@@ -1,0 +1,42 @@
+SATIrE: Static Analysis Tool Integration Engine
+
+1)
+run 'make' for compiling all SATIrE modules and analyzers (ROSE must be installed)
+run 'make docs' for creating all documentation in 
+    * 'docs' (pdf files) and 
+    * 'src/grato/docs/html/index.html' (html documentation)
+run 'make check' for running tests (PAG and ROSE must be installed)
+run 'make clean' for removing all generated files
+
+2)
+To install all satire files:
+You must define the variable INSTALL_PREFIX 
+- this variable is used to define INSTALL_INCLUDES, INSTALL_LIBS, INSTALL_BIN
+  if you require to set each to a separate directory, you currently need to
+  set it directly in src/Makfile
+and run 'make install'
+
+examples:
+  INSTALL_PREFIX=/usr/local/bin make install
+  INSTALL_PREFIX=~/satire_install make install
+
+Note, you must use an absolute path for INSTALL_PREFIX.
+
+3)
+Crafting an analysis:
+  * ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
+  * ensure that the following environment variables are set
+    ROSE_INCLUDE (the include directory of installed ROSE)
+    ROSE_LIB (the lib directory of installed ROSE)
+    PAGDIR (the directory of installed PAG)
+    SATIRE_INCLUDE (the include directory of installed SATIRE)
+    SATIRE_LIB (the lib directory of installed SATIRE)
+  * run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
+    name <ANALYSIS_NAME> with a carrier type <CARRIER_TYPE>
+  * cd <ANALYSIS_NAME>
+  * implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
+  * run 'make' to compile your analyzer
+  * run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is some
+    C/C++ file and the executable analyzer is of name <ANALYSIS_NAME>.
+    This will generate a file '<ANALYSIS_NAME>_result.gdl' which can be
+    viewed with aiSee.

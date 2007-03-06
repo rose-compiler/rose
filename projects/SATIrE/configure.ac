@@ -1,0 +1,188 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.61)
+AC_INIT(SATIrE, 0.8.5, markus@complang.tuwien.ac.at)
+AC_CONFIG_SRCDIR([README])
+
+AM_INIT_AUTOMAKE
+
+
+# Checks for programs.
+AC_PROG_YACC
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_LEX
+AC_PROG_RANLIB
+
+# ROSE PATH
+ROSEDIR='/opt/rose'
+AC_ARG_WITH(rosedir,
+           [  --with-rosedir=DIR           ROSE install path (default in /opt/rose)],
+           [ROSEDIR="$withval"])
+AC_SUBST(ROSEDIR)
+
+ROSE_INCLUDE_DIR="$ROSEDIR/include"
+AC_ARG_WITH(rose_includedir,
+           [  --with-rose-includedir=DIR   ROSE include path (default in /opt/rose/include)],
+           [ROSE_INCLUDE_DIR="$withval"])
+AC_SUBST(ROSE_INCLUDE_DIR)
+
+ROSE_LIB_DIR="$ROSEDIR/lib"
+AC_ARG_WITH(rose_libdir,
+           [  --with-rose-libdir=DIR       ROSE library path (default in /opt/rose/lib)],
+           [ROSE_LIB_DIR="$withval"])
+AC_SUBST(ROSE_LIB_DIR)
+
+# PAG PATH
+PAGDIR='/opt/pag'
+AC_ARG_WITH(pagdir,
+           [  --with-pagdir=DIR            PAG install path (default in /opt/pag)],
+           [PAGDIR="$withval"])
+AC_SUBST(PAGDIR)
+
+PAG_INCLUDE_DIR="$PAGDIR/include"
+AC_ARG_WITH(pag_includedir,
+           [  --with-pag-includedir=DIR    PAG include path (default in /opt/pag/include)],
+           [PAG_INCLUDE_DIR="$withval"])
+AC_SUBST(PAG_INCLUDE_DIR)
+
+PAG_LIB_DIR="$PAGDIR/lib/pag"
+AC_ARG_WITH(pag_libdir,
+           [  --with-pag-libdir=DIR        PAG library path (default in /opt/pag/lib)],
+           [PAG_LIB_DIR="$withval"])
+AC_SUBST(PAG_LIB_DIR)
+
+# BOOST PATH
+BOOSTDIR='/usr'
+AC_ARG_WITH(boostdir,
+           [  --with-boostdir=DIR          Boost install path (default in /usr)],
+           [BOOSTDIR="$withval"])
+AC_SUBST(BOOSTDIR)
+
+BOOST_INCLUDE_DIR="$BOOSTDIR/include"
+AC_ARG_WITH(boost_includedir,
+           [  --with-boost-includedir=DIR  Boost include path (default in /usr/include)],
+           [BOOST_INCLUDE_DIR="$withval"])
+AC_SUBST(BOOST_INCLUDE_DIR)
+
+BOOST_LIB_DIR="$BOOSTDIR/lib"
+AC_ARG_WITH(boost_libdir,
+           [  --with-boost-libdir=DIR      Boost library path (default in /usr/lib)],
+           [BOOST_LIB_DIR="$withval"])
+AC_SUBST(BOOST_LIB_DIR)
+
+# additional Boost stuff: it encodes the compiler version into its lib names
+BOOST_COMPILER_STRING="gcc42"
+AC_ARG_WITH(boost_compiler_string,
+           [  --with-boost-compiler-string=STR    Boost compiler string (default: gcc42)],
+           [BOOST_COMPILER_STRING="$withval"])
+
+
+# Check for SWI-Prolog (optional)
+#-----------------------------------
+if pl --version |grep -q SWI-Prolog; then 
+   PL=pl    # Linux
+else 
+   PL=swipl # OS X
+fi
+PLBASE=`$PL --dump-runtime-variables |grep PLBASE |sed 's/"/ /g' |awk '{print $2}'`
+PLARCH=`$PL --dump-runtime-variables |grep PLARCH |sed 's/"/ /g' |awk '{print $2}'`
+PLLIB="$PLBASE/lib/$PLARCH"
+AC_ARG_WITH([swi-prolog],
+            [AS_HELP_STRING([--with-swi-prolog],
+              [enable SWI-Prolog in Termite (recommended)  @<:@default=check@:>@])],
+            [],
+            [with_swi_prolog=check])
+          
+AS_IF([test "x$with_swi_prolog" != xno],
+      [AC_CHECK_LIB([pl], [PL_toplevel],
+                    [with_swi_prolog=yes],
+                    [if test "x$with_swi_prolog" != xcheck; then
+                       AC_MSG_FAILURE([--with-swi_prolog was given, but test for SWI Prolog failed])
+                     else
+		       with_swi_prolog=no
+                     fi],
+                    [-L$PLLIB])],
+      [with_swi_prolog=false])
+
+AS_IF([test "x$with_swi_prolog" = xyes],
+      [AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
+       AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["$PLBASE/include"])
+       AC_DEFINE([HAVE_SWI_PROLOG], [1], [Define if you have SWI Prolog])
+       AC_MSG_RESULT([** Termite will be built with SWI-Prolog support.])
+       have_swi_prolog=1],
+      [AC_SUBST([SWI_PROLOG_LDADD], [""])  # set a safe dummy default path
+       AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["/usr/include"])
+       AC_DEFINE([HAVE_SWI_PROLOG], [0], [Define if you have SWI Prolog])
+       AC_MSG_RESULT([** Termite will be built WITHOUT SWI-Prolog support.])
+       have_swi_prolog=0])
+
+AM_CONDITIONAL(WITH_SWI_PROLOG, [test "x$with_swi_prolog" = xyes])
+AC_SUBST(have_swi_prolog)
+#-----------------------------------
+
+# Checks for libraries.
+AC_SEARCH_LIBS([fcosf], [m])
+AC_CHECK_LIB([pag], [pag_version], AC_MSG_RESULT([** Found PAG.]), 
+             [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
+              echo "Please consider using one of the --with-pag* options."
+              exit -1 ],
+             [-L${PAG_LIB_DIR}])
+AC_CHECK_LIB([rose], [ROSE_DEBUG], AC_MSG_RESULT([** Found ROSE.]), 
+             [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
+              echo "Please consider using one of the --with-rose* options."
+              exit -1 ], 
+             [-L${ROSE_LIB_DIR}])
+AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
+             AC_MSG_RESULT([** Found Boost (hopefully).]),
+             [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
+              echo "Please consider using one of the --with-boost* options."
+              exit -1 ])
+
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([inttypes.h stdlib.h string.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT8_T
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_CHECK_FUNCS([memset])
+
+AC_CONFIG_FILES([
+Makefile
+src/termite/Makefile
+src/termite/satire/termite.h
+src/analyzer/annotation/Makefile
+src/analyzer/astaccess/Makefile
+src/analyzer/astnumbering/Makefile
+src/analyzer/commandlineinterface/Makefile
+src/analyzer/icfgbuilder/Makefile
+src/analyzer/skeletons/Makefile
+src/analyzer/support/Makefile
+src/analyzer/provided/pointsto/Makefile
+src/analyzer/provided/Makefile
+src/analyzer/Makefile
+src/grato/Makefile
+src/pig/Makefile
+src/Makefile
+examples/Makefile
+tools/Makefile
+tools/icfgbuilder/Makefile
+])
+
+
+AC_OUTPUT

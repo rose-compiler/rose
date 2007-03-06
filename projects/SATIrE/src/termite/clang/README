@@ -1,0 +1,15 @@
+========================================================================
+PRELIMINARY CLANG FRONTEND FOR SATIrE
+========================================================================
+
+(C) 2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+
+Basic Idea:
+
+The clang[1] frontend was extended by a "-emit-term" command line
+option that builds an AST and exports it in the TERMITE format. This
+can then be read in by the termparser to create a ROSE AST and
+subsequently an SATIrE ICFG. It can be seen as an immature replacement
+for the proprietary EDG frontend.
+
+[1] http://clang.llvm.org/

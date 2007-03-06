@@ -1,0 +1,7 @@
+-*- coding: utf-8; -*-
+
+Some of these testfiles are from the WCET benchmark suite of the University of
+Mälardalen, which can be found at
+http://www.mrtc.mdh.se/projects/wcet/benchmarks.html
+
+Some of them conform to the older c89 specification.

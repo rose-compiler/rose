@@ -1,0 +1,4 @@
+1) The absolute paths to ROSE-includes must be eliminated in all Makefiles
+   - the variables are: ROSE_INCLUDE and ROSE_LIB.
+   - the skeleton files are already prepared
+

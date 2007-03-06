@@ -1,0 +1,48 @@
+// common TRANSFER matcher for shape analyses
+
+// Author: Viktor Pavlu
+// E-mail: e0425543@student.tuwien.ac.at
+// Year  : 2006, 2007, 2008
+
+// assignments
+ExprStatement(AssignOp(lhs,rhs) as e),_:
+  assign(lhs,rhs,@);
+
+// scope
+DeclareStmt(VariableSymbol(var) as varsym,type),_: @;
+UndeclareStmt(local_vars),_:
+  delete_vars(@, local_vars);
+
+// before call, $arg = expr
+ArgumentAssignment(lhs,rhs),_:
+  assign(lhs,rhs,@);
+
+FunctionCall(fn,vars),local_edge: bot;
+FunctionCall(fn,vars),call_edge: @;
+FunctionReturn(funcname,local_vars), _: delete_vars(@, local_vars);
+
+FunctionEntry(funcname),_: @;
+FunctionExit(funcname,local_vars), return_edge: delete_vars(@, local_vars);
+
+// in function, localvar = $arg
+ParamAssignment(VariableSymbol(_) as sym_var,VariableSymbol(_) as sym_tmp),_:
+  let var = varsym_varid(sym_var);
+      tmp = varsym_varid(sym_tmp); in
+  delete_var(lift(tassign_x_y(var,tmp,drop(@))),tmp);
+
+// after return, $retvar_i = $retvar
+ReturnAssignment(VariableSymbol(_) as sym_ret,VariableSymbol(_) as sym_tmp),_:
+  let ret = varsym_varid(sym_ret);
+      tmp = varsym_varid(sym_tmp); in
+  delete_var(lift(tassign_x_y(ret,tmp,drop(@))),tmp);
+
+stmt,edge: @; //FIXME match expressions explicitly, report error on unhandled expressions
+
+//ExprStatement(_),_: @;
+//ScopeStatement(WhileStmt(exprExprStatement)),_: @;
+//WhileJoin(),_: @;
+
+// default action
+//stmt,edge:
+//  print("error ") print(stmt_asttext(stmt)) print(",") print(edge) print(" -- ") error("unhandled statement,edge pair");
+

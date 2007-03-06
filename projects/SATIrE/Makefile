@@ -1,0 +1,22 @@
+all:
+	$(MAKE) -C src
+
+docs: handwritten-docs doxygen-docs
+
+handwritten-docs:
+	$(MAKE) -C docs
+
+doxygen-docs:
+	$(MAKE) docs -C src/grato
+
+check:
+	$(MAKE) check -C src
+
+install:
+	$(MAKE) install -C src
+
+clean:
+	$(MAKE) clean -C docs
+	$(MAKE) clean -C src
+
+

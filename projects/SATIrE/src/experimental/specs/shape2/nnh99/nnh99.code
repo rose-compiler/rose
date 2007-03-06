@@ -1,0 +1,511 @@
+// Author: Viktor Pavlu
+// E-mail: e0425543@student.tuwien.ac.at
+// Year  : 2006--2008
+
+SET
+#include "../common.set"
+ShapeGraphSetList = list(ShapeGraphSet)  // for enunion
+
+HeapEdgeTuple     = HeapEdge * HeapEdge  // for check_inv3
+HeapEdgeTupleSet  = set(HeapEdgeTuple)   // for check_inv3
+NodeSetList       = list(NodeSet)        // for check_inv4
+
+DOMAIN
+ShapeGraphSetLifted = flat(ShapeGraphSet)
+ENDDOMAIN
+
+UNIVERSAL
+option_kill_normalisation_temps : bool#
+option_kill_empty_graph         : bool#
+option_kill_unreachable_nodes   : bool#
+
+GLOBAL
+globals     : *VariableSymbolNT#
+
+BLOCK
+label       : snum#
+
+PROBLEM nnh99
+prefix    : nnh99
+direction : forward
+carrier   : ShapeGraphSetLifted
+init      : bot
+init_start: lift({(({},{}),{})})
+combine   : comb
+retfunc   : comb
+widening  : wide
+equal     : eq
+
+TRANSFER
+#include "../common_transfer.optla"
+
+SUPPORT
+comb::ShapeGraphSetLifted,ShapeGraphSetLifted->ShapeGraphSetLifted;
+comb(a,bot) = a;
+comb(a,top) = top;
+comb(bot,b) = b;
+comb(top,b) = top;
+comb(  a,b) = lift(union(drop(a),drop(b)));
+
+wide::ShapeGraphSetLifted,ShapeGraphSetLifted->ShapeGraphSetLifted;
+wide(a,b) = b;
+
+eq(a,b) = a=b;
+
+tassign_x_null::VariableId,ShapeGraphSet->ShapeGraphSet;
+tassign_xsel_null::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+tassign_x_new::VariableId,ShapeGraphSet->ShapeGraphSet;
+tassign_xsel_new::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+tassign_x_y::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+tassign_x_ysel::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+#include "../common_tassign.optla"
+#include "../common_support.optla"
+#include "../common_normalisation.optla"
+#include "../common_debug.optla"
+
+//remove_empty_graph::ShapeGraphSet->ShapeGraphSet;
+//remove_empty_graph(g) = if g = {(({},{}),{})} then {(({},{}),{})} else if option_kill_empty_graph then g # (({},{}),{}) else g endif endif;
+
+extract_graphs::ShapeGraphSet->SrwNnhPair;
+extract_graphs(sg) = (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg));
+
+// FIXME still required for alias-computation
+shape_carrier_to_shapegraphset::ShapeGraphSetLifted->ShapeGraphSet;
+shape_carrier_to_shapegraphset(lifted_sg) = drop(lifted_sg);
+
+// ----------------------------------------
+// Analysis Entry Point: Transfer Functions
+// ----------------------------------------
+
+assign_x_null::VariableId,ShapeGraphSet->ShapeGraphSet;
+assign_x_null(x,gset) = 
+  let dummy = debug_print_str("lowlevel","x_null    ".varid_str(x)."\n"); in
+  enunion([fassign_x_null(x,g) !! g <-- gset]);
+
+assign_x_new::VariableId,ShapeGraphSet->ShapeGraphSet;
+assign_x_new(x,gset) =
+  let dummy = debug_print_str("lowlevel","x_new     ".varid_str(x)."\n"); in
+  enunion([fassign_x_new(x,g) !! g <-- gset]);
+
+assign_xsel_null::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+assign_xsel_null(x,sel,gset) =
+  let dummy = debug_print_str("lowlevel","xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
+  enunion([fassign_xsel_null(x,sel,g) !! g <-- gset]);
+
+assign_x_y::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+assign_x_y(x,y,gset) = 
+  let dummy = debug_print_str("lowlevel","x_y       ".varid_str(x)."\t".varid_str(y)."\n"); in
+  enunion([fassign_x_y(x,y,g) !! g <-- gset]);
+  
+assign_x_ysel::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+assign_x_ysel(x,y,sel,gset) =
+  let dummy = debug_print_str("lowlevel","x_ysel     ".varid_str(x)."\t".varid_str(y)."->".varid_str(sel)."\n"); in
+  enunion([fassign_x_ysel(x,y,sel,g) !! g <-- gset]);
+
+assign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
+assign_xsel_y(x,sel,y,gset) =
+  let dummy = debug_print_str("lowlevel","xsel_y     ".varid_str(x)."->".varid_str(sel)."\t".varid_str(y)."\n"); in
+  enunion([fassign_xsel_y(x,sel,y,g) !! g <-- gset]);
+
+enunion::ShapeGraphSetList->ShapeGraphSet;
+enunion([]) = {};
+enunion(car:cdr) = union(car,enunion(cdr));
+
+
+
+fassign_x_null::VariableId,ShapeGraph->ShapeGraphSet;
+fassign_x_null(x,g) =
+  {kill_x(x,g)};
+
+fassign_x_y::VariableId,VariableId,ShapeGraph->ShapeGraphSet;
+fassign_x_y(x,y,((S1,H1),is1) as gi) = 
+  let S2  = union(
+             {(z,gxy(x,y,nz)) !! (z,nz) <-- S1},                      // add x to all edges where y is already
+             {(x,gxy(x,y,ny)) !! (y1,ny) <-- S1, if (y1 = y)});       // add a new edge (x,{x,y,...}) to where y pointed to
+      H2  = {(gxy(x,y,nv),sel,gxy(x,y,nw)) !! (nv,sel,nw) <-- H1}; // add x to all edges where y is already
+      is2 = {gxy(x,y,nz) !! nz <-- is1}; in
+  {((S2,H2),is2)};
+
+fassign_x_ysel::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
+fassign_x_ysel(x,y,ysel,((S1,H1),is1) as g) = // it is guaranteed that x!=y
+  /* three cases: (see popa, chapter 2.6 shape analysis, [x:=y.sel])
+   * case 1: there is no (_,{y,_}) <-- S or no ({y,_},ysel, _) <-- H
+   * case 2: there is    (_,{y,_}) <-- S   and ({y,_},ysel, u) <-- H where u != {}
+   * case 3: there is    (_,{y,_}) <-- S   and ({y,_},ysel,{}) <-- H
+   */
+  if !var_exists(y,g) then
+    // case 1a: uninitialised variable (null pointer deref in var)
+    print("warn: dereferencing of uninitialised variable: ".varid_str(y)."\n")
+    {kill_x(x,g)}
+  else
+    if !var_sel_exists(y,ysel,g) then
+      // case 1b: uninitialised selector (null pointer deref in struct-field)
+      print("warn: dereferencing of uninitialised selector: ".varid_str(y).".".varid_str(ysel)."\n")
+      {kill_x(x,g)}
+    else
+      case heapedge_by_var_sel(y,ysel,H1) of
+        // case 3: materialisation of x from {}
+        (_,_,{}) =>
+          materialise(x,y,ysel,g);
+
+        // case 2: rename u to include {x}, add (x,union(u,{x}) to S
+        (_,_,u) =>
+          let S2  = union({(z,hxU(x,u,nz)) !! (z,nz) <-- S1}, {(x,hxU(x,u,u))});
+              H2  = {(hxU(x,u,nv),sel1,hxU(x,u,nw)) !! (nv,sel1,nw) <-- H1};
+              is2 = {hxU(x,u,nz) !! nz <-- is1}; in
+          {((S2,H2),is2)};
+
+      endcase
+    endif
+  endif;
+
+fassign_xsel_null::VariableId,VariableId,ShapeGraph->ShapeGraphSet;
+fassign_xsel_null(x,s,((S0,H0),is0) as g) =
+  if !var_exists(x,g) || !var_sel_exists(x,s,g) then
+    {g} // identity case as x.sel is not in graph
+  else
+    // edge (nx,sel,nu) <-- H0 and must be removed
+    let edge = heapedge_by_var_sel(x,s,H0); in
+    case edge of
+      (nx,sel,nu) =>
+        let S1  = S0;
+            H1  = {e !! (nv,sel1,nw) as e <-- H0, if !(nx=nv && sel=sel1)}; in
+        let is1 = if (nu ? is0)
+                  && n_into(nu,H1) <= 1
+                  && {} = {e !! (nk,_,nl) as e <-- H1, if (nk={}) && (nl=nu)} then // or same: && {} = {sel2 !! ({},sel2,nu) <-- H1} then
+                    is0 # nu
+                  else
+                    is0
+                  endif; in
+        {((S1,H1),is1)};
+    endcase
+  endif;
+
+fassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
+fassign_xsel_y(x,sel,y,((S1,H1),is1) as g) = 
+  if !var_exists(x,g) || !var_exists(y,g) then
+    // in both cases identity, as kill_xsel has already been performed
+    {g}
+  else
+    let S2 = S1;
+        nx = node_by_var(x,g);
+        ny = node_by_var(y,g); in
+    let H2  = union(H1, {(nx,sel,ny)}); in
+    let is2 = if n_into(ny,H1) >= 1 then union(is1,{ny}) else is1 endif; in
+    {((S2,H2),is2)}
+  endif;
+
+fassign_x_new::VariableId,ShapeGraph->ShapeGraphSet;
+fassign_x_new(x,((S1,H1),is1) as g) =
+  {((union(S1,{(x,{x})}),H1),is1)};
+
+
+
+materialise::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
+materialise(x,y,sel,((S1,H1),is1) as G1) = 
+  let dummy = debug_print_str("materialisation","materialise ".varid_str(x)." = ".varid_str(y).".".varid_str(sel)."\n"); in
+  let dummy = debug_print_ShapeGraph("materialisation","graph",G1); in
+  // all nx is already removed from G'
+  // only check for {} when determining class of edge
+  let n0nx       = {{},{x}}; in
+  let S2         = union(S1,{(x,{x})});
+      H1externa  = {e1a !! (nv1a,sel1a,nw1a) as e1a <-- H1, if (nv1a != {}) && (nw1a != {})};
+      H1extern   = {e1 !! (nv1,sel1,nw1) as e1 <-- H1, if intersect({nv1,nw1},n0nx) = {}};
+      H1intern   = {e2 !! (nv2,sel2,nw2) as e2 <-- H1, if   (nv2 ? n0nx) &&   (nw2 ? n0nx)};
+      H1goingout = {e3 !! (nv3,sel3,nw3) as e3 <-- H1, if   (nv3 ? n0nx) && ! (nw3 ? n0nx)};
+      H1goingin  = {e4 !! (nv4,sel4,nw4) as e4 <-- H1, if ! (nv4 ? n0nx) &&   (nw4 ? n0nx)}; in
+
+  if union(union(H1extern,H1intern),union(H1goingin,H1goingout)) != H1 then error("logic error 1 in materialisation") else // DEBUG sanity check
+  if H1externa != H1extern then error("logic error 2 in materialisation") else // DEBUG sanity check
+
+  let is2choices = if {} ? is1 then
+    // if {} is shared in G1 we have 3 cases: {}, {x} or both are shared
+    // note that the sharing can not go away, ie. there is no case where neither {} nor {x} is shared
+    [is1 ~ {},
+     is1 ~ {x},
+     is1 ~ {} ~ {x}]
+  else
+    // if {} is unshared, neither {} nor {x} are shared in G2
+    [is1]
+  endif; in
+  let candidates = enunion([generate_related_graphs(x,y,sel,S2,H1extern,H1intern,H1goingout,H1goingin,is2) !! is2 <- is2choices]); in
+
+  let xx = {G2xx !! ((S2xx,H1xx),is2xx) as G2xx <-- candidates, if (x,{x}) ? S2xx}; in // DEBUG sanity check
+  let yy = {G2yy !! ((S2yy,H1yy),is2yy) as G2yy <-- candidates, if var_exists(x,G2yy)}; in // DEBUG sanity check
+  if xx != yy then error("logic error 2 in materialisation") else // DEBUG sanity check
+
+  {G2 !! G2 <-- candidates, if is_accepted(x,y,sel,G1,G2)}
+
+  endif // DEBUG sanity check
+  endif // DEBUG sanity check
+  endif // DEBUG sanity check
+  ;
+
+is_accepted::VariableId,VariableId,VariableId,ShapeGraph,ShapeGraph->bool;
+is_accepted(x,y,sel,G1,((S2,H2),is2) as G2) =
+  let res = if is_compatible(G2)
+  && kill_x(x,G2) = G1
+  && (x,{x}) ? S2
+  && var_exists(y,G2)
+  && (node_by_var(y,G2),sel,{x}) ? H2 then true else false endif; in
+  let dummy = debug_print_bool("materialisation","is_compatible ",is_compatible(G2)); in
+  let dummy = debug_print_bool("materialisation","kill_x(G2)=G1 ",kill_x(x,G2) = G1); in
+  let dummy = debug_print_bool("materialisation","x->{x} exists ",(x,{x}) ? S2); in
+  let dummy = debug_print_bool("materialisation","y-{y,?} exists",var_exists(y,G2)); in
+  let dummy = debug_print_bool("materialisation","y->sel = x    ",(node_by_var(y,G2),sel,{x}) ? H2); in
+  res;
+
+// generate all possible G" with related edges for H1___
+generate_related_graphs::VariableId,VariableId,VariableId,StackEdgeSet,HeapEdgeSet,HeapEdgeSet,HeapEdgeSet,HeapEdgeSet,NodeSet->ShapeGraphSet;
+generate_related_graphs(x,y,sel,S2,H1ext,H1int,H1out,H1in,is2) =
+  
+  if !var_sel_exists(y,sel,((S2,H1in),is2)) then print("edge not found: ".varid_str(y).".".varid_str(sel)) error(" logic error in generate") else // DEBUG sanity check
+
+  let old_edge    = heapedge_by_var_sel(y,sel,H1in);          // y->sel must be an internal edge as y is named and target is {}
+      new_edge    = (node_by_var(y,((S2,{}),{})),sel,{x}); in // change it to the new (y,sel,x) edge
+  let H1in_no_old = [e !! e <-- (H1in # old_edge)]; in
+  let ext_choices = [H1ext];
+      int_choices = gen_internal({x},[e !! e <-- H1int],is2); 
+       in_choices = combine_H(gen_goingin({x},H1in_no_old, is2), [{new_edge}]); // replace old_edge with new_edge in every graph
+      out_choices = gen_goingout({x},[e !! e <-- H1out],is2); in                // but don't pass it into the gen_goingin func
+
+  let H2set       = combine_H(combine_H(combine_H(ext_choices,int_choices),in_choices),out_choices); in
+
+  let dummy = debug_print_HeapEdgeSet("materialisation", "ext = ", H1ext); in
+  let dummy = debug_print_HeapEdgeSet("materialisation", "int = ", H1int); in
+  let dummy = debug_print_HeapEdgeSet("materialisation", "in* = ", H1in ); in
+  let dummy = debug_print_HeapEdgeSet("materialisation", " in = ", {tmp !! tmp <-H1in_no_old}); in
+  let dummy = debug_print_HeapEdgeSet("materialisation", "out = ", H1out); in
+
+  let dummy = debug_print_HeapEdgeSetList("materialisation","ext_choices", ext_choices); in
+  let dummy = debug_print_HeapEdgeSetList("materialisation","int_choices", int_choices); in
+  let dummy = debug_print_HeapEdgeSetList("materialisation"," in_choices",  in_choices); in
+  let dummy = debug_print_HeapEdgeSetList("materialisation","out_choices", out_choices); in
+
+  {((S2,H2),is2) !! H2 <- H2set}
+
+  endif; // DEBUG sanity check
+
+// generate all edges related to these internal edges
+gen_internal::Node,HeapEdgeList,NodeSet->HeapEdgeSetList;
+gen_internal(_,       [],  _) = [];
+gen_internal(x,edge:Hint,is2) =
+  case edge of
+    ({},sel,{}) =>
+      if ({} ? is2) || (x ? is2) then [
+        // only 1
+        {({},sel,{})},
+        {( x,sel,{})},
+
+        // even into x as it is shared alredy
+        {({},sel, x)},
+        {( x,sel, x)},
+
+        // any 2 where x has only one out-edge
+        {({},sel,{}),({},sel, x)},
+        {({},sel,{}),( x,sel,{})},
+        {({},sel,{}),( x,sel, x)},
+        {({},sel, x),( x,sel,{})},
+        {({},sel, x),( x,sel, x)},
+                                    // x,sel,x x,sel,{} would violate Inv3
+        
+        // any 3 where x has only one out-edge
+        {({},sel,{}),({},sel, x),(x,sel,{})},
+        {({},sel,{}),({},sel, x),(x,sel, x)}
+
+        // there is no 4 where x has only one out-edge
+      ] else [
+        {({},sel,{})},  // internal edge can stay at {}
+        {( x,sel,{})},  // or come from x
+                        // but can not point to x without introducing sharing
+                        // as there is always the going-in edge (y,sel,x)
+        {({},sel,{}),(x,sel,{})} // or both
+      ]
+      endif ++ gen_internal(x,Hint,is2);
+
+    _ => error("logical error in gen_internal");
+  endcase;
+
+gen_goingin::Node,HeapEdgeList,NodeSet->HeapEdgeSetList;
+gen_goingin(_,      [],  _) = [];
+gen_goingin(x,edge:Hin,is2) =
+  case edge of
+    (y,sel,{}) =>
+      if y = {} then error("logical error 1 in gen_goingin") else // DEBUG sanity check
+
+      let cur = if ({} ? is2) || (x ? is2) then [
+        // when {} is shared, {x} is also shared
+                       // the (y,sel,_) edge can not go away
+        {(y,sel,{})},  // so either it stays at {}
+        {(y,sel,x)}    // or it moves with materialisation to the new {x} ({x} is already shared so it have n_into > 1)
+                       // but not both, as this would violate Inv3
+      ] else [
+        // when not shared
+        {(y,sel,{})}   // it can only stay at {} without introducing sharing for {x}
+      ] endif; in
+      cur ++ gen_goingin(x,Hin,is2)
+
+      endif; // DEBUG sanity check
+
+    _ => error("logical error 2 in gen_goingin");
+  endcase;
+
+gen_goingout::Node,HeapEdgeList,NodeSet->HeapEdgeSetList;
+gen_goingout(_,       [],  _) = [];
+gen_goingout(x,edge:Hout,is2) =
+  case edge of
+    ({},sel,y) =>
+      if y = {} then error("logical error 1 in gen_goingout") else // DEBUG sanity check
+
+      if y ? is2 then [
+        {({},sel,y)},
+        {( x,sel,y)},
+        {({},sel,y),(x,sel,y)}
+      ] else [
+        {({},sel,y)},
+        {( x,sel,y)}
+      ] endif ++ gen_goingout(x,Hout,is2)
+
+      endif; // DEBUG sanity check
+
+    _ => error("logical error 2 in gen_goingout");
+  endcase;
+
+// combine every a1..an from A with every b1..bm from B
+combine_H::HeapEdgeSetList,HeapEdgeSetList->HeapEdgeSetList;
+combine_H(   As,  []) = As;  // some lhs choices combined with no rhs -> identity on lhs
+combine_H(   [],  Bs) = Bs;  // accordingly here
+combine_H(ai:[],  Bs) = let dummy=assert_combine_H(ai,[],Bs); in [union(set,ai) !! set <- Bs];
+combine_H(ai:As,  Bs) = let dummy=assert_combine_H(ai,As,Bs); in [union(set,ai) !! set <- Bs] ++ combine_H(As,Bs);
+
+assert_combine_H::HeapEdgeSet,HeapEdgeSetList,HeapEdgeSetList -> bool; 
+assert_combine_H(car,cdr,rhs) =
+  let assert_0 = if {} ? {x !! x <- [car]++cdr} then error("assert failed. empty set in lhs, aka 'no edge' is one option -- but edges can not go away.") else true endif; in
+  let assert_1 = if {} ? {x !! x <- rhs}        then error("assert failed. empty set in rhs, aka 'no edge' is one option -- but edges can not go away.") else true endif; in
+  assert_0 && assert_1;
+
+
+/*
+,(_,sel,_) as edge:cdr,is0) =
+  let Hn = case edge of
+    ({},_,{}) => 
+      if x ? is0 then {
+        {({},sel,{})},
+        {({},sel, x)},
+        {( x,sel,{})},
+        {( x,sel, x)},
+
+        {({},sel,{}),({},sel, x)},
+        {({},sel,{}),( x,sel,{})},
+        {({},sel,{}),( x,sel, x)},
+        {({},sel, x),( x,sel,{})},
+        {({},sel, x),( x,sel, x)},
+        {( x,sel,{}),( x,sel, x)},
+        
+        {({},sel,{}),({},sel, x),(x,sel,{})},
+        {({},sel,{}),({},sel, x),(x,sel, x)},
+        {({},sel,{}),( x,sel,{}),(x,sel, x)},
+        
+        {({},sel,{}),({},sel,x),(x,sel,{}),(x,sel,x)}
+      } else {
+        {({},sel,{})},
+        {( x,sel,{})},
+
+        {({},sel,{}),(x,sel,{})}
+      } endif;
+      
+    ({},_,y) =>
+      if y ? is0 then {
+        {({},sel,y)},
+        {( x,sel,y)},
+        {({},sel,y),(x,sel,y)}
+      } else {
+        {({},sel,y)},
+        {( x,sel,y)}
+      } endif;
+
+    (y,_,{}) => {
+        {(y,sel,{})},
+        {(y,sel,x)}
+      };
+  endcase; in
+  enunion([generate_related_graphs(x,S,union(H,new_edge),cdr,is0) !! new_edge <-- Hn]);
+generate_related_graphs(_,S,H,[],is0) = {((S,H),is0)};
+
+*/
+
+// -------------------
+// auxiliary functions
+// -------------------
+
+kill_x::VariableId,ShapeGraph->ShapeGraph;
+kill_x(x,((S0,H0),is0)) =
+  let S1  = {(z,rem(x,nz)) !! (z,nz) <-- S0, if !(z=x)}; 
+      H1  = {(rem(x,nv),sel,rem(x,nw)) !! (nv,sel,nw) <-- H0};
+      is1 = {rem(x,nx) !! nx <-- is0}; in
+  ((S1,H1),is1);
+
+// remove x from {x,...}  (called kx in nnh)
+rem::VariableId,Node->Node;
+rem(x,Z) = Z # x;
+
+// add x to Z if y is already there
+gxy::VariableId,VariableId,Node->Node;
+gxy(x,y,Z) = if (y ? Z) then union(Z,{x}) else Z endif;
+
+// add x to U if U = Z
+hxU::VariableId,Node,Node->Node;
+hxU(x,U,Z) = if (Z = U) then union(U,{x}) else Z endif;
+
+n_into::Node,HeapEdgeSet->snum;
+n_into(nx,H0) = HeapEdgeSet_len([e !! (_,_,nw) as e <-- H0, if nw = nx]);
+
+HeapEdgeSet_len::HeapEdgeList->snum;
+HeapEdgeSet_len([]) = 0;
+HeapEdgeSet_len(car:cdr) = 1 + HeapEdgeSet_len(cdr);
+
+is_compatible::ShapeGraph->bool;
+is_compatible(((S0,H0),is0) as g) =
+  let vars = union(is0,union(nodes_by_stackedges(S0),nodes_by_heapedges(H0))); in
+  let res = if check_inv1(vars)
+    && check_inv2(S0)
+    && check_inv3(H0)
+    && check_inv4([x !! x <-- is0],H0)
+    && check_inv5(vars,H0,is0) then true else false endif; in
+  let dummy = debug_print_bool("materialisation", "inv1", check_inv1(vars)); in
+  let dummy = debug_print_bool("materialisation", "inv2", check_inv2(S0)); in
+  let dummy = debug_print_bool("materialisation", "inv3", check_inv3(H0)); in
+  let dummy = debug_print_bool("materialisation", "inv4", check_inv4([x !! x <-- is0],H0)); in
+  let dummy = debug_print_bool("materialisation", "inv5", check_inv5(vars,H0,is0)); in
+  res;
+
+// Inv1: two nodes a,b are either the same or have no common variables
+check_inv1::NodeSet->bool;
+check_inv1(vars) = {} = {false !! a <-- vars, b <-- vars, if (a != b) && intersect(a,b) != {}};
+
+// Inv2: if x points to a node, the nodes name must contain x (naming convention)
+check_inv2::StackEdgeSet->bool;
+check_inv2(S) = S = {(x,nx) !! (x,nx) <-- S, if x ? nx};
+
+// Inv3: no node,sel pair may point to more than one node except {},sel
+check_inv3::HeapEdgeSet->bool;
+check_inv3(H) = 
+  {} = {((nv1,sel1,nw1),(nv2,sel2,nw2)) !! (nv1,sel1,nw1) <-- H, (nv2,sel2,nw2) <-- H,
+        if nv1 = nv2
+        && sel1 = sel2
+        && !(nw1 = nw2 || nv1 = {})};
+
+// Inv4: if nx is shared, there exists either {},_,nw or >1 edges pointing to nx
+check_inv4::NodeList, HeapEdgeSet->bool;
+check_inv4(           [],_) = true;
+check_inv4(shared_x:cdr, H) = 
+  ( {} != {e !! ({},_,nw) as e <-- H, if nw = shared_x}
+    || n_into(shared_x,H) > 1)
+  && check_inv4(cdr,H);
+
+// Inv5: if two or more edges point to nx then nx is shared (if nx is not {})
+check_inv5::NodeSet,HeapEdgeSet,NodeSet->bool;
+check_inv5(vars,H0,is0) = {} = {nx !! nx <-- vars, if n_into(nx,H0) > 1 && nx != {} && !(nx ? is0)};
+
+// vim: ts=2 sts=2 sw=2 expandtab:

@@ -1,0 +1,122 @@
+// Author: Markus Schordan, 2006
+
+#include <config.h>
+
+#include "CommandLineParser.h"
+
+/* Support functions for handling the analyzer command line and PAG options */
+bool CommandLineParser::fileExists(const std::string& fileName)
+{
+  std::fstream fin;
+  fin.open(fileName.c_str(),std::ios::in);
+  if( fin.is_open() )
+  {
+    fin.close();
+    return true;
+  }
+  fin.close();
+  return false;
+}
+
+void CommandLineParser::failed(AnalyzerOptions opt) {
+  std::cout << opt.getOptionsInfo() << std::endl;
+  exit(1);
+}
+
+AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
+  AnalyzerOptions cl;
+
+  char toolname[100];
+  char inName[100];
+  strcpy(toolname, argv[0]);
+  inName[0] = 0;
+
+  cl.setAnimationDirectoryName("anim-out");
+  cl.setProgramName(toolname);
+  cl.setGdlFileName(cl.getProgramName()+"_result.gdl");
+
+  for (int i=1; i < argc; i++) {
+    if (!strcmp(argv[i], "--cfgordering")) {
+      cl.setCfgOrdering(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--gc_lowperc")) {
+      cl.setGcLow(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--gc_highperc")) {
+      cl.setGcHigh(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--gdl")) {
+      cl.setGdlFileName(strdup(argv[++i]));
+    } else if (!strcmp(argv[i], "--statistics")) {
+      cl.statisticsOn();
+    } else if (!strcmp(argv[i], "--no_result")) {
+      cl.resultGenerationOff();
+    } else if (!strcmp(argv[i], "--animdir")) {
+      cl.setAnimationDirectoryName(strdup(argv[++i]));
+    } else if (!strcmp(argv[i], "--no_anim")) {
+      cl.animationGenerationOff();
+    } else if (!strcmp(argv[i], "--callstringlength")) {
+      if(i+1>=argc) { failed(cl); }
+      cl.setCallStringLength(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--callstringinfinite")) {
+      cl.setCallStringLength(-1);
+    } else if (!strcmp(argv[i], "--pagverbose")) {
+      cl.pagVerboseOn();
+    } else if (!strcmp(argv[i], "--startbank")) {
+      cl.setStartBank(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--sharemin")) {
+      cl.setShareMin(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--sharenum")) {
+      cl.setShareNum(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--preinfo")) {
+      cl.preInfoOn();
+    } else if (!strcmp(argv[i], "--postinfo")) {
+      cl.postInfoOn();
+    } else if (!strcmp(argv[i], "--no_preinfo")) {
+      cl.preInfoOff();
+    } else if (!strcmp(argv[i], "--no_postinfo")) {
+      cl.postInfoOff();
+    } else if (!strcmp(argv[i], "--no_proceduresubgraphs")) {
+      cl.gdlProcedureSubgraphsOff();
+    } else if (!strcmp(argv[i], "--textoutput")) {
+      cl.analysisResultsTextOutputOn();
+    } else if (!strcmp(argv[i], "--sourceoutput")) {
+      cl.analysisResultsSourceOutputOn();
+    } else if (!strcmp(argv[i], "--vivu")) {
+      cl.vivuOn();
+    } else if (!strcmp(argv[i], "--vivuLoopUnrolling")) {
+      if(i+1>=argc) { failed(cl); }
+      cl.setVivuLoopUnrolling(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--vivu4MaxUnrolling")) {
+      if(i+1>=argc) { failed(cl); }
+      cl.setVivu4MaxUnrolling(atoi(argv[++i]));
+    } else if (!strcmp(argv[i], "--help")) {
+      cl.helpMessageRequestedOn();
+    } else if (!strncmp(argv[i], "-I",2)) {
+      /* include path option is passed to ROSE as is */
+    } else {
+      if(inName[0]==0) {
+	strcpy(inName, argv[i]);
+	if(!fileExists(std::string(inName))) {
+	  std::cout << "Error: File "<< inName << " not found." << std::endl;
+	  exit(1);
+	}
+      } else {
+	failed(cl);
+      }
+    }
+  }
+  
+  // post-processing of parsed values
+  if(cl.helpMessageRequested()) {
+    std::cout << cl.getOptionsInfo() << std::endl;
+    exit(0);
+  }
+  if(cl.optionsError()) {
+    std::cout << cl.getOptionsErrorMessage() << std::endl;
+    exit(1);
+  }
+
+  if (inName[0]==0) {
+    failed(cl);
+  }
+  cl.setInputFileName(inName);
+  return cl;
+}

@@ -1,0 +1,60 @@
+%{ /* -*- c++ -*- */
+/*
+ * Copyright 2008 Adrian Prantl
+ * see LICENSE in the root folder of this project
+*/
+using namespace std;
+#include <string>
+#include <deque>
+#include <iostream> 
+#include "termite.h"
+#include "dfiparser.tab.h++"
+
+// This global variable is our "yyin"
+const char* dfi_input = 0;
+const char* dfi_input_start = 0;
+
+#define YY_INPUT(buf,result,max_size) { \
+      if (dfi_input == 0 || *dfi_input == 0) \
+	result = YY_NULL; \
+      else { \
+	*buf = *dfi_input; \
+        ++dfi_input; \
+	result = 1; \
+      }	\
+    }
+
+%}
+%option noyywrap
+
+top TOP
+bottom BOTTOM
+setbegin \{\[
+setclose \]\}
+int \-?[0-9]+
+assign \-\>
+/* kudos to kregexpeditor: */
+token (::)?[_a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
+undef \<undefined\ dfi\>
+
+%%
+
+{undef}  { return UNDEF; }
+{top}    { return TOP; }
+{bottom} { return BOTTOM; }
+{assign} { return ASSIGN; }
+{setbegin} { return SET_BEGIN; }
+{setclose} { return SET_CLOSE; }
+
+{int}   { //cerr<<"INT "<<yytext<<endl; 
+          dfilval.intValue = (int)strtol(dfitext, NULL, 10); 
+	  return(INT); }
+{token} { //cerr<<"TOKEN "<<yytext<<endl; 
+          dfilval.strValue = new string(dfitext); 
+	  return(TOKEN); }
+\,\}    { //cerr<<"my }"<< endl;
+          return '}'; /* don't want to deal with this ugliness in the parser*/}
+.       { //cerr<<"ID "<<yytext<<endl;
+          return(dfitext[0]); }
+
+%%

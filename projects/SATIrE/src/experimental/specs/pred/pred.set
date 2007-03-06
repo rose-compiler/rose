@@ -1,0 +1,7 @@
+SET
+    Dummy = set(snum)
+    Expr = str * snum * snum
+DOMAIN
+    ExprSet = set(Expr)
+    CarrierType = lift(ExprSet)
+

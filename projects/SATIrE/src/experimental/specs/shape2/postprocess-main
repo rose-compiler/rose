@@ -1,0 +1,60 @@
+#!/bin/bash
+
+function usage {
+  echo "$0 is called by Makefile for postprocessing on the"
+  echo "generated main.C"
+  echo " - visualisation code is customized to carrier type"
+  echo " - custom commandline arg are added"
+  echo ""
+  echo "Usage: $0 path/to/main.C srw98|nnh99"
+}
+
+function die {
+  echo $@
+  exit -1
+}
+
+if [ "$2" = '' ]; then usage; die; fi
+
+case 1 in
+  --help|-?)
+    usage && exit 0
+    ;;
+
+  *)
+    main="$1"
+    analysis="$2"
+    custom_header="#include \"$analysis-out/src/$analysis.h\""
+
+    [ -e "$main" ] || die "file not found: $main"
+    dir=`dirname "$main"`
+    temp="$dir/temp.C"
+
+    line=`grep -n 'int main(int argc, char \*\*argv)' "$main" | cut -d : -f 1`
+
+    head -n $(( line - 1 )) "$main" > "$temp"      # 0 -- (int main)
+    echo "$custom_header" >> "$temp"               # insert
+                                                   # insert
+    cat >> "$temp" <<EOF                       
+#include "visualisation.h"
+#include "CmdlineOptions.h"
+
+ShapeAnalyzerOptions *opt;
+
+EOF
+    tail -n +$line "$main" | head -n 2 >> "$temp"  # (int main) -- (+2)
+                                                   # insert
+    cat >> "$temp" <<EOF
+    opt = new ShapeAnalyzerOptions();
+EOF
+    tail -n +$((line + 2)) "$main" >> "$temp"      # (+2) -- end
+    case "$analysis" in
+      srw98) DFI=o_ShapeGraphLifted;;
+      nnh99) DFI=o_ShapeGraphSetLifted;;
+      *) die unknown analysis "$analysis"
+    esac
+    sed visualisation.c -e "s/{DFI}/$DFI/g" >> "$temp"                 # insert
+
+    mv "$temp" "$main"
+    exit 0
+esac

@@ -1,0 +1,30 @@
+/* -*- C++ -*-
+ * Copyright 2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+ *
+ * Configures the TERMITE term representation.
+ */
+
+#ifndef __TERMITE_H__
+#define __TERMITE_H__
+
+#ifndef HAVE_SWI_PROLOG
+#define HAVE_SWI_PROLOG @have_swi_prolog@
+#endif
+
+#define DEBUG_TERMITE 0
+
+#include "PrologTerm.h"
+#include "PrologCompTerm.h"
+#include "PrologList.h"
+#include "PrologAtom.h"
+#include "PrologInt.h"
+#include "PrologVariable.h"
+
+// Defines wether Terms start with "Sg"
+#define SG_PREFIX ""
+//#define SG_PREFIX "Sg"
+
+// if enabled, use int_val(...) instead of unary_node(intval, ...)
+#define COMPACT_TERM_NOTATION
+
+#endif

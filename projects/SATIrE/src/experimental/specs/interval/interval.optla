@@ -1,0 +1,504 @@
+// -- -*- haskell -*- (Fake Emacs mode for syntax highlighting
+// -- ------------------------------------------------------------------------
+// -- Authors: Gergo Barany, 2006 (original constprop)
+// --          Adrian Prantl, 2008 (interval extensions)
+// --          
+// -- Contact: adrian@complang.tuwien.ac.at
+// --
+// -- TOP: Variable is not analyzABLE
+// -- (min,max): Variable has the interval min =< v =< max
+// -- BOT: Variable is not yet analyzED
+// -- 
+// -- remaining problems:
+// -- * pointer aliasing is ignored
+// -- * type casts are ignored
+// -- * interval arithmetic needs to be checked for correctness (esp. | and &)
+// -- 
+// -- ------------------------------------------------------------------------
+
+PROBLEM Interval_Analysis
+  direction:  forward
+  carrier:    State
+  init:       bot
+  init_start: lift([->(top, top)])
+  combine:    comb
+  retfunc:    comb
+  widening:   wide
+  equal:      eq
+
+TRANSFER
+
+FunctionEntry(_), _: 
+  if @ != bot then
+    @
+  else
+    bot //top
+  endif;
+
+ExprStatement(exp), _:
+  if @ != bot then
+    eval(exp, @)!2!2
+  else
+    bot
+  endif;
+
+ArgumentAssignment(VarRefExp(_) as var, exp), _:
+  if @ != bot then
+      let f <= @; in
+      lift(f\[varref_varid(var) -> eval(exp, @)!1!2])
+  else
+    bot
+  endif;
+
+ParamAssignment(VariableSymbol(_) as var, VariableSymbol(_) as param), _:
+  if @ != bot then
+    let f <= @; in
+    // -- assign var
+    lift(f\[varsym_varid(var) -> f{!varsym_varid(param)!}]
+    // -- kill rhs
+    \[varsym_varid(param) -> top])
+  else
+    bot
+  endif;
+
+ReturnAssignment(VariableSymbol(_) as var, VariableSymbol(_) as retvar), _:
+  if @ != bot then
+    let f <= @; in
+    // -- assign var
+    lift(f\[varsym_varid(var) -> f{!varsym_varid(retvar)!}]
+    // -- kill rhs
+    \[varsym_varid(retvar) -> top])
+  else
+    bot
+  endif;
+
+ScopeStatement(IfStmt(ExprStatement(cond))), true_edge:
+  branch(cond, @, true, false);
+
+ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
+  branch(cond, @, false, false);
+
+ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
+  branch(cond, @, true, true);
+
+ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
+  branch(cond, @, false, false);
+
+LogicalIf(cond), true_edge:
+  branch(cond, @, true, false);
+
+LogicalIf(cond), false_edge:
+  branch(cond, @, false, false);
+
+UndeclareStmt(vars), _:
+  kill_vars(@, vars);
+
+FunctionExit(_, vars), _:
+  kill_vars(@, vars);
+
+FunctionCall(_,_), local_edge:
+  bot;
+
+_, _: @;
+
+SUPPORT
+
+dup(a) = (a, a);
+duplift(a) = dup(lift(a));
+ltup(a,b) = (lift(a), lift(b));
+
+eval :: Expression, State -> IntervalStatePair;
+eval(_, bot) = bot;
+eval(_, top) = top;
+eval(exp, state) =  
+  // --print("eval(") print(exp) print(",") print(state) print(")\n")
+  let s <= state; in
+
+  case exp of 
+    CommaOpExp(exp1, exp2) => let state1 = 
+                                eval(exp1, state)!2!2; in
+                                eval(exp2, state1);
+    _ =>
+      if is_unary(exp) then
+        unary(unary_get_child(exp), exp, state)
+      else if is_binary(exp) then
+        let r = binary(binary_get_left_child(exp), binary_get_right_child(exp),
+          exp, state); in r // --print("BINARY <----") print(r) print("\n") r
+      else if is_value(exp) then
+        case exp of
+          BoolValExp(value) => (duplift(val-astint(value)), state);
+          EnumVal(value)    => (duplift(val-astint(value)), state);
+          IntVal(value)     => (duplift(val-astint(value)), state);
+          ShortVal(value)   => (duplift(val-astshort(value)), state);
+          LongIntVal(value) => (duplift(val-astlong(value)), state);
+
+          CharVal(value)  => (duplift(snum(val-astchar(value))), state);
+          // -- FIXME: incorrect type conversions
+          UnsignedCharVal(value) => (duplift(snum(val-astuchar(value))), state);
+          UnsignedIntVal(value)  => (duplift(snum(val-astuint(value))), state);
+          UnsignedShortVal(value)=>(duplift(snum(val-astushort(value))), state);
+          UnsignedLongVal(value) => (duplift(snum(val-astulong(value))), state);
+          // -- NOT IMPLEMENTED
+          FloatVal(_) => ((top,top), state);
+          DoubleVal(_) => ((top,top), state);
+          _         => print("unsupported value exp: ")
+                       print(exp) print("\n") ((top,top), state);
+        endcase
+    else case exp of
+      VarRefExp(name)       =>  // --print("###is_VARREF") 
+                                // --print(val-aststring(name)) print("\n") 
+                                (s{!varref_varid(exp)!}, state);
+      AssignInitializer(e1) => eval(e1, state);
+      NewExp(_,_,_)         => ((bot,bot), state);
+      _                     => print("**WARNING: ignoring unknown exp: ")
+                               print(exp) print("\n") ((top,top), state); 
+                                      // --((top,top), lift([-> top]));
+    endcase endif endif endif;
+  endcase;
+          
+// -- TODO kill temporary variables - Possible Memory leak
+
+
+binary :: Expression, Expression, Expression, State -> IntervalStatePair;
+binary(left, right, exp, state) =
+  // -- Evaluate the right child expression, yielding a (value, state)
+  // -- pair assigned to r and rs, respectively.
+  // --print("BINARY(") print(exp) print(")\n")
+  let rr = eval(right, state);
+      dontknow = ((top,top), state);
+  in case exp of
+    // -- If this is an assignment operation, update the state.
+    // -- We do not evaluate the left-hand side as this might
+    // -- yield top or bot, causing trouble.
+    AssignOp(_, _) => // --print("ASSIGNOP: ") print(left) print("=") print(rr!1!2) print(" ...\n")
+      if bad(rr!1!2) then
+        //(top, rr!2!2)
+        updatestate(rr!2!2, left, top)
+      else
+        let r = rr!1!2; rs = rr!2!2; in
+        updatestate(rs, left, r)
+      endif;
+    // -- If this is not an assignment, we may safely evaluate
+    // -- the left-hand side as well (in the "new" state after
+    // -- evaluation of the rhs) and perform the operation.
+    _ => 
+      let rlifted = rr!1!2; rs = rr!2!2;
+      in let ll = eval(left, rs);
+      in let llifted = ll!1!2; ls = ll!2!2;
+      in if bad(rlifted) then dontknow else
+         if bad(llifted) then dontknow else
+        let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
+            l1 <= llifted!1!2; l2 <= llifted!2!2; in
+        let constp = (l1=l2) && (r1=r2); in
+        // --print("evalbin(") print(exp) print(";;; ") print(llifted) print(", ") 
+        // --                                           print(rlifted) print(")\n")
+        case exp of
+          EqualityOp(_, _) => if constp then (duplift(bool_int(l1=r1)), ls) else
+                              if (l2 < r1) || (l1 > r2) then (duplift(0), ls) else
+                              dontknow endif endif;
+
+          LessThanOp(_, _)  => if (l2 < r1) then (duplift(1), ls) else 
+                               if (l1 >=r2) then (duplift(0), ls) else 
+                               dontknow endif endif;
+
+          GreaterThanOp(_, _) => if (l1 > r2) then (duplift(1), ls) else 
+                                 if (l2 <=r1) then (duplift(0), ls) else 
+                                 dontknow endif endif;
+
+          NotEqualOp(_, _) => if (l2 < r1) || (l1 > r2) then (duplift(1), ls) else
+                              if (constp)  then (duplift(bool_int(l1!=r1)), ls) else
+                              dontknow endif;
+
+          LessOrEqualOp(_, _) => if (l2 <= r1) then (duplift(1), ls) else 
+                                 if (r2 <  l1) then (duplift(0), ls) else 
+                                 dontknow endif endif;
+
+          GreaterOrEqualOp(_, _) => if (l1 >= r2) then (duplift(1), ls) else 
+                                    if (r1 >  l2) then (duplift(0), ls) else 
+                                    dontknow endif endif;
+                                             
+          AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
+          SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
+          MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
+          DivideOp(_, _)  => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
+          IntegerDivideOp(_, _) 
+                          => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
+          ModOp(_, _)     => (ltup(0, r2), ls);
+          LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
+          RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
+	  BitAndOp(_, _)  => (ltup(l1 & r1, l2 & r2), ls);
+          BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
+          BitXorOp(_, _)  => if constp then 
+                                 (duplift(bool_int(l1 != r1)), ls)
+                             else dontknow endif;
+
+	  AndOp(_, _) => if constp then
+                          (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
+                         else dontknow endif;
+
+          OrOp(_, _)  => if constp then 
+                          (duplift(bool_int((l1 != 0) || (r1 != 0))), ls)
+                         else dontknow endif;
+
+          ScopeOp(_, _)       => (ltup(r1, r2), ls);
+          PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2));
+          MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1));
+          MultAssignOp(_, _)  => updatestate(ls, left, 
+                                               ltup(mini(l1*r1, l1*r2), 
+                                                    maxi(l2*r1, l2*r2)));
+          DivAssignOp(_, _)   => updatestate(ls, left, 
+                                               ltup(mini(l1/r1, l1/r2), 
+                                                    maxi(l2/r1, l2/r2)));
+          ModAssignOp(_, _)   => updatestate(ls, left, ltup(0, r2));
+          LshiftAssignOp(_, _)=> updatestate(ls, left,
+                                   ltup(l1<<unum(r1), l2<<unum(r2)));
+          RshiftAssignOp(_, _)=> updatestate(ls, left, 
+                                   ltup(l1>>unum(r2), l2>>unum(r1)));
+          _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
+               (top, lift([-> top]));
+        endcase
+      endif endif;
+  endcase;
+
+unary :: Expression, Expression, State -> IntervalStatePair;
+unary(child, exp, state) = 
+  // --print("UNARY(") print(exp) print(")\n")
+  let ee = eval(child, state); in
+  let er = ee!1!2; es = ee!2!2; in
+  // -- if child node is not analyzable, bail out
+  if bad(er) then ((top,top), state) else // BUG!
+     let e1 <= er!1!2; e2 <= er!2!2; in
+    case exp of
+      MinusOp(_)    => (ltup(-e2, -e1), es);
+      UnaryAddOp(_) => (ltup( e1,  e2), es);
+      NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
+      CastExp(_, _) => eval(child, state);
+      // -- the following are only correct for prefix -- and ++
+      MinusMinusOp(_) => updatestate(es, child, ltup(e1-1, e2-1));
+      PlusPlusOp(_)   => updatestate(es, child, ltup(e1+1, e2+1));
+      // -- the following is not safe at all
+      PointerDerefExp(_) => print("**WARNING: ignoring possible pointer aliasing\n")
+                            ((top,top), state);
+      _ => print("unsupported unary: ") print(exp) print("\n") 
+           (top, lift([-> top]));
+    endcase 
+  endif;
+
+bad((top, _)) = true;
+bad((bot, _)) = true;
+bad((_, top)) = true;
+bad((_, bot)) = true;
+bad((_,_)) = false;
+
+bool_int :: bool -> snum;
+bool_int(b) =
+  if b then 1 else 0 endif;
+
+int_bool :: snum -> bool;
+int_bool(0) = false;
+int_bool(_) = true;
+								    
+updatestate :: State, Expression, Interval -> IntervalStatePair;
+updatestate(bot, _, _) = ((top,top),bot);
+// -- Update state state by assigning the value value to the variable
+// -- referenced by expression exp (if any). Yields a pair of the value
+// -- and the new state.
+updatestate(state, exp, value) = 
+// --print("updatestate(") print(state) print(", ") print(exp) print(", ") print(value) print(")\n ") 
+  let s <= state; in 
+  let newstate =
+    case exp of
+      VarRefExp(var) => lift(s\[varref_varid(exp) -> value]);
+      _ => state;
+    endcase;
+  in // --print("\n=> ") print(state) print("\n") 
+     (value, newstate);
+
+
+branch :: Expression, State, bool, bool -> State;
+branch(exp, state, edge, isLoopBody) =
+  // --print("\nbranching...\nexp: ") print(exp) 
+  // --print("\nstate: ") print(state) 
+  // --print("\nedge: ") print(edge)  
+  // --print("\n")
+
+  let pair = eval(exp, state); in
+  let c = interval_to_bool(pair!1!2); 
+          newstate = pair!2!2; in
+  if (c = top || isLoopBody) then 
+    // -- We don't know for sure which edge will be taken
+    // --print("c=top\n") 
+    // --print("Maybe\n") 
+    eval_branch_condition(exp, state, newstate, edge, isLoopBody)
+  else if c = bot then 
+    print("FIXME c=bot\n") 
+    state
+  else if drop(c) = edge then  
+    // -- This edge will ALWAYS be taken
+    // --print(newstate) print("\n") 
+    // --print("Always\n") 
+    newstate
+  else 
+    // -- This edge will NEVER be taken
+    // --print("bot\n") 
+    // --print("Never\n") 
+    bot
+  endif endif endif;
+
+
+eval_branch_condition :: Expression, State, State, bool, bool -> State;
+eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
+  if is_binary(exp) then
+    let lhs = eval(binary_get_left_child(exp), state)!1!2;
+        rhs = eval(binary_get_right_child(exp), state)!1!2; in
+
+    case exp of 
+      AndOp(exp1, exp2) =>
+        let state1 = 
+          eval_branch_condition(exp1, state, newstate, edge, isLoopBody); in
+          eval_branch_condition(exp2, state1, newstate, edge, isLoopBody);
+  
+      LessThanOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
+        else 
+            updatestate(state, var, adjust_min(lhs, rhs))!2!2
+        endif;
+      LessOrEqualOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_max(lhs, rhs))!2!2
+        else 
+            updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+        endif;
+      GreaterThanOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+        else 
+            updatestate(state, var, adjust_max(lhs, rhs))!2!2
+        endif;
+      GreaterOrEqualOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_min(lhs, rhs))!2!2
+        else 
+            updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
+        endif;
+
+      EqualityOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, rhs)!2!2
+        else 
+            newstate
+        endif;
+      NotEqualOp(var, _) =>
+        if edge = true then 
+            newstate
+        else 
+            updatestate(state, var, rhs)!2!2
+        endif;
+
+      _ => newstate;
+    endcase
+  else 
+    lift([-> (top,top)])
+    //newstate
+  endif;
+
+
+// -- update the min portion of an interval
+adjust_min :: Interval, Interval -> Interval;
+adjust_min((_, a2), (m, _)) = (m, max(m, a2));
+
+// -- update the max portion of an interval
+adjust_max :: Interval, Interval -> Interval;
+adjust_max((a1, _), (_, m)) = (min(a1, m), m);
+
+// -- update the min portion of an interval and add c
+adjust_min_plus :: Interval, Interval, snum -> Interval;
+adjust_min_plus((_, a2), (m, _), c) = 
+    let m1 <= m; in
+    let m2 = lift(m1+c); in
+      (m2, max(m2, a2));
+
+// -- update the max portion of an interval and add c
+adjust_max_plus :: Interval, Interval, snum -> Interval;
+adjust_max_plus((a1, _), (_, m), c) =
+    let m1 <= m; in
+    let m2 = lift(m1+c); in
+      (min(a1, m2), m2);
+
+
+kill_vars :: State, *VariableSymbolNT -> State;
+kill_vars(s, [!]) =
+  s;
+kill_vars(s, v::vars) =
+  let ss <= s; in
+  kill_vars(lift(ss\[varsym_varid(v) -> top]), vars);
+
+interval_to_bool :: Interval -> BoolL;
+interval_to_bool((lift(0), lift(0))) = lift(false);
+interval_to_bool((lift(1), lift(1))) = lift(true);
+interval_to_bool(_) = top;
+
+//shiftleft :: snum, snum -> snum;
+//shiftleft(a, 0) = a;
+//shiftleft(a, b) = shiftleft(a*2, b-1);
+
+//shiftright :: snum, snum -> snum;
+//shiftright(a, 0) = a;
+//shiftright(a, b) = shiftright(a/2, b-1);
+
+comb(a, bot) = a;
+comb(bot, b) = b;
+comb(_, top) = top;
+comb(top, _) = top;
+comb(a, b) =
+  let res = lift(crunch(drop(a), drop(b), combi)); // -- a glb b
+  in
+  // --print("comb a: ") print(a) print("\n")
+  // --print("comb b: ") print(b) print("\n")
+  // --print("result: ") print(res) print("\n\n")
+  res;
+
+combi((a1, a2), (b1, b2)) = 
+  (min(a1, b1), max(a2, b2));
+
+min(_, top) = top;
+min(top, _) = top;
+min(a, bot) = a;
+min(bot, b) = b;
+min(a, b) = if drop(a) < drop(b) then a else b endif;
+
+// -- all glory to polymorphy
+mini(a, b) = if a < b then a else b endif;
+
+max(_, top) = top;
+max(top, _) = top;
+max(a, bot) = a;
+max(bot, b) = b;
+max(a, b) = if drop(a) > drop(b) then a else b endif;
+
+maxi(a, b) = if a > b then a else b endif;
+
+// -- default widening operator:
+//wide(_, b) = b;
+
+wide(bot, b) = b;
+wide(a, bot) = a;
+wide(_, top) = top;
+wide(top, _) = top;
+wide(a, b) = lift(crunch(drop(a), drop(b), widen));
+
+widen((top, bot), b) = b;
+widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else top /*min(a1, b1)*/ endif,
+                              if a2=b2 then a2 else top /*max(a1, b1)*/ endif );
+
+//widen((a1, a2), (b1, b2)) = let v1 <= b1 ;
+//                                v2 <= b2 ; in 
+//                            ( if v2-v1 > 10 then top else b1 endif,
+//                              if v2-v1 > 10 then top else b2 endif) ;
+
+
+eq(a, b)   = //print("eq a: ") print(a) print("\n")
+             //print("eq b: ") print(b) print("\n\n")
+             (a = b);
+

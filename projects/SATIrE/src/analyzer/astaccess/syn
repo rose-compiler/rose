@@ -1,0 +1,202 @@
+SYNTAX
+START:Statement
+
+Statement : ExprStatement ( expression_root:ExpressionRootNT )
+ | LabelStatement (  )
+ | CaseOptionStmt ( key_root:ExpressionRootNT )
+ | DefaultOptionStmt (  )
+ | BreakStmt (  )
+ | ContinueStmt (  )
+ | ReturnStmt ( expression_root:ExpressionRootNT )
+ | GotoStatement (  )
+ | SpawnStmt ( the_func_root:ExpressionRootNT )
+ | ForInitStatement ( init_stmt:Statement* )
+ | ClinkageStartStatement (  )
+ | DeclarationStatement (  )
+ | ScopeStatement ( node:ScopeStatementNT )
+ | NullStatement (  )
+ | DeclareStmt ( var:VariableSymbolNT, type:Type )
+ | UndeclareStmt ( vars:VariableSymbolNT* )
+ | ExternalCall ( type:Type )
+ | ConstructorCall ( name:aststring, type:Type )
+ | DestructorCall ( name:aststring, type:Type )
+ | ArgumentAssignment ( lhs:Expression, rhs:Expression )
+ | ReturnAssignment ( lhs:VariableSymbolNT, rhs:VariableSymbolNT )
+ | ParamAssignment ( lhs:VariableSymbolNT, rhs:VariableSymbolNT )
+ | LogicalIf ( condition:Expression )
+ | IfJoin (  )
+ | WhileJoin (  )
+ | FunctionEntry ( funcname:aststring )
+ | FunctionExit ( funcname:aststring, params:VariableSymbolNT* )
+ | FunctionCall ( funcname:aststring, params:VariableSymbolNT* )
+ | FunctionReturn ( funcname:aststring, params:VariableSymbolNT* )
+ ;
+
+DeclarationStatement : VariableDeclaration ( variables:InitializedNameNT* )
+ | VariableDefinition ( vardefn:InitializedNameNT, bitfield:UnsignedLongValNT )
+ | EnumDeclaration (  )
+ | AsmStmt ( expr_root:ExpressionRootNT )
+ | NamespaceDeclarationStatement ( definition:NamespaceDefinitionStatementNT )
+ | NamespaceAliasDeclarationStatement (  )
+ | UsingDirectiveStatement (  )
+ | UsingDeclarationStatement (  )
+ | FunctionParameterList ( args:InitializedNameNT* )
+ | CtorInitializerList ( ctors:InitializedNameNT* )
+ | PragmaDeclaration ( pragma:PragmaNT )
+ ;
+
+ScopeStatementNT : Global ( declarations:DeclarationStatement* )
+ | IfStmt ( conditional:Statement )
+ | ForStatement ( for_init_stmt:ForInitStatementNT, test_expr_root:ExpressionRootNT, increment_expr_root:ExpressionRootNT )
+ | FunctionDefinition (  )
+ | WhileStmt ( condition:Statement )
+ | DoWhileStmt ( condition:Statement )
+ | SwitchStatement ( item_selector:Statement )
+ | CatchOptionStmt ( condition:VariableDeclarationNT )
+ | NamespaceDefinitionStatement ( declarations:DeclarationStatement* )
+ ;
+
+Expression : ExprListExp ( expressions:Expression* )
+ | VarRefExp ( name:aststring )
+ | ClassNameRefExp (  )
+ | FunctionRefExp (  )
+ | MemberFunctionRefExp (  )
+ | FunctionCallExp ( function:Expression, args:ExprListExpNT )
+ | SizeOfOp ( operand_expr:Expression )
+ | ConditionalExp ( conditional_exp:Expression, true_exp:Expression, false_exp:Expression )
+ | NewExp ( placement_args:ExprListExpNT, constructor_args:ConstructorInitializerNT, builtin_args:Expression )
+ | DeleteExp ( variable:Expression )
+ | ThisExp ( type:Type ) // unused; we have a variable "this" instead
+ | RefExp (  )
+ | VarArgStartOp ( lhs_operand:Expression, rhs_operand:Expression )
+ | VarArgOp ( operand_expr:Expression )
+ | VarArgEndOp ( operand_expr:Expression )
+ | VarArgCopyOp ( lhs_operand:Expression, rhs_operand:Expression )
+ | VarArgStartOneOperandOp ( operand_expr:Expression )
+ | Initializer (  )
+ | BoolValExp ( value:astint )
+ | StringVal ( value:aststring )
+ | ShortVal ( value:astshort )
+ | CharVal ( value:astchar )
+ | UnsignedCharVal ( value:astuchar )
+ | WcharVal ( value:astulong )
+ | UnsignedShortVal ( value:astushort )
+ | IntVal ( value:astint )
+ | EnumVal ( value:astint )
+ | UnsignedIntVal ( value:astuint )
+ | LongIntVal ( value:astlong )
+ | LongLongIntVal ( value:astllong )
+ | UnsignedLongLongIntVal ( value:astullong )
+ | UnsignedLongVal ( value:astulong )
+ | FloatVal ( value:astfloat )
+ | DoubleVal ( value:astdouble )
+ | LongDoubleVal ( value:astldouble )
+ | ArrowExp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | DotExp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | DotStarOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | ArrowStarOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | EqualityOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | LessThanOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | GreaterThanOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | NotEqualOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | LessOrEqualOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | GreaterOrEqualOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | AddOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | SubtractOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | MultiplyOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | DivideOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | IntegerDivideOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | ModOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | AndOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | OrOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | BitXorOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | BitAndOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | BitOrOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | CommaOpExp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | LshiftOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | RshiftOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | PntrArrRefExp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | ScopeOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | AssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | PlusAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | MinusAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | AndAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | IorAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | MultAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | DivAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | ModAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | XorAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | LshiftAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | RshiftAssignOp ( lhs_operand_i:Expression, rhs_operand_i:Expression )
+ | MinusOp ( operand_i:Expression )
+ | UnaryAddOp ( operand_i:Expression )
+ | NotOp ( operand_i:Expression )
+ | PointerDerefExp ( operand_i:Expression )
+ | AddressOfOp ( operand_i:Expression )
+ | MinusMinusOp ( operand_i:Expression )
+ | PlusPlusOp ( operand_i:Expression )
+ | BitComplementOp ( operand_i:Expression )
+ | CastExp ( operand_i:Expression, type:Type )
+ | ThrowOp ( operand_i:Expression )
+ ;
+
+Initializer : AggregateInitializer ( initializers:ExprListExpNT )
+ | ConstructorInitializer ( args:ExprListExpNT )
+ | AssignInitializer ( operand_i:Expression )
+ ;
+
+//PartialFunctionType : PartialFunctionModifierType ( ref_to:ReferenceType, ptr_to:PointerType, modifiers:ModifierNodesNT, typedefs:TypedefSeq, return_type:Type, orig_return_type:Type )
+// ;
+
+ExpressionRootNT : ExpressionRoot ( operand_i:Expression )
+ ;
+
+InitializedNameNT : InitializedName ( name:aststring, initptr:Initializer )
+ ;
+
+UnsignedLongValNT : UnsignedLongVal ( value:astulong )
+ ;
+
+NamespaceDefinitionStatementNT : NamespaceDefinitionStatement ( declarations:DeclarationStatement* )
+ ;
+
+PragmaNT : Pragma (  )
+ ;
+
+ForInitStatementNT : ForInitStatement ( init_stmt:Statement* )
+ ;
+
+VariableDeclarationNT : VariableDeclaration ( variables:InitializedNameNT* )
+ ;
+
+VariableSymbolNT : VariableSymbol ( name:aststring )
+ ;
+
+ExprListExpNT : ExprListExp ( expressions:Expression* )
+ ;
+
+ConstructorInitializerNT : ConstructorInitializer ( args:ExprListExpNT )
+ ;
+
+Type : ArrayType ( base_type:Type )
+ | BasicType ( typename:aststring )
+ | FunctionType ( return_type:Type, arguments:Type* )
+ | NamedType ( name:aststring )
+ | PointerType ( base_type:Type )
+ | ReferenceType ( base_type:Type )
+ ;
+
+astint     == snum;
+aststring  == str;
+astshort   == snum;
+astchar    == chr;
+astuchar   == chr;
+astushort  == unum;
+astuint    == unum;
+astlong    == snum;
+astllong   == snum;
+astullong  == unum;
+astulong   == unum;
+astfloat   == real;
+astdouble  == real;
+astldouble == real;

@@ -1,0 +1,9 @@
+SET
+
+DOMAIN
+    ExpressionId = extern
+    TypeId       = extern
+    VariableId   = extern
+    Location     = extern
+
+ENDDOMAIN

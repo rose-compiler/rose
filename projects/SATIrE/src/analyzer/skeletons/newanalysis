@@ -1,0 +1,48 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]
+then
+    echo "usage: new_analysis <name of analysis> <type of analysis carrier>"
+    exit 1
+fi
+
+echo "creating new analysis $1..."
+if [ -e "$1" ]
+then
+    echo "directory $1 found."
+else
+    echo "creating directory $1..."
+    mkdir "$1"
+fi
+if [ -e "$1/anim-out" ]
+then
+    echo "directory $1/anim-out found."
+else
+    mkdir "$1/anim-out"
+fi
+
+echo "copying files..."
+cp $SATIRE_INCLUDE/main.h-template $1/main.h
+cp $SATIRE_INCLUDE/main.C-template $1/main.C
+cp $SATIRE_INCLUDE/main-support.C-template $1/main-support.C
+echo "customizing Makefile..."
+echo "ANALYSIS = $1" > $1/Makefile
+echo "CARRIER_TYPE = $2" >> $1/Makefile
+cat $SATIRE_INCLUDE/Makefile-template >> $1/Makefile
+echo
+
+if [ -e "$1/$1.set" ]
+then
+  echo "$1/$1.set exists and remains in $1."
+else
+ echo "You must create $1/$1.set before you can compile the analyzer $1/$1."
+fi
+
+if [ -e "$1/$1.optla" ]
+then
+ echo "$1/$1.optla exists and remains in $1."
+else
+ echo "You must create $1/$1.optla before you can compile the analyzer $1/$1."
+fi
+echo
+echo "All done, have fun."

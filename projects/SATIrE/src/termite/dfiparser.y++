@@ -1,0 +1,129 @@
+%{ /* -*- C++ -*-
+   Copyright 2008 Adrian Prantl
+   see LICENSE in the root folder of this project
+*/
+using namespace std;
+#include <iostream>  
+#include <deque>
+#include <string>
+#include "termite.h"
+
+extern int   dfilex();
+extern char* dfitext;
+extern int   dfilineno;
+PrologCompTerm*  dfiterm;
+const char* dfi_name;
+
+void dfierror(const char *);
+
+%}
+
+/*Token declarations*/
+%token <strValue> TOKEN
+%token <strValue> TOP 
+%token <strValue> BOTTOM
+%token <strValue> ASSIGN
+%token <intValue> INT 
+%token <strValue> UNDEF 
+%token <strValue> SET_BEGIN
+%token <strValue> SET_CLOSE
+
+/*data structure*/
+%union {
+  int intValue;
+  std::string* strValue;
+  PrologTerm* singleTerm;
+  std::deque<PrologTerm*>* termList;
+}
+
+/*nonterminal types*/
+%type <singleTerm> result
+%type <singleTerm> value
+%type <singleTerm> topbot
+%type <singleTerm> assignment
+%type <termList>   assignments
+%type <termList>   values
+
+%%
+
+/*grammar*/
+
+result:
+  '[' value ':' ']' { 
+    dfiterm = new PrologCompTerm(dfi_name);
+    dfiterm->addSubterm($2); 
+    dfiterm->addSubterm(new PrologList());
+    //cerr << dfiterm->getRepresentation() << endl;
+  }
+  | '[' value ':' assignments ']' { 
+    dfiterm = new PrologCompTerm(dfi_name);
+    dfiterm->addSubterm($2); 
+    dfiterm->addSubterm(new PrologList(*$4));
+    //cerr << dfiterm->getRepresentation() << endl;
+  } 
+  | value { 
+    dfiterm = new PrologCompTerm(dfi_name);
+    dfiterm->addSubterm($1);
+    //cerr << dfiterm->getRepresentation() << endl;
+  } 
+  | UNDEF { $$ = new PrologAtom("undefined dfi"); }
+;
+
+assignments:
+  assignment ','  { $$ = new deque<PrologTerm*>(); $$->push_front($1); }
+  | assignment ',' assignments { $3->push_front($1); $$=$3; }
+;
+
+assignment:
+  TOKEN ASSIGN value { 
+    PrologInfixOperator* ifx = new PrologInfixOperator("->");
+    ifx->addSubterm(new PrologAtom(*$1));
+    ifx->addSubterm($3);
+    delete $1;
+    $$ = ifx;
+  }
+;
+
+topbot: 
+  TOP      { $$ = new PrologAtom("top"); }
+  | BOTTOM { $$ = new PrologAtom("bottom"); }
+;
+
+value:
+  INT              { $$ = new PrologInt($1); }
+  | TOKEN          { $$ = new PrologAtom(*$1); delete $1; }
+  | topbot         { $$ = $1; }
+  | '(' values ')' { $$ = new PrologList(*$2); }
+  | SET_BEGIN values SET_CLOSE { 
+      PrologCompTerm* t = new PrologCompTerm("lifted_set");
+      t->addSubterm(new PrologList(*$2));
+      $$ = t;
+    }
+;
+
+values:
+  value              { $$ = new deque<PrologTerm*>(); $$->push_front($1); }
+  | value ',' values { $3->push_front($1); $$=$3; }
+  |                  { $$ = new deque<PrologTerm*>();}
+;
+
+
+%%
+
+extern const char* dfi_input;
+extern const char* dfi_input_start;
+
+void dfierror(const char* msg) 
+{
+  cerr << std::string(msg) 
+       << " near token """ << dfitext << """" 
+       << "(" << (int)dfitext[0] << ")" 
+       << " before """ << dfi_input << """" << endl;
+  cerr << "in DFI string """ << dfi_input_start << """." << endl;
+  dfiterm = new PrologCompTerm(dfi_name);
+  dfiterm->addSubterm(new PrologAtom("parse error"));
+  dfiterm->addSubterm(new PrologAtom(dfitext));
+  exit(1);
+}
+
+

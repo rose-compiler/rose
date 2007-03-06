@@ -1,0 +1,9 @@
+SET
+
+DOMAIN
+    Bound = flat(snum)
+    Interval = Bound * Bound
+    fState = VariableId -> Interval
+    IntervalStatePair = Interval * State
+    BoolL = flat(bool)
+    State = lift(fState)
