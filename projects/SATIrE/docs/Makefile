@@ -1,12 +1,14 @@
 all:
 	$(MAKE) -C cfgconstruction
-	cp cfgconstruction/cfgconstruction.pdf .
+	$(MAKE) -C pig-doc
+	$(MAKE) -C pag-interface
+	cp cfgconstruction/cfgconstruction.pdf pig-doc/pig-doc.pdf pag-interface/pag-interface.pdf .
 	$(MAKE) clean -C cfgconstruction
+	$(MAKE) clean -C pig-doc
+	$(MAKE) clean -C pag-interface
 
 clean:
 	$(MAKE) clean -C cfgconstruction
-	rm -f cfgconstruction.pdf
-
-
-
-
+	$(MAKE) clean -C pig-doc
+	$(MAKE) clean -C pag-interface
+	rm -f cfgconstruction.pdf pig-doc.pdf pag-interface.pdf
