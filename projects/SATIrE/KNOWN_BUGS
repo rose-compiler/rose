@@ -1,11 +1,6 @@
-In some rare cases the original AST is modifyied when generating the
-ICFG: 
-the reason seems to be a bug in ROSE 0.8.10e's deep copy mechanism which
-we use when generating the SATIrE-ICFG from the ROSE-AST. This deep
-copy mechanism is already fixed for the next ROSE release. We will
-need to investigate this problem again, once the new release is
-available.
-Problem caused: some file info is missing and an assert fails.
-
-
+BUG: --sourceoutput
+     When this option is used, cc1plus reports an error that it does not know
+     the option -fsourceoutput. The result, an annotated source file is still
+     generated, the error can be ignored.
+     Required Fix: remove argument from command line array after CL processing.
 

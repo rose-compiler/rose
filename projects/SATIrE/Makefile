@@ -21,5 +21,30 @@ install:
 clean:
 	$(MAKE) clean -C docs
 	$(MAKE) clean -C src
+	rm -rf dist
+
+DIST=satire_0.8.0
+
+dist:
+	rm -rf $(DIST)
+	mkdir -p $(DIST)
+	cp -rp src $(DIST)
+	mkdir $(DIST)/docs
+	cp -rp docs/*.pdf $(DIST)/docs
+	rm $(DIST)/src/examples/specs/adapt_makefile
+	rm $(DIST)/src/examples/specs/makefile_header
+	cp Makefile_dist $(DIST)/Makefile
+	rm -f $(DIST)/*~
+	rm -rf $(DIST)/CVS
+	rm -f $(DIST)/*/*~
+	rm -rf $(DIST)/*/CVS
+	rm -f $(DIST)/*/*/*~
+	rm -rf $(DIST)/*/*/CVS
+	rm -f $(DIST)/*/*/*/*~
+	rm -rf $(DIST)/*/*/*/CVS
+	rm -f $(DIST)/*/*/*/*/*~
+	rm -rf $(DIST)/*/*/*/*/CVS
+	tar cvzf $(DIST).tgz $(DIST)
+
 
 
