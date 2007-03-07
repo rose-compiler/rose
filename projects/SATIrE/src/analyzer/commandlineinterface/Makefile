@@ -1,4 +1,4 @@
-FLAGS = -I /usr/local/mstools/include/rose$(ROSEVERSION)/ -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer
+FLAGS = -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer
 
 all: libsatire_commandlineinterface.a
 

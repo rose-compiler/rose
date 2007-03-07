@@ -1,7 +1,7 @@
 # set OCE_DIR to point to the devsrc directory containing the compiler sources
 OCE_DIR = ../../devsrc/
 # set PAG to point to the pag executable
-PAG = ~/PAGDCv0.9.7.337/bin/pag
+PAG = $(PAGDIR)/bin/pag
 # set PIG to point to the pig executable; this should be correct for you
 PIG = ../pig
 

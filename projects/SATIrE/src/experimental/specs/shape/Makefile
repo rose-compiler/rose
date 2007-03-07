@@ -12,8 +12,8 @@ SATIREINCLUDES = -I $(SATIREMAINDIR)/analyzer/commandlineinterface -I $(SATIREMA
 COMMONDIR = $(SATIREMAINDIR)/analyzer/astaccess
 
 PAG = $(PAGDIR)/bin/pag
-FLAGS = -Wall -I /usr/local/mstools/include/rose$(ROSEVERSION)/ -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ $(SATIREINCLUDES)
-LPATH = -L /usr/local/mstools/lib/rose$(ROSEVERSION)/ -L $(PAGDIR)/lib/pag -L $(SATIRELIBS)
+FLAGS = -Wall -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ $(SATIREINCLUDES)
+LPATH = -L $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L $(SATIRELIBS)
 LIBS = $(ANALYSIS).a -lsatire -lrose -ledg -lpag -lrt
 
 TESTDIR = tests

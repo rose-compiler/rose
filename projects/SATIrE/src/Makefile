@@ -10,12 +10,11 @@ all:
 	$(MAKE) -C pig
 	$(MAKE) -C analyzer
 	$(MAKE) -C examples
-	$(MAKE) -C experimental
+#	$(MAKE) -C experimental
 
 check:
 	$(MAKE) check -C grato
-	$(MAKE) check -C experimental
-
+#	$(MAKE) check -C experimental
 
 install: all
 	mkdir -p $(INSTALL_INCLUDE)
@@ -30,8 +29,6 @@ install: all
 	cp -p $(SATIRE_SRC_DIR)/analyzer/annotation/*.h $(INSTALL_INCLUDE)
 	cp -p $(SATIRE_SRC_DIR)/analyzer/annotation/StatementAttributeTraversal.C $(INSTALL_INCLUDE)
 	cp -p $(SATIRE_SRC_DIR)/analyzer/skeletons/*-template $(INSTALL_INCLUDE)
-
-
 
 	mkdir -p $(INSTALL_LIB)
 	cp -p $(SATIRE_SRC_DIR)/analyzer/*.a $(INSTALL_LIB)
