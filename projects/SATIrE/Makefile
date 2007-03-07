@@ -11,6 +11,9 @@ doxygen-docs:
 
 check:
 	$(MAKE) check -C src
+	@echo "-----------------"
+	@echo "All checks passed"
+	@echo "-----------------"
 
 install:
 	$(MAKE) install -C src

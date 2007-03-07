@@ -51,21 +51,23 @@ $(LIBGRATO): $(LIBOBJECTFILES)
 
 check:	$(GRATO) $(TESTS)/WHILE.syn $(TESTS)/SAGE3.syn $(TESTS)/OCE.syn
 	$(GRATO) -t $(TESTS)/WHILE.syn | $(GRATO) -t
-	$(GRATO) -d $(TESTS)/WHILE.syn > $(TESTS)/WHILE.dot
-	dot -Tps $(TESTS)/WHILE.dot -o $(TESTS)/WHILE.ps
-	rm $(TESTS)/WHILE.dot; rm $(TESTS)/WHILE.ps
 	$(GRATO) -t $(TESTS)/OCE.syn | $(GRATO) -t
-	$(GRATO) -d $(TESTS)/OCE.syn > $(TESTS)/OCE.dot
-	dot -Tps $(TESTS)/OCE.dot -o $(TESTS)/OCE.ps
-	rm $(TESTS)/OCE.dot; rm $(TESTS)/OCE.ps
 	$(GRATO) -t $(TESTS)/SAGE3.syn | $(GRATO) -t
-	$(GRATO) -d $(TESTS)/SAGE3.syn > $(TESTS)/SAGE3.dot
-	dot -Tps $(TESTS)/SAGE3.dot -o $(TESTS)/SAGE3.ps
-	rm $(TESTS)/SAGE3.dot; rm $(TESTS)/SAGE3.ps
 
 	$(GRATO) -p $(TESTS)/SAGE3.syn
 	$(GRATO) -r1 $(TESTS)/SAGE3.syn | $(GRATO) -p
 	$(GRATO) -r2 $(TESTS)/SAGE3.syn | $(GRATO) -p
+
+dotcheck:
+	$(GRATO) -d $(TESTS)/WHILE.syn > $(TESTS)/WHILE.dot
+	dot -Tps $(TESTS)/WHILE.dot -o $(TESTS)/WHILE.ps
+	rm $(TESTS)/WHILE.dot; rm $(TESTS)/WHILE.ps
+	$(GRATO) -d $(TESTS)/OCE.syn > $(TESTS)/OCE.dot
+	dot -Tps $(TESTS)/OCE.dot -o $(TESTS)/OCE.ps
+	rm $(TESTS)/OCE.dot; rm $(TESTS)/OCE.ps
+	$(GRATO) -d $(TESTS)/SAGE3.syn > $(TESTS)/SAGE3.dot
+	dot -Tps $(TESTS)/SAGE3.dot -o $(TESTS)/SAGE3.ps
+	rm $(TESTS)/SAGE3.dot; rm $(TESTS)/SAGE3.ps
 
 $(EXAMPLES): $(GRATO) $(TESTS)/SAGE3.syn $(TESTS)/OCE.syn $(TESTS)/SETL2.syn
 	mkdir -p examples

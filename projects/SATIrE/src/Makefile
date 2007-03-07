@@ -14,6 +14,7 @@ all:
 
 check:
 	$(MAKE) check -C grato
+	$(MAKE) check -C examples
 #	$(MAKE) check -C experimental
 
 install: all
