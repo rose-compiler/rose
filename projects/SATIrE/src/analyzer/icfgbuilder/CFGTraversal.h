@@ -4,6 +4,8 @@
 #include <config.h>
 #include <rose.h>
 
+#include <map>
+
 #include "cfg_support.h"
 
 // this must be used preorder
@@ -12,6 +14,9 @@ class CFGTraversal : public AstSimpleProcessing
 public:
     CFGTraversal(std::deque<Procedure *> *);
     CFG *getCFG();
+
+    void print_map() const;
+    std::map<int, SgStatement *> block_stmt_map;
 
 protected:
     void visit(SgNode *);
@@ -38,6 +43,7 @@ private:
     int call_num;
     int lognum;
     int expnum;
+    SgStatement *current_statement;
 };
 
 #endif

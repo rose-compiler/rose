@@ -58,6 +58,8 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
                     ExprTransformer et(node_id, (*i)->procnum, expnum, cfg,
                             NULL);
                     et.traverse(new_expr, preorder);
+                    for (int z = node_id; z < et.get_node_id(); ++z)
+                        block_stmt_map[z] = current_statement;
                     node_id = et.get_node_id();
                     expnum = et.get_expnum();
                     if (first == NULL)
@@ -103,6 +105,7 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
                 }
                 else
                 {
+                    /* empty block for argument assignments */
                     b = new BasicBlock(node_id++, INNER, (*i)->procnum);
                     cfg->nodes.push_back(b);
                     b->statements.push_back(*j);
@@ -391,6 +394,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
          * of all enclosing blocks for undeclaration. This is a TODO.) */
         if (isSgReturnStmt(block->get_statements().back()))
         {
+            current_statement = NULL;
             new_block = allocate_new_block(new_block, proc->exit);
             new_block->statements.push_back(
                     new UndeclareStmt(local_var_decls));
@@ -399,6 +403,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
         else
         {
             /* No return: Just produce a normal block. */
+            current_statement = NULL;
             new_block = allocate_new_block(new_block, after);
             new_block->statements.push_back(
                     new UndeclareStmt(local_var_decls));
@@ -424,10 +429,13 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
     {
         StatementAttribute *stmt_start = NULL, *stmt_end = NULL;
 
+        current_statement = *i;
+
         switch ((*i)->variantT())
         {
         case V_SgIfStmt:
             {
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *join_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(join_block);
@@ -436,6 +444,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 after = join_block;
 
                 SgIfStmt *ifs = isSgIfStmt(*i);
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *if_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(if_block);
@@ -452,6 +461,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, if_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
                 
@@ -494,11 +505,13 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 SgForStatement *fors = isSgForStatement(*i);
                 /* create a block containing the initialization
                  * statement */
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *init_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(init_block);
                 /* create a block for the "real" head of the for
                  * statement (where the condition is tested) */
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *for_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(for_block);
@@ -527,6 +540,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                         ExprTransformer et(node_id, proc->procnum, expnum,
                                 cfg, init_block);
                         et.traverse(new_expr, preorder);
+                        for (int z = node_id; z < et.get_node_id(); ++z)
+                            block_stmt_map[z] = current_statement;
                         node_id = et.get_node_id();
                         expnum = et.get_expnum();
 
@@ -564,6 +579,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                                     cfg, (init_block_after != NULL
                                         ? init_block_after : init_block));
                             et.traverse(new_expr, preorder);
+                            for (int z = node_id; z < et.get_node_id(); ++z)
+                                block_stmt_map[z] = current_statement;
                             node_id = et.get_node_id();
                             expnum = et.get_expnum();
 
@@ -607,6 +624,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, for_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
 
@@ -625,6 +644,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
 #endif
                 BasicBlock *for_block_after = et.get_after();
                 /* create a block for the increment statement */
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *incr_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(incr_block);
@@ -639,6 +659,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et_inc(node_id, proc->procnum, expnum,
                         cfg, incr_block);
                 et_inc.traverse(new_expr_inc, preorder);
+                for (int z = node_id; z < et_inc.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et_inc.get_node_id();
                 expnum = et_inc.get_expnum();
 
@@ -676,6 +698,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
             break;
         case V_SgWhileStmt:
             {
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *join_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(join_block);
@@ -684,6 +707,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 after = join_block;
 
                 SgWhileStmt *whiles = isSgWhileStmt(*i);
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *while_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(while_block);
@@ -700,6 +724,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, while_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
 
@@ -731,6 +757,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
         case V_SgDoWhileStmt:
             {
                 SgDoWhileStmt *dowhiles = isSgDoWhileStmt(*i);
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *dowhile_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(dowhile_block);
@@ -747,6 +774,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, dowhile_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
 
@@ -780,6 +809,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 SgBreakStmt *breaks = isSgBreakStmt(*i);
                 if (new_block == NULL)
                 {
+                    block_stmt_map[node_id] = current_statement;
                     new_block
                         = new BasicBlock(node_id++, INNER, proc->procnum);
                     cfg->nodes.push_back(new_block);
@@ -804,6 +834,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 SgContinueStmt *continues = isSgContinueStmt(*i);
                 if (new_block == NULL)
                 {
+                    block_stmt_map[node_id] = current_statement;
                     new_block
                         = new BasicBlock(node_id++, INNER, proc->procnum);
                     cfg->nodes.push_back(new_block);
@@ -825,6 +856,7 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
         case V_SgSwitchStatement:
             {
                 SgSwitchStatement *switchs = isSgSwitchStatement(*i);
+                block_stmt_map[node_id] = current_statement;
                 BasicBlock *switch_block
                     = new BasicBlock(node_id++, INNER, proc->procnum);
                 cfg->nodes.push_back(switch_block);
@@ -850,6 +882,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, switch_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
 
@@ -942,6 +976,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, new_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
 
@@ -1004,6 +1040,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                         ExprTransformer et(node_id, proc->procnum, expnum,
                             cfg, new_block);
                         et.traverse(new_expr, preorder);
+                        for (int z = node_id; z < et.get_node_id(); ++z)
+                            block_stmt_map[z] = current_statement;
                         node_id = et.get_node_id();
                         expnum = et.get_expnum();
                         after = et.get_after();
@@ -1032,6 +1070,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                         ExprTransformer et(node_id, proc->procnum, expnum,
                             cfg, after);
                         et.traverse(new_expr, preorder);
+                        for (int z = node_id; z < et.get_node_id(); ++z)
+                            block_stmt_map[z] = current_statement;
                         node_id = et.get_node_id();
                         expnum = et.get_expnum();
                         /* incoming information at the incoming edge
@@ -1150,6 +1190,8 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 ExprTransformer et(node_id, proc->procnum, expnum,
                         cfg, new_block);
                 et.traverse(new_expr, preorder);
+                for (int z = node_id; z < et.get_node_id(); ++z)
+                    block_stmt_map[z] = current_statement;
                 node_id = et.get_node_id();
                 expnum = et.get_expnum();
                 
@@ -1337,6 +1379,8 @@ BasicBlock *CFGTraversal::allocate_block_without_successor(BasicBlock *nb)
 {
     if (nb == NULL)
     {
+        if (current_statement != NULL)
+            block_stmt_map[node_id] = current_statement;
         nb = new BasicBlock(node_id++, INNER, proc->procnum);
         cfg->nodes.push_back(nb);
     }
@@ -1430,4 +1474,15 @@ BasicBlock *CFGTraversal::call_base_destructors(Procedure *p,
     }
 
     return after;
+}
+
+void CFGTraversal::print_map() const
+{
+    std::map<int, SgStatement *>::const_iterator i;
+    for (i = block_stmt_map.begin(); i != block_stmt_map.end(); ++i)
+    {
+        std::cout << "block " << std::setw(4) << i->first
+            << " stmt " << i->second << ": "
+            << (i->second)->unparseToString() << std::endl;
+    }
 }
