@@ -1,11 +1,13 @@
-Version 0.8.0
+Version 0.7.0
 
 BUG: options --sourceoutput and --textoutput
 
      The output is always correct for callstring length 0.
      
-     But if callstring length is greater 0, not all data may be
+     But if the callstring length is greater 0, not all data may be
      printed, because only one data item is shown for each node.
+     The data attached to the AST is complete, but the print function 
+     is not finished yet.
      
      [will be fixed in next release]
 

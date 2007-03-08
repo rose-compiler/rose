@@ -32,4 +32,4 @@ clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/
 	rm -rf anim-out
-
+	rm -f a.out

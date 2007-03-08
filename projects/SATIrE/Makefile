@@ -40,6 +40,8 @@ dist:
 	cp -rp docs/*.pdf $(DIST)/docs
 	rm $(DIST)/examples/adapt_makefile
 	rm $(DIST)/examples/makefile_header
+	rm -rf $(DIST)/examples/sl2rd/tools
+	rm -rf $(DIST)/examples/sl2rd/tests/costa
 	rm -rf $(DIST)/src/experimental
 	cp Makefile_dist $(DIST)/Makefile
 	cp -p README $(DIST)
