@@ -1,3 +1,6 @@
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: ExprLabeler.C,v 1.2 2007-03-08 15:36:48 markus Exp $
+
 #include "ExprLabeler.h"
 
 ExprLabeler::ExprLabeler(int expnum_) : expnum(expnum_)

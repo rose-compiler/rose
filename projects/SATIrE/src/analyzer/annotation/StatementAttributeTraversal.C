@@ -1,3 +1,6 @@
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: StatementAttributeTraversal.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+
 /* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
 
 #include "cfg_support.h"

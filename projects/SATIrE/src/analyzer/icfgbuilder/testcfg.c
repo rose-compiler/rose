@@ -1,3 +1,6 @@
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: testcfg.c,v 1.2 2007-03-08 15:36:49 markus Exp $
+
 /*
  * TestCFG: consistency test for a cfg and its PAG-interface
  * version 0.0.19

@@ -1,3 +1,6 @@
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: set_pag_options.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+
 // Author: Markus Schordan, 2006
 
 #include "set_pag_options.h"

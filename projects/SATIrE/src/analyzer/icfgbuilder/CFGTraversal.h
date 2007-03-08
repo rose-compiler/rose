@@ -1,3 +1,6 @@
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: CFGTraversal.h,v 1.3 2007-03-08 15:36:48 markus Exp $
+
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
 

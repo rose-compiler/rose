@@ -1,4 +1,5 @@
-// Author: Markus Schordan, 2006
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: CommandLineParser.h,v 1.2 2007-03-08 15:36:48 markus Exp $
 
 #ifndef COMMANDLINE
 #define COMMANDLINE

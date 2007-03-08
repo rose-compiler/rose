@@ -14,3 +14,4 @@ clean:
 	$(MAKE) clean -C commandlineinterface  
 #	$(MAKE) clean -C annotation
 	rm -f libsatire.a
+	rm -f syntree.o

@@ -1,3 +1,6 @@
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
+// $Id: GDotBackEnd.h,v 1.2 2007-03-08 15:36:49 markus Exp $
+
 #ifndef GDOTBACKEND_H
 #define GDOTBACKEND_H
 
