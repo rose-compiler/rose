@@ -109,6 +109,8 @@ the C/C++ infrastructure LLNL-ROSE.
 ------------------------------------------------------------
  a) Documentation that comes with the distribution can be found
     in the directory 'docs'.
+    A document that describes the overall picture, design, and philosophy
+    behind SATIrE is in preparation but not included yet.
     
  b) On the web information can be found at:
     http://www.complang.tuwien.ac.at/markus/satire
