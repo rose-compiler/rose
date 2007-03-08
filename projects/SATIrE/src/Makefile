@@ -9,12 +9,10 @@ all:
 	$(MAKE) -C grato
 	$(MAKE) -C pig
 	$(MAKE) -C analyzer
-	$(MAKE) -C examples
 #	$(MAKE) -C experimental
 
 check:
 	$(MAKE) check -C grato
-	$(MAKE) check -C examples
 #	$(MAKE) check -C experimental
 
 install: all
@@ -42,5 +40,4 @@ clean:
 	$(MAKE) clean -C grato
 	$(MAKE) clean -C pig
 	$(MAKE) clean -C analyzer
-	$(MAKE) clean -C examples
 #	$(MAKE) clean -C experimental
