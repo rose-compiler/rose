@@ -3,18 +3,25 @@ SATIrE: Static Analysis Tool Integration Engine
 ------------------------------------------------------------
 
 SATIrE integrates static analysis tools into existing compiler
-infrastructures.  Curenlty the focus is on integration of AbsInt's
-Program Analysis Generator (PAG) into infrastructures which offer an
-abstract syntax tree. The infrastructure that is fully supported is
-the C/C++ infrastructure LLNL-ROSE.
+infrastructures.  Currently the focus is on integration of AbsInt's
+Program Analysis Generator (PAG) into C/C++ infrastructures 
+that provide an abstract syntax tree. The infrastructure that 
+is fully supported is the C/C++ infrastructure LLNL-ROSE.
+
+SATIrE 0.7.0 was tested with 
+ - ROSE 0.8.8a (requires g++ 3.3-5.x)
+ - PAG 0.9.7.843
+ - bison 1.875d
+ - flex 2.5.31
+ - g++ 3.5.5
 
 ------------------------------------------------------------
 (1) INSTALLATION
 ------------------------------------------------------------
 
  a) Before you can install SATIrE
-    i)  you must install LLNL-ROSE
-    ii) you must install PAG
+    i)  you must install LLNL-ROSE - http://www.llnl.gov/casc/rose/
+    ii) you must install PAG - http://www.absint.com/pag/
 
  b) After installation of LLNL-ROSE and PAG set the following 
     environment variables:
@@ -24,10 +31,10 @@ the C/C++ infrastructure LLNL-ROSE.
     - PAGDIR (the directory of installed PAG)
 
  c) Unpack the satire tar-ball with:
-    tar xvzf satire_0.7.0
+    tar xvzf SATIrE-0.7.0
 
  d) Go to the satire directory:
-    cd satire_0.7.0
+    cd SATIrE-0.7.0
 
  e) Perform the following operations with make:
     run 'make' for compiling all SATIrE modules and analyzers (ROSE must be installed)
@@ -60,9 +67,9 @@ the C/C++ infrastructure LLNL-ROSE.
     SATIRE_LIB (the lib directory of installed SATIRE)
 
  c) We chose the example sl1rd:
-    [let's assume that you unpacked satire_0.7.0.tgz in your home directory]
+    [let's assume that you unpacked SATIrE-0.7.0.tgz in your home directory]
 
-    cp -r ~/satire_0.7.0/examples/sl1rd . [copy all files and test files to your directory]
+    cp -r ~/SATIrE-0.7.0/examples/sl1rd . [copy all files and test files to your directory]
     newanalysis sl1rd VarLabPairSetLifted [generate and configure all required files]
     cd sl1rd                              [change to the directory]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
@@ -107,6 +114,7 @@ the C/C++ infrastructure LLNL-ROSE.
 ------------------------------------------------------------
 (4) FURTHER INFORMATION & CONTACT
 ------------------------------------------------------------
+  
  a) Documentation that comes with the distribution can be found
     in the directory 'docs'.
     A document that describes the overall picture, design, and philosophy
@@ -115,5 +123,5 @@ the C/C++ infrastructure LLNL-ROSE.
  b) On the web information can be found at:
     http://www.complang.tuwien.ac.at/markus/satire
 
- c) For questions, feedback, bug reports, or suggesstions send
+ c) For questions, feedback, bug reports, or suggestions on SATIrE send
     email to: markus@complang.tuwien.ac.at
