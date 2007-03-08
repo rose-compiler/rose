@@ -26,6 +26,8 @@ clean:
 	rm -rf $(DIST)
 
 dist:
+	$(MAKE) clean -C src
+	$(MAKE) handwritten-docs -C .
 	rm -rf $(DIST)
 	mkdir -p $(DIST)
 	cp -rp src $(DIST)
