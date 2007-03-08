@@ -1,0 +1,9 @@
+
+# argument $1: name of analysis(dir)
+cat makefile_header > tmp
+cat $1/Makefile >> tmp
+mv tmp $1/Makefile
+
+# manual fix:
+# replace: $(SATIRE_INCLUDE) in the call to PAG with $(SATIRE_INCLUDE_DIR)
+# add: SATIRE_INCLUDE_DIR=$(SATIREMAINDIR)/analyzer/astaccess

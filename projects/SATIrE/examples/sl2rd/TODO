@@ -1,0 +1,6 @@
+1) Temporary variables in expressions
+   * x=y+f();
+     a temporary variable is introduced in the expression. Therefore, even if
+     an analysis does not modify the analysis information for expressions
+     we may need to update it to remove temporary variables for such
+     expressions. Clearly, this impacts how analysis are written.

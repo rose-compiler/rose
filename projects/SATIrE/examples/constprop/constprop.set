@@ -1,0 +1,4 @@
+DOMAIN
+    Const = flat(snum)
+    State = str -> Const
+    ConstStatePair = Const * State

@@ -12,13 +12,11 @@ void f(void)
         d++;
     }
     if (a == b + c) {
-      int x;
-      x= 42;
+      int x = 42;
       a=x;
     }
     else {
-      int y;
-      y = 23;
+      int y = 23;
       a=y;
     }
 }
