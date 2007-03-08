@@ -7,6 +7,7 @@ LIBS = $(ANALYSIS).a -lsatire -lrose -ledg -lrt -lpag
 all: $(ANALYSIS)
 
 $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
+	mkdir -p anim-out
 	mkdir -p $(ANALYSIS)-out/src
 	if $(PAG) $(SATIRE_INCLUDE)/ iterate1.t $(ANALYSIS) $(ANALYSIS)-out --prefix=$(PAGDIR) 2> pag-out; then cat pag-out; else cat pag-out; false; fi
 	cp $(SATIRE_LIB)/syntree.o $(ANALYSIS)-out/src/
@@ -30,4 +31,5 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/
-	rm -f anim-out/*.gdl
+	rm -rf anim-out
+
