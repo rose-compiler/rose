@@ -13,8 +13,8 @@ the C/C++ infrastructure LLNL-ROSE.
 ------------------------------------------------------------
 
    Before you can install SATIrE
-   i) you must install LLNL-ROSE
-   ii) you must install PAG
+   a) you must install LLNL-ROSE
+   b) you must install PAG
 
    After installation you must set the following environment variables:
 
@@ -22,7 +22,7 @@ the C/C++ infrastructure LLNL-ROSE.
    - ROSE_LIB (the lib directory of installed LLNL-ROSE)
    - PAGDIR (the directory of installed PAG)
 
-   iii)
+   c)
    unpack the satire tar-ball with:
    tar xvzf satire_0.7.0
 
@@ -47,19 +47,19 @@ the C/C++ infrastructure LLNL-ROSE.
        Note, you must use an absolute path for INSTALL_PREFIX!
 
 ------------------------------------------------------------
-(2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE:
+(2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
 ------------------------------------------------------------
 
-  * ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
+ a) ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
 
-  * ensure that the following environment variables are set:
+ b) ensure that the following environment variables are set:
     ROSE_INCLUDE (the include directory of installed ROSE)
     ROSE_LIB (the lib directory of installed ROSE)
     PAGDIR (the directory of installed PAG)
     SATIRE_INCLUDE (the include directory of installed SATIRE)
     SATIRE_LIB (the lib directory of installed SATIRE)
 
-  * we chose the example sl1rd:
+ c) we chose the example sl1rd:
     [let's assume that you unpacked satire.tgz in your home directory]
 
     cp -r ~/satire/examples/sl1rd .       [copy all files and test files to your directory]
@@ -71,31 +71,30 @@ the C/C++ infrastructure LLNL-ROSE.
     
 
 ------------------------------------------------------------
-(3) CRAFTING A NEW ANALYSIS:
+(3) CRAFTING A NEW ANALYSIS
 ------------------------------------------------------------
 
-  * ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
+ a) ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
 
-  * ensure that the following environment variables are set:
+ b) ensure that the following environment variables are set:
     ROSE_INCLUDE (the include directory of installed ROSE)
     ROSE_LIB (the lib directory of installed ROSE)
     PAGDIR (the directory of installed PAG)
     SATIRE_INCLUDE (the include directory of installed SATIRE)
     SATIRE_LIB (the lib directory of installed SATIRE)
 
-  * run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
+ c) run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
     name <ANALYSIS_NAME> with a carrier type <CARRIER_TYPE>. This command
     creates a directory of name <ANALYSIS_NAME> and copies&configers several
     files into that directory.
 
-  * cd <ANALYSIS_NAME>
+ d) cd <ANALYSIS_NAME>
 
-  * implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
+ e) implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
 
-  * run 'make' to compile your analyzer
+ f) run 'make' to compile your analyzer
 
-  * run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is some
+ g) run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is some
     C/C++ file and the executable analyzer is of name <ANALYSIS_NAME>.
     This will generate a file '<ANALYSIS_NAME>_result.gdl' which can be
     viewed with aiSee.
-  
