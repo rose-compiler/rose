@@ -1,10 +1,7 @@
 all:
 	$(MAKE) -C src
 
-docs: handwritten-docs doxygen-docs
-
-handwritten-docs:
-	$(MAKE) -C docs
+docs: doxygen-docs
 
 doxygen-docs:
 	$(MAKE) docs -C src/grato
