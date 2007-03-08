@@ -23,7 +23,7 @@ private:
     int procnum;
 };
 
-static SgMemberFunctionDeclaration *get_default_constructor(
+SgMemberFunctionDeclaration *get_default_constructor(
         SgClassDeclaration *);
 
 #endif

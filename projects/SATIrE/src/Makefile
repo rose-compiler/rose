@@ -43,4 +43,4 @@ clean:
 	$(MAKE) clean -C pig
 	$(MAKE) clean -C analyzer
 	$(MAKE) clean -C examples
-	$(MAKE) clean -C experimental
+#	$(MAKE) clean -C experimental

@@ -1,5 +1,6 @@
 #include "AnalyzerOptions.h"
 
+#include <iostream>
 AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   setCfgOrdering(1);
   setCallStringLength(0);
@@ -23,6 +24,9 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   setVivuLoopUnrolling(2); // default
   setVivu4MaxUnrolling(-1); // default
   
+  clearCommandLine();
+  setCommandLineNum(0);
+
   std::string s=
     "Analysis options:\n"
     "   --callstringlength <num>     set callstring length to <num> [default:0]\n"
@@ -54,7 +58,9 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --animdir <dirname>           generate animation gdl files in directory <dirname>\n"
     "                                 [default: --animdir anim-out]\n"
     "   --no_anim                     do not generate an animation\n"
-    "\n"
+    "\n";
+
+    /*
     " PAG garbage collection options:\n"
     "   --gc_lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
     "                                 at which GC is started\n"
@@ -67,6 +73,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "                                 [default 2]\n"
     "   --vivu4MaxUnrolling <num>     maximal unrolling for VIVU4 mapping [default: -1]\n"
     "\n";
+    */
 
   setOptionsInfo(s);
 }
@@ -181,3 +188,30 @@ std::string AnalyzerOptions::getOptionsErrorMessage() {
   return _optionsErrorMessage;
 }
 
+void AnalyzerOptions::clearCommandLine() { _commandLine.clear(); }
+void AnalyzerOptions::appendCommandLine(std::string cl) { _commandLine.push_back(cl); addCommandLineNum(1);}
+std::list<std::string> AnalyzerOptions::getCommandLineList() { return _commandLine; }
+char** AnalyzerOptions::getCommandLineCarray() { 
+  int argc=getCommandLineNum();
+  char** argv=new char*[argc]; // we need to create the same DS as in C for argv
+  int j=0;
+  for(std::list<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
+    argv[j++]=strdup(const_cast<char*>((*i).c_str()));
+  }
+  return argv;
+}
+
+std::string AnalyzerOptions::getCommandLine() { 
+  std::string s;
+  for(std::list<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
+    s+=*i+" ";
+  }
+  return s;
+}
+
+
+void AnalyzerOptions::setCommandLineNum(int cl) { _commandLineNum=cl; }
+void AnalyzerOptions::addCommandLineNum(int cl) { _commandLineNum+=cl; }
+int AnalyzerOptions::getCommandLineNum() { return _commandLineNum; }
+
+bool AnalyzerOptions::retFuncUsed() { return true; }

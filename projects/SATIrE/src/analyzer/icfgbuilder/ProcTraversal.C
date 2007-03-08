@@ -250,7 +250,7 @@ void ProcTraversal::visit(SgNode *node)
     }
 }
 
-static SgMemberFunctionDeclaration *get_default_constructor(
+SgMemberFunctionDeclaration *get_default_constructor(
         SgClassDeclaration *c)
 {
     SgClassDefinition *d = c->get_definition();

@@ -26,14 +26,14 @@ void CommandLineParser::failed(AnalyzerOptions opt) {
 AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
   AnalyzerOptions cl;
 
-  char toolname[100];
   char inName[100];
-  strcpy(toolname, argv[0]);
   inName[0] = 0;
 
   cl.setAnimationDirectoryName("anim-out");
-  cl.setProgramName(toolname);
+  cl.setProgramName(std::string(argv[0]));
   cl.setGdlFileName(cl.getProgramName()+"_result.gdl");
+  cl.clearCommandLine();
+  cl.appendCommandLine(std::string(argv[0]));
 
   for (int i=1; i < argc; i++) {
     if (!strcmp(argv[i], "--cfgordering")) {
@@ -91,9 +91,11 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
       cl.helpMessageRequestedOn();
     } else if (!strncmp(argv[i], "-I",2)) {
       /* include path option is passed to ROSE as is */
+      cl.appendCommandLine(std::string(argv[i]));
     } else {
       if(inName[0]==0) {
 	strcpy(inName, argv[i]);
+	cl.appendCommandLine(std::string(argv[i]));
 	if(!fileExists(std::string(inName))) {
 	  std::cout << "Error: File "<< inName << " not found." << std::endl;
 	  exit(1);
@@ -118,5 +120,6 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
     failed(cl);
   }
   cl.setInputFileName(inName);
+
   return cl;
 }

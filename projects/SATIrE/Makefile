@@ -1,3 +1,5 @@
+DIST=satire_0.7.0
+
 all:
 	$(MAKE) -C src
 
@@ -21,9 +23,7 @@ install:
 clean:
 	$(MAKE) clean -C docs
 	$(MAKE) clean -C src
-	rm -rf dist
-
-DIST=satire_0.8.0
+	rm -rf $(DIST)
 
 dist:
 	rm -rf $(DIST)
@@ -33,6 +33,7 @@ dist:
 	cp -rp docs/*.pdf $(DIST)/docs
 	rm $(DIST)/src/examples/specs/adapt_makefile
 	rm $(DIST)/src/examples/specs/makefile_header
+	rm -rf $(DIST)/src/experimental
 	cp Makefile_dist $(DIST)/Makefile
 	rm -f $(DIST)/*~
 	rm -rf $(DIST)/CVS
@@ -45,6 +46,3 @@ dist:
 	rm -f $(DIST)/*/*/*/*/*~
 	rm -rf $(DIST)/*/*/*/*/CVS
 	tar cvzf $(DIST).tgz $(DIST)
-
-
-

@@ -15,6 +15,7 @@ extern int global_print_post_info;
 extern int global_print_pre_info;
 extern int global_proc_as_graphs;
 extern int verbose;
+extern int global_retfunc;
 
 void setPagOptions(AnalyzerOptions opt) {
   cfg_ordering=opt.getCfgOrdering();
@@ -62,5 +63,9 @@ void setPagOptions(AnalyzerOptions opt) {
   if(opt.getVivu4MaxUnrolling()!=-1) {
     sel_mapping=6;
     mapping_data.map_global_max_cut=opt.getVivu4MaxUnrolling();
+  }
+  if(opt.retFuncUsed()) {
+    /* use retfunc for combining information from local and return edge */
+    global_retfunc = 1;
   }
 }

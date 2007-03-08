@@ -41,9 +41,7 @@ template<typename DFI_STORE_TYPE>
 std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPreInfo(SgStatement* stmt) {
   std::stringstream ss1;
 
-  std::cout << "Fetching pre-info Attribute at: " << stmt->sage_class_name() << std::endl;
   StatementAttribute *start = (StatementAttribute *) stmt->getAttribute("PAG statement start");
-  std::cout << "finished." << std::endl;
 
   BasicBlock *startb = start->get_bb();
   if (startb != NULL) {
@@ -61,9 +59,7 @@ template<typename DFI_STORE_TYPE>
 std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPostInfo(SgStatement* stmt) {
   std::stringstream ss2;
 
-  std::cout << "Fetching post-info Attribute at: " << stmt->sage_class_name() << std::endl;
   StatementAttribute* end= (StatementAttribute *) stmt->getAttribute("PAG statement end");
-  std::cout << "finished." << std::endl;
 
   BasicBlock *endb = end->get_bb();
   if (endb != NULL) {
@@ -120,12 +116,10 @@ DfiTextPrinter<DFI_STORE_TYPE>::~DfiTextPrinter() {
 
 template<typename DFI_STORE_TYPE>
 void DfiTextPrinter<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
-
   std::string stmt_str = stmt->unparseToString();
+  std::cout << currentFunction() << ": " << "// pre info : " << preInfo << std::endl;
   std::cout << currentFunction() << ": " << stmt_str << std::endl;
-
-  std::cout << "// pre info : " << preInfo; // << std::endl;
-  std::cout << "// post info: " << postInfo << std::endl << std::endl;
+  std::cout << currentFunction() << ": " << "// post info: " << postInfo << std::endl << std::endl;
 }
 
 template<typename DFI_STORE_TYPE>

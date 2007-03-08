@@ -4,6 +4,7 @@
 #define ANALYZEROPTIONS_H
 
 #include <string>
+#include <list>
 
 class AnalyzerOptions {
 public:
@@ -88,6 +89,20 @@ public:
   std::string getOptionsErrorMessage();
   bool optionsError();
 
+  void clearCommandLine();
+  void appendCommandLine(std::string);
+  std::list<std::string> getCommandLineList();
+  std::string getCommandLine();
+  char** getCommandLineCarray();
+
+  int getCommandLineNum(); // is computing according to appendCommandLine
+
+  bool retFuncUsed();
+
+private:
+  void setCommandLineNum(int);
+  void addCommandLineNum(int);
+
 private:
   void optionsError(std::string message);
 
@@ -102,6 +117,9 @@ private:
   bool _animationGeneration, _resultGeneration, _helpMessageRequested, _pagVerbose;
   bool _postInfo, _preInfo, _gdlProcedureSubgraphs, _statistics, _analysisResultsTextOutput, _analysisResultsSourceOutput;
   bool _vivu;
+
+  std::list<std::string> _commandLine;
+  int _commandLineNum;
 };
 
 #endif

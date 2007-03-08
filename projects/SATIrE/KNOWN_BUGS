@@ -1,6 +1,12 @@
-BUG: --sourceoutput
-     When this option is used, cc1plus reports an error that it does not know
-     the option -fsourceoutput. The result, an annotated source file is still
-     generated, the error can be ignored.
-     Required Fix: remove argument from command line array after CL processing.
+Version 0.8.0
+
+BUG: options --sourceoutput and --textoutput
+
+     The output is always correct for callstring length 0.
+     
+     But if callstring length is greater 0, not all data may be
+     printed, because only one data item is shown for each node.
+     
+     [will be fixed in next release]
+
 

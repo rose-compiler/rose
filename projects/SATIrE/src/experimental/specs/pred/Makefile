@@ -42,7 +42,8 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 
 check:	
 	pred tests/test3.C
-	pred tests/test4.C
+	pred --textoutput tests/test3.C
+	pred --sourceoutput tests/test4.C
 
 test:	pred
 	generatedot graphtest1
