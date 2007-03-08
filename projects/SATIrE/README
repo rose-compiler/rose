@@ -12,57 +12,57 @@ the C/C++ infrastructure LLNL-ROSE.
 (1) INSTALLATION
 ------------------------------------------------------------
 
-   Before you can install SATIrE
-   a) you must install LLNL-ROSE
-   b) you must install PAG
+ a) Before you can install SATIrE
+    i)  you must install LLNL-ROSE
+    ii) you must install PAG
 
-   After installation you must set the following environment variables:
+ b) After installation of LLNL-ROSE and PAG set the following 
+    environment variables:
 
-   - ROSE_INCLUDE (the include directory of installed LLNL-ROSE)
-   - ROSE_LIB (the lib directory of installed LLNL-ROSE)
-   - PAGDIR (the directory of installed PAG)
+    - ROSE_INCLUDE (the include directory of installed LLNL-ROSE)
+    - ROSE_LIB (the lib directory of installed LLNL-ROSE)
+    - PAGDIR (the directory of installed PAG)
 
-   c)
-   unpack the satire tar-ball with:
-   tar xvzf satire_0.7.0
+ c) Unpack the satire tar-ball with:
+    tar xvzf satire_0.7.0
 
-   Go to the satire directory:
-   cd satire
+ d) Go to the satire directory:
+    cd satire_0.7.0
 
-   Perform the following actions with make:
-   run 'make' for compiling all SATIrE modules and analyzers (ROSE must be installed)
-   run 'make docs' for creating all documentation in 
-       * 'docs' (pdf files) and 
-       * 'src/grato/docs/html/index.html' (html documentation)
-   run 'make check' for running several tests (PAG and ROSE, must be installed)
+ e) Perform the following operations with make:
+    run 'make' for compiling all SATIrE modules and analyzers (ROSE must be installed)
 
-   run 'INSTALL_PREFIX=<my_install_prefix> make install
-       where <my_install_prefix> is your directory path in which the directories
-       'include', 'lib', 'bin' will be created.
+    run 'make check' for running several tests (PAG and ROSE, must be installed)
 
-       examples:
-         INSTALL_PREFIX=/usr/local/bin make install
-         INSTALL_PREFIX=~/satire_install make install
+    run 'INSTALL_PREFIX=<my_install_prefix> make install
+        where <my_install_prefix> is your directory path in which the directories
+        'include', 'lib', 'bin' will be created.
 
-       Note, you must use an absolute path for INSTALL_PREFIX!
+        examples:
+          INSTALL_PREFIX=/usr/local/ make install
+          INSTALL_PREFIX=~/satire_install make install
+
+        Note, you must use an absolute path for INSTALL_PREFIX!
+    
+    Now you are ready to specify, compile, and run an anlysis.
 
 ------------------------------------------------------------
 (2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
 ------------------------------------------------------------
 
- a) ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
+ a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
 
- b) ensure that the following environment variables are set:
+ b) Ensure that the following environment variables are set:
     ROSE_INCLUDE (the include directory of installed ROSE)
     ROSE_LIB (the lib directory of installed ROSE)
     PAGDIR (the directory of installed PAG)
     SATIRE_INCLUDE (the include directory of installed SATIRE)
     SATIRE_LIB (the lib directory of installed SATIRE)
 
- c) we chose the example sl1rd:
-    [let's assume that you unpacked satire.tgz in your home directory]
+ c) We chose the example sl1rd:
+    [let's assume that you unpacked satire_0.7.0.tgz in your home directory]
 
-    cp -r ~/satire/examples/sl1rd .       [copy all files and test files to your directory]
+    cp -r ~/satire_0.7.0/examples/sl1rd . [copy all files and test files to your directory]
     newanalysis sl1rd VarLabPairSetLifted [generate and configure all required files]
     cd sl1rd                              [change to the directory]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
@@ -74,27 +74,44 @@ the C/C++ infrastructure LLNL-ROSE.
 (3) CRAFTING A NEW ANALYSIS
 ------------------------------------------------------------
 
- a) ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
+ a) Ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
 
- b) ensure that the following environment variables are set:
+ b) Ensure that the following environment variables are set:
     ROSE_INCLUDE (the include directory of installed ROSE)
     ROSE_LIB (the lib directory of installed ROSE)
     PAGDIR (the directory of installed PAG)
     SATIRE_INCLUDE (the include directory of installed SATIRE)
     SATIRE_LIB (the lib directory of installed SATIRE)
 
- c) run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
+ c) Run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
     name <ANALYSIS_NAME> with a carrier type <CARRIER_TYPE>. This command
     creates a directory of name <ANALYSIS_NAME> and copies&configers several
     files into that directory.
 
  d) cd <ANALYSIS_NAME>
 
- e) implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
+ e) Implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
 
- f) run 'make' to compile your analyzer
+ f) Run 'make' to compile your analyzer
 
- g) run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is some
-    C/C++ file and the executable analyzer is of name <ANALYSIS_NAME>.
+ g) Run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is
+    some C/C++ file and the executable analyzer has the name <ANALYSIS_NAME>.
     This will generate a file '<ANALYSIS_NAME>_result.gdl' which can be
-    viewed with aiSee.
+    viewed with the tool aiSee.
+
+    Note, the command 'newanalysis' never modifies *.set or *.optla files
+    but does overwrite Makefile, main.C, main-support.C in the directory 
+    <ANALYSIS_NAME>, according to the parameters of the command.
+
+
+------------------------------------------------------------
+(4) FURTHER INFORMATION & CONTACT
+------------------------------------------------------------
+ a) Documentation that comes with the distribution can be found
+    in the directory 'docs'.
+    
+ b) On the web information can be found at:
+    http://www.complang.tuwien.ac.at/markus/satire
+
+ c) For questions, feedback, bug reports, or suggesstions send
+    email to: markus@complang.tuwien.ac.at
