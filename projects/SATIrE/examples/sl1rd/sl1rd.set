@@ -1,6 +1,6 @@
 SET
-  VarSet      = set(VariableId)
-  VarLabPair  = VariableId * snum
+  VarSet      = set(str)
+  VarLabPair  = str * snum
 
 DOMAIN
   VarLabPairSet = set(VarLabPair)
