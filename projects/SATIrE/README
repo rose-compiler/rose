@@ -73,6 +73,7 @@ SATIrE 0.7.0 was tested with
     newanalysis sl1rd VarLabPairSetLifted [generate and configure all required files]
     cd sl1rd                              [change to the directory]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
+    sl1rd --help                          [prints an overview of the available options]
     sl1rd tests/rdtest1.C                 [run the analyzer on the test file 'rdtest1.C']
     aisee sl1rd_result.gdl                [view the analysis result with aisee]
     
