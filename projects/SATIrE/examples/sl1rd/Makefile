@@ -36,9 +36,9 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 	@echo "nothing, because it wasn't run (the analysis specification has not changed)" > pag-out
 
 check:  all
-	$(ANALYSIS) tests/rdtest1.C
-	$(ANALYSIS) --callstringlength 1 tests/rdtest2.C
-	$(ANALYSIS) --sourceoutput tests/rdtest3.C
+	./$(ANALYSIS) tests/rdtest1.C
+	./$(ANALYSIS) --callstringlength 1 tests/rdtest2.C
+	./$(ANALYSIS) --sourceoutput tests/rdtest3.C
 
 .PHONY: clean
 clean:

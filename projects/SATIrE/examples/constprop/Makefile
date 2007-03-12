@@ -36,8 +36,8 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 	@echo "nothing, because it wasn't run (the analysis specification has not changed)" > pag-out
 
 check:  all
-	$(ANALYSIS) tests/classes2.C
-	$(ANALYSIS) tests/blocks.c
+	./$(ANALYSIS) tests/classes2.C
+	./$(ANALYSIS) tests/blocks.c
 
 .PHONY: clean
 clean:

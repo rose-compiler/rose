@@ -50,39 +50,39 @@ $(LIBGRATO): $(LIBOBJECTFILES)
 	ar -crsv $(LIBGRATO) $(LIBOBJECTFILES)
 
 check:	$(GRATO) $(TESTS)/WHILE.syn $(TESTS)/SAGE3.syn $(TESTS)/OCE.syn
-	$(GRATO) -t $(TESTS)/WHILE.syn | $(GRATO) -t
-	$(GRATO) -t $(TESTS)/OCE.syn | $(GRATO) -t
-	$(GRATO) -t $(TESTS)/SAGE3.syn | $(GRATO) -t
+	./$(GRATO) -t $(TESTS)/WHILE.syn | ./$(GRATO) -t
+	./$(GRATO) -t $(TESTS)/OCE.syn | ./$(GRATO) -t
+	./$(GRATO) -t $(TESTS)/SAGE3.syn | ./$(GRATO) -t
 
-	$(GRATO) -p $(TESTS)/SAGE3.syn
-	$(GRATO) -r1 $(TESTS)/SAGE3.syn | $(GRATO) -p
-	$(GRATO) -r2 $(TESTS)/SAGE3.syn | $(GRATO) -p
+	./$(GRATO) -p $(TESTS)/SAGE3.syn
+	./$(GRATO) -r1 $(TESTS)/SAGE3.syn | ./$(GRATO) -p
+	./$(GRATO) -r2 $(TESTS)/SAGE3.syn | ./$(GRATO) -p
 
 dotcheck:
-	$(GRATO) -d $(TESTS)/WHILE.syn > $(TESTS)/WHILE.dot
+	./$(GRATO) -d $(TESTS)/WHILE.syn > $(TESTS)/WHILE.dot
 	dot -Tps $(TESTS)/WHILE.dot -o $(TESTS)/WHILE.ps
 	rm $(TESTS)/WHILE.dot; rm $(TESTS)/WHILE.ps
-	$(GRATO) -d $(TESTS)/OCE.syn > $(TESTS)/OCE.dot
+	./$(GRATO) -d $(TESTS)/OCE.syn > $(TESTS)/OCE.dot
 	dot -Tps $(TESTS)/OCE.dot -o $(TESTS)/OCE.ps
 	rm $(TESTS)/OCE.dot; rm $(TESTS)/OCE.ps
-	$(GRATO) -d $(TESTS)/SAGE3.syn > $(TESTS)/SAGE3.dot
+	./$(GRATO) -d $(TESTS)/SAGE3.syn > $(TESTS)/SAGE3.dot
 	dot -Tps $(TESTS)/SAGE3.dot -o $(TESTS)/SAGE3.ps
 	rm $(TESTS)/SAGE3.dot; rm $(TESTS)/SAGE3.ps
 
 $(EXAMPLES): $(GRATO) $(TESTS)/SAGE3.syn $(TESTS)/OCE.syn $(TESTS)/SETL2.syn
 	mkdir -p examples
-	$(GRATO) -r1 $(TESTS)/SAGE3.syn > $(EXAMPLES)/SAGE3_r1.syn
-	$(GRATO) -r2 $(TESTS)/SAGE3.syn > $(EXAMPLES)/SAGE3_r2.syn
-	$(GRATO) -r1 $(TESTS)/OCE.syn > $(EXAMPLES)/OCE_r1.syn
-	$(GRATO) -r2 $(TESTS)/OCE.syn > $(EXAMPLES)/OCE_r2.syn
-	$(GRATO) -r1 $(TESTS)/SETL2.syn > $(EXAMPLES)/SETL2_r1.syn
-	$(GRATO) -r2 $(TESTS)/SETL2.syn > $(EXAMPLES)/SETL2_r2.syn
-	$(GRATO) -p $(EXAMPLES)/SAGE3_r1.syn
-	$(GRATO) -p $(EXAMPLES)/SAGE3_r2.syn
-	$(GRATO) -p $(EXAMPLES)/OCE_r1.syn
-	$(GRATO) -p $(EXAMPLES)/OCE_r2.syn
-	$(GRATO) -p $(EXAMPLES)/SETL2_r1.syn
-	$(GRATO) -p $(EXAMPLES)/SETL2_r2.syn
+	./$(GRATO) -r1 $(TESTS)/SAGE3.syn > $(EXAMPLES)/SAGE3_r1.syn
+	./$(GRATO) -r2 $(TESTS)/SAGE3.syn > $(EXAMPLES)/SAGE3_r2.syn
+	./$(GRATO) -r1 $(TESTS)/OCE.syn > $(EXAMPLES)/OCE_r1.syn
+	./$(GRATO) -r2 $(TESTS)/OCE.syn > $(EXAMPLES)/OCE_r2.syn
+	./$(GRATO) -r1 $(TESTS)/SETL2.syn > $(EXAMPLES)/SETL2_r1.syn
+	./$(GRATO) -r2 $(TESTS)/SETL2.syn > $(EXAMPLES)/SETL2_r2.syn
+	./$(GRATO) -p $(EXAMPLES)/SAGE3_r1.syn
+	./$(GRATO) -p $(EXAMPLES)/SAGE3_r2.syn
+	./$(GRATO) -p $(EXAMPLES)/OCE_r1.syn
+	./$(GRATO) -p $(EXAMPLES)/OCE_r2.syn
+	./$(GRATO) -p $(EXAMPLES)/SETL2_r1.syn
+	./$(GRATO) -p $(EXAMPLES)/SETL2_r2.syn
 
 docs:	Doxyfile
 	doxygen Doxyfile
