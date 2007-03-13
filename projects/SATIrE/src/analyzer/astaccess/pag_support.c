@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.c,v 1.3 2007-03-13 10:11:35 pr009 Exp $
+// $Id: pag_support.c,v 1.4 2007-03-13 10:58:14 pr009 Exp $
 
 #include <iostream>
 
@@ -458,7 +458,7 @@ int expr_to_exprnum(SgExpression *expr)
 
 std::string exprnum_to_str(int n)
 {
-    return exprnum_to_expr(n)->unparseToString();
+    return expr_to_string(exprnum_to_expr(n));
 }
 
 SgType *expr_type(SgExpression *expr)
