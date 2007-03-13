@@ -5,7 +5,6 @@
 
 SET
 VarSet             = set(str)
-BoolSet            = set(bool)
 
 StackEdge          = str * VarSet
 StackEdgeSet       = set(StackEdge)
@@ -17,14 +16,11 @@ HeapEdgeSet        = set(HeapEdge)
 HeapEdgeSetSet     = set(HeapEdgeSet)   //*
 HeapEdgeSetList    = list(HeapEdgeSet)  //*
 HeapEdgeList       = list(HeapEdge)
-HeapEdgeTuple      = HeapEdge * HeapEdge
-HeapEdgeTupleList  = list(HeapEdgeTuple)
 
 NodeSet            = set(VarSet)
 NodeSetSet         = set(NodeSet)
 NodeList           = list(VarSet)
 
-NodeSel            = VarSet * str
 NodeTuple          = VarSet * VarSet
 NodeTupleList      = list(NodeTuple)
 
@@ -37,9 +33,6 @@ ShapeGraphList     = list(ShapeGraph)
 StrList            = list(str)
 SNumList           = list(snum)
 
-OpCode             = str * StrList
-OpCodeList         = list(OpCode)
-
 CarrierVarSetTuple = dfi * VarSet
 
 DOMAIN
@@ -47,4 +40,4 @@ dfi                = flat(ShapeGraphSet)
 
 
 
-// *) required for srw <-> nielson conversion
+// *) required for srw <-> nnh conversion

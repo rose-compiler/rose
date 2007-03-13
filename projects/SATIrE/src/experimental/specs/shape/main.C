@@ -1,10 +1,4 @@
-#include <config.h>
-
-#include "CFGTraversal.h"
-#include "ProcTraversal.h"
-
-#undef NDEBUG
-#include "testcfg.h"
+#include "main.h"
 
 // GRAPH OUTPUT
 #include <stdio.h>

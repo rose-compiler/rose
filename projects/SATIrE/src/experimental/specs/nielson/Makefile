@@ -10,7 +10,7 @@ SATIRE_INCLUDE_DIR=$(SATIREMAINDIR)/analyzer/astaccess
 PAG = $(PAGDIR)/bin/pag
 FLAGS = -Wall -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ -I $(SATIRE_INCLUDE)
 LPATH = -L $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L $(SATIRE_LIB)
-LIBS = $(ANALYSIS).a -lsatire -lrose -lrt -lpag
+LIBS = $(ANALYSIS).a -lsatire -lrose -ledg -lrt -lpag
 
 TESTDIR = tests
 
@@ -25,25 +25,53 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(FLAGS) -DPAG -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DDFI_WRITE -c main.C
+	g++ $(FLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DDFI_WRITE -c main.C
 
 main-support.o: main-support.C
-	g++ $(FLAGS) -DPAG -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
+	g++ $(FLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
 
-$(ANALYSIS): $(ANALYSIS).a main.o main-support.o
-	g++ $(FLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
+$(ANALYSIS): $(ANALYSIS).a main.o main-support.o  main-vis.o
+	g++ $(FLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) main.o main-support.o  main-vis.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out
 	@echo "nothing, because it wasn't run (the analysis specification has not changed)" > pag-out
+
+main-vis.o: main-vis.C main.h
+	g++ $(FLAGS) -DDFI_WRITE -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-vis.C
 
 
 .PHONY: clean
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/
-	rm -rf anim-out
+	rm -rf shapeanim
 
 check:  $(ANALYSIS)
-	mkdir -p anim-out
+	mkdir -p shapeanim
 	$(ANALYSIS) $(TESTDIR)/reverse1.C
+	$(ANALYSIS) $(TESTDIR)/reverse2.C
+	$(ANALYSIS) $(TESTDIR)/artificialListCreation.C
+	$(ANALYSIS) $(TESTDIR)/artificialListCreationCyclic.C
+	$(ANALYSIS) $(TESTDIR)/test1.C
+	$(ANALYSIS) $(TESTDIR)/test2.C
+	$(ANALYSIS) $(TESTDIR)/test3.C
+	$(ANALYSIS) $(TESTDIR)/test4.C
+	$(ANALYSIS) $(TESTDIR)/test5.C
+	$(ANALYSIS) $(TESTDIR)/test6.C
+	$(ANALYSIS) $(TESTDIR)/test7.C
+	$(ANALYSIS) $(TESTDIR)/test8.C
+	$(ANALYSIS) $(TESTDIR)/listTraversal1.C
+	$(ANALYSIS) $(TESTDIR)/srw98reverse.C
+	$(ANALYSIS) $(TESTDIR)/srw98insert.C
+	$(ANALYSIS) $(TESTDIR)/OOsrw98insert1.C
+	$(ANALYSIS) $(TESTDIR)/OOtest1a.C
+	$(ANALYSIS) $(TESTDIR)/OOtest1b.C
+	$(ANALYSIS) $(TESTDIR)/OOtest2.C
+	$(ANALYSIS) $(TESTDIR)/OOtest3.C
+	$(ANALYSIS) $(TESTDIR)/test9.C
+	$(ANALYSIS) -I$(TESTDIR)/wcettests $(TESTDIR)/wcettests/bubble.c
+
+fastcheck: $(ANALYSIS)
+	mkdir -p shapeanim
+	$(ANALYSIS) $(TESTDIR)/stack1.C
