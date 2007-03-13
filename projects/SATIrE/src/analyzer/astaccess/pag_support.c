@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.c,v 1.2 2007-03-08 15:36:48 markus Exp $
+// $Id: pag_support.c,v 1.3 2007-03-13 10:11:35 pr009 Exp $
 
 #include <iostream>
 
@@ -427,4 +427,58 @@ void syntax_init(void)
         syntax_eq, synttype_hash, 0);
     e_syntaxtype = GC_registertype(1024, syntaxdummy, syntax_mcopy,
         syntax_eq, synttype_hash, 0);
+}
+
+#include "ast_support_funcs.h"
+
+SgType *typenum_to_type(int n)
+{
+    return get_global_cfg()->numbers_types[n];
+}
+
+int type_to_typenum(SgType *type)
+{
+    return get_global_cfg()->types_numbers[type];
+}
+
+std::string typenum_to_str(int n)
+{
+    return typenum_to_type(n)->unparseToString();
+}
+
+SgExpression *exprnum_to_expr(int n)
+{
+    return get_global_cfg()->numbers_exprs[n];
+}
+
+int expr_to_exprnum(SgExpression *expr)
+{
+    return get_global_cfg()->exprs_numbers[expr];
+}
+
+std::string exprnum_to_str(int n)
+{
+    return exprnum_to_expr(n)->unparseToString();
+}
+
+SgType *expr_type(SgExpression *expr)
+{
+    return expr->get_type();
+}
+
+int exprnum_typenum(int n)
+{
+    return type_to_typenum(expr_type(exprnum_to_expr(n)));
+}
+
+bool is_subtype_of(SgClassType *a, SgClassType *b)
+{
+    return o_is_subtype_of(a, b);
+}
+
+bool is_subtypenum_of(int a, int b)
+{
+    SgClassType *ta = isSgClassType(typenum_to_type(a));
+    SgClassType *tb = isSgClassType(typenum_to_type(b));
+    return (ta != NULL && tb != NULL && is_subtype_of(ta, tb));
 }
