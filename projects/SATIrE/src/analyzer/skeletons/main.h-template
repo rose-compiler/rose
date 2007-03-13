@@ -13,6 +13,8 @@
 
 #include "StatementAttributeTraversal.h"
 
+#include "ast_support_funcs.h"
+
 #define doit(analysis) xdoit(analysis)
 #define xdoit(analysis) analysis##_doit
 

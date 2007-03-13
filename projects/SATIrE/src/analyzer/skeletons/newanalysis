@@ -2,7 +2,7 @@
 
 if [ $# -ne 2 ]
 then
-    echo "usage: new_analysis <name of analysis> <type of analysis carrier>"
+    echo "usage: newanalysis <name of analysis> <type of analysis carrier>"
     exit 1
 fi
 
