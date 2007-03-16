@@ -13,6 +13,8 @@
 
 #include "StatementAttributeTraversal.h"
 
+#include "ast_support_funcs.h"
+
 #define doit(analysis) xdoit(analysis)
 #define xdoit(analysis) analysis##_doit
 
@@ -31,9 +33,8 @@
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject* root,char* output,bool noresult);
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt);
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt);
-carrier_type_o(CARRIER_TYPE) get_statement_pre_info(DFI_STORE store, SgStatement *stmt);
-carrier_type_o(CARRIER_TYPE) get_statement_post_info(DFI_STORE store, SgStatement *stmt);
-carrier_type_o(CARRIER_TYPE) select_info(DFI_STORE store, SgStatement *stmt, std::string attrName);
+void* get_statement_pre_info(DFI_STORE store, SgStatement *stmt);
+void* get_statement_post_info(DFI_STORE store, SgStatement *stmt);
 
 template <typename DFI_STORE_TYPE>
 class PagDfiTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE> {
