@@ -27,30 +27,35 @@ std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt) {
 					  ));
 }
 
-carrier_type_o(CARRIER_TYPE) 
-select_info(DFI_STORE store, SgStatement *stmt, std::string attrName) {
-  StatementAttribute* stmtAttr = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));
-  BasicBlock* block=stmtAttr->get_bb();
-  int pos=stmtAttr->get_pos();
-  switch (pos) {
-  case POS_PRE:
-    return dfi_get_pre_info(store, block->id);
-  case POS_POST:
-    return dfi_get_post_info_all(store, block->id);
-  }
-  return NULL;
+void* get_statement_pre_info(DFI_STORE store, SgStatement *stmt)
+{
+    StatementAttribute *start
+        = (StatementAttribute *) stmt->getAttribute("PAG statement start");
+    BasicBlock *startblock = start->get_bb();
+    switch (start->get_pos())
+    {
+    case POS_PRE:
+        return dfi_get_pre_info(store, startblock->id);
+    case POS_POST:
+        return dfi_get_post_info_all(store, startblock->id);
+    }
+    return NULL;
 }
 
-carrier_type_o(CARRIER_TYPE) 
-get_statement_pre_info(DFI_STORE store, SgStatement *stmt)
-{
-  return select_info(store, stmt, "PAG statement start");
-}
 
-carrier_type_o(CARRIER_TYPE) 
-get_statement_post_info(DFI_STORE store, SgStatement *stmt)
+void* get_statement_post_info(DFI_STORE store, SgStatement *stmt)
 {
-  return select_info(store, stmt, "PAG statement end");
+    StatementAttribute *end
+        = (StatementAttribute *) stmt->getAttribute("PAG statement end");
+    BasicBlock *endblock = end->get_bb();
+    switch (end->get_pos())
+    {
+    case POS_PRE:
+        return dfi_get_pre_info(store, endblock->id);
+    case POS_POST:
+        return dfi_get_post_info_all(store, endblock->id);
+    }
+    return NULL;
 }
 
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,char* output, bool noresult)
