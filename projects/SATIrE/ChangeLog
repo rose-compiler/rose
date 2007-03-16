@@ -1,10 +1,8 @@
 V0.7.x 2007-xx-xx
 
+Fixed src/analyzer/astaccess/Makefile (to set variable PIG)
 Added ast_support_funcs.h (with new headers for support functions)
       main.h-template is modified to include above file
-Added analysis: experimental/shape2
-Added analysis: experimental/nielson
-
 
 V0.7.0 2007-03-09
 initial release
