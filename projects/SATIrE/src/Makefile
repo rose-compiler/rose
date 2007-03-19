@@ -35,6 +35,7 @@ install: all
 
 	mkdir -p $(INSTALL_BIN)
 	cp -p $(SATIRE_SRC_DIR)/analyzer/skeletons/newanalysis $(INSTALL_BIN)
+	cp -p $(SATIRE_SRC_DIR)/analyzer/skeletons/undonewanalysis $(INSTALL_BIN)
 
 clean:
 	$(MAKE) clean -C grato

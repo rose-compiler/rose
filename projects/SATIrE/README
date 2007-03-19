@@ -54,7 +54,24 @@ SATIrE 0.7.0 was tested with
     Now you are ready to specify, compile, and run an anlysis.
 
 ------------------------------------------------------------
-(2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
+(2) RUNNING AN EXAMPLE ANALYSIS THAT COMES WITH SATIrE
+------------------------------------------------------------
+
+ a) Ensure that the following environment variables are set:
+    ROSE_INCLUDE (the include directory of installed ROSE)
+    ROSE_LIB (the lib directory of installed ROSE)
+    PAGDIR (the directory of installed PAG)
+
+ b) We chose the example sl1rd:
+    [let's assume that you unpacked SATIrE-0.7.0.tgz in your home directory]
+    cd SATORE-0.7.0/examples [go to the examples directory]
+    make                     [generate all required files in each analysis-dir]
+    cd sl1rd                 [go to the direcotry of analysis sl1rd]
+    make                     [compile the analyzer sl1rd]
+    sl1rd tests/rdtest1.C    [run the analyzer with test file rdtest1.C]
+
+------------------------------------------------------------
+(3) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
 ------------------------------------------------------------
 
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
@@ -68,7 +85,7 @@ SATIrE 0.7.0 was tested with
 
  c) We chose the example sl1rd:
     [let's assume that you unpacked SATIrE-0.7.0.tgz in your home directory]
-
+    make clean -C ~/SATIrE-0.7.0/examples [remove all generated files]
     cp -r ~/SATIrE-0.7.0/examples/sl1rd . [copy all files and test files to your directory]
     newanalysis sl1rd VarLabPairSetLifted [generate and configure all required files]
     cd sl1rd                              [change to the directory]
@@ -79,7 +96,7 @@ SATIrE 0.7.0 was tested with
     
 
 ------------------------------------------------------------
-(3) CRAFTING A NEW ANALYSIS
+(4) CRAFTING A NEW ANALYSIS
 ------------------------------------------------------------
 
  a) Ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
@@ -94,7 +111,8 @@ SATIrE 0.7.0 was tested with
  c) Run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
     name <ANALYSIS_NAME> with a carrier type <CARRIER_TYPE>. This command
     creates a directory of name <ANALYSIS_NAME> and copies&configers several
-    files into that directory.
+    files into that directory. (you can rerun newanalysis if you have not
+    decided on the name of the carrier-type yet later again)
 
  d) cd <ANALYSIS_NAME>
 
@@ -102,8 +120,8 @@ SATIrE 0.7.0 was tested with
 
  f) Run 'make' to compile your analyzer
 
- g) Run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is
-    some C/C++ file and the executable analyzer has the name <ANALYSIS_NAME>.
+ g) Run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is a
+    C/C++ source file and the executable analyzer has the name <ANALYSIS_NAME>.
     This will generate a file '<ANALYSIS_NAME>_result.gdl' which can be
     viewed with the tool aiSee.
 
@@ -113,7 +131,7 @@ SATIrE 0.7.0 was tested with
 
 
 ------------------------------------------------------------
-(4) FURTHER INFORMATION & CONTACT
+(5) FURTHER INFORMATION & CONTACT
 ------------------------------------------------------------
   
  a) Documentation that comes with the distribution can be found

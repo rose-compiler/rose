@@ -33,3 +33,7 @@ clean:
 	rm -rf $(ANALYSIS)-out/
 	rm -rf anim-out
 	rm -f a.out
+	rm -f rose_*
+
+check:
+	runtests
