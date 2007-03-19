@@ -10,9 +10,9 @@ is fully supported is the C/C++ infrastructure LLNL-ROSE.
 
 SATIrE 0.7.0 was tested with 
  - ROSE 0.8.8a (requires g++ 3.3-5.x)
- - PAG 0.9.7.843
- - bison 1.875d
+ - PAG 0.9.7.843d
  - flex 2.5.31
+ - bison 1.875d
  - g++ 3.5.5
 
 ------------------------------------------------------------
