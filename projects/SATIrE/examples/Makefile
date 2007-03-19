@@ -27,12 +27,12 @@ check:
 	$(MAKE) check -C constprop
 
 clean:
-	$(MAKE) clean -C sl1rd
-	$(MAKE) clean -C sl2rd
-	$(MAKE) clean -C constprop
-	$(UNDONEWANALYSIS) sl1rd
-	$(UNDONEWANALYSIS) sl2rd
-	$(UNDONEWANALYSIS) constprop
+	if [ -e "sl1rd/Makefile" ]; then $(MAKE) clean -C sl1rd; fi
+	if [ -e "sl2rd/Makefile" ]; then $(MAKE) clean -C sl2rd; fi
+	if [ -e "constprop/Makefile" ]; then $(MAKE) clean -C constprop; fi
+	if [ -e $(UNDONEWANALYSIS) ]; then $(UNDONEWANALYSIS) sl1rd; fi
+	if [ -e $(UNDONEWANALYSIS) ]; then $(UNDONEWANALYSIS) sl2rd; fi
+	if [ -e $(UNDONEWANALYSIS) ]; then $(UNDONEWANALYSIS) constprop; fi
 	rm -rf $(EXAMPLE_INSTALL_DIR)
 
 # we create a local install dir in 'examples' to allow using examples

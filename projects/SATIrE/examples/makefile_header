@@ -1,5 +1,0 @@
-SATIREMAINDIR = ../../../../src
-SATIRE_LIB = $(SATIREMAINDIR)/analyzer/
-# we deliberately do not use "-I" for the first dir because a libname is
-# expected in the gerated include file
-SATIRE_INCLUDE = $(SATIREMAINDIR)/analyzer/commandlineinterface -I $(SATIREMAINDIR)/analyzer/astaccess -I $(SATIREMAINDIR)/analyzer/icfgbuilder -I $(SATIREMAINDIR)/analyzer/annotation

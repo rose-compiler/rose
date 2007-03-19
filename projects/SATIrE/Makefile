@@ -2,7 +2,7 @@ DIST=SATIrE-0.7.0
 
 all:
 	$(MAKE) -C src
-	$(MAKE) -C examples
+	$(MAKE) EXAMPLE_INSTALL_PATH=$(PWD)/examples -C examples
 
 docs: handwritten-docs doxygen-docs
 
@@ -25,12 +25,12 @@ install:
 clean:
 	$(MAKE) clean -C docs
 	$(MAKE) clean -C src
-	$(MAKE) clean -C examples
+	$(MAKE) EXAMPLE_INSTALL_PATH=$(PWD)/examples clean -C examples
 	rm -rf $(DIST)
 
 dist:
 	$(MAKE) clean -C src
-	$(MAKE) clean -C examples
+	$(MAKE) EXAMPLE_INSTALL_PATH=$(PWD)/examples clean -C examples
 	$(MAKE) handwritten-docs -C .
 	rm -rf $(DIST)
 	mkdir -p $(DIST)
@@ -38,8 +38,6 @@ dist:
 	cp -rp examples $(DIST)
 	mkdir $(DIST)/docs
 	cp -rp docs/*.pdf $(DIST)/docs
-	rm $(DIST)/examples/adapt_makefile
-	rm $(DIST)/examples/makefile_header
 	rm -rf $(DIST)/examples/sl2rd/tools
 	rm -rf $(DIST)/examples/sl2rd/tests/costa
 	rm -rf $(DIST)/src/experimental
