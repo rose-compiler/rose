@@ -42,10 +42,10 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/
-	rm -rf shapeanim
+	rm -rf anim-out
 
 check:  $(ANALYSIS)
-	mkdir -p shapeanim
+	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/reverse1.C
 	$(ANALYSIS) $(TESTDIR)/reverse2.C
 	$(ANALYSIS) $(TESTDIR)/artificialListCreation.C
@@ -70,5 +70,5 @@ check:  $(ANALYSIS)
 	$(ANALYSIS) -I$(TESTDIR)/wcettests $(TESTDIR)/wcettests/bubble.c
 
 fastcheck: $(ANALYSIS)
-	mkdir -p shapeanim
+	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/stack1.C

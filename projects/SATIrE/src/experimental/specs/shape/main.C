@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   debug_stat=1; // 1 or 2 for debugging, 2 means more detailed stats
   verbose=0; // prints PAG-info during analysis (see section 14.3.3.1 in User Manual)
 
-  animation="shapeanim";
+  animation="anim-out";
     SgProject *root = frontend(argc, argv);
     AstTests::runAllTests(root);
     std::cout << "collecting functions... ";
