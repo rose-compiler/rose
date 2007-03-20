@@ -6,9 +6,6 @@ int main(int argc, char **argv)
   CommandLineParser clp;
   AnalyzerOptions opt=clp.parse(argc,argv);
 
-  /* use retfunc for combining information from local and return edge */
-  global_retfunc = 1;
-
   /* set the PAG options as specified on the command line */
   setPagOptions(opt);
   
@@ -41,7 +38,7 @@ int main(int argc, char **argv)
   if(opt.analysisResultsSourceOutput()) {
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
     ca.traverseInputFiles(ast_root, preorder);
-    backend(ast_root);
+    ast_root->unparse();
   }
 
   // experimental: force dot output
