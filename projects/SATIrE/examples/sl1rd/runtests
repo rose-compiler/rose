@@ -1,0 +1,3 @@
+sl1rd tests/rdtest1.C
+sl1rd --callstringlength 1 tests/rdtest2.C
+sl1rd --sourceoutput tests/rdtest3.C

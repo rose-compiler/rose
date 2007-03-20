@@ -1,0 +1,2 @@
+./constprop tests/classes2.C
+./constprop tests/blocks.c

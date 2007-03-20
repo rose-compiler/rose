@@ -1,13 +1,12 @@
 all:
 	$(MAKE) -C src
+	$(MAKE) EXAMPLE_INSTALL_PATH=$(PWD)/examples -C examples
 
-docs: doxygen-docs
-
-doxygen-docs:
-	$(MAKE) docs -C src/grato
+docs:
 
 check:
 	$(MAKE) check -C src
+	$(MAKE) check -C examples
 	@echo "-----------------"
 	@echo "All checks passed"
 	@echo "-----------------"
@@ -16,6 +15,6 @@ install:
 	$(MAKE) install -C src
 
 clean:
-	$(MAKE) clean -C docs
 	$(MAKE) clean -C src
+	$(MAKE) EXAMPLE_INSTALL_PATH=$(PWD)/examples clean -C examples
 	rm -rf dist
