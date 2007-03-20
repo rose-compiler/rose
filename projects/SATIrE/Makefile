@@ -43,7 +43,6 @@ dist:
 	rm -rf $(DIST)/src/experimental
 	cp Makefile_dist $(DIST)/Makefile
 	cp -p README $(DIST)
-	cp -p KNOWN_BUGS $(DIST)
 	cp -p LICENSE $(DIST)
 	rm -f $(DIST)/*~
 	rm -rf $(DIST)/CVS
