@@ -26,6 +26,7 @@ init      : bot
 init_start: lift((({},{}),{}))
 equal     : eq
 combine   : comb
+retfunc   : comb
 widening  : w
 
 
