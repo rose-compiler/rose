@@ -29,20 +29,12 @@ extern int verbose;
 //extern "C" void *doit(ANALYSIS)(void *);
 
 extern "C" void gdl_create(char *, int);
-static int      edge = 0; // Martin's global variable
-
-int      stack_as_heap = 0; // global variable, used as option in analysis
-bool get_universal_attribute__stack_as_heap(void) {
-        return(bool_from_c(stack_as_heap));
-}
-
-
+static int      edge = 0; // global variable for setting edges on/off
 
 extern char* animation;
 
 int main(int argc, char **argv)
 {
-  std::cout << "stack_as_heap:" << stack_as_heap << std::endl;
   debug_stat=1; // 1 or 2 for debugging, 2 means more detailed stats
   verbose=0; // prints PAG-info during analysis (see section 14.3.3.1 in User Manual)
 

@@ -4,14 +4,13 @@
 
 TODO:
 testcase: stack1.C
-statement: a->next=cp; "looses" the sharing information on {}! create program with explicit assignments to investigate this effect
-
+statement: a->next=cp; 
+  "looses" the sharing information on {}! create program with explicit assignments to investigate this effect
 testcase: stack3.C
-bei 23:y->next=t wird die y->next Kante nicht nullifiziert. Dies ist noch nicht richtig!
+ see 23:y->next=t : edge y->next is not nullified
 */
 
 UNIVERSAL 
-stack_as_heap:  bool#
 
 GLOBAL
 max_symb   :  str#
@@ -35,15 +34,7 @@ TRANSFER
 
 ExprStatement(ExpressionRoot(e)),_: expression1(e,(@),0);
 
-DeclareStmt(VariableSymbol(c_var),type),_:
-  if(stack_as_heap) then
-    let x = val-aststring(c_var); in
-    let G0=drop(@); in
-    let G1=ttdeclare_x(x,G0); in
-    lift(G1)
-  else
-    @
-  endif;
+DeclareStmt(VariableSymbol(c_var),type),_: @;
 
 // argumentX := y
 // ArgumentAssignment(VariableSymbol(na_l),VarRefExp(na_r)),_:
@@ -180,11 +171,7 @@ ttdelete_var(info,var) =
  bot  => bot;
  info2 => 
    let G = drop(info2); in 
-     if(stack_as_heap) then
-       lift(tassign_x_null(address_of_name(var),ttassign_x_null(var,G)))
-     else
-       lift(tassign_x_null(var,G))
-     endif;
+       lift(tassign_x_null(var,G));
  endcase;
 
 
@@ -200,11 +187,7 @@ expression1(e,g,z) = case drop(g) of ((EV,ES),is_shared) as info
   AssignOp(VarRefExp(c_x),AddressOfOp(VarRefExp(c_y))) =>
   let x = val-aststring(c_x); in
   let y = val-aststring(c_y); in
-  if(stack_as_heap) then
-    lift(tassign_xsel_y(address_of_name(x),stack_to_heap(x),address_of_name(y),info))
-  else
-    error("Address Operator not supported in this mode. Use --stack_as_heap option.")
-  endif;
+    error("Address Operator not supported. Normalize input program before running the analysis.");
 
   // x=*y;
   AssignOp(VarRefExp(c_x),PointerDerefExp(VarRefExp(c_y))) =>
@@ -312,14 +295,7 @@ endcase;
 
 // decl x;
 ttdeclare_x::str,dfii->dfii;
-ttdeclare_x(x,G) =
-  if(stack_as_heap) then
-    let xaddr = address_of_name(x); in
-    let G1=tassign_x_new(xaddr,G); in
-    G1
-  else
-    G
-  endif;
+ttdeclare_x(x,G) = G;
 
 // undecl x1,x2, ...., xn
 ttundeclare_vars :: *VariableSymbolNT,dfii -> dfii;
@@ -328,86 +304,31 @@ ttundeclare_vars(vars,G) =
 
 // x = null;
 ttassign_x_null::str,dfii -> dfii;
-ttassign_x_null(x,G) =
-if(stack_as_heap) then
-  tassign_xsel_null(address_of_name(x),stack_to_heap(x),G)
-else
-  tassign_x_null(x,G)
-endif;
+ttassign_x_null(x,G) = tassign_x_null(x,G);
 
 // x.sel = null;
 ttassign_xsel_null::str,str,dfii -> dfii;
-ttassign_xsel_null(x,selp,G) =
-if(stack_as_heap) then
-  tassign_xselsel_null(address_of_name(x),stack_to_heap(x),selp,G)
-else
-  tassign_xsel_null(x,selp,G)
-endif;
+ttassign_xsel_null(x,selp,G) = tassign_xsel_null(x,selp,G);
 
 // x.sel.sel = null;
 ttassign_xselsel_null::str,str,str,dfii -> dfii;
-ttassign_xselsel_null(x,sel1,sel2,G) =
-if(stack_as_heap) then
-  error("x->sel->sel not supported in 'stack_as_heap' mode.")
-else
-  tassign_xselsel_null(x,sel1,sel2,G)
-endif;
-
+ttassign_xselsel_null(x,sel1,sel2,G) = tassign_xselsel_null(x,sel1,sel2,G);
 
 // x = y;
 ttassign_x_y::str,str,dfii->dfii;
-ttassign_x_y(x,y,G) =
-if(stack_as_heap) then
-  let xaddr=address_of_name(x); in
-  let yaddr=address_of_name(y); in
-  tassign_xsel_ysel(xaddr,stack_to_heap(x),yaddr,stack_to_heap(y),G)
-else
-  tassign_x_y(x,y,G)
-endif;
+ttassign_x_y(x,y,G) = tassign_x_y(x,y,G);
 
 // x.sel = y;
 ttassign_xsel_y::str,str,str,dfii->dfii;
-ttassign_xsel_y(x,selp,y,G) =
-  if(stack_as_heap) then
-    let t=tmpvar(address_of_name(x).stack_to_heap(x)); in
-    let G1=tassign_x_ysel(t,address_of_name(x),stack_to_heap(x),G); in
-    let G2=tassign_xsel_ysel(t,selp,address_of_name(y),stack_to_heap(y),G1); in
-    let G3=tundeclare_x(t,G2); in
-        G3
-  else
-    tassign_xsel_y(x,selp,y,G)
-  endif;
+ttassign_xsel_y(x,selp,y,G) = tassign_xsel_y(x,selp,y,G);
 
 // x = y.sel;
 ttassign_x_ysel::str,str,str,dfii -> dfii;
-ttassign_x_ysel(x,y,selp,G) =
-  if(stack_as_heap) then
-    let t1=tmpvar(address_of_name(y).stack_to_heap(y)); in
-    let t2="_$$67"; in
-    let G1=tassign_x_ysel(t1,address_of_name(y),stack_to_heap(y),G); in
-    let G2=tassign_x_ysel(t2,t1,selp,G1); in
-    let G3=tassign_xsel_y(address_of_name(x),stack_to_heap(x),t2,G2); in
-    let G4=tundeclare_x(t1,G3); in
-    let G5=tundeclare_x(t2,G4); in
-    G5
-  else
-    tassign_x_ysel(x,y,selp,G)
-  endif;
+ttassign_x_ysel(x,y,selp,G) = tassign_x_ysel(x,y,selp,G);
 
 // x = new;
 ttassign_x_new::str,dfii->dfii;
-ttassign_x_new(x,G) =
-  if(stack_as_heap) then
-    if(is_temp(x)) then
-      // model effect of declaration of a temporary
-      let G1=ttdeclare_x(x,G); in
-      tassign_xsel_new(address_of_name(x),stack_to_heap(x),G1)
-    else
-      tassign_x_new(x,G)
-    endif
-  else
-    tassign_x_new(x,G)
-  endif;
+ttassign_x_new(x,G) = tassign_x_new(x,G);
 
 // x.sel = new;
 ttassign_xsel_new::str,str,dfii->dfii;
