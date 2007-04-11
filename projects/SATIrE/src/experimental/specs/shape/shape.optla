@@ -89,8 +89,8 @@ FunctionExit(cfunctionName,params), _:
   else  
 */
 /*
-ERROR: verwendung von konvertierten Werten von val-aststring von cfunctionName fuehrt zu 
-       seg-fault
+ERROR: use of converted values of val-aststringof cfunctionName causes seg-fault
+FIXED: yes (code not updated yet)
     if(val-aststring(cfunctionName)="List") then
       kill_vars(@, params)
     else
@@ -696,22 +696,9 @@ binary_get_right_child :: Expression -> Expression;
 
 // ----------------------------------------------------------------------
 
-is_constructor::str->bool;
-is_constructor(name) =
-  if(name="List") then
-    true
-  else
-    false
-  endif
-;
+// not implemented yet. should become a support function
+//is_constructor(name) = 
 
-address_of_name::str->str;
-address_of_name(varName) =
-  "&".varName;
-
-stack_to_heap::str->str;
-stack_to_heap(varName) =
-  "varptr";
 
 tmpvar::str->str;
 tmpvar(n) = "_$".n;
