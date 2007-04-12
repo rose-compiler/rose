@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: CFGTraversal.C,v 1.4 2007-04-12 00:42:00 pr009 Exp $
 
 #include <iostream>
 #include <string.h>
@@ -501,6 +501,9 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 
                 new_block = NULL;
                 after = et.get_after();
+
+                (*i)->addNewAttribute("PAG statement head",
+                    new StatementAttribute(if_block, POS_POST));
             }
             break;
         case V_SgForStatement:
@@ -697,6 +700,9 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 
                 new_block = NULL;
                 after = init_block_after;
+
+                (*i)->addNewAttribute("PAG statement head",
+                    new StatementAttribute(for_block, POS_POST));
             }
             break;
         case V_SgWhileStmt:
@@ -755,6 +761,9 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
 
                 new_block = NULL;
                 after = et.get_after();
+
+                (*i)->addNewAttribute("PAG statement head",
+                    new StatementAttribute(while_block, POS_POST));
             }
             break;
         case V_SgDoWhileStmt:
@@ -805,6 +814,9 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
 
                 new_block = NULL;
                 after = body;
+
+                (*i)->addNewAttribute("PAG statement head",
+                    new StatementAttribute(dowhile_block, POS_POST));
             }
             break;
         case V_SgBreakStmt:
@@ -900,14 +912,14 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
                 BlockList *body
                     = do_switch_body(switchs->get_body(), after,
                             continue_target);
-                BlockList::const_iterator i;
+                BlockList::const_iterator bli;
                 bool default_case = false;
-                for (i = body->begin(); i != body->end(); ++i)
+                for (bli = body->begin(); bli != body->end(); ++bli)
                 {
-                    if (isSgDefaultOptionStmt((*i)->statements[0])
-                            || isSgCaseOptionStmt((*i)->statements[0]))
-                        add_link(switch_block, *i, NORMAL_EDGE);
-                    if (isSgDefaultOptionStmt((*i)->statements[0]))
+                    if (isSgDefaultOptionStmt((*bli)->statements[0])
+                            || isSgCaseOptionStmt((*bli)->statements[0]))
+                        add_link(switch_block, *bli, NORMAL_EDGE);
+                    if (isSgDefaultOptionStmt((*bli)->statements[0]))
                         default_case = true;
                 }
                 if (!default_case)
@@ -922,6 +934,9 @@ BasicBlock *CFGTraversal::transform_block(SgBasicBlock *block,
 
                 new_block = NULL; //switch_block;
                 after = et.get_after(); //switch_block;
+
+                (*i)->addNewAttribute("PAG statement head",
+                    new StatementAttribute(switch_block, POS_POST));
             }
             break;
         case V_SgBasicBlock:
