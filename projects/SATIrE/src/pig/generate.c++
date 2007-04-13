@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: generate.c++,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: generate.c++,v 1.3 2007-04-13 17:28:57 pr009 Exp $
 
 #include <fstream>
 #include <vector>
@@ -141,7 +141,7 @@ void printMatches(std::string &type, std::string &constructor,
     std::string ftype = ftype_;
     std::string basetype = ftype;
     /* whoa, what's this? comment! */
-    basetype.erase(0, 5);
+    // basetype.erase(0, 5);
 
     /* iterate over all rules defined in the pig file */
     std::vector<std::vector<RuleDef *> *>::iterator pos = rules.begin();
@@ -226,11 +226,23 @@ void printMatches(std::string &type, std::string &constructor,
                          * Write the macro invocation into the header
                          * file where the preprocessor turns it into the
                          * real macro definition. */
+                        /* Access functions for the same list type
+                         * may be generated multiple times for
+                         * multiple occurrences; therefore surround
+                         * such definitions with preprocessor
+                         * guards. */
+                        if (islist)
+                            h << "#ifndef PIG_LIST_" << ftype << "_"
+                                << head->first->get_rulename() << std::endl
+                                << "#define PIG_LIST_" << ftype << "_"
+                                << head->first->get_rulename() << std::endl;
                         h << macroname(head->first->get_rulename(), rule)
                             << '(' << head->first->get_nodename() << ", "
                             << type << ", " << constructor << ", " << constri
                             << ", " << field << ", " << fieldi << ", " << ftype
                             << ')' << std::endl;
+                        if (islist)
+                            h << "#endif" << std::endl;
                     }
                     else
                     {
@@ -246,6 +258,16 @@ void printMatches(std::string &type, std::string &constructor,
                             << type << ", " << constructor << ", " << constri
                             << ", " << field << ", " << fieldi << ", " << ftype
                             << ')' << std::endl;
+                        /* Access functions for the same list type
+                         * may be generated multiple times for
+                         * multiple occurrences; therefore surround
+                         * such definitions with preprocessor
+                         * guards. */
+                        if (islist)
+                            c << "#ifndef PIG_LIST_" << ftype << "_"
+                                << head->first->get_rulename() << std::endl
+                                << "#define PIG_LIST_" << ftype << "_"
+                                << head->first->get_rulename() << std::endl;
                         if (head->first->extern_c)
                             c << "PIG_EXTERN_C" << " ";
                         c << macroname(head->first->get_rulename(), rule)
@@ -253,6 +275,8 @@ void printMatches(std::string &type, std::string &constructor,
                             << type << ", " << constructor << ", " << constri
                             << ", " << field << ", " << fieldi << ", " << ftype
                             << ')' << std::endl;
+                        if (islist)
+                            c << "#endif" << std::endl;
                     }
                 }
                 first_match = (*posi);
