@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.c,v 1.4 2007-03-13 10:58:14 pr009 Exp $
+// $Id: pag_support.c,v 1.5 2007-04-14 13:47:16 pr009 Exp $
 
 #include <iostream>
 
@@ -50,6 +50,7 @@ const char *c_str_print(const void *s)
     return (const char *) s;
 }
 
+#if 0
 PIG_EXTERN_C
 int LIST_VariableSymbolNT_empty(void *l)
 {
@@ -67,6 +68,7 @@ void *LIST_VariableSymbolNT_tl(void *l)
 {
     return ((PigNodeList *) l)->tail();
 }
+#endif
 
 PIG_EXTERN_C
 char *basic_type_name(const void *p)

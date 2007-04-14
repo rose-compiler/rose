@@ -207,6 +207,40 @@ is:body(NODE, _, CONSTR, _, _, _, _)
     return isSg##CONSTR((SgNode *) NODE) != NULL;
 %}
 
+%%
+extern_c list empty:head(NODE, _, _, _, _, _, FTYPE)
+%{
+int LIST_##FTYPE##_empty(void *NODE)
+%}
+
+empty:body(NODE, _, _, _, _, _, _)
+%{
+    return ((PigNodeList *) NODE)->empty();
+%}
+
+%%
+extern_c list hd:head(NODE, _, _, _, _, _, FTYPE)
+%{
+void *LIST_##FTYPE##_hd(void *NODE)
+%}
+
+hd:body(NODE, _, _, _, _, _, _)
+%{
+    return ((PigNodeList *) NODE)->head();
+%}
+
+%%
+extern_c list tl:head(NODE, _, _, _, _, _, FTYPE)
+%{
+void *LIST_##FTYPE##_tl(void *NODE)
+%}
+
+tl:body(NODE, _, _, _, _, _, _)
+%{
+    return ((PigNodeList *) NODE)->tail();
+%}
+
+
 %{
 #include "pag_support.h"
 
