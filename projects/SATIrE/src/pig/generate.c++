@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: generate.c++,v 1.3 2007-04-13 17:28:57 pr009 Exp $
+// $Id: generate.c++,v 1.4 2007-04-14 13:48:33 pr009 Exp $
 
 #include <fstream>
 #include <vector>
@@ -231,7 +231,7 @@ void printMatches(std::string &type, std::string &constructor,
                          * multiple occurrences; therefore surround
                          * such definitions with preprocessor
                          * guards. */
-                        if (islist)
+                        if (head->first->islist)
                             h << "#ifndef PIG_LIST_" << ftype << "_"
                                 << head->first->get_rulename() << std::endl
                                 << "#define PIG_LIST_" << ftype << "_"
@@ -241,7 +241,7 @@ void printMatches(std::string &type, std::string &constructor,
                             << type << ", " << constructor << ", " << constri
                             << ", " << field << ", " << fieldi << ", " << ftype
                             << ')' << std::endl;
-                        if (islist)
+                        if (head->first->islist)
                             h << "#endif" << std::endl;
                     }
                     else
@@ -263,7 +263,7 @@ void printMatches(std::string &type, std::string &constructor,
                          * multiple occurrences; therefore surround
                          * such definitions with preprocessor
                          * guards. */
-                        if (islist)
+                        if (head->first->islist)
                             c << "#ifndef PIG_LIST_" << ftype << "_"
                                 << head->first->get_rulename() << std::endl
                                 << "#define PIG_LIST_" << ftype << "_"
@@ -275,7 +275,7 @@ void printMatches(std::string &type, std::string &constructor,
                             << type << ", " << constructor << ", " << constri
                             << ", " << field << ", " << fieldi << ", " << ftype
                             << ')' << std::endl;
-                        if (islist)
+                        if (head->first->islist)
                             c << "#endif" << std::endl;
                     }
                 }
