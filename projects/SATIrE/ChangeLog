@@ -1,7 +1,9 @@
 V0.7.2 2007-05-10
+
 * Added support for syntactic lists in PAG specifications
 * Changed --prefix=syn to -Psyn in grato/Makefile
-
+* Fixed problem with file "other.h" (added to src/analyzer/astaccess)
+	
 * Tested with:
   - ROSE 0.8.8a (requires g++ 3.3-5.x)
   - PAG 0.9.7.843d
@@ -9,6 +11,7 @@ V0.7.2 2007-05-10
   - bison 1.875d
   - g++ 3.5.5
 	
+
 V0.7.1 2007-03-20
 
 * Changed main.C-template to not compile generated C/C++ files
@@ -24,6 +27,7 @@ V0.7.1 2007-03-20
 * Fixed src/analyzer/astaccess/Makefile (to set variable PIG)
 * Added ast_support_funcs.h (with new headers for support functions)
         main.h-template was modified to include above file
+
 * Tested with:
   - ROSE 0.8.8a (requires g++ 3.3-5.x)
   - PAG 0.9.7.843d
@@ -31,8 +35,11 @@ V0.7.1 2007-03-20
   - bison 1.875d
   - g++ 3.5.5
 	
+
 V0.7.0 2007-03-09
+
 * Initial release
+
 * Tested with:
   - ROSE 0.8.8a (requires g++ 3.3-5.x)
   - PAG 0.9.7.843d
