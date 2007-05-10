@@ -1,4 +1,4 @@
-V0.7.2 2007-05-xx
+V0.7.2 2007-05-10
 * Added support for syntactic lists in PAG specifications
 * Changed --prefix=syn to -Psyn in grato/Makefile
 
