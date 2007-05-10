@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: AnalyzerOptions.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.4 2007-05-10 20:37:44 markus Exp $
 
 #include "AnalyzerOptions.h"
 
@@ -49,7 +49,6 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --pagverbose                  output analyzer debug info on stdout\n"
     "   --textoutput                  output the analysis results for each statement on stdout\n"
     "   --sourceoutput                generate source file with annotated analysis results for each statement\n"
-    "                                 (only useful with callstringlength 0)\n"
     "   --help                        output this help message on stdout\n"
     "\n"
     " GDL output options:\n"

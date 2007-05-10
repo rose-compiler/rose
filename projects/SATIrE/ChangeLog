@@ -1,3 +1,14 @@
+V0.7.2 2007-05-xx
+* Added support for syntactic lists in PAG specifications
+* Changed --prefix=syn to -Psyn in grato/Makefile
+
+* Tested with:
+  - ROSE 0.8.8a (requires g++ 3.3-5.x)
+  - PAG 0.9.7.843d
+  - flex 2.5.31
+  - bison 1.875d
+  - g++ 3.5.5
+	
 V0.7.1 2007-03-20
 
 * Changed main.C-template to not compile generated C/C++ files
@@ -9,7 +20,7 @@ V0.7.1 2007-03-20
 	directory examples all required files are generated and after
 	'make clean' all generated files are removed. Thus, the examples
 	can be run within the distribution package or outside after
-	copying one of dirtories (with files *.set, *.optla, runtests)
+	copying one of the directories (with files *.set, *.optla, runtests)
 * Fixed src/analyzer/astaccess/Makefile (to set variable PIG)
 * Added ast_support_funcs.h (with new headers for support functions)
         main.h-template was modified to include above file

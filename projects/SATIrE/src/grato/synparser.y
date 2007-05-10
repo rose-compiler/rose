@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: synparser.y,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: synparser.y,v 1.3 2007-05-10 20:37:45 markus Exp $
 
 /**************************************************************
 * Author: Markus Schordan, 2005                               *
@@ -45,11 +45,11 @@ GEquationList* equList=0;
 %token <cstring> IDENT 
 %token START SYNTAX EQUAL2
 
-%start start
+%start mystart
 
 %%
 
-start		: SYNTAX
+mystart		: SYNTAX
                   start_section 
                   productions_section 
 

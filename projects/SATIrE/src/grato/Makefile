@@ -37,7 +37,7 @@ $(SYNPARSER).H $(SYNPARSER).C: $(SYNPARSER).y parser_decls.h
 	${YACC} -g -d --name-prefix=syn --file-prefix=syn -o $(SYNPARSER).C $(SYNPARSER).y
 
 $(SYNSCANNER).C: $(SYNSCANNER).l $(SYNPARSER).H
-	flex --prefix=syn -o$(SYNSCANNER).C $(SYNSCANNER).l 
+	$(LEX) -Psyn -o$(SYNSCANNER).C $(SYNSCANNER).l 
 
 #$(GRATO):	$(LIBSOURCEFILES) $(HEADERFILES) $(SOURCEFILES) $(GRATO).C
 #	$(CC) $(SOURCEFILES) $(LIBSOURCEFILES) $(GRATO).C -lfl -o $(GRATO) 
