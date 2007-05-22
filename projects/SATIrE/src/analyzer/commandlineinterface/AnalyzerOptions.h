@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: AnalyzerOptions.h,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: AnalyzerOptions.h,v 1.4 2007-05-22 20:25:22 markus Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -11,6 +11,7 @@
 
 class AnalyzerOptions {
 public:
+  enum Language {Language_C89,Language_C99,Language_CPP};
   AnalyzerOptions();
   std::string toString();
   std::string getAnimationDirectoryName();
@@ -101,6 +102,8 @@ public:
   int getCommandLineNum(); // is computing according to appendCommandLine
 
   bool retFuncUsed();
+  void setLanguage(Language lang);
+  Language getLanguage();
 
 private:
   void setCommandLineNum(int);
@@ -123,6 +126,8 @@ private:
 
   std::list<std::string> _commandLine;
   int _commandLineNum;
+
+  Language _language;
 };
 
 #endif

@@ -1,4 +1,6 @@
 ./sl2rd tests/rdtest3.C
+./sl2rd --language c89 tests/rdtest9a_c89.c
+./sl2rd --language c99 tests/rdtest9a_c89.c
 ./sl2rd --callstringlength 1 tests/rdtest4.C
 ./sl2rd --textoutput tests/rdtest1.C
 ./sl2rd --sourceoutput tests/rdtest1.C

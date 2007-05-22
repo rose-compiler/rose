@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: AnalyzerOptions.C,v 1.4 2007-05-10 20:37:44 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.5 2007-05-22 20:25:22 markus Exp $
 
 #include "AnalyzerOptions.h"
 
@@ -30,7 +30,14 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   clearCommandLine();
   setCommandLineNum(0);
 
+  setLanguage(Language_CPP);
+
   std::string s=
+    "Frond End options:\n"
+    "   --language c++ [default]\n"
+    "   --language c99\n"
+    "   --language c89\n"
+    "\n"
     "Analysis options:\n"
     "   --callstringlength <num>     set callstring length to <num> [default:0]\n"
     "   --callstringinfinite         select infinite callstring (for non-resursive programs only)\n"
@@ -217,3 +224,6 @@ void AnalyzerOptions::addCommandLineNum(int cl) { _commandLineNum+=cl; }
 int AnalyzerOptions::getCommandLineNum() { return _commandLineNum; }
 
 bool AnalyzerOptions::retFuncUsed() { return true; }
+
+AnalyzerOptions::Language AnalyzerOptions::getLanguage() { return _language; }
+void AnalyzerOptions::setLanguage(AnalyzerOptions::Language language) { _language=language; }

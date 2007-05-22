@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CommandLineParser.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: CommandLineParser.C,v 1.4 2007-05-22 20:25:22 markus Exp $
 
 #include <config.h>
 
@@ -93,6 +93,20 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
     } else if (!strncmp(argv[i], "-I",2)) {
       /* include path option is passed to ROSE as is */
       cl.appendCommandLine(std::string(argv[i]));
+    } else if (!strcmp(argv[i], "--language")) {
+      //check for language
+      if(!strcmp(argv[i+1], "c++")) {
+	cl.setLanguage(AnalyzerOptions::Language_CPP);
+      } else if (!strcmp(argv[i+1], "c89")) {
+	std::cout << "c89 option recognized\n";
+	cl.setLanguage(AnalyzerOptions::Language_C89);
+      } else if (!strcmp(argv[i+1], "c99")) {
+	std::cout << "c99 option recognized\n";
+	cl.setLanguage(AnalyzerOptions::Language_C99);
+      } else {
+	failed(cl);
+      }
+      i++;
     } else {
       if(inName[0]==0) {
 	strcpy(inName, argv[i]);
@@ -105,6 +119,7 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
 	failed(cl);
       }
     }
+
   }
   
   // post-processing of parsed values
@@ -122,5 +137,16 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
   }
   cl.setInputFileName(inName);
 
+  /* extend command line with ROSE options for front end language selection */
+  switch(cl.getLanguage()) {
+  case AnalyzerOptions::Language_C89: cl.appendCommandLine(std::string("-rose:C_only")); break;
+  case AnalyzerOptions::Language_C99: cl.appendCommandLine(std::string("-rose:C99_only")); break;
+  case AnalyzerOptions::Language_CPP: /* default ROSE mode */ break;
+  default: {
+    std::cout << "UNKOWN LANGUAGE SELECTED: " << cl.getLanguage() << std::endl;
+    failed(cl);
+  }
+  };
+  
   return cl;
 }
