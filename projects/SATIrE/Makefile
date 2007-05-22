@@ -1,4 +1,4 @@
-DIST=SATIrE-0.7.2
+DIST=SATIrE-0.7.3
 
 all:
 	$(MAKE) -C src
