@@ -6,19 +6,19 @@ public:
 };
 
 int main() {
-  N *x, *u, *v, *n1;
+  N *nx, *nu, *nv, *n1;
 
-  u = new N;
+  nx = new N;
+  nu = new N;
+  nv = new N;
   n1 = new N;
-  u->sel1  = n1;
 
-  x = new N;
-  v = new N;
-  x->sel1 = u;
-  v->sel1 = u;
+  nx->sel1 = nu;
+  nv->sel1 = nu;
+  nu->sel1 = n1;
   
   //[x.sel:=nil] when #into <= 1
-  x->sel1 = NULL;
+  nx->sel1 = NULL;
 
   return 0;
 }

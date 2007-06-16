@@ -6,22 +6,23 @@ public:
 };
 
 int main() {
-  N *x, *y, *v, *w, *n0, *n1;
+  N *nx, *ny, *nv, *nw, *n0, *n1;
 
-  x = new N;
+  nx = new N;
+  ny = new N;
+  nv = new N;
+  nw = new N;
   n0 = new N;
   n1 = new N;
-  n0->sel1 = x;
-  x->sel1  = n1;
+  
+  n0->sel1 = nx;
+  nx->sel1 = n1;
 
-  v = new N;
-  w = new N;
-  y = new N;
-  v->sel1 = y;
-  y->sel2 = w;
+  nv->sel1 = ny;
+  ny->sel2 = nw;
   
   //[x:=y] where x != y
-  x = y;
+  nx = ny;
 
   return 0;
 }

@@ -2,30 +2,36 @@
 
 class N {
 public:
-  N *sel1,*sel2;
+  N *sel1,*sel2,*sel3;
 };
 
 int main() {
-  N *x, *y, *t, *v, *w, *n0, *n1;
+  N *nx, *ny, *nv, *nw, *n0, *n1, *na, *nb, *nc;
 
-  x = new N;
+  nx = new N;
   n0 = new N;
   n1 = new N;
-  n0->sel1 = x;
-  x->sel1  = n1;
+  n0->sel1 = nx;
+  nx->sel1 = n1;
 
-  t = new N;
-  v = new N;
-  w = new N;
-  y = new N;
-  y->sel1 = t;
-  t = NULL;
-  v->sel1 = y->sel1;
-  y->sel1->sel1 = y->sel1;
-  y->sel1->sel2 = w;
+  nv = new N;
+  nw = new N;
+  ny = new N;
+  na = new N;
+  nb = new N;
+  nc = new N;
+  ny->sel1 = na;
+  na->sel2 = nw;
+  
+  nv->sel1 = nb;
+  nc->sel3 = nc;
+
+  na = NULL;
+  nb = NULL;
+  nc = NULL;
   
   //[x:=y.sel] case 3
-  x = y->sel1;
+  nx = ny->sel1;
 
   return 0;
 }

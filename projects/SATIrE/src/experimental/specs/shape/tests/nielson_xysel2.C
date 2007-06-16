@@ -6,24 +6,24 @@ public:
 };
 
 int main() {
-  N *x, *y, *u, *v, *w, *n0, *n1;
+  N *nx, *ny, *nu, *nv, *nw, *n0, *n1;
 
-  x = new N;
+  nx = new N;
   n0 = new N;
   n1 = new N;
-  n0->sel1 = x;
-  x->sel1  = n1;
+  n0->sel1 = nx;
+  nx->sel1 = n1;
 
-  u = new N;
-  v = new N;
-  w = new N;
-  y = new N;
-  y->sel1 = u;
-  v->sel1 = u;
-  u->sel2 = w;
-  
+  nu = new N;
+  nv = new N;
+  nw = new N;
+  ny = new N;
+  ny->sel1 = nu;
+  nv->sel1 = nu;
+  nu->sel2 = nw;
+
   //[x:=y.sel] case 2
-  x = y->sel1;
+  nx = ny->sel1;
 
   return 0;
 }

@@ -6,16 +6,16 @@ public:
 };
 
 int main() {
-  N *x, *y, *u;
+  N *nx, *ny, *nu;
 
-  x = new N;
-  u = new N;
-  x->sel1 = u;
+  nx = new N;
+  nu = new N;
+  nx->sel1 = nu;
 
-  y = new N;
+  ny = new N;
   
   //[x.sel:=y] when #into <= 1
-  x->sel1 = y;
+  nx->sel1 = ny;
 
   return 0;
 }

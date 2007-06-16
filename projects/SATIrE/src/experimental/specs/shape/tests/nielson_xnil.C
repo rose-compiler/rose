@@ -6,23 +6,23 @@ public:
 };
 
 int main() {
-  N *x, *v, *w, *n0, *n1, *t;
+  N *n0, *nv, *nx, *nw, *t0, *t1;
 
   n0 = new N;
-  n1 = new N;
-  t  = new N;
-  n0->sel1 = t;
-  t->sel1  = n1;
-  t = NULL;
+  nv = new N;
+  nx = new N;
+  nw = new N;
+  t0 = new N;
+  t1 = new N;
 
-  v = new N;
-  w = new N;
-  x = new N;
-  v->sel1 = x;
-  x->sel2 = w;
-  
+  nv->sel1 = nx;
+  t0->sel1 = n0;
+  n0->sel1 = t1;
+  nx->sel2 = nw;
+  n0 = NULL;
+
   //[x:=nil]
-  x = NULL;
+  nx = NULL;
 
   return 0;
 }
