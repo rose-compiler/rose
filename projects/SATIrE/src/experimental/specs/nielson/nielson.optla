@@ -10,14 +10,14 @@ BLOCK
 label: snum#
 
 PROBLEM nielson
-  direction : forward
-  carrier   : dfi
-  init      : bot
-  init_start: lift({(({},{}),{})})
-  equal     : eq
-  combine   : comb
-  retfunc   : comb
-  widening  : w
+    direction : forward
+    carrier   : dfi
+    init      : bot
+    init_start: lift({(({},{}),{})})
+    equal     : eq
+    combine   : comb
+    retfunc   : comb
+    widening  : w
 
 TRANSFER
 
@@ -25,39 +25,39 @@ ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),@);
 
 ArgumentAssignment(VarRefExp(na_l),NewExp(_,_,_)),_:
 let
-  rx = val-aststring(na_l);
+    rx = val-aststring(na_l);
 in
-  lift(tassign_x_new(rx,drop(@)));
+    lift(tassign_x_new(rx,drop(@)));
 
 ArgumentAssignment(VarRefExp(na_l),VarRefExp(na_r)),_:
 let
-  rx = val-aststring(na_l);
-  ry = val-aststring(na_r);
+    rx = val-aststring(na_l);
+    ry = val-aststring(na_r);
 in
-  lift(tassign_x_y(rx,ry,drop(@)));
+    lift(tassign_x_y(rx,ry,drop(@)));
 
 ParamAssignment(VariableSymbol(na_l),VariableSymbol(param)),_:
 let
-  rx = val-aststring(na_l);
-  ry = val-aststring(param);
+    rx = val-aststring(na_l);
+    ry = val-aststring(param);
 in
-  delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
+    delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
 
 ReturnAssignment(VariableSymbol(na_l),VariableSymbol(na_r)),_:
 let
-  rx = val-aststring(na_l);
-  ry = val-aststring(na_r);
+    rx = val-aststring(na_l);
+    ry = val-aststring(na_r);
 in
-  let
+    let
     newinfo=lift(tassign_x_y(rx,ry,drop(@)));
-  in
+in
     delete_var(newinfo,ry);
 
 FunctionExit(functionName,params), _:
-  kill_vars(@, params);
+    kill_vars(@, params);
 
 UndeclareStmt(vars), _:
-  kill_vars(@, vars);
+    kill_vars(@, vars);
 
 _,_: @;
 
@@ -82,54 +82,39 @@ kill_vars(s, VariableSymbol(p)::ps) =
      delete_var(kill_vars(s, ps),val-aststring(p));
 
 delete_var::dfi,str->dfi;
-delete_var(info,var) = 
-  case info of
-   top  => top;
-   bot  => bot;
-   info2 => 
-     let G = drop(info2); in lift(tassign_x_null(var,G));
-  endcase;
-
-
+delete_var(g,var) = 
+    case g of
+        top  => top;
+        bot  => bot;
+        info => lift(tassign_x_null(var,drop(info)));
+    endcase;
 
 /* Author: Viktor Pavlu
    E-mail: e0425543@student.tuwien.ac.at
    Year  : 2006
 */
 
-// ---------------
-// trace functions
-// ---------------
-
 should_trace::str->bool;
-//should_trace("stmt") = true;                //source code statements
-//should_trace("stmt-graph") = true;          //source code statements and changes in shapegraph
-//should_trace("intermediate") = true;        //intermediate assignments for normalisation
-//should_trace("intermediate-graph") = true;  //intermediate assignments for normalisation and changes in shapegraph
+should_trace("stmt")  = false;    //source code statements
+should_trace("graph") = false;    //shape graph
+should_trace("norm")  = false;    //intermediate assignments for normalisation
+should_trace("lowl") =  false;    //lowest transfer functions
 should_trace(_) = false;
 
-trace_stmt :: str,str,Expression,Expression -> bool;
-trace_stmt(trace_category, label, lhs, rhs) = 
-  if should_trace(trace_category) then print("stmt:") print(label) print(" ") print(lhs) print(" = ") print(rhs) print("\n") true else false endif;
+trace_stmt :: str,Expression,Expression -> bool;
+trace_stmt(label, lhs, rhs) = if should_trace("stmt") then print("    ") print(lhs) print(" = ") print(rhs) print("\n") true else false endif;
 
-trace_assign :: str,str,str -> bool;
-trace_assign(trace_category, lhs, rhs) =
-  if should_trace(trace_category) then print ("  ") print(lhs) print(" = ") print(rhs) print ("\n") true else false endif;
+trace_assign :: str,str,ShapeGraphSet -> bool;
+trace_assign(lhs, rhs, sgs) = if should_trace("norm") then print ("        ") print(lhs) print(" = ") print(rhs) print (": ") print_graphs("        ",sgs) else false endif;
 
-trace_changes :: str,dfi,dfi,VarSet -> bool;
-trace_changes(trace_category, gs_before, gs_after, tmpvars) =
-  if should_trace(trace_category) then
-    case drop(gs_before) of gs0 =>
-    case drop(gs_after)  of gs1 =>
-    print("    graphs before = ") print(gs0) print ("\n")
-    print("    graphs after  = ") print(gs1) print ("\n")
-    print("    temps        += ") print(tmpvars)  print("\n")
-    true;
-    endcase;
-    endcase
-  else
-    false
-  endif;
+trace_transfer :: str,ShapeGraphSet -> bool;
+trace_transfer(label, gs) = if should_trace("lowl") then print_graphs("            ".label.": ", gs) else false endif;
+
+print_graphs :: str,ShapeGraphSet -> bool;
+print_graphs(label,gs) = {print_graph(label,g) !! g <-- gs} != {};
+
+print_graph :: str,ShapeGraph -> bool;
+print_graph(label,g) = print(label) print(g) print("\n") true;
 
 is_temp :: str -> bool;
 is_temp(s) = substr(s, 0, 0) = "$";
@@ -142,15 +127,16 @@ expression :: Expression,str,dfi -> dfi;
 expression(_,_,bot) = bot;
 expression(_,_,top) = top;
 expression(e,label,lifted_gs) = 
-  let result_gsv = normalise(e, label, (lifted_gs,{})); in
-  case result_gsv of (result_gs, tmpvars) =>
-    let debug0 = trace_changes("stmt-graph", lifted_gs, result_gs, tmpvars); in
-    if kill_norm_temps then 
-      kill_normalisation_temps(result_gs,tmpvars)
-    else
-      result_gs
-    endif;
-  endcase;
+    let result_gsv = normalise(e, label, (lifted_gs,{})); in
+    case result_gsv of (result_gs, tmpvars) =>
+        let g = if kill_norm_temps then 
+            kill_normalisation_temps(result_gs,tmpvars)
+        else
+            result_gs
+        endif; in
+            let dummy0 = if should_trace("graph") then print_graphs("    ",drop(g)) else false endif; in
+            g;
+    endcase;
 
 /* Author: Viktor Pavlu
    E-mail: e0425543@student.tuwien.ac.at
@@ -179,8 +165,8 @@ gen_normalisation_temp(label) = "$norm_".label."_";
 
 kill_normalisation_temps :: dfi, VarSet -> dfi;
 kill_normalisation_temps(s, varset) = let
-  varlist = [ x !! x <-- varset ]; in
-  kill_normalisation_temps1(s, varlist);
+    varlist = [ x !! x <-- varset ]; in
+    kill_normalisation_temps1(s, varlist);
 
 kill_normalisation_temps1 :: dfi, StrList -> dfi;
 kill_normalisation_temps1(s, []) = s;
@@ -199,18 +185,18 @@ max(a,b) = if a > b then a else b endif;
 
 expr_depth :: Expression -> snum;
 expr_depth(e) = case e of
-  ArrowExp(VarRefExp(_),VarRefExp(_)) => 0;
-  ArrowExp(child,_)                   => 1 + expr_depth(child);
-  DotExp(PointerDerefExp(child),_)    => 1 + expr_depth(child);
-  _                                   => 0;
+    ArrowExp(VarRefExp(_),VarRefExp(_)) => 0;
+    ArrowExp(child,_)                   => 1 + expr_depth(child);
+    DotExp(PointerDerefExp(child),_)    => 1 + expr_depth(child);
+    _                                   => 0;
 endcase;
 
 
 expr_is_complex :: Expression -> bool;
 expr_is_complex(e) = case e of
-  DotExp(PointerDerefExp(child),_) => true;
-  ArrowExp(child,_)                => true;
-  _                                => false;
+    DotExp(PointerDerefExp(child),_) => true;
+    ArrowExp(child,_)                => true;
+    _                                => false;
 endcase;
 
 /*
@@ -220,10 +206,10 @@ endcase;
 */
 expr_at :: Expression,snum -> Expression;
 expr_at(e,nesting_level) =
-  let
-    descending_steps = min(nesting_level, expr_depth(e));
-  in
-    rec_expr_at(e, descending_steps);
+    let
+        descending_steps = min(nesting_level, expr_depth(e));
+    in
+        rec_expr_at(e, descending_steps);
 
 rec_expr_at :: Expression,snum -> Expression;
 rec_expr_at(e,0) = e;
@@ -240,7 +226,7 @@ expr_innermost(e) = expr_at(e, expr_depth(e));
 normalise :: Expression,str,CarrierVarSetTuple -> CarrierVarSetTuple;
 normalise(e,label,g0) =
     case e  of AssignOp(lhs,rhs) =>
-        let debug0 = trace_stmt("stmt", label, lhs, rhs); in
+        let debug0 = trace_stmt(label, lhs, rhs); in
         let     tmp = gen_normalisation_temp(label); in
         let lhs_tmp = tmp."l";
             rhs_tmp = tmp."r"; in
@@ -254,215 +240,231 @@ normalise(e,label,g0) =
 rec_normalise :: Expression,snum,str,CarrierVarSetTuple -> CarrierVarSetTuple;
 rec_normalise(  _,          0,             _, gv) = gv;
 rec_normalise(lhs, lhs_cursor, tmpvar_prefix, gv) =
-  case gv of (lifted_g, tmpvars) =>
-  case drop(lifted_g) of g0 =>
-  let new_var = tmpvar_prefix . str(lhs_cursor - 1); in
-  let result_gv = case expr_at(lhs,lhs_cursor) of
-  
-      // <new_var> = <parent_var>.sel
-      DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
-      let
-          parent_var = tmpvar_prefix . str(lhs_cursor);
-          sel        = val-aststring(na_sel);
-      in
-          let g1 = tassign_x_ysel(new_var,parent_var,sel,g0); in
-          let debug0 = trace_assign("intermediate", new_var, parent_var.".".sel); in
-          let debug1 = trace_changes("intermediate-graph", lift(g0), lift(g1), {new_var}); in
-          (lift(g1),union(tmpvars,{new_var}));
-            
-      // <new_var> = x.sel
-      ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
-      let
-          x       = val-aststring(na_x);
-          sel     = val-aststring(na_sel);
-      in
-          let g1 = tassign_x_ysel(new_var,x,sel,g0); in
-          let debug0 = trace_assign("intermediate", new_var, x.".".sel); in
-          let debug1 = trace_changes("intermediate-graph", lift(g0), lift(g1), {new_var}); in
-          (lift(g1),union(tmpvars,{new_var}));
+    case gv of (lifted_g, tmpvars) =>
+    case drop(lifted_g) of g0 =>
+    let new_var = tmpvar_prefix . str(lhs_cursor - 1); in
+    let result_gv = case expr_at(lhs,lhs_cursor) of
+    
+        // <new_var> = <parent_var>.sel
+        DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
+        let
+            parent_var = tmpvar_prefix . str(lhs_cursor);
+            sel        = val-aststring(na_sel);
+        in
+            let g1 = tassign_x_ysel(new_var,parent_var,sel,g0); in
+            let debug0 = trace_assign(new_var, parent_var.".".sel,g1); in
+            (lift(g1),union(tmpvars,{new_var}));
+              
+        // <new_var> = x.sel
+        ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+        let
+            x       = val-aststring(na_x);
+            sel     = val-aststring(na_sel);
+        in
+            let g1 = tassign_x_ysel(new_var,x,sel,g0); in
+            let debug0 = trace_assign(new_var, x.".".sel,g1); in
+            (lift(g1),union(tmpvars,{new_var}));
 
-      // <new_var> = x
-      VarRefExp(na_x) =>
-      let
-          x = val-aststring(na_x);
-      in
-          let g1 = tassign_x_y(new_var,x,g0); in
-          let debug0 = trace_assign("intermediate", new_var, x); in
-          let debug1 = trace_changes("intermediate-graph", lift(g0), lift(g1), {new_var}); in
-          (lift(g1),union(tmpvars,{new_var}));
-          
-      _ =>
-          (lifted_g,tmpvars);
-  endcase; in
-  rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, result_gv);
-  endcase;
-  endcase;
+        // <new_var> = x
+        VarRefExp(na_x) =>
+        let
+            x = val-aststring(na_x);
+        in
+            let g1 = tassign_x_y(new_var,x,g0); in
+            let debug0 = trace_assign(new_var, x,g1); in
+            (lift(g1),union(tmpvars,{new_var}));
+            
+        _ =>
+            (lifted_g,tmpvars);
+    endcase; in
+    rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, result_gv);
+    endcase;
+    endcase;
 
 
 perform_assign :: Expression,str,str,CarrierVarSetTuple -> CarrierVarSetTuple;
 perform_assign(e,lhs_tmp,rhs_tmp,gv) =
-  case gv of (lifted_g,tmpvars) =>
-  case drop(lifted_g) of g0 =>
-  case e of
- 
-      // x = new;
-      AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
-      let 
-          x = val-aststring(na_x);
-      in
-          let debug0 = trace_assign("intermediate", x, "<new>"); in
-          (lift(tassign_x_new(x,g0)),tmpvars);
+    case gv of (lifted_g,tmpvars) =>
+    case drop(lifted_g) of g0 =>
+    case e of
+   
+        // x = new;
+        AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
+        let 
+            x = val-aststring(na_x);
+        in
+            let g1 = tassign_x_new(x,g0); in
+            let debug0 = trace_assign(x, "<new>",g1); in
+            (lift(g1),tmpvars);
 
-      // x = null;
-      AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>  
-      let
-          x = val-aststring(na_x);
-      in
-          let debug0 = trace_assign("intermediate", x, "null"); in
-          (lift(tassign_x_null(x,g0)),tmpvars);  //was w/o t_assign
+        // x = null;
+        AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>  
+        let
+            x = val-aststring(na_x);
+        in
+            let g1 = tassign_x_null(x,g0); in
+            let debug0 = trace_assign(x, "null",g1); in
+            (lift(g1),tmpvars);
 
-      // x = y;
-      AssignOp(VarRefExp(na_x),VarRefExp(na_y)) => 
-      let 
-          x = val-aststring(na_x);
-          y = val-aststring(na_y);
-      in 
-          let g1 = tassign_x_y(x,y,g0); in 
-          let debug0 = trace_assign("intermediate", x, y); in
+        // x = y;
+        AssignOp(VarRefExp(na_x),VarRefExp(na_y)) => 
+        let 
+            x = val-aststring(na_x);
+            y = val-aststring(na_y);
+        in let
+            g1 = tassign_x_y(x,y,g0);
+        in let
+            g2 = if (!is_temp(y)) then 
+                g1
+            else 
+                drop(delete_var(lift(g1),y)) // temporary is assigned exactly once and can be eliminated
+            endif;
+        in let
+            debug0 = trace_assign(x, y, g2); in
+            (lift(g2),tmpvars);
+            
 
-          if (!is_temp(y)) then 
-              (lift(g1),tmpvars) 
-          else 
-              (delete_var(lift(g1),y),tmpvars) // temporary is assigned exactly once and can be eliminated
-          endif; 
+        // x.sel = null;
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
+        let
+            x   = val-aststring(na_x);
+            sel = val-aststring(na_sel); 
+        in 
 
-      // x.sel = null;
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-      let
-          x   = val-aststring(na_x);
-          sel = val-aststring(na_sel); 
-      in 
-          let debug0 = trace_assign("intermediate", x.".".sel, "null"); in
+            if (val-astint(n) = 0) then 
+                let g1 = tassign_xsel_null(x,sel,g0); in
+                let debug0 = trace_assign(x.".".sel, "null", g1); in
+                (lift(g1),tmpvars)
+            else 
+                let debug0 = trace_assign(x.".".sel, "null", {}); in
+                (mybot(),tmpvars)
+            endif;
 
-          if (val-astint(n) = 0) then 
-            (lift(tassign_xsel_null(x,sel,g0)),tmpvars)  //was w/o t_assign
-          else 
-            (mybot(),tmpvars) // top?
-          endif;
+        // ...sel = null;  NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
+        let
+            x   = lhs_tmp."0";        //changed
+            sel = val-aststring(na_sel);
+        in 
 
-      // ...sel = null;  NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-      let
-          x   = lhs_tmp."0";        //changed
-          sel = val-aststring(na_sel);
-      in 
-          let debug0 = trace_assign("intermediate", x.".".sel, "null"); in
+            if (val-astint(n) = 0) then 
+                let g1 = tassign_xsel_null(x,sel,g0); in
+                let debug0 = trace_assign(x.".".sel, "null", g1); in
+                (lift(g1),tmpvars)
+            else 
+                let debug0 = trace_assign(x.".".sel, "null", {}); in
+                (mybot(),tmpvars)
+            endif;
 
-          if (val-astint(n) = 0) then 
-            (lift(tassign_xsel_null(x,sel,g0)),tmpvars)  //was w/o t_assign
-          else 
-            (mybot(),tmpvars) // top?
-          endif;
+        // x.sel = y;
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
+        let
+            x   = val-aststring(na_x);
+            sel = val-aststring(na_sel);
+            y   = val-aststring(na_y);
+        in
+            let g1 = tassign_xsel_null(x,sel,g0); in
+            let g2 = tassign_xsel_y(x,sel,y,g1); in
+            let debug0 = trace_assign(x.".".sel, "null", g1); in
+            let debug1 = trace_assign(x.".".sel,      y, g2); in
+            (lift(g2),tmpvars);
 
-      // x.sel = y;
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-      let
-          x   = val-aststring(na_x);
-          sel = val-aststring(na_sel);
-          y   = val-aststring(na_y);
-      in
-          let g1 = tassign_xsel_null(x,sel,g0); in  //was w/o t_assign
-          let debug0 = trace_assign("intermediate", x.".".sel, y); in
-          (lift(tassign_xsel_y(x,sel,y,g1)),tmpvars);     //was w/o t_assign
+        // ...sel = y; NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
+        let
+            x   = lhs_tmp."0";
+            sel = val-aststring(na_sel);
+            y   = val-aststring(na_y);
+        in
+            let g1 = tassign_xsel_null(x,sel,g0); in
+            let g2 = tassign_xsel_y(x,sel,y,g1); in
+            let debug0 = trace_assign(x.".".sel, "null", g1); in
+            let debug1 = trace_assign(x.".".sel,      y, g2); in
+            (lift(g2),tmpvars);
 
-      // ...sel = y; NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-      let
-          x   = lhs_tmp."0";        //changed
-          sel = val-aststring(na_sel);
-          y   = val-aststring(na_y);
-      in
-          let g1 = tassign_xsel_null(x,sel,g0); in  //was w/o t_assign
-          let debug0 = trace_assign("intermediate", x.".".sel, y); in
-          (lift(tassign_xsel_y(x,sel,y,g1)),tmpvars);     //was w/o t_assign
+        // x = y.sel;
+        AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) => 
+        let
+            x   = val-aststring(na_x);
+            y   = val-aststring(na_y); 
+            sel = val-aststring(na_sel);
+        in
+            let g1 = tassign_x_ysel(x,y,sel,g0); in
+            let debug0 = trace_assign(x, y.".".sel,g1); in
+            (lift(g1),tmpvars);
 
-      // x = y.sel;
-      AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) => 
-      let
-          x   = val-aststring(na_x);
-          y   = val-aststring(na_y); 
-          sel = val-aststring(na_sel);
-      in
-          let debug0 = trace_assign("intermediate", x, y.".".sel); in
-          (lift(tassign_x_ysel(x,y,sel,g0)),tmpvars);
+        // x = ...sel; NEW
+        AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) => 
+        let
+            x   = val-aststring(na_x);
+            y   = rhs_tmp."0";       //changed
+            sel = val-aststring(na_sel);
+        in
+            let g1 = tassign_x_ysel(x,y,sel,g0); in
+            let debug0 = trace_assign(x, y.".".sel,g1); in
+            (lift(g1),tmpvars);
 
-      // x = ...sel; NEW
-      AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) => 
-      let
-          x   = val-aststring(na_x);
-          y   = rhs_tmp."0";       //changed
-          sel = val-aststring(na_sel);
-      in
-          let debug0 = trace_assign("intermediate", x, y.".".sel); in
-          (lift(tassign_x_ysel(x,y,sel,g0)),tmpvars);
+        // x.sel = y.sel; NEW
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
+        let
+            x    = val-aststring(na_x);
+            xsel = val-aststring(na_xsel);
+            y    = val-aststring(na_y);
+            ysel = val-aststring(na_ysel);
+        in
+            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
+            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
+            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
+            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
+            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
+            
+        // ...sel = y.sel; NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
+        let
+            x    = lhs_tmp."0";        //changed
+            xsel = val-aststring(na_xsel);
+            y    = val-aststring(na_y);
+            ysel = val-aststring(na_ysel);
+        in
+            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
+            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
+            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
+            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
+            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
 
-      // x.sel = y.sel; NEW
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-      let
-          x    = val-aststring(na_x);
-          xsel = val-aststring(na_xsel);
-          y    = val-aststring(na_y);
-          ysel = val-aststring(na_ysel);
-      in
-          let debug0 = trace_assign("intermediate", rhs_tmp."a", y.".".ysel); in
-          let debug1 = trace_assign("intermediate", x.".".xsel, rhs_tmp."a"); in
-          let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-          (lift(tassign_xsel_y(x,xsel,rhs_tmp."a",g1)),union(tmpvars,{rhs_tmp."a"}));
-          
-      // ...sel = y.sel; NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-      let
-          x    = lhs_tmp."0";        //changed
-          xsel = val-aststring(na_xsel);
-          y    = val-aststring(na_y);
-          ysel = val-aststring(na_ysel);
-      in
-          let debug0 = trace_assign("intermediate", rhs_tmp."a", y.".".ysel); in
-          let debug1 = trace_assign("intermediate", x.".".xsel, rhs_tmp."a"); in
-          let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-          (lift(tassign_xsel_y(x,xsel,rhs_tmp."a",g1)),union(tmpvars,{rhs_tmp."a"}));
+        // x.sel = ...sel; NEW
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
+        let
+            x    = val-aststring(na_x);
+            xsel = val-aststring(na_xsel);
+            y    = rhs_tmp."0";        //changed
+            ysel = val-aststring(na_ysel);
+        in
+            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
+            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
+            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
+            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
+            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
+            
+        // ...sel = ...sel; NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
+        let
+            x    = lhs_tmp."0";         //changed
+            xsel = val-aststring(na_xsel);
+            y    = rhs_tmp."0";         //changed
+            ysel = val-aststring(na_ysel);
+        in
+            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
+            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
+            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
+            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
+            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
 
-      // x.sel = ...sel; NEW
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-      let
-          x    = val-aststring(na_x);
-          xsel = val-aststring(na_xsel);
-          y    = rhs_tmp."0";        //changed
-          ysel = val-aststring(na_ysel);
-      in
-          let debug0 = trace_assign("intermediate", rhs_tmp."a", y.".".ysel); in
-          let debug1 = trace_assign("intermediate", x.".".xsel, rhs_tmp."a"); in
-          let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-          (lift(tassign_xsel_y(x,xsel,rhs_tmp."a",g1)),union(tmpvars,{rhs_tmp."a"}));
-          
-      // ...sel = ...sel; NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-      let
-          x    = lhs_tmp."0";         //changed
-          xsel = val-aststring(na_xsel);
-          y    = rhs_tmp."0";         //changed
-          ysel = val-aststring(na_ysel);
-      in
-          let debug0 = trace_assign("intermediate", rhs_tmp."a", y.".".ysel); in
-          let debug1 = trace_assign("intermediate", x.".".xsel, rhs_tmp."a"); in
-          let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-          (lift(tassign_xsel_y(x,xsel,rhs_tmp."a",g1)),union(tmpvars,{rhs_tmp."a"}));
+        _ => (lift(g0),tmpvars);
 
-      _ => (lift(g0),tmpvars);
-
-  endcase;
-  endcase;
-  endcase;
+    endcase;
+    endcase;
+    endcase;
 
 /* Author: Markus Schordan
    E-mail: markus@complang.tuwien.ac.at
@@ -489,42 +491,69 @@ tassign_x_y(x,y,G) =
   if x = y then
     G
   else
+    let dummy0 = trace_transfer("tassign_x_y(".x.",".y.")", G); in
     let G1=assign_x_y("_$",y,G); in
+    let dummy1 = trace_transfer("_$ = ".y, G1); in
     let G2=assign_x_null(x,G1); in
-    //let G3=assign_x_y(x,y,G2); in  //ms sagen: sollte da nicht eher das stehen, was ich darunter geschrieben hab?
+    let dummy2 = trace_transfer(x." = null", G2); in
     let G3=assign_x_y(x,"_$",G2); in
-    assign_x_null("_$",G3)
+    let dummy3 = trace_transfer(x." = _$", G3); in
+    let G4=assign_x_null("_$",G3); in
+    let dummy4 = trace_transfer(x." = null", G4); in
+    G4
   endif; 
 
 // x.sel = y;
 tassign_xsel_y::str,str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_xsel_y(x,selp,y,G) =
+  let dummy0 = trace_transfer("tassign_xsel_y(".x.",".selp.",".y.")", G); in
   let G1=assign_x_y("_$",y,G); in
+  let dummy1 = trace_transfer("_$ = ".y, G1); in
   let G2=assign_xsel_null(x,selp,G1); in
+  let dummy2 = trace_transfer(x.".".selp." = null", G2); in
   let G3=assign_xsel_y(x,selp,"_$",G2); in
-  assign_x_null("_$",G3);
+  let dummy3 = trace_transfer(x.".".selp." = _$", G3); in
+  let G4=assign_x_null("_$",G3); in
+  let dummy4 = trace_transfer("_$ = null", G4); in
+  G4;
 
 // x = y.sel;
 tassign_x_ysel::str,str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_x_ysel(x,y,selp,G) =
+  let dummy0 = trace_transfer("tassign_x_ysel(".x.",".y.",".selp.")", G); in
   let G1=assign_x_ysel("_$",y,selp,G); in
+  let dummy1 = trace_transfer("_$ = ".y.".".selp, G1); in
   let G2=assign_x_null(x,G1); in
+  let dummy2 = trace_transfer(x." = null", G2); in
   let G3=assign_x_y(x,"_$",G2); in
-  assign_x_null("_$",G3);
+  let dummy3 = trace_transfer(x." = ".y, G3); in
+  let G4=assign_x_null("_$",G3); in
+  let dummy4 = trace_transfer("_$ = null", G4); in
+  G4;
 
 // x = new;
 tassign_x_new::str,ShapeGraphSet -> ShapeGraphSet;
 tassign_x_new(x,G) =
+  let dummy0 = trace_transfer("tassign_x_new(".x.")", G); in
   let G1=assign_x_null(x,G); in
-  assign_x_new(x,G1);
+  let dummy1 = trace_transfer(x." = null", G1); in
+  let G2=assign_x_new(x,G1); in
+  let dummy2 = trace_transfer(x." = new", G2); in
+  G2;
 
 // x.sel = new;
 tassign_xsel_new::str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_xsel_new(x,selp,G) =
+  let dummy0 = trace_transfer("tassign_xse_new(".x.",".selp.")", G); in
   let G1=assign_xsel_null(x,selp,G); in
+  let dummy1 = trace_transfer(x.".".selp." = null", G1); in
   let G2=assign_x_new("_$",G1); in
+  let dummy2 = trace_transfer(x." = new", G2); in
   let G3=assign_xsel_y(x,selp,"_$",G2); in
-  assign_x_null("_$",G3);
+  let dummy3 = trace_transfer(x.".".selp." = _$", G3); in
+  let G4=assign_x_null("_$",G3); in
+  let dummy4 = trace_transfer("_$ = null", G4); in
+  G4;
 
 // --------------------------------------------------------------
 // transfer function F(SGS)[...] = union( f(SG)[...] | SG <- SGS)
@@ -570,12 +599,10 @@ rec_sgs_flatten(car:cdr, sgs) = rec_sgs_flatten(cdr, union(car,sgs));
 
 fassign_x_null :: str,ShapeGraph -> ShapeGraphSet;
 fassign_x_null(x,g) =
-  let dummy0 = if !is_compatible(g) then print("inv violation\n") false else true endif; in
   {kill_x(x,g)};
 
 fassign_xsel_null :: str,str,ShapeGraph -> ShapeGraphSet;
 fassign_xsel_null(x,s,((S0,H0),is0) as g) =
-  let dummy0 = if !is_compatible(g) then print("inv violation\n") false else true endif; in
   if !var_exists(x,g) || !var_sel_exists(x,s,g) then {g} else 
   // edge (nx,sel,nu) is guaranteed to be in H0 and must be removed
   let edge = heapedge_by_var_sel(x,s,H0); in
@@ -605,12 +632,10 @@ fassign_xsel_null(x,s,((S0,H0),is0) as g) =
 
 fassign_x_new :: str,ShapeGraph -> ShapeGraphSet;
 fassign_x_new(x,((S0,H0),is0) as g) =
-  let dummy0 = if !is_compatible(g) then print("inv violation\n") false else true endif; in
   {((union(S0,{(x,{x})}),H0),is0)};
 
 fassign_x_y :: str,str,ShapeGraph -> ShapeGraphSet;
 fassign_x_y(x,y,((S0,H0),is0) as g) = 
-  let dummy0 = if !is_compatible(g) then print("inv violation\n") false else true endif; in
   let
     S1  = union(
            {(z,gxy(x,y,nz)) !! (z,nz) <-- S0},                   // add x to all edges where y is already
@@ -622,7 +647,6 @@ fassign_x_y(x,y,((S0,H0),is0) as g) =
 
 fassign_xsel_y :: str,str,str,ShapeGraph -> ShapeGraphSet;
 fassign_xsel_y(x,sel,y,((S0,H0),is0) as g) = 
-  let dummy0 = if !is_compatible(g) then print("inv violation\n") false else true endif; in
   if !var_exists(x,g) || !var_exists(y,g) then {g} else
   let
     nx = node_by_var(x,g);
@@ -635,7 +659,6 @@ fassign_xsel_y(x,sel,y,((S0,H0),is0) as g) =
 
 fassign_x_ysel :: str,str,str,ShapeGraph -> ShapeGraphSet;
 fassign_x_ysel(x,y,sel,((S0,H0),is0) as g) = // it is guaranteed that x!=y
-  let dummy0 = if !is_compatible(g) then print("inv violation\n") false else true endif; in
   /* three possibilities:
    * - there is no (_,{y,...}) <- S or no ({y,...},sel,_) <- H
    * - there is (_,{y,...}) <- S and ({y,...},sel,dest) <- H where dest != {}
@@ -670,13 +693,13 @@ materialise(x,y,sel,((S0,H0),is0) as g) =
     is1        = is0 # {};
   in let
     Hintern    = [e !! e <-- heapedge_subtract(H0,Hextern)];
-  in let 
+  in let
     candidates = if {} ? is0 then
       sgs_flatten([gen_cand(x,S1,Hextern,Hintern,union(is1,is_shared)) !! is_shared <-- { {{}}, {{x}}, {{x},{}} } ])
     else
         gen_cand(x,S1,Hextern,Hintern,is0)
     endif;
-  in
+  in 
     {sg !! ((S2,H2),is2) as sg <-- candidates, if is_compatible(sg) && kill_x(x,sg) = ((S0,H0),is0) && (x,{x}) ? S2 && ({y},sel,{x}) ? H2};
 
 
@@ -745,42 +768,16 @@ gen_cand(_,S,H,[],is0) = {((S,H),is0)};
 // Auxiliary functions for low-level transfer functions
 // ----------------------------------------------------
 
-run_is_compatible_tests :: -> bool;
-run_is_compatible_tests() = true; /*
-  print("checking invariants...\n") if 
-  is_compatible((({ ("x",{"x"}) },{ ({"x"},"sel",{"y"}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("x",{"y"}) },{ ({"x"},"sel",{"y"}) }),{})) = false &&
-  is_compatible((({ ("x",{"x"}),("x",{"x,y"}) },{ ({"x"},"sel",{"y"}) }),{})) = false &&
-  is_compatible((({ ("x",{"x"}),("y",{"y,x"}) },{ ({"x"},"sel",{"y"}) }),{})) = false &&
-  
-  is_compatible((({ ("x",{"y"}) },{}),{})) = false &&
-  
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({},"sel",{"y"}),({},"sel",{"x"}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"x"},"sel",{"y"}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"x"},"sel",{"x"}) }),{})) = false &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"x"},"sel",{"x"}) }),{{"x"}})) = false &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"y"},"sel",{"x"}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"x"},"sel1",{"z"}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"x"},"sel1",{"y"}) }),{{"y"}})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{"y"}),({"y"},"sel",{"y"}) }),{{"y"}})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({"x"},"sel",{}),({"y"},"sel",{}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({},"sel",{"y"}) }),{{"y"}})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({},"sel",{"y"}) }),{})) = true &&
-  is_compatible((({ ("x",{"x"}),("y",{"y"}) },{ ({},"sel",{"y"}) }),{})) = true 
-  then print("ok\n") true else print("failed\n") false endif;
-  */
-
 is_compatible :: ShapeGraph -> bool;
-is_compatible(((S0,H0),is0)) =
+is_compatible(((S0,H0),is0) as g) =
   let alocs = union(union(aloc_S([x !! x <-- S0],{}), aloc_H([x !! x <-- H0],{})), is0); in
-  if
   check_inv1([(a,b) !! a <-- alocs, b <-- alocs]) &&
+  // Inv2: if x points to a node, the nodes name must contain x (naming convention)
   {(x,nx) !! (x,nx) <-- S0, if x ? nx} = S0 &&
-  check_inv3([(m,m1) !! (v,sel,m) <-- H0, (v1,sel1,m1) <-- H0, if v = v1 && sel = sel1 && v != {}]) &&
+  check_inv3([((nv,sel,nw),(nv1,sel1,nw1)) !! (nv,sel,nw) <-- H0, (nv1,sel1,nw1) <-- H0, if nv = nv1 && sel = sel1 && nv != {}]) &&
   check_inv4([x !! x <-- is0],H0) &&
-  check_inv5([nx1 !! (nv1,sel1,nx1) <-- H0, (nv2,sel2,nx2) <-- H0, if nx1 = nx2 && (sel1 != sel2 || nv1 != nv2) && nx1 != {}],is0)
-  then print ("+") true else print(".") false endif;
-
+  check_inv5([nx1 !! (nv1,sel1,nx1) <-- H0, (nv2,sel2,nx2) <-- H0, if nx1 = nx2 && (sel1 != sel2 || nv1 != nv2) && nx1 != {}],is0);
+  
 aloc_S :: StackEdgeList,NodeSet -> NodeSet;
 aloc_S((_,v):cdr,nodes) = aloc_S(cdr, union(nodes,{v}));
 aloc_S(       [],nodes) = nodes;
@@ -789,24 +786,30 @@ aloc_H :: HeapEdgeList,NodeSet -> NodeSet;
 aloc_H((v,_,v1):cdr,nodes) = aloc_H(cdr, union(nodes, {v,v1}));
 aloc_H(          [],nodes) = nodes;
 
+// Inv1: two nodes a,b are either the same or have no common variables */
 check_inv1 :: NodeTupleList -> bool;
-check_inv1((a,b):cdr) = if (a = b) || (intersect(a,b) = {}) then check_inv1(cdr) else print("inv1 violated: ") print(a) print(" : ") print(b) print("\n") false endif;
+check_inv1((a,b):cdr) = if (a = b) || (intersect(a,b) = {}) then check_inv1(cdr) else false endif;
 check_inv1(       []) = true;
 
-check_inv3 :: NodeTupleList -> bool;
-check_inv3((a,b):cdr) = if (a = b) then check_inv3(cdr) else print("inv3 violated: ") print(a) print(" != ") print(b) print("\n") false endif;
-check_inv3(       []) = true;
+// Inv3: nv,sel,nw  and  nv,sel,nw1: either nw and nw1 are the same node or nv 
+// is the summary node. no node,sel pair may point to more than one node
+// except the source is the summary node
+check_inv3 :: HeapEdgeTupleList -> bool;
+check_inv3(((nv,sel,nw),(nv1,sel1,nw1)):cdr) = if (nw = nw1) then check_inv3(cdr) else false endif;
+check_inv3(         []) = true;
 
+// Inv4: if nx is shared, there exists either {},sel,nx or 2+ edges pointing to nx */
 check_inv4 :: NodeList, HeapEdgeSet -> bool;
 check_inv4(nx:cdr, H) = 
   if 
     ({e !! (n1,_,m1) as e <-- H, if n1 = {} && m1 = nx} != {}) ||
-    ({e !! (n2,sel2,m2)as e <-- H, (n3,sel3,m3) <-- H, if (m2 = m3) && ((sel2 != sel3) || (n2 != n3))} != {})
-  then check_inv4(cdr,H) else print("inv4 violated: ") print(nx) print (" <- IS\n") false endif;
+    ({e !! (n2,sel2,m2) as e <-- H, (n3,sel3,m3) <-- H, if (m2 = m3) && ((sel2 != sel3) || (n2 != n3))} != {})
+  then check_inv4(cdr,H) else false endif;
 check_inv4(     [],_) = true;
 
+// Inv5: if nv,sel,nx and nv1,sel1,nx are in the shapegraph, then nx is shared */
 check_inv5 :: NodeList,NodeSet -> bool;
-check_inv5(nx:cdr, shared) = if nx ? shared then check_inv5(cdr,shared) else print("inv5 violated ") print(nx) print(" <!- IS\n") false endif;
+check_inv5(nx:cdr, shared) = if nx ? shared then check_inv5(cdr,shared) else false endif;
 check_inv5(    [],      _) = true;
 
 
@@ -929,14 +932,14 @@ srw_extract_shapeGraphs(sg) = [x !! x <-- srwSG_to_nnhSG(sg)];
 // ---------------------------------------------
 
 //FIXME in main verwenden
-//nnh_extract_graphs :: ShapeGraphSet -> SrwNnhPair;
-//nnh_extract_graphs(sg) = (lift(nnhSG_to_srwSG(sg)), lift(sg));
+//nielson_extract_graphs :: ShapeGraphSet -> SrwNnhPair;
+//nielson_extract_graphs(sg) = (lift(nnhSG_to_srwSG(sg)), lift(sg));
 
 //FIXME aus main rausnehmen
-nnh_extract_summaryGraph :: ShapeGraphSet -> ShapeGraphList;
-nnh_extract_summaryGraph(sg) = [nnhSG_to_srwSG(sg)];
-nnh_extract_shapeGraphs :: ShapeGraphSet -> ShapeGraphList;
-nnh_extract_shapeGraphs(sg) = [x !! x <-- sg];
+nielson_extract_summaryGraph :: ShapeGraphSet -> ShapeGraphList;
+nielson_extract_summaryGraph(sg) = [nnhSG_to_srwSG(sg)];
+nielson_extract_shapeGraphs :: ShapeGraphSet -> ShapeGraphList;
+nielson_extract_shapeGraphs(sg) = [x !! x <-- sg];
 
 // --------------------
 // conversion functions
@@ -1042,7 +1045,7 @@ rec_transform_stackedges(in_Graph, res_Graph) =
   in let
     edges = stackedges_by_var(var,in_Graph);  // select all out-edges of var
   in
-    [rg !! (_,node) as edge <-- edges, //FIXME as edge weg
+    [rg !! (_,node) as edge <-- edges, //"as edge" kann weggenommen werden
            rg <- rec_transform_stackedges(
 //             stackedge_subtract(in_Graph, {edge}), //stackedges_by_vars(node,in_Graph)), //FIXME mit [b]
              stackedge_subtract(in_Graph, stackedges_by_vars(node,in_Graph)), //FIXME ohne [b]
@@ -1054,7 +1057,6 @@ transform_heapedges::HeapEdgeSet,NodeSet->HeapEdgeSetList;
 transform_heapedges(EH,startnodes) = rec_transform_heapedges(EH,startnodes,{});
 
 rec_transform_heapedges :: HeapEdgeSet,NodeSet,HeapEdgeSet -> HeapEdgeSetList;
-//rec_transform_heapedges(      _,          _, res_Graph) = [{}]; //FIXME zuerst ES debuggen
 rec_transform_heapedges(      {},          _, res_Graph) = [res_Graph];
 rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
   let
@@ -1180,9 +1182,10 @@ emptylist() = [];
 // is_may_alias / is_must_alias
 // -----------------------------
 
-test_alias :: dfi -> bool;
-test_alias(lifted_g) = let g = drop(lifted_g); in
-  print(g) true;
+/*
+
+test_alias :: dfi -> str;
+test_alias(lifted_g) = let g = drop(lifted_g); in "<need two expressions to compare>"; 
 
 is_no_alias :: Expression,Expression,dfi -> bool;
 is_no_alias(a,b,lifted_sgs) = !is_may_alias(a,b,lifted_sgs);
@@ -1192,6 +1195,7 @@ is_may_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, i
 
 is_must_alias :: Expression,Expression,dfi -> bool;
 is_must_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if !is_same_node("must",a,b,g)} = {};
+*/
 
 is_same_node :: str,Expression,Expression,ShapeGraph -> bool;
 is_same_node(may_or_must,a,b,(_,is0) as sg) =
@@ -1202,11 +1206,11 @@ is_same_node(may_or_must,a,b,(_,is0) as sg) =
     if may_or_must = "may" then cmp_may(atail,btail,is0) else cmp_must(atail,btail) endif;
 
 cmp_must :: NodeTuple,NodeTuple -> bool;
-cmp_must((as1,ad),(bs,bd)) =
-  if ad = {} && bd = {} then
-    as1 != {"0$dummyvar"} && as1 = bs
+cmp_must((ay,az),(by,bz)) =
+  if az = {} && bz = {} then
+    ay != {"0$dummyvar"} && ay = by
   else
-    if ad = {"0$dummyvar"} || bd = {"0$dummyvar"} then false else ad = bd endif
+    if az = {"0$dummyvar"} || bz = {"0$dummyvar"} then false else az = bz endif
   endif;
 
 cmp_may :: NodeTuple,NodeTuple,NodeSet -> bool;

@@ -25,30 +25,27 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(FLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DDFI_WRITE -c main.C
+	g++ $(FLAGS) -DPAG -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DDFI_WRITE -c main.C
 
 main-support.o: main-support.C
-	g++ $(FLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
+	g++ $(FLAGS) -DPAG -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
 
-$(ANALYSIS): $(ANALYSIS).a main.o main-support.o  main-vis.o
-	g++ $(FLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) main.o main-support.o  main-vis.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
+$(ANALYSIS): $(ANALYSIS).a main.o main-support.o
+	g++ $(FLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out
 	@echo "nothing, because it wasn't run (the analysis specification has not changed)" > pag-out
-
-main-vis.o: main-vis.C main.h
-	g++ $(FLAGS) -DDFI_WRITE -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-vis.C
 
 
 .PHONY: clean
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/
-	rm -rf shapeanim
+	rm -rf anim-out
 
 check:  $(ANALYSIS)
-	mkdir -p shapeanim
+	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/reverse1.C
 	$(ANALYSIS) $(TESTDIR)/reverse2.C
 	$(ANALYSIS) $(TESTDIR)/artificialListCreation.C
@@ -73,5 +70,5 @@ check:  $(ANALYSIS)
 	$(ANALYSIS) -I$(TESTDIR)/wcettests $(TESTDIR)/wcettests/bubble.c
 
 fastcheck: $(ANALYSIS)
-	mkdir -p shapeanim
+	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/stack1.C

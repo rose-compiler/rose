@@ -31,8 +31,9 @@
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject* root,char* output,bool noresult);
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt);
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt);
-void* get_statement_pre_info(DFI_STORE store, SgStatement *stmt);
-void* get_statement_post_info(DFI_STORE store, SgStatement *stmt);
+carrier_type_o(CARRIER_TYPE) get_statement_pre_info(DFI_STORE store, SgStatement *stmt);
+carrier_type_o(CARRIER_TYPE) get_statement_post_info(DFI_STORE store, SgStatement *stmt);
+carrier_type_o(CARRIER_TYPE) select_info(DFI_STORE store, SgStatement *stmt, std::string attrName);
 
 template <typename DFI_STORE_TYPE>
 class PagDfiTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE> {
@@ -50,11 +51,16 @@ template <typename DFI_STORE_TYPE>
 class PagDfiCommentAnnotator : public DfiCommentAnnotator<DFI_STORE_TYPE> {
 public:
   PagDfiCommentAnnotator(DFI_STORE_TYPE store) : DfiCommentAnnotator<DFI_STORE>(store) {}
-  std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-     return get_statement_pre_info_string(store, stmt);
-  }
   std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-     return get_statement_post_info_string(store, stmt);
+    //FIXME
+    //return o_test_alias(get_statement_post_info(store,stmt));
+    return "aha";
+    //return get_statement_post_info_string(store, stmt);
+  }
+
+  void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
+    addCommentAfterNode("// sharing info: "+postInfo,stmt);
+    addCommentAfterNode("//",stmt);
   }
 };
 

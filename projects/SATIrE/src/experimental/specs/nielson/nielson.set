@@ -5,6 +5,7 @@
 
 SET
 VarSet             = set(str)
+BoolSet            = set(bool)
 
 StackEdge          = str * VarSet
 StackEdgeSet       = set(StackEdge)
@@ -16,6 +17,8 @@ HeapEdgeSet        = set(HeapEdge)
 HeapEdgeSetSet     = set(HeapEdgeSet)   //*
 HeapEdgeSetList    = list(HeapEdgeSet)  //*
 HeapEdgeList       = list(HeapEdge)
+HeapEdgeTuple      = HeapEdge * HeapEdge
+HeapEdgeTupleList  = list(HeapEdgeTuple)
 
 NodeSet            = set(VarSet)
 NodeSetSet         = set(NodeSet)
@@ -40,4 +43,4 @@ dfi                = flat(ShapeGraphSet)
 
 
 
-// *) required for srw <-> nnh conversion
+// *) required for srw <-> nielson conversion
