@@ -24,26 +24,45 @@ TRANSFER
 ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),@);
 
 ArgumentAssignment(VarRefExp(na_l),NewExp(_,_,_)),_:
+case @ of 
+  top  => top;
+  bot  => bot;
+  info =>
 let
     rx = val-aststring(na_l);
 in
     lift(tassign_x_new(rx,drop(@)));
+endcase;
 
 ArgumentAssignment(VarRefExp(na_l),VarRefExp(na_r)),_:
+case @ of 
+  top  => top;
+  bot  => bot;
+  info =>
 let
     rx = val-aststring(na_l);
     ry = val-aststring(na_r);
 in
     lift(tassign_x_y(rx,ry,drop(@)));
+endcase;
 
 ParamAssignment(VariableSymbol(na_l),VariableSymbol(param)),_:
+case @ of 
+  top  => top;
+  bot  => bot;
+  info =>
 let
     rx = val-aststring(na_l);
     ry = val-aststring(param);
 in
     delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
+endcase;
 
 ReturnAssignment(VariableSymbol(na_l),VariableSymbol(na_r)),_:
+case @ of 
+  top  => top;
+  bot  => bot;
+  info =>
 let
     rx = val-aststring(na_l);
     ry = val-aststring(na_r);
@@ -52,6 +71,7 @@ in
     newinfo=lift(tassign_x_y(rx,ry,drop(@)));
 in
     delete_var(newinfo,ry);
+endcase;
 
 FunctionExit(functionName,params), _:
     kill_vars(@, params);
@@ -1181,6 +1201,9 @@ emptylist() = [];
 // ----------------------------
 // is_may_alias / is_must_alias
 // -----------------------------
+
+printpair :: Expression,Expression -> bool;
+printpair(a,b) = print("(") print(a) print(",") print(b) print(")\n") true;
 
 /*
 

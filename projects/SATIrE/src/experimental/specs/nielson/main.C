@@ -58,6 +58,18 @@ int main(int argc, char **argv)
     PagDfiTextPrinter<DFI_STORE> p(analysis_info);
     p.traverseInputFiles(ast_root, preorder);
   }
+
+  ExpressionCollector ec;
+  ExpressionPairVector *pairs = ec.getExpressionPairs(ast_root);
+
+  // iterate through all expression pairs 
+  ExpressionPairVector::iterator i;
+  std::pair<SgNode*,SgNode*> *pair;
+  for (i=pairs->begin(); i != pairs->end(); i++) {
+      pair = *i;
+      //std::cout << "(" << pair->first << "," << pair->second << ")" << std::endl;
+      //o_printpair(pair->first, pair->second);
+  }
   
   /* Handle command line option --sourceoutput 
    * The source code (i.e. the AST) is annotated with comments showing
@@ -73,45 +85,6 @@ int main(int argc, char **argv)
   GC_finish();
   
   return 0;
-
-  /*
-  debug_stat=1; // 1 or 2 for debugging, 2 means more detailed stats
-  verbose=0; // prints PAG-info during analysis (see section 14.3.3.1 in User Manual)
-
-  animation="anim-out";
-    SgProject *root = frontend(argc, argv);
-    AstTests::runAllTests(root);
-    std::cout << "collecting functions... ";
-    ProcTraversal s;
-    s.traverseInputFiles(root, preorder);
-    std::cout << "done" << std::endl;
-
-    std::cout << "generating cfg... ";
-    CFGTraversal t(s.get_procedures());
-    t.traverseInputFiles(root, preorder);
-    std::cout << "done" << std::endl;
-
-    std::cout << "testing cfg... " << std::endl;
-    int test_result = kfg_testit(t.getCFG(), 0, "cfg_dump.gdl");
-    if (test_result == 0)
-    {
-        std::cout << std::endl
-            << "Warning: There are problems in the CFG."
-            << std::endl
-            << "Do not rely on the analysis results." << std::endl;
-    }
-    else
-        std::cout << "no problems found" << std::endl;
-
-    std::cout << "performing analysis " str(ANALYSIS) "... ";
-    doit(ANALYSIS)(t.getCFG());
-    std::cout << "done" << std::endl;
-    std::cout << "generating visualization... ";
-    gdl_create(str(ANALYSIS) "_result.gdl", 0);
-    std::cout << "done" << std::endl;
-
-    return 0;
-  */
 }
 
 #ifdef DFI_WRITE

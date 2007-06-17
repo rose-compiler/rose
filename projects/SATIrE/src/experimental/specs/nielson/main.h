@@ -12,6 +12,7 @@
 #include "CommandLineParser.h"
 
 #include "StatementAttributeTraversal.h"
+#include "AstSimpleProcessing.h"
 
 #define doit(analysis) xdoit(analysis)
 #define xdoit(analysis) analysis##_doit
@@ -62,6 +63,61 @@ public:
     addCommentAfterNode("// sharing info: "+postInfo,stmt);
     addCommentAfterNode("//",stmt);
   }
+};
+
+typedef std::vector<std::pair<SgNode*,SgNode*>*> ExpressionPairVector;
+
+class ExpressionCollector {
+public:
+    
+    ExpressionPairVector* getExpressionPairs(SgProject *projectNode) {
+        
+        class ExpressionCollectorTraversal : public AstSimpleProcessing {
+            private:
+                std::set<SgNode*> *es;
+                
+            public:
+                std::set<SgNode*>* collectExpressions(SgProject* projectNode) {
+                    es = new std::set<SgNode*>();
+                    traverseInputFiles(projectNode, preorder);
+                    return es;
+                }
+               
+            protected:
+                virtual void visit(SgNode *node) {
+                    switch (node->variantT()) {
+                        case V_SgVarRefExp:
+                            es->insert(node);
+                            break;
+                        default:
+                            //std::cout << node->class_name() << std::endl;
+                            break;
+                        }
+                }
+        };
+
+        ExpressionCollectorTraversal trav;
+        std::set<SgNode*> *exprs = trav.collectExpressions(projectNode);
+
+        // generate all (relevant) permutations of collected expressions
+        // under commutativity of expressions (a,b) == (b,a)
+        ExpressionPairVector *pairs = new ExpressionPairVector();
+
+        std::set<SgNode*>::iterator i,j;
+        for (i=exprs->begin(); i!=exprs->end(); i++) {
+            j=i;
+            for (j++; j!=exprs->end(); j++) {
+                SgNode *a,*b;
+                a = *i;
+                b = *j;
+                //std::cout << "(" << a << "," << b << ")" << std::endl;
+                pairs->push_back(new std::pair<SgNode*,SgNode*>(a,b));
+            }
+            //std::cout << "---" << std::endl;
+        }
+
+        return pairs;
+    }
 };
 
 #endif
