@@ -29,9 +29,13 @@ int main() {
   na = NULL;
   nb = NULL;
   nc = NULL;
-  
+
   //[x:=y.sel] case 3
   nx = ny->sel1;
+
+  // add this expression to test for may-aliasing
+  // ny->sel1->sel2 == nw (in 3 of the 6 cases)
+  ny->sel1->sel2 = NULL;
 
   return 0;
 }

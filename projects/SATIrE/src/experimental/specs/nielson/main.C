@@ -53,31 +53,26 @@ int main(int argc, char **argv)
   char* outputfile=(char*)opt.getGdlFileName().c_str();
   DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt.animationGeneration());
 
-  /* Handle command line option --textoutput */
-  if(opt.analysisResultsTextOutput()) {
-    PagDfiTextPrinter<DFI_STORE> p(analysis_info);
-    p.traverseInputFiles(ast_root, preorder);
-  }
-
+  /* Extract all Pairs of Expressions from the Program so that they
+   * can be compared for aliasing. */
   ExpressionCollector ec;
   ExpressionPairVector *pairs = ec.getExpressionPairs(ast_root);
 
-  // iterate through all expression pairs 
-  ExpressionPairVector::iterator i;
-  std::pair<SgNode*,SgNode*> *pair;
-  for (i=pairs->begin(); i != pairs->end(); i++) {
-      pair = *i;
-      //std::cout << "(" << pair->first << "," << pair->second << ")" << std::endl;
-      //o_printpair(pair->first, pair->second);
+  /* Handle command line option --textoutput */
+  if(opt.analysisResultsTextOutput()) {
+    //PagDfiTextPrinter<DFI_STORE> p(analysis_info, pairs);
+    AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
+    p.traverseInputFiles(ast_root, preorder);
   }
-  
+
   /* Handle command line option --sourceoutput 
    * The source code (i.e. the AST) is annotated with comments showing
    * the analysis results and by calling the backend an annotated C/C++
    * file is generated (named rose_<inputfilename>) */
   if(opt.analysisResultsSourceOutput()) {
-    PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
-    ca.traverseInputFiles(ast_root, preorder);
+    //PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
+    AliasPairsCommentAnnotator<DFI_STORE> p(analysis_info, pairs);
+    p.traverseInputFiles(ast_root, preorder);
     ast_root->unparse();
   }
 

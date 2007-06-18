@@ -29,12 +29,16 @@
 #define carrier_printfunc(type) xcarrier_printfunc(type)
 #define xcarrier_printfunc(type) o_##type##_print
 
+typedef std::vector<std::pair<SgNode*,SgNode*>*> ExpressionPairVector;
+
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject* root,char* output,bool noresult);
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt);
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt);
 carrier_type_o(CARRIER_TYPE) get_statement_pre_info(DFI_STORE store, SgStatement *stmt);
 carrier_type_o(CARRIER_TYPE) get_statement_post_info(DFI_STORE store, SgStatement *stmt);
 carrier_type_o(CARRIER_TYPE) select_info(DFI_STORE store, SgStatement *stmt, std::string attrName);
+
+std::string get_statement_alias_pairs_string(carrier_type_o(CARRIER_TYPE) graph, ExpressionPairVector *pairs);
 
 template <typename DFI_STORE_TYPE>
 class PagDfiTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE> {
@@ -49,43 +53,72 @@ public:
 };
 
 template <typename DFI_STORE_TYPE>
-class PagDfiCommentAnnotator : public DfiCommentAnnotator<DFI_STORE_TYPE> {
+class AliasPairsTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE> {
+private:
+    ExpressionPairVector *pairs;
 public:
-  PagDfiCommentAnnotator(DFI_STORE_TYPE store) : DfiCommentAnnotator<DFI_STORE>(store) {}
-  std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-    //FIXME
-    //return o_test_alias(get_statement_post_info(store,stmt));
-    return "aha";
-    //return get_statement_post_info_string(store, stmt);
+  AliasPairsTextPrinter(DFI_STORE_TYPE store, ExpressionPairVector *_pairs) : DfiTextPrinter<DFI_STORE>(store) {
+    pairs = _pairs;
   }
-
-  void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
-    addCommentAfterNode("// sharing info: "+postInfo,stmt);
-    addCommentAfterNode("//",stmt);
+  std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
+    return get_statement_alias_pairs_string(get_statement_pre_info(store,stmt), pairs);
+  }
+  std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
+    return get_statement_alias_pairs_string(get_statement_post_info(store,stmt), pairs);
   }
 };
 
-typedef std::vector<std::pair<SgNode*,SgNode*>*> ExpressionPairVector;
+template <typename DFI_STORE_TYPE>
+class PagDfiCommentAnnotator : public DfiCommentAnnotator<DFI_STORE_TYPE> {
+public:
+  PagDfiCommentAnnotator(DFI_STORE_TYPE store) : DfiCommentAnnotator<DFI_STORE>(store) {}
+  std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
+     return get_statement_pre_info_string(store, stmt);
+  }
+  std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
+     return get_statement_post_info_string(store, stmt);
+  }
+};
+
+template <typename DFI_STORE_TYPE>
+class AliasPairsCommentAnnotator : public DfiCommentAnnotator<DFI_STORE_TYPE> {
+private:
+    ExpressionPairVector *pairs;
+public:
+  AliasPairsCommentAnnotator(DFI_STORE_TYPE store, ExpressionPairVector *_pairs) : DfiCommentAnnotator<DFI_STORE>(store) {
+    pairs = _pairs;
+  }
+  std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
+    return get_statement_alias_pairs_string(get_statement_pre_info(store,stmt), pairs);
+  }
+  std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
+    return get_statement_alias_pairs_string(get_statement_post_info(store,stmt), pairs);
+  }
+};
+
+
+
 
 class ExpressionCollector {
 public:
-    
     ExpressionPairVector* getExpressionPairs(SgProject *projectNode) {
-        
+
         class ExpressionCollectorTraversal : public AstSimpleProcessing {
             private:
                 std::set<SgNode*> *es;
-                
+
             public:
                 std::set<SgNode*>* collectExpressions(SgProject* projectNode) {
                     es = new std::set<SgNode*>();
                     traverseInputFiles(projectNode, preorder);
                     return es;
                 }
-               
+
             protected:
                 virtual void visit(SgNode *node) {
                     switch (node->variantT()) {
+                        case V_SgArrowExp:
+                        case V_SgDotExp:
                         case V_SgVarRefExp:
                             es->insert(node);
                             break;
@@ -115,9 +148,14 @@ public:
             }
             //std::cout << "---" << std::endl;
         }
-
+        
+        free(exprs);
+        exprs = NULL;
+        
         return pairs;
     }
 };
+
+
 
 #endif

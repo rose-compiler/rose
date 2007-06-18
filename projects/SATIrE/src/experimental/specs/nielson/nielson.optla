@@ -865,10 +865,13 @@ many_into(nu,edges) =
          if ((q1 = nu) && (q2 = nu) && !(p1=p2 && s1=s2))});
                               
 var_exists :: str,ShapeGraph -> bool;
-var_exists(x,((S0,_),_)) =  !({e !! (y,ny) as e <-- S0, if (x=y)} = {});
+var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};
 
 var_sel_exists :: str,str,ShapeGraph -> bool;
-var_sel_exists(x,sel,((_,H0),_)) = !({e !! (nv,sv,_) as e <-- H0, if (x ? nv) && (sv = sel)} = {});
+var_sel_exists(x,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (x ? nv) && (sv = sel)} != {};
+
+src_sel_exists :: VarSet,str,ShapeGraph -> bool;
+src_sel_exists(src,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (src = nv) && (sel = sv)} != {};
 
 heapedge_by_var_sel :: str,str,HeapEdgeSet -> HeapEdge;
 heapedge_by_var_sel(x,sel,edges) = first_heapedge([e !! (nv,sv,_) as e <-- edges, if (x ? nv) && (sv = sel)]);
@@ -1202,75 +1205,103 @@ emptylist() = [];
 // is_may_alias / is_must_alias
 // -----------------------------
 
-printpair :: Expression,Expression -> bool;
-printpair(a,b) = print("(") print(a) print(",") print(b) print(")\n") true;
+alias_pair_string :: Expression,Expression,dfi -> str;
+alias_pair_string(a,b,lifted_sgs) =
+    let op = 
+       expr_to_s(a) = "nx" &&
+       expr_to_s(b) = "n0->N::sel1"; in
+//    print("cmp ".expr_to_s(a)." ? ".expr_to_s(b).": ")
+    if is_must_alias(a,b,lifted_sgs) then
+//        print("must\n")
+        "must(".expr_to_s(a).",".expr_to_s(b).") "
+    else if is_may_alias(op,a,b,lifted_sgs) then
+//        print("may\n")
+        "may(".expr_to_s(a).",".expr_to_s(b).") "
+    else 
+//        print("no\n")
+        ""
+//        "no(".expr_to_s(a).",".expr_to_s(b).") "
+    endif endif;
 
-/*
-
-test_alias :: dfi -> str;
-test_alias(lifted_g) = let g = drop(lifted_g); in "<need two expressions to compare>"; 
+expr_to_s :: Expression -> str;
+expr_to_s(DotExp(PointerDerefExp(parent),VarRefExp(na_sel))) = "(*".expr_to_s(parent).").".val-aststring(na_sel);
+expr_to_s(ArrowExp(parent,VarRefExp(na_sel))) = expr_to_s(parent)."->".val-aststring(na_sel);
+expr_to_s(VarRefExp(na_x)) = val-aststring(na_x);
 
 is_no_alias :: Expression,Expression,dfi -> bool;
-is_no_alias(a,b,lifted_sgs) = !is_may_alias(a,b,lifted_sgs);
+is_no_alias(a,b,lifted_sgs) = !is_may_alias(false,a,b,lifted_sgs);
 
-is_may_alias :: Expression,Expression,dfi -> bool;
-is_may_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if is_same_node("may",a,b,g)} != {};
+// a,b are may aliases
+// if there EXISTS one graph in which a and b refer to the same node
+is_may_alias :: bool,Expression,Expression,dfi -> bool;
+is_may_alias(op,a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if is_same_node(op,"may",a,b,g)} != {};
 
+// a,b are must aliases
+// if and b refer to the same node in ALL the graphs
 is_must_alias :: Expression,Expression,dfi -> bool;
-is_must_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if !is_same_node("must",a,b,g)} = {};
-*/
+is_must_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if !is_same_node(false,"must",a,b,g)} = {};
 
-is_same_node :: str,Expression,Expression,ShapeGraph -> bool;
-is_same_node(may_or_must,a,b,(_,is0) as sg) =
+is_same_node :: bool,str,Expression,Expression,ShapeGraph -> bool;
+is_same_node(op,may_or_must,expr_a,expr_b,(_,is0) as sg) =
   let 
-    atail = get_tail_node(a,sg);
-    btail = get_tail_node(b,sg);
+      a = get_node(op,expr_a,sg);
+      b = get_node(op,expr_b,sg);
   in
-    if may_or_must = "may" then cmp_may(atail,btail,is0) else cmp_must(atail,btail) endif;
+      if a = {"0$not_in_graph"} || b = {"0$not_in_graph"} || a != b then
+          false
+      else if a != {} then
+          true
+      else
+          // both a and b point to {}
+          // - if {} is unshared, they point to different nodes
+          // - otherwise they MAY point to the same node
+          //   but they don't necessarily do, as a shared {}
+          //   only means that two (or more) nodes point to
+          //   the same unnamed node (but there could be more)
+          if !({} ? is0) then
+              false
+          else
+              if may_or_must = "may" then true else false endif
+          endif
+      endif endif;
 
-cmp_must :: NodeTuple,NodeTuple -> bool;
-cmp_must((ay,az),(by,bz)) =
-  if az = {} && bz = {} then
-    ay != {"0$dummyvar"} && ay = by
-  else
-    if az = {"0$dummyvar"} || bz = {"0$dummyvar"} then false else az = bz endif
-  endif;
+get_node :: bool, Expression, ShapeGraph -> VarSet;
+get_node(op, e, sg) = 
+//let rc =  //FIXME
+rec_get_node(e, sg);
+//in print(rc) print("\n") rc;
 
-cmp_may :: NodeTuple,NodeTuple,NodeSet -> bool;
-cmp_may((ay,az),(by,bz),is0) =
-  if az = {} && bz = {} then
-    if {} ? is0 then true else ay != {"0$dummyvar"} && ay = by endif
-  else
-    if az = {"0$dummyvar"} || bz = {"0$dummyvar"} then false else az = bz endif
-  endif;
+rec_get_node :: Expression, ShapeGraph -> VarSet;
+rec_get_node(VarRefExp(na_x), g) = 
+    let x = val-aststring(na_x); in
+    if var_exists(x,g) then
+        node_by_var(x,g)
+    else
+        {"0$not_in_graph"}
+    endif;
+    
+rec_get_node(e, g) =
+    let srcsel = case e of
+        // <act>.sel
+        DotExp(PointerDerefExp(parent),VarRefExp(na_sel)) =>
+            (rec_get_node(parent, g), val-aststring(na_sel));
 
-get_tail_node :: Expression, ShapeGraph -> NodeTuple;
-get_tail_node(e, sg) = rec_get_tail_node(e, expr_depth(e), sg, {"0$dummyvar"}, {"0$dummyvar"});
+        // x.sel
+        ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+            let x = val-aststring(na_x); in
+            if var_exists(x,g) then (node_by_var(x,g),val-aststring(na_sel)) else ({"0$not_in_graph"},"0") endif;
 
-rec_get_tail_node :: Expression, snum, ShapeGraph, VarSet, VarSet -> NodeTuple;
-rec_get_tail_node(_, 0, _, prev, act) = (prev,act);
-rec_get_tail_node(e, e_cursor, g, prev, act) =
-  let next = case expr_at(e,e_cursor) of
-      // <act>.sel
-      DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
-          node_by_src_sel(act,val-aststring(na_sel),g);
-
-      // x.sel
-      ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
-          node_by_src_sel(node_by_var(val-aststring(na_x),g), val-aststring(na_sel),g);
-
-      // x
-      VarRefExp(na_x) =>
-          node_by_var(val-aststring(na_x),g);
-        
-      _ =>
-          print("can not parse Expr: ")
-          print(expr_at(e,e_cursor))
-          print("\n")
-          {"0$dummyvar"};
-  endcase; in
-    rec_get_tail_node(e, e_cursor - 1, g, act, next);
-
+        _ =>
+            print("can not parse Expr: ") print(e) print("\n")
+            ({"0$not_in_graph"},"0");
+    endcase; in case srcsel of (src,sel) =>
+        if src_sel_exists(src,sel,g) then
+            node_by_src_sel(src,sel,g)
+        else
+            {"0$not_in_graph"}
+        endif;
+    endcase;
+    
 
 node_by_src_sel :: VarSet,str,ShapeGraph -> VarSet;
 node_by_src_sel(x,sel,((_,H0),_)) = first_node([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);

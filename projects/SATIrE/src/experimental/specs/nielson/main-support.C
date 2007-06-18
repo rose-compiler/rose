@@ -27,6 +27,23 @@ std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt) {
 					  ));
 }
 
+std::string get_statement_alias_pairs_string(carrier_type_o(CARRIER_TYPE) sg, ExpressionPairVector *pairs) {
+    std::string s;
+    // also show graph, for debugging
+    //s.append(carrier_printfunc(CARRIER_TYPE)((carrier_type_o(CARRIER_TYPE))sg));
+    //s.append("\n//");
+    ExpressionPairVector::iterator i;
+    std::pair<SgNode*,SgNode*> *pair;
+    //std::cout<<"pairs:";  //FIXME multiple entries as compared by address
+    for (i=pairs->begin(); i!=pairs->end(); i++) {
+        pair = *i;
+        //std::cout<<"("<<o_expr_to_s(pair->first)<<","<<o_expr_to_s(pair->second)<<") ";  //FIXME multiple entries as compared by address
+        s.append(o_alias_pair_string(pair->first, pair->second, sg));
+    }
+    //std::cout << std::endl;  //FIXME multiple entries as compared by address
+    return s;
+}
+
 carrier_type_o(CARRIER_TYPE) 
 select_info(DFI_STORE store, SgStatement *stmt, std::string attrName) {
   StatementAttribute* stmtAttr = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));

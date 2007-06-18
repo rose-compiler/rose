@@ -24,6 +24,7 @@ NodeSet            = set(VarSet)
 NodeSetSet         = set(NodeSet)
 NodeList           = list(VarSet)
 
+NodeSel            = VarSet * str
 NodeTuple          = VarSet * VarSet
 NodeTupleList      = list(NodeTuple)
 
