@@ -58,6 +58,10 @@ int main(int argc, char **argv)
   ExpressionCollector ec;
   ExpressionPairVector *pairs = ec.getExpressionPairs(ast_root);
 
+  /* Add Alias Pairs to AST */
+  AliasPairsAnnotator<DFI_STORE> annotator(analysis_info, pairs);
+  annotator.traverseInputFiles(ast_root, preorder);
+
   /* Handle command line option --textoutput */
   if(opt.analysisResultsTextOutput()) {
     //PagDfiTextPrinter<DFI_STORE> p(analysis_info, pairs);

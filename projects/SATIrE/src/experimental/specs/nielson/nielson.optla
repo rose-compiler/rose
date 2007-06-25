@@ -16,7 +16,7 @@ PROBLEM nielson
     init_start: lift({(({},{}),{})})
     equal     : eq
     combine   : comb
-    retfunc   : comb
+    retfunc   : combret
     widening  : w
 
 TRANSFER
@@ -25,9 +25,9 @@ ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),@);
 
 ArgumentAssignment(VarRefExp(na_l),NewExp(_,_,_)),_:
 case @ of 
-  top  => top;
-  bot  => bot;
-  info =>
+    top  => top;
+    bot  => bot;
+    info =>
 let
     rx = val-aststring(na_l);
 in
@@ -36,9 +36,9 @@ endcase;
 
 ArgumentAssignment(VarRefExp(na_l),VarRefExp(na_r)),_:
 case @ of 
-  top  => top;
-  bot  => bot;
-  info =>
+    top  => top;
+    bot  => bot;
+    info =>
 let
     rx = val-aststring(na_l);
     ry = val-aststring(na_r);
@@ -48,9 +48,9 @@ endcase;
 
 ParamAssignment(VariableSymbol(na_l),VariableSymbol(param)),_:
 case @ of 
-  top  => top;
-  bot  => bot;
-  info =>
+    top  => top;
+    bot  => bot;
+    info =>
 let
     rx = val-aststring(na_l);
     ry = val-aststring(param);
@@ -60,9 +60,9 @@ endcase;
 
 ReturnAssignment(VariableSymbol(na_l),VariableSymbol(na_r)),_:
 case @ of 
-  top  => top;
-  bot  => bot;
-  info =>
+    top  => top;
+    bot  => bot;
+    info =>
 let
     rx = val-aststring(na_l);
     ry = val-aststring(na_r);
@@ -91,6 +91,9 @@ w(a,b) = b;
 
 comb::dfi,dfi->dfi;
 comb(a,b) = a lub b;
+ 
+combret::dfi,dfi->dfi;
+combret(a,b) = print(a) print("\n") a lub b;
 
 //
 // remove variables from shapegraph
@@ -508,72 +511,72 @@ tassign_xsel_null(x,sel,sg) = assign_xsel_null(x,sel,sg);
 // x = y;
 tassign_x_y::str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_x_y(x,y,G) =
-  if x = y then
-    G
-  else
-    let dummy0 = trace_transfer("tassign_x_y(".x.",".y.")", G); in
-    let G1=assign_x_y("_$",y,G); in
-    let dummy1 = trace_transfer("_$ = ".y, G1); in
-    let G2=assign_x_null(x,G1); in
-    let dummy2 = trace_transfer(x." = null", G2); in
-    let G3=assign_x_y(x,"_$",G2); in
-    let dummy3 = trace_transfer(x." = _$", G3); in
-    let G4=assign_x_null("_$",G3); in
-    let dummy4 = trace_transfer(x." = null", G4); in
-    G4
-  endif; 
+    if x = y then
+        G
+    else
+        let dummy0 = trace_transfer("tassign_x_y(".x.",".y.")", G); in
+        let G1=assign_x_y("_$",y,G); in
+        let dummy1 = trace_transfer("_$ = ".y, G1); in
+        let G2=assign_x_null(x,G1); in
+        let dummy2 = trace_transfer(x." = null", G2); in
+        let G3=assign_x_y(x,"_$",G2); in
+        let dummy3 = trace_transfer(x." = _$", G3); in
+        let G4=assign_x_null("_$",G3); in
+        let dummy4 = trace_transfer(x." = null", G4); in
+        G4
+    endif; 
 
 // x.sel = y;
 tassign_xsel_y::str,str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_xsel_y(x,selp,y,G) =
-  let dummy0 = trace_transfer("tassign_xsel_y(".x.",".selp.",".y.")", G); in
-  let G1=assign_x_y("_$",y,G); in
-  let dummy1 = trace_transfer("_$ = ".y, G1); in
-  let G2=assign_xsel_null(x,selp,G1); in
-  let dummy2 = trace_transfer(x.".".selp." = null", G2); in
-  let G3=assign_xsel_y(x,selp,"_$",G2); in
-  let dummy3 = trace_transfer(x.".".selp." = _$", G3); in
-  let G4=assign_x_null("_$",G3); in
-  let dummy4 = trace_transfer("_$ = null", G4); in
-  G4;
+    let dummy0 = trace_transfer("tassign_xsel_y(".x.",".selp.",".y.")", G); in
+    let G1=assign_x_y("_$",y,G); in
+    let dummy1 = trace_transfer("_$ = ".y, G1); in
+    let G2=assign_xsel_null(x,selp,G1); in
+    let dummy2 = trace_transfer(x.".".selp." = null", G2); in
+    let G3=assign_xsel_y(x,selp,"_$",G2); in
+    let dummy3 = trace_transfer(x.".".selp." = _$", G3); in
+    let G4=assign_x_null("_$",G3); in
+    let dummy4 = trace_transfer("_$ = null", G4); in
+    G4;
 
 // x = y.sel;
 tassign_x_ysel::str,str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_x_ysel(x,y,selp,G) =
-  let dummy0 = trace_transfer("tassign_x_ysel(".x.",".y.",".selp.")", G); in
-  let G1=assign_x_ysel("_$",y,selp,G); in
-  let dummy1 = trace_transfer("_$ = ".y.".".selp, G1); in
-  let G2=assign_x_null(x,G1); in
-  let dummy2 = trace_transfer(x." = null", G2); in
-  let G3=assign_x_y(x,"_$",G2); in
-  let dummy3 = trace_transfer(x." = ".y, G3); in
-  let G4=assign_x_null("_$",G3); in
-  let dummy4 = trace_transfer("_$ = null", G4); in
-  G4;
+    let dummy0 = trace_transfer("tassign_x_ysel(".x.",".y.",".selp.")", G); in
+    let G1=assign_x_ysel("_$",y,selp,G); in
+    let dummy1 = trace_transfer("_$ = ".y.".".selp, G1); in
+    let G2=assign_x_null(x,G1); in
+    let dummy2 = trace_transfer(x." = null", G2); in
+    let G3=assign_x_y(x,"_$",G2); in
+    let dummy3 = trace_transfer(x." = ".y, G3); in
+    let G4=assign_x_null("_$",G3); in
+    let dummy4 = trace_transfer("_$ = null", G4); in
+    G4;
 
 // x = new;
 tassign_x_new::str,ShapeGraphSet -> ShapeGraphSet;
 tassign_x_new(x,G) =
-  let dummy0 = trace_transfer("tassign_x_new(".x.")", G); in
-  let G1=assign_x_null(x,G); in
-  let dummy1 = trace_transfer(x." = null", G1); in
-  let G2=assign_x_new(x,G1); in
-  let dummy2 = trace_transfer(x." = new", G2); in
-  G2;
+    let dummy0 = trace_transfer("tassign_x_new(".x.")", G); in
+    let G1=assign_x_null(x,G); in
+    let dummy1 = trace_transfer(x." = null", G1); in
+    let G2=assign_x_new(x,G1); in
+    let dummy2 = trace_transfer(x." = new", G2); in
+    G2;
 
 // x.sel = new;
 tassign_xsel_new::str,str,ShapeGraphSet -> ShapeGraphSet;
 tassign_xsel_new(x,selp,G) =
-  let dummy0 = trace_transfer("tassign_xse_new(".x.",".selp.")", G); in
-  let G1=assign_xsel_null(x,selp,G); in
-  let dummy1 = trace_transfer(x.".".selp." = null", G1); in
-  let G2=assign_x_new("_$",G1); in
-  let dummy2 = trace_transfer(x." = new", G2); in
-  let G3=assign_xsel_y(x,selp,"_$",G2); in
-  let dummy3 = trace_transfer(x.".".selp." = _$", G3); in
-  let G4=assign_x_null("_$",G3); in
-  let dummy4 = trace_transfer("_$ = null", G4); in
-  G4;
+    let dummy0 = trace_transfer("tassign_xse_new(".x.",".selp.")", G); in
+    let G1=assign_xsel_null(x,selp,G); in
+    let dummy1 = trace_transfer(x.".".selp." = null", G1); in
+    let G2=assign_x_new("_$",G1); in
+    let dummy2 = trace_transfer(x." = new", G2); in
+    let G3=assign_xsel_y(x,selp,"_$",G2); in
+    let dummy3 = trace_transfer(x.".".selp." = _$", G3); in
+    let G4=assign_x_null("_$",G3); in
+    let dummy4 = trace_transfer("_$ = null", G4); in
+    G4;
 
 // --------------------------------------------------------------
 // transfer function F(SGS)[...] = union( f(SG)[...] | SG <- SGS)
@@ -619,167 +622,158 @@ rec_sgs_flatten(car:cdr, sgs) = rec_sgs_flatten(cdr, union(car,sgs));
 
 fassign_x_null :: str,ShapeGraph -> ShapeGraphSet;
 fassign_x_null(x,g) =
-  {kill_x(x,g)};
+    {kill_x(x,g)};
 
 fassign_xsel_null :: str,str,ShapeGraph -> ShapeGraphSet;
 fassign_xsel_null(x,s,((S0,H0),is0) as g) =
-  if !var_exists(x,g) || !var_sel_exists(x,s,g) then {g} else 
-  // edge (nx,sel,nu) is guaranteed to be in H0 and must be removed
-  let edge = heapedge_by_var_sel(x,s,H0); in
-  case edge of (nx,sel,nu) =>
-    let
-      S1 = S0;
-      H1 = {e !! (nv,sel1,nw) as e <-- H0, if !(nx=nv && sel=sel1)};
-    in let
-      /* if
-       *  - nu was shared and
-       *  - there is no ({},_,nu) edge and
-       *  - there is no more than one (_,_,nu) edge then
-       * nu is no longer shared.
-       * otherweise is0 remains unchanged
-       */
-      is1 = if (nu ? is0)
-            && !many_into(nu,H1)
-            && {} = {e     !! (nk,_,nl) as e <-- H1, if (nk={}) && (nl=nu)} then
-              is0 # nu
-            else
-              is0
-            endif;
-      in
-        {((S1,H1),is1)};
-  endcase
-  endif;
+    if !var_exists(x,g) || !var_sel_exists(x,s,g) then {g} else 
+    // edge (nx,sel,nu) is guaranteed to be in H0 and must be removed
+    let edge = heapedge_by_var_sel(x,s,H0); in
+    case edge of (nx,sel,nu) =>
+        let
+            S1 = S0;
+            H1 = {e !! (nv,sel1,nw) as e <-- H0, if !(nx=nv && sel=sel1)};
+        in let
+          /* if
+           *  - nu was shared and
+           *  - there is no ({},_,nu) edge and
+           *  - there is no more than one (_,_,nu) edge then
+           * nu is no longer shared.
+           * otherweise is0 remains unchanged
+           */
+          is1 = if (nu ? is0)
+              && !many_into(nu,H1)
+              && {} = {e     !! (nk,_,nl) as e <-- H1, if (nk={}) && (nl=nu)} then
+                  is0 # nu
+              else
+                  is0
+              endif;
+          in
+            {((S1,H1),is1)};
+    endcase
+    endif;
 
 fassign_x_new :: str,ShapeGraph -> ShapeGraphSet;
 fassign_x_new(x,((S0,H0),is0) as g) =
-  {((union(S0,{(x,{x})}),H0),is0)};
+    {((union(S0,{(x,{x})}),H0),is0)};
 
 fassign_x_y :: str,str,ShapeGraph -> ShapeGraphSet;
 fassign_x_y(x,y,((S0,H0),is0) as g) = 
-  let
-    S1  = union(
-           {(z,gxy(x,y,nz)) !! (z,nz) <-- S0},                   // add x to all edges where y is already
-           {(x,gxy(x,y,ny)) !! (y1,ny) <-- S0, if (y1 = y)});      // add a new edge (x,{x,y,...}) to where y pointed to
-    H1  = {(gxy(x,y,nv),sel,gxy(x,y,nw)) !! (nv,sel,nw) <-- H0}; // add x to all edges where y is already
-    is1 = {gxy(x,y,nz) !! nz <-- is0};
-  in
-  {((S1,H1),is1)};
+    let
+        S1  = union(
+            {(z,gxy(x,y,nz)) !! (z,nz) <-- S0},                      // add x to all edges where y is already
+            {(x,gxy(x,y,ny)) !! (y1,ny) <-- S0, if (y1 = y)});       // add a new edge (x,{x,y,...}) to where y pointed to
+        H1  = {(gxy(x,y,nv),sel,gxy(x,y,nw)) !! (nv,sel,nw) <-- H0}; // add x to all edges where y is already
+        is1 = {gxy(x,y,nz) !! nz <-- is0};
+    in
+    {((S1,H1),is1)};
 
 fassign_xsel_y :: str,str,str,ShapeGraph -> ShapeGraphSet;
 fassign_xsel_y(x,sel,y,((S0,H0),is0) as g) = 
-  if !var_exists(x,g) || !var_exists(y,g) then {g} else
-  let
-    nx = node_by_var(x,g);
-    ny = node_by_var(y,g);
-  in
-  let H1  = union(H0, {(nx,sel,ny)}); in
-  let is1 = if many_into(ny,H1) then union(is0,{ny}) else is0 endif;
-  in {((S0,H1),is1)}
-  endif;
+    if !var_exists(x,g) || !var_exists(y,g) then {g} else
+    let
+        nx = node_by_var(x,g);
+        ny = node_by_var(y,g);
+    in
+    let H1  = union(H0, {(nx,sel,ny)}); in
+    let is1 = if many_into(ny,H1) then union(is0,{ny}) else is0 endif; in
+    {((S0,H1),is1)}
+    endif;
 
 fassign_x_ysel :: str,str,str,ShapeGraph -> ShapeGraphSet;
 fassign_x_ysel(x,y,sel,((S0,H0),is0) as g) = // it is guaranteed that x!=y
-  /* three possibilities:
-   * - there is no (_,{y,...}) <- S or no ({y,...},sel,_) <- H
-   * - there is (_,{y,...}) <- S and ({y,...},sel,dest) <- H where dest != {}
-   * - there is (_,{y,...}) <- S and ({y,...},sel,{}) <- H
-   */
-  if !var_exists(y,g) then
-    // case 1: null dereferencing
-    {g}
-  else if !var_sel_exists(y,sel,g) then
-    // case 1: non-existing selector
-    {g}
-  else
-    case heapedge_by_var_sel(y,sel,H0) of
-      (ny,_,{}) =>  // case 3
-        materialise(x,y,sel,g);
-      (ny,_,nu) => // case 2
-        let
-          // rename the location nu to include {x} and add the binding (x,union(nu,{x}))
-          S1  = union({(z,hxu(x,nu,nz)) !! (z,nz) <-- S0}, {(x,hxu(x,nu,nu))});
-          H1  = {(hxu(x,nu,nv),sel1,hxu(x,nu,nw)) !! (nv,sel1,nw) <-- H0};
-          is1 = {hxu(x,nu,nz) !! nz <-- is0};
-        in {((S1,H1),is1)};
-    endcase
-  endif
-  endif;
+    /* three possibilities:
+     * - there is no (_,{y,...}) <- S or no ({y,...},sel,_) <- H
+     * - there is (_,{y,...}) <- S and ({y,...},sel,dest) <- H where dest != {}
+     * - there is (_,{y,...}) <- S and ({y,...},sel,{}) <- H
+     */
+    if !var_exists(y,g) then
+        // case 1: null dereferencing
+        {g}
+    else if !var_sel_exists(y,sel,g) then
+        // case 1: non-existing selector
+        {g}
+    else
+        case heapedge_by_var_sel(y,sel,H0) of
+            (ny,_,{}) =>  // case 3
+                materialise(x,y,sel,g);
+            (ny,_,nu) => // case 2
+                let
+                // rename the location nu to include {x} and add the binding (x,union(nu,{x}))
+                S1  = union({(z,hxu(x,nu,nz)) !! (z,nz) <-- S0}, {(x,hxu(x,nu,nu))});
+                H1  = {(hxu(x,nu,nv),sel1,hxu(x,nu,nw)) !! (nv,sel1,nw) <-- H0};
+                is1 = {hxu(x,nu,nz) !! nz <-- is0};
+                in {((S1,H1),is1)};
+        endcase
+    endif
+    endif;
 
 materialise :: str,str,str,ShapeGraph -> ShapeGraphSet;
 materialise(x,y,sel,((S0,H0),is0) as g) = 
-  let
-    S1         = union(S0,{(x,{x})});
-    Hextern    = {e !! (v1,sel1,w1) as e <-- H0, if v1 != {} && w1 != {}};
-    is1        = is0 # {};
-  in let
-    Hintern    = [e !! e <-- heapedge_subtract(H0,Hextern)];
-  in let
-    candidates = if {} ? is0 then
-      sgs_flatten([gen_cand(x,S1,Hextern,Hintern,union(is1,is_shared)) !! is_shared <-- { {{}}, {{x}}, {{x},{}} } ])
-    else
-        gen_cand(x,S1,Hextern,Hintern,is0)
-    endif;
-  in 
-    {sg !! ((S2,H2),is2) as sg <-- candidates, if is_compatible(sg) && kill_x(x,sg) = ((S0,H0),is0) && (x,{x}) ? S2 && ({y},sel,{x}) ? H2};
+    let
+        S1         = union(S0,{(x,{x})});
+        Hextern    = {e !! (v1,sel1,w1) as e <-- H0, if v1 != {} && w1 != {}};
+        is1        = is0 # {};
+    in let
+        Hintern    = [e !! e <-- heapedge_subtract(H0,Hextern)];
+    in let
+        candidates = if {} ? is0 then
+            sgs_flatten([gen_cand(x,S1,Hextern,Hintern,union(is1,is_shared)) !! is_shared <-- { {{}}, {{x}}, {{x},{}} } ])
+        else
+            gen_cand(x,S1,Hextern,Hintern,is0)
+        endif;
+    in 
+        {sg !! ((S2,H2),is2) as sg <-- candidates, if is_compatible(sg) && kill_x(x,sg) = ((S0,H0),is0) && (x,{x}) ? S2 && ({y},sel,{x}) ? H2};
 
 
 gen_cand :: str,StackEdgeSet,HeapEdgeSet,HeapEdgeList,NodeSet -> ShapeGraphSet;
 gen_cand(x,S,H,(_,sel,_) as edge:cdr,is0) =
-  let Hn = case edge of
-    ({},_,{}) => 
-      if {x} ? is0 then
-        {
-          {( {},sel, {})},
-          {( {},sel,{x})},
-          {({x},sel, {})},
-          {({x},sel,{x})},
+    let Hn = case edge of
+        ({},_,{}) => 
+            if {x} ? is0 then {
+                {( {},sel, {})},
+                {( {},sel,{x})},
+                {({x},sel, {})},
+                {({x},sel,{x})},
 
-          {( {},sel, {}),( {},sel,{x})},
-          {( {},sel, {}),({x},sel, {})},
-          {( {},sel, {}),({x},sel,{x})},
-          {( {},sel,{x}),({x},sel, {})},
-          {( {},sel,{x}),({x},sel,{x})},
-          {({x},sel,{x}),({x},sel, {})},
-          
-          {({},sel, {}),( {},sel,{x}),({x},sel, {})},
-          {({},sel, {}),( {},sel,{x}),({x},sel,{x})},
-          {({},sel, {}),({x},sel, {}),({x},sel,{x})},
-          {({},sel,{x}),({x},sel,{x}),({x},sel, {})},
-          
-          {({},sel,{}),({},sel,{x}),({x},sel,{}),({x},sel,{x})}
-        }
-      else
-        {
-          {( {},sel, {})},
-          {({x},sel, {})},
+                {( {},sel, {}),( {},sel,{x})},
+                {( {},sel, {}),({x},sel, {})},
+                {( {},sel, {}),({x},sel,{x})},
+                {( {},sel,{x}),({x},sel, {})},
+                {( {},sel,{x}),({x},sel,{x})},
+                {({x},sel,{x}),({x},sel, {})},
+                
+                {({},sel, {}),( {},sel,{x}),({x},sel, {})},
+                {({},sel, {}),( {},sel,{x}),({x},sel,{x})},
+                {({},sel, {}),({x},sel, {}),({x},sel,{x})},
+                {({},sel,{x}),({x},sel,{x}),({x},sel, {})},
+                
+                {({},sel,{}),({},sel,{x}),({x},sel,{}),({x},sel,{x})}
+            } else {
+              {( {},sel, {})},
+              {({x},sel, {})},
 
-          {( {},sel, {}),({x},sel, {})}
-        }
-      endif;
+              {( {},sel, {}),({x},sel, {})}
+            } endif;
+            
+        ({},_,y) =>
+            if y ? is0 then {
+                {( {},sel,y)},
+                {({x},sel,y)},
+                {( {},sel,y),({x},sel,y)}
+            } else {
+                {( {},sel,y)},
+                {({x},sel,y)}
+            } endif;
 
-    ({},_,y) =>
-      if y ? is0 then
-        {
-          {( {},sel,y)},
-          {({x},sel,y)},
-          {( {},sel,y),({x},sel,y)}
-        }
-      else
-        {
-          {( {},sel,y)},
-          {({x},sel,y)}
-        }
-      endif;
-
-    (y,_,{}) =>
-        {
-          {(y,sel,{})},
-          {(y,sel,{x})},
-          {(y,sel,{x}), (y,sel,{})}
-        };
-
-  endcase; in
-    sgs_flatten([gen_cand(x,S,union(H,new_edge),cdr,is0) !! new_edge <-- Hn]);
+        (y,_,{}) => {
+                {(y,sel,{})},
+                {(y,sel,{x})},
+                {(y,sel,{x}), (y,sel,{})}
+            };
+        
+    endcase; in
+        sgs_flatten([gen_cand(x,S,union(H,new_edge),cdr,is0) !! new_edge <-- Hn]);
 
 gen_cand(_,S,H,[],is0) = {((S,H),is0)};
 
@@ -790,14 +784,14 @@ gen_cand(_,S,H,[],is0) = {((S,H),is0)};
 
 is_compatible :: ShapeGraph -> bool;
 is_compatible(((S0,H0),is0) as g) =
-  let alocs = union(union(aloc_S([x !! x <-- S0],{}), aloc_H([x !! x <-- H0],{})), is0); in
-  check_inv1([(a,b) !! a <-- alocs, b <-- alocs]) &&
-  // Inv2: if x points to a node, the nodes name must contain x (naming convention)
-  {(x,nx) !! (x,nx) <-- S0, if x ? nx} = S0 &&
-  check_inv3([((nv,sel,nw),(nv1,sel1,nw1)) !! (nv,sel,nw) <-- H0, (nv1,sel1,nw1) <-- H0, if nv = nv1 && sel = sel1 && nv != {}]) &&
-  check_inv4([x !! x <-- is0],H0) &&
-  check_inv5([nx1 !! (nv1,sel1,nx1) <-- H0, (nv2,sel2,nx2) <-- H0, if nx1 = nx2 && (sel1 != sel2 || nv1 != nv2) && nx1 != {}],is0);
-  
+    let alocs = union(union(aloc_S([x !! x <-- S0],{}), aloc_H([x !! x <-- H0],{})), is0); in
+    check_inv1([(a,b) !! a <-- alocs, b <-- alocs]) &&
+    // Inv2: if x points to a node, the nodes name must contain x (naming convention)
+    {(x,nx) !! (x,nx) <-- S0, if x ? nx} = S0 &&
+    check_inv3([((nv,sel,nw),(nv1,sel1,nw1)) !! (nv,sel,nw) <-- H0, (nv1,sel1,nw1) <-- H0, if nv = nv1 && sel = sel1 && nv != {}]) &&
+    check_inv4([x !! x <-- is0],H0) &&
+    check_inv5([nx1 !! (nv1,sel1,nx1) <-- H0, (nv2,sel2,nx2) <-- H0, if nx1 = nx2 && (sel1 != sel2 || nv1 != nv2) && nx1 != {}],is0);
+    
 aloc_S :: StackEdgeList,NodeSet -> NodeSet;
 aloc_S((_,v):cdr,nodes) = aloc_S(cdr, union(nodes,{v}));
 aloc_S(       [],nodes) = nodes;
@@ -821,10 +815,10 @@ check_inv3(         []) = true;
 // Inv4: if nx is shared, there exists either {},sel,nx or 2+ edges pointing to nx */
 check_inv4 :: NodeList, HeapEdgeSet -> bool;
 check_inv4(nx:cdr, H) = 
-  if 
-    ({e !! (n1,_,m1) as e <-- H, if n1 = {} && m1 = nx} != {}) ||
-    ({e !! (n2,sel2,m2) as e <-- H, (n3,sel3,m3) <-- H, if (m2 = m3) && ((sel2 != sel3) || (n2 != n3))} != {})
-  then check_inv4(cdr,H) else false endif;
+    if 
+        ({e !! (n1,_,m1) as e <-- H, if n1 = {} && m1 = nx} != {}) ||
+        ({e !! (n2,sel2,m2) as e <-- H, (n3,sel3,m3) <-- H, if (m2 = m3) && ((sel2 != sel3) || (n2 != n3))} != {})
+    then check_inv4(cdr,H) else false endif;
 check_inv4(     [],_) = true;
 
 // Inv5: if nv,sel,nx and nv1,sel1,nx are in the shapegraph, then nx is shared */
@@ -838,10 +832,10 @@ mybot() = bot;
 
 kill_x :: str,ShapeGraph -> ShapeGraph;
 kill_x(x,((S0,H0),is0)) = let 
-  S1  = {(z,rem(x,nz)) !! (z,nz) <-- S0, if !(z=x)}; 
-  H1  = {(rem(x,nv),sel,rem(x,nw)) !! (nv,sel,nw) <-- H0};
-  is1 = {rem(x,nx) !! nx <-- is0};
-  in ((S1,H1),is1);
+    S1  = {(z,rem(x,nz)) !! (z,nz) <-- S0, if !(z=x)}; 
+    H1  = {(rem(x,nv),sel,rem(x,nw)) !! (nv,sel,nw) <-- H0};
+    is1 = {rem(x,nx) !! nx <-- is0};
+    in ((S1,H1),is1);
 
 // remove x from Z  (called kx in Nielson)
 rem :: str,VarSet -> VarSet;
@@ -861,8 +855,8 @@ node_by_var(x,((S0,_),_) as g) = first_node([nk !! (k,nk) <-- S0, if (k=x)]);
 
 many_into :: VarSet,HeapEdgeSet -> bool;
 many_into(nu,edges) =
-  !({} = {"two or more" !! (p1,s1,q1) <-- edges, (p2,s2,q2) <-- edges,
-         if ((q1 = nu) && (q2 = nu) && !(p1=p2 && s1=s2))});
+    !({} = {"two or more" !! (p1,s1,q1) <-- edges, (p2,s2,q2) <-- edges,
+            if ((q1 = nu) && (q2 = nu) && !(p1=p2 && s1=s2))});
                               
 var_exists :: str,ShapeGraph -> bool;
 var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};
@@ -891,7 +885,7 @@ extract_stackedge_set(((ev,_),_)) = ev;
 
 extract_heapnodes::ShapeGraph -> NodeList;
 extract_heapnodes(((ES,EH),_))  =
-   [ x !! x <-- union(union({ a !! (a,_,_) <-- EH},{ c !! (_,_,c) <-- EH}),{b !! (_,b) <-- ES}) ];
+    [ x !! x <-- union(union({ a !! (a,_,_) <-- EH},{ c !! (_,_,c) <-- EH}),{b !! (_,b) <-- ES}) ];
 
 extract_stackedges::ShapeGraph -> StackEdgeList;
 extract_stackedges(((ES,_),_)) = [x !! x <-- ES];
@@ -981,15 +975,15 @@ nnhSG_to_srwSG(graphs) = rec_join_shapegraphs( (({},{}),{}), [x !! x <-- graphs]
 rec_join_shapegraphs :: ShapeGraph,ShapeGraphList -> ShapeGraph;
 rec_join_shapegraphs(sg, []) = sg;
 rec_join_shapegraphs(((S0,H0),is0), car:cdr) =
-  case car of ((S1,H1),is1) =>
-    let 
-      new_S = union(S0,S1);
-      new_H = union(H0,H1);
-    in let
-      new_is = nnh_compute_is(((new_S,new_H),union(is0,is1)));
-    in
-    rec_join_shapegraphs(((new_S,new_H),new_is), cdr);
-  endcase;
+    case car of ((S1,H1),is1) =>
+        let 
+            new_S = union(S0,S1);
+            new_H = union(H0,H1);
+        in let
+            new_is = nnh_compute_is(((new_S,new_H),union(is0,is1)));
+        in
+            rec_join_shapegraphs(((new_S,new_H),new_is), cdr);
+    endcase;
 
 
 /*
@@ -1000,24 +994,24 @@ rec_join_shapegraphs(((S0,H0),is0), car:cdr) =
  
 nnh_compute_is :: ShapeGraph -> NodeSet;
 nnh_compute_is(((S,H),iss)) =
-  union(
-    /* Inv4: if nx is shared, then
-     *  - Inv4a: ({},_,nx) must be one of the heapedges OR
-     *  - Inv4b: nx must be the target of more than one heapedge
-     */
-    intersect(
-      iss,
-      union(
-        {x !! x <-  dests_of_heapedges(heapedges_by_src({},H))},   // Inv 4a
-        {y !! y <-- more_than_once(dests_of_heapedges(H))}         //Inv 4b
-      )
-    ),
+    union(
+        /* Inv4: if nx is shared, then
+         *  - Inv4a: ({},_,nx) must be one of the heapedges OR
+         *  - Inv4b: nx must be the target of more than one heapedge
+         */
+        intersect(
+            iss,
+            union(
+                {x !! x <-  dests_of_heapedges(heapedges_by_src({},H))},   // Inv 4a
+                {y !! y <-- more_than_once(dests_of_heapedges(H))}         //Inv 4b
+            )
+        ),
 
-    /* Inv5: nx is shared if two or more heapedges have nx as their
-     * target (if nx != {})
-     */
-    nodes_target2plus(((S,H),iss))
-  );
+        /* Inv5: nx is shared if two or more heapedges have nx as their
+         * target (if nx != {})
+         */
+        nodes_target2plus(((S,H),iss))
+    );
 
 
 // nodes that are target of 2 (or more) heapedges, but not {}
@@ -1033,11 +1027,11 @@ more_than_once(nodes) = rec_more_than_once(nodes,{},{});
 rec_more_than_once :: NodeList,NodeSet,NodeSet -> NodeSet;
 rec_more_than_once([],         _, result) = result;
 rec_more_than_once(car:cdr, seen, result) = 
-  if car ? seen then 
-    rec_more_than_once(cdr, seen, union(result, {car}))
-  else
-    rec_more_than_once(cdr, union(seen, {car}), result)
-  endif;
+    if car ? seen then 
+        rec_more_than_once(cdr, seen, union(result, {car}))
+    else
+        rec_more_than_once(cdr, union(seen, {car}), result)
+    endif;
 
 
 
@@ -1049,12 +1043,12 @@ rec_more_than_once(car:cdr, seen, result) =
 
 srwSG_to_nnhSG :: ShapeGraph -> ShapeGraphSet;
 srwSG_to_nnhSG(((ES,EH),IS)) =
-  {((ESn,EHn),IS) !!
-    ESn <- transform_stackedges(ES),
-    EHn <- transform_heapedges(
-             reachable_heapedges({n !! (_,n) <-- ESn}, EH), // only pass reachable edges
-                                 {n !! (_,n) <-- ESn})      // startnodes (reachable via ES)
-    };
+    {((ESn,EHn),IS) !!
+        ESn <- transform_stackedges(ES),
+        EHn <- transform_heapedges(
+            reachable_heapedges({n !! (_,n) <-- ESn}, EH), // only pass reachable edges
+                                {n !! (_,n) <-- ESn})      // startnodes (reachable via ES)
+        };
 
 // -- transform the stackedges
 transform_stackedges::StackEdgeSet->StackEdgeSetList;
@@ -1063,17 +1057,17 @@ transform_stackedges(ES) = rec_transform_stackedges(ES, {});
 rec_transform_stackedges :: StackEdgeSet,StackEdgeSet -> StackEdgeSetList;
 rec_transform_stackedges(      {}, res_Graph) = [res_Graph];
 rec_transform_stackedges(in_Graph, res_Graph) =
-  let
-    var   = first(vars_by_stackedges(in_Graph));  // pick a variable var
-  in let
-    edges = stackedges_by_var(var,in_Graph);  // select all out-edges of var
-  in
-    [rg !! (_,node) as edge <-- edges, //"as edge" kann weggenommen werden
-           rg <- rec_transform_stackedges(
-//             stackedge_subtract(in_Graph, {edge}), //stackedges_by_vars(node,in_Graph)), //FIXME mit [b]
-             stackedge_subtract(in_Graph, stackedges_by_vars(node,in_Graph)), //FIXME ohne [b]
-             union(res_Graph, stackedges_by_dest(node, in_Graph))
-           )];
+    let
+        var   = first(vars_by_stackedges(in_Graph));  // pick a variable var
+    in let
+        edges = stackedges_by_var(var,in_Graph);  // select all out-edges of var
+    in
+        [rg !! (_,node) as edge <-- edges, //"as edge" kann weggenommen werden
+             rg <- rec_transform_stackedges(
+  //             stackedge_subtract(in_Graph, {edge}), //stackedges_by_vars(node,in_Graph)), //FIXME mit [b]
+               stackedge_subtract(in_Graph, stackedges_by_vars(node,in_Graph)), //FIXME ohne [b]
+               union(res_Graph, stackedges_by_dest(node, in_Graph))
+             )];
 
 // -- transform the heapedges
 transform_heapedges::HeapEdgeSet,NodeSet->HeapEdgeSetList;
@@ -1082,27 +1076,27 @@ transform_heapedges(EH,startnodes) = rec_transform_heapedges(EH,startnodes,{});
 rec_transform_heapedges :: HeapEdgeSet,NodeSet,HeapEdgeSet -> HeapEdgeSetList;
 rec_transform_heapedges(      {},          _, res_Graph) = [res_Graph];
 rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
-  let
-    out_edges         = [e !! e <-- reachable_heapedges(startnodes, in_Graph)];
-  in
-    if out_edges = [] then
-      [res_Graph]
-    else
-      let
-        src_sel_pattern   = first_heapedge(out_edges);
-      in let
-        src               = src_of_heapedge(src_sel_pattern);
-        sel               = sel_of_heapedge(src_sel_pattern);
-      in let
-        edges             = heapedges_by_src_sel(src,sel,in_Graph);
-      in
-        [rg !! (_,_,dest) as edge <-- edges,
-               rg <- rec_transform_heapedges(
-                       heapedge_subtract(in_Graph, edges),
-                       union(startnodes, {dest}),
-                       union(res_Graph, {edge})
-                     )]
-    endif;
+    let
+        out_edges         = [e !! e <-- reachable_heapedges(startnodes, in_Graph)];
+    in
+        if out_edges = [] then
+            [res_Graph]
+        else
+            let
+                src_sel_pattern   = first_heapedge(out_edges);
+            in let
+                src               = src_of_heapedge(src_sel_pattern);
+                sel               = sel_of_heapedge(src_sel_pattern);
+            in let
+                edges             = heapedges_by_src_sel(src,sel,in_Graph);
+            in
+                [rg !! (_,_,dest) as edge <-- edges,
+                 rg <- rec_transform_heapedges(
+                   heapedge_subtract(in_Graph, edges),
+                   union(startnodes, {dest}),
+                   union(res_Graph, {edge})
+                 )]
+        endif;
 
 
 
@@ -1171,14 +1165,14 @@ dest_of_heapedge((_,_,dest)) = dest;
 
 reachable_heapedges::NodeSet,HeapEdgeSet -> HeapEdgeSet;
 reachable_heapedges(nodes, es) =
-  flatten_heapedge_set({heapedges_by_src(src, es) !! src <-- reachable_heapnodes(nodes,es)});
+    flatten_heapedge_set({heapedges_by_src(src, es) !! src <-- reachable_heapnodes(nodes,es)});
 
 reachable_heapnodes::NodeSet,HeapEdgeSet -> NodeSet;
 reachable_heapnodes(nodes,es) =
-  let
-    new_nodes = union({dest !! (src,_,dest) <-- es, if src ? nodes}, nodes);
-  in
-    if nodes != new_nodes then reachable_heapnodes(new_nodes,es) else new_nodes endif;
+    let
+        new_nodes = union({dest !! (src,_,dest) <-- es, if src ? nodes}, nodes);
+    in
+        if nodes != new_nodes then reachable_heapnodes(new_nodes,es) else new_nodes endif;
 
 flatten_heapedge_set::HeapEdgeSetSet -> HeapEdgeSet;
 flatten_heapedge_set(sets) = rec_flatten_heapedge_set([s !! s <-- sets],{});
@@ -1200,28 +1194,21 @@ rec_flatten_heapedge_set(s:sets,set) = rec_flatten_heapedge_set(sets, union(set,
 emptylist :: -> ShapeGraphList;
 emptylist() = [];
 
-
 // ----------------------------
 // is_may_alias / is_must_alias
 // -----------------------------
 
 alias_pair_string :: Expression,Expression,dfi -> str;
 alias_pair_string(a,b,lifted_sgs) =
-    let op = 
-       expr_to_s(a) = "nx" &&
-       expr_to_s(b) = "n0->N::sel1"; in
-//    print("cmp ".expr_to_s(a)." ? ".expr_to_s(b).": ")
     if is_must_alias(a,b,lifted_sgs) then
-//        print("must\n")
         "must(".expr_to_s(a).",".expr_to_s(b).") "
-    else if is_may_alias(op,a,b,lifted_sgs) then
-//        print("may\n")
-        "may(".expr_to_s(a).",".expr_to_s(b).") "
-    else 
-//        print("no\n")
-        ""
-//        "no(".expr_to_s(a).",".expr_to_s(b).") "
-    endif endif;
+    else
+        if is_may_alias(a,b,lifted_sgs) then
+            "may(".expr_to_s(a).",".expr_to_s(b).") "
+        else 
+            ""
+        endif
+    endif;
 
 expr_to_s :: Expression -> str;
 expr_to_s(DotExp(PointerDerefExp(parent),VarRefExp(na_sel))) = "(*".expr_to_s(parent).").".val-aststring(na_sel);
@@ -1229,23 +1216,23 @@ expr_to_s(ArrowExp(parent,VarRefExp(na_sel))) = expr_to_s(parent)."->".val-astst
 expr_to_s(VarRefExp(na_x)) = val-aststring(na_x);
 
 is_no_alias :: Expression,Expression,dfi -> bool;
-is_no_alias(a,b,lifted_sgs) = !is_may_alias(false,a,b,lifted_sgs);
+is_no_alias(a,b,lifted_sgs) = !is_may_alias(a,b,lifted_sgs);
 
 // a,b are may aliases
 // if there EXISTS one graph in which a and b refer to the same node
-is_may_alias :: bool,Expression,Expression,dfi -> bool;
-is_may_alias(op,a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if is_same_node(op,"may",a,b,g)} != {};
+is_may_alias :: Expression,Expression,dfi -> bool;
+is_may_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if is_same_node("may",a,b,g)} != {};
 
 // a,b are must aliases
 // if and b refer to the same node in ALL the graphs
 is_must_alias :: Expression,Expression,dfi -> bool;
-is_must_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if !is_same_node(false,"must",a,b,g)} = {};
+is_must_alias(a,b,lifted_sgs) = let sgs = drop(lifted_sgs); in {g !! g <-- sgs, if !is_same_node("must",a,b,g)} = {};
 
-is_same_node :: bool,str,Expression,Expression,ShapeGraph -> bool;
-is_same_node(op,may_or_must,expr_a,expr_b,(_,is0) as sg) =
+is_same_node :: str,Expression,Expression,ShapeGraph -> bool;
+is_same_node(may_or_must,expr_a,expr_b,(_,is0) as sg) =
   let 
-      a = get_node(op,expr_a,sg);
-      b = get_node(op,expr_b,sg);
+      a = get_node(expr_a,sg);
+      b = get_node(expr_b,sg);
   in
       if a = {"0$not_in_graph"} || b = {"0$not_in_graph"} || a != b then
           false
@@ -1258,27 +1245,16 @@ is_same_node(op,may_or_must,expr_a,expr_b,(_,is0) as sg) =
           //   but they don't necessarily do, as a shared {}
           //   only means that two (or more) nodes point to
           //   the same unnamed node (but there could be more)
-          if !({} ? is0) then
-              false
-          else
-              if may_or_must = "may" then true else false endif
-          endif
+          if !({} ? is0) then false else if may_or_must = "may" then true else false endif endif
       endif endif;
 
-get_node :: bool, Expression, ShapeGraph -> VarSet;
-get_node(op, e, sg) = 
-//let rc =  //FIXME
-rec_get_node(e, sg);
-//in print(rc) print("\n") rc;
+get_node :: Expression, ShapeGraph -> VarSet;
+get_node(e, sg) = rec_get_node(e, sg);
 
 rec_get_node :: Expression, ShapeGraph -> VarSet;
 rec_get_node(VarRefExp(na_x), g) = 
     let x = val-aststring(na_x); in
-    if var_exists(x,g) then
-        node_by_var(x,g)
-    else
-        {"0$not_in_graph"}
-    endif;
+    if var_exists(x,g) then node_by_var(x,g) else {"0$not_in_graph"} endif;
     
 rec_get_node(e, g) =
     let srcsel = case e of
@@ -1295,11 +1271,7 @@ rec_get_node(e, g) =
             print("can not parse Expr: ") print(e) print("\n")
             ({"0$not_in_graph"},"0");
     endcase; in case srcsel of (src,sel) =>
-        if src_sel_exists(src,sel,g) then
-            node_by_src_sel(src,sel,g)
-        else
-            {"0$not_in_graph"}
-        endif;
+        if src_sel_exists(src,sel,g) then node_by_src_sel(src,sel,g) else {"0$not_in_graph"} endif;
     endcase;
     
 

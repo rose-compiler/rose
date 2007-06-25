@@ -38,8 +38,84 @@ carrier_type_o(CARRIER_TYPE) get_statement_pre_info(DFI_STORE store, SgStatement
 carrier_type_o(CARRIER_TYPE) get_statement_post_info(DFI_STORE store, SgStatement *stmt);
 carrier_type_o(CARRIER_TYPE) select_info(DFI_STORE store, SgStatement *stmt, std::string attrName);
 
-std::string get_statement_alias_pairs_string(carrier_type_o(CARRIER_TYPE) graph, ExpressionPairVector *pairs);
+std::string get_statement_alias_pairs_string(std::string pos, std::string alias_type, SgStatement *stmt);
 
+class AliasPairAttribute : public AstAttribute {
+private: 
+  ExpressionPairVector *pairs;
+public:
+  AliasPairAttribute(ExpressionPairVector *es) { pairs = es; }
+  ExpressionPairVector *getPairs() {return pairs;}
+};
+
+/* adds AliasPairs to AST */
+template<typename DFI_STORE_TYPE>
+class AliasPairsAnnotator : public StatementAttributeTraversal<DFI_STORE_TYPE>
+{
+private:
+  ExpressionPairVector *candidate_pairs;
+  
+public:
+  AliasPairsAnnotator(DFI_STORE store_, ExpressionPairVector *candidate_pairs_) : StatementAttributeTraversal<DFI_STORE_TYPE>(store_) {
+    candidate_pairs = candidate_pairs_;
+  }
+  virtual ~AliasPairsAnnotator() {}
+
+protected:
+  virtual void visitStatement(SgStatement* stmt) {
+    addAliasPairsAttribute(statementPreMustAliases(stmt),   "pre", "must", stmt);
+    addAliasPairsAttribute(statementPostMustAliases(stmt), "post", "must", stmt);
+    addAliasPairsAttribute(statementPreMayAliases(stmt),    "pre", "may",  stmt);
+    addAliasPairsAttribute(statementPostMayAliases(stmt),  "post", "may",  stmt);
+  }
+
+  ExpressionPairVector *statementPreMustAliases(SgStatement *stmt) {
+    return computeMustAliasPairs(get_statement_pre_info(store,stmt));
+  }
+  ExpressionPairVector *statementPostMustAliases(SgStatement *stmt) {
+    return computeMustAliasPairs(get_statement_post_info(store,stmt));
+  }
+  ExpressionPairVector *statementPreMayAliases(SgStatement *stmt) {
+    return computeMayAliasPairs(get_statement_pre_info(store,stmt));
+  }
+  ExpressionPairVector *statementPostMayAliases(SgStatement *stmt) {
+    return computeMayAliasPairs(get_statement_post_info(store,stmt));
+  }
+
+  ExpressionPairVector *computeMustAliasPairs(carrier_type_o(CARRIER_TYPE) sg) {
+    ExpressionPairVector *aliases = new ExpressionPairVector();
+    ExpressionPairVector::iterator i;
+    std::pair<SgNode*,SgNode*> *pair;
+    for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
+      pair = *i;
+      if (o_is_must_alias(pair->first, pair->second, sg)) {
+        aliases->push_back(pair);
+      }
+    }
+    return aliases;
+  }
+  
+  ExpressionPairVector *computeMayAliasPairs(carrier_type_o(CARRIER_TYPE) sg) {
+    ExpressionPairVector *aliases = new ExpressionPairVector();
+    ExpressionPairVector::iterator i;
+    std::pair<SgNode*,SgNode*> *pair;
+    for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
+      pair = *i;
+      if (o_is_may_alias(pair->first, pair->second, sg)) {
+        aliases->push_back(pair);
+      }
+    }
+    return aliases;
+  }
+
+  void addAliasPairsAttribute(ExpressionPairVector *exprs, std::string pos, std::string alias_type, SgStatement* node) {
+    std::string label = "PAG " + alias_type + "-alias " + pos;
+    node->setAttribute(label, new AliasPairAttribute(exprs));
+  }
+};
+
+
+/* prints carrier */
 template <typename DFI_STORE_TYPE>
 class PagDfiTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE> {
 public:
@@ -52,22 +128,39 @@ public:
   }
 };
 
+/* prints AliasPairs */
 template <typename DFI_STORE_TYPE>
 class AliasPairsTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE> {
 private:
     ExpressionPairVector *pairs;
 public:
-  AliasPairsTextPrinter(DFI_STORE_TYPE store, ExpressionPairVector *_pairs) : DfiTextPrinter<DFI_STORE>(store) {
-    pairs = _pairs;
-  }
-  std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-    return get_statement_alias_pairs_string(get_statement_pre_info(store,stmt), pairs);
-  }
-  std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-    return get_statement_alias_pairs_string(get_statement_post_info(store,stmt), pairs);
-  }
+    AliasPairsTextPrinter(DFI_STORE_TYPE store, ExpressionPairVector *_pairs) : DfiTextPrinter<DFI_STORE>(store) {
+        pairs = _pairs;
+    }
+  
+protected:
+    virtual void visitStatement(SgStatement* stmt) {
+        std::string preInfo = getPreInfo(stmt);
+        std::string postInfo = getPostInfo(stmt);
+        std::string stmt_str = stmt->unparseToString();
+        
+        std::cout << currentFunction() << ": " << "// pre must_aliases : " << 
+          get_statement_alias_pairs_string("pre", "must", stmt) << std::endl;
+        
+        std::cout << currentFunction() << ": " << "// pre may_aliases : " << 
+          get_statement_alias_pairs_string("pre", "may", stmt) << std::endl;
+        
+        std::cout << currentFunction() << ": " << stmt_str << std::endl;
+        
+        std::cout << currentFunction() << ": " << "// post must_aliases : " << 
+          get_statement_alias_pairs_string("post", "must", stmt) << std::endl;
+        
+        std::cout << currentFunction() << ": " << "// post may_aliases : " << 
+          get_statement_alias_pairs_string("post", "may", stmt) << std::endl << std::endl;
+    }
 };
 
+/* adds carrier as comment to sourcecode */
 template <typename DFI_STORE_TYPE>
 class PagDfiCommentAnnotator : public DfiCommentAnnotator<DFI_STORE_TYPE> {
 public:
@@ -80,36 +173,43 @@ public:
   }
 };
 
+/* adds AliasPairs as comment to sourcecode */
 template <typename DFI_STORE_TYPE>
 class AliasPairsCommentAnnotator : public DfiCommentAnnotator<DFI_STORE_TYPE> {
 private:
     ExpressionPairVector *pairs;
 public:
-  AliasPairsCommentAnnotator(DFI_STORE_TYPE store, ExpressionPairVector *_pairs) : DfiCommentAnnotator<DFI_STORE>(store) {
-    pairs = _pairs;
-  }
-  std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-    return get_statement_alias_pairs_string(get_statement_pre_info(store,stmt), pairs);
-  }
-  std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { 
-    return get_statement_alias_pairs_string(get_statement_post_info(store,stmt), pairs);
-  }
+    AliasPairsCommentAnnotator(DFI_STORE_TYPE store, ExpressionPairVector *_pairs) : DfiCommentAnnotator<DFI_STORE>(store) {
+        pairs = _pairs;
+    }
+protected:
+    virtual void visitStatement(SgStatement* stmt) {
+        addCommentBeforeNode("// pre must_aliases : " + get_statement_alias_pairs_string("pre", "must", stmt), stmt);
+        addCommentBeforeNode("// pre may_aliases : "  + get_statement_alias_pairs_string("pre", "may",  stmt), stmt);
+        addCommentAfterNode("// post must_aliases : " + get_statement_alias_pairs_string("post","must", stmt), stmt);
+        addCommentAfterNode("// post may_aliases : "  + get_statement_alias_pairs_string("post","may",  stmt), stmt);
+    }
 };
 
 
-
+struct ltexpr {
+    bool operator()(SgNode* a, SgNode* b) const {
+        return a->unparseToString() < b->unparseToString();
+    }
+};
 
 class ExpressionCollector {
 public:
     ExpressionPairVector* getExpressionPairs(SgProject *projectNode) {
 
+
         class ExpressionCollectorTraversal : public AstSimpleProcessing {
             private:
-                std::set<SgNode*> *es;
+                std::set<SgNode*,ltexpr> *es;
 
             public:
-                std::set<SgNode*>* collectExpressions(SgProject* projectNode) {
-                    es = new std::set<SgNode*>();
+                std::set<SgNode*,ltexpr>* collectExpressions(SgProject* projectNode) {
+                    es = new std::set<SgNode*,ltexpr>();
                     traverseInputFiles(projectNode, preorder);
                     return es;
                 }
@@ -130,23 +230,21 @@ public:
         };
 
         ExpressionCollectorTraversal trav;
-        std::set<SgNode*> *exprs = trav.collectExpressions(projectNode);
+        std::set<SgNode*,ltexpr> *exprs = trav.collectExpressions(projectNode);
 
         // generate all (relevant) permutations of collected expressions
         // under commutativity of expressions (a,b) == (b,a)
         ExpressionPairVector *pairs = new ExpressionPairVector();
 
-        std::set<SgNode*>::iterator i,j;
+        std::set<SgNode*,ltexpr>::iterator i,j;
         for (i=exprs->begin(); i!=exprs->end(); i++) {
             j=i;
             for (j++; j!=exprs->end(); j++) {
                 SgNode *a,*b;
                 a = *i;
                 b = *j;
-                //std::cout << "(" << a << "," << b << ")" << std::endl;
                 pairs->push_back(new std::pair<SgNode*,SgNode*>(a,b));
             }
-            //std::cout << "---" << std::endl;
         }
         
         free(exprs);
@@ -155,7 +253,5 @@ public:
         return pairs;
     }
 };
-
-
 
 #endif

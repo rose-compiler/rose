@@ -14,34 +14,34 @@ extern "C" DFI_STORE doit(ANALYSIS)(void *);
 extern "C" void gdl_create(char *, int);
 
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt) {
-  return (carrier_printfunc(CARRIER_TYPE)(
-					  (carrier_type_o(CARRIER_TYPE))
-					  get_statement_pre_info(store, stmt)
-					  ));
+  return (carrier_printfunc(CARRIER_TYPE)( (carrier_type_o(CARRIER_TYPE)) get_statement_pre_info(store, stmt)));
 }
 
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt) {
-  return (carrier_printfunc(CARRIER_TYPE)(
-					  (carrier_type_o(CARRIER_TYPE))
-					  get_statement_post_info(store, stmt)
-					  ));
+  return (carrier_printfunc(CARRIER_TYPE)( (carrier_type_o(CARRIER_TYPE)) get_statement_post_info(store, stmt)));
 }
 
-std::string get_statement_alias_pairs_string(carrier_type_o(CARRIER_TYPE) sg, ExpressionPairVector *pairs) {
-    std::string s;
-    // also show graph, for debugging
-    //s.append(carrier_printfunc(CARRIER_TYPE)((carrier_type_o(CARRIER_TYPE))sg));
-    //s.append("\n//");
-    ExpressionPairVector::iterator i;
-    std::pair<SgNode*,SgNode*> *pair;
-    //std::cout<<"pairs:";  //FIXME multiple entries as compared by address
-    for (i=pairs->begin(); i!=pairs->end(); i++) {
-        pair = *i;
-        //std::cout<<"("<<o_expr_to_s(pair->first)<<","<<o_expr_to_s(pair->second)<<") ";  //FIXME multiple entries as compared by address
-        s.append(o_alias_pair_string(pair->first, pair->second, sg));
-    }
-    //std::cout << std::endl;  //FIXME multiple entries as compared by address
-    return s;
+ExpressionPairVector *get_statement_alias_pairs(std::string pos, std::string alias_type, SgStatement *stmt) {
+  std::string label = "PAG " + alias_type + "-alias " + pos;
+  AliasPairAttribute* attr = dynamic_cast<AliasPairAttribute *>(stmt->getAttribute(label));
+  return attr->getPairs();
+}
+
+std::string get_statement_pre_must_alias_pairs_string(SgStatement  *stmt) { return get_statement_alias_pairs_string("pre",  "must", stmt); }
+std::string get_statement_post_must_alias_pairs_string(SgStatement *stmt) { return get_statement_alias_pairs_string("post", "must", stmt); }
+std::string get_statement_pre_may_alias_pairs_string(SgStatement   *stmt) { return get_statement_alias_pairs_string("pre",  "may",  stmt); }
+std::string get_statement_post_may_alias_pairs_string(SgStatement  *stmt) { return get_statement_alias_pairs_string("post", "may",  stmt); }
+
+std::string get_statement_alias_pairs_string(std::string pos, std::string alias_type, SgStatement *stmt) {
+  std::stringstream str;
+  ExpressionPairVector *pairs = get_statement_alias_pairs(pos, alias_type, stmt);
+  ExpressionPairVector::iterator i;
+  std::pair<SgNode*,SgNode*> *pair;
+  for (i=pairs->begin(); i!=pairs->end(); i++) {
+    pair = *i;
+    str << "(" << pair->first->unparseToString() << "," << pair->second->unparseToString() << "), ";
+  }
+  return str.str();
 }
 
 carrier_type_o(CARRIER_TYPE) 
