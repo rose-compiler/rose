@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: StatementAttributeTraversal.C,v 1.4 2007-06-25 10:39:28 pr012 Exp $
 
 /* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
 
@@ -41,7 +41,7 @@ void DfiCommentAnnotator<DFI_STORE_TYPE>::addCommentAfterNode(std::string commen
 
 
 template<typename DFI_STORE_TYPE>
-std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPreInfo(SgStatement* stmt) {
+std::string StatementStringAttributeTraversal<DFI_STORE_TYPE>::getPreInfo(SgStatement* stmt) {
   std::stringstream ss1;
 
   StatementAttribute *start = (StatementAttribute *) stmt->getAttribute("PAG statement start");
@@ -59,7 +59,7 @@ std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPreInfo(SgStatement*
 }
 
 template<typename DFI_STORE_TYPE>
-std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPostInfo(SgStatement* stmt) {
+std::string StatementStringAttributeTraversal<DFI_STORE_TYPE>::getPostInfo(SgStatement* stmt) {
   std::stringstream ss2;
 
   StatementAttribute* end= (StatementAttribute *) stmt->getAttribute("PAG statement end");
@@ -73,10 +73,6 @@ std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPostInfo(SgStatement
 }
 
 template<typename DFI_STORE_TYPE>
-StatementAttributeTraversal<DFI_STORE_TYPE>::~StatementAttributeTraversal() {
-}
-
-template<typename DFI_STORE_TYPE>
 std::string StatementAttributeTraversal<DFI_STORE_TYPE>::currentFunction() {
   return _currentFunction;
 }
@@ -84,23 +80,23 @@ std::string StatementAttributeTraversal<DFI_STORE_TYPE>::currentFunction() {
 template<typename DFI_STORE_TYPE>
 void StatementAttributeTraversal<DFI_STORE_TYPE>::visit(SgNode *node)
 {
-    if (isSgStatement(node))
-    {
-        SgStatement *stmt = isSgStatement(node);
-        SgFunctionDeclaration *func = enclosing_function(stmt);
+  if (isSgStatement(node))
+  {
+    SgStatement *stmt = isSgStatement(node);
+    SgFunctionDeclaration *func = enclosing_function(stmt);
 	if(func!=NULL) {
 	  if (isSgBasicBlock(stmt->get_parent())) {
 
-            std::string funcname = func->get_name().str();
+        std::string funcname = func->get_name().str();
 	    _currentFunction=funcname;
-            handleStmtDfi(stmt,getPreInfo(stmt),getPostInfo(stmt));
+        visitStatement(stmt);
 	  }
 
 	  if(SgBasicBlock* bb=isSgBasicBlock(stmt)) {
 	    visitBasicBlock(bb); // Basic Block has no annotation but we need it sometimes
 	  }
 	}
-    }
+  }
 }
 
 template<typename DFI_STORE_TYPE>
@@ -108,9 +104,9 @@ DfiCommentAnnotator<DFI_STORE_TYPE>::~DfiCommentAnnotator() {
 }
 
 template<typename DFI_STORE_TYPE>
-void DfiCommentAnnotator<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
-  addCommentBeforeNode("// pre info : "+preInfo,stmt);
-  addCommentAfterNode("// post info: "+postInfo,stmt);
+void DfiCommentAnnotator<DFI_STORE_TYPE>::visitStatement(SgStatement* stmt) {
+  addCommentBeforeNode("// pre info : "+getPreInfo(stmt),stmt);
+  addCommentAfterNode("// post info: "+getPostInfo(stmt),stmt);
 }
 
 template<typename DFI_STORE_TYPE>
@@ -118,7 +114,9 @@ DfiTextPrinter<DFI_STORE_TYPE>::~DfiTextPrinter() {
 }
 
 template<typename DFI_STORE_TYPE>
-void DfiTextPrinter<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
+void DfiTextPrinter<DFI_STORE_TYPE>::visitStatement(SgStatement* stmt) {
+  std::string preInfo = getPreInfo(stmt);
+  std::string postInfo = getPostInfo(stmt);
   std::string stmt_str = stmt->unparseToString();
   std::cout << currentFunction() << ": " << "// pre info : " << preInfo << std::endl;
   std::cout << currentFunction() << ": " << stmt_str << std::endl;
@@ -184,7 +182,9 @@ void DfiDotGenerator<DFI_STORE_TYPE>::visitBasicBlock(SgBasicBlock* stmt) {
 }
 
 template<typename DFI_STORE_TYPE>
-void DfiDotGenerator<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
+void DfiDotGenerator<DFI_STORE_TYPE>::visitStatement(SgStatement* stmt) {
+  std::string preInfo = getPreInfo(stmt);
+  std::string postInfo = getPostInfo(stmt);
   switch(stmt->variantT()) {
   case V_SgIfStmt: {
     SgIfStmt* ifstmt=isSgIfStmt(stmt);

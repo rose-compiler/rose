@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.2 2007-03-08 15:36:48 markus Exp $
+// $Id: StatementAttributeTraversal.h,v 1.3 2007-06-25 10:39:28 pr012 Exp $
 
 #ifndef STATEMENTATTRIBUTETRAVERSAL_H
 #define STATEMENTATTRIBUTETRAVERSAL_H
@@ -15,36 +15,45 @@ class StatementAttributeTraversal : public AstSimpleProcessing
 {
 public:
   StatementAttributeTraversal(DFI_STORE store_) : store(store_) {}
-  virtual ~StatementAttributeTraversal();
+  virtual ~StatementAttributeTraversal() {}
 
 protected:
   void visit(SgNode *);
   std::string currentFunction();
 
-  virtual void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {}
+  virtual void visitStatement(SgStatement* stmt) {}
   virtual void visitBasicBlock(SgBasicBlock* stmt) {}
-
-  std::string getPreInfo(SgStatement* stmt);
-  std::string getPostInfo(SgStatement* stmt);
 
   DFI_STORE_TYPE store;
   std::string _currentFunction;
-
-  virtual std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { return ""; }
-  virtual std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { return ""; }
 private:
   SgFunctionDeclaration* enclosing_function(SgNode *node);
 };
 
 template<typename DFI_STORE_TYPE>
-class DfiCommentAnnotator : public StatementAttributeTraversal<DFI_STORE_TYPE>
+class StatementStringAttributeTraversal : public StatementAttributeTraversal<DFI_STORE_TYPE>
 {
 public:
-  DfiCommentAnnotator(DFI_STORE_TYPE store_):StatementAttributeTraversal<DFI_STORE_TYPE>(store_) {}
+  StatementStringAttributeTraversal(DFI_STORE store_) : StatementAttributeTraversal<DFI_STORE_TYPE>(store_) {}
+  virtual ~StatementStringAttributeTraversal() {}
+
+protected:
+  std::string getPreInfo(SgStatement* stmt);
+  std::string getPostInfo(SgStatement* stmt);
+
+  virtual std::string statementPreInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { return ""; }
+  virtual std::string statementPostInfoString(DFI_STORE_TYPE store, SgStatement *stmt) { return ""; }
+};
+
+template<typename DFI_STORE_TYPE>
+class DfiCommentAnnotator : public StatementStringAttributeTraversal<DFI_STORE_TYPE>
+{
+public:
+  DfiCommentAnnotator(DFI_STORE_TYPE store_):StatementStringAttributeTraversal<DFI_STORE_TYPE>(store_) {}
   virtual ~DfiCommentAnnotator();
 
 protected:
-  virtual void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo);
+  virtual void visitStatement(SgStatement* stmt);
 
   void addComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
   void addCommentBeforeNode(std::string comment, SgStatement* node);
@@ -54,20 +63,20 @@ private:
 };
 
 template<typename DFI_STORE_TYPE>
-class DfiTextPrinter : public StatementAttributeTraversal<DFI_STORE_TYPE>
+class DfiTextPrinter : public StatementStringAttributeTraversal<DFI_STORE_TYPE>
 {
 public:
-  DfiTextPrinter(DFI_STORE_TYPE store_) : StatementAttributeTraversal<DFI_STORE_TYPE>(store_) {}
+  DfiTextPrinter(DFI_STORE_TYPE store_) : StatementStringAttributeTraversal<DFI_STORE_TYPE>(store_) {}
   virtual ~DfiTextPrinter();
 
 protected:
-  void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo);
+  virtual void visitStatement(SgStatement* stmt);
 
 private:
 };
 
 template<typename DFI_STORE_TYPE>
-class DfiDotGenerator : public StatementAttributeTraversal<DFI_STORE_TYPE>
+class DfiDotGenerator : public StatementStringAttributeTraversal<DFI_STORE_TYPE>
 {
 public:
   DfiDotGenerator(DFI_STORE_TYPE store_);
@@ -77,7 +86,7 @@ public:
   bool edgeInfo();
 
 protected:
-  virtual void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo);
+  virtual void visitStatement(SgStatement* stmt);
   virtual void visitBasicBlock(SgBasicBlock* stmt);
   std::string addEdgeLabel(std::string s);
   SgStatement* lastStmtofStmtList(SgStatementPtrList& l);
