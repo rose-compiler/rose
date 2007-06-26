@@ -931,7 +931,7 @@ srw_extract_summaryGraph_t(sg) = srw_extract_summaryGraph(sg);
 
 
 // -----------------------------------------
-// functions for Sagiv/Reps/William analysis
+// functions for Sagiv/Reps/Wilhelm analysis
 // -----------------------------------------
 
 //FIXME in main verwenden
@@ -965,7 +965,7 @@ nielson_extract_shapeGraphs(sg) = [x !! x <-- sg];
 /*
  * converts a "Nielson/Nielson/Hankin shape graph" (a list of graphs where
  * each selector may appear at most once at a certain node) into a
- * "Sagiv/Reps/William shape graph" (a single graph where selectors
+ * "Sagiv/Reps/Wilhelm shape graph" (a single graph where selectors
  * may point to more than one node simultaneously)
  */
 
@@ -1036,7 +1036,7 @@ rec_more_than_once(car:cdr, seen, result) =
 
 
 
-// converts a "Sagiv/Reps/William shape graph" (a single graph where selectors
+// converts a "Sagiv/Reps/Wilhelm shape graph" (a single graph where selectors
 // may point to more than one node simultaneously)
 // into a "Nielson/Nielson/Hankin shape graph" (a set of graphs where
 // each selector may point to at most one cell)
@@ -1197,23 +1197,6 @@ emptylist() = [];
 // ----------------------------
 // is_may_alias / is_must_alias
 // -----------------------------
-
-alias_pair_string :: Expression,Expression,dfi -> str;
-alias_pair_string(a,b,lifted_sgs) =
-    if is_must_alias(a,b,lifted_sgs) then
-        "must(".expr_to_s(a).",".expr_to_s(b).") "
-    else
-        if is_may_alias(a,b,lifted_sgs) then
-            "may(".expr_to_s(a).",".expr_to_s(b).") "
-        else 
-            ""
-        endif
-    endif;
-
-expr_to_s :: Expression -> str;
-expr_to_s(DotExp(PointerDerefExp(parent),VarRefExp(na_sel))) = "(*".expr_to_s(parent).").".val-aststring(na_sel);
-expr_to_s(ArrowExp(parent,VarRefExp(na_sel))) = expr_to_s(parent)."->".val-aststring(na_sel);
-expr_to_s(VarRefExp(na_x)) = val-aststring(na_x);
 
 is_no_alias :: Expression,Expression,dfi -> bool;
 is_no_alias(a,b,lifted_sgs) = !is_may_alias(a,b,lifted_sgs);

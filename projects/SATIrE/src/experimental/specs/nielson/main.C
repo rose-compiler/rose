@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 
   /* Handle command line option --textoutput */
   if(opt.analysisResultsTextOutput()) {
-    //PagDfiTextPrinter<DFI_STORE> p(analysis_info, pairs);
+    //PagDfiTextPrinter<DFI_STORE> p(analysis_info);
     AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
     p.traverseInputFiles(ast_root, preorder);
   }
@@ -75,8 +75,8 @@ int main(int argc, char **argv)
    * file is generated (named rose_<inputfilename>) */
   if(opt.analysisResultsSourceOutput()) {
     //PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
-    AliasPairsCommentAnnotator<DFI_STORE> p(analysis_info, pairs);
-    p.traverseInputFiles(ast_root, preorder);
+    AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
+    ca.traverseInputFiles(ast_root, preorder);
     ast_root->unparse();
   }
 
@@ -91,7 +91,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 {
   int show_summarygraph = 0; //shows the combined shape graph a la Sagiv/Reps/William (0: no summary graph)
   int show_shapegraphs  = 1; //shows the shape graphs (0: no shape graphs)
-  int fold_shapegraphs  = 0; //fold the shapegraphs (0: display them all initially)
+  int fold_shapegraphs  = 1; //fold the shapegraphs (0: display them all initially)
 
 	/* We have only one instruction per basic block ! */
 	assert((id==-1 && insnum==-1) || insnum==0);
