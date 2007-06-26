@@ -3,43 +3,25 @@
    Year  : 2006
 */
 
-trace_expr :: str,Expression -> bool;
-trace_expr(label, stmt) = print("stmt:") print(label) print(" ") print(stmt) print("\n") true;
-
-trace_changes :: dfi,dfi -> bool;
-trace_changes(g_before, g_after) =
-  case drop(g_before) of ((e1,h1),_) =>
-  case drop(g_after)  of ((e2,h2),_) =>
-      print("    stack += ") print(stackedgesetminus(e2,e1)) print("\n")
-      print("    stack -= ") print(stackedgesetminus(e1,e2)) print("\n")
-      print("    stack  = ") print(e2) print("\n")
-      print("    heap  += ") print(edgesetminus(h2,h1)) print("\n")
-      print("    heap  -= ") print(edgesetminus(h1,h2)) print("\n")
-      print("    heap   = ") print(h2) print("\n")
-      true;
-  endcase;
-  endcase;
+/* highlevel functions that can handle arbitrarily nested
+ * expressions by introducing temporary variables 
+ */
 
 is_temp :: str -> bool;
 is_temp(s) = substr(s, 0, 0) = "$";
-
-// --------------------------------------------------------------------------
-// highlevel functions handle normalisation and special cases using tassign()
-// --------------------------------------------------------------------------
 
 expression :: Expression,str,dfi -> dfi;
 expression(_,_,bot) = bot;
 expression(_,_,top) = top;
 expression(e,label,lifted_g) =
-  //let debug0 = trace_expr(label,e); in
-  let ops = normalisation_ops(e,label); in
-  let
-      result_g = execute(ops, lifted_g);
-  in if kill_norm_temps then
-      kill_normalisation_temps(ops, result_g)
-  else
-      result_g
-  endif;
+    let ops = normalisation_ops(e,label); in
+    let result_g = execute(ops, lifted_g); in
+    if kill_norm_temps then
+        kill_normalisation_temps(ops, result_g)
+    else
+        result_g
+    endif;
+
 
 /* call tassign_ functions according to the opcodes 
  * to alter the shapegraph. while going along, collect
@@ -49,37 +31,40 @@ expression(e,label,lifted_g) =
 execute :: OpCodeList,dfi -> dfi;
 execute(           [], lifted_g) = lifted_g;
 execute((op,args):cdr, lifted_g) =
-  let g = drop(lifted_g); in
-  let g1 = case op of
-      "x_new" =>
-          tassign_x_new(pick(args,1),g);
-      "x_null" =>
-          tassign_x_null(pick(args,1),g);
-      "x_y" =>
-          let g1 = tassign_x_y(pick(args,1),pick(args,2),g); in
-          if (!is_temp(pick(args,2))) then 
-              g1 
-          else 
-              drop(delete_var(lift(g1),pick(args,2))) // temporary is assigned exactly once and can be eliminated
-          endif; 
-          
-      "x_ysel" =>
-          tassign_x_ysel(pick(args,1),pick(args,2),pick(args,3),g);
-      "xsel_null" =>
-          tassign_xsel_null(pick(args,1),pick(args,2),g);
-      "xsel_y" =>
-          let g1 = tassign_xsel_y(pick(args,1),pick(args,2),pick(args,3),g); in
-          if (!is_temp(pick(args,3))) then 
-              g1 
-          else 
-              drop(delete_var(lift(g1),pick(args,3))) // temporary is assigned exactly once and can be eliminated
-          endif; 
+    let g = drop(lifted_g); in
+    let g1 = case op of
+        "x_new" =>
+            tassign_x_new(pick(args,1),g);
+            
+        "x_null" =>
+            tassign_x_null(pick(args,1),g);
+            
+        "x_y" =>
+            let g1 = tassign_x_y(pick(args,1),pick(args,2),g); in
+            if (!is_temp(pick(args,2))) then 
+                g1 
+            else 
+                drop(delete_var(lift(g1),pick(args,2))) // temporary is assigned exactly once and can be eliminated
+            endif; 
+            
+        "x_ysel" =>
+            tassign_x_ysel(pick(args,1),pick(args,2),pick(args,3),g);
+            
+        "xsel_null" =>
+            tassign_xsel_null(pick(args,1),pick(args,2),g);
+            
+        "xsel_y" =>
+            let g1 = tassign_xsel_y(pick(args,1),pick(args,2),pick(args,3),g); in
+            if (!is_temp(pick(args,3))) then 
+                g1 
+            else 
+                drop(delete_var(lift(g1),pick(args,3))) // temporary is assigned exactly once and can be eliminated
+            endif; 
 
-      _ =>
-          print("unrecognized opcode: ") print(op) print("\n") g;
-  endcase; in
-  //let dummy0 = trace_changes(lift(g),lift(g1)); in
-  execute(cdr,lift(g1));
+        _ =>
+            print("unrecognized opcode: ") print(op) print("\n") g;
+    endcase; in
+    execute(cdr,lift(g1));
 
 pick :: StrList,snum -> str;
 pick(car:cdr,1) = car;

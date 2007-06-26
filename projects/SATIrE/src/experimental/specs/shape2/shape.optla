@@ -7,7 +7,6 @@
 
 
 
-
 UNIVERSAL
 stacksoup : bool#
 deletetmp : bool#
@@ -21,7 +20,6 @@ result : str#
 BLOCK
 label : snum#
 
-
 PROBLEM pointer
 direction : forward
 carrier : dfi
@@ -29,6 +27,7 @@ init : bot
 init_start : lift((({},{}),{}))
 equal : eq
 combine : comb
+retfunc : comb
 widening : w
 
 
@@ -40,37 +39,36 @@ ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),(@));
 
 ArgumentAssignment(VarRefExp(na_l),NewExp(_,_,_)),_:
 let
-  rx = val-aststring(na_l);
+    rx = val-aststring(na_l);
 in
-  lift(assign_x_new(rx,drop(@)));
+    lift(assign_x_new(rx,drop(@)));
 
 ArgumentAssignment(VarRefExp(na_l),VarRefExp(na_r)),_:
 let
-  rx = val-aststring(na_l);
-  ry = val-aststring(na_r);
+    rx = val-aststring(na_l);
+    ry = val-aststring(na_r);
 in
-  lift(tassign_x_y(rx,ry,drop(@)));
+    lift(tassign_x_y(rx,ry,drop(@)));
 
 ParamAssignment(VariableSymbol(na_l),VariableSymbol(param)),_:
 let
-  rx = val-aststring(na_l);
-  ry = val-aststring(param);
+    rx = val-aststring(na_l);
+    ry = val-aststring(param);
 in
-  delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
+    delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
 
 
 ReturnAssignment(VariableSymbol(na_l),VariableSymbol(na_r)),_:
 let
-  rx = val-aststring(na_l);
-  ry = val-aststring(na_r);
-in
-  let
+    rx = val-aststring(na_l);
+    ry = val-aststring(na_r);
+in let
     newinfo=lift(tassign_x_y(rx,ry,drop(@)));
-  in
+in
     delete_var(newinfo,ry);
 
 FunctionExit(functionName,params), _:
-  kill_params(@, params);
+    kill_params(@, params);
 
 _,_: @;
 
@@ -83,75 +81,43 @@ w::dfi,dfi->dfi;
 w(a,b) = b;
 
 comb::dfi,dfi->dfi;
-comb(a,b) = if a = bot then b
-            else if b = bot then a
-            else let a2 <= a;
-                     b2 <= b; in
-             case a2,b2 of
-             ((V1,E1),I1),((V2,E2),I2) =>lift(((union(V1,V2),union(E1,E2)),
-                                           union(I1,I2)));
-             endcase
-           endif
-         endif;
-
+comb(a,b) =
+    if a = bot then b
+    else if b = bot then a
+    else case drop(a),drop(b) of
+        ((V1,E1),I1),((V2,E2),I2) =>
+            lift(((union(V1,V2),union(E1,E2)),union(I1,I2)));
+    endcase
+    endif
+    endif;
 
 kill_params :: dfi, *VariableSymbolNT -> dfi;
 kill_params(s, [!]) = s;
 kill_params(s, VariableSymbol(p)::ps) =
-     delete_var(kill_params(s, ps),val-aststring(p));
-
+    delete_var(kill_params(s, ps),val-aststring(p));
 
 delete_var::dfi,str->dfi;
-delete_var(info,var) =
- case info of
- top => top;
- bot => bot;
- info2 =>
-   let G = drop(info2); in
-     lift(assign_x_null(var,G));
- endcase;
-
-
-
-
-
-trace_expr :: str,Expression -> bool;
-trace_expr(label, stmt) = print("stmt:") print(label) print(" ") print(stmt) print("\n") true;
-
-trace_changes :: dfi,dfi -> bool;
-trace_changes(g_before, g_after) =
-  case drop(g_before) of ((e1,h1),_) =>
-  case drop(g_after) of ((e2,h2),_) =>
-      print("    stack += ") print(stackedgesetminus(e2,e1)) print("\n")
-      print("    stack -= ") print(stackedgesetminus(e1,e2)) print("\n")
-      print("    stack  = ") print(e2) print("\n")
-      print("    heap  += ") print(edgesetminus(h2,h1)) print("\n")
-      print("    heap  -= ") print(edgesetminus(h1,h2)) print("\n")
-      print("    heap   = ") print(h2) print("\n")
-      true;
-  endcase;
-  endcase;
-
+delete_var(g,var) =
+    case g of
+        top => top;
+        bot => bot;
+        info => lift(assign_x_null(var,drop(info)));
+    endcase;
 is_temp :: str -> bool;
 is_temp(s) = substr(s, 0, 0) = "$";
-
-
-
-
 
 expression :: Expression,str,dfi -> dfi;
 expression(_,_,bot) = bot;
 expression(_,_,top) = top;
 expression(e,label,lifted_g) =
+    let ops = normalisation_ops(e,label); in
+    let result_g = execute(ops, lifted_g); in
+    if kill_norm_temps then
+        kill_normalisation_temps(ops, result_g)
+    else
+        result_g
+    endif;
 
-  let ops = normalisation_ops(e,label); in
-  let
-      result_g = execute(ops, lifted_g);
-  in if kill_norm_temps then
-      kill_normalisation_temps(ops, result_g)
-  else
-      result_g
-  endif;
 
 
 
@@ -161,37 +127,40 @@ expression(e,label,lifted_g) =
 execute :: OpCodeList,dfi -> dfi;
 execute( [], lifted_g) = lifted_g;
 execute((op,args):cdr, lifted_g) =
-  let g = drop(lifted_g); in
-  let g1 = case op of
-      "x_new" =>
-          tassign_x_new(pick(args,1),g);
-      "x_null" =>
-          tassign_x_null(pick(args,1),g);
-      "x_y" =>
-          let g1 = tassign_x_y(pick(args,1),pick(args,2),g); in
-          if (!is_temp(pick(args,2))) then
-              g1
-          else
-              drop(delete_var(lift(g1),pick(args,2)))
-          endif;
+    let g = drop(lifted_g); in
+    let g1 = case op of
+        "x_new" =>
+            tassign_x_new(pick(args,1),g);
 
-      "x_ysel" =>
-          tassign_x_ysel(pick(args,1),pick(args,2),pick(args,3),g);
-      "xsel_null" =>
-          tassign_xsel_null(pick(args,1),pick(args,2),g);
-      "xsel_y" =>
-          let g1 = tassign_xsel_y(pick(args,1),pick(args,2),pick(args,3),g); in
-          if (!is_temp(pick(args,3))) then
-              g1
-          else
-              drop(delete_var(lift(g1),pick(args,3)))
-          endif;
+        "x_null" =>
+            tassign_x_null(pick(args,1),g);
 
-      _ =>
-          print("unrecognized opcode: ") print(op) print("\n") g;
-  endcase; in
+        "x_y" =>
+            let g1 = tassign_x_y(pick(args,1),pick(args,2),g); in
+            if (!is_temp(pick(args,2))) then
+                g1
+            else
+                drop(delete_var(lift(g1),pick(args,2)))
+            endif;
 
-  execute(cdr,lift(g1));
+        "x_ysel" =>
+            tassign_x_ysel(pick(args,1),pick(args,2),pick(args,3),g);
+
+        "xsel_null" =>
+            tassign_xsel_null(pick(args,1),pick(args,2),g);
+
+        "xsel_y" =>
+            let g1 = tassign_xsel_y(pick(args,1),pick(args,2),pick(args,3),g); in
+            if (!is_temp(pick(args,3))) then
+                g1
+            else
+                drop(delete_var(lift(g1),pick(args,3)))
+            endif;
+
+        _ =>
+            print("unrecognized opcode: ") print(op) print("\n") g;
+    endcase; in
+    execute(cdr,lift(g1));
 
 pick :: StrList,snum -> str;
 pick(car:cdr,1) = car;
@@ -212,8 +181,8 @@ kill_normalisation_temps1(car:cdr, s) = delete_var(kill_normalisation_temps1(cdr
 extract_tempvars :: OpCodeList,VarSet -> VarSet;
 extract_tempvars( [], temps) = temps;
 extract_tempvars((_,v:_):cdr, temps) =
-  let new_temps = if is_normalisation_temp(v) then {v} else {} endif; in
-  extract_tempvars(cdr, union(temps,new_temps));
+    let new_temps = if is_normalisation_temp(v) then {v} else {} endif; in
+    extract_tempvars(cdr, union(temps,new_temps));
 
 
 
@@ -227,17 +196,17 @@ max(a,b) = if a > b then a else b endif;
 
 expr_depth :: Expression -> snum;
 expr_depth(e) = case e of
-  ArrowExp(VarRefExp(_),VarRefExp(_)) => 0;
-  ArrowExp(child,_) => 1 + expr_depth(child);
-  DotExp(PointerDerefExp(child),_) => 1 + expr_depth(child);
-  _ => 0;
+    ArrowExp(VarRefExp(_),VarRefExp(_)) => 0;
+    ArrowExp(child,_) => 1 + expr_depth(child);
+    DotExp(PointerDerefExp(child),_) => 1 + expr_depth(child);
+    _ => 0;
 endcase;
 
 expr_is_complex :: Expression -> bool;
 expr_is_complex(e) = case e of
-  DotExp(PointerDerefExp(child),_) => true;
-  ArrowExp(child,_) => true;
-  _ => false;
+    DotExp(PointerDerefExp(child),_) => true;
+    ArrowExp(child,_) => true;
+    _ => false;
 endcase;
 
 
@@ -247,10 +216,10 @@ endcase;
 
 expr_at :: Expression,snum -> Expression;
 expr_at(e,nesting_level) =
-  let
-    descending_steps = min(nesting_level, expr_depth(e));
-  in
-    rec_expr_at(e, descending_steps);
+    let
+        descending_steps = min(nesting_level, expr_depth(e));
+    in
+        rec_expr_at(e, descending_steps);
 
 rec_expr_at :: Expression,snum -> Expression;
 rec_expr_at(e,0) = e;
@@ -267,108 +236,103 @@ expr_innermost(e) = expr_at(e, expr_depth(e));
 normalisation_ops :: Expression,str -> OpCodeList;
 normalisation_ops(e,label) =
     case e of AssignOp(lhs,rhs) =>
-      let tmp = gen_normalisation_temp(label); in
-      let lhs_tmp = tmp."l";
-          rhs_tmp = tmp."r";
-      in
-          rec_normalise(lhs,expr_depth(lhs),lhs_tmp,[]) ++
-          rec_normalise(rhs,expr_depth(rhs),rhs_tmp,[]) ++
-          perform_assign(e,lhs_tmp,rhs_tmp,[]);
-      _ => [];
+        let tmp = gen_normalisation_temp(label); in
+        let lhs_tmp = tmp."l";
+            rhs_tmp = tmp."r";
+        in
+            rec_normalise(lhs,expr_depth(lhs),lhs_tmp,[]) ++
+            rec_normalise(rhs,expr_depth(rhs),rhs_tmp,[]) ++
+            perform_assign(e,lhs_tmp,rhs_tmp,[]);
+        _ => [];
     endcase;
 
 rec_normalise :: Expression,snum,str,OpCodeList -> OpCodeList;
 rec_normalise( _, 0, _, list) = list;
 rec_normalise(lhs, lhs_cursor, tmpvar_prefix, list) =
-  let new_var = tmpvar_prefix . str(lhs_cursor - 1); in
-  let new_list = case expr_at(lhs,lhs_cursor) of
+    let new_var = tmpvar_prefix . str(lhs_cursor - 1); in
+    let new_list = case expr_at(lhs,lhs_cursor) of
 
 
-      DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
-          [("x_ysel", [new_var, tmpvar_prefix.str(lhs_cursor), val-aststring(na_sel)])];
+        DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
+            [("x_ysel", [new_var, tmpvar_prefix.str(lhs_cursor), val-aststring(na_sel)])];
 
 
-      ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
-          [("x_ysel", [new_var,val-aststring(na_x),val-aststring(na_sel)])];
+        ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+            [("x_ysel", [new_var,val-aststring(na_x),val-aststring(na_sel)])];
 
 
-      VarRefExp(na_x) =>
-          [("x_y", [new_var,val-aststring(na_x)])];
+        VarRefExp(na_x) =>
+            [("x_y", [new_var,val-aststring(na_x)])];
 
-      _ => [];
+        _ => [];
 
-  endcase; in
-  rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, list ++ new_list);
+    endcase; in
+    rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, list ++ new_list);
 
 
 perform_assign :: Expression,str,str,OpCodeList -> OpCodeList;
 perform_assign(e,lhs_tmp,rhs_tmp,list) =
-  case e of
+    case e of
 
-      AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
-          [("x_new", [val-aststring(na_x)])];
-
-
-      AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>
-          [("x_null", [val-aststring(na_x)])];
+        AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
+            [("x_new", [val-aststring(na_x)])];
 
 
-      AssignOp(VarRefExp(na_x),VarRefExp(na_y)) =>
-          [("x_y", [val-aststring(na_x),val-aststring(na_y)])];
+        AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>
+            [("x_null", [val-aststring(na_x)])];
 
 
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) =>
-          [("xsel_null", [val-aststring(na_x),val-aststring(na_sel)])];
+        AssignOp(VarRefExp(na_x),VarRefExp(na_y)) =>
+            [("x_y", [val-aststring(na_x),val-aststring(na_y)])];
 
 
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) =>
-          [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)])];
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) =>
+            [("xsel_null", [val-aststring(na_x),val-aststring(na_sel)])];
 
 
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-          [("xsel_null", [val-aststring(na_x), val-aststring(na_sel), "DEBUG"]),
-           ("xsel_y", [val-aststring(na_x), val-aststring(na_sel), val-aststring(na_y)])];
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) =>
+            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)])];
 
 
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-          [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)]),
-           ("xsel_y", [lhs_tmp."0", val-aststring(na_sel), val-aststring(na_y)])];
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
+            [("xsel_null", [val-aststring(na_x), val-aststring(na_sel), "DEBUG"]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_sel), val-aststring(na_y)])];
 
 
-      AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) =>
-          [("x_ysel", [val-aststring(na_x), val-aststring(na_y), val-aststring(na_sel)])];
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
+            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_sel), val-aststring(na_y)])];
 
 
-      AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) =>
-          [("x_ysel", [val-aststring(na_x), rhs_tmp."0", val-aststring(na_sel)])];
+        AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) =>
+            [("x_ysel", [val-aststring(na_x), val-aststring(na_y), val-aststring(na_sel)])];
 
 
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
-           ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
+        AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) =>
+            [("x_ysel", [val-aststring(na_x), rhs_tmp."0", val-aststring(na_sel)])];
 
 
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
-           ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
 
 
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
-           ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
 
 
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
-           ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
-
-      _ => list;
-  endcase;
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
 
 
-print_l :: OpCodeList -> bool;
-print_l([]) = true;
-print_l(car:cdr) = print(" -- ") print(car) print_l(cdr);
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
+
+        _ => list;
+    endcase;
 tassign_x_null::str,ShapeGraph -> ShapeGraph;
 tassign_x_null(x,sg) = assign_x_null(x,sg);
 
@@ -614,15 +578,15 @@ gc_up(info) = let info2 <= info; in lift(gc(info2));
 reach(ev,es) = let newev = union({ x !! (y,_,x) <-- es, if y ? ev } , ev);
                in if ev != newev
                      then reach(newev,es) else newev endif;
-extract_stackedge_set :: ShapeGraph->StackEdgeSet;
-extract_stackedge_set(((ev,_),_)) = ev;
+extract_stackedge_set :: ShapeGraph -> StackEdgeSet;
+extract_stackedge_set(((EV,_),_)) = EV;
+
+extract_stackedges::ShapeGraph -> StackEdgeList;
+extract_stackedges(((EV,_),_)) = [x !! x <-- EV];
 
 extract_heapnodes::ShapeGraph -> NodeList;
 extract_heapnodes(((EV,ES),_)) =
    [ x !! x <-- union(union({ a !! (a,_,_) <-- ES},{ c !! (_,_,c) <-- ES}),{b !! (_,b) <-- EV}) ];
-
-extract_stackedges::ShapeGraph -> StackEdgeList;
-extract_stackedges(((EV,_),_)) = [x !! x <-- EV];
 
 extract_heapedges::ShapeGraph -> HeapEdgeList;
 extract_heapedges(((_,ES),_)) = [x !! x <-- ES];
@@ -660,26 +624,37 @@ srw_extract_summaryGraph :: ShapeGraph -> ShapeGraphList;
 srw_extract_summaryGraph(sg) = [sg];
 
 srw_extract_shapeGraphs :: ShapeGraph -> ShapeGraphList;
-srw_extract_shapeGraphs(sg) = srwSG_to_hrnSG(sg);
+srw_extract_shapeGraphs(sg) = srwSG_to_nielsonSG(sg);
 
 
 
 
 
-hrn_extract_summaryGraph :: ShapeGraphList -> ShapeGraphList;
-hrn_extract_summaryGraph(sg) = [hrnSG_to_srwSG(sg)];
+nielson_extract_summaryGraph :: ShapeGraphList -> ShapeGraphList;
+nielson_extract_summaryGraph(sg) = [nielsonSG_to_srwSG(sg)];
 
-hrn_extract_shapeGraphs :: ShapeGraphList -> ShapeGraphList;
-hrn_extract_shapeGraphs(sg) = sg;
-hrnSG_to_srwSG :: ShapeGraphList -> ShapeGraph;
-hrnSG_to_srwSG(_) = (({},{}),{});
-srwSG_to_hrnSG :: ShapeGraph -> ShapeGraphList;
-srwSG_to_hrnSG(((EV,ES),IS)) =
-  mk_unique_shapeGraph_list([((EVn,ESn),IS) !!
-    EVn <- transform_stackedges(EV),
-    ESn <- transform_heapedges(
-             reachable_heapedges({n !! (_,n) <-- EVn}, ES),
-                             {n !! (_,n) <-- EVn})
+nielson_extract_shapeGraphs :: ShapeGraphList -> ShapeGraphList;
+nielson_extract_shapeGraphs(sg) = sg;
+nielsonSG_to_srwSG :: ShapeGraphList -> ShapeGraph;
+nielsonSG_to_srwSG(graphs) = rec_combine_graphs(hd(graphs),tl(graphs));
+
+rec_combine_graphs :: ShapeGraph,ShapeGraphList -> ShapeGraph;
+rec_combine_graphs(g, [] ) = g;
+rec_combine_graphs(((EV0,ES0),IS0), ((EV1,ES1),IS1):rest) =
+  rec_combine_graphs(((union(EV0,EV1),union(ES0,ES1)),union(IS0,IS1)), rest);
+
+
+
+
+
+
+srwSG_to_nielsonSG :: ShapeGraph -> ShapeGraphList;
+srwSG_to_nielsonSG(((EV,ES),IS)) =
+    mk_unique_shapeGraph_list([((EVn,ESn),IS) !!
+        EVn <- transform_stackedges(EV),
+        ESn <- transform_heapedges(
+            reachable_heapedges({n !! (_,n) <-- EVn}, ES),
+                                {n !! (_,n) <-- EVn})
     ]);
 
 
@@ -690,7 +665,7 @@ rec_transform_stackedges :: StackEdgeSet,StackEdgeSet -> StackEdgeSetList;
 rec_transform_stackedges( {}, res_Graph) = [res_Graph];
 rec_transform_stackedges(in_Graph, res_Graph) =
   let
-    var = first(vars_by_stackedges(in_Graph));
+    var = hd(vars_by_stackedges(in_Graph));
   in let
     edges = stackedges_by_var(var,in_Graph);
   in
@@ -706,39 +681,30 @@ transform_heapedges::HeapEdgeSet,NodeSet->HeapEdgeSetList;
 transform_heapedges(ES,startnodes) = rec_transform_heapedges(ES,startnodes,{});
 
 rec_transform_heapedges :: HeapEdgeSet,NodeSet,HeapEdgeSet -> HeapEdgeSetList;
-
 rec_transform_heapedges( {}, _, res_Graph) = [res_Graph];
 rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
-  let
-    out_edges = [e !! e <-- reachable_heapedges(startnodes, in_Graph)];
-  in
-    if out_edges = [] then
-      [res_Graph]
-    else
-      let
-        src_sel_pattern = first_heapedge(out_edges);
-      in let
-        src = srcnode_of_heapedge(src_sel_pattern);
-        sel = selector_of_heapedge(src_sel_pattern);
-      in let
-        edges = heapedges_by_srcnode_sel(src,sel,in_Graph);
-      in
-        [rg !! (_,_,dest) as edge <-- edges,
-               rg <- rec_transform_heapedges(
+    let
+        out_edges = [e !! e <-- reachable_heapedges(startnodes, in_Graph)];
+    in
+        if out_edges = [] then
+            [res_Graph]
+        else
+            let src_sel_pattern = hd(out_edges); in
+            let
+                src = srcnode_of_heapedge(src_sel_pattern);
+                sel = selector_of_heapedge(src_sel_pattern);
+            in let
+                edges = heapedges_by_srcnode_sel(src,sel,in_Graph);
+            in
+                [rg !! (_,_,dest) as edge <-- edges,
+                 rg <- rec_transform_heapedges(
                        heapedge_subtract(in_Graph, edges),
                        union(startnodes, {dest}),
                        union(res_Graph, {edge})
                      )]
-    endif;
+        endif;
 
 
-
-
-first::StrList->str;
-first(car:cdr) = car;
-
-first_heapedge::HeapEdgeList->HeapEdge;
-first_heapedge(car:cdr) = car;
 
 
 shapeGraph_list_member::ShapeGraph,ShapeGraphList->bool;
@@ -747,10 +713,13 @@ shapeGraph_list_member(a,[]) = false;
 
 
 mk_unique_shapeGraph_list::ShapeGraphList->ShapeGraphList;
-mk_unique_shapeGraph_list(a:b) = if shapeGraph_list_member(a,b) then mk_unique_shapeGraph_list(b) else a: mk_unique_shapeGraph_list(b) endif;
 mk_unique_shapeGraph_list([]) = [];
-
-
+mk_unique_shapeGraph_list(a:b) =
+    if shapeGraph_list_member(a,b) then
+        mk_unique_shapeGraph_list(b)
+    else
+        a: mk_unique_shapeGraph_list(b)
+    endif;
 
 
 stackedges_by_var::str,StackEdgeSet->StackEdgeSet;
@@ -796,10 +765,10 @@ reachable_heapedges(nodes, es) =
 
 reachable_heapnodes::NodeSet,HeapEdgeSet -> NodeSet;
 reachable_heapnodes(nodes,es) =
-  let
-    new_nodes = union({dest !! (src,_,dest) <-- es, if src ? nodes}, nodes);
-  in
-    if nodes != new_nodes then reachable_heapnodes(new_nodes,es) else new_nodes endif;
+    let
+        new_nodes = union({dest !! (src,_,dest) <-- es, if src ? nodes}, nodes);
+    in
+        if nodes != new_nodes then reachable_heapnodes(new_nodes,es) else new_nodes endif;
 
 flatten_heapedge_set::HeapEdgeSetSet -> HeapEdgeSet;
 flatten_heapedge_set(sets) = rec_flatten_heapedge_set([s !! s <-- sets],{});
@@ -809,3 +778,76 @@ rec_flatten_heapedge_set( [],set) = set;
 rec_flatten_heapedge_set(s:sets,set) = rec_flatten_heapedge_set(sets, union(set,s));
 emptylist :: -> ShapeGraphList;
 emptylist() = [];
+
+
+
+
+
+test_alias :: dfi -> str;
+test_alias(lifted_g) = let g = drop(lifted_g); in "<need two expressions to compare>";
+
+is_no_alias :: Expression,Expression,dfi -> bool;
+is_no_alias(a,b,lifted_sgs) = !is_may_alias(a,b,lifted_sgs);
+
+is_may_alias :: Expression,Expression,dfi -> bool;
+is_may_alias(a,b,lifted_sgs) = let g = drop(lifted_sgs); in is_same_node("may",a,b,g);
+
+is_must_alias :: Expression,Expression,dfi -> bool;
+is_must_alias(a,b,lifted_sgs) = let g = drop(lifted_sgs); in is_same_node("must",a,b,g);
+
+is_same_node :: str,Expression,Expression,ShapeGraph -> bool;
+is_same_node(may_or_must,a,b,(_,is0) as sg) =
+    let
+        atail = get_tail_node(a,sg);
+        btail = get_tail_node(b,sg);
+    in
+        if may_or_must = "may" then cmp_may(atail,btail,is0) else cmp_must(atail,btail) endif;
+
+cmp_must :: NodeTuple,NodeTuple -> bool;
+cmp_must((ay,az),(by,bz)) =
+    if az = {} && bz = {} then
+        ay != {"0$dummyvar"} && ay = by
+    else
+        if az = {"0$dummyvar"} || bz = {"0$dummyvar"} then false else az = bz endif
+    endif;
+
+cmp_may :: NodeTuple,NodeTuple,NodeSet -> bool;
+cmp_may((ay,az),(by,bz),is0) =
+    if az = {} && bz = {} then
+        if {} ? is0 then true else ay != {"0$dummyvar"} && ay = by endif
+    else
+        if az = {"0$dummyvar"} || bz = {"0$dummyvar"} then false else az = bz endif
+    endif;
+
+node_by_var :: str,ShapeGraph -> VarSet;
+node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
+
+get_tail_node :: Expression, ShapeGraph -> NodeTuple;
+get_tail_node(e, sg) = rec_get_tail_node(e, expr_depth(e), sg, {"0$dummyvar"}, {"0$dummyvar"});
+
+rec_get_tail_node :: Expression, snum, ShapeGraph, VarSet, VarSet -> NodeTuple;
+rec_get_tail_node(_, 0, _, prev, act) = (prev,act);
+rec_get_tail_node(e, e_cursor, g, prev, act) =
+    let next = case expr_at(e,e_cursor) of
+
+        DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
+            node_by_src_sel(act,val-aststring(na_sel),g);
+
+
+        ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+            node_by_src_sel(node_by_var(val-aststring(na_x),g), val-aststring(na_sel),g);
+
+
+        VarRefExp(na_x) =>
+            node_by_var(val-aststring(na_x),g);
+
+        _ =>
+            print("can not parse Expr: ")
+            print(expr_at(e,e_cursor))
+            print("\n")
+            {"0$dummyvar"};
+    endcase; in
+    rec_get_tail_node(e, e_cursor - 1, g, act, next);
+
+node_by_src_sel :: VarSet,str,ShapeGraph -> VarSet;
+node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);

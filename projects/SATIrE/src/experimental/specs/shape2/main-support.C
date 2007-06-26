@@ -14,48 +14,60 @@ extern "C" DFI_STORE doit(ANALYSIS)(void *);
 extern "C" void gdl_create(char *, int);
 
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt) {
-  return (carrier_printfunc(CARRIER_TYPE)(
-					  (carrier_type_o(CARRIER_TYPE))
-					  get_statement_pre_info(store, stmt)
-					  ));
+  return (carrier_printfunc(CARRIER_TYPE)( (carrier_type_o(CARRIER_TYPE)) get_statement_pre_info(store, stmt)));
 }
 
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt) {
-  return (carrier_printfunc(CARRIER_TYPE)(
-					  (carrier_type_o(CARRIER_TYPE))
-					  get_statement_post_info(store, stmt)
-					  ));
+  return (carrier_printfunc(CARRIER_TYPE)( (carrier_type_o(CARRIER_TYPE)) get_statement_post_info(store, stmt)));
 }
 
-void* get_statement_pre_info(DFI_STORE store, SgStatement *stmt)
-{
-    StatementAttribute *start
-        = (StatementAttribute *) stmt->getAttribute("PAG statement start");
-    BasicBlock *startblock = start->get_bb();
-    switch (start->get_pos())
-    {
-    case POS_PRE:
-        return dfi_get_pre_info(store, startblock->id);
-    case POS_POST:
-        return dfi_get_post_info_all(store, startblock->id);
-    }
-    return NULL;
+ExpressionPairVector *get_statement_alias_pairs(std::string pos, std::string alias_type, SgStatement *stmt) {
+  std::string label = "PAG " + alias_type + "-alias " + pos;
+  AliasPairAttribute* attr = dynamic_cast<AliasPairAttribute *>(stmt->getAttribute(label));
+  return attr->getPairs();
 }
 
+std::string get_statement_pre_must_alias_pairs_string(SgStatement  *stmt) { return get_statement_alias_pairs_string("pre",  "must", stmt); }
+std::string get_statement_post_must_alias_pairs_string(SgStatement *stmt) { return get_statement_alias_pairs_string("post", "must", stmt); }
+std::string get_statement_pre_may_alias_pairs_string(SgStatement   *stmt) { return get_statement_alias_pairs_string("pre",  "may",  stmt); }
+std::string get_statement_post_may_alias_pairs_string(SgStatement  *stmt) { return get_statement_alias_pairs_string("post", "may",  stmt); }
 
-void* get_statement_post_info(DFI_STORE store, SgStatement *stmt)
+std::string get_statement_alias_pairs_string(std::string pos, std::string alias_type, SgStatement *stmt) {
+  std::stringstream str;
+  ExpressionPairVector *pairs = get_statement_alias_pairs(pos, alias_type, stmt);
+  ExpressionPairVector::iterator i;
+  std::pair<SgNode*,SgNode*> *pair;
+  for (i=pairs->begin(); i!=pairs->end(); i++) {
+    pair = *i;
+    str << "(" << pair->first->unparseToString() << "," << pair->second->unparseToString() << "), ";
+  }
+  return str.str();
+}
+
+carrier_type_o(CARRIER_TYPE) 
+select_info(DFI_STORE store, SgStatement *stmt, std::string attrName) {
+  StatementAttribute* stmtAttr = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));
+  BasicBlock* block=stmtAttr->get_bb();
+  int pos=stmtAttr->get_pos();
+  switch (pos) {
+  case POS_PRE:
+    return dfi_get_pre_info(store, block->id);
+  case POS_POST:
+    return dfi_get_post_info_all(store, block->id);
+  }
+  return NULL;
+}
+
+carrier_type_o(CARRIER_TYPE) 
+get_statement_pre_info(DFI_STORE store, SgStatement *stmt)
 {
-    StatementAttribute *end
-        = (StatementAttribute *) stmt->getAttribute("PAG statement end");
-    BasicBlock *endblock = end->get_bb();
-    switch (end->get_pos())
-    {
-    case POS_PRE:
-        return dfi_get_pre_info(store, endblock->id);
-    case POS_POST:
-        return dfi_get_post_info_all(store, endblock->id);
-    }
-    return NULL;
+  return select_info(store, stmt, "PAG statement start");
+}
+
+carrier_type_o(CARRIER_TYPE) 
+get_statement_post_info(DFI_STORE store, SgStatement *stmt)
+{
+  return select_info(store, stmt, "PAG statement end");
 }
 
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,char* output, bool noresult)

@@ -1,5 +1,6 @@
 #include "main.h"
 
+// GRAPH OUTPUT
 #include <stdio.h>
 //#include <str.h>
 #include <assert.h>
@@ -9,77 +10,87 @@
 #include "mapping.h"
 #include "shape-out/src/o_dfi.h"
 
-void my_VarSet_print_fp(FILE * fp, o_VarSet node);
-
-#define doit(analysis) xdoit(analysis)
-#define xdoit(analysis) analysis##_doit
-
-#define str(analysis) xstr(analysis)
-#define xstr(analysis) #analysis
-
-extern int debug_stat;
-extern int verbose;
+#include <string>
+#include <vector>
+#include <algorithm>
 
 bool get_universal_attribute__kill_norm_temps()
 {
   return true;
 }
 
+void my_o_VarSet_print_fp(FILE * fp, o_VarSet node);
+
 // declared in iterate.h
 //extern "C" void *doit(ANALYSIS)(void *);
 
 extern "C" void gdl_create(char *, int);
-
-static int edge = 0; // Martin's global variable
-// FIXME ?ms (wenn edge == 1 gibts beim laden einen syntaxfehler)
-
-extern char* animation;
+static int      edge = 0; // global variable for setting edges on/off
 
 int main(int argc, char **argv)
 {
-  verbose    = 0; // prints PAG-info during analysis (see section 14.3.3.1 in User Manual)
 
-  animation = NULL; //"shapeanim";
-  SgProject *root = frontend(argc, argv);
-  AstTests::runAllTests(root);
-  std::cout << "collecting functions... ";
-  ProcTraversal s;
-  s.traverseInputFiles(root, preorder);
-  std::cout << "done" << std::endl;
+  /* parse the command line and extract analyzer options */
+  CommandLineParser clp;
+  AnalyzerOptions opt=clp.parse(argc,argv);
 
-  std::cout << "generating cfg... ";
-  CFGTraversal t(s.get_procedures());
-  t.traverseInputFiles(root, preorder);
-  std::cout << "done" << std::endl;
+  /* set the PAG options as specified on the command line */
+  setPagOptions(opt);
+  
+  /* Run the frontend to construct an abstract syntax tree from
+   * the files specified on the command line (which has been processed
+   * and commands only relevant to the analyzer have been removed). */
+  SgProject* ast_root = frontend(opt.getCommandLineNum(), opt.getCommandLineCarray());
+  
+  /* Make sure everything is OK... */
+  AstTests::runAllTests(ast_root);
 
-  std::cout << "testing cfg... " << std::endl;
-  int test_result = kfg_testit(t.getCFG(), 0, "cfg_dump.gdl");
-  if (test_result == 0)
-  {
-    std::cout << std::endl << "Warning: There are problems in the CFG." << std::endl;
-    return 1;
+  /* Construct a control-flow graph from the AST, make sure it has
+   * the structrure expected by PAG, and run the analysis on it,
+   * attributing the statements of the AST with analysis
+   * information. Use the StatementAttributeTraversal class for accessing
+   * the analysis information on each statement */
+  char* outputfile=(char*)opt.getGdlFileName().c_str();
+  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt.animationGeneration());
+
+  /* Extract all Pairs of Expressions from the Program so that they
+   * can be compared for aliasing. */
+  ExpressionCollector ec;
+  ExpressionPairVector *pairs = ec.getExpressionPairs(ast_root);
+
+  /* Add Alias Pairs to AST */
+  AliasPairsAnnotator<DFI_STORE> annotator(analysis_info, pairs);
+  annotator.traverseInputFiles(ast_root, preorder);
+
+  /* Handle command line option --textoutput */
+  if(opt.analysisResultsTextOutput()) {
+    //PagDfiTextPrinter<DFI_STORE> p(analysis_info, pairs);
+    AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
+    p.traverseInputFiles(ast_root, preorder);
   }
-  else
-  {
-    std::cout << "no problems found" << std::endl;
+
+  /* Handle command line option --sourceoutput 
+   * The source code (i.e. the AST) is annotated with comments showing
+   * the analysis results and by calling the backend an annotated C/C++
+   * file is generated (named rose_<inputfilename>) */
+  if(opt.analysisResultsSourceOutput()) {
+    //PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
+    AliasPairsCommentAnnotator<DFI_STORE> p(analysis_info, pairs);
+    p.traverseInputFiles(ast_root, preorder);
+    ast_root->unparse();
   }
 
-  std::cout << "performing analysis " str(ANALYSIS) "... " << std::endl;
-  doit(ANALYSIS)(t.getCFG());
-  std::cout << "done" << std::endl;
-  std::cout << "generating visualization... " << std::flush;
-  gdl_create(str(ANALYSIS) "_result.gdl", 0);
-  std::cout << "done" << std::endl;
-
+  /* Free all memory allocated by the PAG garbage collection */
+  GC_finish();
+  
   return 0;
 }
 
 #ifdef DFI_WRITE
-
 void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,int insnum,int ctx)
 {
-  int show_summarygraph = 1; //shows the combined shape graph a la Sagiv/Reps/William (0: no summary graph)
-  int show_shapegraphs  = 0; //shows the shape graphs (0: no shape graphs)
+  int show_summarygraph = 0; //shows the combined shape graph a la Sagiv/Reps/William (0: no summary graph)
+  int show_shapegraphs  = 1; //shows the shape graphs (0: no shape graphs)
   int fold_shapegraphs  = 0; //fold the shapegraphs (0: display them all initially)
 
 	/* We have only one instruction per basic block ! */
@@ -113,19 +124,21 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
   
 	if (!o_dfi_istop(info) && !o_dfi_isbottom(info))
   {
-    o_ShapeGraph carrier = o_dfi_drop(info);
+    //the three lines marked with "**change" need to be 
+    //modified when changing from srw to nielson graphs
+    o_ShapeGraph carrier = o_dfi_drop(info); //**change
     o_ShapeGraphList graphs = o_emptylist();
     int n_graphs = 0;
     int n_nodes = 0;
 
     if (show_shapegraphs) 
     {
-      graphs = o_ShapeGraphList_conc(o_srw_extract_shapeGraphs_t(carrier), graphs);
+      graphs = o_ShapeGraphList_conc(o_srw_extract_shapeGraphs(carrier), graphs); //**change
     }
 
     if (show_summarygraph)
     {
-      graphs = o_ShapeGraphList_conc(o_srw_extract_summaryGraph_t(carrier), graphs);
+      graphs = o_ShapeGraphList_conc(o_srw_extract_summaryGraph(carrier), graphs);  //**change
     }
 
     // all graphs
@@ -173,7 +186,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
         o_VarSet_print_fp(fp, node);
         fprintf(fp, "\"\n");
         fprintf(fp, "      label: \"");
-        my_VarSet_print_fp(fp, node);
+        my_o_VarSet_print_fp(fp, node);
         fprintf(fp, "\"\n");
         if (o_NodeList_is_elem(is_shared, node))
         {
@@ -262,31 +275,39 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
       fprintf(fp, "  }\n");
     }
   }
-  
 
 	fprintf(fp, "}\n\n\n\n");
 	return;
 }
 
-//print a VarSet to fp
-void my_VarSet_print_fp(FILE * fp, o_VarSet node) {
-  _o_VarSet_cur cur;
+void my_o_VarSet_print_fp(FILE * fp, o_VarSet node) {
+	_o_VarSet_cur cur;
 
-  fprintf(fp,"{");
-  o_VarSet_cur_reset(&cur,node);
+	std::vector<std::string> varSet;
+	o_VarSet_cur_reset(&cur,node);
+	while(!o_VarSet_cur_is_empty(&cur)) {
+	        char* var = str_to_charp(o_VarSet_cur_get(&cur)); // MS adapted int to char*
+		o_VarSet_cur_next(&cur);
+		//if (var!=0) fprintf(fp,"%s",var); // MS adapted to char*
+		//else fprintf(fp,"NOVAR");
+		//if(!o_VarSet_cur_is_empty(&cur))
+		//fprintf(fp,",");
+		if (var!=0)
+		  varSet.push_back(var);
+		else
+		  varSet.push_back("NOVAR");
+	}
+	// we need to sort the set of variable names to ensure that the same string is generated for the same set
+	sort(varSet.begin(),varSet.end());
+	fprintf(fp,"{");
+	for(std::vector<std::string>::iterator i=varSet.begin();i!=varSet.end(); i++) {
+	  if(i!=varSet.begin())
+	    fprintf(fp,",");
+	  std::string varName=*i;
+	  const char* c=varName.c_str();
+	  fprintf(fp,c);
 
-  while (!o_VarSet_cur_is_empty(&cur)) {
-    char* var = str_to_charp(o_VarSet_cur_get(&cur)); // MS adapted int to char*
-    o_VarSet_cur_next(&cur);
-
-    if (var!=0)
-      fprintf(fp,"%s",var); // MS adapted to char*
-    else
-      fprintf(fp,"NOVAR");
-
-    if(!o_VarSet_cur_is_empty(&cur))
-      fprintf(fp,",");
-  }
-  fprintf(fp,"}");
+	}
+	fprintf(fp,"}");
 }
 #endif

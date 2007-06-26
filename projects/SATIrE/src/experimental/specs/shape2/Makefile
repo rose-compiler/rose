@@ -16,6 +16,9 @@ TESTDIR = tests
 
 all: $(ANALYSIS)
 
+$(ANALYSIS).optla: $(ANALYSIS).skel $(ANALYSIS)_header.optla $(ANALYSIS)_highlevel.optla $(ANALYSIS)_lowlevel.optla $(ANALYSIS)_gc.optla $(ANALYSIS)_extern.optla
+	gcc -xc -E $(ANALYSIS).skel | grep -v "^#" > $(ANALYSIS).optla
+
 $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	mkdir -p anim-out/
 	mkdir -p $(ANALYSIS)-out/src
@@ -25,10 +28,10 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(FLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DDFI_WRITE -c main.C
+	g++ $(FLAGS) -DPAG -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DDFI_WRITE -c main.C
 
 main-support.o: main-support.C
-	g++ $(FLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
+	g++ $(FLAGS) -DPAG -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
 
 $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 	g++ $(FLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
@@ -42,10 +45,10 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/
-	rm -rf shapeanim
+	rm -rf anim-out
 
 check:  $(ANALYSIS)
-	mkdir -p shapeanim
+	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/reverse1.C
 	$(ANALYSIS) $(TESTDIR)/reverse2.C
 	$(ANALYSIS) $(TESTDIR)/artificialListCreation.C
@@ -70,5 +73,5 @@ check:  $(ANALYSIS)
 	$(ANALYSIS) -I$(TESTDIR)/wcettests $(TESTDIR)/wcettests/bubble.c
 
 fastcheck: $(ANALYSIS)
-	mkdir -p shapeanim
+	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/stack1.C

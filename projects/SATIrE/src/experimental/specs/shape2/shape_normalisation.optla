@@ -3,14 +3,18 @@
    Year  : 2006
 */
 
-/* decomposition of arbitrary long expressions into
- * the primitive forms covered by the transfer functions
- * is performed by normalisation_ops :: expr,label,dfi -> list of opcodes
+/* decomposes arbitrarily nested expressions into primitive
+ * forms by introducing temporary variables.
+ * a list of opcodes is returned that specifies which transfer
+ * functions need to be called. by doing so, the normalisation
+ * functions do not need to modify the shape graph, hence 
+ * they do not need to be adapted to different carrier types.
  *
- * call the corresponding tassign_ function for each element
- * in the list of opcodes ("x_ysel", ["arg1", "arg2", ..])
+ * an opcode looks like this: ("x_ysel", ["arg1", "arg2", ...])
+ * interpretation of the opcodes is done by the function
+ * execute :: OpCodeList,<carrier> -> <carrier>;
  */
-
+ 
 // -------------------------------------
 // functions for temp normalisation vars
 // -------------------------------------
@@ -31,8 +35,8 @@ kill_normalisation_temps1(car:cdr, s) = delete_var(kill_normalisation_temps1(cdr
 extract_tempvars :: OpCodeList,VarSet -> VarSet;
 extract_tempvars(     [], temps) = temps;
 extract_tempvars((_,v:_):cdr, temps) = 
-  let new_temps = if is_normalisation_temp(v) then {v} else {} endif; in
-  extract_tempvars(cdr, union(temps,new_temps));
+    let new_temps = if is_normalisation_temp(v) then {v} else {} endif; in
+    extract_tempvars(cdr, union(temps,new_temps));
 
 // -----------------------------
 // expression accessor functions
@@ -46,30 +50,30 @@ max(a,b) = if a > b then a else b endif;
 
 expr_depth :: Expression -> snum;
 expr_depth(e) = case e of
-  ArrowExp(VarRefExp(_),VarRefExp(_)) => 0;
-  ArrowExp(child,_)                   => 1 + expr_depth(child);
-  DotExp(PointerDerefExp(child),_)    => 1 + expr_depth(child);
-  _                                   => 0;
+    ArrowExp(VarRefExp(_),VarRefExp(_)) => 0;
+    ArrowExp(child,_)                   => 1 + expr_depth(child);
+    DotExp(PointerDerefExp(child),_)    => 1 + expr_depth(child);
+    _                                   => 0;
 endcase;
 
 expr_is_complex :: Expression -> bool;
 expr_is_complex(e) = case e of
-  DotExp(PointerDerefExp(child),_) => true;
-  ArrowExp(child,_)                => true;
-  _                                => false;
+    DotExp(PointerDerefExp(child),_) => true;
+    ArrowExp(child,_)                => true;
+    _                                => false;
 endcase;
 
 /*
   returns the expression at the given nesting_level 0..<expr_depth>, where
-  0 ... topmost expression that contains all other expressions
-  expr_depth ... innermost expression
+  0 refers to the topmost expression that contains all other expressions
+  and the expression at expr_depth is the innermost expression
 */
 expr_at :: Expression,snum -> Expression;
 expr_at(e,nesting_level) =
-  let
-    descending_steps = min(nesting_level, expr_depth(e));
-  in
-    rec_expr_at(e, descending_steps);
+    let
+        descending_steps = min(nesting_level, expr_depth(e));
+    in
+        rec_expr_at(e, descending_steps);
 
 rec_expr_at :: Expression,snum -> Expression;
 rec_expr_at(e,0) = e;
@@ -86,105 +90,101 @@ expr_innermost(e) = expr_at(e, expr_depth(e));
 normalisation_ops :: Expression,str -> OpCodeList;
 normalisation_ops(e,label) =
     case e of AssignOp(lhs,rhs) =>
-      let     tmp = gen_normalisation_temp(label); in
-      let lhs_tmp = tmp."l";
-          rhs_tmp = tmp."r";
-      in
-          rec_normalise(lhs,expr_depth(lhs),lhs_tmp,[]) ++
-          rec_normalise(rhs,expr_depth(rhs),rhs_tmp,[]) ++
-          perform_assign(e,lhs_tmp,rhs_tmp,[]);
-      _ => [];
+        let     tmp = gen_normalisation_temp(label); in
+        let lhs_tmp = tmp."l";
+            rhs_tmp = tmp."r";
+        in
+            rec_normalise(lhs,expr_depth(lhs),lhs_tmp,[]) ++
+            rec_normalise(rhs,expr_depth(rhs),rhs_tmp,[]) ++
+            perform_assign(e,lhs_tmp,rhs_tmp,[]);
+        _ => [];
     endcase;
 
 rec_normalise :: Expression,snum,str,OpCodeList -> OpCodeList;
 rec_normalise(  _,          0,             _, list) = list;
 rec_normalise(lhs, lhs_cursor, tmpvar_prefix, list) =
-  let new_var  = tmpvar_prefix . str(lhs_cursor - 1); in
-  let new_list = case expr_at(lhs,lhs_cursor) of
-  
-      // <new_var> = <parent_var>.sel
-      DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
-          [("x_ysel", [new_var, tmpvar_prefix.str(lhs_cursor), val-aststring(na_sel)])];
-            
-      // <new_var> = x.sel
-      ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
-          [("x_ysel", [new_var,val-aststring(na_x),val-aststring(na_sel)])];
+    let new_var  = tmpvar_prefix . str(lhs_cursor - 1); in
+    let new_list = case expr_at(lhs,lhs_cursor) of
+    
+        // <new_var> = <parent_var>.sel
+        DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
+            [("x_ysel", [new_var, tmpvar_prefix.str(lhs_cursor), val-aststring(na_sel)])];
+              
+        // <new_var> = x.sel
+        ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+            [("x_ysel", [new_var,val-aststring(na_x),val-aststring(na_sel)])];
 
-      // <new_var> = x
-      VarRefExp(na_x) =>
-          [("x_y", [new_var,val-aststring(na_x)])];
-          
-      _ => [];
-      
-  endcase; in
-  rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, list ++ new_list);
+        // <new_var> = x
+        VarRefExp(na_x) =>
+            [("x_y", [new_var,val-aststring(na_x)])];
+            
+        _ => [];
+        
+    endcase; in
+    rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, list ++ new_list);
 
 
 perform_assign :: Expression,str,str,OpCodeList -> OpCodeList;
 perform_assign(e,lhs_tmp,rhs_tmp,list) =
-  case e of
-      // x = new;
-      AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
-          [("x_new", [val-aststring(na_x)])];
+    case e of
+        // x = new;
+        AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
+            [("x_new", [val-aststring(na_x)])];
 
-      // x = null;
-      AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>  
-          [("x_null", [val-aststring(na_x)])];
-          
-      // x = y;
-      AssignOp(VarRefExp(na_x),VarRefExp(na_y)) => 
-          [("x_y", [val-aststring(na_x),val-aststring(na_y)])];
+        // x = null;
+        AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>  
+            [("x_null", [val-aststring(na_x)])];
+            
+        // x = y;
+        AssignOp(VarRefExp(na_x),VarRefExp(na_y)) => 
+            [("x_y", [val-aststring(na_x),val-aststring(na_y)])];
 
-      // x.sel = null;
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-          [("xsel_null", [val-aststring(na_x),val-aststring(na_sel)])];
+        // x.sel = null;
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
+            [("xsel_null", [val-aststring(na_x),val-aststring(na_sel)])];
 
-      // ...sel = null;  NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-          [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)])];
+        // ...sel = null;  NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
+            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)])];
 
-      // x.sel = y;
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-          [("xsel_null", [val-aststring(na_x), val-aststring(na_sel), "DEBUG"]),
-           ("xsel_y",    [val-aststring(na_x), val-aststring(na_sel), val-aststring(na_y)])];
+        // x.sel = y;
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
+            [("xsel_null", [val-aststring(na_x), val-aststring(na_sel), "DEBUG"]),
+             ("xsel_y",    [val-aststring(na_x), val-aststring(na_sel), val-aststring(na_y)])];
 
-      // ...sel = y; NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-          [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)]),
-           ("xsel_y",    [lhs_tmp."0", val-aststring(na_sel), val-aststring(na_y)])];
+        // ...sel = y; NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
+            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)]),
+             ("xsel_y",    [lhs_tmp."0", val-aststring(na_sel), val-aststring(na_y)])];
 
-      // x = y.sel;
-      AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) => 
-          [("x_ysel", [val-aststring(na_x), val-aststring(na_y), val-aststring(na_sel)])];
+        // x = y.sel;
+        AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) => 
+            [("x_ysel", [val-aststring(na_x), val-aststring(na_y), val-aststring(na_sel)])];
 
-      // x = ...sel; NEW
-      AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) => 
-          [("x_ysel", [val-aststring(na_x), rhs_tmp."0", val-aststring(na_sel)])];
+        // x = ...sel; NEW
+        AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) => 
+            [("x_ysel", [val-aststring(na_x), rhs_tmp."0", val-aststring(na_sel)])];
 
-      // x.sel = y.sel; NEW
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
-           ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
-          
-      // ...sel = y.sel; NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
-           ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
+        // x.sel = y.sel; NEW
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
+            
+        // ...sel = y.sel; NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
 
-      // x.sel = ...sel; NEW
-      AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
-           ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
-          
-      // ...sel = ...sel; NEW
-      AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-          [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
-           ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
+        // x.sel = ...sel; NEW
+        AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
+            
+        // ...sel = ...sel; NEW
+        AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
+            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
 
-      _ => list;
-  endcase;
+        _ => list;
+    endcase;
 
-
-print_l :: OpCodeList -> bool;
-print_l([]) = true;
-print_l(car:cdr) = print(" -- ") print(car) print_l(cdr);

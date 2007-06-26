@@ -1,5 +1,4 @@
 /* Author: Markus Schordan
-
    E-mail: markus@complang.tuwien.ac.at
    Year  : 2006
 */
@@ -8,25 +7,24 @@ UNIVERSAL
 stacksoup       :  bool#
 deletetmp       :  bool#
 int_malloc      :  bool#
-kill_norm_temps : bool#
+kill_norm_temps :  bool#
 
 GLOBAL
 max_symb        :  str#
 result          :  str#
 
 BLOCK
-label      : snum#
-
+label           : snum#
 
 PROBLEM pointer
-direction  : forward
-carrier    : dfi
-init       : bot
-init_start : lift((({},{}),{}))
-equal      : eq
-combine    : comb
-retfunc    : comb
-widening   : w
+direction       : forward
+carrier         : dfi
+init            : bot
+init_start      : lift((({},{}),{}))
+equal           : eq
+combine         : comb
+retfunc         : comb
+widening        : w
 
 
 TRANSFER
@@ -37,37 +35,36 @@ ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),(@));
 // ArgumentAssignment(VariableSymbol(na_l),VarRefExp(na_r)),_:
 ArgumentAssignment(VarRefExp(na_l),NewExp(_,_,_)),_:
 let  
-  rx = val-aststring(na_l);
+    rx = val-aststring(na_l);
 in
-  lift(assign_x_new(rx,drop(@)));
+    lift(assign_x_new(rx,drop(@)));
 
 ArgumentAssignment(VarRefExp(na_l),VarRefExp(na_r)),_:
 let  
-  rx = val-aststring(na_l);
-  ry = val-aststring(na_r); 
+    rx = val-aststring(na_l);
+    ry = val-aststring(na_r); 
 in
-  lift(tassign_x_y(rx,ry,drop(@)));
+    lift(tassign_x_y(rx,ry,drop(@)));
 
 ParamAssignment(VariableSymbol(na_l),VariableSymbol(param)),_:
 let  
-  rx = val-aststring(na_l);
-  ry = val-aststring(param); 
+    rx = val-aststring(na_l);
+    ry = val-aststring(param); 
 in
-  delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
+    delete_var(lift(tassign_x_y(rx,ry,drop(@))),ry);
 
 // x <- y
 ReturnAssignment(VariableSymbol(na_l),VariableSymbol(na_r)),_:
 let  
-  rx = val-aststring(na_l);
-  ry = val-aststring(na_r);
-in
-  let
+    rx = val-aststring(na_l);
+    ry = val-aststring(na_r);
+in let
     newinfo=lift(tassign_x_y(rx,ry,drop(@)));
-  in
+in
     delete_var(newinfo,ry);
 
 FunctionExit(functionName,params), _:
-  kill_params(@, params);
+    kill_params(@, params);
 
 _,_: @;
 
@@ -80,30 +77,26 @@ w::dfi,dfi->dfi;
 w(a,b) = b;
 
 comb::dfi,dfi->dfi;
-comb(a,b) = if a = bot then b
-            else if b = bot then a 
-            else let a2 <= a;
-                     b2 <= b; in
-             case a2,b2 of
-             ((V1,E1),I1),((V2,E2),I2) =>lift(((union(V1,V2),union(E1,E2)),
-                                           union(I1,I2)));
-             endcase
-           endif
-         endif;
-
+comb(a,b) =
+    if a = bot then b
+    else if b = bot then a
+    else case drop(a),drop(b) of
+        ((V1,E1),I1),((V2,E2),I2) =>
+            lift(((union(V1,V2),union(E1,E2)),union(I1,I2)));
+    endcase
+    endif
+    endif;
 
 kill_params :: dfi, *VariableSymbolNT -> dfi;
 kill_params(s, [!]) = s;
 kill_params(s, VariableSymbol(p)::ps) =
-     delete_var(kill_params(s, ps),val-aststring(p));
+    delete_var(kill_params(s, ps),val-aststring(p));
 
-//delete_var::dfi,str->dfi;
 delete_var::dfi,str->dfi;
-delete_var(info,var) = 
- case info of
- top  => top;
- bot  => bot;
- info2 => 
-   let G = drop(info2); in 
-     lift(assign_x_null(var,G));
- endcase;
+delete_var(g,var) = 
+    case g of
+        top  => top;
+        bot  => bot;
+        info => lift(assign_x_null(var,drop(info)));
+    endcase;
+

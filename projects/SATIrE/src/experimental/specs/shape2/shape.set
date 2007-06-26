@@ -1,4 +1,4 @@
-/* Author: Markus Schordan
+/* Author: Markus Schordan, Viktor Pavlu
    E-mail: markus@complang.tuwien.ac.at
    Year  : 2006
 */
@@ -18,12 +18,16 @@ StackEdgeSetList   = list(StackEdgeSet)
 StackEdgeList      = list(StackEdge)
 
 NodeSet            = set(VarSet) // iss_ty
+NodeList           = list(VarSet)
+
+NodeTuple          = VarSet * VarSet
+NodeTupleList      = list(NodeTuple)
+
 Graph              = StackEdgeSet * HeapEdgeSet 
 ShapeGraph         = Graph * NodeSet
 
 StrList            = list(str)
 SNumList           = list(snum)
-NodeList           = list(VarSet)
 ShapeGraphList     = list(ShapeGraph)
 
 CarrierVarSetTuple = dfi * VarSet
