@@ -37,6 +37,9 @@ ShapeGraphList     = list(ShapeGraph)
 StrList            = list(str)
 SNumList           = list(snum)
 
+OpCode             = str * StrList
+OpCodeList         = list(OpCode)
+
 CarrierVarSetTuple = dfi * VarSet
 
 DOMAIN

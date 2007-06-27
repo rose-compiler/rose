@@ -117,6 +117,10 @@ delete_var(g,var) =
    Year  : 2006
 */
 
+// ----------------------------------------------------------------------------
+// Trace Functions write out the transfer functions and the carrier at runtime
+// ----------------------------------------------------------------------------
+
 should_trace::str->bool;
 should_trace("stmt")  = false;    //source code statements
 should_trace("graph") = false;    //shape graph
@@ -139,6 +143,7 @@ print_graphs(label,gs) = {print_graph(label,g) !! g <-- gs} != {};
 print_graph :: str,ShapeGraph -> bool;
 print_graph(label,g) = print(label) print(g) print("\n") true;
 
+
 is_temp :: str -> bool;
 is_temp(s) = substr(s, 0, 0) = "$";
 
@@ -149,52 +154,107 @@ is_temp(s) = substr(s, 0, 0) = "$";
 expression :: Expression,str,dfi -> dfi;
 expression(_,_,bot) = bot;
 expression(_,_,top) = top;
-expression(e,label,lifted_gs) = 
-    let result_gsv = normalise(e, label, (lifted_gs,{})); in
-    case result_gsv of (result_gs, tmpvars) =>
-        let g = if kill_norm_temps then 
-            kill_normalisation_temps(result_gs,tmpvars)
-        else
-            result_gs
-        endif; in
-            let dummy0 = if should_trace("graph") then print_graphs("    ",drop(g)) else false endif; in
-            g;
-    endcase;
+expression(e,label,lifted_g) =
+    let ops = normalisation_ops(e,label); in
+    let result_g = execute(ops, lifted_g); in
+    if kill_norm_temps then
+        kill_normalisation_temps(ops, result_g)
+    else
+        result_g
+    endif;
+
+/* call tassign_ functions according to the opcodes 
+ * to alter the shapegraph. while going along, collect
+ * all temporary variables.
+ * return (modified graph, temp vars)
+ */
+execute :: OpCodeList,dfi -> dfi;
+execute(           [], lifted_g) = lifted_g;
+execute((op,args):cdr, lifted_g) =
+    let g = drop(lifted_g); in
+    let g1 = case op of
+        "x_new" =>
+            tassign_x_new(pick(args,1),g);
+            
+        "x_null" =>
+            tassign_x_null(pick(args,1),g);
+            
+        "x_y" =>
+            let g1 = tassign_x_y(pick(args,1),pick(args,2),g); in
+            if (!is_temp(pick(args,2))) then 
+                g1 
+            else 
+                drop(delete_var(lift(g1),pick(args,2))) // temporary is assigned exactly once and can be eliminated
+            endif; 
+            
+        "x_ysel" =>
+            tassign_x_ysel(pick(args,1),pick(args,2),pick(args,3),g);
+            
+        "xsel_null" =>
+            tassign_xsel_null(pick(args,1),pick(args,2),g);
+            
+        "xsel_y" =>
+            let g1 = tassign_xsel_y(pick(args,1),pick(args,2),pick(args,3),g); in
+            if (!is_temp(pick(args,3))) then 
+                g1 
+            else 
+                drop(delete_var(lift(g1),pick(args,3))) // temporary is assigned exactly once and can be eliminated
+            endif; 
+
+        _ =>
+            print("unrecognized opcode: ") print(op) print("\n") g;
+    endcase; in
+    execute(cdr,lift(g1));
+
+pick :: StrList,snum -> str;
+pick(car:cdr,1) = car;
+pick(car:cdr,n) = if n > 1 then pick(cdr, n - 1) else print("pick beyond bounds") "" endif;
+
+
+
+
+
+
 
 /* Author: Viktor Pavlu
    E-mail: e0425543@student.tuwien.ac.at
    Year  : 2006
 */
 
-/* decomposition of arbitrary long expressions into
- * the primitive forms covered by the transfer functions
- * is performed by normalise :: expr->label->(dfi,varset) -> (dfi,varset)
+/* decomposes arbitrarily nested expressions into primitive
+ * forms by introducing temporary variables.
+ * a list of opcodes is returned that specifies which transfer
+ * functions need to be called. by doing so, the normalisation
+ * functions do not need to modify the shape graph, hence 
+ * they do not need to be adapted to different carrier types.
  *
- * all functions in this file are source-level
- * polymorphic but not code-level polymorphic, ie the
- * source code herein does not have to be changed if the
- * carrier changes, but it has to be recompiled.
+ * an opcode looks like this: ("x_ysel", ["arg1", "arg2", ...])
+ * interpretation of the opcodes is done by the function
+ * execute :: OpCodeList,<carrier> -> <carrier>;
  */
-
+ 
 // -------------------------------------
 // functions for temp normalisation vars
 // -------------------------------------
 
 is_normalisation_temp :: str -> bool;
-is_normalisation_temp(s) = substr(s, 0, 5) = "$norm_";
+is_normalisation_temp(s) = substr(s, 0, 5) = "#norm_";
 
 gen_normalisation_temp :: str -> str;
-gen_normalisation_temp(label) = "$norm_".label."_";
+gen_normalisation_temp(label) = "#norm_".label."_";
 
-kill_normalisation_temps :: dfi, VarSet -> dfi;
-kill_normalisation_temps(s, varset) = let
-    varlist = [ x !! x <-- varset ]; in
-    kill_normalisation_temps1(s, varlist);
+kill_normalisation_temps :: OpCodeList,dfi -> dfi;
+kill_normalisation_temps(list,sg) = kill_normalisation_temps1([x !! x <-- extract_tempvars(list,{})], sg);
 
-kill_normalisation_temps1 :: dfi, StrList -> dfi;
-kill_normalisation_temps1(s, []) = s;
-kill_normalisation_temps1(s, car:cdr) =
-    delete_var(kill_normalisation_temps1(s,cdr),car);
+kill_normalisation_temps1 :: StrList,dfi -> dfi;
+kill_normalisation_temps1(     [], s) = s;
+kill_normalisation_temps1(car:cdr, s) = delete_var(kill_normalisation_temps1(cdr,s),car);
+
+extract_tempvars :: OpCodeList,VarSet -> VarSet;
+extract_tempvars(     [], temps) = temps;
+extract_tempvars((_,v:_):cdr, temps) = 
+    let new_temps = if is_normalisation_temp(v) then {v} else {} endif; in
+    extract_tempvars(cdr, union(temps,new_temps));
 
 // -----------------------------
 // expression accessor functions
@@ -214,7 +274,6 @@ expr_depth(e) = case e of
     _                                   => 0;
 endcase;
 
-
 expr_is_complex :: Expression -> bool;
 expr_is_complex(e) = case e of
     DotExp(PointerDerefExp(child),_) => true;
@@ -222,11 +281,9 @@ expr_is_complex(e) = case e of
     _                                => false;
 endcase;
 
-/*
-  returns the expression at the given nesting_level 0..<expr_depth>, where
-  0 ... topmost expression that contains all other expressions
-  expr_depth ... innermost expression
-*/
+// returns the expression at the given depth, where
+// 0 is the topmost expression that contains the others, and
+// expr_depth is the innermost expression
 expr_at :: Expression,snum -> Expression;
 expr_at(e,nesting_level) =
     let
@@ -242,252 +299,112 @@ rec_expr_at(ArrowExp(child,_),descending_steps) = rec_expr_at(child, descending_
 expr_innermost :: Expression -> Expression;
 expr_innermost(e) = expr_at(e, expr_depth(e));
 
-// --------------------------------------
-// normalisation function, calls tassign*
-// --------------------------------------
+// -----------------------------------------------------------
+// normalisation function, generates the normalisation opcodes
+// -----------------------------------------------------------
 
-normalise :: Expression,str,CarrierVarSetTuple -> CarrierVarSetTuple;
-normalise(e,label,g0) =
-    case e  of AssignOp(lhs,rhs) =>
-        let debug0 = trace_stmt(label, lhs, rhs); in
+normalisation_ops :: Expression,str -> OpCodeList;
+normalisation_ops(e,label) =
+    case e of AssignOp(lhs,rhs) =>
         let     tmp = gen_normalisation_temp(label); in
         let lhs_tmp = tmp."l";
-            rhs_tmp = tmp."r"; in
-        let g1 = rec_normalise(lhs,expr_depth(lhs),lhs_tmp,g0); in
-        let g2 = rec_normalise(rhs,expr_depth(rhs),rhs_tmp,g1); in
-        perform_assign(e,lhs_tmp,rhs_tmp,g2);
-    _ =>
-        g0;
+            rhs_tmp = tmp."r";
+        in
+            rec_normalise(lhs,expr_depth(lhs),lhs_tmp,[]) ++
+            rec_normalise(rhs,expr_depth(rhs),rhs_tmp,[]) ++
+            perform_assign(e,lhs_tmp,rhs_tmp,[]);
+        _ => [];
     endcase;
 
-rec_normalise :: Expression,snum,str,CarrierVarSetTuple -> CarrierVarSetTuple;
-rec_normalise(  _,          0,             _, gv) = gv;
-rec_normalise(lhs, lhs_cursor, tmpvar_prefix, gv) =
-    case gv of (lifted_g, tmpvars) =>
-    case drop(lifted_g) of g0 =>
-    let new_var = tmpvar_prefix . str(lhs_cursor - 1); in
-    let result_gv = case expr_at(lhs,lhs_cursor) of
+rec_normalise :: Expression,snum,str,OpCodeList -> OpCodeList;
+rec_normalise(  _,          0,             _, list) = list;
+rec_normalise(lhs, lhs_cursor, tmpvar_prefix, list) =
+    let new_var  = tmpvar_prefix . str(lhs_cursor - 1); in
+    let new_list = case expr_at(lhs,lhs_cursor) of
     
         // <new_var> = <parent_var>.sel
         DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
-        let
-            parent_var = tmpvar_prefix . str(lhs_cursor);
-            sel        = val-aststring(na_sel);
-        in
-            let g1 = tassign_x_ysel(new_var,parent_var,sel,g0); in
-            let debug0 = trace_assign(new_var, parent_var.".".sel,g1); in
-            (lift(g1),union(tmpvars,{new_var}));
+            [("x_ysel", [new_var, tmpvar_prefix.str(lhs_cursor), val-aststring(na_sel)])];
               
         // <new_var> = x.sel
         ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
-        let
-            x       = val-aststring(na_x);
-            sel     = val-aststring(na_sel);
-        in
-            let g1 = tassign_x_ysel(new_var,x,sel,g0); in
-            let debug0 = trace_assign(new_var, x.".".sel,g1); in
-            (lift(g1),union(tmpvars,{new_var}));
+            [("x_ysel", [new_var,val-aststring(na_x),val-aststring(na_sel)])];
 
         // <new_var> = x
         VarRefExp(na_x) =>
-        let
-            x = val-aststring(na_x);
-        in
-            let g1 = tassign_x_y(new_var,x,g0); in
-            let debug0 = trace_assign(new_var, x,g1); in
-            (lift(g1),union(tmpvars,{new_var}));
+            [("x_y", [new_var,val-aststring(na_x)])];
             
-        _ =>
-            (lifted_g,tmpvars);
+        _ => [];
+        
     endcase; in
-    rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, result_gv);
-    endcase;
-    endcase;
+    rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, list ++ new_list);
 
 
-perform_assign :: Expression,str,str,CarrierVarSetTuple -> CarrierVarSetTuple;
-perform_assign(e,lhs_tmp,rhs_tmp,gv) =
-    case gv of (lifted_g,tmpvars) =>
-    case drop(lifted_g) of g0 =>
+perform_assign :: Expression,str,str,OpCodeList -> OpCodeList;
+perform_assign(e,lhs_tmp,rhs_tmp,list) =
     case e of
-   
         // x = new;
         AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
-        let 
-            x = val-aststring(na_x);
-        in
-            let g1 = tassign_x_new(x,g0); in
-            let debug0 = trace_assign(x, "<new>",g1); in
-            (lift(g1),tmpvars);
+            [("x_new", [val-aststring(na_x)])];
 
         // x = null;
         AssignOp(VarRefExp(na_x),CastExp(IntVal(n),_)) =>  
-        let
-            x = val-aststring(na_x);
-        in
-            let g1 = tassign_x_null(x,g0); in
-            let debug0 = trace_assign(x, "null",g1); in
-            (lift(g1),tmpvars);
-
+            [("x_null", [val-aststring(na_x)])];
+            
         // x = y;
         AssignOp(VarRefExp(na_x),VarRefExp(na_y)) => 
-        let 
-            x = val-aststring(na_x);
-            y = val-aststring(na_y);
-        in let
-            g1 = tassign_x_y(x,y,g0);
-        in let
-            g2 = if (!is_temp(y)) then 
-                g1
-            else 
-                drop(delete_var(lift(g1),y)) // temporary is assigned exactly once and can be eliminated
-            endif;
-        in let
-            debug0 = trace_assign(x, y, g2); in
-            (lift(g2),tmpvars);
-            
+            [("x_y", [val-aststring(na_x),val-aststring(na_y)])];
 
         // x.sel = null;
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-        let
-            x   = val-aststring(na_x);
-            sel = val-aststring(na_sel); 
-        in 
-
-            if (val-astint(n) = 0) then 
-                let g1 = tassign_xsel_null(x,sel,g0); in
-                let debug0 = trace_assign(x.".".sel, "null", g1); in
-                (lift(g1),tmpvars)
-            else 
-                let debug0 = trace_assign(x.".".sel, "null", {}); in
-                (mybot(),tmpvars)
-            endif;
+            [("xsel_null", [val-aststring(na_x),val-aststring(na_sel)])];
 
         // ...sel = null;  NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-        let
-            x   = lhs_tmp."0";        //changed
-            sel = val-aststring(na_sel);
-        in 
-
-            if (val-astint(n) = 0) then 
-                let g1 = tassign_xsel_null(x,sel,g0); in
-                let debug0 = trace_assign(x.".".sel, "null", g1); in
-                (lift(g1),tmpvars)
-            else 
-                let debug0 = trace_assign(x.".".sel, "null", {}); in
-                (mybot(),tmpvars)
-            endif;
+            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)])];
 
         // x.sel = y;
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-        let
-            x   = val-aststring(na_x);
-            sel = val-aststring(na_sel);
-            y   = val-aststring(na_y);
-        in
-            let g1 = tassign_xsel_null(x,sel,g0); in
-            let g2 = tassign_xsel_y(x,sel,y,g1); in
-            let debug0 = trace_assign(x.".".sel, "null", g1); in
-            let debug1 = trace_assign(x.".".sel,      y, g2); in
-            (lift(g2),tmpvars);
+            [("xsel_null", [val-aststring(na_x), val-aststring(na_sel), "DEBUG"]),
+             ("xsel_y",    [val-aststring(na_x), val-aststring(na_sel), val-aststring(na_y)])];
 
         // ...sel = y; NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-        let
-            x   = lhs_tmp."0";
-            sel = val-aststring(na_sel);
-            y   = val-aststring(na_y);
-        in
-            let g1 = tassign_xsel_null(x,sel,g0); in
-            let g2 = tassign_xsel_y(x,sel,y,g1); in
-            let debug0 = trace_assign(x.".".sel, "null", g1); in
-            let debug1 = trace_assign(x.".".sel,      y, g2); in
-            (lift(g2),tmpvars);
+            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)]),
+             ("xsel_y",    [lhs_tmp."0", val-aststring(na_sel), val-aststring(na_y)])];
 
         // x = y.sel;
         AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) => 
-        let
-            x   = val-aststring(na_x);
-            y   = val-aststring(na_y); 
-            sel = val-aststring(na_sel);
-        in
-            let g1 = tassign_x_ysel(x,y,sel,g0); in
-            let debug0 = trace_assign(x, y.".".sel,g1); in
-            (lift(g1),tmpvars);
+            [("x_ysel", [val-aststring(na_x), val-aststring(na_y), val-aststring(na_sel)])];
 
         // x = ...sel; NEW
         AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) => 
-        let
-            x   = val-aststring(na_x);
-            y   = rhs_tmp."0";       //changed
-            sel = val-aststring(na_sel);
-        in
-            let g1 = tassign_x_ysel(x,y,sel,g0); in
-            let debug0 = trace_assign(x, y.".".sel,g1); in
-            (lift(g1),tmpvars);
+            [("x_ysel", [val-aststring(na_x), rhs_tmp."0", val-aststring(na_sel)])];
 
         // x.sel = y.sel; NEW
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-        let
-            x    = val-aststring(na_x);
-            xsel = val-aststring(na_xsel);
-            y    = val-aststring(na_y);
-            ysel = val-aststring(na_ysel);
-        in
-            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
-            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
-            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
-            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
+            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
             
         // ...sel = y.sel; NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-        let
-            x    = lhs_tmp."0";        //changed
-            xsel = val-aststring(na_xsel);
-            y    = val-aststring(na_y);
-            ysel = val-aststring(na_ysel);
-        in
-            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
-            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
-            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
-            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
+            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
 
         // x.sel = ...sel; NEW
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-        let
-            x    = val-aststring(na_x);
-            xsel = val-aststring(na_xsel);
-            y    = rhs_tmp."0";        //changed
-            ysel = val-aststring(na_ysel);
-        in
-            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
-            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
-            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
-            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
+            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
             
         // ...sel = ...sel; NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-        let
-            x    = lhs_tmp."0";         //changed
-            xsel = val-aststring(na_xsel);
-            y    = rhs_tmp."0";         //changed
-            ysel = val-aststring(na_ysel);
-        in
-            let g1 = tassign_x_ysel(rhs_tmp."a",y,ysel,g0); in
-            let g2 = tassign_xsel_y(x,xsel,rhs_tmp."a",g1); in
-            let debug0 = trace_assign(rhs_tmp."a", y.".".ysel,g1); in
-            let debug1 = trace_assign(x.".".xsel, rhs_tmp."a",g2); in
-            (lift(g2),union(tmpvars,{rhs_tmp."a"}));
+            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
 
-        _ => (lift(g0),tmpvars);
+        _ => list;
+    endcase;
 
-    endcase;
-    endcase;
-    endcase;
+
 
 /* Author: Markus Schordan
    E-mail: markus@complang.tuwien.ac.at
@@ -851,7 +768,7 @@ hxu :: str,VarSet,VarSet -> VarSet;
 hxu(x,U,Z) = if (Z = U) then union(U,{x}) else Z endif;
 
 node_by_var :: str,ShapeGraph -> VarSet;
-node_by_var(x,((S0,_),_) as g) = first_node([nk !! (k,nk) <-- S0, if (k=x)]);
+node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
 
 many_into :: VarSet,HeapEdgeSet -> bool;
 many_into(nu,edges) =
@@ -868,7 +785,7 @@ src_sel_exists :: VarSet,str,ShapeGraph -> bool;
 src_sel_exists(src,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (src = nv) && (sel = sv)} != {};
 
 heapedge_by_var_sel :: str,str,HeapEdgeSet -> HeapEdge;
-heapedge_by_var_sel(x,sel,edges) = first_heapedge([e !! (nv,sv,_) as e <-- edges, if (x ? nv) && (sv = sel)]);
+heapedge_by_var_sel(x,sel,edges) = hd([e !! (nv,sv,_) as e <-- edges, if (x ? nv) && (sv = sel)]);
 
 
 /* Author: Viktor Pavlu
@@ -1058,7 +975,7 @@ rec_transform_stackedges :: StackEdgeSet,StackEdgeSet -> StackEdgeSetList;
 rec_transform_stackedges(      {}, res_Graph) = [res_Graph];
 rec_transform_stackedges(in_Graph, res_Graph) =
     let
-        var   = first(vars_by_stackedges(in_Graph));  // pick a variable var
+        var   = hd(vars_by_stackedges(in_Graph));  // pick a variable var
     in let
         edges = stackedges_by_var(var,in_Graph);  // select all out-edges of var
     in
@@ -1083,7 +1000,7 @@ rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
             [res_Graph]
         else
             let
-                src_sel_pattern   = first_heapedge(out_edges);
+                src_sel_pattern   = hd(out_edges);
             in let
                 src               = src_of_heapedge(src_sel_pattern);
                 sel               = sel_of_heapedge(src_sel_pattern);
@@ -1103,15 +1020,6 @@ rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
 // ----------------------------------------
 // Auxiliary functions for graph conversion
 // ----------------------------------------
-
-first::StrList->str;
-first(car:cdr) = car;
-
-first_heapedge::HeapEdgeList->HeapEdge;
-first_heapedge(car:cdr) = car;
-
-first_node::NodeList -> VarSet;
-first_node(car:cdr) = car;
 
 shapeGraph_list_member::ShapeGraph,ShapeGraphList->bool;
 shapeGraph_list_member(a,b:c) = if a=b then true else shapeGraph_list_member(a,c) endif;
@@ -1259,5 +1167,5 @@ rec_get_node(e, g) =
     
 
 node_by_src_sel :: VarSet,str,ShapeGraph -> VarSet;
-node_by_src_sel(x,sel,((_,H0),_)) = first_node([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
+node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
 
