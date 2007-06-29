@@ -80,9 +80,8 @@ comb::dfi,dfi->dfi;
 comb(a,b) =
     if a = bot then b
     else if b = bot then a
-    else case drop(a),drop(b) of
-        ((V1,E1),I1),((V2,E2),I2) =>
-            lift(((union(V1,V2),union(E1,E2)),union(I1,I2)));
+    else case drop(a),drop(b) of ((V1,E1),I1),((V2,E2),I2) =>
+        lift(((union(V1,V2),union(E1,E2)),union(I1,I2)));
     endcase
     endif
     endif;

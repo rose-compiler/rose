@@ -20,6 +20,8 @@ StackEdgeList      = list(StackEdge)
 NodeSet            = set(VarSet) // iss_ty
 NodeList           = list(VarSet)
 
+
+NodeSel            = VarSet * str
 NodeTuple          = VarSet * VarSet
 NodeTupleList      = list(NodeTuple)
 
@@ -29,6 +31,7 @@ ShapeGraph         = Graph * NodeSet
 StrList            = list(str)
 SNumList           = list(snum)
 ShapeGraphList     = list(ShapeGraph)
+ShapeGraphSet      = set(ShapeGraph)
 
 CarrierVarSetTuple = dfi * VarSet
 

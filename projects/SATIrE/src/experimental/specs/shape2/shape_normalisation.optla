@@ -63,11 +63,9 @@ expr_is_complex(e) = case e of
     _                                => false;
 endcase;
 
-/*
-  returns the expression at the given nesting_level 0..<expr_depth>, where
-  0 refers to the topmost expression that contains all other expressions
-  and the expression at expr_depth is the innermost expression
-*/
+// returns the expression at the given depth, where
+// 0 is the topmost expression that contains the others, and
+// expr_depth is the innermost expression
 expr_at :: Expression,snum -> Expression;
 expr_at(e,nesting_level) =
     let
