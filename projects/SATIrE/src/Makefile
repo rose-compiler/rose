@@ -37,8 +37,13 @@ install: all
 	cp -p $(SATIRE_SRC_DIR)/analyzer/skeletons/newanalysis $(INSTALL_BIN)
 	cp -p $(SATIRE_SRC_DIR)/analyzer/skeletons/undonewanalysis $(INSTALL_BIN)
 
+docs: Doxyfile
+	doxygen Doxyfile
+
 clean:
 	$(MAKE) clean -C grato
 	$(MAKE) clean -C pig
 	$(MAKE) clean -C analyzer
 #	$(MAKE) clean -C experimental
+	rm -rf docs
+

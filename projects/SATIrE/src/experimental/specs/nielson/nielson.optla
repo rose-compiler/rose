@@ -21,7 +21,7 @@ PROBLEM nielson
 
 TRANSFER
 
-ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),@);
+ExprStatement(e),_: expression(e,str(label),@);
 
 ArgumentAssignment(VarRefExp(na_l),NewExp(_,_,_)),_:
 case @ of 

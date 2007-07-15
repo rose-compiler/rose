@@ -1,10 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.h,v 1.2 2007-03-08 15:36:48 markus Exp $
+// $Id: pag_support.h,v 1.3 2007-07-15 02:02:27 markus Exp $
 
 #ifndef H_PAG_SUPPORT
 #define H_PAG_SUPPORT
 
-unsigned int synttype_hash(void *);
+unsigned long synttype_hash(void *);
 int syntax_eq(void *, void *);
 void syntax_mcopy(void *, void *);
 void syntaxdummy(void *);

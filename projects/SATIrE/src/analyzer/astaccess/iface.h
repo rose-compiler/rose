@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: iface.h,v 1.2 2007-03-08 15:36:48 markus Exp $
+// $Id: iface.h,v 1.3 2007-07-15 02:02:27 markus Exp $
 
 #ifndef H_IFACE
 #define H_IFACE
@@ -41,7 +41,7 @@ int kfg_num_nodes(KFG);
 #ifdef __cplusplus
 extern "C"
 #endif
-enum KFG_NODE_TYPE kfg_node_type(KFG, KFG_NODE);
+/*enum*/ KFG_NODE_TYPE kfg_node_type(KFG, KFG_NODE); // removed "enum" MS: 20.07.2007
 #ifdef __cplusplus
 extern "C"
 #endif

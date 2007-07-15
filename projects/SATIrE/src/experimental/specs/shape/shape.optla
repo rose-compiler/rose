@@ -33,7 +33,7 @@ widening  : w
 
 TRANSFER
 
-ExprStatement(ExpressionRoot(e)),_: expression1(e,(@),0);
+ExprStatement(e),_: expression1(e,(@),0);
 
 DeclareStmt(VariableSymbol(c_var),type),_: @;
 

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.h,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: ProcTraversal.h,v 1.4 2007-07-15 02:02:27 markus Exp $
 
 #ifndef H_PROCTRAVERSAL
 #define H_PROCTRAVERSAL
@@ -26,6 +26,9 @@ private:
     int procnum;
 };
 
+/* find default constructor method in a given class declaration
+ * if no default constructor exists, a "dummy"-default constructor is created
+ */
 SgMemberFunctionDeclaration *get_default_constructor(
         SgClassDeclaration *);
 

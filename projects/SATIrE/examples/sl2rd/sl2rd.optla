@@ -37,7 +37,7 @@ TRANSFER
 /* In C++ an expression statement contains an expression which can also be an assignment.
  * In C++SL1 we only allow assignments of the form x=e, where x is a variable and e is
  * an expression without an assignment (thus, a=b=c is not in SL1). */
-ExprStatement(ExpressionRoot(exprstmt)), _:
+ExprStatement(exprstmt), _:
    case exprstmt of
       /* For a call of a void function a node is created in the ICFG with a use of the 
        * auxiliary return variable - this permits removing the auxiliary variable */
@@ -65,15 +65,15 @@ LogicalIf(cond), _:
  * note that assignements are not allowed in conditionals in C++SL1 
  * we also consider the case of a temporary variable in an IfStmt which
  * is introduced in the CFG for handling short-circuit evaluation in boolean expresssions */
-ScopeStatement(IfStmt(ExprStatement(ExpressionRoot(cond)))),_:
+ScopeStatement(IfStmt(ExprStatement(cond))),_:
     kill_if_temporary_variable_exp(cond,@);
 
 /* handle the condition of a while statement */
-ScopeStatement(WhileStmt(ExprStatement(ExpressionRoot(cond)))),_:
+ScopeStatement(WhileStmt(ExprStatement(cond))),_:
     sl1_expression(cond,label,@);
 
 /* handle the return statement */
-ReturnStmt(ExpressionRoot(exp)), _:
+ReturnStmt(exp), _:
     sl1_expression(exp,label,@);
 
 /* In the remaining transfer-section we specify transfer functions for inter-procedural analysis 
@@ -116,8 +116,12 @@ IfJoin(),_:
 WhileJoin(),_:
     @;
 
+/* should match external call here as well */
+
 /* we report an error for any unmatched statement */
-_, _: error("Unknown statement. This is not an SL2 program.");
+
+_, _: print("Label: ") print(label) print(":") error("Unknown statement. This is not an SL2 program.");
+
 
 SUPPORT
 

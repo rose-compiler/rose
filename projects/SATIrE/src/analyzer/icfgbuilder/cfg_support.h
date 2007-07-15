@@ -1,13 +1,14 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: cfg_support.h,v 1.3 2007-07-15 02:02:27 markus Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
 
 #include <utility>
 #include <deque>
+#include <typeinfo>
 
-#include <AttributeMechanism.h>
+#include "AttributeMechanism.h"
 
 #include "iface.h"
 
@@ -107,7 +108,12 @@ protected:
     char *name;
 };
 
-class CallStmt : public SgStatement
+class IcfgStmt : public SgStatement
+{
+  std::string unparseToString();
+};
+
+class CallStmt : public IcfgStmt
 {
 public:
     CallStmt(KFG_NODE_TYPE node_type, char *name, CallBlock *parent);
@@ -140,7 +146,7 @@ private:
     char *funcname;
 };
 
-class DeclareStmt : public SgStatement
+class DeclareStmt : public IcfgStmt
 {
 public:
     DeclareStmt(SgVariableSymbol *v, SgType *t)
@@ -157,7 +163,7 @@ protected:
     SgType *type;
 };
 
-class UndeclareStmt : public SgStatement
+class UndeclareStmt : public IcfgStmt
 {
 public:
     UndeclareStmt(std::list<SgVariableSymbol *> *v)
@@ -188,7 +194,7 @@ private:
     std::string str;
 };
 
-class ExternalCall : public SgStatement
+class ExternalCall : public IcfgStmt
 {
 public:
     SgType *get_type() const { return type; }
@@ -199,7 +205,7 @@ private:
     SgType *type;
 };
 
-class ConstructorCall : public SgStatement
+class ConstructorCall : public IcfgStmt
 {
 public:
     char *get_name() const { return name; }
@@ -215,7 +221,7 @@ private:
     SgType *type;
 };
 
-class DestructorCall : public SgStatement
+class DestructorCall : public IcfgStmt
 {
 public:
     char *get_name() const { return name; }
@@ -231,7 +237,7 @@ private:
     SgType *type;
 };
 
-class ArgumentAssignment : public SgStatement
+class ArgumentAssignment : public IcfgStmt
 {
 public:
     ArgumentAssignment(SgVariableSymbol *l, SgExpression *r);
@@ -248,7 +254,7 @@ private:
     ArgumentAssignment();
 };
 
-class MyAssignment : public SgStatement
+class MyAssignment : public IcfgStmt
 {
 public:
     MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r) : lhs(l), rhs(r)
@@ -284,7 +290,7 @@ public:
     std::string unparseToString() const;
 };
 
-class LogicalIf : public SgStatement
+class LogicalIf : public IcfgStmt
 {
 public:
     LogicalIf(SgExpression *e) : expr(e)
@@ -298,14 +304,14 @@ private:
     SgExpression *expr;
 };
 
-class IfJoin : public SgStatement
+class IfJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
     char *get_funcname() const { return "<none>"; }
 };
 
-class WhileJoin : public SgStatement
+class WhileJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;

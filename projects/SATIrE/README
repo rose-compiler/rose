@@ -8,12 +8,12 @@ Program Analysis Generator (PAG) into C/C++ infrastructures
 that provide an abstract syntax tree. The infrastructure that 
 is fully supported is the C/C++ infrastructure LLNL-ROSE.
 
-SATIrE 0.7.3 was tested with 
- - ROSE 0.8.8a (requires g++ 3.3-5.x)
- - PAG 0.9.7.843d
- - flex 2.5.31
- - bison 1.875d
- - g++ 3.5.5
+SATIrE 0.7.4 was tested with 
+ - ROSE 0.8.10e
+ - PAG 6.1.6.96
+ - flex 2.5.33
+ - bison 2.3
+ - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
 ------------------------------------------------------------
 (1) INSTALLATION
@@ -31,10 +31,10 @@ SATIrE 0.7.3 was tested with
     - PAGDIR (the directory of installed PAG)
 
  c) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.7.3.tgz
+    tar xvzf SATIrE-0.7.4.tgz
 
  d) Go to the satire directory:
-    cd SATIrE-0.7.3
+    cd SATIrE-0.7.4
 
  e) Perform the following operations with make:
     run 'make' for compiling all SATIrE modules and analyzers (ROSE must be installed)
@@ -63,8 +63,8 @@ SATIrE 0.7.3 was tested with
     PAGDIR (the directory of installed PAG)
 
  b) We chose the example sl1rd:
-    [let's assume that you unpacked SATIrE-0.7.3.tgz in your home directory]
-    cd SATIrE-0.7.3/examples [go to the examples directory]
+    [let's assume that you unpacked SATIrE-0.7.4.tgz in your home directory]
+    cd SATIrE-0.7.4/examples [go to the examples directory]
     make                     [generate all required files in each analysis-dir]
     cd sl1rd                 [go to the direcotry of analysis sl1rd]
     make                     [compile the analyzer sl1rd]
@@ -84,9 +84,9 @@ SATIrE 0.7.3 was tested with
     SATIRE_LIB (the lib directory of installed SATIRE)
 
  c) We chose the example sl1rd:
-    [let's assume that you unpacked SATIrE-0.7.3.tgz in your home directory]
-    make clean -C ~/SATIrE-0.7.3/examples [remove all generated files]
-    cp -r ~/SATIrE-0.7.3/examples/sl1rd . [copy all files and test files to your directory]
+    [let's assume that you unpacked SATIrE-0.7.4.tgz in your home directory]
+    make clean -C ~/SATIrE-0.7.4/examples [remove all generated files]
+    cp -r ~/SATIrE-0.7.4/examples/sl1rd . [copy all files and test files to your directory]
     newanalysis sl1rd VarLabPairSetLifted [generate and configure all required files]
     cd sl1rd                              [change to the directory]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]

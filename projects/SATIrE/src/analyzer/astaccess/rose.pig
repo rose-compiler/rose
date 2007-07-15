@@ -148,6 +148,12 @@ get:body(NODE, _, "ExprListExp", _, "expressions", _, FTYPE)
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
+get:body(NODE, _, "AsmStmt", _, "operands", _, FTYPE)
+%{
+    return (void *) new PigNodeList(
+        isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
+%}
+
 get:body(NODE, _, "StringVal", _, "value", _, _)
 %{
     return strdup(isSg##CONSTR((SgNode *) NODE)->get_value().c_str());
@@ -189,7 +195,7 @@ is:body(NODE, _, "FunctionEntry" | "FunctionExit" | "FunctionCall" | "FunctionRe
 %{
     CONSTR *e = dynamic_cast<CONSTR *>(isSgStatement((SgNode *) NODE));
     return e != NULL && e->parent != NULL
-        && e->parent->node_type == (enum KFG_NODE_TYPE) X_##CONSTR;
+        && e->parent->node_type == (KFG_NODE_TYPE) X_##CONSTR;
 %}
 
 is:body(NODE, _, "ArgumentAssignment" | "ParamAssignment" | "ReturnAssignment" | "LogicalIf" | "IfJoin" | "WhileJoin", _, _, _, _)

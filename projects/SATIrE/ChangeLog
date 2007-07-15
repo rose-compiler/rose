@@ -1,4 +1,86 @@
-V0.7.3 2007-05-22
+V0.7.4 2007-07-15 MS
+
+* required user changes:
+  - Modify optla file(s): remove ExpressionRoot( ) 
+  - Rerun newanalysis (skeleton files were modified)
+
+* Adapted SATIrE interfaces from ROSE 0.8.8a to ROSE 0.8.10e
+  - rewrote analyzer/icfgbuilder
+    + rewrote the icfg generation to use one uniform interface
+    + added new SATIrE-ROSE interfacing class Ir
+    + changed code to use new ROSE-AST features
+    + changed code to comply with strict ROSE 0.8.10e AST checks
+  - changed analyzer/astaccess 
+    + eliminated the use of SgRootExpression
+    + changed code to create and access new IR structure 
+  - upgraded analyzer/annotation code to gcc 4.1.1+
+  - updated analyzer/skeletons (used by newanalysis)
+  - changed examples analyses to not use RootExpression
+
+* Tested with:
+ - ROSE 0.8.10e
+ - PAG 6.1.6.96
+ - flex 2.5.33
+ - bison 2.3
+ - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
+
+********* Locally Modified *********
+>Locally modified   ChangeLog
+>Locally modified   Makefile
+>Locally modified   README
+>Locally modified   examples/constprop/constprop.optla
+>Locally modified   examples/constprop/tests/blocks.c
+>Locally modified   examples/sl1rd/sl1rd.optla
+>Locally modified   examples/sl2rd/runtests
+>Locally modified   examples/sl2rd/sl2rd.optla
+>Locally modified   src/Makefile
+>Locally modified   src/analyzer/annotation/StatementAttributeTraversal.C
+>Locally modified   src/analyzer/astaccess/iface.h
+>Locally modified   src/analyzer/astaccess/pag_support.c
+>Locally modified   src/analyzer/astaccess/pag_support.h
+>Locally modified   src/analyzer/astaccess/rose.pig
+>Locally modified   src/analyzer/astaccess/syn
+>Locally modified   src/analyzer/astaccess/syn_typedefs.h
+>Locally modified   src/analyzer/icfgbuilder/CFGTraversal.C
+>Locally modified   src/analyzer/icfgbuilder/ExprTransformer.C
+>Locally modified   src/analyzer/icfgbuilder/ExprTransformer.h
+>Locally modified   src/analyzer/icfgbuilder/Makefile
+>Locally modified   src/analyzer/icfgbuilder/ProcTraversal.C
+>Locally modified   src/analyzer/icfgbuilder/ProcTraversal.h
+>Locally modified   src/analyzer/icfgbuilder/cfg_funcs.C
+>Locally modified   src/analyzer/icfgbuilder/cfg_support.C
+>Locally modified   src/analyzer/icfgbuilder/cfg_support.h
+>Locally modified   src/analyzer/skeletons/Makefile-template
+>Locally modified   src/experimental/specs/nielson/Makefile
+>Locally modified   src/experimental/specs/nielson/nielson.optla
+>Locally modified   src/experimental/specs/pred/Makefile
+>Locally modified   src/experimental/specs/pred/pred.optla
+>Locally modified   src/experimental/specs/pred/runtest
+>Locally modified   src/experimental/specs/shape/Makefile
+>Locally modified   src/experimental/specs/shape/shape.optla
+>Locally modified   src/experimental/specs/shape2/Makefile
+>Locally modified   src/experimental/specs/shape2/main.h
+>Locally modified   src/experimental/specs/shape2/shape_header.optla
+>Locally modified   src/experimental/specs/typeexpr/Makefile
+>Locally modified   src/experimental/specs/typeexpr/typeexpr.optla
+>Locally modified   src/grato/Makefile
+>Locally modified   src/pig/spec.y
+********* Needs CVS Update *********
+********* FILES NEEDING A MERGE *********
+********* Files Scheduled to be added *********
++Scheduled for add      examples/sl2rd/tests/rdtest12.C
++Scheduled for add      src/Doxyfile
++Scheduled for add      src/analyzer/icfgbuilder/IrCreation.C
++Scheduled for add      src/analyzer/icfgbuilder/IrCreation.h
++Scheduled for add      src/experimental/specs/pred/tests/test8.C
++Scheduled for add      src/experimental/specs/typeexpr/tests/test6.C
+********* Files Scheduled to be removed *********
+-Scheduled for removal  src/experimental/specs/pred/makeout.txt
+
+
+V0.7.3 2007-05-22 MS
+
+* required user changes: none
 
 * Added support for specific C versions
   new command line options:
@@ -14,7 +96,9 @@ V0.7.3 2007-05-22
   - g++ 3.5.5
 	
 
-V0.7.2 2007-05-10
+V0.7.2 2007-05-10 MS,GB
+
+* required user changes: none
 
 * Added support for syntactic lists in PAG specifications
 * Changed --prefix=syn to -Psyn in grato/Makefile
@@ -28,7 +112,9 @@ V0.7.2 2007-05-10
   - g++ 3.5.5
 	
 
-V0.7.1 2007-03-20
+V0.7.1 2007-03-20 MS
+
+* required user changes: none
 
 * Changed main.C-template to not compile generated C/C++ files
 * Changed all example-analyses in directory examples. Now only files *.set,
@@ -52,7 +138,7 @@ V0.7.1 2007-03-20
   - g++ 3.5.5
 	
 
-V0.7.0 2007-03-09
+V0.7.0 2007-03-09 MS,GB
 
 * Initial release
 

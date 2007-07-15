@@ -12,7 +12,7 @@ COMMONDIR = $(SATIREMAINDIR)/analyzer/astaccess
 PAG = $(PAGDIR)/bin/pag
 FLAGS = -Wall -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ $(SATIREINCLUDES)
 LPATH = -L $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L $(SATIRELIBS)
-LIBS = $(ANALYSIS).a -lsatire -lrose -ledg -lpag -lrt
+LIBS = $(ANALYSIS).a -lsatire -lrose -lpag -lrt
 
 all: $(ANALYSIS)
 
@@ -31,6 +31,14 @@ $(ANALYSIS): $(ANALYSIS).a main.o
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out
+
+check: $(ANALYSIS)
+	typeexpr tests/ints.C
+	typeexpr tests/subtypetest.C
+	typeexpr tests/test3.C
+	typeexpr tests/test4.C
+	typeexpr tests/test5.C
+	typeexpr tests/test6.C
 
 .PHONY: clean
 clean:

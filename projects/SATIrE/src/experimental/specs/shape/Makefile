@@ -10,7 +10,7 @@ SATIRE_INCLUDE_DIR=$(SATIREMAINDIR)/analyzer/astaccess
 PAG = $(PAGDIR)/bin/pag
 FLAGS = -Wall -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ -I $(SATIRE_INCLUDE)
 LPATH = -L $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L $(SATIRE_LIB)
-LIBS = $(ANALYSIS).a -lsatire -lrose -ledg -lrt -lpag
+LIBS = $(ANALYSIS).a -lsatire -lrose -lrt -lpag
 
 TESTDIR = tests
 

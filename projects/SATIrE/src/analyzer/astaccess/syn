@@ -1,15 +1,14 @@
 SYNTAX
 START:Statement
 
-Statement : ExprStatement ( expression_root:ExpressionRootNT )
+Statement : ExprStatement ( expression:Expression )
  | LabelStatement (  )
- | CaseOptionStmt ( key_root:ExpressionRootNT )
+ | CaseOptionStmt ( key:Expression )
  | DefaultOptionStmt (  )
  | BreakStmt (  )
  | ContinueStmt (  )
- | ReturnStmt ( expression_root:ExpressionRootNT )
+ | ReturnStmt ( expression:Expression )
  | GotoStatement (  )
- | SpawnStmt ( the_func_root:ExpressionRootNT )
  | ForInitStatement ( init_stmt:Statement* )
  | ClinkageStartStatement (  )
  | DeclarationStatement (  )
@@ -35,7 +34,7 @@ Statement : ExprStatement ( expression_root:ExpressionRootNT )
 DeclarationStatement : VariableDeclaration ( variables:InitializedNameNT* )
  | VariableDefinition ( vardefn:InitializedNameNT, bitfield:UnsignedLongValNT )
  | EnumDeclaration (  )
- | AsmStmt ( expr_root:ExpressionRootNT )
+ | AsmStmt ( operands:Expression* )
  | NamespaceDeclarationStatement ( definition:NamespaceDefinitionStatementNT )
  | NamespaceAliasDeclarationStatement (  )
  | UsingDirectiveStatement (  )
@@ -47,7 +46,7 @@ DeclarationStatement : VariableDeclaration ( variables:InitializedNameNT* )
 
 ScopeStatementNT : Global ( declarations:DeclarationStatement* )
  | IfStmt ( conditional:Statement )
- | ForStatement ( for_init_stmt:ForInitStatementNT, test_expr_root:ExpressionRootNT, increment_expr_root:ExpressionRootNT )
+ | ForStatement ( for_init_stmt:ForInitStatementNT, test:Expression, increment:Expression )
  | FunctionDefinition (  )
  | WhileStmt ( condition:Statement )
  | DoWhileStmt ( condition:Statement )
@@ -147,9 +146,6 @@ Initializer : AggregateInitializer ( initializers:ExprListExpNT )
 
 //PartialFunctionType : PartialFunctionModifierType ( ref_to:ReferenceType, ptr_to:PointerType, modifiers:ModifierNodesNT, typedefs:TypedefSeq, return_type:Type, orig_return_type:Type )
 // ;
-
-ExpressionRootNT : ExpressionRoot ( operand_i:Expression )
- ;
 
 InitializedNameNT : InitializedName ( name:aststring, initptr:Initializer )
  ;

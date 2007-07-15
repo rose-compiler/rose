@@ -29,7 +29,7 @@ widening        : w
 
 TRANSFER
 
-ExprStatement(ExpressionRoot(e)),_: expression(e,str(label),(@));
+ExprStatement(e),_: expression(e,str(label),(@));
 
 // argumentX := y
 // ArgumentAssignment(VariableSymbol(na_l),VarRefExp(na_r)),_:

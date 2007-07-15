@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: spec.y,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: spec.y,v 1.3 2007-07-15 02:02:28 markus Exp $
 
 // MS230107: replaced yyin with synin
 
@@ -231,6 +231,7 @@ int main(int argc, char *argv[])
     synfile = argv[optind];
     specfile = argv[optind+1];
     
+    int errno;
     errno = 0;
     if ((synin = fopen(synfile.c_str(), "r")) == NULL)
     {

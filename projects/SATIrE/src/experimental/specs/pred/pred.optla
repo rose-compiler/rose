@@ -17,28 +17,28 @@ PROBLEM Types_and_Expressions
 
 TRANSFER
 
-ScopeStatement(IfStmt(ExprStatement(ExpressionRoot(cond)))),true_edge:
+ScopeStatement(IfStmt(ExprStatement(cond))),true_edge:
   let en = expr_to_exprnum(cond); in
   let es = exprnum_to_str(en); in
     lift(forcepredicate(drop(@),label,(es,1,en)));
 
-ScopeStatement(IfStmt(ExprStatement(ExpressionRoot(cond)))),false_edge:
+ScopeStatement(IfStmt(ExprStatement(cond))),false_edge:
   let en = expr_to_exprnum(cond); in
   let es = exprnum_to_str(en); in
     lift(forcepredicate(drop(@),label,(es,0,en)));
 
 
-ScopeStatement(WhileStmt(ExprStatement(ExpressionRoot(cond)))),true_edge:
+ScopeStatement(WhileStmt(ExprStatement(cond))),true_edge:
   let en = expr_to_exprnum(cond); in
   let es = exprnum_to_str(en); in
     lift(forcepredicate(drop(@),label,(es,1,en)));
 
-ScopeStatement(WhileStmt(ExprStatement(ExpressionRoot(cond)))),false_edge:
+ScopeStatement(WhileStmt(ExprStatement(cond))),false_edge:
   let en = expr_to_exprnum(cond); in
   let es = exprnum_to_str(en); in
     lift(forcepredicate(drop(@),label,(es,0,en)));
 
-ExprStatement(ExpressionRoot(AssignOp(VarRefExp(cvarname),rhsexpr))), _:
+ExprStatement(AssignOp(VarRefExp(cvarname),rhsexpr)), _:
   let var = val-aststring(cvarname); in
   let en = expr_to_exprnum(rhsexpr); in
   let es = exprnum_to_str(en); in

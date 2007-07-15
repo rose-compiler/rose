@@ -1,45 +1,46 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.2 2007-03-08 15:36:48 markus Exp $
+// $Id: ExprTransformer.C,v 1.3 2007-07-15 02:02:27 markus Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
 
 #include "ExprTransformer.h"
+#include "IrCreation.h"
 
 ExprTransformer::ExprTransformer(int node_id_, int procnum_, int expnum_,
-        CFG *cfg_, BasicBlock *after_)
-    : node_id(node_id_), procnum(procnum_), expnum(expnum_), cfg(cfg_),
+				 CFG *cfg_, BasicBlock *after_)
+  : node_id(node_id_), procnum(procnum_), expnum(expnum_), cfg(cfg_),
     after(after_), retval(after_), root_var(NULL)
 {
 }
 
-int ExprTransformer::get_node_id() const
-{
-    return node_id;
+int 
+ExprTransformer::get_node_id() const {
+  return node_id;
 }
 
-int ExprTransformer::get_expnum() const
-{
+int 
+ExprTransformer::get_expnum() const {
     return expnum;
 }
 
-BasicBlock *ExprTransformer::get_after() const
-{
+BasicBlock*
+ExprTransformer::get_after() const {
     return after;
 }
 
-BasicBlock *ExprTransformer::get_last() const
-{
+BasicBlock*
+ExprTransformer::get_last() const {
     return last;
 }
 
-BasicBlock *ExprTransformer::get_retval() const
-{
+BasicBlock* 
+ExprTransformer::get_retval() const {
     return retval;
 }
 
-SgVariableSymbol *ExprTransformer::get_root_var() const
-{
+SgVariableSymbol*
+ExprTransformer::get_root_var() const {
     return root_var;
 }
 
@@ -54,14 +55,10 @@ void ExprTransformer::visit(SgNode *node)
      * short-circuit operators &&, ||, and ?: (the comma operator
      * should also be implemented some day).
      */
-    Sg_File_Info *info = new Sg_File_Info();
-    if (isSgThisExp(node))
+    if (SgThisExp* thisExp=isSgThisExp(node))
     {
-        SgVariableSymbol *var = new SgVariableSymbol(
-            new SgInitializedName(SgName("this"),
-                isSgThisExp(node)->get_type()));
-        replaceChild(node->get_parent(), node,
-                new SgVarRefExp(node->get_file_info(), var));
+      SgVarRefExp* varRefExp=Ir::createVarRefExp("this",thisExp->get_type());
+      replaceChild(node->get_parent(), node, varRefExp);
     }
     else if (isSgFunctionCallExp(node))
     {
@@ -69,49 +66,43 @@ void ExprTransformer::visit(SgNode *node)
         SgName name = find_func_name(call);
         const std::list<CallBlock *> *entries = find_entries(call);
         SgExpressionPtrList elist;
+	//std::cout << "FunctionCallExp:" << name << ": function search => " << entries->size() << std::endl;
 
-        if (entries != NULL && !entries->empty())
-        {
-            Procedure *p = (*cfg->procedures)[entries->front()->procnum];
-            SgInitializedNamePtrList params = p->params->get_args();
-            SgExpressionPtrList &alist
-                = call->get_args()->get_expressions();
-            SgInitializedNamePtrList::const_iterator ni = params.begin();
-            SgExpressionPtrList::const_iterator ei;
-            /* if this is a member function, put the this pointer as
-             * first argument; this does not appear explicitly
-             * anywhere */
-            if (find_called_memberfunc(call->get_function()))
-            {
-                SgExpression *e = calling_object_address(call->get_function());
-                if (e != NULL)
-                    elist.push_back(e);
-                else
-                {
-                    std::cout << "unknown object" << std::endl;
-                    exit(EXIT_FAILURE);
-                }
-            }
-            for (ei = alist.begin() ; ei != alist.end(); ++ei)
-            {
-                elist.push_back(*ei);
-                ++ni;
-            }
-            while (ni != params.end())
-            {
-                elist.push_back(isSgAssignInitializer((*ni)->get_initptr())
-                        ->get_operand_i());
-                ++ni;
-            }
-        }
-        else
-        {
-            /* evaluate args for external functions */
-            SgExpressionPtrList &alist
-                = call->get_args()->get_expressions();
-            SgExpressionPtrList::const_iterator ei;
-            for (ei = alist.begin(); ei != alist.end(); ++ei)
-                elist.push_back(*ei);
+        if (entries != NULL && !entries->empty()) {
+	  Procedure *p = (*cfg->procedures)[entries->front()->procnum];
+	  SgInitializedNamePtrList params = p->params->get_args();
+	  SgExpressionPtrList &alist
+	    = call->get_args()->get_expressions();
+	  SgInitializedNamePtrList::const_iterator ni = params.begin();
+	  SgExpressionPtrList::const_iterator ei;
+	  /* if this is a member function, put the this pointer as
+	   * first argument; this does not appear explicitly
+	   * anywhere */
+	  if (find_called_memberfunc(call->get_function())) {
+	    SgExpression *e = calling_object_address(call->get_function());
+	    if (e != NULL) {
+	      elist.push_back(e);
+	    } else {
+	      std::cout << "unknown object" << std::endl;
+	      exit(EXIT_FAILURE);
+	    }
+	  }
+	  for (ei = alist.begin() ; ei != alist.end(); ++ei) {
+	    elist.push_back(*ei);
+	    ++ni;
+	  }
+          while (ni != params.end()) {
+	    elist.push_back(isSgAssignInitializer((*ni)->get_initptr())
+			    ->get_operand_i());
+	    ++ni;
+	  }
+        } else {
+	  /* evaluate args for external functions */
+	  SgExpressionPtrList &alist
+	    = call->get_args()->get_expressions();
+	  SgExpressionPtrList::const_iterator ei;
+	  for (ei = alist.begin(); ei != alist.end(); ++ei)
+	    elist.push_back(*ei);
         }
         /*
          * create:
@@ -191,11 +182,12 @@ void ExprTransformer::visit(SgNode *node)
         }
         else
         {
+	  /* external call */
             BasicBlock *call_block
                 = new BasicBlock(node_id++, INNER, procnum);
             cfg->nodes.push_back(call_block);
             call_block->statements.push_front(
-                    new ExternalCall(call->get_type()));
+                    Ir::createExternalCall(call->get_type()));
 
             /* set links */
             if (last_arg_block != NULL)
@@ -238,478 +230,383 @@ void ExprTransformer::visit(SgNode *node)
             after = first_arg_block;
         expnum++;
     }
-    else if (isSgConstructorInitializer(node))
-    {
-        SgConstructorInitializer *ci = isSgConstructorInitializer(node);
-        SgClassDefinition *class_type = (ci->get_class_decl()
-                ? ci->get_class_decl()->get_definition() : NULL);
-        std::list<CallBlock *> blocks(0);
-        SgName name = "";
-        if (ci->get_declaration() != NULL)
-        {
-            name = ci->get_declaration()->get_name();
-            /* find constructor implementations */
-            int num = 0;
-            std::deque<Procedure *>::const_iterator i;
-            for (i = cfg->procedures->begin(); i != cfg->procedures->end();
-                    ++i)
-            {
-                if (strcmp(name.str(), (*i)->name) == 0)
-                    blocks.push_back((*cfg->procedures)[num]->entry);
-                num++;
-            }
-        }
+    else if (isSgConstructorInitializer(node)) {
+      SgConstructorInitializer* ci = isSgConstructorInitializer(node);
 
-        /* setup argument expressions */
-        SgExpressionPtrList elist;
-        Procedure *p = NULL;
-        SgInitializedNamePtrList params;
-        SgExpressionPtrList &alist = ci->get_args()->get_expressions();
-        SgInitializedNamePtrList::const_iterator ni;
-        SgExpressionPtrList::const_iterator ei;
-        if (!blocks.empty())
-        {
-            p = (*cfg->procedures)[blocks.front()->procnum];
-            params = p->params->get_args();
-            ni = params.begin();
-        }
-        if (isSgInitializedName(ci->get_parent()))
-        {
-            /* some member is initialized, pass the address
-             * of the object as this pointer */
-            SgInitializedName *var
-                = isSgInitializedName(ci->get_parent());
-            SgVarRefExp *ref = new SgVarRefExp(new Sg_File_Info(),
-                new SgVariableSymbol(var));
-            elist.push_back(new SgAddressOfOp(new Sg_File_Info(),
-                    ref, new SgPointerType(ref->get_type())));
-        }
-        else if (isSgNewExp(ci->get_parent()))
-        {
-            SgType *t = isSgNewExp(ci->get_parent())->get_type();
-            if (isSgPointerType(t))
-                t = isSgPointerType(t)->get_base_type();
-            if (isSgNamedType(t))
-                name = isSgNamedType(t)->get_name();
+      SgClassDefinition* class_type = (ci->get_class_decl()
+				       ? ci->get_class_decl()->get_definition() : NULL);
+      std::list<CallBlock *> blocks(0);
+      SgName name = "";
+      if (ci->get_declaration() != NULL) {
+	name = ci->get_declaration()->get_name();
+	/* find constructor implementations */
+	int num = 0;
+	std::deque<Procedure *>::const_iterator i;
+	for (i = cfg->procedures->begin(); i != cfg->procedures->end();
+	     ++i) {
+	  if (strcmp(Ir::getConstCharPtr(name), (*i)->name) == 0) {
+	    blocks.push_back((*cfg->procedures)[num]->entry);
+	  }
+	  num++;
+	}
+      }
+	
+      /* setup argument expressions */
+      SgExpressionPtrList elist;
+      Procedure *p = NULL;
+      SgInitializedNamePtrList params;
+      SgExpressionPtrList& alist = ci->get_args()->get_expressions();
+      SgInitializedNamePtrList::const_iterator ni;
+      SgExpressionPtrList::const_iterator ei;
+      if (!blocks.empty()) {
+	p = (*cfg->procedures)[blocks.front()->procnum];
+	params = p->params->get_args();
+	ni = params.begin();
+      }
+      if (SgInitializedName* initializedName=isSgInitializedName(ci->get_parent())) {
+	/* some member is initialized, pass the address
+	 * of the object as this pointer */
+	//initializedName->set_file_info(FILEINFO);
+	SgVarRefExp *ref = Ir::createVarRefExp(initializedName);
+	SgAddressOfOp* a = Ir::createAddressOfOp(ref,Ir::createPointerType(ref->get_type()));
+	elist.push_back(a);
+      } else if (SgNewExp* newExp0=isSgNewExp(ci->get_parent())) {
+	SgType *t = newExp0->get_type();
+	if (isSgPointerType(t))
+	  t = isSgPointerType(t)->get_base_type();
+	if (isSgNamedType(t))
+	  name = isSgNamedType(t)->get_name();
+	
+	elist.push_back(newExp0);
+	  
+	RetvalAttribute *ra = (RetvalAttribute *) ci->getAttribute("return variable");
+	
+	SgVariableSymbol *var = Ir::createVariableSymbol(ra->get_str(),newExp0->get_type());
+	
+	if (isSgExpression(newExp0->get_parent())) {
+	  SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
+	  replaceChild(newExp0->get_parent(),newExp0,varRefExp);
+	  } else if (root_var == NULL) {
+	    root_var = var;
+	  }
+      } else {
+	RetvalAttribute* ra = (RetvalAttribute *) ci->getAttribute("anonymous variable");
+	SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
+	elist.push_back(Ir::createAddressOfOp(ref, Ir::createPointerType(ref->get_type())));
+      }
+      for (ei = alist.begin(); ei != alist.end(); ++ei) {
+	elist.push_back(*ei);
+	if (!blocks.empty())
+	  ++ni;
+      }
+      if (!blocks.empty()) {
+	while (ni != params.end()) {
+	  elist.push_back(isSgAssignInitializer((*ni)->get_initptr())
+			  ->get_operand_i());
+	  ++ni;
+	}
+      }
+      BasicBlock *first_arg_block = NULL, *last_arg_block = NULL;
+      if (!elist.empty()) {
+	int i;
+	BasicBlock *prev = NULL;
+	for (i = 0; i < elist.size(); i++) {
+	  BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
+	  cfg->nodes.push_back(b);
+	  if (first_arg_block == NULL)
+	    first_arg_block = b;
+	  if (prev != NULL)
+	    add_link(prev, b, NORMAL_EDGE);
+	  prev = b;
+	}
+	last_arg_block = prev;
+      }
+      /* FIXME: is this correct? */
+      BasicBlock *retval_block = NULL;
+      CallBlock *call_block = NULL, *return_block = NULL;
+      if (!blocks.empty()) {
+	call_block = new CallBlock(node_id++, CALL, procnum,
+				   blocks.front()->paramlist, name.str());
+	return_block = new CallBlock(node_id++, RETURN,
+				     procnum, blocks.front()->paramlist, name.str());
+	cfg->nodes.push_back(call_block);
+	cfg->calls.push_back(call_block);
+	cfg->nodes.push_back(return_block);
+	cfg->returns.push_back(return_block);
+	call_block->partner = return_block;
+	return_block->partner = call_block;
 
-            elist.push_back(isSgNewExp(ci->get_parent()));
-            RetvalAttribute *ra = (RetvalAttribute *)
-                ci->getAttribute("return variable");
-            SgVariableSymbol *var = new SgVariableSymbol(
-                new SgInitializedName(SgName(ra->get_str()),
-                    isSgNewExp(ci->get_parent())->get_type()));
-            if (isSgExpression(ci->get_parent()->get_parent()))
-            {
-                replaceChild(ci->get_parent()->get_parent(),
-                        ci->get_parent(),
-                        new SgVarRefExp(ci->get_file_info(), var));
-            }
-            else if (root_var == NULL)
-                root_var = var;
-        }
-        else
-        {
-            RetvalAttribute *ra =
-                (RetvalAttribute *) ci->getAttribute("anonymous variable");
-            SgInitializedName *var = new SgInitializedName(
-                    ra->get_str(), ci->get_type());
-            SgVarRefExp *ref = new SgVarRefExp(new Sg_File_Info(),
-                    new SgVariableSymbol(var));
-            elist.push_back(new SgAddressOfOp(new Sg_File_Info(),
-                        ref, new SgPointerType(ref->get_type())));
-        }
-        for (ei = alist.begin(); ei != alist.end(); ++ei)
-        {
-            elist.push_back(*ei);
-            if (!blocks.empty())
-                ++ni;
-        }
-        if (!blocks.empty())
-        {
-            while (ni != params.end())
-            {
-                elist.push_back(isSgAssignInitializer((*ni)->get_initptr())
-                        ->get_operand_i());
-                ++ni;
-            }
-        }
-        BasicBlock *first_arg_block = NULL, *last_arg_block = NULL;
-        if (!elist.empty())
-        {
-            int i;
-            BasicBlock *prev = NULL;
-            for (i = 0; i < elist.size(); i++)
-            {
-                BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
-                cfg->nodes.push_back(b);
-                if (first_arg_block == NULL)
-                    first_arg_block = b;
-                if (prev != NULL)
-                    add_link(prev, b, NORMAL_EDGE);
-                prev = b;
-            }
-            last_arg_block = prev;
-        }
-        /* FIXME: is this correct? */
-        BasicBlock *retval_block = NULL;
-        CallBlock *call_block = NULL, *return_block = NULL;
-        if (!blocks.empty())
-        {
-            call_block = new CallBlock(node_id++, CALL, procnum,
-                    blocks.front()->paramlist, name.str());
-            return_block = new CallBlock(node_id++, RETURN,
-                    procnum, blocks.front()->paramlist, name.str());
-            cfg->nodes.push_back(call_block);
-            cfg->calls.push_back(call_block);
-            cfg->nodes.push_back(return_block);
-            cfg->returns.push_back(return_block);
-            call_block->partner = return_block;
-            return_block->partner = call_block;
+	/* set links */
+	std::list<CallBlock *> *exits = new std::list<CallBlock *>();
+	std::list<CallBlock *>::const_iterator i;
+	for (i = blocks.begin(); i != blocks.end(); ++i)
+	  exits->push_back((*i)->partner);
+	if (last_arg_block != NULL)
+	  add_link(last_arg_block, call_block, NORMAL_EDGE);
+	for (i = blocks.begin(); i != blocks.end(); ++i)
+	  add_link(call_block, *i, CALL_EDGE);
+	add_link(call_block, return_block, LOCAL);
+	for (i = exits->begin(); i != exits->end(); ++i)
+	  add_link(*i, return_block, RETURN_EDGE);
+	if (retval_block != NULL) {
+	  add_link(return_block, retval_block, NORMAL_EDGE);
+	  add_link(retval_block, after, NORMAL_EDGE);
+	  retval = retval_block;
+	} else {
+	  add_link(return_block, after, NORMAL_EDGE);
+	  retval = return_block;
+	}
+	after = call_block;
+	last = retval;
+      } else {
+	/* call to external constructor */
+	BasicBlock *call_block
+	  = new BasicBlock(node_id++, INNER, procnum);
+	cfg->nodes.push_back(call_block);
+	call_block->statements.push_front(Ir::createConstructorCall(name.str(), ci->get_type()));
 
-            /* set links */
-            std::list<CallBlock *> *exits = new std::list<CallBlock *>();
-            std::list<CallBlock *>::const_iterator i;
-            for (i = blocks.begin(); i != blocks.end(); ++i)
-                exits->push_back((*i)->partner);
-            if (last_arg_block != NULL)
-                add_link(last_arg_block, call_block, NORMAL_EDGE);
-            for (i = blocks.begin(); i != blocks.end(); ++i)
-                add_link(call_block, *i, CALL_EDGE);
-            add_link(call_block, return_block, LOCAL);
-            for (i = exits->begin(); i != exits->end(); ++i)
-                add_link(*i, return_block, RETURN_EDGE);
-            if (retval_block != NULL)
-            {
-                add_link(return_block, retval_block, NORMAL_EDGE);
-                add_link(retval_block, after, NORMAL_EDGE);
-                retval = retval_block;
-            }
-            else
-            {
-                add_link(return_block, after, NORMAL_EDGE);
-                retval = return_block;
-            }
-            after = call_block;
-            last = retval;
-        }
-        else
-        {
-            /* call to external constructor */
-            BasicBlock *call_block
-                = new BasicBlock(node_id++, INNER, procnum);
-            cfg->nodes.push_back(call_block);
-            call_block->statements.push_front(
-                    new ConstructorCall(name.str(), ci->get_type()));
-
-            /* set links */
-            if (last_arg_block != NULL)
-                add_link(last_arg_block, call_block, NORMAL_EDGE);
-            if (retval_block != NULL)
-            {
-                add_link(call_block, retval_block, NORMAL_EDGE);
-                add_link(retval_block, after, NORMAL_EDGE);
-                retval = retval_block;
-            }
-            else
-            {
-                add_link(call_block, after, NORMAL_EDGE);
-                retval = call_block;
-            }
-            after = call_block;
-            last = retval;
-        }
-        /* fill blocks */
-        if (first_arg_block != NULL)
-        {
-            std::list<SgVariableSymbol *> *params =
-                evaluate_arguments(name, elist, first_arg_block, true);
-            if (call_block != NULL)
-            {
-                call_block->paramlist = params;
-                call_block->stmt->update_infolabel();
-            }
-        }
-        /* replace call by its result */
-        // if (retval_block != NULL)
-        //     assign_retval(name, call, retval_block);
-        if (first_arg_block != NULL)
-            after = first_arg_block;
-        expnum++;
+	/* set links */
+	if (last_arg_block != NULL)
+	  add_link(last_arg_block, call_block, NORMAL_EDGE);
+	if (retval_block != NULL) {
+	  add_link(call_block, retval_block, NORMAL_EDGE);
+	  add_link(retval_block, after, NORMAL_EDGE);
+	  retval = retval_block;
+	} else {
+	  add_link(call_block, after, NORMAL_EDGE);
+	  retval = call_block;
+	}
+	after = call_block;
+	last = retval;
+      }
+      /* fill blocks */
+      if (first_arg_block != NULL) {
+	std::list<SgVariableSymbol *> *params =
+	  evaluate_arguments(name, elist, first_arg_block, true);
+	if (call_block != NULL) {
+	  call_block->paramlist = params;
+	  call_block->stmt->update_infolabel();
+	}
+      }
+      /* replace call by its result */
+      // if (retval_block != NULL)
+      //     assign_retval(name, call, retval_block);
+      if (first_arg_block != NULL)
+	after = first_arg_block;
+      expnum++;
     }
-    else if (isSgDeleteExp(node))
-    {
-        SgDeleteExp *de = isSgDeleteExp(node);
-        if (!de->get_is_array())
-        {
-            SgType *delete_type = isSgPointerType(de->get_variable()
-                    ->get_type())->get_base_type();
-            while (isSgTypedefType(delete_type))
-                delete_type = isSgTypedefType(delete_type)->get_base_type();
-            SgClassType *ct = isSgClassType(delete_type);
-            std::string class_name(ct->get_name().str());
-            // std::string destructor_name = class_name + "::~" + class_name;
-            // std::string this_var_name
-            //    = std::string() + "$~" + class_name + "$this";
-            const std::list<CallBlock *> *d_entries
-                = find_destructor_entries(ct);
-            std::list<std::string> *d_class_names = find_destructor_names(ct);
-            std::list<std::string> *d_this_names
-                = find_destructor_this_names(ct);
-            std::list<std::string>::iterator destr_name
-                = d_class_names->begin();
-            std::list<std::string>::iterator this_name
-                = d_this_names->begin();
-            if (d_entries != NULL && !d_entries->empty())
-            {
-                std::list<BasicBlock *> afters, lasts;
-                std::list<CallBlock *>::const_iterator d;
-                for (d = d_entries->begin(); d != d_entries->end(); ++d)
-                {
-                    SgInitializedName *this_var = new SgInitializedName(
-                        *this_name++, de->get_variable()->get_type());
-                    SgVariableSymbol *this_var_sym
-                        = new SgVariableSymbol(this_var);
-                    std::string destructor_name = *destr_name++;
-                    CallBlock *call_block = new CallBlock(node_id++, CALL,
-                        procnum, NULL, strdup(destructor_name.c_str()));
-                    CallBlock *return_block = new CallBlock(node_id++, RETURN,
-                        procnum, NULL, strdup(destructor_name.c_str()));
-                    cfg->nodes.push_back(call_block);
-                    cfg->calls.push_back(call_block);
-                    cfg->nodes.push_back(return_block);
-                    cfg->returns.push_back(return_block);
-                    call_block->partner = return_block;
-                    return_block->partner = call_block;
-                    BasicBlock *this_block
-                        = new BasicBlock(node_id++, INNER, procnum);
-                    cfg->nodes.push_back(this_block);
-                    this_block->statements.push_back(new ArgumentAssignment(
-                            new SgVarRefExp(new Sg_File_Info(), this_var_sym),
-                            de->get_variable()));
-                    call_block->paramlist
-                        = new std::list<SgVariableSymbol *>();
-                    call_block->paramlist->push_back(this_var_sym);
-                    return_block->paramlist = call_block->paramlist;
-                    /* set links */
-                    add_link(this_block, call_block, NORMAL_EDGE);
+    else if (isSgDeleteExp(node)) {
+      SgDeleteExp *de = isSgDeleteExp(node);
+      if (!de->get_is_array()) {
+	SgType *delete_type = isSgPointerType(de->get_variable()
+					      ->get_type())->get_base_type();
+	while (isSgTypedefType(delete_type))
+	  delete_type = isSgTypedefType(delete_type)->get_base_type();
+	SgClassType *ct = isSgClassType(delete_type);
+	std::string class_name(ct->get_name().str());
+	// std::string destructor_name = class_name + "::~" + class_name;
+	// std::string this_var_name
+	//    = std::string() + "$~" + class_name + "$this";
+	const std::list<CallBlock *> *d_entries
+	  = find_destructor_entries(ct);
+	std::list<std::string> *d_class_names = find_destructor_names(ct);
+	std::list<std::string> *d_this_names
+	  = find_destructor_this_names(ct);
+	std::list<std::string>::iterator destr_name
+	  = d_class_names->begin();
+	std::list<std::string>::iterator this_name
+	  = d_this_names->begin();
+	if (d_entries != NULL && !d_entries->empty()) {
+	  std::list<BasicBlock *> afters, lasts;
+	  std::list<CallBlock *>::const_iterator d;
+	  for (d = d_entries->begin(); d != d_entries->end(); ++d) {
+	    SgVariableSymbol *this_var_sym
+	      = Ir::createVariableSymbol(*this_name++, de->get_variable()->get_type());
 
-                    add_link(call_block, *d, CALL_EDGE);
-                    add_link((*d)->partner, return_block, RETURN_EDGE);
+	    std::string destructor_name = *destr_name++;
+	    CallBlock *call_block = new CallBlock(node_id++, CALL,
+						  procnum, NULL, strdup(destructor_name.c_str()));
+	    CallBlock *return_block = new CallBlock(node_id++, RETURN,
+						    procnum, NULL, strdup(destructor_name.c_str()));
+	    cfg->nodes.push_back(call_block);
+	    cfg->calls.push_back(call_block);
+	    cfg->nodes.push_back(return_block);
+	    cfg->returns.push_back(return_block);
+	    call_block->partner = return_block;
+	    return_block->partner = call_block;
+	    BasicBlock *this_block
+	      = new BasicBlock(node_id++, INNER, procnum);
+	    cfg->nodes.push_back(this_block);
+	    this_block->statements.push_back(Ir::createArgumentAssignment(Ir::createVarRefExp(this_var_sym),
+								    de->get_variable()));
+	    call_block->paramlist = new std::list<SgVariableSymbol *>();
+	    call_block->paramlist->push_back(this_var_sym);
+	    return_block->paramlist = call_block->paramlist;
+	    /* set links */
+	    add_link(this_block, call_block, NORMAL_EDGE);
 
-                    add_link(call_block, return_block, LOCAL);
-                    // add_link(return_block, after, NORMAL_EDGE);
-                    afters.push_back(this_block);
-                    lasts.push_back(return_block);
-                    // after = this_block;
+	    add_link(call_block, *d, CALL_EDGE);
+	    add_link((*d)->partner, return_block, RETURN_EDGE);
+	    
+	    add_link(call_block, return_block, LOCAL);
+	    // add_link(return_block, after, NORMAL_EDGE);
+	    afters.push_back(this_block);
+	    lasts.push_back(return_block);
+	    // after = this_block;
                     // last = return_block;
-                }
-                // after: kill this_vars
-                BasicBlock *kill_this_vars = new BasicBlock(node_id++,
-                        INNER, procnum);
-                cfg->nodes.push_back(kill_this_vars);
-                std::list<SgVariableSymbol *> *this_syms
-                    = new std::list<SgVariableSymbol *>();
-                std::list<std::string>::iterator dtn;
-                for (dtn = d_this_names->begin(); dtn != d_this_names->end();
-                        ++dtn)
-                {
-                    this_syms->push_back(new SgVariableSymbol(
-                                new SgInitializedName(SgName(*dtn),
-                                    new SgClassType())));
-                }
-                kill_this_vars->statements.push_back(
-                        new UndeclareStmt(this_syms));
-                add_link(kill_this_vars, after, NORMAL_EDGE);
-                after = kill_this_vars;
-                // set links
-                if (afters.size() > 1)
-                {
-                    BasicBlock *afterblock
-                        = new BasicBlock(node_id++, INNER, procnum);
-                    cfg->nodes.push_back(afterblock);
-                    afterblock->statements.push_back(new SgNullStatement(
-                                new Sg_File_Info()));
-                    std::list<BasicBlock *>::iterator ai, li;
-                    ai = afters.begin();
-                    li = lasts.begin();
-                    while (ai != afters.end() && li != lasts.end())
-                    {
-                        add_link(afterblock, *ai++, NORMAL_EDGE);
-                        add_link(*li++, after, NORMAL_EDGE);
-                    }
-                    after = afterblock;
-                }
-                else
-                {
-                    add_link(*lasts.begin(), after, NORMAL_EDGE);
-                    after = *afters.begin();
-                }
-            }
-            else
-            {
-                /* No destructor found. Generating an external call
-                 * (there might be a destructor whose implementation
-                 * is not accessible to us). */
-                BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
-                cfg->nodes.push_back(b);
-                b->statements.push_front(
-                        new DestructorCall(strdup(class_name.c_str()), ct));
-                add_link(b, after, NORMAL_EDGE);
-                after = b;
-                last = b;
-            }
-        }
-    }
-    else if (isSgAndOp(node))
-    {
-        SgAndOp *and_op = isSgAndOp(node);
-        RetvalAttribute *varnameattr
-            // = (RetvalAttribute *) and_op->attribute["logical variable"];
-            = (RetvalAttribute *) and_op->getAttribute("logical variable");
-        SgVariableSymbol *var = new SgVariableSymbol(
-                new SgInitializedName(SgName(varnameattr->get_str()),
-                    and_op->get_type()));
-        BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(if_block);
-        if (and_op->get_lhs_operand_i()->attributeExists("logical variable"))
+	  }
+	  // after: kill this_vars
+	  BasicBlock* kill_this_vars = new BasicBlock(node_id++, INNER, procnum);
+	  cfg->nodes.push_back(kill_this_vars);
+	  std::list<SgVariableSymbol *>* this_syms = new std::list<SgVariableSymbol *>();
+	  std::list<std::string>::iterator dtn;
+	  for (dtn = d_this_names->begin(); dtn != d_this_names->end();
+	       ++dtn) {
+	    this_syms->push_back(Ir::createVariableSymbol(*dtn,Ir::createClassType()));
+	  }
+	  kill_this_vars->statements.push_back(Ir::createUndeclareStmt(this_syms));
+	  add_link(kill_this_vars, after, NORMAL_EDGE);
+	  after = kill_this_vars;
+	  // set links
+	  if (afters.size() > 1) {
+	    BasicBlock *afterblock
+	      = new BasicBlock(node_id++, INNER, procnum);
+	    cfg->nodes.push_back(afterblock);
+	    afterblock->statements.push_back(Ir::createNullStatement());
+	    std::list<BasicBlock *>::iterator ai, li;
+	    ai = afters.begin();
+	    li = lasts.begin();
+	    while (ai != afters.end() && li != lasts.end()) {
+	      add_link(afterblock, *ai++, NORMAL_EDGE);
+	      add_link(*li++, after, NORMAL_EDGE);
+	    }
+	    after = afterblock;
+	  } else {
+	    add_link(*lasts.begin(), after, NORMAL_EDGE);
+	    after = *afters.begin();
+	  }
+	} else {
+	  /* No destructor found. Generating an external call
+	   * (there might be a destructor whose implementation
+	   * is not accessible to us). */
+	  BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
+	  cfg->nodes.push_back(b);
+	  b->statements.push_front(Ir::createDestructorCall(strdup(class_name.c_str()), ct));
+	  add_link(b, after, NORMAL_EDGE);
+	  after = b;
+	  last = b;
+	}
+      }
+    } else if (isSgAndOp(node) || isSgOrOp(node)) {
+      SgBinaryOp *and_op = isSgBinaryOp(node);
+      RetvalAttribute *varnameattr
+	= (RetvalAttribute *) and_op->getAttribute("logical variable");
+      SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),
+						       and_op->get_type());
+      
+      BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(if_block);
+      if (and_op->get_lhs_operand_i()->attributeExists("logical variable"))
         {
-            RetvalAttribute *vna = (RetvalAttribute *)
-                and_op->get_lhs_operand_i()->getAttribute("logical variable");
-            SgVariableSymbol *vs = new SgVariableSymbol(
-                    new SgInitializedName(SgName(vna->get_str()),
-                        and_op->get_lhs_operand_i()->get_type()));
-            SgVarRefExp *varexp = new SgVarRefExp(info, vs);
-            if_block->statements.push_front(new LogicalIf(varexp));
-        }
-        else
-            if_block->statements.push_front(
-                new LogicalIf(and_op->get_lhs_operand_i()));
-        BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(t_block);
-        t_block->statements.push_front(new SgExprStatement(info,
-                    new SgAssignOp(info, new SgVarRefExp(info, var),
-                        and_op->get_rhs_operand_i())));
-        BasicBlock *f_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(f_block);
-        f_block->statements.push_front(new SgExprStatement(info,
-                    new SgAssignOp(info, new SgVarRefExp(info, var),
-                        new SgBoolValExp(info, false))));
-        add_link(if_block, t_block, TRUE_EDGE);
-        add_link(if_block, f_block, FALSE_EDGE);
-        add_link(t_block, after, NORMAL_EDGE);
-        add_link(f_block, after, NORMAL_EDGE);
-        after = if_block;
-
-        if (isSgExpression(and_op->get_parent()))
-        {
-            replaceChild(and_op->get_parent(), and_op,
-                    new SgVarRefExp(and_op->get_file_info(), var));
-        }
-        else if (root_var == NULL)
-            root_var = var;
-        expnum++;
-    }
-    else if (isSgOrOp(node))
-    {
-        SgOrOp *or_op = isSgOrOp(node);
-        RetvalAttribute *varnameattr
-            // = (RetvalAttribute *) or_op->attribute["logical variable"];
-            = (RetvalAttribute *) or_op->getAttribute("logical variable");
-        SgVariableSymbol *var = new SgVariableSymbol(
-                new SgInitializedName(SgName(varnameattr->get_str()),
-                    or_op->get_type()));
-        BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(if_block);
-        if (or_op->get_lhs_operand_i()->attributeExists("logical variable"))
-        {
-            RetvalAttribute *vna = (RetvalAttribute *)
-                or_op->get_lhs_operand_i()->getAttribute("logical variable");
-            SgVariableSymbol *vs = new SgVariableSymbol(
-                    new SgInitializedName(SgName(vna->get_str()),
-                        or_op->get_lhs_operand_i()->get_type()));
-            SgVarRefExp *varexp = new SgVarRefExp(info, vs);
-            if_block->statements.push_front(new LogicalIf(varexp));
-        }
-        else
-            if_block->statements.push_front(
-                new LogicalIf(or_op->get_lhs_operand_i()));
-        BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(t_block);
-        t_block->statements.push_front(new SgExprStatement(info,
-                    new SgAssignOp(info, new SgVarRefExp(info, var),
-                        new SgBoolValExp(info, true))));
-        BasicBlock *f_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(f_block);
-        f_block->statements.push_front(new SgExprStatement(info,
-                    new SgAssignOp(info, new SgVarRefExp(info, var),
-                        or_op->get_rhs_operand_i())));
-        add_link(if_block, t_block, TRUE_EDGE);
-        add_link(if_block, f_block, FALSE_EDGE);
-        add_link(t_block, after, NORMAL_EDGE);
-        add_link(f_block, after, NORMAL_EDGE);
-        after = if_block;
-
-        if (isSgExpression(or_op->get_parent()))
-        {
-            replaceChild(or_op->get_parent(), or_op,
-                    new SgVarRefExp(or_op->get_file_info(), var));
-        }
-        else if (root_var == NULL)
-            root_var = var;
-        expnum++;
-    }
-    else if (isSgConditionalExp(node))
-    {
-        SgConditionalExp *cond = isSgConditionalExp(node);
-        RetvalAttribute *varnameattr
-            // = (RetvalAttribute *) cond->attribute["logical variable"];
-            = (RetvalAttribute *) cond->getAttribute("logical variable");
-        SgVariableSymbol *var = new SgVariableSymbol(
-                new SgInitializedName(SgName(varnameattr->get_str()),
-                    cond->get_type()));
-        BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(if_block);
-        if_block->statements.push_front(
-                new LogicalIf(cond->get_conditional_exp()));
-        BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(t_block);
-        t_block->statements.push_front(new SgExprStatement(info,
-                    new SgAssignOp(info, new SgVarRefExp(info, var),
-                        cond->get_true_exp())));
-        BasicBlock *f_block = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(f_block);
-        f_block->statements.push_front(new SgExprStatement(info,
-                    new SgAssignOp(info, new SgVarRefExp(info, var),
-                        cond->get_false_exp())));
-        add_link(if_block, t_block, TRUE_EDGE);
-        add_link(if_block, f_block, FALSE_EDGE);
-        add_link(t_block, after, NORMAL_EDGE);
-        add_link(f_block, after, NORMAL_EDGE);
-        after = if_block;
-
-        if (isSgExpression(cond->get_parent()))
-        {
-            replaceChild(cond->get_parent(), cond,
-                    new SgVarRefExp(cond->get_file_info(), var));
-        }
-        else if (root_var == NULL)
-            root_var = var;
-        expnum++;
+	  RetvalAttribute* vna = (RetvalAttribute *) and_op->get_lhs_operand_i()->getAttribute("logical variable");
+	  SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),and_op->get_lhs_operand_i()->get_type());
+	  LogicalIf* logicalIf=Ir::createLogicalIf(varexp);
+	  if_block->statements.push_front(logicalIf);
+        } else {
+	  LogicalIf* logicalIf= Ir::createLogicalIf(and_op->get_lhs_operand_i());
+	  if_block->statements.push_front(logicalIf);
+	}
+      
+      BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(t_block);
+      BasicBlock *f_block;
+      
+      if(isSgAndOp(and_op)) {
+	SgAssignOp* assignOp=Ir::createAssignOp(Ir::createVarRefExp(var),and_op->get_rhs_operand_i());
+	t_block->statements.push_front(Ir::createExprStatement(assignOp));
+	
+	f_block = new BasicBlock(node_id++, INNER, procnum);
+	cfg->nodes.push_back(f_block);
+	SgAssignOp* assignOp2=Ir::createAssignOp(Ir::createVarRefExp(var),Ir::createBoolValExp(false));
+	f_block->statements.push_front(Ir::createExprStatement(assignOp2));
+      } else if(isSgOrOp(and_op)) {
+	t_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
+										  Ir::createBoolValExp(true))));
+	f_block = new BasicBlock(node_id++, INNER, procnum);
+	cfg->nodes.push_back(f_block);
+	f_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
+										  and_op->get_rhs_operand_i())));
+      } else {
+	assert(false); // impossible if outer 'if' remains unchanged
+      }
+      
+      add_link(if_block, t_block, TRUE_EDGE);
+      add_link(if_block, f_block, FALSE_EDGE);
+      add_link(t_block, after, NORMAL_EDGE);
+      add_link(f_block, after, NORMAL_EDGE);
+      after = if_block;
+      
+      if (isSgExpression(and_op->get_parent())) {
+	replaceChild(and_op->get_parent(), and_op,Ir::createVarRefExp(var));
+      }
+      else if (root_var == NULL) {
+	root_var = var;
+      }
+      expnum++;
+    } else if (isSgConditionalExp(node)) {
+      SgConditionalExp* cond = isSgConditionalExp(node);
+      RetvalAttribute* varnameattr
+	= (RetvalAttribute *) cond->getAttribute("logical variable");
+      SgVariableSymbol* var = Ir::createVariableSymbol(varnameattr->get_str(), cond->get_type());
+      BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(if_block);
+      if_block->statements.push_front(Ir::createLogicalIf(cond->get_conditional_exp()));
+      BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(t_block);
+      t_block->statements.push_front(Ir::createExprStatement(
+		Ir::createAssignOp(Ir::createVarRefExp(var),cond->get_true_exp())));
+      BasicBlock *f_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(f_block);
+      f_block->statements.push_front(Ir::createExprStatement(
+		Ir::createAssignOp(Ir::createVarRefExp(var),cond->get_false_exp())));
+      
+      add_link(if_block, t_block, TRUE_EDGE);
+      add_link(if_block, f_block, FALSE_EDGE);
+      add_link(t_block, after, NORMAL_EDGE);
+      add_link(f_block, after, NORMAL_EDGE);
+      after = if_block;
+      
+      if (isSgExpression(cond->get_parent())) {
+	replaceChild(cond->get_parent(), cond, Ir::createVarRefExp(var));
+      }
+      else if (root_var == NULL) {
+	root_var = var;
+      }
+      expnum++;
     }
 }
 
-SgName ExprTransformer::find_mangled_func_name(SgFunctionRefExp *fr) const
-{
-    return fr->get_symbol_i()->get_declaration()->get_mangled_name().str();
+SgName 
+ExprTransformer::find_mangled_func_name(SgFunctionRefExp *fr) const {
+  // fr->get_symbol()->get_declaration()->get_mangled_name();  
+  SgDeclarationStatement* declaration= fr->get_symbol()->get_declaration();
+  ROSE_ASSERT(declaration != NULL);
+  SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration);
+  ROSE_ASSERT(functionDeclaration != NULL);
+  //cannot use following code because the pointer is NULL
+  //SgFunctionDeclaration* nondefiningFunctionDeclaration
+  //  = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
+  SgName mname=functionDeclaration->get_mangled_name();
+  return mname;
 }
 
-SgName ExprTransformer::find_mangled_memberf_name(SgMemberFunctionRefExp *mfr)
-    const
-{
-    return mfr->get_symbol_i()->get_declaration()->get_mangled_name().str();
-}
+//SgName 
+//ExprTransformer::find_mangled_memberf_name(SgMemberFunctionRefExp *mfr) const {
+//  return mfr->get_symbol()->get_declaration()->get_mangled_name();
+//}
 
-CallBlock *ExprTransformer::find_entry(SgFunctionCallExp *call)
+CallBlock* 
+ExprTransformer::find_entry(SgFunctionCallExp *call)
 {
     /* ATTENTION: this is deprecated, do not use */
     SgFunctionRefExp *func_ref = isSgFunctionRefExp(call->get_function());
@@ -735,17 +632,20 @@ CallBlock *ExprTransformer::find_entry(SgFunctionCallExp *call)
     return NULL;
 } 
 
-const std::list<CallBlock *> *ExprTransformer::find_entries(
-        SgFunctionCallExp *call)
+const std::list<CallBlock *>*
+ExprTransformer::find_entries(SgFunctionCallExp *call)
 {
     std::list<CallBlock *> *blocks = new std::list<CallBlock *>();
-    SgFunctionRefExp *func_ref = find_called_func(call->get_function());
-    SgMemberFunctionRefExp *member_func_ref
-        = find_called_memberfunc(call->get_function());
+    SgFunctionRefExp* func_ref = find_called_func(call->get_function());
+    SgMemberFunctionRefExp* member_func_ref = find_called_memberfunc(call->get_function());
+    //std::cout << "FunctionCall: FunctionRefExp:" << func_ref << ", MemberFunctionRef:" << member_func_ref << std::endl;
 
     if (func_ref)
     {
-        char *name = find_mangled_func_name(func_ref).str();
+      // MS: changed for upgrading to ROSE 0.8.10e
+      // (auto conversion of SgName to const char* is broken, name must be determined explicitely)
+      char *name = const_cast<char*>(find_mangled_func_name(func_ref).getString().c_str()); // the string remains in the AST, c_str should be fine
+
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
@@ -762,6 +662,7 @@ const std::list<CallBlock *> *ExprTransformer::find_entries(
         SgMemberFunctionDeclaration *decl
             = isSgMemberFunctionDeclaration(
                     member_func_ref->get_symbol()->get_declaration());
+	assert(decl);
         SgMemberFunctionDeclaration *fnddecl
             = isSgMemberFunctionDeclaration(decl
                     ->get_firstNondefiningDeclaration());
@@ -770,7 +671,10 @@ const std::list<CallBlock *> *ExprTransformer::find_entries(
         SgClassDefinition *class_type
             = isSgClassDefinition(member_func_ref
                 ->get_symbol_i()->get_declaration()->get_scope());
-        const char *name = member_func_ref->get_symbol_i()->get_name().str();
+	// MS: changed following line for upgrading to ROSE 0.8.10e 
+        // (auto conversion of SgName to const char* is broken, name must be determined explicitely)
+        const char *name = member_func_ref->get_symbol()->get_name().getString().c_str(); // the string remains in the AST, c_str should be fine
+
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
@@ -788,145 +692,118 @@ const std::list<CallBlock *> *ExprTransformer::find_entries(
     return NULL;
 }
 
-std::list<SgVariableSymbol *> *ExprTransformer::evaluate_arguments(
-        SgName name, SgExpressionPtrList &args, BasicBlock *block,
-        bool member_func)
-{
-    std::list<SgVariableSymbol *> *params
-        = new std::list<SgVariableSymbol *>();
-    Sg_File_Info *info = new Sg_File_Info();
-    SgExpressionPtrList::const_iterator i = args.begin();
-    if (member_func)
-    {
-        std::string varname = std::string("$") + name.str() + "$this";
-        SgExpression *new_expr = *i;
-        SgVariableSymbol *varsym = 
-                new SgVariableSymbol(new SgInitializedName(
-                        SgName(varname.c_str()), (*i)->get_type()));
-        params->push_back(varsym);
-        block->statements.push_back(new ArgumentAssignment(varsym, new_expr));
-        ++i;
-        if (block->successors.size() > 0)
-        {
-            Edge next = block->successors[0];
-            block = next.first;
-        }
+std::list<SgVariableSymbol *>*
+ExprTransformer::evaluate_arguments(SgName name, 
+				    SgExpressionPtrList &args, 
+				    BasicBlock *block,
+				    bool member_func) {
+  std::list<SgVariableSymbol *> *params
+    = new std::list<SgVariableSymbol *>();
+  SgExpressionPtrList::const_iterator i = args.begin();
+  if (member_func) {
+    std::string varname = std::string("$") + name.str() + "$this";
+    SgExpression *new_expr = *i;
+    SgVariableSymbol *varsym = 
+      Ir::createVariableSymbol(varname.c_str(), (*i)->get_type());
+    params->push_back(varsym);
+    block->statements.push_back(Ir::createArgumentAssignment(varsym, new_expr));
+    ++i;
+    if (block->successors.size() > 0) {
+      Edge next = block->successors[0];
+      block = next.first;
     }
-    int n = 0;
-    for ( ; i != args.end(); ++i)
-    {
-        std::stringstream varname;
-        varname << "$" << name.str() << "$arg_" << n++;
-        
-        SgExpression *new_expr = *i;
-        RetvalAttribute *varnameattr
-            = (*i)->attributeExists("logical variable") ?
-                (RetvalAttribute *) (*i)->getAttribute("logical variable")
-            : (*i)->attributeExists("return variable") ?
-                (RetvalAttribute *) (*i)->getAttribute("return variable")
-            : NULL;
-        if (varnameattr != NULL)
-        {
-            new_expr = new SgVarRefExp(info,
-                    new SgVariableSymbol(new SgInitializedName(
-                            SgName(varnameattr->get_str()),
-                            (*i)->get_type())));
-        }
-        
-        SgVariableSymbol *varsym =
-                new SgVariableSymbol(new SgInitializedName(
-                        SgName(varname.str()), (*i)->get_type()));
-        params->push_back(varsym);
-        block->statements.push_back(new ArgumentAssignment(varsym, new_expr));
-        if (block->successors.size() > 0)
-        {
-            Edge next = block->successors[0];
-            block = next.first;
-        }
-    }
-
-    return params;
-}
-
-void ExprTransformer::assign_retval(SgName name,
-        SgFunctionCallExp *call, BasicBlock *block)
-{
+  }
+  int n = 0;
+  for ( ; i != args.end(); ++i) {
     std::stringstream varname;
-    varname << "$" << name.str() << "$return_" << expnum;
-    std::stringstream retname;
-    retname << "$" << name.str() << "$return";
+    varname << "$" << name.str() << "$arg_" << n++;
+    
+    SgExpression *new_expr = *i;
     RetvalAttribute *varnameattr
-        = (RetvalAttribute *) call->getAttribute("return variable");
-    SgVariableSymbol *var = new SgVariableSymbol(
-            new SgInitializedName(SgName(varnameattr->get_str()),
-                call->get_type()));
-    SgVariableSymbol *retvar = new SgVariableSymbol(
-            new SgInitializedName(SgName(retname.str()),
-                call->get_type()));
-    block->statements.push_front(
-            new ReturnAssignment(var, retvar));
-    if (isSgExpression(call->get_parent()))
-    {
-        replaceChild(call->get_parent(), call,
-                new SgVarRefExp(call->get_file_info(), var));
+      = (*i)->attributeExists("logical variable") ?
+      (RetvalAttribute *) (*i)->getAttribute("logical variable")
+      : (*i)->attributeExists("return variable") ?
+      (RetvalAttribute *) (*i)->getAttribute("return variable")
+      : NULL;
+    
+    if (varnameattr != NULL) {
+      new_expr = Ir::createVarRefExp(varnameattr->get_str(),(*i)->get_type());
     }
-    else if (root_var == NULL)
-        root_var = var;
+        
+    SgVariableSymbol *varsym=Ir::createVariableSymbol(varname.str(), (*i)->get_type());
+    params->push_back(varsym);
+    block->statements.push_back(Ir::createArgumentAssignment(varsym, new_expr));
+    if (block->successors.size() > 0) {
+      Edge next = block->successors[0];
+      block = next.first;
+    }
+  }
+  return params;
 }
 
-static SgMemberFunctionDeclaration *find_dest_impl(SgClassType *ct)
-{
-    SgClassDefinition *classdef = isSgClassDefinition(isSgClassDeclaration(
-                ct->get_declaration())->get_definition());
-    SgDeclarationStatementPtrList decls = classdef->get_members();
-    SgDeclarationStatementPtrList::iterator i;
-    for (i = decls.begin(); i != decls.end(); ++i)
-    {
-        SgMemberFunctionDeclaration *mf = isSgMemberFunctionDeclaration(*i);
-        if (mf != NULL)
-        {
-            SgMemberFunctionDeclaration *fnddecl
-                = isSgMemberFunctionDeclaration(mf
-                        ->get_firstNondefiningDeclaration());
-            if (fnddecl != NULL && fnddecl != mf)
-                mf = fnddecl;
-            if (mf->get_specialFunctionModifier().isDestructor())
-                return mf;
-        }
-    }
-    return NULL;
+void ExprTransformer::assign_retval(SgName name,SgFunctionCallExp *call, BasicBlock *block) {
+  std::stringstream varname;
+  varname << "$" << name.str() << "$return_" << expnum;
+  std::stringstream retname;
+  retname << "$" << name.str() << "$return";
+  RetvalAttribute *varnameattr = (RetvalAttribute *) call->getAttribute("return variable");
+  SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),call->get_type());
+  SgVariableSymbol *retvar = Ir::createVariableSymbol(retname.str(),call->get_type());
+  block->statements.push_front(Ir::createReturnAssignment(var, retvar));
+  if (isSgExpression(call->get_parent())) {
+    replaceChild(call->get_parent(), call, Ir::createVarRefExp(var));
+  } else if (root_var == NULL) {
+    root_var = var;
+  }
 }
 
-const std::list<CallBlock *> *ExprTransformer::find_destructor_entries(
-        SgClassType *ct)
-{
-    SgClassDefinition *cd
-        = isSgClassDeclaration(ct->get_declaration())->get_definition();
-    std::list<CallBlock *> *blocks = new std::list<CallBlock *>();
-
-    SgMemberFunctionDeclaration *dimpl = find_dest_impl(ct);
-    bool virtual_destructor;
-    if (dimpl != NULL && dimpl->get_functionModifier().isVirtual())
-        virtual_destructor = true;
-    else
-        virtual_destructor = false;
-
-    std::deque<Procedure *>::const_iterator p;
-    for (p = cfg->procedures->begin(); p != cfg->procedures->end(); ++p)
-    {
-        if ((*p)->class_type != NULL
-                && (cd == (*p)->class_type
-                    || (virtual_destructor
-                        && subtype_of((*p)->class_type, cd)))
-                && strchr((*p)->memberf_name, '~') != NULL)
-            blocks->push_back((*p)->entry);
+static 
+SgMemberFunctionDeclaration*
+find_dest_impl(SgClassType *ct) {
+  SgClassDefinition *classdef 
+    = isSgClassDefinition(isSgClassDeclaration(ct->get_declaration())->get_definition());
+  SgDeclarationStatementPtrList decls = classdef->get_members();
+  for (SgDeclarationStatementPtrList::iterator i = decls.begin(); i != decls.end(); ++i) {
+    SgMemberFunctionDeclaration* mf = isSgMemberFunctionDeclaration(*i);
+    if (mf != NULL) {
+      SgMemberFunctionDeclaration *fnddecl
+	= isSgMemberFunctionDeclaration(mf->get_firstNondefiningDeclaration());
+      if (fnddecl != NULL && fnddecl != mf)
+	mf = fnddecl;
+      if (mf->get_specialFunctionModifier().isDestructor())
+	return mf;
     }
-
-    return blocks;
+  }
+  return NULL;
 }
 
-std::list<std::string> *ExprTransformer::find_destructor_names(SgClassType *ct)
-{
+const std::list<CallBlock *>*
+ExprTransformer::find_destructor_entries(SgClassType *ct) {
+  SgClassDefinition *cd
+    = isSgClassDeclaration(ct->get_declaration())->get_definition();
+  std::list<CallBlock *> *blocks = new std::list<CallBlock *>();
+
+  SgMemberFunctionDeclaration *dimpl = find_dest_impl(ct);
+  bool virtual_destructor;
+  if (dimpl != NULL && dimpl->get_functionModifier().isVirtual())
+    virtual_destructor = true;
+  else
+    virtual_destructor = false;
+
+  std::deque<Procedure *>::const_iterator p;
+  for (p = cfg->procedures->begin(); p != cfg->procedures->end(); ++p) {
+    if ((*p)->class_type != NULL
+	&& (cd == (*p)->class_type
+	    || (virtual_destructor
+		&& subtype_of((*p)->class_type, cd)))
+	&& strchr((*p)->memberf_name, '~') != NULL)
+      blocks->push_back((*p)->entry);
+  }
+  return blocks;
+}
+
+std::list<std::string>*
+ExprTransformer::find_destructor_names(SgClassType *ct) {
     SgClassDefinition *cd
         = isSgClassDeclaration(ct->get_declaration())->get_definition();
     std::list<std::string> *names = new std::list<std::string>();
@@ -957,9 +834,8 @@ std::list<std::string> *ExprTransformer::find_destructor_names(SgClassType *ct)
     return names;
 }
 
-std::list<std::string> *ExprTransformer::find_destructor_this_names(
-        SgClassType *ct)
-{
+std::list<std::string>*
+ExprTransformer::find_destructor_this_names(SgClassType *ct) {
     SgClassDefinition *cd
         = isSgClassDeclaration(ct->get_declaration())->get_definition();
     std::list<std::string> *names = new std::list<std::string>();

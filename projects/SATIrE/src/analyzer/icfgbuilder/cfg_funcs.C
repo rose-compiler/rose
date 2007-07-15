@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: cfg_funcs.C,v 1.3 2007-07-15 02:02:27 markus Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -160,7 +160,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
                     (incr != NULL ? incr->unparseToString().c_str() : ""));
 #else
                 SgForStatement *fors = isSgForStatement(stmt);
-                SgExpression *test = fors->get_test_expr();
+                SgStatement *test = fors->get_test();
                 fprintf(file, "for (;%s;)",
                     (test != NULL ? test->unparseToString().c_str() : "*"));
 #endif
@@ -196,8 +196,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             {
                 SgCaseOptionStmt *cases = isSgCaseOptionStmt(stmt);
                 result = std::string("case ")
-                    + cases->get_key_root()->get_operand_i()
-                    ->unparseToString() + ":";
+                    + cases->get_key()->unparseToString() + ":";
             }
             break;
         case V_SgDefaultOptionStmt:

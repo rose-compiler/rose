@@ -12,7 +12,7 @@ PROBLEM Types_and_Expressions
   equal: eq
 
 TRANSFER
-ExprStatement(ExpressionRoot(expr)), _:
+ExprStatement(expr), _:
   let en = expr_to_exprnum(expr); in
   let es = exprnum_to_str(en);
       tn = exprnum_typenum(en);

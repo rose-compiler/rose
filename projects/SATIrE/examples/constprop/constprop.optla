@@ -11,7 +11,7 @@ PROBLEM Constant_Propagation
     equal:      eq
 
 TRANSFER
-ExprStatement(ExpressionRoot(exp)), _:
+ExprStatement(exp), _:
     if @ != bot then
         eval(exp, @)!2!2
     else
@@ -45,22 +45,22 @@ ReturnAssignment(VariableSymbol(var), VariableSymbol(retvar)), _:
         bot
     endif;
 
-ScopeStatement(IfStmt(ExprStatement(ExpressionRoot(cond)))), true_edge:
+ScopeStatement(IfStmt(ExprStatement(cond))), true_edge:
     branch(cond, @, true);
 
-ScopeStatement(IfStmt(ExprStatement(ExpressionRoot(cond)))), false_edge:
+ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
     branch(cond, @, false);
 
-ScopeStatement(WhileStmt(ExprStatement(ExpressionRoot(cond)))), true_edge:
+ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
     branch(cond, @, true);
 
-ScopeStatement(WhileStmt(ExprStatement(ExpressionRoot(cond)))), false_edge:
+ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
     branch(cond, @, false);
 
-ScopeStatement(ForStatement(_,ExpressionRoot(cond),_)), true_edge:
+ScopeStatement(ForStatement(_,cond,_)), true_edge:
     branch(cond, @, true);
 
-ScopeStatement(ForStatement(_,ExpressionRoot(cond),_)), false_edge:
+ScopeStatement(ForStatement(_,cond,_)), false_edge:
     branch(cond, @, false);
 
 LogicalIf(cond), true_edge:
@@ -82,7 +82,7 @@ _, _: @;
 
 SUPPORT
 eval :: Expression, State -> ConstStatePair;
-eval(exp, state) =
+eval(exp, state) =    
     if is_unary(exp) then
         unary(unary_get_child(exp), exp, state)
     else if is_binary(exp) then

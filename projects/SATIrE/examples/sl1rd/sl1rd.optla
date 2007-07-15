@@ -35,7 +35,7 @@ TRANSFER
    In C++SL1 we only allow assignments of the form x=e, where x is a variable and e is
    an expression without an assignment (thus, a=b=c is not in SL1). 
 */
-ExprStatement(ExpressionRoot(stmt)), _:
+ExprStatement(stmt), _:
     sl1_assignment(stmt,label,@);
 
 /* declaration of a variable */
@@ -55,15 +55,15 @@ LogicalIf(cond), _:
 
 /* handle the condition of an if statement
  * note that assignements are not allowed in conditionals in C++SL1 */
-ScopeStatement(IfStmt(ExprStatement(ExpressionRoot(cond)))),_:
+ScopeStatement(IfStmt(ExprStatement(cond))),_:
     sl1_expression(cond,label,@);
 
 /* handle the condition of a while statement */
-ScopeStatement(WhileStmt(ExprStatement(ExpressionRoot(cond)))),_:
+ScopeStatement(WhileStmt(ExprStatement(cond))),_:
     sl1_expression(cond,label,@);
 
 /* handle the return statement */
-ReturnStmt(ExpressionRoot(exp)), _:
+ReturnStmt(exp), _:
     sl1_expression(exp,label,@);
 
 /* we ignore this node in intra procedural analysis */

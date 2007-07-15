@@ -7,15 +7,13 @@ SATIRE_SRC_DIR = ../../..
 SATIRE_INCLUDE = -I $(SATIRE_SRC_DIR)/analyzer/commandlineinterface -I $(SATIRE_SRC_DIR)/analyzer/astaccess -I $(SATIRE_SRC_DIR)/analyzer/icfgbuilder -I $(SATIRE_SRC_DIR)/analyzer/annotation
 SATIRE_LIB = $(SATIRE_SRC_DIR)/analyzer
 SATIRE_FRONTENDDIR = $(SATIRE_SRC_DIR)/analyzer/astaccess
-ROSE_INCLUDE = /usr/local/mstools/include/rose$(ROSEVERSION)/
-ROSE_LIB = /usr/local/mstools/lib/rose$(ROSEVERSION)
 #PAGDIR
 
 # you do not usually need to edit this file
 PAG = $(PAGDIR)/bin/pag
 FLAGS = -Wall -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ $(SATIRE_INCLUDE)
 LPATH = -L $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L $(SATIRE_LIB)
-LIB = $(ANALYSIS).a -lsatire -lrose -ledg -lrt -lpag
+LIB = $(ANALYSIS).a -lsatire -lrose -lrt -lpag
 
 all: $(ANALYSIS)
 
@@ -44,6 +42,10 @@ check:
 	pred tests/test3.C
 	pred --textoutput tests/test3.C
 	pred --sourceoutput tests/test4.C
+	pred --sourceoutput tests/test1.C
+	pred --sourceoutput tests/test3.C
+	pred --sourceoutput reverse1.C
+	pred --sourceoutput tests/test8.C
 
 test:	pred
 	generatedot graphtest1

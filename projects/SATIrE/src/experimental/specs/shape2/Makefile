@@ -10,7 +10,7 @@ SATIRE_INCLUDE_DIR=$(SATIREMAINDIR)/analyzer/astaccess
 PAG = $(PAGDIR)/bin/pag
 FLAGS = -Wall -I $(ROSE_INCLUDE) -I $(PAGDIR)/include/pag -I $(PAGDIR)/include/pag/analyzer -I $(ANALYSIS)-out/src/ -I $(SATIRE_INCLUDE)
 LPATH = -L $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L $(SATIRE_LIB)
-LIBS = $(ANALYSIS).a -lsatire -lrose -ledg -lrt -lpag
+LIBS = $(ANALYSIS).a -lsatire -lrose -lrt -lpag
 
 TESTDIR = tests
 
@@ -51,27 +51,5 @@ check:  $(ANALYSIS)
 	mkdir -p anim-out
 	$(ANALYSIS) $(TESTDIR)/reverse1.C
 	$(ANALYSIS) $(TESTDIR)/reverse2.C
-	$(ANALYSIS) $(TESTDIR)/artificialListCreation.C
-	$(ANALYSIS) $(TESTDIR)/artificialListCreationCyclic.C
-	$(ANALYSIS) $(TESTDIR)/test1.C
-	$(ANALYSIS) $(TESTDIR)/test2.C
-	$(ANALYSIS) $(TESTDIR)/test3.C
-	$(ANALYSIS) $(TESTDIR)/test4.C
-	$(ANALYSIS) $(TESTDIR)/test5.C
-	$(ANALYSIS) $(TESTDIR)/test6.C
-	$(ANALYSIS) $(TESTDIR)/test7.C
-	$(ANALYSIS) $(TESTDIR)/test8.C
-	$(ANALYSIS) $(TESTDIR)/listTraversal1.C
 	$(ANALYSIS) $(TESTDIR)/srw98reverse.C
 	$(ANALYSIS) $(TESTDIR)/srw98insert.C
-	$(ANALYSIS) $(TESTDIR)/OOsrw98insert1.C
-	$(ANALYSIS) $(TESTDIR)/OOtest1a.C
-	$(ANALYSIS) $(TESTDIR)/OOtest1b.C
-	$(ANALYSIS) $(TESTDIR)/OOtest2.C
-	$(ANALYSIS) $(TESTDIR)/OOtest3.C
-	$(ANALYSIS) $(TESTDIR)/test9.C
-	$(ANALYSIS) -I$(TESTDIR)/wcettests $(TESTDIR)/wcettests/bubble.c
-
-fastcheck: $(ANALYSIS)
-	mkdir -p anim-out
-	$(ANALYSIS) $(TESTDIR)/stack1.C

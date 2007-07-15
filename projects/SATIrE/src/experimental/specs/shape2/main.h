@@ -70,16 +70,16 @@ protected:
   }
 
   ExpressionPairVector *statementPreMustAliases(SgStatement *stmt) {
-    return computeMustAliasPairs(get_statement_pre_info(store,stmt));
+    return computeMustAliasPairs(get_statement_pre_info(AliasPairsAnnotator::store,stmt));
   }
   ExpressionPairVector *statementPostMustAliases(SgStatement *stmt) {
-    return computeMustAliasPairs(get_statement_post_info(store,stmt));
+    return computeMustAliasPairs(get_statement_post_info(AliasPairsAnnotator::store,stmt));
   }
   ExpressionPairVector *statementPreMayAliases(SgStatement *stmt) {
-    return computeMayAliasPairs(get_statement_pre_info(store,stmt));
+    return computeMayAliasPairs(get_statement_pre_info(AliasPairsAnnotator::store,stmt));
   }
   ExpressionPairVector *statementPostMayAliases(SgStatement *stmt) {
-    return computeMayAliasPairs(get_statement_post_info(store,stmt));
+    return computeMayAliasPairs(get_statement_post_info(AliasPairsAnnotator::store,stmt));
   }
 
   ExpressionPairVector *computeMustAliasPairs(carrier_type_o(CARRIER_TYPE) sg) {
@@ -140,22 +140,22 @@ public:
   
 protected:
     virtual void visitStatement(SgStatement* stmt) {
-        std::string preInfo = getPreInfo(stmt);
-        std::string postInfo = getPostInfo(stmt);
+        std::string preInfo = AliasPairsTextPrinter::getPreInfo(stmt);
+        std::string postInfo = AliasPairsTextPrinter::getPostInfo(stmt);
         std::string stmt_str = stmt->unparseToString();
         
-        std::cout << currentFunction() << ": " << "// pre must_aliases : " << 
+        std::cout << AliasPairsTextPrinter::currentFunction() << ": " << "// pre must_aliases : " << 
           get_statement_alias_pairs_string("pre", "must", stmt) << std::endl;
         
-        std::cout << currentFunction() << ": " << "// pre may_aliases : " << 
+        std::cout << AliasPairsTextPrinter::currentFunction() << ": " << "// pre may_aliases : " << 
           get_statement_alias_pairs_string("pre", "may", stmt) << std::endl;
         
-        std::cout << currentFunction() << ": " << stmt_str << std::endl;
+        std::cout << AliasPairsTextPrinter::currentFunction() << ": " << stmt_str << std::endl;
         
-        std::cout << currentFunction() << ": " << "// post must_aliases : " << 
+        std::cout << AliasPairsTextPrinter::currentFunction() << ": " << "// post must_aliases : " << 
           get_statement_alias_pairs_string("post", "must", stmt) << std::endl;
         
-        std::cout << currentFunction() << ": " << "// post may_aliases : " << 
+        std::cout << AliasPairsTextPrinter::currentFunction() << ": " << "// post may_aliases : " << 
           get_statement_alias_pairs_string("post", "may", stmt) << std::endl << std::endl;
     }
 };
@@ -184,10 +184,10 @@ public:
     }
 protected:
     virtual void visitStatement(SgStatement* stmt) {
-        addCommentBeforeNode("// pre must_aliases : " + get_statement_alias_pairs_string("pre", "must", stmt), stmt);
-        addCommentBeforeNode("// pre may_aliases : "  + get_statement_alias_pairs_string("pre", "may",  stmt), stmt);
-        addCommentAfterNode("// post must_aliases : " + get_statement_alias_pairs_string("post","must", stmt), stmt);
-        addCommentAfterNode("// post may_aliases : "  + get_statement_alias_pairs_string("post","may",  stmt), stmt);
+        AliasPairsCommentAnnotator::addCommentBeforeNode("// pre must_aliases : " + get_statement_alias_pairs_string("pre", "must", stmt), stmt);
+        AliasPairsCommentAnnotator::addCommentBeforeNode("// pre may_aliases : "  + get_statement_alias_pairs_string("pre", "may",  stmt), stmt);
+        AliasPairsCommentAnnotator::addCommentAfterNode("// post must_aliases : " + get_statement_alias_pairs_string("post","must", stmt), stmt);
+        AliasPairsCommentAnnotator::addCommentAfterNode("// post may_aliases : "  + get_statement_alias_pairs_string("post","may",  stmt), stmt);
     }
 };
 

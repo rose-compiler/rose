@@ -1,9 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: syn_typedefs.h,v 1.3 2007-04-14 13:47:16 pr009 Exp $
+// $Id: syn_typedefs.h,v 1.4 2007-07-15 02:02:27 markus Exp $
 
 #ifndef H_SYN_TYPEDEFS
 #define H_SYN_TYPEDEFS
 
+typedef void *FunctionCallExp; // added by MS:19-07-2007
 typedef void *Statement;
 typedef void *DeclarationStatement;
 typedef void *ScopeStatementNT;

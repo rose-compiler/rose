@@ -84,8 +84,8 @@ $(EXAMPLES): $(GRATO) $(TESTS)/SAGE3.syn $(TESTS)/OCE.syn $(TESTS)/SETL2.syn
 	./$(GRATO) -p $(EXAMPLES)/SETL2_r1.syn
 	./$(GRATO) -p $(EXAMPLES)/SETL2_r2.syn
 
-docs:	Doxyfile
-	doxygen Doxyfile
+#docs:	Doxyfile
+#	doxygen Doxyfile
 
 clean:
 	rm -f $(SYNSCANNER).[HhCc] $(SYNPARSER).[HhCc]
@@ -98,5 +98,4 @@ clean:
 
 distclean: clean
 	rm -f *~
-	rm -rf docs
 	rm -rf $(EXAMPLES)

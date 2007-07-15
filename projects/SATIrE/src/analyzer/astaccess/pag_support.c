@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.c,v 1.5 2007-04-14 13:47:16 pr009 Exp $
+// $Id: pag_support.c,v 1.6 2007-07-15 02:02:27 markus Exp $
 
 #include <iostream>
 
@@ -401,9 +401,9 @@ extern "C" bool o_is_operatorname(str s)
 #include <string.h>
 #include "gc_mem.h"
 
-unsigned int synttype_hash(void *x)
+unsigned long synttype_hash(void *x)
 {
-    return (unsigned int) x;
+    return (unsigned long) x;
 }
 
 int syntax_eq(void *x, void *y)
