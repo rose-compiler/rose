@@ -1,0 +1,162 @@
+# -*- makefile-mode -*-
+
+INSTALLPREFIX = /nfstmp/adrian/rose
+#/usr/local/mstools
+
+.PHONY: docs check clean_check
+
+CXX=g++
+CXXFLAGS=#-O0 -ggdb
+
+# Location of include directory after "make install"
+ROSE_INCLUDE_DIR = $(INSTALLPREFIX)/include 
+
+# Location of library directory after "make install"
+ROSE_LIB_DIR = $(INSTALLPREFIX)/lib
+
+ROSE_LIBS = -lrose -ledg -lrt
+
+# program linking with rose&edg lib only
+PROGRAM = generatePrologTerm 
+
+SUPPORTFILES = PrologSupport.h PrologToRose.h
+
+TERMREP = TermRep.h \
+	PrologTerm.h PrologCompTerm.h PrologInt.h PrologString.h PrologAtom.h PrologList.h	
+
+#  -lquery -lastprocessing are at the end to resolve undefined external symbols
+ROSE_SEPERATE_LIBS = \
+   -lRoseStringSupport -lRoseCommandlineUtil -lsupport -lgraphs -lroseutil \
+   -lcr -lmstl -lpdf -lsage3 -ledg33 -ledgSage -lastinlining -lastInterface \
+   -lastSupport -lsymbolicVal -lannotation -lrewrite -lOAWrap -lCFG \
+   -ldataflowAnalysis -lvaluePropagation  -ldepInfo \
+   -ldepGraph -lcomputation -lslicing -ldriver -lLoopProcessing -lunparse \
+   -lroseSupport -lquery -lastDiagnostics -lastprocessing
+
+# Default make rule to use
+all: generatePrologTerm termparser termpretty docs
+#generatePrologTermSL
+
+PrologTraversal.o: PrologTraversal.h PrologTraversal.C  $(TERMREP) \
+		$(SUPPORTFILES) 
+	$(CXX) $(CXXFLAGS) -DHAVE_CONFIG_H -I$(ROSE_INCLUDE_DIR) -c -o PrologTraversal.o PrologTraversal.C
+#include "termparser.tab.h++"
+
+generatePrologTerm.o: PrologTraversal.h  toProlog.C $(TERMREP) 
+	$(CXX) $(CXXFLAGS) -DHAVE_CONFIG_H -I$(ROSE_INCLUDE_DIR) -c -o generatePrologTerm.o toProlog.C
+
+generatePrologTerm: PrologTraversal.o generatePrologTerm.o\
+	PrologTerm.o PrologCompTerm.o PrologInt.o PrologString.o PrologAtom.o PrologList.o PrologVariable.o\
+	PrologSupport.o
+	$(CXX) $(CXXFLAGS) -o generatePrologTerm generatePrologTerm.o PrologTraversal.o \
+	PrologTerm.o PrologVariable.o PrologCompTerm.o PrologInt.o PrologString.o PrologAtom.o PrologList.o PrologSupport.o \
+	-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS) -lm
+
+PrologToRose.o: PrologToRose.h PrologToRose.C	
+	$(CXX) $(CXXFLAGS) -DHAVE_CONFIG_H -I$(ROSE_INCLUDE_DIR) -c -o PrologToRose.o PrologToRose.C
+
+play: testmain.o testmain.o 
+	$(CXX) $(CXXFLAGS) -o play testmain.o 
+	-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS) -lm
+
+testmain.o: testmain.cpp ${TERMREP} ${SUPPORTFILES}
+	$(CXX) $(CXXFLAGS) -c -o testmain.o testmain.cpp \
+	-I${ROSE_INCLUDE_DIR}
+
+termlexer.C: termlexer.l++
+	lex -o termlexer.C termlexer.l++
+termpretty.C: termpretty.l++
+	lex -o termpretty.C termpretty.l++
+termpretty: termpretty.C
+	$(CXX) $(CXXFLAGS) -o termpretty termpretty.C
+
+
+pdfgen: pdfgen.C
+	$(CXX) $(CXXFLAGS) -I${ROSE_INCLUDE_DIR} -o pdfgen pdfgen.C -L${ROSE_LIB_DIR} -Wl,-rpath ${ROSE_LIB_DIR} ${ROSE_LIBS} -lm
+
+#this is not pretty
+termlexer.o: termlexer.C termparser.tab.c++ 
+	$(CXX) $(CXXFLAGS) -c -o termlexer.o termlexer.C
+
+termparser.tab.c++: termparser.y++ 
+	bison -d termparser.y++
+
+termparser.o: termparser.tab.c++ $(TERMREP) 
+	$(CXX) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) -c -o termparser.o termparser.tab.c++
+
+termparser_main.o: main.C $(TERMREP) PrologToRose.h
+	$(CXX) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) -c -o termparser_main.o main.C
+
+termparser: termparser.o termparser_main.o termlexer.o PrologToRose.o \
+	PrologTerm.o PrologVariable.o PrologCompTerm.o PrologInt.o PrologString.o PrologAtom.o PrologList.o
+	$(CXX) $(CXXFLAGS) -o termparser termparser.o termparser_main.o termlexer.o PrologToRose.o \
+	PrologTerm.o PrologVariable.o PrologCompTerm.o PrologInt.o PrologString.o PrologAtom.o PrologList.o \
+	-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS) -lm
+
+PrologTerm.o: PrologTerm.h PrologTerm.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologTerm.o PrologTerm.cpp
+PrologCompTerm.o: PrologCompTerm.h PrologCompTerm.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologCompTerm.o PrologCompTerm.cpp
+PrologInt.o: PrologInt.h PrologInt.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologInt.o PrologInt.cpp
+PrologString.o: PrologString.h PrologString.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologString.o PrologString.cpp
+PrologAtom.o: PrologAtom.h PrologAtom.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologAtom.o PrologAtom.cpp
+PrologList.o: PrologList.h PrologList.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologList.o PrologList.cpp
+PrologVariable.o: PrologVariable.h PrologVariable.cpp
+	$(CXX) $(CXXFLAGS) -c -o PrologVariable.o PrologVariable.cpp
+
+
+PrologSupport.o: PrologSupport.C PrologSupport.h
+	$(CXX) $(CXXFLAGS) -DHAVE_CONFIG_H -I$(ROSE_INCLUDE_DIR) -c -o PrologSupport.o PrologSupport.C
+
+
+#generatePrologTermSL: PrologTraversal.o $(PROGRAM).o
+#generatePrologTermSL: PrologTraversal.o $(PROGRAM).o
+#	$(CXX) $(CXXFLAGS) -o generatePrologTermSL PrologTraversal.o generatePrologTerm.o \
+#                -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_SEPERATE_LIBS) -lm
+
+
+#lexer.o: lex.yy.c y.tab.h
+#	$(CXX) $(CXXFLAGS) -DHAVE_CONFIG_H -I$(ROSE_INCLUDE_DIR) -c -o lexer.o lex.yy.c \
+#	-L$(ROSE_LIB_DIR) 
+#lex.yy.c: termlexer.l y.tab.h
+#	flex termlexer.l
+
+#y.tab.h: termparser.y
+#	bison -y -d termparser.y
+#y.tab.c: y.tab.h
+
+#parser: lexer.o y.tab.c
+#	$(CXX) $(CXXFLAGS) -DHAVE_CONFIG_H -I$(ROSE_INCLUDE_DIR) lexer.o y.tab.c -o parser \
+#	 -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS) -lm
+
+
+#docs: parseProlog generatePrologTerm
+#	doxygen prolog.dox
+docs:
+	doxygen my.dox
+check:
+	test.sh
+
+clean_check:
+	rm -f tests/results/*
+	rm -f test.log
+clean:	clean_check
+	rm -f generatePrologTerm
+	rm -f termparser
+	rm -f termpretty
+	rm -f pdfgen
+	rm -f lex.yy.c
+	rm -f termparser.tab.c++
+	rm -f termparser.c++
+	rm -f termparser.h
+	rm -f termlexer.C
+	rm -f termlexer.c++
+	rm -f termpretty.C
+	rm -f termparser.tab.h++
+	rm -f *.o
+	rm -rf ../docs/*
+#	rm -f lex.yy.c lexer.o y.tab.c y.tab.h parser
