@@ -28,7 +28,7 @@ libtermite_a_SOURCES = \
 	PrologInt.cpp PrologCompTerm.cpp PrologTerm.cpp PrologSupport.C 
 
 
-termparser.tab.c++: $(srcdir)/termparser.y++ 
+termparser.tab.h++ termparser.tab.c++: $(srcdir)/termparser.y++ 
 	$(YACC) -d $(srcdir)/termparser.y++
 	mv y.tab.c termparser.tab.c++
 	mv y.tab.h termparser.tab.h++
