@@ -1,7 +1,7 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: main.C,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: main.C,v 1.3 2007-09-20 15:08:37 markus Exp $
 
-#include <config.h>
+//#include <rose_config.h>
 
 #include "CFGTraversal.h"
 #include "ProcTraversal.h"

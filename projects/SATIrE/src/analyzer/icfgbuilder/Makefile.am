@@ -19,14 +19,5 @@ libIcfgBuilder_a_SOURCES = AstNumberOfNodesStatistics.C  cfg_funcs.C  cfg_suppor
 			   testcfg.c
 
 
-noinst_PROGRAMS = testcfg
-testcfg_SOURCES = main.C
-testcfg_LDADD = \
-	-L$(ROSE_LIB_DIR) -lrose \
-	-L$(PAG_LIB_DIR)  -lpag \
-	libIcfgBuilder.a ../astaccess/libAstAccess.a ../astaccess/satire/libsyntree.a
-
-installcheck-local:
-	./testcfg -I$(top_srcdir)/src/analyzer/icfgbuilder main.C
 
 
