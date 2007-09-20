@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)/src/satire -I$(top_srcdir)/src/analyzer/icfgbuilder -I$(top_srcdir)/src/grato
+INCLUDES = -I$(top_srcdir)/src/analyzer/icfgbuilder -I$(top_srcdir)/src/grato
 
 noinst_PROGRAMS = pig
 
@@ -9,7 +9,7 @@ SYNOBJS = ../grato/libgrato.a
 
 pig_LDADD = $(SYNOBJS)
 
-DISTCLEANFILES = pigparser.c++ pigparser.h pigscanner.c++ y.vcg
+CLEANFILES =
 
 AM_YFLAGS = -g -d --name-prefix=pig
 AM_LFLAGS = -Ppig -olex.yy.c
