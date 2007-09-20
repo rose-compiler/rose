@@ -8,7 +8,6 @@ INCLUDES = -I$(top_srcdir)/src/termite/satire \
 	   -I$(PAG_INCLUDE_DIR)/pag \
            -I$(PAG_INCLUDE_DIR)/pag/analyzer
 
-AM_CXXFLAGS=-I$(ROSE_INCLUDE_DIR)
 AM_LDFLAGS=-L$(ROSE_LIB_DIR)
 
 bin_PROGRAMS = termpretty rose2term term2rose

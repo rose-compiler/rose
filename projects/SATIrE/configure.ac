@@ -37,7 +37,7 @@ PAG_INCLUDE_DIR="$PAGDIR/include"
 AC_ARG_WITH(pag_includedir, [  --with-pag-includedir=DIR     PAG include path (default in /opt/pag/include)], [PAG_INCLUDE_DIR="$withval"])
 AC_SUBST(PAG_INCLUDE_DIR)
 
-PAG_LIB_DIR="$PAGDIR/lib"
+PAG_LIB_DIR="$PAGDIR/lib/pag"
 AC_ARG_WITH(pag_libdir, [  --with-pag-libdir=DIR         PAG library path (default in /opt/pag/lib)], [PAG_LIB_DIR="$withval"])
 AC_SUBST(PAG_LIB_DIR)
 
