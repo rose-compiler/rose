@@ -1,3 +1,5 @@
-sl1rd tests/rdtest1.C
-sl1rd --callstringlength 1 tests/rdtest2.C
-sl1rd --sourceoutput tests/rdtest3.C
+#!/bin/sh
+
+./sl1rd tests/rdtest1.C  || exit 1
+./sl1rd --callstringlength 1 tests/rdtest2.C || exit 1
+./sl1rd --sourceoutput tests/rdtest3.C || exit 1

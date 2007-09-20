@@ -1,5 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CommandLineParser.C,v 1.4 2007-05-22 20:25:22 markus Exp $
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
+// $Id: CommandLineParser.C,v 1.5 2007-09-20 09:25:32 adrian Exp $
 
 #include <config.h>
 
@@ -80,6 +80,8 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
       cl.analysisResultsTextOutputOn();
     } else if (!strcmp(argv[i], "--sourceoutput")) {
       cl.analysisResultsSourceOutputOn();
+    } else if (!strcmp(argv[i], "--termoutput")) {
+      cl.analysisResultsTermOutputOn();
     } else if (!strcmp(argv[i], "--vivu")) {
       cl.vivuOn();
     } else if (!strcmp(argv[i], "--vivuLoopUnrolling")) {

@@ -1,3 +1,368 @@
+V0.7.5
+
+Changes (Adrian)
+* analysis results are exported to termrep
+* added -termrep analysis switch	
+* added Termite
+* new autotools-based build system	
+
+********* Extra Files (skipping output of all Makefile.in files) *********
+:Extra file         aclocal.m4
+:Extra file         autom4te.cache
+:Extra file         configure
+:Extra file         depcomp
+:Extra file         install-sh
+:Extra file         missing
+:Extra file         pagrosenotes.txt
+:Extra file         roseupgrade.diff
+:Extra file         satire-0.7.5.tar.gz
+:Extra file         satire20070915B.tgz
+:Extra file         semantic.cache
+:Extra file         ylwrap
+:Extra file         examples/semantic.cache
+:Extra file         examples/constprop/Makefile
+:Extra file         examples/constprop/anim-out
+:Extra file         examples/constprop/blocks.dot
+:Extra file         examples/constprop/blocks.ps
+:Extra file         examples/constprop/cfg_dump.gdl
+:Extra file         examples/constprop/constprop
+:Extra file         examples/constprop/constprop-out
+:Extra file         examples/constprop/constprop_result.gdl
+:Extra file         examples/constprop/main-support.C
+:Extra file         examples/constprop/main.C
+:Extra file         examples/constprop/main.h
+:Extra file         examples/constprop/pag-out
+:Extra file         examples/constprop/tests/blocks.c.pl
+:Extra file         examples/constprop/tests/cconstants.c.pl
+:Extra file         examples/sl2rd/rdtest4.dot
+:Extra file         examples/sl2rd/tests/a.out
+:Extra file         examples/sl2rd/tests/cfg_dump.gdl
+:Extra file         examples/sl2rd/tests/error1.c
+:Extra file         examples/sl2rd/tests/rdtest7.ps
+:Extra file         examples/sl2rd/tests/rose_rdtest1.C
+:Extra file         src/semantic.cache
+:Extra file         src/stbkVIjQ
+:Extra file         src/analyzer/.deps
+:Extra file         src/analyzer/semantic.cache
+:Extra file         src/analyzer/annotation/.deps
+:Extra file         src/analyzer/annotation/semantic.cache
+:Extra file         src/analyzer/astaccess/semantic.cache
+:Extra file         src/analyzer/commandlineinterface/semantic.cache
+:Extra file         src/analyzer/icfgbuilder/semantic.cache
+:Extra file         src/analyzer/skeletons/Makefile.am
+:Extra file         src/analyzer/skeletons/semantic.cache
+:Extra file         src/experimental/testcases
+:Extra file         src/experimental/specs/extshape
+:Extra file         src/experimental/specs/fp
+:Extra file         src/experimental/specs/fp.tar.gz
+:Extra file         src/experimental/specs/nielson/rose_nielson_xysel3.C
+:Extra file         src/experimental/specs/nielson/semantic.cache
+:Extra file         src/experimental/specs/pred/anim-out
+:Extra file         src/experimental/specs/pred/semantic.cache
+:Extra file         src/experimental/specs/pred/testrun.log
+:Extra file         src/experimental/specs/pred/testrun.sum
+:Extra file         src/experimental/specs/pred/tests/semantic.cache
+:Extra file         src/experimental/specs/pred/tests/test1.C
+:Extra file         src/experimental/specs/shape/OOtest1a.C
+:Extra file         src/experimental/specs/shape/OOtest1a_t1.C
+:Extra file         src/experimental/specs/shape/OOtest1a_t1.dot
+:Extra file         src/experimental/specs/shape/OOtest1a_t2.C
+:Extra file         src/experimental/specs/shape/OOtest1a_t2.dot
+:Extra file         src/experimental/specs/shape/OOtest4.ti
+:Extra file         src/experimental/specs/shape/rose_OOtest1a.C
+:Extra file         src/experimental/specs/shape/rose_OOtest3.C
+:Extra file         src/experimental/specs/shape/semantic.cache
+:Extra file         src/experimental/specs/shape2/rose_srw98reverse.C
+:Extra file         src/experimental/specs/shape2/semantic.cache
+:Extra file         src/experimental/specs/shape2/shape.optla
+:Extra file         src/experimental/specs/shape2/shapeanim
+:Extra file         src/experimental/specs/typeexpr/semantic.cache
+:Extra file         src/grato/semantic.cache
+:Extra file         src/grato/synparser.c++
+:Extra file         src/grato/synparser.h
+:Extra file         src/grato/synscanner.c++
+:Extra file         src/grato/y.vcg
+:Extra file         src/pig/Makefile.am
+:Extra file         src/pig/pigparser.c++
+:Extra file         src/pig/pigparser.h
+:Extra file         src/pig/pigscanner.c++
+:Extra file         src/pig/semantic.cache
+:Extra file         src/pig/y.vcg
+:Extra file         src/termite/Makefile.original
+:Extra file         src/termite/aclocal.m4
+:Extra file         src/termite/autom4te.cache
+:Extra file         src/termite/autoscan.log
+:Extra file         src/termite/config.h.in
+:Extra file         src/termite/configure
+:Extra file         src/termite/depcomp
+:Extra file         src/termite/doc
+:Extra file         src/termite/example
+:Extra file         src/termite/install-sh
+:Extra file         src/termite/missing
+:Extra file         src/termite/my.dox
+:Extra file         src/termite/newtest1.C
+:Extra file         src/termite/newtest1.pl
+:Extra file         src/termite/newtest1.plpretty
+:Extra file         src/termite/prolog
+:Extra file         src/termite/rose-prolog-bridge-1.0.tar.gz
+:Extra file         src/termite/rose-prolog-bridge-1.01.tar.gz
+:Extra file         src/termite/rose-prolog-bridge-1.02.tar.gz
+:Extra file         src/termite/rose-prolog-bridge-1.03.tar.gz
+:Extra file         src/termite/termlexer.c++
+:Extra file         src/termite/termparser.c++
+:Extra file         src/termite/termparser.h
+:Extra file         src/termite/termpretty.c++
+:Extra file         src/termite/test.log
+:Extra file         src/termite/test.txt
+:Extra file         src/termite/ylwrap
+:Extra file         src/termite/tests/results/test1.C.pl
+:Extra file         src/termite/tests/results/test1.C.rose.C
+:Extra file         src/termite/tests/results/test1.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test1.C.torose.err.log
+:Extra file         src/termite/tests/results/test1.C.unparsed.C
+:Extra file         src/termite/tests/results/test2.C.pl
+:Extra file         src/termite/tests/results/test2.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test2.C.torose.err.log
+:Extra file         src/termite/tests/results/test2.C.unparsed.C
+:Extra file         src/termite/tests/results/test3.C.pl
+:Extra file         src/termite/tests/results/test3.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test3.C.torose.err.log
+:Extra file         src/termite/tests/results/test3.C.unparsed.C
+:Extra file         src/termite/tests/results/test4.C.pl
+:Extra file         src/termite/tests/results/test4.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test4.C.torose.err.log
+:Extra file         src/termite/tests/results/test4.C.unparsed.C
+:Extra file         src/termite/tests/results/test5.C.pl
+:Extra file         src/termite/tests/results/test5.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test5.C.torose.err.log
+:Extra file         src/termite/tests/results/test5.C.unparsed.C
+:Extra file         src/termite/tests/results/test5b.C.pl
+:Extra file         src/termite/tests/results/test5b.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test5b.C.torose.err.log
+:Extra file         src/termite/tests/results/test5b.C.unparsed.C
+:Extra file         src/termite/tests/results/test6.C.pl
+:Extra file         src/termite/tests/results/test6.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test6.C.torose.err.log
+:Extra file         src/termite/tests/results/test6.C.unparsed.C
+:Extra file         src/termite/tests/results/test7.C.pl
+:Extra file         src/termite/tests/results/test7.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test7.C.torose.err.log
+:Extra file         src/termite/tests/results/test7.C.unparsed.C
+:Extra file         src/termite/tests/results/test8.C.pl
+:Extra file         src/termite/tests/results/test8.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test8.C.torose.err.log
+:Extra file         src/termite/tests/results/test8.C.unparsed.C
+:Extra file         src/termite/tests/results/test9.C.pl
+:Extra file         src/termite/tests/results/test9.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test9.C.torose.err.log
+:Extra file         src/termite/tests/results/test9.C.unparsed.C
+:Extra file         src/termite/tests/results/test_class1.C.pl
+:Extra file         src/termite/tests/results/test_class1.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_class1.C.torose.err.log
+:Extra file         src/termite/tests/results/test_class1.C.unparsed.C
+:Extra file         src/termite/tests/results/test_class2.C.pl
+:Extra file         src/termite/tests/results/test_class2.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_class2.C.torose.err.log
+:Extra file         src/termite/tests/results/test_class2.C.unparsed.C
+:Extra file         src/termite/tests/results/test_control.C.pl
+:Extra file         src/termite/tests/results/test_control.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_control.C.torose.err.log
+:Extra file         src/termite/tests/results/test_control.C.unparsed.C
+:Extra file         src/termite/tests/results/test_enum.C.pl
+:Extra file         src/termite/tests/results/test_enum.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_enum.C.torose.err.log
+:Extra file         src/termite/tests/results/test_enum.C.unparsed.C
+:Extra file         src/termite/tests/results/test_minimal.C.pl
+:Extra file         src/termite/tests/results/test_minimal.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_minimal.C.torose.err.log
+:Extra file         src/termite/tests/results/test_minimal.C.unparsed.C
+:Extra file         src/termite/tests/results/test_struct.C.pl
+:Extra file         src/termite/tests/results/test_struct.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_struct.C.torose.err.log
+:Extra file         src/termite/tests/results/test_struct.C.unparsed.C
+:Extra file         src/termite/tests/results/test_transformme.C.dot
+:Extra file         src/termite/tests/results/test_transformme.C.pdf
+:Extra file         src/termite/tests/results/test_transformme.C.pl
+:Extra file         src/termite/tests/results/test_transformme.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_transformme.C.torose.err.log
+:Extra file         src/termite/tests/results/test_transformme.C.unparsed.C
+:Extra file         src/termite/tests/results/test_transformme.pl
+:Extra file         src/termite/tests/results/test_typedef.C.pl
+:Extra file         src/termite/tests/results/test_typedef.C.toprolog.err.log
+:Extra file         src/termite/tests/results/test_typedef.C.torose.err.log
+:Extra file         src/termite/tests/results/test_typedef.C.unparsed.C
+********* TESTED with **************
+(*)  automake (GNU automake) 1.4-p6
+(*)  autoconf (GNU Autoconf) 2.59
+(*)  (**) g++ (GCC) 3.3.5 (Debian 1:3.3.5-13)
+(**) gcc (GCC) 3.3.5 (Debian 1:3.3.5-13)
+(**) bison (GNU Bison) 1.875d
+(*)  doxygen 1.4.2
+(*)  dot version 2.2.1 (Fri Sep 30 13:22:44 UTC 2005)
+(*)  e-TeX (Web2C 7.4.5) 3.14159-2.1
+(*)  latex2html: Command not found.
+(*)  sqlite (requires g++ 3.3.2) /home/dquinlan/SQLite/sqliteCompileTree/bin/sqlite3: Command not found.
+
+(*)  Optional for use of ROSE (by users), but required for internal ROSE development (by ROSE project team)
+(**) Required for use of ROSE (and for all internal development)
+
+********* Locally Modified *********
+>Locally modified   ChangeLog
+>Locally modified   examples/constprop/runtests
+>Locally modified   examples/sl1rd/runtests
+>Locally modified   examples/sl2rd/runtests
+>Locally modified   src/analyzer/commandlineinterface/AnalyzerOptions.C
+>Locally modified   src/analyzer/commandlineinterface/CommandLineParser.C
+>Locally modified   src/analyzer/skeletons/main-support.C-template
+>Locally modified   src/analyzer/skeletons/main.C-template
+>Locally modified   src/analyzer/skeletons/main.h-template
+>Locally modified   src/pig/spec.h
+********* Needs CVS Update *********
+********* FILES NEEDING A MERGE *********
+********* Files Scheduled to be added *********
++Scheduled for add      AUTHORS
++Scheduled for add      COPYING
++Scheduled for add      INSTALL
++Scheduled for add      KNOWN_BUGS
++Scheduled for add      Makefile.am
++Scheduled for add      NEWS
++Scheduled for add      config.h.in
++Scheduled for add      configure.ac
++Scheduled for add      examples/Makefile.am
++Scheduled for add      src/Makefile.am
++Scheduled for add      src/buildsatirelib
++Scheduled for add      src/analyzer/Makefile.am
++Scheduled for add      src/analyzer/annotation/Makefile.am
++Scheduled for add      src/analyzer/annotation/satire/StatementAttributeTraversal.h
++Scheduled for add      src/analyzer/astaccess/Makefile.am
++Scheduled for add      src/analyzer/astaccess/pag_support.C
++Scheduled for add      src/analyzer/astaccess/satire/ast_support_funcs.h
++Scheduled for add      src/analyzer/astaccess/satire/edges
++Scheduled for add      src/analyzer/astaccess/satire/iface.h
++Scheduled for add      src/analyzer/astaccess/satire/other.h
++Scheduled for add      src/analyzer/astaccess/satire/pag_support.h
++Scheduled for add      src/analyzer/astaccess/satire/pagoptions
++Scheduled for add      src/analyzer/astaccess/satire/pignodelist.h
++Scheduled for add      src/analyzer/astaccess/satire/syn
++Scheduled for add      src/analyzer/astaccess/satire/syn_typedefs.h
++Scheduled for add      src/analyzer/commandlineinterface/Makefile.am
++Scheduled for add      src/analyzer/commandlineinterface/satire/AnalyzerOptions.h
++Scheduled for add      src/analyzer/commandlineinterface/satire/CommandLineParser.h
++Scheduled for add      src/analyzer/commandlineinterface/satire/set_pag_options.h
++Scheduled for add      src/analyzer/icfgbuilder/Makefile.am
++Scheduled for add      src/analyzer/icfgbuilder/obsolete_CFGFixUp.C
++Scheduled for add      src/analyzer/icfgbuilder/satire/AstNumberOfNodesStatistics.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/CFGTraversal.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/ExprLabeler.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/ExprTransformer.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/IrCreation.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/ProcTraversal.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/analysis_info.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/cfg_support.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/obsolete_CFGFixUp.h
++Scheduled for add      src/analyzer/icfgbuilder/satire/testcfg.h
++Scheduled for add      src/analyzer/skeletons/Makefile-template.in
++Scheduled for add      src/analyzer/skeletons/newanalysis.in
++Scheduled for add      src/grato/Makefile.am
++Scheduled for add      src/grato/synparser.y++
++Scheduled for add      src/grato/synscanner.l++
++Scheduled for add      src/pig/pigparser.y++
++Scheduled for add      src/pig/pigscanner.l++
++Scheduled for add      src/termite/AUTHORS
++Scheduled for add      src/termite/COPYING
++Scheduled for add      src/termite/ChangeLog
++Scheduled for add      src/termite/INSTALL
++Scheduled for add      src/termite/LICENCE
++Scheduled for add      src/termite/Makefile.am
++Scheduled for add      src/termite/NEWS
++Scheduled for add      src/termite/PrologAtom.cpp
++Scheduled for add      src/termite/PrologCompTerm.cpp
++Scheduled for add      src/termite/PrologInt.cpp
++Scheduled for add      src/termite/PrologList.cpp
++Scheduled for add      src/termite/PrologString.cpp
++Scheduled for add      src/termite/PrologSupport.C
++Scheduled for add      src/termite/PrologTerm.cpp
++Scheduled for add      src/termite/PrologToRose.C
++Scheduled for add      src/termite/PrologVariable.cpp
++Scheduled for add      src/termite/README
++Scheduled for add      src/termite/c2term
++Scheduled for add      src/termite/main.C
++Scheduled for add      src/termite/pdfgen.C
++Scheduled for add      src/termite/term2c
++Scheduled for add      src/termite/termlexer.l++
++Scheduled for add      src/termite/termparser.y++
++Scheduled for add      src/termite/termpretty.l++
++Scheduled for add      src/termite/test.sh
++Scheduled for add      src/termite/toProlog.C
++Scheduled for add      src/termite/satire/PrologAtom.h
++Scheduled for add      src/termite/satire/PrologCompTerm.h
++Scheduled for add      src/termite/satire/PrologInt.h
++Scheduled for add      src/termite/satire/PrologList.h
++Scheduled for add      src/termite/satire/PrologString.h
++Scheduled for add      src/termite/satire/PrologSupport.h
++Scheduled for add      src/termite/satire/PrologTerm.h
++Scheduled for add      src/termite/satire/PrologToRose.h
++Scheduled for add      src/termite/satire/PrologVariable.h
++Scheduled for add      src/termite/satire/TermPrinter.h
++Scheduled for add      src/termite/satire/TermRep.h
++Scheduled for add      src/termite/satire/termparser.h
++Scheduled for add      src/termite/tests/orig_out.txt
++Scheduled for add      src/termite/tests/test1.C
++Scheduled for add      src/termite/tests/test2.C
++Scheduled for add      src/termite/tests/test3.C
++Scheduled for add      src/termite/tests/test4.C
++Scheduled for add      src/termite/tests/test5.C
++Scheduled for add      src/termite/tests/test5b.C
++Scheduled for add      src/termite/tests/test6.C
++Scheduled for add      src/termite/tests/test7.C
++Scheduled for add      src/termite/tests/test8.C
++Scheduled for add      src/termite/tests/test9.C
++Scheduled for add      src/termite/tests/test_class1.C
++Scheduled for add      src/termite/tests/test_class2.C
++Scheduled for add      src/termite/tests/test_control.C
++Scheduled for add      src/termite/tests/test_control.C.dot
++Scheduled for add      src/termite/tests/test_control.C.pdf
++Scheduled for add      src/termite/tests/test_enum.C
++Scheduled for add      src/termite/tests/test_minimal.C
++Scheduled for add      src/termite/tests/test_struct.C
++Scheduled for add      src/termite/tests/test_transformme.C
++Scheduled for add      src/termite/tests/test_typedef.C
+********* Files Scheduled to be removed *********
+-Scheduled for removal  Makefile
+-Scheduled for removal  examples/Makefile
+-Scheduled for removal  src/Makefile
+-Scheduled for removal  src/analyzer/Makefile
+-Scheduled for removal  src/analyzer/annotation/Makefile
+-Scheduled for removal  src/analyzer/annotation/StatementAttributeTraversal.C
+-Scheduled for removal  src/analyzer/annotation/StatementAttributeTraversal.h
+-Scheduled for removal  src/analyzer/astaccess/Makefile
+-Scheduled for removal  src/analyzer/astaccess/iface.h
+-Scheduled for removal  src/analyzer/astaccess/pag_support.c
+-Scheduled for removal  src/analyzer/commandlineinterface/AnalyzerOptions.h
+-Scheduled for removal  src/analyzer/commandlineinterface/CommandLineParser.h
+-Scheduled for removal  src/analyzer/commandlineinterface/Makefile
+-Scheduled for removal  src/analyzer/commandlineinterface/set_pag_options.h
+-Scheduled for removal  src/analyzer/icfgbuilder/AstNumberOfNodesStatistics.h
+-Scheduled for removal  src/analyzer/icfgbuilder/CFGTraversal.h
+-Scheduled for removal  src/analyzer/icfgbuilder/ExprLabeler.h
+-Scheduled for removal  src/analyzer/icfgbuilder/ExprTransformer.h
+-Scheduled for removal  src/analyzer/icfgbuilder/IrCreation.h
+-Scheduled for removal  src/analyzer/icfgbuilder/Makefile
+-Scheduled for removal  src/analyzer/icfgbuilder/ProcTraversal.h
+-Scheduled for removal  src/analyzer/icfgbuilder/analysis_info.h
+-Scheduled for removal  src/analyzer/icfgbuilder/cfg_support.h
+-Scheduled for removal  src/analyzer/icfgbuilder/testcfg.h
+-Scheduled for removal  src/analyzer/skeletons/Makefile-template
+-Scheduled for removal  src/analyzer/skeletons/newanalysis
+-Scheduled for removal  src/grato/Makefile
+-Scheduled for removal  src/grato/synparser.y
+-Scheduled for removal  src/grato/synscanner.l
+-Scheduled for removal  src/pig/Makefile
+-Scheduled for removal  src/pig/spec.l
+-Scheduled for removal  src/pig/spec.y
+********* WARNINGS *********
+********* ERRORS *********
+
 V0.7.4 2007-07-15 MS
 
 * required user changes:

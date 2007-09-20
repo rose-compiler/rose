@@ -1,43 +1,5 @@
 ## Process this file with automake to create Makefile.in.
 
-SUBDIRS= src tools examples
-DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-pagdir=$(PAGDIR) --with-boostdir=$(BOOSTDIR) CXX=$(CXX)
-EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
-        docs/satire_cfgconstruction.pdf \
-	docs/satire_overview.pdf \
-        docs/ \
-	docs/satire_attributes_auxiliary_functions \
-	\
-	testsuite/testsuite.sh \
-	testsuite/base/success/ab.c \
-	testsuite/base/success/bigger.c \
-	testsuite/base/success/blocks.c \
-	testsuite/base/success/cconstants.c \
-	testsuite/base/success/classes.C \
-	testsuite/base/success/classes2.C \
-	testsuite/base/success/classes_and_returns.C \
-	testsuite/base/success/deepreturn.c \
-	testsuite/base/success/default_args.C \
-	testsuite/base/success/demo1.C \
-	testsuite/base/success/demo2.C \
-	testsuite/base/success/destructor.C \
-	testsuite/base/success/destructor2.C \
-	testsuite/base/success/destructor_simple.C \
-	testsuite/base/success/forinit.c \
-	testsuite/base/success/for_return1.c \
-	testsuite/base/success/intval.c \
-	testsuite/base/success/jump.c \
-	testsuite/base/success/logical.c \
-	testsuite/base/success/manyargs.c \
-	testsuite/base/success/namespaces.C \
-	testsuite/base/success/nested.c \
-	testsuite/base/success/overload.C \
-	testsuite/base/success/simpleif.c \
-	testsuite/base/success/small.c \
-	testsuite/base/success/test1.C \
-	testsuite/base/success/test5.C \
-	testsuite/base/success/test6.C \
-	testsuite/base/success/typedefs.C \
-	testsuite/base/success/verysmall.c \
-	testsuite/base/success/virtual.C \
-	testsuite/base/success/while_call1.c
+SUBDIRS= src examples
+DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag
+EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS

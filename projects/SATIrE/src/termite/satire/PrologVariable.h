@@ -1,11 +1,11 @@
-/* -*- C++ -*-
-Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
-          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+/*
+Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+see LICENSE in the root folder of this project
 */
 #ifndef PROLOGVARIABLE_H_
 #define PROLOGVARIABLE_H_
 #include "PrologTerm.h"
-
+using namespace std;
 ///class representing a prolog variable
 class PrologVariable : public PrologTerm {
 	public:

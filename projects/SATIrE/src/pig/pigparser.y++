@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pigparser.y++,v 1.2 2008-11-04 10:04:27 gergo Exp $
+// $Id: pigparser.y++,v 1.1 2007-09-20 09:25:32 adrian Exp $
 
 // MS230107: replaced yyin with synin
 
@@ -21,7 +21,6 @@
 #include <limits.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <cstring>
 
 #include <iostream>
 #include <fstream>

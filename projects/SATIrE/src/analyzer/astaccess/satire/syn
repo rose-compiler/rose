@@ -16,8 +16,7 @@ Statement : ExprStatement ( expression:Expression )
  | NullStatement (  )
  | DeclareStmt ( var:VariableSymbolNT, type:Type )
  | UndeclareStmt ( vars:VariableSymbolNT* )
- | ExternalCall ( function:Expression, params:VariableSymbolNT*, type:Type )
- | ExternalReturn ( function:Expression, params:VariableSymbolNT*, type:Type )
+ | ExternalCall ( type:Type )
  | ConstructorCall ( name:aststring, type:Type )
  | DestructorCall ( name:aststring, type:Type )
  | ArgumentAssignment ( lhs:Expression, rhs:Expression )
@@ -56,9 +55,8 @@ ScopeStatementNT : Global ( declarations:DeclarationStatement* )
  | NamespaceDefinitionStatement ( declarations:DeclarationStatement* )
  ;
 
-// GB (2008-02-14): Removed ExprListExp from here since we have
-// ExprListExpNT elsewhere.
-Expression : VarRefExp ( name:aststring )
+Expression : ExprListExp ( expressions:Expression* )
+ | VarRefExp ( name:aststring )
  | ClassNameRefExp (  )
  | FunctionRefExp (  )
  | MemberFunctionRefExp (  )
@@ -74,14 +72,7 @@ Expression : VarRefExp ( name:aststring )
  | VarArgEndOp ( operand_expr:Expression )
  | VarArgCopyOp ( lhs_operand:Expression, rhs_operand:Expression )
  | VarArgStartOneOperandOp ( operand_expr:Expression )
-// GB (2008-02-14): Replaced this useless production with the stuff it was
-// supposed to expand to.
-// | Initializer (  )
- | AggregateInitializer ( initializers:ExprListExpNT )
-// GB (2008-02-14): This node will never appear in the ICFG as the
-// constructor call is resolved to a function call.
-// | ConstructorInitializer ( args:ExprListExpNT )
- | AssignInitializer ( operand_i:Expression )
+ | Initializer (  )
  | BoolValExp ( value:astint )
  | StringVal ( value:aststring )
  | ShortVal ( value:astshort )
@@ -148,14 +139,15 @@ Expression : VarRefExp ( name:aststring )
  | ThrowOp ( operand_i:Expression )
  ;
 
+Initializer : AggregateInitializer ( initializers:ExprListExpNT )
+ | ConstructorInitializer ( args:ExprListExpNT )
+ | AssignInitializer ( operand_i:Expression )
+ ;
+
 //PartialFunctionType : PartialFunctionModifierType ( ref_to:ReferenceType, ptr_to:PointerType, modifiers:ModifierNodesNT, typedefs:TypedefSeq, return_type:Type, orig_return_type:Type )
 // ;
 
-// GB (2008-02-14): Changed type of initptr from Initializer to Expression
-// because the former does not exist anymore as a standalone production.
-// Introducing indirection in the form of InitializerNT would have led to a
-// *lot* of typing in analysis specifications.
-InitializedNameNT : InitializedName ( name:aststring, initptr:Expression )
+InitializedNameNT : InitializedName ( name:aststring, initptr:Initializer )
  ;
 
 UnsignedLongValNT : UnsignedLongVal ( value:astulong )

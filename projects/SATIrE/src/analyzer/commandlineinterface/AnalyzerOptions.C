@@ -1,5 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: AnalyzerOptions.C,v 1.5 2007-05-22 20:25:22 markus Exp $
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
+// $Id: AnalyzerOptions.C,v 1.6 2007-09-20 09:25:32 adrian Exp $
 
 #include "AnalyzerOptions.h"
 
@@ -23,6 +23,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   //setShareNum(?);
   analysisResultsTextOutputOff();
   analysisResultsSourceOutputOff();
+  analysisResultsTermOutputOff();
   vivuOff();
   setVivuLoopUnrolling(2); // default
   setVivu4MaxUnrolling(-1); // default
@@ -56,6 +57,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --pagverbose                  output analyzer debug info on stdout\n"
     "   --textoutput                  output the analysis results for each statement on stdout\n"
     "   --sourceoutput                generate source file with annotated analysis results for each statement\n"
+    "   --termoutput                  generate term (Prolog) representation with annotated analysis results\n"
     "   --help                        output this help message on stdout\n"
     "\n"
     " GDL output options:\n"
@@ -178,6 +180,10 @@ bool AnalyzerOptions::analysisResultsTextOutput() { return _analysisResultsTextO
 void AnalyzerOptions::analysisResultsSourceOutputOn() { _analysisResultsSourceOutput=true; }
 void AnalyzerOptions::analysisResultsSourceOutputOff() { _analysisResultsSourceOutput=false; }
 bool AnalyzerOptions::analysisResultsSourceOutput() { return _analysisResultsSourceOutput; }
+
+void AnalyzerOptions::analysisResultsTermOutputOn() { _analysisResultsTermOutput=true; }
+void AnalyzerOptions::analysisResultsTermOutputOff() { _analysisResultsTermOutput=false; }
+bool AnalyzerOptions::analysisResultsTermOutput() { return _analysisResultsTermOutput; }
 
 void AnalyzerOptions::vivuOn() { _vivu=true; }
 void AnalyzerOptions::vivuOff() { _vivu=false; }

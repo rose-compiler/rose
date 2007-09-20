@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: syn_typedefs.h,v 1.2 2008-08-23 13:46:48 gergo Exp $
+// $Id: syn_typedefs.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
 
 #ifndef H_SYN_TYPEDEFS
 #define H_SYN_TYPEDEFS
@@ -27,7 +27,7 @@ typedef long double astldouble;
 typedef unsigned long long astullong;
 typedef long long astllong;
 typedef unsigned char astuchar;
-typedef const char *aststring;
+typedef char *aststring;
 typedef int astint;
 typedef short astshort;
 typedef char astchar;

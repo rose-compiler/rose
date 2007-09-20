@@ -1,2 +1,8 @@
-./constprop tests/classes2.C
-./constprop tests/blocks.c
+#!/bin/sh 
+
+./constprop tests/classes2.C || exit 1
+./constprop tests/blocks.c   || exit 1
+
+./constprop tests/blocks.c --textoutput   || exit 1
+./constprop tests/blocks.c --termoutput   || exit 1
+./constprop tests/blocks.c --sourceoutput || exit 1

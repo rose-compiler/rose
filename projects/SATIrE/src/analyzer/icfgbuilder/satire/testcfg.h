@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: testcfg.h,v 1.3 2008-09-29 12:33:37 gergo Exp $
+// $Id: testcfg.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
 
 /*
  * TestCFG: consistency test for a cfg and its PAG-interface
@@ -15,8 +15,7 @@ extern "C" {
 
 #include "iface.h"
 
-  void outputIcfg(KFG kfg, const char* gdl_name);
-  int kfg_testit(KFG kfg, int quiet_mode);
+int kfg_testit (KFG kfg, int quiet_mode, char *gdl_name);
 
 #ifdef __cplusplus
 }

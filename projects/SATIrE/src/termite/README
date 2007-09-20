@@ -1,23 +1,4 @@
-AUTHOR
-
-This package was originally written in 2006 by Christoph Bonitz 
-as part of his Bachelor's Thesis at the TU Vienna.
-
-Since 2007 it is now maintained by 
-Adrian Prantl <adrian@complang.tuwien.ac.at>
-
-------CLIP-HERE---------------------------------------------------------
-| This is the original README from 2006:
-v
-
-Copyright 2006
-Christoph Bonitz <christoph.bonitz@gmail.com>
-
-CONTRIBUTERS
-
-Repackaging & minor updates/bugfixes by 
-Adrian Prantl <adrian@complang.tuwien.ac.at>
-Markus Schordan <markus@complang.tuwien.ac.at>Term representation generator for C/C++ files + unparser
+Term representation generator for C/C++ files + unparser
 version 0.5 (not suitable for production use)
 
 IMPORTANT:
@@ -61,24 +42,3 @@ to output.pl It consists of some rewriting infrastructure and two
 example transformations.  (tested with SWI-PROLOG)
 
 A good test file is: tests/test_transformme.C
-
-
-------CLIP-HERE---------------------------------------------------------
-| Original LICENCE from 2006
-v
-
-
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-
-IMPORTANT:
-This software is provided as is, with no warranty of any kind.
-The entire risk of using the program is with the user.
-
-Note that some of the source files use ROSE, flex or
-bison source code and that the licencing terms of these
-programs may apply.
-
-The author makes no restriction on use, copying or modification,
-as long as the authorship information is preserved and changes
-by other authors are denoted as such.
-

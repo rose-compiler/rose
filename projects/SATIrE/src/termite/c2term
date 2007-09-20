@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]
+then
+	echo "usage: $0 input_file output_file"
+else
+	echo "Running term generator on $1"
+	echo "Output written to $2"
+	# ignore error msgs
+	rose2term $1 | grep unary_node > $2
+fi

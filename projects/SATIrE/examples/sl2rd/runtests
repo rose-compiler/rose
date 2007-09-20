@@ -1,7 +1,9 @@
-./sl2rd tests/rdtest3.C
-./sl2rd --language c89 tests/rdtest9a_c89.c
-./sl2rd --language c99 tests/rdtest9a_c89.c
-./sl2rd --callstringlength 1 tests/rdtest4.C
-./sl2rd --textoutput tests/rdtest1.C
-./sl2rd --sourceoutput tests/rdtest1.C
-cat rose_rdtest1.C
+#!/bin/sh
+
+./sl2rd tests/rdtest3.C || exit 1
+./sl2rd --language c89 tests/rdtest9a_c89.c || exit 1
+./sl2rd --language c99 tests/rdtest9a_c89.c || exit 1
+./sl2rd --callstringlength 1 tests/rdtest4.C || exit 1
+./sl2rd --textoutput tests/rdtest1.C || exit 1
+./sl2rd --sourceoutput tests/rdtest1.C || exit 1
+cat rose_rdtest1.C || exit 1

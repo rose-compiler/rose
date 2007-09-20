@@ -1,0 +1,13 @@
+Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+
+IMPORTANT:
+This software is provided as is, with no warranty of any kind.
+The entire risk of using the program is with the user.
+
+Note that some of the source files use ROSE, flex or
+bison source code and that the licencing terms of these
+programs may apply.
+
+The author makes no restriction on use, copying or modification,
+as long as the authorship information is preserved and changes
+by other authors are denoted as such.

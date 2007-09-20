@@ -1,9 +1,12 @@
+/* -*- C++ -*- */
+
 #ifndef H_PAG_ANALYSIS_MAIN
 #define H_PAG_ANALYSIS_MAIN
 
 #include <config.h>
 #include "CFGTraversal.h"
 #include "ProcTraversal.h"
+#include "TermPrinter.h"
 
 #include "iterate.h"
 

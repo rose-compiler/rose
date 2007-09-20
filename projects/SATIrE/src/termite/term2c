@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]
+then
+	echo "usage: $0 input_file output_file"
+else
+	echo "Running source creator on $1"
+	echo "Output written to $2"
+	term2rose < $1 > $2
+	exit $?
+fi
