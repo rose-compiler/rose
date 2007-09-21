@@ -48,6 +48,7 @@ AC_SUBST(PAG_LIB_DIR)
 AC_CHECK_LIB([m], [fcosf])
 AC_CHECK_LIB([rose], [SgTreeCopy])
 AC_CHECK_LIB([rt], [clock_gettime])
+AC_CHECK_LIB([pag], [pag_version])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -83,6 +84,8 @@ src/grato/Makefile
 src/pig/Makefile
 src/Makefile
 examples/Makefile
+tools/Makefile
+tools/icfgbuilder/Makefile
 ])
 
 AC_OUTPUT

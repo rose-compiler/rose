@@ -36,26 +36,26 @@ SATIrE 0.7.4 was tested with
  d) Go to the satire directory:
     cd SATIrE-0.7.4
 
- e) Perform the following operations with make:
-    run 'make' for compiling all SATIrE modules and analyzers (ROSE must be installed)
+ e) Configure the sources for your platform
 
-    run 'make check' for running several tests (PAG and ROSE, must be installed)
+    ./configure --help
 
-    run 'INSTALL_PREFIX=<my_install_prefix> make install'
-        where <my_install_prefix> is your directory path in which the directories
-        'include', 'lib', 'bin' will be created.
+    e.g.    
+    ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ --with-pagdir=/usr/local/pag
 
-        examples:
-          INSTALL_PREFIX=/usr/local/ make install
-          INSTALL_PREFIX=~/satire_install make install
+    run 'make' for compiling all SATIrE modules and analyzers
+    run 'make install' to install SATIrE to the location specified by --prefix=
 
-        Note, you must use an absolute path for INSTALL_PREFIX!
-    
+ 
     Now you are ready to specify, compile, and run an anlysis.
 
 ------------------------------------------------------------
 (2) RUNNING AN EXAMPLE ANALYSIS THAT COMES WITH SATIrE
 ------------------------------------------------------------
+
+FIXME: 
+    The scripts will respect these variables but will default to the 
+    locations specified during the configure run (recommended).
 
  a) Ensure that the following environment variables are set:
     ROSE_INCLUDE (the include directory of installed ROSE)
