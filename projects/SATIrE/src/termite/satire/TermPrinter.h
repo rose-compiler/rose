@@ -1,7 +1,7 @@
 /*  -*- C++ -*-
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-          2007 Adrian Prantl
-see LICENSE in the root folder of this project
+    Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+              2007 Adrian Prantl
+    see LICENSE in the root folder of this project
 */
 
 #ifndef PROLOGTRAVERSAL_H_
@@ -79,6 +79,7 @@ private:
   PrologTerm* mTerm;
 
   PrologCompTerm* getAnalysisResult(SgStatement* stmt);  
+  PrologCompTerm* pagToProlog(std::string name, std::string dfi);
 };
 
 
@@ -111,54 +112,63 @@ see LICENSE in the root folder of this project
 template<typename DFI_STORE_TYPE>
 PrologTerm* 
 TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList synList) {
-	/*
-	 * Compute the PROLOG representation of a node using
-	 * the successors' synthesized attributes.
-	 * o nodes with a fixed number of atmost 4 successors will be represented by a term in which
-	 *   the successor nodes have fixed positions
-	 * o nodes with more successors or a variable # of succ. will be represented by a term that contains
-	 *   a list of successor nodes.
-	 */
+  /*
+   * Compute the PROLOG representation of a node using
+   * the successors' synthesized attributes.
+   * o nodes with a fixed number of atmost 4 successors will be represented by a term in which
+   *   the successor nodes have fixed positions
+   * o nodes with more successors or a variable # of succ. will be represented by a term that contains
+   *   a list of successor nodes.
+   */
 
   PrologCompTerm* t;
   /* depending on the number of successors, use different predicate names*/
-  	if(AstTests::numSuccContainers(astNode))
-   		t = listTerm(astNode, synList);
-  	else {  
-		switch (AstTests::numSingleSuccs(astNode)) {
-			case 0:
-				t = leafTerm(astNode, synList);
-			break;
-			case 1:
-				t = unaryTerm(astNode, synList);
-			break;
-			case 2:
-				t = binaryTerm(astNode, synList);
-			break;
-			case 3:
-			  	t = ternaryTerm(astNode, synList);
-				break;
-			case 4:
-				t = quaternaryTerm(astNode, synList);
-			break;
-			default:
-				t = listTerm(astNode, synList);
-				break;
-		}
-	}
-	/* add node specific information to the term*/
-	PrologSupport::addSpecific(astNode,t);
+  if(AstTests::numSuccContainers(astNode))
+    t = listTerm(astNode, synList);
+  else {  
+    switch (AstTests::numSingleSuccs(astNode)) {
+    case 0:
+      t = leafTerm(astNode, synList);
+      break;
+    case 1:
+      t = unaryTerm(astNode, synList);
+      break;
+    case 2:
+      t = binaryTerm(astNode, synList);
+      break;
+    case 3:
+      t = ternaryTerm(astNode, synList);
+      break;
+    case 4:
+      t = quaternaryTerm(astNode, synList);
+      break;
+    default:
+      t = listTerm(astNode, synList);
+      break;
+    }
+  }
+  /* add node specific information to the term*/
+  PrologSupport::addSpecific(astNode,t);
+  PrologCompTerm* annot = (PrologCompTerm*)t->getSubTerms().back();
+  assert(annot);
 
-	/* add analysis information to the term*/
-	if (SgStatement* n = isSgStatement(astNode)) {
-	  t->addSubterm(getAnalysisResult(n));
-	}
+  /* add analysis information to the term*/
+  if (SgStatement* n = isSgStatement(astNode)) {
+    /* analysis result */
+    annot->addSubterm(getAnalysisResult(n));
+  } else {
+    /* empty analysis result */
+    PrologCompTerm* ar = new PrologCompTerm("analysis_result");
+    ar->addSubterm(new PrologAtom("null"));
+    annot->addSubterm(ar);
+  }
 
-	/* add file info term*/
-	t->addSubterm(PrologSupport::getFileInfo(astNode->get_file_info()));
-	/* remember the last term */
-	mTerm = t;
-	return t;
+  /* add file info term */
+  t->addSubterm(PrologSupport::getFileInfo(astNode->get_file_info()));
+
+  /* remember the last term */
+  mTerm = t;
+  return t;
 }
 
 /* Add analysis result */
@@ -166,26 +176,81 @@ template<typename DFI_STORE_TYPE>
 PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 {
-  PrologCompTerm *ar, *pre, *post;
+  PrologCompTerm *ar;
+  PrologTerm *preInfo, *postInfo;
   ar   = new PrologCompTerm("analysis_result");
-  pre  = new PrologCompTerm("pre_info");
-  post = new PrologCompTerm("post_info");
-  string preInfo, postInfo;
 
 # ifdef PAG_VERSION
   if (withPagAnalysisResults && stmt->get_attributeMechanism()) {
-     preInfo = pagDfiTextPrinter.getPreInfo(stmt);
-    postInfo = pagDfiTextPrinter.getPostInfo(stmt);
+     preInfo = pagToProlog("pre_info", pagDfiTextPrinter.getPreInfo(stmt));
+    postInfo = pagToProlog("post_info",pagDfiTextPrinter.getPostInfo(stmt));
   } else 
 # endif
   {
-     preInfo = "null";
-    postInfo = "null";
+     preInfo = new PrologAtom("null");
+    postInfo = new PrologAtom("null");
   }
-  ar->addSubterm(new PrologString(preInfo));
-  ar->addSubterm(new PrologString(postInfo));
+  ar->addSubterm(preInfo);
+  ar->addSubterm(postInfo);
 
   return ar;
+}
+
+/* Convert the PAG analysis result into a Prolog Term */
+template<typename DFI_STORE_TYPE>
+PrologCompTerm*
+TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
+  // FIXME: do this by iterating over the data structure instead
+  // FIXME: more error recovery
+
+  PrologCompTerm* t = new PrologCompTerm(name);
+  PrologList* lst = new PrologList();
+  int i = 0;
+
+  if (dfi[i] == '[') {
+    ++i;
+    if (dfi.substr(i,3) == "TOP") { 
+      t->addSubterm(new PrologAtom("top"));
+      i += 3;
+    } else if (dfi.substr(i,6) == "BOTTOM") {
+      t->addSubterm(new PrologAtom("bottom"));
+      i += 6;
+    } else t->addSubterm(new PrologAtom("error"));
+    if (dfi[i] == ':') {
+      do {
+	++i;
+	if (dfi[i] == ']') break;
+
+	// Parse List elements
+	std::string tok1 = "";
+	while (dfi.substr(i,2) != "->") {
+	  tok1 += dfi[i];
+	  ++i;
+	}
+	i += 2;
+	std::string tok2 = "";
+	while (dfi[i] != ',') {
+	  tok2 += dfi[i];
+	  ++i;
+	}	
+
+	PrologInfixOperator* ifx = new PrologInfixOperator("->");
+	ifx->addSubterm(new PrologAtom(tok1));
+	ifx->addSubterm(new PrologAtom(tok2));
+	lst->addElement(ifx);
+      } while (dfi[i] == ',');
+
+      t->addSubterm(lst);
+
+      if (dfi[i] != ']') {
+	std::cerr << "Warning: TermPrinter could not parse " << dfi << std::endl;
+      }
+      ++i;
+    } else t->addSubterm(new PrologAtom("error"));
+  }
+  cerr << dfi << endl;
+  cerr << t->getRepresentation() << endl;
+  return t;   
 }
 	
 /* Create a prolog term representing a leaf node.*/

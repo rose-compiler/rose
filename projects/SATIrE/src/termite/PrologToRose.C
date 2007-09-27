@@ -740,7 +740,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
 		/* get value and name, create a dummy declaration*/
-		ROSE_ASSERT(annot->getArity() == 3);
+		ROSE_ASSERT(annot->getArity() == 4);
 		int value = toInt(annot->at(0));
 		SgName v_name = *toStringP(annot->at(1));
 		SgEnumDeclaration* decdummy = dynamic_cast<SgEnumDeclaration*>(toRose(annot->at(2)));
@@ -887,8 +887,8 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	ROSE_ASSERT(sgexp != NULL);
 	PrologCompTerm* annot = retrieveAnnotation(t);
 	ROSE_ASSERT(annot != NULL);
-	/* the annotation should have arity of 4*/
-	ROSE_ASSERT(annot->getArity() == 4);
+	/* the annotation should have arity of 5*/
+	ROSE_ASSERT(annot->getArity() == 5);
 	PrologInt* mode = dynamic_cast<PrologInt*>(annot->at(0));
 	ROSE_ASSERT(mode != NULL);
 	SgType* sgtype = createType(annot->at(1));
@@ -2636,7 +2636,7 @@ PrologToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
 	ROSE_ASSERT(ct != NULL);
 	PrologCompTerm* annot = retrieveAnnotation(ct);
 	ROSE_ASSERT(annot != NULL);
-	ROSE_ASSERT(annot->getArity() == 2);
+	ROSE_ASSERT(annot->getArity() == 3);
 	string* s = toStringP(annot->at(0));
 	ROSE_ASSERT(s != NULL);
 	/* create function symbol*/
@@ -2662,7 +2662,7 @@ PrologToRose::createMemberFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
 	ROSE_ASSERT(ct != NULL);
 	PrologCompTerm* annot = retrieveAnnotation(ct);
 	ROSE_ASSERT(annot != NULL);
-	ROSE_ASSERT(annot->getArity() == 4);
+	ROSE_ASSERT(annot->getArity() == 5);
 	/* create member function symbol*/
 	SgMemberFunctionSymbol* sym = createDummyMemberFunctionSymbol(annot->at(0));
 	ROSE_ASSERT(sym!= NULL);
