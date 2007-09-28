@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.C,v 1.6 2007-09-20 09:25:32 adrian Exp $
+// $Id: AnalyzerOptions.C,v 1.7 2007-09-28 08:36:25 adrian Exp $
 
 #include "AnalyzerOptions.h"
 
@@ -14,6 +14,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   animationGenerationOn();
   helpMessageRequestedOff();
   pagVerboseOff();
+  quietOff();
   preInfoOff();
   postInfoOn();
   statisticsOff();
@@ -55,6 +56,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     " Output options:\n"
     "   --statistics                  output analyzer statistics on stdout\n"
     "   --pagverbose                  output analyzer debug info on stdout\n"
+    "   --quiet                       suppress most progress info\n"
     "   --textoutput                  output the analysis results for each statement on stdout\n"
     "   --sourceoutput                generate source file with annotated analysis results for each statement\n"
     "   --termoutput                  generate term (Prolog) representation with annotated analysis results\n"
@@ -156,6 +158,10 @@ bool AnalyzerOptions::helpMessageRequested() { return _helpMessageRequested; }
 void AnalyzerOptions::pagVerboseOn() { _pagVerbose=true; }
 void AnalyzerOptions::pagVerboseOff() { _pagVerbose=false; }
 bool AnalyzerOptions::pagVerbose() { return _pagVerbose; }
+
+void AnalyzerOptions::quietOn() { _quiet=true; }
+void AnalyzerOptions::quietOff() { _quiet=false; }
+bool AnalyzerOptions::quiet() { return _quiet; }
 
 void AnalyzerOptions::preInfoOn() { _preInfo=true; }
 void AnalyzerOptions::preInfoOff() { _preInfo=false; }

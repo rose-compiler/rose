@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
+// $Id: AnalyzerOptions.h,v 1.2 2007-09-28 08:36:25 adrian Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -51,6 +51,10 @@ public:
   void helpMessageRequestedOn();
   void helpMessageRequestedOff();
   bool helpMessageRequested();
+
+  void quietOn();
+  void quietOff();
+  bool quiet();
 
   void pagVerboseOn();
   void pagVerboseOff();
@@ -124,7 +128,7 @@ private:
   int _callStringLength;
   int _startBank, _shareMin, _shareNum, _gcLow, _gcHigh;
   int _vivuLoopUnrolling, _vivu4MaxUnrolling;
-  bool _animationGeneration, _resultGeneration, _helpMessageRequested, _pagVerbose;
+  bool _animationGeneration, _resultGeneration, _helpMessageRequested, _pagVerbose, _quiet;
   bool _postInfo, _preInfo, _gdlProcedureSubgraphs, _statistics, 
        _analysisResultsTextOutput, 
        _analysisResultsSourceOutput, 

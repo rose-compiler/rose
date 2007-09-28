@@ -248,8 +248,8 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
       ++i;
     } else t->addSubterm(new PrologAtom("error"));
   }
-  cerr << dfi << endl;
-  cerr << t->getRepresentation() << endl;
+  //cerr << dfi << endl;
+  //cerr << t->getRepresentation() << endl;
   return t;   
 }
 	

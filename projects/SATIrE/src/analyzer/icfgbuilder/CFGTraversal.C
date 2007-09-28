@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.5 2007-07-15 02:02:27 markus Exp $
+// $Id: CFGTraversal.C,v 1.6 2007-09-28 08:36:25 adrian Exp $
 
 #include <iostream>
 #include <string.h>
@@ -1114,6 +1114,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
       }
 	break;
 
+      case V_SgPragmaDeclaration: /* Adrian: Ignore Pragma Decls */
       case V_SgNullStatement: {
 	/*
 	  new_block = allocate_new_block(new_block, after);

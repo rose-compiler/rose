@@ -25,7 +25,7 @@ int main(int argc, char **argv)
    * information. Use the StatementAttributeTraversal class for accessing
    * the analysis information on each statement */
   char* outputfile=(char*)opt.getGdlFileName().c_str();
-  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt.animationGeneration());
+  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt.animationGeneration(), !opt.quiet());
 
   /* Handle command line option --textoutput */
   if(opt.analysisResultsTextOutput()) {

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.5 2007-09-20 09:25:32 adrian Exp $
+// $Id: CommandLineParser.C,v 1.6 2007-09-28 08:36:25 adrian Exp $
 
 #include <config.h>
 
@@ -60,7 +60,9 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
       cl.setCallStringLength(-1);
     } else if (!strcmp(argv[i], "--pagverbose")) {
       cl.pagVerboseOn();
-    } else if (!strcmp(argv[i], "--startbank")) {
+    } else if (!strcmp(argv[i], "--quiet")) {
+      cl.quietOn();
+    }else if (!strcmp(argv[i], "--startbank")) {
       cl.setStartBank(atoi(argv[++i]));
     } else if (!strcmp(argv[i], "--sharemin")) {
       cl.setShareMin(atoi(argv[++i]));
