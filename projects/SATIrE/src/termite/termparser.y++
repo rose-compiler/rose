@@ -1,7 +1,8 @@
 %{
-/*
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-see LICENSE in the root folder of this project
+/* -*- C++ -*-
+   Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+             2007 Adrian Prantl
+   see LICENSE in the root folder of this project
 */
 using namespace std;
 #include <iostream>  
@@ -15,17 +16,20 @@ using namespace std;
 #include "PrologInt.h"
 #include "PrologVariable.h"
 
-extern int yylex();
+extern int   yylex();
 extern char* yytext;
-extern int yylineno;
-PrologTerm* prote;
+extern int   yylineno;
+extern int   colno;
+PrologTerm*  prote;
 
-  void yyerror(char *);
+void yyerror(char *);
+
 %}
 
 /*Token declarations*/
 %token <strValue> VARIABLE 
 %token <strValue> ATOM 
+%token <strValue> OPERATOR
 %token <strValue> STRING
 %token <intValue> INT 
 
@@ -44,8 +48,9 @@ PrologTerm* prote;
 
 /*nonterminal types*/
 %type <singleTerm> term
+%type <singleTerm> infix_pair
 %type <singleTerm> pterm
-%type <termList> terms
+%type <termList>   terms
 %type <singleTerm> comp_term
 %type <singleTerm> plist
 
@@ -58,12 +63,14 @@ pterm:
  | comp_term '.' {prote = $1; $$ = $1;}
 ;
 term:
- STRING {$$ = new PrologString(*$1);}
- | ATOM {$$ = new PrologAtom(*$1);}
- | VARIABLE {$$ = new PrologVariable(*$1);}
- | comp_term {$$ = $1;}
- | plist {$$ = $1;}
- | INT {$$ = new PrologInt($1);}
+ STRING       { $$ = new PrologString(*$1);  }
+ | ATOM       { $$ = new PrologAtom(*$1);    }
+ | VARIABLE   { $$ = new PrologVariable(*$1);}
+ | comp_term  { $$ = $1;                     }
+ | infix_pair { $$ = $1;                     }
+ | plist      { $$ = $1;                     }
+ | INT        { $$ = new PrologInt($1);      }
+| '(' term ')'{ $$ = $2;                     } 
 ;
 
 comp_term:
@@ -78,6 +85,17 @@ comp_term:
 	$$ = t;
 	}
 ;
+
+/*TODO: no operator precedence yet*/
+infix_pair:
+ term OPERATOR term {
+	PrologInfixOperator *ifx = new PrologInfixOperator(*$2);
+	ifx->addSubterm($1);
+	ifx->addSubterm($3);
+	$$ = ifx;
+	}
+;
+
 
 terms:
  terms ',' term {$1->push_back($3); $$=$1;} 
@@ -101,7 +119,10 @@ plist:
 
 %%
 void yyerror(char* msg) {
-  std::cerr << std::string(msg) << " at line " << yylineno << " near " << yytext << std::endl;
+  std::cerr << std::string(msg) 
+	    << " at line " << yylineno 
+	    << ", col. " << colno << ", "
+	    << "near token \"" << yytext << "\"" << std::endl;
   exit(1);
 }
 

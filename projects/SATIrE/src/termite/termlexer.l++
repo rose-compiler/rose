@@ -1,7 +1,8 @@
 %{
-/*
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-see LICENSE in the root folder of this project
+/* -*- C++ -*-
+ * Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+ *           2007 Adrian Prantl
+ * see LICENSE in the root folder of this project
 */
 using namespace std;
 #include <string>
@@ -9,6 +10,19 @@ using namespace std;
 #include <iostream> 
 #include "PrologTerm.h"
 #include "termparser.tab.h++"
+
+int colno = 0;
+
+void count() {
+  for (int i = 0; yytext[i] != '\0'; i++)
+    if (yytext[i] == '\n')
+      colno = 0;
+    else if (yytext[i] == '\t')
+      colno += 8 - (colno % 8);
+    else
+      colno++;
+}
+
 %}
 %option yylineno noyywrap
 
@@ -16,27 +30,30 @@ doublequoted  \"([^\"]*)\"
 quoted \'([^\'\\]*(\\.[^\'\\]*)*)\'
 variable [A-Z][A-Za-z_]*
 int \-?[0-9]+
-atom [a-z][A-Za-z_]*
-
+atom [a-z][A-Za-z_0-9]*
+operator [\-\+\*\/\<\=\>\:]+
 
 %%
 
-[ \t\n]
+[ \t\n] { count(); }
 {doublequoted} {
+        count();
         yytext++;
         *(yytext + yyleng - 2) = '\0';
         yylval.strValue = new string(yytext);
 	return(STRING);
         }
 {quoted} {
+        count();
         yytext++;
         *(yytext + yyleng - 2) = '\0';
         yylval.strValue = new string(yytext);
 	return(STRING);
         }
-{variable} {yylval.strValue = new string(yytext); return(VARIABLE);}
-{int} {yylval.intValue = atoi(yytext); return(INT);}
-{atom} {yylval.strValue = new string(yytext); return(ATOM);}
-. {return(yytext[0]);}
+{variable} { count(); yylval.strValue = new string(yytext); return(VARIABLE); }
+{int}      { count(); yylval.intValue = atoi(yytext);       return(INT);      }
+{atom}     { count(); yylval.strValue = new string(yytext); return(ATOM);     }
+{operator} { count(); yylval.strValue = new string(yytext); return(OPERATOR); }
+.          { count(); return(yytext[0]); }
 
 %%

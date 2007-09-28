@@ -224,13 +224,15 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
 	// Parse List elements
 	std::string tok1 = "";
 	while (dfi.substr(i,2) != "->") {
-	  tok1 += dfi[i];
+	  if (dfi[i] != '$') // drop '$' chars
+	    tok1 += dfi[i];
 	  ++i;
 	}
 	i += 2;
 	std::string tok2 = "";
 	while (dfi[i] != ',') {
-	  tok2 += dfi[i];
+	  if (dfi[i] != '$') // drop '$' chars
+	    tok2 += dfi[i];
 	  ++i;
 	}	
 
