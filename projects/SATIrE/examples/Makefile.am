@@ -21,7 +21,7 @@ dist_pkgdata_DATA= \
 
 
 
-testdir=_satire-installcheck-tests
+testdir=executable-examples
 
 installcheck-local:
 	mkdir $(testdir)
@@ -42,5 +42,4 @@ installcheck-local:
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) check -C $(testdir)/constprop
-	rm -rf $(testdir)
-
+#	rm -rf $(testdir)
