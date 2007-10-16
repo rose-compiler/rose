@@ -3,6 +3,7 @@
 INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/pag/analyzer -I$(top_srcdir)/src/analyzer/astaccess  -I$(top_srcdir)/src/analyzer/astaccess/satire -I$(top_srcdir)/src/analyzer/icfgbuilder/satire -I$(top_srcdir)/src/analyzer/commandlineinterface/satire
 
 # FIXME
+EXTRA_DIST=main.C
 #bin_PROGRAMS = icfgbuilder
 icfgbuilder_SOURCES = main.C
 icfgbuilder_LDADD = \

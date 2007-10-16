@@ -19,10 +19,10 @@ else
     ANALYSIS_DIR=$1
     ANALYSIS_NAME=$1
 fi
-if [ x$SATIRE_INCLUDE = x ]
-then
+#if [ x$SATIRE_INCLUDE = x ]
+#then
   SATIRE_INCLUDE="@pkgdatadir@"
-fi
+#fi
 
 # do the actual work
 echo "creating new analysis $1..."

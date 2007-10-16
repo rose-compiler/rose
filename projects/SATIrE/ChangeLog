@@ -1,10 +1,17 @@
-V0.7.5
+V0.7.5 2007-10-16 AP
 
 Changes (Adrian)
-* analysis results are exported to termrep
-* added -termrep analysis switch	
-* added Termite
-* new autotools-based build system	
+* required user changes:
+	configuration: environment must be configured using configure
+	               NO environment variables need to be set
+
+        using newanalysis: parameters are now optional
+          newanalysis [analysis-directory-name] [carrier-type-name]
+	
+* reworked entire build system to use GNU autotools
+* added Termite: src/termite
+* analysis results are exported to term representation
+* added --termoutput analysis switch	
 
 ********* Extra Files (skipping output of all Makefile.in files) *********
 :Extra file         aclocal.m4
@@ -191,20 +198,6 @@ Changes (Adrian)
 :Extra file         src/termite/tests/results/test_typedef.C.toprolog.err.log
 :Extra file         src/termite/tests/results/test_typedef.C.torose.err.log
 :Extra file         src/termite/tests/results/test_typedef.C.unparsed.C
-********* TESTED with **************
-(*)  automake (GNU automake) 1.4-p6
-(*)  autoconf (GNU Autoconf) 2.59
-(*)  (**) g++ (GCC) 3.3.5 (Debian 1:3.3.5-13)
-(**) gcc (GCC) 3.3.5 (Debian 1:3.3.5-13)
-(**) bison (GNU Bison) 1.875d
-(*)  doxygen 1.4.2
-(*)  dot version 2.2.1 (Fri Sep 30 13:22:44 UTC 2005)
-(*)  e-TeX (Web2C 7.4.5) 3.14159-2.1
-(*)  latex2html: Command not found.
-(*)  sqlite (requires g++ 3.3.2) /home/dquinlan/SQLite/sqliteCompileTree/bin/sqlite3: Command not found.
-
-(*)  Optional for use of ROSE (by users), but required for internal ROSE development (by ROSE project team)
-(**) Required for use of ROSE (and for all internal development)
 
 ********* Locally Modified *********
 >Locally modified   ChangeLog

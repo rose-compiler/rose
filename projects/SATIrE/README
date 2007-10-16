@@ -8,7 +8,7 @@ Program Analysis Generator (PAG) into C/C++ infrastructures
 that provide an abstract syntax tree. The infrastructure that 
 is fully supported is the C/C++ infrastructure LLNL-ROSE.
 
-SATIrE 0.7.4 was tested with 
+SATIrE 0.7.5 was tested with 
  - ROSE 0.8.10e
  - PAG 6.1.6.96
  - flex 2.5.33
@@ -23,100 +23,59 @@ SATIrE 0.7.4 was tested with
     i)  you must install LLNL-ROSE - http://www.llnl.gov/casc/rose/
     ii) you must install PAG - http://www.absint.com/pag/
 
- b) After installation of LLNL-ROSE and PAG set the following 
-    environment variables:
+ b) Unpack the satire tar-ball with:
+    tar xvzf SATIrE-0.7.5.tgz
 
-    - ROSE_INCLUDE (the include directory of installed LLNL-ROSE)
-    - ROSE_LIB (the lib directory of installed LLNL-ROSE)
-    - PAGDIR (the directory of installed PAG)
+ c) Go to the satire directory:
+    cd SATIrE-0.7.5
 
- c) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.7.4.tgz
-
- d) Go to the satire directory:
-    cd SATIrE-0.7.4
-
- e) Configure the sources for your platform
-
-    ./configure --help
+ d) Configure the sources for your platform and set the path for ROSE and PAG:
 
     e.g.    
     ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ --with-pagdir=/usr/local/pag
 
+    ./configure --help
+
     run 'make' for compiling all SATIrE modules and analyzers
-    run 'make install' to install SATIrE to the location specified by --prefix=
+    run 'make install' to install SATIrE to the location specified by --prefix=<INSTALL_PREFIX>
+    run 'make installcheck' to run SATIrE tests on the installation
 
- 
-    Now you are ready to specify, compile, and run an anlysis.
-
-------------------------------------------------------------
-(2) RUNNING AN EXAMPLE ANALYSIS THAT COMES WITH SATIrE
-------------------------------------------------------------
-
-FIXME: 
-    The scripts will respect these variables but will default to the 
-    locations specified during the configure run (recommended).
-
- a) Ensure that the following environment variables are set:
-    ROSE_INCLUDE (the include directory of installed ROSE)
-    ROSE_LIB (the lib directory of installed ROSE)
-    PAGDIR (the directory of installed PAG)
-
- b) We chose the example sl1rd:
-    [let's assume that you unpacked SATIrE-0.7.4.tgz in your home directory]
-    cd SATIrE-0.7.4/examples [go to the examples directory]
-    make                     [generate all required files in each analysis-dir]
-    cd sl1rd                 [go to the direcotry of analysis sl1rd]
-    make                     [compile the analyzer sl1rd]
-    sl1rd tests/rdtest1.C    [run the analyzer with test file rdtest1.C]
+     Now you are ready to specify, compile, and run an anlysis.
 
 ------------------------------------------------------------
-(3) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
+(2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
 ------------------------------------------------------------
 
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
 
- b) Ensure that the following environment variables are set:
-    ROSE_INCLUDE (the include directory of installed ROSE)
-    ROSE_LIB (the lib directory of installed ROSE)
-    PAGDIR (the directory of installed PAG)
-    SATIRE_INCLUDE (the include directory of installed SATIRE)
-    SATIRE_LIB (the lib directory of installed SATIRE)
-
- c) We chose the example sl1rd:
-    [let's assume that you unpacked SATIrE-0.7.4.tgz in your home directory]
-    make clean -C ~/SATIrE-0.7.4/examples [remove all generated files]
-    cp -r ~/SATIrE-0.7.4/examples/sl1rd . [copy all files and test files to your directory]
-    newanalysis sl1rd VarLabPairSetLifted [generate and configure all required files]
+ b) We chose the example sl1rd:
+    [let's assume that you unpacked SATIrE-0.7.5.tgz in your home directory]
+    cp -r ~/SATIrE-0.7.5/examples/sl1rd . [copy all files and test files to your directory]
+    newanalysis sl1rd                     [generate and configure all required files]
     cd sl1rd                              [change to the directory]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
     sl1rd --help                          [prints an overview of the available options]
     sl1rd tests/rdtest1.C                 [run the analyzer on the test file 'rdtest1.C']
     aisee sl1rd_result.gdl                [view the analysis result with aisee]
-    
+    sl1rd --sourceoutput tests/rdtest1.C  [generate an annotated source file tests/rose_rdtest1.C]
+    sl1rd --termoutput tests/rdtest1.C    [generate a term representation in tests/rdtest1.C.pl]
 
 ------------------------------------------------------------
-(4) CRAFTING A NEW ANALYSIS
+(3) CRAFTING A NEW ANALYSIS
 ------------------------------------------------------------
 
  a) Ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
 
- b) Ensure that the following environment variables are set:
-    ROSE_INCLUDE (the include directory of installed ROSE)
-    ROSE_LIB (the lib directory of installed ROSE)
-    PAGDIR (the directory of installed PAG)
-    SATIRE_INCLUDE (the include directory of installed SATIRE)
-    SATIRE_LIB (the lib directory of installed SATIRE)
+ b) mkdir <ANALYSIS_NAME>
 
- c) Run 'newanalysis <ANALYSIS_NAME> <CARRIER_TYPE>' to create an analysis of 
-    name <ANALYSIS_NAME> with a carrier type <CARRIER_TYPE>. This command
+ c) cd <ANALYSIS_NAME>
+
+ d) Implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
+
+ e) Run 'newanalysis <ANALYSIS_NAME>' to create an analysis of 
+    name <ANALYSIS_NAME>. This command
     creates a directory of name <ANALYSIS_NAME> and copies&configers several
-    files into that directory. (you can rerun newanalysis if you have not
-    decided on the name of the carrier-type yet later again)
-
- d) cd <ANALYSIS_NAME>
-
- e) Implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
+    files into that directory. (you can rerun newanalysis later again)
 
  f) Run 'make' to compile your analyzer
 
@@ -131,7 +90,7 @@ FIXME:
 
 
 ------------------------------------------------------------
-(5) FURTHER INFORMATION & CONTACT
+(4) FURTHER INFORMATION & CONTACT
 ------------------------------------------------------------
   
  a) Documentation that comes with the distribution can be found

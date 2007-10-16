@@ -9,6 +9,7 @@ fi
 if [ -e "$1" ]
 then
     echo "cleaning directory $1 ..."
+    make -C $1 clean
     rm $1/Makefile
     rm $1/main.h
     rm $1/main.C

@@ -49,7 +49,7 @@ installcheck-local:
 	echo "TERMITE tests"
 	echo "====================="
 	echo
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term constprop/tests/bigger.c bigger.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c bigger.pl bigger.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term constprop/tests/bigger.c >bigger.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose <bigger.pl >bigger.c
 
 	rm -rf $(testdir)

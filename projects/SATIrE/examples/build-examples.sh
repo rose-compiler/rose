@@ -1,19 +1,25 @@
- mkdir $(testdir)
-        echo "Testing sl1rd"
-        cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
-        chmod u+rwx -R $(testdir)/sl1rd
-        cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis sl1rd
-        $(MAKE) check -C $(testdir)/sl1rd
+TESTDIR=executable-examples
+BASEDIR=`pwd`
 
-        echo "Testing sl2rd"
-        cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
-        chmod u+rwx -R $(testdir)/sl2rd
-        cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis sl2rd
-        $(MAKE) check -C $(testdir)/sl2rd
+mkdir $TESTDIR
+echo "Testing sl1rd"
+cp -ur sl1rd $TESTDIR
+chmod u+rwx -R $TESTDIR/sl1rd
+cd $TESTDIR ; newanalysis sl1rd
+cd $BASEDIR
+make check -C $TESTDIR/sl1rd
 
-        echo "Testing constprop"
-        cp -ur $(top_srcdir)/examples/constprop $(testdir)
-        chmod u+rwx -R $(testdir)/constprop
-        cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-        $(MAKE) check -C $(testdir)/constprop
-#       rm -rf $(testdir)
+echo "Testing sl2rd"
+cp -ur sl2rd $TESTDIR
+chmod u+rwx -R $TESTDIR/sl2rd
+cd $TESTDIR ; newanalysis sl2rd
+cd $BASEDIR
+make check -C $TESTDIR/sl2rd
+
+echo "Testing constprop"
+cp -ur constprop $TESTDIR
+chmod u+rwx -R $TESTDIR/constprop
+cd $TESTDIR ; newanalysis constprop 
+cd $BASEDIR
+make check -C $TESTDIR/constprop
+
