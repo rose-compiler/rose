@@ -25,6 +25,9 @@ testdir=executable-examples
 
 installcheck-local:
 	mkdir $(testdir)
+	echo "PAG tests"
+	echo "====================="
+	echo
 	echo "Testing sl1rd"
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl1rd
@@ -42,4 +45,11 @@ installcheck-local:
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) check -C $(testdir)/constprop
-#	rm -rf $(testdir)
+
+	echo "TERMITE tests"
+	echo "====================="
+	echo
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term constprop/tests/bigger.c bigger.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c bigger.pl bigger.c
+
+	rm -rf $(testdir)

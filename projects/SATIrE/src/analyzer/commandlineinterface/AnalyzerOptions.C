@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.C,v 1.7 2007-09-28 08:36:25 adrian Exp $
+// $Id: AnalyzerOptions.C,v 1.8 2007-10-16 13:14:46 adrian Exp $
 
 #include "AnalyzerOptions.h"
 
@@ -42,7 +42,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "\n"
     "Analysis options:\n"
     "   --callstringlength <num>     set callstring length to <num> [default:0]\n"
-    "   --callstringinfinite         select infinite callstring (for non-resursive programs only)\n"
+    "   --callstringinfinite         select infinite callstring (for non-recursive programs only)\n"
     "   --cfgordering <num>          set ordering that is used by the iteration algorithm where\n"
     "                                <num> = 1 : dfs preorder [default]\n"
     "                                        2 : bfs preorder\n"
