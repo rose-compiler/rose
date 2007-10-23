@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.3 2007-07-15 02:02:27 markus Exp $
+// $Id: cfg_support.C,v 1.4 2007-10-23 13:24:48 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -47,6 +47,25 @@ std::string UndeclareStmt::unparseToString() const
   }
   label += "])";
   return label;
+}
+
+// GB (2007-10-23): Added this function to unparse the new members of the
+// ExternalCall node (the function expression and the list of parameter
+// variables).
+std::string ExternalCall::unparseToString() const
+{
+    std::stringstream label;
+    label << "ExternalCall(" << expr_to_string(function) << ", [";
+    assert(params != NULL);
+    std::list<SgVariableSymbol *>::const_iterator i = params->begin();
+    if (i != params->end())
+    {
+        label << (*i)->get_name().str();
+        for (++i; i != params->end(); ++i)
+            label << ", " << (*i)->get_name().str();
+    }
+    label << "])";
+    return label.str();
 }
 
 std::string CallBlock::print_paramlist() const 

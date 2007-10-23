@@ -369,8 +369,8 @@ Ir::createUndeclareStmt(std::list<SgVariableSymbol *> *v){
 }
 
 ExternalCall*
-Ir::createExternalCall(SgType *type_){
-  ExternalCall* n=new ExternalCall(type_);
+Ir::createExternalCall(SgExpression *function, std::list<SgVariableSymbol *> *params, SgType *type_){
+  ExternalCall* n=new ExternalCall(function, params, type_);
   configLocatedNode(n);
   return n;
 }

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.4 2007-09-28 08:36:25 adrian Exp $
+// $Id: cfg_funcs.C,v 1.5 2007-10-23 13:24:48 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -100,7 +100,8 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
     std::string result;
     
     if (external_call)
-        result = "EXTERNAL CALL";
+     // result = "EXTERNAL CALL";
+        result = external_call->unparseToString();
     else if (declare_stmt)
         result = declare_stmt->unparseToString();
     else if (undeclare_stmt)

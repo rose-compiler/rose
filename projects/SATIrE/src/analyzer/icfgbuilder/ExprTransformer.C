@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.3 2007-07-15 02:02:27 markus Exp $
+// $Id: ExprTransformer.C,v 1.4 2007-10-23 13:24:48 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -138,6 +138,7 @@ void ExprTransformer::visit(SgNode *node)
         else
             retval_block = NULL;
         CallBlock *call_block = NULL, *return_block = NULL;
+        ExternalCall *external_call = NULL;
         if (entries != NULL && !entries->empty())
         {
             call_block = new CallBlock(node_id++, CALL, procnum,
@@ -186,8 +187,12 @@ void ExprTransformer::visit(SgNode *node)
             BasicBlock *call_block
                 = new BasicBlock(node_id++, INNER, procnum);
             cfg->nodes.push_back(call_block);
-            call_block->statements.push_front(
-                    Ir::createExternalCall(call->get_type()));
+         // GB (2007-10-23): This now records the expression referring to
+         // the called function and the parameter list. Because the
+         // parameter list has not been computed yet, pass NULL for now.
+            external_call = 
+                    Ir::createExternalCall(call->get_function(), NULL, call->get_type());
+            call_block->statements.push_front(external_call);
 
             /* set links */
             if (last_arg_block != NULL)
@@ -212,6 +217,8 @@ void ExprTransformer::visit(SgNode *node)
             std::list<SgVariableSymbol *> *params =
                 evaluate_arguments(name, elist, first_arg_block,
                     find_called_memberfunc(call->get_function()));
+         // Set the parameter list for whatever kind of CFG nodes we
+         // computed above.
             if (call_block != NULL)
             {
                 call_block->paramlist = params;
@@ -221,6 +228,10 @@ void ExprTransformer::visit(SgNode *node)
             {
                 return_block->paramlist = params;
                 return_block->stmt->update_infolabel();
+            }
+            if (external_call != NULL)
+            {
+                external_call->set_params(params);
             }
         }
         /* replace call by its result */
@@ -498,56 +509,79 @@ void ExprTransformer::visit(SgNode *node)
 	}
       }
     } else if (isSgAndOp(node) || isSgOrOp(node)) {
-      SgBinaryOp *and_op = isSgBinaryOp(node);
+      SgBinaryOp *logical_op = isSgBinaryOp(node);
       RetvalAttribute *varnameattr
-	= (RetvalAttribute *) and_op->getAttribute("logical variable");
+	= (RetvalAttribute *) logical_op->getAttribute("logical variable");
       SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),
-						       and_op->get_type());
+						       logical_op->get_type());
       
       BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(if_block);
-      if (and_op->get_lhs_operand_i()->attributeExists("logical variable"))
+      if (logical_op->get_lhs_operand_i()->attributeExists("logical variable"))
         {
-	  RetvalAttribute* vna = (RetvalAttribute *) and_op->get_lhs_operand_i()->getAttribute("logical variable");
-	  SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),and_op->get_lhs_operand_i()->get_type());
+	  RetvalAttribute* vna = (RetvalAttribute *) logical_op->get_lhs_operand_i()->getAttribute("logical variable");
+	  SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),logical_op->get_lhs_operand_i()->get_type());
 	  LogicalIf* logicalIf=Ir::createLogicalIf(varexp);
 	  if_block->statements.push_front(logicalIf);
         } else {
-	  LogicalIf* logicalIf= Ir::createLogicalIf(and_op->get_lhs_operand_i());
+	  LogicalIf* logicalIf= Ir::createLogicalIf(logical_op->get_lhs_operand_i());
 	  if_block->statements.push_front(logicalIf);
 	}
-      
+
       BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(t_block);
-      BasicBlock *f_block;
+      BasicBlock *f_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(f_block);
+   // GB (2007-10-23): Create blocks for a nested branch to evaluate the rhs
+   // operand. These blocks are linked below; they are successors of the
+   // true or the false branch depending on whether the operator is && or ||.
+      BasicBlock *nested_t_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(nested_t_block);
+      nested_t_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
+                                                                    Ir::createBoolValExp(true))));
+      BasicBlock *nested_f_block = new BasicBlock(node_id++, INNER, procnum);
+      cfg->nodes.push_back(nested_f_block);
+      nested_f_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
+                                                                    Ir::createBoolValExp(false))));
+
+   // GB (2007-10-23): Compute the rhs operand of the logical operation.
+   // This is the expression in the AST or a reference to the logical
+   // variable associated with that expression, if any.
+      SgExpression *rhs_operand = logical_op->get_rhs_operand_i();
+      if (rhs_operand->attributeExists("logical variable"))
+      {
+	  RetvalAttribute* vna = (RetvalAttribute *) rhs_operand->getAttribute("logical variable");
+          rhs_operand = Ir::createVarRefExp(vna->get_str(), rhs_operand->get_type());
+      }
       
-      if(isSgAndOp(and_op)) {
-	SgAssignOp* assignOp=Ir::createAssignOp(Ir::createVarRefExp(var),and_op->get_rhs_operand_i());
-	t_block->statements.push_front(Ir::createExprStatement(assignOp));
-	
-	f_block = new BasicBlock(node_id++, INNER, procnum);
-	cfg->nodes.push_back(f_block);
+      if(isSgAndOp(logical_op)) {
+        t_block->statements.push_front(Ir::createLogicalIf(rhs_operand));
+        add_link(t_block, nested_t_block, TRUE_EDGE);
+        add_link(t_block, nested_f_block, FALSE_EDGE);
+        
 	SgAssignOp* assignOp2=Ir::createAssignOp(Ir::createVarRefExp(var),Ir::createBoolValExp(false));
 	f_block->statements.push_front(Ir::createExprStatement(assignOp2));
-      } else if(isSgOrOp(and_op)) {
+        add_link(f_block, after, NORMAL_EDGE);
+      } else if(isSgOrOp(logical_op)) {
 	t_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
 										  Ir::createBoolValExp(true))));
-	f_block = new BasicBlock(node_id++, INNER, procnum);
-	cfg->nodes.push_back(f_block);
-	f_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
-										  and_op->get_rhs_operand_i())));
+        add_link(t_block, after, NORMAL_EDGE);
+
+        f_block->statements.push_front(Ir::createLogicalIf(rhs_operand));
+        add_link(f_block, nested_t_block, TRUE_EDGE);
+        add_link(f_block, nested_f_block, FALSE_EDGE);
       } else {
 	assert(false); // impossible if outer 'if' remains unchanged
       }
       
       add_link(if_block, t_block, TRUE_EDGE);
       add_link(if_block, f_block, FALSE_EDGE);
-      add_link(t_block, after, NORMAL_EDGE);
-      add_link(f_block, after, NORMAL_EDGE);
+      add_link(nested_t_block, after, NORMAL_EDGE);
+      add_link(nested_f_block, after, NORMAL_EDGE);
       after = if_block;
       
-      if (isSgExpression(and_op->get_parent())) {
-	replaceChild(and_op->get_parent(), and_op,Ir::createVarRefExp(var));
+      if (isSgExpression(logical_op->get_parent())) {
+	replaceChild(logical_op->get_parent(), logical_op,Ir::createVarRefExp(var));
       }
       else if (root_var == NULL) {
 	root_var = var;
