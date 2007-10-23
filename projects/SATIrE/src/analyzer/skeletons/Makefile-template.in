@@ -9,7 +9,7 @@ SATIRE_DATA=@pkgdatadir@
 
 PAG = $(PAGDIR)/bin/pag
 CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(ANALYSIS)-out/src/ -I$(SATIRE_INCLUDE)
-LPATH = -L$(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB)
+LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB)
 LIBS = $(ANALYSIS).a -lsatire -ltermite -lrose -lrt -lpag
 
 all: $(ANALYSIS)

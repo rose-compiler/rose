@@ -7,7 +7,7 @@ EXTRA_DIST=main.C
 #bin_PROGRAMS = icfgbuilder
 icfgbuilder_SOURCES = main.C
 icfgbuilder_LDADD = \
-       -L$(ROSE_LIB_DIR) -lrose \
+       -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -lrose \
        -L$(PAG_LIB_DIR)  -lpag \
        ../../src/libsatire.a ../../src/analyzer/astaccess/syntree.o
 
