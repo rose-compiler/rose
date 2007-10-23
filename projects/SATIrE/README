@@ -8,7 +8,7 @@ Program Analysis Generator (PAG) into C/C++ infrastructures
 that provide an abstract syntax tree. The infrastructure that 
 is fully supported is the C/C++ infrastructure LLNL-ROSE.
 
-SATIrE 0.7.5 was tested with 
+SATIrE 0.7.6 was tested with 
  - ROSE 0.8.10e
  - PAG 6.1.6.96
  - flex 2.5.33
@@ -24,10 +24,10 @@ SATIrE 0.7.5 was tested with
     ii) you must install PAG - http://www.absint.com/pag/
 
  b) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.7.5.tgz
+    tar xvzf SATIrE-0.7.6.tgz
 
  c) Go to the satire directory:
-    cd SATIrE-0.7.5
+    cd SATIrE-0.7.6
 
  d) Configure the sources for your platform and set the path for ROSE and PAG:
 
@@ -49,8 +49,8 @@ SATIrE 0.7.5 was tested with
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
 
  b) We chose the example sl1rd:
-    [let's assume that you unpacked SATIrE-0.7.5.tgz in your home directory]
-    cp -r ~/SATIrE-0.7.5/examples/sl1rd . [copy all files and test files to your directory]
+    [let's assume that you unpacked SATIrE-0.7.6.tgz in your home directory]
+    cp -r ~/SATIrE-0.7.6/examples/sl1rd . [copy all files and test files to your directory]
     newanalysis sl1rd                     [generate and configure all required files]
     cd sl1rd                              [change to the directory]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
