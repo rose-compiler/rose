@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pignodelist.h,v 1.2 2007-03-08 15:36:48 markus Exp $
+// $Id: pignodelist.h,v 1.3 2007-10-23 14:17:36 gergo Exp $
 
 #ifndef H_PIGNODELIST
 #define H_PIGNODELIST
@@ -18,7 +18,7 @@ public:
         typename std::list<T, T2>::const_iterator i, j;
         j = l.end();
         for (i = l.begin(); i != j; ++i)
-            newlist->push_front(*i);
+            newlist->push_back(*i);
         first = newlist;
         second = newlist->begin();
     }
