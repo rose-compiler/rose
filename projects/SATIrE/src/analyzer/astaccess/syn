@@ -1,3 +1,7 @@
+!! GB (2007-10-23): This is NOT the syn file used by pig and installed for
+!! the user! Use the syn file in the satire/ subdirectory instead.
+
+
 SYNTAX
 START:Statement
 
