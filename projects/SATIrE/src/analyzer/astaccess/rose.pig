@@ -40,6 +40,12 @@ get:body(NODE, _, "DeclareStmt" | "UndeclareStmt", _, FIELD, _, _)
     return (void *) stmt->get_##FIELD();
 %}
 
+get:body(NODE, _, "ExternalCall", _, "params", _, _)
+%{
+    CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
+    return new PigNodeList(stmt->get_##FIELD());
+%}
+
 get:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, FIELD, _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);

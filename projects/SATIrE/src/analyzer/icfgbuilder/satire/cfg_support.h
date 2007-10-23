@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
+// $Id: cfg_support.h,v 1.2 2007-10-23 13:25:12 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -194,14 +194,25 @@ private:
     std::string str;
 };
 
+// GB (2007-20-23): Added members for the expression that refers to the
+// external function and for its parameter list.
 class ExternalCall : public IcfgStmt
 {
 public:
+    SgExpression *get_function() const { return function; }
+    std::list<SgVariableSymbol *> *get_params() const { return params; }
     SgType *get_type() const { return type; }
-    ExternalCall(SgType *type_) : type(type_) {}
+
+    ExternalCall(SgExpression *function_, std::list<SgVariableSymbol *> *params_, SgType *type_)
+      : function(function_), params(params_), type(type_) {}
+
+    void set_params(std::list<SgVariableSymbol *> *params_) { params = params_; }
+    std::string unparseToString() const;
     
 private:
     ExternalCall();
+    SgExpression *function;
+    std::list<SgVariableSymbol *> *params;
     SgType *type;
 };
 
