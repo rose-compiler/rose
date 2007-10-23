@@ -24,31 +24,31 @@ dist_pkgdata_DATA= \
 testdir=executable-examples
 
 installcheck-local:
-	mkdir $(testdir)
-	echo "PAG tests"
-	echo "====================="
-	echo
-	echo "Testing sl1rd"
+	mkdir -p $(testdir)
+	@echo "PAG tests"
+	@echo "====================="
+	@echo
+	@echo "Testing sl1rd"
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl1rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis sl1rd
 	$(MAKE) check -C $(testdir)/sl1rd
 
-	echo "Testing sl2rd"
+	@echo "Testing sl2rd"
 	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl2rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis sl2rd
 	$(MAKE) check -C $(testdir)/sl2rd
 
-	echo "Testing constprop"
+	@echo "Testing constprop"
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) check -C $(testdir)/constprop
 
-	echo "TERMITE tests"
-	echo "====================="
-	echo
+	@echo "TERMITE tests"
+	@echo "====================="
+	@echo
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term constprop/tests/bigger.c >bigger.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose <bigger.pl >bigger.c
 

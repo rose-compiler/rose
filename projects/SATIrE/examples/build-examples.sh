@@ -1,7 +1,7 @@
 TESTDIR=executable-examples
 BASEDIR=`pwd`
 
-mkdir $TESTDIR
+mkdir -p $TESTDIR
 echo "Testing sl1rd"
 cp -ur sl1rd $TESTDIR
 chmod u+rwx -R $TESTDIR/sl1rd
