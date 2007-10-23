@@ -1,3 +1,18 @@
+V0.7.6 2007-10-23 GB
+
+* required user changes:
+  - change analysis specifications that match on the ExternalCall constructor
+
+* Added the function expression and the parameter list to the ExternalCall
+  constructor.
+* Improved ICFG construction for logical expressions; the result assigned to
+  the logical variable is now always a boolean constant. Right-associative
+  expressions like a || (b && c) are still evaluated in a wrong order,
+  however.
+* Added the -rpath linker flag in several makefiles to encode the path to
+  the ROSE libraries in binaries we generate. This should make use of the
+  LD_LIBRARY_PATH variable unnecessary.
+
 V0.7.5 2007-10-16 AP
 
 Changes (Adrian)
