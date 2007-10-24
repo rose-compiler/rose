@@ -164,7 +164,12 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
   }
 
   /* add file info term */
-  t->addSubterm(PrologSupport::getFileInfo(astNode->get_file_info()));
+  Sg_File_Info* fi = astNode->get_file_info();
+  if (fi == NULL) {
+    fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+    std::cerr << "** WARNING: FileInfo for Node " << astNode << " was not set." << std::endl;
+  }
+  t->addSubterm(PrologSupport::getFileInfo(fi));
 
   /* remember the last term */
   mTerm = t;
