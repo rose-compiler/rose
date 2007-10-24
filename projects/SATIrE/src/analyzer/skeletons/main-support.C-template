@@ -58,12 +58,12 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,char* output, bool nore
 {
     if (verbose) std::cout << "collecting functions: ";
     ProcTraversal s;
-    s.traverseInputFiles(root, preorder);
+    s.traverse(root, preorder);
     if (verbose) std::cout << "... done" << std::endl;
 
     if (verbose) std::cout << "generating cfg ... ";
     CFGTraversal t(s.get_procedures());
-    t.traverseInputFiles(root, preorder);
+    t.traverse(root, preorder);
     if (verbose) std::cout << "done" << std::endl;
 
     if (verbose) std::cout << "testing cfg ... " << std::endl;

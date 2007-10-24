@@ -1,2 +1,9 @@
-2) check sl2rd why temp vars are not all eliminated
-3) move examples/experimental to top directory
+1) Support for array initializers
+   - currently they are ignored (we would need to generate a list of
+     assignments or a special construct accessible in a specification)
+2) Generation of analysis results as pragmas
+   - currently only comments are generated
+3) Support for initialization of global variables
+   - currently global variables show up in the ICFG, but the initialization
+     in global scope is not accessible. Thus, global variables do not
+     have a corresponding DeclStatement

@@ -29,7 +29,7 @@ int main ( int argc, char ** argv ) {
 	//pdfgen.generateInputFiles(root);
 	//create prolog term
 	BasicTermPrinter tp;
-	tp.traverseInputFiles(root);
+	tp.traverse(root);
 	PrologTerm* genTerm = tp.getTerm();
 	//ofstream ofile("orig_out.txt");
 	//ofile << (root->unparseToCompleteString());

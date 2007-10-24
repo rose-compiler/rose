@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: main.C,v 1.1 2007-09-21 09:16:22 adrian Exp $
+// $Id: main.C,v 1.2 2007-10-24 16:12:35 markus Exp $
 
 #include <rose.h>
 
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     SgProject *root = frontend(argc, argv);
     std::cout << "collecting functions... ";
     ProcTraversal s;
-    s.traverseInputFiles(root, preorder);
+    s.traverse(root, preorder);
     std::cout << "done" << std::endl;
 
     std::cout << "generating cfg..." << std::endl;

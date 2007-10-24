@@ -30,7 +30,7 @@ int main(int argc, char **argv)
   /* Handle command line option --textoutput */
   if(opt.analysisResultsTextOutput()) {
     PagDfiTextPrinter<DFI_STORE> p(analysis_info);
-    p.traverseInputFiles(ast_root, preorder);
+    p.traverse(ast_root, preorder);
   }
   
   /* Handle command line option --sourceoutput 
@@ -39,14 +39,14 @@ int main(int argc, char **argv)
    * file is generated (named rose_<inputfilename>) */
   if(opt.analysisResultsSourceOutput()) {
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
-    ca.traverseInputFiles(ast_root, preorder);
+    ca.traverse(ast_root, preorder);
     ast_root->unparse();
   }
 
   /* Handle command line option --termoutput */
   if(opt.analysisResultsTermOutput()) {
     TermPrinter<DFI_STORE> tp(analysis_info);
-    tp.traverseInputFiles(ast_root);
+    tp.traverse(ast_root);
 
     ofstream termfile;
     string fn = ast_root->getFileNames().front()+".pl";
