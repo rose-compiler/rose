@@ -1,18 +1,26 @@
-V0.7.6 2007-10-23 GB
+V0.7.6 2007-10-23 GB, MS, AP
 
 * required user changes:
   - change analysis specifications that match on the ExternalCall constructor
 
 * Added the function expression and the parameter list to the ExternalCall
-  constructor.
+  constructor. [GB]
 * Improved ICFG construction for logical expressions; the result assigned to
   the logical variable is now always a boolean constant. Right-associative
   expressions like a || (b && c) are still evaluated in a wrong order,
-  however.
+  however. [GB]
 * Added the -rpath linker flag in several makefiles to encode the path to
   the ROSE libraries in binaries we generate. This should make use of the
-  LD_LIBRARY_PATH variable unnecessary.
+  LD_LIBRARY_PATH variable unnecessary. [GB]
 
+* Changed skeleton files such that generated analyzers 
+  now operate on all source code that is included somehow (e.g. header files,
+  included C++ files, etc.) [MS]
+
+* Fixed newanalysis to operate without parameters [MS]
+
+* Fixed termite to handle missing file infos [AP]
+	
 V0.7.5 2007-10-16 AP
 
 Changes (Adrian)
@@ -281,7 +289,7 @@ Changes (Adrian)
 +Scheduled for add      src/termite/ChangeLog
 +Scheduled for add      src/termite/INSTALL
 +Scheduled for add      src/termite/LICENCE
-+Scheduled for add      src/termite/Makefile.am
+ for add      src/termite/Makefile.am
 +Scheduled for add      src/termite/NEWS
 +Scheduled for add      src/termite/PrologAtom.cpp
 +Scheduled for add      src/termite/PrologCompTerm.cpp
@@ -473,9 +481,9 @@ V0.7.2 2007-05-10 MS,GB
 
 * required user changes: none
 
-* Added support for syntactic lists in PAG specifications
-* Changed --prefix=syn to -Psyn in grato/Makefile
-* Fixed problem with file "other.h" (added to src/analyzer/astaccess)
+* Added support for syntactic lists in PAG specifications [GB]
+* Changed --prefix=syn to -Psyn in grato/Makefile [MS]
+* Fixed problem with file "other.h" (added to src/analyzer/astaccess) [MS]
 	
 * Tested with:
   - ROSE 0.8.8a (requires g++ 3.3-5.x)

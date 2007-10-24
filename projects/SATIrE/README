@@ -4,9 +4,9 @@ SATIrE: Static Analysis Tool Integration Engine
 
 SATIrE integrates static analysis tools into existing compiler
 infrastructures.  Currently the focus is on integration of AbsInt's
-Program Analysis Generator (PAG) into C/C++ infrastructures 
-that provide an abstract syntax tree. The infrastructure that 
-is fully supported is the C/C++ infrastructure LLNL-ROSE.
+Program Analysis Generator (PAG), the C/C++ infrastructure LLNL-ROSE,
+and support for an external format (reading and writing) in Prolog
+term syntax.
 
 SATIrE 0.7.6 was tested with 
  - ROSE 0.8.10e
@@ -40,7 +40,7 @@ SATIrE 0.7.6 was tested with
     run 'make install' to install SATIrE to the location specified by --prefix=<INSTALL_PREFIX>
     run 'make installcheck' to run SATIrE tests on the installation
 
-     Now you are ready to specify, compile, and run an anlysis.
+    Now you are ready to specify, compile, and run an anlysis.
 
 ------------------------------------------------------------
 (2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
@@ -51,8 +51,8 @@ SATIrE 0.7.6 was tested with
  b) We chose the example sl1rd:
     [let's assume that you unpacked SATIrE-0.7.6.tgz in your home directory]
     cp -r ~/SATIrE-0.7.6/examples/sl1rd . [copy all files and test files to your directory]
-    newanalysis sl1rd                     [generate and configure all required files]
     cd sl1rd                              [change to the directory]
+    newanalysis                           [generate and configure all required files]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
     sl1rd --help                          [prints an overview of the available options]
     sl1rd tests/rdtest1.C                 [run the analyzer on the test file 'rdtest1.C']
@@ -72,10 +72,8 @@ SATIrE 0.7.6 was tested with
 
  d) Implement <ANALYSIS_NAME>.optla and <ANALYSIS_NAME>.set
 
- e) Run 'newanalysis <ANALYSIS_NAME>' to create an analysis of 
-    name <ANALYSIS_NAME>. This command
-    creates a directory of name <ANALYSIS_NAME> and copies&configers several
-    files into that directory. (you can rerun newanalysis later again)
+ e) Run 'newanalysis' to have all required files copied into your
+    directory. (you can rerun newanalysis later again)
 
  f) Run 'make' to compile your analyzer
 
@@ -86,8 +84,7 @@ SATIrE 0.7.6 was tested with
 
     Note, the command 'newanalysis' never modifies *.set or *.optla files
     but does overwrite Makefile, main.C, main-support.C in the directory 
-    <ANALYSIS_NAME>, according to the parameters of the command.
-
+    where it is run. 
 
 ------------------------------------------------------------
 (4) FURTHER INFORMATION & CONTACT
@@ -95,8 +92,6 @@ SATIrE 0.7.6 was tested with
   
  a) Documentation that comes with the distribution can be found
     in the directory 'docs'.
-    A document that describes the overall picture, design, and philosophy
-    behind SATIrE is in preparation but not included yet.
     
  b) On the web information can be found at:
     http://www.complang.tuwien.ac.at/markus/satire
