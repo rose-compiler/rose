@@ -6,7 +6,7 @@ dist_pkgdata_DATA = main.C-template  main.h-template  main-support.C-template  M
 bin_SCRIPTS= newanalysis  undonewanalysis 
 CLEANFILES = newanalysis Makefile-template
 
-# neccessary to get the right path for the skeletons..
+# necessary to get the right path for the skeletons..
 # TODO: replace this with AC_SUBST()
 
 do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \

@@ -19,10 +19,8 @@ else
     ANALYSIS_DIR=$1
     ANALYSIS_NAME=$1
 fi
-#if [ x$SATIRE_INCLUDE = x ]
-#then
-  SATIRE_INCLUDE="@pkgdatadir@"
-#fi
+
+SATIRE_DATA="@pkgdatadir@"
 
 # do the actual work
 echo "creating new analysis $1..."
@@ -41,9 +39,9 @@ else
 fi
 
 echo "copying files..."
-cp $SATIRE_INCLUDE/main.h-template $ANALYSIS_DIR/main.h
-cp $SATIRE_INCLUDE/main.C-template $ANALYSIS_DIR/main.C
-cp $SATIRE_INCLUDE/main-support.C-template $ANALYSIS_DIR/main-support.C
+cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
+cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
+cp $SATIRE_DATA/main-support.C-template $ANALYSIS_DIR/main-support.C
 echo
 
 if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]
@@ -60,7 +58,7 @@ then
  echo "ANALYSIS = $ANALYSIS_NAME" > $ANALYSIS_DIR/Makefile
  CARRIER_TYPE=`egrep 'carrier[ ]*:' $ANALYSIS_DIR/$ANALYSIS_NAME.optla | awk --field-separator ':' '{ print $2 }' | sed 's/ //g'`
  echo "CARRIER_TYPE = $CARRIER_TYPE" >> $ANALYSIS_DIR/Makefile
- cat $SATIRE_INCLUDE/Makefile-template >> $ANALYSIS_DIR/Makefile
+ cat $SATIRE_DATA/Makefile-template >> $ANALYSIS_DIR/Makefile
 else
  echo "You must create $ANALYSIS_DIR/$ANALYSIS_NAME.optla before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
 fi

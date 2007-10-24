@@ -1,5 +1,4 @@
-%{
-/* -*- C++ -*-
+%{ /* -*- C++ -*-
    Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
              2007 Adrian Prantl
    see LICENSE in the root folder of this project
