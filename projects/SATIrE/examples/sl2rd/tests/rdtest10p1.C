@@ -1,6 +1,3 @@
-int inc1(int);
-int inc2(int);
-
 int main() {
   int x,r1,r2;
   x=5;

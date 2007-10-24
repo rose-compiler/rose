@@ -1,18 +1,21 @@
 EXTRA_DIST= \
 	sl1rd/sl1rd.set sl1rd/sl1rd.optla sl1rd/runtests \
-	sl1rd/tests/rderrtest1.C sl1rd/tests/rdtest1.C   \
-	sl1rd/tests/rdtest2.C    sl1rd/tests/rdtest3.C  \
-	sl2rd/tests/error1.c     sl2rd/tests/rdtest10.C \
-        sl2rd/tests/rdtest2.C    sl2rd/tests/rdtest5.C  \
-        sl2rd/tests/rdtest8a.C   sl2rd/tests/rdtest9a_c89.c \
-	sl2rd/tests/rderrtest1.C sl2rd/tests/rdtest11.C \
-        sl2rd/tests/rdtest3.C    sl2rd/tests/rdtest6.C  \
-	sl2rd/tests/rdtest8b.C   sl2rd/tests/rdtest0.C  \
-        sl2rd/tests/rdtest12.C   sl2rd/tests/rdtest4.C  \
-	sl2rd/tests/rdtest7.C    sl2rd/tests/rdtest8c.C \
-        sl2rd/tests/rdtest9b.C   sl2rd/tests/rdtest1.C  \
-        sl2rd/tests/rdtest4b.C   sl2rd/tests/rdtest7.ps \
-        sl2rd/tests/rdtest9a.C   \
+	sl1rd/tests/rderrtest1.C  sl1rd/tests/rdtest1.C   \
+	sl1rd/tests/rdtest2.C     sl1rd/tests/rdtest3.C  \
+	sl2rd/tests/error1.c      sl2rd/tests/rdtest10.C \
+        sl2rd/tests/rdtest2.C     sl2rd/tests/rdtest5.C  \
+        sl2rd/tests/rdtest8a.C    sl2rd/tests/rdtest9a_c89.c \
+	sl2rd/tests/rderrtest1.C  sl2rd/tests/rdtest11.C \
+        sl2rd/tests/rdtest3.C     sl2rd/tests/rdtest6.C  \
+	sl2rd/tests/rdtest8b.C    sl2rd/tests/rdtest0.C  \
+        sl2rd/tests/rdtest12.C    sl2rd/tests/rdtest4.C  \
+	sl2rd/tests/rdtest7.C     sl2rd/tests/rdtest8c.C \
+        sl2rd/tests/rdtest9b.C    sl2rd/tests/rdtest1.C  \
+        sl2rd/tests/rdtest4b.C    \
+        sl2rd/tests/rdtest9a.C    \
+        sl2rd/tests/rdtest10all.C sl2rd/tests/rdtest10p1.C\
+        sl2rd/tests/rdtest10p2.C  sl2rd/tests/rdtest10p3.C\
+\
         sl2rd/sl2rd.set sl2rd/sl2rd.optla sl2rd/runtests \
         constprop/constprop.set constprop/constprop.optla constprop/runtests \
 	constprop/tests/cconstants.c  constprop/tests/classes_and_returns.C  \
