@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.4 2007-10-23 13:24:48 gergo Exp $
+// $Id: ExprTransformer.C,v 1.5 2007-10-25 19:48:12 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -189,9 +189,12 @@ void ExprTransformer::visit(SgNode *node)
             cfg->nodes.push_back(call_block);
          // GB (2007-10-23): This now records the expression referring to
          // the called function and the parameter list. Because the
-         // parameter list has not been computed yet, pass NULL for now.
+         // parameter list has not been computed yet, pass an empty dummy
+         // list for now.
             external_call = 
-                    Ir::createExternalCall(call->get_function(), NULL, call->get_type());
+                    Ir::createExternalCall(call->get_function(),
+                                           new std::list<SgVariableSymbol *>,
+                                           call->get_type());
             call_block->statements.push_front(external_call);
 
             /* set links */
