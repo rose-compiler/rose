@@ -64,7 +64,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	echo $(MAKE) check -C $(testdir)/constprop
+	$(MAKE) check -C $(testdir)/constprop
 
 	@echo
 	@echo "========================================================================"

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.C,v 1.8 2007-10-16 13:14:46 adrian Exp $
+// $Id: AnalyzerOptions.C,v 1.9 2007-10-25 12:54:24 adrian Exp $
 
 #include "AnalyzerOptions.h"
 
@@ -18,6 +18,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   preInfoOff();
   postInfoOn();
   statisticsOff();
+  outputWholeProgramOff();
   gdlProcedureSubgraphsOn();
   //setStartBank(?);
   //setShareMin(?);
@@ -60,6 +61,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --textoutput                  output the analysis results for each statement on stdout\n"
     "   --sourceoutput                generate source file with annotated analysis results for each statement\n"
     "   --termoutput                  generate term (Prolog) representation with annotated analysis results\n"
+    "   --wholeprogram                source/termoutput: output self-contained source program\n"
     "   --help                        output this help message on stdout\n"
     "\n"
     " GDL output options:\n"
@@ -174,6 +176,10 @@ bool AnalyzerOptions::postInfo() { return _postInfo; }
 void AnalyzerOptions::statisticsOn() { _statistics=true; }
 void AnalyzerOptions::statisticsOff() { _statistics=false; }
 bool AnalyzerOptions::statistics() { return _statistics; }
+
+void AnalyzerOptions::outputWholeProgramOn() { _outputWholeProgram=true; }
+void AnalyzerOptions::outputWholeProgramOff() { _outputWholeProgram=false; }
+bool AnalyzerOptions::outputWholeProgram() { return _outputWholeProgram; }
 
 void AnalyzerOptions::gdlProcedureSubgraphsOn() { _gdlProcedureSubgraphs=true; }
 void AnalyzerOptions::gdlProcedureSubgraphsOff() { _gdlProcedureSubgraphs=false; }

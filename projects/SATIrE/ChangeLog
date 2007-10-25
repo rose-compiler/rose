@@ -1,3 +1,6 @@
+* added --wholeprogram option to the analyzer [AP]
+
+
 V0.7.6 2007-10-23 GB, MS, AP
 
 * required user changes:

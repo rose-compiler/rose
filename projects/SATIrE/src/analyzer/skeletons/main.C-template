@@ -7,6 +7,7 @@ int main(int argc, char **argv)
   /* parse the command line and extract analyzer options */
   CommandLineParser clp;
   AnalyzerOptions opt=clp.parse(argc,argv);
+  bool outputAll = opt.outputWholeProgram();
 
   /* set the PAG options as specified on the command line */
   setPagOptions(opt);
@@ -30,7 +31,9 @@ int main(int argc, char **argv)
   /* Handle command line option --textoutput */
   if(opt.analysisResultsTextOutput()) {
     PagDfiTextPrinter<DFI_STORE> p(analysis_info);
-    p.traverse(ast_root, preorder);
+
+    if (outputAll) p.traverse(ast_root, preorder);
+    else p.traverseInputFiles(ast_root, preorder);    
   }
   
   /* Handle command line option --sourceoutput 
@@ -39,14 +42,19 @@ int main(int argc, char **argv)
    * file is generated (named rose_<inputfilename>) */
   if(opt.analysisResultsSourceOutput()) {
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
-    ca.traverse(ast_root, preorder);
+
+    if (outputAll) ca.traverse(ast_root, preorder);
+    else ca.traverseInputFiles(ast_root, preorder);
+
     ast_root->unparse();
   }
 
   /* Handle command line option --termoutput */
   if(opt.analysisResultsTermOutput()) {
     TermPrinter<DFI_STORE> tp(analysis_info);
-    tp.traverse(ast_root);
+
+    if (outputAll) tp.traverse(ast_root);
+    else tp.traverseInputFiles(ast_root);
 
     ofstream termfile;
     string fn = ast_root->getFileNames().front()+".pl";

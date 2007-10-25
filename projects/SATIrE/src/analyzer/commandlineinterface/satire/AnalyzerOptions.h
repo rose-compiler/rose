@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.h,v 1.2 2007-09-28 08:36:25 adrian Exp $
+// $Id: AnalyzerOptions.h,v 1.3 2007-10-25 12:54:24 adrian Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -72,6 +72,10 @@ public:
   void statisticsOff();
   bool statistics();
 
+  void outputWholeProgramOn();
+  void outputWholeProgramOff();
+  bool outputWholeProgram();
+
   void gdlProcedureSubgraphsOn();
   void gdlProcedureSubgraphsOff();
   bool gdlProcedureSubgraphs();
@@ -129,7 +133,7 @@ private:
   int _startBank, _shareMin, _shareNum, _gcLow, _gcHigh;
   int _vivuLoopUnrolling, _vivu4MaxUnrolling;
   bool _animationGeneration, _resultGeneration, _helpMessageRequested, _pagVerbose, _quiet;
-  bool _postInfo, _preInfo, _gdlProcedureSubgraphs, _statistics, 
+  bool _postInfo, _preInfo, _outputWholeProgram, _gdlProcedureSubgraphs, _statistics, 
        _analysisResultsTextOutput, 
        _analysisResultsSourceOutput, 
        _analysisResultsTermOutput;

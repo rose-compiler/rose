@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.6 2007-09-28 08:36:25 adrian Exp $
+// $Id: CommandLineParser.C,v 1.7 2007-10-25 12:54:24 adrian Exp $
 
 #include <config.h>
 
@@ -62,7 +62,7 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
       cl.pagVerboseOn();
     } else if (!strcmp(argv[i], "--quiet")) {
       cl.quietOn();
-    }else if (!strcmp(argv[i], "--startbank")) {
+    } else if (!strcmp(argv[i], "--startbank")) {
       cl.setStartBank(atoi(argv[++i]));
     } else if (!strcmp(argv[i], "--sharemin")) {
       cl.setShareMin(atoi(argv[++i]));
@@ -76,6 +76,8 @@ AnalyzerOptions CommandLineParser::parse(int argc, char**argv) {
       cl.preInfoOff();
     } else if (!strcmp(argv[i], "--no_postinfo")) {
       cl.postInfoOff();
+    } else if (!strcmp(argv[i], "--wholeprogram")) {
+      cl.outputWholeProgramOn();
     } else if (!strcmp(argv[i], "--no_proceduresubgraphs")) {
       cl.gdlProcedureSubgraphsOff();
     } else if (!strcmp(argv[i], "--textoutput")) {
