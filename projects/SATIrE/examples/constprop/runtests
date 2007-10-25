@@ -1,8 +1,23 @@
 #!/bin/sh 
 
-./constprop tests/classes2.C || exit 1
-./constprop tests/blocks.c   || exit 1
+FILES=`ls tests/*.[cC]`
 
-./constprop tests/blocks.c --textoutput   || exit 1
-./constprop tests/blocks.c --termoutput   || exit 1
-./constprop tests/blocks.c --sourceoutput || exit 1
+# Known to work
+./constprop tests/classes2.C >/dev/null || exit 1
+./constprop tests/blocks.c   >/dev/null || exit 1
+
+./constprop tests/blocks.c --textoutput   >/dev/null || exit 1
+./constprop tests/blocks.c --termoutput   >/dev/null || exit 1
+./constprop tests/blocks.c --sourceoutput >/dev/null || exit 1
+
+# possibly buggy
+echo $FILES
+for file in $FILES;
+do
+  echo "######## Testing $file"
+  set -x
+  ./constprop $file --textoutput    >/dev/null || exit 1
+  ./constprop $file --termoutput    >/dev/null || exit 1
+  ./constprop $file --sourceoutput  >/dev/null || exit 1
+  set +x
+done

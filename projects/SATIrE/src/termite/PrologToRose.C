@@ -24,7 +24,12 @@ PrologToRose::toRose(PrologTerm* t) {
 		string termType = t->getName();
 		/* get type */
 		PrologAtom* nterm = dynamic_cast<PrologAtom*>(c->at(0));
-		ROSE_ASSERT(nterm != NULL);
+		if (nterm == NULL) {
+		  cerr << "** ERROR: Term has no type argument >>" 
+		       << t->getRepresentation() << "<<" << endl;
+		  ROSE_ASSERT(0);
+		}
+		
 		string tname = nterm->getName();
 		debug("unparsing " + tname + "\n");
 		/* depending on the type, call other static member functions*/
@@ -57,12 +62,22 @@ PrologToRose::toRose(PrologTerm* t) {
 	return node;
 }
 
+static void assert_arity(PrologCompTerm* t, int arity) {
+  if (t->getArity() != arity) {
+    cerr << "** ERROR: Term >>" 
+	 << t->getRepresentation() << "<<" 
+	 << " does not have arity of " << arity 
+	 << endl;
+    ROSE_ASSERT(0);
+  }
+}
+
 /** create ROSE-IR for unary node*/
 SgNode*
 PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
 	debug("unparsing unary");
 	/* assert correct arity of term*/
-	ROSE_ASSERT(t->getArity() == 4);
+	assert_arity(t, 4);
 	/*get child node (prefix traversal step)*/
 	SgNode* child1 = toRose(t->at(1));
 	/*create file info and check it*/
@@ -128,7 +143,7 @@ SgNode*
 PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
 	debug("unparsing binary");
 	/* assert correct arity of term*/
-	ROSE_ASSERT(t->getArity() == 5);
+	assert_arity(t, 5);
 	/*get child nodes (prefix traversal step)*/
 	SgNode* child1 = toRose(t->at(1));
 	SgNode* child2 = toRose(t->at(2));
@@ -179,7 +194,7 @@ SgNode*
 PrologToRose::ternaryToRose(PrologCompTerm* t,string tname) {
 	debug("unparsing ternary");
 	/* assert correct arity of term*/
-	assert(t->getArity()== 6);
+	assert_arity(t, 6);
 	/*get child nodes (prefix traversal step)*/
 	SgNode* child1 = toRose(t->at(1));
 	SgNode* child2 = toRose(t->at(2));
@@ -220,7 +235,7 @@ SgNode*
 PrologToRose::quaternaryToRose(PrologCompTerm* t,string tname) {
 	debug("unparsing quaternary");
 	/* assert correct arity of term*/
-	assert(t->getArity()== 7);
+	assert_arity(t, 7);
 	/*get child nodes (prefix traversal step)*/
 	SgNode* child1 = toRose(t->at(1));
 	SgNode* child2 = toRose(t->at(2));
@@ -316,7 +331,7 @@ SgNode*
 PrologToRose::leafToRose(PrologCompTerm* t,string tname) {
 	debug("unparsing leaf");
 	/* assert correct arity of term*/
-	assert(t->getArity()== 3);
+	assert_arity(t, 3);
 	/* create file info and check it*/
 	Sg_File_Info* fi = createFileInfo(t->at(2));
 	testFileInfo(fi);
@@ -403,7 +418,7 @@ PrologToRose::createFileInfo(PrologTerm* t) {
 		PrologCompTerm* u = dynamic_cast<PrologCompTerm*>(t);
 		assert((PrologCompTerm*) 0 != u);	
 		assert(u->getName() == "file_info");
-		assert(u->getArity()== 3);
+		assert_arity(u, 3);
 		if(u->at(0)->getName() != "compilergenerated") {
 			/* a filename is present => retrieve data from term and generete node*/
 			PrologString* filename = dynamic_cast<PrologString*>(u->at(0));
@@ -740,7 +755,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
 		/* get value and name, create a dummy declaration*/
-		ROSE_ASSERT(annot->getArity() == 4);
+		assert_arity(annot, 4);
 		int value = toInt(annot->at(0));
 		SgName v_name = *toStringP(annot->at(1));
 		SgEnumDeclaration* decdummy = dynamic_cast<SgEnumDeclaration*>(toRose(annot->at(2)));
