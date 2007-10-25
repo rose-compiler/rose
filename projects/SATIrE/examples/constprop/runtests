@@ -1,8 +1,15 @@
 #!/bin/sh 
 
+# Basic test script
+# (C) 2007 Adrian Prantl
+
 FILES=`ls tests/*.[cC]`
 MODES="--textoutput --termoutput --sourceoutput"
 OPTIONS="--wholeprogram --preinfo --postinfo"
+
+ALL=
+SUCESS=
+FAILED=
 
 # Known to work
 ./constprop tests/classes2.C >/dev/null || exit 1
@@ -22,15 +29,49 @@ for mode in $MODES; do
 	echo "######## on file $file"
 
 	# Without options
-	echo "./constprop $file $mode >/dev/null || exit 1"
-	./constprop $file $mode >/dev/null || exit 1
+	echo "./constprop $file $mode"
+	./constprop $file $mode >/dev/null
+
+	if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$mode"
+	else FAILED="$FAILED $file$mode"; fi
+	ALL="$ALL $file$mode"
 
 	# for each option
 	# TODO: for each combination of options
 	for option in $OPTIONS; do
 
-	    echo "./constprop $file $mode $option >/dev/null || exit 1"
-	    ./constprop $file $mode $option >/dev/null || exit 1
+	    echo "./constprop $file $mode $option"
+	    ./constprop $file $mode $option >/dev/null
+
+	    if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$mode$option"
+	    else FAILED="$FAILED $file$mode$option"; fi
+	    ALL="$ALL $file$mode$option"
 	done 
     done
 done
+
+
+
+echo "########################################################################"
+echo "# SATIrE automagic test report, `date`"
+echo "########################################################################"
+echo
+
+TOTAL=`echo $ALL    |wc -w`
+GOOD=`echo  $SUCCESS|wc -w`
+BAD=`echo   $FAILED |wc -w`
+PERCENT=`echo $GOOD*100/$TOTAL|bc`
+
+echo "[$GOOD/$TOTAL] = $PERCENT% succeeded!" # FIXME: integer only
+#if [ -n "$SUCCESS" ]; then 
+#    echo [$SUCESS]
+#fi
+
+echo "[$BAD/$TOTAL] failed:"
+if [ -n "$FAILED" ]; then 
+    for f in $FAILED; do
+	echo $f
+    done
+    exit 1
+fi
+echo "########################################################################"
