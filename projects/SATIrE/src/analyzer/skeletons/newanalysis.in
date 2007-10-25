@@ -10,7 +10,7 @@
 # set -x
 
 # Set default values
-CURRENDIR=`pwd`
+CURRENTDIR=`pwd`
 if [ x$1 = x ]
 then
     ANALYSIS_DIR=$CURRENTDIR
