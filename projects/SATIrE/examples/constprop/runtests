@@ -62,7 +62,7 @@ GOOD=`echo  $SUCCESS|wc -w`
 BAD=`echo   $FAILED |wc -w`
 PERCENT=`echo $GOOD*100/$TOTAL|bc`
 
-echo "[$GOOD/$TOTAL] = $PERCENT% succeeded!" # FIXME: integer only
+echo "[$GOOD/$TOTAL] succeeded ($PERCENT%)!" # FIXME: integer only
 #if [ -n "$SUCCESS" ]; then 
 #    echo [$SUCESS]
 #fi

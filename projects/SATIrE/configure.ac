@@ -45,10 +45,18 @@ AC_SUBST(PAG_LIB_DIR)
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-ledg':
 #AC_CHECK_LIB([edg], [main])
-AC_CHECK_LIB([m], [fcosf])
-AC_CHECK_LIB([rose], [SgTreeCopy])
-AC_CHECK_LIB([rt], [clock_gettime])
-AC_CHECK_LIB([pag], [pag_version])
+AC_SEARCH_LIBS([fcosf], [m])
+AC_SEARCH_LIBS([clock_gettime], [rt])
+AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"], 
+             [echo "Could not find -lpag."
+              echo "Please consider using one of the --with-pag* options."
+              exit -1 ],
+              [-L${PAG_LIB_DIR}])
+AC_CHECK_LIB([rose], [PDF_close], [echo "Found ROSE!"], 
+             [echo "Could not find -lrose."
+	      echo "Please consider using one of the --with-rose* options."
+	      exit -1 ], 
+             [-L${ROSE_LIB_DIR}])
 
 # Checks for header files.
 AC_HEADER_STDC

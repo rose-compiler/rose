@@ -1,5 +1,5 @@
 * added --wholeprogram option to the analyzer [AP]
-
+* fixed ./configure checks for ROSE and PAG [AP]
 
 V0.7.6 2007-10-23 GB, MS, AP
 
