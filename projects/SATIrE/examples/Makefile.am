@@ -38,6 +38,18 @@ testdir=executable-examples
 
 installcheck-local:
 	mkdir -p $(testdir)
+
+	@echo
+	@echo "========================================================================"
+	@echo "TERMITE tests"
+	@echo "========================================================================"
+	@echo
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term constprop/tests/bigger.c >TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose <TEST1.pl >TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST2.c >TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose <TEST3.pl >TEST4.c
+
+
 	@echo "========================================================================"
 	@echo "PAG tests"
 	@echo "========================================================================"
@@ -65,15 +77,5 @@ installcheck-local:
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) check -C $(testdir)/constprop
-
-	@echo
-	@echo "========================================================================"
-	@echo "TERMITE tests"
-	@echo "========================================================================"
-	@echo
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term constprop/tests/bigger.c >TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose <TEST1.pl >TEST2.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST2.c >TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose <TEST3.pl >TEST4.c
 
 	rm -rf $(testdir)

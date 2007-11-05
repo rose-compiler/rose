@@ -121,55 +121,67 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
    *   a list of successor nodes.
    */
 
-  PrologCompTerm* t;
-  /* depending on the number of successors, use different predicate names*/
-  if(AstTests::numSuccContainers(astNode))
-    t = listTerm(astNode, synList);
-  else {  
-    switch (AstTests::numSingleSuccs(astNode)) {
-    case 0:
-      t = leafTerm(astNode, synList);
-      break;
-    case 1:
-      t = unaryTerm(astNode, synList);
-      break;
-    case 2:
-      t = binaryTerm(astNode, synList);
-      break;
-    case 3:
-      t = ternaryTerm(astNode, synList);
-      break;
-    case 4:
-      t = quaternaryTerm(astNode, synList);
-      break;
-    default:
-      t = listTerm(astNode, synList);
-      break;
-    }
-  }
-  /* add node specific information to the term*/
-  PrologSupport::addSpecific(astNode,t);
-  PrologCompTerm* annot = (PrologCompTerm*)t->getSubTerms().back();
-  assert(annot);
+  PrologTerm* t;
 
-  /* add analysis information to the term*/
-  if (SgStatement* n = isSgStatement(astNode)) {
-    /* analysis result */
-    annot->addSubterm(getAnalysisResult(n));
-  } else {
-    /* empty analysis result */
-    PrologCompTerm* ar = new PrologCompTerm("analysis_result");
-    ar->addSubterm(new PrologAtom("null"));
-    annot->addSubterm(ar);
-  }
-
-  /* add file info term */
+  /* See if this node is intended to be unparsed -> decls inserted by EDG will be stripped */
   Sg_File_Info* fi = astNode->get_file_info();
   if (fi == NULL) {
     fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-    std::cerr << "** WARNING: FileInfo for Node " << astNode << " was not set." << std::endl;
+    std::cerr << "** WARNING: FileInfo for Node " << astNode 
+	      << " \"" << astNode->unparseToString() << "\" was not set." << std::endl;
   }
-  t->addSubterm(PrologSupport::getFileInfo(fi));
+
+  if (!fi->isFrontendSpecific()) {
+
+    /* depending on the number of successors, use different predicate names*/
+    if(AstTests::numSuccContainers(astNode))
+      t = listTerm(astNode, synList);
+    else {  
+      switch (AstTests::numSingleSuccs(astNode)) {
+      case 0:
+	t = leafTerm(astNode, synList);
+	break;
+      case 1:
+	t = unaryTerm(astNode, synList);
+	break;
+      case 2:
+	t = binaryTerm(astNode, synList);
+	break;
+      case 3:
+	t = ternaryTerm(astNode, synList);
+	break;
+      case 4:
+	t = quaternaryTerm(astNode, synList);
+	break;
+      default:
+	t = listTerm(astNode, synList);
+	break;
+      }
+    }
+    /* add node specific information to the term*/
+    PrologSupport::addSpecific(astNode, (PrologCompTerm*)t);
+    PrologCompTerm* annot = (PrologCompTerm*)((PrologCompTerm*)t)->getSubTerms().back();
+    assert(annot);
+
+    /* add analysis information to the term*/
+    if (SgStatement* n = isSgStatement(astNode)) {
+      /* analysis result */
+      annot->addSubterm(getAnalysisResult(n));
+    } else {
+      /* empty analysis result */
+      PrologCompTerm* ar = new PrologCompTerm("analysis_result");
+      ar->addSubterm(new PrologAtom("null"));
+      annot->addSubterm(ar);
+    }
+
+    /* add file info term */
+    ((PrologCompTerm*)t)->addSubterm(PrologSupport::getFileInfo(fi));
+  }
+  else {
+    t = new PrologAtom("null");
+  }
+
+
 
   /* remember the last term */
   mTerm = t;
@@ -334,7 +346,10 @@ TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList
   SynthesizedAttributesList::iterator it;
   it = synList.begin();
   while(it !=synList.end()) {
-    l->addElement(*it);
+    /* strip "null" Atoms */
+    PrologAtom* atom = dynamic_cast<PrologAtom*>(*it);
+    if (!(atom && (atom->getName() == "null")))
+      l->addElement(*it);
     it++;
   }
   /* add list to term*/
