@@ -70,8 +70,10 @@ echo "[$GOOD/$TOTAL] succeeded ($PERCENT%)!" # FIXME: integer only
 echo "[$BAD/$TOTAL] failed:"
 if [ -n "$FAILED" ]; then 
     for f in $FAILED; do
-	echo $f
+	echo "  $f"
     done
-    exit 1
+    echo "Press <Ctrl-C> to abort or <Return> to continue"
+    read 
+    #exit 1
 fi
 echo "########################################################################"
