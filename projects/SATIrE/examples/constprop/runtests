@@ -20,6 +20,19 @@ FAILED=
 ./constprop tests/blocks.c --sourceoutput >/dev/null || exit 1
 
 # possibly buggy
+DELIM=§
+
+# generate all permutations of options
+PERMUTATIONS="$DELIM"
+for opt in $OPTIONS; do
+    newperms=
+    for perm in $PERMUTATIONS; do
+        newperms="$newperms $perm"
+        newperms="$newperms $perm$DELIM$opt"
+    done
+    PERMUTATIONS="$newperms"
+done
+
 for mode in $MODES; do
 
     echo "######## ######## Testing mode \"$mode\""
@@ -28,24 +41,17 @@ for mode in $MODES; do
 
 	echo "######## on file $file"
 
-	# Without options
-	echo "./constprop $file $mode"
-	./constprop $file $mode >/dev/null
+	# for each option (even no options)
+	for option in $PERMUTATIONS; do
 
-	if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$mode"
-	else FAILED="$FAILED $file$mode"; fi
-	ALL="$ALL $file$mode"
+            option_with_space=${option//$DELIM/ }
 
-	# for each option
-	# TODO: for each combination of options
-	for option in $OPTIONS; do
+	    echo "./constprop $file $mode $option_with_space"
+	    ./constprop $file $mode $option_with_space >/dev/null
 
-	    echo "./constprop $file $mode $option"
-	    ./constprop $file $mode $option >/dev/null
-
-	    if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$mode$option"
-	    else FAILED="$FAILED $file$mode$option"; fi
-	    ALL="$ALL $file$mode$option"
+	    if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$DELIM$mode$DELIM$option"
+	    else FAILED="$FAILED $file$DELIM$mode$DELIM$option"; fi
+	    ALL="$ALL $file$DELIM$mode$DELIM$option"
 	done 
     done
 done
@@ -64,12 +70,13 @@ PERCENT=`echo $GOOD*100/$TOTAL|bc`
 
 echo "[$GOOD/$TOTAL] succeeded ($PERCENT%)!" # FIXME: integer only
 #if [ -n "$SUCCESS" ]; then 
-#    echo [$SUCESS]
+#    echo [$SUCCESS]
 #fi
 
 echo "[$BAD/$TOTAL] failed:"
 if [ -n "$FAILED" ]; then 
     for f in $FAILED; do
+        f=${f//$DELIM/ }
 	echo "  $f"
     done
     echo "Press <Ctrl-C> to abort or <Return> to continue"
