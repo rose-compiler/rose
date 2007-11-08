@@ -40,9 +40,15 @@ fi
 
 echo "copying files..."
 cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
-cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
 cp $SATIRE_DATA/main-support.C-template $ANALYSIS_DIR/main-support.C
 echo
+
+if [ -e "$ANALYSIS_DIR/main.C" ]
+then
+  echo "$ANALYSIS_DIR/main.C exists and remains in $ANALYSIS_DIR. remove main.C and call $0 if you want a fresh copy."
+else
+  cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
+fi
 
 if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]
 then
