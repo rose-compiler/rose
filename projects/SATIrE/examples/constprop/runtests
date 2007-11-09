@@ -19,7 +19,7 @@ FAILED=
 ./constprop tests/blocks.c --termoutput   >/dev/null || exit 1
 ./constprop tests/blocks.c --sourceoutput >/dev/null || exit 1
 
-# possibly buggy
+# possibly buggy testcases
 DELIM=§
 
 # generate all permutations of options

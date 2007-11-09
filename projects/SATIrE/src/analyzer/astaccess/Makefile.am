@@ -14,7 +14,6 @@ libAstAccess_a_SOURCES = pag_support.C
 
 BUILT_SOURCES = satire/syntree.h  satire/syntree.c
 CLEANFILES =    satire/syntree.h  satire/syntree.c \
-	               syntree.h         syntree.c \
                       pig_temp.h        pig_temp.c \
                      pig_temp2.h       pig_temp2.c 
 
@@ -36,8 +35,8 @@ syntree.o: satire/syntree.c satire/syntree.h
 $(PIG):
 	$(MAKE) -C ../../pig
 
-satire/syntree.h satire/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig  $(PIG)
+satire/syntree.h satire/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig $(PIG)
 	$(PIG) -ip $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig
         # An ugly hack indeed, but haven't found a better way to confine those header files into include/satire
 	mkdir -p satire
-	cp syntree.h syntree.c satire/
+	mv syntree.h syntree.c satire/

@@ -8,7 +8,7 @@ BACKENDSOURCEFILES = GBackEnd.C GTextBackEnd.C GDotBackEnd.C GCocoBackEnd.C
 
 GRATOHEADERS = GrammarIr.h GBackEnd.h GTextBackEnd.h GTextTransformation.h GDotBackEnd.h GProperty.h GSequenceVisitor.h GCocoBackEnd.h 
 
-include_HEADERS = $(GRATOHEADERS) parser_decls.h setalgorithms.h
+noinst_HEADERS = $(GRATOHEADERS) parser_decls.h setalgorithms.h
 libgrato_a_SOURCES = $(IRSOURCEFILES) $(BACKENDSOURCEFILES) synparser.y++ synscanner.l++
 
 AM_YFLAGS = -g -d --name-prefix=syn

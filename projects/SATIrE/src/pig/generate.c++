@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: generate.c++,v 1.4 2007-04-14 13:48:33 pr009 Exp $
+// $Id: generate.c++,v 1.5 2007-11-09 11:16:24 adrian Exp $
 
 #include <fstream>
 #include <vector>
@@ -295,7 +295,12 @@ void printMatches(std::string &type, std::string &constructor,
 
 void preprocess(std::string opts, std::string infile, std::string outfile)
 {
-    std::system(("cpp -P " + opts + ' ' + infile + " -o " + outfile).c_str());
+  std::string cmd = "cpp -P " + opts + ' ' + infile + " -o " + outfile;
+  if (std::system(cmd.c_str()) != 0) {
+    std::cerr << cmd << std::endl 
+	      << "** ERROR Invocation of cpp failed" << std::endl;
+    exit(-1);
+  }
 }
 
 void prepost(const char *infile, const char *outfile, std::string &pre,
