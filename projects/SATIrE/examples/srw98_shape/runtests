@@ -15,20 +15,20 @@ FAILED=
 
 # possible buggy testcases
 
-DELIM=§
+DELIM=%
 PERMUTATIONS="$DELIM"
-#if [ $GENERATE_PERMUTATIONS -eq "0" ]; then
+if [ $GENERATE_PERMUTATIONS -eq "0" ]; then
     PERMUTATIONS="$PERMUTATIONS $OPTIONS"
-#else
-#    for opt in $OPTIONS; do
-#        newperms=
-#        for perm in $PERMUTATIONS; do
-#            newperms="$newperms $perm"
-#            newperms="$newperms $perm$DELIM$opt"
-#        done
-#        PERMUTATIONS="$newperms"
-#    done
-#fi
+else
+    for opt in $OPTIONS; do
+        newperms=
+        for perm in $PERMUTATIONS; do
+            newperms="$newperms $perm"
+            newperms="$newperms $perm$DELIM$opt"
+        done
+        PERMUTATIONS="$newperms"
+    done
+fi
 
 
 echo "######## ######## Testing mode \"$MODES\""
@@ -62,20 +62,21 @@ echo
 TOTAL=`echo $ALL    |wc -w`
 GOOD=`echo  $SUCCESS|wc -w`
 BAD=`echo   $FAILED |wc -w`
-PERCENT=`echo $GOOD*100/$TOTAL|bc`
+GOOD_PERC=`echo $GOOD*100/$TOTAL|bc`
+BAD_PERC=`echo $BAD*100/$TOTAL|bc`
 
-echo "[$GOOD/$TOTAL] succeeded ($PERCENT%)!" # FIXME: integer only
+echo "[$GOOD/$TOTAL] succeeded ($GOOD_PERC%)!" # FIXME: integer only
 #if [ -n "$SUCCESS" ]; then 
 #    echo [$SUCCESS]
 #fi
 
-echo "[$BAD/$TOTAL] failed:"
+echo "[$BAD/$TOTAL] failed ($BAD_PERC%):"
 if [ -n "$FAILED" ]; then 
     for f in $FAILED; do
         f=${f//$DELIM/ }
 	echo "  $f"
     done
-    echo "Press <Ctrl-C> to abort or <Return> to continue"
+    #echo "Press <Ctrl-C> to abort or <Return> to continue"
     #read 
     #exit 1
 fi
