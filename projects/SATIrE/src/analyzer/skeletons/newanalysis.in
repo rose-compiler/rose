@@ -15,7 +15,7 @@ do
   case $Option in
     u) echo "Will not overwrite modified files"; UPDATE="T" ;;
     *) echo "usage: newanalysis [-uh] <name of analysis> <type of analysis carrier>"
-       echo "If the -u options is specified, newanalysis will not overwrite exitsting files"
+       echo "If the -u option is specified, newanalysis will not overwrite any existing files."
        exit 1 ;;
   esac
 done
