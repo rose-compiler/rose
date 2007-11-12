@@ -1,53 +1,35 @@
-#include "srw98_data.h"
+struct List {
+  List(int n):next(0),val(n) {
+  }
+  List* next;
+  int val;
+};
 
-
-L* createList(int n){
-	L* listHead=0;
-	L* newElement;
-	
-	while(n>0) {
-		newElement = new L;
-		newElement->next = listHead;
-		listHead = newElement;
-		n--;
-	}
-		return listHead;
+void insert(List* x, List* e) {
+  List* y;
+  List* t;
+  y=x;
+  while(y->next!=0 && (y->next->val < e->val)) {
+    y=y->next;
+  }
+  t=y->next;
+  e->next=t;
+  y->next=e;
+  t=0;
+  e=0;
+  y=0;
 }
 
-void insertList(L* destination, L* source, int pos) {
-	L* dest;
-	L* src;
-	L* srcLast;
-
-	dest = destination;
-	src = source;
-
-	srcLast = src;
-	while(srcLast->next!=0){
-		srcLast = srcLast->next;
-	}
-
-	while((dest->next != 0) && (pos !=0)) {
-		dest = dest->next;
-		pos--;
-	}
-	
-	srcLast->next = dest->next;
-	dest->next=src;
-
-	dest=0;
-	src=0;
-	srcLast=0;
+int main() {
+  List* acyclicList=new List(-1);
+  int vals[]={2,5,3,7,4,-1};
+  int i=0;
+  while(vals[i]!=-1) {
+    List* e;
+    e=new List(vals[i]);
+    insert(acyclicList,e);
+    i++;
+  }
 }
 
-int main(){
-	L* list1;
-	L* list2;
-
-	list1 = createList(5);
-	list2 = createList(3);
-
-	insertList(list1,list2,3);
-
-	return 0;
-}
+  
