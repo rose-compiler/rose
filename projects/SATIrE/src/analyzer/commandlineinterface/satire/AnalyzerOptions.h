@@ -1,5 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.h,v 1.3 2007-10-25 12:54:24 adrian Exp $
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
+// $Id: AnalyzerOptions.h,v 1.4 2007-11-12 15:37:56 pr012 Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -11,96 +11,41 @@
 
 class AnalyzerOptions {
 public:
-  enum Language {Language_C89,Language_C99,Language_CPP};
   AnalyzerOptions();
+  virtual ~AnalyzerOptions();
+
   std::string toString();
-  std::string getAnimationDirectoryName();
-  void setAnimationDirectoryName(std::string);
-  std::string getProgramName();
-  void setInputFileName(std::string);
-  std::string getInputFileName();
-  void setProgramName(std::string);
-  void setCfgOrdering(int ordering);
-  int getCfgOrdering();
-  void setCallStringLength(int length);
-  int getCallStringLength();
-  void setGdlFileName(std::string fileName);
-  std::string getGdlFileName();
-  void setOptionsInfo(std::string);
-  std::string getOptionsInfo();
-  void setGcLow(int perc);
-  void setGcHigh(int perc);
-  int getGcLow();
-  int getGcHigh();
 
-  void setStartBank(int start);
-  int getStartBank();
-  void setShareMin(int min);
-  int getShareMin();
-  void setShareNum(int num);
-  int getShareNum();
+  enum Language {Language_C89,Language_C99,Language_CPP};
+  void setLanguage(Language lang);
+  Language getLanguage();
 
-  void animationGenerationOn();
-  void animationGenerationOff();
-  bool animationGeneration();
+  /* declare getter/setter methods */
+#define STRING_ATTR(attrname,defaultval) \
+  std::string get##attrname(); \
+  void set##attrname(std::string);
 
-  void resultGenerationOn();
-  void resultGenerationOff();
-  bool resultGeneration();
+#define INT_ATTR(attrname,defaultval) \
+  int get##attrname(); \
+  void set##attrname(int);
 
-  void helpMessageRequestedOn();
-  void helpMessageRequestedOff();
-  bool helpMessageRequested();
+#define INT_ATTR_NOSTUB(attrname,defaultval) \
+  int get##attrname(); \
+  void set##attrname(int);
 
-  void quietOn();
-  void quietOff();
-  bool quiet();
+#define BOOL_ATTR(attrname,defaultval) \
+  void attrname##On(); \
+  void attrname##Off(); \
+  bool attrname();
 
-  void pagVerboseOn();
-  void pagVerboseOff();
-  bool pagVerbose();
+#include "attributes"
+#undef STRING_ATTR
+#undef INT_ATTR
+#undef INT_ATTR_NOSTUB
+#undef BOOL_ATTR
 
-  void preInfoOn();
-  void preInfoOff();
-  bool preInfo();
-
-  void postInfoOn();
-  void postInfoOff();
-  bool postInfo();
-
-  void statisticsOn();
-  void statisticsOff();
-  bool statistics();
-
-  void outputWholeProgramOn();
-  void outputWholeProgramOff();
-  bool outputWholeProgram();
-
-  void gdlProcedureSubgraphsOn();
-  void gdlProcedureSubgraphsOff();
-  bool gdlProcedureSubgraphs();
-
-  void analysisResultsTextOutputOn();
-  void analysisResultsTextOutputOff();
-  bool analysisResultsTextOutput();
-
-  void analysisResultsSourceOutputOn();
-  void analysisResultsSourceOutputOff();
-  bool analysisResultsSourceOutput();
-
-  void analysisResultsTermOutputOn();
-  void analysisResultsTermOutputOff();
-  bool analysisResultsTermOutput();
-
-  void vivuOn(); // callstring length defines chop size
-  void vivuOff();
-  bool vivu();
-
-  void setVivuLoopUnrolling(int start);
-  int getVivuLoopUnrolling();
-
-  void setVivu4MaxUnrolling(int start);
-  int getVivu4MaxUnrolling();
+  virtual std::string getOptionsInfo();
+  void setOptionsInfo(std::string infoString);
 
   std::string getOptionsErrorMessage();
   bool optionsError();
@@ -111,38 +56,38 @@ public:
   std::string getCommandLine();
   char** getCommandLineCarray();
 
-  int getCommandLineNum(); // is computing according to appendCommandLine
+  int getCommandLineNum(); // is computed according to appendCommandLine
 
   bool retFuncUsed();
-  void setLanguage(Language lang);
-  Language getLanguage();
 
-private:
+protected:
   void setCommandLineNum(int);
   void addCommandLineNum(int);
 
-private:
+protected:
   void optionsError(std::string message);
 
-  std::string _animationDirectoryName;
-  std::string _gdlFileName, _inputFileName, _programName;
   std::string _optionsErrorMessage;
   std::string _optionsInfo;
-  int _cfgOrdering;
-  int _callStringLength;
-  int _startBank, _shareMin, _shareNum, _gcLow, _gcHigh;
-  int _vivuLoopUnrolling, _vivu4MaxUnrolling;
-  bool _animationGeneration, _resultGeneration, _helpMessageRequested, _pagVerbose, _quiet;
-  bool _postInfo, _preInfo, _outputWholeProgram, _gdlProcedureSubgraphs, _statistics, 
-       _analysisResultsTextOutput, 
-       _analysisResultsSourceOutput, 
-       _analysisResultsTermOutput;
-  bool _vivu;
-
+  
   std::list<std::string> _commandLine;
   int _commandLineNum;
-
   Language _language;
+
+#define STRING_ATTR(attrname,defaultval) \
+  std::string _##attrname;
+#define INT_ATTR(attrname,defaultval) \
+  int _##attrname;
+#define INT_ATTR_NOSTUB(attrname,defaultval) \
+  int _##attrname;
+#define BOOL_ATTR(attrname,defaultval) \
+  bool _##attrname;
+#include "attributes"
+#undef STRING_ATTR
+#undef INT_ATTR
+#undef INT_ATTR_NOSTUB
+#undef BOOL_ATTR
+
 };
 
 #endif

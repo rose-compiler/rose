@@ -2,14 +2,8 @@
  * use this file for additional declarations
  * necessary for your analysis. */
 
-#include <satire.h>
-#include "iterate.h"
-
-#define ANALYSIS nnh99_shape
-#include "satire_legacy.h"
-
 extern "C" void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,int insnum,int ctx);
-extern "C" void my_o_Node_print_fp(FILE * fp, o_Node node);
+extern "C" void my_o_VarSet_print_fp(FILE * fp, o_VarSet node);
 extern "C" int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o_ShapeGraph sg);
 
 #include "AnalyzerOptions.h"
@@ -20,7 +14,6 @@ public:
       gdlFoldGraphsOff();
       gdlShowIndividualGraphsOn();
       gdlShowSummaryGraphOff();
-	  setGraphStatisticsFile(NULL);
     }
     virtual ~ShapeAnalyzerOptions() {}
 
@@ -44,21 +37,16 @@ public:
     void gdlShowIndividualGraphsOff() { _gdlShowIndividualGraphs = false; }
     bool gdlShowIndividualGraphs()    { return _gdlShowIndividualGraphs;  }
 
-    char *graphStatisticsFile() { return _graphStatisticsFile; }
-    void setGraphStatisticsFile(char *fn) { _graphStatisticsFile = fn; }
-
     virtual std::string getOptionsInfo() {
       return AnalyzerOptions::getOptionsInfo() + 
         " Custom options:\n" 
-        "   --output-alias                output the alias pairs for each statement on stdout\n"
-        "   --output-alias-annotation     add alias pairs to each statement in generated source file\n"
+        "   --aliastextoutput             output the alias pairs for each statement on stdout\n"
+        "   --aliassourceoutput           generate source file with annotated alias pairs for each statement\n"
         "   --individualgraphs            output all individual graphs in gdl [default]\n"
-        "   --no-individualgraphs         do not output all individual graphs in gdl\n"
+        "   --no_individualgraphs         do not output all individual graphs in gdl\n"
         "   --summarygraph                output summary graph in gdl\n"
-        "   --no-summarygraph             do not output summary graph in gdl [default]\n"
-        "   --foldgraphs                  fold all gdl graphs initially\n"
-		"\n"
-		"   --output-graph-statistics=<FILENAME>  write graph statistics to <FILENAME>\n";
+        "   --no_summarygraph             do not output summary graph in gdl [default]\n"
+        "   --foldgraphs                  fold all gdl graphs initially\n";
     }
 
 protected:
@@ -67,7 +55,6 @@ protected:
     bool _gdlFoldGraphs;
     bool _gdlShowSummaryGraph;
     bool _gdlShowIndividualGraphs;
-    char *_graphStatisticsFile;
 };
 
 class ShapeCommandLineParser : public CommandLineParser {
@@ -78,28 +65,27 @@ public:
 
       ShapeAnalyzerOptions *scl = dynamic_cast<ShapeAnalyzerOptions*>(cl);
 
-      if (optionMatch(argv[i], "--output-alias")) {
+      if (!strcmp(argv[i], "--aliastextoutput")) {
         scl->aliasTextOutputOn();
-      } else if (optionMatch(argv[i], "--output-alias-annotation")) {
+      } else if (!strcmp(argv[i], "--aliassourceoutput")) {
         scl->aliasSourceOutputOn();
-      } else if (optionMatch(argv[i], "--individualgraphs")) {
+      } else if (!strcmp(argv[i], "--individualgraphs")) {
         scl->gdlShowIndividualGraphsOn();
-      } else if (optionMatch(argv[i], "--no-individualgraphs")) {
+      } else if (!strcmp(argv[i], "--no_individualgraphs")) {
         scl->gdlShowIndividualGraphsOff();
-      } else if (optionMatch(argv[i], "--summarygraph")) {
+      } else if (!strcmp(argv[i], "--summarygraph")) {
         scl->gdlShowSummaryGraphOn();
-      } else if (optionMatch(argv[i], "--no-summarygraph")) {
+      } else if (!strcmp(argv[i], "--no_summarygraph")) {
         scl->gdlShowSummaryGraphOff();
-      } else if (optionMatch(argv[i], "--foldgraphs")) {
+      } else if (!strcmp(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
-	  } else if (optionMatchPrefix(argv[i],"--output-graph-statistics=")) {
-	    scl->setGraphStatisticsFile(strdup(argv[i]+prefixLength));
       } else {
         return CommandLineParser::handleOption(cl,i,argc,argv);
       }
       return 1;
     }
 };
+
 
 // -- new parts follow
 
@@ -119,7 +105,7 @@ public:
 
 struct ltexpr {
     bool operator()(SgNode* a, SgNode* b) const {
-        return Ir::fragmentToString(a) < Ir::fragmentToString(b);
+        return a->unparseToString() < b->unparseToString();
     }
 };
 
@@ -167,7 +153,7 @@ public:
                 SgNode *a,*b,*tmp;
                 a = *i;
                 b = *j;
-                if (Ir::fragmentToString(a).length() < Ir::fragmentToString(b).length()) {
+                if (a->unparseToString().length() < b->unparseToString().length()) {
                     // make sure that the longer expression is on the left (to avoid duplicates)
                     tmp = a;
                     a = b;
@@ -177,7 +163,9 @@ public:
             }
         }
         
-        delete exprs;
+        free(exprs);
+        exprs = NULL;
+        
         return pairs;
     }
 };
@@ -218,14 +206,12 @@ protected:
   }
 
   ExpressionPairSet *computeMustAliasPairs(carrier_type_o(CARRIER_TYPE) sg) { 
-    if (sg == NULL)
-      return NULL;
     ExpressionPairSet *aliases = new ExpressionPairSet();
     ExpressionPairSet::iterator i;
     std::pair<SgNode*,SgNode*> *pair;
     for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
       pair = *i;
-      if (o_is_must_alias(pair->first, pair->second, o_shape_carrier_to_shapegraphset(sg))) {
+      if (o_is_must_alias(pair->first, pair->second, sg)) {
         aliases->insert(pair);
       }
     }
@@ -233,14 +219,12 @@ protected:
   }
   
   ExpressionPairSet *computeMayAliasPairs(carrier_type_o(CARRIER_TYPE) sg) {
-    if (sg == NULL)
-      return NULL;
     ExpressionPairSet *aliases = new ExpressionPairSet();
     ExpressionPairSet::iterator i;
     std::pair<SgNode*,SgNode*> *pair;
     for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
       pair = *i;
-      if (o_is_may_alias(pair->first, pair->second, o_shape_carrier_to_shapegraphset(sg))) {
+      if (o_is_may_alias(pair->first, pair->second, sg)) {
         aliases->insert(pair);
       }
     }
@@ -267,7 +251,7 @@ protected:
     virtual void handleStmtDfi(SgStatement* stmt, std::string _unused1, std::string _unused2) {
         std::string preInfo =  AliasPairsTextPrinter<DFI_STORE_TYPE>::getPreInfo(stmt);
         std::string postInfo = AliasPairsTextPrinter<DFI_STORE_TYPE>::getPostInfo(stmt);
-        std::string stmt_str = Ir::fragmentToString(stmt);
+        std::string stmt_str = stmt->unparseToString();
         
         std::cout << this->currentFunction() << ": " << "// pre must-aliases : " << 
           format_alias_pairs(stmt, "pre", "must") << std::endl;

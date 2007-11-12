@@ -3,37 +3,33 @@
 # Basic test script
 # (C) 2007 Adrian Prantl, Viktor Pavlu
 
-FILES=`ls tests/*.[cC]`
-ANALYSIS="./constprop"
-MODES="--textoutput --termoutput --sourceoutput"
-OPTIONS="--wholeprogram --preinfo --postinfo"
+FILES=`ls tests/*.[cC] tests/*.cpp`
+ANALYSIS="./srw98_shape"
+MODES="--textoutput --termoutput --sourceoutput --aliastextoutput --aliassourceoutput"
+OPTIONS="--wholeprogram --preinfo --postinfo --foldgraphs --no_individualgraphs --summarygraph"
+GENERATE_PERMUTATIONS="0" # 0=do not / 1=do generate permutations of OPTIONS
 
 ALL=
 SUCESS=
 FAILED=
 
-# known to work
-$ANALYSIS tests/classes2.C >/dev/null || exit 1
-$ANALYSIS tests/blocks.c   >/dev/null || exit 1
-
-$ANALYSIS tests/blocks.c --textoutput   >/dev/null || exit 1
-$ANALYSIS tests/blocks.c --termoutput   >/dev/null || exit 1
-$ANALYSIS tests/blocks.c --sourceoutput >/dev/null || exit 1
-
 # possible buggy testcases
 
-# generate all permutations of options
 DELIM=§
 PERMUTATIONS="$DELIM"
-#for opt in $OPTIONS; do
-#    newperms=
-#    for perm in $PERMUTATIONS; do
-#        newperms="$newperms $perm"
-#        newperms="$newperms $perm$DELIM$opt"
+#if [ $GENERATE_PERMUTATIONS -eq "0" ]; then
+    PERMUTATIONS="$PERMUTATIONS $OPTIONS"
+#else
+#    for opt in $OPTIONS; do
+#        newperms=
+#        for perm in $PERMUTATIONS; do
+#            newperms="$newperms $perm"
+#            newperms="$newperms $perm$DELIM$opt"
+#        done
+#        PERMUTATIONS="$newperms"
 #    done
-#    PERMUTATIONS="$newperms"
-#done
-PERMUTATIONS="$PERMUTATIONS $OPTIONS"
+#fi
+
 
 echo "######## ######## Testing mode \"$MODES\""
 
@@ -54,6 +50,7 @@ for file in $FILES; do
         ALL="$ALL $ANALYSIS$DELIM$file$DELIM$MODES$DELIM$option"
     done 
 done
+
 
 
 echo "########################################################################"

@@ -1,21 +1,23 @@
 /* -*- C++ -*- */
 
+#include "main-support.h"
 #include "main.h"
 
 int main(int argc, char **argv)
 {
   /* parse the command line and extract analyzer options */
+  AnalyzerOptions *opt = new AnalyzerOptions();
   CommandLineParser clp;
-  AnalyzerOptions opt=clp.parse(argc,argv);
-  bool outputAll = opt.outputWholeProgram();
+  clp.parse(opt,argc,argv);
+  bool outputAll = opt->outputWholeProgram();
 
   /* set the PAG options as specified on the command line */
-  setPagOptions(opt);
+  setPagOptions(*opt);
   
   /* Run the frontend to construct an abstract syntax tree from
    * the files specified on the command line (which has been processed
    * and commands only relevant to the analyzer have been removed). */
-  SgProject* ast_root = frontend(opt.getCommandLineNum(), opt.getCommandLineCarray());
+  SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
   
   /* Make sure everything is OK... */
   AstTests::runAllTests(ast_root);
@@ -25,11 +27,11 @@ int main(int argc, char **argv)
    * attributing the statements of the AST with analysis
    * information. Use the StatementAttributeTraversal class for accessing
    * the analysis information on each statement */
-  char* outputfile=(char*)opt.getGdlFileName().c_str();
-  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt.animationGeneration(), !opt.quiet());
+  char* outputfile=(char*)opt->getGdlFileName().c_str();
+  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt->animationGeneration(), !opt->quiet());
 
   /* Handle command line option --textoutput */
-  if(opt.analysisResultsTextOutput()) {
+  if(opt->analysisResultsTextOutput()) {
     PagDfiTextPrinter<DFI_STORE> p(analysis_info);
 
     if (outputAll) p.traverse(ast_root, preorder);
@@ -40,7 +42,7 @@ int main(int argc, char **argv)
    * The source code (i.e. the AST) is annotated with comments showing
    * the analysis results and by calling the backend an annotated C/C++
    * file is generated (named rose_<inputfilename>) */
-  if(opt.analysisResultsSourceOutput()) {
+  if(opt->analysisResultsSourceOutput()) {
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
     if (outputAll) ca.traverse(ast_root, preorder);
@@ -50,7 +52,7 @@ int main(int argc, char **argv)
   }
 
   /* Handle command line option --termoutput */
-  if(opt.analysisResultsTermOutput()) {
+  if(opt->analysisResultsTermOutput()) {
     TermPrinter<DFI_STORE> tp(analysis_info);
 
     if (outputAll) tp.traverse(ast_root);

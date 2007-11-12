@@ -1,39 +1,32 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: AnalyzerOptions.C,v 1.9 2007-10-25 12:54:24 adrian Exp $
+// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
+// $Id: AnalyzerOptions.C,v 1.10 2007-11-12 15:37:56 pr012 Exp $
+
+// todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
 #include "AnalyzerOptions.h"
-
 #include <iostream>
+
+AnalyzerOptions::~AnalyzerOptions() {}
 AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
-  setCfgOrdering(1);
-  setCallStringLength(0);
-  setGdlFileName("analysis_result.gdl");
-  setGcLow(30);
-  setGcHigh(30);
-  resultGenerationOn();
-  animationGenerationOn();
-  helpMessageRequestedOff();
-  pagVerboseOff();
-  quietOff();
-  preInfoOff();
-  postInfoOn();
-  statisticsOff();
-  outputWholeProgramOff();
-  gdlProcedureSubgraphsOn();
-  //setStartBank(?);
-  //setShareMin(?);
-  //setShareNum(?);
-  analysisResultsTextOutputOff();
-  analysisResultsSourceOutputOff();
-  analysisResultsTermOutputOff();
-  vivuOff();
-  setVivuLoopUnrolling(2); // default
-  setVivu4MaxUnrolling(-1); // default
+  
+  // set default values
+  setLanguage(Language_CPP);
+#define STRING_ATTR(attrname,defaultval) \
+  set##attrname(defaultval);
+#define INT_ATTR(attrname,defaultval) \
+  set##attrname(defaultval);
+#define INT_ATTR_NOSTUB(attrname,defaultval) \
+  set##attrname(defaultval);
+#define BOOL_ATTR(attrname,defaultval) \
+  attrname##defaultval();
+#include "attributes"
+#undef STRING_ATTR
+#undef INT_ATTR
+#undef INT_ATTR_NOSTUB
+#undef BOOL_ATTR
   
   clearCommandLine();
   setCommandLineNum(0);
-
-  setLanguage(Language_CPP);
 
   std::string s=
     "Frond End options:\n"
@@ -98,116 +91,63 @@ std::string AnalyzerOptions::toString() {
     + "GDL Filename: "+getGdlFileName()+"\n"
     + "Animation DirName: "+getAnimationDirectoryName()+"\n";
 }
-std::string AnalyzerOptions::getAnimationDirectoryName() { return _animationDirectoryName; }
-void AnalyzerOptions::setAnimationDirectoryName(std::string animDir) { _animationDirectoryName=animDir; }
-std::string AnalyzerOptions::getProgramName() { return _programName; }
-void AnalyzerOptions::setProgramName(std::string progName) { _programName=progName; }
-std::string AnalyzerOptions::getInputFileName() { return _inputFileName; }
-void AnalyzerOptions::setInputFileName(std::string fileName) { _inputFileName=fileName; }
+void AnalyzerOptions::setOptionsInfo(std::string info) {
+  _optionsInfo = info;
+}
+std::string AnalyzerOptions::getOptionsInfo() {
+  return "\n Usage: "+getProgramName()+" [OPTION]... <filename>\n\n "+_optionsInfo;
+}
+
+
+#define STRING_ATTR(attrname,defaultval) \
+  std::string AnalyzerOptions::get##attrname() { return _##attrname; } \
+  void AnalyzerOptions::set##attrname(std::string s) { _##attrname=s; }
+#define INT_ATTR(attrname,defaultval) \
+  int AnalyzerOptions::get##attrname() { return _##attrname; } \
+  void AnalyzerOptions::set##attrname(int i) { _##attrname=i; }
+#define INT_ATTR_NOSTUB(attrname,defaultval) \
+  int AnalyzerOptions::get##attrname() { return _##attrname; }
+#define BOOL_ATTR(attrname,defaultval) \
+  void AnalyzerOptions::attrname##On()  { _##attrname=true;  } \
+  void AnalyzerOptions::attrname##Off() { _##attrname=false; } \
+  bool AnalyzerOptions::attrname() { return _##attrname; }
+#include "attributes"
+#undef STRING_ATTR
+#undef INT_ATTR
+#undef INT_ATTR_NOSTUB
+#undef BOOL_ATTR
+
 void AnalyzerOptions::setCfgOrdering(int ordering) { 
   if(ordering <1 || ordering>8) {
     optionsError("Cfg ordering must be a value between 1 to 8.");
   } else {
-    _cfgOrdering=ordering; 
+    _CfgOrdering=ordering; 
   }
 }
-int AnalyzerOptions::getCfgOrdering() { return _cfgOrdering; }
-void AnalyzerOptions::setCallStringLength(int length) { _callStringLength=length; }
-int AnalyzerOptions::getCallStringLength() { return _callStringLength; }
-void AnalyzerOptions::setGdlFileName(std::string fileName) { _gdlFileName=fileName; }
-std::string AnalyzerOptions::getGdlFileName() { return _gdlFileName; }
-void AnalyzerOptions::setOptionsInfo(std::string info) { _optionsInfo=info; }
-std::string AnalyzerOptions::getOptionsInfo() { return "\n Usage: "+getProgramName()+" [OPTION]... <filename>\n\n "+_optionsInfo; }
 void AnalyzerOptions::setGcLow(int perc) { 
   if(perc < 0 || perc>99) {
-    _gcLow=30; 
+    _GcLow=30; 
     optionsError("GC Low-percentage of garbage collection must be within 0..99.");
   } else {
-    _gcLow=perc;
+    _GcLow=perc;
   }
 }
 void AnalyzerOptions::setGcHigh(int perc) { 
   if(perc < 0 || perc>99) {
-    _gcHigh=30; 
+    _GcHigh=30; 
     optionsError("GC High-percentage of garbage collection must be within 0..99.");
   } else {
-    _gcHigh=perc;
+    _GcHigh=perc;
   }
 }
 
-int AnalyzerOptions::getGcLow() { return _gcLow; }
-int AnalyzerOptions::getGcHigh() { return _gcHigh; }
+AnalyzerOptions::Language AnalyzerOptions::getLanguage() { return _language; }
+void AnalyzerOptions::setLanguage(AnalyzerOptions::Language language) { _language=language; }
 
-void AnalyzerOptions::setStartBank(int start) { _startBank=start; }
-int AnalyzerOptions::getStartBank() { return _startBank; }
-void AnalyzerOptions::setShareMin(int min) { _shareMin=min; }
-int AnalyzerOptions::getShareMin() { return _shareMin; }
-void AnalyzerOptions::setShareNum(int num) { _shareNum=num; }
-int AnalyzerOptions::getShareNum() { return _shareNum; }
 
-void AnalyzerOptions::animationGenerationOn() { _animationGeneration=true; }
-void AnalyzerOptions::animationGenerationOff() { _animationGeneration=false; }
-bool AnalyzerOptions::animationGeneration() { return _animationGeneration; }
-
-void AnalyzerOptions::resultGenerationOn() { _resultGeneration=true; }
-void AnalyzerOptions::resultGenerationOff() { _resultGeneration=false; }
-bool AnalyzerOptions::resultGeneration() { return _resultGeneration; }
-
-void AnalyzerOptions::helpMessageRequestedOn() { _helpMessageRequested=true; }
-void AnalyzerOptions::helpMessageRequestedOff() { _helpMessageRequested=false; }
-bool AnalyzerOptions::helpMessageRequested() { return _helpMessageRequested; }
-
-void AnalyzerOptions::pagVerboseOn() { _pagVerbose=true; }
-void AnalyzerOptions::pagVerboseOff() { _pagVerbose=false; }
-bool AnalyzerOptions::pagVerbose() { return _pagVerbose; }
-
-void AnalyzerOptions::quietOn() { _quiet=true; }
-void AnalyzerOptions::quietOff() { _quiet=false; }
-bool AnalyzerOptions::quiet() { return _quiet; }
-
-void AnalyzerOptions::preInfoOn() { _preInfo=true; }
-void AnalyzerOptions::preInfoOff() { _preInfo=false; }
-bool AnalyzerOptions::preInfo() { return _preInfo; }
-
-void AnalyzerOptions::postInfoOn() { _postInfo=true; }
-void AnalyzerOptions::postInfoOff() { _postInfo=false; }
-bool AnalyzerOptions::postInfo() { return _postInfo; }
-
-void AnalyzerOptions::statisticsOn() { _statistics=true; }
-void AnalyzerOptions::statisticsOff() { _statistics=false; }
-bool AnalyzerOptions::statistics() { return _statistics; }
-
-void AnalyzerOptions::outputWholeProgramOn() { _outputWholeProgram=true; }
-void AnalyzerOptions::outputWholeProgramOff() { _outputWholeProgram=false; }
-bool AnalyzerOptions::outputWholeProgram() { return _outputWholeProgram; }
-
-void AnalyzerOptions::gdlProcedureSubgraphsOn() { _gdlProcedureSubgraphs=true; }
-void AnalyzerOptions::gdlProcedureSubgraphsOff() { _gdlProcedureSubgraphs=false; }
-bool AnalyzerOptions::gdlProcedureSubgraphs() { return _gdlProcedureSubgraphs; }
-
-void AnalyzerOptions::analysisResultsTextOutputOn() { _analysisResultsTextOutput=true; }
-void AnalyzerOptions::analysisResultsTextOutputOff() { _analysisResultsTextOutput=false; }
-bool AnalyzerOptions::analysisResultsTextOutput() { return _analysisResultsTextOutput; }
-
-void AnalyzerOptions::analysisResultsSourceOutputOn() { _analysisResultsSourceOutput=true; }
-void AnalyzerOptions::analysisResultsSourceOutputOff() { _analysisResultsSourceOutput=false; }
-bool AnalyzerOptions::analysisResultsSourceOutput() { return _analysisResultsSourceOutput; }
-
-void AnalyzerOptions::analysisResultsTermOutputOn() { _analysisResultsTermOutput=true; }
-void AnalyzerOptions::analysisResultsTermOutputOff() { _analysisResultsTermOutput=false; }
-bool AnalyzerOptions::analysisResultsTermOutput() { return _analysisResultsTermOutput; }
-
-void AnalyzerOptions::vivuOn() { _vivu=true; }
-void AnalyzerOptions::vivuOff() { _vivu=false; }
-bool AnalyzerOptions::vivu() { return _vivu; }
-
-void AnalyzerOptions::setVivuLoopUnrolling(int start) { _vivuLoopUnrolling=start; }
-int AnalyzerOptions::getVivuLoopUnrolling() { return _vivuLoopUnrolling; }
-
-void AnalyzerOptions::setVivu4MaxUnrolling(int start) { _vivu4MaxUnrolling=start; }
-int AnalyzerOptions::getVivu4MaxUnrolling() { return _vivu4MaxUnrolling; }
-
-bool AnalyzerOptions::optionsError() { return _optionsErrorMessage!=""; }
+bool AnalyzerOptions::optionsError() {
+  return _optionsErrorMessage!="";
+}
 void AnalyzerOptions::optionsError(std::string message) {
   _optionsErrorMessage=message;
 }
@@ -236,12 +176,9 @@ std::string AnalyzerOptions::getCommandLine() {
   return s;
 }
 
-
 void AnalyzerOptions::setCommandLineNum(int cl) { _commandLineNum=cl; }
 void AnalyzerOptions::addCommandLineNum(int cl) { _commandLineNum+=cl; }
 int AnalyzerOptions::getCommandLineNum() { return _commandLineNum; }
 
 bool AnalyzerOptions::retFuncUsed() { return true; }
 
-AnalyzerOptions::Language AnalyzerOptions::getLanguage() { return _language; }
-void AnalyzerOptions::setLanguage(AnalyzerOptions::Language language) { _language=language; }

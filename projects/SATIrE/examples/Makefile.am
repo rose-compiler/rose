@@ -30,7 +30,35 @@ EXTRA_DIST= \
 	constprop/tests/virtual.C     constprop/tests/blocks.c \
 	constprop/tests/classes3.C    constprop/tests/demo1.C \
 	constprop/tests/forinit.c     constprop/tests/manyargs.c \
-	constprop/tests/simpleif.c   constprop/tests/test6.C
+	constprop/tests/simpleif.c   constprop/tests/test6.C \
+	\
+	nnh99_shape/nnh99_shape.set      nnh99_shape/nnh99_shape.optla \
+	nnh99_shape/main.C               nnh99_shape/main.h \
+	nnh99_shape/runtests \
+	nnh99_shape/tests/nnh_xsely.C \
+	nnh99_shape/tests/srw98_listreverse.C \
+	nnh99_shape/tests/nnh_xysel3.C \
+	nnh99_shape/tests/nnh_xselnil.C \
+	nnh99_shape/tests/nnh_xy.C \
+	nnh99_shape/tests/nnh_xysel2.C \
+	nnh99_shape/tests/srw98_data.h \
+	nnh99_shape/tests/nnh_xnil.C \
+	nnh99_shape/tests/nnh_xysel3shared.C \
+	nnh99_shape/tests/srw98_listinsert.C \
+	\
+	srw98_shape/srw98_shape.set               srw98_shape/srw98_shape.optla \
+	srw98_shape/main.C                        srw98_shape/main.h \
+	srw98_shape/runtests \
+	srw98_shape/tests/nnh_xsely.C \
+	srw98_shape/tests/srw98_listreverse.C \
+	srw98_shape/tests/nnh_xysel3.C \
+	srw98_shape/tests/nnh_xselnil.C \
+	srw98_shape/tests/nnh_xy.C \
+	srw98_shape/tests/nnh_xysel2.C \
+	srw98_shape/tests/srw98_data.h \
+	srw98_shape/tests/nnh_xnil.C \
+	srw98_shape/tests/nnh_xysel3shared.C \
+	srw98_shape/tests/srw98_listinsert.C 
 
 
 
@@ -79,5 +107,21 @@ installcheck-local:
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) check -C $(testdir)/constprop
+
+	@echo
+	@echo "Testing nnh99_shape"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
+	chmod u+rwx -R $(testdir)/nnh99_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
+	$(MAKE) check -C $(testdir)/nnh99_shape
+
+	@echo
+	@echo "Testing srw98_shape"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+	chmod u+rwx -R $(testdir)/srw98_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+	$(MAKE) check -C $(testdir)/srw98_shape
 
 	rm -rf $(testdir)

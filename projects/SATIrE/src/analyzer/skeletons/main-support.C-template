@@ -7,7 +7,7 @@
     #define CARRIER_TYPE PLEASE_SPECIFY_CARRIER_TYPE
 #endif
 
-#include "main.h"
+#include "main-support.h"
 #include "cfg_support.h"
 #include "analysis_info.h"
 
