@@ -25,14 +25,14 @@ $ANALYSIS tests/blocks.c --sourceoutput >/dev/null || exit 1
 # generate all permutations of options
 DELIM=§
 PERMUTATIONS="$DELIM"
-#for opt in $OPTIONS; do
-#    newperms=
-#    for perm in $PERMUTATIONS; do
-#        newperms="$newperms $perm"
-#        newperms="$newperms $perm$DELIM$opt"
-#    done
-#    PERMUTATIONS="$newperms"
-#done
+for opt in $OPTIONS; do
+    newperms=
+    for perm in $PERMUTATIONS; do
+        newperms="$newperms $perm"
+        newperms="$newperms $perm$DELIM$opt"
+    done
+    PERMUTATIONS="$newperms"
+done
 PERMUTATIONS="$PERMUTATIONS $OPTIONS"
 
 echo "######## ######## Testing mode \"$MODES\""
@@ -42,9 +42,10 @@ for file in $FILES; do
     echo "######## on file $file"
 
     # for each option (even no options)
-    for option in $PERMUTATIONS; do
+    #for option in $PERMUTATIONS; do
 
-        option_with_space=${option//$DELIM/ }
+        #option_with_space=${option//$DELIM/ }
+        option_with_space=$OPTIONS
 
         echo "$ANALYSIS $file $MODES $option_with_space"
         $ANALYSIS $file $MODES $option_with_space >/dev/null
@@ -52,7 +53,7 @@ for file in $FILES; do
         if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$DELIM$MODES$DELIM$option"
         else FAILED="$FAILED $ANALYSIS$DELIM$file$DELIM$MODES$DELIM$option"; fi
         ALL="$ALL $ANALYSIS$DELIM$file$DELIM$MODES$DELIM$option"
-    done 
+    #done 
 done
 
 
