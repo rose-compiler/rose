@@ -12,7 +12,7 @@ ALL=
 SUCESS=
 FAILED=
 
-# Known to work
+# known to work
 $ANALYSIS tests/classes2.C >/dev/null || exit 1
 $ANALYSIS tests/blocks.c   >/dev/null || exit 1
 
@@ -20,9 +20,10 @@ $ANALYSIS tests/blocks.c --textoutput   >/dev/null || exit 1
 $ANALYSIS tests/blocks.c --termoutput   >/dev/null || exit 1
 $ANALYSIS tests/blocks.c --sourceoutput >/dev/null || exit 1
 
-DELIM=§
+# possible buggy testcases
 
 # generate all permutations of options
+DELIM=§
 PERMUTATIONS="$DELIM"
 for opt in $OPTIONS; do
     newperms=
