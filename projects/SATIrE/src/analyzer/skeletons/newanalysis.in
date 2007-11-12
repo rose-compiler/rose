@@ -2,12 +2,24 @@
 
 #if [ $# -ne 2 ]
 #then
-#    echo "usage: newanalysis <name of analysis> <type of analysis carrier>"
+#    echo 
 #    exit 1
 #fi
 
 # Debugging:
 # set -x
+
+# Command line options
+while getopts ":u" Option
+do
+  case $Option in
+    u) echo "Will not overwrite modified files"; UPDATE="T" ;;
+    *) echo "usage: newanalysis [-uh] <name of analysis> <type of analysis carrier>"
+       echo "If the -u options is specified, newanalysis will not overwrite exitsting files"
+       exit 1 ;;
+  esac
+done
+shift $(($OPTIND - 1))
 
 # Set default values
 CURRENTDIR=`pwd`
