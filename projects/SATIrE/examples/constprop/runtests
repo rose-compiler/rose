@@ -1,9 +1,10 @@
 #!/bin/sh 
 
 # Basic test script
-# (C) 2007 Adrian Prantl
+# (C) 2007 Adrian Prantl, Viktor Pavlu
 
 FILES=`ls tests/*.[cC]`
+ANALYSIS="./constprop"
 MODES="--textoutput --termoutput --sourceoutput"
 OPTIONS="--wholeprogram --preinfo --postinfo"
 
@@ -12,14 +13,13 @@ SUCESS=
 FAILED=
 
 # Known to work
-./constprop tests/classes2.C >/dev/null || exit 1
-./constprop tests/blocks.c   >/dev/null || exit 1
+$ANALYSIS tests/classes2.C >/dev/null || exit 1
+$ANALYSIS tests/blocks.c   >/dev/null || exit 1
 
-./constprop tests/blocks.c --textoutput   >/dev/null || exit 1
-./constprop tests/blocks.c --termoutput   >/dev/null || exit 1
-./constprop tests/blocks.c --sourceoutput >/dev/null || exit 1
+$ANALYSIS tests/blocks.c --textoutput   >/dev/null || exit 1
+$ANALYSIS tests/blocks.c --termoutput   >/dev/null || exit 1
+$ANALYSIS tests/blocks.c --sourceoutput >/dev/null || exit 1
 
-# possibly buggy testcases
 DELIM=§
 
 # generate all permutations of options
@@ -46,12 +46,12 @@ for mode in $MODES; do
 
             option_with_space=${option//$DELIM/ }
 
-	    echo "./constprop $file $mode $option_with_space"
-	    ./constprop $file $mode $option_with_space >/dev/null
+	    echo "$ANALYSIS $file $mode $option_with_space"
+	    $ANALYSIS $file $mode $option_with_space >/dev/null
 
 	    if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$DELIM$mode$DELIM$option"
-	    else FAILED="$FAILED $file$DELIM$mode$DELIM$option"; fi
-	    ALL="$ALL $file$DELIM$mode$DELIM$option"
+	    else FAILED="$FAILED $ANALYSIS$DELIM$file$DELIM$mode$DELIM$option"; fi
+	    ALL="$ALL $ANALYSIS$DELIM$file$DELIM$mode$DELIM$option"
 	done 
     done
 done
