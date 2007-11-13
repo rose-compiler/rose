@@ -14,8 +14,8 @@ while getopts ":u" Option
 do
   case $Option in
     u) echo "Will not overwrite modified files"; UPDATE="T" ;;
-    *) echo "usage: newanalysis [-uh] <name of analysis> <type of analysis carrier>"
-       echo "If the -u option is specified, newanalysis will not overwrite any existing files."
+    *) echo "usage: newanalysis [-uh] [analysis name] [analysis carrier type]"
+       echo "       -u : existing files are not overwritten."
        exit 1 ;;
   esac
 done
@@ -55,7 +55,7 @@ cp $SATIRE_DATA/main-support.h-template $ANALYSIS_DIR/main-support.h
 cp $SATIRE_DATA/main-support.C-template $ANALYSIS_DIR/main-support.C
 echo
 
-if [ "x$UPDATE" = "xT" ]
+if [ x$UPDATE = xT ]
 then
     if [ -e "$ANALYSIS_DIR/main.C" ]
     then
@@ -69,9 +69,16 @@ then
     else
         cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
     fi
+    if [ -e "$ANALYSIS_DIR/runtests" ]
+    then
+        echo "$ANALYSIS_DIR/runtests exists and remains in $ANALYSIS_DIR."
+    else
+        cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
+    fi
 else
     cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
     cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
+    cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
 fi
 
 if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]

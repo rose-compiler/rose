@@ -1,7 +1,7 @@
 EXTRA_DIST = main.C-template  main.h-template  main-support.C-template  main-support.h-template  \
-             Makefile-template.in newanalysis.in undonewanalysis 
+             Makefile-template.in newanalysis.in undonewanalysis runtests-template
 
-dist_pkgdata_DATA = main.C-template  main.h-template  main-support.C-template  main-support.h-template  Makefile-template
+dist_pkgdata_DATA = main.C-template  main.h-template  main-support.C-template  main-support.h-template  Makefile-template runtests-template
 
 bin_SCRIPTS= newanalysis  undonewanalysis 
 CLEANFILES = newanalysis Makefile-template

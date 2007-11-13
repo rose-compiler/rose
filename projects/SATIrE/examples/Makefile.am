@@ -15,7 +15,7 @@ EXTRA_DIST= \
         sl2rd/tests/rdtest10all.C sl2rd/tests/rdtest10p1.C \
         sl2rd/tests/rdtest10p2.C  sl2rd/tests/rdtest10p3.C \
         sl2rd/sl2rd.set sl2rd/sl2rd.optla sl2rd/runtests \
-        constprop/constprop.set constprop/constprop.optla constprop/runtests \
+        constprop/constprop.set constprop/constprop.optla \
 	constprop/tests/cconstants.c  constprop/tests/classes_and_returns.C  \
 	constprop/tests/demo2.C       constprop/tests/intval.c \
 	constprop/tests/namespaces.C  constprop/tests/small.c \
@@ -34,7 +34,6 @@ EXTRA_DIST= \
 	\
 	nnh99_shape/nnh99_shape.set      nnh99_shape/nnh99_shape.optla \
 	nnh99_shape/main.C               nnh99_shape/main.h \
-	nnh99_shape/runtests \
 	nnh99_shape/tests/nnh_xsely.C \
 	nnh99_shape/tests/srw98_listreverse.C \
 	nnh99_shape/tests/nnh_xysel3.C \
@@ -48,7 +47,6 @@ EXTRA_DIST= \
 	\
 	srw98_shape/srw98_shape.set               srw98_shape/srw98_shape.optla \
 	srw98_shape/main.C                        srw98_shape/main.h \
-	srw98_shape/runtests \
 	srw98_shape/tests/nnh_xsely.C \
 	srw98_shape/tests/srw98_listreverse.C \
 	srw98_shape/tests/nnh_xysel3.C \
@@ -89,7 +87,7 @@ installcheck-local:
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl1rd
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis sl1rd
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
 	$(MAKE) check -C $(testdir)/sl1rd
 
 	@echo
@@ -97,7 +95,7 @@ installcheck-local:
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl2rd
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis sl2rd
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
 	$(MAKE) check -C $(testdir)/sl2rd
 
 	@echo
