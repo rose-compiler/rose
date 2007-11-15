@@ -5,8 +5,8 @@ srw98_shape: shape analysis as published in TOPLAS'98, "Solving shape-analysis p
              in languages with destructive updating" by M. Sagiv, T. Reps, R. Wilhelm.
              analysis is adapted to operate on the subset SL3 of C++
              (the only pointer operator accepted is '->', but not '&', '*', or arithmetics)
-nnh99_shape: shape analysis as published in TOPLAS'98, "Principle of Program Analysis" by
-             F. Nielson, H.R. Nielson, C. Hankin
+nnh99_shape: shape analysis as published in "Principle of Program Analysis" by F. Nielson
+             H.R. Nielson, C. Hankin
              analysis is adapted to operate on the subset SL3 of C++
              (the only pointer operator accepted is '->', but not '&', '*', or arithmetics)
 
