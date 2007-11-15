@@ -12,6 +12,8 @@ CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/inc
 LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB)
 LIBS = $(ANALYSIS).a -lsatire -lsyntree -ltermite -lrose -lrt -lpag
 
+CUSTOM_DFI_WRITE=
+
 all: $(ANALYSIS)
 
 $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
@@ -20,11 +22,11 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	if $(PAG) $(SATIRE_INCLUDE)/ iterate1.t $(ANALYSIS) $(ANALYSIS)-out --prefix=$(PAGDIR) 2> pag-out; then cat pag-out; else cat pag-out; false; fi
 	ar x $(SATIRE_LIB)/libsyntree.a syntree.o
 	mv syntree.o $(ANALYSIS)-out/src/
-	$(MAKE) -C $(ANALYSIS)-out/src/
+	$(MAKE) CFLAGS="$(CUSTOM_DFI_WRITE)" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main.C
+	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) $(CUSTOM_DFI_WRITE) -c main.C
 
 main-support.o: main-support.C
 	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C

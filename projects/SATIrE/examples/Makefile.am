@@ -112,7 +112,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
 	chmod u+rwx -R $(testdir)/nnh99_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	$(MAKE) check -C $(testdir)/nnh99_shape
+	$(MAKE) check -C $(testdir)/nnh99_shape CUSTOM_DFI_WRITE='-DDFI_WRITE' 
 
 	@echo
 	@echo "Testing srw98_shape"
@@ -120,6 +120,6 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) check -C $(testdir)/srw98_shape
+	$(MAKE) check -C $(testdir)/srw98_shape CUSTOM_DFI_WRITE='-DDFI_WRITE'
 
 	rm -rf $(testdir)
