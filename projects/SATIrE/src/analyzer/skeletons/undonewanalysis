@@ -13,6 +13,7 @@ then
     rm $1/Makefile
     rm $1/main.h
     rm $1/main.C
+    rm $1/main-support.h
     rm $1/main-support.C
     echo "done."
 else
