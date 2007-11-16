@@ -3,80 +3,210 @@
 # Basic test script
 # (C) 2007 Adrian Prantl, Viktor Pavlu
 
-FILES=`ls tests/*.[cC] tests/*.cpp tests/*.cc tests/*.cxx`
+FILES=`ls tests/*.[cC] tests/*.cpp tests/*.cc tests/*.cxx 2>/dev/null`
 CURRENTDIR=`pwd`
 ANALYSIS=`basename $CURRENTDIR`
-MODES="--textoutput --termoutput --sourceoutput --aliastextoutput --aliassourceoutput"
-OPTIONS="--wholeprogram --preinfo --postinfo --foldgraphs --no_individualgraphs --summarygraph"
-GENERATE_PERMUTATIONS="0" # 0=do not / 1=do generate permutations of OPTIONS
+MODES="--textoutput --termoutput --sourceoutput"
+OPTIONS="--wholeprogram --preinfo --postinfo"
 
-ALL=
-SUCESS=
-FAILED=
+CUSTOM_MODES="--aliastextoutput --aliassourceoutput"   # not available in all analyses, checked against --help text of $(ANALYSIS)
+CUSTOM_OPTIONS="--foldgraphs --summarygraph --individualgraphs"
+# FIXME take alternativeness of options into consideration
+# CUSTOM_OPTIONS="--foldgraphs| --summarygraph|--no_summarygraph| --individualgraphs|--no_individualgraphs|"
 
-DELIM=%
-PERMUTATIONS="$DELIM"
-if [ $GENERATE_PERMUTATIONS -eq "0" ]; then
-    PERMUTATIONS="$PERMUTATIONS $OPTIONS"
-else
+ARGSEP=:
+
+# add all CUSTOM_MODES that are implemented in
+# this analysis to the variable MODES
+addIfImplemented () {
+    target_var=$1
+    custom_options=$2
+    helptext=$3
+    for opt in $custom_options; do
+        r=`echo $helptext | grep -c "${opt//-/\\-}"`
+        if [ "$r" != "0" ]; then
+            eval "$target_var=\"\$$target_var $opt\""
+        fi
+    done
+}
+
+helptext=`$ANALYSIS --help`
+addIfImplemented "MODES"   "$CUSTOM_MODES"   "$helptext"
+addIfImplemented "OPTIONS" "$CUSTOM_OPTIONS" "$helptext"
+
+
+# generate "permutations" of options
+generatePermutations () {
+    perms="$ARGSEP"
     for opt in $OPTIONS; do
         newperms=
-        for perm in $PERMUTATIONS; do
-            newperms="$newperms $perm"
-            newperms="$newperms $perm$DELIM$opt"
+        for p in $perms; do
+            newperms="$newperms $p"
+            newperms="$newperms $p$ARGSEP$opt"
         done
-        PERMUTATIONS="$newperms"
+        perms="$newperms"
     done
+    ARGUMENTS=$perms
+}
+
+if [ "$GENERATE_PERMUTATIONS" = "yes" ]; then
+    generatePermutations
+else
+    ARGUMENTS="--no_anim$ARGSEP--statistics --no_anim$ARGSEP--statistics$ARGSEP${MODES// /$ARGSEP}$ARGSEP${OPTIONS// /$ARGSEP}"
 fi
 
+TMPFILE=/tmp/runtests.pag.$RANDOM
+CMDFILE=/tmp/runtests.cmd.$RANDOM
 
-echo "######## ######## Testing mode \"$MODES\""
+rm -f $TMPFILE
+rm -f $CMDFILE
+
+i=0
 
 for file in $FILES; do
 
-    echo "######## on file $file"
+    echo "--- testing $ANALYSIS on file $file ---"
 
     # for each option (even no options)
-    #for option in $PERMUTATIONS; do
+    for argset in $ARGUMENTS; do
+        i=$(($i + 1))
 
-        #option_with_space=${option//$DELIM/ }
-        option_with_space=$OPTIONS
+        cmd="$ANALYSIS$ARGSEP$file$ARGSEP$argset"
+        readable_cmd=${cmd//$ARGSEP/ }
 
-        echo "$ANALYSIS $file $MODES $option_with_space"
-        $ANALYSIS $file $MODES $option_with_space >/dev/null
+        printf "$readable_cmd ..." $i
+        /usr/bin/time --format="%S %U %e" $readable_cmd 1>/dev/null 2>$TMPFILE
 
-        if [ $? -eq 0 ]; then SUCCESS="$SUCCESS $file$DELIM$MODES$DELIM$option"
-        else FAILED="$FAILED $ANALYSIS$DELIM$file$DELIM$MODES$DELIM$option"; fi
-        ALL="$ALL $ANALYSIS$DELIM$file$DELIM$MODES$DELIM$option"
-    #done 
+        rc=$?
+
+        time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
+        time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
+        time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
+        time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'` 
+        mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
+
+        time_sys=` cat $TMPFILE | awk 'END {print $1}'`
+        time_user=`cat $TMPFILE | awk 'END {print $2}'`
+        time_wall=`cat $TMPFILE | awk 'END {print $3}'`
+
+        #echo " pag_run = $time_pag_run"
+        #echo "pag_init = $time_pag_init"
+        #echo "pag_iter = $time_pag_iter"
+        #echo "  pag_gc = $time_pag_gc"
+        #echo "     mem = $mem_allocd"
+
+        #echo "     sys = $time_sys"
+        #echo "    user = $time_user"
+        #echo "    wall = $time_wall"
+
+        echo " done in $time_wall secs."
+        
+        if [ $rc -eq 127 ]; then
+            cat $TMPFILE
+            exit 127
+        fi 
+
+        # bug the user with output (but remove --statistics)
+        cat $TMPFILE | grep -v 'analyzer done in .* sec' | grep -v '.*sec initalizing .*sec iterating' \
+        | grep -v '.* steps, .* nodes, .* average worklistlength' | grep -v '=> .* sec per step' \
+        | grep -v 'garbage collection (.* of iterating)' | grep -v '.*MB (.* rgc) allocated' \
+        | grep -v '.* Memory used total' | head -n -1
+
+        # append to report file
+        line="$rc $time_sys $time_user $time_wall $time_pag_run $time_pag_init $time_pag_iter $time_pag_gc $mem_allocd $cmd\n"
+        printf ${line// /\\t} >> $CMDFILE
+    done 
 done
 
+# create report  script
+AWKFILE=/tmp/runtests.awk.$RANDOM
+cat >$AWKFILE <<EndOfAWK
+BEGIN {
+    min_time_user  = 9999
+    min_time_wall  = 9999
+    min_time_pag   = 9999
+    min_mem_allocd = 9999
+}
+{
+    time_sys      += \$2
+    time_user     += \$3
+    time_wall     += \$4
+    time_pag_run  += \$5
+    time_pag_init += \$6
+    time_pag_iter += \$7
+    time_pag_gc   += \$8
+    mem_allocd    += \$9
 
+    min_time_user = min_time_user < \$3 ? min_time_user : \$3
+    max_time_user = max_time_user > \$3 ? max_time_user : \$3
+
+    min_time_wall = min_time_wall < \$4 ? min_time_wall : \$4
+    max_time_wall = max_time_wall > \$4 ? max_time_wall : \$4
+
+    min_time_pag  = min_time_pag < \$5 ? min_time_pag : \$5
+    max_time_pag  = max_time_pag > \$5 ? max_time_pag : \$5
+
+    min_mem_allocd  = min_mem_allocd < \$9 ? min_mem_allocd : \$9
+    max_mem_allocd  = max_mem_allocd > \$9 ? max_mem_allocd : \$9
+
+    i++
+}
+END {
+    if (i == 0) {
+        min_time_wall  = max_time_wall  = time_wall = 0;
+        min_time_user  = max_time_user  = time_user = 0;
+        min_time_pag   = max_time_pag   = time_pag_run = 0;
+        min_mem_allocd = max_mem_allocd = mem_allocd = 0;
+        i = 1;
+    }
+    printf "%s t_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
+    printf "%s t_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
+    printf "%s t_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
+    printf "%s alloc'd  min avg max = %f %f %f secs\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
+}
+EndOfAWK
+
+OUTPUT_COLUMNS="\$4,\$3,\$5,\$9,cmd"
+OUTPUT_HEADERS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
 
 echo "########################################################################"
 echo "# SATIrE automagic test report, `date`"
 echo "########################################################################"
 echo
 
-TOTAL=`echo $ALL    |wc -w`
-GOOD=`echo  $SUCCESS|wc -w`
-BAD=`echo   $FAILED |wc -w`
-GOOD_PERC=`echo $GOOD*100/$TOTAL|bc`
-BAD_PERC=`echo $BAD*100/$TOTAL|bc`
+TOTAL=`cat $CMDFILE |wc -l`
+GOOD=`awk 'BEGIN{s=0}($1==0){s++}END{print s}' $CMDFILE ` 
+BAD=` awk 'BEGIN{s=0}($1!=0){s++}END{print s}' $CMDFILE ` 
+GOOD_PERC=`echo scale=2\; $GOOD*100/$TOTAL|bc`
+BAD_PERC=`echo scale=2\; $BAD*100/$TOTAL|bc`
 
-echo "[$GOOD/$TOTAL] succeeded ($GOOD_PERC%)!" # FIXME: integer only
-#if [ -n "$SUCCESS" ]; then 
-#    echo [$SUCCESS]
-#fi
-
-echo "[$BAD/$TOTAL] failed ($BAD_PERC%):"
-if [ -n "$FAILED" ]; then 
-    for f in $FAILED; do
-        f=${f//$DELIM/ }
-	echo "  $f"
-    done
-    #echo "Press <Ctrl-C> to abort or <Return> to continue"
-    #read 
-    #exit 1
+echo "--- [$GOOD/$TOTAL] succeeded ($GOOD_PERC%) ---"
+if [ "$GOOD" != "0" ]; then
+    printf "$OUTPUT_HEADERS\n"
+    awk "BEGIN{OFS=\"\\t\"}(\$1==0){cmd=\$10;gsub(\"$ARGSEP\",\" \",cmd);print $OUTPUT_COLUMNS}" $CMDFILE
 fi
+
+echo "--- [$BAD/$TOTAL] failed ($BAD_PERC%) ---"
+if [ "$BAD" != "0" ]; then
+    printf "$OUTPUT_HEADERS\n"
+    awk "BEGIN{OFS=\"\\t\"}(\$1!=0){cmd=\$10;gsub(\"$ARGSEP\",\" \",cmd);print $OUTPUT_COLUMNS}" $CMDFILE
+fi
+
+echo "--- $ANALYSIS runtests statistics ---" 
+awk '($1==0){print $0}' $CMDFILE | awk -v prefix="success" -f $AWKFILE
+awk '($1!=0){print $0}' $CMDFILE | awk -v prefix="failed" -f $AWKFILE
+awk '{s+=$4}END{printf "total t_wall: %s secs",s}' $CMDFILE
+
+rm -f $TMPFILE
+rm -f $CMDFILE
+rm -f $AWKFILE
+
+echo
 echo "########################################################################"
+
+if [ "$BAD" != "0" ]; then
+    echo "Press <Ctrl-C> to abort or <Return> to continue"
+    read
+fi
+
+# vim: ts=4 sts=4 sw=4:
