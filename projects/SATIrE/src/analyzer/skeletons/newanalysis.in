@@ -74,11 +74,13 @@ then
         echo "$ANALYSIS_DIR/runtests exists and remains in $ANALYSIS_DIR."
     else
         cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
+        chmod u+x $ANALYSIS_DIR/runtests
     fi
 else
     cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
     cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
     cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
+    chmod u+x $ANALYSIS_DIR/runtests
 fi
 
 if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]
