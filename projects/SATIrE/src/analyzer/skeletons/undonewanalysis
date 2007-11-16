@@ -15,6 +15,7 @@ then
     rm $1/main.C
     rm $1/main-support.h
     rm $1/main-support.C
+    rm $1/runtests
     echo "done."
 else
     echo "$1 not found. No files removed."
