@@ -28,12 +28,12 @@ cp -ur nielson99_shape $TESTDIR
 chmod u+rwx -R $TESTDIR/nielson99_shape
 cd $TESTDIR ; newanalysis -u nielson99_shape 
 cd $BASEDIR
-make check -C $TESTDIR/nielson99_shape
+make check -C $TESTDIR/nielson99_shape CUSTOM_DFI_WRITE='-DDFI_WRITE'
 
 echo "Testing srw98_shape"
 cp -ur srw98_shape $TESTDIR
 chmod u+rwx -R $TESTDIR/srw98_shape
 cd $TESTDIR ; newanalysis -u srw98_shape 
 cd $BASEDIR
-make check -C $TESTDIR/srw98_shape
+make check -C $TESTDIR/srw98_shape CUSTOM_DFI_WRITE='-DDFI_WRITE' 
 
