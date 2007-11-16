@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.2 2007-10-31 10:52:08 gergo Exp $
+// $Id: pag_support.C,v 1.3 2007-11-16 21:36:11 gergo Exp $
 
 #include <iostream>
 
@@ -207,6 +207,11 @@ char const *kfg_get_instruction_attribute_by_name(KFG, KFG_NODE, int, char *)
 //#define HAVE_MEMMOVE
 #include "pagheader.h"
 #include "snum.h"
+/* list of global variables */
+extern "C" void *kfg_get_global_attribute__globals(KFG cfg)
+{
+    return new PigNodeList(((CFG *) cfg)->globals);
+}
 /* numbers of types and expressions */
 extern "C" snum kfg_get_global_attribute__numtypes(KFG cfg)
 {
@@ -336,6 +341,30 @@ extern "C" bool o_is_subtype_of(void *a, void *b)
 extern "C" bool o_is_subtypenum_of(snum a, snum b)
 {
     return o_is_subtype_of(o_typenum_to_type(a), o_typenum_to_type(b));
+}
+
+extern "C" void *o_global_get_type(void *symbol)
+{
+    SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
+    return varsym->get_type();
+}
+
+extern "C" bool o_global_has_initializer(void *symbol)
+{
+    SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
+    if (get_global_cfg()->globals_initializers.find(varsym)
+            != get_global_cfg()->globals_initializers.end())
+    {
+        return true;
+    }
+    else
+        return false;
+}
+
+extern "C" void *o_global_get_initializer(void *symbol)
+{
+    SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
+    return get_global_cfg()->globals_initializers[varsym];
 }
 
 extern "C" str o_exp_root_str(void *exp)
