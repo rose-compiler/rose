@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.2 2007-10-23 13:25:12 gergo Exp $
+// $Id: cfg_support.h,v 1.3 2007-11-16 21:36:36 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -74,6 +74,11 @@ public:
     std::map<SgExpression *, int, ExprPtrComparator> exprs_numbers;
     std::map<int, SgType *> numbers_types;
     std::map<SgType *, int, TypePtrComparator> types_numbers;
+
+    std::map<std::string, SgVariableSymbol *> names_globals;
+    std::map<std::string, SgExpression *> names_initializers;
+    std::list<SgVariableSymbol *> globals;
+    std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
 };
 
 class BasicBlock

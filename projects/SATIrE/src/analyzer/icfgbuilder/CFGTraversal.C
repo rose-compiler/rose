@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.6 2007-09-28 08:36:25 adrian Exp $
+// $Id: CFGTraversal.C,v 1.7 2007-11-16 21:36:33 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -228,7 +228,21 @@ CFGTraversal::number_exprs() {
   std::deque<SgStatement *>::const_iterator stmt;
   std::set<SgExpression *, ExprPtrComparator> expr_set;
   std::set<SgType *, TypePtrComparator> type_set;
+
+// add all global initializer expressions and the types of all global
+// variables
+  ExprSetTraversal global_est(&expr_set, &type_set);
+  std::map<SgVariableSymbol *, SgExpression *>::iterator itr;
+  for (itr = cfg->globals_initializers.begin();
+       itr != cfg->globals_initializers.end(); ++itr)
+  {
+      global_est.traverse(itr->second, preorder);
+  }
+  std::list<SgVariableSymbol *>::iterator g_itr;
+  for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
+      type_set.insert((*g_itr)->get_type());
   
+// collect all expressions from the program blocks
   for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block) {
     for (stmt = (*block)->statements.begin();
 	 stmt != (*block)->statements.end(); ++stmt) {
@@ -255,6 +269,8 @@ CFGTraversal::number_exprs() {
       } else if (dynamic_cast<LogicalIf *>(*stmt)) {
 	est.traverse(dynamic_cast<LogicalIf *>(*stmt)->get_condition(),
 		     preorder);
+      } else if (dynamic_cast<DeclareStmt *>(*stmt)) {
+          type_set.insert(dynamic_cast<DeclareStmt *>(*stmt)->get_type());
       }
     }
   }
@@ -278,6 +294,40 @@ CFGTraversal::number_exprs() {
 
 void 
 CFGTraversal::visit(SgNode *node) {
+  // collect all global variables into a list
+  if (SgGlobal *global = isSgGlobal(node->get_parent()))
+  {
+      SgDeclarationStatementPtrList::iterator itr;
+      for (itr = global->getDeclarationList().begin();
+           itr != global->getDeclarationList().end();
+           ++itr)
+      {
+          if (SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
+          {
+              SgInitializedName *initname = vardecl->get_variables().front();
+              SgVariableSymbol *varsym
+                  = global->lookup_var_symbol(initname->get_name());
+              std::string name = initname->get_name().str();
+              if (cfg->names_globals.find(name) == cfg->names_globals.end())
+              {
+                  cfg->names_globals[name] = varsym;
+                  cfg->globals.push_back(varsym);
+              }
+              if (cfg->names_initializers.find(name)
+                      == cfg->names_initializers.end())
+              {
+                  if (isSgAssignInitializer(initname->get_initializer()))
+                  {
+                      cfg->names_initializers[name]
+                          = isSgAssignInitializer(initname->get_initializer())
+                                ->get_operand();
+                      cfg->globals_initializers[varsym]
+                          = cfg->names_initializers[name];
+                  }
+              }
+          }
+      }
+  }
   // visit all function definitions
   if (isSgFunctionDeclaration(node)) {
     SgFunctionDeclaration *decl = isSgFunctionDeclaration(node);
