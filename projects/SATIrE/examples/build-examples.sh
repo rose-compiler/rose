@@ -23,12 +23,12 @@ cd $TESTDIR ; newanalysis constprop
 cd $BASEDIR
 make check -C $TESTDIR/constprop
 
-echo "Testing nielson99_shape"
-cp -ur nielson99_shape $TESTDIR
-chmod u+rwx -R $TESTDIR/nielson99_shape
-cd $TESTDIR ; newanalysis -u nielson99_shape 
+echo "Testing nnh99_shape"
+cp -ur nnh99_shape $TESTDIR
+chmod u+rwx -R $TESTDIR/nnh99_shape
+cd $TESTDIR ; newanalysis -u nnh99_shape 
 cd $BASEDIR
-make check -C $TESTDIR/nielson99_shape CUSTOM_DFI_WRITE='-DDFI_WRITE'
+make check -C $TESTDIR/nnh99_shape CUSTOM_DFI_WRITE='-DDFI_WRITE'
 
 echo "Testing srw98_shape"
 cp -ur srw98_shape $TESTDIR
