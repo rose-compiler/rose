@@ -1,3 +1,9 @@
+* Added a global attribute and some auxiliary functions for access to global
+  variables from PAG analysis specifications. [GB]
+
+* Added file docs/satire_attributes_auxiliary_functions as documentation of
+  all attributes and auxiliary functions provided by SATIrE. [GB]
+
 V0.7.7 2007-11-12 VP, AP, MS
 
 * added srw98_shape, nnh99_shape [VP,MS]
