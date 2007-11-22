@@ -127,8 +127,10 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
   Sg_File_Info* fi = astNode->get_file_info();
   if (fi == NULL) {
     fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-    std::cerr << "** WARNING: FileInfo for Node " << astNode 
-	      << " \"" << astNode->unparseToString() << "\" was not set." << std::endl;
+    if (isSgLocatedNode(astNode)) {
+      std::cerr << "** WARNING: FileInfo for Node " << astNode->class_name()  
+		<< " \"" << astNode->unparseToString() << "\" was not set." << std::endl;
+    }
   }
 
   if (!fi->isFrontendSpecific()) {
