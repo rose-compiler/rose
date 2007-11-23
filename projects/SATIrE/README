@@ -75,6 +75,14 @@ SATIrE 0.7.6 was tested with
  e) Run 'newanalysis' to have all required files copied into your
     directory. (you can rerun newanalysis later again)
 
+    If you do modify the generated files do not want them to be overwritten
+    in subsequent uses of new analysis use option '-u' (for update). 
+    The option '-u' *must* be used if you are apply newanalysis to the examples
+    srw98_shape and nnh99_shape to not overwrite main.C and main.h which are
+    predefined for the two shape analyses. (Future versions of SATIrE will
+    include a configure file that allows to handle such cases in a more 
+    convenient way)
+
  f) Run 'make' to compile your analyzer
 
  g) Run your analyzer '<ANALYSIS_NAME> <INPUTFILE>'. The input file is a
@@ -92,6 +100,11 @@ SATIrE 0.7.6 was tested with
   
  a) Documentation that comes with the distribution can be found
     in the directory 'docs'.
+    satire_overview.pdf: gives an overview of the SATIrE infrastructure
+    satire_cfgconstruction.pdf: describes the structure of the ICFG
+    satire_attributes_auxiliary_functions: a text document on the auxiliary
+          functions that can be used in PAG analysis specifications to 
+          access various program information.
     
  b) On the web information can be found at:
     http://www.complang.tuwien.ac.at/markus/satire

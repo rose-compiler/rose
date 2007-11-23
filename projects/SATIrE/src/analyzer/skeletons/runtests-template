@@ -11,7 +11,7 @@ OPTIONS="--wholeprogram --preinfo --postinfo"
 
 CUSTOM_MODES="--aliastextoutput --aliassourceoutput"   # not available in all analyses, checked against --help text of $(ANALYSIS)
 CUSTOM_OPTIONS="--foldgraphs --summarygraph --individualgraphs"
-# FIXME take alternativeness of options into consideration
+# FIXME take alternativenes of options into consideration
 # CUSTOM_OPTIONS="--foldgraphs| --summarygraph|--no_summarygraph| --individualgraphs|--no_individualgraphs|"
 
 ARGSEP=:
@@ -188,7 +188,7 @@ fi
 
 echo "--- [$BAD/$TOTAL] failed ($BAD_PERC%) ---"
 if [ "$BAD" != "0" ]; then
-    printf "$OUTPUT_HEADERS\n"
+    printf "ERROR:$OUTPUT_HEADERS\n"
     awk "BEGIN{OFS=\"\\t\"}(\$1!=0){cmd=\$10;gsub(\"$ARGSEP\",\" \",cmd);print $OUTPUT_COLUMNS}" $CMDFILE
 fi
 

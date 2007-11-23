@@ -2,5 +2,6 @@
 
 SUBDIRS= src tools examples
 DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag
-EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS docs/satire_cfgconstruction.pdf docs/satire_overview.pdf
+EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS docs/satire_cfgconstruction.pdf docs/satire_overview.pdf docs/ docs/satire_attributes_auxiliary_functions
+
 

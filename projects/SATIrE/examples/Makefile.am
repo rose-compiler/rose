@@ -1,4 +1,5 @@
 EXTRA_DIST= \
+	build-examples.sh \
 	sl1rd/sl1rd.set sl1rd/sl1rd.optla sl1rd/runtests \
 	sl1rd/tests/rderrtest1.C  sl1rd/tests/rdtest1.C  \
 	sl1rd/tests/rdtest2.C     sl1rd/tests/rdtest3.C  \
@@ -60,7 +61,7 @@ EXTRA_DIST= \
 
 
 
-testdir=executable-examples
+testdir=installcheck-executable-examples
 
 installcheck-local:
 	mkdir -p $(testdir)
