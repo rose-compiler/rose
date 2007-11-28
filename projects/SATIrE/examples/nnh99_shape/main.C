@@ -282,7 +282,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
     
     if ( opt->gdlShowSummaryGraph() ) {
       fprintf(fp, "  graph: { /*summary graph*/\n");
-      fprintf(fp, "    color: green\n");
+      fprintf(fp, "    color: lightgrey\n");
       n_graphs++;
       n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, o_SrwNielsonPair_select_1(gpair));
     }
