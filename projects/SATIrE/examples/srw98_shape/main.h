@@ -12,8 +12,8 @@ class ShapeAnalyzerOptions : public AnalyzerOptions {
 public:
     ShapeAnalyzerOptions() : AnalyzerOptions() {
       gdlFoldGraphsOff();
-      gdlShowIndividualGraphsOn();
-      gdlShowSummaryGraphOff();
+      gdlShowIndividualGraphsOff();
+      gdlShowSummaryGraphOn();
     }
     virtual ~ShapeAnalyzerOptions() {}
 
@@ -42,10 +42,10 @@ public:
         " Custom options:\n" 
         "   --aliastextoutput             output the alias pairs for each statement on stdout\n"
         "   --aliassourceoutput           generate source file with annotated alias pairs for each statement\n"
-        "   --individualgraphs            output all individual graphs in gdl [default]\n"
-        "   --no_individualgraphs         do not output all individual graphs in gdl\n"
-        "   --summarygraph                output summary graph in gdl\n"
-        "   --no_summarygraph             do not output summary graph in gdl [default]\n"
+        "   --individualgraphs            output all individual graphs in gdl\n"
+        "   --no_individualgraphs         do not output all individual graphs in gdl [default]\n"
+        "   --summarygraph                output summary graph in gdl [default]\n"
+        "   --no_summarygraph             do not output summary graph in gdl\n"
         "   --foldgraphs                  fold all gdl graphs initially\n";
     }
 

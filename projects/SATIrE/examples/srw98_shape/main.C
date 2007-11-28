@@ -138,7 +138,6 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
   o_StrList              vars = o_vars_by_stackedges(o_extract_stackedge_set(sg));
 
   fprintf(fp, "    title: \"%s-sg%d\"\n", name, n_graphs);
-  fprintf(fp, "    label: \"\"\n");
   fprintf(fp, "    orientation: left_to_right\n");
   fprintf(fp, "    status: grey\n");
   fprintf(fp, "    display_edge_labels: yes\n");
@@ -270,7 +269,8 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
     
     if (opt->gdlShowSummaryGraph()) {
       fprintf(fp, "  graph: { /*summary graph*/\n");
-      fprintf(fp, "    color: green\n");
+      fprintf(fp, "    color: lightgrey\n");
+      fprintf(fp, "    label: \"\"\n");
       n_graphs++;
       n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, o_SrwNielsonPair_select_1(gpair));
     }
@@ -284,6 +284,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
         
         fprintf(fp, "  graph: { /*shape graph*/\n");
         fprintf(fp, "    color: white\n");
+        fprintf(fp, "    label: \"\"\n");
         n_graphs++;
         n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, sg);
       }
