@@ -5,98 +5,98 @@
 
 bool get_universal_attribute__kill_norm_temps()
 {
-  /* remove temporary variables introduced in the normalisation process */
-  return true;
+	/* remove temporary variables introduced in the normalisation process */
+	return true;
 }
 
 ShapeAnalyzerOptions *opt;
 
 int main(int argc, char **argv)
 {
-  /* parse the command line and extract analyzer options */
-  opt = new ShapeAnalyzerOptions();
-  ShapeCommandLineParser clp;
-  clp.parse(opt,argc,argv);
-  bool outputAll = opt->outputWholeProgram();
+	/* parse the command line and extract analyzer options */
+	opt = new ShapeAnalyzerOptions();
+	ShapeCommandLineParser clp;
+	clp.parse(opt,argc,argv);
+	bool outputAll = opt->outputWholeProgram();
 
-  /* set the PAG options as specified on the command line */
-  setPagOptions(*opt);
-  
-  /* Run the frontend to construct an abstract syntax tree from
-   * the files specified on the command line (which has been processed
-   * and commands only relevant to the analyzer have been removed). */
-  SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
-  
-  /* Make sure everything is OK... */
-  AstTests::runAllTests(ast_root);
+	/* set the PAG options as specified on the command line */
+	setPagOptions(*opt);
+	
+	/* Run the frontend to construct an abstract syntax tree from
+	 * the files specified on the command line (which has been processed
+	 * and commands only relevant to the analyzer have been removed). */
+	SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
+	
+	/* Make sure everything is OK... */
+	AstTests::runAllTests(ast_root);
 
-  /* Construct a control-flow graph from the AST, make sure it has
-   * the structrure expected by PAG, and run the analysis on it,
-   * attributing the statements of the AST with analysis
-   * information. Use the StatementAttributeTraversal class for accessing
-   * the analysis information on each statement */
-  char* outputfile=(char*)opt->getGdlFileName().c_str();
-  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt->animationGeneration(), !opt->quiet());
+	/* Construct a control-flow graph from the AST, make sure it has
+	 * the structrure expected by PAG, and run the analysis on it,
+	 * attributing the statements of the AST with analysis
+	 * information. Use the StatementAttributeTraversal class for accessing
+	 * the analysis information on each statement */
+	char* outputfile=(char*)opt->getGdlFileName().c_str();
+	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt->animationGeneration(), !opt->quiet());
 
-  /* Extract all Pairs of Expressions from the Program so that they
-   * can be compared for aliasing. */
-  ExpressionCollector ec;
-  ExpressionPairSet *pairs = ec.getExpressionPairs(ast_root);
+	/* Extract all Pairs of Expressions from the Program so that they
+	 * can be compared for aliasing. */
+	ExpressionCollector ec;
+	ExpressionPairSet *pairs = ec.getExpressionPairs(ast_root);
 
-  /* Add Alias Pairs to AST */
-  AliasPairsAnnotator<DFI_STORE> annotator(analysis_info, pairs);
-  annotator.traverseInputFiles(ast_root, preorder);
+	/* Add Alias Pairs to AST */
+	AliasPairsAnnotator<DFI_STORE> annotator(analysis_info, pairs);
+	annotator.traverseInputFiles(ast_root, preorder);
 
-  /* Handle command line option --textoutput */
-  if(opt->analysisResultsTextOutput()) {
-    PagDfiTextPrinter<DFI_STORE> p(analysis_info);
+	/* Handle command line option --textoutput */
+	if(opt->analysisResultsTextOutput()) {
+		PagDfiTextPrinter<DFI_STORE> p(analysis_info);
 
-    if (outputAll) p.traverse(ast_root, preorder);
-    else p.traverseInputFiles(ast_root, preorder);    
-  }
-  if(opt->aliasTextOutput()) {
-    AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
-    p.traverseInputFiles(ast_root, preorder);
-  }
+		if (outputAll) p.traverse(ast_root, preorder);
+		else p.traverseInputFiles(ast_root, preorder);    
+	}
+	if(opt->aliasTextOutput()) {
+		AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
+		p.traverseInputFiles(ast_root, preorder);
+	}
  
-  /* Handle command line option --sourceoutput 
-   * The source code (i.e. the AST) is annotated with comments showing
-   * the analysis results and by calling the backend an annotated C/C++
-   * file is generated (named rose_<inputfilename>) */
-  if(opt->analysisResultsSourceOutput()) {
-    PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
+	/* Handle command line option --sourceoutput 
+	 * The source code (i.e. the AST) is annotated with comments showing
+	 * the analysis results and by calling the backend an annotated C/C++
+	 * file is generated (named rose_<inputfilename>) */
+	if(opt->analysisResultsSourceOutput()) {
+		PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
-    if (outputAll) ca.traverse(ast_root, preorder);
-    else ca.traverseInputFiles(ast_root, preorder);
+		if (outputAll) ca.traverse(ast_root, preorder);
+		else ca.traverseInputFiles(ast_root, preorder);
 
-    ast_root->unparse();
-  }
-  /* handle command line option --aliassourceoutput */
-  if(opt->aliasSourceOutput()) {
-    AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
-    ca.traverseInputFiles(ast_root, preorder);
-    ast_root->unparse();
-  }
+		ast_root->unparse();
+	}
+	/* handle command line option --aliassourceoutput */
+	if(opt->aliasSourceOutput()) {
+		AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
+		ca.traverseInputFiles(ast_root, preorder);
+		ast_root->unparse();
+	}
 
-  /* Handle command line option --termoutput */
-  if(opt->analysisResultsTermOutput()) {
-    TermPrinter<DFI_STORE> tp(analysis_info);
+	/* Handle command line option --termoutput */
+	if(opt->analysisResultsTermOutput()) {
+		TermPrinter<DFI_STORE> tp(analysis_info);
 
-    if (outputAll) tp.traverse(ast_root);
-    else tp.traverseInputFiles(ast_root);
+		if (outputAll) tp.traverse(ast_root);
+		else tp.traverseInputFiles(ast_root);
 
-    ofstream termfile;
-    string fn = ast_root->getFileNames().front()+".pl";
-    termfile.open(fn.c_str());
-    termfile << "% Termite term representation" << endl;
-    termfile << tp.getTerm()->getRepresentation() << "." << endl;
-    termfile.close();
-  }
+		ofstream termfile;
+		string fn = ast_root->getFileNames().front()+".pl";
+		termfile.open(fn.c_str());
+		termfile << "% Termite term representation" << endl;
+		termfile << tp.getTerm()->getRepresentation() << "." << endl;
+		termfile.close();
+	}
 
-  /* Free all memory allocated by the PAG garbage collection */
-  GC_finish();
-  
-  return 0;
+	/* Free all memory allocated by the PAG garbage collection */
+	GC_finish();
+	
+	return 0;
 }
 
 // -- custom visualisation --
@@ -104,21 +104,21 @@ int main(int argc, char **argv)
 static int edge = 0; // global variable for setting edges on/off
 
 ExpressionPairSet *get_statement_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type) {
-  std::string label = "PAG " + alias_type + "-alias " + pos;
-  AliasPairAttribute* attr = dynamic_cast<AliasPairAttribute *>(stmt->getAttribute(label));
-  return attr->getPairs();
+	std::string label = "PAG " + alias_type + "-alias " + pos;
+	AliasPairAttribute* attr = dynamic_cast<AliasPairAttribute *>(stmt->getAttribute(label));
+	return attr->getPairs();
 }
 
 std::string format_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type) {
-  std::stringstream str;
-  ExpressionPairSet *pairs = get_statement_alias_pairs(stmt, pos, alias_type);
-  ExpressionPairSet::iterator i;
-  std::pair<SgNode*,SgNode*> *pair;
-  for (i=pairs->begin(); i!=pairs->end(); i++) {
-    pair = *i;
-    str << "(" << pair->first->unparseToString() << "," << pair->second->unparseToString() << "), ";
-  }
-  return str.str();
+	std::stringstream str;
+	ExpressionPairSet *pairs = get_statement_alias_pairs(stmt, pos, alias_type);
+	ExpressionPairSet::iterator i;
+	std::pair<SgNode*,SgNode*> *pair;
+	for (i=pairs->begin(); i!=pairs->end(); i++) {
+		pair = *i;
+		str << "(" << pair->first->unparseToString() << "," << pair->second->unparseToString() << "), ";
+	}
+	return str.str();
 }
 
 
@@ -128,113 +128,122 @@ std::string format_alias_pairs(SgStatement *stmt, std::string pos, std::string a
 
 /* custom .gdl output functions */
 int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o_ShapeGraph sg) {
-  int n_nodes = 0;
+	int n_nodes = 0;
 
-  o_NodeList        is_shared = o_extract_is_shared(sg);
-  o_StackEdgeList stack_edges = o_extract_stackedges(sg);
-  o_HeapEdgeList   heap_edges = o_extract_heapedges(sg);
+	o_NodeList	is_shared = o_extract_is_shared(sg);
+	o_StackEdgeList stack_edges = o_extract_stackedges(sg);
+	o_HeapEdgeList   heap_edges = o_extract_heapedges(sg);
 
-  o_NodeList            nodes = o_extract_heapnodes(sg);
-  o_StrList              vars = o_vars_by_stackedges(o_extract_stackedge_set(sg));
+	o_NodeList	    nodes = o_extract_heapnodes(sg);
+	o_StrList	      vars = o_vars_by_stackedges(o_extract_stackedge_set(sg));
 
-  fprintf(fp, "    title: \"%s-sg%d\"\n", name, n_graphs);
-  fprintf(fp, "    orientation: left_to_right\n");
-  fprintf(fp, "    status: grey\n");
-  fprintf(fp, "    display_edge_labels: yes\n");
-  fprintf(fp, "    manhattan_edges: no\n");
-  fprintf(fp, "    ignore_singles : no\n");
-  fprintf(fp, "    xspace: 50\n");
-  fprintf(fp, "    %s\n", attrib);
+	fprintf(fp, "    title: \"%s-sg%d\"\n", name, n_graphs);
+	fprintf(fp, "    orientation: left_to_right\n");
+	fprintf(fp, "    status: grey\n");
+	fprintf(fp, "    display_edge_labels: yes\n");
+	fprintf(fp, "    manhattan_edges: no\n");
+	fprintf(fp, "    ignore_singles : no\n");
+	fprintf(fp, "    xspace: 50\n");
+	fprintf(fp, "    %s\n", attrib);
 
-  // all heap nodes
-  while (!o_NodeList_is_empty(nodes)) {
-    o_VarSet node = o_NodeList_head(nodes);
-    nodes = o_NodeList_tail(nodes);
-    n_nodes++;
-    
-    fprintf(fp, "    node: { /*heap node*/ \n");
-    fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
-    o_VarSet_print_fp(fp, node);
-    fprintf(fp, "\"\n");
-    fprintf(fp, "      label: \"");
-    my_o_VarSet_print_fp(fp, node);
-    fprintf(fp, "\"\n");
-    if (o_NodeList_is_elem(is_shared, node))
-    {
-      fprintf(fp, "      shape: rhomb\n");
-      if (!edge)
-      {
-        if (o_VarSet_is_empty(node)) 
-          fprintf(fp, "      color: darkmagenta\n");
-        else
-          fprintf(fp, "      color: red\n");
-      }
-    }
-    fprintf(fp, "    }\n\n");
-  }
+	// all heap nodes
+	while (!o_NodeList_is_empty(nodes)) {
+		o_VarSet node = o_NodeList_head(nodes);
+		nodes = o_NodeList_tail(nodes);
+		n_nodes++;
+		
+		fprintf(fp, "    node: { /*heap node*/ \n");
+		fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
+		o_VarSet_print_fp(fp, node);
+		fprintf(fp, "\"\n");
+		fprintf(fp, "      label: \"");
+		my_o_VarSet_print_fp(fp, node);
+		fprintf(fp, "\"\n");
+		if (o_NodeList_is_elem(is_shared, node))
+		{
+			fprintf(fp, "      shape: rhomb\n");
+			if (!edge)
+			{
+	if (o_VarSet_is_empty(node)) 
+	  fprintf(fp, "      color: darkmagenta\n");
+	else
+	  fprintf(fp, "      color: red\n");
+			}
+		}
+		fprintf(fp, "    }\n\n");
+	}
 
-  // all var nodes
-  while (!o_StrList_is_empty(vars)) {
-    str node = o_StrList_head(vars);
+	// all var nodes
+	while (!o_StrList_is_empty(vars)) {
+		str node = o_StrList_head(vars);
 
-    vars = o_StrList_tail(vars);
-    fprintf(fp, "    node: { /*var node*/ \n");
-    fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
-    str_print_fp(fp, node);
-    fprintf(fp, "\"\n      label: \"");
-    fprintf(fp, "%s\"\n", str_to_charp(node));
-    fprintf(fp, "      shape: ellipse\n");
-    fprintf(fp, "      level: 0\n");
-    fprintf(fp, "    }\n\n");
-  }
+		vars = o_StrList_tail(vars);
+		fprintf(fp, "    node: { /*var node*/ \n");
+		fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
+		str_print_fp(fp, node);
+		fprintf(fp, "\"\n      label: \"");
+		fprintf(fp, "%s\"\n", str_to_charp(node));
+		fprintf(fp, "      shape: ellipse\n");
+		fprintf(fp, "      level: 0\n");
+		fprintf(fp, "    }\n\n");
+	}
 
-  // all stack edges
-  while (!o_StackEdgeList_is_empty(stack_edges)) {
-    o_StackEdge           edge = o_StackEdgeList_head(stack_edges);
-    str             var = o_StackEdge_select_1(edge);
-    o_VarSet          vars = o_StackEdge_select_2(edge);
+	// all stack edges
+	while (!o_StackEdgeList_is_empty(stack_edges)) {
+		o_StackEdge	   edge = o_StackEdgeList_head(stack_edges);
+		str	     var = o_StackEdge_select_1(edge);
+		o_VarSet	  vars = o_StackEdge_select_2(edge);
 
-    stack_edges = o_StackEdgeList_tail(stack_edges);
-    fprintf(fp, "    edge: { /*stackedge*/\n");
-    fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
-    str_print_fp(fp, var);
-    fprintf(fp, "\"\n");
-    fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
-    o_VarSet_print_fp(fp, vars);
-    fprintf(fp, "\"\n");
-    fprintf(fp, "    }\n\n");
-  }
+		stack_edges = o_StackEdgeList_tail(stack_edges);
+		fprintf(fp, "    edge: { /*stackedge*/\n");
+		fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
+		str_print_fp(fp, var);
+		fprintf(fp, "\"\n");
+		fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
+		o_VarSet_print_fp(fp, vars);
+		fprintf(fp, "\"\n");
+		fprintf(fp, "    }\n\n");
+	}
 
-  // all heap edges
-  while (!o_HeapEdgeList_is_empty(heap_edges)) {
-    o_HeapEdge edge = o_HeapEdgeList_head(heap_edges);
-    o_VarSet  node1 = o_HeapEdge_select_1(edge);
-    str         var = o_HeapEdge_select_2(edge);
-    o_VarSet  node2 = o_HeapEdge_select_3(edge);
+	// all heap edges
+	while (!o_HeapEdgeList_is_empty(heap_edges)) {
+		o_HeapEdge edge = o_HeapEdgeList_head(heap_edges);
+		o_VarSet  node1 = o_HeapEdge_select_1(edge);
+		str	 var = o_HeapEdge_select_2(edge);
+		o_VarSet  node2 = o_HeapEdge_select_3(edge);
 
-    heap_edges = o_HeapEdgeList_tail(heap_edges);
-    fprintf(fp, "    edge: { /*heapedge*/\n");
-    fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
-    o_VarSet_print_fp(fp, node1);
-    fprintf(fp, "\"\n");
-    fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
-    o_VarSet_print_fp(fp, node2);
-    fprintf(fp, "\"\n");
-    fprintf(fp, "      label: \"");
-    fprintf(fp, "%s\"\n", str_to_charp(var));
-    fprintf(fp, "    }\n\n");
-  }
-  
-  // end graph
-  fprintf(fp, "  }\n\n");
-  return n_nodes;
+		heap_edges = o_HeapEdgeList_tail(heap_edges);
+		fprintf(fp, "    edge: { /*heapedge*/\n");
+		fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
+		o_VarSet_print_fp(fp, node1);
+		fprintf(fp, "\"\n");
+		fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
+		o_VarSet_print_fp(fp, node2);
+		fprintf(fp, "\"\n");
+		fprintf(fp, "      label: \"");
+		fprintf(fp, "%s\"\n", str_to_charp(var));
+		fprintf(fp, "    }\n\n");
+	}
+
+	if (!n_nodes) {
+		fprintf(fp, "  node: { /*no nodes*/ \n");
+		fprintf(fp, "    title: \"%s-sg%d_dummy\"\n", name, n_graphs);
+		fprintf(fp, "    label: \"\"\n");
+		fprintf(fp, "    width : 0\n");
+		fprintf(fp, "    height: 0\n");
+		fprintf(fp, "  }\n");
+	}
+	
+	// end graph
+	fprintf(fp, "  }\n\n");
+	return n_nodes;
 }
 
 void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,int insnum,int ctx) {
 	/* We have only one instruction per basic block ! */
 	assert((id==-1 && insnum==-1) || insnum==0);
 	if (o_dfi_istop(info) || o_dfi_isbottom(info))
-  {
+	{
 		fprintf(fp, "node: { /*single instruction*/\n");
 		fprintf(fp, "  title: \"%s\"\n", name);
 		fprintf(fp, "  label: \"%s\"\n", o_dfi_istop(info)?GDL_TOP:GDL_BOT);
@@ -245,13 +254,13 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	fprintf(fp, "graph: { /*carrier box*/\n");
 	fprintf(fp, "  title: \"%s\"\n", name);
 	fprintf(fp, "  label: \"\"\n");
-  
+	
 	//fprintf(fp, "status: grey\n");
-  if (opt->gdlFoldGraphs())
-    fprintf(fp, "  status: folded\n");
-  else
-    fprintf(fp, "  status: boxed\n");
-  
+	if (opt->gdlFoldGraphs())
+		fprintf(fp, "  status: folded\n");
+	else
+		fprintf(fp, "  status: boxed\n");
+	
 	fprintf(fp, "  orientation: left_to_right\n");
 	fprintf(fp, "  color: white\n");
 	fprintf(fp, "  display_edge_labels: yes\n");
@@ -259,46 +268,46 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	fprintf(fp, "  ignore_singles : no\n");
 	fprintf(fp, "  xspace: 50\n");
 	fprintf(fp, "  %s\n", attrib);
-  
-	if (!o_dfi_istop(info) && !o_dfi_isbottom(info))
-  {
+	
     int n_nodes = 0;
-    int n_graphs = 0;
-    
-    o_SrwNielsonPair gpair = o_srw_extract_graphs(o_dfi_drop(info));
-    
-    if (opt->gdlShowSummaryGraph()) {
-      fprintf(fp, "  graph: { /*summary graph*/\n");
-      fprintf(fp, "    color: lightgrey\n");
-      fprintf(fp, "    label: \"\"\n");
-      n_graphs++;
-      n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, o_SrwNielsonPair_select_1(gpair));
-    }
+	if (!o_dfi_istop(info) && !o_dfi_isbottom(info))
+	{
+		int n_graphs = 0;
+		
+		o_SrwNielsonPair gpair = o_srw_extract_graphs(o_dfi_drop(info));
+		
+		if (opt->gdlShowSummaryGraph()) {
+			fprintf(fp, "  graph: { /*summary graph*/\n");
+			fprintf(fp, "    color: lightgrey\n");
+			fprintf(fp, "    label: \"\"\n");
+			n_graphs++;
+			n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, o_SrwNielsonPair_select_1(gpair));
+		}
 
-    if (opt->gdlShowIndividualGraphs()) {
-      o_ShapeGraphList graphs = o_SrwNielsonPair_select_2(gpair);
-      while (!o_ShapeGraphList_is_empty(graphs)) 
-      {
-        o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
-        graphs = o_ShapeGraphList_tail(graphs);
-        
-        fprintf(fp, "  graph: { /*shape graph*/\n");
-        fprintf(fp, "    color: white\n");
-        fprintf(fp, "    label: \"\"\n");
-        n_graphs++;
-        n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, sg);
-      }
-    }
+		if (opt->gdlShowIndividualGraphs()) {
+			o_ShapeGraphList graphs = o_SrwNielsonPair_select_2(gpair);
+			while (!o_ShapeGraphList_is_empty(graphs)) 
+			{
+				o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
+				graphs = o_ShapeGraphList_tail(graphs);
+				
+				fprintf(fp, "  graph: { /*shape graph*/\n");
+				fprintf(fp, "    color: white\n");
+				fprintf(fp, "    label: \"\"\n");
+				n_graphs++;
+				n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, sg);
+			}
+		}
+	}
 
-    if (!n_nodes) {
-      fprintf(fp, "  node: { /*no nodes*/ \n");
-      fprintf(fp, "    title: \"%s-sg%d_dummy\"\n", name, n_graphs);
-      fprintf(fp, "    label: \"\"\n");
-      fprintf(fp, "    width : 0\n");
-      fprintf(fp, "    height: 0\n");
-      fprintf(fp, "  }\n");
+	if (!n_nodes) {
+		fprintf(fp, "  node: { /*no nodes*/ \n");
+		fprintf(fp, "    title: \"%s_dummy\"\n", name);
+		fprintf(fp, "    label: \"\"\n");
+		fprintf(fp, "    width : 0\n");
+		fprintf(fp, "    height: 0\n");
+		fprintf(fp, "  }\n");
     }
-  }
 
 	fprintf(fp, "}\n\n\n\n");
 	return;
@@ -310,7 +319,7 @@ void my_o_VarSet_print_fp(FILE * fp, o_VarSet node) {
 	std::vector<std::string> varSet;
 	o_VarSet_cur_reset(&cur,node);
 	while(!o_VarSet_cur_is_empty(&cur)) {
-	        char* var = str_to_charp(o_VarSet_cur_get(&cur)); // MS adapted int to char*
+		char* var = str_to_charp(o_VarSet_cur_get(&cur)); // MS adapted int to char*
 		o_VarSet_cur_next(&cur);
 		//if (var!=0) fprintf(fp,"%s",var); // MS adapted to char*
 		//else fprintf(fp,"NOVAR");
@@ -335,3 +344,4 @@ void my_o_VarSet_print_fp(FILE * fp, o_VarSet node) {
 	fprintf(fp,"}");
 }
 
+// vim: ts=4 sts=2:

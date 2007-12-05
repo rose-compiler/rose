@@ -53,6 +53,8 @@ in let
 in
     delete_var(newinfo,ry);
 
+FunctionCall(_,_),local_edge: bot;
+
 FunctionExit(functionName,params), _:
     kill_vars(@, params);
 
