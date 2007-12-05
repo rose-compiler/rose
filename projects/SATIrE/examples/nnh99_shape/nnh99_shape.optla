@@ -12,14 +12,14 @@ BLOCK
 label: snum#
 
 PROBLEM nielson
-    direction : forward
-    carrier   : dfi
-    init      : bot
-    init_start: lift({(({},{}),{})})
-    equal     : eq
-    combine   : comb
-    retfunc   : comb
-    widening  : w
+direction : forward
+carrier   : dfi
+init      : bot
+init_start: lift({(({},{}),{})})
+equal     : eq
+combine   : comb
+retfunc   : comb
+widening  : w
 
 TRANSFER
 
@@ -54,6 +54,8 @@ in
     newinfo=lift(tassign_x_y(rx,ry,drop(@)));
 in
     gc(delete_var(newinfo,ry));
+
+FunctionCall(_,_),local_edge: bot;
 
 FunctionExit(functionName,params), _:
     gc(kill_vars(@, params));
@@ -128,6 +130,7 @@ trace_transfer :: str,ShapeGraphSet -> bool;
 trace_transfer(label, gs) = if should_trace("lowl") then print_graphs("            ".label.": ", gs) else false endif;
 
 print_graphs :: str,ShapeGraphSet -> bool;
+print_graphs(label,{}) = print(label) print("{}\n") false;
 print_graphs(label,gs) = {print_graph(label,g) !! g <-- gs} != {};
 
 print_graph :: str,ShapeGraph -> bool;
@@ -617,63 +620,70 @@ materialise(x,y,sel,((S0,H0),is0) as g) =
     let
         S1         = union(S0,{(x,{x})});
         Hextern    = {e !! (v1,sel1,w1) as e <-- H0, if v1 != {} && w1 != {}};
-        is1        = is0 # {};
     in let
         Hintern    = [e !! e <-- heapedge_subtract(H0,Hextern)];
     in let
         candidates = if {} ? is0 then
-            sgs_flatten([gen_cand(x,S1,Hextern,Hintern,union(is1,is_shared)) !! is_shared <-- { {{}}, {{x}}, {{x},{}} } ])
+            // if {} is shared, generate candidates for 3 cases
+            // after the materialisation:
+            //   - {} remains shared, new {x} is unshared
+            //   - {} remains shared, new {x} is shared
+            //   - {} loses sharing,  new {x} is shared
+            // note that the sharing can not go away, as there
+            // is no case where both {} and {x} are unshared
+            // after materialisation if {} was shared before
+            sgs_flatten([gen_cand({x},S1,Hextern,Hintern,union(is0 # {},is_shared)) !! is_shared <-- { {{}}, {{x}}, {{x},{}} } ])
         else
-            gen_cand(x,S1,Hextern,Hintern,is0)
+            // if {} is unshared, both {} and {x} must also
+            // be unshared after the materialisation
+            gen_cand({x},S1,Hextern,Hintern,is0)
         endif;
     in 
-        {sg !! ((S2,H2),is2) as sg <-- candidates, if is_compatible(sg) && kill_x(x,sg) = ((S0,H0),is0) && (x,{x}) ? S2 && ({y},sel,{x}) ? H2};
+        {sg !! ((S2,H2),is2) as sg <-- candidates, if is_compatible(sg) && kill_x(x,sg) = ((S0,H0),is0) && (x,{x}) ? S2 && var_exists(y,sg) && var_exists(x,sg) && (node_by_var(y,sg),sel,node_by_var(x,sg)) ? H2};
 
 
-gen_cand :: str,StackEdgeSet,HeapEdgeSet,HeapEdgeList,NodeSet -> ShapeGraphSet;
+gen_cand :: VarSet,StackEdgeSet,HeapEdgeSet,HeapEdgeList,NodeSet -> ShapeGraphSet;
 gen_cand(x,S,H,(_,sel,_) as edge:cdr,is0) =
     let Hn = case edge of
         ({},_,{}) => 
-            if {x} ? is0 then {
-                {( {},sel, {})},
-                {( {},sel,{x})},
-                {({x},sel, {})},
-                {({x},sel,{x})},
+            if x ? is0 then {
+                {({},sel,{})},
+                {({},sel, x)},
+                {( x,sel,{})},
+                {( x,sel, x)},
 
-                {( {},sel, {}),( {},sel,{x})},
-                {( {},sel, {}),({x},sel, {})},
-                {( {},sel, {}),({x},sel,{x})},
-                {( {},sel,{x}),({x},sel, {})},
-                {( {},sel,{x}),({x},sel,{x})},
-                {({x},sel,{x}),({x},sel, {})},
+                {({},sel,{}),({},sel, x)},
+                {({},sel,{}),( x,sel,{})},
+                {({},sel,{}),( x,sel, x)},
+                {({},sel, x),( x,sel,{})},
+                {({},sel, x),( x,sel, x)},
+                {( x,sel,{}),( x,sel, x)},
                 
-                {({},sel, {}),( {},sel,{x}),({x},sel, {})},
-                {({},sel, {}),( {},sel,{x}),({x},sel,{x})},
-                {({},sel, {}),({x},sel, {}),({x},sel,{x})},
-                {({},sel,{x}),({x},sel,{x}),({x},sel, {})},
+                {({},sel,{}),({},sel, x),(x,sel,{})},
+                {({},sel,{}),({},sel, x),(x,sel, x)},
+                {({},sel,{}),( x,sel,{}),(x,sel, x)},
                 
-                {({},sel,{}),({},sel,{x}),({x},sel,{}),({x},sel,{x})}
+                {({},sel,{}),({},sel,x),(x,sel,{}),(x,sel,x)}
             } else {
-              {( {},sel, {})},
-              {({x},sel, {})},
+                {({},sel,{})},
+                {( x,sel,{})},
 
-              {( {},sel, {}),({x},sel, {})}
+                {({},sel,{}),(x,sel,{})}
             } endif;
             
         ({},_,y) =>
             if y ? is0 then {
-                {( {},sel,y)},
-                {({x},sel,y)},
-                {( {},sel,y),({x},sel,y)}
+                {({},sel,y)},
+                {( x,sel,y)},
+                {({},sel,y),(x,sel,y)}
             } else {
-                {( {},sel,y)},
-                {({x},sel,y)}
+                {({},sel,y)},
+                {( x,sel,y)}
             } endif;
 
         (y,_,{}) => {
                 {(y,sel,{})},
-                {(y,sel,{x})},
-                {(y,sel,{x}), (y,sel,{})}
+                {(y,sel,x)}
             };
         
     endcase; in
