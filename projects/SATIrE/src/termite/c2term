@@ -7,5 +7,5 @@ else
 	echo "Running term generator on $1"
 	echo "Output written to $2"
 	# ignore error msgs
-	rose2term $1 | grep unary_node > $2
+	rose2term $1 > $2
 fi
