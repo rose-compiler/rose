@@ -17,7 +17,7 @@ class PrologSupport {
 	public:
 		static void addSpecific(SgNode*,PrologCompTerm*);
 		static PrologCompTerm* getFileInfo(Sg_File_Info*);
-		static std::string* prologize(std::string);
+		static std::string prologize(std::string);
                 static std::string escape_string(std::string s);
 	private:
 		static PrologTerm* getFunctionDeclarationSpecific(SgFunctionDeclaration*);

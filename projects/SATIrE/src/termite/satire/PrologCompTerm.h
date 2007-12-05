@@ -20,6 +20,10 @@ public:
   std::string getRepresentation();
   std::vector<PrologTerm *> getSubTerms() { return mSubterms; };
 
+
+  /// Add a subterm at the first position
+  void addFirstSubTerm(PrologTerm* t) {mSubterms.insert(mSubterms.begin(),t);};
+
   /// Add a subterm at the last position
   void addSubterm(PrologTerm* t) {mSubterms.push_back(t);};
 

@@ -73,8 +73,12 @@ private:
   PrologCompTerm* quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList);
   /** create list nodes*/
   PrologCompTerm* listTerm(SgNode* astNode, SynthesizedAttributesList synList);
+
+# ifndef COMPACT_TERM_NOTATION
   /** add the class name to the term, using PrologSupport::prologize*/
   void addClassname(SgNode* astNode,PrologCompTerm*);
+#endif
+
   /** the current term */
   PrologTerm* mTerm;
 
@@ -277,20 +281,30 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
 /* Create a prolog term representing a leaf node.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::leafTerm(SgNode* astNode, SynthesizedAttributesList synList) {
+TermPrinter<DFI_STORE_TYPE>::leafTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+{
+#ifdef COMPACT_TERM_NOTATION
+	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+#else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("leaf_node");
 	addClassname(astNode,t);
+#endif
 	return t;
 }
 
 /* Create a prolog term representing a unary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::unaryTerm(SgNode* astNode, SynthesizedAttributesList synList) {
+TermPrinter<DFI_STORE_TYPE>::unaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+{
+#ifdef COMPACT_TERM_NOTATION
+	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+#else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("unary_node");
 	addClassname(astNode,t);
+#endif
 	/* add children's subterms*/
 	t->addSubterm(synList.at(0));
 	return t;
@@ -299,10 +313,15 @@ TermPrinter<DFI_STORE_TYPE>::unaryTerm(SgNode* astNode, SynthesizedAttributesLis
 /* Create a prolog term representing a binary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::binaryTerm(SgNode* astNode, SynthesizedAttributesList synList) {
+TermPrinter<DFI_STORE_TYPE>::binaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+{
+#ifdef COMPACT_TERM_NOTATION
+	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+#else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("binary_node");
 	addClassname(astNode,t);
+#endif
 	/* add children's subterms*/
 	t->addSubterm(synList.at(0));
 	t->addSubterm(synList.at(1));
@@ -312,10 +331,15 @@ TermPrinter<DFI_STORE_TYPE>::binaryTerm(SgNode* astNode, SynthesizedAttributesLi
 /* Create a prolog term representing a ternary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::ternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) {
+TermPrinter<DFI_STORE_TYPE>::ternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+{
+#ifdef COMPACT_TERM_NOTATION
+	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+#else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("ternary_node");
 	addClassname(astNode,t);
+#endif
 	t->addSubterm(synList.at(0)); 
 	t->addSubterm(synList.at(1));
 	t->addSubterm(synList.at(2));
@@ -325,10 +349,15 @@ TermPrinter<DFI_STORE_TYPE>::ternaryTerm(SgNode* astNode, SynthesizedAttributesL
 /* Create a prolog term representing a quaternary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) {
+TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+{
+#ifdef COMPACT_TERM_NOTATION
+	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+#else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("quaternary_node"); 
   	addClassname(astNode,t);
+#endif
 	t->addSubterm(synList.at(0));
 	t->addSubterm(synList.at(1));
 	t->addSubterm(synList.at(2));
@@ -339,10 +368,15 @@ TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(SgNode* astNode, SynthesizedAttribut
 /* Create a prolog term representing a node with more than four successors.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList synList) {
+TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+{
+#ifdef COMPACT_TERM_NOTATION
+  PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+#else
   /* create composite term and add class name*/
   PrologCompTerm* t = new PrologCompTerm("list_node");
   addClassname(astNode,t);
+#endif
  /* add children's subterms to list*/
   PrologList* l = new PrologList();
   SynthesizedAttributesList::iterator it;
@@ -359,13 +393,15 @@ TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList
   return t;
 }
 
+#ifndef COMPACT_TERM_NOTATION
 template<typename DFI_STORE_TYPE>
 void
 TermPrinter<DFI_STORE_TYPE>::addClassname(SgNode* astNode, PrologCompTerm* t) {
 	/* create a new atom with Class name (ZigZagCase transfomed to zig_zag_case
 	 * to avoid being seen as a variable)*/
-	PrologAtom* cName = new PrologAtom(*(PrologSupport::prologize(astNode->class_name())));
+	PrologAtom* cName = new PrologAtom(PrologSupport::prologize(astNode->class_name()));
 	t->addSubterm(cName);
 }
+#endif 
 
 #endif

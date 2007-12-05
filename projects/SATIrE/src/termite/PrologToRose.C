@@ -21,6 +21,26 @@ SgNode*
 PrologToRose::toRose(PrologTerm* t) {
         SgNode* node;
 	if(PrologCompTerm* c = dynamic_cast<PrologCompTerm*>(t)) {
+
+#ifdef COMPACT_TERM_NOTATION
+	  string tname = c->getName();
+	  // Insert a dummy first argument to be backwards compatible 
+	  // with the old term representation
+	  c->addFirstSubTerm(new PrologAtom(tname));
+	  if (dynamic_cast<PrologList*>(c->at(1))) {
+	    node = listToRose(c,tname);
+	  } else {
+	    switch (c->getSubTerms().size()) {
+	    case (3): node = leafToRose(c,tname); break;
+	    case (4): node = unaryToRose(c,tname); break;
+	    case (5): node = binaryToRose(c,tname); break;
+	    case (6): node = ternaryToRose(c,tname); break;
+	    case (7): node = quaternaryToRose(c,tname); break;
+	    default: node = (SgNode*) 0;
+	    }
+	  }
+#else
+
 		string termType = t->getName();
 		/* get type */
 		PrologAtom* nterm = dynamic_cast<PrologAtom*>(c->at(0));
@@ -45,10 +65,12 @@ PrologToRose::toRose(PrologTerm* t) {
 			node = listToRose(c,tname);
 		} else if(termType=="leaf_node") { 
 			node = leafToRose(c,tname);
-		}
+		} 
+#endif
 	} else {
 		node = (SgNode*) 0;
 	}
+
 	// Set the CompilerGenerated Flag
 	if (SgLocatedNode* ln = isSgLocatedNode(node)) {
 	  Sg_File_Info* fi = ln->get_file_info();
@@ -1285,20 +1307,14 @@ PrologToRose::retrieveAnnotation(PrologCompTerm* t) {
 	PrologCompTerm* a = NULL;
 	/* the position of the annotation depends on the
 	 * arity of the term*/
-	if(tname == "unary_node") {
-		a = dynamic_cast<PrologCompTerm*>(t->at(2));
-	} else if (tname == "binary_node") {
-		a = dynamic_cast<PrologCompTerm*>(t->at(3));
-	} else if (tname == "ternary_node") {
-		a = dynamic_cast<PrologCompTerm*>(t->at(4));
-	} else if (tname == "quaternary_node") {
-		a = dynamic_cast<PrologCompTerm*>(t->at(5));
-	} else if (tname == "list_node") {
-		a = dynamic_cast<PrologCompTerm*>(t->at(2));	
-	} else if (tname == "leaf_node") {
-		a = dynamic_cast<PrologCompTerm*>(t->at(1));	
-	} else {
-		/*could not retrieve annotation*/
+	switch(t->getArity()) {
+	case 3: a = dynamic_cast<PrologCompTerm*>(t->at(1)); break;
+	case 4: a = dynamic_cast<PrologCompTerm*>(t->at(2)); break;
+	case 5: a = dynamic_cast<PrologCompTerm*>(t->at(3)); break;
+	case 6: a = dynamic_cast<PrologCompTerm*>(t->at(4)); break;
+	case 7: a = dynamic_cast<PrologCompTerm*>(t->at(5)); break;
+	default:
+	        /*could not retrieve annotation*/
 		ROSE_ASSERT(false);
 	}
 	ROSE_ASSERT(a != NULL);
@@ -2924,6 +2940,6 @@ PrologToRose::warn_msg(string msg) {
 void
 PrologToRose::debug(string message) {
 #ifndef NDEBUG
-  //	cout << message << "\n";
+  //  	cerr << message << "\n";
 #endif
 }

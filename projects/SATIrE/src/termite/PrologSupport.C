@@ -116,9 +116,9 @@ PrologSupport::getFileInfo(Sg_File_Info* inf) {
  * The reason we need this is that in PROLOG strings
  * starting with uppercase letters are variables.
  */
-string* 
+string 
 PrologSupport::prologize(string s) {
-	string* t = new string;
+	string t;
 	string::iterator it;
 	it = s.begin();
 	// remove "^Sg"
@@ -128,9 +128,9 @@ PrologSupport::prologize(string s) {
 	//lowercase first char (without prepending underscore)
 	if(it != s.end()) {
 		if(isUpper(*it)) {
-			t->push_back(toLower(*it));
+			t.push_back(toLower(*it));
 		} else {
-			t->push_back(*it);
+			t.push_back(*it);
 		}
 		it++;
 	}
@@ -138,10 +138,10 @@ PrologSupport::prologize(string s) {
 	//and its lowercase equivalent
 	while(it != s.end()) {
 		if(isUpper(*it)) {
-			t->push_back('_');
-			t->push_back(toLower(*it));
+			t.push_back('_');
+			t.push_back(toLower(*it));
 		} else {
-			t->push_back(*it);
+			t.push_back(*it);
 		}
 		it++;
 	}
@@ -443,7 +443,7 @@ PrologSupport::getTypeSpecific(SgType* stype) {
 		cn == "SgTypeWchar"
 		) {  
 			t =  new 
-				PrologAtom(*(prologize(cn)));
+				PrologAtom(prologize(cn));
 	} else {
 			PrologCompTerm* ct  = new PrologCompTerm("not_yet_implemented");
 			ct->addSubterm(new PrologString(stype->class_name()));
@@ -1313,6 +1313,11 @@ PrologSupport::getTypePtrListSpecific(SgTypePtrList& tl) {
 PrologTerm*
 PrologSupport::getPragmaSpecific(SgPragma* n) {
 	PrologCompTerm* t = new PrologCompTerm("pragma_annotation");
-	t->addSubterm(new PrologString(n->get_pragma()));
+	// Adrian 2007-11-27:
+	// This is to work around a bug in ROSE?/EDG? that inserts whitespaces
+	// Hopefully I can remove it in a later revision
+	string s = n->get_pragma();
+	s.erase(remove_if(s.begin(), s.end(), bind1st(equal_to<char>(), ' ')), s.end());
+	t->addSubterm(new PrologString(s));
 	return t;
 }

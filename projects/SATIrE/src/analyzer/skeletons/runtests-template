@@ -71,7 +71,7 @@ for file in $FILES; do
     for argset in $ARGUMENTS; do
         i=$(($i + 1))
 
-        cmd="$ANALYSIS$ARGSEP$file$ARGSEP$argset"
+        cmd="./$ANALYSIS$ARGSEP$file$ARGSEP$argset"
         readable_cmd=${cmd//$ARGSEP/ }
 
         printf "$readable_cmd ..." $i
