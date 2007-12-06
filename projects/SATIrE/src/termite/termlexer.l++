@@ -27,6 +27,7 @@ void count() {
 %option yylineno noyywrap
 
 doublequoted \"([^\"\\]*(\\.[^\"\\]*)*)\"
+singlechar \"\\[0-9][0-9][0-9]\\\"
 quoted \'([^\'\\]*(\\.[^\'\\]*)*)\'
 variable [A-Z][A-Za-z_]*
 int \-?[0-9]+
@@ -43,6 +44,14 @@ operator [\-\+\*\/\<\=\>\:]+
         yylval.strValue = new string(yytext);
 	return(STRING);
         }
+
+{singlechar} {
+        count();
+	yytext[5] = 0;
+        yylval.intValue = (int)strtol(yytext+2, NULL, 10);
+	return(INT);
+        }
+
 {quoted} {
         count();
         yytext++;
