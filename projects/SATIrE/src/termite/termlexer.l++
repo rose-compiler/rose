@@ -21,13 +21,13 @@ void count() {
       colno += 8 - (colno % 8);
     else
       colno++;
-}
+} 
 
 %}
 %option yylineno noyywrap
 
-doublequoted \"([^\"\\]*(\\.[^\"\\]*)*)\"
 singlechar \"\\[0-9][0-9][0-9]\\\"
+doublequoted \"([^\"\\]*(\\.[^\"\\]*)*)\"
 quoted \'([^\'\\]*(\\.[^\'\\]*)*)\'
 variable [A-Z][A-Za-z_]*
 int \-?[0-9]+
@@ -37,19 +37,27 @@ operator [\-\+\*\/\<\=\>\:]+
 %%
 
 [ \t\n] { count(); }
-{doublequoted} {
-        count();
-        yytext++;
-        *(yytext + yyleng - 2) = '\0';
-        yylval.strValue = new string(yytext);
-	return(STRING);
-        }
 
 {singlechar} {
         count();
 	yytext[5] = 0;
         yylval.intValue = (int)strtol(yytext+2, NULL, 10);
 	return(INT);
+        }
+
+{doublequoted} {
+	// FIXME write a more elegant regexp instead
+	if ((yyleng > 7) && (yytext[1] == '\\') && 
+	   (yytext[2] >= '0') && (yytext[2] <= '9') &&
+	   (yytext[3] >= '0') && (yytext[3] <= '9') &&
+	   (yytext[4] >= '0') && (yytext[4] <= '9') &&
+	   (yytext[5] == '\\') && (yytext[6] == '"')) REJECT; // singlechar
+
+        count();
+        yytext++;
+        *(yytext + yyleng - 2) = '\0';
+        yylval.strValue = new string(yytext);
+	return(STRING);
         }
 
 {quoted} {
@@ -59,6 +67,7 @@ operator [\-\+\*\/\<\=\>\:]+
         yylval.strValue = new string(yytext);
 	return(STRING);
         }
+
 {variable} { count(); yylval.strValue = new string(yytext); return(VARIABLE); }
 {int}      { count(); yylval.intValue = atoi(yytext);       return(INT);      }
 {atom}     { count(); yylval.strValue = new string(yytext); return(ATOM);     }
