@@ -1,6 +1,10 @@
+* Term Representation: 
+  Support for more data types (StringVal, ...) [AP]
+  Various bugfixes
+
 * Term Representation: Added a compiletime-switch
   -DCOMPACT_TERM_REPRESENTATION wich changes the external term
-  representation to a more convenient format.
+  representation to a more convenient format. [AP]
 
 * Added a global attribute and some auxiliary functions for access to global
   variables from PAG analysis specifications. [GB]

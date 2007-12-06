@@ -148,9 +148,9 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
 		s = createPragmaDeclaration(fi,child1,t);
 	}
 
-	/* to be:
+	/* to be:*/
 	ROSE_ASSERT(s != NULL);
-	*/
+	
 	/*set s to be the parent of its child node*/
 	if (s != NULL) {
 		if(child1 != NULL) {
@@ -623,13 +623,14 @@ PrologToRose::createType(PrologTerm* t) {
 		else if (tname==SG_PREFIX "type_signed_short") return new  SgTypeSignedShort();
 		else if (tname==SG_PREFIX "type_string") return new  SgTypeString();
 		else if (tname==SG_PREFIX "type_unknown") return new  SgTypeUnknown();
-		else if (tname==SG_PREFIX "type_char") return new  SgTypeUnsignedChar();
+		else if (tname==SG_PREFIX "type_unsigned_char") return new  SgTypeUnsignedChar();
 		else if (tname==SG_PREFIX "type_unsigned_int") return new  SgTypeUnsignedInt();
 		else if (tname==SG_PREFIX "type_unsigned_long") return new  SgTypeUnsignedLong();
 		else if (tname==SG_PREFIX "type_unsigned_long_long") return new  SgTypeUnsignedLongLong();
 		else if (tname==SG_PREFIX "type_unsigned_short") return new  SgTypeUnsignedShort(); 
 		else if (tname==SG_PREFIX "type_void") return new  SgTypeVoid();
 		else if (tname==SG_PREFIX "type_wchar") return new  SgTypeWchar();
+
 	}
 	/* should never happen*/
 	ROSE_ASSERT(false);
@@ -868,6 +869,11 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		istringstream str(s->getName());
 		str >> i;
 		ve = new SgBoolValExp(fi,i);
+	} else if (vtype == SG_PREFIX "string_val") {
+		PrologCompTerm* annot = retrieveAnnotation(t);
+		ROSE_ASSERT(annot != NULL);
+		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+		ve = new SgStringVal(fi,s->getName());
 	}
 	
 	
@@ -920,7 +926,8 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	SgExpression* sgexp = dynamic_cast<SgExpression*>(succ);
 	PrologTerm* n = t->at(0);
 	string opname = n->getName();
-	debug("creating " + opname + "\n");
+	debug("creating " + opname + "\n");	
+	cerr << t->getRepresentation() << endl << succ << endl;
 	ROSE_ASSERT(sgexp != NULL);
 	PrologCompTerm* annot = retrieveAnnotation(t);
 	ROSE_ASSERT(annot != NULL);
@@ -1391,7 +1398,7 @@ PrologToRose::createVarRefExp(Sg_File_Info* fi, PrologCompTerm* t) {
 SgAssignInitializer*
 PrologToRose::createAssignInitializer(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	SgExpression* exp = dynamic_cast<SgExpression*>(succ);
-	ROSE_ASSERT(exp != NULL);
+	// not true.. ROSE_ASSERT(exp != NULL);
 	SgAssignInitializer* ai = new SgAssignInitializer(fi,exp);
 	ROSE_ASSERT(ai != NULL);
 	return ai;
@@ -2940,6 +2947,6 @@ PrologToRose::warn_msg(string msg) {
 void
 PrologToRose::debug(string message) {
 #ifndef NDEBUG
-  //  	cerr << message << "\n";
+  //    	cerr << message << "\n";
 #endif
 }

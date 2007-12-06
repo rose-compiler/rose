@@ -628,6 +628,8 @@ PrologSupport::getValueExpSpecific(SgValueExp* astNode) {
 		o << n->get_valueUL();
 		string s = o.str();
 		t->addSubterm(new PrologString(escape_string(s)));
+	} else if (SgStringVal* n = dynamic_cast<SgStringVal*>(astNode)) {
+		t->addSubterm(new PrologString(escape_string(n->get_value())));
 	} else {
 		t->addSubterm(new PrologAtom("null"));
 	}
