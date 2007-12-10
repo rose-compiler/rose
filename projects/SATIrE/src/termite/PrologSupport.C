@@ -538,6 +538,7 @@ PrologSupport::escape_string(std::string s) {
       }
     }
   }
+  //cerr<<"escape("<<s<<") = "<< r <<endl;
   return r;
 }
 

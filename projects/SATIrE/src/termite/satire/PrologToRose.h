@@ -81,6 +81,7 @@ class PrologToRose {
 		/*unary nodes*/
 		static SgExpression* createValueExp(Sg_File_Info*,SgNode*,PrologCompTerm*);
 		static SgUnaryOp* createUnaryOp(Sg_File_Info*,SgNode*,PrologCompTerm*);
+		static SgFile* createFile(Sg_File_Info*,SgNode*,PrologCompTerm*);
 		static SgReturnStmt* createReturnStmt(Sg_File_Info*,SgNode*,PrologCompTerm*);
 		static SgFunctionDefinition* createFunctionDefinition(Sg_File_Info*,SgNode*,PrologCompTerm*);
 		static SgInitializedName* createInitializedName(Sg_File_Info*,SgNode*,PrologCompTerm*);
@@ -141,5 +142,6 @@ class PrologToRose {
 		static SgThisExp* createThisExp(Sg_File_Info*,PrologCompTerm*);
 		static SgTypedefDeclaration* createTypedefDeclaration(Sg_File_Info*,PrologCompTerm*);
 		static SgPragma* createPragma(Sg_File_Info*,PrologCompTerm*);
+		static char unescape_char(std::string s);
 };
 #endif

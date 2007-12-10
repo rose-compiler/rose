@@ -97,7 +97,7 @@ static void assert_arity(PrologCompTerm* t, int arity) {
 /** create ROSE-IR for unary node*/
 SgNode*
 PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
-	debug("unparsing unary");
+        debug("unparsing unary"); debug(t->getRepresentation());
 	/* assert correct arity of term*/
 	assert_arity(t, 4);
 	/*get child node (prefix traversal step)*/
@@ -114,6 +114,8 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
 		s = createValueExp(fi,child1,t);
 	}else if(isUnaryOp(tname)) {
 		s = createUnaryOp(fi,child1,t);
+	}else if(tname == SG_PREFIX "file") {
+                s = createFile(fi,child1,t);
 	}else if(tname == SG_PREFIX "return_stmt") {
 		s = createReturnStmt(fi,child1,t);
 	}else if(tname == SG_PREFIX "function_definition") {
@@ -149,10 +151,11 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
 	}
 
 	/* to be:*/
-	ROSE_ASSERT(s != NULL);
+	//ROSE_ASSERT(s != NULL);
 	
 	/*set s to be the parent of its child node*/
-	if (s != NULL) {
+	//cerr<<s->class_name()<<endl;
+	if (s != NULL){ //&& !isSgProject(s) && !isSgFile(s) && !isSgGlobal(s)) {
 		if(child1 != NULL) {
 			child1->set_parent(s);
 		}
@@ -163,7 +166,7 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
 /** create ROSE-IR for binary node*/
 SgNode*
 PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
-	debug("unparsing binary");
+        debug("unparsing binary"); debug(t->getRepresentation());
 	/* assert correct arity of term*/
 	assert_arity(t, 5);
 	/*get child nodes (prefix traversal step)*/
@@ -199,6 +202,7 @@ PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
 	}else if(tname == SG_PREFIX "catch_option_stmt") {
 		s = createCatchOptionStmt(fi,child1,child2,t);	
 	}
+
 	/*set s to be the parent of its child nodes*/
 	if (s != NULL) {
 		if(child1 != NULL) {
@@ -237,6 +241,7 @@ PrologToRose::ternaryToRose(PrologCompTerm* t,string tname) {
 	} else if (tname == SG_PREFIX "conditional_exp") {
 	        s = createConditionalExp(fi,child1,child2,child3,t);
 	}
+
 	/*set s to be the parent of its child nodes*/
 	if (s != NULL) {
 		if(child1 != NULL) {
@@ -680,6 +685,53 @@ PrologToRose::isValueExp(string tname) {
 }
 
 
+/**
+ *
+ * UnEscape non-printable characters
+ */
+char
+PrologToRose::unescape_char(std::string s) {
+  std::string r;
+
+  switch(s.length()) {
+  case 1: return s[0];
+  case 2: {
+    ROSE_ASSERT(s[0] == '\\');
+    switch(s[1]) {
+    case '\\': return '\\';
+    case '\"': return '\"';
+    case '\'': return '\'';
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 'b': return '\b';
+    case 't': return '\t';
+    case 'f': return '\f';
+    case 'a': return '\a';
+    case 'v': return '\v';
+    default: ROSE_ASSERT(false);
+    }
+   }
+  case 4: {
+    ROSE_ASSERT((s[0] == '\\') && (s[4] == '\\'));
+    int c;
+    istringstream instr(s.substr(1, 3));
+    instr.setf(ios::oct, ios::basefield);
+    instr >> c;
+    return c;
+   }
+  case 6: { // Unicode
+    ROSE_ASSERT((s[0] == '\\') && (s[1] == 'u'));
+    unsigned int c;
+    istringstream instr(s.substr(2, 5));
+    instr.setf(ios::hex, ios::basefield);
+    instr >> c;
+    if (c > 255) cerr << "** WARNING: truncated 16bit unicode character" << s << endl;
+    return c;
+   }
+  default: ROSE_ASSERT(false);
+  }
+}
+
 /** create a SgValueExp*/
 SgExpression* 
 PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
@@ -828,11 +880,15 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		debug("unparsing char");
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
-		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
-		ROSE_ASSERT(s != NULL);
 		char number;
-		istringstream instr(s->getName());
-		instr >> number;
+		if (PrologString* s = dynamic_cast<PrologString*>(annot->at(0))) {
+		  number = unescape_char(s->getName());
+		} else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+		  number = val->getValue();
+		} else {
+		  // Must be either a string or an int
+		  ROSE_ASSERT(false);
+		}		
 		SgCharVal* valnode = new SgCharVal(fi,number);
 		ve = valnode;
 	}else if (vtype == SG_PREFIX "unsigned_char_val") {
@@ -843,8 +899,16 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
 		ROSE_ASSERT(s != NULL);
 		unsigned char number;
-		istringstream instr(s->getName());
-		instr >> number;
+		if (PrologString* s = dynamic_cast<PrologString*>(annot->at(0))) {
+		  /*istringstream instr(s->getName());
+		  instr >> number;*/
+		  number = unescape_char(s->getName());
+		} else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+		  number = val->getValue();
+		} else {
+		  // Must be either a string or an int
+		  ROSE_ASSERT(false);
+		}
 		SgUnsignedCharVal* valnode = new SgUnsignedCharVal(fi,number);
 		ve = valnode;
 	}else if (vtype == SG_PREFIX "wchar_val") {
@@ -927,7 +991,7 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	PrologTerm* n = t->at(0);
 	string opname = n->getName();
 	debug("creating " + opname + "\n");	
-	cerr << t->getRepresentation() << endl << succ << endl;
+	//cerr << t->getRepresentation() << endl << succ << endl;
 	ROSE_ASSERT(sgexp != NULL);
 	PrologCompTerm* annot = retrieveAnnotation(t);
 	ROSE_ASSERT(annot != NULL);
@@ -987,6 +1051,21 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	ROSE_ASSERT(false);
 	/*never called*/
 	return (SgUnaryOp*) 0;	
+}
+
+/**
+ * create SgFile
+ */
+SgFile*
+PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
+  /*        SgFile* file = new SgFile();
+	file->set_file_info(fi);
+	SgGlobal* glob = isSgGlobal(child1);
+	ROSE_ASSERT(glob);
+	file->set_root(glob);
+	return file;*/
+
+	return NULL;
 }
 
 /**
@@ -1414,6 +1493,9 @@ PrologToRose::createBinaryOp(Sg_File_Info* fi,SgNode* lnode,SgNode* rnode,Prolog
 	ROSE_ASSERT(name_atom != NULL);
 	string op_name = name_atom->getName();
 	debug("op type: " + op_name);
+	if (op_name == "lshift_assign_op") {
+	  debug("op type: " + op_name);
+	}
 	/*get lhs and rhs operand*/
 	SgExpression* lhs = dynamic_cast<SgExpression*>(lnode);
 	SgExpression* rhs = dynamic_cast<SgExpression*>(rnode);
@@ -1579,7 +1661,7 @@ PrologToRose::isBinaryOp(string tname) {
 		return true;
 	} else if (tname == SG_PREFIX "xor_assign_op") {
 		return true;
-	} else if (tname == SG_PREFIX "lshift_assign_op_ ") {
+	} else if (tname == SG_PREFIX "lshift_assign_op") {
 		return true;
 	} else if (tname == SG_PREFIX "rshift_assign_op") {
 		return true;
@@ -2947,6 +3029,6 @@ PrologToRose::warn_msg(string msg) {
 void
 PrologToRose::debug(string message) {
 #ifndef NDEBUG
-  //    	cerr << message << "\n";
+  //cerr << message << "\n";
 #endif
 }

@@ -39,19 +39,22 @@ operator [\-\+\*\/\<\=\>\:]+
 [ \t\n] { count(); }
 
 {singlechar} {
-        count();
-	yytext[5] = 0;
-        yylval.intValue = (int)strtol(yytext+2, NULL, 10);
-	return(INT);
+	  // ISO Prolog insists on quoting Characters as "\123\" 
+	  // which leads to this strange amiguity
+          count();
+          yytext[5] = 0;
+          yylval.intValue = (int)strtol(yytext+2, NULL, 10);
+          return(INT);
         }
-
+ 
 {doublequoted} {
-	// FIXME write a more elegant regexp instead
-	if ((yyleng > 7) && (yytext[1] == '\\') && 
-	   (yytext[2] >= '0') && (yytext[2] <= '9') &&
-	   (yytext[3] >= '0') && (yytext[3] <= '9') &&
-	   (yytext[4] >= '0') && (yytext[4] <= '9') &&
-	   (yytext[5] == '\\') && (yytext[6] == '"')) REJECT; // singlechar
+       // FIXME write a more elegant regexp instead
+       if ((yyleng > 7) && (yytext[1] == '\\') && 
+          (yytext[2] >= '0') && (yytext[2] <= '9') &&
+          (yytext[3] >= '0') && (yytext[3] <= '9') &&
+          (yytext[4] >= '0') && (yytext[4] <= '9') &&
+          (yytext[5] == '\\') && (yytext[6] == '"')) REJECT; // singlechar
+ 
 
         count();
         yytext++;
