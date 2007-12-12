@@ -6,6 +6,7 @@ then
 else
 	echo "Running term generator on $1"
 	echo "Output written to $2"
-	# ignore error msgs
-	rose2term $1 > $2
+	# this sed thing is a quick & dirty hack to remove global namespace
+	# qualifiers that startle EDG
+	rose2term $1 | sed -e 's/typedef_annotation(\"::/typedef_annotation(\"/g' > $2
 fi

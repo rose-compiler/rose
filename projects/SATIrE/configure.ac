@@ -47,6 +47,7 @@ AC_SUBST(PAG_LIB_DIR)
 #AC_CHECK_LIB([edg], [main])
 AC_SEARCH_LIBS([fcosf], [m])
 AC_SEARCH_LIBS([clock_gettime], [rt])
+AC_SEARCH_LIBS([yywrap], [fl])
 AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"], 
              [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
               echo "Please consider using one of the --with-pag* options."
@@ -56,7 +57,7 @@ AC_CHECK_LIB([rose], [PDF_close], [echo "Found ROSE!"],
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
 	      echo "Please consider using one of the --with-rose* options."
 	      exit -1 ], 
-             [-L${ROSE_LIB_DIR}])
+             [-L${ROSE_LIB_DIR} -lfl])
 
 # Checks for header files.
 AC_HEADER_STDC
