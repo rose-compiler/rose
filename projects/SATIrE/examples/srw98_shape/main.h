@@ -162,9 +162,7 @@ public:
             }
         }
         
-        free(exprs);
-        exprs = NULL;
-        
+        delete exprs;
         return pairs;
     }
 };

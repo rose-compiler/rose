@@ -640,12 +640,6 @@ extract_heapedges(((_,ES),_)) = [x !! x <-- ES];
 extract_is_shared::ShapeGraph -> NodeList;
 extract_is_shared((_,iss)) = [x !! x <-- iss];
 
-var_exists :: str,ShapeGraph -> bool;
-var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};
-
-node_by_var :: str,ShapeGraph -> VarSet;
-node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
-
 src_sel_exists :: VarSet,str,ShapeGraph -> bool;
 src_sel_exists(src,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (src = nv) && (sel = sv)} != {};
 
@@ -951,13 +945,18 @@ rec_get_node(e, g) =
     endcase; in case srcsel of (src,sel) =>
         if src_sel_exists(src,sel,g) then node_by_src_sel(src,sel,g) else {"0$not_in_graph"} endif;
     endcase;
-    
+
+var_exists :: str,ShapeGraph -> bool;
+var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};
+
+node_by_var :: str,ShapeGraph -> VarSet;
+node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
 
 node_by_src_sel :: VarSet,str,ShapeGraph -> VarSet;
 node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
 
 /* special conversion function for shape */
 shape_carrier_to_shapegraphset :: dfi -> ShapeGraphSet;
-shape_carrier_to_shapegraphset(lifted_sg) = {drop(lifted_sg)};
+shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nielsonSG(drop(lifted_sg));
 
 //nielson_carrier_to_shapegraphset :: dfi -> ShapeGraphSet;
