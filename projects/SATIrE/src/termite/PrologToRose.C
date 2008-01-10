@@ -71,11 +71,13 @@ PrologToRose::toRose(PrologTerm* t) {
 		node = (SgNode*) 0;
 	}
 
+
 	// Set the CompilerGenerated Flag
 	if (SgLocatedNode* ln = isSgLocatedNode(node)) {
 	  Sg_File_Info* fi = ln->get_file_info();
 	  fi->set_classificationBitField(fi->get_classificationBitField() 
-					 | Sg_File_Info::e_compiler_generated);
+					 | Sg_File_Info::e_compiler_generated 
+					 /*| Sg_File_Info::e_output_in_code_generation*/);
 	  
 	  // Set EndOfConstruct
 	  ln->set_endOfConstruct( Sg_File_Info::generateDefaultFileInfoForTransformationNode() );
@@ -1026,9 +1028,12 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	}
 	/* For a cast we need to retrieve cast type (enum)*/
 	else if (opname == SG_PREFIX "cast_exp") {
+	  cerr<<"######castexp "<< annot->getRepresentation()<< "bug in ROSE?" <<endl;
 		PrologInt* ctype = dynamic_cast<PrologInt*>(annot->at(2));
 		ROSE_ASSERT(ctype != NULL);
-		return new SgCastExp(fi,sgexp,sgtype,(SgCastExp::cast_type_enum) ctype->getValue());
+		SgCastExp* e = new SgCastExp(fi,sgexp,sgtype,(SgCastExp::cast_type_enum) ctype->getValue());
+		//cerr<< e->unparseToString()<< endl;
+		return e;
 	} 
 	/* some more initialization necessary for a throw */
 	else if (opname == SG_PREFIX "throw_op") { 
@@ -1321,6 +1326,10 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
 	func_decl->set_forward(func_def == NULL);
 	func_decl->set_parameterList(par_list);
 	setDeclarationModifier(annot->at(2),&(func_decl->get_declarationModifier()));
+
+	// Fake the scope for function declaration statements
+	fakeParentScope(func_decl);
+
 	/*post processing*/
 	/*important: otherwise unparsing fails*/
 	if (func_def != NULL) {
@@ -3029,6 +3038,6 @@ PrologToRose::warn_msg(string msg) {
 void
 PrologToRose::debug(string message) {
 #ifndef NDEBUG
-  //cerr << message << "\n";
+  //  cerr << message << "\n";
 #endif
 }

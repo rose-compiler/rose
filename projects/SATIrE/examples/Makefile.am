@@ -64,6 +64,7 @@ EXTRA_DIST= \
 testdir=installcheck-executable-examples
 
 installcheck-local:
+	rm -rf $(testdir)
 	mkdir -p $(testdir)
 
 	@echo

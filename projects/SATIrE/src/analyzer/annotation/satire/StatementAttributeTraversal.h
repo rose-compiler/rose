@@ -1,6 +1,6 @@
 // -*- C++ -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.2 2007-10-04 15:13:21 markus Exp $
+// $Id: StatementAttributeTraversal.h,v 1.3 2008-01-10 16:04:37 adrian Exp $
 
 #ifndef STATEMENTATTRIBUTETRAVERSAL_H
 #define STATEMENTATTRIBUTETRAVERSAL_H
@@ -86,7 +86,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.2 2007-10-04 15:13:21 markus Exp $
+// $Id: StatementAttributeTraversal.h,v 1.3 2008-01-10 16:04:37 adrian Exp $
 
 /* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
 
@@ -212,10 +212,10 @@ DfiTextPrinter<DFI_STORE_TYPE>::~DfiTextPrinter() {
 template<typename DFI_STORE_TYPE>
 void DfiTextPrinter<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
   
-  std::cout << "Unparsing:" << std::endl;
+  //std::cout << "Unparsing:" << std::endl;
 
   std::string stmt_str = stmt->unparseToString(0);
-  std::cout << "done. Printing info now ... " << std::endl;
+  //std::cout << "done. Printing info now ... " << std::endl;
   std::cout << DfiTextPrinter<DFI_STORE_TYPE>::currentFunction() << ": " << "// pre info : " << preInfo << std::endl;
   std::cout << DfiTextPrinter<DFI_STORE_TYPE>::currentFunction() << ": " << stmt_str << std::endl;
   std::cout << DfiTextPrinter<DFI_STORE_TYPE>::currentFunction() << ": " << "// post info: " << postInfo << std::endl << std::endl;

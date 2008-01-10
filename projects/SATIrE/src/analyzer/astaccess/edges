@@ -1,8 +1,0 @@
-local_edge
-bb_intern
-true_edge
-false_edge
-normal_edge
-call_edge
-return_edge
-noedge
