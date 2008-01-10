@@ -18,23 +18,23 @@ FunctionEntry(_), _:
     else
         top
     endif;
-
+ 
 ExprStatement(exp), _:
-    if true then
+    if @ != bot then
         eval(exp, @)!2!2
     else
         bot
     endif;
 
 ArgumentAssignment(VarRefExp(var), exp), _:
-    if true then
+    if @ != bot then
         @\[val-aststring(var) -> eval(exp, @)!1!2]
     else
         bot
     endif;
 
 ParamAssignment(VariableSymbol(var), VariableSymbol(param)), _:
-    if true then
+    if @ != bot then
         // assign var
         @\[val-aststring(var) -> @{!val-aststring(param)!}]
         // kill rhs
@@ -44,7 +44,7 @@ ParamAssignment(VariableSymbol(var), VariableSymbol(param)), _:
     endif;
 
 ReturnAssignment(VariableSymbol(var), VariableSymbol(retvar)), _:
-    if true then
+    if @ != bot then
         // assign var
         @\[val-aststring(var) -> @{!val-aststring(retvar)!}]
         // kill rhs
@@ -66,11 +66,9 @@ ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
     branch(cond, @, false);
 
 ScopeStatement(ForStatement(_,cond,_)), true_edge:
-    print("TRUE\n")
     branch(cond, @, true);
 
 ScopeStatement(ForStatement(_,cond,_)), false_edge:
-    print("FALSE\n")
     branch(cond, @, false);
 
 LogicalIf(cond), true_edge:
@@ -118,7 +116,6 @@ binary :: Expression, Expression, Expression, State -> ConstStatePair;
 binary(left, right, exp, state) =
     // Evaluate the right child expression, yielding a (value, state)
     // pair assigned to r and rs, respectively.
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     let rr = eval(right, state);
     in case exp of
         // If this is an assignment operation, update the state.
@@ -234,5 +231,4 @@ comb(a, b) =
  //                         ) print("\n\n")
     if a = bot then b else if b = bot then a else a glb b endif endif;
 wide(a, b) = comb(a, b);
-
 eq(a, b)   = (a = b);
