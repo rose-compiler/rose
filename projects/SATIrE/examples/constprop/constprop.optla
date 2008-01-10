@@ -107,7 +107,7 @@ eval(exp, state) =
         endcase
     else case exp of
         VarRefExp(name)             => (state{!val-aststring(name)!}, state);
-        NewExp(_,_,_)               => (top, state);
+        NewExp(_,_,_)               => (bot, state);
         _                           => print("unknown exp: ")
                                        print(exp) print("\n") (top, [-> top]);
     endcase endif endif endif;
@@ -120,9 +120,9 @@ binary(left, right, exp, state) =
     in case exp of
         // If this is an assignment operation, update the state.
         // We do not evaluate the left-hand side as this might
-        // yield bot, causing trouble.
+        // yield top or bot, causing trouble.
         AssignOp(_, _) =>
-            if rr!1!2 = top
+            if rr!1!2 = top || rr!1!2 = bot
             then
                 (top, rr!2!2)
             else
@@ -133,48 +133,56 @@ binary(left, right, exp, state) =
         // the left-hand side as well (in the "new" state after
         // evaluation of the rhs) and perform the operation.
         _ =>
-            let r <= rr!1!2; rs = rr!2!2;
+            let rlifted = rr!1!2; rs = rr!2!2;
             in let ll = eval(left, rs);
-            in let l <= ll!1!2; ls = ll!2!2;
-            in case exp of
-                EqualityOp(_, _)        => (lift(bool_int(l = r)), ls);
-                LessThanOp(_, _)        => (lift(bool_int(l < r)), ls);
-                GreaterThanOp(_, _)     => (lift(bool_int(l > r)), ls);
-                NotEqualOp(_, _)        => (lift(bool_int(l != r)), ls);
-                LessOrEqualOp(_, _)     => (lift(bool_int(l <= r)), ls);
-                GreaterOrEqualOp(_, _)  => (lift(bool_int(l >= r)), ls);
-                AddOp(_, _)             => (lift(l + r), ls);
-                SubtractOp(_, _)        => (lift(l - r), ls);
-                MultiplyOp(_, _)        => (lift(l * r), ls);
-                DivideOp(_, _)          => (lift(l / r), ls);
-                IntegerDivideOp(_, _)   => (lift(l / r), ls);
-                ModOp(_, _)             => (lift(l % r), ls);
-                AndOp(_, _)         => (lift(bool_int(l != 0 && r != 0)), ls);
-                OrOp(_, _)          => (lift(bool_int(l != 0 || r != 0)), ls);
-                ScopeOp(_, _)       => (lift(r), ls);
-                PlusAssignOp(_, _)  => updatestate(ls, left, lift(l + r));
-                MinusAssignOp(_, _) => updatestate(ls, left, lift(l - r));
-                MultAssignOp(_, _)  => updatestate(ls, left, lift(l * r));
-                DivAssignOp(_, _)   => updatestate(ls, left, lift(l / r));
-                ModAssignOp(_, _)   => updatestate(ls, left, lift(l % r));
-                _ => print("unsupported binary: ") print(exp) (top, [-> top]);
-            endcase;
+            in let llifted = ll!1!2; ls = ll!2!2;
+            in if rlifted = top || rlifted = bot then (rlifted, rs) else
+               if llifted = top || llifted = bot then (llifted, ls) else
+                let r <= rlifted;
+                    l <= llifted;
+                in case exp of
+                    EqualityOp(_, _)        => (lift(bool_int(l = r)), ls);
+                    LessThanOp(_, _)        => (lift(bool_int(l < r)), ls);
+                    GreaterThanOp(_, _)     => (lift(bool_int(l > r)), ls);
+                    NotEqualOp(_, _)        => (lift(bool_int(l != r)), ls);
+                    LessOrEqualOp(_, _)     => (lift(bool_int(l <= r)), ls);
+                    GreaterOrEqualOp(_, _)  => (lift(bool_int(l >= r)), ls);
+                    AddOp(_, _)             => (lift(l + r), ls);
+                    SubtractOp(_, _)        => (lift(l - r), ls);
+                    MultiplyOp(_, _)        => (lift(l * r), ls);
+                    DivideOp(_, _)          => (lift(l / r), ls);
+                    IntegerDivideOp(_, _)   => (lift(l / r), ls);
+                    ModOp(_, _)             => (lift(l % r), ls);
+                    AndOp(_, _)         => (lift(bool_int(l != 0 && r != 0)), ls);
+                    OrOp(_, _)          => (lift(bool_int(l != 0 || r != 0)), ls);
+                    ScopeOp(_, _)       => (lift(r), ls);
+                    PlusAssignOp(_, _)  => updatestate(ls, left, lift(l + r));
+                    MinusAssignOp(_, _) => updatestate(ls, left, lift(l - r));
+                    MultAssignOp(_, _)  => updatestate(ls, left, lift(l * r));
+                    DivAssignOp(_, _)   => updatestate(ls, left, lift(l / r));
+                    ModAssignOp(_, _)   => updatestate(ls, left, lift(l % r));
+                    _ => print("unsupported binary: ") print(exp) (top, [-> top]);
+                endcase
+            endif endif;
     endcase;
 
 unary :: Expression, Expression, State -> ConstStatePair;
 unary(child, exp, state) =
     let ee = eval(child, state);
-    in let e <= ee!1!2; es = ee!2!2;
-    in case exp of
-        MinusOp(_)      => (lift(-e), es);
-        UnaryAddOp(_)   => (lift(e), es);
-        NotOp(_)        => (lift(bool_int(e = 0)), es);
-        CastExp(_, _)   => eval(child, state);
-        // the following are only correct for prefix -- and ++
-        MinusMinusOp(_) => updatestate(es, child, lift(e - 1));
-        PlusPlusOp(_)   => updatestate(es, child, lift(e + 1));
-        _ => print("unsupported unary: ") print(exp) (top, [-> top]);
-    endcase;
+    in let elifted = ee!1!2; es = ee!2!2;
+    in if elifted = bot || elifted = top then (elifted, es) else
+        let e <= elifted;
+        in case exp of
+            MinusOp(_)      => (lift(-e), es);
+            UnaryAddOp(_)   => (lift(e), es);
+            NotOp(_)        => (lift(bool_int(e = 0)), es);
+            CastExp(_, _)   => eval(child, state);
+         // the following are only correct for prefix -- and ++
+            MinusMinusOp(_) => updatestate(es, child, lift(e - 1));
+            PlusPlusOp(_)   => updatestate(es, child, lift(e + 1));
+            _ => print("unsupported unary: ") print(exp) (top, [-> top]);
+        endcase
+    endif;
 
 bool_int :: bool -> snum;
 bool_int(b) =
