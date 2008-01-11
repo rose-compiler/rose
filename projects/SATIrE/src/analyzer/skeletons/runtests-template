@@ -3,7 +3,7 @@
 # Basic test script
 # (C) 2007 Adrian Prantl, Viktor Pavlu
 
-FILES=`ls tests/*.[cC] tests/*.cpp tests/*.cc tests/*.cxx 2>/dev/null`
+FILES=`find tests -name \*.[cC] 2>/dev/null` `find tests -name \*.c[px][px] 2>/dev/null`
 CURRENTDIR=`pwd`
 ANALYSIS=`basename $CURRENTDIR`
 MODES="--textoutput --termoutput --sourceoutput"
