@@ -177,6 +177,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       /* empty analysis result */
       PrologCompTerm* ar = new PrologCompTerm("analysis_result");
       ar->addSubterm(new PrologAtom("null"));
+      ar->addSubterm(new PrologAtom("null"));
       annot->addSubterm(ar);
     }
 
@@ -186,8 +187,6 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
   else {
     t = new PrologAtom("null");
   }
-
-
 
   /* remember the last term */
   mTerm = t;
@@ -272,9 +271,13 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
       }
       ++i;
     } else t->addSubterm(new PrologAtom("error"));
-  }
+  } 
+  else if (dfi == "<undefinef dfi>") t->addSubterm(new PrologAtom("undefined_dfi"));
+  else t->addSubterm(new PrologAtom("dfi_parse_error"));
+
   //cerr << dfi << endl;
   //cerr << t->getRepresentation() << endl;
+
   return t;   
 }
 	

@@ -531,7 +531,8 @@ PrologSupport::escape_string(std::string s) {
 	     << std::oct 
 	     << std::setfill('0') 
 	     << std::setw(3) 
-	     << (unsigned int)c; // \nnn Character with octal value nnn
+	     << (unsigned int)c // \nnn Character with octal value nnn
+	     << '\\'; // Prolog expects this weird syntax with a trailing backslash
 	r += strm.str();
       } else {
 	r += c;

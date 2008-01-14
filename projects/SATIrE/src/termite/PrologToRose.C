@@ -713,7 +713,18 @@ PrologToRose::unescape_char(std::string s) {
     default: ROSE_ASSERT(false);
     }
    }
-  case 4: {
+
+  case 4: { // Char Val
+    ROSE_ASSERT((s[0] == '\\'));
+    cerr << "**WARNING: Found C-style escaped char \"" << s 
+	 << "\" when expecting \"" << s << "\\\"" << endl;
+    int c;
+    istringstream instr(s.substr(1, 3));
+    instr.setf(ios::oct, ios::basefield);
+    instr >> c;
+    return c;
+   }
+  case 5: { // Prolog-style Char Val
     ROSE_ASSERT((s[0] == '\\') && (s[4] == '\\'));
     int c;
     istringstream instr(s.substr(1, 3));

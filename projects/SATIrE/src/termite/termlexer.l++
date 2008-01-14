@@ -1,4 +1,4 @@
-%{ 
+%{ /* -*- c++ -*- */
 /*
  * Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
  *           2007 Adrian Prantl
@@ -26,6 +26,7 @@ void count() {
 %}
 %option yylineno noyywrap
 
+comment %[^\n]*
 singlechar \"\\[0-9][0-9][0-9]\\\"
 doublequoted \"([^\"\\]*(\\.[^\"\\]*)*)\"
 quoted \'([^\'\\]*(\\.[^\'\\]*)*)\'
@@ -36,11 +37,12 @@ operator [\-\+\*\/\<\=\>\:]+
 
 %%
 
-[ \t\n] { count(); }
+{comment} { count(); }
+[ \t\n]   { count(); }
 
 {singlechar} {
 	  // ISO Prolog insists on quoting Characters as "\123\" 
-	  // which leads to this strange amiguity
+	  // which leads to this strange ambiguity
           count();
           yytext[5] = 0;
           yylval.intValue = (int)strtol(yytext+2, NULL, 10);
