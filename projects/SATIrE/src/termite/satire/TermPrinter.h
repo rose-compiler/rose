@@ -256,7 +256,7 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
 	  if (dfi[i] != '$') // drop '$' chars
 	    tok2 += dfi[i];
 	  ++i;
-	}	
+	}
 
 	PrologInfixOperator* ifx = new PrologInfixOperator("->");
 	ifx->addSubterm(new PrologAtom(tok1));

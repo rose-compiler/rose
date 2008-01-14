@@ -5,7 +5,8 @@ see LICENSE in the root folder of this project
 #ifndef PROLOGATOM_H_
 #define PROLOGATOM_H_
 #include "PrologTerm.h"
-using namespace std;
+#include <ctype.h>
+
 /**class representing a prolog atom*/
 class PrologAtom : public PrologTerm {
  public:
@@ -20,7 +21,14 @@ class PrologAtom : public PrologTerm {
 		///return the string
 		std::string getName() {return mName;};
 		/// return the string
-		std::string getRepresentation() {return mName;};
+		std::string getRepresentation() {
+		  if ((mName.length() > 0) && isupper(mName[0])) {
+		      std::string s;
+		      s = "'" + mName  + "'";
+		      return s;
+		    }
+		    return mName;
+		};
 	private:
 		/// the string
 		std::string mName;
