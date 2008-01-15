@@ -305,6 +305,7 @@ PrologSupport::getTypedefTypeSpecific(SgType* mtype) {
 	/* make sure this is actually a SgTypedefType*/
 	SgTypedefType* tp = isSgTypedefType(mtype);
 	ROSE_ASSERT(tp != NULL);
+
 	/* create term and add name*/
 	PrologCompTerm* t = new PrologCompTerm("typedef_type");
 	t->addSubterm(new PrologString(tp->get_name().getString()));
@@ -1276,7 +1277,8 @@ PrologSupport::getTypedefDeclarationSpecific(SgTypedefDeclaration* d) {
 	/*create annotation term*/
 	PrologCompTerm* t = new PrologCompTerm("typedef_annotation");
 	/*get name*/
-	t->addSubterm(new PrologString(d->get_qualified_name().getString()));
+	// FIXME :: t->addSubterm(new PrologString(d->get_qualified_name().getString()));
+	t->addSubterm(new PrologString(d->get_name().getString()));
 	/*get base type*/
 	t->addSubterm(getTypeSpecific(d->get_base_type()));
 	/*get declaration*/

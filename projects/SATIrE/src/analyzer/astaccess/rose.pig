@@ -1,4 +1,4 @@
-%{
+%{ /* -*- c++ -*- */
 #ifndef H_SYNTREE
 #define H_SYNTREE
 
@@ -83,7 +83,7 @@ get:body(NODE, _, "VarRefExp" | "InitializedName", _, "name", _, _)
     if (in == NULL && isSgVarRefExp((SgNode *) NODE))
         in = isSgVarRefExp((SgNode *) NODE)->get_symbol()->get_declaration();
     if (in != NULL)
-        if (in->get_scope() != NULL)
+        if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::"))
             return strdup(in->get_qualified_name().str());
         else
             return strdup(in->get_name().str());

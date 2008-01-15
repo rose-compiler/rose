@@ -3,7 +3,6 @@
               2007 Adrian Prantl
     see LICENSE in the root folder of this project
 */
-
 #ifndef PROLOGTRAVERSAL_H_
 #define  PROLOGTRAVERSAL_H_
 #include <iostream>
@@ -257,6 +256,9 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
 	    tok2 += dfi[i];
 	  ++i;
 	}
+
+	// put parentheses around negative number
+	if (tok2[0] == '-') tok2 = "(" +  tok2 + ")"; 
 
 	PrologInfixOperator* ifx = new PrologInfixOperator("->");
 	ifx->addSubterm(new PrologAtom(tok1));
