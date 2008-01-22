@@ -1,4 +1,8 @@
 V0.7.8 2008-01-22 AP, GB, VP, MS
+
+* Updated docs/cfgconstruction.ps for DeclareStmt, ExternalCall, 
+  FunctionEntry, FunctionExit, FunctionCall, FunctionReturn [MS]
+
 * Added graph visualization for srw98_shape and nnh99_shape.
   The gdl files now show the shape graphs for each node.
   For the srw98 analysis a single graph is shown for each node.

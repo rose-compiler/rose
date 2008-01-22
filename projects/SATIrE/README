@@ -48,7 +48,11 @@ SATIrE 0.7.8 was tested with
 
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
 
- b) We chose the example sl1rd:
+ b) compile all examples that come with SATIrE
+    cd SATIrE-0.7.8/examples
+    sh build-examples.sh                  [creates examples in directory executable-examples]
+
+ c) If you want to perform each step on your own, here is an example for sl1rd:
     [let's assume that you unpacked SATIrE-0.7.8.tgz in your home directory]
     cp -r ~/SATIrE-0.7.8/examples/sl1rd . [copy all files and test files to your directory]
     cd sl1rd                              [change to the directory]
@@ -60,7 +64,7 @@ SATIrE 0.7.8 was tested with
     sl1rd --sourceoutput tests/rdtest1.C  [generate an annotated source file tests/rose_rdtest1.C]
     sl1rd --termoutput tests/rdtest1.C    [generate a term representation in tests/rdtest1.C.pl]
 
- c) If you are starting with a shape analysis (srw98_shape or nnh99_shape) you must use
+ d) If you are starting with a shape analysis (srw98_shape or nnh99_shape) you must use
     newanalysis -u
     The option 'u' ensures that existing files are not overwritten by 'newanalysis' which
     is currently necessary for the shape analyses to allow for analysis results post-processing

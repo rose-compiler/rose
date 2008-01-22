@@ -1,3 +1,8 @@
+Compile all examples in this directory:
+sh build-examples.sh
+
+The following examples are created in executable-examples:
+
 constprop  : constant propagation operating on C++
 sl1rd      : intra-procedural reaching definitions analysis on the subset SL1 of C++
 sl2rd      : inter-procedural reaching definitions analysis on the subset SL2 of C++

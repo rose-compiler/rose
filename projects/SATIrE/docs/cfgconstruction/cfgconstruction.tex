@@ -60,12 +60,12 @@ including constructors, destructors and overloaded operators) in the
 C++ source code. Each procedure has an \emph{entry} or \emph{start}
 node marked by the statement
 \begin{verbatim}
-    FunctionEntry ( funcname:c_str )
+    FunctionEntry ( funcname:aststring )
 \end{verbatim}
 giving access to the name of the procedure, and an \emph{exit} or
 \emph{end} node which is marked by
 \begin{verbatim}
-    FunctionExit ( funcname:c_str, vars:VariableSymbolNT* )
+    FunctionExit ( funcname:aststring, params:VariableSymbolNT* )
 \end{verbatim}
 containing also the name of the procedure and a list of variables
 local to this function. (The intention of the latter being that
@@ -285,8 +285,8 @@ assignments which just have special names.
 The actual call to the function is modelled by a pair of special
 statements:
 \begin{verbatim}
-    FunctionCall ( funcname:c_str )
-    FunctionReturn ( funcname:c_str )
+    FunctionCall ( funcname:aststring, params:VariableSymbolNT* )
+    FunctionReturn ( funcname:aststring, params:VariableSymbolNT* )
 \end{verbatim}
 The \verb|ArgumentAssignment| nodes are placed before the call node,
 while the \verb|ReturnAssignment| is after the return node. An edge
@@ -310,7 +310,7 @@ implementations, either because only a declaration but not a
 definition is known or because they go through function pointers,
 are represented by a single node of type:
 \begin{verbatim}
-    ExternalCall ( type:Type )
+    ExternalCall ( function:Expression, params:VariableSymbolNT*, type:Type )
 \end{verbatim}
 Note that such calls can at the very least arbitrarily change all
 global variables, and potentially any local variable whose address
