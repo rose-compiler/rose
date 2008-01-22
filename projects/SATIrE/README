@@ -8,7 +8,7 @@ Program Analysis Generator (PAG), the C/C++ infrastructure LLNL-ROSE,
 and support for an external format (reading and writing) in Prolog
 term syntax.
 
-SATIrE 0.7.6 was tested with 
+SATIrE 0.7.8 was tested with 
  - ROSE 0.8.10e
  - PAG 6.1.6.96
  - flex 2.5.33
@@ -24,10 +24,10 @@ SATIrE 0.7.6 was tested with
     ii) you must install PAG - http://www.absint.com/pag/
 
  b) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.7.6.tgz
+    tar xvzf SATIrE-0.7.8.tgz
 
  c) Go to the satire directory:
-    cd SATIrE-0.7.6
+    cd SATIrE-0.7.8
 
  d) Configure the sources for your platform and set the path for ROSE and PAG:
 
@@ -49,8 +49,8 @@ SATIrE 0.7.6 was tested with
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
 
  b) We chose the example sl1rd:
-    [let's assume that you unpacked SATIrE-0.7.6.tgz in your home directory]
-    cp -r ~/SATIrE-0.7.6/examples/sl1rd . [copy all files and test files to your directory]
+    [let's assume that you unpacked SATIrE-0.7.8.tgz in your home directory]
+    cp -r ~/SATIrE-0.7.8/examples/sl1rd . [copy all files and test files to your directory]
     cd sl1rd                              [change to the directory]
     newanalysis                           [generate and configure all required files]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
@@ -59,6 +59,12 @@ SATIrE 0.7.6 was tested with
     aisee sl1rd_result.gdl                [view the analysis result with aisee]
     sl1rd --sourceoutput tests/rdtest1.C  [generate an annotated source file tests/rose_rdtest1.C]
     sl1rd --termoutput tests/rdtest1.C    [generate a term representation in tests/rdtest1.C.pl]
+
+ c) If you are starting with a shape analysis (srw98_shape or nnh99_shape) you must use
+    newanalysis -u
+    The option 'u' ensures that existing files are not overwritten by 'newanalysis' which
+    is currently necessary for the shape analyses to allow for analysis results post-processing
+    and non-default visualizations.
 
 ------------------------------------------------------------
 (3) CRAFTING A NEW ANALYSIS

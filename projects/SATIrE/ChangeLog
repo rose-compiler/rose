@@ -1,3 +1,13 @@
+V0.7.8 2008-01-22 AP, GB, VP, MS
+* Added graph visualization for srw98_shape and nnh99_shape.
+  The gdl files now show the shape graphs for each node.
+  For the srw98 analysis a single graph is shown for each node.
+  For the nnh99 analysis a set of graphs is shown for each node.
+  (the summary graph shows the union of the set of graphs)
+  [VP,MS]
+
+* Improved post-processing of may/must analysis information [VP]
+	
 * Term Representation: 
   Support for more data types (StringVal, ...) [AP]
   Various bugfixes
