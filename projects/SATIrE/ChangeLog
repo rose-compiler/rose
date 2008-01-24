@@ -13,7 +13,15 @@ V0.7.8 2008-01-24 AP, GB, VP, MS
   (the summary graph shows the union of the set of graphs)
   [VP,MS]
 
-* Improved post-processing of may/must analysis information [VP]
+* Post-processing of may/must analysis information:
+  Open issues: 
+    - For must-alias pair computation of the SRW98 analysis
+      we assume that existing edges do not represent null values.
+      This will be fixed in one of the next releases.
+    - One kind of may-aliases is not reported yet: access paths
+      that lead to an unshared summary node, but do share a common
+      node on their path.
+  [VP]
 	
 * Term Representation: 
   Support for more data types (StringVal, ...) [AP]
