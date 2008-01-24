@@ -52,6 +52,13 @@ SATIrE 0.7.8 was tested with
     cd SATIrE-0.7.8/examples
     sh build-examples.sh                  [creates examples in directory executable-examples]
 
+    Example for viewing shape analysis results:
+      cd executable-examples
+      cd srw98_shape
+      srw98_shape --aliassourceoutput tests/srw98_listreverse.C [further options: --help]
+      aisee srw98_shape_result.gdl        [view shape graphs with aisee]
+      cat rose_srw98_listreverse.C        [view source file annotated with computed alias pairs]
+
  c) If you want to perform each step on your own, here is an example for sl1rd:
     [let's assume that you unpacked SATIrE-0.7.8.tgz in your home directory]
     cp -r ~/SATIrE-0.7.8/examples/sl1rd . [copy all files and test files to your directory]

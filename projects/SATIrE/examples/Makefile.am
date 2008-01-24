@@ -35,6 +35,7 @@ EXTRA_DIST= \
 	\
 	nnh99_shape/nnh99_shape.set      nnh99_shape/nnh99_shape.optla \
 	nnh99_shape/main.C               nnh99_shape/main.h \
+	nnh99_shape/Makefile.custom
 	nnh99_shape/tests/nnh_xsely.C \
 	nnh99_shape/tests/srw98_listreverse.C \
 	nnh99_shape/tests/nnh_xysel3.C \
@@ -48,6 +49,7 @@ EXTRA_DIST= \
 	\
 	srw98_shape/srw98_shape.set               srw98_shape/srw98_shape.optla \
 	srw98_shape/main.C                        srw98_shape/main.h \
+	srw98_shape/Makefile.custom
 	srw98_shape/tests/nnh_xsely.C \
 	srw98_shape/tests/srw98_listreverse.C \
 	srw98_shape/tests/nnh_xysel3.C \
@@ -58,8 +60,6 @@ EXTRA_DIST= \
 	srw98_shape/tests/nnh_xnil.C \
 	srw98_shape/tests/nnh_xysel3shared.C \
 	srw98_shape/tests/srw98_listinsert.C 
-
-
 
 testdir=installcheck-executable-examples
 
@@ -114,7 +114,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
 	chmod u+rwx -R $(testdir)/nnh99_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	$(MAKE) check -C $(testdir)/nnh99_shape CUSTOM_DFI_WRITE='-DDFI_WRITE' 
+	$(MAKE) check -C $(testdir)/nnh99_shape
 
 	@echo
 	@echo "Testing srw98_shape"
@@ -122,6 +122,6 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) check -C $(testdir)/srw98_shape CUSTOM_DFI_WRITE='-DDFI_WRITE'
+	$(MAKE) check -C $(testdir)/srw98_shape
 
 	rm -rf $(testdir)

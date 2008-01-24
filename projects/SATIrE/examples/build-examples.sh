@@ -28,12 +28,13 @@ cp -ur nnh99_shape $TESTDIR
 chmod u+rwx -R $TESTDIR/nnh99_shape
 cd $TESTDIR ; newanalysis -u nnh99_shape 
 cd $BASEDIR
-make check -C $TESTDIR/nnh99_shape CUSTOM_DFI_WRITE='-DDFI_WRITE'
+make check -C $TESTDIR/nnh99_shape
 
 echo "Testing srw98_shape"
 cp -ur srw98_shape $TESTDIR
 chmod u+rwx -R $TESTDIR/srw98_shape
 cd $TESTDIR ; newanalysis -u srw98_shape 
 cd $BASEDIR
-make check -C $TESTDIR/srw98_shape CUSTOM_DFI_WRITE='-DDFI_WRITE' 
+make check -C $TESTDIR/srw98_shape
+
 
