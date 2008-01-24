@@ -51,6 +51,7 @@ SATIrE 0.7.8 was tested with
  b) compile all examples that come with SATIrE
     cd SATIrE-0.7.8/examples
     sh build-examples.sh                  [creates examples in directory executable-examples]
+                                          [note that the script uses the *installed* 'newanalysis']
 
     Example for viewing shape analysis results:
       cd executable-examples
