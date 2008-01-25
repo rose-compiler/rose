@@ -18,6 +18,16 @@ libIcfgBuilder_a_SOURCES = AstNumberOfNodesStatistics.C  cfg_funcs.C  cfg_suppor
                            ExprTransformer.C  IrCreation.C  ProcTraversal.C \
 			   testcfg.c
 
+libIcfgBuilder_a_LIBADD = $(CFGOBJS)
+
+PAG_PATH = $(PAG_INCLUDE_DIR)/..
+
+CFGOBJS = $(addsuffix _cfg.o, $(shell cat $(PAG_PATH)/share/pag/cfg/files))
+
+%_cfg.o: $(PAG_PATH)/share/pag/cfg/%.c
+	$(COMPILE) -Wno-unused -c $< -o $@
+
+
 
 
 

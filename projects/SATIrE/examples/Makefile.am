@@ -116,12 +116,12 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
 	$(MAKE) check -C $(testdir)/nnh99_shape
 
-	@echo
-	@echo "Testing srw98_shape"
-	@echo "====================="
-	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-	chmod u+rwx -R $(testdir)/srw98_shape
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) check -C $(testdir)/srw98_shape
+#	@echo
+#	@echo "Testing srw98_shape"
+#	@echo "====================="
+#	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+#	chmod u+rwx -R $(testdir)/srw98_shape
+#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+#	$(MAKE) check -C $(testdir)/srw98_shape
 
 	rm -rf $(testdir)

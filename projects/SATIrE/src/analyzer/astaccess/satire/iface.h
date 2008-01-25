@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: iface.h,v 1.1 2007-09-20 09:25:31 adrian Exp $
+// $Id: iface.h,v 1.2 2008-01-25 05:00:13 markus Exp $
 
 #ifndef H_IFACE
 #define H_IFACE
@@ -7,10 +7,8 @@
 #include <stdio.h>
 
 #define ANIM
-#include "genkfg.h"
 
 #if 0
-typedef void *KFG;
 enum KFG_NODE_TYPE;
 typedef enum
 {
@@ -21,10 +19,14 @@ typedef enum
     INNER
 } KFG_NODE_TYPE;
 typedef int KFG_NODE_ID;
+#endif
+#if 1
+typedef void *KFG;
 typedef void *KFG_NODE;
 typedef void *KFG_NODE_LIST;
 typedef unsigned int KFG_EDGE_TYPE;
 #endif
+#include "genkfg.h"
 #if 0
 #define genkfg2_Il1l_I_
 typedef struct{char const*attr_def_name;int attr_def_id;}KFG_ATTR_DEF;

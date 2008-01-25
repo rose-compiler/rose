@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.h,v 1.1 2007-09-20 09:25:31 adrian Exp $
+// $Id: pag_support.h,v 1.2 2008-01-25 05:00:13 markus Exp $
 
 #ifndef H_PAG_SUPPORT
 #define H_PAG_SUPPORT
@@ -13,8 +13,15 @@ extern "C"
 #endif
 void syntax_init(void);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int syntaxtype;
 extern int e_syntaxtype;
+
+#ifdef __cplusplus
+}
+#endif
 
 #include "syn_typedefs.h"
 

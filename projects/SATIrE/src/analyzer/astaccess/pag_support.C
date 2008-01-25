@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.3 2007-11-16 21:36:11 gergo Exp $
+// $Id: pag_support.C,v 1.4 2008-01-25 05:00:13 markus Exp $
 
 #include <iostream>
 
@@ -512,4 +512,14 @@ bool is_subtypenum_of(int a, int b)
     SgClassType *ta = isSgClassType(typenum_to_type(a));
     SgClassType *tb = isSgClassType(typenum_to_type(b));
     return (ta != NULL && tb != NULL && is_subtype_of(ta, tb));
+}
+
+int kfg_routine_is_loop (KFG cfg, KFG_ROUTINE routine)
+{
+        return 0;
+}
+
+int kfg_routine_is_infeasible (KFG cfg, KFG_ROUTINE routine)
+{
+        return 0;
 }

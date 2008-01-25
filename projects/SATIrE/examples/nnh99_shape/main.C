@@ -3,19 +3,19 @@
 #include "main-support.h"
 #include "main.h"
 
-bool get_universal_attribute__kill_norm_temps()
+PAG_BOOL get_universal_attribute__kill_norm_temps()
 {
 	/* remove temporary variables introduced in the normalisation process */
 	return true;
 }
 
-bool get_universal_attribute__kill_empty_graph()
+PAG_BOOL get_universal_attribute__kill_empty_graph()
 {
 	/* remove empty graphs from the set of graphs */
 	return true;
 }
 
-bool get_universal_attribute__kill_unreachable_nodes()
+PAG_BOOL get_universal_attribute__kill_unreachable_nodes()
 {
 	/* remove nodes that are not reachable through the nodes in the state (named ones) */
 	return true;
