@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.10 2007-11-12 15:37:56 pr012 Exp $
+// $Id: AnalyzerOptions.C,v 1.11 2008-01-25 16:09:17 adrian Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -157,12 +157,12 @@ std::string AnalyzerOptions::getOptionsErrorMessage() {
 
 void AnalyzerOptions::clearCommandLine() { _commandLine.clear(); }
 void AnalyzerOptions::appendCommandLine(std::string cl) { _commandLine.push_back(cl); addCommandLineNum(1);}
-std::list<std::string> AnalyzerOptions::getCommandLineList() { return _commandLine; }
+std::vector<std::string> AnalyzerOptions::getCommandLineList() { return _commandLine; }
 char** AnalyzerOptions::getCommandLineCarray() { 
   int argc=getCommandLineNum();
   char** argv=new char*[argc]; // we need to create the same DS as in C for argv
   int j=0;
-  for(std::list<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
+  for(std::vector<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
     argv[j++]=strdup(const_cast<char*>((*i).c_str()));
   }
   return argv;
@@ -170,7 +170,7 @@ char** AnalyzerOptions::getCommandLineCarray() {
 
 std::string AnalyzerOptions::getCommandLine() { 
   std::string s;
-  for(std::list<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
+  for(std::vector<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
     s+=*i+" ";
   }
   return s;

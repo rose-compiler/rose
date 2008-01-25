@@ -9,14 +9,16 @@ SATIRE_DATA=@pkgdatadir@
 
 PAG = $(PAGDIR)/bin/pag
 CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(ANALYSIS)-out/src/ -I$(SATIRE_INCLUDE)
-LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB)
-LIBS = $(ANALYSIS).a -lsatire -lsyntree -ltermite -lrose -lrt -lpag
+LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
+LIBS = $(ANALYSIS).a -lsatire -lsyntree -ltermite -lrose -lrt -lpag -lfl
 
 # variable CUSTOM_CFLAGS can be in separate file
 custommakefile = $(wildcard Makefile*)
 ifneq '$(custommakefile)' 'Makefile'
 include Makefile.custom
 endif
+
+.PHONY: all clean check update newanalysis
 
 all: $(ANALYSIS)
 
@@ -42,7 +44,6 @@ $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
 	@cat pag-out
 	@echo "nothing, because it wasn't run (the analysis specification has not changed)" > pag-out
 
-.PHONY: clean
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
 	rm -rf $(ANALYSIS)-out/

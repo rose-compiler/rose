@@ -1,12 +1,12 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.4 2007-10-23 13:24:48 gergo Exp $
+// $Id: cfg_support.C,v 1.5 2008-01-25 16:09:17 adrian Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
 #include "IrCreation.h"
 
 CallBlock::CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
-		     std::list<SgVariableSymbol *> *paramlist_, char *name_)
+		     std::vector<SgVariableSymbol *> *paramlist_, const char *name_)
   : BasicBlock(id_, type_, procnum_), paramlist(paramlist_), name(name_)
 {
   switch (node_type) {
@@ -35,7 +35,7 @@ std::string UndeclareStmt::unparseToString() const
 {
   std::string label = "UndeclareStmt([";
   if (vars != NULL) {
-    std::list<SgVariableSymbol *>::const_iterator i;
+    std::vector<SgVariableSymbol *>::const_iterator i;
     i = vars->begin();
     if (i != vars->end()) {
       label += (*i++)->get_name().str();
@@ -57,7 +57,7 @@ std::string ExternalCall::unparseToString() const
     std::stringstream label;
     label << "ExternalCall(" << expr_to_string(function) << ", [";
     assert(params != NULL);
-    std::list<SgVariableSymbol *>::const_iterator i = params->begin();
+    std::vector<SgVariableSymbol *>::const_iterator i = params->begin();
     if (i != params->end())
     {
         label << (*i)->get_name().str();
@@ -76,7 +76,7 @@ std::string CallBlock::print_paramlist() const
     s << "CallBlock " << (void *) this << " has null params";
     return s.str();
   }
-  std::list<SgVariableSymbol *>::const_iterator i = paramlist->begin();
+  std::vector<SgVariableSymbol *>::const_iterator i = paramlist->begin();
   if (i == paramlist->end()) {
     return std::string("");
   } else {
@@ -88,7 +88,7 @@ std::string CallBlock::print_paramlist() const
   }
 }
 
-CallStmt::CallStmt(KFG_NODE_TYPE type_, char *name_, CallBlock *parent_)
+CallStmt::CallStmt(KFG_NODE_TYPE type_, const char *name_, CallBlock *parent_)
   : type(type_), name(name_), parent(parent_) 
 {
   update_infolabel();
@@ -220,7 +220,7 @@ CallStmt::unparseToString() const
   return infolabel;
 }
 
-char*
+const char*
 CallStmt::get_funcname() const
 {
   return name;
@@ -392,8 +392,8 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
 
 bool subtype_of(SgClassDefinition *a, SgClassDefinition *b)
 {
-  const std::list<SgBaseClass *> &base_classes = a->get_inheritances();
-  std::list<SgBaseClass *>::const_iterator i;
+  const SgBaseClassPtrList &base_classes = a->get_inheritances();
+  SgBaseClassPtrList::const_iterator i;
   for (i = base_classes.begin(); i != base_classes.end(); ++i) {
     SgClassDefinition *base = (*i)->get_base_class()->get_definition();
     if (base == b || subtype_of(base, b)) {

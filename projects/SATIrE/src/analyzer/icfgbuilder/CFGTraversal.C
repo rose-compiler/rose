@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.7 2007-11-16 21:36:33 gergo Exp $
+// $Id: CFGTraversal.C,v 1.8 2008-01-25 16:09:17 adrian Exp $
 
 #include <iostream>
 #include <string.h>
@@ -238,7 +238,7 @@ CFGTraversal::number_exprs() {
   {
       global_est.traverse(itr->second, preorder);
   }
-  std::list<SgVariableSymbol *>::iterator g_itr;
+  std::vector<SgVariableSymbol *>::iterator g_itr;
   for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
       type_set.insert((*g_itr)->get_type());
   
@@ -385,8 +385,8 @@ CFGTraversal::transform_block(SgBasicBlock *block,
      * seperate list used for calling their destructors. */
     SgStatementPtrList::iterator s;
     SgInitializedNamePtrList local_classvar_decls;
-    std::list<SgVariableSymbol *> *local_var_decls
-        = new std::list<SgVariableSymbol *>();
+    std::vector<SgVariableSymbol *> *local_var_decls
+        = new std::vector<SgVariableSymbol *>();
     for (s = stmts.begin(); s != stmts.end(); ++s) {
       if (isSgVariableDeclaration(*s)) {
 	SgVariableDeclaration *decl = isSgVariableDeclaration(*s);
@@ -525,9 +525,9 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	cfg->nodes.push_back(for_block);
 	BasicBlock *init_block_after = for_block;
                 
-	std::list<SgStatement *> init_list
+	SgStatementPtrList init_list
 	  = fors->get_for_init_stmt()->get_init_stmt();
-	std::list<SgStatement *>::reverse_iterator it;
+	SgStatementPtrList::reverse_iterator it;
 	for (it = init_list.rbegin(); it != init_list.rend(); ++it) {
 	  SgExprStatement *init_expr
 	    = isSgExprStatement(*it);
@@ -1408,9 +1408,9 @@ CFGTraversal::is_destructor_decl(SgFunctionDeclaration *fd) const {
 
 BasicBlock* 
 CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
-  std::list<CallBlock *> blocks;
+  std::vector<CallBlock *> blocks;
   std::deque<Procedure *>::const_iterator pi;
-  std::list<SgBaseClass *>::iterator base;
+  std::vector<SgBaseClass *>::iterator base;
   for (base = p->class_type->get_inheritances().begin();
        base != p->class_type->get_inheritances().end();
        ++base) {
@@ -1426,7 +1426,7 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
       }
     }
   }
-  std::list<CallBlock *>::iterator bi;
+  std::vector<CallBlock *>::iterator bi;
   for (bi = blocks.begin(); bi != blocks.end(); ++bi) {
     std::string class_name((*cfg->procedures)[(*bi)->procnum]->name + 1);
     std::string destructor_name = class_name + "::~" + class_name;

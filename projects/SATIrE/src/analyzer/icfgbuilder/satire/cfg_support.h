@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.3 2007-11-16 21:36:36 gergo Exp $
+// $Id: cfg_support.h,v 1.4 2008-01-25 16:09:17 adrian Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -77,7 +77,7 @@ public:
 
     std::map<std::string, SgVariableSymbol *> names_globals;
     std::map<std::string, SgExpression *> names_initializers;
-    std::list<SgVariableSymbol *> globals;
+    std::vector<SgVariableSymbol *> globals;
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
 };
 
@@ -103,14 +103,14 @@ class CallBlock : public BasicBlock
 {
 public:
     CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
-            std::list<SgVariableSymbol *> *paramlist_, char *name_);
+            std::vector<SgVariableSymbol *> *paramlist_, const char *name_);
     CallBlock *partner;
     std::string print_paramlist() const;
-    std::list<SgVariableSymbol *> *paramlist;
+    std::vector<SgVariableSymbol *> *paramlist;
     CallStmt *stmt;
 
 protected:
-    char *name;
+    const char *name;
 };
 
 class IcfgStmt : public SgStatement
@@ -121,13 +121,13 @@ class IcfgStmt : public SgStatement
 class CallStmt : public IcfgStmt
 {
 public:
-    CallStmt(KFG_NODE_TYPE node_type, char *name, CallBlock *parent);
+    CallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent);
 
     std::string unparseToString() const;
-    char *get_funcname() const;
+    const char *get_funcname() const;
 
     KFG_NODE_TYPE type;
-    char *name;
+    const char *name;
     CallBlock *parent;
     void update_infolabel();
 
@@ -140,7 +140,7 @@ typedef CallStmt FunctionCall, FunctionReturn;
 class FunctionEntry : public CallStmt
 {
 public:
-    FunctionEntry(KFG_NODE_TYPE type, char *func, CallBlock *parent)
+    FunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent)
         : CallStmt(type, func, parent)
     {
     }
@@ -148,7 +148,7 @@ public:
     // const char *get_funcname() const { return funcname; }
 
 private:
-    char *funcname;
+    const char *funcname;
 };
 
 class DeclareStmt : public IcfgStmt
@@ -171,16 +171,16 @@ protected:
 class UndeclareStmt : public IcfgStmt
 {
 public:
-    UndeclareStmt(std::list<SgVariableSymbol *> *v)
+    UndeclareStmt(std::vector<SgVariableSymbol *> *v)
         : vars(v)
     {
     }
 
     std::string unparseToString() const;
-    std::list<SgVariableSymbol *> *get_vars() const { return vars; }
+    std::vector<SgVariableSymbol *> *get_vars() const { return vars; }
 
 protected:
-    std::list<SgVariableSymbol *> *vars;
+    std::vector<SgVariableSymbol *> *vars;
 };
 
 class RetvalAttribute : public AstAttribute
@@ -205,51 +205,51 @@ class ExternalCall : public IcfgStmt
 {
 public:
     SgExpression *get_function() const { return function; }
-    std::list<SgVariableSymbol *> *get_params() const { return params; }
+    std::vector<SgVariableSymbol *> *get_params() const { return params; }
     SgType *get_type() const { return type; }
 
-    ExternalCall(SgExpression *function_, std::list<SgVariableSymbol *> *params_, SgType *type_)
+    ExternalCall(SgExpression *function_, std::vector<SgVariableSymbol *> *params_, SgType *type_)
       : function(function_), params(params_), type(type_) {}
 
-    void set_params(std::list<SgVariableSymbol *> *params_) { params = params_; }
+    void set_params(std::vector<SgVariableSymbol *> *params_) { params = params_; }
     std::string unparseToString() const;
     
 private:
     ExternalCall();
     SgExpression *function;
-    std::list<SgVariableSymbol *> *params;
+    std::vector<SgVariableSymbol *> *params;
     SgType *type;
 };
 
 class ConstructorCall : public IcfgStmt
 {
 public:
-    char *get_name() const { return name; }
+    const char *get_name() const { return name; }
     SgType *get_type() const { return type; }
-    ConstructorCall(char *name_, SgType *type_)
+    ConstructorCall(const char *name_, SgType *type_)
         : name(name_), type(type_)
     {
     }
 
 private:
     ConstructorCall();
-    char *name;
+    const char *name;
     SgType *type;
 };
 
 class DestructorCall : public IcfgStmt
 {
 public:
-    char *get_name() const { return name; }
+    const char *get_name() const { return name; }
     SgType *get_type() const { return type; }
-    DestructorCall(char *name_, SgType *type_)
+    DestructorCall(const char *name_, SgType *type_)
         : name(name_), type(type_)
     {
     }
 
 private:
     DestructorCall();
-    char *name;
+    const char *name;
     SgType *type;
 };
 
@@ -324,20 +324,20 @@ class IfJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
-    char *get_funcname() const { return "<none>"; }
+    const char *get_funcname() const { return "<none>"; }
 };
 
 class WhileJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
-    char *get_funcname() const { return "<none>"; }
+    const char *get_funcname() const { return "<none>"; }
 };
 
 class FunctionExit : public CallStmt
 {
 public:
-    FunctionExit(KFG_NODE_TYPE type, char *func, CallBlock *parent)
+    FunctionExit(KFG_NODE_TYPE type, const char *func, CallBlock *parent)
         : CallStmt(type, func, parent)
     {
     }
@@ -345,14 +345,14 @@ public:
     // const char *get_funcname() const { return funcname; }
 
 private:
-    char *funcname;
+    const char *funcname;
 };
 
 class Procedure
 {
 public:
     int procnum;
-    char *name, *mangled_name, *memberf_name, *mangled_memberf_name;
+    const char *name, *mangled_name, *memberf_name, *mangled_memberf_name;
     SgClassDefinition *class_type;
     CallBlock *entry;
     CallBlock *exit;

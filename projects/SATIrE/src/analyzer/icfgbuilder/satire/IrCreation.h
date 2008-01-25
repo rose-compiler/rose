@@ -30,14 +30,14 @@ public:
   static SgSwitchStatement* createSwitchStatement(SgExprStatement* expStmt);
   static SgClassType* createClassType();
   // ICFG specific nodes that inherit from ROSE SgStatement and implement unparseToString
-  static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, char *name, CallBlock *parent);
-  static FunctionEntry* createFunctionEntry(KFG_NODE_TYPE type, char *func, CallBlock *parent);
-  static FunctionExit* createFunctionExit(KFG_NODE_TYPE type, char *func, CallBlock *parent);
+  static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent);
+  static FunctionEntry* createFunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent);
+  static FunctionExit* createFunctionExit(KFG_NODE_TYPE type, const char *func, CallBlock *parent);
   static DeclareStmt* createDeclareStmt(SgVariableSymbol *v, SgType *t);
-  static UndeclareStmt* createUndeclareStmt(std::list<SgVariableSymbol *> *v);
-  static ExternalCall* createExternalCall(SgExpression *function, std::list<SgVariableSymbol *> *params, SgType *type_);
-  static ConstructorCall* createConstructorCall(char *name_, SgType *type_);
-  static DestructorCall* createDestructorCall(char *name_, SgType *type_);
+  static UndeclareStmt* createUndeclareStmt(std::vector<SgVariableSymbol *> *v);
+  static ExternalCall* createExternalCall(SgExpression *function, std::vector<SgVariableSymbol *> *params, SgType *type_);
+  static ConstructorCall* createConstructorCall(const char *name_, SgType *type_);
+  static DestructorCall* createDestructorCall(const char *name_, SgType *type_);
   static ArgumentAssignment* createArgumentAssignment(SgVariableSymbol *l, SgExpression *r);
   static ArgumentAssignment* createArgumentAssignment(SgExpression *l, SgExpression *r);
   static ReturnAssignment* createReturnAssignment(SgVariableSymbol *l, SgVariableSymbol *r);

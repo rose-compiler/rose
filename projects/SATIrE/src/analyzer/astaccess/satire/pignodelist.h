@@ -1,21 +1,21 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pignodelist.h,v 1.2 2007-10-23 15:06:48 gergo Exp $
+// $Id: pignodelist.h,v 1.3 2008-01-25 16:09:17 adrian Exp $
 
 #ifndef H_PIGNODELIST
 #define H_PIGNODELIST
 
 #include "cfg_support.h"
 
-typedef std::list<void *> nodelist;
+typedef std::vector<void *> nodelist;
 
 class PigNodeList
     : public std::pair<nodelist *, nodelist::const_iterator>
 {
 public:
-    template <class T, class T2> PigNodeList(const std::list<T, T2> &l)
+    template <class T, class T2> PigNodeList(const std::vector<T, T2> &l)
     {
         nodelist *newlist = new nodelist();
-        typename std::list<T, T2>::const_iterator i, j;
+        typename std::vector<T, T2>::const_iterator i, j;
         j = l.end();
         for (i = l.begin(); i != j; ++i)
             newlist->push_back(*i);
@@ -23,7 +23,7 @@ public:
         second = newlist->begin();
     }
     template <class T, class T2> PigNodeList(
-            std::list<T, T2> *l, typename std::list<T, T2>::const_iterator i)
+            std::vector<T, T2> *l, typename std::vector<T, T2>::const_iterator i)
     {
         first = l;
         second = i;

@@ -89,6 +89,7 @@ FunctionCall(_,_), local_edge:
 _, _: @;
 
 SUPPORT
+
 eval :: Expression, State -> ConstStatePair;
 eval(exp, state) =    
     if is_unary(exp) then
@@ -99,8 +100,9 @@ eval(exp, state) =
     else if is_value(exp) then
         case exp of
             BoolValExp(value) => (lift(val-astint(value)), state);
-            IntVal(value)     => (lift(val-astint(value)), state);
             EnumVal(value)    => (lift(val-astint(value)), state);
+            IntVal(value)     => (lift(val-astint(value)), state);
+	    ShortVal(value)   => (lift(val-astshort(value)), state);
             LongIntVal(value) => (lift(val-astlong(value)), state);
             _                 => print("unsupported value exp: ")
                                  print(exp) print("\n") (top, [-> top]);
@@ -153,8 +155,12 @@ binary(left, right, exp, state) =
                     DivideOp(_, _)          => (lift(l / r), ls);
                     IntegerDivideOp(_, _)   => (lift(l / r), ls);
                     ModOp(_, _)             => (lift(l % r), ls);
-                    AndOp(_, _)         => (lift(bool_int(l != 0 && r != 0)), ls);
-                    OrOp(_, _)          => (lift(bool_int(l != 0 || r != 0)), ls);
+                    LshiftOp(_, _)          => (lift(shiftleft(l,r)), ls);
+		    RshiftOp(_, _)          => (lift(shiftright(l,r)), ls);
+		    BitAndOp(_, _)          => (lift((l & r)), ls);
+		    BitOrOp(_, _)           => (lift((l | r)), ls);
+		    AndOp(_, _)             => (lift(bool_int(l != 0 && r != 0)), ls);
+                    OrOp(_, _)              => (lift(bool_int(l != 0 || r != 0)), ls);
                     ScopeOp(_, _)       => (lift(r), ls);
                     PlusAssignOp(_, _)  => updatestate(ls, left, lift(l + r));
                     MinusAssignOp(_, _) => updatestate(ls, left, lift(l - r));
@@ -191,7 +197,8 @@ bool_int(b) =
 int_bool :: snum -> bool;
 int_bool(i) =
     if i != 0 then true else false endif;
-
+ 
+								      
 updatestate :: State, Expression, Const -> ConstStatePair;
 // Update state state by assigning the value value to the variable
 // referenced by expression exp (if any). Yields a pair of the value
@@ -230,6 +237,15 @@ is_value :: Expression -> bool;
 unary_get_child :: Expression -> Expression;
 binary_get_left_child :: Expression -> Expression;
 binary_get_right_child :: Expression -> Expression;
+
+shiftleft :: snum, snum -> snum;
+shiftleft(a, 0) = a;
+shiftleft(a, b) = a * 2 + shiftleft(a, b-1);
+
+shiftright :: snum, snum -> snum;
+shiftright(a, 0) = a;
+shiftright(a, b) = a / 2 + shiftright(a, b-1);
+								      
 
 comb(a, b) =
  // print("comb a: ") print(a) print("\n")

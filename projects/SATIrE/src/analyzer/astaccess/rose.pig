@@ -46,6 +46,18 @@ get:body(NODE, _, "ExternalCall", _, "params", _, _)
     return new PigNodeList(*stmt->get_##FIELD());
 %}
 
+get:body(NODE, _, "ConstructorCall" | "DestructorCall", _, "name", _, _)
+%{
+    CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
+    return strdup(stmt->get_##FIELD());
+%}
+
+get:body(NODE, _, "FunctionEntry" | "FunctionExit" | "FunctionCall" | "FunctionReturn", _, "funcname", _, _)
+%{
+    CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
+    return strdup(stmt->get_##FIELD());
+%}
+
 get:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, FIELD, _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
@@ -82,12 +94,13 @@ get:body(NODE, _, "VarRefExp" | "InitializedName", _, "name", _, _)
     SgInitializedName *in = isSgInitializedName((SgNode *) NODE);
     if (in == NULL && isSgVarRefExp((SgNode *) NODE))
         in = isSgVarRefExp((SgNode *) NODE)->get_symbol()->get_declaration();
-    if (in != NULL)
+    if (in != NULL) {
+      /* FIXME: find a better way to deal with qualified names */
         if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::"))
             return strdup(in->get_qualified_name().str());
-        else
+        else /* don't print the global namespace (::) */
             return strdup(in->get_name().str());
-    else
+    } else
         return NULL;
 %}
 

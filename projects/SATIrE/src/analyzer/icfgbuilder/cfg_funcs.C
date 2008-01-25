@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.5 2007-10-23 13:24:48 gergo Exp $
+// $Id: cfg_funcs.C,v 1.6 2008-01-25 16:09:17 adrian Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -133,7 +133,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
 	case V_SgPragmaDeclaration: 
 	  assert(0);
             fprintf(file, "Pragma Declaration %s", 
-		    isSgPragmaDeclaration(stmt)->get_pragma()->get_pragma());
+		    isSgPragmaDeclaration(stmt)->get_pragma()->get_pragma().c_str());
             break;
         case V_SgNullStatement:
             fprintf(file, "NullStatement (no-op)");

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
+// $Id: ExprTransformer.h,v 1.2 2008-01-25 16:09:17 adrian Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -40,13 +40,13 @@ private:
     SgName find_mangled_func_name(SgFunctionRefExp *) const;
   //SgName find_mangled_memberf_name(SgMemberFunctionRefExp *) const;
     CallBlock *find_entry(SgFunctionCallExp *);
-    const std::list<CallBlock *> *find_entries(SgFunctionCallExp *);
-    const std::list<CallBlock *> *find_destructor_entries(SgClassType *);
-    std::list<SgVariableSymbol *> *evaluate_arguments(SgName,
+    const std::vector<CallBlock *> *find_entries(SgFunctionCallExp *);
+    const std::vector<CallBlock *> *find_destructor_entries(SgClassType *);
+    std::vector<SgVariableSymbol *> *evaluate_arguments(SgName,
             SgExpressionPtrList &, BasicBlock *, bool);
     void assign_retval(SgName, SgFunctionCallExp *, BasicBlock *);
-    std::list<std::string> *find_destructor_names(SgClassType *);
-    std::list<std::string> *find_destructor_this_names(SgClassType *);
+    std::vector<std::string> *find_destructor_names(SgClassType *);
+    std::vector<std::string> *find_destructor_this_names(SgClassType *);
 };
 
 #endif

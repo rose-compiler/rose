@@ -1,5 +1,6 @@
+// -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.5 2007-10-25 19:48:12 gergo Exp $
+// $Id: ExprTransformer.C,v 1.6 2008-01-25 16:09:17 adrian Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -64,7 +65,7 @@ void ExprTransformer::visit(SgNode *node)
     {
         SgFunctionCallExp *call = isSgFunctionCallExp(node);
         SgName name = find_func_name(call);
-        const std::list<CallBlock *> *entries = find_entries(call);
+        const std::vector<CallBlock *> *entries = find_entries(call);
         SgExpressionPtrList elist;
 	//std::cout << "FunctionCallExp:" << name << ": function search => " << entries->size() << std::endl;
 
@@ -142,10 +143,10 @@ void ExprTransformer::visit(SgNode *node)
         if (entries != NULL && !entries->empty())
         {
             call_block = new CallBlock(node_id++, CALL, procnum,
-                    new std::list<SgVariableSymbol *>()
+                    new std::vector<SgVariableSymbol *>()
                     /*entries->front()->paramlist*/, name.str());
             return_block = new CallBlock(node_id++, RETURN,
-                    procnum, new std::list<SgVariableSymbol *>()
+                    procnum, new std::vector<SgVariableSymbol *>()
                     /*entries->front()->paramlist*/,
                     name.str());
             cfg->nodes.push_back(call_block);
@@ -156,8 +157,8 @@ void ExprTransformer::visit(SgNode *node)
             return_block->partner = call_block;
 
             /* set links */
-            std::list<CallBlock *> *exits = new std::list<CallBlock *>();
-            std::list<CallBlock *>::const_iterator i;
+            std::vector<CallBlock *> *exits = new std::vector<CallBlock *>();
+            std::vector<CallBlock *>::const_iterator i;
             for (i = entries->begin(); i != entries->end(); ++i)
                 exits->push_back((*i)->partner);
             if (last_arg_block != NULL)
@@ -193,7 +194,7 @@ void ExprTransformer::visit(SgNode *node)
          // list for now.
             external_call = 
                     Ir::createExternalCall(call->get_function(),
-                                           new std::list<SgVariableSymbol *>,
+                                           new std::vector<SgVariableSymbol *>,
                                            call->get_type());
             call_block->statements.push_front(external_call);
 
@@ -217,7 +218,7 @@ void ExprTransformer::visit(SgNode *node)
         /* fill blocks */
         if (first_arg_block != NULL)
         {
-            std::list<SgVariableSymbol *> *params =
+            std::vector<SgVariableSymbol *> *params =
                 evaluate_arguments(name, elist, first_arg_block,
                     find_called_memberfunc(call->get_function()));
          // Set the parameter list for whatever kind of CFG nodes we
@@ -249,7 +250,7 @@ void ExprTransformer::visit(SgNode *node)
 
       SgClassDefinition* class_type = (ci->get_class_decl()
 				       ? ci->get_class_decl()->get_definition() : NULL);
-      std::list<CallBlock *> blocks(0);
+      std::vector<CallBlock *> blocks(0);
       SgName name = "";
       if (ci->get_declaration() != NULL) {
 	name = ci->get_declaration()->get_name();
@@ -351,8 +352,8 @@ void ExprTransformer::visit(SgNode *node)
 	return_block->partner = call_block;
 
 	/* set links */
-	std::list<CallBlock *> *exits = new std::list<CallBlock *>();
-	std::list<CallBlock *>::const_iterator i;
+	std::vector<CallBlock *> *exits = new std::vector<CallBlock *>();
+	std::vector<CallBlock *>::const_iterator i;
 	for (i = blocks.begin(); i != blocks.end(); ++i)
 	  exits->push_back((*i)->partner);
 	if (last_arg_block != NULL)
@@ -395,7 +396,7 @@ void ExprTransformer::visit(SgNode *node)
       }
       /* fill blocks */
       if (first_arg_block != NULL) {
-	std::list<SgVariableSymbol *> *params =
+	std::vector<SgVariableSymbol *> *params =
 	  evaluate_arguments(name, elist, first_arg_block, true);
 	if (call_block != NULL) {
 	  call_block->paramlist = params;
@@ -421,18 +422,18 @@ void ExprTransformer::visit(SgNode *node)
 	// std::string destructor_name = class_name + "::~" + class_name;
 	// std::string this_var_name
 	//    = std::string() + "$~" + class_name + "$this";
-	const std::list<CallBlock *> *d_entries
+	const std::vector<CallBlock *> *d_entries
 	  = find_destructor_entries(ct);
-	std::list<std::string> *d_class_names = find_destructor_names(ct);
-	std::list<std::string> *d_this_names
+	std::vector<std::string> *d_class_names = find_destructor_names(ct);
+	std::vector<std::string> *d_this_names
 	  = find_destructor_this_names(ct);
-	std::list<std::string>::iterator destr_name
+	std::vector<std::string>::iterator destr_name
 	  = d_class_names->begin();
-	std::list<std::string>::iterator this_name
+	std::vector<std::string>::iterator this_name
 	  = d_this_names->begin();
 	if (d_entries != NULL && !d_entries->empty()) {
-	  std::list<BasicBlock *> afters, lasts;
-	  std::list<CallBlock *>::const_iterator d;
+	  std::vector<BasicBlock *> afters, lasts;
+	  std::vector<CallBlock *>::const_iterator d;
 	  for (d = d_entries->begin(); d != d_entries->end(); ++d) {
 	    SgVariableSymbol *this_var_sym
 	      = Ir::createVariableSymbol(*this_name++, de->get_variable()->get_type());
@@ -453,7 +454,7 @@ void ExprTransformer::visit(SgNode *node)
 	    cfg->nodes.push_back(this_block);
 	    this_block->statements.push_back(Ir::createArgumentAssignment(Ir::createVarRefExp(this_var_sym),
 								    de->get_variable()));
-	    call_block->paramlist = new std::list<SgVariableSymbol *>();
+	    call_block->paramlist = new std::vector<SgVariableSymbol *>();
 	    call_block->paramlist->push_back(this_var_sym);
 	    return_block->paramlist = call_block->paramlist;
 	    /* set links */
@@ -472,8 +473,8 @@ void ExprTransformer::visit(SgNode *node)
 	  // after: kill this_vars
 	  BasicBlock* kill_this_vars = new BasicBlock(node_id++, INNER, procnum);
 	  cfg->nodes.push_back(kill_this_vars);
-	  std::list<SgVariableSymbol *>* this_syms = new std::list<SgVariableSymbol *>();
-	  std::list<std::string>::iterator dtn;
+	  std::vector<SgVariableSymbol *>* this_syms = new std::vector<SgVariableSymbol *>();
+	  std::vector<std::string>::iterator dtn;
 	  for (dtn = d_this_names->begin(); dtn != d_this_names->end();
 	       ++dtn) {
 	    this_syms->push_back(Ir::createVariableSymbol(*dtn,Ir::createClassType()));
@@ -487,7 +488,7 @@ void ExprTransformer::visit(SgNode *node)
 	      = new BasicBlock(node_id++, INNER, procnum);
 	    cfg->nodes.push_back(afterblock);
 	    afterblock->statements.push_back(Ir::createNullStatement());
-	    std::list<BasicBlock *>::iterator ai, li;
+	    std::vector<BasicBlock *>::iterator ai, li;
 	    ai = afters.begin();
 	    li = lasts.begin();
 	    while (ai != afters.end() && li != lasts.end()) {
@@ -634,6 +635,7 @@ ExprTransformer::find_mangled_func_name(SgFunctionRefExp *fr) const {
   //SgFunctionDeclaration* nondefiningFunctionDeclaration
   //  = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
   SgName mname=functionDeclaration->get_mangled_name();
+  //std::cerr<<mname.str()<<std::endl;
   return mname;
 }
 
@@ -653,7 +655,7 @@ ExprTransformer::find_entry(SgFunctionCallExp *call)
     if (func_ref)
     {
         SgName sgname = find_func_name(call);
-        char *name = sgname.str();
+        const char *name = sgname.str();
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
@@ -669,10 +671,10 @@ ExprTransformer::find_entry(SgFunctionCallExp *call)
     return NULL;
 } 
 
-const std::list<CallBlock *>*
+const std::vector<CallBlock *>*
 ExprTransformer::find_entries(SgFunctionCallExp *call)
 {
-    std::list<CallBlock *> *blocks = new std::list<CallBlock *>();
+    std::vector<CallBlock *> *blocks = new std::vector<CallBlock *>();
     SgFunctionRefExp* func_ref = find_called_func(call->get_function());
     SgMemberFunctionRefExp* member_func_ref = find_called_memberfunc(call->get_function());
     //std::cout << "FunctionCall: FunctionRefExp:" << func_ref << ", MemberFunctionRef:" << member_func_ref << std::endl;
@@ -681,13 +683,15 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
     {
       // MS: changed for upgrading to ROSE 0.8.10e
       // (auto conversion of SgName to const char* is broken, name must be determined explicitely)
-      char *name = const_cast<char*>(find_mangled_func_name(func_ref).getString().c_str()); // the string remains in the AST, c_str should be fine
-
+	char *name = const_cast<char*>(find_mangled_func_name(func_ref).getString().c_str()); // the string remains in the AST, c_str should be fine 
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
         for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i)
-        {
+	{
+	    //std::cout<<"B: "<< (char*)((*i)->mangled_name) << std::endl;
+	    //std::cout<<"A: "<< name <<std::endl;
+
             if (strcmp(name, (*i)->mangled_name) == 0)
                 blocks->push_back((*cfg->procedures)[num]->entry);
             num++;
@@ -711,7 +715,6 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
 	// MS: changed following line for upgrading to ROSE 0.8.10e 
         // (auto conversion of SgName to const char* is broken, name must be determined explicitely)
         const char *name = member_func_ref->get_symbol()->get_name().getString().c_str(); // the string remains in the AST, c_str should be fine
-
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
@@ -729,13 +732,13 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
     return NULL;
 }
 
-std::list<SgVariableSymbol *>*
+std::vector<SgVariableSymbol *>*
 ExprTransformer::evaluate_arguments(SgName name, 
 				    SgExpressionPtrList &args, 
 				    BasicBlock *block,
 				    bool member_func) {
-  std::list<SgVariableSymbol *> *params
-    = new std::list<SgVariableSymbol *>();
+  std::vector<SgVariableSymbol *> *params
+    = new std::vector<SgVariableSymbol *>();
   SgExpressionPtrList::const_iterator i = args.begin();
   if (member_func) {
     std::string varname = std::string("$") + name.str() + "$this";
@@ -814,11 +817,11 @@ find_dest_impl(SgClassType *ct) {
   return NULL;
 }
 
-const std::list<CallBlock *>*
+const std::vector<CallBlock *>*
 ExprTransformer::find_destructor_entries(SgClassType *ct) {
   SgClassDefinition *cd
     = isSgClassDeclaration(ct->get_declaration())->get_definition();
-  std::list<CallBlock *> *blocks = new std::list<CallBlock *>();
+  std::vector<CallBlock *> *blocks = new std::vector<CallBlock *>();
 
   SgMemberFunctionDeclaration *dimpl = find_dest_impl(ct);
   bool virtual_destructor;
@@ -839,11 +842,11 @@ ExprTransformer::find_destructor_entries(SgClassType *ct) {
   return blocks;
 }
 
-std::list<std::string>*
+std::vector<std::string>*
 ExprTransformer::find_destructor_names(SgClassType *ct) {
     SgClassDefinition *cd
         = isSgClassDeclaration(ct->get_declaration())->get_definition();
-    std::list<std::string> *names = new std::list<std::string>();
+    std::vector<std::string> *names = new std::vector<std::string>();
 
     SgMemberFunctionDeclaration *dimpl = find_dest_impl(ct);
     bool virtual_destructor;
@@ -871,11 +874,11 @@ ExprTransformer::find_destructor_names(SgClassType *ct) {
     return names;
 }
 
-std::list<std::string>*
+std::vector<std::string>*
 ExprTransformer::find_destructor_this_names(SgClassType *ct) {
     SgClassDefinition *cd
         = isSgClassDeclaration(ct->get_declaration())->get_definition();
-    std::list<std::string> *names = new std::list<std::string>();
+    std::vector<std::string> *names = new std::vector<std::string>();
 
     SgMemberFunctionDeclaration *dimpl = find_dest_impl(ct);
     bool virtual_destructor;

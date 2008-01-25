@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.h,v 1.4 2007-11-12 15:37:56 pr012 Exp $
+// $Id: AnalyzerOptions.h,v 1.5 2008-01-25 16:09:17 adrian Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -8,6 +8,7 @@
 
 #include <string>
 #include <list>
+#include <vector>
 
 class AnalyzerOptions {
 public:
@@ -52,7 +53,7 @@ public:
 
   void clearCommandLine();
   void appendCommandLine(std::string);
-  std::list<std::string> getCommandLineList();
+  std::vector<std::string> getCommandLineList();
   std::string getCommandLine();
   char** getCommandLineCarray();
 
@@ -70,7 +71,7 @@ protected:
   std::string _optionsErrorMessage;
   std::string _optionsInfo;
   
-  std::list<std::string> _commandLine;
+  std::vector<std::string> _commandLine;
   int _commandLineNum;
   Language _language;
 

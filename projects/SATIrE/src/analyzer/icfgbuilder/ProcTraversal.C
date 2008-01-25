@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.4 2007-07-15 02:02:27 markus Exp $
+// $Id: ProcTraversal.C,v 1.5 2008-01-25 16:09:17 adrian Exp $
 
 #include <iostream>
 #include <string.h>
@@ -54,8 +54,8 @@ ProcTraversal::visit(SgNode *node) {
 	proc->class_type = NULL;
 	proc->memberf_name = proc->mangled_memberf_name = NULL;
       }
-      std::list<SgVariableSymbol* >* arglist
-	= new std::list<SgVariableSymbol* >();
+      std::vector<SgVariableSymbol* >* arglist
+	= new std::vector<SgVariableSymbol* >();
       SgVariableSymbol *this_var = NULL, *this_temp_var = NULL;
       if (mdecl 
 	  || decl->get_parameterList() != NULL
@@ -100,7 +100,7 @@ ProcTraversal::visit(SgNode *node) {
 	  && strcmp(mdecl->get_name().str(), 
 		    proc->class_type->get_declaration()->get_name().str()) == 0
 	  && proc->class_type != NULL) {
-	std::list<SgBaseClass *>::iterator base;
+	SgBaseClassPtrList::iterator base;
 	for (base = proc->class_type->get_inheritances().begin();
 	     base != proc->class_type->get_inheritances().end();
 	     ++base) {
@@ -227,7 +227,7 @@ SgMemberFunctionDeclaration*
 get_default_constructor(SgClassDeclaration *c) {
   SgClassDefinition *d = c->get_definition();
   if (d != NULL) {
-    std::list<SgDeclarationStatement *>::iterator i;
+    SgDeclarationStatementPtrList::iterator i;
     for (i = d->get_members().begin(); i != d->get_members().end(); ++i) {
       if (SgMemberFunctionDeclaration* m=isSgMemberFunctionDeclaration(*i)) {
 	if (m->get_name() == c->get_name() && m->get_args().empty())

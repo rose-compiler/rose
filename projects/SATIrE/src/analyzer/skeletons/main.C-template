@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
   
   /* Make sure everything is OK... */
-  //AstTests::runAllTests(ast_root);
+  AstTests::runAllTests(ast_root);
 
   /* Construct a control-flow graph from the AST, make sure it has
    * the structrure expected by PAG, and run the analysis on it,

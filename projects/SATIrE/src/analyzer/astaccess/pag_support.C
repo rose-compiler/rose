@@ -1,5 +1,6 @@
+// -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.4 2008-01-25 05:00:13 markus Exp $
+// $Id: pag_support.C,v 1.5 2008-01-25 16:09:17 adrian Exp $
 
 #include <iostream>
 
@@ -322,10 +323,10 @@ extern "C" bool o_is_subtype_of(void *a, void *b)
      * inheritances (base classes) */
     if (at == NULL) return false;
     if (bt == NULL) return false;
-    const std::list<SgBaseClass *> &base_classes = 
+    const SgBaseClassPtrList &base_classes = 
         isSgClassDeclaration(at->get_declaration())->get_definition()
             ->get_inheritances();
-    std::list<SgBaseClass *>::const_iterator i;
+    SgBaseClassPtrList::const_iterator i;
     for (i = base_classes.begin(); i != base_classes.end(); ++i)
     {
         SgClassDeclaration *base = (*i)->get_base_class();
@@ -516,10 +517,10 @@ bool is_subtypenum_of(int a, int b)
 
 int kfg_routine_is_loop (KFG cfg, KFG_ROUTINE routine)
 {
-        return 0;
+    return 0;
 }
 
 int kfg_routine_is_infeasible (KFG cfg, KFG_ROUTINE routine)
 {
-        return 0;
+    return 0;
 }

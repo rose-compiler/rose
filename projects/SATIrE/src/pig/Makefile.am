@@ -9,7 +9,7 @@ SYNOBJS = ../grato/libgrato.a
 
 pig_LDADD = $(SYNOBJS)
 
-CLEANFILES =
+DISTCLEANFILES = pigparser.c++ pigparser.h pigscanner.c++ y.vcg
 
 AM_YFLAGS = -g -d --name-prefix=pig
 AM_LFLAGS = -Ppig -olex.yy.c

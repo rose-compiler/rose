@@ -3,6 +3,25 @@
 #include <iostream>
 #include "IrCreation.h"
 
+/**
+ * the unparser wants a parent scope for many statements; if the parent is NULL, we fake it!
+ * stol^H^H^H^Hadapted from src/termite/PrologToRose.C
+ * TODO: tell Dan we love him
+ */
+void
+fakeParentScope(SgStatement* s) {
+ // nothing to do if there is already a parent scope
+    if(s->get_parent()) return;
+    Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+    SgGlobal* dummy = new SgGlobal(fi);
+    ROSE_ASSERT(dummy != NULL);
+    s->set_parent(dummy);
+ // s->set_scope(dummy);
+    ROSE_ASSERT(s->get_parent());
+    ROSE_ASSERT(s->get_scope());
+}
+
+
 std::string Ir::unparseNode(SgNode* node) {
   return "";
   std::cout << "@" << node << ":";
@@ -120,6 +139,10 @@ void Ir::configInitializedName(SgInitializedName* n) {
   }
   n->set_startOfConstruct(createFileInfo());
   //n->set_endOfConstruct(createFileInfo());
+  // GB (2008-01-25): faking parent scope
+  Sg_File_Info* fi2 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+  SgGlobal *global = new SgGlobal(fi2);
+  n->set_scope(global);
 }
 
 void Ir::configSupportNode(SgSupport* n, SgNode* s1) {
@@ -167,6 +190,8 @@ SgExprStatement* Ir::createExprStatement(SgExpression* e) {
   SgExprStatement* n=new SgExprStatement(e);
   configLocatedNode(n);
   assert(e->get_parent()==n);
+// GB (2008-01-25): Inserted call to fakeParentScope because the ROSE 0.9.0b unparser needs it
+  fakeParentScope(n);
   return n; 
 }
 
@@ -305,7 +330,9 @@ Ir::createIfStmt(SgExprStatement* expStmt) {
   // then and else are not used
   //configLocatedNode(n,expStmt); this works in ROSE0.8.10 for 'if' but not for the while constructs
   configLocatedNode(n);
-  expStmt->set_parent(NULL);
+//expStmt->set_parent(NULL);
+  expStmt->set_parent(n);
+  fakeParentScope(n);
   return n;
 }
 
@@ -315,7 +342,9 @@ Ir::createWhileStmt(SgExprStatement* expStmt) {
   // then and else are not used
   //configLocatedNode(n,expStmt);
   configLocatedNode(n);
-  expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
+//expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
+  expStmt->set_parent(n);
+  fakeParentScope(n);
   return n;
 }
 
@@ -324,7 +353,9 @@ Ir::createDoWhileStmt(SgExprStatement* expStmt) {
   SgDoWhileStmt* n=new SgDoWhileStmt(createFileInfo(),NULL,expStmt);
   // then and else are not used
   configLocatedNode(n);
-  expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
+//expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
+  expStmt->set_parent(n);
+  fakeParentScope(n);
   return n;
 }
 
@@ -333,7 +364,9 @@ Ir::createSwitchStatement(SgExprStatement* expStmt) {
   SgSwitchStatement* n=new SgSwitchStatement(createFileInfo(),expStmt,NULL);
   // then and else are not used
   configLocatedNode(n);
-  expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
+//expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
+  expStmt->set_parent(n);
+  fakeParentScope(n);
   return n;
 }
 
@@ -341,14 +374,14 @@ Ir::createSwitchStatement(SgExprStatement* expStmt) {
 // ICFG specific nodes that inherit from ROSE SgStatement
 // has unparseToString
 CallStmt*
-Ir::createCallStmt(KFG_NODE_TYPE node_type, char *name, CallBlock *parent){
+Ir::createCallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent){
   CallStmt* n=new CallStmt(node_type,name,parent);
   configLocatedNode(n);
   return n;
 }
 
 FunctionEntry*
-Ir::createFunctionEntry(KFG_NODE_TYPE type, char *func, CallBlock *parent){
+Ir::createFunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent){
   FunctionEntry* n=new FunctionEntry(type,func,parent);
   configLocatedNode(n);
   return n;
@@ -362,28 +395,28 @@ Ir::createDeclareStmt(SgVariableSymbol *v, SgType *t){
 }
 
 UndeclareStmt*
-Ir::createUndeclareStmt(std::list<SgVariableSymbol *> *v){
+Ir::createUndeclareStmt(std::vector<SgVariableSymbol *> *v){
   UndeclareStmt* n=new UndeclareStmt(v);
   configLocatedNode(n);
   return n;
 }
 
 ExternalCall*
-Ir::createExternalCall(SgExpression *function, std::list<SgVariableSymbol *> *params, SgType *type_){
+Ir::createExternalCall(SgExpression *function, std::vector<SgVariableSymbol *> *params, SgType *type_){
   ExternalCall* n=new ExternalCall(function, params, type_);
   configLocatedNode(n);
   return n;
 }
 
 ConstructorCall*
-Ir::createConstructorCall(char *name_, SgType *type_){
+Ir::createConstructorCall(const char *name_, SgType *type_){
   ConstructorCall* n=new ConstructorCall(name_,type_);
   configLocatedNode(n);
   return n;
 }
 
 DestructorCall*
-Ir::createDestructorCall(char *name_, SgType *type_){
+Ir::createDestructorCall(const char *name_, SgType *type_){
   DestructorCall* n=new DestructorCall(name_,type_);
   configLocatedNode(n);
   return n;
@@ -439,7 +472,7 @@ Ir::createWhileJoin(){
 }
 
 FunctionExit*
-Ir::createFunctionExit(KFG_NODE_TYPE type, char *func, CallBlock *parent){
+Ir::createFunctionExit(KFG_NODE_TYPE type, const char *func, CallBlock *parent){
   FunctionExit* n=new FunctionExit(type,func,parent);
   configLocatedNode(n);
   return n;

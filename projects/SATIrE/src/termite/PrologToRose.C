@@ -1825,7 +1825,7 @@ PrologToRose::createForStatement(Sg_File_Info* fi, SgNode* child1, SgNode* child
 	  f = new SgForStatement(fi,test_stmt,s->get_expression(),loop_body);
 	}
 	ROSE_ASSERT(f != NULL);
-	list<SgStatement*>::iterator it = ini_stmt->get_init_stmt().begin();
+	SgStatementPtrList::iterator it = ini_stmt->get_init_stmt().begin();
 	while(it != ini_stmt->get_init_stmt().end()) {
 		f->append_init_stmt(*it);
 		it++;
@@ -2021,7 +2021,7 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
 	ROSE_ASSERT(type_s != NULL);
 	SgClassType* sg_class_type = createClassType(type_s);
 	SgName class_name = class_name_s->getName();
-	SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,class_type->getValue(),sg_class_type,class_def);
+	SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)class_type->getValue(),sg_class_type,class_def);
 	ROSE_ASSERT(d != NULL);
 	/* set declaration or the forward flag*/
 	if(class_def != NULL) {
@@ -2080,7 +2080,7 @@ SgClassDeclaration*
 PrologToRose::createDummyClassDeclaration(string s,int c_type) {
 	Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
 	SgName class_name = s;
-	SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,c_type,NULL,NULL);
+	SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)c_type,NULL,NULL);
 	ROSE_ASSERT(d != NULL);
 	fakeParentScope(d);
 	return d;

@@ -14,6 +14,8 @@ libgrato_a_SOURCES = $(IRSOURCEFILES) $(BACKENDSOURCEFILES) synparser.y++ synsca
 AM_YFLAGS = -g -d --name-prefix=syn
 AM_LFLAGS = -Psyn -olex.yy.c
 
+DISTCLEANFILES = synparser.c++ synparser.h synscanner.c++ y.vcg
+
 bin_PROGRAMS = grato
 grato_SOURCES = GTextTransformation.C GProperty.C GSequenceVisitor.C grato.C
 grato_LDADD = libgrato.a

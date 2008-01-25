@@ -6,6 +6,7 @@ see LICENSE in the root folder of this project
 #ifndef PROLOGCOMPTERM_H_
 #define PROLOGCOMPTERM_H_
 #include "PrologTerm.h"
+#include <assert.h>
 
 /// Representation of a composite prolog term .
 class PrologCompTerm : public PrologTerm {
@@ -43,8 +44,8 @@ public:
   /// Creates a composite term with the given name. no subterms added yet.
   PrologInfixOperator(std::string name) : PrologCompTerm(name) {};
   std::string getRepresentation() {
-    if (mSubterms.size() == 2) 
-      return mSubterms[0]->getRepresentation() + getName() + mSubterms[1]->getRepresentation();
+    assert(mSubterms.size() == 2);
+    return mSubterms[0]->getRepresentation() + getName() + mSubterms[1]->getRepresentation();
   }
 };
 

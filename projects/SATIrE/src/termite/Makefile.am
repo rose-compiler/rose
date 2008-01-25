@@ -42,6 +42,8 @@ rose2term_LDADD = libtermite.a -lrose -lrt
 
 CLEANFILES=termparser.tab.c++ termparser.tab.h++
 
+DISTCLEANFILES = termparser.c++ termparser.h termlexer.c++ termpretty.c++
+
 nobase_include_HEADERS = \
 	satire/PrologList.h      satire/PrologToRose.h   satire/termparser.h \
 	satire/PrologAtom.h      satire/PrologString.h   satire/TermPrinter.h \
