@@ -35,7 +35,7 @@ termparser.tab.h++ termparser.tab.c++: $(srcdir)/termparser.y++
 termpretty_SOURCES = termpretty.l++
 
 rose2term_SOURCES = toProlog.C 
-term2rose_SOURCES = main.C 
+term2rose_SOURCES = toC.C 
 
 term2rose_LDADD = libtermite.a -lrose -lrt
 rose2term_LDADD = libtermite.a -lrose -lrt
