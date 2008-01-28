@@ -6,8 +6,5 @@ then
 else
 	echo "Running term generator on $1"
 	echo "Output written to $2"
-	rose2term $1 > $2.tmp
-	# FIXME!
-	grep -v "Frontend Warnings only: errorCode = 2" $2.tmp >$2
-	rm $2.tmp
+	rose2term $1 $2
 fi

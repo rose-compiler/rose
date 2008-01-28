@@ -19,6 +19,7 @@ using namespace std;
  * create ROSE-IR for valid term representation*/
 SgNode*
 PrologToRose::toRose(PrologTerm* t) {
+
         SgNode* node;
 	if(PrologCompTerm* c = dynamic_cast<PrologCompTerm*>(t)) {
 
@@ -1470,7 +1471,7 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
 
 	/* we stop unparsing at SgGlobal level! output results and be happy.*/
 	//cout << "/*unparsing from PROLOG representation*/\n";
-	cout << globalUnparseToString(glob, unparseInfo);
+	ofile << globalUnparseToString(glob, unparseInfo);
 	return glob;
 }
 
@@ -3041,7 +3042,7 @@ PrologToRose::createConditionalExp(Sg_File_Info* fi,SgNode* child1,SgNode* child
 void
 PrologToRose::warn_msg(string msg) {
 	/* since this is only a warning, i think stdout is okay*/
-	cout << "/*" << msg << "*/\n";
+	ofile << "/*" << msg << "*/\n";
 }
 
 /** output a debug message, unless

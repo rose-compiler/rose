@@ -16,31 +16,33 @@ see LICENSE in the root folder of this project
 #include "PrologTerm.h"
 
 int main ( int argc, char ** argv ) {
-	//frontend processing
-	SgProject * root = frontend(argc,argv);
+  //frontend processing
+  SgProject * root = frontend(argc,argv);
 	
 
-	//Create dot and pdf files
-	//DOT generation (numbering:preoder)
-	//AstDOTGeneration dotgen;
+  //Create dot and pdf files
+  //DOT generation (numbering:preoder)
+  //AstDOTGeneration dotgen;
 
-	//dotgen.generateInputFiles(root,AstDOTGeneration::PREORDER);
-	//PDF generation
-	//AstPDFGeneration pdfgen;
-	//pdfgen.generateInputFiles(root);
+  //dotgen.generateInputFiles(root,AstDOTGeneration::PREORDER);
+  //PDF generation
+  //AstPDFGeneration pdfgen;
+  //pdfgen.generateInputFiles(root);
+  
+  //create prolog term
+  BasicTermPrinter tp;
+  //tp.traverse(root);
+  tp.traverseInputFiles(root);
+  PrologTerm* genTerm = tp.getTerm();
 
-	//create prolog term
-	BasicTermPrinter tp;
-	//tp.traverse(root);
-	tp.traverseInputFiles(root);
-	PrologTerm* genTerm = tp.getTerm();
+  if (argc != 3) {
+    cerr << "Usage: " << argv[0] << " sourcefile.[cC] termfile.pl" << endl;
+    return 1;
+  }
 
-	//ofstream ofile("orig_out.txt");
-	//ofile << (root->unparseToCompleteString());
-	//ofile.close();
-
-	cout << genTerm->getRepresentation() << "." << endl;
-	return 0;
-
-       
+  ofstream ofile(argv[2]);
+  ofile << genTerm->getRepresentation() << "." << endl;
+  ofile.close();
+		
+  return 0;
 }

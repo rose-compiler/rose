@@ -11,9 +11,15 @@ see LICENSE in the root folder of this project
 extern int yyparse();
 extern PrologTerm* prote;
 
-int main() {
+int main(int argc, char** argv) {
   yyparse();
 //  cout << prote->getRepresentation();
-  PrologToRose::toRose(prote);
+  if (argc != 3) {
+    cerr << "Usage: " << argv[0] << " termfile.pl sourcefile" << endl;
+    return 1;
+  }
+
+  PrologToRose unparser(argv[2]);
+  unparser.toRose(prote);
   return 0;
 }
