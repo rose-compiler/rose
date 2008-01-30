@@ -3,7 +3,7 @@
 #include "main-support.h"
 #include "main.h"
 
-bool get_universal_attribute__kill_norm_temps()
+PAG_BOOL get_universal_attribute__kill_norm_temps()
 {
 	/* remove temporary variables introduced in the normalisation process */
 	return true;

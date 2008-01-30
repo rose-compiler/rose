@@ -6,10 +6,12 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/p
 EXTRA_DIST=main.C
 #bin_PROGRAMS = icfgbuilder
 icfgbuilder_SOURCES = main.C
-icfgbuilder_LDADD = \
-       -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -lrose \
-       -L$(PAG_LIB_DIR)  -lpag \
-       ../../src/libsatire.a ../../src/analyzer/astaccess/syntree.o
+icfgbuilder_LDADD = -lsatire -lpag -ltermite -lrose
+icfgbuilder_LDFLAGS = -L$(top_builddir)/src -L$(ROSE_LIB_DIR) \
+		      -L$(top_builddir)/src/termite \
+		      -L$(PAG_LIB_DIR) \
+                      -Wl,-rpath
+
 
 installcheck-local:
 	echo FIXME #icfgbuilder -I$(top_srcdir)/examples/test/...

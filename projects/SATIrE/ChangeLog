@@ -1,3 +1,21 @@
+V0.7.9 2008 MS,GB,AP (in progress)
+
+* upgrade to PAG 7.3.8.55 [MS]
+  - added new functions kfg_routine_is_loop and kfg_routine_is_infeasible
+    to file astaccess/pag_support.C (thanks to AbsInt for patch-info)
+  - changed type bool to PAG_BOOL in
+	srw98_shape/main.C: PAG_BOOL get_universal_attribute__kill_norm_temps()
+	nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_norm_temps()
+	nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_empty_graph()
+	nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_unreachable_nodes()
+  - changed Makefile.in-template to use CUSTOM_CFLAGS for main.C and main-support.C
+    allowing to eliminate all redeclaration warnings
+	
+* upgrade to ROSE 0.9.0b [GB,AP,MS]
+  - extended IR interface (in progress) [MS]
+  - changed types and upgraded ICFG generation [GB]
+  - upgraded termite to new ROSE version [AP]
+
 V0.7.8 2008-01-24 AP, GB, VP, MS
 
 * Added Makefile.custom to shape analyses to allow customized

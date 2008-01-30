@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: main.C,v 1.2 2007-10-24 16:12:35 markus Exp $
+// $Id: main.C,v 1.3 2008-01-30 17:07:09 markus Exp $
 
 #include <rose.h>
 
@@ -16,6 +16,9 @@
 #undef NDEBUG
 #include "testcfg.h"
 #include "CommandLineParser.h"
+
+extern "C" int yylex() { return 0; }
+extern "C" int yywrap() { return 0; }
 
 int main(int argc, char **argv)
 {

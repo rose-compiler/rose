@@ -32,13 +32,13 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) $(CUSTOM_DFI_WRITE) -c main.C
+	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) $(CUSTOM_CFLAGS) -c main.C
 
 main-support.o: main-support.C
-	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -c main-support.C
+	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) $(CUSTOM_CFLAGS) -c main-support.C
 
 $(ANALYSIS): $(ANALYSIS).a main.o main-support.o
-	g++ $(CXXFLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
+	g++ $(CXXFLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) $(CUSTOM_CFLAGS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out
