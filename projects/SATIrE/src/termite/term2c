@@ -6,8 +6,10 @@ then
 else
 	echo "Running source creator on $1"
 	echo "Output written to $2"
+	term2rose $1 $2.tmp
+	STATUS=$?
 	# this sed thing is a quick & dirty hack to remove global namespace
 	# qualifiers that startle EDG
-	term2rose < $1 |sed -e 's/ ::/ /g'>$2
-	exit $?
+	cat $2.tmp | sed -e 's/ ::/ /g' >$2
+	exit $STATUS
 fi

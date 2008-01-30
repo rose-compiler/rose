@@ -7,4 +7,5 @@ else
 	echo "Running term generator on $1"
 	echo "Output written to $2"
 	rose2term $1 $2
+	exit $?
 fi
