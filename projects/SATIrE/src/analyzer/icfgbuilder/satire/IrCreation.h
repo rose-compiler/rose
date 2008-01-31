@@ -45,7 +45,7 @@ public:
   static LogicalIf* createLogicalIf(SgExpression *e);
   static IfJoin* createIfJoin();
   static WhileJoin* createWhileJoin();
-
+  // support functions
   static const char* getConstCharPtr(SgName& n);
   static char* getCharPtr(SgName& n);
   static std::string getString(SgName& n);
@@ -55,6 +55,8 @@ public:
   static std::string unparseNode(SgNode* node);
   // for testing only
   static std::string unparseExpression(SgExpression* node);
+  // for creating a string representation of IR expressions (including assignments)
+  static std::string fragmentToString(SgNode* node);
 
 private:
   static void configLocatedNode(SgLocatedNode* ln, SgNode* s1, SgNode* s2);

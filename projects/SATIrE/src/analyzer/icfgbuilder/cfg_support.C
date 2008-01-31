@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.5 2008-01-25 16:09:17 adrian Exp $
+// $Id: cfg_support.C,v 1.6 2008-01-31 00:01:53 markus Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -26,7 +26,7 @@ std::string DeclareStmt::unparseToString() const
   std::string label = "DeclareStmt(";
   label += var->get_name().str();
   label += ", ";
-  label += type->unparseToString();
+  label += Ir::fragmentToString(type);
   label += ")";
   return label;
 }
@@ -128,7 +128,7 @@ expr_to_string(const SgExpression *expr)
   SgTreeCopy treecopy;
   SgExpression *new_expr = isSgExpression(expr->copy(treecopy));
   new_expr->set_parent(NULL);
-  const char *retval = strdup(new_expr->unparseToString().c_str());
+  const char *retval = strdup(Ir::fragmentToString(new_expr).c_str());
   
   return retval;
 }
@@ -148,8 +148,8 @@ bool TypePtrComparator::operator()(SgType *a, SgType *b) const
   while (isSgTypedefType(b)) {
     b = isSgTypedefType(b)->get_base_type();
   }
-  const char *sa = strdup(a->unparseToString().c_str());
-  const char *sb = strdup(b->unparseToString().c_str());
+  const char *sa = strdup(Ir::fragmentToString(a).c_str());
+  const char *sb = strdup(Ir::fragmentToString(b).c_str());
   
   return strcmp(sa, sb) < 0;
 }
@@ -315,7 +315,7 @@ std::string ParamAssignment::unparseToString() const
 
 std::string LogicalIf::unparseToString() const
 {
-  return std::string("LogicalIf(") + expr->unparseToString() + ')';
+  return std::string("LogicalIf(") + Ir::fragmentToString(expr) + ')';
 }
 
 std::string IfJoin::unparseToString() const

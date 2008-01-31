@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.5 2008-01-25 16:09:17 adrian Exp $
+// $Id: pag_support.C,v 1.6 2008-01-31 00:01:53 markus Exp $
 
 #include <iostream>
 
@@ -10,6 +10,7 @@
 #include "syntree.h"
 #include "pignodelist.h"
 #include "pag_support.h"
+#include "IrCreation.h"
 
 int syntaxtype;
 int e_syntaxtype;
@@ -286,8 +287,7 @@ extern "C" snum o_type_to_typenum(void *type)
 
 extern "C" str o_typenum_to_str(snum n)
 {
-    return strdup(isSgType((SgNode *) o_typenum_to_type(n))
-        ->unparseToString().c_str());
+    return strdup(Ir::fragmentToString(isSgType((SgNode *)o_typenum_to_type(n))).c_str());
 }
 
 extern "C" void *o_exprnum_to_expr(snum n)
@@ -475,7 +475,7 @@ int type_to_typenum(SgType *type)
 
 std::string typenum_to_str(int n)
 {
-    return typenum_to_type(n)->unparseToString();
+    return Ir::fragmentToString(typenum_to_type(n));
 }
 
 SgExpression *exprnum_to_expr(int n)

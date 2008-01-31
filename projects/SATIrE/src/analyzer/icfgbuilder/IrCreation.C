@@ -3,24 +3,36 @@
 #include <iostream>
 #include "IrCreation.h"
 
-/**
- * the unparser wants a parent scope for many statements; if the parent is NULL, we fake it!
- * stol^H^H^H^Hadapted from src/termite/PrologToRose.C
- * TODO: tell Dan we love him
- */
-void
-fakeParentScope(SgStatement* s) {
- // nothing to do if there is already a parent scope
-    if(s->get_parent()) return;
-    Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-    SgGlobal* dummy = new SgGlobal(fi);
-    ROSE_ASSERT(dummy != NULL);
-    s->set_parent(dummy);
- // s->set_scope(dummy);
-    ROSE_ASSERT(s->get_parent());
-    ROSE_ASSERT(s->get_scope());
-}
+// creates a source string representation of an AST fragment. This function creates
+// a dummy node to allow the ROSE unparseToString function to always succeed
+std::string Ir::fragmentToString(SgNode* node) {
 
+  // we select what we cannot unparse as fragment
+  if(!dynamic_cast<SgStatement*>(node) && !dynamic_cast<SgExpression*>(node)) {
+    return "FRAGMENT: not (statement or expression)";
+  }
+  if(dynamic_cast<SgFunctionDeclaration*>(node)) {
+    return "FRAGMENT: function declaration";
+  }
+  if(dynamic_cast<SgFunctionDefinition*>(node)) {
+    return "FRAGMENT: function definition";
+  }
+  
+  std::string s;
+  // 1. build dummy global node
+  Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+  SgGlobal* dummy = new SgGlobal(fi);
+  ROSE_ASSERT(dummy != NULL);
+  // save original parent
+  SgNode* tempParent=node->get_parent();
+  // overwrite parent pointer with pointer to dummy global node
+  node->set_parent(dummy);
+  s=node->unparseToString();
+  // restore original parent pointer
+  node->set_parent(tempParent);
+  // return string representing the unparsed subtree with 'node' as root node
+  return s;
+}
 
 std::string Ir::unparseNode(SgNode* node) {
   return "";
@@ -190,8 +202,6 @@ SgExprStatement* Ir::createExprStatement(SgExpression* e) {
   SgExprStatement* n=new SgExprStatement(e);
   configLocatedNode(n);
   assert(e->get_parent()==n);
-// GB (2008-01-25): Inserted call to fakeParentScope because the ROSE 0.9.0b unparser needs it
-  fakeParentScope(n);
   return n; 
 }
 
@@ -332,7 +342,6 @@ Ir::createIfStmt(SgExprStatement* expStmt) {
   configLocatedNode(n);
 //expStmt->set_parent(NULL);
   expStmt->set_parent(n);
-  fakeParentScope(n);
   return n;
 }
 
@@ -344,7 +353,6 @@ Ir::createWhileStmt(SgExprStatement* expStmt) {
   configLocatedNode(n);
 //expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
   expStmt->set_parent(n);
-  fakeParentScope(n);
   return n;
 }
 
@@ -355,7 +363,6 @@ Ir::createDoWhileStmt(SgExprStatement* expStmt) {
   configLocatedNode(n);
 //expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
   expStmt->set_parent(n);
-  fakeParentScope(n);
   return n;
 }
 
@@ -366,13 +373,12 @@ Ir::createSwitchStatement(SgExprStatement* expStmt) {
   configLocatedNode(n);
 //expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
   expStmt->set_parent(n);
-  fakeParentScope(n);
   return n;
 }
 
 
 // ICFG specific nodes that inherit from ROSE SgStatement
-// has unparseToString
+// have unparseToString
 CallStmt*
 Ir::createCallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent){
   CallStmt* n=new CallStmt(node_type,name,parent);

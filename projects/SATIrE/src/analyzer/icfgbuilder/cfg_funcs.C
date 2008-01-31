@@ -1,8 +1,9 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.6 2008-01-25 16:09:17 adrian Exp $
+// $Id: cfg_funcs.C,v 1.7 2008-01-31 00:01:53 markus Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
+#include "IrCreation.h"
 
 extern "C" KFG kfg_create(KFG p)
 {
@@ -101,11 +102,11 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
     
     if (external_call)
      // result = "EXTERNAL CALL";
-        result = external_call->unparseToString();
+        result = Ir::fragmentToString(external_call);
     else if (declare_stmt)
-        result = declare_stmt->unparseToString();
+        result = Ir::fragmentToString(declare_stmt);
     else if (undeclare_stmt)
-        result = undeclare_stmt->unparseToString();
+        result = Ir::fragmentToString(undeclare_stmt);
     else if (constructor_call)
         result = std::string("ConstructorCall(")
             + constructor_call->get_name() + ")";
@@ -113,19 +114,19 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
         result = std::string("DestructorCall(")
             + destructor_call->get_name() + ")";
     else if (call_stmt)
-        result = call_stmt->unparseToString();
+        result = Ir::fragmentToString(call_stmt);
     else if (argument_assignment)
-        result = argument_assignment->unparseToString();
+        result = Ir::fragmentToString(argument_assignment);
     else if (param_assignment)
-        result = param_assignment->unparseToString();
+        result = Ir::fragmentToString(param_assignment);
     else if (return_assignment)
-        result = return_assignment->unparseToString();
+        result = Ir::fragmentToString(return_assignment);
     else if (logical_if)
-        result = logical_if->unparseToString();
+        result = Ir::fragmentToString(logical_if);
     else if (if_join)
-        result = if_join->unparseToString();
+        result = Ir::fragmentToString(if_join);
     else if (while_join)
-        result = while_join->unparseToString();
+        result = Ir::fragmentToString(while_join);
     else
     {
         switch (stmt->variantT())
@@ -155,21 +156,10 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             */
         case V_SgForStatement:
             {
-#if 0
-                SgForStatement *fors = isSgForStatement(stmt);
-                SgStatement *init = fors->get_for_init_stmt();
-                SgExpression *test = fors->get_test_expr();
-                SgExpression *incr = fors->get_increment_expr();
-                fprintf(file, "for (%s;%s;%s)",
-                    (init != NULL ? init->unparseToString().c_str() : ""),
-                    (test != NULL ? test->unparseToString().c_str() : "?"),
-                    (incr != NULL ? incr->unparseToString().c_str() : ""));
-#else
                 SgForStatement *fors = isSgForStatement(stmt);
                 SgStatement *test = fors->get_test();
                 fprintf(file, "for (;%s;)",
-                    (test != NULL ? test->unparseToString().c_str() : "*"));
-#endif
+                    (test != NULL ? Ir::fragmentToString(test).c_str() : "*"));
             }
             break;
             
@@ -177,7 +167,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             {
                 SgWhileStmt *whiles = isSgWhileStmt(stmt);
                 result = std::string("while (")
-                    + whiles->get_condition()->unparseToString() + ")";
+                    + Ir::fragmentToString(whiles->get_condition()) + ")";
             }
             break;
             
@@ -185,7 +175,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             {
                 SgDoWhileStmt *dowhiles = isSgDoWhileStmt(stmt);
                 result = std::string("do-while (")
-                    + dowhiles->get_condition()->unparseToString() + ")";
+                    + Ir::fragmentToString(dowhiles->get_condition()) + ")";
             }
             break;
             /*
@@ -202,7 +192,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             {
                 SgCaseOptionStmt *cases = isSgCaseOptionStmt(stmt);
                 result = std::string("case ")
-                    + cases->get_key()->unparseToString() + ":";
+                    + Ir::fragmentToString(cases->get_key()) + ":";
             }
             break;
         case V_SgDefaultOptionStmt:
@@ -211,7 +201,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             }
             break;
         default:
-            result = stmt->unparseToString();
+            result = Ir::fragmentToString(stmt);
             break;
         }
     }

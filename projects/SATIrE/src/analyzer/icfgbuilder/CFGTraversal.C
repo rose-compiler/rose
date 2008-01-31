@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.8 2008-01-25 16:09:17 adrian Exp $
+// $Id: CFGTraversal.C,v 1.9 2008-01-31 00:01:53 markus Exp $
 
 #include <iostream>
 #include <string.h>
@@ -1483,6 +1483,6 @@ CFGTraversal::print_map() const {
   for (i = block_stmt_map.begin(); i != block_stmt_map.end(); ++i) {
     std::cout << "block " << std::setw(4) << i->first
 	      << " stmt " << i->second << ": "
-	      << (i->second)->unparseToString() << std::endl;
+	      << Ir::fragmentToString((i->second)) << std::endl;
   }
 }
