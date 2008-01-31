@@ -21,8 +21,6 @@
    template<typename DFI_STORE_TYPE> class PagDfiTextPrinter;
 #endif
 
-#define BasicTermPrinter TermPrinter<void*>
-
 /* See main.C-template and toProlog.C for examples how to use this */
   
 /**
@@ -85,13 +83,15 @@ private:
   PrologCompTerm* pagToProlog(std::string name, std::string dfi);
 };
 
+typedef TermPrinter<void*> BasicTermPrinter;
+
 
 ////////////////////////////////////////////////////////////////////////
 
 /*
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-          2007 Adrian Prantl
-see LICENSE in the root folder of this project
+ * Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+ *           2007 Adrian Prantl
+ * see LICENSE in the root folder of this project
  *
  *
  * TermPrinter (Implementation)
@@ -139,7 +139,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
   if (!fi->isFrontendSpecific()) {
 
     /* depending on the number of successors, use different predicate names*/
-    if(AstTests::numSuccContainers(astNode))
+    if(AstTests::numSuccContainers(astNode) || isSgVariableDeclaration(astNode))
       t = listTerm(astNode, synList);
     else {  
       switch (AstTests::numSingleSuccs(astNode)) {
