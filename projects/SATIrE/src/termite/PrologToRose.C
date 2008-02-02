@@ -72,6 +72,11 @@ PrologToRose::toRose(PrologTerm* t) {
 		node = (SgNode*) 0;
 	}
 
+	if ((node == NULL) && (t->getRepresentation() != "null")
+                           && (t->getName() != "file")) {
+	  cerr << "**WARNING: could not translate the term '" 
+	       << t->getRepresentation() << "'" << endl;
+	}
 
 	// Set the CompilerGenerated Flag
 	if (SgLocatedNode* ln = isSgLocatedNode(node)) {
@@ -151,6 +156,8 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
 		s = createConstructorInitializer(fi,child1,t);
 	}else if(tname == SG_PREFIX "pragma_declaration") {
 		s = createPragmaDeclaration(fi,child1,t);
+	} else if (tname == SG_PREFIX "typedef_declaration") {
+                s = createTypedefDeclaration(fi,t);
 	}
 
 	/* to be:*/
@@ -409,8 +416,6 @@ PrologToRose::leafToRose(PrologCompTerm* t,string tname) {
 		s = createMemberFunctionRefExp(fi,t);
 	} else if (tname == SG_PREFIX "this_exp") {
 		s = createThisExp(fi,t);
-	} else if (tname == SG_PREFIX "typedef_declaration") {
-		s = createTypedefDeclaration(fi,t);
 	} else if(tname == SG_PREFIX "pragma") {
 		s = createPragma(fi,t);
 	}
@@ -468,10 +473,12 @@ PrologToRose::createFileInfo(PrologTerm* t) {
 			fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
 		}
 	} 
+	ROSE_ASSERT(fi != NULL);
+
 	// Set the CompilerGenerated Flag (Adrian)
 	fi->setCompilerGenerated();
+	fi->setOutputInCodeGeneration();
 
-	ROSE_ASSERT(fi != NULL);
 	return fi;
 }
 
@@ -797,10 +804,13 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
 		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
-		ROSE_ASSERT(s != NULL);
+		PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
+		ROSE_ASSERT((s != 0) || (i != 0));
 		long int number;
-		istringstream instr(s->getName());
-		instr >> number;
+		if (s) {
+		    istringstream instr(s->getName());
+		    instr >> number;
+		} else number = i->getValue();
 		SgLongIntVal* valnode = new SgLongIntVal(fi,number);
 		ve = valnode;
 	} else if (vtype == SG_PREFIX "unsigned_long_val") {
@@ -809,10 +819,13 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
 		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
-		ROSE_ASSERT(s != NULL);
+		PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
+		ROSE_ASSERT((s != 0) || (i != 0));
 		unsigned long int number;
-		istringstream instr(s->getName());
-		instr >> number;
+		if (s) {
+		    istringstream instr(s->getName());
+		    instr >> number;
+		} else number = i->getValue();
 		SgUnsignedLongVal* valnode = new SgUnsignedLongVal(fi,number);
 		ve = valnode;
 	} else if (vtype == SG_PREFIX "long_long_int_val") {
@@ -821,10 +834,13 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
 		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
-		ROSE_ASSERT(s != NULL);
+		PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
+		ROSE_ASSERT((s != 0) || (i != 0));
 		long long int number;
-		istringstream instr(s->getName());
-		instr >> number;
+		if (s) {
+		    istringstream instr(s->getName());
+		    instr >> number;
+		} else number = i->getValue();
 		SgLongLongIntVal* valnode = new SgLongLongIntVal(fi,number);
 		ve = valnode;
 	} else if (vtype == SG_PREFIX "unsigned_long_long_int_val") {
@@ -833,10 +849,13 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 		PrologCompTerm* annot = retrieveAnnotation(t);
 		ROSE_ASSERT(annot != NULL);
 		PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
-		ROSE_ASSERT(s != NULL);
+		PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
+		ROSE_ASSERT((s != 0) || (i != 0));
 		unsigned long long int number;
-		istringstream instr(s->getName());
-		instr >> number;
+		if (s) {
+		    istringstream instr(s->getName());
+		    instr >> number;
+		} else number = i->getValue();
 		SgUnsignedLongLongIntVal* valnode = new SgUnsignedLongLongIntVal(fi,number);
 		ve = valnode;
 	} else if (vtype == SG_PREFIX "enum_val") {
@@ -1040,7 +1059,7 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 	}
 	/* For a cast we need to retrieve cast type (enum)*/
 	else if (opname == SG_PREFIX "cast_exp") {
-	  cerr<<"######castexp "<< annot->getRepresentation()<< "bug in ROSE?" <<endl;
+	  //cerr<<"######castexp "<< annot->getRepresentation()<< "bug in ROSE?" <<endl;
 		PrologInt* ctype = dynamic_cast<PrologInt*>(annot->at(2));
 		ROSE_ASSERT(ctype != NULL);
 		SgCastExp* e = new SgCastExp(fi,sgexp,sgtype,(SgCastExp::cast_type_enum) ctype->getValue());
@@ -1470,7 +1489,8 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
 	//AstPostProcessing(glob);
 
 	/* we stop unparsing at SgGlobal level! output results and be happy.*/
-	//cout << "/*unparsing from PROLOG representation*/\n";
+	cout << "/*unparsing from PROLOG representation*/\n";
+	cout << glob->unparseToString();
 	ofile << globalUnparseToString(glob, unparseInfo);
 	return glob;
 }
@@ -1727,6 +1747,7 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,vector<SgNode*>* succs,
 	vector<SgNode*>::iterator it = succs->begin();
 	SgInitializedName* ini_name = NULL;
 	SgInitializer* ini_initializer = NULL;
+	ROSE_ASSERT(it != succs->end());
 	while(it != succs->end()) {
 		ini_name = NULL;
 		ini_initializer = NULL;
@@ -2072,7 +2093,7 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
 	/* create namespace*/
 	SgNamespaceDeclarationStatement* dec = new SgNamespaceDeclarationStatement(dfi,n,def,u_b);
 	ROSE_ASSERT(dec != NULL);
-	fakeParentScope(dec);
+	//fakeParentScope(dec); AP 1.2.2008 remove a ROSE 0.9.0b warning 
 }
 	
 
@@ -2244,6 +2265,7 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
 		tdec->set_typedefBaseTypeContainsDefiningDeclaration(true);	
 
 	};
+
 	return tdec;
 }
 

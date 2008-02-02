@@ -58,6 +58,11 @@ protected:
 # endif
 
 private:
+  /** should generate list instead of tuple? */
+  bool isContainer(SgNode* astNode);
+  /** return the number of successors */
+  int getArity(SgNode* astNode);
+
   /** create leaf nodes*/
   PrologCompTerm* leafTerm(SgNode* astNode, SynthesizedAttributesList synList);
   /** create unary nodes*/
@@ -112,6 +117,30 @@ typedef TermPrinter<void*> BasicTermPrinter;
 #include <sstream>
 #include <iostream>
 
+
+template<typename DFI_STORE_TYPE>
+bool
+TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode) 
+{
+  // AP 2.2.2008 new rose (hotel) compatibility
+  return AstTests::numSuccContainers(astNode) ||
+    isSgVariableDeclaration(astNode);
+}
+
+template<typename DFI_STORE_TYPE>
+int
+TermPrinter<DFI_STORE_TYPE>::getArity(SgNode* astNode) 
+{
+  // AP 2.2.2008 fix incompatibilities with new rose
+  int a = AstTests::numSingleSuccs(astNode);
+  //vector<SgNode*> succ = astNode->get_traversalSuccessorContainer();
+  //for (int i = 0; i < succ.size(); i++) {
+  //  if (succ[i] == NULL) 
+  //    --a;
+  //}
+  return a;
+}
+
 template<typename DFI_STORE_TYPE>
 PrologTerm* 
 TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList synList) {
@@ -139,10 +168,10 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
   if (!fi->isFrontendSpecific()) {
 
     /* depending on the number of successors, use different predicate names*/
-    if(AstTests::numSuccContainers(astNode) || isSgVariableDeclaration(astNode))
+    if(isContainer(astNode))
       t = listTerm(astNode, synList);
     else {  
-      switch (AstTests::numSingleSuccs(astNode)) {
+      switch (getArity(astNode)) {
       case 0:
 	t = leafTerm(astNode, synList);
 	break;
