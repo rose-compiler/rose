@@ -46,10 +46,11 @@ std::string Ir::fragmentToString(const SgNode* node) {
   // store and restore original parent pointer of 'node'
   SgNode* origParent=node->get_parent();
   (const_cast<SgNode*>(node))->set_parent(glob);
-  if(const SgExpression* e=isSgExpression(node)) {
-    s=globalUnparseToString(node, unparseInfo);
+  if(const SgStatementExpression* statexp=isSgStatementExpression(node)) {
+    s=statexp->unparseToString();
+  } else {
+    s=node->unparseToString();
   }
-  s=globalUnparseToString(node, unparseInfo)+"FRAGMENT";
   (const_cast<SgNode*>(node))->set_parent(origParent);
   }
   // return string representing the unparsed subtree with 'node' as root node
