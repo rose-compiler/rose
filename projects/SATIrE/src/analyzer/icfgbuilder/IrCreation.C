@@ -45,35 +45,14 @@ std::string Ir::fragmentToString(const SgNode* node) {
   // we only implement unparseToString(), but not unparseToString(unparseInfo), therefore
   // the methods are called here as they are available on the respective node
   if(const SgExprStatement* n=isSgExprStatement(node)) {
-    // unparseToString does NOT work on ExprStatement, we must take the expression explicitly
+    // unparseToString does NOT work on ExprStatement in ROSE, we must take the expression explicitly
     s=n->get_expression()->unparseToString(unparseInfo); 
   } else if(const SgExpression* n=isSgExpression(node)) {
     s=n->unparseToString(unparseInfo);
   } else if(const SgVariableSymbol* v=dynamic_cast<const SgVariableSymbol*>(node)) {
     s=v->get_name();
-  } else if(const DeclareStmt* n=dynamic_cast<const DeclareStmt*>(node)) {
-    s=n->unparseToString();
-  } else if(const UndeclareStmt* n=dynamic_cast<const UndeclareStmt*>(node)) {
-    s=n->unparseToString();
-  } else if(const CallStmt* n=dynamic_cast<const CallStmt*>(node)) {
-    s=n->unparseToString();
-  } else if(const ExternalCall* n=dynamic_cast<const ExternalCall*>(node)) {
-    s=n->unparseToString();
-  } else if(const ConstructorCall* n=dynamic_cast<const ConstructorCall*>(node)) {
-    s=std::string("ConstructorCall(") + n->get_name() + ")";
-  } else if(const DestructorCall* n=dynamic_cast<const DestructorCall*>(node)) {
-    s=std::string("DestructorCall(") + n->get_name() + ")";
-  } else if(const ArgumentAssignment* n=dynamic_cast<const ArgumentAssignment*>(node)) {
-    s=n->unparseToString();
-  } else if(const ParamAssignment* n=dynamic_cast<const ParamAssignment*>(node)) {
-    s=n->unparseToString();
-  } else if(const ReturnAssignment* n=dynamic_cast<const ReturnAssignment*>(node)) {
-    s=n->unparseToString();
-  } else if(const LogicalIf* n=dynamic_cast<const LogicalIf*>(node)) {
-    s=n->unparseToString();
-  } else if(const IfJoin* n=dynamic_cast<const IfJoin*>(node)) {
-    s=n->unparseToString();
-  } else if(const WhileJoin* n=dynamic_cast<const WhileJoin*>(node)) {
+  } else if(const IcfgStmt* n=dynamic_cast<const IcfgStmt*>(node)) {
+    // MS: I've made unparseToString virtual in SATIrE, therefor this works
     s=n->unparseToString();
   } else {
     s=node->unparseToString(unparseInfo);
@@ -83,85 +62,6 @@ std::string Ir::fragmentToString(const SgNode* node) {
   (const_cast<SgNode*>(node))->set_parent(origParent);
 
   // return string representing the unparsed subtree with 'node' as root node
-  return s;
-}
-
-std::string Ir::unparseNode(SgNode* node) {
-  // MS: this function works now for all nodes
-  std::cout << "@" << node << ":";
-  if(dynamic_cast<IcfgStmt*>(node)) {
-    std::cout << "Unparse: " << "ICFG-NODE:" << typeid(node).name() << ":";
-    if(DeclareStmt* n=dynamic_cast<DeclareStmt*>(node)) {
-      std::cout << "DeclareStmt:" << n->unparseToString() << std::endl;
-      return "dummy";
-    }
-    if(UndeclareStmt* n=dynamic_cast<UndeclareStmt*>(node)) {
-      std::cout << "UndeclareStmt:" << n->unparseToString() << std::endl;
-      return "dummy";
-    }
-    if(FunctionEntry* n=dynamic_cast<FunctionEntry*>(node)) {
-      std::cout << "FunctionEntry:" << n->unparseToString() << std::endl;
-      return "dummy";
-    }
-    if(FunctionExit* n=dynamic_cast<FunctionExit*>(node)) {
-      std::cout << "FunctionExit:" << n->unparseToString() << std::endl;
-      return "dummy";
-    }
-    if(FunctionCall* n=dynamic_cast<FunctionCall*>(node)) {
-      std::cout << "FunctionCall:" << n->unparseToString() << std::endl;
-      return "dummy";
-    }
-    std::cout << "xxx" << std::endl;
-    return "";
-  } else {
-    if(SgConstructorInitializer* n=dynamic_cast<SgConstructorInitializer*>(node)) {
-      std::cout << "SgConstructorInitializer: not unparsed." << std::endl;
-      return "";
-    }
-    if(SgClassType* n=dynamic_cast<SgClassType*>(node)) {
-      std::cout << "SgClassType: not unparsed. Known bug." << std::endl;
-      return "";
-    }
-    std::cout << "Unparse: " << node->sage_class_name() << " :";
-  }
-  if(SgSymbol* sym=isSgSymbol(node)) {
-    SgName name=sym->get_name();
-    std::cout << std::string("name:") << name.getString() << ":";
-  }
-  std::cout << Ir::fragmentToString(node);
-  std::cout << std::endl;
-  return "dummy";
-#if 0 
-  /* We may also need to construct a SgFile beforehand*/
-  SgFile* file = new SgFile();
-  file->set_file_info(fi);
-  file->set_root(glob);
-#endif
-
-  SgUnparse_Info* unparseInfo = new SgUnparse_Info();
-  unparseInfo->unset_SkipComments();    // generate comments
-  unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to format the code
-  unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
-
-  /* We also need to construct a SgFile beforehand*/
-  SgGlobal* glob = new SgGlobal(createFileInfo());
-  SgFile* file = new SgFile();
-  file->set_file_info(createFileInfo());
-  file->set_root(glob);
-  SgNode* tmpParent=node->get_parent();
-  node->set_parent(file);
-  std::string s=globalUnparseToString(glob, unparseInfo);
-  node->set_parent(tmpParent);
-  return s;
-}
-
-std::string Ir::unparseExpression(SgExpression* node) {
-  SgUnparse_Info* unparseInfo = new SgUnparse_Info();
-  unparseInfo->unset_SkipComments();    // generate comments
-  unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to format the code
-  unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
-  //Unparser backend;
-  std::string s; //=backend.unparseExpression(node,*unparseInfo);
   return s;
 }
 
@@ -191,7 +91,6 @@ void Ir::configLocatedNode(SgLocatedNode* n) {
     std::cout << "Setting file_info in " << n->sage_class_name() << std::endl;
     n->set_file_info(createFileInfo());
   }
-  unparseNode(n);
 }
 void Ir::configInitializedName(SgInitializedName* n) {
   // this here reveals an inconistency in the ROSE interface:
@@ -214,8 +113,7 @@ void Ir::configSupportNode(SgSupport* n, SgNode* s1) {
   configSupportNode(n);
 }
 void Ir::configSupportNode(SgSupport* n) {
-  //n->set_startOfConstruct(createFileInfo());
-  unparseNode(n);
+  // nothing to do
 }
 
 void Ir::configSymbolNode(SgSymbol* n, SgNode* s1) {
@@ -224,17 +122,11 @@ void Ir::configSymbolNode(SgSymbol* n, SgNode* s1) {
 }
 
 void Ir::configSymbolNode(SgSymbol* n) {
-  //n->set_startOfConstruct(createFileInfo());
-  //n->set_endOfConstruct(createFileInfo());
-  //Sg_File_Info* fi = n->get_file_info();
-  //if(!fi) {
-  //  n->set_file_info(createFileInfo());
-  //}
-  unparseNode(n);
+  // nothing to do
 }
 
 void Ir::configTypeNode(SgType* n) {
-  unparseNode(n);
+  // nothing to do
 }
 
 
@@ -275,20 +167,19 @@ SgAddressOfOp* Ir::createAddressOfOp(SgExpression* e, SgType* type) {
   SgAddressOfOp* n=new SgAddressOfOp(e,type);
   configLocatedNode(n,e);
 
-  // following block is taken from Cxx_Grammar.h : SgAddressOfOp::get_type()
+  // MS: the following block is taken from Cxx_Grammar.h : SgAddressOfOp::get_type()
   // we need to ensure that the scope is properly set otherwise this causes a failing assert
-  if(SgVarRefExp* varRefExp = isSgVarRefExp(n->get_operand()))
-        {
-          ROSE_ASSERT(varRefExp->get_symbol() != NULL);
-          ROSE_ASSERT(varRefExp->get_symbol()->get_declaration() != NULL);
-          SgInitializedName* variable = varRefExp->get_symbol()->get_declaration();
-          ROSE_ASSERT(variable != NULL);
-          SgScopeStatement* scope = variable->get_scope();
-	  if(!scope) {
-	    //std::cout << "Fixing missing SgScopeStatement in SgVarRefExp operand of AddressOfOp" << std::endl;
-	    variable->set_scope(new SgScopeStatement()); // dummy, we only need it in the ICFG for ROSE 0.8.10e+
-	  }
-        }
+  if(SgVarRefExp* varRefExp = isSgVarRefExp(n->get_operand())) {
+    ROSE_ASSERT(varRefExp->get_symbol() != NULL);
+    ROSE_ASSERT(varRefExp->get_symbol()->get_declaration() != NULL);
+    SgInitializedName* variable = varRefExp->get_symbol()->get_declaration();
+    ROSE_ASSERT(variable != NULL);
+    SgScopeStatement* scope = variable->get_scope();
+    if(!scope) {
+      //std::cout << "Fixing missing SgScopeStatement in SgVarRefExp operand of AddressOfOp" << std::endl;
+      variable->set_scope(new SgScopeStatement()); // dummy, we only need it in the ICFG for ROSE 0.8.10e+
+    }
+  }
   assert(e->get_parent()==n);
   return n; 
 }
@@ -338,10 +229,6 @@ SgInitializedName* Ir::createInitializedName(std::string name,SgType* type) {
   SgName sgname=createName(name);
   SgInitializedName* n=new SgInitializedName(sgname,type);
   configInitializedName(n);
-  //n->set_file_info(createFileInfo());
-  //n->set_startOfConstruct(createFileInfo());
-  //configSupportNode(n);
-  //n->set_endOfConstruct(FILEINFO); does not exist
   sgname.set_parent(n);
   configTypeNode(type);
   return n;
@@ -363,7 +250,7 @@ SgConstructorInitializer*
 Ir::createConstructorInitializer(SgMemberFunctionDeclaration * mfd,SgType* type) {
   SgExprListExp* eList;
   eList=createExprListExp();
-    SgConstructorInitializer* n=new SgConstructorInitializer(createFileInfo(),
+  SgConstructorInitializer* n=new SgConstructorInitializer(createFileInfo(),
 							   mfd,
 							   eList,
 							   type,
@@ -558,7 +445,15 @@ Ir::getString(SgName& n) {
 }
 
 std::string 
-Ir::getStrippedName(SgVariableDeclaration* d) {
+Ir::getStrippedName(SgInitializedName* in) {
+  /* FIXME: check for global scope '::' and use non-qualified name for global scope
+   *        find a better way to deal with qualified names */
+  if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::")) {
+    return in->get_qualified_name().str();
+  } else {
+    /* don't print the global namespace (::) */
+    return in->get_name().str();
+  }
   std::string s;
   return s;
 }

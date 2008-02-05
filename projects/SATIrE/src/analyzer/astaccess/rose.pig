@@ -96,7 +96,8 @@ get:body(NODE, _, "VarRefExp" | "InitializedName", _, "name", _, _)
         in = isSgVarRefExp((SgNode *) NODE)->get_symbol()->get_declaration();
     if (in != NULL) {
          /* FIXME: check for global scope '::' and use non-qualified name for global scope
-          *        find a better way to deal with qualified names */
+          *        find a better way to deal with qualified names 
+	  *        we should use strdup(Ir::getStrippedName(in)); in future */
          if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::")) {
             return strdup(in->get_qualified_name().str());
          } else {
@@ -111,7 +112,8 @@ get:body(NODE, _, "VariableSymbol", _, "name", _, _)
 %{
     SgVariableSymbol *var = isSgVariableSymbol((SgNode *) NODE);
     /* FIXME: check for global scope '::' and use non-qualified name for global scope
-     *        find a better way to deal with qualified names [MS08]*/
+     *        find a better way to deal with qualified names [MS08]
+     *        we should use strdup(Ir::getStrippedName(in)); in future */
     if ((var->get_declaration()->get_scope() != NULL) && (var->get_declaration()->get_scope()->get_qualified_name() != "::") )
         return strdup(var->get_declaration()->get_qualified_name().str());
     else

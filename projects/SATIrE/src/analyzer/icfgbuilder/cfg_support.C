@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.8 2008-02-05 19:42:12 markus Exp $
+// $Id: cfg_support.C,v 1.9 2008-02-05 21:37:47 markus Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -230,10 +230,9 @@ CallStmt::get_funcname() const
   return name;
 }
 
-std::string IcfgStmt::unparseToString() {
-  const char* name=typeid(this).name();
-  std::cout << "IcfgStmt::UnparseToString: not implemented @";
-  std::cout << name << std::endl;
+std::string IcfgStmt::unparseToString() const
+{
+  std::cout << "IcfgStmt::UnparseToString: use inherited class." << std::endl;
   assert(false);
 }
 
@@ -294,33 +293,21 @@ std::string ArgumentAssignment::unparseToString() const
 
 std::string ReturnAssignment::unparseToString() const
 {   
-  std::string buf = "ReturnAssignment(";
-  if (lhs->get_declaration()->get_scope() != NULL)
-    buf += lhs->get_declaration()->get_qualified_name().str();
-  else
-    buf += lhs->get_name().str();
-  buf += ", ";
-  if (rhs->get_declaration()->get_scope() != NULL)
-    buf += rhs->get_declaration()->get_qualified_name().str();
-  else
-    buf += rhs->get_name().str();
-  buf += ")";
+  std::string buf = "ReturnAssignment("
+    + Ir::getStrippedName(lhs->get_declaration()) 
+    + ", "
+    + Ir::getStrippedName(rhs->get_declaration())
+    + ")";
   return buf;
 } 
 
 std::string ParamAssignment::unparseToString() const
 {   
-  std::string buf = "ParamAssignment(";
-  if (lhs->get_declaration()->get_scope() != NULL)
-    buf += lhs->get_declaration()->get_qualified_name().str();
-  else
-    buf += lhs->get_name().str();
-  buf += ", ";
-  if (rhs->get_declaration()->get_scope() != NULL)
-    buf += rhs->get_declaration()->get_qualified_name().str();
-  else
-    buf += rhs->get_name().str();
-  buf += ")";
+  std::string buf = "ParamAssignment("
+    + Ir::getStrippedName(lhs->get_declaration()) 
+    + ", "
+    + Ir::getStrippedName(rhs->get_declaration());
+    + ")";
   return buf;
 } 
 
@@ -337,6 +324,27 @@ std::string IfJoin::unparseToString() const
 std::string WhileJoin::unparseToString() const
 {
   return std::string("WhileJoin");
+}
+
+std::string ConstructorCall::unparseToString() const
+{
+  return std::string("ConstructorCall(") + get_name() + ")";
+}
+
+std::string DestructorCall::unparseToString() const
+{
+  return std::string("DestructorCall(") + get_name() + ")";
+}
+
+SgVariableSymbol * MyAssignment::get_lhs() const {
+  return lhs;
+}
+
+SgVariableSymbol * MyAssignment::get_rhs() const {
+  return rhs;
+}
+
+MyAssignment::MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r) : lhs(l), rhs(r) {
 }
 
 BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,

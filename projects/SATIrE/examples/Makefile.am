@@ -102,28 +102,28 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
 	$(MAKE) check -C $(testdir)/sl2rd
 
-#	@echo
-#	@echo "Testing constprop"
-#	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/constprop $(testdir)
-#	chmod u+rwx -R $(testdir)/constprop
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-#	$(MAKE) check -C $(testdir)/constprop
+	@echo
+	@echo "Testing constprop"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/constprop $(testdir)
+	chmod u+rwx -R $(testdir)/constprop
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
+	$(MAKE) check -C $(testdir)/constprop
 
-#	@echo
-#	@echo "Testing nnh99_shape"
-#	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
-#	chmod u+rwx -R $(testdir)/nnh99_shape
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-#	$(MAKE) check -C $(testdir)/nnh99_shape
+	@echo
+	@echo "Testing nnh99_shape"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
+	chmod u+rwx -R $(testdir)/nnh99_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
+	$(MAKE) check -C $(testdir)/nnh99_shape
 
-#	@echo
-#	@echo "Testing srw98_shape"
-#	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-#	chmod u+rwx -R $(testdir)/srw98_shape
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-#	$(MAKE) check -C $(testdir)/srw98_shape
+	@echo
+	@echo "Testing srw98_shape"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+	chmod u+rwx -R $(testdir)/srw98_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+	$(MAKE) check -C $(testdir)/srw98_shape
 
 	rm -rf $(testdir)

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.5 2008-02-05 19:42:12 markus Exp $
+// $Id: cfg_support.h,v 1.6 2008-02-05 21:37:47 markus Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -115,8 +115,10 @@ protected:
 
 class IcfgStmt : public SgStatement
 {
+public:
   // MS: we make this function virtual (although it is not virtual in ROSE)
-  virtual std::string unparseToString();
+  virtual std::string unparseToString() const;
+  IcfgStmt() {}
 };
 
 class CallStmt : public IcfgStmt
@@ -231,6 +233,7 @@ public:
         : name(name_), type(type_)
     {
     }
+    std::string unparseToString() const;
 
 private:
     ConstructorCall();
@@ -247,6 +250,7 @@ public:
         : name(name_), type(type_)
     {
     }
+    std::string unparseToString() const;
 
 private:
     DestructorCall();
@@ -268,23 +272,19 @@ private:
     void init(SgExpression *l, SgExpression *r);
     SgExpression *lhs;
     SgExpression *rhs;
-    ArgumentAssignment();
+  //ArgumentAssignment();
 };
 
 class MyAssignment : public IcfgStmt
 {
 public:
-    MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r) : lhs(l), rhs(r)
-    {
-    }
-    SgVariableSymbol *get_lhs() const { return lhs; }
-    SgVariableSymbol *get_rhs() const { return rhs; }
-    std::string unparseToString() const;
-
+  SgVariableSymbol *get_lhs() const;
+  SgVariableSymbol *get_rhs() const;
+  MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r);
+  
 protected:
-    SgVariableSymbol *lhs;
-    SgVariableSymbol *rhs;
-    MyAssignment();
+  SgVariableSymbol *lhs;
+  SgVariableSymbol *rhs;
 };
 
 class ReturnAssignment : public MyAssignment
