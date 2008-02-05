@@ -56,7 +56,7 @@ public:
   // for testing only
   static std::string unparseExpression(SgExpression* node);
   // for creating a string representation of IR expressions (including assignments)
-  static std::string fragmentToString(SgNode* node);
+  static std::string fragmentToString(const SgNode* node);
 
 private:
   static void configLocatedNode(SgLocatedNode* ln, SgNode* s1, SgNode* s2);

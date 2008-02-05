@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.6 2008-01-31 00:01:53 markus Exp $
+// $Id: cfg_support.C,v 1.7 2008-02-05 15:10:11 markus Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -125,11 +125,15 @@ expr_to_string(const SgExpression *expr)
 {
   if (expr == NULL)
     return "null";
-  SgTreeCopy treecopy;
-  SgExpression *new_expr = isSgExpression(expr->copy(treecopy));
-  new_expr->set_parent(NULL);
-  const char *retval = strdup(Ir::fragmentToString(new_expr).c_str());
-  
+
+  // MS: deactivate code because new function fragmentToString allow
+  // to unparse without duplicating code
+  //SgTreeCopy treecopy;
+  //SgExpression *new_expr = isSgExpression(expr->copy(treecopy));
+  //new_expr->set_parent(NULL);
+  // const char* retval = strdup(Ir::fragmentToString(new_expr).c_str());
+
+  const char* retval = strdup(Ir::fragmentToString(expr).c_str());
   return retval;
 }
 

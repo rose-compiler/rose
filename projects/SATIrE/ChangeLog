@@ -13,6 +13,9 @@ V0.7.9 2008 MS,GB,AP (in progress)
 	
 * upgrade to ROSE 0.9.0b [GB,AP,MS]
   - extended IR interface (in progress) [MS]
+    + added fragmentToString function and made it the only function to create
+      string representations of AST subtrees in SATIrE
+  - upgraded handling of variable names to ROSE 0.9.0b (rose.pig)
   - changed types and upgraded ICFG generation [GB]
   - upgraded termite to new ROSE version [AP]
 

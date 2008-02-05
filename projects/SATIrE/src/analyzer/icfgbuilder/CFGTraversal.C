@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.9 2008-01-31 00:01:53 markus Exp $
+// $Id: CFGTraversal.C,v 1.10 2008-02-05 15:10:11 markus Exp $
 
 #include <iostream>
 #include <string.h>
@@ -388,6 +388,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
     std::vector<SgVariableSymbol *> *local_var_decls
         = new std::vector<SgVariableSymbol *>();
     for (s = stmts.begin(); s != stmts.end(); ++s) {
+      // MS: transformation of variable declarations
       if (isSgVariableDeclaration(*s)) {
 	SgVariableDeclaration *decl = isSgVariableDeclaration(*s);
 	SgInitializedNamePtrList::iterator n;
@@ -396,6 +397,8 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  /* TODO: do something about storage specifiers? */
 	  if (isSgClassType((*n)->get_type()))
 	    local_classvar_decls.push_back(*n);
+	  // n is a InitializedName, but those names are of form '::name'
+	  std::cout << "[DeclName:" << (*n)->unparseToString() << "||" << Ir::fragmentToString(*n) << "]";
 	  SgVariableSymbol *varsym = Ir::createVariableSymbol(*n);
 	  local_var_decls->push_back(varsym);
 	}

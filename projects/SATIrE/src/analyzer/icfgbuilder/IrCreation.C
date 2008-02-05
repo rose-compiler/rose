@@ -3,60 +3,85 @@
 #include <iostream>
 #include "IrCreation.h"
 
+//std::string Ir::convertToUniformVariableName(std::string name) {
+//  // we remove leading '::' from variable names
+//  
+//}
+
+
 // creates a source string representation of an AST fragment. This function creates
 // a dummy node to allow the ROSE unparseToString function to always succeed
-std::string Ir::fragmentToString(SgNode* node) {
+std::string Ir::fragmentToString(const SgNode* node) {
 
-  // we select what we cannot unparse as fragment
-  if(!dynamic_cast<SgStatement*>(node) && !dynamic_cast<SgExpression*>(node)) {
-    return "FRAGMENT: not (statement or expression)";
+  std::string s;
+  // Variable Symbols cannot be unparsed using unparseToString, instead get_name must be used
+  if(const SgVariableSymbol* v=dynamic_cast<const SgVariableSymbol*>(node)) {
+    std::string s=v->get_name();
+  } else {
+
+  // we report what we cannot unparse as fragment
+  // we'll change that to throw an exception 
+  if(!dynamic_cast<const SgStatement*>(node) && !dynamic_cast<const SgExpression*>(node)) {
+    return "unparse FRAGMENT: not (statement or expression)";
   }
-  if(dynamic_cast<SgFunctionDeclaration*>(node)) {
-    return "FRAGMENT: function declaration";
+  if(dynamic_cast<const SgFunctionDeclaration*>(node)) {
+    return "unparse FRAGMENT: function declaration";
   }
-  if(dynamic_cast<SgFunctionDefinition*>(node)) {
-    return "FRAGMENT: function definition";
+  if(dynamic_cast<const SgFunctionDefinition*>(node)) {
+    return "unparse FRAGMENT: function definition";
   }
   
-  std::string s;
-  // 1. build dummy global node
-  Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-  SgGlobal* dummy = new SgGlobal(fi);
-  ROSE_ASSERT(dummy != NULL);
-  // save original parent
-  SgNode* tempParent=node->get_parent();
-  // overwrite parent pointer with pointer to dummy global node
-  node->set_parent(dummy);
-  s=node->unparseToString();
-  // restore original parent pointer
-  node->set_parent(tempParent);
+  SgUnparse_Info* unparseInfo = new SgUnparse_Info();
+  unparseInfo->set_SkipComments();    // do not generate comments
+  unparseInfo->set_SkipWhitespaces(); // do not generate whitespaces to format the code
+  unparseInfo->set_SkipQualifiedNames(); // skip qualified names -> this would cause a call to the EDG otherwise
+
+  /* create a temporary AST root with SgFile and SgGlobal to allow ROSE function unparseToString to trace back */
+  SgFile* file = new SgFile();
+  file->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+  SgGlobal* glob = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+  glob->set_parent(file);
+  file->set_root(glob); // do we need this one?
+
+  // store and restore original parent pointer of 'node'
+  SgNode* origParent=node->get_parent();
+  (const_cast<SgNode*>(node))->set_parent(glob);
+  if(const SgExpression* e=isSgExpression(node)) {
+    s=globalUnparseToString(node, unparseInfo);
+  }
+  s=globalUnparseToString(node, unparseInfo)+"FRAGMENT";
+  (const_cast<SgNode*>(node))->set_parent(origParent);
+  }
   // return string representing the unparsed subtree with 'node' as root node
-  return s;
+
+  return s+"_unparsedFRAGMENT";
+
 }
 
 std::string Ir::unparseNode(SgNode* node) {
   return "";
+  // MS: this function works now for all nodes
   std::cout << "@" << node << ":";
   if(dynamic_cast<IcfgStmt*>(node)) {
     std::cout << "Unparse: " << "ICFG-NODE:" << typeid(node).name() << ":";
     if(DeclareStmt* n=dynamic_cast<DeclareStmt*>(node)) {
-      std::cout << "DeclareStmt1:" << n->unparseToString() << std::endl;
+      std::cout << "DeclareStmt:" << Ir::fragmentToString(n) << std::endl;
       return "dummy";
     }
     if(UndeclareStmt* n=dynamic_cast<UndeclareStmt*>(node)) {
-      std::cout << "UndeclareStmt1:" << n->unparseToString() << std::endl;
+      std::cout << "UndeclareStmt:" << Ir::fragmentToString(n) << std::endl;
       return "dummy";
     }
     if(FunctionEntry* n=dynamic_cast<FunctionEntry*>(node)) {
-      std::cout << "UndeclareStmt1:" << n->unparseToString() << std::endl;
+      std::cout << "FunctionEntry:" << Ir::fragmentToString(n) << std::endl;
       return "dummy";
     }
     if(FunctionExit* n=dynamic_cast<FunctionExit*>(node)) {
-      std::cout << "UndeclareStmt1:" << n->unparseToString() << std::endl;
+      std::cout << "FunctionExit:" << Ir::fragmentToString(n) << std::endl;
       return "dummy";
     }
     if(FunctionCall* n=dynamic_cast<FunctionCall*>(node)) {
-      std::cout << "UndeclareStmt1:" << n->unparseToString() << std::endl;
+      std::cout << "FunctionCall:" << Ir::fragmentToString(n) << std::endl;
       return "dummy";
     }
     std::cout << "xxx" << std::endl;
@@ -76,11 +101,11 @@ std::string Ir::unparseNode(SgNode* node) {
     SgName name=sym->get_name();
     std::cout << std::string("name:") << name.getString() << ":";
   }
-  std::cout << node->unparseToString();
+  std::cout << Ir::fragmentToString(node);
   std::cout << std::endl;
   return "dummy";
 #if 0 
-  /* We may also need to construct an SgFile beforehand*/
+  /* We may also need to construct a SgFile beforehand*/
   SgFile* file = new SgFile();
   file->set_file_info(fi);
   file->set_root(glob);
@@ -91,7 +116,7 @@ std::string Ir::unparseNode(SgNode* node) {
   unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to format the code
   unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
 
-  /* We also need to construct an SgFile beforehand*/
+  /* We also need to construct a SgFile beforehand*/
   SgGlobal* glob = new SgGlobal(createFileInfo());
   SgFile* file = new SgFile();
   file->set_file_info(createFileInfo());
@@ -143,7 +168,7 @@ void Ir::configLocatedNode(SgLocatedNode* n) {
 }
 void Ir::configInitializedName(SgInitializedName* n) {
   // this here reveals an inconistency in the ROSE interface:
-  // InitializedName allows to set a file_fino but
+  // InitializedName allows to set a file_info but
   // SgSupport does not (but has a get_file_info()!)
   Sg_File_Info* fi = n->get_file_info();
   if(!fi) {
@@ -224,7 +249,7 @@ SgAddressOfOp* Ir::createAddressOfOp(SgExpression* e, SgType* type) {
   configLocatedNode(n,e);
 
   // following block is taken from Cxx_Grammar.h : SgAddressOfOp::get_type()
-  // we need to ensure that the scope is properly set otherwise this causes an assert
+  // we need to ensure that the scope is properly set otherwise this causes a failing assert
   if(SgVarRefExp* varRefExp = isSgVarRefExp(n->get_operand()))
         {
           ROSE_ASSERT(varRefExp->get_symbol() != NULL);
@@ -234,7 +259,7 @@ SgAddressOfOp* Ir::createAddressOfOp(SgExpression* e, SgType* type) {
           SgScopeStatement* scope = variable->get_scope();
 	  if(!scope) {
 	    //std::cout << "Fixing missing SgScopeStatement in SgVarRefExp operand of AddressOfOp" << std::endl;
-	    variable->set_scope(new SgScopeStatement()); // dummy, we only need it in the ICFG for ROSE 0.8.10e
+	    variable->set_scope(new SgScopeStatement()); // dummy, we only need it in the ICFG for ROSE 0.8.10e+
 	  }
         }
   assert(e->get_parent()==n);
@@ -270,7 +295,7 @@ SgVariableSymbol* Ir::createVariableSymbol(SgInitializedName* initializedName) {
   configSymbolNode(n,initializedName);
   return n;
 }
-// ok
+
 SgVariableSymbol* Ir::createVariableSymbol(std::string name,SgType* type) {
   SgInitializedName* initializedName=createInitializedName(name,type);
   SgVariableSymbol* variableSymbol=createVariableSymbol(initializedName);
@@ -278,12 +303,10 @@ SgVariableSymbol* Ir::createVariableSymbol(std::string name,SgType* type) {
   return variableSymbol;
 }
 
-// ok
 SgName Ir::createName(std::string name) {
   return SgName(name);
 }
 
-// ok
 SgInitializedName* Ir::createInitializedName(std::string name,SgType* type) {
   SgName sgname=createName(name);
   SgInitializedName* n=new SgInitializedName(sgname,type);
@@ -329,49 +352,42 @@ Ir::createConstructorInitializer(SgMemberFunctionDeclaration * mfd,SgType* type)
 SgMemberFunctionDeclaration* 
 Ir::createMemberFunctionDeclaration(std::string name) {
    SgMemberFunctionDeclaration* n = new SgMemberFunctionDeclaration(createFileInfo(), name);
-   //SgFile* file=new SgFile();
    configLocatedNode(n);   
    return n;
 }
 
 SgIfStmt* 
 Ir::createIfStmt(SgExprStatement* expStmt) {
+  // then and else are not used (connections are represented by ICFG edges)
   SgIfStmt* n=new SgIfStmt(createFileInfo(),expStmt);
-  // then and else are not used
-  //configLocatedNode(n,expStmt); this works in ROSE0.8.10 for 'if' but not for the while constructs
   configLocatedNode(n);
-//expStmt->set_parent(NULL);
   expStmt->set_parent(n);
   return n;
 }
 
 SgWhileStmt* 
 Ir::createWhileStmt(SgExprStatement* expStmt) {
+  // body is not used (connection to body represented by ICFG edges)
   SgWhileStmt* n=new SgWhileStmt(createFileInfo(),expStmt,NULL);
-  // then and else are not used
-  //configLocatedNode(n,expStmt);
   configLocatedNode(n);
-//expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
   expStmt->set_parent(n);
   return n;
 }
 
 SgDoWhileStmt* 
 Ir::createDoWhileStmt(SgExprStatement* expStmt) {
+  // body is not used (connection to body represented by ICFG edges)
   SgDoWhileStmt* n=new SgDoWhileStmt(createFileInfo(),NULL,expStmt);
-  // then and else are not used
   configLocatedNode(n);
-//expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
   expStmt->set_parent(n);
   return n;
 }
 
 SgSwitchStatement*
 Ir::createSwitchStatement(SgExprStatement* expStmt) {
+  // body is not used (connection is represented by ICFG edge)
   SgSwitchStatement* n=new SgSwitchStatement(createFileInfo(),expStmt,NULL);
-  // then and else are not used
   configLocatedNode(n);
-//expStmt->set_parent(NULL); // ROSE0.8.10 requires a NULL pointer here
   expStmt->set_parent(n);
   return n;
 }

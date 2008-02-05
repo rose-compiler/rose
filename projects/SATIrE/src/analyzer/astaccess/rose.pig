@@ -95,11 +95,14 @@ get:body(NODE, _, "VarRefExp" | "InitializedName", _, "name", _, _)
     if (in == NULL && isSgVarRefExp((SgNode *) NODE))
         in = isSgVarRefExp((SgNode *) NODE)->get_symbol()->get_declaration();
     if (in != NULL) {
-      /* FIXME: find a better way to deal with qualified names */
-        if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::"))
+         /* FIXME: check for global scope '::' and use non-qualified name for global scope
+          *        find a better way to deal with qualified names */
+         if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::")) {
             return strdup(in->get_qualified_name().str());
-        else /* don't print the global namespace (::) */
+         } else {
+            /* don't print the global namespace (::) */
             return strdup(in->get_name().str());
+         }
     } else
         return NULL;
 %}
@@ -107,9 +110,12 @@ get:body(NODE, _, "VarRefExp" | "InitializedName", _, "name", _, _)
 get:body(NODE, _, "VariableSymbol", _, "name", _, _)
 %{
     SgVariableSymbol *var = isSgVariableSymbol((SgNode *) NODE);
-    if (var->get_declaration()->get_scope() != NULL)
+    /* FIXME: check for global scope '::' and use non-qualified name for global scope
+     *        find a better way to deal with qualified names [MS08]*/
+    if ((var->get_declaration()->get_scope() != NULL) && (var->get_declaration()->get_scope()->get_qualified_name() != "::") )
         return strdup(var->get_declaration()->get_qualified_name().str());
     else
+        /* don't print the global namespace (::) */
         return strdup(var->get_declaration()->get_name().str());
 %}
 
