@@ -49,13 +49,14 @@ public:
   static const char* getConstCharPtr(SgName& n);
   static char* getCharPtr(SgName& n);
   static std::string getString(SgName& n);
+  static std::string getStrippedName(SgVariableDeclaration* d);
 
 public:
   // for testing only
   static std::string unparseNode(SgNode* node);
   // for testing only
   static std::string unparseExpression(SgExpression* node);
-  // for creating a string representation of IR expressions (including assignments)
+  // for creating a string representation of IR fragments
   static std::string fragmentToString(const SgNode* node);
 
 private:

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.4 2008-01-25 16:09:17 adrian Exp $
+// $Id: cfg_support.h,v 1.5 2008-02-05 19:42:12 markus Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -115,7 +115,8 @@ protected:
 
 class IcfgStmt : public SgStatement
 {
-  std::string unparseToString();
+  // MS: we make this function virtual (although it is not virtual in ROSE)
+  virtual std::string unparseToString();
 };
 
 class CallStmt : public IcfgStmt

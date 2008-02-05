@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.7 2008-02-05 15:10:11 markus Exp $
+// $Id: cfg_support.C,v 1.8 2008-02-05 19:42:12 markus Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -228,6 +228,13 @@ const char*
 CallStmt::get_funcname() const
 {
   return name;
+}
+
+std::string IcfgStmt::unparseToString() {
+  const char* name=typeid(this).name();
+  std::cout << "IcfgStmt::UnparseToString: not implemented @";
+  std::cout << name << std::endl;
+  assert(false);
 }
 
 ArgumentAssignment::ArgumentAssignment(SgVariableSymbol *l, SgExpression *r)

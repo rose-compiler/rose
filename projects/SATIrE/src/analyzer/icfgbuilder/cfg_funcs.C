@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.7 2008-01-31 00:01:53 markus Exp $
+// $Id: cfg_funcs.C,v 1.8 2008-02-05 19:42:12 markus Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -81,6 +81,10 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
         fprintf(file, "empty BB");
         return;
     }
+
+    std::string result;
+    
+#if 0
     DeclareStmt *declare_stmt = dynamic_cast<DeclareStmt *>(stmt);
     UndeclareStmt *undeclare_stmt = dynamic_cast<UndeclareStmt *>(stmt);
     CallStmt *call_stmt = dynamic_cast<CallStmt *>(stmt);
@@ -98,8 +102,6 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
     IfJoin *if_join = dynamic_cast<IfJoin *>(stmt);
     WhileJoin *while_join = dynamic_cast<WhileJoin *>(stmt);
 
-    std::string result;
-    
     if (external_call)
      // result = "EXTERNAL CALL";
         result = Ir::fragmentToString(external_call);
@@ -128,32 +130,31 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
     else if (while_join)
         result = Ir::fragmentToString(while_join);
     else
+#endif 
     {
         switch (stmt->variantT())
         {
 	case V_SgPragmaDeclaration: 
 	  assert(0);
-            fprintf(file, "Pragma Declaration %s", 
+            fprintf(file, "#Pragma %s", 
 		    isSgPragmaDeclaration(stmt)->get_pragma()->get_pragma().c_str());
             break;
         case V_SgNullStatement:
             fprintf(file, "NullStatement (no-op)");
             break;
         case V_SgBreakStmt:
-            fprintf(file, "break;");
+            fprintf(file, "break");
             break;
         case V_SgLabelStatement:
             fprintf(file, "%s:", isSgLabelStatement(stmt)->get_label().str());
             break;
-            /*
         case V_SgIfStmt:
             {
                 SgIfStmt *ifs = isSgIfStmt(stmt);
                 fprintf(file, "if (%s)",
-                        ifs->get_conditional()->unparseToString().c_str());
+                        Ir::fragmentToString(ifs->get_conditional()).c_str());
             }
             break;
-            */
         case V_SgForStatement:
             {
                 SgForStatement *fors = isSgForStatement(stmt);
@@ -201,10 +202,13 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             }
             break;
         default:
+	  // all other cases are handled by Ir::fragmentToString
             result = Ir::fragmentToString(stmt);
             break;
         }
     }
+
+    // for proper representation of all strings in GDL files we escape '\'
     if (result.find("\"") != std::string::npos)
     {
         /* quote double quotes with backslash */

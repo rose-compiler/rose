@@ -1,41 +1,33 @@
-// Author: Markus Schordan, 2007
+// Author: Markus Schordan, 2007,2008
 
 #include <iostream>
 #include "IrCreation.h"
-
-//std::string Ir::convertToUniformVariableName(std::string name) {
-//  // we remove leading '::' from variable names
-//  
-//}
-
 
 // creates a source string representation of an AST fragment. This function creates
 // a dummy node to allow the ROSE unparseToString function to always succeed
 std::string Ir::fragmentToString(const SgNode* node) {
 
   std::string s;
-  // Variable Symbols cannot be unparsed using unparseToString, instead get_name must be used
-  if(const SgVariableSymbol* v=dynamic_cast<const SgVariableSymbol*>(node)) {
-    std::string s=v->get_name();
-  } else {
-
   // we report what we cannot unparse as fragment
   // we'll change that to throw an exception 
-  if(!dynamic_cast<const SgStatement*>(node) && !dynamic_cast<const SgExpression*>(node)) {
-    return "unparse FRAGMENT: not (statement or expression)";
-  }
   if(dynamic_cast<const SgFunctionDeclaration*>(node)) {
-    return "unparse FRAGMENT: function declaration";
+    return "not unparsed: FRAGMENT function declaration";
   }
   if(dynamic_cast<const SgFunctionDefinition*>(node)) {
-    return "unparse FRAGMENT: function definition";
+    return "not unparsed: FRAGMENT function definition";
   }
-  
+
   SgUnparse_Info* unparseInfo = new SgUnparse_Info();
   unparseInfo->set_SkipComments();    // do not generate comments
   unparseInfo->set_SkipWhitespaces(); // do not generate whitespaces to format the code
-  unparseInfo->set_SkipQualifiedNames(); // skip qualified names -> this would cause a call to the EDG otherwise
+  unparseInfo->set_SkipQualifiedNames(); // skip qualified names -> this would cause a call to the EDG-IR otherwise
 
+  // SgType does not allow to set the parent pointer (as we need to do), an ASSERT fails, but unparsing is ok
+  if(const SgType* n=isSgType(node)) {
+    s=n->unparseToString(unparseInfo);
+    return s;
+  }
+ 
   /* create a temporary AST root with SgFile and SgGlobal to allow ROSE function unparseToString to trace back */
   SgFile* file = new SgFile();
   file->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
@@ -46,43 +38,77 @@ std::string Ir::fragmentToString(const SgNode* node) {
   // store and restore original parent pointer of 'node'
   SgNode* origParent=node->get_parent();
   (const_cast<SgNode*>(node))->set_parent(glob);
-  if(const SgStatementExpression* statexp=isSgStatementExpression(node)) {
-    s=statexp->unparseToString();
+
+  // the method unparseToString is not virtual therefore we need to determine the
+  // concrete type before invoking unparseToString (should be changed in ROSE)
+  // there are two versions of unpareToString, in the nodes that inherite in SATIrE
+  // we only implement unparseToString(), but not unparseToString(unparseInfo), therefore
+  // the methods are called here as they are available on the respective node
+  if(const SgExprStatement* n=isSgExprStatement(node)) {
+    // unparseToString does NOT work on ExprStatement, we must take the expression explicitly
+    s=n->get_expression()->unparseToString(unparseInfo); 
+  } else if(const SgExpression* n=isSgExpression(node)) {
+    s=n->unparseToString(unparseInfo);
+  } else if(const SgVariableSymbol* v=dynamic_cast<const SgVariableSymbol*>(node)) {
+    s=v->get_name();
+  } else if(const DeclareStmt* n=dynamic_cast<const DeclareStmt*>(node)) {
+    s=n->unparseToString();
+  } else if(const UndeclareStmt* n=dynamic_cast<const UndeclareStmt*>(node)) {
+    s=n->unparseToString();
+  } else if(const CallStmt* n=dynamic_cast<const CallStmt*>(node)) {
+    s=n->unparseToString();
+  } else if(const ExternalCall* n=dynamic_cast<const ExternalCall*>(node)) {
+    s=n->unparseToString();
+  } else if(const ConstructorCall* n=dynamic_cast<const ConstructorCall*>(node)) {
+    s=std::string("ConstructorCall(") + n->get_name() + ")";
+  } else if(const DestructorCall* n=dynamic_cast<const DestructorCall*>(node)) {
+    s=std::string("DestructorCall(") + n->get_name() + ")";
+  } else if(const ArgumentAssignment* n=dynamic_cast<const ArgumentAssignment*>(node)) {
+    s=n->unparseToString();
+  } else if(const ParamAssignment* n=dynamic_cast<const ParamAssignment*>(node)) {
+    s=n->unparseToString();
+  } else if(const ReturnAssignment* n=dynamic_cast<const ReturnAssignment*>(node)) {
+    s=n->unparseToString();
+  } else if(const LogicalIf* n=dynamic_cast<const LogicalIf*>(node)) {
+    s=n->unparseToString();
+  } else if(const IfJoin* n=dynamic_cast<const IfJoin*>(node)) {
+    s=n->unparseToString();
+  } else if(const WhileJoin* n=dynamic_cast<const WhileJoin*>(node)) {
+    s=n->unparseToString();
   } else {
-    s=node->unparseToString();
+    s=node->unparseToString(unparseInfo);
   }
+
+  // restore original parent pointer
   (const_cast<SgNode*>(node))->set_parent(origParent);
-  }
+
   // return string representing the unparsed subtree with 'node' as root node
-
-  return s+"_unparsedFRAGMENT";
-
+  return s;
 }
 
 std::string Ir::unparseNode(SgNode* node) {
-  return "";
   // MS: this function works now for all nodes
   std::cout << "@" << node << ":";
   if(dynamic_cast<IcfgStmt*>(node)) {
     std::cout << "Unparse: " << "ICFG-NODE:" << typeid(node).name() << ":";
     if(DeclareStmt* n=dynamic_cast<DeclareStmt*>(node)) {
-      std::cout << "DeclareStmt:" << Ir::fragmentToString(n) << std::endl;
+      std::cout << "DeclareStmt:" << n->unparseToString() << std::endl;
       return "dummy";
     }
     if(UndeclareStmt* n=dynamic_cast<UndeclareStmt*>(node)) {
-      std::cout << "UndeclareStmt:" << Ir::fragmentToString(n) << std::endl;
+      std::cout << "UndeclareStmt:" << n->unparseToString() << std::endl;
       return "dummy";
     }
     if(FunctionEntry* n=dynamic_cast<FunctionEntry*>(node)) {
-      std::cout << "FunctionEntry:" << Ir::fragmentToString(n) << std::endl;
+      std::cout << "FunctionEntry:" << n->unparseToString() << std::endl;
       return "dummy";
     }
     if(FunctionExit* n=dynamic_cast<FunctionExit*>(node)) {
-      std::cout << "FunctionExit:" << Ir::fragmentToString(n) << std::endl;
+      std::cout << "FunctionExit:" << n->unparseToString() << std::endl;
       return "dummy";
     }
     if(FunctionCall* n=dynamic_cast<FunctionCall*>(node)) {
-      std::cout << "FunctionCall:" << Ir::fragmentToString(n) << std::endl;
+      std::cout << "FunctionCall:" << n->unparseToString() << std::endl;
       return "dummy";
     }
     std::cout << "xxx" << std::endl;
@@ -531,9 +557,8 @@ Ir::getString(SgName& n) {
   return s;
 }
 
-std::string IcfgStmt::unparseToString() {
-  const char* name=typeid(this).name();
-  std::cout << "UnparseToString: not implemented @";
-  std::cout << name << std::endl;
-  assert(false);
+std::string 
+Ir::getStrippedName(SgVariableDeclaration* d) {
+  std::string s;
+  return s;
 }
