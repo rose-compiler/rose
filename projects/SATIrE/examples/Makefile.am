@@ -74,7 +74,8 @@ installcheck-local:
 	@echo skipping TERMITE TESTS
 
 	cp $(top_srcdir)/examples/constprop/tests/bigger.c $(testdir)/TEST0.c
-#cp $(top_srcdir)/examples/constprop/tests/wcet_bench/adpcm.c $(testdir)/TEST0.c
+# Debug only:	
+#	cp $(top_srcdir)/examples/constprop/tests/wcet_bench/adpcm.c $(testdir)/TEST0.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.c  TEST3.pl
