@@ -17,7 +17,8 @@ V0.7.9 2008 MS,GB
       string representations of AST subtrees in SATIrE [MS]
     + improved performance of unparseToString (eliminated deep copy of AST fragments) [MS]
   - upgraded handling of variable names to ROSE 0.9.0b and improved handling of scopes [MS]
-  - upgraded ICFG generation with new type information of ROSE 0.9.0b [GB]
+  - upgraded ICFG generation with new type information of ROSE 0.9.0b and adapted use of 
+    unparseToString functions [GB]
   - termite is not upgraded yet
 
 * Tested with:
@@ -27,6 +28,7 @@ V0.7.9 2008 MS,GB
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
+	
 V0.7.8 2008-01-24 AP, GB, VP, MS
 
 * Added Makefile.custom to shape analyses to allow customized
@@ -73,6 +75,7 @@ V0.7.8 2008-01-24 AP, GB, VP, MS
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
+	
 V0.7.7 2007-11-12 VP, AP, MS
 
 * added srw98_shape, nnh99_shape [VP,MS]
@@ -87,6 +90,7 @@ V0.7.7 2007-11-12 VP, AP, MS
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
+	
 V0.7.6 2007-10-23 GB, MS, AP
 
 * required user changes:
@@ -117,6 +121,7 @@ V0.7.6 2007-10-23 GB, MS, AP
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
+
 V0.7.5 2007-10-16 AP
 
 Changes (Adrian)
@@ -139,162 +144,6 @@ Changes (Adrian)
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
-********* Locally Modified *********
->Locally modified   ChangeLog
->Locally modified   examples/constprop/runtests
->Locally modified   examples/sl1rd/runtests
->Locally modified   examples/sl2rd/runtests
->Locally modified   src/analyzer/commandlineinterface/AnalyzerOptions.C
->Locally modified   src/analyzer/commandlineinterface/CommandLineParser.C
->Locally modified   src/analyzer/skeletons/main-support.C-template
->Locally modified   src/analyzer/skeletons/main.C-template
->Locally modified   src/analyzer/skeletons/main.h-template
->Locally modified   src/pig/spec.h
-********* Needs CVS Update *********
-********* FILES NEEDING A MERGE *********
-********* Files Scheduled to be added *********
-+Scheduled for add      AUTHORS
-+Scheduled for add      COPYING
-+Scheduled for add      INSTALL
-+Scheduled for add      KNOWN_BUGS
-+Scheduled for add      Makefile.am
-+Scheduled for add      NEWS
-+Scheduled for add      config.h.in
-+Scheduled for add      configure.ac
-+Scheduled for add      examples/Makefile.am
-+Scheduled for add      src/Makefile.am
-+Scheduled for add      src/buildsatirelib
-+Scheduled for add      src/analyzer/Makefile.am
-+Scheduled for add      src/analyzer/annotation/Makefile.am
-+Scheduled for add      src/analyzer/annotation/satire/StatementAttributeTraversal.h
-+Scheduled for add      src/analyzer/astaccess/Makefile.am
-+Scheduled for add      src/analyzer/astaccess/pag_support.C
-+Scheduled for add      src/analyzer/astaccess/satire/ast_support_funcs.h
-+Scheduled for add      src/analyzer/astaccess/satire/edges
-+Scheduled for add      src/analyzer/astaccess/satire/iface.h
-+Scheduled for add      src/analyzer/astaccess/satire/other.h
-+Scheduled for add      src/analyzer/astaccess/satire/pag_support.h
-+Scheduled for add      src/analyzer/astaccess/satire/pagoptions
-+Scheduled for add      src/analyzer/astaccess/satire/pignodelist.h
-+Scheduled for add      src/analyzer/astaccess/satire/syn
-+Scheduled for add      src/analyzer/astaccess/satire/syn_typedefs.h
-+Scheduled for add      src/analyzer/commandlineinterface/Makefile.am
-+Scheduled for add      src/analyzer/commandlineinterface/satire/AnalyzerOptions.h
-+Scheduled for add      src/analyzer/commandlineinterface/satire/CommandLineParser.h
-+Scheduled for add      src/analyzer/commandlineinterface/satire/set_pag_options.h
-+Scheduled for add      src/analyzer/icfgbuilder/Makefile.am
-+Scheduled for add      src/analyzer/icfgbuilder/obsolete_CFGFixUp.C
-+Scheduled for add      src/analyzer/icfgbuilder/satire/AstNumberOfNodesStatistics.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/CFGTraversal.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/ExprLabeler.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/ExprTransformer.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/IrCreation.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/ProcTraversal.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/analysis_info.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/cfg_support.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/obsolete_CFGFixUp.h
-+Scheduled for add      src/analyzer/icfgbuilder/satire/testcfg.h
-+Scheduled for add      src/analyzer/skeletons/Makefile-template.in
-+Scheduled for add      src/analyzer/skeletons/newanalysis.in
-+Scheduled for add      src/grato/Makefile.am
-+Scheduled for add      src/grato/synparser.y++
-+Scheduled for add      src/grato/synscanner.l++
-+Scheduled for add      src/pig/pigparser.y++
-+Scheduled for add      src/pig/pigscanner.l++
-+Scheduled for add      src/termite/AUTHORS
-+Scheduled for add      src/termite/COPYING
-+Scheduled for add      src/termite/ChangeLog
-+Scheduled for add      src/termite/INSTALL
-+Scheduled for add      src/termite/LICENCE
- for add      src/termite/Makefile.am
-+Scheduled for add      src/termite/NEWS
-+Scheduled for add      src/termite/PrologAtom.cpp
-+Scheduled for add      src/termite/PrologCompTerm.cpp
-+Scheduled for add      src/termite/PrologInt.cpp
-+Scheduled for add      src/termite/PrologList.cpp
-+Scheduled for add      src/termite/PrologString.cpp
-+Scheduled for add      src/termite/PrologSupport.C
-+Scheduled for add      src/termite/PrologTerm.cpp
-+Scheduled for add      src/termite/PrologToRose.C
-+Scheduled for add      src/termite/PrologVariable.cpp
-+Scheduled for add      src/termite/README
-+Scheduled for add      src/termite/c2term
-+Scheduled for add      src/termite/main.C
-+Scheduled for add      src/termite/pdfgen.C
-+Scheduled for add      src/termite/term2c
-+Scheduled for add      src/termite/termlexer.l++
-+Scheduled for add      src/termite/termparser.y++
-+Scheduled for add      src/termite/termpretty.l++
-+Scheduled for add      src/termite/test.sh
-+Scheduled for add      src/termite/toProlog.C
-+Scheduled for add      src/termite/satire/PrologAtom.h
-+Scheduled for add      src/termite/satire/PrologCompTerm.h
-+Scheduled for add      src/termite/satire/PrologInt.h
-+Scheduled for add      src/termite/satire/PrologList.h
-+Scheduled for add      src/termite/satire/PrologString.h
-+Scheduled for add      src/termite/satire/PrologSupport.h
-+Scheduled for add      src/termite/satire/PrologTerm.h
-+Scheduled for add      src/termite/satire/PrologToRose.h
-+Scheduled for add      src/termite/satire/PrologVariable.h
-+Scheduled for add      src/termite/satire/TermPrinter.h
-+Scheduled for add      src/termite/satire/TermRep.h
-+Scheduled for add      src/termite/satire/termparser.h
-+Scheduled for add      src/termite/tests/orig_out.txt
-+Scheduled for add      src/termite/tests/test1.C
-+Scheduled for add      src/termite/tests/test2.C
-+Scheduled for add      src/termite/tests/test3.C
-+Scheduled for add      src/termite/tests/test4.C
-+Scheduled for add      src/termite/tests/test5.C
-+Scheduled for add      src/termite/tests/test5b.C
-+Scheduled for add      src/termite/tests/test6.C
-+Scheduled for add      src/termite/tests/test7.C
-+Scheduled for add      src/termite/tests/test8.C
-+Scheduled for add      src/termite/tests/test9.C
-+Scheduled for add      src/termite/tests/test_class1.C
-+Scheduled for add      src/termite/tests/test_class2.C
-+Scheduled for add      src/termite/tests/test_control.C
-+Scheduled for add      src/termite/tests/test_control.C.dot
-+Scheduled for add      src/termite/tests/test_control.C.pdf
-+Scheduled for add      src/termite/tests/test_enum.C
-+Scheduled for add      src/termite/tests/test_minimal.C
-+Scheduled for add      src/termite/tests/test_struct.C
-+Scheduled for add      src/termite/tests/test_transformme.C
-+Scheduled for add      src/termite/tests/test_typedef.C
-********* Files Scheduled to be removed *********
--Scheduled for removal  Makefile
--Scheduled for removal  examples/Makefile
--Scheduled for removal  src/Makefile
--Scheduled for removal  src/analyzer/Makefile
--Scheduled for removal  src/analyzer/annotation/Makefile
--Scheduled for removal  src/analyzer/annotation/StatementAttributeTraversal.C
--Scheduled for removal  src/analyzer/annotation/StatementAttributeTraversal.h
--Scheduled for removal  src/analyzer/astaccess/Makefile
--Scheduled for removal  src/analyzer/astaccess/iface.h
--Scheduled for removal  src/analyzer/astaccess/pag_support.c
--Scheduled for removal  src/analyzer/commandlineinterface/AnalyzerOptions.h
--Scheduled for removal  src/analyzer/commandlineinterface/CommandLineParser.h
--Scheduled for removal  src/analyzer/commandlineinterface/Makefile
--Scheduled for removal  src/analyzer/commandlineinterface/set_pag_options.h
--Scheduled for removal  src/analyzer/icfgbuilder/AstNumberOfNodesStatistics.h
--Scheduled for removal  src/analyzer/icfgbuilder/CFGTraversal.h
--Scheduled for removal  src/analyzer/icfgbuilder/ExprLabeler.h
--Scheduled for removal  src/analyzer/icfgbuilder/ExprTransformer.h
--Scheduled for removal  src/analyzer/icfgbuilder/IrCreation.h
--Scheduled for removal  src/analyzer/icfgbuilder/Makefile
--Scheduled for removal  src/analyzer/icfgbuilder/ProcTraversal.h
--Scheduled for removal  src/analyzer/icfgbuilder/analysis_info.h
--Scheduled for removal  src/analyzer/icfgbuilder/cfg_support.h
--Scheduled for removal  src/analyzer/icfgbuilder/testcfg.h
--Scheduled for removal  src/analyzer/skeletons/Makefile-template
--Scheduled for removal  src/analyzer/skeletons/newanalysis
--Scheduled for removal  src/grato/Makefile
--Scheduled for removal  src/grato/synparser.y
--Scheduled for removal  src/grato/synscanner.l
--Scheduled for removal  src/pig/Makefile
--Scheduled for removal  src/pig/spec.l
--Scheduled for removal  src/pig/spec.y
-********* WARNINGS *********
-********* ERRORS *********
 
 V0.7.4 2007-07-15 MS
 
@@ -321,59 +170,6 @@ V0.7.4 2007-07-15 MS
  - flex 2.5.33
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
-
-********* Locally Modified *********
->Locally modified   ChangeLog
->Locally modified   Makefile
->Locally modified   README
->Locally modified   examples/constprop/constprop.optla
->Locally modified   examples/constprop/tests/blocks.c
->Locally modified   examples/sl1rd/sl1rd.optla
->Locally modified   examples/sl2rd/runtests
->Locally modified   examples/sl2rd/sl2rd.optla
->Locally modified   src/Makefile
->Locally modified   src/analyzer/annotation/StatementAttributeTraversal.C
->Locally modified   src/analyzer/astaccess/iface.h
->Locally modified   src/analyzer/astaccess/pag_support.c
->Locally modified   src/analyzer/astaccess/pag_support.h
->Locally modified   src/analyzer/astaccess/rose.pig
->Locally modified   src/analyzer/astaccess/syn
->Locally modified   src/analyzer/astaccess/syn_typedefs.h
->Locally modified   src/analyzer/icfgbuilder/CFGTraversal.C
->Locally modified   src/analyzer/icfgbuilder/ExprTransformer.C
->Locally modified   src/analyzer/icfgbuilder/ExprTransformer.h
->Locally modified   src/analyzer/icfgbuilder/Makefile
->Locally modified   src/analyzer/icfgbuilder/ProcTraversal.C
->Locally modified   src/analyzer/icfgbuilder/ProcTraversal.h
->Locally modified   src/analyzer/icfgbuilder/cfg_funcs.C
->Locally modified   src/analyzer/icfgbuilder/cfg_support.C
->Locally modified   src/analyzer/icfgbuilder/cfg_support.h
->Locally modified   src/analyzer/skeletons/Makefile-template
->Locally modified   src/experimental/specs/nielson/Makefile
->Locally modified   src/experimental/specs/nielson/nielson.optla
->Locally modified   src/experimental/specs/pred/Makefile
->Locally modified   src/experimental/specs/pred/pred.optla
->Locally modified   src/experimental/specs/pred/runtest
->Locally modified   src/experimental/specs/shape/Makefile
->Locally modified   src/experimental/specs/shape/shape.optla
->Locally modified   src/experimental/specs/shape2/Makefile
->Locally modified   src/experimental/specs/shape2/main.h
->Locally modified   src/experimental/specs/shape2/shape_header.optla
->Locally modified   src/experimental/specs/typeexpr/Makefile
->Locally modified   src/experimental/specs/typeexpr/typeexpr.optla
->Locally modified   src/grato/Makefile
->Locally modified   src/pig/spec.y
-********* Needs CVS Update *********
-********* FILES NEEDING A MERGE *********
-********* Files Scheduled to be added *********
-+Scheduled for add      examples/sl2rd/tests/rdtest12.C
-+Scheduled for add      src/Doxyfile
-+Scheduled for add      src/analyzer/icfgbuilder/IrCreation.C
-+Scheduled for add      src/analyzer/icfgbuilder/IrCreation.h
-+Scheduled for add      src/experimental/specs/pred/tests/test8.C
-+Scheduled for add      src/experimental/specs/typeexpr/tests/test6.C
-********* Files Scheduled to be removed *********
--Scheduled for removal  src/experimental/specs/pred/makeout.txt
 
 
 V0.7.3 2007-05-22 MS
