@@ -18,7 +18,7 @@ EXTRA_DIST= \
         sl2rd/sl2rd.set sl2rd/sl2rd.optla sl2rd/runtests \
         constprop/constprop.set constprop/constprop.optla \
 	constprop/tests/cconstants.c  constprop/tests/classes_and_returns.C  \
-	constprop/tests/demo2.C       constprop/tests/intval.c \
+/tests/demo2.C       constprop/tests/intval.c \
 	constprop/tests/namespaces.C  constprop/tests/small.c \
 	constprop/tests/typedefs.C    constprop/tests/ab.c \
         constprop/tests/classes.C     constprop/tests/deepreturn.c \
@@ -74,7 +74,7 @@ installcheck-local:
 	@echo skipping TERMITE TESTS
 
 #	cp $(top_srcdir)/examples/constprop/tests/bigger.c $(testdir)/TEST0.c
-# Debug only:	
+#Debug only:	
 #	cp $(top_srcdir)/examples/constprop/tests/wcet_bench/adpcm.c $(testdir)/TEST0.c
 #	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
 #	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
