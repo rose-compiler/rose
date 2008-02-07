@@ -104,6 +104,8 @@ eval(exp, state) =
             IntVal(value)     => (lift(val-astint(value)), state);
 	    ShortVal(value)   => (lift(val-astshort(value)), state);
             LongIntVal(value) => (lift(val-astlong(value)), state);
+	    FloatVal(value)  => (top, state);
+	    DoubleVal(value)  => (top, state);
             _                 => print("unsupported value exp: ")
                                  print(exp) print("\n") (top, [-> top]);
         endcase
@@ -221,7 +223,7 @@ branch(exp, state, edge) =
     in if int_bool(cond) = edge then
         newstate
     else
-        bot
+        state/*bot*/
     endif
     endif;
 

@@ -1365,6 +1365,9 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
   /*important: otherwise unparsing fails*/
   if (func_def != NULL) {
     func_def->set_declaration(func_decl);
+    /* set defining declaration ROSE 0.9.0b */
+    func_decl->set_definingDeclaration(func_decl);
+    //func_decl->set_firstNondefiningDeclaration(func_decl);
   } else {
   }
   return func_decl;
@@ -2322,6 +2325,11 @@ PrologToRose::fakeParentScope(SgDeclarationStatement* s) {
   Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
   SgGlobal* dummy = new SgGlobal(fi);
   ROSE_ASSERT(dummy != NULL);
+
+  // 7.2.2008 ROSE 0.9.0b (Adrian)
+  SgFunctionDeclaration *decl = isSgFunctionDeclaration(s);
+  if (decl) dummy->insert_symbol(decl->get_name(), new SgFunctionSymbol(decl));
+
   s->set_parent(dummy);
   s->set_scope(dummy);
   ROSE_ASSERT(s->get_parent());
@@ -2746,6 +2754,7 @@ PrologToRose::createDummyFunctionDeclaration(string* namestr, PrologTerm* type_t
   /* postprocessing to satisfy unparser*/
   d->setForward();
   fakeParentScope(d);
+
   return d;
 }
 

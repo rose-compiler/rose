@@ -11,7 +11,7 @@ V0.7.9 2008 MS,GB
   - changed Makefile.in-template to use CUSTOM_CFLAGS for main.C and main-support.C
     allowing to eliminate all redeclaration warnings
 	
-* upgrade to ROSE 0.9.0b [MS,GB]
+* upgrade to ROSE 0.9.0b [MS,GB,AP]
   - extended IR interface [MS]
     + added fragmentToString function and made it the only function to create
       string representations of AST subtrees in SATIrE [MS]
@@ -19,8 +19,12 @@ V0.7.9 2008 MS,GB
   - upgraded handling of variable names to ROSE 0.9.0b and improved handling of scopes [MS]
   - upgraded ICFG generation with new type information of ROSE 0.9.0b and adapted use of 
     unparseToString functions [GB]
-  - termite is not upgraded yet
-
+  - upgraded termite to work with ROSE 0.9.0b: [AP]
+	+ now generate symbol table entries for function declarations
+	+ parent scopes for namespace declarations are not necessary any more
+	
+* Termite: improved term quoting [AP]
+	
 * Tested with:
  - ROSE 0.9.0b
  - PAG 7.3.8.55
