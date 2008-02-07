@@ -242,11 +242,11 @@ binary_get_right_child :: Expression -> Expression;
 
 shiftleft :: snum, snum -> snum;
 shiftleft(a, 0) = a;
-shiftleft(a, b) = a * 2 + shiftleft(a, b-1);
+shiftleft(a, b) = shiftleft(a*2, b-1);
 
 shiftright :: snum, snum -> snum;
 shiftright(a, 0) = a;
-shiftright(a, b) = a / 2 + shiftright(a, b-1);
+shiftright(a, b) = shiftright(a/2, b-1);
 								      
 
 comb(a, b) =
