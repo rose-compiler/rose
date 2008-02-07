@@ -2323,8 +2323,14 @@ PrologToRose::fakeParentScope(SgDeclarationStatement* s) {
   ROSE_ASSERT(dummy != NULL);
 
   // 7.2.2008 ROSE 0.9.0b (Adrian)
-  SgFunctionDeclaration *decl = isSgFunctionDeclaration(s);
-  if (decl) dummy->insert_symbol(decl->get_name(), new SgFunctionSymbol(decl));
+  {
+    SgFunctionDeclaration *decl = isSgFunctionDeclaration(s);
+    if (decl) dummy->insert_symbol(decl->get_name(), new SgFunctionSymbol(decl));
+  }
+  {
+    SgClassDeclaration *decl = isSgClassDeclaration(s);
+    if (decl) dummy->insert_symbol(decl->get_name(), new SgClassSymbol(decl));
+  }
 
   s->set_parent(dummy);
   s->set_scope(dummy);
