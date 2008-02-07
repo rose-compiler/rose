@@ -1489,8 +1489,8 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
   //AstPostProcessing(glob);
 
   /* we stop unparsing at SgGlobal level! output results and be happy.*/
-  cout << "/*unparsing from PROLOG representation*/\n";
-  cout << glob->unparseToString();
+  //cout << "/*unparsing from PROLOG representation*/\n";
+  //cout << glob->unparseToString();
   ofile << globalUnparseToString(glob, unparseInfo);
   return glob;
 }
