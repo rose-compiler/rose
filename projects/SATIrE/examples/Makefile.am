@@ -18,7 +18,7 @@ EXTRA_DIST= \
         sl2rd/sl2rd.set sl2rd/sl2rd.optla sl2rd/runtests \
         constprop/constprop.set constprop/constprop.optla \
 	constprop/tests/cconstants.c  constprop/tests/classes_and_returns.C  \
-/tests/demo2.C       constprop/tests/intval.c \
+	constprop/tests/demo2.C       constprop/tests/intval.c \
 	constprop/tests/namespaces.C  constprop/tests/small.c \
 	constprop/tests/typedefs.C    constprop/tests/ab.c \
         constprop/tests/classes.C     constprop/tests/deepreturn.c \
