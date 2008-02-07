@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.10 2008-02-05 15:10:11 markus Exp $
+// $Id: CFGTraversal.C,v 1.11 2008-02-07 00:48:52 markus Exp $
 
 #include <iostream>
 #include <string.h>
@@ -398,7 +398,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  if (isSgClassType((*n)->get_type()))
 	    local_classvar_decls.push_back(*n);
 	  // n is a InitializedName, but those names are of form '::name'
-	  std::cout << "[DeclName:" << (*n)->unparseToString() << "||" << Ir::fragmentToString(*n) << "]";
 	  SgVariableSymbol *varsym = Ir::createVariableSymbol(*n);
 	  local_var_decls->push_back(varsym);
 	}

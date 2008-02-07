@@ -25,6 +25,7 @@ std::string Ir::fragmentToString(const SgNode* node) {
   // SgType does not allow to set the parent pointer (as we need to do), an ASSERT fails, but unparsing is ok
   if(const SgType* n=isSgType(node)) {
     s=n->unparseToString(unparseInfo);
+    delete unparseInfo;
     return s;
   }
  
@@ -60,6 +61,11 @@ std::string Ir::fragmentToString(const SgNode* node) {
 
   // restore original parent pointer
   (const_cast<SgNode*>(node))->set_parent(origParent);
+  
+  delete unparseInfo;
+  // delete temporary AST nodes
+  delete glob;
+  delete file;
 
   // return string representing the unparsed subtree with 'node' as root node
   return s;
