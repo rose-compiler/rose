@@ -418,14 +418,11 @@ PrologToRose::leafToRose(PrologCompTerm* t,string tname) {
     s = createThisExp(fi,t);
   } else if(tname == SG_PREFIX "pragma") {
     s = createPragma(fi,t);
+  } else if (tname == SG_PREFIX "null_statement") {
+    s = new SgNullStatement(fi);
+  } else if (tname == SG_PREFIX "null_expression") {
+    s = new SgNullExpression(fi);
   }
-
-	
-  /*else if (tname == SG_PREFIX "null_statement") {
-    return new SgNullStatement(fi);
-    } else if (tname == SG_PREFIX "null_expression") {
-    return new SgNullExpression(fi);
-    } */
   return s;
 }
 
@@ -1485,6 +1482,7 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
   SgFile* file = new SgFile();
   file->set_file_info(fi);
   file->set_root(glob);
+  glob->set_parent(file);
 
   //resetParentPointers(glob, file);
   //AstPostProcessing(glob);
