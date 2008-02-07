@@ -22,6 +22,8 @@ V0.7.9 2008 MS,GB
   - upgraded termite to work with ROSE 0.9.0b: [AP]
 	+ now generate symbol table entries for function declarations
 	+ parent scopes for namespace declarations are not necessary any more
+	+ because of some printf statements in the new ROSE code,
+	term2rose and rose2term no longer read/write from/to stdin/out
 	
 * Termite: improved term quoting [AP]
 	

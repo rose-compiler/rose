@@ -929,8 +929,6 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing unsigned char");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
-    ROSE_ASSERT(s != NULL);
     unsigned char number;
     if (PrologString* s = dynamic_cast<PrologString*>(annot->at(0))) {
       /*istringstream instr(s->getName());
