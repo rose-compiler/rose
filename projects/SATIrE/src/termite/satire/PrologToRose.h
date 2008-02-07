@@ -62,6 +62,7 @@ class PrologToRose {
 		int toInt(PrologTerm*);
 		void pciDeclarationStatement(SgDeclarationStatement*,PrologTerm*);
 		void fakeParentScope(SgDeclarationStatement*);
+		void addSymbol(SgGlobal*, SgDeclarationStatement*);
 		void fakeClassScope(string,int,SgDeclarationStatement*);
 		SgAccessModifier* createAccessModifier(PrologTerm*);
 		SgBaseClassModifier* createBaseClassModifier(PrologTerm*);

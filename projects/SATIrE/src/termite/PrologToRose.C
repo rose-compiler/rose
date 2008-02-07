@@ -1469,6 +1469,7 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
       if(curdec->get_scope() == NULL) {
 	curdec->set_scope(glob);
       }
+      addSymbol(glob, curdec); // ROSE 0.9.0b (Adrian)
       debug ("added declaration of type " + (*it)->class_name());
     }
     it++;
@@ -2323,19 +2324,27 @@ PrologToRose::fakeParentScope(SgDeclarationStatement* s) {
   ROSE_ASSERT(dummy != NULL);
 
   // 7.2.2008 ROSE 0.9.0b (Adrian)
-  {
-    SgFunctionDeclaration *decl = isSgFunctionDeclaration(s);
-    if (decl) dummy->insert_symbol(decl->get_name(), new SgFunctionSymbol(decl));
-  }
-  {
-    SgClassDeclaration *decl = isSgClassDeclaration(s);
-    if (decl) dummy->insert_symbol(decl->get_name(), new SgClassSymbol(decl));
-  }
+  addSymbol(dummy, s);
 
   s->set_parent(dummy);
   s->set_scope(dummy);
   ROSE_ASSERT(s->get_parent());
   ROSE_ASSERT(s->get_scope());
+}
+
+/**
+ * the unparser now wants a symbol table entry, too
+ */
+void
+PrologToRose::addSymbol(SgGlobal* scope, SgDeclarationStatement* s) {
+  {
+    SgFunctionDeclaration *decl = isSgFunctionDeclaration(s);
+    if (decl) scope->insert_symbol(decl->get_name(), new SgFunctionSymbol(decl));
+  }
+  {
+    SgClassDeclaration *decl = isSgClassDeclaration(s);
+    if (decl) scope->insert_symbol(decl->get_name(), new SgClassSymbol(decl));
+  }
 }
 
 /**
