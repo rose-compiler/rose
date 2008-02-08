@@ -71,13 +71,12 @@ installcheck-local:
 	@echo "========================================================================"
 	@echo "TERMITE tests"
 	@echo "========================================================================"
-	@echo skipping TERMITE TESTS
 
 	cp $(top_srcdir)/examples/constprop/tests/bigger.c $(testdir)/TEST0.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.c  TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST0.c  TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose TEST1.pl TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST2.c  TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose TEST3.pl TEST4.c
 
 
 	@echo "========================================================================"
