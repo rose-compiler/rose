@@ -1,4 +1,4 @@
-V0.7.9 2008 MS,GB,AP
+V0.7.9 2008-02-08 MS,GB,AP
 
 * upgrade to PAG 7.3.8.55 [MS]
   - added new functions kfg_routine_is_loop and kfg_routine_is_infeasible
@@ -24,7 +24,7 @@ V0.7.9 2008 MS,GB,AP
 	+ generate symbol table entries for class declarations
 	+ parent scopes for namespace declarations are not necessary any more
 	+ because of some printf statements in the new ROSE code,
-	term2rose and rose2term no longer read/write from/to stdin/out
+	  term2rose and rose2term no longer read/write from/to stdin/out
 	
 * Termite: improved term quoting [AP]
 	
