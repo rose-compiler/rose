@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <ctype.h>
+#include <cstdio>
 #include <rose_config.h>
 #include "rose.h"
 #include "PrologTerm.h"
@@ -247,71 +249,22 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 }
 
 /* Convert the PAG analysis result into a Prolog Term */
+extern const char* dfi_input;
+extern const char* dfi_name;
+extern int dfiparse (void);
+extern void dfirestart(FILE*);
+extern PrologCompTerm* dfiterm;
+
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
-  // FIXME: do this by iterating over the data structure instead
-  // FIXME: more error recovery
-
-  PrologCompTerm* t = new PrologCompTerm(name);
-  PrologList* lst = new PrologList();
-  int i = 0;
-
-  if (dfi[i] == '[') {
-    ++i;
-    if (dfi.substr(i,3) == "TOP") { 
-      t->addSubterm(new PrologAtom("top"));
-      i += 3;
-    } else if (dfi.substr(i,6) == "BOTTOM") {
-      t->addSubterm(new PrologAtom("bottom"));
-      i += 6;
-    } else t->addSubterm(new PrologAtom("error"));
-    if (dfi[i] == ':') {
-      do {
-	++i;
-	if (dfi[i] == ']') break;
-
-	// Parse List elements
-	std::string tok1 = "";
-	while (dfi.substr(i,2) != "->") {
-	  if (dfi[i] != '$') // drop '$' chars
-	    tok1 += dfi[i];
-	  ++i;
-	}
-	i += 2;
-	std::string tok2 = "";
-	while (dfi[i] != ',') {
-	  if (dfi[i] != '$') // drop '$' chars
-	    tok2 += dfi[i];
-	  ++i;
-	}
-
-	// put parentheses around negative number
-	if (tok2[0] == '-') tok2 = "(" +  tok2 + ")"; 
-
-	PrologInfixOperator* ifx = new PrologInfixOperator("->");
-	ifx->addSubterm(new PrologAtom(tok1));
-	ifx->addSubterm(new PrologAtom(tok2));
-	lst->addElement(ifx);
-      } while (dfi[i] == ',');
-
-      t->addSubterm(lst);
-
-      if (dfi[i] != ']') {
-	std::cerr << "Warning: TermPrinter could not parse " << dfi << std::endl;
-      }
-      ++i;
-    } else t->addSubterm(new PrologAtom("error"));
-  } 
-  else if (dfi == "<undefinef dfi>") t->addSubterm(new PrologAtom("undefined_dfi"));
-  else t->addSubterm(new PrologAtom("dfi_parse_error"));
-
-  //cerr << dfi << endl;
-  //cerr << t->getRepresentation() << endl;
-
-  return t;   
+  dfi_name = name.c_str();
+  dfi_input = dfi.c_str();
+  dfirestart(0);
+  dfiparse();
+  return dfiterm;
 }
-	
+
 /* Create a prolog term representing a leaf node.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*

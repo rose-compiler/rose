@@ -26,7 +26,10 @@ V0.7.9 2008-02-08 MS,GB,AP
 	+ because of some printf statements in the new ROSE code,
 	  term2rose and rose2term no longer read/write from/to stdin/out
 	
-* Termite: improved term quoting [AP]
+* Termite: 
+ - improved term quoting [AP]
+ - new lex/yacc parser for PAG data flow information dfi_[parser|scanner] [AP]
+	
 	
 * Tested with:
  - ROSE 0.9.0b
