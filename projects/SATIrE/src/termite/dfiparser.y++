@@ -88,6 +88,7 @@ indicator:
 value:
   INT            { $$ = new PrologInt($1);      }
   | '(' ints ')' { $$ = new PrologList(*$2);     }
+  | indicator    { $$ = $1; }
 ;
 
 ints:
