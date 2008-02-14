@@ -2,6 +2,25 @@
 
 SUBDIRS= src tools examples
 DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=/usr/local/mstools/rose-0.9.0b --with-pagdir=/usr/local/mstools/pag-7.3.8.55
-EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS docs/satire_cfgconstruction.pdf docs/satire_overview.pdf docs/ docs/satire_attributes_auxiliary_functions
+EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS \
+	docs/satire_cfgconstruction.pdf docs/satire_overview.pdf docs/ docs/satire_attributes_auxiliary_functions \
+	\
+	testsuite/success/cconstants.c  testsuite/success/classes_and_returns.C  \
+	testsuite/success/demo2.C       testsuite/success/intval.c \
+	testsuite/success/namespaces.C  testsuite/success/small.c \
+	testsuite/success/typedefs.C    testsuite/success/ab.c \
+        testsuite/success/classes.C     testsuite/success/deepreturn.c \
+	testsuite/success/destructor.C  testsuite/success/jump.c \
+	testsuite/success/nested.c      testsuite/success/test1.C \
+	testsuite/success/verysmall.c   testsuite/success/bigger.c \
+	testsuite/success/classes2.C    testsuite/success/default_args.C \
+        testsuite/success/destructor2.C testsuite/success/logical.c \
+	testsuite/success/overload.C    testsuite/success/test5.C  \
+	testsuite/success/virtual.C     testsuite/success/blocks.c \
+	testsuite/success/classes3.C    testsuite/success/demo1.C \
+	testsuite/success/forinit.c     testsuite/success/manyargs.c \
+	testsuite/success/simpleif.c    testsuite/success/test6.C 
+
+
 
 
