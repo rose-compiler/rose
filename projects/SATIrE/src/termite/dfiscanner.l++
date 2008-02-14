@@ -30,16 +30,16 @@ top TOP
 bottom BOTTOM
 int \-?[0-9]+
 assign \-\>
-token (\:\:)?[a-zA-Z\$][A-Za-z_0-9\:\$]*
+/* kudos to kregexpeditor: */
+token (::)?[a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
 %%
 
 {top}    { return TOP; }
 {bottom} { return BOTTOM; }
 {assign} { return ASSIGN; }
 
-{int}   { dfilval.intValue = (int)strtol(dfitext, NULL, 10); return(INT); }
- 
-{token} { dfilval.strValue = new string(dfitext); return(TOKEN); }
-.       { return(dfitext[0]); }
+{int}   { /*cerr<<"INT "<<yytext<<endl;*/   dfilval.intValue = (int)strtol(dfitext, NULL, 10); return(INT); }
+{token} { /*cerr<<"TOKEN "<<yytext<<endl;*/ dfilval.strValue = new string(dfitext); return(TOKEN); }
+.       { /*cerr<<"ID "<<yytext<<endl;*/    return(dfitext[0]); }
 
 %%
