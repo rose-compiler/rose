@@ -1,6 +1,5 @@
 EXTRA_DIST= \
 	build-examples.sh \
-	testsuite.sh \
 	sl1rd/sl1rd.set sl1rd/sl1rd.optla sl1rd/runtests \
 	sl1rd/tests/rderrtest1.C  sl1rd/tests/rdtest1.C  \
 	sl1rd/tests/rdtest2.C     sl1rd/tests/rdtest3.C  \
@@ -87,18 +86,18 @@ installcheck-local:
 	@echo 
 	@echo "Testing sl1rd"
 	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
-#	chmod u+rwx -R $(testdir)/sl1rd
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
-#	$(MAKE) check -C $(testdir)/sl1rd
+	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
+	chmod u+rwx -R $(testdir)/sl1rd
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
+	$(MAKE) check -C $(testdir)/sl1rd
 
 	@echo
 	@echo "Testing sl2rd"
 	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
-#	chmod u+rwx -R $(testdir)/sl2rd
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
-#	$(MAKE) check -C $(testdir)/sl2rd
+	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
+	chmod u+rwx -R $(testdir)/sl2rd
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
+	$(MAKE) check -C $(testdir)/sl2rd
 
 	@echo
 	@echo "Testsuite..."
@@ -108,7 +107,7 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	cp -ur $(top_srcdir)/testsuite $(testdir)
 	$(MAKE) -C $(testdir)/constprop
-	cd $(testdir) ; sh ../testsuite.sh testsuite
+	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
 
 
 #	@echo

@@ -5,6 +5,7 @@ DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=/usr/local/mstools/rose-0.9.0b --with-p
 EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS \
 	docs/satire_cfgconstruction.pdf docs/satire_overview.pdf docs/ docs/satire_attributes_auxiliary_functions \
 	\
+	testsuite/testsuite.sh \
 	testsuite/success/cconstants.c  testsuite/success/classes_and_returns.C  \
 	testsuite/success/demo2.C       testsuite/success/intval.c \
 	testsuite/success/namespaces.C  testsuite/success/small.c \
