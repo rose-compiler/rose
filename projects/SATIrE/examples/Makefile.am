@@ -110,20 +110,20 @@ installcheck-local:
 	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
 
 
-#	@echo
-#	@echo "Testing nnh99_shape"
-#	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
-#	chmod u+rwx -R $(testdir)/nnh99_shape
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-#	$(MAKE) check -C $(testdir)/nnh99_shape
+	@echo
+	@echo "Testing nnh99_shape"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
+	chmod u+rwx -R $(testdir)/nnh99_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
+	$(MAKE) check -C $(testdir)/nnh99_shape
 
-#	@echo
-#	@echo "Testing srw98_shape"
-#	@echo "====================="
-#	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-#	chmod u+rwx -R $(testdir)/srw98_shape
-#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-#	$(MAKE) check -C $(testdir)/srw98_shape
+	@echo
+	@echo "Testing srw98_shape"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+	chmod u+rwx -R $(testdir)/srw98_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+	$(MAKE) check -C $(testdir)/srw98_shape
 
 #	rm -rf $(testdir)

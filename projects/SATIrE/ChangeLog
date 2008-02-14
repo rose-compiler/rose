@@ -1,8 +1,20 @@
-
+V0.8.0 (IN PROGRESS)
 
 * required user changes:
   - change analysis specifications to support AssignInitializer/AggregateInitializer nodes
+  - change command line options according to new options (see 'youranalyzer --help')
+  - you must apply command 'newanalysis' without option '-u' to regenerate main.C
 
+* Changed and added command line options [MS]
+  - names of output files for source,term,gdl can now be specified
+  - options for specifying naming conventions for multiple output files (IN PROGRESS)
+
+* Added support for multiple input and multiple output files [MS] (IN PROGRESS)
+  - multiple input files are represented in one single AST
+  - analysis is performed on one single ICFG
+  - multiple output file generation (source code annotation, and terms)
+  - one single GDL file is generated (for single as well as for multiple input files)
+	
 * ICFG: added better support for initializers [GB]
   - added aggregate initializers for arrays/structs
   - *all* initializer expressions are now wrapped inside appropriate initializer nodes

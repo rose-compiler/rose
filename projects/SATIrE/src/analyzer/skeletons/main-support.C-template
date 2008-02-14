@@ -70,10 +70,9 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,char* output, bool nore
     int test_result = kfg_testit(t.getCFG(), !verbose, "cfg_dump.gdl");
     if (test_result == 0)
     {
-        std::cerr << std::endl
-            << "Warning: There are problems in the CFG."
-            << std::endl
-            << "Do not rely on the analysis results." << std::endl;
+      std::cerr << std::endl
+		<< "Warning: There are problems in the CFG."
+		<< std::endl;
     }
     else {
         if (verbose) std::cout << "no problems found" << std::endl;

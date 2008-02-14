@@ -1,5 +1,5 @@
 #!/bin/sh
 
-./sl1rd tests/rdtest1.C  || exit 1
+./sl1rd --output-gdlfile tests/rdtest1.gdl tests/rdtest1.C  || exit 1
 ./sl1rd --callstringlength 1 tests/rdtest2.C || exit 1
-./sl1rd --sourceoutput tests/rdtest3.C || exit 1
+./sl1rd --output-sourcefile tests/rdtest3.annotated.C tests/rdtest3.C || exit 1

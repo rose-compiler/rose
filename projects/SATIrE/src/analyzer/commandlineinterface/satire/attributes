@@ -9,12 +9,19 @@
  * INT_ATTR_NOSTUB unrolls to all the declaratsion but no method code
  */
 
-STRING_ATTR(AnimationDirectoryName, "anim-out")
 STRING_ATTR(ProgramName, "")
 STRING_ATTR(InputFileName, "")
+
+STRING_ATTR(HelpOptionsText, "")
+
+STRING_ATTR(OutputSourceFileName, "")
+STRING_ATTR(OutputFilePrefix, "")
+STRING_ATTR(OutputGdlFileName, "")
+STRING_ATTR(OutputTermFileName, "")
+STRING_ATTR(OutputGdlAnimDirName, "")
+
 INT_ATTR_NOSTUB(CfgOrdering, 1)
 INT_ATTR(CallStringLength, 0)
-STRING_ATTR(GdlFileName, "analysis_result.gdl")
 
 INT_ATTR_NOSTUB(GcLow,  30)
 INT_ATTR_NOSTUB(GcHigh, 30)
@@ -22,7 +29,8 @@ INT_ATTR(StartBank, 0) /* ?? */
 INT_ATTR(ShareMin,  0) /* ?? */
 INT_ATTR(ShareNum,  0) /* ?? */
 
-BOOL_ATTR(animationGeneration, On)
+BOOL_ATTR(analysisAnnotation, On)
+BOOL_ATTR(checkRoseAst, Off)
 BOOL_ATTR(resultGeneration, On)
 BOOL_ATTR(helpMessageRequested, Off)
 BOOL_ATTR(quiet, Off)
@@ -30,11 +38,14 @@ BOOL_ATTR(pagVerbose, Off)
 BOOL_ATTR(preInfo, Off)
 BOOL_ATTR(postInfo, On)
 BOOL_ATTR(statistics, Off)
-BOOL_ATTR(outputWholeProgram, Off)
+BOOL_ATTR(analysisWholeProgram, On)
 BOOL_ATTR(gdlProcedureSubgraphs, On)
-BOOL_ATTR(analysisResultsTextOutput, Off)
-BOOL_ATTR(analysisResultsSourceOutput, Off)
-BOOL_ATTR(analysisResultsTermOutput, Off)
+BOOL_ATTR(outputText, Off)
+BOOL_ATTR(analysisResultsAnnotation, On)
+BOOL_ATTR(outputSource, Off)
+BOOL_ATTR(outputTerm, Off)
+BOOL_ATTR(outputGdl, Off)
+BOOL_ATTR(outputGdlAnim, Off)
 BOOL_ATTR(vivu, Off) /* callstring length defines chop size */
 INT_ATTR(VivuLoopUnrolling, 2)
 INT_ATTR(Vivu4MaxUnrolling, -1)

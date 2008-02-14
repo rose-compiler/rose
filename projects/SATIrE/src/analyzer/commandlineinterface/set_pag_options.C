@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.3 2007-03-08 15:36:48 markus Exp $
+// $Id: set_pag_options.C,v 1.4 2008-02-14 22:31:47 markus Exp $
 
 // Author: Markus Schordan, 2006
 
@@ -27,10 +27,10 @@ void setPagOptions(AnalyzerOptions opt) {
   debug_stat=opt.statistics(); // bool->int
 
   //output=(char*)(opt.getGdlFileName().c_str());
-  animation=(char*)(opt.getAnimationDirectoryName().c_str());  
+  animation=(char*)(opt.getOutputGdlAnimDirName().c_str());  
   //noresult=!opt.resultGeneration();
 
-  if(!opt.animationGeneration())
+  if(!opt.outputGdlAnim())
     animation=NULL;
   int csl=opt.getCallStringLength();
   if(csl==0 || csl==1) { 

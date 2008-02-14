@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.11 2008-01-25 16:09:17 adrian Exp $
+// $Id: AnalyzerOptions.C,v 1.12 2008-02-14 22:31:47 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -11,93 +11,97 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
   
   // set default values
   setLanguage(Language_CPP);
-#define STRING_ATTR(attrname,defaultval) \
+  #define STRING_ATTR(attrname,defaultval) \
   set##attrname(defaultval);
-#define INT_ATTR(attrname,defaultval) \
+  #define INT_ATTR(attrname,defaultval) \
   set##attrname(defaultval);
-#define INT_ATTR_NOSTUB(attrname,defaultval) \
+  #define INT_ATTR_NOSTUB(attrname,defaultval) \
   set##attrname(defaultval);
-#define BOOL_ATTR(attrname,defaultval) \
+  #define BOOL_ATTR(attrname,defaultval) \
   attrname##defaultval();
-#include "attributes"
-#undef STRING_ATTR
-#undef INT_ATTR
-#undef INT_ATTR_NOSTUB
-#undef BOOL_ATTR
+  #include "attributes"
+  #undef STRING_ATTR
+  #undef INT_ATTR
+  #undef INT_ATTR_NOSTUB
+  #undef BOOL_ATTR
   
   clearCommandLine();
   setCommandLineNum(0);
 
   std::string s=
-    "Frond End options:\n"
+    " Frond End options:\n"
     "   --language c++ [default]\n"
     "   --language c99\n"
     "   --language c89\n"
     "\n"
-    "Analysis options:\n"
-    "   --callstringlength <num>     set callstring length to <num> [default:0]\n"
-    "   --callstringinfinite         select infinite callstring (for non-recursive programs only)\n"
-    "   --cfgordering <num>          set ordering that is used by the iteration algorithm where\n"
-    "                                <num> = 1 : dfs preorder [default]\n"
-    "                                        2 : bfs preorder\n"
-    "                                        3 : reversed dfs postorder\n"
-    "                                        4 : bfs postorder\n"
-    "                                        5 : topsort scc dfs preorder\n"
-    "                                        6 : topsort scc bfs preorder\n"
-    "                                        7 : topsort scc reversed bfs dfs postorder\n"
-    "                                        8 : topsort scc bfs postorder\n"
+    " Analysis options:\n"
+    "   --callstringlength <num>       set callstring length to <num> [default:0]\n"
+    "   --callstringinfinite           select infinite callstring (for non-recursive programs only)\n"
+    "   --cfgordering <num>            set ordering that is used by the iteration algorithm where\n"
+    "                                  <num> = 1 : dfs preorder [default]\n"
+    "                                          2 : bfs preorder\n"
+    "                                          3 : reversed dfs postorder\n"
+    "                                          4 : bfs postorder\n"
+    "                                          5 : topsort scc dfs preorder\n"
+    "                                          6 : topsort scc bfs preorder\n"
+    "                                          7 : topsort scc reversed bfs dfs postorder\n"
+    "                                          8 : topsort scc bfs postorder\n"
+    "   --check-ast                    run all ROSE specific test for checking whether ROSE-AST is correct\n"
+    "   --analysis-files=all|cl        analyse all source files [default=all]\n"
+    "   --analysis-annotation=yes|no   annotate analysis results in AST and output [default=yes]\n"
     "\n"
     " Output options:\n"
-    "   --statistics                  output analyzer statistics on stdout\n"
-    "   --pagverbose                  output analyzer debug info on stdout\n"
-    "   --quiet                       suppress most progress info\n"
-    "   --textoutput                  output the analysis results for each statement on stdout\n"
-    "   --sourceoutput                generate source file with annotated analysis results for each statement\n"
-    "   --termoutput                  generate term (Prolog) representation with annotated analysis results\n"
-    "   --wholeprogram                source/termoutput: output self-contained source program\n"
-    "   --help                        output this help message on stdout\n"
+    "   --statistics=yes|no            output analyzer statistics on stdout\n"
+    "   --verbose=yes|no               output analyzer debug info on stdout\n"
+    "   --quiet                        suppress most progress info\n"
+    "   --output-text=yes|no           output the analysis results for each statement on stdout\n"
+    "   --output-sourcefile <FILENAME> generate source file with annotated analysis results for each statement\n"
+    "   --output-termfile <FILENAME>   generate term (Prolog) representation with annotated analysis results\n"
+    "   --help                         output this help message on stdout\n"
+    "\n"
+    " Handling of multiple input and output files\n"
+    "   --output-source=yes|no         output source files (only useful with option 'output-fileprefix')\n"
+    "   --output-fileprefix <PREFIX>   generate for each input file one output file with prefixed name\n"
+    "                                  (only applied to source files in this version)                 \n"
     "\n"
     " GDL output options:\n"
-    "   --preinfo                     output analysis info before cfg nodes \n"
-    "   --no_preinfo                  do not output preinfo [default]\n"
-    "   --postinfo                    output analysis info after cfg nodes [default]\n"
-    "   --no_postinfo                 do not output postinfo\n"
-    "   --gdl <filename>              generate gdl graph in file <filename>\n"
-    "   --animdir <dirname>           generate animation gdl files in directory <dirname>\n"
-    "                                 [default: --animdir anim-out]\n"
-    "   --no_anim                     do not generate an animation\n"
-    "\n";
-
+    "   --gdl-preinfo=yes|no           output analysis info before cfg nodes [default=no]\n"
+    "   --gdl-postinfo=yes|no          output analysis info after cfg nodes [default=yes]\n"
+    "   --output-gdlfile <filename>    output gdl graph\n"
+    "   --output-gdlanimdir <dirname>  output animation gdl files in directory <dirname>\n"
+    "\n"
     /*
     " PAG garbage collection options:\n"
-    "   --gc_lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
+    "   --pag:gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
     "                                 at which GC is started\n"
-    "   --gc_highperc <num>           if after a GC less than <num>% [0..99] of space in the heap\n"
+    "   --pag:gc-highperc <num>           if after a GC less than <num>% [0..99] of space in the heap\n"
     "                                 is free, a new bank is allocated and added to the heap\n"
     " VIVU options:\n"
-    "   --vivu                        turns on vivu computation\n"
+    "   --pag:vivu                        turns on vivu computation\n"
     "                                 use --callstringlength to set vivu chop size\n"
-    "   --vivuLoopUnrolling <num>     if set to 2 it is distinguished between first and other executions\n"
+    "   --pag:vivuLoopUnrolling <num>     if set to 2 it is distinguished between first and other executions\n"
     "                                 [default 2]\n"
-    "   --vivu4MaxUnrolling <num>     maximal unrolling for VIVU4 mapping [default: -1]\n"
+    "   --pag:vivu4MaxUnrolling <num>     maximal unrolling for VIVU4 mapping [default: -1]\n"
     "\n";
     */
-
-  setOptionsInfo(s);
+    ;
+  setHelpOptionsText(s);
 }
+
 std::string AnalyzerOptions::toString() {
-  return "InputFileName: "+getInputFileName()+"\n"
-    + "Program Name: "+getProgramName()+"\n"
-    + "GDL Filename: "+getGdlFileName()+"\n"
-    + "Animation DirName: "+getAnimationDirectoryName()+"\n";
-}
-void AnalyzerOptions::setOptionsInfo(std::string info) {
-  _optionsInfo = info;
-}
-std::string AnalyzerOptions::getOptionsInfo() {
-  return "\n Usage: "+getProgramName()+" [OPTION]... <filename>\n\n "+_optionsInfo;
+  return "Program Name: "+getProgramName()+"\n"
+    + "Input FileName: "+getInputFileName()+"\n"
+    + "Output Source Filename: "+getOutputTermFileName()+"\n"
+    + "Output Term Filename: "+getOutputTermFileName()+"\n"
+    + "Output GDL Filename: "+getOutputGdlFileName()+"\n"
+    + "Output GDL Anim DirName: "+getOutputGdlAnimDirName()+"\n"
+    + "ROSE Command Line: "+getCommandLine()+"\n"
+    ;
 }
 
+std::string AnalyzerOptions::getOptionsInfo() {
+  return "\n Usage: "+getProgramName()+" [OPTION]... <filename1> <filename2> ... \n\n "+getHelpOptionsText();
+}
 
 #define STRING_ATTR(attrname,defaultval) \
   std::string AnalyzerOptions::get##attrname() { return _##attrname; } \
@@ -181,4 +185,3 @@ void AnalyzerOptions::addCommandLineNum(int cl) { _commandLineNum+=cl; }
 int AnalyzerOptions::getCommandLineNum() { return _commandLineNum; }
 
 bool AnalyzerOptions::retFuncUsed() { return true; }
-
