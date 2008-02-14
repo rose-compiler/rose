@@ -91,6 +91,8 @@ _, _: @;
 SUPPORT
 
 eval :: Expression, State -> ConstStatePair;
+eval(AssignInitializer(exp), state) =
+    eval(exp, state);
 eval(exp, state) =    
     if is_unary(exp) then
         unary(unary_get_child(exp), exp, state)

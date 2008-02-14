@@ -219,6 +219,9 @@ case exp of
   /* boolean value (represented as int 0,1); use val-int(value) for converting to snum */
   BoolValExp(value)       => true; 
 
+  /* initializer; this is a "wrapper" AST node around the initializer expression */
+  AssignInitializer(e)    => is_sl1_expression(e);
+
   /* default case: no expression matches; not an SL1 program */
   _                       => false;
 
