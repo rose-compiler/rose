@@ -32,8 +32,11 @@ int \-?[0-9]+
 assign \-\>
 /* kudos to kregexpeditor: */
 token (::)?[a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
+undef \<undefined\ dfi\>
+
 %%
 
+{undef}  { return UNDEF; }
 {top}    { return TOP; }
 {bottom} { return BOTTOM; }
 {assign} { return ASSIGN; }

@@ -1,3 +1,5 @@
+
+
 * required user changes:
   - change analysis specifications to support AssignInitializer/AggregateInitializer nodes
 
@@ -6,6 +8,13 @@
   - *all* initializer expressions are now wrapped inside appropriate initializer nodes
     rather than representing them as simple assignments as before
 
+* Test of installation" [AP]
+  - new directories:
+	testsuite/success
+	testsuite/failure
+	testsuite/dontrun
+  - examples/testsuite.sh will be called by 'make installcheck'
+	
 V0.7.9 2008-02-08 MS,GB,AP
 
 * upgrade to PAG 7.3.8.55 [MS]

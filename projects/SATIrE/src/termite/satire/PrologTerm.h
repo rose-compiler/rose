@@ -26,9 +26,8 @@ class PrologTerm {
 
   /// Properly quote an atom if necessary
   static std::string quote(const std::string atom) {
-    if ((atom.length() > 0) && 
-	(!islower(atom[0])) && 
-	(!isdigit(atom[0]))) {
+    if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
+	|| (atom.find(' ') < atom.length())) {
       std::string s;
       s = "'" + atom  + "'";
       return s;

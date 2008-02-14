@@ -30,6 +30,7 @@ void dfierror(char *);
 %token <strValue> BOTTOM
 %token <strValue> ASSIGN
 %token <intValue> INT 
+%token <strValue> UNDEF 
 
 /*data structure*/
 %union {
@@ -63,7 +64,8 @@ result:
     dfiterm->addSubterm($2); 
     dfiterm->addSubterm(new PrologList(*$4));
     //cerr << dfiterm->getRepresentation() << endl;
-  }
+  } 
+  | UNDEF { $$ = new PrologAtom("undefined dfi"); }
 ;
 
 assignments:

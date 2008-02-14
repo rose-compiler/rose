@@ -86,26 +86,29 @@ installcheck-local:
 	@echo 
 	@echo "Testing sl1rd"
 	@echo "====================="
-	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
-	chmod u+rwx -R $(testdir)/sl1rd
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
-	$(MAKE) check -C $(testdir)/sl1rd
+#	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
+#	chmod u+rwx -R $(testdir)/sl1rd
+#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
+#	$(MAKE) check -C $(testdir)/sl1rd
 
 	@echo
 	@echo "Testing sl2rd"
 	@echo "====================="
-	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
-	chmod u+rwx -R $(testdir)/sl2rd
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
-	$(MAKE) check -C $(testdir)/sl2rd
+#	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
+#	chmod u+rwx -R $(testdir)/sl2rd
+#	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
+#	$(MAKE) check -C $(testdir)/sl2rd
 
 	@echo
-	@echo "Testing constprop"
+	@echo "Testsuite..."
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	$(MAKE) check -C $(testdir)/constprop
+	cp -ur $(top_srcdir)/testsuite $(testdir)
+	$(MAKE) -C $(testdir)/constprop
+	cd $(testdir) ; sh ../testsuite.sh testsuite
+
 
 #	@echo
 #	@echo "Testing nnh99_shape"
@@ -123,4 +126,4 @@ installcheck-local:
 #	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
 #	$(MAKE) check -C $(testdir)/srw98_shape
 
-	rm -rf $(testdir)
+#	rm -rf $(testdir)
