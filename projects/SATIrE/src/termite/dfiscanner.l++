@@ -30,7 +30,7 @@ top TOP
 bottom BOTTOM
 int \-?[0-9]+
 assign \-\>
-token [a-zA-Z\$][A-Za-z_0-9\$]*
+token (\:\:)?[a-zA-Z\$][A-Za-z_0-9\:\$]*
 %%
 
 {top}    { return TOP; }
