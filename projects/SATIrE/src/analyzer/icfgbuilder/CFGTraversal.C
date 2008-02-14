@@ -1,5 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.11 2008-02-07 00:48:52 markus Exp $
+// Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
+// $Id: CFGTraversal.C,v 1.12 2008-02-14 11:22:09 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -313,16 +313,14 @@ CFGTraversal::visit(SgNode *node) {
                   cfg->names_globals[name] = varsym;
                   cfg->globals.push_back(varsym);
               }
-              if (cfg->names_initializers.find(name)
-                      == cfg->names_initializers.end())
+              if (cfg->names_initializers.find(name) == cfg->names_initializers.end())
               {
-                  if (isSgAssignInitializer(initname->get_initializer()))
+               // GB (2008-02-14): Added support for aggregate initializers.
+                  if (isSgAssignInitializer(initname->get_initializer())
+                          || isSgAggregateInitializer(initname->get_initializer()))
                   {
-                      cfg->names_initializers[name]
-                          = isSgAssignInitializer(initname->get_initializer())
-                                ->get_operand();
-                      cfg->globals_initializers[varsym]
-                          = cfg->names_initializers[name];
+                      cfg->names_initializers[name] = initname->get_initializer();
+                      cfg->globals_initializers[varsym] = cfg->names_initializers[name];
                   }
               }
           }
@@ -1045,39 +1043,45 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	    = isSgAggregateInitializer((*j)->get_initptr());
 	  SgConstructorInitializer *constr_init
 	    = isSgConstructorInitializer((*j)->get_initptr());
-	  if (agg_init && false) {
-	    /* TODO: aggregate initializers */
-	  } else if (initializer) {
-	    SgTreeCopy treecopy;
-	    SgExpression *new_expr
-	      = isSgExpression(initializer->get_operand()->copy(treecopy));
-	    new_expr->set_parent(NULL);
-	    
-	    ExprLabeler el(expnum);
-	    el.traverse(new_expr, preorder);
-	    expnum = el.get_expnum();
-	    new_block = allocate_new_block(new_block, after);
-	    ExprTransformer et(node_id, proc->procnum, expnum,
-			       cfg, new_block);
-	    et.traverse(new_expr, preorder);
-	    for (int z = node_id; z < et.get_node_id(); ++z) {
-	      block_stmt_map[z] = current_statement;
-	    }
-	    node_id = et.get_node_id();
-	    expnum = et.get_expnum();
-	    after = et.get_after();
-	    stmt_start = new StatementAttribute(after, POS_PRE);
-	    
-	    if (et.get_root_var() != NULL)
-	      new_expr = Ir::createVarRefExp(et.get_root_var());
-	    SgExprStatement* expstmt
-	      = Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(declared_var),new_expr));
-	    new_block->statements.push_front(expstmt);
-	    new_block = NULL;
+
+   // GB (2008-02-14): Unified the "normal" and "aggregate" initializer
+   // cases. Even "normal" initializers are now wrapped in a
+   // SgAssignInitializer node! Analysis specification must be aware.
+      SgTreeCopy treecopy;
+      SgExpression *new_expr = NULL;
+      if (agg_init)
+          new_expr = isSgExpression(agg_init->copy(treecopy));
+      else if (initializer)
+          new_expr = isSgExpression(initializer->copy(treecopy));
+
+	  if (new_expr) {
+          new_expr->set_parent(NULL);
+
+          ExprLabeler el(expnum);
+          el.traverse(new_expr, preorder);
+          expnum = el.get_expnum();
+          new_block = allocate_new_block(new_block, after);
+          ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block);
+          et.traverse(new_expr, preorder);
+          for (int z = node_id; z < et.get_node_id(); ++z)
+              block_stmt_map[z] = current_statement;
+          node_id = et.get_node_id();
+          expnum = et.get_expnum();
+          after = et.get_after();
+          stmt_start = new StatementAttribute(after, POS_PRE);
+
+          if (et.get_root_var() != NULL)
+              new_expr = Ir::createVarRefExp(et.get_root_var());
+          SgExprStatement *expstmt
+              = Ir::createExprStatement(Ir::createAssignOp(
+                          Ir::createVarRefExp(declared_var), new_expr));
+          new_block->statements.push_front(expstmt);
+          new_block = NULL;
 	  } else if (constr_init) {
-	    SgTreeCopy treecopy;
-	    SgExpression *new_expr
-	      = isSgExpression(constr_init->copy(treecopy));
+     // GB (2008-02-14): It's not clear to me why this case is almost, but
+     // not entirely, identical to the other cases. Could we merge these?
+     // TODO: investigate!
+	    new_expr = isSgExpression(constr_init->copy(treecopy));
 	    new_expr->set_parent(*j);
 
 	    ExprLabeler el(expnum);
