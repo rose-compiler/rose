@@ -1627,11 +1627,14 @@ resetParentPointersInMemoryPool()
 
      TimingPerformance timer ("Reset parent pointers in memory pool:");
 
+     ResetParentPointersInMemoryPool t;
+     t.traverseMemoryPool();
+
+  // JJW: Moved this down because it requires that some non-Sg_File_Info
+  // parent pointers have been set
   // Reset parents of any remaining unset Sg_File_Info object first
      resetFileInfoParentPointersInMemoryPool();
 
-     ResetParentPointersInMemoryPool t;
-     t.traverseMemoryPool();
    }
      
 void
@@ -1941,7 +1944,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 #endif
                default:
                   {
-#if 1
+#if 0
                  // DQ (6/26/2006): If we don't reset the parent pointer then this code is redundant with the AST Consistancy testing
                     if (locatedNode->get_parent() == NULL)
                        {

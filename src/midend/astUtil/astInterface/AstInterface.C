@@ -1,6 +1,7 @@
 
 #include <rose.h>
 #include <general.h>
+#include <stdlib.h>
 
 #include <iostream>
 #include <string.h>
@@ -730,15 +731,16 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
   // DQ (1/2/2007): The use of _astInterface_Tmp.c does not provide a unique filename
   // to support testing of the loop processor in parallel.  This is modified below to
   // make the name unique for each process.
-     unsigned long processID = getpid();
-     string processIDstring = StringUtility::numberToString(processID);
-     string uniqueFilename = "_astInterface_Tmp_" + processIDstring + ".c";
-  // printf ("In AstInterfaceImpl::CreateDeclarationStmts(): build a unique filename processIDstring = %s \n",uniqueFilename.c_str());
+     char uniqueFilename[] = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     int fd = mkstemp(uniqueFilename);
+     if (fd == -1) {
+       perror("mkstemp: ");
+       abort();
+     }
 
-  // string decl = "echo \"" + _decl + "\"  > _astInterface_Tmp.c \n";
-     string decl = "echo \"" + _decl + "\"  > " + uniqueFilename + " \n";
+     write(fd, _decl.c_str(), _decl.size());
+     write(fd, "\n", 1);
 
-     system(decl.c_str());
      int error = 0;
      vector<string> argv(2);
 
@@ -750,8 +752,9 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
      SgFile* addDecls = new SgFile(argv, error);
 
   // system( "rm _astInterface_Tmp.c");
-     string systemString = string("rm '") + uniqueFilename + "'";
-     system( systemString.c_str() );
+     unlink( uniqueFilename );
+  // string systemString = string("rm '") + uniqueFilename + "'";
+  // system( systemString.c_str() );
 
      SgGlobal *declRoot = addDecls->get_root();
      SgDeclarationStatementPtrList& decls = declRoot->get_declarations ();

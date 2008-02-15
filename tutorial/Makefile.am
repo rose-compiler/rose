@@ -84,7 +84,6 @@ noinst_PROGRAMS = \
    wholeGraphFilterOnPersistantAttributes \
    graphGenerationOfSubtree \
    virtualFunctionIdentification \
-   varSubstCopy \
    switchWithoutDefault \
    addStruct \
    sprintf_to_snprintf
@@ -306,9 +305,6 @@ graphGenerationOfSubtree_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 virtualFunctionIdentification_SOURCES = virtualFunctionIdentification.C
 virtualFunctionIdentification_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-
-varSubstCopy_SOURCES = varSubstCopy.C
-varSubstCopy_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 switchWithoutDefault_SOURCES = switchWithoutDefault.C
 switchWithoutDefault_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -657,7 +653,6 @@ generatedCodeExamples = \
    graphTraversal.pdf \
    rose_inputCode_addComments.C \
    rose_inputCode_codeGenerationFormatControl.C \
-   rose_inputCode_varSubstCopy.C \
    traversalShortCircuit.out \
    wholeGraphAST.pdf \
    collectCommentsSkipHeaderFiles.out \
@@ -1033,9 +1028,6 @@ rose_inputCode_partialRedundancyElimination.C: partialRedundancyElimination
 rose_inputCode_codeGenerationFormatControl.C: codeGenerationFormatControl
 	./codeGenerationFormatControl $(ROSE_FLAGS) -c $(srcdir)/inputCode_codeGenerationFormatControl.C
 
-rose_inputCode_varSubstCopy.C: varSubstCopy
-	./varSubstCopy $(ROSE_FLAGS) -c $(srcdir)/inputCode_varSubstCopy.C
-
 dataFlowGraph.pdf: dataFlowGraph
 	@echo "Generate the data flow graph from processing of input code (dataFlowGraph) ..."
 	./callGraphAnalysis $(ROSE_FLAGS) -c $(srcdir)/inputCode_dataFlowGraphAnalysis.C
@@ -1126,7 +1118,6 @@ EXTRA_DIST = \
    inputCode_testsymbolTableHandling.C \
    inputCode_traversalShortCircuit.C \
    inputCode_collectComments.C \
-   inputCode_varSubstCopy.C \
    inputCode_ClassHierarchyGraph.C \
    input_defuseAnalysis.C \
    attributeCopyExamples.C \

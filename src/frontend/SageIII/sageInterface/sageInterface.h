@@ -1,21 +1,8 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
 
-// Liao 1/7/2008: start to move AST utility functions into this namespace, 
-// see the rear of the file for new SAGE interfaces
-//
-// Major AST manipulation functions are scattered in the following directories 
-// * src/midend/astUtil/astInterface
-// * src/roseSupport
-// * src/util
-// * src/frontend/SageIII/sageInterface
-// * project/OpenMP_Translator/ AST_Tools class
-//
-// Last modified: 1/11/2008
-//------------------------------------------------------------------------------
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
-// Added global function for getting the string associated 
-// with an enum (which is defined in global scope)
+//! A global function for getting the string associated with an enum (which is defined in global scope)
 std::string getVariantName (VariantT v);
 
 // DQ (12/9/2004): Qing, Rich and Dan have decided to start this namespace within ROSE
@@ -26,7 +13,7 @@ std::string getVariantName (VariantT v);
 // to represent the compete interface and different developers may contribute interface
 // functions easily.
 
-// Constructor handling:
+// Constructor handling: (We have sageBuilder.h now for this purpose, Liao 2/1/2008)
 //     We could add simpler layers of support for construction of IR nodes by 
 // hidding many details in "makeSg***()" functions.  such functions would
 // return pointers to the associated Sg*** objects and would be able to hide
@@ -35,20 +22,34 @@ std::string getVariantName (VariantT v);
 //      optional parameter settings not often required
 //      use of Sg_File_Info objects (and setting them as transformations)
 //      
-
 // namespace AST_Interface  (this name is taken already by some of Qing's work :-)
 
+//! an alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+#define TRANS_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+
+//------------------------------------------------------------------------
 /*! \brief This namespace is to organize functions that are useful when operating on the AST.
 
-  \defgroup frontendSageUtilityFunctions SAGE III utility functions
+  \defgroup frontendSageUtilityFunctions SAGE III utility functions(SageInterface)
   \ingroup ROSE_FrontEndGroup
 
     The Sage III IR design attempts to be minimalist.  thus additional functionality is
 intended to be presented using separate higher level interfaces which work with the IR.
-this namespace collects functions that operate on the IR and are suppotive of numerous types of
-routine operations required to support general analysis and transformation of the AST.
+The namespace, SageInterface, collects functions that operate on the IR and are suppotive of numerous types of routine operations required to support general analysis and transformation of the AST.
 
     \internal Further organization of the functions in this namespace is required.
+Major AST manipulation functions are scattered in the following directories 
+   - src/midend/astUtil/astInterface
+   - src/roseSupport/utility_function.h,  namespace ROSE 
+   - src/roseSupport/TransformationSupport.h, class TransformationSupport
+   - src/midend/astInlining/inlinerSupport.C
+   - src/frontend/SageIII/sageInterface
+   - projects: such as outliner, OpenMP_Translator
+Some other utility functions not related AST can be found in 
+   - src/util/stringSupport/string_functions.h, namespace StringUtility
+   - src/roseExtensions/dataStructureTraversal/helpFunctions.C
+   - projects/dataStructureGraphing/helpFunctions.C
+
 
     \todo A number of additional things to do:
          - Pull scope handling out of EDG/Sage III translation so that is is made 
@@ -58,21 +59,30 @@ routine operations required to support general analysis and transformation of th
  */
 namespace SageInterface
 {
-//! an alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
-#define TRANS_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 //! an internal counter for generating unqiue SgName
 extern int gensym_counter;
 
-//-------------------------------symbol table handling -------------------
 //------------------------------------------------------------------------
-  // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
-  SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &	functionName,
-							SgScopeStatement *currentScope);
-
+//@{
+/*! @name Symbol tables
+  \brief  utility functions for symbol tables
+*/
   // Liao 1/22/2008, used for get symobls for generating variable reference nodes
-  //! find a symbol in current and ancestor scopes for a given variable name
+  //! find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
   SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
-							SgScopeStatement *currentScope);
+							SgScopeStatement *currentScope=NULL);
+
+  // DQ (11/24/2007): Functions moved from the Fortran support so that they could be called from within astPostProcessing.
+  //!look up the first matched function symbol in parent scopes given only a function name, starting from top of ScopeStack if currentscope is not given or NULL
+  SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &	functionName,
+							SgScopeStatement *currentScope=NULL);
+
+  // Liao, 1/24/2008, find exact match for a function
+  //!look up function symbol in parent scopes given both name and function type, starting from top of ScopeStack if currentscope is not given or NULL
+  SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &  functionName, 
+                                                        const SgType* t,
+                                                        SgScopeStatement *currentScope=NULL);
+
   /*! \brief set_name of symbol in symbol table.
 
       This function extracts the symbol from the relavant symbol table, 
@@ -84,6 +94,46 @@ extern int gensym_counter;
   // DQ (12/9/2004): Moved this function (by Alin Jula) from being a member of SgInitializedName
   // to this location where it can be a part of the interface for the Sage III AST.
   int set_name (SgInitializedName * initializedNameNode, SgName new_name);
+
+  /*! \brief Output function type symbols in global function type symbol table.
+   */
+  void outputGlobalFunctionTypeSymbolTable ();
+
+  // DQ (6/27/2005):
+  /*! \brief Output the local symbol tables.
+
+      \implementation Each symbol table is output with the file infor where it is located in the source code.
+   */
+  void outputLocalSymbolTables (SgNode * node);
+
+  class OutputLocalSymbolTables:public AstSimpleProcessing
+        {
+          public:
+    void visit (SgNode * node);
+        };
+  /*! \brief Regenerate the symbol table.
+
+     \implementation current symbol table must be NULL pointer before calling this 
+     function (for safety, but is this a good idea?)
+   */
+  // DQ (9/28/2005):
+  void rebuildSymbolTable (SgScopeStatement * scope);
+
+  //SgNode::get_globalFunctionTypeTable() ;
+
+//@}
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Stringify 
+  \brief Generate a useful string (name) to describe a SgNode
+*/
+  /*! \brief Generate a useful name to describe the SgNode
+
+      \internal default names are used for SgNode objects that can not be associated with a name.
+   */
+  // DQ (9/21/2005): General function for extracting the name of declarations (when they have names)
+    std::string get_name (const SgNode * node);
 
   /*! \brief Generate a useful name to describe the declaration
 
@@ -130,41 +180,13 @@ extern int gensym_counter;
    */
     std::string get_name (const SgSupport * node);
 
-  /*! \brief Generate a useful name to describe the SgNode
+//@}
 
-      \internal default names are used for SgNode objects that can not be associated with a name.
-   */
-  // DQ (9/21/2005): General function for extracting the name of declarations (when they have names)
-    std::string get_name (const SgNode * node);
-  //---------------------output symbol tables---------------
-
-  /*! \brief Output function type symbols in global function type symbol table.
-   */
-  void outputGlobalFunctionTypeSymbolTable ();
-
-  // DQ (6/27/2005):
-  /*! \brief Output the local symbol tables.
-
-      \implementation Each symbol table is output with the file infor where it is located in the source code.
-   */
-  void outputLocalSymbolTables (SgNode * node);
-
-  class OutputLocalSymbolTables:public AstSimpleProcessing
-        {
-          public:
-    void visit (SgNode * node);
-        };
-  /*! \brief Regenerate the symbol table.
-
-     \implementation current symbol table must be NULL pointer before calling this 
-     function (for safety, but is this a good idea?)
-   */
-  // DQ (9/28/2005):
-  void rebuildSymbolTable (SgScopeStatement * scope);
-
-  //SgNode::get_globalFunctionTypeTable() ;
-//---------------------------------- class utilities----------------------
 //------------------------------------------------------------------------
+//@{
+/*! @name Class utilities
+  \brief
+*/
   /*! \brief Get the default destructor from the class declaration
    */
   // DQ (6/21/2005): Get the default destructor from the class declaration
@@ -176,6 +198,21 @@ extern int gensym_counter;
   // DQ (6/22/2005): Get the default constructor from the class declaration
   SgMemberFunctionDeclaration *getDefaultConstructor (SgClassDeclaration *
 						      classDeclaration);
+  /*! \brief Return true if template definition is in the class, false if outside of class.
+   */
+  // DQ (8/27/2005): 
+  bool templateDefinitionIsInClass (SgTemplateInstantiationMemberFunctionDecl
+				    * memberFunctionDeclaration);
+
+  /*! \brief Generate a non-defining (forward) declaration from a defining function declaration.
+
+     \internal should put into sageBuilder ?
+   */
+  // DQ (9/17/2005):
+     SgTemplateInstantiationMemberFunctionDecl*
+     buildForwardFunctionDeclaration
+        (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
+
 #if 0
 // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration 
 // (so that it can handle template functions and member functions)
@@ -188,45 +225,18 @@ extern int gensym_counter;
 				 memberFunctionDeclaration);
 #endif
 
-  /*! \brief Return true if template definition is in the class, false if outside of class.
-   */
-  // DQ (8/27/2005): 
-  bool templateDefinitionIsInClass (SgTemplateInstantiationMemberFunctionDecl
-				    * memberFunctionDeclaration);
+//@}
 
-//--------------------------- function tools------------------------------
 //------------------------------------------------------------------------
+//@{
+/*! @name Unsorted
+  \brief Not sure the classifications right now
+*/
 
   /*! \brief Return true if function is overloaded.
    */
   // DQ (8/27/2005):
   bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
-
-  /*! \brief Generate a non-defining (forward) declaration from a defining function declaration.
-   */
-  // DQ (9/17/2005):
-     SgTemplateInstantiationMemberFunctionDecl*
-     buildForwardFunctionDeclaration
-        (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
-
-//--------------------------- AST properties -----------------------------
-//------------------------------------------------------------------------
-//  std::string version();  // utility_functions.h, version number
-  /*! brief These traverse the memory pool of SgFile IR nodes and determine what laguages are in use!
-   */
-  bool is_C_language ();
-  bool is_C99_language ();
-  bool is_Cxx_language ();
-  bool is_Fortran_language ();
-  bool is_binary_executable();
-  bool is_mixed_C_and_Cxx_language ();
-  bool is_mixed_Fortran_and_C_language ();
-  bool is_mixed_Fortran_and_Cxx_language ();
-  bool is_mixed_Fortran_and_C_and_Cxx_language ();
-
-
-//------------------------entity generators  -----------------------------
-//------------------------------------------------------------------------
 
   // DQ (6/22/2005):
   /*! \brief Generate unique name from C and C++ constructs.
@@ -266,66 +276,6 @@ extern int gensym_counter;
     std::string addMangledNameToCache (SgNode * astNode,
 				       const std::string & mangledName);
 
-//------------------------------- scope ----------------------------------
-//------------------------------------------------------------------------
-  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
-  // labels for scopes in a function (as required for name mangling).
-  /*! \brief Assigns unique numbers to each SgScopeStatement of a function. 
-
-      This is used to provide unique names for variables and types defined is 
-      different nested scopes of a function (used in mangled name generation).
-   */
-  void resetScopeNumbers (SgFunctionDefinition * functionDeclaration);
-
-  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
-  // labels for scopes in a function (as required for name mangling).
-  /*! \brief Clears the cache of scope,integer pairs for the input function.
-
-      This is used to clear the cache of computed unique lables for scopes in a function.
-      This function should be called after any transformation on a function that might effect
-      the allocation of scopes and cause the existing unique numbrs to be incorrect.
-      This is part of support to provide unique names for variables and types defined is 
-      different nested scopes of a function (used in mangled name generation).
-   */
-  void clearScopeNumbers (SgFunctionDefinition * functionDefinition);
-
-  SgNamespaceDefinitionStatement * enclosingNamespaceScope (SgDeclarationStatement * declaration);
-//  SgNamespaceDefinitionStatement * getEnclosingNamespaceScope (SgNode * node);
-
-  bool isPrototypeInScope (SgScopeStatement * scope,
-			   SgFunctionDeclaration * functionDeclaration,
-			   SgDeclarationStatement * startingAtDeclaration);
-  // Liao, 1/9/2008
-  /*! 
-  	\brief return the first global scope under current project
-  */
-  SgGlobal * getFirstGlobalScope(SgProject *project);
-
-  /*!
-	\brief get the last statement within a scope, return NULL if does not exit
-  */
-  SgStatement* getLastStatement(SgScopeStatement *scope);
-
-  //SgFunctionDeclaration* findMain(SgNode* n) 
-  // int get_scope_level(SgNode* astNode);
-
-//-------------------source position: Sg_File_Info------------------------
-//------------------------------------------------------------------------
-  void setSourcePosition (SgLocatedNode * locatedNode);
-
-  // Liao, 1/8/2007, set file info. for a whole subtree as transformation generated
-//! set current node's source position as transformation generated
-  void setOneSourcePositionForTransformation(SgNode *node);
-
-//! recursively set source position info(Sg_File_Info) as transformation generated
-  void setSourcePositionForTransformation (SgNode * root);
-
-//! set source position info(Sg_File_Info) as transformation generated for all SgNodes 
-  void setSourcePositionForTransformation_memoryPool();
-
-
-//----------------------------misc. utilities ----------------------------
-//------------------------------------------------------------------------
   SgDeclarationStatement * getNonInstantiatonDeclarationForClass
     (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
 
@@ -354,21 +304,119 @@ extern int gensym_counter;
     std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy,
 					     SgCopyHelp * help = NULL);
 
-// deepCopy of AST subtree, Liao, Jan. 15, 2008
-//! used for deep copy
-   static SgTreeCopy g_treeCopy; 
 //! deep copy a subtree
    SgNode* deepCopy (const SgNode* subtree);
 
-//--------------------------------access functions---------------------------
-//----------------------------------get/set sth.-----------------------------
+//! deep copy an expression
+   SgExpression* copyExpression(SgExpression* e) ;
 
 // from VarSym.cc in src/midend/astOutlining/src/ASTtools
 //! Get the variable symbol for the first initialized name of a declaration stmt.
   SgVariableSymbol* getFirstVarSym (SgVariableDeclaration* decl);
 
-//---------------------------AST Data types-------------------------------
+//! A special purpose statement removal function, originally from inlinerSupport.h, Need Jeremiah's attention to refine it. Please don't use it for now.
+void myRemoveStatement(SgStatement* stmt);
+
+bool isConstantTrue(SgExpression* e);
+bool isConstantFalse(SgExpression* e);
+
+bool isCallToParticularFunction(SgFunctionDeclaration* decl, SgExpression* e);
+bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, SgExpression* e);
+//@}
+
 //------------------------------------------------------------------------
+//@{
+/*! @name AST properties
+  \brief version, language properties of currentAST
+*/
+
+//  std::string version();  // utility_functions.h, version number
+  /*! brief These traverse the memory pool of SgFile IR nodes and determine what laguages are in use!
+   */
+  bool is_C_language ();
+  bool is_C99_language ();
+  bool is_Cxx_language ();
+  bool is_Fortran_language ();
+  bool is_binary_executable();
+  bool is_mixed_C_and_Cxx_language ();
+  bool is_mixed_Fortran_and_C_language ();
+  bool is_mixed_Fortran_and_Cxx_language ();
+  bool is_mixed_Fortran_and_C_and_Cxx_language ();
+
+//@}
+
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Scope
+  \brief 
+*/
+
+  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
+  // labels for scopes in a function (as required for name mangling).
+  /*! \brief Assigns unique numbers to each SgScopeStatement of a function. 
+
+      This is used to provide unique names for variables and types defined is 
+      different nested scopes of a function (used in mangled name generation).
+   */
+  void resetScopeNumbers (SgFunctionDefinition * functionDeclaration);
+
+  // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
+  // labels for scopes in a function (as required for name mangling).
+  /*! \brief Clears the cache of scope,integer pairs for the input function.
+
+      This is used to clear the cache of computed unique lables for scopes in a function.
+      This function should be called after any transformation on a function that might effect
+      the allocation of scopes and cause the existing unique numbrs to be incorrect.
+      This is part of support to provide unique names for variables and types defined is 
+      different nested scopes of a function (used in mangled name generation).
+   */
+  void clearScopeNumbers (SgFunctionDefinition * functionDefinition);
+
+  
+  SgNamespaceDefinitionStatement * enclosingNamespaceScope (SgDeclarationStatement * declaration);
+//  SgNamespaceDefinitionStatement * getEnclosingNamespaceScope (SgNode * node);
+
+  bool isPrototypeInScope (SgScopeStatement * scope,
+			   SgFunctionDeclaration * functionDeclaration,
+			   SgDeclarationStatement * startingAtDeclaration);
+//@}
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Source file position infomation
+  \brief set Sg_File_Info for a SgNode
+*/
+//! build and attach comment, comment style is inferred from the language type of the target node if not provided
+PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
+               PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
+
+//! insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope.
+PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
+
+  // Liao, 1/8/2007, set file info. for a whole subtree as transformation generated
+//! set current node's source position as transformation generated
+  void setOneSourcePositionForTransformation(SgNode *node);
+
+//! recursively set source position info(Sg_File_Info) as transformation generated
+  void setSourcePositionForTransformation (SgNode * root);
+
+//! set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
+  void setSourcePositionForTransformation_memoryPool();
+
+//! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.
+  void setSourcePosition (SgLocatedNode * locatedNode);
+
+//@}
+
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Data type
+  \brief
+*/
+
 // from src/midend/astInlining/typeTraits.h
 // src/midend/astUtil/astInterface/AstInterface.h
 
@@ -396,8 +444,14 @@ bool isConstType(SgType* t);
 //! Is this a scalar type?
 bool isScalarType(SgType* t);
 
-//--------------------------------loop handling --------------------------
+//@}
+
 //------------------------------------------------------------------------
+//@{
+/*! @name Loop handling
+  \brief
+*/
+
 // by Jeremiah
 //! Add a step statement to the end of a loop body
 //! Add a new label to the end of the loop, with the step statement after
@@ -407,82 +461,108 @@ bool isScalarType(SgType* t);
 //! For example:
 //! while (a < 5) {if (a < -3) continue;} (adding "a++" to end) becomes
 //! while (a < 5) {if (a < -3) goto label; label: a++;}
-template <class LoopStatement>
-void addStepToLoopBody(LoopStatement* loopStmt, SgStatement* step);
+void addStepToLoopBody(SgScopeStatement* loopStmt, SgStatement* step);
 
 void moveForStatementIncrementIntoBody(SgForStatement* f);
 void convertForToWhile(SgForStatement* f);
 void convertAllForsToWhiles(SgNode* top);
 //! change continue statements in a given block of code to gotos to a label
-void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
+void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
+ 
+//! Routines to get and set the body of a loop
+SgBasicBlock* getLoopBody(SgScopeStatement* loop);
+void setLoopBody(SgScopeStatement* loop, SgBasicBlock* body);
 
-//-----------------------topdown search and find -------------------------
+//! Routines to get and set the condition of a loop
+SgStatement* getLoopCondition(SgScopeStatement* loop);
+void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
+
+//@}
+
 //------------------------------------------------------------------------
-  /*! \brief top-down traversal from current node to find the main() function declaration
-  */
-   SgFunctionDeclaration* findMain(SgNode* currentNode);  
+//@{
+/*! @name Topdown search
+  \brief Top-down traversal from current node to find a node of a specified type
+*/
+
+//! query a subtree to get all nodes of a given type.
+template <typename NodeType>
+std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant);
+
+/*! \brief top-down traversal from current node to find the main() function declaration
+*/
+SgFunctionDeclaration* findMain(SgNode* currentNode);  
 
 	  //midend/programTransformation/partialRedundancyElimination/pre.h
-  //! find referenced symbols within an expression
-   std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
+//! find referenced symbols within an expression
+std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
 
-  //loopHelpers.h: already included into rose.h and its functons are put in global scope
-  // should be include them here or not? 
-  
 //! Find break statements inside a particular statement, stopping at nested loops or switchs
-//! loops or switch statements defines their own contexts for break
-//! statements.  The function will stop immediately if run on a loop or switch
-//! statement.
-  std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code); 
+/*! loops or switch statements defines their own contexts for break
+ statements.  The function will stop immediately if run on a loop or switch
+ statement.
+*/
+std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code); 
 
 //! Find all continue statements inside a particular statement, stopping at nested loops
-//! Nested loops define their own contexts for continue statements.  The
-//! function will stop immediately if run on a loop.
+/*! Nested loops define their own contexts for continue statements.  The
+ function will stop immediately if run on a loop.
+*/
   std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code);
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgReturnStmt*> findReturnStmts(SgStatement* scope);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw); 
+#if 0 //TODO
+  // 1. preorder traversal from current SgNode till find next SgNode of type V_SgXXX
+  //    until reach the end node
+  SgNode* getNextSgNode( const SgNode* astSourceNode, VariantT=V_SgNode, SgNode* astEndNode=NULL);
 
-//---------------------------bottom up search-----------------------------
-//----------------------find enclosing(ancestor) SgXXX -------------------
-/*! \brief traverses through the parents to the first scope of a given node
+  // 2. return all nodes of type VariantT following the source node
+  std::vector<SgNode*> getAllNextSgNode( const SgNode* astSourceNode, VariantT=V_SgNode, SgNode* astEndNode=NULL);
+
+#endif
+
+//@}
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Bottom up search 
+  \brief Backwards traverse through the AST to find a node, findEnclosingXXX()
 */
-  SgScopeStatement* getScope(const SgNode* astNode); 
-  SgFunctionDefinition* getEnclosingProcedure(SgNode* n);
+// remember to put const to all arguments.
+//! traverse back through a node's parents to find the first node matching the desired type, includingSelf specifies if the current node is checked.
+SgNode * getEnclosingNode(const SgNode*, const VariantT, const bool includingSelf=false);
+
+//! get the closest scope 
+SgScopeStatement* getScope(const SgNode* astNode); 
+
+  //! traverse back through a node's parents to find the enclosing global scope
+  SgGlobal* getGlobalScope( const SgNode* astNode);
+
+  //! find the function definition
+  SgFunctionDefinition* getEnclosingProcedure(SgNode* n, const bool includingSelf=false);
+
+  SgFunctionDefinition* getEnclosingFunctionDefinition(SgNode* astNode, const bool includingSelf=false);
+
   SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
 
-  SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode);
-  SgFunctionDefinition* getEnclosingFunctionDefinition(SgNode* astNode);
+  SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
 
    //roseSupport/utility_functions.h
+  //! get the SgFile node from current node
   SgFile* getEnclosingFileNode ( const SgNode* astNode );
-//! Get the initializer containing an expression if it is within an initializer.
+
+  //! Get the initializer containing an expression if it is within an initializer.
   SgInitializer* getInitializerOfExpression(SgExpression* n);
 
+// TODO
 #if 0
-//---------------------------bottom up search-----------------------------
-//----------------------find enclosing(ancestor) SgXXX -------------------
-// get ancestor nodes, using bottom up/reverse search
-// a universal reverse traveral interface 
-// remember to put const to all arguments.
-
-// what interface name is better?   getEnclosingXXX() vs. getAncestorXXX()
-
-   // generic functions for base implementation
-   // reverse search for nodes of type VariantT, until reaching endNode
-
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
-   std::vector<SgNode *>
-            getAllEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
-
-   SgFile* getFile( const SgNode* astNode);
-   SgGlobal* getGlobalScope( const SgNode* astNode);
-
+   std::vector<SgNode *>  getAllEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
+   SgVariableDeclaration* findVariableDeclaratin( const string& varname)
 
    SgClassDeclaration* getEnclosingClassDeclaration( const SgNode* astNode);
    SgClassDefinition* getEnclosingClassDefinition( const SgNode* astNode);
-
-  SgVariableDeclaration* findVariableDeclaratin( const string& varname)
 
    // e.g. for some expression, find its parent statement
    SgStatement* getEnclosingStatement(const SgNode* astNode);
@@ -492,30 +572,138 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
   
   // used to build a variable reference for compiler generated code in current scope
    SgSymbol * findReachingDefinition (SgScopeStatement* startScope, SgName &name);
+#endif
+//@}
 
-//------------------------AST traversal/walk-----------------------------
 //------------------------------------------------------------------------
+//@{
+/*! @name AST Walk and Traversal
+  \brief 
+*/
+  // Liao, 1/9/2008
+  /*! 
+  	\brief return the first global scope under current project
+  */
+  SgGlobal * getFirstGlobalScope(SgProject *project);
 
-  // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
-  // default is any node
-  //SgNode* getNextSgNode( const SgNode* currentNode, VariantT=0);// VariantT 0 is valid!
-
-  SgNode* getNextSgNode( const SgNode* currentNode, VariantT=V_SgNode);
-
-// Question: cross scope boundary or not? 
-// bool crossScope==true, 
-
-  SgStatement* getNextStatement(SgStatement * currentStmt, bool crossScope=true);
-  SgStatement* getPreviousStatement(SgStatement * currentStmt,bool crossScope=true);
-
-  SgStatement* getFirstStatement(SgScopeStatement *scope);
+  /*!
+	\brief get the last statement within a scope, return NULL if it does not exit
+  */
   SgStatement* getLastStatement(SgScopeStatement *scope);
+
+  //! get the first statement within a scope, return NULL if it does not exist
+  SgStatement* getFirstStatement(SgScopeStatement *scope);
+
+//! get next statement within the same scope of current statement 
+  SgStatement* getNextStatement(SgStatement * currentStmt);
+
+//! get previous statement within the same scope of current statement 
+  SgStatement* getPreviousStatement(SgStatement * currentStmt);
+#if 0 //TODO
+  // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
+  SgNode* getNextSgNode( const SgNode* currentNode, VariantT=V_SgNode);
+#endif 
+//@}
+
+//------------------------------------------------------------------------
+//@{
+/*! @name AST comparison
+  \brief Compare AST nodes, subtree, etc
+*/
+  //! check if a SgIntVal node has a given value 
+ bool isEqualToIntConst(SgExpression* e, int value); 
+//@}
+
+//------------------------------------------------------------------------
+//@{
+/*! @name AST insert, removal, and replacement
+  \brief Add, remove,and replace AST
+ 
+  scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
+*/
+
+//! append a statement in the end of current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
+void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
+
+void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
+
+//! insert a statement before or after the targt statement within the target's scope
+void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);
+
+//! insert a statement before a target statment
+void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt);
+
+//! insert a statement After a target statment
+void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
+
+//! append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
+/*! we recommend to build SgFunctionParameterList before building a function delcaration
+ However, it is still allowed to append new arguments for existing function declarations.
+ \todo function type , function symbol also need attention.
+*/
+void appendArg(SgFunctionParameterList *, SgInitializedName*);
+
+//! append an expression to a SgExprListExp, set the parent pointer also
+void appendExpression(SgExprListExp *, SgExpression*);
+
+//! set parameter list for a function declaration, considering existing parameter list etc.
+void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paralist);
+
+//! set a pragma of a pragma declaration. handle memory release for preexisting pragma, and set parent pointer.
+void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);
+
+  //! replace an expression with another, used for variable reference substitution and others. the old expression can be deleted (default case)  or kepted.
+  void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp=false);
+
+//! Set original expression trees to NULL for SgValueExp or SgCastExp expressions, so you can change the value and have it unparsed correctly.
+void removeAllOriginalExpressionTrees(SgNode* top);
+
+//@}
+//------------------------------------------------------------------------
+//@{
+/*! @name AST repair, fixup, and postprocessing.
+  \brief 
+*/
+//! Connect variable reference to the right variable symbols when feasible, return the number of references being fixed.
+/*! In AST translation, it is possible to build a variable reference before the variable
+ is being declared. buildVarRefExp() will use fake initialized name and symbol as placeholders
+ to get the work done. Users should call fixVariableReference() when AST is complete and all
+ variable decalations are in place.
+*/
+int fixVariableReferences(SgNode* root);
+
+//@}
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Advanced AST transformations and optimizations
+  \brief Some customized transformations, not sure if they are suitable for this namespace
+*/
+
+//! Remove jumps whose label is immediately after the jump.  Used to clean up inlined code fragments.
+void removeJumpsToNextStatement(SgNode*);
+
+//! Remove labels which are not targets of any goto statements
+void removeUnusedLabels(SgNode* top);
+
+//! Remove consecutive lables
+void removeConsecutiveLabels(SgNode* top);
+
+//! split long expressions into blocks of statements
+void splitExpressionIntoBasicBlock(SgExpression* expr);
+
+//! remove labeled goto statements
+void removeLabeledGotos(SgNode* top);
+
+//! If the given statement contains any break statements in its body, add a new label below the statement and change the breaks into gotos to that new label.
+void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
+//@}
+
+
+#if 0
 
 //------------------------AST dump, stringify-----------------------------
 //------------------------------------------------------------------------
-  void generatePDF ( const SgProject & project ); //utility_functions.h
-  void generateDOT ( const SgProject & project );
-
   std::string buildOperatorString ( SgNode* astNode ); //transformationSupport.h
 
   // do we need these?
@@ -552,17 +740,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
   //src/frontend/SageIII/astPostProcessing
   //AstPostProcessing(SgNode * node)
 
-//-------------------------------Symbol table ----------------------------
-//------------------------------------------------------------------------
-//   current support from SgScopeStatement is quite good
-// 
-
-  SgFunctionSymbol *lookupFunctionSymbolInParentScopes (const SgName &  functionName,
-                                                        SgScopeStatement *currentScope);
-  void rebuildSymbolTable (SgScopeStatement * scope);
-  void outputLocalSymbolTables (SgNode * node);
-  void outputGlobalFunctionTypeSymbolTable ();
-
 //--------------------------AST modification------------------------------
 //------------------------------------------------------------------------
 // any operations changing AST tree, including
@@ -570,7 +747,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
 
   // insert before or after some point, argument list is consistent with LowLevelRewrite
   void insertAst(SgNode* targetPosition, SgNode* newNode, bool insertBefore=true);
-  void insertStatement(SgStatement* targetStmt, SgStatement* newStmt, bool insertBefore=true);
 
   // previous examples
   //void myStatementInsert(SgStatement* target,...)
@@ -597,9 +773,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
   void replaceAst(SgNode* oldNode, SgNode* newNode);
   void replaceStatement (SgStatement* s_cur, SgStatement* s_new);
 
-  // replace variable reference expression, used for variable substitution
-  void replaceVarRefExp (SgExpression *oldExp, SgExpression *newExp);
-
    //void replaceChild(SgNode* parent, SgNode* from, SgNode* to);
    //bool AstInterface::ReplaceAst( const AstNodePtr& orig, const AstNodePtr& n)
 
@@ -619,10 +792,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
   void changeAllMembersToPublic(SgNode* n);
 
   void removeVariableDeclaration(SgInitializedName* initname);
-
-  //src/midend/astInlining/inlinerSupport.C
-  void removeUnusedLabels(SgNode* top)
-
 
   //! Convert something like "int a = foo();" into "int a; a = foo();"
   SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init);
@@ -696,11 +865,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
   //src/midend/programTransformation/partialRedundancyElimination/pre.h
   bool anyOfListPotentiallyModifiedIn(const std::vector<SgVariableSymbol*>& syms, SgNode* n);
 
-//***********************************************************************
-//     operations for special types of AST nodes
-//     should move them into SgXXX as member funtions?
-//***********************************************************************
-
 //------------------------ loop handling ---------------------------------
 //------------------------------------------------------------------------
   //get and set loop control expressions 
@@ -711,15 +875,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
 
   bool isLoopIndexVarRef(SgForStatement* forstmt, SgVarRefExp *varref);
   SgInitializedName * getLoopIndexVar(SgForStatement* forstmt);
-
-  inline SgExpression* getLoopConditionRoot(Loop* loop)
-  void setLoopConditionRoot(Loop* loop, SgExpression* body)
-
-  	//src/midend/astInlining/replaceExpressionWithStatement.h
-        // handle several variants of loops: for-loop, while-loop,etc.
-  template <class Loop>
-  inline SgBasicBlock* getLoopBody(Loop* loop)
-  void setLoopBody(Loop* loop, SgBasicBlock* body)
 
 //------------------------expressions-------------------------------------
 //------------------------------------------------------------------------
@@ -741,13 +896,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
 
 //--------------------------preprocessing info. -------------------------
 //------------------------------------------------------------------------
-
-  void attachComment (const std::string& comment, SgStatement* s);
-  void attachComment (const char* comment, SgStatement* s);
-
-  //! Inserts an '#include' of a header file at the first statement.
-  bool insertHeader (const std::string& filename, SgProject* proj);
-
   //! Removes all preprocessing information at a given position.
   void cutPreprocInfo (SgBasicBlock* b,
                        PreprocessingInfo::RelativePositionType pos,
@@ -794,15 +942,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
 //------------------------------------------------------------------------
   std::string buildMacro ( std::string s ); //transformationSupport.h
 
-//---------------------------AST Data types-------------------------------
-//------------------------------------------------------------------------
-// additional suggestion: macros for basic type creation, less typing and hide details
-  // but has to be in global scope
-  #define TypeInt SgTypeInt::createType() 
-  #define TypeFloat SgTypeFloat::createType() 
-
- // no need for this? 
-  std::string getTypeName ( SgType* type );//SgType::get_mangled()
 //--------------------------------access functions---------------------------
 //----------------------------------get/set sth.-----------------------------
 // several categories: 
@@ -830,18 +969,6 @@ void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
   void setExtern (SgVariableDeclaration*)
   void setPublic()
   void setPrivate()
-//-----------------------topdown search and find -------------------------
-//------------------------------------------------------------------------
-// get descendant nodes, using topdown/preorder  search
-// name convention: get or find ?
-  // we can have two generic (template) functions
-  // 1. preorder traversal from current SgNode till find next SgNode of type V_SgXXX
-  //    until reach the end node
-  SgNode* getNextSgNode( const SgNode* astSourceNode, VariantT=V_SgNode, SgNode* astEndNode=NULL);
-
-  // 2. return all nodes of type VariantT following the source node
-  std::vector<SgNode*> getAllNextSgNode( const SgNode* astSourceNode, VariantT=V_SgNode, SgNode* astEndNode=NULL);
-
 
 
 #endif 

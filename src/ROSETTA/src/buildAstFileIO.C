@@ -203,8 +203,10 @@ Grammar::build_header_AST_FILE_IO_CLASS()
    { 
      StringUtility::FileWithLineNumbers readFromFile = Grammar::readFileWithPos("../Grammar/grammarAST_FileIoHeader.code");
      
+     ROSE_ASSERT (!this->astVariantToNodeMap.empty());
+     size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
      std::string replacement = "     enum { totalNumberOfIRNodes = " + 
-                               IntToString ( terminalList.size() + nonTerminalList.size() ) +
+                               IntToString ( maxVariant + 1 ) +
                                "} ; ";
     
      string returnString = StringUtility::toString(StringUtility::copyEdit(readFromFile,"$PLACE_ENUM_SIZE", replacement )); 
@@ -266,30 +268,31 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    * i-th-1 listOfMemoryPool entry from the i-th entry.
    */
      std::string startUp;
-     int offset = 0;
+
+     set<string> presentNames;
+     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i ) {
+       presentNames.insert(nonTerminalList[i].name);
+     }
+     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i ) {
+       presentNames.insert(terminalList[i].name);
+     }
 
      startUp += "     listOfMemoryPoolSizes [ 0 ] =  globalIndexCounter;\n"  ;
 
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name;
-          nbr =  IntToString ( offset );
-          startUp +=  "     globalIndexCounter = " + nodeNameString + 
-                      " :: getNumberOfValidNodesAndSetGlobalIndexInFreepointer ( globalIndexCounter ) ; \n" ;
-          startUp +=  "     listOfMemoryPoolSizes [ " +  IntToString ( offset + 1) + " ] "\
-                      "=  globalIndexCounter; \n"  ;
-          offset ++;
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name;
-          nbr =  IntToString ( offset );
-          startUp +=  "     globalIndexCounter = " + nodeNameString + 
-                      " :: getNumberOfValidNodesAndSetGlobalIndexInFreepointer ( globalIndexCounter ) ; \n" ;
-          startUp +=  "     listOfMemoryPoolSizes [ " +  IntToString ( offset + 1) + " ]"\
-                      " =  globalIndexCounter; \n"  ;
-          offset ++;
-        }
+     ROSE_ASSERT (!this->astVariantToNodeMap.empty());
+     size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
+     for (size_t i = 0; i <= maxVariant; ++i) {
+       map<size_t, string>::const_iterator it = this->astVariantToNodeMap.find(i);
+       if (it != this->astVariantToNodeMap.end()) {
+          nodeNameString = it->second;
+          if (presentNames.find(nodeNameString) != presentNames.end()) {
+            startUp +=  "     globalIndexCounter = " + nodeNameString + 
+                        " :: getNumberOfValidNodesAndSetGlobalIndexInFreepointer ( globalIndexCounter ) ; \n" ;
+          }
+       }
+       startUp +=  "     listOfMemoryPoolSizes [ " +  IntToString ( i + 1) + " ] "\
+                    "=  globalIndexCounter; \n"  ;
+     }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_STARTUP", startUp.c_str() );
   
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -314,27 +317,10 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    /* 2. Iterate over the memory pools and store the data into the corresponding 
     *    StorageClasses. Thereby, the abstract classes are omitted!
     */
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
-          if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
-             {
-               compressAst += "     sizeOfActualPool = getSizeOfMemoryPool (V_" + nodeNameString + " ) ; \n" ;
-               compressAst += "     std::cout << \" " + nodeNameString + " has size \" << sizeOfActualPool << std::endl;\n" ;
-               compressAst += "     " + nodeNameString + "StorageClass* " + nodeNameString + "StorageArray = NULL; \n" ;
-               compressAst += "     if ( 0 < sizeOfActualPool ) \n" ;
-               compressAst += "        {  \n" ;
-               compressAst += "          " + nodeNameString + "StorageArray = "\
-                              "new " + nodeNameString + "StorageClass[sizeOfActualPool] ; \n" ;
-               compressAst += "          unsigned long storageClassIndex = " + nodeNameString + 
-                              "::initializeStorageClassArray (" + nodeNameString + "StorageArray); ;\n" ;
-               compressAst += "          assert ( storageClassIndex == sizeOfActualPool ); \n" ;
-               compressAst += "        }  \n" ;
-             }
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end())
+            continue;
           if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
              {
                compressAst += "     sizeOfActualPool = getSizeOfMemoryPool (V_" + nodeNameString + " ) ; \n" ;
@@ -362,38 +348,17 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    /* 5. Iterate over the IR node types and store the data contained within the 
     *    StorageClassen into the memorypools.
     */
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end())
+            continue;
           if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
              {
                compressAst += "     sizeOfActualPool =  getPoolSizeOfNewAst( V_" + nodeNameString + " ) ;\n" ;
                compressAst += "     std::cout << \" " + nodeNameString + " has size \" << sizeOfActualPool << std::endl;\n" ;
                compressAst += "     if ( 0 < sizeOfActualPool )\n" ;
                compressAst += "        { \n" ;
-               if (nonTerminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
-                  {
-                    compressAst += "          " + nodeNameString + 
-                                   "StorageClass :: arrangeStaticDataOfEasyStorageClassesInOneBlock () ; \n" ;
-                  }
-               compressAst += "          for ( unsigned int i = 0;  i < sizeOfActualPool; ++i )\n" ;
-               compressAst += "              {\n" ;
-               compressAst += "               new " + nodeNameString + " ( " + nodeNameString + "StorageArray[i] ) ; \n" ;
-               compressAst += "              }\n" ;
-               compressAst += "          delete [] " + nodeNameString + "StorageArray;\n" ;
-               compressAst += "        } \n" ;
-            }
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
-          if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
-             {
-               compressAst += "     sizeOfActualPool =  getPoolSizeOfNewAst( V_" + nodeNameString + " ) ;\n" ;
-               compressAst += "     std::cout << \" " + nodeNameString + " has size \" << sizeOfActualPool << std::endl;\n" ;
-               compressAst += "     if ( 0 < sizeOfActualPool )\n" ;
-               compressAst += "        { \n" ;
-               if (terminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
+               if (this->getTerminalForVariant(i->first).hasMembersThatAreStoredInEasyStorageClass() == true )
                   {
                     compressAst += "          " + nodeNameString + 
                                    "StorageClass :: arrangeStaticDataOfEasyStorageClassesInOneBlock () ; \n" ;
@@ -417,14 +382,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    */
      std::string resetValidAstAfterWriting;
 
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
-          resetValidAstAfterWriting += "     " + nodeNameString + "::resetValidFreepointers( );\n" ;
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           resetValidAstAfterWriting += "     " + nodeNameString + "::resetValidFreepointers( );\n" ;
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_RESETVALIDASTAFTERWRITING",resetValidAstAfterWriting.c_str() );
@@ -434,15 +394,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    * The produced method does print a list of the actual memory pool sizes.
    */
      std::string printListOfPoolSizes;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
-          printListOfPoolSizes += "     std::cout << \"Memory pool size of " + nodeNameString + ": \"" ;
-          printListOfPoolSizes += " <<  listOfMemoryPoolSizes[V_" + nodeNameString + "] << std::endl; \n";
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           printListOfPoolSizes += "     std::cout << \"Memory pool size of " + nodeNameString + ": \"" ;
           printListOfPoolSizes += " <<  listOfMemoryPoolSizes[V_" + nodeNameString + "] << std::endl; \n";
         }
@@ -453,15 +407,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    * The produced method does print a list of the actual memory pool sizes.
    */
      std::string printListOfPoolSizesOfAst;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
-          printListOfPoolSizesOfAst += "     std::cout << \"Memory pool size of " + nodeNameString + ": \"" ;
-          printListOfPoolSizesOfAst += " <<  vectorOfASTs[index]->getMemoryPoolSize(V_"+nodeNameString+") << std::endl; \n";
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           printListOfPoolSizesOfAst += "     std::cout << \"Memory pool size of " + nodeNameString + ": \"" ;
           printListOfPoolSizesOfAst += " <<  vectorOfASTs[index]->getMemoryPoolSize(V_"+nodeNameString+") << std::endl; \n";
         }
@@ -483,16 +431,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
      getSgClassPointerFromGlobalIndex += "#endif\n";
      getSgClassPointerFromGlobalIndex += "         switch ( sgVariantOfIRNodeTypeOfIndex )\n";
      getSgClassPointerFromGlobalIndex += "            {\n";
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString =  nonTerminalList[i].name ;
-          getSgClassPointerFromGlobalIndex += "             case V_" + nodeNameString + ": \n " ;
-          getSgClassPointerFromGlobalIndex += "                returnPointer =  " + nodeNameString + " :: getPointerFromGlobalIndex( globalIndex )  ;\n";
-          getSgClassPointerFromGlobalIndex += "                break ; \n" ;
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString =  terminalList[i].name ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           getSgClassPointerFromGlobalIndex += "             case V_" + nodeNameString + ": \n " ;
           getSgClassPointerFromGlobalIndex += "                returnPointer =  " + nodeNameString + " :: getPointerFromGlobalIndex( globalIndex )  ;\n";
           getSgClassPointerFromGlobalIndex += "                break ; \n" ;
@@ -512,14 +453,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    * specific parts. 
    */
      std::string clearMemoryPools;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
-          clearMemoryPools += "     " + nodeNameString + "::clearMemoryPool( );\n" ;
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           clearMemoryPools += "     " + nodeNameString + "::clearMemoryPool( );\n" ;
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_CLEARMEMORYPOOLS",clearMemoryPools.c_str() );
@@ -537,14 +473,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
      * the suitable extendMemoryPoolForFileIO on every IR node type is called.
   */
      std::string extendMemoryPoolsForRebuildingAST;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
-          extendMemoryPoolsForRebuildingAST += "     " + nodeNameString + "::extendMemoryPoolForFileIO( );\n" ;
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           extendMemoryPoolsForRebuildingAST += "     " + nodeNameString + "::extendMemoryPoolForFileIO( );\n" ;
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_EXTENDMEMORYPOOLS",extendMemoryPoolsForRebuildingAST.c_str() );
@@ -552,9 +483,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // JH (04/05/2006) generate code for writeASTToFile
      std::string writeASTToFile;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
              {
                writeASTToFile += "     sizeOfActualPool = getSizeOfMemoryPool(V_" + nodeNameString + " ); \n" ;
@@ -572,34 +503,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
             // delete array 
                writeASTToFile += "           delete [] storageArray;  \n" ;
             // Writing EasyStorage stuff 
-               if (nonTerminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
-                  {
-                    writeASTToFile += "           " + nodeNameString + "StorageClass :: writeEasyStorageDataToFile(out) ;\n" ;
-                  }
-               writeASTToFile += "        }  \n\n" ;
-             }
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
-          if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
-             {
-               writeASTToFile += "     sizeOfActualPool = getSizeOfMemoryPool(V_" + nodeNameString + " ); \n" ;
-               writeASTToFile += "     storageClassIndex = 0 ;\n" ;
-               writeASTToFile += "     if ( 0 < sizeOfActualPool ) \n" ;
-               writeASTToFile += "        {  \n" ;
-            // Initializing the StorageClasses 
-               writeASTToFile += "          " + nodeNameString + "StorageClass* storageArray = "\
-                                 "new " + nodeNameString + "StorageClass[sizeOfActualPool] ;\n" ;
-               writeASTToFile += "           storageClassIndex = " + nodeNameString + "::initializeStorageClassArray (storageArray); ;\n" ;
-               writeASTToFile += "           assert ( storageClassIndex == sizeOfActualPool ); \n" ;
-            // Writing StorageClass array to disk
-               writeASTToFile += "           out.write ( (char*) (storageArray) , sizeof ( " + nodeNameString + "StorageClass ) * sizeOfActualPool) ;\n" ;
-     
-                 // delete array 
-               writeASTToFile += "           delete [] storageArray;  \n" ;
-            // Writing EasyStorage stuff 
-               if (terminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
+               if (this->getTerminalForVariant(i->first).hasMembersThatAreStoredInEasyStorageClass() == true )
                   {
                     writeASTToFile += "           " + nodeNameString + "StorageClass :: writeEasyStorageDataToFile(out) ;\n" ;
                   }
@@ -611,9 +515,9 @@ Grammar::build_source_AST_FILE_IO_CLASS()
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // JH (04/05/2006) generate code for readASTFromFile
      std::string readASTFromFile;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name  ;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
              {
             // readASTFromFile += "     std::cout << \" reading " + nodeNameString + " \" << std::endl; \n" ;
@@ -627,7 +531,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                readASTFromFile += "          inFile.read ( (char*) (storageArray" + nodeNameString + ") , "\
                                                            "sizeof ( " + nodeNameString + "StorageClass ) * sizeOfActualPool) ;\n" ;
             // Reading EasyStorage stuff 
-               if (nonTerminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
+               if (this->getTerminalForVariant(i->first).hasMembersThatAreStoredInEasyStorageClass() == true )
                   {
                     readASTFromFile += "        " + nodeNameString + "StorageClass :: readEasyStorageDataFromFile(inFile) ;\n" ;
                   }
@@ -641,44 +545,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
             // delete array 
                readASTFromFile += "      delete [] storageArray" + nodeNameString + ";  \n" ;
             // delete EasyStorage stuff 
-               if (nonTerminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
-                  {
-                    readASTFromFile += "      " + nodeNameString + "StorageClass :: deleteStaticDataOfEasyStorageClasses();\n" ;
-                  }
-               readASTFromFile += "\n\n" ;
-             }
-        }
-     for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
-        {
-          nodeNameString = terminalList[i].name  ;
-          if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
-             {
-            // readASTFromFile += "     std::cout << \" reading " + nodeNameString + " \" << std::endl; \n" ;
-               readASTFromFile += "     sizeOfActualPool = getPoolSizeOfNewAst(V_" + nodeNameString + " ); \n" ;
-               readASTFromFile += "     storageClassIndex = 0 ;\n" ;
-               readASTFromFile += "     " + nodeNameString + "StorageClass* storageArray" + nodeNameString + " = NULL;\n" ;
-               readASTFromFile += "     if ( 0 < sizeOfActualPool ) \n" ;
-               readASTFromFile += "        {  \n" ;
-            // Reading StorageClass array
-               readASTFromFile += "          storageArray" + nodeNameString + " = new " + nodeNameString + "StorageClass[sizeOfActualPool] ;\n" ;
-               readASTFromFile += "          inFile.read ( (char*) (storageArray" + nodeNameString + ") , "\
-                                                          "sizeof ( " + nodeNameString + "StorageClass ) * sizeOfActualPool) ;\n" ;
-            // Reading EasyStorage stuff 
-               if (terminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
-                  {
-                    readASTFromFile += "        " + nodeNameString + "StorageClass :: readEasyStorageDataFromFile(inFile) ;\n" ;
-                  }
-               readASTFromFile += "          " + nodeNameString + "StorageClass* storageArray = storageArray" + nodeNameString + " ;\n" ;
-               readASTFromFile += "          for ( unsigned int i = 0;  i < sizeOfActualPool; ++i )\n" ;
-               readASTFromFile += "             {\n" ;
-               readASTFromFile += "               new " + nodeNameString + " ( *storageArray ) ; \n" ;
-               readASTFromFile += "               storageArray++ ; \n" ;
-               readASTFromFile += "             }\n" ;
-               readASTFromFile += "        }  \n" ;
-            // delete array 
-               readASTFromFile += "           delete [] storageArray" + nodeNameString + ";  \n" ;
-            // delete EasyStorage stuff 
-               if (terminalList[i].hasMembersThatAreStoredInEasyStorageClass() == true )
+               if (this->getTerminalForVariant(i->first).hasMembersThatAreStoredInEasyStorageClass() == true )
                   {
                     readASTFromFile += "      " + nodeNameString + "StorageClass :: deleteStaticDataOfEasyStorageClasses();\n" ;
                   }

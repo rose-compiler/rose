@@ -92,7 +92,7 @@ else
 noinst_LTLIBRARIES = libsage3.la
 endif
 
-libsage3_la_SOURCES = $(libsage3Sources) preproc.C
+libsage3_la_SOURCES = $(libsage3Sources) preproc.C $(top_builddir)/rose_config.h $(top_builddir)/rose_paths.h
 
 if ROSE_USE_BOOST_WAVE
 libsage3_la_LIBADD  = \
@@ -121,7 +121,7 @@ endif
 # $(CXX_TEMPLATE_OBJECTS)
 # libsage3_la_DEPENDENCIES = preproc.o $(GENERATED_OBJECTS) astFixup/*.o astPostProcessing/*.o astMerge/*.o astFileIO/*.o sageInterface/*.o virtualCFG/*.o 
 
-rose_attributes_list.o : rose_attributes_list.h
+rose_attributes_list.lo : rose_attributes_list.h
 
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)

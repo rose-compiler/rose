@@ -3572,7 +3572,7 @@ HEADER_APPLICATION_FILE_START
        // friend void unparseFile ( SgFile & file );
        // friend int compileOutput ( int & argc, char** & argv, SgFile & file );
        // BP : 11/13/2001, modified to include compiler name
-          std::string buildCompilerCommandLineOptions ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
+          std::vector<std::string> buildCompilerCommandLineOptions ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
        // BP : 11/13/2001, modified to include compiler name
           int compileOutput ( std::vector<std::string> & argv, int fileNameIndex, const std::string& compilerName );
 

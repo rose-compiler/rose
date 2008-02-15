@@ -66,6 +66,8 @@ MarkLhsValues::visit(SgNode* node)
                        {
                          SgExpression* lhs = binaryOperator->get_lhs_operand();
                          ROSE_ASSERT(lhs != NULL);
+                         SgExpression* rhs = binaryOperator->get_rhs_operand();
+                         ROSE_ASSERT(rhs != NULL);
 
                       // This is violated by the ROSE/tests/roseTests/astInliningTests/pass16.C test code!
                       // ROSE_ASSERT(lhs->get_lvalue() == true);
@@ -73,6 +75,7 @@ MarkLhsValues::visit(SgNode* node)
                       // This is a value that I know has to be set, the AST generation in EDG/Sage and OFP/Sage
                       // sets this properly, but some transformations of the AST do not, so we fix it up here.
                          lhs->set_lvalue(true);
+                         rhs->set_lvalue(false);
                          break;
                        }
 
@@ -130,6 +133,8 @@ MarkLhsValues::visit(SgNode* node)
                   {
                  // IR nodes that should have a valid lvalue
                  // What about SgAddressOfOp?
+              
+                    case V_SgAddressOfOp: break; // JJW 1/31/2008
 
                     case V_SgMinusMinusOp:
                     case V_SgPlusPlusOp:

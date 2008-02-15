@@ -33,6 +33,18 @@ SgExpression::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
      printf ("Inside of SgExpression::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
 
+     Rose_STL_Container<SgNode*> children_original = const_cast<SgExpression*>(this)->get_traversalSuccessorContainer();
+     Rose_STL_Container<SgNode*> children_copy     = const_cast<SgNode*>(copy)->get_traversalSuccessorContainer();
+     ROSE_ASSERT (children_original.size() == children_copy.size());
+
+     for (Rose_STL_Container<SgNode*>::const_iterator
+            i_original = children_original.begin(),
+            i_copy = children_copy.begin();
+          i_original != children_original.end(); ++i_original, ++i_copy) {
+       if (*i_original == NULL) continue;
+       (*i_original)->fixupCopy_references(*i_copy,help);
+     }
+
      SgLocatedNode::fixupCopy_references(copy,help);
    }
 
@@ -67,33 +79,32 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
                               SgVariableSymbol* variableSymbol_original = varRefExp->get_symbol();
                               ROSE_ASSERT(variableSymbol_original != NULL);
                               SgInitializedName* initializedName_original = variableSymbol_original->get_declaration();
-                              ROSE_ASSERT(initializedName_original != NULL);
-                              SgCopyHelp::copiedNodeMapTypeIterator i = helpSupport.get_copiedNodeMap().find(initializedName_original);
+                              if (initializedName_original != NULL) { // Try to do this first, because the symbol may not have been copied
+                             // ROSE_ASSERT(initializedName_original->get_symbol_from_symbol_table());
+                                SgCopyHelp::copiedNodeMapTypeIterator i = helpSupport.get_copiedNodeMap().find(initializedName_original);
+                                if (i != helpSupport.get_copiedNodeMap().end()) {
+                                  SgInitializedName* initializedName_copy = isSgInitializedName(i->second);
+                                  ROSE_ASSERT(initializedName_copy != NULL);
+                                  SgVariableSymbol* symbol_copy = isSgVariableSymbol(initializedName_copy->get_symbol_from_symbol_table());
+                                  if (symbol_copy) {
+                                 // printf ("Inside of SgStatement::fixupCopy_references(): symbol_copy = %p \n",symbol_copy);
+                                    varRefExp->set_symbol(symbol_copy);
+                                  }
+                                }
+                              } else { // This is used for cases such as __PRETTY_FUNCTION__ whose symbols are not in a symbol table
+                                SgCopyHelp::copiedNodeMapTypeIterator i = helpSupport.get_copiedNodeMap().find(variableSymbol_original);
+                                if (i != helpSupport.get_copiedNodeMap().end()) {
+                                  SgVariableSymbol* symbol_copy = isSgVariableSymbol(i->second);
+                                  if (symbol_copy) {
+                                 // printf ("Inside of SgStatement::fixupCopy_references(): symbol_copy = %p \n",symbol_copy);
+                                    varRefExp->set_symbol(symbol_copy);
+                                  }
+                                }
+                              }
 
                            // printf ("Inside of SgStatement::fixupCopy_references(): i != helpSupport.get_copiedNodeMap().end() = %s \n",
                            //      (i != helpSupport.get_copiedNodeMap().end()) ? "true" : "false");
 
-                           // If the declaration is in the map then it is because we have copied it previously
-                           // and thus it symbol should be updated to reflect the copied declaration.
-                           // ROSE_ASSERT(i != help.get_copiedNodeMap().end());
-                              if (i != helpSupport.get_copiedNodeMap().end())
-                                 {
-                                   SgInitializedName* initializedName_copy = isSgInitializedName(i->second);
-                                   ROSE_ASSERT(initializedName_copy != NULL);
-                                   SgSymbol* symbol_copy = initializedName_copy->get_symbol_from_symbol_table();
-                                // printf ("Inside of SgStatement::fixupCopy_references(): symbol_copy = %p \n",symbol_copy);
-                                   if (symbol_copy != NULL)
-                                      {
-                                        SgVariableSymbol* variableSymbol_copy = isSgVariableSymbol(symbol_copy);
-                                        ROSE_ASSERT(variableSymbol_copy != NULL);
-                                        varRefExp->set_symbol(variableSymbol_copy);
-                                      }
-                                     else
-                                      {
-                                        printf ("Error: Symbol not found for initializedName_copy = %p = %s \n",initializedName_copy,SageInterface::get_name(initializedName_copy).c_str());
-                                     // ROSE_ASSERT(false);
-                                      }
-                                 }
                               break;
                             }
 
@@ -247,6 +258,28 @@ SgGlobal::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
      SgScopeStatement::fixupCopy_references(copy,help);
 
   // printf ("\nLeaving SgGlobal::fixupCopy_references() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
+   }
+
+// JJW 2/1/2008 -- Added fixup to allow statement expressions to be handled
+void
+SgExprStatement::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgExprStatement::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgExprStatement* es_copy = isSgExprStatement(copy);
+     ROSE_ASSERT(es_copy != NULL);
+
+     SgExpression* expression_original = this->get_expression();
+     SgExpression* expression_copy =     es_copy->get_expression();
+
+     expression_original->fixupCopy_references(expression_copy, help);
+
+  // Call the base class fixupCopy member function
+     SgStatement::fixupCopy_references(copy,help);
+
+  // printf ("\nLeaving SgBasicBlock::fixupCopy_references() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
    }
 
 // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!

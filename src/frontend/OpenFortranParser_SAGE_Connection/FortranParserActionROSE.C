@@ -2157,6 +2157,7 @@ void c_action_ac_implied_do()
      setSourcePosition(impliedDo);
 
      objectList->set_parent(impliedDo);
+     doLoopVar->set_parent(impliedDo);
      upperBound->set_parent(impliedDo);
      lowerBound->set_parent(impliedDo);
      increment->set_parent(impliedDo);
@@ -8457,6 +8458,7 @@ void c_action_associate_stmt(Token_t *label, Token_t *id, Token_t *associateKeyw
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(astNodeStack.front());
      ROSE_ASSERT(variableDeclaration != NULL);
      associateStatement->set_variable_declaration(variableDeclaration);
+     variableDeclaration->set_parent(associateStatement);
 #endif
 
   // Output debugging information about saved state (stack) information.
@@ -10931,6 +10933,7 @@ void c_action_io_implied_do()
      upperBound->set_parent(impliedDo);
   // lowerBound->set_parent(assignment);
      lowerBound->set_parent(impliedDo);
+     doLoopVar->set_parent(impliedDo);
 
      astExpressionStack.push_front(impliedDo);
 

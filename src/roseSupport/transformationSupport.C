@@ -2000,7 +2000,11 @@ TransformationSupport::getProject( const SgNode* astNode )
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-          printf ("Error: could not trace back to SgProject node \n");
+            if (astNode==NULL)
+                printf ("Warning: could not trace back to SgProject node. \n");
+            else
+                printf ("Warning: could not trace back to SgProject node from %s \n",
+          astNode->class_name().c_str());
        // ROSE_ABORT();
         }
        else
@@ -2076,8 +2080,11 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
      if ( isSgGlobal(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
-        {
-          printf ("Error: could not trace back to SgGlobal node \n");
+        {  //It is possible to find no SgGlobal during transformation, changed to warning.
+         if (astNode!=NULL)
+            printf ("Warning: could not trace back to SgGlobal node from %s \n",
+          astNode->class_name().c_str());
+         else printf ("Warning: could not trace back to SgGlobal node\n ");
        // ROSE_ASSERT(false);
           return NULL;
         }
@@ -2119,8 +2126,12 @@ TransformationSupport::getStatement( const SgNode* astNode )
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
+          if (astNode==NULL)
           printf ("Error: could not trace back to SgStatement node \n");
-       // ROSE_ABORT();
+          else 
+            printf ("Warning: could not trace back to SgStatement node from %s \n",
+          astNode->class_name().c_str());
+        //ROSE_ABORT();
           return NULL;
         }
        else
@@ -2165,7 +2176,11 @@ TransformationSupport::getFunctionDeclaration( const SgNode* astNode)
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
+          if (astNode==NULL)
           printf ("Error: could not trace back to SgFunctionDeclaration node \n");
+          else
+               printf ("Warning: could not trace back to SgFunctionDeclaration node from %s \n",
+          astNode->class_name().c_str());
           ROSE_ABORT();
         }
        else
@@ -2201,7 +2216,11 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
+          if(astNode==NULL)
           printf ("Error: could not trace back to SgFunctionDefinition node \n");
+          else 
+               printf ("Warning: could not trace back to SgFunctionDefinition node from %s \n",
+          astNode->class_name().c_str());
           ROSE_ABORT();
         }
        else

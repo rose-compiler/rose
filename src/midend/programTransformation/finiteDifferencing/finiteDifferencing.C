@@ -216,7 +216,7 @@ void doFiniteDifferencingOne(SgExpression* e,
      vector<SgVariableSymbol*> used_symbols = getSymbolsUsedInExpression(e);
      SgName cachename = "cache_fd__"; cachename << ++gensym_counter;
      SgVariableDeclaration* cachedecl = new SgVariableDeclaration(SgNULL_FILE, cachename, e->get_type(),0 /* new SgAssignInitializer(SgNULL_FILE, e) */);
-     SgInitializedName* cachevar = lastElementOfContainer(cachedecl->get_variables());
+     SgInitializedName* cachevar = cachedecl->get_variables().back();
      ROSE_ASSERT (cachevar);
      root->get_statements().insert(i, cachedecl);
      cachedecl->set_parent(root);

@@ -79,6 +79,8 @@ libfortran_ofp_parser_java_FortranParserActionJNI_la_DEPENDENCIES =
 
 include_HEADERS = ActionEnums.h  FortranParserAction.h  token.h rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jni_token_funcs.h
 
+openFortranParserMain: $(top_builddir)/rose_paths.h
+
 # Moved this header file to ../SageIII, it is not used for the lex pass for all languages in ROSE.
 # general_defs.h
 

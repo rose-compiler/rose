@@ -229,6 +229,10 @@ HEADER_VAR_REF_EXPRESSION_END
 
 HEADER_LABEL_REF_EXPRESSION_START
 
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
           SgName get_name() const;
        // const SgName & get_name() const;
 
@@ -894,6 +898,10 @@ HEADER_COLON_SHAPE_EXPRESSION_END
 // HEADER_SUBSCRIPT_ASTERISK_EXPRESSION_END
 
 HEADER_ASTERISK_SHAPE_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
 HEADER_ASTERISK_SHAPE_EXPRESSION_END
 
 HEADER_USE_ONLY_EXPR_START
@@ -916,6 +924,10 @@ HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_START
 HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
 
 HEADER_ACTUAL_ARGUMENT_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
 HEADER_ACTUAL_ARGUMENT_EXPRESSION_END
 
 
@@ -2006,6 +2018,30 @@ SOURCE_VARIABLE_REFERENCE_EXPRESSION_END
 
 SOURCE_LABEL_REFERENCE_EXPRESSION_START
 
+unsigned int
+SgLabelRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgLabelRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgLabelRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+
 SgName
 SgLabelRefExp::get_name() const
    {
@@ -2599,6 +2635,10 @@ SgFunctionCallExp::get_type() const
   // printf ("In SgFunctionCallExp::get_type(): calling get_type() on p_function = %p = %s \n",p_function,p_function->class_name().c_str());
      SgType* likelyFunctionType = p_function->get_type();
      ROSE_ASSERT(likelyFunctionType != NULL);
+     while (likelyFunctionType && isSgTypedefType(likelyFunctionType)) {
+       likelyFunctionType = isSgTypedefType(likelyFunctionType)->get_base_type();
+       ROSE_ASSERT(likelyFunctionType != NULL);
+     }
      SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
      if (functionType == NULL)
         {
@@ -3315,7 +3355,12 @@ $CLASSNAME::get_type() const
                someType = modifierType->get_base_type();
                goto keepStripping;
              }
-
+     // Liao (1/25/2008) SgTypeUnknown is used (abused ?) to specify a temporary InitializedName generated in translation when the corresponding variable declaration is not yet available. HighLevel_Sage_Builder_Interface::fixVariableReferences() will fix this temporary inconsistence in AST after transformation is complete.
+          case V_SgTypeUnknown:
+             {
+               returnType = SgTypeUnknown::createType();
+               break;
+             }
        // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
           case V_SgFunctionType:
              {
@@ -3770,6 +3815,13 @@ $CLASSNAME::get_type() const
                returnType = SgTypeChar::createType();
                break;
              }
+     // Liao (1/25/2008) SgTypeUnknown is used to specify a temporary symbol generated 
+     //during translation when the corresponding variable declaration is not yet declared.
+          case V_SgTypeUnknown:
+             {
+               returnType = SgTypeUnknown::createType();
+               break;
+             }
 
           default:
              {
@@ -3985,7 +4037,7 @@ $CLASSNAME::get_type() const
   // from which we can get the type to be returned from the new operator!
   // If there is no constructor then this might be a primative type or perhaps 
   // a class or struct without an explicit constructor.
-     ROSE_ASSERT(p_constructor_args != NULL);
+     // ROSE_ASSERT(p_constructor_args != NULL); -- JJW hack
 
   // Since where the p_constructor_args->get_declaration() == NULL (often for primative types) 
   // we need the explicitly stored p_expression_type pointer anyway so we can just make it the 
@@ -5450,6 +5502,24 @@ SOURCE_COLON_SHAPE_EXPRESSION_END
 
 SOURCE_ASTERISK_SHAPE_EXPRESSION_START
 
+unsigned int $CLASSNAME::cfgIndexForEnd() const {
+  return 0;
+}
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+  std::vector<VirtualCFG::CFGEdge> result;
+  ROSE_ASSERT (idx == 0);
+  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+  return result;
+}
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+  std::vector<VirtualCFG::CFGEdge> result;
+  ROSE_ASSERT (idx == 0);
+  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+  return result;
+}
+
 void
 SgAsteriskShapeExp::post_construction_initialization() 
    { }
@@ -5679,6 +5749,40 @@ SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
 
 
 SOURCE_ACTUAL_ARGUMENT_EXPRESSION_START
+
+unsigned int
+SgActualArgumentExpression::cfgIndexForEnd() const 
+   {
+     return 1;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgActualArgumentExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_expression()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgActualArgumentExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_expression()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
 
 void
 SgActualArgumentExpression::post_construction_initialization() 

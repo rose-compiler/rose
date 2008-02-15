@@ -10,7 +10,6 @@ endif
 libsageInterface_la_SOURCES      = \
      sageInterface.C \
      sageInterface_type.C \
-     loopHelpers.C \
      generateUniqueName.C \
      sageBuilder.C
 #     highLevelInterface.C
@@ -22,9 +21,9 @@ libsageInterface_la_DEPENDENCIES =
 
 include_HEADERS = \
      sageInterface.h \
-     loopHelpers.h \
      sageBuilder.h
 #     highLevelInterface.h
+#     loopHelpers.h 
 
 #libsageInterface.la: $(libastFixup_la_OBJECTS) $(libastFixup_la_DEPENDENCIES)
 #	-rm -f $@

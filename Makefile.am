@@ -59,7 +59,9 @@ distclean-local:
 	rm -rf *_HEADERS
 
 # DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
-include_HEADERS = rose_config.h rose_paths.h
+nodist_include_HEADERS = rose_config.h rose_paths.h
+
+include $(top_srcdir)/config/build_rose_paths.Makefile
 
 check-local:
 	@echo "************************************************************"
@@ -68,6 +70,8 @@ check-local:
 
 install-exec-local:
 install-data-local:
+	-rm -rf $(includedir)/*_HEADERS
+	cp -dpR $(top_builddir)/include-staging/* $(includedir)/
 	@echo "************************************************************"
 	@echo "***** make install rule complete (terminated normally) *****"
 	@echo "************************************************************"
