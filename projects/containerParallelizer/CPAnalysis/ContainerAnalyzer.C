@@ -1,20 +1,18 @@
 
-#include <rose.h>
-
-// DQ (1/1/2006): This is OK if not declared in a header file
-using namespace std;
-
-#include <general.h>
-#include <AstInterface.h>
+#include <sage3.h>
+#include <AstInterface_ROSE.h>
+#include <CPPAstInterface.h>
 #include <TestParallelLoop.h>
 #include <string>
 #include <iostream>
 #include <CommandOptions.h>
 
+using namespace std;
+
 void PrintUsage( char* name)
 {
-  cerr << name << " <options> " << "<program name>" << "\n";
-  TestParallelLoop::DumpOptions(cerr);
+  STD cerr << name << " <options> " << "<program name>" << "\n";
+  TestParallelLoop::DumpOptions(STD cerr);
 }
 
 class TestParallelLoopWrap : public TransformAstTree
@@ -27,10 +25,12 @@ class TestParallelLoopWrap : public TransformAstTree
      f.open(fname.c_str(), ios_base::out);
    }
   ~TestParallelLoopWrap() { f.close(); }
-  bool operator()(AstInterface& fa,const AstNodePtr& head, AstNodePtr& result)
+  bool operator()(AstInterface& _fa,const AstNodePtr& _head, AstNodePtr& result)
   { 
+    CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
+    SgNode* head = AstNodePtrImpl(_head).get_ptr();
     if (head->variantT() == V_SgForStatement) {
-       if (op.LoopParallelizable(head) )
+       if (op.LoopParallelizable(fa, _head) )
           f << "parallelize loop " << head->unparseToString() << endl;
     }
     return false;
@@ -47,14 +47,13 @@ main ( unsigned argc,  char * argv[] )
      }
      CmdOptions::GetInstance()->SetOptions(argc,argv);
      TestParallelLoop test(argc, argv);
-     test.Dump();
 
      SgProject sageProject ( (int)argc,argv);
 
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
      SgFile &sageFile = sageProject.get_file(i);
-     string name = string(strrchr(sageFile.getFileName(),'/')+1) + ".out";
+     string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".out";
      TestParallelLoopWrap testWrap(test,name);
 
      SgGlobal *root = sageFile.get_root();
@@ -67,8 +66,9 @@ main ( unsigned argc,  char * argv[] )
           if (defn == 0)
              continue;
           SgBasicBlock *stmts = defn->get_body();  
-          AstInterface fa(stmts);
-          TransformAstTraverse( fa, stmts, testWrap);
+          AstInterfaceImpl scope(stmts);
+          CPPAstInterface fa(&scope);
+          TransformAstTraverse( fa, AstNodePtrImpl(stmts), testWrap);
      }
    }
 

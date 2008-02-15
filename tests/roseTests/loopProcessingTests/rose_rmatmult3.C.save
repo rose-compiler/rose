@@ -1,5 +1,3 @@
-#include "stdio.h"
-#include "assert.h"
 /* Restrict macros for various compilers */
 #ifdef __GNUC__
 #define RESTRICT __restrict
@@ -69,23 +67,8 @@ void rmatmult3(int imin,int imax,int jmin,int jmax,int kmin,int kmax,int jp,int 
   double *__restrict__ xufc = ((x + kp) + jp);
   double *__restrict__ xufr = (((x + kp) + jp) + 1);
   double myflops = 0.0;
-  FILE *filePtr;
   static int firstPass = 1;
   register double temp;
-/*   perfometer(); */
-/* On the first pass into this function for decks/zrad.0001, if ii=imin, b[i] = 1.0, otherwise, b[i]=6.075507e-13.
-     We can use this information to create a correctness check on new loop implementations.
-  */
-#if LOOP_IMPLEMENTATION == 1
-#if VALIDITY_CHECK == 1
-#endif /* end of VALIDITY_CHECK */
-/* end of ii loop */
-/* end of jj loop */
-/* end of kk loop */
-#if VALIDITY_CHECK == 1
-#endif
-#elif LOOP_IMPLEMENTATION == 2
-  int dummy_to_preserve_preprocessor_directive = 0;
   for (kk = kmin; kk <= -1 + kmax; kk += 1) {
     for (jj = jmin; jj <= -1 + jmax; jj += 1) {
       for (ii = imin; ii <= -1 + imax; ii += 1) {

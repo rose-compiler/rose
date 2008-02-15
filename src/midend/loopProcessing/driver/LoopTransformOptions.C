@@ -1,5 +1,4 @@
 
-#include <general.h>
 #include <iostream>
 
 #include <LoopTransformOptions.h>
@@ -8,12 +7,6 @@
 #include <FusionAnal.h>
 #include <CommandOptions.h>
 #include <CopyArrayAnal.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 class DynamicTuning {
   static int dt;  
@@ -32,33 +25,33 @@ bool DynamicTuning::Do()
 }
 
 
-static void ReadDefaultBlockSize(LoopTransformOptions& opt, const std::vector<std::string>& argv, unsigned& index)
+static void ReadDefaultBlockSize(LoopTransformOptions& opt, char** argv, unsigned& index)
 {
- int defaultblocksize = atoi(argv[index].c_str());
+ int defaultblocksize = atoi(argv[index]);
  if (defaultblocksize <= 1) {
-       cerr << "invalid blocking size: " << argv[index] << "; Use default (16)\n";
+       STD cerr << "invalid blocking size: " << argv[index] << "; Use default (16)\n";
        defaultblocksize = 16;
        --index;
  }
  opt.SetDefaultBlockSize(defaultblocksize);
 }
 
-static int ReadDefaultCopyDim(LoopTransformOptions& opt, const std::vector<std::string>& argv, unsigned& index)
+static int ReadDefaultCopyDim(LoopTransformOptions& opt, char** argv, unsigned& index)
 {
  int defaultcopysize = 0;
  char hint = argv[index][0]; 
  if (hint >= '0' && hint <= '9' ) {
-       defaultcopysize = atoi(argv[index].c_str());
+       defaultcopysize = atoi(argv[index]);
  }
  else {
-    cerr << "invalid array copy dimension: " << argv[index] << "; Use default (0)\n";
+    STD cerr << "invalid array copy dimension: " << argv[index] << "; Use default (0)\n";
     --index;
  }
  return defaultcopysize;
 }
 class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv) 
+    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv) 
       { 
         ++index;
 	ReadDefaultBlockSize(opt,argv,index); 
@@ -70,7 +63,7 @@ class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
       { 
         ++index;
 	ReadDefaultBlockSize(opt,argv,index); 
@@ -82,7 +75,7 @@ class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class BlockAllLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
       {
         ++index;
 	ReadDefaultBlockSize(opt,argv,index); 
@@ -94,7 +87,7 @@ class BlockAllLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class CopyArrayOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
       {
         ++index;
 	int dim = ReadDefaultCopyDim(opt,argv,index); 
@@ -107,7 +100,7 @@ class CopyArrayOpt : public LoopTransformOptions::OptRegistryType
 
 class ReuseInterchangeOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { opt.SetInterchangeSel( new ArrangeReuseOrder() ); }
   public:
      ReuseInterchangeOpt() : OptRegistryType("-ic1", " :loop interchange for more reuses") {}
@@ -115,7 +108,7 @@ class ReuseInterchangeOpt : public LoopTransformOptions::OptRegistryType
 
 class FisionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { opt.SetFusionSel( new LoopNestFusion() ); }
   public:
      FisionOpt() : OptRegistryType("-fs0", " : maximum distribution at all loops") {}
@@ -123,7 +116,7 @@ class FisionOpt : public LoopTransformOptions::OptRegistryType
 
 class InnerFisionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { opt.SetFusionSel( new SameLevelFusion( new InnermostLoopFision() ) ); }
   public:
      InnerFisionOpt() : OptRegistryType("-fs01", " : maximum distribution at inner-most loops") {}
@@ -131,7 +124,7 @@ class InnerFisionOpt : public LoopTransformOptions::OptRegistryType
 
 class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { opt.SetFusionSel( new SameLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
      SingleReuseFusionOpt() 
@@ -140,7 +133,7 @@ class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { opt.SetFusionSel( new MultiLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
     MultiReuseFusionOpt() 
@@ -149,10 +142,10 @@ class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { 
             index++;
-            int limit = atoi(argv[index].c_str());
+            int limit = atoi(argv[index]);
             opt.SetTransAnalSplitLimit( limit ) ; 
          }
   public:
@@ -162,10 +155,10 @@ class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 
 class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 { 
-  virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          { 
            index ++;
-           int size = atoi(argv[index].c_str()); 
+           int size = atoi(argv[index]); 
            opt.SetCacheLineSize(size);
          }
  public:
@@ -174,10 +167,10 @@ class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 
 class ReuseDistOpt : public LoopTransformOptions::OptRegistryType
 {
-  virtual void operator()( LoopTransformOptions &opt, unsigned &index, const std::vector<std::string>& argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
          {
            index ++;
-           int size = atoi(argv[index].c_str());
+           int size = atoi(argv[index]);
            opt.SetReuseDistance(size);
          }
  public:
@@ -185,7 +178,7 @@ class ReuseDistOpt : public LoopTransformOptions::OptRegistryType
 };
                                                                                                                                                                                                      
 LoopTransformOptions:: LoopTransformOptions()
-       : bkOp(0), cpOp(0), cacheline(16), reuseDist(8), splitlimit(20)
+       : cacheline(16), splitlimit(20), reuseDist(8), cpOp(0), bkOp(0)
 {
    icOp =  new ArrangeOrigNestingOrder() ;
    fsOp = new SameLevelFusion( new OrigLoopFusionAnal() );
@@ -254,15 +247,15 @@ LoopTransformOptions* LoopTransformOptions::GetInstance()
   return inst;
 }
 
-void LoopTransformOptions :: PrintUsage(ostream& stream) const
+void LoopTransformOptions :: PrintUsage(STD ostream& stream) const
 {  
    for ( SinglyLinkedListWrap <OptRegistryType*>::Iterator p(reg); !p.ReachEnd(); ++p) {
       stream << (*p)->GetName() << (*p)->GetExpl() << "\n";
    }
-   stream << "-dt :perform dynamic tuning" << endl;
+   stream << "-dt :perform dynamic tuning" << STD endl;
 }
 
-Boolean LoopTransformOptions :: DoDynamicTuning() const
+bool LoopTransformOptions :: DoDynamicTuning() const
 {
   return DynamicTuning::Do();
 }
@@ -277,18 +270,14 @@ void LoopTransformOptions :: RegisterOption( OptRegistryType* t)
    reg.AppendLast(t);
 }
 
-void LoopTransformOptions :: SetOptions (std::vector<std::string>& argv)
+int LoopTransformOptions :: SetOptions (int argc, char* argv[])
       {
-        unsigned index = 1;
-        for (unsigned i = 1; i < argv.size(); ++i) {
+        int index = 1;
+        for (unsigned i = 1; i < argc; ++i) {
             SinglyLinkedListWrap <OptRegistryType*>::Iterator p(reg); 
             for ( ; !p.ReachEnd(); ++p) {
-                if ( (*p)->GetName() == argv[i]) {
-                    unsigned int oldI = i;
-                    cerr << "Found option " << (*p)->GetName() << " at position " << i << endl;
+                if ( argv[i] != 0 && !strcmp( (*p)->GetName().c_str(), argv[i])) {
                     (*(*p))(*this, i, argv);
-                    argv.erase(argv.begin() + oldI, argv.begin() + i + 1);
-                    i = oldI - 1; // To compensate for deleted options and ++i in loop header
                     break;
                 }
             }
@@ -298,8 +287,7 @@ void LoopTransformOptions :: SetOptions (std::vector<std::string>& argv)
                 ++index;
             }
          }
-         assert(argv.size() >= index);
-         argv.resize(index);
+          return index;
       }
 
 

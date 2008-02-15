@@ -4,8 +4,7 @@
 
 #include <AstInterface.h>
 #include <GraphDotOutput.h>
-// #include <IDGraphCreateTemp.h>
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 
 // DQ (7/28/2005): Don't include the data base
 #ifdef USE_ROSE_SQL_DATABASE_SUPPORT
@@ -38,7 +37,7 @@ typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
 // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
 // extern SgFunctionTypeTable Sgfunc_type_table;
 
-class CallGraphNode: public GraphNode
+class CallGraphNode: public MultiGraphElem
    {
 #ifdef SOLVE_FUNCTION_CALLS_IN_DB
    public:
@@ -70,7 +69,7 @@ class CallGraphNode: public GraphNode
 #endif
    };
 
-class CallGraphEdge : public GraphEdge
+class CallGraphEdge : public MultiGraphElem
    {
 #ifdef SOLVE_FUNCTION_CALLS_IN_DB
      public:
@@ -101,7 +100,7 @@ typedef CallGraphEdge ClassHierarchyEdge;
 template <class Node, class Edge>
 // DQ (9/4/2005): Compiler does not know what IDGraphCreateTemp is!
 // class DAGCreate : public IDGraphCreateTemp<Node, Edge>
-class DAGCreate : public IDGraphCreateTemplate<Node, Edge>
+class DAGCreate : public VirtualGraphCreateTemplate<Node, Edge>
    {
      private:
        // Map subgraph names to id values used in DOT interface
@@ -249,7 +248,7 @@ findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name );
 CallGraphNode* 
 findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name, int );
 
-class CallGraphDotOutput : public GraphDotOutput
+class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
    {
   // Keep a reference to the current graph
      CallGraphCreate &callGraph;

@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgAsmExpression::p_replacement
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmExpression::SgAsmExpression(const SgAsmExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmExpression *SgAsmExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmExpression::initializeStorageClassArray(SgAsmExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmExpression::~SgAsmExpression()
+*/
+/*!\fn virtual SgNode *SgAsmExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmExpression::set_replacement(std::string replacement)
+\brief \brief See  replacement)
+replacement for documentation */
+/*!\fn std::string SgAsmExpression::get_replacement() const
+\brief \brief See  const
+replacement for documentation */
+/*!\fn virtual SgNode *SgAsmExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmExpression::SgAsmExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_955073683;

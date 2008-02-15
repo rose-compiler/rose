@@ -79,35 +79,35 @@ pointer to an object derived from a SgDirectory.
 /*!\fn virtual SgNode *SgDirectory::copy(SgCopyHelp &help) const
 */
 /*!\fn virtual void SgDirectory::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
-\description See  *attributeMechanism)
+\brief \brief See  *attributeMechanism)
 attributeMechanism for documentation */
 /*!\fn void SgDirectory::set_directoryList(SgDirectoryList *directoryList)
-\description See  *directoryList)
+\brief \brief See  *directoryList)
 directoryList for documentation */
 /*!\fn void SgDirectory::set_fileList(SgFileList *fileList)
-\description See  *fileList)
+\brief \brief See  *fileList)
 fileList for documentation */
 /*!\fn SgDirectoryList *SgDirectory::get_directoryList() const
-\description See  const
+\brief \brief See  const
 directoryList for documentation */
 /*!\fn SgFileList *SgDirectory::get_fileList() const
-\description See  const
+\brief \brief See  const
 fileList for documentation */
 /*!\fn virtual AstAttributeMechanism *SgDirectory::get_attributeMechanism() const
-\description See  const
+\brief \brief See  const
 attributeMechanism for documentation */
 /*!\fn virtual SgNode *SgDirectory::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgDirectory::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgDirectory::get_numberOfTraversalSuccessors()
-\description See  SgDirectory::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgDirectory::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDirectory::get_traversalSuccessorContainer()
-\description See  SgDirectory::traversalSuccessorContainer for documentation */
+\brief \brief See  SgDirectory::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDirectory::get_traversalSuccessorNamesContainer()
-\description See  SgDirectory::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgDirectory::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgDirectory::SgDirectory()
 \brief This is the constructor.
@@ -116,4 +116,4 @@ childIndex for documentation */
 \ref SgDirectory_create "Example:create an SgDirectory object"
 */
 //@}
-int SAGE_Doxygen_Dummy_10207149013613;
+int SAGE_Doxygen_Dummy_17054277608789;

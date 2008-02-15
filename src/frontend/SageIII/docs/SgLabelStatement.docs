@@ -71,6 +71,8 @@ pointer to an object derived from a SgLabelStatement.
 */
 /*!\var SgStatement *SgLabelStatement::p_statement
 */
+/*!\var bool SgLabelStatement::p_gnu_extension_unused
+*/
 //@}
 /*! \name User Interface*/
 //@{
@@ -115,47 +117,53 @@ pointer to an object derived from a SgLabelStatement.
 /*!\fn virtual void SgLabelStatement::post_construction_initialization()
 */
 /*!\fn virtual void SgLabelStatement::set_scope(SgScopeStatement *scope)
-\description See  *scope)
+\brief \brief See  *scope)
 scope for documentation */
+/*!\fn void SgLabelStatement::set_gnu_extension_unused(bool gnu_extension_unused)
+\brief \brief See  gnu_extension_unused)
+gnu_extension_unused for documentation */
 /*!
 \fn void SgLabelStatement::set_label(SgName label)
-\brief Access function for p_label.
-See  label)
-label for documentation \return Returns void.
+\brief Access function for p_label.See  label)
+label for documentation 
+\return Returns void.
 */
 /*!\fn void SgLabelStatement::set_statement(SgStatement *statement)
-\description See  *statement)
+\brief \brief See  *statement)
 statement for documentation */
 /*!
 \fn SgName SgLabelStatement::get_label() const
-\brief Returns SgName by value.
-See  const
-label for documentation \return Returns SgName.
+\brief Returns SgName by value.See  const
+label for documentation 
+\return Returns SgName.
 */
 /*!\fn SgName SgLabelStatement::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgStatement *SgLabelStatement::get_statement() const
-\description See  const
+\brief \brief See  const
 statement for documentation */
+/*!\fn bool SgLabelStatement::get_gnu_extension_unused() const
+\brief \brief See  const
+gnu_extension_unused for documentation */
 /*!\fn virtual SgNode *SgLabelStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgScopeStatement *SgLabelStatement::get_scope() const
-\description See  const
+\brief \brief See  const
 scope for documentation */
 /*!\fn virtual SgSymbol *SgLabelStatement::get_symbol_from_symbol_table() const
-\description See  const
+\brief \brief See  const
 symbol_from_symbol_table for documentation */
 /*!\fn virtual size_t SgLabelStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgLabelStatement::get_numberOfTraversalSuccessors()
-\description See  SgLabelStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgLabelStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgLabelStatement::get_traversalSuccessorContainer()
-\description See  SgLabelStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgLabelStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgLabelStatement::get_traversalSuccessorNamesContainer()
-\description See  SgLabelStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgLabelStatement::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgLabelStatement::SgLabelStatement(SgName label,SgStatement *statement)
 \brief This is the constructor.
@@ -163,4 +171,4 @@ childIndex for documentation */
 \param startOfConstruct represents the position in the source code
 */
 //@}
-int SAGE_Doxygen_Dummy_29208705031402;
+int SAGE_Doxygen_Dummy_13115139304113;

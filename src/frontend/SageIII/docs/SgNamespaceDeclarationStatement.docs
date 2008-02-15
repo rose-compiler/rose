@@ -114,59 +114,59 @@ pointer to an object derived from a SgNamespaceDeclarationStatement.
 */
 /*!
 \fn void SgNamespaceDeclarationStatement::set_definition(SgNamespaceDefinitionStatement *definition)
-\brief Access function for p_definition.
-See  *definition)
-definition for documentation \return Returns void.
+\brief Access function for p_definition.See  *definition)
+definition for documentation 
+\return Returns void.
 */
 /*!
 \fn void SgNamespaceDeclarationStatement::set_isUnnamedNamespace(bool isUnnamedNamespace)
-\brief Access function for p_isUnnamedNamespace.
-See  isUnnamedNamespace)
-isUnnamedNamespace for documentation \return Returns void.
+\brief Access function for p_isUnnamedNamespace.See  isUnnamedNamespace)
+isUnnamedNamespace for documentation 
+\return Returns void.
 */
 /*!
 \fn void SgNamespaceDeclarationStatement::set_name(SgName name)
-\brief Access function for p_name.
-See  name)
-name for documentation \return Returns void.
+\brief Access function for p_name.See  name)
+name for documentation 
+\return Returns void.
 */
 /*!
 \fn SgName SgNamespaceDeclarationStatement::get_name() const
-\brief Access function for p_name.
-See  const
-name for documentation \return Returns SgName.
+\brief Access function for p_name.See  const
+name for documentation 
+\return Returns SgName.
 */
 /*!
 \fn SgNamespaceDefinitionStatement *SgNamespaceDeclarationStatement::get_definition() const
-\brief Returns pointer to SgNamespaceDefinitionStatement.
-See  const
-definition for documentation \return Returns pointer to SgNamespaceDefinitionStatement.
+\brief Returns pointer to SgNamespaceDefinitionStatement.See  const
+definition for documentation 
+\return Returns pointer to SgNamespaceDefinitionStatement.
 */
 /*!
 \fn bool SgNamespaceDeclarationStatement::get_isUnnamedNamespace() const
-\brief Access function for p_isUnnamedNamespace.
-See  const
-isUnnamedNamespace for documentation \return Returns SgName.
+\brief Access function for p_isUnnamedNamespace.See  const
+isUnnamedNamespace for documentation 
+\return Returns SgName.
 */
 /*!\fn virtual SgName SgNamespaceDeclarationStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgName SgNamespaceDeclarationStatement::get_qualified_name() const
-\description See  const
+\brief \brief See  const
 qualified_name for documentation */
 /*!\fn virtual SgNode *SgNamespaceDeclarationStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgNamespaceDeclarationStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgNamespaceDeclarationStatement::get_numberOfTraversalSuccessors()
-\description See  SgNamespaceDeclarationStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgNamespaceDeclarationStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNamespaceDeclarationStatement::get_traversalSuccessorContainer()
-\description See  SgNamespaceDeclarationStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgNamespaceDeclarationStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNamespaceDeclarationStatement::get_traversalSuccessorNamesContainer()
-\description See  SgNamespaceDeclarationStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgNamespaceDeclarationStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgNamespaceDeclarationStatement::SgNamespaceDeclarationStatement(SgName name,SgNamespaceDefinitionStatement *definition,bool isUnnamedNamespace)
 */
 //@}
-int SAGE_Doxygen_Dummy_84942874920441;
+int SAGE_Doxygen_Dummy_22404627627665;

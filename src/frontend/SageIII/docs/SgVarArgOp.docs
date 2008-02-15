@@ -45,33 +45,33 @@
 /*!\fn virtual void SgVarArgOp::post_construction_initialization()
 */
 /*!\fn void SgVarArgOp::set_expression_type(SgType *expression_type)
-\description See  *expression_type)
+\brief \brief See  *expression_type)
 expression_type for documentation */
 /*!\fn void SgVarArgOp::set_operand_expr(SgExpression *operand_expr)
-\description See  *operand_expr)
+\brief \brief See  *operand_expr)
 operand_expr for documentation */
 /*!\fn SgExpression *SgVarArgOp::get_operand_expr() const
-\description See  const
+\brief \brief See  const
 operand_expr for documentation */
 /*!\fn SgType *SgVarArgOp::get_expression_type() const
-\description See  const
+\brief \brief See  const
 expression_type for documentation */
 /*!\fn virtual SgNode *SgVarArgOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgVarArgOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgVarArgOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgVarArgOp::get_numberOfTraversalSuccessors()
-\description See  SgVarArgOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgVarArgOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgVarArgOp::get_traversalSuccessorContainer()
-\description See  SgVarArgOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgVarArgOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgVarArgOp::get_traversalSuccessorNamesContainer()
-\description See  SgVarArgOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgVarArgOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgVarArgOp::SgVarArgOp(SgExpression *operand_expr,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_639092640;
+extern int SAGE_Doxygen_Dummy_1507448258;

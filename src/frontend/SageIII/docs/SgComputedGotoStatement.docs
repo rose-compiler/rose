@@ -3,14 +3,14 @@
 */
 /*! \name Class Members*/
 //@{
-/*!\var SgStatementPtrList SgComputedGotoStatement::p_labels
+/*!\var SgExprListExp *SgComputedGotoStatement::p_labelList
 */
-/*!\var SgExpression *SgComputedGotoStatement::p_conditional
+/*!\var SgExpression *SgComputedGotoStatement::p_label_index
 */
 //@}
 /*! \name User Interface*/
 //@{
-/*!\fn SgComputedGotoStatement::SgComputedGotoStatement(Sg_File_Info *startOfConstruct,SgStatementPtrList labels,SgExpression *conditional=(0))
+/*!\fn SgComputedGotoStatement::SgComputedGotoStatement(Sg_File_Info *startOfConstruct,SgExprListExp *labelList,SgExpression *label_index=(0))
 */
 /*!\fn SgComputedGotoStatement::SgComputedGotoStatement(const SgComputedGotoStatementStorageClass &source)
 */
@@ -36,33 +36,43 @@
 */
 /*!\fn virtual SgNode *SgComputedGotoStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual bool SgComputedGotoStatement::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgComputedGotoStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgComputedGotoStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgComputedGotoStatement::cfgFindChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgComputedGotoStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgComputedGotoStatement::post_construction_initialization()
 */
-/*!\fn void SgComputedGotoStatement::set_conditional(SgExpression *conditional)
-\description See  *conditional)
-conditional for documentation */
-/*!\fn void SgComputedGotoStatement::set_labels(SgStatementPtrList labels)
-\description See  labels)
-labels for documentation */
-/*!\fn SgExpression *SgComputedGotoStatement::get_conditional() const
-\description See  const
-conditional for documentation */
-/*!\fn SgStatementPtrList SgComputedGotoStatement::get_labels() const
-\description See  const
-labels for documentation */
+/*!\fn void SgComputedGotoStatement::set_labelList(SgExprListExp *labelList)
+\brief \brief See  *labelList)
+labelList for documentation */
+/*!\fn void SgComputedGotoStatement::set_label_index(SgExpression *label_index)
+\brief \brief See  *label_index)
+label_index for documentation */
+/*!\fn SgExprListExp *SgComputedGotoStatement::get_labelList() const
+\brief \brief See  const
+labelList for documentation */
+/*!\fn SgExpression *SgComputedGotoStatement::get_label_index() const
+\brief \brief See  const
+label_index for documentation */
 /*!\fn virtual SgNode *SgComputedGotoStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgComputedGotoStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgComputedGotoStatement::get_numberOfTraversalSuccessors()
-\description See  SgComputedGotoStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgComputedGotoStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgComputedGotoStatement::get_traversalSuccessorContainer()
-\description See  SgComputedGotoStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgComputedGotoStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgComputedGotoStatement::get_traversalSuccessorNamesContainer()
-\description See  SgComputedGotoStatement::traversalSuccessorNamesContainer for documentation */
-/*!\fn SgComputedGotoStatement::SgComputedGotoStatement(SgStatementPtrList labels,SgExpression *conditional)
+\brief \brief See  SgComputedGotoStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgComputedGotoStatement::SgComputedGotoStatement(SgExprListExp *labelList,SgExpression *label_index)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1423465858;
+extern int SAGE_Doxygen_Dummy_2142557644;

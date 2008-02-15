@@ -34,27 +34,33 @@
 */
 /*!\fn virtual SgPrintStatement::~SgPrintStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgPrintStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgPrintStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgPrintStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgPrintStatement::post_construction_initialization()
 */
 /*!\fn void SgPrintStatement::set_format(SgExpression *format)
-\description See  *format)
+\brief \brief See  *format)
 format for documentation */
 /*!\fn SgExpression *SgPrintStatement::get_format() const
-\description See  const
+\brief \brief See  const
 format for documentation */
 /*!\fn virtual SgNode *SgPrintStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgPrintStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgPrintStatement::get_numberOfTraversalSuccessors()
-\description See  SgPrintStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgPrintStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPrintStatement::get_traversalSuccessorContainer()
-\description See  SgPrintStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgPrintStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPrintStatement::get_traversalSuccessorNamesContainer()
-\description See  SgPrintStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgPrintStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgPrintStatement::SgPrintStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_996360721;
+extern int SAGE_Doxygen_Dummy_846474093;

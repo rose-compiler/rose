@@ -37,9 +37,9 @@
 /*!\fn virtual AttachPreprocessingInfoTreeTraversalSynthesizedAttribute AttachAllPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(SgNode *n,AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh,AstTopDownBottomUpProcessing < AttachPreprocessingInfoTreeTraversalInheritedAttrribute , AttachPreprocessingInfoTreeTraversalSynthesizedAttribute > ::SubTreeSynthesizedAttributes st)
 */
 /*!\fn std::pair< SgNode * , enum PreprocessingInfo::RelativePositionType  > AttachAllPreprocessingInfoTreeTrav::get_first_node_for_file(const int fn,int hintfororder)
-\description See  hintfororder)
+\brief \brief See  hintfororder)
 first_node_for_file for documentation */
 /*!\fn void AttachAllPreprocessingInfoTreeTrav::display(const std::string &label) const
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1150902925;
+extern int SAGE_Doxygen_Dummy_1850866477;

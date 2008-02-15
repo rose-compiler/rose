@@ -130,51 +130,51 @@ pointer to an object derived from a SgFunctionDefinition.
 */
 /*!
 \fn void SgFunctionDefinition::set_body(SgBasicBlock *body)
-\brief Access function for p_body.
-See  *body)
-body for documentation \param body SgBasicBlock pointer
+\brief Access function for p_body.See  *body)
+body for documentation 
+\param body SgBasicBlock pointer
 \return Returns void.
 */
 /*!\fn void SgFunctionDefinition::set_declaration(SgFunctionDeclaration *new_val)
-\description See  *new_val)
+\brief \brief See  *new_val)
 declaration for documentation */
 /*!
 \fn SgBasicBlock *SgFunctionDefinition::get_body() const
-\brief Access function for p_body.
-See  const
-body for documentation \return Returns a pointer to a SgBasicBlock.
+\brief Access function for p_body.See  const
+body for documentation 
+\return Returns a pointer to a SgBasicBlock.
 */
 /*!\fn SgFunctionDeclaration *SgFunctionDefinition::get_declaration() const
-\description See  const
+\brief \brief See  const
 declaration for documentation */
 /*!\fn int SgFunctionDefinition::get_scope_number(const SgNode *scope) const
-\description See  const
+\brief \brief See  const
 scope_number for documentation */
 /*!\fn std::map< SgNode * , int  , std::less< SgNode * >  , std::allocator< std::pair< SgNode *const  , int  >  >  > &SgFunctionDefinition::get_scope_number_list()
-\description See  &SgFunctionDefinition::scope_number_list for documentation */
+\brief \brief See  &SgFunctionDefinition::scope_number_list for documentation */
 /*!\fn virtual SgName SgFunctionDefinition::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!
 \fn virtual SgName SgFunctionDefinition::get_qualified_name() const
-\brief Returns SgName (a string) representing the name of the current scope.
+\brief Returns SgName (a string) representing the name of the current scope.See  const
+qualified_name for documentation 
    See discussion of mangled names in the documentation.
-See  const
-qualified_name for documentation \return Returns SgName (a string).
+\return Returns SgName (a string).
 */
 /*!\fn virtual SgNode *SgFunctionDefinition::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgFunctionDefinition::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFunctionDefinition::get_numberOfTraversalSuccessors()
-\description See  SgFunctionDefinition::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFunctionDefinition::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionDefinition::get_traversalSuccessorContainer()
-\description See  SgFunctionDefinition::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFunctionDefinition::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionDefinition::get_traversalSuccessorNamesContainer()
-\description See  SgFunctionDefinition::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgFunctionDefinition::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgFunctionDefinition::SgFunctionDefinition(SgBasicBlock *body)
 */
 //@}
-int SAGE_Doxygen_Dummy_9831235872010;
+int SAGE_Doxygen_Dummy_10613231718989;

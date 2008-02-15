@@ -4,47 +4,46 @@
 #include <ReachingDefinition.h>
 #include <StmtInfoCollect.h>
 
-class DefUseChainNode : public GraphNode
+class DefUseChainNode : public MultiGraphElem
 {
   bool isdef;
   AstNodePtr ref, stmt;
  public:
-  DefUseChainNode( GraphCreate* c, const AstNodePtr& _ref, 
+  DefUseChainNode( MultiGraphCreate* c, const AstNodePtr& _ref, 
 		   const AstNodePtr& _stmt, bool def)
-		// HK 7/31/2007 changed the order of initialization
-    //: GraphNode(c), ref(_ref), stmt(_stmt), isdef(def) {}
-    : GraphNode(c), isdef(def), ref(_ref), stmt(_stmt) {}
+    : MultiGraphElem(c), ref(_ref), stmt(_stmt), isdef(def) {}
   bool is_definition() const { return isdef; }
   AstNodePtr get_ref() const { return ref; }
   AstNodePtr get_stmt() const { return stmt; }
   void Dump() const;
-  std::string ToString() const;
+  STD string toString() const;
 };
 
   
 template <class Node>
 class DefUseChain 
-  : public IDGraphCreateTemplate<Node, GraphEdge>
+  : public VirtualGraphCreateTemplate<Node, MultiGraphElem>
 {
  public:
-  typedef typename IDGraphCreateTemplate<Node, GraphEdge>::NodeIterator NodeIterator;
-  typedef typename IDGraphCreateTemplate<Node, GraphEdge>::EdgeIterator EdgeIterator;
+  typedef MultiGraphElem Edge;
+  typedef typename VirtualGraphCreateTemplate<Node, Edge>::NodeIterator NodeIterator;
+  typedef typename VirtualGraphCreateTemplate<Node, Edge>::EdgeIterator EdgeIterator;
   
   DefUseChain( BaseGraphCreate* c) 
-    : IDGraphCreateTemplate<Node, GraphEdge>(c) {}
+    : VirtualGraphCreateTemplate<Node, Edge>(c) {}
 
   virtual Node* CreateNode( AstInterface& fa, const AstNodePtr& ref, 
 			    const AstNodePtr& stmt, bool def)
     {
       Node* n = new Node(this, ref, stmt, def);
-      CreateBaseNode(n);
+      AddNode(n);
 
       return n;
     }
-  GraphEdge* CreateEdge( Node* n1, Node* n2)
+  Edge* CreateEdge( Node* n1, Node* n2)
     {
-      GraphEdge* e = new GraphEdge(this);
-      CreateBaseEdge( n1, n2, e);
+      Edge* e = new Edge(this);
+      AddEdge( n1, n2, e);
       return e;
     }
   
@@ -52,7 +51,8 @@ class DefUseChain
 	      ReachingDefinitionAnalysis& r, 
               AliasAnalysisInterface& alias,
 	      FunctionSideEffectInterface* f = 0);
-  void build(AstNodePtr root, AliasAnalysisInterface* alias = 0, 
+  void build(AstInterface& fa, AstNodePtr root,  
+             AliasAnalysisInterface* alias = 0, 
              FunctionSideEffectInterface* f = 0);
 };
 
@@ -77,6 +77,10 @@ class DefaultDUchain : public DefUseChain<DefUseChainNode>
 template<class Node>
 void PropagateDefUseChainUpdate( DefUseChain<Node> *graph, 
 				 UpdateDefUseChainNode<Node>& update);
+
+#define TEMPLATE_ONLY
+#include <DefUseChain.C>
+#undef TEMPLATE_ONLY
 
 #endif
 

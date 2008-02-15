@@ -11,4 +11,4 @@
 /*!\fn void MarkTemplateInstantiationsForOutputSupport::saveDeclaration(SgDeclarationStatement *declaration)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1710367532;
+extern int SAGE_Doxygen_Dummy_18873640;

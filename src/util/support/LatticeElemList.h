@@ -9,10 +9,8 @@ template <class T>
 class LatticeElemMerge
 {
  public:
-//virtual Boolean MergeElem(const T &e1, const T &e2, T& result)=0;
-virtual int MergeElem(const T &e1, const T &e2, T& result)=0;
-//virtual Boolean IsTop(const T& e) = 0;
-virtual int IsTop(const T& e) = 0;
+virtual bool MergeElem(const T &e1, const T &e2, T& result)=0;
+virtual bool IsTop(const T& e) = 0;
 };
 
 template <class T> 
@@ -23,15 +21,14 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
    LatticeElemList <T> (const LatticeElemList <T> &that)
      : DoublyLinkedListWrap<T> (that) {}
 
-  typedef typename DoublyLinkedListWrap<T>::Iterator Iterator;
+  typedef typename DoublyLinkedListWrap<T>::iterator iterator;
+  typedef typename DoublyLinkedListWrap<T>::const_iterator const_iterator;
   DoublyLinkedListWrap<T>::First;
 
-// Boolean AddElem( const T& _item, LatticeElemMerge<T> *Merge = 0)
-   int AddElem( const T& _item, LatticeElemMerge<T> *Merge = 0)
+   bool AddElem( const T& _item, LatticeElemMerge<T> *Merge = 0)
    { if (Merge != 0 && Merge->IsTop(_item))
        return false;
-  // Boolean mod = false, add = true;
-     int mod = false, add = true;
+     bool mod = false, add = true;
      T item = _item;
      for (DoublyLinkedEntryWrap<T> *e = First(); e != 0; ) {
         DoublyLinkedEntryWrap<T>* tmp = e;
@@ -62,8 +59,7 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
     return mod;
   }
 
-//void UpdateElem( Boolean (*Update)(T & info) )
-  void UpdateElem( int (*Update)(T & info) )
+  void UpdateElem( bool (*Update)(T & info) )
   {
     for (DoublyLinkedEntryWrap<T> *e = First(); e != 0; e = Next(e)) {
        T& d = e->GetEntry();
@@ -74,12 +70,10 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
        }
     }
   }
-//Boolean operator |= (const LatticeElemList <T> &that)
-  int operator |= (const LatticeElemList <T> &that)
+  bool operator |= (const LatticeElemList <T> &that)
   {
-// Boolean result = false;
-   int result = false;
-    for ( Iterator iter(that); !iter.ReachEnd(); iter++) {
+   bool result = false;
+    for ( iterator iter(that); !iter.ReachEnd(); iter++) {
       T &c = iter.Current();
       if (AddElem(c))
          result = true;

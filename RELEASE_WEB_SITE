@@ -41,7 +41,7 @@ fail.
    4) Only use the configure command line WITHOUT options.
    5) make the build tree separate from the source tree.
 
-Directions to get: "rose-0.9.0b-with_edg_binary.tar.gz"
+Directions to get: "rose-0.9.1a-with_edg_binary.tar.gz"
 
   To download a ROSE binary distribution,
     (1) Point your browser at: http://vuduc.org/rose-dist
@@ -55,13 +55,13 @@ From the web page, copy the file to your computer....
 2) untar the tarball
 3) type "mkdir compileTree"
 4) type "cd compileTree"
-5) type "../rose-0.9.0b/configure"
+5) type "../rose-0.9.1a/configure"
    (there will be output from configure)
 6) type "make"
    (you can use the -jn option for any value of "n" to run the make in parallel)
 7) type "make check" or "make -jn check"
 8) type "make install"
-9  type make installcheck"
+9) type make installcheck"
 
   You now have ROSE installed and tested, the Compass
 work is in projects/compass and you can see from the

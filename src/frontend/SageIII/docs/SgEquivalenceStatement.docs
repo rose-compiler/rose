@@ -34,30 +34,36 @@
 */
 /*!\fn virtual SgNode *SgEquivalenceStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgEquivalenceStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgEquivalenceStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgEquivalenceStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgEquivalenceStatement::post_construction_initialization()
 */
 /*!\fn void SgEquivalenceStatement::set_equivalence_set_list(SgExprListExp *equivalence_set_list)
-\description See  *equivalence_set_list)
+\brief \brief See  *equivalence_set_list)
 equivalence_set_list for documentation */
 /*!\fn SgExprListExp *SgEquivalenceStatement::get_equivalence_set_list() const
-\description See  const
+\brief \brief See  const
 equivalence_set_list for documentation */
 /*!\fn virtual SgName SgEquivalenceStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgEquivalenceStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgEquivalenceStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgEquivalenceStatement::get_numberOfTraversalSuccessors()
-\description See  SgEquivalenceStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgEquivalenceStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgEquivalenceStatement::get_traversalSuccessorContainer()
-\description See  SgEquivalenceStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgEquivalenceStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgEquivalenceStatement::get_traversalSuccessorNamesContainer()
-\description See  SgEquivalenceStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgEquivalenceStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgEquivalenceStatement::SgEquivalenceStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1493308044;
+extern int SAGE_Doxygen_Dummy_341068879;

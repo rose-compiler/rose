@@ -37,18 +37,18 @@
 /*!\fn virtual void SgDeadIfDirectiveStatement::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgDeadIfDirectiveStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgDeadIfDirectiveStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgDeadIfDirectiveStatement::get_numberOfTraversalSuccessors()
-\description See  SgDeadIfDirectiveStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgDeadIfDirectiveStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDeadIfDirectiveStatement::get_traversalSuccessorContainer()
-\description See  SgDeadIfDirectiveStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgDeadIfDirectiveStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDeadIfDirectiveStatement::get_traversalSuccessorNamesContainer()
-\description See  SgDeadIfDirectiveStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgDeadIfDirectiveStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgDeadIfDirectiveStatement::SgDeadIfDirectiveStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_649226675;
+extern int SAGE_Doxygen_Dummy_1923352715;

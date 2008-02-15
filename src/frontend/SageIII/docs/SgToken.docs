@@ -39,30 +39,30 @@
 /*!\fn virtual SgToken::~SgToken()
 */
 /*!\fn void SgToken::set_classification_code(unsigned int classification_code)
-\description See  classification_code)
+\brief \brief See  classification_code)
 classification_code for documentation */
 /*!\fn void SgToken::set_lexeme_string(std::string lexeme_string)
-\description See  lexeme_string)
+\brief \brief See  lexeme_string)
 lexeme_string for documentation */
 /*!\fn std::string SgToken::get_lexeme_string() const
-\description See  const
+\brief \brief See  const
 lexeme_string for documentation */
 /*!\fn unsigned int SgToken::get_classification_code() const
-\description See  const
+\brief \brief See  const
 classification_code for documentation */
 /*!\fn virtual SgNode *SgToken::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgToken::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgToken::get_numberOfTraversalSuccessors()
-\description See  SgToken::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgToken::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgToken::get_traversalSuccessorContainer()
-\description See  SgToken::traversalSuccessorContainer for documentation */
+\brief \brief See  SgToken::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgToken::get_traversalSuccessorNamesContainer()
-\description See  SgToken::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgToken::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgToken::SgToken(std::string lexeme_string,unsigned int classification_code)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_32387489;
+extern int SAGE_Doxygen_Dummy_284878145;

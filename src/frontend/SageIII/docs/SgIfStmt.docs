@@ -52,12 +52,16 @@ pointer to an object derived from a SgIfStmt.
 /*! \var SgBasicBlock *SgIfStmt::p_true_body
 \brief This pointer a SgBasicBlock, and holds the statements in the "true" body of if statement.
 */
+/*!\var SgLabelRefExp *SgIfStmt::p_else_numeric_label
+*/
+/*!\var SgLabelRefExp *SgIfStmt::p_end_numeric_label
+*/
 /*! \var SgStatement *SgIfStmt::p_conditional
 \brief This pointer a SgStatement.
 */
-/*!\var int SgIfStmt::p_end_numeric_label
-*/
 /*!\var std::string SgIfStmt::p_string_label
+*/
+/*!\var bool SgIfStmt::p_has_end_statement
 */
 //@}
 /*! \name User Interface*/
@@ -115,73 +119,85 @@ pointer to an object derived from a SgIfStmt.
 */
 /*!\fn virtual void SgIfStmt::post_construction_initialization()
 */
-/*!
-\fn void SgIfStmt::set_conditional(SgStatement *conditional)
-\brief Access function for p_conditional.
-See  *conditional)
-conditional for documentation \param conditional SgStatement pointer
-\return Returns void.
-*/
-/*!\fn void SgIfStmt::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgIfStmt::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
 /*!
-\fn void SgIfStmt::set_false_body(SgBasicBlock *false_body)
-\brief Access function for p_false_body.
-See  *false_body)
-false_body for documentation \param false_body SgBasicBlock pointer
+\fn void SgIfStmt::set_conditional(SgStatement *conditional)
+\brief Access function for p_conditional.See  *conditional)
+conditional for documentation 
+\param conditional SgStatement pointer
 \return Returns void.
 */
+/*!\fn void SgIfStmt::set_else_numeric_label(SgLabelRefExp *else_numeric_label)
+\brief \brief See  *else_numeric_label)
+else_numeric_label for documentation */
+/*!
+\fn void SgIfStmt::set_false_body(SgBasicBlock *false_body)
+\brief Access function for p_false_body.See  *false_body)
+false_body for documentation 
+\param false_body SgBasicBlock pointer
+\return Returns void.
+*/
+/*!\fn void SgIfStmt::set_has_end_statement(bool has_end_statement)
+\brief \brief See  has_end_statement)
+has_end_statement for documentation */
 /*!\fn void SgIfStmt::set_string_label(std::string string_label)
-\description See  string_label)
+\brief \brief See  string_label)
 string_label for documentation */
 /*!
 \fn void SgIfStmt::set_true_body(SgBasicBlock *true_body)
-\brief Access function for p_true_body.
-See  *true_body)
-true_body for documentation \param true_body SgBasicBlock pointer
+\brief Access function for p_true_body.See  *true_body)
+true_body for documentation 
+\param true_body SgBasicBlock pointer
 \return Returns void.
 */
 /*!
 \fn SgBasicBlock *SgIfStmt::get_false_body() const
-\brief Access function for p_false_body.
-See  const
-false_body for documentation \return Returns a pointer to a SgBasicBlock.
+\brief Access function for p_false_body.See  const
+false_body for documentation 
+\return Returns a pointer to a SgBasicBlock.
 */
 /*!
 \fn SgBasicBlock *SgIfStmt::get_true_body() const
-\brief Access function for p_true_body.
-See  const
-true_body for documentation \return Returns a pointer to a SgBasicBlock.
+\brief Access function for p_true_body.See  const
+true_body for documentation 
+\return Returns a pointer to a SgBasicBlock.
 */
+/*!\fn SgLabelRefExp *SgIfStmt::get_else_numeric_label() const
+\brief \brief See  const
+else_numeric_label for documentation */
+/*!\fn SgLabelRefExp *SgIfStmt::get_end_numeric_label() const
+\brief \brief See  const
+end_numeric_label for documentation */
 /*!
 \fn SgStatement *SgIfStmt::get_conditional() const
-\brief Access function for p_conditional.
-See  const
-conditional for documentation \return Returns a pointer to a SgStatement.
+\brief Access function for p_conditional.See  const
+conditional for documentation 
+\return Returns a pointer to a SgStatement.
 */
-/*!\fn int SgIfStmt::get_end_numeric_label() const
-\description See  const
-end_numeric_label for documentation */
+/*!\fn bool SgIfStmt::get_has_end_statement() const
+\brief \brief See  const
+has_end_statement for documentation */
 /*!\fn std::string SgIfStmt::get_string_label() const
-\description See  const
+\brief \brief See  const
 string_label for documentation */
 /*!\fn virtual SgName SgIfStmt::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgIfStmt::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgIfStmt::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgIfStmt::get_numberOfTraversalSuccessors()
-\description See  SgIfStmt::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgIfStmt::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIfStmt::get_traversalSuccessorContainer()
-\description See  SgIfStmt::traversalSuccessorContainer for documentation */
+\brief \brief See  SgIfStmt::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIfStmt::get_traversalSuccessorNamesContainer()
-\description See  SgIfStmt::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgIfStmt::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgIfStmt::SgIfStmt(SgStatement *conditional,SgBasicBlock *true_body,SgBasicBlock *false_body)
 */
 //@}
-int SAGE_Doxygen_Dummy_184212389329986;
+int SAGE_Doxygen_Dummy_9663314568241;

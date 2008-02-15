@@ -62,32 +62,32 @@
 /*!\fn virtual void SgDoubleVal::post_construction_initialization()
 */
 /*!\fn void SgDoubleVal::set_value(double value)
-\description See  value)
+\brief \brief See  value)
 value for documentation */
 /*!\fn void SgDoubleVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn double SgDoubleVal::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
 /*!\fn std::string SgDoubleVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn virtual SgNode *SgDoubleVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgDoubleVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgDoubleVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgDoubleVal::get_numberOfTraversalSuccessors()
-\description See  SgDoubleVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgDoubleVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDoubleVal::get_traversalSuccessorContainer()
-\description See  SgDoubleVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgDoubleVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDoubleVal::get_traversalSuccessorNamesContainer()
-\description See  SgDoubleVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgDoubleVal::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgDoubleVal::SgDoubleVal(double value,std::string valueString)
 \brief This is the constructor.
@@ -97,4 +97,4 @@ childIndex for documentation */
 \ref SgDoubleVal_create "Example:create an SgDoubleVal object"
 */
 //@}
-int SAGE_Doxygen_Dummy_177562004619109;
+int SAGE_Doxygen_Dummy_1515025195484;

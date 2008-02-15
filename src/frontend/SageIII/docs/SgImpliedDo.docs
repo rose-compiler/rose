@@ -42,54 +42,60 @@
 */
 /*!\fn virtual SgNode *SgImpliedDo::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgImpliedDo::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgImpliedDo::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgImpliedDo::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgImpliedDo::post_construction_initialization()
 */
 /*!\fn void SgImpliedDo::set_do_var(SgVarRefExp *do_var)
-\description See  *do_var)
+\brief \brief See  *do_var)
 do_var for documentation */
 /*!\fn void SgImpliedDo::set_first_val(SgExpression *first_val)
-\description See  *first_val)
+\brief \brief See  *first_val)
 first_val for documentation */
 /*!\fn void SgImpliedDo::set_increment(SgExpression *increment)
-\description See  *increment)
+\brief \brief See  *increment)
 increment for documentation */
 /*!\fn void SgImpliedDo::set_last_val(SgExpression *last_val)
-\description See  *last_val)
+\brief \brief See  *last_val)
 last_val for documentation */
 /*!\fn void SgImpliedDo::set_object_list(SgExprListExp *object_list)
-\description See  *object_list)
+\brief \brief See  *object_list)
 object_list for documentation */
 /*!\fn SgExprListExp *SgImpliedDo::get_object_list() const
-\description See  const
+\brief \brief See  const
 object_list for documentation */
 /*!\fn SgExpression *SgImpliedDo::get_first_val() const
-\description See  const
+\brief \brief See  const
 first_val for documentation */
 /*!\fn SgExpression *SgImpliedDo::get_increment() const
-\description See  const
+\brief \brief See  const
 increment for documentation */
 /*!\fn SgExpression *SgImpliedDo::get_last_val() const
-\description See  const
+\brief \brief See  const
 last_val for documentation */
 /*!\fn SgVarRefExp *SgImpliedDo::get_do_var() const
-\description See  const
+\brief \brief See  const
 do_var for documentation */
 /*!\fn virtual SgNode *SgImpliedDo::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgImpliedDo::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgImpliedDo::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgImpliedDo::get_numberOfTraversalSuccessors()
-\description See  SgImpliedDo::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgImpliedDo::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgImpliedDo::get_traversalSuccessorContainer()
-\description See  SgImpliedDo::traversalSuccessorContainer for documentation */
+\brief \brief See  SgImpliedDo::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgImpliedDo::get_traversalSuccessorNamesContainer()
-\description See  SgImpliedDo::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgImpliedDo::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgImpliedDo::SgImpliedDo(SgVarRefExp *do_var,SgExpression *first_val,SgExpression *last_val,SgExpression *increment,SgExprListExp *object_list)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1195653785;
+extern int SAGE_Doxygen_Dummy_62569605;

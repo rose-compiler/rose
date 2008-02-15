@@ -5,7 +5,7 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../OAWrap -I$(top_srcdir
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-libCFGSources =  CFG_ROSE.C CFG_OA.C CFGImpl.C
+libCFGSources =  CFG_ROSE.C CFG_OA.C 
 
 # lib_LTLIBRARIES = libCFG.a
 # libCFG_a_SOURCES  = $(libCFGSources)

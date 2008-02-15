@@ -1,0 +1,47 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmTypeByte
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmTypeByte::SgAsmTypeByte(const SgAsmTypeByteStorageClass &source)
+*/
+/*!\fn inline static void SgAsmTypeByte::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmTypeByte *SgAsmTypeByte::create_type()
+*/
+/*!\fn static SgAsmTypeByte *SgAsmTypeByte::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmTypeByte::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmTypeByte::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmTypeByte::initializeStorageClassArray(SgAsmTypeByteStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmTypeByte::clearMemoryPool()
+*/
+/*!\fn static void SgAsmTypeByte::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmTypeByte::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmTypeByte::roseRTI()
+*/
+/*!\fn virtual SgAsmTypeByte::~SgAsmTypeByte()
+*/
+/*!\fn virtual SgNode *SgAsmTypeByte::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmTypeByte::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmTypeByte::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmTypeByte::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmTypeByte::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmTypeByte::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmTypeByte::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmTypeByte::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmTypeByte::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmTypeByte::SgAsmTypeByte()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_748378357;

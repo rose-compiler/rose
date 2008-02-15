@@ -5,7 +5,7 @@
 //@{
 /*!\var bool SgProgramHeaderStatement::p_program_statement_explicit
 */
-/*!\var int SgProgramHeaderStatement::p_end_numeric_label
+/*!\var SgLabelRefExp *SgProgramHeaderStatement::p_end_numeric_label
 */
 //@}
 /*! \name User Interface*/
@@ -40,34 +40,34 @@
 */
 /*!\fn virtual void SgProgramHeaderStatement::post_construction_initialization()
 */
-/*!\fn void SgProgramHeaderStatement::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgProgramHeaderStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
 /*!\fn void SgProgramHeaderStatement::set_program_statement_explicit(bool program_statement_explicit)
-\description See  program_statement_explicit)
+\brief \brief See  program_statement_explicit)
 program_statement_explicit for documentation */
-/*!\fn bool SgProgramHeaderStatement::get_program_statement_explicit() const
-\description See  const
-program_statement_explicit for documentation */
-/*!\fn int SgProgramHeaderStatement::get_end_numeric_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgProgramHeaderStatement::get_end_numeric_label() const
+\brief \brief See  const
 end_numeric_label for documentation */
+/*!\fn bool SgProgramHeaderStatement::get_program_statement_explicit() const
+\brief \brief See  const
+program_statement_explicit for documentation */
 /*!\fn virtual SgName SgProgramHeaderStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgProgramHeaderStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgProgramHeaderStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgProgramHeaderStatement::get_numberOfTraversalSuccessors()
-\description See  SgProgramHeaderStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgProgramHeaderStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgProgramHeaderStatement::get_traversalSuccessorContainer()
-\description See  SgProgramHeaderStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgProgramHeaderStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgProgramHeaderStatement::get_traversalSuccessorNamesContainer()
-\description See  SgProgramHeaderStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgProgramHeaderStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgProgramHeaderStatement::SgProgramHeaderStatement(SgName name,SgFunctionType *type,SgFunctionDefinition *definition)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_884782873;
+extern int SAGE_Doxygen_Dummy_999067261;

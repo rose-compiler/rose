@@ -1,15 +1,7 @@
-#include <general.h>
-
 #include <assert.h>
 
 #include <DepInfo.h>
 #include <sstream>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 class DepEDDTypeInfo : public DepInfoImpl
 {
@@ -83,7 +75,7 @@ GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePt
                       DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel))
                      :  DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; }
 
-string DepType2String(DepType t) 
+STD string DepType2String(DepType t) 
 {
   switch (t) {
   case DEPTYPE_CTRL: return "CTRL_DEP;"; 
@@ -101,19 +93,19 @@ string DepType2String(DepType t)
   default: assert(false);
   }
 }
-
-string DepInfo :: ToString() const
+  
+STD string DepInfo :: toString() const
 {
-  stringstream out;
+  STD stringstream out;
   out << rows() << "*" << cols();
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
 
   if (is_precise()) 
       out << " +precise ";
-  out << AstInterface::AstToString(SrcRef()) << AstInterface::AstToString(SnkRef());
+  out << AstToString(SrcRef()) << AstToString(SnkRef());
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
-       out << Entry( i, j).ToString() << ";";
+       out << Entry( i, j).toString() << ";";
     } 
     out << ":";
   }
@@ -121,7 +113,7 @@ string DepInfo :: ToString() const
   return out.str();
 }
 
-Boolean DepInfo:: operator |= (const DepInfo &d2)
+bool DepInfo:: operator |= (const DepInfo &d2)
 {
   return UpdateMatrix(*this, d2, DepRel::UnionUpdate);
 }
@@ -133,12 +125,12 @@ DepInfo operator | ( const DepInfo &info1, const DepInfo &info2)
   return result;
 }
 
-Boolean DepInfo :: operator &= ( const DepInfo &d2)
+bool DepInfo :: operator &= ( const DepInfo &d2)
 {
   return UpdateMatrix(*this, d2, DepRel::IntersectUpdate);
 }
 
-Boolean DepInfo:: operator *= ( const DepInfo &info2)
+bool DepInfo:: operator *= ( const DepInfo &info2)
 {
   assert(cols() == info2.rows());
   DepInfo info1(*this);
@@ -163,9 +155,9 @@ DepInfo operator & ( const DepInfo &info1, const DepInfo &info2)
   return result;
 }
 
-Boolean DepInfo :: ClosureEntries()
+bool DepInfo :: ClosureEntries()
 {
-  Boolean mod = false;
+  bool mod = false;
   assert(rows() == cols());
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
@@ -225,7 +217,7 @@ DepInfo Closure( const DepInfo &info )
   return result;
 }
 
-Boolean DepInfo :: operator == ( const DepInfo &d2) const
+bool DepInfo :: operator == ( const DepInfo &d2) const
 {
   if (CountRefHandle<DepInfoImpl>:: operator ==(d2))
      return true;
@@ -240,7 +232,7 @@ Boolean DepInfo :: operator == ( const DepInfo &d2) const
   return true;
 }
 
-Boolean DepInfo :: operator < ( const DepInfo &d2) const
+bool DepInfo :: operator < ( const DepInfo &d2) const
 {
   if (rows() != d2.rows() || cols() != d2.cols() || CommonLevel() != d2.CommonLevel())
      return false;
@@ -253,7 +245,7 @@ Boolean DepInfo :: operator < ( const DepInfo &d2) const
   return true;
 }
 
-Boolean DepInfo :: operator <= ( const DepInfo &d2) const
+bool DepInfo :: operator <= ( const DepInfo &d2) const
 {
   if (rows() != d2.rows() || cols() != d2.cols() || CommonLevel() != d2.CommonLevel())
      return false;
@@ -419,14 +411,14 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
 {
   minLevel = -1;
   maxLevel = -1;
-  // int nr = rows(), nc = cols();
+  int nr = rows(), nc = cols();
   int num = CommonLevel();
   for (int i = 0; i < num; i++) {
     DepRel r = Entry(i,i);
     DepDirType t = r.GetDirType();
     int align1 = Entry(i,i).GetMinAlign();
     int align2 = Entry(i,i).GetMaxAlign();
-    Boolean carry = true, notcarry = true;
+    bool carry = true, notcarry = true;
 
     switch (t) {
     case DEPDIR_EQ:
@@ -442,7 +434,6 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
     case DEPDIR_GE:
          if (align1 > 0)
             notcarry = carry = false;
-    default: {cerr << "Bad depdir " << t << endl; assert (!"Unhandled case");}
     }
     if (carry && minLevel < 0)
        minLevel = i;
@@ -459,7 +450,7 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
   }
 }
 
-Boolean DepInfo :: IsTop( ) const
+bool DepInfo :: IsTop( ) const
 {
   if (ConstPtr() == 0)
      return true;
@@ -472,7 +463,7 @@ Boolean DepInfo :: IsTop( ) const
   return false;
 }
 
-Boolean DepInfo :: IsBottom( int level ) const
+bool DepInfo :: IsBottom( int level ) const
 {
   if (level >= rows() || level >= cols())
      return true;
@@ -485,7 +476,7 @@ Boolean DepInfo :: IsBottom( int level ) const
   return true;
 }
 
-Boolean DepInfo :: IsID() const
+bool DepInfo :: IsID() const
 {
   if (rows() != cols())
      return false;
@@ -499,7 +490,7 @@ Boolean DepInfo :: IsID() const
   return true;
 }
 
-Boolean IsValidDep(  const DepInfo &d, int num)
+bool IsValidDep(  const DepInfo &d, int num)
 {
   if (d.GetDepType() == DEPTYPE_IO)
       return true;
@@ -519,7 +510,6 @@ Boolean IsValidDep(  const DepInfo &d, int num)
     case DEPDIR_GE:
     case DEPDIR_ALL:
          return false;
-    default: assert (!"Unhandled case");
     }
   }
   return true;

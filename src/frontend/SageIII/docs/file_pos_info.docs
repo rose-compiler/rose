@@ -1,0 +1,11 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class file_pos_info
+*/
+/*! \name Class Members*/
+//@{
+/*!\var int file_pos_info::line_num
+*/
+/*!\var int file_pos_info::column_num
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_739937791;

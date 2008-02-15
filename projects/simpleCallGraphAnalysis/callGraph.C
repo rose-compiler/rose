@@ -6,8 +6,7 @@
 // #include <string>
 // #include <iostream>
 #include <GraphDotOutput.h>
-// #include <CommandOptions.h>
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
@@ -72,25 +71,25 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration )
         }
    }
 
-class CallGraphNode: public GraphNode
+class CallGraphNode: public MultiGraphElem
    {
      public:
          string label;
          SgFunctionDeclaration* functionDeclaration;
 
          CallGraphNode ( string label, SgFunctionDeclaration* functionDeclaration )
-            : GraphNode(NULL), label(label), functionDeclaration(functionDeclaration) {};
+            : MultiGraphElem(NULL), label(label), functionDeclaration(functionDeclaration) {};
    };
 
-class CallGraphEdge: public GraphEdge
+class CallGraphEdge: public MultiGraphElem
    {
      public:
          string label;
 
-         CallGraphEdge ( string label = "default edge" ) : GraphEdge(NULL), label(label) {};
+         CallGraphEdge ( string label = "default edge" ) : MultiGraphElem(NULL), label(label) {};
    };
 
-class CallGraphCreate : public IDGraphCreateTemplate<CallGraphNode,CallGraphEdge>
+class CallGraphCreate : public VirtualGraphCreateTemplate<CallGraphNode,CallGraphEdge>
    {
      public:
           void addNode ( CallGraphNode* node );
@@ -98,18 +97,18 @@ class CallGraphCreate : public IDGraphCreateTemplate<CallGraphNode,CallGraphEdge
 
           int size();
 
-          CallGraphCreate () : IDGraphCreateTemplate<CallGraphNode,CallGraphEdge> (NULL) {}
+          CallGraphCreate () : VirtualGraphCreateTemplate<CallGraphNode,CallGraphEdge> (NULL) {}
 
          ~CallGraphCreate() { printf ("Inside of ~CallGraphCreate() \n"); }
    };
 
 void
 CallGraphCreate::addNode ( CallGraphNode* node )
-   { CreateBaseNode ( node ); }
+   { VirtualGraphCreateTemplate<CallGraphNode,CallGraphEdge>::AddNode ( node ); }
 
 void
 CallGraphCreate::addEdge ( CallGraphNode *src, CallGraphNode *snk, CallGraphEdge* edge )
-   { CreateBaseEdge ( src, snk, edge ); }
+   { VirtualGraphCreateTemplate<CallGraphNode,CallGraphEdge>::AddEdge ( src, snk, edge ); }
 
 int
 CallGraphCreate::size()
@@ -252,7 +251,7 @@ GenerateDotGraph ( CallGraphCreate* graph )
         }
 
      printf ("Building the GraphDotOutput object ... \n");
-     GraphDotOutput output(*graph);
+     GraphDotOutput<CallGraphCreate> output(*graph);
 
      printf ("Leaving GenerateDotGraph ... \n");
 
@@ -298,9 +297,6 @@ main (int argc, char* argv[])
    }
 
 
-#define TEMPLATE_ONLY
-#include <IDGraphCreate.C>
-template class IDGraphCreateTemplate<CallGraphNode, CallGraphEdge>;
 
 
 

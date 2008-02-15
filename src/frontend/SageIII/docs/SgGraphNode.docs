@@ -43,45 +43,45 @@
 /*!\fn void SgGraphNode::append_properties(int addr,std::string prop)
 */
 /*!\fn void SgGraphNode::set_SgNode(SgNode *SgNode)
-\description See  *SgNode)
+\brief \brief See  *SgNode)
 SgNode for documentation */
 /*!\fn void SgGraphNode::set_name(std::string name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgGraphNode::set_properties(std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > properties)
-\description See  properties)
+\brief \brief See  properties)
 properties for documentation */
 /*!\fn void SgGraphNode::set_type(std::string type)
-\description See  type)
+\brief \brief See  type)
 type for documentation */
 /*!\fn SgNode *SgGraphNode::get_SgNode() const
-\description See  const
+\brief \brief See  const
 SgNode for documentation */
 /*!\fn int SgGraphNode::get_graph_id() const
-\description See  const
+\brief \brief See  const
 graph_id for documentation */
 /*!\fn std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > SgGraphNode::get_properties() const
-\description See  const
+\brief \brief See  const
 properties for documentation */
 /*!\fn std::string SgGraphNode::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn std::string SgGraphNode::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual SgNode *SgGraphNode::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgGraphNode::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgGraphNode::get_numberOfTraversalSuccessors()
-\description See  SgGraphNode::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgGraphNode::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGraphNode::get_traversalSuccessorContainer()
-\description See  SgGraphNode::traversalSuccessorContainer for documentation */
+\brief \brief See  SgGraphNode::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGraphNode::get_traversalSuccessorNamesContainer()
-\description See  SgGraphNode::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgGraphNode::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgGraphNode::SgGraphNode(std::string name=(""),std::string type=(""),int graph_id=0)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1675235752;
+extern int SAGE_Doxygen_Dummy_1543931688;

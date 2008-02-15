@@ -1,0 +1,179 @@
+Help:
+-----
+
+Contact Gary Yuan (yuangm@gmail.com)
+
+Description of this directory
+-----------------------------
+
+**Contents (compass_scripts):
+compass_checkin.sh
+compass_submission_setup.sh
+compass_fixes (directory)
+	compassMain.C  compass.tex.in  Makefile.am
+compass_template_generator (directory)
+	compass.C  compass_parameters  gen_checker.sh
+	compass.h  compassTestMain.C
+
+################################################################################
+
+Invocation of the compass_checkin.sh script
+-------------------------------------------
+
+If you are a member of the rose group then invoke the script compass_checkin.sh 
+script to handin your new Compass Checker or overwrite an existing checker
+with a new version.
+
+Usage:
+------
+
+compass_checkin.sh <Tar GZIP checker> <Checkin Directory>
+
+Example:
+--------
+
+$ compass_checkin.sh noExitInMpiCode.tgz ~dquinlan/COMPASS_SUBMIT
+
+Restrictions:
+-------------
+
+1. You may only specify one checker tarball file at a time
+2. You may only submit GZIP TAR format files
+3. You may only submit files less than 10 MB
+
+Test for Success: You should see the name of your checker archive
+-----------------
+
+$ ls -l ~dquinlan/COMPASS_SUBMIT
+
+################################################################################
+
+Invocation of the compass_submission_setup.sh script
+----------------------------------------------------
+
+You may use the compass_submission_setup.sh script to integrate your own and
+other people's checkers into your source tree of projects/compass.
+
+Necessary Edits to compass_submission_setup.sh:
+-----------------------------------------------
+
+Edit the following changes to your copy of compass_submission_setup.sh
+
+CHECKIN_DIRECTORY=<Full path to where you store your checker archives>
+COMPASS_PROJECT=<Full path to ROSE source tree projects/compass>
+
+Note, that compass_submission_setup.sh expects to find GZIP TAR format archives
+in the directory path specified by ${CHECKIN_DIRECTORY}
+
+Invocation of the compass_submission_setup.sh script
+----------------------------------------------------
+
+After you have made the necessary edits simply execute:
+
+$ compass_submission_setup.sh
+
+Results of executing compass_submission_setup.sh
+------------------------------------------------
+
+compass_submission_setup.sh will produce several generated files in your
+ROSE source tree projects/compass directory:
+
+projects/compass/CHECKER_LIST -- Contains a list of checkers ever 'seen' by your
+	copy of compass_submission_setup.sh
+
+projects/compass/compass_makefile.inc -- Include this file in at the top of your
+	projects/compass/Makefile.am. This will build the correct Makefile
+	for only the new checkers 'seen' by compass_submission_setup.sh
+
+projects/compass/checkers.h -- Header file included in 
+	projects/compass/compassMain.C, contains the individual include
+	directives for each checker 'seen' by compass_submission_setup.sh
+
+projects/compass/buildCheckers.C -- Source file containing the function
+	to build all traversals for checkers 'seen' by 
+	compass_submission_setup.sh. Call this function from
+	projects/compass/compassMain.C
+
+	Here is the prototype for this function
+
+void buildCheckers( std::vector<Compass::TraversalBase*> &retVal, 
+		    Compass::Parameters &params, 
+		    Compass::OutputObject &output );
+
+projects/compass/compassCheckerDocs.tex -- Is a common tex file that \inputs
+	all documentation for checkers 'seen' by compass_submission_setup.sh.
+	input this file in your projects/compass/compass.tex.in file instead
+	of the individual checker documentations.
+
+	Example of compass.tex.in edits:
+	\input{introduction}
+
+	\input{compassCheckerDocs}
+
+	\newpage
+	\input{addYourOwnDetector}
+
+Summary of post-processing instructions for compass_submission_setup.sh
+-----------------------------------------------------------------------
+
+You must complete these post-processing instructions once when switching to the
+version of compass provided after 7/18/2007.
+
+1. include compass_makefile.inc in your Makefile.am under the ROSE source
+   tree projects/compass directory
+
+2. Edit your compassMain.C to call the buildCheckers() function and have
+   the function prototype at an appropriate location in compassMain.C
+
+3. Edit your compass.tex.in file to input only compassCheckerDocs.tex instead
+   of the individual documentation .tex files for each checker
+
+0. If you would rather take the default files for all these changes please
+   copy compass/fixes/* to projects/compass
+
+################################################################################
+
+Invocation of the compass_template_generator/gen_checker.sh script
+------------------------------------------------------------------
+
+Invoke the gen_checker.sh script to generate a template for all your Compass
+checker submissions.
+
+Usage:
+------
+
+gen_checker.sh <name of your checker>
+
+Example:
+--------
+
+$ gen_checker.sh multiple cases on same line
+
+Results of executing the gen_checker.sh script
+----------------------------------------------
+
+A new directory name 'multipleCasesOnSameLine' (name of your checker in
+camel case) is created with the following files:
+
+	compass.C           multipleCasesOnSameLine.C
+	compass.h           multipleCasesOnSameLineDocs.tex
+	compass_parameters  multipleCasesOnSameLine.h
+	compassTestMain.C   multipleCasesOnSameLineMain.C
+	Makefile            multipleCasesOnSameLineTest1.C
+	Makefile.am
+
+Some of the files (compass.[Ch], compass_parameters, and compassTestMain.C)
+are copied from the current directory (compass_template_generator), while
+others are generated (multiple*, Makefile, Makefile.am)
+
+Some Suggestions:
+-----------------
+
+1. It is advised that you do not invoke the script gen_checker with words
+   like checker, detector, tester, etc. Adding these verbs at the command
+   line means that these words are added as suffixes into the
+   directory-name. Which will make it redundant, as the compass project is
+   about writing style-checkers!
+
+2. Some of the files have read-only permissions and are intended only for
+   such use. Please do not change the permissions of these files.

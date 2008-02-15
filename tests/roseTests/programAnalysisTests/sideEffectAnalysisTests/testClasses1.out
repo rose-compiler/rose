@@ -1,0 +1,25 @@
+Call side effects on project: 
+Function  Side Effects foo::ptrMod: x 
+Statement Side Effects testClasses1.C-134839016: x 
+Function  Side Effects foo::refMod: x 
+Statement Side Effects testClasses1.C-134846616: x 
+Function  Side Effects foo::globalMod: local ::global 
+Statement Side Effects testClasses1.C-134858808: local 
+Statement Side Effects testClasses1.C-134859736: ::global 
+Function  Side Effects main: x ::global y 
+Statement Side Effects testClasses1.C-134876248: x 
+Statement Side Effects testClasses1.C-134877608: y 
+Statement Side Effects testClasses1.C-134878856: ::global 
+Call side effects on file: 
+Function  Side Effects foo::ptrMod: x 
+Statement Side Effects testClasses1.C-134839016: x 
+Function  Side Effects foo::refMod: x 
+Statement Side Effects testClasses1.C-134846616: x 
+Function  Side Effects foo::globalMod: local ::global 
+Statement Side Effects testClasses1.C-134858808: local 
+Statement Side Effects testClasses1.C-134859736: ::global 
+Function  Side Effects main: x ::global y 
+Statement Side Effects testClasses1.C-134876248: x 
+Statement Side Effects testClasses1.C-134877608: y 
+Statement Side Effects testClasses1.C-134878856: ::global 
+Call side effects within for loop: 

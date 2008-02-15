@@ -1,7 +1,7 @@
 
 int min2(int a0,int a1)
 {
-  return (a0 < a1)?a0:a1;
+  return a0 < a1?a0:a1;
 }
 
 #define N 50
@@ -10,8 +10,6 @@ extern void initmatrix(double x[][50],double s);
 
 int main()
 {
-  int _var_1;
-  int _var_0;
   int i;
   int j;
   int k;
@@ -19,6 +17,8 @@ int main()
   double b[50][50];
   double c[50][50];
   double s;
+  int _var_0;
+  int _var_1;
   s = 235.0;
   initmatrix(a,s);
   s = 321.0;

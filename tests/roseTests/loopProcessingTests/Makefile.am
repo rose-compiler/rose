@@ -1,13 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/loopProcessing -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil/astSupport
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/loopProcessing/driver -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil/astSupport
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 bin_PROGRAMS = LoopProcessor
 
-LoopProcessor_SOURCES = LoopProcessor.C
+LoopProcessor_SOURCES = LoopProcessor.C NormalizeCPP.C
 LoopProcessor_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # DQ (10/18/2004): Switch to using multiple libs (since it is faster)
@@ -25,8 +25,7 @@ VALGRIND = valgrind $(VALGRIND_OPTIONS)
 # This rule generates a dependency that forces the "make check" 
 # test to always compile the test code
 FORCE_TEST_CODES_TO_RUN:
-# DQ(12/5/2007): Commented this out because it fails to work with the most recent modifications in ROSE, very sorry.
-#	$(srcdir)/TestDriver $(srcdir)
+	$(srcdir)/TestDriver $(srcdir)
 	echo "Commented out loopProcessor due to internal problems..."
 
 EXTRA_DIST = TestDriver mm.C fusiontest1.C lufac.C tridvpk.C rmatmult3.C dgemm.C rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm.C.save rose_lufac.C.save rose_lufac_split.C.save rose_tridvpk.C.save rose_rmatmult3.C.save rose_dgemm.C.save rose_fusiontest1.C.save rose_mm_cp0.C.save rose_lufac_cp0.C.save rose_mm_cp2_bk3.C.save funcs.annot rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_lufac.C.wave-save rose_lufac.C.withoutwave-save rose_lufac_split.C.wave-save rose_lufac_split.C.withoutwave-save rose_tridvpk.C.wave-save rose_tridvpk.C.withoutwave-save rose_rmatmult3.C.wave-save rose_rmatmult3.C.withoutwave-save rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm_cp0.C.wave-save rose_mm_cp0.C.withoutwave-save rose_lufac_cp0.C.wave-save rose_lufac_cp0.C.withoutwave-save rose_mm_cp2_bk3.C.wave-save rose_mm_cp2_bk3.C.withoutwave-save

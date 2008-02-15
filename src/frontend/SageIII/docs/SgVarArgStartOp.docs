@@ -47,39 +47,39 @@
 /*!\fn virtual void SgVarArgStartOp::post_construction_initialization()
 */
 /*!\fn void SgVarArgStartOp::set_expression_type(SgType *expression_type)
-\description See  *expression_type)
+\brief \brief See  *expression_type)
 expression_type for documentation */
 /*!\fn void SgVarArgStartOp::set_lhs_operand(SgExpression *lhs_operand)
-\description See  *lhs_operand)
+\brief \brief See  *lhs_operand)
 lhs_operand for documentation */
 /*!\fn void SgVarArgStartOp::set_rhs_operand(SgExpression *rhs_operand)
-\description See  *rhs_operand)
+\brief \brief See  *rhs_operand)
 rhs_operand for documentation */
 /*!\fn SgExpression *SgVarArgStartOp::get_lhs_operand() const
-\description See  const
+\brief \brief See  const
 lhs_operand for documentation */
 /*!\fn SgExpression *SgVarArgStartOp::get_rhs_operand() const
-\description See  const
+\brief \brief See  const
 rhs_operand for documentation */
 /*!\fn SgType *SgVarArgStartOp::get_expression_type() const
-\description See  const
+\brief \brief See  const
 expression_type for documentation */
 /*!\fn virtual SgNode *SgVarArgStartOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgVarArgStartOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgVarArgStartOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgVarArgStartOp::get_numberOfTraversalSuccessors()
-\description See  SgVarArgStartOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgVarArgStartOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgVarArgStartOp::get_traversalSuccessorContainer()
-\description See  SgVarArgStartOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgVarArgStartOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgVarArgStartOp::get_traversalSuccessorNamesContainer()
-\description See  SgVarArgStartOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgVarArgStartOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgVarArgStartOp::SgVarArgStartOp(SgExpression *lhs_operand,SgExpression *rhs_operand,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_628809876;
+extern int SAGE_Doxygen_Dummy_816582499;

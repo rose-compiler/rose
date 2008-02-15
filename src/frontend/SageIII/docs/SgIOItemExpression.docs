@@ -39,33 +39,33 @@
 /*!\fn virtual void SgIOItemExpression::post_construction_initialization()
 */
 /*!\fn void SgIOItemExpression::set_io_item(SgExpression *io_item)
-\description See  *io_item)
+\brief \brief See  *io_item)
 io_item for documentation */
 /*!\fn void SgIOItemExpression::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn SgExpression *SgIOItemExpression::get_io_item() const
-\description See  const
+\brief \brief See  const
 io_item for documentation */
 /*!\fn SgName SgIOItemExpression::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn virtual SgNode *SgIOItemExpression::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgIOItemExpression::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgIOItemExpression::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgIOItemExpression::get_numberOfTraversalSuccessors()
-\description See  SgIOItemExpression::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgIOItemExpression::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIOItemExpression::get_traversalSuccessorContainer()
-\description See  SgIOItemExpression::traversalSuccessorContainer for documentation */
+\brief \brief See  SgIOItemExpression::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIOItemExpression::get_traversalSuccessorNamesContainer()
-\description See  SgIOItemExpression::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgIOItemExpression::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgIOItemExpression::SgIOItemExpression(SgName name,SgExpression *io_item)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_166006258;
+extern int SAGE_Doxygen_Dummy_922836499;

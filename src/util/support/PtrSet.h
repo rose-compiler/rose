@@ -4,7 +4,9 @@
 #include <set>
 #include <FunctionObject.h>
 
-class VoidPtrSet : public std::set<void*> {};
+#define STD std::
+
+class VoidPtrSet : public STD set<void*, STD less<void*> > {};
 
 template <class T>
 class PtrSetWrap  
@@ -17,14 +19,66 @@ class PtrSetWrap
   ~PtrSetWrap() {}
   PtrSetWrap<T>* Clone() const { return new PtrSetWrap<T>(*this); }
 
-// DQ (3/8/2006): Removed Boolean macro set to int from use in header files
-//Boolean IsMember( T* t) const { return impl.find((void*)t) != impl.end(); }
-  int IsMember( T* t) const { return impl.find((void*)t) != impl.end(); }
-//Boolean operator()( T* t) const { return IsMember(t); }
-  int operator()( T* t) const { return IsMember(t); }
+  class Iterator 
+  {
+    const VoidPtrSet *impl;
+    VoidPtrSet::iterator p;
+    Iterator( const VoidPtrSet* _impl) 
+            : impl(_impl) { Reset(); }
+    Iterator( const VoidPtrSet* _impl, const VoidPtrSet::iterator _p) 
+            : impl(_impl), p(_p) {}
+   protected:
+    T* Current() const {  return (p == impl->end())? 0 : ((T*)*p); }
+    T*& Current() {  return ((T*&)*p); }
+  public:
+    ~Iterator() {}
+    Iterator( const Iterator& that) 
+     : impl(that.impl), p(that.p) {}
+    bool operator == (const Iterator& that) const
+      { return impl == that.impl && p == that.p; }
+    Iterator& operator = (const Iterator& that)
+      { impl = that.impl; p = that.p; return *this; }
 
-  void Add(T* t) { impl.insert((void*)t); }
-  void Delete(T* t) { 
+    void Reset() { p = (impl->empty())? impl->end() : impl->begin(); }
+    void Advance() { if (p != impl->end()) ++p; } 
+    void operator ++() { Advance(); }
+    void operator ++(int) { Advance(); }
+    bool ReachEnd() const { return p == impl->end(); }
+    friend class PtrSetWrap<T>;
+  };
+  class const_iterator : public Iterator {
+   public:
+    const_iterator( const Iterator& that) 
+     : Iterator(that) {}
+    bool operator == (const const_iterator& that) const
+      { return Iterator::operator==(that); }
+    const_iterator& operator = (const const_iterator& that)
+      { Iterator::operator=(that); }
+    T* Current() const {  return Iterator::Current(); }
+    T* operator *() const { return Current(); }
+  };
+  class iterator : public Iterator {
+   public:
+    iterator( const Iterator& that) : Iterator(that) {}
+    bool operator == (const iterator& that) const
+      { return Iterator::operator==(that); }
+    iterator& operator = (const iterator& that)
+      { Iterator::operator=(that); }
+    T*& Current() {  return Iterator::Current(); }
+    T*& operator *() { return Current(); }
+  };
+
+  const_iterator begin() const { return Iterator(&impl); }
+  const_iterator end() const { return Iterator(&impl, impl.end()); }
+  const_iterator find(const T* t) const { return Iterator(&impl,impl.find((void*)t)); }
+  iterator begin() { return Iterator(&impl); }
+  iterator end() { return Iterator(&impl, impl.end()); }
+
+  bool IsMember( const T* t) const 
+           { return impl.find((void*)t) != impl.end(); }
+
+  void insert(T* t) { impl.insert((void*)t); }
+  void erase(T* t) { 
       VoidPtrSet::const_iterator p = impl.find((void*)t);
       if ( p != impl.end())
          impl.erase(p); 
@@ -53,41 +107,15 @@ class PtrSetWrap
   unsigned NumberOfEntries() const { return impl.size(); }
   unsigned size() const { return impl.size(); }
 
-  class Iterator 
-  {
-    const VoidPtrSet *impl;
-    VoidPtrSet::iterator p;
-    Iterator( const VoidPtrSet* _impl) 
-            : impl(_impl) { Reset(); }
-  public:
-    ~Iterator() {}
-    Iterator( const Iterator& that) 
-     : impl(that.impl), p(that.p) {}
-    Iterator& operator = (const Iterator& that)
-      { impl = that.impl; p = that.p; return *this; }
-
-    T* Current() const {  return (p == impl->end())? 0 : ((T*)*p); }
-    T* operator *() const { return Current(); }
-    void Reset() { p = (impl->empty())? impl->end() : impl->begin(); }
-    void Advance() { if (p != impl->end()) ++p; } 
-    void operator ++() { Advance(); }
-    void operator ++(int) { Advance(); }
- // Boolean ReachEnd() const { std::cerr << ""; return p == impl->end(); }
-    int ReachEnd() const { std::cerr << ""; return p == impl->end(); }
-    friend class PtrSetWrap<T>;
-  };
-
-  Iterator GetIterator() const { return Iterator(&impl); }
 };
 
 template<class T>
 class AppendSTLSet : public CollectObject<T>
 {
-  std::set<T>& res;
+  STD set<T, STD less<T> >& res;
  public:
-  AppendSTLSet( std::set<T>& r) : res(r) {}
-// Boolean operator()(const T& cur) 
-  int operator()(const T& cur) 
+  AppendSTLSet( STD set<T, STD less<T> >& r) : res(r) {}
+  bool operator()(const T& cur) 
    {
       if (res.find(cur) != res.end())
           return false;
@@ -101,12 +129,11 @@ class AppendPtrSet : public CollectObject<T*>
   PtrSetWrap<T>& res;
  public:
   AppendPtrSet( PtrSetWrap<T>& r) : res(r) {}
-// Boolean operator()(T* const& cur) 
-  int operator()(T* const& cur) 
+  bool operator()(T* const& cur) 
    {
       if (res.IsMember(cur))
           return false;
-      res.Add(cur);
+      res.insert(cur);
       return true;
    }
 };
@@ -115,11 +142,10 @@ class AppendPtrSet : public CollectObject<T*>
 template<class T>
 class SelectSTLSet : public SelectObject<T>
 {
-  std::set<T> res;
+  STD set<T> res;
  public:
-  SelectSTLSet( const std::set<T> r) : res(r) {}
-// Boolean operator()(const T& cur) 
-  int operator()(const T& cur) 
+  SelectSTLSet( const STD set<T> r) : res(r) {}
+  bool operator()(const T& cur) 
    {
       return (res.find(cur) != res.end());
    }
@@ -129,9 +155,13 @@ class SelectPtrSet : public SelectObject<T*>
 {
   PtrSetWrap<T> res;
  public:
+  SelectPtrSet() {}
   SelectPtrSet( const PtrSetWrap<T>& r) : res(r) {}
-// Boolean operator()(T* const& cur)  const
-  int operator()(T* const& cur)  const
+  typedef typename PtrSetWrap<T>::const_iterator const_iterator;
+  const_iterator begin() const { return res.begin(); }
+  const_iterator end() const { return res.end(); }
+  
+  bool operator()(T* const& cur)  const
    {
       return (res.IsMember(cur));
    }
@@ -142,8 +172,7 @@ class NotSelectPtrSet : public SelectObject<T*>
   PtrSetWrap<T> res;
  public:
   NotSelectPtrSet( const PtrSetWrap<T>& r) : res(r) {}
-// Boolean operator()(T* const& cur)  const
-  int operator()(T* const& cur)  const
+  bool operator()(T* const& cur)  const
    {
       return !(res.IsMember(cur));
    }

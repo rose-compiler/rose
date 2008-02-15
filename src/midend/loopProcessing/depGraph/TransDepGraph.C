@@ -1,32 +1,26 @@
 
-#include <general.h>
 #include <TransDepGraph.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 template <class Node> 
 class TransDepAnalImpl  : public TransInfoOP<DepInfoSet>
 {
  public:
-  DepInfoSet GetTopInfo( const GraphNode *n1, const GraphNode *n2)
+  DepInfoSet GetTopInfo( const GraphAccessInterface::Node *n1, const GraphAccessInterface::Node *n2)
   { return DepInfoSetGenerator::GetTopInfoSet(); }
-  DepInfoSet GetBottomInfo( const GraphNode *n1, const GraphNode *n2)
+  DepInfoSet GetBottomInfo( const GraphAccessInterface::Node *n1, const GraphAccessInterface::Node *n2)
     {
        int nr = static_cast<const Node*>(n1)->NumOfLoops();
        int nc = static_cast<const Node*>(n2)->NumOfLoops();
        return DepInfoSetGenerator::GetBottomInfoSet(nr, nc, 1);
     }
-  DepInfoSet GetIDTransInfo( const GraphNode *n)
+  DepInfoSet GetIDTransInfo( const GraphAccessInterface::Node *n)
   {
      int nr = static_cast<const Node*>(n)->NumOfLoops();
      return DepInfoSetGenerator::GetIDInfoSet(nr);
   }
+  bool IsTop(DepInfoSet t) { return t.IsTop(); }
      
-  DepInfoSet  GetTransInfo( const GraphEdge *e)
+  DepInfoSet  GetTransInfo( const GraphAccessInterface::Edge *e)
     {
       const DepInfoEdge *edge = static_cast<const DepInfoEdge*>(e);
       DepInfoSet result(DepInfoSetGenerator::GetTopInfoSet());
@@ -42,58 +36,69 @@ class TransDepAnalImpl  : public TransInfoOP<DepInfoSet>
 };
 
 template <class Node>
-Boolean TransDepGraphCreate<Node>::
-TransInfoComputed(const GraphNode *src, const GraphNode *snk)
+bool TransDepGraphCreate<Node>::
+TransInfoComputed(const GraphAccessInterface::Node *_src, 
+                  const GraphAccessInterface::Node *_snk)
    { 
-      return GraphGetCrossEdge<GraphAccess>()(this, src, snk) != 0;
+     const Node* src = static_cast<const Node*>(_src);
+     const Node* snk = static_cast<const Node*>(_snk);
+      return !GraphCrossEdgeIterator<TransDepGraphCreate<Node> >
+                 (this, src, snk).ReachEnd();
    }
 
 template <class Node>
 DepInfoSet TransDepGraphCreate<Node>::
-GetTransInfo( const GraphNode *src, const GraphNode *snk)
+GetTransInfo( const GraphAccessInterface::Node *_src, 
+              const GraphAccessInterface::Node *_snk)
    {
-     DepInfoSetEdge *edge = static_cast<DepInfoSetEdge*>
-              (GraphGetCrossEdge<GraphAccess>()(this, src, snk)); 
+     const Node* src = static_cast<const Node*>(_src);
+     const Node* snk = static_cast<const Node*>(_snk);
+     DepInfoSetEdge *edge = GraphCrossEdgeIterator<TransDepGraphCreate<Node> >
+                                 (this, src, snk).Current(); 
       return edge->GetInfo();
    } 
 
 template <class Node>
 void TransDepGraphCreate<Node>::
-SetTransInfo( GraphNode *src1, GraphNode *snk1, DepInfoSet info) 
+SetTransInfo( GraphAccessInterface::Node *src1, GraphAccessInterface::Node *snk1, DepInfoSet info) 
    {
       Node* src = static_cast<Node*>(src1), *snk =  static_cast<Node*>(snk1);
-     DepInfoSetEdge *edge = static_cast<DepInfoSetEdge*>
-              (GraphGetCrossEdge<GraphAccess>()(this, src, snk)); 
-      if (edge == 0) {
-         edge = new DepInfoSetEdge(this, info);
-         CreateBaseEdge(src, snk, edge);
-      }
-      else 
+     GraphCrossEdgeIterator<TransDepGraphCreate<Node> > cross(this, src, snk);
+     DepInfoSetEdge *edge = 0;
+     if (!cross.ReachEnd()) {
+         edge = cross.Current();
          edge->GetInfo() = info;
-    }
+     }
+     else {
+         edge = new DepInfoSetEdge(this, info);
+         AddEdge(src, snk, edge);
+     }
+   }
 
 
 template <class Node>
 DepInfoSetEdge * TransDepGraphCreate<Node> :: 
 GetTransDep( Node *src, Node *snk)
 {
-  DepInfoSetEdge *edge = static_cast<DepInfoSetEdge*>
-              (GraphGetCrossEdge<GraphAccess>()(this, src, snk)); 
-  if (edge == 0 && anal.ComputeTransInfo(this, src,snk)) {
-      edge = static_cast<DepInfoSetEdge*>
-              (GraphGetCrossEdge<GraphAccess>()(this, src, snk)); 
+  DepInfoSetEdge *edge = 0; 
+  GraphCrossEdgeIterator<TransDepGraphCreate<Node> > cross(this, src, snk);
+  if (cross.ReachEnd() && anal.ComputeTransInfo(this, src,snk)) {
+      edge = (GraphCrossEdgeIterator<TransDepGraphCreate<Node> >(this, src, snk).Current()); 
       assert(edge != 0);
   }
+  else
+      edge = cross.Current();
   return edge;
 }
 
 template <class Node> TransDepGraphCreate<Node> ::  
 TransDepGraphCreate(GraphAccessTemplate<Node,DepInfoEdge> *graph,
                     int splitlimit, BaseGraphCreate *bc)
- : IDGraphCreateTemplate<Node, DepInfoSetEdge>(bc),
-   anal(graph, analop=new TransDepAnalImpl<Node>(), splitlimit) 
+ : VirtualGraphCreateTemplate<Node, DepInfoSetEdge>(bc),
+   access(graph),
+   anal(&access, analop=new TransDepAnalImpl<Node>(), splitlimit) 
 {
-  CloneNodeSet(graph->GetNodeIterator());
+  AddNodeSet(graph->GetNodeIterator());
 }
 
 template <class Node> TransDepGraphCreate<Node> :: ~TransDepGraphCreate()
@@ -101,16 +106,11 @@ template <class Node> TransDepGraphCreate<Node> :: ~TransDepGraphCreate()
   delete analop;
 }
 
+#ifndef NO_TEMPLATE_INSTANTIATION
 #define TEMPLATE_ONLY
 #include <TransAnalysis.C>
 #include <vector>
-#ifndef TRANSDEPGRAPH_TEMPLATE_ONLY
 template class TransInfoGraph<DepInfoSet>;
-template class vector <TransAnalSCCGraphNode<DepInfoSet>::TwinNode>;
+template class std::vector <TransAnalSCCGraphNode<DepInfoSet>::TwinNode>;
+
 #endif
-
-// DQ (1/7/2006): Does not compile using g++ 4.0.2
-// template TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct * __uninitialized_copy_aux<TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *>(TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, __false_type);
-// template TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct * __uninitialized_fill_n_aux<TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, unsigned int, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct>(TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, unsigned int, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct const &, __false_type);
-// template TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct * __uninitialized_copy_aux<TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct const *, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *>(TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct const *, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct const *, TransAnalSCCGraphNode<DepInfoSet>::TwinNodeStruct *, __false_type);
-

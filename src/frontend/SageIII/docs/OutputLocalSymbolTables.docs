@@ -6,4 +6,4 @@
 /*!\fn virtual void SageInterface::OutputLocalSymbolTables::visit(SgNode *node)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1048694987;
+extern int SAGE_Doxygen_Dummy_64137669;

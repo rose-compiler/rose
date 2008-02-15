@@ -1,7 +1,7 @@
 #include "pre.h"
 #include <vector>
 #include <string>
-#include "CommandOptions.h"
+#include "VectorCommandOptions.h"
 using namespace std;
 
 int main (int argc, char* argv[])
@@ -12,7 +12,7 @@ int main (int argc, char* argv[])
   // Build the project object (AST) which we will fill up with multiple files and use as a
   // handle for all processing of the AST(s) associated with one or more source files.
      vector<string> argvList(argv, argv + argc);
-     CmdOptions::GetInstance()->SetOptions(argvList);
+     VectorCmdOptions::GetInstance()->SetOptions(argvList);
      SgProject* sageProject = frontend(argvList);
   // FixSgProject(sageProject);
 

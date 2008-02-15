@@ -124,21 +124,21 @@ pointer to an object derived from a SgName.
 /*!\fn void SgName::replace_space(char t)
 */
 /*!\fn unsigned int SgName::get_length() const
-\description See  const
+\brief \brief See  const
 length for documentation */
 /*!\fn virtual SgNode *SgName::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgName::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgName::get_numberOfTraversalSuccessors()
-\description See  SgName::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgName::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgName::get_traversalSuccessorContainer()
-\description See  SgName::traversalSuccessorContainer for documentation */
+\brief \brief See  SgName::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgName::get_traversalSuccessorNamesContainer()
-\description See  SgName::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgName::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgName::~SgName()
 */
 //@}
-int SAGE_Doxygen_Dummy_1415384734136;
+int SAGE_Doxygen_Dummy_13981022019901;

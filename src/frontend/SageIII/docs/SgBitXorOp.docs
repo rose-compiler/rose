@@ -34,18 +34,18 @@
 /*!\fn virtual void SgBitXorOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgBitXorOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgBitXorOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgBitXorOp::get_numberOfTraversalSuccessors()
-\description See  SgBitXorOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgBitXorOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBitXorOp::get_traversalSuccessorContainer()
-\description See  SgBitXorOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgBitXorOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBitXorOp::get_traversalSuccessorNamesContainer()
-\description See  SgBitXorOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgBitXorOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgBitXorOp::SgBitXorOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_691028731;
+extern int SAGE_Doxygen_Dummy_2101669340;

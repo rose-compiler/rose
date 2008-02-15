@@ -7,6 +7,8 @@
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAccessModifier *variable_SgAccessModifier)
 */
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgActualArgumentExpression *variable_SgActualArgumentExpression)
+*/
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAddOp *variable_SgAddOp)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAddressOfOp *variable_SgAddressOfOp)
@@ -27,9 +29,523 @@
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgArrowStarOp *variable_SgArrowStarOp)
 */
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmAdc *variable_SgAsmArmAdc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmAdd *variable_SgAsmArmAdd)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmAnd *variable_SgAsmArmAnd)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmArithmeticInstruction *variable_SgAsmArmArithmeticInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmB *variable_SgAsmArmB)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmBic *variable_SgAsmArmBic)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmBl *variable_SgAsmArmBl)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmBx *variable_SgAsmArmBx)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmCmn *variable_SgAsmArmCmn)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmCmp *variable_SgAsmArmCmp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmControlTransferInstruction *variable_SgAsmArmControlTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmDataTransferInstruction *variable_SgAsmArmDataTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmEor *variable_SgAsmArmEor)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmInstruction *variable_SgAsmArmInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmLdm *variable_SgAsmArmLdm)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmLdr *variable_SgAsmArmLdr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmLogicalInstruction *variable_SgAsmArmLogicalInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMiscInstruction *variable_SgAsmArmMiscInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMla *variable_SgAsmArmMla)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMov *variable_SgAsmArmMov)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMrs *variable_SgAsmArmMrs)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMsr *variable_SgAsmArmMsr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMul *variable_SgAsmArmMul)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmMvn *variable_SgAsmArmMvn)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmOrr *variable_SgAsmArmOrr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmRsb *variable_SgAsmArmRsb)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmRsc *variable_SgAsmArmRsc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmSbc *variable_SgAsmArmSbc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmSmlal *variable_SgAsmArmSmlal)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmSmull *variable_SgAsmArmSmull)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmStm *variable_SgAsmArmStm)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmStr *variable_SgAsmArmStr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmSub *variable_SgAsmArmSub)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmSwi *variable_SgAsmArmSwi)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmSwp *variable_SgAsmArmSwp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmTeq *variable_SgAsmArmTeq)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmTst *variable_SgAsmArmTst)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmUmlal *variable_SgAsmArmUmlal)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmArmUmull *variable_SgAsmArmUmull)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBinaryAdd *variable_SgAsmBinaryAdd)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBinaryDivide *variable_SgAsmBinaryDivide)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBinaryExpression *variable_SgAsmBinaryExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBinaryMod *variable_SgAsmBinaryMod)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBinaryMultiply *variable_SgAsmBinaryMultiply)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBinarySubtract *variable_SgAsmBinarySubtract)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmBlock *variable_SgAsmBlock)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmByteValueExpression *variable_SgAsmByteValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmCommonSubExpression *variable_SgAsmCommonSubExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmControlFlagsExpression *variable_SgAsmControlFlagsExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmDataStructureDeclaration *variable_SgAsmDataStructureDeclaration)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmDeclaration *variable_SgAsmDeclaration)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmDoubleFloatValueExpression *variable_SgAsmDoubleFloatValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmDoubleWordValueExpression *variable_SgAsmDoubleWordValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmExpression *variable_SgAsmExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmFieldDeclaration *variable_SgAsmFieldDeclaration)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmFile *variable_SgAsmFile)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmFunctionDeclaration *variable_SgAsmFunctionDeclaration)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmInstruction *variable_SgAsmInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmMemoryReferenceExpression *variable_SgAsmMemoryReferenceExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmNode *variable_SgAsmNode)
+*/
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmOp *variable_SgAsmOp)
 */
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmOperandList *variable_SgAsmOperandList)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmProgramHeader *variable_SgAsmProgramHeader)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmProgramHeaderList *variable_SgAsmProgramHeaderList)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmQuadWordValueExpression *variable_SgAsmQuadWordValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmRegisterReferenceExpression *variable_SgAsmRegisterReferenceExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmSectionHeader *variable_SgAsmSectionHeader)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmSectionHeaderList *variable_SgAsmSectionHeaderList)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmSingleFloatValueExpression *variable_SgAsmSingleFloatValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmStatement *variable_SgAsmStatement)
+*/
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmStmt *variable_SgAsmStmt)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmType *variable_SgAsmType)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeByte *variable_SgAsmTypeByte)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeDoubleFloat *variable_SgAsmTypeDoubleFloat)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeDoubleWord *variable_SgAsmTypeDoubleWord)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeQuadWord *variable_SgAsmTypeQuadWord)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeSingleFloat *variable_SgAsmTypeSingleFloat)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeVector *variable_SgAsmTypeVector)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmTypeWord *variable_SgAsmTypeWord)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmUnaryExpression *variable_SgAsmUnaryExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmUnaryMinus *variable_SgAsmUnaryMinus)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmUnaryPlus *variable_SgAsmUnaryPlus)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmValueExpression *variable_SgAsmValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmVectorValueExpression *variable_SgAsmVectorValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmWordValueExpression *variable_SgAsmWordValueExpression)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Aaa *variable_SgAsmx86Aaa)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Aad *variable_SgAsmx86Aad)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Aam *variable_SgAsmx86Aam)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Aas *variable_SgAsmx86Aas)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Adc *variable_SgAsmx86Adc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Add *variable_SgAsmx86Add)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86And *variable_SgAsmx86And)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ArithmeticInstruction *variable_SgAsmx86ArithmeticInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86BitAndByteInstruction *variable_SgAsmx86BitAndByteInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Bound *variable_SgAsmx86Bound)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Bsf *variable_SgAsmx86Bsf)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Bsr *variable_SgAsmx86Bsr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Bswap *variable_SgAsmx86Bswap)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Bt *variable_SgAsmx86Bt)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Btc *variable_SgAsmx86Btc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Btr *variable_SgAsmx86Btr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Bts *variable_SgAsmx86Bts)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMova *variable_SgAsmx86CMova)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovae *variable_SgAsmx86CMovae)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovb *variable_SgAsmx86CMovb)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovbe *variable_SgAsmx86CMovbe)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovc *variable_SgAsmx86CMovc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMove *variable_SgAsmx86CMove)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovg *variable_SgAsmx86CMovg)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovge *variable_SgAsmx86CMovge)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovl *variable_SgAsmx86CMovl)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovle *variable_SgAsmx86CMovle)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovnc *variable_SgAsmx86CMovnc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovne *variable_SgAsmx86CMovne)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovno *variable_SgAsmx86CMovno)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovnp *variable_SgAsmx86CMovnp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovns *variable_SgAsmx86CMovns)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovo *variable_SgAsmx86CMovo)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovp *variable_SgAsmx86CMovp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86CMovs *variable_SgAsmx86CMovs)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Call *variable_SgAsmx86Call)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cbw *variable_SgAsmx86Cbw)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Clc *variable_SgAsmx86Clc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cld *variable_SgAsmx86Cld)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cli *variable_SgAsmx86Cli)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cmc *variable_SgAsmx86Cmc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cmp *variable_SgAsmx86Cmp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cmps *variable_SgAsmx86Cmps)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cmpxchg *variable_SgAsmx86Cmpxchg)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cmpxchg8b *variable_SgAsmx86Cmpxchg8b)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ConditionalControlTransferInstruction *variable_SgAsmx86ConditionalControlTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ConditionalDataTransferInstruction *variable_SgAsmx86ConditionalDataTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ConditionalFlagBitAndByteInstruction *variable_SgAsmx86ConditionalFlagBitAndByteInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ConditionalFlagControlTransferInstruction *variable_SgAsmx86ConditionalFlagControlTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ConditionalFlagDataTransferInstruction *variable_SgAsmx86ConditionalFlagDataTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ConditionalFlagStringInstruction *variable_SgAsmx86ConditionalFlagStringInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ControlTransferInstruction *variable_SgAsmx86ControlTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cpuid *variable_SgAsmx86Cpuid)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Cwd *variable_SgAsmx86Cwd)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Daa *variable_SgAsmx86Daa)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Das *variable_SgAsmx86Das)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86DataTransferInstruction *variable_SgAsmx86DataTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Dec *variable_SgAsmx86Dec)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Div *variable_SgAsmx86Div)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Enter *variable_SgAsmx86Enter)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Esc *variable_SgAsmx86Esc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86FlagControlInstruction *variable_SgAsmx86FlagControlInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Hlt *variable_SgAsmx86Hlt)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86IDiv *variable_SgAsmx86IDiv)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86IMul *variable_SgAsmx86IMul)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86IOInstruction *variable_SgAsmx86IOInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86IRet *variable_SgAsmx86IRet)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86In *variable_SgAsmx86In)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Inc *variable_SgAsmx86Inc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Ins *variable_SgAsmx86Ins)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Instruction *variable_SgAsmx86Instruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Int *variable_SgAsmx86Int)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Into *variable_SgAsmx86Into)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Ja *variable_SgAsmx86Ja)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jae *variable_SgAsmx86Jae)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jb *variable_SgAsmx86Jb)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jbe *variable_SgAsmx86Jbe)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jc *variable_SgAsmx86Jc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jcxz *variable_SgAsmx86Jcxz)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Je *variable_SgAsmx86Je)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jg *variable_SgAsmx86Jg)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jge *variable_SgAsmx86Jge)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jl *variable_SgAsmx86Jl)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jle *variable_SgAsmx86Jle)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jmp *variable_SgAsmx86Jmp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jnc *variable_SgAsmx86Jnc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jne *variable_SgAsmx86Jne)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jno *variable_SgAsmx86Jno)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jns *variable_SgAsmx86Jns)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jo *variable_SgAsmx86Jo)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jpe *variable_SgAsmx86Jpe)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Jpo *variable_SgAsmx86Jpo)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Js *variable_SgAsmx86Js)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lahf *variable_SgAsmx86Lahf)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lds *variable_SgAsmx86Lds)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lea *variable_SgAsmx86Lea)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Leave *variable_SgAsmx86Leave)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Les *variable_SgAsmx86Les)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lfs *variable_SgAsmx86Lfs)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lgs *variable_SgAsmx86Lgs)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lock *variable_SgAsmx86Lock)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lods *variable_SgAsmx86Lods)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86LogicalInstruction *variable_SgAsmx86LogicalInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Loop *variable_SgAsmx86Loop)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Loopnz *variable_SgAsmx86Loopnz)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Loopz *variable_SgAsmx86Loopz)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Lss *variable_SgAsmx86Lss)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86MiscInstruction *variable_SgAsmx86MiscInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Mov *variable_SgAsmx86Mov)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Movs *variable_SgAsmx86Movs)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Movsx *variable_SgAsmx86Movsx)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Movzx *variable_SgAsmx86Movzx)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Mul *variable_SgAsmx86Mul)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Neg *variable_SgAsmx86Neg)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Nop *variable_SgAsmx86Nop)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Not *variable_SgAsmx86Not)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Or *variable_SgAsmx86Or)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Out *variable_SgAsmx86Out)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Outs *variable_SgAsmx86Outs)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Pop *variable_SgAsmx86Pop)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Popa *variable_SgAsmx86Popa)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Popf *variable_SgAsmx86Popf)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Push *variable_SgAsmx86Push)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Pusha *variable_SgAsmx86Pusha)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Pushf *variable_SgAsmx86Pushf)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Rcl *variable_SgAsmx86Rcl)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Rcr *variable_SgAsmx86Rcr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Rdtsc *variable_SgAsmx86Rdtsc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Rep *variable_SgAsmx86Rep)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Repe *variable_SgAsmx86Repe)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Repne *variable_SgAsmx86Repne)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Ret *variable_SgAsmx86Ret)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Rol *variable_SgAsmx86Rol)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Ror *variable_SgAsmx86Ror)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sahf *variable_SgAsmx86Sahf)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sar *variable_SgAsmx86Sar)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sbb *variable_SgAsmx86Sbb)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Scas *variable_SgAsmx86Scas)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86SegmentRegisterInstruction *variable_SgAsmx86SegmentRegisterInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Seta *variable_SgAsmx86Seta)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setae *variable_SgAsmx86Setae)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setb *variable_SgAsmx86Setb)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setbe *variable_SgAsmx86Setbe)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sete *variable_SgAsmx86Sete)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setg *variable_SgAsmx86Setg)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setge *variable_SgAsmx86Setge)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setl *variable_SgAsmx86Setl)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setle *variable_SgAsmx86Setle)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setne *variable_SgAsmx86Setne)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setno *variable_SgAsmx86Setno)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setns *variable_SgAsmx86Setns)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Seto *variable_SgAsmx86Seto)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setpe *variable_SgAsmx86Setpe)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Setpo *variable_SgAsmx86Setpo)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sets *variable_SgAsmx86Sets)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86ShiftAndRotateInstruction *variable_SgAsmx86ShiftAndRotateInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Shl *variable_SgAsmx86Shl)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Shld *variable_SgAsmx86Shld)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Shr *variable_SgAsmx86Shr)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Shrd *variable_SgAsmx86Shrd)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Stc *variable_SgAsmx86Stc)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Std *variable_SgAsmx86Std)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sti *variable_SgAsmx86Sti)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Stos *variable_SgAsmx86Stos)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86StringInstruction *variable_SgAsmx86StringInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Sub *variable_SgAsmx86Sub)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Test *variable_SgAsmx86Test)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Ud2 *variable_SgAsmx86Ud2)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86UnConditionalControlTransferInstruction *variable_SgAsmx86UnConditionalControlTransferInstruction)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Wait *variable_SgAsmx86Wait)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Xadd *variable_SgAsmx86Xadd)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Xchg *variable_SgAsmx86Xchg)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Xlat *variable_SgAsmx86Xlat)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAsmx86Xor *variable_SgAsmx86Xor)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgAssignInitializer *variable_SgAssignInitializer)
 */
@@ -119,6 +635,8 @@
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgComputedGotoStatement *variable_SgComputedGotoStatement)
 */
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgConcatenationOp *variable_SgConcatenationOp)
+*/
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgConditionalExp *variable_SgConditionalExp)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgConstVolatileModifier *variable_SgConstVolatileModifier)
@@ -193,6 +711,8 @@
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgEndifDirectiveStatement *variable_SgEndifDirectiveStatement)
 */
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgEntryStatement *variable_SgEntryStatement)
+*/
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgEnumDeclaration *variable_SgEnumDeclaration)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgEnumFieldSymbol *variable_SgEnumFieldSymbol)
@@ -227,9 +747,17 @@
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgFlushStatement *variable_SgFlushStatement)
 */
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgForAllStatement *variable_SgForAllStatement)
+*/
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgForInitStatement *variable_SgForInitStatement)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgForStatement *variable_SgForStatement)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgFormatItem *variable_SgFormatItem)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgFormatItemList *variable_SgFormatItemList)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgFormatStatement *variable_SgFormatStatement)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgFortranDo *variable_SgFortranDo)
 */
@@ -310,6 +838,8 @@
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgIntrinsicSymbol *variable_SgIntrinsicSymbol)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgIorAssignOp *variable_SgIorAssignOp)
+*/
+/*!\fn virtual inline void ROSE_VisitorPattern::visit(SgLabelRefExp *variable_SgLabelRefExp)
 */
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgLabelStatement *variable_SgLabelStatement)
 */
@@ -664,4 +1194,4 @@
 /*!\fn virtual inline void ROSE_VisitorPattern::visit(SgToken *variable_SgToken)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_457345663;
+extern int SAGE_Doxygen_Dummy_1309058340;

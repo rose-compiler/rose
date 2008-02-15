@@ -1,11 +1,13 @@
 /* GENERATED FILE - DO NOT MODIFY */
 /*! \name Class Members*/
 //@{
-/*!\var extern TerminalNamesType Cxx_GrammarTerminalNames[330]
+/*!\var extern TerminalNamesType Cxx_GrammarTerminalNames[595]
 */
 /*!\var extern bool interproceduralControlFlowGraph
 */
 /*!\var extern std::map< std::string  , std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > * , std::less< std::string  >  , std::allocator< std::pair< const std::string  , std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > * >  >  > mapFilenameToAttributes
+*/
+/*!\var static const unsigned int VirtualCFG::numberOfFortranIOCommonEdges
 */
 /*!\var extern int found_pragma_cnt
 */
@@ -20,21 +22,33 @@
 */
 /*!\fn extern SgDeclarationStatement *SageInterface::getNonInstantiatonDeclarationForClass(SgTemplateInstantiationMemberFunctionDecl *memberFunctionInstantiation)
 */
+/*!\fn extern SgExpression *VirtualCFG::forallMaskExpression(SgForAllStatement *stmt)
+*/
+/*!\fn extern SgFunctionDeclaration *SageInterface::getEnclosingFunctionDeclaration(SgNode *astNode,const bool includingSelf=false)
+*/
 /*!\fn extern SgFunctionDeclaration *VirtualCFG::getDeclaration(SgExpression *func)
+*/
+/*!\fn extern SgFunctionDefinition *SageInterface::getEnclosingFunctionDefinition(SgNode *astNode,const bool includingSelf=false)
 */
 /*!\fn extern SgFunctionDefinition *getEnclosingProcedure(SgNode *n)
 */
-/*!\fn extern SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes(const SgName &functionName,SgScopeStatement *currentScope)
-*/
 /*!\fn extern SgNamespaceDefinitionStatement *SageInterface::enclosingNamespaceScope(SgDeclarationStatement *declaration)
 */
+/*!\fn extern SgSwitchStatement *SageInterface::findEnclosingSwitch(SgStatement *s)
+*/
 /*!\fn extern SgSwitchStatement *findEnclosingSwitch(SgStatement *s)
+*/
+/*!\fn extern VirtualBinCFG::CFGNode VirtualBinCFG::getNodeJustAfterInContainer(SgNode *n)
+*/
+/*!\fn extern VirtualBinCFG::CFGNode VirtualBinCFG::getNodeJustBeforeInContainer(SgNode *n)
+*/
+/*!\fn extern VirtualCFG::CFGNode VirtualCFG::getCFGTargetOfFortranLabelRef(SgLabelRefExp *lRef)
+*/
+/*!\fn extern VirtualCFG::CFGNode VirtualCFG::getCFGTargetOfFortranLabelSymbol(SgLabelSymbol *sym)
 */
 /*!\fn extern VirtualCFG::CFGNode VirtualCFG::getNodeJustAfterInContainer(SgNode *n)
 */
 /*!\fn extern VirtualCFG::CFGNode VirtualCFG::getNodeJustBeforeInContainer(SgNode *n)
-*/
-/*!\fn extern bool SageInterface::declarationPreceedsDefinition(SgDeclarationStatement *nonDefiningDeclaration,SgDeclarationStatement *definingDeclaration)
 */
 /*!\fn extern bool SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope(SgFunctionCallExp *functionCall)
 */
@@ -46,6 +60,8 @@
 */
 /*!\fn extern bool SageInterface::is_Fortran_language()
 */
+/*!\fn extern bool SageInterface::is_binary_executable()
+*/
 /*!\fn extern bool SageInterface::is_mixed_C_and_Cxx_language()
 */
 /*!\fn extern bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
@@ -53,6 +69,12 @@
 /*!\fn extern bool SageInterface::is_mixed_Fortran_and_C_language()
 */
 /*!\fn extern bool SageInterface::is_mixed_Fortran_and_Cxx_language()
+*/
+/*!\fn extern bool VirtualCFG::doForallCfgIsIndexInteresting(const SgForAllStatement *me,unsigned int idx)
+*/
+/*!\fn extern bool VirtualCFG::handleFortranIOCommonInEdges(SgIOStatement *me,unsigned int idx,unsigned int numChildren,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
+*/
+/*!\fn extern bool VirtualCFG::handleFortranIOCommonOutEdges(SgIOStatement *me,unsigned int idx,unsigned int numChildren,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
 */
 /*!\fn extern int AstMergeSupport(SgProject *project)
 */
@@ -70,6 +92,10 @@
 */
 /*!\fn extern std::ostream &operator<<(std::ostream &,std::set< int  , std::less< int  >  , std::allocator< int  >  > &)
 */
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgAsmExpression * , std::allocator< SgAsmExpression * >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgAsmStatement * , std::allocator< SgAsmStatement * >  > &)
+*/
 /*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgCommonBlockObject * , std::allocator< SgCommonBlockObject * >  > &)
 */
 /*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgDataStatementObject * , std::allocator< SgDataStatementObject * >  > &)
@@ -78,11 +104,17 @@
 */
 /*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgDimensionObject * , std::allocator< SgDimensionObject * >  > &)
 */
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgFormatItem * , std::allocator< SgFormatItem * >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgLabelSymbol * , std::allocator< SgLabelSymbol * >  > &)
+*/
 /*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< bool  , std::allocator< bool  >  > &)
 */
 /*!\fn extern std::ostream &operator<<(std::ostream &os,const __gnu_cxx::hash_multimap < SgName , SgSymbol * , hash_Name , eqstr , std::allocator< SgSymbol * > > ::iterator &rhm_it)
 */
 /*!\fn extern std::ostream &operator<<(std::ostream &os,const std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > &l)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &os,const std::vector< SgAsmStatement * , std::allocator< SgAsmStatement * >  > &l)
 */
 /*!\fn extern std::ostream &operator<<(std::ostream &os,const std::vector< bool  , std::allocator< bool  >  > &bv)
 */
@@ -94,23 +126,53 @@
 */
 /*!\fn extern std::string SageInterface::getMangledNameFromCache(SgNode *astNode)
 */
-/*!\fn extern std::string getVariantName(enum VariantT v)
+/*!\fn extern std::string escapeString(const std::string &s)
 */
 /*!\fn extern std::string globalUnparseToString(const SgNode *astNode,SgUnparse_Info *inputUnparseInfoPointer=(0))
 */
 /*!\fn extern std::string replaceNonAlphaNum(const std::string &s)
 */
+/*!\fn extern std::vector< SgGotoStatement * , std::allocator< SgGotoStatement * >  > SageInterface::findGotoStmts(SgStatement *scope,SgLabelStatement *l)
+*/
+/*!\fn extern std::vector< SgGotoStatement * , std::allocator< SgGotoStatement * >  > findFortranGotos(SgStatement *scope,SgStatement *l)
+*/
 /*!\fn extern std::vector< SgGotoStatement * , std::allocator< SgGotoStatement * >  > findGotos(SgStatement *scope,SgLabelStatement *l)
+*/
+/*!\fn extern std::vector< SgReturnStmt * , std::allocator< SgReturnStmt * >  > SageInterface::findReturnStmts(SgStatement *scope)
 */
 /*!\fn extern std::vector< SgReturnStmt * , std::allocator< SgReturnStmt * >  > findReturnStmts(SgStatement *code)
 */
+/*!\fn extern std::vector< SgStatement * , std::allocator< SgStatement * >  > SageInterface::getSwitchCases(SgSwitchStatement *sw)
+*/
 /*!\fn extern std::vector< SgStatement * , std::allocator< SgStatement * >  > getSwitchCases(SgSwitchStatement *sw)
+*/
+/*!\fn extern std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > VirtualCFG::doForallCfgInEdges(SgForAllStatement *me,unsigned int idx)
+*/
+/*!\fn extern std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > VirtualCFG::doForallCfgOutEdges(SgForAllStatement *me,unsigned int idx)
+*/
+/*!\fn extern unsigned int VirtualCFG::doForallCfgFindChildIndex(SgForAllStatement *me,SgNode *tgt)
+*/
+/*!\fn extern unsigned int VirtualCFG::doForallCfgFindNextChildIndex(SgForAllStatement *me,SgNode *tgt)
+*/
+/*!\fn extern unsigned int VirtualCFG::doForallCfgIndexForEnd(const SgForAllStatement *me)
 */
 /*!\fn extern void CheckIsModifiedFlagSupport(SgNode *node)
 */
+/*!\fn extern void SageInterface::convertAllForsToWhiles(SgNode *top)
+*/
+/*!\fn extern void SageInterface::convertForToWhile(SgForStatement *f)
+*/
+/*!\fn extern void SageInterface::moveForStatementIncrementIntoBody(SgForStatement *f)
+*/
 /*!\fn extern void SageInterface::resetMangledNameCache(SgGlobal *globalScope)
 */
-/*!\fn extern void SageInterface::setSourcePosition(SgLocatedNode *locatedNode)
+/*!\fn extern void VirtualBinCFG::makeEdge(VirtualBinCFG::CFGNode from,VirtualBinCFG::CFGNode to,std::vector< VirtualBinCFG::CFGEdge  , std::allocator< VirtualBinCFG::CFGEdge  >  > &result)
+*/
+/*!\fn extern void VirtualCFG::addInEdgeOrBypassForExpressionChild(SgNode *me,unsigned int idx,SgExpression *e,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
+*/
+/*!\fn extern void VirtualCFG::addIncomingFortranGotos(SgStatement *stmt,unsigned int index,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
+*/
+/*!\fn extern void VirtualCFG::addOutEdgeOrBypassForExpressionChild(SgNode *me,unsigned int idx,SgExpression *e,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
 */
 /*!\fn extern void VirtualCFG::makeEdge(VirtualCFG::CFGNode from,VirtualCFG::CFGNode to,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
 */
@@ -211,4 +273,4 @@
 /*!\fn extern void generateGraphOfAST(SgProject *project,std::string filename)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1913984338;
+extern int SAGE_Doxygen_Dummy_1615499149;

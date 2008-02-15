@@ -36,35 +36,41 @@
 */
 /*!\fn virtual SgNode *SgImplicitStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgImplicitStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgImplicitStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgImplicitStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgImplicitStatement::post_construction_initialization()
 */
 /*!\fn void SgImplicitStatement::set_implicit_none(bool implicit_none)
-\description See  implicit_none)
+\brief \brief See  implicit_none)
 implicit_none for documentation */
 /*!\fn SgInitializedNamePtrList &SgImplicitStatement::get_variables()
-\description See  &SgImplicitStatement::variables for documentation */
+\brief \brief See  &SgImplicitStatement::variables for documentation */
 /*!\fn bool SgImplicitStatement::get_implicit_none() const
-\description See  const
+\brief \brief See  const
 implicit_none for documentation */
 /*!\fn const SgInitializedNamePtrList &SgImplicitStatement::get_variables() const
-\description See  const
+\brief \brief See  const
 variables for documentation */
 /*!\fn virtual SgName SgImplicitStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgImplicitStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgImplicitStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgImplicitStatement::get_numberOfTraversalSuccessors()
-\description See  SgImplicitStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgImplicitStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgImplicitStatement::get_traversalSuccessorContainer()
-\description See  SgImplicitStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgImplicitStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgImplicitStatement::get_traversalSuccessorNamesContainer()
-\description See  SgImplicitStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgImplicitStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgImplicitStatement::SgImplicitStatement(bool implicit_none)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1206936280;
+extern int SAGE_Doxygen_Dummy_244283453;

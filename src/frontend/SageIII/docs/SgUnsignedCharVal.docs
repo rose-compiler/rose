@@ -39,33 +39,33 @@
 /*!\fn virtual void SgUnsignedCharVal::post_construction_initialization()
 */
 /*!\fn void SgUnsignedCharVal::set_value(unsigned char value)
-\description See  value)
+\brief \brief See  value)
 value for documentation */
 /*!\fn void SgUnsignedCharVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn std::string SgUnsignedCharVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn unsigned char SgUnsignedCharVal::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
 /*!\fn virtual SgNode *SgUnsignedCharVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgUnsignedCharVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgUnsignedCharVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUnsignedCharVal::get_numberOfTraversalSuccessors()
-\description See  SgUnsignedCharVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUnsignedCharVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnsignedCharVal::get_traversalSuccessorContainer()
-\description See  SgUnsignedCharVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUnsignedCharVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnsignedCharVal::get_traversalSuccessorNamesContainer()
-\description See  SgUnsignedCharVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUnsignedCharVal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUnsignedCharVal::SgUnsignedCharVal(unsigned char value,std::string valueString)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_170082740;
+extern int SAGE_Doxygen_Dummy_1859364331;

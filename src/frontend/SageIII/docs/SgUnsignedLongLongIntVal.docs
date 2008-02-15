@@ -39,33 +39,33 @@
 /*!\fn virtual void SgUnsignedLongLongIntVal::post_construction_initialization()
 */
 /*!\fn void SgUnsignedLongLongIntVal::set_value(unsigned long long value)
-\description See  value)
+\brief \brief See  value)
 value for documentation */
 /*!\fn void SgUnsignedLongLongIntVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn std::string SgUnsignedLongLongIntVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn unsigned long long SgUnsignedLongLongIntVal::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
 /*!\fn virtual SgNode *SgUnsignedLongLongIntVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgUnsignedLongLongIntVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgUnsignedLongLongIntVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUnsignedLongLongIntVal::get_numberOfTraversalSuccessors()
-\description See  SgUnsignedLongLongIntVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUnsignedLongLongIntVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnsignedLongLongIntVal::get_traversalSuccessorContainer()
-\description See  SgUnsignedLongLongIntVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUnsignedLongLongIntVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnsignedLongLongIntVal::get_traversalSuccessorNamesContainer()
-\description See  SgUnsignedLongLongIntVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUnsignedLongLongIntVal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUnsignedLongLongIntVal::SgUnsignedLongLongIntVal(unsigned long long value,std::string valueString)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_374657481;
+extern int SAGE_Doxygen_Dummy_954421820;

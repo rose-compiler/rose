@@ -38,18 +38,18 @@
 /*!\fn virtual void SgPlusPlusOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgPlusPlusOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgPlusPlusOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgPlusPlusOp::get_numberOfTraversalSuccessors()
-\description See  SgPlusPlusOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgPlusPlusOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPlusPlusOp::get_traversalSuccessorContainer()
-\description See  SgPlusPlusOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgPlusPlusOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPlusPlusOp::get_traversalSuccessorNamesContainer()
-\description See  SgPlusPlusOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgPlusPlusOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgPlusPlusOp::SgPlusPlusOp(SgExpression *operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_117809030;
+extern int SAGE_Doxygen_Dummy_431205506;

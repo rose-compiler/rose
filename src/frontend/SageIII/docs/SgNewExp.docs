@@ -147,67 +147,67 @@ permit the new opperator to allocate space at a specific location (address).
 /*!\fn virtual void SgNewExp::post_construction_initialization()
 */
 /*!\fn void SgNewExp::set_builtin_args(SgExpression *builtin_args)
-\description See  *builtin_args)
+\brief \brief See  *builtin_args)
 builtin_args for documentation */
 /*!\fn void SgNewExp::set_constructor_args(SgConstructorInitializer *constructor_args)
-\description See  *constructor_args)
+\brief \brief See  *constructor_args)
 constructor_args for documentation */
 /*!
 \fn void SgNewExp::set_need_global_specifier(short need_global_specifier)
-\brief Access function for p_need_global_specifier.
-See  need_global_specifier)
-need_global_specifier for documentation \param need_global_specifier flag to record use of array delete.
+\brief Access function for p_need_global_specifier.See  need_global_specifier)
+need_global_specifier for documentation 
+\param need_global_specifier flag to record use of array delete.
 \return Returns void.
 */
 /*!\fn void SgNewExp::set_newOperatorDeclaration(SgFunctionDeclaration *newOperatorDeclaration)
-\description See  *newOperatorDeclaration)
+\brief \brief See  *newOperatorDeclaration)
 newOperatorDeclaration for documentation */
 /*!\fn void SgNewExp::set_placement_args(SgExprListExp *placement_args)
-\description See  *placement_args)
+\brief \brief See  *placement_args)
 placement_args for documentation */
 /*!\fn void SgNewExp::set_specified_type(SgType *specified_type)
-\description See  *specified_type)
+\brief \brief See  *specified_type)
 specified_type for documentation */
 /*!\fn SgConstructorInitializer *SgNewExp::get_constructor_args() const
-\description See  const
+\brief \brief See  const
 constructor_args for documentation */
 /*!\fn SgExprListExp *SgNewExp::get_placement_args() const
-\description See  const
+\brief \brief See  const
 placement_args for documentation */
 /*!\fn SgExpression *SgNewExp::get_builtin_args() const
-\description See  const
+\brief \brief See  const
 builtin_args for documentation */
 /*!\fn SgExpression *SgNewExp::get_next(int &n) const
-\description See  const
+\brief \brief See  const
 next for documentation */
 /*!\fn SgFunctionDeclaration *SgNewExp::get_newOperatorDeclaration() const
-\description See  const
+\brief \brief See  const
 newOperatorDeclaration for documentation */
 /*!\fn SgType *SgNewExp::get_specified_type() const
-\description See  const
+\brief \brief See  const
 specified_type for documentation */
 /*!
 \fn short SgNewExp::get_need_global_specifier() const
-\brief Access function for p_need_global_specifier.
-See  const
-need_global_specifier for documentation \return Returns bool.
+\brief Access function for p_need_global_specifier.See  const
+need_global_specifier for documentation 
+\return Returns bool.
 */
 /*!\fn virtual SgNode *SgNewExp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgNewExp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgNewExp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgNewExp::get_numberOfTraversalSuccessors()
-\description See  SgNewExp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgNewExp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNewExp::get_traversalSuccessorContainer()
-\description See  SgNewExp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgNewExp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNewExp::get_traversalSuccessorNamesContainer()
-\description See  SgNewExp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgNewExp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgNewExp::SgNewExp(SgType *specified_type,SgExprListExp *placement_args,SgConstructorInitializer *constructor_args,SgExpression *builtin_args,short need_global_specifier,SgFunctionDeclaration *newOperatorDeclaration)
 */
 //@}
-int SAGE_Doxygen_Dummy_376240622782;
+int SAGE_Doxygen_Dummy_15707263319617;

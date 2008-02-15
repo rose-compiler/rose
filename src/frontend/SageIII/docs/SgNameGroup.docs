@@ -35,29 +35,29 @@
 /*!\fn virtual SgNode *SgNameGroup::copy(SgCopyHelp &help) const
 */
 /*!\fn void SgNameGroup::set_group_name(std::string group_name)
-\description See  group_name)
+\brief \brief See  group_name)
 group_name for documentation */
 /*!\fn SgStringList &SgNameGroup::get_name_list()
-\description See  &SgNameGroup::name_list for documentation */
+\brief \brief See  &SgNameGroup::name_list for documentation */
 /*!\fn const SgStringList &SgNameGroup::get_name_list() const
-\description See  const
+\brief \brief See  const
 name_list for documentation */
 /*!\fn std::string SgNameGroup::get_group_name() const
-\description See  const
+\brief \brief See  const
 group_name for documentation */
 /*!\fn virtual SgNode *SgNameGroup::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgNameGroup::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgNameGroup::get_numberOfTraversalSuccessors()
-\description See  SgNameGroup::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgNameGroup::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNameGroup::get_traversalSuccessorContainer()
-\description See  SgNameGroup::traversalSuccessorContainer for documentation */
+\brief \brief See  SgNameGroup::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNameGroup::get_traversalSuccessorNamesContainer()
-\description See  SgNameGroup::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgNameGroup::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgNameGroup::SgNameGroup()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_137036986;
+extern int SAGE_Doxygen_Dummy_2120122743;

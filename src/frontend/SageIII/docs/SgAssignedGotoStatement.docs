@@ -37,24 +37,24 @@
 /*!\fn virtual void SgAssignedGotoStatement::post_construction_initialization()
 */
 /*!\fn void SgAssignedGotoStatement::set_targets(SgExprListExp *targets)
-\description See  *targets)
+\brief \brief See  *targets)
 targets for documentation */
 /*!\fn SgExprListExp *SgAssignedGotoStatement::get_targets() const
-\description See  const
+\brief \brief See  const
 targets for documentation */
 /*!\fn virtual SgNode *SgAssignedGotoStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAssignedGotoStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAssignedGotoStatement::get_numberOfTraversalSuccessors()
-\description See  SgAssignedGotoStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAssignedGotoStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAssignedGotoStatement::get_traversalSuccessorContainer()
-\description See  SgAssignedGotoStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAssignedGotoStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAssignedGotoStatement::get_traversalSuccessorNamesContainer()
-\description See  SgAssignedGotoStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAssignedGotoStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAssignedGotoStatement::SgAssignedGotoStatement(SgExprListExp *targets)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_2138360599;
+extern int SAGE_Doxygen_Dummy_1600302098;

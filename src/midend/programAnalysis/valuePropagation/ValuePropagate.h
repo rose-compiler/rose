@@ -9,25 +9,25 @@ class ValuePropagateNode : public DefUseChainNode
 {
   HasValueDescriptor desc;
  public:
-  ValuePropagateNode( GraphCreate*c, const AstNodePtr& ref, 
+  ValuePropagateNode( MultiGraphCreate *c, const AstNodePtr& ref, 
 		      const AstNodePtr& _stmt, bool def)
     : DefUseChainNode( c, ref, _stmt, def) {}
 
   const HasValueDescriptor& get_desc() const { return desc; }
   HasValueDescriptor& get_desc() { return desc; }
-  virtual std::string ToString() const;
+  virtual STD string toString() const;
 };
 
 class HasValueMap : public AstObserver
 {
-  std::map<AstNodePtr, HasValueDescriptor> valmap;
+  STD map<AstNodePtr, HasValueDescriptor> valmap;
 
-  void ObserveCopyAst(AstInterface& fa, const AstNodePtr& orig, const AstNodePtr& copy);
+  void ObserveCopyAst(AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy);
  public:
   bool has_value( const AstNodePtr& ast, HasValueDescriptor* r = 0) const;
   void set_val( const AstNodePtr& ast, const HasValueDescriptor& val);
 
-  void copy_value( AstInterface& fa, const AstNodePtr& orig, const AstNodePtr& copy);
+  void copy_value( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy);
  friend class ValuePropagate;
 };
 
@@ -35,6 +35,7 @@ class HasValueMapReplace
   : public MapObject<SymbolicVal, SymbolicVal>, public SymbolicVisitor
 {
   HasValueMap& valmap;
+  AstInterface& fa;
 
   bool usedefault;
   SymbolicVal repl;
@@ -42,13 +43,13 @@ class HasValueMapReplace
   void VisitFunction (const SymbolicFunction& u);
   SymbolicVal operator() ( const SymbolicVal& v);
  public:
-  HasValueMapReplace ( HasValueMap& _m, bool _usedefault) 
-     : valmap(_m), usedefault(_usedefault) {}
+  HasValueMapReplace ( AstInterface& _fa, HasValueMap& _m, bool _usedefault) 
+     : fa(_fa), valmap(_m), usedefault(_usedefault) {}
 };
 
 class HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>
 {
-  std::map<AstNodePtr, AstNodePtr> astmap;
+  STD map<AstNodePtr, AstNodePtr> astmap;
  public:
   AstNodePtr operator() (AstInterface* const& fa, const AstNodePtr& orig);
 };
@@ -56,7 +57,7 @@ class HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>
 class ValuePropagate 
 : public DefUseChain<ValuePropagateNode>
 {
-  std::map<AstNodePtr, ValuePropagateNode*> nodemap;
+  STD map<AstNodePtr, ValuePropagateNode*> nodemap;
   HasValueMap valmap;
   HasValueCodeGen astmap;
 

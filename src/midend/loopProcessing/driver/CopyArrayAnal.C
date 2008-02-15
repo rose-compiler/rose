@@ -1,19 +1,13 @@
-#include <general.h>
-
 #include <CopyArrayAnal.h>
 #include <CommandOptions.h>
 #include <ReuseAnalysis.h>
 #include <LoopInfoInterface.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
+#include <GraphIO.h>
 
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
+extern bool DebugCopySplit();
 
-extern Boolean DebugCopySplit();
-
-static Boolean DebugCopyRoot()
+static bool DebugCopyRoot()
 {
   static int r = 0;
   if (r == 0)
@@ -21,7 +15,7 @@ static Boolean DebugCopyRoot()
   return r == 1; 
 }
 
-static Boolean DebugCopyRemove()
+static bool DebugCopyRemove()
 {
   static int r = 0;
   if (r == 0)
@@ -29,21 +23,21 @@ static Boolean DebugCopyRemove()
   return r == 1; 
 }
 
-#if 0
-static Boolean DebugCrossGraph()
+static bool DebugCrossGraph()
 {
   static int r = 0;
   if (r == 0)
     r = CmdOptions::GetInstance()->HasOption("-debugcrossgraph")? 1 : -1;
   return r == 1; 
 }
-#endif
-
 void CopyArrayOperator::operator()
 (LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root)
 {
    DepCompAstRefGraphCreate refDep;
    refDep.Build(la, tc, root);
+
+   if (DebugCrossGraph())
+      write_graph(refDep, STD cerr, "reuse");
    DepCompCopyArrayCollect collect(la,  root);
    DepCompCopyArrayToBuffer().CollectCopyArray(la, collect, refDep);
    ModifyCopyArrayCollect(la, collect, refDep);
@@ -56,7 +50,7 @@ OutmostReuseLevel ( DepCompCopyArrayCollect::CopyArrayUnit& unit,
 {
    int copylevel = unit.copylevel();
    int res = -1;
-   for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::Iterator p1 = unit.refs.GetIterator();
+   for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p1 = unit.refs.begin();
        !p1.ReachEnd(); ++p1) {
       const DepCompAstRefGraphNode* cur = *p1;
       for (int level = copylevel; level < cur->GetInfo().stmt->LoopLevel(); ++level) {
@@ -67,7 +61,7 @@ OutmostReuseLevel ( DepCompCopyArrayCollect::CopyArrayUnit& unit,
       }
   }
   if (DebugCopyRoot()) { 
-     cerr << "outmost reuse level for " << IteratorToString2(unit.refs.GetIterator()) << " is " << res << endl;
+     STD cerr << "outmost reuse level for " << IteratorToString2(unit.refs.begin()) << " is " << res << STD endl;
   }
   return res;
 }
@@ -79,7 +73,7 @@ EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit,
 {
    int copylevel = unit.copylevel();
    int res = 0;
-   for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::Iterator p1 = unit.refs.GetIterator();
+   for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p1 = unit.refs.begin();
        !p1.ReachEnd(); ++p1) {
       const DepCompAstRefGraphNode* cur = *p1;
       int curdim = 0;
@@ -87,13 +81,13 @@ EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit,
          if (!refDep.SelfReuseLevel(cur, level)) {
             ++curdim; 
             if (DebugCopyRoot())
-               cerr << "  loop at level " << level << "do not carry reuse \n";
+               STD cerr << "processing node " << cur << ":  loop at level " << level << "do not carry reuse \n";
          }
          if (curdim > copydim && cuts != 0) {
-            cuts->Add(cur);
+            cuts->insert(cur);
             if (unit.refs.size() > 1) {
                DepCompCopyArrayCollect::CopyArrayUnit tmp = unit;
-               tmp.refs.Delete(cur); 
+               tmp.refs.erase(cur); 
                DepCompCopyArrayToBuffer().EnforceCopyRoot(tmp, refDep, cur, *cuts);
             }
             return -1;       
@@ -105,13 +99,13 @@ EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit,
    return res;
 }
 
-Boolean CopyArrayOperator::
+bool CopyArrayOperator::
 IsRedundantCopy( LoopTransformInterface& la, DepCompCopyArrayCollect::CopyArrayUnit& unit, 
                  int copydim)
 {
    int copylevel = unit.copylevel();
    int dimdiff = 0;
-   DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::Iterator p = unit.refs.GetIterator();
+   DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p = unit.refs.begin();
    for ( ; !p.ReachEnd(); ++p) {
         int curdiff = (*p)->GetInfo().stmt->LoopLevel() - copylevel;
         if (dimdiff < curdiff)
@@ -135,7 +129,7 @@ IsRedundantCopy( LoopTransformInterface& la, DepCompCopyArrayCollect::CopyArrayU
     return false;
 }
 
-Boolean CopyArrayOperator::
+bool CopyArrayOperator::
 SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
                         DepCompCopyArrayCollect::CopyArrayUnit& unit,
                         DepCompAstRefGraphCreate& refDep,
@@ -143,14 +137,14 @@ SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
 {
   assert(unit.refs.size() > 0);
   DepCompCopyArrayCollect::CopyArrayUnit::InsideGraph insidegraph(&refDep,unit);
-  const DepCompAstRefGraphNode* cur = *unit.refs.GetIterator();
+  const DepCompAstRefGraphNode* cur = *unit.refs.begin();
 
   GraphGetNodeReachable<DepCompCopyArrayCollect::CopyArrayUnit::InsideGraph, 
                         AppendPtrSet<const DepCompAstRefGraphNode> > op;
   DepCompCopyArrayCollect::CopyArrayUnit::NodeSet innodes;
   AppendPtrSet<const DepCompAstRefGraphNode> col1(innodes), col2(cuts);
   op(&insidegraph, cur, GraphAccess::EdgeIn,col1); 
-  for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::Iterator p1 = innodes.GetIterator();
+  for (DepCompCopyArrayCollect::CopyArrayUnit::NodeSet::const_iterator p1 = innodes.begin();
        !p1.ReachEnd(); ++p1) {
      op(&insidegraph, (*p1), GraphAccess::EdgeOut,col2); 
   }
@@ -164,13 +158,13 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
 {
    LoopTreeInterface interface;
    if (DebugCopyRoot()) 
-      cerr << "copydim = " << copydim << endl;
+      STD cerr << "copydim = " << copydim << STD endl;
    for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
         arrays != collect.end(); ) {
        DepCompCopyArrayCollect::CopyArrayUnit& unit = *arrays;
        LoopTreeNode* origroot = unit.root;
        if (DebugCopySplit() || DebugCopyRoot()) 
-         cerr << " modifying copy unit: " << IteratorToString2(unit.refs.GetIterator()) << " with root = " << unit.root->ToString() << endl;
+         STD cerr << " modifying copy unit: " << IteratorToString2(unit.refs.begin()) << " with root = " << ((unit.root == 0)? "null" : unit.root->toString()) << STD endl;
        unit.root = collect.OutmostCopyRoot(unit, refDep, collect.get_tree_root());
 
        int curdim = -1;
@@ -188,13 +182,13 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
                  p = GetEnclosingLoop(p, interface); 
              }
              if (DebugCopyRoot()) 
-               cerr << "resetting copy root to be " << n->ToString() << endl;
+               STD cerr << "resetting copy root to be " << n->toString() << STD endl;
              unit.root = n;
              unit.carrybyroot = true;
              continue;
           }
           if (DebugCopySplit())
-             cerr << "Enforce copy dimension by removing " << IteratorToString2(cuts.GetIterator()) << endl;
+             STD cerr << "Enforce copy dimension by removing " << IteratorToString2(cuts.begin()) << STD endl;
           collect.AddCopyArray() = 
                 DepCompCopyArrayCollect::CopyArrayUnit(cuts, collect.ComputeCommonRoot(cuts));
           unit.refs -= cuts;
@@ -206,7 +200,7 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
           origroot = collect.ComputeCommonRoot(cuts);
           DepCompCopyArrayCollect::CopyArrayUnit::NodeSet left = unit.refs;
           if (DebugCopySplit() || DebugCopyRoot()) 
-             cerr << " Spliting disconnected refs: removing " << IteratorToString2(cuts.GetIterator()) << endl;
+             STD cerr << " Spliting disconnected refs: removing " << IteratorToString2(cuts.begin()) << STD endl;
           left -= cuts;
           collect.AddCopyArray() = DepCompCopyArrayCollect::CopyArrayUnit(left,collect.ComputeCommonRoot(left));
           unit.refs = cuts;
@@ -219,20 +213,20 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
            if (reuselevel > copylevel) {
               LoopTreeNode *cur = origroot;  
               for (int curlevel = origroot->LoopLevel(); reuselevel  <= curlevel; 
-                   cur = GetEnclosingLoop(cur, interface), --curlevel) {}
+                   cur = GetEnclosingLoop(cur, interface), --curlevel);
               if (DebugCopyRoot()) 
-                  cerr << "After reuse anal, resetting copy root to be " << cur->ToString() << endl;
+                  STD cerr << "After reuse anal, resetting copy root to be " << cur->toString() << STD endl;
               unit.root = cur;
               curdim -= (reuselevel - copylevel+1);
            }
            else if (DebugCopyRoot()) 
-                cerr << "do not reset copy root because copylevel = " << copylevel << " and copy root = " << unit.root->ToString() << endl;
+                STD cerr << "do not reset copy root because copylevel = " << copylevel << " and copy root = " << unit.root->toString() << STD endl;
        }
        DepCompCopyArrayCollect::iterator tmp = arrays;
        ++arrays;
        if (IsRedundantCopy(li, unit, curdim)) {
          if (DebugCopyRemove()) {
-             cerr << "remove redundant copy " <<  IteratorToString2(unit.refs.GetIterator()) << " with root = " << unit.root->ToString() << endl;
+             STD cerr << "remove redundant copy " <<  IteratorToString2(unit.refs.begin()) << " with root = " << unit.root->toString() << STD endl;
          }
          collect.RemoveCopyArray(tmp);
        }

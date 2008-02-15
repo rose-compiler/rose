@@ -293,6 +293,9 @@
 /* Controls use of ROSE SQLite Database Support. */
 #undef USE_ROSE_SQL_DATABASE_SUPPORT
 
+/* Wine provides access to Windows specific binary file format headers. */
+#undef USE_ROSE_WINDOWS_BINARY_ANALYSIS_SUPPORT
+
 /* Controls use of ROSE support for XML (libxml2). */
 #undef USE_ROSE_XML_SUPPORT
 

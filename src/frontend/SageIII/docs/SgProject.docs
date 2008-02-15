@@ -68,10 +68,16 @@ pointer to an object derived from a SgProject.
 \internal  This is an STL list, I think that the get_file() member function should be
     deprecated so that we acess the list like all other STL lists.
 */
+/*!\var SgStringList SgProject::p_excludePathList
+*/
 /*!
 \var SgStringList SgProject::p_includeDirectorySpecifierList
 \brief List of directories specified with "-I" option on command line
 \internal  
+*/
+/*!\var SgStringList SgProject::p_includeFileList
+*/
+/*!\var SgStringList SgProject::p_includePathList
 */
 /*!
 \var SgStringList SgProject::p_libraryDirectorySpecifierList
@@ -137,6 +143,8 @@ See manual for details of AST merge mechansim.
     have a better one this should be false.  It is use to control teting of the existing
     prelink mechanism (which will be rewritten).
 */
+/*!\var bool SgProject::p_runningFromInstalledRose
+*/
 /*!
 \var enum SgProject::template_instantiation_enum SgProject::p_template_instantiation_mode
 \brief This controls the degree of template instatiation by ROSE.  No template
@@ -179,13 +187,15 @@ first build the required "AST Merge Command File" prior to processing of the
 See manual for details of AST merge mechansim.
 \internal New mechanism (not yet documented).
 */
+/*!\var std::string SgProject::p_compilationPerformanceFile
+*/
 /*!
 \var std::string SgProject::p_outputFileName
 \brief Filename specifiec using "-o" option on command line.
    Set as part of normal command line processing within ROSE.
 \internal  This is set to a default value of "a.out" if "-o" is not specified.
 */
-/*!\var std::string SgProject::p_compilationPerformanceFile
+/*!\var SgStringList SgProject::p_excludeFileList
 */
 //@}
 /*! \name User Interface*/
@@ -235,169 +245,215 @@ See manual for details of AST merge mechansim.
 */
 /*!\fn void SgProject::initialization()
 */
+/*!\fn void SgProject::skipfinalCompileStep(bool value)
+*/
 /*!\fn static void SgProject::set_verbose(int )
-\description See  )
+\brief \brief See  )
 verbose for documentation */
 /*!\fn virtual void SgProject::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
-\description See  *attributeMechanism)
+\brief \brief See  *attributeMechanism)
 attributeMechanism for documentation */
 /*!\fn void SgProject::set_C_PreprocessorOnly(bool C_PreprocessorOnly)
-\description See  C_PreprocessorOnly)
+\brief \brief See  C_PreprocessorOnly)
 C_PreprocessorOnly for documentation */
 /*!\fn void SgProject::set_astMerge(bool astMerge)
-\description See  astMerge)
+\brief \brief See  astMerge)
 astMerge for documentation */
 /*!\fn void SgProject::set_astMergeCommandFile(std::string astMergeCommandFile)
-\description See  astMergeCommandFile)
+\brief \brief See  astMergeCommandFile)
 astMergeCommandFile for documentation */
 /*!\fn void SgProject::set_backendErrorCode(int backendErrorCode)
-\description See  backendErrorCode)
+\brief \brief See  backendErrorCode)
 backendErrorCode for documentation */
 /*!\fn void SgProject::set_compilationPerformanceFile(std::string compilationPerformanceFile)
-\description See  compilationPerformanceFile)
+\brief \brief See  compilationPerformanceFile)
 compilationPerformanceFile for documentation */
 /*!\fn void SgProject::set_compileOnly(bool compileOnly)
-\description See  compileOnly)
+\brief \brief See  compileOnly)
 compileOnly for documentation */
+/*!\fn void SgProject::set_excludeFileList(const SgStringList &excludeFileList)
+\brief \brief See  &excludeFileList)
+excludeFileList for documentation */
+/*!\fn void SgProject::set_excludePathList(const SgStringList &excludePathList)
+\brief \brief See  &excludePathList)
+excludePathList for documentation */
 /*!\fn void SgProject::set_fileList(SgFilePtrListPtr fileList)
-\description See  fileList)
+\brief \brief See  fileList)
 fileList for documentation */
 /*!\fn void SgProject::set_frontendErrorCode(int frontendErrorCode)
-\description See  frontendErrorCode)
+\brief \brief See  frontendErrorCode)
 frontendErrorCode for documentation */
 /*!\fn void SgProject::set_includeDirectorySpecifierList(SgStringList includeDirectorySpecifierList)
-\description See  includeDirectorySpecifierList)
+\brief \brief See  includeDirectorySpecifierList)
 includeDirectorySpecifierList for documentation */
+/*!\fn void SgProject::set_includeFileList(const SgStringList &includeFileList)
+\brief \brief See  &includeFileList)
+includeFileList for documentation */
+/*!\fn void SgProject::set_includePathList(const SgStringList &includePathList)
+\brief \brief See  &includePathList)
+includePathList for documentation */
 /*!\fn void SgProject::set_libraryDirectorySpecifierList(SgStringList libraryDirectorySpecifierList)
-\description See  libraryDirectorySpecifierList)
+\brief \brief See  libraryDirectorySpecifierList)
 libraryDirectorySpecifierList for documentation */
 /*!\fn void SgProject::set_libraryFileList(SgStringList libraryFileList)
-\description See  libraryFileList)
+\brief \brief See  libraryFileList)
 libraryFileList for documentation */
 /*!\fn void SgProject::set_librarySpecifierList(SgStringList librarySpecifierList)
-\description See  librarySpecifierList)
+\brief \brief See  librarySpecifierList)
 librarySpecifierList for documentation */
 /*!\fn void SgProject::set_objectFileNameList(SgStringList objectFileNameList)
-\description See  objectFileNameList)
+\brief \brief See  objectFileNameList)
 objectFileNameList for documentation */
 /*!
 \fn void SgProject::set_originalCommandLineArgumentList(SgStringList originalCommandLineArgumentList)
-\brief Sets the list of strings representing the original command-line.
-See  originalCommandLineArgumentList)
-originalCommandLineArgumentList for documentation */
+\brief Sets the list of strings representing the original command-line.See  originalCommandLineArgumentList)
+originalCommandLineArgumentList for documentation 
+*/
 /*!\fn void SgProject::set_outputFileName(std::string outputFileName)
-\description See  outputFileName)
+\brief \brief See  outputFileName)
 outputFileName for documentation */
 /*!\fn void SgProject::set_prelink(bool prelink)
-\description See  prelink)
+\brief \brief See  prelink)
 prelink for documentation */
+/*!\fn void SgProject::set_runningFromInstalledRose(bool runningFromInstalledRose)
+\brief \brief See  runningFromInstalledRose)
+runningFromInstalledRose for documentation */
 /*!\fn void SgProject::set_sourceFileNameList(SgStringList sourceFileNameList)
-\description See  sourceFileNameList)
+\brief \brief See  sourceFileNameList)
 sourceFileNameList for documentation */
 /*!\fn void SgProject::set_template_instantiation_mode(enum SgProject::template_instantiation_enum template_instantiation_mode)
-\description See  template_instantiation_mode)
+\brief \brief See  template_instantiation_mode)
 template_instantiation_mode for documentation */
 /*!\fn SgFilePtrListPtr SgProject::get_fileList() const
-\description See  const
+\brief \brief See  const
 fileList for documentation */
+/*!\fn SgStringList &SgProject::get_excludeFileList()
+\brief \brief See  &SgProject::excludeFileList for documentation */
+/*!\fn SgStringList &SgProject::get_excludePathList()
+\brief \brief See  &SgProject::excludePathList for documentation */
+/*!\fn SgStringList &SgProject::get_includeFileList()
+\brief \brief See  &SgProject::includeFileList for documentation */
+/*!\fn SgStringList &SgProject::get_includePathList()
+\brief \brief See  &SgProject::includePathList for documentation */
 /*!\fn SgStringList SgProject::get_includeDirectorySpecifierList() const
-\description See  const
+\brief \brief See  const
 includeDirectorySpecifierList for documentation */
 /*!\fn SgStringList SgProject::get_libraryDirectorySpecifierList() const
-\description See  const
+\brief \brief See  const
 libraryDirectorySpecifierList for documentation */
 /*!\fn SgStringList SgProject::get_libraryFileList() const
-\description See  const
+\brief \brief See  const
 libraryFileList for documentation */
 /*!\fn SgStringList SgProject::get_librarySpecifierList() const
-\description See  const
+\brief \brief See  const
 librarySpecifierList for documentation */
 /*!\fn SgStringList SgProject::get_objectFileNameList() const
-\description See  const
+\brief \brief See  const
 objectFileNameList for documentation */
 /*!
 \fn SgStringList SgProject::get_originalCommandLineArgumentList() const
-\brief Returns a list of strings representing the original command-line.
-See  const
-originalCommandLineArgumentList for documentation */
+\brief Returns a list of strings representing the original command-line.See  const
+originalCommandLineArgumentList for documentation 
+*/
 /*!\fn SgStringList SgProject::get_sourceFileNameList() const
-\description See  const
+\brief \brief See  const
 sourceFileNameList for documentation */
 /*!
 \fn bool SgProject::get_C99_only() const
-\brief This controls the c99 mode in the frontend.
-See  const
-C99_only for documentation */
+\brief This controls the c99 mode in the frontend.See  const
+C99_only for documentation 
+*/
 /*!\fn bool SgProject::get_C_PreprocessorOnly() const
-\description See  const
+\brief \brief See  const
 C_PreprocessorOnly for documentation */
 /*!\fn bool SgProject::get_C_only() const
-\description See  const
+\brief \brief See  const
 C_only for documentation */
+/*!\fn bool SgProject::get_Cxx_only() const
+\brief \brief See  const
+Cxx_only for documentation */
 /*!\fn bool SgProject::get_F2003_only() const
-\description See  const
+\brief \brief See  const
 F2003_only for documentation */
 /*!\fn bool SgProject::get_F77_only() const
-\description See  const
+\brief \brief See  const
 F77_only for documentation */
 /*!\fn bool SgProject::get_F90_only() const
-\description See  const
+\brief \brief See  const
 F90_only for documentation */
 /*!\fn bool SgProject::get_F95_only() const
-\description See  const
+\brief \brief See  const
 F95_only for documentation */
 /*!\fn bool SgProject::get_Fortran_only() const
-\description See  const
+\brief \brief See  const
 Fortran_only for documentation */
 /*!\fn bool SgProject::get_astMerge() const
-\description See  const
+\brief \brief See  const
 astMerge for documentation */
+/*!\fn bool SgProject::get_binary_only() const
+\brief \brief See  const
+binary_only for documentation */
 /*!\fn bool SgProject::get_compileOnly() const
-\description See  const
+\brief \brief See  const
 compileOnly for documentation */
 /*!\fn bool SgProject::get_prelink() const
-\description See  const
+\brief \brief See  const
 prelink for documentation */
+/*!\fn bool SgProject::get_runningFromInstalledRose() const
+\brief \brief See  const
+runningFromInstalledRose for documentation */
 /*!\fn bool SgProject::get_skip_transformation() const
-\description See  const
+\brief \brief See  const
 skip_transformation for documentation */
 /*!\fn bool SgProject::get_useBackendOnly() const
-\description See  const
+\brief \brief See  const
 useBackendOnly for documentation */
+/*!\fn const SgStringList &SgProject::get_excludeFileList() const
+\brief \brief See  const
+excludeFileList for documentation */
+/*!\fn const SgStringList &SgProject::get_excludePathList() const
+\brief \brief See  const
+excludePathList for documentation */
+/*!\fn const SgStringList &SgProject::get_includeFileList() const
+\brief \brief See  const
+includeFileList for documentation */
+/*!\fn const SgStringList &SgProject::get_includePathList() const
+\brief \brief See  const
+includePathList for documentation */
 /*!\fn enum SgProject::template_instantiation_enum SgProject::get_template_instantiation_mode() const
-\description See  const
+\brief \brief See  const
 template_instantiation_mode for documentation */
 /*!\fn int SgProject::get_backendErrorCode() const
-\description See  const
+\brief \brief See  const
 backendErrorCode for documentation */
 /*!\fn int SgProject::get_frontendErrorCode() const
-\description See  const
+\brief \brief See  const
 frontendErrorCode for documentation */
 /*!\fn std::string SgProject::get_astMergeCommandFile() const
-\description See  const
+\brief \brief See  const
 astMergeCommandFile for documentation */
 /*!\fn std::string SgProject::get_compilationPerformanceFile() const
-\description See  const
+\brief \brief See  const
 compilationPerformanceFile for documentation */
 /*!\fn std::string SgProject::get_outputFileName() const
-\description See  const
+\brief \brief See  const
 outputFileName for documentation */
 /*!\fn virtual AstAttributeMechanism *SgProject::get_attributeMechanism() const
-\description See  const
+\brief \brief See  const
 attributeMechanism for documentation */
 /*!\fn virtual SgNode *SgProject::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgProject::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgProject::get_numberOfTraversalSuccessors()
-\description See  SgProject::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgProject::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgProject::get_traversalSuccessorContainer()
-\description See  SgProject::traversalSuccessorContainer for documentation */
+\brief \brief See  SgProject::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgProject::get_traversalSuccessorNamesContainer()
-\description See  SgProject::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgProject::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgProject::~SgProject()
 */
 //@}
-int SAGE_Doxygen_Dummy_8708318697673;
+int SAGE_Doxygen_Dummy_323981673813898;

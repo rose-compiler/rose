@@ -39,42 +39,42 @@
 /*!\fn virtual SgNode *SgArrayType::copy(SgCopyHelp &help) const
 */
 /*!\fn void SgArrayType::set_base_type(SgType *base_type)
-\description See  *base_type)
+\brief \brief See  *base_type)
 base_type for documentation */
 /*!\fn void SgArrayType::set_dim_info(SgExprListExp *dim_info)
-\description See  *dim_info)
+\brief \brief See  *dim_info)
 dim_info for documentation */
 /*!\fn void SgArrayType::set_index(SgExpression *index)
-\description See  *index)
+\brief \brief See  *index)
 index for documentation */
 /*!\fn void SgArrayType::set_rank(int rank)
-\description See  rank)
+\brief \brief See  rank)
 rank for documentation */
 /*!\fn SgExprListExp *SgArrayType::get_dim_info() const
-\description See  const
+\brief \brief See  const
 dim_info for documentation */
 /*!\fn SgExpression *SgArrayType::get_index() const
-\description See  const
+\brief \brief See  const
 index for documentation */
 /*!\fn SgType *SgArrayType::get_base_type() const
-\description See  const
+\brief \brief See  const
 base_type for documentation */
 /*!\fn int SgArrayType::get_rank() const
-\description See  const
+\brief \brief See  const
 rank for documentation */
 /*!\fn virtual SgNode *SgArrayType::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgArrayType::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgArrayType::get_numberOfTraversalSuccessors()
-\description See  SgArrayType::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgArrayType::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgArrayType::get_traversalSuccessorContainer()
-\description See  SgArrayType::traversalSuccessorContainer for documentation */
+\brief \brief See  SgArrayType::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgArrayType::get_traversalSuccessorNamesContainer()
-\description See  SgArrayType::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgArrayType::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgArrayType::SgArrayType(SgType *base_type=(0),SgExpression *index=(0))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1748813276;
+extern int SAGE_Doxygen_Dummy_2047043369;

@@ -11,4 +11,4 @@
 /*!\fn virtual void DeleteEmptyOperatorNodes::visitWithAstNodePointersList(SgNode *node,AstNodePtrs::AstNodePointersList l)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_774939666;
+extern int SAGE_Doxygen_Dummy_838919311;

@@ -2,17 +2,35 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Need to add sibdirectory for annotation parser tests as well
 #SUBDIRS = sideEffectAnalysisTests
-SUBDIRS = testCallGraphAnalysis defUseAnalysisTests staticInterproceduralSlicingTests
+SUBDIRS = testCallGraphAnalysis 
+#ptrTraceDriver
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
+#-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest
+bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 steensgaardTest2
 
 # DQ: Removed this because it was failing and I could not figure out why
 # AnnotationLanguageParserTest
+
+PtrAnalTest_SOURCES = PtrAnalTest.C
+PtrAnalTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+PtrAnalTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#PtrAnalTest2_SOURCES = PtrAnalTest2.C
+#PtrAnalTest2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+#PtrAnalTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+
+steensgaardTest1_SOURCES = steensgaardTest1.C
+steensgaardTest1_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+steensgaardTest1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+steensgaardTest2_SOURCES = steensgaardTest2.C
+steensgaardTest2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+steensgaardTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 CFGTest_SOURCES = CFGTest.C
 CFGTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -40,7 +58,9 @@ FORCE_TEST_CODES_TO_RUN:
 EXTRA_DIST = TestDriver testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.ref \
              testfile2.c testfile2.c.cfg testfile2.c.du testfile2.c.ref \
              testfile3.c testfile3.c.cfg testfile3.c.du testfile3.c.ref \
-             testfile4.c testfile4.c.du 
+             testfile4.c testfile4.c.du  testPtr1.C testPtr2.C \
+             PtrAnalTest.out1  steensgaardTest1.out   steensgaardTest2.out2 \
+             PtrAnalTest.out2  steensgaardTest2.out1  testfile1.c.out
              #trustedAnnotationOutput annotationLanguageParserInputFile.ann
 
 # to deactivate tests comment out check-local

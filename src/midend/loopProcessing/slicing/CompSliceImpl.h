@@ -8,8 +8,7 @@
 
 class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
 {
-//Boolean reversible;
-  int reversible;
+  bool reversible;
  protected:
   virtual void UpdateDeleteNode( const LoopTreeNode *n)
   { LoopTreeShadowNode::ReplaceRepr(0);
@@ -25,31 +24,29 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
       LoopTreeShadowNode::ReplaceRepr(n);
    }
  public:
-//CompSliceLoop( LoopTreeNode *l, CompSliceImpl* impl,Boolean r = true);
-  CompSliceLoop( LoopTreeNode *l, CompSliceImpl* impl,int r = true);
+  CompSliceLoop( LoopTreeNode *l, CompSliceImpl* impl,
+                bool r = true);
   CompSliceLoop( LoopTreeNode *n, const CompSliceLoop& that)
      : LoopTreeShadowNode(n, that) 
      { reversible = that.reversible; n->AttachObserver(*this); }
   ~CompSliceLoop() { if (GetRepr() != 0)
                         GetRepr()->DetachObserver(*this); }
 
-//void SetReversal( Boolean r)
-  void SetReversal( int r)
+  void SetReversal( bool r)
      { if (reversible) reversible = r; }
 
   CompSlice::SliceLoopInfo GetSliceInfo() const;
-//Boolean LoopReversible() const { return reversible; }
-  int LoopReversible() const { return reversible; }
+  bool LoopReversible() const { return reversible; }
   LoopTreeNode* GetSliceLoop() const { return GetRepr(); }
-  void Dump() const { std::cerr << ToString() << std::endl; }
-  virtual std::string ToString() const
+  void Dump() const { STD cerr << toString() << STD endl; }
+  virtual STD string toString() const
     { 
-      std::string res =  "slice loop: \n" + GetRepr()->ToString();
+      STD string res =  "slice loop: \n" + GetRepr()->toString();
       if ( LoopReversible())
          res = res + " loop reversible \n";
       return res;
     }
-  virtual std::string GetClassName() const { return "CompSliceLoop"; }
+  virtual STD string GetClassName() const { return "CompSliceLoop"; }
 };
 
 class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
@@ -90,14 +87,14 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
        Link(loop, AsLastChild);
        align = a;
      }
-  void Dump() const { std::cerr << ToString() << std::endl; }
-  virtual std::string ToString() const
+  void Dump() const { STD cerr << toString() << STD endl; }
+  virtual STD string toString() const
     { 
        char buf[20];
        sprintf( buf, "%d", align);
-       return  " stmt: \n" + GetRepr()->ToString() + "\nslicing alignment: " + std::string(buf);
+       return  " stmt: \n" + GetRepr()->toString() + "\nslicing alignment: " + STD string(buf);
     }
-  virtual std::string GetClassName() const { return "CompSliceStmt"; }
+  virtual STD string GetClassName() const { return "CompSliceStmt"; }
 };
 
 inline CompSlice::SliceLoopInfo CompSliceLoop:: GetSliceInfo() const
@@ -127,9 +124,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
      return result;
    }
    virtual CompSliceLoop* CreateSliceLoopNode( LoopTreeNode *n, CompSliceLoop* that = 0)
-   {
-  // Boolean r = (that == 0)? true : that->LoopReversible();
-     int r = (that == 0)? true : that->LoopReversible();
+   {  bool r = (that == 0)? true : that->LoopReversible();
          return new CompSliceLoop( n, this, r); }
    virtual CompSliceStmt* CreateSliceStmtNode( LoopTreeNode *n, CompSliceStmt* that = 0)
    {  return new CompSliceStmt( n, this ); }
@@ -141,7 +136,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
     { return new CompSliceImpl( QuerySliceLevel() ); }
 
   void Dump() const { GetTreeRoot()->DumpTree(); }
-  std::string ToString() const { return GetTreeRoot()->TreeToString(); }
+  STD string toString() const { return GetTreeRoot()->TreeToString(); }
   CompSliceStmt * QuerySliceStmt( const LoopTreeNode *n) const
     { return (n->GetOrigStmt() != 0)? 
                 static_cast <CompSliceStmt*>( QueryShadowNode(n)):0;
@@ -172,11 +167,11 @@ class CompSliceImpl : public LoopTreeShadowCreate
   virtual void Append( const CompSliceImpl& that)
    {
      LoopTreeTraverseSelectLoop loopIter(that.GetTreeRoot());
-     for (LoopTreeNode *n; (n=loopIter.Current()); loopIter++) {
+     for (LoopTreeNode *n; n=loopIter.Current(); loopIter++) {
        CompSliceLoop *l = static_cast<CompSliceLoop*>(n);
        CompSliceLoop *myl = CreateSliceLoop(l->GetSliceLoop(), l);
        LoopTreeTraverseSelectStmt stmtIter(l);
-       for (LoopTreeNode *n1; (n1 = stmtIter.Current()); stmtIter++)  {
+       for (LoopTreeNode *n1; n1 = stmtIter.Current(); stmtIter++)  {
           CompSliceStmt *s = static_cast <CompSliceStmt*>(n1);
           CompSliceStmt *mys = CreateSliceStmt(s->GetSliceStmt(), s);
           mys->SetSliceLoop( myl, s->GetSliceAlign() );
@@ -188,8 +183,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
 };
 
 inline CompSliceLoop:: 
-// CompSliceLoop( LoopTreeNode *l, CompSliceImpl *_slice, Boolean r)
-CompSliceLoop( LoopTreeNode *l, CompSliceImpl *_slice, int r)
+CompSliceLoop( LoopTreeNode *l, CompSliceImpl *_slice, bool r)
     : LoopTreeShadowNode( l, _slice), reversible(r)
  { l->AttachObserver(*this); }
 

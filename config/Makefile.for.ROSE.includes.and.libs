@@ -116,6 +116,11 @@ if ROSE_USE_YICES
   ROSE_YICES_LIB_FILE = libyices.a
 endif
 
+# ROSE-WINE Package (Wine is a package to permit execution of Windows binaries under Linux)
+if ROSE_USE_WINDOWS_BINARY_ANALYSIS_SUPPORT
+  ROSE_WINE_INCLUDES = -I$(wine_path)/include
+endif
+
 
 ROSE_INCLUDES = \
      -I$(top_srcdir)/src \
@@ -165,8 +170,9 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
-     -I$(top_srcdir)/src/midend/loopProcessing \
+     -I$(top_srcdir)/src/midend/loopProcessing/driver \
       $(ROSE_SIDEEFFECTS_INCLUDE) \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \
@@ -192,7 +198,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      $(WAVE_INCLUDES) \
-     $(ROSE_YICES_INCLUDES)
+     $(ROSE_YICES_INCLUDES) \
+     $(ROSE_WINE_INCLUDES)
 
 # DQ (1/3/2008): Removed since we are no longer using the Coco parser generator.
 #     -I$(top_srcdir)/src/3rdPartyLibraries/coco/cplus2

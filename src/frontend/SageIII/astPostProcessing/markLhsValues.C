@@ -173,6 +173,9 @@ MarkLhsValues::visit(SgNode* node)
                          break;
                        }
 
+                 // Added to address problem on Qing's machine using g++ 4.0.2
+                    case V_SgNotOp:
+
                  // These are where some error occur.  I want to isolate then so that I know the current status of where lvalues are not marked correctly!
                     case V_SgPointerDerefExp:
                     case V_SgCastExp:
@@ -208,6 +211,8 @@ MarkLhsValues::visit(SgNode* node)
                               unaryOperator->get_startOfConstruct()->display("Error for operand: operand->get_lvalue() == true: debug");
                             }
 #endif
+
+                      // Note that this fails for line 206 of file: include/g++_HEADERS/hdrs1/ext/mt_allocator.h
                          ROSE_ASSERT(operand->get_lvalue() == false);
                        }          
                   }

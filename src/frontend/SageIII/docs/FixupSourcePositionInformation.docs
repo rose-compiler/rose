@@ -14,4 +14,4 @@
 /*!\fn void FixupSourcePositionInformation::fixupSourcePositionUnavailableInFrontendToBeUniformlyMarked(SgLocatedNode *locatedNode)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_252309559;
+extern int SAGE_Doxygen_Dummy_251724440;

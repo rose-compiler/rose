@@ -41,42 +41,42 @@
 /*!\fn virtual void SgDataStatementValue::post_construction_initialization()
 */
 /*!\fn void SgDataStatementValue::set_constant_expression(SgExpression *constant_expression)
-\description See  *constant_expression)
+\brief \brief See  *constant_expression)
 constant_expression for documentation */
 /*!\fn void SgDataStatementValue::set_data_initialization_format(enum SgDataStatementValue::data_statement_value_enum data_initialization_format)
-\description See  data_initialization_format)
+\brief \brief See  data_initialization_format)
 data_initialization_format for documentation */
 /*!\fn void SgDataStatementValue::set_initializer_list(SgExprListExp *initializer_list)
-\description See  *initializer_list)
+\brief \brief See  *initializer_list)
 initializer_list for documentation */
 /*!\fn void SgDataStatementValue::set_repeat_expression(SgExpression *repeat_expression)
-\description See  *repeat_expression)
+\brief \brief See  *repeat_expression)
 repeat_expression for documentation */
 /*!\fn SgExprListExp *SgDataStatementValue::get_initializer_list() const
-\description See  const
+\brief \brief See  const
 initializer_list for documentation */
 /*!\fn SgExpression *SgDataStatementValue::get_constant_expression() const
-\description See  const
+\brief \brief See  const
 constant_expression for documentation */
 /*!\fn SgExpression *SgDataStatementValue::get_repeat_expression() const
-\description See  const
+\brief \brief See  const
 repeat_expression for documentation */
 /*!\fn enum SgDataStatementValue::data_statement_value_enum SgDataStatementValue::get_data_initialization_format() const
-\description See  const
+\brief \brief See  const
 data_initialization_format for documentation */
 /*!\fn virtual SgNode *SgDataStatementValue::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgDataStatementValue::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgDataStatementValue::get_numberOfTraversalSuccessors()
-\description See  SgDataStatementValue::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgDataStatementValue::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDataStatementValue::get_traversalSuccessorContainer()
-\description See  SgDataStatementValue::traversalSuccessorContainer for documentation */
+\brief \brief See  SgDataStatementValue::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDataStatementValue::get_traversalSuccessorNamesContainer()
-\description See  SgDataStatementValue::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgDataStatementValue::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgDataStatementValue::SgDataStatementValue(enum SgDataStatementValue::data_statement_value_enum data_initialization_format=SgDataStatementValue::e_unknown)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1049717497;
+extern int SAGE_Doxygen_Dummy_1647197481;

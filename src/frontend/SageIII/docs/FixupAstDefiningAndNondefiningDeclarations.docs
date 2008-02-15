@@ -8,4 +8,4 @@
 /*!\fn virtual void FixupAstDefiningAndNondefiningDeclarations::visit(SgNode *node)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1755558453;
+extern int SAGE_Doxygen_Dummy_1205770317;

@@ -7,9 +7,8 @@ class PrivatizeScalar
 {
  public:
   AstNodePtr operator()( LoopTransformInterface& la, const AstNodePtr& root); 
-//Boolean cmdline_configure();
-  int cmdline_configure();
-  static std::string cmdline_help();
+  bool cmdline_configure();
+  static STD string cmdline_help();
 };
 
 #endif

@@ -9,9 +9,11 @@
 */
 /*!\var SgExpression *SgWhereStatement::p_condition
 */
-/*!\var int SgWhereStatement::p_end_numeric_label
+/*!\var SgLabelRefExp *SgWhereStatement::p_end_numeric_label
 */
 /*!\var std::string SgWhereStatement::p_string_label
+*/
+/*!\var bool SgWhereStatement::p_has_end_statement
 */
 //@}
 /*! \name User Interface*/
@@ -42,51 +44,63 @@
 */
 /*!\fn virtual SgWhereStatement::~SgWhereStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgWhereStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgWhereStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgWhereStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgWhereStatement::post_construction_initialization()
 */
+/*!\fn virtual void SgWhereStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
+end_numeric_label for documentation */
 /*!\fn void SgWhereStatement::set_body(SgBasicBlock *body)
-\description See  *body)
+\brief \brief See  *body)
 body for documentation */
 /*!\fn void SgWhereStatement::set_condition(SgExpression *condition)
-\description See  *condition)
+\brief \brief See  *condition)
 condition for documentation */
 /*!\fn void SgWhereStatement::set_elsewhere(SgElseWhereStatement *elsewhere)
-\description See  *elsewhere)
+\brief \brief See  *elsewhere)
 elsewhere for documentation */
-/*!\fn void SgWhereStatement::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
-end_numeric_label for documentation */
+/*!\fn void SgWhereStatement::set_has_end_statement(bool has_end_statement)
+\brief \brief See  has_end_statement)
+has_end_statement for documentation */
 /*!\fn void SgWhereStatement::set_string_label(std::string string_label)
-\description See  string_label)
+\brief \brief See  string_label)
 string_label for documentation */
 /*!\fn SgBasicBlock *SgWhereStatement::get_body() const
-\description See  const
+\brief \brief See  const
 body for documentation */
 /*!\fn SgElseWhereStatement *SgWhereStatement::get_elsewhere() const
-\description See  const
+\brief \brief See  const
 elsewhere for documentation */
 /*!\fn SgExpression *SgWhereStatement::get_condition() const
-\description See  const
+\brief \brief See  const
 condition for documentation */
-/*!\fn int SgWhereStatement::get_end_numeric_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgWhereStatement::get_end_numeric_label() const
+\brief \brief See  const
 end_numeric_label for documentation */
+/*!\fn bool SgWhereStatement::get_has_end_statement() const
+\brief \brief See  const
+has_end_statement for documentation */
 /*!\fn std::string SgWhereStatement::get_string_label() const
-\description See  const
+\brief \brief See  const
 string_label for documentation */
 /*!\fn virtual SgNode *SgWhereStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgWhereStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgWhereStatement::get_numberOfTraversalSuccessors()
-\description See  SgWhereStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgWhereStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgWhereStatement::get_traversalSuccessorContainer()
-\description See  SgWhereStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgWhereStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgWhereStatement::get_traversalSuccessorNamesContainer()
-\description See  SgWhereStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgWhereStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgWhereStatement::SgWhereStatement(SgExpression *condition,SgBasicBlock *body,SgElseWhereStatement *elsewhere)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_847985493;
+extern int SAGE_Doxygen_Dummy_507828423;

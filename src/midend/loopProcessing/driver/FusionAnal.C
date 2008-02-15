@@ -1,16 +1,8 @@
 
-#include <general.h>
-
-#include <slicing/CompSliceDepGraph.h>
-#include <slicing/CompSliceLocality.h>
+#include <CompSliceDepGraph.h>
+#include <CompSliceLocality.h>
 #include <FusionAnal.h>
 #include <CommandOptions.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 bool DebugFusion()
 {
@@ -47,7 +39,7 @@ FusionInfo GetFusionInfo(const DepInfo& e, int index1, int index2)
    DepDirType t = r.GetDirType() ;
    if (t == DEPDIR_EQ || t == DEPDIR_LE) {
        if (DebugFusion()) {
-         cerr << "fusion align is " << r.GetMaxAlign() << " from dep" << r.ToString() << endl;
+         STD cerr << "fusion align is " << r.GetMaxAlign() << " from dep" << r.toString() << STD endl;
        }
        return FusionInfo(true, r.GetMaxAlign());
    }
@@ -139,7 +131,7 @@ operator()(CompSliceLocalityRegistry *anal, CompSliceNest& n1, CompSliceNest& n2
    return false;
 }
 
-Boolean MultiLevelFusion ::
+bool MultiLevelFusion ::
 Fusible( CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2, const DepInfo& e) const
 {
   for (int j = 0; j < n1.NumberOfEntries(); j++) {
@@ -161,7 +153,7 @@ Fuse( CompSliceLocalityRegistry *reg,CompSliceNest& n1, CompSliceNest& n2, DepIn
     int k;
     for ( k = j; k < num2; ++k) {
       FusionInfo info;
-      if ((info = (*anal)(reg, n1, n2, j, k, e))) {
+      if (info = (*anal)(reg, n1, n2, j, k, e)) {
 
          fuse.Entry(j,j) = DepRel(DEPDIR_EQ, info.align);
          if (k != j) {
@@ -181,7 +173,7 @@ Fuse( CompSliceLocalityRegistry *reg,CompSliceNest& n1, CompSliceNest& n2, DepIn
   FuseSliceNests(n1,n2,fuse);
 }
 
-Boolean SameLevelFusion ::
+bool SameLevelFusion ::
 Fusible( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, const DepInfo &e) const
 {
   return n1.NumberOfEntries() && n2.NumberOfEntries() 

@@ -1,5 +1,3 @@
-
-#include <general.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -9,27 +7,22 @@
 #include <DomainInfo.h>
 #include <PtrSet.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
 class DepGraphEdgeCreate : public CollectObject<DepInfo>
 {
-  AstTreeDepGraphBuildImpl* graph;
-  GraphNode* n1, *n2;   
  public:
    DepGraphEdgeCreate(AstTreeDepGraphBuildImpl* g, 
-                      GraphNode *_n1, GraphNode* _n2)
-     : graph(g), n1(_n1), n2(_n2) {}
-   Boolean operator()(const DepInfo& d) 
+                      GraphAccessInterface::Node *_n1, GraphAccessInterface::Node* _n2)
+     :  n1(_n1), n2(_n2), graph(g) {}
+   bool operator()(const DepInfo& d) 
    { if (!d.IsTop()) {
         graph->CreateEdgeImpl( n1,n2,d);
         return true;
      }
      return false;
    }
+ private:
+  AstTreeDepGraphBuildImpl* graph;
+  GraphAccessInterface::Node* n1, *n2;   
 };
 
 void AstTreeDepGraphAnal :: 
@@ -62,27 +55,27 @@ ComputeCtrlDep( LoopTransformInterface &fa,const StmtNodeInfo& nc,
                 const StmtNodeInfo& ns, DepType t )
 {
    AstNodePtr c = nc.start, s = ns.start;
-   // bool equal  = (c == s);
+   bool equal  = (c == s);
    DepGraphEdgeCreate deps1(graph,nc.node, ns.node), deps2(graph, ns.node, nc.node);
    impl.ComputeCtrlDep( fa, c, s, deps1, deps2, t);
 }
 
 
-Boolean BuildAstTreeDepGraph::
+bool BuildAstTreeDepGraph::
 ProcessLoop( AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
                       AstInterface::TraversalVisitType t)
 {
   if (t == AstInterface::PreVisit) {
-    GraphNode *n = graph->CreateNodeImpl(l, GetStmtDomain(lf, l));
+    GraphAccessInterface::Node *n = graph->CreateNodeImpl(l, GetStmtDomain(lf, l));
     AstNodePtr init,cond,incr;
     if (!fa.IsLoop(l, &init, &cond, &incr))
         assert(false);
     for (StmtStackType::Iterator p(stmtNodes); !p.ReachEnd(); ++p) {
-      if (init != 0)
+      if (init != AST_NULL)
          ComputeDataDep(lf, *p, StmtNodeInfo(n,init), DEPTYPE_DATA );
-      if (cond != 0)
+      if (cond != AST_NULL)
          ComputeDataDep(lf, *p, StmtNodeInfo(n,cond), DEPTYPE_DATA );
-      if (incr != 0)
+      if (incr != AST_NULL)
          ComputeDataDep(lf, *p, StmtNodeInfo(n,incr), DEPTYPE_DATA );
     }
     for (StmtStackType::Iterator ps(gotoNodes); !ps.ReachEnd(); ++ps) {
@@ -97,10 +90,10 @@ ProcessLoop( AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
   return ProcessAstTree::ProcessLoop(fa, l, body, t);
 }
 
-Boolean BuildAstTreeDepGraph ::
+bool BuildAstTreeDepGraph ::
 ProcessGoto( AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest)
 {
-   GraphNode *n = graph->CreateNodeImpl(s, GetStmtDomain(lf, s));
+   GraphAccessInterface::Node *n = graph->CreateNodeImpl(s, GetStmtDomain(lf, s));
    StmtNodeInfo info(n,s);
    gotoNodes.PushFirst(info);
 
@@ -116,10 +109,10 @@ ProcessGoto( AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest)
    return ProcessAstTree::ProcessGoto(fa, s, dest);
 }
 
-void BuildAstTreeDepGraph ::
+bool BuildAstTreeDepGraph ::
 ProcessStmt( AstInterface &fa, const AstNodePtr& s)
 {
-   GraphNode *n = graph->CreateNodeImpl(s, GetStmtDomain(lf, s));
+   GraphAccessInterface::Node *n = graph->CreateNodeImpl(s, GetStmtDomain(lf, s));
    StmtNodeInfo info(n,s);
    stmtNodes.PushFirst(info);
    for (StmtStackType::Iterator ps(stmtNodes); !ps.ReachEnd(); ++ps) {
@@ -132,29 +125,29 @@ ProcessStmt( AstInterface &fa, const AstNodePtr& s)
         ComputeCtrlDep(lf, (*pg), info);
    }
 
-   ProcessAstTree::ProcessStmt(fa, s);
+   return ProcessAstTree::ProcessStmt(fa, s);
 }
 
 void BuildAstTreeDepGraph :: TranslateCtrlDeps(LoopTransformInterface &fa)
 {
-  GraphAccess* g = graph->Access();
+  const GraphAccessInterface* g = graph->Access();
   for (StmtStackType::Iterator p(stmtNodes); !p.ReachEnd(); ++p) {
     StmtNodeInfo &info = *p;
-    GraphNode *n1 = info.node;
-    for (GraphAccess::EdgeIterator p1 = g->GetNodeEdgeIterator(n1, GraphAccess::EdgeIn);
+    GraphAccessInterface::Node *n1 = info.node;
+    for (GraphAccessInterface::EdgeIterator p1 = g->GetNodeEdgeIterator(n1, GraphAccess::EdgeIn);
          !p1.ReachEnd(); ++p1) {
-       GraphEdge *e1 = p1.Current();
+       GraphAccessInterface::Edge *e1 = p1.Current();
        DepInfoConstIterator depIter1 = 
               graph->GetDepInfoIteratorImpl(e1, DEPTYPE_CTRL);
        if (depIter1.ReachEnd())
            continue;
-       GraphNode *ctrl = g->GetEdgeEndPoint(e1, GraphAccess::EdgeOut);
+       GraphAccessInterface::Node *ctrl = g->GetEdgeEndPoint(e1, GraphAccess::EdgeOut);
        DepInfo cd = depIter1.Current();
        DepInfo cd1 = Reverse( cd );
-       GraphAccess::EdgeIterator p2 = g->GetNodeEdgeIterator(ctrl,GraphAccess::EdgeOut);
+       GraphAccessInterface::EdgeIterator p2 = g->GetNodeEdgeIterator(ctrl,GraphAccess::EdgeOut);
        for ( ; !p2.ReachEnd(); ++p2) {
-         GraphEdge *e2 = p2.Current();
-         GraphNode *n2 = g->GetEdgeEndPoint(e2, GraphAccess::EdgeIn);
+         GraphAccessInterface::Edge *e2 = p2.Current();
+         GraphAccessInterface::Node *n2 = g->GetEdgeEndPoint(e2, GraphAccess::EdgeIn);
          for (DepInfoConstIterator depIter2 = 
                              graph->GetDepInfoIteratorImpl(e2, DEPTYPE_DATA);
               ! depIter2.ReachEnd(); depIter2++) {
@@ -164,8 +157,8 @@ void BuildAstTreeDepGraph :: TranslateCtrlDeps(LoopTransformInterface &fa)
        }
        for (p2 = g->GetNodeEdgeIterator(ctrl, GraphAccess::EdgeIn);
             !p2.ReachEnd(); ++p2) {
-         GraphEdge *e2 = p2.Current();
-         GraphNode *n2 = g->GetEdgeEndPoint(e2, GraphAccess::EdgeOut);
+         GraphAccessInterface::Edge *e2 = p2.Current();
+         GraphAccessInterface::Node *n2 = g->GetEdgeEndPoint(e2, GraphAccess::EdgeOut);
          for (DepInfoConstIterator depIter2 = 
                      graph->GetDepInfoIteratorImpl(e2, DEPTYPE_DATA);
               ! depIter2.ReachEnd(); depIter2++)  {

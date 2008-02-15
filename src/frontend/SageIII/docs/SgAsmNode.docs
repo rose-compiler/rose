@@ -1,0 +1,70 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmNode
+*/
+/*! \name Class Members*/
+//@{
+/*!\var AttachedPreprocessingInfoType *SgAsmNode::p_attachedPreprocessingInfoPtr
+*/
+/*!\var AstAttributeMechanism *SgAsmNode::p_attributeMechanism
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmNode::SgAsmNode(const SgAsmNodeStorageClass &source)
+*/
+/*!\fn inline static void SgAsmNode::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmNode *SgAsmNode::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmNode::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmNode::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmNode::initializeStorageClassArray(SgAsmNodeStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmNode::clearMemoryPool()
+*/
+/*!\fn static void SgAsmNode::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmNode::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmNode::roseRTI()
+*/
+/*!\fn virtual SgAsmNode::~SgAsmNode()
+*/
+/*!\fn virtual SgNode *SgAsmNode::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual std::vector< VirtualBinCFG::CFGEdge  , std::allocator< VirtualBinCFG::CFGEdge  >  > SgAsmNode::cfgBinInEdges()
+*/
+/*!\fn virtual std::vector< VirtualBinCFG::CFGEdge  , std::allocator< VirtualBinCFG::CFGEdge  >  > SgAsmNode::cfgBinOutEdges()
+*/
+/*!\fn virtual unsigned int SgAsmNode::cfgBinFindChildIndex()
+*/
+/*!\fn virtual void SgAsmNode::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
+\brief \brief See  *attributeMechanism)
+attributeMechanism for documentation */
+/*!\fn void SgAsmNode::set_attachedPreprocessingInfoPtr(AttachedPreprocessingInfoType *attachedPreprocessingInfoPtr)
+\brief \brief See  *attachedPreprocessingInfoPtr)
+attachedPreprocessingInfoPtr for documentation */
+/*!\fn AttachedPreprocessingInfoType *SgAsmNode::get_attachedPreprocessingInfoPtr() const
+\brief \brief See  const
+attachedPreprocessingInfoPtr for documentation */
+/*!\fn virtual AstAttributeMechanism *SgAsmNode::get_attributeMechanism() const
+\brief \brief See  const
+attributeMechanism for documentation */
+/*!\fn virtual SgNode *SgAsmNode::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmNode::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmNode::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmNode::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmNode::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmNode::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmNode::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmNode::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmNode::SgAsmNode()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1582096119;

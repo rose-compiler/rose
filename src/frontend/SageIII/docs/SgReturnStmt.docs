@@ -110,23 +110,23 @@ pointer to an object derived from a SgReturnStmt.
 /*!\fn virtual void SgReturnStmt::post_construction_initialization()
 */
 /*!\fn void SgReturnStmt::set_expression(SgExpression *expression)
-\description See  *expression)
+\brief \brief See  *expression)
 expression for documentation */
 /*!\fn SgExpression *SgReturnStmt::get_expression() const
-\description See  const
+\brief \brief See  const
 expression for documentation */
 /*!\fn virtual SgNode *SgReturnStmt::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgReturnStmt::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgReturnStmt::get_numberOfTraversalSuccessors()
-\description See  SgReturnStmt::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgReturnStmt::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgReturnStmt::get_traversalSuccessorContainer()
-\description See  SgReturnStmt::traversalSuccessorContainer for documentation */
+\brief \brief See  SgReturnStmt::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgReturnStmt::get_traversalSuccessorNamesContainer()
-\description See  SgReturnStmt::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgReturnStmt::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgReturnStmt::SgReturnStmt(Sg_File_Info *startOfConstruct,SgExpression *expression=(0))
 \brief This is the constructor.
@@ -136,4 +136,4 @@ childIndex for documentation */
 \ref SgReturnStmt_create "Example:create an SgReturnStmt object"
 */
 //@}
-int SAGE_Doxygen_Dummy_26580200553613;
+int SAGE_Doxygen_Dummy_88521466132518;

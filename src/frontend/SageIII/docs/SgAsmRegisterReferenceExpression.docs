@@ -1,0 +1,80 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmRegisterReferenceExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var enum SgAsmRegisterReferenceExpression::arm_register_enum SgAsmRegisterReferenceExpression::p_arm_register_code
+*/
+/*!\var enum SgAsmRegisterReferenceExpression::x86_position_in_register_enum SgAsmRegisterReferenceExpression::p_x86_position_in_register_code
+*/
+/*!\var enum SgAsmRegisterReferenceExpression::x86_register_enum SgAsmRegisterReferenceExpression::p_x86_register_code
+*/
+/*!\var enum SgAsmRegisterReferenceExpression::arm_position_in_register_enum SgAsmRegisterReferenceExpression::p_arm_position_in_register_code
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmRegisterReferenceExpression::SgAsmRegisterReferenceExpression(const SgAsmRegisterReferenceExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmRegisterReferenceExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmRegisterReferenceExpression *SgAsmRegisterReferenceExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmRegisterReferenceExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmRegisterReferenceExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmRegisterReferenceExpression::initializeStorageClassArray(SgAsmRegisterReferenceExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmRegisterReferenceExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmRegisterReferenceExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmRegisterReferenceExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmRegisterReferenceExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmRegisterReferenceExpression::~SgAsmRegisterReferenceExpression()
+*/
+/*!\fn virtual SgNode *SgAsmRegisterReferenceExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmRegisterReferenceExpression::set_arm_position_in_register_code(enum SgAsmRegisterReferenceExpression::arm_position_in_register_enum arm_position_in_register_code)
+\brief \brief See  arm_position_in_register_code)
+arm_position_in_register_code for documentation */
+/*!\fn void SgAsmRegisterReferenceExpression::set_arm_register_code(enum SgAsmRegisterReferenceExpression::arm_register_enum arm_register_code)
+\brief \brief See  arm_register_code)
+arm_register_code for documentation */
+/*!\fn void SgAsmRegisterReferenceExpression::set_x86_position_in_register_code(enum SgAsmRegisterReferenceExpression::x86_position_in_register_enum x86_position_in_register_code)
+\brief \brief See  x86_position_in_register_code)
+x86_position_in_register_code for documentation */
+/*!\fn void SgAsmRegisterReferenceExpression::set_x86_register_code(enum SgAsmRegisterReferenceExpression::x86_register_enum x86_register_code)
+\brief \brief See  x86_register_code)
+x86_register_code for documentation */
+/*!\fn enum SgAsmRegisterReferenceExpression::arm_position_in_register_enum SgAsmRegisterReferenceExpression::get_arm_position_in_register_code() const
+\brief \brief See  const
+arm_position_in_register_code for documentation */
+/*!\fn enum SgAsmRegisterReferenceExpression::arm_register_enum SgAsmRegisterReferenceExpression::get_arm_register_code() const
+\brief \brief See  const
+arm_register_code for documentation */
+/*!\fn enum SgAsmRegisterReferenceExpression::x86_position_in_register_enum SgAsmRegisterReferenceExpression::get_x86_position_in_register_code() const
+\brief \brief See  const
+x86_position_in_register_code for documentation */
+/*!\fn enum SgAsmRegisterReferenceExpression::x86_register_enum SgAsmRegisterReferenceExpression::get_x86_register_code() const
+\brief \brief See  const
+x86_register_code for documentation */
+/*!\fn virtual SgNode *SgAsmRegisterReferenceExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmRegisterReferenceExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmRegisterReferenceExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmRegisterReferenceExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmRegisterReferenceExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmRegisterReferenceExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmRegisterReferenceExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmRegisterReferenceExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmRegisterReferenceExpression::SgAsmRegisterReferenceExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1905603152;

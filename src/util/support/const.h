@@ -1,6 +1,6 @@
 
-#ifndef SLICING_CONST_H
-#define SLICING_CONST_H
+#ifndef CONST_H
+#define CONST_H
 
 #define NEG_INFTY -32767
 #define POS_INFTY 32767

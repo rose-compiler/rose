@@ -129,84 +129,84 @@ pointer to an object derived from a SgClassDefinition.
 /*!\fn void SgClassDefinition::prepend_member(SgDeclarationStatement *element)
 */
 /*!\fn void SgClassDefinition::set_declaration(SgClassDeclaration *new_val)
-\description See  *new_val)
+\brief \brief See  *new_val)
 declaration for documentation */
 /*!\fn void SgClassDefinition::set_isPrivate(bool isPrivate)
-\description See  isPrivate)
+\brief \brief See  isPrivate)
 isPrivate for documentation */
 /*!\fn void SgClassDefinition::set_isSequence(bool isSequence)
-\description See  isSequence)
+\brief \brief See  isSequence)
 isSequence for documentation */
 /*!\fn void SgClassDefinition::set_packingAlignment(unsigned int packingAlignment)
-\description See  packingAlignment)
+\brief \brief See  packingAlignment)
 packingAlignment for documentation */
 /*!
 \fn SgBaseClassPtrList &SgClassDefinition::get_inheritances()
-\brief Returns a list to the base classes.
-See  &SgClassDefinition::inheritances for documentation \return Returns an STL list by reference.
+\brief Returns a list to the base classes.See  &SgClassDefinition::inheritances for documentation 
+\return Returns an STL list by reference.
 */
 /*!
 \fn SgClassDeclaration *SgClassDefinition::get_declaration() const
-\brief returns the class declaration associated with this class decinition.
-See  const
-declaration for documentation \return Returns SgClassDeclaration pointer.
+\brief returns the class declaration associated with this class decinition.See  const
+declaration for documentation 
+\return Returns SgClassDeclaration pointer.
 */
 /*!
 \fn SgDeclarationStatementPtrList &SgClassDefinition::get_members()
-\brief Returns a list to the data member declarations.
-See  &SgClassDefinition::members for documentation \return Returns an STL list by reference.
+\brief Returns a list to the data member declarations.See  &SgClassDefinition::members for documentation 
+\return Returns an STL list by reference.
 */
 /*!
 \fn SgName SgClassDefinition::get_mangled_qualified_name(int &i)
-\brief Returns SgName (a string) representing the mangled name of the current scope.
+\brief Returns SgName (a string) representing the mangled name of the current scope.See  &i)
+mangled_qualified_name for documentation 
    See discussion of mangled names in the documentation.
-See  &i)
-mangled_qualified_name for documentation \return Returns SgName (a string).
+\return Returns SgName (a string).
 */
 /*!\fn bool SgClassDefinition::get_isPrivate() const
-\description See  const
+\brief \brief See  const
 isPrivate for documentation */
 /*!\fn bool SgClassDefinition::get_isSequence() const
-\description See  const
+\brief \brief See  const
 isSequence for documentation */
 /*!
 \fn const SgBaseClassPtrList &SgClassDefinition::get_inheritances() const
-\brief Returns a const list to the base classes.
-See  const
-inheritances for documentation \return Returns a const STL list by reference.
+\brief Returns a const list to the base classes.See  const
+inheritances for documentation 
+\return Returns a const STL list by reference.
 */
 /*!
 \fn const SgDeclarationStatementPtrList &SgClassDefinition::get_members() const
-\brief Returns a const list to the data member declarations.
-See  const
-members for documentation \return Returns a const STL list by reference.
+\brief Returns a const list to the data member declarations.See  const
+members for documentation 
+\return Returns a const STL list by reference.
 */
 /*!\fn unsigned int SgClassDefinition::get_packingAlignment() const
-\description See  const
+\brief \brief See  const
 packingAlignment for documentation */
 /*!\fn virtual SgName SgClassDefinition::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!
 \fn virtual SgName SgClassDefinition::get_qualified_name() const
-\brief Returns SgName (a string) representing the name of the current scope.
+\brief Returns SgName (a string) representing the name of the current scope.See  const
+qualified_name for documentation 
    See discussion of qualified names in the documentation.
-See  const
-qualified_name for documentation \return Returns SgName (a string).
+\return Returns SgName (a string).
 */
 /*!\fn virtual SgNode *SgClassDefinition::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgClassDefinition::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgClassDefinition::get_numberOfTraversalSuccessors()
-\description See  SgClassDefinition::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgClassDefinition::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClassDefinition::get_traversalSuccessorContainer()
-\description See  SgClassDefinition::traversalSuccessorContainer for documentation */
+\brief \brief See  SgClassDefinition::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClassDefinition::get_traversalSuccessorNamesContainer()
-\description See  SgClassDefinition::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgClassDefinition::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgClassDefinition::SgClassDefinition()
 */
 //@}
-int SAGE_Doxygen_Dummy_558361576953;
+int SAGE_Doxygen_Dummy_50242647226498;

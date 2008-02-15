@@ -3,26 +3,20 @@
 #include <GraphUpdate.h>
 #include <PtrMap.h>
 
-template <class SelfInfo, class InitSelfInfo, class SelfInfoToString,
-          class RelInfo, class InitRelInfo, class RelInfoToString,
-          class CreateInitInfo>
+template <class SelfInfo, class RelInfo, class Analysis> 
 class CompSliceRegistry 
-  : public IDGraphCreateTemplate<GraphNodeTemplate<SelfInfo,InitSelfInfo,SelfInfoToString>,
-                                 GraphEdgeTemplate<RelInfo, InitRelInfo,RelInfoToString> >,
+  : public VirtualGraphCreateTemplate<MultiGraphElemTemplate<SelfInfo>,
+                                      MultiGraphElemTemplate<RelInfo> >,
     public CompSliceObserver
 {
  public:
-  typedef GraphNodeTemplate<SelfInfo,InitSelfInfo,SelfInfoToString> SliceNode;
-  typedef GraphEdgeTemplate<RelInfo, InitRelInfo,RelInfoToString> SliceEdge;
-  typedef CompSliceRegistry<SelfInfo,InitSelfInfo,SelfInfoToString,
-                            RelInfo,InitRelInfo,RelInfoToString,
-                            CreateInitInfo> Registry;
-  typedef typename IDGraphCreateTemplate<GraphNodeTemplate<SelfInfo,InitSelfInfo,SelfInfoToString>,
-                             GraphEdgeTemplate<RelInfo, InitRelInfo,RelInfoToString> >::EdgeDirection
-          EdgeDirection;
+  typedef MultiGraphElemTemplate<SelfInfo> SliceNode;
+  typedef MultiGraphElemTemplate<RelInfo> SliceEdge;
+  typedef CompSliceRegistry<SelfInfo,RelInfo,Analysis> Registry;
+
  private:
    PtrMapWrap <CompSlice, SliceNode> nodeMap;
-   CreateInitInfo Create;
+   Analysis& anal;
 
  protected:
    virtual void UpdateFuseSlice( const CompSliceFuseInfo &info)
@@ -30,27 +24,26 @@ class CompSliceRegistry
       const CompSlice *slice1 = &info.GetSlice(), *slice2 = &info.GetSlice2();
       SliceNode *n1=QuerySliceNode(slice1), *n2=QuerySliceNode(slice2);
       if (n2 != 0) {
-        SliceEdge* edge = GraphGetCrossEdge<CompSliceRegistry>()(this,n1,n2);
-        RelInfo rel = edge? edge->GetInfo() 
-                          : RelInfo(Create(slice1,slice2));
+        RelInfo rel = RelInfo(anal, slice1,slice2);
+        GraphCrossEdgeIterator<CompSliceRegistry> cross(this,n1,n2);
+        if (!cross.ReachEnd())
+           rel = cross.Current()->GetInfo(); 
         n1->GetInfo().FuseSelfInfo(n2->GetInfo(), rel);
-        MoveEachNodeEdge
-           <CompSliceRegistry<SelfInfo,InitSelfInfo,SelfInfoToString,
-                              RelInfo,InitRelInfo,RelInfoToString,CreateInitInfo> >
-               () (this, n2, n1);
+        MoveNodeEdge(this, n2, n1);
         DeleteNode(slice2);
       }
       else   
-        n1->GetInfo().FuseSelfInfo(Create(slice2), Create(slice1,slice2));
+        n1->GetInfo().FuseSelfInfo(SelfInfo(anal,slice2), 
+                                   RelInfo(anal,slice1,slice2));
      }
    virtual void UpdateDelete( const CompSlice &slice)
     { SliceNode* n = QuerySliceNode(&slice);
       nodeMap.RemoveMapping(const_cast<CompSlice*>(&slice));
-      IDGraphCreateTemplate<SliceNode,SliceEdge>::DeleteNode(n);
+      VirtualGraphCreateTemplate<SliceNode,SliceEdge>::DeleteNode(n);
     }
  public:
-  CompSliceRegistry( CreateInitInfo _Create, BaseGraphCreate *b = 0) 
-      : IDGraphCreateTemplate<SliceNode,SliceEdge>(b), Create(_Create) {}
+  CompSliceRegistry( Analysis& _anal, BaseGraphCreate *b = 0) 
+      : anal(_anal), VirtualGraphCreateTemplate<SliceNode,SliceEdge>(b) {}
   ~CompSliceRegistry() 
    {
       for (typename PtrMapWrap<CompSlice, SliceNode>::Iterator p = nodeMap.GetIterator();
@@ -72,9 +65,9 @@ class CompSliceRegistry
     {
       SliceNode* node = nodeMap.Map(const_cast<CompSlice*>(slice));
       if (node == 0) {
-        node = new SliceNode(this, Create(slice));
+        node = new SliceNode(this, SelfInfo(anal, slice));
         nodeMap.InsertMapping(const_cast<CompSlice*>(slice),node);
-        CreateBaseNode(node);
+        AddNode(node);
         const_cast<CompSlice*>(slice)->AttachObserver(*this); 
       }
       return node;
@@ -82,32 +75,35 @@ class CompSliceRegistry
    SliceEdge* CreateEdge(const CompSlice* slice1, const CompSlice* slice2)
     {  
      SliceNode *node1 = CreateNode(slice1), *node2 = CreateNode(slice2);
-     SliceEdge *edge = GraphGetCrossEdge<CompSliceRegistry>()(this,node1,node2);
-     if (edge == 0) {
-       edge = new SliceEdge(this, Create(slice1,slice2));
-       CreateBaseEdge(node1,node2,edge);
+     GraphCrossEdgeIterator<CompSliceRegistry> cross(this,node1,node2);
+     SliceEdge *edge = 0;
+     if (cross.ReachEnd()) {
+       edge = new SliceEdge(this, RelInfo(anal, slice1,slice2));
+       AddEdge(node1,node2,edge);
      }
+     else
+       edge = cross.Current();
      return edge;
     }
-   void MoveEdgeEndPoint( SliceEdge *e, EdgeDirection dir, SliceNode *n)
+   void MoveEdgeEndPoint( SliceEdge *e, GraphAccess::EdgeDirection dir, SliceNode *n)
     { 
-      SliceNode *n1 = GetEdgeEndPoint(e, GraphAccess::EdgeOut), 
-                *n2 = GetEdgeEndPoint(e,GraphAccess::EdgeIn);
+      SliceNode *n1 = GetEdgeEndPoint(e,  GraphAccess::EdgeOut), 
+                *n2 = GetEdgeEndPoint(e, GraphAccess::EdgeIn);
       SliceEdge *edge = (dir == GraphAccess::EdgeOut)? 
-             GraphGetCrossEdge<CompSliceRegistry>()(this,n, n2) : 
-             GraphGetCrossEdge<CompSliceRegistry>()(this,n1,n);
+             GraphCrossEdgeIterator<CompSliceRegistry>(this,n, n2).Current() : 
+             GraphCrossEdgeIterator<CompSliceRegistry>(this,n1,n).Current();
       edge->GetInfo().FuseRelInfo(e->GetInfo());
       DeleteEdge(e);
     } 
 
    void DeleteEdge(SliceEdge *e) 
-    { IDGraphCreateTemplate<SliceNode,SliceEdge>::DeleteEdge(e); }
+    { VirtualGraphCreateTemplate<SliceNode,SliceEdge>::DeleteEdge(e); }
 
    void DeleteNode( const CompSlice *slice) 
     { SliceNode* n = QuerySliceNode(slice); 
       nodeMap.RemoveMapping(const_cast<CompSlice*>(slice));
       const_cast<CompSlice*>(slice)->DetachObserver(*this);
-      IDGraphCreateTemplate<SliceNode,SliceEdge>::DeleteNode(n); 
+      VirtualGraphCreateTemplate<SliceNode,SliceEdge>::DeleteNode(n); 
     }
 };
 

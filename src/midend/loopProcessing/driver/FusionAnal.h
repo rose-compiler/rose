@@ -2,20 +2,16 @@
 #ifndef FUSIONINTERFACE_H
 #define FUSIONINTERFACE_H
 
-#include <slicing/CompSliceDepGraph.h>
+#include <CompSliceDepGraph.h>
 #include <LoopTransformOptions.h>
 class CompSliceNest;
 class DepInfo;
 class CompSliceLocalityRegistry;
 
 struct FusionInfo {
-//Boolean succ;
-  int succ;
-  int align ;
-//FusionInfo(Boolean s = false, int a=0) : succ (s), align(a) {}
-  FusionInfo(int s = false, int a=0) : succ (s), align(a) {}
-//operator Boolean() { return succ; }
-  operator int() { return succ; }
+  bool succ; int align ;
+  FusionInfo(bool s = false, int a=0) : succ (s), align(a) {}
+  operator bool() { return succ; }
 };
 FusionInfo GetFusionInfo(const DepInfo &info, int index1, int index2);
 void FuseSliceNests( CompSliceNest& g1, CompSliceNest& g2, const DepInfo &info);
@@ -68,8 +64,7 @@ class LoopNestFusion
 {
  public:
   virtual ~LoopNestFusion() {}
-//virtual Boolean Fusible(CompSliceLocalityRegistry *anal,CompSliceNest &n1,CompSliceNest &n2,
-  virtual int Fusible(CompSliceLocalityRegistry *anal,CompSliceNest &n1,CompSliceNest &n2,
+  virtual bool Fusible(CompSliceLocalityRegistry *anal,CompSliceNest &n1,CompSliceNest &n2,
                            const DepInfo &e) const { return false; }
   virtual void Fuse( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, 
                      DepInfo &e) const { assert(false); }
@@ -82,8 +77,7 @@ class MultiLevelFusion : public LoopNestFusion
  public:
   MultiLevelFusion( LoopFusionAnal *a) : anal(a) {} 
   ~MultiLevelFusion() { delete anal; }
-//Boolean Fusible( CompSliceLocalityRegistry *anal, CompSliceNest &n1,CompSliceNest &n2, 
-  int Fusible( CompSliceLocalityRegistry *anal, CompSliceNest &n1,CompSliceNest &n2, 
+  bool Fusible( CompSliceLocalityRegistry *anal, CompSliceNest &n1,CompSliceNest &n2, 
                    const DepInfo &e) const;
   void Fuse( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, 
              DepInfo &e) const;
@@ -96,8 +90,7 @@ class SameLevelFusion : public LoopNestFusion
  public:
   SameLevelFusion( LoopFusionAnal* a) : anal(a) {}
   ~SameLevelFusion() { delete anal; }
-//Boolean Fusible( CompSliceLocalityRegistry *anal, CompSliceNest &n1, CompSliceNest &n2, 
-  int Fusible( CompSliceLocalityRegistry *anal, CompSliceNest &n1, CompSliceNest &n2, 
+  bool Fusible( CompSliceLocalityRegistry *anal, CompSliceNest &n1, CompSliceNest &n2, 
                    const DepInfo &e) const;
   void Fuse( CompSliceLocalityRegistry *reg, CompSliceNest &n1, CompSliceNest &n2, 
              DepInfo &e) const;

@@ -143,82 +143,82 @@ be a valid pointer.
 /*!\fn virtual void SgConstructorInitializer::post_construction_initialization()
 */
 /*!\fn void SgConstructorInitializer::set_args(SgExprListExp *args)
-\description See  *args)
+\brief \brief See  *args)
 args for documentation */
 /*!\fn void SgConstructorInitializer::set_associated_class_unknown(bool associated_class_unknown)
-\description See  associated_class_unknown)
+\brief \brief See  associated_class_unknown)
 associated_class_unknown for documentation */
 /*!\fn void SgConstructorInitializer::set_declaration(SgMemberFunctionDeclaration *declaration)
-\description See  *declaration)
+\brief \brief See  *declaration)
 declaration for documentation */
 /*!
 \fn void SgConstructorInitializer::set_expression_type(SgType *expression_type)
-\brief Access function for p_expression_type.
-See  *expression_type)
-expression_type for documentation \param required - sets value of internal p_expression_type.
+\brief Access function for p_expression_type.See  *expression_type)
+expression_type for documentation 
+\param required - sets value of internal p_expression_type.
 \return Returns void.
 */
 /*!
 \fn void SgConstructorInitializer::set_need_name(bool need_name)
-\brief This function allows the p_need_name flag to be set (used internally).
-See  need_name)
-need_name for documentation \param required - sets value of internal p_need_name flag.
+\brief This function allows the p_need_name flag to be set (used internally).See  need_name)
+need_name for documentation 
+\param required - sets value of internal p_need_name flag.
 \return Returns void.
 */
 /*!\fn void SgConstructorInitializer::set_need_parenthesis_after_name(bool need_parenthesis_after_name)
-\description See  need_parenthesis_after_name)
+\brief \brief See  need_parenthesis_after_name)
 need_parenthesis_after_name for documentation */
 /*!\fn void SgConstructorInitializer::set_need_qualifier(bool need_qualifier)
-\description See  need_qualifier)
+\brief \brief See  need_qualifier)
 need_qualifier for documentation */
 /*!\fn SgExprListExp *SgConstructorInitializer::get_args() const
-\description See  const
+\brief \brief See  const
 args for documentation */
 /*!\fn SgExpression *SgConstructorInitializer::get_next(int &n) const
-\description See  const
+\brief \brief See  const
 next for documentation */
 /*!\fn SgMemberFunctionDeclaration *SgConstructorInitializer::get_declaration() const
-\description See  const
+\brief \brief See  const
 declaration for documentation */
 /*!
 \fn SgType *SgConstructorInitializer::get_expression_type() const
-\brief Access function for p_expression_type, returns pointer to SgType associated with constructor.
+\brief Access function for p_expression_type, returns pointer to SgType associated with constructor.See  const
+expression_type for documentation 
    This is usually a SgClassType, but it can also be a primative type
 (typically in association with a new operator).
-See  const
-expression_type for documentation \return Returns pointer to SgType.
+\return Returns pointer to SgType.
 */
 /*!\fn bool SgConstructorInitializer::get_associated_class_unknown() const
-\description See  const
+\brief \brief See  const
 associated_class_unknown for documentation */
 /*!
 \fn bool SgConstructorInitializer::get_need_name() const
-\brief returns bool value if name is required in code generation then return true.
-See  const
-need_name for documentation \return Returns bool value.
+\brief returns bool value if name is required in code generation then return true.See  const
+need_name for documentation 
+\return Returns bool value.
 */
 /*!\fn bool SgConstructorInitializer::get_need_parenthesis_after_name() const
-\description See  const
+\brief \brief See  const
 need_parenthesis_after_name for documentation */
 /*!\fn bool SgConstructorInitializer::get_need_qualifier() const
-\description See  const
+\brief \brief See  const
 need_qualifier for documentation */
 /*!\fn virtual SgNode *SgConstructorInitializer::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgConstructorInitializer::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgConstructorInitializer::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgConstructorInitializer::get_numberOfTraversalSuccessors()
-\description See  SgConstructorInitializer::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgConstructorInitializer::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgConstructorInitializer::get_traversalSuccessorContainer()
-\description See  SgConstructorInitializer::traversalSuccessorContainer for documentation */
+\brief \brief See  SgConstructorInitializer::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgConstructorInitializer::get_traversalSuccessorNamesContainer()
-\description See  SgConstructorInitializer::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgConstructorInitializer::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgConstructorInitializer::SgConstructorInitializer(SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown)
 */
 //@}
-int SAGE_Doxygen_Dummy_179013045516929;
+int SAGE_Doxygen_Dummy_152882245117150;

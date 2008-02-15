@@ -139,75 +139,75 @@ scope if it were computed structureally from the parent pointer data.
 /*!\fn virtual void SgTemplateDeclaration::post_construction_initialization()
 */
 /*!\fn virtual void SgTemplateDeclaration::set_scope(SgScopeStatement *scope)
-\description See  *scope)
+\brief \brief See  *scope)
 scope for documentation */
 /*!
 \fn void SgTemplateDeclaration::set_name(SgName name)
-\brief Access function for p_name.
-See  name)
-name for documentation \return Returns void.
+\brief Access function for p_name.See  name)
+name for documentation 
+\return Returns void.
 */
 /*!
 \fn void SgTemplateDeclaration::set_string(SgName string)
-\brief Access function for p_string.
-See  string)
-string for documentation \return Returns void.
+\brief Access function for p_string.See  string)
+string for documentation 
+\return Returns void.
 */
 /*!\fn void SgTemplateDeclaration::set_templateParameters(SgTemplateParameterPtrListPtr templateParameters)
-\description See  templateParameters)
+\brief \brief See  templateParameters)
 templateParameters for documentation */
 /*!
 \fn void SgTemplateDeclaration::set_template_kind(enum SgTemplateDeclaration::template_type_enum template_kind)
-\brief Access function for p_template_kind.
-See  template_kind)
-template_kind for documentation \return Returns void.
+\brief Access function for p_template_kind.See  template_kind)
+template_kind for documentation 
+\return Returns void.
 */
 /*!
 \fn SgName SgTemplateDeclaration::get_name() const
-\brief Returns name of template declaration.
-See  const
-name for documentation \return Returns SgName by value.
+\brief Returns name of template declaration.See  const
+name for documentation 
+\return Returns SgName by value.
 */
 /*!
 \fn SgName SgTemplateDeclaration::get_string() const
-\brief Returns stringified template declaration.
-See  const
-string for documentation \return Returns SgName by value.
+\brief Returns stringified template declaration.See  const
+string for documentation 
+\return Returns SgName by value.
 */
 /*!\fn SgTemplateParameterPtrListPtr SgTemplateDeclaration::get_templateParameters() const
-\description See  const
+\brief \brief See  const
 templateParameters for documentation */
 /*!
 \fn enum SgTemplateDeclaration::template_type_enum SgTemplateDeclaration::get_template_kind() const
-\brief Returns enum value (function, class, etc.)
-See  const
-template_kind for documentation \return Returns enum value
+\brief Returns enum value (function, class, etc.)See  const
+template_kind for documentation 
+\return Returns enum value
 */
 /*!\fn virtual SgName SgTemplateDeclaration::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgName SgTemplateDeclaration::get_qualified_name() const
-\description See  const
+\brief \brief See  const
 qualified_name for documentation */
 /*!\fn virtual SgNode *SgTemplateDeclaration::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgScopeStatement *SgTemplateDeclaration::get_scope() const
-\description See  const
+\brief \brief See  const
 scope for documentation */
 /*!\fn virtual SgSymbol *SgTemplateDeclaration::get_symbol_from_symbol_table() const
-\description See  const
+\brief \brief See  const
 symbol_from_symbol_table for documentation */
 /*!\fn virtual size_t SgTemplateDeclaration::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTemplateDeclaration::get_numberOfTraversalSuccessors()
-\description See  SgTemplateDeclaration::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTemplateDeclaration::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTemplateDeclaration::get_traversalSuccessorContainer()
-\description See  SgTemplateDeclaration::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTemplateDeclaration::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTemplateDeclaration::get_traversalSuccessorNamesContainer()
-\description See  SgTemplateDeclaration::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTemplateDeclaration::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgTemplateDeclaration::SgTemplateDeclaration(SgName name,SgName string,enum SgTemplateDeclaration::template_type_enum template_kind,SgTemplateParameterPtrListPtr templateParameters)
 */
 //@}
-int SAGE_Doxygen_Dummy_775440829648;
+int SAGE_Doxygen_Dummy_270762311625847;

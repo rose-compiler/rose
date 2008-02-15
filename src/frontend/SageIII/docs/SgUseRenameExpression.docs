@@ -39,33 +39,33 @@
 /*!\fn virtual void SgUseRenameExpression::post_construction_initialization()
 */
 /*!\fn void SgUseRenameExpression::set_newname(SgExpression *newname)
-\description See  *newname)
+\brief \brief See  *newname)
 newname for documentation */
 /*!\fn void SgUseRenameExpression::set_oldname(SgExpression *oldname)
-\description See  *oldname)
+\brief \brief See  *oldname)
 oldname for documentation */
 /*!\fn SgExpression *SgUseRenameExpression::get_newname() const
-\description See  const
+\brief \brief See  const
 newname for documentation */
 /*!\fn SgExpression *SgUseRenameExpression::get_oldname() const
-\description See  const
+\brief \brief See  const
 oldname for documentation */
 /*!\fn virtual SgNode *SgUseRenameExpression::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgUseRenameExpression::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgUseRenameExpression::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUseRenameExpression::get_numberOfTraversalSuccessors()
-\description See  SgUseRenameExpression::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUseRenameExpression::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUseRenameExpression::get_traversalSuccessorContainer()
-\description See  SgUseRenameExpression::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUseRenameExpression::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUseRenameExpression::get_traversalSuccessorNamesContainer()
-\description See  SgUseRenameExpression::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUseRenameExpression::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUseRenameExpression::SgUseRenameExpression(SgExpression *oldname,SgExpression *newname)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1088627106;
+extern int SAGE_Doxygen_Dummy_1014001030;

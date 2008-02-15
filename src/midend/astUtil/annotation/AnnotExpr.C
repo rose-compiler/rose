@@ -1,10 +1,8 @@
-#include <general.h>
 #include <AnnotExpr.h>
 #include <SymbolicSelect.h>
 #include <SymbolicPlus.h>
 #include <SymbolicMultiply.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 void SymbolicValDescriptor :: set_val( const SymbolicVal& v) 
@@ -19,7 +17,7 @@ void SymbolicValDescriptor :: set_val( const SymbolicVal& v)
 
 void SymbolicValDescriptor::write(ostream& out) const
  { 
-         string r= val.ToString();
+         string r= val.toString();
          if (r != "")
             out << r;
  }
@@ -32,7 +30,7 @@ void SymbolicValDescriptor::Dump() const
      else if (val == get_bottom())
          cerr << "bottom";
      else {
-         string r= val.ToString(); 
+         string r= val.toString(); 
          if (r != "")
             cerr << r;
      }
@@ -63,7 +61,7 @@ replace_var( const string& varname, const SymbolicVal& n)
 {
   SymbolicValDescriptor that(n);
   SymbolicVal repl = that.get_val();
-  SymbolicVal r = ReplaceVal( val, SymbolicVar(varname, 0), repl);
+  SymbolicVal r = ReplaceVal( val, SymbolicVar(varname, AST_NULL), repl);
   set_val(r);
 }
 
@@ -103,32 +101,38 @@ string SymbolicExtendVar :: get_varname( string name, int index)
 AstNodePtr SymbolicExtendVar :: CodeGen( AstInterface& fa) const
      {  
         string name;
-        assert(GetArg(0).GetValType() == VAL_VAR && GetArg(1).GetValType() == VAL_CONST);
-        SymbolicVar var( GetArg(0).ToString() + "_" + GetArg(1).ToString(), 0 );
+        assert(first_arg().GetValType() == VAL_VAR && last_arg().GetValType() == VAL_CONST);
+        SymbolicVar var( first_arg().toString() + "_" + last_arg().toString(), AST_NULL );
         return var.CodeGen(fa);
      }
+
+AstNodePtr SymbolicFunctionPtrCall :: CodeGen(AstInterface& fa) const
+{
+  const_iterator i = args_begin(); 
+  AstNodePtr func = (*i).CodeGen(fa);
+  AstInterface::AstNodeList l;
+  for ( ++i ; i != args_end(); ++i) {
+     SymbolicVal cur = *i;
+     AstNodePtr curast = cur.CodeGen(fa); 
+     l.push_back(curast);
+  }
+  return fa.CreateFunctionCall(func,l); 
+}
+
 
 AstNodePtr SymbolicDotExp:: CodeGen( AstInterface& fa) const
      {  
          assert(NumOfArgs() == 2);
-         AstNodePtr obj = GetArg(0).CodeGen(fa);
+         AstNodePtr obj = first_arg().CodeGen(fa);
          AstNodeType objtype;
-         bool succ = fa.IsExpression(obj, &objtype);
-         assert(succ);
+         if ( fa.IsExpression(obj, &objtype) == AST_NULL)
+           assert(false);
          string objtypename;
          fa.GetTypeInfo(objtype, 0, &objtypename);
 
-         string val = GetArg(1).ToString(), type = GetArg(1).GetTypeName();
+         string val = last_arg().toString(), type = last_arg().GetTypeName();
          SymbolicConst tmp( objtypename + "::" + val, type);
-         return fa.CreateBinaryOP(".",obj, tmp.CodeGen(fa)); 
-     }
-
-AstNodePtr SymbolicSubscriptExp:: CodeGen( AstInterface& fa) const
-     {
-         assert(NumOfArgs() == 2);
-         AstNodePtr array = GetArg(0).CodeGen(fa);
-         AstNodePtr sub = GetArg(1).CodeGen(fa);
-         return fa.CreateBinaryOP("[]", array, sub);
+         return fa.CreateBinaryOP(AstInterface::BOP_DOT_ACCESS,obj, tmp.CodeGen(fa)); 
      }
 
 SymbolicVal ReadSymbolicExpr( int level, istream& in);
@@ -145,7 +149,7 @@ SymbolicVal ReadSymbolicTerm( istream& in)
       } 
       else if (is_num(c)) {
          string val = read_num(in);
-         if (val.find('.') != string::npos)
+         if (strchr(val.c_str(), '.') != 0)
             result = new SymbolicConst(val, "float");
          else
             result = new SymbolicConst(val, "int");
@@ -174,11 +178,20 @@ SymbolicVal ReadSymbolicTerm( istream& in)
          else {
             c  = peek_ch(in);
             if (c != '(') {
-               result = new SymbolicVar(id, 0);
+               result = new SymbolicVar(id, AST_NULL);
                assert( id != "none");
             }
-            else 
-               result = new SymbolicConst(id, "function");
+            else {
+              read_ch(in, c);
+              SymbolicFunction::Arguments args;
+              c = peek_ch(in);
+              if (c != ')') {
+                 ReadContainerWrap<SymbolicValDescriptor, SymbolicFunction::Arguments > accu( args);
+                 read_list(in, accu, ',');
+               }
+              read_ch(in, ')');
+              result = new SymbolicFunction(AstInterface::OP_NONE, id, args);
+            }
          }
      }
      else if (is_operator(c)) { // unary operators
@@ -190,7 +203,7 @@ SymbolicVal ReadSymbolicTerm( istream& in)
          else {
            SymbolicFunction::Arguments args;
            args.push_back(result);
-           result = new SymbolicFunction( op, args);
+           result = new SymbolicFunction( AstInterface::OP_NONE, op, args);
          }
          c = peek_ch(in);
      }       
@@ -213,22 +226,20 @@ SymbolicVal ReadSymbolicTerm( istream& in)
      if (c == '(') {
         read_ch(in, c);
         SymbolicFunction::Arguments args;
+        args.push_back(result);
         c = peek_ch(in);
         if (c != ')') {
-          ReadContainerWrap<SymbolicValDescriptor, vector<SymbolicVal> > accu( args);
+          ReadContainerWrap<SymbolicValDescriptor, SymbolicFunction::Arguments > accu( args);
           read_list(in, accu, ',');
         }
         read_ch(in, ')');
-        result = new SymbolicFunction( result, args);
+        result = new SymbolicFunctionPtrCall( args);
      }
      else if (c == '[') {
        read_ch(in,c);
        SymbolicVal r2 = ReadSymbolicExpr( 0, in);
        read_ch(in,']'); 
-       SymbolicFunction::Arguments args;
-       args.push_back(result);
-       args.push_back(r2);
-       result = new SymbolicSubscriptExp( args);
+       result = new SymbolicFunction(AstInterface::OP_ARRAY_ACCESS, "[]", result, r2);
      }
 
     return result;
@@ -251,6 +262,8 @@ SymbolicVal ReadSymbolicExpr( int level, istream& in)
         else if (op == "-") {
            result = result - r2;
         }
+        else if (op == "/") 
+           result = new SymbolicFunction( AstInterface::BOP_DIVIDE,op, result,r2);
         else {
            SymbolicFunction::Arguments args;
            args.push_back(result);
@@ -258,7 +271,7 @@ SymbolicVal ReadSymbolicExpr( int level, istream& in)
            if (op == "$") 
                result = result = new SymbolicExtendVar(args);
            else
-               result = new SymbolicFunction( op, args);
+               result = new SymbolicFunction( AstInterface::OP_NONE, op, result,r2);
         }
         c = peek_ch(in);
         level1 = is_operator(c);
@@ -298,8 +311,8 @@ bool ExtendibleParamDescriptor :: get_extension( int& l, int& u) const
   SymbolicVal ub = get_ext_ub();
   if ( lb.GetValType() == VAL_CONST && lb.GetTypeName() == "int" &&
           ub.GetValType() == VAL_CONST && ub.GetTypeName() == "int") {
-     l = atoi(lb.ToString().c_str());
-     u = atoi(ub.ToString().c_str());
+     l = atoi(lb.toString().c_str());
+     u = atoi(ub.toString().c_str());
      return true;
   }
   return false;
@@ -308,7 +321,7 @@ bool ExtendibleParamDescriptor :: get_extension( int& l, int& u) const
 void SymbolicParamListDescriptor::
 replace_var( const string& varname, const SymbolicVal& repl)
 {
-  for (unsigned int i = 0; i < size(); ++i) {
+  for (int i = 0; i < size(); ++i) {
     ExtendibleParamDescriptor& cur = operator[](i);
     cur.replace_var( varname, repl);
   }
@@ -337,10 +350,10 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 {
   string basename, extname;
   int extlb, extub, parstart;
-  const SymbolicFunction::Arguments parList;
+  const vector<SymbolicVal> parList;
 
   SymbolicVal orig;
-  SymbolicFunction::Arguments result;
+  vector<SymbolicVal> result;
   
   void Default() { 
     result.push_back(orig); 
@@ -356,7 +369,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
       orig = cur;
       orig.Visit(this);
     }
-    for (unsigned int i = cur; i < result.size(); ++i) {
+    for (int i = cur; i < result.size(); ++i) {
       r->ApplyOpd( result[i]);
     }
 
@@ -366,65 +379,62 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 
   void VisitFunction( const SymbolicFunction& u)
   {
-    string buf = u.GetOp().ToString();
-    if (buf == "$" && u.GetArg(0).ToString() == basename) {
+    string buf = u.GetOp();
+    if (buf == "$" && u.first_arg().toString() == basename) {
 	assert(u.NumOfArgs() == 2);
-        string curext = u.GetArg(1).ToString();
+        string curext = u.last_arg().toString();
         if ( curext == extname) {
 	    for (int i = 0; i <= extub-extlb; ++i) {
 	      result.push_back(parList[parstart + i]);
 	    } 
 	}
-	else if (u.GetArg(1).GetValType() == VAL_CONST && 
-                 u.GetArg(1).GetTypeName() == "int") {
+	else if (u.last_arg().GetValType() == VAL_CONST && 
+                 u.last_arg().GetTypeName() == "int") {
             int index = atoi(curext.c_str());
 	    assert( index >= extlb && index <= extub);
 	    result.push_back( parList[parstart + index - extlb] );
 	}
 	else {
             cerr << "Error: expecting integer const instead of ";
-            u.GetArg(1).Dump();
+            u.last_arg().Dump();
             cerr << endl;
 	    assert(false);
         }
     }
    else if (buf == "repeat") {
 	assert(u.NumOfArgs() == 4);
-	buf = u.GetArg(0).ToString();
+        SymbolicFunction::const_iterator i = u.args_begin();
+	buf = (*i).toString();
 	int lb = 0, ub = 0;
-        lb = atoi( u.GetArg(1).ToString().c_str());
-        ub = atoi( u.GetArg(2).ToString().c_str());
-	for (int i = lb; i <= ub; ++i) {
-	  SymbolicVal cur = ReplaceVal( u.GetArg(3), SymbolicVar(buf, 0), SymbolicConst(i));
-          orig = cur;
+        lb = atoi( (*(++i)).toString().c_str());
+        ub = atoi( (*(++i)).toString().c_str());
+        SymbolicVal cur = *(++i);
+	for (int j = lb; j <= ub; ++j) {
+	  SymbolicVal tmp= ReplaceVal( cur, SymbolicVar(buf, AST_NULL), SymbolicConst(j));
+          orig = tmp;
 	  orig.Visit(this);
 	}
    }
    else {
-	SymbolicFunction::Arguments tmp = result;
-	result.clear();
-
-        SymbolicVal op = u.GetOp();
-        orig = op;
-        orig.Visit(this);
-        assert(result.size() == 1);
-        SymbolicVal nop = result[0];
-
-        result.clear();
-	for (unsigned int i = 0; i < u.NumOfArgs(); ++i) {
-          SymbolicVal cur = u.GetArg(i);
-          orig = cur;
+        int cur = result.size();
+        for (SymbolicFunction::const_iterator i = u.args_begin(); 
+              i != u.args_end(); ++i) {
+          SymbolicVal tmp= *i;
+          orig = tmp;
 	  orig.Visit(this);
 	}
-
-	SymbolicVal val = u.CloneFunction( nop, result);
-	result = tmp;
+        SymbolicFunction::Arguments args;
+        for (int i = cur; i < result.size(); ++i) {
+          args.push_back(result[i]);
+        }
+	SymbolicVal val = u.cloneFunction( args);
+        result.resize(cur);
         result.push_back(val);
     }
   }
  public:
    ReplaceExtendibleParam( const string& bn, const string& en, int lb, int ub, 
-                           int start, const SymbolicFunction::Arguments& l)
+                           int start, const vector<SymbolicVal>& l)
      : basename(bn), extname(en), extlb(lb), extub(ub), parstart(start), parList(l)
     {}
    SymbolicVal visit ( const SymbolicVal& o )
@@ -433,17 +443,17 @@ class ReplaceExtendibleParam : public SymbolicVisitor
       result.clear();
       orig.Visit(this);
       assert(result.size() == 1);
-      return result[0];
+      return result.front();
     }
 };
 
 bool SymbolicFunctionDeclarationGroup::
 get_val(AstInterface& fa, AstInterface::AstNodeList& argList, AstNodePtr& r) const
 {
-  SymbolicFunction::Arguments argVal;
+  STD vector<SymbolicVal> argVal;
   int index = 0;
-  for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(argList);
-       !p.ReachEnd(); ++p, ++index) {
+  for (AstInterface::AstNodeList::iterator p = argList.begin();
+       p != argList.end(); ++p, ++index) {
     AstNodePtr cur = *p;
     argVal.push_back( SymbolicAstWrap(cur));
   }
@@ -459,13 +469,13 @@ void SymbolicFunctionDeclarationGroup::Dump() const
 { write(cerr); }
 
 bool SymbolicFunctionDeclaration:: 
-get_val(const SymbolicFunction::Arguments& parList, SymbolicVal& r) const
+get_val(const STD vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
   vector< pair<SymbolicVar, SymbolicVal> > params;
 
-  unsigned int j = 0;
+  int j = 0;
   r = second;
-  for (unsigned int i = 0; i < first.size(); ++i) {
+  for (int i = 0; i < first.size(); ++i) {
     const ExtendibleParamDescriptor& cur = first[i];
     const SymbolicValDescriptor& cur1 = cur.get_param();
     SymbolicValType curtype = cur1.get_val().GetValType();
@@ -475,15 +485,15 @@ get_val(const SymbolicFunction::Arguments& parList, SymbolicVal& r) const
       ++j;
     }
     else {
-      string basename = cur1.get_val().ToString();
+      string basename = cur1.get_val().toString();
       string extname = cur.get_extend_var();
       if (extname == "") {
-	r = ReplaceVal(r, SymbolicVar(basename, 0), parList[j]);
+	r = ReplaceVal(r, SymbolicVar(basename, AST_NULL), parList[j]);
 	++j;
       }
       else {
         int lb = 0, ub = 0;
-        if (!cur.get_extension(lb, ub) || ub-lb >= (int)parList.size() - j) {
+        if (!cur.get_extension(lb, ub) || ub-lb >= parList.size() - j) {
            cerr << "lb = " << lb << "; ub = " << ub << "; parList.size = " << parList.size() << "; j = " << j << endl; 
            assert(false);
         }
@@ -501,7 +511,7 @@ get_val(const SymbolicFunction::Arguments& parList, SymbolicVal& r) const
 }
 
 bool SymbolicFunctionDeclarationGroup :: 
-get_val( const SymbolicFunction::Arguments& parList, SymbolicVal& r) const
+get_val( const STD vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
   for (const_iterator p = begin(); p != end(); ++p) {
     const SymbolicFunctionDeclaration& cur = *p;
@@ -553,7 +563,7 @@ void DefineVariableDescriptor::Dump() const
 
 #ifndef TEMPLATE_ONLY
 #define TEMPLATE_ONLY
-#include <AnnotDescriptors.h>
+#include <AnnotDescriptors.C>
 template class WriteContainer<list<SymbolicFunctionDeclaration>, ',', '(', ')'>;
 template class pair<SymbolicValDescriptor, SymbolicValDescriptor>;
 #endif

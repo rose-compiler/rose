@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmBinaryMultiply
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmBinaryMultiply::SgAsmBinaryMultiply(const SgAsmBinaryMultiplyStorageClass &source)
+*/
+/*!\fn inline static void SgAsmBinaryMultiply::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmBinaryMultiply *SgAsmBinaryMultiply::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmBinaryMultiply::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmBinaryMultiply::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmBinaryMultiply::initializeStorageClassArray(SgAsmBinaryMultiplyStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmBinaryMultiply::clearMemoryPool()
+*/
+/*!\fn static void SgAsmBinaryMultiply::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmBinaryMultiply::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmBinaryMultiply::roseRTI()
+*/
+/*!\fn virtual SgAsmBinaryMultiply::~SgAsmBinaryMultiply()
+*/
+/*!\fn virtual SgNode *SgAsmBinaryMultiply::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmBinaryMultiply::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryMultiply::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryMultiply::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmBinaryMultiply::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmBinaryMultiply::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmBinaryMultiply::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmBinaryMultiply::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmBinaryMultiply::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmBinaryMultiply::SgAsmBinaryMultiply()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_122513176;

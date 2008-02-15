@@ -166,76 +166,76 @@ pointer to an object derived from a SgTemplateArgument.
 */
 /*!
 \fn void SgTemplateArgument::set_argumentType(enum SgTemplateArgument::template_argument_enum argumentType)
-\brief This function sets argumentType.
-See  argumentType)
-argumentType for documentation \return Returns void.
+\brief This function sets argumentType.See  argumentType)
+argumentType for documentation 
+\return Returns void.
 */
 /*!
 \fn void SgTemplateArgument::set_explicitlySpecified(bool explicitlySpecified)
-\brief This function sets explicitlySpecified.
-See  explicitlySpecified)
-explicitlySpecified for documentation \return Returns void.
+\brief This function sets explicitlySpecified.See  explicitlySpecified)
+explicitlySpecified for documentation 
+\return Returns void.
 */
 /*!\fn void SgTemplateArgument::set_expression(SgExpression *expression)
-\description See  *expression)
+\brief \brief See  *expression)
 expression for documentation */
 /*!
 \fn void SgTemplateArgument::set_isArrayBoundUnknownType(bool isArrayBoundUnknownType)
-\brief This function sets isArrayBoundUnknownType.
-See  isArrayBoundUnknownType)
-isArrayBoundUnknownType for documentation \return Returns void.
+\brief This function sets isArrayBoundUnknownType.See  isArrayBoundUnknownType)
+isArrayBoundUnknownType for documentation 
+\return Returns void.
 */
 /*!\fn void SgTemplateArgument::set_templateDeclaration(SgTemplateDeclaration *templateDeclaration)
-\description See  *templateDeclaration)
+\brief \brief See  *templateDeclaration)
 templateDeclaration for documentation */
 /*!\fn void SgTemplateArgument::set_type(SgType *type)
-\description See  *type)
+\brief \brief See  *type)
 type for documentation */
 /*!
 \fn SgExpression *SgTemplateArgument::get_expression() const
-\brief This function returns argumentExpression.
-See  const
-expression for documentation \return Returns SgExpression pointer.
+\brief This function returns argumentExpression.See  const
+expression for documentation 
+\return Returns SgExpression pointer.
 */
 /*!\fn SgTemplateDeclaration *SgTemplateArgument::get_templateDeclaration() const
-\description See  const
+\brief \brief See  const
 templateDeclaration for documentation */
 /*!
 \fn SgType *SgTemplateArgument::get_type() const
-\brief This function returns argumentType.
-See  const
-type for documentation \return Returns SgType pointer.
+\brief This function returns argumentType.See  const
+type for documentation 
+\return Returns SgType pointer.
 */
 /*!
 \fn bool SgTemplateArgument::get_explicitlySpecified() const
-\brief This function returns explicitlySpecified.
-See  const
-explicitlySpecified for documentation \return Returns bool.
+\brief This function returns explicitlySpecified.See  const
+explicitlySpecified for documentation 
+\return Returns bool.
 */
 /*!
 \fn bool SgTemplateArgument::get_isArrayBoundUnknownType() const
-\brief This function returns isArrayBoundUnknownType.
-See  const
-isArrayBoundUnknownType for documentation \return Returns bool.
+\brief This function returns isArrayBoundUnknownType.See  const
+isArrayBoundUnknownType for documentation 
+\return Returns bool.
 */
 /*!
 \fn enum SgTemplateArgument::template_argument_enum SgTemplateArgument::get_argumentType() const
-\brief This function returns argumentType.
-See  const
-argumentType for documentation \return Returns SgTemplateArgument::template_argument_enum.
+\brief This function returns argumentType.See  const
+argumentType for documentation 
+\return Returns SgTemplateArgument::template_argument_enum.
 */
 /*!\fn virtual SgNode *SgTemplateArgument::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTemplateArgument::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTemplateArgument::get_numberOfTraversalSuccessors()
-\description See  SgTemplateArgument::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTemplateArgument::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTemplateArgument::get_traversalSuccessorContainer()
-\description See  SgTemplateArgument::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTemplateArgument::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTemplateArgument::get_traversalSuccessorNamesContainer()
-\description See  SgTemplateArgument::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTemplateArgument::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgTemplateArgument::SgTemplateArgument(enum SgTemplateArgument::template_argument_enum argumentType=SgTemplateArgument::argument_undefined,bool isArrayBoundUnknownType=false,SgType *type=(0),SgExpression *expression=(0),SgTemplateDeclaration *templateDeclaration=(0),bool explicitlySpecified=true)
 \brief Constructor using all possible parameters.
@@ -244,4 +244,4 @@ childIndex for documentation */
 \ref SgTemplateArgument_create "Example:create an SgTemplateArgument object"
 */
 //@}
-int SAGE_Doxygen_Dummy_120171980917807;
+int SAGE_Doxygen_Dummy_19665166459106;

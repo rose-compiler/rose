@@ -30,18 +30,18 @@
 /*!\fn virtual SgNode *SgClassType::copy(SgCopyHelp &help) const
 */
 /*!\fn virtual SgNode *SgClassType::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgClassType::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgClassType::get_numberOfTraversalSuccessors()
-\description See  SgClassType::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgClassType::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClassType::get_traversalSuccessorContainer()
-\description See  SgClassType::traversalSuccessorContainer for documentation */
+\brief \brief See  SgClassType::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClassType::get_traversalSuccessorNamesContainer()
-\description See  SgClassType::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgClassType::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgClassType::SgClassType(SgDeclarationStatement *declaration=(0))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1145653239;
+extern int SAGE_Doxygen_Dummy_1854565988;

@@ -47,54 +47,54 @@
 /*!\fn virtual void SgIOStatement::post_construction_initialization()
 */
 /*!\fn void SgIOStatement::set_err(SgExpression *err)
-\description See  *err)
+\brief \brief See  *err)
 err for documentation */
 /*!\fn void SgIOStatement::set_io_statement(enum SgIOStatement::io_statement_enum io_statement)
-\description See  io_statement)
+\brief \brief See  io_statement)
 io_statement for documentation */
 /*!\fn void SgIOStatement::set_io_stmt_list(SgExprListExp *io_stmt_list)
-\description See  *io_stmt_list)
+\brief \brief See  *io_stmt_list)
 io_stmt_list for documentation */
 /*!\fn void SgIOStatement::set_iomsg(SgExpression *iomsg)
-\description See  *iomsg)
+\brief \brief See  *iomsg)
 iomsg for documentation */
 /*!\fn void SgIOStatement::set_iostat(SgExpression *iostat)
-\description See  *iostat)
+\brief \brief See  *iostat)
 iostat for documentation */
 /*!\fn void SgIOStatement::set_unit(SgExpression *unit)
-\description See  *unit)
+\brief \brief See  *unit)
 unit for documentation */
 /*!\fn SgExprListExp *SgIOStatement::get_io_stmt_list() const
-\description See  const
+\brief \brief See  const
 io_stmt_list for documentation */
 /*!\fn SgExpression *SgIOStatement::get_err() const
-\description See  const
+\brief \brief See  const
 err for documentation */
 /*!\fn SgExpression *SgIOStatement::get_iomsg() const
-\description See  const
+\brief \brief See  const
 iomsg for documentation */
 /*!\fn SgExpression *SgIOStatement::get_iostat() const
-\description See  const
+\brief \brief See  const
 iostat for documentation */
 /*!\fn SgExpression *SgIOStatement::get_unit() const
-\description See  const
+\brief \brief See  const
 unit for documentation */
 /*!\fn enum SgIOStatement::io_statement_enum SgIOStatement::get_io_statement() const
-\description See  const
+\brief \brief See  const
 io_statement for documentation */
 /*!\fn virtual SgNode *SgIOStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgIOStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgIOStatement::get_numberOfTraversalSuccessors()
-\description See  SgIOStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgIOStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIOStatement::get_traversalSuccessorContainer()
-\description See  SgIOStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgIOStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIOStatement::get_traversalSuccessorNamesContainer()
-\description See  SgIOStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgIOStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgIOStatement::SgIOStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_406880606;
+extern int SAGE_Doxygen_Dummy_1794903745;

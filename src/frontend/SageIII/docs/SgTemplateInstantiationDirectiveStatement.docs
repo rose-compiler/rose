@@ -98,31 +98,31 @@ pointer to an object derived from a SgTemplateInstantiationDirectiveStatement.
 */
 /*!
 \fn void SgTemplateInstantiationDirectiveStatement::set_declaration(SgDeclarationStatement *declaration)
-\brief Access function for p_declaration.
-See  *declaration)
-declaration for documentation \return Returns void.
+\brief Access function for p_declaration.See  *declaration)
+declaration for documentation 
+\return Returns void.
 */
 /*!
 \fn SgDeclarationStatement *SgTemplateInstantiationDirectiveStatement::get_declaration() const
-\brief Returns pointer to SgDeclarationStatement.
-See  const
-declaration for documentation \return Returns pointer to SgDeclarationStatement.
+\brief Returns pointer to SgDeclarationStatement.See  const
+declaration for documentation 
+\return Returns pointer to SgDeclarationStatement.
 */
 /*!\fn virtual SgName SgTemplateInstantiationDirectiveStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgTemplateInstantiationDirectiveStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTemplateInstantiationDirectiveStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTemplateInstantiationDirectiveStatement::get_numberOfTraversalSuccessors()
-\description See  SgTemplateInstantiationDirectiveStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTemplateInstantiationDirectiveStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTemplateInstantiationDirectiveStatement::get_traversalSuccessorContainer()
-\description See  SgTemplateInstantiationDirectiveStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTemplateInstantiationDirectiveStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTemplateInstantiationDirectiveStatement::get_traversalSuccessorNamesContainer()
-\description See  SgTemplateInstantiationDirectiveStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTemplateInstantiationDirectiveStatement::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgTemplateInstantiationDirectiveStatement::SgTemplateInstantiationDirectiveStatement(SgDeclarationStatement *declaration)
 \brief This is the constructor.
@@ -130,4 +130,4 @@ childIndex for documentation */
 \param startOfConstruct represents the position in the source code
 */
 //@}
-int SAGE_Doxygen_Dummy_298902408728685;
+int SAGE_Doxygen_Dummy_727463162123;

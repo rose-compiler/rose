@@ -33,18 +33,18 @@
 /*!\fn virtual SgTypeWchar::~SgTypeWchar()
 */
 /*!\fn virtual SgNode *SgTypeWchar::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTypeWchar::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTypeWchar::get_numberOfTraversalSuccessors()
-\description See  SgTypeWchar::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTypeWchar::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeWchar::get_traversalSuccessorContainer()
-\description See  SgTypeWchar::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTypeWchar::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeWchar::get_traversalSuccessorNamesContainer()
-\description See  SgTypeWchar::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTypeWchar::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgTypeWchar::SgTypeWchar()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1916772135;
+extern int SAGE_Doxygen_Dummy_368155308;

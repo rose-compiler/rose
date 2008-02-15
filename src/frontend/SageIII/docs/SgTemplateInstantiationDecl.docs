@@ -130,41 +130,42 @@ this side-effect will be removed soon).
 /*!\fn virtual void SgTemplateInstantiationDecl::post_construction_initialization()
 */
 /*!\fn void SgTemplateInstantiationDecl::set_definition(SgTemplateInstantiationDefn *definition)
-\description See  *definition)
+\brief \brief See  *definition)
 definition for documentation */
 /*! 
-See  nameResetFromMangledForm)
-nameResetFromMangledForm for documentation \fn void SgTemplateInstantiationDecl::set_nameResetFromMangledForm(bool nameResetFromMangledForm)
-\brief Access function for p_nameResetFromMangledForm.
+\fn void SgTemplateInstantiationDecl::set_nameResetFromMangledForm(bool nameResetFromMangledForm)
+\brief Access function for p_nameResetFromMangledForm.See  nameResetFromMangledForm)
+nameResetFromMangledForm for documentation 
 \return returns void.
 */
 /*! 
-See  templateArguments)
-templateArguments for documentation \fn void SgTemplateInstantiationDecl::set_templateArguments(SgTemplateArgumentPtrListPtr templateArguments)
-\brief Access function for p_templateArguments.
+\fn void SgTemplateInstantiationDecl::set_templateArguments(SgTemplateArgumentPtrListPtr templateArguments)
+\brief Access function for p_templateArguments.See  templateArguments)
+templateArguments for documentation 
 \return returns void.
 */
 /*! 
-See  *templateDeclaration)
-templateDeclaration for documentation \fn void SgTemplateInstantiationDecl::set_templateDeclaration(SgTemplateDeclaration *templateDeclaration)
-\brief Access function for p_templateDeclaration.
+\fn void SgTemplateInstantiationDecl::set_templateDeclaration(SgTemplateDeclaration *templateDeclaration)
+\brief Access function for p_templateDeclaration.See  *templateDeclaration)
+templateDeclaration for documentation 
 \return returns void.
 */
 /*!\fn void SgTemplateInstantiationDecl::set_templateHeader(SgName templateHeader)
-\description See  templateHeader)
+\brief \brief See  templateHeader)
 templateHeader for documentation */
 /*! 
-See  templateName)
-templateName for documentation \fn void SgTemplateInstantiationDecl::set_templateName(SgName templateName)
-\brief sets name of instantiated class template, name excludes template arguments.
+\fn void SgTemplateInstantiationDecl::set_templateName(SgName templateName)
+\brief sets name of instantiated class template, name excludes template arguments.See  templateName)
+templateName for documentation 
 \return returns void.
 */
 /*!\fn SgName SgTemplateInstantiationDecl::get_templateHeader() const
-\description See  const
+\brief \brief See  const
 templateHeader for documentation */
 /*! 
 \fn SgName SgTemplateInstantiationDecl::get_templateName() const
-\brief Returns name of class template, the name excludes template arguments.
+\brief Returns name of class template, the name excludes template arguments.See  const
+templateName for documentation 
 For the template name with arguments, e.g. "class_template<int>" the user should call 
 get_name() (defined in the SgClassDeclaration base class).
 \note The SgClassSymbol used to hold a reference to this declaration in the symbol table
@@ -175,49 +176,48 @@ get_name() (defined in the SgClassDeclaration base class).
     However in these case it still seems that we could get it from the template
     declaration (if it is available, member fucntions of a templated class may not
     have an explicit or separate template declaration).
-See  const
-templateName for documentation \return returns SgName by value.
+\return returns SgName by value.
 */
 /*!
 \fn SgTemplateArgumentPtrListPtr SgTemplateInstantiationDecl::get_templateArguments() const
-\brief Returns pointer to STL list of pointers to SgTemplateArgument objects.
-See  const
-templateArguments for documentation \return Returns pointer to STL list of pointers to SgTemplateArgument objects.
+\brief Returns pointer to STL list of pointers to SgTemplateArgument objects.See  const
+templateArguments for documentation 
+\return Returns pointer to STL list of pointers to SgTemplateArgument objects.
 */
 /*! 
-See  const
-templateDeclaration for documentation \fn SgTemplateDeclaration *SgTemplateInstantiationDecl::get_templateDeclaration() const
-\brief Returns pointer to SgTemplateDeclaration from which instantiation is generated.
+\fn SgTemplateDeclaration *SgTemplateInstantiationDecl::get_templateDeclaration() const
+\brief Returns pointer to SgTemplateDeclaration from which instantiation is generated.See  const
+templateDeclaration for documentation 
 \return returns pointer to SgTemplateDeclaration.
 */
 /*! 
-See  const
-nameResetFromMangledForm for documentation \fn bool SgTemplateInstantiationDecl::get_nameResetFromMangledForm() const
-\brief Returns pointer to SgTemplateDeclaration from which instantiation is generated.
+\fn bool SgTemplateInstantiationDecl::get_nameResetFromMangledForm() const
+\brief Returns pointer to SgTemplateDeclaration from which instantiation is generated.See  const
+nameResetFromMangledForm for documentation 
 \return returns pointer to SgTemplateDeclaration.
 */
 /*!\fn virtual SgName SgTemplateInstantiationDecl::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgName SgTemplateInstantiationDecl::get_qualified_name() const
-\description See  const
+\brief \brief See  const
 qualified_name for documentation */
 /*!\fn virtual SgNode *SgTemplateInstantiationDecl::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgSymbol *SgTemplateInstantiationDecl::get_symbol_from_symbol_table() const
-\description See  const
+\brief \brief See  const
 symbol_from_symbol_table for documentation */
 /*!\fn virtual size_t SgTemplateInstantiationDecl::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTemplateInstantiationDecl::get_numberOfTraversalSuccessors()
-\description See  SgTemplateInstantiationDecl::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTemplateInstantiationDecl::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTemplateInstantiationDecl::get_traversalSuccessorContainer()
-\description See  SgTemplateInstantiationDecl::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTemplateInstantiationDecl::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTemplateInstantiationDecl::get_traversalSuccessorNamesContainer()
-\description See  SgTemplateInstantiationDecl::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTemplateInstantiationDecl::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgTemplateInstantiationDecl::SgTemplateInstantiationDecl(SgName name,enum SgClassDeclaration::class_types class_type,SgClassType *type,SgClassDefinition *definition,SgTemplateDeclaration *templateDeclaration,SgTemplateArgumentPtrListPtr templateArguments)
 */
 //@}
-int SAGE_Doxygen_Dummy_28815134113309;
+int SAGE_Doxygen_Dummy_82962692614634;

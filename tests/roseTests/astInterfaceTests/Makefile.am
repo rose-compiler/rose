@@ -26,6 +26,7 @@ buildPragmaDeclaration_SOURCES   = buildPragmaDeclaration.C
 attachComment_SOURCES            = attachComment.C
 insertHeader_SOURCES             = insertHeader.C
 
+
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 

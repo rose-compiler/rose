@@ -1,13 +1,12 @@
 
+#include "sage3.h"
 #include <string>
-#include "rose.h"
+#include <AstInterface_ROSE.h>
 #include <StmtInfoCollect.h>
 #include <CommandOptions.h>
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
-
-#define Boolean int
 
 void PrintUsage( char* name)
 {
@@ -18,8 +17,8 @@ class TestVarRefCollect : public CollectObject< pair<AstNodePtr,AstNodePtr> >
 {
   string refs;
  public:
-   virtual Boolean operator()( const pair<AstNodePtr,AstNodePtr>& var) 
-      { refs = refs + " " + var.first->unparseToString(); return true;}
+   virtual bool operator()( const pair<AstNodePtr,AstNodePtr>& var) 
+      { refs = refs + " " + AstNodePtrImpl(var.first)->unparseToString(); return true;}
    void DumpOut( ostream& out) 
      { out << refs;  }
    void Clear() { refs = ""; }
@@ -37,11 +36,11 @@ class TestStmtModRef : public ProcessAstTree
      out.open(fname.c_str(),ios_base::out);
   }
   ~TestStmtModRef() { out.close(); }
-  Boolean ProcessTree( AstInterface &fa, const AstNodePtr& s,
+  bool ProcessTree( AstInterface &fa, const AstNodePtr& s,
                        AstInterface::TraversalVisitType t)
   {
      if (t == AstInterface::PreVisit && fa.IsExecutableStmt(s)) {
-         out << s->unparseToString();
+         out << AstNodePtrImpl(s)->unparseToString();
          out << "\n";
          bool r = op ( fa, s, &mod, &use, &kill);
          out << "modref: ";
@@ -68,10 +67,14 @@ main ( int argc,  char * argv[] )
          return -1;
      }
 
-     vector<string> argvList(argv, argv + argc);
+     // pmp 09JUN05
+     //   gcc 3.4 does not allow cast from int to unsigned& anymore
+     //   a surrugoate variable is introduced and used instead of argc.
+     //   was: SgProject sageProject ( argc,argv);
+     //        CmdOptions::GetInstance()->SetOptions((unsigned)argc, argv);
       
-     SgProject sageProject ( argvList);
-    CmdOptions::GetInstance()->SetOptions(argvList);
+     SgProject sageProject ( argc,argv);
+    CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 
    int filenum = sageProject.numberOfFiles();
@@ -80,8 +83,9 @@ main ( int argc,  char * argv[] )
      SgGlobal *root = sageFile.get_root();
      string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".out";
      TestStmtModRef op(name);
-     AstInterface fa(root);
-     op( fa, &sageProject);
+     AstInterfaceImpl scope(root);
+     AstInterface fa(&scope);
+     op( fa, AstNodePtrImpl(&sageProject));
    }
 
   return 0;

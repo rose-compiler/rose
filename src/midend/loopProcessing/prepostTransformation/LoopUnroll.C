@@ -1,4 +1,5 @@
-#include <general.h>
+#include <vector>
+
 #include <LoopUnroll.h>
 #include <LoopInfoInterface.h>
 #include <LoopTransformInterface.h>
@@ -8,35 +9,27 @@
 #include <CommandOptions.h>
 
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
-
-string LoopUnrolling:: cmdline_help() 
+STD string LoopUnrolling:: cmdline_help() 
    { 
     return "-unroll [locond] [nvar] <unrollsize> : unrolling innermost loops at <unrollsize>"; }
-Boolean LoopUnrolling:: cmdline_configure()
+bool LoopUnrolling:: cmdline_configure()
 {
         opt = DEFAULT;
-	const vector<string>& opts = CmdOptions::GetInstance()->GetOptions();
-        unsigned int config = CmdOptions::GetInstance()->HasOption("-unroll");
+        const char* config = CmdOptions::GetInstance()->HasOption("-unroll");
         if (config == 0)
             return false;
-	// config now points to the NEXT argument after -unroll
-        if (config != opts.size() && opts[config] == "locond") {
+        config += 8;
+        if (strstr(config,"locond")==config) {
            opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
-           ++config;
+           config += 7;
         }
-        if (config != opts.size() && opts[config] == "nvar") {
+        if (strstr(config,"nvar")==config)  {
            opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::USE_NEWVAR);
-           ++config;
+           config += 5;
         }
-	if (config == opts.size()) return false;
-	unrollsize = atoi(opts[config].c_str());
+        sscanf(config, "%d",&unrollsize);      
         if (unrollsize <= 0) {
-           cerr << "invalid unrolling size. Use default (4)\n";
+           STD cerr << "invalid unrolling size. Use default (4)\n";
            unrollsize = 4;
         }
        return true;
@@ -44,13 +37,14 @@ Boolean LoopUnrolling:: cmdline_configure()
 
 bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodePtr& r)
 {
-   if (enclosingloop == s) {
-       enclosingloop = GetEnclosingLoop(s, fa);
-        return false;
+   bool isLoop = false;
+   if (enclosingloop == s || (enclosingloop == AST_NULL && (isLoop = fa.IsLoop(s)))) {
+       for (enclosingloop = fa.GetParent(s); 
+            enclosingloop != AST_NULL && !fa.IsLoop(enclosingloop); 
+            enclosingloop = fa.GetParent(enclosingloop));
+       if (!isLoop)
+          return false;
    }
-
-   if (fa.IsLoop(s))
-      enclosingloop = GetEnclosingLoop(s, fa);
    assert( la != 0);
 
    AstNodePtr body;
@@ -61,20 +55,20 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           SymbolicVal nstepval = stepval * unrollsize;
           SymbolicVal nubval = ubval;
 
-          bool hasleft = true;
-          vector<AstNodePtr> bodylist;
+          bool hasleft = true, negativeStep = (stepval < 0);
+          STD vector<AstNodePtr> bodylist;
           AstNodePtr leftbody, lefthead;
 
           int stepnum=0, loopnum = 0;
           SymbolicVal loopval = ubval - lbval + 1;
-          if (stepval.ToInt(stepnum) && loopval.ToInt(loopnum) 
+          if (stepval.isConstInt(stepnum) && loopval.isConstInt(loopnum) 
                && !(loopnum % stepnum)) {
              hasleft = false; 
           }
           else {
              nubval = ubval - SymbolicVal(unrollsize - 1);
              if (opt & COND_LEFTOVER) {
-                 leftbody = fa.CreateBasicBlock();
+                 leftbody = fa.CreateBlock();
                  lefthead = leftbody;
              }
              else {
@@ -82,18 +76,20 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                  lefthead = fa.CreateLoop( ivar.CodeGen(fa), 
                                            AstNodePtr(), 
                                            ubval.CodeGen(fa), 
-                                           stepval.CodeGen(fa), leftbody);
+                                           stepval.CodeGen(fa), leftbody,
+                                           negativeStep);
              }
           }
           fa.RemoveStmt(body);
           AstNodePtr s1 = fa.CreateLoop(ivar.CodeGen(fa), lbval.CodeGen(fa),
                                           nubval.CodeGen(fa), 
-                                          nstepval.CodeGen(fa), body);
+                                          nstepval.CodeGen(fa), body,
+                                           negativeStep);
           fa.ReplaceAst( s,s1);
           r = s1; 
 
           AstNodePtr origbody = fa.CopyAstTree(body);
-          string nvarname = "";
+          STD string nvarname = "";
           SymbolicVal nvar;
           if (opt & USE_NEWVAR) {
                nvarname = fa.NewVar(fa.GetType("int"),"",true,body, ivar.CodeGen(fa)); 
@@ -105,7 +101,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
               if (opt & USE_NEWVAR) {
                  AstNodePtr nvarassign = 
                      fa.CreateAssignment(nvar.CodeGen(fa), (nvar+1).CodeGen(fa));
-                 fa.BasicBlockAppendStmt( body, nvarassign);
+                 fa.BlockAppendStmt( body, nvarassign);
                  AstTreeReplaceVar repl(ivar, nvar);
                  repl( fa, bodycopy);
               }
@@ -113,14 +109,14 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                  AstTreeReplaceVar repl(ivar, ivar+i);
                  repl( fa, bodycopy);
               }
-              fa.BasicBlockAppendStmt( body, bodycopy);
+              fa.BlockAppendStmt( body, bodycopy);
               bodylist.push_back(bodycopy);
               if (hasleft && (opt & COND_LEFTOVER)) {
                  AstNodePtr cond = 
-                      fa.CreateRelLE( ivar.CodeGen(fa), (ubval-(i-1)).CodeGen(fa));
+                      fa.CreateBinaryOP( AstInterface::BOP_LE, ivar.CodeGen(fa), (ubval-(i-1)).CodeGen(fa));
                  AstNodePtr body1 = fa.CopyAstTree(bodylist[i-1]);
                  AstNodePtr ifstmt =  fa.CreateIf( cond, body1);
-                 fa.BasicBlockAppendStmt( leftbody, ifstmt);
+                 fa.BlockAppendStmt( leftbody, ifstmt);
                  leftbody = body1;
               }
           }
@@ -130,6 +126,5 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           r  = s;
           return true;
    }
-
    return false;
 }

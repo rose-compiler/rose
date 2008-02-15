@@ -97,42 +97,42 @@ pointer to an object derived from a SgFunctionType.
 /*!\fn virtual SgNode *SgFunctionType::copy(SgCopyHelp &help) const
 */
 /*!\fn void SgFunctionType::set_argument_list(SgFunctionParameterTypeList *argument_list)
-\description See  *argument_list)
+\brief \brief See  *argument_list)
 argument_list for documentation */
 /*!\fn void SgFunctionType::set_has_ellipses(bool has_ellipses)
-\description See  has_ellipses)
+\brief \brief See  has_ellipses)
 has_ellipses for documentation */
 /*!\fn void SgFunctionType::set_orig_return_type(SgType *orig_return_type)
-\description See  *orig_return_type)
+\brief \brief See  *orig_return_type)
 orig_return_type for documentation */
 /*!\fn void SgFunctionType::set_return_type(SgType *return_type)
-\description See  *return_type)
+\brief \brief See  *return_type)
 return_type for documentation */
 /*!\fn SgFunctionParameterTypeList *SgFunctionType::get_argument_list() const
-\description See  const
+\brief \brief See  const
 argument_list for documentation */
 /*!\fn SgType *SgFunctionType::get_orig_return_type() const
-\description See  const
+\brief \brief See  const
 orig_return_type for documentation */
 /*!\fn SgType *SgFunctionType::get_return_type() const
-\description See  const
+\brief \brief See  const
 return_type for documentation */
 /*!\fn bool SgFunctionType::get_has_ellipses() const
-\description See  const
+\brief \brief See  const
 has_ellipses for documentation */
 /*!\fn virtual SgNode *SgFunctionType::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgFunctionType::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFunctionType::get_numberOfTraversalSuccessors()
-\description See  SgFunctionType::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFunctionType::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionType::get_traversalSuccessorContainer()
-\description See  SgFunctionType::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFunctionType::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionType::get_traversalSuccessorNamesContainer()
-\description See  SgFunctionType::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgFunctionType::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgFunctionType::SgFunctionType(SgType *return_type=(0),bool has_ellipses=(1))
 */
 //@}
-int SAGE_Doxygen_Dummy_2152459417970;
+int SAGE_Doxygen_Dummy_225161980731439;

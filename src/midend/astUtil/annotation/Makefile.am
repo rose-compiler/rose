@@ -25,8 +25,6 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-EXTRA_DIST = AnnotDescriptorsTempl.C
-
 include_HEADERS = \
    AnnotCollect.h      AnnotExpr.h  AnnotStmt.h           OperatorDescriptors.h \
    AnnotDescriptors.h  AnnotIO.h    OperatorAnnotation.h  TypeAnnotation.h

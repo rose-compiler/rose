@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmDoubleWordValueExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned long SgAsmDoubleWordValueExpression::p_value
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmDoubleWordValueExpression::SgAsmDoubleWordValueExpression(const SgAsmDoubleWordValueExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmDoubleWordValueExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmDoubleWordValueExpression *SgAsmDoubleWordValueExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmDoubleWordValueExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmDoubleWordValueExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmDoubleWordValueExpression::initializeStorageClassArray(SgAsmDoubleWordValueExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmDoubleWordValueExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmDoubleWordValueExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmDoubleWordValueExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmDoubleWordValueExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmDoubleWordValueExpression::~SgAsmDoubleWordValueExpression()
+*/
+/*!\fn virtual SgNode *SgAsmDoubleWordValueExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmDoubleWordValueExpression::set_value(unsigned long value)
+\brief \brief See  value)
+value for documentation */
+/*!\fn unsigned long SgAsmDoubleWordValueExpression::get_value() const
+\brief \brief See  const
+value for documentation */
+/*!\fn virtual SgNode *SgAsmDoubleWordValueExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmDoubleWordValueExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmDoubleWordValueExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmDoubleWordValueExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmDoubleWordValueExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmDoubleWordValueExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmDoubleWordValueExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmDoubleWordValueExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmDoubleWordValueExpression::SgAsmDoubleWordValueExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2118921797;

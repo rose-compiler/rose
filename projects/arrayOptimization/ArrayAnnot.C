@@ -1,7 +1,3 @@
-// DQ (1/1/2006): This is OK if not declared in a header file
-using namespace std;
-
-#include <general.h>
 #include <ArrayAnnot.h>
 #include <fstream>
 #include <CommandOptions.h>
@@ -23,24 +19,24 @@ bool DebugArrayAnnot()
 bool ArrayShapeDescriptor:: get_dimension( int& val) const
 { 
    SymbolicVal dimval = dimension.get_val();
-   return dimval.ToInt( val);
+   return dimval.isConstInt( val);
 }
 
 
-bool ArrayShapeDescriptor::read( istream& in)
+bool ArrayShapeDescriptor::read( STD istream& in)
 {
   return ReadContainer<ArrayShapeDescriptor, ReadSymbolicFunctionDeclaration,
                         ';', '{','}'>::
     read(*this, in);
 }
 
-bool ArrayElemDescriptor::read( istream& in)
+bool ArrayElemDescriptor::read( STD istream& in)
 {
   return ReadContainer<ArrayElemDescriptor, ReadSymbolicFunctionDeclaration,';', '{','}'>::
     read(*this, in);
 }
 
-bool ArrayDescriptor::read( istream& in)
+bool ArrayDescriptor::read( STD istream& in)
 {
   return ReadContainer<ArrayDescriptor, ReadSymbolicFunctionDeclaration,';', '{','}'>::
     read(*this, in);
@@ -48,7 +44,7 @@ bool ArrayDescriptor::read( istream& in)
 
 void ArrayShapeDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur)
   {
-    string annot = cur.first.first;
+    STD string annot = cur.first.first;
     if (annot == "dimension") {
         assert(cur.first.second.size() == 0);
         dimension = cur.second;
@@ -57,19 +53,19 @@ void ArrayShapeDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cu
         length.push_back( SymbolicFunctionDeclaration( cur.first.second, cur.second) );
     }
     else {
-      cerr << "Error: non-recognized annotation: " << annot << endl;
+      STD cerr << "Error: non-recognized annotation: " << annot << STD endl;
       assert(false);
     }
   }
 
 void ArrayElemDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur)
 {
-  string annot = cur.first.first;
+  STD string annot = cur.first.first;
   if (annot == "elem") {
     elem.push_back( SymbolicFunctionDeclaration( cur.first.second, cur.second) );
   }
   else{
-      cerr << "Error: non-recognized annotation: " << annot << endl;
+      STD cerr << "Error: non-recognized annotation: " << annot << STD endl;
       assert(false);
     }
 
@@ -77,14 +73,14 @@ void ArrayElemDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur
   
 void ArrayDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur)
 {
-  string annot = cur.first.first;
+  STD string annot = cur.first.first;
   if (annot == "elem") {
      ArrayElemDescriptor::push_back( cur);
   }
   else 
     ArrayShapeDescriptor::push_back(cur) ;
 }
-void ArrayShapeDescriptor::write( ostream& out) const
+void ArrayShapeDescriptor::write( STD ostream& out) const
 {
   out << "dimension=";
   dimension.write(out); 
@@ -94,10 +90,10 @@ void ArrayShapeDescriptor::write( ostream& out) const
 
 void ArrayShapeDescriptor :: Dump() const
 {
-  write(cerr);
+  write(STD cerr);
 }
 
-void ArrayElemDescriptor::write( ostream& out) const
+void ArrayElemDescriptor::write( STD ostream& out) const
 {
   out << ";  elem=";
   elem.write(out);
@@ -105,10 +101,10 @@ void ArrayElemDescriptor::write( ostream& out) const
 
 void ArrayElemDescriptor :: Dump() const
 {
-  write(cerr);
+  write(STD cerr);
 }
 
-void ArrayDescriptor::write( ostream& out) const
+void ArrayDescriptor::write( STD ostream& out) const
 {
   out << "{";
   ArrayShapeDescriptor::write(out);
@@ -118,11 +114,11 @@ void ArrayDescriptor::write( ostream& out) const
 
 void ArrayDescriptor :: Dump() const
 {
-  write(cerr);
+  write(STD cerr);
 }
 
 void ArrayDefineDescriptor ::
-replace_var(  const string& varname, const SymbolicVal& repl)
+replace_var(  const STD string& varname, const SymbolicVal& repl)
 { 
   ArrayDescriptor::replace_var( varname, repl);
   reshape.replace_var( varname, repl);
@@ -137,7 +133,7 @@ replace_val(MapObject<SymbolicVal, SymbolicVal>& repl)
 
 void ArrayDefineDescriptor::push_back( const ReadSymbolicFunctionDeclaration& cur)
 {
-  string annot = cur.first.first;
+  STD string annot = cur.first.first;
   if (annot == "reshape")  {
     if ( cur.first.second.size() > 1) {
       cur.Dump();
@@ -149,13 +145,13 @@ void ArrayDefineDescriptor::push_back( const ReadSymbolicFunctionDeclaration& cu
      ArrayDescriptor::push_back(cur);
 }
 
-bool ArrayDefineDescriptor :: read( istream& in)
+bool ArrayDefineDescriptor :: read( STD istream& in)
 {
   return ReadContainer< ArrayDefineDescriptor, ReadSymbolicFunctionDeclaration,';', '{','}'>::
                read(*this, in);
 }
 
-void ArrayDefineDescriptor :: write( ostream& out) const
+void ArrayDefineDescriptor :: write( STD ostream& out) const
 { 
   ArrayDescriptor::write(out);
   out << "reshape = ";
@@ -164,11 +160,11 @@ void ArrayDefineDescriptor :: write( ostream& out) const
 
 void ArrayDefineDescriptor :: Dump() const
 {
-  write(cerr);
+  write(STD cerr);
 }
 
 
-bool ArrayOptDescriptor :: read( istream& in)
+bool ArrayOptDescriptor :: read( STD istream& in)
 {
   read_ch(in, '{');
   if (peek_id(in) == "define") { 
@@ -179,14 +175,14 @@ bool ArrayOptDescriptor :: read( istream& in)
                read(*this, in);
 }
 
-void ArrayOptDescriptor :: write( ostream& out) const
+void ArrayOptDescriptor :: write( STD ostream& out) const
 { 
   defs.write(out);
   ArrayDescriptor::write(out);
 }
 
 void ArrayOptDescriptor :: 
-replace_var(  const string& varname, const SymbolicVal& repl)
+replace_var(  const STD string& varname, const SymbolicVal& repl)
 { 
   ArrayDescriptor::replace_var( varname, repl);
   for (DefContainer::iterator p = defs.begin();
@@ -209,7 +205,7 @@ replace_val(MapObject<SymbolicVal, SymbolicVal>& repl)
 
 void ArrayOptDescriptor :: Dump() const
 {
-  write(cerr);
+  write(STD cerr);
 }
 
 ArrayAnnotation* ArrayAnnotation::inst = 0;
@@ -236,6 +232,7 @@ void ArrayAnnotation:: register_annot()
 void ArrayAnnotation :: Dump() const
 {
    OperatorSideEffectAnnotation::get_inst()->Dump();
+   OperatorAliasAnnotation::get_inst()->Dump();
    ValueAnnotation::get_inst()->Dump();
    arrays.Dump();
    arrayopt.Dump();
@@ -244,36 +241,42 @@ void ArrayAnnotation :: Dump() const
 }
 
 bool ArrayAnnotation ::
-known_array_type( const AstNodeType& type, ArrayDefineDescriptor* r)
+known_array_type( CPPAstInterface& fa, const AstNodeType& type, ArrayDefineDescriptor* r)
 {
-  return arrays.known_type( type, r);
+  return arrays.known_type( fa, type, r);
 }
 
 bool ArrayAnnotation ::
-known_array( const AstNodePtr& array, ArrayDefineDescriptor* r)
+known_array( CPPAstInterface& fa, const AstNodePtr& array, ArrayDefineDescriptor* r)
 {
-  return arrays.known_type( array, r);
+  return arrays.known_type( fa, array, r);
 }
 
 bool ArrayAnnotation ::
-has_array_opt( const AstNodePtr array, ArrayOptDescriptor* r)
+has_array_opt( CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* r)
 {
-  return arrayopt.known_type( array, r);
+  return arrayopt.known_type( fa, array, r);
 }
 
 bool ArrayAnnotation::
-is_array_mod_op( const AstNodePtr& arrayExp,
+is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
                  AstNodePtr* arrayp, ArrayDescriptor* descp, bool* reshape,
                  ReplaceParams* repl)
 {
-  AstInterface::AstNodeList args;
+  CPPAstInterface::AstNodeList args;
   ArrayModifyDescriptor desc;
-  if (!arrayModify.known_operator( arrayExp, &args, &desc, true))
+  if (!arrayModify.known_operator( fa, arrayExp, &args, &desc, true)) {
+     if (DebugArrayAnnot()) {
+        STD cerr << "NOT mod-array operator: ";
+        STD cerr << AstToString(arrayExp);
+        STD cerr << STD endl;
+     }
     return false;
+  }
 
   if (arrayp != 0) {
-    *arrayp = desc.first.get_val().ToAst();
-    assert( *arrayp != 0);
+    if (!desc.first.get_val().isAstWrap(*arrayp))
+       assert( false);
   }
   if (descp != 0) {
     *descp = desc.second;
@@ -284,40 +287,42 @@ is_array_mod_op( const AstNodePtr& arrayExp,
   }
 
   if (DebugArrayAnnot()) {
-     cerr << "recognized mod-array operator: ";
-     arrayExp.Dump();
-     cerr << endl;
+     STD cerr << "recognized mod-array operator: ";
+     STD cerr << AstToString(arrayExp);
+     STD cerr << STD endl;
+
+     return true;
   }
   return true;
 }
 
 bool ArrayAnnotation::
-is_array_construct_op( const AstNodePtr& arrayExp, AstInterface::AstNodeList* alias,
+is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, CPPAstInterface::AstNodeList* alias,
                        ArrayDescriptor* descp, ReplaceParams* repl)
 {
-  AstInterface::AstNodeList args;
+  CPPAstInterface::AstNodeList args;
   ArrayConstructDescriptor desc;
-  if (!arrayConstruct.known_operator( arrayExp, &args, &desc, true))
+  if (!arrayConstruct.known_operator( fa, arrayExp, &args, &desc, true))
     return false;
 
   if (descp != 0) {
     *descp = desc.second;
   }
   if (alias != 0) {
-    for (list<SymbolicValDescriptor>::const_iterator p = desc.first.begin(); 
+    for (STD list<SymbolicValDescriptor>::const_iterator p = desc.first.begin(); 
          p != desc.first.end(); ++p) {
        SymbolicValDescriptor cur = *p;
-       AstNodePtr curarg = cur.get_val().ToAst();
-       assert( curarg != 0);
-       assert( curarg != 0);
-       AstInterfaceBase::ListAppend(*alias, curarg);
+       AstNodePtr curarg;
+       if (!cur.get_val().isAstWrap(curarg))
+           assert(false);
+       alias->push_back(curarg);
     }
   }
   return true;
 }
 
 AstNodePtr ArrayAnnotation::
-create_access_array_elem( AstInterface& fa, const AstNodePtr& array,
+create_access_array_elem( CPPAstInterface& fa, const AstNodePtr& array,
 			  const AstInterface::AstNodeList& args)
 {
   return arrays.create_known_member_function( fa, array, "elem", args);
@@ -330,8 +335,8 @@ create_access_array_elem( const AstNodePtr& array, const SymbolicFunction::Argum
 }
 
 AstNodePtr ArrayAnnotation ::
-create_reshape_array( AstInterface& fa, const AstNodePtr& array,
-			  const AstInterface::AstNodeList& args)
+create_reshape_array( CPPAstInterface& fa, const AstNodePtr& array,
+			  const CPPAstInterface::AstNodeList& args)
 {
   return arrays.create_known_member_function( fa, array, "reshape", args);
 }
@@ -345,39 +350,40 @@ create_access_array_length( const AstNodePtr& array, const SymbolicVal& dim)
 }
 
 AstNodePtr ArrayAnnotation::
-create_access_array_length( AstInterface& fa, const AstNodePtr& array, 
+create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array, 
 			    int dim)
 {
-  AstInterface::AstNodeList args = fa.CreateList();
-  fa.ListAppend( args, fa.CreateConstInt(dim));
+  CPPAstInterface::AstNodeList args;
+  args.push_back( fa.CreateConstInt(dim));
   return arrays.create_known_member_function( fa, array, "length", args);
 }
 
 bool ArrayAnnotation ::
-is_access_array_length( const SymbolicVal& orig, AstNodePtr* arrayp, SymbolicVal *dim)
+is_access_array_length( CPPAstInterface& fa, const SymbolicVal& orig, 
+                         AstNodePtr* arrayp, SymbolicVal *dim)
 {
   SymbolicFunction::Arguments args;
-  if (arrays.is_known_member_function( orig, arrayp, &args) == "length") {
+  if (arrays.is_known_member_function( fa,orig, arrayp, &args) == "length") {
      assert(args.size() == 1);
      if (dim != 0)
-        *dim = args[0];
+        *dim = args.front();
      return true;
   }
   return false;
 }
 
 bool ArrayAnnotation ::
-is_access_array_length( const AstNodePtr& orig, AstNodePtr* arrayp,
+is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr* arrayp,
                         AstNodePtr* dimAst, int *dim)
 {
-   AstInterface::AstNodeList args;
-   if (arrays.is_known_member_function( orig, arrayp, &args) == "length") {
+   CPPAstInterface::AstNodeList args;
+   if (arrays.is_known_member_function( fa, orig, arrayp, &args) == "length") {
       assert (args.size() == 1);
-      AstNodePtr cur = *AstInterface::GetAstNodeListIterator(args);
+      AstNodePtr cur = *args.begin();
       if (dimAst != 0)
             *dimAst = cur;
       if (dim != 0) {
-          if (!AstInterface::IsConstInt(cur, dim))
+          if (!fa.IsConstInt(cur, dim))
               assert(false);
       }
       return true;
@@ -386,56 +392,60 @@ is_access_array_length( const AstNodePtr& orig, AstNodePtr* arrayp,
 }
 
 bool ArrayAnnotation ::
-is_access_array_elem( const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
+is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
 {
-  if (arrays.is_known_member_function( orig, array, args) == "elem") {
+  if (arrays.is_known_member_function( fa, orig, array, args) == "elem") {
     return true;
   }
   return false;
 }
 
 bool ArrayAnnotation ::
-is_access_array_elem( const AstNodePtr& orig, AstNodePtr* arrayp,
-                      AstInterface::AstNodeList* args)
+is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig, 
+                      AstNodePtr* arrayp,
+                      CPPAstInterface::AstNodeList* args)
 {
-  if (arrays.is_known_member_function( orig, arrayp, args) == "elem") {
+  if (arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") {
     return true;
   }
   return false;
 }
 
 bool ArrayAnnotation ::
-is_reshape_array( const AstNodePtr& orig, AstNodePtr* arrayp,
-                  AstInterface::AstNodeList* args)
+is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig, 
+                  AstNodePtr* arrayp,
+                  CPPAstInterface::AstNodeList* args)
 {
-  return arrays.is_known_member_function( orig, arrayp, args) == "reshape" ;
+  return arrays.is_known_member_function( fa, orig, arrayp, args) == "reshape" ;
 }
 
 bool ArrayAnnotation ::
-may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-                         CollectObject< pair<AstNodePtr, int> >& collectalias)
+may_alias(AstInterface& _fa, const AstNodePtr& fc, const AstNodePtr& result,
+                         CollectObject< STD pair<AstNodePtr, int> >& collectalias)
 {
-  if (is_access_array_elem( fc) || is_access_array_length(fc) ||
-      is_reshape_array( fc))
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
+  if (is_access_array_elem( fa, fc) || is_access_array_length(fa, fc) ||
+      is_reshape_array( fa, fc))
       return true;
   return OperatorAliasAnnotation::get_inst()->may_alias(fa, fc, result, collectalias);
 }
 
 bool ArrayAnnotation ::
 allow_alias(AstInterface& fa, const AstNodePtr& fc, 
-                         CollectObject< pair<AstNodePtr, int> >& collectalias)
+                         CollectObject< STD pair<AstNodePtr, int> >& collectalias)
 {
   return OperatorAliasAnnotation::get_inst()->allow_alias(fa, fc, collectalias);
 }
 
 bool ArrayAnnotation ::
-get_modify(AstInterface& fa, const AstNodePtr& fc,
+get_modify(AstInterface& _fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect)
 {
-   if ( is_access_array_elem( fc) || is_access_array_length( fc)) 
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
+   if ( is_access_array_elem(fa, fc) || is_access_array_length(fa, fc)) 
       return true;
    AstNodePtr array;
-   if (is_reshape_array( fc, &array)) {
+   if (is_reshape_array( fa,fc, &array)) {
       if (collect != 0)
          (*collect)(array);
       return true;
@@ -444,19 +454,20 @@ get_modify(AstInterface& fa, const AstNodePtr& fc,
 }
 
 bool ArrayAnnotation ::
-get_read(AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect)
+get_read(AstInterface& _fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* collect)
 {
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
    AstNodePtr dim;
-   if (is_access_array_length( fc, 0, &dim)) {
+   if (is_access_array_length( fa, fc, 0, &dim)) {
        if (collect != 0)
            (*collect)(dim);
        return true;
    }
-   AstInterface::AstNodeList args;
-   if (is_access_array_elem( fc, 0, &args)) {
+   CPPAstInterface::AstNodeList args;
+   if (is_access_array_elem( fa, fc, 0, &args)) {
       if (collect != 0) {
-           for (AstInterface::AstNodeListIterator p =
-                  fa.GetAstNodeListIterator(args); !p.ReachEnd(); ++p) 
+           for (CPPAstInterface::AstNodeList::iterator p = args.begin();
+                  p != args.end(); ++p) 
               (*collect)(*p);
       }
       return true;
@@ -467,6 +478,7 @@ get_read(AstInterface& fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* coll
 
 #define TEMPLATE_ONLY
 #include <TypeAnnotation.C>
+#include <CPPAnnotation.C>
 #include <OperatorDescriptors.C>
 template class TypeCollection<ArrayModifyDescriptor>;
 template class TypeCollection<ArrayConstructDescriptor>;

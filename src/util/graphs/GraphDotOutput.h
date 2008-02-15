@@ -1,42 +1,47 @@
 #ifndef GRAPH_DOT_H
 #define GRAPH_DOT_H
 
-#include <GraphInterface.h>
+#include <GraphAccess.h>
 #include <string>
-#include <DOTGraphInterface.h>
 
-class DotNodeIterator : public GraphAccess::NodeIterator
-{
- public:
-   DotNodeIterator( const GraphAccess::NodeIterator& that)
-     : GraphAccess::NodeIterator(that) {}
-   bool operator ==(  const DotNodeIterator& that) const
-      { return (IsEmpty() && that.ReachEnd()) ||
-               (ReachEnd() && that.IsEmpty()) ||
-               GraphAccess::NodeIterator::operator==(that); }
-   bool operator != (  const DotNodeIterator& that) const
-      { return ! operator ==(that); }
-   GraphNode& operator *() const { return * GraphAccess::NodeIterator::operator *(); }
-};
-
-class DotEdgeIterator : public GraphAccess::EdgeIterator
-{
- public:
-   DotEdgeIterator( const GraphAccess::EdgeIterator& that)
-     : GraphAccess::EdgeIterator(that) {}
-   bool operator ==(  const DotEdgeIterator& that) const 
-      { return (IsEmpty() && that.ReachEnd()) ||
-               (ReachEnd() && that.IsEmpty()) ||
-               GraphAccess::EdgeIterator::operator==(that); }
-   bool operator != ( const DotEdgeIterator& that) const
-      { return ! operator ==(that); }
-   GraphEdge& operator *() const { return * GraphAccess::EdgeIterator::operator *(); }
-};
-
+template <class Graph>
 class GraphDotOutput 
-  : public DOTGraphInterface<GraphNode, GraphEdge, DotNodeIterator, DotEdgeIterator>
 {
-  GraphAccess& g;
+ public:
+    typedef typename Graph::Node GraphNode;
+    typedef typename Graph::Edge GraphEdge;
+
+    void writeToDOTFile(const std::string& filename, const std::string& graphname)
+     {
+	bool debug = true;
+	if(debug) std::cerr << " dot output to " << filename << std::endl; 
+        std::ofstream dotfile(filename.c_str());
+
+        dotfile <<  "digraph " << graphname << " {\n";
+        for(typename Graph::NodeIterator p=g.GetNodeIterator(); !p.ReachEnd(); ++p) {
+            typename Graph::Node* node = *p;
+            dotfile << ((long)node) << "[label=\"" << getVertexName(node) << "\" ];" << std::endl;
+	}
+
+        if(debug) std::cerr << " finished add node" << std::endl; // debug
+
+        for(typename Graph::NodeIterator p=g.GetNodeIterator(); !p.ReachEnd(); ++p) {
+           if(debug) std::cerr << " add edge from node ... " << std::endl; // debug
+           typename Graph::Node* node1 = *p;
+           typename Graph::EdgeIterator edges = g.GetNodeEdgeIterator(node1, GraphAccess::EdgeOut);
+           for( ; !edges.ReachEnd(); ++edges) {
+              typename Graph::Edge* e = *edges;
+              typename Graph::Node* node2 = g.GetEdgeEndPoint(e, GraphAccess::EdgeIn);
+              dotfile << ((long)node1) << " -> " << ((long)node2)
+	              << "[label=\"" << getEdgeLabel(e) << "\"];" << std::endl;
+           }
+        }
+        if(debug) std::cerr << " writing content to " << filename << std::endl; // debug
+        dotfile <<  "}\n";
+     }
+
+ private:
+  Graph& g;
   std::string Translate( std::string r1) 
   {
          std::string r2 = "";
@@ -44,70 +49,32 @@ class GraphDotOutput
             char c = r1[i];
             if (c == '\"')
                r2 = r2 + "\\\"";
+            else if (c == '\n') {
+               r2 = r2 + "\\n";
+           }
             else
                r2 = r2 + c;
          }
          return r2;
   }
  public:
-  GraphDotOutput( GraphAccess &_g) : g(_g) {}
-  virtual DotNodeIterator getVertices() 
-         { return g.GetNodeIterator(); }
-
-  //! get the end of the vertices
-  virtual DotNodeIterator getVerticesEnd() 
-         { return GraphAccess::NodeIterator(); }
-
-  //! get an iterator for all outgoing edges of a vertex
-  virtual DotEdgeIterator getEdges(GraphNode &v) 
-    { return g.GetNodeEdgeIterator(&v, GraphAccess::EdgeOut); }
-
-   //! get the end of the outgoing edges
-  virtual DotEdgeIterator getEdgesEnd(GraphNode &v) 
-   { return GraphAccess::EdgeIterator(); }
-
-
-
-   //! get unique string representation of a vertex, NOTE - this function works with a pointer to the vertex!
-   virtual std::string vertexToString(GraphNode *v) 
-      { 
-        char buf[100];
-        sprintf(buf, "%p", v);
-        return buf;
-      }
+  GraphDotOutput( Graph &_g) : g(_g) {}
 
      //! get the name of a vertex
-    virtual std::string getVertexName(GraphNode &v) 
+     std::string getVertexName(typename Graph::Node* v) 
        { 
-         std::string r1 = v.ToString();
+         std::string r1 = v->toString();
          std::string r2 = Translate(r1); 
          return r2;
        }
 
-     virtual std::string getEdgeLabel(GraphEdge &e) 
+     std::string getEdgeLabel(typename Graph::Edge* e) 
        {
-          std::string r1 = e.ToString();
+          std::string r1 = e->toString();
           return Translate(r1);
        }
 
 
-     //! get the target vertex of an edge, NOTE - this function returns a pointer to a vertex for use with vertexToString!
-     virtual GraphNode *getTargetVertex(GraphEdge &e) 
-      { return g.GetEdgeEndPoint(&e, GraphAccess::EdgeIn); }
-
-		//! query the subgraph ID of a node
-		virtual int getVertexSubgraphId(GraphNode &v) {
-			// assume there are no subgraphs
-			return -2;
-		}
-
-#if 0
-	   //! add new subgraph, returns id of the subgraph
-      virtual int addSubgraph(std::string name) 
-         {
-           return mDotRep.addSubgraph(name);
-         }
-#endif
 };
 
 #endif

@@ -37,18 +37,18 @@
 /*!\fn virtual void SgClinkageEndStatement::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgClinkageEndStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgClinkageEndStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgClinkageEndStatement::get_numberOfTraversalSuccessors()
-\description See  SgClinkageEndStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgClinkageEndStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClinkageEndStatement::get_traversalSuccessorContainer()
-\description See  SgClinkageEndStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgClinkageEndStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClinkageEndStatement::get_traversalSuccessorNamesContainer()
-\description See  SgClinkageEndStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgClinkageEndStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgClinkageEndStatement::SgClinkageEndStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_782853000;
+extern int SAGE_Doxygen_Dummy_995973229;

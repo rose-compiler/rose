@@ -14,13 +14,11 @@ public:
   int EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
                                DepCompAstRefGraphCreate& refDep, int copydim,
                                DepCompCopyArrayCollect::CopyArrayUnit::NodeSet* cuts = 0);
-//Boolean SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
-  int SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
+  bool SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
                               DepCompCopyArrayCollect::CopyArrayUnit& unit,
                               DepCompAstRefGraphCreate& g,                        
                                DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts);
-//Boolean IsRedundantCopy( LoopTransformInterface& li, 
-  int IsRedundantCopy( LoopTransformInterface& li, 
+  bool IsRedundantCopy( LoopTransformInterface& li, 
                              DepCompCopyArrayCollect::CopyArrayUnit& unit, int copydim);
   int OutmostReuseLevel ( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
                             DepCompAstRefGraphCreate& refDep);

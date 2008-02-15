@@ -114,43 +114,43 @@ pointer to an object derived from a SgSymbol.
 /*!\fn virtual SgSymbol::~SgSymbol()
 */
 /*!\fn virtual void SgSymbol::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
-\description See  *attributeMechanism)
+\brief \brief See  *attributeMechanism)
 attributeMechanism for documentation */
 /*!\fn virtual AstAttributeMechanism *SgSymbol::get_attributeMechanism() const
-\description See  const
+\brief \brief See  const
 attributeMechanism for documentation */
 /*!
 \fn virtual SgName SgSymbol::get_name() const = 0
-\brief Access function for getting name from declarations or types internally.
+\brief Access function for getting name from declarations or types internally.See  0
+name for documentation 
 \internal This is a virtual function.
-See  0
-name for documentation \return Returns SgName.
+\return Returns SgName.
 */
 /*!\fn virtual SgNode *SgSymbol::get_symbol_basis() const
-\description See  const
+\brief \brief See  const
 symbol_basis for documentation */
 /*!\fn virtual SgNode *SgSymbol::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgScopeStatement *SgSymbol::get_scope() const
-\description See  const
+\brief \brief See  const
 scope for documentation */
 /*!
 \fn virtual SgType *SgSymbol::get_type() const = 0
-\brief This function returns the type associated with the named entity.
+\brief This function returns the type associated with the named entity.See  0
+type for documentation 
 \internal This is a virtual function.
-See  0
-type for documentation \return Returns SgType*.
+\return Returns SgType*.
 */
 /*!\fn virtual size_t SgSymbol::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSymbol::get_numberOfTraversalSuccessors()
-\description See  SgSymbol::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSymbol::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSymbol::get_traversalSuccessorContainer()
-\description See  SgSymbol::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSymbol::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSymbol::get_traversalSuccessorNamesContainer()
-\description See  SgSymbol::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSymbol::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgSymbol::SgSymbol()
 \brief This is the default constructor.
@@ -159,4 +159,4 @@ childIndex for documentation */
 \ref SgSymbol_create "Example:create an SgSymbol object"
 */
 //@}
-int SAGE_Doxygen_Dummy_11538101318035;
+int SAGE_Doxygen_Dummy_200921212725390;

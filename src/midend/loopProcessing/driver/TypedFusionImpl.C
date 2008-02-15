@@ -1,17 +1,10 @@
 
-#include <general.h>
 #include <CompSliceDepGraph.h>
 #include <SinglyLinkedList.h>
 #include <PtrMap.h>
 #include <TypedFusion.h>
 #include <GraphScope.h>
 #include <FusionAnal.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 class SliceGraphTypedFusionImpl : public TypedFusionOperator
 {
@@ -24,13 +17,13 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
   FuseVecType2 fuseVec;
   PtrMapWrap <CompSliceDepGraphNode, FuseVecType1 > fuseMap;
 
-  int GetNodeType( GraphNode *gn)
+  int GetNodeType( GraphAccessInterface::Node *gn)
   {
    CompSliceDepGraphNode *n = static_cast<CompSliceDepGraphNode*>(gn);
    return n->GetInfo().NumberOfEntries() > 0;
   }
 
-  void MarkFuseNodes( GraphNode *gn1, GraphNode *gn2)
+  void MarkFuseNodes( GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2)
   {
     CompSliceDepGraphNode *n1 = static_cast<CompSliceDepGraphNode*>(gn1), 
                           *n2 = static_cast<CompSliceDepGraphNode*>(gn2);
@@ -44,7 +37,7 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
     fuseInfo->AppendLast(n2);
   }    
 
-  Boolean PreventFusion( GraphNode *gn1, GraphNode *gn2, GraphEdge *e)
+  bool PreventFusion( GraphAccessInterface::Node *gn1, GraphAccessInterface::Node *gn2, GraphAccessInterface::Edge *e)
   {
     CompSliceDepGraphNode *n1 = static_cast<CompSliceDepGraphNode*>(gn1),
                           *n2 = static_cast<CompSliceDepGraphNode*>(gn2);
@@ -54,7 +47,7 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
  public:
   SliceGraphTypedFusionImpl( CompSliceLocalityRegistry *r, CompSliceDepGraphCreate &c, 
                             const LoopNestFusion &f) 
-     : fuse(f), reg(r), ct(c) {}
+     : reg(r), ct(c), fuse(f) {}
   void FuseNodes()
   {
     for ( FuseVecType2::Iterator p2(fuseVec); !p2.ReachEnd(); p2.Advance()) {
@@ -71,9 +64,13 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
             if (n2 == 0)
                 continue;
             CompSliceNest& g2 = n2->GetInfo();
-            DepInfoEdge *edge = GraphGetCrossEdge<CompSliceDepGraph>()(&ct,n1, n2);
-            DepInfo info = (edge != 0)? edge->GetInfo() :
-                                  DepInfoGenerator::GetTopDepInfo();
+            GraphCrossEdgeIterator<CompSliceDepGraph> crossIter(&ct,n1, n2);
+            DepInfoEdge *edge = 0;
+            DepInfo info = DepInfoGenerator::GetTopDepInfo();
+            if (!crossIter.ReachEnd()) {
+                edge = crossIter.Current();
+                info =  edge->GetInfo(); 
+            }
             if (fuse.Fusible( reg, g1, g2, info)) {
                 fuse.Fuse( reg, g1, g2, info);
                 *p1 = 0;
@@ -93,11 +90,16 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
   }
 };
 
-void SliceNestTypedFusion( CompSliceLocalityRegistry *reg, CompSliceDepGraphCreate &t, 
+void SliceNestTypedFusion( CompSliceLocalityRegistry *reg, 
+                           CompSliceDepGraphCreate &t, 
                            const LoopNestFusion& fuse )
 {
   SliceGraphTypedFusionImpl impl(reg, t,fuse);
-  TypedFusion()(&t, impl, (int)true);
+  GraphAccessWrapTemplate<GraphAccessInterface::Node,
+                          GraphAccessInterface::Edge,
+                          CompSliceDepGraphCreate> access(&t);
+                          
+  TypedFusion()(&access, impl, (int)true);
   impl.FuseNodes();
 }
 
@@ -124,7 +126,10 @@ void SliceNestReverseTypedFusion( CompSliceLocalityRegistry *reg, CompSliceDepGr
                                   const LoopNestFusion& fuse)
 {
   SliceGraphReverseTypedFusionImpl impl(reg, t, fuse);
-  GraphReverseEdgeImpl graph(&t);
-  TypedFusion()(&graph, impl, (int)true);
+  GraphReverseEdge<CompSliceDepGraphCreate> graph(&t);
+  GraphAccessWrapTemplate<GraphAccessInterface::Node, 
+                          GraphAccessInterface::Edge, 
+                        GraphReverseEdge<CompSliceDepGraphCreate> > acc(&graph);
+  TypedFusion()(&acc, impl, (int)true);
   impl.FuseNodes();
 }

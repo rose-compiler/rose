@@ -35,26 +35,4 @@ void redBlackRelax3DNonFullyVariational ( floatArray & s, floatArray & rhs )
                s(Black_Even+1,Even_Rows,Even_Rows) + s(Black_Even-1,Even_Rows,Even_Rows) + 
                s(Black_Even,Even_Rows+1,Even_Rows) + s(Black_Even,Even_Rows-1,Even_Rows) + 
                s(Black_Even,Even_Rows,Even_Rows+1) + s(Black_Even,Even_Rows,Even_Rows-1) ) / 6.0;
-/*
-     s(Red_Even,Odd_Rows,Odd_Rows) = 
-          ( hSqr * rhs(Red_Even,Odd_Rows,Odd_Rows) + 
-               s(Red_Even+1,Odd_Rows,Odd_Rows) + s(Red_Even-1,Odd_Rows,Odd_Rows) + 
-               s(Red_Even,Odd_Rows+1,Odd_Rows) + s(Red_Even,Odd_Rows-1,Odd_Rows) + 
-               s(Red_Even,Odd_Rows,Odd_Rows+1) + s(Red_Even,Odd_Rows,Odd_Rows-1) ) / 6.0;
-     s(Red_Odd,Even_Rows,Odd_Rows) = 
-          ( hSqr * rhs(Red_Odd,Even_Rows,Odd_Rows) + 
-               s(Red_Odd+1,Even_Rows,Odd_Rows) + s(Red_Odd-1,Even_Rows,Odd_Rows) + 
-               s(Red_Odd,Even_Rows+1,Odd_Rows) + s(Red_Odd,Even_Rows-1,Odd_Rows) + 
-               s(Red_Odd,Even_Rows,Odd_Rows+1) + s(Red_Odd,Even_Rows,Odd_Rows-1) ) / 6.0;
-     s(Red_Even,Odd_Rows,Even_Rows) = 
-          ( hSqr * rhs(Red_Even,Odd_Rows,Even_Rows) +
-               s(Red_Even+1,Odd_Rows,Even_Rows) + s(Red_Even-1,Odd_Rows,Even_Rows) + 
-               s(Red_Even,Odd_Rows+1,Even_Rows) + s(Red_Even,Odd_Rows-1,Even_Rows) + 
-               s(Red_Even,Odd_Rows,Even_Rows+1) + s(Red_Even,Odd_Rows,Even_Rows-1) ) / 6.0;
-     s(Red_Odd,Even_Rows,Even_Rows) = 
-          ( hSqr * rhs(Red_Odd,Even_Rows,Even_Rows) + 
-               s(Red_Odd+1,Even_Rows,Even_Rows) + s(Red_Odd-1,Even_Rows,Even_Rows) + 
-               s(Red_Odd,Even_Rows+1,Even_Rows) + s(Red_Odd,Even_Rows-1,Even_Rows) + 
-               s(Red_Odd,Even_Rows,Even_Rows+1) + s(Red_Odd,Even_Rows,Even_Rows-1) ) / 6.0;
-*/
    }

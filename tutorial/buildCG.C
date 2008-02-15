@@ -1,5 +1,6 @@
 #include "rose.h"
 #include <CallGraph.h>
+#include <GraphUpdate.h>
 
 using namespace std;
 

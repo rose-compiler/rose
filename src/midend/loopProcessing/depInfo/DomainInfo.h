@@ -16,37 +16,28 @@ class DomainCond :  protected DepInfo
       { DepInfo :: operator =(that); return *this; }
 
   int NumOfLoops() const { return DepInfo::rows(); }
-//Boolean IsTop() const;
-  int IsTop() const;
-//Boolean IsBottom() const;
-  int IsBottom() const;
-  std::string ToString() const;
+  bool IsTop() const;
+  bool IsBottom() const;
+  STD string toString() const;
 
   const DepRel& Entry(int index1, int index2) const
     { return DepInfo::Entry(index1, index2); }
   DepRel& Entry(int index1, int index2)
     { return DepInfo::Entry(index1, index2); }
-//Boolean ClosureCond();
-  int ClosureCond();
+  bool ClosureCond();
   void SetLoopRel(int index1, int index2, const DepRel &r) ;
   void Initialize( const DepRel &r);
 
-//Boolean operator < (const DomainCond &that) const
-  int operator < (const DomainCond &that) const
+  bool operator < (const DomainCond &that) const
     { return DepInfo :: operator < (that); }
-//Boolean operator <= (const DomainCond &that) const
-  int operator <= (const DomainCond &that) const
+  bool operator <= (const DomainCond &that) const
     { return DepInfo :: operator <= (that); }
-//Boolean operator |= (const DomainCond &that);
-  int operator |= (const DomainCond &that);
-//Boolean operator &= (const DomainCond &that);
-  int operator &= (const DomainCond &that);
+  bool operator |= (const DomainCond &that);
+  bool operator &= (const DomainCond &that);
 
-//Boolean operator ==( const DomainCond &that) const
-  int operator ==( const DomainCond &that) const
+  bool operator ==( const DomainCond &that) const
      { return DepInfo::operator==(that); }
-//Boolean operator != (const DomainCond &that) const
-  int operator != (const DomainCond &that) const
+  bool operator != (const DomainCond &that) const
      { return ! operator ==(that); }
 
   void InsertLoop( int level);
@@ -86,18 +77,13 @@ class DomainInfo : protected CountRefHandle <DomainInfoImpl>
    int NumOfLoops() const;
    DepRel GetLoopRel( int i1, int i2) const;
 
-// Boolean AddCond( const DomainCond &c) ;
-   int AddCond( const DomainCond &c) ;
-// Boolean operator |= (const DomainInfo &that);
-   int operator |= (const DomainInfo &that);
-// void UpdateDomainCond( Boolean (*Update)(DomainCond &info) );
-   void UpdateDomainCond( int (*Update)(DomainCond &info) );
+   bool AddCond( const DomainCond &c) ;
+   bool operator |= (const DomainInfo &that);
+   void UpdateDomainCond( bool (*Update)(DomainCond &info) );
 
-// Boolean IsTop() const;
-   int IsTop() const;
-// Boolean IsBottom() const;
-   int IsBottom() const;
-   std::string ToString() const;
+   bool IsTop() const;
+   bool IsBottom() const;
+   STD string toString() const;
 
    DomainCondConstIterator GetConstIterator() const;
    DomainCondUpdateIterator GetUpdateIterator();

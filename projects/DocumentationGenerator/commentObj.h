@@ -45,6 +45,7 @@ class DoxygenEntry
           std::string &prototype();
           bool hasBrief();
           std::string &brief();
+          void set_brief(std::string newString);
 
 		  //The decsription variable contains description and todo
           bool hasDescription();

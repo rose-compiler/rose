@@ -4,4 +4,4 @@
 /*!\fn virtual void FixupNullPointersInAST::visit(SgNode *node)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1925486616;
+extern int SAGE_Doxygen_Dummy_477389629;

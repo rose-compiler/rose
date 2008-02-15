@@ -2,7 +2,7 @@
 #ifndef COND_COMPSLICE
 #define COND_COMPSLICE
 
-#include <slicing/CompSlice.h>
+#include <CompSlice.h>
 
 class DynamicCompSlice  : public CompSlice
 {

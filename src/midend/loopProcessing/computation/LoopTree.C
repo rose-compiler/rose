@@ -1,4 +1,3 @@
-#include <general.h>
 #include <stdlib.h>
 
 #include <LoopTree.h>
@@ -9,13 +8,7 @@
 #include <LoopTransformInterface.h>
 #include <SymbolicBound.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
-Boolean LoopTreeLoopNode :: SelfRemove() 
+bool LoopTreeLoopNode :: SelfRemove() 
 { 
   LoopTreeGetVarBound f(this);
   if (ChildCount() == 0 || 
@@ -111,7 +104,7 @@ void LoopTreeCreate :: DetachObserver( LoopTreeObserver &o) const
 
 void LoopTreeCreate::AttachObserver( LoopTreeNode* n) const
 {
-  for (LoopTreeObserveImpl::Iterator p = impl->GetIterator(); 
+  for (LoopTreeObserveImpl::Iterator p = impl->GetObserverIterator(); 
        !p.ReachEnd(); ++p) {
      LoopTreeObserver* cur = *p;
      n->AttachObserver(*cur);
@@ -128,13 +121,13 @@ LoopTreeLoopNode( SymbolicVar _ivar,SymbolicVal _lb, SymbolicVal _ub,
 
 LoopTreeLoopNode::  
 LoopTreeLoopNode( LoopTransformInterface &fa, const AstNodePtr& l)
-    : LoopTreeNode(), orig(l), info(fa, l) 
+    : LoopTreeNode(), info(fa, l), orig(l) 
 {
   AttachObserver(*this);
 }
 
 LoopTreeLoopNode::LoopTreeLoopNode( const LoopTreeLoopNode& that) 
-        : LoopTreeNode(that), orig(that.orig), info(that.info) 
+        : LoopTreeNode(that), info(that.info), orig(that.orig) 
 {
   AttachObserver(*this);
 }
@@ -193,32 +186,24 @@ unsigned LoopTreeNode:: NumberOfObservers() const
 
 AstNodePtr LoopTreeNode :: CodeGen( LoopTransformInterface &la) const
 {
-  cerr << "LoopTreeNode::CodeGen start" << endl;
   AstInterface& fa = la;
-  AstNodePtr result = 0;
+  AstNodePtr result = AST_NULL;
   if (ChildCount() == 1) {
      result = FirstChild()->CodeGen(la);
   }
   else if (ChildCount() > 0) {
-     std::vector<AstNodePtr> children;
+     result = fa.CreateBlock();
      for (LoopTreeNode *child = FirstChild(); child != 0; 
           child = child->NextSibling()) {
-         children.push_back(child->CodeGen(la));
-     }
-     result = fa.CreateBasicBlock(); // This needs to not exist (because it has a NULL parent) when CodeGen is called for the children
-     for (size_t i = 0; i < children.size(); ++i) {
-         fa.BasicBlockAppendStmt(result, children[i]);
+         fa.BlockAppendStmt(result, child->CodeGen(la));
      }
   }
-  cerr << "LoopTreeNode::CodeGen before two-argument call " << result << endl;
-  AstNodePtr result2 = CodeGen(la, result); 
-  cerr << "LoopTreeNode::CodeGen end " << result << " -> " << result2 << endl;
-  return result2;
+  return CodeGen(la, result); 
 }
 
-string LoopTreeStmtNode :: ToString() const
+STD string LoopTreeStmtNode :: toString() const
 {
-  return AstInterface::AstToString( start );
+  return AstToString( start );
 }
 
 AstNodePtr LoopTreeStmtNode :: 
@@ -232,13 +217,17 @@ LoopInfo :: LoopInfo( LoopTransformInterface &fa, const AstNodePtr& ctrl)
 {
   bool succ = fa.IsFortranLoop(ctrl, &GetVar(), 
                                          &GetBound().lb, &GetBound().ub, &step);
-  if (!succ)
-     assert(false);
-  reverse = (step <= 0);
-  if (reverse) {
-     SymbolicBound b = GetBound();
-     GetBound().ub = b.lb;
-     GetBound().lb = b.ub;
+  if (!succ) {
+    succ = fa.IsLoop(ctrl, &GetBound().lb, &step, &GetBound().ub);
+    assert(succ);
+  }
+  else {
+    reverse = (step <= 0);
+    if (reverse) {
+       SymbolicBound c = GetBound();
+       GetBound().ub = c.lb;
+       GetBound().lb = c.ub;
+    }
   }
 }
 
@@ -248,38 +237,40 @@ LoopInfo:: LoopInfo( SymbolicVar ivar,SymbolicVal lb, SymbolicVal ub,
 { 
   reverse = (step <= 0); 
   if (reverse) {
-     SymbolicBound b = GetBound();
-     GetBound().ub = b.lb;
-     GetBound().lb = b.ub;
+     SymbolicBound c = GetBound();
+     GetBound().ub = c.lb;
+     GetBound().lb = c.ub;
   }
 }
 
-string LoopTreeLoopNode :: ToString() const
-{ return info.ToString(); }
+STD string LoopTreeLoopNode :: toString() const
+{ return info.toString(); }
 
 AstNodePtr LoopTreeLoopNode :: 
 CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
 {
   AstInterface& fa = la;
-  if (info.GetLoopUB() == info.GetLoopLB()) {       
-      AstNodePtr varGenerated = info.GetVar().CodeGen(fa);
-      AstNodePtr lbGenerated = info.GetLoopLB().CodeGen(fa);
-      AstNodePtr r =  fa.CreateBasicBlock();
-      fa.BasicBlockAppendStmt(r, 
-            fa.CreateAssignment(varGenerated, lbGenerated));
-      fa.BasicBlockAppendStmt(r, c);
+  if (info.GetVar().GetVarName() == "") {
+     return fa.CreateLoop(info.GetStep().CodeGen(fa), c);
+  }
+  else if (info.GetLoopUB() == info.GetLoopLB()) {       
+      AstNodePtr r =  fa.CreateBlock();
+      fa.BlockAppendStmt(r, 
+            fa.CreateAssignment(info.GetVar().CodeGen(fa),
+                                info.GetLoopLB().CodeGen(fa)));
+      fa.BlockAppendStmt(r, c);
       return r;
   }   
   else
       return fa.CreateLoop( info.GetVar().CodeGen(fa), 
                             info.GetLoopLB().CodeGen(fa),
                             info.GetLoopUB().CodeGen(fa), 
-                            info.GetStep().CodeGen(fa), c);
+                            info.GetStep().CodeGen(fa), c, info.ReverseEnum());
 }
 
-string LoopTreeNode :: TreeToString() const
+STD string LoopTreeNode :: TreeToString() const
 {
-  string res = ToString();
+  STD string res = toString();
   if (ChildCount() > 0) {
      for (LoopTreeNode *n = FirstChild(); n != 0; n = n->NextSibling()) {
         res = res + "\n" + n->TreeToString();
@@ -289,21 +280,21 @@ string LoopTreeNode :: TreeToString() const
   return res;
 }
 
-string LoopTreeRoot :: ToString() const
+STD string LoopTreeRoot :: toString() const
 {
   char buf[20];
   sprintf( buf, "%d", level);
-  return "LOOP_TREE_ROOT at level" + string(buf);
+  return "LOOP_TREE_ROOT at level" + STD string(buf);
 }
 
 
-Boolean LoopTreeNode :: ContainLoop() const
+bool LoopTreeNode :: ContainLoop() const
 {
   LoopTreeNode *r = const_cast<LoopTreeNode*>(this);
   return ! LoopTreeTraverseSelectLoop(r).ReachEnd();
 }
 
-Boolean LoopTreeNode :: IsPerfectLoopNest() const
+bool LoopTreeNode :: IsPerfectLoopNest() const
 {
   int level = 0;
   const LoopTreeNode *l=this; 

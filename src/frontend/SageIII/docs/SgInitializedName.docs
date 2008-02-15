@@ -306,139 +306,139 @@ pointing to the the original SgInitializedName object's data members.
 \brief Allocates a new storage modifier and sets the storage modifier to default values
 */
 /*!\fn virtual void SgInitializedName::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
-\description See  *attributeMechanism)
+\brief \brief See  *attributeMechanism)
 attributeMechanism for documentation */
 /*!\fn virtual void SgInitializedName::set_file_info(Sg_File_Info *X)
-\description See  *X)
+\brief \brief See  *X)
 file_info for documentation */
 /*!\fn void SgInitializedName::set_declptr(SgDeclarationStatement *declptr)
-\description See  *declptr)
+\brief \brief See  *declptr)
 declptr for documentation */
 /*!\fn void SgInitializedName::set_definition(SgDeclarationStatement *def)
-\description See  *def)
+\brief \brief See  *def)
 definition for documentation */
 /*!\fn void SgInitializedName::set_initializationDeferred(bool initializationDeferred)
-\description See  initializationDeferred)
+\brief \brief See  initializationDeferred)
 initializationDeferred for documentation */
 /*!\fn void SgInitializedName::set_initializer(SgInitializer *i)
-\description See  *i)
+\brief \brief See  *i)
 initializer for documentation */
 /*!\fn void SgInitializedName::set_initptr(SgInitializer *initptr)
-\description See  *initptr)
+\brief \brief See  *initptr)
 initptr for documentation */
 /*!\fn void SgInitializedName::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgInitializedName::set_preinitialization(enum SgInitializedName::preinitialization_enum preinitialization)
-\description See  preinitialization)
+\brief \brief See  preinitialization)
 preinitialization for documentation */
 /*!\fn void SgInitializedName::set_prev_decl_item(SgInitializedName *prev_decl_item)
-\description See  *prev_decl_item)
+\brief \brief See  *prev_decl_item)
 prev_decl_item for documentation */
 /*!\fn void SgInitializedName::set_register_name_code(enum SgInitializedName::asm_register_name_enum register_name_code)
-\description See  register_name_code)
+\brief \brief See  register_name_code)
 register_name_code for documentation */
 /*!\fn void SgInitializedName::set_register_name_string(std::string register_name_string)
-\description See  register_name_string)
+\brief \brief See  register_name_string)
 register_name_string for documentation */
 /*!\fn void SgInitializedName::set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType)
-\description See  requiresGlobalNameQualificationOnType)
+\brief \brief See  requiresGlobalNameQualificationOnType)
 requiresGlobalNameQualificationOnType for documentation */
 /*!\fn void SgInitializedName::set_scope(SgScopeStatement *scope)
-\description See  *scope)
+\brief \brief See  *scope)
 scope for documentation */
 /*!\fn void SgInitializedName::set_shapeDeferred(bool shapeDeferred)
-\description See  shapeDeferred)
+\brief \brief See  shapeDeferred)
 shapeDeferred for documentation */
 /*!\fn void SgInitializedName::set_startOfConstruct(Sg_File_Info *startOfConstruct)
-\description See  *startOfConstruct)
+\brief \brief See  *startOfConstruct)
 startOfConstruct for documentation */
 /*!\fn void SgInitializedName::set_type(SgType *t)
-\description See  *t)
+\brief \brief See  *t)
 type for documentation */
 /*!\fn void SgInitializedName::set_typeptr(SgType *typeptr)
-\description See  *typeptr)
+\brief \brief See  *typeptr)
 typeptr for documentation */
 /*!
 \fn SgDeclarationStatement *SgInitializedName::get_declaration() const
-\brief Equal operator : it checks if all the data members are the same or point to the same objects
+\brief Equal operator : it checks if all the data members are the same or point to the same objectsSee  const
+declaration for documentation 
 \returns Pointer to SgDeclarationStatement
-See  const
-declaration for documentation */
+*/
 /*!\fn SgDeclarationStatement *SgInitializedName::get_declptr() const
-\description See  const
+\brief \brief See  const
 declptr for documentation */
 /*!\fn SgDeclarationStatement *SgInitializedName::get_definition() const
-\description See  const
+\brief \brief See  const
 definition for documentation */
 /*!\fn SgInitializedName *SgInitializedName::get_prev_decl_item() const
-\description See  const
+\brief \brief See  const
 prev_decl_item for documentation */
 /*!\fn SgInitializer *SgInitializedName::get_initializer() const
-\description See  const
+\brief \brief See  const
 initializer for documentation */
 /*!\fn SgInitializer *SgInitializedName::get_initptr() const
-\description See  const
+\brief \brief See  const
 initptr for documentation */
 /*!\fn SgName SgInitializedName::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgScopeStatement *SgInitializedName::get_scope() const
-\description See  const
+\brief \brief See  const
 scope for documentation */
 /*!
 \fn SgStorageModifier &SgInitializedName::get_storageModifier()
-\brief returns a reference to the storage modifier
-See  &SgInitializedName::storageModifier for documentation */
+\brief returns a reference to the storage modifierSee  &SgInitializedName::storageModifier for documentation 
+*/
 /*!\fn SgType *SgInitializedName::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn SgType *SgInitializedName::get_typeptr() const
-\description See  const
+\brief \brief See  const
 typeptr for documentation */
 /*!\fn bool SgInitializedName::get_initializationDeferred() const
-\description See  const
+\brief \brief See  const
 initializationDeferred for documentation */
 /*!\fn bool SgInitializedName::get_requiresGlobalNameQualificationOnType() const
-\description See  const
+\brief \brief See  const
 requiresGlobalNameQualificationOnType for documentation */
 /*!\fn bool SgInitializedName::get_shapeDeferred() const
-\description See  const
+\brief \brief See  const
 shapeDeferred for documentation */
 /*!\fn enum SgInitializedName::asm_register_name_enum SgInitializedName::get_register_name_code() const
-\description See  const
+\brief \brief See  const
 register_name_code for documentation */
 /*!\fn enum SgInitializedName::preinitialization_enum SgInitializedName::get_preinitialization() const
-\description See  const
+\brief \brief See  const
 preinitialization for documentation */
 /*!\fn std::string SgInitializedName::get_register_name_string() const
-\description See  const
+\brief \brief See  const
 register_name_string for documentation */
 /*!\fn virtual AstAttributeMechanism *SgInitializedName::get_attributeMechanism() const
-\description See  const
+\brief \brief See  const
 attributeMechanism for documentation */
 /*!\fn virtual SgName SgInitializedName::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgInitializedName::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual Sg_File_Info *SgInitializedName::get_file_info() const
-\description See  const
+\brief \brief See  const
 file_info for documentation */
 /*!\fn virtual Sg_File_Info *SgInitializedName::get_startOfConstruct() const
-\description See  const
+\brief \brief See  const
 startOfConstruct for documentation */
 /*!\fn virtual size_t SgInitializedName::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgInitializedName::get_numberOfTraversalSuccessors()
-\description See  SgInitializedName::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgInitializedName::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgInitializedName::get_traversalSuccessorContainer()
-\description See  SgInitializedName::traversalSuccessorContainer for documentation */
+\brief \brief See  SgInitializedName::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgInitializedName::get_traversalSuccessorNamesContainer()
-\description See  SgInitializedName::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgInitializedName::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgInitializedName::SgInitializedName()
 */
 //@}
-int SAGE_Doxygen_Dummy_219111949121657;
+int SAGE_Doxygen_Dummy_194862206317986;

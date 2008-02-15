@@ -188,6 +188,60 @@ HEADER_BINARY_FILE_START
                e_machine_architecture_last
              };
 
+       // DQ (2/11/2008): Added support for Windows binaries
+          enum pe_processor_architecture_enum
+             {
+               e_processor_architecture_error   = 0,
+               e_processor_architecture_unknown = 1,
+               e_processor_architecture_none    = 2,
+               e_processor_architecture_INTEL   = 3,
+               e_processor_architecture_MIPS    = 4,
+               e_processor_architecture_ALPHA   = 5,
+               e_processor_architecture_PPC     = 6,
+               e_processor_architecture_SHX     = 7,
+               e_processor_architecture_ARM     = 8,
+               e_processor_architecture_IA64    = 9,
+               e_processor_architecture_ALPHA64 = 10,
+               e_processor_architecture_MSIL    = 11,
+               e_processor_architecture_AMD64   = 12,
+               e_processor_architecture_UNKNOWN = 13,
+               e_processor_architecture_last
+             };
+
+       // DQ (2/11/2008): Added support for Windows binaries
+          enum pe_processor_type_enum
+             {
+               e_processor_type_error         = 0,
+               e_processor_type_unknown       = 1,
+               e_processor_type_none          = 2,
+               e_processor_type_INTEL_386     = 3,
+               e_processor_type_INTEL_486     = 4,
+               e_processor_type_INTEL_PENTIUM = 5,
+               e_processor_type_INTEL_860     = 6,
+               e_processor_type_INTEL_IA64    = 7,
+               e_processor_type_AMD_X8664     = 8,
+               e_processor_type_MIPS_R2000    = 9,
+               e_processor_type_MIPS_R3000    = 10,
+               e_processor_type_MIPS_R4000    = 11,
+               e_processor_type_ALPHA_21064   = 12,
+               e_processor_type_PPC_601       = 13,
+               e_processor_type_PPC_603       = 14,
+               e_processor_type_PPC_604       = 15,
+               e_processor_type_PPC_620       = 16,
+               e_processor_type_HITACHI_SH3   = 17,
+               e_processor_type_HITACHI_SH3E  = 18,
+               e_processor_type_HITACHI_SH4   = 19,
+               e_processor_type_MOTOROLA_821  = 20,
+               e_processor_type_SHx_SH3       = 21,
+               e_processor_type_SHx_SH4       = 22,
+               e_processor_type_STRONGARM     = 23,
+               e_processor_type_ARM720        = 24,
+               e_processor_type_ARM820        = 25,
+               e_processor_type_ARM920        = 26,
+               e_processor_type_ARM_7TDMI     = 27,
+               e_processor_type_last
+             };
+
 
 HEADER_BINARY_FILE_END
 

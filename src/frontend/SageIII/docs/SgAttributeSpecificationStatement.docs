@@ -24,6 +24,8 @@
 */
 /*!\fn SgAttributeSpecificationStatement::SgAttributeSpecificationStatement(const SgAttributeSpecificationStatementStorageClass &source)
 */
+/*!\fn SgSymbol *SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
+*/
 /*!\fn inline static void SgAttributeSpecificationStatement::operator delete(void *pointer)
 */
 /*!\fn static SgAttributeSpecificationStatement *SgAttributeSpecificationStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
@@ -46,57 +48,63 @@
 */
 /*!\fn virtual SgNode *SgAttributeSpecificationStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAttributeSpecificationStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAttributeSpecificationStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgAttributeSpecificationStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgAttributeSpecificationStatement::post_construction_initialization()
 */
 /*!\fn void SgAttributeSpecificationStatement::set_attribute_kind(enum SgAttributeSpecificationStatement::attribute_spec_enum attribute_kind)
-\description See  attribute_kind)
+\brief \brief See  attribute_kind)
 attribute_kind for documentation */
 /*!\fn void SgAttributeSpecificationStatement::set_bind_list(SgExprListExp *bind_list)
-\description See  *bind_list)
+\brief \brief See  *bind_list)
 bind_list for documentation */
 /*!\fn void SgAttributeSpecificationStatement::set_intent(int intent)
-\description See  intent)
+\brief \brief See  intent)
 intent for documentation */
 /*!\fn void SgAttributeSpecificationStatement::set_parameter_list(SgExprListExp *parameter_list)
-\description See  *parameter_list)
+\brief \brief See  *parameter_list)
 parameter_list for documentation */
 /*!\fn SgDataStatementGroupPtrList &SgAttributeSpecificationStatement::get_data_statement_group_list()
-\description See  &SgAttributeSpecificationStatement::data_statement_group_list for documentation */
+\brief \brief See  &SgAttributeSpecificationStatement::data_statement_group_list for documentation */
 /*!\fn SgDimensionObjectPtrList &SgAttributeSpecificationStatement::get_dimension_object_list()
-\description See  &SgAttributeSpecificationStatement::dimension_object_list for documentation */
+\brief \brief See  &SgAttributeSpecificationStatement::dimension_object_list for documentation */
 /*!\fn SgExprListExp *SgAttributeSpecificationStatement::get_bind_list() const
-\description See  const
+\brief \brief See  const
 bind_list for documentation */
 /*!\fn SgExprListExp *SgAttributeSpecificationStatement::get_parameter_list() const
-\description See  const
+\brief \brief See  const
 parameter_list for documentation */
 /*!\fn SgStringList &SgAttributeSpecificationStatement::get_name_list()
-\description See  &SgAttributeSpecificationStatement::name_list for documentation */
+\brief \brief See  &SgAttributeSpecificationStatement::name_list for documentation */
 /*!\fn const SgStringList &SgAttributeSpecificationStatement::get_name_list() const
-\description See  const
+\brief \brief See  const
 name_list for documentation */
 /*!\fn enum SgAttributeSpecificationStatement::attribute_spec_enum SgAttributeSpecificationStatement::get_attribute_kind() const
-\description See  const
+\brief \brief See  const
 attribute_kind for documentation */
 /*!\fn int SgAttributeSpecificationStatement::get_intent() const
-\description See  const
+\brief \brief See  const
 intent for documentation */
 /*!\fn virtual SgName SgAttributeSpecificationStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgAttributeSpecificationStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAttributeSpecificationStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAttributeSpecificationStatement::get_numberOfTraversalSuccessors()
-\description See  SgAttributeSpecificationStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAttributeSpecificationStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAttributeSpecificationStatement::get_traversalSuccessorContainer()
-\description See  SgAttributeSpecificationStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAttributeSpecificationStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAttributeSpecificationStatement::get_traversalSuccessorNamesContainer()
-\description See  SgAttributeSpecificationStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAttributeSpecificationStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAttributeSpecificationStatement::SgAttributeSpecificationStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_965517889;
+extern int SAGE_Doxygen_Dummy_2027065112;

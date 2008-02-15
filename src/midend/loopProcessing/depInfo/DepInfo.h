@@ -17,7 +17,7 @@ typedef enum { DEPTYPE_NONE = 0, DEPTYPE_TRUE = 1, DEPTYPE_ANTI = 2,
                DEPTYPE_INPUT = 32, DEPTYPE_ARRAY = 39, 
                DEPTYPE_IO = 64, DEPTYPE_DATA = 95, DEPTYPE_CTRL = 128, DEPTYPE_BACKCTRL = 256,
                DEPTYPE_ALL = 479, DEPTYPE_TRANS = 512} DepType;
-std::string DepType2String( DepType t);
+STD string DepType2String( DepType t);
 typedef enum {DEP_SRC = 1, DEP_SINK = 2, DEP_SRC_SINK = 3} DepDirection;
 
 typedef Matrix<DepRel> DepEDD;
@@ -25,8 +25,7 @@ typedef Matrix<DepRel> DepEDD;
 class DepInfoImpl 
 {
    DepEDD edd;
-// Boolean precise;
-   int precise;
+   bool precise;
    int commonlevel;
  protected:
    virtual ~DepInfoImpl() {}
@@ -46,15 +45,14 @@ class DepInfoImpl
 
    int CommonLevel() const {  return commonlevel; }
    int& CommonLevel()  {  return commonlevel; }
-// Boolean is_precise() const { return precise; }
-   int is_precise() const { return precise; }
+   bool is_precise() const { return precise; }
    void set_precise() { precise = true; }
 
    virtual DepInfoImpl* Clone() const 
      { return new DepInfoImpl(*this); }
    virtual DepType GetDepType() const { return DEPTYPE_NONE; }
-   virtual AstNodePtr SrcRef() const { return 0; }
-   virtual AstNodePtr SnkRef() const { return 0; }
+   virtual AstNodePtr SrcRef() const { return AST_NULL; }
+   virtual AstNodePtr SnkRef() const { return AST_NULL; }
 
    void Reset(int srcdim, int snkdim) { edd.Reset(srcdim, snkdim); }
    void Initialize(  const DepRel &init) { edd.Initialize(init); }
@@ -75,13 +73,16 @@ class DepInfo : protected CountRefHandle <DepInfoImpl>
   DepInfo( const DepInfo &that) : CountRefHandle<DepInfoImpl>(that) {}
   DepInfo & operator = (const DepInfo &that)
     { CountRefHandle <DepInfoImpl>::operator =(that); return *this; }
+  const DepInfo* operator->() const { return this; }
+  DepInfo* operator->() { return this; }
+
 
   int rows() const { return (ConstPtr() == 0)? 0 : ConstRef().rows(); }
   int cols() const { return (ConstPtr() == 0)? 0 : ConstRef().cols(); }
   DepType GetDepType() const  
     { return (ConstPtr()==0)? DEPTYPE_NONE: ConstRef().GetDepType(); }
-  AstNodePtr SrcRef() const { return (ConstPtr()==0)?0:ConstRef().SrcRef(); }
-  AstNodePtr SnkRef() const { return (ConstPtr()==0)?0:ConstRef().SnkRef(); }
+  AstNodePtr SrcRef() const { return (ConstPtr()==0)?AST_NULL:ConstRef().SrcRef(); }
+  AstNodePtr SnkRef() const { return (ConstPtr()==0)?AST_NULL:ConstRef().SnkRef(); }
   int CommonLevel() const { return  (ConstPtr()==0)?-1:ConstRef().CommonLevel(); }
 
   int& CommonLevel() { return  UpdateRef().CommonLevel(); }
@@ -94,37 +95,25 @@ class DepInfo : protected CountRefHandle <DepInfoImpl>
   const DepEDD& GetEDD() const { return ConstRef().GetEDD(); }
   void Initialize( const DepRel &init) { UpdateRef().Initialize(init); }
 
-  void Dump() const { std::cerr << ToString() << std::endl; }
-  std::string ToString() const;
+  void Dump() const { STD cerr << toString() << STD endl; }
+  STD string toString() const;
   void CarryLevels( int &minLevel, int &maxLevel) const;
   int CarryLevel() const;
-//Boolean IsTop( ) const;
-  int IsTop( ) const;
-//Boolean IsBottom( int level = 0 ) const;
-  int IsBottom( int level = 0 ) const;
-//Boolean IsID() const;
-  int IsID() const;
-//Boolean is_precise() const { return (ConstPtr() == 0)? true : ConstRef().is_precise(); }
-  int is_precise() const { return (ConstPtr() == 0)? true : ConstRef().is_precise(); }
+  bool IsTop( ) const;
+  bool IsBottom( int level = 0 ) const;
+  bool IsID() const;
+  bool is_precise() const { return (ConstPtr() == 0)? true : ConstRef().is_precise(); }
   void set_precise() { UpdateRef().set_precise(); }
 
-//Boolean operator &= ( const DepInfo &d2);
-  int operator &= ( const DepInfo &d2);
-//Boolean operator |= ( const DepInfo &d2);
-  int operator |= ( const DepInfo &d2);
-//Boolean operator *= (const DepInfo& d2);
-  int operator *= (const DepInfo& d2);
-//Boolean ClosureEntries();
-  int ClosureEntries();
+  bool operator &= ( const DepInfo &d2);
+  bool operator |= ( const DepInfo &d2);
+  bool operator *= (const DepInfo& d2);
+  bool ClosureEntries();
 
-//Boolean operator <= ( const DepInfo &d2) const ;
-  int operator <= ( const DepInfo &d2) const ;
-//Boolean operator < ( const DepInfo &d2) const ;
-  int operator < ( const DepInfo &d2) const ;
-//Boolean operator == (const DepInfo &d) const;
-  int operator == (const DepInfo &d) const;
-//Boolean operator != (const DepInfo &d) const { return ! operator ==(d); }
-  int operator != (const DepInfo &d) const { return ! operator ==(d); }
+  bool operator <= ( const DepInfo &d2) const ;
+  bool operator < ( const DepInfo &d2) const ;
+  bool operator == (const DepInfo &d) const;
+  bool operator != (const DepInfo &d) const { return ! operator ==(d); }
   void InsertLoop( int level, DepDirection dir);
   void RemoveLoop( int level, DepDirection dir);
   void DistLoop( int level);
@@ -136,10 +125,8 @@ class DepInfo : protected CountRefHandle <DepInfoImpl>
  friend class DepInfoGenerator;
 };
 
-// inline Boolean IsNIL(const DepInfo &info) { return info.IsTop(); }
-inline int IsNIL(const DepInfo &info) { return info.IsTop(); }
-// Boolean IsValidDep( const DepInfo &info, int commLevel);
-int IsValidDep( const DepInfo &info, int commLevel);
+inline bool IsNIL(const DepInfo &info) { return info.IsTop(); }
+bool IsValidDep( const DepInfo &info, int commLevel);
 typedef IteratorImpl<DepInfo> DepInfoConstIteratorImpl;
 typedef IteratorImpl<DepInfo&> DepInfoUpdateIteratorImpl;
 typedef IteratorWrap<DepInfo,DepInfoConstIteratorImpl> DepInfoConstIterator;

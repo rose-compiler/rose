@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmArmBl
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmArmBl::SgAsmArmBl(const SgAsmArmBlStorageClass &source)
+*/
+/*!\fn inline static void SgAsmArmBl::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmArmBl *SgAsmArmBl::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmArmBl::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmArmBl::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmArmBl::initializeStorageClassArray(SgAsmArmBlStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmArmBl::clearMemoryPool()
+*/
+/*!\fn static void SgAsmArmBl::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmArmBl::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmArmBl::roseRTI()
+*/
+/*!\fn virtual SgAsmArmBl::~SgAsmArmBl()
+*/
+/*!\fn virtual SgNode *SgAsmArmBl::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmArmBl::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmArmBl::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmArmBl::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmArmBl::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmArmBl::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmArmBl::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmArmBl::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmArmBl::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmArmBl::SgAsmArmBl(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1064122399;

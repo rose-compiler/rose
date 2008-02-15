@@ -77,24 +77,24 @@ left hand side value (lvalue).
 /*!\fn virtual void SgValueExp::post_construction_initialization()
 */
 /*!\fn void SgValueExp::set_originalExpressionTree(SgExpression *originalExpressionTree)
-\description See  *originalExpressionTree)
+\brief \brief See  *originalExpressionTree)
 originalExpressionTree for documentation */
 /*!\fn SgExpression *SgValueExp::get_originalExpressionTree() const
-\description See  const
+\brief \brief See  const
 originalExpressionTree for documentation */
 /*!\fn virtual SgNode *SgValueExp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgValueExp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgValueExp::get_numberOfTraversalSuccessors()
-\description See  SgValueExp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgValueExp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgValueExp::get_traversalSuccessorContainer()
-\description See  SgValueExp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgValueExp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgValueExp::get_traversalSuccessorNamesContainer()
-\description See  SgValueExp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgValueExp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgValueExp::SgValueExp()
 */
 //@}
-int SAGE_Doxygen_Dummy_307082843024887;
+int SAGE_Doxygen_Dummy_3084119584051;

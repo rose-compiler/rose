@@ -34,18 +34,18 @@
 /*!\fn virtual void SgAddOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgAddOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAddOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAddOp::get_numberOfTraversalSuccessors()
-\description See  SgAddOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAddOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAddOp::get_traversalSuccessorContainer()
-\description See  SgAddOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAddOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAddOp::get_traversalSuccessorNamesContainer()
-\description See  SgAddOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAddOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAddOp::SgAddOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_605888323;
+extern int SAGE_Doxygen_Dummy_1076154873;

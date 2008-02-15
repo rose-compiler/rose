@@ -3,16 +3,17 @@
 #define OBSERVE_OBJECT
 
 #include <assert.h>
-#include <iostream>
 #include <PtrSet.h>
+#include <string>
+
+#define STD std::
 
 template <class Observer>
 class ObserveInfo
 {
  public:
-  virtual ~ObserveInfo() {};
   virtual void UpdateObserver( Observer& o) const = 0;
-  virtual void Dump() {};
+  virtual STD string toString() { return ""; };
 };
 
 template <class Observer>
@@ -21,18 +22,18 @@ class ObserveObject
     typedef PtrSetWrap<Observer> ObSetType;
     ObSetType obList;
   public:
-    typedef typename PtrSetWrap<Observer>::Iterator Iterator;
+    typedef typename PtrSetWrap<Observer>::const_iterator Iterator;
     virtual ~ObserveObject() {}
     void AttachObserver( Observer *o)
         { assert(!obList.IsMember(o) );
-          obList.Add( o ); }
+          obList.insert( o ); }
     void DetachObserver( Observer *o)
-        { obList.Delete( o ); }
+        { obList.erase( o ); }
 
-    Iterator GetIterator() const { return obList.GetIterator(); }
+    Iterator GetObserverIterator() const { return obList.begin(); }
     void Notify( const ObserveInfo<Observer> &info) 
        {
-        Iterator p = obList.GetIterator();
+        Iterator p = obList.begin();
         Observer* o = 0;
         while ( !p.ReachEnd() ) {
            o = *p;

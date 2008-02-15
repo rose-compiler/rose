@@ -1531,6 +1531,16 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
 
 #include "elf.h"
 
+// DQ (2/11/2008): Added support for reading binaries.
+// Note that there is a redundant use of the SelectObject name so I have placed the Wine header files into a namespace.
+//      ROSE/src/util/support/FunctionObject.h:5: error: previous declaration of `template<class T> class SelectObject'
+// We are using the Wine project and their header files to handle the details of the structure of Windows binaries.
+namespace Rose_Wine
+   {
+// I have modified the win.h file to change the data member "class" to "window_class" (see note in win.h).
+#include "win.h"
+   }
+
 bool
 isBinaryExecutableFile ( string sourceFilename )
    {
@@ -1545,7 +1555,10 @@ isBinaryExecutableFile ( string sourceFilename )
         }
 
      int character0 = fgetc(f);
-     if (character0 == 127)
+
+  // The first character of an ELF binary is '\127' and for a PE binary it is 'M'
+  // if (character0 == 127)
+     if (character0 == 127 || character0 == 77)
         {
           returnValue = true;
         }
@@ -1554,6 +1567,92 @@ isBinaryExecutableFile ( string sourceFilename )
 
       return returnValue;
     }
+
+
+
+string
+processorArchitectureName (SgAsmFile::pe_processor_architecture_enum processor_architecture_kind)
+   {
+  // This function supports the Portable Execution binary format (PE) used in Windows binaries.
+  // PE format is a variation of the COFF format used by IBM and others.
+
+     string s;
+
+     switch (processor_architecture_kind)
+        {
+          case SgAsmFile::e_processor_architecture_none:    s = "No machine"; break;
+          case SgAsmFile::e_processor_architecture_INTEL:   s = "INTEL";      break;
+          case SgAsmFile::e_processor_architecture_MIPS:    s = "MIPS";       break;
+          case SgAsmFile::e_processor_architecture_ALPHA:   s = "ALPHA";      break;
+          case SgAsmFile::e_processor_architecture_PPC:     s = "PPC";        break;
+          case SgAsmFile::e_processor_architecture_SHX:     s = "SHX";        break;
+          case SgAsmFile::e_processor_architecture_ARM:     s = "ARM";        break;
+          case SgAsmFile::e_processor_architecture_IA64:    s = "IA64";       break;
+          case SgAsmFile::e_processor_architecture_ALPHA64: s = "ALPHA64";    break;
+          case SgAsmFile::e_processor_architecture_MSIL:    s = "MSIL";       break;
+          case SgAsmFile::e_processor_architecture_AMD64:   s = "AMD64";      break;
+          case SgAsmFile::e_processor_architecture_UNKNOWN: s = "UNKNOWN";    break;
+
+          default:
+             {
+               s = "error";
+
+               printf ("Error: default reach for processor_architecture_type = %d \n",processor_architecture_kind);
+             }
+        }
+
+     return s;
+   }
+
+string
+processorTypeName (SgAsmFile::pe_processor_type_enum processor_type_kind)
+   {
+  // This function supports the Portable Execution binary format (PE) used in Windows binaries.
+  // PE format is a variation of the COFF format used by IBM and others.
+
+     string s;
+
+     switch (processor_type_kind)
+        {
+          case SgAsmFile::e_processor_type_none:          s = "No machine";    break;
+          case SgAsmFile::e_processor_type_INTEL_386:     s = "INTEL_386";     break;
+          case SgAsmFile::e_processor_type_INTEL_486:     s = "INTEL_486";     break;
+          case SgAsmFile::e_processor_type_INTEL_PENTIUM: s = "INTEL_PENTIUM"; break;
+          case SgAsmFile::e_processor_type_INTEL_860:     s = "INTEL_860";     break;
+          case SgAsmFile::e_processor_type_INTEL_IA64:    s = "INTEL_IA64";    break;
+          case SgAsmFile::e_processor_type_AMD_X8664:     s = "AMD_X8664";     break;
+          case SgAsmFile::e_processor_type_MIPS_R2000:    s = "MIPS_R2000";    break;
+          case SgAsmFile::e_processor_type_MIPS_R3000:    s = "MIPS_R3000";    break;
+          case SgAsmFile::e_processor_type_MIPS_R4000:    s = "MIPS_R4000";    break;
+          case SgAsmFile::e_processor_type_ALPHA_21064:   s = "ALPHA_21064";   break;
+          case SgAsmFile::e_processor_type_PPC_601:       s = "PPC_601";       break;
+          case SgAsmFile::e_processor_type_PPC_603:       s = "PPC_603";       break;
+          case SgAsmFile::e_processor_type_PPC_604:       s = "PPC_604";       break;
+          case SgAsmFile::e_processor_type_PPC_620:       s = "PPC_620";       break;
+          case SgAsmFile::e_processor_type_HITACHI_SH3:   s = "HITACHI_SH3";   break;
+          case SgAsmFile::e_processor_type_HITACHI_SH3E:  s = "HITACHI_SH3E";  break;
+          case SgAsmFile::e_processor_type_HITACHI_SH4:   s = "HITACHI_SH4";   break;
+          case SgAsmFile::e_processor_type_MOTOROLA_821:  s = "MOTOROLA_821";  break;
+          case SgAsmFile::e_processor_type_SHx_SH3:       s = "SHx_SH3";       break;
+          case SgAsmFile::e_processor_type_SHx_SH4:       s = "SHx_SH4";       break;
+          case SgAsmFile::e_processor_type_STRONGARM:     s = "STRONGARM";     break;
+          case SgAsmFile::e_processor_type_ARM720:        s = "ARM720";        break;
+          case SgAsmFile::e_processor_type_ARM820:        s = "ARM820";        break;
+          case SgAsmFile::e_processor_type_ARM920:        s = "ARM920";        break;
+          case SgAsmFile::e_processor_type_ARM_7TDMI:     s = "ARM_7TDMI";     break;
+
+          default:
+             {
+               s = "error";
+
+               printf ("Error: default reach for processor_type_type = %d \n",processor_type_kind);
+             }
+        }
+
+     return s;
+   }
+
+
 
 string
 machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_architecture_kind)
@@ -1649,9 +1748,431 @@ machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_archit
      return s;
    }
 
+void
+generateBinaryExecutableFileInformation_Windows ( string sourceFilename, SgAsmFile* asmFile )
+   {
+     ROSE_ASSERT(asmFile != NULL);
+
+     ROSE_ASSERT(isBinaryExecutableFile(sourceFilename) == true);
+
+  // Open file for reading
+     FILE* f = fopen(sourceFilename.c_str(), "r");
+     if (!f)
+        {
+          printf ("Could not open binary file = %s \n",sourceFilename.c_str());
+          ROSE_ASSERT(false);
+        }
+
+     int firstCharacter = fgetc(f);
+
+     printf ("In generateBinaryExecutableFileInformation_Windows(): firstCharacter = %d \n",firstCharacter);
+     ROSE_ASSERT(firstCharacter == 77);
+
+  // This is likely a binary executable
+  // fread(void *ptr, size_t size_of_elements, size_t number_of_elements, FILE *a_file);
+
+#if 0
+// This is the MSDOS header
+typedef struct _IMAGE_DOS_HEADER {
+    WORD  e_magic;      /* 00: MZ Header signature */
+    WORD  e_cblp;       /* 02: Bytes on last page of file */
+    WORD  e_cp;         /* 04: Pages in file */
+    WORD  e_crlc;       /* 06: Relocations */
+    WORD  e_cparhdr;    /* 08: Size of header in paragraphs */
+    WORD  e_minalloc;   /* 0a: Minimum extra paragraphs needed */
+    WORD  e_maxalloc;   /* 0c: Maximum extra paragraphs needed */
+    WORD  e_ss;         /* 0e: Initial (relative) SS value */
+    WORD  e_sp;         /* 10: Initial SP value */
+    WORD  e_csum;       /* 12: Checksum */
+    WORD  e_ip;         /* 14: Initial IP value */
+    WORD  e_cs;         /* 16: Initial (relative) CS value */
+    WORD  e_lfarlc;     /* 18: File address of relocation table */
+    WORD  e_ovno;       /* 1a: Overlay number */
+    WORD  e_res[4];     /* 1c: Reserved words */
+    WORD  e_oemid;      /* 24: OEM identifier (for e_oeminfo) */
+    WORD  e_oeminfo;    /* 26: OEM information; e_oemid specific */
+    WORD  e_res2[10];   /* 28: Reserved words */
+    DWORD e_lfanew;     /* 3c: Offset to extended header */
+} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
+#endif
+
+  // The first x3c bytes are the MS-DOS header, the last word is the offset to the PE header (extended header)
+     Rose_Wine::IMAGE_DOS_HEADER msdos_header;
+     char* msdos_header_array = (char*) &msdos_header;
+
+     msdos_header_array[0]  = firstCharacter;
+
+     int msdos_header_value = 0;
+     int msdos_header_size = sizeof(Rose_Wine::IMAGE_DOS_HEADER);
+     ROSE_ASSERT(msdos_header_size == 64);
+     int i = 1;
+     do {
+          msdos_header_value = fgetc(f);
+          msdos_header_array[i]  = msdos_header_value;
+          i++;
+        }
+  // while (i <= msdos_header_size && msdos_header_value != EOF);
+     while (i < msdos_header_size && msdos_header_value != EOF);
+
+     printf ("msdos_header.e_magic    = %d \n",(int)msdos_header.e_magic);
+     printf ("msdos_header.e_cblp     = %d \n",(int)msdos_header.e_cblp);
+     printf ("msdos_header.e_cp       = %d \n",(int)msdos_header.e_cp);
+     printf ("msdos_header.e_crlc     = %d \n",(int)msdos_header.e_crlc);
+     printf ("msdos_header.e_cparhdr  = %d \n",(int)msdos_header.e_cparhdr);
+     printf ("msdos_header.e_minalloc = %d \n",(int)msdos_header.e_minalloc);
+     printf ("msdos_header.e_maxalloc = %d \n",(int)msdos_header.e_maxalloc);
+     printf ("msdos_header.e_ss       = %d \n",(int)msdos_header.e_ss);
+     printf ("msdos_header.e_sp       = %d \n",(int)msdos_header.e_sp);
+     printf ("msdos_header.e_csum     = %d \n",(int)msdos_header.e_csum);
+     printf ("msdos_header.e_ip       = %d \n",(int)msdos_header.e_ip);
+     printf ("msdos_header.e_cs       = %d \n",(int)msdos_header.e_cs);
+     printf ("msdos_header.e_lfarlc   = %d \n",(int)msdos_header.e_lfarlc);
+     printf ("msdos_header.e_ovno     = %d \n",(int)msdos_header.e_ovno);
+     printf ("msdos_header.e_res[0]   = %d \n",(int)msdos_header.e_res[0]);
+     printf ("msdos_header.e_res[1]   = %d \n",(int)msdos_header.e_res[1]);
+     printf ("msdos_header.e_res[2]   = %d \n",(int)msdos_header.e_res[2]);
+     printf ("msdos_header.e_res[3]   = %d \n",(int)msdos_header.e_res[3]);
+     printf ("msdos_header.e_oemid    = %d \n",(int)msdos_header.e_oemid);
+     printf ("msdos_header.e_oeminfo  = %d \n",(int)msdos_header.e_oeminfo);
+     printf ("msdos_header.e_res2[0]  = %d \n",(int)msdos_header.e_res2[0]);
+     printf ("msdos_header.e_res2[1]  = %d \n",(int)msdos_header.e_res2[1]);
+     printf ("msdos_header.e_res2[2]  = %d \n",(int)msdos_header.e_res2[2]);
+     printf ("msdos_header.e_res2[3]  = %d \n",(int)msdos_header.e_res2[3]);
+     printf ("msdos_header.e_res2[4]  = %d \n",(int)msdos_header.e_res2[4]);
+     printf ("msdos_header.e_res2[5]  = %d \n",(int)msdos_header.e_res2[5]);
+     printf ("msdos_header.e_res2[6]  = %d \n",(int)msdos_header.e_res2[6]);
+     printf ("msdos_header.e_res2[7]  = %d \n",(int)msdos_header.e_res2[7]);
+     printf ("msdos_header.e_res2[8]  = %d \n",(int)msdos_header.e_res2[8]);
+     printf ("msdos_header.e_res2[9]  = %d \n",(int)msdos_header.e_res2[9]);
+     printf ("msdos_header.e_lfanew   = %d \n",(int)msdos_header.e_lfanew);
+
+  // printf ("Exiting at base of generateBinaryExecutableFileInformation_Windows() after reading the msdos header \n");
+  // ROSE_ASSERT(false);
+
+     printf ("Read the file up to the PE header msdos_header.e_lfanew = %d \n",msdos_header.e_lfanew);
+
+     for (int i = msdos_header_size; i < msdos_header.e_lfanew; i++)
+        {
+          int value = fgetc(f);
+          ROSE_ASSERT(value != EOF);
+        }
+
+     printf ("Now read the PE header \n");
+
+  // Now read the PE header!
+
+     char characterArray [4+1];
+     for (int i=0; i < 4; i++)
+          characterArray[i] = 'X';
+     characterArray[4] = '\0';
+
+  // string magic_number_string(char[EI_NIDENT]);
+     string magic_number_string = characterArray;
+  // printf ("magic_number_string.size() = %zu \n",magic_number_string.size());
+     ROSE_ASSERT(magic_number_string.size() == 4);
+
+     int pe_string[4] = { -1, -1, -1, -1 };
+     int magic_number_array[4];
+
+     magic_number_array [0] = firstCharacter;
+     magic_number_string[0] = (char)firstCharacter;
+
+     int magic_number_value = 0;
+     i = 0;
+     do {
+          magic_number_value     = fgetc(f);
+
+          printf ("magic_number_value = %d \n",magic_number_value);
+          char charValue = (char)magic_number_value;
+          if (charValue >= 'a' && charValue <= 'Z')
+               printf ("charValue = %c \n",charValue);
+
+          pe_string[i]           = magic_number_value;
+          magic_number_array[i]  = magic_number_value;
+          magic_number_string[i] = (char)magic_number_value;
+          i++;
+        }
+  // while (i <= 3 && magic_number_value != EOF);
+     while (i < 4 && magic_number_value != EOF);
+
+     ROSE_ASSERT(magic_number_value != EOF);
+
+  // The PE format has the string "PE\0\0" in the first 4 bytes.
+     if ( pe_string[0] == 'P' && pe_string[1] == 'E' && pe_string[2] == '\0' && pe_string[3] == '\0')
+        {
+          printf ("This is some sort of PE (likely Windows) binary executable \n");
+        }
+       else
+        {
+          printf ("Error: this is a binary, but not in COFF format \n");
+          ROSE_ASSERT(false);
+        }
+
+#if 0
+typedef struct _IMAGE_FILE_HEADER {
+  WORD  Machine;
+  WORD  NumberOfSections;
+  DWORD TimeDateStamp;
+  DWORD PointerToSymbolTable;
+  DWORD NumberOfSymbols;
+  WORD  SizeOfOptionalHeader;
+  WORD  Characteristics;
+} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
+#endif
+
+  // This needs to be referenced later (to get the number of sections)
+     Rose_Wine::IMAGE_FILE_HEADER coff_file_header;
+     char* coff_file_header_array = (char*) &coff_file_header;
+
+     int coff_file_header_value = 0;
+     int coff_file_header_size = sizeof(Rose_Wine::IMAGE_FILE_HEADER);
+  // ROSE_ASSERT(coff_file_header_size == 64);
+     i = 0;
+     do {
+          coff_file_header_value = fgetc(f);
+          coff_file_header_array[i]  = coff_file_header_value;
+          i++;
+        }
+  // while (i <= msdos_header_size && msdos_header_value != EOF);
+     while (i < coff_file_header_size && coff_file_header_value != EOF);
+
+     printf ("coff_file_header.Machine                = %d \n",(int)coff_file_header.Machine);
+     printf ("coff_file_header.NumberOfSections       = %d \n",(int)coff_file_header.NumberOfSections);
+     printf ("coff_file_header.TimeDateStamp          = %d \n",(int)coff_file_header.TimeDateStamp);
+
+  // Note that ctime() adds a "\n" at the end of the string that it returns.
+     printf ("coff_file_header.TimeDateStamp (string) = %s",ctime((const time_t*)&coff_file_header.TimeDateStamp));
+
+     printf ("coff_file_header.PointerToSymbolTable   = %d \n",(int)coff_file_header.PointerToSymbolTable);
+     printf ("coff_file_header.NumberOfSymbols        = %d \n",(int)coff_file_header.NumberOfSymbols);
+     printf ("coff_file_header.SizeOfOptionalHeader   = %d \n",(int)coff_file_header.SizeOfOptionalHeader);
+     printf ("coff_file_header.Characteristics        = %p \n",(void*)coff_file_header.Characteristics);
+
+
+  // Save the PE header in the SgAsmFile asmFile
+
+#if 0
+typedef struct _IMAGE_OPTIONAL_HEADER {
+
+  /* Standard fields */
+
+  WORD  Magic; /* 0x10b or 0x107 */	/* 0x00 */
+  BYTE  MajorLinkerVersion;
+  BYTE  MinorLinkerVersion;
+  DWORD SizeOfCode;
+  DWORD SizeOfInitializedData;
+  DWORD SizeOfUninitializedData;
+  DWORD AddressOfEntryPoint;		/* 0x10 */
+  DWORD BaseOfCode;
+  DWORD BaseOfData;
+
+  /* NT additional fields */
+
+  DWORD ImageBase;
+  DWORD SectionAlignment;		/* 0x20 */
+  DWORD FileAlignment;
+  WORD  MajorOperatingSystemVersion;
+  WORD  MinorOperatingSystemVersion;
+  WORD  MajorImageVersion;
+  WORD  MinorImageVersion;
+  WORD  MajorSubsystemVersion;		/* 0x30 */
+  WORD  MinorSubsystemVersion;
+  DWORD Win32VersionValue;
+  DWORD SizeOfImage;
+  DWORD SizeOfHeaders;
+  DWORD CheckSum;			/* 0x40 */
+  WORD  Subsystem;
+  WORD  DllCharacteristics;
+  DWORD SizeOfStackReserve;
+  DWORD SizeOfStackCommit;
+  DWORD SizeOfHeapReserve;		/* 0x50 */
+  DWORD SizeOfHeapCommit;
+  DWORD LoaderFlags;
+  DWORD NumberOfRvaAndSizes;
+  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES]; /* 0x60 */
+  /* 0xE0 */
+} IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
+#endif
+
+     Rose_Wine::IMAGE_OPTIONAL_HEADER32 coff_optional_header;
+     char* coff_optional_header_array = (char*) &coff_optional_header;
+
+     int coff_optional_header_value = 0;
+     int coff_optional_header_size = sizeof(Rose_Wine::IMAGE_OPTIONAL_HEADER32);
+
+     printf ("coff_optional_header_size = %d sizeof(Rose_Wine::IMAGE_OPTIONAL_HEADER32) = %d coff_file_header.SizeOfOptionalHeader = %d \n",
+          coff_optional_header_size,(int)sizeof(Rose_Wine::IMAGE_OPTIONAL_HEADER32),(int)coff_file_header.SizeOfOptionalHeader);
+
+     ROSE_ASSERT(coff_optional_header_size == coff_file_header.SizeOfOptionalHeader);
+
+     i = 0;
+     do {
+          coff_optional_header_value = fgetc(f);
+          coff_optional_header_array[i]  = coff_optional_header_value;
+          i++;
+        }
+     while (i < coff_optional_header_size && coff_optional_header_value != EOF);
+
+     printf ("coff_optional_header.Magic                       = %p \n",(int*)coff_optional_header.Magic);
+     printf ("coff_optional_header.MajorLinkerVersion          = %d \n",(int)coff_optional_header.MajorLinkerVersion);
+     printf ("coff_optional_header.MinorLinkerVersion          = %d \n",(int)coff_optional_header.MinorLinkerVersion);
+     printf ("coff_optional_header.SizeOfCode                  = %d \n",(int)coff_optional_header.SizeOfCode);
+     printf ("coff_optional_header.SizeOfInitializedData       = %d \n",(int)coff_optional_header.SizeOfInitializedData);
+     printf ("coff_optional_header.SizeOfUninitializedData     = %d \n",(int)coff_optional_header.SizeOfUninitializedData);
+     printf ("coff_optional_header.AddressOfEntryPoint         = %p \n",(int*)coff_optional_header.AddressOfEntryPoint);
+     printf ("coff_optional_header.BaseOfCode                  = %p \n",(int*)coff_optional_header.BaseOfCode);
+     printf ("coff_optional_header.BaseOfData                  = %d \n",(int)coff_optional_header.BaseOfData);
+     printf ("coff_optional_header.ImageBase                   = %p \n",(int*)coff_optional_header.ImageBase);
+     printf ("coff_optional_header.SectionAlignment            = %d \n",(int)coff_optional_header.SectionAlignment);
+     printf ("coff_optional_header.FileAlignment               = %d \n",(int)coff_optional_header.FileAlignment);
+     printf ("coff_optional_header.MajorOperatingSystemVersion = %d \n",(int)coff_optional_header.MajorOperatingSystemVersion);
+     printf ("coff_optional_header.MinorOperatingSystemVersion = %d \n",(int)coff_optional_header.MinorOperatingSystemVersion);
+     printf ("coff_optional_header.MajorImageVersion           = %d \n",(int)coff_optional_header.MajorImageVersion);
+     printf ("coff_optional_header.MinorSubsystemVersion       = %d \n",(int)coff_optional_header.MinorSubsystemVersion);
+     printf ("coff_optional_header.Win32VersionValue           = %d \n",(int)coff_optional_header.Win32VersionValue);
+     printf ("coff_optional_header.SizeOfImage                 = %d \n",(int)coff_optional_header.SizeOfImage);
+     printf ("coff_optional_header.SizeOfHeaders               = %d \n",(int)coff_optional_header.SizeOfHeaders);
+     printf ("coff_optional_header.CheckSum                    = %d \n",(int)coff_optional_header.CheckSum);
+     printf ("coff_optional_header.Subsystem                   = %d \n",(int)coff_optional_header.Subsystem);
+     printf ("coff_optional_header.DllCharacteristics          = %p \n",(int*)coff_optional_header.DllCharacteristics);
+     printf ("coff_optional_header.SizeOfStackReserve          = %d \n",(int)coff_optional_header.SizeOfStackReserve);
+     printf ("coff_optional_header.SizeOfStackCommit           = %d \n",(int)coff_optional_header.SizeOfStackCommit);
+     printf ("coff_optional_header.SizeOfHeapReserve           = %d \n",(int)coff_optional_header.SizeOfHeapReserve);
+     printf ("coff_optional_header.SizeOfHeapCommit            = %d \n",(int)coff_optional_header.SizeOfHeapCommit);
+     printf ("coff_optional_header.LoaderFlags                 = %d \n",(int)coff_optional_header.LoaderFlags);
+     printf ("coff_optional_header.NumberOfRvaAndSizes         = %d \n",(int)coff_optional_header.NumberOfRvaAndSizes);
+  // printf ("coff_optional_header.              = %d \n",(int)coff_optional_header.);
+
+  // Save the PE optional header in the SgAsmFile asmFile
+
+     const int MaxNumberOfDirectoryHeaders = 100;
+  // Rose_Wine::IMAGE_DATA_DIRECTORY coff_data_directory_headers[16];
+     Rose_Wine::IMAGE_DATA_DIRECTORY coff_data_directory_headers[MaxNumberOfDirectoryHeaders];
+     char* coff_data_directory_array = (char*) coff_data_directory_headers;
+
+  // ROSE_ASSERT(coff_optional_header.NumberOfRvaAndSizes == 16);
+     ROSE_ASSERT(coff_optional_header.NumberOfRvaAndSizes < MaxNumberOfDirectoryHeaders);
+
+     int coff_data_directory_header_value = 0;
+     int coff_data_directory_headers_size = coff_optional_header.NumberOfRvaAndSizes * sizeof(Rose_Wine::IMAGE_DATA_DIRECTORY);
+
+     i = 0;
+     do {
+          coff_data_directory_header_value = fgetc(f);
+          coff_data_directory_array[i]     = coff_data_directory_header_value;
+          i++;
+        }
+     while (i < coff_data_directory_headers_size && coff_data_directory_header_value != EOF);
+
+     for (int i = 0; i < coff_optional_header.NumberOfRvaAndSizes; i++)
+        {
+          printf ("coff_data_directory_headers[%d].VirtualAddress = %p \n",i,(void*)coff_data_directory_headers[i].VirtualAddress);
+          printf ("coff_data_directory_headers[%d].Size           = %u \n",i,(unsigned int)coff_data_directory_headers[i].Size);
+        }
+
+#if 0
+typedef struct _IMAGE_SECTION_HEADER {
+  BYTE  Name[IMAGE_SIZEOF_SHORT_NAME];
+  union {
+    DWORD PhysicalAddress;
+    DWORD VirtualSize;
+  } Misc;
+  DWORD VirtualAddress;
+  DWORD SizeOfRawData;
+  DWORD PointerToRawData;
+  DWORD PointerToRelocations;
+  DWORD PointerToLinenumbers;
+  WORD  NumberOfRelocations;
+  WORD  NumberOfLinenumbers;
+  DWORD Characteristics;
+} IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
+#endif
+
+#if 1
+  // Reread the file from the start
+     rewind(f);
+
+     int coff_sectionHeaderFilePosition_value = 0;
+     int signatureSize = 4;
+
+  // The COFF header starts at a position specified by msdos_header.e_lfanew
+  // int sectionHeaderFilePosition  = msdos_header_size + signatureSize + coff_file_header_size + coff_optional_header_size + coff_data_directory_headers_size;
+     int sectionHeaderFilePosition  = msdos_header.e_lfanew + signatureSize + coff_file_header_size + coff_optional_header_size + coff_data_directory_headers_size;
+
+     printf ("sectionHeaderFilePosition = %d \n",sectionHeaderFilePosition);
+
+     i = 0;
+     do {
+          coff_sectionHeaderFilePosition_value = fgetc(f);
+          i++;
+        }
+     while (i < sectionHeaderFilePosition && coff_sectionHeaderFilePosition_value != EOF);
+#endif
+
+  // Note that the Windows loader limits the number of sections to 96 (see PE spec: page 7 section 3.3).
+     const int MaxNumberOfSectionHeaders = 96;
+     Rose_Wine::IMAGE_SECTION_HEADER coff_section_headers[MaxNumberOfSectionHeaders];
+     char* coff_section_array = (char*) coff_section_headers;
+
+     ROSE_ASSERT(coff_file_header.NumberOfSections < MaxNumberOfSectionHeaders);
+
+     unsigned int coff_section_header_value = 0;
+     int coff_section_headers_size = coff_file_header.NumberOfSections * sizeof(Rose_Wine::IMAGE_SECTION_HEADER);
+
+     i = 0;
+     do {
+          coff_section_header_value = fgetc(f);
+          coff_section_array[i]     = coff_section_header_value;
+          i++;
+        }
+     while (i < coff_section_headers_size && coff_section_header_value != EOF);
+
+  // Assertion based on PE spec page 12 (SizeOfHeaders description)
+     ROSE_ASSERT(sectionHeaderFilePosition + coff_section_headers_size < coff_optional_header.SizeOfHeaders);
+
+     for (int i = 0; i < coff_file_header.NumberOfSections; i++)
+        {
+          unsigned char nameString[9];
+          printf ("coff_section_headers[%d].Name (byte values)   = ",i);
+          for (int j = 0; j < 8; j++)
+             {
+               nameString[i] = coff_section_headers[i].Name[j];
+               printf ("%d ",nameString[i]);
+             }
+          nameString[8] = '\0';
+          printf ("\n");
+
+          printf ("coff_section_headers[%d].Name                 = \"%s\" \n",i,nameString);
+          printf ("coff_section_headers[%d].Misc.PhysicalAddress = %d \n",i,(int)coff_section_headers[i].Misc.PhysicalAddress);
+          printf ("coff_section_headers[%d].Misc.VirtualSize     = %d \n",i,(int)coff_section_headers[i].Misc.VirtualSize);
+          printf ("coff_section_headers[%d].VirtualAddress       = %d \n",i,(int)coff_section_headers[i].VirtualAddress);
+          printf ("coff_section_headers[%d].SizeOfRawData        = %d \n",i,(int)coff_section_headers[i].SizeOfRawData);
+          printf ("coff_section_headers[%d].PointerToRawData     = %p \n",i,(void*)coff_section_headers[i].PointerToRawData);
+          printf ("coff_section_headers[%d].PointerToRelocations = %p \n",i,(void*)coff_section_headers[i].PointerToRelocations);
+          printf ("coff_section_headers[%d].PointerToLinenumbers = %p \n",i,(void*)coff_section_headers[i].PointerToLinenumbers);
+          printf ("coff_section_headers[%d].NumberOfRelocations  = %d \n",i,(int)coff_section_headers[i].NumberOfRelocations);
+          printf ("coff_section_headers[%d].NumberOfLinenumbers  = %d \n",i,(int)coff_section_headers[i].NumberOfLinenumbers);
+          printf ("coff_section_headers[%d].Characteristics      = %p \n",i,(void*)coff_section_headers[i].Characteristics);
+        }
+
+  // Reread the file from the start
+     rewind(f);
+
+
+
+
+
+
+
+
+
+     printf ("Exiting at base of generateBinaryExecutableFileInformation_Windows() \n");
+     ROSE_ASSERT(false);
+   }
+ 
  
 void
-generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
+generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* asmFile )
    {
      ROSE_ASSERT(asmFile != NULL);
 
@@ -2238,7 +2759,17 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
   // printf ("Exiting as a test in generateBinaryExecutableFileInformation() \n");
   // ROSE_ASSERT(false);
    }
+
  
+void
+generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
+   {
+  // Need a mechanism to select what kind of binary we will process.
+  // generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
+
+     generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+   }
+
 #endif
 
 void
@@ -2248,8 +2779,8 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
 
   // this->display("In SgFile::setupSourceFilename()");
-  // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-  // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+     printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+     printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
 
      if (fileList.empty() == false)
         {
@@ -2474,7 +3005,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
-  // printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
+     printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
 
   // BP: (11/26/2001) trying out a new method of figuring out internal compiler definitions
 #if defined(CXX_SPEC_DEF)
@@ -3142,7 +3673,7 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-  // printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
+     printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
 
   // builds file list (or none if this is a link line)
 	  processCommandLine(argv);
@@ -3230,7 +3761,7 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
 
-  // printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+     printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
@@ -3311,7 +3842,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-  // printf ("Inside of SgFile::doSetupForConstructor() \n");
+     printf ("Inside of SgFile::doSetupForConstructor() \n");
 
   // DQ (4/21/2006): I think we can now assert this! This is an unused function parameter!
      ROSE_ASSERT(fileNameIndex == 0);
@@ -3449,6 +3980,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
 
 
 #if 1
+#define CASE_SENSITIVE_SYSTEM 1
+
 // Note that moving this function from commandline_processing.C to this file (sageSupport.C)
 // permitted the validExecutableFileSuffixes to be initialized properly!
 void
@@ -3460,6 +3993,8 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
         {
        // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
           validExecutableFileSuffixes.push_back("");
+
+          printf ("CASE_SENSITIVE_SYSTEM = %d \n",CASE_SENSITIVE_SYSTEM);
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
           validExecutableFileSuffixes.push_back(".exe");
@@ -3477,7 +4012,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
    {
      initExecutableFileSuffixList();
 
-  // printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+     printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -3485,11 +4020,13 @@ CommandlineProcessing::isExecutableFilename ( string name )
         {
           int jlength = (*j).size();
 
-       // printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
+          printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
 
           if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
              {
                bool returnValue = false;
+
+               printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
                FILE* f = fopen(name.c_str(), "r");
@@ -3502,10 +4039,15 @@ CommandlineProcessing::isExecutableFilename ( string name )
                   {
                  // Check for if this is a binary executable file!
                     int character0 = fgetc(f);
-                    if (character0 == 127)
+
+                 // The first character of an ELF binary is '\127' and for a PE binary it is 'M'
+                 // if (character0 == 127)
+                    if (character0 == 127 || character0 == 77)
                        {
                          returnValue = true;
                        }
+
+                    printf ("First character in file: character0 = %d  (77 == %c) \n",character0,'\77');
 
                     fclose(f);
                   }
@@ -3681,7 +4223,7 @@ SgFile::callFrontEnd ()
         }
 #endif
 
-  // printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+     printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
 
   // Save this so that it can be used in the template instantiation phase later.
   // This file is later written into the *.ti file so that the compilation can 
@@ -3723,7 +4265,7 @@ SgFile::callFrontEnd ()
   // ROSE_ASSERT (get_sourceFileNamesWithoutPath() != NULL);
   // ROSE_ASSERT (get_sourceFileNameWithoutPath().empty() == false);
 
-  // display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
+     display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
 
   // Exit if we are to ONLY call the vendor's backend compiler
      if (p_useBackendOnly == true)
@@ -3824,7 +4366,7 @@ SgFile::callFrontEnd ()
             // int edg_errorLevel = edg_main (numberOfCommandLineArguments, inputCommandLine,*this);
             // int frontendErrorLevel = 0;
 
-#if 0
+#if 1
                display("SgFile::callFrontEnd()");
                printf ("get_C_only()       = %s \n",(get_C_only() == true) ? "true" : "false");
                printf ("get_C99_only()     = %s \n",(get_C99_only() == true) ? "true" : "false");
@@ -4076,6 +4618,8 @@ SgFile::callFrontEnd ()
                          SgAsmFile* asmFile = new SgAsmFile();
                          ROSE_ASSERT(asmFile != NULL);
 
+                         printf ("Calling generateBinaryExecutableFileInformation() \n");
+
                       // Get the structure of the binary file (only implemented for ELF formatted files currently).
                       // Later we will implement a PE reader to get the structure of MS Windows executables.
                          generateBinaryExecutableFileInformation(executableFileName,asmFile);
@@ -4098,7 +4642,7 @@ SgFile::callFrontEnd ()
                             }
                            else
                             {
-                              printf ("Error: only 32-bit binaries are supported for disassembly using ROSE! \n");
+                              printf ("Error: only 32-bit binaries are currently supported for disassembly using ROSE! \n");
                             }
 
                       // We need to figure out which type of binary this is, x86 or ARM, etc.
@@ -4221,22 +4765,8 @@ SgFile::callFrontEnd ()
 
      if (get_binary_only() == true)
         {
-#if 0
-       // This is now done above so that we can know the machine specific details of the 
-       // executable as early as possible before disassembly.
-
-       // Generate the ELF executable format structure into the AST
-          string executableFileName = this->get_sourceFileNameWithPath();
-
-          printf ("Secondary Pass over file: executableFileName = %s \n",executableFileName.c_str());
-
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-          SgAsmFile* asmFile = this->get_binaryFile();
-          ROSE_ASSERT(asmFile != NULL);
-
-          generateBinaryExecutableFileInformation(executableFileName,asmFile);
-#endif
-#endif
+       // This is now done above so that we can know the machine specific details
+       // of the executable as early as possible before disassembly.
         }
        else
         {

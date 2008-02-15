@@ -70,20 +70,40 @@ class AddStringToDescription : public AstSimpleProcessing
 
 						 std::string message = "See " + varName + " for documentation " ;
 
-						 if(c->entry.hasDescription() == false)
+						 //AS(1/25/08)
+						 //The DoxygenEntry::Function doxygen syntax does not have a description construct.
+						 //It is therefore necessary to use the brief construct instead for that class.
+						 //FIXME: Should we use brief in all cases?
+						 if(c->entry.type() == DoxygenEntry::Function)
 						 {
+                             if(c->entry.hasBrief() == false)
+	    					 {
+		    				   std::string* strPtr = &c->entry.brief();
+			    			   strPtr = new string();
+                               //c->entry.description() = strPtr;
+				    		   c->entry.set_brief(message);
+						      //std::cout << "Unparse2: " << c->entry.description() << std::endl;
 
-						   std::string* strPtr = &c->entry.description();
-						   strPtr = new string();
-                           //c->entry.description() = strPtr;
-						   c->entry.set_description(message);
-						   //std::cout << "Unparse2: " << c->entry.description() << std::endl;
-
+						     }else{
+						       c->entry.brief() +=message;
+						       //std::cout << "Unparse: \"" << c->entry.unparse() << "\""<<std::endl;
+						     }
 						 }else{
-						   c->entry.description() +=message;
-						   //std::cout << "Unparse: \"" << c->entry.unparse() << "\""<<std::endl;
-						 }
+     						 if(c->entry.hasDescription() == false)
+	    					 {
 
+		    				   std::string* strPtr = &c->entry.description();
+			    			   strPtr = new string();
+                               //c->entry.description() = strPtr;
+				    		   c->entry.set_description(message);
+						      //std::cout << "Unparse2: " << c->entry.description() << std::endl;
+
+						     }else{
+						       c->entry.description() +=message;
+						       //std::cout << "Unparse: \"" << c->entry.unparse() << "\""<<std::endl;
+						     }
+
+						 }
 						 c->originalComment->setString(c->entry.unparse());
 
 

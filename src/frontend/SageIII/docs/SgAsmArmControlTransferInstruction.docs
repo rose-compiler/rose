@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmArmControlTransferInstruction
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmArmControlTransferInstruction::SgAsmArmControlTransferInstruction(const SgAsmArmControlTransferInstructionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmArmControlTransferInstruction::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmArmControlTransferInstruction *SgAsmArmControlTransferInstruction::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmArmControlTransferInstruction::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmArmControlTransferInstruction::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmArmControlTransferInstruction::initializeStorageClassArray(SgAsmArmControlTransferInstructionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmArmControlTransferInstruction::clearMemoryPool()
+*/
+/*!\fn static void SgAsmArmControlTransferInstruction::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmArmControlTransferInstruction::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmArmControlTransferInstruction::roseRTI()
+*/
+/*!\fn virtual SgAsmArmControlTransferInstruction::~SgAsmArmControlTransferInstruction()
+*/
+/*!\fn virtual SgNode *SgAsmArmControlTransferInstruction::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmArmControlTransferInstruction::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmArmControlTransferInstruction::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmArmControlTransferInstruction::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmArmControlTransferInstruction::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmArmControlTransferInstruction::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmArmControlTransferInstruction::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmArmControlTransferInstruction::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmArmControlTransferInstruction::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmArmControlTransferInstruction::SgAsmArmControlTransferInstruction(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1321132453;

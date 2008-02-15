@@ -13,11 +13,8 @@ double abs(double x)
 extern void printmatrix(double x[][50]);
 extern void initmatrix(double x[][50],double s);
 
-int main(int argc,char **argv)
+int main(int argc,char *argv[])
 {
-  double a_buf2;
-  double a_buf1;
-  int p_buf0;
   int p[50];
   int i;
   int j;
@@ -25,6 +22,9 @@ int main(int argc,char **argv)
   double a[50][50];
   double mu;
   double t;
+  int p_buf0;
+  double a_buf1;
+  double a_buf2;
   initmatrix(a,5.0);
   printmatrix(a);
   for (k = 0; k <= 48; k += 1) {
@@ -56,6 +56,5 @@ int main(int argc,char **argv)
     }
   }
   printmatrix(a);
-  return 0;
 }
 

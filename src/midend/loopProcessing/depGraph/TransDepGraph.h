@@ -9,16 +9,19 @@
 template <class Node> class TransDepAnalImpl;
 template <class Node>
 class TransDepGraphCreate 
-   : public IDGraphCreateTemplate<Node,DepInfoSetEdge>, 
+   : public VirtualGraphCreateTemplate<Node,DepInfoSetEdge>, 
      public TransInfoGraph<DepInfoSet>
 {
+  GraphAccessWrapTemplate<GraphAccessInterface::Node,
+                          GraphAccessInterface::Edge, 
+                          GraphAccessTemplate<Node,DepInfoEdge> >
+     access;
   GraphTransAnalysis<DepInfoSet> anal;
   TransDepAnalImpl<Node> *analop;
 
-//Boolean TransInfoComputed(const GraphNode *src, const GraphNode *snk);
-  int TransInfoComputed(const GraphNode *src, const GraphNode *snk);
-  DepInfoSet GetTransInfo( const GraphNode *src, const GraphNode *snk);
-  void SetTransInfo( GraphNode *src, GraphNode *snk, DepInfoSet info) ;
+  bool TransInfoComputed(const GraphAccessInterface::Node *src, const GraphAccessInterface::Node *snk);
+  DepInfoSet GetTransInfo( const GraphAccessInterface::Node *src, const GraphAccessInterface::Node *snk);
+  void SetTransInfo( GraphAccessInterface::Node *src, GraphAccessInterface::Node *snk, DepInfoSet info) ;
  public:
   TransDepGraphCreate(GraphAccessTemplate<Node,DepInfoEdge> *g, 
                        int splitlimit=20, 

@@ -1,9 +1,9 @@
 
-#ifndef OPERATION_DESCRIPTORS_H
-#define OPERATION_DESCRIPTORS_H
+#ifndef ___OPERATION_DESCRIPTORS_H
+#define ___OPERATION_DESCRIPTORS_H
 
-#include <AnnotExpr.h>
 #include <TypeAnnotation.h>
+#include <AnnotExpr.h>
 #include <FunctionObject.h>
 
 typedef ContainerDescriptor<std::vector<NameDescriptor>, NameDescriptor,',','(',')'>
@@ -63,13 +63,16 @@ public:
 };
 
 class OperatorDeclaration {
-  std::string signature;
+  std::string signiture;
   ParameterDeclaration pars;
+  static bool unique;
 public:
-  OperatorDeclaration() : signature("") {}
+  OperatorDeclaration() : signiture("") {}
   
-  std::string get_signature () const { return signature; }
-  static std::string get_signature( const AstNodePtr& op);
+  std::string get_signiture () const { return signiture; }
+  static std::string get_signiture( AstInterface& fa, const STD string& fname,
+                                    const AstInterface::AstTypeList& params);
+  static void set_unique() { unique = true; }
   
   const ParameterDeclaration& get_param_info() const { return pars; }
   

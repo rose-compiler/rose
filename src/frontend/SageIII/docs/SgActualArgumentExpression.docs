@@ -1,0 +1,77 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgActualArgumentExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgName SgActualArgumentExpression::p_argument_name
+*/
+/*!\var SgExpression *SgActualArgumentExpression::p_expression
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgActualArgumentExpression::SgActualArgumentExpression(Sg_File_Info *startOfConstruct,SgName argument_name=(""),SgExpression *expression=(0))
+*/
+/*!\fn SgActualArgumentExpression::SgActualArgumentExpression(const SgActualArgumentExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgActualArgumentExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgActualArgumentExpression *SgActualArgumentExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgActualArgumentExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgActualArgumentExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgActualArgumentExpression::initializeStorageClassArray(SgActualArgumentExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgActualArgumentExpression::clearMemoryPool()
+*/
+/*!\fn static void SgActualArgumentExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgActualArgumentExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgActualArgumentExpression::roseRTI()
+*/
+/*!\fn virtual SgActualArgumentExpression::~SgActualArgumentExpression()
+*/
+/*!\fn virtual SgNode *SgActualArgumentExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgActualArgumentExpression::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgActualArgumentExpression::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgActualArgumentExpression::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgActualArgumentExpression::post_construction_initialization()
+*/
+/*!\fn void SgActualArgumentExpression::set_argument_name(SgName argument_name)
+\brief \brief See  argument_name)
+argument_name for documentation */
+/*!\fn void SgActualArgumentExpression::set_expression(SgExpression *expression)
+\brief \brief See  *expression)
+expression for documentation */
+/*!\fn SgExpression *SgActualArgumentExpression::get_expression() const
+\brief \brief See  const
+expression for documentation */
+/*!\fn SgName SgActualArgumentExpression::get_argument_name() const
+\brief \brief See  const
+argument_name for documentation */
+/*!\fn virtual SgNode *SgActualArgumentExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgActualArgumentExpression::get_type() const
+\brief \brief See  const
+type for documentation */
+/*!\fn virtual size_t SgActualArgumentExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgActualArgumentExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgActualArgumentExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgActualArgumentExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgActualArgumentExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgActualArgumentExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgActualArgumentExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgActualArgumentExpression::SgActualArgumentExpression(SgName argument_name,SgExpression *expression)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_142443801;

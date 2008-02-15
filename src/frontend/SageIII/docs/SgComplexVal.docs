@@ -43,45 +43,45 @@
 /*!\fn virtual void SgComplexVal::post_construction_initialization()
 */
 /*!\fn void SgComplexVal::set_imaginary_value(long double imaginary_value)
-\description See  imaginary_value)
+\brief \brief See  imaginary_value)
 imaginary_value for documentation */
 /*!\fn void SgComplexVal::set_precisionType(SgType *precisionType)
-\description See  *precisionType)
+\brief \brief See  *precisionType)
 precisionType for documentation */
 /*!\fn void SgComplexVal::set_real_value(long double real_value)
-\description See  real_value)
+\brief \brief See  real_value)
 real_value for documentation */
 /*!\fn void SgComplexVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn SgType *SgComplexVal::get_precisionType() const
-\description See  const
+\brief \brief See  const
 precisionType for documentation */
 /*!\fn long double SgComplexVal::get_imaginary_value() const
-\description See  const
+\brief \brief See  const
 imaginary_value for documentation */
 /*!\fn long double SgComplexVal::get_real_value() const
-\description See  const
+\brief \brief See  const
 real_value for documentation */
 /*!\fn std::string SgComplexVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn virtual SgNode *SgComplexVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgComplexVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgComplexVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgComplexVal::get_numberOfTraversalSuccessors()
-\description See  SgComplexVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgComplexVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgComplexVal::get_traversalSuccessorContainer()
-\description See  SgComplexVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgComplexVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgComplexVal::get_traversalSuccessorNamesContainer()
-\description See  SgComplexVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgComplexVal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgComplexVal::SgComplexVal(long double real_value,long double imaginary_value,SgType *precisionType,std::string valueString)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_263611290;
+extern int SAGE_Doxygen_Dummy_757314702;

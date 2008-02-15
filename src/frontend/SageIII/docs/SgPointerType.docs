@@ -31,24 +31,24 @@
 /*!\fn virtual SgPointerType::~SgPointerType()
 */
 /*!\fn void SgPointerType::set_base_type(SgType *base_type)
-\description See  *base_type)
+\brief \brief See  *base_type)
 base_type for documentation */
 /*!\fn SgType *SgPointerType::get_base_type() const
-\description See  const
+\brief \brief See  const
 base_type for documentation */
 /*!\fn virtual SgNode *SgPointerType::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgPointerType::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgPointerType::get_numberOfTraversalSuccessors()
-\description See  SgPointerType::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgPointerType::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPointerType::get_traversalSuccessorContainer()
-\description See  SgPointerType::traversalSuccessorContainer for documentation */
+\brief \brief See  SgPointerType::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPointerType::get_traversalSuccessorNamesContainer()
-\description See  SgPointerType::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgPointerType::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgPointerType::SgPointerType(SgType *base_type=(0))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_994118593;
+extern int SAGE_Doxygen_Dummy_170594847;

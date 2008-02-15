@@ -15,4 +15,4 @@
 /*!\fn wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode *node=(0),ROSEAttributesList *preprocInfo=(0),int len=0)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_95776953;
+extern int SAGE_Doxygen_Dummy_2056486580;

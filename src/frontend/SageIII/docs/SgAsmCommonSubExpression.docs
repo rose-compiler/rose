@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmCommonSubExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmExpression *SgAsmCommonSubExpression::p_subexpression
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmCommonSubExpression::SgAsmCommonSubExpression(const SgAsmCommonSubExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmCommonSubExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmCommonSubExpression *SgAsmCommonSubExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmCommonSubExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmCommonSubExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmCommonSubExpression::initializeStorageClassArray(SgAsmCommonSubExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmCommonSubExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmCommonSubExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmCommonSubExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmCommonSubExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmCommonSubExpression::~SgAsmCommonSubExpression()
+*/
+/*!\fn virtual SgNode *SgAsmCommonSubExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmCommonSubExpression::set_subexpression(SgAsmExpression *subexpression)
+\brief \brief See  *subexpression)
+subexpression for documentation */
+/*!\fn SgAsmExpression *SgAsmCommonSubExpression::get_subexpression() const
+\brief \brief See  const
+subexpression for documentation */
+/*!\fn virtual SgNode *SgAsmCommonSubExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmCommonSubExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmCommonSubExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmCommonSubExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmCommonSubExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmCommonSubExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmCommonSubExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmCommonSubExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmCommonSubExpression::SgAsmCommonSubExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_956330489;

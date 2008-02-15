@@ -10,14 +10,13 @@ class BreakupStatement : public PrePostTransformation
                            AstNodePtr& result);
  public:
   BreakupStatement(int bs = 0) : breaksize(bs) {}
-  AstNodePtr operator()( LoopTransformInterface& la, const AstNodePtr& root) 
+  AstNodePtr operator()( LoopTransformInterface& _la, const AstNodePtr& root) 
   {
-     SetLoopTransformInterface(&la);
-     return TransformAstTraverse(la, root, *this, AstInterface::PreVisit );
+     SetLoopTransformInterface(&_la);
+     return TransformAstTraverse(_la, root, *this, AstInterface::PreVisit );
   }
-//Boolean cmdline_configure();
-  int cmdline_configure();
-  static std::string cmdline_help();
+  bool cmdline_configure();
+  static STD string cmdline_help();
 };
 
 #endif

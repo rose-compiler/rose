@@ -37,27 +37,27 @@
 /*!\fn virtual void SgUseOnlyExpression::post_construction_initialization()
 */
 /*!\fn void SgUseOnlyExpression::set_access_list(SgExprListExp *access_list)
-\description See  *access_list)
+\brief \brief See  *access_list)
 access_list for documentation */
 /*!\fn SgExprListExp *SgUseOnlyExpression::get_access_list() const
-\description See  const
+\brief \brief See  const
 access_list for documentation */
 /*!\fn virtual SgNode *SgUseOnlyExpression::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgUseOnlyExpression::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgUseOnlyExpression::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUseOnlyExpression::get_numberOfTraversalSuccessors()
-\description See  SgUseOnlyExpression::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUseOnlyExpression::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUseOnlyExpression::get_traversalSuccessorContainer()
-\description See  SgUseOnlyExpression::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUseOnlyExpression::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUseOnlyExpression::get_traversalSuccessorNamesContainer()
-\description See  SgUseOnlyExpression::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUseOnlyExpression::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUseOnlyExpression::SgUseOnlyExpression(SgExprListExp *access_list)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1469315864;
+extern int SAGE_Doxygen_Dummy_1183051988;

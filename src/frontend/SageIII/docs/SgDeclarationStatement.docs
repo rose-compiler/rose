@@ -374,105 +374,105 @@ a defining declaration is NOT a marked as a forward declaration.
 /*!\fn void SgDeclarationStatement::unsetSkipElaborateType()
 */
 /*!\fn void SgDeclarationStatement::set_binding_label(std::string binding_label)
-\description See  binding_label)
+\brief \brief See  binding_label)
 binding_label for documentation */
 /*!\fn void SgDeclarationStatement::set_decl_attributes(unsigned int decl_attributes)
-\description See  decl_attributes)
+\brief \brief See  decl_attributes)
 decl_attributes for documentation */
-/*! See  *definingDeclaration)
-definingDeclaration for documentation \fn void SgDeclarationStatement::set_definingDeclaration(SgDeclarationStatement *definingDeclaration)
+/*! \fn void SgDeclarationStatement::set_definingDeclaration(SgDeclarationStatement *definingDeclaration)
 \brief This is an access function for the SgDeclarationStatement::p_definingDeclaration data member (see
     that variable's documentation for details).
-*/
+See  *definingDeclaration)
+definingDeclaration for documentation */
 /*!\fn void SgDeclarationStatement::set_externBrace(bool externBrace)
-\description See  externBrace)
+\brief \brief See  externBrace)
 externBrace for documentation */
-/*! See  *firstNondefiningDeclaration)
-firstNondefiningDeclaration for documentation \fn void SgDeclarationStatement::set_firstNondefiningDeclaration(SgDeclarationStatement *firstNondefiningDeclaration)
+/*! \fn void SgDeclarationStatement::set_firstNondefiningDeclaration(SgDeclarationStatement *firstNondefiningDeclaration)
 \brief This is an access function for the SgDeclarationStatement::p_firstNondefiningDeclaration data member (see
     that variable's documentation for details).
-*/
+See  *firstNondefiningDeclaration)
+firstNondefiningDeclaration for documentation */
 /*!\fn void SgDeclarationStatement::set_forward(bool forward)
-\description See  forward)
+\brief \brief See  forward)
 forward for documentation */
 /*!\fn void SgDeclarationStatement::set_linkage(std::string linkage)
-\description See  linkage)
+\brief \brief See  linkage)
 linkage for documentation */
 /*!\fn void SgDeclarationStatement::set_nameOnly(bool nameOnly)
-\description See  nameOnly)
+\brief \brief See  nameOnly)
 nameOnly for documentation */
 /*!\fn void SgDeclarationStatement::set_qualifiedNameList(const SgQualifiedNamePtrList &x)
-\description See  &x)
+\brief \brief See  &x)
 qualifiedNameList for documentation */
 /*!\fn void SgDeclarationStatement::set_skipElaborateType(bool skipElaborateType)
-\description See  skipElaborateType)
+\brief \brief See  skipElaborateType)
 skipElaborateType for documentation */
 /*!
 \fn SgDeclarationModifier &SgDeclarationStatement::get_declarationModifier()
-\brief Returns SgDeclarationModifier object by reference (so that it can be set).
-See  &SgDeclarationStatement::declarationModifier for documentation \return Returns SgDeclarationModifier by reference.
+\brief Returns SgDeclarationModifier object by reference (so that it can be set).See  &SgDeclarationStatement::declarationModifier for documentation 
+\return Returns SgDeclarationModifier by reference.
 */
 /*!\fn SgDeclarationStatement *SgDeclarationStatement::get_declaration_associated_with_symbol() const
-\description See  const
+\brief \brief See  const
 declaration_associated_with_symbol for documentation */
-/*! See  const
-definingDeclaration for documentation \fn SgDeclarationStatement *SgDeclarationStatement::get_definingDeclaration() const
+/*! \fn SgDeclarationStatement *SgDeclarationStatement::get_definingDeclaration() const
 \brief This is an access function for the SgDeclarationStatement::p_definingDeclaration data member (see
     that variable's documentation for details).
-*/
-/*! See  const
-firstNondefiningDeclaration for documentation \fn SgDeclarationStatement *SgDeclarationStatement::get_firstNondefiningDeclaration() const
+See  const
+definingDeclaration for documentation */
+/*! \fn SgDeclarationStatement *SgDeclarationStatement::get_firstNondefiningDeclaration() const
 \brief This is an access function for the SgDeclarationStatement::p_firstNondefiningDeclaration data member (see
     that variable's documentation for details).
-*/
+See  const
+firstNondefiningDeclaration for documentation */
 /*!\fn SgQualifiedNamePtrList &SgDeclarationStatement::get_qualifiedNameList()
-\description See  &SgDeclarationStatement::qualifiedNameList for documentation */
+\brief \brief See  &SgDeclarationStatement::qualifiedNameList for documentation */
 /*!\fn bool SgDeclarationStatement::get_externBrace() const
-\description See  const
+\brief \brief See  const
 externBrace for documentation */
 /*!\fn bool SgDeclarationStatement::get_forward() const
-\description See  const
+\brief \brief See  const
 forward for documentation */
 /*!\fn bool SgDeclarationStatement::get_nameOnly() const
-\description See  const
+\brief \brief See  const
 nameOnly for documentation */
 /*!\fn bool SgDeclarationStatement::get_skipElaborateType() const
-\description See  const
+\brief \brief See  const
 skipElaborateType for documentation */
 /*!\fn const SgDeclarationModifier &SgDeclarationStatement::get_declarationModifier() const
-\description See  const
+\brief \brief See  const
 declarationModifier for documentation */
 /*!\fn const SgQualifiedNamePtrList &SgDeclarationStatement::get_qualifiedNameList() const
-\description See  const
+\brief \brief See  const
 qualifiedNameList for documentation */
 /*!\fn std::string SgDeclarationStatement::get_binding_label() const
-\description See  const
+\brief \brief See  const
 binding_label for documentation */
 /*!\fn std::string SgDeclarationStatement::get_linkage() const
-\description See  const
+\brief \brief See  const
 linkage for documentation */
 /*!\fn unsigned int SgDeclarationStatement::get_decl_attributes() const
-\description See  const
+\brief \brief See  const
 decl_attributes for documentation */
 /*!\fn virtual SgName SgDeclarationStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgDeclarationStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgSymbol *SgDeclarationStatement::get_symbol_from_symbol_table() const
-\description See  const
+\brief \brief See  const
 symbol_from_symbol_table for documentation */
 /*!\fn virtual size_t SgDeclarationStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgDeclarationStatement::get_numberOfTraversalSuccessors()
-\description See  SgDeclarationStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgDeclarationStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDeclarationStatement::get_traversalSuccessorContainer()
-\description See  SgDeclarationStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgDeclarationStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDeclarationStatement::get_traversalSuccessorNamesContainer()
-\description See  SgDeclarationStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgDeclarationStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgDeclarationStatement::SgDeclarationStatement()
 */
 //@}
-int SAGE_Doxygen_Dummy_285332188112965;
+int SAGE_Doxygen_Dummy_161461545710151;

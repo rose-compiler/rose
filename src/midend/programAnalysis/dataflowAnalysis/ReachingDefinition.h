@@ -12,56 +12,56 @@
 typedef BitVectorRepr ReachingDefinitions;
 
 class ReachingDefinitionBase 
- : private BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >
+ : private BitVectorReprBase<STD string, STD pair<AstNodePtr, AstNodePtr> >
 {
-  mutable ScopeStringMap scopemap;
+  Ast2StringMap scopemap;
  public:
-  typedef BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >::iterator iterator;
+  typedef BitVectorReprBase<STD string, STD pair<AstNodePtr, AstNodePtr> >::iterator iterator;
   void collect_refs ( AstInterface& fa, const AstNodePtr& h,
                       FunctionSideEffectInterface* a=0,
                       AstInterface::AstNodeList* in = 0);
-  void add_ref( const std::string& name, const AstNodePtr& scope, const std::pair<AstNodePtr,AstNodePtr>& def);
-  void add_unknown_def ( const std::pair<AstNodePtr,AstNodePtr>& def)
+  void add_ref( const STD string& name, const AstNodePtr& scope, const STD pair<AstNodePtr,AstNodePtr>& def);
+  void add_unknown_def ( const STD pair<AstNodePtr,AstNodePtr>& def)
       { add_data( "unknown", def); }
-  void finalize() { BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >::finalize(); }
+  void finalize() { BitVectorReprBase<STD string, STD pair<AstNodePtr, AstNodePtr> >::finalize(); }
   iterator begin()  const
-       { return BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >::begin();}
+       { return BitVectorReprBase<STD string, STD pair<AstNodePtr, AstNodePtr> >::begin();}
   iterator end() const
-       { return BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >::end();}
-  std::pair<AstNodePtr, AstNodePtr> get_ref ( iterator p) const
-    { return BitVectorReprBase<std::string, std::pair<AstNodePtr, AstNodePtr> >::get_data(p); }
+       { return BitVectorReprBase<STD string, STD pair<AstNodePtr, AstNodePtr> >::end();}
+  STD pair<AstNodePtr, AstNodePtr> get_ref ( iterator p) const
+    { return BitVectorReprBase<STD string, STD pair<AstNodePtr, AstNodePtr> >::get_data(p); }
 
 
  friend class ReachingDefinitionGenerator;
 };
 
 class  ReachingDefinitionGenerator 
-: private BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >
+: private BitVectorReprGenerator<STD string, STD pair<AstNodePtr,AstNodePtr> >
 {
-  mutable ScopeStringMap scopemap;
+  Ast2StringMap scopemap;
  public:
   ReachingDefinitionGenerator( const ReachingDefinitionBase& b)
-    : BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >(b), scopemap(b.scopemap) {}
+    : BitVectorReprGenerator<STD string, STD pair<AstNodePtr,AstNodePtr> >(b), scopemap(b.scopemap) {}
   void add_unknown_def( ReachingDefinitions& gen, 
-                        const std::pair<AstNodePtr,AstNodePtr>& def) const
+                        const STD pair<AstNodePtr,AstNodePtr>& def) const
       { add_member( gen, "unknown", def); }
-  void add_def( ReachingDefinitions& repr, const std::string& varname, const AstNodePtr& scope, 
-                const std::pair<AstNodePtr,AstNodePtr>& def) const;
+  void add_def( ReachingDefinitions& repr, const STD string& varname, const AstNodePtr& scope, 
+                const STD pair<AstNodePtr,AstNodePtr>& def) const;
 
 
   ReachingDefinitions get_unknown_defs() const
      { return get_data_set( "unknown" ); }
   ReachingDefinitions get_empty_set() const 
-   { return BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >::get_empty_set(); }
-  ReachingDefinitions get_def_set( const std::string& varname, const AstNodePtr& scope) const;
+   { return BitVectorReprGenerator<STD string, STD pair<AstNodePtr,AstNodePtr> >::get_empty_set(); }
+  ReachingDefinitions get_def_set( const STD string& varname, const AstNodePtr& scope) const;
 
   void collect_member( const ReachingDefinitions& repr,
-                       CollectObject< std::pair<AstNodePtr,AstNodePtr> >& collect) const
-    { BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >::collect_member(repr, collect); }
+                       CollectObject< STD pair<AstNodePtr,AstNodePtr> >& collect) const
+    { BitVectorReprGenerator<STD string, STD pair<AstNodePtr,AstNodePtr> >::collect_member(repr, collect); }
 
   const ReachingDefinitionBase& get_base() const
    { return static_cast<const ReachingDefinitionBase&>
-         (BitVectorReprGenerator<std::string, std::pair<AstNodePtr,AstNodePtr> >::get_base()); }
+         (BitVectorReprGenerator<STD string, STD pair<AstNodePtr,AstNodePtr> >::get_base()); }
 
 };
 
@@ -87,7 +87,8 @@ class ReachingDefNode
     }
   void Dump() const;
 
-  ReachingDefNode( GraphCreate* c)  : DataFlowNode<ReachingDefinitions>(c) {}
+  ReachingDefNode( MultiGraphCreate* c)  
+          : DataFlowNode<ReachingDefinitions>(c) {}
   ReachingDefinitions get_entry_defs() const { return in; }
   ReachingDefinitions get_exit_defs() const { return out; }
   friend class ReachingDefinitionAnalysis;
@@ -120,7 +121,7 @@ class ReachingDefinitionAnalysis
   void operator() ( AstInterface& fa, const AstNodePtr& h, 
 		 FunctionSideEffectInterface* anal = 0);
   void collect_ast( const ReachingDefinitions& repr, 
-		    CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect);
+		    CollectObject< STD pair<AstNodePtr, AstNodePtr> >& collect);
 
   const ReachingDefinitionGenerator* get_generator() const
     { return g; }

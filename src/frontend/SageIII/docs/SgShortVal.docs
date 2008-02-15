@@ -39,33 +39,33 @@
 /*!\fn virtual void SgShortVal::post_construction_initialization()
 */
 /*!\fn void SgShortVal::set_value(short value)
-\description See  value)
+\brief \brief See  value)
 value for documentation */
 /*!\fn void SgShortVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn short SgShortVal::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
 /*!\fn std::string SgShortVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn virtual SgNode *SgShortVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgShortVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgShortVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgShortVal::get_numberOfTraversalSuccessors()
-\description See  SgShortVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgShortVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgShortVal::get_traversalSuccessorContainer()
-\description See  SgShortVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgShortVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgShortVal::get_traversalSuccessorNamesContainer()
-\description See  SgShortVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgShortVal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgShortVal::SgShortVal(short value,std::string valueString)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_492219829;
+extern int SAGE_Doxygen_Dummy_2033218611;

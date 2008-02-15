@@ -6,4 +6,4 @@
 /*!\fn virtual void FixupFortranReferences::visit(SgNode *node)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1554701258;
+extern int SAGE_Doxygen_Dummy_421535822;

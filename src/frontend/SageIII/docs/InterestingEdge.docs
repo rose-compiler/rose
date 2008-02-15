@@ -37,4 +37,4 @@
 /*!\fn inline bool VirtualCFG::InterestingEdge::operator<(const VirtualCFG::InterestingEdge &o) const
 */
 //@}
-extern int SAGE_Doxygen_Dummy_669630035;
+extern int SAGE_Doxygen_Dummy_1496263831;

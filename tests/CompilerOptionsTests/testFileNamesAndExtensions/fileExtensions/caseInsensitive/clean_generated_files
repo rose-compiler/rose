@@ -1,0 +1,2 @@
+echo "***************Removing all the generated files beginning with rose_, all .o files, a.out and output!!!!"
+\rm -f ./rose_* ./rose_*.c ./*.o ./a.out ./output

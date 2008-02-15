@@ -5,20 +5,24 @@
 //@{
 /*!\var SgBasicBlock *SgFortranDo::p_body
 */
-/*!\var SgExpression *SgFortranDo::p_condition
+/*!\var SgExpression *SgFortranDo::p_bound
 */
 /*!\var SgExpression *SgFortranDo::p_increment
 */
 /*!\var SgExpression *SgFortranDo::p_initialization
 */
-/*!\var int SgFortranDo::p_end_numeric_label
+/*!\var SgLabelRefExp *SgFortranDo::p_end_numeric_label
+*/
+/*!\var bool SgFortranDo::p_old_style
 */
 /*!\var std::string SgFortranDo::p_string_label
+*/
+/*!\var bool SgFortranDo::p_has_end_statement
 */
 //@}
 /*! \name User Interface*/
 //@{
-/*!\fn SgFortranDo::SgFortranDo(Sg_File_Info *startOfConstruct,SgExpression *initialization=(0),SgExpression *condition=(0),SgExpression *increment=(0),SgBasicBlock *body=(0))
+/*!\fn SgFortranDo::SgFortranDo(Sg_File_Info *startOfConstruct,SgExpression *initialization=(0),SgExpression *bound=(0),SgExpression *increment=(0),SgBasicBlock *body=(0))
 */
 /*!\fn SgFortranDo::SgFortranDo(const SgFortranDoStorageClass &source)
 */
@@ -44,57 +48,81 @@
 */
 /*!\fn virtual SgNode *SgFortranDo::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual bool SgFortranDo::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgFortranDo::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgFortranDo::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgFortranDo::cfgFindChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgFortranDo::cfgFindNextChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgFortranDo::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgFortranDo::post_construction_initialization()
 */
-/*!\fn void SgFortranDo::set_body(SgBasicBlock *body)
-\description See  *body)
-body for documentation */
-/*!\fn void SgFortranDo::set_condition(SgExpression *condition)
-\description See  *condition)
-condition for documentation */
-/*!\fn void SgFortranDo::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgFortranDo::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
+/*!\fn void SgFortranDo::set_body(SgBasicBlock *body)
+\brief \brief See  *body)
+body for documentation */
+/*!\fn void SgFortranDo::set_bound(SgExpression *bound)
+\brief \brief See  *bound)
+bound for documentation */
+/*!\fn void SgFortranDo::set_has_end_statement(bool has_end_statement)
+\brief \brief See  has_end_statement)
+has_end_statement for documentation */
 /*!\fn void SgFortranDo::set_increment(SgExpression *increment)
-\description See  *increment)
+\brief \brief See  *increment)
 increment for documentation */
 /*!\fn void SgFortranDo::set_initialization(SgExpression *initialization)
-\description See  *initialization)
+\brief \brief See  *initialization)
 initialization for documentation */
+/*!\fn void SgFortranDo::set_old_style(bool old_style)
+\brief \brief See  old_style)
+old_style for documentation */
 /*!\fn void SgFortranDo::set_string_label(std::string string_label)
-\description See  string_label)
+\brief \brief See  string_label)
 string_label for documentation */
 /*!\fn SgBasicBlock *SgFortranDo::get_body() const
-\description See  const
+\brief \brief See  const
 body for documentation */
-/*!\fn SgExpression *SgFortranDo::get_condition() const
-\description See  const
-condition for documentation */
+/*!\fn SgExpression *SgFortranDo::get_bound() const
+\brief \brief See  const
+bound for documentation */
 /*!\fn SgExpression *SgFortranDo::get_increment() const
-\description See  const
+\brief \brief See  const
 increment for documentation */
 /*!\fn SgExpression *SgFortranDo::get_initialization() const
-\description See  const
+\brief \brief See  const
 initialization for documentation */
-/*!\fn int SgFortranDo::get_end_numeric_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgFortranDo::get_end_numeric_label() const
+\brief \brief See  const
 end_numeric_label for documentation */
+/*!\fn bool SgFortranDo::get_has_end_statement() const
+\brief \brief See  const
+has_end_statement for documentation */
+/*!\fn bool SgFortranDo::get_old_style() const
+\brief \brief See  const
+old_style for documentation */
 /*!\fn std::string SgFortranDo::get_string_label() const
-\description See  const
+\brief \brief See  const
 string_label for documentation */
 /*!\fn virtual SgNode *SgFortranDo::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgFortranDo::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFortranDo::get_numberOfTraversalSuccessors()
-\description See  SgFortranDo::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFortranDo::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFortranDo::get_traversalSuccessorContainer()
-\description See  SgFortranDo::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFortranDo::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFortranDo::get_traversalSuccessorNamesContainer()
-\description See  SgFortranDo::traversalSuccessorNamesContainer for documentation */
-/*!\fn SgFortranDo::SgFortranDo(SgExpression *initialization,SgExpression *condition,SgExpression *increment,SgBasicBlock *body)
+\brief \brief See  SgFortranDo::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFortranDo::SgFortranDo(SgExpression *initialization,SgExpression *bound,SgExpression *increment,SgBasicBlock *body)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_123678574;
+extern int SAGE_Doxygen_Dummy_1953414567;

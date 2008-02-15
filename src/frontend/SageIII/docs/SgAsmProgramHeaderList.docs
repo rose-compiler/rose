@@ -1,0 +1,55 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmProgramHeaderList
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmProgramHeaderPtrList SgAsmProgramHeaderList::p_program_headers
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmProgramHeaderList::SgAsmProgramHeaderList(const SgAsmProgramHeaderListStorageClass &source)
+*/
+/*!\fn inline static void SgAsmProgramHeaderList::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmProgramHeaderList *SgAsmProgramHeaderList::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmProgramHeaderList::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmProgramHeaderList::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmProgramHeaderList::initializeStorageClassArray(SgAsmProgramHeaderListStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmProgramHeaderList::clearMemoryPool()
+*/
+/*!\fn static void SgAsmProgramHeaderList::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmProgramHeaderList::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmProgramHeaderList::roseRTI()
+*/
+/*!\fn virtual SgAsmProgramHeaderList::~SgAsmProgramHeaderList()
+*/
+/*!\fn virtual SgNode *SgAsmProgramHeaderList::copy(SgCopyHelp &help) const
+*/
+/*!\fn SgAsmProgramHeaderPtrList &SgAsmProgramHeaderList::get_program_headers()
+\brief \brief See  &SgAsmProgramHeaderList::program_headers for documentation */
+/*!\fn const SgAsmProgramHeaderPtrList &SgAsmProgramHeaderList::get_program_headers() const
+\brief \brief See  const
+program_headers for documentation */
+/*!\fn virtual SgNode *SgAsmProgramHeaderList::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmProgramHeaderList::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmProgramHeaderList::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmProgramHeaderList::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmProgramHeaderList::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmProgramHeaderList::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmProgramHeaderList::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmProgramHeaderList::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmProgramHeaderList::SgAsmProgramHeaderList()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_318381502;

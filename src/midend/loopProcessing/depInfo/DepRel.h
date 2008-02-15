@@ -5,6 +5,7 @@
 #include <const.h>
 #include <stdlib.h>
 #include <iostream>
+#include <string>
 
 typedef enum {DEPDIR_NONE=0, DEPDIR_EQ=1, DEPDIR_LE=3, DEPDIR_GE=5,
               DEPDIR_NE=6, DEPDIR_ALL=7} DepDirType;
@@ -28,45 +29,32 @@ class DepRel
   DepDirType GetDirType() const;
   int GetMinAlign() const;
   int GetMaxAlign() const;
-  std::string ToString() const;
-  void Dump() const { std::cerr << ToString() << std::endl; }
-//Boolean IsTop() const;
-  int IsTop() const;
-//Boolean IsBottom() const;
-  int IsBottom() const;
+  std:: string toString() const;
+  void Dump() const { std:: cerr << toString() << std:: endl; }
+  bool IsTop() const;
+  bool IsBottom() const;
 
-//Boolean IncreaseAlign(int inc)
-  int IncreaseAlign(int inc)
+  bool IncreaseAlign(int inc)
      { int tmp = align; align = AddConst(align, inc); return tmp != align; }
-//Boolean Closure();
-  int Closure();
-//Boolean operator == (const DepRel &that) const
-  int operator == (const DepRel &that) const
+  bool Closure();
+  bool operator == (const DepRel &that) const
     { return entryType == that.entryType && align == that.align; }
-//Boolean operator != (const DepRel &that) const
-  int operator != (const DepRel &that) const
+  bool operator != (const DepRel &that) const
     { return ! operator ==(that); }
 
-//static Boolean IntersectUpdate(DepRel& e1, const DepRel &that);
-  static int IntersectUpdate(DepRel& e1, const DepRel &that);
-//static Boolean UnionUpdate(DepRel& e1, const DepRel &that);
-  static int UnionUpdate(DepRel& e1, const DepRel &that);
+  static bool IntersectUpdate(DepRel& e1, const DepRel &that);
+  static bool UnionUpdate(DepRel& e1, const DepRel &that);
 };
 
-// DQ (1/2/2006): Updated these two function with 
-// correct code using return statement from Qing.
-// inline Boolean operator &= (DepRel& e1, const DepRel &that)
-inline int operator &= (DepRel& e1, const DepRel &that)
+inline bool operator &= (DepRel& e1, const DepRel &that)
    { return DepRel::IntersectUpdate(e1,that); }
-// inline Boolean operator |= (DepRel& e1, const DepRel &that)
-inline int operator |= (DepRel& e1, const DepRel &that)
-   { return DepRel::UnionUpdate(e1, that); }
+inline bool operator |= (DepRel& e1, const DepRel &that)
+  { return DepRel::UnionUpdate(e1, that); }
 
-
-// Boolean operator <= ( const DepRel &e1, const DepRel &e2);
-int operator <= ( const DepRel &e1, const DepRel &e2);
-// inline Boolean operator < ( const DepRel &e1, const DepRel &e2)
-inline int operator < ( const DepRel &e1, const DepRel &e2)
+bool LessThan( const DepRel &e1, const DepRel &e2);
+inline bool operator <= ( const DepRel &e1, const DepRel &e2)
+  { return LessThan(e1, e2); }
+inline bool operator < ( const DepRel &e1, const DepRel &e2)
   { return e1 <= e2 && e1 != e2; }
 DepRel operator & ( const DepRel &e1, const DepRel &e2);
 DepRel operator | ( const DepRel &e1, const DepRel &e2);

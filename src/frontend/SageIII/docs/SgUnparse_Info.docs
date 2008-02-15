@@ -70,6 +70,8 @@
 */
 /*!\fn int SgUnparse_Info::SkipEnumDefinition() const
 */
+/*!\fn int SgUnparse_Info::SkipFormatting() const
+*/
 /*!\fn int SgUnparse_Info::SkipFunctionDefinition() const
 */
 /*!\fn int SgUnparse_Info::SkipFunctionQualifier() const
@@ -167,139 +169,141 @@
 /*!\fn void SgUnparse_Info::unsetBit(enum SgUnparse_Info::unparse_type_num bit)
 */
 /*!\fn static void SgUnparse_Info::set_forceDefaultConstructorToTriggerError(bool forceDefaultConstructorToTriggerError)
-\description See  forceDefaultConstructorToTriggerError)
+\brief \brief See  forceDefaultConstructorToTriggerError)
 forceDefaultConstructorToTriggerError for documentation */
 /*!\fn void SgUnparse_Info::set_AddSemiColonAfterDeclaration()
-\description See  SgUnparse_Info::AddSemiColonAfterDeclaration for documentation */
+\brief \brief See  SgUnparse_Info::AddSemiColonAfterDeclaration for documentation */
 /*!\fn void SgUnparse_Info::set_CheckAccess()
-\description See  SgUnparse_Info::CheckAccess for documentation */
+\brief \brief See  SgUnparse_Info::CheckAccess for documentation */
 /*!\fn void SgUnparse_Info::set_PrintName()
-\description See  SgUnparse_Info::PrintName for documentation */
+\brief \brief See  SgUnparse_Info::PrintName for documentation */
 /*!\fn void SgUnparse_Info::set_SkipAtomic()
-\description See  SgUnparse_Info::SkipAtomic for documentation */
+\brief \brief See  SgUnparse_Info::SkipAtomic for documentation */
 /*!\fn void SgUnparse_Info::set_SkipBaseType()
-\description See  SgUnparse_Info::SkipBaseType for documentation */
+\brief \brief See  SgUnparse_Info::SkipBaseType for documentation */
 /*!\fn void SgUnparse_Info::set_SkipBasicBlock()
-\description See  SgUnparse_Info::SkipBasicBlock for documentation */
+\brief \brief See  SgUnparse_Info::SkipBasicBlock for documentation */
 /*!\fn void SgUnparse_Info::set_SkipCPPDirectives()
-\description See  SgUnparse_Info::SkipCPPDirectives for documentation */
+\brief \brief See  SgUnparse_Info::SkipCPPDirectives for documentation */
 /*!\fn void SgUnparse_Info::set_SkipClassDefinition()
-\description See  SgUnparse_Info::SkipClassDefinition for documentation */
+\brief \brief See  SgUnparse_Info::SkipClassDefinition for documentation */
 /*!\fn void SgUnparse_Info::set_SkipClassSpecifier()
-\description See  SgUnparse_Info::SkipClassSpecifier for documentation */
+\brief \brief See  SgUnparse_Info::SkipClassSpecifier for documentation */
 /*!\fn void SgUnparse_Info::set_SkipComments()
-\description See  SgUnparse_Info::SkipComments for documentation */
+\brief \brief See  SgUnparse_Info::SkipComments for documentation */
 /*!\fn void SgUnparse_Info::set_SkipConstantFoldedExpressions()
-\description See  SgUnparse_Info::SkipConstantFoldedExpressions for documentation */
+\brief \brief See  SgUnparse_Info::SkipConstantFoldedExpressions for documentation */
 /*!\fn void SgUnparse_Info::set_SkipDefinition()
-\description See  SgUnparse_Info::SkipDefinition for documentation */
+\brief \brief See  SgUnparse_Info::SkipDefinition for documentation */
 /*!\fn void SgUnparse_Info::set_SkipEnumDefinition()
-\description See  SgUnparse_Info::SkipEnumDefinition for documentation */
+\brief \brief See  SgUnparse_Info::SkipEnumDefinition for documentation */
+/*!\fn void SgUnparse_Info::set_SkipFormatting()
+\brief \brief See  SgUnparse_Info::SkipFormatting for documentation */
 /*!\fn void SgUnparse_Info::set_SkipFunctionDefinition()
-\description See  SgUnparse_Info::SkipFunctionDefinition for documentation */
+\brief \brief See  SgUnparse_Info::SkipFunctionDefinition for documentation */
 /*!\fn void SgUnparse_Info::set_SkipFunctionQualifier()
-\description See  SgUnparse_Info::SkipFunctionQualifier for documentation */
+\brief \brief See  SgUnparse_Info::SkipFunctionQualifier for documentation */
 /*!\fn void SgUnparse_Info::set_SkipGlobal()
-\description See  SgUnparse_Info::SkipGlobal for documentation */
+\brief \brief See  SgUnparse_Info::SkipGlobal for documentation */
 /*!\fn void SgUnparse_Info::set_SkipInitializer()
-\description See  SgUnparse_Info::SkipInitializer for documentation */
+\brief \brief See  SgUnparse_Info::SkipInitializer for documentation */
 /*!\fn void SgUnparse_Info::set_SkipParen()
-\description See  SgUnparse_Info::SkipParen for documentation */
+\brief \brief See  SgUnparse_Info::SkipParen for documentation */
 /*!\fn void SgUnparse_Info::set_SkipQualifiedNames()
-\description See  SgUnparse_Info::SkipQualifiedNames for documentation */
+\brief \brief See  SgUnparse_Info::SkipQualifiedNames for documentation */
 /*!\fn void SgUnparse_Info::set_SkipSemiColon()
-\description See  SgUnparse_Info::SkipSemiColon for documentation */
+\brief \brief See  SgUnparse_Info::SkipSemiColon for documentation */
 /*!\fn void SgUnparse_Info::set_SkipWhitespaces()
-\description See  SgUnparse_Info::SkipWhitespaces for documentation */
+\brief \brief See  SgUnparse_Info::SkipWhitespaces for documentation */
 /*!\fn void SgUnparse_Info::set_access_attribute(int access_attribute)
-\description See  access_attribute)
+\brief \brief See  access_attribute)
 access_attribute for documentation */
 /*!\fn void SgUnparse_Info::set_array_index_list(SgExpression *e,SgUnparse_Info finfo)
-\description See  finfo)
+\brief \brief See  finfo)
 array_index_list for documentation */
 /*!\fn void SgUnparse_Info::set_array_index_list(SgName array_index_list)
-\description See  array_index_list)
+\brief \brief See  array_index_list)
 array_index_list for documentation */
 /*!\fn void SgUnparse_Info::set_current_context(SgNamedType *current_context)
-\description See  *current_context)
+\brief \brief See  *current_context)
 current_context for documentation */
 /*!\fn void SgUnparse_Info::set_current_function_call(SgFunctionCallExp *current_function_call)
-\description See  *current_function_call)
+\brief \brief See  *current_function_call)
 current_function_call for documentation */
 /*!\fn void SgUnparse_Info::set_current_namespace(SgNamespaceDeclarationStatement *current_namespace)
-\description See  *current_namespace)
+\brief \brief See  *current_namespace)
 current_namespace for documentation */
 /*!\fn void SgUnparse_Info::set_current_scope(SgScopeStatement *current_scope)
-\description See  *current_scope)
+\brief \brief See  *current_scope)
 current_scope for documentation */
 /*!\fn void SgUnparse_Info::set_decl_stmt(SgDeclarationStatement *stmt)
-\description See  *stmt)
+\brief \brief See  *stmt)
 decl_stmt for documentation */
 /*!\fn void SgUnparse_Info::set_declstatement_ptr(SgDeclarationStatement *declstatement_ptr)
-\description See  *declstatement_ptr)
+\brief \brief See  *declstatement_ptr)
 declstatement_ptr for documentation */
 /*!\fn void SgUnparse_Info::set_forceQualifiedNames()
-\description See  SgUnparse_Info::forceQualifiedNames for documentation */
+\brief \brief See  SgUnparse_Info::forceQualifiedNames for documentation */
 /*!\fn void SgUnparse_Info::set_inAggregateInitializer()
-\description See  SgUnparse_Info::inAggregateInitializer for documentation */
+\brief \brief See  SgUnparse_Info::inAggregateInitializer for documentation */
 /*!\fn void SgUnparse_Info::set_inArgList()
-\description See  SgUnparse_Info::inArgList for documentation */
+\brief \brief See  SgUnparse_Info::inArgList for documentation */
 /*!\fn void SgUnparse_Info::set_inConditional()
-\description See  SgUnparse_Info::inConditional for documentation */
+\brief \brief See  SgUnparse_Info::inConditional for documentation */
 /*!\fn void SgUnparse_Info::set_inEmbeddedDecl()
-\description See  SgUnparse_Info::inEmbeddedDecl for documentation */
+\brief \brief See  SgUnparse_Info::inEmbeddedDecl for documentation */
 /*!\fn void SgUnparse_Info::set_inEnumDecl()
-\description See  SgUnparse_Info::inEnumDecl for documentation */
+\brief \brief See  SgUnparse_Info::inEnumDecl for documentation */
 /*!\fn void SgUnparse_Info::set_inRhsExpr()
-\description See  SgUnparse_Info::inRhsExpr for documentation */
+\brief \brief See  SgUnparse_Info::inRhsExpr for documentation */
 /*!\fn void SgUnparse_Info::set_inTemplateList()
-\description See  SgUnparse_Info::inTemplateList for documentation */
+\brief \brief See  SgUnparse_Info::inTemplateList for documentation */
 /*!\fn void SgUnparse_Info::set_inVarDecl()
-\description See  SgUnparse_Info::inVarDecl for documentation */
+\brief \brief See  SgUnparse_Info::inVarDecl for documentation */
 /*!\fn void SgUnparse_Info::set_isArrayType()
-\description See  SgUnparse_Info::isArrayType for documentation */
+\brief \brief See  SgUnparse_Info::isArrayType for documentation */
 /*!\fn void SgUnparse_Info::set_isPointerToSomething()
-\description See  SgUnparse_Info::isPointerToSomething for documentation */
+\brief \brief See  SgUnparse_Info::isPointerToSomething for documentation */
 /*!\fn void SgUnparse_Info::set_isPrivateAccess()
-\description See  SgUnparse_Info::isPrivateAccess for documentation */
+\brief \brief See  SgUnparse_Info::isPrivateAccess for documentation */
 /*!\fn void SgUnparse_Info::set_isProtectedAccess()
-\description See  SgUnparse_Info::isProtectedAccess for documentation */
+\brief \brief See  SgUnparse_Info::isProtectedAccess for documentation */
 /*!\fn void SgUnparse_Info::set_isPublicAccess()
-\description See  SgUnparse_Info::isPublicAccess for documentation */
+\brief \brief See  SgUnparse_Info::isPublicAccess for documentation */
 /*!\fn void SgUnparse_Info::set_isReferenceToSomething()
-\description See  SgUnparse_Info::isReferenceToSomething for documentation */
+\brief \brief See  SgUnparse_Info::isReferenceToSomething for documentation */
 /*!\fn void SgUnparse_Info::set_isTypeFirstPart()
-\description See  SgUnparse_Info::isTypeFirstPart for documentation */
+\brief \brief See  SgUnparse_Info::isTypeFirstPart for documentation */
 /*!\fn void SgUnparse_Info::set_isTypeSecondPart()
-\description See  SgUnparse_Info::isTypeSecondPart for documentation */
+\brief \brief See  SgUnparse_Info::isTypeSecondPart for documentation */
 /*!\fn void SgUnparse_Info::set_isUnsetAccess()
-\description See  SgUnparse_Info::isUnsetAccess for documentation */
+\brief \brief See  SgUnparse_Info::isUnsetAccess for documentation */
 /*!\fn void SgUnparse_Info::set_isWithType()
-\description See  SgUnparse_Info::isWithType for documentation */
+\brief \brief See  SgUnparse_Info::isWithType for documentation */
 /*!\fn void SgUnparse_Info::set_name(const SgName &name)
-\description See  &name)
+\brief \brief See  &name)
 name for documentation */
 /*!\fn void SgUnparse_Info::set_nested_expression()
-\description See  SgUnparse_Info::nested_expression for documentation */
+\brief \brief See  SgUnparse_Info::nested_expression for documentation */
 /*!\fn void SgUnparse_Info::set_operator_name(const std::string &on)
-\description See  &on)
+\brief \brief See  &on)
 operator_name for documentation */
 /*!\fn void SgUnparse_Info::set_outputClassTemplateName()
-\description See  SgUnparse_Info::outputClassTemplateName for documentation */
+\brief \brief See  SgUnparse_Info::outputClassTemplateName for documentation */
 /*!\fn void SgUnparse_Info::set_outputCodeGenerationFormatDelimiters(bool outputCodeGenerationFormatDelimiters)
-\description See  outputCodeGenerationFormatDelimiters)
+\brief \brief See  outputCodeGenerationFormatDelimiters)
 outputCodeGenerationFormatDelimiters for documentation */
 /*!\fn void SgUnparse_Info::set_outputCompilerGeneratedStatements()
-\description See  SgUnparse_Info::outputCompilerGeneratedStatements for documentation */
+\brief \brief See  SgUnparse_Info::outputCompilerGeneratedStatements for documentation */
 /*!\fn void SgUnparse_Info::set_qualifiedNameList(SgQualifiedNamePtrListPtr qualifiedNameList)
-\description See  qualifiedNameList)
+\brief \brief See  qualifiedNameList)
 qualifiedNameList for documentation */
 /*!\fn void SgUnparse_Info::set_requiresGlobalNameQualification()
-\description See  SgUnparse_Info::requiresGlobalNameQualification for documentation */
+\brief \brief See  SgUnparse_Info::requiresGlobalNameQualification for documentation */
 /*!\fn void SgUnparse_Info::set_skipCheckAccess()
-\description See  SgUnparse_Info::skipCheckAccess for documentation */
+\brief \brief See  SgUnparse_Info::skipCheckAccess for documentation */
 /*!\fn void SgUnparse_Info::set_useTypeAttributes()
-\description See  SgUnparse_Info::useTypeAttributes for documentation */
+\brief \brief See  SgUnparse_Info::useTypeAttributes for documentation */
 /*!\fn void SgUnparse_Info::unset_AddSemiColonAfterDeclaration()
 */
 /*!\fn void SgUnparse_Info::unset_CheckAccess()
@@ -325,6 +329,8 @@ qualifiedNameList for documentation */
 /*!\fn void SgUnparse_Info::unset_SkipDefinition()
 */
 /*!\fn void SgUnparse_Info::unset_SkipEnumDefinition()
+*/
+/*!\fn void SgUnparse_Info::unset_SkipFormatting()
 */
 /*!\fn void SgUnparse_Info::unset_SkipFunctionDefinition()
 */
@@ -393,55 +399,55 @@ qualifiedNameList for documentation */
 /*!\fn void SgUnparse_Info::unset_useTypeAttributes()
 */
 /*!\fn SgDeclarationStatement *SgUnparse_Info::get_decl_stmt()
-\description See  *SgUnparse_Info::decl_stmt for documentation */
+\brief \brief See  *SgUnparse_Info::decl_stmt for documentation */
 /*!\fn SgDeclarationStatement *SgUnparse_Info::get_declstatement_ptr() const
-\description See  const
+\brief \brief See  const
 declstatement_ptr for documentation */
 /*!\fn SgFunctionCallExp *SgUnparse_Info::get_current_function_call() const
-\description See  const
+\brief \brief See  const
 current_function_call for documentation */
 /*!\fn SgName &SgUnparse_Info::get_name()
-\description See  &SgUnparse_Info::name for documentation */
+\brief \brief See  &SgUnparse_Info::name for documentation */
 /*!\fn SgName SgUnparse_Info::get_array_index_list()
-\description See  SgUnparse_Info::array_index_list for documentation */
+\brief \brief See  SgUnparse_Info::array_index_list for documentation */
 /*!\fn SgName SgUnparse_Info::get_array_index_list() const
-\description See  const
+\brief \brief See  const
 array_index_list for documentation */
 /*!\fn SgNamedType *SgUnparse_Info::get_current_context() const
-\description See  const
+\brief \brief See  const
 current_context for documentation */
 /*!\fn SgNamespaceDeclarationStatement *SgUnparse_Info::get_current_namespace() const
-\description See  const
+\brief \brief See  const
 current_namespace for documentation */
 /*!\fn SgQualifiedNamePtrListPtr SgUnparse_Info::get_qualifiedNameList() const
-\description See  const
+\brief \brief See  const
 qualifiedNameList for documentation */
 /*!\fn SgScopeStatement *SgUnparse_Info::get_current_scope() const
-\description See  const
+\brief \brief See  const
 current_scope for documentation */
 /*!\fn bool SgUnparse_Info::get_outputCodeGenerationFormatDelimiters() const
-\description See  const
+\brief \brief See  const
 outputCodeGenerationFormatDelimiters for documentation */
 /*!\fn int SgUnparse_Info::get_access_attribute() const
-\description See  const
+\brief \brief See  const
 access_attribute for documentation */
 /*!\fn int SgUnparse_Info::get_nested_expression()
-\description See  SgUnparse_Info::nested_expression for documentation */
+\brief \brief See  SgUnparse_Info::nested_expression for documentation */
 /*!\fn std::string SgUnparse_Info::get_operator_name()
-\description See  SgUnparse_Info::operator_name for documentation */
+\brief \brief See  SgUnparse_Info::operator_name for documentation */
 /*!\fn virtual SgNode *SgUnparse_Info::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgUnparse_Info::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUnparse_Info::get_numberOfTraversalSuccessors()
-\description See  SgUnparse_Info::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUnparse_Info::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnparse_Info::get_traversalSuccessorContainer()
-\description See  SgUnparse_Info::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUnparse_Info::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnparse_Info::get_traversalSuccessorNamesContainer()
-\description See  SgUnparse_Info::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUnparse_Info::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgUnparse_Info::~SgUnparse_Info()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1527528163;
+extern int SAGE_Doxygen_Dummy_1913398184;

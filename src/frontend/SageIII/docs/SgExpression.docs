@@ -207,8 +207,6 @@ interpritation of the frontend regarding the use of parenthesis.
 */
 /*!\fn virtual bool SgExpression::cfgIsIndexInteresting(unsigned int index) const
 */
-/*!\fn virtual int SgExpression::precedence() const
-*/
 /*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgExpression::cfgInEdges(unsigned int index)
 */
 /*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgExpression::cfgOutEdges(unsigned int index)
@@ -228,45 +226,46 @@ interpritation of the frontend regarding the use of parenthesis.
 /*!\fn virtual void SgExpression::post_construction_initialization()
 */
 /*!\fn virtual void SgExpression::set_file_info(Sg_File_Info *X)
-\description See  *X)
+\brief \brief See  *X)
 file_info for documentation */
 /*!\fn void SgExpression::set_global_qualified_name(bool global_qualified_name)
-\description See  global_qualified_name)
+\brief \brief See  global_qualified_name)
 global_qualified_name for documentation */
 /*!
 \fn void SgExpression::set_lvalue(bool lvalue)
-\brief This function allows the p_lvalue flag to be set (used internally).
+\brief This function allows the p_lvalue flag to be set (used internally).See  lvalue)
+lvalue for documentation 
    This function is mostly used internally but would required for the construction of
 specific expression trees. In general it is set by the frontend, but not used elsewhere
 within SAGE III (will be tested in the future).
-See  lvalue)
-lvalue for documentation \param lvalue - sets value of internal p_lvalue flag (true if the current is to be
+\param lvalue - sets value of internal p_lvalue flag (true if the current is to be
     a left hand side value (lvalue)).
 \return Returns void.
 */
 /*!
 \fn void SgExpression::set_need_paren(bool need_paren)
-\brief This function allows the p_need_paren flag to be set (used internally).
+\brief This function allows the p_need_paren flag to be set (used internally).See  need_paren)
+need_paren for documentation 
    This function is mostly used internally but would required for the construction of
 specific expression trees where the operator precedence would be insufficent to generate
 the correct code (which si the purpose of adding parenthesis in source code).
-See  need_paren)
-need_paren for documentation \param need_paren - sets value of internal p_need_paren flag (true if parenthesis are
+\param need_paren - sets value of internal p_need_paren flag (true if parenthesis are
     needed around the expression).
 \return Returns void.
 */
 /*!\fn void SgExpression::set_operatorPosition(Sg_File_Info *operatorPosition)
-\description See  *operatorPosition)
+\brief \brief See  *operatorPosition)
 operatorPosition for documentation */
 /*!\fn Sg_File_Info *SgExpression::get_operatorPosition() const
-\description See  const
+\brief \brief See  const
 operatorPosition for documentation */
 /*!\fn bool SgExpression::get_global_qualified_name() const
-\description See  const
+\brief \brief See  const
 global_qualified_name for documentation */
 /*!
 \fn bool SgExpression::get_lvalue() const
-\brief returns bool value if front-end considers parenthesis to be required.
+\brief returns bool value if front-end considers parenthesis to be required.See  const
+lvalue for documentation 
    This function returns a boolean value which is true if parenthesis are required
 for the proper eveluation of the current expression.  The frontend is however overly
 conservative and introduces parenthesis too often.  The value as determined by the 
@@ -274,12 +273,12 @@ frontend is saved in the SAGE III AST because it is sometimes required for more
 complex expressions and contructor calls with initializers.  At present the
 unparser applies operator precedence rules to eliminate some of the redundent
 parenthesis within expressions (this makes the output more appealing).
-See  const
-lvalue for documentation \return Returns bool value (true if parenthesis are needed around the expression).
+\return Returns bool value (true if parenthesis are needed around the expression).
 */
 /*!
 \fn bool SgExpression::get_need_paren() const
-\brief returns bool value if front-end considers parenthesis to be required.
+\brief returns bool value if front-end considers parenthesis to be required.See  const
+need_paren for documentation 
    This function returns a boolean value which is true if parenthesis are required
 for the proper eveluation of the current expression.  The frontend is however overly
 conservative and introduces parenthesis too often.  The value as determined by the 
@@ -287,31 +286,30 @@ frontend is saved in the SAGE III AST because it is sometimes required for more
 complex expressions and contructor calls with initializers.  At present the
 unparser applies operator precedence rules to eliminate some of the redundent
 parenthesis within expressions (this makes the output more appealing).
-See  const
-need_paren for documentation \return Returns bool value (true if parenthesis are needed around the expression).
+\return Returns bool value (true if parenthesis are needed around the expression).
 */
 /*!\fn virtual SgNode *SgExpression::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!
 \fn virtual SgType *SgExpression::get_type() const
-\brief Get the type associated with this expression
-See  const
-type for documentation \return Returns SgType (base class for all possible types)
+\brief Get the type associated with this expressionSee  const
+type for documentation 
+\return Returns SgType (base class for all possible types)
 */
 /*!\fn virtual Sg_File_Info *SgExpression::get_file_info() const
-\description See  const
+\brief \brief See  const
 file_info for documentation */
 /*!\fn virtual size_t SgExpression::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgExpression::get_numberOfTraversalSuccessors()
-\description See  SgExpression::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgExpression::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgExpression::get_traversalSuccessorContainer()
-\description See  SgExpression::traversalSuccessorContainer for documentation */
+\brief \brief See  SgExpression::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgExpression::get_traversalSuccessorNamesContainer()
-\description See  SgExpression::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgExpression::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgExpression::SgExpression()
 */
 //@}
-int SAGE_Doxygen_Dummy_129981662332040;
+int SAGE_Doxygen_Dummy_287291332112421;

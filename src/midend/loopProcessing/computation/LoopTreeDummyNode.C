@@ -1,6 +1,3 @@
-
-#include <general.h>
-
 #include <sstream>
 #include <vector>
 #include <SymbolicBound.h>
@@ -11,15 +8,9 @@
 #include <ProcessAstTree.h>
 #include <StmtInfoCollect.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
 LoopTreeRestrLoopRange::  LoopTreeRestrLoopRange(  LoopTreeNode *l, int align,
                           SymbolicVal _lb, SymbolicVal _ub )
-    : LoopTreeNode(), b(_lb,_ub), loop(l, align, this) 
+    : LoopTreeNode(), loop(l, align, this), b(_lb,_ub) 
 {
   AttachObserver(*this);
 }
@@ -40,12 +31,12 @@ void LoopTreeRestrLoopRange :: UpdateSwapNode( const SwapNodeInfo &info)
        }
    }
 
-string LoopTreeRestrLoopRange :: ToString() const
+STD string LoopTreeRestrLoopRange :: toString() const
    {
-      stringstream out(stringstream::out);
+      STD stringstream out;
       out << "restrict loop ivar ";
-      out << loop.GetAncesLoop()->GetLoopInfo()->GetVar().ToString();
-      out << " + " << loop.GetLoopAlign() << " within range:\n ( " << b.ToString();
+      out << loop.GetAncesLoop()->GetLoopInfo()->GetVar().toString();
+      out << " + " << loop.GetLoopAlign() << " within range:\n ( " << b.toString();
       return out.str();
    }
 
@@ -58,16 +49,16 @@ CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
       SymbolicVal lval = align? b.lb-align : b.lb;
       AstNodePtr cond1;
       if (b.lb == b.ub) {
-         cond1 = fa.CreateRelEQ( ivar.CodeGen(fa), lval.CodeGen(fa));
+         cond1 = fa.CreateBinaryOP(AstInterface::BOP_EQ, ivar.CodeGen(fa), lval.CodeGen(fa));
       }
       else {
          SymbolicVal uval = align? b.ub-align : b.ub;
-         cond1 = lval.IsNIL()? 0: fa.CreateRelGE( ivar.CodeGen(fa), lval.CodeGen(fa));
-         AstNodePtr cond2 = uval.IsNIL()? 0:
-                   fa.CreateRelLE( ivar.CodeGen(fa), uval.CodeGen(fa));
-         if (cond1 != 0 && cond2 != 0)
-              cond1 = fa.CreateLogicalAND( cond1, cond2);
-         else if (cond1 == 0)
+         cond1 = lval.IsNIL()? AST_NULL: fa.CreateBinaryOP(AstInterface::BOP_GE, ivar.CodeGen(fa), lval.CodeGen(fa));
+         AstNodePtr cond2 = uval.IsNIL()? AST_NULL:
+                   fa.CreateBinaryOP(AstInterface::BOP_LE, ivar.CodeGen(fa), uval.CodeGen(fa));
+         if (cond1 != AST_NULL && cond2 != AST_NULL)
+              cond1 = fa.CreateBinaryOP(AstInterface::BOP_AND, cond1, cond2);
+         else if (cond1 == AST_NULL)
               cond1 = cond2;
       }
       return fa.CreateIf( cond1, c );
@@ -89,7 +80,7 @@ LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, SelectObject<LoopTreeNode*
       return 0; 
 }
 
-Boolean LoopTreeRestrLoopRange :: RemoveSelf()
+bool LoopTreeRestrLoopRange :: RemoveSelf()
 {
       if (ChildCount() == 0) {
         RemoveTree();
@@ -143,7 +134,7 @@ Boolean LoopTreeRestrLoopRange :: RemoveSelf()
             if (info == 0)
                continue;
             int align;
-            if ((info->GetVar() - b.lb).ToInt(align)) {
+            if ((info->GetVar() - b.lb).isConstInt(align)) {
                  LoopTreeMergeStmtLoop()( l1, l, this, align);
                  LoopTreeNode::RemoveSelf();
                  return true;
@@ -158,17 +149,17 @@ class SelectRestrLoopAnces : public SelectObject<LoopTreeNode*>
   LoopTreeRestrLoopRange *node;
  public:
   SelectRestrLoopAnces( LoopTreeRestrLoopRange *n) : node(n) {}
-  Boolean operator ()( LoopTreeNode * const& n)  const
+  bool operator ()( LoopTreeNode * const& n)  const
    { if (n == node->GetRestrLoop())
         return true;
      if (n->GetClassName() != node->GetClassName())
         return false;
-     LoopTreeRestrLoopRange *that = static_cast<LoopTreeRestrLoopRange*>(n);
+     LoopTreeRestrLoopRange * that = static_cast<LoopTreeRestrLoopRange* const>(n);
      return that->GetRestrLoop() == node->GetRestrLoop();
    } 
 };
 
-Boolean LoopTreeRestrLoopRange :: SelfRemove()
+bool LoopTreeRestrLoopRange :: SelfRemove()
     {
       ResetLoopAlign();
       if (RemoveSelf())
@@ -195,11 +186,11 @@ LoopTreeNode* FindSibling( LoopTreeNode*& t, int opt)
 {
    for ( LoopTreeNode* l = t->Parent();
            l && l->ChildCount() == 1;
-           t = l, l = l->Parent()) {}
+           t = l, l = l->Parent());
    return (opt < 0)? t->PrevSibling() : t->NextSibling();
 }
 
-Boolean LoopTreeRestrLoopRange :: MergeSibling( int opt) 
+bool LoopTreeRestrLoopRange :: MergeSibling( int opt) 
    {
      LoopTreeNode *p1 = this;
      LoopTreeNode *p2 = FindSibling(p1, opt);
@@ -255,7 +246,7 @@ Boolean LoopTreeRestrLoopRange :: MergeSibling( int opt)
              n->Link(nr, AsLastChild);
           else
              n->Link(nr, AsFirstChild);
-          Boolean succ1 = RemoveSelf(), succ2 = n->RemoveSelf();
+          bool succ1 = RemoveSelf(), succ2 = n->RemoveSelf();
           if (!succ1 && succ2) 
              succ1 = MergeSibling(opt); 
           return succ1;
@@ -269,11 +260,11 @@ class SelectRelateLoopAnces : public SelectObject<LoopTreeNode*>
   LoopTreeRelateLoopIvar *node;
  public:
   SelectRelateLoopAnces( LoopTreeRelateLoopIvar *n) : node(n) {}
-  Boolean operator ()( LoopTreeNode * const& n)  const
+  bool operator ()( LoopTreeNode * const& n)  const
    {  return n == node->GetLoop2(); }
 };
 
-Boolean LoopTreeRelateLoopIvar :: SelfRemove()
+bool LoopTreeRelateLoopIvar :: SelfRemove()
     {
       if (ChildCount() == 0) {
         RemoveTree();
@@ -289,7 +280,7 @@ Boolean LoopTreeRelateLoopIvar :: SelfRemove()
       return MergeSibling(-1);
     }
 
-Boolean LoopTreeRelateLoopIvar :: MergeSibling( int opt)
+bool LoopTreeRelateLoopIvar :: MergeSibling( int opt)
    {
      LoopTreeNode *p1 = this;
      LoopTreeNode *p2 = FindSibling(p1, opt);
@@ -314,15 +305,15 @@ Boolean LoopTreeRelateLoopIvar :: MergeSibling( int opt)
      return false;
    }
 
-string LoopTreeRelateLoopIvar :: ToString() const
+STD string LoopTreeRelateLoopIvar :: toString() const
    {
-     stringstream out(stringstream::out);
+     STD stringstream out;
      out << "relate loop ivar :";
-     out << loop1.GetAncesLoop()->GetLoopInfo()->GetVar().ToString();
+     out << loop1.GetAncesLoop()->GetLoopInfo()->GetVar().toString();
      out << loop1.GetAncesLoop()->LoopLevel();
      out << " + " << loop1.GetLoopAlign();
      out << " = ";
-     out << loop2.GetAncesLoop()->GetLoopInfo()->GetVar().ToString();
+     out << loop2.GetAncesLoop()->GetLoopInfo()->GetVar().toString();
      out << loop2.GetAncesLoop()->LoopLevel();
      out << " + " << loop2.GetLoopAlign();
      out << "\n";
@@ -333,13 +324,13 @@ AstNodePtr LoopTreeRelateLoopIvar ::
 CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
    { 
      AstInterface& fa = la;
-     AstNodePtr cond = fa.CreateRelEQ( GetIvar1().CodeGen(fa),
+     AstNodePtr cond = fa.CreateBinaryOP(AstInterface::BOP_EQ, GetIvar1().CodeGen(fa),
                                               (GetIvar2()+GetAlign()).CodeGen(fa));
      AstNodePtr result = fa.CreateIf( cond, c);
      return result;
    }
 
-Boolean LoopTreeReplLoopVar :: SelfRemove() 
+bool LoopTreeReplLoopVar :: SelfRemove() 
     {
       if (ChildCount() == 0) {
         RemoveTree();
@@ -373,11 +364,11 @@ Boolean LoopTreeReplLoopVar :: SelfRemove()
       return false;
     }
 
-string LoopTreeReplLoopVar :: ToString() const
+STD string LoopTreeReplLoopVar :: toString() const
    {
-     stringstream out(stringstream::out);
-      out << "replace loop index variable " <<  oldvar.ToString();
-      out << " with val:" << newval.ToString();
+     STD stringstream out;
+      out << "replace loop index variable " <<  oldvar.toString();
+      out << " with val:" << newval.toString();
       out << " + " << align;
       out << "\n";
      return out.str();
@@ -394,14 +385,14 @@ AstNodePtr LoopTreeReplLoopVar :: CodeGen( LoopTransformInterface &fa, const Ast
     return result;
   }
 
-string LoopTreeCopyArray::ToString() const
+STD string LoopTreeCopyArray::toString() const
 {
-   return config.ToString() + CopyArrayConfig::CopyOpt2String(opt);
+   return config.toString() + CopyArrayConfig::CopyOpt2String(opt);
 }
 
-string LoopTreeReplAst::ToString() const
+STD string LoopTreeReplAst::toString() const
 {
-  return "replace " + AstInterface::AstToString(orig) + " -> " + AstInterface::AstToString(repl);
+  return "replace " + AstToString(orig) + " -> " + AstToString(repl);
 }
 
 AstNodePtr LoopTreeReplAst::CodeGen( LoopTransformInterface &fa) const
@@ -417,33 +408,32 @@ AstNodePtr LoopTreeCopyArray::
 CodeGen( LoopTransformInterface &la, const AstNodePtr& h) const
 {
    AstInterface& fa = la;
-   AstNodePtr r = fa.CreateBasicBlock();
-   fa.ReplaceAst(h,r);
+   AstNodePtr r = fa.CreateBlock();
  
    if ( opt & CopyArrayConfig::ALLOC_COPY) { 
        AstNodePtr alloc = config.allocate_codegen(fa);
        if (alloc != 0)
-          fa.BasicBlockAppendStmt(r, alloc);
+          fa.BlockAppendStmt(r, alloc);
    }
    if (opt & CopyArrayConfig::INIT_COPY) {
        AstNodePtr copy = 
              config.copy_codegen(la, CopyArrayConfig::INIT_COPY); 
-       fa.BasicBlockAppendStmt(r, copy);
+       fa.BlockAppendStmt(r, copy);
    }
    
-   fa.BasicBlockAppendStmt(r, h);
+   fa.BlockAppendStmt(r, h);
    if (opt & CopyArrayConfig::SAVE_COPY) {
        AstNodePtr copy = config.copy_codegen(la, CopyArrayConfig::SAVE_COPY); 
-       fa.BasicBlockAppendStmt(r, copy);
+       fa.BlockAppendStmt(r, copy);
    }
    if (opt & CopyArrayConfig::SHIFT_COPY) {
        AstNodePtr copy = config.copy_codegen(la, CopyArrayConfig::SHIFT_COPY); 
-       fa.BasicBlockAppendStmt(r, copy);
+       fa.BlockAppendStmt(r, copy);
    }
    if ((opt & CopyArrayConfig::DELETE_COPY)) {
        AstNodePtr del = config.delete_codegen(fa);
        if (del != 0)
-         fa.BasicBlockAppendStmt(r,del); 
+         fa.BlockAppendStmt(r,del); 
    }
    return r;
 }

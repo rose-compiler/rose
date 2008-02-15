@@ -126,38 +126,38 @@ pointer to an object derived from a SgBasicBlock.
 */
 /*!
 \fn SgStatementPtrList &SgBasicBlock::get_statements()
-\brief Returns a non-const STL list by reference.
-See  &SgBasicBlock::statements for documentation \return Returns non-const SgStatementPtrList (STL list) by reference.
+\brief Returns a non-const STL list by reference.See  &SgBasicBlock::statements for documentation 
+\return Returns non-const SgStatementPtrList (STL list) by reference.
 */
 /*!
 \fn const SgStatementPtrList &SgBasicBlock::get_statements() const
-\brief Returns a const STL list by reference.
-See  const
-statements for documentation \return Returns const SgStatementPtrList (STL list) by reference.
+\brief Returns a const STL list by reference.See  const
+statements for documentation 
+\return Returns const SgStatementPtrList (STL list) by reference.
 */
 /*!\fn virtual SgName SgBasicBlock::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!
 \fn virtual SgName SgBasicBlock::get_qualified_name() const
-\brief Returns SgName (a string) representing the name of the current scope.
+\brief Returns SgName (a string) representing the name of the current scope.See  const
+qualified_name for documentation 
    See discussion of mangled names in the documentation.
-See  const
-qualified_name for documentation \return Returns SgName (a string).
+\return Returns SgName (a string).
 */
 /*!\fn virtual SgNode *SgBasicBlock::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgBasicBlock::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgBasicBlock::get_numberOfTraversalSuccessors()
-\description See  SgBasicBlock::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgBasicBlock::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBasicBlock::get_traversalSuccessorContainer()
-\description See  SgBasicBlock::traversalSuccessorContainer for documentation */
+\brief \brief See  SgBasicBlock::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBasicBlock::get_traversalSuccessorNamesContainer()
-\description See  SgBasicBlock::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgBasicBlock::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgBasicBlock::~SgBasicBlock()
 */
 //@}
-int SAGE_Doxygen_Dummy_17485720826887;
+int SAGE_Doxygen_Dummy_28560798028742;

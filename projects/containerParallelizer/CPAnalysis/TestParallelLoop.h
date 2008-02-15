@@ -9,27 +9,28 @@ class AstNodePtr;
 
 class ContainerCollection : public TypeAnnotCollection <BoolDescriptor>
 {
-  virtual bool read_annot_name( const string& abname) const
+  virtual bool read_annot_name( const STD string& abname) const
     { return (abname == "container"); }
  public:
   void Dump() const
-    { cerr << "containers: \n"; TypeAnnotCollection<BoolDescriptor>::Dump(); }
+    { STD cerr << "containers: \n"; TypeAnnotCollection<BoolDescriptor>::Dump(); }
 };
 
 class TestParallelLoop  {
   ContainerCollection containers;
   OperatorModInfoCollection modInfo;
-  map <string, OperatorDeclaration> decl;
+  STD map <STD string, OperatorDeclaration> decl;
 
  public:
   TestParallelLoop( int argc, char** argv); 
   
-  bool LoopParallelizable( const AstNodePtr& loop);
-  static void DumpOptions( ostream& os);
+  bool LoopParallelizable( CPPAstInterface& fa, const AstNodePtr& loop);
+  static void DumpOptions( STD ostream& os);
 
-  bool known_operator( string op, OperatorSideEffectDescriptor& info) 
-    { return modInfo.known_type(op, &info); }
-  bool known_operator( string op) 
+  bool known_operator( AstInterface& fa, const AstNodePtr& fcall,
+                        OperatorSideEffectDescriptor& info) 
+    { return modInfo.known_operator(fa, fcall, 0, &info); }
+  bool known_operator( STD string op) 
          { return modInfo.known_type(op); }
   void Dump() const 
      { 

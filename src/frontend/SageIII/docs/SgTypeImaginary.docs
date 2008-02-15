@@ -79,24 +79,24 @@ pointer to an object derived from a SgTypeImaginary.
 /*!\fn virtual SgTypeImaginary::~SgTypeImaginary()
 */
 /*!\fn void SgTypeImaginary::set_precision(enum SgTypeImaginary::floating_point_precision_enum precision)
-\description See  precision)
+\brief \brief See  precision)
 precision for documentation */
 /*!\fn enum SgTypeImaginary::floating_point_precision_enum SgTypeImaginary::get_precision() const
-\description See  const
+\brief \brief See  const
 precision for documentation */
 /*!\fn virtual SgNode *SgTypeImaginary::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTypeImaginary::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTypeImaginary::get_numberOfTraversalSuccessors()
-\description See  SgTypeImaginary::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTypeImaginary::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeImaginary::get_traversalSuccessorContainer()
-\description See  SgTypeImaginary::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTypeImaginary::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeImaginary::get_traversalSuccessorNamesContainer()
-\description See  SgTypeImaginary::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTypeImaginary::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgTypeImaginary::SgTypeImaginary(enum SgTypeImaginary::floating_point_precision_enum precision=SgTypeImaginary::e_errorPrecision)
 */
 //@}
-int SAGE_Doxygen_Dummy_2688315857729;
+int SAGE_Doxygen_Dummy_15048313668841;

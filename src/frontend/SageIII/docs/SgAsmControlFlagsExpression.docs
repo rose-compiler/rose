@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmControlFlagsExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned long SgAsmControlFlagsExpression::p_bit_flags
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmControlFlagsExpression::SgAsmControlFlagsExpression(const SgAsmControlFlagsExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmControlFlagsExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmControlFlagsExpression *SgAsmControlFlagsExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmControlFlagsExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmControlFlagsExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmControlFlagsExpression::initializeStorageClassArray(SgAsmControlFlagsExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmControlFlagsExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmControlFlagsExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmControlFlagsExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmControlFlagsExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmControlFlagsExpression::~SgAsmControlFlagsExpression()
+*/
+/*!\fn virtual SgNode *SgAsmControlFlagsExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmControlFlagsExpression::set_bit_flags(unsigned long bit_flags)
+\brief \brief See  bit_flags)
+bit_flags for documentation */
+/*!\fn unsigned long SgAsmControlFlagsExpression::get_bit_flags() const
+\brief \brief See  const
+bit_flags for documentation */
+/*!\fn virtual SgNode *SgAsmControlFlagsExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmControlFlagsExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmControlFlagsExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmControlFlagsExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmControlFlagsExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmControlFlagsExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmControlFlagsExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmControlFlagsExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmControlFlagsExpression::SgAsmControlFlagsExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1956791449;

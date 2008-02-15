@@ -33,18 +33,18 @@
 /*!\fn virtual SgTypeFloat::~SgTypeFloat()
 */
 /*!\fn virtual SgNode *SgTypeFloat::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTypeFloat::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTypeFloat::get_numberOfTraversalSuccessors()
-\description See  SgTypeFloat::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTypeFloat::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeFloat::get_traversalSuccessorContainer()
-\description See  SgTypeFloat::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTypeFloat::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeFloat::get_traversalSuccessorNamesContainer()
-\description See  SgTypeFloat::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTypeFloat::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgTypeFloat::SgTypeFloat()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_242099293;
+extern int SAGE_Doxygen_Dummy_80552787;

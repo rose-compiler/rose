@@ -13651,7 +13651,10 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1, Token_t * k
 
      SgScopeStatement* topOfStack = getTopOfScopeStack();
   // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
-     ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
+  
+  // DQ (2/1/2008): This does not have to be true since a function can be defined as a nested 
+  // function in an existing function (SgProgramHeaderStatement).
+  // ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
      topOfStack->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfo());
      topOfStack->get_endOfConstruct()->set_parent(topOfStack);

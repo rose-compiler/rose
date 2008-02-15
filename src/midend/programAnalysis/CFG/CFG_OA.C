@@ -3,15 +3,17 @@
 
 #include <SAGE2OA.h>
 
+#include <AstInterface_ROSE.h>
 #include <OAWrap.h>
 #include <CFG.h>
 #include <PtrMap.h>
 
 #ifndef TEMPLATE_ONLY
-OpenAnalysis::ROSE_CFG_Wrap ::ROSE_CFG_Wrap( const AstNodePtr& head )
+OpenAnalysis::ROSE_CFG_Wrap ::ROSE_CFG_Wrap( const AstNodePtr& _head )
 {
+  SgNode* head = AstNodePtrImpl(_head).get_ptr();
   SgStatement *s = isSgStatement(head);
-  if (AstInterface::IsFunctionDefinition(head)) {
+  if (head->variantT() == V_SgFunctionDefinition) {
       s = isSgFunctionDefinition(s)->get_body();
   }
   SageIRInterface ir;
@@ -31,14 +33,14 @@ OpenAnalysis::ROSE_CFG_Wrap :: ~ROSE_CFG_Wrap()
 #endif
 
 template <class Node, class Edge>
-void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node,Edge>& ng)
+void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& ng)
 {
   ROSE_CFG_Wrap wrap( head);
   OA2ROSE_CFG_Translate( wrap, ng);
 }
 
 template <class Node, class Edge>
-void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node,Edge>& ng)
+void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng)
 {
   PtrMapWrap <CFG::Node,Node> nodeMap;
   CFG& g = wrap.get_OA_CFG();

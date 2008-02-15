@@ -34,30 +34,36 @@
 */
 /*!\fn virtual SgNode *SgContainsStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgContainsStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgContainsStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgContainsStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgContainsStatement::post_construction_initialization()
 */
 /*!\fn void SgContainsStatement::set_name_list(SgStringList name_list)
-\description See  name_list)
+\brief \brief See  name_list)
 name_list for documentation */
 /*!\fn SgStringList SgContainsStatement::get_name_list() const
-\description See  const
+\brief \brief See  const
 name_list for documentation */
 /*!\fn virtual SgName SgContainsStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgContainsStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgContainsStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgContainsStatement::get_numberOfTraversalSuccessors()
-\description See  SgContainsStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgContainsStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgContainsStatement::get_traversalSuccessorContainer()
-\description See  SgContainsStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgContainsStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgContainsStatement::get_traversalSuccessorNamesContainer()
-\description See  SgContainsStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgContainsStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgContainsStatement::SgContainsStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1727883299;
+extern int SAGE_Doxygen_Dummy_1697651341;

@@ -3,9 +3,9 @@
 */
 /*! \name Class Members*/
 //@{
-/*!\var enum SgProcedureHeaderStatement::subprogram_kind_enum SgProcedureHeaderStatement::p_subprogram_kind
+/*!\var SgLabelRefExp *SgProcedureHeaderStatement::p_end_numeric_label
 */
-/*!\var int SgProcedureHeaderStatement::p_end_numeric_label
+/*!\var enum SgProcedureHeaderStatement::subprogram_kind_enum SgProcedureHeaderStatement::p_subprogram_kind
 */
 /*!\var SgInitializedName *SgProcedureHeaderStatement::p_result_name
 */
@@ -46,40 +46,40 @@
 */
 /*!\fn virtual void SgProcedureHeaderStatement::post_construction_initialization()
 */
-/*!\fn void SgProcedureHeaderStatement::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgProcedureHeaderStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
 /*!\fn void SgProcedureHeaderStatement::set_result_name(SgInitializedName *result_name)
-\description See  *result_name)
+\brief \brief See  *result_name)
 result_name for documentation */
 /*!\fn void SgProcedureHeaderStatement::set_subprogram_kind(enum SgProcedureHeaderStatement::subprogram_kind_enum subprogram_kind)
-\description See  subprogram_kind)
+\brief \brief See  subprogram_kind)
 subprogram_kind for documentation */
 /*!\fn SgInitializedName *SgProcedureHeaderStatement::get_result_name() const
-\description See  const
+\brief \brief See  const
 result_name for documentation */
-/*!\fn enum SgProcedureHeaderStatement::subprogram_kind_enum SgProcedureHeaderStatement::get_subprogram_kind() const
-\description See  const
-subprogram_kind for documentation */
-/*!\fn int SgProcedureHeaderStatement::get_end_numeric_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgProcedureHeaderStatement::get_end_numeric_label() const
+\brief \brief See  const
 end_numeric_label for documentation */
+/*!\fn enum SgProcedureHeaderStatement::subprogram_kind_enum SgProcedureHeaderStatement::get_subprogram_kind() const
+\brief \brief See  const
+subprogram_kind for documentation */
 /*!\fn virtual SgName SgProcedureHeaderStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgProcedureHeaderStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgProcedureHeaderStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgProcedureHeaderStatement::get_numberOfTraversalSuccessors()
-\description See  SgProcedureHeaderStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgProcedureHeaderStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgProcedureHeaderStatement::get_traversalSuccessorContainer()
-\description See  SgProcedureHeaderStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgProcedureHeaderStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgProcedureHeaderStatement::get_traversalSuccessorNamesContainer()
-\description See  SgProcedureHeaderStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgProcedureHeaderStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgProcedureHeaderStatement::SgProcedureHeaderStatement(SgName name,SgFunctionType *type,SgFunctionDefinition *definition)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_693893912;
+extern int SAGE_Doxygen_Dummy_1158090683;

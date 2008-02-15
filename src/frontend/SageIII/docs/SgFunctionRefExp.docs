@@ -125,42 +125,42 @@ arguments.
 /*!\fn virtual void SgFunctionRefExp::post_construction_initialization()
 */
 /*!\fn void SgFunctionRefExp::set_symbol(SgFunctionSymbol *symbol)
-\description See  *symbol)
+\brief \brief See  *symbol)
 symbol for documentation */
 /*!\fn void SgFunctionRefExp::set_symbol_i(SgFunctionSymbol *symbol_i)
-\description See  *symbol_i)
+\brief \brief See  *symbol_i)
 symbol_i for documentation */
 /*!\fn SgFunctionSymbol *SgFunctionRefExp::get_symbol() const
-\description See  const
+\brief \brief See  const
 symbol for documentation */
 /*!\fn SgFunctionSymbol *SgFunctionRefExp::get_symbol_i() const
-\description See  const
+\brief \brief See  const
 symbol_i for documentation */
 /*!\fn virtual SgNode *SgFunctionRefExp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!
 \fn virtual SgType *SgFunctionRefExp::get_type() const
-\brief Get the type associated with this expression
+\brief Get the type associated with this expressionSee  const
+type for documentation 
      Note that the return value is either:
    -# SgFunctionType : normal function call
    -# SgMemberFunctionType : normal member function call
    -# SgTypedefType : in teh case of a function call from a pointer
    It should always be a vailid pointer.  These details are verified in the AST
    Consistancy Tests.
-See  const
-type for documentation \return Returns SgType (but not any SgType).
+\return Returns SgType (but not any SgType).
 */
 /*!\fn virtual size_t SgFunctionRefExp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFunctionRefExp::get_numberOfTraversalSuccessors()
-\description See  SgFunctionRefExp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFunctionRefExp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionRefExp::get_traversalSuccessorContainer()
-\description See  SgFunctionRefExp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFunctionRefExp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionRefExp::get_traversalSuccessorNamesContainer()
-\description See  SgFunctionRefExp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgFunctionRefExp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgFunctionRefExp::SgFunctionRefExp(SgFunctionSymbol *symbol_i,SgFunctionType *function_type)
 */
 //@}
-int SAGE_Doxygen_Dummy_1098045929047;
+int SAGE_Doxygen_Dummy_13746971927522;

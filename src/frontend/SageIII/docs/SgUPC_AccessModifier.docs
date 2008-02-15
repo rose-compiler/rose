@@ -65,24 +65,24 @@
 /*!\fn void SgUPC_AccessModifier::setUnknown()
 */
 /*!\fn void SgUPC_AccessModifier::set_modifier(enum SgUPC_AccessModifier::upc_access_modifier_enum modifier)
-\description See  modifier)
+\brief \brief See  modifier)
 modifier for documentation */
 /*!\fn enum SgUPC_AccessModifier::upc_access_modifier_enum SgUPC_AccessModifier::get_modifier() const
-\description See  const
+\brief \brief See  const
 modifier for documentation */
 /*!\fn virtual SgNode *SgUPC_AccessModifier::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgUPC_AccessModifier::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUPC_AccessModifier::get_numberOfTraversalSuccessors()
-\description See  SgUPC_AccessModifier::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUPC_AccessModifier::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUPC_AccessModifier::get_traversalSuccessorContainer()
-\description See  SgUPC_AccessModifier::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUPC_AccessModifier::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUPC_AccessModifier::get_traversalSuccessorNamesContainer()
-\description See  SgUPC_AccessModifier::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUPC_AccessModifier::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUPC_AccessModifier::SgUPC_AccessModifier()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1882901873;
+extern int SAGE_Doxygen_Dummy_848666980;

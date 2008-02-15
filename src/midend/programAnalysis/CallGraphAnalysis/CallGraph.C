@@ -22,7 +22,7 @@ Properties::Properties(){
 
 CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, SgType *ty,
 	        bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls )
-	   : GraphNode( NULL ), label( label )
+	   : MultiGraphElem( NULL ), label( label )
   {
   hasDefinition = hasDef;
   properties = new FunctionProperties();
@@ -41,7 +41,7 @@ CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDecl
      }
  }
 
-CallGraphNode::CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef ) : GraphNode ( NULL )
+CallGraphNode::CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef ) : MultiGraphElem ( NULL )
  {
    this->label = label;
    properties = fctProps;
@@ -66,7 +66,7 @@ CallGraphNode::ToString() const
  }
 
 
-CallGraphEdge::CallGraphEdge ( std::string label = "default edge" ) : GraphEdge( NULL ), label( label )
+CallGraphEdge::CallGraphEdge ( std::string label = "default edge" ) : MultiGraphElem( NULL ), label( label )
  {
    properties = new FunctionProperties();
   
@@ -94,7 +94,7 @@ FunctionData::isDefined ()
 
 #else
 CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, bool hasDef )
-	   : GraphNode(NULL), label(label), functionDeclaration(fctDeclaration) {
+	   : MultiGraphElem(NULL), label(label), functionDeclaration(fctDeclaration) {
    hasDefinition = hasDef;
 
    // DQ (9/4/2005): This means nothing since it is set in the constructors preinitialization list! (noticed by the compiler in warning)
@@ -121,7 +121,7 @@ CallGraphNode::ToString() const
  }
 
 
-CallGraphEdge::CallGraphEdge ( std::string label ) : GraphEdge( NULL ), label( label ) 
+CallGraphEdge::CallGraphEdge ( std::string label ) : MultiGraphElem( NULL ), label( label ) 
   {};
 	 
 void 
@@ -157,7 +157,7 @@ CallGraphBuilder::getGraph()
     return graph; 
   }
 
-CallGraphDotOutput::CallGraphDotOutput( CallGraphCreate & graph ) : GraphDotOutput(graph), callGraph(graph) 
+CallGraphDotOutput::CallGraphDotOutput( CallGraphCreate & graph ) : GraphDotOutput<CallGraphCreate>(graph), callGraph(graph) 
   {}
 
 
@@ -1850,7 +1850,7 @@ GenerateDotGraph ( CallGraphCreate *graph, string fileName )
 
      //     printf ("Building the GraphDotOutput object ... \n");
      CallGraphDotOutput output(*graph);
-     output.writeToDOTFile(fileName);
+     output.writeToDOTFile(fileName, "Call Graph");
    }
 
 

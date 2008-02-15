@@ -1,0 +1,237 @@
+#!/usr/bin/env bash
+#
+# Author: Gary Yuan
+# Date: 8/2/2006
+# File: qm.sh
+# Purpose: wrapper for QMTest in makefiles
+#
+###############################################################################
+
+# Usage
+
+if (( $# < 4 )); then
+  echo "Usage: qm.sh <f|o> <QMTest test class> <ROSE translator> <Backend Compiler|NULL> {compiler arguments...} {Test arguments (-testopt:<>)...}"
+  exit 1
+fi
+
+# Functions
+
+addPrereq() {
+
+local count=0		# for loop counter, over arguments
+local flag=0		# logical flag to skip over -o <?> option
+local testfile=$1	# the test file for modification 
+local outcome=$2	# expected outcome
+local prevdir=""	# previous working directory
+local objects=""	# list of object file(s) or libraries
+local prereq=""		# prerequisite test name
+local xml_head='<argument name="prerequisites"><set>'
+local xml_body=''
+local xml_tail="<\/set><\/argument><\/extension>"
+local temp=.ttemp_ame_no_ajisai		# temporary file
+
+################################################################################
+
+for arg in $@
+do
+
+  ((count++))
+
+  if((count > 3)); then
+
+    if ((flag == 1)); then
+      flag=0	# reset flag
+      continue
+    fi
+
+    case $arg in
+      -o) flag=1;; # is the output, i.e. test itself; skip.
+
+      -I* | -L*) echo $arg;;
+
+      -*) continue;; # is argument, continue
+
+      *) objects="${objects} $arg" ;; # append non-option to object list
+    esac
+
+  fi # if count > 3 skips over backend compiler
+
+done
+
+################################################################################
+
+for p in $objects
+do
+
+  # transform the name of the object file into its' mapped test name
+  p=`echo $p | sed -e 's/\./_dot_/g' | sed -e 's/\//_/g' | \
+	    gawk '{print tolower($0)}'`
+
+  # perform a find to match the test mapped name and gawk out the prefixed path
+  prereq=`find . -name "*$p*" | gawk -F/ '{print $NF}'`
+  prereq=${prereq%%.*}
+
+  if [[ $prereq != "" ]]; then
+    xml_body="${xml_body}<tuple><text>$prereq<\/text><enumeral>$outcome<\/enumeral><\/tuple>"
+  fi # if a prereq is found append it to prerequisites qmtest XML
+
+done
+
+################################################################################
+
+# rewrite the test file with new prerequisite information
+sed -e "s/<\/extension>/$xml_head$xml_body$xml_tail/g" $testfile > $temp
+mv $temp $testfile
+rm -f $temp
+
+}
+
+includeFullPath () {
+  local BACK=`pwd`	# save the original pwd
+  
+  ARG=`echo $ARG | sed -e "s/-I//g"`
+  cd $ARG
+  ARG=-I`pwd`
+
+  cd $BACK	# return to original pwd
+  return 0
+} # get the absolute path of all include directories
+
+################################################################################
+
+# Globals
+
+declare -i COUNT=0	# for loop counter
+declare -i FLAG=0	# logical flag
+
+TEST=badtest.qmt	# error in test creation
+MODE=$1			# The naming mode of the script
+TEST_CLASS=$2		# QMTest class
+PROGRAM=$3		# executable name
+BACKEND=$4		# The execution string with backend compiler
+ARGUMENTS="['-I$PWD',"	# argument stub general
+OFILE=""		# The original object file
+
+###############################################################################
+
+for ARG in $@
+do
+  ((COUNT++))
+
+  if ((COUNT > 4)); then
+
+    if [[ ${ARG:0:9} == "-testopt:" ]]; then
+      ARGUMENTS="${ARGUMENTS} '`echo $ARG | sed -e 's/-testopt://g'`', "
+      continue
+    fi # parse out specific options to test only and not to backend
+
+    BACKEND="${BACKEND} $ARG" # build original compile-line
+  
+    #case#######################################################################
+
+
+    case $ARG in
+	-I*) includeFullPath;;
+
+	*.c | *.cpp | *.C | *.[cC]* ) 
+          if [[ ${ARG:0:1} != '/' ]]; then
+            ARG="`pwd`/$ARG"
+          fi # take care of absolute paths
+
+	  # rename the QMTest output test file. Replace space, period, plus,
+	  # and underscores with their equivalent spellings.
+	  # Redundant check for "badtest.qmt" in case -o is not specified
+	  # name the test file after the source file.
+	  if [[ $MODE = 'f' || $TEST == "badtest.qmt" ]]; then
+            TEST=`echo ${ARG%%.*}.o | sed -e 's/_/UNDERSCORE/g' | \
+		  sed -e 's/\//_/g' | sed -e 's/\./_dot_/g' | \
+		  sed -e 's/+/plus/g'`.qmt
+	  fi
+
+	;; # case C/C++ source files
+
+	-o) 
+	  if [[ $MODE = 'o' || $MODE = 'L' ]]; then
+	    FLAG=1
+	  elif [[ $MODE = 'f' ]]; then
+	    FLAG=2
+	  fi # spike out the object flag
+
+	  continue
+	;; # case -o
+
+	*) ;; # default
+    esac
+
+    #esac#fi####################################################################
+
+    if ((FLAG == 1)); then
+      if [[ ${ARG:0:1} != '/' ]]; then
+        ARG="`pwd`/$ARG"
+      fi # if argument not specified with absolute path then append PWD
+
+      # rename the QMTest output test file, replace space, period, plus, and 
+      # underscore with equivalent spellings.
+      TEST=`echo $ARG | sed -e 's/_/UNDERSCORE/g' |sed -e 's/\//_/g' | \
+	    sed -e 's/\./_dot_/g' | sed -e 's/+/plus/g'`.qmt
+
+      FLAG=0		# reset FLAG
+      continue
+    elif ((FLAG == 2)); then
+      FLAG=0		# reset FLAG
+      continue
+    fi # if the -o flag used; create the object name and TEST name from object
+
+    #fi#if######################################################################
+
+
+    ARGUMENTS="${ARGUMENTS} '$ARG', "
+  fi # if argument is not qm.sh argument
+
+  #fi#done######################################################################
+
+
+done # for all command-line arguments to qm.sh
+
+# reconstruct the object file from the test name, this is necessary due to the
+# flattened structure of the test database this is the original object file 
+OFILE=`echo ${TEST%%.*} | sed -e 's/_dot_/\./g' | sed -e 's/_/\//g' | \
+       sed -e 's/UNDERSCORE/_/g' | gawk -F/ '{print $NF}'`
+
+#OBJECT=$OFILE
+
+OBJECT=${TEST%%.*}.o		# name the object after the test
+
+
+# change all characters in TEST to lower case for correct handling in QMTest
+# revert the UNDERSCORE flag to a regular punctuation underscore.
+TEST=`echo $TEST | sed -e 's/UNDERSCORE/_/g' | gawk '{print tolower($0)}'`
+
+
+# add output specifier to end of arguments list for QMTest test file
+ARGUMENTS="${ARGUMENTS} '-o', '$OBJECT']"
+
+#done#case######################################################################
+
+
+qmtest create -o "$TEST" -a program="$PROGRAM" -a arguments="$ARGUMENTS" test $TEST_CLASS
+
+if(( $? != 0)); then
+  echo "qmtest create failed!"
+  exit 1
+fi # error checking for qmtest success
+
+#esac#main######################################################################
+
+if [[ $MODE == 'L' ]]; then
+  addPrereq $TEST PASS $BACKEND
+fi
+
+if [[ ${BACKEND:0:4} == "NULL" ]]; then
+  touch $OFILE #>& /dev/null # create dummy file and pipe error to NULL
+  exit 0		     # always exit 0
+fi # skip backend compilation
+
+# Execute backend compilation with original compile-line
+$BACKEND
+exit $?

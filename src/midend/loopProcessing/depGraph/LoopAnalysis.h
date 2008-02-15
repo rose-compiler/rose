@@ -1,7 +1,7 @@
 #ifndef TRANSFORM_ANALYSIS
 #define TRANSFORM_ANALYSIS
 
-#include <depGraph/TransDepGraph.h>
+#include <TransDepGraph.h>
 
 template <class Node> 
 struct LoopAnalInfo
@@ -16,8 +16,7 @@ struct LoopAlignInfo {
      int mina, maxa;
      LoopAlignInfo() { mina = 1; maxa = -1; }
      LoopAlignInfo(int _mina, int _maxa) : mina(_mina), maxa(_maxa) {}
-  // operator Boolean() { return mina <= maxa; }
-     operator int() { return mina <= maxa; }
+     operator bool() { return mina <= maxa; }
      void operator &= ( const LoopAlignInfo &that)
        { if (mina < that.mina) mina = that.mina; 
          if (maxa > that.maxa) maxa = that.maxa; }
@@ -39,39 +38,29 @@ class TransLoopFusible
 
 template <class Node> 
 class TransLoopSlicable
-{ 
-//public: Boolean operator() ( TransDepGraphCreate<Node> *graph, 
-  public: int operator() ( TransDepGraphCreate<Node> *graph, 
+{ public: bool operator() ( TransDepGraphCreate<Node> *graph, 
 	   		  const LoopAnalInfo<Node> &l);
 };
 
 template <class Edge, class GraphCreate>
 class PerfectLoopSlicable
-{ 
-//public: Boolean operator() (GraphCreate *g, int level); };
-  public: int operator() (GraphCreate *g, int level); };
+{ public: bool operator() (GraphCreate *g, int level); };
 
 template <class Node> class TransLoopDistributable
-{
-//public: Boolean operator() ( TransDepGraphCreate<Node> *graph,
-  public: int operator() ( TransDepGraphCreate<Node> *graph,
+{ public: bool operator() ( TransDepGraphCreate<Node> *graph,
                        const LoopAnalInfo<Node> &l1,
                       const LoopAnalInfo<Node> &l2);
 };
 
 template <class Node> 
 class TransLoopReversible
-{
-//public: Boolean operator()( TransDepGraphCreate<Node> *graph,
-  public: int operator()( TransDepGraphCreate<Node> *graph,
+{ public: bool operator()( TransDepGraphCreate<Node> *graph,
                              const LoopAnalInfo<Node> &l);
 };
 
 template <class Edge, class GraphCreate> 
 class PerfectLoopReversible
-{
-//public: Boolean operator()( GraphCreate *g, int  level);
-  public: int operator()( GraphCreate *g, int  level);
+{ public: bool operator()( GraphCreate *g, int  level);
 };
 
 #endif

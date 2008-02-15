@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmType
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmType::SgAsmType(const SgAsmTypeStorageClass &source)
+*/
+/*!\fn inline static void SgAsmType::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmType *SgAsmType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmType::initializeStorageClassArray(SgAsmTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmType::clearMemoryPool()
+*/
+/*!\fn static void SgAsmType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmType::roseRTI()
+*/
+/*!\fn virtual SgAsmType::~SgAsmType()
+*/
+/*!\fn virtual SgNode *SgAsmType::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmType::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmType::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmType::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmType::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmType::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmType::SgAsmType()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1139870053;

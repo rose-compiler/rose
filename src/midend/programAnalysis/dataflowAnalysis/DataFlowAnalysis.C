@@ -1,4 +1,3 @@
-#include <general.h>
 #include <DataFlowAnalysis.h>
 #include <DGBaseGraphImpl.h>
 
@@ -13,7 +12,7 @@ void DataFlowAnalysis<Node, Data>::
 operator()( AstInterface& fa, const AstNodePtr& head)
 {
   ROSE_Analysis::BuildCFG( fa, head, *this);
-  DAGBaseGraphImpl* base = static_cast<DAGBaseGraphImpl* > (GetBaseGraph());
+  DAGBaseGraphImpl* base = static_cast<DAGBaseGraphImpl* >(VirtualGraphCreateTemplate<Node, CFGEdgeImpl>::GetBaseGraph());
   base->TopoSort();
   FinalizeCFG( fa);
 

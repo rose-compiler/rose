@@ -6,80 +6,46 @@
 #include <stdlib.h>
 #include <string>
 
+#define STD std::
+
 template <class T>
 class IteratorImpl 
 {
-   virtual T CurrentImpl() const = 0;
-   virtual IteratorImpl<T>* CloneImpl() const =0;
-   virtual void AdvanceImpl() = 0;
-   virtual void ResetImpl() = 0;
-// virtual Boolean ReachEndImpl() const = 0;
-   virtual int ReachEndImpl() const = 0;
  public:
    virtual ~IteratorImpl() {}
-   T Current() const { assert(!ReachEnd()); return CurrentImpl(); }
+   virtual T Current() const = 0;
+   virtual void Advance() = 0;
+   virtual void Reset() = 0;
+   virtual bool ReachEnd() const = 0;
+   virtual IteratorImpl<T>* Clone() const = 0;
+
    T operator *() const { return Current(); }
-   void Advance() { AdvanceImpl(); }
-   void Reset() { ResetImpl(); }
-   void operator ++() { return Advance(); }
-   void operator ++(int) { return Advance(); }
-// Boolean ReachEnd() const { return ReachEndImpl(); }
-   int ReachEnd() const { return ReachEndImpl(); }
-   IteratorImpl<T>* Clone() const { return CloneImpl(); }
+   void operator ++() {  Advance(); }
+   void operator ++(int) {  Advance(); }
 };
 
 template <class T, class Iterator>
 class IteratorImplTemplate : public IteratorImpl<T>
 {
+ protected:
   Iterator impl;
-  virtual T CurrentImpl() const { return impl.Current();}
-  virtual void AdvanceImpl() { impl.Advance(); }
-  virtual void ResetImpl() { impl.Reset(); }
-  virtual IteratorImpl<T>* CloneImpl() const
-            {return new IteratorImplTemplate<T,Iterator>(impl); }
-//virtual Boolean ReachEndImpl() const { return impl.ReachEnd(); }
-  virtual int ReachEndImpl() const { return impl.ReachEnd(); }
  public:
   IteratorImplTemplate( const Iterator& it) : impl(it) {}
   ~IteratorImplTemplate() {}
+
+  virtual T Current() const { return impl.Current();}
+  virtual void Advance() { impl.Advance(); }
+  virtual void Reset() { impl.Reset(); }
+  virtual bool ReachEnd() const { return impl.ReachEnd(); }
+  virtual IteratorImpl<T>* Clone() const
+            {return new IteratorImplTemplate<T,Iterator>(impl); }
 }; 
 
-template <class T1, class T2>
-class Iterator2Impl : public IteratorImpl<T1>
-{
-   virtual T1 CurrentImpl() const { return CurrentImpl2(); }
-   virtual IteratorImpl<T1>* CloneImpl() const { return CloneImpl2(); }
-   virtual T2 CurrentImpl2()  const = 0;
-   virtual Iterator2Impl<T1,T2>* CloneImpl2() const = 0;
- public:
-   virtual ~Iterator2Impl() {}
-   IteratorImpl<T1>::ReachEnd;
-   T2 Current() const { assert(!ReachEnd()); return CurrentImpl2(); }
-   Iterator2Impl<T1,T2>* Clone() const { return  CloneImpl2(); }
-};
-
-template <class T1, class T2, class Iterator>
-class Iterator2ImplTemplate : public Iterator2Impl<T1,T2> 
-{
-  Iterator impl;
-  virtual T2 CurrentImpl2() const { return impl.Current();}
-  virtual void AdvanceImpl() { impl.Advance(); }
-  virtual void ResetImpl() { impl.Reset(); }
-  virtual Iterator2Impl<T1,T2>* CloneImpl2() const
-            {return new Iterator2ImplTemplate<T1,T2,Iterator>(impl); }
-//virtual Boolean ReachEndImpl() const { return impl.ReachEnd(); }
-  virtual int ReachEndImpl() const { return impl.ReachEnd(); }
- public:
-  Iterator2ImplTemplate( const Iterator& it) : impl(it) {}
-  ~Iterator2ImplTemplate() {}
-};
-
 template <class T>
-class SingleIterator 
+class SingleIterator : public IteratorImpl<T>
 {
   T item; 
-//Boolean end;
-  int end;
+  bool end;
  public:
   SingleIterator(T t) : item(t) { end = false; }  
   SingleIterator(const SingleIterator<T>& that) 
@@ -88,8 +54,9 @@ class SingleIterator
   T operator *() const { return Current(); }
   void Advance() { end = true; }
   void Reset() { end = false; }
-//Boolean ReachEnd() const { return end; }
-  int ReachEnd() const { return end; }
+  bool ReachEnd() const { return end; }
+  virtual IteratorImpl<T>* Clone() const
+            {return new SingleIterator(*this); }
 };
 
 template <class T, class Impl>
@@ -121,41 +88,36 @@ class IteratorWrap : public CountRefHandle <Impl>
                  if (impl) impl->Reset(); }
   void operator++() { Advance(); }
   void operator++(int) { Advance(); }
-//Boolean ReachEnd() const { return (!ConstPtr() || ConstRef().ReachEnd()); }
-  int ReachEnd() const { return (!ConstPtr() || ConstRef().ReachEnd()); }
-//Boolean IsEmpty() const { return !ConstPtr(); }
-  int IsEmpty() const { return !ConstPtr(); }
-//Boolean operator == (const IteratorWrap<T,Impl> &that) const
-  int operator == (const IteratorWrap<T,Impl> &that) const
+  bool ReachEnd() const { return (!ConstPtr() || ConstRef().ReachEnd()); }
+  bool IsEmpty() const { return !ConstPtr(); }
+  bool operator == (const IteratorWrap<T,Impl> &that) const
     { return ConstPtr() == that.ConstPtr(); }
 };
 
-template <class T1, class T2>
-class Iterator2Wrap : public IteratorWrap <T2, Iterator2Impl<T1,T2> >
+template <class T, class Iterator>
+class MultiIterator : public IteratorImpl<T>
 {
- protected:
-  IteratorWrap <T2, Iterator2Impl<T1,T2> >::ConstRef;
-  IteratorWrap <T2, Iterator2Impl<T1,T2> >::ConstPtr;
-  IteratorWrap <T2, Iterator2Impl<T1,T2> >::UpdatePtr;
-  IteratorWrap <T2, Iterator2Impl<T1,T2> >::UpdateRef;
+  Iterator iter, next;
  public:
-  typedef IteratorImpl<T1> Impl1;
-  typedef Iterator2Impl<T1,T2> Impl2;
+  MultiIterator(Iterator impl1, Iterator impl2)
+     : iter(impl1), next(impl2) {}
+  MultiIterator(const MultiIterator& that)
+     : iter(that.iter), next(that.next) {}
+  ~MultiIterator() {}
 
-  Iterator2Wrap<T1,T2>& operator = (const Iterator2Wrap<T1,T2> &that)
-     { IteratorWrap<T2,Impl2> :: operator=(that); return *this; }
-  Iterator2Wrap(const Iterator2Wrap<T1,T2> &that)
-    : IteratorWrap<T2,Impl2> (that) {}
-  Iterator2Wrap() {}
-  Iterator2Wrap(Impl2 *_impl) : IteratorWrap<T2,Impl2>(_impl) {}
-  Iterator2Wrap(const Impl2 &_impl)
-    : IteratorWrap<T2,Impl2>(_impl) {}
-  ~Iterator2Wrap() {}
-
-  operator IteratorWrap<T1, Impl1>() 
-    { return (ConstPtr() == 0)? IteratorWrap<T1,Impl1>() 
-                              : IteratorWrap<T1,Impl1>(ConstRef().Clone()); }
-
+  void Advance()
+     { if (!iter.ReachEnd()) iter.Advance();
+       else next.Advance();
+     }
+  void operator++() { Advance(); }
+  void operator++(int) { Advance(); }
+  void Reset() { iter.Reset(); next.Reset(); }
+  T Current() const
+   { return (iter.ReachEnd())? next.Current() : iter.Current(); }
+  T& Current() { return (iter.ReachEnd())? next.Current() : iter.Current(); }
+  bool ReachEnd() const { return iter.ReachEnd() && next.ReachEnd();}
+  IteratorImpl<T>* Clone() const 
+          { return new MultiIterator<T,Iterator>(*this); }
 };
 
 template <class Iter, class Update>
@@ -170,31 +132,30 @@ template <class Iter>
 unsigned CountIteratorSize( Iter iter)
 {
   unsigned size = 0;
-  for ( Iter p = iter; !p.ReachEnd(); ++p,++size) {}
+  for ( Iter p = iter; !p.ReachEnd(); ++p,++size);
   return size;
 } 
 
 template <class Iter>
-std::string IteratorToString1( Iter iter)
+STD string IteratorToString1( Iter iter)
 {
-  std::string res;
+  STD string res;
   for ( Iter p = iter; !p.ReachEnd(); ++p)
-     res = res + (*p).ToString();
+     res = res + (*p).toString();
   return res;
 } 
 
 template <class Iter>
-std::string IteratorToString2( Iter iter)
+STD string IteratorToString2( Iter iter)
 {
-  std::string res;
+  STD string res;
   for ( Iter p = iter; !p.ReachEnd(); ++p)
-     res = res + (*p)->ToString();
+     res = res + (*p)->toString();
   return res;
 } 
 
 template <class Iter, class Update>
-// Boolean FindFirst(Iter& iter, Update T)
-int FindFirst(Iter& iter, Update T)
+bool FindFirst(Iter& iter, Update T)
 {
   for ( ; !iter.ReachEnd(); iter++) {
      if (T(iter.Current()))

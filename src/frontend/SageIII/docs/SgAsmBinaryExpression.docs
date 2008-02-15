@@ -1,0 +1,64 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmBinaryExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmExpression *SgAsmBinaryExpression::p_lhs
+*/
+/*!\var SgAsmExpression *SgAsmBinaryExpression::p_rhs
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmBinaryExpression::SgAsmBinaryExpression(const SgAsmBinaryExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmBinaryExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmBinaryExpression *SgAsmBinaryExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmBinaryExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmBinaryExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmBinaryExpression::initializeStorageClassArray(SgAsmBinaryExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmBinaryExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmBinaryExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmBinaryExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmBinaryExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmBinaryExpression::~SgAsmBinaryExpression()
+*/
+/*!\fn virtual SgNode *SgAsmBinaryExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmBinaryExpression::set_lhs(SgAsmExpression *lhs)
+\brief \brief See  *lhs)
+lhs for documentation */
+/*!\fn void SgAsmBinaryExpression::set_rhs(SgAsmExpression *rhs)
+\brief \brief See  *rhs)
+rhs for documentation */
+/*!\fn SgAsmExpression *SgAsmBinaryExpression::get_lhs() const
+\brief \brief See  const
+lhs for documentation */
+/*!\fn SgAsmExpression *SgAsmBinaryExpression::get_rhs() const
+\brief \brief See  const
+rhs for documentation */
+/*!\fn virtual SgNode *SgAsmBinaryExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmBinaryExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmBinaryExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmBinaryExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmBinaryExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmBinaryExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmBinaryExpression::SgAsmBinaryExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1073446508;

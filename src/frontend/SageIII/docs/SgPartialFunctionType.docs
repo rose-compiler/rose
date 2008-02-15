@@ -30,18 +30,18 @@
 /*!\fn virtual void SgPartialFunctionType::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgPartialFunctionType::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgPartialFunctionType::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgPartialFunctionType::get_numberOfTraversalSuccessors()
-\description See  SgPartialFunctionType::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgPartialFunctionType::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPartialFunctionType::get_traversalSuccessorContainer()
-\description See  SgPartialFunctionType::traversalSuccessorContainer for documentation */
+\brief \brief See  SgPartialFunctionType::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPartialFunctionType::get_traversalSuccessorNamesContainer()
-\description See  SgPartialFunctionType::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgPartialFunctionType::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgPartialFunctionType::SgPartialFunctionType(SgType *return_type=(0),bool has_ellipses=(1),SgClassDefinition *struct_name=(0),unsigned int mfunc_specifier=(0))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1966163864;
+extern int SAGE_Doxygen_Dummy_1578372470;

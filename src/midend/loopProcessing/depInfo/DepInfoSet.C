@@ -1,18 +1,9 @@
-
-#include <general.h>
-
 #include <stdlib.h>
 
 #include <DepRel.h>
 #include <DepInfoSet.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
-typedef LatticeElemList<DepInfo>::Iterator DepInfoSetIterator;
+typedef LatticeElemList<DepInfo>::iterator DepInfoSetIterator;
 
 DepInfoConstIterator DepInfoSet :: GetConstIterator() const
 { if (ConstPtr() == 0)
@@ -31,34 +22,34 @@ DepInfoUpdateIterator DepInfoSet :: GetUpdateIterator()
 DepInfoSet:: DepInfoSet() : CountRefHandle <DepInfoSetImpl>( new DepInfoSetImpl() )
 {}
 
-void DepInfoSet :: UpdateDepInfo( Boolean (*Update)(DepInfo &info) )
+void DepInfoSet :: UpdateDepInfo( bool (*Update)(DepInfo &info) )
       { UpdateRef().UpdateElem(Update); }
 
 int DepInfoSet :: NumOfDeps() const { return ConstRef().NumberOfEntries(); }
 
-string DepInfoSet :: ToString() const
+STD string DepInfoSet :: toString() const
  { 
-   string r;
+   STD string r;
    for (DepInfoSetIterator iter(ConstRef()); !iter.ReachEnd(); iter.Advance()) {
-     r = r + iter.Current().ToString();
+     r = r + iter.Current().toString();
    }
    return r;
  }
 
-Boolean DepInfoSet :: operator |= (const DepInfoSet &that)
+bool DepInfoSet :: operator |= (const DepInfoSet &that)
 {
-  Boolean mod = false;
+  bool mod = false;
   for (DepInfoSetIterator iter(that.ConstRef()); !iter.ReachEnd(); 
        iter.Advance()) {
-     Boolean tmp = AddDep(iter.Current());
+     bool tmp = AddDep(iter.Current());
      mod = mod || tmp;
   }
   return mod;
 }
 
-Boolean DepInfoSet :: operator &= ( const DepInfoSet &dm2)
+bool DepInfoSet :: operator &= ( const DepInfoSet &dm2)
 {
-  Boolean mod = false;
+  bool mod = false;
   DepInfoSet result(DepInfoSetGenerator::GetTopInfoSet());
   for (DepInfoSetIterator iter1(ConstRef()); !iter1.ReachEnd(); iter1++) {
       DepInfo c1 = iter1.Current();
@@ -103,7 +94,7 @@ DepRel DepInfoSet :: GetDepRel( int index1, int index2 ) const
   return r;
 }
 
-Boolean DepInfoSet :: IsTop() const
+bool DepInfoSet :: IsTop() const
 {
   if (NumOfDeps() == 0)
     return true;
@@ -114,7 +105,7 @@ Boolean DepInfoSet :: IsTop() const
   return false;
 }
 
-Boolean DepInfoSet :: IsBottom(int commLevel) const
+bool DepInfoSet :: IsBottom(int commLevel) const
 {
   if (NumOfDeps() == 1) {
     if (ConstRef().First()->GetEntry().IsBottom(commLevel))
@@ -125,8 +116,8 @@ Boolean DepInfoSet :: IsBottom(int commLevel) const
 
 class MergeDepInfo : public LatticeElemMerge<DepInfo>
 {
-Boolean IsTop(const DepInfo& d) { return d.IsTop(); }
-Boolean MergeElem( const DepInfo &d1, const DepInfo& d2, DepInfo &result)
+bool IsTop(const DepInfo& d) { return d.IsTop(); }
+bool MergeElem( const DepInfo &d1, const DepInfo& d2, DepInfo &result)
  {
   int nr = d1.rows(), nc = d1.cols();
   assert( nr == d2.rows() && nc == d2.cols());
@@ -165,7 +156,7 @@ Boolean MergeElem( const DepInfo &d1, const DepInfo& d2, DepInfo &result)
  }
 };
 
-Boolean DepInfoSet :: AddDep( const DepInfo &c)
+bool DepInfoSet :: AddDep( const DepInfo &c)
   { 
     MergeDepInfo merge;
     return UpdateRef().AddElem(c, &merge); 

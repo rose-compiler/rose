@@ -2,44 +2,92 @@
 #ifndef BASE_GRAPH_CREATE
 #define BASE_GRAPH_CREATE
 
-#include <GraphTemplate.h>
+#include <MultiGraphCreate.h>
+#include <GraphAccess.h>
+#include <assert.h>
 
-class GraphNodeToString
-{public:
- static std::string ToString(const GraphNode* n) { return n->ToString(); }
-};
+typedef MultiGraphElemTemplate<void*> BaseGraphNode;
+typedef MultiGraphElemTemplate<void*> BaseGraphEdge;
 
-class GraphEdgeToString
-{ public:
-   static std::string ToString(const GraphEdge* n) { return n->ToString(); }
-};
-
-class BaseGraphCreate : 
-  public GraphAccessTemplate<GraphNodeTemplate<GraphNode*,GraphNode*, GraphNodeToString>, 
-                            GraphEdgeTemplate<GraphEdge*,GraphEdge*, GraphEdgeToString> >, 
-  public GraphCreate
+class BaseGraphCreate 
+  : public MultiGraphCreate,
+           GraphAccessTemplate<BaseGraphNode,BaseGraphEdge>
 {
-//Boolean ContainNodeImpl( const GraphNode* n) const
-  int ContainNodeImpl( const GraphNode* n) const
-     { return GraphCreate::LinkedToElem(n); }
-//Boolean ContainEdgeImpl( const GraphEdge* e) const
-  int ContainEdgeImpl( const GraphEdge* e) const
-     { return GraphCreate::LinkedToElem(e); }
-
+ protected:
+  typedef GraphAccessTemplate<BaseGraphNode,BaseGraphEdge>
+      GraphAccessBase;
  public:
-  virtual ~BaseGraphCreate() {};
-  virtual Node* CreateNode( GraphNode *id) = 0;
-  virtual Edge* CreateEdge(Node *src, Node *snk, GraphEdge *id) = 0;
+  typedef void* NodeContent;
+  typedef void* EdgeContent;
+  typedef GraphAccessBase::Node Node;
+  typedef GraphAccessBase::Edge Edge;
+  typedef GraphAccessBase::NodeIterator NodeIterator;
+  typedef GraphAccessBase::EdgeIterator EdgeIterator;
+ 
+ 
+  virtual ~BaseGraphCreate() {}
 
-  virtual void MoveEdgeEndPoint( Edge *e, Node *n, 
-                             EdgeDirection dir)=0;
-  virtual void DeleteNode(Node *n) = 0;
-  virtual void DeleteEdge(Edge *e) = 0;
+  virtual BaseGraphNode* CreateNode(NodeContent _id) =0;
+  virtual BaseGraphEdge* 
+  CreateEdge(BaseGraphNode* src, BaseGraphNode *snk, EdgeContent _id)=0;
+  virtual void 
+  MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n, EdgeDirection dir)=0;
+  virtual void DeleteNode( BaseGraphNode *n)=0;
+  virtual void DeleteEdge( BaseGraphEdge *n)=0;
+
+  GraphAccessBase::GetNodeIterator;
+  GraphAccessBase::GetNodeEdgeIterator;
+  GraphAccessBase::GetEdgeEndPoint;
+  GraphAccessBase::ContainNode;
+  GraphAccessBase::ContainEdge;
 };
 
-template <class NodeImpl, class EdgeImpl, class GraphImpl>
-class BaseGraphCreateTemplate : public BaseGraphCreate
+template <class GraphImpl>
+class BaseGraphCreateWrap : public BaseGraphCreate
 {
+ public:
+  BaseGraphCreateWrap() {  impl = new GraphImpl(); }
+  virtual ~BaseGraphCreateWrap() { delete impl; }
+
+  virtual BaseGraphNode* CreateNode(NodeContent _id) 
+      { return new typename GraphImpl::Node( impl, this, _id); }
+  virtual BaseGraphEdge* 
+  CreateEdge(BaseGraphNode* src, BaseGraphNode *snk, EdgeContent _id)
+   { 
+      assert( ContainNode(src) && ContainNode(snk));
+      return new typename GraphImpl::Edge( this, 
+                          static_cast<typename GraphImpl::Node*>(src), 
+                          static_cast<typename GraphImpl::Node*>(snk), _id); 
+   }
+  virtual void 
+  MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n, 
+                     GraphAccess::EdgeDirection dir)
+    { 
+      assert( ContainEdge(e) && ContainNode(n));
+      static_cast<typename GraphImpl::Edge*>(e)->MoveEndPoint( static_cast<typename GraphImpl::Node*>(n), 
+                                               TranslateDirection(dir));
+    }
+  virtual void DeleteNode( BaseGraphNode *n)
+    { delete static_cast<typename GraphImpl::Node*>(n); }
+  virtual void DeleteEdge( BaseGraphEdge *n)
+    { delete static_cast<typename GraphImpl::Edge*>(n); }
+
+  NodeIterator GetNodeIterator() const
+    { return new IteratorImplTemplate<Node*,typename GraphImpl::NodeIterator>
+            (impl->GetNodeIterator()); }
+  EdgeIterator GetNodeEdgeIterator( const Node* n, 
+                                 GraphAccess::EdgeDirection dir) const
+   { return new IteratorImplTemplate<Edge*,typename GraphImpl::EdgeIterator>
+             (impl->GetNodeEdgeIterator(static_cast<const typename GraphImpl::Node*>(n),
+                                        TranslateDirection(dir))); }
+  Node* GetEdgeEndPoint( const BaseGraphEdge* e, 
+                                GraphAccess::EdgeDirection dir) const
+    { return  impl->GetEdgeEndPoint(static_cast<const typename GraphImpl::Edge*>(e), 
+                                    TranslateDirection(dir)); }
+  bool ContainNode( const BaseGraphNode* n) const 
+      { return impl->ContainNode(static_cast<const typename GraphImpl::Node*>(n)); }
+  bool ContainEdge( const BaseGraphEdge* n) const 
+      { return impl->ContainEdge(static_cast<const typename GraphImpl::Edge*>(n)); }
  protected:
   GraphImpl* impl;
 
@@ -48,67 +96,11 @@ class BaseGraphCreateTemplate : public BaseGraphCreate
   { switch (dir) {
    case GraphAccess::EdgeOut: return GraphImpl::EdgeOut;
    case GraphAccess::EdgeIn: return GraphImpl::EdgeIn;
-
-// DQ (12/31/2005): Added default to make clear that not all cases were handled
-   default: 
-     {
-    // ignoring BiEdge case
-     }
+   default:
+     assert(false);
    }
-   assert(false);
   }
 
-  BaseGraphCreate::NodeIterator GetNodeIteratorImpl2() const
-    { 
-      return GetNodeIterator();
-    }
-  BaseGraphCreate::EdgeIterator 
-  GetNodeEdgeIteratorImpl2(const Node *n, EdgeDirection dir) const
-    { 
-      return GetNodeEdgeIterator( n,  dir);
-    }
-  GraphNode* GetEdgeEndPointImpl(const GraphEdge *e, EdgeDirection dir) const
-    { 
-      return GetEdgeEndPoint( static_cast<const Edge*>(e), dir);
-    }
-
- public:
-  BaseGraphCreateTemplate() {  impl = new GraphImpl(); }
-  virtual ~BaseGraphCreateTemplate() { delete impl; }
-
-  Node* CreateNode(GraphNode *_id) { return new NodeImpl( impl, this, _id); }
-  Edge* CreateEdge(Node* src, Node *snk, GraphEdge *_id)
-   { 
-      assert( ContainNode(src) && ContainNode(snk));
-      return new EdgeImpl( this, static_cast<NodeImpl*>(src), static_cast<NodeImpl*>(snk), 
-                       _id); 
-   }
-  void MoveEdgeEndPoint( Edge *e, Node *n, EdgeDirection dir)
-    { 
-      assert( ContainEdge(e) && ContainNode(n));
-      static_cast<EdgeImpl*>(e)->MoveEndPoint( static_cast<NodeImpl*>(n), 
-                                               TranslateDirection(dir));
-    }
-  void DeleteNode( Node *n)
-    { delete static_cast<NodeImpl*>(n); }
-  void DeleteEdge( Edge *n)
-    { delete static_cast<EdgeImpl*>(n); }
-
-  NodeIterator GetNodeIterator() const 
-    {  return new Iterator2ImplTemplate 
-                 <GraphNode*, Node*, typename GraphImpl::NodeIterator>
-                ( impl->GetNodeIterator() ); 
-    }
-  EdgeIterator GetNodeEdgeIterator( const Node* n, EdgeDirection dir) const
-    {  assert(ContainNode(n));
-      return new Iterator2ImplTemplate 
-                <GraphEdge*,Edge*, typename GraphImpl::EdgeIterator>
-            ( impl->GetNodeEdgeIterator( static_cast<const NodeImpl*>(n), TranslateDirection(dir)));
-    }
-  NodeImpl* GetEdgeEndPoint( const Edge *e, EdgeDirection dir) const
-    {  assert (ContainEdge(e));
-      return  impl->GetEdgeEndPoint( static_cast<const EdgeImpl*>(e), TranslateDirection(dir));
-    }
 };
 
 #endif

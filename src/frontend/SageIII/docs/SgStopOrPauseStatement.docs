@@ -5,12 +5,12 @@
 //@{
 /*!\var enum SgStopOrPauseStatement::stop_or_pause_enum SgStopOrPauseStatement::p_stop_or_pause
 */
-/*!\var SgName SgStopOrPauseStatement::p_code
+/*!\var SgExpression *SgStopOrPauseStatement::p_code
 */
 //@}
 /*! \name User Interface*/
 //@{
-/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement(Sg_File_Info *startOfConstruct)
+/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement(Sg_File_Info *startOfConstruct,SgExpression *code=(0))
 */
 /*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement(const SgStopOrPauseStatementStorageClass &source)
 */
@@ -36,33 +36,39 @@
 */
 /*!\fn virtual SgStopOrPauseStatement::~SgStopOrPauseStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgStopOrPauseStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgStopOrPauseStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgStopOrPauseStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgStopOrPauseStatement::post_construction_initialization()
 */
-/*!\fn void SgStopOrPauseStatement::set_code(SgName code)
-\description See  code)
+/*!\fn void SgStopOrPauseStatement::set_code(SgExpression *code)
+\brief \brief See  *code)
 code for documentation */
 /*!\fn void SgStopOrPauseStatement::set_stop_or_pause(enum SgStopOrPauseStatement::stop_or_pause_enum stop_or_pause)
-\description See  stop_or_pause)
+\brief \brief See  stop_or_pause)
 stop_or_pause for documentation */
-/*!\fn SgName SgStopOrPauseStatement::get_code() const
-\description See  const
+/*!\fn SgExpression *SgStopOrPauseStatement::get_code() const
+\brief \brief See  const
 code for documentation */
 /*!\fn enum SgStopOrPauseStatement::stop_or_pause_enum SgStopOrPauseStatement::get_stop_or_pause() const
-\description See  const
+\brief \brief See  const
 stop_or_pause for documentation */
 /*!\fn virtual SgNode *SgStopOrPauseStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgStopOrPauseStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgStopOrPauseStatement::get_numberOfTraversalSuccessors()
-\description See  SgStopOrPauseStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgStopOrPauseStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgStopOrPauseStatement::get_traversalSuccessorContainer()
-\description See  SgStopOrPauseStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgStopOrPauseStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgStopOrPauseStatement::get_traversalSuccessorNamesContainer()
-\description See  SgStopOrPauseStatement::traversalSuccessorNamesContainer for documentation */
-/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement()
+\brief \brief See  SgStopOrPauseStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement(SgExpression *code)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1387774767;
+extern int SAGE_Doxygen_Dummy_2144006854;

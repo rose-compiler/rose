@@ -1,6 +1,7 @@
 // Example ROSE Translator: used within ROSE/tutorial
 
 #include "rose.h"
+#include <GraphUpdate.h>
 #include "CFGImpl.h"
 #include "GraphDotOutput.h"
 #include "controlFlowGraph.h"
@@ -47,8 +48,7 @@ int main( int argc, char * argv[] )
   // Build the AST used by ROSE
      SgProject* project = frontend(argc,argv);
 
-     vector<string> argvList(argv, argv + argc);
-     CmdOptions::GetInstance()->SetOptions(argvList);
+     CmdOptions::GetInstance()->SetOptions(argc,argv);
 
   // Build the traversal object
      visitorTraversal exampleTraversal;

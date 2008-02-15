@@ -111,46 +111,46 @@ pointer to an object derived from a SgDoWhileStmt.
 */
 /*!
 \fn void SgDoWhileStmt::set_body(SgBasicBlock *body)
-\brief Access function for p_body.
-See  *body)
-body for documentation \param body SgBasicBlock pointer
+\brief Access function for p_body.See  *body)
+body for documentation 
+\param body SgBasicBlock pointer
 \return Returns void.
 */
 /*!
 \fn void SgDoWhileStmt::set_condition(SgStatement *condition)
-\brief Access function for p_condition.
-See  *condition)
-condition for documentation \param condition SgStatement pointer
+\brief Access function for p_condition.See  *condition)
+condition for documentation 
+\param condition SgStatement pointer
 \return Returns void.
 */
 /*!
 \fn SgBasicBlock *SgDoWhileStmt::get_body() const
-\brief Access function for p_body.
-See  const
-body for documentation \return Returns a pointer to a SgBasicBlock.
+\brief Access function for p_body.See  const
+body for documentation 
+\return Returns a pointer to a SgBasicBlock.
 */
 /*!
 \fn SgStatement *SgDoWhileStmt::get_condition() const
-\brief Access function for p_condition.
-See  const
-condition for documentation \return Returns a pointer to a SgStatement.
+\brief Access function for p_condition.See  const
+condition for documentation 
+\return Returns a pointer to a SgStatement.
 */
 /*!\fn virtual SgName SgDoWhileStmt::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgDoWhileStmt::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgDoWhileStmt::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgDoWhileStmt::get_numberOfTraversalSuccessors()
-\description See  SgDoWhileStmt::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgDoWhileStmt::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDoWhileStmt::get_traversalSuccessorContainer()
-\description See  SgDoWhileStmt::traversalSuccessorContainer for documentation */
+\brief \brief See  SgDoWhileStmt::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDoWhileStmt::get_traversalSuccessorNamesContainer()
-\description See  SgDoWhileStmt::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgDoWhileStmt::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgDoWhileStmt::SgDoWhileStmt(SgBasicBlock *body,SgStatement *condition)
 */
 //@}
-int SAGE_Doxygen_Dummy_296603102419590;
+int SAGE_Doxygen_Dummy_111231451116629;

@@ -1,15 +1,17 @@
 
-#include <rose.h>
+#include <sage3.h>
 
-#include <AstInterface.h>
-#include <CFGImpl.h>
+#include <AstInterface_ROSE.h>
 #include <string>
 #include <iostream>
-#include <GraphDotOutput.h>
 #include <CommandOptions.h>
 #include <GraphIO.h>
+#include <GraphDotOutput.h>
+#include <CFGImpl.h>
+//#define TEMPLATE_ONLY
+//#include <CFG_OA.C>
+//#undef TEMPLATE_ONLY
 
-// DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
 
 void PrintUsage( char* name)
@@ -48,14 +50,17 @@ class TestCFGWrap
 
   void operator()(SgNode* head)
   { 
-     AstInterface fa(head);
+     AstInterfaceImpl scope(head);
+     AstInterface fa(&scope);
      switch (t) {
      case ROSE: 
-        ROSE_Analysis::BuildCFG(fa, head, graph);
+        ROSE_Analysis::BuildCFG(fa, AstNodePtrImpl(head), graph);
         break;
+/*
      case OA:
-        OpenAnalysis::BuildCFG(fa, head, graph);
+        OpenAnalysis::BuildCFG(fa, AstNodePtrImpl(head), graph);
         break;
+*/
      default:
        assert(false);
      }
@@ -75,7 +80,8 @@ class TestCFGWrap_Text : public TestCFGWrap
   void operator()(SgNode* head)
   {
      TestCFGWrap::operator()(head);
-     f << GraphToString(graph);
+     write_graph(graph, f, "edge");
+     f << "\n";
   }
 };
 
@@ -87,8 +93,8 @@ class TestCFGWrap_DOT : public TestCFGWrap
   void operator()(SgNode* head, string fname)
   {
      TestCFGWrap::operator()(head);
-     GraphDotOutput output(graph);
-     output.writeToDOTFile(fname); 
+     GraphDotOutput<DefaultCFGImpl> output(graph);
+     output.writeToDOTFile(fname, "CFGGraph"); 
   }
 };
 
@@ -102,15 +108,21 @@ main ( int argc,  char * argv[] )
          return -1;
      }
 
-     vector<string> argvList(argv, argv + argc);
+     SgProject sageProject ( (int)argc,argv);
 
-     SgProject sageProject ( argvList);
-
-    CmdOptions::GetInstance()->SetOptions(argvList);
+    CmdOptions::GetInstance()->SetOptions(argc, argv);
 
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
      SgFile &sageFile = sageProject.get_file(i);
+      TestCFGWrap::AnalysisDomain t = UseOA(argc, argv)? TestCFGWrap::OA : TestCFGWrap::ROSE;
+      //string txtname = string(strrchr(sageFile.getFileName(),'/')+1) + ".out";
+      string filename = sageFile.getFileName();
+      string txtname = filename.substr(filename.rfind('/')+1) + ".out"; 
+      TestCFGWrap_Text txtop(t,txtname);
+      //string dotname = string(strrchr(sageFile.getFileName(),'/')+1) + ".dot";
+      string dotname = filename.substr(filename.rfind('/')+1) + ".dot";
+      TestCFGWrap_DOT dotop(t);
      SgGlobal *root = sageFile.get_root();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
@@ -121,22 +133,11 @@ main ( int argc,  char * argv[] )
           if (defn == 0)
              continue;
           SgNode* stmts = defn;
-          TestCFGWrap::AnalysisDomain t = UseOA(argc, argv)? TestCFGWrap::OA : TestCFGWrap::ROSE;
           if (GenerateDOT(argc, argv)) {
-             string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".dot";
-             TestCFGWrap_DOT op(t);
-             op(stmts, name);
+             dotop(stmts, dotname);
           }
           else {
-             const char *p = sageFile.getFileName().c_str();
-	     const char *p1 = strrchr(p, '/');
-             if (p1 == 0)
-                 p1 = p;
-             else
-                 ++p1;
-             string name = string(p1) + ".out";
-             TestCFGWrap_Text op(t,name);
-             op(stmts);
+             txtop(stmts);
           }
      }
    }

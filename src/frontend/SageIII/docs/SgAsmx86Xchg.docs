@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmx86Xchg
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmx86Xchg::SgAsmx86Xchg(const SgAsmx86XchgStorageClass &source)
+*/
+/*!\fn inline static void SgAsmx86Xchg::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmx86Xchg *SgAsmx86Xchg::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmx86Xchg::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmx86Xchg::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmx86Xchg::initializeStorageClassArray(SgAsmx86XchgStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmx86Xchg::clearMemoryPool()
+*/
+/*!\fn static void SgAsmx86Xchg::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmx86Xchg::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmx86Xchg::roseRTI()
+*/
+/*!\fn virtual SgAsmx86Xchg::~SgAsmx86Xchg()
+*/
+/*!\fn virtual SgNode *SgAsmx86Xchg::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmx86Xchg::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Xchg::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Xchg::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmx86Xchg::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmx86Xchg::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmx86Xchg::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmx86Xchg::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmx86Xchg::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmx86Xchg::SgAsmx86Xchg(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_313691226;

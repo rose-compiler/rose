@@ -4125,6 +4125,9 @@ TestLValueExpressions::visit ( SgNode* node )
                          break;
                        }
 
+                 // Added to address problem on Qing's machine using g++ 4.0.2
+                    case V_SgNotOp:
+
                  // These are where some error occur.  I want to isolate then so that I know the current status of where lvalues are not marked correctly!
                     case V_SgPointerDerefExp:
                     case V_SgCastExp:

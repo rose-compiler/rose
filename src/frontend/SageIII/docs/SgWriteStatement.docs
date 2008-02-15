@@ -42,51 +42,57 @@
 */
 /*!\fn virtual SgWriteStatement::~SgWriteStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgWriteStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgWriteStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgWriteStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgWriteStatement::post_construction_initialization()
 */
 /*!\fn void SgWriteStatement::set_advance(SgExpression *advance)
-\description See  *advance)
+\brief \brief See  *advance)
 advance for documentation */
 /*!\fn void SgWriteStatement::set_asynchronous(SgExpression *asynchronous)
-\description See  *asynchronous)
+\brief \brief See  *asynchronous)
 asynchronous for documentation */
 /*!\fn void SgWriteStatement::set_format(SgExpression *format)
-\description See  *format)
+\brief \brief See  *format)
 format for documentation */
 /*!\fn void SgWriteStatement::set_namelist(SgExpression *namelist)
-\description See  *namelist)
+\brief \brief See  *namelist)
 namelist for documentation */
 /*!\fn void SgWriteStatement::set_rec(SgExpression *rec)
-\description See  *rec)
+\brief \brief See  *rec)
 rec for documentation */
 /*!\fn SgExpression *SgWriteStatement::get_advance() const
-\description See  const
+\brief \brief See  const
 advance for documentation */
 /*!\fn SgExpression *SgWriteStatement::get_asynchronous() const
-\description See  const
+\brief \brief See  const
 asynchronous for documentation */
 /*!\fn SgExpression *SgWriteStatement::get_format() const
-\description See  const
+\brief \brief See  const
 format for documentation */
 /*!\fn SgExpression *SgWriteStatement::get_namelist() const
-\description See  const
+\brief \brief See  const
 namelist for documentation */
 /*!\fn SgExpression *SgWriteStatement::get_rec() const
-\description See  const
+\brief \brief See  const
 rec for documentation */
 /*!\fn virtual SgNode *SgWriteStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgWriteStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgWriteStatement::get_numberOfTraversalSuccessors()
-\description See  SgWriteStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgWriteStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgWriteStatement::get_traversalSuccessorContainer()
-\description See  SgWriteStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgWriteStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgWriteStatement::get_traversalSuccessorNamesContainer()
-\description See  SgWriteStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgWriteStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgWriteStatement::SgWriteStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_642503011;
+extern int SAGE_Doxygen_Dummy_1673204050;

@@ -1,0 +1,55 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmSectionHeaderList
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmSectionHeaderPtrList SgAsmSectionHeaderList::p_section_headers
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmSectionHeaderList::SgAsmSectionHeaderList(const SgAsmSectionHeaderListStorageClass &source)
+*/
+/*!\fn inline static void SgAsmSectionHeaderList::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmSectionHeaderList *SgAsmSectionHeaderList::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmSectionHeaderList::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmSectionHeaderList::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmSectionHeaderList::initializeStorageClassArray(SgAsmSectionHeaderListStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmSectionHeaderList::clearMemoryPool()
+*/
+/*!\fn static void SgAsmSectionHeaderList::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmSectionHeaderList::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmSectionHeaderList::roseRTI()
+*/
+/*!\fn virtual SgAsmSectionHeaderList::~SgAsmSectionHeaderList()
+*/
+/*!\fn virtual SgNode *SgAsmSectionHeaderList::copy(SgCopyHelp &help) const
+*/
+/*!\fn SgAsmSectionHeaderPtrList &SgAsmSectionHeaderList::get_section_headers()
+\brief \brief See  &SgAsmSectionHeaderList::section_headers for documentation */
+/*!\fn const SgAsmSectionHeaderPtrList &SgAsmSectionHeaderList::get_section_headers() const
+\brief \brief See  const
+section_headers for documentation */
+/*!\fn virtual SgNode *SgAsmSectionHeaderList::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmSectionHeaderList::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmSectionHeaderList::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmSectionHeaderList::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmSectionHeaderList::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmSectionHeaderList::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmSectionHeaderList::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmSectionHeaderList::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmSectionHeaderList::SgAsmSectionHeaderList()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1197633417;

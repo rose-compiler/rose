@@ -6,7 +6,7 @@
 
 class SymbolicPlus : public SymbolicExpr
 {
-  std::string GetOPName() const { return "+"; }
+  STD string GetOPName() const { return "+"; }
   virtual SymOpType GetTermOP() const { return SYMOP_MULTIPLY; }
  public:
   SymbolicPlus() : SymbolicExpr() {}
@@ -25,24 +25,30 @@ class PlusApplicator : public OPApplicator
 {
  public:
   SymOpType GetOpType() { return SYMOP_PLUS; }
-  int MergeConstInt( int v1, int v2) { return v1 + v2; }
+  bool MergeConstInt( int vu1, int vd1, int vu2, int vd2, int& r1, int& r2) 
+       { assert(vd1 == vd2);  //QY: not yet handle other case
+         r1= vu1 + vu2; 
+         r2 = vd1;
+         return true;
+       }
   SymbolicExpr* CreateExpr() { return new SymbolicPlus(); }
-//Boolean IsTop(const SymbolicTerm& t) 
-  int IsTop(const SymbolicTerm& t) 
+  bool IsTop(const SymbolicTerm& t) 
         { return IsZero(t) || t.IsTop(); }
-//Boolean MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
-  int MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
+  bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
                             SymbolicTerm& result)
     { 
-      int val1, val2;
+      int valu1,vald1, valu2, vald2;
       if ( IsZero(t1)) {
         result = t2; return true;
       }
       else if (IsZero(t2)) {
         result = t1; return true;
       }
-      else if (t1.IsConstInt(&val1) && t2.IsConstInt(&val2)) {
-        result = SymbolicTerm(val1 + val2); return true;
+      else if (t1.IsConstInt(valu1, vald1) && t2.IsConstInt(valu2, vald2)) {
+         int r1, r2;
+         MergeConstInt(valu1, vald1, valu2, vald2, r1, r2);
+         result = SymbolicTerm(r1, r2);
+         return true;
       }
       else
         return OPApplicator::MergeElem(t1,t2,result); 

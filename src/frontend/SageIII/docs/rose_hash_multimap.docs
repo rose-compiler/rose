@@ -15,11 +15,11 @@
 /*!\fn inline void rose_hash_multimap::delete_elements()
 */
 /*!\fn inline void rose_hash_multimap::set_parent(SgNode *new_parent)
-\description See  *new_parent)
+\brief \brief See  *new_parent)
 parent for documentation */
 /*!\fn inline SgNode *rose_hash_multimap::get_parent()
-\description See  *rose_hash_multimap::parent for documentation */
+\brief \brief See  *rose_hash_multimap::parent for documentation */
 /*!\fn inline rose_hash_multimap::~rose_hash_multimap()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_365429006;
+extern int SAGE_Doxygen_Dummy_157649795;

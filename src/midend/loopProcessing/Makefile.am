@@ -8,22 +8,10 @@ INCLUDES = \
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-libLoopProcessingSources = \
-          LoopTransformInterface.C 
-
-if DEV_LIBS
-lib_LTLIBRARIES = libLoopProcessing.la
-else
-noinst_LTLIBRARIES = libLoopProcessing.la
-endif
-libLoopProcessing_la_SOURCES = $(libLoopProcessingSources)
-
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
 	rm -rf rose_mm.C
 
 distclean-local:
 	rm -rf Templates.DB
-
-include_HEADERS =  LoopTransformInterface.h
 

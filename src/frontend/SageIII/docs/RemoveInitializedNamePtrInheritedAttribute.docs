@@ -13,4 +13,4 @@
 /*!\fn inline RemoveInitializedNamePtrInheritedAttribute::RemoveInitializedNamePtrInheritedAttribute() : firstInitializedNameVisited(false), parentNode((0))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_214808802;
+extern int SAGE_Doxygen_Dummy_2114995705;

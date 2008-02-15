@@ -33,33 +33,33 @@
 /*!\fn virtual SgNode *SgIntrinsicSymbol::copy(SgCopyHelp &help) const
 */
 /*!\fn void SgIntrinsicSymbol::set_declaration(SgInitializedName *declaration)
-\description See  *declaration)
+\brief \brief See  *declaration)
 declaration for documentation */
 /*!\fn SgInitializedName *SgIntrinsicSymbol::get_declaration() const
-\description See  const
+\brief \brief See  const
 declaration for documentation */
 /*!\fn virtual SgName SgIntrinsicSymbol::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn virtual SgNode *SgIntrinsicSymbol::get_symbol_basis() const
-\description See  const
+\brief \brief See  const
 symbol_basis for documentation */
 /*!\fn virtual SgNode *SgIntrinsicSymbol::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgIntrinsicSymbol::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgIntrinsicSymbol::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgIntrinsicSymbol::get_numberOfTraversalSuccessors()
-\description See  SgIntrinsicSymbol::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgIntrinsicSymbol::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIntrinsicSymbol::get_traversalSuccessorContainer()
-\description See  SgIntrinsicSymbol::traversalSuccessorContainer for documentation */
+\brief \brief See  SgIntrinsicSymbol::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIntrinsicSymbol::get_traversalSuccessorNamesContainer()
-\description See  SgIntrinsicSymbol::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgIntrinsicSymbol::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgIntrinsicSymbol::SgIntrinsicSymbol(SgInitializedName *declaration=(0))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_459818952;
+extern int SAGE_Doxygen_Dummy_1061889218;

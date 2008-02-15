@@ -68,33 +68,33 @@
 /*!\fn virtual void SgFloatVal::post_construction_initialization()
 */
 /*!\fn void SgFloatVal::set_value(float value)
-\description See  value)
+\brief \brief See  value)
 value for documentation */
 /*!\fn void SgFloatVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn float SgFloatVal::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
 /*!\fn std::string SgFloatVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn virtual SgNode *SgFloatVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgFloatVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgFloatVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFloatVal::get_numberOfTraversalSuccessors()
-\description See  SgFloatVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFloatVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFloatVal::get_traversalSuccessorContainer()
-\description See  SgFloatVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFloatVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFloatVal::get_traversalSuccessorNamesContainer()
-\description See  SgFloatVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgFloatVal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgFloatVal::SgFloatVal(float value,std::string valueString)
 */
 //@}
-int SAGE_Doxygen_Dummy_147152450825822;
+int SAGE_Doxygen_Dummy_171491209824412;

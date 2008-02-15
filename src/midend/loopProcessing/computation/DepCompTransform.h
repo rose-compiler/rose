@@ -11,7 +11,7 @@ class DepCompDistributeLoop
  public:
   //selective distribution
   struct Result 
-     { LoopTreeNode* node; PtrSetWrap<LoopTreeNode> sel; 
+     { LoopTreeNode* node; SelectPtrSet<LoopTreeNode> sel; 
        Result() : node(0) {}
        Result( LoopTreeNode* n, const PtrSetWrap<LoopTreeNode>& _sel) 
             : node(n), sel(_sel) {} 
@@ -27,53 +27,77 @@ class DepCompCopyArrayCollect
  public:
   struct CopyArrayUnit {
     typedef PtrSetWrap<const DepCompAstRefGraphNode> NodeSet;
-    typedef SelectPtrSet<const DepCompAstRefGraphNode> SelectNodeSet;
-    typedef NotSelectPtrSet<const DepCompAstRefGraphNode> NotSelectNodeSet;
-    typedef GraphSelectEndSet2<DepCompAstRefGraphCreate, SelectNodeSet> SelectInsideNode;
-    typedef GraphSelectEndSet1<DepCompAstRefGraphCreate, SelectNodeSet> SelectCrossNode;
-    typedef GraphSelectEndSet<DepCompAstRefGraphCreate, SelectNodeSet, NotSelectNodeSet>
-                               SelectCrossOutNode;
-    typedef GraphSelectEndSet<DepCompAstRefGraphCreate, NotSelectNodeSet, SelectNodeSet>
-                               SelectCrossInNode;
-    typedef GraphSelectCompound<DepCompAstRefGraphCreate, SelectInsideNode, SelectDepLevel> 
-              SelectInside;
-    typedef GraphSelectCompound<DepCompAstRefGraphCreate, SelectCrossNode, SelectDepLevel> 
-              SelectCross;
-    typedef GraphSelectCompound<DepCompAstRefGraphCreate, SelectCrossOutNode, SelectDepLevel> 
-              SelectCrossOut;
-    typedef GraphSelectCompound<DepCompAstRefGraphCreate, SelectCrossInNode, SelectDepLevel> 
-              SelectCrossIn;
-    class InsideGraph: public GraphSelect<DepCompAstRefGraphCreate,SelectInside> 
-    { public:
+    class InsideGraph: public GraphSelect<DepCompAstRefGraphCreate> 
+    { 
+        NodeSet nodesel;
+        int level;
+      public:
        InsideGraph(const DepCompAstRefGraphCreate* g, const CopyArrayUnit& unit)
-        : GraphSelect<DepCompAstRefGraphCreate,SelectInside> 
-            (g, SelectInside(SelectInsideNode(g, unit.refs), 
-                             SelectDepLevel(unit.copylevel()-1)))
-        {}
+        : GraphSelect<DepCompAstRefGraphCreate> (g), nodesel(unit.refs),
+           level(unit.copylevel()-1) {}
+       bool ContainNode( const DepCompAstRefGraphNode* n) const
+          { return nodesel.IsMember(n); }
+       bool ContainEdge( const DepInfoEdge* e) const
+        {
+         return nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeOut)) 
+               && nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeIn))
+               && SelectDepLevel(e->GetInfo(), level);
+        } 
     };
-    class CrossGraph: public GraphSelect<DepCompAstRefGraphCreate,SelectCross> 
-    { public:
-       CrossGraph(const DepCompAstRefGraphCreate* g, const CopyArrayUnit& unit)
-        : GraphSelect<DepCompAstRefGraphCreate,SelectCross> 
-            (g,SelectCross(SelectCrossNode(g, unit.refs), 
-                           SelectDepLevel(unit.copylevel())))
-       {}
+   class CrossGraph: public GraphSelect<DepCompAstRefGraphCreate> 
+   { 
+        NodeSet nodesel;
+        int level;
+    public:
+      CrossGraph(const DepCompAstRefGraphCreate* g, const CopyArrayUnit& unit)
+        : GraphSelect<DepCompAstRefGraphCreate>(g), 
+           nodesel(unit.refs), level(unit.copylevel()) {}
+      bool ContainNode( const DepCompAstRefGraphNode* n) const
+         { return impl->ContainNode(n); }
+      bool ContainEdge( const DepInfoEdge* e) const
+       {
+        if (!SelectDepLevel(e->GetInfo(), level))
+            return false;
+        bool b1=nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeOut));
+        bool b2=nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeIn));
+        return (b1 && !b2) || (!b1 && b2);
+       } 
     };
-    class CrossGraphOut: public GraphSelect<DepCompAstRefGraphCreate,SelectCrossOut> 
-    { public:
-       CrossGraphOut(const DepCompAstRefGraphCreate* g, const CopyArrayUnit& unit)
-        : GraphSelect<DepCompAstRefGraphCreate,SelectCrossOut>
-            (g,SelectCrossOut(SelectCrossOutNode(g, unit.refs,unit.refs), 
-                              SelectDepLevel(unit.copylevel())))
-       {}
+    class CrossGraphOut: public GraphSelect<DepCompAstRefGraphCreate>
+    { 
+        NodeSet nodesel;
+        int level;
+      public:
+       CrossGraphOut(const DepCompAstRefGraphCreate* g, 
+                     const CopyArrayUnit& unit)
+        : GraphSelect<DepCompAstRefGraphCreate>(g),
+            nodesel(unit.refs),  level(unit.copylevel()) {}
+      bool ContainNode( const DepCompAstRefGraphNode* n) const
+         { return impl->ContainNode(n); }
+      bool ContainEdge( const DepInfoEdge* e) const
+       {
+         return nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeOut)) 
+             && !nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeIn))
+               && SelectDepLevel(e->GetInfo(), level);
+       } 
     };
-    class CrossGraphIn: public GraphSelect<DepCompAstRefGraphCreate,SelectCrossIn> 
-    { public:
-       CrossGraphIn(const DepCompAstRefGraphCreate* g, const CopyArrayUnit& unit)
-        : GraphSelect<DepCompAstRefGraphCreate,SelectCrossIn>
-            (g,SelectCrossIn(SelectCrossInNode(g, unit.refs,unit.refs), 
-                             SelectDepLevel(unit.copylevel())))
-       {}
+    class CrossGraphIn: public GraphSelect<DepCompAstRefGraphCreate>
+    { 
+        NodeSet nodesel;
+        int level;
+      public:
+       CrossGraphIn(const DepCompAstRefGraphCreate* g, 
+                     const CopyArrayUnit& unit)
+        : GraphSelect<DepCompAstRefGraphCreate>(g),
+            nodesel(unit.refs),  level(unit.copylevel()) {}
+      bool ContainNode( const DepCompAstRefGraphNode* n) const
+         { return impl->ContainNode(n); }
+      bool ContainEdge( const DepInfoEdge* e) const
+       {
+         return nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeIn))  
+             && !nodesel.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeOut))
+               && SelectDepLevel(e->GetInfo(), level);
+       } 
     };
 
     NodeSet refs;

@@ -150,62 +150,63 @@ declaration in these cases.
 /*!\fn virtual void SgTypedefDeclaration::post_construction_initialization()
 */
 /*!\fn virtual void SgTypedefDeclaration::set_scope(SgScopeStatement *scope)
-\description See  *scope)
+\brief \brief See  *scope)
 scope for documentation */
 /*!\fn void SgTypedefDeclaration::set_base_type(SgType *base_type)
-\description See  *base_type)
+\brief \brief See  *base_type)
 base_type for documentation */
 /*!\fn void SgTypedefDeclaration::set_declaration(SgDeclarationStatement *declaration)
-\description See  *declaration)
+\brief \brief See  *declaration)
 declaration for documentation */
 /*!\fn void SgTypedefDeclaration::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgTypedefDeclaration::set_parent_scope(SgSymbol *parent_scope)
-\description See  *parent_scope)
+\brief \brief See  *parent_scope)
 parent_scope for documentation */
 /*!\fn void SgTypedefDeclaration::set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType)
-\description See  requiresGlobalNameQualificationOnType)
+\brief \brief See  requiresGlobalNameQualificationOnType)
 requiresGlobalNameQualificationOnType for documentation */
 /*!\fn void SgTypedefDeclaration::set_type(SgTypedefType *type)
-\description See  *type)
+\brief \brief See  *type)
 type for documentation */
 /*!\fn void SgTypedefDeclaration::set_typedefBaseTypeContainsDefiningDeclaration(bool typedefBaseTypeContainsDefiningDeclaration)
-\description See  typedefBaseTypeContainsDefiningDeclaration)
+\brief \brief See  typedefBaseTypeContainsDefiningDeclaration)
 typedefBaseTypeContainsDefiningDeclaration for documentation */
 /*!\fn SgDeclarationStatement *SgTypedefDeclaration::get_declaration() const
-\description See  const
+\brief \brief See  const
 declaration for documentation */
 /*!\fn SgName SgTypedefDeclaration::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgSymbol *SgTypedefDeclaration::get_parent_scope() const
-\description See  const
+\brief \brief See  const
 parent_scope for documentation */
 /*!\fn SgType *SgTypedefDeclaration::get_base_type() const
-\description See  const
+\brief \brief See  const
 base_type for documentation */
 /*!\fn SgTypedefType *SgTypedefDeclaration::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn bool SgTypedefDeclaration::get_requiresGlobalNameQualificationOnType() const
-\description See  const
+\brief \brief See  const
 requiresGlobalNameQualificationOnType for documentation */
 /*!\fn bool SgTypedefDeclaration::get_typedefBaseTypeContainsDefiningDeclaration() const
-\description See  const
+\brief \brief See  const
 typedefBaseTypeContainsDefiningDeclaration for documentation */
 /*!\fn virtual SgName SgTypedefDeclaration::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgName SgTypedefDeclaration::get_qualified_name() const
-\description See  const
+\brief \brief See  const
 qualified_name for documentation */
 /*!\fn virtual SgNode *SgTypedefDeclaration::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!
 \fn virtual SgScopeStatement *SgTypedefDeclaration::get_scope() const
-\brief Returns scope of current statement.
+\brief Returns scope of current statement.See  const
+scope for documentation 
    This functions returns a pointer to the inner most SgScopeStatement where the current 
 statement is located.
 This is a function called after the parents have been set.  It is not called by the
@@ -217,22 +218,21 @@ SgFunctionParameterList and the SgFunctionDefinition have the SgFunctionDeclarat
 as a parent.  Thus the scope of the SgFunctionParameterList is computed to be the 
 SgGlobal (global scope) most often; which is an error).  So we handle this case 
 explicitly.
-See  const
-scope for documentation \return Returns valid pointer to SgScopeStatement.
+\return Returns valid pointer to SgScopeStatement.
 */
 /*!\fn virtual SgSymbol *SgTypedefDeclaration::get_symbol_from_symbol_table() const
-\description See  const
+\brief \brief See  const
 symbol_from_symbol_table for documentation */
 /*!\fn virtual size_t SgTypedefDeclaration::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTypedefDeclaration::get_numberOfTraversalSuccessors()
-\description See  SgTypedefDeclaration::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTypedefDeclaration::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypedefDeclaration::get_traversalSuccessorContainer()
-\description See  SgTypedefDeclaration::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTypedefDeclaration::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypedefDeclaration::get_traversalSuccessorNamesContainer()
-\description See  SgTypedefDeclaration::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTypedefDeclaration::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgTypedefDeclaration::SgTypedefDeclaration(SgName name,SgType *base_type,SgTypedefType *type,SgDeclarationStatement *declaration,SgSymbol *parent_scope)
 */
 //@}
-int SAGE_Doxygen_Dummy_11134217614321;
+int SAGE_Doxygen_Dummy_165541935319619;

@@ -9,8 +9,8 @@ int main (int argc, char* argv[])
   // handle for all processing of the AST(s) associated with one or more source files.
      std::vector<std::string> l = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
 
+     CmdOptions::GetInstance()->SetOptions(argc, argv);
      SgProject* project = frontend(l);
-     CmdOptions::GetInstance()->SetOptions(l);
 
      PRE::partialRedundancyElimination(project);
 

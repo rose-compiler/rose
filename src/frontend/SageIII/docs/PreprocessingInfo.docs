@@ -57,10 +57,10 @@
 /*!\fn void PreprocessingInfo::unpacked(char *storePointer)
 */
 /*!\fn Sg_File_Info *PreprocessingInfo::get_file_info() const
-\description See  const
+\brief \brief See  const
 file_info for documentation */
 /*!\fn void PreprocessingInfo::set_file_info(Sg_File_Info *info)
-\description See  *info)
+\brief \brief See  *info)
 file_info for documentation */
 //@}
-extern int SAGE_Doxygen_Dummy_1544971620;
+extern int SAGE_Doxygen_Dummy_929780776;

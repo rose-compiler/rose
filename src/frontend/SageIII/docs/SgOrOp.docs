@@ -40,21 +40,21 @@
 /*!\fn virtual void SgOrOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgOrOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgOrOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgOrOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgOrOp::get_numberOfTraversalSuccessors()
-\description See  SgOrOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgOrOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgOrOp::get_traversalSuccessorContainer()
-\description See  SgOrOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgOrOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgOrOp::get_traversalSuccessorNamesContainer()
-\description See  SgOrOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgOrOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgOrOp::SgOrOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1500383567;
+extern int SAGE_Doxygen_Dummy_1901066221;

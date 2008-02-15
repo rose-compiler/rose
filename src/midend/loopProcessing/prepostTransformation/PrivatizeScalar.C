@@ -1,21 +1,14 @@
-#include <general.h>
 #include <PrivatizeScalar.h>
 #include <LoopInfoInterface.h>
 #include <DefUseChain.h>
 #include <CommandOptions.h>
 
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
-
-string PrivatizeScalar:: cmdline_help() 
+STD string PrivatizeScalar:: cmdline_help() 
    { 
     return "-pv : move scalar-assignments to innermost privatizable loops before loop transformation";
    }
-Boolean PrivatizeScalar:: cmdline_configure()
+bool PrivatizeScalar:: cmdline_configure()
 {
     return CmdOptions::GetInstance()->HasOption("-pv") != 0;
 }
@@ -25,7 +18,7 @@ operator()( LoopTransformInterface& la, const AstNodePtr& root)
 {
   AstInterface& fa = la;
   DefaultDUchain defuse;
-  defuse.build(root, &la.getAliasInterface(), la.getSideEffectInterface());
+  defuse.build(fa, root, &la.getAliasInterface(), la.getSideEffectInterface());
   for (DefaultDUchain::NodeIterator nodes = defuse.GetNodeIterator(); 
        !nodes.ReachEnd(); ++nodes) {
      DefUseChainNode *n = *nodes;
@@ -35,7 +28,7 @@ operator()( LoopTransformInterface& la, const AstNodePtr& root)
      if (!fa.IsVarRef(n->get_ref()) || !fa.IsAssignment(n->get_stmt(), &lhs)
          || lhs != n->get_ref())
         continue;
-     AstNodePtr l = 0;
+     AstNodePtr l = AST_NULL;
      for (DefaultDUchain::EdgeIterator uses = 
              defuse.GetNodeEdgeIterator(n,GraphAccess::EdgeOut);
          !uses.ReachEnd(); ++uses) { 
@@ -44,23 +37,22 @@ operator()( LoopTransformInterface& la, const AstNodePtr& root)
              defuse.GetNodeEdgeIterator(u,GraphAccess::EdgeIn); 
         ++defs;
         if (defs.ReachEnd()) {
-           if (l == 0)
+           if (l == AST_NULL)
               l = GetEnclosingLoop(u->get_stmt(), fa);
            else if (l != GetEnclosingLoop(u->get_stmt(),fa)) {
-              l = 0; break;   
+              l = AST_NULL; break;   
            }
         }   
         else {
-           l = 0; break;
+           l = AST_NULL; break;
         }
      }
-     if (l != 0) {
+     if (l != AST_NULL) {
         AstNodePtr body;
         if (!fa.IsLoop(l, 0,0,0,&body))
             assert(false);
         fa.RemoveStmt(n->get_stmt());
-        fa.BasicBlockPrependStmt(body, n->get_stmt()); 
+        fa.BlockPrependStmt(body, n->get_stmt()); 
      }
   }
-  return root;
 }

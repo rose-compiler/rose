@@ -1,0 +1,64 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmMemoryReferenceExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmExpression *SgAsmMemoryReferenceExpression::p_address
+*/
+/*!\var SgAsmExpression *SgAsmMemoryReferenceExpression::p_segment
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmMemoryReferenceExpression::SgAsmMemoryReferenceExpression(const SgAsmMemoryReferenceExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmMemoryReferenceExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmMemoryReferenceExpression *SgAsmMemoryReferenceExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmMemoryReferenceExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmMemoryReferenceExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmMemoryReferenceExpression::initializeStorageClassArray(SgAsmMemoryReferenceExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmMemoryReferenceExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmMemoryReferenceExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmMemoryReferenceExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmMemoryReferenceExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmMemoryReferenceExpression::~SgAsmMemoryReferenceExpression()
+*/
+/*!\fn virtual SgNode *SgAsmMemoryReferenceExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmMemoryReferenceExpression::set_address(SgAsmExpression *address)
+\brief \brief See  *address)
+address for documentation */
+/*!\fn void SgAsmMemoryReferenceExpression::set_segment(SgAsmExpression *segment)
+\brief \brief See  *segment)
+segment for documentation */
+/*!\fn SgAsmExpression *SgAsmMemoryReferenceExpression::get_address() const
+\brief \brief See  const
+address for documentation */
+/*!\fn SgAsmExpression *SgAsmMemoryReferenceExpression::get_segment() const
+\brief \brief See  const
+segment for documentation */
+/*!\fn virtual SgNode *SgAsmMemoryReferenceExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmMemoryReferenceExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmMemoryReferenceExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmMemoryReferenceExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmMemoryReferenceExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmMemoryReferenceExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmMemoryReferenceExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmMemoryReferenceExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmMemoryReferenceExpression::SgAsmMemoryReferenceExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2067371742;

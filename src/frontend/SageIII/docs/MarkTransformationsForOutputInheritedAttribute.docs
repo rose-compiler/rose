@@ -9,4 +9,4 @@
 /*!\fn inline MarkTransformationsForOutputInheritedAttribute::MarkTransformationsForOutputInheritedAttribute() : insideTransformationToOutput(false)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_774583691;
+extern int SAGE_Doxygen_Dummy_774006800;

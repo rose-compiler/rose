@@ -1,13 +1,13 @@
 
 template <class Node, class Edge> 
-DAGCreate<Node, Edge>::DAGCreate () : IDGraphCreateTemplate<Node, Edge> (NULL) 
+DAGCreate<Node, Edge>::DAGCreate () : VirtualGraphCreateTemplate<Node, Edge> (NULL) 
   {}
 
 template <class Node, class Edge> 
 void
 DAGCreate<Node, Edge>::DeleteNode(Node* n) 
   {
-   IDGraphCreateTemplate<Node, Edge>::DeleteNode(n);
+   VirtualGraphCreateTemplate<Node, Edge>::DeleteNode(n);
   }
 
 template <class Node, class Edge>
@@ -18,18 +18,18 @@ DAGCreate<Node, Edge>::~DAGCreate()
 
 template <class Node, class Edge> void
 DAGCreate<Node, Edge>::addNode ( Node* node )
-   { CreateBaseNode ( node ); }
+   { VirtualGraphCreateTemplate<Node,Edge>::AddNode ( node ); }
 
 template <class Node, class Edge> void
 DAGCreate<Node, Edge>::addEdge ( Node *src, Node *snk, Edge* edge )
-   { CreateBaseEdge ( src, snk, edge ); }
+   { VirtualGraphCreateTemplate<Node,Edge>::AddEdge ( src, snk, edge ); }
 
 
 template <class Node, class Edge> bool
 DAGCreate<Node, Edge>::edgeExist ( Node *src, Node *snk)
    { 
      bool edge_exist = false;     
-     for (typename DAGCreate<Node, Edge>::IDEdgeIterator i = this->GetIDNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
+     for (typename DAGCreate<Node, Edge>::EdgeIterator i = this->GetNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
         {
 	      Edge* currentEdge = i.Current();
               Node* endPoint= GetEdgeEndPoint(currentEdge, GraphAccess::EdgeIn);
@@ -58,7 +58,7 @@ template <class Node, class Edge> bool
 DAGCreate<Node, Edge>::edgeExist ( Node *src, Node *snk)
    { 
      bool edge_exist = false;     
-     for (typename DAGCreate<Node, Edge>::IDEdgeIterator i = this->GetIDNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
+     for (typename DAGCreate<Node, Edge>::EdgeIterator i = this->GetNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
         {
 	      Edge* currentEdge = i.Current();
               Node* endPoint= GetEdgeEndPoint(currentEdge, GraphAccess::EdgeIn);

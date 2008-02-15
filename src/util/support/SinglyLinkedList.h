@@ -3,7 +3,6 @@
 #define SINGLY_LINKED_LIST_H
 
 #include <FunctionObject.h>
-#include <iostream>
 
 template <class T> class SinglyLinkedListWrap;
 template <class T>
@@ -117,8 +116,7 @@ class SinglyLinkedListWrap
       Iterator() : list(0), cur(0) {}
       T& Current() const { return cur->GetEntry(); }
       T& operator *() const { return Current(); }
-   // Boolean ReachEnd() const { std::cerr << ""; return cur == 0; }
-      int ReachEnd() const { std::cerr << ""; return cur == 0; }
+      bool ReachEnd() const { return cur == 0; }
       void Reset() { if (list != 0) cur = list->First(); }
       void Advance() { if (cur != 0) cur = list->Next(cur); }
       void operator++() { Advance(); }
@@ -133,8 +131,7 @@ class CollectSinglyLinkedList : public CollectObject<T>
   SinglyLinkedListWrap<T>& res;
  public:
   CollectSinglyLinkedList(SinglyLinkedListWrap<T>& r) : res(r) {}
-//Boolean operator()(const T& cur)
-  int operator()(const T& cur)
+  bool operator()(const T& cur)
    {
       res.AppendLast(cur);
       return true;

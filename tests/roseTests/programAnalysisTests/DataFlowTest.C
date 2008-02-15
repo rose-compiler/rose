@@ -1,10 +1,8 @@
 
-#include <rose.h>
-#include <general.h>
+#include <sage3.h>
 
-#include <GraphDotOutput.h>
 #include <StmtInfoCollect.h>
-#include <AstInterface.h>
+#include <AstInterface_ROSE.h>
 
 #include <DefUseChain.h>
 #include <string>
@@ -40,7 +38,7 @@ class TestDUWrap
   void operator()(AstInterface& fa, SgNode* head)
   {
     ReachingDefinitionAnalysis r;
-    r(fa, head);
+    r(fa, AstNodePtrImpl(head));
     graph.build(fa, r, alias);
   }
 };
@@ -58,7 +56,7 @@ class TestDUWrap_Text : public TestDUWrap
   void operator()(AstInterface& fa, SgNode* head)
   {
      TestDUWrap::operator()(fa, head);
-     f << GraphToString(graph);
+     write_graph(graph, f, "edge");
   }
 };
 
@@ -69,9 +67,11 @@ class TestDUWrap_DOT : public TestDUWrap
 
   void operator()(AstInterface& fa, SgNode* head, string fname)
   {
+/*
      TestDUWrap::operator()(fa, head);
      GraphDotOutput output(graph);
      output.writeToDOTFile(fname); 
+*/
   }
 };
 
@@ -85,9 +85,8 @@ main ( int argc,  char * argv[] )
          return -1;
      }
 
-     vector<string> argvList(argv, argv + argc);
-     SgProject sageProject (argvList);
-    CmdOptions::GetInstance()->SetOptions(argvList);
+     SgProject sageProject ( (int)argc,argv);
+    CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 
    int filenum = sageProject.numberOfFiles();
@@ -103,9 +102,10 @@ main ( int argc,  char * argv[] )
           if (defn == 0)
              continue;
           SgBasicBlock *stmts = defn->get_body();  
-          AstInterface fa(stmts);
+          AstInterfaceImpl scope(stmts);
+          AstInterface fa(&scope);
           StmtVarAliasCollect alias;
-          alias(fa, defn);
+          alias(fa, AstNodePtrImpl(defn));
           if (GenerateDOT(argc, argv)) {
              string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".dot";
              TestDUWrap_DOT op(alias);
@@ -122,8 +122,3 @@ main ( int argc,  char * argv[] )
   return 0;
 }
 
-#define TEMPLATE_ONLY
-#include <DefUseChain.C>
-
-// DQ (1/15/2007): This is an error on the Intel compiler!
-// template class DefUseChain<DefUseChainNode>;

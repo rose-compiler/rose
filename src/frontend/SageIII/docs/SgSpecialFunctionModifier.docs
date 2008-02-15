@@ -87,24 +87,24 @@
 /*!\fn void SgSpecialFunctionModifier::unsetUnknown()
 */
 /*!\fn void SgSpecialFunctionModifier::set_modifierVector(SgBitVector modifierVector)
-\description See  modifierVector)
+\brief \brief See  modifierVector)
 modifierVector for documentation */
 /*!\fn SgBitVector SgSpecialFunctionModifier::get_modifierVector() const
-\description See  const
+\brief \brief See  const
 modifierVector for documentation */
 /*!\fn virtual SgNode *SgSpecialFunctionModifier::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgSpecialFunctionModifier::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSpecialFunctionModifier::get_numberOfTraversalSuccessors()
-\description See  SgSpecialFunctionModifier::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSpecialFunctionModifier::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSpecialFunctionModifier::get_traversalSuccessorContainer()
-\description See  SgSpecialFunctionModifier::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSpecialFunctionModifier::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSpecialFunctionModifier::get_traversalSuccessorNamesContainer()
-\description See  SgSpecialFunctionModifier::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSpecialFunctionModifier::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgSpecialFunctionModifier::SgSpecialFunctionModifier()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_2034069705;
+extern int SAGE_Doxygen_Dummy_462590293;

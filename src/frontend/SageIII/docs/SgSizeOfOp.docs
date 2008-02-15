@@ -98,33 +98,33 @@ pointer to an object derived from a SgSizeOfOp.
 /*!\fn virtual void SgSizeOfOp::post_construction_initialization()
 */
 /*!\fn void SgSizeOfOp::set_operand_expr(SgExpression *operand_expr)
-\description See  *operand_expr)
+\brief \brief See  *operand_expr)
 operand_expr for documentation */
 /*!\fn void SgSizeOfOp::set_operand_type(SgType *operand_type)
-\description See  *operand_type)
+\brief \brief See  *operand_type)
 operand_type for documentation */
 /*!\fn SgExpression *SgSizeOfOp::get_operand_expr() const
-\description See  const
+\brief \brief See  const
 operand_expr for documentation */
 /*!\fn SgType *SgSizeOfOp::get_operand_type() const
-\description See  const
+\brief \brief See  const
 operand_type for documentation */
 /*!\fn virtual SgNode *SgSizeOfOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgSizeOfOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgSizeOfOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSizeOfOp::get_numberOfTraversalSuccessors()
-\description See  SgSizeOfOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSizeOfOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSizeOfOp::get_traversalSuccessorContainer()
-\description See  SgSizeOfOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSizeOfOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSizeOfOp::get_traversalSuccessorNamesContainer()
-\description See  SgSizeOfOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSizeOfOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgSizeOfOp::SgSizeOfOp(SgExpression *operand_expr,SgType *operand_type,SgType *expression_type)
 */
 //@}
-int SAGE_Doxygen_Dummy_40541132032485;
+int SAGE_Doxygen_Dummy_223302703230054;

@@ -3,18 +3,16 @@
 */
 /*! \name Class Members*/
 //@{
-/*!\var SgBasicBlock *SgInterfaceStatement::p_body
+/*!\var SgFunctionDeclaration *SgInterfaceStatement::p_function
 */
 /*!\var SgName SgInterfaceStatement::p_name
 */
-/*!\var SgScopeStatement *SgInterfaceStatement::p_scope
-*/
-/*!\var int SgInterfaceStatement::p_end_numeric_label
+/*!\var SgLabelRefExp *SgInterfaceStatement::p_end_numeric_label
 */
 //@}
 /*! \name User Interface*/
 //@{
-/*!\fn SgInterfaceStatement::SgInterfaceStatement(Sg_File_Info *startOfConstruct,SgName name=(""),SgBasicBlock *body=(0),SgScopeStatement *scope=(0))
+/*!\fn SgInterfaceStatement::SgInterfaceStatement(Sg_File_Info *startOfConstruct,SgName name=(""),SgFunctionDeclaration *function=(0))
 */
 /*!\fn SgInterfaceStatement::SgInterfaceStatement(const SgInterfaceStatementStorageClass &source)
 */
@@ -40,48 +38,48 @@
 */
 /*!\fn virtual SgNode *SgInterfaceStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgInterfaceStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgInterfaceStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgInterfaceStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgInterfaceStatement::post_construction_initialization()
 */
-/*!\fn virtual void SgInterfaceStatement::set_scope(SgScopeStatement *scope)
-\description See  *scope)
-scope for documentation */
-/*!\fn void SgInterfaceStatement::set_body(SgBasicBlock *body)
-\description See  *body)
-body for documentation */
-/*!\fn void SgInterfaceStatement::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgInterfaceStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
+/*!\fn void SgInterfaceStatement::set_function(SgFunctionDeclaration *function)
+\brief \brief See  *function)
+function for documentation */
 /*!\fn void SgInterfaceStatement::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
-/*!\fn SgBasicBlock *SgInterfaceStatement::get_body() const
-\description See  const
-body for documentation */
-/*!\fn SgName SgInterfaceStatement::get_name() const
-\description See  const
-name for documentation */
-/*!\fn int SgInterfaceStatement::get_end_numeric_label() const
-\description See  const
+/*!\fn SgFunctionDeclaration *SgInterfaceStatement::get_function() const
+\brief \brief See  const
+function for documentation */
+/*!\fn SgLabelRefExp *SgInterfaceStatement::get_end_numeric_label() const
+\brief \brief See  const
 end_numeric_label for documentation */
+/*!\fn SgName SgInterfaceStatement::get_name() const
+\brief \brief See  const
+name for documentation */
 /*!\fn virtual SgName SgInterfaceStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgInterfaceStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
-/*!\fn virtual SgScopeStatement *SgInterfaceStatement::get_scope() const
-\description See  const
-scope for documentation */
 /*!\fn virtual size_t SgInterfaceStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgInterfaceStatement::get_numberOfTraversalSuccessors()
-\description See  SgInterfaceStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgInterfaceStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgInterfaceStatement::get_traversalSuccessorContainer()
-\description See  SgInterfaceStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgInterfaceStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgInterfaceStatement::get_traversalSuccessorNamesContainer()
-\description See  SgInterfaceStatement::traversalSuccessorNamesContainer for documentation */
-/*!\fn SgInterfaceStatement::SgInterfaceStatement(SgName name,SgBasicBlock *body,SgScopeStatement *scope)
+\brief \brief See  SgInterfaceStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgInterfaceStatement::SgInterfaceStatement(SgName name,SgFunctionDeclaration *function)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_2115000713;
+extern int SAGE_Doxygen_Dummy_985897211;

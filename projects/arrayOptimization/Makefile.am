@@ -18,7 +18,7 @@ INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
-     -I$(top_srcdir)/src/midend/loopProcessing \
+     -I$(top_srcdir)/src/midend/loopProcessing/driver \
      -I$(top_srcdir)/src/midend/loopProcessing/depInfo
 
 lib_LIBRARIES = libarrayOptimization.a

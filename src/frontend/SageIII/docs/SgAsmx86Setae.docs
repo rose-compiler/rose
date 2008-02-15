@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmx86Setae
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmx86Setae::SgAsmx86Setae(const SgAsmx86SetaeStorageClass &source)
+*/
+/*!\fn inline static void SgAsmx86Setae::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmx86Setae *SgAsmx86Setae::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmx86Setae::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmx86Setae::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmx86Setae::initializeStorageClassArray(SgAsmx86SetaeStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmx86Setae::clearMemoryPool()
+*/
+/*!\fn static void SgAsmx86Setae::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmx86Setae::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmx86Setae::roseRTI()
+*/
+/*!\fn virtual SgAsmx86Setae::~SgAsmx86Setae()
+*/
+/*!\fn virtual SgNode *SgAsmx86Setae::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmx86Setae::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Setae::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Setae::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmx86Setae::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmx86Setae::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmx86Setae::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmx86Setae::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmx86Setae::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmx86Setae::SgAsmx86Setae(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_579306066;

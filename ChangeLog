@@ -26,12 +26,14 @@
 
 	* Fixed Yices support to use AST attributes for Yices expressions.
 
-	* -lfl should no longer be required on the link line.
+	* -lfl should no longer be required on the link line. The yywrap
+	  requirement that caused this should not be gone.
 
 	* Added include directories to the path to avoid paths to header
 	  files being wrong after the install (allowing make install to 
 	  work for the binary analysis option.
-	
+
+
 
 2008-1-8  Dan Quinlan 0.9.0b
 

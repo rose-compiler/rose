@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmx86Btr
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmx86Btr::SgAsmx86Btr(const SgAsmx86BtrStorageClass &source)
+*/
+/*!\fn inline static void SgAsmx86Btr::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmx86Btr *SgAsmx86Btr::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmx86Btr::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmx86Btr::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmx86Btr::initializeStorageClassArray(SgAsmx86BtrStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmx86Btr::clearMemoryPool()
+*/
+/*!\fn static void SgAsmx86Btr::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmx86Btr::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmx86Btr::roseRTI()
+*/
+/*!\fn virtual SgAsmx86Btr::~SgAsmx86Btr()
+*/
+/*!\fn virtual SgNode *SgAsmx86Btr::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmx86Btr::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Btr::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Btr::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmx86Btr::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmx86Btr::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmx86Btr::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmx86Btr::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmx86Btr::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmx86Btr::SgAsmx86Btr(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_407795171;

@@ -25,24 +25,18 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
 {
   class Impl;
  public:
-  class RelInitInfo
-  { public:
-    const CompSlice *slice1, *slice2;
-    CompSliceLocalityAnal& anal;
-    RelInitInfo(CompSliceLocalityAnal& a, const CompSlice *s1,
-               const CompSlice *s2)
-     : slice1(s1), slice2(s2), anal(a) {}
-  };
-  class SliceSelfInfo;
   class SliceRelInfo
   {
     CompSliceLocalityAnal::AstNodeSet tmpRefSet, spRefSet;
    public:
-    SliceRelInfo( RelInitInfo info)
+    SliceRelInfo( CompSliceLocalityAnal& anal, 
+                  const CompSlice* slice1, const CompSlice* slice2)
      {  
-        info.anal.TemporaryReuses(info.slice1, info.slice2, tmpRefSet); 
-        info.anal.SpatialReuses(info.slice1, info.slice2, spRefSet); 
+        anal.TemporaryReuses(slice1, slice2, tmpRefSet); 
+        anal.SpatialReuses(slice1, slice2, spRefSet); 
      }
+    const CompSliceLocalityAnal::AstNodeSet* get_temporaryReuseSet() const
+       { return &tmpRefSet; }
     void FuseRelInfo( const SliceRelInfo& rel)
      { tmpRefSet.insert(rel.tmpRefSet.begin(), rel.tmpRefSet.end()); }
     int TemporaryReuses( CompSliceLocalityAnal::AstNodeSet* refset = 0) const 
@@ -52,21 +46,12 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
             return tmpRefSet.size();
          }
     int SpatialReuses() const { return spRefSet.size(); }
-    std::string ToString() const
+    STD string toString() const
     {  
-       std::stringstream out;
+       STD stringstream out;
        out << " Temporary reuse: " << TemporaryReuses(); 
        return out.str();
     }
-    friend class CompSliceLocalityRegistry::SliceSelfInfo;
-  };
-
-  class SelfInitInfo
-  { public:
-   const CompSlice *slice;
-   CompSliceLocalityAnal& anal;
-   SelfInitInfo(CompSliceLocalityAnal& a, const CompSlice *s)
-    : slice(s), anal(a) {}
   };
 
   class SliceSelfInfo
@@ -74,14 +59,17 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
    float spatialReuses;
    CompSliceLocalityAnal::AstNodeSet tmpRefSet;
   public:
-   SliceSelfInfo(SelfInitInfo info)
-   { spatialReuses = info.anal.SpatialReuses(info.slice);
-     info.anal.TemporaryReuses(info.slice, info.slice, tmpRefSet);
+   SliceSelfInfo (CompSliceLocalityAnal& anal, const CompSlice *slice)
+   { 
+     spatialReuses = anal.SpatialReuses(slice);
+     anal.TemporaryReuses(slice, slice, tmpRefSet);
    }
    void FuseSelfInfo( const SliceSelfInfo& that, const SliceRelInfo& rel)
    { spatialReuses += that.spatialReuses;
+     const CompSliceLocalityAnal::AstNodeSet* 
+                 tmpSet1 = rel.get_temporaryReuseSet();
      tmpRefSet.insert( that.tmpRefSet.begin(), that.tmpRefSet.end());
-     tmpRefSet.insert( rel.tmpRefSet.begin(), rel.tmpRefSet.end());
+     tmpRefSet.insert( tmpSet1->begin(), tmpSet1->end());
    }
    int TemporaryReuses( CompSliceLocalityAnal::AstNodeSet* refset = 0) const 
          { 
@@ -90,24 +78,13 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
             return tmpRefSet.size();
          }
    float SpatialReuses() { return spatialReuses; }
-   std::string ToString() const
+   STD string toString() const
     {  
-       std::stringstream out;
+       STD stringstream out;
        out << "spatial reuse: " << spatialReuses << "; Temporary reuse: " <<
               TemporaryReuses();
        return out.str();
     }
-  };
-
-  class CreateInitInfo
-  {
-    CompSliceLocalityAnal& anal;
-  public:
-   CreateInitInfo(CompSliceLocalityAnal& a) : anal(a) {}
-   SelfInitInfo operator()(const CompSlice *slice)
-    { return SelfInitInfo(anal, slice); }
-   RelInitInfo operator()(const CompSlice* slice1, const CompSlice* slice2)
-    { return RelInitInfo( anal, slice1, slice2); }
   };
 
  private:

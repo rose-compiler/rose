@@ -100,28 +100,28 @@ pointer to an object derived from a SgCatchStatementSeq.
 */
 /*!
 \fn SgStatementPtrList &SgCatchStatementSeq::get_catch_statement_seq()
-\brief Access function for p_catch_statement_seq.
-See  &SgCatchStatementSeq::catch_statement_seq for documentation \return Returns non-const reference to SgStatementPtrList.
+\brief Access function for p_catch_statement_seq.See  &SgCatchStatementSeq::catch_statement_seq for documentation 
+\return Returns non-const reference to SgStatementPtrList.
 */
 /*!
 \fn const SgStatementPtrList &SgCatchStatementSeq::get_catch_statement_seq() const
-\brief Access function for p_catch_statement_seq.
-See  const
-catch_statement_seq for documentation \return Returns const reference to SgStatementPtrList.
+\brief Access function for p_catch_statement_seq.See  const
+catch_statement_seq for documentation 
+\return Returns const reference to SgStatementPtrList.
 */
 /*!\fn virtual SgNode *SgCatchStatementSeq::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgCatchStatementSeq::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgCatchStatementSeq::get_numberOfTraversalSuccessors()
-\description See  SgCatchStatementSeq::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgCatchStatementSeq::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgCatchStatementSeq::get_traversalSuccessorContainer()
-\description See  SgCatchStatementSeq::traversalSuccessorContainer for documentation */
+\brief \brief See  SgCatchStatementSeq::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgCatchStatementSeq::get_traversalSuccessorNamesContainer()
-\description See  SgCatchStatementSeq::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgCatchStatementSeq::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgCatchStatementSeq::SgCatchStatementSeq()
 */
 //@}
-int SAGE_Doxygen_Dummy_174861636432083;
+int SAGE_Doxygen_Dummy_139302182716110;

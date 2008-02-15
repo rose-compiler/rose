@@ -1,19 +1,19 @@
 
 int min2(int a0,int a1)
 {
-  return (a0 < a1)?a0:a1;
+  return a0 < a1?a0:a1;
 }
 
 
 int min3(int a0,int a1,int a2)
 {
   int res = a0;
-  if (res > a1) {
+  if (a1 < res) {
     res = a1;
   }
   else {
   }
-  if (res > a2) {
+  if (a2 < res) {
     res = a2;
   }
   else {
@@ -36,9 +36,8 @@ double abs(double x)
 extern void printmatrix(double x[][50]);
 extern void initmatrix(double x[][50],double s);
 
-int main(int argc,char **argv)
+int main(int argc,char *argv[])
 {
-  int _var_0;
   int p[50];
   int i;
   int j;
@@ -46,6 +45,7 @@ int main(int argc,char **argv)
   double a[50][50];
   double mu;
   double t;
+  int _var_0;
   initmatrix(a,5.0);
   printmatrix(a);
   for (k = 0; k <= 48; k += 1) {

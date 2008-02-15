@@ -34,18 +34,18 @@
 /*!\fn virtual void SgIntegerDivideOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgIntegerDivideOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgIntegerDivideOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgIntegerDivideOp::get_numberOfTraversalSuccessors()
-\description See  SgIntegerDivideOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgIntegerDivideOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIntegerDivideOp::get_traversalSuccessorContainer()
-\description See  SgIntegerDivideOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgIntegerDivideOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIntegerDivideOp::get_traversalSuccessorNamesContainer()
-\description See  SgIntegerDivideOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgIntegerDivideOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgIntegerDivideOp::SgIntegerDivideOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_861290927;
+extern int SAGE_Doxygen_Dummy_393617963;

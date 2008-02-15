@@ -2,40 +2,40 @@
 
 #include "rose.h"
 #include <GraphDotOutput.h>
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 using namespace std;
 
-class Node : public GraphNode {
+class Node : public MultiGraphElem {
      public:
           std::string name;
-          Node( std::string n ) : GraphNode( NULL ), name( n ) {}
+          Node( std::string n ) : MultiGraphElem( NULL ), name( n ) {}
           virtual std::string ToString() const { return name; }
    };
 
-class Edge : public GraphEdge {
+class Edge : public MultiGraphElem {
      public:
           std::string label;
-          Edge ( std::string label = "default edge" ) : GraphEdge( NULL ), label( label ) {};
+          Edge ( std::string label = "default edge" ) : MultiGraphElem( NULL ), label( label ) {};
           void Dump() const { printf ("EDGE: label = %s \n",label.c_str()); }
           virtual std::string ToString() const { return label;}
    };
 
 template <class NodeType, class EdgeType>
-class GraphBuilder : public IDGraphCreateTemplate<NodeType, EdgeType> {
+class GraphBuilder : public VirtualGraphCreateTemplate<NodeType, EdgeType> {
      public:
           void addNode ( NodeType* node );
           void addEdge ( NodeType* src, NodeType* snk, EdgeType* edge );
-          GraphBuilder () : IDGraphCreateTemplate<NodeType, EdgeType> (NULL) {}
+          GraphBuilder () : VirtualGraphCreateTemplate<NodeType, EdgeType> (NULL) {}
          ~GraphBuilder() { printf ("Inside of ~GraphBuilder() \n"); }
    };
 
 template <class NodeType, class EdgeType> 
 void GraphBuilder<NodeType, EdgeType>::addNode ( NodeType* node )
-   { CreateBaseNode ( node ); }
+   { VirtualGraphCreateTemplate<NodeType,EdgeType>::AddNode ( node ); }
 
 template <class NodeType, class EdgeType> 
 void GraphBuilder<NodeType, EdgeType>::addEdge ( NodeType* src, NodeType* snk, EdgeType* edge )
-   { CreateBaseEdge ( src, snk, edge ); }
+   { VirtualGraphCreateTemplate<NodeType,EdgeType>::AddEdge ( src, snk, edge ); }
 
 int main( int argc, char * argv[] )
    {
@@ -72,11 +72,11 @@ int main( int argc, char * argv[] )
      graph.addEdge(src,rosetta,                new Edge("subdirG"));
      graph.addEdge(src,util,                   new Edge("subdirH"));
 
-  // Build a DOT graph internally
-     GraphDotOutput output(graph);
+  // Build a wrapper for outputing DOT graph 
+     GraphDotOutput<GraphBuilder<Node, Edge> > output(graph);
 
   // Write out the DOT graph
-     output.writeToDOTFile("customGraph.dot");
+     output.writeToDOTFile("customGraph.dot", "custom graph");
 
      return 0;
    }

@@ -109,23 +109,23 @@ pointer to an object derived from a SgExprStatement.
 /*!\fn virtual void SgExprStatement::post_construction_initialization()
 */
 /*!\fn void SgExprStatement::set_expression(SgExpression *expression)
-\description See  *expression)
+\brief \brief See  *expression)
 expression for documentation */
 /*!\fn SgExpression *SgExprStatement::get_expression() const
-\description See  const
+\brief \brief See  const
 expression for documentation */
 /*!\fn virtual SgNode *SgExprStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgExprStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgExprStatement::get_numberOfTraversalSuccessors()
-\description See  SgExprStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgExprStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgExprStatement::get_traversalSuccessorContainer()
-\description See  SgExprStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgExprStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgExprStatement::get_traversalSuccessorNamesContainer()
-\description See  SgExprStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgExprStatement::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgExprStatement::SgExprStatement(SgExpression *expression)
 \brief This is the constructor.
@@ -133,4 +133,4 @@ childIndex for documentation */
 \param startOfConstruct represents the position in the source code
 */
 //@}
-int SAGE_Doxygen_Dummy_27401843527287;
+int SAGE_Doxygen_Dummy_79532801116543;

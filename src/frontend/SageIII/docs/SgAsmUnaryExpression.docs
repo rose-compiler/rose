@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmUnaryExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmExpression *SgAsmUnaryExpression::p_operand
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmUnaryExpression::SgAsmUnaryExpression(const SgAsmUnaryExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmUnaryExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmUnaryExpression *SgAsmUnaryExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmUnaryExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmUnaryExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmUnaryExpression::initializeStorageClassArray(SgAsmUnaryExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmUnaryExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmUnaryExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmUnaryExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmUnaryExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmUnaryExpression::~SgAsmUnaryExpression()
+*/
+/*!\fn virtual SgNode *SgAsmUnaryExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmUnaryExpression::set_operand(SgAsmExpression *operand)
+\brief \brief See  *operand)
+operand for documentation */
+/*!\fn SgAsmExpression *SgAsmUnaryExpression::get_operand() const
+\brief \brief See  const
+operand for documentation */
+/*!\fn virtual SgNode *SgAsmUnaryExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmUnaryExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmUnaryExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmUnaryExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmUnaryExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmUnaryExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmUnaryExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmUnaryExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmUnaryExpression::SgAsmUnaryExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_593410697;

@@ -1,14 +1,12 @@
-#include <general.h>
-
+#include <vector>
 #include <iostream>
 #include <stdlib.h>
 #include <FunctionObject.h>
 #include <DepRel.h>
-#include <DepInfo.h>
 #include <SymbolicVal.h>
+#include <DomainInfo.h>
 
 #include <LoopTransformInterface.h>
-#include <map>
 
 extern bool DebugDep();
 
@@ -16,9 +14,9 @@ template <class VarVec, class CoeffVec>
 SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la, 
             const SymbolicVal& exp, const VarVec& vars, CoeffVec& vec, int size)
   {
-    // AstInterface& fa = la;
+    AstInterface& fa = la;
     SymbolicVal val = exp;
-    // int coeff;
+    int coeff;
     for (int i = 0; i < size; ++i) {
        SymbolicVar ivar = vars[i];
        SymbolicBound ivarbound;
@@ -39,8 +37,7 @@ SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la,
   }
 
 template <class CoeffVec, class BoundVec, class BoundOp>
-// Boolean SplitEquation( LoopTransformInterface& la, CoeffVec& cur, 
-int SplitEquation( LoopTransformInterface& la, CoeffVec& cur, 
+bool SplitEquation( LoopTransformInterface& la, CoeffVec& cur, 
                       const SymbolicVal& cut, const BoundVec& bounds, 
                       BoundOp& boundop, CoeffVec& split)
  {
@@ -52,7 +49,7 @@ int SplitEquation( LoopTransformInterface& la, CoeffVec& cur,
        bool lt = ((r1 & REL_GT) && (r2 & REL_LT)) || ((r1 & REL_LT) && (r2 & REL_GT)); 
        if (!lt) {
          if (DebugDep())
-           std::cerr << "unable to split because " << leftval.ToString() << " ? " << cut.ToString() << std::endl;
+           STD cerr << "unable to split because " << leftval.toString() << " ? " << cut.toString() << STD endl;
          return false;   
        }
      }
@@ -79,14 +76,6 @@ int SplitEquation( LoopTransformInterface& la, CoeffVec& cur,
                  left = left + cur[j] * bounds[j].lb; break;
               case REL_GE:
                  left = left + cur[j] * bounds[j].ub; break;
-	      default: {
-                 std::cerr << "Bad case from CompareVal" << std::endl;
-                 std::cerr << "cur[" << j << "] = " << cur[j].ToString() << std::endl;
-                 std::cerr << "left = " << left.ToString() << std::endl;
-                 // std::cerr << "boundop = " << boundop.ToString() << std::endl;
-                 std::cerr << "Compare result = " << CompareVal(cur[j], 0, &boundop) << std::endl;
-                 assert (!"Unhandled case");
-              }
              }
         }
         if (j == dim && (left == 0 || (CompareVal(left,cut) & REL_LT)))  {
@@ -99,9 +88,9 @@ int SplitEquation( LoopTransformInterface& la, CoeffVec& cur,
         }
         else if (DebugDep()) { 
             if (j == dim)
-               std::cerr << "unable to decide left " << left.ToString() << " ? " << cut.ToString() << std::endl;
+               STD cerr << "unable to decide left " << left.toString() << " ? " << cut.toString() << STD endl;
             else
-               std::cerr << "unable to decide cur[" << j << "] ? 0\n";
+               STD cerr << "unable to decide cur[" << j << "] ? 0\n";
         }
      }
      split.clear();
@@ -109,8 +98,7 @@ int SplitEquation( LoopTransformInterface& la, CoeffVec& cur,
 }
 
 template <class Mat>
-// Boolean NormalizeMatrix( Mat& analMatrix, int rows, int cols)
-int NormalizeMatrix( Mat& analMatrix, int rows, int cols)
+bool NormalizeMatrix( Mat& analMatrix, int rows, int cols)
   {
     int k;
     for ( k = 0 ; k < rows && k < cols; k++) {
@@ -185,22 +173,25 @@ int SetDepDirection( DepInfo &edd, int commLevel, Collect &result)
       }
       return i+1;
     }
+	 
+//extern DepTestStatistics DepStats;
 
 template <class CoeffVec, class BoundVec, class BoundOp, class Dep>
-// Boolean AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
-int AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
+bool AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
                         BoundOp& boundop, 
                         Dep& result, const DepRel& rel) 
 {
   int dim = vec.size()- 1;
-  std::vector<int> signs;
+  STD vector<int> signs;
   for (int index = 0; index < dim; ++index) { 
     if  (vec[index]==0) {
         signs.push_back(0);
         continue;
     }
     SymbolicBound cb = GetValBound(vec[index], boundop);
+    assert(!cb.lb.IsNIL() && !cb.ub.IsNIL());
     const SymbolicBound& b = bounds[index];
+    assert(!b.lb.IsNIL() && !b.ub.IsNIL());
     if (b.lb >= 0) {
        if (cb.lb >= 0) 
           signs.push_back(1);
@@ -208,7 +199,7 @@ int AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
           signs.push_back(-1);
        else { 
          if (DebugDep()) 
-           std::cerr << "unable to decide sign of coeff when lb >=0 for ivar[" << index << "]\n";
+           STD cerr << "unable to decide sign of coeff when lb >=0 for ivar[" << index << "]\n";
          //return false;
          signs.push_back(2);
        }
@@ -220,14 +211,14 @@ int AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
         signs.push_back(1);
       else { 
          if (DebugDep()) 
-           std::cerr << "unable to decide sign of coeff when ub <=0 for ivar[" << index << "]\n";
+           STD cerr << "unable to decide sign of coeff when ub <=0 for ivar[" << index << "]\n";
         //return false;
         signs.push_back(2);
       }
     }
     else {
          if (DebugDep()) 
-           std::cerr << "unable to decide sign of ivar[" << index << "]\n";
+           STD cerr << "unable to decide sign of ivar[" << index << "]\n";
         //return false;
         signs.push_back(2);
     }
@@ -235,6 +226,12 @@ int AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
   if (vec[dim] == 0)
       signs.push_back(0);
   else {
+     SymbolicVal leftval = vec[dim];
+     if (leftval.IsNIL()) {
+        if (DebugDep()) 
+           STD cerr << "unable to decide sign of leftval\n";
+        return false;
+     }
      SymbolicBound lb = GetValBound(vec[dim], boundop);
      if (lb.ub <= 0)
         signs.push_back(-1);
@@ -242,15 +239,16 @@ int AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
         signs.push_back(1);
      else {
         if (DebugDep()) 
-           std::cerr << "unable to decide sign of leftval\n";
-        //return false;
-        signs.push_back(2);
+           STD cerr << "unable to decide sign of leftval\n";
+        return false;
+        //signs.push_back(2);
      }
   }
   for (int i = 0; i < dim ; ++i) { 
     if (signs[i] == 0)
        continue;
     SymbolicVal coeff = vec[i];
+    assert(!coeff.IsNIL());
     int j = 0;
     for ( j = i+1; j < dim; ++j) {
       if (signs[j] == 0 || coeff + vec[j] != 0)
@@ -264,30 +262,39 @@ int AnalyzeEquation(const CoeffVec& vec, const BoundVec& bounds,
         else if (signs[k] == 2 || signs[k] * left < 0)
            break;
       }
-      if ( k < dim || left == 2 || signs[dim] == 2 || left * signs[dim] < 0)
+      if ( k < dim || left == 2 || left * signs[dim] < 0)
          continue;
       int diff = 0, c = 1;
       bool hasdiff = false;
-      if (left == 0 && vec[dim].ToInt(diff) && 
-           (diff == 0 || coeff.ToInt(c)))  {
+      if (left == 0 && vec[dim].isConstInt(diff) && 
+           (diff == 0 || coeff.isConstInt(c)))  {
         if (diff != 0 && c != 1) {
            int odiff = diff;
            diff = diff / c;   
-           if (odiff != diff * c) {
-             result[i][j] = DepRel(DEPDIR_NONE);
-             return true;
+           if (odiff != diff * c)
+			  {
+				  	//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_NONE)));
+					result[i][j] = DepRel(DEPDIR_NONE);
+					return true;
            }
         }
         hasdiff = true;
       }
-      if (hasdiff) { 
-        result[i][j] = rel * DepRel(DEPDIR_EQ, diff); 
-        return true; // precise dependence
+      if (hasdiff) {
+		//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_EQ, diff)));
+		result[i][j] = rel * DepRel(DEPDIR_EQ, diff);
+		return true; // precise dependence
       }
-      else if (signs[i] != 2)
-	result[i][j] = rel * 
-                 ((signs[dim]* signs[i] > 0)? DepRel(DEPDIR_GE, diff) :
-	                DepRel(DEPDIR_LE, diff));
+      else if (signs[i] != 2) {
+		if (signs[dim]* signs[i] > 0) {
+			//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_GE, diff)));
+			result[i][j] = rel * DepRel(DEPDIR_GE, diff);
+		}
+		else {
+			//DepStats.AddAdhocDV(DepStats.RoseToPlatoDV(DepRel(DEPDIR_LE, diff)));
+			result[i][j] = rel * DepRel(DEPDIR_LE, diff);
+		}
+      }
     }
   }
   return false;

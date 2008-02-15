@@ -422,20 +422,20 @@ compiliable code.
 /*!\fn virtual void SgNode::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
 */
 /*!\fn void SgNode::set_freepointer(SgNode *freepointer)
-\description See  *freepointer)
+\brief \brief See  *freepointer)
 freepointer for documentation */
 /*!\fn SgNode *SgNode::get_freepointer() const
-\description See  const
+\brief \brief See  const
 freepointer for documentation */
 /*!\fn virtual SgNode *SgNode::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgNode::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgNode::get_numberOfTraversalSuccessors()
-\description See  SgNode::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgNode::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual SgNode::~SgNode()
 */
 //@}
-int SAGE_Doxygen_Dummy_84771868019823;
+int SAGE_Doxygen_Dummy_215852697515864;

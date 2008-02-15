@@ -216,15 +216,15 @@ pointer to an object derived from a Sg_File_Info.
 */
 /*!
 \fn void Sg_File_Info::set_isPartOfTransformation(bool isPartOfTransformation)
-\brief This function marks an IR nodes as being part of a transformation, this function is deprecated.
-See  isPartOfTransformation)
-isPartOfTransformation for documentation \return Returns void.
+\brief This function marks an IR nodes as being part of a transformation, this function is deprecated.See  isPartOfTransformation)
+isPartOfTransformation for documentation 
+\return Returns void.
 \deprecated This function is deprecated.
 */
 /*!
 \fn bool Sg_File_Info::get_isPartOfTransformation()
-\brief This function indicates of the IR nodes is part of a transformation.
-See  Sg_File_Info::isPartOfTransformation for documentation \return Returns bool
+\brief This function indicates of the IR nodes is part of a transformation.See  Sg_File_Info::isPartOfTransformation for documentation 
+\return Returns bool
 \deprecated This function is deprecated.
 */
 /*!
@@ -463,64 +463,64 @@ associated statement.
 */
 /*!
 \fn void Sg_File_Info::set_filename(const char *filename)
-\brief This function sets the filename of the construct's association with source code.
+\brief This function sets the filename of the construct's association with source code.See  *filename)
+filename for documentation 
 \internal This function should be updated to take and return a string.  Likely we can 
     implement an overloaded function with takes and resturns a string and preserve this
     function (deprecated) for a period of time.
-See  *filename)
-filename for documentation \return Returns char* (will return C++ string at some point later)
+\return Returns char* (will return C++ string at some point later)
 */
 /*!
 \fn void Sg_File_Info::set_line(int line)
 \brief This function sets the line number of the construct's association with source code
-    in the source file named by p_filename.
-See  line)
-line for documentation \return Returns an integer.
+    in the source file named by p_filename.See  line)
+line for documentation 
+\return Returns an integer.
 */
 /*!
 \fn const char *Sg_File_Info::get_filename() const
-\brief Returns filename of source code associated with IR node.
+\brief Returns filename of source code associated with IR node.See  const
+filename for documentation 
    The filename returned is manipulated under some contitions:
       - if isTransformation() is true then "transformation" is returned as the filename.
       - if isCompilerGenerated() is true then "comilerGenerated" is returned as the filename.
       - if isCompilerGeneratedNodeToBeUnparsed() is true then "comilerGenerated" is returned as the filename.
 \internal For debugging purposes it is an error to ask for the filename from any IR node
     for which hasPositionInSource() == false.
-See  const
-filename for documentation \return Returns char* (will return C++ string in the future).
+\return Returns char* (will return C++ string in the future).
 */
 /*!
 \fn int Sg_File_Info::get_col() const
-\brief Returns the column number of the associated code for this IR node.
-See  const
-col for documentation \return Returns integer
+\brief Returns the column number of the associated code for this IR node.See  const
+col for documentation 
+\return Returns integer
 */
 /*!
 \fn int Sg_File_Info::get_line() const
-\brief Returns the line number of the associated code for this IR node.
-See  const
-line for documentation \return Returns integer.
+\brief Returns the line number of the associated code for this IR node.See  const
+line for documentation 
+\return Returns integer.
 */
 /*!
 \fn int Sg_File_Info::get_raw_col() const
-\brief Returns the column number of the associated code for this IR node.
-See  const
-raw_col for documentation \return Returns 
+\brief Returns the column number of the associated code for this IR node.See  const
+raw_col for documentation 
+\return Returns 
 */
 /*!
 \fn int Sg_File_Info::get_raw_line() const
-\brief Returns the line number of the associated code for this IR node.
-See  const
-raw_line for documentation \return Returns integer.
+\brief Returns the line number of the associated code for this IR node.See  const
+raw_line for documentation 
+\return Returns integer.
 */
 /*!
 \fn std::string Sg_File_Info::get_raw_filename() const
-\brief Returns filename of source code associated with IR node.
+\brief Returns filename of source code associated with IR node.See  const
+raw_filename for documentation 
    The filename is not manipulated! The value of p_filename is returned whatever the IR
    node classification.
 \internal This is useful for debugging.
-See  const
-raw_filename for documentation \return Returns a C++ string object.
+\return Returns a C++ string object.
 */
 /*!
 \fn bool Sg_File_Info::ok() const
@@ -533,4 +533,4 @@ raw_filename for documentation \return Returns a C++ string object.
 \return Returns bool.
 */
 //@}
-int SAGE_Doxygen_Dummy_238331118225614;
+int SAGE_Doxygen_Dummy_214591494622315;

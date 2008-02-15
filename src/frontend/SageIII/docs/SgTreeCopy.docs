@@ -4,4 +4,4 @@
 /*!\fn virtual SgNode *SgTreeCopy::copyAst(const SgNode *n)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_2080953299;
+extern int SAGE_Doxygen_Dummy_720590443;

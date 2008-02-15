@@ -11,16 +11,21 @@ class LoopTreeBuild : public ProcessAstTree
   LoopTransformInterface* la;
   LoopTreeNode *cur;
  protected:
-//Boolean ProcessLoop( AstInterface &fa, const AstNodePtr& loop ,
-  int ProcessLoop( AstInterface &fa, const AstNodePtr& loop ,
+  bool ProcessLoop( AstInterface &fa, const AstNodePtr& loop ,
                       const AstNodePtr& body,
                       AstInterface::TraversalVisitType t)
     {
        LoopTreeNode *root = lt->GetTreeRoot();
        if (t == AstInterface::PreVisit) {
-          LoopTreeNode* result = lt->CreateLoopNode( *la, loop);
-          result->Link(cur, LoopTreeNode::AsLastChild);
-          cur = result;
+          if (fa.IsFortranLoop(loop)) {
+              LoopTreeNode* result = lt->CreateLoopNode( *la, loop);
+              result->Link(cur, LoopTreeNode::AsLastChild);
+              cur = result;
+           } 
+           else  {
+             std::cerr << "Warning: treating non-Fortran loop as a single statement\n";
+             ProcessStmt(fa, loop);
+           }
         }
         else {
           if (cur != root)
@@ -28,31 +33,26 @@ class LoopTreeBuild : public ProcessAstTree
         }
         return ProcessAstTree::ProcessLoop(fa, loop, body, t);
      }
-//Boolean ProcessIf( AstInterface &fa, const AstNodePtr& s, const AstNodePtr& cond,
-  void ProcessIf( AstInterface &fa, const AstNodePtr& s, const AstNodePtr& cond,
+  bool ProcessIf( AstInterface &fa, const AstNodePtr& s, const AstNodePtr& cond,
                      const AstNodePtr& body1, const AstNodePtr& body2,
                       AstInterface::TraversalVisitType t)
     { 
         if (t == AstInterface::PreVisit) return ProcessStmt(fa, s); 
-         // return true;
+         return true;
     }
 
-//Boolean ProcessGoto( AstInterface &fa, const AstNodePtr& start, 
-  int ProcessGoto( AstInterface &fa, const AstNodePtr& start, 
+  bool ProcessGoto( AstInterface &fa, const AstNodePtr& start, 
                        const AstNodePtr& dest)
-    { ProcessStmt(fa, start); return true; }
+    { return ProcessStmt(fa, start); }
 
-//Boolean ProcessStmt( AstInterface &fa, const AstNodePtr& start)
-  void ProcessStmt( AstInterface &fa, const AstNodePtr& start)
+  bool ProcessStmt( AstInterface &fa, const AstNodePtr& start)
     {
-       std::cerr << "LoopTreeBuild::ProcessStmt " << start << std::endl;
        LoopTreeNode *stmtNode = lt->CreateStmtNode( start);
        stmtNode->Link(cur, LoopTreeNode::AsLastChild);
-       ProcessAstTree::ProcessStmt(fa, start);
+       return ProcessAstTree::ProcessStmt(fa, start);
     } 
  public:
-// Boolean operator ()( AstInterface& fa, const AstNodePtr& top, 
-   int operator ()( AstInterface& fa, const AstNodePtr& top, 
+   bool operator ()( AstInterface& fa, const AstNodePtr& top, 
                         LoopTreeCreate *ltc, LoopTransformInterface* _la,
                         LoopTreeNode* root = 0)
      { 

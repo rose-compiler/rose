@@ -51,7 +51,7 @@ class LoopTreeObserver
 
    virtual void UpdateDeleteNode( const LoopTreeNode *n )
                { if (next != 0) next->UpdateDeleteNode( n ); }
-   virtual void write(std::ostream& out) const {}
+   virtual void write(STD ostream& out) const {}
 };
 
 class LoopTreeObserveInfo  : public ObserveInfo<LoopTreeObserver>
@@ -194,7 +194,7 @@ class SwapNodeInfo : public LoopTreeObserveInfo
   public:
      SwapNodeInfo( LoopTreeNode *o, LoopTreeNode *other, int dir, 
                    const VarInfo& v)
-       : LoopTreeObserveInfo( o ), direction(dir), othernode(other),
+       : LoopTreeObserveInfo( o ), othernode(other), direction(dir),
          varinfo(v)  {}
      virtual ~SwapNodeInfo() {}
      int GetDirection() const { return direction; }
@@ -212,7 +212,7 @@ class SplitStmtInfo : public LoopTreeObserveInfo
  public:
   SplitStmtInfo( LoopTreeNode *stmt, LoopTreeNode *n,  
                  int l1, int l2, const DepRel& r)
-     : LoopTreeObserveInfo(stmt),splitstmt(n),loop1(l1),loop2(l2),rel(r) {}
+     : LoopTreeObserveInfo(stmt),splitstmt(n),rel(r),loop1(l1),loop2(l2) {}
   virtual ~SplitStmtInfo() {}
  
   LoopTreeNode * GetSplitStmt() const { return splitstmt; }

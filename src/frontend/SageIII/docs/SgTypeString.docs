@@ -67,17 +67,17 @@ pointer to an object derived from a SgTypeString.
 /*!\fn virtual SgTypeString::~SgTypeString()
 */
 /*!\fn virtual SgNode *SgTypeString::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTypeString::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTypeString::get_numberOfTraversalSuccessors()
-\description See  SgTypeString::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTypeString::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeString::get_traversalSuccessorContainer()
-\description See  SgTypeString::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTypeString::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeString::get_traversalSuccessorNamesContainer()
-\description See  SgTypeString::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTypeString::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgTypeString::SgTypeString()
 \brief This is the constructor.
@@ -86,4 +86,4 @@ childIndex for documentation */
 \ref SgTypeString_create "Example:create an SgTypeString object"
 */
 //@}
-int SAGE_Doxygen_Dummy_323032384411;
+int SAGE_Doxygen_Dummy_322522999011704;

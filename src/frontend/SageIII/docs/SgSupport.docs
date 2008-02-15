@@ -71,17 +71,17 @@ pointer to an object derived from a SgSupport.
 /*!\fn virtual SgSupport::~SgSupport()
 */
 /*!\fn virtual SgNode *SgSupport::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgSupport::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSupport::get_numberOfTraversalSuccessors()
-\description See  SgSupport::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSupport::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSupport::get_traversalSuccessorContainer()
-\description See  SgSupport::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSupport::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSupport::get_traversalSuccessorNamesContainer()
-\description See  SgSupport::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSupport::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgSupport::SgSupport()
 \brief This is the constructor.
@@ -90,4 +90,4 @@ childIndex for documentation */
 \ref SgSupport_create "Example:create an SgSupport object"
 */
 //@}
-int SAGE_Doxygen_Dummy_69482778013790;
+int SAGE_Doxygen_Dummy_10038203659542;

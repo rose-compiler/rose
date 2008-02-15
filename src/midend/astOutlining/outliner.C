@@ -25,8 +25,6 @@ using namespace std;
 
 #define TRANS_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
-static SgTreeCopy treeCopy;	// We need deep copy most of the time
-
 class ASTtools
 {
 public:
@@ -62,6 +60,8 @@ int OmpMidend::counter = 0;
 int
 OmpMidend::transParallelRegion (SgPragmaDeclaration * decl)
 {
+// printf ("Inside of OmpMidend::transParallelRegion() \n");
+
   // generate outlined function
   SgFunctionDeclaration *outFuncDecl = generateOutlinedFunction (decl);
   ROSE_ASSERT (outFuncDecl != NULL);
@@ -88,7 +88,7 @@ OmpMidend::transParallelRegion (SgPragmaDeclaration * decl)
   SgScopeStatement *scope = decl->get_scope ();
   ROSE_ASSERT (scope != NULL);
   SgStatementPtrList & statementList = scope->getStatementList ();
-  list < SgStatement * >::iterator i = statementList.begin ();
+  Rose_STL_Container< SgStatement * >::iterator i = statementList.begin ();
   while ((i != statementList.end ()) && ((*i) != decl))
     {
       i++;
@@ -96,9 +96,13 @@ OmpMidend::transParallelRegion (SgPragmaDeclaration * decl)
   i++;
   SgStatement *oldblock = (*i);
 
+// printf ("For targetBB = %p = %s insert oldblock = %p = %s \n",targetBB,targetBB->class_name().c_str(),rtlCall,rtlCall->class_name().c_str());
+
   targetBB->insert_statement (oldblock, rtlCall, true);
   LowLevelRewrite::remove (oldblock);
   LowLevelRewrite::remove (decl);
+
+// printf ("Leaving OmpMidend::transParallelRegion() \n");
 
   return 0;
 }
@@ -110,6 +114,8 @@ SgFunctionDeclaration *
 OmpMidend::generateOutlinedFunction (SgPragmaDeclaration * decl)
 {
   SgFunctionDeclaration *func;
+
+// printf ("Inside of OmpMidend::generateOutlinedFunction() \n");
 
   SgType *func_return_type = new SgTypeVoid ();
   SgName func_name;
@@ -141,7 +147,7 @@ OmpMidend::generateOutlinedFunction (SgPragmaDeclaration * decl)
   // get next statement
   SgStatementPtrList & statementList =
     decl->get_scope ()->getStatementList ();
-  list < SgStatement * >::iterator i = statementList.begin ();
+  Rose_STL_Container< SgStatement * >::iterator i = statementList.begin ();
   while ((i != statementList.end ()) && ((*i) != decl))
     {
       i++;
@@ -152,21 +158,47 @@ OmpMidend::generateOutlinedFunction (SgPragmaDeclaration * decl)
   if (isSgBasicBlock (nextStatement) == NULL)
     {
       // copy a statement
-      SgStatement *myStatement = new SgStatement (TRANS_FILE);
+
+   // DQ (10/27/2007): This SgStatement object is not used, plus it does not make sense to build SgStatement object directly!
+   // SgStatement *myStatement = new SgStatement (TRANS_FILE);
+      SgStatement *myStatement = NULL;
+
+   // printf ("Copy a single statement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+      SgTreeCopy treeCopy;
       myStatement = isSgStatement (nextStatement->copy (treeCopy));
+   // printf ("#1 copy returned is myStatement = %p = %s \n",myStatement,myStatement->class_name().c_str());
       func_body->append_statement (myStatement);
     }
   else
-    {				// deep copy every statement from the basic block
-      SgStatementPtrList srcStmtList =
-	isSgBasicBlock (nextStatement)->get_statements ();
-      for (std::list < SgStatement * >::iterator i = srcStmtList.begin ();
+    {
+   // deep copy every statement from the basic block
+      ROSE_ASSERT(isSgBasicBlock (nextStatement) != NULL);
+      SgStatementPtrList srcStmtList =	isSgBasicBlock (nextStatement)->get_statements ();
+   // printf ("Copy a SgBasicBlock (all the statements in the block: size = %zu) \n",srcStmtList.size());
+      for (Rose_STL_Container< SgStatement * >::iterator i = srcStmtList.begin ();
 	   i != srcStmtList.end (); i++)
-	{
-	  SgStatement *mystmt = new SgStatement (TRANS_FILE);
-	  mystmt = isSgStatement ((*i)->copy (treeCopy));
-	  func_body->append_statement (mystmt);
-	}
+         {
+        // DQ (10/27/2007): This SgStatement object is not used, plus it does not make sense to build SgStatement object directly!
+	     // SgStatement *mystmt = new SgStatement (TRANS_FILE);
+           SgStatement *mystmt = NULL;
+
+        // printf ("Copy *i = %p = %s \n",*i,(*i)->class_name().c_str());
+           ROSE_ASSERT((*i)->get_startOfConstruct() != NULL);
+           (*i)->get_startOfConstruct()->display("startOfConstruct -- copy used in outliner: debug");
+
+           if ((*i)->get_endOfConstruct() == NULL)
+              {
+                printf ("Warning in OmpMidend::generateOutlinedFunction(): invalid input to copy mechanism (endOfConstruct not set) \n");
+              }
+        // ROSE_ASSERT((*i)->get_endOfConstruct() != NULL);
+        // (*i)->get_endOfConstruct()->display("endOfConstruct -- copy used in outliner: debug");
+
+           SgTreeCopy treeCopy;
+           mystmt = isSgStatement ((*i)->copy (treeCopy));
+        // printf ("#2 copy returned is mystmt = %p = %s \n",mystmt,mystmt->class_name().c_str());
+
+           func_body->append_statement (mystmt);
+        }
     }
 
   return func;
@@ -208,10 +240,9 @@ OmpMidend::generateParallelRTLcall (SgPragmaDeclaration * pragDecl,
   SgFunctionCallExp *func_call_expr =
     new SgFunctionCallExp (TRANS_FILE, func_ref_exp, exp_list_exp,
 			   myFuncType);
+
   // build SgExprStatement
-  SgExpressionRoot *expRoot =
-    new SgExpressionRoot (TRANS_FILE, func_call_expr, myFuncType);
-  SgExprStatement *expStmt = new SgExprStatement (TRANS_FILE, expRoot);
+  SgExprStatement *expStmt = new SgExprStatement (TRANS_FILE, func_call_expr);
 
   return expStmt;
 }
@@ -253,17 +284,20 @@ Alternative way: use the default preorder in AST query and reverse it:
 We get what we want then: 
 	(stmt1, pragma2, bb2,pragma1, bb1).
 */
-  list < SgNode * >pragmaList =
+  Rose_STL_Container< SgNode * >pragmaList =
     NodeQuery::querySubTree (project, V_SgPragmaDeclaration);
-  typedef list < SgNode * >::reverse_iterator pragmaListIterator;
+  typedef Rose_STL_Container< SgNode * >::reverse_iterator pragmaListIterator;
   for (pragmaListIterator listElement = pragmaList.rbegin ();
        listElement != pragmaList.rend (); ++listElement)
     {
       SgPragmaDeclaration *decl = isSgPragmaDeclaration (*listElement);
       ROSE_ASSERT (decl != NULL);
+
+      printf ("Processing a pragma = %p = %s \n",decl,decl->class_name().c_str());
+
       string pragmaString = decl->get_pragma ()->get_pragma ();
       if (pragmaString.find ("omp parallel") != string::npos)
-	OmpMidend::transParallelRegion (decl);
+         OmpMidend::transParallelRegion (decl);
     }
 
   return 0;
@@ -310,15 +344,13 @@ ASTtools::moveUpPreprocessingInfo (SgStatement * stmt1, SgStatement * stmt2)
 {
   ROSE_ASSERT (stmt1 != NULL);
   ROSE_ASSERT (stmt2 != NULL);
-  AttachedPreprocessingInfoType *infoList =
-    stmt2->getAttachedPreprocessingInfo ();
-  AttachedPreprocessingInfoType *infoToRemoveList =
-    new AttachedPreprocessingInfoType ();
+  AttachedPreprocessingInfoType *infoList = stmt2->getAttachedPreprocessingInfo ();
+  AttachedPreprocessingInfoType *infoToRemoveList = new AttachedPreprocessingInfoType ();
 
   if (infoList == NULL)
     return 0;
 
-  for (std::list < PreprocessingInfo * >::iterator i = (*infoList).begin ();
+  for (Rose_STL_Container< PreprocessingInfo * >::iterator i = (*infoList).begin ();
        i != (*infoList).end (); i++)
     {
       PreprocessingInfo *info = dynamic_cast < PreprocessingInfo * >(*i);
@@ -336,6 +368,8 @@ ASTtools::moveUpPreprocessingInfo (SgStatement * stmt1, SgStatement * stmt2)
 	      PreprocessingInfo::CpreprocessorIfndefDeclaration)
 	  || (info->getTypeOfDirective () ==
 	      PreprocessingInfo::CpreprocessorIfDeclaration)
+	  || (info->getTypeOfDirective () ==
+	      PreprocessingInfo::CpreprocessorDeadIfDeclaration)
 	  || (info->getTypeOfDirective () ==
 	      PreprocessingInfo::CpreprocessorElseDeclaration)
 	  || (info->getTypeOfDirective () ==
@@ -355,7 +389,9 @@ ASTtools::moveUpPreprocessingInfo (SgStatement * stmt1, SgStatement * stmt2)
   AttachedPreprocessingInfoType::iterator j;
   for (j = (*infoToRemoveList).begin (); j != (*infoToRemoveList).end (); j++)
     {
-      (*infoList).remove (*j);
+   // DQ (9/25/2007): Moded from std::list to std::vector
+   // (*infoList).remove (*j);
+      infoList->erase( find(infoList->begin(),infoList->end(),*j) );
     }
   return 0;
 }
@@ -365,10 +401,10 @@ ASTtools::moveUpPreprocessingInfo (SgStatement * stmt1, SgStatement * stmt2)
 int
 OmpMidend::insertHeaders (SgProject * project)
 {
-  list < SgNode * >globalScopeList =
+  Rose_STL_Container< SgNode * >globalScopeList =
     NodeQuery::querySubTree (project, V_SgGlobal);
 
-  for (list < SgNode * >::iterator i = globalScopeList.begin ();
+  for (Rose_STL_Container< SgNode * >::iterator i = globalScopeList.begin ();
        i != globalScopeList.end (); i++)
     {
       SgGlobal *globalScope = isSgGlobal (*i);
@@ -376,7 +412,7 @@ OmpMidend::insertHeaders (SgProject * project)
 
       SgDeclarationStatementPtrList & stmtList =
 	globalScope->get_declarations ();
-      for (list < SgDeclarationStatement * >::iterator i = stmtList.begin ();
+      for (Rose_STL_Container< SgDeclarationStatement * >::iterator i = stmtList.begin ();
 	   i != stmtList.end (); i++)
 	{
 	  //must have this judgement, otherwise wrong file will be modified!

@@ -32,21 +32,21 @@
 /*!\fn virtual void SgColonShapeExp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgColonShapeExp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgColonShapeExp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgColonShapeExp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgColonShapeExp::get_numberOfTraversalSuccessors()
-\description See  SgColonShapeExp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgColonShapeExp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgColonShapeExp::get_traversalSuccessorContainer()
-\description See  SgColonShapeExp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgColonShapeExp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgColonShapeExp::get_traversalSuccessorNamesContainer()
-\description See  SgColonShapeExp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgColonShapeExp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgColonShapeExp::SgColonShapeExp()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_445696814;
+extern int SAGE_Doxygen_Dummy_1906870553;

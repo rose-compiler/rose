@@ -56,9 +56,7 @@ class CountRefHandle
    void Reset() { DecreaseUse(); obj = 0; count = 0; }
    void Reset( T* t) { obj = t; Init(); }
 
-// DQ (3/8/2006): Removed Boolean macro set to int from use in header files
-// Boolean operator ==( const CountRefHandle <T> &that) const
-   int operator ==( const CountRefHandle <T> &that) const
+   bool operator ==( const CountRefHandle <T> &that) const
      { return obj == that.obj; }
 };  
 

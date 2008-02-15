@@ -1,0 +1,13 @@
+Call side effects on project: 
+Function  Side Effects foo: x local 
+Statement Side Effects testRef.C-134817264: x 
+Statement Side Effects testRef.C-134772816: local 
+Function  Side Effects main: y 
+Statement Side Effects testRef.C-134827496: y 
+Call side effects on file: 
+Function  Side Effects foo: x local 
+Statement Side Effects testRef.C-134817264: x 
+Statement Side Effects testRef.C-134772816: local 
+Function  Side Effects main: y 
+Statement Side Effects testRef.C-134827496: y 
+Call side effects within for loop: 

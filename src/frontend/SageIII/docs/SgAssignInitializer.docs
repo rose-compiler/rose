@@ -96,42 +96,42 @@ pointer to an object derived from a SgAssignInitializer.
 */
 /*!
 \fn void SgAssignInitializer::set_operand(SgExpression *exp)
-\brief This sets the rhs expression.
-See  *exp)
-operand for documentation \param exp - sets value of rhs.
+\brief This sets the rhs expression.See  *exp)
+operand for documentation 
+\param exp - sets value of rhs.
 \return Returns void.
 */
 /*!\fn void SgAssignInitializer::set_operand_i(SgExpression *operand_i)
-\description See  *operand_i)
+\brief \brief See  *operand_i)
 operand_i for documentation */
 /*!\fn SgExpression *SgAssignInitializer::get_next(int &n) const
-\description See  const
+\brief \brief See  const
 next for documentation */
 /*!
 \fn SgExpression *SgAssignInitializer::get_operand() const
-\brief Returns the rhs.
-See  const
-operand for documentation \return Returns SgExpression.
+\brief Returns the rhs.See  const
+operand for documentation 
+\return Returns SgExpression.
 */
 /*!\fn SgExpression *SgAssignInitializer::get_operand_i() const
-\description See  const
+\brief \brief See  const
 operand_i for documentation */
 /*!\fn virtual SgNode *SgAssignInitializer::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgAssignInitializer::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgAssignInitializer::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAssignInitializer::get_numberOfTraversalSuccessors()
-\description See  SgAssignInitializer::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAssignInitializer::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAssignInitializer::get_traversalSuccessorContainer()
-\description See  SgAssignInitializer::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAssignInitializer::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAssignInitializer::get_traversalSuccessorNamesContainer()
-\description See  SgAssignInitializer::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAssignInitializer::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAssignInitializer::SgAssignInitializer(SgExpression *operand_i,SgType *expression_type)
 */
 //@}
-int SAGE_Doxygen_Dummy_6167282718825;
+int SAGE_Doxygen_Dummy_186312131211436;

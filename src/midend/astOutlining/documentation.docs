@@ -1,8 +1,6 @@
- /*!
-     \defgroup ROSE_AST_OutliningGroup Outlining Transformations
-     \ingroup ROSE_ProgramTransformationGroup
 
-     \brief Outlining isolates a segment of the control flow of a program into a function.
+/*
+   This should document the Outliner (required for the generated documentation)
+*/
 
-  */
 

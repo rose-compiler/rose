@@ -2,83 +2,83 @@
 #ifndef DEP_GRAPH
 #define DEP_GRAPH
 
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 #include <DepInfoSet.h>
-#include <IteratorCompound.h>
 
-class DepInfoToString {
+class DepInfoEdge : public MultiGraphElemTemplate<DepInfo> 
+{
  public:
-  static std::string ToString(const DepInfo& info) { return info.ToString(); }
-  static std::string ToString(const DepInfoSet& info) { return info.ToString(); }
+  DepInfoEdge(MultiGraphCreate* c, const DepInfo& d) 
+           : MultiGraphElemTemplate<DepInfo>(c, d) {} 
+  STD string toString() const { return GetInfo().toString(); }
+  DepInfoConstIterator get_depIterator() const
+    { return new SingleIterator<DepInfo>(GetInfo()); }
 };
 
-class DepInfoEdge : public GraphEdgeTemplate<DepInfo, const DepInfo&, DepInfoToString> 
+class DepInfoSetEdge : public MultiGraphElemTemplate<DepInfoSet> 
 {
-  typedef  GraphEdgeTemplate<DepInfo, const DepInfo&, DepInfoToString> BaseClass;
  public:
-  DepInfoEdge(GraphCreate* c, const DepInfo& d) : BaseClass(c, d) {} 
+  DepInfoSetEdge(MultiGraphCreate* c, const DepInfoSet& d) 
+           : MultiGraphElemTemplate<DepInfoSet>(c, d) {} 
+  STD string toString() const { return GetInfo().toString(); }
+  DepInfoConstIterator get_depIterator() const
+    { return GetInfo().GetConstIterator(); }
 };
 
-typedef GraphEdgeTemplate<DepInfoSet,const DepInfoSet&, DepInfoToString> DepInfoSetEdge;
-typedef Iterator2Impl<GraphEdge*,DepInfoEdge*> DepInfoEdgeIteratorImpl;
-typedef Iterator2Wrap<GraphEdge*,DepInfoEdge*> DepInfoEdgeIterator;
-typedef Iterator2Impl<GraphEdge*,DepInfoSetEdge*> DepInfoSetEdgeIteratorImpl;
-typedef Iterator2Wrap<GraphEdge*,DepInfoSetEdge*> DepInfoSetEdgeIterator;
-
-class SelectDepType
+typedef IteratorImpl<DepInfoEdge*> DepInfoEdgeIteratorImpl;
+typedef IteratorWrap<DepInfoEdge*, DepInfoEdgeIteratorImpl> DepInfoEdgeIterator;
+template <class EdgeIterator>
+class DepInfoEdgeConstInfoIterator : public IteratorImpl<DepInfo>
 {
-  DepType sel;
+   EdgeIterator impl;
  public:
-  SelectDepType(DepType t) : sel(t) {}
-//Boolean operator() ( const DepInfoEdge *e) const
-  int operator() ( const DepInfoEdge *e) const
-      { return (e->GetInfo().GetDepType() & sel) != 0; }
-//Boolean operator() ( const DepInfo &info) const
-  int operator() ( const DepInfo &info) const
+   DepInfoEdgeConstInfoIterator( const EdgeIterator& p): impl(p) {}
+   DepInfo Current() const { return impl.Current()->GetInfo(); }
+   void Reset() { impl.Reset(); }
+   void Advance() { impl.Advance(); } 
+   bool ReachEnd() const { return impl.ReachEnd(); }
+   IteratorImpl<DepInfo>* Clone() const
+        { return new DepInfoEdgeConstInfoIterator(*this); }
+};
+
+typedef IteratorImpl<DepInfoSetEdge*> DepInfoSetEdgeIteratorImpl;
+typedef IteratorWrap<DepInfoSetEdge*, DepInfoSetEdgeIteratorImpl> 
+DepInfoSetEdgeIterator;
+
+inline bool SelectDepType( const DepInfo &info, const DepType& sel) 
      { return (info.GetDepType() & sel) != 0; }
-};
 
-class SelectDepLevel
-{
-  int level;
- public:
-  SelectDepLevel(int t) : level(t) {}
-//Boolean operator() ( const DepInfoEdge* e)  const
-  int operator() ( const DepInfoEdge* e)  const
-   { return operator()( e->GetInfo()); }
-//Boolean operator() ( const DepInfo &d) const
-  int operator() ( const DepInfo &d) const
-   {
+inline bool SelectDepLevel( const DepInfo &d, int level) 
+   {  
      int num = d.CommonLevel();
      if ( level <= num) {
         return level <= d.CarryLevel();
      }
      return false;
    }
-};
 
 template <class Node>
-class DepInfoGraphCreate : public IDGraphCreateTemplate<Node,DepInfoEdge> 
+class DepInfoGraphCreate : public VirtualGraphCreateTemplate<Node,DepInfoEdge> 
 {
  public:
   DepInfoGraphCreate(BaseGraphCreate *_impl = 0) 
-     : IDGraphCreateTemplate<Node,DepInfoEdge>(_impl) {}
+     : VirtualGraphCreateTemplate<Node,DepInfoEdge>(_impl) {}
   DepInfoEdge* CreateEdge( Node *n1, Node *n2, const DepInfo &info)
        { assert(!info.IsTop());
          DepInfoEdge *e = new DepInfoEdge(this, info);
-         CreateBaseEdge(n1, n2, e);
+         VirtualGraphCreateTemplate<Node,DepInfoEdge>::AddEdge(n1, n2, e);
          return e;
        }
   void DeleteEdge(DepInfoEdge *e) 
-      { IDGraphCreateTemplate<Node,DepInfoEdge>::DeleteEdge(e); }
+      { VirtualGraphCreateTemplate<Node,DepInfoEdge>::DeleteEdge(e); }
 };
 
 template <class Node>
-class DepInfoSetGraphCreate : public IDGraphCreateTemplate<Node,DepInfoSetEdge>
+class DepInfoSetGraphCreate : public VirtualGraphCreateTemplate<Node,DepInfoSetEdge>
 {
  public:
   DepInfoSetGraphCreate(BaseGraphCreate *_impl = 0)
-     : IDGraphCreateTemplate<Node,DepInfoSetEdge>(_impl) {}
+     : VirtualGraphCreateTemplate<Node,DepInfoSetEdge>(_impl) {}
 
   DepInfoSetEdge* CreateEdge( Node *n1, Node *n2, const DepInfo &info)
        { assert(!info.IsTop());
@@ -87,68 +87,19 @@ class DepInfoSetGraphCreate : public IDGraphCreateTemplate<Node,DepInfoSetEdge>
          return e;
        }
   DepInfoSetEdge* CreateEdge(Node *n1, Node* n2, const DepInfoSet& tmp)
-      { DepInfoSetEdge *e = GraphGetCrossEdge<DepInfoSetGraphCreate<Node> >()(this, n1,n2);
+      { 
+         GraphCrossEdgeIterator<DepInfoSetGraphCreate> p(this, n1, n2);
+         DepInfoSetEdge *e = p.ReachEnd()? 0 : p.Current();
          if (e == 0) {
            e = new DepInfoSetEdge(this, tmp);
-           CreateBaseEdge(n1,n2, e);
+           AddEdge(n1,n2, e);
          }
          else
            e->GetInfo() |= tmp;
          return e;
       }
   void DeleteEdge(DepInfoSetEdge *e) 
-      { IDGraphCreateTemplate<Node,DepInfoSetEdge>::DeleteEdge(e); }
-};
-
-class DepEdgeGetUpdateInfoIterator
-{
- public:
-  DepInfoUpdateIterator operator() (DepInfoEdge *e) const
-    { return new IteratorImplTemplate<DepInfo&, SingleIterator<DepInfo&> >
-                 (SingleIterator<DepInfo&>(e->GetInfo())); }
-  DepInfoUpdateIterator operator() (DepInfoSetEdge *e) const
-     { return e->GetInfo().GetUpdateIterator(); }
-};
-
-class DepEdgeGetConstInfoIterator
-{
- public:
-  DepInfoConstIterator operator()(const DepInfoEdge *e) const
-     { return new IteratorImplTemplate<DepInfo, SingleIterator<DepInfo> >
-                  (SingleIterator<DepInfo>(e->GetInfo()) ); }
-  DepInfoConstIterator operator()(const DepInfoSetEdge *e)  const
-     { return e->GetInfo().GetConstIterator(); }
-};
-
-class DepInfoEdgeGetConstInfo
-{ public:
-   DepInfo operator()( const DepInfoEdge *e) const { return e->GetInfo(); }
-};
-class DepInfoEdgeGetUpdateInfo
-{ public:
-   DepInfo& operator()( DepInfoEdge* e) const { return e->GetInfo(); }
-};
-typedef SingleCrossIterator<DepInfoEdge*, DepInfo, DepInfoEdgeIterator,
-                            DepInfoEdgeGetConstInfo>
-        DepInfoEdgeConstInfoIterator;
-typedef SingleCrossIterator<DepInfoEdge*, DepInfo&, DepInfoEdgeIterator,
-                            DepInfoEdgeGetUpdateInfo>
-        DepInfoEdgeUpdateInfoIterator;
-
-typedef MultiCrossIterator<DepInfo,DepInfoSetEdgeIterator,DepInfoConstIterator,
-                           DepEdgeGetConstInfoIterator>
-        DepInfoSetEdgeConstInfoIterator;
-typedef MultiCrossIterator<DepInfo&,DepInfoSetEdgeIterator,
-                           DepInfoUpdateIterator, DepEdgeGetUpdateInfoIterator>
-        DepInfoSetEdgeUpdateInfoIterator;
-
-class DepEdgeSetGetConstInfoIterator
-{
- public:
-  DepInfoConstIterator operator()(const DepInfoEdgeIterator iter) const
-   { return new IteratorImplTemplate<DepInfo, DepInfoEdgeConstInfoIterator>(iter); }
-  DepInfoConstIterator operator()(const DepInfoSetEdgeIterator iter)  const
-  { return new IteratorImplTemplate<DepInfo,DepInfoSetEdgeConstInfoIterator>(iter);}
+      { VirtualGraphCreateTemplate<Node,DepInfoSetEdge>::DeleteEdge(e); }
 };
 
 #endif

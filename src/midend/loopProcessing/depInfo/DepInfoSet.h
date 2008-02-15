@@ -26,21 +26,15 @@ class DepInfoSet : protected CountRefHandle <DepInfoSetImpl>
    int NumOfDeps() const ;
    DepRel GetDepRel( int index1, int index2 ) const;
 
-// Boolean IsTop() const;
-   int IsTop() const;
-// Boolean IsBottom(int commLevel = 0) const;
-   int IsBottom(int commLevel = 0) const;
-   std::string ToString() const;
+   bool IsTop() const;
+   bool IsBottom(int commLevel = 0) const;
+   STD string toString() const;
 
-// Boolean AddDep( const DepInfo &c);
-   int AddDep( const DepInfo &c);
-// Boolean operator |= (const DepInfoSet &that);
-   int operator |= (const DepInfoSet &that);
-// Boolean operator &= (const DepInfoSet &that);
-   int operator &= (const DepInfoSet &that);
+   bool AddDep( const DepInfo &c);
+   bool operator |= (const DepInfoSet &that);
+   bool operator &= (const DepInfoSet &that);
  
-// void UpdateDepInfo( Boolean (*Update)(DepInfo &info) );
-   void UpdateDepInfo( int (*Update)(DepInfo &info) );
+   void UpdateDepInfo( bool (*Update)(DepInfo &info) );
   
    DepInfoConstIterator GetConstIterator() const;
    DepInfoUpdateIterator GetUpdateIterator();

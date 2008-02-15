@@ -34,18 +34,18 @@
 /*!\fn virtual void SgSubtractOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgSubtractOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgSubtractOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSubtractOp::get_numberOfTraversalSuccessors()
-\description See  SgSubtractOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSubtractOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSubtractOp::get_traversalSuccessorContainer()
-\description See  SgSubtractOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSubtractOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSubtractOp::get_traversalSuccessorNamesContainer()
-\description See  SgSubtractOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSubtractOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgSubtractOp::SgSubtractOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_688678176;
+extern int SAGE_Doxygen_Dummy_979414755;

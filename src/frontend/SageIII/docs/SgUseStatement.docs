@@ -38,42 +38,48 @@
 */
 /*!\fn virtual SgUseStatement::~SgUseStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgUseStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgUseStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgUseStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgUseStatement::post_construction_initialization()
 */
 /*!\fn void SgUseStatement::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgUseStatement::set_rename_list(SgExprListExp *rename_list)
-\description See  *rename_list)
+\brief \brief See  *rename_list)
 rename_list for documentation */
 /*!\fn void SgUseStatement::set_use_only(SgUseOnlyExpression *use_only)
-\description See  *use_only)
+\brief \brief See  *use_only)
 use_only for documentation */
 /*!\fn SgExprListExp *SgUseStatement::get_rename_list() const
-\description See  const
+\brief \brief See  const
 rename_list for documentation */
 /*!\fn SgName SgUseStatement::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgUseOnlyExpression *SgUseStatement::get_use_only() const
-\description See  const
+\brief \brief See  const
 use_only for documentation */
 /*!\fn virtual SgName SgUseStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgUseStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgUseStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUseStatement::get_numberOfTraversalSuccessors()
-\description See  SgUseStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUseStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUseStatement::get_traversalSuccessorContainer()
-\description See  SgUseStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUseStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUseStatement::get_traversalSuccessorNamesContainer()
-\description See  SgUseStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUseStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUseStatement::SgUseStatement(SgName name,SgExprListExp *rename_list,SgUseOnlyExpression *use_only)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_124287499;
+extern int SAGE_Doxygen_Dummy_520183844;

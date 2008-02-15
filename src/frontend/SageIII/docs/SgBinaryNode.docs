@@ -170,16 +170,16 @@ returns the name of the IR node.
 */
 /*!
 \fn bool SgNode::get_isVisited() const
-\brief DOCS IN SgNode.docs: Access function for p_isVisited flag used previously by the AST traversals.
-See  const
-isVisited for documentation \deprecated This function is not used and will be removed.
+\brief DOCS IN SgNode.docs: Access function for p_isVisited flag used previously by the AST traversals.See  const
+isVisited for documentation 
+\deprecated This function is not used and will be removed.
 \return Returns bool; true if previously visited within current AST traversal.
 */
 /*!
 \fn void SgNode::set_isVisited(bool isVisited)
-\brief Access function for p_isVisited flag used previously by the AST traversals.
-See  isVisited)
-isVisited for documentation \deprecated This function is not used and will be removed.
+\brief Access function for p_isVisited flag used previously by the AST traversals.See  isVisited)
+isVisited for documentation 
+\deprecated This function is not used and will be removed.
 */
 //@}
 /*! \name Class Members*/
@@ -234,7 +234,7 @@ would dump out or rebuild IR nodes.
 */
 /*!
 \fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNode::get_traversalSuccessorContainer()
-\brief \b FOR \b INTERNAL \b USE within ROSE traverals mechanism only.  
+\brief \b FOR \b INTERNAL \b USE within ROSE traverals mechanism only.  See  SgNode::traversalSuccessorContainer for documentation 
    This function builds and returns a copy of ordered container 
 holding pointers to children of this node in a traversal. It is 
 associated with the definition of a tree that is travered by the
@@ -247,11 +247,11 @@ and subject to change.
 \warning This function can return unexpected data members and thus the 
          order and the number of elements is unpredicable and subject 
          to change.
-See  SgNode::traversalSuccessorContainer for documentation \return Returns ordered STL Container of pointers to children nodes in AST.
+\return Returns ordered STL Container of pointers to children nodes in AST.
 */
 /*!
 \fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNode::get_traversalSuccessorNamesContainer()
-\brief \b FOR \b INTERNAL \b USE within ROSE traverals mechanism only.
+\brief \b FOR \b INTERNAL \b USE within ROSE traverals mechanism only.See  SgNode::traversalSuccessorNamesContainer for documentation 
    This function builds and returns a copy of ordered container 
 holding strings used to name data members that are traversed in the IR 
 node. It is associated with the definition of a tree that is travered by the
@@ -270,14 +270,14 @@ accessing attributes in a traversal. The order is the same in which they are
 traversed and the same in which the access enums are defined. Therefore this 
 method can be used to get the corresponding name (string) of an access enum 
 which allows to produce more meaningful messages for attribute computations.
-See  SgNode::traversalSuccessorNamesContainer for documentation \return Returns ordered STL container of names (strings) of access names to children nodes in AST.
+\return Returns ordered STL container of names (strings) of access names to children nodes in AST.
 */
 /*!
 \fn bool SgNode::get_isModified() const
-\brief \b FOR \b INTERNAL \b USE All nodes in the AST contain a isModified flag.
+\brief \b FOR \b INTERNAL \b USE All nodes in the AST contain a isModified flag.See  const
+isModified for documentation 
      This flag can be set but this is typically an internal function used to track the updates to AST.
-See  const
-isModified for documentation \return Returns bool; true if IR node has been modified.
+\return Returns bool; true if IR node has been modified.
 */
 //@}
 /*! \name User Interface*/
@@ -338,23 +338,24 @@ compiliable code.
 */
 /*!
 \fn void SgNode::set_isModified(bool isModified)
-\brief Acess function for isModified flag.
+\brief Acess function for isModified flag.See  isModified)
+isModified for documentation 
     This flag records if the current IR node has been modified. It is set to false after
     and ROSE front-end processing.
-See  isModified)
-isModified for documentation */
+*/
 /*!
 \fn void SgNode::set_parent(SgNode *parent)
 \brief Sets parent node for any IR node.
    The parent node in the AST can be set but this is typically 
-an internal function used to build the AST.
-See  *parent)
-parent for documentation \param parent - Pointer to parent node to store within the current IR node.
+an internal function used to build the AST.See  *parent)
+parent for documentation 
+\param parent - Pointer to parent node to store within the current IR node.
 \return returns void.
 */
 /*!
 \fn SgNode *SgNode::get_parent() const
-\brief Access function for parent node in AST.
+\brief Access function for parent node in AST.See  const
+parent for documentation 
    The parent node in the AST can be accessed, in general only the project node, symbols and 
 types should be NULL.  Since parent nodes are set within post processing
 (and using the ROSE AST traveral mechanism) the parents are guarenteed to
@@ -365,8 +366,7 @@ code layout and not any concept of scope.  Note that the scope of relavant
 IR nodes is stored explicitly in the AST, precisely because it is not always
 related to the layout of the source code (and thus not related to the concept 
 of parent in the AST).
-See  const
-parent for documentation \return Returns pointer to SgNode
+\return Returns pointer to SgNode
 */
 /*!
 \fn SgNode::SgNode()
@@ -377,4 +377,4 @@ All Sage III IR nodes are derived from this class.
 \ref SgNode_usage "Example:create an SgNode object"
 */
 //@}
-int SAGE_Doxygen_Dummy_20831476718653;
+int SAGE_Doxygen_Dummy_21809877521149;

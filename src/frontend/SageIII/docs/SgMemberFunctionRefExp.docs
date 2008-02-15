@@ -113,54 +113,54 @@ Note that all SgSymbol objects are shared (just like SgType objects)
 /*!\fn virtual void SgMemberFunctionRefExp::post_construction_initialization()
 */
 /*!\fn void SgMemberFunctionRefExp::set_need_qualifier(int need_qualifier)
-\description See  need_qualifier)
+\brief \brief See  need_qualifier)
 need_qualifier for documentation */
 /*!\fn void SgMemberFunctionRefExp::set_symbol(SgMemberFunctionSymbol *symbol)
-\description See  *symbol)
+\brief \brief See  *symbol)
 symbol for documentation */
 /*!\fn void SgMemberFunctionRefExp::set_symbol_i(SgMemberFunctionSymbol *symbol_i)
-\description See  *symbol_i)
+\brief \brief See  *symbol_i)
 symbol_i for documentation */
 /*!\fn void SgMemberFunctionRefExp::set_virtual_call(int virtual_call)
-\description See  virtual_call)
+\brief \brief See  virtual_call)
 virtual_call for documentation */
 /*!\fn SgMemberFunctionSymbol *SgMemberFunctionRefExp::get_symbol() const
-\description See  const
+\brief \brief See  const
 symbol for documentation */
 /*!\fn SgMemberFunctionSymbol *SgMemberFunctionRefExp::get_symbol_i() const
-\description See  const
+\brief \brief See  const
 symbol_i for documentation */
 /*!\fn int SgMemberFunctionRefExp::get_need_qualifier() const
-\description See  const
+\brief \brief See  const
 need_qualifier for documentation */
 /*!\fn int SgMemberFunctionRefExp::get_virtual_call() const
-\description See  const
+\brief \brief See  const
 virtual_call for documentation */
 /*!\fn virtual SgNode *SgMemberFunctionRefExp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!
 \fn virtual SgType *SgMemberFunctionRefExp::get_type() const
-\brief Get the type associated with this expression
+\brief Get the type associated with this expressionSee  const
+type for documentation 
      Note that the return value is either:
    -# SgFunctionType : normal function call
    -# SgMemberFunctionType : normal member function call
    -# SgTypedefType : in the case of a function call from a pointer
    It should always be a vailid pointer.  These details are verified in the AST
    Consistancy Tests.
-See  const
-type for documentation \return Returns SgType (but not any SgType).
+\return Returns SgType (but not any SgType).
 */
 /*!\fn virtual size_t SgMemberFunctionRefExp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgMemberFunctionRefExp::get_numberOfTraversalSuccessors()
-\description See  SgMemberFunctionRefExp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgMemberFunctionRefExp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgMemberFunctionRefExp::get_traversalSuccessorContainer()
-\description See  SgMemberFunctionRefExp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgMemberFunctionRefExp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgMemberFunctionRefExp::get_traversalSuccessorNamesContainer()
-\description See  SgMemberFunctionRefExp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgMemberFunctionRefExp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgMemberFunctionRefExp::SgMemberFunctionRefExp(SgMemberFunctionSymbol *symbol_i,int virtual_call,SgFunctionType *function_type,int need_qualifier)
 */
 //@}
-int SAGE_Doxygen_Dummy_22271623519195;
+int SAGE_Doxygen_Dummy_2618715214178;

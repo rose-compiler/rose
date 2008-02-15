@@ -1,9 +1,10 @@
 #ifndef TRANSFORM_LOOP_TREE_H
 #define TRANSFORM_LOOP_TREE_H
 
-#include <computation/LoopTree.h>
-#include <computation/LoopTreeHoldNode.h>
-#include <depInfo/DepRel.h>
+#include <vector>
+#include <LoopTree.h>
+#include <LoopTreeHoldNode.h>
+#include <DepRel.h>
 
 class ObserveTransform;
 class LoopTreeTransform
@@ -20,11 +21,12 @@ class LoopTreeTransform
 
 class LoopTreeDistributeNode : public LoopTreeTransform
 {
-  LoopTreeNode* Distribute( LoopTreeNode *n, SelectLoopTreeNode &sel, 
+  typedef SelectObject<LoopTreeNode*>& SelectLoopTreeNode;
+  LoopTreeNode* Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, 
                             ObserveTransform &ob);
  public:
   // distribute n and put the distributed node before n; 
-  LoopTreeNode* operator () (LoopTreeNode *n, SelectLoopTreeNode& sel, bool before = true);
+  LoopTreeNode* operator () (LoopTreeNode *n, SelectLoopTreeNode sel, bool before = true);
 
   //distribute the parent of nodes and put distributed nodes before the others
   LoopTreeNode* operator () (LoopTreeNodeIterator nodes);
@@ -68,14 +70,14 @@ class SelectArray
     SymbolicVal incr, size;
     int dim;
     ArrayDim( int d, const SymbolicVal& in, const SymbolicVal& _size)
-     : incr(in), size(_size), dim(d) {}
+     : dim(d), incr(in), size(_size) {}
   };
-  std::vector<SymbolicVal> selstart;
-  std::list<ArrayDim> selinfo;
+  STD vector<SymbolicVal> selstart;
+  STD list<ArrayDim> selinfo;
  public:
   SelectArray(int arrdim) 
    {  for (int i = 0; i < arrdim; ++i) selstart.push_back(SymbolicVal()); }
-  std::string ToString() const;
+  STD string toString() const;
 
   unsigned arr_dim() const { return selstart.size(); }
   unsigned sel_dim() const { return selinfo.size(); }
@@ -83,23 +85,34 @@ class SelectArray
   const SymbolicVal& sel_start( int dim) const { return selstart[dim]; }
   SymbolicVal& sel_start( int dim) { return selstart[dim]; }
 
-  class const_iterator : public std::list<ArrayDim>::const_iterator
+  class const_iterator   
   {
+     STD list<ArrayDim>::const_iterator impl;
     public:
-      const_iterator(const std::list<ArrayDim>::const_iterator& that) 
-         : std::list<ArrayDim>::const_iterator(that) {}
-      SymbolicVal cur_incr() const { return operator*().incr; }
-      SymbolicVal cur_size() const { return operator*().size; }
-      int cur_dim() const { return operator*().dim; }
+      const_iterator(const STD list<ArrayDim>::const_iterator& that) 
+         : impl(that) {}
+      const_iterator(const const_iterator& that) : impl(that.impl) {}
+      bool operator == (const const_iterator& that) const
+          { return impl == that.impl; }
+      void operator ++() { ++impl;}
+      void operator ++(int) { impl++;}
+      SymbolicVal cur_incr() const { return (*impl).incr; }
+      SymbolicVal cur_size() const { return (*impl).size; }
+      int cur_dim() const { return (*impl).dim; }
   };
-  class iterator : public std::list<ArrayDim>::iterator
+  class iterator 
   {
+     STD list<ArrayDim>::iterator impl;
     public:
-      iterator(const std::list<ArrayDim>::iterator& that) 
-         : std::list<ArrayDim>::iterator(that) {}
-      SymbolicVal& cur_incr() { return operator*().incr; }
-      SymbolicVal& cur_size() { return operator*().size; }
-      int cur_dim() const { return operator*().dim; }
+      iterator(const STD list<ArrayDim>::iterator& that) : impl(that) {}
+      iterator(const iterator& that) : impl(that.impl) {}
+      bool operator == (const iterator& that) const
+          { return impl == that.impl; }
+      void operator ++() { ++impl;}
+      void operator ++(int) { impl++;}
+      SymbolicVal& cur_incr() { return (*impl).incr; }
+      SymbolicVal& cur_size() { return (*impl).size; }
+      int cur_dim() const { return (*impl).dim; }
   };
   const_iterator begin() const { return selinfo.begin(); }
   const_iterator end() const { return selinfo.end(); }
@@ -118,11 +131,11 @@ class CopyArrayConfig
  public:
   typedef enum {NONE = 0, INIT_COPY = 1, SAVE_COPY = 2, 
                 ALLOC_COPY = 4, DELETE_COPY = 8, SHIFT_COPY = 16} CopyOpt;
-  static std::string CopyOpt2String( int opt);
+  static STD string CopyOpt2String( int opt);
 
-  CopyArrayConfig( AstInterface& fa, const std::string& arr, const AstNodeType& base,
+  CopyArrayConfig( AstInterface& fa, const STD string& arr, const AstNodeType& base,
                    const SelectArray& sel, LoopTreeNode* shift = 0);
-  std::string ToString() const;
+  STD string toString() const;
 
 
   AstNodePtr copy_codegen(LoopTransformInterface& fa, CopyOpt opt) const;
@@ -135,7 +148,7 @@ class CopyArrayConfig
   bool scalar_repl() const;
 
   SymbolicVal buffer_size() const { return bufsize[bufsize.size()-1]; }
-  SymbolicVal buf_offset(AstInterface& fa, std::vector<SymbolicVal>& arroffset) const;
+  SymbolicVal buf_offset(AstInterface& fa, STD vector<SymbolicVal>& arroffset) const;
   AstNodePtr buf_codegen(AstInterface& fa, const SymbolicVal& index) const;
   AstNodePtr buf_codegen(AstInterface& fa, AstInterface::AstNodeList& arrindex) const;
  private:
@@ -145,19 +158,19 @@ class CopyArrayConfig
 
   void copy_scalar_codegen(LoopTransformInterface& la, 
                           SelectArray::const_iterator selp, 
-                           std::vector<SymbolicVal>& arrindex, CopyOpt opt,
+                           STD vector<SymbolicVal>& arrindex, CopyOpt opt,
                           AstNodePtr& r, int& bufoffset) const ;
   void copy_loop_codegen(LoopTransformInterface& la, 
                           SelectArray::const_iterator selp, 
-                          std::vector<SymbolicVal>& arrindex, CopyOpt opt,
+                          STD vector<SymbolicVal>& arrindex, CopyOpt opt,
                           AstNodePtr& r, const AstNodePtr& bufoffset) const ;
 
-  std::vector<SymbolicVal> bufsize, arrshift;
+  STD vector<SymbolicVal> bufsize, arrshift;
   LoopInfo* shift;
   SymbolicVal bufshift;
 
   AstNodePtr prep;
-  std::string arrname, bufname;
+  STD string arrname, bufname;
   AstNodeType basetype;
   SelectArray sel;
 };

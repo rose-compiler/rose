@@ -184,6 +184,19 @@ DoxygenEntry::brief()
      return *briefP;
    }
 
+
+void
+DoxygenEntry::set_brief(std::string newString) 
+   {
+	 if(briefP == NULL)
+	   briefP = new std::string();
+
+   	 (*briefP) = "\\brief " + newString;
+
+   }
+
+
+
 bool
 DoxygenEntry::hasDescription() 
    {

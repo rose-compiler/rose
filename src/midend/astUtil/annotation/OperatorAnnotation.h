@@ -25,23 +25,23 @@ class OperatorAnnotCollection
   }
   void add_annot( const OperatorDeclaration& op, const Descriptor& d)
     {
-      std::string sig = op.get_signature();
-      // pmp 08JUN05
-      //   was: typemap[ sig ] = d;
+      std::string sig = op.get_signiture();
       this->typemap[ sig ] = d;
     }
-  bool known_operator( const AstNodePtr& exp, AstInterface::AstNodeList* argp= 0, 
+  bool known_operator( AstInterface& fa, 
+                       const AstNodePtr& exp, AstInterface::AstNodeList* argp= 0, 
 		       Descriptor* desc= 0, bool replpar = false,
                        Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen =0) const
   {
-    AstNodePtr func;
     AstInterface::AstNodeList args;
-    if (!AstInterface::IsFunctionCall(exp, &func, &args ) && !AstInterface::IsFunctionDecl(exp, 0,0,0,&args))
-      return false;
-    if (func == 0)
-       func = exp;
-    std::string sig = OperatorDeclaration::get_signature( func);
-    if (known_type(sig, desc)) {
+    AstInterface::AstTypeList params;
+    AstNodePtr f;
+    STD string fname;
+    if (!(fa.IsFunctionCall(exp,&f, &args, 0, &params) && fa.IsVarRef(f,0,&fname))
+       && !fa.IsFunctionDefinition(exp,&fname,&args,0,0, &params))
+        return false;
+    STD string sig = OperatorDeclaration::get_signiture(fa, fname, params);
+    if (known_type( sig, desc)) {
        if (argp != 0)
           *argp = args;
        if (desc != 0 && replpar) {
@@ -72,7 +72,7 @@ class OperatorInlineAnnotation
       std::cerr << "inline: \n";
       OperatorAnnotCollection<OperatorInlineDescriptor>::Dump();
     }
-  bool known_operator( const AstNodePtr& exp, SymbolicVal* val = 0) const;
+  bool known_operator( AstInterface& fa, const AstNodePtr& exp, SymbolicVal* val = 0) const;
   void register_annot()
     { ReadAnnotation::get_inst()->add_OperatorCollection(this); }
   bool get_inline( AstInterface& fa, const AstNodePtr& h, SymbolicVal* val = 0);

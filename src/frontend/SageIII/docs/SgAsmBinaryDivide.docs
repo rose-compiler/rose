@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmBinaryDivide
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmBinaryDivide::SgAsmBinaryDivide(const SgAsmBinaryDivideStorageClass &source)
+*/
+/*!\fn inline static void SgAsmBinaryDivide::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmBinaryDivide *SgAsmBinaryDivide::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmBinaryDivide::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmBinaryDivide::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmBinaryDivide::initializeStorageClassArray(SgAsmBinaryDivideStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmBinaryDivide::clearMemoryPool()
+*/
+/*!\fn static void SgAsmBinaryDivide::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmBinaryDivide::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmBinaryDivide::roseRTI()
+*/
+/*!\fn virtual SgAsmBinaryDivide::~SgAsmBinaryDivide()
+*/
+/*!\fn virtual SgNode *SgAsmBinaryDivide::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmBinaryDivide::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryDivide::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryDivide::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmBinaryDivide::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmBinaryDivide::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmBinaryDivide::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmBinaryDivide::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmBinaryDivide::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmBinaryDivide::SgAsmBinaryDivide()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1142034706;

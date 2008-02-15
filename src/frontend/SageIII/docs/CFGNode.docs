@@ -1,22 +1,36 @@
 /* GENERATED FILE - DO NOT MODIFY */
 /*!\class VirtualCFG::CFGNode
 */
+/*!\class VirtualBinCFG::CFGNode
+*/
 /*! \name Class Members*/
 //@{
 /*!\var SgNode *VirtualCFG::CFGNode::node
 */
 /*!\var unsigned int VirtualCFG::CFGNode::index
 */
+/*!\var SgAsmNode *VirtualBinCFG::CFGNode::node
+*/
 //@}
 /*! \name User Interface*/
 //@{
 /*!\fn bool VirtualCFG::CFGNode::isInteresting() const
 */
+/*!\fn inline SgAsmNode *VirtualBinCFG::CFGNode::getNode() const
+*/
 /*!\fn inline SgNode *VirtualCFG::CFGNode::getNode() const
+*/
+/*!\fn inline VirtualBinCFG::CFGNode::CFGNode() : node((0))
+*/
+/*!\fn inline VirtualBinCFG::CFGNode::CFGNode(SgNode *node)
 */
 /*!\fn inline VirtualCFG::CFGNode::CFGNode() : node((0)), index((0))
 */
 /*!\fn inline VirtualCFG::CFGNode::CFGNode(SgNode *node,unsigned int index=(0)) : node(node), index(index)
+*/
+/*!\fn inline bool VirtualBinCFG::CFGNode::operator!=(const VirtualBinCFG::CFGNode &o) const
+*/
+/*!\fn inline bool VirtualBinCFG::CFGNode::operator==(const VirtualBinCFG::CFGNode &o) const
 */
 /*!\fn inline bool VirtualCFG::CFGNode::operator!=(const VirtualCFG::CFGNode &o) const
 */
@@ -26,17 +40,29 @@
 */
 /*!\fn inline unsigned int VirtualCFG::CFGNode::getIndex() const
 */
+/*!\fn static unsigned int VirtualCFG::CFGNode::childCount(SgNode *n)
+*/
+/*!\fn std::string VirtualBinCFG::CFGNode::id() const
+*/
+/*!\fn std::string VirtualBinCFG::CFGNode::toString() const
+*/
+/*!\fn std::string VirtualBinCFG::CFGNode::toStringForDebugging() const
+*/
 /*!\fn std::string VirtualCFG::CFGNode::id() const
 */
 /*!\fn std::string VirtualCFG::CFGNode::toString() const
 */
 /*!\fn std::string VirtualCFG::CFGNode::toStringForDebugging() const
 */
+/*!\fn std::vector< VirtualBinCFG::CFGEdge  , std::allocator< VirtualBinCFG::CFGEdge  >  > VirtualBinCFG::CFGNode::inEdges() const
+*/
+/*!\fn std::vector< VirtualBinCFG::CFGEdge  , std::allocator< VirtualBinCFG::CFGEdge  >  > VirtualBinCFG::CFGNode::outEdges() const
+*/
 /*!\fn std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > VirtualCFG::CFGNode::inEdges() const
 */
 /*!\fn std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > VirtualCFG::CFGNode::outEdges() const
 */
-/*!\fn static unsigned int VirtualCFG::CFGNode::childCount(SgNode *n)
+/*!\fn inline bool VirtualBinCFG::CFGNode::operator<(const VirtualBinCFG::CFGNode &o) const
 */
 //@}
-extern int SAGE_Doxygen_Dummy_58863558;
+extern int SAGE_Doxygen_Dummy_1966046970;

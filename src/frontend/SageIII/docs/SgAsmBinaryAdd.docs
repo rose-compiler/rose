@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmBinaryAdd
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmBinaryAdd::SgAsmBinaryAdd(const SgAsmBinaryAddStorageClass &source)
+*/
+/*!\fn inline static void SgAsmBinaryAdd::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmBinaryAdd *SgAsmBinaryAdd::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmBinaryAdd::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmBinaryAdd::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmBinaryAdd::initializeStorageClassArray(SgAsmBinaryAddStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmBinaryAdd::clearMemoryPool()
+*/
+/*!\fn static void SgAsmBinaryAdd::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmBinaryAdd::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmBinaryAdd::roseRTI()
+*/
+/*!\fn virtual SgAsmBinaryAdd::~SgAsmBinaryAdd()
+*/
+/*!\fn virtual SgNode *SgAsmBinaryAdd::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmBinaryAdd::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryAdd::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmBinaryAdd::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmBinaryAdd::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmBinaryAdd::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmBinaryAdd::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmBinaryAdd::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmBinaryAdd::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmBinaryAdd::SgAsmBinaryAdd()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1535734420;

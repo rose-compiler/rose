@@ -1,14 +1,4 @@
-
-#include <general.h>
-
-// pmp 09JUN05
-//   include iostream here so that LoopTreeShadow can be properly included.
-#include <iostream>
-
-#include <computation/LoopTreeShadow.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
+#include <LoopTreeShadow.h>
 
 LoopTreeShadowNode ::
 LoopTreeShadowNode( LoopTreeNode *n, LoopTreeShadowCreate *tc)
@@ -21,9 +11,9 @@ LoopTreeShadowNode( LoopTreeNode *n, LoopTreeShadowCreate *tc)
 }
 
 LoopTreeNode* LoopTreeShadowSelect::
-Build( LoopTreeNode *orig, SelectStmt& sel, LoopTreeNode *p)
+Build( LoopTreeNode *orig, LoopTreeNode *p)
 {
-  if (sel(orig)) {
+  if (select_stmt(orig)) {
      return CreateShadowNode(orig);
   }
   else { 
@@ -31,7 +21,7 @@ Build( LoopTreeNode *orig, SelectStmt& sel, LoopTreeNode *p)
      LoopTreeNode* r1 = 0, *r2 = 0, *result = r1;
      LoopTreeNode *n = orig->FirstChild(); 
      for ( ; n != 0; n = n->NextSibling()) {
-        if ( (r1 = Build( n, sel, shadow)) != 0)
+        if ( (r1 = Build( n, shadow)) != 0)
             break;
      }
      if (r1 == 0)
@@ -45,7 +35,7 @@ Build( LoopTreeNode *orig, SelectStmt& sel, LoopTreeNode *p)
      }
      if (n == 0) return result;
      for ( n = n->NextSibling() ;n != 0; n = n->NextSibling()) {
-        if ( (r2 = Build(n, sel, shadow)) != 0)
+        if ( (r2 = Build(n, shadow)) != 0)
              break;
      }
      if (r2 == 0)
@@ -59,7 +49,7 @@ Build( LoopTreeNode *orig, SelectStmt& sel, LoopTreeNode *p)
      if (n == 0)
         return result;
      for ( n = n->NextSibling() ;n != 0; n = n->NextSibling()) {
-        Build(n, sel, shadow);
+        Build(n, shadow);
      }
      return result;
   }
@@ -77,11 +67,9 @@ LoopTreeShadowCreate :: ~LoopTreeShadowCreate()
 }
 
 LoopTreeShadowSelect:: 
-LoopTreeShadowSelect( LoopTreeNode *orig, SelectStmt& sel)
+LoopTreeShadowSelect( LoopTreeNode *orig)
      : LoopTreeShadowCreate(orig->LoopLevel())
 { 
-   Build( orig, sel, GetTreeRoot()); 
+   Build( orig, GetTreeRoot()); 
 }
-
-template class SelectObject<LoopTreeNode*>;
 

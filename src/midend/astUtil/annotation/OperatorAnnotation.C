@@ -1,4 +1,3 @@
-#include <general.h>
 #include <OperatorAnnotation.h>
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -9,14 +8,14 @@ OperatorSideEffectAnnotation* OperatorSideEffectAnnotation::inst = 0;
 OperatorAliasAnnotation* OperatorAliasAnnotation::inst = 0;
 
 bool OperatorInlineAnnotation::
-known_operator( const AstNodePtr& arrayExp, SymbolicVal* val) const
+known_operator( AstInterface& fa, const AstNodePtr& arrayExp, SymbolicVal* val) const
 {
   typedef OperatorAnnotCollection<OperatorInlineDescriptor> BaseClass;
   if (val == 0)
-     return BaseClass::known_operator( arrayExp);
+     return BaseClass::known_operator( fa, arrayExp);
   AstInterface::AstNodeList args;
   OperatorInlineDescriptor desc;
-  if (!BaseClass::known_operator( arrayExp, &args, &desc, true))
+  if (!BaseClass::known_operator( fa, arrayExp, &args, &desc, true))
     return false;
   *val = desc.get_val();
   return true;
@@ -25,7 +24,7 @@ known_operator( const AstNodePtr& arrayExp, SymbolicVal* val) const
 bool OperatorInlineAnnotation::
 get_inline( AstInterface& fa, const AstNodePtr& h, SymbolicVal* val)
 {
-  return known_operator( h, val);
+  return known_operator( fa, h, val);
 }
 
 bool OperatorSideEffectAnnotation::
@@ -34,7 +33,7 @@ get_modify( AstInterface& fa, const AstNodePtr& fc,
 {
   AstInterface::AstNodeList args;
   OperatorSideEffectDescriptor mod;
-  if (modInfo.known_operator( fc, &args, &mod)) {
+  if (modInfo.known_operator( fa, fc, &args, &mod)) {
     if (collect != 0) 
       mod.get_side_effect(fa, args, *collect);
     return true;
@@ -48,7 +47,7 @@ get_read( AstInterface& fa, const AstNodePtr& fc,
 {
   AstInterface::AstNodeList args;
   OperatorSideEffectDescriptor read;
-  if  (readInfo.known_operator( fc, &args, &read)) { 
+  if  (readInfo.known_operator( fa, fc, &args, &read)) { 
        if (collect != 0) 
          read.get_side_effect(fa, args, *collect);
        return true;
@@ -64,7 +63,7 @@ AliasAnnotAnal(AstInterface& fa,
 {
   AstInterface::AstNodeList args;
   OperatorAliasDescriptor desc; 
-  if (!aliasInfo.known_operator( fc, &args, &desc, false) )
+  if (!aliasInfo.known_operator( fa, fc, &args, &desc, false) )
     return false;
   ReplaceParams paramMap( desc.get_param_decl().get_params(), args);
   paramMap.add("result", result);
@@ -76,7 +75,7 @@ AliasAnnotAnal(AstInterface& fa,
 	 p2 != cur.end(); ++p2) {
       string varname = *p2;
       AstNodePtr arg = paramMap.find(varname).get_ast();
-      if (arg != 0) {
+      if (arg != AST_NULL) {
 	collectalias( pair<AstNodePtr, int>(arg, index));
       }
       else {
@@ -99,7 +98,7 @@ bool OperatorAliasAnnotation::
 allow_alias(AstInterface& fa, const AstNodePtr& fc, 
             CollectObject< pair<AstNodePtr, int> >& collectalias)
 {
-  return AliasAnnotAnal( fa, allowaliasInfo, fc, 0, collectalias);
+  return AliasAnnotAnal( fa, allowaliasInfo, fc, AST_NULL, collectalias);
 }
 
 #define TEMPLATE_ONLY
@@ -121,7 +120,7 @@ template class OperatorAnnotCollection<OperatorAliasDescriptor>;
 template class OperatorAnnotCollection<OperatorInlineDescriptor>;
 
 
-#include <AnnotDescriptors.h>
+#include <AnnotDescriptors.C>
 template class WriteContainer<set<NameDescriptor>, ',', '(', ')'>;
 template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>, 
                              NameDescriptor, ',','{','}'>;

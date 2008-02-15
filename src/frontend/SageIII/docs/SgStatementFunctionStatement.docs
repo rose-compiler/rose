@@ -39,33 +39,33 @@
 /*!\fn virtual void SgStatementFunctionStatement::post_construction_initialization()
 */
 /*!\fn void SgStatementFunctionStatement::set_expression(SgExpression *expression)
-\description See  *expression)
+\brief \brief See  *expression)
 expression for documentation */
 /*!\fn void SgStatementFunctionStatement::set_function(SgFunctionDeclaration *function)
-\description See  *function)
+\brief \brief See  *function)
 function for documentation */
 /*!\fn SgExpression *SgStatementFunctionStatement::get_expression() const
-\description See  const
+\brief \brief See  const
 expression for documentation */
 /*!\fn SgFunctionDeclaration *SgStatementFunctionStatement::get_function() const
-\description See  const
+\brief \brief See  const
 function for documentation */
 /*!\fn virtual SgName SgStatementFunctionStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgStatementFunctionStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgStatementFunctionStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgStatementFunctionStatement::get_numberOfTraversalSuccessors()
-\description See  SgStatementFunctionStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgStatementFunctionStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgStatementFunctionStatement::get_traversalSuccessorContainer()
-\description See  SgStatementFunctionStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgStatementFunctionStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgStatementFunctionStatement::get_traversalSuccessorNamesContainer()
-\description See  SgStatementFunctionStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgStatementFunctionStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgStatementFunctionStatement::SgStatementFunctionStatement(SgFunctionDeclaration *function,SgExpression *expression)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1327301786;
+extern int SAGE_Doxygen_Dummy_198625077;

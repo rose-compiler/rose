@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmQuadWordValueExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned long SgAsmQuadWordValueExpression::p_value
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmQuadWordValueExpression::SgAsmQuadWordValueExpression(const SgAsmQuadWordValueExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmQuadWordValueExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmQuadWordValueExpression *SgAsmQuadWordValueExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmQuadWordValueExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmQuadWordValueExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmQuadWordValueExpression::initializeStorageClassArray(SgAsmQuadWordValueExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmQuadWordValueExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmQuadWordValueExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmQuadWordValueExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmQuadWordValueExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmQuadWordValueExpression::~SgAsmQuadWordValueExpression()
+*/
+/*!\fn virtual SgNode *SgAsmQuadWordValueExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmQuadWordValueExpression::set_value(unsigned long value)
+\brief \brief See  value)
+value for documentation */
+/*!\fn unsigned long SgAsmQuadWordValueExpression::get_value() const
+\brief \brief See  const
+value for documentation */
+/*!\fn virtual SgNode *SgAsmQuadWordValueExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmQuadWordValueExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmQuadWordValueExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmQuadWordValueExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmQuadWordValueExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmQuadWordValueExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmQuadWordValueExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmQuadWordValueExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmQuadWordValueExpression::SgAsmQuadWordValueExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_612134132;

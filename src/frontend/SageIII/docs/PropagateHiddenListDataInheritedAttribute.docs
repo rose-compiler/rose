@@ -6,4 +6,4 @@
 /*!\var std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > PropagateHiddenListDataInheritedAttribute::inherited_hidden_declaration_list
 */
 //@}
-extern int SAGE_Doxygen_Dummy_796385428;
+extern int SAGE_Doxygen_Dummy_1483553532;

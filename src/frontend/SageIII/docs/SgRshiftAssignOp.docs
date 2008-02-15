@@ -34,18 +34,18 @@
 /*!\fn virtual void SgRshiftAssignOp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgRshiftAssignOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgRshiftAssignOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgRshiftAssignOp::get_numberOfTraversalSuccessors()
-\description See  SgRshiftAssignOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgRshiftAssignOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgRshiftAssignOp::get_traversalSuccessorContainer()
-\description See  SgRshiftAssignOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgRshiftAssignOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgRshiftAssignOp::get_traversalSuccessorNamesContainer()
-\description See  SgRshiftAssignOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgRshiftAssignOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgRshiftAssignOp::SgRshiftAssignOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_682313073;
+extern int SAGE_Doxygen_Dummy_856623460;

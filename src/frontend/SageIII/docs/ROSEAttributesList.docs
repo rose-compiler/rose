@@ -3,6 +3,8 @@
 */
 /*! \name Class Members*/
 //@{
+/*!\var LexTokenStreamTypePointer ROSEAttributesList::rawTokenStream
+*/
 /*!\var std::string ROSEAttributesList::fileName
 */
 /*!\var std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > ROSEAttributesList::attributeList
@@ -36,6 +38,10 @@
 */
 /*!\fn void ROSEAttributesList::deepClean()
 */
+/*!\fn void ROSEAttributesList::display(const std::string &label)
+*/
+/*!\fn void ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST(const std::string &filename)
+*/
 /*!\fn void ROSEAttributesList::insertElement(PreprocessingInfo &pRef)
 */
 /*!\fn void ROSEAttributesList::moveElements(ROSEAttributesList &)
@@ -44,7 +50,12 @@
 */
 /*!\fn void ROSEAttributesList::setIndex(int i)
 */
-/*!\fn void ROSEAttributesList::display(const std::string &label)
+/*!\fn void ROSEAttributesList::set_rawTokenStream(LexTokenStreamTypePointer s)
+\brief \brief See  s)
+rawTokenStream for documentation */
+/*!\fn LexTokenStreamTypePointer ROSEAttributesList::get_rawTokenStream()
+\brief \brief See  ROSEAttributesList::rawTokenStream for documentation */
+/*!\fn void ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST(const std::string &filename)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1948046965;
+extern int SAGE_Doxygen_Dummy_447708476;

@@ -29,21 +29,27 @@
 */
 /*!\fn virtual SgNullStatement::~SgNullStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgNullStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgNullStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgNullStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgNullStatement::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgNullStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgNullStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgNullStatement::get_numberOfTraversalSuccessors()
-\description See  SgNullStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgNullStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNullStatement::get_traversalSuccessorContainer()
-\description See  SgNullStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgNullStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNullStatement::get_traversalSuccessorNamesContainer()
-\description See  SgNullStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgNullStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgNullStatement::SgNullStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1794786222;
+extern int SAGE_Doxygen_Dummy_1992590126;

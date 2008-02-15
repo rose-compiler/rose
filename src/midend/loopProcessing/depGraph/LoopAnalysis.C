@@ -1,14 +1,10 @@
 
-#include <general.h>
-#include <depGraph/LoopAnalysis.h>
-#include <depInfo/DepRel.h>
-#include <depInfo/DomainInfo.h>
-#include <depInfo/DepInfo.h>
-#include <depGraph/TransDepGraph.h>
-#include <depGraph/DepGraph.h>
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
+#include <LoopAnalysis.h>
+#include <DepRel.h>
+#include <DomainInfo.h>
+#include <DepInfo.h>
+#include <TransDepGraph.h>
+#include <DepGraph.h>
 
 template <class Node> 
 LoopAlignInfo TransLoopFusible<Node>::
@@ -39,10 +35,10 @@ operator() ( TransDepGraphCreate<Node> *graph,
 } 
 
 template <class Node> 
-Boolean TransLoopSlicable<Node>::
+bool TransLoopSlicable<Node>::
 operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
 {
-  Boolean result = false;
+  bool result = false;
 
   DepInfoSetEdge* td = graph->GetTransDep( l.n, l.n);
   if (td == 0)
@@ -58,15 +54,13 @@ operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
 }
 
 template <class Edge,class GraphCreate> 
-Boolean PerfectLoopSlicable<Edge,GraphCreate>::
+bool PerfectLoopSlicable<Edge,GraphCreate>::
 operator()(GraphCreate *g, int level)
 {
   DepDirType cur = DEPDIR_EQ;
-  for ( typename GraphCreate::EdgeIterator edgeIter = 
-             GraphGetEdgeIterator<GraphCreate>()(g);
+  for ( GraphEdgeIterator<GraphCreate> edgeIter(g);
        !edgeIter.ReachEnd(); ++edgeIter) {
-     for (DepInfoConstIterator depIter = 
-               DepEdgeGetConstInfoIterator()( edgeIter.Current() );
+     for (DepInfoConstIterator depIter = edgeIter.Current()->get_depIterator();
           !depIter.ReachEnd(); depIter++) { 
        DepInfo d = depIter.Current();
        DepRel r = d.Entry( level, level);
@@ -85,10 +79,10 @@ operator()(GraphCreate *g, int level)
   return true;
 }
 
-template <class Node> Boolean TransLoopReversible<Node>::
+template <class Node> bool TransLoopReversible<Node>::
 operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
 {
-  Boolean result = false;
+  bool result = false;
 
   DepInfoSetEdge* td = graph->GetTransDep( l.n, l.n);
   if (td == 0)
@@ -104,13 +98,12 @@ operator() ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l)
 }
 
 template <class Edge,class GraphCreate> 
-Boolean PerfectLoopReversible<Edge,GraphCreate>::
+bool PerfectLoopReversible<Edge,GraphCreate>::
 operator() ( GraphCreate* g, int level)
 {
-  for ( typename GraphCreate::EdgeIterator edgeIter = GraphGetEdgeIterator<GraphCreate>()(g);
+  for ( GraphEdgeIterator<GraphCreate> edgeIter(g);
        !edgeIter.ReachEnd(); ++edgeIter) {
-     for (DepInfoConstIterator depIter = 
-            DepEdgeGetConstInfoIterator()( edgeIter.Current() );
+     for (DepInfoConstIterator depIter = edgeIter.Current()->get_depIterator();
           !depIter.ReachEnd(); depIter++) {
        DepInfo d = depIter.Current();
        DepRel r = d.Entry( level, level);
@@ -125,11 +118,11 @@ operator() ( GraphCreate* g, int level)
   return true;
 }
 
-template <class Node> Boolean TransLoopDistributable<Node>::
+template <class Node> bool TransLoopDistributable<Node>::
 operator () ( TransDepGraphCreate<Node> *graph, const LoopAnalInfo<Node> &l1, 
                    const LoopAnalInfo<Node> &l2)
 {
-  Boolean result = false;;
+  bool result = false;;
 
   DepInfoSetEdge* td12 = graph->GetDepInfoSetEdge( l1.n, l2.n);
   DepInfoSetEdge* td21 = graph->GetDepInfoSetEdge( l2.n, l1.n);

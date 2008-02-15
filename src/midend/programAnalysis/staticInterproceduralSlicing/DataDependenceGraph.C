@@ -1,5 +1,6 @@
 #include "rose.h"
 
+#include <AstInterface_ROSE.h>
 #include "DependenceGraph.h"
 
 #include "DefUseAnalysis.h"
@@ -386,13 +387,14 @@ void DataDependenceGraph::_buildDefUseChains(SgFunctionDefinition * fD)
 {
 
     SgBasicBlock *stmts = fD->get_body();
-    AstInterface astInt(stmts);
+    AstInterfaceImpl astIntImpl(stmts);
+    AstInterface astInt(&astIntImpl);
     StmtVarAliasCollect alias;
 
-    alias(astInt, fD);
+    alias(astInt, AstNodePtrImpl(fD));
     ReachingDefinitionAnalysis r;
 
-    r(astInt, fD);
+    r(astInt, AstNodePtrImpl(fD));
     _defuse.build(astInt, r, alias);
 }
 

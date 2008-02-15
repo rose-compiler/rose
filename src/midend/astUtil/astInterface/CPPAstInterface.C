@@ -1,33 +1,31 @@
-#include <rose.h>
-#include <general.h>
-#include <CPPAstInterface.h>
+#include "sage3.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
+#include <CPPAstInterface.h>
+#include <AstInterface_ROSE.h>
 using namespace std;
 
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
-Boolean CPPAstInterface ::
-IsMemberAccess( const AstNodePtr& s,  AstNodePtr* obj, AstNodePtr* field)
+bool CPPAstInterface ::
+IsMemberAccess( const AstNodePtr& _s,  AstNodePtr* obj, STD string* field)
 {
+  SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  SgVarRefExp* var = 0;
   switch (s->variantT()) {
   case V_SgDotExp:
       {
         SgDotExp* dot = isSgDotExp(s);
         if (obj != 0)  
-          *obj = dot->get_lhs_operand();
-        if (field != 0)
-          *field = dot->get_rhs_operand();
+          *obj = AstNodePtrImpl(dot->get_lhs_operand());
+        if (field != 0 && (var = isSgVarRefExp(dot->get_rhs_operand())) != 0)
+          *field = var->get_symbol()->get_name().str();
       }
       break;
   case V_SgArrowExp:
       {
         SgArrowExp* arrow = isSgArrowExp(s);
         if (obj != 0)
-          *obj = arrow->get_lhs_operand();
-        if (field != 0)
-          *field = arrow->get_rhs_operand();
+          *obj = AstNodePtrImpl(arrow->get_lhs_operand());
+        if (field != 0 && (var = isSgVarRefExp(arrow->get_rhs_operand())) != 0)
+          *field = var->get_symbol()->get_name().str();
       }
       break;
    default:
@@ -36,13 +34,22 @@ IsMemberAccess( const AstNodePtr& s,  AstNodePtr* obj, AstNodePtr* field)
   return true;
 }
 
-Boolean CPPAstInterface :: 
-IsMemberFunctionCall( const AstNodePtr& s,  AstNodePtr* obj, AstNodePtr* func,
+AstNodePtr CPPAstInterface::
+CreateFunctionCall( const AstNodePtr& func, const AstNodeList& args)
+{
+  return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), args));
+}
+
+
+bool CPPAstInterface :: 
+IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj, 
+                      STD string* func,
                            AstNodePtr* access, AstNodeList* _args)
 {
-  AstNodePtr f;
+  SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  SgNode* f;
   AstInterface::AstNodeList args;
-  if (!IsFunctionCall(s, &f, &args)) {
+  if (!impl->IsFunctionCall(s, &f, &args)) {
     return false;
   }
   switch (f->variantT()) {
@@ -52,13 +59,14 @@ IsMemberFunctionCall( const AstNodePtr& s,  AstNodePtr* obj, AstNodePtr* func,
        return false;
   }
   if (access != 0) {
-     SgNode * dot = f->get_parent();
+     AstNodePtrImpl dot = f->get_parent();
      assert( dot->variantT() == V_SgDotExp ||
              dot->variantT() == V_SgArrowExp);
      *access = dot;
   }
   if (func != 0)
-    *func = f;
+    *func = isSgMemberFunctionRefExp(f)->get_symbol()->get_name().str();
+
   if (obj != 0) {
      assert(args.size() > 0);
      *obj = args.front();
@@ -70,8 +78,9 @@ IsMemberFunctionCall( const AstNodePtr& s,  AstNodePtr* obj, AstNodePtr* func,
   return true;
 }
 
-Boolean CPPAstInterface :: IsPointerVariable( const AstNodePtr& n)
+bool CPPAstInterface :: IsPointerVariable( const AstNodePtr& _n)
 {
+  SgNode* n = AstNodePtrImpl(_n).get_ptr();
   SgVarRefExp *var = isSgVarRefExp(n);
   if (var == 0)
     return false;
@@ -83,8 +92,9 @@ Boolean CPPAstInterface :: IsPointerVariable( const AstNodePtr& n)
   return false;
 }
 
-AstNodePtr CPPAstInterface :: GetVarScope( const AstNodePtr& n)
+AstNodePtr CPPAstInterface :: GetVarScope( const AstNodePtr& _n)
 {
+  SgNode* n = AstNodePtrImpl(_n).get_ptr();
   SgInitializedName *decl = isSgInitializedName(n);
   if (decl == 0) {
      SgVarRefExp *var = isSgVarRefExp(n);
@@ -95,18 +105,24 @@ AstNodePtr CPPAstInterface :: GetVarScope( const AstNodePtr& n)
   SgStatement* vardecl = isSgStatement(decl->get_parent());
   assert(vardecl != 0);
   SgScopeStatement *scope = vardecl->get_scope();
-  return scope;
+  return AstNodePtrImpl(scope);
 }
 
-Boolean CPPAstInterface :: IsPlusPlus( const AstNodePtr& s, AstNodePtr* opd)
+bool CPPAstInterface :: IsPlusPlus( const AstNodePtr& _s, AstNodePtr* opd)
 {
-  string fname;
-  if ( IsUnaryOp(s, opd, &fname) && 
-      (s->variantT() == V_SgPlusPlusOp || fname == "++" || fname == "operator++"))
+  AstNodePtrImpl s(_s);
+  AstNodePtr op;
+  std::string fname;
+  AstNodeList args;
+  if ( IsFunctionCall(s, &op, &args) && IsVarRef(op,0,&fname) 
+       && strstr(fname.c_str(),"operator++") != 0) {
+      if (opd != 0) *opd = args.front();
       return true;
-  if ( IsBinaryOp(s, opd, 0, &fname) && 
-      (s->variantT() == V_SgPlusPlusOp || fname == "++" || fname == "operator++"))
+  }
+  if ( s->variantT() == V_SgPlusPlusOp)  {
+      if (opd != 0) *opd = AstNodePtrImpl(isSgPlusPlusOp(s.get_ptr())->get_operand());
       return true;
+  }
   return false;
 }
 

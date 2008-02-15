@@ -1,32 +1,35 @@
 
-#include <general.h>
-
-#include "pre.h"
-#include "finiteDifferencing.h"
-#include "rose.h"
-
-// DQ (1/2/2008): I think this is no longer used!
-// #include "copy_unparser.h"
-
-#include "rewrite.h"
+//#include "pre.h"
+//#include "finiteDifferencing.h"
+#include "sage3.h"
 #include <CommandOptions.h>
 #include <LoopTransformInterface.h>
 #include <AnnotCollect.h>
 #include <OperatorAnnotation.h>
+#include <AstInterface_ROSE.h>
 
-// DQ (1/1/2006): This is OK if not declared in a header file
-using namespace std;
+#ifdef USE_OMEGA
+#include <DepTestStatistics.h>
+
+extern DepTestStatistics DepStats;
+#endif
+
+extern bool DebugAnnot();
+extern void FixFileInfo(SgNode* n);
+class UnparseFormatHelp;
+class UnparseDelegate;
+void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 void PrintUsage( char* name)
 {
-  cerr << name << " <options> " << "<program name>" << "\n";
-  cerr << "-gobj: generate object file\n";
-  cerr << "-orig: copy non-modified statements from original file\n";
-  cerr << "-splitloop: applying loop splitting to remove conditionals inside loops\n";
-  cerr << ReadAnnotation::get_inst()->OptionString() << endl;
-  cerr << "-pre:  apply partial redundancy elimination\n";
-  cerr << "-fd:  apply finite differencing to array index expressions\n";
-  PrintLoopTransformUsage( cerr );
+  STD cerr << name << " <options> " << "<program name>" << "\n";
+  STD cerr << "-gobj: generate object file\n";
+  STD cerr << "-orig: copy non-modified statements from original file\n";
+  STD cerr << "-splitloop: applying loop splitting to remove conditionals inside loops\n";
+  STD cerr << ReadAnnotation::get_inst()->OptionString() << STD endl;
+//  STD cerr << "-pre:  apply partial redundancy elimination\n";
+//  STD cerr << "-fd:  apply finite differencing to array index expressions\n";
+  PrintLoopTransformUsage( STD cerr );
 }
 
 bool GenerateObj()
@@ -34,47 +37,42 @@ bool GenerateObj()
   return CmdOptions::GetInstance()->HasOption("-gobj");
 }
 
-class AssumeNoAlias : public AliasAnalysisInterface
-{
- public:
-  virtual bool
-     may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
-   { return false; }
-};
-
-
 int
 main ( int argc,  char * argv[] )
 {
+	int i;
 
+	std::stringstream buffer;
+	buffer << argv[argc-1] << std::endl;
+	
   if (argc <= 1) {
       PrintUsage(argv[0]);
       return -1;
   }
-  vector<string> argvList(argv, argv + argc);
 
-  CmdOptions::GetInstance()->SetOptions(argvList);
-  SetLoopTransformOptions(argvList);
+  CmdOptions::GetInstance()->SetOptions(argc, argv);
+  argc = SetLoopTransformOptions(argc, argv);
 
-  cerr << "After loop options: " << StringUtility::listToString(argvList, true) << endl;
-
-  SgProject* sageProject = frontend( argvList );
-
-  cerr << "After ROSE options: " << StringUtility::listToString(argvList, true) << endl;
+#ifdef USE_OMEGA
+  DepStats.SetFileName(buffer.str());
+#endif
 
   OperatorSideEffectAnnotation *funcInfo = 
          OperatorSideEffectAnnotation::get_inst();
   funcInfo->register_annot();
   ReadAnnotation::get_inst()->read();
+  if (DebugAnnot())
+     funcInfo->Dump();
   AssumeNoAlias aliasInfo;
 
-   AstTests::runAllTests(sageProject);
+  SgProject *sageProject = new SgProject ( argc,argv);
+  FixFileInfo(sageProject);
+
    int filenum = sageProject->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
      SgFile &sageFile = sageProject->get_file(i);
      SgGlobal *root = sageFile.get_root();
-     SgDeclarationStatementPtrList& declList = root->get_declarations ();
-     AstTests::runAllTests(sageProject);
+     SgDeclarationStatementPtrList declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
           SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
           if (func == 0)
@@ -82,36 +80,31 @@ main ( int argc,  char * argv[] )
           SgFunctionDefinition *defn = func->get_definition();
           if (defn == 0)
              continue;
-	  cerr << "Working on function " << func->get_name().getString() << endl;
           SgBasicBlock *stmts = defn->get_body();  
-	  cerr << "stmts = " << stmts << endl;
-	  cerr << "stmts->get_parent() before " << stmts->get_parent() << endl;
-          AstInterface *fa = new AstInterface(stmts);
-          stmts = isSgBasicBlock(LoopTransformTraverse( *fa, stmts, aliasInfo, funcInfo));
-	  ROSE_ASSERT (stmts);
-	  defn->set_body(stmts);
-	  stmts->set_parent(defn);
-	  // Update based on possible inserted statements (and iterator invalidation)
-	  p = std::find(declList.begin(), declList.end(), func);
-	  ROSE_ASSERT (p != declList.end());
-	  cerr << "After working on function " << func->get_name().getString() << endl;
-	  // generateAstGraph(sageProject, 400000);
-	  // AstTests::runAllTests(sageProject);
+          AstInterfaceImpl scope(stmts);
+          AstInterface fa(&scope);
+          NormalizeForLoop(fa, AstNodePtrImpl(stmts));
+          LoopTransformTraverse( fa, AstNodePtrImpl(stmts), aliasInfo, funcInfo);
      }
    }
 
-   if (CmdOptions::GetInstance()->HasOption("-fd")) {
-       simpleIndexFiniteDifferencing(sageProject);
-   }
+//   if (CmdOptions::GetInstance()->HasOption("-fd")) {
+//       simpleIndexFiniteDifferencing(sageProject);
+//   }
+//   if (CmdOptions::GetInstance()->HasOption("-pre")) {
+//       partialRedundancyElimination(sageProject);
+//   }
 
-   if (CmdOptions::GetInstance()->HasOption("-pre")) {
-       PRE::partialRedundancyElimination(sageProject);
-   }
+  //   unparseProject(sageProject);
+   backend(sageProject);
 
-   AstTests::runAllTests(sageProject);
-   unparseProject(sageProject);
-   if (GenerateObj())
-      return sageProject->compileOutput();
-   return 0;
+#ifdef USE_OMEGA
+     DepStats.SetDepChoice(0x1 | 0x2 | 0x4);
+     DepStats.PrintResults();
+#endif
+
+//  if (GenerateObj())
+ //    return sageProject->compileOutput();
+  return 0;
 }
 

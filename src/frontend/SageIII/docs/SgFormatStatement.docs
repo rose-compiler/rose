@@ -1,0 +1,69 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgFormatStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgFormatItemList *SgFormatStatement::p_format_item_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgFormatStatement::SgFormatStatement(Sg_File_Info *startOfConstruct,SgFormatItemList *format_item_list=(0))
+*/
+/*!\fn SgFormatStatement::SgFormatStatement(const SgFormatStatementStorageClass &source)
+*/
+/*!\fn inline static void SgFormatStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgFormatStatement *SgFormatStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFormatStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFormatStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFormatStatement::initializeStorageClassArray(SgFormatStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgFormatStatement::clearMemoryPool()
+*/
+/*!\fn static void SgFormatStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFormatStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgFormatStatement::roseRTI()
+*/
+/*!\fn virtual SgFormatStatement::~SgFormatStatement()
+*/
+/*!\fn virtual SgNode *SgFormatStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgFormatStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgFormatStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgFormatStatement::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgFormatStatement::post_construction_initialization()
+*/
+/*!\fn void SgFormatStatement::set_format_item_list(SgFormatItemList *format_item_list)
+\brief \brief See  *format_item_list)
+format_item_list for documentation */
+/*!\fn SgFormatItemList *SgFormatStatement::get_format_item_list() const
+\brief \brief See  const
+format_item_list for documentation */
+/*!\fn virtual SgName SgFormatStatement::get_mangled_name() const
+\brief \brief See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgFormatStatement::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgFormatStatement::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFormatStatement::get_numberOfTraversalSuccessors()
+\brief \brief See  SgFormatStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFormatStatement::get_traversalSuccessorContainer()
+\brief \brief See  SgFormatStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFormatStatement::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgFormatStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFormatStatement::SgFormatStatement(SgFormatItemList *format_item_list)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1468930602;

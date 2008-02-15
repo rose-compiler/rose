@@ -1,12 +1,7 @@
-
-#include <general.h>
-#include <slicing/DynamicCompSlice.h>
-#include <slicing/CompSliceImpl.h>
-#include <computation/LoopTreeTransform.h>
+#include <DynamicCompSlice.h>
+#include <CompSliceImpl.h>
+#include <LoopTreeTransform.h>
 #include <stdio.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
 
 class CondSliceStmt : public CompSliceStmt
 {
@@ -25,9 +20,9 @@ class CondSliceStmt : public CompSliceStmt
   void Dump() const
     { 
       CompSliceStmt::Dump();
-      cerr << "slicing group: " <<  groupIndex << "\n";
+      STD cerr << "slicing group: " <<  groupIndex << "\n";
     }
-  virtual string GetClassName() const { return "CondSliceStmt"; }
+  virtual STD string GetClassName() const { return "CondSliceStmt"; }
 };
 
 
@@ -91,19 +86,19 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
   int num = slice->QuerySliceGroupNumber();
   LoopTreeNode *nr = root;
   if (num > 1) {
-    string groupVar = fa.NewVar(fa.GetType("int")), groupVarN = groupVar + "N";
+    STD string groupVar = fa.NewVar(fa.GetType("int")), groupVarN = groupVar + "N";
     fa.NewVar( fa.GetType("int"), groupVarN);
     LoopTreeCreate *tc = c.GetLoopTreeCreate();
-    nr = tc->CreateLoopNode( SymbolicVar(groupVar, 0), 1, SymbolicVar(groupVarN, 0), 1);
+    nr = tc->CreateLoopNode( SymbolicVar(groupVar, AST_NULL), 1, SymbolicVar(groupVarN, AST_NULL), 1);
     LoopTreeTransform().InsertLoop( nr, root, -1);
 
-    AstInterface::AstNodeList args = fa.CreateList();
+    AstInterface::AstNodeList args;
     char buf[10];
     for (int i = 1; i <= num; ++i) {
        sprintf(buf, "%1d", i);
-       string name = groupVar + buf;
+       STD string name = groupVar + buf;
        fa.NewVar(fa.GetType("int"), name);
-       fa.ListAppend( args, fa.CreateVarRef( name) );
+       args.push_back( fa.CreateVarRef( name) );
     }
     int id;
     AstNodePtr config = la.CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id); 
@@ -117,7 +112,7 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
          !p.ReachEnd(); ++p) {
         LoopTreeNode* stmt = p.Current();
         sprintf(buf, "%1d", slice->QuerySliceStmtGroupIndex(stmt));
-        LoopTreeEmbedStmt()( nr, stmt, SymbolicVar(groupVar + buf, 0) ); 
+        LoopTreeEmbedStmt()( nr, stmt, SymbolicVar(groupVar + buf, AST_NULL) ); 
     }   
     DependenceHoisting::Transform(la, c, slice, root);
   }

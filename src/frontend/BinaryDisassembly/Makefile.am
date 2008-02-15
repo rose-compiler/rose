@@ -12,7 +12,8 @@ if DEV_LIBS
 lib_LTLIBRARIES = libbinaryDatabase.la libbinaryFrontend.la libbinarydisassembly.la
 else
 # This will cause the dynamic library to be built (as libroseObjdumpDisassembler.so)
-noinst_LTLIBRARIES = libbinaryDatabase.la libbinaryFrontend.la libbinarydisassembly.la
+noinst_LTLIBRARIES = libbinaryFrontend.la libbinarydisassembly.la
+lib_LTLIBRARIES = libbinaryDatabase.la 
 endif
 
 # Isolated part of library that depends on the mysql database

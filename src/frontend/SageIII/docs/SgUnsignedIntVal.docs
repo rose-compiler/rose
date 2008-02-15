@@ -39,33 +39,33 @@
 /*!\fn virtual void SgUnsignedIntVal::post_construction_initialization()
 */
 /*!\fn void SgUnsignedIntVal::set_value(unsigned int value)
-\description See  value)
+\brief \brief See  value)
 value for documentation */
 /*!\fn void SgUnsignedIntVal::set_valueString(std::string valueString)
-\description See  valueString)
+\brief \brief See  valueString)
 valueString for documentation */
 /*!\fn std::string SgUnsignedIntVal::get_valueString() const
-\description See  const
+\brief \brief See  const
 valueString for documentation */
 /*!\fn unsigned int SgUnsignedIntVal::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
 /*!\fn virtual SgNode *SgUnsignedIntVal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgUnsignedIntVal::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgUnsignedIntVal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUnsignedIntVal::get_numberOfTraversalSuccessors()
-\description See  SgUnsignedIntVal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUnsignedIntVal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnsignedIntVal::get_traversalSuccessorContainer()
-\description See  SgUnsignedIntVal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUnsignedIntVal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnsignedIntVal::get_traversalSuccessorNamesContainer()
-\description See  SgUnsignedIntVal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUnsignedIntVal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUnsignedIntVal::SgUnsignedIntVal(unsigned int value,std::string valueString)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1402211891;
+extern int SAGE_Doxygen_Dummy_1200839246;

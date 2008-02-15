@@ -62,9 +62,9 @@ pointer to an object derived from a SgSwitchStatement.
 /*! \var SgBasicBlock *SgSwitchStatement::p_body
 \brief This pointer a SgBasicBlock, and holds the cases in the body of the switch.
 */
-/*!\var SgStatement *SgSwitchStatement::p_item_selector
+/*!\var SgLabelRefExp *SgSwitchStatement::p_end_numeric_label
 */
-/*!\var int SgSwitchStatement::p_end_numeric_label
+/*!\var SgStatement *SgSwitchStatement::p_item_selector
 */
 /*!\var std::string SgSwitchStatement::p_string_label
 */
@@ -124,59 +124,59 @@ pointer to an object derived from a SgSwitchStatement.
 */
 /*!\fn void SgSwitchStatement::prepend_case(SgCaseOptionStmt *&)
 */
-/*!
-\fn void SgSwitchStatement::set_body(SgBasicBlock *body)
-\brief Access function for p_body.
-See  *body)
-body for documentation \param loop_body SgBasicBlock pointer
-\return Returns void.
-*/
-/*!\fn void SgSwitchStatement::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgSwitchStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
 /*!
+\fn void SgSwitchStatement::set_body(SgBasicBlock *body)
+\brief Access function for p_body.See  *body)
+body for documentation 
+\param loop_body SgBasicBlock pointer
+\return Returns void.
+*/
+/*!
 \fn void SgSwitchStatement::set_item_selector(SgStatement *item_selector)
-\brief Access function for p_item_selector.
-See  *item_selector)
-item_selector for documentation \param for_init_stmt SgExpression pointer
+\brief Access function for p_item_selector.See  *item_selector)
+item_selector for documentation 
+\param for_init_stmt SgExpression pointer
 \return Returns void.
 */
 /*!\fn void SgSwitchStatement::set_string_label(std::string string_label)
-\description See  string_label)
+\brief \brief See  string_label)
 string_label for documentation */
 /*!
 \fn SgBasicBlock *SgSwitchStatement::get_body() const
-\brief Access function for p_body.
-See  const
-body for documentation \return Returns a pointer to a SgBasicBlock.
+\brief Access function for p_body.See  const
+body for documentation 
+\return Returns a pointer to a SgBasicBlock.
 */
+/*!\fn SgLabelRefExp *SgSwitchStatement::get_end_numeric_label() const
+\brief \brief See  const
+end_numeric_label for documentation */
 /*!
 \fn SgStatement *SgSwitchStatement::get_item_selector() const
-\brief Access function for p_item_selector_root.
-See  const
-item_selector for documentation \return Returns a pointer to a SgExpression.
+\brief Access function for p_item_selector_root.See  const
+item_selector for documentation 
+\return Returns a pointer to a SgExpression.
 */
-/*!\fn int SgSwitchStatement::get_end_numeric_label() const
-\description See  const
-end_numeric_label for documentation */
 /*!\fn std::string SgSwitchStatement::get_string_label() const
-\description See  const
+\brief \brief See  const
 string_label for documentation */
 /*!\fn virtual SgName SgSwitchStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgSwitchStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgSwitchStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSwitchStatement::get_numberOfTraversalSuccessors()
-\description See  SgSwitchStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSwitchStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSwitchStatement::get_traversalSuccessorContainer()
-\description See  SgSwitchStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSwitchStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSwitchStatement::get_traversalSuccessorNamesContainer()
-\description See  SgSwitchStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSwitchStatement::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgSwitchStatement::SgSwitchStatement(SgStatement *item_selector,SgBasicBlock *body)
 \brief This is the constructor.
@@ -184,4 +184,4 @@ childIndex for documentation */
 \param startOfConstruct represents the position in the source code
 */
 //@}
-int SAGE_Doxygen_Dummy_15051383618080;
+int SAGE_Doxygen_Dummy_198932187812989;

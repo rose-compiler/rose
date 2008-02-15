@@ -9,7 +9,7 @@
 using namespace std;
 
 
-ClassHierarchyNode::ClassHierarchyNode( SgClassDefinition *cls ) : GraphNode( NULL ), classDefinition( cls ) 
+ClassHierarchyNode::ClassHierarchyNode( SgClassDefinition *cls ) : MultiGraphElem( NULL ), classDefinition( cls ) 
  {}
 
 std::string 
@@ -74,7 +74,7 @@ ClassHierarchyWrapper::findEdge ( ClassHierarchyNode* src, ClassHierarchyNode* s
      // bool edge_exist = false;     
      ClassHierarchyEdge* returnEdge = NULL;
      //std::cout << "iterator1\n";
-     for ( ClassHierarchy::IDEdgeIterator i = classGraph.GetIDNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
+     for ( ClassHierarchy::EdgeIterator i = classGraph.GetNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
         {
 	      //std::cout <<"iterator2" << endl;
 	      ClassHierarchyEdge* currentEdge = i.Current();

@@ -91,40 +91,40 @@ pointer to an object derived from a SgClassSymbol.
 /*!\fn virtual SgNode *SgClassSymbol::copy(SgCopyHelp &help) const
 */
 /*!\fn void SgClassSymbol::set_declaration(SgClassDeclaration *declaration)
-\description See  *declaration)
+\brief \brief See  *declaration)
 declaration for documentation */
 /*!\fn SgClassDeclaration *SgClassSymbol::get_declaration() const
-\description See  const
+\brief \brief See  const
 declaration for documentation */
 /*!
 \fn virtual SgName SgClassSymbol::get_name() const
-\brief Access function for getting name from declarations or types internally.
+\brief Access function for getting name from declarations or types internally.See  const
+name for documentation 
 \internal This is a virtual function.
-See  const
-name for documentation \return Returns SgName.
+\return Returns SgName.
 */
 /*!\fn virtual SgNode *SgClassSymbol::get_symbol_basis() const
-\description See  const
+\brief \brief See  const
 symbol_basis for documentation */
 /*!\fn virtual SgNode *SgClassSymbol::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!
 \fn virtual SgType *SgClassSymbol::get_type() const
-\brief This function returns the type associated with the named entity.
+\brief This function returns the type associated with the named entity.See  const
+type for documentation 
 \internal This is a virtual function.
-See  const
-type for documentation \return Returns SgType*.
+\return Returns SgType*.
 */
 /*!\fn virtual size_t SgClassSymbol::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgClassSymbol::get_numberOfTraversalSuccessors()
-\description See  SgClassSymbol::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgClassSymbol::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClassSymbol::get_traversalSuccessorContainer()
-\description See  SgClassSymbol::traversalSuccessorContainer for documentation */
+\brief \brief See  SgClassSymbol::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClassSymbol::get_traversalSuccessorNamesContainer()
-\description See  SgClassSymbol::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgClassSymbol::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgClassSymbol::SgClassSymbol(SgClassDeclaration *declaration=(0))
 \brief This is the only constructor.
@@ -133,4 +133,4 @@ childIndex for documentation */
 \ref SgClassSymbol_create "Example:create an SgClassSymbol object"
 */
 //@}
-int SAGE_Doxygen_Dummy_17102033515175;
+int SAGE_Doxygen_Dummy_210491281915910;

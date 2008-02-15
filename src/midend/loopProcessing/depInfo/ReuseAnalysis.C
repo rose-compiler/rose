@@ -1,15 +1,8 @@
 
 #include <stdlib.h>
-#include <general.h>
 
 #include <ReuseAnalysis.h>
 #include <DepInfoAnal.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 int GetConstArrayBound( LoopTransformInterface& a, const AstNodePtr& array, 
                         int dim, unsigned defaultSize)
@@ -23,11 +16,11 @@ int GetConstArrayBound( LoopTransformInterface& a, const AstNodePtr& array,
 
 class AstRefGetAccessStride : public ProcessAstNode
 {
-  string name;
-  Boolean Traverse ( AstInterface &fa, const AstNodePtr& v,
+  STD string name;
+  bool Traverse ( AstInterface &fa, const AstNodePtr& v,
                        AstInterface::TraversalVisitType t)
   { 
-   string name1;
+   STD string name1;
    if (fa.IsVarRef(v, 0, &name1)) {
        if (name == name1) {
           return false;
@@ -36,37 +29,37 @@ class AstRefGetAccessStride : public ProcessAstNode
     return true;
   }
  public:
-  Boolean SweepArrayDimension( LoopTransformInterface &fa, const AstNodePtr& r, 
-                                string ivar, int dim)
+  bool SweepArrayDimension( LoopTransformInterface &fa, const AstNodePtr& r, 
+                                STD string ivar, int dim)
   {
    AstInterface::AstNodeList subs;
    if (! fa.IsArrayAccess(r, 0, &subs)) 
       assert(false);
    name = ivar;
-   AstInterface::AstNodeListIterator  listp 
-           = AstInterface::GetAstNodeListIterator(subs);
-   for (int i = 0; !listp.ReachEnd() && i < dim; ++listp,++i) {}
-   assert(!listp.ReachEnd());
+   AstInterface::AstNodeList::iterator  listp = subs.begin(); 
+   for (int i = 0; listp != subs.end() && i < dim; ++listp,++i);
+   assert(listp != subs.end());
    AstNodePtr sub = *listp;
    return !ReadAstTraverse(fa, sub, *this, AstInterface::PreOrder);
   }
   unsigned operator() ( LoopTransformInterface &fa, const AstNodePtr& r, 
-                        string _name, unsigned arrayBound)
+                        STD string _name, unsigned arrayBound)
   {
    AstNodePtr nameAst;
    AstInterface::AstNodeList subs;
+   AstInterface & ai = fa;
    if ( fa.IsArrayAccess(r, &nameAst, &subs)) {
      name = _name;
      AstNodeType elemtype;
-     bool isexp = AstInterface::IsExpression(r, &elemtype);
-     assert(isexp);
+     AstNodePtr isexp = ai.IsExpression(r, &elemtype);
+     assert(isexp != AST_NULL);
      int typesize;
-     AstInterface::GetTypeInfo(elemtype, 0, 0, &typesize); 
+     ai.GetTypeInfo(elemtype, 0, 0, &typesize); 
 
      unsigned size = 1, rsize = 0;
 
-     AstInterface::AstNodeListIterator  list = AstInterface::GetAstNodeListIterator(subs);
-     for (int dim = 0; !list.ReachEnd(); ++list,++dim) { 
+     AstInterface::AstNodeList::iterator  list = subs.begin();
+     for (int dim = 0; list != subs.end(); ++list,++dim) { 
        AstNodePtr sub = *list;
        if (!ReadAstTraverse(fa, sub, *this, AstInterface::PreOrder)) {
           rsize = size;
@@ -80,25 +73,25 @@ class AstRefGetAccessStride : public ProcessAstNode
   }
 };
 
-Boolean ReferenceDimension(LoopTransformInterface& la, const AstNodePtr& r,
-                       const string& ivarname, int dim)
+bool ReferenceDimension(LoopTransformInterface& la, const AstNodePtr& r,
+                       const STD string& ivarname, int dim)
 {
   return AstRefGetAccessStride()(la, r, ivarname, dim);
 }
 
 int ReferenceStride(LoopTransformInterface& la, const AstNodePtr& r, 
-                    const string& ivarname, unsigned arrayBound)
+                    const STD string& ivarname, unsigned arrayBound)
 {
    return AstRefGetAccessStride()(la, r, ivarname, arrayBound );
 }
 
 float SelfSpatialReuse( LoopTransformInterface& la, const AstNodePtr& r, 
-                        const string& ivarname, unsigned linesize,
+                        const STD string& ivarname, unsigned linesize,
                         unsigned defaultArrayBound)
 {
-        unsigned int size = AstRefGetAccessStride()(la, r, ivarname, defaultArrayBound );
+        int size = AstRefGetAccessStride()(la, r, ivarname, defaultArrayBound );
         if (size > 0 && size < linesize) 
-          return 1 - size * 1.0F /linesize ;
+          return 1 - size * 1.0 /linesize ;
         else
           return 0;
 }
@@ -108,7 +101,7 @@ DepType TemporaryReuseRefs( DepInfoConstIterator ep, Map2Object<AstNodePtr, DepD
                             CollectObject<AstNodePtr>& refCollect, int* dist) 
 {
   int mdist = 0;
-  DepType reuseType = (DepType)0;
+  DepType reuseType;
   
   for ( ep.Reset();  !ep.ReachEnd(); ++ep) {
      DepInfo d = ep.Current();
@@ -118,7 +111,7 @@ DepType TemporaryReuseRefs( DepInfoConstIterator ep, Map2Object<AstNodePtr, DepD
              continue;
        reuseType = (DepType)( reuseType | t);
      AstNodePtr src = d.SrcRef(), snk = d.SnkRef();
-     assert(src != 0 && snk != 0);
+     assert(src != AST_NULL && snk != AST_NULL);
      int loop1 = loopmap(src, DEP_SRC), loop2 = loopmap(snk, DEP_SINK); 
      assert(loop1 >= 0 && loop2 >= 0);
      DepRel r = d.Entry(loop1, loop2);
@@ -143,7 +136,7 @@ class CollectArrayRef : public CollectObject<AstNodePtr>
    CollectObject<AstNodePtr> &collect;
    LoopTransformInterface& la;
  public:
-   Boolean operator()(const AstNodePtr& cur) 
+   bool operator()(const AstNodePtr& cur) 
     {
       AstNodePtr array;
       if (la.IsArrayAccess(cur, &array) ) {
@@ -154,7 +147,7 @@ class CollectArrayRef : public CollectObject<AstNodePtr>
     }
    CollectArrayRef( LoopTransformInterface& _la, 
                     CollectObject<AstNodePtr>& _collect) 
-      : collect(_collect), la(_la) {}
+      : la(_la), collect(_collect) {}
 };
 
 void ArrayReferences( LoopTransformInterface& la, const AstNodePtr& s, 

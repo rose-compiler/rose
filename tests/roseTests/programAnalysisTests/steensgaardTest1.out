@@ -1,0 +1,25 @@
+a = &x;
+*x2 = x;
+*a = a;
+a2 = a;
+x3 = *x2;
+allocate(x)
+y = op(y1,y2);
+func_def(p,(p1,p2),(p3,p4))
+func_call(p,(y1,y2),(y3,y4))
+====================
+a LOC1=>LOC2 =>LOC2 
+a2 LOC3=>LOC2 =>LOC2 
+p LOC4=>LOC5 (inparams:  LOC6 LOC7) ->(outparams:  LOC8 LOC9) 
+p1 LOC10=>LOC6 (pending  LOC11) 
+p2 LOC12=>LOC7 (pending  LOC11) 
+p3 LOC13=>LOC8 
+p4 LOC14=>LOC9 
+x LOC2=>LOC2 =>LOC2 
+x2 LOC15=>LOC16 =>LOC2 
+x3 LOC17=>LOC2 =>LOC2 
+y LOC18=>LOC11 
+y1 LOC19=>LOC6 (pending  LOC11) 
+y2 LOC20=>LOC7 (pending  LOC11) 
+y3 LOC21=>LOC8 
+y4 LOC22=>LOC9 

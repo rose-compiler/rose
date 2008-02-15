@@ -34,27 +34,33 @@
 */
 /*!\fn virtual SgNode *SgCloseStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgCloseStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgCloseStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgCloseStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgCloseStatement::post_construction_initialization()
 */
 /*!\fn void SgCloseStatement::set_status(SgExpression *status)
-\description See  *status)
+\brief \brief See  *status)
 status for documentation */
 /*!\fn SgExpression *SgCloseStatement::get_status() const
-\description See  const
+\brief \brief See  const
 status for documentation */
 /*!\fn virtual SgNode *SgCloseStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgCloseStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgCloseStatement::get_numberOfTraversalSuccessors()
-\description See  SgCloseStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgCloseStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgCloseStatement::get_traversalSuccessorContainer()
-\description See  SgCloseStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgCloseStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgCloseStatement::get_traversalSuccessorNamesContainer()
-\description See  SgCloseStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgCloseStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgCloseStatement::SgCloseStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_785326927;
+extern int SAGE_Doxygen_Dummy_792189948;

@@ -1,6 +1,6 @@
 # DQ (5/30/2007): Move to new modern automake macros (previous versions have been depricated)
 # AC_INIT
-AC_INIT(ROSE, 0.9.1a)
+AC_INIT(ROSE, 0.9.2a)
 
 # DQ (5/30/2007): Move to newer version of autoconf (I think this is required to get the new macros).
 # This is reported as bad style at http://sources.redhat.com/automake/automake.html#Extending-aclocal
@@ -30,6 +30,17 @@ AM_CONFIG_HEADER(rose_config.h)
 configure_date=`date '+%A %B %e %H:%M:%S %Y'`
 AC_SUBST(configure_date)
 # echo "In ROSE/con figure: configure_date = $configure_date"
+
+# DQ (1/27/2008): Added based on suggestion by Andreas.  This allows
+# the binary analysis to have more specific information. However, it
+# appears that it requires version 2.61 of autoconf and we are using 2.59.
+# echo "$host_cpu"
+# echo "host_cpu = $host_cpu"
+# echo "host_vendor = $host_vendor"
+# echo "ac_cv_host = $ac_cv_host"
+# echo "host = $host"
+# This does not currently work - I don't know why!
+# AC_DEFINE([ROSE_HOST_CPU],$host_cpu,[Machine CPU Name where ROSE was configured.])
 
 # DQ (9/7/2006): Allow the default prefix to be the current build tree
 # This does not appear to work properly
@@ -75,6 +86,9 @@ USE_EDG_SOURCE_CODE
 
 # Setup Automake conditional in src/frontend/EDG/EDG_3.3/src/Makefile.am
 AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
+AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
+AM_CONDITIONAL(ROSE_BUILD_ROSEHPCT,test "$with_hpct" = true)
+
 
 # echo "At top of configure.in: with_edg_source_code = $with_edg_source_code"
 
@@ -237,6 +251,12 @@ ROSE_SUPPORT_BINARY_ANALYSIS
 
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_BINARY_ANALYSIS_SUPPORT,test ! "$with_binary_analysis" = no)
+
+# Call supporting macro for Binary Analysis
+ROSE_SUPPORT_WINDOWS_BINARY_ANALYSIS
+
+# Setup Automake conditional in Projects/programModeling/Makefile.am
+AM_CONDITIONAL(ROSE_USE_WINDOWS_BINARY_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
 
 ROSE_SUPPORT_XML
 
@@ -723,6 +743,7 @@ src/midend/programAnalysis/CallGraphAnalysis/Makefile
 src/midend/programAnalysis/OAWrap/Makefile
 src/midend/programAnalysis/CFG/Makefile
 src/midend/programAnalysis/dataflowAnalysis/Makefile
+src/midend/programAnalysis/pointerAnal/Makefile
 src/midend/programAnalysis/valuePropagation/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile

@@ -69,24 +69,24 @@
 /*!\fn void SgAccessModifier::setUnknown()
 */
 /*!\fn void SgAccessModifier::set_modifier(enum SgAccessModifier::access_modifier_enum modifier)
-\description See  modifier)
+\brief \brief See  modifier)
 modifier for documentation */
 /*!\fn enum SgAccessModifier::access_modifier_enum SgAccessModifier::get_modifier() const
-\description See  const
+\brief \brief See  const
 modifier for documentation */
 /*!\fn virtual SgNode *SgAccessModifier::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAccessModifier::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAccessModifier::get_numberOfTraversalSuccessors()
-\description See  SgAccessModifier::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAccessModifier::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAccessModifier::get_traversalSuccessorContainer()
-\description See  SgAccessModifier::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAccessModifier::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAccessModifier::get_traversalSuccessorNamesContainer()
-\description See  SgAccessModifier::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAccessModifier::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAccessModifier::SgAccessModifier()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_358645175;
+extern int SAGE_Doxygen_Dummy_766775648;

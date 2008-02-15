@@ -6,7 +6,7 @@ Stmt GetEnclosingLoop( Stmt n, Interface& interface)
 {
   while (true) {
     n = interface.GetParent(n);
-    if (n == 0)
+    if (n == interface.getNULL())
       break;
     if (interface.IsLoop(n))
          break;
@@ -19,7 +19,7 @@ int GetLoopLevel( Stmt s, Interface& interface)
 {
   int r = 0;
   s = GetEnclosingLoop(s,interface);
-  for ( ; s != 0; ++r, s = GetEnclosingLoop(s,interface)) {}
+  for ( ; s != interface.getNULL(); ++r, s = GetEnclosingLoop(s,interface));
   return r;
 }
 
@@ -44,8 +44,8 @@ Stmt GetCommonLoop( Interface& interface, Stmt b1, int dim1,
   if (level != 0)
       *level = dim1;
   if (b1 != b2)
-      return 0;
-  if (b1 != 0 && !interface.IsLoop(b1))
+      return interface.getNULL();
+  if (b1 != interface.getNULL() && !interface.IsLoop(b1))
      b1 = GetEnclosingLoop(b1, interface);
   return b1;
 }

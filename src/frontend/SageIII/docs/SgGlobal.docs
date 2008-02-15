@@ -118,38 +118,38 @@ pointer to an object derived from a SgGlobal.
 */
 /*!
 \fn SgDeclarationStatementPtrList &SgGlobal::get_declarations()
-\brief Returns a list to the global scope declarations.
-See  &SgGlobal::declarations for documentation \return Returns an STL list by reference.
+\brief Returns a list to the global scope declarations.See  &SgGlobal::declarations for documentation 
+\return Returns an STL list by reference.
 */
 /*!
 \fn const SgDeclarationStatementPtrList &SgGlobal::get_declarations() const
-\brief Returns a const list to the global scope declarations.
-See  const
-declarations for documentation \return Returns a const STL list by reference.
+\brief Returns a const list to the global scope declarations.See  const
+declarations for documentation 
+\return Returns a const STL list by reference.
 */
 /*!\fn virtual SgName SgGlobal::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!
 \fn virtual SgName SgGlobal::get_qualified_name() const
-\brief Returns SgName (a string) representing the name of the current scope (empty string).
+\brief Returns SgName (a string) representing the name of the current scope (empty string).See  const
+qualified_name for documentation 
    See discussion of mangled names in the documentation.
-See  const
-qualified_name for documentation \return Returns SgName (a string).
+\return Returns SgName (a string).
 */
 /*!\fn virtual SgNode *SgGlobal::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgGlobal::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgGlobal::get_numberOfTraversalSuccessors()
-\description See  SgGlobal::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgGlobal::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGlobal::get_traversalSuccessorContainer()
-\description See  SgGlobal::traversalSuccessorContainer for documentation */
+\brief \brief See  SgGlobal::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGlobal::get_traversalSuccessorNamesContainer()
-\description See  SgGlobal::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgGlobal::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgGlobal::SgGlobal()
 */
 //@}
-int SAGE_Doxygen_Dummy_10267138782818;
+int SAGE_Doxygen_Dummy_3823314095563;

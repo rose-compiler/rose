@@ -9,18 +9,14 @@
 #include <DepRel.h>
 #include <LoopTree.h>
 #include <LoopTreeObserver.h>
+#include <MultiGraphObserve.h>
 #include <PtrMap.h>
 #include <PtrSet.h>
 #include <LoopTransformInterface.h>
 #include <GraphScope.h>
 
-class LoopTreeToString{
- public:
-  static std::string ToString( const LoopTreeNode* n) { return n->ToString(); }
-};
-
 class LoopTreeDepGraphNode 
-   : public GraphObserveNodeTemplate<LoopTreeNode*, LoopTreeNode*, LoopTreeToString>,
+   : public MultiGraphObserveNodeTemplate<LoopTreeNode*>,
      public LoopTreeObserver
 {
    DepInfo loopMap;   
@@ -28,55 +24,55 @@ class LoopTreeDepGraphNode
    ~LoopTreeDepGraphNode() 
      { 
       LoopTreeNode *s = GetInfo();
-      if (s && s->GetOrigStmt() != 0)
+      if (s && s->GetOrigStmt() != AST_NULL)
         s->DetachObserver(*this);
      }
   void UpdateDeleteNode( const LoopTreeNode *n) { GetInfo() = 0; }
-  void UpdateSwapStmtLoop( const SwapStmtLoopInfo &info)
-       { loopMap.SwapLoop(info.GetLoop1(),info.GetLoop2(),DEP_SINK); 
-         domain.SwapLoop(info.GetLoop1(), info.GetLoop2());
+  void UpdateSwapStmtLoop( const SwapStmtLoopInfo &_info)
+       { loopMap.SwapLoop(_info.GetLoop1(),_info.GetLoop2(),DEP_SINK); 
+         domain.SwapLoop(_info.GetLoop1(), _info.GetLoop2());
        }
-  void UpdateMergeStmtLoop( const MergeStmtLoopInfo &info)
-       { loopMap.MergeLoop(info.GetLoop1(), info.GetLoop2(),DEP_SINK); 
-         domain.MergeLoop(info.GetLoop1(), info.GetLoop2());
-         if (info.GetMergeAlign() != 0) {
-           loopMap.AlignLoop(info.GetLoop1(), -info.GetMergeAlign(),DEP_SINK);
-           domain.AlignLoop(info.GetLoop1(), -info.GetMergeAlign());
+  void UpdateMergeStmtLoop( const MergeStmtLoopInfo &_info)
+       { loopMap.MergeLoop(_info.GetLoop1(), _info.GetLoop2(),DEP_SINK); 
+         domain.MergeLoop(_info.GetLoop1(), _info.GetLoop2());
+         if (_info.GetMergeAlign() != 0) {
+           loopMap.AlignLoop(_info.GetLoop1(), -_info.GetMergeAlign(),DEP_SINK);
+           domain.AlignLoop(_info.GetLoop1(), -_info.GetMergeAlign());
          }
        }
-   LoopTreeDepGraphNode(GraphCreate *c, LoopTreeNode *s = 0)
-       : GraphObserveNodeTemplate<LoopTreeNode*,LoopTreeNode*,LoopTreeToString>(c,s) 
+   LoopTreeDepGraphNode(MultiGraphCreate *c, LoopTreeNode *s = 0)
+       : MultiGraphObserveNodeTemplate<LoopTreeNode*>(c,s) 
        { if (s != 0) {
             int level = s->LoopLevel();
             loopMap = DepInfoGenerator::GetIDDepInfo(level,false);
             domain = DomainCond(level);
          }    
        } 
-   LoopTreeDepGraphNode(GraphCreate *c, LoopTreeNode* s,
+   LoopTreeDepGraphNode(MultiGraphCreate *c, LoopTreeNode* s,
                         const DomainCond _dm)
-     : GraphObserveNodeTemplate<LoopTreeNode*,LoopTreeNode*,LoopTreeToString>(c, s),
+     : MultiGraphObserveNodeTemplate<LoopTreeNode*>(c, s),
        loopMap(DepInfoGenerator::GetIDDepInfo(s->LoopLevel(),false)), 
        domain(_dm)
-     { if (s->GetOrigStmt() != 0)
+     { if (s->GetOrigStmt() != AST_NULL)
          s->AttachObserver(*this);
      }
-   LoopTreeDepGraphNode(GraphCreate *c, LoopTreeNode* s,
+   LoopTreeDepGraphNode(MultiGraphCreate *c, LoopTreeNode* s,
                         const DepInfo& _loopMap, const DomainCond _dm)
-     : GraphObserveNodeTemplate<LoopTreeNode*,LoopTreeNode*,LoopTreeToString>(c, s),
+     : MultiGraphObserveNodeTemplate<LoopTreeNode*>(c, s),
        loopMap(_loopMap), domain(_dm)
-     { if (s->GetOrigStmt() != 0) 
+     { if (s->GetOrigStmt() != AST_NULL) 
 	 s->AttachObserver(*this);
      }
 
-   void UpdateInsertStmtLoop( const InsertStmtLoopInfo& info)
+   void UpdateInsertStmtLoop( const InsertStmtLoopInfo& _info)
        { 
-         int level = info.GetLoop();
+         int level = _info.GetLoop();
          loopMap.InsertLoop(level, DEP_SINK); 
          domain.InsertLoop(level);
        }
-  void UpdateDeleteStmtLoop( const DeleteStmtLoopInfo& info)
+  void UpdateDeleteStmtLoop( const DeleteStmtLoopInfo& _info)
        { 
-         int level = info.GetLoop();
+         int level = _info.GetLoop();
          loopMap.RemoveLoop(level, DEP_SINK); 
          domain.RemoveLoop(level);
        }
@@ -93,19 +89,19 @@ class LoopTreeDepGraphNode
         assert(false); }
    const DepInfo& GetLoopMap() const { return loopMap; }
    const DomainCond& GetDomain() const { return domain; }
+   STD string toString() const { return GetInfo()->toString(); }
 
  friend class LoopTreeDepGraphCreate;
 };
 
 typedef GraphAccessTemplate<LoopTreeDepGraphNode,DepInfoEdge> LoopTreeDepGraph;
-typedef LoopTreeDepGraph::NodeIterator LoopTreeDepGraphNodeIterator;
 typedef TransDepGraphCreate<LoopTreeDepGraphNode> LoopTreeTransDepGraphCreate;
 
 class LoopTreeNodeDepMap
 {
   PtrMapWrap <LoopTreeNode, LoopTreeDepGraphNode>* map;
-  void InsertMapping( const LoopTreeNode*  info, LoopTreeDepGraphNode *n)
-        { map->InsertMapping(info, n); } 
+  void InsertMapping( const LoopTreeNode*  _info, LoopTreeDepGraphNode *n)
+        { map->InsertMapping(_info, n); } 
  public:
   LoopTreeNodeDepMap(PtrMapWrap <LoopTreeNode, LoopTreeDepGraphNode>* m) : map(m) {}
   LoopTreeNodeDepMap( const LoopTreeNodeDepMap& that) : map(that.map) {}
@@ -123,6 +119,7 @@ class LoopTreeDepGraphCreate
      public LoopTreeObserver
 {
   LoopTreeNodeDepMap map;
+  typedef DepInfoGraphCreate<LoopTreeDepGraphNode> GraphCreateBase;
 
   void UpdateDeleteNode( const LoopTreeNode *n);
   void UpdateSplitStmt( const SplitStmtInfo &info);
@@ -147,22 +144,11 @@ class LoopTreeDepGraphCreate
   LoopTreeDepGraphNode* CreateNode(LoopTreeNode *s, const DomainCond& c);
   LoopTreeDepGraphNode* CreateNode(LoopTreeNode *s, const DepInfo& m,
                                     const DomainCond& c);
-//Boolean DeleteNode( LoopTreeDepGraphNode *n);
-  int DeleteNode( LoopTreeDepGraphNode *n);
+  bool DeleteNode( LoopTreeDepGraphNode *n);
   DepInfoEdge* CreateEdge( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2,
 			   const DepInfo& info);
   DepInfoEdge* CreateEdgeFromOrigAst( LoopTreeDepGraphNode *n1,
                                       LoopTreeDepGraphNode *n2, const DepInfo& info);
-
-  typedef GraphSelectEndSet2<LoopTreeDepGraph,
-                             SelectPtrSet<const LoopTreeDepGraphNode> >
-           SelectNode;
-  typedef GraphSelectCompound<LoopTreeDepGraph, SelectNode,SelectDepLevel> 
-          SelectSubtree;
-  typedef GraphSelect<LoopTreeDepGraph, 
-             GraphSelectCompound<LoopTreeDepGraph, SelectNode,SelectDepLevel> >
-          SubtreeGraph;
-  static SubtreeGraph GetSubtreeGraph(LoopTreeDepGraph* g, const LoopTreeNodeDepMap& map, LoopTreeNode* r);
 };
 
 
@@ -177,6 +163,7 @@ class LoopTreeDepComp
   LoopTreeDepComp(LoopTreeDepComp& that) 
     { map = that.map; root = that.root;  tc = that.tc;
      depGraph = that.depGraph; }
+  virtual ~LoopTreeDepComp() {}
   void SetTreeRoot(LoopTreeNode *r) { root = r; }
   void SetDepGraph( LoopTreeDepGraph *d) { depGraph = d; }
   void SetMap(const LoopTreeNodeDepMap& _map) { map = _map; }
@@ -201,18 +188,39 @@ class LoopTreeDepComp
   void DumpNode( LoopTreeNode *s) const;
 };
 
-class LoopTreeDepCompSubtree : public LoopTreeDepComp
+class LoopTreeDepGraphSubtree : public GraphSelect<LoopTreeDepGraph>
 {
-  typedef GraphScopeTemplate<LoopTreeDepGraphNode,DepInfoEdge,
-                      LoopTreeDepGraphCreate::SubtreeGraph> ScopeType;
-  ScopeType scope;
- public:
-  LoopTreeDepCompSubtree( LoopTreeDepComp &c, LoopTreeNode* root);
-  LoopTreeDepCompSubtree( LoopTreeDepCompSubtree& that) 
-     : LoopTreeDepComp(that), scope(that.scope) {}
+   PtrSetWrap<const LoopTreeDepGraphNode> selset; 
+   int level;
+  public:
+   LoopTreeDepGraphSubtree(const LoopTreeDepComp& comp, LoopTreeNode* root,
+                           LoopTreeDepGraph* graph)
+      : GraphSelect<LoopTreeDepGraph>(graph)
+    {
+      for (LoopTreeTraverseSelectStmt iter(root); !iter.ReachEnd(); ++iter) {
+           LoopTreeNode *s = iter.Current(); 
+           selset.insert( comp.GetDepNode(s) );
+      }
+      level = root->LoopLevel();
+    }
+    virtual bool ContainNode(const LoopTreeDepGraphNode* n) const
+       { return selset.IsMember(n); }
+    virtual bool ContainEdge(const DepInfoEdge* e) const
+       { 
+        return selset.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeOut))
+              && selset.IsMember(impl->GetEdgeEndPoint(e,GraphAccess::EdgeIn))
+              && SelectDepLevel(e->GetInfo(), level);
+       }
 };
 
-class LoopTreeDepCompCreate : public LoopTreeDepComp, public GraphObserver
+class LoopTreeDepCompSubtree : public LoopTreeDepComp
+{
+ public:
+  LoopTreeDepCompSubtree( LoopTreeDepComp &c, LoopTreeNode* root);
+  virtual ~LoopTreeDepCompSubtree() { delete GetDepGraph(); }
+};
+
+class LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiGraphObserver
 {
   DepInfoAnal anal;
   PtrMapWrap <LoopTreeNode, LoopTreeDepGraphNode> nodeMap;
@@ -220,7 +228,7 @@ class LoopTreeDepCompCreate : public LoopTreeDepComp, public GraphObserver
   LoopTreeCreate treeCreate;
   AstNodePtr top;
 
-  void UpdateDeleteNode( const GraphNode *n);
+  void UpdateDeleteNode( const MultiGraphElem *n);
  public:
   LoopTreeDepCompCreate( LoopTransformInterface &fa, const AstNodePtr& top, 
                          bool buildDepGraph = true);

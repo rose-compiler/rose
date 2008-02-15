@@ -99,46 +99,52 @@ set is X86, other register sets could be supported in the future.
 */
 /*!\fn virtual SgNode *SgAsmStmt::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAsmStmt::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAsmStmt::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgAsmStmt::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgAsmStmt::post_construction_initialization()
 */
 /*!
 \fn SgAsmStmt::AsmRegisterNameList &SgAsmStmt::get_clobberRegisterList()
-\brief Access function for operand list (STL list).
-See  &SgAsmStmt::clobberRegisterList for documentation \return Returns STL list of SgInitializedName::asm_register_name_enum by reference (SgAsmStmt::AsmRegisterNameList).
+\brief Access function for operand list (STL list).See  &SgAsmStmt::clobberRegisterList for documentation 
+\return Returns STL list of SgInitializedName::asm_register_name_enum by reference (SgAsmStmt::AsmRegisterNameList).
 */
 /*!
 \fn SgExpressionPtrList &SgAsmStmt::get_operands()
-\brief Access function for operand list (STL list).
-See  &SgAsmStmt::operands for documentation \return Returns STL list of SgAsmOp by reference.
+\brief Access function for operand list (STL list).See  &SgAsmStmt::operands for documentation 
+\return Returns STL list of SgAsmOp by reference.
 */
 /*!
 \fn const SgAsmStmt::AsmRegisterNameList &SgAsmStmt::get_clobberRegisterList() const
-\brief Access function for operand list (STL list).
-See  const
-clobberRegisterList for documentation \return Returns STL list of SgInitializedName::asm_register_name_enum by const reference (SgAsmStmt::AsmRegisterNameList).
+\brief Access function for operand list (STL list).See  const
+clobberRegisterList for documentation 
+\return Returns STL list of SgInitializedName::asm_register_name_enum by const reference (SgAsmStmt::AsmRegisterNameList).
 */
 /*!
 \fn const SgExpressionPtrList &SgAsmStmt::get_operands() const
-\brief Access function for operand list (STL list).
-See  const
-operands for documentation \return Returns STL list of SgAsmOp by const reference.
+\brief Access function for operand list (STL list).See  const
+operands for documentation 
+\return Returns STL list of SgAsmOp by const reference.
 */
 /*!\fn virtual SgName SgAsmStmt::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgAsmStmt::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAsmStmt::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAsmStmt::get_numberOfTraversalSuccessors()
-\description See  SgAsmStmt::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAsmStmt::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmStmt::get_traversalSuccessorContainer()
-\description See  SgAsmStmt::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAsmStmt::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmStmt::get_traversalSuccessorNamesContainer()
-\description See  SgAsmStmt::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAsmStmt::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAsmStmt::SgAsmStmt()
 */
 //@}
-int SAGE_Doxygen_Dummy_173761161419489;
+int SAGE_Doxygen_Dummy_256022841620624;

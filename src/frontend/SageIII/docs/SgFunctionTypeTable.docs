@@ -102,29 +102,29 @@ pointer to an object derived from a SgFunctionTypeTable.
 */
 /*!
 \fn void SgFunctionTypeTable::set_function_type_table(SgSymbolTable *function_type_table)
-\brief Access function for p_function_type_table.
-See  *function_type_table)
-function_type_table for documentation \return Returns void.
+\brief Access function for p_function_type_table.See  *function_type_table)
+function_type_table for documentation 
+\return Returns void.
 */
 /*!
 \fn SgSymbolTable *SgFunctionTypeTable::get_function_type_table() const
-\brief Returns pointer to SgSymbolTable used for function type symbols only.
-See  const
-function_type_table for documentation \return Returns pointer to SgSymbolTable.
+\brief Returns pointer to SgSymbolTable used for function type symbols only.See  const
+function_type_table for documentation 
+\return Returns pointer to SgSymbolTable.
 */
 /*!\fn virtual SgNode *SgFunctionTypeTable::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgFunctionTypeTable::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFunctionTypeTable::get_numberOfTraversalSuccessors()
-\description See  SgFunctionTypeTable::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFunctionTypeTable::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionTypeTable::get_traversalSuccessorContainer()
-\description See  SgFunctionTypeTable::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFunctionTypeTable::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionTypeTable::get_traversalSuccessorNamesContainer()
-\description See  SgFunctionTypeTable::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgFunctionTypeTable::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgFunctionTypeTable::~SgFunctionTypeTable()
 */
 //@}
-int SAGE_Doxygen_Dummy_214532390630699;
+int SAGE_Doxygen_Dummy_325261022727;

@@ -1,20 +1,12 @@
-#include <general.h>
-
 #include <iostream>
 #include <sstream>
 
 #include <DomainInfo.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
 inline DomainInfoImpl* Clone(const DomainInfoImpl& that)
    { return that.Clone(); }
 
-typedef  LatticeElemList<DomainCond>::Iterator DomainInfoIterator;
+typedef  LatticeElemList<DomainCond>::iterator DomainInfoIterator;
 
 DomainCondConstIterator DomainInfo::GetConstIterator() const
  { return new IteratorImplTemplate<DomainCond, DomainInfoIterator>(DomainInfoIterator(ConstRef()) ); }
@@ -32,22 +24,22 @@ DomainInfo:: DomainInfo(DomainCond c)
 
 int DomainInfo::NumOfConds() const { return ConstRef().NumberOfEntries(); }
 
-Boolean DomainInfo::AddCond( const DomainCond &c)
+bool DomainInfo::AddCond( const DomainCond &c)
      { return UpdateRef().AddElem(c); }
 
-Boolean DomainInfo::operator |= (const DomainInfo &that)
+bool DomainInfo::operator |= (const DomainInfo &that)
        {  return UpdateRef() |= that.ConstRef(); }
 
-void DomainInfo:: UpdateDomainCond( Boolean (*Update)(DomainCond &info) )
+void DomainInfo:: UpdateDomainCond( bool (*Update)(DomainCond &info) )
       { UpdateRef().UpdateElem(Update); }
 
-string DomainInfo::ToString() const 
+STD string DomainInfo::toString() const 
 { 
-  string res;
+  STD string res;
   const LatticeElemList<DomainCond>& list = ConstRef();
-  for ( LatticeElemList<DomainCond>::Iterator iter(list); 
+  for ( LatticeElemList<DomainCond>::iterator iter(list); 
         !iter.ReachEnd(); iter++) {
-       res = res + iter.Current().ToString() + "\n";   
+       res = res + iter.Current().toString() + "\n";   
   }
   return res;
 }
@@ -78,9 +70,9 @@ void DomainCond :: SetLoopRel(int index1, int index2, const DepRel &r)
    ClosureCond();
 } 
 
-string DomainCond :: ToString() const 
+STD string DomainCond :: toString() const 
 {  
-   stringstream res;
+   STD stringstream res;
 
    int num = NumOfLoops();
    res << "# of loops = " << num << ": ";
@@ -88,14 +80,14 @@ string DomainCond :: ToString() const
       for (int j = i+1; j < num; j++) { 
         DepRel r = Entry(i,j);
         if (!r.IsBottom()) {
-           res << i << "," << j << ":" << r.ToString() << ";"; 
+           res << i << "," << j << ":" << r.toString() << ";"; 
         }
      }
    }
    return res.str();
 }
 
-Boolean DomainCond :: IsTop() const
+bool DomainCond :: IsTop() const
 {
   if (ConstPtr() == 0)
     return true;
@@ -108,7 +100,7 @@ Boolean DomainCond :: IsTop() const
   return false;
 }
 
-Boolean DomainCond :: IsBottom() const
+bool DomainCond :: IsBottom() const
 {
   for (int i = 0; i < NumOfLoops(); i++) {
     for (int j = i+1; j < NumOfLoops(); j++) {
@@ -119,7 +111,7 @@ Boolean DomainCond :: IsBottom() const
   return true;
 }
 
-Boolean DomainCond :: ClosureCond()
+bool DomainCond :: ClosureCond()
 {
    for (int i = 0; i < NumOfLoops(); ++i) {
      for (int j = i+1; j < NumOfLoops(); ++j) {
@@ -128,21 +120,21 @@ Boolean DomainCond :: ClosureCond()
     }
   }
    DomainCond d1 = (*this);
-Boolean mod = false;
+bool mod = false;
    while ( (*this) *= d1) 
      mod = true;
    return mod;
 }
 
 
-Boolean DomainCond :: operator |= ( const DomainCond &d2)
+bool DomainCond :: operator |= ( const DomainCond &d2)
 {
   return DepInfo:: operator |=(d2);
 }
 
-Boolean DomainCond :: operator &=( const DomainCond &d2)
+bool DomainCond :: operator &=( const DomainCond &d2)
 {
-Boolean r = DepInfo:: operator &= (d2);
+bool r = DepInfo:: operator &= (d2);
   ClosureCond();
   return r;
 }
@@ -261,7 +253,7 @@ DomainInfo operator - ( const DomainInfo &info1, const DomainInfo& info2)
   return result;
 }
 
-Boolean DomainInfo :: IsTop() const
+bool DomainInfo :: IsTop() const
 {
   if (NumOfConds() == 0)
     return true;
@@ -272,7 +264,7 @@ Boolean DomainInfo :: IsTop() const
   return false;
 }
 
-Boolean DomainInfo :: IsBottom() const
+bool DomainInfo :: IsBottom() const
 {
   if (NumOfConds() == 1) {
     if (ConstRef().First()->GetEntry().IsBottom())

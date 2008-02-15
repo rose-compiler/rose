@@ -1,13 +1,5 @@
-// DQ (1/1/2006): This is OK if not declared in a header file
-using namespace std;
-
-#include <general.h>
 #include <ArrayInterface.h>
 #include <CPPAstInterface.h>
-
-// DQ (3/13/2006): If we have to have this at lease it is 
-// not in the header files seen by ALL ROSE applications.
-#define Boolean int
 
 extern bool DebugAliasAnal();
 
@@ -25,12 +17,12 @@ void ArrayInterface::observe( AstInterface& fa)
 }
 
 void ArrayInterface::
-ObserveCopyAst( AstInterface& fa, const AstNodePtr& orig, const AstNodePtr& copy)
+ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy)
 {
-  map <AstNodePtr, int>::const_iterator p1 = dimmap.find(orig);
+  STD map <AstNodePtr, int>::const_iterator p1 = dimmap.find(orig);
   if (p1 != dimmap.end())
     dimmap[copy] = (*p1).second;
-  map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p2 = lenmap.find(orig);
+  STD map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p2 = lenmap.find(orig);
   if (p2 != lenmap.end())
     lenmap[copy] = (*p2).second;
 }
@@ -43,14 +35,15 @@ stop_observe( AstInterface& fa)
 }
 
 bool ArrayInterface ::
-may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
+may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
 {
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   AstNodePtr array1, array2;
   ArrayAnnotation* annot = ArrayAnnotation::get_inst();
-  bool elem1 = annot->is_access_array_elem( r1, &array1) ;
-  bool len1 = annot->is_access_array_length( r1, &array1);
-  bool elem2 = annot->is_access_array_elem( r2, &array2);
-  bool len2 = annot->is_access_array_length( r2, &array2);
+  bool elem1 = annot->is_access_array_elem( fa, r1, &array1) ;
+  bool len1 = annot->is_access_array_length( fa, r1, &array1);
+  bool elem2 = annot->is_access_array_elem( fa, r2, &array2);
+  bool len2 = annot->is_access_array_length( fa, r2, &array2);
 
   if ( (elem1 && len2) || (len1 && elem2))  {
      return false;
@@ -58,45 +51,45 @@ may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
   else if ( (elem1 && elem2)  || (len1 && len2)) {
      if (may_alias(fa, array1, array2)) {
         if (DebugAliasAnal())
-            cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+            STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
         return true;
      }
   }
   else if (elem1 || len1) {
      if (may_alias(fa, array1, r2)) {
         if (DebugAliasAnal())
-            cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+            STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
         return true;
      }
   }
   else if (elem2 || len2) {
      if (may_alias(fa, r1, array2)) {
         if (DebugAliasAnal())
-            cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+            STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
         return true;
      }
   }
   else {
      AstInterface::AstNodeList args;
-     if (annot->is_array_construct_op( r1, &args)) {
-        for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(args);
-             !p.ReachEnd(); ++p) {
+     if (annot->is_array_construct_op( fa, r1, &args)) {
+        for (AstInterface::AstNodeList::iterator p = args.begin();
+             p != args.end(); ++p) {
           AstNodePtr cur = *p;
           if (may_alias( fa, cur, r2)) {
             if (DebugAliasAnal())
-               cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+               STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
              return true;
           }
         }
         return false;    
      }
-     else if (annot->is_array_construct_op( r2, &args)) {
-        for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(args);
-             !p.ReachEnd(); ++p) {
+     else if (annot->is_array_construct_op( fa, r2, &args)) {
+        for (AstInterface::AstNodeList::iterator p = args.begin();
+             p != args.end(); ++p) {
           AstNodePtr cur = *p;
           if (may_alias( fa, cur, r1)) {
             if (DebugAliasAnal())
-               cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+               STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
              return true;
           }
         }
@@ -108,30 +101,30 @@ may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
 }
 
 bool ArrayInterface::
-get_array_opt(AstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& r)
+get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& r)
 {
-  string name;
+  STD string name;
   if (!fa.IsVarRef(array, 0, &name))
     return false;
   
-  map <string, ArrayOptDescriptor>::const_iterator p = optmap.find(name);
+  STD map <STD string, ArrayOptDescriptor>::const_iterator p = optmap.find(name);
   if (p != optmap.end()) 
   {
     r = (*p).second;
     return true;
   }
   ArrayOptDescriptor desc;
-  if (!ArrayAnnotation::get_inst()->has_array_opt( array, &desc))
+  if (!ArrayAnnotation::get_inst()->has_array_opt( fa, array, &desc))
     return false;
   
-  // int dim;
+  int dim;
   for (ArrayOptDescriptor::InitVarIterator p = desc.init_var_begin();
        p != desc.init_var_end(); ++p) {
     DefineVariableDescriptor& cur = *p;
     ExtendibleParamDescriptor &par = cur.get_var();
-    string parname = par.get_param_name();
-    par.get_param() = SymbolicVar( name + parname, 0);
-    SymbolicVal newpar = new SymbolicVar(name + parname, 0);
+    STD string parname = par.get_param_name();
+    par.get_param() = SymbolicVar( name + parname, AST_NULL);
+    SymbolicVal newpar = new SymbolicVar(name + parname, AST_NULL);
     desc.replace_var(parname, newpar);
   }
   optmap[name] = desc;
@@ -142,7 +135,7 @@ get_array_opt(AstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& r)
 void ArrayInterface ::
 set_array_dimension( const AstNodePtr& arrayexp, int dim)
 {
-  map <AstNodePtr, int>::const_iterator p = dimmap.find(arrayexp);
+  STD map <AstNodePtr, int>::const_iterator p = dimmap.find(arrayexp);
   if (p != dimmap.end()) {
      int olddim = (*p).second;
      assert(olddim == dim);
@@ -152,15 +145,15 @@ set_array_dimension( const AstNodePtr& arrayexp, int dim)
 }
 
 bool ArrayInterface :: 
-is_array_exp( const AstNodePtr& array, 
+is_array_exp( CPPAstInterface& fa, const AstNodePtr& array, 
 	      int *dimp, SymbolicFunctionDeclarationGroup *lenp, bool *changep)
 {
   ArrayDefineDescriptor desc;
-  if (!ArrayAnnotation::get_inst()->known_array( array, &desc))
+  if (!ArrayAnnotation::get_inst()->known_array( fa, array, &desc))
     return false;
   if (lenp != 0) 
   {
-    map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p = lenmap.find(array);
+    STD map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p = lenmap.find(array);
     if (p != lenmap.end()) 
     {
       *lenp = (*p).second;
@@ -170,7 +163,7 @@ is_array_exp( const AstNodePtr& array,
   int dim=0;
   if (dimp != 0 || lenp != 0) 
   {
-    map <AstNodePtr, int>::const_iterator p = dimmap.find(array);
+    STD map <AstNodePtr, int>::const_iterator p = dimmap.find(array);
     if (p != dimmap.end()) 
     {
       dim = (*p).second;
@@ -190,7 +183,7 @@ is_array_exp( const AstNodePtr& array,
     *changep = true;
   HasValueDescriptor valdesc;
   bool hasval =  valueCollect.known_value( array, &valdesc, changep);
-  if (changep != 0 && !AstInterface::IsVarRef(array))
+  if (changep != 0 && !fa.IsVarRef(array))
     *changep = false; 
     
   if (dim == 0) 
@@ -201,7 +194,7 @@ is_array_exp( const AstNodePtr& array,
 	|| dimval.get_val().GetTypeName() != "int")  {
       dimval = desc.get_dimension();
     }
-    if (!dimval.get_val().ToInt(dim))
+    if (!dimval.get_val().isConstInt(dim))
         assert(false);
     if (dimp != 0)
       *dimp = dim;
@@ -216,7 +209,7 @@ is_array_exp( const AstNodePtr& array,
       SymbolicValDescriptor parval(i);
       ExtendibleParamDescriptor par_i(parval);
       SymbolicValDescriptor tmp;
-      if (hasval && valdesc.has_value( string(buf), &tmp)
+      if (hasval && valdesc.has_value( STD string(buf), &tmp)
 	  && !tmp.is_bottom() && !tmp.is_top()) 
 	len.push_back( SymbolicFunctionDeclaration( par_i, tmp));
     }
@@ -228,15 +221,15 @@ is_array_exp( const AstNodePtr& array,
 }
 
 bool ArrayInterface::
-is_array_mod_op( const AstNodePtr& arrayExp, AstNodePtr* arrayp, int *dimp, 
+is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, AstNodePtr* arrayp, int *dimp, 
 		 SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem, 
 		 bool *reshape)
 {
   AstNodePtr array;
   ArrayDescriptor desc;
-  if (!ArrayAnnotation::get_inst()->is_array_mod_op( arrayExp, &array, &desc, reshape)) 
+  if (!ArrayAnnotation::get_inst()->is_array_mod_op( fa, arrayExp, &array, &desc, reshape)) 
     return false;
-  HasValueMapReplace repl( valueCollect.get_value_map(), true);
+  HasValueMapReplace repl( fa, valueCollect.get_value_map(), true);
   desc.replace_val(repl);
 
   if (arrayp != 0)
@@ -252,7 +245,7 @@ is_array_mod_op( const AstNodePtr& arrayExp, AstNodePtr* arrayp, int *dimp,
     *len = desc.get_length();
   if (dimp != 0 || len != 0) 
   {
-    if (!is_array_exp( array, dimp, len, reshape))
+    if (!is_array_exp( fa, array, dimp, len, reshape))
       assert(false);
     if (dimp != 0 && dim1 != 0 && *dimp > dim1)
        *dimp = dim1;
@@ -268,12 +261,13 @@ is_array_mod_op( const AstNodePtr& arrayExp, AstNodePtr* arrayp, int *dimp,
 }
 
 bool ArrayInterface::
-is_array_construct_op( const AstNodePtr& arrayExp, AstInterface::AstNodeList* alias,int *dimp, 
+is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
+                       AstInterface::AstNodeList* alias,int *dimp, 
  			      SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
 {
   ArrayDescriptor desc;
-  if (ArrayAnnotation::get_inst()->is_array_construct_op( arrayExp, alias, &desc) ) {
-    HasValueMapReplace repl( valueCollect.get_value_map(), true);
+  if (ArrayAnnotation::get_inst()->is_array_construct_op( fa, arrayExp, alias, &desc) ) {
+    HasValueMapReplace repl( fa, valueCollect.get_value_map(), true);
     desc.replace_val(repl);
 
     int dim = 0, dim1 = 0;
@@ -287,7 +281,7 @@ is_array_construct_op( const AstNodePtr& arrayExp, AstInterface::AstNodeList* al
       *len = desc.get_length();
     if (dimp != 0 || len != 0)
     {
-      if (!is_array_exp( arrayExp, dimp, len))
+      if (!is_array_exp( fa, arrayExp, dimp, len))
 	assert(false);
       if (dimp != 0 && dim1 != 0 && *dimp > dim1)
         *dimp = dim1;
@@ -304,17 +298,17 @@ is_array_construct_op( const AstNodePtr& arrayExp, AstInterface::AstNodeList* al
 
 
 AstNodePtr ArrayInterface::
-impl_array_opt_init( AstInterface& fa, const AstNodePtr& array, bool insertInit)
+impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, bool insertInit)
 {
   ArrayOptDescriptor desc;
 
   if (!get_array_opt( fa, array, desc))
-    return 0;  
+    return AST_NULL;  
 
   int dim;
-  if (!is_array_exp( array, &dim))
+  if (!is_array_exp( fa, array, &dim))
     assert(false);
-  AstNodePtr result = insertInit? 0 : fa.CreateBasicBlock();
+  AstNodePtr result = insertInit? AST_NULL : fa.CreateBlock();
   for (ArrayOptDescriptor::InitVarIterator p = desc.init_var_begin();
        p != desc.init_var_end(); ++p) {
     DefineVariableDescriptor& cur = *p;
@@ -322,29 +316,29 @@ impl_array_opt_init( AstInterface& fa, const AstNodePtr& array, bool insertInit)
     cur.replace_var( "dimension", dim);
 
     const ExtendibleParamDescriptor& par = cur.get_var();
-    string extname = par.get_extend_var();
-    string parname = par.get_param_name();
+    STD string extname = par.get_extend_var();
+    STD string parname = par.get_param_name();
     int lb = -1, ub = -1;
     par.get_extension( lb, ub);
-    string vartype = cur.get_var_type();
+    STD string vartype = cur.get_var_type();
     for (int i = lb; i <= ub; ++i) {
-      string varname = parname;
+      STD string varname = parname;
       SymbolicValDescriptor initval = cur.get_var_init();
-      // if (i >= 0) {
+      if (i >= 0) {
 	varname = SymbolicExtendVar::get_varname( varname, i);
 	initval.replace_var(extname, i); 
-      // }
+      }
       AstNodePtr init = initval.get_val().CodeGen(fa);
       if (insertInit) {
-	string varname1 = fa.NewVar( fa.GetType(vartype), varname, false, 0, init);
+	STD string varname1 = fa.NewVar( fa.GetType(vartype), varname, false, AST_NULL, init);
 	assert( varname1 == varname);
       }
       else {
-	string varname1 = fa.NewVar( fa.GetType(vartype), varname);
+	STD string varname1 = fa.NewVar( fa.GetType(vartype), varname);
 	assert( varname1 == varname);
 	AstNodePtr var = fa.CreateVarRef( varname);
 	AstNodePtr assign = fa.CreateAssignment( var, init);
-	fa.BasicBlockAppendStmt(result, assign);
+	fa.BlockAppendStmt(result, assign);
       }
     }
   }
@@ -352,13 +346,13 @@ impl_array_opt_init( AstInterface& fa, const AstNodePtr& array, bool insertInit)
 }
 
 AstNodePtr ArrayInterface::
-impl_reshape_array( AstInterface& fa, 
+impl_reshape_array( CPPAstInterface& fa, 
 		    const AstNodePtr& array,
 		    AstInterface::AstNodeList& ivarAst)
 {
   ArrayDefineDescriptor desc;
-  if (!ArrayAnnotation::get_inst()->known_array( array, &desc))
-    return false;
+  if (!ArrayAnnotation::get_inst()->known_array( fa, array, &desc))
+    return AST_NULL;
 
   SymbolicFunctionDeclarationGroup reshape = desc.get_reshape();
   reshape.replace_var( "this", SymbolicAstWrap(array));
@@ -366,9 +360,9 @@ impl_reshape_array( AstInterface& fa,
 
   AstNodePtr r;
   if (!reshape.get_val( fa, ivarAst, r)) {
-     cerr << "Error: cannot extract value from reshape spec: \n";
-     reshape.write(cerr);
-     cerr << endl;
+     STD cerr << "Error: cannot extract value from reshape spec: \n";
+     reshape.write(STD cerr);
+     STD cerr << STD endl;
      assert(false);
   }
   return r;
@@ -376,7 +370,7 @@ impl_reshape_array( AstInterface& fa,
 
 
 AstNodePtr ArrayInterface::
-impl_access_array_elem (AstInterface& fa, const AstNodePtr& array,
+impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
 			   AstInterface::AstNodeList& ivarAst)
 {
   SymbolicFunctionDeclarationGroup elem;
@@ -389,7 +383,7 @@ impl_access_array_elem (AstInterface& fa, const AstNodePtr& array,
   else 
   {
     ArrayDefineDescriptor desc1;
-    if (!ArrayAnnotation::get_inst()->known_array( array, &desc1))
+    if (!ArrayAnnotation::get_inst()->known_array( fa, array, &desc1))
       assert(false);
     elem = desc1.get_elem();
   }
@@ -403,7 +397,7 @@ impl_access_array_elem (AstInterface& fa, const AstNodePtr& array,
 
 
 AstNodePtr ArrayInterface::
-impl_access_array_length( AstInterface& fa, const AstNodePtr& array,
+impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
 			 int dim, int plus)
 {
   SymbolicVal rval;
@@ -417,38 +411,39 @@ impl_access_array_length( AstInterface& fa, const AstNodePtr& array,
   else 
   {
     ArrayDefineDescriptor desc1;
-    if (!ArrayAnnotation::get_inst()->known_array( array, &desc1))
-      return false;
+    if (!ArrayAnnotation::get_inst()->known_array( fa, array, &desc1))
+      return AST_NULL;
     if (! desc1.get_length(dim, rval))
       assert(false);
   }
-  ReplaceVal(rval, SymbolicVar("this",0), SymbolicAstWrap(array));
+  ReplaceVal(rval, SymbolicVar("this",AST_NULL), SymbolicAstWrap(array));
   if (plus != 0)
      rval = rval + plus;
   return rval.CodeGen(fa);
 }
 
-Boolean ArrayInterface ::
-IsArray( AstInterface& fa, const AstNodePtr& s)
+bool ArrayInterface ::
+IsArray( CPPAstInterface& fa, const AstNodePtr& s)
 { 
-  if ( ArrayAnnotation::get_inst()->known_array( s))
+  if ( ArrayAnnotation::get_inst()->known_array( fa, s))
      return true;
   return false;
 }
 
-Boolean ArrayInterface ::
-IsArrayRef( AstInterface& fa, const AstNodePtr& t)
+bool ArrayInterface ::
+IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t)
 {
-  if ( ArrayAnnotation::get_inst()->known_array_type(fa.GetExpressionType(t)))
+  if ( ArrayAnnotation::get_inst()->known_array_type(fa, fa.GetExpressionType(t)))
      return true;
   return false;
 }
-Boolean ArrayInterface :: 
-IsArrayAccess( AstInterface& fa, const AstNodePtr& s, AstNodePtr* arrayp,
+bool ArrayInterface :: 
+IsArrayAccess( AstInterface& _fa, const AstNodePtr& s, AstNodePtr* arrayp,
                                  AstInterface::AstNodeList* index)
 {  
+   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
    AstNodePtr array;
-   if ( ArrayAnnotation::get_inst()->is_access_array_elem( s, &array, index)) {
+   if ( ArrayAnnotation::get_inst()->is_access_array_elem( fa, s, &array, index)) {
      if (arrayp != 0)
         *arrayp = array; 
      return true;
@@ -457,27 +452,29 @@ IsArrayAccess( AstInterface& fa, const AstNodePtr& s, AstNodePtr* arrayp,
 }
 
 AstNodePtr ArrayInterface::
-CreateArrayAccess(AstInterface& fa, const AstNodePtr& arr, 
+CreateArrayAccess(AstInterface& _fa, const AstNodePtr& arr, 
                           AstInterface::AstNodeList& index)
 {
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   return impl_access_array_elem(  fa, arr, index); 
 }
 
-Boolean ArrayInterface ::
-GetArrayBound( AstInterface& fa, const AstNodePtr& array,
+bool ArrayInterface ::
+GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
                                  int dim, int &lb, int &ub) 
 { 
+  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   SymbolicFunctionDeclarationGroup len;
-  if (!is_array_exp( array, 0, &len))
+  if (!is_array_exp( fa, array, 0, &len))
     assert(false);
 
-  SymbolicFunction::Arguments pars;
+  STD vector<SymbolicVal> pars;
   pars.push_back( SymbolicConst(dim));
 
   SymbolicVal rval;
   if (!len.get_val( pars, rval)) 
      return false;
-  if (!rval.ToInt(ub))
+  if (!rval.isConstInt(ub))
      return false;
   lb = 0;
   return true;

@@ -41,39 +41,39 @@
 /*!\fn virtual void SgUnknownArrayOrFunctionReference::post_construction_initialization()
 */
 /*!\fn void SgUnknownArrayOrFunctionReference::set_expression_list(SgExprListExp *expression_list)
-\description See  *expression_list)
+\brief \brief See  *expression_list)
 expression_list for documentation */
 /*!\fn void SgUnknownArrayOrFunctionReference::set_name(std::string name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgUnknownArrayOrFunctionReference::set_named_reference(SgExpression *named_reference)
-\description See  *named_reference)
+\brief \brief See  *named_reference)
 named_reference for documentation */
 /*!\fn SgExprListExp *SgUnknownArrayOrFunctionReference::get_expression_list() const
-\description See  const
+\brief \brief See  const
 expression_list for documentation */
 /*!\fn SgExpression *SgUnknownArrayOrFunctionReference::get_named_reference() const
-\description See  const
+\brief \brief See  const
 named_reference for documentation */
 /*!\fn std::string SgUnknownArrayOrFunctionReference::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn virtual SgNode *SgUnknownArrayOrFunctionReference::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgUnknownArrayOrFunctionReference::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgUnknownArrayOrFunctionReference::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgUnknownArrayOrFunctionReference::get_numberOfTraversalSuccessors()
-\description See  SgUnknownArrayOrFunctionReference::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgUnknownArrayOrFunctionReference::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnknownArrayOrFunctionReference::get_traversalSuccessorContainer()
-\description See  SgUnknownArrayOrFunctionReference::traversalSuccessorContainer for documentation */
+\brief \brief See  SgUnknownArrayOrFunctionReference::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnknownArrayOrFunctionReference::get_traversalSuccessorNamesContainer()
-\description See  SgUnknownArrayOrFunctionReference::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgUnknownArrayOrFunctionReference::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgUnknownArrayOrFunctionReference::SgUnknownArrayOrFunctionReference()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1401299514;
+extern int SAGE_Doxygen_Dummy_736309356;

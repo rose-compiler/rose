@@ -177,9 +177,15 @@ operator.
 definition.
 \internal This should maybe be moved to the SgFunctionParameterList class.
 */
+/*!\var bool SgFunctionDeclaration::p_requiresNameQualificationOnReturnType
+*/
 /*!\var enum SgDeclarationStatement::template_specialization_enum SgFunctionDeclaration::p_specialization
 */
-/*!\var bool SgFunctionDeclaration::p_requiresNameQualificationOnReturnType
+/*!\var std::string SgFunctionDeclaration::p_gnu_extension_alias
+*/
+/*!\var std::string SgFunctionDeclaration::p_gnu_extension_section
+*/
+/*!\var enum SgDeclarationStatement::gnu_extension_visability_attribute_enum SgFunctionDeclaration::p_gnu_extension_visability
 */
 //@}
 /*! \name User Interface*/
@@ -256,102 +262,120 @@ definition.
 /*!\fn void SgFunctionDeclaration::hasEllipses()
 */
 /*!\fn virtual void SgFunctionDeclaration::set_scope(SgScopeStatement *scope)
-\description See  *scope)
+\brief \brief See  *scope)
 scope for documentation */
 /*!\fn void SgFunctionDeclaration::set_definition(SgFunctionDefinition *definition)
-\description See  *definition)
+\brief \brief See  *definition)
 definition for documentation */
 /*!\fn void SgFunctionDeclaration::set_exceptionSpecification(SgTypePtrListPtr exceptionSpecification)
-\description See  exceptionSpecification)
+\brief \brief See  exceptionSpecification)
 exceptionSpecification for documentation */
+/*!\fn void SgFunctionDeclaration::set_gnu_extension_alias(std::string gnu_extension_alias)
+\brief \brief See  gnu_extension_alias)
+gnu_extension_alias for documentation */
+/*!\fn void SgFunctionDeclaration::set_gnu_extension_section(std::string gnu_extension_section)
+\brief \brief See  gnu_extension_section)
+gnu_extension_section for documentation */
+/*!\fn void SgFunctionDeclaration::set_gnu_extension_visability(enum SgDeclarationStatement::gnu_extension_visability_attribute_enum gnu_extension_visability)
+\brief \brief See  gnu_extension_visability)
+gnu_extension_visability for documentation */
 /*!\fn void SgFunctionDeclaration::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgFunctionDeclaration::set_named_in_end_statement(bool named_in_end_statement)
-\description See  named_in_end_statement)
+\brief \brief See  named_in_end_statement)
 named_in_end_statement for documentation */
 /*!\fn void SgFunctionDeclaration::set_oldStyleDefinition(bool oldStyleDefinition)
-\description See  oldStyleDefinition)
+\brief \brief See  oldStyleDefinition)
 oldStyleDefinition for documentation */
 /*!\fn void SgFunctionDeclaration::set_parameterList(SgFunctionParameterList *parameterList)
-\description See  *parameterList)
+\brief \brief See  *parameterList)
 parameterList for documentation */
 /*!\fn void SgFunctionDeclaration::set_requiresNameQualificationOnReturnType(bool requiresNameQualificationOnReturnType)
-\description See  requiresNameQualificationOnReturnType)
+\brief \brief See  requiresNameQualificationOnReturnType)
 requiresNameQualificationOnReturnType for documentation */
 /*!\fn void SgFunctionDeclaration::set_specialization(enum SgDeclarationStatement::template_specialization_enum specialization)
-\description See  specialization)
+\brief \brief See  specialization)
 specialization for documentation */
 /*!\fn void SgFunctionDeclaration::set_type(SgFunctionType *type)
-\description See  *type)
+\brief \brief See  *type)
 type for documentation */
 /*!\fn SgFunctionDefinition *SgFunctionDeclaration::get_definition() const
-\description See  const
+\brief \brief See  const
 definition for documentation */
 /*!\fn SgFunctionModifier &SgFunctionDeclaration::get_functionModifier()
-\description See  &SgFunctionDeclaration::functionModifier for documentation */
+\brief \brief See  &SgFunctionDeclaration::functionModifier for documentation */
 /*!\fn SgFunctionParameterList *SgFunctionDeclaration::get_parameterList() const
-\description See  const
+\brief \brief See  const
 parameterList for documentation */
 /*!\fn SgFunctionType *SgFunctionDeclaration::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn SgInitializedNamePtrList &SgFunctionDeclaration::get_args()
-\description See  &SgFunctionDeclaration::args for documentation */
+\brief \brief See  &SgFunctionDeclaration::args for documentation */
 /*!\fn SgName SgFunctionDeclaration::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgSpecialFunctionModifier &SgFunctionDeclaration::get_specialFunctionModifier()
-\description See  &SgFunctionDeclaration::specialFunctionModifier for documentation */
+\brief \brief See  &SgFunctionDeclaration::specialFunctionModifier for documentation */
 /*!\fn SgTypePtrListPtr SgFunctionDeclaration::get_exceptionSpecification() const
-\description See  const
+\brief \brief See  const
 exceptionSpecification for documentation */
 /*!\fn bool SgFunctionDeclaration::get_named_in_end_statement() const
-\description See  const
+\brief \brief See  const
 named_in_end_statement for documentation */
 /*!\fn bool SgFunctionDeclaration::get_oldStyleDefinition() const
-\description See  const
+\brief \brief See  const
 oldStyleDefinition for documentation */
 /*!\fn bool SgFunctionDeclaration::get_requiresNameQualificationOnReturnType() const
-\description See  const
+\brief \brief See  const
 requiresNameQualificationOnReturnType for documentation */
 /*!\fn const SgFunctionModifier &SgFunctionDeclaration::get_functionModifier() const
-\description See  const
+\brief \brief See  const
 functionModifier for documentation */
 /*!\fn const SgInitializedNamePtrList &SgFunctionDeclaration::get_args() const
-\description See  const
+\brief \brief See  const
 args for documentation */
 /*!\fn const SgSpecialFunctionModifier &SgFunctionDeclaration::get_specialFunctionModifier() const
-\description See  const
+\brief \brief See  const
 specialFunctionModifier for documentation */
+/*!\fn enum SgDeclarationStatement::gnu_extension_visability_attribute_enum SgFunctionDeclaration::get_gnu_extension_visability() const
+\brief \brief See  const
+gnu_extension_visability for documentation */
 /*!\fn enum SgDeclarationStatement::template_specialization_enum SgFunctionDeclaration::get_specialization() const
-\description See  const
+\brief \brief See  const
 specialization for documentation */
+/*!\fn std::string SgFunctionDeclaration::get_gnu_extension_alias() const
+\brief \brief See  const
+gnu_extension_alias for documentation */
+/*!\fn std::string SgFunctionDeclaration::get_gnu_extension_section() const
+\brief \brief See  const
+gnu_extension_section for documentation */
 /*!\fn virtual SgName SgFunctionDeclaration::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgName SgFunctionDeclaration::get_qualified_name() const
-\description See  const
+\brief \brief See  const
 qualified_name for documentation */
 /*!\fn virtual SgNode *SgFunctionDeclaration::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgScopeStatement *SgFunctionDeclaration::get_scope() const
-\description See  const
+\brief \brief See  const
 scope for documentation */
 /*!\fn virtual SgSymbol *SgFunctionDeclaration::get_symbol_from_symbol_table() const
-\description See  const
+\brief \brief See  const
 symbol_from_symbol_table for documentation */
 /*!\fn virtual size_t SgFunctionDeclaration::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgFunctionDeclaration::get_numberOfTraversalSuccessors()
-\description See  SgFunctionDeclaration::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgFunctionDeclaration::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionDeclaration::get_traversalSuccessorContainer()
-\description See  SgFunctionDeclaration::traversalSuccessorContainer for documentation */
+\brief \brief See  SgFunctionDeclaration::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionDeclaration::get_traversalSuccessorNamesContainer()
-\description See  SgFunctionDeclaration::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgFunctionDeclaration::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgFunctionDeclaration::SgFunctionDeclaration(SgName name,SgFunctionType *type,SgFunctionDefinition *definition)
 */
 //@}
-int SAGE_Doxygen_Dummy_126602496819371;
+int SAGE_Doxygen_Dummy_24252117517655;

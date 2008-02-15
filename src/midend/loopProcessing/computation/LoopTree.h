@@ -8,7 +8,6 @@
 #include <SymbolicVal.h>
 #include <TreeImpl.h>
 #include <IteratorTmpl.h>
-#include <IteratorCompound.h>
 #include <FunctionObject.h>
 #include <SinglyLinkedList.h>
 #include <LoopTreeObserver.h>
@@ -27,15 +26,14 @@ class LoopTreeObserveInfo;
 class LoopInfo  : public VarInfo
 {
   SymbolicVal step;
-//Boolean reverse;
-  int reverse;
+  bool reverse;
  public:
   LoopInfo( SymbolicVar ivar,SymbolicVal lb, SymbolicVal ub, 
                     SymbolicVal s);
   LoopInfo( LoopTransformInterface &fa, const AstNodePtr& l);
 
-  std::string ToString() const 
-       { return VarInfo::ToString() + ":" + step.ToString();}
+  STD string toString() const 
+       { return VarInfo::toString() + ":" + step.toString();}
 
   bool ReverseEnum() const { return reverse; }
   const SymbolicVal& GetStep() const { return step; }
@@ -64,33 +62,30 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
        { return Parent()->LoopLevel() + Parent()->IncreaseLoopLevel(); }
   virtual int IncreaseLoopLevel() const { return 0; }
 
-  virtual std::string GetClassName() const = 0;
+  virtual STD string GetClassName() const = 0;
 
   virtual VarInfo GetVarInfo() const { return VarInfo(); }
-  virtual AstNodePtr GetOrigStmt()  const { return 0; }
+  virtual AstNodePtr GetOrigStmt()  const { return AST_NULL; }
 
   virtual const LoopInfo* GetLoopInfo() const { return 0; }
   virtual LoopInfo* GetLoopInfo() { return 0; }
 
-//virtual Boolean SelfRemove() { return false; }
-  virtual int SelfRemove() { return false; }
+  virtual bool SelfRemove() { return false; }
   virtual LoopTreeNode* Clone() const = 0;
 
-  void Dump() const { std::cerr << ToString() << std::endl; }
-  virtual std::string ToString() const { return ""; }
+  void Dump() const { STD cerr << toString() << STD endl; }
+  virtual STD string toString() const { return ""; }
   virtual AstNodePtr CodeGen( LoopTransformInterface &fa) const;
 
   void AttachObserver( LoopTreeObserver &o) const;
   void DetachObserver( LoopTreeObserver &o) const;
   void Notify( const LoopTreeObserveInfo &info) const;
   unsigned NumberOfObservers() const;
-  void DumpTree() const { std::cerr << TreeToString() << std::endl; }
-  std::string TreeToString() const;
+  void DumpTree() const { STD cerr << TreeToString() << STD endl; }
+  STD string TreeToString() const;
 
-//Boolean IsPerfectLoopNest() const;
-  int IsPerfectLoopNest() const;
-//Boolean ContainLoop() const;
-  int ContainLoop() const;
+  bool IsPerfectLoopNest() const;
+  bool ContainLoop() const;
  friend class LoopTreeTransform;
 };
 
@@ -103,9 +98,10 @@ class LoopTreeStmtNode : public LoopTreeNode
    LoopTreeStmtNode(  const LoopTreeStmtNode& that)
      : LoopTreeNode(that), start(that.start) {}
  public:
-   std::string ToString() const;
-   std::string GetClassName() const { return "LoopTreeStmtNode"; }
-   AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
+   STD string toString() const;
+   STD string GetClassName() const { return "LoopTreeStmtNode"; }
+
+   virtual AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
    AstNodePtr GetOrigStmt() const { return start; }
    LoopTreeNode* Clone() const { return new LoopTreeStmtNode( *this ); }
  friend class LoopTreeCreate;
@@ -115,19 +111,18 @@ class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
 {
   AstNodePtr orig;
   LoopInfo info;
-//virtual Boolean SelfRemove();
-  virtual int SelfRemove();
+  virtual bool SelfRemove();
  protected:
   ~LoopTreeLoopNode();
   LoopTreeLoopNode( LoopTransformInterface &fa, const AstNodePtr& l); 
   LoopTreeLoopNode( const LoopTreeLoopNode& that) ;
   LoopTreeLoopNode( SymbolicVar _ivar,SymbolicVal _lb, SymbolicVal _ub, 
                   SymbolicVal _step);
-  AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
+  virtual AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
   void UpdateSwapNode( const SwapNodeInfo& info);
  public:
-  std::string ToString() const;
-  std::string GetClassName() const { return "LoopTreeLoopNode"; }
+  STD string toString() const;
+  STD string GetClassName() const { return "LoopTreeLoopNode"; }
   int IncreaseLoopLevel() const { return 1; }
   LoopTreeNode* Clone() const
      { return new LoopTreeLoopNode( *this ); }
@@ -146,16 +141,17 @@ class LoopTreeRoot : public LoopTreeNode
     : LoopTreeNode(), level(_level) {}
 
  public:
-  std::string ToString() const;
+  STD string toString() const;
   LoopTreeNode* Clone() const { return 0; }
-  std::string GetClassName() const { return "LoopTreeRoot"; }
+  STD string GetClassName() const { return "LoopTreeRoot"; }
   virtual int LoopLevel() const { return level; }
 
  friend class LoopTreeCreate;
 };
 
 typedef IteratorImpl<LoopTreeNode*> LoopTreeNodeIteratorImpl;
-typedef IteratorWrap<LoopTreeNode*, LoopTreeNodeIteratorImpl> LoopTreeNodeIterator;
+typedef IteratorWrap<LoopTreeNode*, LoopTreeNodeIteratorImpl> 
+LoopTreeNodeIterator;
 
 class LoopTreeCreate
 {
@@ -163,9 +159,7 @@ class LoopTreeCreate
   LoopTreeObserveImpl *impl;
  public:
   virtual LoopTreeNode* CreateStmtNode(AstNodePtr s)
-     { LoopTreeNode *r =  new LoopTreeStmtNode(s);
-       AttachObserver(r);
-       return r; }
+     { LoopTreeNode *r =  new LoopTreeStmtNode(s); AttachObserver(r); return r;}
   virtual LoopTreeNode* CreateLoopNode( LoopTransformInterface &fa, 
                                          const AstNodePtr& ctrl) { 
         LoopTreeNode* r=  new LoopTreeLoopNode(fa, ctrl); 
@@ -190,7 +184,7 @@ class LoopTreeCreate
   LoopTreeNode* GetTreeRoot() const { return root; }
   int LoopLevel() const { return root->LoopLevel(); }
   void Dump() const { root->DumpTree(); }
-  AstNodePtr CodeGen( LoopTransformInterface& fa) { return root->CodeGen(fa); }
+  virtual AstNodePtr CodeGen( LoopTransformInterface& fa) { return root->CodeGen(fa); }
 
   void AttachObserver( LoopTreeObserver &o) const;
   void DetachObserver( LoopTreeObserver &o) const;
@@ -200,6 +194,8 @@ class LoopTreeCreate
 class LoopTreeInterface {
  public:
   LoopTreeNode* GetParent( LoopTreeNode* n) const { return n->Parent(); }
+  LoopTreeNode* getNULL() const { return 0; }
+  
   const LoopTreeNode* GetParent( const LoopTreeNode* n) const 
                { return n->Parent(); }
 
@@ -225,28 +221,53 @@ class LoopTreeTraverse : public TreeTraverse<LoopTreeNode>
        else
          cur = 0;
      }
-//Boolean ReachEnd() const {  return cur == 0; }
-  int ReachEnd() const {  return cur == 0; }
+  bool ReachEnd() const {  return cur == 0; }
 };
 
-typedef SelectObject<LoopTreeNode*> SelectLoopTreeNode;
+class LoopTreeTraverseSelectStmt 
+  : public IteratorImplTemplate<LoopTreeNode*, LoopTreeTraverse>
+{ 
+   void SetIterator() {
+       for ( ; !impl.ReachEnd(); impl.Advance()) { 
+            LoopTreeNode* n = impl.Current();
+            if (n->GetOrigStmt() != AST_NULL && !n->IncreaseLoopLevel())
+               break;
+        }
+   }
+ public: 
+  LoopTreeTraverseSelectStmt( LoopTreeNode *r, 
+                 LoopTreeTraverse::TraversalOpt o= LoopTreeTraverse::PreOrder)
+   :IteratorImplTemplate<LoopTreeNode*,LoopTreeTraverse>(LoopTreeTraverse(r,o)) 
+    { SetIterator(); }
+  void Advance() { impl.Advance(); SetIterator(); }
+  void Reset() { impl.Reset(); SetIterator(); }
+  LoopTreeNode* Current() const { return impl.Current(); }
+  LoopTreeNode*& Current() { return impl.Current(); }
+  IteratorImpl<LoopTreeNode*>* Clone() const
+   { return new LoopTreeTraverseSelectStmt(*this); }
+};
 
-class SelectStmt : public SelectLoopTreeNode
-{
-// public: Boolean operator()(LoopTreeNode* const& n)  const
-  public: int operator()(LoopTreeNode* const& n)  const
-           { return n->GetOrigStmt() != 0 && !n->IncreaseLoopLevel(); }
+class LoopTreeTraverseSelectLoop 
+  : public IteratorImplTemplate<LoopTreeNode*, LoopTreeTraverse>
+{ 
+  void SetIterator() {
+         for ( ; !impl.ReachEnd(); impl.Advance()) { 
+            if (impl.Current()->IncreaseLoopLevel())
+                break;
+         }
+   }
+ public: 
+  LoopTreeTraverseSelectLoop( LoopTreeNode *r, 
+                 LoopTreeTraverse::TraversalOpt o= LoopTreeTraverse::PreOrder)
+   :IteratorImplTemplate<LoopTreeNode*,LoopTreeTraverse>(LoopTreeTraverse(r,o)) 
+    { SetIterator(); }
+  void Advance() { impl.Advance(); SetIterator(); }
+  void Reset() { impl.Reset(); SetIterator(); }
+  LoopTreeNode* Current() const { return impl.Current(); }
+  LoopTreeNode*& Current() { return impl.Current(); }
+  IteratorImpl<LoopTreeNode*>* Clone() const
+   { return new LoopTreeTraverseSelectLoop(*this); }
 };
-class SelectLoop : public SelectLoopTreeNode
-{
-//public: Boolean operator()(LoopTreeNode* const& n)  const
-  public: int operator()(LoopTreeNode* const& n)  const
-      { return n->IncreaseLoopLevel(); }
-};
-typedef SelectIterator<LoopTreeNode*,LoopTreeNode*&,LoopTreeTraverse,SelectStmt>
-         LoopTreeTraverseSelectStmt;
-typedef SelectIterator<LoopTreeNode*,LoopTreeNode*&,LoopTreeTraverse,SelectLoop>
-        LoopTreeTraverseSelectLoop;
 inline unsigned CountEnclosedStmts(LoopTreeNode *root) 
   { return CountIteratorSize(LoopTreeTraverseSelectStmt(root)); }
 

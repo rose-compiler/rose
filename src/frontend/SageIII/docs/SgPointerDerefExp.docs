@@ -34,21 +34,21 @@
 /*!\fn virtual void SgPointerDerefExp::post_construction_initialization()
 */
 /*!\fn virtual SgNode *SgPointerDerefExp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgPointerDerefExp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgPointerDerefExp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgPointerDerefExp::get_numberOfTraversalSuccessors()
-\description See  SgPointerDerefExp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgPointerDerefExp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPointerDerefExp::get_traversalSuccessorContainer()
-\description See  SgPointerDerefExp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgPointerDerefExp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPointerDerefExp::get_traversalSuccessorNamesContainer()
-\description See  SgPointerDerefExp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgPointerDerefExp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgPointerDerefExp::SgPointerDerefExp(SgExpression *operand_i,SgType *expression_type)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_690915025;
+extern int SAGE_Doxygen_Dummy_63050197;

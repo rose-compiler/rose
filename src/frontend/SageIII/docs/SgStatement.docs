@@ -87,7 +87,7 @@ pointer to an object derived from a SgStatement.
 //@}
 /*! \name Class Members*/
 //@{
-/*!\var int SgStatement::p_numeric_label
+/*!\var SgLabelRefExp *SgStatement::p_numeric_label
 */
 //@}
 /*! \name User Interface*/
@@ -126,6 +126,8 @@ pointer to an object derived from a SgStatement.
 */
 /*!\fn virtual bool SgStatement::cfgIsIndexInteresting(unsigned int index) const
 */
+/*!\fn virtual bool SgStatement::has_end_numeric_label() const
+*/
 /*!
 \fn virtual bool SgStatement::insert_child(SgStatement *,SgStatement *,bool inFront=true,bool extractListFromBasicBlock=false)
 \brief Private supporting function for low level SageIII rewrite interface.
@@ -160,18 +162,22 @@ the block are extracts and placed into the same scope as the target position.
 */
 /*!\fn virtual void SgStatement::post_construction_initialization()
 */
-/*!\fn void SgStatement::set_numeric_label(int numeric_label)
-\description See  numeric_label)
+/*!\fn virtual void SgStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
+end_numeric_label for documentation */
+/*!\fn void SgStatement::set_numeric_label(SgLabelRefExp *numeric_label)
+\brief \brief See  *numeric_label)
 numeric_label for documentation */
-/*!\fn int SgStatement::get_numeric_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgStatement::get_numeric_label() const
+\brief \brief See  const
 numeric_label for documentation */
 /*!\fn virtual SgNode *SgStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!
 \fn virtual SgScopeStatement *SgStatement::get_scope() const
-\brief Returns scope of current statement.
+\brief Returns scope of current statement.See  const
+scope for documentation 
    This functions returns a pointer to the inner most SgScopeStatement where the current 
 statement is located.
 This is a function called after the parents have been set.  It is not called by the
@@ -183,31 +189,30 @@ SgFunctionParameterList and the SgFunctionDefinition have the SgFunctionDeclarat
 as a parent.  Thus the scope of the SgFunctionParameterList is computed to be the 
 SgGlobal (global scope) most often; which is an error).  So we handle this case 
 explicitly.
-See  const
-scope for documentation \return Returns valid pointer to SgScopeStatement.
+\return Returns valid pointer to SgScopeStatement.
 */
 /*!
 \fn virtual SgSymbol *SgStatement::get_symbol_from_symbol_table() const
-\brief Virtual function to obtain the SgSymbol from the scope's symbol table.
+\brief Virtual function to obtain the SgSymbol from the scope's symbol table.See  const
+symbol_from_symbol_table for documentation 
      This function permits retrival of the associated SgSymbol, where it exists
 for that IR node, where is is associated with this exact declaration. If no
 symbol is found in the symbol table the function returns NULL. If it is not
 implemented for the associated statement or declaration it is an error
 (assertion failure).   This fucntion is ONLY defined for those IR nodes for
 which symbols can be constructed.
-See  const
-symbol_from_symbol_table for documentation \return Returns SgSymbol pointer.
+\return Returns SgSymbol pointer.
 */
 /*!\fn virtual size_t SgStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgStatement::get_numberOfTraversalSuccessors()
-\description See  SgStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgStatement::get_traversalSuccessorContainer()
-\description See  SgStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgStatement::get_traversalSuccessorNamesContainer()
-\description See  SgStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgStatement::SgStatement()
 */
 //@}
-int SAGE_Doxygen_Dummy_11735510613475;
+int SAGE_Doxygen_Dummy_13012365528796;

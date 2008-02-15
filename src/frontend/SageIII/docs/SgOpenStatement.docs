@@ -58,99 +58,105 @@
 */
 /*!\fn virtual SgOpenStatement::~SgOpenStatement()
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgOpenStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgOpenStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgOpenStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgOpenStatement::post_construction_initialization()
 */
 /*!\fn void SgOpenStatement::set_access(SgExpression *access)
-\description See  *access)
+\brief \brief See  *access)
 access for documentation */
 /*!\fn void SgOpenStatement::set_action(SgExpression *action)
-\description See  *action)
+\brief \brief See  *action)
 action for documentation */
 /*!\fn void SgOpenStatement::set_asynchronous(SgExpression *asynchronous)
-\description See  *asynchronous)
+\brief \brief See  *asynchronous)
 asynchronous for documentation */
 /*!\fn void SgOpenStatement::set_blank(SgExpression *blank)
-\description See  *blank)
+\brief \brief See  *blank)
 blank for documentation */
 /*!\fn void SgOpenStatement::set_delim(SgExpression *delim)
-\description See  *delim)
+\brief \brief See  *delim)
 delim for documentation */
 /*!\fn void SgOpenStatement::set_file(SgExpression *file)
-\description See  *file)
+\brief \brief See  *file)
 file for documentation */
 /*!\fn void SgOpenStatement::set_form(SgExpression *form)
-\description See  *form)
+\brief \brief See  *form)
 form for documentation */
 /*!\fn void SgOpenStatement::set_pad(SgExpression *pad)
-\description See  *pad)
+\brief \brief See  *pad)
 pad for documentation */
 /*!\fn void SgOpenStatement::set_position(SgExpression *position)
-\description See  *position)
+\brief \brief See  *position)
 position for documentation */
 /*!\fn void SgOpenStatement::set_recl(SgExpression *recl)
-\description See  *recl)
+\brief \brief See  *recl)
 recl for documentation */
 /*!\fn void SgOpenStatement::set_round(SgExpression *round)
-\description See  *round)
+\brief \brief See  *round)
 round for documentation */
 /*!\fn void SgOpenStatement::set_sign(SgExpression *sign)
-\description See  *sign)
+\brief \brief See  *sign)
 sign for documentation */
 /*!\fn void SgOpenStatement::set_status(SgExpression *status)
-\description See  *status)
+\brief \brief See  *status)
 status for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_access() const
-\description See  const
+\brief \brief See  const
 access for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_action() const
-\description See  const
+\brief \brief See  const
 action for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_asynchronous() const
-\description See  const
+\brief \brief See  const
 asynchronous for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_blank() const
-\description See  const
+\brief \brief See  const
 blank for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_delim() const
-\description See  const
+\brief \brief See  const
 delim for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_file() const
-\description See  const
+\brief \brief See  const
 file for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_form() const
-\description See  const
+\brief \brief See  const
 form for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_pad() const
-\description See  const
+\brief \brief See  const
 pad for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_position() const
-\description See  const
+\brief \brief See  const
 position for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_recl() const
-\description See  const
+\brief \brief See  const
 recl for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_round() const
-\description See  const
+\brief \brief See  const
 round for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_sign() const
-\description See  const
+\brief \brief See  const
 sign for documentation */
 /*!\fn SgExpression *SgOpenStatement::get_status() const
-\description See  const
+\brief \brief See  const
 status for documentation */
 /*!\fn virtual SgNode *SgOpenStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgOpenStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgOpenStatement::get_numberOfTraversalSuccessors()
-\description See  SgOpenStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgOpenStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgOpenStatement::get_traversalSuccessorContainer()
-\description See  SgOpenStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgOpenStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgOpenStatement::get_traversalSuccessorNamesContainer()
-\description See  SgOpenStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgOpenStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgOpenStatement::SgOpenStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_568928916;
+extern int SAGE_Doxygen_Dummy_1800895913;

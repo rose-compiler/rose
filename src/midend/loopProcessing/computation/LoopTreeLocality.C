@@ -1,20 +1,12 @@
-
 #include <stdlib.h>
-
 #include <sstream>
-#include <general.h>
+
 #include <LoopTreeLocality.h>
 #include <ReuseAnalysis.h>
 #include <DepGraphTransform.h>
 #include <CommandOptions.h>
 #include <StmtInfoCollect.h>
 #include <StmtDepAnal.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 bool DebugRefGraph()
 {
@@ -27,8 +19,8 @@ bool DebugRefGraph()
 
 LoopTreeLocalityAnal :: 
  LoopTreeLocalityAnal( LoopTransformInterface& _fa, LoopTreeDepCompCreate& c)
-    : comp(c), anal(comp.GetDepAnal()),
-      inputCreate(c.GetTreeNodeMap()), fa(_fa)
+    : fa(_fa), comp(c), anal(comp.GetDepAnal()),
+      inputCreate(c.GetTreeNodeMap()) 
 {
   comp.GetLoopTreeCreate()->AttachObserver(inputCreate);
   LoopTreeNode* root = comp.GetLoopTreeRoot();
@@ -48,7 +40,7 @@ LoopTreeLocalityAnal :: ~LoopTreeLocalityAnal()
 }
 
 void LoopTreeLocalityAnal ::
-ComputeInputDep( LoopTreeDepGraphNodeIterator nodeIter, DepCompAstRefAnal& stmtorder)
+ComputeInputDep( LoopTreeDepGraph::NodeIterator nodeIter, DepCompAstRefAnal& stmtorder)
 {
   SinglyLinkedListWrap <LoopTreeDepGraphNode*> nodeSet;
   for ( ; ! nodeIter.ReachEnd() ; nodeIter.Advance()) {
@@ -73,19 +65,20 @@ ComputeInputDep( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, DepCompAstR
     LoopTreeDepGraphNode * tmp = n1;
     n1 = n2; n2 = tmp; 
   }
-  if (GraphGetCrossEdge<LoopTreeDepGraph>()(&inputCreate,n1,n2) != 0)
+  GraphCrossEdgeIterator<LoopTreeDepGraph> p(&inputCreate,n1,n2);
+  if (!p.ReachEnd())
     return;
   
   inputCreate.BuildDep(fa, anal, n1,n2,DEPTYPE_INPUT);
 }
 
 void LoopTreeLocalityAnal ::
-ComputeInputDep( LoopTreeDepGraphNodeIterator srcIter,
-                 LoopTreeDepGraphNodeIterator snkIter, DepCompAstRefAnal& stmtorder)
+ComputeInputDep( LoopTreeDepGraph::NodeIterator srcIter,
+                 LoopTreeDepGraph::NodeIterator snkIter, DepCompAstRefAnal& stmtorder)
 {
-  for ( LoopTreeDepGraphNode *n; (n = srcIter.Current()); srcIter.Advance()) {
+  for ( LoopTreeDepGraphNode *n; n = srcIter.Current(); srcIter.Advance()) {
      snkIter.Reset();
-     for (LoopTreeDepGraphNode *n1; (n1 = snkIter.Current()); snkIter++) {
+     for (LoopTreeDepGraphNode *n1; n1 = snkIter.Current(); snkIter++) {
          ComputeInputDep( n, n1, stmtorder);
      }
   }
@@ -95,13 +88,13 @@ class AccumulateSpatialReuse : public CollectObject<AstNodePtr>
 {
   float res;
   LoopTransformInterface& la;
-  string ivarname;
+  STD string ivarname;
   int linesize;
  public:
-  Boolean operator()(const AstNodePtr& cur)
+  bool operator()(const AstNodePtr& cur)
   { res +=  SelfSpatialReuse( la, cur, ivarname, linesize); return true;}
-  AccumulateSpatialReuse( LoopTransformInterface& _la, const string& _ivarname, int _linesize)
-    : res(0), la(_la), ivarname(_ivarname), linesize(_linesize) {}
+  AccumulateSpatialReuse( LoopTransformInterface& _la, const STD string& _ivarname, int _linesize)
+    : la(_la), ivarname(_ivarname), linesize(_linesize), res(0) {}
   float get_result() const { return res; }
 };
 
@@ -110,7 +103,7 @@ SelfSpatialReuses( LoopTreeNode *n, int loop, int linesize)
 {
    int loop1 = comp.GetDepNode(n)->LoopTreeDim2AstTreeDim(loop);
    AstNodePtr s = n->GetOrigStmt();
-   string name = anal.GetStmtInfo(fa, s).ivars[loop1].GetVarName();
+   STD string name = anal.GetStmtInfo(fa, s).ivars[loop1].GetVarName();
    AccumulateSpatialReuse  col(fa, name, linesize);
    AnalyzeStmtRefs( fa, s, col, col);
    return col.get_result();
@@ -136,16 +129,17 @@ TemporaryReuseRefs(LoopTreeNode *s1, int loop1, LoopTreeNode *s2, int loop2,
   LoopTreeDepGraphNode *n1=comp.GetDepNode(s1), *n2=comp.GetDepNode(s2);
 
   LoopTreeDepGraph* graph = comp.GetDepGraph();
-  DepInfoEdgeIterator iter1 = GraphGetCrossEdgeIterator<LoopTreeDepGraph>()(graph,n1,n2); 
-  DepInfoEdgeIterator iter2 = GraphGetCrossEdgeIterator<LoopTreeDepGraph>()(&inputCreate,n1,n2);
-  MultiIterator<DepInfo,DepInfo,DepInfoEdgeConstInfoIterator> 
-          iter(iter1,iter2);
-  IteratorImplTemplate<DepInfo, MultiIterator<DepInfo,DepInfo,DepInfoEdgeConstInfoIterator> >
-      iter3(iter);
+  GraphCrossEdgeIterator<LoopTreeDepGraph> iter1 (graph,n1,n2); 
+  GraphCrossEdgeIterator<LoopTreeDepGraph> iter2 (&inputCreate,n1,n2);
+  MultiIterator<DepInfoEdge*, GraphCrossEdgeIterator<LoopTreeDepGraph> > 
+          iter3(iter1,iter2);
+  DepInfoEdgeConstInfoIterator<
+    MultiIterator<DepInfoEdge*, 
+                  GraphCrossEdgeIterator<LoopTreeDepGraph> > > iter4(iter3);
   MapSrcSinkLooplevel loopmap(loop1, loop2);
 
   AppendSTLSet<AstNodePtr> col(refSet);
-  ::TemporaryReuseRefs( iter3, loopmap, col, &reuseDist);
+  ::TemporaryReuseRefs( iter4, loopmap, col, &reuseDist);
   return refSet.size();
 }
 
@@ -155,21 +149,22 @@ bool operator < (const DepCompAstRef& n1, const DepCompAstRef& n2)
    }
 
 
-string DepCompAstRef::ToHandle() const 
+STD string DepCompAstRef::ToHandle() const 
 {
-   stringstream res;
-   res <<  stmt  << orig;
+   STD stringstream res;
+   res <<  stmt  << orig.get_ptr();
    return res.str();
 }
 
-string DepCompAstRef::ToString() const 
+STD string DepCompAstRef::toString() const 
 {
-  stringstream out;
-  out << AstInterface::AstToString(orig) << " : " << stmt << ":" << stmt->ToString(); 
+  STD stringstream out;
+  out << AstToString(orig) << " : " << stmt << ":" << stmt->toString(); 
   return out.str();
 }
 
-DepCompAstRefGraphNode* DepCompAstRefGraphCreate::CreateNode(const AstNodePtr& r, LoopTreeNode* stmt)
+DepCompAstRefGraphNode* DepCompAstRefGraphCreate::
+CreateNode(const AstNodePtr& r, LoopTreeNode* stmt)
 {
     DepCompAstRef cur(r, stmt);
     AstRefNodeMap::const_iterator rp = refNodeMap.find(cur);
@@ -177,7 +172,7 @@ DepCompAstRefGraphNode* DepCompAstRefGraphCreate::CreateNode(const AstNodePtr& r
     DepCompAstRefGraphNode* rnode = 0;
     if (rp == refNodeMap.end()) {
        rnode = new DepCompAstRefGraphNode(this, cur);
-       CreateBaseNode(rnode);
+       AddNode(rnode);
        refNodeMap[cur] = rnode;
     }
     else
@@ -189,16 +184,16 @@ DepInfoEdge*  DepCompAstRefGraphCreate::
 CreateEdge( DepCompAstRefGraphNode* src,  DepCompAstRefGraphNode* snk, const DepInfo& dep)
 {
    DepInfoEdge *e = new DepInfoEdge(this, dep); 
-   CreateBaseEdge(src, snk, e);
+   AddEdge(src, snk, e);
    if (DebugRefGraph()) {
-      cerr << "creating edge in ref graph: " << src->ToString() << "->" << snk->ToString() << " : " << e->ToString() << endl;
+      STD cerr << "creating edge in ref graph: " << src->toString() << "->" << snk->toString() << " : " << e->toString() << STD endl;
    }
    return e;
 }
 
-template<class Graph>
-void CreateEdge( LoopTransformInterface& la, DepCompAstRefGraphCreate* res, 
-            LoopTreeDepComp& comp, Graph* g, LoopTreeDepGraphCreate::EdgeIterator deps)
+template<class Graph, class EdgeIterator>
+void CreateEdgeWrap( LoopTransformInterface& la, DepCompAstRefGraphCreate* res, 
+            LoopTreeDepComp& comp, Graph* g, EdgeIterator deps)
 {
   for ( ; !deps.ReachEnd(); ++deps) {
     DepInfoEdge *cur = deps.Current();
@@ -220,28 +215,25 @@ void DepCompAstRefGraphCreate::
 Build(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root) 
 { 
   LoopTreeDepComp& comp = tc.GetDepComp();
-  LoopTreeNodeDepMap m = comp.GetTreeNodeMap();
+  LoopTreeDepGraphSubtree depgraph(comp, root, comp.GetDepGraph());
+  GraphEdgeIterator<LoopTreeDepGraphSubtree> edgep(&depgraph);
+  CreateEdgeWrap( la, this, comp, &depgraph, edgep); 
 
-  LoopTreeDepGraphCreate::SubtreeGraph depgraph = 
-            LoopTreeDepGraphCreate::GetSubtreeGraph(comp.GetDepGraph(), m, root);
-
-  ::CreateEdge( la, this, comp, &depgraph, 
-              GraphGetEdgeIterator<LoopTreeDepGraphCreate::SubtreeGraph>()(&depgraph));
-
-  LoopTreeDepGraphCreate::SubtreeGraph inputgraph =             
-            LoopTreeDepGraphCreate::GetSubtreeGraph(tc.GetInputGraph(), m, root);
-  ::CreateEdge( la, this, comp, &inputgraph, 
-                GraphGetEdgeIterator<LoopTreeDepGraphCreate::SubtreeGraph>()(&inputgraph));
+  LoopTreeDepGraphSubtree inputgraph(comp,root, tc.GetInputGraph());
+  GraphEdgeIterator<LoopTreeDepGraphSubtree> edgep1(&inputgraph);
+  CreateEdgeWrap( la, this, comp, &inputgraph, edgep1);
 }
      
-void DepCompAstRefAnal:: Append( LoopTransformInterface& ai, LoopTreeNode* root)
+void DepCompAstRefAnal:: Append(LoopTransformInterface& ai, LoopTreeNode* _root)
      {
-       class CollectModRef : public CollectObject<pair<AstNodePtr,AstNodePtr> >  
+       
+       typedef STD map<AstNodePtr,int,STD less<AstNodePtr> > AstIntMap;
+       class CollectModRef : public CollectObject<STD pair<AstNodePtr,AstNodePtr> >  
         { 
-         map<AstNodePtr,int>& refmap;
+         AstIntMap& refmap;
          public:
-         CollectModRef(map<AstNodePtr,int>&  m) : refmap(m){}
-         Boolean operator()(const pair<AstNodePtr,AstNodePtr>& cur)
+         CollectModRef(AstIntMap&  m) : refmap(m){}
+         bool operator()(const STD pair<AstNodePtr,AstNodePtr>& cur)
           {
             if (refmap.find(cur.first) == refmap.end()) {
                 int num = refmap.size();
@@ -251,12 +243,12 @@ void DepCompAstRefAnal:: Append( LoopTransformInterface& ai, LoopTreeNode* root)
             return false;
           }
        } modcollect(refmap);
-       class CollectReadRef : public CollectObject<pair<AstNodePtr,AstNodePtr> >  
+       class CollectReadRef : public CollectObject<STD pair<AstNodePtr,AstNodePtr> >  
         { 
-         map<AstNodePtr,int>& refmap;
+         AstIntMap& refmap;
          public:
-         CollectReadRef(map<AstNodePtr,int>&  m) : refmap(m){}
-         Boolean operator()(const pair<AstNodePtr,AstNodePtr>& cur)
+         CollectReadRef(AstIntMap&  m) : refmap(m){}
+         bool operator()(const STD pair<AstNodePtr,AstNodePtr>& cur)
           {
             if (refmap.find(cur.first) == refmap.end()) {
                 int num = refmap.size();
@@ -267,7 +259,7 @@ void DepCompAstRefAnal:: Append( LoopTransformInterface& ai, LoopTreeNode* root)
           }
        } readcollect(refmap);
        int stmtnum = stmtmap.size();
-       for (LoopTreeTraverse stmts(root, LoopTreeTraverse::PostOrder); 
+       for (LoopTreeTraverse stmts(_root, LoopTreeTraverse::PostOrder); 
             !stmts.ReachEnd(); stmts.Advance(),++stmtnum) {
            LoopTreeNode* curstmt = stmts.Current();
            assert(stmtmap.find(curstmt) == stmtmap.end());
@@ -276,12 +268,11 @@ void DepCompAstRefAnal:: Append( LoopTransformInterface& ai, LoopTreeNode* root)
        } 
      }
 
-Boolean DepCompAstRefGraphCreate::
+bool DepCompAstRefGraphCreate::
 SelfReuseLevel( const DepCompAstRefGraphNode* n, int level) const
 {
-  for (DepInfoEdgeIterator edges = 
-        GraphGetCrossEdgeIterator<DepCompAstRefGraphCreate>()(this, n,n);
-       !edges.ReachEnd(); ++edges) {
+  GraphCrossEdgeIterator<DepCompAstRefGraphCreate> edges(this, n,n);
+  for ( ; !edges.ReachEnd(); ++edges) {
     int cur = (*edges)->GetInfo().CarryLevel();
     if (cur == level)
          return true;
@@ -366,6 +357,3 @@ void DepCompAstRefGraphCreate::SplitNodeDomain()
 }
 */
 
-#define TEMPLATE_ONLY
-#include <IDGraphCreate.C>
-template class IDGraphCreateTemplate<GraphNodeTemplate<DepCompAstRef, DepCompAstRef const&,AstRefToString>, DepInfoEdge>;

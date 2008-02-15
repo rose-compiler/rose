@@ -1,0 +1,37 @@
+Performance Ideas:
+
+   1) Use a hash table to detect collisions to know where the hidden list computation is
+    required (likely what is already done).
+
+   2) Only do collect inforamtion for classes and namespaces that appear in using
+    directives.
+
+   3) Get rid of string operations, turn strings into numbers.
+
+   4) Take advantage of uniqueness between sets in the intersection operation.
+
+   5) Are trivial intersections trivial in performance.
+
+   6) Test at higher level of optimization
+
+Build a performance evaluation function that can be used to report the performance of the 
+different parts of the hidden list computation.
+
+Things to time at a greater resolution:
+   1) Intersection
+   2) Time spend in intersection processing the global scope
+   3) NamespacesAndClassTraversal :: evaluateInheritedAttribute
+   4) NamespacesAndClassTraversal :: evaluateInheritedAttribute (block at line 204)
+              if( isSgVariableDeclaration(n) || isSgFunctionDeclaration(n) ||
+                  isSgTypedefDeclaration(n) || isSgClassDeclaration(n) || isSgEnumDeclaration(n) || 
+                  isSgNamespaceDeclarationStatement(n) || isSgTemplateDeclaration(n) || 
+                  isSgUsingDirectiveStatement(n) ||isSgUsingDeclarationStatement(n) ) {
+
+   5) HiddenListComputationTraversal :: evaluateInheritedAttribute
+   6) HiddenListComputationTraversal :: evaluateInheritedAttribute (block at line 421)
+             if(decl_stat != NULL) {
+   6) HiddenListComputationTraversal :: evaluateInheritedAttribute (block at line 772)
+             if (SgScope != NULL)  {
+
+
+

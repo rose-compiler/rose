@@ -41,39 +41,39 @@
 /*!\fn virtual void SgAsmOp::post_construction_initialization()
 */
 /*!\fn void SgAsmOp::set_constraint(enum SgAsmOp::asm_operand_constraint_enum constraint)
-\description See  constraint)
+\brief \brief See  constraint)
 constraint for documentation */
 /*!\fn void SgAsmOp::set_expression(SgExpression *expression)
-\description See  *expression)
+\brief \brief See  *expression)
 expression for documentation */
 /*!\fn void SgAsmOp::set_modifiers(enum SgAsmOp::asm_operand_modifier_enum modifiers)
-\description See  modifiers)
+\brief \brief See  modifiers)
 modifiers for documentation */
 /*!\fn SgExpression *SgAsmOp::get_expression() const
-\description See  const
+\brief \brief See  const
 expression for documentation */
 /*!\fn enum SgAsmOp::asm_operand_constraint_enum SgAsmOp::get_constraint() const
-\description See  const
+\brief \brief See  const
 constraint for documentation */
 /*!\fn enum SgAsmOp::asm_operand_modifier_enum SgAsmOp::get_modifiers() const
-\description See  const
+\brief \brief See  const
 modifiers for documentation */
 /*!\fn virtual SgNode *SgAsmOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgAsmOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgAsmOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAsmOp::get_numberOfTraversalSuccessors()
-\description See  SgAsmOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAsmOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmOp::get_traversalSuccessorContainer()
-\description See  SgAsmOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAsmOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmOp::get_traversalSuccessorNamesContainer()
-\description See  SgAsmOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAsmOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAsmOp::SgAsmOp(enum SgAsmOp::asm_operand_constraint_enum constraint,enum SgAsmOp::asm_operand_modifier_enum modifiers,SgExpression *expression)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1984680774;
+extern int SAGE_Doxygen_Dummy_2058375766;

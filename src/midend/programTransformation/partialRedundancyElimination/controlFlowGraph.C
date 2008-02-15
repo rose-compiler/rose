@@ -4,13 +4,12 @@
 #include "rose.h"
 
 #include "CFG.h"
+#include <AstInterface_ROSE.h>
 #include "controlFlowGraph.h"
-#define CFGIMPL_TEMPLATE_ONLY
-#include "CFGImpl.C"
 
 using namespace std;
 
-class CfgConfig: public BuildCFGConfig<int, int> {
+class CfgConfig: public BuildCFGConfig<int> {
   PRE::ControlFlowGraph& graph;
 
   public:
@@ -24,20 +23,19 @@ class CfgConfig: public BuildCFGConfig<int, int> {
     return new PRE::Vertex(vertex);
   }
 
-  virtual PRE::Edge* CreateEdge(PRE::Vertex* src, PRE::Vertex* tgt,
+  virtual void CreateEdge(PRE::Vertex* src, PRE::Vertex* tgt,
 			        CFGConfig::EdgeType condval) {
     // cerr << "Creating edge between " << *src << " and " << *tgt << endl;
     PRE::Edge edge = graph.graph.add_edge(*src, *tgt);
     graph.edge_type.push_back(condval);
     graph.edge_insertion_point.push_back(make_pair((SgNode*)0, false));
-    return new PRE::Edge(edge);
   }
 
   virtual void AddNodeStmt(PRE::Vertex* n, const AstNodePtr& s) {
     ROSE_ASSERT(s != NULL);
  // printf ("Adding node = %p = %s \n",s,s->class_name().c_str());
  // cerr << "Adding statement " << s->unparseToString() << " to node " << *n << endl;
-    graph.node_statements[*n].push_back(s);
+    graph.node_statements[*n].push_back(AstNodePtrImpl(s).get_ptr());
   }
 };
 
@@ -45,8 +43,9 @@ void
 PRE::makeCfg ( SgFunctionDefinition* n, PRE::ControlFlowGraph& graph )
    {
      CfgConfig cfgconfig(graph);
-     AstInterface asti = AstNodePtr(n);
-     ROSE_Analysis::BuildCFG(asti, AstNodePtr(n), cfgconfig);
+     AstInterfaceImpl astiImpl = AstInterfaceImpl(n);
+     AstInterface asti(&astiImpl);
+     ROSE_Analysis::BuildCFG(asti, AstNodePtrImpl(n), cfgconfig);
    }
 
 void

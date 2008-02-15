@@ -94,35 +94,35 @@ for Sage III.
 */
 /*!
 \fn void SgBinaryOp::set_lhs_operand_i(SgExpression *lhs_operand_i)
-\brief This function allows the p_lhs_operand_i pointer to be set (used internally).
+\brief This function allows the p_lhs_operand_i pointer to be set (used internally).See  *lhs_operand_i)
+lhs_operand_i for documentation 
    This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
-See  *lhs_operand_i)
-lhs_operand_i for documentation \deprecated This function is not used.
+\deprecated This function is not used.
 \param operand - sets value of internal p_lhs_operand pointer.
 \return Returns void.
 */
 /*!
 \fn SgExpression *SgBinaryOp::get_lhs_operand_i() const
-\brief returns SgExpression pointer to the operand associated with this binary operator.
-See  const
-lhs_operand_i for documentation \deprecated This function is not used.
+\brief returns SgExpression pointer to the operand associated with this binary operator.See  const
+lhs_operand_i for documentation 
+\deprecated This function is not used.
 \return Returns SgExpression pointer.
 */
 /*!
 \fn SgExpression *SgBinaryOp::get_rhs_operand_i() const
-\brief returns SgExpression pointer to the operand associated with this binary operator.
-See  const
-rhs_operand_i for documentation \deprecated This function is not used.
+\brief returns SgExpression pointer to the operand associated with this binary operator.See  const
+rhs_operand_i for documentation 
+\deprecated This function is not used.
 \return Returns SgExpression pointer.
 */
 /*!
 \fn void SgBinaryOp::set_rhs_operand_i(SgExpression *rhs_operand_i)
-\brief This function allows the p_rhs_operand_i pointer to be set (used internally).
+\brief This function allows the p_rhs_operand_i pointer to be set (used internally).See  *rhs_operand_i)
+rhs_operand_i for documentation 
    This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
-See  *rhs_operand_i)
-rhs_operand_i for documentation \deprecated This function is not used.
+\deprecated This function is not used.
 \param operand - sets value of internal p_rhs_operand pointer.
 \return Returns void.
 */
@@ -204,53 +204,53 @@ overloader operators \ref OverloaderOperatorSupport.
 */
 /*!
 \fn void SgBinaryOp::set_lhs_operand(SgExpression *exp)
-\brief This function allows the p_lhs_operand pointer to be set (used internally).
+\brief This function allows the p_lhs_operand pointer to be set (used internally).See  *exp)
+lhs_operand for documentation 
    This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
-See  *exp)
-lhs_operand for documentation \param operand - sets value of internal p_lhs_operand pointer.
+\param operand - sets value of internal p_lhs_operand pointer.
 \return Returns void.
 */
 /*!
 \fn void SgBinaryOp::set_rhs_operand(SgExpression *exp)
-\brief This function allows the p_rhs_operand pointer to be set (used internally).
+\brief This function allows the p_rhs_operand pointer to be set (used internally).See  *exp)
+rhs_operand for documentation 
    This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
-See  *exp)
-rhs_operand for documentation \param operand - sets value of internal p_rhs_operand pointer.
+\param operand - sets value of internal p_rhs_operand pointer.
 \return Returns void.
 */
 /*!
 \fn SgExpression *SgBinaryOp::get_lhs_operand() const
-\brief returns SgExpression pointer to the lhs operand associated with this binary operator.
-See  const
-lhs_operand for documentation \return Returns SgExpression pointer.
+\brief returns SgExpression pointer to the lhs operand associated with this binary operator.See  const
+lhs_operand for documentation 
+\return Returns SgExpression pointer.
 */
 /*!\fn SgExpression *SgBinaryOp::get_next(int &n) const
-\description See  const
+\brief \brief See  const
 next for documentation */
 /*!
 \fn SgExpression *SgBinaryOp::get_rhs_operand() const
-\brief returns SgExpression pointer to the rhs operand associated with this binary operator.
-See  const
-rhs_operand for documentation \return Returns SgExpression pointer.
+\brief returns SgExpression pointer to the rhs operand associated with this binary operator.See  const
+rhs_operand for documentation 
+\return Returns SgExpression pointer.
 */
 /*!\fn virtual SgNode *SgBinaryOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgBinaryOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgBinaryOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgBinaryOp::get_numberOfTraversalSuccessors()
-\description See  SgBinaryOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgBinaryOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBinaryOp::get_traversalSuccessorContainer()
-\description See  SgBinaryOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgBinaryOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBinaryOp::get_traversalSuccessorNamesContainer()
-\description See  SgBinaryOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgBinaryOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgBinaryOp::SgBinaryOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
 */
 //@}
-int SAGE_Doxygen_Dummy_19768190216664;
+int SAGE_Doxygen_Dummy_11331210804242;

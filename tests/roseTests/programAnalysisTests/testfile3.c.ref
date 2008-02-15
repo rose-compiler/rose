@@ -7,7 +7,7 @@ modref:  j ;  readref:  ;  killref:  j
 b =(3);
 modref:  b ;  readref:  ;  killref:  b
 for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}
-modref:  j j b c  k x ;  readref:  i j a j b c k j k x x i ;  killref:  j j b c  k x
+modref:  j j b c k k x ;  readref:  i j a j b c k j k x x i ;  killref:  j j b c k k x
 j = i;
 modref:  j ;  readref:  i ;  killref:  j
 (j) < a;
@@ -17,7 +17,7 @@ modref:  b ;  readref:  b ;  killref:  b
 c--;
 modref:  c ;  readref:  c ;  killref:  c
 for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}
-modref:   k x ;  readref:  k j k x x i ;  killref:   k x
+modref:  k k x ;  readref:  k j k x x i ;  killref:  k k x
 k < j;
 modref:  ;  readref:  k j ;  killref: 
 x +=(x *(i));

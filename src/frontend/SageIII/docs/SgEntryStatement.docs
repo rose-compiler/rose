@@ -1,0 +1,63 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgEntryStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgInitializedName *SgEntryStatement::p_result_name
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgEntryStatement::SgEntryStatement(Sg_File_Info *startOfConstruct,SgName name=(""),SgFunctionType *type=(0),SgFunctionDefinition *definition=(0))
+*/
+/*!\fn SgEntryStatement::SgEntryStatement(const SgEntryStatementStorageClass &source)
+*/
+/*!\fn inline static void SgEntryStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgEntryStatement *SgEntryStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgEntryStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgEntryStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgEntryStatement::initializeStorageClassArray(SgEntryStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgEntryStatement::clearMemoryPool()
+*/
+/*!\fn static void SgEntryStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgEntryStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgEntryStatement::roseRTI()
+*/
+/*!\fn virtual SgEntryStatement::~SgEntryStatement()
+*/
+/*!\fn virtual SgNode *SgEntryStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgEntryStatement::post_construction_initialization()
+*/
+/*!\fn void SgEntryStatement::set_result_name(SgInitializedName *result_name)
+\brief \brief See  *result_name)
+result_name for documentation */
+/*!\fn SgInitializedName *SgEntryStatement::get_result_name() const
+\brief \brief See  const
+result_name for documentation */
+/*!\fn virtual SgName SgEntryStatement::get_mangled_name() const
+\brief \brief See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgEntryStatement::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgEntryStatement::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgEntryStatement::get_numberOfTraversalSuccessors()
+\brief \brief See  SgEntryStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgEntryStatement::get_traversalSuccessorContainer()
+\brief \brief See  SgEntryStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgEntryStatement::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgEntryStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgEntryStatement::SgEntryStatement(SgName name,SgFunctionType *type,SgFunctionDefinition *definition)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1818069877;

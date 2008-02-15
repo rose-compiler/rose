@@ -1,12 +1,8 @@
-#include <general.h>
 
 #include <SymbolicExpr.h>
 #include <SymbolicSelect.h>
 #include <SymbolicBound.h>
 #include <CommandOptions.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
 
 bool DebugReplaceVal()
 {
@@ -48,7 +44,7 @@ class ValGetBound : public SymbolicVisitor
   SymbolicBound result;
   MapObject<SymbolicVal,SymbolicBound>& GetVarBound;
 
-  bool Default( const SymbolicVal &v)
+  bool Default0( const SymbolicVal &v)
      {
         SymbolicBound tmp = GetVarBound(v);
         bool succ = false;
@@ -69,13 +65,9 @@ class ValGetBound : public SymbolicVisitor
        SymbolicBound orig = result;
        bool change = false;
            
-       SymbolicVal op = v.GetOp();
-       SymbolicVal nop = GetRepl(op);
-       if (nop != op) {
-            change = true;
-       }
-       for (unsigned i = 0; i < v.NumOfArgs(); ++i) {
-          SymbolicVal cur = v.GetArg(i);
+       for (SymbolicFunction::const_iterator p = v.args_begin();
+            p != v.args_end(); ++p ){
+          SymbolicVal cur = *p;
           SymbolicVal n = GetRepl(cur);
           if (cur != n) {
              change = true;
@@ -83,7 +75,7 @@ class ValGetBound : public SymbolicVisitor
           args.push_back( n);
        }
        if (change) 
-          result.lb = result.ub = v.CloneFunction( nop, args);
+          result.lb = result.ub = v.cloneFunction(args);
        else
          result = orig;
      }
@@ -92,7 +84,7 @@ class ValGetBound : public SymbolicVisitor
          SymbolicBound orig = result;
          bool change = false, isrepl = true, reverse = false;
          SymOpType op = exp.GetOpType(); 
-         list<SymbolicBound> args;
+         STD list<SymbolicBound> args;
          for (SymbolicExpr::OpdIterator iter = exp.GetOpdIterator();
                !iter.ReachEnd(); iter.Advance()) {
             SymbolicVal cur = exp.Term2Val(iter.Current());
@@ -106,7 +98,7 @@ class ValGetBound : public SymbolicVisitor
             args.push_back(curbound); 
          }
          if (change) {
-            list<SymbolicBound>::const_iterator p = args.begin(); 
+            STD list<SymbolicBound>::const_iterator p = args.begin(); 
             result = *p;
             for ( ++p ; p != args.end(); ++p) {
                SymbolicBound cur = *p;
@@ -130,7 +122,7 @@ class ValGetBound : public SymbolicVisitor
   void Visit( const SymbolicVal &val)
      {
         result.lb = result.ub = val;
-        if (!Default(val))
+        if (!Default0(val))
             val.Visit(this);
       }
   SymbolicBound GetBound( const SymbolicVal &val)  
@@ -194,7 +186,7 @@ SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal
   ValGetBound op(op1);
   SymbolicVal r = op.GetRepl(v);
   if (DebugReplaceVal()) {
-     cerr << "replacing " << v.ToString() << " -> " << r.ToString() << endl;
+     STD cerr << "replacing " << v.toString() << "->" << r.toString() << STD endl;
   }
   return r;
 }
@@ -210,13 +202,13 @@ GetValBound(SymbolicVal val, MapObject<SymbolicVal, SymbolicBound>& f)
 { 
    SymbolicBound b = ValGetBound(f).GetBound(val); 
    if (DebugValBound()) {
-     cerr << " bound of ";
+     STD cerr << " bound of ";
      val.Dump();
-     cerr << " : ";
+     STD cerr << " : ";
      b.lb.Dump();
-     cerr << " -> ";
+     STD cerr << " -> ";
      b.ub.Dump();
-     cerr << endl;
+     STD cerr << STD endl;
    }
    return b;
 }

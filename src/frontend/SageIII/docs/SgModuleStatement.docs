@@ -3,16 +3,12 @@
 */
 /*! \name Class Members*/
 //@{
-/*!\var SgBasicBlock *SgModuleStatement::p_body
-*/
-/*!\var SgName SgModuleStatement::p_name
-*/
-/*!\var int SgModuleStatement::p_end_numeric_label
+/*!\var SgLabelRefExp *SgModuleStatement::p_end_numeric_label
 */
 //@}
 /*! \name User Interface*/
 //@{
-/*!\fn SgModuleStatement::SgModuleStatement(Sg_File_Info *startOfConstruct,SgName name=(""),SgBasicBlock *body=(0))
+/*!\fn SgModuleStatement::SgModuleStatement(Sg_File_Info *startOfConstruct,SgName name=(""),enum SgClassDeclaration::class_types class_type=SgClassDeclaration::e_class,SgClassType *type=(0),SgClassDefinition *definition=(0))
 */
 /*!\fn SgModuleStatement::SgModuleStatement(const SgModuleStatementStorageClass &source)
 */
@@ -38,42 +34,36 @@
 */
 /*!\fn virtual SgNode *SgModuleStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgModuleStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgModuleStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgModuleStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgModuleStatement::post_construction_initialization()
 */
-/*!\fn void SgModuleStatement::set_body(SgBasicBlock *body)
-\description See  *body)
-body for documentation */
-/*!\fn void SgModuleStatement::set_end_numeric_label(int end_numeric_label)
-\description See  end_numeric_label)
+/*!\fn virtual void SgModuleStatement::set_end_numeric_label(SgLabelRefExp *end_numeric_label)
+\brief \brief See  *end_numeric_label)
 end_numeric_label for documentation */
-/*!\fn void SgModuleStatement::set_name(SgName name)
-\description See  name)
-name for documentation */
-/*!\fn SgBasicBlock *SgModuleStatement::get_body() const
-\description See  const
-body for documentation */
-/*!\fn SgName SgModuleStatement::get_name() const
-\description See  const
-name for documentation */
-/*!\fn int SgModuleStatement::get_end_numeric_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgModuleStatement::get_end_numeric_label() const
+\brief \brief See  const
 end_numeric_label for documentation */
 /*!\fn virtual SgName SgModuleStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!\fn virtual SgNode *SgModuleStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgModuleStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgModuleStatement::get_numberOfTraversalSuccessors()
-\description See  SgModuleStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgModuleStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgModuleStatement::get_traversalSuccessorContainer()
-\description See  SgModuleStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgModuleStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgModuleStatement::get_traversalSuccessorNamesContainer()
-\description See  SgModuleStatement::traversalSuccessorNamesContainer for documentation */
-/*!\fn SgModuleStatement::SgModuleStatement(SgName name,SgBasicBlock *body)
+\brief \brief See  SgModuleStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgModuleStatement::SgModuleStatement(SgName name,enum SgClassDeclaration::class_types class_type,SgClassType *type,SgClassDefinition *definition)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_137599805;
+extern int SAGE_Doxygen_Dummy_1793118495;

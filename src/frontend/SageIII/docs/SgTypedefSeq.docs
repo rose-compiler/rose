@@ -72,17 +72,17 @@ pointer to an object derived from a SgTypedefSeq.
 /*!\fn virtual SgTypedefSeq::~SgTypedefSeq()
 */
 /*!\fn virtual SgNode *SgTypedefSeq::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgTypedefSeq::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgTypedefSeq::get_numberOfTraversalSuccessors()
-\description See  SgTypedefSeq::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgTypedefSeq::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypedefSeq::get_traversalSuccessorContainer()
-\description See  SgTypedefSeq::traversalSuccessorContainer for documentation */
+\brief \brief See  SgTypedefSeq::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypedefSeq::get_traversalSuccessorNamesContainer()
-\description See  SgTypedefSeq::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgTypedefSeq::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgTypedefSeq::SgTypedefSeq()
 \brief This is the constructor.
@@ -91,4 +91,4 @@ childIndex for documentation */
 \ref SgTypedefSeq_create "Example:create an SgTypedefSeq object"
 */
 //@}
-int SAGE_Doxygen_Dummy_14066724811990;
+int SAGE_Doxygen_Dummy_243321332632516;

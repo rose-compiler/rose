@@ -1,8 +1,6 @@
 
 #include <set>
 
-#include <general.h>
-
 #include <const.h>
 #include <ObserveObject.h>
 #include <SymbolicVal.h>
@@ -11,12 +9,6 @@
 #include <CompSliceImpl.h>
 #include <CompSliceObserver.h>
 #include <LoopInfoInterface.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 class CompSlice::ObserveImpl
    : public ObserveObject <CompSliceObserver>
@@ -66,22 +58,22 @@ CompSlice ::  ~CompSlice()
   delete obImpl; 
 }
 
-string CompSliceNest::ToString() const
+STD string CompSliceNest::toString() const
 { 
-  string res;
+  STD string res;
   for (int i = 0;i<NumberOfEntries();++i)
-     res = res + Entry(i)->ToString();
+     res = res + Entry(i)->toString();
   return res;
 }
 
-string CompSlice :: ToString() const
+STD string CompSlice :: toString() const
 {
-  return impl->ToString();
+  return impl->toString();
 }
 
 void CompSlice::
 SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l,
-                     Boolean loopreversible, int align)
+                     bool loopreversible, int align)
 {
   CompSliceStmt *stmt = impl->CreateSliceStmt(s);
   CompSliceLoop *loop = impl->CreateSliceLoop(l);
@@ -103,10 +95,10 @@ CompSlice::SliceLoopInfo CompSlice :: QuerySliceLoopInfo( const LoopTreeNode *n)
   return impl->QuerySliceLoop(n)->GetSliceInfo();
 }
 
-Boolean CompSlice :: QuerySliceStmt( const LoopTreeNode *n) const
+bool CompSlice :: QuerySliceStmt( const LoopTreeNode *n) const
 { return impl->QuerySliceStmt(n) != 0; }
 
-Boolean CompSlice :: QuerySliceLoop( const LoopTreeNode *n) const
+bool CompSlice :: QuerySliceLoop( const LoopTreeNode *n) const
 { return impl->QuerySliceLoop(n) != 0; }
 
 
@@ -153,10 +145,10 @@ void CompSlice :: IncreaseAlign( int a)
   Notify(info);
 }
 
-Boolean CompSlice :: SliceCommonLoop( CompSlice *slice2) const
+bool CompSlice :: SliceCommonLoop( CompSlice *slice2) const
 {
   ConstLoopIterator iter = GetConstLoopIterator();
-  for (LoopTreeNode *l; (l = iter.Current()); iter++) {
+  for (LoopTreeNode *l; l = iter.Current(); iter++) {
     if (slice2->QuerySliceLoop(l)) {
        return true;
     }
@@ -164,27 +156,27 @@ Boolean CompSlice :: SliceCommonLoop( CompSlice *slice2) const
   return false;
 }
 
-Boolean CompSlice :: SliceCommonStmt( CompSlice *slice2) const
+bool CompSlice :: SliceCommonStmt( CompSlice *slice2) const
 {
   ConstStmtIterator iter = GetConstStmtIterator();
-  for (LoopTreeNode *n1; (n1 = iter.Current()); iter.Advance()) {
+  for (LoopTreeNode *n1; n1 = iter.Current(); iter.Advance()) {
     if (slice2->QuerySliceStmt(n1))
        return true;
   }
   return false;
 }
 
-Boolean CompSlice :: SliceCodeSegment( LoopTreeNode *root) const
+bool CompSlice :: SliceCodeSegment( LoopTreeNode *root) const
 {
   LoopTreeTraverseSelectStmt iter( root);
-  for (LoopTreeNode *s; (s = iter.Current()); iter.Advance()) {
+  for (LoopTreeNode *s; s = iter.Current(); iter.Advance()) {
     if (!QuerySliceStmt(s))
        return false;
   }
   return true;
 }
 
-Boolean CompSlice :: SliceLoopReversible() const
+bool CompSlice :: SliceLoopReversible() const
 {
   for (ConstLoopIterator iter = GetConstLoopIterator();
         iter.Current() != 0; iter.Advance()) {
@@ -225,7 +217,7 @@ CompSliceNest ::  ~CompSliceNest()
   Notify(info);
 
   delete impl;
-  for (unsigned int i = 0; i < size; ++i) {
+  for (int i = 0; i < size; ++i) {
     CompSlice* tmp =  sliceVec[i];
     delete tmp;
   }
@@ -254,7 +246,7 @@ void CompSliceNest :: DeleteEntry( int index)
   CompSliceNestDeleteEntryInfo info(*this, index);
   Notify(info);
   delete sliceVec[index];
-  for (unsigned int i = index; i < size-1; ++i)
+  for (int i = index; i < size-1; ++i)
     sliceVec[i] = sliceVec[i+1]; 
   --size;
 }
@@ -297,7 +289,7 @@ SymbolicBound SliceLoopRange(const CompSlice *slice, LoopTreeNode *root)
   SymbolicBound result;
   LoopTreeGetVarBound bf(root->Parent());
   CompSlice::ConstStmtIterator stmtIter = slice->GetConstStmtIterator();
-  for (LoopTreeNode* stmt; (stmt = stmtIter.Current()); stmtIter++) {
+  for (LoopTreeNode* stmt; stmt = stmtIter.Current(); stmtIter++) {
     CompSlice::SliceStmtInfo info = stmtIter.CurrentInfo();
     LoopInfo *l  = info.loop->GetLoopInfo();
     SymbolicBound b = LoopTreeGetVarConstBound(info.loop, root->Parent()).GetConstBound(l->GetVar());
@@ -312,10 +304,10 @@ LoopStepInfo SliceLoopStep(const CompSlice *slice)
   CompSlice::ConstLoopIterator iter = slice->GetConstLoopIterator();
   LoopTreeNode *loop = iter.Current();
   SymbolicVal step = loop->GetLoopInfo()->GetStep();
-  Boolean reversible = iter.CurrentLoopReversible();
-  for ( iter.Advance(); (loop = iter.Current()); iter.Advance()) {
+  bool reversible = iter.CurrentLoopReversible();
+  for ( iter.Advance(); loop = iter.Current(); iter.Advance()) {
     SymbolicVal step1 = loop->GetLoopInfo()->GetStep();
-    Boolean r = iter.CurrentLoopReversible();
+    bool r = iter.CurrentLoopReversible();
     if (step !=step1) {
        assert(step== -step1 && (reversible || r));
        if (!r)
@@ -329,15 +321,15 @@ LoopStepInfo SliceLoopStep(const CompSlice *slice)
 
 SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
 {
-  typedef set<string, less<string> > nameset;
+  typedef STD set<STD string, STD less<STD string> > nameset;
   nameset sliceVars, usedVars;
   CompSlice::ConstLoopIterator loopIter = slice->GetConstLoopIterator();
   LoopTreeInterface interface;
-  for (LoopTreeNode *loop; (loop = loopIter.Current()); loopIter.Advance()) {
-    string name = loop->GetLoopInfo()->GetVar().GetVarName();
+  for (LoopTreeNode *loop; loop = loopIter.Current(); loopIter.Advance()) {
+    STD string name = loop->GetLoopInfo()->GetVar().GetVarName();
     sliceVars.insert( name);
     CompSlice::ConstStmtIterator stmtIter=loopIter.GetConstStmtIterator();
-    for (LoopTreeNode *stmt; (stmt=stmtIter.Current()); stmtIter.Advance()) {
+    for (LoopTreeNode *stmt; stmt=stmtIter.Current(); stmtIter.Advance()) {
        for (LoopTreeNode *l = GetEnclosingLoop(stmt,interface);
             l != 0; l = GetEnclosingLoop(l, interface) ) {
           if (l == loop) continue;
@@ -349,15 +341,14 @@ SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
   for (nameset::iterator p = sliceVars.begin(); p != sliceVars.end(); 
        ++p) {
     if (usedVars.find(*p) == usedVars.end())
-      return SymbolicVar(*p, 0);;
+      return SymbolicVar(*p, AST_NULL);;
   }
-  return SymbolicVar(fa.NewVar(fa.GetType("int")), 0);
+  return SymbolicVar(fa.NewVar(fa.GetType("int")), AST_NULL);
 }
 
 CompSlice::ConstLoopIterator::
 ConstLoopIterator( LoopTreeNode *root)
- : LoopTreeTraverseSelectLoop(
-                LoopTreeTraverse(root, LoopTreeTraverse::ChildrenOnly))
+ : LoopTreeTraverseSelectLoop(root, LoopTreeTraverse::ChildrenOnly)
 {}
 
 LoopTreeNode* CompSlice::ConstStmtIterator::Current() const
@@ -381,7 +372,7 @@ CompSlice::SliceLoopInfo CompSlice::ConstLoopIterator::CurrentInfo() const
       CompSliceLoop* l = static_cast<CompSliceLoop*>(cur);
       return (l==0)? SliceLoopInfo() : l->GetSliceInfo();
     }
-Boolean CompSlice::ConstLoopIterator::
+bool CompSlice::ConstLoopIterator::
 CurrentLoopReversible() const
     { LoopTreeNode* cur = LoopTreeTraverseSelectLoop::Current();
       return static_cast<CompSliceLoop*>(cur)->LoopReversible(); }

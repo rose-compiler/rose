@@ -1,0 +1,64 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmVectorValueExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned int SgAsmVectorValueExpression::p_size
+*/
+/*!\var SgAsmType *SgAsmVectorValueExpression::p_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmVectorValueExpression::SgAsmVectorValueExpression(const SgAsmVectorValueExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmVectorValueExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmVectorValueExpression *SgAsmVectorValueExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmVectorValueExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmVectorValueExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmVectorValueExpression::initializeStorageClassArray(SgAsmVectorValueExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmVectorValueExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmVectorValueExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmVectorValueExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmVectorValueExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmVectorValueExpression::~SgAsmVectorValueExpression()
+*/
+/*!\fn virtual SgNode *SgAsmVectorValueExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmVectorValueExpression::set_size(unsigned int size)
+\brief \brief See  size)
+size for documentation */
+/*!\fn void SgAsmVectorValueExpression::set_type(SgAsmType *type)
+\brief \brief See  *type)
+type for documentation */
+/*!\fn SgAsmType *SgAsmVectorValueExpression::get_type() const
+\brief \brief See  const
+type for documentation */
+/*!\fn unsigned int SgAsmVectorValueExpression::get_size() const
+\brief \brief See  const
+size for documentation */
+/*!\fn virtual SgNode *SgAsmVectorValueExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmVectorValueExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmVectorValueExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmVectorValueExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmVectorValueExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmVectorValueExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmVectorValueExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmVectorValueExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmVectorValueExpression::SgAsmVectorValueExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1135713902;

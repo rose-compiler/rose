@@ -5,7 +5,7 @@ INCLUDES = -I$(top_srcdir)/src/util/support -I$(srcdir)/..
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libgraphsSources = \
-   DGBaseGraphImpl.C IDGraphCreate.C  SCCAnalysis.C  TransAnalysis.C  TypedFusion.C
+   DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C
 
 # lib_LIBRARIES = libgraphs.a
 # libgraphs_a_SOURCES  = $(libgraphsSources)
@@ -24,8 +24,8 @@ distclean-local:
 	rm -rf Templates.DB
 
 include_HEADERS = \
-   IDGraphCreate.C \
-   BaseGraphCreate.h  GraphScope.h     IDGraphCreate.h \
-   TransAnalysis.h    GraphGroup.h       GraphTemplate.h  \
-   TypedFusion.h DGBaseGraphImpl.h  GraphInterface.h GraphUtils.h\
+   VirtualGraphCreate.C \
+   BaseGraphCreate.h  GraphScope.h     VirtualGraphCreate.h \
+   TransAnalysis.h    GraphGroup.h   \
+   TypedFusion.h DGBaseGraphImpl.h  GraphAccess.h GraphUtils.h\
    GraphUpdate.h    SCCAnalysis.h GraphDotOutput.h GraphIO.h 

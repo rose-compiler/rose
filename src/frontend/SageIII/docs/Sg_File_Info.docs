@@ -76,60 +76,60 @@
 /*!\fn void Sg_File_Info::updateSourcePosition(Sg_File_Info *update)
 */
 /*!\fn void Sg_File_Info::set_classificationBitField(unsigned int )
-\description See  )
+\brief \brief See  )
 classificationBitField for documentation */
 /*!\fn void Sg_File_Info::set_col(int n)
-\description See  n)
+\brief \brief See  n)
 col for documentation */
 /*!\fn void Sg_File_Info::set_fileIDsToUnparse(SgFileIdList fileIDsToUnparse)
-\description See  fileIDsToUnparse)
+\brief \brief See  fileIDsToUnparse)
 fileIDsToUnparse for documentation */
 /*!\fn void Sg_File_Info::set_file_id(int file_id)
-\description See  file_id)
+\brief \brief See  file_id)
 file_id for documentation */
 /*!\fn void Sg_File_Info::set_fileidtoname_map(std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > fileidtoname_map)
-\description See  fileidtoname_map)
+\brief \brief See  fileidtoname_map)
 fileidtoname_map for documentation */
 /*!\fn void Sg_File_Info::set_filenameString(const std::string &filename)
-\description See  &filename)
+\brief \brief See  &filename)
 filenameString for documentation */
 /*!\fn void Sg_File_Info::set_max_file_id(int max_file_id)
-\description See  max_file_id)
+\brief \brief See  max_file_id)
 max_file_id for documentation */
 /*!\fn void Sg_File_Info::set_nametofileid_map(std::map< std::string  , int  , std::less< std::string  >  , std::allocator< std::pair< const std::string  , int  >  >  > nametofileid_map)
-\description See  nametofileid_map)
+\brief \brief See  nametofileid_map)
 nametofileid_map for documentation */
 /*!\fn SgFileIdList Sg_File_Info::get_fileIDsToUnparse() const
-\description See  const
+\brief \brief See  const
 fileIDsToUnparse for documentation */
 /*!\fn const std::string &Sg_File_Info::get_filenameString() const
-\description See  const
+\brief \brief See  const
 filenameString for documentation */
 /*!\fn int Sg_File_Info::get_file_id() const
-\description See  const
+\brief \brief See  const
 file_id for documentation */
 /*!\fn int Sg_File_Info::get_max_file_id() const
-\description See  const
+\brief \brief See  const
 max_file_id for documentation */
 /*!\fn std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > Sg_File_Info::get_fileidtoname_map() const
-\description See  const
+\brief \brief See  const
 fileidtoname_map for documentation */
 /*!\fn std::map< std::string  , int  , std::less< std::string  >  , std::allocator< std::pair< const std::string  , int  >  >  > Sg_File_Info::get_nametofileid_map() const
-\description See  const
+\brief \brief See  const
 nametofileid_map for documentation */
 /*!\fn virtual SgNode *Sg_File_Info::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t Sg_File_Info::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t Sg_File_Info::get_numberOfTraversalSuccessors()
-\description See  Sg_File_Info::numberOfTraversalSuccessors for documentation */
+\brief \brief See  Sg_File_Info::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > Sg_File_Info::get_traversalSuccessorContainer()
-\description See  Sg_File_Info::traversalSuccessorContainer for documentation */
+\brief \brief See  Sg_File_Info::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > Sg_File_Info::get_traversalSuccessorNamesContainer()
-\description See  Sg_File_Info::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  Sg_File_Info::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual Sg_File_Info::~Sg_File_Info()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_807512226;
+extern int SAGE_Doxygen_Dummy_381524958;

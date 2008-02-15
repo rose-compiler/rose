@@ -1,18 +1,10 @@
 
-#include <general.h>
-
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
 #include <assert.h>
 
 #include <DepRel.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 #define ALIGN_ALL 32767
 #define MAX_ALIGN 3
@@ -136,19 +128,19 @@ int DepRel :: GetMaxAlign() const
   }
 }
 
-Boolean DepRel :: IsTop() const
+bool DepRel :: IsTop() const
 {
   return GetRelType( entryType ) == DEPDIR_NONE;
 }
 
-Boolean DepRel :: IsBottom() const
+bool DepRel :: IsBottom() const
 {
   return GetRelType( entryType ) == DEPDIR_ALL;
 }
 
-string DepRel :: ToString() const 
+std:: string DepRel :: toString() const 
 {
-  string res;
+  std:: string res;
   switch ( GetRelType( entryType)) {
   case DEPDIR_NONE:
     res = res + "(); "; 
@@ -172,17 +164,17 @@ string DepRel :: ToString() const
   char buf[20];
   if (align != ALIGN_ALL) {
     sprintf(buf, "%d", align);
-    res = res + string(buf);
+    res = res + std:: string(buf);
   }
   int s = AlignRangeSize( entryType );
   if ( s > 1)  {
     sprintf(buf, ",%d", s);
-    res = res + string(buf);
+    res = res + std:: string(buf);
   }
   return res;
 }
 
-Boolean operator <= ( const DepRel &e1, const DepRel &e2)
+bool LessThan( const DepRel &e1, const DepRel &e2)
 {
   if ( e1.IsTop() || e2.IsBottom())
     return true;
@@ -208,7 +200,7 @@ Boolean operator <= ( const DepRel &e1, const DepRel &e2)
     return false;
 }
 
-Boolean DepRel::UnionUpdate (DepRel& e1, const DepRel &e2)
+bool DepRel::UnionUpdate (DepRel& e1, const DepRel &e2)
 {
   DepDirType t1 = e1.GetDirType(), t2 = e2.GetDirType();
   DepDirType t = static_cast <DepDirType>(t1 | t2);
@@ -226,7 +218,7 @@ DepRel operator | (const DepRel &e1, const DepRel &e2)
   return result;
 }
 
-Boolean DepRel::IntersectUpdate (DepRel& e1, const DepRel &e2)
+bool DepRel::IntersectUpdate (DepRel& e1, const DepRel &e2)
 {
   DepDirType t1 = e1.GetDirType(), t2 = e2.GetDirType();
   DepDirType t = static_cast <DepDirType>(t1 & t2);
@@ -279,7 +271,7 @@ DepRel operator * (const DepRel &e1, const DepRel &e2)
   return DepRel(t, AddConst(a1,a2), AddConst(b1, b2));
 } 
 
-Boolean DepRel:: Closure()
+bool DepRel:: Closure()
 {
   DepDirType t = GetDirType();
   int lo = GetMinAlign(), hi = GetMaxAlign();

@@ -86,183 +86,189 @@
 */
 /*!\fn virtual SgNode *SgInquireStatement::copy(SgCopyHelp &help) const
 */
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgInquireStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgInquireStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgInquireStatement::cfgIndexForEnd() const
+*/
 /*!\fn virtual void SgInquireStatement::post_construction_initialization()
 */
 /*!\fn void SgInquireStatement::set_access(SgExpression *access)
-\description See  *access)
+\brief \brief See  *access)
 access for documentation */
 /*!\fn void SgInquireStatement::set_action(SgExpression *action)
-\description See  *action)
+\brief \brief See  *action)
 action for documentation */
 /*!\fn void SgInquireStatement::set_asynchronous(SgExpression *asynchronous)
-\description See  *asynchronous)
+\brief \brief See  *asynchronous)
 asynchronous for documentation */
 /*!\fn void SgInquireStatement::set_blank(SgExpression *blank)
-\description See  *blank)
+\brief \brief See  *blank)
 blank for documentation */
 /*!\fn void SgInquireStatement::set_decimal(SgExpression *decimal)
-\description See  *decimal)
+\brief \brief See  *decimal)
 decimal for documentation */
 /*!\fn void SgInquireStatement::set_delim(SgExpression *delim)
-\description See  *delim)
+\brief \brief See  *delim)
 delim for documentation */
 /*!\fn void SgInquireStatement::set_direct(SgExpression *direct)
-\description See  *direct)
+\brief \brief See  *direct)
 direct for documentation */
 /*!\fn void SgInquireStatement::set_exist(SgExpression *exist)
-\description See  *exist)
+\brief \brief See  *exist)
 exist for documentation */
 /*!\fn void SgInquireStatement::set_file(SgExpression *file)
-\description See  *file)
+\brief \brief See  *file)
 file for documentation */
 /*!\fn void SgInquireStatement::set_form(SgExpression *form)
-\description See  *form)
+\brief \brief See  *form)
 form for documentation */
 /*!\fn void SgInquireStatement::set_formatted(SgExpression *formatted)
-\description See  *formatted)
+\brief \brief See  *formatted)
 formatted for documentation */
 /*!\fn void SgInquireStatement::set_name(SgExpression *name)
-\description See  *name)
+\brief \brief See  *name)
 name for documentation */
 /*!\fn void SgInquireStatement::set_named(SgExpression *named)
-\description See  *named)
+\brief \brief See  *named)
 named for documentation */
 /*!\fn void SgInquireStatement::set_nextrec(SgExpression *nextrec)
-\description See  *nextrec)
+\brief \brief See  *nextrec)
 nextrec for documentation */
 /*!\fn void SgInquireStatement::set_number(SgExpression *number)
-\description See  *number)
+\brief \brief See  *number)
 number for documentation */
 /*!\fn void SgInquireStatement::set_opened(SgExpression *opened)
-\description See  *opened)
+\brief \brief See  *opened)
 opened for documentation */
 /*!\fn void SgInquireStatement::set_pad(SgExpression *pad)
-\description See  *pad)
+\brief \brief See  *pad)
 pad for documentation */
 /*!\fn void SgInquireStatement::set_pending(SgExpression *pending)
-\description See  *pending)
+\brief \brief See  *pending)
 pending for documentation */
 /*!\fn void SgInquireStatement::set_position(SgExpression *position)
-\description See  *position)
+\brief \brief See  *position)
 position for documentation */
 /*!\fn void SgInquireStatement::set_read(SgExpression *read)
-\description See  *read)
+\brief \brief See  *read)
 read for documentation */
 /*!\fn void SgInquireStatement::set_readwrite(SgExpression *readwrite)
-\description See  *readwrite)
+\brief \brief See  *readwrite)
 readwrite for documentation */
 /*!\fn void SgInquireStatement::set_recl(SgExpression *recl)
-\description See  *recl)
+\brief \brief See  *recl)
 recl for documentation */
 /*!\fn void SgInquireStatement::set_sequential(SgExpression *sequential)
-\description See  *sequential)
+\brief \brief See  *sequential)
 sequential for documentation */
 /*!\fn void SgInquireStatement::set_size(SgExpression *size)
-\description See  *size)
+\brief \brief See  *size)
 size for documentation */
 /*!\fn void SgInquireStatement::set_stream(SgExpression *stream)
-\description See  *stream)
+\brief \brief See  *stream)
 stream for documentation */
 /*!\fn void SgInquireStatement::set_unformatted(SgExpression *unformatted)
-\description See  *unformatted)
+\brief \brief See  *unformatted)
 unformatted for documentation */
 /*!\fn void SgInquireStatement::set_write(SgExpression *write)
-\description See  *write)
+\brief \brief See  *write)
 write for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_access() const
-\description See  const
+\brief \brief See  const
 access for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_action() const
-\description See  const
+\brief \brief See  const
 action for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_asynchronous() const
-\description See  const
+\brief \brief See  const
 asynchronous for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_blank() const
-\description See  const
+\brief \brief See  const
 blank for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_decimal() const
-\description See  const
+\brief \brief See  const
 decimal for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_delim() const
-\description See  const
+\brief \brief See  const
 delim for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_direct() const
-\description See  const
+\brief \brief See  const
 direct for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_exist() const
-\description See  const
+\brief \brief See  const
 exist for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_file() const
-\description See  const
+\brief \brief See  const
 file for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_form() const
-\description See  const
+\brief \brief See  const
 form for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_formatted() const
-\description See  const
+\brief \brief See  const
 formatted for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_named() const
-\description See  const
+\brief \brief See  const
 named for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_nextrec() const
-\description See  const
+\brief \brief See  const
 nextrec for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_number() const
-\description See  const
+\brief \brief See  const
 number for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_opened() const
-\description See  const
+\brief \brief See  const
 opened for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_pad() const
-\description See  const
+\brief \brief See  const
 pad for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_pending() const
-\description See  const
+\brief \brief See  const
 pending for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_position() const
-\description See  const
+\brief \brief See  const
 position for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_read() const
-\description See  const
+\brief \brief See  const
 read for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_readwrite() const
-\description See  const
+\brief \brief See  const
 readwrite for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_recl() const
-\description See  const
+\brief \brief See  const
 recl for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_sequential() const
-\description See  const
+\brief \brief See  const
 sequential for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_size() const
-\description See  const
+\brief \brief See  const
 size for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_stream() const
-\description See  const
+\brief \brief See  const
 stream for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_unformatted() const
-\description See  const
+\brief \brief See  const
 unformatted for documentation */
 /*!\fn SgExpression *SgInquireStatement::get_write() const
-\description See  const
+\brief \brief See  const
 write for documentation */
 /*!\fn virtual SgNode *SgInquireStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgInquireStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgInquireStatement::get_numberOfTraversalSuccessors()
-\description See  SgInquireStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgInquireStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgInquireStatement::get_traversalSuccessorContainer()
-\description See  SgInquireStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgInquireStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgInquireStatement::get_traversalSuccessorNamesContainer()
-\description See  SgInquireStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgInquireStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgInquireStatement::SgInquireStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1017160492;
+extern int SAGE_Doxygen_Dummy_283035104;

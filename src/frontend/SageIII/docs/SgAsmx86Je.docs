@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmx86Je
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmx86Je::SgAsmx86Je(const SgAsmx86JeStorageClass &source)
+*/
+/*!\fn inline static void SgAsmx86Je::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmx86Je *SgAsmx86Je::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmx86Je::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmx86Je::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmx86Je::initializeStorageClassArray(SgAsmx86JeStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmx86Je::clearMemoryPool()
+*/
+/*!\fn static void SgAsmx86Je::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmx86Je::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmx86Je::roseRTI()
+*/
+/*!\fn virtual SgAsmx86Je::~SgAsmx86Je()
+*/
+/*!\fn virtual SgNode *SgAsmx86Je::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmx86Je::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Je::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmx86Je::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmx86Je::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmx86Je::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmx86Je::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmx86Je::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmx86Je::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmx86Je::SgAsmx86Je(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_288557691;

@@ -112,37 +112,37 @@ the IR node.
 /*!\fn virtual void SgThrowOp::post_construction_initialization()
 */
 /*!\fn void SgThrowOp::set_throwKind(enum SgThrowOp::e_throw_kind throwKind)
-\description See  throwKind)
+\brief \brief See  throwKind)
 throwKind for documentation */
 /*!\fn void SgThrowOp::set_typeList(SgTypePtrListPtr typeList)
-\description See  typeList)
+\brief \brief See  typeList)
 typeList for documentation */
 /*!
 \fn SgTypePtrListPtr SgThrowOp::get_typeList() const
-\brief Return internal pointer to SgTypePtrList (STL list of SgType pointers).
+\brief Return internal pointer to SgTypePtrList (STL list of SgType pointers).See  const
+typeList for documentation 
    Return internal pointer to SgTypePtrList (STL list of SgType pointers).
-See  const
-typeList for documentation \return Returns valid pointer to SgTypePtrList.
+\return Returns valid pointer to SgTypePtrList.
 */
 /*!\fn enum SgThrowOp::e_throw_kind SgThrowOp::get_throwKind() const
-\description See  const
+\brief \brief See  const
 throwKind for documentation */
 /*!\fn virtual SgNode *SgThrowOp::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual SgType *SgThrowOp::get_type() const
-\description See  const
+\brief \brief See  const
 type for documentation */
 /*!\fn virtual size_t SgThrowOp::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgThrowOp::get_numberOfTraversalSuccessors()
-\description See  SgThrowOp::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgThrowOp::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgThrowOp::get_traversalSuccessorContainer()
-\description See  SgThrowOp::traversalSuccessorContainer for documentation */
+\brief \brief See  SgThrowOp::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgThrowOp::get_traversalSuccessorNamesContainer()
-\description See  SgThrowOp::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgThrowOp::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgThrowOp::SgThrowOp(SgExpression *operand_i,SgType *expression_type,SgTypePtrListPtr typeList,enum SgThrowOp::e_throw_kind throwKind)
 */
 //@}
-int SAGE_Doxygen_Dummy_139951546727386;
+int SAGE_Doxygen_Dummy_7768425726542;

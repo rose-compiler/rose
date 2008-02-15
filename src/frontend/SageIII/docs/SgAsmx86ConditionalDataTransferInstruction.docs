@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmx86ConditionalDataTransferInstruction
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmx86ConditionalDataTransferInstruction::SgAsmx86ConditionalDataTransferInstruction(const SgAsmx86ConditionalDataTransferInstructionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmx86ConditionalDataTransferInstruction::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmx86ConditionalDataTransferInstruction *SgAsmx86ConditionalDataTransferInstruction::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmx86ConditionalDataTransferInstruction::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmx86ConditionalDataTransferInstruction::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmx86ConditionalDataTransferInstruction::initializeStorageClassArray(SgAsmx86ConditionalDataTransferInstructionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmx86ConditionalDataTransferInstruction::clearMemoryPool()
+*/
+/*!\fn static void SgAsmx86ConditionalDataTransferInstruction::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmx86ConditionalDataTransferInstruction::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmx86ConditionalDataTransferInstruction::roseRTI()
+*/
+/*!\fn virtual SgAsmx86ConditionalDataTransferInstruction::~SgAsmx86ConditionalDataTransferInstruction()
+*/
+/*!\fn virtual SgNode *SgAsmx86ConditionalDataTransferInstruction::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmx86ConditionalDataTransferInstruction::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmx86ConditionalDataTransferInstruction::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmx86ConditionalDataTransferInstruction::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmx86ConditionalDataTransferInstruction::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmx86ConditionalDataTransferInstruction::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmx86ConditionalDataTransferInstruction::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmx86ConditionalDataTransferInstruction::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmx86ConditionalDataTransferInstruction::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmx86ConditionalDataTransferInstruction::SgAsmx86ConditionalDataTransferInstruction(unsigned int address=(0),std::string mnemonic=(""),std::string comment=(""))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_375042097;

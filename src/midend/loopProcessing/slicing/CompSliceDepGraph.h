@@ -9,12 +9,12 @@
 #include <SinglyLinkedList.h>
 
 class CompSliceDepGraphNode 
-   : public GraphNode, protected CompSliceNestObserver
+   : public MultiGraphElem, protected CompSliceNestObserver
 {
   CompSliceNest vec;
   SinglyLinkedListWrap<LoopTreeNode*> rootList;
-  CompSliceDepGraphNode(GraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op) ;
-  CompSliceDepGraphNode(GraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op,
+  CompSliceDepGraphNode(MultiGraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op) ;
+  CompSliceDepGraphNode(MultiGraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op,
                         LoopTreeTransDepGraphCreate *t);
 
   void UpdateSwap(const CompSliceNestSwapInfo &info);
@@ -24,7 +24,7 @@ class CompSliceDepGraphNode
   void UpdateFusion( const CompSliceNestFusionInfo& info);
  public:
   CompSliceNest& GetInfo() { return vec; }
-  std::string ToString() const { return vec.ToString(); }
+  STD string toString() const { return vec.toString(); }
   
   LoopTreeNodeIterator GetSliceRootIterator() const;
   
@@ -45,17 +45,16 @@ class CompSliceDepGraphCreate
   CompSliceDepGraphNode* CreateNode(LoopTreeDepComp &c, DependenceHoisting& op)
      { CompSliceDepGraphNode* node = new CompSliceDepGraphNode(this, c, op);
         nodeMap.InsertMapping(&node->vec, node); 
-        CreateBaseNode(node);
+        AddNode(node);
        return node;}
   CompSliceDepGraphNode* CreateNode( LoopTreeDepComp &c, DependenceHoisting& op, 
                                      LoopTreeTransDepGraphCreate *t)
      { CompSliceDepGraphNode* node = new CompSliceDepGraphNode(this, c,op, t);
         nodeMap.InsertMapping(&node->vec, node); 
-        CreateBaseNode(node); 
+        AddNode(node); 
         return node;
      }
-//Boolean DeleteNode( CompSliceDepGraphNode *n)
-  int DeleteNode( CompSliceDepGraphNode *n)
+  bool DeleteNode( CompSliceDepGraphNode *n)
       { return DepInfoGraphCreate<CompSliceDepGraphNode>::DeleteNode(n); }
   DepInfoEdge* CreateEdge( CompSliceDepGraphNode *n1, CompSliceDepGraphNode *n2,
                            const DepInfo &info);
@@ -65,8 +64,7 @@ class CompSliceDepGraphCreate
   CompSliceDepGraphNode* QueryDepNode( const CompSliceNest *nest) 
       { return nodeMap.Map(const_cast<CompSliceNest*>(nest)); }
 
-//void TopoSort( Boolean reverse = false );
-  void TopoSort( int reverse = false );
+  void TopoSort( bool reverse = false );
 };
 
 typedef CompSliceDepGraphCreate::NodeIterator CompSliceDepGraphNodeIterator;

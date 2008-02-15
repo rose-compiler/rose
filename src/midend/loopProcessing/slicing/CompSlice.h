@@ -2,9 +2,9 @@
 #ifndef COMPSLICE
 #define COMPSLICE
 
-#include <computation/LoopTree.h>
-#include <computation/LoopTreeObserver.h>
-#include <computation/LoopTreeDepComp.h>
+#include <LoopTree.h>
+#include <LoopTreeObserver.h>
+#include <LoopTreeDepComp.h>
 
 class CompSliceObserver;
 class CompSliceObserveInfo;
@@ -15,8 +15,8 @@ class CompSlice
   CompSliceImpl *impl;
   ObserveImpl *obImpl;
 
-//void SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l, Boolean loopreversible = false, int align = 0);
-  void SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l, int loopreversible = false, int align = 0);
+  void SetSliceLoop( LoopTreeNode *s, LoopTreeNode *l,
+                     bool loopreversible = false, int align = 0);
   void SetSliceAlign( LoopTreeNode *s, int align);
   void Notify( const CompSliceObserveInfo &info);
  protected:
@@ -28,40 +28,32 @@ class CompSlice
   CompSlice( const CompSlice& that);
   ~CompSlice();
 
-  void Dump() const { std::cerr << ToString() << std::endl;}
-  std::string ToString() const;
+  void Dump() const { STD cerr << toString() << STD endl;}
+  STD string toString() const;
   int QuerySliceLevel() const;
 
   struct SliceStmtInfo {
      LoopTreeNode *loop;
-  // Boolean reversible;
-     int reversible;
+     bool reversible;
      int align;
      SliceStmtInfo() : loop(0), reversible(false), align(0) {}
-  // SliceStmtInfo(LoopTreeNode *l, Boolean r, int a) 
-     SliceStmtInfo(LoopTreeNode *l, int r, int a) 
+     SliceStmtInfo(LoopTreeNode *l, bool r, int a) 
        : loop(l), reversible(r), align(a) {}
-  // operator Boolean()  { return loop != 0; }
-     operator int()  { return loop != 0; }
+     operator bool()  { return loop != 0; }
   };
   struct SliceLoopInfo {
- // Boolean reversible;
-    int reversible;
+    bool reversible;
     unsigned stmtcount;
     int minalign, maxalign;
     SliceLoopInfo() : reversible(false) { stmtcount=minalign=maxalign = 0;}
- // SliceLoopInfo( Boolean r, unsigned c, int mina, int maxa)
-    SliceLoopInfo( int r, unsigned c, int mina, int maxa)
+    SliceLoopInfo( bool r, unsigned c, int mina, int maxa)
       : reversible(r), stmtcount(c),minalign(mina),maxalign(maxa) {}
- // operator Boolean() { return !stmtcount; }
-    operator int() { return !stmtcount; }
+    operator bool() { return !stmtcount; }
   };
   SliceStmtInfo QuerySliceStmtInfo( const LoopTreeNode *s) const;
   SliceLoopInfo QuerySliceLoopInfo( const LoopTreeNode *l) const;
-//Boolean QuerySliceStmt( const LoopTreeNode *s) const;
-  int QuerySliceStmt( const LoopTreeNode *s) const;
-//Boolean QuerySliceLoop( const LoopTreeNode *l) const;
-  int QuerySliceLoop( const LoopTreeNode *l) const;
+  bool QuerySliceStmt( const LoopTreeNode *s) const;
+  bool QuerySliceLoop( const LoopTreeNode *l) const;
 
   class ConstStmtIterator : public LoopTreeTraverseSelectStmt
   { public:
@@ -80,8 +72,7 @@ class CompSlice
           : LoopTreeTraverseSelectLoop(that) {}
       LoopTreeNode* Current() const;
       SliceLoopInfo CurrentInfo() const;
-   // Boolean CurrentLoopReversible() const ;
-      int CurrentLoopReversible() const ;
+      bool CurrentLoopReversible() const ;
       ConstStmtIterator GetConstStmtIterator() const;
     };
   ConstLoopIterator GetConstLoopIterator() const;
@@ -130,14 +121,10 @@ class CompSlice
   void AttachObserver( CompSliceObserver &o) const; 
   void DetachObserver( CompSliceObserver &o) const;
 
-//Boolean SliceCommonLoop( CompSlice *slice2) const;
-  int SliceCommonLoop( CompSlice *slice2) const;
-//Boolean SliceCommonStmt( CompSlice *slice2) const;
-  int SliceCommonStmt( CompSlice *slice2) const;
-//Boolean SliceCodeSegment( LoopTreeNode *root) const;
-  int SliceCodeSegment( LoopTreeNode *root) const;
-//Boolean SliceLoopReversible() const;
-  int SliceLoopReversible() const;
+  bool SliceCommonLoop( CompSlice *slice2) const;
+  bool SliceCommonStmt( CompSlice *slice2) const;
+  bool SliceCodeSegment( LoopTreeNode *root) const;
+  bool SliceLoopReversible() const;
 
   void Append( const CompSlice& that);
   void IncreaseAlign( int align);
@@ -146,11 +133,8 @@ class CompSlice
 
 SymbolicBound SliceLoopRange(const CompSlice *slice, LoopTreeNode *root);
 struct LoopStepInfo
-{
-//SymbolicVal step; Boolean reversible;
-  SymbolicVal step; int reversible;
-//LoopStepInfo(SymbolicVal s, Boolean r) : step(s), reversible(r){}
-  LoopStepInfo(SymbolicVal s, int r) : step(s), reversible(r){}
+{ SymbolicVal step; bool reversible;
+  LoopStepInfo(SymbolicVal s, bool r) : step(s), reversible(r){}
 };
 LoopStepInfo SliceLoopStep(const CompSlice *slice);
 SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice);
@@ -187,8 +171,8 @@ class CompSliceNest
   int NumberOfEntries() const { return size; }
   const CompSlice* Entry(int index) const { return sliceVec[index]; }
   const CompSlice* operator [] (int index) const { return sliceVec[index]; }
-  void Dump() const  { std::cerr << ToString() << std::endl; }
-  std::string ToString() const ;
+  void Dump() const  { STD cerr << toString() << STD endl; }
+  STD string toString() const ;
 
   void AttachObserver( CompSliceNestObserver &o) const ;
   void DetachObserver( CompSliceNestObserver &o) const;

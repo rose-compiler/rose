@@ -11,4 +11,4 @@
 /*!\fn virtual RemoveInitializedNamePtrInheritedAttribute RemoveInitializedNamePtr::evaluateInheritedAttribute(SgNode *node,RemoveInitializedNamePtrInheritedAttribute ia)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1145110638;
+extern int SAGE_Doxygen_Dummy_531417540;

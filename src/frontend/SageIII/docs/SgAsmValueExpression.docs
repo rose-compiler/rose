@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmValueExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgAsmValueExpression *SgAsmValueExpression::p_unfolded_expression_tree
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmValueExpression::SgAsmValueExpression(const SgAsmValueExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgAsmValueExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmValueExpression *SgAsmValueExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmValueExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmValueExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmValueExpression::initializeStorageClassArray(SgAsmValueExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmValueExpression::clearMemoryPool()
+*/
+/*!\fn static void SgAsmValueExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmValueExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmValueExpression::roseRTI()
+*/
+/*!\fn virtual SgAsmValueExpression::~SgAsmValueExpression()
+*/
+/*!\fn virtual SgNode *SgAsmValueExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgAsmValueExpression::set_unfolded_expression_tree(SgAsmValueExpression *unfolded_expression_tree)
+\brief \brief See  *unfolded_expression_tree)
+unfolded_expression_tree for documentation */
+/*!\fn SgAsmValueExpression *SgAsmValueExpression::get_unfolded_expression_tree() const
+\brief \brief See  const
+unfolded_expression_tree for documentation */
+/*!\fn virtual SgNode *SgAsmValueExpression::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmValueExpression::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmValueExpression::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmValueExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmValueExpression::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmValueExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmValueExpression::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmValueExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmValueExpression::SgAsmValueExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_260963666;

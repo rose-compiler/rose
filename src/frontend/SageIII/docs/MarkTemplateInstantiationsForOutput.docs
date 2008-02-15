@@ -10,4 +10,4 @@
 /*!\fn static void MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(std::set< SgDeclarationStatement * , std::less< SgDeclarationStatement * >  , std::allocator< SgDeclarationStatement * >  > setOfRequiredDeclarations,SgFile *file)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1560304717;
+extern int SAGE_Doxygen_Dummy_928552861;

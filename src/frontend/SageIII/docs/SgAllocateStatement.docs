@@ -37,24 +37,24 @@
 /*!\fn virtual void SgAllocateStatement::post_construction_initialization()
 */
 /*!\fn void SgAllocateStatement::set_name_list(SgStringList name_list)
-\description See  name_list)
+\brief \brief See  name_list)
 name_list for documentation */
 /*!\fn SgStringList SgAllocateStatement::get_name_list() const
-\description See  const
+\brief \brief See  const
 name_list for documentation */
 /*!\fn virtual SgNode *SgAllocateStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAllocateStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAllocateStatement::get_numberOfTraversalSuccessors()
-\description See  SgAllocateStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAllocateStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAllocateStatement::get_traversalSuccessorContainer()
-\description See  SgAllocateStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAllocateStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAllocateStatement::get_traversalSuccessorNamesContainer()
-\description See  SgAllocateStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgAllocateStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgAllocateStatement::SgAllocateStatement()
 */
 //@}
-extern int SAGE_Doxygen_Dummy_747123910;
+extern int SAGE_Doxygen_Dummy_1340136140;

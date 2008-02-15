@@ -10,12 +10,12 @@
 class AstTreeDepGraphBuildImpl
 {
  public:
-  virtual GraphNode* CreateNodeImpl(AstNodePtr s, const DomainCond& c) = 0;
-  virtual void CreateEdgeImpl(GraphNode *n1, GraphNode *n2, DepInfo info) = 0;
+  virtual GraphAccessInterface::Node* CreateNodeImpl(AstNodePtr s, const DomainCond& c) = 0;
+  virtual void CreateEdgeImpl(GraphAccessInterface::Node *n1, GraphAccessInterface::Node *n2, DepInfo info) = 0;
   virtual DepInfoConstIterator 
-          GetDepInfoIteratorImpl( GraphEdge* e, DepType t) = 0;
-  virtual AstNodePtr GetNodeAst(GraphNode *n) = 0;
-  virtual GraphAccess* Access() const = 0;
+          GetDepInfoIteratorImpl( GraphAccessInterface::Edge* e, DepType t) = 0;
+  virtual AstNodePtr GetNodeAst(GraphAccessInterface::Node *n) = 0;
+  virtual const GraphAccessInterface* Access() const = 0;
 };
 
 class  AstTreeDepGraphAnal
@@ -27,11 +27,11 @@ class  AstTreeDepGraphAnal
    AstTreeDepGraphAnal( AstTreeDepGraphBuildImpl* g, DepInfoAnal &_impl) 
       : impl(_impl), graph(g) {}
    struct StmtNodeInfo {
-      GraphNode *node;
+      GraphAccessInterface::Node *node;
       AstNodePtr start;
-      StmtNodeInfo(GraphNode *n, const AstNodePtr& s)
+      StmtNodeInfo(GraphAccessInterface::Node *n, const AstNodePtr& s)
        : node(n), start(s) {}
-      StmtNodeInfo() { node = 0; start = 0; }
+      StmtNodeInfo() { node = 0; start = AST_NULL; }
    };
 
   const DomainCond& GetStmtDomain( LoopTransformInterface &fa, const AstNodePtr& s) 
@@ -55,21 +55,17 @@ class  BuildAstTreeDepGraph : public AstTreeDepGraphAnal,
   BuildAstTreeDepGraph( LoopTransformInterface& _lf, AstTreeDepGraphBuildImpl* g, DepInfoAnal &_impl)
     : AstTreeDepGraphAnal(g, _impl), lf(_lf) {}
 
-//Boolean ProcessStmt(AstInterface &fa, const AstNodePtr& s);
-  void ProcessStmt(AstInterface &fa, const AstNodePtr& s);
-//Boolean ProcessGoto(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest);
-  int ProcessGoto(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest);
-//Boolean ProcessIf(AstInterface &fa, const AstNodePtr& l, 
-  void ProcessIf(AstInterface &fa, const AstNodePtr& l, 
+  bool ProcessStmt(AstInterface &fa, const AstNodePtr& s);
+  bool ProcessGoto(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest);
+  bool ProcessIf(AstInterface &fa, const AstNodePtr& l, 
                     const AstNodePtr& cond, const AstNodePtr& truebody,
                     const AstNodePtr& falsebody, AstInterface::TraversalVisitType t)
-     { if (t == AstInterface::PreVisit) 
-	 ProcessStmt(fa, l); 
+     { if (t == AstInterface::PreVisit) return ProcessStmt(fa, l); 
+       return true;
      }
-//Boolean ProcessLoop(AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
-  int ProcessLoop(AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
+  bool ProcessLoop(AstInterface &fa, const AstNodePtr& l, const AstNodePtr& body,
                       AstInterface::TraversalVisitType t);
-  GraphNode* LastProcessedStmt() 
+  GraphAccessInterface::Node* LastProcessedStmt() 
     { return stmtNodes.First()->GetEntry().node; }
   void TranslateCtrlDeps(LoopTransformInterface &fa);
 };

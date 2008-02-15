@@ -50,6 +50,8 @@ pointer to an object derived from a SgStorageModifier.
 //@{
 /*!\var enum SgStorageModifier::storage_modifier_enum SgStorageModifier::p_modifier
 */
+/*!\var bool SgStorageModifier::p_thread_local_storage
+*/
 //@}
 /*! \name User Interface*/
 //@{
@@ -196,23 +198,29 @@ pointer to an object derived from a SgStorageModifier.
 \return Returns bool.
 */
 /*!\fn void SgStorageModifier::set_modifier(enum SgStorageModifier::storage_modifier_enum modifier)
-\description See  modifier)
+\brief \brief See  modifier)
 modifier for documentation */
+/*!\fn void SgStorageModifier::set_thread_local_storage(bool thread_local_storage)
+\brief \brief See  thread_local_storage)
+thread_local_storage for documentation */
+/*!\fn bool SgStorageModifier::get_thread_local_storage() const
+\brief \brief See  const
+thread_local_storage for documentation */
 /*!\fn enum SgStorageModifier::storage_modifier_enum SgStorageModifier::get_modifier() const
-\description See  const
+\brief \brief See  const
 modifier for documentation */
 /*!\fn virtual SgNode *SgStorageModifier::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgStorageModifier::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgStorageModifier::get_numberOfTraversalSuccessors()
-\description See  SgStorageModifier::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgStorageModifier::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgStorageModifier::get_traversalSuccessorContainer()
-\description See  SgStorageModifier::traversalSuccessorContainer for documentation */
+\brief \brief See  SgStorageModifier::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgStorageModifier::get_traversalSuccessorNamesContainer()
-\description See  SgStorageModifier::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgStorageModifier::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgStorageModifier::SgStorageModifier()
 \brief This is the constructor.
@@ -221,4 +229,4 @@ childIndex for documentation */
 \ref SgStorageModifier_create "Example:create an SgStorageModifier object"
 */
 //@}
-int SAGE_Doxygen_Dummy_9259300339403;
+int SAGE_Doxygen_Dummy_279031298117000;

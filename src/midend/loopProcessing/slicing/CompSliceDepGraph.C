@@ -1,17 +1,10 @@
 
-#include <general.h>
 #include <DepRel.h>
 #include <LoopTreeDepComp.h>
 #include <DepGraphTransform.h>
 #include <DGBaseGraphImpl.h>
 #include <CompSliceDepGraph.h>
 #include <GraphGroup.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a header file it is OK here!
-#define Boolean int
 
 CompSliceDepGraphCreate :: 
 CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
@@ -27,15 +20,15 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
        sliceNode = CreateNode(scope, op);
     }
     else {
-      cerr << "construct transitive dep. graph" << "\n";
+      STD cerr << "construct transitive dep. graph" << "\n";
       sliceNode = CreateNode(scope, op, tc);
     }
     LoopTreeTraverseSelectStmt stmts(n);
-    for (LoopTreeNode *s; (s = stmts.Current()); stmts.Advance()) 
+    for (LoopTreeNode *s; s = stmts.Current(); stmts.Advance()) 
         treeMap.InsertMapping(s, sliceNode);
   }
   LoopTreeDepGraph* depGraph = comp.GetDepGraph();
-  for (DepInfoEdgeIterator depIter = GraphGetEdgeIterator<LoopTreeDepGraph>()(depGraph);
+  for (GraphEdgeIterator<LoopTreeDepGraph> depIter(depGraph);
        !depIter.ReachEnd(); ++depIter) {
     DepInfoEdge* edge = depIter.Current();
     LoopTreeDepGraphNode *n1 = depGraph->GetEdgeEndPoint(edge, EdgeOut);
@@ -65,13 +58,14 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
    }
 }
 
-void CompSliceDepGraphCreate :: TopoSort( Boolean reverse)
+void CompSliceDepGraphCreate :: TopoSort( bool reverse)
 {
   impl->TopoSort(reverse);
 }
 
-CompSliceDepGraphNode :: CompSliceDepGraphNode(GraphCreate* g, LoopTreeDepComp &c, DependenceHoisting &op)
-     : GraphNode(g)
+CompSliceDepGraphNode :: 
+CompSliceDepGraphNode(MultiGraphCreate* g, LoopTreeDepComp &c, DependenceHoisting &op)
+     : MultiGraphElem(g)
       { 
         vec.AttachObserver(*this);
         LoopTreeNode *r = c.GetLoopTreeRoot();
@@ -79,9 +73,10 @@ CompSliceDepGraphNode :: CompSliceDepGraphNode(GraphCreate* g, LoopTreeDepComp &
            op.Analyze(c, vec);
         rootList.AppendLast(r);
       }
-CompSliceDepGraphNode:: CompSliceDepGraphNode(GraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op,
+CompSliceDepGraphNode:: 
+CompSliceDepGraphNode(MultiGraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op,
                         LoopTreeTransDepGraphCreate *t)
-     : GraphNode(g)
+     : MultiGraphElem(g)
       { 
         vec.AttachObserver(*this);
         LoopTreeNode *r = c.GetLoopTreeRoot();
@@ -126,7 +121,7 @@ UpdateDuplicateEntry( const CompSliceNestDuplicateEntryInfo &info)
   int desc =info.GetDescIndex(), src = info.GetSrcIndex();
   CompSliceDepGraphCreate* graph =
       static_cast<CompSliceDepGraphCreate*>(GetGraphCreate());
-  DepGraphInsertLoop( graph, this, desc);
+  DepGraphNodeInsertLoop( graph, this, desc);
   if (src > desc)
     ++src ;
   DepGraphNodeMergeLoop( graph, this, desc, src);
@@ -143,15 +138,19 @@ UpdateAlignEntry( const CompSliceNestAlignEntryInfo &info)
 void CompSliceDepGraphCreate:: MoveEdgeEndPoint(DepInfoEdge *e, EdgeDirection dir,
                         CompSliceDepGraphNode *n)
      {
-       // CompSliceDepGraphNode *n1 = GetEdgeEndPoint(e, dir);
+       CompSliceDepGraphNode *n1 = GetEdgeEndPoint(e, dir);
        CompSliceDepGraphNode *n2 = GetEdgeEndPoint(e, GraphAccess::Reverse(dir));
        if (n == n2) {
           DeleteEdge(e);
        }
        else {
-         DepInfoEdge *e1 = (dir==GraphAccess::EdgeOut)?
-                GraphGetCrossEdge<CompSliceDepGraph>()(this,n,n2) : 
-                GraphGetCrossEdge<CompSliceDepGraph>()(this,n2,n); 
+         GraphCrossEdgeIterator<CompSliceDepGraph> outIter(this, n, n2);
+         GraphCrossEdgeIterator<CompSliceDepGraph> inIter(this, n2, n);
+         DepInfoEdge *e1 = 0;
+         if (  dir==GraphAccess::EdgeOut && !outIter.ReachEnd()) 
+             e = outIter.Current();
+         else if (dir==GraphAccess::EdgeIn && !inIter.ReachEnd())
+             e = inIter.Current();
          if (e1 == 0) {
             DepInfoGraphCreate<CompSliceDepGraphNode>::MoveEdgeEndPoint(e,dir,n);
          }
@@ -165,22 +164,17 @@ void CompSliceDepGraphCreate:: MoveEdgeEndPoint(DepInfoEdge *e, EdgeDirection di
 DepInfoEdge* CompSliceDepGraphCreate::
 CreateEdge( CompSliceDepGraphNode *n1, CompSliceDepGraphNode *n2, const DepInfo &info)
        { 
-        DepInfoEdge *e = GraphGetCrossEdge<CompSliceDepGraph>()(this,n1,n2); 
-         if (e == 0) {
+        GraphCrossEdgeIterator<CompSliceDepGraph> crossIter(this,n1,n2);
+        DepInfoEdge *e = 0;
+         if (crossIter.ReachEnd()) {
            e = new DepInfoEdge(this, info);
-           CreateBaseEdge(n1,n2, e);
+           AddEdge(n1,n2, e);
          }
          else {
+            e = crossIter.Current();
             e->GetInfo() |= info;
          }
          return e;
        }
-
-
-#define TEMPLATE_ONLY
-#include <IDGraphCreate.C>
-
-template class DepInfoGraphCreate<CompSliceDepGraphNode>;
-template class IteratorImplTemplate<LoopTreeNode *, CompSlice::ConstStmtIterator>;
 
 

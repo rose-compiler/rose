@@ -2,14 +2,14 @@
 #ifndef BLOCKING_ANALYSIS
 #define BLOCKING_ANALYSIS
 
-#include <slicing/CompSliceLocality.h>
-#include <driver/LoopTransformOptions.h>
+#include <CompSliceLocality.h>
+#include <LoopTransformOptions.h>
 #include <vector>
 
 class LoopBlockingAnal 
 {
  protected:
-  std::vector<SymbolicVal> blocksize;
+  STD vector<SymbolicVal> blocksize;
  public:
   SymbolicVal GetBlockSize( int index) { return blocksize[index]; }
   virtual void SetBlocking( AstInterface& fa, CompSliceLocalityRegistry *anal, CompSliceNest& n) = 0;

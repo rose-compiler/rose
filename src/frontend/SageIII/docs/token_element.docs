@@ -1,11 +1,17 @@
 /* GENERATED FILE - DO NOT MODIFY */
+/*!\class token_element
+*/
 /*!\class SgToken::token_element
 */
 /*! \name Class Members*/
 //@{
+/*!\var int token_element::token_id
+*/
 /*!\var std::string SgToken::token_element::token_lexeme
+*/
+/*!\var std::string token_element::token_lexeme
 */
 /*!\var int SgToken::token_element::token_id
 */
 //@}
-extern int SAGE_Doxygen_Dummy_591721646;
+extern int SAGE_Doxygen_Dummy_1554986577;

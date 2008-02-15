@@ -33,4 +33,4 @@
 /*!\fn inline bool VirtualCFG::InterestingNode::operator<(const VirtualCFG::InterestingNode &o) const
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1478523512;
+extern int SAGE_Doxygen_Dummy_608132120;

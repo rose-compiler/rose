@@ -154,51 +154,51 @@ current construct.
 /*!\fn void SgLocatedNode::unsetSourcePositionUnavailableInFrontend()
 */
 /*!\fn virtual void SgLocatedNode::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
-\description See  *attributeMechanism)
+\brief \brief See  *attributeMechanism)
 attributeMechanism for documentation */
 /*!\fn void SgLocatedNode::set_attachedPreprocessingInfoPtr(AttachedPreprocessingInfoType *attachedPreprocessingInfoPtr)
-\description See  *attachedPreprocessingInfoPtr)
+\brief \brief See  *attachedPreprocessingInfoPtr)
 attachedPreprocessingInfoPtr for documentation */
 /*!
 \fn void SgLocatedNode::set_endOfConstruct(Sg_File_Info *endOfConstruct)
 \brief This function sets the current source location position of the end
-of the current construct.
-See  *endOfConstruct)
-endOfConstruct for documentation \param endOfConstruct - Pointer to Sg_File_Info object containing source location information.
+of the current construct.See  *endOfConstruct)
+endOfConstruct for documentation 
+\param endOfConstruct - Pointer to Sg_File_Info object containing source location information.
 \return Returns void.
 */
 /*!
 \fn void SgLocatedNode::set_startOfConstruct(Sg_File_Info *startOfConstruct)
 \brief This function sets the current source location position of the start 
-of the current construct.
-See  *startOfConstruct)
-startOfConstruct for documentation \param startOfConstruct - Pointer to Sg_File_Info object containing source location information.
+of the current construct.See  *startOfConstruct)
+startOfConstruct for documentation 
+\param startOfConstruct - Pointer to Sg_File_Info object containing source location information.
 \return Returns void.
 */
 /*!\fn AttachedPreprocessingInfoType *SgLocatedNode::get_attachedPreprocessingInfoPtr() const
-\description See  const
+\brief \brief See  const
 attachedPreprocessingInfoPtr for documentation */
 /*!\fn virtual AstAttributeMechanism *SgLocatedNode::get_attributeMechanism() const
-\description See  const
+\brief \brief See  const
 attributeMechanism for documentation */
 /*!\fn virtual SgNode *SgLocatedNode::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual Sg_File_Info *SgLocatedNode::get_endOfConstruct() const
-\description See  const
+\brief \brief See  const
 endOfConstruct for documentation */
 /*!\fn virtual Sg_File_Info *SgLocatedNode::get_startOfConstruct() const
-\description See  const
+\brief \brief See  const
 startOfConstruct for documentation */
 /*!\fn virtual size_t SgLocatedNode::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgLocatedNode::get_numberOfTraversalSuccessors()
-\description See  SgLocatedNode::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgLocatedNode::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgLocatedNode::get_traversalSuccessorContainer()
-\description See  SgLocatedNode::traversalSuccessorContainer for documentation */
+\brief \brief See  SgLocatedNode::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgLocatedNode::get_traversalSuccessorNamesContainer()
-\description See  SgLocatedNode::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgLocatedNode::traversalSuccessorNamesContainer for documentation */
 /*!
 \fn SgLocatedNode::SgLocatedNode(Sg_File_Info *startOfConstruct=(0))
 \brief This is the constructor.
@@ -208,4 +208,4 @@ childIndex for documentation */
 \ref SgLocatedNode_create "Example:create an SgLocatedNode object"
 */
 //@}
-int SAGE_Doxygen_Dummy_1818702020945;
+int SAGE_Doxygen_Dummy_3004617179344;

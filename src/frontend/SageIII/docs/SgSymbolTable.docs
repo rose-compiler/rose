@@ -132,42 +132,42 @@ pointer to an object derived from a SgSymbolTable.
 /*!\fn void SgSymbolTable::insert(const SgName &,SgSymbol *sp)
 */
 /*!\fn void SgSymbolTable::set_name(SgName name)
-\description See  name)
+\brief \brief See  name)
 name for documentation */
 /*!\fn void SgSymbolTable::set_no_name(bool no_name)
-\description See  no_name)
+\brief \brief See  no_name)
 no_name for documentation */
 /*!\fn void SgSymbolTable::set_symbolSet(SgNodeSet symbolSet)
-\description See  symbolSet)
+\brief \brief See  symbolSet)
 symbolSet for documentation */
 /*!\fn void SgSymbolTable::set_table(rose_hash_multimap *table)
-\description See  *table)
+\brief \brief See  *table)
 table for documentation */
 /*!\fn SgName SgSymbolTable::get_name() const
-\description See  const
+\brief \brief See  const
 name for documentation */
 /*!\fn SgNodeSet SgSymbolTable::get_symbolSet() const
-\description See  const
+\brief \brief See  const
 symbolSet for documentation */
 /*!\fn bool SgSymbolTable::get_no_name() const
-\description See  const
+\brief \brief See  const
 no_name for documentation */
 /*!\fn rose_hash_multimap *SgSymbolTable::get_table() const
-\description See  const
+\brief \brief See  const
 table for documentation */
 /*!\fn virtual SgNode *SgSymbolTable::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgSymbolTable::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgSymbolTable::get_numberOfTraversalSuccessors()
-\description See  SgSymbolTable::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgSymbolTable::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSymbolTable::get_traversalSuccessorContainer()
-\description See  SgSymbolTable::traversalSuccessorContainer for documentation */
+\brief \brief See  SgSymbolTable::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSymbolTable::get_traversalSuccessorNamesContainer()
-\description See  SgSymbolTable::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgSymbolTable::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgSymbolTable::~SgSymbolTable()
 */
 //@}
-int SAGE_Doxygen_Dummy_236457778169;
+int SAGE_Doxygen_Dummy_1704867671646;

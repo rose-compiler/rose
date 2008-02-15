@@ -1,0 +1,47 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmTypeDoubleWord
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmTypeDoubleWord::SgAsmTypeDoubleWord(const SgAsmTypeDoubleWordStorageClass &source)
+*/
+/*!\fn inline static void SgAsmTypeDoubleWord::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmTypeDoubleWord *SgAsmTypeDoubleWord::create_type()
+*/
+/*!\fn static SgAsmTypeDoubleWord *SgAsmTypeDoubleWord::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmTypeDoubleWord::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmTypeDoubleWord::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmTypeDoubleWord::initializeStorageClassArray(SgAsmTypeDoubleWordStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmTypeDoubleWord::clearMemoryPool()
+*/
+/*!\fn static void SgAsmTypeDoubleWord::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmTypeDoubleWord::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmTypeDoubleWord::roseRTI()
+*/
+/*!\fn virtual SgAsmTypeDoubleWord::~SgAsmTypeDoubleWord()
+*/
+/*!\fn virtual SgNode *SgAsmTypeDoubleWord::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmTypeDoubleWord::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmTypeDoubleWord::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmTypeDoubleWord::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmTypeDoubleWord::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmTypeDoubleWord::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmTypeDoubleWord::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmTypeDoubleWord::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmTypeDoubleWord::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmTypeDoubleWord::SgAsmTypeDoubleWord()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1230337198;

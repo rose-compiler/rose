@@ -267,49 +267,49 @@ it could not be modified (since such modifications would not be reflected in the
 /*!\fn void SgScopeStatement::remove_symbol(SgSymbol *s)
 */
 /*!\fn void SgScopeStatement::set_hidden_declaration_list(const std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > &hidden_declaration_list)
-\description See  &hidden_declaration_list)
+\brief \brief See  &hidden_declaration_list)
 hidden_declaration_list for documentation */
 /*!\fn void SgScopeStatement::set_hidden_type_list(const std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > &hidden_type_list)
-\description See  &hidden_type_list)
+\brief \brief See  &hidden_type_list)
 hidden_type_list for documentation */
 /*!
 \fn void SgScopeStatement::set_symbol_table(SgSymbolTable *symbol_table)
-\brief Sets the pointer to the locally strored SgSymbolTable.
-See  *symbol_table)
-symbol_table for documentation \return Returns void.
+\brief Sets the pointer to the locally strored SgSymbolTable.See  *symbol_table)
+symbol_table for documentation 
+\return Returns void.
 */
 /*!\fn void SgScopeStatement::set_type_elaboration_list(const std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > &type_elaboration_list)
-\description See  &type_elaboration_list)
+\brief \brief See  &type_elaboration_list)
 type_elaboration_list for documentation */
 /*!
 \fn SgSymbolTable *SgScopeStatement::get_symbol_table() const
-\brief Returns a pointer to the locally strored SgSymbolTable.
-See  const
-symbol_table for documentation \return Returns a pointer.
+\brief Returns a pointer to the locally strored SgSymbolTable.See  const
+symbol_table for documentation 
+\return Returns a pointer.
 */
 /*!\fn virtual SgName SgScopeStatement::get_mangled_name() const
-\description See  const
+\brief \brief See  const
 mangled_name for documentation */
 /*!
 \fn virtual SgName SgScopeStatement::get_qualified_name() const
-\brief Returns SgName (a string) representing the name of the current scope.
+\brief Returns SgName (a string) representing the name of the current scope.See  const
+qualified_name for documentation 
    See discussion of mangled names in the documentation.
-See  const
-qualified_name for documentation \return Returns SgName (a string).
+\return Returns SgName (a string).
 */
 /*!\fn virtual SgNode *SgScopeStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgScopeStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgScopeStatement::get_numberOfTraversalSuccessors()
-\description See  SgScopeStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgScopeStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgScopeStatement::get_traversalSuccessorContainer()
-\description See  SgScopeStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgScopeStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgScopeStatement::get_traversalSuccessorNamesContainer()
-\description See  SgScopeStatement::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgScopeStatement::traversalSuccessorNamesContainer for documentation */
 /*!\fn virtual SgScopeStatement::~SgScopeStatement()
 */
 //@}
-int SAGE_Doxygen_Dummy_27261145295206;
+int SAGE_Doxygen_Dummy_30916245543869;

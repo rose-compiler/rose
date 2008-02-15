@@ -3,14 +3,14 @@
 */
 /*! \name Class Members*/
 //@{
-/*!\var SgLabelStatement *SgAssignStatement::p_label
+/*!\var SgLabelRefExp *SgAssignStatement::p_label
 */
 /*!\var SgExpression *SgAssignStatement::p_value
 */
 //@}
 /*! \name User Interface*/
 //@{
-/*!\fn SgAssignStatement::SgAssignStatement(Sg_File_Info *startOfConstruct,SgLabelStatement *label=(0),SgExpression *value=(0))
+/*!\fn SgAssignStatement::SgAssignStatement(Sg_File_Info *startOfConstruct,SgLabelRefExp *label=(0),SgExpression *value=(0))
 */
 /*!\fn SgAssignStatement::SgAssignStatement(const SgAssignStatementStorageClass &source)
 */
@@ -38,31 +38,31 @@
 */
 /*!\fn virtual void SgAssignStatement::post_construction_initialization()
 */
-/*!\fn void SgAssignStatement::set_label(SgLabelStatement *label)
-\description See  *label)
+/*!\fn void SgAssignStatement::set_label(SgLabelRefExp *label)
+\brief \brief See  *label)
 label for documentation */
 /*!\fn void SgAssignStatement::set_value(SgExpression *value)
-\description See  *value)
+\brief \brief See  *value)
 value for documentation */
 /*!\fn SgExpression *SgAssignStatement::get_value() const
-\description See  const
+\brief \brief See  const
 value for documentation */
-/*!\fn SgLabelStatement *SgAssignStatement::get_label() const
-\description See  const
+/*!\fn SgLabelRefExp *SgAssignStatement::get_label() const
+\brief \brief See  const
 label for documentation */
 /*!\fn virtual SgNode *SgAssignStatement::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgAssignStatement::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgAssignStatement::get_numberOfTraversalSuccessors()
-\description See  SgAssignStatement::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgAssignStatement::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAssignStatement::get_traversalSuccessorContainer()
-\description See  SgAssignStatement::traversalSuccessorContainer for documentation */
+\brief \brief See  SgAssignStatement::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAssignStatement::get_traversalSuccessorNamesContainer()
-\description See  SgAssignStatement::traversalSuccessorNamesContainer for documentation */
-/*!\fn SgAssignStatement::SgAssignStatement(SgLabelStatement *label,SgExpression *value)
+\brief \brief See  SgAssignStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAssignStatement::SgAssignStatement(SgLabelRefExp *label,SgExpression *value)
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1599423849;
+extern int SAGE_Doxygen_Dummy_1924146779;

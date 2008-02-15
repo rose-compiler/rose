@@ -91,30 +91,30 @@ pointer to an object derived from a SgInitializer.
 */
 /*!
 \fn void SgInitializer::set_is_explicit_cast(bool is_explicit_cast)
-\brief This function allows the p_is_explicit_cast flag to be set (used internally).
-See  is_explicit_cast)
-is_explicit_cast for documentation \param explicit_cast - sets value of internal p_is_explicit_cast flag (true if explicit).
+\brief This function allows the p_is_explicit_cast flag to be set (used internally).See  is_explicit_cast)
+is_explicit_cast for documentation 
+\param explicit_cast - sets value of internal p_is_explicit_cast flag (true if explicit).
 \return Returns void.
 */
 /*!
 \fn bool SgInitializer::get_is_explicit_cast() const
-\brief returns bool value if front-end considers this cast as explicit.
-See  const
-is_explicit_cast for documentation \return Returns bool value.
+\brief returns bool value if front-end considers this cast as explicit.See  const
+is_explicit_cast for documentation 
+\return Returns bool value.
 */
 /*!\fn virtual SgNode *SgInitializer::get_traversalSuccessorByIndex(size_t idx)
-\description See  idx)
+\brief \brief See  idx)
 traversalSuccessorByIndex for documentation */
 /*!\fn virtual size_t SgInitializer::get_childIndex(SgNode *child)
-\description See  *child)
+\brief \brief See  *child)
 childIndex for documentation */
 /*!\fn virtual size_t SgInitializer::get_numberOfTraversalSuccessors()
-\description See  SgInitializer::numberOfTraversalSuccessors for documentation */
+\brief \brief See  SgInitializer::numberOfTraversalSuccessors for documentation */
 /*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgInitializer::get_traversalSuccessorContainer()
-\description See  SgInitializer::traversalSuccessorContainer for documentation */
+\brief \brief See  SgInitializer::traversalSuccessorContainer for documentation */
 /*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgInitializer::get_traversalSuccessorNamesContainer()
-\description See  SgInitializer::traversalSuccessorNamesContainer for documentation */
+\brief \brief See  SgInitializer::traversalSuccessorNamesContainer for documentation */
 /*!\fn SgInitializer::SgInitializer()
 */
 //@}
-int SAGE_Doxygen_Dummy_29500998125607;
+int SAGE_Doxygen_Dummy_12162203624304;

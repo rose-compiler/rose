@@ -1,5 +1,3 @@
-#include "stdio.h"
-#include "assert.h"
 
 /* Restrict macros for various compilers */
 #ifdef __GNUC__
@@ -108,7 +106,6 @@ void rmatmult3( int imin, int imax, int jmin, int jmax, int kmin, int kmax, int 
   double * RESTRICT xufr = x + kp + jp + 1 ;
   
   double myflops = 0.0 ;
-  FILE* filePtr;
   static int firstPass = 1;
   register double temp;
   
@@ -118,7 +115,8 @@ void rmatmult3( int imin, int imax, int jmin, int jmax, int kmin, int kmax, int 
   */
   
 #if LOOP_IMPLEMENTATION == 1
-   for ( kk = kmin ; kk < kmax ; kk++ ) {
+  
+  for ( kk = kmin ; kk < kmax ; kk++ ) {
     for ( jj = jmin ; jj < jmax ; jj++ ) {
       for ( ii = imin ; ii < imax ; ii++ ) {
         i = ii + jj * jp + kk * kp ;
@@ -166,8 +164,7 @@ void rmatmult3( int imin, int imax, int jmin, int jmax, int kmin, int kmax, int 
 #endif
   
 #elif LOOP_IMPLEMENTATION == 2
-  int dummy_to_preserve_preprocessor_directive=0; 
-
+  
   for ( kk = kmin ; kk < kmax ; kk++ ) {
     for ( jj = jmin ; jj < jmax ; jj++ ) {
       for ( ii = imin ; ii < imax ; ii++ ) {

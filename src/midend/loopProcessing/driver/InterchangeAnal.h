@@ -2,7 +2,7 @@
 #ifndef INTERCHANGE_ANAL
 #define INTERCHANGE_ANAL
 
-#include <driver/LoopTransformOptions.h>
+#include <LoopTransformOptions.h>
 
 typedef enum {ORIG_ORDER, SPATIAL_REUSE_ORDER, TMP_REUSE_ORDER, 
               MIX_REUSE_ORDER} LoopNestOrder;

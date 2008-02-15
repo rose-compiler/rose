@@ -2,7 +2,6 @@
 #ifndef SliceOptions_h
 #define SliceOptions_h
 
-#include <general.h>
 #include <iostream>
 #include <string>
 #include <SinglyLinkedList.h>
@@ -19,13 +18,13 @@ class LoopTransformOptions
  public:
   class OptRegistryType
         { 
-          std::string name, expl;
+          STD string name, expl;
         public:
           virtual void operator () ( LoopTransformOptions &opt, unsigned &index, 
-                                     const std::vector<std::string>& argv)=0; 
-          OptRegistryType( const std::string &s1, const std::string &s2) : name(s1), expl(s2) {}
-          std::string GetName() const { return name; }
-          std::string GetExpl() const { return expl; }
+                                     char* argv[])=0; 
+          OptRegistryType( const STD string &s1, const STD string &s2) : name(s1), expl(s2) {}
+          STD string GetName() const { return name; }
+          STD string GetExpl() const { return expl; }
          };
  private:
   static LoopTransformOptions *inst;
@@ -43,7 +42,7 @@ class LoopTransformOptions
  public:
   static LoopTransformOptions* GetInstance () ;
 
-  void PrintUsage(std::ostream& stream) const ;
+  void PrintUsage(STD ostream& stream) const ;
   void RegisterOption( OptRegistryType* t);
 
   LoopBlockingAnal* GetBlockSel() const  { return bkOp; }
@@ -55,15 +54,14 @@ class LoopTransformOptions
   unsigned GetTransAnalSplitLimit() const { return splitlimit; }
   unsigned GetDefaultBlockSize() const { return defaultblocksize; }
   void SetDefaultBlockSize(unsigned size) { defaultblocksize = size; }
-//Boolean DoDynamicTuning() const;
-  int DoDynamicTuning() const;
+  bool DoDynamicTuning() const;
   unsigned GetDynamicTuningIndex() const;
 
   typedef enum {NO_OPT = 0, LOOP_NEST_OPT = 1, INNER_MOST_OPT = 2, MULTI_LEVEL_OPT = 3, LOOP_OPT = 3, DATA_OPT = 4, LOOP_DATA_OPT = 7} OptType;
 
   OptType GetOptimizationType();
  
-  void SetOptions  (std::vector<std::string>& argv);
+  int SetOptions  (int argc, char* argv[]);
 
   void SetBlockSel( LoopBlockingAnal* sel); 
   void SetCopySel( CopyArrayOperator* sel); 

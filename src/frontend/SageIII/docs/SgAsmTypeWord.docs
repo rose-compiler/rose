@@ -1,0 +1,47 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsmTypeWord
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsmTypeWord::SgAsmTypeWord(const SgAsmTypeWordStorageClass &source)
+*/
+/*!\fn inline static void SgAsmTypeWord::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmTypeWord *SgAsmTypeWord::create_type()
+*/
+/*!\fn static SgAsmTypeWord *SgAsmTypeWord::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmTypeWord::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmTypeWord::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmTypeWord::initializeStorageClassArray(SgAsmTypeWordStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmTypeWord::clearMemoryPool()
+*/
+/*!\fn static void SgAsmTypeWord::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmTypeWord::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmTypeWord::roseRTI()
+*/
+/*!\fn virtual SgAsmTypeWord::~SgAsmTypeWord()
+*/
+/*!\fn virtual SgNode *SgAsmTypeWord::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgAsmTypeWord::get_traversalSuccessorByIndex(size_t idx)
+\brief \brief See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmTypeWord::get_childIndex(SgNode *child)
+\brief \brief See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmTypeWord::get_numberOfTraversalSuccessors()
+\brief \brief See  SgAsmTypeWord::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmTypeWord::get_traversalSuccessorContainer()
+\brief \brief See  SgAsmTypeWord::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmTypeWord::get_traversalSuccessorNamesContainer()
+\brief \brief See  SgAsmTypeWord::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmTypeWord::SgAsmTypeWord()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1763010131;

@@ -9,33 +9,29 @@ struct DepCompAstRef {
   LoopTreeNode* stmt; 
   DepCompAstRef(const AstNodePtr& o, LoopTreeNode* s) 
        : orig(o),stmt(s) {}
-  std::string ToHandle() const;
-  std::string ToString() const;
-
-// DQ (9/25/2007): Added operator< to permit compilation using STL debugging mode!
-// bool operator<(const DepCompAstRef & x) const { return false; };
+  STD string ToHandle() const;
+  STD string toString() const;
 };
 
-// DQ (9/25/2007): This is a seperate function
-bool operator < (const DepCompAstRef& n1, const DepCompAstRef& n2);
-
-class AstRefToString {
-public:
-static std::string ToString( const DepCompAstRef& r) { return r.ToString(); }
+class DepCompAstRefGraphNode : public MultiGraphElemTemplate<DepCompAstRef> 
+{
+ public:
+  DepCompAstRefGraphNode(MultiGraphCreate* c, const DepCompAstRef& r)
+    : MultiGraphElemTemplate<DepCompAstRef>(c, r) {}
+  STD string toString() const { return GetInfo().toString(); }
 };
-
-typedef GraphNodeTemplate<DepCompAstRef, const DepCompAstRef&,AstRefToString> 
-DepCompAstRefGraphNode;
 
 class DepCompAstRefAnal
 {
-  std::map<LoopTreeNode*, int> stmtmap;
-  std::map<AstNodePtr,int> refmap;
+  typedef STD map<LoopTreeNode*, int, STD less<LoopTreeNode*> > StmtMap;
+  typedef STD map<AstNodePtr,int, STD less<AstNodePtr> > RefMap;
+  StmtMap stmtmap;
+  RefMap refmap;
   LoopTreeNode* root;
   
     int get_ref_index( const AstNodePtr& ref) const
        { 
-            std::map<AstNodePtr, int>:: const_iterator p = refmap.find(ref); 
+            RefMap:: const_iterator p = refmap.find(ref); 
             assert(p  != refmap.end());
             int res =  (*p).second; 
             return (res > 0)? res : -res;
@@ -50,14 +46,14 @@ class DepCompAstRefAnal
     bool has_stmt(LoopTreeNode* s) const { return stmtmap.find(s) != stmtmap.end(); } 
     bool is_mod_ref( const AstNodePtr& ref) const
        {
-            std::map<AstNodePtr, int>:: const_iterator p = refmap.find(ref); 
+            RefMap:: const_iterator p = refmap.find(ref); 
             assert(p  != refmap.end());
             return  (*p).second < 0; 
        }
 
     int CompareStmt( LoopTreeNode* s1, LoopTreeNode* s2)  const
       { 
-         std::map<LoopTreeNode*, int>:: const_iterator p1 = stmtmap.find(s1), p2 = stmtmap.find(s2); 
+         StmtMap:: const_iterator p1 = stmtmap.find(s1), p2 = stmtmap.find(s2); 
          assert(p1  != stmtmap.end() && p2 != stmtmap.end());
          int i1 = (*p1).second, i2 = (*p2).second; 
          return (i1 == i2)? 0 : ( (i1 < i2)? -1 : 1);
@@ -79,13 +75,13 @@ class LoopTreeLocalityAnal
   LoopTreeDepGraphCreate inputCreate;
   LoopTransformInterface &fa;
 
-  void ComputeInputDep( LoopTreeDepGraphNodeIterator iter, DepCompAstRefAnal& stmtorder);
-  void ComputeInputDep( LoopTreeDepGraphNodeIterator src,
-                        LoopTreeDepGraphNodeIterator snk, DepCompAstRefAnal& stmtorder);
+  void ComputeInputDep( LoopTreeDepGraph::NodeIterator iter, DepCompAstRefAnal& stmtorder);
+  void ComputeInputDep( LoopTreeDepGraph::NodeIterator src,
+                        LoopTreeDepGraph::NodeIterator snk, DepCompAstRefAnal& stmtorder);
   void ComputeInputDep( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, 
                         DepCompAstRefAnal& stmtorder);
  public:
-  typedef std::set<AstNodePtr> AstNodeSet;
+  typedef STD set<AstNodePtr, STD less<AstNodePtr> > AstNodeSet;
   LoopTreeLocalityAnal( LoopTransformInterface& _fa, LoopTreeDepCompCreate& c);
   ~LoopTreeLocalityAnal();
 
@@ -100,11 +96,8 @@ class LoopTreeLocalityAnal
 
 class DepCompAstRefGraphCreate: public DepInfoGraphCreate<DepCompAstRefGraphNode> 
 {
-  typedef std::map<DepCompAstRef, DepCompAstRefGraphNode*> AstRefNodeMap;
-
-// DQ (9/25/2007): This does not appear to be used, since DepCompAstRef has no operator<().  
-// It is used in LoopTreeLocality.C (function DepCompAstRefGraphCreate::CreateNode()).
-   AstRefNodeMap refNodeMap;
+  typedef STD map<DepCompAstRef, DepCompAstRefGraphNode*, STD less<DepCompAstRef> > AstRefNodeMap; 
+  AstRefNodeMap refNodeMap; 
 
  public:
   DepCompAstRefGraphNode* 
@@ -113,8 +106,7 @@ class DepCompAstRefGraphCreate: public DepInfoGraphCreate<DepCompAstRefGraphNode
       CreateEdge( DepCompAstRefGraphNode* src,  DepCompAstRefGraphNode* snk, const DepInfo& dep);
   void Build(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root) ;
 
-//Boolean SelfReuseLevel( const DepCompAstRefGraphNode* n, int level) const;
-  int SelfReuseLevel( const DepCompAstRefGraphNode* n, int level) const;
+  bool SelfReuseLevel( const DepCompAstRefGraphNode* n, int level) const;
 };
 
 #endif

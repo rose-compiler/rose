@@ -15,4 +15,4 @@
 /*!\fn inline RTIMemberData::RTIMemberData(char *type0,char *name0,char *value0) : type(::std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string((type0))), name(::std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string((name0))), value(::std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string((value0)))
 */
 //@}
-extern int SAGE_Doxygen_Dummy_1669208649;
+extern int SAGE_Doxygen_Dummy_555552536;

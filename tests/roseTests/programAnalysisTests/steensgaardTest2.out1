@@ -1,0 +1,23 @@
+c:0 LOC1=>LOC2 (pending  LOC3) 
+c:2 LOC4=>LOC5 (pending  LOC6=>LOC7 ) 
+v:foo LOC8=>LOC9 (inparams:  LOC10=>LOC11 ) ->(outparams:  LOC10=>LOC11 ) 
+v:foo-0 LOC12=>LOC10 =>LOC11 
+v:foo-1-2 LOC13=>LOC6 =>LOC7 
+v:foo-1-input LOC14=>LOC10 =>LOC11 
+v:foo-1-m LOC6=>LOC7 
+v:foo-1-p LOC15=>LOC6 =>LOC7 
+v:foo-1-p1 LOC16=>LOC6 =>LOC7 
+v:foo-1-pp LOC17=>LOC15 =>LOC6 
+v:foo-1-q LOC18=>LOC6 =>LOC7 
+v:foo-1-r LOC19=>LOC6 =>LOC7 
+v:goo LOC20=>LOC21 (inparams:  LOC9) ->(outparams:  LOC22) 
+v:goo-0 LOC23=>LOC22 
+v:goo-3-4 LOC24=>LOC10 =>LOC11 
+v:goo-3-content LOC25=>LOC10 =>LOC11 
+v:goo-3-f LOC26=>LOC9 (inparams:  LOC10=>LOC11 ) ->(outparams:  LOC10=>LOC11 ) 
+v:main LOC27=>LOC28 (inparams: ) ->(outparams:  LOC3) 
+v:main-0 LOC29=>LOC3 
+v:main-5-6 LOC30=>LOC10 =>LOC11 
+v:main-5-content LOC31=>LOC10 =>LOC11 
+v:main-5-content2 LOC32=>LOC33 =>LOC34 
+v:main-5-output LOC35=>LOC10 =>LOC11 
