@@ -1,6 +1,7 @@
 
 #include "rose.h"
 
+#include <AstInterface_ROSE.h>
 #include "ControlFlowGraph.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -36,7 +37,7 @@ void ControlFlowGraph::createNode(CFGNodeImpl * node) {
   } else {
     // printf("Adding Statements:\n");
     for (list<AstNodePtr>::iterator i = stmtList.begin(); i != stmtList.end(); i++) {
-      SgNode * curr = *i;
+      SgNode * curr = AstNodePtrImpl(*i).get_ptr();
 
       ControlNode * toInsert = new ControlNode(curr);
       _sgnodemap[curr] = toInsert;
@@ -49,8 +50,9 @@ void ControlFlowGraph::createNode(CFGNodeImpl * node) {
 
 void ControlFlowGraph::_buildCFGImpl(SgNode * head) {
   _cfg = new DefaultCFGImpl();
-  AstInterface fa(head);
-  ROSE_Analysis::BuildCFG(fa, head, *_cfg);
+  AstInterfaceImpl faImpl(head);
+  AstInterface fa(&faImpl);
+  ROSE_Analysis::BuildCFG(fa, AstNodePtrImpl(head), *_cfg);
 }
 
 void ControlFlowGraph::_buildCFG() {
@@ -91,12 +93,12 @@ void ControlFlowGraph::_buildCFG() {
   if (_cfgnodemap.count(entry))
     _entry = _cfgnodemap[entry];
   else
-    _entry = _sgnodemap[entry->GetStmts().front()];
+    _entry = _sgnodemap[AstNodePtrImpl(entry->GetStmts().front()).get_ptr()];
 
   if (_cfgnodemap.count(exit))
     _exit = _cfgnodemap[exit];
   else
-    _exit = _sgnodemap[exit->GetStmts().back()];
+    _exit = _sgnodemap[AstNodePtrImpl(exit->GetStmts().back()).get_ptr()];
 
   //For each CFGNodeImpl, add the appropriate links in ControlFlowGraph
   for (nodes = _cfg->GetNodeIterator(); !nodes.ReachEnd(); ++nodes) {
@@ -108,13 +110,13 @@ void ControlFlowGraph::_buildCFG() {
       list<AstNodePtr>::iterator next = stmts.begin();
       next++;
       while (next != stmts.end()) {
-	SgNode * from = *curr;
-	SgNode * to = *next;
+	SgNode * from = AstNodePtrImpl(*curr).get_ptr();
+	SgNode * to = AstNodePtrImpl(*next).get_ptr();
 	addLink(_sgnodemap[from], _sgnodemap[to]);
 	curr++;
 	next++;
       }
-      SgNode * last = *curr;
+      SgNode * last = AstNodePtrImpl(*curr).get_ptr();
       _buildBranches(_sgnodemap[last], *nodes);
     }
   }
@@ -139,7 +141,7 @@ void ControlFlowGraph::_buildBranches(ControlNode * from, CFGNodeImpl * curr) {
     if (stmts.empty()) { //if there are no statements, use the node itself
       addLink(from, _cfgnodemap[node]);
     } else {
-      addLink(from, _sgnodemap[stmts.front()]);
+      addLink(from, _sgnodemap[AstNodePtrImpl(stmts.front()).get_ptr()]);
     }
   }
 }
@@ -195,9 +197,9 @@ void ControlFlowGraph::_setupIDs(ID_dir direction) {
 }
 
 void ControlFlowGraph::outputCFGImpl() {
-  GraphDotOutput output(*_cfg);
+  GraphDotOutput<DefaultCFGImpl> output(*_cfg);
   string fileName = "cfg.dot";
-  output.writeToDOTFile(fileName);
+  output.writeToDOTFile(fileName, "CFG");
 }
 
 void ControlFlowGraph::_displayData(SimpleDirectedGraphNode * data, ostream & os) {

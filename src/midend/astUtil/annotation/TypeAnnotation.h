@@ -1,15 +1,14 @@
 
-#ifndef TYPE_ANNOTATION_H
-#define TYPE_ANNOTATION_H
+#ifndef ___TYPE_ANNOTATION_H
+#define ___TYPE_ANNOTATION_H
 
-#include <AnnotDescriptors.h>
-#include <AstInterface.h>
-#include <SymbolicVal.h>
-#include <string>
-#include <vector>
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <string>
+#include <vector>
+#include <AnnotDescriptors.h>
+#include <SymbolicVal.h>
 
 template <class TargetInfo>
 class  AnnotCollectionBase {
@@ -64,24 +63,11 @@ class TypeCollection
   const_iterator end() const { return typemap.end(); }
   
   bool known_type( const TypeDescriptor &name, Descriptor* desc = 0)  const;
-  bool known_type( const AstNodePtr& exp, 
+  bool known_type( AstInterface& fa, const AstNodePtr& exp, 
 		   Descriptor* desc = 0) const;
-  bool known_type( const AstNodeType& exp, 
+  bool known_type( AstInterface& fa, const AstNodeType& exp, 
 		   Descriptor* desc = 0) const;
   void Dump() const;
-  std::string is_known_member_function( const AstNodePtr& exp, 
-                                   AstNodePtr* obj = 0, 
-                                   AstInterface::AstNodeList* args = 0,
-                                   Descriptor* desc = 0);
-  std::string is_known_member_function( const SymbolicVal& exp,
-                                   AstNodePtr* obj = 0,
-                                   SymbolicFunction::Arguments* args = 0,
-                                   Descriptor* desc = 0);
-  SymbolicVal create_known_member_function( const AstNodePtr& obj, const std::string& memname,
-                                     const SymbolicFunction::Arguments& args);
-  AstNodePtr create_known_member_function( AstInterface& fa, const AstNodePtr& obj, 
-                                           const std::string& memname,
-                                            const AstInterface::AstNodeList& args);
 };
 
 template <class Descriptor>

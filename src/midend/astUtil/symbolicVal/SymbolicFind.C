@@ -1,15 +1,10 @@
-#include <general.h>
-
 #include <SymbolicVal.h>
 #include <SymbolicExpr.h>
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 class ValFindBase : public SymbolicVisitor
 {
   SymbolicVal target, cur;
-  Boolean result;
+  bool result;
 
   virtual void Default() { result = (target == cur); }
 
@@ -18,11 +13,10 @@ class ValFindBase : public SymbolicVisitor
        { 
           if (target.GetValType() == VAL_FUNCTION && cur == target)
               result = true;
-          else if (operator()(v.GetOp(), target) )
-              result = true;
           else {
-            for (unsigned i = 0; i < v.NumOfArgs(); ++i) {
-              SymbolicVal tmp = v.GetArg(i);
+            for (SymbolicFunction::const_iterator p = v.args_begin();
+                 p != v.args_end(); ++p) {
+              SymbolicVal tmp = *p;
               cur = tmp;
               cur.Visit(this);
               if ( result) 
@@ -48,7 +42,7 @@ class ValFindBase : public SymbolicVisitor
  public:
   ValFindBase() : result(false) {}
     
-  Boolean operator ()( const SymbolicVal &v, const SymbolicVal& _target)
+  bool operator ()( const SymbolicVal &v, const SymbolicVal& _target)
     { 
       target = _target;
       cur = v;
@@ -58,7 +52,7 @@ class ValFindBase : public SymbolicVisitor
     }
 };
 
-Boolean FindVal( const SymbolicVal &v, const SymbolicVal &var)
+bool FindVal( const SymbolicVal &v, const SymbolicVal &var)
 { 
    ValFindBase op;
    return op(v, var);

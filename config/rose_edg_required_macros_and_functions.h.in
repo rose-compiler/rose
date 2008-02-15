@@ -426,7 +426,25 @@ we only handle the __offsetof__ macro (so define it way).  Then the builtin
 function is just defined as being the offsetof macro.
 */
 #define __offsetof__
-#define __builtin_offsetof(t,memb) offsetof(t,memb)
+/*
+// DQ (2/9/2008): Don't define __builtin_offsetof in terms of offsetof since this
+// causes a recursively defined marco on Fedora Core relase 4, though it works 
+// fine on Red Hat Enterprise release 9. New definition taken from common
+// implementation of offset, but modified to address specific case of where C++
+// defines a operator&() which can be a problem for the more common definition.
+// This definition is used to defin the __builtin_offsetof
+// #define __builtin_offsetof(t,memb) offsetof(t,memb)
+// #define __builtin_offsetof(t,memb) ((size_t)&(((t *)0)->memb))
+*/
+#ifndef __cplusplus
+#define __builtin_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#else
+/* The cast to "char &" below avoids problems with user-defined "operator &", which can appear in a POD type. */
+#define __builtin_offsetof(TYPE, MEMBER)					\
+  (__offsetof__ (reinterpret_cast <size_t>			\
+                 (&reinterpret_cast <const volatile char &>	\
+                  (static_cast<TYPE *> (0)->MEMBER))))
+#endif
 
 /* matching else for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #else

@@ -1,5 +1,6 @@
 #include <rose.h>
 
+#include <AstInterface_ROSE.h>
 #include <GraphDotOutput.h>
 #include <DefUseChain.h>
 
@@ -17,11 +18,11 @@ class DefUseGraphToDOT
           void operator() (AstInterface & fa, SgNode * head, std::string fname)
              {
                ReachingDefinitionAnalysis reachDefAnal;
-               reachDefAnal (fa, head);
+               reachDefAnal (fa, AstNodePtrImpl(head));
                graph.build (fa, reachDefAnal, aliasAnal);
 
-               GraphDotOutput output (graph);
-               output.writeToDOTFile (fname);
+               GraphDotOutput<DefaultDUchain> output (graph);
+               output.writeToDOTFile (fname, "Reaching def");
              }
    };
 
@@ -52,12 +53,13 @@ main (int argc, char *argv[])
 
                SgBasicBlock *stmtsInBody = funcDefn->get_body ();
             // ??
-               AstInterface fa (stmtsInBody);
+               AstInterfaceImpl faImpl (stmtsInBody);
+               AstInterface fa (&faImpl);
             // Do alias analysis 
                StmtVarAliasCollect alias;
-               alias (fa, funcDefn);
+               alias (fa, AstNodePtrImpl(funcDefn));
 
-            // Generate dot graph representing the data flow graph
+            // Generate dot graph output for the data flow graph
                std::string name = std::string (sageFile.get_sourceFileNameWithoutPath()) + ".dot";
                DefUseGraphToDOT op (alias);
                op (fa, funcDefn, name);

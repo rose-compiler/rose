@@ -5,7 +5,7 @@
    #include <GlobalDatabaseConnection.h>
 #endif
 
-class ClassHierarchyNode : public GraphNode
+class ClassHierarchyNode : public MultiGraphElem
    {
      public:
        SgClassDefinition *classDefinition;

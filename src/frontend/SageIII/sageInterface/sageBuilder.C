@@ -700,6 +700,21 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope)
   setOneSourcePositionForTransformation(varRef);
   ROSE_ASSERT(varRef);
   return varRef; 
+ 
+  SgFunctionDeclaration* func_decl= isSgFunctionDeclaration(paraList->get_parent());
+  if (func_decl) 
+  {
+    if ((func_decl->get_definingDeclaration()) == func_decl )
+    { //defining function declaration, set scope and symbol table
+      SgFunctionDefinition* func_def = func_decl->get_definition();
+      ROSE_ASSERT(func_def);
+      initName->set_scope(func_def);
+      func_def->insert_symbol(initName->get_name(), new SgVariableSymbol(initName) );
+    } // nondefining declaration, set scope only, currently set to decl's scope, TODO 
+     else  initName->set_scope(func_decl->get_scope());
+  } //end if func_decl is available
+  //TODO how about function type and function symbol?
+  
 }
 
 SgVarRefExp *

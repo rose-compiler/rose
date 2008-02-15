@@ -60,7 +60,7 @@ class Matrix
        vec = 0;
     else {
        vec = new T[num];
-       for (unsigned int i = 0; i < num; ++i)
+       for (int i = 0; i < num; ++i)
           vec[i] = that.vec[i];
     }
   }
@@ -111,23 +111,20 @@ class Matrix
   }
 
   void Initialize(const T &init)
-   { for (unsigned int i = 0; i < num; i++)
+   { for (int i = 0; i < num; i++)
        vec[i] = init;
    }
 
-//Boolean IsEmpty() const { return vec == 0; }
-  int IsEmpty() const { return vec == 0; }
+  bool IsEmpty() const { return vec == 0; }
 
 
 };
 
 template<class Mat, class ElemOp>
-// Boolean UpdateMatrix(Mat& d1, const Mat &d2, ElemOp& op)
-int UpdateMatrix(Mat& d1, const Mat &d2, ElemOp& op)
+bool UpdateMatrix(Mat& d1, const Mat &d2, ElemOp op)
 {
   assert (d1.rows() == d2.rows() && d1.cols() == d2.cols());
-//Boolean mod = false;
-  int mod = false;
+  bool mod = false;
   for (int i = 0; i < d1.rows(); i++) {
     for (int j = 0; j < d1.cols(); j++) {
       typename Mat::Elem e1 = d1.Entry(i,j);

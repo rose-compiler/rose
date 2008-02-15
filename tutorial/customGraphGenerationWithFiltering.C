@@ -2,7 +2,7 @@
 /********************************************************************
 * Andreas Saebjoernsen 03/17/06 
 * Demonstration on how to iterate over a graph constucted by an
-* IDGraphCreateTemplate. This type of graph is returned by for
+* VirtualGraphCreateTemplate. This type of graph is returned by for
 * instance the call graph analysis, data flow analysis and all
 * the other program analysis work within ROSE.
 ********************************************************************/
@@ -18,56 +18,55 @@
 #include <functional>
 
 
-#include <AstInterface.h>
+#include <GraphUpdate.h>
 #include <GraphDotOutput.h>
-// #include <IDGraphCreateTemp.h>
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 
 
 using namespace std;
 
-class Node : public GraphNode {
+class Node : public MultiGraphElem {
      public:
           std::string name;
-          Node( std::string n ) : GraphNode( NULL ), name( n ) {}
+          Node( std::string n ) : MultiGraphElem( NULL ), name( n ) {}
           virtual std::string ToString() const { return name; }
    };
 
-class Edge : public GraphEdge {
+class Edge : public MultiGraphElem {
      public:
           std::string label;
-          Edge ( std::string label = "default edge" ) : GraphEdge( NULL ), label( label ) {};
+          Edge ( std::string label = "default edge" ) : MultiGraphElem( NULL ), label( label ) {};
           void Dump() const { printf ("EDGE: label = %s \n",label.c_str()); }
           virtual std::string ToString() const { return label;}
    };
 
 template <class NodeType, class EdgeType>
-class GraphBuilder : public IDGraphCreateTemplate<NodeType, EdgeType> {
+class GraphBuilder : public VirtualGraphCreateTemplate<NodeType, EdgeType> {
      public:
           void addNode ( NodeType* node );
           void addEdge ( NodeType* src, NodeType* snk, EdgeType* edge );
-          GraphBuilder () : IDGraphCreateTemplate<NodeType, EdgeType> (NULL) {}
+          GraphBuilder () : VirtualGraphCreateTemplate<NodeType, EdgeType> (NULL) {}
          ~GraphBuilder() { printf ("Inside of ~GraphBuilder() \n"); }
           void DeleteNode(Node* node)
              {
-               IDGraphCreateTemplate<Node, Edge>::DeleteNode(node);
+               VirtualGraphCreateTemplate<Node, Edge>::DeleteNode(node);
              }
    };
 
 template <class NodeType, class EdgeType> 
 void GraphBuilder<NodeType, EdgeType>::addNode ( NodeType* node )
-   { CreateBaseNode ( node ); }
+   { VirtualGraphCreateTemplate<NodeType,EdgeType>::AddNode( node ); }
 
 template <class NodeType, class EdgeType> 
 void GraphBuilder<NodeType, EdgeType>::addEdge ( NodeType* src, NodeType* snk, EdgeType* edge )
-   { CreateBaseEdge ( src, snk, edge ); }
+   { VirtualGraphCreateTemplate<NodeType,EdgeType>::AddEdge( src, snk, edge ); }
 
 
 /***********************************************************************************************
  * The function
  *     void TranslateGraph(_GraphStructure& graph, _NodePredicate& _nodePred, _EdgePredicate& _edgePred);
  * performas the action _nodePred to every node and _edgePred to every edge in the graph 'graph'.
- * This work is general and should work on any graph constructed from IDGraphCreateTemplate which
+ * This work is general and should work on any graph constructed from VirtualGraphCreateTemplate which
  * is the graph all the program analysis work returns.
  ***********************************************************************************************/ 
 template<typename _GraphStructure, typename _NodePredicate,typename _EdgePredicate>
@@ -158,10 +157,10 @@ main( int argc, char * argv[] )
      filterGraph(graph,filterNodes());
 
   // Build a DOT graph internally
-     GraphDotOutput output(graph);
+     GraphDotOutput<GraphBuilder<Node, Edge> > output(graph);
 
   // Write out the DOT graph
-     output.writeToDOTFile("customGraphWithFiltering.dot");
+     output.writeToDOTFile("customGraphWithFiltering.dot", "Custom graph");
 
      return 0;
    }

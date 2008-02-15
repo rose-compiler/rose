@@ -1,37 +1,33 @@
-#include <general.h>
-
 #include <SymbolicExpr.h>
 #include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <CommandOptions.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
-Boolean SymbolicTerm::CombineWith( const SymbolicTerm &that)
+bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
          { if (v == that.v) {
-               time += that.time;
+               if (time2 == that.time2)
+                   time1 += that.time1;
+               else 
+                   assert(false); // QY: a case not yet handled
                return true;
            }
            return false;
          }
 
-Boolean SymbolicTerm::operator == (const SymbolicTerm& that) const
-     { return time == that.time && v == that.v; }
-Boolean SymbolicTerm::operator == (const SymbolicVal &that) const
-    { return time == 1 && v == that; }
+bool SymbolicTerm::operator == (const SymbolicTerm& that) const
+     { return time1 == that.time1 && time2 == that.time2 && v == that.v; }
+bool SymbolicTerm::operator == (const SymbolicVal &that) const
+    { return time1 == 1 && time2 == 1 && v == that; }
 
 class SymbolicTermMerge : public LatticeElemMerge<SymbolicTerm>
 {
   OPApplicator& op;
  public:
   SymbolicTermMerge( OPApplicator& _op) : op(_op) {}
-  Boolean IsTop( const SymbolicTerm& v)
+  bool IsTop( const SymbolicTerm& v)
    { return op.IsTop(v); }
-  Boolean MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
+  bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
                             SymbolicTerm& result)
         { return op.MergeElem(t1,t2,result); }
 };
@@ -41,16 +37,16 @@ SymbolicVal SymbolicExpr::GetUnknownOpds() const
      { 
        SymbolicExpr* r = DistributeExpr( SYMOP_NIL, SymbolicVal());
        for (OpdIterator p = GetOpdIterator(); !p.ReachEnd(); ++p) {
-           if (! p.Current().IsConstInt())
+           if (! p.Current().IsConst())
               r->AddOpd(*p);
        }
        return GetExprVal(r);
      }
 
-Boolean SymbolicExpr :: GetConstOpd( int &val) const
+bool SymbolicExpr :: GetConstOpd( int &val1, int& val2) const
 {
   for (OpdIterator p = GetOpdIterator(); !p.ReachEnd(); ++p) {
-     if ( p.Current().IsConstInt(&val)) {
+     if ( p.Current().IsConstInt(val1, val2)) {
          return true;
      }
   }
@@ -78,12 +74,13 @@ void SymbolicExpr:: AddOpd( const SymbolicTerm& v, OPApplicator *op)
     }
 
 void SymbolicExpr:: AddOpd( const SymbolicVal& v, OPApplicator* op)
-     { // if (v.IsNIL());
+     { int tmp;
+       if (v.IsNIL());
        AddOpd(Val2Term(v), op);
      }
 
 
-Boolean SymbolicExpr:: operator == (const SymbolicExpr& that) const
+bool SymbolicExpr:: operator == (const SymbolicExpr& that) const
     { if (GetOpType() == that.GetOpType() && 
           NumOfOpds() == that.NumOfOpds()) {
           OpdIterator iter1 = GetOpdIterator(); 
@@ -103,32 +100,35 @@ Boolean SymbolicExpr:: operator == (const SymbolicExpr& that) const
    }
 
 
-string SymbolicTerm :: ToString() const
+STD string SymbolicTerm :: toString() const
 {
-  char buf[20];
-  sprintf(buf, "%d",  time);
+  STD stringstream out;
 
-  if (IsConstInt()) {
-       return buf; 
+  if (v.IsNIL()) {
+    out << time1;
+    if (time2 != 1)
+        out << "/" << time2;    
    }
    else { 
-     if (time != 1)
-       return v.ToString() + "(" + buf + ")"; 
-     else
-       return v.ToString();
+     out << v.toString();
+     if (time1 != 1 || time2 != 1) {
+       out << "(";
+       if (time1 != 1)
+         out << time1;
+       if (time2 != 1)
+         out << "/" << time2;
+       out << ")";
+     }
    }
+  return out.str();
 }
 
-string SymbolicExpr :: ToString() const
+STD string SymbolicExpr :: toString() const
 {
-  string r = GetOPName() + "(";
-  bool first = true;
+  STD string r = GetOPName() + "(";
   for (OpdIterator iter = GetOpdIterator(); 
-       !iter.ReachEnd(); iter.Advance()) {
-    if (!first) r += ", ";
-    first = false;
-    r = r + iter.Current().ToString();
-  }
+       !iter.ReachEnd(); iter.Advance())  
+    r = r + iter.Current().toString();
   r = r + ")";
   return r;
 }
@@ -155,7 +155,7 @@ SymbolicVal GetExprVal( SymbolicExpr *r)
          case SYMOP_PLUS: return 0;
          case SYMOP_MULTIPLY: return 1;
          default: 
-              cerr << "non-recognized expression type: " << r->ToString() << endl;
+              STD cerr << "non-recognized expression type: " << r->toString() << STD endl;
               assert(false);
          }
       }
@@ -207,15 +207,18 @@ class OPHelpVisitor : public SymbolicVisitor
 
 class IntVisitor : public OPHelpVisitor
 {
-  int val;
+  int valu, vald;
   SymbolicVal v2;
 
-  void Default() { DefaultOP(val, v2); }
+  void Default() { DefaultOP(SymbolicConst(valu,vald), v2); }
   virtual void VisitConst( const SymbolicConst &v) 
                {
-                   int val1;
-                   if (v.GetIntVal(val1)) 
-                      result = op.MergeConstInt(val, val1);
+                   int valu1, vald1;
+                   if (v.GetIntVal(valu1, vald1)) {
+                      int r1, r2;
+                      op.MergeConstInt(valu, vald, valu1, vald1, r1, r2);
+                      result = SymbolicConst(r1, r2);
+                   }
                    else 
                       Default();
                }
@@ -223,7 +226,7 @@ class IntVisitor : public OPHelpVisitor
        {
           if (op.GetOpType() == v.GetOpType())  {
              SymbolicExpr *r = v.CloneExpr();
-             r->AddOpd( SymbolicTerm(val), &op);
+             r->AddOpd( SymbolicTerm(valu,vald), &op);
              result = GetExprVal(r);
           }
           else
@@ -231,8 +234,8 @@ class IntVisitor : public OPHelpVisitor
        }
 
  public: 
-  IntVisitor( const SymbolicVal& v1, int _val, OPApplicator &_op) 
-    : OPHelpVisitor( _op, v1), val(_val) {}
+  IntVisitor( const SymbolicVal& v1, int _valu, int _vald, OPApplicator &_op) 
+    : OPHelpVisitor( _op, v1), valu(_valu), vald(_vald) {}
   SymbolicVal ApplyOP( const SymbolicVal& v)
     { v2 = v; return OPHelpVisitor::ApplyOP(v); }
 
@@ -246,9 +249,9 @@ class TermVisitor : public OPHelpVisitor
 
   void VisitConst( const SymbolicConst &v)
           {
-              int val;
-              if (v.GetIntVal(val)) 
-                 result = IntVisitor( v2, val,op).ApplyOP(that); 
+              int valu, vald;
+              if (v.GetIntVal(valu,vald)) 
+                 result = IntVisitor( v2, valu,vald,op).ApplyOP(that); 
               else 
                  Default();
           }
@@ -282,10 +285,10 @@ class CombineVisitor : public OPHelpVisitor
      result = GetExprVal(r); }
   virtual void VisitConst( const SymbolicConst &v)
    { 
-       int val;
-       if (v.GetIntVal(val)) {
+       int valu, vald;
+       if (v.GetIntVal(valu, vald)) {
           SymbolicExpr* r = exp.CloneExpr();
-          r->AddOpd( SymbolicTerm(val), &op);
+          r->AddOpd( SymbolicTerm(valu, vald), &op);
           result = GetExprVal(r); 
        }
        else
@@ -321,9 +324,9 @@ class DistributeVisitor : private OPHelpVisitor
    { result = TermVisitor(v2,op).ApplyOP(that); }
   void VisitConst( const SymbolicConst &v) 
       { 
-          int val;
-          if (v.GetIntVal(val))
-             result = IntVisitor(v2, val, op).ApplyOP(that); 
+          int valu, vald;
+          if (v.GetIntVal(valu, vald))
+             result = IntVisitor(v2, valu, vald, op).ApplyOP(that); 
           else
              Default();
       }
@@ -357,7 +360,7 @@ class DistributeVisitor : private OPHelpVisitor
       }
  public:
   DistributeVisitor( const SymbolicVal& v, const SymbolicExpr& _exp, 
-                     OPApplicator& _op) : OPHelpVisitor(_op, v), exp(_exp) {}
+                     OPApplicator& _op) : exp(_exp), OPHelpVisitor(_op, v) {}
   SymbolicVal ApplyOP( const SymbolicVal &_v2)
    { v2 = _v2; return OPHelpVisitor::ApplyOP(_v2); }
 };
@@ -370,9 +373,9 @@ class OPVisitor  : public SymbolicVisitor
    { result = TermVisitor(v1,op).ApplyOP(v2); }
   void VisitConst( const SymbolicConst &v)
       { 
-          int val;
-          if (v.GetIntVal(val)) {
-            IntVisitor intOp(v1,val,op);
+          int valu, vald;
+          if (v.GetIntVal(valu, vald)) {
+            IntVisitor intOp(v1,valu, vald,op);
             result = intOp.ApplyOP(v2); 
           }
           else

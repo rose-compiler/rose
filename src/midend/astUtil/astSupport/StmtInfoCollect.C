@@ -1,22 +1,12 @@
 
-#include <general.h>
-
 #include <iostream>
 #include <sstream>
-#include <stdlib.h>
-#include <stdio.h>
 
 #include <StmtInfoCollect.h>
-#include <AstInterface.h>
 #include <AnalysisInterface.h>
 #include <assert.h>
 #include <CommandOptions.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 bool DebugLocalInfoCollect ()
 {
@@ -48,27 +38,29 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc)
   AstInterface::AstNodeList args;
   if (!fa.IsFunctionCall(fc, 0, &args))
       assert(false);
-  for (AstInterface::AstNodeListIterator p1 = fa.GetAstNodeListIterator(args);
-       !p1.ReachEnd(); ++p1) {
-    AstNodePtr cur = *p1;
-    if ( cur == 0)
+
+  for (AstInterface::AstNodeList::const_iterator p1 = args.begin();
+       p1 != args.end(); ++p1) {
+    AstNodePtr c = *p1;
+    if ( c == AstNodePtr())
         continue;
-    operator()(fa, cur); 
+    operator()(fa, c); 
   }
 }
+
 void StmtInfoCollect ::
 AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
 {
   AstInterface::AstNodeList args;
   if (!fa.IsFunctionCall(fc, 0, &args))
       assert(false);
-  for (AstInterface::AstNodeListIterator p2 = fa.GetAstNodeListIterator(args);
-       !p2.ReachEnd(); ++p2) {
-    AstNodePtr cur = *p2;
-    if (cur == 0)
+  for (AstInterface::AstNodeList::const_iterator p2 = args.begin();
+       p2 != args.end(); ++p2) {
+    AstNodePtr c = *p2;
+    if (c == AstNodePtr())
        continue;
-    if (fa.IsMemoryAccess(cur))
-       AppendModLoc( fa, cur, 0);
+    if (fa.IsMemoryAccess(c))
+       AppendModLoc( fa, c, AstNodePtr());
   }
 }
 
@@ -79,7 +71,7 @@ void StmtInfoCollect::operator()( AstInterface& fa, const AstNodePtr& h)
    curstmt = curstmttmp;
 }
 
-Boolean StmtInfoCollect :: 
+bool StmtInfoCollect :: 
 ProcessTree( AstInterface &fa, const AstNodePtr& s, 
                        AstInterface::TraversalVisitType t) 
 {
@@ -87,21 +79,26 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
 
    if (fa.IsStatement(s)) {
       if (DebugLocalInfoCollect())
-         cerr << "previsiting cur statement " << fa.AstToString(s) << "\n";
+         STD cerr << "previsiting cur statement " << AstToString(s) << "\n";
       curstmt = s;
    }
    else  {
       if (DebugLocalInfoCollect()) 
-         cerr << "previsiting cur node " << fa.AstToString(s) << "\n";
-      if (curstmt == 0) {
-        AstNodePtr s1 = fa.GetParent(s); 
-        for ( ; s1 != 0 && !fa.IsStatement(s1); s1 = fa.GetParent(s1)) {}
-        curstmt = s1;
+         STD cerr << "previsiting cur node " << AstToString(s) << "\n";
+      if (curstmt == AST_NULL) {
+        AstNodePtr s1 = fa.GetParent(s);
+        for ( ; s1 != AST_NULL && !fa.IsStatement(s1); s1 = fa.GetParent(s1));
+        if (s1 != AST_NULL)
+           curstmt = s1;
+        else if (DebugLocalInfoCollect())
+            std::cerr << "curstmt = 0\n";
+           
       } 
    }
 
    AstNodePtr lhs, rhs;
    AstInterface::AstNodeList vars, args;
+   AstInterface::OperatorEnum opr;
    bool readlhs = false;
 
    if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
@@ -111,29 +108,37 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
         modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
      }
    }
+   else if (fa.IsUnaryOp(s, &opr, &lhs) && 
+           (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
+     ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+     if (mp == 0 || mp->find(lhs) == mp->end()) {
+        modstack.push_back(s);
+        modstack.back().modmap[lhs] =  ModRecord( lhs,true); 
+     }
+   }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
-      AstInterface::AstNodeListIterator pv = fa.GetAstNodeListIterator(vars);
-      AstInterface::AstNodeListIterator pa = fa.GetAstNodeListIterator(args);
+      AstInterface::AstNodeList::const_iterator pv = vars.begin();
+      AstInterface::AstNodeList::const_iterator pa = args.begin();
       modstack.push_back(s);
-      while (!pv.ReachEnd()) {
+      while (pv != vars.end()) {
          modstack.back().modmap[*pv] = ModRecord(*pa,false);
          ++pv;
          ++pa;
       }
    }
    else  if (fa.IsIOInputStmt(s, &args)) {
-     fa.ListReverse(args);
+     args.reverse();
      modstack.push_back(s);
-     for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(args);
-           !p.ReachEnd(); ++p) {
-        AstNodePtr cur = *p;
-        modstack.back().modmap[cur]= ModRecord(0,false);
+     for (AstInterface::AstNodeList::const_iterator p = args.begin();
+           p != args.end(); ++p) {
+        AstNodePtr c = *p;
+        modstack.back().modmap[c]= ModRecord(AST_NULL,false);
      }
    }
    else {
      if (fa.IsFunctionCall(s)) {
          if (DebugLocalInfoCollect()) 
-             cerr << " append function call " << fa.AstToString(s) << endl;
+             STD cerr << " append function call " << AstToString(s) << STD endl;
          AppendFuncCall(fa, s);
          Skip(s);
      }
@@ -142,10 +147,10 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
         if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
            AppendReadLoc(fa, s);
         if (fa.IsArrayAccess(s, 0, &args))  {
-           for (AstInterface::AstNodeListIterator p = 
-                 fa.GetAstNodeListIterator(args); !p.ReachEnd(); ++p) {
-               AstNodePtr cur = *p;
-               operator()(fa, cur);
+           for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
+                p != args.end();  ++p) {
+               AstNodePtr c = *p;
+               operator()(fa, c);
            }
            Skip(s);
         }
@@ -154,18 +159,18 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
  }
  else {
       if (DebugLocalInfoCollect()) 
-         cerr << "postvisiting cur node " << fa.AstToString(s) << "\n";
+         STD cerr << "postvisiting cur node " << AstToString(s) << "\n";
        if (modstack.size() && modstack.back().root == s) {
           const ModMap &modmap = modstack.back().modmap;
           for ( ModMap::const_iterator p = modmap.begin();
                p != modmap.end(); ++p) { 
-              pair<AstNodePtr,ModRecord> cur = *p;
-             AppendModLoc( fa, cur.first, cur.second.rhs);
+              STD pair<const AstNodePtr,ModRecord> c = *p;
+             AppendModLoc( fa, c.first, c.second.rhs);
           }
           modstack.pop_back();
        }
      if (s == curstmt) {
-        curstmt = 0;
+        curstmt = AST_NULL;
      }
  }
  return true;
@@ -173,7 +178,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
 
 class CollectReadRefWrap : public CollectObject<AstNodePtr>
 {
-  CollectObject< pair< AstNodePtr, AstNodePtr> >* collect;
+  CollectObject< STD pair< AstNodePtr, AstNodePtr> >* collect;
   FunctionSideEffectInterface* func;
  protected:
   AstNodePtr stmt;
@@ -181,25 +186,25 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
  public:
   CollectReadRefWrap( AstInterface& _fa, FunctionSideEffectInterface* f, 
                       const AstNodePtr& _stmt, 
-                      CollectObject< pair< AstNodePtr, AstNodePtr> >* c)
-    : collect(c), func(f), stmt(_stmt), fa(_fa) {}
-  Boolean operator() ( const AstNodePtr& ref)
+                      CollectObject< STD pair< AstNodePtr, AstNodePtr> >* c)
+    : fa(_fa), func(f), stmt(_stmt), collect(c) {}
+  bool operator() ( const AstNodePtr& ref)
    {
       AstInterface::AstNodeList args;
       if (fa.IsFunctionCall(ref))
          func->get_read(fa, ref, this); 
       else if (fa.IsArrayAccess(ref, 0, &args)) {
-        for (AstInterface::AstNodeListIterator p = 
-               fa.GetAstNodeListIterator(args); !p.ReachEnd(); ++p) {
-               AstNodePtr cur = *p;
-               operator()(cur);
+        for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
+             p != args.end(); ++p) {
+               AstNodePtr c = *p;
+               operator()(c);
         }
       }
       if (fa.IsMemoryAccess(ref)) {
         if (DebugLocalInfoCollect()) 
-           cerr << "appending reading " << fa.AstToString(ref) << " : " << fa.AstToString(stmt) << endl;
+           STD cerr << "appending reading " << AstToString(ref) << " : " << AstToString(stmt) << STD endl;
         if (collect != 0)
-          (*collect)( pair<AstNodePtr, AstNodePtr>(ref, stmt));
+          (*collect)( STD pair<AstNodePtr, AstNodePtr>(ref, stmt));
       }
       return true;
    }
@@ -207,28 +212,28 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
 
 class CollectModRefWrap : public CollectReadRefWrap
 {
-  CollectObject< pair< AstNodePtr, AstNodePtr> >* mod;
+  CollectObject< STD pair< AstNodePtr, AstNodePtr> >* mod;
  public:
   CollectModRefWrap( AstInterface& _fa, FunctionSideEffectInterface* f,
                      const AstNodePtr& _stmt,
-                      CollectObject< pair<AstNodePtr,AstNodePtr> >* read,
-                      CollectObject< pair<AstNodePtr,AstNodePtr> >* m)
+                      CollectObject< STD pair<AstNodePtr,AstNodePtr> >* read,
+                      CollectObject< STD pair<AstNodePtr,AstNodePtr> >* m)
     : CollectReadRefWrap(_fa, f, _stmt, read), mod(m) {}
-  Boolean operator() ( const AstNodePtr& ref)
+  bool operator() ( const AstNodePtr& ref)
    {
       AstInterface::AstNodeList args;
       if (fa.IsFunctionCall(ref, 0,&args) || fa.IsArrayAccess(ref, 0, &args)) {
         CollectReadRefWrap read(*this);
-        for (AstInterface::AstNodeListIterator p = 
-               fa.GetAstNodeListIterator(args); !p.ReachEnd(); ++p) {
-               AstNodePtr cur = *p;
-               read(cur);
+        for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
+             p != args.end(); ++p) {
+               AstNodePtr c = *p;
+               read(c);
         }
       }
       if (DebugLocalInfoCollect()) 
-          cerr << "appending modifying " << fa.AstToString(ref) << " : " << fa.AstToString(stmt) << endl;
+          STD cerr << "appending modifying " << AstToString(ref) << " : " << AstToString(stmt) << STD endl;
       if (mod != 0)
-        (*mod)( pair<AstNodePtr, AstNodePtr>(ref, stmt));
+        (*mod)( STD pair<AstNodePtr, AstNodePtr>(ref, stmt));
       return true;
    }
 };
@@ -237,21 +242,22 @@ void StmtSideEffectCollect::
 AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
     {  
       if (DebugLocalInfoCollect()) {
-          cerr << "appending modifying " << fa.AstToString(mod) << " = " << fa.AstToString(rhs) << endl;
+          STD cerr << "appending modifying " << AstToString(mod) << " = " << AstToString(rhs) << STD endl;
       }
-       if (killcollect != 0 && rhs != 0)
-            (*killcollect)( pair<AstNodePtr,AstNodePtr>(mod, curstmt));
+       assert(curstmt != AST_NULL);
+       if (killcollect != 0 && rhs != AST_NULL)
+            (*killcollect)( STD pair<AstNodePtr,AstNodePtr>(mod, curstmt));
        if (modcollect != 0)
-            (*modcollect)( pair<AstNodePtr,AstNodePtr>(mod, curstmt)); 
+            (*modcollect)( STD pair<AstNodePtr,AstNodePtr>(mod, curstmt)); 
     }
 void StmtSideEffectCollect::
 AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
     {   
       if (DebugLocalInfoCollect()) {
-          cerr << "appending reading " << fa.AstToString(read) << endl;
+          STD cerr << "appending reading " << AstToString(read) << STD endl;
       }
        if (readcollect != 0)
-               (*readcollect)(pair<AstNodePtr,AstNodePtr>(read, curstmt)); 
+               (*readcollect)(STD pair<AstNodePtr,AstNodePtr>(read, curstmt)); 
     }
 
 void StmtSideEffectCollect::
@@ -261,21 +267,20 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
       if (DebugLocalInfoCollect()) 
-         cerr << "no interprecedural read info for : " << fa.AstToString(fc) << endl;
+         STD cerr << "no interprecedural read info for : " << AstToString(fc) << STD endl;
       AppendFuncCallArguments(fa, fc);
   }
 
   CollectModRefWrap mod(fa, funcanal, curstmt, readcollect, modcollect);
   if (funcanal == 0 || !funcanal->get_modify( fa, fc, &mod))  {
       if (DebugLocalInfoCollect()) 
-         cerr << "no interprecedural mod info for : " << fa.AstToString(fc) << endl;
+         STD cerr << "no interprecedural mod info for : " << AstToString(fc) << STD endl;
        AppendFuncCallWrite(fa, fc);
        modunknown = true;
   }
 }
 
-
-class ModifyAliasMap : public CollectObject< pair<AstNodePtr, int> >
+class ModifyAliasMap : public CollectObject< STD pair<AstNodePtr, int> >
 {
   AstInterface& fa;
   StmtVarAliasCollect::VarAliasMap& aliasmap;
@@ -283,7 +288,7 @@ class ModifyAliasMap : public CollectObject< pair<AstNodePtr, int> >
   int index;
 public:
   ModifyAliasMap(AstInterface& _fa, StmtVarAliasCollect::VarAliasMap& m) 
-    : fa(_fa), aliasmap(m), repr(0), index(-1) {}
+    : fa(_fa), aliasmap(m), index(-1), repr(0) {}
 
   void reset() 
   { 
@@ -291,61 +296,82 @@ public:
     repr = 0;
   }
 
-  Boolean operator() ( const pair<AstNodePtr, int>& cur)
+  bool operator() ( const STD pair<AstNodePtr, int>& cur)
   {
-    string varname;
+    STD string varname;
     AstNodePtr scope;
-    if (cur.first == 0 || !fa.IsVarRef(cur.first, 0, &varname, &scope))
+    if (cur.first == AST_NULL || !fa.IsVarRef(cur.first, 0, &varname, &scope))
       return false;
     if (cur.second == index) {
       aliasmap.get_alias_map(varname, scope).union_with(repr);
-      if (DebugAliasAnal()) 
-         cerr << "aliasing with: " << varname << endl;
+      if (DebugAliasAnal())  {
+         STD cerr << "aliasing with: " << varname << STD endl;
+      }
     }
     else {
       assert( cur.second > index); 
       repr = &aliasmap.get_alias_map(varname, scope);
       if (DebugAliasAnal()) 
-         cerr << "cur alias-var repr:" << varname << endl;
+         STD cerr << "cur alias-var repr:" << varname << STD endl;
       index = cur.second;
     }
     return true;
   }
 };
 
-string ScopeStringMap :: get_scope_string( const AstNodePtr& s)
+STD string Ast2StringMap :: get_string( const AstNodePtr& s)
 {
-  assert( s != 0);
-  map<AstNodePtr,string>::const_iterator p = scopemap.find(s);
-  if (p != scopemap.end()) 
+  if ( s == AST_NULL) return "";
+  MapType::const_iterator p = astmap.find(s);
+  if (p != astmap.end()) 
     return (*p).second; 
-  stringstream buf;
+  STD stringstream buf;
   ++cur;
   buf <<  cur;
-  string r= buf.str();
-  scopemap[s] = r;
+  STD string r= buf.str();
+  astmap[s] = r;
   return r;
 }
 
-string ScopeStringMap :: get_scope_string( const AstNodePtr& s) const
+STD string Ast2StringMap :: get_string( const AstNodePtr& s) const
 {
-  assert( s != 0);
-  map<AstNodePtr,string>::const_iterator p = scopemap.find(s);
-  if (p == scopemap.end()) {
-     cerr << "Error: cannot find scope: " << s << AstInterface::AstToString(s) << endl;
-     for (p = scopemap.begin(); p != scopemap.end(); ++p) {
-          cerr << " : " << (*p).first << ":" << (*p).second << endl;
+  if ( s == AST_NULL) return "";
+  MapType::const_iterator p = astmap.find(s);
+  if (p == astmap.end()) {
+     STD cerr << "Error: cannot find ast: " << AstToString(s) << STD endl;
+     for (p = astmap.begin(); p != astmap.end(); ++p) {
+          STD cerr << " : " << AstToString((*p).first) << ":" << (*p).second << STD endl;
      }
      assert(false);
   }
   return (*p).second;
 }
 
-UF_elem&  StmtVarAliasCollect::VarAliasMap::
-get_alias_map( const string& varname, const AstNodePtr& scope)
+Ast2StringMap InterProcVariableUniqueRepr:: astmap;
+
+std:: string InterProcVariableUniqueRepr::
+get_unique_name(AstInterface& fa, const AstNodePtr& exp)
 {
-  string scopename = scopemap.get_scope_string(scope);
-  string name = varname + scopename;
+  std::string expname = astmap.get_string(exp);
+  return get_unique_name(fa, exp, expname);
+}
+
+std:: string InterProcVariableUniqueRepr::
+get_unique_name(AstInterface& fa, const AstNodePtr& _scope, const std::string& varname)
+    { 
+      if (_scope == AST_NULL) return varname;
+      std::string fname;
+      AstNodePtr func = fa.GetFunctionDefinition(_scope, &fname);
+     if (func == AST_NULL) return varname;
+     return get_unique_name(fname, func, varname);
+ }
+
+
+UF_elem&  StmtVarAliasCollect::VarAliasMap::
+get_alias_map( const STD string& varname, const AstNodePtr& scope)
+{
+  STD string scopename = scopemap.get_string(scope);
+  STD string name = varname + scopename;
   return aliasmap[name];
 }
 
@@ -353,10 +379,10 @@ void StmtVarAliasCollect::
 AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs)
 {
-  string modname;
+  STD string modname;
   AstNodeType modtype;
   AstNodePtr modscope;
-  if (rhs == 0 || !fa.IsVarRef(mod, &modtype, &modname, &modscope) || fa.IsScalarType(modtype))
+  if (rhs == AST_NULL || !fa.IsVarRef(mod, &modtype, &modname, &modscope) || fa.IsScalarType(modtype))
     return;
   AstInterface::AstNodeList args;
   if (fa.IsFunctionCall( rhs, 0, &args) ) {
@@ -365,18 +391,18 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
         return;
     hasunknown = true;
     if (DebugAliasAnal()) {
-        cerr << "unknown alias info for function call : " << fa.AstToString(rhs) << endl;
-        cerr << "aliasing all parameters with " << fa.AstToString(mod) << endl;;
+        STD cerr << "unknown alias info for function call : " << AstToString(rhs) << STD endl;
+        STD cerr << "aliasing all parameters with " << AstToString(mod) << STD endl;;
     }
     collect.reset();
-    collect( pair<AstNodePtr,int>(mod, 0));
-    for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(args);
-          !p.ReachEnd(); ++p) {
-       collect( pair<AstNodePtr,int>(*p, 0));
+    collect( STD pair<AstNodePtr,int>(mod, 0));
+    for (AstInterface::AstNodeList::const_iterator p = args.begin();
+          p != args.end() ; ++p) {
+       collect( STD pair<AstNodePtr,int>(*p, 0));
     }
   }
   else {
-    string rhsname;
+    STD string rhsname;
     AstNodeType rhstype;
     AstNodePtr rhsscope;
     if (fa.IsVarRef(rhs, &rhstype, &rhsname, &rhsscope)) {
@@ -390,19 +416,19 @@ void StmtVarAliasCollect::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 {
   ModifyAliasMap collect(fa, aliasmap);
-  if (funcanal == 0 || !funcanal->may_alias( fa, fc, 0, collect)) {
+  if (funcanal == 0 || !funcanal->may_alias( fa, fc, AST_NULL, collect)) {
      hasunknown = true;
     if (DebugAliasAnal()) {
-        cerr << "unknown alias info. for function call : " << fa.AstToString(fc) << endl;
-        cerr << "aliasing all parameters \n";
+        STD cerr << "unknown alias info. for function call : " << AstToString(fc) << STD endl;
+        STD cerr << "aliasing all parameters \n";
      }
      collect.reset();
      AstInterface::AstNodeList args;
      if (!fa.IsFunctionCall( fc, 0, &args)) 
          assert(false);
-     for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(args);
-           !p.ReachEnd(); ++p) {
-         collect( pair<AstNodePtr,int>(*p, 0));
+     for (AstInterface::AstNodeList::const_iterator p = args.begin();
+           p != args.end(); ++p) {
+         collect( STD pair<AstNodePtr,int>(*p, 0));
      }
   }
 }
@@ -412,23 +438,23 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
 	  const AstNodePtr& r2)
 {
   AstNodeType t1, t2;
-  if (!fa.IsExpression(r1, &t1) || !fa.IsExpression(r2, &t2))
+  if (fa.IsExpression(r1, &t1) == AST_NULL || fa.IsExpression(r2, &t2)==AST_NULL)
     assert(false);
   if (!hasresult) {
     if (DebugAliasAnal()) {
-       cerr << "no alias analysis performed \n";
-       cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+       STD cerr << "no alias analysis performed \n";
+       STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
     }
     return true;
   }
-  string varname1, varname2;
+  STD string varname1, varname2;
   AstNodePtr scope1, scope2;
   bool global1, global2;
   if (!fa.IsVarRef(r1, 0, &varname1, &scope1, &global1) 
       || !fa.IsVarRef(r2, 0, &varname2, &scope2, &global2)) {
     if (DebugAliasAnal()) {
-       cerr << "no alias analysis between non_variables performed \n";
-       cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+       STD cerr << "no alias analysis between non_variables performed \n";
+       STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
     }
     return true;
   }
@@ -436,16 +462,16 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
   if (global1 && global2 && hasunknown) {
     if (DebugAliasAnal()) {
        if (global1) {
-          cerr << varname1 << " and " << varname2 << " are global \n";
-          cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+          STD cerr << varname1 << " and " << varname2 << " are global \n";
+          STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
        }
     }
     return true;
   }
   if ( aliasmap.get_alias_map(varname1, scope1).in_same_group( &aliasmap.get_alias_map(varname2, scope2))) {
     if (DebugAliasAnal()) {
-       cerr << "alias analysis performed \n";
-       cerr << "has alias between " << fa.AstToString(r1) << " and " << fa.AstToString(r2) << endl;
+       STD cerr << "alias analysis performed \n";
+       STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
      }
      return true;
   }
@@ -457,22 +483,19 @@ operator()( AstInterface& fa, const AstNodePtr& funcdef)
 {
   assert(!hasresult);
   hasresult = true;
-  AstNodePtr funcdecl, body;
-  if (!fa.IsFunctionDefinition(funcdef, &funcdecl, &body)) {
-     cerr << "Error: alias analysis requires function definition as input instead of " << fa.AstToString(funcdef) << endl;
+  AstNodePtr  body;
+  AstInterface::AstNodeList params;
+  if (!fa.IsFunctionDefinition(funcdef, 0, &params, 0, &body)) {
+     STD cerr << "Error: alias analysis requires function definition as input instead of " << AstToString(funcdef) << STD endl;
      assert(false);
   }
 
   ModifyAliasMap collect(fa, aliasmap);
-  if (funcanal == 0 || !funcanal->allow_alias( fa, funcdecl, collect)) {
-     AstInterface::AstNodeList params;
-     if (!fa.IsFunctionDecl( funcdecl, 0, 0, 0, &params))
-       assert(false);
-     for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(params);
-          !p.ReachEnd(); ++p) {
-         collect( pair<AstNodePtr,int>(*p, 0));
+  if (funcanal == 0 || !funcanal->allow_alias( fa, funcdef, collect)) {
+     for (AstInterface::AstNodeList::const_iterator p = params.begin();
+          p != params.end(); ++p) {
+         collect( STD pair<AstNodePtr,int>(*p, 0));
      }
   }
   StmtInfoCollect::operator()(fa, body);
 }
-

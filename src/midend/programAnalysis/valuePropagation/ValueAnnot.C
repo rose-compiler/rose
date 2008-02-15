@@ -1,16 +1,13 @@
-#include <general.h>
 #include <fstream>
 #include <iostream>
+#include <strstream>
 #include <CPPAstInterface.h>
 #include <AnnotExpr.h>
 #include <ValueAnnot.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
 bool DebugValuePropogate();
 
-void HasValueDescriptor::replace_var( const string& name, const SymbolicVal& repl)
+void HasValueDescriptor::replace_var( const STD string& name, const SymbolicVal& repl)
 {
   for (iterator p = begin(); p != end(); ++p) {
     SymbolicValDescriptor& cur = (*p).second;
@@ -19,7 +16,7 @@ void HasValueDescriptor::replace_var( const string& name, const SymbolicVal& rep
 }
 
 bool HasValueDescriptor::
-has_value( const string& name, SymbolicValDescriptor* r) const
+has_value( const STD string& name, SymbolicValDescriptor* r) const
     {
       const_iterator p = find(name);
       if (p == end())
@@ -33,16 +30,17 @@ bool HasValueDescriptor::merge (const HasValueDescriptor& that)
 {
   bool change = false;;
   for (const_iterator p = that.begin(); p != that.end(); ++p) {
-    const pair<string, SymbolicValDescriptor>& cur = *p;
-    if (operator[](cur.first).merge(cur.second))
+    if (operator[]((*p).first).merge((*p).second))
        change = true;
   }
   return change;
 }
 
-void HasValueDescriptor :: Dump() const
+STD string HasValueDescriptor :: toString() const
 {
-  write(cerr);
+  STD strstream out;
+  write(out);
+  return out.str();
 }
 
 void HasValueDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVal>& repl)
@@ -61,6 +59,50 @@ void RestrictValueOpDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVa
       cur.second.replace_val( repl);
   }
 }
+
+STD string HasValueCollection::
+is_known_member_function( AstInterface& fa,
+                        const SymbolicVal& exp, AstNodePtr* objp,
+                        SymbolicFunction::Arguments* argsp , 
+                        HasValueDescriptor* descp )
+{
+ STD string op1, op2;
+ SymbolicFunction::Arguments arg1, arg2;
+ if (!exp.isFunction(op1,&arg1))
+      return "";
+ if (op1 != "FunctionPtrCall" ||
+     !arg1.front().isFunction(op2,&arg2) || op2 != "." || arg2.size() != 2)
+      return "";
+ AstNodePtr obj;
+ if (!arg2.front().isAstWrap(obj) || !known_type(fa, obj, descp))
+     return "";
+ if (objp != 0)
+    *objp = obj;
+ if (argsp != 0)
+    *argsp = arg1;
+ return arg2.back().toString();
+}
+
+STD string HasValueCollection::
+is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,
+                          AstNodePtr* objp, AstInterface::AstNodeList* args,
+                          HasValueDescriptor* desc)
+{
+  AstNodePtr obj;
+  STD string func;
+  if (!fa.IsMemberAccess( exp, &obj, &func) &&
+     !fa.IsMemberFunctionCall(exp, &obj, &func, 0, args))
+     return "";
+  if (obj == AST_NULL)
+    return "";
+  if (known_type( fa, obj, desc)) {
+    if (objp != 0)
+        *objp = obj;
+    return func;
+  }
+  return "";
+}
+
 
 ValueAnnotation* ValueAnnotation::inst = 0;
 ValueAnnotation* ValueAnnotation::get_inst()
@@ -84,9 +126,9 @@ void ValueAnnotation :: Dump() const
 }
 
 bool ValueAnnotation ::
-known_type( const AstNodePtr& exp, HasValueDescriptor* r)
+known_type( AstInterface& fa, const AstNodePtr& exp, HasValueDescriptor* r)
 {
-  if (!values.known_type( exp, r))
+  if (!values.known_type(fa, exp, r))
     return false;
   if (r != 0)
     r->replace_var( "this", SymbolicAstWrap(exp));
@@ -97,15 +139,16 @@ class ReplaceValue
   : public MapObject<SymbolicVal, SymbolicVal>, public SymbolicVisitor
 {
    MapObject<SymbolicVal, SymbolicVal>* valmap;
+   AstInterface& fa;
    bool succ;
 
   virtual void VisitAstWrap( const SymbolicAstWrap& v)
   {
      AstNodePtr ast = v.get_ast();
      AstNodeType type;
-     if (!AstInterface::IsExpression( ast, &type))
+     if (fa.IsExpression( ast, &type)==AST_NULL)
         succ = false;
-     else if (!AstInterface::IsScalarType(type))
+     else if (!fa.IsScalarType(type))
         succ = false;
   }
   virtual SymbolicVal operator()( const SymbolicVal& v)
@@ -120,8 +163,9 @@ class ReplaceValue
   }
 
  public:
-   ReplaceValue( MapObject<SymbolicVal, SymbolicVal>* _valmap = 0) 
-         : valmap(_valmap), succ(false) {}
+   ReplaceValue( AstInterface& _fa, 
+                 MapObject<SymbolicVal, SymbolicVal>* _valmap = 0) 
+         : fa(_fa), succ(false), valmap(_valmap)  {}
    bool operator()( HasValueDescriptor& desc) 
    {
       bool onesucc = false;
@@ -140,36 +184,37 @@ class ReplaceValue
 
 
 bool ValueAnnotation::
-is_value_restrict_op( const AstNodePtr& exp, 
+is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp, 
                     Collect2Object< AstNodePtr, HasValueDescriptor>* descp,
                      MapObject<SymbolicVal, SymbolicVal>* valMap,
                      Map2Object<AstInterface*, AstNodePtr, AstNodePtr>* astcodegen)
 {
   RestrictValueOpDescriptor desc;
-  if (!valueRestrict.known_operator( exp, 0, &desc, true, astcodegen))
+  if (!valueRestrict.known_operator( fa, exp, 0, &desc, true, astcodegen))
     return false;
   if (descp == 0)
      return true;
-  ReplaceValue repl( valMap);
+  ReplaceValue repl( fa, valMap);
   for (RestrictValueOpDescriptor::const_iterator p = desc.begin(); 
         p != desc.end(); ++p) {
       RestrictValueDescriptor cur = *p; 
-      AstNodePtr curast = cur.first.get_val().ToAst();
-      assert(curast != 0);
+      AstNodePtr curast;
+      if (!cur.first.get_val().isAstWrap(curast))
+         assert(false);
       HasValueDescriptor curval = cur.second;
       if (repl(curval)) {
          if (DebugValuePropogate()) {
-             cerr << "found restrict value : " << AstInterface::AstToString(curast) << ":" << AstInterface::AstToString(exp);
+             STD cerr << "found restrict value : " << AstToString(curast) << ":" << AstToString(exp);
              curval.Dump();
-             cerr << endl;
+             STD cerr << STD endl;
           }
          (*descp)( curast, curval);
       }
       else {
         if (DebugValuePropogate()) {
-             cerr << "discard restrict value : " << AstInterface::AstToString(curast) << ":" << AstInterface::AstToString(exp);
+             STD cerr << "discard restrict value : " << AstToString(curast) << ":" << AstToString(exp);
              curval.Dump();
-             cerr << endl;
+             STD cerr << STD endl;
           }
       }
   }
@@ -177,10 +222,10 @@ is_value_restrict_op( const AstNodePtr& exp,
 }
 
 bool ValueAnnotation::
-is_access_value( const AstNodePtr& exp, AstNodePtr* obj, string* name,
+is_access_value( CPPAstInterface& fa, const AstNodePtr& exp, AstNodePtr* obj, STD string* name,
 		 AstInterface::AstNodeList* args, HasValueDescriptor* desc)
 {
-  string funcname = values.is_known_member_function( exp, obj, args, desc);
+  STD string funcname = values.is_known_member_function( fa, exp, obj, args, desc);
   if (funcname != "") {
     if (name != 0)
       *name = funcname;

@@ -1,4 +1,3 @@
-#include <general.h>
 #include <DGBaseGraphImpl.h>
 #include <DirectedGraph.C>
 #include <DAG.C>

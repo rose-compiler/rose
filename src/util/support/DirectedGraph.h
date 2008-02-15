@@ -2,9 +2,9 @@
 #ifndef DIRECTED_GRAPH_IMPL
 #define DIRECTED_GRAPH_IMPL
 
+#include <DoublyLinkedList.h>
 #include <assert.h>
 #include <iostream>
-#include <DoublyLinkedList.h>
 
 class DirectedEdgeInterface
 { public:
@@ -20,7 +20,7 @@ class DirectedGraphNode
    DirectedGraph<Node,Edge> *graph;  
  public:
    typedef DirectedEdgeInterface::EdgeDirection EdgeDirection;
-   typedef typename DoublyLinkedListWrap<Edge*>::Iterator EdgeIterator;
+   typedef typename DoublyLinkedListWrap<Edge*>::iterator EdgeIterator;
 
    DirectedGraphNode( DirectedGraph<Node,Edge> *g);
    virtual ~DirectedGraphNode();
@@ -51,13 +51,15 @@ class DirectedGraphEdge
   void MoveEndPoint(Node *n, EdgeDirection dir);
 };
 
-template <class Node, class Edge>
+template <class NodeImpl, class EdgeImpl>
 class DirectedGraph : public DirectedEdgeInterface
 {
-  DoublyLinkedListWrap <Node*> nodes;
+  DoublyLinkedListWrap <NodeImpl*> nodes;
  public:
   typedef DirectedEdgeInterface::EdgeDirection EdgeDirection;
-  typedef typename DoublyLinkedListWrap<Node*>::Iterator NodeIterator;
+  typedef NodeImpl Node;
+  typedef EdgeImpl Edge;
+  typedef typename DoublyLinkedListWrap<Node*>::iterator NodeIterator;
   typedef typename DirectedGraphNode<Node,Edge>::EdgeIterator EdgeIterator;
 
   DirectedGraph() {}
@@ -74,6 +76,10 @@ class DirectedGraph : public DirectedEdgeInterface
        { return n->GetEdgeIterator(d); }
   Node* GetEdgeEndPoint( const Edge* e, EdgeDirection d)
      { return e->EndPoint(d); }
+  bool ContainNode( const Node* n) const
+    { return n->GetGraph() == this; }
+  bool ContainEdge( const Edge* e) const
+    { return e->EndPoint(EdgeOut)->GetGraph() == this; }
   unsigned NumberOfNodes() const { return nodes.NumberOfEntries(); }
   
   void SortNodes( MapObject<Node*, int>& f) { nodes.Sort(f); }

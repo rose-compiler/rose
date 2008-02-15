@@ -2,6 +2,7 @@
 #define SYMBOLIC_BOUND_H
 
 #include <SymbolicVal.h>
+#include <map>
 
 class SingleValBound : public MapObject<SymbolicVal, SymbolicBound>
 {
@@ -20,12 +21,13 @@ class MapVarBound
   public SymbolicVisitor
 {
   SymbolicBound result;
-  typedef std::pair<std::string,AstNodePtr> Key;
-  std::map< Key, SymbolicBound> bmap;
+  typedef STD pair<STD string,AstNodePtr> Key;
+  typedef STD map< Key, SymbolicBound, STD less<Key> > MapBound;
+  MapBound bmap;
   
   void VisitVar( const SymbolicVar& var)
   {
-    std::map<Key,SymbolicBound>::const_iterator p = bmap.find(Key(var.GetVarName(), var.GetVarScope()));
+    MapBound::const_iterator p = bmap.find(Key(var.GetVarName(), var.GetVarScope()));
     if (p != bmap.end())
        result = (*p).second;
   }
@@ -50,8 +52,8 @@ class VarInfo : public MapObject<SymbolicVal, SymbolicBound>
            const SymbolicVal& _ub) : var(_var),b(_lb,_ub) {}
   VarInfo( const SymbolicVar& _var, const SymbolicBound& _b)
            : var(_var),b(_b) {}
-  std::string ToString() const {
-      return  var.ToString() + " : " + b.ToString();
+  STD string toString() const {
+      return  var.toString() + " : " + b.toString();
   }
   SymbolicBound operator() ( const SymbolicVal& v)
    { return (v == var)? b : SymbolicBound(); }
@@ -78,7 +80,7 @@ class SymbolicBoundAnalysis
    { result = GetBound(var); }
  public:
   SymbolicBoundAnalysis(Interface _interface, Stmt n, Stmt a = 0)
-      : interface(_interface), node(n), ances(a) {}
+      : node(n), interface(_interface), ances(a) {}
   SymbolicBound GetBound(const SymbolicVar& var, Stmt* stop = 0)
        {
          SymbolicBound tmp;
@@ -113,12 +115,13 @@ class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,Interface>
  protected:
   SymbolicBoundAnalysis<Stmt,Interface>::result;
   SymbolicBoundAnalysis<Stmt,Interface>::ances;
-  SymbolicBoundAnalysis<Stmt,Interface>::node;
   SymbolicBoundAnalysis<Stmt,Interface>::interface;
+  SymbolicBoundAnalysis<Stmt,Interface>::node;
+ private:
   void VisitVar( const SymbolicVar& var)
    { result = GetConstBound(var); }
  public:
-  SymbolicConstBoundAnalysis(Interface _interface, Stmt n, Stmt a = 0)
+  SymbolicConstBoundAnalysis(Interface _interface, Stmt n, Stmt a )
       : SymbolicBoundAnalysis<Stmt,Interface>(_interface,n,a) {}
   SymbolicBound GetConstBound(const SymbolicVar& var)
        {

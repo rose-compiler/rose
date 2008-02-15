@@ -5,6 +5,7 @@
 #include <SymbolicVal.h>
 #include <FunctionObject.h>
 #include <stdlib.h>
+#include <vector>
 
 class SymbolicValDescriptor
 {
@@ -23,7 +24,7 @@ class SymbolicValDescriptor
   SymbolicVal& get_val() { return val; }
   void write(std::ostream& out) const;
   void Dump() const;
-  std::string ToString() const { std::stringstream out; write(out); return out.str(); }
+  std::string toString() const { std::stringstream out; write(out); return out.str(); }
 
   bool is_top() const;
   bool is_bottom() const;
@@ -38,53 +39,51 @@ class SymbolicValDescriptor
 
 class SymbolicDotExp : public SymbolicFunction
 {
-  virtual SymbolicFunction* CloneFunction( const SymbolicVal& _op,
-                                         const Arguments& v) const
-         { return new SymbolicDotExp( v); }
-
   public:
    SymbolicDotExp(const Arguments& v)
-    : SymbolicFunction(".", v)  { assert( v.size() == 2); }
+    : SymbolicFunction(AstInterface::BOP_DOT_ACCESS, ".", v)  { assert( v.size() == 2); }
    SymbolicDotExp( const SymbolicVal& obj, const SymbolicVal& field)
-    : SymbolicFunction(".", obj, field) {}
+    : SymbolicFunction(AstInterface::BOP_DOT_ACCESS,".", obj, field) {}
    SymbolicDotExp( const SymbolicVal& obj, const std::string& fieldname)
-    : SymbolicFunction(".", obj, SymbolicConst(fieldname, "field")) {}
+    : SymbolicFunction(AstInterface::BOP_DOT_ACCESS,".", obj, SymbolicConst(fieldname, "field")) {}
    SymbolicDotExp( const SymbolicDotExp& that)
     : SymbolicFunction(that) {}
 
-   virtual AstNodePtr CodeGen( AstInterface& fa) const;
+  virtual AstNodePtr CodeGen( AstInterface& fa) const;
+  virtual SymbolicValImpl* Clone() const
+         { return new SymbolicDotExp(*this); }
+  virtual SymbolicFunction* cloneFunction(const Arguments& args) const
+         { return new SymbolicDotExp(args); }
 };
 
-class SymbolicSubscriptExp : public SymbolicFunction
+class SymbolicFunctionPtrCall : public SymbolicFunction
 {
-  virtual SymbolicFunction* CloneFunction( const SymbolicVal& _op,
-                                         const Arguments& v) const
-         { return new SymbolicSubscriptExp( v); }
-
   public:
-   SymbolicSubscriptExp(const Arguments& v)
-    : SymbolicFunction("[]", v)  { assert( v.size() == 2); }
-   SymbolicSubscriptExp( const SymbolicVal& array, const SymbolicVal& index)
-    : SymbolicFunction(".", array, index) {}
-   SymbolicSubscriptExp( const SymbolicSubscriptExp& that)
+   SymbolicFunctionPtrCall(const Arguments& v)
+    : SymbolicFunction(AstInterface::OP_NONE, "FunctionPtrCall", v) {} 
+   SymbolicFunctionPtrCall( const SymbolicFunctionPtrCall& that)
     : SymbolicFunction(that) {}
 
-   virtual AstNodePtr CodeGen( AstInterface& fa) const;
+  virtual AstNodePtr CodeGen( AstInterface& fa) const;
+  virtual SymbolicValImpl* Clone() const
+         { return new SymbolicFunctionPtrCall(*this); }
+  virtual SymbolicFunction* cloneFunction(const Arguments& args) const
+         { return new SymbolicFunctionPtrCall(args); }
 };
 
 class SymbolicExtendVar : public SymbolicFunction
 {
   SymbolicValImpl* Clone() const
    { return new SymbolicExtendVar(*this); }
-  virtual SymbolicFunction* CloneFunction( const SymbolicVal& _op,
-                                         const Arguments& v) const
+  virtual SymbolicFunction* cloneFunction(const Arguments& v) const
          { return new SymbolicExtendVar( v); }
 
   public:
    SymbolicExtendVar(const Arguments& v)
-    : SymbolicFunction("$", v)  { assert( v.size() == 2); }
+    : SymbolicFunction(AstInterface::OP_NONE, "$", v)  
+       { assert( v.size() == 2); }
    SymbolicExtendVar( const std::string& varname, int  index)
-    : SymbolicFunction("$", SymbolicVar(varname, 0), index) {}
+    : SymbolicFunction(AstInterface::OP_NONE,"$", SymbolicVar(varname, AST_NULL), index) {}
    SymbolicExtendVar( const SymbolicExtendVar& that)
     : SymbolicFunction(that) {}
 
@@ -119,13 +118,13 @@ class ExtendibleParamDescriptor
        { first = p; }
   void write(std::ostream& out) const { BaseClass::write(out); }
   void Dump() const;
-  std::string ToString() const { std::stringstream out; write(out); return out.str(); }
+  std::string toString() const { std::stringstream out; write(out); return out.str(); }
 
   bool read(std::istream& in);
   const SymbolicValDescriptor& get_param() const { return first; }
   SymbolicValDescriptor& get_param() { return first; }
   std::string get_param_name() const 
-        { assert(first.get_val().GetValType() == VAL_VAR); return first.get_val().ToString(); }
+        { assert(first.get_val().GetValType() == VAL_VAR); return first.get_val().toString(); }
   std::string get_extend_var() const { return second.first; }
   bool get_extension( int& lb, int& ub) const; 
 
@@ -157,9 +156,9 @@ class SymbolicFunctionDeclaration
   void write( std::ostream& out) const
         {  BaseClass::write(out); }
   void Dump() const;
-  std::string ToString() const { std::stringstream out; write(out); return out.str(); }
+  std::string toString() const { std::stringstream out; write(out); return out.str(); }
 
-  bool get_val( const SymbolicFunction::Arguments& argList, SymbolicVal& r) const;
+  bool get_val( const STD vector<SymbolicVal>& args, SymbolicVal& r) const;
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
@@ -172,7 +171,7 @@ class SymbolicFunctionDeclarationGroup
                                 SymbolicFunctionDeclaration, ',', '(', ')'>
       BaseClass;
 public:
- bool get_val( const SymbolicFunction::Arguments& argList, SymbolicVal& r) const;
+ bool get_val( const STD vector<SymbolicVal>& argList, SymbolicVal& r) const;
  bool get_val( AstInterface& fa, AstInterface::AstNodeList& argList, 
                   AstNodePtr& r) const;
  void replace_var( const std::string& varname, const SymbolicVal& val);

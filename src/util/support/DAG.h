@@ -24,11 +24,8 @@ class DAGNode : public DirectedGraphNode<Node, Edge>
 template <class Node, class Edge>
 class DAGEdge : public DirectedGraphEdge<Node,Edge>
 {
-//DQ (3/8/2006): Removed Boolean macro set to int from use in header files
-//Boolean isBackEdge;
-  int isBackEdge;
-//Boolean ValidTopoOrder() 
-  int ValidTopoOrder() 
+  bool isBackEdge;
+  bool ValidTopoOrder() 
      { return EndPoint(DirectedEdgeInterface::EdgeOut)->TopoOrderIndex() 
              < EndPoint(DirectedEdgeInterface::EdgeIn)->TopoOrderIndex();
      }
@@ -37,8 +34,7 @@ class DAGEdge : public DirectedGraphEdge<Node,Edge>
   DAGEdge( Node *_src, Node *_snk);
   virtual ~DAGEdge() {}
   void MoveEndPoint(Node *n, EdgeDirection dir);
-//Boolean IsBackEdge() const;
-  int IsBackEdge() const;
+  bool IsBackEdge() const;
   DirectedGraphEdge<Node,Edge>::EndPoint;
  friend class DAG<Node,Edge>;
 };
@@ -53,17 +49,13 @@ class DAG  : public DirectedGraph<Node,Edge>
   typedef typename DirectedGraph<Node,Edge>::NodeIterator NodeIterator;
 
  private:
-//Boolean ordered;
-  int ordered;
+  bool ordered;
   SortType sort;
   
   class NodeTopoOrderIndex : public MapObject<Node*, int>
-  { 
- // Boolean reverse;
-    int reverse;
+  { bool reverse;
     public: 
-   // NodeTopoOrderIndex( Boolean r) : reverse(r) {}
-      NodeTopoOrderIndex( int r) : reverse(r) {}
+      NodeTopoOrderIndex( bool r) : reverse(r) {}
       int operator ()( Node* const& n) 
           { 
             return (reverse)? 
@@ -86,13 +78,10 @@ class DAG  : public DirectedGraph<Node,Edge>
   class EdgeOrderLessThan : public CompareObject<Edge*>
   { 
     EdgeDirection dir;
- // Boolean reverse;
-    int reverse;
+    bool reverse;
    public:
- // EdgeOrderLessThan( EdgeDirection d, Boolean r) : dir(d), reverse(r) {}
-    EdgeOrderLessThan( EdgeDirection d, int r) : dir(d), reverse(r) {}
- // Boolean operator () ( Edge* const& e1, Edge* const& e2) 
-    int operator () ( Edge* const& e1, Edge* const& e2) 
+    EdgeOrderLessThan( EdgeDirection d, bool r) : dir(d), reverse(r) {}
+    bool operator () ( Edge* const& e1, Edge* const& e2) 
       { 
         int i1 = e1->EndPoint(dir)->TopoOrderIndex();
         int i2 = e2->EndPoint(dir)->TopoOrderIndex();
@@ -154,8 +143,7 @@ class DAG  : public DirectedGraph<Node,Edge>
     }
   }
 
-//void TopoSort( Boolean reverse = false )
-  void TopoSort( int reverse = false )
+  void TopoSort( bool reverse = false )
    {  if (!ordered) {
          TopoOrderNodes();
          sort = NON_SORT;

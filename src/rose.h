@@ -82,6 +82,8 @@
 // File in src/frontend/BinaryDisassembly
   #include "RoseBin_support.h"
   #include "RoseBin_unparse.h"
+  #include "RoseBin.h"
+
   #include "RoseBin_DotGraph.h"
   #include "RoseBin_GmlGraph.h"
   #include "RoseBin_ControlFlowAnalysis.h"

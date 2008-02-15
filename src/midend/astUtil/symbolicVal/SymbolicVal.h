@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string>
 #include <vector>
-#include <map>
 
 class SymbolicConst;
 class SymbolicVar;
@@ -38,17 +37,15 @@ class SymbolicValImpl
  protected:
   virtual ~SymbolicValImpl() {}
  public:
-  virtual std::string ToString() const { return ""; }
-  virtual AstNodePtr ToAst() const { return 0; }
+  virtual std:: string toString() const { return ""; }
+  virtual void Dump() const;
 
   virtual SymOpType GetOpType() const { return SYMOP_NIL; }
   virtual SymbolicValType GetValType() const { return VAL_BASE; }
-  virtual std::string GetTypeName() const { return "unknown"; }
+  virtual std:: string GetTypeName() const { return "unknown"; }
   virtual void Visit( SymbolicVisitor *op) const = 0;
   virtual AstNodePtr  CodeGen(AstInterface &fa) const = 0;
   virtual SymbolicValImpl* Clone() const = 0;
-
-  virtual void Dump() const;
 
  friend class CountRefHandle<SymbolicValImpl>;
 };
@@ -59,70 +56,57 @@ inline SymbolicValImpl* Clone(const SymbolicValImpl& that)
 
 class SymbolicConst : public SymbolicValImpl
 {
-  std::string val, type;
-  int intval;
+  std:: string val, type;
+  int intval, dval;
 
   SymbolicValImpl* Clone() const { return new SymbolicConst(*this); }
  public:
-  SymbolicConst( int _val) ;
-  SymbolicConst( std::string _val, std::string type);
+  SymbolicConst( int _val, int _dval = 1) ;
+  SymbolicConst( std:: string _val, std:: string type);
   SymbolicConst( const SymbolicConst& that) 
-       : val(that.val), type(that.type), intval(that.intval) {}
+       : val(that.val), dval(that.dval), type(that.type), intval(that.intval) {}
   ~SymbolicConst() {}
 
   bool operator == (const SymbolicConst& that) const 
     { return val == that.val && type == that.type; }
-  virtual std::string ToString() const;
-  virtual void Dump() const { std::cerr << val << "(" << type << ")"; }
+  virtual std:: string toString() const;
+  virtual void Dump() const { std:: cerr << val << "(" << type << ")"; }
   SymbolicValType GetValType() const { return VAL_CONST; }
-  std::string GetTypeName() const { return type; }
+  std:: string GetTypeName() const { return type; }
   AstNodePtr  CodeGen(AstInterface &fa) const;
   void Visit( SymbolicVisitor *op) const { op->VisitConst(*this); }
-//Boolean GetIntVal( int &result, int opt = 0) const
-  int GetIntVal( int &result, int opt = 0) const
+  bool GetIntVal( int &val1, int &val2) const
           { 
-            if (type == "int") {
-             result = intval; return true; 
+            if (type == "int" || type == "fraction") {
+             val1 = intval; val2 = dval; return true; 
             }
             return false;
           }
-//Boolean GetConstVal( std::string& result, std::string& rtype) const 
-  int GetConstVal( std::string& result, std::string& rtype) const 
+  bool GetConstVal( std:: string& result, std:: string& rtype) const 
           { 
              result = val; rtype = type; return true; 
           }
-  std::string GetVal() const { return val; }
+  std:: string GetVal() const { return val; }
 };
 
 class SymbolicVar : public SymbolicValImpl
 {
-  std::string varname;
+  std:: string varname;
   AstNodePtr scope;
-  SymbolicValImpl* Clone() const { return new SymbolicVar(varname, scope); }
+  SymbolicValImpl* Clone() const { return new SymbolicVar(*this); }
  public:
-#if 1
-// DQ (3/23/2006): Put the implementation in the source file
-  SymbolicVar( std::string name, const AstNodePtr& sc);
-#else
-  SymbolicVar( std::string name, const AstNodePtr& sc) : varname(name), scope(sc)
-     {
-       printf ("scope->class_name() = %s \n",scope->class_name().c_str());
-     }
-#endif
-  SymbolicVar() : varname(""), scope(0) {}
+  SymbolicVar( std:: string name, const AstNodePtr& sc) : varname(name), scope(sc) {}
+  SymbolicVar() : varname(""), scope(AST_NULL) {}
+  SymbolicVar(const SymbolicVar& that) : varname(that.varname), scope(that.scope) {}
   ~SymbolicVar() {}
-  virtual std::string ToString() const;
-  virtual void Dump() const { std::cerr << varname; }
+  virtual std:: string toString() const;
+  virtual void Dump() const { std:: cerr << varname; }
   SymbolicValType GetValType() const { return VAL_VAR; }
   AstNodePtr  CodeGen( AstInterface &fa) const;
 
-  std::string GetVarName() const { return varname; }
+  std:: string GetVarName() const { return varname; }
   AstNodePtr GetVarScope() const  { return scope; }
-//virtual Boolean GetVarName( std::string& r) const 
-  virtual int GetVarName( std::string& r) const 
-         { r = varname; return true; } 
-//Boolean operator == (const SymbolicVar &that) const ;
-  int operator == (const SymbolicVar &that) const ;
+  bool operator == (const SymbolicVar &that) const ;
   void Visit( SymbolicVisitor *op) const { op->VisitVar(*this); }
 };
 
@@ -136,22 +120,20 @@ class SymbolicAstWrap : public SymbolicValImpl
   SymbolicAstWrap( const AstNodePtr& _ast, 
                    Map2Object <AstInterface*, AstNodePtr, AstNodePtr>* cg = 0) 
     : ast(_ast), codegen(cg) {}
-  SymbolicAstWrap() : ast(0), codegen(0) {}
+  SymbolicAstWrap() : ast(AST_NULL), codegen(0) {}
   SymbolicAstWrap( const SymbolicAstWrap& that)
-    : SymbolicValImpl(that), ast(that.ast), codegen(that.codegen) {}
+    : ast(that.ast), codegen(that.codegen) {}
 
   ~SymbolicAstWrap() {}
   virtual void Dump() const;
-  virtual std::string ToString() const;
-  virtual AstNodePtr ToAst() const { return ast; }
+  virtual std:: string toString() const;
 
   SymbolicValType GetValType() const { return VAL_AST; }
-  virtual std::string GetTypeName() const { return "astwrap"; }
+  virtual std:: string GetTypeName() const { return "astwrap"; }
   AstNodePtr CodeGen( AstInterface &fa) const ;
 
   void Visit( SymbolicVisitor *op) const { op->VisitAstWrap(*this); }
-//Boolean operator == (const SymbolicAstWrap& that) const
-  int operator == (const SymbolicAstWrap& that) const
+  bool operator == (const SymbolicAstWrap& that) const
      { return ast == that.ast; }
   const AstNodePtr& get_ast() const { return ast; }
 };
@@ -170,110 +152,134 @@ class SymbolicVal : public CountRefHandle <SymbolicValImpl>
   SymbolicVal& operator = (const SymbolicVal& that)
    { CountRefHandle <SymbolicValImpl>:: operator = (that); return *this; }
 
-//Boolean IsNIL() const { return ConstPtr() == 0; }
-  int IsNIL() const { return ConstPtr() == 0; }
-//Boolean IsSame( const SymbolicVal& that) const
-  int IsSame( const SymbolicVal& that) const
+  bool IsNIL() const { return ConstPtr() == 0; }
+  bool IsSame( const SymbolicVal& that) const
      { return ConstPtr() == that.ConstPtr(); }
-//Boolean IsSame( const SymbolicValImpl& impl) const
-  int IsSame( const SymbolicValImpl& impl) const
+  bool IsSame( const SymbolicValImpl& impl) const
      { return ConstPtr() == &impl; }
   AstNodePtr CodeGen(AstInterface &fa) const
-           { return (ConstPtr()==0)? AstNodePtr(0) : ConstRef().CodeGen(fa); }
+     { return (ConstPtr()==0)? AstNodePtr(AST_NULL) : ConstRef().CodeGen(fa); }
   void Visit( SymbolicVisitor *op) const 
          { if (ConstPtr()!=0) 
                  ConstRef().Visit(op); }
   void Dump() const;
-  std::string ToString() const;
-  bool ToInt(int &val) const 
+  std:: string toString() const;
+  bool isConstInt(int &val1, int &val2) const 
    { 
-     if (ConstPtr() != 0 && ConstRef().GetTypeName() == "int" && 
-         ConstRef().GetValType() == VAL_CONST) {
-         val = atoi(ConstRef().ToString().c_str());
-         return true;
+     if (ConstPtr() != 0 && ConstRef().GetValType() == VAL_CONST) {
+         const SymbolicConst& c = static_cast<const SymbolicConst&>(ConstRef());
+         return c.GetIntVal(val1, val2);
       }
      return false;
    }
-                 
-  virtual AstNodePtr ToAst() const 
-      { return (ConstPtr()== 0)? 0: ConstRef().ToAst(); }
+  bool isConstInt(int &val) const 
+  {
+     int val2;
+     return isConstInt(val, val2) && val2 == 1;
+  }
+  bool isAstWrap(AstNodePtr& r) const 
+  { 
+   if (ConstPtr() != 0 && ConstRef().GetValType() == VAL_AST) {
+     const SymbolicAstWrap& c = static_cast<const SymbolicAstWrap&>(ConstRef());
+     r = c.get_ast();
+     return true;
+   }
+   return false;
+  }
+  bool isVar(std:: string& name, AstNodePtr* scope=0) const 
+  { 
+   if (ConstPtr() != 0 && ConstRef().GetValType() == VAL_VAR) {
+     const SymbolicVar& c = static_cast<const SymbolicVar&>(ConstRef());
+     name = c.GetVarName();
+     if (scope != 0)
+       *scope = c.GetVarScope();
+     return true;
+   }
+   return false;
+  }
+  bool isFunction(std:: string& name, std:: vector<SymbolicVal>* argp=0) const;
+
   SymbolicValType GetValType() const 
       { return (ConstPtr()== 0)? VAL_BASE : ConstRef().GetValType(); }
   virtual SymOpType GetOpType() const  
      { return  (ConstPtr()== 0)? SYMOP_NIL : ConstRef().GetOpType(); }
-  std::string GetTypeName() const 
-    { return (ConstPtr()== 0)? "NIL" : ConstRef().GetTypeName(); }
+  std:: string GetTypeName() const 
+    { return (ConstPtr()== 0)? std:: string("NIL") : ConstRef().GetTypeName(); }
 };
 
 class SymbolicFunction : public SymbolicValImpl
 {
-  SymbolicVal op;
-  std::vector<SymbolicVal> args;
+  std:: string op;
+  std:: vector<SymbolicVal> args;
+ protected:
+  typedef AstInterface::OperatorEnum OpType;
+  OpType t;
 
-  SymbolicValImpl* Clone() const { return CloneFunction(op, args); }
  public:
-  typedef std::vector<SymbolicVal> Arguments;
-  SymbolicFunction() {}
-  SymbolicFunction( const std::string& _op, const Arguments& v ) 
-    : args(v) { op = new SymbolicConst(_op, "function"); }
-  SymbolicFunction( const std::string& _op, const SymbolicVal& v1, const SymbolicVal& v2)
-     { 
-        op = new SymbolicConst(_op, "function");
-        args.push_back(v1); args.push_back(v2);
-      }
-  SymbolicFunction( const SymbolicVal& _op, const Arguments& v)
-    : op(_op), args(v) {}
+  typedef std:: vector<SymbolicVal> Arguments;
+  typedef std:: vector<SymbolicVal>::const_iterator const_iterator;
+  SymbolicFunction( AstInterface::OperatorEnum _t, const std::string& _op, 
+                    const Arguments& v)
+    : t(_t), op(_op), args(v) {} 
+  SymbolicFunction( AstInterface::OperatorEnum _t, const std::string& _op, 
+                    const SymbolicVal& v1, const SymbolicVal& v2)
+    : t(_t), op(_op) { args.push_back(v1); args.push_back(v2); }
+  SymbolicFunction( AstInterface::OperatorEnum _t, const std::string& _op, 
+                    const SymbolicVal& v)
+    : t(_t), op(_op) { args.push_back(v); }
   SymbolicFunction( const SymbolicFunction& that)
-    : SymbolicValImpl(that), op(that.op), args(that.args) {}
+    : op(that.op), args(that.args), t(that.t) {}
 
   ~SymbolicFunction() {}
-  virtual std::string ToString() const;
+  virtual std:: string toString() const;
   SymbolicValType GetValType() const { return VAL_FUNCTION; }
   AstNodePtr CodeGen( AstInterface &fa) const;
-  virtual SymbolicFunction* CloneFunction( const SymbolicVal& _op, 
-                                         const Arguments& v) const
-         { return new SymbolicFunction( _op, v); }
-
-  void Visit( SymbolicVisitor *op) const { op->VisitFunction(*this); }
-//Boolean operator == (const SymbolicFunction& that) const;
-  int operator == (const SymbolicFunction& that) const;
-  SymbolicVal GetOp() const { return op; }
-  Arguments GetArgs() const { return args; }
+  virtual void Visit( SymbolicVisitor *v) const { v->VisitFunction(*this); }
+  bool operator == (const SymbolicFunction& that) const;
+  std:: string GetOp() const { return op; }
+  const Arguments& get_args() const { return args; }
+  const_iterator args_begin() const { return args.begin(); }
+  const_iterator args_end() const { return args.end(); }
+  SymbolicVal first_arg() const { return args.front(); }
+  SymbolicVal last_arg() const { return args.back(); }
   unsigned NumOfArgs() const { return args.size(); }
-  SymbolicVal GetArg(int index) const { return args[index]; }
   virtual SymbolicVal GetUnknownOpds() const 
       { return SymbolicVal(); }
-//virtual Boolean GetConstOpd(int &val) const { return false; }
-  virtual int GetConstOpd(int &val) const { return false; }
+  virtual bool GetConstOpd(int &val1, int &val2) const { return false; }
+  SymbolicValImpl* Clone() const { new SymbolicFunction(*this); }
+  virtual SymbolicFunction* cloneFunction(const Arguments& args) const
+     { return  new SymbolicFunction(t, op,args); }
 };
+
+inline bool 
+SymbolicVal:: isFunction(std:: string& name, std:: vector<SymbolicVal>* argp) const
+{
+   if (ConstPtr() != 0 && ConstRef().GetValType() == VAL_FUNCTION) {
+     const SymbolicFunction& c = static_cast<const SymbolicFunction&>(ConstRef());
+     name = c.GetOp();
+     if (argp != 0)
+       *argp = c.get_args();
+     return true;
+   }
+   return false;
+}
 
 class SymbolicPow : public SymbolicFunction
 {
  public:
   SymbolicPow( const SymbolicVal& v, int e ) 
-    : SymbolicFunction("pow", v, e)
-    { }
+    : SymbolicFunction(AstInterface::OP_NONE, "pow", v, e) { }
+  SymbolicPow( const Arguments& _args ) 
+       : SymbolicFunction(AstInterface::OP_NONE, "pow",_args) {}
   SymbolicPow( const SymbolicPow& that)
     : SymbolicFunction(that) {}
   virtual SymOpType GetOpType() const { return SYMOP_POW; }
-  virtual SymbolicVal GetUnknownOpds() const { return GetArg(0); }
-//virtual Boolean GetConstOpd(int &val) const { return GetArg(1).ToInt(val); }
-  virtual int GetConstOpd(int &val) const { return GetArg(1).ToInt(val); }
-};
-
-class ToSymbolicFunction : public SymbolicVisitor
-{
-  SymbolicFunction* result;  
-  bool succ;
-  virtual void VisitFunction( const SymbolicFunction &v) { *result = v;  succ = true; }
- public:
-  bool operator() (const SymbolicVal& v, SymbolicFunction& r)
-  {
-     result = &r;
-     succ = false;
-     v.Visit(this); 
-     return succ;
-  }
+  virtual SymbolicVal GetUnknownOpds() const { return first_arg(); }
+  virtual bool GetConstOpd(int &val1, int &val2) const 
+            { return last_arg().isConstInt(val1, val2); }
+  SymbolicValImpl* Clone() const { new SymbolicPow(*this); }
+  virtual SymbolicFunction* cloneFunction(const Arguments& args) 
+     { SymbolicFunction* r =  new SymbolicPow(args); }
 };
 
 class SymbolicValGenerator
@@ -282,23 +288,19 @@ class SymbolicValGenerator
  static SymbolicVal GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp);
 };
 
+SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
+                        const SymbolicVal &v2);
+inline SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2)
+  { return ApplyBinOP(SYMOP_PLUS, v1, v2); }
+SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2);
+SymbolicVal operator / (const SymbolicVal &v1, const SymbolicVal &v2);
+inline SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2)
+         { return v1 + (-1 * v2); }
+inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
+                                                                                          
 typedef enum {REL_NONE = 0, REL_EQ = 1, REL_LT = 2, REL_LE = 3,
               REL_GT = 4, REL_GE = 5, REL_NE = 6, REL_UNKNOWN = 8} CompareRel;
-CompareRel Reverse( CompareRel rel);
-std::string RelToString( CompareRel r);
-// Boolean operator == (const SymbolicVal &v1, const SymbolicVal& v2);
-int operator == (const SymbolicVal &v1, const SymbolicVal& v2);
-// Boolean operator != (const SymbolicVal &v1, const SymbolicVal& v2);
-int operator != (const SymbolicVal &v1, const SymbolicVal& v2);
-// Boolean operator <= (const SymbolicVal &v1, const SymbolicVal &v2);
-int operator <= (const SymbolicVal &v1, const SymbolicVal &v2);
-// Boolean operator >= (const SymbolicVal &v1, const SymbolicVal& v2);
-int operator >= (const SymbolicVal &v1, const SymbolicVal& v2);
-// Boolean operator < (const SymbolicVal &v1, const SymbolicVal& v2);
-int operator < (const SymbolicVal &v1, const SymbolicVal& v2);
-// Boolean operator > (const SymbolicVal &v1, const SymbolicVal& v2);
-int operator > (const SymbolicVal &v1, const SymbolicVal& v2);
-
+ 
 class SymbolicCond
 {
   SymbolicVal val1, val2;
@@ -307,61 +309,84 @@ class SymbolicCond
   SymbolicCond() { t = REL_UNKNOWN; }
   SymbolicCond( const CompareRel _t, const SymbolicVal &_val1,
                 const SymbolicVal &_val2)
-      : val1(_val1), val2(_val2), t(_t) {}
+      : t(_t), val1(_val1), val2(_val2) {}
   SymbolicCond( const SymbolicCond& that)
-    : val1(that.val1), val2(that.val2), t(that.t) {}
+    : t(that.t), val1(that.val1), val2(that.val2) {}
   SymbolicCond& operator = (const SymbolicCond& that)
     { t = that.t; val1 = that.val1; val2 = that.val2;  return *this; }
   ~SymbolicCond() {}
-
+                                                                                          
   SymbolicVal  GetLeftVal() const { return val1; }
   SymbolicVal  GetRightVal() const { return val2; }
   CompareRel GetRelType() const { return t; }
-
-//Boolean IsNIL() { return t == REL_UNKNOWN; }
-  int IsNIL() { return t == REL_UNKNOWN; }
-
+                                                                                          
+  bool IsNIL() { return t == REL_UNKNOWN; }
+                                                                                          
   void Dump() const;
-  std::string ToString () const;
+  std:: string toString () const;
   AstNodePtr  CodeGen(AstInterface &fa) const;
 };
-
-SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2);
-SymbolicVal operator - (const SymbolicVal &v);
-SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2);
-SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2);
-SymbolicVal operator / (const SymbolicVal &v1, const SymbolicVal &v2);
-//Boolean HasFraction(const SymbolicVal& v, SymbolicVal* integral = 0, SymbolicVal* frac = 0);
-int HasFraction(const SymbolicVal& v, SymbolicVal* integral = 0, SymbolicVal* frac = 0);
 
 struct SymbolicBound{
   SymbolicVal lb, ub;
   SymbolicBound() {}
   SymbolicBound( const SymbolicVal &l, const SymbolicVal &u): lb(l),ub(u) {}
-  std::string ToString() const 
-      { return "(" + lb.ToString() + "," + ub.ToString() + ")"; }
+  std:: string toString() const
+      { return "(" + lb.toString() + "," + ub.toString() + ")"; }
   SymbolicBound operator - (const SymbolicVal& v) const
-   { return SymbolicBound( lb - v, ub - v); } 
+   { return SymbolicBound( lb - v, ub - v); }
   SymbolicBound operator + (const SymbolicVal& v) const
-   { return SymbolicBound( lb + v, ub + v); } 
-  void Union( const SymbolicBound& b2, 
-	      MapObject<SymbolicVal, SymbolicBound>* f = 0);
-  void Intersect( const SymbolicBound& b2, 
-		  MapObject<SymbolicVal, SymbolicBound>* f = 0);  
-  void ReplaceVars(  MapObject<SymbolicVal,SymbolicBound>& f); 
+   { return SymbolicBound( lb + v, ub + v); }
+  void Union( const SymbolicBound& b2,
+              MapObject<SymbolicVal, SymbolicBound>* f = 0);
+  void Intersect( const SymbolicBound& b2,
+                  MapObject<SymbolicVal, SymbolicBound>* f = 0);
+  void ReplaceVars(  MapObject<SymbolicVal,SymbolicBound>& f);
 };
-//Boolean operator ==( const SymbolicBound& b1, const SymbolicBound& b2);
-int operator ==( const SymbolicBound& b1, const SymbolicBound& b2);
-//Boolean operator != (const SymbolicBound &b1, const SymbolicBound& b2);
-int operator != (const SymbolicBound &b1, const SymbolicBound& b2);
+                                                                                          
+CompareRel Reverse( CompareRel rel);
+std:: string RelToString( CompareRel r);
+bool Equal(const SymbolicVal &v1, const SymbolicVal& v2);
+CompareRel CompareVal( const SymbolicVal &v1, const SymbolicVal &v2, 
+                       MapObject<SymbolicVal, SymbolicBound>* f = 0);
+                                                                                          
+inline bool operator == (const SymbolicVal &v1, const SymbolicVal& v2)
+     { return Equal(v1,v2); }
+inline bool operator != (const SymbolicVal &v1, const SymbolicVal& v2)
+{ return !(v1 == v2); }
+inline bool operator <= (const SymbolicVal &v1, const SymbolicVal &v2)
+{
+  switch (CompareVal(v1,v2)) {
+  case REL_EQ: case REL_LT: case REL_LE:
+    return true;
+  default:
+    return false;
+  }
+}
+                                                                                          
+inline bool operator >= (const SymbolicVal &v1, const SymbolicVal &v2)
+{
+  switch (CompareVal(v1,v2)) {
+  case REL_EQ: case REL_GT: case REL_GE:
+    return true;
+  default:
+    return false;
+  }
+}
+                                                                                          
+bool operator < (const SymbolicVal &v1, const SymbolicVal& v2);
+bool operator > (const SymbolicVal &v1, const SymbolicVal& v2);
+
+bool HasFraction(const SymbolicVal& v, SymbolicVal* integral = 0, SymbolicVal* frac = 0);
+
+bool operator ==( const SymbolicBound& b1, const SymbolicBound& b2);
+bool operator != (const SymbolicBound &b1, const SymbolicBound& b2);
 SymbolicBound& operator &= ( SymbolicBound& b1, const SymbolicBound& b2);
 SymbolicBound& operator |= (SymbolicBound& b1, const SymbolicBound& b2);
 SymbolicBound GetValBound(SymbolicVal val, MapObject<SymbolicVal, SymbolicBound>& f);
 SymbolicVal GetValLB(const SymbolicVal& val, MapObject<SymbolicVal, SymbolicBound>& f);
 SymbolicVal GetValUB(const SymbolicVal& val, MapObject<SymbolicVal, SymbolicBound>& f);
 
-CompareRel CompareVal( const SymbolicVal &v1, const SymbolicVal &v2, 
-                       MapObject<SymbolicVal, SymbolicBound>* f = 0);
 SymbolicVal Max(const SymbolicVal &v1, const SymbolicVal &v2,
                        MapObject<SymbolicVal, SymbolicBound>* f = 0);
 SymbolicVal Min(const SymbolicVal &v1, const SymbolicVal &v2,
@@ -369,8 +394,7 @@ SymbolicVal Min(const SymbolicVal &v1, const SymbolicVal &v2,
 SymbolicVal UnwrapVarCond( const SymbolicCond& valCond,
                          const SymbolicVar &pivot, SymbolicBound& pivotBound ); //return pivot coefficient
 
-//Boolean FindVal( const SymbolicVal &v, const SymbolicVal &sub);
-int FindVal( const SymbolicVal &v, const SymbolicVal &sub);
+bool FindVal( const SymbolicVal &v, const SymbolicVal &sub);
 SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &sub, const SymbolicVal& newval);
 SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal>& valmap);
 
@@ -381,11 +405,10 @@ class AstTreeReplaceVar : public ProcessAstNode
   public:
    AstTreeReplaceVar( const SymbolicVar& ov, const SymbolicVal &nv)
        : oldvar(ov), val(nv) {}
-// Boolean Traverse( AstInterface &fa, const AstNodePtr& r,
-   int Traverse( AstInterface &fa, const AstNodePtr& r,
+   bool Traverse( AstInterface &fa, const AstNodePtr& r,
                      AstInterface::TraversalVisitType t)
      {
-        std::string varname;
+        std:: string varname;
         if (t == AstInterface::PostVisit && fa.IsVarRef(r, 0, &varname)) {
           if (varname == oldvar.GetVarName()) {
             AstNodePtr r1 = val.CodeGen(fa);

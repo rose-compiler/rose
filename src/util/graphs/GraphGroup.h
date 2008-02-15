@@ -3,87 +3,70 @@
 #define GROUP_GRAPH_H
 
 #include <PtrSet.h>
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
+#include <GraphScope.h>
 
-class GroupGraphNode : public GraphNode
+class GroupGraphNode : public MultiGraphElem
 {
-  PtrSetWrap <GraphNode> nodeSet;
  public:
-  GroupGraphNode( GraphCreate *g) : GraphNode(g) {}
+  typedef GraphAccessInterface::Node Node;
+  GroupGraphNode( MultiGraphCreate *g) : MultiGraphElem(g) {}
   ~GroupGraphNode() {}
-  typedef PtrSetWrap<GraphNode>::Iterator Iterator;
-  std::string ToString() const
-    { 
-      std::string res;
-      PtrSetWrap<GraphNode>::Iterator iter=nodeSet.GetIterator();
-      for (GraphNode* n; (n = iter.Current()); iter++)
-         res = res + "; " + n->ToString();
-      res = res + "\n";
-      return res;
-    }
-//Boolean ContainNode( const GraphNode *n) const 
-  int ContainNode( const GraphNode *n) const 
-       { return nodeSet.IsMember(const_cast<GraphNode*>(n) ); }
-  virtual void AddNode(const GraphNode* n) 
-       { nodeSet.Add(const_cast<GraphNode*>(n) ); }
-  Iterator GetIterator() const { return nodeSet.GetIterator(); }
+  typedef PtrSetWrap<Node>::const_iterator const_iterator;
+  bool ContainNode( const Node *n) const 
+       { return nodeSet.IsMember(const_cast<Node*>(n) ); }
+  virtual void AddNode(const Node* n) 
+       { nodeSet.insert(const_cast<Node*>(n) ); }
+  const_iterator begin() const { return nodeSet.begin(); }
+  const_iterator end() const { return nodeSet.end(); }
+ private:
+  PtrSetWrap <Node> nodeSet;
 };
 
-class GroupNodeSelect
+class GroupGraphEdge : public MultiGraphElem
 {
-   GroupGraphNode *node;
-  public:
-   typedef GroupGraphNode::Iterator Iterator;
-   GroupNodeSelect(GroupGraphNode *n) : node(n) {}
-// Boolean operator()(const GraphNode* n) const { return node->ContainNode(n);}
-   int operator()(const GraphNode* n) const { return node->ContainNode(n);}
-  Iterator GetIterator() const { return node->GetIterator(); }
-};
-
-class GroupGraphEdge : public GraphEdge
-{
-  PtrSetWrap <GraphEdge> edgeSet;
  public:
-  GroupGraphEdge( GraphCreate *g) : GraphEdge(g) {}
+  typedef GraphAccessInterface::Edge Edge;
+  GroupGraphEdge( MultiGraphCreate *g) : MultiGraphElem(g) {}
   ~GroupGraphEdge() {}
-  typedef PtrSetWrap<GraphEdge>::Iterator Iterator;
-  std::string ToString() const 
-    { 
-      std::string res;
-      Iterator iter=edgeSet.GetIterator();
-      for (GraphEdge* e; (e = iter.Current()); iter++)
-         res = res + "; " + e->ToString();
-      res = res + "\n";
-      return res;
-    }
-  void AddEdge( GraphEdge *e) { edgeSet.Add(e); }
-//Boolean ContainEdge( const GraphEdge *e) const 
-  int ContainEdge( const GraphEdge *e) const 
-       { return edgeSet.IsMember(const_cast<GraphEdge*>(e)); }
-  Iterator GetIterator() const { return edgeSet.GetIterator(); }
+  typedef PtrSetWrap<Edge>::const_iterator const_iterator;
+  void AddEdge( Edge *e) { edgeSet.insert(e); }
+  bool ContainEdge( const Edge *e) const 
+       { return edgeSet.IsMember(const_cast<Edge*>(e)); }
+  const_iterator begin() const { return edgeSet.begin(); }
+  const_iterator end() const { return edgeSet.end(); }
+ private:
+  PtrSetWrap <Edge> edgeSet;
 };
 
-class GroupEdgeSelect
-{
-   GroupGraphEdge *edge;
-  public:
-   GroupEdgeSelect(GroupGraphEdge *e) : edge(e) {}
-// Boolean operator()(const GraphEdge* e) const { return edge->ContainEdge(e);}
-   int operator()(const GraphEdge* e) const { return edge->ContainEdge(e);}
-};
-
-typedef GraphAccessTemplate<GroupGraphNode,GroupGraphEdge> GroupGraph;
-
-class GroupGraphCreate : public IDGraphCreateTemplate<GroupGraphNode,GroupGraphEdge>
+class GroupGraphCreate 
+   : public VirtualGraphCreateTemplate<GroupGraphNode,GroupGraphEdge>
 {
  public:
   void AddGroupNode( GroupGraphNode *n)
-    { CreateBaseNode(n); }
+    { AddNode(n); }
   void AddGroupEdge( GroupGraphNode *src, GroupGraphNode *snk, GroupGraphEdge *e)
-    { CreateBaseEdge(src, snk, e); }
+    { AddEdge(src, snk, e); }
   GroupGraphCreate( BaseGraphCreate *_impl=0)
-    :IDGraphCreateTemplate<GroupGraphNode,GroupGraphEdge>(_impl) {};
+    :VirtualGraphCreateTemplate<GroupGraphNode,GroupGraphEdge>(_impl) {};
   ~GroupGraphCreate() {}
+};
+
+class GroupNodeSelect  : public GraphSelect<GraphAccessInterface>
+{
+   GroupGraphNode *node;
+  public:
+   GroupNodeSelect(GraphAccessInterface* g, GroupGraphNode *n) 
+     : GraphSelect<GraphAccessInterface >(g), node(n) {}
+   NodeIterator GetNodeIterator() const 
+     { return new IteratorImplTemplate<Node*, GroupGraphNode::const_iterator>
+                 (node->begin()); 
+     }
+   bool ContainNode(const Node* n) const { return node->ContainNode(n); }
+   bool ContainEdge(const Edge* e) const  
+       { return node->ContainNode(impl->GetEdgeEndPoint(e,EdgeOut)) &&
+                node->ContainNode(impl->GetEdgeEndPoint(e,EdgeIn)); 
+       }
 };
 
 #endif

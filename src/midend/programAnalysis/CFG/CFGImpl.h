@@ -1,82 +1,85 @@
 #ifndef CFGIMPL_H
 #define CFGIMPL_H
 
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 #include <CFG.h>
+#include <sstream>
 #include <list>
 
 template <class Node, class Edge>
 class CFGImplTemplate 
-  : public IDGraphCreateTemplate<Node, Edge>, public BuildCFGConfig<Node,Edge>
+  : public VirtualGraphCreateTemplate<Node, Edge>, public BuildCFGConfig<Node>
 {
  protected:
-  typedef typename BuildCFGConfig<Node,Edge>::EdgeType EdgeType;
+  typedef typename BuildCFGConfig<Node>::EdgeType EdgeType;
   virtual Node* CreateNode()
         { 
            Node* n = new Node(this);
-           CreateBaseNode(n);
+           AddNode(n);
            return n;
         }
-  virtual Edge* CreateEdge( Node *n1, Node *n2, EdgeType condval) 
+  virtual void CreateEdge( Node *n1, Node *n2, EdgeType condval) 
         {
            Edge* e = new Edge(condval, this);
-           CreateBaseEdge( n1, n2, e);
-           return e;
+           AddEdge( n1, n2, e);
         } 
   virtual void AddNodeStmt(Node* n, const AstNodePtr& s) 
         { n->AddNodeStmt(s); }
  public:
-  typedef typename IDGraphCreateTemplate<Node, Edge>::NodeIterator NodeIterator;
-  typedef typename IDGraphCreateTemplate<Node, Edge>::EdgeIterator EdgeIterator;
+  typedef typename VirtualGraphCreateTemplate<Node, Edge>::NodeIterator NodeIterator;
+  typedef typename VirtualGraphCreateTemplate<Node, Edge>::EdgeIterator EdgeIterator;
 
-  CFGImplTemplate(  BaseGraphCreate *_impl = 0) : IDGraphCreateTemplate<Node,Edge>(_impl) {}
+  CFGImplTemplate(  BaseGraphCreate *_impl = 0) : VirtualGraphCreateTemplate<Node,Edge>(_impl) {}
 
   NodeIterator GetPredecessors( Node* n)
-       { return GraphGetNodePredecessors<CFGImplTemplate<Node,Edge> >()(this, n); }
+     { return new GraphNodePredecessorIterator<CFGImplTemplate<Node,Edge> >
+                   (this, n); }
   NodeIterator GetSuccessors( Node *n)
-       { return GraphGetNodeSuccessors<CFGImplTemplate<Node,Edge> >()(this, n); }
+       { return new GraphNodeSuccessorIterator<CFGImplTemplate<Node,Edge> >
+                   (this, n); }
 };
 
-class CFGNodeImpl : public GraphNode
+class CFGNodeImpl : public MultiGraphElem
 {
  public:
-  CFGNodeImpl(GraphCreate *c) : GraphNode(c) {}
-  std::list<AstNodePtr>& GetStmts() { return stmtList; } 
+  CFGNodeImpl(MultiGraphCreate *c) : MultiGraphElem(c) {}
+  std:: list<AstNodePtr>& GetStmts() { return stmtList; } 
   
   void AddNodeStmt( const AstNodePtr& s) { stmtList.push_back(s); }
 
-  virtual std::string ToString() const
+  virtual std:: string toString() const
     {
-        std::string r;
-         for (std::list<AstNodePtr>::const_iterator p = stmtList.begin(); p != stmtList.end(); ++p)
-            r = r + AstInterface::AstToString(*p);
-        return r;
+        std::stringstream r;
+        std:: list<AstNodePtr>::const_iterator p = stmtList.begin(); 
+        if (p != stmtList.end())
+           r <<  AstToString(*p);
+        for ( ++p; p != stmtList.end(); ++p) 
+            r << "\n" <<  AstToString(*p);
+        return r.str();
     }
 
-  virtual void write(std::ostream& out) const
+  virtual void write(std:: ostream& out) const
     {
-      std::cerr << "Node : " << this << "\n"; 
-      for (std::list<AstNodePtr>::const_iterator p = stmtList.begin(); 
+      std:: cerr << "Node : " << this << "\n"; 
+      for (std:: list<AstNodePtr>::const_iterator p = stmtList.begin(); 
            p != stmtList.end(); ++p)
-            AstInterface::write(*p, std::cerr);
+            std:: cerr << AstToString(*p);
     }
   virtual void Dump() const
     {
-      write(std::cerr);
+      write(std:: cerr);
     }
  private:
-  std::list<AstNodePtr> stmtList;
+  std:: list<AstNodePtr> stmtList;
 };
 
-class CFGEdgeImpl : public GraphEdge
+class CFGEdgeImpl : public MultiGraphElem
 {
  public:
   typedef CFGConfig::EdgeType EdgeType;
-	// HK
-  //CFGEdgeImpl( EdgeType val, GraphCreate *c) : t(val), GraphEdge(c) {}
-  CFGEdgeImpl( EdgeType val, GraphCreate *c) : GraphEdge(c), t(val) {}
+  CFGEdgeImpl( EdgeType val, MultiGraphCreate *c) : t(val), MultiGraphElem(c) {}
   EdgeType GetEdgeType() const { return t; }
-  virtual std::string ToString() const
+  virtual std:: string toString() const
     {
        switch (t) {
        case CFGConfig::COND_TRUE: return "true"; 
@@ -86,10 +89,10 @@ class CFGEdgeImpl : public GraphEdge
            assert(false);
        }
     }
-  virtual void write(std::ostream& out) const
-   { out << ToString() << std::endl; }
+  virtual void write(std:: ostream& out) const
+   { out << toString() << std:: endl; }
   virtual void Dump() const
-   { write(std::cerr); }
+   { write(std:: cerr); }
 
  private:
   EdgeType t;

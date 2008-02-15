@@ -1,7 +1,7 @@
 /********************************************************************
 * Andreas Saebjoernsen 03/17/06 
 * Demonstration on how to iterate over a graph constucted by an
-* IDGraphCreateTemplate. This type of graph is returned by for
+* VirtualGraphCreateTemplate. This type of graph is returned by for
 * instance the call graph analysis, data flow analysis and all
 * the other program analysis work within ROSE.
 ********************************************************************/
@@ -19,26 +19,25 @@
 
 #include <AstInterface.h>
 #include <GraphDotOutput.h>
-// #include <IDGraphCreateTemp.h>
-#include <IDGraphCreate.h>
+#include <VirtualGraphCreate.h>
 
 
 using namespace std;
 
-class Vertex : public GraphNode
+class Vertex : public MultiGraphElem
    {
      public:
        std::string name;
-       Vertex( std::string n ) : GraphNode( NULL ), name( n ) {}
+       Vertex( std::string n ) : MultiGraphElem( NULL ), name( n ) {}
        virtual std::string ToString() const { return name; }
    };
 
-class EdgeImpl : public GraphEdge
+class EdgeImpl : public MultiGraphElem
    {
    public:
          std::string label;
                                                                                                                                                               
-         EdgeImpl ( std::string label = "default edge" ) : GraphEdge( NULL ), label( label ) {};
+         EdgeImpl ( std::string label = "default edge" ) : MultiGraphElem( NULL ), label( label ) {};
                                                                                                                                                               
          void Dump() const { printf ("EDGE: label = %s \n",label.c_str()); }
          virtual std::string ToString() const { return label;}
@@ -47,24 +46,24 @@ class EdgeImpl : public GraphEdge
 
 
 template <class Node, class Edge>
-class GraphBuilder : public IDGraphCreateTemplate<Node, Edge>
+class GraphBuilder : public VirtualGraphCreateTemplate<Node, Edge>
    {
      public:
           typedef Node NodeType;
           void addNode ( Node* node );
           void addEdge ( Node *src, Node *snk, Edge* edge );
                                                                                                                                                               
-          GraphBuilder () : IDGraphCreateTemplate<Node, Edge> (NULL) {}
+          GraphBuilder () : VirtualGraphCreateTemplate<Node, Edge> (NULL) {}
          ~GraphBuilder() { printf ("Inside of ~GraphBuilder() \n"); }
    };
 
 template <class Node, class Edge> void
 GraphBuilder<Node, Edge>::addNode ( Node* node )
-   { CreateBaseNode ( node ); }
+   { VirtualGraphCreateTemplate<Node, Edge>::AddNode ( node ); }
                                                                                                                                                               
 template <class Node, class Edge> void
 GraphBuilder<Node, Edge>::addEdge ( Node *src, Node *snk, Edge* edge )
-   { CreateBaseEdge ( src, snk, edge ); }
+   { VirtualGraphCreateTemplate<Node, Edge>::AddEdge ( src, snk, edge ); }
 
 typedef GraphBuilder<Vertex, EdgeImpl> GraphBears;
 
@@ -73,7 +72,7 @@ typedef GraphBuilder<Vertex, EdgeImpl> GraphBears;
  * The function
  *     void TranslateGraph(_GraphStructure& graph, _NodePredicate& _nodePred, _EdgePredicate& _edgePred);
  * performas the action _nodePred to every node and _edgePred to every edge in the graph 'graph'.
- * This work is general and should work on any graph constructed from IDGraphCreateTemplate which
+ * This work is general and should work on any graph constructed from VirtualGraphCreateTemplate which
  * is the graph all the program analysis work returns.
  ***********************************************************************************************/ 
 template<typename _GraphStructure, typename _NodePredicate,typename _EdgePredicate>
@@ -139,8 +138,8 @@ main( int argc, char * argv[] )
      //Call function to iterate over the graph
      translateGraph(graph,testPredNodes(),testPredEdges());   
 
-     GraphDotOutput output(graph);
-     output.writeToDOTFile("graphTraversal.dot");
+     GraphDotOutput<GraphBears> output(graph);
+     output.writeToDOTFile("graphTraversal.dot", "GraphBears");
 
      return 0;
    }

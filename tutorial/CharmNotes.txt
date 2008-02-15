@@ -1,0 +1,74 @@
+// There are three specific problems:
+// 1) Automated Pack and Unpack functions
+//    These are for arbitrary data structures (using the data structure 
+//    handling capabilities within ROSE from Andreas's work).
+// 2) Incapsulation of global variables
+//    wrap-up global variables into a separate data structure (for 
+//    thread support, as I recall)
+//
+// 3) Blocking on 1D arrays (I forget the details of this problem)
+//    "= a[i]" get
+//    "a[i] =" set
+
+// It was suggested that problem 2 would make a useful example 
+// problem (also useful for the tutorial)
+
+
+// Previous test at top of example CharmSupport.C:
+// This is [or will be] an example program to solve a specific problem 
+// suggested by the Charm++ research project.
+
+
+#if 0
+/********** original code **********/
+//global variables
+int max_size;
+mytype myinfo;
+double *data;
+
+void f(){
+	for(int i = 0; i < max_size; i++)
+		data[i] += myinfo.some_var;
+}
+
+void g(int A){
+	f();
+}
+
+int main(void){
+	// do some stuff...
+	g();
+}
+
+
+/* transformed code
+ * All functions (except main) must take in new parameter
+*/
+/* in global scope */
+struct AMPI_globals_t{
+	int max_size;
+	mytype myinfo;
+	double *data;
+}
+
+/* declared as "void f()" */
+void f(AMPI_globals_t *AMPI_globals){
+	for(int i = 0; i < AMPI_globals->max_size; i++)
+		AMPI_globals->data[i] += AMPI_globals->myinfo.some_var;
+}
+
+/* declared as "void g(int A)" */
+void g(int A, AMPI_globals_t *AMPI_globals){
+	f(AMPI_globals);
+}
+
+int main(void){
+	/* NEW CODE */
+	AMPI_globals_t *AMPI_globals =
+	   (AMPI_globals_t*) malloc(sizeof(AMPI_globals_t));
+	// do some stuff...
+	g(AMPI_globals);
+}
+#endif
+
+

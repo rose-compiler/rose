@@ -1,8 +1,6 @@
-#include <general.h>
 #include <AnnotIO.h>
 #include <CommandOptions.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 namespace annotation{
@@ -51,12 +49,10 @@ bool is_id( char c)
 int is_operator( char c)
 {
   string op = "<>+-*/&.$";
-  std::string::size_type pos = op.find(c);
-  if (pos == string::npos) {
+  char *p = strchr(op.c_str(), c);
+  if (p == 0)
       return 0;
-  } else {
-    return (int)pos + 1;
-  }
+  return p - op.c_str() + 1;
 }
 
 char getch( istream& in)

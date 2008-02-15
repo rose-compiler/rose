@@ -1,9 +1,4 @@
-#include <general.h>
-
 #include <SymbolicExpr.h>
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 struct VarRestr
 {
@@ -11,14 +6,14 @@ struct VarRestr
   CompareRel rel;
   VarRestr( const SymbolicVal &co, const SymbolicVal &res, CompareRel r)
    : coeff(co), result(res), rel(r) {}
-  Boolean IsNIL() const { return rel == REL_UNKNOWN; }
+  bool IsNIL() const { return rel == REL_UNKNOWN; }
 };
 class UnwrapCond : public SymbolicVisitor
 {
   SymbolicVar pivot;
   SymbolicVal left, right;
   CompareRel rel;
-  Boolean succ;
+  bool succ;
 
   void VisitVar( const SymbolicVar& v)
     { if (pivot == v) {
@@ -103,7 +98,7 @@ class UnwrapCond : public SymbolicVisitor
      rel = cond.GetRelType();
      succ = false;
 
-     Boolean b1 = FindVal(left, pivot), b2 = FindVal(right, pivot);
+     bool b1 = FindVal(left, pivot), b2 = FindVal(right, pivot);
      if (!b1 && !b2) 
         rel = REL_NONE;
      else {

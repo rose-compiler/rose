@@ -213,7 +213,4 @@ class CloseDescriptor : public Descriptor {
   std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };
 
-
-#include <AnnotDescriptorsTempl.C>
-
 #endif

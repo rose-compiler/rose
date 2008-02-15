@@ -1,47 +1,46 @@
 #ifndef SCC_ANALYSIS_H
 #define SCC_ANALYSIS_H
 
+#include <GraphAccess.h>
 #include <GraphGroup.h>
 
-class GraphNode;
-class GraphEdge;
 class SCCAnalOperator 
 {
   public:
     virtual void CreateSCC() = 0;
-    virtual void SCCAdd( GraphNode *n) = 0;
+    virtual void SCCAdd( GraphAccessInterface::Node *n) = 0;
 };
  
-class GraphAccess;
 class SCCAnalysis
 {
   public:
-    void operator()( const GraphAccess *dg, SCCAnalOperator &op);
-    void operator() (const GraphAccess *dg, GraphNode *node, 
+    void operator()( const GraphAccessInterface *dg, SCCAnalOperator &op);
+    void operator() (const GraphAccessInterface *dg, 
+                     GraphAccessInterface::Node *node, 
                      SCCAnalOperator &op);
-    void operator() (const GraphAccess *dg, GraphAccess::NodeIterator iter, 
+    void operator() (const GraphAccessInterface *dg, 
+                     GraphAccessInterface::NodeIterator iter, 
                      SCCAnalOperator& op);
 };
 
 class SCCGroupGraphOperator : public SCCAnalOperator
 {
-   GroupGraphNode *sccNode;
-   GroupGraphCreate *graph;
-   PtrMapWrap <GraphNode, GroupGraphNode> nodeMap;
-  protected:
-    void SetCurSCC( GroupGraphNode *scc ) { sccNode = scc; graph->AddGroupNode(sccNode); }
   public:
-   SCCGroupGraphOperator(GroupGraphCreate *g) : sccNode(0),graph(g) {}
+   SCCGroupGraphOperator(GroupGraphCreate *g) : graph(g),sccNode(0) {}
    virtual void CreateSCC() { SetCurSCC( new GroupGraphNode(graph) ); }
-   void SCCAdd( GraphNode *n)
+   void SCCAdd( GraphAccessInterface::Node *n)
       { sccNode->AddNode( n );
         nodeMap.InsertMapping(n, sccNode); }
-   GroupGraphNode* GetSCCNode( GraphNode *n)
+   GroupGraphNode* GetSCCNode( GraphAccessInterface::Node *n)
       { return nodeMap.Map(n); }
    GroupGraphCreate* GetGroupGraphCreate() const { return graph; }
-
-// DQ (12/31/2005): Added virtual destructor to clean up code (eliminate compiler warning)
-   virtual ~SCCGroupGraphOperator() {}
+  protected:
+    void SetCurSCC( GroupGraphNode *scc ) 
+        { sccNode = scc; graph->AddGroupNode(sccNode); }
+  private:
+   GroupGraphNode *sccNode;
+   GroupGraphCreate *graph;
+   PtrMapWrap <GraphAccessInterface::Node, GroupGraphNode> nodeMap;
 };
 
 class DAGBaseGraphImpl;
@@ -49,9 +48,8 @@ class SCCGraphCreate : public GroupGraphCreate
 {
   DAGBaseGraphImpl *impl;
  public:
-  SCCGraphCreate( const GraphAccess *orig, SCCGroupGraphOperator *op = 0);
-//void TopoSort( Boolean reverse = false );
-  void TopoSort( int reverse = false );
+  SCCGraphCreate( const GraphAccessInterface *orig, SCCGroupGraphOperator *op = 0);
+  void TopoSort( bool reverse = false );
 };
 
 #endif

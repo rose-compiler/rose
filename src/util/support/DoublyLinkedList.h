@@ -7,6 +7,8 @@
 #include <FunctionObject.h>
 #include <iostream>
 
+#define STD std::
+
 template <class T> class DoublyLinkedListWrap;
 
 template <class T>
@@ -15,7 +17,7 @@ class DoublyLinkedEntryWrap
    T *o;
    DoublyLinkedEntryWrap<T>* next, *prev;
  public:
-   DoublyLinkedEntryWrap<T>() :  o(0), next(0), prev(0) {}
+   DoublyLinkedEntryWrap<T>() : next(0), prev(0), o(0) {}
    DoublyLinkedEntryWrap( const T& _o) : o(new T(_o)), next(0), prev(0) {}
    DoublyLinkedEntryWrap& operator = ( const T& _o)
          { 
@@ -35,7 +37,6 @@ class DoublyLinkedListWrap
 {
    DoublyLinkedEntryWrap<T> head;
    unsigned count;
-   void operator = (const DoublyLinkedListWrap<T> & that) {}
  public:
    void LinkBefore( DoublyLinkedEntryWrap<T> *e, DoublyLinkedEntryWrap<T>* pos)
      {
@@ -70,11 +71,19 @@ class DoublyLinkedListWrap
       : count(0)
     {
       head.prev = head.next = &head;
-      for (Iterator iter(that); !iter.ReachEnd(); iter++) {
+      for (iterator iter(that); !iter.ReachEnd(); iter++) {
          T &c = iter.Current();
          AppendLast(c);
       }
     }
+    void operator = (const DoublyLinkedListWrap<T> & that) 
+     {
+      DeleteAll();
+      for (const_iterator iter(that); !iter.ReachEnd(); iter++) {
+         const T &c = iter.Current();
+         AppendLast(c);
+      }
+     }
     ~DoublyLinkedListWrap() { DeleteAll(); }
 
     DoublyLinkedEntryWrap<T>* InsertBefore( const T& o , DoublyLinkedEntryWrap<T>* pos)
@@ -101,11 +110,12 @@ class DoublyLinkedListWrap
        LinkBefore(e, head.next);
        return e;
      }
+    void push_front(const T& o) { PushFirst(o); }
 
     void Sort( MapObject<T, int>& f)
      {
        DoublyLinkedEntryWrap<T> **buf = new DoublyLinkedEntryWrap<T>*[count];
-       for (unsigned int i = 0; i < count; ++i)
+       for (int i = 0; i < count; ++i)
             buf[i] = 0;
        for (DoublyLinkedEntryWrap<T> *p = First(); p; p = Next(p)) {
            unsigned index = f(p->GetEntry());
@@ -124,9 +134,7 @@ class DoublyLinkedListWrap
      }
 
     void Sort( CompareObject<T> & f)
-     { 
-    // Boolean done = false;
-       int done = false;
+     { bool done = false;
        DoublyLinkedEntryWrap<T> *h = head.next;
        while (!done) {
          done = true;
@@ -167,11 +175,14 @@ class DoublyLinkedListWrap
             assert( r == 0 || r->o != 0); 
             return r;
           }
+    T& front() const { return First()->GetEntry(); }
     DoublyLinkedEntryWrap<T>* Last() const 
           { 
             DoublyLinkedEntryWrap<T>* r = (count == 0)? 0 : head.prev; 
             assert( r == 0 || r->o != 0); return r;
           }
+    T& back() const { return Last()->GetEntry(); }
+         
     DoublyLinkedEntryWrap<T>* Next(const DoublyLinkedEntryWrap<T>* cur) const
           { 
             DoublyLinkedEntryWrap<T>* r = (cur == head.prev)? 0 : cur->next; 
@@ -207,37 +218,62 @@ class DoublyLinkedListWrap
           : list(&l) { cur = l.First(); }
       Iterator(const DoublyLinkedListWrap<T> &l, DoublyLinkedEntryWrap<T>* c) 
           : list(&l), cur(c) {}
+      bool operator == (const Iterator& that) const
+            { return list == that.list && cur == that.cur; }
+      bool operator != (const Iterator& that) const
+             { return !operator ==(that); }
       Iterator(const Iterator& that) : list(that.list), cur(that.cur) {}
       Iterator() : list(0), cur(0) {}
-   // Boolean operator == (const Iterator& that) const
-      int operator == (const Iterator& that) const
-            { return list == that.list && cur == that.cur; }
-   // Boolean operator != (const Iterator& that) const
-      int operator != (const Iterator& that) const
-             { return !operator ==(that); }
-      T& Current() const { return cur->GetEntry(); }
-      T& operator *() const { return Current(); }
       DoublyLinkedEntryWrap<T>* CurrentPtr() const { return cur; }
-   // Boolean ReachEnd() const 
-      int ReachEnd() const 
-        { 
-          if (cur != 0)
-             std::cerr << "";
-          return cur == 0; 
-        }
+      bool ReachEnd() const 
+        { return cur == 0; }
       void Reset() { if (list != 0) cur = list->First(); }
       void Advance() { if (cur != 0) cur = list->Next(cur); }
       void operator++() { Advance(); }
       void operator ++(int) { Advance(); }
     };
-    // will change later to distinguish const and non-const
-    typedef Iterator iterator;
+    class const_iterator : public Iterator
+    { public:
+      Iterator::CurrentPtr;
+      const_iterator(const Iterator& that) : Iterator(that) {}
+      const_iterator() : Iterator() {}
+      const_iterator(const DoublyLinkedListWrap<T> &l) : Iterator(l) {}
+      const_iterator(const DoublyLinkedListWrap<T> &l, 
+                    DoublyLinkedEntryWrap<T>* c) : Iterator(l,c) {}
+      bool operator == (const const_iterator& that) const
+            { return Iterator::operator==(that); }
+      bool operator != (const const_iterator& that) const
+             { return !operator ==(that); }
+      const T& Current() const { return CurrentPtr()->GetEntry(); }
+      const T& operator *() const { return Current(); }
+    };
+    class iterator : public Iterator
+    { public:
+      Iterator::CurrentPtr;
+      iterator(const Iterator& that) : Iterator(that) {}
+      iterator() : Iterator() {}
+      iterator(const DoublyLinkedListWrap<T> &l) : Iterator(l) {}
+      iterator(const DoublyLinkedListWrap<T> &l, 
+                    DoublyLinkedEntryWrap<T>* c) : Iterator(l,c) {}
+      bool operator == (const iterator& that) const
+            { return Iterator::operator==(that); }
+      bool operator != (const iterator& that) const
+             { return !operator ==(that); }
+      T& Current() const { return CurrentPtr()->GetEntry(); }
+      T& operator *() const { return Current(); }
+    };
 
-    iterator begin() const { return Iterator(*this); }
-    iterator end() const { return Iterator(*this, 0); }
+    const_iterator begin() const { return Iterator(*this); }
+    const_iterator end() const { return Iterator(*this, 0); }
+    iterator begin() { return Iterator(*this); }
+    iterator end() { return Iterator(*this, 0); }
+
+    void erase( iterator& p) { Delete(p.CurrentPtr()); }
+    void push_back( const T& o ) { AppendLast(o); }
 };
 
-template <class T> void writeList( const DoublyLinkedListWrap<T>& list, std::ostream& out)
+template <class T> 
+void writeList( const DoublyLinkedListWrap<T>& list, STD ostream& out)
 { for ( typename DoublyLinkedListWrap<T>::Iterator iter(list); !iter.ReachEnd(); 
        iter.Advance()) 
      iter.Current().write(out);
@@ -249,8 +285,7 @@ class CollectDoublyLinkedList : public CollectObject<T>
   DoublyLinkedListWrap<T>& res;
  public:
   CollectDoublyLinkedList(DoublyLinkedListWrap<T>& r) : res(r) {}
-// Boolean operator()(const T& cur)
-  int operator()(const T& cur)
+  bool operator()(const T& cur)
    {
       res.AppendLast(cur);
       return true;

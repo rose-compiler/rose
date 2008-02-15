@@ -124,6 +124,7 @@ libroseObjects = \
    $(top_builddir)/src/midend/programAnalysis/OAWrap/*.o \
    $(top_builddir)/src/midend/programAnalysis/CFG/*.o \
    $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/*.o \
+   $(top_builddir)/src/midend/programAnalysis/pointerAnal/*.o \
    $(top_builddir)/src/midend/programAnalysis/valuePropagation/*.o \
    $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/*.o \
    $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/*.o \
@@ -192,6 +193,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/OAWrap/libOAWrap.la \
    $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.la \
    $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/libdataflowAnalysis.la \
+   $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.la \
    $(top_builddir)/src/midend/programAnalysis/valuePropagation/libvaluePropagation.la \
    $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/libDefUseAnalysis.la \
    $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/libStaticSlicing.la \
@@ -206,7 +208,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/loopProcessing/computation/libcomputation.la \
    $(top_builddir)/src/midend/loopProcessing/slicing/libslicing.la \
    $(top_builddir)/src/midend/loopProcessing/driver/libdriver.la \
-   $(top_builddir)/src/midend/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
@@ -285,7 +286,7 @@ libroseLibraries = \
 #   $(libdir)/libquery.so $(libdir)/libastprocessing.so $(libdir)/librewrite.so $(libdir)/libOAWrap.so $(libdir)/libCFG.so $(libdir)/libdataflowAnalysis.so \
 #   $(libdir)/libvaluePropagation.so $(libdir)/libdepInfo.so $(libdir)/libdepGraph.so $(libdir)/libfunctionCallNormalization.so \
 #   $(libdir)/libcomputation.so $(libdir)/libslicing.so $(libdir)/libdriver.so $(libdir)/libprepostloop.so $(libdir)/libdriver.so \
-#   $(libdir)/libLoopProcessing.so $(libdir)/libunparse.so $(libdir)/libroseSupport.so $(libdir)/libastDiagnostics.so \
+#   $(libdir)/libunparse.so $(libdir)/libroseSupport.so $(libdir)/libastDiagnostics.so \
 #   $(libdir)/libCallGraph.so $(ROSE_SQLITE_DATABASE_LIB_FILE) \
 #   $(ROSE_SIDEEFFECTS_LIB_FILE) $(ROSE_DATABASE_LIB_FILE)
 
@@ -489,6 +490,12 @@ $(libdir)/libCFG.so: $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.so
 #	test -f $(libdir)/libCFG.so                 || cp $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.so $(libdir)/libCFG.so
 	cp $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.so $(libdir)/libCFG.so
 
+$(libdir)/libpointerAnal.so: $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.so
+	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
+#	test -f $(libdir)/libpointerAnal.so    || ln -s $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.so $(libdir)/libpointerAnal.so
+#	test -f $(libdir)/libpointerAnal.so    || cp $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.so $(libdir)/libpointerAnal.so
+	cp $(top_builddir)/src/midend/programAnalysis/pointerAnal/libpointerAnal.so $(libdir)/libpointerAnal.so
+
 $(libdir)/libdataflowAnalysis.so: $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/libdataflowAnalysis.so
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
 #	test -f $(libdir)/libdataflowAnalysis.so    || ln -s $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/libdataflowAnalysis.so $(libdir)/libdataflowAnalysis.so
@@ -543,11 +550,6 @@ $(libdir)/libdriver.so: $(top_builddir)/src/midend/loopProcessing/driver/libdriv
 #	test -f $(libdir)/libdriver.so              || cp $(top_builddir)/src/midend/loopProcessing/driver/libdriver.so $(libdir)/libdriver.so
 	cp $(top_builddir)/src/midend/loopProcessing/driver/libdriver.so $(libdir)/libdriver.so
 
-$(libdir)/libLoopProcessing.so: $(top_builddir)/src/midend/loopProcessing/libLoopProcessing.so
-	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
-#	test -f $(libdir)/libLoopProcessing.so      || ln -s $(top_builddir)/src/midend/loopProcessing/libLoopProcessing.so $(libdir)/libLoopProcessing.so
-#	test -f $(libdir)/libLoopProcessing.so      || cp $(top_builddir)/src/midend/loopProcessing/libLoopProcessing.so $(libdir)/libLoopProcessing.so
-	cp $(top_builddir)/src/midend/loopProcessing/libLoopProcessing.so $(libdir)/libLoopProcessing.so
 
 $(libdir)/libunparse.so: $(top_builddir)/src/backend/unparser/libunparse.so
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"

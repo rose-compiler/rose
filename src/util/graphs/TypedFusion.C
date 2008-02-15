@@ -1,26 +1,16 @@
-#include <general.h>
-
-// pmp 08JUN05
-//   cmp comment in ../graph/IDGraphCreate.h
-#include <iostream>
-
 #include <SinglyLinkedList.h>
 #include <PtrMap.h>
 
-#include <GraphInterface.h>
 #include <TypedFusion.h>
 
 #define BADFUSE NEG_INFTY+1
 
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
 class FusionAnalInfo
 {
  public:
-  GraphNode* node;
+  GraphAccessInterface::Node* node;
   int num, maxBadPrev, count, next, type;
-  FusionAnalInfo(GraphNode *n, int index, int _type)
+  FusionAnalInfo(GraphAccessInterface::Node *n, int index, int _type)
     {
       num = index+1; node = n;
       maxBadPrev = 0; count = 0; next = 0;
@@ -31,10 +21,10 @@ class FusionAnalInfo
 };
 
 void TypedFusion ::
-operator() ( GraphAccess *dg, TypedFusionOperator &fuseOp, int fusetype)
+operator() ( GraphAccessInterface *dg, TypedFusionOperator &fuseOp, int fusetype)
 {
   int lastnum = 0;
-  PtrMapWrap <GraphNode, FusionAnalInfo> infoMap;
+  PtrMapWrap <GraphAccessInterface::Node, FusionAnalInfo> infoMap;
   SinglyLinkedListWrap<FusionAnalInfo*> workStack;
 
   int index = 0, fused = 0, lastfused = 0;
@@ -44,13 +34,13 @@ operator() ( GraphAccess *dg, TypedFusionOperator &fuseOp, int fusetype)
 
   FusionAnalInfo** infoVec = new FusionAnalInfo*[size];
 
-  for ( GraphAccess::NodeIterator nodeIter= dg->GetNodeIterator();
+  for ( GraphAccessInterface::NodeIterator nodeIter= dg->GetNodeIterator();
         !nodeIter.ReachEnd(); ++nodeIter, ++index) {
-    GraphNode *n = *nodeIter;
+    GraphAccessInterface::Node *n = *nodeIter;
     int type = fuseOp.GetNodeType(n);
     FusionAnalInfo *info = new FusionAnalInfo(n, index, type);
     infoMap.InsertMapping(n, info);
-    for (GraphAccess::EdgeIterator edgeIter = dg->GetNodeEdgeIterator(n, GraphAccess::EdgeIn);
+    for (GraphAccessInterface::EdgeIterator edgeIter = dg->GetNodeEdgeIterator(n, GraphAccess::EdgeIn);
           ! edgeIter.ReachEnd(); ++edgeIter) {
       info->count++;
     }
@@ -63,7 +53,7 @@ operator() ( GraphAccess *dg, TypedFusionOperator &fuseOp, int fusetype)
   while ( workStack.size() > 0) {
     FusionAnalInfo *info = workStack.First()->GetEntry();
     workStack.PopFirst();
-    GraphNode *node = info->node;
+    GraphAccessInterface::Node *node = info->node;
     int p = 0;
     if (info->type == fusetype) {
       if (info->maxBadPrev == 0)
@@ -99,10 +89,10 @@ operator() ( GraphAccess *dg, TypedFusionOperator &fuseOp, int fusetype)
         }
       }
     }
-    for (GraphAccess::EdgeIterator edgeIter = dg->GetNodeEdgeIterator( node, GraphAccess::EdgeOut);
+    for (GraphAccessInterface::EdgeIterator edgeIter = dg->GetNodeEdgeIterator( node, GraphAccess::EdgeOut);
           !edgeIter.ReachEnd(); ++edgeIter) {
-      GraphEdge *edge = edgeIter.Current();
-      GraphNode *m = dg->GetEdgeEndPoint(edge, GraphAccess::EdgeIn );
+      GraphAccessInterface::Edge *edge = edgeIter.Current();
+      GraphAccessInterface::Node *m = dg->GetEdgeEndPoint(edge, GraphAccess::EdgeIn );
       FusionAnalInfo *info1 = infoMap.Map(m);
       info1->count--;
       if (info1->count == 0) {
@@ -126,7 +116,7 @@ operator() ( GraphAccess *dg, TypedFusionOperator &fuseOp, int fusetype)
       }
     }
   }
-  for (unsigned int i = 0; i < size; ++i)
+  for (int i = 0; i < size; ++i)
     delete infoVec[i];
   delete [] infoVec;
 }

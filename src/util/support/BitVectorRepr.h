@@ -5,7 +5,9 @@
 #include <FunctionObject.h>
 #include <DoublyLinkedList.h>
 #include <assert.h>
-#include <iostream>
+#include <sstream>
+
+#define STD std::
 
 class BitVectorReprImpl {
   unsigned* impl;
@@ -44,13 +46,15 @@ class BitVectorReprImpl {
     }
   }
 
-  void Dump() const
+  STD string toString() const
   {
-    std::cerr << ":";
+    STD stringstream r;
+    r <<  ":";
     for (unsigned i = 0; i < num; ++i) {
-       std::cerr << impl[i];
+       r << impl[i];
     }
-    std::cerr << ":"; 
+    r << ":"; 
+    return r.str();
   }
   void operator &=( const BitVectorReprImpl& that)
   {
@@ -137,8 +141,8 @@ class BitVectorRepr : public CountRefHandle<BitVectorReprImpl>
   { UpdateRef() &= that.ConstRef(); }
   void complement() 
     { UpdateRef().complement(); }
-  void Dump() const
-    { ConstRef().Dump();  }
+  STD string toString() const
+    { ConstRef().toString();  }
 };
 
 template <class Name, class Data>
@@ -149,10 +153,10 @@ class BitVectorReprBase
     Name name;
     int index;
     DataEntry( const Name& n, const Data& d, int i = 0) 
-      : data(d), name(n), index(i) {}
+      : name(n), data(d), index(i) {}
   };
   typedef DoublyLinkedListWrap<DataEntry> DataList;
-  typedef std::map<Name, DoublyLinkedEntryWrap<DataEntry>* > DataMap;
+  typedef STD map<Name, DoublyLinkedEntryWrap<DataEntry>* > DataMap;
   
   DataList datalist;
   DataMap datamap; 
@@ -164,7 +168,7 @@ class BitVectorReprBase
 
   BitVectorReprBase( const BitVectorReprBase<Name,Data>& that)
     {
-      std::string name = "";
+      STD string name = "";
       for ( iterator p = that.datalist.begin(); !p.ReachEnd(); ++p) {
 	DataEntry& cur = *p;
         DoublyLinkedEntryWrap<DataEntry>* e = datalist.AppendLast(cur);
@@ -197,7 +201,7 @@ class BitVectorReprBase
 	cur.index = index;
       }
     }
-  iterator find( const std::string& name) const
+  iterator find( const STD string& name) const
     {
       typename DataMap::const_iterator mp = datamap.find(name);
       if (mp == datamap.end()) {
@@ -207,7 +211,7 @@ class BitVectorReprBase
       iterator lp( datalist, (*mp).second);  
       return lp;
     }
-  std::string get_name ( iterator p) const
+  STD string get_name ( iterator p) const
     { return (*p).name; }
   Data get_data ( iterator p) const
     { return (*p).data; }
@@ -239,8 +243,15 @@ class BitVectorReprGenerator
   void add_member( BitVectorRepr& repr, const Name& name, const Data& d) const
     {
       typename BitVectorReprBase<Name,Data>::iterator p = base.find(name);
-      for ( ;  p != base.end() && base.get_data(p) != d; ++p) {}
-      assert( p != base.end());
+      if (p == base.end()) {
+           std::cerr << "Error: cannot find variable " << name << "\n";
+           assert(false);
+      }
+      for ( ;  p != base.end() && base.get_data(p) != d; ++p); 
+      if (p == base.end()) {
+           std::cerr << "Error: cannot find data " << " for variable " << name << "\n";
+           assert(false);
+      }
       repr.add_member( base.get_index(p));
     }
       

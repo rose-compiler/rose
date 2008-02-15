@@ -10,50 +10,51 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
                         const SymbolicVal &v2);
 class SymbolicTerm
 {
-  int time;
+  int time1, time2;
   SymbolicVal v;
  public:
-  SymbolicTerm( int t, const SymbolicVal& _v) : time(t), v( _v) { }
-  SymbolicTerm(int t = 0) : time(t) {}
+  SymbolicTerm( int t1, int t2, const SymbolicVal& _v) 
+          : time1(t1), time2(t2), v( _v) { }
+  SymbolicTerm( int t1, int t2) : time1(t1), time2(t2) {}
+  SymbolicTerm() : time1(0), time2(1) {}
   ~SymbolicTerm() {}
   SymbolicTerm& operator = (const SymbolicTerm& that)
-     { time = that.time; v = that.v; return *this; }
+     { time1 = that.time1; time2 = that.time2; v = that.v; return *this; }
 
-  std::string ToString() const;
-//Boolean IsConstInt( int *val = 0) const 
-  int IsConstInt( int *val = 0) const 
-      { if (val != 0) *val = time; 
-        return v.IsNIL(); }
+  STD string toString() const;
+  bool IsConst() const
+      {  return v.IsNIL(); }
+  bool IsConstInt( int& val1, int& val2) const 
+      {  if (v.IsNIL()) { val1=time1; val2=time2;  return true; } 
+         return false;
+      }
+  bool IsConstInt( int& val) const 
+      {  if (v.IsNIL() && time2 == 1) { val=time1; return true; } 
+         return false;
+      }
   SymbolicVal GetVal( SymOpType op)  const
-          { int val;
-            if (IsConstInt(&val)) return val;
-            else if ( time == 1)
+          { 
+            if (v.IsNIL())
+                return SymbolicConst(time1, time2); 
+            else if ( time1 == 1 && time2 == 1)
                return v;
-            return ApplyBinOP( op, v, time);
+            return ApplyBinOP( op, v, SymbolicConst(time1,time2));
           }
 
-
-//Boolean IsTop() const { return  !v.IsNIL() && time == 0; } 
-  int IsTop() const { return  !v.IsNIL() && time == 0; } 
-//Boolean CombineWith( const SymbolicTerm &that)  ;
-  int CombineWith( const SymbolicTerm &that)  ;
-//Boolean operator == (const SymbolicTerm& that) const;
-  int operator == (const SymbolicTerm& that) const;
-//Boolean operator == (const SymbolicVal &that) const;
-  int operator == (const SymbolicVal &that) const;
+  bool IsTop() const { return  !v.IsNIL() && time1 == 0; } 
+  bool CombineWith( const SymbolicTerm &that)  ;
+  bool operator == (const SymbolicTerm& that) const;
+  bool operator == (const SymbolicVal &that) const;
  friend class SymbolicExpr;
 };
 
-//inline Boolean IsZero( const SymbolicTerm& t)
-inline int IsZero( const SymbolicTerm& t)
-      { int val; 
-        return t.IsConstInt(&val) && val == 0; }
-// inline Boolean IsOne( const SymbolicTerm& t)
-inline int IsOne( const SymbolicTerm& t)
-      { int val;
-        return t.IsConstInt(&val) && val == 1; }
-// inline Boolean operator != (const SymbolicTerm& v1, const SymbolicTerm& v2)
-inline int operator != (const SymbolicTerm& v1, const SymbolicTerm& v2)
+inline bool IsZero( const SymbolicTerm& t)
+      { int val1,val2; 
+        return t.IsConstInt(val1,val2) && val1 == 0; }
+inline bool IsOne( const SymbolicTerm& t)
+      { int val1, val2;
+        return t.IsConstInt(val1,val2) && val1 == 1 && val2 == 1; }
+inline bool operator != (const SymbolicTerm& v1, const SymbolicTerm& v2)
 {  return !(v1 == v2); }
 
 class OPApplicator;
@@ -61,7 +62,7 @@ class SymbolicOperands
 {
   LatticeElemList<SymbolicTerm> opds;
  public:
-  typedef LatticeElemList<SymbolicTerm>::Iterator OpdIterator;
+  typedef LatticeElemList<SymbolicTerm>::iterator OpdIterator;
 
   SymbolicOperands() {}
   SymbolicOperands( const SymbolicOperands& that)
@@ -73,7 +74,7 @@ class SymbolicOperands
   unsigned NumOfOpds() const { return opds.NumberOfEntries(); }
   OpdIterator GetOpdIterator() const { return OpdIterator(opds); }
   SymbolicTerm& First() const { return opds.First()->GetEntry(); }
-  std::string ToString() const;
+  STD string toString() const;
 
   SymbolicOperands* Clone() const { return new SymbolicOperands(*this); }
 };
@@ -86,7 +87,7 @@ class SymbolicExpr : public SymbolicValImpl,
  protected:
   SymbolicExpr() {}
   SymbolicExpr( const SymbolicExpr& that)
-    : SymbolicValImpl(that), CountRefHandle<SymbolicOperands>(that) {}
+    : CountRefHandle<SymbolicOperands>(that), SymbolicValImpl(that) {}
 
   virtual SymOpType GetTermOP() const = 0;
  public:
@@ -94,7 +95,7 @@ class SymbolicExpr : public SymbolicValImpl,
   SymbolicVal Term2Val( const SymbolicTerm& tm) const
           { return tm.GetVal(GetTermOP()); }
 
-  typedef LatticeElemList<SymbolicTerm>::Iterator OpdIterator;
+  typedef LatticeElemList<SymbolicTerm>::iterator OpdIterator;
   void AddOpd( const SymbolicTerm& v, OPApplicator* op = 0);
   void AddOpd( const SymbolicVal& v, OPApplicator* op = 0);
 
@@ -102,10 +103,10 @@ class SymbolicExpr : public SymbolicValImpl,
   virtual SymbolicExpr* DistributeExpr(SymOpType t, const SymbolicVal& that) const = 0;
   void Visit( SymbolicVisitor* op) const { op->VisitExpr(*this); }
   SymbolicValImpl* Clone() const { return CloneExpr(); }
-  std::string ToString() const;
+  STD string toString() const;
   SymbolicValType GetType() const { return VAL_EXPR; }
   void push_back( const SymbolicVal& v) { ApplyOpd(v); }
-  virtual std::string GetOPName () const = 0;
+  virtual STD string GetOPName () const = 0;
 
   virtual SymOpType GetOpType() const = 0;
   virtual SymbolicExpr* CloneExpr() const  = 0;
@@ -123,14 +124,12 @@ class SymbolicExpr : public SymbolicValImpl,
   }
 
   SymbolicVal GetUnknownOpds() const;
-//Boolean GetConstOpd(int &val) const;
-  int GetConstOpd(int &val) const;
+  bool GetConstOpd(int &val1, int &val2) const;
   unsigned NumOfOpds() const ;
   OpdIterator GetOpdIterator() const;
   SymbolicTerm& FirstOpd() const;
 
-//Boolean operator == (const SymbolicExpr& that) const;
-  int operator == (const SymbolicExpr& that) const;
+  bool operator == (const SymbolicExpr& that) const;
 };
 
 class ValTermVisitor : public SymbolicVisitor
@@ -138,30 +137,33 @@ class ValTermVisitor : public SymbolicVisitor
   SymbolicTerm result;
   SymOpType expOP;
   void VisitConst( const SymbolicConst& e) 
-       { int v = 0;
-         if (e.GetIntVal(v))
-             result = SymbolicTerm(v); 
+       { 
+        int val1, val2;
+        if (e.GetIntVal(val1,val2))
+           result = SymbolicTerm(val1, val2); 
+        else
+           result = SymbolicTerm(1,1,e); 
        }
   void VisitFunction( const SymbolicFunction& v)
    {
-     int val;
+     int val1, val2;
      if (v.GetOpType() == expOP &&
-         v.GetConstOpd(val)) {
-         result = SymbolicTerm(val, v.GetUnknownOpds());
+         v.GetConstOpd(val1, val2)) {
+         result = SymbolicTerm(val1, val2, v.GetUnknownOpds());
      }
    }
   void VisitExpr( const SymbolicExpr& v)
    {
-     int val;
+     int val1, val2;
      if (v.GetOpType() == expOP &&
-         v.GetConstOpd(val)) {
-         result = SymbolicTerm(val, v.GetUnknownOpds());
+         v.GetConstOpd(val1, val2)) {
+         result = SymbolicTerm(val1, val2, v.GetUnknownOpds());
      }
    }
   public:
     ValTermVisitor( SymOpType t) : expOP(t) {}
     SymbolicTerm operator()( const SymbolicVal& v)
-     { result = SymbolicTerm(1,v);
+     { result = SymbolicTerm(1,1,v);
        v.Visit(this);  return result; }
 };
 
@@ -171,12 +173,10 @@ class OPApplicator
   virtual SymOpType GetOpType() = 0;
 
   virtual SymbolicExpr *CreateExpr() = 0;
-  virtual int MergeConstInt(int v1, int v2) = 0;
-//virtual Boolean IsTop( const SymbolicTerm& v)
-  virtual int IsTop( const SymbolicTerm& v)
+  virtual bool MergeConstInt(int vu1, int vd1, int vu2, int vd2, int& r1, int &r2) = 0;
+  virtual bool IsTop( const SymbolicTerm& v)
    { return v.IsTop(); }
-//virtual Boolean MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
-  virtual int MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
+  virtual bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
                             SymbolicTerm& result)
         { result = t1;
           return result.CombineWith(t2); }

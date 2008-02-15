@@ -1,317 +1,244 @@
 
-#ifndef SAGE_AST_TREE_INTERFACE
-#define SAGE_AST_TREE_INTERFACE
+#ifndef AST_TREE_INTERFACE_H
+#define AST_TREE_INTERFACE_H
 
-#include <list>
-#include <string>
-#include <vector>
 #include <iostream>
+#include <list>
 #include <ObserveObject.h>
 
-// #warning "Inside of AstInterface.h"
+#define STD std::
 
-class SgNode;
-// #include "sage3.h"
-
+class AstInterfaceImpl;
 class AstNodePtr {
-  SgNode* repr;
+ protected:
+  void* repr;
  public:
-  typedef SgNode PtrBaseClass;
-  AstNodePtr( SgNode* n = 0) : repr(n) {}
+  AstNodePtr() : repr(0) {}
   AstNodePtr( const AstNodePtr& that) : repr(that.repr) {}
   AstNodePtr& operator = (const AstNodePtr &that) 
       { repr = that.repr; return *this; }
+  bool operator != (const AstNodePtr &that) const
+    { return repr != that.repr; }
+  bool operator == (const AstNodePtr &that) const
+    { return repr == that.repr; }
+  bool operator == (void *p) const
+    { return repr == p; }
+  bool operator != (void *p) const
+    { return repr != p; }
+  bool operator < (const AstNodePtr &that) const
+    { return repr < that.repr; }
   ~AstNodePtr() {}
-  operator SgNode* () const { return repr; }
-  SgNode* operator -> () const { return repr; }
-  void Dump() const;
-
-// DQ (3/23/2006): I was deperate to get the value of the private variable
-// and nothing else appeared to work.
-// SgNode* get_ptr() const { return repr; }
+  void * get_ptr() const { return repr; }
 };
-class SgType;
-typedef SgType* AstNodeType;
+#define AST_NULL AstNodePtr()
 
-
-class AstInterfaceBase
-{
+class AstNodeType {
+ protected:
+  void* repr;
  public:
-  typedef enum { PreOrder, PostOrder, ReversePreOrder, ReversePostOrder, 
-                 PreAndPostOrder } TraversalOrderType;
-  typedef enum {PreVisit, PostVisit} TraversalVisitType;
-  typedef std::list<AstNodePtr> AstNodeList;
-  typedef std::list<AstNodeType> AstTypeList;
-  template <class Node>
-  class AstListIterator 
-   {
-  // DQ (9/4/2005): Swapped order of data members to fixup compiler warnings
-  // typename list<Node>::iterator repr;
-     std::list<Node> *l;
-     typename std::list<Node>::iterator repr;
-    public:
-     AstListIterator( std::list<Node> &lt) : l(&lt) { repr = lt.begin(); }
-     AstListIterator( const AstListIterator<Node> &that) 
-          : l(that.l), repr(that.repr) {}
-     AstListIterator<Node>& operator = (const AstListIterator<Node> &that) 
-          { l = that.l; repr = that.repr; return *this; }
-     ~AstListIterator() {}
-     Node operator *() const { return *repr; }
-     Node& operator *() { return *repr; }
-  // DQ (3/8/2006): Removed Boolean macro set to int from use in header files
-  // Boolean ReachEnd() const { return repr == l->end(); }
-     int ReachEnd() const { return repr == l->end(); }
-  // Boolean operator==(const AstListIterator<Node>& that ) const {
-     int operator==(const AstListIterator<Node>& that ) const {
-           return l == that.l && repr == that.repr;
-     }
-  // Boolean operator!=(const AstListIterator<Node>& that ) const {
-     int operator!=(const AstListIterator<Node>& that ) const {
-           return !((*this) == that);
-     }
-     void Reset() { repr = l->begin(); }
-     void Advance() { if (repr != l->end()) ++repr; }
-     void operator++() { Advance(); }
-     void operator ++(int) { Advance(); }
-   };
-  typedef AstListIterator<AstNodePtr> AstNodeListIterator;
-  typedef AstListIterator<AstNodeType> AstTypeListIterator;
-
-  static AstNodeList CreateList()  ;
-  static AstNodeListIterator GetAstNodeListIterator( AstNodeList& l);
-  static AstTypeListIterator GetAstTypeListIterator( AstTypeList& l);
-  static void ListAppend( AstNodeList& l, const AstNodePtr& s) ;
-  static void ListPrepend( AstNodeList& l, const AstNodePtr& s) ;
-  static void ListReverse( AstNodeList& l) { l.reverse(); }
-
-  static void write( const AstNodePtr& s, std::ostream& out); 
-  static void DumpAst(  const AstNodePtr& s);
-  static std::string AstToString( const AstNodePtr& s);
-/* 
-  static Boolean AstTreeIdentical( const AstNodePtr& n1, const AstNodePtr& n2);
-  static Boolean AstNodeIdentical( const AstNodePtr& n1, const AstNodePtr& n2);
-*/
-  static void InsertStmt( const AstNodePtr& orig, const AstNodePtr& n, 
-                          bool before = true, bool extractFromBasicBlock = false);
-  static void FreeAstTree( const AstNodePtr& n);
-  static AstNodeList GetChildrenList( const AstNodePtr &n);
-
-//static Boolean IsLoop( const AstNodePtr& s, 
-  static int IsLoop( const AstNodePtr& s, 
-                          AstNodePtr* init=0, AstNodePtr* cond=0,
-                         AstNodePtr* incr = 0, AstNodePtr* body = 0) ;
-
-  static AstNodePtr GetPrevStmt( const AstNodePtr& s);
-  static AstNodePtr GetNextStmt( const AstNodePtr& s);
-
-//static Boolean IsDecls( const AstNodePtr& s) ;
-  static int IsDecls( const AstNodePtr& s) ;
-//static Boolean IsExecutableStmt( const AstNodePtr& s) ;
-  static int IsExecutableStmt( const AstNodePtr& s) ;
-//static Boolean IsStatement( const AstNodePtr& s);
-  static int IsStatement( const AstNodePtr& s);
-//static Boolean IsBasicBlock( const AstNodePtr& exp);
-  static int IsBasicBlock( const AstNodePtr& exp);
-  static AstNodeList GetBasicBlockStmtList( const AstNodePtr& n);
-  static AstNodePtr GetBasicBlockFirstStmt( const AstNodePtr& n);
-  static AstNodePtr GetBasicBlockLastStmt( const AstNodePtr& n);
-  static int GetBasicBlockSize( const AstNodePtr& n);
-  static AstNodePtr CreateBasicBlock( const AstNodePtr& orig = 0) ;
-  static void BasicBlockAppendStmt( AstNodePtr& b, const AstNodePtr& s);
-  static void BasicBlockPrependStmt( AstNodePtr& b, const AstNodePtr& s);
-  
-//static Boolean IsPostTestLoop( const AstNodePtr& s);
-  static int IsPostTestLoop( const AstNodePtr& s);
-//static Boolean IsIf( const AstNodePtr& s, AstNodePtr* cond = 0, 
-  static int IsIf( const AstNodePtr& s, AstNodePtr* cond = 0, 
-                       AstNodePtr* truebody = 0, AstNodePtr* falsebody = 0);
-//static Boolean IsGoto( const AstNodePtr& s, AstNodePtr* dest = 0);
-  static int IsGoto( const AstNodePtr& s, AstNodePtr* dest = 0);
-//static Boolean IsGotoBefore( const AstNodePtr& s); // goto the point before destination
-  static int IsGotoBefore( const AstNodePtr& s); // goto the point before destination
-//static Boolean IsGotoAfter( const AstNodePtr& s); // goto the point after destination
-  static int IsGotoAfter( const AstNodePtr& s); // goto the point after destination
-//static Boolean IsLabelStatement( const AstNodePtr& s);
-  static int IsLabelStatement( const AstNodePtr& s);
-
-//static Boolean IsFunctionDefinition(  const AstNodePtr& s, AstNodePtr* decl = 0,
-  static int IsFunctionDefinition(  const AstNodePtr& s, AstNodePtr* decl = 0,
-                                        AstNodePtr* body = 0);
-//static Boolean IsFunctionDecl( const AstNodePtr& s, std::string* declname = 0,  
-  static int IsFunctionDecl( const AstNodePtr& s, std::string* declname = 0,  
-				 AstNodeType* returntype = 0, 
-				 AstTypeList* paramType = 0, AstNodeList* params = 0);
-//static Boolean IsFunctionCall( const AstNodePtr& s, AstNodePtr* func = 0,
-  static int IsFunctionCall( const AstNodePtr& s, AstNodePtr* func = 0,
-                               AstNodeList* args = 0);
-//static Boolean IsAssignment( const AstNodePtr& s, AstNodePtr* lhs = 0, 
-  static int IsAssignment( const AstNodePtr& s, AstNodePtr* lhs = 0, 
-                               AstNodePtr* rhs = 0, bool* readlhs = 0); 
-//static Boolean IsIOInputStmt( const AstNodePtr& s, AstNodeList* varlist = 0);
-  static int IsIOInputStmt( const AstNodePtr& s, AstNodeList* varlist = 0);
-//static Boolean IsIOOutputStmt( const AstNodePtr& s, AstNodeList* explist = 0);
-  static int IsIOOutputStmt( const AstNodePtr& s, AstNodeList* explist = 0);
-
-//static Boolean IsConstInt( const AstNodePtr& exp, int* value = 0) ;
-  static int IsConstInt( const AstNodePtr& exp, int* value = 0) ;
-//static Boolean IsConstant( const AstNodePtr& exp, std::string* value = 0) ;
-  static int IsConstant( const AstNodePtr& exp, std::string* value = 0) ;
-//static Boolean IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
-  static int IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
-                           std::string* varname = 0, AstNodePtr* scope = 0, bool *isglobal = 0) ;
-//static Boolean IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
-  static int IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
-//static Boolean IsVariableDecl( const AstNodePtr& exp, AstNodeList* vars = 0,
-  static int IsVariableDecl( const AstNodePtr& exp, AstNodeList* vars = 0,
-                                 AstNodeList* inits = 0);
-//static Boolean IsArrayAccess( const AstNodePtr& s, AstNodePtr* array = 0,
-  static int IsArrayAccess( const AstNodePtr& s, AstNodePtr* array = 0,
-                                   AstNodeList* index = 0)  ;
-//static Boolean IsMemoryAccess( const AstNodePtr& s);
-  static int IsMemoryAccess( const AstNodePtr& s);
-//static Boolean IsExpression( const AstNodePtr& s, AstNodeType* exptype =0 );
-  static int IsExpression( const AstNodePtr& s, AstNodeType* exptype =0 );
-//static Boolean IsBinaryOp(  const AstNodePtr& exp, AstNodePtr* opd1 = 0, 
-  static int IsBinaryOp(  const AstNodePtr& exp, AstNodePtr* opd1 = 0, 
-			      AstNodePtr* opd2 = 0, std::string* opname = 0 );
-//static Boolean IsBinaryTimes( const AstNodePtr& exp, AstNodePtr* opd1 = 0,
-  static int IsBinaryTimes( const AstNodePtr& exp, AstNodePtr* opd1 = 0,
-                                AstNodePtr* opd2 = 0 ) ;
-//static Boolean IsBinaryPlus( const AstNodePtr& exp, AstNodePtr* opd1 = 0,
-  static int IsBinaryPlus( const AstNodePtr& exp, AstNodePtr* opd1 = 0,
-                               AstNodePtr* opd2 = 0) ;
-//static Boolean IsBinaryMinus( const AstNodePtr& exp, AstNodePtr* opd1 = 0,
-  static int IsBinaryMinus( const AstNodePtr& exp, AstNodePtr* opd1 = 0,
-                               AstNodePtr* opd2 = 0) ;
-//static Boolean IsRelEQ( const AstNodePtr& s, AstNodePtr* opd1 = 0, 
-  static int IsRelEQ( const AstNodePtr& s, AstNodePtr* opd1 = 0, 
-                           AstNodePtr* opd2 = 0);
-//static Boolean IsRelNE( const AstNodePtr& s, AstNodePtr* opd1 = 0, 
-  static int IsRelNE( const AstNodePtr& s, AstNodePtr* opd1 = 0, 
-                          AstNodePtr* opd2 = 0);
-//static Boolean IsUnaryOp( const AstNodePtr& exp, AstNodePtr* opd = 0, 
-  static int IsUnaryOp( const AstNodePtr& exp, AstNodePtr* opd = 0, 
-                            std::string* fname = 0) ;
-//static Boolean IsUnaryMinus( const AstNodePtr& exp, AstNodePtr* opd = 0) ;
-  static int IsUnaryMinus( const AstNodePtr& exp, AstNodePtr* opd = 0) ;
-
-
-  static AstNodePtr CreateConstInt( int val)  ;
-  static AstNodePtr CreateFunctionCall( const AstNodePtr& f, AstNodeList args);
-  static AstNodePtr CreateIf( const AstNodePtr& cond, const AstNodePtr& stmts) ;
-
-//static Boolean
-  static int
-     GetArrayBound( const AstNodePtr& arrayname, int dim, int &lb, int &ub) ;
-  static void GetTypeInfo( const AstNodeType& t, std::string* name = 0, 
-                           std::string* stripname = 0, int* size = 0);
-  static std::string GetTypeName( const AstNodeType& t);
-  static std::string GetTypeSpec( const AstNodeType& t);
-//static Boolean IsScalarType( const AstNodeType& t);
-  static int IsScalarType( const AstNodeType& t);
-//static Boolean IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);
-  static int IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);
-  static std::string GetVarName( const AstNodePtr& exp);
-  static AstNodeType GetExpressionType( const AstNodePtr& s);
-  static AstNodePtr GetFunctionDecl( const AstNodePtr& s);
-  static std::string GetFunctionName( const AstNodePtr& f);
-
+  AstNodeType() : repr(0) {}
+  AstNodeType( const AstNodeType& that) : repr(that.repr) {}
+  AstNodeType& operator = (const AstNodeType &that) 
+      { repr = that.repr; return *this; }
+  ~AstNodeType() {}
+  void * get_ptr() const { return repr; }
 };
 
-class AstInterface;
+STD string AstToString( const AstNodePtr& s);
+
 class AstObserver {
   public:
-  virtual ~AstObserver() {};
-   virtual void ObserveCopyAst( AstInterface& fa, const AstNodePtr& orig, const AstNodePtr& n) = 0;
+   virtual void ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& n) = 0;
 };
 
 class CopyAstRecord : public ObserveInfo< AstObserver>
-   {
-          AstNodePtr orig, n;
-          AstInterface& fa;
-     public:
-       // DQ (8/20/2005): Changed order of initialization in constructor preinitialization (avoid compiler warning)
-       // CopyAstRecord(AstInterface& _fa, const AstNodePtr& o, const AstNodePtr& _n)  : fa(_fa), orig(o), n(_n) {}
-          CopyAstRecord(AstInterface& _fa, const AstNodePtr& o, const AstNodePtr& _n)  : orig(o), n(_n), fa(_fa) {}
-          virtual void UpdateObserver( AstObserver& o) const 
-             {  o.ObserveCopyAst(fa, orig, n); }
-
-       // DQ (9/4/2005): Added virtual destructor to satisy compiler warning
-          virtual ~CopyAstRecord() {}
-   };
- 
-class AstInterfaceImpl;
-class AstInterface : public AstInterfaceBase, public ObserveObject< AstObserver>
 {
-  AstInterfaceImpl *impl;
- protected:
+  AstNodePtr orig, n;
+  AstInterfaceImpl& fa;
  public:
-  AstInterface( const AstNodePtr& root);
-  ~AstInterface() ;
+  CopyAstRecord(AstInterfaceImpl& _fa, const AstNodePtr& o, const AstNodePtr& _n) 
+      : fa(_fa), orig(o), n(_n) {}
+  virtual void UpdateObserver( AstObserver& o) const 
+         {  o.ObserveCopyAst(fa, orig, n); }
+};
+ 
+
+class SymbolicVal;
+class SymbolicVar;
+class AstInterface 
+{
+ protected:
+  AstInterfaceImpl *impl;
+ public:
+  AstInterface( AstInterfaceImpl* _impl) : impl(_impl) {}
+  ~AstInterface() {}
+  AstInterfaceImpl* get_impl() { return impl; }
+
+  typedef enum {OP_NONE, 
+           UOP_MINUS, UOP_ADDR, UOP_DEREF, UOP_ALLOCATE, UOP_NOT,
+           UOP_CAST, UOP_INCR1, UOP_DECR1,
+           BOP_DOT_ACCESS, BOP_ARROW_ACCESS, 
+           BOP_TIMES, BOP_DIVIDE, BOP_PLUS, BOP_MINUS, 
+           BOP_EQ, BOP_LE, BOP_LT, BOP_NE, BOP_GT, BOP_GE, 
+           BOP_AND, BOP_OR,
+           BOP_BIT_AND,BOP_BIT_OR, BOP_BIT_RSHIFT, BOP_BIT_LSHIFT,
+           OP_ARRAY_ACCESS} OperatorEnum;
 
   AstNodePtr GetRoot() const;
+  AstNodePtr getNULL() const { return AstNodePtr(); }
   void SetRoot( const AstNodePtr& root);
-  AstNodePtr GetVarDecl( const std::string& varname);
-  AstNodePtr CopyAstTree( const AstNodePtr& n);
 
-  void AddDeclaration( const std::string& decl);
-  std::string NewVar (const AstNodeType& t, const std::string& name = "", 
-                 bool makeunique = false, const AstNodePtr& declLoc = 0,
-                 const AstNodePtr& init = 0);
+  typedef enum { PreOrder, PostOrder, ReversePreOrder, ReversePostOrder, 
+                 PreAndPostOrder } TraversalOrderType;
+  typedef enum {PreVisit, PostVisit} TraversalVisitType;
+  typedef STD list<AstNodePtr>  AstNodeList;
+  typedef STD list<AstNodeType> AstTypeList;
 
-  AstNodePtr GetParent( const AstNodePtr &n);
+  void AttachObserver(AstObserver* ob);
+  void DetachObserver(AstObserver* ob);
 
-  AstNodePtr CreateVarRef( std::string varname, const AstNodePtr& loc = 0) const;
-  AstNodePtr CreateConst( const std::string& val, const std::string& valtype) const;
-  AstNodePtr CreateFunction(  const std::string& name, const std::string& decl_if_not_found);
-  AstInterfaceBase::CreateFunctionCall;
-  AstNodePtr CreateFunctionCall( const std::string& func, const std::string& decl, AstNodeList args);
-  AstNodePtr CreateAssignment( const AstNodePtr& lhs, const AstNodePtr& rhs);
-  AstNodePtr CreateLoop( const AstNodePtr& ivar, const AstNodePtr& lb, 
-                         const AstNodePtr& ub, const AstNodePtr& step, 
-                         const AstNodePtr& stmts);
-  AstNodePtr CreateBinaryOP( const std::string& op, const AstNodePtr& a0, 
-                                   const AstNodePtr& a2) const;
-  AstNodePtr CreateArrayAccess( const AstNodePtr& arr, const AstNodeList& index);
-  AstNodePtr CreateBinaryMinus( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateBinaryPlus( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateBinaryTimes( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateUnaryOP( const std::string& op, const AstNodePtr& arg);
-  AstNodePtr CreateRelNE( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateRelEQ( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateRelLT( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateRelGT( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateRelLE( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateRelGE( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr CreateLogicalAND( const AstNodePtr& a1, const AstNodePtr& a2) ;
-  AstNodePtr AllocateArray( const AstNodePtr& arr, const AstNodeType& elemtype, 
-                                   const std::vector<AstNodePtr>& indexsize);
-  AstNodePtr DeleteArray( const AstNodePtr& arr);
+  bool get_fileInfo(const AstNodePtr& n, std:: string* fname= 0, int* lineno = 0);
 
+  void InsertStmt( const AstNodePtr& orig, const AstNodePtr& n, 
+                   bool before = true, bool extractFromBlock = false);
+  void InsertAnnot( const AstNodePtr& n, const std::string& annot, 
+                   bool before = true);
   bool ReplaceAst( const AstNodePtr& orig, const AstNodePtr& n);
   bool RemoveStmt( const AstNodePtr& n);
+  void FreeAstTree( const AstNodePtr& n);
+  AstNodePtr CopyAstTree( const AstNodePtr& n);
 
-  AstNodeType GetType( std::string name);
-  AstNodeType GetArrayType( const AstNodeType& base, const std::vector<AstNodePtr>& indexsize);
+  AstNodePtr GetParent( const AstNodePtr &n);
+  AstNodePtr GetPrevStmt( const AstNodePtr& s);
+  AstNodePtr GetNextStmt( const AstNodePtr& s);
+  AstNodeList GetChildrenList( const AstNodePtr &n);
+
+  bool IsDecls( const AstNodePtr& s) ;
+  bool IsVariableDecl( const AstNodePtr& exp, AstNodeList* vars = 0,
+                                 AstNodeList* inits = 0);
+  bool IsExecutableStmt( const AstNodePtr& s) ;
+  bool IsStatement( const AstNodePtr& s);
+
+  bool IsBlock( const AstNodePtr& exp);
+  AstNodeList GetBlockStmtList( const AstNodePtr& n);
+  AstNodePtr GetBlockFirstStmt( const AstNodePtr& n);
+  AstNodePtr GetBlockLastStmt( const AstNodePtr& n);
+  int GetBlockSize( const AstNodePtr& n);
+  AstNodePtr CreateBlock( const AstNodePtr& orig = AstNodePtr()) ;
+  void BlockAppendStmt( AstNodePtr& b, const AstNodePtr& s);
+  void BlockPrependStmt( AstNodePtr& b, const AstNodePtr& s);
+  
+  bool IsLoop( const AstNodePtr& s, 
+                          AstNodePtr* init=0, AstNodePtr* cond=0,
+                         AstNodePtr* incr = 0, AstNodePtr* body = 0) ;
+  bool IsPostTestLoop( const AstNodePtr& s);
+  bool IsFortranLoop( const AstNodePtr& s, AstNodePtr* ivar = 0,
+                       AstNodePtr* lb = 0, AstNodePtr* ub=0,
+                       AstNodePtr* step =0, AstNodePtr* body=0);
+  AstNodePtr CreateLoop( const AstNodePtr& cond, const AstNodePtr& body); 
+  AstNodePtr CreateLoop( const AstNodePtr& ivar, const AstNodePtr& lb, 
+                         const AstNodePtr& ub, const AstNodePtr& step, 
+                         const AstNodePtr& stmts, bool negativeStep);
+
+  bool IsIf( const AstNodePtr& s, AstNodePtr* cond = 0, 
+                       AstNodePtr* truebody = 0, AstNodePtr* falsebody = 0);
+  AstNodePtr CreateIf( const AstNodePtr& cond, const AstNodePtr& stmts) ;
+
+  bool IsGoto( const AstNodePtr& s, AstNodePtr* dest = 0);
+  bool IsGotoBefore( const AstNodePtr& s); // goto the point before destination
+  bool IsGotoAfter( const AstNodePtr& s); // goto the point after destination
+  bool IsLabelStatement( const AstNodePtr& s);
+  bool IsReturn(const AstNodePtr& s, AstNodePtr* val=0);
+
+  bool GetFunctionCallSideEffect( const AstNodePtr& fc,  // the most conservative estimation
+                     CollectObject<AstNodePtr>& collectmod,  // of function side effect
+                     CollectObject<AstNodePtr>& collectread);
+  bool IsFunctionCall( const AstNodePtr& s, AstNodePtr* f = 0, 
+                       AstNodeList* args = 0, AstNodeList* outargs = 0, 
+                       AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
+  bool IsMin(const AstNodePtr& exp);
+  bool IsMax(const AstNodePtr& exp);
+  AstNodePtr CreateFunctionCall(const STD string& func, const AstNodeList& args);
+  AstNodePtr CreateFunctionCall(const AstNodePtr& func, const AstNodeList& args);
+
+  AstNodePtr GetFunctionDefinition( const AstNodePtr &n, std::string* name=0);
+  bool IsFunctionDefinition(  const AstNodePtr& s, STD string* name = 0,
+                    AstNodeList* params = 0, AstNodeList* outpars = 0,
+                    AstNodePtr* body = 0,
+                    AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
+
+  bool IsAssignment( const AstNodePtr& s, AstNodePtr* lhs = 0, 
+                               AstNodePtr* rhs = 0, bool* readlhs = 0); 
+  AstNodePtr CreateAssignment( const AstNodePtr& lhs, const AstNodePtr& rhs);
+
+  bool IsIOInputStmt( const AstNodePtr& s, AstNodeList* varlist = 0);
+  bool IsIOOutputStmt( const AstNodePtr& s, AstNodeList* explist = 0);
+
+  bool IsMemoryAccess( const AstNodePtr& s);
+  AstNodePtr IsExpression( const AstNodePtr& s, AstNodeType* exptype =0);
+  AstNodeType GetExpressionType( const AstNodePtr& s);
+
+  bool IsConstInt( const AstNodePtr& exp, int* value = 0) ;
+  AstNodePtr CreateConstInt( int val)  ;
+
+  bool IsConstant( const AstNodePtr& exp, STD string* valtype=0, STD string* value = 0) ;
+  AstNodePtr CreateConstant( const STD string& valtype, const STD string& val);
+
+  bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
+                   STD string* varname = 0, AstNodePtr* scope = 0, 
+                    bool *isglobal = 0) ;
+  STD string GetVarName( const AstNodePtr& exp);
+
+  bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
+  bool IsAliasedRef( const AstNodePtr& s1, const AstNodePtr& s2);
+  STD string NewVar (const AstNodeType& t, const STD string& name = "", 
+                bool makeunique = false, const AstNodePtr& declLoc=AstNodePtr(),
+                const AstNodePtr& init = AstNodePtr());
+  void AddNewVarDecls(const AstNodePtr& nblock, const AstNodePtr& oldblock); 
+  AstNodePtr CreateVarRef( STD string varname, const AstNodePtr& declLoc = AstNodePtr()); 
+
+  bool IsScalarType( const AstNodeType& t);
+  bool IsPointerType( const AstNodeType& t);
+  AstNodeType GetType( const STD string& name);
+  bool IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);
+  void GetTypeInfo( const AstNodeType& t, STD string* name = 0, 
+                           STD string* stripname = 0, int* size = 0);
+  STD string GetTypeName(const AstNodeType& t) 
+     { STD string r; GetTypeInfo(t, &r); return r; }
+
+  bool GetArrayBound( const AstNodePtr& arrayname, int dim, int &lb, int &ub) ;
+  AstNodeType GetArrayType( const AstNodeType& base, const AstNodeList& indexsize);
+
+  AstNodePtr CreateAllocateArray( const AstNodePtr& arr, const AstNodeType& elemtype, 
+                                const AstNodeList& indexsize);
+  AstNodePtr CreateDeleteArray( const AstNodePtr& arr);
+  bool IsArrayAccess( const AstNodePtr& s, AstNodePtr* array = 0,
+                                   AstNodeList* index = 0)  ;
+  AstNodePtr CreateArrayAccess( const AstNodePtr& arr, const AstNodeList& index);
+
+  bool IsBinaryOp(  const AstNodePtr& exp, OperatorEnum* opr=0, 
+                    AstNodePtr* opd1 = 0, AstNodePtr* opd2 = 0);
+  bool IsUnaryOp( const AstNodePtr& exp, OperatorEnum* op = 0, 
+                   AstNodePtr* opd = 0); 
+  AstNodePtr CreateBinaryOP( OperatorEnum op, const AstNodePtr& a0, 
+                                   const AstNodePtr& a2);
+  AstNodePtr CreateUnaryOP( OperatorEnum op, const AstNodePtr& arg);
 };
 
 class ProcessAstNode
 {
   public:
-  virtual ~ProcessAstNode() {};
-// virtual Boolean Traverse( AstInterface &fa, const AstNodePtr& n, AstInterface::TraversalVisitType t) = 0;
-   virtual int Traverse( AstInterface &fa, const AstNodePtr& n, AstInterface::TraversalVisitType t) = 0;
+   virtual bool Traverse( AstInterface &fa, const AstNodePtr& n, 
+                             AstInterface::TraversalVisitType t) = 0;
 };
 
-// Boolean ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
-int ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
+bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
                         ProcessAstNode& op, 
                         AstInterface::TraversalOrderType t = AstInterface::PreOrder); 
 
 class TransformAstTree
 {
  public:
-  virtual ~TransformAstTree() {};
   virtual bool operator()( AstInterface& fa, const AstNodePtr& n, 
                            AstNodePtr& result) = 0;
 };

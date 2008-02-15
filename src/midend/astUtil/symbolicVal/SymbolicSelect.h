@@ -8,12 +8,12 @@
 class SymbolicSelect : public SymbolicExpr
 {
   int opt;
-  std::string GetOPName() const { return ((opt < 0)? "Min" : "Max"); }
+  STD string GetOPName() const { return ((opt < 0)? "Min" : "Max"); }
   virtual SymOpType GetTermOP() const { return SYMOP_NIL; }
  public:
   SymbolicSelect(int t) : opt(t) {}
   SymbolicSelect( const SymbolicSelect& that) 
-     : SymbolicExpr(that), opt(that.opt) {}
+     : opt(that.opt), SymbolicExpr(that) {}
 
   SymbolicExpr* CloneExpr() const { return new SymbolicSelect(*this);  }
 
@@ -33,7 +33,7 @@ class SymbolicSelect : public SymbolicExpr
 
 
    AstNodePtr CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
-   {  assert(false);  return AstNodePtr(0); }
+   {  assert(false);  return AST_NULL; }
    AstNodePtr CodeGen(  AstInterface &fa ) const;
 };
 
@@ -44,15 +44,13 @@ class SelectApplicator : public OPApplicator
    virtual CompareRel Compare(const SymbolicVal& v1, const SymbolicVal& v2)
      { return ::CompareVal(v1,v2); }
 
-// virtual Boolean IsTop( const SymbolicTerm& v)
-   virtual int IsTop( const SymbolicTerm& v)
+   virtual bool IsTop( const SymbolicTerm& v)
      { 
        int val;
-       return OPApplicator::IsTop(v) || (v.IsConstInt(&val) && val*opt == NEG_INFTY);
+       return OPApplicator::IsTop(v) || (v.IsConstInt(val) && val*opt == NEG_INFTY);
      } 
 
-// Boolean SelectMerge(const SymbolicVal& v1, const SymbolicVal& v2,
-   int SelectMerge(const SymbolicVal& v1, const SymbolicVal& v2,
+   bool SelectMerge(const SymbolicVal& v1, const SymbolicVal& v2,
                          SymbolicVal& result)
     {
       switch (Compare(v1,v2)) {
@@ -71,15 +69,22 @@ class SelectApplicator : public OPApplicator
   SelectApplicator( int t) : opt(t) {}
   virtual SymOpType GetOpType() { return (opt < 0)? SYMOP_MIN : SYMOP_MAX; }
   SymbolicExpr* CreateExpr() { return  new SymbolicSelect(opt); }
-  int MergeConstInt( int v1, int v2)
-      { return ((v1-v2) * opt < 0)? v2 : v1; }
-//Boolean MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
-  int MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
+  bool MergeConstInt( int vu1, int vd1, int vu2, int vd2, int& r1, int& r2)
+      { 
+         if ((vu1/vd2 - vu2 / vd2) * opt < 0) {
+             r1 = vu2; r2 = vd2;
+         }
+         else {
+             r1 = vu1; r2 = vd1; 
+         }
+         return true;
+      }
+  bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
                                   SymbolicTerm& result)
     { SymbolicVal r;
       SymbolicSelect e(opt);
       if (SelectMerge(e.Term2Val(t1), e.Term2Val(t2), r)) {
-          result = SymbolicTerm(1,r);
+          result = SymbolicTerm(1,1,r);
           return true;
        }
        return false;
@@ -90,10 +95,8 @@ class SelectApplicatorWithBound : public SelectApplicator
 {
   MapObject<SymbolicVal, SymbolicBound>& func;
  protected:
-//Boolean GetLB( const SymbolicVal& v, int& result);
-  int GetLB( const SymbolicVal& v, int& result);
-//Boolean GetUB( const SymbolicVal& v, int& result);
-  int GetUB( const SymbolicVal& v, int& result);
+  bool GetLB( const SymbolicVal& v, int& result);
+  bool GetUB( const SymbolicVal& v, int& result);
   CompareRel Compare(const SymbolicVal& v1, const SymbolicVal& v2)
         { return CompareVal(v1,v2, &func); }
  public:

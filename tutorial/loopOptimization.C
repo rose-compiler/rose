@@ -6,27 +6,20 @@
 
 #include "rose.h"
 
+#include <AstInterface_ROSE.h>
 #include "LoopTransformInterface.h"
 #include "CommandOptions.h"
 
 using namespace std;
 
-class AssumeNoAlias : public AliasAnalysisInterface
-   {
-  // This class allows us to turn off the alias analysis and assume no pointer aliasing
-     public:
-          virtual bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
-             { return false; }
-   };
-
 int
 main ( int argc,  char * argv[] )
    {
-     vector<string> argvList(argv, argv + argc);
-     CmdOptions::GetInstance()->SetOptions(argvList);
-     SetLoopTransformOptions(argvList);
+     CmdOptions::GetInstance()->SetOptions(argc, argv);
+     SetLoopTransformOptions(argc, argv);
      AssumeNoAlias aliasInfo;
 
+     vector<string> argvList(argv, argv + argc);
      SgProject project ( argvList);
 
   // Loop over the number of files in the project
@@ -48,11 +41,12 @@ main ( int argc,  char * argv[] )
                     continue;
 
                SgBasicBlock *stmts = defn->get_body();
-               AstInterface fa(stmts);
+               AstInterfaceImpl faImpl(stmts);
+               AstInterface fa(&faImpl);
 
             // This will do as much fusion as possible (finer grained 
             // control over loop optimizations uses a different interface).
-               LoopTransformTraverse( fa, stmts, aliasInfo);
+               LoopTransformTraverse( fa, AstNodePtrImpl(stmts), aliasInfo);
 
             // JJW 10-29-2007 Adjust for iterator invalidation and possible
             // inserted statements

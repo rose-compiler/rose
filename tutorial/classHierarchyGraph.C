@@ -19,8 +19,8 @@ main( int argc, char * argv[] )
      ClassHierarchyWrapper hier( project );
 
      ClassHierarchy* classHier = hier.getClassHierarchyGraph();
-     GraphDotOutput outputHier (*classHier);
-     outputHier.writeToDOTFile ("classHier.dot");
+     GraphDotOutput<ClassHierarchy> outputHier (*classHier);
+     outputHier.writeToDOTFile ("classHier.dot", "Class Hierarchy");
 
      return 0;
    }

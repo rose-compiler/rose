@@ -1,0 +1,47 @@
+
+Files to copy: 
+
+/src/frontend/SageII/astFileIO/
+     StorageClassMemoryManangement.h
+     StorageClassMemoryManangement.C
+
+
+/src/ROSETTA/src
+  Makefile.am
+  builsStorageClasses.C
+  buildAstFileIO.C
+  grammar.h (if you made no changes to this file ...) 
+  terminal.h (if you made no changes to this file ...) 
+
+/src/ROSETTA/Grammar
+  Common.code (if you made no changes to this file ...) 
+   grammarAST_FileIoHeader.code
+   grammarAST_FileIoSource.code
+   grammarSourceOfIRNodesAstFileIOSupport.macro (newly introduced)
+   grammarStaticDataManagingClassHeader.macro   (newly introduced)
+   grammarStaticDataManagingClassStorageClassHeader.macro    (newly introduced)
+   grammarStaticDataManagingClassSource.macro    (newly introduced)
+
+
+/tests/roseTests/astFileIOTests/
+   astFileIO.C
+   astFileRead.C
+
+
+
+Tiny changes in: 
+ 
+/src/ROSETTA/src
+   grammar.C
+3678,3681d3677
+<   // JH (01/09/2006)
+<      char* includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
+<      includeHeaderString = GrammarString::stringConcatenate (includeHeaderString, includeHeaderAstFileIO);
+<
+3966c3962
+<      string constructorTakingStorageClassSourceFileName = string(getGrammarName()) + "ConstructorTakingStorageClass.C";
+---
+>      string constructorTakingStorageClassSourceFileName = "SourcesOfIRNodesAstFileIOSupport.C";
+
+
+

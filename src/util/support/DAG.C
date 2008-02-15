@@ -47,16 +47,8 @@ MoveEndPoint(Node *n, EdgeDirection dir)
    }
 }
 template <class Node, class Edge>
-// Boolean DAGEdge<Node,Edge>:: IsBackEdge() const
-int DAGEdge<Node,Edge>:: IsBackEdge() const
+bool DAGEdge<Node,Edge>:: IsBackEdge() const
 {
-// DQ (8/2/2005): This was a suggested fix that appeared to not be required 
-// the assert(false) was put in and is not required.
-// pmp070605  (suggested fix)
-// assert(false);
-// DAG<Node,Edge>* dag = EndPoint( DirectedEdgeInterface::EdgeOut)->GetGraph();
-// assert(dag->ordered);
-
    DAG<Node,Edge>* dag = EndPoint( DirectedEdgeInterface::EdgeOut)->GetGraph();
    assert(dag->ordered);
    return isBackEdge;

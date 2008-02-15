@@ -24,20 +24,23 @@ class TreeNodeImpl
  public:
   TreeNodeImpl() : parent(0), holder(0) {}
   virtual ~TreeNodeImpl() 
-    { for (Iterator p = ChildrenIterator(); !p.ReachEnd(); ++p) {
+    { for (iterator p = ChildrenIterator(); !p.ReachEnd(); ++p) {
          TreeNodeImpl<T>* n = (*p);
          n->holder = 0;
          delete n;
       }
       Unlink(); 
     }
-  typedef typename DoublyLinkedListWrap<T*>::Iterator Iterator;
-  typedef enum {AsFirstChild, AsLastChild, AsPrevSibling, AsNextSibling} LinkOption;
+  typedef typename DoublyLinkedListWrap<T*>::iterator iterator;
+  typedef typename DoublyLinkedListWrap<T*>::const_iterator const_iterator;
+
+  typedef enum {AsFirstChild,AsLastChild, AsPrevSibling, AsNextSibling} LinkOption;
 
   T* Parent() const { return parent; }
   T* FirstChild() const { return (ChildCount() > 0)? children.First()->GetEntry() : 0; }
   T* LastChild() const { return (ChildCount() > 0)? children.Last()->GetEntry() : 0; }
-  Iterator ChildrenIterator() const { return Iterator(children); }
+  iterator ChildrenIterator() { return iterator(children); }
+  const_iterator ChildrenIterator() const { return const_iterator(children); }
   T* NextSibling() const {  HolderType *h = (holder==0)? 0 : parent->children.Next(holder);
                             return (h != 0)? h->GetEntry() : 0; }
   T* PrevSibling() const { HolderType *h = (holder==0)? 0 : parent->children.Prev(holder);
@@ -64,31 +67,14 @@ class TreeNodeImpl
            assert(false);
        }
      }
-
-  virtual void write(std::ostream& out) const {}
-
-#if 0
-// DQ (9/4/2005): This is Peter's fix (I think)
-  void writeTree() const
-    { 
-      // pmp 09JUN05
-      //   I believe this is a bug; out is nowhere declared, so I assume that
-      //   this function has not been instantiated before
-      //   was: write(out);
-      //        for (Iterator p = ChildrenIterator(); !p.ReachEnd(); ++p)        
-      //          (*p)->write(out);
-      using std::cerr;
-      write(std::cerr);
-#else
-// DQ (9/4/2005): This is Qing's fix (I think) (I assume it is better since it adds the declaration of "out"
-  void writeTree(std::ostream& out) const
-    { write(out);
-#endif
-      for (Iterator p = ChildrenIterator(); !p.ReachEnd(); ++p) 
-         (*p)->write(std::cerr);
+  virtual void write(std::ostream& out) const {
+      for (const_iterator p = ChildrenIterator(); !p.ReachEnd(); ++p) 
+         (*p)->write(out);
       if (ChildCount() > 0) 
-        std::cerr << "endtree\n";
-    }
+        out << "endtree\n";
+  }
+  void write() const 
+    { write(std::cerr); }
 };
 
 template <class T>

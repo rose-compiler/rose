@@ -417,6 +417,11 @@ PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader
   \brief
 */
 
+//@{
+/*! @name Data type
+  \brief
+*/
+
 // from src/midend/astInlining/typeTraits.h
 // src/midend/astUtil/astInterface/AstInterface.h
 

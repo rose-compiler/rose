@@ -1,17 +1,9 @@
-#include <general.h>
-
 #include <Matrix.h>
 #include <SymbolicExpr.h>
 #include <SymbolicPlus.h>
 #include <SymbolicMultiply.h>
 #include <SymbolicSelect.h>
 #include <CommandOptions.h>
-
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
 
 #define COMPARE_MAX  10
 static int comparetime = 0;
@@ -42,7 +34,7 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       PlusApplicator op; 
       r = ApplyBinOP(op, v1, v2);
       if (DebugOp())
-         cerr << v1.ToString() << " + " << v2.ToString() << " = " << r.ToString() << endl;  
+         STD cerr << v1.toString() << " + " << v2.toString() << " = " << r.toString() << STD endl;  
       return r;
      }
   case SYMOP_MULTIPLY: 
@@ -50,30 +42,33 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       MultiplyApplicator op; 
       r = ApplyBinOP(op, v1, v2);
       if (DebugOp())
-         cerr << v1.ToString() << " * " << v2.ToString() << " = " << r.ToString() << endl;  
+         STD cerr << v1.toString() << " * " << v2.toString() << " = " << r.toString() << STD endl;  
       return r;
     }
   case SYMOP_MIN: 
       r = Min(v1,v2);
       if (DebugOp())
-         cerr << "Min( " << v1.ToString() << " , " << v2.ToString() << ") = " << r.ToString() << endl;  
+         STD cerr << "Min( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << STD endl;  
       return r;
   case SYMOP_MAX: return Max(v1, v2);
       r = Max(v1,v2);
       if (DebugOp())
-         cerr << "Max( " << v1.ToString() << " , " << v2.ToString() << ") = " << r.ToString() << endl;  
+         STD cerr << "Max( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << STD endl;  
       return r;
   case SYMOP_POW: 
      {
-      int val;
-      if (!v2.ToInt(val))
+      int val2;
+      int vu1, vd1;
+      if (!v2.isConstInt(val2))
          assert(false);
-      if (v1 == 1 || v2 == 1)
+      if (v1 == 1 || val2 == 1)
          r =  v1;
-      else
-         r = new SymbolicPow(v1, val);
+      else if (val2 == -1 && v1.isConstInt(vu1, vd1)) 
+         r = new SymbolicConst(vd1, vu1);
+      else   
+         r = new SymbolicPow(v1, val2);
       if (DebugOp())
-         cerr << "Pow( " << v1.ToString() << " , " << v2.ToString() << ") = " << r.ToString() << endl;  
+         STD cerr << "Pow( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << STD endl;  
       return r;
      }
   default:
@@ -81,8 +76,6 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
   }
 }
 
-SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2)
-         {  return ApplyBinOP(SYMOP_PLUS, v1, v2); }
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)
          {  return ApplyBinOP(SYMOP_MULTIPLY, v1, v2); }
 SymbolicVal operator / (const SymbolicVal &v1, const SymbolicVal &v2)
@@ -167,14 +160,11 @@ SymbolicVal Min( const SymbolicVal &v1, const SymbolicVal &v2,
               assert(0);
            }
          }
-SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2)
-         { return v1 + (-1 * v2); }
-SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
 
 class EQOperator : public SymbolicVisitor
 {
  protected:
-  Boolean result;
+  bool result;
   virtual void VisitConst( const SymbolicConst &v) { result = false; }
   virtual void VisitVar( const SymbolicVar &v) { result = false; }
   virtual void VisitFunction( const SymbolicFunction &v) { result = false; }
@@ -188,7 +178,7 @@ class ConstEQ : public EQOperator
   void VisitConst( const SymbolicConst &v) { result = (c == v); }
  public:
   ConstEQ( const SymbolicConst &v) : c(v) {}
-  Boolean operator ()(SymbolicVal v)
+  bool operator ()(SymbolicVal v)
        { result = false; v.Visit(this); return result; }
 };
 
@@ -198,7 +188,7 @@ class AstWrapEQ : public EQOperator
   void VisitAstWrap( const SymbolicAstWrap &v) { result = (c == v); }
  public:
   AstWrapEQ( const SymbolicAstWrap &v) : c(v) {}
-  Boolean operator ()(SymbolicVal v)
+  bool operator ()(SymbolicVal v)
        { result = false; v.Visit(this); return result; }
 };
 
@@ -208,7 +198,7 @@ class VarEQ : public EQOperator
   void VisitVar( const SymbolicVar &v) { result = (var == v); }
  public:
   VarEQ( const SymbolicVar &v) : var(v) {}
-  Boolean operator ()(SymbolicVal v)
+  bool operator ()(SymbolicVal v)
        { result = false; v.Visit(this); return result; }
 };
 
@@ -218,7 +208,7 @@ class FunctionEQ : public EQOperator
   void VisitFunction( const SymbolicFunction &v) { result = (var == v); }
  public:
   FunctionEQ( const SymbolicFunction &v) : var(v) {}
-  Boolean operator ()(SymbolicVal v)
+  bool operator ()(SymbolicVal v)
        { result = false; v.Visit(this); return result; }
 };
 
@@ -229,7 +219,7 @@ class ExprEQ : public EQOperator
       { result = (exp == v); }
  public:
   ExprEQ( const SymbolicExpr &v) : exp(v) {}
-  Boolean operator ()(SymbolicVal v)
+  bool operator ()(SymbolicVal v)
        { result = false; v.Visit(this); return result; }
 };
 
@@ -242,11 +232,11 @@ class ValEQ : public EQOperator
   void VisitExpr( const  SymbolicExpr& v) { result = ExprEQ(v)(v2); }
   void VisitAstWrap( const SymbolicAstWrap& v) { result = AstWrapEQ(v)(v2); }
  public:
-  Boolean operator()(const SymbolicVal &_v1, const SymbolicVal &_v2)
+  bool operator()(const SymbolicVal &_v1, const SymbolicVal &_v2)
    { result = false; v2 = _v2; _v1.Visit(this); return result; } 
 };
 
-Boolean operator == (const SymbolicVal &v1, const SymbolicVal& v2)
+bool Equal(const SymbolicVal &v1, const SymbolicVal& v2)
      { return v1.IsSame(v2)? true : ValEQ()(v1,v2); }
 
 class CompareOperator : public SymbolicVisitor
@@ -273,17 +263,17 @@ class CompareOperator : public SymbolicVisitor
        result = REL_UNKNOWN;
   }
 
-   void Default( const SymbolicVal &v1, const SymbolicVal &v2)
+   void Default0( const SymbolicVal &v1, const SymbolicVal &v2)
    {  
      Default1(v1,v2);
      if (DebugCompareVal())
-         cerr << " in CompareOperator::Default \n";
+         STD cerr << " in CompareOperator::Default \n";
      if (result == REL_UNKNOWN) {
        int tmp = comparetime;
        SymbolicVal diff = v1 - v2;
        comparetime = tmp;
        if (diff.GetValType() == VAL_CONST) {
-          int diffval = atoi( diff.ToString().c_str());
+          int diffval = atoi( diff.toString().c_str());
           if (diffval  < 0) 
               result = REL_LT;
           else if (diffval > 0)
@@ -319,7 +309,7 @@ void ExprTermCompare( const SymbolicExpr &e1, const SymbolicVal& v2,
                        MapObject<SymbolicVal,SymbolicBound>* f)
 {  
    if (DebugCompareVal())
-       cerr << " in ExprTermCompare1 \n";
+       STD cerr << " in ExprTermCompare1 \n";
    int i = 0;
    for (SymbolicExpr::OpdIterator p1 = e1.GetOpdIterator();
         !p1.ReachEnd(); ++p1,++i) {
@@ -333,7 +323,7 @@ void ExprTermCompare( const SymbolicExpr &e1, const SymbolicExpr &e2,
                        MapObject<SymbolicVal,SymbolicBound>* f)
 { 
    if (DebugCompareVal())
-       cerr << " in ExprTermCompare2 \n";
+       STD cerr << " in ExprTermCompare2 \n";
    int i = 0;
    for (SymbolicExpr::OpdIterator p1 = e1.GetOpdIterator();
         !p1.ReachEnd(); ++p1,++i) {
@@ -349,8 +339,8 @@ void ExprTermCompare( const SymbolicExpr &e1, const SymbolicExpr &e2,
 unsigned CountSrcRel( Matrix<CompareRel> r, int (*Count)(CompareRel r))
    {
       unsigned c1 = 0;
-      for (unsigned int i1 = 0; i1 < r.rows(); ++i1)  {
-         for ( unsigned int i2 = 0; i2 < r.cols(); ++i2) {
+      for (int i1 = 0; i1 < r.rows(); ++i1)  {
+         for ( int i2 = 0; i2 < r.cols(); ++i2) {
             if ( Count( r(i1,i2) ) ) {
                ++c1;
                break;
@@ -363,8 +353,8 @@ unsigned CountSrcRel( Matrix<CompareRel> r, int (*Count)(CompareRel r))
 unsigned CountSinkRel( Matrix<CompareRel> r, int (*Count)(CompareRel r))
    {
       unsigned c1 = 0;
-      for (unsigned int i1 = 0; i1 < r.cols(); ++i1)  {
-         for ( unsigned int i2 = 0; i2 < r.rows(); ++i2) {
+      for (int i1 = 0; i1 < r.cols(); ++i1)  {
+         for ( int i2 = 0; i2 < r.rows(); ++i2) {
             if ( Count( r(i2, i1) )) {
                ++c1;
                break;
@@ -379,11 +369,11 @@ class SelectCompare  : public CompareOperator
   SymbolicVal v1, v2;
   const SymbolicExpr& e1;
 
-  void Default( const SymbolicVal &v2)
+  void Default0()
    {
-                  Matrix<CompareRel> rel(e1.NumOfOpds(),1,0);
-                  ExprTermCompare(e1,v2,rel,GetFunc()); 
-                  MatchCompare(rel,1);
+      Matrix<CompareRel> rel(e1.NumOfOpds(),1,0);
+      ExprTermCompare(e1,v2,rel,GetFunc()); 
+      MatchCompare(rel,1);
        
    }
   void MatchCompare(Matrix<CompareRel> &rel, int c2)
@@ -394,9 +384,9 @@ class SelectCompare  : public CompareOperator
                          result = REL_LT;
                      else if (CountSrcRel( rel, CountLE) == e1.NumOfOpds()) 
                          result = REL_LE;
-                     else if ( CountSinkRel( rel, CountGT) == (unsigned int)c2)
+                     else if ( CountSinkRel( rel, CountGT) == c2)
                          result = REL_GT; 
-                     else if ( CountSinkRel( rel, CountGE) == (unsigned int)c2)
+                     else if ( CountSinkRel( rel, CountGE) == c2)
                          result = REL_GE; 
                   }
                   else if (t1 == SYMOP_MIN) {
@@ -404,23 +394,23 @@ class SelectCompare  : public CompareOperator
                          result= REL_GT;
                      else if (CountSrcRel( rel, CountGE) == e1.NumOfOpds())
                          result= REL_GE;
-                     else if ( CountSinkRel( rel, CountLT) == (unsigned int)c2)
+                     else if ( CountSinkRel( rel, CountLT) == c2)
                          result = REL_LT;
-                     else if ( CountSinkRel( rel, CountLE) == (unsigned int)c2)
+                     else if ( CountSinkRel( rel, CountLE) == c2)
                          result = REL_LE;
                   }
   }
   
 
-  virtual void VisitConst( const SymbolicConst &v) { Default(v2); }
-  virtual void VisitAstWrap( const SymbolicAstWrap &v) { Default(v2); }
-  virtual void VisitVar( const SymbolicVar &v) { Default(v2); }
-  virtual void VisitFunction( const SymbolicFunction &v) { Default(v2); }
+  virtual void VisitConst( const SymbolicConst &v) { Default0(); }
+  virtual void VisitAstWrap( const SymbolicAstWrap &v) { Default0(); }
+  virtual void VisitVar( const SymbolicVar &v) { Default0(); }
+  virtual void VisitFunction( const SymbolicFunction &v) { Default0(); }
   virtual void VisitExpr( const  SymbolicExpr& e2) 
            {  SymOpType t1 = e1.GetOpType(), t2 = e2.GetOpType(); 
               unsigned c1 = e1.NumOfOpds(), c2 = e2.NumOfOpds();
               if (t2 == SYMOP_MULTIPLY || t2 == SYMOP_PLUS )
-                     Default(v2); 
+                     Default0(); 
               else if (t1 == t2) {
                   Matrix<CompareRel> rel(c1,c2,0);
                   ExprTermCompare(e1,e2,rel,GetFunc()); 
@@ -440,11 +430,11 @@ class SelectCompare  : public CompareOperator
                      if (CountGT(r))
                          ++gt;
                  } 
-                 if ((unsigned int)gt == e2.NumOfOpds()) 
+                 if (gt == e2.NumOfOpds()) 
                       result = REL_GT;
                  else if (lt > 0)
                        result = REL_LT;
-                 else if ((unsigned int)ge == e2.NumOfOpds()) 
+                 else if (ge == e2.NumOfOpds()) 
                       result = REL_GE;
                  else if (le > 0)
                        result = REL_LE;
@@ -458,7 +448,7 @@ class SelectCompare  : public CompareOperator
  public:
   SelectCompare( const SymbolicVal& _v1, const SymbolicExpr& _e1, 
                  MapObject<SymbolicVal,SymbolicBound>* _func = 0)
-     : CompareOperator(_func), v1(_v1), e1(_e1) {}
+     : v1(_v1), e1(_e1), CompareOperator(_func) {}
   CompareRel operator() ( const SymbolicVal &_v2) 
   { result = REL_UNKNOWN; v2 = _v2;
     v2.Visit(this); return result; }
@@ -469,23 +459,23 @@ class ValCompare  : public CompareOperator
   SymbolicVal v1, v2;
   int index;
 
-  void Default() {
+  void Default0() {
       if (index == 1) {
          index = 2; 
          v2.Visit(this);
       }
       else {
-        CompareOperator::Default(v1,v2);
+        CompareOperator::Default0(v1,v2);
       }
   }
-  void VisitConst( const SymbolicConst &v) { Default(); }
-  void VisitVar( const SymbolicVar &v) { Default(); }
-  void VisitFunction( const SymbolicFunction &v) { Default(); }
+  void VisitConst( const SymbolicConst &v) { Default0(); }
+  void VisitVar( const SymbolicVar &v) { Default0(); }
+  void VisitFunction( const SymbolicFunction &v) { Default0(); }
   void VisitExpr( const  SymbolicExpr& v) 
           { switch (v.GetOpType()) { 
              case SYMOP_MULTIPLY:
              case SYMOP_PLUS:
-                   Default(); break;
+                   Default0(); break;
              case SYMOP_MIN:
              case SYMOP_MAX:
                    Default1(v1,v2);
@@ -513,7 +503,7 @@ CompareRel CompareVal(const SymbolicVal &v1, const SymbolicVal &v2,
    { 
      assert( !v1.IsNIL() && !v2.IsNIL());
      if (DebugCompareVal())
-         cerr << "comparing " << v1.ToString() << " with " << v2.ToString() << " under " <<  f << endl;
+         STD cerr << "comparing " << v1.toString() << " with " << v2.toString() << " under " <<  f << STD endl;
      comparetime = 0;
      return CompareValHelp(v1,v2,f);
    }
@@ -525,7 +515,7 @@ CompareRel CompareValHelp(const SymbolicVal &v1, const SymbolicVal &v2,
     if (++comparetime < COMPARE_MAX)
         r = ValCompare(f)(v1,v2); 
     if (DebugCompareVal())
-         cerr << v1.ToString() << RelToString(r) << v2.ToString() << " under " << f << endl;
+         STD cerr << v1.toString() << RelToString(r) << v2.toString() << " under " << f << STD endl;
      return r;
    }
 
@@ -550,42 +540,16 @@ CompareRel Reverse( CompareRel rel)
   }
 }
 
-Boolean operator <= (const SymbolicVal &v1, const SymbolicVal &v2)
-{
-  switch (CompareVal(v1,v2)) {
-  case REL_EQ:
-  case REL_LT:
-  case REL_LE:
-    return true;
-  default:
-    return false;
-  }
-}
-
-Boolean operator >= (const SymbolicVal &v1, const SymbolicVal &v2)
-{
-  switch (CompareVal(v1,v2)) {
-  case REL_EQ:
-  case REL_GT:
-  case REL_GE:
-    return true;
-  default:
-    return false;
-  }
-}
-
-Boolean operator < (const SymbolicVal &v1, const SymbolicVal& v2)
+bool operator < (const SymbolicVal &v1, const SymbolicVal& v2)
 { return CompareVal(v1,v2) == REL_LT; }
 
-Boolean operator > (const SymbolicVal &v1, const SymbolicVal& v2)
+bool operator > (const SymbolicVal &v1, const SymbolicVal& v2)
 { return CompareVal(v1,v2) == REL_GT; }
 
-Boolean operator != (const SymbolicVal &v1, const SymbolicVal& v2)
-{ return !(v1 == v2); }
 
-Boolean operator ==( const SymbolicBound& b1, const SymbolicBound& b2)
+bool operator ==( const SymbolicBound& b1, const SymbolicBound& b2)
      { return b1.lb == b2.lb && b1.ub == b2.ub; }
-Boolean operator != (const SymbolicBound &b1, const SymbolicBound& b2)
+bool operator != (const SymbolicBound &b1, const SymbolicBound& b2)
      { return b1.lb != b2.lb || b1.ub != b2.ub; }
 SymbolicBound& operator &= ( SymbolicBound& b1, const SymbolicBound& b2)
     { b1.Intersect(b2); return b1; }
@@ -597,44 +561,44 @@ class SplitFraction : public SymbolicVisitor
   SymbolicVal *inp, *frp;
   bool hasfrac;
  public:
-  virtual void Default(const SymbolicVal& v)
+  virtual void Default0(const SymbolicVal& v)
    { if (inp != 0) *inp = v; }
   virtual void VisitFunction( const SymbolicFunction &v)  
    {
      bool _hasfrac = hasfrac;
-     SymbolicVal op = v.GetOp();
-     if (op.ToString() == "pow" && v.GetArg(1) < 0) {
+     STD string op = v.GetOp();
+     if (op == "pow" && v.last_arg() < 0) {
          _hasfrac = true;
          if (frp != 0) *frp = v;  
      }
      else {
-         int i = 0, num = v.NumOfArgs();
-         for ( ; i < num; ++i) {
-            if (operator()(v.GetArg(i), inp, frp)) {
+         SymbolicFunction::const_iterator p = v.args_begin();
+         for (  ; p != v.args_end(); ++p) {
+            if (operator()(*p, inp, frp)) {
                 _hasfrac = true;
                  break;  
             }
          }
-         if (i == num) {
+         if (p == v.args_end()) {
             if (inp != 0) *inp = v;
          }
          else {
             if (inp == 0 && frp == 0)
                  return;
             SymbolicFunction::Arguments inargs, frargs;
-            int j = 0; 
-            for ( ; j < i ; ++j) {
+            SymbolicFunction::const_iterator q = v.args_begin(); 
+            for ( ; q != p ; ++q) {
                if (inp != 0)
-                  inargs.push_back(v.GetArg(j));
+                  inargs.push_back(*q);
                if (frp != 0)
-                  frargs.push_back(v.GetArg(j));
+                  frargs.push_back(*q);
             }
             if (inp != 0)
                inargs.push_back(*inp);
             if (frp != 0)
                frargs.push_back(*frp);
-            for (++j; j < num; ++j) {
-              SymbolicVal cur = v.GetArg(j);
+            for (++q; q != v.args_end(); ++q) {
+              SymbolicVal cur = *q;
               if (operator()(v, inp, frp)) {
                 if (inp != 0)
                    inargs.push_back(*inp);
@@ -649,9 +613,9 @@ class SplitFraction : public SymbolicVisitor
               }
             }   
             if (inp != 0) 
-                *inp = new SymbolicFunction(op, inargs);
+                *inp = v.cloneFunction(inargs);
             if (frp != 0)
-                *frp = new SymbolicFunction(op, frargs);
+                *frp = v.cloneFunction(frargs);
          }
      }
      hasfrac = _hasfrac;
@@ -709,7 +673,7 @@ class SplitFraction : public SymbolicVisitor
      hasfrac = _hasfrac;
    }
 
-  Boolean operator()(const SymbolicVal& v, SymbolicVal* i, SymbolicVal* f)
+  bool operator()(const SymbolicVal& v, SymbolicVal* i, SymbolicVal* f)
    {
       inp = i; 
       frp = f;
@@ -721,7 +685,7 @@ class SplitFraction : public SymbolicVisitor
    }
 };
 
-Boolean HasFraction(const SymbolicVal& v, SymbolicVal* integral, 
+bool HasFraction(const SymbolicVal& v, SymbolicVal* integral, 
                     SymbolicVal* frac)
 {
    return SplitFraction()(v, integral, frac);

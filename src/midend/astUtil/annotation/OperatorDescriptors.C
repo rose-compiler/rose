@@ -1,7 +1,5 @@
-#include <general.h>
 #include <OperatorDescriptors.h>
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 extern bool DebugAnnot();
@@ -11,8 +9,8 @@ ReplaceParams ( const ParamDescriptor& decl, AstInterface::AstNodeList& args,
 {
   assert(decl.size() == args.size());
   int index = 0;
-  for (AstInterface::AstNodeListIterator p1 = AstInterface::GetAstNodeListIterator(args);
-       !p1.ReachEnd(); ++p1, ++index) {
+  for (AstInterface::AstNodeList::iterator p1 = args.begin();
+       p1 != args.end(); ++p1, ++index) {
     AstNodePtr curAst = *p1;
     string curpar = decl[index];
     SymbolicAstWrap curarg(curAst, codegen);
@@ -40,7 +38,7 @@ void ReplaceParams:: VisitVar( const SymbolicVar &var)
 {
   string varname = var.GetVarName();
   SymbolicAstWrap ast = find(varname);
-  if (ast.get_ast() != 0) 
+  if (ast.get_ast() != AST_NULL) 
     cur = ast;
 }
 
@@ -49,49 +47,47 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
   v.replace_val( *this);
 }
 
-string OperatorDeclaration:: get_signature( const AstNodePtr& opDef)
+bool OperatorDeclaration::unique = false; 
+string OperatorDeclaration:: 
+get_signiture( AstInterface& fa, const STD string& fname,
+                                    const AstInterface::AstTypeList& plist)
 {
-  AstNodePtr decl = AstInterface::GetFunctionDecl(opDef);
-  if (decl == 0) {
-     return "unknown";
-  }
-  string r;
-  AstInterface::AstTypeList plist;
-  AstInterface::IsFunctionDecl(decl, &r, 0, &plist);
-  for ( AstInterface::AstTypeListIterator p 
-           = AstInterface::GetAstTypeListIterator(plist);
-        !p.ReachEnd(); ++p) {
-    AstNodeType t = *p;
-    string name;
-    AstInterface::GetTypeInfo( t, &name); 
-    r = r + "_" + name;
-  }
+  STD string r = fname;
+  if (!unique)
+    for ( AstInterface::AstTypeList::const_iterator p = plist.begin();
+          p != plist.end();  ++p) {
+      AstNodeType t = *p;
+      string name;
+      fa.GetTypeInfo( t, &name); 
+      r = r + "_" + name;
+    }
   return r;
 }
 
 OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
    {
-      signature = read_id(in);
+      signiture = read_id(in);
 
       string classname, funcname;
 
       char c = peek_ch(in);
       if (c == ':') {
-        classname = signature;
+        classname = signiture;
         read_ch(in, ':');
         read_ch(in, ':');
-        signature = signature + "::";
+        signiture = signiture + "::";
         c = peek_ch(in);
       }
       while ( in.good() && c != '(') {
          read_ch(in,c);
-         signature.push_back(c);
+         signiture.push_back(c);
          funcname.push_back(c);
          c = peek_ch(in);
       }
 
-      if (signature.rfind(":operator") == signature.size() - 9) {
-         signature += "()";
+      char* opstart = strrchr(signiture.c_str(), ':');
+      if (opstart != 0 && string(opstart+1) == "operator") {
+         signiture = signiture + "()";
          read_ch(in,'(');
          read_ch(in,')');
       }
@@ -100,19 +96,20 @@ OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
       int index = 0;
       if (classname != "" && classname != funcname) {
         index = 1;
-        pars.add_param( signature, "this");
+        pars.add_param( signiture, "this");
       }
       pars.read(in);
       for (unsigned i = index; i < pars.num_of_params(); ++i) {
          string partype = pars.get_param_type(i);
-         signature = signature + "_" + partype;
+         if (!unique)
+            signiture = signiture + "_" + partype;
       }
       return *this;
    }
 
 void OperatorDeclaration:: write( ostream& out) const
    {
-      out << get_signature();
+      out << get_signiture();
       pars.write(out);
    }
 
@@ -120,7 +117,7 @@ bool OperatorSideEffectDescriptor::read( istream& in, const OperatorDeclaration&
 { 
   param_num = 0;
   if (BaseClass::read(in, op)) {
-    for (unsigned int i = 0; i < decl.num_of_params(); ++i) {
+    for (int i = 0; i < decl.num_of_params(); ++i) {
       if (contain_parameter(i))
 	++param_num;
     }
@@ -137,7 +134,7 @@ get_side_effect( AstInterface& fa,
   for (OperatorSideEffectDescriptor::const_iterator p = begin(); p != end(); ++p) {
       string varname = *p;
       AstNodePtr arg = paramMap.find(varname).get_ast();
-      if (arg != 0) {
+      if (arg != AST_NULL) {
         collect( arg);
       }
       else {

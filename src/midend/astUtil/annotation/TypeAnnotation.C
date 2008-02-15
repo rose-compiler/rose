@@ -1,7 +1,4 @@
-#include <general.h>
-
 #include <TypeAnnotation.h>
-#include <CPPAstInterface.h>
 #include <AnnotExpr.h>
 #include <sstream>
 #include <list>
@@ -99,79 +96,24 @@ bool TypeCollection<Descriptor>::
      }
 template <class Descriptor>
 bool TypeCollection<Descriptor>:: 
-  known_type( const AstNodePtr& exp, Descriptor* desc) const
+  known_type( AstInterface& fa, const AstNodePtr& exp, Descriptor* desc) const
     {
       AstNodeType type;
-      if (!AstInterfaceBase::IsExpression(exp, &type))
+      if (fa.IsExpression(exp, &type)==AST_NULL)
          return false;
-      string tname = AstInterfaceBase::GetTypeName(type);
+      STD string tname;
+      fa.GetTypeInfo(type, 0, &tname);
       return known_type( tname, desc);
+
     }
 template <class Descriptor>
 bool TypeCollection<Descriptor>:: 
-  known_type( const AstNodeType& type, Descriptor* desc) const
+  known_type( AstInterface& fa, const AstNodeType& type, Descriptor* desc) const
     {
-      string tname = AstInterfaceBase::GetTypeName(type);
+      STD string tname;
+      fa.GetTypeInfo(type, 0, &tname);
       return known_type( tname, desc);
     }
-template <class Descriptor>
-string TypeCollection<Descriptor>::
-is_known_member_function( const SymbolicVal& exp, AstNodePtr* objp,
-                        SymbolicFunction::Arguments* argsp , Descriptor* descp )
-{
- SymbolicFunction r1, r2;
- if (!ToSymbolicFunction()(exp, r1))
-      return "";
- if (!ToSymbolicFunction()(r1.GetOp(), r2) || r2.GetOp().ToString() != "." || r2.NumOfArgs() != 2)
-      return "";
- AstNodePtr obj = r2.GetArg(0).ToAst();
- if (obj == 0 || !known_type(obj, descp))
-     return "";
- if (objp != 0)
-    *objp = obj;
- if (argsp != 0)
-    *argsp = r1.GetArgs();
- return r2.GetArg(1).ToString();
-}
-
-template <class Descriptor>
-string TypeCollection<Descriptor>::
-is_known_member_function( const AstNodePtr& exp,
-			  AstNodePtr* objp, AstInterface::AstNodeList* args,
-			  Descriptor* desc)
-{
-  AstNodePtr func, obj;
-  if (!CPPAstInterface::IsMemberAccess( exp, &obj, &func) && 
-     !CPPAstInterface::IsMemberFunctionCall(exp, &obj, &func, 0, args))
-     return "";
-  if (obj == 0)
-    return "";
-  if (known_type( obj, desc)) {
-    if (objp != 0)
-        *objp = obj;
-    return AstInterface::GetFunctionName(func);
-  }
-  return "";
-}
-
-template <class Descriptor>
-SymbolicVal TypeCollection<Descriptor>::
-create_known_member_function( const AstNodePtr& obj, const string& memname,
-                                     const SymbolicFunction::Arguments& args)
-{
-  SymbolicDotExp func(new SymbolicAstWrap(obj), new SymbolicConst(memname, "memberfunction") );
-  return SymbolicFunction( func, args);
-}
-
-template <class Descriptor>
-AstNodePtr TypeCollection<Descriptor>::
-create_known_member_function( AstInterface& fa, const AstNodePtr& obj, const string& memname,
-                                   const AstInterface::AstNodeList& args)
-{
-  SymbolicDotExp op(new SymbolicAstWrap(obj), new SymbolicConst(memname, "memberfunction") );
-  AstNodePtr func = op.CodeGen(fa);
-  return fa.CreateFunctionCall( func, args);
-}
 
 template <class Descriptor>
 void TypeAnnotCollection<Descriptor>:: 

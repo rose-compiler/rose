@@ -7,14 +7,10 @@
 
 class UF_elem 
 {
-// DQ (9/25/2007): Made this public to permit use of stronger STL checking using -D_GLIBCXX_CONCEPT_CHECKS
- public:
    void operator = (const UF_elem& that) {}
-
  protected:
    UF_elem *p_group;
    unsigned size;
-
  public:
    UF_elem () : p_group(this), size(1) {}
    UF_elem (const UF_elem& that)  // no copying, can only modify using union_with 

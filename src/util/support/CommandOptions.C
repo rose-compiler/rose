@@ -1,8 +1,4 @@
-#include <general.h>
 #include <CommandOptions.h>
-#include <iostream>
-
-using namespace std;
 
 CmdOptions* CmdOptions::inst = 0;
 CmdOptions* CmdOptions::GetInstance()
@@ -12,21 +8,22 @@ CmdOptions* CmdOptions::GetInstance()
   return inst;
 } 
 
-size_t CmdOptions:: HasOption( const string& opt) const
+void CmdOptions::SetOptions  (int argc, char* argv[])
+   {
+     for (int i = 1; i < argc; ++i) {
+       cmd = cmd + " " + argv[i];
+       if ( argv[i] == 0)
+           continue;
+     }
+     cmd = cmd + " ";
+  }
+
+const char* CmdOptions:: HasOption( const STD string& opt)
 {
-// DQ (1/16/2008): Brian White ask that this output be removed!
-// cerr << "Searching for option " << opt << endl;
-  assert (cmd);
-  vector<string>::const_iterator i =
-    std::find(cmd->begin(), cmd->end(), opt);
-  if (i == cmd->end()) {
-// DQ (1/16/2008): Brian White ask that this output be removed!
- // cerr << "Not found" << endl;
-    return 0;
-  } else {
-// DQ (1/16/2008): Brian White ask that this output be removed!
-//  cerr << "Found at position " << i - cmd->begin() << endl;
-    return i - cmd->begin() + 1;
+  const char* p = STD strstr(cmd.c_str(), opt.c_str()); 
+  if (p != 0 && *(p+opt.size()) == ' ') {
+      return p;
    }
+  return 0;
 }
 

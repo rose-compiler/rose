@@ -1,21 +1,11 @@
-#include <general.h>
-
-#include <CFGImpl.h>
+#include <CFG.h>
 #include <PtrMap.h>
 #include <ProcessAstTree.h>
 #include <CommandOptions.h>
-#include <iostream>
-#include "rose.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
-
-// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
-#define Boolean int
-
-bool debug_cfg();
 
 #ifndef TEMPLATE_ONLY
+
 bool debug_cfg()
 {
   static int r = 0;
@@ -27,10 +17,12 @@ bool debug_cfg()
   }
   return r == 1;
 }
-#endif
 
-#ifndef TEMPLATE_ONLY
-string CFGConfig::EdgeType2String( EdgeType e)
+#else
+
+bool debug_cfg();
+
+inline STD string CFGConfig::EdgeType2String( EdgeType e)
 {
   switch (e) {
   case COND_TRUE: return "true";
@@ -40,31 +32,27 @@ string CFGConfig::EdgeType2String( EdgeType e)
      assert(false);
   }
 }
-#endif
 
-template <class Node, class Edge>
+template <class Node>
 class BuildCFGTraverse : public ProcessAstTree
 {
  public:
-  BuildCFGTraverse( BuildCFGConfig<Node,Edge>& g) : graph(g), node(0), stmtnum(0) {}
+  BuildCFGTraverse( BuildCFGConfig<Node>& g) : graph(g), node(0), stmtnum(0) {}
   void operator()(  AstInterface& fa, const AstNodePtr& head )
      { 
        ProcessAstTree::operator()(fa, head);
      }
-// DQ (1/28/2006): Removed const function parameter 
-// (suggested by Michelle Strout as part of compilation on 64 bit Opteron processor)
-// void operator() ( AstInterface& fa, const AstInterface::AstNodeList& stmts)
-   void operator() ( AstInterface& fa, AstInterface::AstNodeList& stmts)
+  void operator() ( AstInterface& fa, const AstInterface::AstNodeList& stmts)
      {
-       for (AstInterface::AstNodeListIterator p = fa.GetAstNodeListIterator(stmts);
-            !p.ReachEnd(); ++p) {
+       for (AstInterface::AstNodeList::const_iterator p = stmts.begin();
+            p != stmts.end(); ++p) {
           operator()(fa, *p);
        }
      }
 
 
  private:
-  BuildCFGConfig<Node,Edge>& graph;
+  BuildCFGConfig<Node>& graph;
   Node* node; 
   unsigned stmtnum;
 
@@ -78,21 +66,21 @@ class BuildCFGTraverse : public ProcessAstTree
 
   bool IsBodyEmpty( AstInterface&fa, const AstNodePtr& s)
   {
-    if (s == 0)
+    if (s == AST_NULL)
         return true;
-    AstNodePtr first = 0;
-    if (fa.IsBasicBlock(s) && (first = fa.GetBasicBlockFirstStmt(s)) == 0) {
+    AstNodePtr first;
+    if (fa.IsBlock(s) && (first = fa.GetBlockFirstStmt(s)) == AST_NULL) {
       if (debug_cfg())
-         cerr << "block " << fa.AstToString(s) << " is empty " << endl;
+         STD cerr << "block " << AstToString(s) << " is empty " << STD endl;
       return true;
     }
     else {
       if (debug_cfg()) {
-         cerr << "block " << fa.AstToString(s) << " is not empty " ;
-         if (first != 0) 
-            cerr << "first statement: " << fa.AstToString(first) << endl;
+         STD cerr << "block " << AstToString(s) << " is not empty " ;
+         if (first != AST_NULL) 
+            STD cerr << "first statement: " << AstToString(first) << STD endl;
          else
-            cerr << endl;
+            STD cerr << STD endl;
       }
     }
     return false; 
@@ -102,9 +90,9 @@ class BuildCFGTraverse : public ProcessAstTree
    {
       switch (t) {
       case EXIT:
-       return exitMap.Map(s);
+       return exitMap.Map(s.get_ptr());
       case START:
-        return startMap.Map(s);
+        return startMap.Map(s.get_ptr());
       } 
       assert(false);
       return 0;
@@ -112,125 +100,106 @@ class BuildCFGTraverse : public ProcessAstTree
   void SetStmtNode( const AstNodePtr& s, Node* n, MapType t)
    {
       if (debug_cfg()) {
-         cerr << "mapping stmt " << ((t == START)? "START" : "EXIT");
-         cerr << AstInterface::AstToString(s) << " to " << n << endl;
+         STD cerr << "mapping stmt " << ((t == START)? "START" : "EXIT");
+         STD cerr << AstToString(s) << " to " << n << STD endl;
       }
       switch (t) {
       case EXIT:
-         exitMap.InsertMapping(s, n); break;
+         exitMap.InsertMapping(s.get_ptr(), n); break;
          break;
       case START:
-         startMap.InsertMapping(s, n);
+         startMap.InsertMapping(s.get_ptr(), n);
          break;
       default:
          assert(false);
       };
    }
       // map s to a CFG node: create a new one if not already mapped 
-  Node* MapStmt( const AstNodePtr& s, MapType t, bool add = false) 
+  Node* MapStmt( AstInterface& fa, const AstNodePtr& s, MapType t, bool add = false) 
    {
-     // printf("In MapStmt %p (%s) on map %s add=%s\n", (SgNode*)s, s->class_name().c_str(), (t == START ? "START" : "END"), (add ? "true" : "false"));
-     assert(s != 0);
+     assert(s != AST_NULL);
      Node *n = GetStmtNode(s,t);
      if (n != 0) 
          return n;
          
       n = graph.CreateNode();
       if (debug_cfg()) {
-         cerr << " create node : " << n << endl; 
+         STD cerr << " create node : " << n << STD endl; 
       }
       if (add) {
           assert ( t==START);
-           AddStmt(n, s);
+           AddStmt(fa, n, s);
           SetStmtNode( s, n, START);
        }
        else
          SetStmtNode(s,n,t);
      return n;
    }
-  Node* AddStmt( Node* n, const AstNodePtr& s) // add s to the node n
+  Node* AddStmt( AstInterface& fa, Node* n, const AstNodePtr& s) // add s to the node n
     { 
-       assert(s != 0 && n != 0);
-
-       // printf ("In AddStmt(%s) \n",s->class_name().c_str());
-       if (AstInterface::IsBasicBlock(s)) {
-
-       // printf ("s->class_name() = %s \n",s->class_name().c_str());
-
-          AstInterface::AstNodeList l = AstInterface::GetBasicBlockStmtList(s);
-
-       // DQ (3/16/2006): If the SgForStatment has an empty SgForInitStatement then "graph.AddNodeStmt(n,*p);" is never called
-          ROSE_ASSERT(l.size() > 0);
-
-          for (AstInterface::AstNodeListIterator p = AstInterface::GetAstNodeListIterator(l);
-               !p.ReachEnd(); ++p) {
+       assert(s != AST_NULL && n != 0);
+       if (fa.IsBlock(s)) {
+          AstInterface::AstNodeList l = fa.GetBlockStmtList(s);
+          for (AstInterface::AstNodeList::const_iterator p = l.begin();
+               p != l.end(); ++p) {
               graph.AddNodeStmt(n,*p);
           }
        }
        else
           graph.AddNodeStmt(n, s); 
-
        if (debug_cfg()) {
-          cerr << " add stmt " << AstInterface::AstToString(s);
-          cerr << " to node " << n << endl;
+          STD cerr << " add stmt " << AstToString(s);
+          STD cerr << " to node " << n << STD endl;
        }
-
        if (node == n)
           ++stmtnum;
-
        SetStmtNode(s,n,START);
-
        return n;
     }
-
   void AddBranch( Node *cur, Node* dest, CFGConfig::EdgeType val)
     { 
        assert(cur != 0 && dest != 0);
-       if (cur == dest) {
-          assert(val == CFGConfig::ALWAYS);
-       }
-       else {
-          graph.CreateEdge(cur, dest, val);
-          if (debug_cfg()) 
-             cerr << "add " << CFGConfig::EdgeType2String(val) << " edge from " << cur << " to " << dest << endl;
-       }
+       if (cur == dest && val == CFGConfig::ALWAYS)
+          return;
+       graph.CreateEdge(cur, dest, val);
+       if (debug_cfg()) 
+             STD cerr << "add " << CFGConfig::EdgeType2String(val) << " edge from " << cur << " to " << dest << STD endl;
     }
 
 
   bool IsCurNodeEmpty() const { return !stmtnum; }
-
   Node* GetCurNode( bool createnew = true)  // return the current CFGConfig::node 
    {
       if (node == 0 && createnew) {
         node = graph.CreateNode();
         if (debug_cfg()) 
-           cerr << "create node in GetCurNode " << node << endl;
+           STD cerr << "create node in GetCurNode " << node << STD endl;
         stmtnum = 0;
       }
       if (debug_cfg()) 
-        cerr << "current node : " << node << endl;
+        STD cerr << "current node : " << node << STD endl;
       return node;
    }
   void SetCurNode( Node *n)
    {
      if (debug_cfg()) {
         if (n == 0)
-           cerr << "resetting current node to 0 \n"; 
+           STD cerr << "resetting current node to 0 \n"; 
      }
      node = n;
      stmtnum = 0;
    }
 
-  virtual Boolean ProcessDecls(AstInterface &fa, const AstNodePtr& s)
-                                { ProcessStmt(fa, s); return true;}
+  virtual bool ProcessDecls(AstInterface &fa, const AstNodePtr& s)
+                                { return ProcessStmt(fa, s); }
 
-  virtual Boolean ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
+  virtual bool ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
                                            const AstNodePtr& body,
                                      AstInterface::TraversalVisitType t)
    {
      if (debug_cfg()) {
-        cerr << "processing function def " ; 
-        cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << endl;
+        STD cerr << "processing function def " ; 
+        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
      }
      if (t == AstInterface::PreVisit) {
             Node *exit = GetCurNode(true);
@@ -248,70 +217,50 @@ class BuildCFGTraverse : public ProcessAstTree
      return  ProcessAstTree::ProcessFunctionDefinition(fa, s, body, t);
    }
 
-  virtual Boolean ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
+  virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
                                AstInterface::TraversalVisitType t)
      {
         Node *lastNode = GetCurNode();
         SetStmtNode(s, lastNode, START);
-        Node *exitNode = MapStmt(s, EXIT);
+        Node *exitNode = MapStmt(fa, s, EXIT);
 
      if (debug_cfg()) {
-        cerr << "processing loop ";
-        cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << endl;
+        STD cerr << "processing loop ";
+        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
      }
        AstNodePtr init, cond, incr;
        if (!fa.IsLoop( s, &init, &cond,&incr))
             assert(false);
 
-     // DQ (3/16/2006): Added assertion to help debug init being an empty SgForInitStatement
-     // ROSE_ASSERT(*init != NULL);
-     // ROSE_ASSERT(*cond != NULL);
-     // ROSE_ASSERT(*incr != NULL);
-#if 0
-        init.Dump();
-        if (init != NULL)
-           {
-             printf ("\ninit is valid pointer %p = %s \n",isSgNode(init),init->class_name().c_str());
-           }
-          else
-           {
-             printf ("\ninit is NULL pointer %p \n",isSgNode(init));
-           }
-        printf ("lastNode = %p \n",lastNode);
-#endif
-
         if (t == AstInterface::PreVisit) {
-
-        // DQ (3/18/2006): Only build a basic block where there are statements to support it
-        // if (init != 0) 
-           if (init != 0 && fa.GetBasicBlockSize(init) > 0) 
-              AddStmt(lastNode, init);
+           if (init != AST_NULL) 
+              AddStmt(fa, lastNode, init);
 
            bool isPostLoop = fa.IsPostTestLoop(s);
            Node* bodyNode = (isPostLoop && IsCurNodeEmpty())? SetStmtNode(body, lastNode, START), lastNode 
-                                                        : MapStmt(body, START);
+                                                        : MapStmt(fa, body, START);
            Node* testNode = 0;
-           if (cond != 0) {
-              testNode = (!isPostLoop && IsCurNodeEmpty())? AddStmt(lastNode, cond), lastNode : MapStmt(cond, START, true); 
+           if (cond != AST_NULL) {
+              testNode = (!isPostLoop && IsCurNodeEmpty())? AddStmt(fa, lastNode, cond), lastNode : MapStmt(fa, cond, START, true); 
 
               if (!isPostLoop) { 
-                  AddBranch( lastNode, testNode, BuildCFGConfig<Node,Edge>::ALWAYS); 
+                  AddBranch( lastNode, testNode, BuildCFGConfig<Node>::ALWAYS); 
               }
               else {
-                  AddBranch( lastNode, bodyNode, BuildCFGConfig<Node,Edge>::ALWAYS);
+                  AddBranch( lastNode, bodyNode, BuildCFGConfig<Node>::ALWAYS);
               }
-              AddBranch( testNode, exitNode, BuildCFGConfig<Node,Edge>::COND_FALSE);
-              AddBranch( testNode, bodyNode, BuildCFGConfig<Node,Edge>::COND_TRUE); 
+              AddBranch( testNode, exitNode, BuildCFGConfig<Node>::COND_FALSE);
+              AddBranch( testNode, bodyNode, BuildCFGConfig<Node>::COND_TRUE); 
            }
            else {
-              AddBranch( lastNode, bodyNode, BuildCFGConfig<Node,Edge>::ALWAYS);
+              AddBranch( lastNode, bodyNode, BuildCFGConfig<Node>::ALWAYS);
            }
-           if (incr != 0) {
-              Node* incrNode = MapStmt(incr, START, true);
+           if (incr != AST_NULL) {
+              Node* incrNode = MapStmt(fa, incr, START, true);
               SetStmtNode(s, incrNode, START);
               SetStmtNode( body, incrNode, EXIT);
            }
-           else if (cond != 0) {
+           else if (cond != AST_NULL) {
               assert(testNode != 0);
               SetStmtNode(s, testNode, START);
               SetStmtNode(body, testNode, EXIT);
@@ -323,14 +272,14 @@ class BuildCFGTraverse : public ProcessAstTree
            SetCurNode(bodyNode);
         }
         else {
-           if (incr != 0) {
+           if (incr != AST_NULL) {
               Node* incrNode = GetStmtNode(incr, START);
               assert(incrNode != 0);
               AddBranch(lastNode, incrNode, CFGConfig::ALWAYS);
               SetCurNode(incrNode);
               lastNode = incrNode;
            }
-           if (cond != 0) {
+           if (cond != AST_NULL) {
               Node* testNode = GetStmtNode(cond, START);
               assert(testNode != 0);  
               AddBranch( lastNode, testNode, CFGConfig::ALWAYS);
@@ -344,29 +293,29 @@ class BuildCFGTraverse : public ProcessAstTree
         }
         return  ProcessAstTree::ProcessLoop(fa, s, body, t);
      }
-  virtual void ProcessIf( AstInterface &fa, const AstNodePtr& s,
+  virtual bool ProcessIf( AstInterface &fa, const AstNodePtr& s,
                              const AstNodePtr& cond, const AstNodePtr& trueBody,
                              const AstNodePtr& falseBody,
                                AstInterface::TraversalVisitType t)
    {
      if (debug_cfg()) {
-        cerr << "processing if ";
-        cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << endl;
+        STD cerr << "processing if ";
+        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
       }
-        Node *exitNode = MapStmt(s, EXIT);
+        Node *exitNode = MapStmt(fa, s, EXIT);
 
 
         if (t == AstInterface::PreVisit) {
             Node *lastNode = GetCurNode();
-            assert( cond != 0);
-            Node *testNode = IsCurNodeEmpty()? AddStmt(lastNode, cond) : MapStmt(cond, START, true);
+            assert( cond != AST_NULL);
+            Node *testNode = IsCurNodeEmpty()? AddStmt(fa, lastNode, cond) : MapStmt(fa, cond, START, true);
             AddBranch( lastNode, testNode, CFGConfig::ALWAYS);
-            Node *falseNode = IsBodyEmpty(fa,falseBody)? 0 : MapStmt(falseBody, START);
+            Node *falseNode = IsBodyEmpty(fa,falseBody)? 0 : MapStmt(fa, falseBody, START);
             if (falseNode != 0)  {
                  AddBranch(testNode, falseNode, CFGConfig::COND_FALSE);
                  SetStmtNode( falseBody, exitNode, EXIT);
             }
-            Node *trueNode = IsBodyEmpty(fa,trueBody)? 0 :MapStmt(trueBody, START);
+            Node *trueNode = IsBodyEmpty(fa,trueBody)? 0 :MapStmt(fa, trueBody, START);
             if (trueNode != 0) {
                AddBranch(testNode, trueNode, CFGConfig::COND_TRUE);
                SetStmtNode( trueBody, exitNode, EXIT);
@@ -391,25 +340,26 @@ class BuildCFGTraverse : public ProcessAstTree
             }
            SetCurNode(exitNode);
         }
-        ProcessAstTree::ProcessIf(fa, s, cond, trueBody, falseBody, t);
+        return  ProcessAstTree::ProcessIf(fa, s, cond, trueBody, falseBody, t);
      }
-  virtual Boolean ProcessBasicBlock( AstInterface &fa, const AstNodePtr& s,
+  virtual bool ProcessBlock( AstInterface &fa, const AstNodePtr& s,
                                     AstInterface::TraversalVisitType t)
     {
      if (debug_cfg()) {
-        cerr << "processing basic block "; // << AstInterface::AstToString(s); 
-        cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << endl;
+        STD cerr << "processing basic block " ; 
+        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
      }
 
         Node* lastNode = GetCurNode(false);
         if (t == AstInterface::PreVisit) {
             Node *n = GetStmtNode(s,START);
-            if ( n != 0 && n != lastNode) {
+            if ( n != 0 && n != lastNode) 
                SetCurNode(n); 
-               Node *n1 = MapStmt(s, EXIT); 
-               AstNodePtr lastStmt = fa.GetBasicBlockLastStmt(s);
-               if (lastStmt != 0) 
-                 SetStmtNode(lastStmt, n1, EXIT);
+            Node *n1 = GetStmtNode(s,EXIT); //MapStmt(fa, s, EXIT); 
+            if (n1 != 0) {
+               AstNodePtr lastStmt = fa.GetBlockLastStmt(s);
+               if (lastStmt != AST_NULL)  
+                  SetStmtNode(lastStmt, n1, EXIT);
             }
         } 
         else if (lastNode != 0) {  // use exitMap to remember the last node of this block
@@ -417,35 +367,33 @@ class BuildCFGTraverse : public ProcessAstTree
         }
         else if ( (lastNode = GetStmtNode(s, EXIT)) != 0)
            SetCurNode(lastNode);
-        return  ProcessAstTree::ProcessBasicBlock(fa, s, t);
+        return  ProcessAstTree::ProcessBlock(fa, s, t);
     }
 
-  virtual Boolean ProcessGoto( AstInterface &fa, const AstNodePtr& s, 
+  virtual bool ProcessGoto( AstInterface &fa, const AstNodePtr& s, 
                                const AstNodePtr& _dest)
      {
      if (debug_cfg()) {
-        cerr << "processing go to  " ; 
+        STD cerr << "processing go to  " ; 
      }
         AstNodePtr dest = _dest;
-     // DQ (8/4/2005): Trivial change suggested by Qing
-     // Node *lastNode = GetCurNode( false );
-        Node *lastNode = GetCurNode( true );
+        Node *lastNode = GetCurNode( false );
         assert (lastNode != 0);
-        AddStmt(lastNode, s); 
+        AddStmt(fa, lastNode, s); 
 
         if (fa.IsGotoAfter(s)) {
-            Node* destNode = MapStmt(dest, EXIT);
+            Node* destNode = MapStmt(fa, dest, EXIT);
             AddBranch( lastNode, destNode, CFGConfig::ALWAYS);
-            while (fa.IsBasicBlock(dest)) {
-              dest = fa.GetBasicBlockLastStmt(dest);
+            while (fa.IsBlock(dest)) {
+              dest = fa.GetBlockLastStmt(dest);
               SetStmtNode(dest, destNode, EXIT); 
             }
         }
         else { 
-            Node* destNode =  MapStmt(dest, START);
+            Node* destNode =  MapStmt(fa, dest, START);
             AddBranch( lastNode, destNode, CFGConfig::ALWAYS);
             AstNodePtr prev = fa.GetPrevStmt(dest);
-            if (prev != 0)
+            if (prev != AST_NULL)
                SetStmtNode( prev, destNode, EXIT);
         }
         SetCurNode(0);
@@ -453,49 +401,47 @@ class BuildCFGTraverse : public ProcessAstTree
         return  ProcessAstTree::ProcessGoto(fa, s, dest);
      }
 
-  virtual void ProcessStmt(AstInterface &fa, const AstNodePtr& s)
+  virtual bool ProcessStmt(AstInterface &fa, const AstNodePtr& s)
      {
        if (debug_cfg()) 
-          cerr << "processing stmt " << s->class_name() << ": " << fa.AstToString(s) << endl;
+          STD cerr << "processing stmt " << AstToString(s) << STD endl;
 
          Node *lastNode = GetCurNode();
          Node *n = GetStmtNode(s, START);
          if (n == 0 && !fa.IsLabelStatement(s))
-            AddStmt(lastNode, s); 
+            AddStmt(fa, lastNode, s); 
          else if (n == 0 && IsCurNodeEmpty()) {
-            AddStmt(lastNode, s);
+            AddStmt(fa, lastNode, s);
             SetStmtNode(s, lastNode, START); 
          }
          else if (n != 0) { 
             if (n == 0) {
-               n = MapStmt( s, START, true);
+               n = MapStmt(fa,  s, START, true);
             }
             else
-               AddStmt(n, s);
+               AddStmt(fa, n, s);
             AddBranch( lastNode, n, CFGConfig::ALWAYS);
             SetCurNode(n);
             SetStmtNode(s, n, START);
          }
-        ProcessAstTree::ProcessStmt(fa, s);
+        return  ProcessAstTree::ProcessStmt(fa, s);
      }
 };
 
-template <class Node, class Edge>
-void ROSE_Analysis::BuildCFG( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node,Edge>& g)
+template <class Node>
+void ROSE_Analysis::BuildCFG( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g)
 {
-  BuildCFGTraverse<Node,Edge> op(g);
+  BuildCFGTraverse<Node> op(g);
   op(fa, head);
 }
 
-/* pmp 08JUN05
-       in call to op the argument head is undeclared; 
-       Uncertain, if this function is ever used, or if head will be known at instantiation time
-       --> commented out for now
-       
-template <class Node, class Edge>
-void ROSE_Analysis::BuildCFG( AstInterface& fa, const AstInterface::AstNodeList& stmts, BuildCFGConfig<Node,Edge>& g)
+template <class Node>
+void ROSE_Analysis::BuildCFG( AstInterface& fa, const AstInterface::AstNodeList& stmts, BuildCFGConfig<Node>& g)
 {
-  BuildCFGTraverse<Node,Edge> op(g);
-  op(fa, head, stmts);
+  BuildCFGTraverse<Node> op(g);
+  for (AstInterface::AstNodeList::const_iterator p = stmts.begin();
+       p != stmts.end(); ++p) {
+     op(fa, *p);
+  }
 }
-*/
+#endif

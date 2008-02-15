@@ -2,24 +2,18 @@
 #define COMMAND_OPTIONS_H
 #include <stdlib.h>
 #include <string>
-#include <vector>
 #include <iostream>
-#include <cassert>
+
+#define STD std::
 
 class CmdOptions
 {
-  std::vector<std::string>* cmd;
+  STD string cmd;
   static CmdOptions *inst;
  public:
-  CmdOptions() : cmd(NULL) {}
-  void SetOptions  (std::vector<std::string>& options) {
-    cmd = &options;
-  }
-  const std::vector<std::string>& GetOptions() const {
-    assert (cmd);
-    return *cmd;
-  }
-  size_t HasOption( const std::string& opt) const;  // Returns one-based index or zero for not found
+  CmdOptions() : cmd("") {}
+  void SetOptions  (int argc, char* argv[]);
+  const char* HasOption( const STD string& opt); 
   static CmdOptions* GetInstance();
 };
 

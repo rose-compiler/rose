@@ -3,26 +3,24 @@
 
 #include <AstInterface.h>
 
-class CPPAstInterface : public AstInterfaceBase
+class CPPAstInterface : public AstInterface
 {
  public:
-//static Boolean IsMemberAccess( const AstNodePtr& n, AstNodePtr* obj = 0,
-  static int IsMemberAccess( const AstNodePtr& n, AstNodePtr* obj = 0,
-                                         AstNodePtr* func = 0);
+  CPPAstInterface(AstInterfaceImpl* _impl) : AstInterface(_impl) {}
+  bool IsMemberAccess( const AstNodePtr& n, AstNodePtr* obj = 0,
+                                         STD string* fieldname = 0);
 
-//static Boolean IsMemberFunctionCall( const AstNodePtr& n, 
-  static int IsMemberFunctionCall( const AstNodePtr& n, 
+  bool IsMemberFunctionCall( const AstNodePtr& n, 
                                        AstNodePtr* obj = 0,
-	                               AstNodePtr* func = 0, 
+	                               STD string* funcname = 0, 
                                        AstNodePtr* access = 0,
                                        AstInterface::AstNodeList* args = 0);
-  
-//static Boolean IsPointerVariable( const AstNodePtr& n); 
-  static int IsPointerVariable( const AstNodePtr& n); 
-  static AstNodePtr GetVarScope( const AstNodePtr& n);
+  AstNodePtr CreateFunctionCall( const AstNodePtr& func, 
+                          const AstInterface::AstNodeList& args);
+  bool IsPointerVariable( const AstNodePtr& n); 
+  AstNodePtr GetVarScope( const AstNodePtr& n);
 
-//static Boolean IsPlusPlus( const AstNodePtr& s, AstNodePtr* opd = 0);
-  static int IsPlusPlus( const AstNodePtr& s, AstNodePtr* opd = 0);
+  bool IsPlusPlus( const AstNodePtr& s, AstNodePtr* opd = 0);
 };
 
 #endif

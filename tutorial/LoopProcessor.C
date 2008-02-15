@@ -10,11 +10,15 @@
 
 #include "rewrite.h"
 #include <CommandOptions.h>
+#include <AstInterface_ROSE.h>
 #include <LoopTransformInterface.h>
 #include <AnnotCollect.h>
 #include <OperatorAnnotation.h>
 
 using namespace std;
+
+// DQ (2/10/2008): Using API support similar to that in tests/roseTests/loopProcessor
+extern bool DebugAnnot();
 
 void PrintUsage( char* name)
 {
@@ -33,14 +37,6 @@ bool GenerateObj()
   return CmdOptions::GetInstance()->HasOption("-gobj");
 }
 
-class AssumeNoAlias : public AliasAnalysisInterface
-{
- public:
-  virtual bool
-     may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
-   { return false; }
-};
-
 
 int
 main ( int argc,  char * argv[] )
@@ -50,9 +46,9 @@ main ( int argc,  char * argv[] )
       PrintUsage(argv[0]);
       return -1;
   }
-  vector<string> argvList(argv, argv + argc);
-  CmdOptions::GetInstance()->SetOptions(argvList);
-  SetLoopTransformOptions(argvList);
+#if 0
+  CmdOptions::GetInstance()->SetOptions(argc, argv);
+  SetLoopTransformOptions(argc, argv);
 
   OperatorSideEffectAnnotation *funcInfo = 
          OperatorSideEffectAnnotation::get_inst();
@@ -60,11 +56,30 @@ main ( int argc,  char * argv[] )
   ReadAnnotation::get_inst()->read();
   AssumeNoAlias aliasInfo;
 
+  vector<string> argvList(argv, argv + argc);
   SgProject sageProject ( argvList);
+#else
+// DQ (2/10/2008): Using command-line support similar to that in tests/roseTests/loopProcessor
+  CmdOptions::GetInstance()->SetOptions(argc, argv);
+  argc = SetLoopTransformOptions(argc, argv);
 
-   int filenum = sageProject.numberOfFiles();
+#ifdef USE_OMEGA
+  DepStats.SetFileName(buffer.str());
+#endif
+
+  OperatorSideEffectAnnotation *funcInfo = 
+         OperatorSideEffectAnnotation::get_inst();
+  funcInfo->register_annot();
+  ReadAnnotation::get_inst()->read();
+  if (DebugAnnot())
+     funcInfo->Dump();
+  AssumeNoAlias aliasInfo;
+  SgProject *sageProject = new SgProject ( argc,argv);
+#endif
+
+   int filenum = sageProject->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject.get_file(i);
+     SgFile &sageFile = sageProject->get_file(i);
      SgGlobal *root = sageFile.get_root();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
@@ -75,8 +90,9 @@ main ( int argc,  char * argv[] )
           if (defn == 0)
              continue;
           SgBasicBlock *stmts = defn->get_body();  
-          AstInterface *fa = new AstInterface(stmts);
-          LoopTransformTraverse( *fa, stmts, aliasInfo, funcInfo);
+          AstInterfaceImpl faImpl = AstInterfaceImpl(stmts);
+          AstInterface fa(&faImpl);
+          LoopTransformTraverse( fa, AstNodePtrImpl(stmts), aliasInfo, funcInfo);
        // JJW 10-29-2007 Adjust for iterator invalidation and possible changes to declList
           p = std::find(declList.begin(), declList.end(), func);
           assert (p != declList.end());
@@ -84,16 +100,16 @@ main ( int argc,  char * argv[] )
    }
 
    if (CmdOptions::GetInstance()->HasOption("-fd")) {
-       simpleIndexFiniteDifferencing(&sageProject);
+       simpleIndexFiniteDifferencing(sageProject);
    }
 
    if (CmdOptions::GetInstance()->HasOption("-pre")) {
-       PRE::partialRedundancyElimination(&sageProject);
+       PRE::partialRedundancyElimination(sageProject);
    }
 
-   unparseProject(&sageProject);
+   unparseProject(sageProject);
    if (GenerateObj())
-      return sageProject.compileOutput();
+      return sageProject->compileOutput();
    return 0;
 }
 
