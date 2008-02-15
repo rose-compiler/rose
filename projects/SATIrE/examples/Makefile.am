@@ -100,17 +100,6 @@ installcheck-local:
 	$(MAKE) check -C $(testdir)/sl2rd
 
 	@echo
-	@echo "Testsuite..."
-	@echo "====================="
-	cp -ur $(top_srcdir)/examples/constprop $(testdir)
-	chmod u+rwx -R $(testdir)/constprop
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	cp -ur $(top_srcdir)/testsuite $(testdir)
-	$(MAKE) -C $(testdir)/constprop
-	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
-
-
-	@echo
 	@echo "Testing nnh99_shape"
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
@@ -125,5 +114,15 @@ installcheck-local:
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
 	$(MAKE) check -C $(testdir)/srw98_shape
+
+	@echo
+	@echo "Testsuite..."
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/constprop $(testdir)
+	chmod u+rwx -R $(testdir)/constprop
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
+	cp -ur $(top_srcdir)/testsuite $(testdir)
+	$(MAKE) -C $(testdir)/constprop
+	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
 
 #	rm -rf $(testdir)

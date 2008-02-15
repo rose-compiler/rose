@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     else p.traverseInputFiles(ast_root, preorder);    
   }
   
-  /* Handle command line option --sourceoutput 
+  /* Handle command line option --output-XXX 
    * The source code (i.e. the AST) is annotated with comments showing
    * the analysis results and by calling the backend an annotated C/C++
    * file is generated (named rose_<inputfilename>) */

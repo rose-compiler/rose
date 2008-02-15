@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	opt = new ShapeAnalyzerOptions();
 	ShapeCommandLineParser clp;
 	clp.parse(opt,argc,argv);
-	bool outputAll = opt->outputWholeProgram();
+	bool outputAll = opt->analysisWholeProgram();
 
 	/* set the PAG options as specified on the command line */
 	setPagOptions(*opt);
@@ -28,16 +28,18 @@ int main(int argc, char **argv)
 	SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
 	
 	/* Make sure everything is OK... */
-	AstTests::runAllTests(ast_root);
+	if(opt->checkRoseAst()) {
+	  AstTests::runAllTests(ast_root);
+	}
 
 	/* Construct a control-flow graph from the AST, make sure it has
 	 * the structrure expected by PAG, and run the analysis on it,
 	 * attributing the statements of the AST with analysis
 	 * information. Use the StatementAttributeTraversal class for accessing
 	 * the analysis information on each statement */
-	char* outputfile=(char*)opt->getGdlFileName().c_str();
-	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,!opt->animationGeneration(), !opt->quiet());
-
+	char* outputfile=(char*)opt->getOutputGdlFileName().c_str();
+	bool gdloutput=!(opt->outputGdlAnim() || opt->outputGdl());
+	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,gdloutput, !opt->quiet());
 	/* Extract all Pairs of Expressions from the Program so that they
 	 * can be compared for aliasing. */
 	ExpressionCollector ec;
@@ -48,7 +50,7 @@ int main(int argc, char **argv)
 	annotator.traverseInputFiles(ast_root, preorder);
 
 	/* Handle command line option --textoutput */
-	if(opt->analysisResultsTextOutput()) {
+	if(opt->outputText()) {
 		PagDfiTextPrinter<DFI_STORE> p(analysis_info);
 
 		if (outputAll) p.traverse(ast_root, preorder);
@@ -59,18 +61,13 @@ int main(int argc, char **argv)
 		p.traverseInputFiles(ast_root, preorder);
 	}
  
-	/* Handle command line option --sourceoutput 
-	 * The source code (i.e. the AST) is annotated with comments showing
-	 * the analysis results and by calling the backend an annotated C/C++
-	 * file is generated (named rose_<inputfilename>) */
-	if(opt->analysisResultsSourceOutput()) {
-		PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
-
-		if (outputAll) ca.traverse(ast_root, preorder);
-		else ca.traverseInputFiles(ast_root, preorder);
-
-		ast_root->unparse();
+	if(opt->analysisResultsAnnotation()) {
+	  PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
+	  
+	  if (outputAll) ca.traverse(ast_root, preorder);
+	  else ca.traverseInputFiles(ast_root, preorder);
 	}
+
 	/* handle command line option --aliassourceoutput */
 	if(opt->aliasSourceOutput()) {
 		AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
@@ -78,25 +75,46 @@ int main(int argc, char **argv)
 		ast_root->unparse();
 	}
 
-	/* Handle command line option --termoutput */
-	if(opt->analysisResultsTermOutput()) {
-		TermPrinter<DFI_STORE> tp(analysis_info);
+	/* check how many input files we have */
+	if(ast_root->numberOfFiles()==1) {
+	  SgFile& file = ast_root->get_file(0);
+	  if(opt->outputSource()) {
+	    file.set_unparse_output_filename(opt->getOutputSourceFileName());
+	    unparseFile(&file,0,0);
+	  }
+	  /* Handle command line option --termoutput */
+	  if(opt->outputTerm()) {
+	    TermPrinter<DFI_STORE> tp(analysis_info);
+	    
+	    if (outputAll) tp.traverse(ast_root);
+	    else tp.traverseInputFiles(ast_root);
 
-		if (outputAll) tp.traverse(ast_root);
-		else tp.traverseInputFiles(ast_root);
-
-		ofstream termfile;
-		string fn = ast_root->getFileNames().front()+".pl";
-		termfile.open(fn.c_str());
-		termfile << "% Termite term representation" << endl;
-		termfile << tp.getTerm()->getRepresentation() << "." << endl;
-		termfile.close();
+	    ofstream termfile;
+	    string filename = opt->getOutputTermFileName();
+	    termfile.open(filename.c_str());
+	    termfile << "% Termite term representation" << endl;
+	    termfile << tp.getTerm()->getRepresentation() << "." << endl;
+	    termfile.close();
+	  }
+	}
+	
+	/* handle multiple input files */
+	if(ast_root->numberOfFiles()>1) {
+	  /* Iterate over all input files (and its included files) */
+	  for (int i=0; i < ast_root->numberOfFiles(); ++i) {
+	    SgFile& file = ast_root->get_file(i);
+	    
+	    if(opt->outputSource()) {
+	      std::string filename=file.get_sourceFileNameWithoutPath();
+	      file.set_unparse_output_filename(opt->getOutputFilePrefix()+filename);
+	      unparseFile(&file,0,0);
+	    }
+	  }
 	}
 
-	/* Free all memory allocated by the PAG garbage collection */
-	GC_finish();
-	
-	return 0;
+  /* Free all memory allocated by the PAG garbage collection */
+  GC_finish();
+  delete opt;
 }
 
 // -- custom visualisation --
