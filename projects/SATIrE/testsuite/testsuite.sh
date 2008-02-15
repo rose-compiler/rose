@@ -14,7 +14,6 @@ fi
 FILES=`find $SUITE -name \*.[cC]* 2>/dev/null`
 CURRENTDIR=`pwd`
 ANALYSIS="constprop/constprop"
-OPTIONS="--wholeprogram --preinfo --postinfo --textoutput --termoutput --sourceoutput --no_anim"
 
 expected_fails=0
 fails_ok=0
@@ -31,8 +30,11 @@ for file in $FILES; do
     if ! echo $file | grep -q ^$SUITE/dontrun; then
 
       echo "--- testing $ANALYSIS on file $file ---"
-
-      $analysis $OPTIONS $file >/dev/null
+      outfile=`basename $file`
+      options="--analysis-files=all --output-text --output-termfile $outfile.pl \
+                                                  --output-sourcefile $outfile.dfi \
+                                                  --quiet"
+      $analysis $options $file >/dev/null
       result=$?
       # Expected FAIL
       if echo $file | grep -q ^$SUITE/failure; then
