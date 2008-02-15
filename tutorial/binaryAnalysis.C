@@ -9,6 +9,8 @@ int main(int argc, char** argv)
 
 #ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 
+     RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
+
 #if 1
      SgAsmFile* file = project->get_file(0).get_binaryFile();
      ROSE_ASSERT (file != NULL);

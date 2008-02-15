@@ -88,7 +88,7 @@ int openFortranParser_main(int argc, char **argv)
   */
 
  /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
-    const char* new_value = ROSE_COMPILE_TREE_PATH "/src/frontend/OpenFortranParser_SAGE_Connection/.libs";
+    const char* new_value = ROSE_AUTOMAKE_TOP_BUILDDIR "/src/frontend/OpenFortranParser_SAGE_Connection/.libs";
 
  /* Save the old value */
     const char* old_value = getenv("LD_LIBRARY_PATH");

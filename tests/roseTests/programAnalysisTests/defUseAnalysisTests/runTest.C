@@ -229,7 +229,7 @@ int main( int argc, char * argv[] )
     //cout << "start: " << startNrInt << "  all: " << testAll << endl;
 
     argvList.resize(2);
-    argvList[0]="runTest";
+    argvList[0]=argv[0];
     multimap <string, int> results;
     multimap <string, int> useresults;
 

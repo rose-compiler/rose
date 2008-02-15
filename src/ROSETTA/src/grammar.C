@@ -11,6 +11,8 @@
 #include "constraintList.h"
 #include "constraint.h"
 #include <sstream>
+#include <fstream>
+#include <map>
 
 using namespace std;
 
@@ -112,6 +114,23 @@ Grammar::Grammar ( const string& inputGrammarName,
      grammarNameBaseClass = inputGrammarNameBaseClass;
 
      filenameForSupportClasses = "";
+
+  // JJW 2-12-2008 Use a file for this list so the numbers will be more stable
+     {
+       std::string astNodeListFilename = ROSE_AUTOMAKE_TOP_SRCDIR "/src/ROSETTA/astNodeList";
+       std::ifstream astNodeList(astNodeListFilename.c_str());
+       size_t c = 1;
+       while (astNodeList) {
+         std::string name;
+         astNodeList >> name;
+         if (name == "") break;
+         this->astNodeToVariantMap[name] = c;
+         this->astVariantToNodeMap[c] = name;
+         ++c;
+       }
+       ROSE_ASSERT (astNodeList.eof());
+       astNodeList.close();
+     }
 
   // DQ (3/15/2007): Added support for binaries
      setUpBinaryInstructions();
@@ -226,6 +245,7 @@ Grammar::addGrammarElement ( Terminal & X )
      terminalList.push_back ( (Terminal *const &) Y );
   // terminalList.display("END of Grammar::addGrammarElement(Terminal)");
      terminalList.consistencyCheck();
+     astVariantToTerminalMap[this->getVariantForTerminal(X)] = &X;
    }
 
 void
@@ -240,6 +260,7 @@ Grammar::addGrammarElement ( NonTerminal & X )
      nonTerminalList.push_back ((Terminal *const &) Y );
   // nonTerminalList.display("END of Grammar::addGrammarElement(NonTerminal)");
      nonTerminalList.consistencyCheck();
+     astVariantToTerminalMap[this->getVariantForTerminal(X)] = &X;
    }
 
 void
@@ -3060,6 +3081,36 @@ Grammar::printTreeNodeNames ( const GrammarTreeNode & node ) const
     }
 }
 
+size_t Grammar::getVariantForNode(const std::string& name) const {
+  std::map<std::string, size_t>::const_iterator it = this->astNodeToVariantMap.find(name);
+  if (it == this->astNodeToVariantMap.end()) {
+    it = this->astNodeToVariantMap.find(this->grammarPrefixName + name);
+  }
+  ROSE_ASSERT (it != this->astNodeToVariantMap.end());
+  return it->second;
+}
+
+size_t Grammar::getVariantForTerminal(const Terminal& t) const {
+  return this->getVariantForNode(t.getName());
+}
+
+size_t Grammar::getVariantForNonterminal(const NonTerminal& t) const {
+  return this->getVariantForNode(t.getName());
+}
+
+string Grammar::getNodeForVariant(size_t var) const {
+  std::map<size_t, std::string>::const_iterator it = this->astVariantToNodeMap.find(var);
+  ROSE_ASSERT (it != this->astVariantToNodeMap.end());
+  return it->second;
+}
+
+Terminal& Grammar::getTerminalForVariant(size_t var) {
+  std::map<size_t, Terminal*>::const_iterator it = this->astVariantToTerminalMap.find(var);
+  ROSE_ASSERT (it != this->astVariantToTerminalMap.end());
+  ROSE_ASSERT (it->second);
+  return *(it->second);
+}
+
 StringUtility::FileWithLineNumbers
 Grammar::buildVariants ()
    {
@@ -3088,12 +3139,12 @@ Grammar::buildVariants ()
 
      for (i=0; i < nonTerminalList.size(); i++)
        {
-	 returnString.push_back(StringUtility::StringWithLineNumber(seperatorString + nonTerminalList[i].getTagName() + ", ", "" /* "<variant for nonterminal " + nonTerminalList[i].getTagName() + ">" */, 1));
+	 returnString.push_back(StringUtility::StringWithLineNumber(seperatorString + nonTerminalList[i].getTagName() + " = " + StringUtility::numberToString(this->getVariantForNonterminal(nonTerminalList[i])) + ", ", "" /* "<variant for nonterminal " + nonTerminalList[i].getTagName() + ">" */, 1));
        }
 
      for (i=0; i < terminalList.size(); i++)
        {
-	 returnString.push_back(StringUtility::StringWithLineNumber(seperatorString + terminalList[i].getTagName() + ", ", "" /* "<variant for terminal " + terminalList[i].getTagName() + ">" */, 1));
+	 returnString.push_back(StringUtility::StringWithLineNumber(seperatorString + terminalList[i].getTagName() + " = " + StringUtility::numberToString(this->getVariantForTerminal(terminalList[i])) + ", ", "" /* "<variant for terminal " + terminalList[i].getTagName() + ">" */, 1));
        }
 
      returnString.push_back(StringUtility::StringWithLineNumber(footer, "" /* "<buildVariants footer>" */, 1));
@@ -3439,17 +3490,29 @@ Grammar::buildVariantEnums() {
       s+=string(",\n");
     }
     notFirst=true;
-    s+=(string("V_")+nonTerminalList[i].name);
+    std::map<std::string, size_t>::const_iterator it = this->astNodeToVariantMap.find(nonTerminalList[i].name);
+    if (it == this->astNodeToVariantMap.end()) {
+      std::cerr << "Could not find entry for " << nonTerminalList[i].name << " in AST node list" << std::endl;
+      ROSE_ABORT();
+    }
+    size_t varNum = it->second;
+    s+=(string("V_")+nonTerminalList[i].name+" = "+StringUtility::numberToString(varNum));
   }
   for (i=0; i < terminalList.size(); i++) {
     if(notFirst) {
       s+=string(",\n");
     }
     notFirst=true;
-    s+=(string("V_")+terminalList[i].name);
+    std::map<std::string, size_t>::const_iterator it = this->astNodeToVariantMap.find(terminalList[i].name);
+    if (it == this->astNodeToVariantMap.end()) {
+      std::cerr << "Could not find entry for " << terminalList[i].name << " in AST node list" << std::endl;
+      ROSE_ABORT();
+    }
+    size_t varNum = it->second;
+    s+=(string("V_")+terminalList[i].name+" = "+StringUtility::numberToString(varNum));
   }
   // add an ENUM to get the number of enums declared.
-  s+=string(", V_SgNumVariants");
+  s+=string(", V_SgNumVariants = ")+StringUtility::numberToString(this->astNodeToVariantMap.size() + 1);
   s+="};\n";  
   return s;
 }
@@ -3552,22 +3615,18 @@ Grammar::buildMemoryPoolBasedVariantVectorTraversalSupport() {
 // MS: new automatically generated variantnames as variantEnum->string mapping
 string
 Grammar::buildVariantEnumNames() {
-  string s;
-  unsigned int i;
-  bool notFirst=false;
-  for (i=0; i < nonTerminalList.size(); i++) {
-    if(notFirst) {
-      s+=string(",\n");
+  vector<string> variantNames;
+  for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+    if (i->first + 1 > variantNames.size()) {
+      variantNames.resize(i->first + 1, "<ERROR: unknown VariantT>");
     }
-    notFirst=true;
-    s+=(string("\"")+nonTerminalList[i].name+string("\""));
+    variantNames[i->first] = i->second;
   }
-  for (i=0; i < terminalList.size(); i++) {
-    if(notFirst) {
-      s+=string(",\n");
-    }
-    notFirst=true;
-    s+=(string("\"")+terminalList[i].name+string("\""));
+  bool first = true;
+  string s = "";
+  for (size_t i=0; i < variantNames.size(); i++) {
+    s+=(first ? "" : string(",\n"))+"\"" + variantNames[i]+string("\"");
+    first = false;
   }
   return s;
 }

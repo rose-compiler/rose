@@ -1,4 +1,4 @@
-namespace {
+namespace A {
 
 int main(void)
 {
@@ -9,5 +9,6 @@ int main(void)
 
 int main(int argc, char* argv[])
 {
-  return 1;
+  A::main();
+  return 0;
 }

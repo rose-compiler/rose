@@ -539,13 +539,12 @@ RoseBin_Emulate::evaluateInstruction( SgAsmInstruction* binInst, string& operand
 	    if (memRef) {
 	      operands += " :: MemRef ";
 	      SgAsmExpression* mem_loc = memRef->get_address();
-	      string type = "type unknwon";
-	      string res = unparser->resolveOperand(mem_loc, &type, this);
+	      string res = unparser->resolveOperand(mem_loc, this);
 	      uint64_t pos = 0;
 	      RoseBin_support::from_string<uint64_t>(pos, res, std::hex);
 	      uint64_t value = getRegister(codeR);
 	      assignMemory(pos, value);
-	      operands += "["+res+"] "+type+" ("+RoseBin_support::HexToString(pos)+":"+RoseBin_support::HexToString(value)+")";
+	      operands += "["+res+"] "+" ("+RoseBin_support::HexToString(pos)+":"+RoseBin_support::HexToString(value)+")";
 	    } else {
 	      operands += " :: RegRef ";
 	      // copy value in right register to left register

@@ -1,7 +1,7 @@
 /*
  * File:        findMethodCalls.h
  * Copyright:   (c) 2005 The Regents of the University of California
- * Release:     $Name: HEAD $
+ * Release:     $Name:  $
  * Revision:    @(#) $Revision: 1.2 $
  * Date:        $Date: 2008/01/08 02:55:50 $
  * Description: Define a 

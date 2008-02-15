@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = BT SP
-#SUBDIRS = BT CG EP FT IS LU MG SP
+SUBDIRS = BT CG EP FT IS LU MG SP
 
 EXTRA_DIST = README.omc  README.org LOG.omc common bin Doc config sys
 

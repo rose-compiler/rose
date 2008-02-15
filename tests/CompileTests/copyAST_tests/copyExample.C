@@ -178,7 +178,7 @@ main ( int argc, char* argv[] )
 
 #if 1
      set<SgNode*> oldNodes;
-     if (numberOfNodes() < 2000)
+     // if (numberOfNodes() < 2000)
         {
           oldNodes = getAllNodes();
         }

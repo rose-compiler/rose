@@ -1,6 +1,7 @@
 
 #include "rose.h"
 #include "rewrite.h"
+#include "sageBuilder.h"
 #include <iostream>
 #include <iomanip>
 
@@ -72,11 +73,7 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
 		      where_to_write_answer->set_parent(assignment);
 		    if (return_expr != assignment)
 		      return_expr->set_parent(assignment);
-                    SgStatement* assign_stmt = new SgExprStatement(SgNULL_FILE,assignment);
-                    assign_stmt->set_endOfConstruct(SgNULL_FILE);
-
-                 // DQ (12/15/2006): Set the parent for the expression in the SgExprStatement.
-                    assignment->set_parent(assign_stmt);
+                    SgStatement* assign_stmt = SageBuilder::buildExprStatement(assignment);
 
                     assign_stmt->set_parent(block);
                     block->get_statements().push_back(assign_stmt);
@@ -299,7 +296,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 	  thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
 	  thisdecl->set_definingDeclaration(thisdecl);
 
-          thisinitname = lastElementOfContainer(thisdecl->get_variables());
+          thisinitname = (thisdecl->get_variables()).back();
+          //thisinitname = lastElementOfContainer(thisdecl->get_variables());
           // thisinitname->set_endOfConstruct(SgNULL_FILE);
 	  assignInitializer->set_parent(thisinitname);
 
@@ -315,7 +313,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgInitializedNamePtrList::iterator i;
      SgExpressionPtrList& funargs = funcall->get_args()->get_expressions();
      SgExpressionPtrList::iterator j;
-     int ctr;
+     //int ctr; // unused variable, Liao
      std::vector<SgInitializedName*> inits;
      SgTreeCopy tc;
      SgFunctionDefinition* function_copy = isSgFunctionDefinition(fundef->copy(tc));
@@ -359,7 +357,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           printf ("Built new SgVariableDeclaration #2 = %p = %s initializer = %p \n",vardecl,shadow_name.str(),(*(vardecl->get_variables().begin()))->get_initializer());
 
           vardecl->set_parent(funbody_copy);
-          SgInitializedName* init = lastElementOfContainer(vardecl->get_variables());
+          SgInitializedName* init = (vardecl->get_variables()).back();
           // init->set_endOfConstruct(SgNULL_FILE);
           inits.push_back(init);
 	  ai->set_parent(init);
@@ -424,11 +422,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      end_of_inline_label_sym->set_parent(targetFunction->get_symbol_table());
      targetFunction->get_symbol_table()->insert(end_of_inline_label->get_name(), end_of_inline_label_sym);
   // To ensure that there is some statement after the label
-     SgNullExpression* ne = new SgNullExpression(SgNULL_FILE);
-     ne->set_endOfConstruct(SgNULL_FILE);
-     SgExprStatement* dummyStatement = new SgExprStatement(SgNULL_FILE, ne);
+     SgExprStatement* dummyStatement = SageBuilder::buildExprStatement(SageBuilder::buildNullExpression());
      dummyStatement->set_endOfConstruct(SgNULL_FILE);
-     ne->set_parent(dummyStatement);
      funbody_copy->append_statement(dummyStatement);
      dummyStatement->set_parent(funbody_copy);
 #if 0

@@ -361,8 +361,8 @@ ROSE_SUPPORT_INSURE
 
 # DQ (9/7/2006): build the directory where libs will be placed.
 # mkdir -p $prefix/libs
-echo "Before calling \"mkdir -p $prefix/lib\": prefix = $prefix"
-mkdir -p $prefix/lib
+# echo "Before calling \"mkdir -p $prefix/lib\": prefix = $prefix"
+# mkdir -p $prefix/lib
 
 # DQ (1/14/2007): I don't think this is required any more!
 # ROSE_TEST_LIBS="-L$prefix/lib"
@@ -665,11 +665,11 @@ AC_CONFIG_SUBDIRS(src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv)
 
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
+# JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am
 AC_CONFIG_FILES([
 stamp-h
 Makefile
 rose.docs
-rose_paths.h
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -820,10 +820,17 @@ projects/NameConsistancyChecker/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/tests/Makefile
+projects/OpenMP_Translator/tests/cvalidationsuite/Makefile
 projects/OpenMP_Translator/tests/developmentTests/Makefile
 projects/OpenMP_Translator/tests/epcc-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/BT/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/EP/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/FT/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
 projects/MPICodeMotion/Makefile
 tests/Makefile
@@ -1245,6 +1252,9 @@ if test ! `cd $srcdir && pwd -P` = `pwd -P`; then
 fi
 
 ]])
+
+# Generate rose_paths.h
+AC_CONFIG_COMMANDS([rose_paths.h], [make rose_paths.h])
 
 # echo "Calling AC OUTPUT in configure.in file"
 

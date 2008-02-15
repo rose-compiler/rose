@@ -1,7 +1,7 @@
 /*
  * File:        CassLessCompare.h
  * Copyright:   (c) 2005 The Regents of the University of California
- * Release:     $Name: HEAD $
+ * Release:     $Name:  $
  * Revision:    @(#) $Revision: 1.1 $
  * Date:        $Date: 2005/07/06 20:18:17 $
  * Description: Compare two std::string's ignoring case

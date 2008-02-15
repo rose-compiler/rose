@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 
 #include "string_functions.h"
 
@@ -185,6 +186,9 @@ class Grammar
      public:
           TerminalList    terminalList;
           NonTerminalList nonTerminalList;
+          std::map<std::string, size_t> astNodeToVariantMap;
+          std::map<size_t, std::string> astVariantToNodeMap;
+          std::map<size_t, Terminal*> astVariantToTerminalMap;
 
           GrammarTreeNode* rootNode;
           TerminalList leafNodeList;
@@ -323,6 +327,14 @@ class Grammar
 
        // Removes a terminal (which we look up from the string) from the grammar
           void remove ( const std::string& terminalName );
+
+       // Get the variant for a node name
+          size_t getVariantForNode(const std::string& name) const;
+          size_t getVariantForTerminal(const Terminal& name) const;
+          size_t getVariantForNonterminal(const NonTerminal& name) const;
+       // Get the node name for a variant, asserting if not found
+          std::string getNodeForVariant(size_t var) const;
+          Terminal& getTerminalForVariant(size_t var);
 
      protected:
        // mechanism for internal use only

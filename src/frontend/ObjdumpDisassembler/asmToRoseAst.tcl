@@ -35,18 +35,26 @@ proc split_on_unwrapped_comma {str} {
 }
 
 proc read_operand {op} {
+  # puts stderr "read_operand $op"
   # if {[string match *:* $op]} { puts stderr "read_operand $op"}
-  switch -regexp $op {
-    {^%(e..)$} {return "\"[string range $op 1 end]\" reg"}
-    {^%.*flags$} {return "\"eflags\" reg"}
+  switch -regexp -- $op {
+    {^%([er]..)$} {return "\"[string range $op 1 end]\" reg"}
+    {^%(r[8-9])$} {return "\"[string range $op 1 end]\" reg"}
+    {^%(r[8-9][dwb])$} {return "\"[string range $op 1 end]\" reg"}
+    {^%(r1[0-5][dwb])$} {return "\"[string range $op 1 end]\" reg"}
+    {^%.*flags$} {return "\"[string range $op 1 end]\" reg"}
     {^%([cdefgs]s)$} {return "\"[string range $op 1 end]\" reg"}
     {^%[abcd]l$} {return "\"[string range $op 1 end]\" reg"}
     {^%[abcd]h$} {return "\"[string range $op 1 end]\" reg"}
+    {^%[sd]il$} {return "\"[string range $op 1 end]\" reg"}
+    {^%[bs]pl$} {return "\"[string range $op 1 end]\" reg"}
     {^%[abcd]x$} {return "\"[string range $op 1 end]\" reg"}
     {^%[sd]i$} {return "\"[string range $op 1 end]\" reg"}
     {^%[bs]p$} {return "\"[string range $op 1 end]\" reg"}
     {^%st$} {return "\"st0\" reg"}
     {^%st\([0-7]\)$} {return "\"st[string index $op 4]\" reg"}
+    {^%mm[0-7]$} {return "\"[string range $op 1 end]\" reg"}
+    {^%xmm([0-9]+)$} {return "\"[string range $op 1 end]\" reg"}
     {^\$0x0x.*$} {return [read_operand "\$[string range $op 3 end]"]}
     {^\$0x([0-9a-fA-F]*)$} {
       if {[in_code_segment [string range $op 1 end]]} {get_insn [string range $op 1 end]}
@@ -57,7 +65,7 @@ proc read_operand {op} {
       if {[in_code_segment $val]} {get_insn $val}
       return "[format %u $val] constant \"$annot\" annotate"
     }
-    {^\$([0-9a-f]*) *$} {
+    {^\$([-0-9a-f]*) *$} {
       if {[in_code_segment 0x[string range $op 1 end]]} {get_insn 0x[string range $op 1 end]}
       return "[format %u 0x[string range $op 1 end]] constant"
     }
@@ -67,13 +75,14 @@ proc read_operand {op} {
 }
 
 proc read_operand_addr {op} {
-  switch -regexp $op {
-    {^[0-9A-Fa-f]+`.*$} {
+  # puts stderr "read_operand_addr $op"
+  switch -regexp -- $op {
+    {^[-0-9A-Fa-f]+`.*$} {
       regexp {^([0-9A-Fa-f]+)`<(.*)>$} $op _ op annot
       if {[in_code_segment 0x$op]} {get_insn 0x$op}
       return "[format %u 0x${op}] constant \"$annot\" annotate"
     }
-    {^[0-9A-Fa-f]+$} {
+    {^[-0-9A-Fa-f]+$} {
       if {[in_code_segment 0x$op]} {get_insn 0x$op}
       return "[format %u 0x${op}] constant"
     }
@@ -81,10 +90,15 @@ proc read_operand_addr {op} {
       if {[in_code_segment $op]} {get_insn $op}
       return "[format %u 0x[string range ${op} 2 end]] constant"
     }
-    {^[x0-9A-Fa-f]*\([^)]*\)$} {
-      if {[regexp {^([x0-9A-Fa-f]*)\(([^)]*)\)$} $op _ offset sib]} {
-	if {$offset == ""} {set offset "0 constant"}
-	if {[string range $offset 0 1] == "0x"} {set offset "[format %u 0x[string range $offset 2 end]] constant"}
+    {^[-x0-9A-Fa-f]*\([^)]*\)$} {
+      if {[regexp {^([-x0-9A-Fa-f]*)\(([^)]*)\)$} $op _ offset sib]} {
+	if {$offset == ""} {
+          set offset "0 constant"
+        } elseif {[string range $offset 0 1] == "0x"} {
+          set offset "[format %u 0x[string range $offset 2 end]] constant"
+        } else {
+          set offset "[format %u $offset] constant"
+        }
 	set sib [split_on_unwrapped_comma $sib]
 	if {[llength $sib] == 3} {
 	  if {[lindex $sib 0] == ""} {
@@ -125,6 +139,7 @@ proc letterToSize {letter} {
     b {return 1}
     w {return 2}
     l {return 4}
+    q {return 8}
     default {return 0}
   }
 }
@@ -132,14 +147,17 @@ proc letterToSize {letter} {
 proc convert_insn {next_addr insn} {
   regsub -all {^(rep[^ ]*) } $insn {\1-} insn
   regsub -all {^lock } $insn {lock-} insn
+  regsub -all { *#.*} $insn "" insn
   regsub -all { <} $insn {`<} insn
-  if {[regexp {^([^ ]*) +(.*)$} $insn _ opcode operands]} {
+  if {[regexp {^([^ ]*) *(.*)$} $insn _ opcode operands]} {
+    set operands [string trim $operands]
     regsub -all ",.*" $opcode "" opcode; # Remove branch prediction hints
     set operands [split_on_unwrapped_comma $operands]
     set i 0
     foreach op $operands {
       set op${i}_raw $op
-      set op$i [read_operand $op]
+      set op$i "<invalid operand>"
+      catch {set op$i [read_operand $op]}
       incr i
     }
     set size [letterToSize [string index $opcode end]]
@@ -148,14 +166,22 @@ proc convert_insn {next_addr insn} {
       movzbw {puts -nonewline "\"movzx\" $op1 size2 $op0 size1 2 insn"}
       movzbl {puts -nonewline "\"movzx\" $op1 size4 $op0 size1 2 insn"}
       movzwl {puts -nonewline "\"movzx\" $op1 size4 $op0 size2 2 insn"}
+      movzbq {puts -nonewline "\"movzx\" $op1 size8 $op0 size1 2 insn"}
+      movzwq {puts -nonewline "\"movzx\" $op1 size8 $op0 size2 2 insn"}
+      movzlq {puts -nonewline "\"movzx\" $op1 size8 $op0 size4 2 insn"}
       movsbw {puts -nonewline "\"movsx\" $op1 size2 $op0 size1 2 insn"}
       movsbl {puts -nonewline "\"movsx\" $op1 size4 $op0 size1 2 insn"}
       movswl {puts -nonewline "\"movsx\" $op1 size4 $op0 size2 2 insn"}
+      movsbq {puts -nonewline "\"movsx\" $op1 size8 $op0 size1 2 insn"}
+      movswq {puts -nonewline "\"movsx\" $op1 size8 $op0 size2 2 insn"}
+      movslq {puts -nonewline "\"movsx\" $op1 size8 $op0 size4 2 insn"}
       bswap {puts -nonewline "\"bswap\" $op0 size4 1 insn"}
       xchg? {puts -nonewline "\"xchg\" $op1 size$size $op0 size$size 2 insn"}
       cmpxchg? {puts -nonewline "\"cmpxchg\" $op1 size$size $op0 size$size 2 insn"}
       cwtl {puts -nonewline "\"cwde\" 0 insn"}
       cltd {puts -nonewline "\"cdq\" 0 insn"}
+      cltq {puts -nonewline "\"cdqe\" 0 insn"}
+      cqto {puts -nonewline "\"cqo\" 0 insn"}
       inc? {puts -nonewline "\"inc\" $op0 size$size 1 insn"}
       dec? {puts -nonewline "\"dec\" $op0 size$size 1 insn"}
       add? {puts -nonewline  "\"add\"   $op1 size$size $op0 size$size 2 insn"}
@@ -238,14 +264,17 @@ proc convert_insn {next_addr insn} {
       push? {puts -nonewline "\"push\" $op0 size$size 1 insn"}
       pushfw {puts -nonewline "\"pushf\" 0 insn"}
       pushfl {puts -nonewline "\"pushfd\" 0 insn"}
+      pushfq {puts -nonewline "\"pushfq\" 0 insn"}
       pushaw {puts -nonewline "\"pusha\" 0 insn"}
       pushal {puts -nonewline "\"pushad\" 0 insn"}
       pop? {puts -nonewline "\"pop\" $op0 size$size 1 insn"}
       popfw {puts -nonewline "\"popf\" 0 insn"}
       popfl {puts -nonewline "\"popfd\" 0 insn"}
+      popfq {puts -nonewline "\"popfq\" 0 insn"}
       popaw {puts -nonewline "\"popa\" 0 insn"}
       popal {puts -nonewline "\"popad\" 0 insn"}
       jmp -
+      jmpq -
       jmpl -
       jmpw {
 	if {[string index $op0_raw 0] == "*"} {
@@ -258,6 +287,7 @@ proc convert_insn {next_addr insn} {
       }
       jcxz {puts -nonewline "\"jcxz\" [read_operand \$0x$op0_raw] size4 1 insn"; get_insn $op0}
       jecxz {puts -nonewline "\"jecxz\" [read_operand \$0x$op0_raw] size4 1 insn"; get_insn $op0}
+      jrcxz {puts -nonewline "\"jrcxz\" [read_operand \$0x$op0_raw] size4 1 insn"; get_insn $op0}
       loop* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] size$size 1 insn"; get_insn $op0}
       j* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] size$size 1 insn"; get_insn $op0}
       set* {puts -nonewline "\"$opcode\" $op0 size1 1 insn"}
@@ -290,6 +320,7 @@ proc convert_insn {next_addr insn} {
       outsl {puts -nonewline "\"outsd\" $op1 size$size $op0 size$size 2 insn"}
       outs? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
       call -
+      callq -
       calll -
       callw {
 	if {[string index $op0_raw 0] == "*"} {
@@ -301,14 +332,17 @@ proc convert_insn {next_addr insn} {
 	}
       }
       retw -
-      retl {if {[info exists op0]} {puts -nonewline "\"ret\"$op0 1 insn"} else {puts -nonewline "\"ret\" 0 insn"}}
-      leavel {puts -nonewline "\"leave\" 0 insn"}
+      retl -
+      retq {if {[info exists op0]} {puts -nonewline "\"ret\"$op0 1 insn"} else {puts -nonewline "\"ret\" 0 insn"}}
+      leavel -
+      leaveq {puts -nonewline "\"leave\" 0 insn"}
       int {puts -nonewline "\"int\" $op0 size1 1 insn"}
       rdtsc {puts -nonewline "\"rdtsc\" 0 insn"}
       hlt {puts -nonewline "\"hlt\" 0 insn"}
       lock-* {convert_insn $next_addr [string range $insn 5 end]; puts -nonewline " lock"}
       nop {puts -nonewline "\"nop\" 0 insn"}
       .byte {puts -nonewline "\".byte\" 0 insn"}
+      data16 {puts -nonewline "\"data16\" 0 insn"}
 
       default {
 	set result "\"$opcode\" "
@@ -330,19 +364,75 @@ array set basic_block_starts {}
 array set instructions_leading_to_point {}
 
 set executable [readfile [lindex $argv 0]]
-set data [readfile "|objdump -d -w -z -Msuffix --show-raw-insn [lindex $argv 0]"]
-
-if {![binary scan $executable @0icc@24i@32i@46ss magic class dataformat start_addr shoff shentsize shnum]} {
+if {![binary scan $executable @0icc magic class dataformat]} {
   error "Invalid format"
 }
-if {$magic != 0x464C457F || $class != 1 || $dataformat != 1} {error "Not an ELF binary or incorrect format"}
-if {$shentsize != 40} {error "Bad section header size"}
+if {$magic != 0x464C457F} {error "Not an ELF binary"}
+switch -exact $class {
+  1 {set bits 32}
+  2 {set bits 64}
+  default {error "Bad binary class $class"}
+}
+switch -exact $dataformat {
+  1 {set endian little}
+  2 {set endian big}
+  default {error "Bad binary format $dataformat"}
+}
+
+if {$bits == 64 && 1000000000 + 2000000000 < 0} {
+  error "Cannot analyze 64-bit binaries on a 32-bit system"
+}
+
+switch -exact "$bits-$endian" {
+  32-little {set headerformat @18s@24i@32i@46ss}
+  32-big {set headerformat @18S@24I@32I@46SS}
+  64-little {set headerformat @18s@24w@40w@58ss}
+  64-big {set headerformat @18S@24W@40W@58SS}
+}
+
+if {![binary scan $executable $headerformat archNumber start_addr shoff shentsize shnum]} {
+  error "Invalid format"
+}
+
+switch -exact $archNumber {
+  3 {set arch i386}
+  40 {set arch arm}
+  62 {set arch x86-64}
+  default {error "Bad architecture number $archNumber"}
+}
+
+if {$arch != "i386" && $arch != "x86-64"} {error "This asmToRoseAst.tcl does not support architecture $arch"}
+
+switch -exact -- $arch {
+  i386 -
+  x86-64 {
+    set objdump "objdump"
+    set objdumpFlags "-Msuffix"
+  }
+  arm {
+    set objdump arm-unknown-linux-gnu-objdump
+    set objdumpFlags "-Mreg-names-raw"
+  }
+  default {
+    error "Bad architecture $arch"
+  }
+}
+set data [readfile "|${objdump} -d -w -z $objdumpFlags --show-raw-insn [lindex $argv 0]"]
+
+if {$shentsize != 40 && $bits == 32 || $shentsize != 64 && $bits == 64} {error "Bad section header size"}
 
 set code_sections ""
 set sections ""
 
+switch -exact "$bits-$endian" {
+  32-little {set sectionformat x4iiiii}
+  32-big {set sectionformat x4IIIII}
+  64-little {set sectionformat x4iwwww}
+  64-big {set sectionformat x4IWWWW}
+}
+
 for {set i 0} {$i < $shnum} {incr i} {
-  if {![binary scan $executable @[expr {$shoff + $i * $shentsize}]x4iiiii type flags addr offset size]} {error "Bad section $i"}
+  if {![binary scan $executable @[expr {$shoff + $i * $shentsize}]$sectionformat type flags addr offset size]} {error "Bad section $i"}
   lappend sections $type $addr $offset $size $flags
   # puts stderr "Got section $type [format %x $addr] $offset [format %x $size] $flags"
   if {($flags & 6) == 6} { # Executable and alloc
@@ -377,8 +467,8 @@ set get_insn_running 0
 proc get_insn {addr} {
   global basic_block_starts get_insn_running get_insn_worklist sections data
   # puts stderr "get_insn start $addr"
-  regsub -all { .*} $addr "" addr ; # Used for annotations on jumps
-  if {![scan $addr %d _]} {return}; # Remove indirect jumps and similar things
+  regsub -all {[ `].*} $addr "" addr ; # Used for annotations on jumps
+  if {![scan $addr %d _]} {return}; # Remove indirect jumps and similar things (by removing all non-numbers)
   if {![in_code_segment $addr]} {return}; # Bogus pointers (call 0 and such)
   set addr 0x[format %x $addr]
   set basic_block_starts($addr) 1; # This might be needed even if the instruction has already been converted, but is not done for later steps in the loop below (which are just handling fallthrough cases)
@@ -399,6 +489,7 @@ proc get_insn {addr} {
 	# puts stderr "get_insn inner $addr"
 	set disassembly [get_disassembly_of_instruction $addr]
 	set re "^\\t(\[ 0-9A-Fa-f\]*)\\t(\[^\\n\]*)\$"
+        # puts stderr "Got disassembly '$disassembly'"
 	# puts stderr "re = '$re'"
 	# puts stderr "Output data is $data"
 	if {[regexp -lineanchor $re $disassembly _ bytes insn]} {
@@ -433,12 +524,19 @@ proc get_insn {addr} {
   }
 }
 
+switch -exact $bits-$endian {
+  32-little {set pointerformat i}
+  32-big {set pointerformat I}
+  64-little {set pointerformat w}
+  64-big {set pointerformat W}
+}
+
 get_insn $start_addr
 foreach {type virtaddr off size flag} $sections {
   if {($flag & 6) == 2 && $type == 1} { ; # Allocated, not executable, PROGBITS
     # puts stderr "Scanning section at 0x[format %x $virtaddr] for code pointers"
-    for {set i 0} {$i < $size} {incr i 4} {
-      binary scan $executable @${off}x${i}i value
+    for {set i 0} {$i < $size} {incr i [expr {$bits / 8}]} {
+      binary scan $executable @${off}x${i}$pointerformat value
       if {[in_code_segment $value]} {get_insn $value}
     }
   }
@@ -446,3 +544,4 @@ foreach {type virtaddr off size flag} $sections {
 foreach addr [array names basic_block_starts] {
   puts "[format %u $addr] basic_block_start"
 }
+puts "done"

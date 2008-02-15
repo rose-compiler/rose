@@ -17,28 +17,27 @@ class PDFInheritedAttribute {
   unsigned int parent;
 };
 
-template <class NodeType>
+namespace PDFGenerationHelpers {
+}
+
 class PDFGeneration : public SgTopDownProcessing<PDFInheritedAttribute> {
 public:
-  PDFGeneration();
-  virtual void generate(std::string filename, NodeType* node);
+  PDFGeneration(): pdfFile(NULL) {}
+  virtual void generate(std::string filename, SgNode* node);
 protected:
-  virtual std::string text_page(NodeType* node);
-  virtual void edit_page(NodeType* node, PDFInheritedAttribute inheritedValue);
-  PDFInheritedAttribute evaluateInheritedAttribute(NodeType* node, PDFInheritedAttribute inheritedValue);
-  void create_textlink(const char* text, int targetpage,int hitboxextender=0);
+  virtual PDFInheritedAttribute evaluateInheritedAttribute(SgNode* node, PDFInheritedAttribute inheritedValue);
   PDF* pdfFile;
+  int topMargin;
+  int leftMargin;
+
+  std::string text_page(SgNode* node);
+  virtual void edit_page(SgNode* node, PDFInheritedAttribute inheritedValue);
+  void create_textlink(const char* text, int targetpage,int hitboxextender=0);
   void pdf_setup(std::string filename);
   void pdf_finalize();
   void begin_page();
   void end_page();
-  int topMargin;
-  int leftMargin;
 private:
 };
-
-// #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION 
-   #include "PDFGeneration.C" 
-// #endif 
 
 #endif

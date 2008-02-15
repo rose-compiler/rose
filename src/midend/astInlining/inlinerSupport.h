@@ -48,9 +48,19 @@ void rebindVariableAndLabelReferences(SgNode* top);
 //! program are modified.
 void fixReturnStatements(SgNode* n);
 
+//! Remove unused variables in a scope
+void removeUnusedVariables(SgNode* top);
+
+//! Find all variables referenced in a region
+std::set<SgInitializedName*> findVariablesUsedInRegion(SgNode* e);
+
 //! In code with declarations such as "int foo = bar", where foo and bar are
 //! not modified, replace "foo" with "bar" and remove the declaration
 void simpleCopyAndConstantPropagation(SgNode* top);
+
+//! Remove all null statements (those with only an integer constant or a null
+//! expression)
+void removeNullStatements(SgNode* n);
 
 //! Combined procedure for cleaning up code after inlining.  Does not do
 //! variable renaming or block flattening, however.
@@ -61,15 +71,9 @@ void cleanupInlinedCode(SgNode* n);
 //! code.
 void changeAllMembersToPublic(SgNode* n);
 
-//! Remove a statement
-void myRemoveStatement(SgStatement* stmt);
-
 //! Get all variable names declared within a scope, in the correct order for
 //! destruction
 SgInitializedNamePtrList findInitializedNamesInScope(SgScopeStatement* scope);
-
-//! Get the innermost scope containing a particular node
-SgScopeStatement* getScope(SgNode* n);
 
 //! Remove the declaration of a given variable
 void removeVariableDeclaration(SgInitializedName* initname);

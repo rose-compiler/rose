@@ -8,7 +8,7 @@
 #include "PDFGeneration.h"
 #include "AstNodeVisitMapping.h"
 
-class AstPDFGeneration : public PDFGeneration<SgNode> {
+class AstPDFGeneration : public PDFGeneration {
 public:
   virtual void generate(std::string filename, SgNode* node);
   void generateInputFiles(SgProject* projectNode);

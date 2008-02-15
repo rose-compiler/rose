@@ -33,7 +33,6 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): ../../../ompTranslator $(srcdir)/$(@:.o=.c)
-	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
 	$(VALGRIND) ../../../ompTranslator -D_OPENMP $(ROSE_FLAGS) -I$(srcdir) -I$(srcdir)/../common -I$(srcdir)/../../.. -I$(srcdir)/../../../includes -c $(srcdir)/$(@:.o=.c)
 
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}

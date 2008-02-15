@@ -485,11 +485,11 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
           SgType* type = expr->get_type();
           if (isSgArrayType(type))
                type = new SgPointerType(isSgArrayType(type)->get_base_type());
-          assert (isDefaultConstructible(type));
+          assert (SageInterface::isDefaultConstructible(type));
        // FIXME: assert (isAssignable(type));
           SgVariableDeclaration* decl = new SgVariableDeclaration(SgNULL_FILE, cachevarname, type, NULL);
           decl->set_definingDeclaration(decl);
-          SgInitializedName* initname = lastElementOfContainer(decl->get_variables());
+          SgInitializedName* initname = decl->get_variables().back();
 
        // DQ (10/5/2007): Added an assertion.
           ROSE_ASSERT(initname != NULL);

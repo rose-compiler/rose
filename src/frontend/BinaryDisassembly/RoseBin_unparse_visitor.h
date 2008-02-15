@@ -61,8 +61,8 @@ class RoseBin_unparse_visitor : public AstSimpleProcessing { //ROSE_VisitorPatte
   /****************************************************
    * resolve Operand
    ****************************************************/
-  std::string resolveOperand(SgAsmExpression* expr, std::string *type, std::string *replace);
-  std::string resolveOperand(SgAsmExpression* expr, std::string *type, RoseBin_DataFlowAbstract* dfa);
+  std::string resolveOperand(SgAsmExpression* expr, std::string *replace);
+  std::string resolveOperand(SgAsmExpression* expr, RoseBin_DataFlowAbstract* dfa);
 
   /****************************************************
    * resolve expression

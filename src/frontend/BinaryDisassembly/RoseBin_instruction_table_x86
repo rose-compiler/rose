@@ -30,8 +30,8 @@ push -> Push
 pop -> Pop
 pusha pushad -> Pusha
 popa popad -> Popa
-cwd cdq -> Cwd
-cbw cwde -> Cbw
+cwd cdq cqo -> Cwd
+cbw cwde cdqe -> Cbw
 movsx -> Movsx
 movzx -> Movzx
 sub -> Sub
@@ -153,3 +153,4 @@ esc -> Esc
 lock -> Lock
 wait -> Wait
 hlt -> Hlt
+data16 -> Data16

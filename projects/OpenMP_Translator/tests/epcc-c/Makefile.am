@@ -9,17 +9,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
 
+OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
+
 TESTCODES_REQUIRED_TO_PASS = \
 arraydelay.c \
 delay.c \
 getclock.c \
-gtod.c 
-# disabled due to symbol table issues, Liao 1/2/2008
-#syncbench.c
-#schedbench.c 
-
-# array bench is not our interest, C. Liao July 19
-# arraybench.c 
+gtod.c \
+syncbench.c \
+schedbench.c 
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -43,7 +41,6 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): ../../ompTranslator $(srcdir)/$(@:.o=.c)
-	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
 	$(VALGRIND) ../../ompTranslator -D_OPENMP -DIDA=1 $(ROSE_FLAGS) -I$(srcdir)/../.. -I$(srcdir)/../../includes -c $(srcdir)/$(@:.o=.c)
 
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
@@ -69,6 +66,16 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
+if ROSE_USE_OPENMP
+LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
+
+TESTS = $(check_PROGRAMS)
+check_PROGRAMS = syncbench schedbench
+syncbench: syncbench.o delay.o getclock.o gtod.o
+	$(CC) -o $@ $^ $(LDADD)
+schedbench:schedbench.o delay.o getclock.o gtod.o
+	$(CC) -o $@ $^ $(LDADD)
+else 
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -77,6 +84,8 @@ check-local:
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/epcc-c: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
+endif
+
 # else
 # check-local:
 #	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"

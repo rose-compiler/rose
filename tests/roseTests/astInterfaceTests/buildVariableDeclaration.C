@@ -2,13 +2,14 @@
 // Demostrate how to build variable declaration statements
 //  extern int i;
 //  int i;
-// HighLevel_Sage_Builder_Interface contains the AST nodes/subtrees builders
+// SageBuilder contains the AST nodes/subtrees builders
 // SageInterface contains any other AST utitily tools 
 //-------------------------------------------------------------------
 #include "rose.h"
 #include "sageBuilder.h"
-
-using namespace HighLevel_Sage_Builder_Interface;
+#include <string>
+using namespace std;
+using namespace SageBuilder;
 using namespace SageInterface;
 
 static  SgTreeCopy treeCopy;
@@ -23,7 +24,7 @@ int main (int argc, char *argv[])
   SgVariableDeclaration *varDecl = buildVariableDeclaration
     (SgName ("i"), SgTypeInt::createType ());
   ((varDecl->get_declarationModifier()).get_storageModifier()).setExtern();
-  append_statement (varDecl);
+  appendStatement (varDecl);
 // two ways to build a same declaration
   // int i;
 #if 1
@@ -35,7 +36,7 @@ int main (int argc, char *argv[])
   ((varDecl->get_declarationModifier()).get_storageModifier()).setDefault();
 #endif 
 
-  append_statement (varDecl2);
+  appendStatement (varDecl2);
 
   popScopeStack ();
 

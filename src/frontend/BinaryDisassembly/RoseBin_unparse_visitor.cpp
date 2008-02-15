@@ -12,6 +12,50 @@
 
 using namespace std;
 
+string getNameForPartialRegister(const string& fullRegName, SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos) {
+  ROSE_ASSERT (fullRegName.size() >= 2 && fullRegName[0] == 'r');
+  enum RegisterClass {numbered, sidibpspip, axbxcxdx};
+  RegisterClass regClass;
+  if (isdigit(fullRegName[1])) {
+    regClass = numbered;
+  } else if (fullRegName[fullRegName.size() - 1] != 'x') {
+    regClass = sidibpspip;
+  } else {
+    regClass = axbxcxdx;
+  }
+  switch (pos) {
+    case SgAsmRegisterReferenceExpression::low_byte: {
+      switch (regClass) {
+        case numbered: return fullRegName + "b";
+        case sidibpspip: ROSE_ASSERT (fullRegName != "rip"); return fullRegName.substr(1, 2) + "l";
+        case axbxcxdx: return fullRegName.substr(1, 1) + "l";
+      }
+    }
+    case SgAsmRegisterReferenceExpression::high_byte: {
+      ROSE_ASSERT (regClass == axbxcxdx);
+      return fullRegName.substr(1, 1) + "h";
+    }
+    case SgAsmRegisterReferenceExpression::word: {
+      switch (regClass) {
+        case numbered: return fullRegName + "w";
+        case sidibpspip: case axbxcxdx: return fullRegName.substr(1, 2);
+      }
+    }
+    case SgAsmRegisterReferenceExpression::dword: {
+      switch (regClass) {
+        case numbered: return fullRegName + "d";
+        case sidibpspip: case axbxcxdx: return "e" + fullRegName.substr(1, 2);
+      }
+    }
+    case SgAsmRegisterReferenceExpression::qword:
+    case SgAsmRegisterReferenceExpression::all: {
+      return fullRegName;
+    }
+    default: ROSE_ASSERT (!"Bad position in register");
+  }
+}
+
+
 /****************************************************
  * resolve expression
  ****************************************************/
@@ -20,192 +64,76 @@ string RoseBin_unparse_visitor::resolveRegister(SgAsmRegisterReferenceExpression
   string res="";
   switch (code) {
   case SgAsmRegisterReferenceExpression::rAX: {
-    res="rAX:undefined";
-    if (pos==SgAsmRegisterReferenceExpression::low_byte)
-      res="al";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::high_byte)
-	res="ah";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::word)
-	  res="ax";
-	else 
-	  if (pos==SgAsmRegisterReferenceExpression::dword)
-	    res="eax";
-	  else 
-	    if (pos==SgAsmRegisterReferenceExpression::qword)
-	      res="rax";
-    break; 
+    return getNameForPartialRegister("rax", pos);
   }
   case SgAsmRegisterReferenceExpression::rBX: {
-    res="rBX:undefined"; 
-    if (pos==SgAsmRegisterReferenceExpression::low_byte)
-      res="bl";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::high_byte)
-	res="bh";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::word)
-	  res="bx";
-	else 
-	  if (pos==SgAsmRegisterReferenceExpression::dword)
-	    res="ebx";
-	  else 
-	    if (pos==SgAsmRegisterReferenceExpression::qword)
-	      res="rbx";
-    break;
+    return getNameForPartialRegister("rbx", pos);
   }
   case SgAsmRegisterReferenceExpression::rCX: {
-    res="rCX:undefined";
-    if (pos==SgAsmRegisterReferenceExpression::low_byte)
-      res="cl";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::high_byte)
-	res="ch";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::word)
-	  res="cx";
-	else 
-	  if (pos==SgAsmRegisterReferenceExpression::dword)
-	    res="ecx";
-	  else 
-	    if (pos==SgAsmRegisterReferenceExpression::qword)
-	      res="rcx";
-    break;
+    return getNameForPartialRegister("rcx", pos);
   } 
   case SgAsmRegisterReferenceExpression::rDX: {
-    res="rDX:undefined"; 
-    if (pos==SgAsmRegisterReferenceExpression::low_byte)
-      res="dl";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::high_byte)
-	res="dh";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::word)
-	  res="dx";
-	else 
-	  if (pos==SgAsmRegisterReferenceExpression::dword)
-	    res="edx";
-	  else 
-	    if (pos==SgAsmRegisterReferenceExpression::qword)
-	      res="rdx";
-    break;
-  }
-  case SgAsmRegisterReferenceExpression::rDI: {
-    res="rDI:undefined"; 
-    if (pos==SgAsmRegisterReferenceExpression::word)
-      res="di";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::dword)
-	res="edi";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::qword)
-	  res="rdi";
-    break;
+    return getNameForPartialRegister("rdx", pos);
   }
   case SgAsmRegisterReferenceExpression::rSI: {
-    res="rSI:undefined";
-    if (pos==SgAsmRegisterReferenceExpression::word)
-      res="si";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::dword)
-	res="esi";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::qword)
-	  res="rsi";
-    break;
+    return getNameForPartialRegister("rsi", pos);
   } 
-  case SgAsmRegisterReferenceExpression::rSP: {
-    res="rSP:undefined"; 
-    if (pos==SgAsmRegisterReferenceExpression::word)
-      res="sp";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::dword)
-	res="esp";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::qword)
-	  res="rsp";
-    break;
+  case SgAsmRegisterReferenceExpression::rDI: {
+    return getNameForPartialRegister("rdi", pos);
   }
   case SgAsmRegisterReferenceExpression::rBP: {
-    res="rBP:undefined";
-    if (pos==SgAsmRegisterReferenceExpression::word)
-      res="bp";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::dword)
-	res="ebp";
-      else 
-	if (pos==SgAsmRegisterReferenceExpression::qword)
-	  res="rbp";
-    break;
+    return getNameForPartialRegister("rbp", pos);
   } 
+  case SgAsmRegisterReferenceExpression::rSP: {
+    return getNameForPartialRegister("rsp", pos);
+  }
   case SgAsmRegisterReferenceExpression::r8: {
-    res="r8";
-    break;
+    return getNameForPartialRegister("r8", pos);
   } 
   case SgAsmRegisterReferenceExpression::r9: {
-    res="r9";
-    break;
+    return getNameForPartialRegister("r9", pos);
   } 
   case SgAsmRegisterReferenceExpression::r10: {
-    res="r10";
-    break;
+    return getNameForPartialRegister("r10", pos);
   } 
   case SgAsmRegisterReferenceExpression::r11: {
-    res="r11";
-    break;
+    return getNameForPartialRegister("r11", pos);
   } 
   case SgAsmRegisterReferenceExpression::r12: {
-    res="r12";
-    break;
+    return getNameForPartialRegister("r12", pos);
   } 
   case SgAsmRegisterReferenceExpression::r13: {
-    res="r13";
-    break;
+    return getNameForPartialRegister("r13", pos);
   } 
   case SgAsmRegisterReferenceExpression::r14: {
-    res="r14";
-    break;
+    return getNameForPartialRegister("r14", pos);
   } 
   case SgAsmRegisterReferenceExpression::r15: {
-    res="r15";
-    break;
+    return getNameForPartialRegister("r15", pos);
   } 
   case SgAsmRegisterReferenceExpression::CS: {
-    res="cs";
-    break;
+    return "cs";
   } 
   case SgAsmRegisterReferenceExpression::DS: {
-    res="ds";
-    break;
-  } 
-  case SgAsmRegisterReferenceExpression::SS: {
-    res="ss";
-    break;
+    return "ds";
   } 
   case SgAsmRegisterReferenceExpression::ES: {
-    res="es";
-    break;
+    return "es";
+  } 
+  case SgAsmRegisterReferenceExpression::SS: {
+    return "ss";
   } 
   case SgAsmRegisterReferenceExpression::FS: {
-    res="fs:undefined";
-    if (pos==SgAsmRegisterReferenceExpression::dword)
-      res="fs";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::qword)
-	res="rfs";
-    break;
+    return "fs";
   } 
   case SgAsmRegisterReferenceExpression::GS: {
-    res="gs:undefined";
-    if (pos==SgAsmRegisterReferenceExpression::dword)
-      res="gs";
-    else 
-      if (pos==SgAsmRegisterReferenceExpression::qword)
-	res="rgs";
-    break;
+    return "gs";
+  } 
+  case SgAsmRegisterReferenceExpression::rIP: {
+    return getNameForPartialRegister("rip", pos);
   } 
   default:
+    abort();
     res = "undefined";
     break;
   }
@@ -358,28 +286,37 @@ string RoseBin_unparse_visitor::get_mnemonic_from_instruction(SgAsmExpression* e
 	return mnemonic;
 }
 
-string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *type,
+string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 					       RoseBin_DataFlowAbstract* dfa) {
   encode=true;
   analysis = dfa;
   ROSE_ASSERT(analysis);
   string replace = "";
-  string val = resolveOperand(expr, type, &replace);
+  string val = resolveOperand(expr, &replace);
   //cerr << " found val and type " << val << " " << *type << endl;
   analysis=NULL;
   encode=false;
   return val;
 }
 
+string getPointerTypeName(SgAsmType* ty) {
+  switch (ty->variantT()) {
+    case V_SgAsmTypeByte: return "BYTE";
+    case V_SgAsmTypeWord: return "WORD";
+    case V_SgAsmTypeDoubleWord: return "DWORD";
+    case V_SgAsmTypeQuadWord: return "QWORD";
+    default: {std::cerr << "getPointerTypeName: Bad class " << ty->class_name() << std::endl; ROSE_ABORT();}
+  }
+}
+
 /****************************************************
  * resolve expression
  ****************************************************/
-string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *type,
+string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 					       string *replace) {
   string res="...";
   ROSE_ASSERT(expr);
   ROSE_ASSERT(replace);
-  ROSE_ASSERT(type);
   if (isSgAsmRegisterReferenceExpression(expr)) {
     // 1. its a RegisterReferenceExpression -------------------------
     //SgAsmExpression* offset = NULL;
@@ -390,7 +327,6 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *ty
       //offset = refExpr->get_offset();
     // if offset==null, then we have no children, must be a plain register
       res = resolveRegister(code, pos);
-
     } else if (RoseAssemblyLanguage==arm) {
       SgAsmRegisterReferenceExpression::arm_register_enum code = refExpr->get_arm_register_code();
       SgAsmRegisterReferenceExpression::arm_position_in_register_enum pos = refExpr->get_arm_position_in_register_code();
@@ -418,7 +354,7 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *ty
       SgAsmExpression* address = memRef->get_address();
       ROSE_ASSERT(address);
 
-      string operand = resolveOperand(address, type, replace);
+      string operand = resolveOperand(address, replace);
 
       string mnemonic = "";
       mnemonic = get_mnemonic_from_instruction(expr);
@@ -427,8 +363,8 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *ty
 	exception=true;
       res = "[";
       if (exception==false) {
-	string sizeString = *type; // FIXME
-	res = sizeString + " PTR [";
+        ROSE_ASSERT (expr->get_type());
+	res = getPointerTypeName(expr->get_type()) + " PTR [";
       }
       *replace = expr->get_replacement();
       if (*replace!="") 
@@ -458,18 +394,6 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *ty
 				      double_word_val,
 				      quad_word_val);
 
-	if (isSgAsmByteValueExpression(valExp)) {
-	  *type ="BYTE";
-	}
-	if (isSgAsmWordValueExpression(valExp)) {
-	  *type ="WORD";
-	}
-	if (isSgAsmDoubleWordValueExpression(valExp)) {
-	  *type ="DWORD";
-	}
-	if (isSgAsmQuadWordValueExpression(valExp)) {
-	  *type="QWORD";
-	}
 	//*replace="<" + RoseBin_support::ToString(valExp) + ">"+" rep= " + valExp->get_replacement();
 	*replace = valExp->get_replacement();
 	if (*replace!="") 
@@ -484,14 +408,8 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr, string *ty
 	  SgAsmExpression* right = binExp->get_rhs();
 
 	  if (left && right) {
-	    string type1="";
-	    string type2="";
-	    string resLeft = resolveOperand(left,&type1,replace);
-	    string resRight = resolveOperand(right,&type2,replace);
-	    //cerr << " type left : " << type1 << "   type right : " << type2 << endl;
-	    if (type1==type2) *type=type1;
-	    else if (type1=="DWORD" && type2=="QWORD") *type="QWORD";
-	    else if (type1=="QWORD" && type2=="DWORD") *type="QWORD";
+	    string resLeft = resolveOperand(left,replace);
+	    string resRight = resolveOperand(right,replace);
 	    uint64_t l =0;
 	    uint64_t r =0;
 	    if (encode) {
@@ -604,18 +522,16 @@ RoseBin_unparse_visitor::unparseInstruction(SgAsmInstruction* binInst) {
   string operands = "";
   int counter=0;
   SgAsmExpressionPtrList ptrList = opList->get_operands();
-  string lastType = "DWORD";
-  for (SgAsmExpressionPtrList::reverse_iterator it=ptrList.rbegin(); it!=ptrList.rend(); ++it) { // Do backwards to propagate types from constants to mem refs
+  string type = "";
+  for (SgAsmExpressionPtrList::iterator it=ptrList.begin(); it!=ptrList.end(); ++it) {
     SgAsmExpression* expr = *it;
     ROSE_ASSERT(expr);
     // resolve each operand
-    string type = lastType;
     string replace="";
-    string result = resolveOperand(expr,&type,&replace);
-    lastType = type;
+    string result = resolveOperand(expr,&replace);
     operands = result + operands;
     if (counter < (int) (ptrList.size()-1))
-      operands = "," + operands;
+      operands = ", " + operands;
     counter++;
   }
 

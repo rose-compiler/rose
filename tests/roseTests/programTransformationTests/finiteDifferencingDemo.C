@@ -62,7 +62,7 @@ int main (int argc, char* argv[]) {
       SgStatement* stmt = 
 	isSgStatement(exprs[i]->get_parent()->get_parent()->get_parent());
       if (stmt)
-	myRemoveStatement(stmt);
+	SageInterface::myRemoveStatement(stmt);
       doFiniteDifferencingOne(exprs[i], body, getFiniteDifferencingRules());
     }
 
@@ -78,7 +78,7 @@ int main (int argc, char* argv[]) {
       if (!bb) continue;
       SgVarRefExp* vr = isSgVarRefExp(bang_exprs[i]);
       if (!vr) continue;
-      myRemoveStatement(bang_stmt);
+      SageInterface::myRemoveStatement(bang_stmt);
       simpleUndoFiniteDifferencingOne(bb, vr);
     }
     rewrite(getAlgebraicRules(), (SgNode*&)body);

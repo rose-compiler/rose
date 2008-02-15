@@ -1,5 +1,6 @@
 
 #include "rose.h"
+#include "sageBuilder.h"
 
 // DQ (8/1/2005): test use of new static function to create 
 // Sg_File_Info object that are marked as transformations
@@ -19,32 +20,35 @@ class FlattenBlocksVisitor: public AstSimpleProcessing {
   virtual void visit(SgNode* node) {
     if (isSgBasicBlock(node)) {
       SgBasicBlock* c = isSgBasicBlock(node);
-      bool changed = true;
-      while (changed) {
-	changed = false;
-	SgStatementPtrList::iterator i;
-	for (i = c->get_statements().begin();
-	     i != c->get_statements().end();
-	     ++i) {
-	  if (isSgBasicBlock(*i)) {
-	    changed = true;
-	    break;
-	  }
-	}
-	size_t idx = i - c->get_statements().begin();
-	if (changed) { // Here, means "needs a change"
-	  SgStatementPtrList& stmts = isSgBasicBlock(*i)->get_statements();
-	  for (SgStatementPtrList::iterator j = stmts.begin();
-	       j != stmts.end(); ++j) {
-	    (*j)->set_parent(c);
-	  }
-          ROSE_ASSERT (*i != c); // Ensure that we are not inserting the contents of a block into itself
-	  c->get_statements().erase(i);
-	  // This use of idx is needed to avoid iterator invalidation
-	  c->get_statements().insert(c->get_statements().begin() + idx,
-                                     stmts.begin(), stmts.end());
-	}
+      SgStatementPtrList newStatements;
+      for (SgStatementPtrList::const_iterator i = c->get_statements().begin();
+           i != c->get_statements().end(); ++i) {
+        if (isSgBasicBlock(*i)) {
+          SgBasicBlock* c2 = isSgBasicBlock(*i);
+          const SgStatementPtrList& c2Stmts = c2->get_statements();
+          // We need to prevent a declaration from immediately following a label, as that is illegal
+          if (!newStatements.empty() && isSgLabelStatement(newStatements.back()) && !c2Stmts.empty() && isSgVariableDeclaration(c2Stmts.front())) {
+            newStatements.push_back(SageBuilder::buildExprStatement(SageBuilder::buildNullExpression()));
+          }
+          newStatements.insert(newStatements.end(), isSgBasicBlock(*i)->get_statements().begin(), isSgBasicBlock(*i)->get_statements().end());
+        } else {
+          if (!newStatements.empty() && isSgLabelStatement(newStatements.back()) && isSgVariableDeclaration(*i)) {
+            newStatements.push_back(SageBuilder::buildExprStatement(SageBuilder::buildNullExpression()));
+          }
+          newStatements.push_back(*i);
+        }
       }
+      if (!newStatements.empty() && isSgLabelStatement(newStatements.back())) {
+        // Prevent block from ending with a label
+        newStatements.push_back(SageBuilder::buildExprStatement(SageBuilder::buildNullExpression()));
+      }
+      for (SgStatementPtrList::const_iterator i = newStatements.begin();
+           i != newStatements.end(); ++i) {
+        (*i)->set_parent(c);
+      }
+      c->get_statements() = newStatements;
+      c->get_symbol_table()->get_table()->clear();
+      SageInterface::rebuildSymbolTable(c);
     }
   }
 };
@@ -173,102 +177,6 @@ void renameLabels(SgNode* fd, SgFunctionDefinition* enclosingFunctionDefinition)
   RenameLabelsVisitor(enclosingFunctionDefinition).traverse(fd, preorder);
 }
 
-// Remove jumps whose label is immediately after the jump.  Used to clean
-// up inlined code fragments.
-class RemoveJumpsToNextStatementVisitor: public AstSimpleProcessing {
-  public:
-  virtual void visit(SgNode* n) {
-    if (isSgBasicBlock(n)) {
-      SgBasicBlock* bb = isSgBasicBlock(n);
-      bool changes = true;
-      while (changes) {
-	changes = false;
-	for (SgStatementPtrList::iterator i = bb->get_statements().begin();
-	     i != bb->get_statements().end(); ++i) {
-	  if (isSgGotoStatement(*i)) {
-	    SgGotoStatement* gs = isSgGotoStatement(*i);
-	    SgStatementPtrList::iterator inext = i;
-	    ++inext;
-	    if (inext == bb->get_statements().end())
-	      continue;
-	    if (!isSgLabelStatement(*inext))
-	      continue;
-	    SgLabelStatement* ls = isSgLabelStatement(*inext);
-	    if (gs->get_label() == ls) {
-	      changes = true;
-	      bb->get_statements().erase(i);
-	      break;
-	    }
-	  }
-	}
-      }
-    }
-  }
-};
-
-void removeJumpsToNextStatement(SgNode* top) {
-  RemoveJumpsToNextStatementVisitor().traverse(top, postorder);
-}
-
-// Find the sets of both used and declared labels in a piece of code.
-class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
-  SgLabelStatementPtrSet& used;
-  SgLabelStatementPtrSet& all;
-
-  public:
-  FindUsedAndAllLabelsVisitor(SgLabelStatementPtrSet& used,
-			      SgLabelStatementPtrSet& all):
-    used(used), all(all) {}
-
-  virtual void visit(SgNode* n) {
-    if (isSgGotoStatement(n)) {
-      used.insert(isSgGotoStatement(n)->get_label());
-    }
-    if (isSgLabelStatement(n)) {
-      all.insert(isSgLabelStatement(n));
-    }
-  }
-};
-
-// Remove a statement
-void myRemoveStatement(SgStatement* stmt) {
-  // assert (LowLevelRewrite::isRemovableStatement(*i));
-  SgStatement* parent = isSgStatement(stmt->get_parent());
-  ROSE_ASSERT (parent);
-  SgBasicBlock* bb = isSgBasicBlock(parent);
-  SgForInitStatement* fis = isSgForInitStatement(parent);
-  if (bb || fis) {
-    ROSE_ASSERT (bb || fis);
-    SgStatementPtrList& siblings = 
-      (bb ? bb->get_statements() : fis->get_init_stmt());
-    SgStatementPtrList::iterator j = 
-      std::find(siblings.begin(), siblings.end(), stmt);
-    ROSE_ASSERT (j != siblings.end());
-    siblings.erase(j);
-    // LowLevelRewrite::remove(*i);
-  } else {
-    parent->replace_statement(stmt, new SgNullStatement(SgNULL_FILE));
-  }
-}
-
-// Remove all unused labels in a section of code.
-void removeUnusedLabels(SgNode* top) {
-  SgLabelStatementPtrSet used;
-  SgLabelStatementPtrSet unused;
-  FindUsedAndAllLabelsVisitor(used, unused).traverse(top, preorder);
-  for (SgLabelStatementPtrSet::iterator i = used.begin(); 
-       i != used.end(); ++i) {
-    assert (unused.find(*i) != unused.end());
-    // std::cout << "Keeping used label " << (*i)->get_label().str() << std::endl;
-    unused.erase(*i);
-  }
-  for (SgLabelStatementPtrSet::iterator i = unused.begin(); 
-       i != unused.end(); ++i) {
-    // std::cout << "Removing unused label " << (*i)->get_label().str() << std::endl;
-    myRemoveStatement(*i);
-  }
-}
-
 // Remove all statements whose sole content is an integer constant.  Dummy
 // statements like this are introduced by the inliner to ensure that a
 // label is not the last statement in a block, but not all of them are
@@ -286,15 +194,19 @@ class RemoveNullStatementsVisitor: public AstSimpleProcessing {
 	     i != stmts.end(); ++i) {
 	  if (isSgExprStatement(*i)) {
 	    SgExpression* expr = isSgExprStatement(*i)->get_expression();
-	    if (isSgIntVal(expr)) { // This is what null statements are
+	    if (isSgIntVal(expr) ||
+                isSgNullExpression(expr) ||
+                isSgVarRefExp(expr) ||
+                (isSgNotOp(expr) && isSgVarRefExp(isSgNotOp(expr)->get_operand()))) { // This is what null statements are
 	      SgStatementPtrList::iterator inext = i, iprev = i;
 	      ++inext;
 	      if (iprev != stmts.begin()) --iprev;
-	      if (inext != stmts.end() || !isSgLabelStatement(*iprev)) {
+	      if ((inext != stmts.end() && !isSgDeclarationStatement(*inext)) || // A label cannot precede a declaration
+		  !isSgLabelStatement(*iprev)) {
 		// Checking to be sure that this statement isn't ensuring
 		// that a label isn't the last statement in a block (which
 		// would be illegal)
-		myRemoveStatement(*i);
+		SageInterface::myRemoveStatement(*i);
 		changes = true;
 		break; // To avoid iterator invalidation
 	      }
@@ -391,7 +303,7 @@ class FindReferenceVariablesVisitor: public AstSimpleProcessing {
       assert (copy_vr->get_symbol());
       SgInitializedName* copy = copy_vr->get_symbol()->get_declaration();
       assert (copy);
-      if (!isReferenceType(copy->get_type()))
+      if (!SageInterface::isReferenceType(copy->get_type()))
            return; // Fail if non-reference
 
       SgInitializer* copyinit = copy->get_initializer(); 
@@ -441,7 +353,7 @@ class FindCopiesVisitor: public AstSimpleProcessing {
       assert (copy);
       SgInitializer* copyinit = copy->get_initializer(); 
       SgScopeStatement* copyscope =
-	getScope(copy->get_parent()->get_parent());
+	SageInterface::getScope(copy->get_parent()->get_parent());
       if (isSgAssignInitializer(copyinit)) {
 	SgAssignInitializer* init = 
 	  isSgAssignInitializer(copyinit);
@@ -476,6 +388,7 @@ class FindCopiesVisitor: public AstSimpleProcessing {
 	    SgExpression* orig_copy = isSgExpression(orig_expr /*->copy(SgTreeCopy()) */);
 	    assert (orig_copy);
 	    orig_copy->set_parent(copy_vr->get_parent());
+            orig_copy->set_lvalue(copy_vr->get_lvalue());
 
        ROSE_ASSERT(copy_vr != NULL);
        ROSE_ASSERT(copy_vr->get_parent() != NULL);
@@ -522,6 +435,12 @@ class FindUsedDeclarationsVisitor: public AstSimpleProcessing {
   }
 };
 
+set<SgInitializedName*> findVariablesUsedInRegion(SgNode* e) {
+  FindUsedDeclarationsVisitor vis;
+  vis.traverse(e, preorder);
+  return vis.used_decls;
+}
+
 // Remove unused variable declarations in which the initializer is null, a
 // variable, or a constant.
 class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
@@ -531,17 +450,33 @@ class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
   RemoveUnusedDeclarationsVisitor(set<SgInitializedName*>& u):
     used_decls(u) {}
 
+  static bool isSimpleInitializer(SgExpression* e) {
+    if (isSgVarRefExp(e)) return true;
+    if (isSgValueExp(e)) return true;
+    if (isSgUnaryOp(e) && isSimpleInitializer(isSgUnaryOp(e)->get_operand())) {
+      return isSgBitComplementOp(e) || isSgMinusOp(e) || isSgNotOp(e) || isSgUnaryAddOp(e);
+    }
+    if (isSgBinaryOp(e) && isSimpleInitializer(isSgBinaryOp(e)->get_lhs_operand()) && isSimpleInitializer(isSgBinaryOp(e)->get_rhs_operand())) {
+      return isSgAddOp(e) || isSgAndOp(e) || isSgBitAndOp(e) || isSgBitOrOp(e) || isSgBitXorOp(e) || isSgCommaOpExp(e) || isSgDivideOp(e) || isSgEqualityOp(e) || isSgGreaterOrEqualOp(e) || isSgGreaterThanOp(e) || isSgLessOrEqualOp(e) || isSgLessThanOp(e) || isSgLshiftOp(e) || isSgModOp(e) || isSgMultiplyOp(e) || isSgNotEqualOp(e) || isSgOrOp(e) || isSgRshiftOp(e) || isSgSubtractOp(e);
+    }
+    if (isSgConditionalExp(e)) {
+      SgConditionalExp* c = isSgConditionalExp(e);
+      return isSimpleInitializer(c->get_conditional_exp()) && isSimpleInitializer(c->get_true_exp()) && isSimpleInitializer(c->get_false_exp());
+    }
+    return false;
+  }
+
   virtual void visit(SgNode* n) {
     if (isSgBasicBlock(n)) {
       SgBasicBlock* bb = isSgBasicBlock(n);
       bool changes1 = true;
       while (changes1) {
 	changes1 = false;
-	for (SgStatementPtrList::iterator i = bb->get_statements().begin();
-	     i != bb->get_statements().end(); ++i) {
-	  if (isSgVariableDeclaration(*i)) {
+	for (size_t i = 0; i < bb->get_statements().size(); ++i) {
+	  SgStatement* stmt = bb->get_statements()[i];
+	  if (isSgVariableDeclaration(stmt)) {
 	    SgInitializedNamePtrList& vars = 
-	      isSgVariableDeclaration(*i)->get_variables();
+	      isSgVariableDeclaration(stmt)->get_variables();
 	    bool changes = true;
 	    while (changes) {
 	      changes = false;
@@ -555,22 +490,26 @@ class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
 		  else if (isSgAssignInitializer(init)) {
 		    SgAssignInitializer* init2 = isSgAssignInitializer(init);
 		    // Ensure that init does not have side effects
-		    shouldErase = isSgVarRefExp(init2->get_operand_i()) ||
-				  isSgValueExp(init2->get_operand_i());
+		    shouldErase = isSimpleInitializer(init2->get_operand());
 		  }
 		  if (shouldErase) {
-		    vars.erase(j);
-		    changes = true;
-		    break;
+		    removeVariableDeclaration(*j);
+		    --i; // Counteract increment
+		    goto iLoopBottom;
+		    // changes = true;
+		    // break;
 		  }
 		}
 	    }
+#if 0
 	    if (vars.empty()) {
 	      bb->get_statements().erase(i);
 	      changes1 = true;
 	      break;
 	    }
+#endif
 	  }
+iLoopBottom: ;
 	}
       }
     }
@@ -585,6 +524,16 @@ void simpleCopyAndConstantPropagation(SgNode* top) {
   FindUsedDeclarationsVisitor vis;
   vis.traverse(top, preorder);
   RemoveUnusedDeclarationsVisitor(vis.used_decls).traverse(top, postorder);
+}
+
+// Remove unused variables in a scope
+void removeUnusedVariables(SgNode* top) {
+  set<SgInitializedName*> usedDecls;
+  vector<SgNode*> varRefs = NodeQuery::querySubTree(top, V_SgVarRefExp);
+  for (size_t i = 0; i < varRefs.size(); ++i) {
+    usedDecls.insert(isSgVarRefExp(varRefs[i])->get_symbol()->get_declaration());
+  }
+  RemoveUnusedDeclarationsVisitor(usedDecls).traverse(top, postorder);
 }
 
 // Remove the declaration of a given variable.
@@ -605,7 +554,7 @@ void removeVariableDeclaration(SgInitializedName* initname) {
   }
 #endif
   ROSE_ASSERT (vars.size() == 1);
-  myRemoveStatement(parent);
+  SageInterface::myRemoveStatement(parent);
 }
 
 // Move variable declarations down until just before they are used, and
@@ -618,7 +567,8 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
          if (isSgBasicBlock(n)) {
            SgBasicBlock* bb = isSgBasicBlock(n);
            SgStatementPtrList& stmts = bb->get_statements();
-           for (size_t decli = 0, initi; decli != stmts.size(); ++decli) {
+	   size_t initi;
+           for (size_t decli = 0; decli < stmts.size(); ++decli) {
              if (isSgVariableDeclaration(stmts[decli])) {
                SgVariableDeclaration* decl = isSgVariableDeclaration(stmts[decli]);
                SgInitializedNamePtrList& vars = decl->get_variables();
@@ -626,7 +576,7 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                  SgInitializedName* in = vars[vari];
                  if (in->get_initializer() == 0) {
                    bool used = false;
-                   for (initi = decli + 1; initi != stmts.size();
+                   for (initi = decli + 1; initi < stmts.size();
                         used |= containsVariableReference(stmts[initi], in),
                           ++initi) {
                      SgExprStatement* initExprStmt = isSgExprStatement(stmts[initi]);
@@ -658,6 +608,8 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                            // Assumes only one var per declaration FIXME
                            ROSE_ASSERT (vars.size() == 1);
                            stmts.erase(stmts.begin() + decli);
+			   --decli; // To counteract ++decli in loop header
+			   break; // To get out of initi loop
                          }
                        }
                      }
@@ -784,8 +736,8 @@ SgInitializedNamePtrList findInitializedNamesInScope(SgScopeStatement* scope) {
 // variable renaming or block flattening, however.
 void cleanupInlinedCode(SgNode* top) {
   simpleCopyAndConstantPropagation(top);
-  RemoveJumpsToNextStatementVisitor().traverse(top, postorder);
-  removeUnusedLabels(top);
+  SageInterface::removeJumpsToNextStatement(top);
+  SageInterface::removeUnusedLabels(top);
   RemoveNullStatementsVisitor().traverse(top, postorder);
   MoveDeclarationsToFirstUseVisitor().traverse(top, postorder);
   FindInitializedNames fin;
@@ -795,6 +747,11 @@ void cleanupInlinedCode(SgNode* top) {
     doSubexpressionExpansionSmart(*i);
   }
   simpleCopyAndConstantPropagation(top);
+  RemoveNullStatementsVisitor().traverse(top, postorder);
+}
+
+void removeNullStatements(SgNode* top) {
+  RemoveNullStatementsVisitor().traverse(top, postorder);
 }
 
 class ChangeAllMembersToPublicVisitor: public AstSimpleProcessing {
@@ -818,9 +775,3 @@ void changeAllMembersToPublic(SgNode* top) {
   ChangeAllMembersToPublicVisitor().traverse(top, preorder);
 }
 
-// Find the innermost scope containing a node
-SgScopeStatement* getScope(SgNode* n) {
-  while (n && !isSgScopeStatement(n)) {n = n->get_parent();}
-  ROSE_ASSERT (isSgScopeStatement(n));
-  return isSgScopeStatement(n);
-}

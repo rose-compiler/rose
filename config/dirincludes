@@ -1,25 +1,28 @@
 #! /bin/sh
 
-######################################################################################
-# Author:             Bobby Philip                                                   #
-# Creation Date:      11/20/2001                                                     #
-# Last Modified Date: 12/04/2001                                                     #
-######################################################################################
+############################################################
+# Author:             Bobby Philip                         #
+# Creation Date:      11/20/2001                           #
+# Last Modified Date: 01/30/2008                           #
+############################################################
 
 #given a target directory name, creates a list of include subdirectories
-if [ $# -ne 1 ] 
+if [ $# -ne 2 ] 
 then
-  echo "ERROR: Usage is create_include_path parentdir"
+  echo "ERROR: Usage is create_include_path parentdir includedir" 1>&2
+  exit 1
 else
-   if [ -d "$1" ]
+   origparentdir="$1"
+   includedir="$2"
+   if [ -d "$origparentdir" ]
    then
      includeString=""
      current_dir=`pwd`
-     cd "$1"
+     cd "$origparentdir"
      parent_dir=`pwd`
-     for fName in *
+     for fName in "$includedir"/*
      do
-       if [ -d $fName ]
+       if [ -d "$fName" ]
        then
          #AS(2/21/07) Changed dirincludes so that edg sees them as
          #system includes and not normal includes. This is important for
@@ -27,13 +30,14 @@ else
          #processed after all other directories) and for the handling
          #of the -nostdinc++ and -nostdinc options.
          #includeString="$includeString-I$parent_dir/$fName "
-         includeString="$includeString--sys_include $parent_dir/$fName "
-
+         includeString="$includeString, \"$fName\""
        fi
      done
      cd "$current_dir"
      echo "$includeString"
+     exit 0
    else
-     echo "ERROR: $1 is not a directory"
+     echo "ERROR: $1 is not a directory" 1>&2
+     exit 1
    fi
 fi

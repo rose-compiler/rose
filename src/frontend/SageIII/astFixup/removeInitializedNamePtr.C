@@ -399,6 +399,7 @@ visitWithAstNodePointersList ( SgNode* node, AstNodePointersList l )
         }
 
   // MS: FIX 4:
+#if 0 // JJW commented this out because it doesn't make sense for arrays to have constructor args
      if (SgNewExp* newexp = dynamic_cast<SgNewExp*>(node))
         {
           if (newexp->get_constructor_args() == NULL)
@@ -415,5 +416,6 @@ visitWithAstNodePointersList ( SgNode* node, AstNodePointersList l )
                ROSE_ASSERT (false);
              }
         }
+#endif
    }
 

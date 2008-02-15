@@ -71,6 +71,24 @@ vector<SgContinueStmt*> findContinueStmts(SgStatement* code) {
     return result;
   }
 
+  vector<SgGotoStatement*> findFortranGotos(SgStatement* scope, SgStatement* l) {
+ // DQ (9/25/2007): Moved from std::list to std::vector uniformally in ROSE.
+ // But we still need the copy since the return type is IR node specific.
+    Rose_STL_Container<SgNode*> allGotos = NodeQuery::querySubTree(scope, V_SgGotoStatement);
+
+    vector<SgGotoStatement*> result;
+    for (Rose_STL_Container<SgNode*>::const_iterator i = allGotos.begin(); i != allGotos.end(); ++i) {
+      SgLabelRefExp* lRef = isSgGotoStatement(*i)->get_label_expression();
+      if (!lRef) continue;
+      SgLabelSymbol* sym = lRef->get_symbol();
+      ROSE_ASSERT(sym);
+      if (sym->get_fortran_statement() == l) {
+	result.push_back(isSgGotoStatement(*i));
+      }
+    }
+    return result;
+  }
+
   vector<SgReturnStmt*> findReturnStmts(SgStatement* scope) {
  // DQ (9/25/2007): Moved from std::list to std::vector uniformally in ROSE. 
  // But we still need the copy since the return type is IR node specific.

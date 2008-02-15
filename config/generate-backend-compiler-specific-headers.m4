@@ -35,7 +35,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # echo "Before calling create system_headers prefix = $prefix"
 
  # Make the directory where we will place the ROSE version of the header files
-   mkdir -p $prefix/include
+ # mkdir -p $prefix/include
  # echo "Built directory structure for $prefix/include"
 
    saveCurrentDirectory=`pwd`
@@ -53,7 +53,8 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # ${srcdir}/config/create_system_headers "${compilerName}" "$ROSE_HEADERS_DIR" "${absolutePath_srcdir}"
 
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
-   ${srcdir}/config/create_system_headers "${BACKEND_CXX_COMPILER}" "$ROSE_CXX_HEADERS_DIR" "${absolutePath_srcdir}"
+   mkdir -p "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS"
+   ${srcdir}/config/create_system_headers "${BACKEND_CXX_COMPILER}" "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS" "${absolutePath_srcdir}"
 ])
 
 
@@ -89,10 +90,10 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # Include the directory with the subdirectories of header files
  # includeString="`${srcdir}/$ROSE_HOME/config/dirincludes "$ROSE_CXX_HEADERS_DIR"`"
-   includeString="--sys_include $ROSE_CXX_HEADERS_DIR `${srcdir}/$ROSE_HOME/config/dirincludes "$ROSE_CXX_HEADERS_DIR"` --sys_include /usr/include/ "
+   includeString="{\"${BACKEND_CXX_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER}_HEADERS"`, \"/usr/include\"}"
 
    echo "includeString = $includeString"
-   AC_DEFINE_UNQUOTED([CXX_INCLUDE_STRING],"$includeString",[Include path for backend C++ compiler.])
+   AC_DEFINE_UNQUOTED([CXX_INCLUDE_STRING],$includeString,[Include path for backend C++ compiler.])
 
  # echo "Exiting in generate-backend-compiler-specific-headers_m4"
  # exit 1
@@ -108,7 +109,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
 
    if test "$ROSE_C_HEADERS_DIR" = ""; then
       AC_MSG_NOTICE([ROSE_C_HEADERS_DIR not set ...])
-      ROSE_C_HEADERS_DIR="${prefix}/include/${compilerName}_HEADERS"
+      ROSE_C_HEADERS_DIR="${compilerName}_HEADERS"
    else
       AC_MSG_NOTICE([ROSE_C_HEADERS_DIR set to: $ROSE_C_HEADERS_DIR])
    fi
@@ -118,7 +119,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # echo "Before calling create system_headers absolutePath_srcdir = ${absolutePath_srcdir}"
 
  # Make the directory where we will place the ROSE version of the header files
-   mkdir -p $prefix/include
+ # mkdir -p $prefix/include
  # echo "Built directory structure for $prefix/include"
 
    saveCurrentDirectory=`pwd`
@@ -129,7 +130,8 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
  # ${srcdir}/config/create_system_headers "${BACKEND_C_COMPILER}" "$ROSE_C_HEADERS_DIR" "${absolutePath_srcdir}"
  # ${srcdir}/config/create_system_headers "${BACKEND_C_COMPILER}" "$ROSE_C_HEADERS_DIR" "${absolutePath_srcdir}" || : exit 1
-   ${srcdir}/config/create_system_headers "${BACKEND_C_COMPILER}" "$ROSE_C_HEADERS_DIR" "${absolutePath_srcdir}"
+   mkdir -p "./include-staging/${BACKEND_C_COMPILER}_HEADERS"
+   ${srcdir}/config/create_system_headers "${BACKEND_C_COMPILER}" "./include-staging/${BACKEND_C_COMPILER}_HEADERS" "${absolutePath_srcdir}"
 
    error_code=$?
    echo "error_code = $error_code"
@@ -175,10 +177,10 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # Include the directory with the subdirectories of header files
  # includeString="`${srcdir}/$ROSE_HOME/config/dirincludes "$ROSE_C_HEADERS_DIR"`"
-   includeString="--sys_include $ROSE_C_HEADERS_DIR `${srcdir}/$ROSE_HOME/config/dirincludes "$ROSE_C_HEADERS_DIR"` --sys_include /usr/include "
+   includeString="{\"${BACKEND_C_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER}_HEADERS"`, \"/usr/include\"}"
 
    echo "includeString = $includeString"
-   AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],"$includeString",[Include path for backend C compiler.])
+   AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])
 
  # echo "Exiting in generate-backend-compiler-specific-headers_m4"
  # exit 1

@@ -4,6 +4,7 @@
 // #include "rose.h"
 // #include <vector>
 
+#if 0
 //! Find all break statements inside a particular statement, stopping at nested
 //! loops or switch statements, which define their own contexts for break
 //! statements.  The function will stop immediately if run on a loop or switch
@@ -20,7 +21,10 @@ std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 std::vector<SgReturnStmt*> findReturnStmts(SgStatement* code);
 SgFunctionDefinition* getEnclosingProcedure(SgNode* n);
 std::vector<SgGotoStatement*> findGotos(SgStatement* scope, SgLabelStatement* l);
+std::vector<SgGotoStatement*> findFortranGotos(SgStatement* scope, SgStatement* l);
 SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
+
+#endif
 
 template <typename List>
 typename List::value_type indexList(const List& l, unsigned int i) {

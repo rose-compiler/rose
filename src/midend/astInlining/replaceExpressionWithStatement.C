@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include "sageBuilder.h"
 
 // DQ (8/1/2005): test use of new static function to create 
 // Sg_File_Info object that are marked as transformations
@@ -16,7 +17,6 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-
 // void FixSgTree(SgNode*);
 
 int gensym_counter = 0;
@@ -38,7 +38,7 @@ void replaceAssignmentStmtWithStatement(SgExprStatement* from,
   SgStatement* replacement = to->generate(var);
   // replacement->set_parent(from->get_parent());
   myStatementInsert(from, replacement, false);
-  myRemoveStatement(from);
+  SageInterface::myRemoveStatement(from);
 }
 
 // Get the expression root of an expression.  Needs to be moved.
@@ -149,6 +149,12 @@ void myStatementInsert ( SgStatement* target, SgStatement* newstmt, bool before,
           assert (target);
         }
 
+     if (isSgSwitchStatement(target->get_parent()) && target == isSgSwitchStatement(target->get_parent())->get_item_selector()) {
+       target = isSgScopeStatement(target->get_parent()->get_parent());
+       parent = isSgScopeStatement(target->get_parent());
+       assert (target);
+     }
+
      ROSE_ASSERT(target != NULL);
 #if 0
   // DQ (8/1/2005): This fails because the parent at some point is not set and the unparseToString detects this (likely in qualifier generation)
@@ -208,35 +214,13 @@ class AndOpGenerator: public StatementGenerator
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
-               SgExpression* assignOpTrue = new SgAssignOp(SgNULL_FILE, lhs, op->get_rhs_operand());
-	       assignOpTrue->set_endOfConstruct(SgNULL_FILE);
-               lhs->set_parent(assignOpTrue);
-               op->get_rhs_operand()->set_parent(assignOpTrue);
-               SgStatement* statementTrue = new SgExprStatement(SgNULL_FILE, assignOpTrue);
-	       statementTrue->set_endOfConstruct(SgNULL_FILE);
-               assignOpTrue->set_parent(statementTrue);
-               SgBasicBlock* bbTrue = new SgBasicBlock(SgNULL_FILE, statementTrue);
-	       bbTrue->set_endOfConstruct(SgNULL_FILE);
-               statementTrue->set_parent(bbTrue);
-               SgExpression* falseValue = new SgBoolValExp(SgNULL_FILE, false);
-               SgExpression* assignOpFalse = new SgAssignOp(SgNULL_FILE, lhsCopy, falseValue);
-	       assignOpFalse->set_endOfConstruct(SgNULL_FILE);
-               lhsCopy->set_parent(assignOpFalse);
-               falseValue->set_parent(assignOpFalse);
-               SgStatement* statementFalse = new SgExprStatement(SgNULL_FILE, assignOpFalse);
-	       statementFalse->set_endOfConstruct(SgNULL_FILE);
-               assignOpFalse->set_parent(statementFalse);
-               SgBasicBlock* bbFalse = new SgBasicBlock(SgNULL_FILE, statementFalse);
-	       bbFalse->set_endOfConstruct(SgNULL_FILE);
-               statementFalse->set_parent(bbFalse);
-               SgExprStatement* ifTest = new SgExprStatement(SgNULL_FILE, op->get_lhs_operand());
-	       ifTest->set_endOfConstruct(SgNULL_FILE);
-               op->get_lhs_operand()->set_parent(ifTest);
                SgIfStmt* tree =
-                    new SgIfStmt(SgNULL_FILE, ifTest, bbTrue, bbFalse);
-               ifTest->set_parent(tree);
-               bbTrue->set_parent(tree);
-               bbFalse->set_parent(tree);
+                 SageBuilder::buildIfStmt(
+                     SageBuilder::buildExprStatement(op->get_lhs_operand()),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhs, op->get_rhs_operand())),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhsCopy, SageBuilder::buildBoolValExp(false))));
                return tree;
              }
    };
@@ -253,35 +237,13 @@ class OrOpGenerator: public StatementGenerator
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
-               SgExpression* trueValue = new SgBoolValExp(SgNULL_FILE, true);
-               SgExpression* assignOpTrue = new SgAssignOp(SgNULL_FILE, lhs, trueValue);
-	       assignOpTrue->set_endOfConstruct(SgNULL_FILE);
-               lhs->set_parent(assignOpTrue);
-               trueValue->set_parent(assignOpTrue);
-               SgStatement* statementTrue = new SgExprStatement(SgNULL_FILE, assignOpTrue);
-	       statementTrue->set_endOfConstruct(SgNULL_FILE);
-               assignOpTrue->set_parent(statementTrue);
-               SgBasicBlock* bbTrue = new SgBasicBlock(SgNULL_FILE, statementTrue);
-	       bbTrue->set_endOfConstruct(SgNULL_FILE);
-               statementTrue->set_parent(bbTrue);
-               SgExpression* assignOpFalse = new SgAssignOp(SgNULL_FILE, lhsCopy, op->get_rhs_operand());
-	       assignOpFalse->set_endOfConstruct(SgNULL_FILE);
-               lhsCopy->set_parent(assignOpFalse);
-               op->get_rhs_operand()->set_parent(assignOpFalse);
-               SgStatement* statementFalse = new SgExprStatement(SgNULL_FILE, assignOpFalse);
-	       statementFalse->set_endOfConstruct(SgNULL_FILE);
-               assignOpFalse->set_parent(statementFalse);
-               SgBasicBlock* bbFalse = new SgBasicBlock(SgNULL_FILE, statementFalse);
-	       bbFalse->set_endOfConstruct(SgNULL_FILE);
-               statementFalse->set_parent(bbFalse);
-               SgExprStatement* ifTest = new SgExprStatement(SgNULL_FILE, op->get_lhs_operand());
-	       ifTest->set_endOfConstruct(SgNULL_FILE);
-               op->get_lhs_operand()->set_parent(ifTest);
                SgIfStmt* tree =
-                    new SgIfStmt(SgNULL_FILE, ifTest, bbTrue, bbFalse);
-               ifTest->set_parent(tree);
-               bbTrue->set_parent(tree);
-               bbFalse->set_parent(tree);
+                 SageBuilder::buildIfStmt(
+                     SageBuilder::buildExprStatement(op->get_lhs_operand()),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhs, SageBuilder::buildBoolValExp(true))),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhsCopy, op->get_rhs_operand())));
                return tree;
              }
    };
@@ -298,34 +260,13 @@ class ConditionalExpGenerator: public StatementGenerator
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
-               SgExpression* assignOpTrue = new SgAssignOp(SgNULL_FILE, lhs, op->get_true_exp());
-	       assignOpTrue->set_endOfConstruct(SgNULL_FILE);
-               lhs->set_parent(assignOpTrue);
-               op->get_true_exp()->set_parent(assignOpTrue);
-               SgStatement* statementTrue = new SgExprStatement(SgNULL_FILE, assignOpTrue);
-	       statementTrue->set_endOfConstruct(SgNULL_FILE);
-               assignOpTrue->set_parent(statementTrue);
-               SgBasicBlock* bbTrue = new SgBasicBlock(SgNULL_FILE, statementTrue);
-	       bbTrue->set_endOfConstruct(SgNULL_FILE);
-               statementTrue->set_parent(bbTrue);
-               SgExpression* assignOpFalse = new SgAssignOp(SgNULL_FILE, lhsCopy, op->get_false_exp());
-	       assignOpFalse->set_endOfConstruct(SgNULL_FILE);
-               lhsCopy->set_parent(assignOpFalse);
-               op->get_false_exp()->set_parent(assignOpFalse);
-               SgStatement* statementFalse = new SgExprStatement(SgNULL_FILE, assignOpFalse);
-	       statementFalse->set_endOfConstruct(SgNULL_FILE);
-               assignOpFalse->set_parent(statementFalse);
-               SgBasicBlock* bbFalse = new SgBasicBlock(SgNULL_FILE, statementFalse);
-	       bbFalse->set_endOfConstruct(SgNULL_FILE);
-               statementFalse->set_parent(bbFalse);
-               SgExprStatement* ifTest = new SgExprStatement(SgNULL_FILE, op->get_conditional_exp());
-	       ifTest->set_endOfConstruct(SgNULL_FILE);
-               op->get_conditional_exp()->set_parent(ifTest);
                SgIfStmt* tree =
-                    new SgIfStmt(SgNULL_FILE, ifTest, bbTrue, bbFalse);
-               ifTest->set_parent(tree);
-               bbTrue->set_parent(tree);
-               bbFalse->set_parent(tree);
+                 SageBuilder::buildIfStmt(
+                     SageBuilder::buildExprStatement(op->get_conditional_exp()),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhs, op->get_true_exp())),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhsCopy, op->get_false_exp())));
                return tree;
              }
    };
@@ -361,11 +302,11 @@ void replaceExpressionWithExpression(SgExpression* from, SgExpression* to) {
 // Assumptions: from is not within the test of a loop or if
 //              not currently traversing from or the statement it is in
 SgAssignInitializer* splitExpression(SgExpression* from, string newName) {
-  if (!isCopyConstructible(from->get_type())) {
+  if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
   }
-  assert (isCopyConstructible(from->get_type())); // How do we report errors?
+  assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
   SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
@@ -418,7 +359,7 @@ SgAssignInitializer* splitExpression(SgExpression* from, string newName) {
   vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
   vardecl->set_definingDeclaration(vardecl);
   SgInitializedName* initname = 
-    lastElementOfContainer(vardecl->get_variables());
+    vardecl->get_variables().back();
   // initname->set_endOfConstruct(SgNULL_FILE);
   SgVariableSymbol* sym = new SgVariableSymbol(initname);
   assert (sym);
@@ -447,7 +388,8 @@ SgAssignInitializer* splitExpression(SgExpression* from, string newName) {
 // Convert something like "int a = foo();" into "int a; a = foo();"
 SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
    {
-     assert (isDefaultConstructible(init->get_operand_i()->get_type()));
+     using namespace SageBuilder;
+     assert (SageInterface::isDefaultConstructible(init->get_operand_i()->get_type()));
      SgStatement* stmt = getStatementOfExpression(init);
      assert (stmt);
      SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
@@ -485,21 +427,12 @@ SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
      assert (initname);
      assert (initname->get_initializer() == init);
      assert (parent);
-     SgVariableSymbol* sym = initname->get_scope()->get_symbol_table()->findvar(initname->get_name());
-     ROSE_ASSERT (sym);
-     SgVarRefExp* vr = new SgVarRefExp(SgNULL_FILE, sym);
-     vr->set_endOfConstruct(SgNULL_FILE);
+     SgSymbol* sym = initname->get_symbol_from_symbol_table();
+     ROSE_ASSERT (isSgVariableSymbol(sym));
+     SgVarRefExp* vr = buildVarRefExp(isSgVariableSymbol(sym));
      vr->set_lvalue(true);
-     SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, vr, init->get_operand());
-     assignment->set_endOfConstruct(SgNULL_FILE);
-     vr->set_parent(assignment);
-     init->get_operand()->set_parent(assignment);
+     SgExprStatement* assign_stmt = buildAssignStatement(vr, init->get_operand());
 
-     printf ("In convertInitializerIntoAssignment: building SgAssignOp = %p \n",assignment);
-
-     SgExprStatement* assign_stmt = new SgExprStatement(SgNULL_FILE, assignment);
-     assign_stmt->set_endOfConstruct(SgNULL_FILE);
-     assignment->set_parent(assign_stmt);
      initname->set_initializer(NULL);
 
   // assignment->set_parent(assign_stmt);
@@ -508,14 +441,12 @@ SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
 
      myStatementInsert(stmt, assign_stmt, false);
      assign_stmt->set_parent(parent);
-     assign_stmt->get_expression()->set_parent(assign_stmt);
-
-     ROSE_ASSERT(assignment->get_parent() != NULL);
 
   // FixSgTree(assign_stmt);
   // FixSgTree(parent);
 
-     return assignment;
+     AstPostProcessing(assign_stmt);
+     return isSgAssignOp(assign_stmt->get_expression());
    }
 
 // Similar to replaceExpressionWithStatement, but with more restrictions.
@@ -581,157 +512,62 @@ void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* t
   // cout << "4: " << getStatementOfExpression(from)->get_parent()->unparseToString() << endl;
    }
 
-// Change continue statements in a given block of code to gotos to a label
-void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label)
-   {
-     std::vector<SgContinueStmt*> continues = findContinueStmts(stmt);
-     for (std::vector<SgContinueStmt*>::iterator i = continues.begin(); i != continues.end(); ++i)
-        {
-       // LowLevelRewrite::replace(*i, make_unit_list( new SgGotoStatement(SgNULL_FILE, label->get_declaration())));
-          SgGotoStatement* gotoStatement = new SgGotoStatement(SgNULL_FILE, label->get_declaration());
-	  gotoStatement->set_endOfConstruct(SgNULL_FILE);
-       // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
-          LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
-
-          ROSE_ASSERT(gotoStatement->get_parent() != NULL);
-        }
-   }
-
-// Return bool for C++ code, and int for C code
-SgType* getBoolType(SgNode* n) {
-  bool isC = TransformationSupport::getFile(n)->get_outputLanguage() == SgFile::e_C_output_language;
-  if (isC) {
-    return SgTypeInt::createType();
-  } else {
-    return SgTypeBool::createType();
-  }
-}
-
 // Rewrites a while or for loop so that the official test is changed to
 // "true" and what had previously been the test is now an if-break
 // combination (with an inverted condition) at the beginning of the loop
 // body
 //
 // For example, "while (a < 5) ++a;" becomes:
-// "while (true) {bool temp; temp = (a < 5); if (!temp) break; ++a;}"
-template <class LoopStatement>
-void pushTestIntoBody(LoopStatement* loopStmt) {
-  SgBasicBlock* new_body = new SgBasicBlock(SgNULL_FILE);
-  new_body->set_endOfConstruct(SgNULL_FILE);
-// printf ("Building IR node #10: new SgBasicBlock = %p \n",new_body);
-  SgBasicBlock* old_body = getLoopBody(loopStmt);
-  setLoopBody(loopStmt, new_body);
-  SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
-  SgVariableDeclaration* new_decl = 
-    new SgVariableDeclaration(SgNULL_FILE, varname, getBoolType(loopStmt));
-  new_decl->set_endOfConstruct(SgNULL_FILE);
-  new_decl->get_definition()->set_endOfConstruct(SgNULL_FILE);
-  new_decl->set_definingDeclaration(new_decl);
-  SgInitializedName* initname = 
-    lastElementOfContainer(new_decl->get_variables());
-  // initname->set_endOfConstruct(SgNULL_FILE);
-  initname->set_scope(new_body);
-  SgVariableSymbol* varsym = new SgVariableSymbol(initname);
-  new_body->insert_symbol(varname, varsym);
-  varsym->set_parent(new_body->get_symbol_table());
-  new_decl->set_parent(new_body);
-  new_body->get_statements().push_back(new_decl);
-
-// DQ (11/7/2006): modified this code to account for removal of SgExpressionRoot.
-// SgExpressionRoot* root = getLoopConditionRoot(loopStmt);
-  SgExpression* root = getLoopConditionRoot(loopStmt);
-
-// DQ (11/7/2006): modified this code to account for removal of SgExpressionRoot.
-// DQ (2/21/2006): Make sure that all SgCastExp have there 
-// type set since there is no way to figure it out otherwise.
-// SgCastExp* cast = new SgCastExp(SgNULL_FILE, root->get_operand_i());
-// SgCastExp* cast = new SgCastExp(SgNULL_FILE, root->get_operand_i(),new SgTypeBool());
-  SgCastExp* cast = new SgCastExp(SgNULL_FILE, root,getBoolType(loopStmt));
-// printf ("pushTestIntoBody(): built SgCastExp = %p (no type specificed) \n",cast);
-
-// DQ (11/7/2006): modified this code to account for removal of SgExpressionRoot.
-// root->get_operand_i()->set_parent(cast);
-  root->set_parent(cast);
-  assert (varsym);
-  SgVarRefExp* vr1 = new SgVarRefExp(SgNULL_FILE, varsym);
-  vr1->set_endOfConstruct(SgNULL_FILE);
-  vr1->set_lvalue(true);
-  SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, vr1, cast);
-  assignment->set_endOfConstruct(SgNULL_FILE);
-  vr1->set_parent(assignment);
-  cast->set_parent(assignment);
-
-  printf ("In pushTestIntoBody: building SgAssignOp = %p \n",assignment);
-
-  SgExprStatement* temp_setup = new SgExprStatement(SgNULL_FILE, assignment);
-  temp_setup->set_endOfConstruct(SgNULL_FILE);
-  assignment->set_parent(temp_setup);
-  new_body->get_statements().push_back(temp_setup);
-  temp_setup->set_parent(new_body);
-  SgBreakStmt* breakStmt = new SgBreakStmt(SgNULL_FILE);
-  SgBasicBlock* breakStmtBlock = new SgBasicBlock(SgNULL_FILE, breakStmt);
-  breakStmtBlock->set_endOfConstruct(SgNULL_FILE);
-  breakStmt->set_parent(breakStmtBlock);
-  SgVarRefExp* varsymVr = new SgVarRefExp(SgNULL_FILE, varsym);
-  varsymVr->set_endOfConstruct(SgNULL_FILE);
-  SgNotOp* notOp = new SgNotOp(SgNULL_FILE, varsymVr);
-  varsymVr->set_parent(notOp);
-  SgExprStatement* notOpStmt = new SgExprStatement(SgNULL_FILE, notOp);
-  notOpStmt->set_endOfConstruct(SgNULL_FILE);
-  notOp->set_parent(notOpStmt);
-  SgBasicBlock* emptyElse = new SgBasicBlock(SgNULL_FILE);
-  emptyElse->set_endOfConstruct(SgNULL_FILE);
-  SgIfStmt* loop_break =
-       new SgIfStmt(SgNULL_FILE, notOpStmt, breakStmtBlock, emptyElse);
-  notOpStmt->set_parent(loop_break);
-  breakStmtBlock->set_parent(loop_break);
-  emptyElse->set_parent(loop_break);
-#if 0
-  printf ("Building IR node #4: loop_break = %p \n",loop_break);
-  printf ("Building IR node #11: new SgBasicBlock = %p \n",loop_break->get_true_body());
-  printf ("Building IR node #12: new SgBasicBlock = %p \n",loop_break->get_false_body());
-#endif
-  loop_break->set_parent(new_body);
-  new_body->get_statements().push_back(loop_break);
-  old_body->set_parent(new_body);
-  new_body->get_statements().push_back(old_body);
-  // FixSgTree(new_body);
-  setLoopConditionRoot(loopStmt, new SgBoolValExp(SgNULL_FILE, true));
-}
-
-template <class LoopStatement>
-// Add a step statement to the end of a loop body
-// Add a new label to the end of the loop, with the step statement after
-// it; then change all continue statements in the old loop body into
-// jumps to the label
-//
-// For example:
-// while (a < 5) {if (a < -3) continue;} (adding "a++" to end) becomes
-// while (a < 5) {if (a < -3) goto label; label: a++;}
-void addStepToLoopBody(LoopStatement* loopStmt, SgStatement* step) {
-  SgBasicBlock* old_body = getLoopBody(loopStmt);
-  SgBasicBlock* new_body = new SgBasicBlock(SgNULL_FILE);
-  new_body->set_endOfConstruct(SgNULL_FILE);
-// printf ("Building IR node #13: new SgBasicBlock = %p \n",new_body);
-  SgName labelname = "rose_label__";
-  labelname << ++gensym_counter;
-  SgLabelStatement* labelstmt = new SgLabelStatement(SgNULL_FILE, labelname);
-  labelstmt->set_endOfConstruct(SgNULL_FILE);
-  labelstmt->set_scope(new_body);
-  SgLabelSymbol* labelsym = new SgLabelSymbol(labelstmt);
-  changeContinuesToGotos(old_body, labelsym);
-  new_body->insert_symbol(labelname, labelsym);
-  labelsym->set_parent(new_body->get_symbol_table());
-  new_body->get_statements().push_back(old_body);
-  new_body->get_statements().push_back(labelstmt);
-
-// DQ (6/24/2006): Set the parent
-  labelstmt->set_parent(new_body);
-
-  new_body->get_statements().push_back(step);
-  step->set_parent(new_body);
-  setLoopBody(loopStmt, new_body);
+// "while (true) {bool temp = (a < 5); if (!temp) break; ++a;}"
+// "for (init; test; step) body;" becomes:
+// "for (init; true; step) {bool temp = test; if (!temp) break; body;}"
+// "do body; while (test);" becomes:
+// "do {body; bool temp = test; if (!temp) break;} while (true);"
+void pushTestIntoBody(SgScopeStatement* loopStmt) {
+  using namespace SageBuilder;
+  AstPostProcessing(loopStmt);
+  SgBasicBlock* new_body = buildBasicBlock();
+  SgBasicBlock* old_body = SageInterface::getLoopBody(loopStmt);
+  SageInterface::setLoopBody(loopStmt, new_body);
   new_body->set_parent(loopStmt);
+  AstPostProcessing(loopStmt);
+  SgStatement* cond = SageInterface::getLoopCondition(loopStmt);
+  ROSE_ASSERT (isSgExprStatement(cond));
+  SgExpression* root = isSgExprStatement(cond)->get_expression();
+  SgCastExp* cast = buildCastExp(root, SageInterface::getBoolType(loopStmt));
+  // Name does not need to be unique, but must not be used in user code anywhere
+  AstPostProcessing(loopStmt);
+  SgVariableDeclaration* new_decl =
+    buildVariableDeclaration("rose__temp",
+                             SageInterface::getBoolType(loopStmt),
+                             buildAssignInitializer(cast),
+                             new_body);
+  SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
+  new_body->get_statements().push_back(new_decl);
+  AstPostProcessing(loopStmt);
+  SgIfStmt* loop_break =
+    buildIfStmt(buildExprStatement(
+                  buildNotOp(buildVarRefExp(varsym))),
+                buildBasicBlock(buildBreakStmt()),
+                buildBasicBlock());
+  new_body->get_statements().push_back(loop_break);
+  AstPostProcessing(loopStmt);
+  if (isSgDoWhileStmt(loopStmt)) {
+    SgName label = "rose_test_label__";
+    static unsigned int gensym_counter = 0;
+    label << ++gensym_counter;
+    SgLabelStatement* ls = buildLabelStatement(label, buildBasicBlock(), SageInterface::getEnclosingProcedure(loopStmt));
+    SageInterface::changeContinuesToGotos(old_body, ls);
+    old_body->get_statements().push_back(ls);
+    ls->set_parent(old_body);
+    new_body->get_statements().insert(new_body->get_statements().begin(), old_body);
+  } else {
+    new_body->get_statements().push_back(old_body);
+  }
+  old_body->set_parent(new_body);
+  AstPostProcessing(loopStmt);
+  SageInterface::setLoopCondition(loopStmt, buildExprStatement(buildBoolValExp(true)));
+  AstPostProcessing(loopStmt);
 }
 
 // Replace a given expression with a list of statements produced by a
@@ -801,13 +637,13 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                  //   label: e;
                  // }
                  // std::cout << "Converting for step" << std::endl;
-		    SgExprStatement* incrStmt = new SgExprStatement(SgNULL_FILE, forStatement->get_increment());
-		    incrStmt->set_endOfConstruct(SgNULL_FILE);
+		    SgExprStatement* incrStmt = SageBuilder::buildExprStatement(forStatement->get_increment());
                     forStatement->get_increment()->set_parent(incrStmt);
-                    addStepToLoopBody(forStatement, incrStmt);
+                    SageInterface::addStepToLoopBody(forStatement, incrStmt);
 		    SgNullExpression* ne = new SgNullExpression(SgNULL_FILE);
 		    ne->set_endOfConstruct(SgNULL_FILE);
                     forStatement->set_increment(ne);
+                    ne->set_parent(forStatement);
                     replaceSubexpressionWithStatement(from, to);
                   }
                  else
@@ -817,6 +653,7 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                     SgWhileStmt* whileStatement = isSgWhileStmt(enclosingStmtParent);
                     SgDoWhileStmt* doWhileStatement = isSgDoWhileStmt(enclosingStmtParent);
                     SgIfStmt* ifStatement = isSgIfStmt(enclosingStmtParent);
+                    SgSwitchStatement* switchStatement = isSgSwitchStatement(enclosingStmtParent);
                     SgForStatement* enclosingForStatement = isSgForStatement(enclosingStmtParent);
                   if (enclosingForStatement && enclosingForStatement->get_test() == exprStatement)
                      {
@@ -865,25 +702,25 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                    //    temp = e;} while (temp);}
                    // in which "temp = e;" is rewritten further
                    // std::cout << "Converting do-while test" << std::endl;
-                      SgBasicBlock* new_statement = new SgBasicBlock(SgNULL_FILE);
+                      SgBasicBlock* new_statement = SageBuilder::buildBasicBlock();
 		      new_statement->set_endOfConstruct(SgNULL_FILE);
                    // printf ("Building IR node #14: new SgBasicBlock = %p \n",new_statement);
                       assert (doWhileStatement->get_parent());
                       new_statement->set_parent(doWhileStatement->get_parent());
                       myStatementInsert(doWhileStatement, new_statement, false);
-                      myRemoveStatement(doWhileStatement);
+                      SageInterface::myRemoveStatement(doWhileStatement);
                       SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
-                      SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, new SgBoolValExp(SgNULL_FILE, true),getBoolType(doWhileStatement));
+                      SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, new SgBoolValExp(SgNULL_FILE, true),SageInterface::getBoolType(doWhileStatement));
                       assignInitializer->set_endOfConstruct(SgNULL_FILE);
 
                    // SgVariableDeclaration* new_decl = 
          //       new SgVariableDeclaration(SgNULL_FILE, varname, new SgTypeBool(), 
          //           new SgAssignInitializer(SgNULL_FILE, new SgBoolValExp(SgNULL_FILE, true),new SgTypeBool()));
-                      SgVariableDeclaration* new_decl = new SgVariableDeclaration(SgNULL_FILE, varname, getBoolType(doWhileStatement), assignInitializer);
+                      SgVariableDeclaration* new_decl = new SgVariableDeclaration(SgNULL_FILE, varname, SageInterface::getBoolType(doWhileStatement), assignInitializer);
 		      new_decl->set_endOfConstruct(SgNULL_FILE);
 		      new_decl->get_definition()->set_endOfConstruct(SgNULL_FILE);
                       new_decl->set_definingDeclaration(new_decl);
-                      SgInitializedName* initname = lastElementOfContainer(new_decl->get_variables());
+                      SgInitializedName* initname = new_decl->get_variables().back();
 		      // initname->set_endOfConstruct(SgNULL_FILE);
                       initname->set_scope(new_statement);
 
@@ -901,28 +738,17 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
 
                    // SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, new SgVarRefExp(SgNULL_FILE, varsym), new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool()));
                    // SgCastExp* castExp1 = new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool());
-                      SgCastExp* castExp1 = new SgCastExp(SgNULL_FILE, root, getBoolType(doWhileStatement));
+                      SgCastExp* castExp1 = new SgCastExp(SgNULL_FILE, root, SageInterface::getBoolType(doWhileStatement));
 		      SgVarRefExp* vr = new SgVarRefExp(SgNULL_FILE, varsym);
 		      vr->set_endOfConstruct(SgNULL_FILE);
                       vr->set_lvalue(true);
-                      SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, vr, castExp1 );
-		      assignment->set_endOfConstruct(SgNULL_FILE);
-		      vr->set_parent(assignment);
-		      castExp1->set_parent(assignment);
-                   // printf ("replaceExpressionWithStatement(): built #1 SgCastExp = %p (type specified) \n",castExp1);
 
-            printf ("In replaceExpressionWithStatement(): building SgAssignOp = %p \n",assignment);
+                      SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp1);
 
-                      SgExprStatement* temp_setup = new SgExprStatement(SgNULL_FILE, assignment);
-		      temp_setup->set_endOfConstruct(SgNULL_FILE);
-
-         // DQ (12/14/2006): Uncommented where we set the parent, is not required!
-                      assignment->set_parent(temp_setup);
-
-                      addStepToLoopBody(doWhileStatement, temp_setup);
+                      SageInterface::addStepToLoopBody(doWhileStatement, temp_setup);
                       SgVarRefExp* varsymVr = new SgVarRefExp(SgNULL_FILE, varsym);
 		      varsymVr->set_endOfConstruct(SgNULL_FILE);
-                      SgExprStatement* condStmt = new SgExprStatement(SgNULL_FILE, varsymVr);
+                      SgExprStatement* condStmt = SageBuilder::buildExprStatement(varsymVr);
 		      condStmt->set_endOfConstruct(SgNULL_FILE);
                       varsymVr->set_parent(condStmt);
                       doWhileStatement->set_condition(condStmt);
@@ -931,24 +757,23 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                     }
                   else if (ifStatement && ifStatement->get_conditional() == exprStatement)
                     {
-                      SgBasicBlock* new_statement = new SgBasicBlock(SgNULL_FILE);
-		      new_statement->set_endOfConstruct(SgNULL_FILE);
+                      SgBasicBlock* new_statement = SageBuilder::buildBasicBlock();
                    // printf ("Building IR node #15: new SgBasicBlock = %p \n",new_statement);
                       assert (ifStatement->get_parent());
                       new_statement->set_parent(ifStatement->get_parent());
                       myStatementInsert(ifStatement, new_statement, false);
-                      myRemoveStatement(ifStatement);
+                      SageInterface::myRemoveStatement(ifStatement);
                       SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
                       SgBoolValExp* trueVal = new SgBoolValExp(SgNULL_FILE, true);
                       trueVal->set_endOfConstruct(SgNULL_FILE);
                       SgAssignInitializer* ai = new SgAssignInitializer(SgNULL_FILE, trueVal);
                       ai->set_endOfConstruct(SgNULL_FILE);
                       trueVal->set_parent(ai);
-                      SgVariableDeclaration* new_decl = new SgVariableDeclaration(SgNULL_FILE, varname, getBoolType(ifStatement), ai);
+                      SgVariableDeclaration* new_decl = new SgVariableDeclaration(SgNULL_FILE, varname, SageInterface::getBoolType(ifStatement), ai);
 		      new_decl->set_endOfConstruct(SgNULL_FILE);
 		      new_decl->get_definition()->set_endOfConstruct(SgNULL_FILE);
                       new_decl->set_definingDeclaration(new_decl);
-                      SgInitializedName* initname = lastElementOfContainer(new_decl->get_variables());
+                      SgInitializedName* initname = new_decl->get_variables().back();
 		      // initname->set_endOfConstruct(SgNULL_FILE);
                       ai->set_parent(initname);
                       initname->set_scope(new_statement);
@@ -962,32 +787,50 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
 
                    // SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, new SgVarRefExp(SgNULL_FILE, varsym), new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool()));
                    // SgCastExp* castExp2 = new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool());
-                      SgCastExp* castExp2 = new SgCastExp(SgNULL_FILE, root, getBoolType(ifStatement));
+                      SgCastExp* castExp2 = SageBuilder::buildCastExp(root, SageInterface::getBoolType(ifStatement));
 		      SgVarRefExp* vr = new SgVarRefExp(SgNULL_FILE, varsym);
 		      vr->set_endOfConstruct(SgNULL_FILE);
                       vr->set_lvalue(true);
-                      SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, vr, castExp2 );
-		      assignment->set_endOfConstruct(SgNULL_FILE);
-		      vr->set_parent(assignment);
-		      castExp2->set_parent(assignment);
-                   // printf ("replaceExpressionWithStatement(): built #2 SgCastExp = %p (type specified) \n",castExp2);
-
-            printf ("In replaceExpressionWithStatement(): building SgAssignOp = %p \n",assignment);
-
-                      SgExprStatement* temp_setup = new SgExprStatement(SgNULL_FILE, assignment);
-		      temp_setup->set_endOfConstruct(SgNULL_FILE);
-                      assignment->set_parent(new_statement);
+                      SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp2 );
                       new_statement->get_statements().push_back(temp_setup);
                       new_statement->get_statements().push_back(ifStatement);
                       temp_setup->set_parent(new_statement);
                       ifStatement->set_parent(new_statement);
-                      SgVarRefExp* vr2 = new SgVarRefExp(SgNULL_FILE, varsym);
-		      vr2->set_endOfConstruct(SgNULL_FILE);
-                      SgExprStatement* es = new SgExprStatement(SgNULL_FILE, vr2);
-		      es->set_endOfConstruct(SgNULL_FILE);
-                      vr2->set_parent(es);
+                      SgVarRefExp* vr2 = SageBuilder::buildVarRefExp(varsym);
+                      SgExprStatement* es = SageBuilder::buildExprStatement(vr2);
                       ifStatement->set_conditional(es);
                       es->set_parent(ifStatement);
+                      replaceSubexpressionWithStatement(from, to);
+                    }
+                  else if (switchStatement && switchStatement->get_item_selector() == exprStatement)
+                    {
+                      SgExpression* switchCond = exprStatement->get_expression();
+                      ROSE_ASSERT (switchCond);
+                      SgBasicBlock* new_statement = SageBuilder::buildBasicBlock();
+		      new_statement->set_endOfConstruct(SgNULL_FILE);
+                   // printf ("Building IR node #15: new SgBasicBlock = %p \n",new_statement);
+                      assert (switchStatement->get_parent());
+                      new_statement->set_parent(switchStatement->get_parent());
+                      myStatementInsert(switchStatement, new_statement, false);
+                      SageInterface::myRemoveStatement(switchStatement);
+                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      switchCond->set_parent(NULL);
+                      SgVariableDeclaration* new_decl = SageBuilder::buildVariableDeclaration(varname, switchCond->get_type(), SageBuilder::buildAssignInitializer(switchCond), new_statement);
+                      SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
+                      new_decl->set_parent(new_statement);
+                      new_statement->get_statements().push_back(new_decl);
+                      switchStatement->set_parent(new_statement);
+                      assert (varsym);
+
+                   // SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, new SgVarRefExp(SgNULL_FILE, varsym), new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool()));
+                   // SgCastExp* castExp2 = new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool());
+
+                      new_statement->get_statements().push_back(switchStatement);
+                      switchStatement->set_parent(new_statement);
+                      SgVarRefExp* vr2 = SageBuilder::buildVarRefExp(varsym);
+                      SgExprStatement* es = SageBuilder::buildExprStatement(vr2);
+                      switchStatement->set_item_selector(es);
+                      es->set_parent(switchStatement);
                       replaceSubexpressionWithStatement(from, to);
                     }
                   else

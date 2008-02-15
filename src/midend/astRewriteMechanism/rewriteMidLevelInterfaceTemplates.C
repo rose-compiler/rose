@@ -331,7 +331,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 
   // We need the lifetime to be extended beyond that of this function (to avoid purify error)
   // SgFile transformationAST (transformation_argc,transformation_argv,errorCode);
-     SgFile* transformationASTPointer = new SgFile (transformation_argv,errorCode);
+     SgFile* transformationASTPointer = new SgFile (transformation_argv,errorCode, 0, project);
      ROSE_ASSERT (transformationASTPointer != NULL);
      ROSE_ASSERT (errorCode <= 2);
 

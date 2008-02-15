@@ -23,7 +23,7 @@ $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -w -rose:C -rose:verbose 0 --edg:restrict
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -33,7 +33,6 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): ../../../ompTranslator $(srcdir)/$(@:.o=.c)
-	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
 	$(VALGRIND) ../../../ompTranslator -D_OPENMP $(ROSE_FLAGS) -I$(srcdir) -I$(srcdir)/../common -I$(srcdir)/../../.. -I$(srcdir)/../../../includes -c $(srcdir)/$(@:.o=.c)
 
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}

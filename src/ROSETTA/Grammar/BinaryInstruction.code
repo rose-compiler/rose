@@ -239,6 +239,48 @@ HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_START
 
 HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
+HEADER_BINARY_BYTE_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_BYTE_VALUE_EXPRESSION_END
+
+HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_END
+
+HEADER_BINARY_DOUBLE_WORD_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_DOUBLE_WORD_VALUE_EXPRESSION_END
+
+HEADER_BINARY_QUAD_WORD_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_QUAD_WORD_VALUE_EXPRESSION_END
+
+HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_END
+
+HEADER_BINARY_VECTOR_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_VECTOR_VALUE_EXPRESSION_END
+
+HEADER_BINARY_WORD_VALUE_EXPRESSION_START
+
+          virtual SgAsmType* get_type();
+
+HEADER_BINARY_WORD_VALUE_EXPRESSION_END
+
 SOURCE_BINARY_FILE_SECTION_HEADER_LIST_START
 
 #if 1
@@ -354,7 +396,7 @@ HEADER_BINARY_EXPRESSION_START
           virtual SgAsmType* get_type();
 
       //! Return the precedence of the operator (see C and C++ examples for details)
-          virtual int get_precedence();
+      //  virtual int get_precedence();
 
 HEADER_BINARY_EXPRESSION_END
 
@@ -362,36 +404,36 @@ HEADER_BINARY_EXPRESSION_END
 
 HEADER_BINARY_TYPE_START
 
-       // static SgAsmType* create_type();
+       // static SgAsmType* createType();
 
 HEADER_BINARY_TYPE_END
 
 HEADER_BINARY_TYPE_BYTE_START
-          static SgAsmTypeByte* create_type();
+          static SgAsmTypeByte* createType();
 HEADER_BINARY_TYPE_BYTE_END
 
 HEADER_BINARY_TYPE_WORD_START
-          static SgAsmTypeWord* create_type();
+          static SgAsmTypeWord* createType();
 HEADER_BINARY_TYPE_WORD_END
 
 HEADER_BINARY_TYPE_DOUBLE_WORD_START
-          static SgAsmTypeDoubleWord* create_type();
+          static SgAsmTypeDoubleWord* createType();
 HEADER_BINARY_TYPE_DOUBLE_WORD_END
 
 HEADER_BINARY_TYPE_QUAD_WORD_START
-          static SgAsmTypeQuadWord* create_type();
+          static SgAsmTypeQuadWord* createType();
 HEADER_BINARY_TYPE_QUAD_WORD_END
 
 HEADER_BINARY_TYPE_SINGLE_FLOAT_START
-          static SgAsmTypeSingleFloat* create_type();
+          static SgAsmTypeSingleFloat* createType();
 HEADER_BINARY_TYPE_SINGLE_FLOAT_END
 
 HEADER_BINARY_TYPE_DOUBLE_FLOAT_START
-          static SgAsmTypeDoubleFloat* create_type();
+          static SgAsmTypeDoubleFloat* createType();
 HEADER_BINARY_TYPE_DOUBLE_FLOAT_END
 
 HEADER_BINARY_TYPE_VECTOR_START
-          static SgAsmTypeVector* create_type();
+          static SgAsmTypeVector* createType();
 HEADER_BINARY_TYPE_VECTOR_END
 
 
@@ -421,10 +463,10 @@ HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
                rBX = 2,  /*!< Used for either RBX, EBX, BX, BL, or BH */
                rCX = 3,  /*!< Used for either RCX, ECX, CX, CL, or CH */
                rDX = 4,  /*!< Used for either RDX, EDX, DX, DL, or EH */
-               rDI = 5,  /*!< Used for either RDI, EDI, DI */
-               rSI = 6,  /*!< Used for either RSI, ESI, SI */
-               rSP = 7,  /*!< Used for either RSP, ESP, SP */
-               rBP = 8,  /*!< Used for either RBP, EBP, BP */
+               rDI = 5,  /*!< Used for either RDI, EDI, DI, DIL */
+               rSI = 6,  /*!< Used for either RSI, ESI, SI, SIL */
+               rSP = 7,  /*!< Used for either RSP, ESP, SP, SPL */
+               rBP = 8,  /*!< Used for either RBP, EBP, BP, BPL */
                r8  = 9,  /*!< numbered registers */
                r9  = 10, /*!< numbered registers */
                r10 = 11, /*!< numbered registers */
@@ -440,7 +482,12 @@ HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
                FS  = 21, /*!< segment register, only ES and FS are used in for 64 bit modes */
                GS  = 22, /*!< segment register, only ES and FS are used in for 64 bit modes */
 	       ST  = 23, /*Register appears in IDA */
-               last_register
+               STnumbered = 24, /* Explicitly numbered ST registers 0-7 */
+               rIP = 32, /*!< Instruction pointer */
+               rFLAGS = 33, /*< Condition code register */
+               MM = 40, /* MMX registers, aliased with FP registers 0-7 */
+               XMM = 48, /* SSE registers, 8 on 32-bit and 16 on 64-bit */
+               last_register = XMM + 16
              };
 
      /*! \brief This permits the specification of different parts of a register
@@ -527,7 +574,17 @@ HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
                last_position_in_suffix
              };
 
+             // Note that the auto-generated version of this is const
+             virtual SgAsmType* get_type();
+
 HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_END
+
+HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_START
+
+             // Note that the auto-generated version of this is const
+             virtual SgAsmType* get_type();
+
+HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 
 
 
@@ -1013,6 +1070,123 @@ SgAsmx86ControlTransferInstruction::cfgBinInEdgesLastConditionalNodes() {
 SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION_END
 
 
+SOURCE_BINARY_EXPRESSION_START
+
+SgAsmType* SgAsmExpression::get_type() {
+  ROSE_ASSERT (!"Cannot get the type of this SgAsmExpression");
+}
+
+SOURCE_BINARY_EXPRESSION_END
+
+SOURCE_BINARY_TYPE_START
+SOURCE_BINARY_TYPE_END
+
+SOURCE_BINARY_TYPE_BYTE_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_BYTE_END
+
+SOURCE_BINARY_TYPE_WORD_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_WORD_END
+
+SOURCE_BINARY_TYPE_DOUBLE_WORD_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_DOUBLE_WORD_END
+
+SOURCE_BINARY_TYPE_QUAD_WORD_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_QUAD_WORD_END
+
+SOURCE_BINARY_TYPE_SINGLE_FLOAT_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_SINGLE_FLOAT_END
+
+SOURCE_BINARY_TYPE_DOUBLE_FLOAT_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_DOUBLE_FLOAT_END
+
+SOURCE_BINARY_TYPE_VECTOR_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_VECTOR_END
+
+
 SOURCE_BINARY_NODE_START
 
 
@@ -1041,4 +1215,77 @@ $CLASSNAME::cfgBinInEdges() {
 
 SOURCE_BINARY_NODE_END
 
+SOURCE_BINARY_BYTE_VALUE_EXPRESSION_START
 
+SgAsmType* $CLASSNAME::get_type() {
+  return SgAsmTypeByte::createType();
+}
+
+SOURCE_BINARY_BYTE_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_START
+
+SgAsmType* $CLASSNAME::get_type() {
+  return SgAsmTypeDoubleFloat::createType();
+}
+
+SOURCE_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_DOUBLE_WORD_VALUE_EXPRESSION_START
+
+SgAsmType* $CLASSNAME::get_type() {
+  return SgAsmTypeDoubleWord::createType();
+}
+
+SOURCE_BINARY_DOUBLE_WORD_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_QUAD_WORD_VALUE_EXPRESSION_START
+
+SgAsmType* $CLASSNAME::get_type() {
+  return SgAsmTypeQuadWord::createType();
+}
+
+SOURCE_BINARY_QUAD_WORD_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_START
+
+SgAsmType* $CLASSNAME::get_type() {
+  return SgAsmTypeSingleFloat::createType();
+}
+
+SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_VECTOR_VALUE_EXPRESSION_START
+
+// Note that the auto-generated version of this is const
+SgAsmType* SgAsmVectorValueExpression::get_type() {
+  return p_type;
+}
+
+SOURCE_BINARY_VECTOR_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_WORD_VALUE_EXPRESSION_START
+
+SgAsmType* $CLASSNAME::get_type() {
+  return SgAsmTypeWord::createType();
+}
+
+SOURCE_BINARY_WORD_VALUE_EXPRESSION_END
+
+SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_START
+
+// Note that the auto-generated version of this is const
+SgAsmType* SgAsmRegisterReferenceExpression::get_type() {
+  return p_type;
+}
+
+SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END
+
+SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_START
+
+// Note that the auto-generated version of this is const
+SgAsmType* SgAsmMemoryReferenceExpression::get_type() {
+  return p_type;
+}
+
+SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_END

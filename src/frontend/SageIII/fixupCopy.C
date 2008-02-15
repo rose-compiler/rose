@@ -536,7 +536,10 @@ SgLocatedNode::fixupCopy(SgNode* copy, SgCopyHelp & help) const
                               SgInitializedName* initializedName_original = variableSymbol_original->get_declaration();
                               ROSE_ASSERT(initializedName_original != NULL);
                               SgCopyHelp::copiedNodeMapTypeIterator i = helpSupport.get_copiedNodeMap().find(initializedName_original);
-
+  
+			      if (i == helpSupport.get_copiedNodeMap().end()) {
+				cerr << "We did not copy initialized name for " << initializedName_original->get_name().getString() << endl;
+			      }
                            // printf ("Inside of SgStatement::fixupCopy(): i != helpSupport.get_copiedNodeMap().end() = %s \n",
                            //      (i != helpSupport.get_copiedNodeMap().end()) ? "true" : "false");
 
@@ -549,6 +552,7 @@ SgLocatedNode::fixupCopy(SgNode* copy, SgCopyHelp & help) const
                                    ROSE_ASSERT(initializedName_copy != NULL);
                                    SgSymbol* symbol_copy = initializedName_copy->get_symbol_from_symbol_table();
                                 // printf ("Inside of SgStatement::fixupCopy(): symbol_copy = %p \n",symbol_copy);
+				   ROSE_ASSERT (symbol_copy);
                                    if (symbol_copy != NULL)
                                       {
                                         SgVariableSymbol* variableSymbol_copy = isSgVariableSymbol(symbol_copy);

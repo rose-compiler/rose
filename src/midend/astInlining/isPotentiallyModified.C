@@ -57,7 +57,7 @@ bool isInitializerForReferenceVar(SgAssignInitializer* n, SgExpression* expr) {
   assert (in);
   assert (in->get_type());
   // cout << "Type is " << in->get_type()->unparseToString() << ", var is " << in->get_name().str() << endl;
-  bool isNonconstRef = isNonconstReference(in->get_type());
+  bool isNonconstRef = SageInterface::isNonconstReference(in->get_type());
   bool containsNonConstUse = containsNonConst(n, expr);
   bool result = isNonconstRef && containsNonConstUse;
   // cout << "isNonconstReference is " << isNonconstRef << ", containsNonConst is " << containsNonConstUse << endl;
@@ -117,7 +117,7 @@ class IsPotentiallyModifiedVisitor: public AstSimpleProcessing {
 	SgTypePtrList::iterator pi = params.begin();
 	SgExpressionPtrList::iterator ai = args.begin();
 	for (; ai != args.end(); ++ai, ++pi) {
-	  if (isNonconstReference(*pi))
+	  if (SageInterface::isNonconstReference(*pi))
 	    result |= containsNonConst(*ai, expr);
 	}
 	break;

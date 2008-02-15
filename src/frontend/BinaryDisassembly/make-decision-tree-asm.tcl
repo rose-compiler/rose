@@ -46,7 +46,7 @@ proc makeSwitch {len prefix indent} {
       makeSwitch $len "$prefix$c" "${indent}    "
       puts "${indent}  }"
     }
-    puts "${indent}  default: instruction = new SgAsmx86Instruction(address,  mnemonic, \"\"); goto done;"
+    puts "${indent}  default: {std::cerr << \"Found bad instruction name '\" << mnemonic << \"'\\n\"; abort();}"
     puts "${indent}}"
   }
 }

@@ -261,8 +261,15 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                SgUnaryOp* unaryOperator = isSgUnaryOp(expr);
                if (unaryOperator != NULL)
                   {
+                    ROSE_ASSERT(synthesizedAttributeList.size() == 1 || (synthesizedAttributeList.size() == 2 && isSgCastExp(unaryOperator)));
+                    SgExpression* synthesizedValue = synthesizedAttributeList[SgUnaryOp_operand_i].newValueExp;
+                 // Replace the lhs and/or rhs if generated at a child node in the AST traversal
+                 // Note that this overwrites the existing pointer and is likely a memory leak!
+                    if (synthesizedValue != NULL)
+                       unaryOperator->set_operand(synthesizedValue);
                     SgExpression* operand = unaryOperator->get_operand();
                     SgValueExp* value = isSgValueExp(operand);
+
                     if (value != NULL)
                        {
                          switch (unaryOperator->variantT())
@@ -280,6 +287,28 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                                  }
                             }
                        }
+                  }
+
+               SgAssignInitializer* assignInit = isSgAssignInitializer(expr);
+               if (assignInit != NULL)
+                  {
+                    ROSE_ASSERT(synthesizedAttributeList.size() == 1);
+                    SgExpression* synthesizedValue = synthesizedAttributeList[SgAssignInitializer_operand_i].newValueExp;
+                 // Replace the lhs and/or rhs if generated at a child node in the AST traversal
+                 // Note that this overwrites the existing pointer and is likely a memory leak!
+                    if (synthesizedValue != NULL)
+                       assignInit->set_operand(synthesizedValue);
+                  }
+
+               SgExprListExp* exprList = isSgExprListExp(expr);
+               if (exprList != NULL)
+                  {
+                    ROSE_ASSERT(synthesizedAttributeList.size() == exprList->get_expressions().size());
+		    for (size_t i = 0; i < exprList->get_expressions().size(); ++i) {
+		      SgExpression* synthesizedValue = synthesizedAttributeList[i].newValueExp;
+		      if (synthesizedValue != NULL)
+			exprList->get_expressions()[i] = synthesizedValue;
+		    }
                   }
              }
         }

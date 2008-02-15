@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS = cvalidationsuite developmentTests epcc-c npb2.3-omp-c
-SUBDIRS = developmentTests epcc-c npb2.3-omp-c 
+SUBDIRS = cvalidationsuite developmentTests epcc-c npb2.3-omp-c 
 
 # Automake conditional to control use of ROSE with OpenMP
 if ROSE_USE_OPENMP

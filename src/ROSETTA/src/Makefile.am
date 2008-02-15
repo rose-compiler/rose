@@ -61,7 +61,8 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/grammarStaticDataManagingClassStorageClassHeader.macro \
      ../Grammar/grammarReturnDataMemberPointers.macro \
      ../Grammar/grammarReturnDataMemberReferenceToPointers.macro \
-     ../Grammar/grammarGetChildIndex.macro
+     ../Grammar/grammarGetChildIndex.macro \
+     ../astNodeList
 
 # DQ (4/6/2006): Removed from Jochen's new version
 # ../Grammar/grammarConstructorOfStorageClass.macro

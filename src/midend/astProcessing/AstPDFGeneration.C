@@ -42,12 +42,12 @@ AstPDFGeneration::generateInputFiles(SgProject* projectNode) {
 void
 AstPDFGeneration::generateWithinFile(const string& pdffilename, SgFile* node) {
   AstNodeVisitMapping addrPageMappingTrav(1);
-  addrPageMappingTrav.traverseWithinFile(node,preorder);
+  addrPageMappingTrav.traverse/*WithinFile*/(node,preorder);
   addrPageMapping=addrPageMappingTrav.address_pagenum;
 // cout << "generating PDF file: " << pdffilename << " ... ";
   pdf_setup(pdffilename + ".pdf");
   PDFInheritedAttribute pdfIA;
-  traverseWithinFile(node,pdfIA);
+  traverse/*WithinFile*/(node,pdfIA);
   pdf_finalize();
 // cout << "done." << endl;
 }
@@ -117,6 +117,10 @@ AstPDFGeneration::edit_page(SgNode* node, PDFInheritedAttribute inheritedValue)
   // ostringstream _ss; _ss << "0x" << std::hex << (int)node;
      ostringstream _ss; _ss << "pointer:" << std::hex << node;
      PDF_continue_text(pdfFile, _ss.str().c_str());
+
+     // JW hack to show expression types
+     if (isSgExpression(node))
+       PDF_continue_text(pdfFile, ("Expression type: " + isSgExpression(node)->get_type()->unparseToString()).c_str());
 
      PDF_setrgbcolor(pdfFile, 0, 1, 0);
 

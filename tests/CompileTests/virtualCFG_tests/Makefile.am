@@ -442,7 +442,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
 C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
 F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
-F77_FILES = ${F77_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
+F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
 F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
 
 $(CXX_FILES): testVirtualCFG
@@ -478,9 +478,15 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = 
 
-# Will work on Fortran later
-# check-local: $(CXX_FILES) $(C_FILES) $(F90_FILES) $(F77_FILES) $(F03_FILES)
-check-local: $(CXX_FILES) $(C_FILES)
+check-cxx: $(CXX_FILES)
+check-c: $(C_FILES)
+check-f90: $(F90_FILES)
+check-f77: $(F77_FILES)
+check-f03: $(F03_FILES)
+check-fortran: check-f90 check-f77 check-f03
+
+check-local: check-cxx check-c check-fortran
+# check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/virtualCFG_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"

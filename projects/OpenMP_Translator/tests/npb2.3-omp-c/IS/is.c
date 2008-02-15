@@ -189,7 +189,7 @@ INT_TYPE test_index_array[TEST_ARRAY_SIZE],
 /***********************/
 /* function prototypes */
 /***********************/
-double	randlc( double *X, double *A );
+double	randlc2( double *X, double *A );
 
 void full_verify( void );
 
@@ -232,7 +232,7 @@ void full_verify( void );
 /*************    portable random number generator    ************/
 /*****************************************************************/
 
-double	randlc(double *X, double *A)
+double	randlc2(double *X, double *A)
 {
       static int        KS=0;
       static double	R23, R46, T23, T46;
@@ -307,10 +307,10 @@ void	create_seq( double seed, double a )
 
 	for (i=0; i<NUM_KEYS; i++)
 	{
-	    x = randlc(&seed, &a);
-	    x += randlc(&seed, &a);
-    	    x += randlc(&seed, &a);
-	    x += randlc(&seed, &a);  
+	    x = randlc2(&seed, &a);
+	    x += randlc2(&seed, &a);
+    	    x += randlc2(&seed, &a);
+	    x += randlc2(&seed, &a);  
 
             key_array[i] = k*x;
 	}

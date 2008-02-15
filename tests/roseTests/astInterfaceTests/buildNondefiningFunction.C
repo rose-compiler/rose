@@ -1,14 +1,14 @@
 // Liao, 1/15/2008
 // Demostrate how to build a function using the interface close to C language
 //
-// HighLevel_Sage_Builder_Interface contains the AST nodes/subtrees builders
+// SageBuilder contains the AST nodes/subtrees builders
 // SageInterface contains any other AST utitily tools 
 // HighLevel_Sage_C_Builder_Interface
 //-------------------------------------------------------------------
 #include "rose.h"
 #include "sageBuilder.h"
 
-using namespace HighLevel_Sage_Builder_Interface;
+using namespace SageBuilder;
 using namespace SageInterface;
 
 int main (int argc, char *argv[])
@@ -23,19 +23,19 @@ int main (int argc, char *argv[])
   SgInitializedName* arg1 = buildInitializedName(SgName("x"),SgTypeInt::createType());
   SgInitializedName* arg2 = buildInitializedName(SgName(""),SgTypeFloat::createType());
   SgFunctionParameterList * paraList = buildFunctionParameterList();
-  append_arg(paraList,arg1);  
-  append_arg(paraList,arg2);  
+  appendArg(paraList,arg1);  
+  appendArg(paraList,arg2);  
 	  // build nondefining function declaration 
   SgFunctionDeclaration * func1 = buildNonDefiningFunctionDeclaration \
      (SgName("foo"),SgTypeVoid::createType(),paraList);
-  append_statement (func1);
+  appendStatement (func1);
 
     // SgFunctionParameterList should not be shared, deepcopy
   SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
   SgFunctionDeclaration * func2 = buildNonDefiningFunctionDeclaration \
      (SgName("foo"),SgTypeVoid::createType(),paraList2);
   // insert prototype function declaration
-  append_statement (func2);
+  appendStatement (func2);
 
 #if 1
 
@@ -54,10 +54,10 @@ int main (int argc, char *argv[])
     (SgName ("i"), SgTypeInt::createType ());
 
 	  // Insert the statement
-  append_statement (varDecl);
+  appendStatement (varDecl);
   popScopeStack ();
   // insert the defining function
-  append_statement (func3);
+  appendStatement (func3);
 
 #endif 
 
@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
   SgFunctionParameterList * paraList4= isSgFunctionParameterList(deepCopy(paraList));
   SgFunctionDeclaration * func4 = buildNonDefiningFunctionDeclaration \
      (SgName("foo"),SgTypeVoid::createType(),paraList4);
-  append_statement (func4);
+  appendStatement (func4);
 #endif 
  // pop the final scope after all AST insertion
   popScopeStack ();

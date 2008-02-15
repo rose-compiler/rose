@@ -3,6 +3,7 @@
 
 // #include "config.h"
 #include "rose.h"
+#if 0  // moved to SageInterface namespace
 
 //! Is a type default constructible?  This may not quite work properly.
 bool isDefaultConstructible(SgType* type);
@@ -21,5 +22,5 @@ bool isReferenceType(SgType* t);
 
 //! Is this a const type?
 bool isConstType(SgType* t);
-
+#endif 
 #endif // TYPETRAITS_H

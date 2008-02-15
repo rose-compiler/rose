@@ -443,7 +443,8 @@ INPUT                  = \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs \
                          @top_srcdir@/src/util/utilDocumentation.docs \
                          @top_srcdir@/src/util/stringSupport/stringSupportDocumentation.docs \
-                         @top_srcdir@/src/util/commandlineProcessing/commandlineProcessingDocumentation.docs \
+                         @top_srcdir@/src/util/stringSupport/ \
+                         @top_srcdir@/src/util/commandlineProcessing \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/PDFlib.docs \

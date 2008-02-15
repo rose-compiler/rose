@@ -515,9 +515,8 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	// get the first (and only) element 
 	if (ptrList.size()!=0) {
 	SgAsmExpression* expr = *(ptrList.begin());
-	string type = "DWORD";
 	string replace = "";
-	string op = unparser->resolveOperand(expr,&type, &replace);
+	string op = unparser->resolveOperand(expr, &replace);
 
 	// we can detect malloc with the help of ida.
 	if (replace=="_malloc" || replace=="malloc@plt") {

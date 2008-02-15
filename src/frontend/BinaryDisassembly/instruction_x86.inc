@@ -47,7 +47,7 @@ switch (mnemonic.size()) {
           case 'z': { // 'jz'
             {instruction = new SgAsmx86Je(address,  mnemonic, ""); goto done;}
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'o': { // 'o'
@@ -57,7 +57,7 @@ switch (mnemonic.size()) {
           instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
         }
       }
-      default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+      default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
     }
   case 3:
     switch (mnemonic[0]) {
@@ -77,7 +77,7 @@ switch (mnemonic.size()) {
               case 's': { // 'aas'
                 {instruction = new SgAsmx86Aas(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'd': { // 'ad'
@@ -88,7 +88,7 @@ switch (mnemonic.size()) {
               case 'd': { // 'add'
                 {instruction = new SgAsmx86Add(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'n': { // 'an'
@@ -98,7 +98,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'b': { // 'b'
@@ -111,7 +111,7 @@ switch (mnemonic.size()) {
               case 'r': { // 'bsr'
                 {instruction = new SgAsmx86Bsr(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 't': { // 'bt'
@@ -125,10 +125,10 @@ switch (mnemonic.size()) {
               case 's': { // 'bts'
                 {instruction = new SgAsmx86Bts(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'c': { // 'c'
@@ -158,7 +158,7 @@ switch (mnemonic.size()) {
               case 'i': { // 'cli'
                 {instruction = new SgAsmx86Cli(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'm': { // 'cm'
@@ -169,7 +169,14 @@ switch (mnemonic.size()) {
               case 'p': { // 'cmp'
                 {instruction = new SgAsmx86Cmp(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
+            }
+          }
+          case 'q': { // 'cq'
+            if (mnemonic[2] == 'o') { // 'cqo'
+              {instruction = new SgAsmx86Cwd(address,  mnemonic, ""); goto done;}
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
           case 'w': { // 'cw'
@@ -179,7 +186,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'd': { // 'd'
@@ -192,7 +199,7 @@ switch (mnemonic.size()) {
               case 's': { // 'das'
                 {instruction = new SgAsmx86Das(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'e': { // 'de'
@@ -209,7 +216,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'e': { // 'e'
@@ -246,7 +253,7 @@ switch (mnemonic.size()) {
             case 't': { // 'int'
               {instruction = new SgAsmx86Int(address,  mnemonic, ""); goto done;}
             }
-            default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
           }
         } else {
           instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -321,7 +328,7 @@ switch (mnemonic.size()) {
               case 'z': { // 'jnz'
                 {instruction = new SgAsmx86Jne(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'p': { // 'jp'
@@ -332,10 +339,10 @@ switch (mnemonic.size()) {
               case 'o': { // 'jpo'
                 {instruction = new SgAsmx86Jpo(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'l': { // 'l'
@@ -355,7 +362,7 @@ switch (mnemonic.size()) {
               case 's': { // 'les'
                 {instruction = new SgAsmx86Les(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'f': { // 'lf'
@@ -379,7 +386,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'm': { // 'm'
@@ -398,7 +405,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'n': { // 'n'
@@ -418,10 +425,10 @@ switch (mnemonic.size()) {
               case 't': { // 'not'
                 {instruction = new SgAsmx86Not(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'o': { // 'o'
@@ -456,7 +463,7 @@ switch (mnemonic.size()) {
               case 'r': { // 'rcr'
                 {instruction = new SgAsmx86Rcr(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'e': { // 're'
@@ -467,7 +474,7 @@ switch (mnemonic.size()) {
               case 't': { // 'ret'
                 {instruction = new SgAsmx86Ret(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'o': { // 'ro'
@@ -478,10 +485,10 @@ switch (mnemonic.size()) {
               case 'r': { // 'ror'
                 {instruction = new SgAsmx86Ror(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 's': { // 's'
@@ -494,7 +501,7 @@ switch (mnemonic.size()) {
               case 'r': { // 'sar'
                 {instruction = new SgAsmx86Sar(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'b': { // 'sb'
@@ -512,7 +519,7 @@ switch (mnemonic.size()) {
               case 'r': { // 'shr'
                 {instruction = new SgAsmx86Shr(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 't': { // 'st'
@@ -526,7 +533,7 @@ switch (mnemonic.size()) {
               case 'i': { // 'sti'
                 {instruction = new SgAsmx86Sti(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'u': { // 'su'
@@ -536,7 +543,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'u': { // 'u'
@@ -561,7 +568,7 @@ switch (mnemonic.size()) {
           instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
         }
       }
-      default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+      default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
     }
   case 4:
     switch (mnemonic[0]) {
@@ -571,6 +578,17 @@ switch (mnemonic.size()) {
             if (mnemonic[2] == 'l') { // 'cal'
               if (mnemonic[3] == 'l') { // 'call'
                 {instruction = new SgAsmx86Call(address,  mnemonic, ""); goto done;}
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
+          case 'd': { // 'cd'
+            if (mnemonic[2] == 'q') { // 'cdq'
+              if (mnemonic[3] == 'e') { // 'cdqe'
+                {instruction = new SgAsmx86Cbw(address,  mnemonic, ""); goto done;}
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
               }
@@ -600,7 +618,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'i': { // 'i'
@@ -640,7 +658,7 @@ switch (mnemonic.size()) {
                   case 'w': { // 'insw'
                     {instruction = new SgAsmx86Ins(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               }
               case 't': { // 'int'
@@ -650,7 +668,7 @@ switch (mnemonic.size()) {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'r': { // 'ir'
@@ -664,7 +682,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'j': { // 'j'
@@ -710,10 +728,10 @@ switch (mnemonic.size()) {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'l': { // 'l'
@@ -752,10 +770,10 @@ switch (mnemonic.size()) {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'm': { // 'm'
@@ -799,7 +817,7 @@ switch (mnemonic.size()) {
                 case 'f': { // 'popf'
                   {instruction = new SgAsmx86Popf(address,  mnemonic, ""); goto done;}
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -816,7 +834,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'r': { // 'r'
@@ -829,7 +847,7 @@ switch (mnemonic.size()) {
               case 'z': { // 'repz'
                 {instruction = new SgAsmx86Repe(address,  mnemonic, ""); goto done;}
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           } else {
             instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -895,7 +913,7 @@ switch (mnemonic.size()) {
                 case 'z': { // 'setz'
                   {instruction = new SgAsmx86Sete(address,  mnemonic, ""); goto done;}
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -917,7 +935,7 @@ switch (mnemonic.size()) {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 't': { // 'st'
@@ -931,7 +949,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 't': { // 't'
@@ -999,10 +1017,10 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
-      default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+      default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
     }
   case 5:
     switch (mnemonic[0]) {
@@ -1038,7 +1056,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'c': { // 'c'
@@ -1078,7 +1096,7 @@ switch (mnemonic.size()) {
                     case 'z': { // 'cmovz'
                       {instruction = new SgAsmx86CMove(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 } else {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1096,13 +1114,13 @@ switch (mnemonic.size()) {
                     case 'w': { // 'cmpsw'
                       {instruction = new SgAsmx86Cmps(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 } else {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
           case 'p': { // 'cp'
@@ -1120,7 +1138,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'e': { // 'e'
@@ -1192,7 +1210,7 @@ switch (mnemonic.size()) {
                     case 'w': { // 'lodsw'
                       {instruction = new SgAsmx86Lods(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 } else {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1207,16 +1225,16 @@ switch (mnemonic.size()) {
                     case 'z': { // 'loopz'
                       {instruction = new SgAsmx86Loopz(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 } else {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'm': { // 'm'
@@ -1237,7 +1255,7 @@ switch (mnemonic.size()) {
                   case 'x': { // 'movsx'
                     {instruction = new SgAsmx86Movsx(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               }
               case 'z': { // 'movz'
@@ -1247,7 +1265,7 @@ switch (mnemonic.size()) {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
-              default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
             }
           } else {
             instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1270,7 +1288,7 @@ switch (mnemonic.size()) {
                 case 'w': { // 'outsw'
                   {instruction = new SgAsmx86Outs(address,  mnemonic, ""); goto done;}
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1301,7 +1319,7 @@ switch (mnemonic.size()) {
                     instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                   }
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1317,7 +1335,7 @@ switch (mnemonic.size()) {
                   case 'f': { // 'pushf'
                     {instruction = new SgAsmx86Pushf(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1326,7 +1344,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 'r': { // 'r'
@@ -1356,7 +1374,7 @@ switch (mnemonic.size()) {
                   case 'z': { // 'repnz'
                     {instruction = new SgAsmx86Repne(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1365,7 +1383,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
       case 's': { // 's'
@@ -1383,7 +1401,7 @@ switch (mnemonic.size()) {
                   case 'w': { // 'scasw'
                     {instruction = new SgAsmx86Scas(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1455,7 +1473,7 @@ switch (mnemonic.size()) {
                     case 'z': { // 'setnz'
                       {instruction = new SgAsmx86Setne(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 }
                 case 'p': { // 'setp'
@@ -1466,10 +1484,10 @@ switch (mnemonic.size()) {
                     case 'o': { // 'setpo'
                       {instruction = new SgAsmx86Setpo(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1488,7 +1506,7 @@ switch (mnemonic.size()) {
                   case 'w': { // 'stosw'
                     {instruction = new SgAsmx86Stos(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1497,10 +1515,10 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
-      default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+      default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
     }
   case 6:
     switch (mnemonic[0]) {
@@ -1569,7 +1587,7 @@ switch (mnemonic.size()) {
                     case 'z': { // 'cmovnz'
                       {instruction = new SgAsmx86CMovne(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 }
                 case 'p': { // 'cmovp'
@@ -1580,10 +1598,33 @@ switch (mnemonic.size()) {
                     case 'o': { // 'cmovpo'
                       {instruction = new SgAsmx86CMovnp(address,  mnemonic, ""); goto done;}
                     }
-                    default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                    default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                   }
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          } else {
+            instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          }
+        } else {
+          instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+        }
+      }
+      case 'd': { // 'd'
+        if (mnemonic[1] == 'a') { // 'da'
+          if (mnemonic[2] == 't') { // 'dat'
+            if (mnemonic[3] == 'a') { // 'data'
+              if (mnemonic[4] == '1') { // 'data1'
+                if (mnemonic[5] == '6') { // 'data16'
+                  {instruction = new SgAsmx86Data16(address,  mnemonic, ""); goto done;}
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1607,7 +1648,7 @@ switch (mnemonic.size()) {
                   case 'z': { // 'loopnz'
                     {instruction = new SgAsmx86Loopnz(address,  mnemonic, ""); goto done;}
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1641,7 +1682,7 @@ switch (mnemonic.size()) {
                     instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                   }
                 }
-                default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
               }
             } else {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1699,7 +1740,7 @@ switch (mnemonic.size()) {
                       instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                     }
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1708,10 +1749,10 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       }
-      default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+      default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
     }
   case 7:
     if (mnemonic[0] == 'c') { // 'c'
@@ -1749,7 +1790,7 @@ switch (mnemonic.size()) {
                       instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                     }
                   }
-                  default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
                 }
               } else {
                 instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
@@ -1777,7 +1818,7 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
-          default: instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          default: {std::cerr << "Found bad instruction name '" << mnemonic << "'\n"; abort();}
         }
       } else {
         instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;

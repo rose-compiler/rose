@@ -25,7 +25,7 @@ endif
 
 include_HEADERS = objdumpToRoseBinaryAst.h
 
-EXTRA_DIST = asmToRoseAst.tcl
+dist_libexec_SCRIPTS = asmToRoseAst.tcl
 
 # objdumpTest: objdumpTest.C objdumpToRoseBinaryAst.C
 #	g++ -g -o objdumpTest objdumpTest.C objdumpToRoseBinaryAst.C -I/export/0/tmp.willcock2/dec4/install/include -L/export/0/tmp.willcock2/dec4/install/lib -lrose -lrt -lfl -lbinarydisassembly -lrose /usr/lib/mysql/libmysqlclient_r.so.14

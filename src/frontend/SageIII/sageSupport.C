@@ -1,4 +1,6 @@
 #include "rose.h"
+#include <sys/stat.h>
+#include <sys/wait.h>
 
 #ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 #include "objdumpToRoseBinaryAst.h"
@@ -6,6 +8,59 @@
 #endif
 
 using namespace std;
+
+// This needs to be moved somewhere else
+int systemFromVector(const vector<string>& argv) {
+  ROSE_ASSERT (!argv.empty());
+  pid_t pid = fork();
+  if (pid == -1) {perror("fork: "); abort();}
+  if (pid == 0) { // Child
+    vector<const char*> argvC(argv.size() + 1);
+    for (size_t i = 0; i < argv.size(); ++i) {
+      argvC[i] = strdup(argv[i].c_str());
+    }
+    argvC.back() = NULL;
+    int err = execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+    exit(1); // Should not get here normally
+  } else { // Parent
+    int status;
+    pid_t err = waitpid(pid, &status, 0);
+    if (err == -1) {perror("waitpid: "); abort();}
+    return status;
+  }
+}
+
+// These need to be moved somewhere else
+// EOF is not handled correctly here -- EOF is normally set when the child
+// process exits
+FILE* popenReadFromVector(const vector<string>& argv) {
+  ROSE_ASSERT (!argv.empty());
+  int pipeDescriptors[2];
+  int pipeErr = pipe(pipeDescriptors);
+  if (pipeErr == -1) {perror("pipe: "); abort();}
+  pid_t pid = fork();
+  if (pid == -1) {perror("fork: "); abort();}
+  if (pid == 0) { // Child
+    vector<const char*> argvC(argv.size() + 1);
+    for (size_t i = 0; i < argv.size(); ++i) {
+      argvC[i] = strdup(argv[i].c_str());
+    }
+    argvC.back() = NULL;
+    int dup2Err = dup2(pipeDescriptors[1], 1); // stdout
+    if (dup2Err == -1) {perror("dup2: "); abort();}
+    int err = execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+    exit(1); // Should not get here normally
+  } else { // Parent
+    return fdopen(pipeDescriptors[0], "r");
+  }
+}
+
+int pcloseFromVector(FILE* f) { // Assumes there is only one child process
+  int status;
+  pid_t err = wait(&status);
+  fclose(f);
+  return status;
+}
 
 // DQ (1/5/2008): These are functions separated out of the generated
 // code in ROSETTA.  These functions don't need to be generated since
@@ -33,6 +88,18 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
    }
 #endif
 
+static bool sameFile(const string& a, const string& b) {
+  // Uses stat() to test device and inode numbers
+  // Returning false on error is so that a non-existant file doesn't match
+  // anything
+  // printf("sameFile('%s', '%s')\n", a.c_str(), b.c_str());
+  struct stat aStat, bStat;
+  int statResultA = stat(a.c_str(), &aStat);
+  if (statResultA != 0) return false;
+  int statResultB = stat(b.c_str(), &bStat);
+  if (statResultB != 0) return false;
+  return aStat.st_dev == bStat.st_dev && aStat.st_ino == bStat.st_ino;
+}
 
 void 
 SgProject::processCommandLine(const vector<string>& input_argv)
@@ -73,6 +140,44 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // Build the empty STL lists
      p_fileList = new SgFilePtrList();
      ROSE_ASSERT (p_fileList != NULL);
+
+  // JJW (1/30/2008): added detection of path of current executable
+     {
+       ROSE_ASSERT (!local_commandLineArgumentList.empty());
+       string argv0 = local_commandLineArgumentList.front();
+    // printf("Have argv[0] = '%s'\n", argv0.c_str());
+       string fullExecutableFile;
+       if (argv0.find('/') == string::npos) { // Need to search $PATH
+         const char* pathRaw = getenv("PATH");
+         string path = pathRaw ? pathRaw : "/usr/bin:/bin";
+      // printf("Searching path '%s'\n", path.c_str());
+         for (string::size_type oldi = (string::size_type)(-1),
+                                i = path.find(':');
+              i != string::npos; oldi = i, i = path.find(':', i + 1)) {
+           string pathDir = path.substr(oldi + 1, i - 1 - oldi);
+        // printf("Get path entry '%s'\n", pathDir.c_str());
+           bool fileExists = false;
+           string fullNameToTest = pathDir + "/" + argv0;
+           FILE* f = fopen(fullNameToTest.c_str(), "r");
+           if (f) {fileExists = true; fclose(f);}
+           if (fileExists) {
+             fullExecutableFile = fullNameToTest;
+             break;
+           }
+         }
+       } else {
+         fullExecutableFile = argv0;
+      // printf("argv[0] has /, so this is a full path\n");
+       }
+    // printf("Found executable file name '%s'\n", fullExecutableFile.c_str());
+       ROSE_ASSERT(!fullExecutableFile.empty());
+       string executablePath = ROSE::getPathFromFileName(fullExecutableFile);
+       ROSE_ASSERT(!executablePath.empty());
+    // printf("Found executable path '%s'\n", executablePath.c_str());
+       bool inInstallDir = sameFile(executablePath, ROSE_AUTOMAKE_BINDIR);
+    // printf(inInstallDir ? "Running from installed ROSE\n" : "Running from build tree\n");
+       this->set_runningFromInstalledRose(inInstallDir);
+     }
 
   // return value for calls to SLA
      int optionCount = 0;
@@ -1948,16 +2053,9 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
   // Now get the program headers
 
-  // Reread the file from the start
-     rewind(f);
-
   // Can we move the file pointer more directly than this???
      unsigned long programHeaderOffset = asmFile->get_program_header_offset();
-     for (unsigned long i=0; i < programHeaderOffset; i++)
-        {
-          int character = fgetc(f);
-          ROSE_ASSERT(character != EOF);
-        }
+     fseek(f, programHeaderOffset, SEEK_SET);
 
      Elf32_Phdr elf_32_bit_program_header;
      Elf64_Phdr elf_64_bit_program_header;
@@ -2040,16 +2138,9 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
   // Now get the segment headers
 
-  // Reread the file from the start
-     rewind(f);
-
   // Can we move the file pointer more directly than this???
      unsigned long segmentHeaderOffset = asmFile->get_section_header_offset();
-     for (unsigned long i=0; i < segmentHeaderOffset; i++)
-        {
-          int character = fgetc(f);
-          ROSE_ASSERT(character != EOF);
-        }
+     fseek(f, segmentHeaderOffset, SEEK_SET);
 
      Elf32_Shdr elf_32_bit_section_header;
      Elf64_Shdr elf_64_bit_section_header;
@@ -2339,6 +2430,20 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
   // display("SgFile::setupSourceFilename()");
    }
 
+static string makeSysIncludeList(const Rose_STL_Container<string>& dirs,
+                                 bool useInstalledIncludedir) {
+  string includeBase = useInstalledIncludedir ?
+                       ROSE_AUTOMAKE_INCLUDEDIR :
+                       (ROSE_AUTOMAKE_TOP_BUILDDIR "/include-staging");
+  string result;
+  for (Rose_STL_Container<string>::const_iterator i = dirs.begin();
+       i != dirs.end(); ++i) {
+    ROSE_ASSERT (!i->empty());
+    string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+    result += "--sys_include " + fullPath + " ";
+  }
+  return result;
+}
 
 void
 SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
@@ -2375,9 +2480,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if defined(CXX_SPEC_DEF)
 
 #if 1
-     string configDefsString              = CXX_SPEC_DEF;
-     const string Cxx_ConfigIncludeString = CXX_INCLUDE_STRING;
-     const string C_ConfigIncludeString   = C_INCLUDE_STRING;
+     string configDefsString                = CXX_SPEC_DEF;
+     const char* Cxx_ConfigIncludeDirsRaw[] = CXX_INCLUDE_STRING;
+     const char* C_ConfigIncludeDirsRaw[]   = C_INCLUDE_STRING;
+     Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
+     Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
+     SgProject* myProject = isSgProject(this->get_parent());
+     ROSE_ASSERT (myProject);
 
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)
@@ -2385,8 +2494,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      const string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE";
 
      ROSE_ASSERT(configDefsString.empty() == false);
-     ROSE_ASSERT(Cxx_ConfigIncludeString.empty() == false);
-     ROSE_ASSERT(C_ConfigIncludeString.empty() == false);
+     ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
+     ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
 
   // printf ("configDefsString = %s \n",configDefsString);
 #if 0
@@ -2451,49 +2560,32 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Find the C++ sys include path for the rose_edg_required_macros_and_functions.h
      string roseHeaderDirCPP = " --sys_include ";
 
-     Rose_STL_Container<string> internalIncludePathListForHeader = CommandlineProcessing::generateArgListFromString(Cxx_ConfigIncludeString);
-
-     for (Rose_STL_Container<string>::iterator i = internalIncludePathListForHeader.begin(); i != internalIncludePathListForHeader.end(); i++)
+     for (Rose_STL_Container<string>::iterator i = Cxx_ConfigIncludeDirs.begin(); i != Cxx_ConfigIncludeDirs.end(); i++)
         {
-          if (i->substr(0,13) == "--sys_include")
-             {
-               i++;
-               if ( ( i != internalIncludePathListForHeader.end() ) && ( (i->substr(0,8) != "--sys_include") || (i->substr(0,2) == "-I") ))
-                  {
-                    string file = (*i) + "/rose_edg_required_macros_and_functions.h";
-                    FILE* testIfFileExist = fopen(file.c_str(),"r");
-                    if (testIfFileExist)
-                       {
-                         roseHeaderDirCPP+=(*i);
-                         fclose(testIfFileExist);
-                         break;
-                       }
-                  }
-             }
+          string file = (*i) + "/rose_edg_required_macros_and_functions.h";
+          FILE* testIfFileExist = fopen(file.c_str(),"r");
+          if (testIfFileExist)
+          {
+            roseHeaderDirCPP+=(*i);
+            fclose(testIfFileExist);
+            break;
+          }
         }
 
   // Find the C sys include path for the rose_edg_required_macros_and_functions.h
      string roseHeaderDirC = " --sys_include ";
-     internalIncludePathListForHeader = CommandlineProcessing::generateArgListFromString(C_ConfigIncludeString);
 
-     for (Rose_STL_Container<string>::iterator i = internalIncludePathListForHeader.begin(); i != internalIncludePathListForHeader.end(); i++)
+     for (Rose_STL_Container<string>::iterator i = C_ConfigIncludeDirs.begin(); i != C_ConfigIncludeDirs.end(); i++)
         {
-          if (i->substr(0,13) == "--sys_include")
-             {
-               i++;
-               if ( (i != internalIncludePathListForHeader.end() ) && ( (i->substr(0,13) != "--sys_include") || (i->substr(0,2) == "-I") ))
-                  {
-                    string file = (*i) + "/rose_edg_required_macros_and_functions.h";
-                    FILE* testIfFileExist = fopen(file.c_str(),"r");
-                 // std::cout << file << std::endl;
-                    if (testIfFileExist)
-                       {
-                         roseHeaderDirC+=(*i);
-                         fclose(testIfFileExist);
-                         break;
-                       }
-                  }
-             }
+          string file = (*i) + "/rose_edg_required_macros_and_functions.h";
+          FILE* testIfFileExist = fopen(file.c_str(),"r");
+          // std::cout << file << std::endl;
+          if (testIfFileExist)
+          {
+            roseHeaderDirC+=(*i);
+            fclose(testIfFileExist);
+            break;
+          }
         }
 
 
@@ -2519,11 +2611,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                     if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
                        {
                          initString += roseHeaderDirCPP;
-                         initString += C_ConfigIncludeString;
+                         initString += makeSysIncludeList(C_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
                        }
                       else
                        {
-                         initString += Cxx_ConfigIncludeString;
+                         initString += makeSysIncludeList(Cxx_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
                        }
                   }
 
@@ -2539,7 +2631,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   }
                  else
                   {
-                    initString += C_ConfigIncludeString;
+                    initString += makeSysIncludeList(C_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
                   }
        
             // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
@@ -2558,11 +2650,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
                   {
                     initString += roseHeaderDirCPP;
-                    initString += C_ConfigIncludeString;
+                    initString += makeSysIncludeList(C_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
                   }
                  else
                   {
-                    initString += Cxx_ConfigIncludeString;
+                    initString += makeSysIncludeList(Cxx_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
                   }
              }
 
@@ -3235,6 +3327,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      if (project != NULL)
           set_parent(project);
 
+     ROSE_ASSERT (project);
+
   // DQ (5/9/2007): The initialization() should do this, so this should not be required.
      p_root = NULL;
      p_binaryFile = NULL;
@@ -3708,6 +3802,7 @@ SgFile::callFrontEnd ()
                if ( get_verbose() > 1 )
                     printf ("frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
 
+               ROSE_ASSERT (!"Should not get here");
                system(frontEndCommandLineString.c_str());
 
             // exit(0);
@@ -3782,7 +3877,10 @@ SgFile::callFrontEnd ()
                       // string syntaxCheckingCommandline = "gfortran -S " + get_sourceFileNameWithPath();
                       // string warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow -Wunused-labels";
                       // DQ (12/8/2007): Added commandline control over warnings output in using gfortran sytax checking prior to use of OFP.
-                         string warnings = "";
+
+                         vector<string> fortranCommandLine;
+                         fortranCommandLine.push_back("gfortran");
+                         fortranCommandLine.push_back("-fsyntax-only");
                          if (get_output_warnings() == true)
                             {
                            // These are gfortran specific options
@@ -3802,15 +3900,17 @@ SgFile::callFrontEnd ()
                                 // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
                                 // warnings += " -Wunused-labels";
                                 // warnings = "-Wall -Wconversion -Wampersand -Wimplicit-interface -Wnonstd-intrinsics -Wunderflow";
-                                   warnings = " -Wall";
+                                   fortranCommandLine.push_back("-Wall");
 
                                 // Add in the gfortran extra warnings
-                                   string extra_warnings = " -W";
-                                   warnings += extra_warnings;
+                                   fortranCommandLine.push_back("-W");
 
                                 // More warnings not yet turned on.
-                                   string more_warnings = " -Wconversion -Wampersand -Wimplicit-interface -Wnonstd-intrinsics -Wunderflow";
-                                   warnings += more_warnings;
+                                   fortranCommandLine.push_back("-Wconversion");
+                                   fortranCommandLine.push_back("-Wampersand");
+                                   fortranCommandLine.push_back("-Wimplicit-interface");
+                                   fortranCommandLine.push_back("-Wnonstd-intrinsics");
+                                   fortranCommandLine.push_back("-Wunderflow");
                                  }
                                 else
                                  {
@@ -3820,17 +3920,16 @@ SgFile::callFrontEnd ()
                             }
 
                       // DQ (11/17/2007): Set the fortran mode used with gfortran.
-                         string fortranMode = "";
                          if (get_F90_only() == true || get_F95_only() == true)
                             {
                            // For now let's consider f90 to be syntax checked under f95 rules (since gfortran does not support a f90 specific mode)
-                              fortranMode = " -std=f95";
+                              fortranCommandLine.push_back("-std=f95");
                             }
                            else
                             {
                               if (get_F2003_only() == true)
                                  {
-                                   fortranMode = " -std=f2003";
+                                   fortranCommandLine.push_back("-std=f2003");
                                  }
                                 else
                                  {
@@ -3839,24 +3938,23 @@ SgFile::callFrontEnd ()
                             }
 
                       // DQ (12/8/2007): Added support for cray pointers from commandline.
-                         string cray_pointer_support;
                          if (get_cray_pointer_support() == true)
                             {
-                              cray_pointer_support = " -fcray-pointer";
+                              fortranCommandLine.push_back("-fcray-pointer");
                             }
 
                       // Note that "-c" is required to enforce that we only compile and not link the result (even though -fno-backend is specified)
                       // A web page specific to -fno-backend suggests using -fsyntax-only instead (so the "-c" options is not required).
-                         string syntaxCheckingCommandline = "gfortran -fsyntax-only " + fortranMode + warnings + cray_pointer_support + " " + get_sourceFileNameWithPath();
 
                       // if ( SgProject::get_verbose() > 0 )
                          if ( get_verbose() > 0 )
                             {
-                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",syntaxCheckingCommandline.c_str());
+                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %%s \n" /* ,syntaxCheckingCommandline.c_str() FIXME */);
                             }
 
                       // Call the OS with the commandline defined by: syntaxCheckingCommandline
-                         int returnValueForSyntaxCheckUsingBackendCompiler = system (syntaxCheckingCommandline.c_str());
+                         fortranCommandLine.push_back(get_sourceFileNameWithPath());
+                         int returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
 
                       // Check that there are no errors, I think that warnings are ignored!
                          if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
@@ -3872,16 +3970,20 @@ SgFile::callFrontEnd ()
                        {
                       // DQ (1/19/2008): New version of OFP requires different calling syntax.
                       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
-                         string OFPCommandLineString = std::string("java fortran.ofp.FrontEnd") + " --dump " + get_sourceFileNameWithPath();
-                         printf ("output_parser_actions: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
+                         vector<string> OFPCommandLine;
+                         OFPCommandLine.push_back("java");
+                         OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+                         OFPCommandLine.push_back("--dump");
+                         OFPCommandLine.push_back(get_sourceFileNameWithPath());
+                         // printf ("output_parser_actions: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
 #if 1
                       // Some security checking here could be helpful!!!
-                         system (OFPCommandLineString.c_str());
+                         systemFromVector (OFPCommandLine);
 #else
                       // This fails, I think because we can't call the openFortranParser_main twice.
                          int openFortranParser_dump_argc    = 0;
                          char** openFortranParser_dump_argv = NULL;
-                         CommandlineProcessing::generateArgcArgvFromList(CommandlineProcessing::generateArgListFromString(OFPCommandLineString),openFortranParser_dump_argc,openFortranParser_dump_argv);
+                         CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_dump_argc,openFortranParser_dump_argv);
                          frontendErrorLevel = openFortranParser_main (openFortranParser_dump_argc, openFortranParser_dump_argv);
 #endif
                       // If this was selected as an option then we can stop here (rather than call OFP again).
@@ -3899,17 +4001,20 @@ SgFile::callFrontEnd ()
                        {
                       // DQ (1/19/2008): New version of OFP requires different calling syntax.
                       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
-                         string OFPCommandLineString = std::string("java fortran.ofp.FrontEnd") + " " + get_sourceFileNameWithPath();
+                         vector<string> OFPCommandLine;
+                         OFPCommandLine.push_back("java");
+                         OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+                         OFPCommandLine.push_back(get_sourceFileNameWithPath());
 
                       // printf ("exit_after_parser: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
 #if 1
                       // Some security checking here could be helpful!!!
-                         system (OFPCommandLineString.c_str());
+                         systemFromVector (OFPCommandLine);
 #else
                       // This fails, I think because we can't call the openFortranParser_main twice.
                          int openFortranParser_only_argc    = 0;
                          char** openFortranParser_only_argv = NULL;
-                         CommandlineProcessing::generateArgcArgvFromList(CommandlineProcessing::generateArgListFromString(OFPCommandLineString),openFortranParser_only_argc,openFortranParser_only_argv);
+                         CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
                          frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
                          printf ("Exiting after parsing... (get_exit_after_parser() == true) \n");
@@ -3918,14 +4023,20 @@ SgFile::callFrontEnd ()
                     
                  // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
                  // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
-                    frontEndCommandLineString = std::string(argv[0]) + " --class fortran.ofp.parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
+                    vector<string> frontEndCommandLine;
+                    frontEndCommandLine.push_back(argv[0]);
+                    frontEndCommandLine.push_back("--class");
+                    frontEndCommandLine.push_back("fortran.ofp.parser.java.FortranParserActionJNI");
+                    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
+#if 0
                     if ( get_verbose() > 0 )
                          printf ("numberOfCommandLineArguments = %zu frontEndCommandLineString = %s \n",inputCommandLine.size(),frontEndCommandLineString.c_str());
+#endif
 
                     int openFortranParser_argc    = 0;
                     char** openFortranParser_argv = NULL;
-                    CommandlineProcessing::generateArgcArgvFromList(CommandlineProcessing::generateArgListFromString(frontEndCommandLineString),openFortranParser_argc,openFortranParser_argv);
+                    CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
 
                     // printf ("openFortranParser_argc = %d openFortranParser_argv = %s \n",openFortranParser_argc,CommandlineProcessing::generateStringFromArgList(openFortranParser_argv,false,false).c_str());
 
@@ -3969,6 +4080,7 @@ SgFile::callFrontEnd ()
                       // Later we will implement a PE reader to get the structure of MS Windows executables.
                          generateBinaryExecutableFileInformation(executableFileName,asmFile);
 
+#if 0
                       // DQ (1/22/2008): This is a temporary way to setup the Binary analysis support, in the 
                       // future the binary analysis will query the information in the SgAsmFile.
                          if (asmFile->get_machine_architecture() == SgAsmFile::e_machine_architecture_Intel_80386)
@@ -3995,6 +4107,7 @@ SgFile::callFrontEnd ()
                       // RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
                          ROSE_ASSERT(asmFile->get_machine_architecture() == SgAsmFile::e_machine_architecture_Intel_80386);
                          ROSE_ASSERT(asmFile->get_binary_class_type()    == SgAsmFile::e_class_32);
+#endif
 
                       // This is an object required for the unparsing of instructions, we 
                       // built it now so that it can always be accessed later.
@@ -4003,7 +4116,9 @@ SgFile::callFrontEnd ()
                       // RoseBin_support::setUnparseVisitor(unparser->getVisitor());
 
                       // Fill in the instructions into the SgAsmFile IR node
-                         objdumpToRoseBinaryAst(executableFileName,asmFile);
+                         SgProject* project = isSgProject(this->get_parent());
+                         ROSE_ASSERT(project != NULL);
+                         objdumpToRoseBinaryAst(executableFileName,asmFile,project);
 
                       // Attach the SgAsmFile to the SgFile
                          this->set_binaryFile(asmFile);
@@ -4012,8 +4127,6 @@ SgFile::callFrontEnd ()
                       // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
                       // addresses are unparsed (see Jeremiah for details).
                       // Skip running gnu assemble on the output since we include text that would make this a problem.
-                         SgProject* project = isSgProject(this->get_parent());
-                         ROSE_ASSERT(project != NULL);
                          project->skipfinalCompileStep(true);
 
                       // This is now done below in the Secondary file processing phase.
@@ -4182,7 +4295,7 @@ SgFile::callFrontEnd ()
    }
 
 
-string
+vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
    {
   // This function assembles the commandline that will be passed to the backend (vendor) C++/C compiler 
@@ -4196,7 +4309,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // To use rose in place of a C or C++ compiler specify the compiler name using
   //      rose -compiler <originalCompilerName> ...
   // the default value of "originalCompilerName" is "CC"
-     std::string compilerNameString = compilerName;
+     vector<string> compilerNameString;
+     compilerNameString.push_back(compilerName);
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
@@ -4224,22 +4338,22 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      if (get_C_only() == true || get_C99_only() == true)
         {
        // compilerNameString = "gcc ";
-          compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
+          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
         }
        else
         {
-          compilerNameString = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+          compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
           if (get_Fortran_only() == true)
              {
             // compilerNameString = "f77 ";
-               compilerNameString = "gfortran ";
+               compilerNameString[0] = "gfortran ";
 
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
                  // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
                  // compilerNameString += "-ffixed-form ";
                  // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
-                    compilerNameString += "-ffixed-line-length-none ";
+                    compilerNameString.push_back("-ffixed-line-length-none");
                   }
                  else
                   {
@@ -4248,7 +4362,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // If backend compilation is specificed to be free form, then allow any line length (to simplify code generation for now)
                       // compilerNameString += "-ffree-form ";
                       // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
-                         compilerNameString += "-ffree-line-length-none ";
+                         compilerNameString.push_back("-ffree-line-length-none");
                        }
                       else
                        {
@@ -4258,7 +4372,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          if ( SgProject::get_verbose() >= 1 )
                               printf ("Compiling generated code using gfortran -ffixed-line-length-none to avoid 72 column limit in code generation \n");
 
-                         compilerNameString += "-ffixed-line-length-none ";
+                         compilerNameString.push_back("-ffixed-line-length-none");
                        }
                   }
              }
@@ -4266,16 +4380,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
-     if (compilerNameString.find("icc") != string::npos)
+     if (compilerNameString[0].find("icc") != string::npos)
         {
        // This is the Intel C compiler: icc, we need to add the -restrict option
-          compilerNameString += " -restrict";
+          compilerNameString.push_back("-restrict");
         }
 
-     if (compilerNameString.find("icpc") != string::npos)
+     if (compilerNameString[0].find("icpc") != string::npos)
         {
        // This is the Intel C++ compiler: icc, we need to add the -restrict option
-          compilerNameString += " -restrict";
+          compilerNameString.push_back("-restrict");
         }
 
   // DQ (9/24/2006): Not clear if we want this, if we just skip stripping it out then it will be passed to the backend directly!
@@ -4290,7 +4404,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             else
              {
             // This is might be specific to GNU
-               compilerNameString += " -ansi ";
+               compilerNameString.push_back("-ansi");
              }
         }
 
@@ -4428,7 +4542,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
   // Add any options specified by the user (and add space at the end)
-     compilerNameString += std::string(" ") + StringUtility::listToString(argcArgvList) + std::string(" ");
+     compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
 
   // printf ("buildCompilerCommandLineOptions() #1: compilerNameString = \n%s \n",compilerNameString.c_str());
 
@@ -4453,7 +4567,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-          compilerNameString += std::string("-I") + oldFileNamePathOnly + " ";
+          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
@@ -4462,7 +4576,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // Generate the name of the ROSE generated source file (instead of the original source file)
        // this file will be compiled by the backend (vendor) compiler.
           ROSE_ASSERT(get_unparse_output_filename().empty() == false);
-          compilerNameString += get_unparse_output_filename();
+          compilerNameString.push_back(get_unparse_output_filename());
         }
        else
         {
@@ -4479,7 +4593,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (7/14/2004): Suggested fix from Andreas
           if (objectNameSpecified == false)
              {
-               compilerNameString += " -o " + currentDirectory + "/" + objectFileName;
+               compilerNameString.push_back("-o");
+               compilerNameString.push_back(currentDirectory + "/" + objectFileName);
              }
         }
 
@@ -4577,7 +4692,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
           printf ("Now call the backend (vendor's) compiler for file = %s \n",get_unparse_output_filename().c_str());
 
   // Build the commandline to hand off to the C++/C compiler
-     std::string compilerNameString = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
+     vector<string> compilerNameString = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
   // ROSE_ASSERT (compilerNameString != NULL);
 
      int returnValueForCompiler = 0;
@@ -4588,15 +4703,17 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // allow conditional skipping of the final compile step for testing ROSE
      if (get_skipfinalCompileStep() == false)
         {
+#if 0
           if ( get_verbose() > 1 )
-               printf ("calling system(%s) \n",compilerNameString.c_str());
+               printf ("calling systemFromVector(%s) \n",compilerNameString.c_str());
+#endif
 
-          returnValueForCompiler = system (compilerNameString.c_str());
+          returnValueForCompiler = systemFromVector (compilerNameString);
         }
        else
         {
           if ( get_verbose() > 1 )
-               printf ("COMPILER NOT CALLED: compilerNameString = %s \n",compilerNameString.c_str());
+               printf ("COMPILER NOT CALLED: compilerNameString = %s \n", "<unknown>" /* compilerNameString.c_str() */);
 
           printf ("Skipped call to backend vendor compiler! \n");
         }
@@ -4604,7 +4721,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // DQ (7/20/2006): Catch errors returned from unix "system" function (commonly "out of memory" errors, suggested by Peter and Jeremiah).
      if (returnValueForCompiler < 0)
         {
-          perror("Serious Error returned from internal system command");
+          perror("Serious Error returned from internal systemFromVector command");
         }
 
   // Assemble an exit status that combines the values for ROSE and the C++/C compiler
@@ -4666,18 +4783,19 @@ SgProject::compileOutput( const std::string& compilerName )
           SgFile::stripEdgCommandLineOptions( argv );
 
        // Skip the name of the ROSE translator (so that we can insert the backend compiler name, below)
-          bool skipInitialEntry = true;
+       // bool skipInitialEntry = true;
 
        // Include all the specified source files
-          bool skipSourceFiles  = false;
+       // bool skipSourceFiles  = false;
 
-          std::string originalCommandLine = CommandlineProcessing::generateStringFromArgList(argv,skipInitialEntry,skipSourceFiles);
+          vector<string> originalCommandLine = argv;
+          ROSE_ASSERT (!originalCommandLine.empty());
 
        // DQ (8/13/2006): Use the path to the compiler specified as that backend compiler (should not be specifi to GNU!)
        // DQ (8/6/2006): Test for g++ and use gcc with "-E" option 
        // (makes a different for header file processing in ARES configuration)
        // string compilerNameString = compilerName;
-          string compilerNameString;          
+          string& compilerNameString = originalCommandLine[0];          
           if (get_C_only() == true)
              {
                compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -4687,16 +4805,16 @@ SgProject::compileOutput( const std::string& compilerName )
                compilerNameString = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
                if (get_Fortran_only() == true)
                   {
-                    compilerNameString = "f77 ";
+                    compilerNameString = "f77";
                   }
              }
 
        // DQ (8/13/2006): Add a space to avoid building "g++-E" as output.
-          compilerNameString += " ";
+       // compilerNameString += " ";
 
        // Prepend the compiler name to the original command line
        // originalCommandLine = std::string(compilerName) + std::string(" ") + originalCommandLine;
-          originalCommandLine = compilerNameString + originalCommandLine;
+       // originalCommandLine = compilerNameString + originalCommandLine;
 
        // Prepend the compiler name to the original command line
        // originalCommandLine = std::string(compilerName) + std::string(" ") + originalCommandLine;
@@ -4708,7 +4826,7 @@ SgProject::compileOutput( const std::string& compilerName )
           ROSE_ASSERT(false);
 #endif
 
-          errorCode = system(originalCommandLine.c_str());
+          errorCode = systemFromVector(originalCommandLine);
 
        // printf ("Exiting after call to compiler using -E option! \n");
        // ROSE_ASSERT(false);
@@ -4823,13 +4941,16 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
 
   // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
   // l.pop_front();
-     l.erase(l.begin());
+  // l.erase(l.begin());
+     l[0] = linkerName;
 
-     std::string linkerCommandLine = linkerName + whiteSpace + StringUtility::listToString(l);
+  // std::string linkerCommandLine = linkerName + whiteSpace + StringUtility::listToString(l);
+#if 0
      if ( get_verbose() > 1 )
           printf ("linkerCommandLine = %s \n",linkerCommandLine.c_str());
+#endif
 
-     int status = system(linkerCommandLine.c_str());
+     int status = systemFromVector(l);
 
      if ( get_verbose() > 1 )
           printf ("linker error status = %d \n",status);

@@ -6,7 +6,9 @@
 namespace ObjdumpToRoseBinaryAst
    {
   // SgAsmFile* objdumpToRoseBinaryAst(const std::string& fileName);
-     void objdumpToRoseBinaryAst(const std::string& fileName, SgAsmFile* file);
+     void objdumpToRoseBinaryAst(const std::string& fileName,
+                                 SgAsmFile* file,
+                                 SgProject* proj);
    }
 
 // DQ: Is a using declaration appropriate here?

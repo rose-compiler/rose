@@ -31,10 +31,10 @@ if ROSE_USE_EDG_SOURCE
 # distributed as a binary file (to avoid distribution of the
 # EDG source code as required by the EDG license).
 libedgObjects = \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/decode.o \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_prelink.o \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/src/*.o \
-   $(top_builddir)/src/frontend/EDG_SAGE_Connection/*.o
+   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/decode.lo \
+   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_prelink.lo \
+   $(top_builddir)/src/frontend/EDG/EDG_3.3/src/*.lo \
+   $(top_builddir)/src/frontend/EDG_SAGE_Connection/*.lo
 
 #   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_decode.o 
 
@@ -711,7 +711,7 @@ include_HEADERS = \
 # in each directory and we will link with the collection of all static libraries.
 # DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
-bin_PROGRAMS = testSharedRoseLib 
+noinst_PROGRAMS = testSharedRoseLib 
 
 # noinst_PROGRAMS = testSharedRoseLib testMultiRoseLib
 

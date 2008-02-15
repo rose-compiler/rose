@@ -17,7 +17,13 @@ namespace VirtualCFG {
     eckCaseLabel,     // Case label (constant is given by caseLabel())
     eckDefault,	      // Default label
     eckDoConditionPassed, // Enter Fortran do loop body
-    eckDoConditionFailed // Fortran do loop finished
+    eckDoConditionFailed, // Fortran do loop finished
+    eckForallIndicesInRange, // Start testing forall mask
+    eckForallIndicesNotInRange, // End of forall loop
+    eckComputedGotoCaseLabel, // Case in computed goto -- number needs to be computed separately
+    eckArithmeticIfLess,
+    eckArithmeticIfEqual,
+    eckArithmeticIfGreater // Three options from a Fortran arithmetic if statement
   };
 
   class CFGNode {
@@ -60,6 +66,7 @@ namespace VirtualCFG {
     CFGNode target() const {return tgt;}
     EdgeConditionKind condition() const;
     SgExpression* caseLabel() const;
+    unsigned int computedGotoCaseIndex() const;
     SgExpression* conditionBasedOn() const;
     std::vector<SgInitializedName*> scopesBeingExited() const;
     std::vector<SgInitializedName*> scopesBeingEntered() const;
@@ -212,6 +219,23 @@ namespace VirtualCFG {
   }
 
   SgFunctionDeclaration* getDeclaration(SgExpression* func);
+  SgExpression* forallMaskExpression(SgForAllStatement* stmt);
+
+  CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym);
+  CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef);
+  void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, std::vector<CFGEdge>& result);
+  void addOutEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, SgExpression* e, std::vector<CFGEdge>& result);
+  void addInEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, SgExpression* e, std::vector<CFGEdge>& result);
+  bool handleFortranIOCommonOutEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, std::vector<CFGEdge>& result);
+  bool handleFortranIOCommonInEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, std::vector<CFGEdge>& result);
+  static const unsigned int numberOfFortranIOCommonEdges = 5;
+  // These are too complicated to do within Statement.code
+  unsigned int doForallCfgIndexForEnd(const SgForAllStatement* me);
+  bool doForallCfgIsIndexInteresting(const SgForAllStatement* me, unsigned int idx);
+  unsigned int doForallCfgFindChildIndex(SgForAllStatement* me, SgNode* tgt);
+  unsigned int doForallCfgFindNextChildIndex(SgForAllStatement* me, SgNode* tgt);
+  std::vector<VirtualCFG::CFGEdge> doForallCfgOutEdges(SgForAllStatement* me, unsigned int idx);
+  std::vector<VirtualCFG::CFGEdge> doForallCfgInEdges(SgForAllStatement* me, unsigned int idx);
 }
 
 std::string escapeString(const std::string& s);

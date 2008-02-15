@@ -504,7 +504,9 @@ Grammar::generateStorageClassesFiles()
      std::string accessFunctions = buildAccessFunctionsOfClassEntries(*rootNode);
      std::string dataMembersStorageClass = buildDataMemberStorageClass(*rootNode);
      std::ostringstream myStream; //creates an ostringstream object
-     myStream <<  ( terminalList.size() + nonTerminalList.size() + 1) << std::flush;
+     ROSE_ASSERT (!this->astVariantToNodeMap.empty());
+     size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
+     myStream <<  (maxVariant + 1) << std::flush;
      std::string totalNumberOfIRNodes = myStream.str();
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_NUMBEROFIRNODES", totalNumberOfIRNodes.c_str() );
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_DATAMEMBERS", dataMembers.c_str() );
@@ -534,7 +536,7 @@ Grammar::generateStorageClassesFiles()
      std::cout << "Building StorageClasses source" << std::flush;
      readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassSource.macro");
      std::ostringstream myStream2; //creates an ostringstream object
-     myStream2 << ( terminalList.size() + nonTerminalList.size() ) << std::flush;
+     myStream2 << maxVariant + 1 << std::flush;
      totalNumberOfIRNodes = myStream2.str();
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_NUMBEROFIRNODES", totalNumberOfIRNodes.c_str() );
        
@@ -563,7 +565,7 @@ Grammar::generateStorageClassesFiles()
      staticPickOutSource += "void\n";
      staticPickOutSource += "AstSpecificDataManagingClassStorageClass::pickOutIRNodeData ( AstSpecificDataManagingClass* source )\n";
      staticPickOutSource += "   {\n";
-     staticPickOutSource += "     for(int i =  0; i < " +  myStream.str() + " ; ++ i )\n";
+     staticPickOutSource += "     for(int i =  0; i < " +  myStream.str() + " + 1; ++ i )\n";
      staticPickOutSource += "        {\n";
      staticPickOutSource += "          listOfAccumulatedPoolSizes[i] = source->listOfAccumulatedPoolSizes[i];\n";
      staticPickOutSource += "        }\n";
@@ -575,7 +577,7 @@ Grammar::generateStorageClassesFiles()
      std::string staticDataConstructorSource; 
      staticDataConstructorSource += "AstSpecificDataManagingClass::AstSpecificDataManagingClass(const AstSpecificDataManagingClassStorageClass& source)\n";
      staticDataConstructorSource += "   {\n";
-     staticDataConstructorSource += "     for(int i =  0; i < " +  myStream.str() + " ; ++ i )\n";
+     staticDataConstructorSource += "     for(int i =  0; i < " +  myStream.str() + " + 1; ++ i )\n";
      staticDataConstructorSource += "        {\n";
      staticDataConstructorSource += "          listOfAccumulatedPoolSizes[i] = source.listOfAccumulatedPoolSizes[i];\n";
      staticDataConstructorSource += "        }\n";

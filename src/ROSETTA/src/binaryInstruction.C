@@ -269,6 +269,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Lock ,     "Asmx86Lock",    "Asmx86LockTag" );
      NEW_TERMINAL_MACRO ( Asmx86Wait ,     "Asmx86Wait",    "Asmx86WaitTag" );
      NEW_TERMINAL_MACRO ( Asmx86Hlt ,      "Asmx86Hlt",     "Asmx86HltTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Data16 ,   "Asmx86Data16",  "Asmx86Data16Tag" );
 
 
      NEW_TERMINAL_MACRO ( AsmBlock        , "AsmBlock",        "AsmBlockTag" );
@@ -328,7 +329,7 @@ Grammar::setUpBinaryInstructions ()
 			     , "Asmx86LogicalInstruction", "Asmx86LogicalInstructionTag" );
 
      NEW_NONTERMINAL_MACRO ( Asmx86MiscInstruction, 
-			     Asmx86Lea | Asmx86Nop | Asmx86Ud2 | Asmx86Xlat | Asmx86Cpuid | Asmx86Rdtsc | Asmx86Esc | Asmx86Lock | Asmx86Wait | Asmx86Hlt 
+			     Asmx86Lea | Asmx86Nop | Asmx86Ud2 | Asmx86Xlat | Asmx86Cpuid | Asmx86Rdtsc | Asmx86Esc | Asmx86Lock | Asmx86Wait | Asmx86Hlt | Asmx86Data16
 			     , "Asmx86MiscInstruction", "Asmx86MiscInstructionTag" );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ShiftAndRotateInstruction, 
@@ -440,6 +441,13 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmTypeSingleFloat , "AsmTypeSingleFloat", "AsmTypeSingleFloatTag" );
      NEW_TERMINAL_MACRO ( AsmTypeDoubleFloat , "AsmTypeDoubleFloat", "AsmTypeDoubleFloatTag" );
      NEW_TERMINAL_MACRO ( AsmTypeVector      , "AsmTypeVector",      "AsmTypeVectorTag" );
+     AsmTypeByte.setDataPrototype                    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeWord.setDataPrototype                    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeDoubleWord.setDataPrototype              ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeQuadWord.setDataPrototype                ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeSingleFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeDoubleFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeVector.setDataPrototype                  ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | 
                              AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector, "AsmType", "AsmTypeTag" );
@@ -707,11 +715,15 @@ Grammar::setUpBinaryInstructions ()
      AsmUnaryExpression.setDataPrototype("SgAsmExpression*","operand","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     AsmMemoryReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*","address","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      // added by tps on 16Jan08
      AsmMemoryReferenceExpression.setDataPrototype("SgAsmExpression*","segment","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // Added by JJW on 2-12-2008
+     AsmMemoryReferenceExpression.setDataPrototype("SgAsmType*","type","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmRegisterReferenceExpression.setDataPrototype("SgAsmRegisterReferenceExpression::x86_register_enum","x86_register_code","= SgAsmRegisterReferenceExpression::undefined_general_register",
@@ -727,6 +739,10 @@ Grammar::setUpBinaryInstructions ()
   // added by tps on 3Apr07 and removed on 16Jan08
      //     AsmRegisterReferenceExpression.setDataPrototype("SgAsmExpression*","offset","= NULL",
      //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // Added by JJW on 2-12-2008
+     AsmRegisterReferenceExpression.setDataPrototype("SgAsmType*","type","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   // This might better be an STL std::vector<bool> type.
@@ -748,7 +764,15 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeVector.setFunctionPrototype      ( "HEADER_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
 
 
+     AsmExpression.setFunctionPrototype      ( "HEADER_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
+     AsmByteValueExpression.setFunctionPrototype( "HEADER_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmDoubleFloatValueExpression.setFunctionPrototype( "HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmDoubleWordValueExpression.setFunctionPrototype( "HEADER_BINARY_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmQuadWordValueExpression.setFunctionPrototype( "HEADER_BINARY_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmSingleFloatValueExpression.setFunctionPrototype( "HEADER_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmVectorValueExpression.setFunctionPrototype( "HEADER_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmWordValueExpression.setFunctionPrototype( "HEADER_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
      AsmNode.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -772,7 +796,28 @@ Grammar::setUpBinaryInstructions ()
      AsmFunctionDeclaration.setFunctionSource      ( "SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource                     ( "SOURCE_BINARY_NODE", "../Grammar/BinaryInstruction.code");
      Asmx86ControlTransferInstruction.setFunctionSource  ( "SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     Asmx86Ret.setFunctionSource                     ( "SOURCE_BINARY_RET", "../Grammar/BinaryInstruction.code");
+     Asmx86Ret.setFunctionSource                   ( "SOURCE_BINARY_RET", "../Grammar/BinaryInstruction.code");
+
+     AsmType.setFunctionSource            ( "SOURCE_BINARY_TYPE", "../Grammar/BinaryInstruction.code");
+     AsmTypeByte.setFunctionSource        ( "SOURCE_BINARY_TYPE_BYTE", "../Grammar/BinaryInstruction.code");
+     AsmTypeWord.setFunctionSource        ( "SOURCE_BINARY_TYPE_WORD", "../Grammar/BinaryInstruction.code");
+     AsmTypeDoubleWord.setFunctionSource  ( "SOURCE_BINARY_TYPE_DOUBLE_WORD", "../Grammar/BinaryInstruction.code");
+     AsmTypeQuadWord.setFunctionSource    ( "SOURCE_BINARY_TYPE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
+     AsmTypeSingleFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
+     AsmTypeDoubleFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
+     AsmTypeVector.setFunctionSource      ( "SOURCE_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
+
+     AsmExpression.setFunctionSource               ( "SOURCE_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmMemoryReferenceExpression.setFunctionSource ( "SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+
+     AsmByteValueExpression.setFunctionSource( "SOURCE_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmDoubleFloatValueExpression.setFunctionSource( "SOURCE_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmDoubleWordValueExpression.setFunctionSource( "SOURCE_BINARY_DOUBLE_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmQuadWordValueExpression.setFunctionSource( "SOURCE_BINARY_QUAD_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmSingleFloatValueExpression.setFunctionSource( "SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmVectorValueExpression.setFunctionSource( "SOURCE_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmWordValueExpression.setFunctionSource( "SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
      AsmSectionHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmProgramHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");

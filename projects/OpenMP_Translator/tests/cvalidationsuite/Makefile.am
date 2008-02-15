@@ -80,7 +80,7 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): ../../ompTranslator $(srcdir)/$(@:.o=.c)
-	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
+#	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
 	$(VALGRIND) ../../ompTranslator -D_OPENMP $(ROSE_FLAGS) -I$(srcdir)/../.. -I$(srcdir)/../../includes -c $(srcdir)/$(@:.o=.c)
 
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
@@ -112,10 +112,15 @@ check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
 if ROSE_USE_OPENMP
-	$(CC) *.o -o runme -L$(OPENMP_RUNTIME_LIBRARY)/lib/libompc -lompc_spin_pthread -lpthread -lm
+# enable make check to build and run the final executable, Liao 1/31/2008
+LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
+runme:$(PASSING_TEST_Objects)
+check_PROGRAMS = runme
+TESTS = $(check_PROGRAMS)
+
 endif
+	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/cvalidationsuite: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"

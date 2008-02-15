@@ -39,6 +39,18 @@ SgExpression::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      printf ("Inside of SgExpression::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 #endif
 
+     Rose_STL_Container<SgNode*> children_original = const_cast<SgExpression*>(this)->get_traversalSuccessorContainer();
+     Rose_STL_Container<SgNode*> children_copy     = const_cast<SgNode*>(copy)->get_traversalSuccessorContainer();
+     ROSE_ASSERT (children_original.size() == children_copy.size());
+
+     for (Rose_STL_Container<SgNode*>::const_iterator
+            i_original = children_original.begin(),
+            i_copy = children_copy.begin();
+          i_original != children_original.end(); ++i_original, ++i_copy) {
+       if (*i_original == NULL) continue;
+       (*i_original)->fixupCopy_symbols(*i_copy,help);
+     }
+
      SgLocatedNode::fixupCopy_symbols(copy,help);
    }
 
@@ -104,6 +116,28 @@ SgGlobal::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      SgScopeStatement::fixupCopy_symbols(copy,help);
 
   // printf ("\nLeaving SgGlobal::fixupCopy_symbols() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
+   }
+
+// JJW 2/1/2008 Added support for statement expressions
+void
+SgExprStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgSgExprStatement::fixupCopy_symbols() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgExprStatement* es_copy = isSgExprStatement(copy);
+     ROSE_ASSERT(es_copy != NULL);
+
+     SgExpression* expression_original = this->get_expression();
+     SgExpression* expression_copy     = es_copy->get_expression();
+
+     expression_original->fixupCopy_symbols(expression_copy, help);
+
+  // Call the base class fixupCopy member function
+     SgStatement::fixupCopy_symbols(copy,help);
+
+  // printf ("\nLeaving SgExprStatement::fixupCopy_symbols() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
    }
 
 // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!

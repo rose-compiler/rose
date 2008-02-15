@@ -28,9 +28,9 @@ inputOmpfor2.c \
 inputOrphanedFor.c \
 inputParallelFor.c \
 inputSingle.c \
+inputSection.c \
 inputVariables.c 
 
-#inputSection.c  SF!
 
 # DQ: Need to get C++ codes into tests but this is a bit of a problem for our simple make rule
 CXX_TESTCODES_REQUIRED_TO_PASS = \
@@ -91,6 +91,9 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/developmentTests: make check rule complete (terminated normally) ******"
+	@echo "****** configure option --with-omp_runtime_support can be used to specify Omni runtime library path           ******"
+	@echo "****** for example: --with-omp_runtime_support=/home/liao6/opt/omni-1.6/lib/openmp/lib                        ******"
+	@echo "****** then make check will not only compile the tests, but also run them in multithreads                     ******"
 	@echo "***********************************************************************************************************"
 
 endif 

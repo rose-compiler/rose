@@ -108,7 +108,7 @@ endif
 echo -n "(*)  "
 latex -version | grep 'TeX ('
 echo -n "(*)  "
-latex2html -v | grep 'Original LaTeX2HTML' 
+latex2html -v | grep 'LaTeX2HTML' 
 
 # mysql stuff
 # echo -n "mysql (requires g++ 3.2.2)"

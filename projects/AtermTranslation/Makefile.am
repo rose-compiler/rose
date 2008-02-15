@@ -4,15 +4,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # This needs a configure flag so that the location outside 
 # of ROSE can be easily specificed at configure time.
 # TERM_INCLUDE = -I/home/dquinlan/ROSE/Stratego-tux49/include
-A_TERM_INCLUDE = -I/home/dquinlan/ROSE/Stratego/include
+A_TERM_INCLUDE = -I/home/willcock2/sw/include
 
 INCLUDES = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
 
 # DQ (10/27/2004): Removed because it has dependence upon Stratego (which may not be installed)
 # This will be made a option in the future and the location of the Stratego package will
 # have to be specified on the configure command line!
-# bin_PROGRAMS = termToStratego strategoToTerm
-bin_PROGRAMS = 
+bin_PROGRAMS = termToStratego strategoToTerm
 
 termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
@@ -35,7 +34,7 @@ include_HEADERS = atermTranslation.h
 # DQ (10/27/2004): This explicit path will be later set at configure time.
 # TERM_LIB_DIR = /home/dquinlan/ROSE/Stratego-tux49/lib
 # ATERM_LIB_DIR = /home/dquinlan/ROSE/Stratego/lib
-ATERM_LIB_DIR = /home/Stratego/lib
+ATERM_LIB_DIR = /home/willcock2/sw/lib
 
 # LDADD = $(ATERM_LIB_DIR)/libATerm.a $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 

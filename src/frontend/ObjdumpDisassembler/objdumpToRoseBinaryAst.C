@@ -10,13 +10,17 @@
 
 using namespace std;
 
+// From sageSupport.C:
+FILE* popenReadFromVector(const vector<string>& argv);
+int pcloseFromVector(FILE* f);
+
 namespace ObjdumpToRoseBinaryAst {
 
   enum StackEntryKind {SEK_INT, SEK_STRING, SEK_NODE};
 
   struct StackEntry {
     StackEntryKind kind;
-    uint32_t intVal;
+    uint64_t intVal;
     string stringVal;
     SgAsmNode* nodeVal;
 
@@ -24,7 +28,7 @@ namespace ObjdumpToRoseBinaryAst {
 
     StackEntry(const StackEntry& e): kind(e.kind), intVal(e.intVal), stringVal(e.stringVal), nodeVal(e.nodeVal) {}
 
-    uint32_t asInt() const {
+    uint64_t asInt() const {
       ROSE_ASSERT (kind == SEK_INT);
       return intVal;
     }
@@ -40,7 +44,7 @@ namespace ObjdumpToRoseBinaryAst {
     }
   };
 
-  static StackEntry seInt(uint32_t i) {
+  static StackEntry seInt(uint64_t i) {
     StackEntry se;
     se.kind = SEK_INT;
     se.intVal = i;
@@ -84,81 +88,129 @@ namespace ObjdumpToRoseBinaryAst {
     fprintf(f, "\n");
   }
 
+#define HANDLEREG(name, roseName, posName) \
+  do { \
+    if (regName == name) { \
+      reg = SgAsmRegisterReferenceExpression::roseName; \
+      pos = SgAsmRegisterReferenceExpression::posName; \
+      return; \
+    } \
+  } while (0);
+
   static void getX86RegisterInfo(const string& regName,
                                  SgAsmRegisterReferenceExpression::x86_register_enum& reg,
                                  SgAsmRegisterReferenceExpression::x86_position_in_register_enum& pos) {
-    if (regName == "eax") {
-      reg = SgAsmRegisterReferenceExpression::rAX; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "ebx") {
-      reg = SgAsmRegisterReferenceExpression::rBX; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "ecx") {
-      reg = SgAsmRegisterReferenceExpression::rCX; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "edx") {
-      reg = SgAsmRegisterReferenceExpression::rDX; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "esi") {
-      reg = SgAsmRegisterReferenceExpression::rSI; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "edi") {
-      reg = SgAsmRegisterReferenceExpression::rDI; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "ebp") {
-      reg = SgAsmRegisterReferenceExpression::rBP; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "esp") {
-      reg = SgAsmRegisterReferenceExpression::rSP; pos = SgAsmRegisterReferenceExpression::dword;
-    } else if (regName == "ax") {
-      reg = SgAsmRegisterReferenceExpression::rAX; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "bx") {
-      reg = SgAsmRegisterReferenceExpression::rBX; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "cx") {
-      reg = SgAsmRegisterReferenceExpression::rCX; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "dx") {
-      reg = SgAsmRegisterReferenceExpression::rDX; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "si") {
-      reg = SgAsmRegisterReferenceExpression::rSI; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "di") {
-      reg = SgAsmRegisterReferenceExpression::rDI; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "bp") {
-      reg = SgAsmRegisterReferenceExpression::rBP; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "sp") {
-      reg = SgAsmRegisterReferenceExpression::rSP; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "al") {
-      reg = SgAsmRegisterReferenceExpression::rAX; pos = SgAsmRegisterReferenceExpression::low_byte;
-    } else if (regName == "ah") {
-      reg = SgAsmRegisterReferenceExpression::rAX; pos = SgAsmRegisterReferenceExpression::high_byte;
-    } else if (regName == "bl") {
-      reg = SgAsmRegisterReferenceExpression::rBX; pos = SgAsmRegisterReferenceExpression::low_byte;
-    } else if (regName == "bh") {
-      reg = SgAsmRegisterReferenceExpression::rBX; pos = SgAsmRegisterReferenceExpression::high_byte;
-    } else if (regName == "cl") {
-      reg = SgAsmRegisterReferenceExpression::rCX; pos = SgAsmRegisterReferenceExpression::low_byte;
-    } else if (regName == "ch") {
-      reg = SgAsmRegisterReferenceExpression::rCX; pos = SgAsmRegisterReferenceExpression::high_byte;
-    } else if (regName == "dl") {
-      reg = SgAsmRegisterReferenceExpression::rDX; pos = SgAsmRegisterReferenceExpression::low_byte;
-    } else if (regName == "dh") {
-      reg = SgAsmRegisterReferenceExpression::rDX; pos = SgAsmRegisterReferenceExpression::high_byte;
-    } else if (regName == "cs") {
-      reg = SgAsmRegisterReferenceExpression::CS; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "ds") {
-      reg = SgAsmRegisterReferenceExpression::DS; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "es") {
-      reg = SgAsmRegisterReferenceExpression::ES; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "ss") {
-      reg = SgAsmRegisterReferenceExpression::SS; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "fs") {
-      reg = SgAsmRegisterReferenceExpression::FS; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName == "gs") {
-      reg = SgAsmRegisterReferenceExpression::GS; pos = SgAsmRegisterReferenceExpression::word;
-    } else if (regName.size() == 3 && regName.substr(0, 2) == "st" && regName[2] >= '0' && regName[2] <= '7') { // FIXME
-      fprintf(stderr, "Found unsupported floating-point register %s\n", regName.c_str());
-      reg = SgAsmRegisterReferenceExpression::ST; pos = SgAsmRegisterReferenceExpression::all;
+    HANDLEREG("rax", rAX, qword);
+    HANDLEREG("rbx", rBX, qword);
+    HANDLEREG("rcx", rCX, qword);
+    HANDLEREG("rdx", rDX, qword);
+    HANDLEREG("rsi", rSI, qword);
+    HANDLEREG("rdi", rDI, qword);
+    HANDLEREG("rsp", rSP, qword);
+    HANDLEREG("rbp", rBP, qword);
+    HANDLEREG("r8",  r8,  qword);
+    HANDLEREG("r9",  r9,  qword);
+    HANDLEREG("r10", r10, qword);
+    HANDLEREG("r11", r11, qword);
+    HANDLEREG("r12", r12, qword);
+    HANDLEREG("r13", r13, qword);
+    HANDLEREG("r14", r14, qword);
+    HANDLEREG("r15", r15, qword);
+    HANDLEREG("eax",  rAX, dword);
+    HANDLEREG("ebx",  rBX, dword);
+    HANDLEREG("ecx",  rCX, dword);
+    HANDLEREG("edx",  rDX, dword);
+    HANDLEREG("esi",  rSI, dword);
+    HANDLEREG("edi",  rDI, dword);
+    HANDLEREG("esp",  rSP, dword);
+    HANDLEREG("ebp",  rBP, dword);
+    HANDLEREG("r8d",  r8,  dword);
+    HANDLEREG("r9d",  r9,  dword);
+    HANDLEREG("r10d", r10, dword);
+    HANDLEREG("r11d", r11, dword);
+    HANDLEREG("r12d", r12, dword);
+    HANDLEREG("r13d", r13, dword);
+    HANDLEREG("r14d", r14, dword);
+    HANDLEREG("r15d", r15, dword);
+    HANDLEREG("ax",   rAX, word);
+    HANDLEREG("bx",   rBX, word);
+    HANDLEREG("cx",   rCX, word);
+    HANDLEREG("dx",   rDX, word);
+    HANDLEREG("si",   rSI, word);
+    HANDLEREG("di",   rDI, word);
+    HANDLEREG("sp",   rSP, word);
+    HANDLEREG("bp",   rBP, word);
+    HANDLEREG("r8w",  r8,  word);
+    HANDLEREG("r9w",  r9,  word);
+    HANDLEREG("r10w", r10, word);
+    HANDLEREG("r11w", r11, word);
+    HANDLEREG("r12w", r12, word);
+    HANDLEREG("r13w", r13, word);
+    HANDLEREG("r14w", r14, word);
+    HANDLEREG("r15w", r15, word);
+    HANDLEREG("al",   rAX, low_byte);
+    HANDLEREG("bl",   rBX, low_byte);
+    HANDLEREG("cl",   rCX, low_byte);
+    HANDLEREG("dl",   rDX, low_byte);
+    HANDLEREG("sil",  rSI, low_byte);
+    HANDLEREG("dil",  rDI, low_byte);
+    HANDLEREG("spl",  rSP, low_byte);
+    HANDLEREG("bpl",  rBP, low_byte);
+    HANDLEREG("r8b",  r8,  low_byte);
+    HANDLEREG("r9b",  r9,  low_byte);
+    HANDLEREG("r10b", r10, low_byte);
+    HANDLEREG("r11b", r11, low_byte);
+    HANDLEREG("r12b", r12, low_byte);
+    HANDLEREG("r13b", r13, low_byte);
+    HANDLEREG("r14b", r14, low_byte);
+    HANDLEREG("r15b", r15, low_byte);
+    HANDLEREG("ah",   rAX, high_byte);
+    HANDLEREG("bh",   rBX, high_byte);
+    HANDLEREG("ch",   rCX, high_byte);
+    HANDLEREG("dh",   rDX, high_byte);
+    HANDLEREG("cs",   CS, word);
+    HANDLEREG("ds",   DS, word);
+    HANDLEREG("es",   ES, word);
+    HANDLEREG("ss",   SS, word);
+    HANDLEREG("fs",   FS, word);
+    HANDLEREG("gs",   GS, word);
+    HANDLEREG("rip",  rIP, qword);
+    HANDLEREG("eip",  rIP, dword);
+    HANDLEREG("ip",   rIP, word);
+    if (regName.size() == 3 && regName.substr(0, 2) == "st" && regName[2] >= '0' && regName[2] <= '7') {
+      reg = SgAsmRegisterReferenceExpression::x86_register_enum(SgAsmRegisterReferenceExpression::STnumbered + (regName[2] - '0'));
+      pos = SgAsmRegisterReferenceExpression::all;
+    } else if (regName.size() == 3 && regName.substr(0, 2) == "mm" && regName[2] >= '0' && regName[2] <= '7') {
+      reg = SgAsmRegisterReferenceExpression::x86_register_enum(SgAsmRegisterReferenceExpression::MM + (regName[2] - '0'));
+      pos = SgAsmRegisterReferenceExpression::all;
+    } else if (regName.size() > 3 && regName.substr(0, 3) == "xmm") {
+      reg = SgAsmRegisterReferenceExpression::x86_register_enum(SgAsmRegisterReferenceExpression::XMM + atoi(regName.c_str() + 3));
+      pos = SgAsmRegisterReferenceExpression::all;
     } else {
       fprintf(stderr, "Bad register '%s'\n", regName.c_str());
       abort();
     }
   }
 
+#undef HANDLEREG
+
+  static SgAsmType* sizeCommandToType(const string& cmd) {
+    if (cmd == "size1") {
+      return SgAsmTypeByte::createType();
+    } else if (cmd == "size2") {
+      return SgAsmTypeWord::createType();
+    } else if (cmd == "size4") {
+      return SgAsmTypeDoubleWord::createType();
+    } else if (cmd == "size8") {
+      return SgAsmTypeQuadWord::createType();
+    } else {
+      return NULL;
+    }
+  }
+
   static void dispatchCommand(const string& cmd, stack<StackEntry>& st,
-                              map<uint32_t, SgAsmInstruction*>& insns, map<uint32_t, SgAsmBlock*>& basicBlocks,
-                              map<uint32_t, uint32_t>& nextAddress) {
+                              map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, SgAsmBlock*>& basicBlocks,
+                              map<uint64_t, uint64_t>& nextAddress) {
     // fprintf(stderr, "dispatchCommand '%s' ", cmd.c_str());
     // printStack(stderr, st);
     if (cmd == "reg") {
@@ -174,7 +226,7 @@ namespace ObjdumpToRoseBinaryAst {
     } else if (cmd == "constant") {
       int con = st.top().asInt();
       st.pop();
-      SgAsmDoubleWordValueExpression* e = new SgAsmDoubleWordValueExpression();
+      SgAsmQuadWordValueExpression* e = new SgAsmQuadWordValueExpression();
       e->set_value(con);
       st.push(seNode(e));
     } else if (cmd == "annotate") {
@@ -198,18 +250,36 @@ namespace ObjdumpToRoseBinaryAst {
       SgAsmExpression* e1 = isSgAsmExpression(st.top().asNode());
       st.pop();
       ROSE_ASSERT (e1);
-      if (isSgAsmDoubleWordValueExpression(e1)) {
+      if (isSgAsmQuadWordValueExpression(e1)) {
         if (cmd == "size1") {
           SgAsmByteValueExpression* e = new SgAsmByteValueExpression();
-          e->set_value(isSgAsmDoubleWordValueExpression(e1)->get_value());
+          e->set_value(isSgAsmQuadWordValueExpression(e1)->get_value());
           st.push(seNode(e));
         } else if (cmd == "size2") {
           SgAsmWordValueExpression* e = new SgAsmWordValueExpression();
-          e->set_value(isSgAsmDoubleWordValueExpression(e1)->get_value());
+          e->set_value(isSgAsmQuadWordValueExpression(e1)->get_value());
           st.push(seNode(e));
-        } else {
+        } else if (cmd == "size4") {
+          SgAsmDoubleWordValueExpression* e = new SgAsmDoubleWordValueExpression();
+          e->set_value(isSgAsmQuadWordValueExpression(e1)->get_value());
+          st.push(seNode(e));
+        } else if (cmd == "size8" || cmd == "size0") { // I don't know where size0 comes from
           st.push(seNode(e1));
+        } else {
+          ROSE_ASSERT (!"Bad size cmd");
         }
+      } else if (isSgAsmMemoryReferenceExpression(e1)) {
+        // Set the type of the node based on the size
+        SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(e1);
+        SgAsmType* newType = sizeCommandToType(cmd);
+        if (newType) mr->set_type(newType);
+        st.push(seNode(mr));
+      } else if (isSgAsmRegisterReferenceExpression(e1)) {
+        // Set the type of the node based on the size
+        SgAsmRegisterReferenceExpression* rr = isSgAsmRegisterReferenceExpression(e1);
+        SgAsmType* newType = sizeCommandToType(cmd);
+        if (newType) rr->set_type(newType);
+        st.push(seNode(rr));
       } else {
         st.push(seNode(e1));
       }
@@ -271,9 +341,9 @@ namespace ObjdumpToRoseBinaryAst {
       st.pop();
       string fullCode = st.top().asString();
       st.pop();
-      uint32_t next_addr = st.top().asInt();
+      uint64_t next_addr = st.top().asInt();
       st.pop();
-      uint32_t address = st.top().asInt();
+      uint64_t address = st.top().asInt();
       st.pop();
    // fprintf(stderr, "Got insn at address 0x%08lX\n", (unsigned long)address);
       SgAsmInstruction* instruction = 0;
@@ -299,7 +369,7 @@ namespace ObjdumpToRoseBinaryAst {
       ROSE_ASSERT (st.empty());
       // fprintf(stderr, "Got insn 0x%08lX = '%s'\n", (unsigned long)address, fullCode.c_str());
     } else if (cmd == "basic_block_start") {
-      uint32_t addr = st.top().asInt();
+      uint64_t addr = st.top().asInt();
       st.pop();
       ROSE_ASSERT (basicBlocks.find(addr) == basicBlocks.end());
       //if (!(basicBlocks.find(addr) == basicBlocks.end())) return;
@@ -315,19 +385,29 @@ namespace ObjdumpToRoseBinaryAst {
 
 // DQ (1/22/2008): Changed inteface for this function
 // SgAsmFile* objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
-void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
+// JJW 1/30/2008 Added project so we have access to path information
+void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* proj)
 {
     ROSE_ASSERT(file != NULL);
+    ROSE_ASSERT(proj != NULL);
 
-    map<uint32_t, SgAsmBlock*> basicBlocks;
-    map<uint32_t, SgAsmInstruction*> insns;
-    map<uint32_t, uint32_t> nextAddress;
+    map<uint64_t, SgAsmBlock*> basicBlocks;
+    map<uint64_t, SgAsmInstruction*> insns;
+    map<uint64_t, uint64_t> nextAddress;
  // FILE* f = popen(("./asmToRoseAst.tcl " + fileName).c_str(), "r");
  // FILE* f = popen(( "/home/panas2/development/ROSE-64bit/NEW_ROSE/src/frontend/ObjdumpDisassembler/asmToRoseAst.tcl " + fileName).c_str(), "r");
-    FILE* f = popen(( ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/src/frontend/ObjdumpDisassembler/asmToRoseAst.tcl " + fileName).c_str(), "r");
+    string dirOfScript = proj->get_runningFromInstalledRose() ?
+                         ROSE_AUTOMAKE_LIBEXECDIR :
+                         (ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/src/frontend/ObjdumpDisassembler");
+    string pathToScript = dirOfScript + "/asmToRoseAst.tcl";
+    vector<string> args(2);
+    args[0] = pathToScript;
+    args[1] = fileName;
+    FILE* f = popenReadFromVector(args);
     if (!f) {ROSE_ASSERT(!"Could not open file"); abort();}
     stack<StackEntry> st;
     while (!feof(f)) {
+      errno = 0;
       int c = getc(f);
       if (c == EOF) {
         if (errno != 0) {perror("Error reading from pipe"); abort();}
@@ -358,6 +438,7 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
           if (!isalnum(c) && c != '_') break;
           str.push_back((char)c);
         }
+        if (str == "done") break;
         dispatchCommand(str, st, insns, basicBlocks, nextAddress);
       } else {
         ROSE_ASSERT (!"Invalid character from pipe");
@@ -365,7 +446,7 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
       }
     }
     ROSE_ASSERT (st.empty());
-    pclose(f);
+    pcloseFromVector(f);
 
     // Put each instruction into the proper block, and link the blocks together
  // SgAsmFile* file = new SgAsmFile();
@@ -373,10 +454,10 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
     mainBlock->set_parent(file);
     file->set_global_block(mainBlock);
 
-    map<uint32_t, SgAsmBlock*> insnToBlock;
+    map<uint64_t, SgAsmBlock*> insnToBlock;
 
     // fprintf(stderr, "Putting blocks in file\n");
-    for (map<uint32_t, SgAsmBlock*>::const_iterator i = basicBlocks.begin(); i != basicBlocks.end(); ++i) {
+    for (map<uint64_t, SgAsmBlock*>::const_iterator i = basicBlocks.begin(); i != basicBlocks.end(); ++i) {
       mainBlock->get_statementList().push_back(i->second);
       i->second->set_parent(mainBlock);
       // Every basic block start is in its own block
@@ -386,17 +467,17 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
 
     // fprintf(stderr, "Putting instructions in blocks\n");
     // This stuff relies on the maps being sorted -- hash_maps won't work
-    for (map<uint32_t, SgAsmInstruction*>::const_iterator i = insns.begin(); i != insns.end(); ++i) {
-      uint32_t addr = i->first;
+    for (map<uint64_t, SgAsmInstruction*>::const_iterator i = insns.begin(); i != insns.end(); ++i) {
+      uint64_t addr = i->first;
       SgAsmInstruction* insn = i->second;
-      map<uint32_t, SgAsmBlock*>::const_iterator theBlockIter = insnToBlock.find(addr);
+      map<uint64_t, SgAsmBlock*>::const_iterator theBlockIter = insnToBlock.find(addr);
       ROSE_ASSERT (theBlockIter != insnToBlock.end());
       SgAsmBlock* theBlock = theBlockIter->second;
       insn->set_parent(theBlock);
       theBlock->get_statementList().push_back(insn);
       // fprintf(stderr, "Put insn 0x%08X into block %p\n", addr, theBlock);
       ROSE_ASSERT (nextAddress.find(addr) != nextAddress.end());
-      uint32_t next_addr = nextAddress[addr];
+      uint64_t next_addr = nextAddress[addr];
       if (next_addr != 0 && insnToBlock.find(next_addr) == insnToBlock.end()) {
         // Set the value for the next instruction if it does not start its own basic block
         insnToBlock[next_addr] = theBlock;
@@ -406,5 +487,69 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
     // fprintf(stderr, "Done getting instructions\n");
  // return file;
   }
+
+#if 0
+  class FunctionScanner {
+    map<SgAsmBlock*, SgAsmBlock*> functionMembership; // A disjoint union set
+    set<SgAsmBlock*> functions;
+
+    public:
+    void addFunction(SgAsmBlock* b) {
+      functions.insert(b);
+    }
+
+    SgAsmBlock* lookupFunctionForBlock(SgAsmBlock* b) {
+      while (true) {
+	map<SgAsmBlock*, SgAsmBlock*>::iterator it = functionMembership.find(b);
+	if (it == functionMembership.end()) {
+	  return b;
+	} else {
+	  SgAsmBlock* func = lookupFunctionForBlock(it->second);
+	  it->second = func;
+	  return func;
+	}
+      }
+    }
+
+    void mergeFunctions(SgAsmBlock* a, SgAsmBlock* b) {
+      a = lookupFunctionForBlock(a);
+      b = lookupFunctionForBlock(b);
+      if (a == b) return;
+      ROSE_ASSERT (functions.find(a) != functions.end());
+      ROSE_ASSERT (functions.find(b) != functions.end());
+      functions.erase(b);
+      functionMembership[b] = a;
+    }
+
+    bool startsWithFunctionPrologue(SgAsmBlock* b) {
+      const vector<SgAsmInstruction>& insns = b->get_instructions();
+      if (insns.size() < 2) return false;
+      SgAsmPushInstruction* insn0 = isSgAsmPushInstruction(insns[0]);
+      if (!insn0) return false;
+      SgAsmRegisterReferenceExpression* insn0arg = isSgAsmRegisterReferenceExpression(insn0->get_operand());
+      if (!insn0arg) return false;
+      if (insn0arg->get_x86_register() != rSP) return false;
+      SgAsmMovInstruction* insn1 = isSgAsmMovInstruction(insns[1]);
+      if (!insn1) return false;
+      SgAsmRegisterReferenceExpression* insn1arg0 = isSgAsmRegisterReferenceExpression(insn1->get_lhs_operand());
+      if (!insn1arg0 || insn1arg0->get_x86_register() != rSP) return false;
+      SgAsmRegisterReferenceExpression* insn1arg1 = isSgAsmRegisterReferenceExpression(insn1->get_rhs_operand());
+      if (!insn1arg1 || insn1arg1->get_x86_register() != rBP) return false;
+      return true;
+    }
+  };
+
+  vector<set<SgAsmBlock*> > identifyFunctions(SgAsmBlock* top) {
+    FunctionScanner fs;
+    fs.scan(top);
+    vector<set<SgAsmBlock*> > result;
+    for (set<SgAsmBlock*>::const_iterator i = fs.functions.begin();
+	 i != fs.functions.end(); ++i) {
+      set<SgAsmBlock*>
+      result.push_back(s);
+    map<SgAsmBlock*, SgAsmBlock*> functionMembership;
+
+  }
+#endif
 
 }

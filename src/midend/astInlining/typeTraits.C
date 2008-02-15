@@ -1,6 +1,7 @@
 #include "typeTraits.h"
 #include <iostream>
 
+#if 0 // 
 SgType* getBaseFromType(SgType* t) {
   SgType* deref = t->dereference();
   if (deref && deref != t)
@@ -363,3 +364,4 @@ bool hasTrivialDestructor(SgType* t) {
       }
   }
 }
+#endif

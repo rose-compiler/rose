@@ -156,9 +156,8 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Call* call) {
   // get the first (and only) element 
   if (ptrList.size()!=0) {
     SgAsmExpression* expr = *(ptrList.begin());
-    string type = "DWORD";
     string replace = "";
-    unparser->resolveOperand(expr,&type, &replace);
+    unparser->resolveOperand(expr, &replace);
     if (replace=="_malloc" || replace=="malloc@plt")
       exception=true;
   }

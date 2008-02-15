@@ -47,69 +47,6 @@ SgExpression* getRootOfExpression(SgExpression* n);
 void replaceSubexpressionWithStatement(SgExpression* from,
 				       StatementGenerator* to);
 
-//! Change continue statements in a given block of code to gotos to a label
-void changeContinuesToGotos(SgStatement* stmt, SgLabelSymbol* label);
-
-//! Generic routines to get and set the body of a loop
-template <class Loop>
-inline SgBasicBlock* getLoopBody(Loop* loop) {
-  return loop->get_body();
-}
-
-template <class Loop>
-inline void setLoopBody(Loop* loop, SgBasicBlock* body) {
-     loop->set_body(body);
-
-  // DQ (6/24/2006): Set the parent as well
-     body->set_parent(loop);
-}
-
-template <>
-inline SgBasicBlock* getLoopBody(SgForStatement* loop) {
-  return loop->get_loop_body();
-}
-
-template <>
-inline void setLoopBody(SgForStatement* loop, SgBasicBlock* body) {
-     loop->set_loop_body(body);
-
-  // DQ (6/24/2006): Set the parent as well
-     body->set_parent(loop);
-}
-
-//! Generic routines to get and set the condition of a loop
-template <class Loop>
-inline SgExpression* getLoopConditionRoot(Loop* loop) {
-  return isSgExprStatement(loop->get_condition())->get_expression();
-}
-
-template <class Loop>
-inline void setLoopConditionRoot(Loop* loop, SgExpression* body) {
-  // DQ (3/8/2006): Replaces use of SgNULL_FILE macro!
-  // loop->set_condition(new SgExprStatement(SgNULL_FILE, body->get_operand_i()));
-  // loop->set_condition(new SgExprStatement(Sg_File_Info::generateDefaultFileInfoForTransformationNode(), body->get_operand_i()));
-     SgExprStatement* exprStatement = new SgExprStatement(Sg_File_Info::generateDefaultFileInfoForTransformationNode(), body);
-     exprStatement->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-     loop->set_condition(exprStatement);
-
-  // DQ (6/24/2006): Set the parent as well
-     body->set_parent(exprStatement);
-     exprStatement->set_parent(loop);
-}
-
-template <>
-inline SgExpression* getLoopConditionRoot(SgForStatement* loop) {
-  return loop->get_test_expr();
-}
-
-template <>
-inline void setLoopConditionRoot(SgForStatement* loop, SgExpression* body) {
-     loop->set_test_expr(body);
-
-  // DQ (6/24/2006): Set the parent as well
-     body->set_parent(loop);
-}
-
 //! Rewrites a while or for loop so that the official test is changed to
 //! "true" and what had previously been the test is now an if-break
 //! combination (with an inverted condition) at the beginning of the loop
@@ -117,19 +54,7 @@ inline void setLoopConditionRoot(SgForStatement* loop, SgExpression* body) {
 //!
 //! For example, "while (a < 5) ++a;" becomes:
 //! "while (true) {bool temp; temp = (a < 5); if (!temp) break; ++a;}"
-template <class LoopStatement>
-void pushTestIntoBody(LoopStatement* loopStmt);
-
-//! Add a step statement to the end of a loop body
-//! Add a new label to the end of the loop, with the step statement after
-//! it; then change all continue statements in the old loop body into
-//! jumps to the label
-//!
-//! For example:
-//! while (a < 5) {if (a < -3) continue;} (adding "a++" to end) becomes
-//! while (a < 5) {if (a < -3) goto label; label: a++;}
-template <class LoopStatement>
-void addStepToLoopBody(LoopStatement* loopStmt, SgStatement* step);
+void pushTestIntoBody(SgScopeStatement* loopStmt);
 
 //! Replace a given expression with a list of statements produced by a
 //! generator.  The generator, when given a variable as input, must produce
@@ -141,17 +66,6 @@ void addStepToLoopBody(LoopStatement* loopStmt, SgStatement* step);
 //! Assumptions: not currently traversing from or the statement it is in
 void replaceExpressionWithStatement(SgExpression* from,
 				    StatementGenerator* to);
-
-//! Get a reference to the last element of an STL container
-template <class Cont>
-inline typename Cont::value_type&
-lastElementOfContainer(Cont& c) {
-  // Get reference to last element of an STL container;
-  assert (!c.empty());
-  typename Cont::iterator last = c.end();
-  --last;
-  return *last;
-}
 
 //! Insert a new statement before or after a target statement.  If
 //! allowForInit is true, the new statement can be inserted into the
