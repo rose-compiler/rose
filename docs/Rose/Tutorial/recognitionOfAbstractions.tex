@@ -1,0 +1,32 @@
+\chapter{Recognition of Abstractions}
+
+   Figure~\ref{Tutorial:exampleRecognitionOfAbstractions} shows the low level
+construction of a more complex AST fragment (a function declaration) and its insertion 
+into the AST at the top of each block.  Note that the code does not handle 
+symbol table issues.
+
+   Building a function in global scope.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleRecognitionOfAbstractions}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing automated recognition of high-level abstractions
+    within AST (as support for complex domain-specific transformations).}
+\end{figure}

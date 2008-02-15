@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Generate dependency information for all files in the current directory
+# and subdirectories.
+#
+
+BIN=`dirname $0`
+# INC=$BIN/../A++/include
+INC=$BIN/../include
+DIRS=`find . -type d -print | grep -v noprefix`
+
+echo "In Depend: BIN  = $BIN  \n";
+echo "In Depend: INC  = $INC  \n";
+echo "In Depend: DIRS = $DIRS \n";
+
+for DIR in $DIRS ; do
+
+   #
+   # Generate a dependency file in the subdirectory if *.C files exist
+   #
+
+   echo "Checking dependencies in directory "$DIR
+   FILES=`(cd $DIR; echo *.[fC])`
+   if [ "*.[fC]" != "$FILES" ] ; then
+      $BIN/depend.pl $DIR $INC $FILES
+
+      #
+      # If Makefile.depend does not exist, then create it
+      #
+
+      if [ ! -r $DIR/Makefile.depend ] ; then
+         echo "   creating "$DIR/Makefile.depend
+         mv -f $DIR/Makefile.depend.tmp $DIR/Makefile.depend
+
+      #
+      # Otherwise, copy if the two files are not the same.  Remove the CVS
+      # portions of the header to ignore changes in date/revision/modified.
+      #
+
+      else
+         if $BIN/cmp.pl $DIR/Makefile.depend.tmp $DIR/Makefile.depend ; then
+            rm -f $DIR/Makefile.depend.tmp
+         else
+            echo "   updating "$DIR/Makefile.depend
+            mv -f $DIR/Makefile.depend.tmp $DIR/Makefile.depend
+         fi
+      fi
+   fi
+done
+
+exit 0

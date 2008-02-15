@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+. $1
+
+LA=$1
+LADIR=`dirname $LA`
+LAFILE=`basename $LA`
+
+mkdir -p $2
+cp -a $LA $2
+mkdir -p $2/.libs
+
+# Set SRCFILE to be the file in '.libs' to copy.
+if test x"$pic_object" = x ; then  # Copying a '.la' file
+    SRCFILE=$LADIR/.libs/$old_library
+else # Copying a '.lo' file
+    SRCFILE=$LADIR/$pic_object
+fi
+
+cp -a $SRCFILE $2/.libs
+ln -s ../$LAFILE $2/.libs/$LAFILE
+
+# eof

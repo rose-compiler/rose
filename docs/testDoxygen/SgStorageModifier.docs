@@ -1,0 +1,224 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStorageModifier
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgStorageModifier
+\brief This class represents modifiers specific to storage.
+
+    This modifier is set to only one of a collection of values. To
+unset any value (e.g. "extern") just call "setDefault()" to restore
+the default value.
+
+\note For more detail see the C++ grammar specification in Bjarne's book, Appendix B.
+
+\sa
+\ref SgStorageModifier_usage  "Example of using a SgStorageModifier object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStorageModifier data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgStorageModifier::storage_modifier_enum p_modifier
+\brief enum value (can be set to only one of several values)
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStorageModifier member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgStorageModifier::SgStorageModifier()
+\brief This is the constructor.
+
+   This constructor builds the SgStorageModifier base class.
+
+\sa 
+\ref SgStorageModifier_create "Example:create an SgStorageModifier object"
+*/
+
+/*!
+\fn SgStorageModifier::~SgStorageModifier()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgStorageModifier::operator=(const SgStorageModifier & X)
+\brief This is the assignment operator.
+
+   This is a simple assignment of the SgBitVector from X to the current object.
+*/
+
+/*!
+\fn SgStorageModifier::isSgStorageModifier (SgNode *s)
+\brief Cast function (from derived class to SgStorageModifier pointer).
+
+   This functions returns a SgStorageModifier pointer for any input of a 
+pointer to an object derived from a SgStorageModifier.
+
+\return Returns valid pointer to SgStorageModifier if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgStorageModifier::isSgStorageModifier (const SgNode *s)
+\brief Cast function (from derived class to SgStorageModifier pointer).
+
+   This functions returns a SgStorageModifier pointer for any input of a 
+pointer to an object derived from a SgStorageModifier.
+
+\return Returns valid pointer to SgStorageModifier if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgStorageModifier::isUnknown () const
+\brief Storage modifier is unknown (not set).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setUnknown ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isDefault () const
+\brief Storage modifier is default (default value).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setDefault ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isExtern () const
+\brief Storage modifier is extern (not the same as extern "C").
+
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setExtern ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isStatic () const
+\brief Storage modifier is static (always false for the SgStorageModifier in the SgInitializedName).
+
+\internal Note that the isStatic() for variable declarations is stored in the
+    SgStorageModifier of theSgDeclarationModifier in the SgVariableDeclaration, 
+    and not in the SgStorageModifier stored in the SgInitializedName.  This is
+    a result of the structure of code, where the static keyword can not be used 
+    to selectively apply to individual variables in a list of names in a variable 
+    declaration.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setStatic ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isAuto () const
+\brief Storage modifier is auto (most common setting for variables).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setAuto ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isUnspecified () const
+\brief Storage modifier is not specified (I think this is not used).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setUnspecified ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isRegister () const
+\brief Storage modifier is register.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setRegister ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isMutable () const
+\brief Storage modifier is mutable (C++ only).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setMutable ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isTypedef () const
+\brief Storage modifier is a typedef.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setTypedef ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::isAsm () const
+\brief Storage modifier is an assembler statement.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStorageModifier::setAsm ()
+\brief Set storage.
+
+\return Returns bool.
+*/
+

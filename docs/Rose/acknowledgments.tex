@@ -1,0 +1,149 @@
+
+% \chapter*{Acknowledgments}
+\chapter*{Acknowledgments}
+
+% \begin{center}
+% ********  To be removed later  *************  \newline
+% \end{center}
+% 
+%  Purpose:
+% \begin{itemize}
+%    \item A. Thank everyone
+% \end{itemize}
+% \begin{center}
+% *********************  \newline
+% \end{center}
+% \vspace{0.25in}
+% 
+
+   The Intermediate Representation (IR) used in ROSE is called SAGE III.
+SAGE III is something that we have built based on SAGE II, which was never 
+completed or widely distributed. SAGE II was based on SAGE++, the improvements 
+over SAGE++ were significant. SAGE II was the first version of SAGE to use the 
+Edison Design Group (EDG) frontend.  We want to thank the original
+developers of SAGE++ and SAGE II for their work, from which we learned a lot
+through use of their object-oriented IR interface.
+
+   We chose the name SAGE III to give sufficient credit to the original developers
+of SAGE++ and SAGE II, who also suggested that we call what we are doing SAGE III.  
+ROSE, of course, builds on SAGE III and adds numerous additional mechanisms, 
+including:
+\begin{itemize}
+    \item Loop Optimizations (called by ROSE users)
+    \item Abstrat Syntax Tree (AST) Attributes (tree decoration)
+    \item A family of AST Traversals (as used with Attribute Grammars)
+    \item AST Rewrite mechanisms
+    \item AST Query Mechanisms
+    \item C and C++ code generation from SAGE III
+    \item AST File I\/O
+    \item Significant robustness for C, C99, and C++ (handles large DOE applications)
+    \item AST Visualization
+    \item and more ...
+\end{itemize}
+
+   SAGE III is an automatically generated body of software that uses ROSETTA, a tool we 
+wrote and distribute with ROSE. ROSETTA is an IR generator that, as its largest and most
+sophisticated test, generates SAGE III.  The connection code that was used to translate 
+EDG's AST to SAGE II was derived loosely from the EDG C++ source generator and has
+formed the basis of the SAGE III translator from EDG to SAGE III's IR. Under this license
+we exclude the EDG source code and the translation from the EDG AST in distributions 
+and make available only a binary of those parts with use EDG (front-end AST translation),
+and the source to all of ROSE (which does not depend on EDG). No part of the EDG work is 
+visible to the user of ROSE.  We can make the EDG source available only to those who have 
+the free EDG research license.  We want to thank the developers at Edison Design Group
+(EDG) for making their work so widely available under their research license program.
+
+   Markus Schordan was the first post-doctorate researcher on the ROSE project; he made 
+significant contributions while employed at Lawrence Livermore National Laboratory (LLNL), 
+including the AST traversal mechanism.  We continue to work with Markus, who is now at 
+Vienna University of Technology as an Associate Professor. We were also fortunate to 
+leverage a significant portion of Qing Yi's thesis work (under Ken Kennedy) 
+% on loop optimizations as part of her post-doc at Lawrence Livermore National Laboratory with the ROSE project, 
+and we would like to thank her for that work and the work she did as a post-doc at Lawrence Livermore National Laboratory. 
+We continue to work with her, although she is now at the University of Texas at San Antonio.
+
+     There are many additioanal people to thank for our current status in 
+% where we are currently within 
+the ROSE project:
+\begin{itemize}
+     \item Contributing Collaborators: \\
+           Markus Schordan (Vienna University of Technology),
+           Rich Vuduc (Georgia Tech), and
+           Qing Yi (University of Texas at San Antonio)
+     \item Post-docs (including former post-docs): \\
+           Chunhua Liao (from University of Houston),
+           Thomas Panas (from Vaxjo University, Sweden),
+           Markus Schordan (from University of Klagenfurt, Austria),
+           Rich Vuduc (from University of California at Berkeley), and
+           Jeremiah Willcock (from Indiana University),
+           Qing Yi (from Rice University)
+     \item Students: \\
+           Gergo Barany (Technical University of Vienna),
+           Michael Byrd (University of California at Davis),
+           Gabriel Coutinho (Imperial College London),
+           Peter Collingbough (Imperial College London),
+           Valentin David (University of Bergen, Norway),
+           Jochen Haerdtlein (University of Erlanger, Germany),
+           Vera Hauge (University of Oslo, Norway),
+           Christian Iwainsky (University of Erlanger, Germany),
+           Lingxiao Jiang (University of California at Davis),
+           Alin Jula (Texas A\&M),
+           Han Kim (University of California at San Diago),
+           Milind Kulkarni (Cornell University),
+           Markus Kowarschik (University of Erlanger, Germany),
+           Gary Lee (University of California at Berkeley and Purdue University),
+           Chunhua Liao (University of Houston),
+           Ghassan Misherghi. (University of California at Davis),
+           Peter Pirkelbauer (Texas A\&M),
+           Bobby Philip (University of Colorado),
+           Radu Popovici (Cornell University),
+           Robert Preissl (xxx Austria),
+           Andreas Saebjornsen (University of Oslo, Norway),
+           Sunjeev Sikand (University of California at San Diago),
+           Andy Stone (Colorado State University at Fort Collins),
+           Danny Thorne (University of Kentucky), 
+           Nils Thuerey (University of Erlanger, Germany), 
+           Ramakrishna Upadrasta (Colorado State University at Fort Collins),
+           Christian Wiess(Munich University of Technology, Germany), 
+           Jeremiah Willcock (Indiana University),
+           Brian White (Cornell University),
+           Gary Yuan (University of California at Davis), and
+           Yuan Zhao (Rice University).
+     \item Friendly Users: \\
+           Paul Hovland (Argonne National Laboratory),
+           Brian McCandless (Lawrence Livermore National Laboratory),
+           Brian Miller (Lawrence Livermore National Laboratory),
+           Boyana Norris (Argonne National Laboratory),
+           Jacob Sorensen (University of California at San Diago),
+           Michelle Strout (Colorado State University),
+           Bronis de Supinski (Lawrence Livermore National Laboratory),
+           Chadd Williams (University of Maryland),
+           Beata Winnicka (Argonne National Laboratory),
+           Ramakrisna xxx (Colorado State University at Fort Collins), and
+           Andy Yoo (Lawrence Livermore National Laboratory)
+     \item Support: \\
+           Steve Ashby,
+           David Brown,
+           Bill Henshaw,
+           Bronis de Supinski, and
+           CASC management
+     \item Funding: \\
+           Fred Johnson (Department of Energy, DOE) and
+           Mary Zosel (Lawrence Livermore National Laboratory)
+\end{itemize}
+
+\fixme{Check spelling of student names.}
+
+To be clear, nobody is to blame for the poor state of the current version of the 
+ROSE documentation (but myself).
+
+% At some point we should add Michelle
+% Michelle Strout (Colorado State University)
+% and perhaps Jacob
+% Jacob Sorenson (UCSD),
+
+% including Kei, Fede, Bobby, Bill, and David. And nobody to blame for the 
+% poor state of the current version of the ROSE documentation (but myself).
+
+
+

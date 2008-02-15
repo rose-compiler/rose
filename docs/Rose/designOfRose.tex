@@ -1,0 +1,172 @@
+
+\chapter{ Design of ROSE }
+   Here we lay out the general design of ROSE.  What the goals are, what it is
+good for and what it is inappropriate for, and how it works internally.
+
+\section{Overview}
+   We built on top of SAGE II which was never published or finished by the authors
+(Dennis Gannon and Carl Kesselman, and others).  It was built on top of
+Sage++.  In each case substantial changes occurred.  Although SAGE III
+is very much a complete rewrite (accomplished incrementally over the years)
+I have wanted to retain the SAGE name to acknowledge their original work.
+Dennis suggested that we refer to our work as SAGE III, and so we
+have done so as some attempt to be clear.  There is an original paper on Sage++
+(which included nothing from us).  I have thought it was inappropriate
+to publish a paper on SAGE III (unless it was done with the original authors),
+though more information, history, and background is appropriate for inclusion 
+into the manual.
+
+   SAGE III is the Intermediate Representation (IR) used within ROSE.  
+ROSE adds sophisticated traversal mechanisms, AST rewrite mechanisms, loop
+optimizations, and finished off the work started in SAGE II (template support, exception
+handling, new C++ modifiers, bug fixes, a rewrite and reorganization, and much more).
+Much other work has 
+been done in ROSE to make it easy to define source-to-source translators, including 
+numerous loop optimizations, and some program analysis (still incomplete).
+EDG only builds its own AST and it is difficult to modify it (I think)
+and against their license to publish it or tools to manipulate it.  ROSE provides
+an IR (SAGE III) that is designed to be modified, is object-oriented, and can be published
+(since it completely hides the EDG AST and does not need it after translation to
+SAGE).  SAGE is independent of EDG by design. Current work with Rice is using the 
+SAGE III IR as a basis for an IR that would work in a similar way with the 
+Open64 compiler infrastructure.
+
+   ROSE adds AST traversal mechanisms based on ideas from attribute grammars
+and adds an AST rewrite mechanism.  At some point we will have more meaningful
+program analysis (part of cooperative work with many other groups), it is in 
+these ways that what we have done adds to EDG and
+hopefully provides a more useful infrastructure for the automated transformation of
+C++ applications beyond that of the design goals of EDG.  I understand that the
+design goals of EDG are only to provide a front-end to compiler vendors, a critical
+piece but not at all enough by itself for our work on optimization of high-level 
+abstractions.  I expect that ROSE will be useful to anyone who would otherwise use 
+EDG directly, but certainly it is not required, many people use EDG by itself.
+We, like the rest of the world, of course has the deepest respect for EDG.
+For our purposes we need something like EDG'd front-end to support our own research work
+on program optimization. I don't know of any alternatives to using EDG given that 
+we have to process complex laboratory C++ applications.
+
+\section{GOAL of ROSE}
+   The goal of ROSE is to simplify the development of source-to-source translators.
+In general we expect many translators to optimize applications, but numerous
+other opportunities exist once a user's application can be laid open for analysis
+(AST Processing) and coupled with a programmable rewriting mechanism (AST Rewrite).
+
+\section{GOAL of a ROSE translator}
+
+   The goal here is to provide a means of defining/automating optimizations within
+applications. Object-oriented frameworks are of particular interest to us because object-oriented
+languages provide a simple means to implement user-defined abstractions.
+The definition of such transformations is intended to be as general
+as possible. The way to build a translator to automate such transformations
+is intended to be as simple as possible.
+
+\section{ How general is the optimization of object-oriented frameworks }
+
+   We seek a general mechanism to define the optimization of object-oriented frameworks.
+We are focused upon the interaction of abstractions (read objects in most cases), instead
+of the optimization of method functions of a particular object. The most common case within
+scientific computing that is within range of this sort of optimization is the interaction
+of objects within expressions (commonly array or matrix objects within expressions).
+
+What {\bf CAN} be expected from compile time optimizations
+\begin{itemize}
+   \item Optimization of expressions between objects defined within one or more 
+         object-oriented frameworks. Where the compiler can't see the potential
+         for optimizations between objects is where ROSE can make the greatest 
+         difference.
+\end{itemize}
+
+What {\bf CANNOT} be expected from compile time optimizations
+\begin{itemize}
+   \item Optimization of non-context sensitive method functions (these can be 
+         handled directly within the libraries implementation of the method function)
+   \item Optimization of virtual function calls on small objects within
+         object-oriented frameworks.  ROSE can only perform static analysis,
+         though in principle it could introduce runtime tests, etc.
+\end{itemize}
+
+\section{ How ROSE Translators work internally }
+   We describe here the internal design of ROSE (short version).
+
+   Focusing only upon what ROSE can do well, we thus focus upon the static
+optimization; cases where objects are used within expressions. We will focus less upon
+what optimizations to introduce (there has been separate work on that) than how to
+specify the optimizations within ROSE.
+
+The introduction of optimizations between abstractions (objects) depends upon:
+\begin{itemize}
+   \item The semantics of the abstractions (arrays, matrices, etc.) \
+         The semantics defines what we are trying to produce (often a sum or product for an array class, etc.).
+   \item The syntax of interaction between abstractions. \
+         The syntax of the interaction defines the examples that will trigger the optimization.
+         For example, the syntax of an array object is such that ``A = B + C'' is defined and so
+         the occurrence of this within a user's code (where the objects are of the correct
+         type) would trigger the optimization of this statement.
+\end{itemize}
+
+   ROSE permits the analysis of the AST generated by an application and allows the AST to
+be modified using any additional information (typically additional information from the
+semantics of user-defined abstractions). The AST in ROSE is a representation of the 
+structure of the application source code (little normalization occurs). The AST includes
+completely resolved type information, up to the limitations of static type analysis as
+specified by the C++ standard (much of this we get because we use EDG and it implements
+the static type analysis).
+
+
+\section{ROSE Distributions and Binary ROSE Distributions}
+
+   The ROSE distribution differs from the development version of ROSE, which
+is checked out from CVS directly and has a number of dependencies on versions
+number of autoconf, automake, LaTeX, dot, etc.  ROSE distributions appear in
+the form of a tar'd compressed directory with an embedded version number 
+(e.g. {\it ROSE-0.8.10a.tar.gz}). These sometimes embed the word {\bf binary} or {\bf source}
+to distinguish source code versions (all source code to ROSE including the source code 
+to the EDG front-end used in parts of ROSE) from binary versions (all source code to ROSE
+but a binary of any EDG specific parts or parts of ROSE which use the EDG header files).
+This currently constitutes three small libraires in ROSE.  The source to to as much of
+ROSE as possible is freely distributed under BSD license.
+
+   A binary distribution of ROSE refers to the a distribution or ROSE that uses a binary
+version of the EDG work used by ROSE.  We protect the source code of EDG by saving only 
+the binary libraries that we build from the EDG work (the EDG source code and any parts 
+of ROSE that use the EDG header files).  
+
+The configure option {\tt --with-edg_source_code=true} builds a version of ROSE which assumes
+that the EDG source code is present. It is required to use this option to compile ROSE 
+when it is checked out from CVS (since we store the sorce code for all fo ROSE including
+EDG in the CVS repository.  Without this option (the default case; no specifying 
+{\tt --with-edg_source_code=true} or directly specifing {\tt --with-edg_source_code=false}) the 
+configure script will look for existing binary libraries (in either the build tree or the
+source tree), if it finds the required library (only searches for libedg33.la) then
+is will continue to build the Makefile files so that the {\tt make dist} rule will packadge up
+a distribution and execute the makefile's {\it dist-hook} rules to copy the binary from the 
+compile tree to the distribution.  At this point the distribution is a binary distribution
+(and contains non of the protected source code for EDG).
+
+The libraries specifically effected are:
+\begin{itemize}
+   \item {\bf \$(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.la}
+   \item {\bf \$(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.la}
+   \item {\bf \$(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.la}
+\end{itemize}
+and are placed into the distribution by the {\tt make dist} rule which builds a ROSE distribution
+(often run as part of the {\tt make distcheck} rule).  This is the behavir of {\tt make dist}
+when the configure option {\tt --with-edg_source_code=true} is {\bf NOT} used.
+
+Summary of build steps (to build a binary distribution):
+\begin{itemize}
+   \item {\tt configure --with-edg_source_code=true} \\
+          Builds version of ROSE containing EDG source code.
+   \item  {\tt make} \\
+          Builds all the libraries (make dist may require make to be run prior {\tt make dist}.
+   \item  {\tt make dist} \\
+          Builds a source code distribution of ROSE (distributable to those with EDG source license)
+   \item {\tt configure} \\
+          Builds a version of ROSE that will use the prebuilt EDG libraries.
+   \item {\tt make dist} \\
+          Builds a distribution with copies of the required EDG based libraries
+          (this is the binary form of ROSE and can be distributed to anyone).
+\end{itemize}
+
+

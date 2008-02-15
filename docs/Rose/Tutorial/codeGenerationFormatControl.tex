@@ -1,0 +1,135 @@
+\chapter{Tailoring The Code Generation Format}
+
+   Figure~\ref{Tutorial:example_codeGenerationFormatControl} shows an
+example of how to use the mechanisms in ROSE to tailor the format and
+style of the generated code.  This chapter presents an example translator 
+that modifies the formatting of the code that is generated within ROSE.
+
+The details of functionality are hidden from the user and a high level 
+interface is provided that permits key parameters to be specified.
+This example will be made more sophisticated later, for now it just
+ modifies the indentation of nested code blocks (from 2 spaces/block 
+to 5 spaces/block).
+
+
+\section{Source Code for Example that Tailors the Code Generation}
+
+    Figure~\ref{Tutorial:example_codeGenerationFormatControl}
+shows an example translator which calls the inliner mechanism.
+The code is designed to only inline up to ten functions.
+the list of function calls is recomputed after any function call
+is successfully inlined. 
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_codeGenerationFormatControl},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_codeGenerationFormatControl}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/codeGenerationFormatControl.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/codeGenerationFormatControl.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to tailor the code generation format. }
+\label{Tutorial:example_codeGenerationFormatControl}
+\end{figure}
+
+
+\section{Input to Demonstrate Tailoring the Code Generation}
+
+   Figure~\ref{Tutorial:exampleInputCode_codeGenerationFormatControl}
+shows the example input used for demonstration of how to control the formatting 
+of generated code.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_codeGenerationFormatControl.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_codeGenerationFormatControl.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program to the tailor the code generation.}
+\label{Tutorial:exampleInputCode_codeGenerationFormatControl}
+\end{figure}
+
+
+
+
+
+\section{Final Code After Tailoring the Code Generation}
+
+   Figure~\ref{Tutorial:exampleOutput_codeGenerationFormatControl} 
+shows the results from changes to the formatting of generated code.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_codeGenerationFormatControl.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_codeGenerationFormatControl.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code after changing the format of the generated code.}
+\label{Tutorial:exampleOutput_codeGenerationFormatControl}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,109 @@
+% GB (09/28/2007)
+ 
+\chapter{Distributed-Memory Parallel Traversals}
+\label{chap:distributedMemoryTraversals}
+ 
+    ROSE provides an experimental distributed-memory AST traversal mechanism meant for very large scale program
+analysis. It allows you to distribute expensive program analyses among a distributed-memory system consisting of many
+processors; this can be a cluster or a network of workstations. Different processes in the distributed system will get
+different parts of the AST to analyze: Each process is assigned a number of defining function declarations in the AST,
+and a method implemented by the user is invoked on each of these. The parts of the AST outside of function definitions
+are shared among all processes, but there is no guarantee that all function definitions are visible to all processes.
+
+    The distributed memory analysis framework uses the MPI message passing library for communicating attributes among
+processes. You will need an implementation of MPI to be able to build and run programs using distributed memory
+traversals; consult your documentation on how to run MPI programs. (This is often done using a program named {\tt
+mpirun}, {\tt mpiexecute}, or similar.)
+
+    Distributed memory analyses are performed in three phases:
+\begin{enumerate}
+\item A top-down traversal (the `pre-traversal') specified by the user runs on the shared AST outside of function
+definitions. The inherited attributes this traversal computes for defining function declaration nodes in the AST are
+saved by the framework for use in the next phase.
+
+\item For every defining function declaration, the user-provided {\tt analyzeSubtree()} method is invoked; these calls
+run concurrently, but on different function declarations, on all processors. It takes as arguments the AST node for the
+function declaration and the inherited attribute computed for this node by the pre-traversal. Within {\tt
+analyzeSubtree()} any analysis features provided by ROSE can be used. This method returns the value that will be used as
+the synthesized attribute for this function declaration in the bottom-up traversal (the `post-traversal').
+
+However, unlike normal bottom-up traversals, the synthesized attribute is not simply copied in memory as the AST is
+distributed. The user must therefore provide the methods {\tt serializeAttribute()} and {\tt deserializeAttribute()}.
+These compute a serialized representation of a synthesized attribute, and convert such a representation back to the
+user's synthesized attribute type, respectively. A serialized attribute is a pair of an integer specifying the size of
+the attribute in bytes and a pointer to a region of memory of that size that will be copied byte by byte across the
+distributed system's communication network. Attributes from different parts of the AST may have different sizes. As
+serialization of attributes will often involve dynamic memory allocation, the user can also implement the {\tt
+deleteSerializedAttribute()} method to such dynamic memory after the serialized data has been copied to the
+communication subsystem's internal buffer.
+
+Within the {\tt analyzeSubtree()} method the methods {\tt numberOfProcesses()} and {\tt myID()} can be called. These
+return the total number of concurrent processes, and an integer uniquely identifying the currently running process,
+respectively. The ID ranges from 0 to one less than the number of processes, but has no semantics other than that it is
+different for each process.
+
+\item Finally, a bottom-up traversal is run on the shared AST outside of function definitions. The values returned by
+the distributed analyzers in the previous phase are used as synthesized attributes for function definition nodes in this
+traversal.
+\end{enumerate}
+
+    After the bottom-up traversal has finished, the {\tt getFinalResults()} method can be invoked to obtain the final
+synthesized attribute. The {\tt isRootProcess()} method returns true on exactly one designated process and can be used
+to perform output, program transformations, or other tasks that are not meant to be run on each processor.
+
+    Figure~\ref{Tutorial:exampleDistributedMemoryTraversals} gives a complete example of how to use the distributed
+memory analysis framework. It implements a trivial analysis that determines for each function declaration at what depth
+in the AST it can be found and what its name is. Figure~\ref{Tutorial:exampleOutput_DistributedMemoryTraversals} shows
+the output produced by this program when running using four processors on some input files.
+
+% The distributedMemoryFunctionNames.C file is a copy of projects/DistributedMemoryAnalysis/functionNames.C
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/distributedMemoryFunctionNames.C}
+\end{latexonly}
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/distributedMemoryFunctionNames.C}
+\end{htmlonly}
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source demonstrating the use of the distributed-memory parallel analysis framework.}
+\label{Tutorial:exampleDistributedMemoryTraversals}
+\end{figure}
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% GB (09/28/2007): This is just copied here; we can't generate it as not everyone has a copy of MPI. Might not be very
+% elegant, but it's 4:42 p.m. on my last day :-)
+\begin{verbatim}
+----- found the following functions: ------
+process 0: at depth 3: function il
+process 0: at depth 5: function head
+process 0: at depth 5: function eq
+process 1: at depth 3: function headhead
+process 1: at depth 3: function List
+process 1: at depth 3: function find
+process 1: at depth 3: function head
+process 2: at depth 3: function operator!=
+process 2: at depth 3: function find
+process 2: at depth 3: function head
+process 2: at depth 3: function fib
+process 3: at depth 3: function xform
+process 3: at depth 3: function func
+process 3: at depth 3: function f
+process 3: at depth 3: function g
+process 3: at depth 3: function deref
+-------------------------------------------
+\end{verbatim}
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example output of a distributed-memory analysis running on four processors.}
+\label{Tutorial:exampleOutput_DistributedMemoryTraversals}
+\end{figure}

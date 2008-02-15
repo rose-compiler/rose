@@ -1,0 +1,14 @@
+This file describes the directories in the ROSE/src/midend/programAnalysis directory
+
+As of 5/3/2007, the following directories are depricated:
+     dominatorTreesAndDominanceFrontiers
+   we are now using directory:
+     dominanceAnalysis
+
+As of 5/3/2007, the following directory is no longer used (old version):
+    staticProgramSlicing
+  replaced by directory:
+    staticInterproceduralSlicing
+
+
+

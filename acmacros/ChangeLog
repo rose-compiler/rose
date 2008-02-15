@@ -1,0 +1,75 @@
+2002-10-07  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* acmacros: Macros that generate files at configure
+	time should add those files to the DISTCLEANFILES
+	variables to be cleaned up at distclean time.
+
+2001-09-27  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* configure.in, Makefile.am: Added configuration
+	files to test macros.
+
+2001-06-20  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* arg-with-environment.m4, variable-header-filenames.m4:
+	Make default tasks for optionl arguments.
+
+2001-05-04  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* compiling-stl.m4: No longer contains macros
+	for finding correct header filenames.  Those
+	were move to variable-header-filenames.m4.
+
+	* variable-header-filenames.m4: File replaces
+	compiling-stl.m4, which was more general than
+	for stl alone.
+
+2001-03-27  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* configure-log.m4: Allows logging of multiple
+	variables in one call.
+
+2001-03-20  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* choose-mp-interface.m4 (enable_mp_interface): Added
+	file with macros for setting C macro indicating
+	message passing interface to support.
+
+2001-03-14  Brian T. N. Gunney  <gunneyb@llnl.gov>
+
+	* configure-log.m4: Added specialization for logging
+	variables.
+
+	* compiling-stl.m4: Add macros to check names of
+	iostream, iomanip and fstream classes.
+
+	* compiling-namespace.m4: Improved namespace test code.
+
+	* specify-ar.m4: Use compiler id instead of compiler name.
+
+2001-03-05  Brian T. N. Gunney  <gunney@llnl.gov>
+
+	* with-prefix.m4: Generalized so that the variable
+	set is not fixed.
+
+2001-03-02  Brian T. N. Gunney  <gunney@llnl.gov>
+
+	* with-prefix.m4: New file.  Define macro to specify
+	where a software package is installed (its prefix).
+
+2001-02-22  Brian T. N. Gunney  <gunney@cogneato.llnl.gov>
+
+	* compiler-id.m4: Pre-eval eval added for IBM because
+	it does not eval correctly in one step.
+
+2001-02-20  Brian T. N. Gunney  <gunney@cogneato.llnl.gov>
+
+	* support-lam.m4: Added file support-lam.m4.
+
+2001-02-14  Brian T. N. Gunney  <gunney@cogneato.llnl.gov>
+
+	* choose-STL.m4: Added prefix BTNG_ to names to avoid clash
+	with PADRE version.
+
+	* compiler-id.m4: Added entries for SGI and IBM.
+

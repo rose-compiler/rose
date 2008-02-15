@@ -1,0 +1,80 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateInstantiationDefn
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgTemplateInstantiationDefn
+\brief This class represents the concept of a class definition in C++.
+
+    Templated class definitions are currently nearly the same as class definitions
+(SgClassDefinition).  I expect that work in the future will provide more features that
+are specific to templates.  Currently this version is different from the SgClassDefinition
+in that its constructor takes a SgTemplateInstantiationDecl instead of a SgClassDeclaration.
+
+\internal This is not a base class for IR nodes.
+
+*/
+
+/*
+\sa
+\ref SgTemplateInstantiationDefn_usage  "Example of using a SgTemplateInstantiationDefn object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateInstantiationDefn data members
+/////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateInstantiationDefn member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTemplateInstantiationDefn::SgTemplateInstantiationDefn ( 
+         Sg_File_Info* startOfConstruct = NULL, SgTemplateInstantiationDecl *decl = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgTemplateInstantiationDefn base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgTemplateInstantiationDefn_create "Example:create an SgTemplateInstantiationDefn object"
+*/
+
+/*!
+\fn SgTemplateInstantiationDefn::~SgTemplateInstantiationDefn()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgTemplateInstantiationDefn::isSgTemplateInstantiationDefn (SgNode *s)
+\brief Cast function (from derived class to SgTemplateInstantiationDefn pointer).
+
+   This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
+pointer to an object derived from a SgTemplateInstantiationDefn.
+
+\return Returns valid pointer to SgTemplateInstantiationDefn if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgTemplateInstantiationDefn::isSgTemplateInstantiationDefn (const SgNode *s)
+\brief Cast function (from derived class to SgTemplateInstantiationDefn pointer).
+
+   This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
+pointer to an object derived from a SgTemplateInstantiationDefn.
+
+\return Returns valid pointer to SgTemplateInstantiationDefn if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgTemplateInstantiationDefn::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgTemplateInstantiationDefn.
+*/
+

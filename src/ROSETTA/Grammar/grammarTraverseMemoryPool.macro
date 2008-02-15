@@ -1,0 +1,176 @@
+void
+$CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
+   {
+  // This function traverses the memory pool for an IR node and
+  // calls the visit function of the input class execute a traversal 
+  // similar to the style of the attribute based traversals within ROSE.
+  // This traversal will visit ALL nodes of the AST where as the other 
+  // attribute based traversals visit only the embedded tree within the AST.
+
+  // Initialize array to the address of the first element of the STL vector
+  // (which is guarenteed to be contiguous storage).
+  // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
+     if (Memory_Block_List.empty() == false)
+        {
+       // Generate an array of memory pools
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+
+       // Build a local variable for better performance
+          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
+
+       // Iterate over the memory pools
+          for (unsigned int i=0; i < Memory_Block_List.size(); i++)
+             {
+            // objectArray[i] is a single memory pool
+               for (int j=0; j < CLASS_ALLOCATION_POOL_SIZE; j++)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                         traversal.visit(&(objectArray[i][j]));
+                       }
+                  }
+             }
+        }
+
+  // This should not be required since all previously static data members are 
+  // now static pointers and ALL IR nodes are allocated from the IR memory pools.
+     $CLASS_SPECIFIC_STATIC_MEMBERS_USING_ROSE_VISIT
+   }
+
+
+void
+$CLASSNAME::traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor )
+   {
+  // This function traverses the memory pool for an IR node and
+  // calls the function to execute the visitor object.
+
+  // Initialize array to the address of the first element of the STL vector
+  // (which is guarenteed to be contiguous storage).
+  // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
+     if (Memory_Block_List.empty() == false)
+        {
+       // Generate an array of memory pools
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+
+       // Build a local variable for better performance
+          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
+
+       // Iterate over the memory pools
+          for (unsigned int i=0; i < Memory_Block_List.size(); i++)
+             {
+            // objectArray[i] is a single memory pool
+               for (int j=0; j < CLASS_ALLOCATION_POOL_SIZE; j++)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                      // printf ("Found a valid $CLASSNAME object in the memory pool %d at position %d \n",i,j);
+                      // printf ("Calling executeVisitorMemberFunction(visitor) \n");
+                         objectArray[i][j].executeVisitorMemberFunction(visitor);
+                      // printf ("DONE: executeVisitorMemberFunction(visitor) \n");
+                       }
+                      else
+                       {
+                      // printf ("Found a INVALID $CLASSNAME object in the memory pool \n");
+                       }
+                  }
+             }
+        }
+
+  // This should not be required since all previously static data members are 
+  // now static pointers and ALL IR nodes are allocated from the IR memory pools.
+     $CLASS_SPECIFIC_STATIC_MEMBERS_USING_VISITOR_PATTERN
+   }
+
+void
+$CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
+   {
+  // This function visits only a single IR node of the memory pool.
+  // it is typically called once for each type of IR node within 
+  // the automatically generated function: traverseRepresentativeNodes().
+
+  // Initialize array to the address of the first element of the STL vector
+  // (which is guarenteed to be contiguous storage).
+  // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
+     if (Memory_Block_List.empty() == false)
+        {
+       // Generate an array of memory pools
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+
+       // Build a local variable for better performance
+          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
+
+       // Iterate over the memory pools
+          bool done = false;
+          unsigned int i=0;
+
+       // find the first valid IR node, call visit function, and then leave
+          while ( done == false && i < Memory_Block_List.size() )
+             {
+            // objectArray[i] is a single memory pool
+               int j=0;
+               while (done == false && j < CLASS_ALLOCATION_POOL_SIZE)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                         traversal.visit(&(objectArray[i][j]));
+                         done = true;
+                       }
+                    j++;
+                  }
+               i++;
+             }
+
+          if (done == false)
+             {
+               printf ("No representative for $CLASSNAME found in memory pools \n");
+             }
+        }
+   }
+
+
+int
+$CLASSNAME::numberOfNodes ()
+   {
+  // This function traverses the memory pool for an IR node and
+  // counts the number of IR nodes of a particular Sage III IR 
+  // nodes type.
+
+     int count = 0;
+     if (Memory_Block_List.empty() == false)
+        {
+       // Generate an array of memory pools
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+
+       // Build a local variable for better performance
+          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
+
+       // Iterate over the memory pools
+          for (unsigned int i=0; i < Memory_Block_List.size(); i++)
+             {
+            // objectArray[i] is a single memory pool
+               for (int j=0; j < CLASS_ALLOCATION_POOL_SIZE; j++)
+                  {
+                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
+                       {
+                         count++;
+                       }
+                  }
+             }
+        }
+
+     $CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED
+
+     return count;
+   }
+
+int
+$CLASSNAME::memoryUsage ()
+   {
+  // This function is required because we need the class name as a type when we call sizeof
+  // There might be another way to implement this if we have a traversal that only called a 
+  // representative object (one call for each type of Sage IIIIR node).
+     int memory = numberOfNodes() * sizeof($CLASSNAME);
+
+     return memory;
+   }
+

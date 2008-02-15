@@ -1,0 +1,25 @@
+Introduction
+============
+
+This is a suite of transformations designed to transform C++ code to make
+those things that are expressed implicitly in the language be expressed
+explicitly in the AST.  The goal of these transformations is to make
+the AST more amenable to analyses such as control-flow graph analysis.
+It currently consists of the following transformations:
+
+defaultFunctionGenerator
+Generates default constructors, destructors and copy constructors.
+
+destructorCallAnnotator
+Annotates the AST with calls to class destructors whenever objects
+go out of scope.
+
+shortCircuitingTransformation
+Transforms the evaluation of short-circuited expressions to explicitly
+evaluate each step.  A prerequisite of destructorCallAnnotator.
+
+Credits
+=======
+Brian White
+Chunhua Liao
+Peter Collingbourne

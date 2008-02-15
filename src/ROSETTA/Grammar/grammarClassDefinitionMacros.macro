@@ -1,0 +1,13 @@
+
+// ********************************************************
+// member functions specific to each node in the grammar
+// ********************************************************
+
+MEMBER_FUNCTION_DEFINITIONS
+
+// ********************************************************
+// member functions common across all array grammar objects
+// ********************************************************
+
+
+

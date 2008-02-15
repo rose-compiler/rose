@@ -1,0 +1,6 @@
+This directory contains utility functions specific to Qing Yi's
+work with ROSE.  These functions are not supported for use by 
+external users and are quite old, however likely still required
+for Qing's work (and we very much wish to support her work).
+External users show however avoid the use of these API's.
+

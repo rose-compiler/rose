@@ -1,0 +1,58 @@
+I now think that this s not a problem, or not as much of a problem 
+as I thought, since in code A, the "int x;" would not be traversed
+and in code B, both the "int x;" and the for loop's body (SgBasicBlock)
+would be traversed.
+
+Problem in reverse traversal
+
+
+From the case statement, it is not clear how to tell if the 
+traversal is describing a traversal of code A or code B.
+
+Code A:
+     for (...)
+        {
+          int x;
+        }
+
+     switch(x)
+        {
+          case 1:
+        }
+
+Code B:
+     for (...)
+        {
+          int x;
+          switch(x)
+             {
+               case 1:
+             }
+        }
+
+
+
+Problem:
+The following code would not generate the correct prefix since the traversal
+would not visit the "int x;" statement to collect the CPP directive that is 
+attached to it.
+
+Solution:
+   Collect all comments and CPP directives from scopes which we pass on the 
+way to the AST root during the reverse traversal.
+
+Code C:
+
+     for (...)
+        {
+#define PREFIX_CANNOT_FIND_ME
+          int x;
+        }
+
+     for (...)
+        {
+#ifdef PREFIX_CANNOT_FIND_ME
+          int y;
+#endif
+        }
+

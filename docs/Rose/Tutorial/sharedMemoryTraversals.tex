@@ -1,0 +1,97 @@
+% GB (09/25/2007)
+
+\chapter{Shared-Memory Parallel Traversals}
+\label{chap:sharedMemoryTraversals}
+
+    Besides the traversal classes introduced in Chapter~\ref{chap:traversals},
+ROSE also includes classes to run multi-threaded traversals to make use of
+multi-CPU systems with shared memory (such as typical multicore desktop
+systems). These shared memory traversals are like the combined traversal
+classes in that they run several small traversal classes simultaneously; the
+difference is that here different visit functions may be executed concurrently
+on different CPUs, while the combined traversals always execute visit
+functions sequentially.
+
+    Because of this similarity, the public interface for the parallel
+traversals is a superset of the combined traversal interface. For each
+Ast*Processing class there is an AstSharedMemoryParallel*Processing class that
+provides an interface for adding traversals to its internal list, getting a
+reference to the internal list, and for starting the combined traversal. The
+{\tt traverse()} method performs the same combined traversal as in the
+corresponding AstCombined*Processing class, and the new {\tt
+traverseInParallel()} method (with the same signature as {\tt traverse()})
+must be used to start a parallel traversal. (We currently do not provide {\tt
+traverseWithinFileInParallel()} and {\tt traverseInputFilesInParallel()} that
+would be needed to make the parallel processing classes a fully-featured
+drop-in replacement for other classes.)
+
+    A example of how to use the parallel traversal classes is given in
+Figure~\ref{Tutorial:exampleSharedMemoryTraversals} (note the similarity to
+Figure~\ref{Tutorial:exampleCombinedTraversals} on
+page~\pageref{Tutorial:exampleCombinedTraversals}). A group of traversal
+objects is executed first in combined mode and then in parallel threads.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/sharedMemoryTraversals.C}
+\end{latexonly}
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/sharedMemoryTraversals.C}
+\end{htmlonly}
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing the shared-memory parallel execution of traversals.}
+\label{Tutorial:exampleSharedMemoryTraversals}
+\end{figure}
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/sharedMemoryTraversals.out}
+\end{latexonly}
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/sharedMemoryTraversals.out}
+\end{htmlonly}
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the shared-memory parallel traversals.
+Output may be garbled depending on the multi-threaded behavior of the
+underlying I/O libraries.}
+\label{Tutorial:exampleOutput_SharedMemoryTraversals}
+\end{figure}
+
+    It is the user's responsibility to make sure that the actions executed in
+the parallel traversal are thread-safe. File or terminal I/O may produce
+unexpected results if several threads attempt to write to the same stream at
+once. Allocation of dynamic memory (including the use of ROSE or standard C++
+library calls that allocate memory) may defeat the purpose of multi-threading
+as such calls will typically be serialized by the library.
+
+    Two member functions in each AstSharedMemoryParallel*Processing class are
+available to tune the performance of the parallel traversals. The first is
+{\tt void set\_numberOfThreads(size\_t threads)} which can be used to set the
+number of parallel threads. The default value for this parameter is~2. Our
+experiments suggest that even on systems with more than two CPUs, running more
+than two traversal threads in parallel does not typically increase performance
+because the memory bandwidth is saturated.
+
+    The second function is {\tt void set\_synchronizationWindowSize(size\_t
+windowSize)}. This sets a parameter that corresponds to the size of a `window'
+of AST nodes that the parallel threads use to synchronize. The value is, in
+effect, the number of AST nodes that are visited by each thread before
+synchronizing. Smaller values may in theory result in more locality and
+therefore better cache utilization at the expense of more time spent waiting
+for other threads. In practice, synchronization overhead appears to dominate
+caching effects, so making this parameter too small inhibits performance. The
+default value is~100000; any large values will result in comparable execution
+times.

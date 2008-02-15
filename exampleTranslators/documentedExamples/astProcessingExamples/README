@@ -1,0 +1,47 @@
+// Author: Markus Schordan, Vienna University of Technology, 2004.
+// $Id: README,v 1.2 2004/08/26 23:14:37 markus Exp $
+
+------------------------------------------------
+
+This directory contains examples demonstrating
+
+[1] traversing the AST using AstSimpleProcessing
+
+[2] computing attributes using 
+    [2a] AstTopDownProcessing, 
+    [2b] AstBottomUpProcessing,
+    [2c] AstTopDownBottomUpProcessing
+
+[3] using member variables in AstProcessing classes for computing
+    accumulated results (accumulators).
+
+[4] generating a pdf file containing the information of the AST.
+
+[5] generating a dot file (and postscript) for visualizing the AST
+    as a graph.
+
+[6] adding user-defined information to 
+    [6a] pdf output
+    [6b] dot output
+
+[7] Using class AstAttribute to 
+    [7a] attach information to the AST.
+    [7b] add values of AST node attributes in a pdf output
+
+[8] accessing basic information at AST nodes.
+
+------------------------------------------------
+
+Brief overview of examples:
+
+* printVar: demonstrates [1],[3],[5],[8]
+* loopInfo: demonstrates [2c],[3],[4],[5],[7a,7b].
+
+For more information see the README file in each
+directory and the documented files.
+
+------------------------------------------------
+
+Not demonstrated yet: [2a],[2b],[6]
+
+------------------------------------------------

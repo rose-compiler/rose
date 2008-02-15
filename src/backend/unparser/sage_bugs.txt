@@ -1,0 +1,75 @@
+Sage Bugs found in project Gary_Unparser 7/30/99
+----------------------------------------
+
+1. Forward Declarations: line number information stored in File_Info
+object is wrong, instead gives line number of where the function is
+defined. This only happens when both the forward declaration and the
+definition is in the same file. If the definition is not present in
+the same file, then the line information is correct. Exception: File
+information is correct if the definition follows the declaration in a
+class definition. 
+
+More information about forward declarations is provided in
+Unparser_README.txt.
+
+2. Switch, Basic Block, and Function Declaration Statements: these
+statements have no File_Info object. NO FILENAME is returned as the
+filename, and the the line number is -1. Basic Blocks only fall under
+this situation immediately after a switch statement.
+
+3. All Expressions: File_Info information is wrong. For example, line
+information returned in -2 million something.
+
+4. Option Specification: To skip transformations when unparsing is
+specified incorrectly as "skip_transformations." Correct specification
+is "skip_transformation."
+
+5. Template Handling: Sage has no mechanism to recoginze template
+declarations and statements. It appears that the template is converted
+into a mangled class name.
+
+6. Access Function: Sage provides no public function to access
+p_valueUL in SgWcharVal. p_value is used for now. When Sage is
+rebuilt, we should be able to fix this.
+
+7. No logical_unparse functions for some Expressions: There are no
+definitions for logical_unparse in the following classes:
+SgExpressionRoot, SgInitializer. (not necessarily a bug)
+
+8. Independent variants: These variants (in enum_tag.h) seem to have
+no corresponding class- ASSIGNMENT_EXPRESSION, ABSTRACT,
+DYNAMICCAST_OP, FORDECL_OP, VECTOR_CONST, and CLASSINIT_OP. (not
+necessarily a bug)
+
+9. Allow Sage to recognize comments. Should have a SgCommentStatement
+class.
+
+10. Sizeof: Sizeof is never unparsed (evaulated at compile time) , but
+instead the evaulated expression is unparsed. For example, y =
+sizeof(x) is unparsed as y = 4.
+
+11. Sage automatically unparses "extern" for forward declarations and
+"inline" for class declarations in a class even when it was not
+specified in the original source. Although not wrong, we should try to
+fix this. Also, if the original source declared an int or function as
+extern, "extern" is not printed out.
+    
+12. /home/garylee/ROSE/mytests/test18.C produces a segmentation fault
+in Sage.
+
+13. Compiling errors: 
+baseclasses.h
+line 258: error: only one member
+          of a union may be specified in a constructor initializer list
+      p_itemptr(0), p_prev_itemptr(0), p_is_initializer(1) {}
+
+commenting the error above produces the following error:
+initializedsym_list.h", line 427: error: no
+          instance of constructor "SgInitializedName::SgInitializedName"
+          matches the argument list
+      SgInitializedNameList(size_type n, const SgInitializedName& value = SgInitializedName()) : length(0) {
+
+
+commenting the constructor in initializedsym_list.h out then leads to an
+Assertion failure
+Assertion failed: sym, file /nfs/globus1/tmp/MEI/nPROJ_CC/CCplusplus-top/edg/src/sage_gen_be.C, line 2014

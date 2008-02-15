@@ -1,0 +1,54 @@
+
+The prefix mechanism is an essential part of ther rewrite mechanism within ROSE.
+It is however rather complex and must support numerous language features.
+
+1) Directive Handling (Once the camel's nose in under the tent ...)
+      We want to handle #include <filename> directives, but this cause many not so 
+      obvious repercusions. One we support #include we have to support just about
+      everything else, unfortunately.  The following example shows why:
+
+      #if 0
+      #include <x.h>
+      #else
+      #include <y.h>
+      #endif
+
+      If we skip the #if, #else, #endif processing; then we would get:
+
+      #include <x.h>
+      #include <y.h>
+
+      which is clearly wrong.  Many variations on this are also possible.
+      An option in the prefix generation permits the #include directives to be
+      fully expanded.
+
+2) A complicating detail in the prefix generation is the comment handling. 
+   Since directives are seen as comments this applies generally to both comments and
+   directives.  Comments appering before a function declaration are attached to the 
+   function declaration, but comments appearing after the function declaration as the last
+   comments in the file are attached to the SgBasicBlock (function body). I think 
+   this asymetry is what adds to the complexity of the directive handling in the prefix 
+   generation.
+
+   I would propose that comments attached after a SgBasicBlock that are part of a 
+   function definition which is part of a function declaration, we attached to the 
+   function declaration directly.  Related asymetries exist whern comments are 
+   attached after  SgBasicBlock that is part of a SgForStatement, etc.
+
+   Asymetries to fix:
+      SgBasicBlock
+            with parent:
+                SgFunctionDefinition
+                     with parent:
+                         SgFunctionDeclaration
+                         SgMemberFunctionDeclaration
+                SgForStatement
+                SgWhileStatement
+                SgDoWhileStatement
+                SgIfStatement
+
+
+
+   
+
+

@@ -1,0 +1,111 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgLabelStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgLabelStatement
+\brief This class represents the concept of a C or C++ label statement.
+
+    The label statment is used for labels asociated with goto statements.
+
+    A label construct in C++ has a statement associated with it,
+this concept is not represented in ROSE, but is one of the ways 
+that IPR differs from ROSE.  It seems that EDG accepts the representation of
+a label without a statement as an extension (ref Peter).  An empty
+statement is an alternative representation:
+    label:;
+instead of
+    label:
+
+To handle the case where a label is used without an associated statement
+ROSE will unparse: "LABEL:;"
+to avoid generating cases without an associated statement.  The "empty
+statement" represented by ";" is ignored and so will not cause an error
+or change the semantics.
+
+\internal  Since the label statment does not define a scope, it is not clear that
+we want to attach a sequence of statements to the label which would only be
+traversed through the label statement.  We could alternatively fixup
+label statements to internally reference their next statement if it
+exists, or an empty statement (e.g. ";") if it did not exist.  The problem
+with a internal reference is that it serves on particular purpose, and represent
+a muptiple refeence to it's associated statement (which could cause bugs
+within transformations), so the current design might be best.
+
+\todo Review if we want to have the label statement reference it's 
+associated statement (it would be a redundent reference, since the next
+statement is already in the list of statements for the scope).
+
+\sa
+\ref SgLabelStatement_usage  "Example of using a SgLabelStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgLabelStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgLabelStatement::p_label
+\brief This a SgName object which stores the name of the label.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgLabelStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgLabelStatement::SgLabelStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgLabelStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgLabelStatement_create "Example:create an SgLabelStatement object"
+*/
+
+/*!
+\fn SgLabelStatement::~SgLabelStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgLabelStatement::isSgLabelStatement (SgNode *s)
+\brief Cast function (from derived class to SgLabelStatement pointer).
+
+   This functions returns a SgLabelStatement pointer for any input of a 
+pointer to an object derived from a SgLabelStatement.
+
+\return Returns valid pointer to SgLabelStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgLabelStatement::isSgLabelStatement (const SgNode *s)
+\brief Cast function (from derived class to SgLabelStatement pointer).
+
+   This functions returns a SgLabelStatement pointer for any input of a 
+pointer to an object derived from a SgLabelStatement.
+
+\return Returns valid pointer to SgLabelStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgLabelStatement::get_label() const
+\brief Returns SgName by value.
+
+\return Returns SgName.
+*/
+
+/*!
+\fn SgLabelStatement::set_label(SgName label)
+\brief Access function for p_label.
+
+\return Returns void.
+*/
+
+

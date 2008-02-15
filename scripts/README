@@ -1,0 +1,26 @@
+This directory contains script files useful for ROSE as a project (testing etc.).
+
+These scripts need to be documented.
+
+
+Example used to configure and compile with dotgl:
+     ../ROSE/configure --enable-dq-developer-tests --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/AndreasWork/CompilerTree --with-GraphViz_include=/usr/apps/graphviz/1.10/include/graphviz --with-GraphViz_libs=/usr/apps/graphviz/1.10/lib/graphviz --with-FLTK_include="/home/dquinlan/FLTK/fltk_install/include -I/home/dquinlan/FreeGlut/freeglut_install/include" --with-FLTK_libs="/home/dquinlan/FLTK/fltk_install/lib -L/home/dquinlan/FreeGlut/freeglut_install/lib"
+
+Example using QT Libraries:
+     ../ROSE/configure --enable-dq-developer-tests --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/AndreasWork/CompilerTree --with-GraphViz_include=/usr/apps/graphviz/1.10/include/graphviz --with-GraphViz_libs=/usr/apps/graphviz/1.10/lib/graphviz --with-FLTK_include=/home/dquinlan/FLTK/fltk_install/include -I/home/dquinlan/FreeGlut/freeglut_install/include --with-FLTK_libs=/home/dquinlan/FLTK/fltk_install/lib -L/home/dquinlan/FreeGlut/freeglut_install/lib --with-qt-includes=/home/jose/local/qt/include --with-qt-libraries=/home/jose/local/qt/lib
+
+Location of Gabriel's work:
+ROSE/exampleTranslators/graphicalUserInterfaceExamples/slicing
+ROSE/exampleTranslators/graphicalUserInterfaceExamples/query
+etc.
+
+
+Gary Yuan's work on Graphs of ROSE Performance data:
+   graph.py: is the Python script to process the performance data output file from ROSE
+   Use command line such as:
+      graph.py -fgnuplot -ofile -H4 -W4 -P4 -wlines --ylabel="time (seconds)" -Fpng --ymin=0 -x"number of AST nodes" -efilename -ememory --rehash="true" -g75000 -r Cxx_ROSE_PERFORMANCE_DATA.csv
+   to rune the script.
+   to view the pgn formated file use:
+      eog file.png
+
+

@@ -1,0 +1,622 @@
+#! /bin/sh
+######################################################################################
+# Author:             Bobby Philip                                                   #
+# Creation Date:      11/05/2001                                                     #
+# Last Modified Date: 12/04/2001                                                     #
+######################################################################################
+
+#NEED TO PUT IN CODE TO SET IFS TO SAFE VALUES
+
+# Bourne shell does not allow for the declaration of local
+# variables in functions. Hence we create a non recursive method
+# for processing all headers in a directory and its sub directories
+
+######################################################################################
+# the process_headers_in_dir() function takes as arguments a compiler name, 
+# source and target directory. Both paths should be given as full paths to
+# avoid the overhead of again resolving out what the full path is. It will 
+# be assumed that all error checking has been done prior to this to ensure 
+# that the src and target directories exist.
+# Usage: process_headers_in_dir compiler_name src_dir target_dir
+
+process_headers_in_dir()
+{
+ # echo "In process_headers_in_dir: parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4"
+   cd "$2"
+   for fName in *
+   do
+      [ -f "$fName" ] || continue 
+      case "$fName" in
+        *.c | *.cc | *.C | *.cxx ) cp "$fName" "$3";; # copy source files without processing
+        *) process_file "$1" "$fName" "$3" "$4";;
+      esac
+   done
+}
+
+
+######################################################################################
+# process using compiler
+# Usage: process_file compilerName sourceFile targetDir
+# check to see if files contain include_next directives
+# if so, replace by #include "/usr/include/..." else
+# simply copy to target dir
+process_file()
+{
+   compilerName=`basename "$1"`
+   pwdVar=`pwd`
+
+ # DQ (5/29/2003) Adding support for using rose_varargs.h
+ # echo "In process_file(): compilerName = $compilerName"
+ # echo "In process_file(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4"
+ # echo "In process_file(): new file location = $3/$2"
+ # echo "In process_file(): pwd = $pwdVar parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4"
+
+   case "$compilerName" in     # figure out which compiler we are using
+   CC) cp "$2" "$3" 2>/dev/null;;       # copy directly
+   g++|gcc )
+      # DQ (8/28/2004): The gnu-3.x-headerfile-fixup.pl is used to process the backend compiler's
+      # header files as required.  For some systems no processing is required.  However, for GNU
+      # there is some processing (non-standard features) which the g++ compiler implements just to
+      # be able to process its own header files.  Since we can't implement these language features
+      # in ROSE, we process the header files to remove or fixup the the non-standard parts of the
+      # header files.  In general the header files match the header files associated with the
+      # backend compiler used with ROSE.
+        if  [ ! -f "$4/config/gnu-3.x-headerfile-fixup.pl" ]
+        then
+             echo "ERROR: $4/config/gnu-3.x-headerfile-fixup.pl does not exist"
+             exit 2
+        fi
+      # echo "Calling $4/config/gnu-3.x-headerfile-fixup.pl $2 > $3/$2"
+      # $4/config/gnu-3.x-headerfile-fixup.pl $2 > $3/$2 2>/dev/null;;
+        $4/config/gnu-3.x-headerfile-fixup.pl $2 > $3/$2;;
+   KCC) sed 's/# *__include_next *["<]\(.*\)[">]/#include "\/usr\/include\/\1"/' $2 > $3/$2 2>/dev/null;;
+   icpc|icc ) 
+     #AS (6/14/06) icc/icpc with GNU compatibility will require the GNU header fixups as stated above in the
+     # g++|gcc section
+     if  [ ! -f "$4/config/gnu-3.x-headerfile-fixup.pl" ]
+        then
+             echo "ERROR: $4/config/gnu-3.x-headerfile-fixup.pl does not exist"
+             exit 2
+        fi
+      # echo "Calling $4/config/gnu-3.x-headerfile-fixup.pl $2 > $3/$2"
+        $4/config/gnu-3.x-headerfile-fixup.pl $2 > $3/$2 2>/dev/null;;
+   *) echo "ERROR: Compiler $1 not recognized as supported backend for ROSE translators"
+      exit 6;;
+   esac
+
+ # *******************************************************************************
+ # Compiler independent modifications to the backend compiler's header file system
+ # *******************************************************************************
+
+ # DQ (6/23/2004): Work with Olav Beckman determined that this "==" must be "=" under CygWin!
+ # strip out all ^M characters (a problem for the sstream header file on Linux machines)
+   if [ $2 = "sstream" ]
+   then
+      echo "Processing (removing) ^M characters from sstream file at $3/$2"
+      sed -e s/\//g $3/$2 > $3/tempFile 2>/dev/null;
+      cp $3/tempFile $3/$2;
+   fi
+
+ # DQ (10/31/2005): The Complex header file needs to be modified to work with ROSE.
+ # The following solution does work.  Replacing
+ #   complex(_ComplexT __z) : _M_value(__z) { }
+ # with
+ #   explicit complex(_ComplexT __z) : _M_value(__z) { }
+ # in the complex header file.  See notes in: 
+ # rose_edg_required_macros_and_functions.h
+   if [ $2 = "complex" ]
+   then
+      echo "Processing complex header file (adding explicit keyword to private constructor) at $3/$2"
+      sed -e 's/complex(_ComplexT __z)/\/\/ ***commented out for ROSE*** complex(_ComplexT __z)/g' $3/$2 > $3/tempFile 2>/dev/null;
+      cp $3/tempFile $3/$2;
+   fi
+
+ # JJW (10/29/2007): In GCC 4.2, the system header files use the visibility
+ # attribute which EDG 3.3 does not support.  A #define can be changed to turn
+ # that feature off, though.  Also, the built-in synchronization functions in
+ # new versions of GCC are not yet supported in ROSE, so turn them off too.
+   if [ $2 = "c++config.h" ]
+   then
+      echo "Processing c++config header file (removing use of visibility attribute) at $3/$2"
+      sed -i 's/# *define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 1/#define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 0/' $3/$2
+      sed -i 's/# *define _GLIBCXX_ATOMIC_BUILTINS/#undef _GLIBCXX_ATOMIC_BUILTINS/' $3/$2
+   fi
+
+# DQ (4/9/2005): These are not longer required since we have turned on EDG's GNU Extensions
+# It seems that we require not special treatment of the GNU header files (which if true is great news)
+# However, for A++ code I had to comment out some of the intArray operator&, operator&& and operator||
+# function declarations since they resulted in anbiguous function resolution for code in a few of the
+# header files (basic_ios.tcc and basic_string.tcc, as I recall).
+if [ "xxx" = "yyy" ]
+then
+
+ # DQ (9/15/2004): Apply patch to GNU implementation of basic_string.h so that EDG can compile applications using string type.
+   if [ $2 = "basic_string.h" ]
+   then
+    # echo "Current directory is: $pwdVar"
+    # echo "Saving version (before patch, but after other translations) of $3/$2 (to $3/$2.original) before applying patch ..."
+    # echo "cp $2 $3/$2.original"
+      cp $2 $3/$2.original
+    # echo "Applying generated patch to basic_string.h file at $3/$2 using $4/config/gnu-hdrs1-bits-basic_string-h.patchfile"
+    # patch --verbose --ignore-whitespace --dry-run < $4/config/gnu-hdrs1-bits-basic_string-h.patchfile
+    # echo "cd $3; patch --verbose --ignore-whitespace < $4/config/gnu-hdrs1-bits-basic_string-h.patchfile; cd $pwdVar"
+    # Move from the compiler's header file directory to the ROSE destination directory so that we can run "patch"
+      cd $3
+    # Run "patch"
+      patch --verbose --ignore-whitespace < $4/config/gnu-hdrs1-bits-basic_string-h.patchfile
+    # cd back to compiler's header file directory to continue processing
+      cd $pwdVar
+   fi
+
+ # DQ (5/29/2003) Adding support for using rose_varargs.h
+   if [ $2 = "varargs.h" ]
+   then
+      # echo "Found the varargs.h file  parameter 2 = $2"
+
+      # make sure the source directory structure exists
+        if  [ ! -f "$4/config/vararg_handling_commands.sed" ]
+        then
+             echo "ERROR: $4/config/vararg_handling_commands.sed does not exist"
+             exit 2
+        fi
+
+      # Call sed to insert call to include rose_varagrs.h and
+      # skip the rest of the processing of varargs.h
+      # sed -f $4/config/vararg_handling_commands.sed $2 > \dev\null
+      # sed -f $4/config/vararg_handling_commands.sed $2 > $TMPDIR\null
+      # sed -f $4/config/vararg_handling_commands.sed $2 1>/dev/null
+      # echo "sed -f $4/config/vararg_handling_commands.sed $3/$2"
+        sed -f $4/config/vararg_handling_commands.sed $2 1> $3/$2
+      # echo "Finished processing of ROSE version of vararg.h file"
+        cp $4/config/rose_varargs.h $3
+#   else
+#        echo "Can't find the vararg.h file  parameter 2 = $2"
+   fi
+
+ # DQ (8/11/2003) Adding support for using rose_stdarg.h
+   if [ $2 = "stdarg.h" ]
+   then
+      # echo "Found the stdarg.h file  parameter 2 = $2"
+
+      # make sure the source directory structure exists
+        if  [ ! -f "$4/config/stdarg_handling_commands.sed" ]
+        then
+             echo "ERROR: $4/config/stdarg_handling_commands.sed does not exist"
+             exit 2
+        fi
+
+      # Call sed to insert call to include rose_varagrs.h and
+      # skip the rest of the processing of varargs.h
+        sed -f $4/config/stdarg_handling_commands.sed $2 1> $3/$2
+        cp $4/config/rose_stdarg.h $3
+   fi
+
+ # DQ (8/11/2003) Adding support for using rose/gnu specific fixup header file
+   if [ $2 = "iostream" ]
+   then
+        echo "Found the iostream file  parameter 2 = $2"
+
+      # make sure the source directory structure exists
+        if  [ ! -f "$4/config/iostream_handling_commands.sed" ]
+        then
+             echo "ERROR: $4/config/iostream_handling_commands.sed does not exist"
+             exit 2
+        fi
+
+      # Call sed to insert call to include rose_varagrs.h and
+      # skip the rest of the processing of varargs.h
+        sed -f $4/config/iostream_handling_commands.sed $2 1> $3/$2
+        cp $4/config/rose-g++-headerfilefixup.h $3
+   fi
+fi
+}
+
+######################################################################################
+
+process_headers()
+{
+
+# make sure the source directory structure exists
+  if  [ ! -d "$2" ]
+  then
+    echo "ERROR: Directory $2 does not exist"
+    echo "*************  FAILING ***** FAILING *****************"
+    exit 2
+  fi
+
+# make sure we can read the source directory structure
+  if [ ! -r "$2" ]
+  then
+    echo "ERROR: Directory $2 is not readable"
+    echo "*************  FAILING ***** FAILING *****************"
+    exit 3
+  fi
+
+# make sure we can search the source directory structure
+  if [ ! -x "$2" ]
+  then
+    echo "ERROR: Directory $2 is not searchable"
+    echo "*************  FAILING ***** FAILING *****************"
+    exit 4
+  fi
+
+# get full path for the current working directory, the src and target dirs
+  current_dir=`pwd`
+  src_parent_dir=`dirname "$2"`
+  src_base_dir=`basename "$2"`
+  src_dir="`cd \"$src_parent_dir\" 2>/dev/null && pwd || echo \"$src_parent_dir\"`/$src_base_dir"
+
+  target_parent_dir=`dirname "$3"`
+  target_base_dir=`basename "$3"`
+  target_dir="`cd \"$target_parent_dir\" 2>/dev/null && pwd || echo \"$target_parent_dir\"`/$target_base_dir"
+
+  roseHome=$4
+
+# echo "*****************************************"
+# echo "Parameter 1 = $1"
+# echo "Parameter 2 = $2"
+# echo "Parameter 3 = $3"
+# echo "roseHome = $roseHome"
+# echo "src_dir = $src_dir"
+# echo "target_base_dir = $target_base_dir"
+# echo "target_parent_dir = $target_parent_dir"
+# echo "target_dir = $target_dir"
+# echo "*****************************************"
+
+# now check that the parent directory of target_dir exists and is writable
+  if [ ! -d $target_parent_dir -o ! -w $target_parent_dir ]
+  then
+    echo "ERROR: Target directory cannot be created (Parent directory $target_parent_dir not writable)"
+    exit 5
+  else
+    if [ ! -d $target_dir ]  # if the target directory does not exist create it
+    then
+      mkdir $target_dir
+    fi
+    # get the list of src directories to process
+    listOfSrcDirs=`find "$src_dir" -follow -type d -print 2>/dev/null`
+    for srcDirName in $listOfSrcDirs
+    do
+     # echo "processing files in directory $srcDirName to put into $targetDirName"
+     # this is not the most efficient thing to do ...
+       targetDirName=`echo "$srcDirName" | sed "s|$src_dir|$target_dir|g"`
+     # create if it does not exist
+       [ -d $targetDirName ] || mkdir $targetDirName
+       process_headers_in_dir "$1" "$srcDirName" "$targetDirName" "$roseHome"
+    done
+  fi
+
+ # DQ (4/11/2005): Copy the header file that is to be read first (within EDG processing) into the compile tree.
+ # echo "Copying $roseHome/config/rose_edg_required_macros_and_functions.h to $target_parent_dir"
+ # cp $roseHome/config/rose_edg_required_macros_and_functions.h $target_parent_dir
+
+# go back to where we started from
+  cd $current_dir
+}
+
+######################################################################################
+# start of main
+# check for correct number of arguments and 
+# whether a source directory has been specified
+if [ ! $# -ge 3 ]
+then
+#  echo "ERROR: Usage is create_system_headers compiler [src_dir] target_dir"
+   echo "ERROR: Usage is create_system_headers compiler target_dir source_dir"
+   exit 1
+elif [ $# -eq 3 ]        # in this case only compiler name and target_dir and source_dir are specified
+then
+   srcDirsSpecified=1
+ # echo "srcDirsSpecified == TRUE"
+ # echo "Attempting to automatically determine $1 specific header file directories ..."
+else
+   srcDirsSpecified=0
+ # echo "srcDirsSpecified == FALSE"
+   echo "ERROR: Usage is create_system_headers compiler target_dir source_dir"
+   exit 1
+fi
+
+# echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3"
+
+# for now assume that if a compiler is specified that it is installed
+# see if the full path name has been specified for compiler and if
+# so check if the compiler executable exists in the specified directory
+compilerName=`basename $1`
+compilerBinDir=`dirname $1`
+roseHome=$3
+
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "compilerName   = $compilerName"
+# echo "compilerBinDir = $compilerBinDir"
+# echo "roseHome       = $roseHome"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+# we try to ensure that paths can be given, to enable using different versions of the same compiler
+if [ "$compilerBinDir" != "." ]
+then
+   [ -x "$1" ] || exit 1   # make sure that we have an executable
+fi
+
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "targetDir originating string = $*"
+# echo "targetDir =  $targetDir"
+# echo "targetDirParent =  $targetDirParent"
+# echo "targetDirBase =  $targetDirBase"
+# echo "mainTargetDir =  $mainTargetDir"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+
+# determine the absolute path for the target dir
+# targetDir=`echo $* | cut -f $# -d" "`
+targetDir=$2
+targetDirParent=`dirname "$targetDir"`
+targetDirBase=`basename "$targetDir"`
+mainTargetDir="`cd \"$targetDirParent\" 2>/dev/null && pwd || echo \"$targetDirParent\"`/$targetDirBase"
+
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "Now these should be set ..."
+# echo "targetDir =  $targetDir"
+# echo "targetDirParent =  $targetDirParent"
+# echo "targetDirBase =  $targetDirBase"
+# echo "mainTargetDir =  $mainTargetDir"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+is_C_compiler="no"
+
+#AS moved the mkdir of $mainTargetDir here because the ICC and gcc case need it below
+# we will first ensure that targetDirName exists
+if [ ! -d "$mainTargetDir" ]
+then
+   if [ ! -f "$mainTargetDir" ]  # ensure that a file by the same name does not exist
+   then
+      mkdir "$mainTargetDir"     # create main target directory if it does not exist
+      [ -d "$mainTargetDir" ] && echo "created target directory"
+   else
+      echo "ERROR: cannot create target directory $mainTargetDir, file of the same name exists !!"
+   fi
+fi
+
+if [ ! -w "$mainTargetDir" ]
+then
+   echo "ERROR: target directory $mainTargetDir is not writable"
+   exit 1
+fi
+
+
+if [ $srcDirsSpecified -eq 0 ]    # src directory has been specified
+then
+   nDirs=`expr "$#" - 1`
+   compilerHeadersDir=`echo $* | cut -f 2-$nDirs -d" "`
+else
+ # no src dir specified, try to determine automatically based on compiler name
+   case "$compilerName" in
+    # Support for compiling ROSE with KAI KCC compiler (KAI has been bought by Intel and discontinued)
+      KCC) compilerHeadersDir=`"$1" -v 2>&1 | awk '{for(i=1; i<=NF; i++) {if ($i ~ /-I[^ ]*\/include/) { print substr($i, 3); break } } }'`;;
+    # Support for compiling ROSE with GNU g++ compiler
+      g++|gcc)
+         # credit for helping me figure this out goes to Peter Kurpis, pkurpis@keck.hawaii.edu
+         # compilerHeadersDir=`echo "int main(int argc, char **argv){return 0;}" | "$1" -v -E - 2>&1 | \
+         # awk '/^End/{headers=0} headers==1{print $1} /^#include </{headers=1}' | grep "gcc"`;;__GNUC_PATCHLEVEL__
+         # tmpFile="/tmp/tmp`uname -n`$$.C"
+
+           # If this is a test of gcc then build a C file instead of a C++ source filename
+           if [ "$compilerName" = "gcc" ]
+           then
+              tmpFile="/tmp/tmp`uname -n`$$.c"
+              is_C_compiler="yes"
+           else
+              tmpFile="/tmp/tmp`uname -n`$$.C"
+           fi
+
+           echo "Build a C file instead of a C++ source filename: tmpFile = $tmpFile"
+
+           echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
+           compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1 | \
+           sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d'`
+
+         # echo "compilerHeadersDir = $compilerHeadersDir"
+
+         # AS moved the copying fo rose_edg_macros_and_functions_required_for_gnu.h here because icc requires a different file
+         # DQ (4/11/2005): Copy the header file that is to be read first (within EDG processing) into the compile tree.
+         # echo "Copying $roseHome/config/rose_edg_macros_and_functions_required_for_gnu.h to $target_parent_dir"
+         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" |\
+         #         grep -v "__cplusplus" | grep -v "__EXCEPTIONS" | grep -v "__SIZE_TYPE__" | grep -v "__PTRDIFF_TYPE__" \
+         #       | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" | grep -v "__GNUG__"  \
+         #       | grep -v "__VERSION__" | grep -v "__i386" | grep -v "__linux__" | grep -v "__unix__" | grep -v "__STDC_HOSTED__"`
+         # DQ (6/29/2006): Disabled predefined macros from EDG so that we can define everything required from the preinclude file.
+         # DQ (7/13/2006): There are some macros that need to be defined via the commandline, e.g "__cplusplus", which is set 
+         # depending of the use of commandline options to specific C++ or C language rules for compilation of each file.
+         # DQ (12/23/2006): Modified to use EDG's version of __SIZE_TYPE__  and __PTRDIFF_TYPE__ (though for 64 bit systems we 
+         # reset it explicitly).  So this modification filters them out.
+         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
+         #      | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" `
+         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
+         #      | grep -v "__SIZE_TYPE__" | grep -v "__PTRDIFF_TYPE__" | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" `
+         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
+         #       | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" `
+
+         # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
+           PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
+                | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" | grep -v "__STDC_HOSTED__" | grep -v "__GXX_WEAK__"`
+           cat $roseHome/config/rose_edg_required_macros_and_functions.h.in | perl -pe "s/\\\$REPLACE_ME_WITH_MACRO_DEFINITIONS/$PREPROCESSOR_DEFS/" > $mainTargetDir/rose_edg_required_macros_and_functions.h
+
+         # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
+           echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+           ;;
+
+    # Support for compiling ROSE with SUN CC compiler (not used since 2003 or so)
+      CC) 
+           tmpFile="/tmp/tmp`uname -n`$$.C"
+           echo "#include <sysent.h>" > "$tmpFile"  
+           hdrFileName=`"$1" -xM1 "$tmpFile" 2>/dev/null | awk '/[^ ]*\/SUNWspro\/[^ ]*\/include\/CC/{print $3; exit }'`
+           rm -f "$tmpFile" 2>/dev/null
+           compilerHeadersDir=`dirname "$hdrFileName"`
+           [ -d "$compilerHeadersDir" ] || echo "ERROR: unable to find C++ header files for CC"
+           ;;
+
+    # Support for compiling ROSE with Intel icc compiler (and using the Intel compiler as a backend)
+      icpc|icc) # AS Added extra lines to find icc header files
+           #idea: if icpc/icc is called with the commandline paramaters '-v -E' and
+           #an **illegal filename** it will print a diagnostic which contains the
+           #include paths used by icc/icpc. I know of no direct way to get the include paths.
+           tmpFileSed="\/tmp\/tmpRoseICCsupport`uname -n`$$.C"
+           tmpFile="/tmp/tmpRoseICCsupport`uname -n`$$.C"
+
+           # If this is a test of gcc then build a C file instead of a C++ source filename
+           if [ "$compilerName" = "icc" ]
+           then
+              tmpFile="/tmp/tmp`uname -n`$$.c"
+              is_C_compiler="yes"
+           else
+              tmpFile="/tmp/tmp`uname -n`$$.C"
+           fi
+
+           echo "Build a C file instead of a C++ source filename: tmpFile = $tmpFile"
+
+           echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
+         # compilerPathIntelWithFile=`which "$1"`
+         # compilerPathIntel=`dirname ${compilerPathIntelWithFile}`
+         # compilerHeadersDir="${compilerPathIntel}/../include ${compilerPathIntel}/../include/c++" 
+         # compilerHeadersDir="${compilerHeadersDir1} /usr/apps/gcc/3.3.2/lib/gcc-lib/i686-pc-linux-gnu/3.3.2/include"
+         # compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'`
+         # compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1  | \
+         #    sed -n "/$tmpFileSed/,/Catastrophic/p" | sed "/$tmpFileSed/d; /substitute_headers/d; /^End/d; /\/usr\/include$/d"`
+
+         # DQ (8/10/2006): We run the Intel compiler with a special option to dump out information and the eliminate the directories that we know to be empty
+           compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1  | \
+              grep -v "#include" | grep -v "Version " | grep -v "/mcpcom" | grep -v "rm " | grep -v "int main" | grep -v "# 1" | grep -v "substitute_headers" | sed '/\/usr\/include$/d'`
+           echo "COMPILE HEADERS DIR: ${compilerHeadersDir}"
+
+         # AS create file containing all relevant predefined macros in ICC to be preincluded by EDG
+         # PREPROCESSOR_DEFS=`"$1" -v -E -dM "$tmpFile" | grep "#define" |\
+         #        grep -v "__cplusplus" | grep -v "__EXCEPTIONS" | grep -v "__SIZE_TYPE__" | grep -v "__PTRDIFF_TYPE__" \
+         #        | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" | grep -v "__GNUG__"  \
+         #        | grep -v "__NO_STRING_INLINES" | grep -v "__EDG_VERSION__" | grep -v "__EDG_RUNTIME_USES_NAMESPACES" \
+         #        | grep -v "__PLACEMENT_DELETE" | grep -v "__RTTI" | grep -v "__ARRAY_OPERATORS" | grep -v "_BOOL" \
+         #        | grep -v "_WCHAR_T" | grep -v "__STDC__" | grep -v "__TIME__" | grep -v "__DATE__" | grep -v "__EDG__" \
+         #        | grep -v "__VERSION__" | grep -v "__i386" | grep -v "__linux__" | grep -v "__unix__" | grep -v "__STDC_HOSTED__"`
+         # DQ (6/29/2006): Disabled predefined macros from EDG so that we can define everything required from the preinclude file.
+         # DQ (12/23/2006): Modified to use EDG's version of __SIZE_TYPE__  and __PTRDIFF_TYPE__ (though for 64 bit systems we 
+         # reset it explicitly).  So this modification filters them out.
+         # PREPROCESSOR_DEFS=`"$1" -v -E -dM "$tmpFile" | grep "#define" \
+         #     | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" \
+         #     | grep -v "__cplusplus" | grep -v "__DATE__" | grep -v "__TIME__" | grep -v "__EDG__" \
+         #     | grep -v "__EDG_VERSION__" | grep -v "_WCHAR_T " | grep -v "__NO_STRING_INLINES" `
+           PREPROCESSOR_DEFS=`"$1" -v -E -dM "$tmpFile" | grep "#define" \
+                | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" \
+                | grep -v "__cplusplus" | grep -v "__DATE__" | grep -v "__TIME__" | grep -v "__EDG__" \
+                | grep -v "__EDG_VERSION__" | grep -v "_WCHAR_T " | grep -v "__NO_STRING_INLINES" | grep -v "__STDC_HOSTED__"`
+
+#          PREPROCESSOR_DEFS=`icpc -# "$tmpFile" 2>&1 | grep "\-D" | sed "s/\-D/\#define /" | sed "s/=/ /" | sed "s/\"//g" | \
+#                     grep -v 'i386' | grep -v 'linux' | grep -v 'unix' | grep -v 'GXX' | grep -v 'NO_STRING_INLINES' | \
+#                     grep -v "INLINE" | grep -v "ELF" | grep -v "__extension" | grep -v '__USER_LABEL_PREFIX__' | \
+#                     grep -v 'REGISTER_PREFIX'| grep -v "OPTIMIZE" | grep -v '__EXCEPTIONS' | grep -v "__SIZE_TYPE__" |\
+#                     grep -v "__PTRDIFF_TYPE__" | grep -v "__GNUC_MINOR__" \
+#                     | sed "s/.$//"`
+           cat $roseHome/config/rose_edg_required_macros_and_functions.h.in | perl -pe "s/\\\$REPLACE_ME_WITH_MACRO_DEFINITIONS/$PREPROCESSOR_DEFS/" > $mainTargetDir/rose_edg_required_macros_and_functions.h 
+           echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+
+#            cp $roseHome/config/rose_edg_macros_and_functions_required_for_icc.h $mainTargetDir/.
+
+
+           ;;
+
+    # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
+      roseTranslator) 
+           tmpFile="/tmp/tmp`uname -n`$$.C"
+           echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
+           compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1 | \
+           sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'`
+           echo "Compile headers dir ${compilerHeadersDir}"
+           ;;
+      *) echo "ERROR: Not able to recognize compiler $1"
+         echo "ERROR: Usage is create_system_headers compiler [src_dir] target_dir"
+         ;;
+   esac
+fi
+
+# echo "local script variable compilerHeadersDir = $compilerHeadersDir"
+# echo "Building separate header directories"
+
+iDir=0
+for dirName in $compilerHeadersDir
+   do
+         iDir=`expr "$iDir" + 1 `
+        echo "proccessing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
+
+      # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines).
+        process_headers "$1" "$dirName" "$mainTargetDir/hdrs${iDir}" "$roseHome" &
+   done
+
+# DQ (1/14/2007): It is not required to wait until the calls to process_headers complete
+# wait
+
+# DQ (1/14/2007): This is not handled directly for each backend compiler (above).
+# DQ (4/11/2005): Copy the header file that is to be read first (within EDG processing) into the compile tree.
+# echo "Copying ($roseHome/config/rose_edg_required_macros_and_functions.h) to ($target_parent_dir) ..."
+# cp $roseHome/config/rose_edg_required_macros_and_functions.h $target_parent_dir
+
+# DQ (6/27/2006): We really should verify that "/usr/include/sys/cdefs.h" exists since we reference it explicitly 
+# in the ROSE specific generated "sys/cdefs.h" header file.
+if [ -f /usr/include/sys/cdefs.h ]
+then
+    echo "Verified \"/usr/include/sys/cdefs.h\" exists ... (referenced by ROSE specific \"sys/cdefs.h\" header file)"
+ else
+    echo "ERROR: Could not find \"/usr/include/sys/cdefs.h\" system header file ... (referenced by ROSE specific \"sys/cdefs.h\" header file)"
+    exit 5
+fi
+
+# DQ (1/14/2007): The variable target_parent_dir is not set in this shell procedure, so it causes an error.
+system_headers_directory="$mainTargetDir/hdrs"
+echo "system_headers_directory = $system_headers_directory should be used instead of target_parent_dir = $target_parent_dir"
+
+# echo "Exiting as a test! calling exit 1"
+# exit 1
+
+# DQ (6/27/2006): Copy a ROSE specific version of cdefs.h to $target_parent_dir/sys so that the "__flexarr"
+# macro can be redefined so that Red Hat 7.3 will not require variable length arrays in definition of
+# "struct __gconv_info __cd;" in "/usr/include/_G_config.h".  This is a common problem since C does not
+# support this (gnu does however as an extension).  This is a problem for EDG and we fix it this way.
+
+echo "Copying $roseHome/config/rose_specific_cdefs.h to $system_headers_directory/sys to fix __gconv_info incomplete definition problem ..."
+if [ -d $system_headers_directory/sys ]
+then
+   echo "$system_headers_directory/sys already exists"
+else
+   echo "$system_headers_directory/sys not found, so building it"
+   mkdir -p $system_headers_directory/sys
+fi
+# cp $roseHome/config/rose_specific_cdefs.h $target_parent_dir/sys/cdefs.h
+cp $roseHome/config/rose_specific_cdefs.h $system_headers_directory/sys/cdefs.h
+
+error_code=$?
+echo "error_code = $error_code"
+if test $error_code != 0; then
+     echo "Error in cp $roseHome/config/rose_specific_cdefs.h $system_headers_directory/sys/cdefs.h: nonzero exit code returned to caller error_code = $error_code"
+     exit 1
+fi
+
+if [ is_C_compiler = "yes" ]
+then
+    echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory"
+    cp $roseHome/config/rose_specific_complex.h $system_headers_directory/complex.h
+fi
+
+error_code=$?
+echo "error_code = $error_code"
+if test $error_code != 0; then
+     echo "Error in cp $roseHome/config/rose_specific_complex.h $system_headers_directory/complex.h: nonzero exit code returned to caller error_code = $error_code"
+     exit 1
+fi
+
+# DQ (4/13/2005): This is no longer required (in fact it generates a bug captured in 
+# test2005_54.C).  This simplifies the configuration of ROSE and is possible because
+# of the new level of compatability with GNU g++.
+# DQ (2/14/2005): This fixes a Python problem which does not want system files to be 
+# included before python files, but needs to have many g++ specific values defined.  
+# I have not thought of a better fix than this.  Silly Python! Copy the Python header 
+# file (modified) to a location in the ROSE system header files.
+# This fix is only required when compiling SWIG generated files using ROSE.
+# echo "copy $roseHome/config/Python-version-2.2.h to $mainTargetDir/Python.h"
+# cp $roseHome/config/Python-version-2.2.h $mainTargetDir/Python.h
+
+# echo "Leaving script for processing header files"

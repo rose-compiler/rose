@@ -1,0 +1,232 @@
+\chapter{Generating Unique Names for Declarations}
+
+     There are many instances where a unique name must be generated for
+either a function or variable declaration.  ROSE defines a mechanism
+to make the generation of unique names from all SgDeclarationStatment
+IR nodes and the SgInitializedName IR node.  This simplifies ROSE based
+applications that require this sort of mechanism.  Our experience has found
+that a significant number of tools require such a mechanism and that it
+correct implementation can have subtle complex points, thus we have provided
+one as part of ROSE.
+
+     The specific translator described in this chapter traverses an AST and outputs the
+unique names that can be generated for each declaration showing the use of the 
+unique name generation mechanism.  This tool is intended as an example of how to 
+generate unique names using ROSE. Not all IR nodes can be used to generate a unique
+name. The generated names are unique under the following rules:
+\begin{enumerate}
+   \item Any two generated names are the same iff the declarations are the same. \\
+   Declaration can be the same across files or within the same file.  Declarations that
+   are the same can have different location in the same file (be represented multiple
+   times) or be in different files. Language constructs that are the same must follow 
+   the One-time Definition Rule (ODR) across files.
+   \item Declarations in different unnamed scopes (e.g. for loop bodies) will generate 
+   different names.
+   \item Names are the same when generated buy different ROSE tools. \\
+   Pointer values could be used to generate unique names of all IR nodes, but this would
+   work only within a single invocation of the ROSE based tool.  Generated names are 
+   not based on internal pointer values and are thus insensitive to pointer values.
+   Generated names of the same declaration are thus the same even if generated from
+   different tools.  This allows multiple ROSE tools to inter-operate.
+\end{enumerate}
+
+This unique name generation mechanism is only applicable to specific IR nodes, specifically:
+\begin{itemize}
+   \item SgInitializedName
+   \item SgDeclarationStatement IR nodes:
+   \begin{itemize}
+      \item Obvious IR nodes supported:
+      \begin{itemize}
+         \item SgClassDeclaration
+         \item SgFunctionDeclaration
+         \item SgEnumDeclaration
+         \item SgNamespaceDeclarationStatement
+         \item SgTypedefDeclaration
+      \end{itemize}
+      \item Less obvious IR nodes not supported (support for these would not make sense):
+      \begin{itemize}
+         \item SgAsmStmt
+         \item SgCtorInitializerList
+         \item SgFunctionParameterList
+         \item SgNamespaceAliasDeclarationStatement
+         \item SgPragmaDeclaration
+         \item SgTemplateDeclaration (can this have a mangled name?)
+         \item SgTemplateInstantiationDirectiveStatement
+         \item SgUsingDeclarationStatement
+         \item SgUsingDirectiveStatement
+         \item SgVariableDeclaration \\
+               Note that the SgVariableDeclaration contains a list of SgInitializedName
+               nodes and the mangled names are best queried from each SgInitializedName 
+               instead of the SgVariableDeclaration.
+         \item SgVariableDefinition
+      \end{itemize}
+   \end{itemize}
+   \item Un-named scopes \\
+         A number of scopes are un-names and so there is an opportunity to generate
+    non-unique names from declarations in such scopes.  To fix this we generate names for
+    each un-named scope to guarantee uniqueness.  Nodes handled are:
+   \begin{itemize}
+      \item SgForStatement 
+      \item SgBasicBlock
+      \item SgIfStmt
+      \item get the complete list ...
+   \end{itemize}
+\end{itemize}
+Other language constructs can generate unique names as well, but their
+name could be invalid after certains transformation that move it 
+structurally within the generated source code.
+
+
+\section{Example Code Showing Generation of Unique Names}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/generatingUniqueNamesFromDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/generatingUniqueNamesFromDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing the output of mangled name. The string
+         represents the code associated with the subtree of the target IR node.}
+\label{Tutorial:uniqueNameGeneration}
+\end{figure}
+
+
+\section{Input For Examples Showing Unique Name Generation for Variables}
+
+Figure~\ref{Tutorial:uniqueNameGeneration},
+shows an example translator demonstrating the generation of unique names from 
+declarations in the AST.  For each SgInitializedName we generate the
+mangled name.  Figure~\ref{Tutorial:exampleInputCode_UniqueVariableNameGeneration} 
+shows the input code and 
+figure~\ref{Tutorial:exampleOutput_UniqueVariableNameGeneration}
+shows the generated output from the translator (the mangled names from
+the AST associated with the input application).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_generatingUniqueNamesFromDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_generatingUniqueNamesFromDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+         codes showing debugging techniques shown in this section.}
+\label{Tutorial:exampleInputCode_UniqueVariableNameGeneration}
+\end{figure}
+
+
+
+% Output file name for unique name generation
+% generatingUniqueNamesFromDeclaration.out
+
+
+
+\section{Example Output Showing Unique Variable Names}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/generatingUniqueNamesFromDeclaration.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/generatingUniqueNamesFromDeclaration.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using generatingUniqueNamesFromDeclaration.C}
+\label{Tutorial:exampleOutput_UniqueVariableNameGeneration}
+\end{figure}
+
+
+\section{Input For Examples Showing Unique Name Generation for Functions}
+
+Figure~\ref{Tutorial:uniqueNameGeneration},
+shows an example translator demonstrating the generation of unique names from 
+declarations in the AST.  For each SgInitializedName we generate the
+mangled name.  Figure~\ref{Tutorial:exampleInputCode_UniqueFunctionNameGeneration} 
+shows the input code and 
+figure~\ref{Tutorial:exampleOutput_UniqueFunctionNameGeneration}
+shows the generated output from the translator (the mangled names from
+the AST associated with the input application).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_generatingUniqueNamesFromDeclaration2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_generatingUniqueNamesFromDeclaration2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+         codes showing debugging techniques shown in this section.}
+\label{Tutorial:exampleInputCode_UniqueFunctionNameGeneration}
+\end{figure}
+
+
+\section{Example Output Showing Unique Function Names}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/generatingUniqueNamesFromDeclaration2.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/generatingUniqueNamesFromDeclaration2.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using generatingUniqueNamesFromDeclaration.C}
+\label{Tutorial:exampleOutput_UniqueFunctionNameGeneration}
+\end{figure}
+

@@ -1,0 +1,9 @@
+static void
+AST_Rewrite::addSourceCodeString (
+     SynthesizedAttribute & localSynthesizedAttribute,
+     const string & X,
+     const AST_Rewrite::InheritedAttribute & inheritedAttribute,
+     AST_Rewrite::ScopeIdentifierEnum inputRelativeScope,
+     AST_Rewrite::PlacementPositionEnum inputRelativeLocation,
+     AST_Rewrite::SourceCodeStringClassificationEnum inputSourceCodeClassification,
+     bool inputBuildInNewScope );

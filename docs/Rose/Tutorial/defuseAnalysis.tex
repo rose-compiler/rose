@@ -1,0 +1,88 @@
+\chapter{Dataflow Analysis}
+
+The Dataflow analysis in Rose is based on the control flow graph (CFG).
+One type of dataflow analysis is called def-use analysis, which is explained next.
+
+\section{Def-Use Analysis}
+
+The definition-usage (def-use) analysis allows to query the definition
+and usage for each \emph{control flow node} (CFN).
+Any statement or expression within ROSE is represented as a sequence of CFN's.
+For instance, the CFG for the following program
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/input_defuseAnalysis.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/input_defuseAnalysis.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code.}
+\label{Tutorial:exampledefuseCode}
+\end{figure}
+
+is illustrated in Figure ~\ref{Tutorial:exampledefuse}.
+For each CFN in the CFG, the definition and usage for 
+variable references can be determined with the public function calls:
+
+\begin{verbatim}
+vector <SgNode*> getDefFor(SgNode*, SgInitializedName*)
+vector <SgNode*> getUseFor(SgNode*, SgInitializedName*)
+\end{verbatim}
+
+where SgNode* represents any control flow node and SgInitializedName any variable (being
+used or defined at that CFN). The result is a vector of possible CFN's that either
+define (getDefFor) or use (getUseFor) a specific variable.
+
+Figure ~\ref{Tutorial:exampledefuse} shows how the variable x is being
+declared and defined in CFN's between node 1 and 6. Note that the definition
+is annotated along the edge. For instance at node 6, the edge reads 
+\emph{(6) DEF: x (3) = 5}. This means that variable x was declared at CFN 3 but
+defined at CFN 5.
+
+The second statement x=x+1 is represented by CFN's from 7 to 12.
+One can see in the figure that x is being re-defined at CFN 11. However,
+the definition of x within the same statement happens at CFN 8. Hence, the 
+definition of the right hand side x in the statement is at CFN 5 :
+\emph{(8) DEF: x (3) = 5}.
+
+\begin{figure}
+%\centerline{\epsfig{file=\TutorialExampleBuildDirectory/controlFlowGraph.ps,
+%                    height=1.3\linewidth,width=1.0\linewidth,angle=0}}
+\includegraphics[scale=0.7]{\TutorialExampleBuildDirectory/defuseAnalysis_pic1}
+\caption{Def-Use graph for example program.}
+\label{Tutorial:exampledefuse}
+\end{figure}
+
+Another usage of the def-use analysis is to determine which variables actually
+are defined at each CFN. The following function allows to query a CFN for
+all its variables (SgInitializedNames) and the positions those variables are defined
+(SgNode):
+
+\begin{verbatim}
+std::multimap <SgInitializedName*, SgNode*> getDefMultiMapFor(SgNode*)
+std::multimap <SgInitializedName*, SgNode*> getUseMultiMapFor(SgNode*)
+\end{verbatim}
+
+All public functions are described in \emph{DefuseAnalysis.h}. To use the def-use 
+analysis, one needs to create an object of the class DefUseAnalysis and execute
+the run function. After that, the described functions above help to evaluate 
+definition and usage for each CFN.
+
+
+
+

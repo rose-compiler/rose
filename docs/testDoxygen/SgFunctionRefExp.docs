@@ -1,0 +1,130 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionRefExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgFunctionRefExp
+\brief This class represents the function being called and must be assembled in the
+    SgFunctionCall with the function arguments.
+
+\internal  When used in a SgFunctionCallExp (most common, or typical case (and maybe the
+    only case)) the SgExpression is one of the following:
+       - SgDotExp
+       - SgDotStarOp
+       - SgArrowExp
+       - SgArrowStarOp
+       - SgPointerDerefExp
+       - SgFunctionRefExp
+       - SgMemberFunctionRefExp
+
+\todo Figure out why SgMemberFunctionRefExp is required instead of just SgFunctionRefExp.
+      
+\todo Make the use of a SgMemberFunctionSymbol in a SgFunctionRefExp an error. The result
+      will not unparse correctly (suggested by Jeremiah).
+
+\sa
+\ref SgFunctionRefExp_usage  "Example of using a SgFunctionRefExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionRefExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgFunctionRefExp::p_lvalue
+\brief This boolean variable marks the current expression as a 
+left hand side value (lvalue).
+*/
+
+/*!
+\var SgFunctionRefExp::p_need_paren
+\brief This boolean value marks the current expression as requiring parenthises.
+
+This boolean value marks the current expression as requiring parenthises (the
+information comes from the frontend's interpretation of the requirement and is 
+almost always overly conservative.  The unparser currently backs out more
+accurate rules based on operator precedence and removed then where they
+are not truely required.  Thus the purpose of this variable is to capture the
+interpritation of the frontend regarding the use of parenthesis.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgFunctionRefExp::SgFunctionRefExp (const SgFunctionRefExp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgFunctionRefExp::SgFunctionRefExp ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgFunctionRefExp base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgFunctionRefExp_create "Example:create an SgFunctionRefExp object"
+*/
+
+/*!
+\fn SgFunctionRefExp::~SgFunctionRefExp()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+
+/*!
+\fn SgFunctionRefExp::isSgFunctionRefExp (SgNode *s)
+\brief Cast function (from derived class to SgFunctionRefExp pointer).
+
+   This functions returns a SgFunctionRefExp pointer for any input of a 
+pointer to an object derived from a SgFunctionRefExp.
+
+\return Returns valid pointer to SgFunctionRefExp if input is derived from a SgFunctionRefExp.
+*/
+
+/*!
+\fn SgFunctionRefExp::isSgFunctionRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgFunctionRefExp pointer).
+
+   This functions returns a SgFunctionRefExp pointer for any input of a 
+pointer to an object derived from a SgFunctionRefExp.
+
+\return Returns valid pointer to SgFunctionRefExp if input is derived from a SgFunctionRefExp.
+*/
+
+
+
+
+
+
+/*!
+\fn SgFunctionRefExp::get_type() const
+\brief Get the type associated with this expression
+
+     Note that the return value is either:
+   -# SgFunctionType : normal function call
+   -# SgMemberFunctionType : normal member function call
+   -# SgTypedefType : in teh case of a function call from a pointer
+
+   It should always be a vailid pointer.  These details are verified in the AST
+   Consistancy Tests.
+
+\return Returns SgType (but not any SgType).
+*/
+
+/*!
+\fn SgFunctionRefExp::set_type()
+\brief Set the type associated with this expression
+
+   This is an internally called function, it sets up the type of the expression 
+based upon the types of the subexpressions (if any). Thus it takes no 
+arguments.
+
+\return Returns void
+*/
+

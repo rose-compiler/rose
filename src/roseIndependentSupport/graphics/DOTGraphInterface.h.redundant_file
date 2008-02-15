@@ -1,0 +1,204 @@
+/******************************************************************************
+ *
+ * ROSE Global Database Connection
+ *
+ * Interface for DOT output of graphs
+ *
+ *****************************************************************************/
+
+#ifndef DOTGRAPHINTERFACE_H
+#define DOTGRAPHINTERFACE_H
+
+#include <map>
+#include <iterator>
+#include <stack>
+#include <iostream>
+
+#include "DOTSubgraphRepresentation.h"
+
+
+
+
+//! stl graph class for directed and undirected graphs
+template<class VertexType, class EdgeType, class VertexIterator, class EdgeIterator>
+class DOTGraphInterface {
+
+	public:
+
+		//! public type interface
+
+		//! destructor
+		virtual ~DOTGraphInterface() {};
+
+		//! this is the function that can be used to ouput the graph to a DOT file
+		void writeToDOTFile(string filename);
+
+	protected:
+
+		//! directions of an edge: no direction, towards target, towards source  or bidirectional
+		typedef enum {
+			none = 1,
+			target,
+			source,
+			both
+		} EdgeDirection;
+
+		
+		// ---------
+		// iterators
+
+		//! get an iterator for the vertices
+		virtual VertexIterator getVertices() = 0;
+
+		//! get the end of the vertices
+		virtual VertexIterator getVerticesEnd() = 0;
+
+		//! get an iterator for all edges of a vertex
+		virtual EdgeIterator getEdges(VertexType &v) = 0;
+
+		//! get the end of the edges
+		virtual EdgeIterator getEdgesEnd(VertexType &v) = 0;
+
+		
+		// ----------------
+		// vertex functions
+		
+		//! get unique string representation of a vertex, NOTE - this function works with a pointer to the vertex!
+		virtual string vertexToString(VertexType *v) = 0;
+
+		//! get the name of a vertex
+		virtual string getVertexName(VertexType &v) = 0;
+
+		// -------------
+		// edge functions
+
+		//! get the target vertex of an edge, NOTE - this function returns a pointer to a vertex for use with vertexToString!
+		virtual VertexType *getTargetVertex(EdgeType &e) = 0;
+
+		
+		// ----------------------------------------------
+		// optional functions to improve the graph output
+		// these do not necessarily have to be implemented
+
+		//! get the label of an edge
+		virtual string getEdgeLabel(EdgeType &e) { 
+			// the default is no edge label
+			return string(""); 
+		}
+
+		//! get the direction of an edge
+		virtual EdgeDirection getEdgeDirection(EdgeType &e) { 
+			// normally its from the source to target
+			return target; 
+		}
+
+		//! get the optional settings for a vertex, this can contain any DOT attributes
+		virtual string getVertexOptions(VertexType &v) { 
+			return string(""); 
+		}
+
+		//! get the optional settings for an edge, this can contain any DOT attributes
+		virtual string getEdgeOptions(EdgeType &e) { 
+			return string(""); 
+		}
+
+
+		// ---------
+		// subgraphs
+		
+		//! query the subgraph ID of a node
+		virtual int getVertexSubgraphId(VertexType &v) {
+			// assume there are no subgraphs
+			return -1;
+		}
+
+		//! get a list of the subgraph names, together with their ID's (see also getVertexSubgraphId)
+		//  this function should construct a map containing the ID a the name as a string
+		//  subgraph Id's have to be >0 to be valid
+		//  only subgraphs entered in this list will be displayed (the name may also be empty)
+		virtual map<int,string> getSubgraphList() {
+			// none by default...
+			map<int,string> temp;
+			return temp;
+		}
+		
+		//! similar to getSubgraphList this should return the formatting options for the subgraphs (style, color etc.)
+		virtual map<int,string> getSubgraphOptions() {
+			// none by default...
+			map<int,string> temp;
+			return temp;
+		}
+		
+
+	private:
+
+		//! dot representation object
+		DOTSubgraphRepresentation< string > mDotRep;
+};
+
+
+//-----------------------------------------------------------------------------
+template<class VertexType, class EdgeType, class VertexIterator, class EdgeIterator>
+void DOTGraphInterface<VertexType, EdgeType, VertexIterator, EdgeIterator>::writeToDOTFile(string filename) {
+	bool debug = false;
+	if(debug) cerr << " dot output to " << filename << endl; // debug
+	mDotRep.clear();
+
+	// init subgraphs (this might just be empty, that also works)
+	map<int,string> subgraphs( getSubgraphList() );
+	map<int,string> subgraphOptions( getSubgraphOptions() );
+	for(map<int,string>::iterator s=subgraphs.begin(); s!=subgraphs.end(); s++) {
+		//cerr << " adding subgraph " << endl;
+		string options("");
+		if(subgraphOptions.size()>0) options = subgraphOptions[ (*s).first ];
+		if(debug) cerr << " adding " << (*s).first <<" as "<< (*s).second <<", o:"<< options <<endl; // debug
+		mDotRep.addSubgraph( (*s).first, (*s).second, options );
+	}
+	
+	// create all nodes
+	for(VertexIterator i=getVertices(); i!=getVerticesEnd(); i++) {
+		int subgraphId = getVertexSubgraphId( *i );
+		string options = getVertexOptions( *i );
+		if(subgraphId>=0) {
+			mDotRep.addNode( vertexToString(&(*i)), getVertexName(*i), options, subgraphId );
+		} else {
+			mDotRep.addNode( vertexToString(&(*i)), getVertexName(*i), options );
+		}
+		if(debug) cerr << " add node " << vertexToString(&(*i)) << " as " << getVertexName( (*i) ) << endl; // debug
+	}
+
+
+	// create edges
+	for(VertexIterator i=getVertices(); i!=getVerticesEnd(); i++) {
+		// sort nodes? or problem of the user?
+
+		if(debug) cerr << " add edge vertices ... " << endl; // debug
+		EdgeIterator estart 	= getEdges(*i);
+		EdgeIterator eend 		= getEdgesEnd(*i);
+		for(EdgeIterator j=estart; j!=eend; j++) {
+			EdgeType e = *j; // FIXME - quings suggestion, &e, not working???
+			string label = getEdgeLabel( e );
+			string options = getEdgeOptions( e );
+			if((label.length()>0) || (options.length()>0)) {
+				// insert with label
+				mDotRep.addEdge( vertexToString(&(*i)), label, vertexToString(getTargetVertex(e)) , options);
+				if(debug) cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " as " << label << endl; // debug
+			} else {
+				// insert without label
+				mDotRep.addEdge( vertexToString(&(*i)), vertexToString(getTargetVertex(e)) );
+				if(debug) cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " without label " << endl; // debug
+			}
+			if(debug) cerr << " edge added " << endl; // debug
+		} // edges
+		if(debug) cerr << " edge for vertex added " << endl; // debug
+
+		} // nodes
+
+		if(debug) cerr << " writing content to " << filename << endl; // debug
+		mDotRep.writeToFileAsGraph( filename );
+		if(debug) cerr << " output to " << filename << " done " << endl; // debug
+	}
+
+
+#endif
+

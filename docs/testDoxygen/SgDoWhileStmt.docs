@@ -1,0 +1,119 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDoWhileStmt
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgDoWhileStmt
+\brief This class represents the concept of a do-while statement.
+
+\internal 
+
+\todo The conditional test should be an expression (different from a SgWhileStmt),
+      see test2005_114.C for examples and details.
+*/
+
+/*
+\sa
+\ref SgDoWhileStmt_usage  "Example of using a SgDoWhileStmt object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDoWhileStmt data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgDoWhileStmt::p_condition
+\brief This pointer a SgStatement, the conditional expression in the loop construct.
+
+\todo This should be changed to be a SgExpression (to follow the C++ standard).
+    We also have the condition specified before the body within the ROSETTA
+    specification and this causes the traversal to travers the condition and body in the
+    wrong order (for do-while, the traversal should be body forst and condition second).
+    See test2005_114.C for more details and example code (example of strange loops).
+*/
+
+/*! \var SgDoWhileStmt::p_body
+\brief This pointer a SgBasicBlock, and holds the statements in the body of the loop.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDoWhileStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgDoWhileStmt::SgDoWhileStmt ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgDoWhileStmt base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgDoWhileStmt_create "Example:create an SgDoWhileStmt object"
+*/
+
+/*!
+\fn SgDoWhileStmt::~SgDoWhileStmt()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgDoWhileStmt::isSgDoWhileStmt (SgNode *s)
+\brief Cast function (from derived class to SgDoWhileStmt pointer).
+
+   This functions returns a SgDoWhileStmt pointer for any input of a 
+pointer to an object derived from a SgDoWhileStmt.
+
+\return Returns valid pointer to SgDoWhileStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDoWhileStmt::isSgDoWhileStmt (const SgNode *s)
+\brief Cast function (from derived class to SgDoWhileStmt pointer).
+
+   This functions returns a SgDoWhileStmt pointer for any input of a 
+pointer to an object derived from a SgDoWhileStmt.
+
+\return Returns valid pointer to SgDoWhileStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDoWhileStmt::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgDoWhileStmt.
+*/
+
+/*!
+\fn SgDoWhileStmt::get_body() const
+\brief Access function for p_body.
+
+\return Returns a pointer to a SgBasicBlock.
+*/
+
+/*!
+\fn SgDoWhileStmt::set_body(SgBasicBlock* body)
+\brief Access function for p_body.
+
+\param body SgBasicBlock pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgDoWhileStmt::get_condition() const
+\brief Access function for p_condition.
+
+\return Returns a pointer to a SgStatement.
+*/
+
+/*!
+\fn SgDoWhileStmt::set_condition(SgStatement* condition)
+\brief Access function for p_condition.
+
+\param condition SgStatement pointer
+\return Returns void.
+*/
+

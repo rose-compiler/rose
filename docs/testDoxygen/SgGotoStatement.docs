@@ -1,0 +1,83 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGotoStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgGotoStatement
+\brief This class represents the concept of a C or C++ goto statement.
+
+\sa
+\ref SgGotoStatement_usage  "Example of using a SgGotoStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGotoStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgGotoStatement::p_label
+\brief This pointer points to the SgLabelStatement where control flow will be transfered
+    during execution.
+
+\internal This is always a valid pointer.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGotoStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgGotoStatement::SgGotoStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgGotoStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgGotoStatement_create "Example:create an SgGotoStatement object"
+*/
+
+/*!
+\fn SgGotoStatement::~SgGotoStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgGotoStatement::isSgGotoStatement (SgNode *s)
+\brief Cast function (from derived class to SgGotoStatement pointer).
+
+   This functions returns a SgGotoStatement pointer for any input of a 
+pointer to an object derived from a SgGotoStatement.
+
+\return Returns valid pointer to SgGotoStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgGotoStatement::isSgGotoStatement (const SgNode *s)
+\brief Cast function (from derived class to SgGotoStatement pointer).
+
+   This functions returns a SgGotoStatement pointer for any input of a 
+pointer to an object derived from a SgGotoStatement.
+
+\return Returns valid pointer to SgGotoStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgGotoStatement::get_label() const
+\brief Returns pointer to SgLabelStatement where control flow will be transfered during execution.
+
+\return Returns pointer to SgLabelStatement.
+*/
+
+/*!
+\fn SgGotoStatement::set_label(SgLabelStatement* label)
+\brief Access function for p_label.
+
+\return Returns void.
+*/
+
+

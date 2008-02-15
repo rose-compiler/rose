@@ -1,0 +1,110 @@
+\chapter{Recognizing Loops}
+
+   Figures~\ref{Tutorial:exampleLoopRecognition-part1} and
+\ref{Tutorial:exampleLoopRecognition-part2} show a translator which
+reads an application and gathers a list of loop nests.  At the end of the traversal it
+reports information about each loop nest, including the function where it occurred
+and the depth of the loop nest.
+
+\fixme{This example program is unfinished. It will output a list of objects representing
+       information about perfectly nested loops.}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopRecognition.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/loopRecognition.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing loop recognition (part 1).}
+\label{Tutorial:exampleLoopRecognition-part1}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopRecognition.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/loopRecognition.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing loop recognition (part 2).}
+\label{Tutorial:exampleLoopRecognition-part2}
+\end{figure}
+
+
+   Using this translator we can compile the code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopRecognition}.  The 
+output is shown in figure~\ref{Tutorial:exampleOutput_LoopRecognition}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopRecognition.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopRecognition.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loop recognition processor.}
+\label{Tutorial:exampleInputCode_LoopRecognition}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopRecognition.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/loopRecognition.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to loop recognition processor.}
+\label{Tutorial:exampleOutput_LoopRecognition}
+\end{figure}
+
+
+

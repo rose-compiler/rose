@@ -1,0 +1,126 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionRefExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgMemberFunctionRefExp
+\brief This class represents the member function being called and must be assembled in the
+    SgFunctionCall with the function arguments.
+
+\internal 
+
+\sa
+\ref SgMemberFunctionRefExp_usage  "Example of using a SgMemberFunctionRefExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionRefExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgMemberFunctionRefExp::p_symbol_i
+\brief This is the SgMemberFunctionSymbol.
+
+     This binds the function reference to the member function declaration.
+Note that all SgSymbol objects are shared (just like SgType objects)
+*/
+
+/*!
+\var SgMemberFunctionRefExp::p_virtual_call
+\brief This boolean value marks if the function reference is a virtual function.
+
+*/
+
+/*!
+\var SgMemberFunctionRefExp::p_function_type
+\brief This is a pointer to the SgFunctionType associated with this member function reference.
+
+\internal Notice that it can be a SgFunctionType or any thing derived from that class.
+*/
+
+/*!
+\var SgMemberFunctionRefExp::p_need_qualifier
+\brief This boolean value marks if name qualification is required.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgMemberFunctionRefExp::SgMemberFunctionRefExp (const SgMemberFunctionRefExp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgMemberFunctionRefExp::SgMemberFunctionRefExp ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgMemberFunctionRefExp base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgMemberFunctionRefExp_create "Example:create an SgMemberFunctionRefExp object"
+*/
+
+/*!
+\fn SgMemberFunctionRefExp::~SgMemberFunctionRefExp()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+
+/*!
+\fn SgMemberFunctionRefExp::isSgMemberFunctionRefExp (SgNode *s)
+\brief Cast function (from derived class to SgMemberFunctionRefExp pointer).
+
+   This functions returns a SgMemberFunctionRefExp pointer for any input of a 
+pointer to an object derived from a SgMemberFunctionRefExp.
+
+\return Returns valid pointer to SgMemberFunctionRefExp if input is derived from a SgMemberFunctionRefExp.
+*/
+
+/*!
+\fn SgMemberFunctionRefExp::isSgMemberFunctionRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgMemberFunctionRefExp pointer).
+
+   This functions returns a SgMemberFunctionRefExp pointer for any input of a 
+pointer to an object derived from a SgMemberFunctionRefExp.
+
+\return Returns valid pointer to SgMemberFunctionRefExp if input is derived from a SgMemberFunctionRefExp.
+*/
+
+
+
+
+
+
+/*!
+\fn SgMemberFunctionRefExp::get_type() const
+\brief Get the type associated with this expression
+
+     Note that the return value is either:
+   -# SgFunctionType : normal function call
+   -# SgMemberFunctionType : normal member function call
+   -# SgTypedefType : in the case of a function call from a pointer
+
+   It should always be a vailid pointer.  These details are verified in the AST
+   Consistancy Tests.
+
+\return Returns SgType (but not any SgType).
+*/
+
+/*!
+\fn SgMemberFunctionRefExp::set_type()
+\brief Set the type associated with this expression
+
+   This is an internally called function, it sets up the type of the expression 
+based upon the types of the subexpressions (if any). Thus it takes no 
+arguments.
+
+\return Returns void
+*/
+

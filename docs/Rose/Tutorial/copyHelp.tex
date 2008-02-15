@@ -1,0 +1,131 @@
+\chapter{The Copy Mechanism}
+
+% TODO: sections on basic usage
+
+\section{Advanced Usage}
+
+The following sections describe some advanced usages of the copy
+mechanism, demonstrating its flexibility.  This is achieved by subclassing
+the {\tt SgCopyHelp} class.
+
+The method we need to override is called {\tt copyAst}.  This method
+is used by the copy mechanism to define the path of the traversal
+and consequently the structure of the created AST.  This is achieved
+by calling the {\tt copyAst} method for each attribute to be copied.
+If this method makes a copy of the attribute using its own {\tt copy}
+method, we achieve a deep copy via bottom-up traversal of the AST.
+This is essentially what {\tt SgTreeCopy} does (with the exception of
+types, which are shared pointers).
+
+\section{Variable Substitution}
+
+Say we want to create a version of a function where all instances of a
+particular variable are replaced with a given expression.  An example of
+an application of this is to a function containing a `for' loop such that
+the bounds of the loop are fixed, the goal being to allow for certain
+kinds of compiler optimization.
+
+We proceed by creating a new subtype of the {\tt SgCopyHelp}
+class, overriding the {\tt copyAst} method.  This method,
+when encountering a reference to the specified variable, will
+substitute it for a copy of the expression stored in its attribute.
+Figure~\ref{Tutorial:example_varSubstCopy} shows how to implement a
+translator based on this class.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/varSubstCopy.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/varSubstCopy.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code for variable-substitution copy class.}
+\label{Tutorial:example_varSubstCopy}
+\end{figure}
+
+Using the input program in Figure~\ref{Tutorial:exampleInputCode_varSubstCopy}
+the translator processes the code and generates the output in 
+Figure~\ref{Tutorial:exampleOutput_varSubstCopy}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_varSubstCopy.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_varSubstCopy.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to varSubstCopy.C}
+\label{Tutorial:exampleInputCode_varSubstCopy}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_varSubstCopy.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_varSubstCopy.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to varSubstCopy.C}
+\label{Tutorial:exampleOutput_varSubstCopy}
+\end{figure}
+
+% An example of how this class may be applied is shown in Figure~\ref{Tutorial:copyHelp_inputSgVarSubstCopy} where the function `exampleFunction' is duplicated to the new function `exampleFunction20' where all references to its first parameter are substituted for the integer value 20.  Figure~\ref{Tutorial:copyHelp_outputSgVarSubstCopy} 
+
+\section{Attributes}
+
+The copy mechanism supports three kinds of attributes during a traversal: inherited, synthesised and accumulator (similar to the standard traversal mechanisms within ROSE).  Figure~\ref{Tutorial:attributeCopyExamples} shows example source code for all three types.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/attributeCopyExamples.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/attributeCopyExamples.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code for variable-substitution copy class.}
+\label{Tutorial:attributeCopyExamples}
+\end{figure}

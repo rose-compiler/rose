@@ -1,0 +1,81 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPragmaDeclaration
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgPragmaDeclaration
+\brief This class represents the concept of a C Assembler statement (untested).
+
+\sa
+\ref SgPragmaDeclaration_usage  "Example of using a SgPragmaDeclaration object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPragmaDeclaration data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgPragmaDeclaration::p_expr_root
+\brief This pointer points to the assember expression. 
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPragmaDeclaration member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgPragmaDeclaration::SgPragmaDeclaration ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgPragmaDeclaration base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgPragmaDeclaration_create "Example:create an SgPragmaDeclaration object"
+*/
+
+/*!
+\fn SgPragmaDeclaration::~SgPragmaDeclaration()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgPragmaDeclaration::isSgPragmaDeclaration (SgNode *s)
+\brief Cast function (from derived class to SgPragmaDeclaration pointer).
+
+   This functions returns a SgPragmaDeclaration pointer for any input of a 
+pointer to an object derived from a SgPragmaDeclaration.
+
+\return Returns valid pointer to SgPragmaDeclaration if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgPragmaDeclaration::isSgPragmaDeclaration (const SgNode *s)
+\brief Cast function (from derived class to SgPragmaDeclaration pointer).
+
+   This functions returns a SgPragmaDeclaration pointer for any input of a 
+pointer to an object derived from a SgPragmaDeclaration.
+
+\return Returns valid pointer to SgPragmaDeclaration if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgPragmaDeclaration::get_expr() const
+\brief Returns pointer to SgExpression for asm statement.
+
+\return Returns pointer to SgExpression.
+*/
+
+/*!
+\fn SgPragmaDeclaration::set_expr(SgExpression* expr)
+\brief Access function for p_expr_root.
+
+\return Returns void.
+*/
+
+

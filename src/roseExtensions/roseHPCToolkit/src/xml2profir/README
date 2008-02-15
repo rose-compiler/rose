@@ -1,0 +1,42 @@
+*  Build HPCProfIR-to-SageIR translator.
+
+Finally, translate from HPCProfIR to the SageIR.
+
+The basic translation algorithm is as follows. Let TH be
+the HPCProfTree, and TS be the SageIR tree.
+
+	// Does a post-order traversal
+	// TH == profile data tree
+	// LS == list of statements in TS
+	Attach (n in TH, LS)
+		if n == nil then return
+		for c in Children(n) do
+			Attach (c, LS)
+
+		// Find all matching statements
+		L_match = Match (LS, firstLine(n), lastLine(n))
+
+		// Divide metric equally among all matching statements
+		for l in L_match do
+			Attr(l) = Metric(n) / |L_match|
+
+*  Propagate metrics to other scopes
+
+After attaching all metrics, can run an additional
+bottom-up traversal of TS to propagate metrics to
+higher-level scopes that do are unattributed.
+
+---------------------------------------------------------------------
+Completed
+---------------------------------------------------------------------
+
+*  Build metric map
+
+Need to construct an associative array that maps a metric's short
+name to it's native name.
+
+*  Build IR from XML tree
+
+Need to construct the HPCProfIR from the raw XML tree.
+
+# eof

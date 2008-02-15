@@ -1,0 +1,22 @@
+// Author: Markus Schordan, Vienna University of Technology, 2004.
+// $Id: README,v 1.2 2004/08/26 23:14:37 markus Exp $
+
+EXAMPLE: printVars
+
+This example demonstrates how to perform some simple operations on the
+ROSE AST using class 'AstSimpleProcessing' and how to visualize the
+AST using class 'AstDOTGeneration'.
+
+To compile 'printVars' type
+> make all
+
+To display the computed values of a C++ file as input type
+> printVars <filename>
+A file called <filename>.dot is generated.
+This is also executed as part of 'make check' using the file testInput1.C
+
+To visualize the AST for the example file 'testInput1.C' type
+> dot -Tps testInput1.C.dot > testInput1.ps
+> gv testInput1.ps
+
+

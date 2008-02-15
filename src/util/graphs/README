@@ -1,0 +1,11 @@
+This is a graph library from Qing Yi's work which is not 
+documented and many people have had trouble using.  Although
+used in Qing's work it is not clear if it should be used by 
+external users. 
+
+(DQ: 5/26/2007): These comments are time sensitive.
+   The subject of graph libraries for use in ROSE remains
+a subject under investigation.  Several users have used their
+own small graph libraries and they are included in ROSE.
+
+

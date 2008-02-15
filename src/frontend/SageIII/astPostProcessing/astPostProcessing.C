@@ -1,0 +1,328 @@
+
+#include "rose.h"
+
+// DQ (12/31/2005): This is OK if not declared in a header file
+using namespace std;
+
+// DQ (8/20/2005): Make this local so that it can't be called externally!
+void postProcessingSupport (SgNode* node);
+
+// DQ (5/22/2005): Added function with better name, since none of the fixes are really
+// temporary any more.
+void AstPostProcessing (SgNode* node)
+   {
+  // DQ (7/7/2005): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST post-processing:");
+
+  // DQ (3/17/2007): This should be empty
+     if (SgNode::get_globalMangledNameMap().size() != 0)
+        {
+          printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+          SgNode::clearGlobalMangledNameMap();
+        }
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+     switch (node->variantT())
+        {
+          case V_SgProject:
+             {
+               SgProject* project = isSgProject(node);
+               ROSE_ASSERT(project != NULL);
+
+               SgFilePtrList::iterator fileListIterator;
+               for (fileListIterator = project->get_fileList()->begin(); fileListIterator != project->get_fileList()->end(); fileListIterator++)
+                  {
+                 // iterate through the list of current files
+                    AstPostProcessing(*fileListIterator);
+                  }
+
+            // printf ("SgProject support not implemented in AstPostProcessing \n");
+            // ROSE_ASSERT(false);
+               break;
+             }
+
+          case V_SgDirectory:
+             {
+               SgDirectory* directory = isSgDirectory(node);
+               ROSE_ASSERT(directory != NULL);
+
+               printf ("SgDirectory support not implemented in AstPostProcessing \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          default:
+             {
+            // list general post-processing fixup here ...
+               postProcessingSupport (node);
+             }
+        }
+
+  // DQ (3/17/2007): Clear the static globalMangledNameMap, likely this is not enough and the mangled name map 
+  // should not be used while the names of scopes are being reset (done in the AST post-processing).
+     SgNode::clearGlobalMangledNameMap();
+   }
+
+// DQ (3/4/2007): part of tempoary support for debugging where a defining and nondefining declaration are the same
+// SgDeclarationStatement* saved_declaration;
+
+void postProcessingSupport (SgNode* node)
+   {
+  // DQ (5/24/2006): Added this test to figue out where Symbol parent pointers are being reset to NULL
+  // TestParentPointersOfSymbols::test();
+
+  // DQ (7/25/2005): It is presently an error to call this function with a SgProject 
+  // or SgDirectory, since there is no way to compute the SgFile from such IR nodes 
+  // (could be multiply defined).
+     ROSE_ASSERT(isSgProject(node) == NULL && isSgDirectory(node) == NULL);
+
+  // DQ (7/7/2005): Introduce tracking of performance of ROSE.
+  // TimingPerformance timer ("AST Fixup: time (sec) = ");
+
+     if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
+          cout << "/* AST Postprocessing started. */" << endl;
+
+     ROSE_ASSERT(node != NULL);
+
+  // DQ (7/19/2005): Moved to after parent pointer fixup!        
+  // subTemporaryAstFixes(node);
+
+  // DQ (3/11/2006): Fixup NULL pointers left by users when building the AST
+  // (note that the AST translation fixes these directly).  This step is
+  // provided as a way to make the AST build by users consistant with what 
+  // is built elsewhere within ROSE.
+     fixupNullPointersInAST(node);
+
+  // DQ (8/9/2005): Some function definitions in Boost are build without 
+  // a body (example in test2005_102.C, but it apears to work fine).
+     fixupFunctionDefinitions(node);
+
+  // DQ (8/10/2005): correct any template declarations mistakenly marked as compiler-generated
+     fixupTemplateDeclarations(node);
+
+  // Output progress comments for these relatively expensive operations on the AST
+     if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
+          cout << "/* AST Postprocessing reset parent pointers */" << endl;
+     
+     topLevelResetParentPointer (node);
+
+  // DQ (6/10/2007): This is called later, but call it now to reset the parents in SgTemplateInstantiationDecl
+  // This is required (I think) so that resetTemplateNames() can compute template argument name qualification correctly.
+  // See test2005_28.C for where this is required.
+     resetParentPointersInMemoryPool();
+
+  // Output progress comments for these relatively expensive operations on the AST
+     if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
+          cout << "/* AST Postprocessing reset parent pointers (done) */" << endl;
+
+  // DQ (7/19/2005): Moved to after parent pointer fixup!        
+  // subTemporaryAstFixes(node);
+     removeInitializedNamePtr(node);
+
+  // DQ (3/17/2007): This should be empty
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (12/1/2004): This should be done before the reset of template names (since that operation requires valid scopes!)
+  // DQ (11/29/2004): Added to support new explicit scope information on IR nodes
+  // initializeExplicitScopeData(node);
+     initializeExplicitScopes(node);
+
+  // DQ (5/28/2006): Fixup names in declarations that are inconsistant (e.g. where more than one non-defining declaration exists)
+     resetNamesInAST();
+
+  // DQ (3/17/2007): This should be empty
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // Output progress comments for these relatively expensive operations on the AST
+     if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
+          cout << "/* AST Postprocessing reset template names */" << endl;
+
+  // reset the names of template class declarations
+     resetTemplateNames(node);
+
+  // DQ (3/17/2007): This should be empty
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // Output progress comments for these relatively expensive operations on the AST
+     if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
+          cout << "/* AST Postprocessing reset template names (done) */" << endl;
+
+  // DQ (6/26/2007): Enum values used before they are defined in a class can have NULL declaration pointers.  This
+  // fixup handles this case and traverses just the SgEnumVal objects.
+     fixupEnumValues();
+
+  // DQ (3/20/2005): Fixup AST so that GNU g++ compile-able code will be generated
+     fixupInClassDataInitialization(node);
+
+  // DQ (3/24/2005): Fixup AST to generate code that works around GNU g++ bugs
+     fixupforGnuBackendCompiler(node);
+
+  // DQ (4/19/2005): fixup all definingDeclaration and NondefiningDeclaration pointers in SgDeclarationStatement IR nodes
+  // fixupDeclarations(node);
+
+  // DQ (5/20/2005): make the non-defining (forward) declarations added by EDG for static template 
+  // specializations added under the "--instantiation local" option match the defining declarations.
+     fixupStorageAccessOfForwardTemplateDeclarations(node);
+
+#if 0
+  // DQ (6/27/2005): fixup the defining and non-defining declarations referenced at each SgDeclarationStatement
+     fixupAstDefiningAndNondefiningDeclarations(node);
+#endif
+
+  // DQ (6/21/2005): This function now only marks the subtrees of all appropriate declarations as compiler generated.
+  // DQ (5/27/2005): mark all template instantiations (which we generate as template specializations) as compiler generated.
+  // This is required to make them pass the unparser and the phase where comments are attached.  Some fixup of filenames
+  // and line numbers might also be required.
+     fixupTemplateInstantiations(node);
+
+  // DQ (8/19/2005): Mark any template specialization (C++ specializations are template instantiations 
+  // that are explicit in the source code).  Such template specializations are marked for output only
+  // if they are present in the source file.  This detail could effect handling of header files later on.
+  // Have this phase preceed the markTemplateInstantiationsForOutput() since all specializations should 
+  // be searched for uses of (references to) instantiated template functions and member functions.
+     markTemplateSpecializationsForOutput(node);
+
+  // DQ (6/21/2005): This function marks template declarations for output by the unparser (it is part of a 
+  // fixed point iteration over the AST to force find all templates that are required (EDG at the moment 
+  // outputs only though template functions that are required, but this function solves the more general 
+  // problem of instantiation of both function and member function templates (and static data, later)).
+     markTemplateInstantiationsForOutput(node);
+
+  // DQ (3/17/2007): This should be empty
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (3/16/2006): fixup any newly added declarations (see if we can eliminate the first place where this is called, above)
+  // fixup all definingDeclaration and NondefiningDeclaration pointers in SgDeclarationStatement IR nodes
+     fixupDeclarations(node);
+
+  // DQ (3/17/2007): This should be empty
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (2/12/2006): Moved to trail marking templates (as a test)
+  // DQ (6/27/2005): fixup the defining and non-defining declarations referenced at each SgDeclarationStatement
+  // This is a more sophisticated fixup than that done by fixupDeclarations.
+     fixupAstDefiningAndNondefiningDeclarations(node);
+
+#if 0
+     ROSE_ASSERT(saved_declaration != NULL);
+     printf ("saved_declaration = %p saved_declaration->get_definingDeclaration() = %p saved_declaration->get_firstNondefiningDeclaration() = %p \n",
+          saved_declaration,saved_declaration->get_definingDeclaration(),saved_declaration->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(saved_declaration->get_definingDeclaration() != saved_declaration->get_firstNondefiningDeclaration());     
+#endif
+
+  // DQ (10/21/2007): Friend template functions were previously not properly marked which caused their generated template 
+  // symbols to be added to the wrong symbol tables.  This is a cause of numerous symbol table problems.
+     fixupFriendTemplateDeclarations();
+
+  // DQ (3/17/2007): This should be the last point at which the globalMangledNameMap is empty
+  // The fixupAstSymbolTables will generate calls to function types that will be placed into 
+  // the globalMangledNameMap.
+     ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (6/26/2005): The global function type symbol table should be rebuilt (since the names of templates 
+  // used in qualified names of types have been reset (in post processing).  Other local symbol tables should
+  // be initalized and constructed for any empty scopes (for consistancy, we want all scopes to have a valid 
+  // symbol table pointer).
+     fixupAstSymbolTables(node);
+
+  // DQ (3/17/2007): At this point the globalMangledNameMap has been used in the symbol table construction. OK.
+  // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (8/20/2005): Handle backend vendor specific template handling options 
+  // (e.g. g++ options: -fno-implicit-templates and -fno-implicit-inline-templates)
+     processTemplateHandlingOptions(node);
+
+  // DQ (5/22/2005): relocate compiler generated forward template instantiation declarations to appear 
+  // after the template declarations and before first use.
+  // relocateCompilerGeneratedTemplateInstantiationDeclarationsInAST(node);
+
+  // DQ (8/27/2005): This disables output of some template instantiations that would result in 
+  // "ambiguous template specialization" in g++ (version 3.3.x, 3.4.x, and 4.x).  See test2005_150.C 
+  // for more detail.
+     markOverloadedTemplateInstantiations(node);
+
+  // DQ (9/5/2005): Need to mark all nodes in any subtree marked as a transformation
+     markTransformationsForOutput(node);
+
+  // DQ (3/5/2006): Mark functions that are provided for backend compatability as compiler generated by ROSE
+#if 1
+     markBackendSpecificFunctionsAsCompilerGenerated(node);
+#else
+     printf ("Warning: Skipped marking of backend specific functions ... \n");
+#endif
+
+  // DQ (5/24/2006): Added this test to figure out where Symbol parent pointers are being reset to NULL
+  // TestParentPointersOfSymbols::test();
+
+  // DQ (5/24/2006): reset the remaining parents in IR nodes missed by the AST based traversals
+     resetParentPointersInMemoryPool();
+
+  // DQ (3/17/2007): This should be empty
+  // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (5/29/2006): Fixup types in declarations that are not shared (e.g. where more than one non-defining declaration exists)
+     resetTypesInAST();
+
+  // DQ (3/17/2007): This should be empty
+  // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+  // DQ (3/10/2007): fixup name of any template classes that have been copied incorrectly into SgInitializedName 
+  // list in base class constructor preinitialization lists (see test2004_156.C for an example).
+     resetContructorInitilizerLists();
+
+  // DQ (10/27/2007): Setup any endOfConstruct Sg_File_Info objects (report on where they occur)
+     fixupSourcePositionConstructs();
+
+  // DQ (1/19/2008): This can be called at nearly any point in the ast fixup.
+     markLhsValues(node);
+
+#if 0
+  // DQ (1/22/2008): Use this for the Fortran code to get more accurate source position information.
+
+  // DQ (4/16/2007): comment out to test how function declaration prototypes are reset or set wrong.
+  // DQ (11/1/2006): fixup source code position information for AST IR nodes.
+     fixupSourcePositionInformation(node);
+#endif
+
+#if 0
+  // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
+  // it will be called AFTER any transformations and immediately before code generation where it is 
+  // really required.  This part of a fix for Liao's outliner, but should be useful for numerous 
+  // transformations.
+  // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
+     if (SageInterface::is_Cxx_language() == true)
+        {
+       // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
+       // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
+          Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(node);
+
+       // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
+       // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
+          propagateHiddenListData(node);
+        }
+#endif
+
+  // DQ (11/24/2007): Support for Fortran resolution of array vs. function references.
+     if (SageInterface::is_Fortran_language() == true)
+        {
+       // I think this is not used since I can always figure out if something is an 
+       // array reference or a function call.
+          fixupFortranReferences(node);
+
+       // This is the most reliable way to introduce the Fortran "contains" statement.
+          insertFortranContainsStatement(node);
+        }
+
+  // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
+  // QY: check the isModified flag
+  // CheckIsModifiedFlagSupport(node); 
+     checkIsModifiedFlag(node);
+
+  // ROSE_ASSERT(saved_declaration->get_definingDeclaration() != saved_declaration->get_firstNondefiningDeclaration());     
+
+  // DQ (3/17/2007): This should be empty
+  // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+
+     if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
+        cout << "/* AST Postprocessing finished */" << endl;
+   }

@@ -1,0 +1,10 @@
+
+       // ### This code is not included in Grammar/Node.code
+
+       // We parse from a lower level grammar into a higher level grammar
+       // An element (or root of s subtree of elements) of a lower level
+       // grammar is also an element (or root of) a higher level grammar
+       // This text is located in parserPrototype.macro and is used only 
+       // for non-child terminals/nonterminals.
+       // friend $GRAMMAR_PREFIX_Node* $GRAMMAR_PREFIX_parse ( $PARENT_GRAMMARS_PREFIX_$CLASS_BASE_NAME* X );
+

@@ -1,0 +1,125 @@
+\chapter{Template Support}
+
+    This chapter is specific to demonstrating the C++ template support in ROSE. 
+{\em This section is not an introduction to the general subject of C++ templates.} 
+ROSE provides special handling for C++ templates because template instantiation 
+must be controlled by the compiler.
+
+   Templates that require instantiation are instantiated by ROSE and 
+can be seen in the traversal of the AST (and transformed).  Any templates
+that can be instantiated by the backend compiler {\bf and} {\em are not transformed}
+are not output within the code generation phase.
+
+\fixme{Provide a list of when templates are generated internally in the AST 
+and when template instantiations are output.}
+
+\section{Example Template Code \#1}
+     
+   This section presents figure~\ref{Tutorial:exampleTemplate1}, a simple 
+C++ source code using a template. It is used as a basis for showing how 
+template instantiations are handled within ROSE.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_templateExample1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_templateExample1.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of a C++ template.}
+\label{Tutorial:exampleTemplate1}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_templateExample1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_templateExample1.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code after processing using identityTranslator 
+(shown in figure~\ref{Tutorial:exampleIdentityTranslator}).}
+\label{Tutorial:exampleTemplate1}
+\end{figure}
+
+
+
+\section{Example Template Code \#2}
+     
+   This section presents figure~\ref{Tutorial:exampleTemplate1}, a simple 
+C++ source code using a template function. It is used as a basis for showing how 
+template instantiations are handled within ROSE.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_templateExample2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_templateExample2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of a C++ template.}
+\label{Tutorial:exampleTemplate2}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_templateExample2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_templateExample2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code after processing using identityTranslator 
+(shown in figure~\ref{Tutorial:exampleIdentityTranslator}).}
+\label{Tutorial:exampleTemplate1}
+\end{figure}
+
+
+

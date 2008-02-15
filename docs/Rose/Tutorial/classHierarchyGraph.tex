@@ -1,0 +1,72 @@
+\chapter{Generating the Call Graph (CG)}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleBuildCH}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/classHierarchyGraph.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/classHierarchyGraph.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing visualization of class hierarchy graph.}
+\end{figure}
+
+For C++, because of multiple inheritance, a class hierarchy graph is a directed graph 
+with pointers from a class to a superclass. A superclass is a class which does not inherit
+from any other class. A class may inherit from a superclass by inheriting from another
+class which does rather than by a direct inheritance.
+
+Figure~\ref{Tutorial:exampleBuildCH} shows the code required to generate
+the class hierarchy graph for each class of an application.  Using the input code shown in
+figure~\ref{Tutorial:exampleInputCode_BuildCH} the first function's call graph is
+shown in figure~\ref{Tutorial:exampleBuildCHGraph}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleInputCode_BuildCH}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_ClassHierarchyGraph.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_ClassHierarchyGraph.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to build class hierarchy graph.}
+\end{figure}
+
+
+\begin{figure}
+% \centerline{\epsfig{file=\TutorialExampleBuildDirectory/callGraph.ps,
+%                    height=1.3\linewidth,width=1.0\linewidth,angle=0}}
+\includegraphics[scale=0.7]{\TutorialExampleBuildDirectory/classHierarchyGraph}
+\caption{Call graph for function in input code file: inputCode\_ClassHierarchyGraph.C.}
+\label{Tutorial:exampleBuildCHGraph}
+\end{figure}
+
+   Figure~\ref{Tutorial:exampleBuildCHGraph} shows the class hierarchy graph for the
+classes in the input code in figure~\ref{Tutorial:exampleInputCode_BuildCH}.
+
+
+

@@ -1,0 +1,78 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionType
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgFunctionType
+\brief This class represents a type for all functions.
+
+   Note that covariant return types of virtual functions are permited in C++,
+thus this class has explicit support for the function return type and the 
+original function's return type.
+
+\internal This type is derived from to build member function types
+    (SgMemberFunctionType), partial function types (SgPartialFunctionType),
+    and also (SgPartialFunctionModifierType and SgUnknownMemberFunctionType).
+
+\sa
+\ref SgFunctionType_usage  "Example of using a SgFunctionType object"
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionType data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgBasicBlock::p_argument_list
+\brief This points to the SgTypes used in the function's parameter list.
+*/
+/*! \var SgBasicBlock::p_orig_return_type
+\brief This points to the SgType of the original function type's return type.
+*/
+/*! \var SgBasicBlock::p_return_type
+\brief This points to the SgType of the current function type's return type.
+*/
+/*! \var SgBasicBlock::p_has_ellipses
+\brief This boolean variable is true if the function use the "..." type 
+   (support for variable number of parameters).
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionType member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgFunctionType::SgFunctionType()
+\brief This is the constructor.
+
+   This constructor builds the SgFunctionType base class.
+
+\sa 
+\ref SgFunctionType_create "Example:create an SgFunctionType object"
+*/
+
+/*!
+\fn SgFunctionType::~SgFunctionType()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgFunctionType::isSgFunctionType (SgNode *s)
+\brief Cast function (from derived class to SgFunctionType pointer).
+
+   This functions returns a SgFunctionType pointer for any input of a 
+pointer to an object derived from a SgFunctionType.
+
+\return Returns valid pointer to SgFunctionType if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgFunctionType::isSgFunctionType (const SgNode *s)
+\brief Cast function (from derived class to SgFunctionType pointer).
+
+   This functions returns a SgFunctionType pointer for any input of a 
+pointer to an object derived from a SgFunctionType.
+
+\return Returns valid pointer to SgFunctionType if input is derived from a SgFunctionType node.
+*/
+

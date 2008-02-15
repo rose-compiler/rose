@@ -1,0 +1,61 @@
+
+\begin {figure*}
+\beginfig
+{\footnotesize %\fontfamily{pcr} \selectfont
+\begin {minipage}{.2\textwidth}
+\begin {tabbing}
+=\==\==\==\==\==\==\==\kill
+\> for ($k = 0; k <= n - 2; k+=1$) \\
+\> \{ \\
+\>\>  for ($i = k + 1; i <= n-1; i+=1$) \\
+$s_1$:\>\>\>   $a[k][i] = a[k][i] / a[k][k]$; \\
+\>\>   for ($j = k+1; j <= n-1; j+=1$) \\
+\>\>\>     for ($i = k + 1; i <= n-1; i+=1$) \\
+$s_2$:\>\>\>\>    $a[j][i] = a[j][i] - a[j][k] * a[k][i]$; \\
+\> \}
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{.2\textwidth}
+\begin {tabbing}
+=\==\==\==\==\==\==\==\kill
+\>  for ($j = 0; j <= n-1; j += 1$)  \\
+\> \{ \\
+\>\>  for ($k = 0; k <= j-1; k += 1$) \\
+\>\>\>  for ($i = k+1; i <= n-1; i += 1$) \\
+$s_2$:\>\>\>\>   $a[j][i] = a[j][i] - a[j][k] * a[k][i]$; \\
+\>\>  for ($i = j+1; i <= n-1; i += 1$) \\
+$s_1$\>\>\>     $a[j][i] = a[j][i] / a[j][j]$; \\
+\> \}
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{.2\textwidth}
+\begin {tabbing}
+=\==\==\==\==\==\==\==\kill
+\> for ($x_k = 0; x_k <= n-2; x_k += b$) \\
+\>\>  for ($j = x_k; j <= n-1; j += 1$) \\
+\>\> \{ \\
+\>\>\>  for ($k = x_k; k <= min(x_k+b-1,j-1); k += 1$) \\
+\>\>\>\>  for ($i = k+1; i <= n-1; i += 1$) \\
+$s_2$:\>\>\>\>\>   $a[j][i] = a[j][i] - a[j][k] * a[k][i]$; \\
+\>\>\>  for ($i = j+1; i <= n-1; i += 1$) \\
+$s_1$:\>\>\>\>     $a[j][i] = a[j][i] / a[j][j]$; \\
+\>\> \}
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{\textwidth}
+\vspace{.2in}
+\hspace{.08\textwidth} (a) original code \hspace{.1\textwidth}
+(b) after loop interchange
+\hspace{.1\textwidth} (c) after blocking row dimension
+\end {minipage}
+}
+\endfig
+\caption {Optimizing non-pivoting LU. In (b),
+the $k(s_1)$ loop is fused with the $j(s_2)$ loop
+and the fused loop is then put at the outermost position, 
+achieving a combined interchange and fusion transformation;
+the code in (c) achieves blocking in the row dimension of the matrix
+through combined interchange, fusion and tiling transformations.}
+\label {fig-lu}
+\end {figure*}
+

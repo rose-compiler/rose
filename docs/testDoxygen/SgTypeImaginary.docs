@@ -1,0 +1,62 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeImaginary
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgTypeImaginary
+\brief This class represents a C99 complex type.
+
+   This type can be used in only C and C99 codes, the syntax is "_Imaginary".
+This is added to support C and C99 complex support.
+
+\sa
+\ref SgTypeImaginary_usage  "Example of using a SgTypeImaginary object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeImaginary data members
+/////////////////////////////////////////////////////////////////////////
+
+/* Not variables here */
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeImaginary member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTypeImaginary::SgTypeImaginary()
+\brief This is the constructor.
+
+   This constructor builds the SgTypeImaginary base class.
+
+\sa 
+\ref SgTypeImaginary_create "Example:create an SgTypeImaginary object"
+*/
+
+/*!
+\fn SgTypeImaginary::~SgTypeImaginary()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgTypeImaginary::isSgTypeImaginary (SgNode *s)
+\brief Cast function (from derived class to SgTypeImaginary pointer).
+
+   This functions returns a SgTypeImaginary pointer for any input of a 
+pointer to an object derived from a SgTypeImaginary.
+
+\return Returns valid pointer to SgTypeImaginary if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgTypeImaginary::isSgTypeImaginary (const SgNode *s)
+\brief Cast function (from derived class to SgTypeImaginary pointer).
+
+   This functions returns a SgTypeImaginary pointer for any input of a 
+pointer to an object derived from a SgTypeImaginary.
+
+\return Returns valid pointer to SgTypeImaginary if input is derived from a SgTypeImaginary node.
+*/
+

@@ -1,0 +1,7 @@
+ /*!
+     \defgroup ROSE_MidEndGroup ROSE Midend
+     \brief The ROSE mid-end section contains tools for the processing and transformation of the AST.
+
+
+  */
+

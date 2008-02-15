@@ -1,0 +1,12 @@
+{
+   alloc_shareable_constant__value
+   Memcheck:Value4
+   fun:_Z24alloc_shareable_constantP10a_constant
+}
+
+{
+   alloc_shareable_constant__jump
+   Memcheck:Cond
+   fun:_Z24alloc_shareable_constantP10a_constant
+}
+

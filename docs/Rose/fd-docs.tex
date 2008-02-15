@@ -1,0 +1,73 @@
+\documentclass{article}
+\usepackage{listings}
+
+\begin{document}
+\author{Jeremiah Willcock}
+\title{Finite differencing documentation}
+\maketitle
+
+The implementation of the finite differencing optimization in ROSE is in
+\texttt{src/midend/programTransformation/finiteDifferencing}.  Finite
+differencing is an optimization which uses relationships between values of
+the same expression at different program points to simplify computations of
+the expression~\cite{paige_koenig}.  In particular, for a given expression,
+it adds a cache variable to contain the value of the expression.  Every use
+of the expression is replaced by a reference to the cache variable, and
+every modification of the value of the expression is prefixed by a
+corresponding update to the cache variable.  This optimization is somewhat
+stronger than partial redundancy elimination, and so it can add extra
+computations of the expression.  Beyond this removal of redundant
+computations, however, is the main goal of finite differencing: simplifying
+the updates to the cache variable based on knowledge of its previous value.
+In particular, finite differencing's goal is to be a generalized form of
+strength reduction.
+
+The implementation of finite differencing in ROSE is in direct
+correspondence to the algorithm given above.  For a given expression, a
+cache variable is created, and all uses of the expression are replaced by
+the cache variable.  All updates to variables used in the expression are
+also found.  Currently these updates must be assignments (including
+combined assignment operators such as \lstinline{+=}) or the \lstinline{++}
+or \lstinline{--} operators.  For each update, the value of the expression
+after the update is expressed using the state of the program before the
+update (for example, \lstinline{n * x} after the update \lstinline{x = x + 3}
+is expressed as \lstinline{n * (x + 3)} using the pre-update value of
+\lstinline{x}).  Then, a set of rewrite rules is used to attempt to
+simplify the update.  For example, \lstinline{cache = n * (x + 3}) is rewritten to
+\lstinline{cache = n * x + n * 3}.  Since the value of the cache variable before
+the update is known to be correct, the example can be rewritten further to
+\lstinline{cache = cache + n * 3} or \lstinline{cache += n * 3}.  This
+set of rewrites has changed a multiplication by a variable into a
+multiplication by a constant and an addition, which are simpler operations.
+
+A simple profitability analysis which applies finite differencing only as
+strength reduction for multiplications in simple loops is also provided,
+and this is the main wrapper used for finite differencing in practice.
+However, the core algorithm is extensible to encompass arbitrary uses of
+finite differencing, include its use on higher-level, user-defined
+abstractions.
+
+\section*{Rewrite system used for finite differencing}
+
+As stated earlier, finite differencing uses a set of rewrite rules to
+simplify expressions algebraically.  A custom rewrite engine was developed
+for this, but a specialized language such as Stratego could be used in the
+future.  In this system, a rewrite rule is expressed as an object which
+takes a Sage node as input and possibly rewrites it.  This object returns
+\lstinline{true} if it could rewrite the node and \lstinline{false} if it
+could not.  The node must be updated in place.  The rewrite rule object
+does not need to search for nested redexes (expressions to be rewritten),
+since this is handled at a higher level of the rewrite system.  The
+standard kind of rewrite rule used for algebraic rewriting is a
+pattern-action rule, which is an implementation of a rewrite rule which
+accepts two patterns.  The first pattern (the match pattern) is matched to
+the input node, and a set of variable bindings is produced if it matches.
+These variable bindings are then substituted into the second pattern (the
+action) to produce the result of the rewrite rule.  This is a relatively
+simple system, and it is likely to be replaced by something more
+sophisticated in the future.
+
+\bibliography{docs}
+\bibliographystyle{abbrv}
+
+\end{document}

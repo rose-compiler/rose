@@ -1,0 +1,52 @@
+//                                                              -*- C++ -*-
+// include <sg_root.h>
+// include <iostream.h>
+
+#if 0
+
+// DQ (5/11/2006): I think this ca be deleted (old code)
+
+#define NULL_FILE ((Sg_File_Info*) NULL)
+
+class Sg_File_Info 
+   {
+   /*
+    * This class represents and manipulates file information, for
+    * example file names, line numbers, pragmas, column positions etc.
+    */
+
+     public:
+       // void register_node(SgLocatedNode* node){} /* register interest */
+       // void deregister_node(SgLocatedNode* node){} 
+
+       // Sg_File_Info();
+          Sg_File_Info ( const char* filename = NULL , int line = 0 , int col = 0 );
+
+          void set_line(int line) { p_line = line; }
+          void set_filename(char* filename) { p_filename = filename; }
+
+       // void output(ostream& os);
+
+          char* get_filename() { return p_filename; }
+          int   get_line() { return p_line; }
+          int   get_col() { return p_col; }
+
+       // functions added by Dan Quinlan (suggested by Gary Lee)
+          void set_col( int n ) { p_col = n; }
+          int getCurrentLine () const { return cur_line; }
+          char* getCurrentFilename () const { return cur_file; }
+
+     private:
+          char* p_filename;
+          int   p_line;
+          int   p_col;
+
+          static int cur_line;
+          static char* cur_file;
+   };
+
+class SgNode_CopyHelp
+{
+};
+
+#endif

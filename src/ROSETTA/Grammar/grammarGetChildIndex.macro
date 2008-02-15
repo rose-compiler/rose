@@ -1,0 +1,9 @@
+
+long
+$CLASSNAME::getChildIndex( SgNode* childNode ) const
+   {
+  // ------------ checking pointers of $CLASSNAME -------------------
+     ROSE_ASSERT ( p_freepointer == AST_FileIO::IS_VALID_POINTER() );
+     $CODE_STRING
+   }
+

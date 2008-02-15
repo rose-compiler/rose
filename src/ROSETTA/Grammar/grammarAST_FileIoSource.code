@@ -1,0 +1,746 @@
+
+#include "sage3.h"
+
+#include "AST_FILE_IO.h"
+#include "StorageClasses.h"
+#include <sstream>
+#include <string>
+
+using namespace std;
+
+namespace AST_FileIO
+   {
+     class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
+        {
+          public:
+               int counter;
+               void visit ( SgNode* node );
+        };
+
+     void MemoryCheckingTraversalForAstFileIO::visit ( SgNode* node )
+        {
+          ROSE_ASSERT(node != NULL);
+       // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
+          ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+          node->checkDataMemberPointersIfInMemoryPool();
+        }
+    }
+
+/* JH(01/17/2006) Initializing the static data members
+*/
+AstData*
+AST_FILE_IO :: actualRebuildAst;
+
+std::vector<AstData*>
+AST_FILE_IO :: vectorOfASTs;
+
+unsigned long 
+AST_FILE_IO :: listOfMemoryPoolSizes [ totalNumberOfIRNodes + 1] ;
+
+bool 
+AST_FILE_IO :: freepointersOfCurrentAstAreSetToGlobalIndices;
+
+std::map<std::string, AST_FILE_IO::CONSTRUCTOR > 
+AST_FILE_IO::registeredAttributes;
+
+
+/* JH (10/25/2005): Static method that computes the memory pool sizes and stores them incrementally
+   in listOfAccumulatedPoolSizes at position [ V_$CLASSNAME + 1 ]. Reason for this strange issue; no global
+   index must be 0, since we want to store NULL pointers as 0 ( means, we will not manipulate them ).
+   Therefore, we introduce 'listOfAccumulatedPoolSizes [ 0 ] =  1', in order to calculate the index of an
+   node by computing the index in its memory pool and then adding the getAccumulated sizes of the previous
+   memory pools, already stored in listOfAccumulatedPoolSizes [ V_$CLASSNAME ].
+*/
+
+void 
+AST_FILE_IO :: startUp( SgProject* root )
+   {
+   /* Our array containing the total memory pool sizes starts at startingIndex. This is the first multiply of 100
+      that is greater than the indices used internally. We sorte the the memory pool size at
+      position [ V_$CLASSNAME + 1 ]. Concurrently, we allocate the appropriate STORAGE_class_list arrays.
+      If the corresponding memory pool is empty, we set the pointer to NULL!
+  */
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::startUp():");
+ 
+     assert ( vectorOfASTs.empty() == true );
+     assert ( root != NULL );
+
+#if FILE_IO_EXTRA_CHECK
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::startUp() FILE_IO_EXTRA_CHECK:");
+
+     // std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+     memoryCheckingTraversal.traverseMemoryPool();
+     // std::cout << "  done ! " << std::endl;
+     }
+#endif
+
+  // JH: the global index counting starts at index 1, because we want to store NULL pointers as 0!
+     unsigned long globalIndexCounter = 1;
+
+     $REPLACE_STARTUP
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::startUp() Build contiguious storage:");
+
+     actualRebuildAst = new AstData(root);
+     vectorOfASTs.push_back( actualRebuildAst );
+
+     actualRebuildAst->listOfAccumulatedPoolSizes[0] = listOfMemoryPoolSizes[0];
+     for (int i = 0; i < totalNumberOfIRNodes ; ++i )
+        {
+          actualRebuildAst->listOfAccumulatedPoolSizes[i+1] = listOfMemoryPoolSizes[i+1];
+          listOfMemoryPoolSizes[i] = actualRebuildAst->listOfAccumulatedPoolSizes[i+1] - actualRebuildAst->listOfAccumulatedPoolSizes[i];
+        }
+     
+     freepointersOfCurrentAstAreSetToGlobalIndices = true;
+    
+     REGISTER_ATTRIBUTE_FOR_FILE_IO(AstAttribute) ;
+     }
+
+   }
+
+
+unsigned long
+AST_FILE_IO :: getSizeOfMemoryPool( const int position )
+   {
+   /* JH (01/03/2006): method returns the accumulated pool sizes of the pools that are
+      previous to V_position -> i.e. the SgVariant of an IRNode class
+   */
+      return listOfMemoryPoolSizes [ position ];
+   }
+
+
+unsigned long
+AST_FILE_IO :: getSizeOfMemoryPoolUpToAst( AstData *astInPool, const int position )
+   {
+   /* JH (01/03/2006): method returns the accumulated pool sizes of the pools that are
+      previous to V_position -> i.e. the SgVariant of an IRNode class
+   */
+      unsigned long memoryPoolSize = 0;
+      for (int i=0;i < astInPool->get_AstIndex(); ++i)
+          {
+            memoryPoolSize += vectorOfASTs[i]->getMemoryPoolSize(position);
+          }
+      return memoryPoolSize;
+   }
+
+unsigned long
+AST_FILE_IO :: getAccumulatedPoolSizeOfNewAst( const int position )
+   {
+   /* JH (01/03/2006): method returns the accumulated pool sizes of the pools that are
+      previous to V_position -> i.e. the SgVariant of an IRNode class
+   */
+      return actualRebuildAst->getNumberOfAccumulatedNodes ( position ) ;
+   }
+
+
+unsigned long
+AST_FILE_IO :: getAccumulatedPoolSizeOfAst( AstData *astInPool, const int position )
+   {
+   /* JH (01/03/2006): method returns the accumulated pool sizes of the pools that are
+      previous to V_position -> i.e. the SgVariant of an IRNode class
+   */
+      return astInPool->getNumberOfAccumulatedNodes ( position ) ;
+   }
+
+
+unsigned long
+AST_FILE_IO :: getPoolSizeOfNewAst( const int position )
+   {
+   /* JH (01/03/2006): method returns the accumulated pool sizes of the pools that are
+      previous to V_position -> i.e. the SgVariant of an IRNode class
+   */
+      return actualRebuildAst->getMemoryPoolSize ( position ) ;
+   }
+
+
+unsigned long 
+AST_FILE_IO :: getTotalNumberOfNodesOfAstInMemoryPool ( )
+   {
+   // JH (01/03/2006): returning the sum of all pool sizes; this is used for checking only ...
+      return listOfMemoryPoolSizes [ totalNumberOfIRNodes ] ; 
+   }
+
+
+unsigned long 
+AST_FILE_IO :: getTotalNumberOfNodesOfNewAst ( )
+   {
+   // JH (01/03/2006): returning the sum of all pool sizes; this is used for checking only ...
+      assert (actualRebuildAst != NULL);
+      return actualRebuildAst->getTotalNumberOfASTIRNodes();
+   }
+
+
+
+unsigned long 
+AST_FILE_IO :: linearSearch( unsigned long globalIndex ) 
+   {
+   /* JH (01/03/2006): linearSearch. This easy implementation just looks at the first index, where the
+      getAccumulated pool sizes exceed index.
+   */
+#if FILE_IO_EXTRA_CHECK 
+      // assert ( 0 <= globalIndex ) ;
+      assert ( globalIndex < actualRebuildAst->getTotalNumberOfASTIRNodes() ) ;
+#endif
+      unsigned int actualIRNodeType = 1;
+      while ( actualIRNodeType  < actualRebuildAst->getTotalNumberOfASTIRNodes() )
+         {
+           if ( actualRebuildAst->getNumberOfAccumulatedNodes (actualIRNodeType) <= globalIndex && globalIndex < actualRebuildAst->getNumberOfAccumulatedNodes (actualIRNodeType + 1 ) ) 
+              { 
+                break ; 
+              }
+         } 
+#if FILE_IO_EXTRA_CHECK
+      assert ( 0 < actualIRNodeType ) ;
+      assert ( actualIRNodeType < actualRebuildAst->getTotalNumberOfASTIRNodes() ) ;
+#endif
+      return actualIRNodeType;
+   }
+
+                                                                                                                                                                                                                          
+                                                                                                                                                                                                                          
+unsigned long 
+AST_FILE_IO :: binarySearch( unsigned long globalIndex, int start , int end )
+   {
+   /* JH (01/03/2006): binarySearch: find the SgVariant that corresponds to the index contained in
+      the pointer. Therefore, we use the accumulatedPoolSizesOfNewAst and check the ranges
+   */
+      if ( end - start <= 1 )
+         {
+           if ( actualRebuildAst->getNumberOfAccumulatedNodes (start) <= globalIndex && globalIndex < actualRebuildAst->getNumberOfAccumulatedNodes (end) ) 
+              {
+                return start; 
+              }
+           else
+              {
+                return end;
+              }
+         }
+      int middle = ( end + start ) / 2 ;
+      if (  actualRebuildAst->getNumberOfAccumulatedNodes (middle ) <= globalIndex )
+         {
+           return binarySearch ( globalIndex , middle , end ) ;
+         }
+      else
+         {
+           return binarySearch ( globalIndex, start , middle ) ;
+         }
+   }
+
+void
+AST_FILE_IO :: compressAstInMemoryPool ( ) 
+   {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::compressAstInMemoryPool():");
+ 
+     assert ( freepointersOfCurrentAstAreSetToGlobalIndices == true );
+     assert ( 0 < getTotalNumberOfNodesOfAstInMemoryPool() );
+   /* JH (01/03/2006): prepareMemoryPoolWise: method that traverses the storage pools.
+      1. For each IRNodesStorageClass the pickOutIRNodeData is called
+      2. The static data of the EasyStorage classes is arranged, in order that all static data (of a type) is
+         contained in one memory block
+      3. For each IRNodesStorageClass the rebuildIRNode is called
+      4. The static data of the EasyStorage classes is deleted
+   */
+
+      unsigned long sizeOfActualPool = 0 ; 
+
+$REPLACE_COMPRESSASTINMEMEORYPOOL
+
+#if FILE_IO_EXTRA_CHECK
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::compressAstInMemoryPool() FILE_IO_EXTRA_CHECK:");
+ 
+     for ( int i = 0; i < totalNumberOfIRNodes; ++i)
+        {
+          listOfMemoryPoolSizes[i] += getPoolSizeOfNewAst(i);
+        }
+     listOfMemoryPoolSizes[totalNumberOfIRNodes] += getTotalNumberOfNodesOfNewAst();
+     // std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+     memoryCheckingTraversal.traverseMemoryPool();
+     // std::cout << "  done ! " << std::endl;
+#endif
+
+   }
+
+
+void
+AST_FILE_IO :: resetValidAstAfterWriting ( )
+   {
+#if 0
+$REPLACE_RESETVALIDASTAFTERWRITING
+#endif
+     freepointersOfCurrentAstAreSetToGlobalIndices = false;
+   }
+
+
+bool
+AST_FILE_IO :: areFreepointersContainingGlobalIndices ( )
+   {
+      return freepointersOfCurrentAstAreSetToGlobalIndices;
+   }
+
+
+
+/* JH (01/03/2006) manipulatePointerDataMembers: check if the pointer points to a valid SgNode.
+   First check, if the pointer is a NILL pointer. If so, do nothing. Otherwise:
+   * if yes, call the appropriate virual function to receive the global index. That is stored
+     in the pointer again.
+   * if no, we have somehow a pointer that is not valid. Thus, we look, if the pointer is in any
+     memory pools. If so, we get its global index an store it, but print a warning. If not, we
+     break with an assert.
+*/
+unsigned long
+AST_FILE_IO :: getGlobalIndexFromSgClassPointer ( SgNode* pointer )
+  {
+     unsigned long globalIndex = 0;
+     if ( pointer != NULL )
+        {
+#if FILE_IO_EXTRA_CHECK
+          assert ( freepointersOfCurrentAstAreSetToGlobalIndices == true );
+          assert ( pointer->p_freepointer != AST_FileIO::IS_VALID_POINTER() );
+#endif
+          globalIndex = (unsigned long) (pointer->p_freepointer) ;
+#if FILE_IO_EXTRA_CHECK
+          assert (  0 < globalIndex );
+          assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
+          assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
+#endif
+        }
+     return globalIndex;
+   }
+
+
+
+
+/* JH (01/03/2006) remanipulatePointerDataMembers: check if the index stored in the pointer is
+   lesss than 100, then we have one of the operate types or an builtin type. Otherwise,
+   we get the pointer after computing the type od memory pool, that contains the pointer.
+*/
+SgNode*
+AST_FILE_IO :: getSgClassPointerFromGlobalIndex ( unsigned long globalIndex )
+  {
+#if FILE_IO_EXTRA_CHECK
+     assert ( freepointersOfCurrentAstAreSetToGlobalIndices == false );
+  // std::cout << globalIndex << " " << getTotalNumberOfNodesOfAstInMemoryPool() << " " << getTotalNumberOfNodesOfNewAst( ) << std::endl;
+     assert ( globalIndex < getTotalNumberOfNodesOfAstInMemoryPool() + getTotalNumberOfNodesOfNewAst( ));
+#endif
+
+     SgNode* returnPointer = NULL;
+
+$REPLACE_GETSGPOINTER
+
+     return returnPointer;
+   }
+
+
+
+/* JH (01/03/2006) This mehtods steps through all memory pools and deletes all data contained in
+   the pools, to prepare the base for starting the memory extension for rebuilding the AST.
+*/
+void
+AST_FILE_IO :: clearAllMemoryPools ( )
+  {
+    freepointersOfCurrentAstAreSetToGlobalIndices = false;
+ // JH (08/08/2006) calling delete on the roots of the stored ASTs, in order to have 
+ // empty memory pools afterwards
+    for (unsigned long i = 0; i < vectorOfASTs.size(); ++i)
+       {
+         delete (vectorOfASTs[i]->getRootOfAst());
+       }
+ // JH (08/08/2006) the new version of clear memory pools has nothing to delete anymore, 
+ // but still sets the freepointers to have a ordered linked list - maybe this method 
+ // should now be renamed  ...
+
+$REPLACE_CLEARMEMORYPOOLS
+
+     
+   /* JH (02/03/2006) since the memory pool contain no data anymore, we reset the 
+      contents of the listOfMemoryPoolSizes to 0!
+   */
+     for (int i= 0; i < totalNumberOfIRNodes + 1; ++i)
+        {
+          listOfMemoryPoolSizes[i] = 0;
+        }
+   /* JH (03/21/2006) additionally, we need a method, that resets the static 
+      data pointers to NULL!
+   */
+     deleteStaticData();
+     deleteStoredAsts();
+     return;
+   }
+
+void
+AST_FILE_IO :: deleteStaticData ( )
+  {
+$REPLACE_DELETESTATICDATA
+
+   /* JH (02/03/2006) since the memory pool contain no data anymore, we reset the 
+      contents of the listOfMemoryPoolSizes to 0!
+   */
+     return;
+   }
+
+/* JH (01/03/2006) This mehtods steps through all memory pools and extends it to that amount it 
+   will have after the AST was rebuilt. Thereby, we can set the pointers, even if there is no 
+   valid data at the address they are pointing to. But it will be! 
+*/
+void
+AST_FILE_IO :: extendMemoryPoolsForRebuildingAST (  )
+   {
+     assert ( freepointersOfCurrentAstAreSetToGlobalIndices == false );
+     assert ( 0 < getTotalNumberOfNodesOfNewAst( ) );
+
+$REPLACE_EXTENDMEMORYPOOLS
+  
+     return;
+   }
+
+
+int 
+AST_FILE_IO::getNumberOfAsts ()
+   {
+     return vectorOfASTs.size();
+   }
+
+
+void
+AST_FILE_IO::addNewAst (AstData* newAst)
+   {
+     vectorOfASTs.push_back(newAst);
+     actualRebuildAst = newAst;
+     return;
+   }
+
+
+void
+AST_FILE_IO::printFileMaps ()
+   {
+      std::map<int,std::string> :: iterator Iter1 = Sg_File_Info::p_fileidtoname_map.begin();
+      for ( ; Iter1 != Sg_File_Info::p_fileidtoname_map.end(); ++Iter1)
+         {
+           std::cout << Iter1->first << " " << Iter1->second << std::endl;
+         }
+      std::map<std::string,int> :: iterator Iter2 = Sg_File_Info::p_nametofileid_map.begin();
+      for ( ; Iter2 != Sg_File_Info::p_nametofileid_map.end(); ++Iter2)
+         {
+           std::cout << Iter2->first << " " << Iter2->second << std::endl;
+         }
+   }
+
+
+
+void
+AST_FILE_IO::deleteStoredAsts ()
+   {
+     std::vector<AstData*>::iterator astIterator = vectorOfASTs.begin(); 
+     for ( ; astIterator != vectorOfASTs.end(); ++astIterator)
+         {
+           delete (*astIterator);
+         }
+     vectorOfASTs.clear();
+     return;
+   }
+
+
+
+void
+AST_FILE_IO::setStaticDataOfAst (AstData *astInPool)
+   {
+     assert (astInPool->get_AstIndex() < (int)vectorOfASTs.size());
+     astInPool->setStaticDataMembersOfIRNodes();
+     return;
+   }
+
+
+
+
+void 
+AST_FILE_IO::printListOfPoolSizes ()
+   {
+$REPLACE_PRINTLISTOFPOOLSIZES
+     std::cout << " Total number of IR nodes in contained in the memory pools: "  
+               << listOfMemoryPoolSizes[totalNumberOfIRNodes] << std::endl << std::endl;
+     return;
+   }
+
+
+void 
+AST_FILE_IO::printListOfPoolSizesOfAst (int index)
+   {
+$REPLACE_PRINTSPECIFICLISTOFPOOLSIZESOFAST
+     std::cout << " Total number of IR nodes in contained in the memory pools: "  
+               << vectorOfASTs[index]->getTotalNumberOfASTIRNodes() << std::endl << std::endl;
+     return;
+   }
+
+
+AstData* 
+AST_FILE_IO::getAst (int index)
+   {
+     assert( index <= (int)vectorOfASTs.size() );
+     return vectorOfASTs[index];
+   }
+
+
+AstData* 
+AST_FILE_IO::getAstWithRoot (SgProject* root)
+   {
+     std::vector<AstSpecificDataManagingClass*>:: iterator astIter = vectorOfASTs.begin();
+     while ( astIter != vectorOfASTs.end() && (*astIter)->getRootOfAst() != root )
+        {
+          astIter++;
+        }
+     assert( astIter!= vectorOfASTs.end() );
+     return *astIter;
+   }
+
+
+/* JW (06/21/2006) Refactored this to have a write-to-stream function so
+ * stringstreams can be used */
+void
+AST_FILE_IO :: writeASTToStream ( std::ostream& out) {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile():");
+ 
+     assert ( freepointersOfCurrentAstAreSetToGlobalIndices == true );
+     assert ( 0 < getTotalNumberOfNodesOfAstInMemoryPool() );
+     std::string startString = "ROSE_AST_BINARY_START";
+     out.write ( startString.c_str(), startString.size() );
+
+  // 1. Write the accumulatedPoolSizesOfAstInMemoryPool 
+     AstDataStorageClass staticTemp;
+     staticTemp.pickOutIRNodeData(actualRebuildAst);
+     
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile() raw file write part 1 (memory pool data):"); 
+     out.write ( (char*)(&staticTemp) , sizeof(AstDataStorageClass) );
+     }
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile() raw file write part 2 (easy storage data):");
+     AstDataStorageClass::writeEasyStorageDataToFile(out);
+     }
+     
+  // 1.a Introducing a marker to check the right position in the file     
+
+     std::string markString = "#########";
+     out.write ( markString.c_str(), markString.size() );
+
+  // 2. Initialize the StorageClass and write
+
+     int sizeOfActualPool = 0;
+     long storageClassIndex = 0 ;
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile() raw file write part 3 (rest of AST data):");
+
+$REPLACE_WRITEASTTOFILE
+   
+     }
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile() closing file:");
+     std::string endString = "ROSE_AST_BINARY_END";
+     out.write ( endString.c_str(), endString.size() );
+     }
+     
+  // clear everything, actually, this does not work, since I need a different way to 
+  // initialize the actualRebuildAst
+ //    delete actualRebuildAst;
+ //    vectorOfASTs.clear();
+     
+
+     return ;
+}
+
+
+/* JH (01/03/2006) This method stores an AST in binary format to the file. 
+*/
+void 
+AST_FILE_IO :: writeASTToFile ( std::string fileName )
+  {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::readASTFromFile():");
+ 
+     std::ofstream out;
+     out.open ( fileName.c_str(), std::ios::out | std::ios::binary );
+     if ( out == NULL )
+        {
+          std::cout << "Problems opening file " << fileName << " for writing AST!" << std::endl;
+          exit(-1);
+        }
+     AST_FILE_IO::writeASTToStream(out);
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile() closing file: time (sec) = ");
+     out.close() ;
+     }
+     
+     return ;
+   }
+
+std::string 
+AST_FILE_IO :: writeASTToString()
+  {
+    std::ostringstream out;
+    AST_FILE_IO::writeASTToStream(out);
+    return out.str();
+  }
+
+/* JW (06/21/2006) Changed to use streams in base implementation */
+SgProject*
+AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
+  {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::readASTFromStream() time (sec) = ");
+ 
+     assert ( freepointersOfCurrentAstAreSetToGlobalIndices == false );
+     std::string startString = "ROSE_AST_BINARY_START";
+     char* startChar = new char [startString.size()+1];
+     startChar[startString.size()] = '\0';
+     inFile.read ( startChar, startString.size() );
+     assert (inFile);
+     assert ( string(startChar) == startString );
+     delete [] startChar;
+     REGISTER_ATTRIBUTE_FOR_FILE_IO(AstAttribute) ;
+
+  // 1. Read the accumulatedPoolSizesOfNewAst 
+     // std::cout << "Here we start the reading of the AST specific data ... " << std::endl;
+
+     // std::cout << " Allocating AstDataStorageClass ... " << std::endl;
+     AstDataStorageClass staticTemp;
+     
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() raw file read:");
+
+     // std::cout << " Reading the data from file ... " << std::endl;
+     inFile.read ( (char*)(&staticTemp) , sizeof(AstDataStorageClass) );
+     assert (inFile);
+     // std::cout << " Reading the static (EasyStorage) data from file ... " << std::endl;
+     AstDataStorageClass::readEasyStorageDataFromFile(inFile);
+     }
+     
+  // 1.a Introducing a marker to check the right position in the file     
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() raw file (marker) read:");
+
+     std::string markString = "#########";
+     char* markChar = new char [markString.size()+1];
+
+  // DQ (9/24/2007): Bug fix suggested by Jeremiah.
+     markChar[markString.size()] = '\0';
+
+     inFile.read ( markChar, markString.size() );
+     assert (inFile);
+     assert ( string(markChar) == markString ); 
+     delete [] markChar;
+     }
+     
+  // 2. Initialize the StorageClass and read
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() rebuild AST (part 1):");
+
+     // std::cout << " Initializing the actualRebuildAST with staticTemp ... " << std::endl;
+     actualRebuildAst = new AstData(staticTemp);
+  // extendMemoryPoolsForRebuildingAST();
+  // 3. 
+     if (AST_FILE_IO::vectorOfASTs.size()==1)
+       { 
+         // std::cout << "setting the static data of an AST, but only for the first AST in a pool ... " << std::flush;
+         actualRebuildAst->setStaticDataMembersOfIRNodes();
+     // std::cout << "done" << std::endl;
+       }
+     AstDataStorageClass::deleteStaticDataOfEasyStorageClasses();
+     }
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() rebuild AST (part 2):");
+
+     unsigned long sizeOfActualPool = 0;
+     long storageClassIndex = 0 ;
+
+
+$REPLACE_READASTFROMFILE
+
+     }
+
+     {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() rebuild AST (part 3):");
+
+     for ( int i = 0; i < totalNumberOfIRNodes; ++i)
+        {
+          listOfMemoryPoolSizes[i] += getPoolSizeOfNewAst(i);
+        }
+     listOfMemoryPoolSizes[totalNumberOfIRNodes] += getTotalNumberOfNodesOfNewAst();
+
+     freepointersOfCurrentAstAreSetToGlobalIndices = false;
+     std::string endString = "ROSE_AST_BINARY_END";
+     char* endChar = new char [ endString.size() + 1];
+     endChar[ endString.size() ] = '\0';
+     inFile.read ( endChar , endString.size() );
+     assert (inFile);
+     assert ( string(endChar) == endString );
+     delete [] endChar;
+     }
+
+     SgProject* returnPointer = actualRebuildAst->getRootOfAst();
+     assert ( returnPointer != NULL );
+     
+#if FILE_IO_EXTRA_CHECK
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() FILE_IO_EXTRA_CHECK:");
+
+     // std::cout << " Checking the ast via pool entries .... " << std::endl;
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
+     memoryCheckingTraversal.traverseMemoryPool();
+#endif
+
+     return returnPointer;
+   }
+
+/* JH (01/03/2006) This method reads an AST in binary format from the file 
+*/
+SgProject*
+AST_FILE_IO :: readASTFromFile ( std::string fileName )
+  {
+  // DQ (4/22/2006): Added timer information for AST File I/O
+     TimingPerformance timer ("AST_FILE_IO::readASTFromFile() time (sec) = ");
+ 
+     std::ifstream inFile;
+     inFile.open ( fileName.c_str(), std::ios::in | std::ios::binary );
+     if ( inFile == NULL )
+        {
+          std::cout << "Problems opening file " << fileName << " for reading AST!" << std::endl;
+          exit(-1);
+        }
+     SgProject* returnPointer = AST_FILE_IO::readASTFromStream(inFile);
+
+     inFile.close() ;
+
+     return returnPointer;
+   }
+
+SgProject*
+AST_FILE_IO :: readASTFromString ( const std::string& s )
+  {
+    std::istringstream inFile(s);
+    return AST_FILE_IO::readASTFromStream(inFile);
+  }

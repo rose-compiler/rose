@@ -1,0 +1,101 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgModifier
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgModifier
+\brief This class represents the base class of a number of IR nodes define modifiers
+    within the C++ grammar.
+
+   Modifiers are use to add suplimental information to types and declarations and other IR
+nodes within the C and C++ language (const, volatile, public, protected, private, etc.).
+
+    There are no uses of this IR node anywhere.  All SgModifier based IR nodes
+are derived from this SgModifier class.
+
+\internal This is a base class for all SgModifier objects.
+
+\sa
+\ref SgModifier_usage  "Example of using a SgModifier object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgModifier data members
+/////////////////////////////////////////////////////////////////////////
+
+/*
+   There are no data members for this class.
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgModifier member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgModifier::SgModifier()
+\brief This is the constructor.
+
+   This constructor builds the SgModifier base class.
+
+\sa 
+\ref SgModifier_create "Example:create an SgModifier object"
+*/
+
+/*!
+\fn SgModifier::~SgModifier()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgModifier::operator=(const SgModifier & X)
+\brief This is the assignment operator.
+
+   This is a simple assignment of the SgBitVector from X to the current object.
+*/
+
+/*!
+\fn SgModifier::isSgModifier (SgNode *s)
+\brief Cast function (from derived class to SgModifier pointer).
+
+   This functions returns a SgModifier pointer for any input of a 
+pointer to an object derived from a SgModifier.
+
+\return Returns valid pointer to SgModifier if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgModifier::isSgModifier (const SgNode *s)
+\brief Cast function (from derived class to SgModifier pointer).
+
+   This functions returns a SgModifier pointer for any input of a 
+pointer to an object derived from a SgModifier.
+
+\return Returns valid pointer to SgModifier if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgModifier::setBit(unsigned int bit, SgBitVector &bitVector) const
+\brief This function sets the bit in the STL vector<bool> object (sets value to true).
+
+\internal Note that this function take the SgBitVector as a non-const reference.
+     We modified the original implementation in Sage II to use the STL vector<bool>.
+*/
+
+/*!
+\fn SgModifier::unsetBit(unsigned int bit, SgBitVector &bitVector) const
+\brief This function clears the bit in the STL vector<bool> object (sets value to false).
+
+\internal Note that this function take the SgBitVector as a non-const reference.
+     We modified the original implementation in Sage II to use the STL vector<bool>.
+*/
+
+/*!
+\fn SgModifier::checkBit(unsigned int bit, const SgBitVector &bitVector) const
+\brief This function returns the value of the bit in the STL vector<bool> object.
+
+\internal Note that this function take the SgBitVector as a const reference.
+*/
+

@@ -1,0 +1,87 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAggregateInitializer
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgAggregateInitializer
+\brief This class represents the rhs of an array variable declaration which includes an optional
+    assignment (e.g. "int x[2] = {1,2};").  In this case the SgExprListExp ("{1,2}") is wrapped in an
+    SgAggregateInitializer.
+
+\sa
+\ref SgAggregateInitializer_usage  "Example of using a SgAggregateInitializer object"
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAggregateInitializer data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgAggregateInitializer::p_initializers
+\brief This points to a SgExprListExp (list of expressions).
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAggregateInitializer member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+\fn SgAggregateInitializer::SgAggregateInitializer (const SgAggregateInitializer &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgAggregateInitializer::SgAggregateInitializer ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgAggregateInitializer base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgAggregateInitializer_create "Example:create an SgAggregateInitializer object"
+*/
+
+/*!
+\fn SgAggregateInitializer::~SgAggregateInitializer()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+
+/*!
+\fn SgAggregateInitializer::isSgAggregateInitializer (SgNode *s)
+\brief Cast function (from derived class to SgAggregateInitializer pointer).
+
+   This functions returns a SgAggregateInitializer pointer for any input of a 
+pointer to an object derived from a SgAggregateInitializer.
+
+\return Returns valid pointer to SgAggregateInitializer if input is derived from a SgAggregateInitializer.
+*/
+
+/*!
+\fn SgAggregateInitializer::isSgAggregateInitializer (const SgNode *s)
+\brief Cast function (from derived class to SgAggregateInitializer pointer).
+
+   This functions returns a SgAggregateInitializer pointer for any input of a 
+pointer to an object derived from a SgAggregateInitializer.
+
+\return Returns valid pointer to SgAggregateInitializer if input is derived from a SgAggregateInitializer.
+*/
+
+
+/*!
+\fn SgAggregateInitializer::get_initializers() const
+\brief Returns the rhs.
+
+\return Returns SgExprListExp.
+*/
+
+/*!
+\fn SgAggregateInitializer::set_initializers (SgExprListExp initializers)
+\brief This sets the rhs expression.
+
+\param initializersp - sets value of rhs.
+\return Returns void.
+*/
+

@@ -1,0 +1,165 @@
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0,0,0}{#1}}
+\newcommand{\hlkey}[1]{\textcolor[rgb]{0.7,0.41,0.09}{#1}}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{1,0,0}{#1}}
+\newcommand{\hltyp}[1]{\textcolor[rgb]{0,1,0}{#1}}
+\newcommand{\hlesc}[1]{\textcolor[rgb]{1,0.13,1}{#1}}
+\newcommand{\hlstr}[1]{\textcolor[rgb]{1,0,0}{#1}}
+\newcommand{\hldstr}[1]{\textcolor[rgb]{1,0,0}{#1}}
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0,0,1}{#1}}
+\newcommand{\hldir}[1]{\textcolor[rgb]{1,0.13,1}{#1}}
+\newcommand{\hlsym}[1]{\textcolor[rgb]{0,0,0}{#1}}
+\newcommand{\hlline}[1]{\textcolor[rgb]{0,0,1}{#1}}
+
+\title{/home/yuan5/qmsh/qmalt.sh}
+\oddsidemargin -3mm
+\textwidth 165,2truemm
+\topmargin 0truept
+\headheight 0truept
+\headsep 0truept
+\textheight 230truemm
+
+\definecolor{bgcolor}{rgb}{1,1,1}
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hlcom{\#\ Usage\\
+}\hlline{\ \ \ \ 2\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ \ 3\ }\hlstd{}\hlkey{if\ }\hlstd{((\ }\hltyp{\$}\hlstd{}\hlcom{\#\ $<$\ 4\ ));\ then\\
+}\hlline{\ \ \ \ 4\ }\hlcom{}\hlstd{\hlstd{\ \ }}\hltyp{echo\ }\hlstd{}\hlstr{"Usage:\ qm.sh\ $<$f\textbar o$>$\ $<$QMTest\ test\ class$>$\ $<$ROSE\ translator$>$\ $<$Backend\ Compiler\textbar NULL$>$\ \{compiler\ arguments...\}\ \{Test\ arguments\ (-testopt:$<$$>$)...\}"}\hlstd{\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\hlstd{\ \ }}\hltyp{exit\ }\hlstd{}\hlnum{1\\
+}\hlline{\ \ \ \ 6\ }\hlnum{}\hlstd{}\hlkey{fi\\
+}\hlline{\ \ \ \ 7\ }\hlkey{\\
+}\hlline{\ \ \ \ 8\ }\hlkey{}\hlstd{}\hlcom{\#\ Functions\\
+}\hlline{\ \ \ \ 9\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 10\ }\hlstd{includeFullPath\ ()\ \{\\
+}\hlline{\ \ \ 11\ }\hlstd{\hlstd{\ \ }}\hltyp{local\ }\hlstd{BACK=`}\hltyp{pwd}\hlstd{`\\
+}\hlline{\ \ \ 12\ }\hlstd{\\
+}\hlline{\ \ \ 13\ }\hlstd{\hlstd{\ \ }ARG=`}\hltyp{echo\ \$ARG\ }\hlstd{\textbar \ sed\ -e\ }\hlstr{"s/-I//g"}\hlstd{`\\
+}\hlline{\ \ \ 14\ }\hlstd{\hlstd{\ \ }}\hltyp{cd\ \$ARG\\
+}\hlline{\ \ \ 15\ }\hltyp{\hlstd{\ \ }}\hlstd{ARG=-I`}\hltyp{pwd}\hlstd{`\\
+}\hlline{\ \ \ 16\ }\hlstd{\\
+}\hlline{\ \ \ 17\ }\hlstd{\hlstd{\ \ }}\hltyp{cd\ \$BACK\\
+}\hlline{\ \ \ 18\ }\hltyp{\hlstd{\ \ }return\ }\hlstd{}\hlnum{0\\
+}\hlline{\ \ \ 19\ }\hlnum{}\hlstd{\}\ }\hlcom{\#\ get\ the\ absolute\ path\ of\ all\ include\ directories\\
+}\hlline{\ \ \ 20\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 21\ }\hlstd{}\hlcom{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ \ 22\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 23\ }\hlstd{}\hlcom{\#\ Globals\\
+}\hlline{\ \ \ 24\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 25\ }\hlstd{}\hltyp{declare\ }\hlstd{-i\ COUNT=}\hlnum{0\\
+}\hlline{\ \ \ 26\ }\hlnum{}\hlstd{}\hltyp{declare\ }\hlstd{-i\ FLAG=}\hlnum{0\\
+}\hlline{\ \ \ 27\ }\hlnum{\\
+}\hlline{\ \ \ 28\ }\hlnum{}\hlstd{TEST=BADTEST.qmt}\hlcom{\#\ error\ in\ test\ creation\\
+}\hlline{\ \ \ 29\ }\hlcom{}\hlstd{MODE=}\hltyp{\$1}\hlstd{}\hlcom{\#\ The\ naming\ mode\ of\ the\ script\\
+}\hlline{\ \ \ 30\ }\hlcom{}\hlstd{TEST\textunderscore CLASS=}\hltyp{\$2}\hlstd{}\hlcom{\#\ QMTest\ class\\
+}\hlline{\ \ \ 31\ }\hlcom{}\hlstd{PROGRAM=}\hltyp{\$3}\hlstd{}\hlcom{\#\ executable\ name\\
+}\hlline{\ \ \ 32\ }\hlcom{}\hlstd{BACKEND=}\hltyp{\$4}\hlstd{}\hlcom{\#\ The\ execution\ string\ with\ backend\ compiler\\
+}\hlline{\ \ \ 33\ }\hlcom{}\hlstd{ARGUMENTS=}\hlstr{"['-I\$PWD',"}\hlstd{}\hlcom{\#\ argument\ stub\ general\\
+}\hlline{\ \ \ 34\ }\hlcom{}\hlstd{OFILE=}\hlstr{""}\hlstd{}\hlcom{\#\ The\ original\ object\ file\\
+}\hlline{\ \ \ 35\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 36\ }\hlstd{}\hlcom{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ \ 37\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 38\ }\hlstd{}\hlkey{for\ }\hlstd{ARG\ }\hlkey{in\ }\hlstd{}\hltyp{\$}\hlstd{@\\
+}\hlline{\ \ \ 39\ }\hlstd{}\hlkey{do\\
+}\hlline{\ \ \ 40\ }\hlkey{\hlstd{\ \ }}\hlstd{((COUNT++))\\
+}\hlline{\ \ \ 41\ }\hlstd{\\
+}\hlline{\ \ \ 42\ }\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{((COUNT\ $>$\ }\hlnum{4}\hlstd{));\ }\hlkey{then\\
+}\hlline{\ \ \ 43\ }\hlkey{\\
+}\hlline{\ \ \ 44\ }\hlkey{\hlstd{\ \ \ \ }if\ }\hlstd{[[\ }\hltyp{\$\{ARG:0:9\}}\hlstd{\ ==\ }\hlstr{"-testopt:"}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ \ 45\ }\hlkey{\hlstd{\ \ \ \ \ \ }}\hlstd{ARGUMENTS=}\hlstr{"\$\{ARGUMENTS\}\ '`echo\ \$ARG\ \textbar \ sed\ -e\ 's/-testopt://g'`',\ "}\hlstd{\\
+}\hlline{\ \ \ 46\ }\hlstd{\hlstd{\ \ \ \ \ \ }}\hltyp{continue\\
+}\hlline{\ \ \ 47\ }\hltyp{\hlstd{\ \ \ \ }}\hlstd{}\hlkey{fi\ }\hlstd{}\hlcom{\#\ parse\ out\ specific\ options\ to\ test\ only\ and\ not\ to\ backend\\
+}\hlline{\ \ \ 48\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 49\ }\hlstd{\hlstd{\ \ \ \ }BACKEND=}\hlstr{"\$\{BACKEND\}\ \$ARG"}\hlstd{\ }\hlcom{\#\ build\ original\ compile-line\\
+}\hlline{\ \ \ 50\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 51\ }\hlstd{\hlstd{\ \ \ \ }}\hlcom{\#case\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ \ 52\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 53\ }\hlstd{\\
+}\hlline{\ \ \ 54\ }\hlstd{\hlstd{\ \ \ \ }}\hlkey{case\ }\hlstd{}\hltyp{\$ARG\ }\hlstd{}\hlkey{in\\
+}\hlline{\ \ \ 55\ }\hlkey{}\hlstd{-I*)\ includeFullPath;;\\
+}\hlline{\ \ \ 56\ }\hlstd{\\
+}\hlline{\ \ \ 57\ }\hlstd{*.c\ \textbar \ *.cpp\ \textbar \ *.C\ \textbar \ *.[cC]*\ )\\
+}\hlline{\ \ \ 58\ }\hlstd{\hlstd{\ \ \ \ \ \ \ \ \ \ }}\hlkey{if\ }\hlstd{[[\ }\hltyp{\$\{ARG:0:1\}}\hlstd{\ !=\ }\hlstr{'/'}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ \ 59\ }\hlkey{\hlstd{\ \ \ \ \ \ \ \ \ \ \ \ }}\hlstd{ARG=}\hlstr{"`pwd`/\$ARG"}\hlstd{\\
+}\hlline{\ \ \ 60\ }\hlstd{\hlstd{\ \ \ \ \ \ \ \ \ \ }}\hlkey{fi\ }\hlstd{}\hlcom{\#\ take\ care\ of\ absolute\ paths\\
+}\hlline{\ \ \ 61\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 62\ }\hlstd{\hlstd{\ \ }}\hlcom{\#\ rename\ the\ QMTest\ output\ test\ file.\ Replace\ space,\ period,\ and\ plus\\
+}\hlline{\ \ \ 63\ }\hlcom{}\hlstd{\hlstd{\ \ }}\hlcom{\#\ with\ their\ equivalents\ and\ change\ all\ chars\ to\ lower\ case.\\
+}\hlline{\ \ \ 64\ }\hlcom{}\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{[[\ }\hltyp{\$MODE\ }\hlstd{=\ }\hlstr{'f'}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ \ 65\ }\hlkey{\hlstd{\ \ \ \ \ \ \ \ \ \ \ \ }}\hlstd{TEST=`}\hltyp{echo\ \$ARG\ }\hlstd{\textbar \ sed\ -e\ }\hlstr{'s/$\backslash$//\textunderscore /g'}\hlstd{\ \textbar \ sed\ -e\ }\hlstr{'s/$\backslash$./\textunderscore dot\textunderscore /g'}\hlstd{\ \textbar \ $\backslash$\\
+}\hlline{\ \ \ 66\ }\hlstd{\hlstd{\ \ }sed\ -e\ }\hlstr{'s/+/plus/g'}\hlstd{\ \textbar \ gawk\ }\hlstr{'\{print\ tolower(\$0)\}'}\hlstd{`.qmt\\
+}\hlline{\ \ \ 67\ }\hlstd{\hlstd{\ \ }}\hlkey{fi\\
+}\hlline{\ \ \ 68\ }\hlkey{}\hlstd{;;\ }\hlcom{\#\ case\ C/C++\ source\ files\\
+}\hlline{\ \ \ 69\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 70\ }\hlstd{-o)\\
+}\hlline{\ \ \ 71\ }\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{[[\ }\hltyp{\$MODE\ }\hlstd{=\ }\hlstr{'o'}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ \ 72\ }\hlkey{\hlstd{\ \ \ \ }}\hlstd{FLAG=}\hlnum{1\\
+}\hlline{\ \ \ 73\ }\hlnum{\hlstd{\ \ }}\hlstd{}\hlkey{elif\ }\hlstd{[[\ }\hltyp{\$MODE\ }\hlstd{=\ }\hlstr{'f'}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ \ 74\ }\hlkey{\hlstd{\ \ \ \ }}\hlstd{FLAG=}\hlnum{2\\
+}\hlline{\ \ \ 75\ }\hlnum{\hlstd{\ \ }}\hlstd{}\hlkey{fi\ }\hlstd{}\hlcom{\#\ spike\ out\ the\ object\ flag\\
+}\hlline{\ \ \ 76\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 77\ }\hlstd{\hlstd{\ \ }}\hltyp{continue\\
+}\hlline{\ \ \ 78\ }\hltyp{}\hlstd{;;\ }\hlcom{\#\ case\ -o\\
+}\hlline{\ \ \ 79\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 80\ }\hlstd{*)\ ;;\ }\hlcom{\#\ default\\
+}\hlline{\ \ \ 81\ }\hlcom{}\hlstd{\hlstd{\ \ \ \ }}\hlkey{esac\\
+}\hlline{\ \ \ 82\ }\hlkey{\\
+}\hlline{\ \ \ 83\ }\hlkey{\hlstd{\ \ \ \ }}\hlstd{}\hlcom{\#esac\#fi\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ \ 84\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 85\ }\hlstd{\\
+}\hlline{\ \ \ 86\ }\hlstd{\hlstd{\ \ \ \ }}\hlkey{if\ }\hlstd{((FLAG\ $>$\ }\hlnum{0}\hlstd{));\ }\hlkey{then\\
+}\hlline{\ \ \ 87\ }\hlkey{\hlstd{\ \ \ \ \ \ }}\hlstd{OFILE=}\hltyp{\$ARG\\
+}\hlline{\ \ \ 88\ }\hltyp{\hlstd{\ \ \ \ }}\hlstd{}\hlkey{fi\ }\hlstd{}\hlcom{\#\ name\ the\ object\ file\ after\ -o\ declaration\\
+}\hlline{\ \ \ 89\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 90\ }\hlstd{\hlstd{\ \ \ \ }}\hlkey{if\ }\hlstd{((FLAG\ ==\ }\hlnum{1}\hlstd{));\ }\hlkey{then\\
+}\hlline{\ \ \ 91\ }\hlkey{\hlstd{\ \ \ \ \ \ }if\ }\hlstd{[[\ }\hltyp{\$\{ARG:0:1\}}\hlstd{\ !=\ }\hlstr{'/'}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ \ 92\ }\hlkey{\hlstd{\ \ \ \ \ \ \ \ }}\hlstd{ARG=}\hlstr{"`pwd`/\$ARG"}\hlstd{\\
+}\hlline{\ \ \ 93\ }\hlstd{\hlstd{\ \ \ \ \ \ }}\hlkey{fi\ }\hlstd{}\hlcom{\#\ if\ argument\ not\ specified\ with\ absolute\ path\ then\ append\ PWD\\
+}\hlline{\ \ \ 94\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ 95\ }\hlstd{\hlstd{\ \ \ \ \ \ }}\hlcom{\#\ rename\ the\ QMTest\ output\ test\ file,\ replace\ space,\ period,\ and\ plus\\
+}\hlline{\ \ \ 96\ }\hlcom{}\hlstd{\hlstd{\ \ \ \ \ \ }}\hlcom{\#\ with\ equivalent\ symbols\ and\ change\ all\ chars\ to\ lower\ case.\\
+}\hlline{\ \ \ 97\ }\hlcom{}\hlstd{\hlstd{\ \ \ \ \ \ }TEST=`}\hltyp{echo\ \$ARG\ }\hlstd{\textbar \ sed\ -e\ }\hlstr{'s/$\backslash$//\textunderscore /g'}\hlstd{\ \textbar \ sed\ -e\ }\hlstr{'s/$\backslash$./\textunderscore dot\textunderscore /g'}\hlstd{\ \textbar \ $\backslash$\\
+}\hlline{\ \ \ 98\ }\hlstd{\hlstd{\ \ \ \ }sed\ -e\ }\hlstr{'s/+/plus/g'}\hlstd{\ \textbar \ gawk\ }\hlstr{'\{print\ tolower(\$0)\}'}\hlstd{`.qmt\\
+}\hlline{\ \ \ 99\ }\hlstd{\\
+}\hlline{\ \ 100\ }\hlstd{\hlstd{\ \ \ \ \ \ }FLAG=}\hlnum{0}\hlstd{}\hlcom{\#\ reset\ FLAG\\
+}\hlline{\ \ 101\ }\hlcom{}\hlstd{\hlstd{\ \ \ \ \ \ }}\hltyp{continue\\
+}\hlline{\ \ 102\ }\hltyp{\hlstd{\ \ \ \ }}\hlstd{}\hlkey{elif\ }\hlstd{((FLAG\ ==\ }\hlnum{2}\hlstd{));\ }\hlkey{then\\
+}\hlline{\ \ 103\ }\hlkey{\hlstd{\ \ \ \ \ \ }}\hlstd{FLAG=}\hlnum{0}\hlstd{}\hlcom{\#\ reset\ FLAG\\
+}\hlline{\ \ 104\ }\hlcom{}\hlstd{\hlstd{\ \ \ \ \ \ }}\hltyp{continue\\
+}\hlline{\ \ 105\ }\hltyp{\hlstd{\ \ \ \ }}\hlstd{}\hlkey{fi\ }\hlstd{}\hlcom{\#\ if\ the\ -o\ flag\ used;\ create\ the\ object\ name\ and\ TEST\ name\ from\ object\\
+}\hlline{\ \ 106\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 107\ }\hlstd{\hlstd{\ \ \ \ }}\hlcom{\#fi\#if\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ 108\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 109\ }\hlstd{\\
+}\hlline{\ \ 110\ }\hlstd{\hlstd{\ \ \ \ }ARGUMENTS=}\hlstr{"\$\{ARGUMENTS\}\ '\$ARG',\ "}\hlstd{\\
+}\hlline{\ \ 111\ }\hlstd{\hlstd{\ \ }}\hlkey{fi\ }\hlstd{}\hlcom{\#\ if\ argument\ is\ not\ qm.sh\ argument\\
+}\hlline{\ \ 112\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 113\ }\hlstd{\hlstd{\ \ }}\hlcom{\#fi\#done\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ 114\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 115\ }\hlstd{\\
+}\hlline{\ \ 116\ }\hlstd{}\hlkey{done\ }\hlstd{}\hlcom{\#\ for\ all\ command-line\ arguments\ to\ qm.sh\\
+}\hlline{\ \ 117\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 118\ }\hlstd{OBJECT=}\hltyp{\$\{TEST\%\%.*\}}\hlstd{.o}\hlcom{\#\ name\ the\ object\ after\ the\ test\ file\ name\\
+}\hlline{\ \ 119\ }\hlcom{}\hlstd{ARGUMENTS=}\hlstr{"\$\{ARGUMENTS\}\ '-o',\ '\$OBJECT']"}\hlstd{\\
+}\hlline{\ \ 120\ }\hlstd{\\
+}\hlline{\ \ 121\ }\hlstd{}\hlcom{\#done\#case\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ 122\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 123\ }\hlstd{\\
+}\hlline{\ \ 124\ }\hlstd{}\hlkey{case\ }\hlstd{}\hltyp{\$TEST\textunderscore CLASS\ }\hlstd{}\hlkey{in\\
+}\hlline{\ \ 125\ }\hlkey{\hlstd{\ \ }}\hlstd{strings.SubStringTest)\ qmtest\ create\ -o\ }\hltyp{\$TEST\ }\hlstd{-a\ program=}\hlstr{"\$PROGRAM"}\hlstd{\ -a\ substring=}\hlstr{"ERROR\ SUMMARY:\ 0\ errors\ from\ 0\ contexts"}\hlstd{\ -a\ arguments=}\hlstr{"\$ARGUMENTS"}\hlstd{\ }\hltyp{test\ \$TEST\textunderscore CLASS}\hlstd{;;\\
+}\hlline{\ \ 126\ }\hlstd{\\
+}\hlline{\ \ 127\ }\hlstd{\hlstd{\ \ }*)\ qmtest\ create\ -o\ }\hlstr{"\$TEST"}\hlstd{\ -a\ program=}\hlstr{"\$PROGRAM"}\hlstd{\ -a\ arguments=}\hlstr{"\$ARGUMENTS"}\hlstd{\ }\hltyp{test\ \$TEST\textunderscore CLASS}\hlstd{;;\\
+}\hlline{\ \ 128\ }\hlstd{}\hlkey{esac\ }\hlstd{}\hlcom{\#\ create\ qmtest\ test\ file\ with\ test\ class\\
+}\hlline{\ \ 129\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 130\ }\hlstd{}\hlcom{\#esac\#main\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\\
+}\hlline{\ \ 131\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 132\ }\hlstd{\\
+}\hlline{\ \ 133\ }\hlstd{}\hlkey{if\ }\hlstd{[[\ }\hltyp{\$\{BACKEND:0:4\}}\hlstd{\ ==\ }\hlstr{"NULL"}\hlstd{\ ]];\ }\hlkey{then\\
+}\hlline{\ \ 134\ }\hlkey{\hlstd{\ \ }}\hlstd{touch\ }\hltyp{\$OFILE\ }\hlstd{$>$\&\ /dev/null\ }\hlcom{\#\ create\ dummy\ file\ and\ pipe\ error\ to\ NULL\\
+}\hlline{\ \ 135\ }\hlcom{}\hlstd{\hlstd{\ \ }}\hltyp{exit\ }\hlstd{}\hlnum{0\hlstd{\ \ \ \ }}\hlstd{}\hlcom{\#\ always\ exit\ 0\\
+}\hlline{\ \ 136\ }\hlcom{}\hlstd{}\hlkey{fi\ }\hlstd{}\hlcom{\#\ skip\ backend\ compilation\\
+}\hlline{\ \ 137\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ 138\ }\hlstd{}\hlcom{\#\ Execute\ backend\ compilation\ with\ original\ compile-line\\
+}\hlline{\ \ 139\ }\hlcom{}\hlstd{}\hltyp{\$BACKEND\\
+}\hlline{\ \ 140\ }\hltyp{exit\ \$}\hlstd{?}\\
+\mbox{}\\
+\normalfont

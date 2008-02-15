@@ -1,0 +1,58 @@
+  // authors Quinlan, Qing, Schordan, Lee \n (last checkin by \$Author: dquinlan $)
+
+ /*!
+     \defgroup backendGenerator Backend C and C++ Code Generator
+     \ingroup ROSE_BackEndGroup
+
+     \brief Generates C or C++ Source code from the AST.
+
+     Generates C++ source code directly from AST (this is older style code not yet
+     rewritten to use
+     ROSE tree traversal mechanism).  Parts of this code were borrowed from the original
+     Sage II unparser.  Internally several options are available so that the generated
+     code can either reference the user's original source code or the generated code
+     (\#line \<number\> \<filename\>; is used to optionally reference the original user's file).
+     This is a standard practice to permit generated code to work with debuggers (used by
+     many compilers internally).
+
+     The only user level function associated with the backend is the call to the 
+     <b>SgProject::unparse()</b> member function, which generates the source code
+     associated with the internal AST.  If the ASt had been transformed, then the
+     transformations will be represented as changes between the generated code and
+     the original input application code (user's application).
+
+     \ifnot documentDevelopmentVersionUsingDoxygen
+          <b>There are no user level functions within the backend.  The only three related
+          functions are available from the SgNode interface ( SgNode::unparseToString() ) and
+          SgFile and SgProject interfaces ( SgFile::unparse() and SgProject::unparse(),
+          respectively).</b>
+     \endif
+  */
+
+
+/*
+          \authors Lee, Quinlan, Schordan, ...
+          \version 0.5 cvs-version-#: $Name: HEAD $
+          \date $Date: 2006/04/24 00:21:29 $
+          \bug No Known Bugs.
+          \warning Formatting still overly complex (can be simplified now 
+                   that comments are part of the AST).
+          \todo 1. Finish documentation! \n
+                2. Make formatting easily tailorable to different styles (low priority at the moment).
+*/
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class Unparser
+          \ingroup backendGenerator
+          \brief This class represents the Backend C++ Code Generator within ROSE.
+
+          \note Large parts of documentation contained in <b>ROSE/src/unparser.docs</b>.
+
+          This is the source code generator.  It traverses the AST (not using the new traversal
+          mechanisms) and generates C++ source code from the constructs within the AST.
+          Special attention is given to formatting the generated code.
+
+          \internal This class could be simplified now that the comments and CPP directives are
+                    a part of the AST.
+     \endif
+*/

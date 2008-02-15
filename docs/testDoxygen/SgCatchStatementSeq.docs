@@ -1,0 +1,82 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCatchStatementSeq
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgCatchStatementSeq
+\brief This class represents the concept of a C++ sequence of catch statements.
+
+    This is associated with a try statement.
+
+\sa
+\ref SgCatchStatementSeq_usage  "Example of using a SgCatchStatementSeq object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCatchStatementSeq data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgCatchStatementSeq::p_catch_statement_seq
+\brief This is an STL list of pointers to SgStatement objects.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCatchStatementSeq member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgCatchStatementSeq::SgCatchStatementSeq ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgCatchStatementSeq base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgCatchStatementSeq_create "Example:create an SgCatchStatementSeq object"
+*/
+
+/*!
+\fn SgCatchStatementSeq::~SgCatchStatementSeq()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgCatchStatementSeq::isSgCatchStatementSeq (SgNode *s)
+\brief Cast function (from derived class to SgCatchStatementSeq pointer).
+
+   This functions returns a SgCatchStatementSeq pointer for any input of a 
+pointer to an object derived from a SgCatchStatementSeq.
+
+\return Returns valid pointer to SgCatchStatementSeq if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCatchStatementSeq::isSgCatchStatementSeq (const SgNode *s)
+\brief Cast function (from derived class to SgCatchStatementSeq pointer).
+
+   This functions returns a SgCatchStatementSeq pointer for any input of a 
+pointer to an object derived from a SgCatchStatementSeq.
+
+\return Returns valid pointer to SgCatchStatementSeq if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCatchStatementSeq::get_catch_statement_seq() const
+\brief Access function for p_catch_statement_seq.
+
+\return Returns const reference to SgStatementPtrList.
+*/
+
+/*!
+\fn SgCatchStatementSeq::get_catch_statement_seq()
+\brief Access function for p_catch_statement_seq.
+
+\return Returns non-const reference to SgStatementPtrList.
+*/
+

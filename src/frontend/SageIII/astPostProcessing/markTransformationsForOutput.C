@@ -1,0 +1,72 @@
+
+#include "rose.h"
+
+void
+markTransformationsForOutput( SgNode* node )
+   {
+  // This function marks the subtrees of any IR node marked as a transformation.
+  // This is required since the unparsing will check for either transformation 
+  // or IR nodes marked explicitly for output (typically compiler generated IR nodes).
+
+  // DQ (7/7/2005): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("Mark transformations for output:");
+
+     MarkTransformationsForOutput declarationFixupTraversal;
+
+  // This inherited attribute is used for all traversals (within the iterative approach we define)
+     MarkTransformationsForOutputInheritedAttribute inheritedAttribute;
+
+  // This will be called iteratively so that we can do a fixed point iteration
+     declarationFixupTraversal.traverse(node,inheritedAttribute);
+   }
+
+MarkTransformationsForOutputInheritedAttribute
+MarkTransformationsForOutput::evaluateInheritedAttribute ( 
+   SgNode* node,
+   MarkTransformationsForOutputInheritedAttribute inheritedAttribute )
+   {
+  // Build a return value
+     MarkTransformationsForOutputInheritedAttribute returnAttribute = inheritedAttribute;
+
+  // Mark this explicitly as false to turn off effect of SgGlobal turning it on (???)
+  // returnAttribute.insideTransformationToOutput = false;
+
+     Sg_File_Info* fileInfo = node->get_file_info();
+     if ( fileInfo != NULL )
+        {
+#if 0
+          SgStatement* stmt = isSgStatement(node);
+          if (stmt != NULL)
+             {
+               printf ("MarkTransformationsForOutput: stmt = %p = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
+             }
+#endif
+          if (returnAttribute.insideTransformationToOutput == true)
+             {
+            // Mark the IR node as a transformation if it is not already marked.
+               if ( fileInfo->isTransformation() == false )
+                  {
+                 // Mark the IR node as a transformation.
+                    fileInfo->setTransformation();
+
+                 // DQ (3/8/2006): Not clear if we always want to do this!
+                 // printf ("In MarkTransformationsForOutput: Also mark transformation for output node = %s \n",node->class_name().c_str());
+                    fileInfo->setOutputInCodeGeneration();
+                  }
+             }
+            else
+             {
+            // If this is root of a subtree the check the IR node and mark 
+            // the inherited attribute that we return.
+               if ( fileInfo->isTransformation() == true )
+                  {
+                 // Mark the inherited attribute so that this whole subtree 
+                 // (from this IR node down) will be marked as a transformation.
+                    returnAttribute.insideTransformationToOutput = true;
+                  }
+             }
+        }
+
+     return returnAttribute;
+   }
+

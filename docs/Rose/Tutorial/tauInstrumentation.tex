@@ -1,0 +1,106 @@
+\chapter{{\em TAU} Instrumentation}
+
+  Tau is a performance analysis tool from University of 
+Oregon.  They have mechanisms for automating instrumentation
+of the source code's text file directly, but these can be
+problematic in the present of macros. We present an example
+of instrumentation combined with code generation to provide a more
+robust means of instrumentation for source code.  This work is
+preliminary and depends upon two separate mechanisms for the
+rewrite of the AST (one high level using strings and one low level
+representing a more direct handling of the AST at the IR level).
+
+\section{Input For Examples Showing Information using Tau}
+
+   Figure~\ref{Tutorial:exampleInputCode_tauInstrumenter}
+shows the example input used for demonstration of Tau instrumentation.
+
+% \commentout{
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_tauInstrumenter.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_tauInstrumenter.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+         codes used in this chapter.}
+\label{Tutorial:exampleInputCode_tauInstrumenter}
+\end{figure}
+
+% }
+
+% \commentout{
+
+\section{Generating the code representing any IR node}
+
+    Figure~\ref{Tutorial:example_tauInstrumenter}
+shows a code that traverses each IR node and for a 
+SgInitializedName of SgStatement output the scope information.
+The input code is shown in figure \ref{Tutorial:example_tauInstrumenter},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_tauInstrumenter}.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/tauInstrumenter.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/tauInstrumenter.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to instrument using Tau. }
+\label{Tutorial:example_tauInstrumenter}
+\end{figure}
+
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_tauInstrumenter.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_tauInstrumenter.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using tauInstrumenter.C}
+\label{Tutorial:exampleOutput_tauInstrumenter}
+\end{figure}
+
+% }

@@ -1,0 +1,38 @@
+
+#if 0
+// DQ (7/24/2005): Removed from SAGE III (old code).
+// this code represented an approach to the representation of AST as multiple trees
+// which became difficult to justify and support when transformations got more complex.
+
+// Macro taken from grammarMainParseFunctionSourceCode.macro
+// We have spearated it out because not all grammars require
+// the implementation of a parse function (only the higher level
+// (non-root) grammars require a parse member function).
+
+$GRAMMAR_PREFIX_Global*
+$CLASSNAME::parse ( SgFile* file )
+   {
+  // SgFile* file = getProgramFile();
+     ROSE_ASSERT (file != NULL);
+
+     printf ("Inside of $CLASSNAME::parse (SgFile*) \n");
+
+  // Call automatically generated parser
+     $GRAMMAR_PREFIX_Global* roseProgramTree = 
+          ($GRAMMAR_PREFIX_Global*) $GRAMMAR_PREFIX_parse (file->get_root());
+     ROSE_ASSERT (roseProgramTree != NULL);
+
+  // Now perform the transformations
+  // transform functions will be called after the next pass using the transformation grammar
+  // transform (roseProgramTree);
+
+     printf ("Returning a program tree in the $CLASSNAME grammar! \n");
+
+  // Return the program tree
+     ROSE_ASSERT (roseProgramTree != NULL);
+     return roseProgramTree;
+   }
+
+// DQ (7/24/2005): Removed from SAGE III (old code).
+#endif
+

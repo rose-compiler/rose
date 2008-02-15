@@ -1,0 +1,143 @@
+\chapter{General AST Graph Generation}
+\label{Tutorial:chapterGeneralASTGraphGeneration}
+
+\paragraph{What To Learn From This Example}
+This example shows a maximally complete representation of the AST 
+(often in more detail that is useful).
+
+Where chapter~\ref{Tutorial:chapterASTGraphGenerator}
+presented a ROSE-based translator which presented the AST as a tree, this chapter
+presents the more general represention of the graph in which the AST is embedded.
+The AST may be thought of as a subest of a more general graph or equivalently as
+an AST (a tree in a formal sense) with annotations (extra edges and information),
+sometimes refered to as a `{\em decorated} AST.
+
+We present tools for seeing all the IR nodes in the graph containing the AST, including all types 
+(SgType nodes), symbols (SgSymbol nodes), compiler generated IR nodes, and 
+supporting IR nodes. In general
+it is a specific filtering of this larger graph which is more useful to communicating
+how the AST is designed and internally connected.  We use these graphs for internal 
+debugging (typically on small problems where the graphs are reasonable in size).
+The graphs presented using these graph mechanism present all backedges, and
+demonstrate what IR nodes are shared internally (typically SgType IR nodes).
+
+First a few names, we will call the AST those nodes in the IR that are 
+specified by a traversal using the ROSE traversal (SgSimpleTraversal, etc.).
+We will call the graph of all IR nodes the {\em Graph of all IR nodes}.
+the AST is embedded in the {\em Graph of all IR nodes}.  The AST {\em is} a tree,
+while the {\em graph of all IR nodes} typically not a tree (in a Graph Theory sense)
+since it typically contains cycles.
+
+We cover the visualization of both the AST and the {\em Graph of all IR nodes}.
+\begin{itemize}
+   \item AST graph \\
+   These techniques define ways of visualizing the AST and filtering IR nodes from being represented.
+   \begin{itemize}
+      \item Simple AST graphs
+      \item Colored AST graphs
+      \item Filtering the graph \\
+      The AST graph may be generated for any subtree of the AST (not possible for the
+    graphs of all IR nodes).  Additionally runtime options permit null pointers to be
+    ignored. \fixme{Is this true?}.
+   \end{itemize}
+   \item {\em Graph of all IR nodes} \\
+   These techniques define the ways of visualizing the whole graph of IR nodes and is
+    based on the memory pool traversal as a means to access all IR nodes.  Even
+    disconnected portions of the AST will be presented.
+   \begin{itemize}
+      \item Simple graphs
+      \item Colored graphs
+      \item Filtering the graph
+   \end{itemize}
+\end{itemize}
+
+
+\section{Whole Graph Generation}
+
+This example shows how to generate and visualize the AST from any input program.
+Each node of the graph in figure~\ref{tutorial:exampleOutputWholeGraphAST} shows
+a node of the Intermediate Representation (IR).  Each edge shows the connection
+of the IR nodes in memory. The generated graph shows the connection of different 
+IR nodes to form the AST.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/wholeGraphAST.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/wholeGraphAST.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to read an input program and generate an AST graph.}
+\label{Tutorial:exampleWholeGraphAST}
+\end{figure}
+
+The program in figure~\ref{Tutorial:exampleWholeGraphAST} calls 
+an internal ROSE function that traverses the AST and generates 
+an ASCI file in {\tt dot} format.
+Figure~\ref{Tutorial:exampleInputCode_WholeGraphAST} shows an input
+code which is processed to generate a graph of the AST, generating a 
+{\tt dot} file.   The {\tt dot} file is then processed
+using {\tt dot} to generate a postscript file~\ref{tutorial:exampleOutputWholeGraphAST}
+(within the {\tt Makefile}).
+Note that a similar utility program already exists within ROSE/exampleTranslators
+(and includes a utility to output an alternative PDF representation 
+(suitable for larger ASTs) as well).  Figure~\ref{tutorial:exampleOutputWholeGraphAST}
+(\TutorialExampleBuildDirectory/test.ps) can be found in the compile 
+tree (in the tutorial directory) and viewed directly using ghostview 
+or any postscript viewer to see more detail.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_wholeGraphAST.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_wholeGraphAST.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to generate the AST graph.}
+\label{Tutorial:exampleInputCode_WholeGraphAST}
+\end{figure}
+
+\begin{figure}
+%\centerline{\epsfig{file=\TutorialExampleBuildDirectory/wholeGraphAST.ps,
+%                    height=1.3\linewidth,width=1.0\linewidth,angle=0}}
+\includegraphics[scale=0.5]{\TutorialExampleBuildDirectory/wholeGraphAST}
+\caption{AST representing the source code file: inputCode\_wholeGraphAST.C.}
+\label{tutorial:exampleOutputWholeGraphAST}
+\end{figure}
+
+   Figure~\ref{tutorial:exampleOutputWholeGraphAST} displays the individual
+C++ nodes in ROSE's intermediate representation (IR).  Each circle represents
+a single IR node, the name of the C++ construct appears in the center of the
+circle, with the edge numbers of the traversal on top and the number of
+child nodes appearing below.  Internal processing to build the graph generates
+unique values for each IR node, a pointer address, which is displays at the bottom
+of each circle.  The IR nodes are connected for form a tree, and abstract syntax
+tree (AST). Each IR node is a C++ class, see SAGE III reference for details,
+the edges represent the values of data members in the class (pointers which connect
+the IR nodes to other IR nodes).  The edges are labeled with the names of the 
+data members in the classes representing the IR nodes.
+
+

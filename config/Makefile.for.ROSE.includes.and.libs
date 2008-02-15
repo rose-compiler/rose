@@ -1,0 +1,239 @@
+# These definitions are for the benefit of independent software contained
+# in ROSE.  (Currently, this means SAGE and ROSETTA.)
+# It defines ROSE_INCLUDES and ROSE_LIBS so they can use the ROSE codes.
+
+# ROSE_INCLUDES contains the include flags for compiling with ROSE code.
+# (ROSE software should set the include paths in their respective Makefile.am
+# files, since they are expected to know the ROSE source tree structure.)
+# To use ROSE_INCLUDES, the independent software packages contained in ROSE
+# should define the variable ROSE_HOME to be the relative path to the root
+# of the ROSE directory tree.
+
+# This fixes some problem caused by automake or autoconf
+# (detailed documentation is in the ChangeLog)
+MAKE=gmake
+
+# DQ (8/10/2007): Valentin suggested this be commented out.
+# DQ (4/23/2006): This is the default when build using automake version 1.6.3 but it
+# causes errors so we would like to specify --run automake instead
+# AUTOMAKE = ${SHELL} $(top_srcdir)/config/missing --run automake-1.6
+# AUTOMAKE = ${SHELL} $(top_srcdir)/config/missing --run automake
+
+# force ranlib to just call touch so that *.so (dynamic libraries) will not
+# be run with ranlib (which is a error).  This allows us to use dynamic 
+# libraries as the default within ROSE.
+RANLIB = touch
+
+# This is control over the use of MySQL (which is complicated to use and install)
+# This support for MySQL will be removed in the future.
+if ROSE_USE_DATABASE
+ # The use of the side effect analysis is dependent upon the data base support
+ # which is compiled optionally (see configure --help, for details)
+   ROSE_SIDEEFFECTS_INCLUDE             = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
+   ROSE_SIDEEFFECTS_OBJS                = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/*.o
+   ROSE_SIDEEFFECTS_LIB_NAME            = sideEffect
+   ROSE_SIDEEFFECTS_LIB_FILE            = lib$(ROSE_SIDEEFFECTS_LIB_NAME).so
+   ROSE_SIDEEFFECTS_LIBS_FILE_WITH_PATH = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/$(ROSE_SIDEEFFECTS_LIB_FILE)
+   ROSE_SIDEEFFECTS_LIBS                = -l$(ROSE_SIDEEFFECTS_LIB_NAME)
+
+ # Location of boost should be set in configuration (not done yet)
+   BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
+
+   ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection $(BOOST_INCLUDE)
+   ROSE_DATABASE_OBJS                = $(top_builddir)/src/roseExtensions/databaseConnection/*.o
+   ROSE_DATABASE_LIB_NAME            = rosedatabase
+   ROSE_DATABASE_LIB_FILE            = lib$(ROSE_DATABASE_LIB_NAME).so
+   ROSE_DATABASE_LIBS_FILE_WITH_PATH = $(top_builddir)/src/roseExtensions/databaseConnection/lib$(ROSE_DATABASE_LIB_FILE).a
+   ROSE_DATABASE_LIBS                = -l$(ROSE_DATABASE_LIB_NAME)
+
+ # MySQL support is setup optionally at compile time (see configure --help, for details)
+ # MYSQL_DATABASE_LIBS    = @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lfl -lz
+   MYSQL_DATABASE_LIBS    = @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lz
+   MYSQL_DATABASE_INCLUDE = -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
+endif
+
+# SQLite is a simpler database to use than MySQL
+if ROSE_USE_SQLITE_DATABASE
+   ROSE_SQLITE_DATABASE_INCLUDE  = -I$(top_srcdir)/src/roseExtensions/SQLiteConnection
+ # SQLITE_DATABASE_INCLUDE       = -I/home/dquinlan/SQLite/sqliteCompileTree/include
+   SQLITE_DATABASE_INCLUDE       = -I@SQLite_path@/include
+ # SQLITE_DATABASE_LIBS          = /home/dquinlan/SQLite/sqliteCompileTree/lib/libsqlite3.a
+   SQLITE_DATABASE_LIBS          = @SQLite_path@/lib/libsqlite3.a
+   ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/SQLiteConnection/*.o
+   ROSE_SQLITE_DATABASE_LIB_NAME = RoseSQLiteDatabase
+   ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).so
+   ROSE_SQLITE_DATABASE_LIBS     = -l$(ROSE_SQLITE_DATABASE_LIB_NAME)
+endif
+
+# This is properly handled by automake even when specified in an include file
+EDG_LIBS = @EDG_LIBS@
+
+RT_LIBS = @RT_LIBS@
+
+# Conditional support for Gabriel's QRose GUI Library 
+if ROSE_USE_QROSE
+ROSE_GUI_INCLUDE = \
+   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRGui \
+   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox \
+   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRTree \
+   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox \
+   $(QT_INCLUDES)
+endif
+
+# ROSE-HPCToolkit module
+if ROSE_BUILD_ROSEHPCT
+  ROSE_ROSEHPCT_INCLUDES = -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
+  ROSE_ROSEHPCT_LIBS = -lrosehpct
+  ROSE_ROSEHPCT_LIBS_WITH_PATH = $(top_builddir)/src/roseExtensions/roseHPCToolkit/src/librosehpct.la
+  ROSE_ROSEHPCT_LIB_FILE = librosehpct.so
+endif
+
+# RV (8/12/2005)
+#   Replaced reference to PDFLibrary with a macro
+#PDFLIB_BASE = PDFLibrary
+PDFLIB_BASE = PDFlib-Lite-6.0.2rv
+
+# DQ and AS (4/6/2006): Boost Wave CPP project
+if ROSE_USE_BOOST_WAVE
+# WAVE_INCLUDES is already defined (or is left empty)
+# WAVE_LIBS = $(LIB_WAVE) -lboost_filesystem-gcc
+  WAVE_LIBS = $(LIB_WAVE) -lboost_filesystem-@BOOST_LIB_SUFFIX@
+endif
+
+if ROSE_USE_OPEN_FORTRAN_PARSER
+# This usage (without rpath) assumes that that LD_LIBRARY_PATH contains 
+# the path specified by $JAVA_JVM_PATH
+#JAVA_JVM_LIB = -L$(JAVA_JVM_PATH) -ljvm
+#JAVA_JVM_LIB = -ljvm
+JAVA_JVM_LIB = $(JAVA_JVM_PATH)/libjvm.so
+endif
+
+# ROSE-YICES Package (destributed by SRI as a static library)
+if ROSE_USE_YICES
+  ROSE_YICES_INCLUDES = -I$(yices_path)/include
+  ROSE_YICES_LIBS = -lyices
+  ROSE_YICES_LIBS_WITH_PATH = $(yices_path)/lib/libyices.a
+  ROSE_YICES_LIB_FILE = libyices.a
+endif
+
+
+ROSE_INCLUDES = \
+     -I$(top_srcdir)/src \
+     -I$(top_builddir)/src/frontend/SageIII \
+     -I$(top_srcdir)/src/frontend/SageIII \
+     -I$(top_srcdir)/src/frontend/SageIII/astFixup \
+     -I$(top_srcdir)/src/frontend/SageIII/astPostProcessing \
+     -I$(top_srcdir)/src/frontend/SageIII/astMerge \
+     -I$(top_srcdir)/src/frontend/SageIII/astVisualization \
+     -I$(top_srcdir)/src/frontend/SageIII/astFileIO \
+     -I$(top_srcdir)/src/frontend/SageIII/sageInterface \
+     -I$(top_srcdir)/src/frontend/SageIII/virtualCFG \
+     -I$(top_srcdir)/src/frontend/SageIII/astTokenStream \
+     -I$(top_srcdir)/src/frontend/SageIII/astHiddenTypeAndDeclarationLists \
+     -I$(top_builddir)/src/frontend/SageIII/astFileIO \
+     -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
+     -I$(top_srcdir)/src/frontend/BinaryDisassembly \
+     -I$(top_srcdir)/src/frontend/BinaryDisassembly/graph \
+     -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses \
+     -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses \
+     -I$(top_srcdir)/src/frontend/ObjdumpDisassembler \
+     -I$(top_srcdir)/src/backend/unparser \
+     -I$(top_srcdir)/src/backend/unparser/formatSupport \
+     -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
+     -I$(top_srcdir)/src/backend/unparser/CxxCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
+     -I$(top_srcdir)/src/util \
+     -I$(top_srcdir)/src/util/support \
+     -I$(top_srcdir)/src/util/graphs  \
+     -I$(top_srcdir)/src/util/stringSupport \
+     -I$(top_srcdir)/src/util/commandlineProcessing \
+     -I$(top_srcdir)/src/midend/astUtil/astSupport \
+     -I$(top_srcdir)/src/midend/astUtil/astInterface \
+     -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+     -I$(top_srcdir)/src/midend/astUtil/annotation \
+     -I$(top_srcdir)/src/midend/programAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
+     -I$(top_srcdir)/src/midend/programAnalysis/CFG \
+     -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
+     -I$(top_srcdir)/src/midend/astInlining \
+     -I$(top_srcdir)/src/midend/astOutlining  \
+     -I$(top_srcdir)/src/midend/astQuery \
+     -I$(top_srcdir)/src/midend/astRewriteMechanism \
+     -I$(top_srcdir)/src/midend/astProcessing \
+     -I$(top_srcdir)/src/midend/astDiagnostics \
+     -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
+     -I$(top_srcdir)/src/midend/loopProcessing \
+      $(ROSE_SIDEEFFECTS_INCLUDE) \
+      $(ROSE_DATABASE_INCLUDE) \
+      $(ROSE_GUI_INCLUDE) \
+      $(MYSQL_DATABASE_INCLUDE) \
+      $(ROSE_SQLITE_DATABASE_INCLUDE) \
+      $(SQLITE_DATABASE_INCLUDE) \
+     -I$(top_srcdir)/src/midend/programTransformation/partialRedundancyElimination \
+     -I$(top_srcdir)/src/midend/programTransformation/finiteDifferencing \
+     -I$(top_srcdir)/src/midend/programTransformation/functionCallNormalization \
+     -I$(top_srcdir)/src/midend/programTransformation/constantFolding \
+     -I$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration \
+     -I$(top_srcdir)/src/roseSupport \
+     -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
+\
+     -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdcore \
+     -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdflib \
+     -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/flate \
+     -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/tiff \
+     -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/jpeg \
+     -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/png \
+\
+     -I$(top_srcdir)/projects/dataBase \
+     -I$(top_srcdir)/src/util/graphs \
+     -I$(top_srcdir)/src/midend/astUtil/astInterface \
+     $(WAVE_INCLUDES) \
+     $(ROSE_YICES_INCLUDES)
+
+# DQ (1/3/2008): Removed since we are no longer using the Coco parser generator.
+#     -I$(top_srcdir)/src/3rdPartyLibraries/coco/cplus2
+
+# DQ (5/3/2007): Removed from ROSE
+#     -I$(top_srcdir)/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers
+#     -I$(top_srcdir)/src/midend/programAnalysis/staticProgramSlicing
+
+# DQ (10/22/2004): Removed when I could not get annotation work to compile properly with make distcheck rule
+#     -I$(top_srcdir)/src/midend/programAnalysis/annotationLanguageParser
+
+# New way using two libraries
+# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.a $(top_builddir)/src/libedg.a
+# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.so $(top_builddir)/src/libedg.so
+# ROSE_LIBS_WITH_PATH = $(libdir)/librose.so $(libdir)/libedg.so
+# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la
+# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB)
+ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB) $(ROSE_YICES_LIBS_WITH_PATH)
+
+# ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
+ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
+    $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) \
+    $(JAVA_JVM_LIB) $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) 
+
+# This ROSE_SEPERATE_LIBS is used for the linking of preprocessor.C used within
+# development. The use of the seperate libraries make the linking faster where the
+# main librose library is not built.  Libtool may have changed this so that we could
+# just link to librose now just as easily, but one has to rebuild librose each time
+# instead of just the individual shared library.
+ROSE_SEPERATE_LIBS = \
+   $(top_builddir)/src/librose.la \
+   $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) \
+   $(MYSQL_DATABASE_LIBS) $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
+   $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) \
+   $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH)
+
+# QY (11/2/04): removed -lastoutlining from ROSE_SEPERATE_LIBS 
+
+# DQ (10/22/2004): Removed when I could not get annotation work to compile properly 
+# with make distcheck rule 
+# -lannotationLanguageParser(appears after -lvaluePropagation)
+
+
+

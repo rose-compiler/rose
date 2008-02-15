@@ -1,0 +1,84 @@
+\chapter{ROSE Examples}
+
+\label{RoseExamples:RoseExamples}
+
+    This is a collection of example preprocessors showing how to
+design preprocessors using ROSE.
+
+\fixme{Add more examples}
+
+A simple example.
+
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+
+// simple example code.
+
+\end{verbatim}
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+\commentout{
+A more interesting example.
+
+\vspace{0.5in}
+
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+ Example Code 1 \\\hline\hline
+\lstinputlisting{/home/dquinlan/ROSE/NEW_ROSE/AST_RewriteMechanism/testExample1.C}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example of now to use AST Rewrite Mechanism. }
+\label{AST_Code}
+\end{figure}
+}
+
+An inlined example.
+
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+ Example Code \\\hline\hline
+\begin{lstlisting}{}
+
+  // Simple array statement
+     A = 0;
+
+  // Simple indexed array statement (using Index/Range objects)
+     Range I,J;
+     A(I,J) = B(I,J);
+
+  // Simple 2D array stencil
+     C(I,J) = C(I-1,J) + C(I+1,J) + C(I,J-1) + C(I,J+1);
+
+  // Alternative scalar indexing version of simple 2D array stencil
+     for (int j=0; j < D.getLength(1); j++)
+          for (int i=0; i < D.getLength(0); i++)
+               D(i,j) = D(i-1,j) + D(i+1,j) + D(i,j-1) + D(i,j+1);
+
+\end{lstlisting}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Inline example of now to use AST Rewrite Mechanism. }
+\label{AST_Code}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,10 @@
+
+
+# running Brian's test scripts (from /home/dquinlan2/ROSE/SUN_CC_NOPURIFY)
+   # Running to lowest level test script
+     ~dquinlan/ROSE/NEW_ROSE/SCRIPTS/check-dist-file -dist_file ROSE-0.4.8a.tar.gz -config_for sun
+   # Running the highest level test script
+     ~dquinlan/ROSE/NEW_ROSE/SCRIPTS/standard-remote-check-dist-file ROSE-0.4.9c.tar.gz
+
+# Running Andy's Web page generator (on out from Gary's PETF)
+perl petf_summary.pl -log=mytests.full.log -log=mytests.full.log

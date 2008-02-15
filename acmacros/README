@@ -1,0 +1,25 @@
+Written by Brian Gunney, LLNL/CASC.
+
+This directory, acmacros, contains fairly generic autoconf macros.
+These macros were originally written for the A++P++ and PADRE projects.
+They should be sufficiently generic for general use.
+
+The macros use shell variable names that adhere to a standard that
+I extrapolated from autoconf and automake macros.
+
+The way I intend this directory to be used is as follows.  They reside
+in the CVS repository /usr/casc/overture/gunney/cvsrepository.  All
+of CASC has read but not write permission to this directory.  You can
+check out and export acmacros, but you cannot check it in.  If you
+made a change that should be checked in, please give me the new version
+so I can check it in.
+
+All macros are documented by comments in the macros.  If you need help
+using them, please let me know.
+
+If you intend to use these macros to set up your project's configuration,
+you would ONLY be interested in the *.m4 files.  Other files, such as
+configure.in, Makefile.am, etc., are for use by the acmacros project.
+We use them to test the macros.  If they interfere with your own
+project or your sense of aesthetics, you can remove them before using
+acmacros.

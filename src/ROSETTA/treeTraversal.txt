@@ -1,0 +1,206 @@
+************************************************************************************
+*** This file describes the automatic generation of the tree traversal functions ***
+*** in ROSETTA (Markus Kowarschik, September 2001, mk@cs.fau.de).                ***
+************************************************************************************
+
+1. How data members and function members are specified (within the classes
+to be automatically generated)
+==========================================================================
+Each Terminal object (and each Nonterminal object as well, since class
+Nonterminal is derived from class Terminal) contains three 2x2 arrays of
+lists of GrammarString objects, see grammar.h:
+
+   // Header file class definition function prototypes (local and subtree definitions)
+   // Use an array of lists since every string has a local node/subtree 
+   // representation and a local node/subtree exclude list
+   List<GrammarString> memberFunctionPrototypeList[2][2];
+
+   // Header file class definition data declarations (local and subtree definitions)
+   List<GrammarString> memberDataPrototypeList[2][2];
+
+   // Source code string lists (local and subtree definitions)
+   List<GrammarString> memberFunctionSourceList[2][2];
+
+Each of these 2x2 arrays can be pictured as follows:
+
+LOCAL/INCLUDE   | LOCAL/EXCLUDE
+---------------------------------
+SUBTREE/INCLUDE | SUBTREE/EXCLUDE
+
+1. GrammarString objects placed in the LOCAL/INCLUDE list will occur textually
+   only in the definition of the corresponding class representing a
+   terminal/nonterminal.
+2. GrammarString objects placed in the LOCAL/EXCLUDE list are removed
+   from the definition of the corresponding class representing a
+   terminal/nonterminal and will therefore not occur textually.
+3. GrammarString objects placed in the SUBTREE/INCLUDE list will occur
+   textually in all classes that will be derived from the corresponding
+   class representing a terminal/nonterminal.
+4. GrammarString objects placed in the SUBTREE/EXCLUDE list will be removed
+   from the definitions of all classes that will be derived from the
+   corresponding class representing a terminal/nonterminal and will therefore
+   not occur in any of them.
+
+Note that this convention does not include the root node as a part of the subtree!
+
+The Terminal class (and thus the Nonterminal class) provides the following member
+functions to add elements to each of these three arrays of lists:
+
+setDataPrototype()                -> LOCAL/INCLUDE
+setFunctionPrototype              -> LOCAL/INCLUDE
+setFunctionSource                 -> LOCAL/INCLUDE
+
+setSubTreeFunctionPrototype()     -> SUBTREE/INCLUDE
+setSubTreeFunctionSource()        -> SUBTREE/INCLUDE
+
+excludeFunctionPrototype()        -> LOCAL/EXCLUDE
+excludeSubTreeFunctionPrototype() -> SUBTREE/EXCLUDE
+exlcudeSubTreeDataPrototype()     -> SUBTREE/EXCLUDE
+
+Note that these are not all possible combinations, but these are the combinations
+that are actually needed. All these functions are implemented in terminal.C.
+
+Data members are added using the setDataPrototype() member function
+(in ROSETTA/terminal.C):
+void Grammar::Terminal::setDataPrototype (char* inputTypeNameString,
+     char* inputVariableNameString, char* inputDefaultInitializer,
+     bool constructorParameter, bool buildAccessDataFunctions,
+     bool toBeTraversedDuringTreeTraversal);
+
+The three boolean parameters specify
+- if the data member is going to be a constructor parameter for the
+  automaticaly generated constructor of the corresponding class and
+  all of its subclasses,
+- if access functions for this data member shall be created automatically
+  (sometimes this is not allowed since for certain data members there
+  are/need to be special access functions defined in the corresponding .code
+  files in the ROSETTA/Grammar subdirectory), and
+- if the data member is to be traversed in the course of a tree traversal
+  (I am sure that there are still several data members where this flag
+  has to be switched!).
+
+There are macros defined in the file ROSETTA/ROSETTA_macros.h:
+- CONSTRUCTOR_PARAMETER/NO_CONSTRUCTOR_PARAMETER
+- BUILD_ACCESS_FUNCTIONS/NO_ACCESS_FUNCTIONS
+- TO_BE_TRAVERSED/DO_NOT_TRAVERSE
+Hopefully they simplify the use of the setDataPrototype() member function.
+
+Dan suggests that there shall be another boolean flag specifying whether
+it should be asserted that the corresponding data member is not NULL
+when being traversed or just should not be traversed if it actually is
+NULL.
+
+
+2. Automatic generation of tree traversal functions
+===================================================
+
+Currently, two tree traversal mechanisms are implemented. These mechanisms are
+completely independent from one another.
+The header file grammar.h shows clearly which functions belong to which
+tree traversal mechanism.
+
+Both mechanism allow the user to specify if a preorder traversal or a postorder
+traversal is to be performed; we therefor use the t_traverseOrder data type
+which is defined as follows:
+typedef enum {preorder, postorder} t_traverseOrder;
+In the case of a preorder traversal the current node is visited first,
+and then all of its data members are visited. In the case of a postorder
+traversal, all of its data members are visited first, and then the
+current node itself is visited.
+
+IMPORTANT NOTE:
+The order in which the data members of the current node are traversed is
+determined by the class hierarchy and by the order of the
+setDataPrototype() function calls: data members inherited from "above"
+are visited first (beginning with the root node of the whole class
+hierarchy), and then the locally defined data members are visited in the
+order in which they are introduced using the setDataPrototype() function.
+The order in which the ASTs are traversed is the same for both tree
+traversal mechanism since both mechanisms are based on the same function
+to assemble the list of traversable data members!
+
+The differences of the two mechanisms will be explained in the following.
+
+
+(A) Tree traversal based on virtual member functions
+----------------------------------------------------
+The first mechanism is based on the generation of virtual member functions
+of the (automatically generated) classes representing the elements of the grammar. 
+This means that each class (e.g., SgWhileStmt, SgLocatedNode) implements a
+virtual member function traverseTree() which
+(a) in the case of a non-AST object (a nonterminal) issues an error message when
+called, and
+(b) in the case of an AST object (a terminal) applies a specified function to
+the current object and traverses its traversable data members (preorder traversal).
+In the case of a postorder traversal the data members are traversed first and
+then the specified function is applied to the current node.
+
+The implementations of these virtual member function can finally be found in
+the automatically generated file <GRAMMAR_NAME>TreeTraversal.C;
+e.g., Cxx_GrammarTreeTraversal.C. The prototypes of these virtual member functions
+are located within the class declarations in <GRAMMAR_NAME>.h.
+
+The generation of the <GRAMMAR_NAME>TreeTraversal.C files is based on
+the following files:
+- treeTraversal.code
+- treeTraversalErrorMessage.code
+- inputParameterClass.code
+- inputParameterClassConstructor.code
+They are located in the ROSETTA/Grammar subdirectory and contain code patterns.
+
+
+(B) Tree traversal based on a template class implementing one traverse() method
+for each element of the grammar
+-------------------------------------------------------------------------------
+The second mechanism is based on a tree traversal class. It is a class template
+with the following three template parameters: InheritedAttributeType,
+SynthesizedAttributeType, and AccumulatorType. These are user-defined data types,
+and --- as the names suggest ;) --- can be used to compute inherited, synthesized,
+and accumulated attributes.
+
+The traverse() functions for non-AST objects (nonterminals) recursively determine
+the AST object (terminal) which is to be traversed (by querying the variant of
+the object). Note that this is different than the first mechnaism described
+previously, where the traverseTree() functions corresponding to non-AST objects
+issue error messages.
+[There seems to be a bug: the first method sometimes breaks and issues
+the error message that traverseTree() has been called for an object which
+is a nonterminal and thus should not occur in an AST!]
+
+There are two files corresponding to this second tree traversal mechanism:
+<GRAMMAR_NAME>TreeTraversalClass.h and <GRAMMAR_NAME>TreeTraversalClass.C.
+As usual the header files contains the class declaration whereas the member
+functions are implemented in the source file.
+
+The generation of the two files <GRAMMAR_NAME>TreeTraversalClass.h and
+<GRAMMAR_NAME>TreeTraversalClass.C is based on the following files
+containing code patterns:
+- treeTraversalCaseMacro.code
+- treeTraversalClassConstructor.code
+- treeTraversalClassMemberForNonterminal.code
+- treeTraversalClassMemberForTerminal.code
+- treeTraversalClassTemplate.code
+- treeTraversalFunctionPairMacro.code
+- treeTraversalSTLContainer.code
+They are also located in the ROSETTA/Grammar subdirectory.
+
+
+Please feel free to contact me in the case of any problem concerning
+the tree traversal: mk@cs.fau.de
+
+
+3. Here's a TODO list concerning the tree traversal mechanism:
+==========================================================================
+
+A.
+There seems to be something wrong: when you process
+/ROSE/TESTS/CompileTests/C++Code/test2001_01
+with the preprocessor rose_MK (Markus Kowarschik's test preprocessor),
+it breaks! There seems to be a SgType pointer pointing to an
+SgMemberFunctionDeclaration object. The problem then is that
+class SgMemberFunctionDeclaration is not located underneath
+class SgType and therefore the variants do not match for any
+case option in the corresponding traverse() member function of
+class SgTreeTraversal (see Cxx_GrammarTreeTraversalClass.C).
+We agree on not traversing the "list<SgType*> p_typedefs" data
+member defined in class SgType. This is to be investigated further!

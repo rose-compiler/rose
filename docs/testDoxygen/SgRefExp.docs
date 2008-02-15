@@ -1,0 +1,77 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgRefExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgRefExp
+\brief This class represents the "&" operator (applied to any lvalue).
+
+\todo Double check this description.
+
+\internal 
+
+\sa
+\ref SgRefExp_usage  "Example of using a SgRefExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgRefExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgRefExp::p_type_name
+\brief This a SgType, but I forget its significance.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgRefExp::SgRefExp (const SgRefExp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgRefExp::SgRefExp ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgRefExp base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgRefExp_create "Example:create an SgRefExp object"
+*/
+
+/*!
+\fn SgRefExp::~SgRefExp()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+
+/*!
+\fn SgRefExp::isSgRefExp (SgNode *s)
+\brief Cast function (from derived class to SgRefExp pointer).
+
+   This functions returns a SgRefExp pointer for any input of a 
+pointer to an object derived from a SgRefExp.
+
+\return Returns valid pointer to SgRefExp if input is derived from a SgRefExp.
+*/
+
+/*!
+\fn SgRefExp::isSgRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgRefExp pointer).
+
+   This functions returns a SgRefExp pointer for any input of a 
+pointer to an object derived from a SgRefExp.
+
+\return Returns valid pointer to SgRefExp if input is derived from a SgRefExp.
+*/
+
+
+
+

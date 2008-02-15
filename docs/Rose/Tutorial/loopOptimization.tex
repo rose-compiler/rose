@@ -1,0 +1,455 @@
+\chapter{Loop Optimization}
+
+    This section is specific to loop optimization and show several
+tutorial examples using the optimization mechanisms within ROSE. 
+\fixme{We might want to reference Qing's work explicitly since this is
+       really just showing off here work.}
+
+\section{Example Loop Optimizer}
+     Simple example translator showing use of pre-defined loop optimizations.
+\fixme{We are not running performance tests within this tutorial, but perhaps we could later.}
+
+   Figure~\ref{Tutorial:exampleLoopOptimization} shows the code required to
+call some loop optimizations within ROSE.  The translator that we build for this tutorial
+is simple and takes the following command line options to control which optimizations are done.
+
+
+\begin{verbatim}
+   -ic1 :loop interchange for more reuses
+   -bk1/2/3 <blocksize> :block outer/inner/all loops
+   -fs1/2 :single/multi-level loop fusion for more reuses 
+   -cp <copydim> :copy array 
+   -fs0 : loop fission
+   -splitloop: loop splitting 
+   -unroll [locond] [nvar] <unrollsize> : loop unrolling 
+   -bs <stmtsize> : break up statements in loops
+   -annot <filename>: 
+        Read annotation from a file which defines side effects of functions
+   -arracc <funcname> :
+        Use special function to denote array access (the special function can be replaced
+        with macros after transformation). This option is for circumventing complex 
+        subscript expressions for linearized multi-dimensional arrays.
+   -opt <level=0> : The level of loop optimizations to apply (By default, only the outermost
+                 level is optimized).
+   -ta <int> : Max number of nodes to split for transitive dependence analysis (to limit the 
+            overhead of transitive dep. analysis)
+   -clsize <int> : set cache line size in evaluating spatial locality (affect decisions in 
+                applying loop optimizations)
+   -reuse_dist <int> : set maximum distance of reuse that can exploit cache (used to evaluate 
+                 temporal locality of loops)
+\end{verbatim}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/loopOptimization.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/loopOptimization.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of loop optimization mechanisms.}
+\label{Tutorial:exampleLoopOptimization}
+\end{figure}
+
+% \clearpage
+\section{Matrix Multiply Example}
+
+   Using the matrix multiply example code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopOptimization}, we run the loop optimizer in
+figure~\ref{Tutorial:exampleLoopOptimization} and generate the code shown in 
+figure~\ref{Tutorial:exampleOutput_LoopOptimization}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopOptimization_blocking.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopOptimization_blocking.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loop optimization processor.}
+\label{Tutorial:exampleInputCode_LoopOptimization}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_blocking.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_blocking.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of loop optimization processor showing matrix multiply
+         optimization (using options: {\tt -bk1 -fs0}).}
+\label{Tutorial:exampleOutput_LoopOptimization}
+\end{figure}
+
+
+% \clearpage
+\section{Loop Fusion Example}
+
+   Using the loop fusion example code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopOptimization_fusion}, we run the loop optimizer in
+figure~\ref{Tutorial:exampleLoopOptimization} and generate the code shown in 
+figure~\ref{Tutorial:exampleOutput_LoopOptimization_fusion}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopOptimization_fusion.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopOptimization_fusion.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loop optimization processor.}
+\label{Tutorial:exampleInputCode_LoopOptimization_fusion}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_fusion.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_fusion.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of loop optimization processor showing loop fusion (using options: {\tt -fs2}).}
+\label{Tutorial:exampleOutput_LoopOptimization_fusion}
+\end{figure}
+
+
+\section{Example Loop Processor (LoopProcessor.C)}
+     This section contains a more detail translator which uses the command-line for input
+    of specific loop processing options and is more sophisticated than the previous
+    translator used to handle the previous two examples.
+
+   Figure~\ref{Tutorial:exampleLoopProcessor} shows the code required to
+call the loop optimizations within ROSE.  The translator that we build for this tutorial
+is simple and takes command line parameters to control which optimizations are done.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopProcessor.C.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/loopProcessor.C.aa}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Detailed example source code showing use of loop optimization mechanisms
+    (loopProcessor.C part 1).}
+\label{Tutorial:exampleLoopProcessor}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopProcessor.C.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/loopProcessor.C.ab}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{loopProcessor.C source code (Part 2).}
+\label{Tutorial:exampleLoopProcessor2}
+\end{figure}
+
+% \clearpage
+\section{Matrix Multiplication Example (mm.C)}
+
+   Using the matrix multiplication example code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopOptimization_mm}, we run the loop optimizer in
+figure~\ref{Tutorial:exampleLoopProcessor} and generate the code shown in 
+figure~\ref{Tutorial:exampleOutput_LoopOptimization_mm}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopOptimization_mm.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopOptimization_mm.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loopProcessor, show in figure~\ref{Tutorial:exampleLoopProcessor}.}
+\label{Tutorial:exampleInputCode_LoopOptimization_mm}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_mm.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_mm.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of loopProcessor using input from figure~\ref{Tutorial:exampleInputCode_LoopOptimization_mm}
+    (using options: {\tt -bk1 -fs0}).}
+\label{Tutorial:exampleOutput_LoopOptimization_mm}
+\end{figure}
+
+
+% \clearpage
+\section{Matrix Multiplication Example Using Linearized Matrices (dgemm.C)}
+
+   Using the matrix multiplication example code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopOptimization_dgemm}, we run the loop optimizer in
+figure~\ref{Tutorial:exampleLoopProcessor} and generate the code shown in 
+figure~\ref{Tutorial:exampleOutput_LoopOptimization_dgemm}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopOptimization_dgemm.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopOptimization_dgemm.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loopProcessor, show in figure~\ref{Tutorial:exampleLoopProcessor}.}
+\label{Tutorial:exampleInputCode_LoopOptimization_dgemm}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_dgemm.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_dgemm.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of loopProcessor using input from figure~\ref{Tutorial:exampleInputCode_LoopOptimization_dgemm}
+    (using options: {\tt -bk1 -unroll nvar 16}).}
+\label{Tutorial:exampleOutput_LoopOptimization_dgemm}
+\end{figure}
+
+
+
+% \clearpage
+\section{LU Factorization Example (lufac.C)}
+
+   Using the LU factorization example code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopOptimization_lufac}, we run the loop optimizer in
+figure~\ref{Tutorial:exampleLoopProcessor} and generate the code shown in 
+figure~\ref{Tutorial:exampleOutput_LoopOptimization_lufac}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopOptimization_lufac.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopOptimization_lufac.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loopProcessor, show in figure~\ref{Tutorial:exampleLoopProcessor}.}
+\label{Tutorial:exampleInputCode_LoopOptimization_lufac}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_lufac.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_lufac.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of loopProcessor using input from figure~\ref{Tutorial:exampleInputCode_LoopOptimization_lufac}
+    (using options: {\tt -bk1 -fs0  -splitloop -annotation}).}
+\label{Tutorial:exampleOutput_LoopOptimization_lufac}
+\end{figure}
+
+
+% \clearpage
+\section{Loop Fusion Example (tridvpk.C)}
+
+   Using the loop fusion example code shown in 
+figure~\ref{Tutorial:exampleInputCode_LoopOptimization_tridvpk}, we run the loop optimizer in
+figure~\ref{Tutorial:exampleLoopProcessor} and generate the code shown in 
+figure~\ref{Tutorial:exampleOutput_LoopOptimization_tridvpk}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_LoopOptimization_tridvpk.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_LoopOptimization_tridvpk.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loopProcessor, show in figure~\ref{Tutorial:exampleLoopProcessor}.}
+\label{Tutorial:exampleInputCode_LoopOptimization_tridvpk}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_tridvpk.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_LoopOptimization_tridvpk.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of loopProcessor input from figure~\ref{Tutorial:exampleInputCode_LoopOptimization_tridvpk}
+    (using options: {\tt -fs2 -ic1 -opt 1 }).}
+\label{Tutorial:exampleOutput_LoopOptimization_tridvpk}
+\end{figure}
+

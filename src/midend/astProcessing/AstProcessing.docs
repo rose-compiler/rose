@@ -1,0 +1,153 @@
+ /*!
+     \defgroup AstProcessingClasses AST Processing
+     \ingroup ROSE_MidEndGroup
+
+     \authors Markus Schordan\n 
+              (preliminary versions developed by Quinlan and Kowarschik using a different algorithm for combing attributes and a single interface)
+
+     \brief This is the AST Processing Mechanism for traversing the AST and computing attributes.
+
+     The AST Processing Mechanism allows to traverse the AST and to compute inherited and synthesized attributes.
+     There exist 4 different interfaces:\n
+          -# SimpleProcessing provides a pre- and postorder traversal of the AST. The user needs to implement one visit function.
+          -# The TopDownProcessing - provides the computation of inherited attributes using a pre-order traversal.
+          -# The BottomUpProcessing - provides the computation of synthesized attributes using a post-order traversal.
+          -# The BottomUpTopDownProcessing - provides the computation of inherited and synthesized attributes.
+
+     The classes have pure virtual functions. You must inherit and implement the required methods.
+  */
+
+
+/*
+          \authors Markus Schordan
+          \version 0.5
+          \date Dec 14th 2002
+          \bug No known bugs.
+          \todo eliminate class
+*/
+
+ /*! 
+          \class SgTreeTraversal AstProcessing.h
+          \brief This class is temporary. Do not use.
+
+          This class is an internal class and should not be used anywhere.\n
+	  Use the four Ast*Processing classes instead.
+
+          \internal This class is temporary. Currently it is a base class for
+          the AstProcessing classes providing the implementation of the
+          traversal and attribute evaluation.
+  */
+
+ /*! \class AstSimpleProcessing AstProcessing.h
+     \ingroup AstProcessingClasses
+
+     \brief Class for traversing the AST.
+
+     \todo Make options 'preorder' and 'postorder' local to the class (will brake user code).
+
+     This class allows to traverse the AST in preorder or postorder. A visit function must be implemented
+     by the user which is automaticly called by the provided AST traversal.
+
+     \internal This class is derived from the SgTreeTraversal class.
+  */
+
+ /*! \class AstTopDownProcessing AstProcessing.h
+     \ingroup AstProcessingClasses
+
+     \brief Attribute Evaluator for inherited attributes
+
+     This class allows to compute inherited attributes on the AST. It requires
+     an inherited attribute type as a template parameter and the implementation of
+     the function evaluateInheritedAttribute. This function is invoked in pre-order while the AST is traversed.
+     It can be used for passing context information down the AST.
+
+     \internal This class is derived from the SgTreeTraversal class.
+  */
+
+ /*! \class AstBottomUpProcessing AstProcessing.h
+     \ingroup AstProcessingClasses
+
+     \brief Attribute Evaluator for synthesized attributes
+
+
+     This class allows to compute synthesized attributes on the AST. It requires
+     a synthesized attribute type as a template parameter and the implementation of
+     the function evaluateSynthesizedAttribute. This function is invoked in post-order while the AST is traversed.
+     It can be used for passing information up the AST and for computing a synthesized attribute at each node based on the results
+     of its children in the AST.
+
+     Initialization of synthesized attributes is necessary for values which represent results of non-existent nodes (= null pointers in the AST)
+     or skipped nodes (e.g. traverseWithingFile skips all nodes which do not represent the same file as from where the evaluation of attributes started).
+     -# Class as synthesized attribute type. The default constructor is sufficient to initialize the object representing an attribute value. 
+     -# Primitive type as synthesized attribute type (e.g. int, bool, etc.). The method defaultSynthesizedAttribute must be implemented to initialize the
+     synthesized attribute. This function is automatically called during attribute evaluation whenever necessary.
+
+     \internal This class is derived from the SgTreeTraversal class.
+  */
+
+ /*! \class AstTopDownBottomUpProcessing AstProcessing.h
+     \ingroup AstProcessingClasses
+
+     \brief Attribute Evaluator for inherited and synthesized attributes.
+
+     In general, this class combines the classes TopDownProcessing and BottomUpProcessing and also allows to use the inherited attribute of a node
+     in the computation of the synthesized attribute at the same node.\n
+
+     This class allows to compute inherited and synthesized attributes on the AST. It requires
+     an inherited attribute type and a synthesized attribute type as a template parameter and the implementation of
+     the function evaluateInheritedAttribute and
+     evaluateSynthesizedAttribute. The function
+     evaluateInheritedAttribute is invoked in pre-order, the function
+     evaluateSynthesizedAttribute is invoked in post-order while the
+     AST is traversed. The function evaluateSynthesizedAttribute gets
+     as additional parameter the inheritedAttribute value which is computed at the respective node. It
+     can be used to make the computation of the synthesized attribute at a node
+     dependent on the value of the inherited attribute of the same
+     node. \n
+
+     \internal This class is derived from the SgTreeTraversal class.
+  */
+
+ /*! \class AstAttributeMechanism AstAttributeMechanism.h
+     \ingroup AstProcessingClasses
+
+     \brief This mechanism provides capabilities to define a mapping from strings to AstAttributes. An instance of this class is accessible at each ROSE AST node in the data member 'attribute'.
+
+
+     Each node of the ROSE AST contains an AstAttributeMechanism,
+     accessible as data member 'attribute'. Using this mechnism attributes can be attached to AST nodes.\n
+     example: class MyAstAttribute : public AstAttribute { public: MyAstAttribute(int v):val(v){} ... private: int val; };\n
+              node->attribute.add("myattribute1",new MyAstAttribute(5));\n
+              MyAstAttribute* accessexample = node->attribute["myattribute1"];\n
+  */
+
+ /*! \class AstAttribute AstAttributeMechanism.h
+     \ingroup AstProcessingClasses
+
+     \brief Base class for attributes that can be attached to AST nodes using the attribute mechanism in each AST node.
+
+     
+     Objects of class AstAttribute can be be attached to ROSE AST
+     nodes. An attribute must be a subclass of AstAttribute.  Each
+     node of the ROSE AST contains an AstAttributeMechanism,
+     accessible as data member 'attribute'. Using this mechnism attributes can be attached to AST nodes.\n
+     example: class MyAstAttribute : public AstAttribute { public: MyAstAttribute(int v):val(v){} ... private: int val; };\n
+              node->attribute.add("myattribute1",new MyAstAttribute(5));\n
+              MyAstAttribute* accessexample = node->attribute["myattribute1"];\n
+  */
+
+ /*! \class Ast Ast.h
+     \ingroup AstProcessingClasses
+
+     \brief Class that provides an iterator for the ROSE AST.
+
+     usage: Ast x(mystartnode); for(Ast::iterator i=x.begin();i!=x.end();x++) { MYCODE } \n
+
+     The iterator refers to pointers of AST nodes, it never holds a null-pointer of the
+     traversed tree.
+
+     \todo (DQ 2/1/2006): Could we please change the name of this class, it is not an AST.
+
+  */
+
+

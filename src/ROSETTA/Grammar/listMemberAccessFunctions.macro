@@ -1,0 +1,20 @@
+DATA_ACCESS_FUNCTION_START
+// *** DATA ACCESS FUNCTION SECTION BEGINS HERE ***
+
+const $DATA_TYPE &
+$CLASSNAME::get_$DATA () const
+   {
+     assert (this != NULL);
+     return p_$DATA;
+   }
+
+$DATA_TYPE &
+$CLASSNAME::get_$DATA () 
+   {
+     assert (this != NULL);
+     set_isModified(true);
+     return p_$DATA;
+   }
+
+// *** DATA ACCESS FUNCTION SECTION ENDS HERE ***
+DATA_ACCESS_FUNCTION_END

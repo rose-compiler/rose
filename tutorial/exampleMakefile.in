@@ -1,0 +1,65 @@
+# Example Makefile for ROSE users
+# This makefile is provided as an example of how to use ROSE when ROSE is
+# installed (using "make install").  This makefile is tested as part of the
+# "make distcheck" rule (run as part of tests before any CVS checkin).
+# The test of this makefile can also be run by using the "make installcheck"
+# rule (run as part of "make distcheck").
+
+# Location of include directory after "make install"
+ROSE_INCLUDE_DIR = @prefix@/include
+
+# Location of library directory after "make install"
+ROSE_LIB_DIR = @prefix@/lib
+
+# ROSE_LIBS = -lrose -ledg
+
+# LEXLIB              = @LEXLIB@
+CPPFLAGS              = @CPPFLAGS@
+CXXFLAGS              = @CXXFLAGS@
+
+# Conditional support for Gabriel's QRose GUI Library 
+QT_LDFLAGS          = @QT_LDFLAGS@
+LIB_QT              = @LIB_QT@
+
+# Support for rpath (allows users to avoid setting 
+# their LD_LIBRARY_PATH, so it is simple to test ROSE)
+# LIBS_WITH_RPATH     = @LIBS_WITH_RPATH@
+
+# DQ (8/14/2005): Updated from $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+# ROSE_LIBS = -lrose -ledg $(LEXLIB) $(QT_LDFLAGS) $(LIB_QT) -lm
+# ROSE_LIBS = -lrose -ledg $(LEXLIB) $(LIB_QT) -lm -lrt
+ROSE_LIBS = -L$(ROSE_LIB_DIR) -lrose $(LEXLIB) $(LIB_QT) -lm -lrt
+
+# Location of source code
+ROSE_SOURCE_DIR = \
+   @top_srcdir@/tutorial
+
+executableFiles = identityTranslator ASTGraphGenerator \
+               visitorTraversal inheritedAttributeTraversal \
+               synthesizedAttributeTraversal \
+               inheritedAndSynthesizedAttributeTraversal \
+               accumulatorAttributeTraversal persistantAttributes \
+               queryLibraryExample nestedTraversal \
+               loopRecognition \
+               typeInfoFromFunctionParameters \
+               resolveOverloadedFunction templateParameter \
+               instrumentationExample addVariableDeclaration \
+               addFunctionDeclaration loopOptimization \
+               buildCFG debuggingIRnodeToString \
+               debuggingSourceCodePositionInformation \
+               commandlineProcessing \
+               loopNestingInfoProcessing
+
+# Default make rule to use
+all: $(executableFiles)
+
+# Example of how to use ROSE (linking to dynamic library, which is must faster
+# and smaller than linking to static libraries).  Dynamic linking requires the 
+# use of the "-L$(ROSE_LIB_DIR) -Wl,-rpath" syntax if the LD_LIBRARY_PATH is not
+# modified to use ROSE_LIB_DIR.  We provide two example of this; one using only
+# the "-lrose -ledg" libraries, and one using the many separate ROSE libraries.
+$(executableFiles):
+#	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS)
+#	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+	@top_builddir@/libtool --mode=link g++ $(CPPFLAGS) $(CXXFLAGS) -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS)
+

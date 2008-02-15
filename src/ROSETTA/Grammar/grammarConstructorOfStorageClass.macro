@@ -1,0 +1,7 @@
+
+$CLASSNAME :: $CLASSNAME ( $CLASSNAMEStorageClass& storageSource )  $PARENT_CLASSNAME
+   {
+
+CONSTRUCTOR_SOURCE
+
+   }

@@ -1,0 +1,215 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationModifier
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgDeclarationModifier
+\brief This class represents modifiers for SgDeclaration (declaration statements).
+
+\sa
+\ref SgDeclarationModifier_usage  "Example of using a SgDeclarationModifier object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationModifier data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgBitVector 	SgDeclarationModifier::p_modifierVector
+\brief Bit vector permitting specification of flags for friend, typedef, export, throw.
+
+*/
+
+/*!
+\var SgTypeModifier 	SgDeclarationModifier::p_typeModifier
+\brief Modifier for type information.
+
+*/
+
+/*!
+\var SgAccessModifier 	SgDeclarationModifier::p_accessModifier
+\brief Modifier for access information (only set for declarations in class and struct definitions)
+
+*/
+
+/*!
+\var SgStorageModifier 	SgDeclarationModifier::p_storageModifier
+\brief Modified for storage information.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationModifier member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgDeclarationModifier::SgDeclarationModifier()
+\brief This is the constructor.
+
+   This constructor builds the SgDeclarationModifier base class.
+
+\sa 
+\ref SgDeclarationModifier_create "Example:create an SgDeclarationModifier object"
+*/
+
+/*!
+\fn SgDeclarationModifier::~SgDeclarationModifier()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgDeclarationModifier::operator=(const SgDeclarationModifier & X)
+\brief This is the assignment operator.
+
+   This is a simple assignment of the SgBitVector from X to the current object.
+*/
+
+/*!
+\fn SgDeclarationModifier::isSgDeclarationModifier (SgNode *s)
+\brief Cast function (from derived class to SgDeclarationModifier pointer).
+
+   This functions returns a SgDeclarationModifier pointer for any input of a 
+pointer to an object derived from a SgDeclarationModifier.
+
+\return Returns valid pointer to SgDeclarationModifier if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDeclarationModifier::isSgDeclarationModifier (const SgNode *s)
+\brief Cast function (from derived class to SgDeclarationModifier pointer).
+
+   This functions returns a SgDeclarationModifier pointer for any input of a 
+pointer to an object derived from a SgDeclarationModifier.
+
+\return Returns valid pointer to SgDeclarationModifier if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDeclarationModifier::isUnknown () const
+\brief Declaration modifier is unknown (not set).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationModifier::setUnknown ()
+\brief Set bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::unsetUnknown ()
+\brief Clear (unset) bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::isDefault () const
+\brief Declaration modifier is default (default setting).
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationModifier::setDefault ()
+\brief Set bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::unsetDefault ()
+\brief Clear (unset) bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::isFriend () const
+\brief declaration modifier is friend.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationModifier::setFriend ()
+\brief Set bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::unsetFriend ()
+\brief Clear (unset) bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::isTypedef () const
+\brief Declaration modifier is a typedef.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationModifier::setTypedef ()
+\brief Set bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::unsetTypedef ()
+\brief Clear (unset) bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::isExport () const
+\brief Declaration modifier is export.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationModifier::setExport ()
+\brief Set bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::unsetExport ()
+\brief Clear (unset) bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::isThrow () const
+\brief Declaration modifier is throw.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationModifier::setThrow ()
+\brief Set bit flag.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationModifier::unsetThrow ()
+\brief Clear (unset) bit flag.
+
+\return Returns void.
+*/
+
+

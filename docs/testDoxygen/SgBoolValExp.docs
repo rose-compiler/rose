@@ -1,0 +1,50 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgBoolValExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgBoolValExp
+\brief This class represents a boolean value (expression value).
+
+\internal This is a base class for all value expressions.
+
+\todo The name "SgBoolValExp" should be "SgBoolVal" to be consistant with the names of all
+    other classes derived from SgValueExp.
+
+\sa
+\ref SgBoolValExp_usage  "Example of using a SgBoolValExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgBoolValExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgBoolValExp::p_value
+\brief This boolean variable marks the current expression as a 
+left hand side value (lvalue).
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgBoolValExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgBoolValExp::SgBoolValExp ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgBoolValExp base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgBoolValExp_create "Example:create an SgBoolValExp object"
+*/
+
+/*!
+\fn SgBoolValExp::~SgBoolValExp()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+

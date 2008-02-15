@@ -1,0 +1,22 @@
+#!/bin/sh
+case $# in
+0) input="test.dot"
+   output="test.ps";;
+1) input=$1; output="test.ps";;
+2) input=$1; output=$2;;
+esac
+
+# DQ (8/11/2006):
+# Added test for dot so that where this is called in ROSE it is not a 
+# problem if it is not present (removes dependence within ROSE on dot).
+if (`dot -V >& /dev/null`) then
+   echo "Found dot program in user's path, generating postscript file ..."
+   dot -Gratio=compact -Gfontname="Helvetica" $input -Tps -o $output -Gordering="out"
+else
+   echo "Can't find GraphViz dot program in user's path, ignoring conversion to postscript file (not a problem) ..."
+fi
+
+
+
+
+

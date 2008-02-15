@@ -1,0 +1,3 @@
+  // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
+     AstPDFGeneration pdftest;
+     pdftest.generateInputFiles(&sageProject);

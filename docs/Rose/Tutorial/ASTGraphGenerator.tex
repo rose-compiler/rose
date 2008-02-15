@@ -1,0 +1,259 @@
+\chapter{AST Graph Generator}
+\label{Tutorial:chapterASTGraphGenerator}
+
+\paragraph{What To Learn From This Example}
+This example shows how to generate and visualize the AST from any input program.
+Each node of the graph in figure~\ref{tutorial:exampleOutputCodeGraph} shows
+an a node of the Intermediate Representation (IR).  Each edge shows the connection
+of the IR nodes in memory. The generated graph shows the connection of different 
+IR nodes to form the AST.  The generation of such graphs is appropriate for small 
+input programs, chapter~\ref{Tutorial:chapterASTPDFGenerator} shows a mechanism 
+using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
+More information about generation of specialized AST graphs can be found in 
+\ref{Tutorial:chapterGeneralASTGraphGeneration} and custom graph generation in
+\ref{Tutorial:chapterCustomGraphs}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/ASTGraphGenerator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/ASTGraphGenerator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to read an input program and generate an AST graph.}
+\label{Tutorial:exampleASTGraphGenerator}
+\end{figure}
+
+The program in figure~\ref{Tutorial:exampleASTGraphGenerator} calls 
+an internal ROSE function that traverses the AST and generates 
+an ASCII file in {\tt dot} format.
+Figure~\ref{Tutorial:exampleInputCode_ASTGraphGenerator} shows an input
+code which is processed to generate a graph of the AST, generating a 
+{\tt dot} file.   The {\tt dot} file is then processed
+using {\tt dot} to generate a postscript file~\ref{tutorial:exampleOutputCodeGraph}
+(within the {\tt Makefile}).
+Note that a similar utility program already exists within ROSE/exampleTranslators
+(and includes a utility to output an alternative PDF representation 
+(suitable for larger ASTs) as well).  Figure~\ref{tutorial:exampleOutputCodeGraph}
+(\TutorialExampleBuildDirectory/test.ps) can be found in the compile 
+tree (in the tutorial directory) and viewed directly using ghostview 
+or any postscript viewer to see more detail.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_ASTGraphGenerator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_ASTGraphGenerator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to generate the AST graph.}
+\label{Tutorial:exampleInputCode_ASTGraphGenerator}
+\end{figure}
+
+\begin{figure}
+%\centerline{\epsfig{file=\TutorialExampleBuildDirectory/inputCode_ASTGraphGenerator.ps,
+%                    height=1.3\linewidth,width=1.0\linewidth,angle=0}}
+\includegraphics[scale=0.75]{\TutorialExampleBuildDirectory/inputCode_ASTGraphGenerator}
+\caption{AST representing the source code file: inputCode\_ASTGraphGenerator.C.}
+\label{tutorial:exampleOutputCodeGraph}
+\end{figure}
+
+   Figure~\ref{tutorial:exampleOutputCodeGraph} displays the individual
+C++ nodes in ROSE's intermediate representation (IR).  Each circle represents
+a single IR node, the name of the C++ construct appears in the center of the
+circle, with the edge numbers of the traversal on top and the number of
+child nodes appearing below.  Internal processing to build the graph generates
+unique values for each IR node, a pointer address, which is displays at the bottom
+of each circle.  The IR nodes are connected for form a tree, and abstract syntax
+tree (AST). Each IR node is a C++ class, see SAGE III reference for details,
+the edges represent the values of data members in the class (pointers which connect
+the IR nodes to other IR nodes).  The edges are labeled with the names of the 
+data members in the classes representing the IR nodes.
+
+\fixme{Use this first example as a chance to explain the use of the
+       header files (config.h and rose.h) and the code to build the 
+       SgProject object.}
+
+
+
+
+\chapter{AST Whole Graph Generator}
+\label{Tutorial:chapterASTWholeGraphGenerator}
+
+\paragraph{What To Learn From This Example}
+This example shows how to generate and visualize the AST from any input program.
+This view of the AST includes all additional IR nodes and edges that form attributes to
+the AST, as a result this graph is not a tree.  These graphs are more complex but
+show significantly more detail about the AST and its additional edges and attributes.
+Each node of the graph in figure~\ref{tutorial:exampleOutputCodeWholeGraph} shows
+an a node of the Intermediate Representation (IR).  Each edge shows the connection
+of the IR nodes in memory. The generated graph shows the connection of different 
+IR nodes to form the AST and its additional attributes (e.g types, modifiers, etc).  
+The generation of such graphs is appropriate for very small 
+input programs, chapter~\ref{Tutorial:chapterASTPDFGenerator} shows a mechanism 
+using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
+More information about generation of specialized AST graphs can be found in 
+\ref{Tutorial:chapterGeneralASTGraphGeneration} and custom graph generation in
+\ref{Tutorial:chapterCustomGraphs}.
+
+   {\em Viewing these dot files is best done using:} {\bf zgrviewer} at 
+{\tt http://zvtm.sourceforge.net/zgrviewer.html}.  This tool permits zooming
+in and out and viewing isolated parts of even very large graphs. {\bf Zgrviewer} permits 
+a more natural way of understanding the AST and its additioan IR nodes than the 
+pdf file displayed in these pages.  The few lines of code used to generate the
+graphs can be used on any input code to better understand how the AST represents
+different languages and their constructs.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/wholeASTGraphGenerator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/wholeASTGraphGenerator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to read an input program and generate a {\em whole} AST graph.}
+\label{Tutorial:exampleASTWholeGraphGenerator}
+\end{figure}
+
+The program in figure~\ref{Tutorial:exampleASTWholeGraphGenerator} calls 
+an internal ROSE function that traverses the AST and generates 
+an ASCII file in {\tt dot} format.
+Figure~\ref{Tutorial:exampleInputCode_ASTWholeGraphGenerator_small} shows an tiny input
+code which is processed to generate a graph of the AST with its attributes, generating a 
+{\tt dot} file.   The {\tt dot} file is then processed
+using {\tt dot} to generate a pdf file~\ref{tutorial:exampleOutputCodeWholeGraph_small}
+(within the {\tt Makefile}).
+Note that a similar utility program already exists within ROSE/exampleTranslators
+(and includes a utility to output an alternative PDF representation 
+(suitable for larger ASTs) as well).  Figure~\ref{tutorial:exampleOutputCodeWholeGraph}
+(\TutorialExampleBuildDirectory/test.ps) can be found in the compile 
+tree (in the tutorial directory) and viewed directly using 
+any pdf or dot viewer to see more detail ({\bf zgrviewer} working with
+the dot file directly is strongly advised).
+
+   Note that AST's can get very large, and that the additional IR nodes required to
+represent the types, modifiers, etc, can generate visually complex graphs. ROSE
+contains the mechanisms to traverse these graphs and do analysis on them.  In
+one case the number of IR nodes exceeded 27 million, an analysis was done through
+a traversal of the graph in 10 seconds on a desktop x86 machine (the memory requirements
+were 6 Gig).  ROSE organizes the IR in ways that permit analysis of programs that can 
+represent rather large ASTs.
+
+
+% ************************************************************
+%                     Small Graph Example
+% ************************************************************
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_wholeAST_1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_wholeAST_1.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example tiny source code used as input to generate the small AST graph with attributes.}
+\label{Tutorial:exampleInputCode_ASTGraphGenerator_small}
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.75]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_small}
+\caption{AST representing the source code file: inputCode\_wholeAST\_1.C.}
+\label{tutorial:exampleOutputCodeWholeGraph_small}
+\end{figure}
+
+   Figure~\ref{tutorial:exampleOutputCodeWholeGraph_small} displays the individual
+C++ nodes in ROSE's intermediate representation (IR).  Colors and shapes are used to 
+represent different types or IR nodes. Although only visible using {\bf zgrviewer} 
+the name of the C++ construct appears in the center of each node in the graph, with 
+the names of the data members in each IR node as edge lables. Unique pointer values
+are includes and printed next to the IR node name.  These graphs are the single best
+way to develop an intuitive understanding how language constructs are organized
+in the AST.  In these graphs, the color yellow is used for types (SgType IR nodes),
+the color green is used for expressions (SgExpression IR nodes), and statements
+are a number of different colors and shapes to make them more recognizable.
+
+% ************************************************************
+%                     Large Graph Example
+% ************************************************************
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_wholeAST_2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_wholeAST_2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to generate a larger AST graph with attributes.}
+\label{Tutorial:exampleInputCode_ASTGraphGenerator_large}
+\end{figure}
+
+\begin{figure}
+\includegraphics[scale=0.65]{\TutorialExampleBuildDirectory/inputCode_ASTWholeGraphGenerator_large}
+\caption{AST representing the source code file: inputCode\_wholeAST\_2.C.}
+\label{tutorial:exampleOutputCodeWholeGraph_large}
+\end{figure}
+
+   Figure~\ref{tutorial:exampleOutputCodeWholeGraph_large} shows a graph similar to the
+previous graph but larger and more complex because it is from a larger code. Larger
+graphs of this sort are still very useful in understanding how more significant
+language constructs are organized and reference each other in the AST.  Tools
+such as {\bf zgrviewer} are essential to reviewing and understanding these
+graphs.
+

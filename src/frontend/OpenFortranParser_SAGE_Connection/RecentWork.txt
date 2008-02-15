@@ -1,0 +1,56 @@
+This file outlines some of the recent work to support Fortran.
+
+* Source file handling for Fortran was implemented so that ROSE based translators
+  can seamlessly handle C/C++ as well as Fortran source codes as input.  All the
+  extensions (that I know of to be common for Fortran) were added. 
+
+* Specific commandline options added to support fortran.  New options include:
+     * specification of fixed format input: -qfixed, -fixed, -Mfixed, -ffixed-form
+     * specification of free format input:  -qfree, -free, -Mfree, -free-form
+     * specification of fixed format code generation: -rose:fixedOutput or -rose:fixedFormatOutput
+     * specification of free format code generation:  -rose:freeOutput or -rose:freeFormatOutput
+     * specification of implicit none mode using GNU gfortran option: -fimplicit_none
+     * specification of OpenMP support using GNU gfortran option: -fopenmp
+
+     This table is also represented in ROSE/src/ROSETTA/Grammar/Support.code (as documentation).
+  // Fortran source file format options for different compilers(for IBM/XL,Intel,Portland,GNU):
+  //     IBM/XL           Intel            Portland     GNU
+  //    -qfixed          -fixed           -Mfixed      -ffixed-form
+  //    -qfree           -free            -Mfree       -free-form
+
+* ROSE Code generation (unparser) was reorganized and refactored to support
+  multiple languages:
+    * A base class of langauge independent support be created
+    * Two derived clases, one for C/C++ and one for Fortran were created.
+    * This work builds on top of Thomas's reorganization of the unparser.
+    * This work borrowed some of the functions implemented by the contract with
+      RICE to support Fortran unparsing in ROSE.  A number were rewritten to support
+      modifications of the IR nodes for Fortran, beyond the IR nodes in ROSE that
+      were implemented by Rice.
+    * Initial support for fixed and free format code generation from AST.
+    * Initial Fixed and Free format token stream generation for advanced code generation
+      (code generation from untransformated parts of the AST will be able to alternatively
+      use the token strean directly for more precise code generation (part of mechanism to 
+      generate transformations as diff generated patchs).
+
+* Support in ROSE for the LANL Open Fortran Parser (OFP) was added.
+    * The ROSE/src/frontend now has a directory: OpenFortranParser_SAGE_Connection
+      which has all the code to connect to and use the OFP.  Included
+      in this directory is the file: FortranParserActionROSE.C which
+      implements the c_action_<Fortran Standard Grammar Rule>() functions.
+      There are about 315 of these functions, they are called by the OFP
+      and the implementation of them builds the different AST pieces for each 
+      part of the AST (and connects them together as it goes).  The end result
+      is an AST representing the inputFortran program.
+    * All the support for calling the (Java-based) OFP from C++ and the calls
+      back from OFP to C code (c_action_ functions) is now implemented and working 
+      fine.
+    * Very few c_actions have been implemented thus far (more to come).
+
+
+
+
+
+
+
+

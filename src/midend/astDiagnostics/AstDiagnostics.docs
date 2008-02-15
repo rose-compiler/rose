@@ -1,0 +1,157 @@
+// Author: Dan Quinlan and Markus Schordan
+// $Id: AstDiagnostics.docs,v 1.2 2006/04/24 00:21:31 dquinlan Exp $
+
+// **********************************************************************************
+//                       DESCRIPTION OF AST DIAGNOSTICS
+// **********************************************************************************
+/*!
+\page astDiagnostics Description of AST Diagnostics within ROSE
+
+    This page specifies what mechanisms we provide to test the AST.
+More details are at \ref AstDiagnosticsClasses.
+Analysis of the AST is separated into consistency tests, warnings 
+about questionable AST configurations, and statistical properties 
+of the AST. 
+   -# Consistency tests are pass/fail and all are requred to 
+      pass to verify correctness of the AST.
+   -# Warnings represent the detection of patterns of IR nodes which
+      are not presently disallowed, but which might be problematic.
+      Likely they will work for the unparser to generate code, but are
+      incorrect in ways that would lead to incorrect analysis. In general
+      the unparser will generate good code from an AST which can still
+      contain errors (e.g the unparse does not require that the symbols
+      in the symbol table be correct, but many forms of program analysis
+      might use this information).
+   -# Statistical properties of the AST report on a number of issues
+      relavant to debugging the AST (testing coverage, etc.).
+
+\section ASTConsistencyTests AST Consistency Tests
+
+   Current tests are pass/fail and test the following properties:
+     -# parent pointers are verified correct
+     -# file info objects are verified to be correct, none are set to default values
+    (filename="NULL_FILE",line number =0, column number = 0) except for compiler generated
+    IR nodes.
+     -# pointers to file info objects are verified to be valid pointers
+     -# all file info objects are verified to be unique (non-shared)
+     -# the type of a SgFunctionRefExp is always a SgFunctionType.
+     -# ... \n
+
+\subsection FutureTests Future Consistency Tests
+
+     There are a number of tests planned for the near future:
+     -# SgInitializedName diagnostics
+     -# correct configuration of SgExpressionRoot (SgReturnStmt)
+     -# Complete list in ROSE/proposals/TODO.txt
+
+\section ASTWarnings AST Warnings
+
+     There are a number of warnings that are output if certain parterns of IR usage are
+    found:
+     -# Uniquness of file info objects in AST.
+
+\subsection FutureWarnings Future Warnings
+
+     A number of warnings are planed for the near future:
+     -# correct usage of SgInitializedName
+     -# etc. (see list in TODO.txt).
+
+\section ASTStatisticalProperties AST Statistical Properties
+
+   The AST has about 240 IR nodes and so this section is focuced on the 
+statistical useage of IR nodes within the AST.  Current statistical
+properties of the AST supported are:
+   -# percentage of use of each IR node in the AST.
+
+\subsection FutureStaticitalTests Future Statistical Properties
+    It is easy to imagin additional ASt properties to report.  Future
+work will implement a numbe of tests useful for debugging the AST:
+    -# percentage of AST that passes all tests.
+    -# percentage of AST which generates warnings.
+
+
+*/
+
+// DQ (12/1/2006):  I have lifted this information of the documentation to be generated
+// since it is always dated and does not reflect the number of people who contribute.
+
+     \authors Schordan and Quinlan
+     \version 0.5
+     \date $Date: 2006/04/24 00:21:31 $
+     \bug No known bugs.
+     \warning Documentation is still incomplete.
+     \todo Finish documentation!
+
+ /*!
+     \defgroup AstDiagnosticsClasses AST Diagnostics
+     \ingroup ROSE_MidEndGroup
+
+     \brief This is the AST Diagnostics Tests/Warnings/Statictics Reporting Mechanism.
+
+     The AST Diagnostics Mechanism provides simple ways to test and report on the AST
+     using a traversal over the AST.  The library has types of analysis of the AST. 
+          -# Consistancy Tests (AST is tests to be a \c VALID AST \n
+          -# Warning Reports (AST non-fatal irregularities are reported, possible failures
+             in future stricter tests) \n
+          -# Statistics Reporting (Helpful information about the AST) \n
+
+     More information is availalbe at \ref astDiagnostics.
+  */
+
+     \authors Quinlan and Schordan
+
+ /*! 
+     \class AstConsistency Tests AstConsistency.h
+
+     \brief This class represents the internal structure of the AST Diagnostics Mechanism within ROSE.
+
+     \note Large parts of documentation contained in <b>ROSE/src/midend/astDiagnostics/astDiagnostics.docs</b>.
+     \ingroup AstDiagnosticsClasses
+
+     This class encapsulates the complexities associated with the testing of the AST.
+
+     \internal The exact separation between what is a pass/fail test and what is a
+     warning is not established yet.
+  */
+
+ /*! 
+     \class AstWarnings AstWarnings.h
+
+     \brief This class represents the internal structure of the AST Diagnostics Mechanism within ROSE.
+
+     \note Large parts of documentation contained in <b>ROSE/src/midend/astDiagnostics/astDiagnostics.docs</b>.
+     \ingroup AstDiagnosticsClasses
+
+     This class encapsulates the complexities associated with the testing of the AST.
+
+     \internal The exact separation between what is a pass/fail test and what is a
+     warning is not established yet.
+  */
+
+ /*! 
+     \class AstStatistics AstStatistics.h
+
+     \brief This class represents the internal structure of the AST Diagnostics Mechanism within ROSE.
+
+     \note Large parts of documentation contained in <b>ROSE/src/midend/astDiagnostics/astDiagnostics.docs</b>.
+     \ingroup AstDiagnosticsClasses
+
+     This class encapsulates the complexities associated with the testing of the AST.
+
+     \internal The exact separation between what is a pass/fail test and what is a
+     warning is not established yet.
+  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+

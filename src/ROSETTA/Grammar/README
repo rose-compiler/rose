@@ -1,0 +1,4 @@
+This directory contains the source code fragments that are assembled 
+to form the different grammars that ROSETTA generates.  Only C++ grammars
+are supported, but higher level (more user-defined abstraction specific)
+grammars can be generated.

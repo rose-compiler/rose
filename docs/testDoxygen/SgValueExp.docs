@@ -1,0 +1,52 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgValueExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgValueExp
+\brief This class represents the notion of an value (expression value).
+
+\internal This is a base class for all value expressions.
+
+\todo We should add a SgComplexValue IR nodes for C99 support of complex constants.
+      At the moment these are internally represented as SgFloatValue, SgDoubleValue, 
+      or SgLongDoubleValue IR nodes.
+
+\sa
+\ref SgValueExp_usage  "Example of using a SgValueExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgValueExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgValueExp::p_valueExpressionTree
+\brief This is the root of the expression tree to which the front-end applied constant
+    folding.  
+left hand side value (lvalue).
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgValueExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgValueExp::SgValueExp ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgValueExp base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgValueExp_create "Example:create an SgValueExp object"
+*/
+
+/*!
+\fn SgValueExp::~SgValueExp()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+

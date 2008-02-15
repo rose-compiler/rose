@@ -1,0 +1,132 @@
+// The Transformation Specification Grammar
+
+// This grammar is used to simplify the representation of the 
+// transformations.  So that they can be split apart and 
+// configured by ROSE at compile time (preprocessing time).
+// This grammar defines a few language elements that are
+// represented in C++ (so no languge modifications are 
+// involved).  
+
+// Grammar elements include:
+//     Loop mechanisms  "Loop(numberOfIterations)"
+//          This mechanism is build from a C "for" loop
+//          using a macro which has a defined signature that
+//          we can recongnize at preprocessing time.
+
+//
+//     Function call mechanism 
+//             The specification of the transformation from the transformation 
+//             grammar into the C grammar must be expressed using the functions 
+//             that the transformation defines.  Not clear what this will look like!!!
+//        FUNCTION_DEFINITION SUBSCRIPT_2D ( int i, int j )
+//           {
+//             FUNCTION BODY
+//           }
+//
+//     Conditional mechanism "IF(COMPILE_TIME_TEST)"
+
+#define FUNCTION_DEFINITION void
+
+// Example of transformation specification (in this case for an array statement)
+
+       FUNCTION_DEFINITION UNIQUE_PART_OF_TRANSFORMATION ()
+          {
+         // This code is only required once for all the operands in the same scope
+            int GLOBAL_INDEX_NAME = 0;
+          }
+
+       FUNCTION_DEFINITION LHS_PART_OF_TRANSFORMATION ()
+          {
+         // This is code that is required once for the Lhs operand
+            double* RESTRICT LHS_ARRAY_DATA_POINTER = LHS_ARRAY.getDataPointer();
+          }
+
+       FUNCTION_DEFINITION RHS_PART_OF_TRANSFORMATION (int numberOfRhsOperands)
+          {
+            LOOP(numberOfRhsOperands)
+               {
+              // This is code that is required once for the Lhs operand
+                 double* RESTRICT RHS_ARRAY_DATA_POINTER = RHS_ARRAY.getDataPointer();
+               }
+          }
+
+       FUNCTION_DEFINITION LOOP_PART_OF_TRANSFORMATION ()
+          {
+         // This code is required only once for this transformation
+            const int base_1D_0   = LHS_ARRAY.getBase  (0);
+            const int bound_1D_0  = LHS_ARRAY.getBound (0);
+            const int stride_1D_0 = LHS_ARRAY.getStride(0);
+            for (GLOBAL_INDEX_NAME = base_1D_0; GLOBAL_INDEX_NAME <= bound_1D_0; GLOBAL_INDEX_NAME++)
+               {
+              // This code would be modified with the edited user inner loop statement 
+              // The first statement will be replaced within the transformation process
+                 
+              // LHS_ARRAY_DATA_POINTER[ROSE_SUBSCRIPT_COMPUTATION_1D(GLOBAL_INDEX_NAME,0,stride_1D_0)] = 
+              // RHS_ARRAY_DATA_POINTER[0];
+
+              // It is in the transformation of the statement (called by ROSE recursively on 
+              // the program tree associated with the highest level grammar) that specific 
+              // transformations are introduced).  Look at the specification of the transformations 
+              // of the grammar elements (at all levels of the grammar higherarchy).
+                 TRANSFORMED_STATEMENT();
+               }
+          }
+
+// Example of specification of for the Transformation Specificiation Grammar
+#include "C++_Grammar.include"
+
+// Build the grammar object
+Grammar transformSpecification;
+
+Grammar::Token TransformSpecificationLoop
+     ("TransformSpecification_Loop",transformSpecification,"TransformSpecification_Loop");
+Grammar::Token TransformSpecificationConditional
+     ("TransformSpecification_Conditional",transformSpecification,"TransformSpecification_Conditional");
+Grammar::Token TransformSpecificationFunction
+     ("TransformSpecification_Function",transformSpecification,"TransformSpecification_Function");
+Grammar::Token TransformSpecificationStatementBlock
+     ("TransformSpecification_StatementBlock",transformSpecification,"TransformSpecification_StatementBlock");
+
+TransformSpecificationLoop           = SgForStatement;
+TransformSpecificationConditional    = SgIfStatement;
+TransformSpecificationFunction       = SgFunction;
+TransformSpecificationStatementBlock = SgStatementBlock;
+
+
+// Example of a transform member function
+// Code to put the program tree fragments (after they are recognized 
+// using our transformation specification grammar)
+
+TransformationSpecificationStatementBlock transformSpecification;
+TransformResult transform()
+   {
+  // Build storage for final transformation
+     TransformResult result;
+
+     TransformationSpecificationFunction transformMetaFunctionUnique = transformSpecification.get("UNIQUE_PART_OF_TRANSFORMATION");
+     transformMetaFunction = transformMetaFunctionUnique.edit ("GLOBAL_INDEX_NAME","i");
+     result.add(transformMetaFunctionUnique.getBlock());
+
+     TransformationSpecificationFunction transformMetaFunctionLhs = transformSpecification.get("LHS_PART_OF_TRANSFORMATION");
+     transformMetaFunction = transformMetaFunctionLhs.edit ("LHS_ARRAY",variableName[0]);
+     transformMetaFunction = transformMetaFunctionLhs.edit ("LHS_ARRAY_DATA_POINTER",transformedVariableName[0]);
+     result.add(transformMetaFunctionLhs.getBlock());
+
+     for (int i=0; i < numberOfRhsOperands; i++)
+        {
+          TransformationSpecificationFunction transformMetaFunctionRhs = transformSpecification.get("RHS_PART_OF_TRANSFORMATION");
+          transformMetaFunction = transformMetaFunctionRhs.edit ("RHS_ARRAY",variableName[i+1]);
+          transformMetaFunction = transformMetaFunctionRhs.edit ("RHS_ARRAY_DATA_POINTER",transformedVariableName[i+1]);
+          result.add(transformMetaFunctionRhs.getBlock());
+        }
+
+     TransformationSpecificationFunction transformMetaFunctionLoop = transformSpecification.get("LOOP_PART_OF_TRANSFORMATION");
+     transformMetaFunction = transformMetaFunctionUnique.edit ("GLOBAL_INDEX_NAME","i");
+     transformMetaFunction = transformMetaFunctionLhs.edit ("LHS_ARRAY",variableName[0]);
+     result.add(transformMetaFunctionLoop.getBlock());
+
+     return result;
+   }
+
+
+

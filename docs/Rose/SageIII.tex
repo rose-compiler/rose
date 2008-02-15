@@ -1,0 +1,2025 @@
+\chapter{SAGE III Intermediate Representation}
+\label{SageIII}
+
+There are many details that this chapter on SAGE will present.
+
+\fixme{incomplete-documentation}
+
+
+\section{History of SAGE}
+    We chose to develop and use SAGE III, originally 
+developed as SAGE++ by Dennis Gannon and others at University 
+of Indiana, and then SAGE II by Dennis at IU and Carl Kesselman at ISI,
+and others.  Because SAGE III is a reimplementation of the similar
+object-oriented IR API, their work gave us a significant head 
+start in the development of ROSE.
+
+\subsection{Differences Between SAGE++ and SAGE II}
+     SAGE++ was the first version of SAGE and it provided
+support for C, a subset of C++ (C++ evolved quite a bit early on
+and was a moving target), and F90. SAGE II introduced the use
+of the EDG front-end, and dropped the handling of Fortran, 
+but its work was incomplete.
+
+\subsection{Difference Between SAGE II and SAGE III}
+   The SAGE III IR is now completely generated using the ROSETTA
+IR generator tool (a source-code generation tool) which we
+developed to support our work within ROSE.  Initial versions 
+of SAGE II were well done, but not complete.  Numerous 
+details were addressed in the work on SAGE II as part of its 
+preparation for use within ROSE.  We are very thankful to the 
+initial developers of SAGE II for all their work.  Sage III
+hopefully fulfills on a number of the golas behind their work.
+
+\subsection{Differences Between SAGE III and ROSE}
+   ROSE uses SAGE III and adds numerous, more sophisticated mechanisms to SAGE III.
+For example, ROSE adds:
+\begin{itemize}
+    \item Attribute mechanisms for use within traversals (ideas borrowed 
+          from attribute grammars).
+    \item A sophisticated AST rewrite mechanism to simplify the development 
+          of transformations.
+    \item A more sophisticated persistant attribute mechanism.
+    \item Loop analysis and optimization (loop fusion, fisson, blocking, etc.)
+    \item Operators for conversion of AST subtrees to strings, and of strings 
+          to AST fragments.
+    \item Database support for global analysis.
+    \item C++ Template support.
+    \item Fast binary AST File I\/O.
+    \item An AST merge mechansim for supporting whole program analysis
+          (across hundreds of files).
+    \item Complete language support for C, C++, C99, and UPC.
+    \item AST vizualizations (program visualization for debugging).
+    \item ROSE User Manual and ROSE Tutorial Documentation.
+    \item Full IR documentation via Doxygen (web pages).
+    \item And lots more, ...
+\end{itemize}
+
+\section {Comments Handling}
+
+    Comments are placed into the SAGE III AST using a separate pass over the source file.
+EDG does not preserve comments at this time, and we felt it was important to preserve them
+within the unparsed (generated) output of the source-to-source mechanism that ROSE defines.
+Comment processing can also be addressed using the AST Rewrite Mechanism, though
+the order of how the comments appear in the code is determined by the order of 
+invocation of the AST {\tt insert()} function with a comment as the input string.
+Internally, the comments annotate the AST (tree decoration) so that AST queries may use 
+the comments at will.
+
+\section {C Preprocessor ({\tt cpp}) Directive Handling}
+
+    The C Preprocessor ({\tt cpp}) directives ({\em not} \#pragma) are handled internally using the same mechanism as
+comments.  Although they are fully expanded at compile time they are reinserted back
+into the unparsed source code as it is being unparsed.  Internally, the directives annotate the AST
+(tree decoration) so that AST queries may use the directives at will.
+Note that pragmas are a part of the language specification (grammar) and not a CPP directive.
+
+  Note also that {\tt extern ``C'' \{\}} is also recognized so that it can be
+placed around {\tt \#include} directives and other identified blocks of declarations.
+Internally such declarations are explicitly marked as having extern C linkage.
+
+\section {Pragma Handling}
+
+The {\tt \#pragma} is special and is not really a C Preprocessor ({\tt cpp}) directive.
+It is formally part of the C and C++ language grammar, and thus we are justified in putting it 
+into the AST with the rest of the language constructs (comments and directives are open for 
+a degree of interpretation as to where they can be attached within the AST). Details of
+this subject may be open to minor changes in future releases of ROSE.
+
+  Pragmas are the mechanism in which C and C++ permit language
+extension.  Of course, some people describe this a bit differently,
+but {\tt \#pragma} is not interpreted by {\tt CPP}, and it {\it {\bf is}} interpreted by the compiler.
+And it has a specific semantics since it is part of the language grammar.
+The EDG documentation refers to them as pragma declarations, so they should be 
+treated that way. This also is why they only really work in the grammar if 
+they are declarations (since they are only permitted were common declarations 
+are permitted and no where else).
+% Though it seems that a declaration can go just about anywhere, so this thus
+% support the idea that pragmas can go anywhere.
+
+Note that {\tt \#pragma pack} declarations are handled in a special normalization
+(see section \ref{pragma_pack_normalization}).  These pragmas are a bit different
+from other pragmas and are handled as a stack-based embedded language.
+
+
+% \section{Deep and Shallow Coping of the AST}
+\section { Copying SAGE Nodes and Subtrees}
+
+    Support is provided for a policy-based copying of the AST and subtrees
+of the AST.  Flexability and control is provided through an independent
+policy mechanism that defines the copying process as shallow or deep for
+different types of nodes within the AST.
+
+% Complete documentation about this feature will be done in the near future.
+
+  Each {\tt SgNode} object has the following public virtual member function: 
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+class SgNode {
+     ...
+     virtual SgNode* copy ( SgCopyHelp & help) const;
+     ...
+};
+\end{verbatim}
+}}
+
+  Here SgCopyHelp is a virtual policy class for duplicating 
+{\tt SgNode} objects and is defined as:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+class SgCopyHelp {
+   public:
+     virtual SgNode* copyAst ( const SgNode *n ) = 0;
+};
+\end{verbatim}
+}}
+
+Two concrete classes, {\tt SgShallowCopy} and {\tt SgTreeCopy}, are provided as 
+subclasses of {\tt SgCopyHelp} to configure a shallow copy (duplicating 
+the current {\tt SgNode} object only) or a deep copy (duplicate the complete
+subtree rooted at the current {\tt SgNode} object) respectively. The following
+example illustrates how to use {\tt SgShallowCopy} and {\tt SgTreeCopy} 
+to duplicate SAGE nodes and sub-trees.
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+  SgNode *orig;
+  ...
+  SgNode *n1 = orig->copy(SgShallowCopy::static_instance());
+  SgNode *n2 = orig->copy(SgTreeCopy::static_instance());
+  ... 
+\end{verbatim}
+}}
+
+Here {\it n1} points to a duplicate of the {\tt SgNode} object pointed to by {\tt orig},
+while {\it n2} points to a duplicate of the complete subtree rooted at {\tt orig}.
+Therefore, the shallow copy {\it n1} from {\tt orig} shares all the children 
+of {\tt orig}, while the deep copy {\it n2} from {\tt orig} duplicates all the children 
+of {\tt orig} by recursively cloning the children objects. 
+Note that the children of node {\tt orig} are determined by the tree-traversal
+mechanism of ROSE. A field {\tt fp} within {\tt orig} is considered a child of {\tt orig}
+only if {\tt fp} is traversed by the tree-traversal mechanism. 
+For all other fields in {\tt orig}, only shallow copies are performed. 
+As a result, only pointers to {\tt SgNode}s that are part of
+the tree traversal rooted at {\tt orig} can be recursively cloned. 
+ 
+To simplify the specification of shallow and deep cloning
+of {\tt SgNode}s, two macros are further defined:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+#define SgSHALLOW_COPY SgShallowCopy::static_instance()
+#define SgTREE_COPY SgTreeCopy::static_instance()
+\end{verbatim}
+}}
+
+The above example code, therefore, can be rewritten as:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+  SgNode *orig;
+   ...
+  SgNode *n1 = orig->copy(SgSHALLOW_COPY);
+  SgNode *n2 = orig->copy(SgTREE_COPY);
+  ...
+\end{verbatim}
+}}
+
+\section{ Template Handling in C++}
+
+   The purpose
+of this section is to lay out the details of handling C++ templates.
+% Templates in C++ is quite new within ROSE and it has been 
+% changing as we have interacted with other research groups (particularly Stroustrup).
+Initial template handling in SAGE III represented templates as classes and function
+(using generated, i.e. mangled, names) and with a flag indicating there derivation 
+from a C++ template.
+
+   ROSE allows the transformation of templated classes and
+functions by generating the required specializations.  This way, all details of 
+a templated class of function (or static data member) become visible to the user in
+the AST and permit maximum information assumed to be required for any transformation.
+No transformation occurs on the template declaration unless it's done explicitly by 
+the user (this is difficult since the text string representing the template is not
+formed into an AST that we can traverse).  Note that this is a result of a design
+decision on the part of EDG to provide this as a default behavior and our decision 
+to use it.  More recent work to get the template as an AST is underway, using some 
+of the options in EDG to support this.  This later work is not robust enough to be 
+the default in ROSE without a bit more work.
+
+\subsection{C++ Constructs That Can Be Made Into Templates}
+   The concept of templates does not apply to all C++ contructs and affects only a few.
+The only things that can be templates are classes (including structs and likely unions),
+\fixme{Check on template unions.}
+functions (including member functions), and variables (static data
+members).  The first two are common, but the case of templated variables perhaps requires 
+an example:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+template<typename T>
+class A
+   {
+     public:
+      // non-template data member
+         int nonTemplateDataMember;
+
+      // template data member
+         T templateDataMember;
+
+      // template static data members
+         static T staticTemplateDataMember_T;
+         static float staticTemplateDataMember_float;
+   };
+         
+// This is a template static data member (SgVariableDeclaration)
+template<class U> U A<U>::staticTemplateDataMember_T;
+
+// This is a template static data member (SgVariableDeclaration)
+template<class U> float A<U>::staticTemplateDataMember_float;
+
+// template specialization for variable (was originally defined to be float!)
+template<> float A<double>::staticTemplateDataMember_float;
+
+// template specialization for variable (error: this is not possible, type mismatch)
+template<> float A<double>::staticTemplateDataMember_T;
+\end{verbatim}
+}}
+
+   In the case of a {\tt SgVariableDeclaration}, the information about whether or not it is a specialization
+is kept with the {\tt SgVariableDeclaration}, instead of the {\tt SgInitializedName} objects that
+stand for the individual variables.  Since the {\tt get\_parent()} member function returns
+a pointer to the {\tt SgVariableDeclaration} from the {\tt SgInitializedName}, this
+information is indirectly available from the {\tt SgInitializedName}.
+% It is not clear if this is the best implementation.
+
+  {\tt Enums}, {\tt typedefs}, {\tt namespaces}, etc. cannot appear as templated declarations.
+As a result, only a few declarations contain template specific information
+({\tt SgClassDeclaration}, {\tt SgFunctionDeclaration}, {\tt SgVariableDeclaration}).
+
+\subsection{ How Templates effects the IR }
+   Some IR nodes are present to support the use of templates in C++. These include:
+\begin{itemize}
+     \item {\tt SgTemplateParameters} \\
+           Derived from SgSupport.
+
+     \item {\tt SgTemplateArguments} \\
+           Derived from SgSupport.
+
+     \item {\tt SgTemplateDeclaration} \\
+           Derived from {\tt SgDeclarationStatement}.
+          \begin{itemize}
+               \item Holds the template string (any comments are removed)
+               \item Template name
+               \item Template parameters
+          \end{itemize}
+     \item {\tt SgTemplateInstantiationDecl} ({\em may be renamed to SgTemplateInstantiationClassDeclaration}) \\
+           Derived from {\tt SgClassDeclaration}.
+          \begin{itemize}
+               \item Reference to {\tt SgTemplateDeclaration}
+               \item Template arguments
+          \end{itemize}
+     \item {\tt SgTemplateInstantiationFunctionDecl} \\
+           Derived from {\tt SgFunctionDeclaration}.
+          \begin{itemize}
+               \item Reference to {\tt SgTemplateDeclaration}
+               \item Template arguments
+          \end{itemize}
+     \item {\tt SgTemplateInstantiationMemberFunctionDecl} \\
+           Derived from {\tt SgMemberFunctionDeclaration}.
+          \begin{itemize}
+               \item Reference to {\tt SgTemplateDeclaration}
+               \item Template arguments
+          \end{itemize}
+     \item {\tt SgTemplateInstantiationDirective} \\
+           This forces the explicit instantiation of the specified template when (and
+           where) it appears in the source code.
+%         \begin{itemize}
+%              \item Reference to template declaration node (either
+%                    {\tt SgTemplateInstantiationDecl}, {\tt SgTemplateInstantiationFunctionDecl},
+%                    {\tt SgTemplateInstantiationMemberFunctionDecl}, or a template member data
+%                    (though I have not seen code that demonstrates this and which
+%                    compiles with either EDG or GNU g++).  No other declaration is 
+%                    permitted (or makes sense).
+%         \end{itemize}
+\end{itemize}
+
+Nodes not added include (a judgement call for now):
+\begin{itemize}
+     \item SgTemplateClassDeclaration
+     \item SgTemplateFunctionDeclaration
+     \item SgTemplateMemberFunctionDeclaration
+     \item SgTemplateDataMemberDeclaration
+\end{itemize}
+There are many types of template declarations, at present there is an enum type
+which identifies each category of template declaration.  The enum type is:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+          enum template_type_enum 
+             {
+               e_template_none       = 0,
+               e_template_class      = 1,
+               e_template_m_class    = 2,
+               e_template_function   = 3,
+               e_template_m_function = 4,
+               e_template_m_data     = 5
+             };
+\end{verbatim}
+}}
+
+A data member of this type is held in the {\tt SgTemplateDeclaration}.
+
+% ****************************************************************************************** 
+% ****************************************************************************************** 
+% ****************************************************************************************** 
+
+   We might have to distinguish between template member functions and member functions
+   of template classes, so that we can exclude instantiation of template member functions
+   separately from member functions of template classes (which are required for the
+   definition to appear in the generated source code).  At present, this is done with a
+   member function that computes this information (see the IR node documentation for more detail).
+
+% ****************************************************************************************** 
+% ****************************************************************************************** 
+% ****************************************************************************************** 
+
+\subsection{Template Specialization}
+   Things that can be specialized include classes, structures, unions,
+variables (static data members of templated classes), functions, and member functions.
+% Template instantiations will soon (not done yet) be marked as to if they are part of
+% an explicit instantiation (since those should always be output even if the templates
+% instantiations are not generated and output).
+   Template and template instantiations need more information stored in the IR nodes to
+allow the unparser to be simplified.  We currently compute this information within
+separate, post-processing, passes over the AST (see the source code in
+{\tt ROSE/src/frontend/SageIII/astPostProcessing} for details).
+% and setup the required template instantation behavior (member data such as doNotInstantiate, etc.).
+   Interestingly, a template specialization is not an instantation and can co-exist in each
+file and not cause linker problems (multiply defined symbols), it may cause generation of 
+{\em weak symbols}.
+
+% ************************************************************************************
+% Need to test this.  Later we could
+% instatiate all speciaizations into a separate file (a {\em template specialization file}
+% and keep a list of what specializations have been put into the file so that we could
+% only place specializations into the {\em template specialization file} once.
+% ************************************************************************************
+
+\subsection{ Unparsing Templates }
+   The general handling of templates requires a specific sorting of the template output.
+This order permits the generation of all template specializations, which allows 
+each specialization to be transformed uniquely.  This is important
+to the support of transformations on templates (based on template arguments).
+The order of output for template handling is as follows:
+\begin{enumerate}
+     \item Output templates. \\
+           Raw template declarations (text strings) are output at the top of the file.
+
+     \item Output template function prototypes. \\
+           Function prototypes for all specializations that we generate are required
+           before the use of the template forces its instantiation.  The point is to 
+           allow the specialized template function to be available for transformation.
+           It can be placed anywhere in the file (typically at the end in ROSE) as long
+           as a prototype has been output to prevent a full instantiation of the
+           specialized template function before any use would force its instantiation by
+           the back-end compiler. At that point, the template specialization generated by 
+           ROSE (and perhaps transformed by the user) is not only redundant, but results 
+           in an error (since the function is defined twice -- first instantiated by the 
+           vendor compiler and then seen as an explicit template specialization 
+           generated by ROSE).
+
+     \item Output template function definitions. \\
+           All template specializations can be now output, even if they referenced 
+           templated classes for functions that would force the instantiations (the 
+           reason why all prototypes must preceed the definitions of template classes 
+           and functions).  These can actually appear before or after the rest of the 
+           code, so \#3 and \#4 may be swapped).
+
+     \item Output the rest of the code. \\
+           This will force template instantiations of any nonspecialized template classes
+           or functions.  It may appear before the template functions definitions or mixed
+           (interleaved) with them.
+
+     \item Output all explicit template instantiation directives at the base of each namespace
+           where they appear.  It is not clear that it is required to observe namespaces 
+           since the instantiation directive could reference fully qualified type names.
+           This should be sufficient to resolve type ambiguity.  
+         % Note that GNU (at least) does not allow explicit template instantiation
+         % directives in a class.  Not clear if it is legal C++.
+
+\end{enumerate}
+
+\commentout{
+   It is not clear if we need to handle specializations separately (I will resolve that
+after I get nonspecialized templates working), likely new IR nodes will be added for
+these as well.  The general philosphy is to put as much information into the IR as possible
+about the templates, their specializations, and their instantiations so that
+transformations on templates can be supported.  And I am learning as I go :-).
+}
+
+\subsection{ Templates Details }
+   There are several details to enumerate:
+\begin{enumerate}
+     \item Comments in templates are removed. They are saved in the SAGE III AST, but
+           likely in incorrect positions, and not within the template 
+           (before or after the template declaration).  They are not lost; since they
+           are retrieved using a separate lex pass internally within ROSE.  
+           % It is not clear if we should bother with editing the comments back into the
+           % templates any better than just letting them be output either before of after
+           % the template declaration.
+           When template declarations appear in AST form, they will be placed into the
+           correct positions in the generated code.
+
+     \item Options specific to templates can be classified as follows:
+          \begin{itemize}
+               \item No transformations on templates. \\
+                     This is the first case to got working and it is the easiest case (to
+                     some extent).  Template instantiation can be handled entirely by the
+                     vendor compiler, making life simple for ROSE. We also don't have to
+                     generate any template specializations.
+               \item Transformations on templates. \\
+                     This case can be separated into two separate cases. The second is harder
+                     to handle than the first).
+                    \begin{itemize}
+                         \item Transformations on template functions (including member functions). \\
+                               This case will force transformations to happen as the
+                               templated functions are instantiated (and could not happen 
+                               at any earlier phase).  The instantiation can happen
+                               at an earlier stage than prelinking if we force
+                               auto-instantiation of templates (often triggered
+                               automatically if the program in represented by a single 
+                               translation unit).
+                         \item Transformation of template classes. \\
+                               This case is discussed in more detail below. It is a much harder
+                               case, and is currently incomplete.
+                         \item Transformation of template static data members. \\
+                               This case is not handled yet, but should not be much trouble.
+                    \end{itemize}
+               \item Transformation of template specializations. \\
+                     ROSE generates all template instantiations internally as template
+                     specializations. As such they are no different from any other AST
+                     subtree and all ROSE mechanism can be used for analysis and
+                     transformation of the instantiated template.  Those instantiated 
+                     templates that are transformed are marked for output in the 
+                     code generation phase and output as template specializations.
+                     In this approach, templates instantiated for different types
+                     may be easily transformed differently.
+                   % I'm not clear on how to handle this yet, IR nodes still have to be
+                   % added to SAGE to handle explicit template specializations.  I will 
+                   % worry about this case after we have the more basic templates working.
+                   % I do not think it is much of a problem as I think it nests into the
+                   % general handling of generated template instantiations (since they are
+                   % generated as specializations).  However, partial specialization might
+                   % get a bit tricky, though likely, through user defined transformation, 
+                   % the user will get exactly what he specifies and so perhaps in a cruel 
+                   % sense what he/she deserves.
+          \end{itemize}
+
+     \item Transformation of templated classes is enabled via generated specializations. \\
+           This was discussed briefly above (under {\em Options specific to templates:
+           item Transformation of template specializations} above).  In general,
+           transformations on template classes, functions, and static data members are
+           handled through the explicit generation of specializations in place of the 
+           instantiations that would be generated by the back-end vendor compiler.  All 
+           templates are explicitly generated as specializations in ROSE and, in principle, 
+           no instantiations are required by the back-end vendor compiler.  It is not clear
+           if ROSE needs to be so aggressive in eliminating template instantiations by the
+           back-end vendor compiler, but doing so allows all template instantiations to be
+           made available for transformation using ROSE.  For simplicity, we only output
+           (within code generation) those template instatiations that are required, due 
+           to transformations, and 
+           allow the back-end compiler to generate as many of the required template 
+           instantiations as possible.
+
+           In order for a template to be transformed, we must save it into the 
+           SAGE III AST. If it is a class template, then we only want to unparse 
+           it into the final transformed code if it was modified. Otherwise its
+           member functions and static members will not be defined at link time.
+           Fundamentally, specialization of a class disqualifies the instantiation of its 
+           member functions from the original template declaration, because the newly 
+           instantiated template class becomes a distinct and separate class no longer 
+           associated with the original template. The vendor 
+           compiler can generate code for the new template class using the original
+           template declaration or the member functions associated with the original 
+           template declaration. All the functions must be generated to go
+           along with the new, specialized form of the templated class, which we had to 
+           specialize to permit it to be transformed.
+
+           This potentially massive generation of all the member functions of a class
+           applies only to transformations on class templates.  Transformations on member
+           function templates are not affected.  They are instantiated in the prelink stage
+           and seen in the SAGE III AST at that time. They can be transformed in the prelink
+           stage, during, or immediately after the instantiation. This is the earliest possible
+           stage where transformation on instantiated templates can be done.  A transformation
+           on a templated function is handled as a transformation on each of its instantiations.
+          \begin{itemize}
+               \item Generation of code for transformed templated class. \\
+                     If a class template is modified, then we have to unparse all of the 
+                     templated member functions!  This is because an instantiated template
+                     cannot force its member functions to be instantiated (unless we do
+                     it explicitly, as I understand the template prelinking mechanism). Unparsing
+                     the instantiated template (with a mangled name) or as a specialization
+                     causes it to be considered as a new class and forces the
+                     construction of all member functions. This is a slightly different concept
+                     than instantiation (closer to specialization, I think, since
+                     specialization is not automated and must be handled explicitly as a 
+                     result). Details are discussed earlier in this section.
+
+                     The declaration of a template class as a
+                     specialization requires declaration and definition of member
+                     functions of the class because the template mechanism would permit 
+                     them to be different (even though this seems redundent, and even if
+                     we can automate the construction of the member function by automating 
+                     the declaration of specializations for all member functions and
+                     static member data).
+
+                     This mechanism needs to be controlled, so that we can control the
+                     amount of code generated.  Options are:
+                     \begin{itemize}
+                         \item Always generate used class templates AND the member
+                               functions upon which they depend.  This might seem to
+                               require that we generate all possible code, though in general
+                               it is only slightly less than all the member
+                               functions minus the template class definition.  So maybe
+                               this is a suitable option, but not in the current plan.
+                         \item Generate only class template instantiations that have been 
+                               transformed. Then generate
+                               all the member functions upon which they depend. This is
+                               the current design within ROSE.
+                         \item Generate only the function template instantiations that
+                               have been transformed (currently all function template
+                               instantiations are generated, since we can't know in
+                               advance which ones the user might wish to transform).
+                     \end{itemize}
+                     Note that if a template is never used in a given translation unit, 
+                     then we will not instantiate it, and we can't even allow the user to 
+                     see it for a possible transformation.  This is not much different
+                     than exisiting vendor compilers that would not instantiate the template 
+                     unless it was required by at least one translation unit.  It can be 
+                     argued that the ability to transform templated functions and classes 
+                     that are never used by an application is inherently meaningless. As is
+                     the case for any vendor compiler, if the user wants to force
+                     instantiation of all templated classes, functions, and static data 
+                     members, then he or she can do so by including a test code 
+                     that forces the explicit instantiation of every class, function,
+                     static data member (or using explicit template instantiation directives).
+
+                     If a class template has been modified then we need to make sure that all the 
+                     class definition,
+                     member functions, and 
+                     static data members
+                     are instantiated (on the next pass through the prelinker). The process should 
+                     involve a call to the EDG function:
+                     \begin{itemize}
+                          \item {\tt void set\_instantiation\_required\_for\_template\_class\_members (a\_type\_ptr class\_type)}
+                     \end{itemize}
+
+                   % I am not currently sure how to make this happen, but it should involve the 
+                   % *.ti files (I guess), and might require a modification to the EDG prelink
+                   % mechanism, if it is not as simple as just generating the mangled
+                   % member function names and placing them in the *.ti file (which might
+                   % be all there is to it).
+          \end{itemize}
+\end{enumerate}
+
+\subsection{Different Modes of Template Instantiation}
+   
+    We first supported only a single mode of template instantiation. Later we will
+consider supporting additional modes later.
+% other modes to perhaps support at a later date.  
+ROSE will respond to the EDG options to control automatic template instantiation using the
+option {\tt -edg:t{\it mode}},
+where the mode is either:
+\begin{enumerate}
+   \item none (default) \\
+         No template instantiation will be done.
+   \item used \\
+         Only templates that are used in the translation unit will be instantiated.
+   \item all \\
+         All possible templates will be instantiated.
+   \item local \\
+         Only used templates will be instantiated and they will be forced to be local to
+         the file.  All instantionated functions will be declared as {\tt static}.  Note that
+         {\tt static} functions and member functions are only seen by the local file scope
+         (translation unit, typically the source file).
+\end{enumerate}
+
+
+\commentout{
+\subsection{Problems with the EDG/ROSE Template Instantiation Approach}
+
+    First lets memtion that EDG does a great job and that the problems that
+we have within template instantiation in ROSE are a result of trying to
+convert template instatiations in EDG to be formal template specializations 
+in ROSE.  This approach presents a better user interface and is substantially 
+different to what EDG provides.
+
+    For member functions EDG adds to the EDG AST the instatiations of the member functions
+that are required at the end of the file.  Note that it does not declare the functions
+before hand except in the instantiated class (which ROSE supresses the output of so that
+the template can be used instead and template specializations added).  Since we convert
+all template member functions to specialized template member functions add the
+required forward declaration for the specialized template member function after the
+template declaration. This does however not allow the explicit representation of the
+specialized template of the templated clas (which would also have the prototype
+declaration contained in it).
+
+   We should perhaps output the specialized version of the templated class to be
+uniform.  This would allow the user to do transformations on the template class
+where it was instantiated with specific template arguments.  We currently look to see if
+the templated class has been transformed and ouly then output the class (which would then
+be redundant with the forward declaration of its member function!!!
+
+  If I output all instatiations then I don't need to build forward declarations!
+if I surpress class declarations then I need to output forward declarations of the member
+functions that are used (so that we can output the intantiated member functions at the
+end of the file).
+
+We need at least a couple of template instatiation modes:
+\begin{enumerate}
+   \item Transformations on templates \\
+         default should be to present an AST without the capability to transform
+         templates.  However, due to EDG dropping the inline member function template
+         definitions we would have to compromise and still present the member functions
+         of templated classes as specializations.  Later, perhaps we can fix this.
+
+   \item none (default) \\
+         No template instatiation. This is a problem since member functions are lost as
+         template declarations in the AST.  So we generate code that will not link
+         (error).  If we could get the template declaration directly out of the source
+         code then we could perhaps use it as a text string, but we would have to get it
+         after macro expansion for safety and even then it could be a problem. In general
+         if all templates are instantiated a link time then we have fewer problems.
+   \item used (same as EDG) \\
+         Output all instatiations that are used, this would cause link time problems with
+         multiply defined symbols.
+   \item all (output all template instatiations). \\
+         Assume everything is transformed and output all template instatiations.
+   \item local (same as EDG) \\
+         Output only those template instantiations used and do so as static functions.         
+\end{enumerate}
+}
+
+
+\commentout{
+\section{Prelinking Template Instantiation}
+
+    Prelinking is a strange thing for a source-to-source project to endure.
+Basically we wish to support the analysis and/or transformation of templates
+within C++.  As templates, the uninstantiated code is stored internally as a 
+string, accessible, but not pleasant to deal with for analysis or transformations
+(unless you parse it yourself, but that is part of the point of using ROSE).  
+So any analysis and transformation of templates can happen only on the 
+instantiations of the templates.
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+// this is a string within the SgTemplateDeclaration
+template <class T> class X { T t; };
+// specialization of template
+template <> class X<float> { int t; T f; };
+// variable declaration of type X<int> which is an instatiation
+X<int> x;
+\end{verbatim}
+}}
+
+\subsection{Why the prelinker phase}
+
+    We want to support transformation on templates, so we have to build instantiations.
+Only the instantiations are represented in the ASTs, template declarations are stored 
+only as text strings.
+If we were not to support any transformations on instantiated templates then we could 
+avoid the prelinking and so this step will be optional (in its final form ROSE will
+present this as an option, or you can obtain this trivially by just using the vendor
+compiler to link, and skip the use of ROSE for this phase).  The rest of this section 
+assumes that this optional behavior is in effect and that the users wants to do
+transformations on the instantiated templates.
+
+   Because users expect to link their final codes (if they do), we have to provide only
+one template instantiation; globally across all files in a project.  The only time
+that ROSE sees all the files in a project is at link time, so exactly as with every other
+C++ compiler, we have to instantiate templates at link time (called prelinking) to avoid 
+multiple definitions appearing to the linker.  ROSE only handles the prelinking required 
+to instantiate the templates, not the final linking itself (which is done using the vendor 
+compiler).
+
+\subsection{Why do we compile the generated source instead of the original source within the prelink phase}
+   When prelinking we must process (recompile) the ROSE generated files, because they 
+contain the instatiations (as specializations) that must be seen by the prelinker to 
+trigger the template instantiation mechanism to stop trying to instantiate the template
+instantiation (as a class instead of as a specialization).  If we proces the original input file
+then we would trigger the mechanism (in the EDG front-end) for the front-end to ask for a template to be
+instatiated to satisfy what only an instatiation or a specialization could satisfy.
+When a template instantiation is requested, only an instatiation (class with mangled name)
+or a template specialization will satisfy it. 
+Since either a template instatiation or a specialization will work, we must process
+the ROSE generated code since it contains the specialization (ROSE turns all template
+instantiations into template specializations to support transformations upon them).
+Only the ROSE generated code contains a specialization, the original code contains 
+neither.  Thus ROSE must within the prelinking stage process its own generated 
+source code (not too much of a problem).
+
+\subsection{Tutorial}
+
+   The illustrate the prelink process we can consider an example program (file.C):
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+template < class T >
+void foo ( T u )
+   {
+     u++;
+   }
+
+int main()
+{
+  foo(2);
+  return 0;
+}
+\end{verbatim}
+}}
+
+Which contains a template function {\tt foo} and a use of the template function
+instatiated with an integer. As a single file, template instatiation could be done
+without prelinking using {\tt auto\_instantiation } and specifying the instantiation
+mode to be either {\tt all} or {\tt used}; template instatiation at compile-time.  
+But we will assume that this is part of a larger application using many files and 
+present the approach using template instantiation at link time (prelinking).
+
+
+After compilation, before prelinking invokes any recompilation passes,
+the EDG front-end generates a {\em template instatiation} file (file.ti).
+which contains the following information:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+flg:foo__tm__2_i__FiZ1Z_v:TC
+\end{verbatim}
+}}
+
+ROSE then reads this information and for each symbol included the compiler command line,
+the directory where to do the compilation, and file to compile to generate that symbol.
+The symbols represent possible templates that {\em could} be instantiated (if requested 
+in the template {\em instantiation request} file (rose\_file.ii), discussed in more 
+detail below).  ROSE generates a new {\em template instatiation} file (rose\_file.ti),
+and deletes the {\em template instatiation} file generated by EDG (file.ti).  Thus ROSE
+is consistant is using the {\em rose\_} prefix for all ROSE generated files.  With
+the information in the {\em template instatiation} file (rose\_file.ti), for each source
+file in a project consisting of multiple files, we are ready to prelink.  At this point
+we have only the ROSE generated {\em template instatiation} file (rose\_file.ti) and the
+ROSE generated source file (rose\_file.C).
+
+Example {\em template instatiation} file (rose\_file.ti):
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+cmd:./translator -rose:verbose 2 --edg:restrict --edg:export -I/home/dquinlan/ROSE/NEW_ROSE/tests/CompileTests/A++Code -c -rose:prelink
+dir:/home/dquinlan2/ROSE/LINUX-3.3.2/developersScratchSpace/Dan
+fnm:/home/dquinlan2/ROSE/LINUX-3.3.2/developersScratchSpace/Dan/rose_test2005_74.C
+flg:foo__tm__2_i__FiZ1Z_v:TC
+\end{verbatim}
+}}
+
+In this case {\tt translator} (referenced in the command line {\tt cmd:...}) is the 
+translator build using ROSE. Note that the {\tt -rose:prelink} option is used to signal 
+to ROSE that some special handling is required.  This information ia available to
+translators build using ROSE (see bool SgFile::isPrelinkPhase()).
+
+   The prelink phase starts with:
+\begin{enumerate}
+   \item reading the object files on the command line and associating them with *.ti files.  
+   \item building an internal data base of all the possible templates that could be instatiated.
+   \item running the unix {\tt nm} command on each object file and saving the output.
+   \item parsing the output of the saved {\tt nm} command
+   \item matching undefined symbols with symbols that could be generated from instatiated templates
+   \item generating the template {\em instantiation request} file (rose\_file.ii)
+\end{enumerate}
+
+The template {\em instantiation request} file (rose\_file.ii) is built by the prelinker 
+to communicate to the EDG front-end what templates should be instatiated during the 
+recompilation of each file.  Only the files containing the template declaration
+(the first one if it could be more than one) are recompiled.  An example template 
+{\em instantiation request} file (rose\_file.ii) appears as:
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+foo__tm__2_i__FiZ1Z_v
+\end{verbatim}
+}}
+
+   The prelinker at this point knows:
+\begin{enumerate}
+   \item how to build any symbol required (all command line information is known),
+   \item knows what symbols are required (from running {\tt nm})
+   \item has specified what symbols should be built (templates to be instatiated)
+\end{enumerate}
+
+  The prelinker builds each requested symbol (template instatiation) by recompiling
+the file associated with that symbol and the EDG front-end then reads the template 
+{\em instantiation request} file (rose\_file.ii) and instatiates the template
+in the AST as required.  ROSE translates the instatiated templat in the AST into
+a template specialization and generates the template specialization in the 
+at the bottom of the file containing generated source code (a forward declaration
+for the class or function is also placed at immediately after the template declaration).
+This ROSE generates the file (rose\_file.C):
+
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+template < class T >
+void foo ( T u )
+   {
+     u++;
+   }
+
+/* ROSE generated template specialization prototype */
+template <> void foo(int y,int u);
+
+int main()
+{
+  foo(2);
+  return 0;
+}
+
+/* ROSE generated template specialization explicit definition */
+template <> 
+
+void foo(int u)
+{
+  u++;
+}
+\end{verbatim}
+}}
+
+\subsection{Template Instantiations Generated as Template Specializations}
+   A template instantiation appears as an otherwise normal class, function, or member
+function with a mangled name (e.g. {\tt void foo\_\_tm\_\_2\_i\_\_FiZ1Z\_v(i);})
+In contrast a template specialization appears a a template using specific
+statically defined (resolvable) template arguments (e.g. 
+{\tt template <> void foo(int u)}).  ROSE internally represents all 
+template instantiations as template specializations.  This is done 
+because it permits a simpler recognition of the instatiated template and it's template
+arguments within the AST (else parsing of mangled names would be required).  The output 
+of the template as a specialization is also more satisfying (to unimportant if no
+one reviews the generated source code).
+
+
+\subsection{Controling the Template Instantation}
+   Although tests are possible to test the generation of {\em all} required 
+templates instantiations; it is only required for ROSE to generate template
+instatiations (as specializations) for those instatiated templates that are
+transformed.  ROSE internally records which templates are transformed
+and only generates specializations for those cases (except for inline member
+templates which are always generated as required).
+
+
+\subsection{Summary of Template Instatiation Steps}
+   In summary the steps associated with template instatiation are:
+\begin{enumerate}
+   \item initial compilation of each source file to generate: 
+   \begin{enumerate}
+      \item translated source file (rose\_file.C),
+      \item the {\em template instatiation} file (rose\_file.ti),
+      \item the object file (file.o)
+   \end{enumerate}
+   \item Prelink Phase:
+   \begin{enumerate}
+      \item reading the object files on the command line and associating them with *.ti files.  
+      \item building an internal data base of all the possible templates that could be instatiated.
+      \item running the unix {\tt nm} command on each object file and saving the output.
+      \item parsing the output of the saved {\tt nm} command
+      \item matching undefined symbols with symbols that could be generated from instatiated templates
+      \item generating the template {\em instantiation request} file (rose\_file.ii)
+   \end{enumerate}
+   \item call the vendor compiler's linker to link all the object files \\
+         At this point all templates could have been instatiated, this behavior will
+         ultimately be permitted to be controled by the user.
+\end{enumerate}
+
+Note that EDG also uses a {\em definition list file}  I am unclear what its significance
+is in the template instatiation process (it is however documented in the EDG manual).
+}
+
+
+\section{Compiling ROSE-generated Code Using ROSE}
+
+    These are a few notes about parts that might be difficult if they are 
+encountered in code generated by ROSE (meaning that they had to first appear in 
+an applications source code and the user wanted to run the generated code through ROSE
+again [I can't imagine why]).  It is a rare but interesting possibility.
+
+   There are only a few cases where we generate code that might be a problem to compile
+using ROSE. When compiling for g++ (default), ROSE generates code that will avoid specific
+bugs in g++:
+\begin{enumerate}
+ % \item throw modifiers taking parameters (check on this detail). This is now fixed and
+ %       should not be an issue.
+   \item static const data members defined in the class definition (floats only)
+         EDG accepts static and g++ supports const, and neither accepts what the other
+         considers correct. ROSE generates code specific for the back-end and so the
+         back-end must be specified in when running {\tt configure} for ROSE.  We
+         don't currently support EDG as a back-end, though we support Intel C++ as a
+         back-end and they use EDG, so this should work.
+         \fixme{verify the details here.}
+ % \item are there any others ...
+\end{enumerate}
+
+
+\section{Correctness of AST}
+
+    When processing the AST, traversing it or rewriting it, it is useful to understand
+why things are the way they are in the AST's implementation.  This section attempts to 
+outline the properties that constitute the correctness of the AST.
+\begin{enumerate}
+     \item Null pointers in the AST. \\
+          In general, any null valued pointer is an error in the AST.  This is 
+          a policy in SAGE III, and is dramatically different from SAGE II.
+          Our push for this policy has been incremental over the years and remains
+          somewhat incomplete.
+     \begin{enumerate}
+          \item Parent pointers. \\
+               Pointers to parent nodes (available through the {\tt SgNode::get\_parent()} member
+               function) in the AST are set/reset after construction of the AST. As a
+               result of being set within a traversal of the AST, the parents perfectly 
+               match the traversal's concept of the AST {\em as a tree}.  This point is
+               important since the AST included edges that make it a directed graph, and
+               it is the traveral of the AST 
+               that gives it its form/representation as a tree.  Thus all parent pointers
+               are valid (non-null) values, except the root of the AST, which has no
+               parent (and has a null valued pointer returned from 
+               {\tt SgNode::get\_parent()}.  There are two possible nodes that can be
+               considered a root of the AST, either the {\tt SgProject} or the 
+               {\tt SgFile}; both nodes have constructors that take a translator's command
+               line arguments.
+
+          \item Function declarations. \\
+               Function declarations and function prototypes are confused in the AST,
+               and where a function is defined, i.e. with a function body, it appears 
+               in the AST as a function declaration {\tt SgFunctionDeclarationStatement} 
+               with a pointer to a function definition 
+               ({\tt SgFunctionDefinitionStatement}. A function prototype can have a null 
+               valued pointer returned from its {\tt get\_definition()} member function
+               and is marked explicitly as a function protoype (so that the null valued
+               pointer can be error checked). If the function definition is available
+               in the file (not always the case) then the {\tt get\_definition()} may 
+               return a valid pointer 
+               to it, even for a function prototype. Thus the explicit marking of
+               declarations as a prototypes is critical to its interpretation as a function
+               prototype.
+
+          \item Pointers to {\tt SgBasicBlock}. \\
+               All pointers of type SgBasicBlock should be valid pointers.
+
+          \item Other {\tt NULL} pointers \\
+               A conscious attempt is made within ROSE to not communicate information
+               through a null-valued pointer.  Unfortunately, this has been a 
+               switch from the original design of SAGE II, which had {\tt NULL} pointers
+               throughout the AST.  In general within the newer work, any NULL pointer is
+               currently an error.
+     \end{enumerate}
+
+     \item What lists can be empty. \\
+          SAGE III uses STL lists internally; children on many IR nodes are contained
+          in such STL lists.  There are nodes where the STL lists can be empty.  These 
+          nodes include:
+     \begin{enumerate}
+          \item SgBasicBlock
+          \item SgGlobal
+          \item SgExpresionList
+          \item SgNamespaceDeclaration
+        % \item No others that I know of at present
+     \end{enumerate}
+
+     \item Which access functions are simple and which do meaningful computation. \\
+          This question will be addressed later when we can automate queries of this sort.
+          In general, member functions beginning with {\tt get\_xxx} and {\tt set\_xxx}
+          get or set a private data member named {\tt p\_xxx}.  Most such functions are
+          trivial access functions, but some have more complex semantics.  Given that
+          there are over 200 IR nodes in the SAGE III IR, and that each has numerous
+          member functions, we will defer addressing this question until we can implement
+          a more automated mechanism on the SAGE III source code. 
+          See the Doxygen generated documentation for more details on the IR
+          nodes and their member functions.
+\end{enumerate}
+
+
+\section{AST Normalization: \\ Subtle Ways That ROSE Output Differs \\ from the Original Source Code}
+
+   In general, every attempt is made to preserve the look and feel of the original input
+code.  Original formatting, use of C preprocessor directives 
+(e.g. {\tt \#include<file.h>}), and comments are preserved within the AST and output 
+in the generate code.   However, there can be minor differences between the input 
+source code and the code that is generated from ROSE translators. In all cases this 
+difference is due to normalizations internally within the EDG front-end.  Current 
+normalizations include:
+
+\begin{enumerate}
+     \item White space differences. \\
+     ROSE-generated code will appear somewhat different due to slightly different
+     uses of white space within formatting of the generated code.  All attempts
+     are to preserve as much of the original formatting as possible (or practical).
+
+   % This is not fixed in ROSE and all member functions are represented identically
+   % to there position inside of outside of their class within ROSE.
+   %  \item Member functions defined within a class. \\
+   %  Although this could be changed within EDG, we currently use EDG with
+   %  a (default) internal setting which defines all member functions outside
+   %  of the class declaration of which they are a member.  This normalization makes
+   %  little different and is only syntactic.  Note that this in now optional for
+   %  non-template classes.  The default must be changed in EDG for this to work
+   %  differently. The file is host\_envir.h and the macro
+   %  FRIEND\_AND\_MEMBER\_DEFINITIONS\_MAY\_BE\_MOVED\_OUT\_OF\_CLASS should be set to FALSE.
+   %  Clearly, access to the EDG source code is required for this.  The default within ROSE
+   %  is FALSE, changed from previous versions of ROSE (prior to 0.8.3b and earlier).
+
+     \item Variable declarations are normalized to separated declarations. \\
+     Variable declarations containing multiple names (variables to be declared) are
+     normalized within the AST to form one declaration for each name (variable).  This
+     simplifies program analysis since it avoids one of two ways of searching for a
+     variable declaration (as a separate declaration and as a member of a list in another
+     declaration). As an example:
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     int x,y,z;
+\end{verbatim}
+}}
+     appears in the AST (and in the unparsed [generated] code) as:
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     int x;
+     int y;
+     int z;
+\end{verbatim}
+}}
+     This {\em feature} could be changed at some point, but it has not been a
+     high priority (and may be more desirable than the alternative).
+
+     \item Typedef template arguments are expressed in terms of their base type \\
+     This is not something that we can fix or change. EDG simply represents 
+     at least some and maybe all template arguments with their types normalized 
+     to strip away all typedefs.  Fixing this would allow 
+     generation of code that is easier to verify visually.  This may recieve 
+     some attention in the future.
+
+     \item Comments within templates. \\
+     Comments within templates are ignored and not reproduced in the generated
+     source code.  This is because the template code is held in the AST as a string
+     generated by EDG, and EDG ignores the comments.  We currently output the comments 
+     at either the top or bottom of the template declaration.  Later then the template
+     declaration is represented as an AST, the comments will be folded into place where
+     they belong.
+   % This is possible to fix, but could generate incorrect code, so it has not been done.
+
+     \item Member functions of template instantiations. \\
+     Member functions of template instantiations use the same IR node as 
+     templated member functions of templated classes and templated member functions of
+     non-templated classes.  This is because the reason why a 
+     {\tt SgTemplateInstantiationMemberFunctionDecl} exists to store the pointer to the 
+     {\tt SgTemplateDeclaration} and there is only one of these, either because
+     \begin{enumerate}
+       \item the template declaration is of the class and the member function is declared in
+          the class, or
+       \item the template declaration is of a member function of a templated class and is
+          defined/declared outside of the class.  In this case, the member function can 
+          be for a template or non-template member function, but not both.
+     \end{enumerate}
+
+   % This is now fixed.
+   % \item Handling of {\tt sizeof({\em type})}. \\
+   % The {\tt sizeof({\em type})} construct used to be substituted with the value if known at
+   % compile-time.  This should not be normalized now, as a result of fix to ROSE
+   % 2006-04-23 (see ChangeLog for details).
+
+     \item Calls via dereferencing of function pointers. \\
+     Function calls from dereferencing pointers to functions can be represented with two 
+     different forms of syntax. For example:
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     xPtr ();
+     (*xPtr) ();
+\end{verbatim}
+}}
+     appears in the AST (and in the unparsed (generated) code) as
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     (*xPtr)();
+     (*xPtr)();
+\end{verbatim}
+}}
+
+     \item C++ style cast are normalized to C style casts. \\
+     EDG appears to normalize all C++ style cases to C style casts. We are
+     working on the analysis to backout where C style casts could in fact
+     be C++ style casts of a specific classification: const\_cast, static\_cast,
+     dynamic\_cast,and reinterpret\_cast.
+
+     \item Floating-point literal normalization \\
+     Floating-point literals are internally represented in EDG as float, double, or long
+     double (dependent on the type), thus the exact string representing the floating point
+     literal is lost.  We have modified EDG to save the string representation (from the
+     token stream) the floating-point literal, this work is recent and handles all the
+     different ways that floating point literals can be expressed (even including
+     hexidecimal representation of floating point literals).  The value as a float, double,
+     or long double is also stored explicitly in the AST to simplify forms of analysis.
+     Constant folded values are stored in the AST as well, with full unfolded constant 
+     expressions output in the generated code (by default), to reproduce the original 
+     source code as much as possible.
+
+     \item Normalization of member access from a pointer. \\
+     Member function access can be represented with two different forms of syntax. For example:
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     xPtr->foo();
+     (*xPtr).foo();
+\end{verbatim}
+}}
+     appears in the AST (and in the unparsed (generated) code) as
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     xPtr->foo();
+     xPtr->foo();
+\end{verbatim}
+}}
+     The following code is normalized differently (and somewhat inconsistantly):
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     (*xPtrPtr)->foo();
+     (**xPtrPtr).foo();
+\end{verbatim}
+}}
+     appears in the AST (and in the unparsed (generated) code) as
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     (*(*xPtrPtr)).foo();
+     (*(*xPtrPtr)).foo();
+\end{verbatim}
+}}
+     when operators are explicitly defined by the user, as in
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     class A
+        {
+          public:
+               A();
+               A( int *x, int y);
+               int & operator[](int i);
+               A *operator->() const { return Aptr; }
+               A& operator*() const  { return *Aptr; }
+               A*  Aptr;
+               A** Aptrptr;
+        };
+\end{verbatim}
+}}
+     The following code is normalized differently (and somewhat inconsistently):
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+      A a;
+      A* aptr = &a;
+      A** aptrptr = &aptr;
+
+      aptr->operator[](1);
+      (*aptr)[1];
+      (*aptrptr)->operator[](1);
+      (*(*aptrptr))[1];
+
+      (aptr->Aptr)->operator[](1);
+      (*(aptr->Aptrptr))->operator[](1);
+\end{verbatim}
+}}
+     and appears in the AST (and in the unparsed [generated] code) as
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+     class A a;
+     class A *aptr = (&a);
+     class A **aptrptr = (&aptr);
+     (*aptr)[1];
+     (*aptr)[1];
+     (*(*aptrptr))[1];
+     (*(*aptrptr))[1];
+     (*aptr -> Aptr)[1];
+     (*(*aptr -> Aptrptr))[1];
+\end{verbatim}
+}}
+     \item Normalization of const ref ({\tt const \&}). \\
+           Const references, such as
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+           X<A const & > x3;
+\end{verbatim}
+}}
+     are presently normalized to be
+{\indent
+{\mySmallFontSize
+
+\begin{verbatim}
+           X<const A & > x3
+\end{verbatim}
+}}
+     \item Template arguments explicitly output. \\
+          Template types are output with template arguments.
+     Code such as:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          std::string var = std::string("");
+\end{verbatim}
+}}
+     is normalized to be
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          std::string var = std::basic_string < char , std::char_traits< char > , std::allocator< char > > ((""));
+\end{verbatim}
+}}
+
+     \item Constructor calls are really variable declarations. \\
+          C++ classes can define constructors. When they do the constuctors 
+     are represented in the AST as a member function declaration and marked
+     specifically as a constructor (conversion operators and destructors are
+     also member function declarations and marked explicitly).  However,
+     the call to a constructor is a bit special in C++ and does not appear
+     in the AST as a member function call. It appears as a variable declaration
+     within the AST fragment representing the variable declaration a
+     {\tt SgConstructorInitializer} is used.  So, where a variable of a class type {\tt X} 
+     is written in the code as
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+           X variable;
+\end{verbatim}
+}}
+     the form in the AST is more similar to the code represented by
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+           X variable = X();
+\end{verbatim}
+}}
+     Semantically the two forms of code are equivalent (since the redundant constructor calls will
+     be optimized away), and so this represents a form of normalization within the AST.
+
+     \item Redundant casts and copy constructors. \\
+     The use of redundant casts are represented as nested calls to copy constructors.
+     Code such as:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          std::string arg5 = (std::string) (std::string)std::string("");
+\end{verbatim}
+}}
+     is normalized to be
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          std::string arg5 = 
+               std::basic_string < char , std::char_traits< char > , std::allocator< char > > 
+                    (std::basic_string < char , std::char_traits< char > , std::allocator< char > > (("")));
+\end{verbatim}
+}}
+
+     \item Array indexing represented as pointer arithmetic. \\
+           Array indexing is translated by EDG into pointer arithmetic.  It
+    is not clear if this specific sort of AST normalization is desirable.
+     Code such as:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+void foobar ( double *d1, double *d2 );
+void foo()
+   {
+     double **array;
+     int n;
+     array[n] = new double[100];
+     foobar(&(array[n][n]),&array[n++][n]);
+   }
+\end{verbatim}
+}}
+     is normalized to be
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+void foobar ( double *d1, double *d2 );
+void foo()
+   {
+     double **array;
+     int n;
+     array[n] = new double[100];
+     foobar (array[n] + n,array[n++] + n);
+   }
+\end{verbatim}
+}}
+
+\item Case statements always have an attached SgBasicBlock object.
+
+\item Qualifiers are often normalized to longer names since they are computed on-the-fly
+    as needed during unparsing.  The original qualified names are lost and, as a result, the 
+    generated types can be excessively long and not at all similar to the original source
+    code.   For example, the {\tt STL map::const\_iterator} can become:
+    $ std::_Rb_tree < std::map < int , int , std::less< int > , std::allocator< std::pair<
+    const int , int > > > ::key\_type , std::map < int , int , std::less< int > ,
+    std::allocator< std::pair< const int , int > > > ::value_type , std::\_Select1st<
+    std::map < int , int , std::less< int > , std::allocator< std::pair< const int , int >
+    > > ::value\_type > , std::map < int , int , std::less< int > , std::allocator<
+    std::pair< const int , int > > > ::key\_compare , std::allocator< std::pair< const int
+    , int > > > ::const\_iterator $
+
+       This problem could be fixed by computing a style alias table to permit the shortest
+    type name to always be used.  Either that or we should explicitly store the lists of 
+    qualified names and recompute them only where transformations have been
+    done.
+
+
+\item Unnamed typedefs of enums are normalized to enums. \\
+     EDG appears to normalize unnamed typedefs to be enums, and the information about the 
+     origin as an unnamed typedef is lost.  Since there appears to be no difference in the
+     EDG AST, ROSE is unable to recover when the {\em typedef} keyword was used.  This is not
+     a real problem and the semantics of the application is the same.  Without
+     the name of the typedef, the typedef type can't be referenced except through its tag
+     name.  However, since there are subtle ways in which the tag name is not a type name in
+     C (requires the {\em struct} keyword), this could be an issue for C. I have not
+     isolated a code to demonstrate this as a problem. Thus, within ROSE, code such as:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     typedef enum enumType { zero = 0, one, two };
+\end{verbatim}
+}}
+     is normalized to be
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     enum enumType { zero = 0, one, two };
+\end{verbatim}
+}}
+     This is demonstrated in {\tt test2005\_188.C}.
+
+\item Packing pragmas: {\em \#pragma pack} normalizations. \\
+\label{pragma_pack_normalization}
+     The use of packing pragmas is handled separately from other pragmas within ROSE.
+     Most pragmas are strings and no special processing is done internally.  Packing
+     pragmas assume a stack based semantics and allow:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     #pragma pack(n)      // Sets packing alignment to value n = 1,2,4,8,16, ... powers of 2
+     #pragma pack(push,n) // Push previous packing alignment value and set new value to n
+     #pragma pack(pop)    // Use previously pushed value of packing alignment
+     #pragma pack(push)...#pragma pack(n)...#pragma pack(pop) // Alternative to #pragma pack(push,n) and #pragma pack(pop)
+     #pragma pack()       // resets to packing alignment selected by compiler (default value)
+\end{verbatim}
+}}
+     ROSE will normalize this to explicit packing pragmas for each structure (translating
+     the {\em pack(push,n)} and {\em pack(pop)} to explicit values (using {\em pack(n)}).
+     The reasons this is done is because this is that EDG stores the packing allignment
+     values directly with the data structure and does not represent the pragma explictly.
+     Generated code using ROSE thus only uses {\em \#pragma pack(n)} and 
+     {\em \#pragma pack()} explicitly for each structure declaration (before and 
+     after each declaration, respectively). The specific placement of the 
+     {\em \#pragma pack()} is alos modified so that it appears immediately before and
+     after the opening and closing parens for the class or structure definition.
+     As an example, the following code as input:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+#pragma pack(4)
+struct A { unsigned short a; };
+#pragma pack(push,8)
+struct B1 { unsigned short a; };
+struct B2 { unsigned short a; };
+#pragma pack(pop)
+struct C { unsigned short a; };
+#pragma pack(push,1)
+struct D { unsigned short a; };
+#pragma pack(2)
+struct F { unsigned short a; };
+struct G { unsigned short a; };
+#pragma pack(pop)
+struct H { unsigned short a; };
+struct I { unsigned short a; };
+#pragma pack()
+struct J { unsigned short a; };
+\end{verbatim}
+}}
+will be translated (normalized) to
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+struct A 
+#pragma pack(4)
+{ unsigned short a; }
+#pragma pack()
+;
+struct B1 
+#pragma pack(8)
+{ unsigned short a; }
+#pragma pack()
+;
+struct B2 
+#pragma pack(8)
+{ unsigned short a; }
+#pragma pack()
+;
+struct C 
+#pragma pack(4)
+{ unsigned short a; }
+#pragma pack()
+;
+struct D
+#pragma pack(1)
+{ unsigned short a; }
+#pragma pack()
+;
+struct F
+#pragma pack(2)
+{ unsigned short a; }
+#pragma pack()
+;
+struct G
+#pragma pack(2)
+{ unsigned short a; }
+#pragma pack()
+;
+struct H 
+#pragma pack(4)
+{ unsigned short a; }
+#pragma pack()
+;
+#pragma pack(4)
+struct I { unsigned short a; }
+#pragma pack()
+;
+struct J { unsigned short a; };
+\end{verbatim}
+}}
+
+\item Expressions in C++ {\tt typeid()} construct. \\
+   Expressions within are sometimes normalized.
+This is an example of input code using the typeid() operator:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+#include <iostream>
+#include <typeinfo>
+using namespace std;
+
+struct A { virtual ~A() { } };
+struct B : A { };
+struct C { };
+struct D : C { };
+
+void foo() {
+  B bobj;
+  A* ap = &bobj;
+  A& ar = bobj;
+  cout << "ap: " << typeid(*ap).name() << endl;
+  cout << "ar: " << typeid(ar).name() << endl;
+  D dobj;
+  C* cp = &dobj;
+  C& cr = dobj;
+  cout << "cp: " << typeid(*cp).name() << endl;
+  cout << "cr: " << typeid(cr).name() << endl;
+  cout << "expression: " << typeid(true && false).name() << endl;
+  bool t,f;
+  cout << "expression: " << typeid(t && f).name() << endl;
+  int less,more;
+  cout << "expression: " << typeid(less < more).name() << endl;
+  cout << "expression: " << typeid(less | more).name() << endl;
+  cout << "expression: " << typeid(less + more).name() << endl;
+\end{verbatim}
+}}
+
+This is the associated output code using the typeid() operator 
+(with some reformatting)
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+#include <iostream>
+#include <typeinfo>
+using namespace std;
+
+struct A { virtual inline ~A() {} };
+struct B : public A {};
+struct C {};
+struct D : public C {};
+
+void foo() {
+  struct B bobj;
+  struct A *ap = (&bobj);
+  struct A &ar = bobj;
+  ( *((&std::cout))<<"ap: "<<(typeid(( *ap))).name())<<std::endl;
+  ( *((&std::cout))<<"ar: "<<(typeid(ar)).name())<<std::endl;
+  struct D dobj;
+  struct C *cp = (&dobj);
+  struct C &cr = dobj;
+  ( *((&std::cout))<<"cp: "<<(typeid(C )).name())<<std::endl;
+  ( *((&std::cout))<<"cr: "<<(typeid(C )).name())<<std::endl;
+  ( *((&std::cout))<<"expression: "<<(typeid(bool )).name())<<std::endl;
+  bool t;
+  bool f;
+  ( *((&std::cout))<<"expression: "<<(typeid(bool )).name())<<std::endl;
+  int less;
+  int more;
+  ( *((&std::cout))<<"expression: "<<(typeid(bool )).name())<<std::endl;
+  ( *((&std::cout))<<"expression: "<<(typeid(int )).name())<<std::endl;
+  ( *((&std::cout))<<"expression: "<<(typeid(int )).name())<<std::endl;
+}
+\end{verbatim}
+}}
+
+  Notice that not all expressions are normalized, and that the cases 
+which are normalized vs. those which are not is very subtle. This 
+normalization appears to be a result of the internal working of EDG 
+and not the Sage III IR.  This test code can be found in {\tt test2006\_95.C}.
+
+\end{enumerate}
+
+
+\section{Non-Standard Features: \\ C++ Extensions That We Are Forced to Handle}
+
+    Philosophically, I don't think much of language extensions. we don't add any, 
+we don't think we should add any, and we would not trust ourselves to add them correctly.
+That having been said, there are a few C++ extensions that are introduced by
+EDG (only one that I know of) and a fair number by g++.  Because in many cases these features 
+are implemented differently, we find them all worth avoiding.  However,
+some applications use them, so we are somewhat forced to support them and handle the 
+differences between how they are supported within both the EDG front-end and the
+back-end compiler (most often GNU g++).  We list specific non-standard features of
+C++ that we are forced to handle (because applications we compile mistakenly use them).
+
+One non-standared feature that requires special handling in ROSE is the
+in-class initialization of static const non-integer types. In-class initialization 
+refers to code such as:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     class X
+        {
+          public:
+               static const int integerValueConstant  = 42;   // Legal C++ code
+               static const int integerValueConstant  = 42;   // Legal C++ code
+               static const bool booleanValueConstant = true; // Legal C++ code
+               static const char charValueConstant    = '\0'; // Legal C++ code
+
+            // Illegal C++ code (non-standard, does not compile with EDG, but does with g++)
+               static const double doubleValueConstant1 = 3.14; 
+            // Illegal C++ code (non-standard, but compiles with EDG, and does not with g++)
+               const double doubleValueConstant2 = 3.14; 
+        };
+\end{verbatim}
+}}
+           and it applies to integer-based types only (why such types are special while float
+           and double are not, I don't know). However, {\tt double} is somewhat supported 
+           as a non-standard extension by both EDG and GNU g++ (though in different ways).
+           This is a little corner of C++ which is truely obscure, but shows up in some
+           large applications at LLNL.  Since the code that works with EDG does not work
+           with GNU g++ (and vice versa),
+           there is no common ground.  So we assume that the code will compile using EDG
+           (we have no choice) and then generate code that will compile with GNU g++.
+           This means that we generate C++ code that can't be compiled with EDG, but this 
+           is the mess that application developers get themselves into when they use
+           non-standard features.
+
+           The fix-up of the AST to force the generation of code suitable to GNU g++ is
+           handled in the {\tt ROSE/src/frontend/SageIII/astFixup} directory.
+
+%\item I don't know of any other non-standard features that ROSE supports.
+
+
+\section{Notes on ROSE-specific Header Files }
+
+    We borrow the header files of whatever compiler is specified as the target back-end
+    compiler.  This allows the same expansion of any macros as would be expanded without
+    ROSE to match the expansion that would be done with ROSE.  The mechanism for borrowing
+    the header files from the target back-end compiler is somewhat messy, but fully
+    automated.  There are several steps, including translation and matching the values of
+    the target compiler's predefined macros, to build a set of header files that can be
+    used by ROSE (by the EDG front-end) from those used by the target back-end.
+    The details are handled automatically, and need not be a concern for users of ROSE.
+  % This section permits us to document some of this work for a more complete internal
+  % reference.
+    We use the {\tt --preinclude} mechanism in EDG to force a specific generated header file 
+    to be read ahead of any ROSE system header files (translated from the back-end system
+    header files by the ROSE {\tt configure} mechanism).  This head file contains
+    all the back-end specific macros definitions. The file name is:
+    {\tt rose\_edg\_required\_macros\_and\_functions.h} and is placed in the install
+    tree ({\tt <prefix>/include/<back-end compiler name>\_HEADERS/}.
+
+\commentout{
+    Note that with versions of g++ before 3.4.x, predefined macros could be found
+    automatically from {\tt g++ -v -E test.C} where test.C was any trivial program.
+    Since this is no longer the case for g++ 3.4, the appropriate macros are specified 
+    explicitly (and of course it is a little more difficult).
+
+    Macros can be defined either within ROSE/config/rose-g++-headerfilefixup.h
+    or on the commandline directly.  Most can be defined either location.
+    Macros set incorrectly by system header files (such as for {\tt \_\_flexarr}
+    must be set in ROSE/config/rose-g++-headerfilefixup.h and we are dependent 
+    upon this file being read before any other head files which use this macro.
+    (though we can only force it to be read before any compiler specific header file
+    since we copy and modify these and not the platform specific header files in
+    /usr/include)\footnote{This does not appear to be a problem in practice but if we are
+    required to do so in the future we could also copy and modify the platform specific
+    heder files (though I would like to avoid doing so to make our work as platform
+    independent as possible).  But copying and modifiying the target compiler's header
+    files we are in a position of being guite dependent upon specific version numbers of
+    back-end compilers already).}  For greatest possible safety, most predefined macros are
+    given their definition withn the specificaiton of the commandline internally to EDG
+    (not really a commandline, but a string handed to the EDG front-end withi a function
+    call interface).
+
+    The full commandline internally required to EDG to make it emulate g++ is:
+    $ -D\_\_GNUG\_\_=\$BACK-END\_GCC\_MAJOR -D\_\_GNUC\_\_=\$BACK-END\_GCC\_MAJOR
+    -D\_\_GNUC_MINOR\_\_=\$BACK-END\_GCC\_MINOR -D\_\_GNUC\_PATCHLEVEL\_\_=\$BACK-END\_GCC\_PATCHLEVEL 
+    -D\_GNU\_SOURCE -D\_\_extension\_\_= -D\_\_const=const -D\_\_attribute\_\_(arg)= -D\_\_restrict= 
+    -D\_\_inline= -D\_GLIBCXX\_HAVE\_STDINT\_H -D\_GLIBCXX\_EXTERN\_TEMPLATE=0 -D\_\_null=0 
+    -D\_\_builtin\_expect(x,y)=(x) -D\_\_PRETTY_FUNCTION\_\_=((\_\_const char *) 0) $
+
+    \begin{enumerate}
+        \item {tt \_\_flexarr} must be redefined since it is done incorrectly in
+        /usr/include/sys/cdefs.h.  It is defined first as {\tt\_\_flexarr[]}, but it should be
+        {\tt \_\_flexarr[1]} to compile properly with EDG.
+
+        \item {\tt \_\_GNUC\_\_} for GNU must be defined.
+
+        \item {\tt \_\_GNUC\_MINOR\_\_} for GNU must be defined.
+
+        \item {\tt \_\_GNUC\_PREREQ(maj, min)} for GNU must be defined but will be in
+        /usr/include/features.h if {\tt \_\_GNUC\_\_} and {\tt \_\_GNUC\_MINOR\_\_} are defined.
+
+        \item {\tt \_\_const} for GNU must be defined (to ``const'').
+
+        \item {\tt \_\_null} for GNU must be defined.
+
+        \item {\tt \_\_builtin\_expect(x,y)=(x)} for GNU must be defined (used by assert macros).
+
+        \item {\tt \_\_PRETTY\_FUNCTION\_\_} for GNU must be defined (used as a magic
+        variable within GNU gcc).
+
+        \item {\tt \_\_extension} for GNU must be defined to be empty.
+
+        \item {\tt \_GNU\_SOURCE} for GNU must be defined so that other important macros
+        will be defined internally.
+
+        \item {\tt \_\_GNUC\_PATCHLEVEL\_\_} for GNU is defined but I'm unclear if it is
+        required.
+
+        \item {\tt \_\_inline} for GNU must be defined to be empty (empty might not be the
+        best option here).
+
+        \item {\tt \_GLIBCXX\_HAVE\_STDINT\_H} and {\tt \_GLIBCXX\_EXTERN\_TEMPLATE=0}
+        must be defined to avoid code which uses GNU extensions and would not compile with EDG
+        (not legal C++ code).
+
+        \item The following are defined in the ROSE/config/rose-g++-headerfilefixup.h: \\
+             \#define \_\_FLT\_HAS\_INFINITY\_\_ 1 \\
+             \#define \_\_DBL\_HAS\_INFINITY\_\_ 1 \\
+             \#define \_\_LDBL\_HAS\_INFINITY\_\_ 1 \\
+             \#define \_\_FLT\_HAS\_QUIET\_NAN\_\_ 1 \\
+             \#define \_\_DBL\_HAS\_QUIET\_NAN\_\_ 1 \\
+             \#define \_\_LDBL\_HAS\_QUIET\_NAN\_\_ 1 
+
+    \end{enumerate}
+}
+
+\section{Comments About Declarations (Defining Declarations vs. Nondefining Declartions) }
+
+    Declarations come in two kinds: those that can have a separate definition (e.g class
+and function declarations) and those that cannot (e.g. enum and pragma declarations).
+For example, enums have to have their definition in their declaration; there is no concept of
+forward declarations of enums in C or C++.\footnote{This is in spite of the fact that they
+    are implemented in many compilers. They are not part of the C or C++ language, so 
+they are not implemented in ROSE.  They are, however, one of the most common language
+extensions to C and C++ compilers (even certain standard following front-ends such as EDG).}
+
+A class declaration, in C++, can have a forward declaration (even repeated forward declarations)
+before the declaration that contains the class definition (the {\tt \{\}} part).  Thus 
+the following code is valid C++:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     class X;    // forward declaration (declaration with NULL pointer to definition)
+     class X {}; // defining declaration (declaration with pointer to definition)
+\end{verbatim}
+}}
+Note that multiple forward declarations can exist, as in:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     class X;    // first forward declaration
+     class X;    // second forward declaration
+     class X {}; // defining declaration
+\end{verbatim}
+}}
+   The first forward declaration is the {\tt firstNondefiningDeclaration} within ROSE.
+All forward declarations are marked as forward decarations (see declarations modifiers
+documentation, {\tt isForward()} member function). The second forward declaration is just 
+another declaration and should not be referenced as a firstNondefining declaration from
+any other declaration. Its defining declaration is set in the AST fix-up phase.
+
+The following code is legal, but particularly bothersome (it now works in ROSE):
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     void foo (struct X *ptr);  // first declaration (but not really a forward declaration)
+     class X;     // first or second forward declaration (not really sure if this is the first or second)
+     class X {};  // defining declaration (one one of these is allowed, in the same scope)
+\end{verbatim}
+}}
+   In this code example, the first declaration of X appears in the function parameter
+list of the forward declaration of the function foo. This is not a typical forward 
+struct declaration.  We keep track of which is the 
+defining declaration and which is the first nondefining declaration; the information
+about which is a forward declaration is somewhat redundant.  The unparser can't just 
+use the result of {\tt isForward()} since declarations can be shared. This would
+result in unparsing the class definition multiple times.  Thus, we separate
+the two concepts of defining and nondefining. Defining declarations are never shared
+(except through the {\tt definingDeclaration} pointer); only non-defining declarations
+are shared (through the {\tt firstNondefiningDeclaration} pointer).
+
+    SAGE III contains a {\tt SgDeclarationStatement} IR node from which all declarations IR nodes
+are derived (e.g. {\tt SgClassDeclaration}, {\tt SgFunctionDeclaration}, etc.).  Contained in the
+{\tt SgDeclarationStatment} IR node are pointers (accessed through corresponding {\tt get\_} and
+{\tt set\_} member functions [access functions]) to the first declaration (called
+firstNondefiningDeclaration) and the the defining declaration (called
+definingDeclaration).  Both of these pointers are used internally when a pointer is
+required to a declaration (so that the same first declaration can be shared)
+and within the unparser (most importantly to output the definition where it
+appeared in the original code).
+
+   These pointers are initialized in the EDG/Sage interface code and are in a few cases
+(redundant forward declarations where only the first one is given a proper reference to
+the defining declaration), fixed-up in the ROSE/src/frontend/SageIII/AstFixes.C (AST fix-up
+phase). They are handy in transformations since they simplify how one can find a
+declaration and the definition if it is required.
+
+\section{Mangled Names and Qualified Names}
+
+     Several C++ constructions (IR nodes) have qualified names.  These
+are used to specify the location of the construct within the {\em space of names}
+(we have avoided calling the {\em space of names} the {\tt namespace}, since that
+is a specific C++ construct) presented by the C++ program.
+
+     Note that none of the {\tt get\_mangled()} functions are called within the EDG/Sage 
+translation (I think).  At least none are called directly!
+
+   IR nodes that contain a {\tt get\_qualified\_name()} member function are:
+\begin{itemize}
+     \item SgEnumDeclaration
+     \item SgTypedefDeclaration
+     \item SgTemplateDeclaration
+     \item SgNamespaceDeclarationStatement
+     \item SgClassDeclaration
+     \item SgTemplateInstantiationDecl
+     \item SgMemberFunctionDeclaration
+     \item SgScopeStatement
+     \item SgGlobal
+     \item SgBasicBlock
+     \item SgNamespaceDefinitionStatement
+     \item SgClassDefinition
+     \item SgTemplateInstantiationDefn
+     \item SgNamedType
+\end{itemize}
+
+   Mangled names are a mechanism to build unique mappings to functions, classes,
+and any other constructs that could be identified using a non-unique string.
+Mangled names should include the qualified names of any scopes in which they
+are contained.
+
+   IR nodes that contain a {\tt get\_mangled\_name()} member fucntion are:
+\begin{itemize}
+     \item SgInitializedName
+     \item SgStatement (all derived classes)
+\end{itemize}
+
+\commentout{
+   IR nodes that contain a {\tt get\_mangled\_qualified\_name()} member fucntion are:
+\begin{itemize}
+     \item SgClassDeclaration
+     \item SgClassDefinition
+\end{itemize}
+}
+
+\commentout{
+So the same function from two different namespaces would mangle to the same name!
+Since Sage contains a symbol table for each scope this is not an issue.  Where a 
+compiler would try to translate to C, such functions with the same name but in two
+different scopes would have to be given unique names and so the mangled name would have
+be be prefixed by the mangled form of the qualified name.  Where the user requires
+a unique string to represent a function he/she should form that from a concatination of
+the mangled name and the mangled form of the qualified name.  At some point we will
+provide higher level interfaces to Sage III to support this. At the moment
+we don't want to include such functionality within what is trying to be a minimalist
+interface of Sage III.
+}
+   Note that mangled names include parts that represents the qualified name.
+The algorithm used for name mangling is best described in the actual code
+where the documentation should be clear. The code for this is in the 
+SgType IR nodes (and its derived IR nodes).  The codes used for the operators is
+present in the function {\tt SgType::mangledNameSupport(SgName,SgUnparse\_Info)}.
+
+\section{Passing Options to EDG and ROSE}
+
+    By default, all command line options (except EDG or ROSE-specific options) are 
+passed to the back-end compiler.  As a result the command line for the compiler
+can be used with any translator built using ROSE.  This is particularly effective
+in allowing large complex {\tt Makefiles} to be used by only changing the name of the 
+compiler ({\tt CC} or {\tt CXX}).
+
+    Command line options are considered EDG-specified when prefixed with 
+option: {\tt -edg:xxx}, {\tt --edg:xxx}, {\tt -edg\_parameter:xxx n}, or 
+{\tt --edg\_parameter:xxx n}, which then translates to {\tt -xxx}, {\tt --xxx}, 
+{\tt -xxx n}, or {\tt --xxx n} (respectively) for only the command line passed to 
+the EDG front-end (not passed to the back-end compiler).  These are
+required to support the different types of command line arguments used in EDG.
+For a complete list of the EDG options, see the EDG documentation (available 
+only from EDG and covered under their license to use EDG).
+
+     Similarly, ROSE-specific command line options are prefixed using {\tt -rose:xxx}
+and only interpreted by ROSE (not passed on to EDG or the back-end compiler).  To see 
+a complete list use any translator build using ROSE with the option {\tt --help}.
+
+     All other options are passed to the back-end compiler with no processing.
+
+
+\section{How to Control Language Specific Modes: C++, C, C99, UPC}
+
+   ROSE supports a number of different modes internally (within ROSE, the SAGE III
+IR, and the EDG front-end).  There are five modes supported:
+\begin{enumerate}
+   \item C++ mode. \\
+   \begin{enumerate}
+      \item C++ mode (default). \\
+        This mode is used when compiling all files when no command line options are specified.
+      \item C++ (strict\_warnings) mode {\tt -edg:a}. \\
+        This is the mode used when compiling with the {\tt -edg:a}, violations are issued
+        as warnings. Note that currently, gnu builtin functions
+        are not properly defined in strict modes (so they modes should not be used).
+      \item C++ (strict) mode {\tt -edg:A}. \\
+        This is the mode used when compiling with the {\tt -edg:A}, violations are issued
+        as errors. Note that currently, gnu builtin functions
+        are not properly defined in strict modes (so they modes should not be used).
+        So these strict modes are incompatable with the use of the g++ and gcc compilers
+        as a back-end to ROSE.
+   \end{enumerate}
+
+   \item C mode. \\
+   \begin{enumerate}
+      \item ANSI C (non-strict) mode. \\
+        This is the mode used when compiling with the {\tt -rose:C\_only} C89 standard 
+        (works best if files have ".c" filename extension). This implies conformance with 
+        the C89 ANSI standard. Also equivalent to {\tt --edg:c} option.
+      \item ANSI C (strict\_warnings) mode {\tt -edg:a}. \\
+        This is the mode used when compiling with the {\tt -edg:a} in addition to the 
+        {\tt --edg:c} or {\tt -rose:C\_only} options (file must have ".c"
+        filename extension).  This implies conformance with the C89 standard,
+        violations are issued as warnings.
+      \item ANSI C (strict) mode {\tt -edg:A}. \\
+        This is the mode used when compiling with the {\tt -edg:A} in addition to the 
+        {\tt --edg:c} or {\tt -rose:C\_only} options (file must have ".c"
+        filename extension).  This implies conformance with the C89 standard,
+        violations are issued as errors. 
+   \end{enumerate}
+
+   \item C99 mode. \\
+   \begin{enumerate}
+      \item ANSI C99 default mode. \\
+        This is the mode used when compiling with the {\tt --edg:c99} (file must have ".c"
+        filename extension). This implies conformance with the C99 standard. This is 
+        the same as using {\tt -rose:C99\_only}.
+      \item ANSI C99 {\em strict} mode. \\
+        This is the mode used when compiling with the {\tt -edg:a} in addition to the 
+        {\tt --edg:c99} or {\tt -rose:C99\_only} options (file must have ".c"
+        filename extension).  This implies conformance with the C89 standard,
+        violations are issued as errors.
+   \end{enumerate}
+   Note that in ANSI C99, flexible array structures can not be data members of 
+   other structures. See test2005\_189.c for an example.
+
+   \item UPC mode. \\
+        This is the mode used when compiling with UPC specific modifiers, use 
+        {\tt --edg:upc}.  Note that we have modified the EDG front-end to support
+        this mode for both C and C++ programs.  The generated code does not 
+        support calls to a UPC runtime system at present, so this is just the 
+        mode required to support building the translator for C or C++ which would
+        intorduce the transformations required to call a UPC runtime system (such
+        as has been done for OpenMP by Liao from University of Houston).
+
+   \item K\&R C {\em strict} mode. \\
+        This is the mode used when compiling with the {\tt --edg:old\_c} (file must have ".c"
+        filename extension).  This option will not currently work with ROSE because 
+        prototyped versions of functions are used within
+        {\tt rose\_edg\_required\_macros\_and\_functions.h} and these are not allowed in EDG's
+        {\tt --old\_c} mode (translated from the ROSE {\tt --edg:old\_c}.
+\end{enumerate}
+
+  Most of the time the C++ mode is sufficient for compiling either C or C++ 
+applications.  Sometimes the C mode is required (then, typically {\tt -rose:C\_only} is
+sufficient).  The specific K\&R strict C mode does not currently work in ROSE. But
+K\&R C will compile in both the C and often C++ modes withouth problem. For 
+C99-specific codes (relatively rare), {\tt -rose:C99\_only} is sufficient.  On rare 
+occasions, a greater level of control is required and the other modes can be used.
+
+\subsection{Strict modes can not be used with g++ and gcc compilers as back-ends to ROSE}
+   Note that currently, gnu builtin functions are not properly defined in strict 
+modes (so they modes should not be used).  This is a problem for strict modes for 
+both C and C++.
+
+\subsection{Use {\tt *.c} filename suffix to compile C language files}
+In general most C programs can be compiled using the {\tt -rose:C\_only}
+independent of their filename suffix. However,
+sometimes C program files that use a non *.c suffix cannot be handled by the
+{\tt -rose:C\_only} option because they contain keywords from C++ as variable 
+names, etc.  In order to compile these C language programs their files must use 
+a *.c (lower case {\em c}) as a filename extension (suffix).  This is an EDG
+issue related to the front-end parsing and the language rules that are selected
+(seemingly independent of the options specified to EDG and based partly on the
+filename suffix).  Fortunately most C language programs already use the lower
+case {\em c}) as a filename extension (suffix).  Test code {\tt test2006\_110.c}
+demonstrates an example where the {\em *.c} suffix is required.
+
+\commentout{
+
+# DQ (9/12/2006): This documentation is incomplete.
+
+\section{Low-Level AST Rewrite Interface}
+
+   SAGE III provides a simple interface for editing, similar to that 
+provided within SAGE II but consistant in interface with the other 
+higher-level interfaces to the rewrite mechanisms presenting in 
+\ref{AstRewrite:AstRewrite}.
+
+      incomplete-documentation
+
+\section{Direct Use of SAGE III to Build Code Fragments}
+
+   Some of the examples in the ROSE Tutorial demonstrate this 
+low level handling of the AST.  Significant new work is being done
+to simplify the direct construction of the AST.  This work is not
+available yet.  It is not discussed in this draft of the manual.
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

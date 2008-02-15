@@ -1,0 +1,46 @@
+
+    * The Fortran character set has been extended to contain the 8-bit ASCII characters ~ \ [ ] ` ^ { } | # @
+    * Names of length up to 63 characters
+    * Statements of up to 256 lines
+    * Square brackets [ ] are permitted to delimit array constructors instead of (/ /)
+    * A named PARAMETER constant may be part of a complex constant
+    * Allocatable components of derived types
+    * ASYNCHRONOUS attribute and statement
+    * BIND(C) attribute and statement
+    * PROTECTED attribute and statement
+    * VALUE attribute and statement
+    * VOLATILE attribute and statement
+    * INTENT attribute for pointer objects
+    * Reallocation of allocatable variables on the left hand side of an assignment statement when the right hand side differs in shape or length (requires option "assume realloc_lhs")
+    * In all I/O statements, the following numeric values can be of any kind: UNIT=, IOSTAT=
+    * FLUSH statement
+    * WAIT statement
+    * ACCESS='STREAM' keyword for OPEN
+    * ASYNCHRONOUS keyword for OPEN and data transfer statements
+    * ID keyword for INQUIRE and data transfer statements
+    * POS keyword for data transfer statements
+    * PENDING keyword for INQUIRE
+    * The following OPEN numeric values can be of any kind: RECL=
+    * The following READ and WRITE numeric values can be of any kind: REC=, SIZE=
+    * The following INQUIRE numeric values can be of any kind: NEXTREC=, NUMBER=, RECL=, SIZE=
+    * Recursive I/O is allowed in the case where the new I/O being started is internal I/O that does not modify any internal file other than its own
+    * IEEE Infinities and NaNs are displayed by formatted output as specified by Fortran 2003
+    * In an I/O format, the comma after a P edit descriptor is optional when followed by a repeat specifier
+    * Rename of user-defined operators in USE
+    * INTRINSIC and NON_INTRINSIC keywords in USE
+    * IMPORT statement
+    * Allocatable dummy arguments
+    * Allocatable function results
+    * COMMAND_ARGUMENT_COUNT intrinsic
+    * GET_COMMAND intrinsic
+    * GET_COMMAND_ARGUMENT intrinsic
+    * GET_ENVIRONMENT_VARIABLE intrinsic
+    * IS_IOSTAT_END intrinsic
+    * IS_IOSTAT_EOR intrinsic
+    * MOVE_ALLOC intrinsic
+    * NEW_LINE intrinsic
+    * SELECTED_CHAR_KIND intrinsic
+    * The following intrinsics take an optional KIND= argument: ACHAR, COUNT, IACHAR, ICHAR, INDEX, LBOUND, LEN, LEN_TRIM, MAXLOC, MINLOC, SCAN, SHAPE, SIZE, UBOUND, VERIFY
+    * ISO_C_BINDING intrinsic module
+    * ISO_FORTRAN_ENV intrinsic module 
+

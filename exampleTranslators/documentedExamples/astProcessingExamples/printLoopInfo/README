@@ -1,0 +1,59 @@
+// Author: Markus Schordan, Vienna University of Technology, 2004.
+// $Id: README,v 1.2 2004/08/26 23:14:37 markus Exp $
+
+EXAMPLE: printLoopInfo
+
+This example demonstrates how to use AstTopDownBottomUpProcessin to
+compute inherited and synthesized attributes, generate pdf and dot output,
+how accumulate information, and how to attach attributes to AST nodes.
+
+The attributes are used to compute the nesting level and the nesting
+depth of for/while/do-while loops:
+
+The nesting level is computed using an inherited attribute. It holds
+that nesting-level(innerloop) = nesting-level(outerloop) + 1;
+starting with 1 at the outer most loop.
+
+The nesting depth is computed using a synthesized attribute. It holds
+that nesting-depth(innerloop) = nesting-level(outerloop) - 1;
+starting with 1 at the inner most loop.
+
+To compute the values we use a primitive type (unsigned int). This
+example also shows how to use defaultSynthesizedAttribute to
+initialize a synthesized attribute of primitive type.
+
+The values of the attributes are attached to the AST using
+AstAttribute and the AST node attribute mechanism available at every
+AST node (which can be accessed with node->attribute).
+(see LoopNestingInfoProcessing.C)
+
+For the entire program the maximum nesting level (= max nesting depth)
+is computed as accumulated value using member variable '_maxNestingLevel' of
+class LoopNestingInfoProcessing (see header file and implementation file)
+
+We also demonstrate how to customize an AstAttribute such
+that the value of the attribute is printed in a pdf output.
+(by overriding toString, see LoopNestingInfo.h)
+
+In the generated pdf file (for some C++ input file) the values 
+of the attributes can be viewed for each node.
+(see printLoopInfo.C)
+
+Further more we also generate a dot file, to visualize the
+tree using the graph visualization tool dot. The generated
+file can be converted to postscript (using dot) and viewed
+with gv.
+
+How to use:
+> make all
+
+to generate an example file type
+> make check
+or in general
+> printLoopInfo <filename>
+
+to convert and view the (default) example file testInput1.C
+to postscript type
+> dot -Tps testInput1.C.dot -o testInput1.ps
+> gv testInput1.ps
+

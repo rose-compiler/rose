@@ -1,0 +1,76 @@
+\documentclass[times, 10pt]{article} 
+
+%\usepackage{akit/latex8}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{subfigure}
+
+\long\def\com#1{}
+
+\title{Side-effect Analysis}
+
+\begin{document}
+
+\date{}
+
+\maketitle
+
+
+ROSE provides an alias-free flow-insensitive side-effect analysis
+based on the algorithm presented by Cooper and Kennedy~\cite{cooper+:pldi88}.
+The implementation requires that ROSE by configured with MySQL since
+it potentially performs whole-program analysis and thus requires
+persistence across ROSE invocations.
+
+The implementation does not support virtual functions.  Further it
+does not directly account for potential aliases, though the original
+algorithm may incorporate an external alias analysis in a flow-insensitive
+manner (Section 5 of~\cite{cooper+:pldi88}).  The algorithm is
+intended to augment the {\it DMOD(s)} set of variables modified by
+statement {\it s} independent of aliasing with a set {\it ALIAS(p)}
+for a procedure {\tt p} to create the final set {\it MOD(s)}.  
+Intuitively, if ${\it s \in p}$ then 
+${\it \forall x \in DMOD(s)}$, if ${\it \exists <x,y> \in ALIAS(p)}$,
+{\it y} is added to {\it MOD(s)}~\cite{cooper+:pldi88}.  The
+{\it ALIAS(p)} set could be provided by additional analysis or via
+ROSE's annotation language which provides a facility to
+specify aliasing~\ref{annotation section}.  An alternate approach
+would extend the annotation language to explicitly specify variables
+that are not aliased.  Using this information a transformation or
+subsequent analysis might determine that although a variable {\it x}
+is modified because an annotation asserts that {\it y} does not alias {\it x},
+{\it y} is known not to be modified.
+
+During the analysis a function or method may be invoked for which
+the source code is not available.  Typical examples include
+external libraries or system calls.  To overcome this limitation
+the user may specify the side effects in an annotation 
+file~\ref{annotation section}.  This file should be passed to
+the ROSE {\tt dbAnnotationParser} tool which populates a database
+with the annotation information making it available for subsequent
+analysis.
+
+The abstract base class {\tt SideEffectAnalysis} provides access to
+the side-effect implementation via the {\tt create} method.  The
+analysis is performed by invoking one of the three {\tt calcSideEffect}
+methods.  This overloaded method may be run on an entire project by
+passing it a reference to an {\tt SgProject}, a single file by
+passing it a reference to an {\tt SgFile}, or an arbitrary AST
+node by passing it a reference to an {\tt SgNode}.  The results of
+the analysis are provided via the {\tt getGMOD} and {\tt getDMOD} methods.
+{\tt getGMOD} takes a function name and returns a list of side effects
+for that function.  The class provides the method {\tt getCalledFunctions}
+to return a list of invoked functions encountered during the analysis;
+such functions may subsequently be passed to {\tt getGMOD}.  {\tt getDMOD}
+behaves similarly but acts on a node descriptor instead of a
+function name, returning any side effects corresponding to that node.
+Node descriptors corresponding to a given node are provided by
+the {\tt getNodeIdentifier} method.  Please see the {\tt testSideEffect}
+test for example use of this interface.
+
+SHOULD WE INCLUDE ALL OR EXCERPTS OF testSideEffect?
+
+
+\bibliographystyle{plain}
+\bibliography{sideeffect}
+\end{document}

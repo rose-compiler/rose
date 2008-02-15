@@ -1,0 +1,14 @@
+
+$CLASSNAME* is$CLASSNAME ( $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
+   {
+     return dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
+   }
+
+// DQ (11/8/2003): Added version of functions taking const pointer
+const $CLASSNAME* is$CLASSNAME ( const $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
+   {
+     return dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
+   }
+
+
+

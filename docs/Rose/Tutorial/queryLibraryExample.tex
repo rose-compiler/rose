@@ -1,0 +1,187 @@
+\chapter{AST Query}
+
+   This chapter presents a mechanism for simple queries on the AST.
+such queries are typically a single line of code, instead of the 
+class that much be declared and defined when using the traversal mechanism.
+While the traversal mechanism is more sophisticated and more powerful, the AST Query
+mechanism is particularly simple to use.
+
+\section{Simple Queries on the AST}
+
+   This section demonstrates a simple query on the AST.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/queryLibraryExample.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/queryLibraryExample.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code for translator to read an input program and 
+         generate a list of functions in the AST (queryLibraryExample.C).}
+\label{Tutorial:exampleQueryLibrary}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_QueryLibrary.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_QueryLibrary.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+    figure~\ref{Tutorial:exampleQueryLibrary} (queryLibraryExample.C).}
+\label{Tutorial:exampleInputCode_QueryLibrary}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/queryLibrary.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/queryLibrary.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the AST query processor (queryLibraryExample.C).}
+\label{Tutorial:exampleOutput_QueryLibrary}
+\end{figure}
+
+The program in figure~\ref{Tutorial:exampleQueryLibrary} calls 
+an internal ROSE Query Library.  Queries of the AST using the query library are
+particularly simple and often are useful as nested queries within more complex analysis.
+More information of the ROSE AST Query Library is available within ROSE User Manual.
+% chapter~\ref{QueryLibrary:QueryLibrary}.
+
+   Using the input program in figure~\ref{Tutorial:exampleInputCode_QueryLibrary}
+the translator processes the code and generates the output in 
+figure~\ref{Tutorial:exampleOutput_QueryLibrary}.
+
+\fixme{Put an example of composition of AST queries into the example input code.}
+
+\section{Nested Query}
+
+   This section demonstrates a nested AST query, showing how to use 
+composition in the construction of more elaborate queries from simple ones.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/nestedQueryExample.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/nestedQueryExample.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code for translator to read an input program and 
+         generate a list of access functions in the AST (nestedQueryExample.C).}
+\label{Tutorial:exampleNestedQuery}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+%  \lstinputlisting{\TutorialExampleDirectory/inputCode_NestedQuery.C}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_QueryLibrary.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%  \verbatiminput{\TutorialExampleDirectory/inputCode_NestedQuery.C }
+   \verbatiminput{\TutorialExampleDirectory/inputCode_QueryLibrary.C }
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+    figure~\ref{Tutorial:exampleNestedQuery} (nestedQueryExample.C).}
+\label{Tutorial:exampleInputCode_NestedQuery}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/nestedQuery.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/nestedQuery.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the AST query processor (nestedQueryExample.C).}
+\label{Tutorial:exampleOutput_NestedQuery}
+\end{figure}
+
+The number of traversals of the AST can be reduced by using nested queries. 
+Nested queries permits queries on the result from a NodeQuery. Another advantage is 
+that nested (combined) queries can be formed to query for information without writing new 
+query, the nested query is a new query. 
+
+The program in figure~\ref{Tutorial:exampleNestedQuery} calls 
+an internal ROSE Query Library. Two different queries are performed to find all
+access functions within the AST. The first query is nested, the 
+returned list from a query is used in a traversal, and the second query queries the AST
+for the same nodes.
+
+Using the input program in figure~\ref{Tutorial:exampleInputCode_NestedQuery}
+the translator processes the code and generates the output in 
+figure~\ref{Tutorial:exampleOutput_NestedQuery}.
+

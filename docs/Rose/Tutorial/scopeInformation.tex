@@ -1,0 +1,127 @@
+\chapter{Scopes of Declarations}
+
+     The scope of a IR nodes may be either stored explicitly in the IR node
+or obtained through computation through it's parent information in the AST.
+Figure X shows an example where the variable definition for a variable is 
+the scope of namespace X.  The declaration for variable a is in the namespace X.
+In a more common way the function foo is a member function of B which a
+declaration appearing in class B, but with a function definition in global scope.
+{\mySmallFontSize
+\begin{verbatim}
+namespace X{
+   extern int a;
+}
+int X::a = 0;
+class B
+  {
+    void foo();
+  };
+void B::foo() {}
+\end{verbatim}
+}
+In C++, using name qualification the scope of a declaration can be independent of
+it structural location in the AST.  The {\tt get\_parent()} member function (available 
+on most IR nodes) communicates the structural information of the original source code
+(also represented in the AST).  The scope information must at times be stored
+explicitly when it can not be interpreted structurally.
+
+   The example in this chapter show how to find the scope of each C++ construct
+were it make sense.  Note that SgExpression IR nodes can take there scope from
+that of the statement where they are found.  SgStatement and SgInitializedName
+IR nodes are the interesting IR nodes from the point of scope.
+
+   The SgInitializedName and all SgStatement IR nodes have a member function
+{\tt get\_scope()} which returns the scope of the associated IR nodes.  The
+example code in this chapter traverses the AST and reports the scope of any
+SgInitializedName and all SgStatement IR nodes.  It is intended to provide
+so simple intuition about what the scope can be expected to be in an application.
+The example code is also useful as a simple means of exploring the scopes
+of any other input application.
+
+\section{Input For Examples Showing Scope Information}
+
+   Figure~\ref{Tutorial:exampleInputCode_ScopeInformation}
+shows the input example code form this tutorial example.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_scopeInformation.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_scopeInformation.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+         codes used in this chapter.}
+\label{Tutorial:exampleInputCode_ScopeInformation}
+\end{figure}
+
+
+\section{Generating the code representing any IR node}
+
+    The following code traverses each IR node and for a 
+SgInitializedName of SgStatement output the scope information.
+The input code is shown in figure \ref{Tutorial:exampleInputCode_ScopeInformation},
+the output of this code is shown in figure 
+\ref{Tutorial:exampleOutput_ScopeInformation}.
+    
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/scopeInformation.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/scopeInformation.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to get scope information for each IR node. }
+\label{Tutorial:example_ScopeInformation}
+\end{figure}
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/scopeInformation.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/scopeInformation.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using scopeInformation.C}
+\label{Tutorial:exampleOutput_ScopeInformation}
+\end{figure}
+
+
+

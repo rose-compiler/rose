@@ -1,0 +1,5 @@
+This tutorial was developed to demonstrate simple transformations.
+
+This is a short tutorial that uses the AST rewrite mechanism and 
+introduces a short sequence of transformations of increasing difficultly.
+

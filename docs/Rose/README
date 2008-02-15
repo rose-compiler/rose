@@ -1,0 +1,47 @@
+
+This directory contains most of the ROSE documentation. Both LaTeX and Doxygen
+are used to document ROSE.  The source files from which we build the documentation are
+located in different directories within the ROSE source tree.  This makes it
+easy for developers to update their documentation associated with specific
+subprojects within ROSE.
+
+    There are three pieces to the ROSE documentation.
+   1) HTML Documentation
+         included html version of manual, tutorial, and Doxygen generated 
+         documetnation about all the classes within ROSE (or most of them).
+   2) ROSE User Manual
+         Contains a readable introduction to ROSE and it's mechanisms.
+   3) ROSE Tutorial
+         Contains lots of examples, with input and outputs from each.
+
+Notes: 
+   1) The configure system for ROSE builds the html and latex documentation
+      and places them into a ROSE distribution so that the user is not required to
+      build any documentation.  
+        a) At present the ROSE documentation however contains some explicit paths
+           which might not be correct when the user untars the automatically
+           packadged documentation.  We will be attempting to fix this in the future,
+           it is not presently clear how to fix this, although Markus has suggested
+           that we make the explicit paths relative (but relative to what?).
+
+   2) All Latex documentation for ROSE is provided.
+
+   3) Currently, "make distcheck" will force the documetnation to be built if it is not 
+    already built and copied into the Source Tree.  This is the only case of the build process
+    modifiying the source tree, but this avoid having the user build the documentation for
+    ROSE (which would force a dependence upon latex (setup with extended internal buffer
+    sizes) and Doxygen and some other tools (dot, etc.).
+  
+   4) Be very careful about specifying makefile targets to force the generation of the
+    documentation when it is out of date, because this will often force the makefiles
+    to build the documentation for the end user (something that his/her environment might
+    not support).  Documentation is really only for construction using the development
+    version of ROSE, not a formal distribution.  To force the generation of the
+    documentation use the Makefile rules specific for this purpose (force-latex-docs, 
+    etc.), and not the "make docs" rule.
+
+   5) Setting up the Makefiles to build the documentation is tedious and testing it
+    requires running "make distcheck" which can take a long time (this is no fun).
+
+   6) Run "make cleanSource" to clear the distribution saved to the source tree.
+

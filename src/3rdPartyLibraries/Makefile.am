@@ -1,0 +1,6 @@
+# This should not depend on ROSE in any way so I don't think we need this
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+SUBDIRS = $(PDFLIB_BASE) MSTL coco
+# checkPointLibrary
+

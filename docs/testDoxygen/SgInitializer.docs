@@ -1,0 +1,95 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializer
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgInitializer
+\brief This class represents the notion of an initializer for a variable declaration or
+    expression in a function call argument list.
+
+    There are no direct uses of this IR node anywhere.  All initializers
+are derived from this IR node to build derived classes such as SgConstructorInitializer,
+SgAssignInitializer, and SgAggregateInitializer.
+
+\internal This is a base class for all initializers.
+
+\sa
+\ref SgInitializer_usage  "Example of using a SgInitializer object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializer data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgInitializer::p_is_explicit_cast
+\brief This boolean variable marks the initializer ans part of an explicit or implicit
+    cast.  It is used for all of the different types of initalizers.
+
+\internal This may now be duplicate information with the compiler generated flag in Sg_File_Info.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializer member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+\fn SgInitializer::SgInitializer (const SgInitializer &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgInitializer::SgInitializer ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgInitializer base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgInitializer_create "Example:create an SgInitializer object"
+*/
+
+/*!
+\fn SgInitializer::~SgInitializer()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+
+/*!
+\fn SgInitializer::isSgInitializer (SgNode *s)
+\brief Cast function (from derived class to SgInitializer pointer).
+
+   This functions returns a SgInitializer pointer for any input of a 
+pointer to an object derived from a SgInitializer.
+
+\return Returns valid pointer to SgInitializer if input is derived from a SgInitializer.
+*/
+
+/*!
+\fn SgInitializer::isSgInitializer (const SgNode *s)
+\brief Cast function (from derived class to SgInitializer pointer).
+
+   This functions returns a SgInitializer pointer for any input of a 
+pointer to an object derived from a SgInitializer.
+
+\return Returns valid pointer to SgInitializer if input is derived from a SgInitializer.
+*/
+
+
+/*!
+\fn SgInitializer::get_is_explicit_cast (void) const
+\brief returns bool value if front-end considers this cast as explicit.
+
+\return Returns bool value.
+*/
+
+/*!
+\fn SgInitializer::set_is_explicit_cast (bool explicit_cast)
+\brief This function allows the p_is_explicit_cast flag to be set (used internally).
+
+\param explicit_cast - sets value of internal p_is_explicit_cast flag (true if explicit).
+\return Returns void.
+*/
+

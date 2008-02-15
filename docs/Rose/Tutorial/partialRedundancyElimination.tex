@@ -1,0 +1,125 @@
+\chapter{Partial Redundancy Elimination (PRE)}
+
+   Figure~\ref{Tutorial:example_partialRedundancyElimination} shows an
+example of how to call the Partial Redundancy Elimination (PRE) 
+implemented by Jeremiah Willcock.  This transformation is useful for cleaning up code
+generated from other transformations (used in Qing's loop optimizations).
+
+\section{Source Code for example using PRE}
+
+    Figure~\ref{Tutorial:example_partialRedundancyElimination}
+shows an example translator which calls the PRE mechanism.
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_partialRedundancyElimination},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_partialRedundancyElimination}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/partialRedundancyElimination.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/partialRedundancyElimination.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how use Partial Redundancy Elimination (PRE). }
+\label{Tutorial:example_partialRedundancyElimination}
+\end{figure}
+
+
+
+\section{Input to Example Demonstrating PRE}
+
+   Figure~\ref{Tutorial:exampleInputCode_partialRedundancyElimination}
+shows the example input used for demonstration of Partial Redundancy 
+Elimination (PRE) transformation.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_partialRedundancyElimination.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_partialRedundancyElimination.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program to the Partial Redundancy Elimination
+    (PRE) transformation.}
+\label{Tutorial:exampleInputCode_partialRedundancyElimination}
+\end{figure}
+
+
+
+\section{Final Code After PRE Transformation}
+
+   Figure~\ref{Tutorial:exampleOutput_partialRedundancyElimination} 
+shows the results from the use of PRE on an the example input code.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_partialRedundancyElimination.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_partialRedundancyElimination.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code after Partial Redundancy Elimination (PRE) transformation.}
+\label{Tutorial:exampleOutput_partialRedundancyElimination}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

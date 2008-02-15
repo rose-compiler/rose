@@ -1,0 +1,272 @@
+
+#if 0
+// Extra cool classes that might help us represent transformations as objects (eventually)
+
+class SemanticBehaviorBaseClassType
+   {
+  // Classify the semantics of abstractions and include information about the semantics into the
+  // transformation (a larger goal).  Used as a data member in the AbstractionBaseClassType.
+
+  // Attempt to classify the general semantics of abstractions (information could ideally be useful
+  // in the generation or use of specific transformations.
+     enum SemanticClassificationEnum
+        {
+       // Potential broad classifications of semantics associated with general abstractions (might only be useful for collections)
+          unknownSemantics,   // semantics can't be classified
+          elementSemantics,   // semantics of a collection represent scalar semantics similar to it's elements (e.g. arrays of integers)
+          reductionSemantics, // semantics of the collection are associated with a narrower collection (e.g. rescictions operators)
+          wideningSemantics,  // semantics of a collection are associate with a larger collection (e.g. interpolation operators)
+          LAST_TAG_SEMANTICS
+        }
+
+  // Simple representation of semantic behavior of a collection in terms of the semantics of elements
+     SemanticClassificationEnum classification;
+
+   };
+
+
+class AbstractionBaseClassType
+   {
+  // If transformations operatorate on the context of abstractions within source-code then maybe
+  // abstractions should have an object representation too?  The representation of a abstraction
+  // provides a location for the specification of the abstractions semantics.  If we can represent
+  // the semantics as an object then this whole idea might be of some use.
+
+  // This object is used as a data member in the TransformationBaseClassType.
+
+     public:
+       // Semantics information about abstraction transformation operates upon
+          SemanticBehaviorBaseClassType semanticBehavior;
+
+   };
+
+
+template <class TreeTraversal, class SynthesisedAttribute = SynthesizedAttributeBaseClassType >
+class TransformationBaseClassType
+   {
+  // Transformations operate on the use of abstractions in application source code. We attempt here to
+  // layout what might be the object representation of a transformation.
+
+  // This class is templated upon two parameters, the tree traveral class and the synthesized
+  // attribute class.  Do we really want to include the SynthesisedAttribute class as a template
+  // parameter?
+
+  // This class represents the base class for all transformations.  It's use permits the
+  // specification of an interface for transformations which the templated TransformationTemplates
+  // can assume to exist. This forms the first steps toward the definition of transformations as
+  // single self-contained objects.
+
+  // Composition of transformations: What makes it possible to compose transformations is that they
+  // all have a common interface enforced through a common base class (this base class).
+
+  // Member function interface
+     public:
+
+     // The TreeTraversal represents a container for the semantic actions that will be taken within
+     // a traversal of the AST to define the transformation.  Of course this can completely define a
+     // transformation, but if we decouple the modification of the AST from the representation of
+     // the transformation then we can likely build transformations that are composable.
+        TreeTraversal treeTraversalPointer;
+
+     // The TreeTraversal mechanism generates strings which are then placed into the transformation specification
+        SynthesizedAttributeStringType transformationTemplateSpecification;
+
+     // Abstraction upon which this transformation operatoes
+        AbstractionBaseClassType abstraction;
+
+     // Options: 
+
+     // Transformations can be introduced completely by the TreeTraversal (the collection of
+     // semantics actions that define the transformations).  Advantages: The direct approach might
+     // be simpler than placing the strings representing the transformation into the transformation
+     // string data base.  Disadvantages: Composition of transformations is more complex.
+     // A transformation must be expressed differently to be composable.
+        bool transformationIsComposable();
+
+     // Transformations can optionally be generated without side-effects.  Such transformations are
+     // not useful except for testing (correctness or performance).
+        bool transformationGeneratesSideEffects();
+        void setTransformationGeneratesSideEffects(bool value);
+
+     // Transformation identifies handle (typically Lhs).  This feature permits the generation of
+     // composable transformations that test the transformation against the original code and can be
+     // applied if the transformation preserves the semantics of the original code.
+        SgNode* getTransformationHandle();
+        void setTransformationHandle(SgNode* astNode);
+
+     // Does the transformation preserve the semantics of the original code (most performance optimizations should)
+        bool preservesSemantics();
+   };
+
+
+template <class Transformation>
+class TransformationTemplateBaseClassType
+   {
+  // This class represents a common base class for the specification of a transformation that takes
+  // a transformation as a parameter (a wrapper transformation).  This class wraps the input
+  // transformation class inside of another transformation.  Using the template memchanism to put
+  // the transformation into this class and then deriving from this class is the principal mechanism
+  // by which we nest the transformations and permit the development of transformations that contain
+  // other transformations.
+
+     public:
+          Transformation transformationSpecification;
+
+       // Store a chain of transformations that this transformation will be wrapped into sucessively
+       // list<TransformationTemplateType> nestedTransformations;
+
+          SynthesizedAttributeStringType transformationTemplateSpecification;
+
+       // Insert the parameterized transformation into the template
+          void insert();
+   };
+#endif
+
+#if 0
+// *******************************************
+// Examples of use of the classes listed above
+// *******************************************
+
+
+class SimpleReplacementTraversal : public SgSimpleProcessing
+   {
+  // This class represents a tree traversal. The traversal generates the string represented by a
+  // statement and uses it to specify the transformation. An identity transformation restricted to
+  // expression statements.
+
+     private:
+          SgProject* queryGlobalProject;
+          bool outputStatement;
+
+     protected:
+          void visit ( SgNode* node );
+
+     public:
+          SimpleReplacementTraversal ( SgProject* p ) : queryGlobalProject(p), outputStatement(true) {}
+   };
+
+void
+SimpleReplacementTraversal::visit ( SgNode* node )
+   {
+  // This function replaces the current statement with itself (a trivial/useless test)
+     if (!node) return; // Why do we need this???
+
+     printf ("node->sage_class_name() = %s \n",node->sage_class_name());
+
+  // Restrict the transformation to expression statements (to avoid applying it everywhere)
+     SgExpressionStmt* expr = isSgExpressionStatement(node);
+     if (expr != NULL) 
+        {
+          string sourceCodeString = node->unparseToString();
+          printf ("outputString = %s \n",outputString.c_str());
+
+       // The specification of LocalScope, ReplaceCurrentPosition, TransformationString is sufficent
+       // to trigger modification of the AST.
+          setTransformation (LocalScope,ReplaceCurrentPosition,TransformationString,sourceCodeString);
+
+       // We want to breakup the modification of the AST from the traversal to simplify the transformation
+       // bool isDeclaration = false;
+       // node->replaceSourceCode(*queryGlobalProject,outputString.c_str(),"",!isDeclaration);
+        }
+     printf("visit exit.\n");
+   }
+
+// Example code to demonstrate nesting of transformations (use of transformation templates)
+
+template <class T>
+class TimingTransformation : public TransformationTemplateBaseClassType<T>
+   {
+  // The timing transformation uses the option/feature of transformations to generate code that does
+  // not introduce side-effects. This feature permits the generation of code that has similar
+  // execution behaviour but does not change any data.  Thus the execution of original program is
+  // not changed but the performance of the transformation is evaluated.
+
+     TimingTransformation ()
+        {
+          string timingTemplateString = "\
+// Warmup execution
+$NESTED_TRANSFORMATION \n\
+originalCodeClockStart = clock(); \n\
+$ORIGINAL_CODE \n\
+originalCodeClockEnd = clock(); \n\
+originalCodeTimer# = transformationCodeClockEnd - transformationCodeClockStart; \n\
+transformationCodeClockStart = clock(); \n\
+$NESTED_TRANSFORMATION \n\
+transformationCodeClockEnd = clock(); \n\
+transformationTimer# = transformationCodeClockEnd - transformationCodeClockStart; \n"
+
+       // insert original code into template
+          string originalCode = transformationTemplateSpecification.getSourceCodeString();
+          StringUtility::copyEdit(timingTemplate,"$ORIGINAL_CODE",originalCode);
+
+       // insert transformation into template
+          string nestedTransformation = transformationTemplateSpecification.getSourceCodeString();
+          StringUtility::copyEdit(timingTemplate,"$NESTED_TRANSFORMATION",nestedTransformation);
+        }
+	 
+   };
+
+template <class T>
+class ErrorCheckingTransformation : public TransformationTemplateType<T>
+   {
+// The goal here is to introduce a transformation that would operate on a subtransformation and
+// check it for correctness within the execution of any application.  some of the issues involved in
+// this transformation would be whether the subtransformation actually produces a side-effect or if
+// the original code produces the side-effect. It would seem that we should select one or the other
+// as a way to iteratively move toward the use of the subtranformation in the follwoing stages:
+//    1) original code executes with side-effects and subtransformation is not executed,
+//    2) original code executs and subtransformation executes without side-effect and
+//       the results are compared,
+//    3) subtransformation executes with side-effect and the oroginal code executes without 
+//       side-effect and the results are compared, 
+//    4) subtransformation executes with side-effect and the original code is not exicuted.
+
+     ErrorCheckingTransformation ()
+        {
+          string errorCheckingTemplateString = "\
+// Execute original code \n\
+$ORIGINAL_CODE \n\
+$ORIGINAL_RESULT = $ORIGINAL_LHS; \n\
+// Execute transformed code \n\
+$NESTED_TRANSFORMATION \n\
+$TRANSFORMATION_RESULT = $TRANSFORMATION_LHS; \n\
+$ERROR_CHECKING_TEST; \n";
+
+       // insert original code into template
+          string originalCode = transformationTemplateSpecification.getSourceCodeString();
+          StringUtility::copyEdit(timingTemplate,"$ORIGINAL_CODE",originalCode);
+
+       // insert transformation into template
+          string nestedTransformation = transformationTemplateSpecification.getSourceCodeString();
+          StringUtility::copyEdit(timingTemplate,"$NESTED_TRANSFORMATION",nestedTransformation);
+        }
+	 
+   };
+
+template <class T>
+class StaticLocalityMetricTransformation : public TransformationTemplateType<T>
+   {
+  // I'm not sure that we can treat this sort of transformation as a nested transformation. This
+  // might be mixing a compile-tine analysis with a transformation which might not make any sense.
+
+     localityMetricTransformation ()
+        {
+          string sourceCodeTemplateString = "\
+// Instrumentation of original code \n\
+$ORIGINAL_CODE \n\
+$TRANSFORMATIONS_TO_ANALYSIZE_ACCESS_PATTERN \n\
+$DYNAMIC_LOCALITY_METRIC_EVALUATION; \n";
+
+       // insert original code into template
+          string originalCode = transformationTemplateSpecification.getSourceCodeString();
+          StringUtility::copyEdit(timingTemplate,"$ORIGINAL_CODE",originalCode);
+
+       // insert transformation into template
+          string nestedTransformation = transformationTemplateSpecification.getSourceCodeString();
+          StringUtility::copyEdit(timingTemplate,"$NESTED_TRANSFORMATION",nestedTransformation);
+        }
+	 
+   };
+
+
+#endif

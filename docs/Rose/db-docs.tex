@@ -1,0 +1,200 @@
+\documentclass[times, 10pt]{book}
+ 
+%\usepackage{akit/latex8}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{subfigure}
+ 
+\long\def\com#1{}
+ 
+ 
+\begin{document}
+ 
+\date{}
+ 
+\chapter{Program Analysis}
+
+\section{Database Support for Global Analysis}
+\label{RoseExamples:RoseTutorial:Database}
+ 
+ 
+\subsection{Database Setup}
+\label{sec:DatabaseRequirements}
+
+ROSE uses a MySQL database to store global information over
+multiple runs of a preprocessor.  If a MySQL database and it's C++ 
+interface MySQL++ are installed,
+you can skip the installation instructions. 
+However first ensure that connection parameters such as hostname and 
+login are correctly specified.
+
+These two packages are not distributed with ROSE.  To install them
+simply download the current production release of MySQL and
+the latest version of the MySQL++ API from the download section
+of http://www.mysql.org, then configure and install first MySQL then
+MySQL++. Under Unix, both can easily be installed locally into a home directory
+without requiring root access. 
+
+The following subsections describe MySQL installation and configuration.
+Neither are intended to replace the MySQL manual, but should provide
+sufficient information to configure the ROSE database support.
+
+\subsubsection{MySQL installation}
+
+This section describes installation of MySQL and the MySQL++ library.
+If these installations are already present on your section, you
+make skip this section.
+
+Download the current release of MySQL and MySQL++ from www.mysql.org.  
+Please read the {\tt README} in the MySQL++ distribution, which states
+that building with a GNU compiler requires a version greater than 2.95.
+Further there are 3 patches (for gcc 3.0, 3.2, and 3.2.2) available.
+
+Though not a requiremenet, we assume that MySQL and the MySQL++ library
+installation files (including patches for gcc 3.0, 3.2, and 3.2.2) have been
+copied to \textless{}CompileTree\textgreater{}/src/3rdPartyLibraries.  
+
+These installation instructions assume the use of gcc 3.2.2.
+
+To install MySQL execute the following commands:
+
+\begin{verbatim}
+cd <CompileTree>/src/3rdPartyLibraries
+tar xvfz mysql-4.0.20.tar.gz
+cd mysql-4.0.20
+
+# create a MySQL install dir
+mkdir <CompileTree>/src/3rdPartyLibraries/MySQL_Install
+configure --prefix=<CompileTree>/src/3rdPartyLibraries/MySQL_Install
+
+# (parallel) build
+make -j2
+# install
+make install
+\end{verbatim}
+
+To install the MySQL++ library execute the following commands:
+
+\begin{verbatim}
+cd <CompileTree>/src/3rdPartyLibraries
+tar xvfz mysql++-1.7.9.tar.gz
+gunzip mysql++-gcc-3.0.patch.gz
+gunzip mysql++-gcc-3.2.patch.gz
+gunzip mysql++-gcc-3.2.2.patch.gz
+cd mysql++-1.7.9
+
+# apply the patch as appropriate for your compiler
+# each patch is dependent on the patch for the previous version 
+# of the compiler
+patch -p 1 < ../mysql++-gcc-3.0.patch
+patch -p 1 < ../mysql++-gcc-3.2.patch
+patch -p 1 < ../mysql++-gcc-3.2.2.patch
+
+# rerun automake to rebuild Makefile.in files after running patch
+# need to use automake version 1.4 
+# (download from ftp.gnu.org/gnu/automake)
+automake -a
+autoconf
+
+# configure MySQL++
+./configure --prefix=<CompileTree>/src/3rdPartyLibraries/MySQL_Install \
+            --with-mysql=<CompileTree>/src/3rdPartyLibraries/MySQL_Install \
+            --with-mysql-lib=<CompileTree>/src/3rdPartyLibraries/MySQL_Install
+
+# build
+make
+
+# install
+make install
+\end{verbatim}
+
+\subsubsection{MySQL configuration}
+
+This section describes configuration and setup of a MySQL database daemon,
+required for the use of ROSE's database facilities.
+
+ROSE must be configured with the location of the MySQL libraries, as well
+as a MySQL username, server, password, and database name.  ROSE can be 
+re-configured with these options after an initial reconfiguration.  In
+that case, it should be rebuilt.  Rebuilding will only build the
+database and anything dependent upon it.
+
+For example:
+
+\begin{verbatim}
+<SrcTree>/configure --with-MySQL=<CompileTree>/src/3rdPartyLibraries/MySQL_Install \
+                    --with-MySQL_username=joe \
+                    --with-MySQL_server=`hostname` \
+                    --with-MySQL_password=rosepwd \
+                    --with-MySQL_database_name=databasejoe
+\end{verbatim}
+
+The previous configuration assumes that the developer will start a database
+on the local host.  If one is used elsewhere, the corresponding hostname
+should be specified above.
+
+Depending on the location of the MySQL installation, a ROSE user may or
+may not have write access to the default 'datadir' in which {\tt mysqld}
+attempts to store data.  While these permissions problems will likely not
+be an issue if the user has followed the above installation instructions,
+in the following we assume that the user will specify some alternative
+directory (e.g., /tmp/mysqld-datadir) to store databases.
+
+Upon initial installation, the user must install certain administrative
+databases.  This is accomplished by executing the {\tt mysql\_install\_db}
+script.  After performing this initial setup, the user may
+execute the database daemon {\tt mysqld\_safe}.  
+
+By default the MySQL {\tt root} user has privilege access to the database.
+A user can gain privileged access by simply connecting as the {\tt root}
+user, without specifying a password.  It should be noted that MySQL
+user accounts are not equivalent to Unix user accounts.  The former are
+specified via the {\tt -u} or {\tt --user=} flags to MySQL commands,
+though they default to the Unix user that executes them.  Immediately
+after installation and daemon startup, the user should set the MySQL
+{\tt root} password via the {\tt mysqladmin} command.  
+
+As configured above with the {\tt --with-MySQL*} flags, ROSE applications
+will attempt to access the database as user {\tt joe}, supplying
+password {\tt rosepwd}.  By default {\tt joe} will not have the required
+permissions to access the database.  The MySQL {\tt root} user can
+perform access control via the {\tt GRANT} and {\tt REVOKE} commands.
+Please see the MySQL manual section on {\tt GRANT} and {\tt REVOKE} syntax
+for more details.
+
+The following is intended as a guideline of a minimal configuration.  Please
+see the chapter on 'Installing MySQL' in the MySQL database for more
+detailed documentation.
+
+\begin{verbatim}
+
+# create a datadir
+mkdir /tmp/mysqld-datadir
+
+# instantiate administrative databases
+$MYSQL_INSTALL_DIR/bin/mysql_install_db --datadir=/tmp/mysqld-datadir/
+
+# start the daemon
+$MYSQL_INSTALL_DIR/bin/mysqld_safe --datadir=/tmp/mysqld-datadir/ &
+
+# set the root password
+$MYSQL_INSTALL_DIR/bin/mysqladmin --user=root password rootpwd
+
+# connect to the database as root to perform access control
+$MYSQL_INSTALL_DIR/bin/mysql --user=root --password=rootpwd mysql
+
+# ... at the mysql prompt do:
+
+# remove default MySQL configuration so that username is required
+mysql> DELETE FROM user WHERE user='';
+
+# adds new user 'joe' with password 'rosepwd' with access to all tables
+mysql> GRANT ALL ON *.* TO joe IDENTIFIED BY 'rosepwd';
+
+# forces MySQL to reload privileged information (user table in MySQL)
+mysql> FLUSH PRIVILEGES;
+
+\end{verbatim}
+
+
+\end{document}

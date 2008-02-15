@@ -1,0 +1,288 @@
+Presentation of different versions of Fortran (from Wikipedia).
+
+Fortran I:
+The initial release of FORTRAN for the IBM 704 contained 32 statements, including:
+
+    * DIMENSION and EQUIVALENCE statements
+    * Assignment statements
+    * Three-way arithmetic IF statement. [5]
+    * IF statements for checking exceptions (ACCUMULATOR OVERFLOW, QUOTIENT OVERFLOW, and DIVIDE CHECK); and IF statements for manipulating sense switches and sense lights
+    * GOTO, computed GOTO, ASSIGN, and assigned GOTO
+    * DO loops
+    * Formatted I/O: FORMAT, READ, READ INPUT TAPE, WRITE, WRITE OUTPUT TAPE, PRINT, and PUNCH
+    * Unformatted I/O: READ TAPE, READ DRUM, WRITE TAPE, and WRITE DRUM
+    * Other I/O: END FILE, REWIND, and BACKSPACE
+    * PAUSE, STOP, and CONTINUE
+    * FREQUENCY statement (for providing optimization hints to the compiler) [6]
+
+
+Fortran II:
+IBM's FORTRAN II appeared in 1958. The main enhancement was to support procedural programming by allowing user-written subroutines and functions. Six new statements were introduced:
+
+    * SUBROUTINE, FUNCTION, and END
+    * CALL and RETURN
+    * COMMON
+
+Over the next few years, FORTRAN II would also add support for the DOUBLE PRECISION and COMPLEX data types.
+
+Fortran III:
+IBM also developed a FORTRAN III in 1958 that allowed for inline assembler code among
+other features; however, this version was never released as a product. Like the 704
+FORTRAN and FORTRAN II, FORTRAN III included machine-dependent features that made code
+written in it unportable from machine to machine. Early versions of FORTRAN provided
+by other vendors suffered from the same disadvantage.
+
+Fortran IV:
+Starting in 1961, as a result of customer demands, IBM began development of a FORTRAN IV
+that removed the machine-dependent features of FORTRAN II (such as READ INPUT TAPE),
+while adding new features such as a LOGICAL data type, logical Boolean expressions and
+the logical IF statement as an alternative to the arithmetic IF statement. FORTRAN IV
+was eventually released in 1962, first for the IBM 7030 ("Stretch") computer, followed
+by versions for the IBM 7090 and IBM 7094.
+
+By 1965, Fortran IV was supposed to be the "standard" and in compliance with American
+Standards Association X3.4.3 FORTRAN Working Group.
+
+Fortran 66:
+Perhaps the most significant development in the early history of FORTRAN was the decision
+    by the American Standards Association (now ANSI) to form a committee to develop an
+    "American Standard Fortran." The resulting two standards, approved in March 1966,
+    defined two languages, FORTRAN (based on FORTRAN IV, which had served as a de facto
+    standard), and Basic FORTRAN (based on FORTRAN II, but stripped of its
+    machine-dependent features). The FORTRAN defined by the first standard became known as
+    FORTRAN 66 (although many continued to refer to it as FORTRAN IV, the language upon
+    which the standard was largely based). FORTRAN 66 effectively became the first
+    "industry-standard" version of FORTRAN. FORTRAN 66 included:
+
+
+    * Main program, SUBROUTINE, FUNCTION, and BLOCK DATA program units
+    * INTEGER, REAL, DOUBLE PRECISION, COMPLEX, and LOGICAL data types
+    * COMMON, DIMENSION, and EQUIVALENCE statements
+    * DATA statement for specifying initial values
+    * Intrinsic and EXTERNAL (e.g., library) functions
+    * Assignment statement
+    * GOTO, assigned GOTO, and computed GOTO statements
+    * Logical IF and arithmetic (three-way) IF statements
+    * DO loops
+    * READ, WRITE, BACKSPACE, REWIND, and ENDFILE statements for sequential I/O
+    * FORMAT statement
+    * CALL, RETURN, PAUSE, and STOP statements
+    * Hollerith constants in DATA and FORMAT statements, and as actual arguments to procedures
+    * Identifiers of up to six characters in length
+    * Comment lines
+
+Fortran 77:
+After the release of the FORTRAN 66 standard, compiler vendors introduced a number of
+extensions to "Standard Fortran", prompting ANSI in 1969 to begin work on revising the
+1966 standard. Final drafts of this revised standard circulated in 1977, leading to
+formal approval of the new FORTRAN standard in April 1978. The new standard, known as
+FORTRAN 77, added a number of significant features to address many of the shortcomings
+of FORTRAN 66:
+
+
+    * Block IF and END IF statements, with optional ELSE and ELSE IF clauses, to provide improved language support for structured programming
+    * DO loop extensions, including parameter expressions, negative increments, and zero trip counts
+    * OPEN, CLOSE, and INQUIRE statements for improved I/O capability
+    * Direct-access file I/O
+    * IMPLICIT statement
+    * CHARACTER data type, with vastly expanded facilities for character input and output and processing of character-based data
+    * PARAMETER statement for specifying constants
+    * SAVE statement for persistent local variables
+    * Generic names for intrinsic functions
+    * A set of intrinsics (LGE, LGT, LLE, LLT) for lexical comparison of strings, based upon the ASCII collating sequence.
+
+    (ASCII functions were demanded by the U. S. Department of Defense, in their conditional approval vote.)
+
+In this revision of the standard, a number of features were removed or altered in a manner
+that might invalidate previously-standard-conforming programs. (Removal was the only
+allowable alternative to X3J3 at that time, since the concept of "deprecation" was not
+yet available for ANSI standards.) While most of the 24 items in the conflict list
+(See Appendix A2 of X3.9-1978) addressed loopholes or pathological cases permitted by
+the previous standard but rarely used, a small number of specific capabilities were
+deliberately removed, such as:
+
+    * Hollerith constants and Hollerith data, such as:
+
+        GREET = 12HHELLO THERE!
+
+    * Reading into a H edit (Hollerith field) descriptor in a FORMAT specification.
+    * Overindexing of array bounds by subscripts.
+
+        DIMENSION A(10,5)
+        Y= A(11,1)
+
+    * Transfer of control into the range of a DO loop (also known as "Extended Range").
+
+An important practical extension to FORTRAN 77 was the release of MIL-STD-1753 in 1978. This specification, developed by the U. S. Department of Defense, standardized a number of features implemented by most FORTRAN 77 compilers but not included in the ANSI FORTRAN 77 standard. These features would eventually be incorporated into the Fortran 90 standard.
+
+    * DO WHILE and END DO statements
+    * INCLUDE statement
+    * IMPLICIT NONE variant of the IMPLICIT statement
+    * Bit manipulation intrinsic functions, based on similar functions included in Industrial Real-Time Fortran (ANSI/ISA S61.1 (1976))
+
+The IEEE 1003.9 POSIX Standard, released in 1991, provided a simple means for Fortran-77
+programmers to issue POSIX system calls. Over 100 calls were defined in the document -
+allowing access to POSIX-compatible process control, signal handling, file system
+control, device control, procedure pointing, and stream I/O in a portable manner.
+
+The development of a revised standard to succeed FORTRAN 77 would be repeatedly delayed as
+the standardization process struggled to keep up with rapid changes in computing and
+programming practice. In the meantime, as the "Standard FORTRAN" for nearly fifteen
+years, FORTRAN 77 would become the historically most important dialect.
+
+
+Control Data Corporation computers had another version of FORTRAN 77, called Minnesota
+FORTRAN, with variations in output constructs, special uses of COMMONs and DATA
+statements, optimizations code levels for compiling, and detailed error listings,
+extensive warning messages, and debugs.
+
+Fortran 90:
+The much delayed successor to FORTRAN 77, informally known as Fortran 90, was finally
+released as an ANSI Standard in 1992. This major revision added many new features to
+reflect the significant changes in programming practice that had evolved since the
+1978 standard:
+
+    * Free-form source input, also with lowercase Fortran keywords
+    * Identifiers up to 31 characters in length
+    * Inline comments
+    * Ability to operate on arrays (or array sections) as a whole, thus greatly simplifying math and engineering computations.
+          o whole, partial and masked array assignment statements and array expressions, such as   X(1:N)=R(1:N)*COS(A(1:N)))
+          o WHERE statement for selective array assignment)
+          o array-valued constants and expressions,
+          o user-defined array-valued functions and array constructors.
+    * RECURSIVE procedures
+    * Modules, to group related procedures and data together, and make them available to other program units, including the capability to limit the accessibility to only specific parts of the module.
+    * A vastly improved argument-passing mechanism, allowing interfaces to be checked at compile time
+    * User-written interfaces for generic procedures
+    * Operator overloading
+    * Derived/abstract data types
+    * New data type declaration syntax, to specify the data type and other attributes of variables
+    * Dynamic memory allocation by means of the ALLOCATABLE attribute and the ALLOCATE and DEALLOCATE statements
+    * POINTER attribute, pointer assignment, and NULLIFY statement to facilitate the creation and manipulation of dynamic data structures
+    * Structured looping constructs, with an END DO statement for loop termination, and EXIT and CYCLE statements for "breaking out" of normal DO loop iterations in an orderly way
+    * SELECT . . . CASE construct for multi-way selection
+    * Portable specification of numerical precision under the user's control
+    * New and enhanced intrinsic procedures.
+
+Fortran95:
+Fortran 95 was a minor revision, mostly to resolve some outstanding issues from the
+Fortran 90 standard. Nevertheless, Fortran 95 also added a number of extensions,
+notably from the High Performance Fortran specification:
+
+    * FOR ALL and nested WHERE constructs to aid vectorization
+    * User-defined PURE and ELEMENTAL procedures
+
+An important supplement to Fortran 95 was the ISO technical report TR-15581: Enhanced Data
+Type Facilities, informally known as the Allocatable TR. This specification defined
+enhanced use of ALLOCATABLE arrays, prior to the availability of fully Fortran
+2003-compliant Fortran compilers. Such uses include ALLOCATABLE arrays as derived type
+components, in procedure dummy argument lists, and as function return
+values. (ALLOCATABLE arrays are preferable to POINTER-based arrays because ALLOCATABLE
+arrays are guaranteed by Fortran 95 to be deallocated automatically when they go out
+of scope, eliminating the possibility of memory leakage. In addition, aliasing is not
+an issue for optimization of array references, allowing compilers to generate faster
+code than in the case of pointers.)
+
+Another important supplement to Fortran 95 was the ISO technical report TR-15580:
+Floating-point exception handling, informally known as the IEEE TR. This specification
+defined support for IEEE floating-point arithmetic and floating point exception
+handling.
+
+Conditional Compilation and Varying length strings
+
+In addition to the mandatory "Base language" (defined in ISO/IEC 1539-1 : 1997), the
+Fortran 95 language also includes two optional modules:
+
+    * Varying character strings (ISO/IEC 1539-2 : 2000)
+    * Conditional compilation (ISO/IEC 1539-3 : 1998)
+
+which, together, comprise the multi-part International Standard (ISO/IEC 1539).
+
+According to the standards developers, "the optional parts describe self-contained
+features which have been requested by a substantial body of users and/or implementors,
+but which are not deemed to be of sufficient generality for them to be required in all
+standard-conforming Fortran compilers." Nevertheless, if a standard-conforming Fortran
+does provide such options, then they "must be provided in accordance with the
+description of those facilities in the appropriate Part of the Standard."
+
+Fortran 2003:
+The most recent standard, Fortran 2003, is a major revision introducing many new
+features. A comprehensive summary of the new features of Fortran 2003 is available at
+the ISO Fortran Working Group (WG5) official Web site, and may be downloaded directly
+as a PDF filePDF or gzipped PostScript file.
+
+From that article, the major enhancements for this revision include:
+
+    * Derived type enhancements: parameterized derived types, improved control of accessibility, improved structure constructors, and finalizers.
+    * Object oriented programming support: type extension and inheritance, polymorphism, dynamic type allocation, and type-bound procedures.
+    * Data manipulation enhancements: allocatable components (incorporating TR 15581), deferred type parameters, VOLATILE attribute, explicit type specification in array constructors and allocate statements, pointer enhancements, extended initialization expressions, and enhanced intrinsic procedures.
+    * Input/output enhancements: asynchronous transfer, stream access, user specified transfer operations for derived types, user specified control of rounding during format conversions, named constants for preconnected units, the FLUSH statement, regularization of keywords, and access to error messages.
+    * Procedure pointers.
+    * Support for IEEE floating-point arithmetic and floating point exception handling (incorporating TR 15580).
+    * Interoperability with the C programming language.
+    * Support for international usage: access to ISO 10646 4-byte characters and choice of decimal or comma in numeric formatted input/output.
+    * Enhanced integration with the host operating system: access to command line arguments, environment variables, and processor error messages.
+
+Fortran 2008:
+Efforts are underway to develop a revision to Fortran 2003, tentatively called Fortran
+2008. As with Fortran 95, this is intended to be a minor upgrade, incorporating
+clarifications and corrections to Fortran 2003, as well as introducing a select few
+new capabilities. Proposed new capabilities include
+
+    * Co-array Fortran %G–%@ a parallel processing model
+    * BIT data type
+
+A full list is in the report "The language features that have been chosen for Fortran 2008" PDF filePDF (24.2 KiB).
+
+
+
+
+
+
+
+Fortran 2003 (Intel Features implemented in version 10.1):
+    * The Fortran character set has been extended to contain the 8-bit ASCII characters ~ \ [ ] ` ^ { } | # @
+    * Names of length up to 63 characters
+    * Statements of up to 256 lines
+    * Square brackets [ ] are permitted to delimit array constructors instead of (/ /)
+    * A named PARAMETER constant may be part of a complex constant
+    * Allocatable components of derived types
+    * ASYNCHRONOUS attribute and statement
+    * BIND(C) attribute and statement
+    * PROTECTED attribute and statement
+    * VALUE attribute and statement
+    * VOLATILE attribute and statement
+    * INTENT attribute for pointer objects
+    * Reallocation of allocatable variables on the left hand side of an assignment statement when the right hand side differs in shape or length (requires option "assume realloc_lhs")
+    * In all I/O statements, the following numeric values can be of any kind: UNIT=, IOSTAT=
+    * FLUSH statement
+    * WAIT statement
+    * ACCESS='STREAM' keyword for OPEN
+    * ASYNCHRONOUS keyword for OPEN and data transfer statements
+    * ID keyword for INQUIRE and data transfer statements
+    * POS keyword for data transfer statements
+    * PENDING keyword for INQUIRE
+    * The following OPEN numeric values can be of any kind: RECL=
+    * The following READ and WRITE numeric values can be of any kind: REC=, SIZE=
+    * The following INQUIRE numeric values can be of any kind: NEXTREC=, NUMBER=, RECL=, SIZE=
+    * Recursive I/O is allowed in the case where the new I/O being started is internal I/O that does not modify any internal file other than its own
+    * IEEE Infinities and NaNs are displayed by formatted output as specified by Fortran 2003
+    * In an I/O format, the comma after a P edit descriptor is optional when followed by a repeat specifier
+    * Rename of user-defined operators in USE
+    * INTRINSIC and NON_INTRINSIC keywords in USE
+    * IMPORT statement
+    * Allocatable dummy arguments
+    * Allocatable function results
+    * COMMAND_ARGUMENT_COUNT intrinsic
+    * GET_COMMAND intrinsic
+    * GET_COMMAND_ARGUMENT intrinsic
+    * GET_ENVIRONMENT_VARIABLE intrinsic
+    * IS_IOSTAT_END intrinsic
+    * IS_IOSTAT_EOR intrinsic
+    * MOVE_ALLOC intrinsic
+    * NEW_LINE intrinsic
+    * SELECTED_CHAR_KIND intrinsic
+    * The following intrinsics take an optional KIND= argument: ACHAR, COUNT, IACHAR, ICHAR, INDEX, LBOUND, LEN, LEN_TRIM, MAXLOC, MINLOC, SCAN, SHAPE, SIZE, UBOUND, VERIFY
+    * ISO_C_BINDING intrinsic module
+    * ISO_FORTRAN_ENV intrinsic module 
+

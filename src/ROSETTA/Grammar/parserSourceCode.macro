@@ -1,0 +1,89 @@
+
+// Prototype build:
+//      friend $GRAMMAR_PREFIX_Node* $GRAMMAR_PREFIX_parse ( $PARENT_GRAMMARS_PREFIX_$CLASS_BASE_NAME* X );
+// Old source function declaration:
+//      ROOT_NODE* parse ( ROOT_NODE* subTree )
+
+SOURCE_PARSER_START
+
+// We include the "$GRAMMAR_PREFIX_" in the name of the parse function because we want each grammar's
+// collection of overloaded parse functions to return the root node of that grammar.  Since multiple
+// grammars exist we have to have different collections of overloaded parse functions return different
+// types, and overloaded functions must return the same type (C++ language constraint).  The solution is to have
+// the overloaded parse functions for each grammar share the names that are unique to that grammar only.
+// thus we prefix the parse member function name with "$GRAMMAR_PREFIX_".
+
+$GRAMMAR_PREFIX_Node*
+$GRAMMAR_PREFIX_parse ( $PARENT_GRAMMARS_PREFIX_$CLASS_BASE_NAME* X )
+   {
+  // This is the wrong constructor to call here but we do this as a test for now!
+     $CLASSNAME* returnValue = new $CLASSNAME();
+
+#if 0
+     X_GrammarVariants arrayClassVariant = ArrayClassSageInterface::getVariant(X);
+     switch ( arrayClassVariant )
+        {
+          case BASIC_BLOCK_STMT:
+             {
+            // cout << "BASIC_BLOCK_STMT " << implemented << endl;
+               SgBasicBlock* basicBlock = isSgBasicBlock (stmt);
+               ROSE_ASSERT (basicBlock != NULL);
+
+            // ROSE_StatementBlock* roseStatementBlock = new ROSE_StatementBlock (basicBlock);
+               ROSE_StatementBlock* roseStatementBlock = parse (basicBlock);
+               ROSE_ASSERT (roseStatementBlock != NULL);
+
+            // error recover mechanism
+               if (roseStatementBlock->error())
+                  {
+                 // We have detected an error found in parsing the Sage tree to build the ROSE_ArrayParenthesisOperator
+                    returnNode = NULL;
+                  }
+                 else
+                  {
+#if 0
+                 // Apply constraints to restrict grammar from C++ grammar 
+                 // (no constraints means it behaves just like the C++ grammar!)
+                 // Let the constraints be functions taking a SgNode (or root node 
+                 // of the lower level grammar) and returning a boolean value.
+                    constraintList::iterator i;
+                    for (i = ROSE_StatementBlock::grammarContraintList.begin(); 
+                         i != ROSE_StatementBlock::grammarContraintList.end(); i++)
+                       {
+                         if ( !(*i)->*function(roseStatementBlock) )
+                            {
+                            }
+                       }
+
+                    returnNode = roseStatementBlock;
+#else
+                 // List all the different constraints (one for each entry
+                 // in the constraint list on each terminal/nonterminal)
+                    $CONSTRAINTS_FROM_CONSTRAINT_LIST
+#endif
+                  }
+
+               ROSE_ASSERT (returnNode != NULL);
+               break;
+             }
+        }
+#endif
+
+     return returnValue;
+   }
+
+SOURCE_PARSER_END
+
+#if 0
+
+// Insert one of these for each constraint objects represented in the 
+// constrant list for each terminal/nontrminal.
+CONSTRAINT_TEST_FOR_PARSER_START
+                    if ($CONSTRAINT_STRING)
+                       {
+                      // What goes here?
+                       }
+
+CONSTRAINT_TEST_FOR_PARSER_END
+
+#endif

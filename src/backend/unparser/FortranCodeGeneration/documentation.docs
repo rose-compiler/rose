@@ -1,0 +1,19 @@
+ /*!
+     \defgroup FortranCodeGenerator Backend Fortran Code Generator
+     \ingroup ROSE_BackEndGroup
+
+     \brief Generates Fortran Source code from the AST.
+
+     Generates Fortran source code directly from AST using a design that is similar to
+     the C and C++ code generator.
+
+     \note There are no user level functions within the backend.  The only three related
+          functions are available from the SgNode interface ( SgNode::unparseToString() ) and
+          SgFile and SgProject interfaces ( SgFile::unparse() and SgProject::unparse(),
+          respectively).
+
+    \note This code was developed in collaboration with Rice University 
+          (initial pieces were developed by Nathan Tallent and Gina Goff).
+
+  */
+

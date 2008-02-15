@@ -1,0 +1,84 @@
+
+\chapter{ Glossary }
+
+%  Purpose:
+% \begin{itemize}
+%    \item A. Define terminology
+% \end{itemize}
+% \begin{center}
+% *********************  \newline
+% \end{center}
+% \vspace{0.25in}
+
+\fixme{Define the following terms: IR node, Inherited Attribute, Synthesized Attribute,
+    Accumulator Attribute, AST Traversal }
+
+    We define terms used in the ROSE manual which might otherwise be unclear.
+
+\begin{itemize}
+   \item {\bf AST} Abstract Syntax Tree. A very basic understanding of an AST is the
+                   entry level into ROSE.
+
+   \item {\bf Attribute} User defined information (objects) associated with IR nodes.
+    Forms of attributes include: accumulator, inherited, persistent, and synthesized.
+    Both inherited and synthesized attributes are managed automatically on the stack within a
+    traversal.  Accumulator attributes are typically something sematically equivalent to a
+    global variable (often a static data member of a class).  Persistent attributes 
+    are explicitly added to the AST and are managed directly by the user.  As a result,
+    they can persist across multiple traversals of the AST.  Persistent attributes are
+    also saved in the binary file I/O, but only if the user provides the attribute
+    specific {\tt pack()} and {\tt unpack()} virtual member functions.  See the ROSE
+    User Manual for more inforamtion, and the ROSE Tutorial for examples.
+
+   \item {\bf CFG} As used in ROSE, this is the Control Flow Graph, not Context Free
+    Grammar or anything else.
+
+   \item {\bf EDG} Edison Design Group (the commercial company that produces the C and C++
+    front-end that is used in ROSE).
+
+   \item {\bf IR} Intermediate Representation (IR).  The IR is the set of classes defined
+    within SAGE III that allow an AST to be built to define any application in C, C++,
+    and Fortran application.
+
+   \item {\bf Query} (as in AST Query) Operations on the AST that return answers to
+    questions posed about the content or context in the AST.
+
+   \item {\bf ROSE} A project that covers both research in optimization and a specific
+    infrastructure for handling large scale C, C++, and Fortran applications.
+
+   \item {\bf Rosetta} A tool (written by the ROSE team) used within ROSE to automate the
+    generation of the SAGE III IR.
+
+   \item {\bf SAGE++ and SAGE II} An older object-oriented IR upon which the API of 
+   SAGE III IR is based.
+
+   \item {\bf Semantic Information} What abstractions mean (short answer).
+    (This might be better as a description of what kind of semantic information ROSE could
+    take advantage, not a definition.)
+
+   \item {\bf Telescoping Languages} A research area that defines a process to generate
+    domain-specific languages from a general purpose languages.
+
+   \item {\bf Transformation} The process of automating the editing (either
+    reconfiguration, addition, or deletion; or some combination) of input
+    application parts to build a new application.  In the context of ROSE, all
+    transformations are source-to-source.
+
+   \item {\bf Translator} An executable program (in our context built using ROSE) that performs
+    source-to-source translation on an existing input application source to generate 
+    a second (generated) source code file.  The second (generated) source code is 
+    then typically provided as input to a vendor provided compiler (which generates
+    object code or an executable program).
+
+   \item {\bf Traversal} The process of operating on the AST in some order (usually
+    pre-order, post-order, out of order [randomly], depending on the traversal that is
+    used). The ROSE user builds a traversal from base classes that do the
+    traversal and execute a function, or a number of functions, provided by the user.
+
+\end{itemize}
+
+
+
+
+
+

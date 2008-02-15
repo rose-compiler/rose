@@ -1,0 +1,133 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCaseOptionStmt
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgCaseOptionStmt
+\brief This class represents the concept of a C and C++ case option (used within a switch statement).
+
+\sa
+\ref SgCaseOptionStmt_usage  "Example of using a SgCaseOptionStmt object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCaseOptionStmt data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgCaseOptionStmt::p_key_root
+\brief This pointer points to a SgExpressionRoot object.
+
+\todo Evaluate if this should really be a SgExpressionRoot or just a SgExpression.
+      It should perhaps really be a SgValue (but check the C++ grammar to be sure).
+      then make the p_key_range_end the same type to be consistant.
+
+*/
+
+/*! \var SgCaseOptionStmt::p_key_range_end
+\brief This pointer points to the last constant in the range when a gnu range 
+case label is used.
+
+\internal We can't represent the range a ... b as an expression in C or C++ so we need to
+    explicitly store the start and end of the range where it is used as a case label.
+    The p_key_root is the start of the range.
+
+*/
+
+/*! \var SgCaseOptionStmt::p_body
+\brief This pointer points to a SgBasicBlock object.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCaseOptionStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgCaseOptionStmt::SgCaseOptionStmt ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgCaseOptionStmt base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgCaseOptionStmt_create "Example:create an SgCaseOptionStmt object"
+*/
+
+/*!
+\fn SgCaseOptionStmt::~SgCaseOptionStmt()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgCaseOptionStmt::isSgCaseOptionStmt (SgNode *s)
+\brief Cast function (from derived class to SgCaseOptionStmt pointer).
+
+   This functions returns a SgCaseOptionStmt pointer for any input of a 
+pointer to an object derived from a SgCaseOptionStmt.
+
+\return Returns valid pointer to SgCaseOptionStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCaseOptionStmt::isSgCaseOptionStmt (const SgNode *s)
+\brief Cast function (from derived class to SgCaseOptionStmt pointer).
+
+   This functions returns a SgCaseOptionStmt pointer for any input of a 
+pointer to an object derived from a SgCaseOptionStmt.
+
+\return Returns valid pointer to SgCaseOptionStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCaseOptionStmt::get_key() const
+\brief Returns pointer to a SgExpression object wrapped by SgExpressionRoot in p_key_root.
+
+\internal This should always be a valid pointer.
+
+\return Returns pointer to SgExpression.
+*/
+
+/*!
+\fn SgCaseOptionStmt::set_key(SgExpression* key)
+\brief Access function for pointer to SgExpression object wrapped by SgExpressionRoot in p_key_root.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgCaseOptionStmt::get_key_root() const
+\brief Returns pointer to a SgExpressionRoot object.
+
+\internal This should always be a valid pointer.
+
+\return Returns pointer to SgExpressionRoot.
+*/
+
+/*!
+\fn SgCaseOptionStmt::set_key_root(SgExpressionRoot* key_root)
+\brief Access function for p_key_root.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgCaseOptionStmt::get_body() const
+\brief Returns pointer to a SgBasicBlock object.
+
+\internal This should always be a valid pointer.
+
+\return Returns pointer to SgBasicBlock.
+*/
+
+/*!
+\fn SgCaseOptionStmt::set_body(SgBasicBlock* body)
+\brief Access function for p_body.
+
+\return Returns void.
+*/
+

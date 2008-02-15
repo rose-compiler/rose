@@ -1,0 +1,136 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgIfStmt
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgIfStmt
+\brief This class represents the concept of an "if" construct.
+
+\internal 
+
+\todo The unparse function "unparseIfStmt" associated with this IR node
+      is implemented using a loop.  I think this should be changed to be more
+      conventional and structural (consistant with the design of the rest of 
+      the unparsing).
+*/
+
+/*
+\sa
+\ref SgIfStmt_usage  "Example of using a SgIfStmt object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgIfStmt data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgIfStmt::p_conditional
+\brief This pointer a SgStatement.
+
+*/
+
+/*! \var SgIfStmt::p_true_body
+\brief This pointer a SgBasicBlock, and holds the statements in the "true" body of if statement.
+
+*/
+
+/*! \var SgIfStmt::p_false_body
+\brief This pointer a SgBasicBlock, and holds the statements in the "false" body of if statement.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgIfStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgIfStmt::SgIfStmt ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgIfStmt base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgIfStmt_create "Example:create an SgIfStmt object"
+*/
+
+/*!
+\fn SgIfStmt::~SgIfStmt()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgIfStmt::isSgIfStmt (SgNode *s)
+\brief Cast function (from derived class to SgIfStmt pointer).
+
+   This functions returns a SgIfStmt pointer for any input of a 
+pointer to an object derived from a SgIfStmt.
+
+\return Returns valid pointer to SgIfStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgIfStmt::isSgIfStmt (const SgNode *s)
+\brief Cast function (from derived class to SgIfStmt pointer).
+
+   This functions returns a SgIfStmt pointer for any input of a 
+pointer to an object derived from a SgIfStmt.
+
+\return Returns valid pointer to SgIfStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgIfStmt::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgIfStmt.
+*/
+
+/*!
+\fn SgIfStmt::get_conditional() const
+\brief Access function for p_conditional.
+
+\return Returns a pointer to a SgStatement.
+*/
+
+/*!
+\fn SgIfStmt::set_conditional(SgStatement* conditional)
+\brief Access function for p_conditional.
+
+\param conditional SgStatement pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_true_body() const
+\brief Access function for p_true_body.
+
+\return Returns a pointer to a SgBasicBlock.
+*/
+
+/*!
+\fn SgIfStmt::set_true_body(SgBasicBlock* true_body)
+\brief Access function for p_true_body.
+
+\param true_body SgBasicBlock pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgIfStmt::get_false_body() const
+\brief Access function for p_false_body.
+
+\return Returns a pointer to a SgBasicBlock.
+*/
+
+/*!
+\fn SgIfStmt::set_false_body(SgBasicBlock* false_body)
+\brief Access function for p_false_body.
+
+\param false_body SgBasicBlock pointer
+\return Returns void.
+*/
+

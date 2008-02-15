@@ -1,0 +1,97 @@
+// Example ROSE Translator: used for testing ROSE infrastructure
+
+#include "rose.h"
+
+using namespace std;
+
+// DQ (9/9/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+   #include "GlobalDatabaseConnection.h"
+#endif
+
+int main( int argc, char * argv[] ) 
+   {
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+  // Build the Data base
+     GlobalDatabaseConnection *gDB;
+     gDB = new GlobalDatabaseConnection( "functionNameDataBase" );
+     gDB->initialize();
+     string command = "";
+     command = command + "CREATE TABLE Functions ( name TEXT, counter );";
+
+     Query *q = gDB->getQuery();
+     q->set( command );
+     q->execute();
+
+     if ( q->success() != 0 )
+          cout << "Error creating schema: " << q->error() << "\n";
+  // Alternative syntax, but does not permit access to error messages and exit codes
+  // gDB->execute(command.c_str());
+#endif
+
+  // Build the AST used by ROSE
+     SgProject* project = frontend(argc,argv);
+
+  // Run internal consistancy tests on AST
+     AstTests::runAllTests(project);
+     
+  // Build a list of functions within the AST
+     Rose_STL_Container<SgNode*> functionDeclarationList = NodeQuery::querySubTree (project,V_SgFunctionDeclaration);
+
+     int counter = 0;
+     for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++)
+        {
+       // Build a pointer to the current type so that we can call the get_name() member function.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+       // output the function number and the name of the function
+          printf ("function name #%d is %s at line %d \n",
+               counter++,functionDeclaration->get_name().str(),
+               functionDeclaration->get_file_info()->get_line());
+
+          string functionName = functionDeclaration->get_qualified_name().str();
+
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+          command = "INSERT INTO Functions values(\"" + functionName + "\"," + StringUtility::numberToString(counter) + ");";
+       // Alternative interface
+       // q->set( command );
+       // cout << "Executing: " << q->preview() << "\n";
+       // q->execute();
+          gDB->execute(command.c_str());
+#endif
+        }
+
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+     command = "SELECT * from Functions;";
+
+  // Alternative Interface (using query objects)
+  // q << command;
+     q->set(command);
+     cout << "Executing: " << q->preview() << "\n";
+
+  // execute and return result (alternative usage: "gDB->select()")
+     Result *res = q->store();
+     if ( q->success() != 0 )
+          cout << "Error reading values: " << q->error() << "\n";
+     else
+      {
+     // Read the table returned from the query
+     // res->showResult();
+        for ( Result::iterator i = res->begin(); i != res->end(); i++ )
+           {
+          // Alternative syntax is possible: "Row r = *i;"
+             string functionName = (*i)[0].get_string();
+             int counter = (*i)[1];
+             printf ("functionName = %s counter = %d \n",functionName.c_str(),counter);
+           }
+      }
+
+     gDB->shutdown();
+#else
+     printf ("Program compiled without data base connection support (add using ROSE configure option) \n");
+#endif
+
+     return 0;
+   }
+

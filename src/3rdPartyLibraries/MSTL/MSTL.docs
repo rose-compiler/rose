@@ -1,0 +1,155 @@
+ /*!
+     \defgroup multiSupportTemplateLibrary Multi-Support Template Library
+     \ingroup ROSE_3rdPartyLibrariesGroup
+
+     \brief This library is a separable part of the Rose project.
+
+     This library supports many things related to Abstract Syntax Trees.
+     Currently the library is somewhat dependent upon Rose, but this 
+     will be fixed.
+  */
+
+ /*! \defgroup DOTGenerationStuff DOT (Graph) Visualization of AST
+     \ingroup multiSupportTemplateLibrary
+     \brief This library defines the DOT output (graphical representation) of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This library defines DOT stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+ /*! \class DOTGeneration DOTGeneration.h
+     \ingroup DOTGenerationStuff
+     \brief This class defines the DOT output (graphical representation) of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines DOT stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+ /*! \class DOTInheritedAttribute DOTGeneration.h
+     \ingroup DOTGenerationStuff
+     \brief This class defines the DOT output (graphical representation) of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines DOT stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+ /*! \class DOTSynthesizedAttribute DOTGeneration.h
+     \ingroup DOTGenerationStuff
+     \brief This class defines the DOT output (graphical representation) of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines DOT stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+
+ /*! \class DOTRepresentation DOTRepresentation.h
+     \ingroup DOTGenerationStuff
+     \brief This class defines the DOT output (graphical representation) of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines DOT stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+
+ /*! \defgroup PDFGenerationStuff PDF Visualization of AST
+     \ingroup multiSupportTemplateLibrary
+     \brief This class defines the PDF output of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines the PDF stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+ /*! \class PDFGeneration PDFGeneration.h
+     \ingroup PDFGenerationStuff
+     \brief This class defines the PDF output of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines the PDF stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+ /*! \class PDFInheritedAttribute PDFGeneration.h
+     \ingroup PDFGenerationStuff
+     \brief This class defines the PDF output (graphical representation) of the AST.
+     \authors Schordan
+     \version 0.5
+     \date Dec 16th 2002
+     \bug No known bugs.
+     \warning Documentation incomplete.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/MSTL/MSTL.docs</b>.
+
+     This class defines DOT stuff.
+
+     \internal This class must have some internal details ... :-).
+  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

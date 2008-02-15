@@ -1,0 +1,23 @@
+/* 
+   JH (01/01/2006) ROSETTA generated class declarations for $CLASSNAMEStorageClass 
+   used for the ast file IO. Do not chance by hand! 
+*/
+class $CLASSNAMEStorageClass $PARENT_CLASSNAME
+   {
+
+    protected: 
+
+DATA_MEMBER_DECLARATIONS
+
+    public:
+      void pickOutIRNodeData ( $CLASSNAME* source );
+      static void arrangeStaticDataOfEasyStorageClassesInOneBlock ( );
+      static void deleteStaticDataOfEasyStorageClasses ( );
+      static void pickOutStaticDataMembers ( );
+      static void rebuildStaticDataMembers ( );
+      static void writeEasyStorageDataToFile (std::ostream& out);
+      static void readEasyStorageDataFromFile (std::istream& in);
+      static void writeStaticDataToFile (std::ostream& out );
+      static void readStaticDataFromFile (std::istream& in );
+      friend class $CLASSNAME;
+   };

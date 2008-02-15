@@ -1,0 +1,20 @@
+
+// Generated constructor
+$CLASSNAME::$CLASSNAME ( $CONSTRUCTOR_PARAMETER_LIST )
+   $PRE_INITIALIZATION_LIST
+   {
+#ifdef DEBUG
+  // printf ("In $CLASSNAME::$CLASSNAME ($CONSTRUCTOR_PARAMETER_LIST) sage_class_name() = %s \n",sage_class_name());
+#endif
+
+$CONSTRUCTOR_BODY
+
+  // Test the variant virtual function
+     assert($CLASSTAG == variant());
+     post_construction_initialization();
+
+  // Test the is$CLASSNAME() function since it has been problematic
+     assert(is$CLASSNAME(this) != NULL);
+   }
+
+

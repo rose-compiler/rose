@@ -1,0 +1,70 @@
+/*!
+     \defgroup queryLib Query Library
+
+     \brief This library simplifies the development of useful queries upon the AST.
+     \authors Quinlan (Last checked in by $Author: dquinlan $)
+     \version $Id: QueryLib.docs,v 1.1 2004/07/07 10:26:28 dquinlan Exp $
+     \date Date last worked on $Date: 2004/07/07 10:26:28 $
+     \bug No known bugs.
+     \warning Documentation is incomplete.
+
+     \todo 1. Finish documentation! \n
+           2. Make the source code directory structure for Query lib match the documentation. \n
+           3. Make the library more exstensible (perhaps designed like the PDF and DOT libraries).
+
+     \note Large parts of documentation contained in <b>ROSE/QueryLibs/QueryLib.docs</b>.
+
+     The design of the Query Library is somewhat adhoc, it seems clear from using it that
+     the idea is an important one in the simplification of many preprocessor operations.
+     What is not clear is just what the design of the Query Library should be.  This 
+     implementation will likely be superceeded by an improved version in the future.
+ */
+
+/*!
+     \ingroup queryLib
+     \defgroup localNodeQueryLib Local Node Query Library
+
+     \brief This library simplifies the development of useful queries upon individual
+            nodes of the AST.
+
+     \bug No known bugs.
+     \warning Documentation is incomplete.
+     \todo Finish documentation!
+
+     \note Large parts of documentation contained in <b>ROSE/QueryLibs/QueryLib.docs</b>.
+
+     This library simplifies the reuse of queries that might be specific to certain types
+     of nodes within the AST.  It also forms a repository of functions that might be most
+     appropriately later put into Sage III directly.
+
+     The design of this library should permit the migration of mature functions
+     back into Sage III.
+ */
+
+/*!
+     \ingroup queryLib
+     \defgroup subtreeQueryLib Subtree Query Library
+
+     \brief This library simplifies the development of useful queries that require a
+            traversal of any subtree of the AST.
+
+     \bug Not finished yet.
+     \warning Documentation is incomplete.
+     \todo Finish documentation!
+
+     \note Large parts of documentation contained in <b>ROSE/QueryLibs/QueryLib.docs</b>.
+
+     This library represents a family of queries that all use the tree traversal (AST
+     Processing) and operate upon whole subtrees.  Return values are most commonly lists.     
+
+     \internal None of these functions should be expected to be placed into Sage III,
+               at least not without considerable thought.
+ */
+
+/*! \file
+    
+    This is text about the QueryLib file itself, not sure if we need it?
+ */
+
+
+

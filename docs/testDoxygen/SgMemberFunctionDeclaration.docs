@@ -1,0 +1,97 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionDeclaration
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgMemberFunctionDeclaration
+\brief This class represents the concept of a member function declaration statement.
+
+    The member function declaration is derived from a function declaration and adds
+specific data members that are relavant.
+
+\note Constructors, destructors, and conversion operators are handled as member fucntions 
+    with names associated with their classes.
+
+\internal  The scope can at times be that of the global scope, when this happens 
+     users should access the scope through get_firstNondefiningDeclaration().
+     This appears to be a bug internally.
+
+
+*/
+
+/*
+\sa
+\ref SgMemberFunctionDeclaration_usage  "Example of using a SgMemberFunctionDeclaration object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionDeclaration data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgMemberFunctionDeclaration::p_CtorInitializerList
+\brief This is the constructor preinitialization list (used only for the constructor
+    definitions).
+
+\internal This data member might make more sense in the SgFunctionDefinition (or we could
+    build a SgMemberFunctionDefinition from the SgFunctionDefinition, and put the
+    constructor initialization list there).
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionDeclaration member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgMemberFunctionDeclaration::SgMemberFunctionDeclaration ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgMemberFunctionDeclaration base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgMemberFunctionDeclaration_create "Example:create an SgMemberFunctionDeclaration object"
+*/
+
+/*!
+\fn SgMemberFunctionDeclaration::~SgMemberFunctionDeclaration()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgMemberFunctionDeclaration::isSgMemberFunctionDeclaration (SgNode *s)
+\brief Cast function (from derived class to SgMemberFunctionDeclaration pointer).
+
+   This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
+pointer to an object derived from a SgMemberFunctionDeclaration.
+
+\return Returns valid pointer to SgMemberFunctionDeclaration if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgMemberFunctionDeclaration::isSgMemberFunctionDeclaration (const SgNode *s)
+\brief Cast function (from derived class to SgMemberFunctionDeclaration pointer).
+
+   This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
+pointer to an object derived from a SgMemberFunctionDeclaration.
+
+\return Returns valid pointer to SgMemberFunctionDeclaration if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgMemberFunctionDeclaration::get_CtorInitializerList() const
+\brief Access function for p_CtorInitializerList.
+
+\return Returns pointer to SgCtorInitializerList.
+*/
+
+/*!
+\fn SgMemberFunctionDeclaration::set_CtorInitializerList(SgCtorInitializerList* CtorInitializerList)
+\brief Access function for p_CtorInitializerList.
+
+\return Returns void.
+*/
+

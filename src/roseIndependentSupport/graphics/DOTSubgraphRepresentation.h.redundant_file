@@ -1,0 +1,122 @@
+/******************************************************************************
+ *
+ * DOT Graph output, similar to DOTGraphRepresentation
+ * also supports subgraph clustering - inc constrast to above it
+ * does buffer the graph information until writeDotoutStream is 
+ * called
+ *
+ *****************************************************************************/
+// Author: Markus Schordan, Nils Thuerey
+// $Id: DOTSubgraphRepresentation.h.redundant_file,v 1.1 2005/02/09 22:07:00 dquinlan Exp $
+
+#ifndef DOTSUBGRAPHREPRESENTATION_H
+#define DOTSUBGRAPHREPRESENTATION_H
+
+#include <string>
+#include <sstream>
+#include <map>
+#include <vector>
+using namespace std;
+
+//! dot file representation with subgraphs
+template<class NodeType>
+class DOTSubgraphRepresentation {
+public:
+  typedef unsigned int TraceType;
+  typedef unsigned int ContainerIndexType;
+
+  void writeToFileAsGraph(string filename);
+  void writeToFile(string filename);
+
+  DOTSubgraphRepresentation();
+  ~DOTSubgraphRepresentation();
+  void clear();
+    
+  void addNode(NodeType node, string nodelabel, string option="");
+  void addNode(NodeType node, string nodelabel, string option, int subgraph);
+  void addEdge(NodeType node1, TraceType downtrace, TraceType uptrace, string edgelabel, NodeType node2, string option="");
+  void addEdge(NodeType node1, TraceType downtrace, string edgelabel, NodeType node2, string option="");
+  void addEdge(NodeType node1, string edgelabel, NodeType node2, string option="");
+  void addEdge(NodeType node1, NodeType node2, string option="");
+  void addNullValue(NodeType node, TraceType trace, string varname, string option="");
+  void addNullValue(NodeType node, string nodelabel, string edgelabel, string option="");
+  void addEmptyContainer(NodeType node, TraceType trace, string varname, string option="");
+
+  string containerEdgeLabel(string containerVarName, ContainerIndexType count);
+  string traceFormat(TraceType td, TraceType bu);
+  string traceFormat(TraceType tdPos, TraceType buPos, TraceType tdCount, TraceType buCount);
+  string traceFormat(TraceType tracepos);
+
+	//! add new subgraph, returns id of the subgraph
+	int addSubgraph(string name);
+
+	//! add new subgraph with manual id assignment
+	int addSubgraph(int id, string name, string opt = "");
+
+	typedef struct{
+		NodeType node1;
+		NodeType node2;
+		string label;
+		string option;
+		bool written; // internal flag for writing to dotout
+	} EdgeStorageType;
+
+	typedef struct{
+		NodeType node;
+		string label;
+		string option;
+		int subgraph;
+		bool written; // internal flag for writing to dotout
+	} NodeStorageType;
+
+	typedef struct{
+		NodeType node;
+		string add;
+		bool written; // internal flag for writing to dotout
+	} NodeAdditionalStorage;
+
+ protected:
+  string nodeName(NodeType node);
+  string nullNodeName(NodeType node, string extention);
+  string graphStart(string graphName="G0");
+  string graphEnd();
+
+ private:
+
+	//! write stored nodes and edges to dotout stream
+	void writeDotoutStream( void );
+
+  string nonQuotedNodeName(NodeType node);
+  ostringstream* dotout;
+
+	//! store nodes for later addition
+	vector<NodeStorageType> mNodes;
+
+	//! store edges for later addition
+	vector<EdgeStorageType> mEdges;
+
+	//! store nodes for later addition
+	vector<NodeAdditionalStorage> mAdds;
+
+	//! store names and ID's of subgraphs
+	map<int,string> mSubgraphNames;
+
+	//! store optional attributes for subgraphs
+	map<int,string> mSubgraphOptions;
+
+	//! last id of a subgraph
+	int mSubgraphIds;
+
+	//! use the automatically assigned subgraph id's ?, should not be mixed with manual assignments
+	bool mAutoSubgraphIds;
+
+	//! use the manual assigned of subgraph id's ?, should not be mixed with auto assignments
+	bool mManualSubgraphIds;
+
+};
+
+#ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION 
+   #include "DOTSubgraphRepresentation.C" 
+#endif 
+
+#endif

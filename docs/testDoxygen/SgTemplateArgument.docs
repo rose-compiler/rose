@@ -1,0 +1,270 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateArgument
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgTemplateArgument
+\brief This class represents template argument within the use of a template to build an instantiation.
+
+    The template argument is used for the instatiation of templates.  They can also have
+    default values and not be specified explicitly.
+
+\internal Note that this is not the same as a template parameter, which appears in the
+    template declaration as a placeholder for template argument in the declaration of the
+    template.
+
+\todo Move this be a SgLocatedNode since it should have a position in the source code.
+
+
+\sa
+\ref SgTemplateArgument_usage  "Example of using a SgTemplateArgument object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateArgument data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgTemplateArgument::p_arumentType
+\brief This is the type of the argument specificed to the template in the instantiation of
+    the template.
+
+\internal  
+*/
+
+/*!
+\var SgTemplateArgument::p_isArrayBoundUnknownType
+\brief Template arguments can be used as array bounds, if so this this marks the arguments
+    use as such.
+
+*/
+
+/*!
+\var SgTemplateArgument::p_type
+\brief This is the template argument's reference to a type (if it is a type).
+
+    This pointer is valid if the argumentType is "type_argument".
+
+*/
+
+/*!
+\var SgTemplateArgument::p_expression
+\brief This is the template argument's reference to an expression (if it is an expression).
+
+    This pointer is valid if the argumentType is "nontype_argument".
+
+*/
+
+/*!
+\var SgTemplateArgument::p_templateInstantiation
+\brief This is the associated template instantiation.
+
+*/
+
+/*!
+\var SgTemplateArgument::p_explicitlySpecified
+\brief This true only if for a function template the argument is explicit in the source
+    code (it need not always be.)
+
+   For template<typename T> void foo(T t); 
+   we could specify:
+      -# foo(1.0);
+   or:
+      -# foo<float>(1.0);
+   only in the second case is the template argument explicit.  For all instantiated 
+   member function templates the value is false.
+
+\internal 
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateArgument member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgTemplateArgument::SgTemplateArgument(
+      SgTemplateArgument::template_argument_enum argumentType=argument_undefined, 
+      bool isArrayBoundUnknownType=false, 
+      SgType *type=NULL, 
+      SgExpression *expression=NULL, 
+      SgTemplateInstantiationDecl *templateInstantiation=NULL, 
+      bool explicitlySpecified=true)
+\brief Constructor using all possible parameters.
+
+\internal 
+
+\sa 
+\ref SgTemplateArgument_create "Example:create an SgTemplateArgument object"
+*/
+
+/*!
+\fn SgTemplateArgument::SgTemplateArgument( SgType* arg, bool isExplicitlySpecified)
+\brief Constructor used with types.
+
+\internal 
+
+\sa 
+\ref SgTemplateArgument_create "Example:create an SgTemplateArgument object"
+*/
+
+/*!
+\fn SgTemplateArgument::SgTemplateArgument( SgExpression* arg, bool isExplicitlySpecified)
+\brief Constructor used with expressions.
+
+\internal 
+
+\sa 
+\ref SgTemplateArgument_create "Example:create an SgTemplateArgument object"
+*/
+
+/*!
+\fn SgTemplateArgument::SgTemplateArgument( SgTemplateInstantiationDecl *arg, bool isExplicitlySpecified)
+\brief Constructor used with template instantiations.
+
+\internal 
+
+\sa 
+\ref SgTemplateArgument_create "Example:create an SgTemplateArgument object"
+*/
+
+/*!
+\fn SgTemplateArgument::SgTemplateArgument(const SgTemplateArgument & X)
+   \brief This the copy constructor (deep copy made).
+
+\internal This constructor does a deep copy of all data in the SgTemplateArgument object.
+
+\sa 
+\ref SgTemplateArgument_create "Example:create an SgTemplateArgument object"
+*/
+
+/*!
+\fn SgTemplateArgument::~SgTemplateArgument()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgTemplateArgument::isSgTemplateArgument (SgNode *s)
+\brief Cast function (from derived class to SgTemplateArgument pointer).
+
+   This functions returns a SgTemplateArgument pointer for any input of a 
+pointer to an object derived from a SgTemplateArgument.
+
+\return Returns valid pointer to SgTemplateArgument if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgTemplateArgument::isSgTemplateArgument (const SgNode *s)
+\brief Cast function (from derived class to SgTemplateArgument pointer).
+
+   This functions returns a SgTemplateArgument pointer for any input of a 
+pointer to an object derived from a SgTemplateArgument.
+
+\return Returns valid pointer to SgTemplateArgument if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgTemplateArgument::set_argumentType ( SgTemplateArgument::template_argument_enum argumentType )
+\brief This function sets argumentType.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgTemplateArgument::template_argument_enum SgTemplateArgument::get_argumentType () const
+\brief This function returns argumentType.
+
+\return Returns SgTemplateArgument::template_argument_enum.
+*/
+
+/*!
+\fn SgTemplateArgument::set_isArrayBoundUnknownType ( bool isArrayBoundUnknownType )
+\brief This function sets isArrayBoundUnknownType.
+
+\return Returns void.
+*/
+
+/*!
+\fn bool SgTemplateArgument::get_isArrayBoundUnknownType () const
+\brief This function returns isArrayBoundUnknownType.
+
+\return Returns bool.
+*/
+
+/*!
+\fn set_type ( SgType *type )
+\brief This function sets the argumentType.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgType* SgTemplateArgument::get_type () const
+\brief This function returns argumentType.
+
+\return Returns SgType pointer.
+*/
+
+/*!
+\fn set_expression ( SgExpression *exp )
+\brief This function sets the argumentExpression.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgExpression* SgTemplateArgument::get_expression () const
+\brief This function returns argumentExpression.
+
+\return Returns SgExpression pointer.
+*/
+
+/*!
+\fn set_templateInstantiation ( SgTemplateInstantiationDecl *expression )
+\brief This function sets the argumentExpression.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgTemplateInstantiationDecl* SgTemplateArgument::get_templateInstantiation () const
+\brief This function returns templateInstantiation.
+
+\return Returns SgTemplateInstantiationDecl pointer.
+*/
+
+/*!
+\fn SgTemplateArgument::set_explicitlySpecified ( bool explicitlySpecified )
+\brief This function sets explicitlySpecified.
+
+\return Returns void.
+*/
+
+/*!
+\fn bool SgTemplateArgument::get_explicitlySpecified () const
+\brief This function returns explicitlySpecified.
+
+\return Returns bool.
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

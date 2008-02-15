@@ -1,0 +1,417 @@
+%\textcolor{red}{Adaptive Mesh Refinement}
+
+\chapter{AST Processing}
+\label{AstProcessing:astProcessing}
+
+\fixme{ This chapter should cover both the classic Object-Oriented Visitor Pattern
+        Traversal (which has yet to be build, but which I understand Markus is prepared to
+        implement) and the two new traversals based on iteration over the memory pools
+        which Dan built in the latest internal release of ROSE in December 2005. 
+        The three of these that are implemented are presenting in the ROSE Tutorial
+        where there is a section for the unimplemented classic Object-Oriented Visitor Pattern
+        Traversal not based on memory pools as a place holder (only the code need be updated).}
+
+\section{Introduction}
+\label{AstProcessing:introduction}
+
+ROSE aids the library writer by providing a traversal
+mechanism that visits all the nodes of the AST in a predefined order
+and to compute attributes.  Based on a fixed traversal order, we
+provide inherited attributes for passing information down the AST (top-down processing) and synthesized attributes for passing information up
+the AST (bottom up processing). Inherited attributes can be used to
+propagate context information along the edges of the AST whereas
+synthesized attributes can be used to compute values based on the
+information of the subtree.  One function for computing inherited
+attributes and one function for computing synthesized attributes must
+be implemented when attributes are used.  We provide different
+interfaces that allow that both, only one, or no attribute is used; in
+the latter case it is a simple traveral with a visit method called at
+each node.
+
+The AST processing mechanism can be used to gather information
+about the AST, or ``query'' the AST. Only the functions that are
+invoked by the AST processing mechanism need to be implemented by the user
+of AstProcessing classes; no traversal code must be implemented.
+
+All 4 Ast*Processing classes provide three different functions for invoking a traversal on the AST:
+
+\begin{description}
+\item[T traverse(SgNode* node, ...)] : traverse full AST (including nodes which represent code from include files)
+\item[T traverseInputFiles(SgProject* projectNode, ...)] : traverse the subtree of the AST which represents the file(s) specified on the command line to a translator; files which are the 'input' to the translator.
+\item[T traverseWithinFile(SgNode* node, ...)] : traverse only those nodes which represent code of the same file where the traversal started. The traversal stays 'within' the file.
+\end{description}
+
+The return type {\tt T} and the other parameters are discussed for each {\tt Ast*Processing} class in the following sections.
+
+\section{AstSimpleProcessing}
+\label{AstProcessing:AstSimpleProcessing}
+
+This class is called 'Simple' because, in contrast to the other three
+processing classes, it does not provide the computation of
+attributes. It implements a traversal of the AST and calls a
+visit function at each node of the AST. This can be done as
+a preorder or postorder traversal.
+
+\begin{verbatim}
+typedef {preorder,postorder} t_traversalOrder;
+
+class AstSimpleProcessing {
+public:
+  void traverse(SgNode* node, t_traversalOrder treeTraversalOrder);
+  void traverseWithinFile(SgNode* node, t_traversalOrder treeTraversalOrder);
+  void traverseInputFiles(SgProject* projectNode, t_traversalOrder treeTraversalOrder);
+protected:
+  void virtual visit(SgNode* astNode)=0;
+};
+\end{verbatim}
+
+To use the class AstSimpleProcessing the user needs to implement the
+function {\tt visit} for a user-defined class which inherits
+from class AstSimpleProcessing. To invoke a traversal one of the three
+traverse functions needs to be called.
+
+\subsection{Example (in preparation)}
+
+In the example we traverse the AST in preorder and print the name of
+each node in the order in which they are visited.
+
+The following steps are necessary:
+
+\begin{description}
+\item[Interface:] Create a class, 'MyVisitor', which inherits from AstSimpleProcessing.
+\item[Implementation:] Implement the function 'visit(SgNode* astNode)' for class 'MyVisitor'
+\item[Usage:] Create an object of type 'MyVisitor' and invoke the function traverse(SgNode* node, t\_traverseOrder treeTraversalOrder);
+\end{description}
+
+Interface:
+
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/MyVisitor.h}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/MyVisitor.h}
+\end{htmlonly}
+\caption{Headerfile 'MyVisitor.h'.}
+\label{AstProcessing:myvisitor1}
+\end{figure}
+
+Implementation:
+
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/MyVisitor.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/MyVisitor.C}
+\end{htmlonly}
+\caption{Implementation file 'MyVisitor.C'.}
+\label{AstProcessing:myvisitor1}
+\end{figure}
+
+Usage:
+
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/MyVisitorMain.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/MyVisitorMain.C}
+\end{htmlonly}
+\caption{Example main program 'MyVisitorMain.C'.}
+\label{AstProcessing:myvisitor1}
+\end{figure}
+
+
+
+\section{AstTopDownProcessing}
+\label{AstProcessing:AstTopDownProcessing}
+
+This class allows to use a restricted form of inherited attributes to
+be computed for the AST. The user needs to implement the function
+evaluateInheritedAttribute. This function is called for each node when
+the AST is traversed. The inherited attributes are restricted such
+that a single attribute of a parent node is inherited by all its child
+nodes; i.e., the return value computed by the function {\tt evaluateInheritedValue} at the parent node is the input value to the
+function {\tt evaluateInheritedValue} at all child nodes. 
+
+\begin{verbatim}
+template<InheritedAttributeType>
+class AstTopDownProcessing {
+public:
+  void traverse(SgNode* node, t_traversalOrder treeTraversalOrder);
+  void traverseWithinFile(SgNode* node, t_traversalOrder treeTraversalOrder);
+  void traverseInputFiles(SgProject* projectNode, t_traversalOrder treeTraversalOrder);
+protected:
+  InheritedAttributeType 
+  virtual evaluateInheritedAttribute(SgNode* astNode, 
+                                     InheritedAttributeType inheritedValue)=0;
+};
+\end{verbatim}
+
+The function {\tt evaluateInheritedAttribute} is called at each node. The traversal is a preorder traversal.
+
+\subsection{Example (in preparation)}
+
+In the example we traverse the AST and print the node names properly indented, according to the nesting level of C++ basic blocks. The function {\tt evaluateInheritedAttribute} is implemented and an inherited attribute is used to compute the nesting level.
+
+The following steps are necessary:
+
+\begin{description}
+\item[Interface:] Create a class, 'MyIndenting', which inherits from AstTopDownProcessing, and a class {\tt MyIndentLevel}. The latter will be used for attributes. Note that the constructor of the class {\tt MyIndentLevel} initializes the attribute value.
+\item[Implementation:] Implement the function {\tt evaluateInheritedAttribute(SgNode* astNode)} for class {\tt MyIndenting}.
+\item[Usage:] Create an object of type 'MyIndenting' and invoke the function traverse(SgNode* node, t\_traverseOrder treeTraversalOrder);
+\end{description}
+
+Interface:
+
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/MyIndenting.h}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/MyIndenting.h}
+\end{htmlonly}
+\caption{Headerfile 'MyIndenting.h'.}
+\label{AstProcessing:myvisitor1}
+\end{figure}
+
+Implementation:
+
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/MyIndenting.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/MyIndenting.C}
+\end{htmlonly}
+\caption{Implementation file 'MyIndenting.C'.}
+\label{AstProcessing:myvisitor1}
+\end{figure}
+
+Usage:
+
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/MyVisitorMain.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/MyIndentingMain.C}
+\end{htmlonly}
+\caption{Example main program 'MyIndentingMain.C'.}
+\label{AstProcessing:myvisitor1}
+\end{figure}
+
+Note that we could also use {\tt unsigned int} as attribute type in this simple example. But in general, the use of objects as attributes is more flexible and necessary, if you need to compute more than one attribute value (in the same traversal).
+
+
+\section{AstBottomUpProcessing}
+\label{AstProcessing:AstBottomUpProcessing}
+
+This class allows to use synthesized attributes. The user needs to
+implement the function evaluateSynthesizedAttribute to compute from a
+list of synthesized attributes a single return value. Each element in the list is the result computed at one of the child nodes in the AST. 
+The return value is the synthesized attribute value computed at this node and passed upwards the AST.
+
+\begin{verbatim}
+template<SynthesizedAttributeType>
+class AstBottomUpProcessing {
+public:
+  SynthesizedAttributeType traverse(SgNode* node);
+  SynthesizedAttributeType traverseWithinFile(SgNode* node);
+  SynthesizedAttributeType traverseInputFiles(SgProject* projectNode);
+  typedef vector<SynthesizedAttributeType> SynthesizedAttributesList;
+protected:
+  SynthesizedAttributeType
+    virtual evaluateInheritedAttribute(SgNode* astNode, SynthesizedAttributesList synList)=0;
+  SynthesizedAttributeType defaultSynthesizedAttribute();
+};
+\end{verbatim}
+
+The type {\tt SynthesizedAttributesList} is an STL container that holds the synthesized attribute values of the child nodes. Therefore an iterator can be used to operate on this list. This is necessary when the number of child nodes is arbitrary, e.g. in a SgBasicBlock the number of {\tt SgStatement} nodes which are child nodes, ranges from 0 to {\tt n}, where {\tt n = synList.size()}.
+
+For AST nodes with a fixed number of child nodes these values can be accessed by name, using enums defined for each AST node class. The naming scheme for attribute access is {\tt <CLASSNAME>\_<MEMBERVARIABLENAME>}.
+
+The method {\tt defaultSynthesizedAttribute} must be used to initialize attributes of primitive type (such as int, bool, etc.).  This method is called when a synthesized attribute needs to be created for a non-existing subtree, i.e. when a node-pointer is null. A null pointer is never passed to an evaluate function. If a class is used to represent a synthesized attribute this method does not need to be implemented because the default constructor is called. In order to define an default value for attributes of primitive type, this method must be used.
+
+Note that there exist two cases when a default value is used for a synthesized attribute and the defaultSynthesizedAttribute method is called:
+
+\begin{itemize}
+\item When the traversal encounters a null-pointer it will not call an evaluate method but instead calls defaultSynthesizedAttribute.
+\item When the traversal skips nodes. For example traverseInputFiles only calls the evaluate method on nodes which represent the input-file(s) but skips all other nodes (of header files for example).
+\end{itemize}
+
+% \subsection{Example: Node pointers as synthesized attribute values}
+%In this example we show how to make all node pointers accessible as synthesized attributes.
+%TODO
+
+\subsection{Example: access of synthesized attribute by name}
+
+The enum definition used to access the synthesized attributes by name at a {\tt SgForStatement} node is
+
+\begin{verbatim}
+enum E_SgForStatement {SgForStatement_init_stmt, SgForStatement_test_expr_root, SgForStatement_increment_expr_root, SgForStatement_loop_body};
+\end{verabatim}
+
+The definitions of the enums for all AST nodes can be found in the generated file \verb+<COMPILETREE>/SAGE/Cxx_GrammarTreeTraversalAccessEnums.h+.
+
+For example, to access the synthesized attribute value of the SgForStatement's test-expression the synthesized attributes list is accessed using the enum definition for the test-expr. In the example we assign the pointer to a child node to a variable {\tt myTestExprSynValue}:
+
+\begin{verbatim}
+SgNode* myTestExprSynValue=synList[SgForStatement_test_expr_root].node;
+\end{verbatim}
+
+Note that for each node with a fixed number of child nodes, the size of the synthesized attributes value list is always of the same size, independent of whether the children exist or not. For example, for the SgForStatement it is always of size 4. If a child does not exist, the synthesized attribute value is the default value of the respective type used for the synthesized attribute (as template parameter).
+
+\section{AstTopDownBottomUpProcessing}
+\label{AstProcessing:AstTopDownBottomUpProcessing}
+
+This class combines all features from the above two classes.  It allows to
+use inherited and synthesized attributes and therefore, the user needs
+to provide an implementation for two virtual functions, for
+evaluateInheritedAttribute and evaluateSynthesizedAttribute. The
+signature for evaluateSynthesizedAttribute has an inherited attribute
+as additional parameter. This allows to combine the results of
+inherited and synthesized attributes. You can use the
+inherited attribute that is computed at a
+node A by the evaluateInheritedAttribute method in the evaluateSynthesizedAttribute method at node A. But you cannot
+use synthesized attributes for computing inherited attributes (which is obvious from the method signatures). If such a data
+dependence needs to be represented member variables of the traversal
+object can be used to ``simulate'' such a behaviour to some
+degree. Essentially this allows to implement a pattern also called
+``accumulation''. For example, building a list of all nodes of the AST
+can be implemented using this technique.
+
+%\section{Traversal Order And Attribute Access}
+%\label{AstProcessing:TraversalOrderAndAttributeAccess}
+%TODO: generate a latex version using tables, a text version, and a dot
+%version (without inheritance), and the inheritance graph
+%(=doxygenoutput)
+
+\begin{verbatim}
+InheritedAttributeType 
+virtual evaluateInheritedAttribute(SgNode* astNode, InheritedAttributeType inheritedValue)=0;
+
+SynthesizedAttributeType 
+traverse(SgNode* node, InheritedAttributeType inheritedValue);
+
+SynthesizedAttributeType 
+defaultSynthesizedAttribute(InheritedAttributeType);
+\end{verbatim}
+
+\section{AST Node Attributes}
+
+To each node in the AST user-defined attributes can be attached ``by name''. The
+user needs to implement a class which inherits from
+AstAttribute. Instances of this class can be attached to an AST node by using member functions of SgNode::attribute.
+
+example: let node be a pointer to an object of type SgNode
+
+\begin{verbatim}
+class MyAstAttribute : public AstAttribute {
+public:
+	MyAstAttribute(int v):value(v) {}
+	...
+private:
+	int value;
+	...
+}
+
+node->attribute.setAttribute("mynewattribute",new MyAstAttribute(5));
+\end{verbatim}
+
+Using above expression an attribute with name ``mynewattribute'' can
+be attached to the AST node pointed to by node. Similarily the same attribute can be accessed ``by name'' using the member function getAttribute:
+
+\begin{verbatim}
+MyAstAttribute* myattribute=node->attribute.getAttribute("mynewattribute");
+\end{verbatim}
+
+AST attributes can be used to combine the results of different
+processing phases. Different traversals which are performed in
+sequence can store and read results to and from each node of the
+AST. For example, the first traversal may attache its results for each node as
+attributes to the AST and the second traversal can read and use these results.
+
+\section{Conclusions}
+
+All AST*Processing classes provide similar interfaces that differ only by the attributes used. AST node attributes can be used to attach data to each AST node and to share information between different traversals. 
+
+Additional examples for traversal, attributes, pdf, and dot output can be found in 
+\begin{itemize}
+\item \verb+ROSE/exampleTranslators/documentedExamples/astProcessingExamples+.
+\end{itemize}
+
+\section{Visualization}
+
+\subsection{Example Graphs}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{figure}
+\begin{latexonly}
+   \lstinputlisting{AstProcessing/astprocessingdoc_example1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{AstProcessing/astprocessingdoc_example1.C}
+\end{htmlonly}
+\caption{Example program used as running example}
+\label{AstProcessing:example1}
+\end{figure}
+
+\begin{figure}
+\centerline{\psfig{file=AstProcessing/astprocessingdoc_example1.Preorder.ps,height=1.5\linewidth,width=1.2\linewidth,angle=0}}
+\caption{Numbers at nodes show the order in which the visit function is called in a preorder traversal.}
+\label{AstProcessing:PreorderAst}
+\end{figure}
+
+\begin{figure}
+\centerline{\psfig{file=AstProcessing/astprocessingdoc_example1.Postorder.ps,height=1.0\linewidth,width=1.0\linewidth,angle=0}}
+\caption{Numbers at nodes show the order in which the visit function is called in a postorder traversal.}
+\label{introduction:PostorderAst}
+\end{figure}
+
+The graph shown in fig. \ref{AstProcessing:PreorderAst} is the AST of
+the program in fig. \ref{AstProcessing:example1}. Such an output can
+be generated for an AST with:
+
+\begin{verbatim}
+AstDOTGeneration dotgen;
+dotgen.generateInputFiles(projectNode, AstDOTGeneration::PREORDER);
+\end{verbatim}
+
+where {\tt projectNode} is a node of type {\tt SgProjectNode} and the
+order in which the AST is traversed is specified to be {\tt
+AstDOTGeneration::PREORDER} (or {\tt AstDOTGeneration::POSTORDER}).
+
+\begin{figure}
+\centerline{\psfig{file=AstProcessing/astprocessingdoc_example1.TopDown.ps,height=1.0\linewidth,width=1.0\linewidth,angle=0}}
+\caption{Numbers at nodes show the order in which the function evaluateInheritedAttribute is called in a top-down processing.}
+\label{AstProcessing:TopDownAst}
+\end{figure}
+
+\begin{figure}
+\centerline{\psfig{file=AstProcessing/astprocessingdoc_example1.BottomUp.ps,height=1.0\linewidth,width=1.0\linewidth,angle=0}}
+\caption{Numbers at nodes show the order in which the function evaluateSynthesizedAttribute is called in a bottom up processing.}
+\label{AstProcessing:BottomUpAst}
+\end{figure}
+
+\begin{figure}
+\centerline{\psfig{file=AstProcessing/astprocessingdoc_example1.TopDownBottomUp.ps,height=1.0\linewidth,width=1.0\linewidth,angle=0}}
+\caption{The pair of numbers at nodes shows the order in which the function evaluateInheritedAttribute (1st number) and evaluateSynthesizedAttribute (2nd number) is called in a top-down-bottom-up processing.}
+\label{AstProcessing:TopDownBottomUpAst}
+\end{figure}
+

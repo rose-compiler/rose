@@ -1,0 +1,237 @@
+ /*!
+     \defgroup RewriteMechanism AST Rewrite Mechanism
+     \ingroup ROSE_MidEndGroup
+
+     \brief The AST Rewrite Mechanism permits the editing of an applications AST.
+
+     The AST Rewrite Mechanism permits the editing of an applications AST.  Edits can 
+     include any addition, deletion, or replacement of subtrees within the AST.
+     Using the AST rewrite system as part of a traversal of the AST is the way one
+     builds a preprocessor.  Causing a specific change to the AST implements a 
+     transformation.  A preprocessor is developed which reads a user's applications
+     to generate and Abstract Syntax Tree (AST) and implements a specific
+     transformation of the AST, finally the AST is then written out to form source 
+     code.  This is the essence of source-to-source processing.  If the transformation
+     introduces an optimization then the preprocessor is an optimizing preprocessor.
+     The AST rewrite mechanism is an important part of the development of ROSE for a 
+     target audience of library developers and tool developers who might not have 
+     a deep compiler background.
+
+     There is only one user level function in the AST Rewrite mechanism: \n
+          AST_Rewrite::addSourceCodeString() \n
+     This function uses enum values defined within the AST_Rewrite class.
+  */
+
+ /*! \class AST_Rewrite rewrite.h
+     \ingroup RewriteMechanism
+     \brief This class represents the AST Rewrite Mechanism within ROSE.
+     \authors Quinlan, Schordan \n
+              (last checkedin by: \<\$Author: dquinlan $\> on \<\$Date: 2006/04/24 00:21:32 $\>
+     \version 0.5
+     \date $Date: 2006/04/24 00:21:32 $
+     \bug Not finished yet.
+     \warning Don't use this until it is ready.
+     \todo Finish documentation!
+     \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+     This class encapsulates the complexities associated with rewriting the AST 
+     (modifying the AST to add/remove/replace any subtrees within the AST). The user interface
+     consists of a single static member function and several enums to help specify the position
+     of new strings of source code into the AST as it is traversed using the AST Rewrite Tree 
+     Traversal which the user must also write.
+
+     Any existing traversal (AST Processing?) can be easily modified to use the AST Rewrite
+     Mechanism's tree traversal alternatively.  Then the single static member function to 
+     add new strings can be called at any place in the AST.
+
+     \internal This class hides the conversion of strings to AST fragments and the 
+     internally is implemented using multiple calls to the EDG parser to generate 
+     the intermediate AST (as SgFile objects).
+
+     \internal This is a new mechanism and not fully debugged, the test code does not
+               presently pass (31 out of 64 cases pass, as I recall).
+  */
+
+ /*!
+     \defgroup RewriteNestedClasses AST_Rewrite Nested Classes
+     \ingroup RewriteMechanism
+     \brief Nested classes ...
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class AST_Rewrite::AST_FragmentString rewrite.h
+          \ingroup RewriteNestedClasses
+          \brief Class representing container for string and relative position for string in the AST.
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+          This class forms a container for the string and it's position within the AST. The
+          parameters are the enums defined in the public interface for the AST_Rewrite class.
+
+     \endif
+  */
+
+ /*!
+          \class AST_Rewrite::RewriteTreeTraversal rewrite.h
+          \ingroup RewriteNestedClasses
+          \brief Class representing the traversal associated with AST rewrite mechanism.
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+          The AST Rewrite Mechanism's internal tree traversal mechanism 
+          (makes the user's use of the rewrite mechanism as simple as possible)
+  */
+
+ /*!
+          \typedef AST_Rewrite::InheritedAttribute rewrite.h
+          \ingroup RewriteNestedClasses
+          \brief Inherited attribute used with AST_Rewrite::RewriteTreeTraversal
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+  */
+
+ /*!
+          \class AST_Rewrite::SynthesizedAttribute rewrite.h
+          \ingroup RewriteNestedClasses
+          \brief Synthesized attribute used with AST_Rewrite::RewriteTreeTraversal
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class AST_Rewrite::ASTFragmentRequirementStrings rewrite.h
+          \ingroup RewriteNestedClasses
+          \brief Internal class to hold collections of strings.
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+     \endif
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class AST_Rewrite::ASTFragmentContainer rewrite.h
+          \ingroup RewriteNestedClasses
+          \brief Internal class to hold collections of AST fragments (generated from strings).
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+     \endif
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \defgroup RewriteFragmentIdentificationTraversal AST_Rewrite Fragment Identification Traversal
+          \ingroup RewriteNestedClasses
+          \brief Nested classes required for associated traversal to separate out AST fragments.
+     \endif
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class AST_Rewrite::AST_FragmentIdentificationInheritedAttributeType rewrite.h
+          \ingroup RewriteFragmentIdentificationTraversal
+          \brief Inherited attribute used within internal traversal of generated AST from
+                 transformation strings (intermediately generated files processed to form ASTs).
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+     \endif
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class AST_Rewrite::AST_FragmentIdentificationSynthesizedAttributeType rewrite.h
+          \ingroup RewriteFragmentIdentificationTraversal
+          \brief Synthesized attribute used within internal traversal of generated AST from
+                 transformation strings (intermediately generated files processed to form ASTs).
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+          This class is used as the synthesized attribute in the traversal to separate out the different
+          types of AST fragments that are build from strings specificed as beloging to different
+          locations within a single scope. The value of this class is that it can be either a marker or a
+          pointer to an AST fragment.  If it is a marker then isAMarker is true and the marker string
+          holds the name of the variable used to mark the start/end of a statement for a specific
+          location.
+
+     \endif
+  */
+
+ /*! \if documentDevelopmentVersionUsingDoxygen
+          \class AST_Rewrite::AST_FragmentIdentificationTraversal rewrite.h
+          \ingroup RewriteFragmentIdentificationTraversal
+          \brief Tree traversal definition used within internal traversal of generated AST from
+                 transformation strings (intermediately generated files processed to form ASTs).
+          \authors Quinlan
+          \version 0.5
+          \date Dec 16th 2002
+          \bug Not finished yet.
+          \warning Don't use this until it is ready.
+          \todo Finish documentation!
+
+          \note Large parts of documentation contained in <b>ROSE/AST_RewriteMechanism/ASTRewrite.docs</b>.
+
+          Tree traversal class for seperation of tree fragments.
+
+     \endif
+  */
+
+
+
+
+
+
+
+
+
+
+
+
+

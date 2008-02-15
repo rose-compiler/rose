@@ -1,0 +1,102 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceAliasDeclarationStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgNamespaceAliasDeclarationStatement
+\brief This class represents the concept of a C++ namespace alias declaration statement.
+
+   For a namespace Y, this appears in the code as "namespace X = Y;".  In general
+"X" is a shorter name for what in "Y" might be unwieldy.
+
+\sa
+\ref SgNamespaceAliasDeclarationStatement_usage  "Example of using a SgNamespaceAliasDeclarationStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceAliasDeclarationStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgNamespaceAliasDeclarationStatement::p_name
+\brief This the name of the new namespace alias (usually a shorter name).
+
+*/
+
+/*! \var SgNamespaceAliasDeclarationStatement::p_namespaceDeclaration
+\brief This the namespace to which the alis references.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceAliasDeclarationStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::SgNamespaceAliasDeclarationStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgNamespaceAliasDeclarationStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgNamespaceAliasDeclarationStatement_create "Example:create an SgNamespaceAliasDeclarationStatement object"
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::~SgNamespaceAliasDeclarationStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::isSgNamespaceAliasDeclarationStatement (SgNode *s)
+\brief Cast function (from derived class to SgNamespaceAliasDeclarationStatement pointer).
+
+   This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
+
+\return Returns valid pointer to SgNamespaceAliasDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::isSgNamespaceAliasDeclarationStatement (const SgNode *s)
+\brief Cast function (from derived class to SgNamespaceAliasDeclarationStatement pointer).
+
+   This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
+
+\return Returns valid pointer to SgNamespaceAliasDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::get_name() const
+\brief Access function for p_name.
+
+\return Returns SgName.
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::set_name(SgName name)
+\brief Access function for p_name.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::get_namespaceDeclaration() const
+\brief Access function for p_namespaceDeclaration.
+
+\return Returns SgNamespaceDeclarationStatement.
+*/
+
+/*!
+\fn SgNamespaceAliasDeclarationStatement::set_namespaceDeclaration(SgNamespaceDeclarationStatement* namespaceDeclaration)
+\brief Access function for p_namespaceDeclaration.
+
+\return Returns void.
+*/
+

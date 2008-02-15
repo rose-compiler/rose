@@ -1,0 +1,259 @@
+SHELL=/bin/sh
+
+# hey brian:  the target you want is 'parser'
+
+# Configuration
+
+CXX     = g++ -g -D__LOCALSTL_H
+LD      = $(CXX)
+#INCLUDES= -I. -I/usr/include/g++-3/ -I$(CBZHOME)/src/pointers/heaplayers-0.2 -I$(CBZHOME)/include
+INCLUDES= -I. -I/usr/include/c++/3.2.3/
+YACC    = bison
+LEX     = flex
+AR	= ar
+RANLIB	= ranlib
+LIBCBZ = $(CBZHOME)/lib/libc-breeze.a
+MALLOC = 
+CXX_SHARED_LIB_UPDATE = $(CXX) -shared -o
+
+ifeq ($(OPT), 1)
+CFLAGS = -O4
+endif
+
+ifeq ($(OPT), 3)
+CFLAGS = -O4 -fomit-frame-pointer -funroll-loops -DCBZ_HEAPLAYERS
+endif
+
+ifeq ($(OPT), 2)
+CFLAGS = -O4 -fomit-frame-pointer -funroll-loops
+endif
+
+ifeq ($(EXP), 1)
+CFLAGS = -DOLD_DOMINATOR_TEST -g
+endif
+
+ifeq ($(DEBUG), 1)
+CFLAGS = -g
+endif
+
+ifeq ($(DEBUG), 2)
+CFLAGS = -g -DCBZ_HEAPLAYERS
+endif
+
+ifeq ($(PROF), 1)
+CFLAGS = -O2 -pg
+endif
+
+ifeq ($(PROF), 2)
+CFLAGS = -O4 -pg
+endif
+
+ifeq ($(PROF), 3)
+CFLAGS = -O2 -pg -DOLD_DOMINATOR_TEST
+endif
+
+# Object code to build
+
+OBJ = 	annotations.o \
+	language-parser.o \
+	language-lexer.o \
+	annvariable.o \
+	structure.o \
+	procedure.o \
+	enum_property.o \
+	set_property.o \
+	analyzer.o \
+	expr.o \
+	rule.o \
+	pointerrule.o \
+	analyze.o \
+	propertyanalyzer.o \
+	report.o \
+	cpattern.o \
+	action.o \
+	actionchanger.o \
+	bdwy_liveness.o \
+  unification_ann.o \
+  adaptor_statistics.o \
+  diagnostic.o
+
+OBJS = 	annotations.o \
+	annvariable.o \
+	structure.o \
+	enum_property.o \
+	procedure.o \
+	set_property.o \
+	pointerrule.o \
+	analyze.o \
+	rule.o \
+	expr.o \
+	report.o
+
+# Make targets
+
+EXE = bdwy
+
+NOW: $(EXE)
+
+all: parser testParser
+
+diagnostic: $(OBJ)
+	$(CXX) $(INCLUDES) $(CFLAGS) $(OBJ) -o diagnostic -L$(CBZHOME)/lib -lc-breeze
+
+objects: $(OBJ)
+
+LIB = lib/libbdwy.a
+
+$(LIB): $(OBJ)
+	if [ ! -d lib ] ; then mkdir lib; fi
+	$(AR) r $@ $?
+	$(RANLIB) $@ 
+
+malloc.o: malloc.c malloc.h
+
+clean:
+	rm -f *.o *.a *~ *.tab.* language-lexer.cc language-parser.cc libparser.so
+
+$(EXE): $(LIB) $(MALLOC) bdwy.o $(CBZHOME)/lib/libc-breeze.a
+	$(CXX) $(INCLUDES) $(CFLAGS) bdwy.o $(MALLOC) -o $(EXE) -Llib -lbdwy -L$(CBZHOME)/lib -lc-breeze
+
+bdwy.o: bdwy.cc broadway.h annotations.h
+
+
+language-lexer.cc: language.l
+	flex language.l
+	mv lex.ann.c language-lexer.cc
+
+language-parser.cc: language.y
+	bison -d -pann language.y
+	mv language.tab.c language-parser.cc
+
+parser: language.l language.y language-lexer.cc language-parser.cc $(OBJS)
+#	$(CXX) -DYY_MAIN -o parser language-lexer.cc language-parser.cc $(OBJS)
+#	$(CXX) -o parser language-lexer.cc language-parser.cc $(OBJS)
+	$(CXX) -c -o language-lexer.o language-lexer.cc 
+	$(CXX) -c -o language-parser.o language-parser.cc 
+	$(CXX_SHARED_LIB_UPDATE) libparser.so language-lexer.o language-parser.o $(OBJS)
+
+testParser: libparser.so
+	$(CXX) -o testParser testParser.C libparser.so
+
+# Implicit rule for compiling all C++ code
+
+.cc.o:
+	$(CXX) $(INCLUDES) $(CFLAGS) -c $< -o $@
+
+# rebuild the dependencies.  Note: Ignores standard includes on
+# purpose, on the assumption that they won't change in between builds,
+# and we want to only record dependencies for our files, so that this
+# makefile will work on different platforms that store the standard
+# headers in different places.  
+depend:
+	makedepend -Y -- $(CFLAGS) -- $(OBJ:%.o=%.cc)
+# DO NOT DELETE
+
+annotations.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+annotations.o: enum_property.h set_property.h expr.h structure.h rule.h
+annotations.o: pointerrule.h report.h action.h analyze.h procedure.h
+annotations.o: annotations.h bdwy_liveness.h 
+annotations.o: cpattern.h actionchanger.h
+language-parser.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+language-parser.o: enum_property.h set_property.h expr.h structure.h rule.h
+language-parser.o: pointerrule.h report.h action.h analyze.h procedure.h
+language-parser.o: annotations.h bdwy_liveness.h
+language-parser.o: cpattern.h actionchanger.h
+language-lexer.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+language-lexer.o: enum_property.h set_property.h expr.h structure.h rule.h
+language-lexer.o: pointerrule.h report.h action.h analyze.h procedure.h
+language-lexer.o: annotations.h bdwy_liveness.h 
+language-lexer.o: cpattern.h actionchanger.h language.tab.h
+annvariable.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+annvariable.o: enum_property.h set_property.h expr.h structure.h rule.h
+annvariable.o: pointerrule.h report.h action.h analyze.h procedure.h
+annvariable.o: annotations.h bdwy_liveness.h 
+annvariable.o: cpattern.h actionchanger.h
+structure.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+structure.o: enum_property.h set_property.h expr.h structure.h rule.h
+structure.o: pointerrule.h report.h action.h analyze.h procedure.h
+structure.o: annotations.h bdwy_liveness.h 
+structure.o: cpattern.h actionchanger.h
+procedure.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+procedure.o: enum_property.h set_property.h expr.h structure.h rule.h
+procedure.o: pointerrule.h report.h action.h analyze.h procedure.h
+procedure.o: annotations.h bdwy_liveness.h 
+procedure.o: cpattern.h actionchanger.h
+enum_property.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+enum_property.o: enum_property.h set_property.h expr.h structure.h rule.h
+enum_property.o: pointerrule.h report.h action.h analyze.h procedure.h
+enum_property.o: annotations.h bdwy_liveness.h 
+enum_property.o: cpattern.h actionchanger.h diagnostic.h
+set_property.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+set_property.o: enum_property.h set_property.h expr.h structure.h rule.h
+set_property.o: pointerrule.h report.h action.h analyze.h procedure.h
+set_property.o: annotations.h bdwy_liveness.h 
+set_property.o: cpattern.h actionchanger.h
+analyzer.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+analyzer.o: enum_property.h set_property.h expr.h structure.h rule.h
+analyzer.o: pointerrule.h report.h action.h analyze.h procedure.h
+analyzer.o: annotations.h bdwy_liveness.h 
+analyzer.o: cpattern.h actionchanger.h unification_ann.h
+expr.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+expr.o: enum_property.h set_property.h expr.h structure.h rule.h
+expr.o: pointerrule.h report.h action.h analyze.h procedure.h annotations.h
+expr.o: bdwy_liveness.h cpattern.h
+expr.o: actionchanger.h
+rule.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+rule.o: enum_property.h set_property.h expr.h structure.h rule.h
+rule.o: pointerrule.h report.h action.h analyze.h procedure.h annotations.h
+rule.o: bdwy_liveness.h cpattern.h
+rule.o: actionchanger.h
+pointerrule.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+pointerrule.o: enum_property.h set_property.h expr.h structure.h rule.h
+pointerrule.o: pointerrule.h report.h action.h analyze.h procedure.h
+pointerrule.o: annotations.h bdwy_liveness.h 
+pointerrule.o: cpattern.h actionchanger.h
+analyze.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+analyze.o: enum_property.h set_property.h expr.h structure.h rule.h
+analyze.o: pointerrule.h report.h action.h analyze.h procedure.h
+analyze.o: annotations.h bdwy_liveness.h 
+analyze.o: cpattern.h actionchanger.h
+propertyanalyzer.o: broadway.h ann.h annvariable.h callingcontext.h
+propertyanalyzer.o: property.h enum_property.h set_property.h expr.h
+propertyanalyzer.o: structure.h rule.h pointerrule.h report.h action.h
+propertyanalyzer.o: analyze.h procedure.h annotations.h 
+propertyanalyzer.o: bdwy_liveness.h cpattern.h actionchanger.h
+report.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+report.o: enum_property.h set_property.h expr.h structure.h rule.h
+report.o: pointerrule.h report.h action.h analyze.h procedure.h annotations.h
+report.o: bdwy_liveness.h cpattern.h
+report.o: actionchanger.h
+cpattern.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+cpattern.o: enum_property.h set_property.h expr.h structure.h rule.h
+cpattern.o: pointerrule.h report.h action.h analyze.h procedure.h
+cpattern.o: annotations.h bdwy_liveness.h 
+cpattern.o: cpattern.h actionchanger.h
+action.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+action.o: enum_property.h set_property.h expr.h structure.h rule.h
+action.o: pointerrule.h report.h action.h analyze.h procedure.h annotations.h
+action.o: bdwy_liveness.h cpattern.h
+action.o: actionchanger.h
+actionchanger.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+actionchanger.o: enum_property.h set_property.h expr.h structure.h rule.h
+actionchanger.o: pointerrule.h report.h action.h analyze.h procedure.h
+actionchanger.o: annotations.h bdwy_liveness.h 
+actionchanger.o: cpattern.h actionchanger.h
+bdwy_liveness.o: broadway.h ann.h annvariable.h callingcontext.h property.h
+bdwy_liveness.o: enum_property.h set_property.h expr.h structure.h rule.h
+bdwy_liveness.o: pointerrule.h report.h action.h analyze.h procedure.h
+bdwy_liveness.o: annotations.h bdwy_liveness.h 
+bdwy_liveness.o: cpattern.h actionchanger.h
+unification_ann.o: unification_ann.h broadway.h ann.h annvariable.h
+unification_ann.o: callingcontext.h property.h enum_property.h set_property.h
+unification_ann.o: expr.h structure.h rule.h pointerrule.h report.h action.h
+unification_ann.o: analyze.h procedure.h annotations.h 
+unification_ann.o: bdwy_liveness.h cpattern.h actionchanger.h
+diagnostic.o: diagnostic.h broadway.h ann.h annvariable.h callingcontext.h
+diagnostic.o: property.h enum_property.h set_property.h expr.h structure.h
+diagnostic.o: rule.h pointerrule.h report.h action.h analyze.h procedure.h
+diagnostic.o: annotations.h bdwy_liveness.h 
+diagnostic.o: cpattern.h actionchanger.h

@@ -1,0 +1,272 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExpression
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgExpression
+\brief This class represents the notion of an expression. Expressions
+are derived from SgLocatedNodes, since similar to statement, expressions
+have a concrete location within the user's source code.
+
+    There are no direct uses of this IR node anywhere.  All expressions
+are derived from this IR node to build derived classes such as unary and
+binary operators, conditional expressions, delete expression, variable 
+reference expressions, etc.
+
+\note The SgExpression class has a virtual get_type() member function which returns
+the type associated with any expression.  This work was recently reimplemented and 
+now has the following properties:
+   - The type is no longer explicitly stored in the IR, except for:
+      -# SgCastExp
+      -# SgNewExp
+      -# SgVarArgOp
+   - Binary operators return the type associated with the lhs operand, except for (which
+    return the type associated with the rhs operand):
+      -# SgDotExp
+      -# SgArrowExp
+      -# SgDotStarOp
+      -# SgArrowStarOp
+   - Unary operators return the type of their operand
+   - Value expressions return predefined types (that or their value)
+   - Other special cases include:
+      -# SgPntrArrRefExp, returns the element type of the array being referenced by the
+         lhs (non-trivial implementation), must handle cases of:
+         -# SgArrayType
+         -# SgPointerType
+         -# SgTypedefType
+      -# SgPointerDerefExp, returns the type of the dereferenced pointer (non-trivial
+         implementation), must handle cases of:
+         -# SgArrayType
+         -# SgPointerType
+         -# SgTypedefType
+         -# SgReferenceType
+         -# SgFunctionType
+         -# SgMemberFunctionType
+      -# SgAddressOfOp, creates a pointer to the base type which is stored internally.
+      -# SgFunctionCallExp, returns the return type of the function being called (except
+         in special cases, this might require more work later).  Migration to the correct
+         implementation is more complex due to requirements of backward compatability with
+         older design.
+      -# SgSizeOfOp, returns SgTypeUnsignedInt
+      -# SgTypeIdOp, returns type of stored operand (not clear if this is correct)
+      -# SgConditionalExp, tests for matching of types from true and false branches, but
+         returns type associated with true branch. The types from each branch frequently
+         don't match in application codes.
+      -# SgDeleteExp, returns SgTypeVoid (used to return SgDefaultType)
+      -# SgExprListExp, returns SgDefaultType, but should return type of last expression.
+      -# SgVarRefExp, returns the type associated with the SgSymbol stored internally.
+      -# SgFunctionRefExp, returns the type associated with the SgSymbol stored
+         internally.
+      -# SgMemberFunctionRefExp, returns the type associated with the SgSymbol stored
+         internally.
+      -# SgThisExp, returns a SgPointerType constructed from the type of the class symbol
+         (stored inteernally).
+      -# SgEnumVal, returns a SgTypeInt
+      -# SgLongLongIntVal, returns SgTypeLong (should return SgTypeLongLong)
+      -# SgNewExp, returns a pointer to p_specified_type (explicitly stored there)
+   - Logical operators return SgTypeInt, these include:
+      -# SgAndOp
+      -# SgOrOp
+      -# SgNotOp
+      -# All others operate as a SgBinaryOp (type of lhs operand) or SgUnaryOp (type of
+         operand). not clear if this is the correct behavior.
+   - The following expressions return a SgTypeDefault:
+      -# SgThrowOp
+      -# SgVarArgStartOp
+      -# SgVarArgEndOp
+      -# SgVarArgCopyOp
+      -# SgVarArgStartOneOperandOp
+      -# SgNullExpression
+      -# SgVariantExpression
+      -# SgAggregateInitializer
+      -# SgConstructorInitializer
+
+\internal This is a base class for all expressions.
+As a design point IPR has an empty expression, not an empty statement. And empty statement can 
+be built as an expression statement with an empty expression (which IPR does have).
+We should consider having such an empty expression.  Currently we have and
+expression statment with a null pointer (none too elegant). Sage III now has both a 
+SgNullStatement and a SgNullExpression.
+
+\todo Consider placing the VARARGS expression nodes into a common base class
+   derived from SgExpression.
+
+\todo I have removed the access functions from the explicit storage of type information in
+    SgExpression objects as phase 1 of a 2 phase approach to eliminate the storage of the
+    type in the SgExpression IR nodes.  This type should be computed where required.
+    This would avoid it being held redundently.  This mechanism is being redone
+    internally.  Some IR nodes will have likely have to store there type explicaitly
+    (function expressions for example, though it might be better computed through the
+    symbol).  It is not clear it this computing of the type will be better than stroing of
+    the type explicitly.  It might be required for SgBinaryOp IR nodes to store the type
+    if it is not clearly from either the lhs or rhs (if no simple rule exists).
+
+\todo SgScopeOp is depricated and will be removed in a future version of ROSE.
+      It is a hold over from support for CC++ which is not supported in SAGE III anymore.
+
+\todo SgRefExp is depricated and will be removed in a future version of ROSE.
+      It is not used anywhere within SAGE III and I don't know why it is there.
+
+\todo Need to find an example of where SgClassNameRefExp is used.  It is build in
+      the EDG/Sage III translation, but not in a way that it is obvious that it is
+      still used within Sage III.  So this may have to be removed at a latr date.
+
+\todo To support Fortran parser we need an IR node which will represent the
+      ambiguity of an array access or function call expression.  These are
+      then resolved within the AST after parsing (requires AST Fixup rule).
+
+\todo Fortran support requires support for function call using: "foo(temp=*<label>)"
+      this might force the development of a label expression to support this.
+      Code using this compiles with gfortran, so it appears to be F90.
+
+
+\sa
+\ref SgExpression_usage  "Example of using a SgExpression object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExpression data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgExpression::p_lvalue
+\brief This boolean variable marks the current expression as a 
+left hand side value (lvalue).
+*/
+
+/*!
+\var SgExpression::p_need_paren
+\brief This boolean value marks the current expression as requiring parenthises.
+
+This boolean value marks the current expression as requiring parenthises (the
+information comes from the frontend's interpretation of the requirement and is 
+almost always overly conservative.  The unparser currently backs out more
+accurate rules based on operator precedence and removed then where they
+are not truely required.  Thus the purpose of this variable is to capture the
+interpritation of the frontend regarding the use of parenthesis.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExpression member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgExpression::SgExpression (const SgExpression &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgExpression::SgExpression ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgExpression base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgExpression_create "Example:create an SgExpression object"
+*/
+
+/*!
+\fn SgExpression::~SgExpression()
+\brief This is the destructor.
+
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+
+/*!
+\fn SgExpression::isSgExpression (SgNode *s)
+\brief Cast function (from derived class to SgExpression pointer).
+
+   This functions returns a SgExpression pointer for any input of a 
+pointer to an object derived from a SgExpression.
+
+\return Returns valid pointer to SgExpression if input is derived from a SgExpression.
+*/
+
+/*!
+\fn SgExpression::isSgExpression (const SgNode *s)
+\brief Cast function (from derived class to SgExpression pointer).
+
+   This functions returns a SgExpression pointer for any input of a 
+pointer to an object derived from a SgExpression.
+
+\return Returns valid pointer to SgExpression if input is derived from a SgExpression.
+*/
+
+
+/*!
+\fn SgExpression::get_need_paren (void) const
+\brief returns bool value if front-end considers parenthesis to be required.
+
+   This function returns a boolean value which is true if parenthesis are required
+for the proper eveluation of the current expression.  The frontend is however overly
+conservative and introduces parenthesis too often.  The value as determined by the 
+frontend is saved in the SAGE III AST because it is sometimes required for more
+complex expressions and contructor calls with initializers.  At present the
+unparser applies operator precedence rules to eliminate some of the redundent
+parenthesis within expressions (this makes the output more appealing).
+
+\return Returns bool value (true if parenthesis are needed around the expression).
+*/
+
+/*!
+\fn SgExpression::set_need_paren (bool need_paren)
+\brief This function allows the p_need_paren flag to be set (used internally).
+
+   This function is mostly used internally but would required for the construction of
+specific expression trees where the operator precedence would be insufficent to generate
+the correct code (which si the purpose of adding parenthesis in source code).
+
+\param need_paren - sets value of internal p_need_paren flag (true if parenthesis are
+    needed around the expression).
+\return Returns void.
+*/
+
+/*!
+\fn SgExpression::get_lvalue (void) const
+\brief returns bool value if front-end considers parenthesis to be required.
+
+   This function returns a boolean value which is true if parenthesis are required
+for the proper eveluation of the current expression.  The frontend is however overly
+conservative and introduces parenthesis too often.  The value as determined by the 
+frontend is saved in the SAGE III AST because it is sometimes required for more
+complex expressions and contructor calls with initializers.  At present the
+unparser applies operator precedence rules to eliminate some of the redundent
+parenthesis within expressions (this makes the output more appealing).
+
+\return Returns bool value (true if parenthesis are needed around the expression).
+*/
+
+/*!
+\fn SgExpression::set_lvalue (bool lvalue)
+\brief This function allows the p_lvalue flag to be set (used internally).
+
+   This function is mostly used internally but would required for the construction of
+specific expression trees. In general it is set by the frontend, but not used elsewhere
+within SAGE III (will be tested in the future).
+
+\param lvalue - sets value of internal p_lvalue flag (true if the current is to be
+    a left hand side value (lvalue)).
+\return Returns void.
+*/
+
+/*!
+\fn SgExpression::get_type() const
+\brief Get the type associated with this expression
+
+\return Returns SgType (base class for all possible types)
+*/
+
+/*!
+\fn SgExpression::set_type()
+\brief Set the type associated with this expression
+
+   This is an internally call function, it sets up the type of the expression 
+based upon the types of the subexpressions (if any). Thus it takes no 
+arguments.
+
+\return Returns void
+*/
+

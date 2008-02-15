@@ -1,0 +1,53 @@
+/* JH (01/01/2006) This file is generated using ROSETTA. It should never be 
+   manipulated by hand. The generation is located in buildStorageClasses.C!
+
+    This file contains all decfinitions for the StorageClasses used for the ast file IO.
+*/
+
+#ifndef STORAGE_CLASSES_H
+#define STORAGE_CLASSES_H
+
+#include "sage3.h"
+
+/* JH (02/02/2006) REMARK: Since the declarations, definitions and use of the static member functions of 
+   the templated EasyStorage classes is spread over the files below, we need to compile them all together 
+   at this point. The splitting into several files is just to simplify and separate their contents! 
+*/
+#include "AST_FILE_IO.h"
+#include "StorageClasses.h"
+#include "StorageClassMemoryManagement.C"
+#include "SourcesOfIRNodesAstFileIOSupport.C"
+
+
+
+SgProject* 
+AstSpecificDataManagingClass::getRootOfAst () const
+   {
+     return rootOfAst;
+   }
+
+unsigned long 
+AstSpecificDataManagingClass::getNumberOfAccumulatedNodes (const int position) const
+   {
+     return listOfAccumulatedPoolSizes[position];
+   }
+
+unsigned long
+AstSpecificDataManagingClass::getMemoryPoolSize (const int position) const
+   {
+     return listOfAccumulatedPoolSizes[position + 1] - listOfAccumulatedPoolSizes[position];
+   }
+
+unsigned long 
+AstSpecificDataManagingClass::getTotalNumberOfASTIRNodes ( ) const
+   {
+     return listOfAccumulatedPoolSizes[ $REPLACE_NUMBEROFIRNODES ] ;
+   }
+
+int 
+AstSpecificDataManagingClass::get_AstIndex() const
+   {
+     return astIndex;
+   }
+
+
