@@ -1,0 +1,71 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Goto}
+\label{NoGoto::overview}
+
+   This checker detects uses of \texttt{goto} statements conforming
+with \textit{High-Integrity C++ Coding Standard Manual}, rule 5.8:
+``Do not use \texttt{goto}''
+
+\subsection{Parameter Requirements}
+
+   No parameter is needed
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+void foo() {
+  tryAgain:
+  try {
+    doSomething();
+  }
+  catch (...) {
+    goto tryAgain;
+  }
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+void foo() {
+  do {
+    try {
+      doSomething();
+    }
+    catch (...) {
+      continue ;
+    }
+    break ;
+  } while (true);
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis}
+
+Compliance with this rule can be checked using structural static
+analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Look for goto expressions.
+\end{enumerate}
+
+\subsection{References}
+
+The Programming Research Group, \emph{High-Integrity C++ Coding
+Standard Manual}, rule 5.8: ``Do not use \texttt{goto}''.

@@ -1,0 +1,414 @@
+NOTES -- Danny Thorne (1/31/2000 - 8/18/2000)
+
+Following is an outline and description of my activities and accomplishments
+during the Spring and Summer of 2000. The descriptions will be as elaborate
+as I can manage. I'm compiling information into this document intermittently
+during the hectic last three days of my stay here. Note that I've included
+quite a bit of commentary within the ROSE/SAGE/EDG codes themselves also.
+
+   * Index
+       1. New functionality
+       2. New #define directives
+       3. New run-time options
+       4. Bug fixes
+       5. TODO
+       6. Miscellany
+
+  ------------------------------------------------------------------------
+
+  1. New functionality
+
+       1. Can link both the EDG C++ backend and SAGE backend simultaneously.  Added
+          run-time parameters (see below) to ROSE for enabling and disabling either
+          backend independently of the other.
+          (See TAG11 below for more.)
+
+       2. Modified the unparser to unparse #included files.
+          (See TAG12 below for more.)
+
+       3. Developed a "preinit stage" in SAGE.  The purpose of the preinit stage is
+          to make sure all sage_symbol_ptr and sage_type_ptr fields in the IL tree
+          are initialized before the call to sage_back_end().
+          (See TAG13 below for more.)
+
+       4. Modified SAGE to included template arguments and parameters.  These are
+          stored in the SgName class.  In order for SAGE to have access to the
+          template parameters, EDG had to be modified to store them in the IL tree.
+          Previously it was only storing template arguments in the IL tree.
+          (See TAG14 below for more.)
+
+       5. Made the following change in cmd_lind.h:
+
+             EXTERN a_template_instantiation_mode
+                             instantiation_mode
+             #if VAR_INITIALIZERS
+               #if BACK_END_IS_SAGE_GEN_BE
+               /*
+               // [DT] This will ensure that SAGE gets all the stuff that
+               //      comes from templates and hence ROSE will then be
+               //      able to unparse all the original template declaration
+               //      stuff, even if some of it is not used by the given code.
+               */
+                                            = tim_all /* [DT] 4/21/2000 */
+               #else /* !BACK_END_IS_SAGE_GEN_BE */
+                                            = tim_none
+               #endif /* BACK_END_IS_SAGE_GEN_BE */
+             #endif /* VAR_INITIALIZERS */
+
+          where originally there was just this:
+
+             EXTERN a_template_instantiation_mode
+                             instantiation_mode
+             #if VAR_INITIALIZERS
+                                            = tim_none
+             #endif /* VAR_INITIALIZERS */
+
+          This flag is referenced mainly in templates.c, particularly in the
+          function should_be_instantiated().
+
+       6.
+  2. New #define directives
+
+       1. PREINIT_IL
+             Defined in
+                ROSE/EDG/src/sage_gen_be.C.
+
+       2. PREINIT_VERBOSE
+             Defined in
+                ROSE/EDG/src/sage_gen_be.C.
+
+       3. TEMPLATE_INSTANTIATIONS_IN_SAGE
+             Defined in
+                ROSE/EDG/src/sage_gen_be.C, and
+                ROSE/EDG/src/sage_il_to_str.C.
+
+       4. FACILITATE_PREINIT_IN_EXISTING_SAGE_ROUTINES
+             Defined in
+                ROSE/EDG/src/sage_gen_be.C,
+                ROSE/EDG/src/sage_il_to_str.C, and
+                ROSE/EDG/src/il_to_str.h.
+
+       5. PREINITIALIZE_SAGE_ITEMS_IN_IL
+             Defined in
+                ROSE/EDG/src/cfe.c
+
+       6. UNPARSE_TEMPLATES
+             Defined in
+                ROSE/src/unparser/unparser.h
+
+       7. UNPARSER_VERBOSE
+             Defined in
+                ROSE/src/unparser/unparser.h
+
+       8.
+  3. New run-time options
+
+       1. -enable_sage_backend
+             Have EDG call the sage backend.
+
+       2. -disable_sage_backend
+             Prevent EDG from calling the sage backend.
+
+       3. -enable_cp_backend
+             Have EDG call the cp backend.
+
+       4. -disable_cp_backend
+             prevent EDG from calling the cp backend
+
+       5. -preinit_il
+             Do a preinit stage between the front-end and
+             the backend.  (See sage_preinit_il() in sage_gen_be.C.)
+
+  4. Bug fixes
+
+       1. Unparsing of overloaded operators.
+
+       2. Accident in sage_gen_routine_decl() and sage_gen_variable_decl().
+            if(sageAccessSpecifier!=0)
+            {
+              //
+              // [DT] (3/2/2000) THE FOLLOWING IS A BIG PROBLEM !!
+              //
+              // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+              // result->set_decl_attributes(sageAccessSpecifier);
+              // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+              //
+              // set_decl_attributes() will clobber anything else that is
+              // currently stored in the p_decl_attributes field.
+              // We really just want to turn on the one bit
+              // associated with the access specifier.
+              //
+              // [DT] CORRECTION:
+              //
+              result->setBit(sageAccessSpecifier);
+            }
+          NOTE: We've commented out the set_decl_attributes() member
+          stuff from SgDeclarationStatement in ROSETTA.
+
+          Note, also, that the symptoms of this bug were seen when unparsing
+          class declarations.  All of the ROSE test codes in the repository
+          at the time have class declarations only in ".h" files which, at
+          that point in the development of ROSE, were ignored by the unparser,
+          so it's not surprising that the bug went unnoticed until now.
+
+       3.
+  5. TODO
+
+       1. Modify type reuse in EDG so that the substituted_for_template_param
+          field will work.
+          (See TAG51 below for more.)
+
+       2. Centralize the #defines associated with the preinit stage and the
+          handling of templates in SAGE.
+
+       3. Move the preinit stage from sage_gen_be.C into a separate file --
+          probably, the file should be named sage_preinit_il.C. Following
+          are some issues relavent to that endeavour.
+
+            1. Static file-scope entities in sage_gen_be.C.  Need to change that
+               if we want the preinit stage to be able to access some of those
+               entities from sage_preinit_il.C (like curr_source_sequence_entry).
+               Doing so gives rise to the next issue.
+
+            2. Naming convention.  File-scope entities in sage_gen_be.C (and
+               sage_preinit_il.C) may conflict with entities in cp_gen_be.C if
+               their static property is removed.  Need every file-scope entity
+               in SAGE to be prefixed with "sage_", probably.
+
+       4. Expressions (constants) as template args/params.
+
+       5. Function templates.
+
+       6. The global scope resolution operator isn't always handled correctly
+          in the unparser.
+
+       7. The unparser doesn't always unparse the "this" keyword when it
+          should.  NOTE: Both of these bugs (the "this" keyword and the
+          global scope resolution operator) are manifested when unparsing
+          iostream.h.
+
+       8.
+  6. Miscellany
+
+       1. Almost everywhere that I edited the ROSE/SAGE/EDG codes, I denoted
+          my presence with "[DT]" in a comment, and I often included a
+          date-stamp as well.
+
+       2. A lot of makefiles in ROSE/SAGE/EDG don't specify sufficient
+          dependencies.  Particularly in EDG, I've gotten into the
+          habit of doing a "make clean; make" whenever I change a file
+          other than sage_xxx.{C,h}.
+
+       3. There's a typo in ROSETTA:
+             ROSE/ROSETTA/Grammar/grammarClassDeclatationMacros.macro
+                                                   ^
+
+       4.
+
+  ------------------------------------------------------------------------
+
+   * TAG11 Can link both the EDG C++ backend and SAGE backend simultaneously. [Back]
+
+       I won't bother discussing the mechanics of adding run-time
+       flags to ROSE.  I just reproduced what was already being
+       done for other run-time flags.
+
+       In cfe.c, the following booleans
+
+          a_boolean call_sage_backend=TRUE;
+          a_boolean call_cp_backend=FALSE;
+
+       are set at the top as defaults then, depending on the
+       run-time parameters, these flags may be changed in the
+       call to proc_command_line().
+
+       Previously both the EDG C++ backend and the SAGE backend
+       were accessed by a call to back_end() which was located
+       in cp_gen_be.c or sage_gen_be.C, respectively.  There was
+       no ambiguity because it was enforced that cp_gen_be.o and
+       sage_gen_be.o never were linked simultaneously. Now, I've
+       had to allow both the backends to be linked simultaneously,
+       and to accomodate this I've changed the back_end() routine
+       in sage_gen_be.C to be called sage_back_end().  Another
+       way that ambiguity is avoided is that many of the file-scope
+       entities in cp_gen_be.c and sage_gen_be.C are declared as
+       static.  I think that it would be nicer to just enforce that
+       every file-scope entity in sage_gen_be.C be prefixed with
+       "sage_".  This convention would allow for the static qualifiers
+       to be removed and hence would facilitate separating the
+       preinit stage from sage_gen_be.C in to its own file, something
+       like sage_preinit_il.C.
+
+       Depending on the value of call_sage_backend and call_cp_backend,
+       one or the other or both of the EDG C++ backend and the SAGE backend
+       will be called from cfe.c.
+
+       As documented in the code, it is important for the call to
+       the EDG C++ backend, back_end(), be made before the calle to
+       the SAGE backend, sage_back_end().  Somehow, calling SAGE before
+       the EDG C++ backend has the effect of causing the EDG C++ backend
+       to fail to unmangle template names where it should.
+
+       Changed C_output_file_name in sage_gen_be.C to have suffix ".sage.c"
+       instead of ".int.C" so that it wouldn't clobbert the output from the
+       EDG C++ backend.  Note that the suffix used by EDG C++ is stored
+       in GEN_C_FILE_SUFFIX which is defined in host_envir.h. [Back]
+
+   * TAG12 Modified the unparser to unparse #included files. [Back]
+     The unparser is managed primarily from this loop:
+
+       while (s_iter != globalScope->end())
+       {
+         s_iter++;
+       }
+
+     Within the loop was a check:
+
+       while (s_iter != globalScope->end())
+       {
+         if (!strcmp(getFileName(stmt), getFileName()))
+         {
+         }
+         s_iter++;
+       }
+
+     to see whether the current statement was in the "primary"
+     file, and the statement was skipped if it was not.
+
+     I have added an else clause:
+
+       while (s_iter != globalScope->end())
+       {
+         if (!strcmp(getFileName(stmt), getFileName()))
+         {
+         }
+         else
+         {
+         }
+         s_iter++;
+       }
+
+     where statements from "secondary" files are handled.  Secondary files are
+     files that are #included from the primary file.
+
+     Unparsing statements from secondary files is handled by storing the current
+     output stream and filename for the primary file and then setting the output
+     stream and filename associated with the statement from the secondary file and
+     unparsing that statement and then restoring the output stream and filename of
+     the primary file.
+
+     There is also the issue of acquiring the directives from the secondary file and
+     unparsing them where appropriate.  To facilitate this, I've created a container
+     class for lists of directives.  The directives for an individual file are stored
+     in a ROSEAttributesList, and there is now a ROSEAttributesListContainer class
+     which stores a list of ROSEAttributesLists.  See ROSE/src/rose_attributes_list.C
+     and ROSE/include/rose_attributes_list.h.
+
+   * TAG13 Developed a "preinit stage" in SAGE. [Back]
+
+     Special note:  Just today (8/18/2000, my last day)I found a bug associated with
+     the preinit stage.  It has to do with a side-effect of the preinit stage on
+     member statements of class definitions, as I will explain in a moment.  I have
+     almost fixed it, but one thing remains to be done in order to ensure the
+     side-effect never manifests.
+
+     The problem is located in sage_gen_class_definition() where SAGE loops through
+     the statements of the class definition and appends them to a list in the
+     SgClassDefinition class.  We need to be careful when the preinit stage
+     has already appended these statements that SAGE doesn't also append them. That
+     would give rise to multiple declarations of stuff in the class definition.
+
+     To fix these I've introduced a flag before the relevant loop in
+     sage_gen_class_definition().  This flag is called
+     memberStmtsExistFromPreinitStage, and when it is true, the loop will not
+     append the statements again.
+
+     There is a aspect of this implementation that needs to be fixed.  I'm setting
+     the memberStmtsExistFromPreinitStage to TRUE if there are *any* member
+     statements.  So in the preinit stage we need to make sure that *some* of
+     the member statements are not appended if *all* of them are not.  This can
+     happen if, after a few statements are appended, the call to
+     sage_gen_declaration() fails and that preinit task aborts.  When this happens
+     we need to remove any statements that were appended in order that the next
+     pass can start over from scratch and not append redundant statements.  I haven't
+     done this yet, although I've put a comment in the code (marked by "WARNING")
+     where it needs to be done.  There are also a couple of other elaborate comments
+     about this in the code.
+
+     Note that with the current partial fix, there is *not* a problem if:
+
+       (a) The preinit stage is not run at all, or
+       (b) The call to sage_gen_declaration() in this loop within
+           sage_gen_declaration() never fails during the preinit stage.
+
+     With the current partial fix, there *is* a problem if there are n statements
+     in a class definition and the call to sage_gen_declaration() works for k of
+     them, where 1<k<n, but fails for the k+1 statement, during the preinit
+     stage.  And this can be fixed by always making sure that the preinit stage
+     always appends exactly all or exactly none of the member statements.
+
+     There are other approaches to this problem, like just checking before appending
+     a statement to see whether that statement is already in the list, but it's not
+     clear to me that doing so would be sufficiently convenient or feasible.
+
+   * TAG14 Modified SAGE to included template args and params. [Back]
+
+     NOTE: I'm unparsing information about the template params and args into comments in such
+     a way that the unparsed code can have nested comments.  Of course, this is an intermediate
+     stage.  The information in comments will eventually be formatted into compilable syntax.
+     Also, this only will happen when UNPARSE_TEMPLATES is TRUE (unparser.h).
+
+   * TAG51 Modify type reuse in EDG... [Back]
+     The problem is that the types in the IL tree are getting the
+     substituted_for_template_param field turned on in cases where
+     it shouldn't, because it can happen that the same IL type node
+     is used to represent, simultaneously, types that *do* substitute
+     for template params and types that *don't* substitute for template
+     params.  That's the way it appears to me, currently, at any rate.
+
+     I've tried to eliminate type reuse in EDG entirely as a first step,
+     but I can't get it to work.  In particular, I've put
+
+        #if 1
+        /*
+        ** [DT] 8/16/2000 -- Testing.  In order for the substituted_for_template_param
+        **      field to be useful, we need to eliminate type reuse.
+        */
+              goto make_new_type;
+        #endif
+
+     in traverse_and_modify_type_tree() in types.c, and I've put
+
+        #if 1
+        /*
+        ** [DT] 8/16/2000 -- Want to try to eliminate type reuse in order for the
+        **      substituted_for_template_param field to be useful.
+        */
+          a_boolean                      return_type1_as_comp_type = FALSE;
+          a_boolean                      return_type2_as_comp_type = FALSE;
+        #else
+          a_boolean                      return_type1_as_comp_type = TRUE;
+          a_boolean                      return_type2_as_comp_type = TRUE;
+        #endif
+
+     in composite_routine_type() in types.c, where the #else clause is what
+     was originally there.
+
+     These are the only two routines that I've found in which type reuse is
+     being implemented, and the code that I've put there should prevent it
+     from doing type reuse at all.
+
+     Note that I've also put the following
+
+        #if 1
+        /*
+        ** [DT] 8/16/2000 -- Testing.  Trying to get this field to work correctly.
+        */
+              new_type->substituted_for_template_param = 0;
+        #endif
+
+     in the make_new_type section of traverse_and_modify_type_tree() just to
+     be sure that when the new type is created it doesn't keep the value of
+     this field from another type accidently. [Back]
+
+   * TAGXX

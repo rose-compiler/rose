@@ -1,0 +1,398 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgDeclarationStatement
+\brief This class represents the concept of a declaration statement.
+
+    Declaration statements are where variables and types are
+defined and become available for use within a program.  Declarations
+are strored in symbols (\ref SgSymbol) and used to associate
+the symbol with a location within a scope within the application 
+source code.  There are many different types of declarations, within Sage III
+the SgDeclaration forms a base class for numerous IR nodes such as:
+class declarations (including structs and unions), enum declarations,
+function declarations, namespace declarations, pragma declarations,
+template declarations, typedef declarations, using declarations,
+using directives, variable declarations, etc.
+
+   An important concept for a few types fo declarations is that
+of defining vs. non-defining.  Defining declarations are associated with
+definitions, for example a class definition or function definition.
+A class declaration where a class is defined (instead of a forward 
+declaration) is a defining declaration.  A forward declaration is
+a non-defining declaration.  Some declarations are not explicitly 
+forward declarations, they are non-defining declarations.  Only 
+declarations where there is a definition are defining declarations. 
+Because definitions can at most appear once within a translation unit 
+(a source file and it included header files), there is at most one
+defining declaration.  The defining declaration is never shared,
+however the non-defining declaration can be shared and is required 
+to be shared if there is more than one location in the AST where 
+a non-defining declaration is required.  There is at most one
+defining and one non-defining declaration (at some point they will
+also share their name, but this is not implemented yet).  If a variable
+is defined to be extern or only defined through a refererence or pointer, 
+then there would be no defining declaration (only a non-defining declaration).
+
+   The following code contains no defining declaration for the 
+type "foobar": \n
+     typedef struct foobar *((FunctionPointer)(void);\n
+     foobar* foobar_pointer = NULL; \n
+and yet is vailid code (even though there is no explicit forward declaration
+of "foobar" as a class (or struct).  In this case foobar is represented
+using a non-defining declaration internally and that declaration is 
+reference multiple types (once within each statement).  Note that
+the code abouve is valid C++, and not valid C code (to make it valid C code 
+we would have to add "struct" the pointer declaration, for example:
+     struct foobar* foobar_pointer = NULL; \n
+So C++ is not always a super set of C :-).
+
+
+Different types of declarations explained: \n
+    C and C++ declarations can come in several forms, for example: \n
+typedef struct { int A; } A; // unnamed class declaration (which gets a name from the typedef) \n
+struct A { int i; };         // autonomous declaration \n
+struct B { int i; } b;       // non autonomous declaration \n
+In these cases "struct" and "class" can be used interchangablily. Internally 
+"struct" and "class" are he same (but with a different enum to classify them,
+see SgNameType and SgClassType).  Clearly most C++ code uses autonomous 
+declarations.
+
+    There are no uses of this IR node anywhere.  All statements
+are derived from this SgDeclarationStatement class.
+
+\internal This is a base class for all statements.
+
+\todo  Current issues to look at:
+   - Current classes derived from SgDeclarationStatement and the 
+     SgInitializedName class have ways of generating 
+     names, qualified names, and mangled names, but we lack a uniform mechanism to
+     generate mangled qualified names.  The implementation is not uniform within
+     the IR and this is a problem for applications which must generate unique names 
+     for C++ constructs.  Specific to functions names:
+      - We have:
+         -# get_name()
+         -# get_qualified_name()
+         -# get_mangled_name()
+      - While we need (on ALL SgDeclarationStatement IR nodes):
+         -# get_name()
+         -# get_qualified_name()
+         -# get_mangled_name()
+         -# get_qualified_mangled_name()
+
+   - It has been suggested that we eliminate get_qualified_mangled_name() and have
+     get_mangled_name() return a mangled qualified name.  Thus the semantics of
+     get_mangled_name() would be changed to generate a mangled qualified name.
+     The purpose of get_mangled_name is to generate a unique name for all declarations.
+     Note that some declarations should not return a unique name:
+       -# SgAsmStmt
+       -# SgCtorInitializerList
+       -# SgFunctionParameterList
+       -# SgUsingDeclarationStatement
+       -# SgVariableDefinition \\ 
+            It may be that this should be the same as for the SgVariableDeclaration.
+
+   - Related to the above problem we wish to provide a definition under which all
+     declarations (SgDeclarationStatement IR nodes) can be defined to be unique.
+     Under One-time Definition Rule (ODR) definitions must be the same within 
+     a linked application (in each compilation unit).  We define a unique name
+     for a declaration IR node as:
+        - Any declaration which matches another declaration under ODR must generate 
+          the same unique string.
+        - Any two declarations that are different must generate different unique strings.
+        - Important cases are:
+           - The IR nodes for which there is an obvious mangled name (and a get_mangled_name()
+             exists) are:
+              - SgClassDeclaration
+              - SgFunctionDeclaration
+              - SgEnumDeclaration
+              - SgNamespaceDeclarationStatement
+              - SgTypedefDeclaration
+           - IR nodes for which it is less obvious (or for which there is no present
+             get_mangled_name() member function) are:
+              - SgAsmStmt
+              - SgCtorInitializerList
+              - SgFunctionParameterList
+              - SgNamespaceAliasDeclarationStatement
+              - SgPragmaDeclaration
+              - SgTemplateDeclaration (can this have a mangled name?)
+              - SgTemplateInstantiationDirectiveStatement
+              - SgUsingDeclarationStatement
+              - SgUsingDirectiveStatement
+              - SgVariableDeclaration
+              - SgVariableDefinition
+           - Other IR nodes (not derived from SgDeclarationStatement) but for which we need to
+             generate mangled names (and a get_mangled_name() member functions exists) are:
+              - SgTemplateArgument
+              - SgFunctionDefinition
+              - SgNamespaceDefinitionStatement
+              - SgClassDefinition
+              - SgType (and all IR nodes derived from SgType)
+           - Other IR nodes (not derived from SgDeclarationStatement) but for which I think we 
+             need to generate mangled names (and a get_mangled_name() member functions does NOT 
+             exist) are:
+              - SgInitializedName
+              - SgFile (this might not really be required, but it might make sense)
+              - SgDirectory (this might not really be required, but it might make sense)
+              - SgBaseClass (this is questionable)
+              - SgQualifiedName (this is questionable)
+
+   - Class declarations often point to their definition independently of if they are
+     defining or non-defining declaration (true at least for SgTemplateInstantiationDecl
+     objects).  This is different from how function declarations are handled, where only
+     the defining declaration has a valid pointer to the function definition.  This should
+     be made more consistant.  There are more comments about this is the documentation for 
+     SgTemplateInstantiationDecl.
+
+   - The specification of "extern" is not the same as extern "C", one is handled in the 
+     SgDeclarationStatement (extern "C") and the other is handled in the SgStorageModifier
+     (extern).  It is confusing that the two are so far a part.  Perhaps they could be
+     together so that setting "C" linkage could declare a SgDeclarationStatement as
+     "extern" at the same time.  It makes no sense to have something marked as "C" linkage
+     and have it not be extern (I think); so this could be considered an error (I think).
+
+   - To support debugging of applications using the mangled names to build unique strings
+     we should provide a global map between the unique names and the associated 
+     declarations.  This would avoid the creation of alternative name mangling mechanisms
+     whose sole purpose it to fold into the mangled name debugging information.
+
+\test To test the mangled name generation we should construct a program using the mangled
+     names and compile it to verify uniquenss of the veriable names.  Since functions
+     of the same name can be repeated, mangled names from functions should generate
+     functions in the test program and mangled names of veriables should generate
+     variables, etc.
+
+\sa
+\ref SgDeclarationStatement_usage  "Example of using a SgDeclarationStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgDeclarationStatement::p_definingDeclaration
+\brief This pointer is valid only if a defining declaration exists, and stores the defining declaration 
+where the declaration was defined.
+
+    It is important to note that this is the only defining declaration as 
+opposed to the non-defining declarations (where there can, depending on IR node, often be many).
+
+\internal The value held is not shared within the Sage III AST (except though this data
+member in each defining and non-defining declaration).
+*/
+
+/*! \var SgDeclarationStatement::p_firstNondefiningDeclaration
+\brief This pointer is valid if there is a non-defining declaration, and stores the first non-defining declaration 
+where a declaration was made explicitly (as in forward declaration) or implicitly as in
+the case of a few IR nodes (e.g. SgClassDeclaration). See description of SgDeclarationStatement.
+
+    It is important to note that this is the first non-defining declaration as 
+opposed to the defining declaration.  Thus it is usually the first forward declaration.
+
+\internal The value held is sharable across many references where as the defining
+          declaration (not held by this variable) should have one unique reference
+          within the AST, except where reference though the declarations
+          definingDeclaration data member pointer.  See declarations for details
+          (SgDeclarationStatements).
+*/
+
+/*! \var SgDeclarationStatement::p_linkage
+\brief This string stores the value "C", "C++", or "fortran" to define the external
+    linkage for generating linkable names.
+
+   The only values that make sense here are "C", "C++" is the assumed default and requires
+   a NULL pointer value.  And the use of "fortran" would be backend specific (may be
+   rejected by some backend vendor compilers).
+
+*/
+
+/*! \var SgDeclarationStatement::p_decl_attributes
+\brief This is old and used to be used to hold modifiers.
+
+\deprecated This is part of an older modifier interface that was not fully implemented.
+
+\internal This data member will be removed at some point.
+*/
+
+/*!
+\var SgDeclarationStatement::p_declarationModifier
+\brief This is the mechanism to handle declaration modifiers.
+
+    See Stroustrup 3rd edition, Appendix A, for details of how modifiers are represented
+    in ROSE.
+
+\internal There is no interface to declaration modifiers implemented directly in this
+SgDeclarationStatement class.  This was done to simplify the implementation.  Users
+are expected to access the SgDeclarationmodifier object (returned by reference)
+directly to get/set its values.
+*/
+
+/*!
+\var SgDeclarationStatement::p_nameOnly
+\brief I think this is somewhat redundant with the purpose of specifying a forward
+declaration.  Either that or it is information used by the unparser (Oh, I hope not!).
+
+\deprecated This will likely be removed at some point.
+
+\internal This mechanism is now redundnat with the better support for defining/nondefining
+    declarations.
+*/
+
+/*!
+\var SgDeclarationStatement::p_forward
+\brief This marks a declaration as being an explicit forward declaration.
+
+   All non-defining declaations are marked as forward declarations, while 
+a defining declaration is NOT a marked as a forward declaration.
+
+\internal It is not clear enough to just use defining vs. nondefining declarations
+     to know when something is a forward declaration!
+
+*/
+
+/*!
+\var SgDeclarationStatement::p_externBrace
+\brief This marks that the declaration appeared with "extern".
+
+   Note that I think this is also set even if it appears between "extern {" and "}".
+It might be that this is a way to specify the first "extern {", but I don't think
+it is used interanlly and it is not clear if attaching the "extern {" to
+a declaration is a great way to handle this problem generally (appears to be
+overlly sensative to transformations that would add, remove, or move declarations
+(e.g in inlining and outlining transformations). 
+
+   Currently the lex pass saves all "extern \"C\" {" declarations and treats them as
+CPP directive (along with comments), they are then woven back into the AST as 
+a separate pass.
+
+\deprecated This is now redundant with the seperate preprocessing phase.
+
+\internal Not sure that we need or want this mechanism (or this implementation of it).
+Not that the mechanism that we have is better and based on the scanning for extern "X"
+in the source code directly (where "X" is either "C", "C++", or "fortran".
+
+*/
+
+/*!
+\var SgDeclarationStatement::p_skipElaborateType
+\brief This marks "type elaboration" which is the use of the keyword "class" before
+    variables of type class.
+
+    This is not often required, but is routinely output by the unparser to be
+    conservative.  The support for hidden lists allows the unparser to more
+    precisely output the type elaboration, and so this variable is redundant.
+
+\deprecated This is now redundant with the hidden list analysis done to support more
+    accurate code generation.
+
+\internal This field is used in a default mode and could be set to be more accurate.
+*/
+
+/*!
+\var SgDeclarationStatement::p_need_name_qualifier
+\brief This marks a declaration are requiring qualification in its output in the unparser.
+
+\deprecated This is now redundant with the hidden list analysis done to support more
+    accurate code generation.
+
+\internal Although this variable is specific to unparing, I think it may be required.
+Although the name qualifications were recently reimplemented to be more uniform and robust
+I'm not clear if this variable is a part of that new implementation (and thus required).
+*/
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgDeclarationStatement::SgDeclarationStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgDeclarationStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgDeclarationStatement_create "Example:create an SgDeclarationStatement object"
+*/
+
+/*!
+\fn SgDeclarationStatement::~SgDeclarationStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgDeclarationStatement::isSgDeclarationStatement (SgNode *s)
+\brief Cast function (from derived class to SgDeclarationStatement pointer).
+
+   This functions returns a SgDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgDeclarationStatement.
+
+\return Returns valid pointer to SgDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDeclarationStatement::isSgDeclarationStatement (const SgNode *s)
+\brief Cast function (from derived class to SgDeclarationStatement pointer).
+
+   This functions returns a SgDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgDeclarationStatement.
+
+\return Returns valid pointer to SgDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDeclarationStatement::get_declarationModifier()
+\brief Returns SgDeclarationModifier object by reference (so that it can be set).
+
+\return Returns SgDeclarationModifier by reference.
+*/
+
+/*!
+\fn SgDeclarationStatement::isForward() const
+\brief Returns boolean value indicating if this is a forward declaration.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeclarationStatement::setForward()
+\brief Marks a declaration as a forward declaration.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeclarationStatement::unsetForward()
+\brief Marks a forward declaration as a non-forward declaration.
+
+\return Returns void.
+*/
+
+/*! \fn SgDeclarationStatement::get_definingDeclaration() const
+\brief This is an access function for the SgDeclarationStatement::p_definingDeclaration data member (see
+    that variable's documentation for details).
+*/
+
+/*! \fn SgDeclarationStatement::set_definingDeclaration( SgDeclarationStatement* definingDeclaration )
+\brief This is an access function for the SgDeclarationStatement::p_definingDeclaration data member (see
+    that variable's documentation for details).
+*/
+
+/*! \fn SgDeclarationStatement::get_firstNondefiningDeclaration() const
+\brief This is an access function for the SgDeclarationStatement::p_firstNondefiningDeclaration data member (see
+    that variable's documentation for details).
+*/
+
+/*! \fn SgDeclarationStatement::set_firstNondefiningDeclaration( SgDeclarationStatement* firstNondefiningDeclaration )
+\brief This is an access function for the SgDeclarationStatement::p_firstNondefiningDeclaration data member (see
+    that variable's documentation for details).
+*/
+

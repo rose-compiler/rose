@@ -1,0 +1,77 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Do Not Delete This}
+\label{DoNotDeleteThis::overview}
+``CERT Secure Coding C++ DAN32-C.'' states that
+\begin{quote}
+Deleting this leaves it as a ``dangling'' pointer, which leads to undefined behavior if it is accessed.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal visiting all {\tt delete} expressions and checking its argument to be a {\tt this} expression; if so, flag a violation.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+class SomeClass {
+    public:
+        SomeClass();
+        void doSomething();
+        void destroy();
+        // ...
+};
+
+void SomeClass::destroy() {
+    delete this;  // Dangerous!!
+}
+
+SomeClass sc = new SomeClass;
+// ...
+sc->destroy();
+// ...
+sc->soSomething();  // Undefined behavior
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+class SomeClass {
+    public:
+        SomeClass();
+        void doSomething();
+        // ...
+        ~SomeClass();
+};
+
+SomeClass sc = new SomeClass;
+// ...
+delete sc;
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting all {\tt delete} expression nodes.
+\item For each {\tt delete} expression node, check its argument node to be {\tt this} expression; if so, flag violation.
+\item Report any violations.
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{DAN32-C. Do not delete this}{https://www.securecoding.cert.org/confluence/display/cplusplus/DAN32-C.+Do+not+delete+this}

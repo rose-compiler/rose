@@ -1,0 +1,214 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var extern TerminalNamesType Cxx_GrammarTerminalNames[330]
+*/
+/*!\var extern bool interproceduralControlFlowGraph
+*/
+/*!\var extern std::map< std::string  , std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > * , std::less< std::string  >  , std::allocator< std::pair< const std::string  , std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > * >  >  > mapFilenameToAttributes
+*/
+/*!\var extern int found_pragma_cnt
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn bool std::operator!=(const std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &__x,const std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &__y)
+*/
+/*!\fn bool std::operator==(const std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &__x,const std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &__y)
+*/
+/*!\fn extern ROSEAttributesList *getPreprocessorDirectives(std::string fileName)
+*/
+/*!\fn extern SgDeclarationStatement *SageInterface::getNonInstantiatonDeclarationForClass(SgTemplateInstantiationMemberFunctionDecl *memberFunctionInstantiation)
+*/
+/*!\fn extern SgFunctionDeclaration *VirtualCFG::getDeclaration(SgExpression *func)
+*/
+/*!\fn extern SgFunctionDefinition *getEnclosingProcedure(SgNode *n)
+*/
+/*!\fn extern SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes(const SgName &functionName,SgScopeStatement *currentScope)
+*/
+/*!\fn extern SgNamespaceDefinitionStatement *SageInterface::enclosingNamespaceScope(SgDeclarationStatement *declaration)
+*/
+/*!\fn extern SgSwitchStatement *findEnclosingSwitch(SgStatement *s)
+*/
+/*!\fn extern VirtualCFG::CFGNode VirtualCFG::getNodeJustAfterInContainer(SgNode *n)
+*/
+/*!\fn extern VirtualCFG::CFGNode VirtualCFG::getNodeJustBeforeInContainer(SgNode *n)
+*/
+/*!\fn extern bool SageInterface::declarationPreceedsDefinition(SgDeclarationStatement *nonDefiningDeclaration,SgDeclarationStatement *definingDeclaration)
+*/
+/*!\fn extern bool SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope(SgFunctionCallExp *functionCall)
+*/
+/*!\fn extern bool SageInterface::isPrototypeInScope(SgScopeStatement *scope,SgFunctionDeclaration *functionDeclaration,SgDeclarationStatement *startingAtDeclaration)
+*/
+/*!\fn extern bool SageInterface::is_C99_language()
+*/
+/*!\fn extern bool SageInterface::is_Cxx_language()
+*/
+/*!\fn extern bool SageInterface::is_Fortran_language()
+*/
+/*!\fn extern bool SageInterface::is_mixed_C_and_Cxx_language()
+*/
+/*!\fn extern bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
+*/
+/*!\fn extern bool SageInterface::is_mixed_Fortran_and_C_language()
+*/
+/*!\fn extern bool SageInterface::is_mixed_Fortran_and_Cxx_language()
+*/
+/*!\fn extern int AstMergeSupport(SgProject *project)
+*/
+/*!\fn extern int buildAstMergeCommandFile(SgProject *project)
+*/
+/*!\fn extern int memoryUsage()
+*/
+/*!\fn extern int numberOfNodes()
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,SgName &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::map< SgNode * , int  , std::less< SgNode * >  , std::allocator< std::pair< SgNode *const  , int  >  >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::map< SgNode * , std::string  , std::less< SgNode * >  , std::allocator< std::pair< SgNode *const  , std::string  >  >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::set< int  , std::less< int  >  , std::allocator< int  >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgCommonBlockObject * , std::allocator< SgCommonBlockObject * >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgDataStatementObject * , std::allocator< SgDataStatementObject * >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgDataStatementValue * , std::allocator< SgDataStatementValue * >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< SgDimensionObject * , std::allocator< SgDimensionObject * >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &,std::vector< bool  , std::allocator< bool  >  > &)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &os,const __gnu_cxx::hash_multimap < SgName , SgSymbol * , hash_Name , eqstr , std::allocator< SgSymbol * > > ::iterator &rhm_it)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &os,const std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > &l)
+*/
+/*!\fn extern std::ostream &operator<<(std::ostream &os,const std::vector< bool  , std::allocator< bool  >  > &bv)
+*/
+/*!\fn extern std::string SageInterface::addMangledNameToCache(SgNode *astNode,const std::string &mangledName)
+*/
+/*!\fn extern std::string SageInterface::declarationPositionString(SgDeclarationStatement *declaration)
+*/
+/*!\fn extern std::string SageInterface::generateProjectName(const SgProject *project)
+*/
+/*!\fn extern std::string SageInterface::getMangledNameFromCache(SgNode *astNode)
+*/
+/*!\fn extern std::string getVariantName(enum VariantT v)
+*/
+/*!\fn extern std::string globalUnparseToString(const SgNode *astNode,SgUnparse_Info *inputUnparseInfoPointer=(0))
+*/
+/*!\fn extern std::string replaceNonAlphaNum(const std::string &s)
+*/
+/*!\fn extern std::vector< SgGotoStatement * , std::allocator< SgGotoStatement * >  > findGotos(SgStatement *scope,SgLabelStatement *l)
+*/
+/*!\fn extern std::vector< SgReturnStmt * , std::allocator< SgReturnStmt * >  > findReturnStmts(SgStatement *code)
+*/
+/*!\fn extern std::vector< SgStatement * , std::allocator< SgStatement * >  > getSwitchCases(SgSwitchStatement *sw)
+*/
+/*!\fn extern void CheckIsModifiedFlagSupport(SgNode *node)
+*/
+/*!\fn extern void SageInterface::resetMangledNameCache(SgGlobal *globalScope)
+*/
+/*!\fn extern void SageInterface::setSourcePosition(SgLocatedNode *locatedNode)
+*/
+/*!\fn extern void VirtualCFG::makeEdge(VirtualCFG::CFGNode from,VirtualCFG::CFGNode to,std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > &result)
+*/
+/*!\fn extern void attachPreprocessingInfo(SgFile *sageFile)
+*/
+/*!\fn extern void attachPreprocessingInfo(SgFile *sageFile,std::map< std::string  , ROSEAttributesList * , std::less< std::string  >  , std::allocator< std::pair< const std::string  , ROSEAttributesList * >  >  > *)
+*/
+/*!\fn extern void checkIsModifiedFlag(SgNode *node)
+*/
+/*!\fn extern void fixupEnumValues()
+*/
+/*!\fn extern void fixupFriendDeclarations()
+*/
+/*!\fn extern void fixupFriendTemplateDeclarations()
+*/
+/*!\fn extern void fixupSourcePositionConstructs()
+*/
+/*!\fn extern void generateGraphOfAST(SgProject *project,std::string filename,std::set< SgNode * , std::less< SgNode * >  , std::allocator< SgNode * >  > skippedNodeSet)
+*/
+/*!\fn extern void generateWholeGraphOfAST(std::string filename)
+*/
+/*!\fn extern void generateWholeGraphOfAST(std::string filename,std::set< SgNode * , std::less< SgNode * >  , std::allocator< SgNode * >  > &skippedNodeSet)
+*/
+/*!\fn extern void generateWholeGraphOfAST_filteredFrontendSpecificNodes(std::string filename)
+*/
+/*!\fn extern void printOutComments(SgLocatedNode *locatedNode)
+*/
+/*!\fn extern void print_pragma(SgAttributePtrList &,std::ostream &)
+*/
+/*!\fn extern void removeInitializedNamePtr(SgNode *node)
+*/
+/*!\fn extern void resetContructorInitilizerLists()
+*/
+/*!\fn extern void resetNamesInAST()
+*/
+/*!\fn extern void resetTypesInAST()
+*/
+/*!\fn extern void traverseMemoryPoolNodes(ROSE_VisitTraversal &traversal)
+*/
+/*!\fn extern void traverseMemoryPoolVisitorPattern(ROSE_VisitorPattern &visitor)
+*/
+/*!\fn extern void traverseRepresentativeNodes(ROSE_VisitTraversal &traversal)
+*/
+/*!\fn inline VirtualCFG::CFGNode VirtualCFG::cfgBeginningOfConstruct(SgNode *c)
+*/
+/*!\fn inline VirtualCFG::CFGNode VirtualCFG::cfgEndOfConstruct(SgNode *c)
+*/
+/*!\fn inline VirtualCFG::CFGNode VirtualCFG::makeCfg(SgNode *start)
+*/
+/*!\fn inline VirtualCFG::CFGPath VirtualCFG::mergePaths(const VirtualCFG::CFGPath &hd,const VirtualCFG::CFGPath &tl)
+*/
+/*!\fn inline VirtualCFG::CFGPath VirtualCFG::mergePathsReversed(const VirtualCFG::CFGPath &tl,const VirtualCFG::CFGPath &hd)
+*/
+/*!\fn inline VirtualCFG::InterestingNode VirtualCFG::makeInterestingCfg(SgNode *start)
+*/
+/*!\fn inline void preventConstructionOnStack(SgNode *n)
+*/
+/*!\fn public: friend SgName operator+(const SgName &n1,const SgName &n2)
+*/
+/*!\fn public: friend Sg_Options &Sg_options()
+*/
+/*!\fn public: friend bool operator!=(const Sg_File_Info &X,const Sg_File_Info &Y)
+*/
+/*!\fn public: friend bool operator<(const Sg_File_Info &X,const Sg_File_Info &Y)
+*/
+/*!\fn public: friend bool operator<=(const Sg_File_Info &X,const Sg_File_Info &Y)
+*/
+/*!\fn public: friend bool operator==(const Sg_File_Info &X,const Sg_File_Info &Y)
+*/
+/*!\fn public: friend bool operator>(const Sg_File_Info &X,const Sg_File_Info &Y)
+*/
+/*!\fn public: friend bool operator>=(const Sg_File_Info &X,const Sg_File_Info &Y)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgAccessModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgBaseClassModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgConstVolatileModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgDeclarationModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgElaboratedTypeModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgFunctionModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgLinkageModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgSpecialFunctionModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgStorageModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgTypeModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,SgUPC_AccessModifier &m)
+*/
+/*!\fn public: friend std::ostream &operator<<(std::ostream &os,const std::vector< std::string  , std::allocator< std::string  >  > &l)
+*/
+/*!\fn extern void generateGraphOfAST(SgProject *project,std::string filename)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1913984338;

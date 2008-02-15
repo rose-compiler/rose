@@ -1,0 +1,50 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgTypeSignedLong
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeSignedLong *SgTypeSignedLong::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeSignedLong::SgTypeSignedLong(const SgTypeSignedLongStorageClass &source)
+*/
+/*!\fn inline static void SgTypeSignedLong::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeSignedLong *SgTypeSignedLong::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeSignedLong::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeSignedLong::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeSignedLong::initializeStorageClassArray(SgTypeSignedLongStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeSignedLong::clearMemoryPool()
+*/
+/*!\fn static void SgTypeSignedLong::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeSignedLong::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeSignedLong::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeSignedLong::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeSignedLong::~SgTypeSignedLong()
+*/
+/*!\fn virtual SgNode *SgTypeSignedLong::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeSignedLong::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeSignedLong::get_numberOfTraversalSuccessors()
+\description See  SgTypeSignedLong::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeSignedLong::get_traversalSuccessorContainer()
+\description See  SgTypeSignedLong::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeSignedLong::get_traversalSuccessorNamesContainer()
+\description See  SgTypeSignedLong::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypeSignedLong::SgTypeSignedLong()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_46849490;

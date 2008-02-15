@@ -1,0 +1,52 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAsteriskShapeExp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgAsteriskShapeExp::SgAsteriskShapeExp(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgAsteriskShapeExp::SgAsteriskShapeExp(const SgAsteriskShapeExpStorageClass &source)
+*/
+/*!\fn inline static void SgAsteriskShapeExp::operator delete(void *pointer)
+*/
+/*!\fn static SgAsteriskShapeExp *SgAsteriskShapeExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsteriskShapeExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsteriskShapeExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsteriskShapeExp::initializeStorageClassArray(SgAsteriskShapeExpStorageClass *storageArray)
+*/
+/*!\fn static void SgAsteriskShapeExp::clearMemoryPool()
+*/
+/*!\fn static void SgAsteriskShapeExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsteriskShapeExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsteriskShapeExp::roseRTI()
+*/
+/*!\fn virtual SgAsteriskShapeExp::~SgAsteriskShapeExp()
+*/
+/*!\fn virtual SgNode *SgAsteriskShapeExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgAsteriskShapeExp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgAsteriskShapeExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgAsteriskShapeExp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgAsteriskShapeExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsteriskShapeExp::get_numberOfTraversalSuccessors()
+\description See  SgAsteriskShapeExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsteriskShapeExp::get_traversalSuccessorContainer()
+\description See  SgAsteriskShapeExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsteriskShapeExp::get_traversalSuccessorNamesContainer()
+\description See  SgAsteriskShapeExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsteriskShapeExp::SgAsteriskShapeExp()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_441166442;

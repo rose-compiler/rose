@@ -1,0 +1,64 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgFunctionTypeSymbol
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgName SgFunctionTypeSymbol::p_name
+*/
+/*!\var SgType *SgFunctionTypeSymbol::p_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgFunctionTypeSymbol::SgFunctionTypeSymbol(const SgFunctionTypeSymbolStorageClass &source)
+*/
+/*!\fn inline static void SgFunctionTypeSymbol::operator delete(void *pointer)
+*/
+/*!\fn static SgFunctionTypeSymbol *SgFunctionTypeSymbol::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFunctionTypeSymbol::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFunctionTypeSymbol::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFunctionTypeSymbol::initializeStorageClassArray(SgFunctionTypeSymbolStorageClass *storageArray)
+*/
+/*!\fn static void SgFunctionTypeSymbol::clearMemoryPool()
+*/
+/*!\fn static void SgFunctionTypeSymbol::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFunctionTypeSymbol::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgFunctionTypeSymbol::roseRTI()
+*/
+/*!\fn virtual SgFunctionTypeSymbol::~SgFunctionTypeSymbol()
+*/
+/*!\fn virtual SgNode *SgFunctionTypeSymbol::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgFunctionTypeSymbol::set_name(SgName name)
+\description See  name)
+name for documentation */
+/*!\fn void SgFunctionTypeSymbol::set_type(SgType *type)
+\description See  *type)
+type for documentation */
+/*!\fn virtual SgName SgFunctionTypeSymbol::get_name() const
+\description See  const
+name for documentation */
+/*!\fn virtual SgNode *SgFunctionTypeSymbol::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgFunctionTypeSymbol::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgFunctionTypeSymbol::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFunctionTypeSymbol::get_numberOfTraversalSuccessors()
+\description See  SgFunctionTypeSymbol::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionTypeSymbol::get_traversalSuccessorContainer()
+\description See  SgFunctionTypeSymbol::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionTypeSymbol::get_traversalSuccessorNamesContainer()
+\description See  SgFunctionTypeSymbol::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFunctionTypeSymbol::SgFunctionTypeSymbol(SgName name=(""),SgType *type=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_617998511;

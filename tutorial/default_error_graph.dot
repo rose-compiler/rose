@@ -1,0 +1,5 @@
+digraph "GwholeGraphAST1.dot" {
+"0x2a985e7010"[label="ROSE not configured for this analysis!" shape=ellipse,regular=0,URL="\N",tooltip="more info at\N",sides=4,peripheries=1,color="Blue",fillcolor=yellow,fontname="7x13bold",fontcolor=black,style=filled];
+"0x2a985e7010" -> "0x2a985e7010__parent__null"[label="(see configure options)" dir=none ];
+"0x2a985e7010__parent__null"[label="" shape=diamond ];
+}

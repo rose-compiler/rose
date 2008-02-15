@@ -1,0 +1,38 @@
+
+// Performance of compilation with full testing for large KULL file (9/12/2005):
+
+Total number of nodes traversed = 275895
+
+Performance Report (resolution = 0.010000):
+     AST (SgProject::parse(argc,argv)): time (sec) =  203.804137
+          AST (SgProject::parse()): time (sec) =  203.801699
+               AST SgFile Constructor: time (sec) =  203.801313
+                    AST Front End Processing (SgFile): time (sec) =  50.286502
+                         AST Constrution (included Sage III Translation): time (sec) =  50.276284
+                              EDG AST Constrution: time (sec) =  7.350665
+                              AST EDG/Sage III Translation: time (sec) =  34.949638
+                    AST post-processing: time (sec) =  150.211061
+                         AST Fixup: time (sec) =  150.211017
+                              (fixup defining and non-defining declarations) time (sec) =  1.938722
+                              (fixup defining and non-defining declarations) time (sec) =  2.695484
+                              (reset parent pointers) time (sec) =  29.705470
+                              (subTemporaryAstFixes) time (sec) =  10.206069
+                              (fixup class data member initialization) time (sec) =  2.854305
+                              (fixup for generation of GNU compatable code) time (sec) =  2.085312
+                              (fixup declarations) time (sec) =  2.589787
+                              (fixup storage access of forward template declarations (EDG bug)) time (sec) =  2.704238
+                              (fixup defining and non-defining declarations) time (sec) =  2.264797
+                              (fixup template specializations) time (sec) =  4.935252
+                              (mark template specializations for output) time (sec) =  2.762225
+                              (fixup symbol tables) time (sec) =  2.606264
+                                   (fixup global symbol table) time (sec) =  0.000002
+                                   (fixup local symbol tables) time (sec) =  2.606117
+                    AST Comment Processing: time (sec) =  3.303259
+     AST Object Code Generation (buildTemplateInstantiationSupportFile): time (sec) =  0.001128
+     AST Consistancy Tests: time (sec) =  467.188983
+     AST Object Code Generation (backend): time (sec) =  60.649351
+          AST Object Code Generation (fixupInstantiatedTemplates): time (sec) =  34.762067
+          AST Code Generation (unparsing): time (sec) =  2.483568
+          AST Backend Compilation (SgProject): time (sec) =  23.402703
+               AST Object Code Generation (compile output): time (sec) =  23.399906
+ 

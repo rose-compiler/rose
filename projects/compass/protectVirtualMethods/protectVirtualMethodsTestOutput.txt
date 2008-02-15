@@ -1,0 +1,1 @@
+ProtectVirtualMethods: protectVirtualMethodsTest1.C:9.5-39: SgMemberFunctionDeclaration: This checker checks that virtual member function are not public. Virtual member functions should be protected with public member accessor functions.

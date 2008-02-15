@@ -1,0 +1,42 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class VirtualCFG::CFGNode
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgNode *VirtualCFG::CFGNode::node
+*/
+/*!\var unsigned int VirtualCFG::CFGNode::index
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn bool VirtualCFG::CFGNode::isInteresting() const
+*/
+/*!\fn inline SgNode *VirtualCFG::CFGNode::getNode() const
+*/
+/*!\fn inline VirtualCFG::CFGNode::CFGNode() : node((0)), index((0))
+*/
+/*!\fn inline VirtualCFG::CFGNode::CFGNode(SgNode *node,unsigned int index=(0)) : node(node), index(index)
+*/
+/*!\fn inline bool VirtualCFG::CFGNode::operator!=(const VirtualCFG::CFGNode &o) const
+*/
+/*!\fn inline bool VirtualCFG::CFGNode::operator<(const VirtualCFG::CFGNode &o) const
+*/
+/*!\fn inline bool VirtualCFG::CFGNode::operator==(const VirtualCFG::CFGNode &o) const
+*/
+/*!\fn inline unsigned int VirtualCFG::CFGNode::getIndex() const
+*/
+/*!\fn std::string VirtualCFG::CFGNode::id() const
+*/
+/*!\fn std::string VirtualCFG::CFGNode::toString() const
+*/
+/*!\fn std::string VirtualCFG::CFGNode::toStringForDebugging() const
+*/
+/*!\fn std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > VirtualCFG::CFGNode::inEdges() const
+*/
+/*!\fn std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > VirtualCFG::CFGNode::outEdges() const
+*/
+/*!\fn static unsigned int VirtualCFG::CFGNode::childCount(SgNode *n)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_58863558;

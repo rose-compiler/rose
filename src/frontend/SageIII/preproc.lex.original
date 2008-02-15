@@ -1,0 +1,326 @@
+%{
+  /* this lexer currently recognizes C style comments, C++ style comments,
+     preprocessor directives, and c/c++ linkage specifications.
+     line/column/text information for each recognized directive is stored in ROSEAttributesList.
+     This information is used by the unparser.
+  */
+
+  /* last written and modfified on 2001-11-30 by Markus Schordan (see ChangeLog) 
+     bugfix 2003-02-10: removed lsString code (dead code)
+*/
+
+// #include "assert.h"
+
+#include "sage3.h"
+
+// DQ (11/17/2004): Avoid compiler warning about unused function
+#define YY_NO_UNPUT
+
+#ifdef BOOL_IS_BROKEN
+// If BOOL_IS_BROKEN then we can assume that there is no definition for "true" and "false"
+#ifndef false
+#define false 0
+#endif
+#ifndef true
+#define true  1
+#endif
+#ifndef bool
+typedef int bool;
+#endif
+#endif
+
+#ifndef ROSE_ASSERT
+#define ROSE_ASSERT assert
+#endif
+
+#include "rose_attributes_list.h"
+
+#define HANDLEMACROSTART start_line_no=line_no; start_column_no=1; column_no+=strlen(yytext); strcpy(macroString, yytext); p = macroString+strlen(yytext); BEGIN MACRO;
+
+// DQ 10/19/2005): This is given a static size and was previously set to 8000.
+// test2005_170.C exceeded this limit and causes a seg fault.
+const int max_buf_size = 10000000;
+int i = 0;
+char *p, *q; // p: macropos, q: commentpos
+char commentString[max_buf_size];
+char macroString[max_buf_size];
+
+// DQ (4/19/2006):
+// Store the name of the current file so that we can generate Sg_File_Info objects
+// for each comment.  Later we might want starting and ending fileInfo for each 
+// comments and CPP directive.
+std::string globalFileName;
+
+int braces_no=0;
+int ls_startingline_no; 
+int ls_startingcolumn_no; 
+int brace_counting_on=0;
+PreprocessingInfo::DirectiveType macrotype = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+
+int topbracestack();
+void pushbracestack(int);
+int popbracestack();
+bool isemptystack();
+
+int num_of_newlines(char*);
+
+// DQ (4/13/2007): This is a global variable, we might want to change this.
+ROSEAttributesList preprocessorList;
+
+// DQ (10/30/2005): Changed
+// string			\"([^"]|"\\\""|"\\\n")*\"
+// to 
+// string			\"([^"]|"\\\n")*\"
+// to fix test2005_184.C (use of "\\" in string caused following 
+// macros to be ignored until a double quote (e.g. ") was found).
+
+// DQ (6/25/2006): This was the value before I tried the previous value
+// string			\"([^"]|"\\\n")*\"
+// I tried:
+// string			\"([^"]|"\\n")*\"
+// and: 
+// string			\"([^"]|"\\\\n")*\"
+// This however didn't make any difference, so I restored it it it previous value!
+
+// DQ (6/25/2006): What did fix the problem with continuation chars in C++ comments was changing
+// "<C_COMMENT>\\\n {" to "<C_COMMENT>\\\\n {"
+
+// DQ (6/25/2006): Also swaped the C and C++ enum values used to build the preprocesor info objects since they are incorrect.
+%}
+
+whitespacenl           	[\t\n ]+
+whitespace      	[\t ]+
+alphanum        	[0-9A-Za-z]  
+
+lineprefix		^{whitespace}*"#"{whitespace}*
+macrokeyword 		"include"|"define"|"undef"|"line"|"error"|"warning"|"if"|"ifdef"|"ifndef"|"elif"|"else"|"endif"
+
+mlinkagespecification	^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
+string			\"([^"]|"\\\n")*\"
+
+%s NORMAL C_COMMENT CPP_COMMENT MACRO CPP_COMMENT_INMACRO
+%%
+
+%{
+#undef yywrap
+  	int line_no = 1;
+  	int start_line_no = line_no;
+  	int column_no = 1;
+  	int start_column_no = column_no;
+	BEGIN NORMAL;
+%}
+
+<NORMAL>{mlinkagespecification} { \
+		preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationStart, \
+			yytext,globalFileName,line_no,column_no,0);
+		braces_no++; line_no+=num_of_newlines(yytext); column_no+=strlen(yytext); \
+		pushbracestack(braces_no); \
+		}
+<NORMAL>"{"	{ if(!isemptystack()) {braces_no++;} column_no++; /* we only count braces within a linkage specification. */ \
+                }
+<NORMAL>"}"	{ \
+		if(!isemptystack()) {\
+                	if(braces_no==topbracestack()) { \
+				popbracestack(); \
+				preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationEnd, \
+							    yytext, globalFileName, line_no, column_no, 0); \
+			} \
+			braces_no--;\
+                }\
+                column_no++; \
+		}
+
+<NORMAL>"\/\/" 	{ \
+		start_line_no=line_no; start_column_no=column_no; column_no+=2; \
+		q = commentString; *q = *yytext; *++q = *(yytext+1); q++; \
+		BEGIN C_COMMENT; \
+ 		}
+<NORMAL>"\/*" 	{ \
+		start_line_no=line_no; start_column_no=column_no; column_no+=2; \
+		q = commentString; *q = *yytext; *++q = *(yytext+1); q++; \
+		BEGIN CPP_COMMENT; \
+		}
+
+<NORMAL>{lineprefix}"include"	{ macrotype=PreprocessingInfo::CpreprocessorIncludeDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"define" 	{ macrotype=PreprocessingInfo::CpreprocessorDefineDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"undef" 	{ macrotype=PreprocessingInfo::CpreprocessorUndefDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"line" 	{ macrotype=PreprocessingInfo::CpreprocessorLineDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"error" 	{ macrotype=PreprocessingInfo::CpreprocessorErrorDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"if" 	   { macrotype=PreprocessingInfo::CpreprocessorIfDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"ifdef" 	{ macrotype=PreprocessingInfo::CpreprocessorIfdefDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"ifndef" 	{ macrotype=PreprocessingInfo::CpreprocessorIfndefDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"elif" 	{ macrotype=PreprocessingInfo::CpreprocessorElifDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"else" 	{ macrotype=PreprocessingInfo::CpreprocessorElseDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"endif" 	{ macrotype=PreprocessingInfo::CpreprocessorEndifDeclaration; HANDLEMACROSTART }
+<NORMAL>{lineprefix}"warning" { macrotype=PreprocessingInfo::CpreprocessorWarningDeclaration; HANDLEMACROSTART }
+
+<NORMAL>\n      { line_no++; column_no=1; } 
+<NORMAL>{string} { line_no+=num_of_newlines(yytext); column_no+=strlen(yytext); }
+<NORMAL>.       { column_no++; }
+
+<C_COMMENT>\n 	{ \
+		ROSE_ASSERT(q+1 < commentString+max_buf_size); \
+      if(q+1 < commentString+max_buf_size) { \
+			*q++='\n'; *q++='\0'; \
+		} else { \
+			*q = '\0'; \
+		} \
+		line_no++; column_no=1; \
+		ROSE_ASSERT(*commentString!='\0'); \
+		preprocessorList.addElement(PreprocessingInfo::CplusplusStyleComment, commentString,globalFileName,start_line_no,start_column_no,line_no-start_line_no); \
+		BEGIN NORMAL; }
+
+<C_COMMENT>\\\\n { \
+		ROSE_ASSERT(q+2 < commentString+max_buf_size); \
+		if(q+2 < commentString+max_buf_size) { \
+			*q++ = *yytext; *q++ = *(yytext+1); \
+		} else { \
+			*q = '\0'; \
+		line_no++; column_no=1; \
+		} \
+		}
+
+<C_COMMENT>.    { ROSE_ASSERT(q < commentString+max_buf_size); *q = (q < commentString+max_buf_size)? *yytext : '\0'; q++; column_no++; }
+
+<CPP_COMMENT>\n { ROSE_ASSERT(q < commentString+max_buf_size); *q = (q < commentString+max_buf_size)? *yytext : '\0'; q++; line_no++; column_no=1; }
+<CPP_COMMENT>"*/" { \
+      ROSE_ASSERT(q+1 < commentString+max_buf_size); \
+		if(q+1 < commentString+max_buf_size) { \
+			*q = *yytext; *++q = *(yytext+1); *++q = '\0'; \
+                        } else { \
+			*q = '\0'; \
+			} \
+		ROSE_ASSERT(*commentString!='\0'); \
+		preprocessorList.addElement(PreprocessingInfo::C_StyleComment,commentString,globalFileName,start_line_no,start_column_no,line_no-start_line_no); \
+		column_no+=strlen(yytext);
+		BEGIN NORMAL; }
+<CPP_COMMENT>. 	{ ROSE_ASSERT(q < commentString+max_buf_size); *q = (q < commentString+max_buf_size)? *yytext : '\0'; q++; column_no++; }
+
+<MACRO>\\\n { \
+      ROSE_ASSERT(p+2 < macroString+max_buf_size); \
+		if(p+2 < macroString+max_buf_size) { \
+			*p++ = *yytext; *p++ = *(yytext+1); \
+		} else { \
+			*p = '\0'; \
+		} \
+		line_no++; column_no=1; \
+		}
+<MACRO>\n 	{ \
+      ROSE_ASSERT(p+1 < macroString+max_buf_size); \
+		if(p+1 < macroString+max_buf_size) { \
+			*p++ = '\n'; *p++='\0'; \
+		} else { \
+			*p = '\0'; \
+		} \
+		line_no++; column_no=1; \
+		ROSE_ASSERT(*macroString!='\0'); \
+		preprocessorList.addElement(macrotype,macroString,globalFileName,start_line_no,start_column_no,line_no-start_line_no); \
+		BEGIN NORMAL; }
+<MACRO>"\/*" 	{ \
+		column_no+=2; \
+		*p = *yytext; *++p = *(yytext+1); p++; \
+		BEGIN CPP_COMMENT_INMACRO; \
+		}
+<MACRO>.	{ ROSE_ASSERT(p < macroString+max_buf_size); *p = (p < macroString+max_buf_size)? *yytext: '\0'; p++; column_no++; }
+
+<CPP_COMMENT_INMACRO>"*/" { \
+      ROSE_ASSERT(p+1 < macroString+max_buf_size); \
+		if(p+1 < macroString+max_buf_size) { \
+			*p++ = *yytext; *p++ = *(yytext+1); \
+                        } else { \
+			*p = '\0'; \
+			} \
+		column_no+=strlen(yytext);
+		BEGIN MACRO; }
+<CPP_COMMENT_INMACRO>\n { *p = (p < macroString+max_buf_size)? *yytext : '\0'; p++; line_no++; column_no=1; }
+<CPP_COMMENT_INMACRO>. 	{ *p = (p < macroString+max_buf_size)? *yytext : '\0'; p++; column_no++; }
+
+%%
+int yywrap(void) {
+	return 1; 
+}
+
+const int maxstacksize=500;
+int bracestack[maxstacksize];
+
+int top=0;
+void pushbracestack(int brace_no) { bracestack[top++]=brace_no; }
+int topbracestack() { if(top) return bracestack[top-1]; else return -1; }
+int popbracestack() { return bracestack[--top]; }
+bool isemptystack() { return top==0; }
+
+int num_of_newlines(char* s)
+   {
+     int num = 0;
+     while(*s != '\0')
+        {
+          if(*s == '\n')
+               num++;
+          s++;
+        }
+     return num;
+   }
+
+// DQ (3/30/2006): Modified to use C++ style string instead of C style char* string
+// ROSEAttributesList *getPreprocessorDirectives( char *fileName)
+//! This function gets extracts the comments and CPP preprocessor control directives from the input file.
+ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
+   {
+  // DQ (4/12/2007): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST getPreprocessorDirectives:");
+
+  // printf ("Inside of getPreprocessorDirectives() \n");
+
+     FILE *fp = NULL;
+     ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; /* create a new list */
+     ROSE_ASSERT (preprocessorInfoList != NULL);
+
+  // Set the global filename to be used in the PreprocessingInfo constructor.
+     globalFileName = fileName;
+
+     if ( fileName.empty() == false )
+        {
+          fp = fopen( fileName.c_str(), "r");
+          if (fp)
+             {
+               yyin = fp;
+               yylex();
+
+              // printf ("Inside of getPreprocessorDirectives(%s): preprocessorList size = %ld \n",fileName.c_str(),preprocessorList.size());
+
+            // Writes all gathered information to stdout
+            // preprocessorList.display("TEST Collection of Comments and CPP Directives");
+
+                  {
+                 // DQ (4/12/2007): Introduce tracking of performance of ROSE.
+                    TimingPerformance timer ("AST getPreprocessorDirectives: preprocessorInfoList->moveElements:");
+
+            // bugfix (9/29/2001)
+            // The semantics required here is to move the elements accumulated into the
+            // preprocessorList into the preprocessorInfoList and delete them from the
+            // preprocessorList (which will be used again to accumulate PreprocessingInfo objects
+            // when the next file is processed).  We have to be able to process several files using
+            // this getPreprocessorDirectives() function.
+               preprocessorInfoList->moveElements( preprocessorList ); // create a copy that we can pass on
+                  }
+
+            // The accumulator list should now be empty
+               assert (preprocessorList.getLength() == 0);
+               fclose(fp);  
+             }
+            else
+             {
+            // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
+               printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
+            // ROSE_ASSERT(false);
+             }
+        }
+
+     return preprocessorInfoList;
+   }
+
+
+
+
+
+

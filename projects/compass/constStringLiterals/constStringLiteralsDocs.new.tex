@@ -1,0 +1,157 @@
+
+   \section{Secure Coding : STR05-A. Prefer making string literals const-qualified}
+
+   String literals are constant and should consequently be protected by the {\tt const} qualification. This recommendation supports rule \htmladdnormallink{STR30-C. Do not attempt to modify string literals}{https://www.securecoding.cert.org/confluence/display/seccode/STR3-C.+Do+not+attempt+to+modify+string+literals} .
+   \subsection{Non-Compliant Code Example}
+
+   In the following non-compliant code, the {\tt const} keyword has been omitted.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{char\ }\hlstd{*c\ =\ }\hlstr{"Hello"}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+}
+
+
+   If a statement such as {\tt c[0] = 'C'} were placed following the above declaration, the code would likely still compile cleanly, but the result of the assignment is undefined as string literals are considered constant.
+   \subsection{Compliant Solution 1}
+
+   In this compliant solution, the characters referred to by the pointer {\tt c} are {\tt const}-qualified, meaning that any attempts to assign them to different values is an error.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{char\ const\ }\hlstd{*c\ =\ }\hlstr{"Hello"}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+}
+
+   \subsection{Compliant Solution 2}
+
+   In cases where the string is meant to be modified, use initialization instead of assignment. In this compliant solution, {\tt c} is a modifiable {\tt char} array which has been initialized using the contents of the corresponding string literal.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{char\ }\hlstd{c}\hlsym{[]\ }\hlstd{=\ }\hlstr{"Hello"}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+}
+
+
+   Thus, a statement such as {\tt c[0] = 'C'} is valid and will do what is expected.
+   \subsection{Non-Compliant Code Example 1}
+
+   Although this code example is not compliant with the C99 Standard, it executes correctly if the contents of {\tt CMUfullname} are not modified.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{char\ }\hlstd{*CMUfullname\ =\ }\hlstr{"Carnegie\ Mellon\ University"}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hltyp{char\ }\hlstd{*school;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlcom{/*\ Get\ school\ from\ user\ input\ and\ validate\ */}\hlstd{\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\\
+}\hlline{\ \ \ \ 6\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{strcmp}\hlsym{(}\hlstd{school,\ }\hlstr{"CMU"}\hlstd{}\hlsym{))\ \{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{school\ =\ CMUfullname;\\
+}\hlline{\ \ \ \ 8\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ \ 9\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+}
+
+   \subsection{Non-Compliant Code Example 2}
+
+   Adding in the {\tt const} keyword will likely generate a compiler warning, as the assignment of {\tt CMUfullname} to {\tt school} discards the {\tt const} qualifier. Any modifications to the contents of {\tt school} after this assignment will lead to errors.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{char\ const\ }\hlstd{*CMUfullname\ =\ }\hlstr{"Carnegie\ Mellon\ University"}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hltyp{char\ }\hlstd{*school;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlcom{/*\ Get\ school\ from\ user\ input\ and\ validate\ */}\hlstd{\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\\
+}\hlline{\ \ \ \ 6\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{strcmp}\hlsym{(}\hlstd{school,\ }\hlstr{"CMU"}\hlstd{}\hlsym{))\ \{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{school\ =\ CMUfullname;\\
+}\hlline{\ \ \ \ 8\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ \ 9\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+}
+
+   \subsection{Compliant Solution}
+
+   The compliant solution uses the {\tt const} keyword to protect the string literal, as well as using {\tt strcpy()} to copy the value of {\tt CMUfullname} into {\tt school}, allowing future modification of {\tt school}.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{char\ const\ }\hlstd{*CMUfullname\ =\ }\hlstr{"Carnegie\ Mellon\ University"}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hltyp{char\ }\hlstd{*school;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlcom{/*\ Get\ school\ from\ user\ input\ and\ validate\ */}\hlstd{\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\\
+}\hlline{\ \ \ \ 6\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{strcmp}\hlsym{(}\hlstd{school,\ }\hlstr{"CMU"}\hlstd{}\hlsym{))\ \{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{}\hlcom{/*\ Allocate\ correct\ amount\ of\ space\ for\ copy\ */}\hlstd{\\
+}\hlline{\ \ \ \ 8\ }\hlstd{\hlstd{\ \ \ \ }strcpy}\hlsym{(}\hlstd{school,\ CMUfullname}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 9\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ 10\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+}
+
+   \subsection{Risk Assessment}
+
+   Modifying string literals causes undefined behavior, resulting in abnormal program termination and denial-of-service vulnerabilities.
+
+   \begin{tabular}[c]{| c| c| c| c| c| c|}
+   \hline
+   {\bf Rule} & {\bf Severity} & {\bf Likelihood} & {\bf Remediation Cost} & {\bf Priority} & {\bf Level} \\ \hline
+   STR05-A & {\bf 1} (low) & {\bf 3} (likely) & {\bf 2} (medium) & {\bf P6} & {\bf L3} \\ \hline
+   \end{tabular}
+   \subsubsection{Related Vulnerabilities}
+
+   Search for vulnerabilities resulting from the violation of this rule on the \htmladdnormallink{CERT website}{https://www.kb.cert.org/vulnotes/bymetric?searchview\&query=FIELD+contains+STR05-A} .
+
+   \htmladdnormallink{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/1993/N0389.asc}{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/1993/N0389.asc} [ \\*
+   \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 6.7.8, "Initialization" [Lockheed Martin 2005] Lockheed Martin. Joint Strike Fighter Air Vehicle C++ Coding Standards for the System Development and Demonstration Program. Document Number 2RDU00001, Rev C. December 2005. AV Rule 151.1 \\*

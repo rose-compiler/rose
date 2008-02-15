@@ -1,0 +1,2 @@
+bjam --prefix=/home/dquinlan/local/boost_64bit_3.4.6
+    --builddir=/home/dquinlan/local/boost_64bit_3.4.6 install -j8

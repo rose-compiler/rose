@@ -1,0 +1,235 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationModifier
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgDeclarationModifier
+\brief This class represents modifiers for SgDeclaration (declaration statements).
+\sa
+\ref SgDeclarationModifier_usage  "Example of using a SgDeclarationModifier object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationModifier data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationModifier member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgDeclarationModifier::~SgDeclarationModifier()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgDeclarationModifier::operator=(const SgDeclarationModifier & X)
+\brief This is the assignment operator.
+   This is a simple assignment of the SgBitVector from X to the current object.
+*/
+/*!
+\fn SgDeclarationModifier::isSgDeclarationModifier (SgNode *s)
+\brief Cast function (from derived class to SgDeclarationModifier pointer).
+   This functions returns a SgDeclarationModifier pointer for any input of a 
+pointer to an object derived from a SgDeclarationModifier.
+\return Returns valid pointer to SgDeclarationModifier if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgDeclarationModifier::isSgDeclarationModifier (const SgNode *s)
+\brief Cast function (from derived class to SgDeclarationModifier pointer).
+   This functions returns a SgDeclarationModifier pointer for any input of a 
+pointer to an object derived from a SgDeclarationModifier.
+\return Returns valid pointer to SgDeclarationModifier if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgAccessModifier SgDeclarationModifier::p_accessModifier
+\brief Modifier for access information (only set for declarations in class and struct definitions)
+*/
+/*!
+\var SgBitVector SgDeclarationModifier::p_modifierVector
+\brief Bit vector permitting specification of flags for friend, typedef, export, throw.
+*/
+/*!
+\var SgTypeModifier SgDeclarationModifier::p_typeModifier
+\brief Modifier for type information.
+*/
+/*!
+\var SgStorageModifier SgDeclarationModifier::p_storageModifier
+\brief Modified for storage information.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDeclarationModifier &SgDeclarationModifier::operator=(const SgDeclarationModifier &X)
+*/
+/*!\fn SgDeclarationModifier::SgDeclarationModifier(const SgDeclarationModifier &X)
+*/
+/*!\fn SgDeclarationModifier::SgDeclarationModifier(const SgDeclarationModifierStorageClass &source)
+*/
+/*!\fn bool SgDeclarationModifier::isBind() const
+*/
+/*!
+\fn bool SgDeclarationModifier::isDefault() const
+\brief Declaration modifier is default (default setting).
+\return Returns bool.
+*/
+/*!
+\fn bool SgDeclarationModifier::isExport() const
+\brief Declaration modifier is export.
+\return Returns bool.
+*/
+/*!
+\fn bool SgDeclarationModifier::isFriend() const
+\brief declaration modifier is friend.
+\return Returns bool.
+*/
+/*!
+\fn bool SgDeclarationModifier::isThrow() const
+\brief Declaration modifier is throw.
+\return Returns bool.
+*/
+/*!
+\fn bool SgDeclarationModifier::isTypedef() const
+\brief Declaration modifier is a typedef.
+\return Returns bool.
+*/
+/*!
+\fn bool SgDeclarationModifier::isUnknown() const
+\brief Declaration modifier is unknown (not set).
+\return Returns bool.
+*/
+/*!\fn inline static void SgDeclarationModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgDeclarationModifier *SgDeclarationModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDeclarationModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDeclarationModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDeclarationModifier::initializeStorageClassArray(SgDeclarationModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgDeclarationModifier::clearMemoryPool()
+*/
+/*!\fn static void SgDeclarationModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDeclarationModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgDeclarationModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgDeclarationModifier::roseRTI()
+*/
+/*!\fn virtual SgDeclarationModifier::~SgDeclarationModifier()
+*/
+/*!\fn virtual SgNode *SgDeclarationModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgDeclarationModifier::post_construction_initialization()
+*/
+/*!\fn void SgDeclarationModifier::display(std::string label) const
+*/
+/*!\fn void SgDeclarationModifier::reset()
+*/
+/*!\fn void SgDeclarationModifier::setBind()
+*/
+/*!
+\fn void SgDeclarationModifier::setDefault()
+\brief Set bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::setExport()
+\brief Set bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::setFriend()
+\brief Set bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::setThrow()
+\brief Set bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::setTypedef()
+\brief Set bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::setUnknown()
+\brief Set bit flag.
+\return Returns void.
+*/
+/*!\fn void SgDeclarationModifier::unsetBind()
+*/
+/*!
+\fn void SgDeclarationModifier::unsetDefault()
+\brief Clear (unset) bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::unsetExport()
+\brief Clear (unset) bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::unsetFriend()
+\brief Clear (unset) bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::unsetThrow()
+\brief Clear (unset) bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::unsetTypedef()
+\brief Clear (unset) bit flag.
+\return Returns void.
+*/
+/*!
+\fn void SgDeclarationModifier::unsetUnknown()
+\brief Clear (unset) bit flag.
+\return Returns void.
+*/
+/*!\fn void SgDeclarationModifier::set_modifierVector(SgBitVector modifierVector)
+\description See  modifierVector)
+modifierVector for documentation */
+/*!\fn SgAccessModifier &SgDeclarationModifier::get_accessModifier()
+\description See  &SgDeclarationModifier::accessModifier for documentation */
+/*!\fn SgBitVector SgDeclarationModifier::get_modifierVector() const
+\description See  const
+modifierVector for documentation */
+/*!\fn SgStorageModifier &SgDeclarationModifier::get_storageModifier()
+\description See  &SgDeclarationModifier::storageModifier for documentation */
+/*!\fn SgTypeModifier &SgDeclarationModifier::get_typeModifier()
+\description See  &SgDeclarationModifier::typeModifier for documentation */
+/*!\fn const SgAccessModifier &SgDeclarationModifier::get_accessModifier() const
+\description See  const
+accessModifier for documentation */
+/*!\fn const SgStorageModifier &SgDeclarationModifier::get_storageModifier() const
+\description See  const
+storageModifier for documentation */
+/*!\fn const SgTypeModifier &SgDeclarationModifier::get_typeModifier() const
+\description See  const
+typeModifier for documentation */
+/*!\fn virtual SgNode *SgDeclarationModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgDeclarationModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDeclarationModifier::get_numberOfTraversalSuccessors()
+\description See  SgDeclarationModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDeclarationModifier::get_traversalSuccessorContainer()
+\description See  SgDeclarationModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDeclarationModifier::get_traversalSuccessorNamesContainer()
+\description See  SgDeclarationModifier::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgDeclarationModifier::SgDeclarationModifier()
+\brief This is the constructor.
+   This constructor builds the SgDeclarationModifier base class.
+\sa 
+\ref SgDeclarationModifier_create "Example:create an SgDeclarationModifier object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_1559571867535;

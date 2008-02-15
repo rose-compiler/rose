@@ -1,0 +1,71 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgUnsignedCharVal
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned char SgUnsignedCharVal::p_value
+*/
+/*!\var std::string SgUnsignedCharVal::p_valueString
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgUnsignedCharVal::SgUnsignedCharVal(Sg_File_Info *startOfConstruct,unsigned char value=0,std::string valueString=(""))
+*/
+/*!\fn SgUnsignedCharVal::SgUnsignedCharVal(const SgUnsignedCharValStorageClass &source)
+*/
+/*!\fn inline static void SgUnsignedCharVal::operator delete(void *pointer)
+*/
+/*!\fn static SgUnsignedCharVal *SgUnsignedCharVal::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgUnsignedCharVal::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgUnsignedCharVal::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgUnsignedCharVal::initializeStorageClassArray(SgUnsignedCharValStorageClass *storageArray)
+*/
+/*!\fn static void SgUnsignedCharVal::clearMemoryPool()
+*/
+/*!\fn static void SgUnsignedCharVal::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgUnsignedCharVal::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgUnsignedCharVal::roseRTI()
+*/
+/*!\fn virtual SgNode *SgUnsignedCharVal::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgUnsignedCharVal::~SgUnsignedCharVal()
+*/
+/*!\fn virtual void SgUnsignedCharVal::post_construction_initialization()
+*/
+/*!\fn void SgUnsignedCharVal::set_value(unsigned char value)
+\description See  value)
+value for documentation */
+/*!\fn void SgUnsignedCharVal::set_valueString(std::string valueString)
+\description See  valueString)
+valueString for documentation */
+/*!\fn std::string SgUnsignedCharVal::get_valueString() const
+\description See  const
+valueString for documentation */
+/*!\fn unsigned char SgUnsignedCharVal::get_value() const
+\description See  const
+value for documentation */
+/*!\fn virtual SgNode *SgUnsignedCharVal::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgUnsignedCharVal::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgUnsignedCharVal::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgUnsignedCharVal::get_numberOfTraversalSuccessors()
+\description See  SgUnsignedCharVal::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnsignedCharVal::get_traversalSuccessorContainer()
+\description See  SgUnsignedCharVal::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnsignedCharVal::get_traversalSuccessorNamesContainer()
+\description See  SgUnsignedCharVal::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgUnsignedCharVal::SgUnsignedCharVal(unsigned char value,std::string valueString)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_170082740;

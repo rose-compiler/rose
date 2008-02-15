@@ -1,0 +1,8 @@
+       // Special constructor for this class
+          CLASSNAME ( SgExpression* expr );
+
+       // This class is a leaf of our grammar, so we want to define this function here
+          virtual ROSE_Node* transform();
+          virtual ROSE_Node* transform( ROSE_Expression* lhs, ROSE_Expression* rhs );
+
+          virtual SgExpression* buildExpression ( ROSE_Expression* node, SgExpression* sageLhsExpression, SgExpression* sageRhsExpression );

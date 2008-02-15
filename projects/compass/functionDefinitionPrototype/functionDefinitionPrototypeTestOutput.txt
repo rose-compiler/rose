@@ -1,0 +1,2 @@
+FunctionDefinitionPrototype: functionDefinitionPrototypeTest1.C:1.1-16: SgFunctionDeclaration: This checker checks that function definitions have matching function prototypes.
+FunctionDefinitionPrototype: functionDefinitionPrototypeTest1.C:6.1-10: SgFunctionDeclaration: This checker checks that function definitions have matching function prototypes.

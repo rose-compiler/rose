@@ -1,0 +1,13 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name User Interface*/
+//@{
+/*!\fn static std::set< SgDeclarationStatement * , std::less< SgDeclarationStatement * >  , std::allocator< SgDeclarationStatement * >  > MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations(SgNode *node,SgFile *file)
+*/
+/*!\fn static void MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations(std::set< SgDeclarationStatement * , std::less< SgDeclarationStatement * >  , std::allocator< SgDeclarationStatement * >  > setOfRequiredDeclarations,SgFile *file)
+*/
+/*!\fn static void MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(std::set< SgDeclarationStatement * , std::less< SgDeclarationStatement * >  , std::allocator< SgDeclarationStatement * >  > setOfRequiredDeclarations,SgFile *file)
+*/
+/*!\fn static void MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(std::set< SgDeclarationStatement * , std::less< SgDeclarationStatement * >  , std::allocator< SgDeclarationStatement * >  > setOfRequiredDeclarations,SgFile *file)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1560304717;

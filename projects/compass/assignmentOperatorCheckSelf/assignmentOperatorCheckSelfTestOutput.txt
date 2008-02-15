@@ -1,0 +1,2 @@
+AssignmentOperatorCheckSelf: assignmentOperatorCheckSelfTest1.C:30.3-49: SgMemberFunctionDeclaration: Finding Assignment Operators that do not check for self in first line
+AssignmentOperatorCheckSelf: assignmentOperatorCheckSelfTest1.C:35.3-51: SgMemberFunctionDeclaration: Finding Assignment Operators that do not check for self in first line

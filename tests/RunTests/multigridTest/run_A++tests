@@ -1,0 +1,57 @@
+#! /bin/sh
+# script to compile and execute A++ test files
+# produces output files (*.out) of both the original and unparsed versions of test files
+# and diffs the output files
+
+
+make clean
+
+# riemann
+make riemann
+../src/rose -I../include -skip_transformation -new_unparser -o rose_riemann.C riemann.C
+make rose_riemann
+riemann > riemann.out
+rose_riemann > rose_riemann.out
+diff riemann.out rose_riemann.out
+
+# exit
+
+# mg
+make mg
+../src/rose -I../include -skip_transformation -new_unparser -o rose_mg.C mg.C
+../src/rose -I../include -skip_transformation -new_unparser -o rose_mg_main.C mg_main.C
+../src/rose -I../include -skip_transformation -new_unparser -o rose_mg1level.C mg1level.C
+../src/rose -I../include -skip_transformation -new_unparser -o rose_pde.C pde.C
+make rose_mg
+mg > mg.out
+rose_mg > rose_mg.out
+diff mg.out rose_mg.out
+
+# uncomment to skip processing of testcode.C
+exit
+
+# testcode
+make testcode
+../src/rose -I../include -skip_transformation -new_unparser -o rose_testcode.C testcode.C
+
+# should produce compiling errors
+make rose_testcode
+
+# uncomment the next 2 lines once rose_testcode.C can compile
+# testcode > testcode.out
+# rose_testcode > rose_testcode.out
+# diff testcode.out rose_testcode.out
+
+# testppp
+make testppp
+../src/rose -I../include -skip_transformation -new_unparser -o rose_testppp.C testppp.C
+
+# should produce compiling errors
+make rose_testppp
+
+# uncomment the next 2 lines once rose_testppp.C can compile
+# testppp > testppp.out
+# rose_testppp > rose_testppp.out
+# diff testppp.out rose_testppp.out
+
+# after correcting errors in rose_testcode.C and rose_testppp.C, run redo_tests script.

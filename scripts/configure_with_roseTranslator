@@ -1,0 +1,7 @@
+This is the command line to configure to compile ROSE using a copy of ROSE.
+It is assumed that there is a translator built using ROSE (any ROSE translators 
+should do) and that it is available in the user's path (roseTranslator).
+
+/home/dquinlan/ROSE/NEW_ROSE/configure --with-edg_source_code=true --enable-dq-developer-tests --with-CXX=roseTranslator --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/LINUX_64bit-ROSE_ROSE_3.4.6_install
+
+

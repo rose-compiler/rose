@@ -1,0 +1,59 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Exceptions}
+\label{NoExceptions::overview}
+This checker detects all usages of C++ exception handling.
+
+\subsection{Parameter Requirements}
+No parameters are required.
+
+\subsection{Implementation}
+The checker detects try statements, throw operations and catch statements.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+class Exception{};
+
+int main(){
+ try {
+    throw Exception();
+ } catch( Exception e )
+   { }
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+int main(){
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Traverse the AST
+\item For each try statements, throw operations and catch statements report and error.
+\end{enumerate}
+
+\subsection{References}
+The ALE3D style guide section 17.1 forbids usage of C++ exceptions.
+

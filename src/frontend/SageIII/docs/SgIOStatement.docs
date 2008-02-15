@@ -1,0 +1,100 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgIOStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExprListExp *SgIOStatement::p_io_stmt_list
+*/
+/*!\var SgExpression *SgIOStatement::p_err
+*/
+/*!\var SgExpression *SgIOStatement::p_iostat
+*/
+/*!\var SgExpression *SgIOStatement::p_unit
+*/
+/*!\var enum SgIOStatement::io_statement_enum SgIOStatement::p_io_statement
+*/
+/*!\var SgExpression *SgIOStatement::p_iomsg
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgIOStatement::SgIOStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgIOStatement::SgIOStatement(const SgIOStatementStorageClass &source)
+*/
+/*!\fn inline static void SgIOStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgIOStatement *SgIOStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgIOStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgIOStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgIOStatement::initializeStorageClassArray(SgIOStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgIOStatement::clearMemoryPool()
+*/
+/*!\fn static void SgIOStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgIOStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgIOStatement::roseRTI()
+*/
+/*!\fn virtual SgIOStatement::~SgIOStatement()
+*/
+/*!\fn virtual SgNode *SgIOStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgIOStatement::post_construction_initialization()
+*/
+/*!\fn void SgIOStatement::set_err(SgExpression *err)
+\description See  *err)
+err for documentation */
+/*!\fn void SgIOStatement::set_io_statement(enum SgIOStatement::io_statement_enum io_statement)
+\description See  io_statement)
+io_statement for documentation */
+/*!\fn void SgIOStatement::set_io_stmt_list(SgExprListExp *io_stmt_list)
+\description See  *io_stmt_list)
+io_stmt_list for documentation */
+/*!\fn void SgIOStatement::set_iomsg(SgExpression *iomsg)
+\description See  *iomsg)
+iomsg for documentation */
+/*!\fn void SgIOStatement::set_iostat(SgExpression *iostat)
+\description See  *iostat)
+iostat for documentation */
+/*!\fn void SgIOStatement::set_unit(SgExpression *unit)
+\description See  *unit)
+unit for documentation */
+/*!\fn SgExprListExp *SgIOStatement::get_io_stmt_list() const
+\description See  const
+io_stmt_list for documentation */
+/*!\fn SgExpression *SgIOStatement::get_err() const
+\description See  const
+err for documentation */
+/*!\fn SgExpression *SgIOStatement::get_iomsg() const
+\description See  const
+iomsg for documentation */
+/*!\fn SgExpression *SgIOStatement::get_iostat() const
+\description See  const
+iostat for documentation */
+/*!\fn SgExpression *SgIOStatement::get_unit() const
+\description See  const
+unit for documentation */
+/*!\fn enum SgIOStatement::io_statement_enum SgIOStatement::get_io_statement() const
+\description See  const
+io_statement for documentation */
+/*!\fn virtual SgNode *SgIOStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgIOStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgIOStatement::get_numberOfTraversalSuccessors()
+\description See  SgIOStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIOStatement::get_traversalSuccessorContainer()
+\description See  SgIOStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIOStatement::get_traversalSuccessorNamesContainer()
+\description See  SgIOStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgIOStatement::SgIOStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_406880606;

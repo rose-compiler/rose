@@ -1,0 +1,173 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgForStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgForStatement
+\brief This class represents the concept of a for loop.
+
+\internal 
+
+\todo The conditional in this test is currently an expression, but should be a
+    SgConditional or a SgStatement (e.g. so that it can be a variable declaration).
+
+\todo Now that the test is a SgStatement, perhaps the name of the field should be 
+      "test" instead of "test_expr".
+
+*/
+
+/*
+\sa
+\ref SgForStatement_usage  "Example of using a SgForStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgForStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgForStatement::p_for_init_stmt
+\brief This pointer a SgForInitStatement (a list of pointers to statements (SgStatement objects) ).
+
+\note I think this is a poor name for this variable.
+*/
+
+/*! \var SgForStatement::p_test_expr_root
+\brief This pointer a SgExpression (a list of pointers to statements (SgStatement objects) ).
+
+\note I think this is a poor name for this variable.
+
+\todo This should be changed to be a SgStatement (to follow the C++ standard).
+    this way it could be an expression (via an expression statement) or a variable
+    declaration with initializer (via a SgVariableDeclaration).
+    We also have the condition specified before the body within the ROSETTA
+    specification and this causes the traversal to travers the condition and body in the
+    wrong order (for do-while, the traversal should be body forst and condition second).
+    See test2005_114.C for more details and example code (example of strange loops).
+*/
+
+/*! \var SgForStatement::p_increment_expr_root
+\brief This pointer a SgExpression (a list of pointers to statements (SgStatement objects) ).
+
+\note I think this is a poor name for this variable.
+*/
+
+/*! \var SgForStatement::p_loop_body
+\brief This pointer a SgBasicBlock, and holds the statements in the body of the loop.
+
+\note I think this is a poor name for this variable (should be "body" to match other IR
+      nodes).
+
+\todo Change "loop_body" to "body" to be consistant with other scopes that contain a SgBasicBlock.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgForStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgForStatement::SgForStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgForStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgForStatement_create "Example:create an SgForStatement object"
+*/
+
+/*!
+\fn SgForStatement::~SgForStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgForStatement::isSgForStatement (SgNode *s)
+\brief Cast function (from derived class to SgForStatement pointer).
+
+   This functions returns a SgForStatement pointer for any input of a 
+pointer to an object derived from a SgForStatement.
+
+\return Returns valid pointer to SgForStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgForStatement::isSgForStatement (const SgNode *s)
+\brief Cast function (from derived class to SgForStatement pointer).
+
+   This functions returns a SgForStatement pointer for any input of a 
+pointer to an object derived from a SgForStatement.
+
+\return Returns valid pointer to SgForStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgForStatement::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgForStatement.
+*/
+
+/*!
+\fn SgForStatement::get_for_init_stmt() const
+\brief Access function for p_for_init_stmt.
+
+\return Returns a pointer to a SgForInitStatement.
+*/
+
+/*!
+\fn SgForStatement::set_for_init_stmt(SgForInitStatement* for_init_stmt)
+\brief Access function for p_for_init_stmt.
+
+\param for_init_stmt SgForInitStatement pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgForStatement::get_test_expr() const
+\brief Access function for p_test_expr_root.
+
+\return Returns a pointer to a SgExpression.
+*/
+
+/*!
+\fn SgForStatement::set_test_expr(SgExpression* test_expr)
+\brief Access function for p_test_expr_root.
+
+\param test_expr SgExpression pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgForStatement::get_increment_expr() const
+\brief Access function for p_increment_expr.
+
+\return Returns a pointer to a SgExpression.
+*/
+
+/*!
+\fn SgForStatement::set_increment_expr(SgExpression* increment_expr)
+\brief Access function for p_increment_expr.
+
+\param increment_expr SgExpression pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgForStatement::get_loop_body() const
+\brief Access function for p_loop_body.
+
+\return Returns a pointer to a SgBasicBlock.
+*/
+
+/*!
+\fn SgForStatement::set_loop_body(SgBasicBlock* loop_body)
+\brief Access function for p_loop_body.
+
+\param loop_body SgBasicBlock pointer
+\return Returns void.
+*/
+

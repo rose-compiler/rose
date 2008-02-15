@@ -1,0 +1,13 @@
+
+int
+$CLASSNAME::variant() const
+   {
+  // This function is generated from grammarVariantFunctionDefinitionMacros.macro
+#ifdef DEBUG
+  // printf ("In $CLASSNAME::variant() const \n");
+#endif
+     assert(this != NULL);
+     return $MARKER;
+   }
+
+

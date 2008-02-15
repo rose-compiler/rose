@@ -1,0 +1,32 @@
+#ifndef ROSE_ARRAY_STATEMENT_TRANSFORMATION_H
+#define ROSE_ARRAY_STATEMENT_TRANSFORMATION_H
+
+#if 0
+// Forward reference
+class SynthesizedAttributeBaseClassType;
+
+class ArrayStatementTransformation
+   {
+  // This class holds the details of the implementation of the array statement transformation.
+
+     public:
+
+         ~ArrayStatementTransformation();
+          ArrayStatementTransformation();
+
+          ArrayStatementTransformation ( const SynthesizedAttributeBaseClassType & X );
+
+       // this is a static function called before a transformation object is built.
+       // transformation objects are build only if the targetForTransformation member
+       // function returns TRUE.
+          static bool targetForTransformation( SgNode* astNode );
+
+       // pure virtual function from base class defined (can't be static???)
+       // ProgramTransformationSynthesizedAttributeType transformation( SgNode* astNode );
+       // static ArrayStatementTransformation transformation( SgNode* astNode );
+          static SynthesizedAttributeBaseClassType transformation( SgProject & project, SgNode* astNode );
+   };
+#endif
+
+// endif for ROSE_ARRAY_STATEMENT_TRANSFORMATION_H
+#endif

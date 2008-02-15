@@ -1,0 +1,1 @@
+DoNotCallPutenvWithAutoVar: doNotCallPutenvWithAutoVarTest1.C:14.11-16: SgFunctionCallExp: Do not call putenv() with an automatic variable as an argument.  Try using setenv() instead.

@@ -1,0 +1,77 @@
+#!/usr/bin/perl
+$count =0;
+#print "argv.length =". @ARGV. "and content: ". $ARGV[0] . "\n";
+if ( @ARGV == 1 )
+{
+	$count=$ARGV[0];
+	
+}
+else
+{
+print "This is a stress-test for callgraph factory.\n";
+}
+while ($count < 2)
+{
+	print "Enter the number of functions (min 2):";
+	$count = <STDIN>;
+	chomp($count);
+}
+
+$filename_praefix = "sT";
+$filename=$filename_praefix. $count. ".C";
+
+$graphCmpFileNmae=$filename_praefix. $count.".cmp.dmp";
+
+#create the target.C file
+open(STRESSTEST,">$filename");
+#create the comparision-graph-dump-file
+open(STRESSTESTCMP,">$graphCmpFileNmae");
+
+@funtion_list;
+
+#create the list of function-names, needs only to be writte to the stress-stest-file
+for ($i = 0; $i < $count; ++$i)
+{
+	$function="f$i";
+	# function declaration
+	print STRESSTEST "void $function();\n";
+	push(@function_list , "f$i");
+}
+
+
+foreach $function (@function_list)
+{
+	# create a fuynction defintion
+	print STRESSTEST "void $function(){\n";
+	# create a graph-dump-node
+	print STRESSTESTCMP "$function ->";
+	
+	
+	# make a complete cg by calling every other function but the main
+	foreach $call (@function_list)
+	{
+		print STRESSTEST "$call();\n";
+		# add this node to the called list in the cgd
+		print STRESSTESTCMP " $call";
+	}
+	#close the function
+	print STRESSTEST "}\n";	
+	print STRESSTESTCMP "\n";
+}
+# create the main and its graph-dump-representation
+print STRESSTEST "int main(int argc,char * argv){\n";
+print STRESSTESTCMP "main ->";
+
+
+foreach $function (@function_list)
+{
+	 print STRESSTEST "$function();\n";
+	 print STRESSTESTCMP " $function";
+}
+
+print STRESSTEST "return 0;\n}\n";
+print STRESSTESTCMP "\n";
+close(STRESSTEST);
+close(STRESSTESTCMP);
+
+#print @function_list;

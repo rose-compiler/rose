@@ -1,0 +1,164 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionDeclaration
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgMemberFunctionDeclaration
+\brief This class represents the concept of a member function declaration statement.
+    The member function declaration is derived from a function declaration and adds
+specific data members that are relavant.
+\note Constructors, destructors, and conversion operators are handled as member fucntions 
+    with names associated with their classes.
+\internal  The scope can at times be that of the global scope, when this happens 
+     users should access the scope through get_firstNondefiningDeclaration().
+     This appears to be a bug internally.
+*/
+/*
+\sa
+\ref SgMemberFunctionDeclaration_usage  "Example of using a SgMemberFunctionDeclaration object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionDeclaration data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgMemberFunctionDeclaration member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgMemberFunctionDeclaration_create "Example:create an SgMemberFunctionDeclaration object"
+*/
+/*!
+\fn SgMemberFunctionDeclaration::~SgMemberFunctionDeclaration()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgMemberFunctionDeclaration::isSgMemberFunctionDeclaration (SgNode *s)
+\brief Cast function (from derived class to SgMemberFunctionDeclaration pointer).
+   This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
+pointer to an object derived from a SgMemberFunctionDeclaration.
+\return Returns valid pointer to SgMemberFunctionDeclaration if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgMemberFunctionDeclaration::isSgMemberFunctionDeclaration (const SgNode *s)
+\brief Cast function (from derived class to SgMemberFunctionDeclaration pointer).
+   This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
+pointer to an object derived from a SgMemberFunctionDeclaration.
+\return Returns valid pointer to SgMemberFunctionDeclaration if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgCtorInitializerList *SgMemberFunctionDeclaration::p_CtorInitializerList
+\brief This is the constructor preinitialization list (used only for the constructor
+    definitions).
+\internal This data member might make more sense in the SgFunctionDefinition (or we could
+    build a SgMemberFunctionDefinition from the SgFunctionDefinition, and put the
+    constructor initialization list there).
+*/
+/*!\var SgClassDeclaration *SgMemberFunctionDeclaration::p_associatedClassDeclaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgMemberFunctionDeclaration::SgMemberFunctionDeclaration(Sg_File_Info *startOfConstruct,SgName name=(""),SgFunctionType *type=(0),SgFunctionDefinition *definition=(0))
+*/
+/*!
+\fn SgMemberFunctionDeclaration::SgMemberFunctionDeclaration(const SgMemberFunctionDeclarationStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgMemberFunctionDeclaration base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn bool SgMemberFunctionDeclaration::isDefinedInClass() const
+*/
+/*!\fn inline static void SgMemberFunctionDeclaration::operator delete(void *pointer)
+*/
+/*!\fn static SgMemberFunctionDeclaration *SgMemberFunctionDeclaration::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgMemberFunctionDeclaration::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgMemberFunctionDeclaration::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgMemberFunctionDeclaration::initializeStorageClassArray(SgMemberFunctionDeclarationStorageClass *storageArray)
+*/
+/*!\fn static void SgMemberFunctionDeclaration::clearMemoryPool()
+*/
+/*!\fn static void SgMemberFunctionDeclaration::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgMemberFunctionDeclaration::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgMemberFunctionDeclaration::roseRTI()
+*/
+/*!\fn virtual SgMemberFunctionDeclaration::~SgMemberFunctionDeclaration()
+*/
+/*!\fn virtual SgNode *SgMemberFunctionDeclaration::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual bool SgMemberFunctionDeclaration::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgMemberFunctionDeclaration::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgMemberFunctionDeclaration::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgMemberFunctionDeclaration::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgMemberFunctionDeclaration::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgMemberFunctionDeclaration::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgMemberFunctionDeclaration::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgMemberFunctionDeclaration::post_construction_initialization()
+*/
+/*!\fn void SgMemberFunctionDeclaration::append_ctor_initializer(SgInitializedName *element)
+*/
+/*!\fn void SgMemberFunctionDeclaration::insert_ctor_initializer(const std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator &list,SgInitializedName *element)
+*/
+/*!\fn void SgMemberFunctionDeclaration::prepend_ctor_initializer(SgInitializedName *element)
+*/
+/*!
+\fn void SgMemberFunctionDeclaration::set_CtorInitializerList(SgCtorInitializerList *CtorInitializerList)
+\brief Access function for p_CtorInitializerList.
+See  *CtorInitializerList)
+CtorInitializerList for documentation \return Returns void.
+*/
+/*!\fn void SgMemberFunctionDeclaration::set_orig_return_type(SgType *)
+\description See  *)
+orig_return_type for documentation */
+/*!\fn SgClassDeclaration *SgMemberFunctionDeclaration::get_associatedClassDeclaration() const
+\description See  const
+associatedClassDeclaration for documentation */
+/*!\fn SgClassDefinition *SgMemberFunctionDeclaration::get_class_scope() const
+\description See  const
+class_scope for documentation */
+/*!
+\fn SgCtorInitializerList *SgMemberFunctionDeclaration::get_CtorInitializerList() const
+\brief Access function for p_CtorInitializerList.
+See  const
+CtorInitializerList for documentation \return Returns pointer to SgCtorInitializerList.
+*/
+/*!\fn SgInitializedNamePtrList &SgMemberFunctionDeclaration::get_ctors()
+\description See  &SgMemberFunctionDeclaration::ctors for documentation */
+/*!\fn const SgInitializedNamePtrList &SgMemberFunctionDeclaration::get_ctors() const
+\description See  const
+ctors for documentation */
+/*!\fn virtual SgName SgMemberFunctionDeclaration::get_qualified_name() const
+\description See  const
+qualified_name for documentation */
+/*!\fn virtual SgNode *SgMemberFunctionDeclaration::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgSymbol *SgMemberFunctionDeclaration::get_symbol_from_symbol_table() const
+\description See  const
+symbol_from_symbol_table for documentation */
+/*!\fn virtual size_t SgMemberFunctionDeclaration::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgMemberFunctionDeclaration::get_numberOfTraversalSuccessors()
+\description See  SgMemberFunctionDeclaration::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgMemberFunctionDeclaration::get_traversalSuccessorContainer()
+\description See  SgMemberFunctionDeclaration::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgMemberFunctionDeclaration::get_traversalSuccessorNamesContainer()
+\description See  SgMemberFunctionDeclaration::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgMemberFunctionDeclaration::SgMemberFunctionDeclaration(SgName name,SgFunctionType *type,SgFunctionDefinition *definition)
+*/
+//@}
+int SAGE_Doxygen_Dummy_242892271529045;

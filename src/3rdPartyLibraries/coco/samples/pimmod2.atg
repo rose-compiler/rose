@@ -1,0 +1,119 @@
+COMPILER Mod2
+/* COCO/R Grammar for Modula-2 based on "Programming in Modula-2 */
+
+CHARACTERS
+  eol      = CHR(10) .
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  octDigit = "01234567" .
+  digit    = octDigit + '89' .
+  hexDigit = digit + 'ABCDEF' .
+  noQuote1 = ANY - "'" - eol .
+  noQuote2 = ANY - '"' - eol .
+
+IGNORE  CHR(9).. CHR(13)
+
+COMMENTS
+  FROM '(*' TO '*)' NESTED
+
+TOKENS
+  ident   =  letter { letter | digit } .
+  integer =    digit { digit }
+             | digit { digit }  CONTEXT ("..")
+             | octDigit { octDigit } ("B" | "C")
+             | digit { hexDigit } "H" .
+  real    =  digit { digit } "." { digit }
+             [ "E" [ "+" | "-" ] digit { digit } ] .
+  string  =    "'" { noQuote1 } "'"
+             | '"' { noQuote2 } '"' .
+
+PRODUCTIONS
+  Mod2                 = DefinitionModule | [ "IMPLEMENTATION" ] ProgramModule .
+  Number               = integer | real .
+  QualIdent            = ident { "." ident } .
+  ConstantDeclaration  = ident "=" ConstExpression .
+  ConstExpression      = Expression .
+  TypeDeclaration      = ident "=" Type .
+  Type                 =   SimpleType | ArrayType | RecordType | SetType
+                         | PointerType | ProcedureType .
+  SimpleType           = QualIdent | Enumeration | SubrangeType .
+  Enumeration          = "(" IdentList ")" .
+  IdentList            = ident { "," ident } .
+  SubrangeType         = [ ident ] "[" ConstExpression ".." ConstExpression "]" .
+  ArrayType            = "ARRAY" SimpleType { "," SimpleType } "OF" Type .
+  RecordType           = "RECORD" FieldListSequence "END" .
+  FieldListSequence    = FieldList { ";" FieldList } .
+  FieldList            =   [ IdentList ":" Type
+                         | "CASE" [ ident ] ":" QualIdent "OF"
+                           Variant { "|" Variant }
+                           [ "ELSE" FieldListSequence ] "END" ] .
+  Variant              = [ CaseLabelList ":" FieldListSequence ] .
+  CaseLabelList        = CaseLabels { "," CaseLabels } .
+  CaseLabels           = ConstExpression [ ".." ConstExpression ] .
+  SetType              = "SET" "OF" SimpleType .
+  PointerType          = "POINTER" "TO" Type .
+  ProcedureType        = "PROCEDURE" [ FormalTypeList ] .
+  FormalTypeList       = "(" [ [ "VAR" ] FormalType
+                         { "," [ "VAR" ] FormalType } ] ")" [ ":" QualIdent ] .
+  VariableDeclaration  = IdentList ":" Type .
+  Designator           = QualIdent { "." ident | "[" ExpList "]" | "^" } .
+  ExpList              = Expression { "," Expression } .
+  Expression           = SimpleExpression [ Relation SimpleExpression ] .
+  Relation             = "=" | "#" | "<" |"<=" | ">" | ">=" | "IN" .
+  SimpleExpression     = [ "+" | "-" ] Term { AddOperator Term } .
+  AddOperator          = "+" | "-" | "OR" .
+  Term                 = Factor { MulOperator Factor } .
+  MulOperator          = "*" |"/" | "DIV" | "MOD" | "AND" .
+  Factor               =   Number | string | Set | "NOT" Factor
+                         | Designator [ ActualParameters ]
+                         | "(" Expression ")" .
+  Set                  = [ QualIdent ] "{" [ Element { "," Element } ] "}" .
+  Element              = Expression [ ".." Expression ] .
+  ActualParameters     = "(" [ ExpList ] ")" .
+  Statement            = [  Assignment | ProcedureCall | IfStatement
+                          | CaseStatement | WhileStatement | RepeatStatement
+                          | LoopStatement | ForStatement | WithStatement
+                          | "EXIT" | "RETURN" [ Expression ] ] .
+  Assignment           = Designator ":=" Expression .
+  ProcedureCall        = Designator [ ActualParameters ] .
+  StatementSequence    = Statement { ";" Statement } .
+  IfStatement          = "IF" Expression "THEN" StatementSequence
+                         { "ELSIF" Expression "THEN" StatementSequence }
+                         [ "ELSE" StatementSequence ] "END" .
+  CaseStatement        = "CASE" Expression "OF" Case { "|" Case }
+                         [ "ELSE" StatementSequence ] "END" .
+  Case                 = [ CaseLabelList ":" StatementSequence ] .
+  WhileStatement       = "WHILE" Expression "DO" StatementSequence "END" .
+  RepeatStatement      = "REPEAT" StatementSequence "UNTIL" Expression .
+  ForStatement         = "FOR" ident ":=" Expression "TO" Expression
+                         [ "BY" ConstExpression ] "DO" StatementSequence "END" .
+  LoopStatement        = "LOOP" StatementSequence "END" .
+  WithStatement        = "WITH" Designator "DO" StatementSequence "END" .
+  ProcedureDeclaration = ProcedureHeading ";" Block ident .
+  ProcedureHeading     = "PROCEDURE" ident [ FormalParameters ] .
+  Block                = { Declaration } [ "BEGIN" StatementSequence ] "END" .
+  Declaration          =   "CONST" { ConstantDeclaration ";" }
+                         | "TYPE" { TypeDeclaration ";" }
+                         | "VAR" { VariableDeclaration ";" }
+                         | ProcedureDeclaration ";"
+                         | ModuleDeclaration ";" .
+  FormalParameters     = "(" [ FPSection { ";" FPSection } ] ")"
+                         [ ":" QualIdent ] .
+  FPSection            = [ "VAR" ] IdentList ":" FormalType .
+  FormalType           = [ "ARRAY" "OF" ] QualIdent .
+  ModuleDeclaration    = "MODULE" ident [ Priority ] ";"
+                         [ Import ] [ Export ] Block ident .
+  Priority             = "[" ConstExpression "]" .
+  Export               = "EXPORT" [ "QUALIFIED" ] IdentList ";" .
+  Import               = [ "FROM" ident ] "IMPORT" IdentList ";" .
+  DefinitionModule     = "DEFINITION" "MODULE" ident ";"
+                         { Import } { Definition } "END" ident "." .
+  Definition           =   "CONST" { ConstantDeclaration ";" } |
+                         | "TYPE" { ident [ "=" Type ] ";" }
+                         | "VAR" { VariableDeclaration ";" }
+                         | ProcedureHeading ";" .
+  ProgramModule        = "MODULE" ident [ Priority ] ";"
+                         { Import } Block ident "." .
+
+END Mod2.
+
+

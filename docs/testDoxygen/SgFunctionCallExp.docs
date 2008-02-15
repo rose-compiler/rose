@@ -1,0 +1,94 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionCallExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgFunctionCallExp
+\brief This class represents the concept of a C++ function call (which is an expression).
+
+    Note that a function call is assembled from a function expression and arguments.
+The two are bound together in a function call, function expressions are never called
+directly (the function call argument list can be empty).
+
+\internal When overloaded operators are used the function name becomes the name of the
+    operator (e.g. "operator+").  In these cases the precedence of the operator is that
+    of the operator being overloaded and is different from a normal function call.  Most
+    of this detail is hidden since operands in the expression tree are represented by functions
+    with parameter lists (represented by a SgExprListExp), and not simple expression trees.
+
+\sa
+\ref SgFunctionCallExp_usage  "Example of using a SgFunctionCallExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionCallExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgFunctionCallExp::p_function
+\brief This pointer points to the expression being assembled with argments for be a
+    function call.
+
+    Note that this is not always a SgFunctionRefExp or a SgMemberFunctionRefExp
+and can be quite complex where pointers are referenced and function calls assembled using
+pointers to functions and member functions.
+
+\internal The list of acceptable types of IR nodes here is listed and tested in the AST
+    consistency tests (see src/midend/astDiagnostics/AstConsistencyTests.C for details).
+
+*/
+
+/*! \var SgFunctionCallExp::p_args
+\brief This is a pointer to a SgExprListExp (list of function arguments)
+
+*/
+
+/*! \var SgFunctionCallExp::p_expression_type
+\brief This is the type of the return value of the function.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionCallExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgFunctionCallExp::SgFunctionCallExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgFunctionCallExp base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgFunctionCallExp_create "Example:create an SgFunctionCallExp object"
+*/
+
+/*!
+\fn SgFunctionCallExp::~SgFunctionCallExp()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgFunctionCallExp::isSgFunctionCallExp (SgNode *s)
+\brief Cast function (from derived class to SgFunctionCallExp pointer).
+
+   This functions returns a SgFunctionCallExp pointer for any input of a 
+pointer to an object derived from a SgFunctionCallExp.
+
+\return Returns valid pointer to SgFunctionCallExp if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgFunctionCallExp::isSgFunctionCallExp (const SgNode *s)
+\brief Cast function (from derived class to SgFunctionCallExp pointer).
+
+   This functions returns a SgFunctionCallExp pointer for any input of a 
+pointer to an object derived from a SgFunctionCallExp.
+
+\return Returns valid pointer to SgFunctionCallExp if input is derived from a SgLocatedNode.
+*/
+

@@ -1,0 +1,3 @@
+ConstStringLiterals: constStringLiteralsTest1.C:7.13-20: SgAssignInitializer: String literals should be treated as const char *
+ConstStringLiterals: constStringLiteralsTest1.C:8.5-14: SgAssignOp: String literals should be treated as const char *
+ConstStringLiterals: constStringLiteralsTest1.C:10.5-10: SgExprListExp: String literals should be treated as const char *

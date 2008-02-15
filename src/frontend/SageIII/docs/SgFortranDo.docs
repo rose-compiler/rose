@@ -1,0 +1,100 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgFortranDo
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgBasicBlock *SgFortranDo::p_body
+*/
+/*!\var SgExpression *SgFortranDo::p_condition
+*/
+/*!\var SgExpression *SgFortranDo::p_increment
+*/
+/*!\var SgExpression *SgFortranDo::p_initialization
+*/
+/*!\var int SgFortranDo::p_end_numeric_label
+*/
+/*!\var std::string SgFortranDo::p_string_label
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgFortranDo::SgFortranDo(Sg_File_Info *startOfConstruct,SgExpression *initialization=(0),SgExpression *condition=(0),SgExpression *increment=(0),SgBasicBlock *body=(0))
+*/
+/*!\fn SgFortranDo::SgFortranDo(const SgFortranDoStorageClass &source)
+*/
+/*!\fn inline static void SgFortranDo::operator delete(void *pointer)
+*/
+/*!\fn static SgFortranDo *SgFortranDo::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFortranDo::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFortranDo::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFortranDo::initializeStorageClassArray(SgFortranDoStorageClass *storageArray)
+*/
+/*!\fn static void SgFortranDo::clearMemoryPool()
+*/
+/*!\fn static void SgFortranDo::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFortranDo::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgFortranDo::roseRTI()
+*/
+/*!\fn virtual SgFortranDo::~SgFortranDo()
+*/
+/*!\fn virtual SgNode *SgFortranDo::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFortranDo::post_construction_initialization()
+*/
+/*!\fn void SgFortranDo::set_body(SgBasicBlock *body)
+\description See  *body)
+body for documentation */
+/*!\fn void SgFortranDo::set_condition(SgExpression *condition)
+\description See  *condition)
+condition for documentation */
+/*!\fn void SgFortranDo::set_end_numeric_label(int end_numeric_label)
+\description See  end_numeric_label)
+end_numeric_label for documentation */
+/*!\fn void SgFortranDo::set_increment(SgExpression *increment)
+\description See  *increment)
+increment for documentation */
+/*!\fn void SgFortranDo::set_initialization(SgExpression *initialization)
+\description See  *initialization)
+initialization for documentation */
+/*!\fn void SgFortranDo::set_string_label(std::string string_label)
+\description See  string_label)
+string_label for documentation */
+/*!\fn SgBasicBlock *SgFortranDo::get_body() const
+\description See  const
+body for documentation */
+/*!\fn SgExpression *SgFortranDo::get_condition() const
+\description See  const
+condition for documentation */
+/*!\fn SgExpression *SgFortranDo::get_increment() const
+\description See  const
+increment for documentation */
+/*!\fn SgExpression *SgFortranDo::get_initialization() const
+\description See  const
+initialization for documentation */
+/*!\fn int SgFortranDo::get_end_numeric_label() const
+\description See  const
+end_numeric_label for documentation */
+/*!\fn std::string SgFortranDo::get_string_label() const
+\description See  const
+string_label for documentation */
+/*!\fn virtual SgNode *SgFortranDo::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgFortranDo::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFortranDo::get_numberOfTraversalSuccessors()
+\description See  SgFortranDo::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFortranDo::get_traversalSuccessorContainer()
+\description See  SgFortranDo::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFortranDo::get_traversalSuccessorNamesContainer()
+\description See  SgFortranDo::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFortranDo::SgFortranDo(SgExpression *initialization,SgExpression *condition,SgExpression *increment,SgBasicBlock *body)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_123678574;

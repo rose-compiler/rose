@@ -1,0 +1,65 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{CERT-DCL04-A: One Line Per Declaration}
+\label{OneLinePerDeclaration::overview}
+``CERT Secure Coding DCL04-A'' states
+\begin{quote}
+Declaring multiple variables on a single line of code can cause confusion regarding the types of the variables and their initial values. If more than one variable is declared on a line, care must be taken that the actual type and initialized value of the variable is known. To avoid confusion, more than one type of variable should not be declared on the same line.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal, visiting all variable declaration statements. The line number of each variable declaration statement node is saved to a std set unique to each file. If any line number is added to this set more than once then a violation is flagged.
+
+\subsection{Non-Compliant Code Example}
+The non-compliant code declares multiple {\tt int} variables on the same line.
+
+\begin{verbatim}
+int main()
+{
+  int i1 = 0, i2 = 0, i3 = 0;
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution is to give each {\tt int} declaration its own line.
+
+\begin{verbatim}
+int main()
+{
+  int i1 = 0;
+  int i2 = 0;
+  int i3 = 0;
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform a simple AST traversal visiting all variable declaration nodes.
+\item For each line number associated with a variable declaration node, add the line number to a set of line numbers unique to its source file.
+\item If any line number is added more than once per source file set of line numbers then flag a violation.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+\htmladdnormallink{Secure Coding : DCL04-A. Take care when declaring more than one variable per line}{https://www.securecoding.cert.org/confluence/display/seccode/DCL04-A.+Take+care+when+declaring+more+than+one+variable+per+declaration}

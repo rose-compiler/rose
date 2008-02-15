@@ -1,0 +1,135 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name User Interface*/
+//@{
+/*!\fn Sg_File_Info &Sg_File_Info::operator=(const Sg_File_Info &X)
+*/
+/*!\fn Sg_File_Info::Sg_File_Info(const Sg_File_InfoStorageClass &source)
+*/
+/*!\fn bool Sg_File_Info::isCommentOrDirective() const
+*/
+/*!\fn bool Sg_File_Info::isFrontendSpecific() const
+*/
+/*!\fn bool Sg_File_Info::isSameFile(SgFile *file) const
+*/
+/*!\fn bool Sg_File_Info::isSameFile(Sg_File_Info *fileInfo) const
+*/
+/*!\fn bool Sg_File_Info::isSameFile(const Sg_File_Info &fileInfo) const
+*/
+/*!\fn bool Sg_File_Info::isSourcePositionUnavailableInFrontend() const
+*/
+/*!\fn bool Sg_File_Info::isToken() const
+*/
+/*!\fn inline static void Sg_File_Info::operator delete(void *pointer)
+*/
+/*!\fn int Sg_File_Info::getCurrentLine() const
+*/
+/*!\fn static Sg_File_Info *Sg_File_Info::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static const std::string &Sg_File_Info::getFilenameFromID(int id)
+*/
+/*!\fn static int Sg_File_Info::getIDFromFilename(std::string filename)
+*/
+/*!\fn static unsigned long Sg_File_Info::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long Sg_File_Info::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long Sg_File_Info::initializeStorageClassArray(Sg_File_InfoStorageClass *storageArray)
+*/
+/*!\fn static void Sg_File_Info::clearMemoryPool()
+*/
+/*!\fn static void Sg_File_Info::display_static_data(const std::string label)
+*/
+/*!\fn static void Sg_File_Info::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void Sg_File_Info::resetValidFreepointers()
+*/
+/*!\fn std::string Sg_File_Info::displayString(const std::string &label=("")) const
+*/
+/*!\fn std::string Sg_File_Info::getCurrentFilename() const
+*/
+/*!\fn virtual RTIReturnType Sg_File_Info::roseRTI()
+*/
+/*!\fn virtual SgNode *Sg_File_Info::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void Sg_File_Info::post_construction_initialization()
+*/
+/*!\fn void Sg_File_Info::deregister_node(SgLocatedNode *node)
+*/
+/*!\fn void Sg_File_Info::register_node(SgLocatedNode *node)
+*/
+/*!\fn void Sg_File_Info::setCommentOrDirective()
+*/
+/*!\fn void Sg_File_Info::setFrontendSpecific()
+*/
+/*!\fn void Sg_File_Info::setSourcePositionUnavailableInFrontend()
+*/
+/*!\fn void Sg_File_Info::setToken()
+*/
+/*!\fn void Sg_File_Info::unsetCommentOrDirective()
+*/
+/*!\fn void Sg_File_Info::unsetFrontendSpecific()
+*/
+/*!\fn void Sg_File_Info::unsetSourcePositionUnavailableInFrontend()
+*/
+/*!\fn void Sg_File_Info::unsetToken()
+*/
+/*!\fn void Sg_File_Info::updateSourcePosition(Sg_File_Info *update)
+*/
+/*!\fn void Sg_File_Info::set_classificationBitField(unsigned int )
+\description See  )
+classificationBitField for documentation */
+/*!\fn void Sg_File_Info::set_col(int n)
+\description See  n)
+col for documentation */
+/*!\fn void Sg_File_Info::set_fileIDsToUnparse(SgFileIdList fileIDsToUnparse)
+\description See  fileIDsToUnparse)
+fileIDsToUnparse for documentation */
+/*!\fn void Sg_File_Info::set_file_id(int file_id)
+\description See  file_id)
+file_id for documentation */
+/*!\fn void Sg_File_Info::set_fileidtoname_map(std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > fileidtoname_map)
+\description See  fileidtoname_map)
+fileidtoname_map for documentation */
+/*!\fn void Sg_File_Info::set_filenameString(const std::string &filename)
+\description See  &filename)
+filenameString for documentation */
+/*!\fn void Sg_File_Info::set_max_file_id(int max_file_id)
+\description See  max_file_id)
+max_file_id for documentation */
+/*!\fn void Sg_File_Info::set_nametofileid_map(std::map< std::string  , int  , std::less< std::string  >  , std::allocator< std::pair< const std::string  , int  >  >  > nametofileid_map)
+\description See  nametofileid_map)
+nametofileid_map for documentation */
+/*!\fn SgFileIdList Sg_File_Info::get_fileIDsToUnparse() const
+\description See  const
+fileIDsToUnparse for documentation */
+/*!\fn const std::string &Sg_File_Info::get_filenameString() const
+\description See  const
+filenameString for documentation */
+/*!\fn int Sg_File_Info::get_file_id() const
+\description See  const
+file_id for documentation */
+/*!\fn int Sg_File_Info::get_max_file_id() const
+\description See  const
+max_file_id for documentation */
+/*!\fn std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > Sg_File_Info::get_fileidtoname_map() const
+\description See  const
+fileidtoname_map for documentation */
+/*!\fn std::map< std::string  , int  , std::less< std::string  >  , std::allocator< std::pair< const std::string  , int  >  >  > Sg_File_Info::get_nametofileid_map() const
+\description See  const
+nametofileid_map for documentation */
+/*!\fn virtual SgNode *Sg_File_Info::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t Sg_File_Info::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t Sg_File_Info::get_numberOfTraversalSuccessors()
+\description See  Sg_File_Info::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > Sg_File_Info::get_traversalSuccessorContainer()
+\description See  Sg_File_Info::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > Sg_File_Info::get_traversalSuccessorNamesContainer()
+\description See  Sg_File_Info::traversalSuccessorNamesContainer for documentation */
+/*!\fn virtual Sg_File_Info::~Sg_File_Info()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_807512226;

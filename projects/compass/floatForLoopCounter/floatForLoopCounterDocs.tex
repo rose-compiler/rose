@@ -1,0 +1,56 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Float For Loop Counter}
+\label{FloatForLoopCounter::overview}
+``CERT Secure Coding'' states
+\begin{quote}
+Floating point arithmetic is inexact and is subject to rounding errors. Hence, floating point variables should not be used as loop counters.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that visits all for loop init statement nodes and checks the type of its counter variable declaration. If that type is {\tt float} or {\tt double} then flag a violation.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+for (float count = 0.1f; count <= 1; count += 0.1f)
+{
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution uses an {\tt int} type loop counter.
+
+\begin{verbatim}
+for (int count = 1; count <= 10; count += 1) 
+{
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting all for loop initialization statement nodes.
+\item For each node check the type of its variable declaration. If type is {\tt float} or {\tt double} then flag violation.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{FLP31-C. Do not use floating point variables as loop counters}{https://www.securecoding.cert.org/confluence/display/cplusplus/FLP31-C.+Do+not+use+floating+point+variables+as+loop+counters}

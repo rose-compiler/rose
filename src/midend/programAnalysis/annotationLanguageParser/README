@@ -1,0 +1,7 @@
+This directory represents code from the Broadway annotation parser.
+It is part of collaborations with Calvin Lin at University of Texas 
+at Austin and is used within ROSE to permit the reading of annotations 
+from files separate from the application source code.  We are of
+course grateful to them for sharing their code with us.
+
+

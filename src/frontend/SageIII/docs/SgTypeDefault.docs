@@ -1,0 +1,103 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeDefault
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgTypeDefault
+\brief This class represents a default type used for some IR nodes (see below).
+\internal This type is used internally within some IR nodes:
+   -# SgExprListExp (returned by member function get_type())
+   -# SgThisExp (returned by member function get_type() if SgThisExp::p_pobj_this is NULL)
+   -# SgVarArgStartOp (returned by member function get_type())
+   -# SgVarArgOp (returned by member function get_type())
+   -# SgVarArgEndOp (returned by member function get_type())
+   -# SgVarArgCopyOp (returned by member function get_type())
+   -# SgVarArgStartOneOperandOp (returned by member function get_type())
+   -# SgAggregateInitializer (returned by member function get_type())
+   -# SgConstructorInitializer (returned by member function get_type())
+   -# SgExpressionRoot (returned by member function get_type() if member function
+           get_operand() returns NULL valued pointer)
+   -# SgPointerDerefExp (returned by member function get_type(), if member function
+           get_operand() returns valid valued pointer or operands type is V_SgTypeDefault)
+   -# SgThrowOp (used by member function set_type())
+\sa
+\ref SgTypeDefault_usage  "Example of using a SgTypeDefault object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeDefault data members
+/////////////////////////////////////////////////////////////////////////
+/* No variables here */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeDefault member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTypeDefault::~SgTypeDefault()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgTypeDefault::isSgTypeDefault (SgNode *s)
+\brief Cast function (from derived class to SgTypeDefault pointer).
+   This functions returns a SgTypeDefault pointer for any input of a 
+pointer to an object derived from a SgTypeDefault.
+\return Returns valid pointer to SgTypeDefault if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgTypeDefault::isSgTypeDefault (const SgNode *s)
+\brief Cast function (from derived class to SgTypeDefault pointer).
+   This functions returns a SgTypeDefault pointer for any input of a 
+pointer to an object derived from a SgTypeDefault.
+\return Returns valid pointer to SgTypeDefault if input is derived from a SgTypeDefault node.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeDefault *SgTypeDefault::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeDefault::SgTypeDefault(const SgTypeDefaultStorageClass &source)
+*/
+/*!\fn inline static void SgTypeDefault::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeDefault *SgTypeDefault::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeDefault::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeDefault::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeDefault::initializeStorageClassArray(SgTypeDefaultStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeDefault::clearMemoryPool()
+*/
+/*!\fn static void SgTypeDefault::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeDefault::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeDefault::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeDefault::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeDefault::~SgTypeDefault()
+*/
+/*!\fn virtual SgNode *SgTypeDefault::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeDefault::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeDefault::get_numberOfTraversalSuccessors()
+\description See  SgTypeDefault::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeDefault::get_traversalSuccessorContainer()
+\description See  SgTypeDefault::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeDefault::get_traversalSuccessorNamesContainer()
+\description See  SgTypeDefault::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgTypeDefault::SgTypeDefault()
+\brief This is the constructor.
+   This constructor builds the SgTypeDefault base class.
+\sa 
+\ref SgTypeDefault_create "Example:create an SgTypeDefault object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_175711057724130;

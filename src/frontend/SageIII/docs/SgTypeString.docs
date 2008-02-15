@@ -1,0 +1,89 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeString
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgTypeString
+\brief This class represents a string type used for SgStringVal IR node.
+\internal This type is only used for used for the SgStringVal IR node.
+\sa
+\ref SgTypeString_usage  "Example of using a SgTypeString object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeString data members
+/////////////////////////////////////////////////////////////////////////
+/* Not variables here */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeString member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTypeString::~SgTypeString()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgTypeString::isSgTypeString (SgNode *s)
+\brief Cast function (from derived class to SgTypeString pointer).
+   This functions returns a SgTypeString pointer for any input of a 
+pointer to an object derived from a SgTypeString.
+\return Returns valid pointer to SgTypeString if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgTypeString::isSgTypeString (const SgNode *s)
+\brief Cast function (from derived class to SgTypeString pointer).
+   This functions returns a SgTypeString pointer for any input of a 
+pointer to an object derived from a SgTypeString.
+\return Returns valid pointer to SgTypeString if input is derived from a SgTypeString node.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeString *SgTypeString::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeString::SgTypeString(const SgTypeStringStorageClass &source)
+*/
+/*!\fn inline static void SgTypeString::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeString *SgTypeString::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeString::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeString::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeString::initializeStorageClassArray(SgTypeStringStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeString::clearMemoryPool()
+*/
+/*!\fn static void SgTypeString::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeString::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeString::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeString::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeString::~SgTypeString()
+*/
+/*!\fn virtual SgNode *SgTypeString::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeString::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeString::get_numberOfTraversalSuccessors()
+\description See  SgTypeString::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeString::get_traversalSuccessorContainer()
+\description See  SgTypeString::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeString::get_traversalSuccessorNamesContainer()
+\description See  SgTypeString::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgTypeString::SgTypeString()
+\brief This is the constructor.
+   This constructor builds the SgTypeString base class.
+\sa 
+\ref SgTypeString_create "Example:create an SgTypeString object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_323032384411;

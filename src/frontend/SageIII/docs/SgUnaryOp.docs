@@ -1,0 +1,218 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgUnaryOp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgUnaryOp::SgUnaryOp (const SgUnaryOp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgUnaryOp
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgUnaryOp::isSgUnaryOp (SgNode *s)
+\brief Cast function (from derived class to SgUnaryOp pointer).
+   This functions returns a SgUnaryOp pointer for any input of a 
+pointer to an object derived from a SgUnaryOp.
+\return Returns valid pointer to SgUnaryOp if input is derived from a SgUnaryOp.
+*/
+/*!
+\fn SgUnaryOp::isSgUnaryOp (const SgNode *s)
+\brief Cast function (from derived class to SgUnaryOp pointer).
+   This functions returns a SgUnaryOp pointer for any input of a 
+pointer to an object derived from a SgUnaryOp.
+\return Returns valid pointer to SgUnaryOp if input is derived from a SgUnaryOp.
+*/
+/*!
+\fn SgUnaryOp::get_expression_type (void) const
+\brief returns type of operator expression.
+   This function returns the type of the unary operator.
+\return Returns type of operator expression.
+*/
+/*!
+\fn SgUnaryOp::set_expression_type (SgType* expression_type)
+\brief This function allows the p_expression_type pointer to be set (used internally).
+   This function is mostly used internally and is only required to support editing 
+of existing SgUnaryOp objects. In general it is not changed once it is set.
+\param expression_type - sets value of internal p_expression_type pointer.
+\return Returns void.
+*/
+/*! \name Deprecated*/
+//@{
+/*!
+\fn bool SgUnaryOp::empty() const
+\brief Returns true if number of operands is zero, else false.
+   This function returns boolean value given by (length() == 0).
+This function is not used and is not a defined part a minumal interface 
+for Sage III.
+\deprecated This function is not used.
+\return Returns bool
+*/
+/*!
+\fn int SgUnaryOp::length() const
+\brief Returns number of operands (virtual function)
+     Returns number of operands (all unary operators return value = 1).
+This function is not used and is not a defined part a minumal interface 
+for Sage III.
+\deprecated This function is not used.
+\return Returns int
+*/
+/*!
+\fn void SgUnaryOp::set_operand_i(SgExpression *operand_i)
+\brief This function allows the p_operand_i pointer to be set (used internally).
+   This function is mostly used internally and is only required to support editing 
+of existing SgUnaryOp objects.
+See  *operand_i)
+operand_i for documentation \deprecated This function is not used.
+\param operand - sets value of internal p_operand pointer.
+\return Returns void.
+*/
+/*!
+\fn SgExpression *SgUnaryOp::get_next(int &n) const
+\brief Returns next operand (virtual function)
+     This function returns the next operand and is part of an 
+older iterator interface within Sage II which didn't use STL, but implemented 
+iterators for the operands (since their is only one for a unary operator
+and two for a binary operator we don't support such an iterator interface
+within Sage III.  The goal of Sage III is a minimal easily maintained 
+interface.  This function is not used and is not a defined part a minumal 
+interface for Sage III.
+See  const
+next for documentation \deprecated This function is not used.
+\return Returns int
+*/
+/*!
+\fn SgExpression *SgUnaryOp::get_operand_i() const
+\brief returns SgExpression pointer to the operand associated with this unary operator.
+See  const
+operand_i for documentation \deprecated This function is not used.
+\return Returns SgExpression pointer.
+*/
+/*!
+\var SgType *SgUnaryOp::p_expression_type
+\brief This SgType is the type of the operator (function type).
+    The type is now computed where possible (in all cases except 
+for SgCastExp). This allows us to save space and avoid having 
+explicitly stored values be unset or set incorrectly.
+\deprecated This is no longer used (except for SgCastExp).
+\todo This value is only used for the SgCastExp, we will
+      move it to that IR node when we are ready to change the interface
+      for the SgExpressions (and SgUnaryExp IR nodes).
+*/
+//@}
+/*! \name Class Members*/
+//@{
+/*!
+\var SgExpression *SgUnaryOp::p_operand_i
+\brief This is the operand associated with the unary operator.
+   Every unary operator is applied to a single operand, this
+variable stores the operand to which the unary operator is applied.
+*/
+/*!
+\var enum SgUnaryOp::Sgop_mode SgUnaryOp::p_mode
+\brief This SgType is the type of the operator (function type).
+    This variable records the prefix vs. postfix semantics of the operator 
+since the syntax of "operator++" cannot readily do so.  This approach is
+simpiler to interogate than the C++ syntax for distingishing prefix vs.
+postfix.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgUnaryOp::SgUnaryOp(Sg_File_Info *startOfConstruct,SgExpression *operand_i=(0),SgType *expression_type=(0))
+\brief This is the constructor.
+   This constructor builds the SgUnaryOp base class.
+\param startOfConstruct represents the position in the source code
+\param operand represents the operand to which the operator is applied
+\param expression_type represents the type of the return value of the operator
+\sa 
+\ref SgUnaryOp_create "Example:create an SgUnaryOp object"
+*/
+/*!\fn SgUnaryOp::SgUnaryOp(const SgUnaryOpStorageClass &source)
+*/
+/*!\fn inline static void SgUnaryOp::operator delete(void *pointer)
+*/
+/*!\fn static SgUnaryOp *SgUnaryOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgUnaryOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgUnaryOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgUnaryOp::initializeStorageClassArray(SgUnaryOpStorageClass *storageArray)
+*/
+/*!\fn static void SgUnaryOp::clearMemoryPool()
+*/
+/*!\fn static void SgUnaryOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgUnaryOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgUnaryOp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgUnaryOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgUnaryOp::~SgUnaryOp()
+*/
+/*!\fn virtual int SgUnaryOp::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgUnaryOp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgUnaryOp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgUnaryOp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgUnaryOp::post_construction_initialization()
+*/
+/*!
+\fn void SgUnaryOp::set_mode(enum SgUnaryOp::Sgop_mode mode)
+\brief Set the mode (prefix/postfix) associated with this operator
+   This is an internal function, it sets up the prefix/postfix mode of the 
+unary operator.
+See  mode)
+mode for documentation \param mode - sets value of intermal SgUnaryOp::Sgop_mode mode variable
+\return Returns void
+*/
+/*!
+\fn void SgUnaryOp::set_operand(SgExpression *exp)
+\brief This function allows the p_operand pointer to be set (used internally).
+   This function is mostly used internally and is only required to support editing 
+of existing SgUnaryOp objects.
+See  *exp)
+operand for documentation \param operand - sets value of internal p_operand pointer.
+\return Returns void.
+*/
+/*!
+\fn SgExpression *SgUnaryOp::get_operand() const
+\brief returns SgExpression pointer to the operand associated with this unary operator.
+See  const
+operand for documentation \return Returns SgExpression pointer.
+*/
+/*!
+\fn enum SgUnaryOp::Sgop_mode SgUnaryOp::get_mode() const
+\brief Get the prefix/postfix mode of the operator.
+     Get the prefix/postfix mode of the operator (if applicable to that operator).
+See  const
+mode for documentation \return Returns SgUnaryOp::Sgop_mode (enum for prefix,postfix values)
+*/
+/*!\fn virtual SgNode *SgUnaryOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgUnaryOp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgUnaryOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgUnaryOp::get_numberOfTraversalSuccessors()
+\description See  SgUnaryOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnaryOp::get_traversalSuccessorContainer()
+\description See  SgUnaryOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnaryOp::get_traversalSuccessorNamesContainer()
+\description See  SgUnaryOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgUnaryOp::SgUnaryOp(SgExpression *operand_i,SgType *expression_type)
+*/
+//@}
+int SAGE_Doxygen_Dummy_102641947324387;

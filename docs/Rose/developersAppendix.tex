@@ -1,0 +1,572 @@
+\chapter{ Developer's Appendix }
+
+\label{developersAppendix:developersAppendix}
+
+\section{Building ROSE from the Source Code Repository Checkout {\em (for developers only)}}
+\label{gettingStarted:DeveloperInstructions}
+
+     The instructions for building ROSE from CVS are a little more complex.
+A few GNU software build tools are required (not required for the user
+{\em ROSE Distribution, e.g. ROSE-\VersionNumber.tar.gz}.  Required tools ({\bf ** Note current dependencies}):
+\begin{itemize}
+     \item autoconf \\
+          Autoconf version 2.53 or higher is required. % Autoconf can be problematic, some
+          Newer versions of Autoconf introduce experimental features that could also be problematic.  The
+          Autoconf development has not been particularly good at verifying compatibility
+          with previous releases of their work.  Some users have reported having to
+          install version 2.53 specifically to use ROSE. 
+          {\em Check the ROSE/ChangeLog for current version numbers to be used with ROSE.}
+     \item automake \\
+          Automake version 1.5 or higher is required. Most software projects appear to be
+          less sensitive to the specific version of automake.
+          {\em Check the ROSE/ChangeLog for current version numbers to be used with ROSE.}
+\end{itemize}
+
+%   Several optional tools are also useful to have for ROSE development (required to build
+% documentation) these are:
+% \begin{itemize}
+%     \item LaTeX
+%     \item Doxygen
+%     \item DOT
+% \end{itemize}
+
+The {\tt ROSE/ChangeLog} details the changes between versions of ROSE and lists the
+specific version numbers of all software upon which ROSE depends. Comments of this type
+appear in the {\tt ChangeLog} as:
+{\footnotesize
+\begin{verbatim}
+********* TESTED with **************
+(*)  automake (GNU automake) 1.6.3
+(*)  autoconf (GNU Autoconf) 2.57
+(*)  GNU Make version 3.79.1
+(**) g++ (GCC) 3.3.6
+(**) gcc (GCC) 3.3.6
+(*)  doxygen 1.3.8
+(*)  dot version 1.12 (Sun Aug 15 02:43:07 UTC 2004)
+(*)  TeX (Web2C 7.3.1) 3.14159
+(*)  Original LaTeX2HTML Version 2002 (1.62)
+(*)  sqlite (requires g++ 3.3.2) 3.2.1
+
+(*)  Optional for use of ROSE (by users), but required for internal ROSE development (by ROSE project team)
+(**) Required for use of ROSE (and for all internal development)
+\end{verbatim}
+}
+
+The build process for a {\em Developer Version} is:
+\begin{enumerate}
+%     \item {\bf CVS} checkout \\
+%           Type {\tt cvs -d/usr/casc/overture/ROSE/ROSE2_Repository checkout ROSE} to
+%           checkout a new version of ROSE into a new directory.  {\em The ROSE directory
+%           should not exist in the current directory.}  Checking out a new version of ROSE
+%           on top of an existing version can lead to undefined results.
+     \item Checkout a NEW version from CVS: \\
+     In your {\tt .cshrc} file set the variable {\tt CVSROOT} to 
+     {\tt /usr/casc/overture/ROSE/ROSE2\_Repository}
+     ({\tt setenv CVSROOT /usr/casc/overture/ROSE/ROSE2\_Repository})
+     and ({\tt setenv CVS\_RSH ssh}).
+     The later is to permit checkout of the {\bf acmacros} project from its separate 
+     CVS repository.  Note that this will only work from a machine on the LLNL domain.
+     Other machines will have to get the separate tarball for this project (it should
+     also be in the {\bf CVS} repository and is checked out with ROSE into the top 
+     level ROSE directory).
+
+     Then run {\tt source ~/.cshrc} to have this environment variable set properly.
+     Now you can run {\tt cvs} to checkout the current version from ROSE. Type
+     {\tt cvs co ROSE} or {\tt cvs checkout ROSE} to do this.
+
+     \item  Update an {\em existing} version from CVS: \\
+     Run {\tt cvs update} from inside the ROSE directory (at the top level) to update
+     an existing version of ROSE with the new changes in the CVS repository.
+     Note that the ROSE team uses a common {\tt .cvsrc} file so that reasonable options
+     to prune empty directories are used uniformly within project development.
+
+     \item After being checked out (or updated) from CVS: \\
+     Run the {\tt build} script in the top level ROSE directory to build all configure scripts
+     and {\tt Makefile.in} files (using {\bf automake}).  This is the difference between the development
+     environment and the distribution. This script will call the different {\bf autoconf}
+     tools required to setup ROSE and also checkout other work common to multiple projects
+     within CASC.
+
+     \item Build a compile directory (for the compile tree): \\
+     Make a separate directory to be the root of the compile tree. There can be many compile 
+     trees if you want.
+
+     {\em Note: Before the next step be sure you are using the correct compiler ({\bf g++}
+     C++ compiler
+     [see ChangLog file for current version used for development, generally any 3.x
+     version]) and that you are using the correct version of {\bf autoconf} and 
+     {\bf automake}.}
+
+     \item Running configure: \\
+     Type {\tt <pathToSourceTree>/configure --help} to see the different configuration options.
+     {\tt <pathToSourceTree>} is meant to be the absolute or relative path to the source tree
+     where the {\bf CVS} version was checked out.  After options have been selected, type
+     {\tt <pathToSourceTree>/configure <selected-options>} to run the configure script.
+     Running the configure script with no options is sufficient (uses default values which
+     are either already set or which the configure script will figure out on your machine).
+     For more on ROSE configure options, see \ref{gettingStarted:configureOptions}.
+
+     \item Running Make after running configure: \\
+     After configuration (after the configure script is finished) run {\tt make} or {\tt gmake}.
+     If you have a development version then you can also make distributions by running
+     {\tt make dist}.  If you want to build a new distribution {\em AND} test it, 
+     run {\tt make distcheck} (make or gmake may be used interchangeably). 
+     See details of running make in parallel \ref{gettingStarted:parallelMake}.
+
+     \item Testing your new version of ROSE: \\
+     Automated tests are available within the distribution of ROSE. To run these tests,
+     type {\tt make check}.  Tests on a modern Intel/Linux machine currently take about 
+     15 minutes to run.
+   % if you have configured ROSE to reference a version of the A++/P++ library (since they include
+   % tests of A++/P++ within ROSE).  Tests on a more modern Linux machine are much faster.
+
+     \item Installing ROSE: \\
+     From this point you can generate ROSE the way a user would see it (as if you had
+     started with a {\em ROSE Distribution}).  Type {\tt make install} to install ROSE.
+     See details of installing ROSE \ref{gettingStarted:installation}.
+
+     \item Testing the installed version of ROSE: \\
+     To test the installed version of ROSE type {\tt make installcheck}.  To test
+     compilation, this forces one
+     or more of the Example translators to be built using only the header files from
+     the {\tt \{install\_dir\}/include} directory for their compilation.  To test linking
+     ROSE translators forces the previously compiled example translator to only use the libraries
+     installed in {\tt \{install\_dir\}/lib}.  This is sufficient to test the installation
+     the way that users are expected to use ROSE (only from an installed version).
+     A sample {\tt makefile} is generated, see \ref{gettingStarted:compilingTranslator}.
+
+\end{enumerate}
+
+\section{Generating Documentation}
+   There is a standard GNU {\tt make docs} rule for building all documentation.
+
+{\it Note to developers: To build the documentation ({\tt make docs}) you will need 
+LaTeX, Doxygen and DOT to be installed (check the list of dependences in the 
+{\tt ROSE/ChangeLog}). If you want to build the reference manual of Latex documentation
+generated by Doxygen (not suggested) you may have to tailor your version of LaTeX to 
+permit larger internal buffer sizes.  All the other LaTeX documentation, such as the
+User Manual but not the Reference Manual may be built without problems using the 
+default configuration for LaTeX.
+}
+
+\section{Check In Process}
+   If you are building the development version of ROSE (available only from CVS, not what 
+we package as a ROSE distribution; e.g. ROSE-\VersionNumber.tar.gz) then the README
+file in the top level directory also has instructions for how to get started. 
+The README\_CHECKIN file has the instructions for our standard testing process.
+This should be done before you check anything in; we don't reprint it so it is
+represented at most only once.
+{\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
+
+
+
+\section {Adding New SAGE III IR Nodes (Developers Only)}
+
+    We don't expect users to add nodes to the SAGE III Intermediate Representation (IR),
+however, we need to document the process to support developers who might be extending
+ROSE.  It is hoped that if you proceed to add IR nodes that you understand just
+what this means (you're not extending C++). Check with us so that we can help you and
+understand what you're doing.
+
+   The process is fairly simple: one adds IR node definitions using a BNF syntax within
+ROSETTA.  There are lots of examples within the construction of the C++ IR itself.
+However, you can expect to hunt around a bit before you get the final generated code to
+compile and link!  The general steps are:
+
+
+\begin{enumerate}
+     \item Define a new node. \\
+           For example:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          NEW_TERMINAL_MACRO (VarArgOp,"VarArgOp","VA_OP");
+\end{verbatim}
+}}
+           This is a macro (currently) which builds an object named {\em VarArgOp} (a variable in
+           ROSETTA) to be named {\em SgVarArgOp} in SAGE III, and to be referenced using an enum
+           that will be called {\em V\_SgVarArgOp}.  The secondary generated enum name {\em VA\_OP}
+           is historical and will be removed in a future release of ROSE.
+
+     \item Put the node into the SAGE Hierarchy. \\
+           This is done through the specification of what looks a bit like a BNF
+            production rule to define the abstract grammar. \\
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     NEW_NONTERMINAL_MACRO (Expression,
+          UnaryOp        | BinaryOp             | ExprListExp   | VarRefExp       | ClassNameRefExp |
+          FunctionRefExp | MemberFunctionRefExp | ValueExp      | FunctionCallExp | SizeOfOp        |
+          TypeIdOp       | ConditionalExp       | NewExp        | DeleteExp       | ThisExp         |
+          RefExp         | Initializer          | VarArgStartOp | VarArgOp        | VarArgEndOp     |
+          VarArgCopyOp   | VarArgStartOneOperandOp ,"Expression","ExpressionTag");
+\end{verbatim} 
+}}
+        In this case, we added the VarArgOp IR node as an expression node in the
+    abstract grammar for C++.
+
+     \item Associate some externally defined source code. \\
+           Source code will be generated to implement the SAGE III IR nodes.  Any custom
+           code that needs to be associated with the IR node can be done so by specifying 
+           the name of a pair of markers in a file. The C++ source code is extracted 
+           from between the named markers (text labels) in the named file and inserted 
+           into the generated source code. Using this technique, very small amounts of 
+           specialized code can be tailored for each IR node, while still providing an 
+           automated means of generating all the rest.  Different locations in the
+           generated code can be modified with external code. Here we add the source code
+           for a function.
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+           VarArgOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "Grammar/Expression.code" );
+\end{verbatim} 
+}}
+     \item Expressions have precedence. \\
+           All expression nodes have a precedence in the evaluation, but the precedence must
+           be specified.  This precedence must match that of the C++ frontend.  So we 
+           are not changing anything about the way that C++ evaluates expressions here!
+           It is just that SAGE must have a defined value for the precedence.
+           ROSETTA permits variables to be defined and edited to tailor the automatically
+           generated source code for the IR.
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+           VarArgOp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+\end{verbatim} 
+}}
+     \item Add member data (fields). \\
+           ROSETTA permits the addition of data fields to the class definitions for the
+           new IR node.
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     VarArgOp.setDataPrototype  ( "$GRAMMAR_PREFIX_Expression*","operand_expr","= NULL",
+				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+\end{verbatim}
+}}
+           The new data fields are added to the new IR node.  Using the first example
+           above, the new data member is of type {\tt SgExpression*}, with name
+           {\tt operand\_expr}, and initialized using the source code string {\tt = NULL}.
+           Additional properties that this IR node will have include:
+           \begin{itemize}
+                \item Its construction will take a parameter of this type and 
+                      use it to initialize this member field.
+                \item Access functions to {\it get} and {\it set} the member 
+                      function will be automatically generated.
+                \item The automatically generated AST traversal will traverse 
+                      this node (i.e. it will visit its children in the AST).
+                \item Have the automatically generated destructor not call 
+                      delete on this field (the traversal will to that).
+           \end{itemize}
+           In the case of the VarArgOp, an additional data member was added.
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     VarArgOp.setDataPrototype ( "$GRAMMAR_PREFIX_Type*", "expression_type", "= NULL",
+				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL);
+\end{verbatim} 
+}}
+
+     \item Adding the set\_type and get\_type member functions. \\
+           It is not clear that this is required, but all expressions must define a
+           function that can be used to describe its type (of the expression).
+           It is unfortunate, but it is generally in compiling the generated source code
+           that details like this are discovered.  (ROSETTA has room for improvement!)
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     VarArgOp.setFunctionSource ( "SOURCE_SET_TYPE_DEFAULT_TYPE_EXPRESSION", 
+                                       "Grammar/Expression.code" );
+     VarArgOp.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE",
+                                       "Grammar/Expression.code" );
+\end{verbatim} 
+}}
+
+     \item Modifying the Coco parser. \\
+           The new nodes must be defined in the Coco definition of C++ as well.
+           The file is {\tt ROSE/NEW\_ROSE/src/midend/astProcessing/abstractcppgrammar.atg}.
+           The declaration of the new node is (shown with other new nodes):
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          SgSizeOfOp
+          SgTypeIdOp
+          SgVarArgStartOp
+          SgVarArgStartOneOperandOp
+          SgVarArgOp
+          SgVarArgEndOp
+          SgVarArgCopyOp
+          SgConditionalExp
+\end{verbatim} 
+}}
+          This could be automatically generated by ROSETTA. I'm not sure why it is
+          not handled this way.
+
+     \item Next, add the macro values to the sgnodec.hpp file.
+           The new nodes must be defined in the Coco macros for C++ as well.
+           The file is {\tt ROSE/NEW\_ROSE/src/midend/astProcessing/sgnodec.hpp}.
+           The declaration of the new node is (shown with other new IR nodes):
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+          #define SgClassDeclarationSym	192	/* SgClassDeclaration */
+          #define SgClassDefinitionSym	193	/* SgClassDefinition */
+          #define LparenSym	194	/* "(" */
+          #define RparenSym	195	/* ")" */
+          #define No_Sym	196	/* not */
+          #define SgVarArgStartOpSym 197 /* va_start(x,y) */
+          #define SgVarArgStartOneOperandOpSym 198 /* va_start(x) */
+          #define SgVarArgOpSym 199 /* va_arg (x,type of x) */
+          #define SgVarArgEndOpSym 200 /* va_end(x) */
+          #define SgVarArgCopyOpSym 201 /* var_copy(x,y) */
+          #define MAXT	SgVarArgCopyOpSym	/* Max Terminals */
+\end{verbatim} 
+}}
+          This could be automatically generated by ROSETTA. I'm not sure why it is
+          not handled this way. {\em Note: Don't forget to add the {\bf Sym} suffix.}
+
+     \item Modify the EDG/SAGE connection code to have the new IR node built in the
+           translation from EDG to SAGE III.  This step often requires a bit of expertise
+           in working with the EDG/SAGE connection code. In general, it requires no great
+           depth of knowledge of EDG.
+
+     \item Modify the unparser to have whatever code you want generated in the final
+           code generation step of the ROSE source-to-source translator.
+
+\end{enumerate}
+
+
+
+\section{Separation of EDG Source Code from ROSE Distribution}
+
+    The EDG research license restricts the distribution of their source code.
+Working with EDG is still possible within an open source project such as ROSE because 
+EDG permits binaries of their work to be freely distributed (protecting their source 
+code).  As ROSE matured, we designed the autoconf/automake distribution mechanism
+to build distributions that exclude the EDG source code and alternatively distribute
+a Linux-based binary version of their code.
+
+   All releases of ROSE, starting with 0.8.4a, are done without the EDG source code
+by default.  An optional configure command line option is implemented to allow
+the construction of a distribution of ROSE which includes the EDG source code
+(see {\tt configure --help} for the {\tt --with-edg\_source\_code} option).
+
+   The default options for configure will build a distribution that contains
+no EDG source code (no source files or header files).  This is not a problem 
+for ROSE because it can still exist as an almost entirely open source project
+using only the ROSE source and the EDG binary version of the library.
+
+  Within this default configuration, ROSE can be freely distributed on the Web
+(eventually).  Importantly, this simplifies how we work with many different 
+research groups and avoid the requirement for a special research license from
+EDG for the use of their C and C++ front-end.  Our goal has been to simplify
+the use of ROSE.
+
+   Only the following command to configure with EDG source code is accepted:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     configure --with-edg_source_code=true
+\end{verbatim} 
+}}
+This particularly restrictive syntax is used to prevent it from ever being used
+by accident.  Note that the following will not work. They are equivalent to 
+not having specified the option at all:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     configure --with-edg_source_code
+     configure --with-edg_source_code=false
+     configure --with-edg_source_code=True
+     configure --with-edg_source_code=TRUE
+     configure --with-edg_source_code=xyz
+     configure 
+\end{verbatim} 
+}}
+
+To see how any configuration is set up, type {\tt make testEdgSourceRule}
+in the {\tt ROSE/src/frontend/EDG/EDG\_3.3/src} directory.
+
+To build a distribution without EDG source code:
+\begin{enumerate}
+   \item Configure to use the EDG source code and build normally, 
+   \item Then rerun configure to not use the EDG source code, and
+   \item Run {\tt make dist}.
+\end{enumerate}
+
+
+\section{How to Deprecate ROSE Features}
+
+    There comes a time when even the best ideas don't last
+into a new version of the source code.  This section covers how to
+depricated specific functionality so that it can be removed in
+later releases (typically after a couple of releases, or before
+our first external release).  When using GNU compilers these mechanisms
+will trigger the use of GNU attribute mechanism to permit use of such
+functions in applications to be easily flagged (as warnings
+output when using the GNU options {\tt -Wall}).
+
+Both functions and data members can be deprecated, but the process if different 
+for each case:
+\begin{itemize}
+    \item Deprecated functions and member functions. \\
+          Use the macro {\tt ROSE\_DEPRECATED\_FUNCTION} after the function declaration (and before
+          the closing {\bf ;}). As in:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+       void old_great_idea_function() ROSE_DEPRECATED_FUNCTION;
+\end{verbatim}
+}}
+
+    \item Deprecated data members. \\
+        Use the macro {\tt ROSE\_DEPRECATED\_VARIABLE} to specify that a data members 
+    or variables is to be deprecated.  This is difficult to do because data members of 
+    the IR are all automatically generated and thus can't be edited in this way.  Where 
+    a data member of the IR is to be depricated, it should be specificed explicitly in
+    the documentation for that specific class (in the {\tt ROSE/docs/testDoxygen} directory,
+    which is the staging area for all IR documentation, definitely {\em not} in the 
+    {\tt ROSE/src/frontend/SageIII/docs} directory, which is frequently overwritten).  See
+    details on how to document ROSE (Doxygen-Related Pages).
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+       void old_great idea_data_member ROSE_DEPRECATED_VARIABLE;
+\end{verbatim} 
+}}
+\end{itemize}
+
+
+
+\section{Code Style Rules for ROSE}
+
+   I don't want to constrain anyone from being expressive, but
+we have to maintain your code after you leave, so there are a few rules:
+\begin{enumerate}
+   \item Document your code.
+         Explain every function and use variable names that clearly indicate the purpose of
+         the variable. Explain what the tests are in your code (and where they are located).
+   \item Write test codes to test your code (these are assembled in the {\tt ROSE/tests}
+         directory (or subdirectories of {\tt ROSE/tests/roseTests}).
+   \item Use assertions liberally, use boolean values arguments to 
+         {\tt ROSE\_ASSERT(<expression>)}. Use of {\tt ROSE\_ASSERT(true/false)} for
+         error branches is prefered.
+   \item Put your code into source files (*.C) and as little as possible into header files.
+   \item If you use templates, put the code into a *.C file and include that *.C file
+         at the bottom of your header file.
+   \item If you use a {\em for loop} and break out of the loop (using {\tt break;} 
+         at some point in the iteration, then consider a {\em while loop} instead.
+   \item Don't forget a default statement within switch statements.
+   \item Think about your variable names. I too often see {\tt Node}, {\tt node}, 
+         and {\tt n} in the same function.  Make your code {\em obvious} so that I can understand it when I'm tired
+         or stupid (or both).
+   \item Write good code so that we don't have to debug it after you leave.
+   \item Indent your code blocks.
+\end{enumerate}
+
+My rules for style are as follows. Adhere to them if you like, or don't, if you're
+    appalled by them.
+\begin{enumerate}
+   \item Indent your code blocks (I use five spaces, but some consider this excessive).
+   \item Put spaces between operators for clarity.
+\end{enumerate}
+
+
+
+\section{Things That May Happen to Your Code After You Leave}
+
+    No one likes to have their code touched, and we would like to
+avoid having to do so. We would like to have your contribution to ROSE
+always work and never have to be touched.  We don't wish to pass
+critical judgment on style since we want to allow many people to 
+contribute to ROSE.  However, if we have to debug your code, be prepared 
+that we will do a number of things to it that might offend you:
+\begin{enumerate}
+   \item We will add documentation where we think it is appropriate.
+   \item We will add assertion tests (using ROSE\_ASSERT() macros)
+         wherever we think it is appropriate.
+   \item We will reformat your code if we have to understand it and the 
+         formatting is a problem.  This may offend
+         many people, but it will be a matter of project survival,
+         so all apologies in advance.  If you fix
+         anything later, your free to reformat your code as you like.  We try to change
+         as little as possible of the code that is contributed.
+\end{enumerate}
+
+
+\section{Maintaining the ROSE Email List (casc-rose@llnl.gov)}
+
+   There is an open email list for ROSE which can be subscribed to
+automatically.  The list name is: {\bf casc-rose}.
+
+   These are the email commands available to users of the list. To use them,
+a user sends a message to Majordomo with one or more of these commands in the body of
+the message. Each mailing list has a special "request" address where commands can be
+sent. For example, to use the casc-rose mailing list (casc-rose@lists.llnl.gov), send
+commands to casc-rose-request@lists.llnl.gov.
+
+   It is also possible to send commands directly to majordomo@lists.llnl.gov. 
+However, be sure to specify which list you want to use. With all the commands below, you 
+can leave out list if you are sending to casc-rose-request@lists.llnl.gov.
+
+\begin{itemize}
+   \item subscribe list address \\
+       Subscribe yourself (or address if specified) to the named list. The list may be 
+       configured so that you can only subscribe yourself; ie. you can't specify an 
+       address other than your own.
+
+   \item unsubscribe list address \\
+    Unsubscribe yourself (or address if specified) from the named list. "unsubscribe *" 
+    will remove you (or address) from all lists; This may not work if you have subscribed 
+    using multiple addresses. The list may be configured so that you can only unsubscribe 
+    yourself; ie. you can't specify an address other than your own.
+
+   \item which address \\
+    Find out which lists you (or address if specified) are on. Only lists enabled to
+    supply this information will be returned to the requestor.
+
+   \item who list \\
+    Find out who is on the named list. Only lists enabled to supply this information 
+    will be returned to the requestor.
+
+   \item info list \\
+    Retrieve the general introductory information for the named list. Only lists enabled
+    to supply this information will be returned to the requestor.
+
+   \item intro list \\
+    Retrieve the introductory message sent to new users. Non-subscribers may not be able
+    to retrieve this.
+
+   \item lists \\
+    Show the lists served by this Majordomo server (will not show "private" lists).
+
+   \item help \\
+    Retrieve some help information on the available user commands.
+
+   \item end \\
+    Stop processing commands (useful if your email program adds a signature). 
+\end{itemize}
+
+
+Here are the URLs for the {\em casc-rose} email list:
+
+Instructions on how to use a Majordomo mailing list: \\
+\begin{verbatim}
+    https://lists.llnl.gov/mj/user-commands.html
+\end{verbatim}
+
+Web interface for modifying a Majordomo mailing list: \\
+\begin{verbatim}
+    https://lists.llnl.gov/majordomo.
+\end{verbatim}
+
+Details: \\
+\begin{enumerate}
+   \item List name is: {\em casc-rose} not {\em casc-rose@llnl.gov}.
+   \item Must be on site at LLNL.
+   \item Password is required (Tom Leher and Hichhicker's Guide).
+\end{enumerate}
+
+
+

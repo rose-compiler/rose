@@ -1,0 +1,268 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgInquireStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgInquireStatement::p_access
+*/
+/*!\var SgExpression *SgInquireStatement::p_action
+*/
+/*!\var SgExpression *SgInquireStatement::p_asynchronous
+*/
+/*!\var SgExpression *SgInquireStatement::p_blank
+*/
+/*!\var SgExpression *SgInquireStatement::p_decimal
+*/
+/*!\var SgExpression *SgInquireStatement::p_delim
+*/
+/*!\var SgExpression *SgInquireStatement::p_direct
+*/
+/*!\var SgExpression *SgInquireStatement::p_exist
+*/
+/*!\var SgExpression *SgInquireStatement::p_file
+*/
+/*!\var SgExpression *SgInquireStatement::p_form
+*/
+/*!\var SgExpression *SgInquireStatement::p_formatted
+*/
+/*!\var SgExpression *SgInquireStatement::p_name
+*/
+/*!\var SgExpression *SgInquireStatement::p_named
+*/
+/*!\var SgExpression *SgInquireStatement::p_nextrec
+*/
+/*!\var SgExpression *SgInquireStatement::p_number
+*/
+/*!\var SgExpression *SgInquireStatement::p_opened
+*/
+/*!\var SgExpression *SgInquireStatement::p_pad
+*/
+/*!\var SgExpression *SgInquireStatement::p_position
+*/
+/*!\var SgExpression *SgInquireStatement::p_read
+*/
+/*!\var SgExpression *SgInquireStatement::p_readwrite
+*/
+/*!\var SgExpression *SgInquireStatement::p_recl
+*/
+/*!\var SgExpression *SgInquireStatement::p_sequential
+*/
+/*!\var SgExpression *SgInquireStatement::p_size
+*/
+/*!\var SgExpression *SgInquireStatement::p_stream
+*/
+/*!\var SgExpression *SgInquireStatement::p_unformatted
+*/
+/*!\var SgExpression *SgInquireStatement::p_write
+*/
+/*!\var SgExpression *SgInquireStatement::p_pending
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgInquireStatement::SgInquireStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgInquireStatement::SgInquireStatement(const SgInquireStatementStorageClass &source)
+*/
+/*!\fn inline static void SgInquireStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgInquireStatement *SgInquireStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgInquireStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgInquireStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgInquireStatement::initializeStorageClassArray(SgInquireStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgInquireStatement::clearMemoryPool()
+*/
+/*!\fn static void SgInquireStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgInquireStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgInquireStatement::roseRTI()
+*/
+/*!\fn virtual SgInquireStatement::~SgInquireStatement()
+*/
+/*!\fn virtual SgNode *SgInquireStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgInquireStatement::post_construction_initialization()
+*/
+/*!\fn void SgInquireStatement::set_access(SgExpression *access)
+\description See  *access)
+access for documentation */
+/*!\fn void SgInquireStatement::set_action(SgExpression *action)
+\description See  *action)
+action for documentation */
+/*!\fn void SgInquireStatement::set_asynchronous(SgExpression *asynchronous)
+\description See  *asynchronous)
+asynchronous for documentation */
+/*!\fn void SgInquireStatement::set_blank(SgExpression *blank)
+\description See  *blank)
+blank for documentation */
+/*!\fn void SgInquireStatement::set_decimal(SgExpression *decimal)
+\description See  *decimal)
+decimal for documentation */
+/*!\fn void SgInquireStatement::set_delim(SgExpression *delim)
+\description See  *delim)
+delim for documentation */
+/*!\fn void SgInquireStatement::set_direct(SgExpression *direct)
+\description See  *direct)
+direct for documentation */
+/*!\fn void SgInquireStatement::set_exist(SgExpression *exist)
+\description See  *exist)
+exist for documentation */
+/*!\fn void SgInquireStatement::set_file(SgExpression *file)
+\description See  *file)
+file for documentation */
+/*!\fn void SgInquireStatement::set_form(SgExpression *form)
+\description See  *form)
+form for documentation */
+/*!\fn void SgInquireStatement::set_formatted(SgExpression *formatted)
+\description See  *formatted)
+formatted for documentation */
+/*!\fn void SgInquireStatement::set_name(SgExpression *name)
+\description See  *name)
+name for documentation */
+/*!\fn void SgInquireStatement::set_named(SgExpression *named)
+\description See  *named)
+named for documentation */
+/*!\fn void SgInquireStatement::set_nextrec(SgExpression *nextrec)
+\description See  *nextrec)
+nextrec for documentation */
+/*!\fn void SgInquireStatement::set_number(SgExpression *number)
+\description See  *number)
+number for documentation */
+/*!\fn void SgInquireStatement::set_opened(SgExpression *opened)
+\description See  *opened)
+opened for documentation */
+/*!\fn void SgInquireStatement::set_pad(SgExpression *pad)
+\description See  *pad)
+pad for documentation */
+/*!\fn void SgInquireStatement::set_pending(SgExpression *pending)
+\description See  *pending)
+pending for documentation */
+/*!\fn void SgInquireStatement::set_position(SgExpression *position)
+\description See  *position)
+position for documentation */
+/*!\fn void SgInquireStatement::set_read(SgExpression *read)
+\description See  *read)
+read for documentation */
+/*!\fn void SgInquireStatement::set_readwrite(SgExpression *readwrite)
+\description See  *readwrite)
+readwrite for documentation */
+/*!\fn void SgInquireStatement::set_recl(SgExpression *recl)
+\description See  *recl)
+recl for documentation */
+/*!\fn void SgInquireStatement::set_sequential(SgExpression *sequential)
+\description See  *sequential)
+sequential for documentation */
+/*!\fn void SgInquireStatement::set_size(SgExpression *size)
+\description See  *size)
+size for documentation */
+/*!\fn void SgInquireStatement::set_stream(SgExpression *stream)
+\description See  *stream)
+stream for documentation */
+/*!\fn void SgInquireStatement::set_unformatted(SgExpression *unformatted)
+\description See  *unformatted)
+unformatted for documentation */
+/*!\fn void SgInquireStatement::set_write(SgExpression *write)
+\description See  *write)
+write for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_access() const
+\description See  const
+access for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_action() const
+\description See  const
+action for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_asynchronous() const
+\description See  const
+asynchronous for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_blank() const
+\description See  const
+blank for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_decimal() const
+\description See  const
+decimal for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_delim() const
+\description See  const
+delim for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_direct() const
+\description See  const
+direct for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_exist() const
+\description See  const
+exist for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_file() const
+\description See  const
+file for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_form() const
+\description See  const
+form for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_formatted() const
+\description See  const
+formatted for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_name() const
+\description See  const
+name for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_named() const
+\description See  const
+named for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_nextrec() const
+\description See  const
+nextrec for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_number() const
+\description See  const
+number for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_opened() const
+\description See  const
+opened for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_pad() const
+\description See  const
+pad for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_pending() const
+\description See  const
+pending for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_position() const
+\description See  const
+position for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_read() const
+\description See  const
+read for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_readwrite() const
+\description See  const
+readwrite for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_recl() const
+\description See  const
+recl for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_sequential() const
+\description See  const
+sequential for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_size() const
+\description See  const
+size for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_stream() const
+\description See  const
+stream for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_unformatted() const
+\description See  const
+unformatted for documentation */
+/*!\fn SgExpression *SgInquireStatement::get_write() const
+\description See  const
+write for documentation */
+/*!\fn virtual SgNode *SgInquireStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgInquireStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgInquireStatement::get_numberOfTraversalSuccessors()
+\description See  SgInquireStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgInquireStatement::get_traversalSuccessorContainer()
+\description See  SgInquireStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgInquireStatement::get_traversalSuccessorNamesContainer()
+\description See  SgInquireStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgInquireStatement::SgInquireStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1017160492;

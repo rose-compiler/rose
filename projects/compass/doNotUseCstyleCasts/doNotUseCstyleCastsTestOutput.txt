@@ -1,0 +1,4 @@
+DoNotUseCstyleCasts: doNotUseCstyleCastsTest1.C:7.12-27: SgCastExp: C++ casts allow for more compiler checking and are easier to find in source code (either by tools or by human readers).
+DoNotUseCstyleCasts: compilerGenerated:0.0: SgCastExp: C++ casts allow for more compiler checking and are easier to find in source code (either by tools or by human readers).
+DoNotUseCstyleCasts: doNotUseCstyleCastsTest1.C:11.11-40: SgCastExp: C++ casts allow for more compiler checking and are easier to find in source code (either by tools or by human readers).
+DoNotUseCstyleCasts: compilerGenerated:0.0: SgCastExp: C++ casts allow for more compiler checking and are easier to find in source code (either by tools or by human readers).

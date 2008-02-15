@@ -1,0 +1,101 @@
+
+
+\begin {figure*}
+\beginfig
+{\footnotesize %\fontfamily{pcr} \selectfont
+\begin {minipage}{.4\textwidth}
+\begin {tabbing}
+=\==\==\==\==\==\==\==\kill
+\>      for ($ j=0; j <=n-1; j+=1$)\\
+\>\>     for ($ i=0; i<=n-1; i+=1$)\\
+\>\>\>         $duz[i][j][1] = duz[i][j][1]*b[1]$;\\
+\>      for ($k=1; k<=n-2; k+=1$)\\
+\>\>      for ($j = 0; j <= n-1; j+=1$)\\
+\>\>\>      for ($i=0; i<=n-1; i+=1$)\\
+\>\>\>\>         $duz[i][j][k]=(duz[i][j][k]-a[k]*duz[i][j][k-1])*b[k]$;\\
+\>      for ($ j=0; j <=n-1; j+=1$)\\
+\>\>      for ($ i=0; i<=n-1; i+=1$)\\
+\>\>         $tot[i][j] = 0$;\\
+\>      for ($ k=0; k<=n-2; k+=1$)\\
+\>\>      for ($ j=0; j <=n-1; j+=1$)\\
+\>\>\>      for ($ i=0; i<=n-1; i+=1$)\\
+\>\>\>\>            $tot[i][j] = tot[i][j] + d[k]*duz[i][j][k]$;\\
+\>      for ($ j=0; j <=n-1; j+=1$)\\
+\>\>      for ($ i=0; i<=n-1; i+=1$)\\
+\>\>\>         $duz[i][j][n-1] = (duz[i][j][n-1] - tot[i][j])*b[n-1]$;\\
+\>      for ($ j=0; j <=n-1; j+=1$)\\
+\>\>      for ($ i=0; i<=n-1; i+=1$)\\
+\>\>\>         $duz[i][j][n-2]=duz[i][j][n-2] - e[n-2]*duz[i][j][n-1]$;\\
+\>      for ($k=n-3; k>=0; k+=-1$)\\
+\>\>      for ($j = 0; j <= n-1; j+=1$)\\
+\>\>\>      for ($i=0; i<=n-1; i+=1$)\\
+\>\>\>\>       $duz[i][j][k] =$ \= $duz[i][j][k] - c[k]*duz[i][j][k+1]$\\
+\>\>\>\>\> $- e[k]*duz[i][j][n-1]$;\\
+\end {tabbing}
+\end {minipage}
+%\begin {minipage}{.4\textwidth}
+%\begin {tabbing}\\
+%=\==\==\==\==\==\==\==\kill
+%\>  for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>     $tot[i][j] = 0.0$;\\
+%\>  for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>       $duz[i][j][1] = duz[i][j][1] * b[1]$;\\
+%\>  for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>  for ($k = 1; k <= n-2; k += 1$)\\
+%\>\>\>\>   $duz[i][j][k] = (duz[i][j][k] - a[k] * duz[i][j][k - 1]) * b[k]$;\\
+%\>  for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>  for ($k = 0; k <= n-2; k += 1$)\\
+%\>\>\>\>    $tot[i][j] = tot[i][j] + d[k] * duz[i][j][k]$;\\
+%\> for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>    $duz[i][j][n-1] = (duz[i][j][n-1] - tot[i][j]) * b[n-1]$;\\
+%\> for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>     $duz[i][j][n-2] = duz[i][j][n-2] - e[n-2] * duz[i][j][n-1]$;\\
+%\>  for ($i = 0; i <= n-1; i += 1$)\\
+%\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+%\>\>\>  for ($k = n-3; k >= 0; k += -1$)\\
+%\>\>\>\>     $duz[i][j][k] =$ \= $(duz[i][j][k] - c[k] * duz[i][j])[k + 1])$ \\
+%\>\>\>\>\>   $- e[k] * ((duz[i])[j])[n-1]$;\\
+%\end {tabbing}
+%\end {minipage}
+\begin {minipage}{.4\textwidth}
+\begin {tabbing}
+=\==\==\==\==\==\==\==\kill
+\>  for ($i = 0; i <= n-1; i += 1$)\\
+\>  \{ \\
+\>\>  for ($j = 0; j <= n-1; j += 1$)\\
+\>\>  \{ \\
+\>\>\>     $tot[i][j] = 0.0$;\\
+\>\>\>     $duz[i][j][1] = duz[i][j][1] * b[1]$;\\
+\>\>\>  for ($k = 1; k <= n-2; k += 1$)\\
+\>\>\> \{ \\
+\>\>\>\>   $duz[i][j][k] = (duz[i][j][k] - a[k] * duz[i][j][k - 1]) * b[k]$;\\
+\>\>\>\>   $tot[i][j] = tot[i][j] + d[k] * duz[i][j][k]$;\\
+\>\>\>  \} \\
+\>\>\>     $duz[i][j][n-1] = (duz[i][j][n-1] - tot[i][j]) * b[n-1]$;\\
+\>\>\>     $duz[i][j][n-2] = duz[i][j][n-2] - e[n-2] * duz[i][j][n-1]$;\\
+\>\>\>  for ($k = n-3; k >= 0; k += -1$)\\
+\>\>\>\>    $duz[i][j][k] = $ \= $(duz[i][j][k] - c[k] * duz[i][j])[k + 1])$ \\
+\>\>\>\>\>  $- e[k] * ((duz[i])[j])[n-1]$;\\
+\>\> \} \\
+\> \} 
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{\textwidth}
+\vspace{.2in}
+\hspace{.08\textwidth} (a) original code \hspace{.5\textwidth}
+(b) after fusion
+\end {minipage}
+}
+\endfig
+\caption {Optimizing $tridvpk$ from Erlebacher: 
+combining loop interchange and fusion, thus
+fusing multiple levels of loops simultaneously} 
+\label {fig-tridvpk}
+\end {figure*}
+

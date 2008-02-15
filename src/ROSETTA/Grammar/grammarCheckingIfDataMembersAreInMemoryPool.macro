@@ -1,0 +1,13 @@
+
+void
+$CLASSNAME::checkDataMemberPointersIfInMemoryPool()
+   {
+  // ------------ checking pointers of $CLASSNAME -------------------
+     ROSE_ASSERT ( p_freepointer == AST_FileIO::IS_VALID_POINTER() );
+
+     $CODE_STRING
+
+   }
+
+$ASSOCIATED_MEMORY_POOL_TEST
+

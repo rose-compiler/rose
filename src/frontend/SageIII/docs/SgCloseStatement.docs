@@ -1,0 +1,60 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgCloseStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgCloseStatement::p_status
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgCloseStatement::SgCloseStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgCloseStatement::SgCloseStatement(const SgCloseStatementStorageClass &source)
+*/
+/*!\fn inline static void SgCloseStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgCloseStatement *SgCloseStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgCloseStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgCloseStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgCloseStatement::initializeStorageClassArray(SgCloseStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgCloseStatement::clearMemoryPool()
+*/
+/*!\fn static void SgCloseStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgCloseStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgCloseStatement::roseRTI()
+*/
+/*!\fn virtual SgCloseStatement::~SgCloseStatement()
+*/
+/*!\fn virtual SgNode *SgCloseStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgCloseStatement::post_construction_initialization()
+*/
+/*!\fn void SgCloseStatement::set_status(SgExpression *status)
+\description See  *status)
+status for documentation */
+/*!\fn SgExpression *SgCloseStatement::get_status() const
+\description See  const
+status for documentation */
+/*!\fn virtual SgNode *SgCloseStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgCloseStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgCloseStatement::get_numberOfTraversalSuccessors()
+\description See  SgCloseStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgCloseStatement::get_traversalSuccessorContainer()
+\description See  SgCloseStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgCloseStatement::get_traversalSuccessorNamesContainer()
+\description See  SgCloseStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgCloseStatement::SgCloseStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_785326927;

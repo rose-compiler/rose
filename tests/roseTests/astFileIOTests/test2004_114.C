@@ -1,0 +1,21 @@
+// This test code demonstrates the handling of formating doubles
+
+// 16 digits are output after the decimal
+double a = 0.12345678901234567890123456789000000;
+
+// Trailing zeros are truncated
+double b = 0.12345678900000000000000000000000000;
+
+// Trailing zeros are truncated (ouput is: "0.0")
+double c = 0.00000000000000000000000000000000000;
+
+// Trailing zeros are truncated
+double d = 0.00000000050000000000000000000000000;
+
+float e = 0.12345678901234567890123456789000000;
+float f = 0.12345678900000000000000000000000000;
+float g = 0.00000000000000000000000000000000000;
+float h = 0.00000000050000000000000000000000000;
+
+
+

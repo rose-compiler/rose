@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var SgSymbol *SgTypedefType::p_parent_scope
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypedefType::SgTypedefType(const SgTypedefTypeStorageClass &source)
+*/
+/*!\fn inline static void SgTypedefType::operator delete(void *pointer)
+*/
+/*!\fn static SgTypedefType *SgTypedefType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypedefType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypedefType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypedefType::initializeStorageClassArray(SgTypedefTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgTypedefType::clearMemoryPool()
+*/
+/*!\fn static void SgTypedefType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypedefType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypedefType::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypedefType::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypedefType::~SgTypedefType()
+*/
+/*!\fn void SgTypedefType::set_parent_scope(SgSymbol *parent_scope)
+\description See  *parent_scope)
+parent_scope for documentation */
+/*!\fn SgSymbol *SgTypedefType::get_parent_scope() const
+\description See  const
+parent_scope for documentation */
+/*!\fn virtual SgNode *SgTypedefType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypedefType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypedefType::get_numberOfTraversalSuccessors()
+\description See  SgTypedefType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypedefType::get_traversalSuccessorContainer()
+\description See  SgTypedefType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypedefType::get_traversalSuccessorNamesContainer()
+\description See  SgTypedefType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypedefType::SgTypedefType(SgDeclarationStatement *declaration=(0),SgSymbol *parent_scope=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_350684301;

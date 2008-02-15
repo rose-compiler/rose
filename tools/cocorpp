@@ -1,0 +1,23 @@
+#preprocess coco file
+agpp $1.atg > $1_pp.atg
+#process coco file
+cocor -P -DCRFRAMES . $1_pp.atg
+
+#change generate new files with substituted class names (experimental)
+sed -e s/"sgnodeParser"/"$1Parser"/ \
+-e s/"sgnodec.hpp"/"$1CocoCodes.h"/ \
+-e s/"sgnodes.hpp"/"AstNodeScanner.h"/ \
+-e s/"sgnodep.hpp"/"$1Parser.h"/ \
+sgnodep.cpp > $1Parser.C
+sed -e s/"sgnodeParser"/"$1Parser"/ \
+-e s/"sgnodes.hpp"/"AstNodeScanner.h"/ \
+#-e s/"const int MAXSYM = 13;"// \
+#-e s/"const int MAXERROR = 217;"// \
+#-e s/"public:"/"public: static const int MAXSYM = 13;"/ \
+sgnodep.hpp > $1Parser.h
+mv sgnodec.hpp $1CocoCodes.h
+mv sgnodee.hpp $1CocoErrorMessages.h
+
+
+
+

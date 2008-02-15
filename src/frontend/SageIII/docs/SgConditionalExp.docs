@@ -1,0 +1,173 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgConditionalExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgConditionalExp
+\brief This class represents the concept of a C trinary conditional expression (e.g. "test ? true : false")
+\sa
+\ref SgConditionalExp_usage  "Example of using a SgConditionalExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgConditionalExp data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgConditionalExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgConditionalExp_create "Example:create an SgConditionalExp object"
+*/
+/*!
+\fn SgConditionalExp::~SgConditionalExp()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgConditionalExp::isSgConditionalExp (SgNode *s)
+\brief Cast function (from derived class to SgConditionalExp pointer).
+   This functions returns a SgConditionalExp pointer for any input of a 
+pointer to an object derived from a SgConditionalExp.
+\return Returns valid pointer to SgConditionalExp if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgConditionalExp::isSgConditionalExp (const SgNode *s)
+\brief Cast function (from derived class to SgConditionalExp pointer).
+   This functions returns a SgConditionalExp pointer for any input of a 
+pointer to an object derived from a SgConditionalExp.
+\return Returns valid pointer to SgConditionalExp if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgConditionalExp::get_expression_type() const
+\brief Access function for p_expression_type.
+\return Returns pointer to SgExpression.
+*/
+/*!
+\fn SgConditionalExp::set_expression_type(SgType* expression_type)
+\brief Access function for p_expression_type.
+   Both the p_true_exp and p_false_exp must have the same type.
+\param expression_type type of result.
+\return Returns void.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgExpression *SgConditionalExp::p_conditional_exp
+\brief This pointer points to a SgExpression object.
+*/
+/*! \var SgExpression *SgConditionalExp::p_false_exp
+\brief This pointer points to a SgExpression object.
+*/
+/*! \var SgExpression *SgConditionalExp::p_true_exp
+\brief This pointer points to a SgExpression object.
+*/
+/*! \var SgType *SgConditionalExp::p_expression_type
+\brief This pointer points to a SgType object.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgConditionalExp::SgConditionalExp(Sg_File_Info *startOfConstruct,SgExpression *conditional_exp=(0),SgExpression *true_exp=(0),SgExpression *false_exp=(0),SgType *expression_type=(0))
+*/
+/*!
+\fn SgConditionalExp::SgConditionalExp(const SgConditionalExpStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgConditionalExp base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn inline static void SgConditionalExp::operator delete(void *pointer)
+*/
+/*!\fn static SgConditionalExp *SgConditionalExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgConditionalExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgConditionalExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgConditionalExp::initializeStorageClassArray(SgConditionalExpStorageClass *storageArray)
+*/
+/*!\fn static void SgConditionalExp::clearMemoryPool()
+*/
+/*!\fn static void SgConditionalExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgConditionalExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgConditionalExp::roseRTI()
+*/
+/*!\fn virtual SgConditionalExp::~SgConditionalExp()
+*/
+/*!\fn virtual SgNode *SgConditionalExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual bool SgConditionalExp::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual int SgConditionalExp::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgConditionalExp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgConditionalExp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgConditionalExp::cfgFindChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgConditionalExp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgConditionalExp::post_construction_initialization()
+*/
+/*!
+\fn void SgConditionalExp::set_conditional_exp(SgExpression *conditional_exp)
+\brief Access function for p_conditional_exp.
+See  *conditional_exp)
+conditional_exp for documentation \param conditional_exp is the conditional test expression
+\return Returns void.
+*/
+/*!
+\fn void SgConditionalExp::set_false_exp(SgExpression *false_exp)
+\brief Access function for p_false_exp.
+See  *false_exp)
+false_exp for documentation \param false_exp expression to evaluate if test is false.
+\return Returns void.
+*/
+/*!
+\fn void SgConditionalExp::set_true_exp(SgExpression *true_exp)
+\brief Access function for p_true_exp.
+See  *true_exp)
+true_exp for documentation \param true_exp expression to evaluate if test is true.
+\return Returns void.
+*/
+/*!
+\fn SgExpression *SgConditionalExp::get_conditional_exp() const
+\brief Access function for p_conditional_exp.
+See  const
+conditional_exp for documentation \return Returns pointer to SgExpression.
+*/
+/*!
+\fn SgExpression *SgConditionalExp::get_false_exp() const
+\brief Access function for p_false_exp.
+See  const
+false_exp for documentation \return Returns pointer to SgExpression.
+*/
+/*!\fn SgExpression *SgConditionalExp::get_next(int &n) const
+\description See  const
+next for documentation */
+/*!
+\fn SgExpression *SgConditionalExp::get_true_exp() const
+\brief Access function for p_true_exp.
+See  const
+true_exp for documentation \return Returns pointer to SgExpression.
+*/
+/*!\fn virtual SgNode *SgConditionalExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgConditionalExp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgConditionalExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgConditionalExp::get_numberOfTraversalSuccessors()
+\description See  SgConditionalExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgConditionalExp::get_traversalSuccessorContainer()
+\description See  SgConditionalExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgConditionalExp::get_traversalSuccessorNamesContainer()
+\description See  SgConditionalExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgConditionalExp::SgConditionalExp(SgExpression *conditional_exp,SgExpression *true_exp,SgExpression *false_exp,SgType *expression_type)
+*/
+//@}
+int SAGE_Doxygen_Dummy_29019416210287;

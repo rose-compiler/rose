@@ -1,0 +1,62 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+#if 0
+CLASSNAME::CLASSNAME ()
+   {
+     ROSE_Node::setUp (CLASSNAME_TAG,NULL);
+   }
+#endif
+
+CLASSNAME::CLASSNAME ( SgExpression* expr )
+   : BASECLASSNAME(expr)
+   {
+  // ArrayOperators are implemented as member functions or friend functions and so this function
+  // looks for array operators by looking for either array friend functions or array member functions
+  // the function name is required to be from a specific set of qualified names as well.
+
+     ROSE_ASSERT (expr != NULL);
+     ROSE_Node::setUp (CLASSNAME_TAG,expr);
+
+  // showSgExpression (cout, expr, "Called from CLASSNAME::CLASSNAME ( SgExpression* expr )");
+   }
+
+ROSE_Node* CLASSNAME::transform()
+   {
+     printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+  // ROSE_ABORT();
+
+     ROSE_ASSERT (!error());
+
+     return this;
+   }
+
+void CLASSNAME::addArgumentExpression ( ROSE_Expression* roseExpression )
+   {
+     ROSE_ASSERT (roseExpression != NULL);
+     roseExpressionList.addElement(*roseExpression);
+   }
+
+int CLASSNAME::numberOfArguments()
+   {
+     return roseExpressionList.getLength();
+   }
+
+void CLASSNAME::setSageExpressionListExpression ( SgExprListExp* exprListExp )
+   {
+     ROSE_ASSERT (exprListExp != NULL);
+     sageExpressionListExpression = exprListExp;
+   }
+
+SgExprListExp* CLASSNAME::getSageExpressionListExpression()
+   {
+     ROSE_ASSERT (sageExpressionListExpression != NULL);
+     return sageExpressionListExpression;
+   }
+
+List<ROSE_Expression> & CLASSNAME::getRoseExpressionList ()
+   {
+     return roseExpressionList;
+   }
+

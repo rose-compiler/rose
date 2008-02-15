@@ -1,0 +1,134 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCatchOptionStmt
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgCatchOptionStmt
+\brief This class represents the concept of a catch within a try-catch construct used in
+    C++ exception handling.
+
+\internal try and catch, though linked semanticaly, are seperate statements in the IR.
+
+*/
+
+/*
+\sa
+\ref SgCatchOptionStmt_usage  "Example of using a SgCatchOptionStmt object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCatchOptionStmt data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgCatchOptionStmt::p_condition
+\brief This pointer to a SgVariableDeclaration.
+
+*/
+
+/*! \var SgCatchOptionStmt::p_body
+\brief This pointer to a SgBasicBlock used to hold the statements to be executed when the
+    exception is caught.
+
+*/
+
+/*! \var SgCatchOptionStmt::p_trystmt
+\brief This pointer to a SgTryStmt (a declaration) that is associated with this catch option.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCatchOptionStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgCatchOptionStmt::SgCatchOptionStmt ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgCatchOptionStmt base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgCatchOptionStmt_create "Example:create an SgCatchOptionStmt object"
+*/
+
+/*!
+\fn SgCatchOptionStmt::~SgCatchOptionStmt()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgCatchOptionStmt::isSgCatchOptionStmt (SgNode *s)
+\brief Cast function (from derived class to SgCatchOptionStmt pointer).
+
+   This functions returns a SgCatchOptionStmt pointer for any input of a 
+pointer to an object derived from a SgCatchOptionStmt.
+
+\return Returns valid pointer to SgCatchOptionStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCatchOptionStmt::isSgCatchOptionStmt (const SgNode *s)
+\brief Cast function (from derived class to SgCatchOptionStmt pointer).
+
+   This functions returns a SgCatchOptionStmt pointer for any input of a 
+pointer to an object derived from a SgCatchOptionStmt.
+
+\return Returns valid pointer to SgCatchOptionStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCatchOptionStmt::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgCatchOptionStmt.
+*/
+
+/*!
+\fn SgCatchOptionStmt::get_condition() const
+\brief Access function for p_condition.
+
+\return Returns a pointer to a SgVariableDeclaration.
+*/
+
+/*!
+\fn SgCatchOptionStmt::set_condition(SgVariableDeclaration* condition)
+\brief Access function for p_condition.
+
+\param condition SgVariableDeclaration pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgCatchOptionStmt::get_body() const
+\brief Access function for p_body.
+
+\return Returns a pointer to a SgBasicBlock.
+*/
+
+/*!
+\fn SgCatchOptionStmt::set_body(SgBasicBlock* body)
+\brief Access function for p_body.
+
+\param body SgBasicBlock pointer
+\return Returns void.
+*/
+
+/*!
+\fn SgCatchOptionStmt::get_trystmt() const
+\brief Access function for p_trystmt.
+
+\return Returns a pointer to a SgTryStmt.
+*/
+
+/*!
+\fn SgCatchOptionStmt::set_trystmt(SgTryStmt* trystmt)
+\brief Access function for p_trystmt.
+
+\param trystmt SgTryStmt pointer
+\return Returns void.
+*/
+

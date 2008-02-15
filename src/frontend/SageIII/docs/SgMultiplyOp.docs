@@ -1,0 +1,51 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgMultiplyOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgMultiplyOp::SgMultiplyOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgMultiplyOp::SgMultiplyOp(const SgMultiplyOpStorageClass &source)
+*/
+/*!\fn inline static void SgMultiplyOp::operator delete(void *pointer)
+*/
+/*!\fn static SgMultiplyOp *SgMultiplyOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgMultiplyOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgMultiplyOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgMultiplyOp::initializeStorageClassArray(SgMultiplyOpStorageClass *storageArray)
+*/
+/*!\fn static void SgMultiplyOp::clearMemoryPool()
+*/
+/*!\fn static void SgMultiplyOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgMultiplyOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgMultiplyOp::roseRTI()
+*/
+/*!\fn virtual SgMultiplyOp::~SgMultiplyOp()
+*/
+/*!\fn virtual SgNode *SgMultiplyOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgMultiplyOp::precedence() const
+*/
+/*!\fn virtual void SgMultiplyOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgMultiplyOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgMultiplyOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgMultiplyOp::get_numberOfTraversalSuccessors()
+\description See  SgMultiplyOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgMultiplyOp::get_traversalSuccessorContainer()
+\description See  SgMultiplyOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgMultiplyOp::get_traversalSuccessorNamesContainer()
+\description See  SgMultiplyOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgMultiplyOp::SgMultiplyOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2799463;

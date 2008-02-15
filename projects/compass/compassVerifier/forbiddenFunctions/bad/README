@@ -1,0 +1,9 @@
+This directory contains .txt files listing the names of forbidden functions
+
+For the descriptions of the listed functions and system calls see:
+http://www.opengroup.org/onlinepubs/007908799/index.html
+
+To collect all these names and generate a compass_parameters file simply
+execute
+
+./accumulate.sh

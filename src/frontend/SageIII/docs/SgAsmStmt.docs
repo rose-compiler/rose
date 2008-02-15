@@ -1,0 +1,144 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAsmStmt
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgAsmStmt
+\brief This class represents the concept of a C Assembler statement.
+    This IR node supports the gnu standard names for registers, and specifially
+the X86 register set.  Other register sets could be supported, for details contact
+the ROSE development team.  More information about the use of asm statements can
+be easily found on the web. 
+\note This is part of support for embedded programming, however the Linux header files
+contain numerous example of asm statements demonstrating there somewhat suprising
+wide-spread use.
+\internal Test code for this include test2006_98.C and test2006_99.C.
+\todo This should not be a SgDeclaration (should be a regular SgStatement).
+      Where "asm" is used in declarations (e.g. "int x asm("ax") = 0;") this
+      is a SgVariableDeclaration.  A asm statment is really just another kind
+      of statement (e.g "asm ("template",output operand, input operand);").
+      This sort of statement is not a declaration (as I understand it).  This
+      will be fixed in a later release.
+\sa
+\ref SgAsmStmt_usage  "Example of using a SgAsmStmt object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAsmStmt data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAsmStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgAsmStmt_create "Example:create an SgAsmStmt object"
+*/
+/*!
+\fn SgAsmStmt::~SgAsmStmt()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgAsmStmt::isSgAsmStmt (SgNode *s)
+\brief Cast function (from derived class to SgAsmStmt pointer).
+   This functions returns a SgAsmStmt pointer for any input of a 
+pointer to an object derived from a SgAsmStmt.
+\return Returns valid pointer to SgAsmStmt if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgAsmStmt::isSgAsmStmt (const SgNode *s)
+\brief Cast function (from derived class to SgAsmStmt pointer).
+   This functions returns a SgAsmStmt pointer for any input of a 
+pointer to an object derived from a SgAsmStmt.
+\return Returns valid pointer to SgAsmStmt if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgExpressionPtrList SgAsmStmt::p_operands
+\brief This is a list of expressions; first the asm template, followed by the output
+    operand, and all input operands.
+   Note that the first element of the list if always a SgStringVal IR node containing the
+asm template string, the second operand is an output operand (SgAsmOp), the rest of the 
+expressions in this list are the input operands (also SgAsmOp).
+*/
+/*! \var SgAsmStmt::AsmRegisterNameList SgAsmStmt::p_clobberRegisterList
+\brief This is the clobber list (list of registers where side-effects happen).
+   This is a list of enum values (type SgInitializedName::asm_register_name_enum)
+that are standard gnu names for registers.  The only currently supported register
+set is X86, other register sets could be supported in the future.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgAsmStmt::SgAsmStmt(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgAsmStmt base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgAsmStmt::SgAsmStmt(const SgAsmStmtStorageClass &source)
+*/
+/*!\fn inline static void SgAsmStmt::operator delete(void *pointer)
+*/
+/*!\fn static SgAsmStmt *SgAsmStmt::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAsmStmt::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAsmStmt::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAsmStmt::initializeStorageClassArray(SgAsmStmtStorageClass *storageArray)
+*/
+/*!\fn static void SgAsmStmt::clearMemoryPool()
+*/
+/*!\fn static void SgAsmStmt::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAsmStmt::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAsmStmt::roseRTI()
+*/
+/*!\fn virtual SgAsmStmt::~SgAsmStmt()
+*/
+/*!\fn virtual SgNode *SgAsmStmt::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgAsmStmt::post_construction_initialization()
+*/
+/*!
+\fn SgAsmStmt::AsmRegisterNameList &SgAsmStmt::get_clobberRegisterList()
+\brief Access function for operand list (STL list).
+See  &SgAsmStmt::clobberRegisterList for documentation \return Returns STL list of SgInitializedName::asm_register_name_enum by reference (SgAsmStmt::AsmRegisterNameList).
+*/
+/*!
+\fn SgExpressionPtrList &SgAsmStmt::get_operands()
+\brief Access function for operand list (STL list).
+See  &SgAsmStmt::operands for documentation \return Returns STL list of SgAsmOp by reference.
+*/
+/*!
+\fn const SgAsmStmt::AsmRegisterNameList &SgAsmStmt::get_clobberRegisterList() const
+\brief Access function for operand list (STL list).
+See  const
+clobberRegisterList for documentation \return Returns STL list of SgInitializedName::asm_register_name_enum by const reference (SgAsmStmt::AsmRegisterNameList).
+*/
+/*!
+\fn const SgExpressionPtrList &SgAsmStmt::get_operands() const
+\brief Access function for operand list (STL list).
+See  const
+operands for documentation \return Returns STL list of SgAsmOp by const reference.
+*/
+/*!\fn virtual SgName SgAsmStmt::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgAsmStmt::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAsmStmt::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAsmStmt::get_numberOfTraversalSuccessors()
+\description See  SgAsmStmt::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAsmStmt::get_traversalSuccessorContainer()
+\description See  SgAsmStmt::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAsmStmt::get_traversalSuccessorNamesContainer()
+\description See  SgAsmStmt::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAsmStmt::SgAsmStmt()
+*/
+//@}
+int SAGE_Doxygen_Dummy_173761161419489;

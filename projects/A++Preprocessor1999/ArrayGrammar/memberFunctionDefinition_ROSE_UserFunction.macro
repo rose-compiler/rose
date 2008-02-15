@@ -1,0 +1,54 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+#if 0
+CLASSNAME::CLASSNAME ()
+   {
+     ROSE_Node::setUp (CLASSNAME_TAG,NULL);
+   }
+#endif
+
+CLASSNAME::CLASSNAME ( SgExpression* expr )
+   : BASECLASSNAME (expr)
+   {
+     ROSE_ASSERT (expr != NULL);
+     ROSE_Node::setUp (CLASSNAME_TAG,expr);
+   }
+
+// CLASSNAME::build_CLASSNAME ( ROSE_Node* node, ROSE_Expression* roseLhsExpression, ROSE_Expression* roseRhsExpression )
+//    : BASECLASSNAME ( (SgExpression*) (node->sageSubTree()) )
+
+#if 0
+// Copied from the ROSE_C_Expression class definition
+CLASSNAME* CLASSNAME::build_ROSE_C_Expression ( ROSE_Expression* node, ROSE_Expression* roseLhsExpression, ROSE_Expression* roseRhsExpression )
+   {
+  // This is a static function (we could alternatively make it a constructor,
+  // but that would be more complex so it is not clear if that is the best approach.
+
+     SgExpression* sageLhsExpression = (SgExpression*) roseLhsExpression->getSageSubTree();
+     ROSE_ASSERT (sageLhsExpression != NULL);
+     SgExpression* sageRhsExpression = (SgExpression*) roseRhsExpression->getSageSubTree();
+     ROSE_ASSERT (sageRhsExpression != NULL);
+
+     SgExpression* sageOperator = node->buildExpression (node,sageLhsExpression,sageRhsExpression);
+     ROSE_ASSERT (sageOperator != NULL);
+
+  // Since we are holding the transformation of the array expression (which is a C
+  // expression by definition) we can wrap it into a ROSE_C_Expression, alternatively
+  // we could define a new grammar terminal to hold the transformed SAGE program tree.
+     ROSE_C_Expression* roseExpression = new ROSE_C_Expression (sageOperator);
+     ROSE_ASSERT (roseExpression != NULL);
+
+     return roseExpression;
+   }
+#endif
+
+ROSE_Node* CLASSNAME::transform()
+   {
+     printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+  // ROSE_ABORT();
+
+     return this;
+   }
+

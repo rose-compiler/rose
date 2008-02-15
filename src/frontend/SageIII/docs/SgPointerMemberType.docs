@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgPointerMemberType
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgClassDefinition *SgPointerMemberType::p_class_of
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgPointerMemberType::SgPointerMemberType(const SgPointerMemberTypeStorageClass &source)
+*/
+/*!\fn inline static void SgPointerMemberType::operator delete(void *pointer)
+*/
+/*!\fn static SgPointerMemberType *SgPointerMemberType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgPointerMemberType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgPointerMemberType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgPointerMemberType::initializeStorageClassArray(SgPointerMemberTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgPointerMemberType::clearMemoryPool()
+*/
+/*!\fn static void SgPointerMemberType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgPointerMemberType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgPointerMemberType::roseRTI()
+*/
+/*!\fn virtual SgNode *SgPointerMemberType::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgPointerMemberType::~SgPointerMemberType()
+*/
+/*!\fn void SgPointerMemberType::set_class_of(SgClassDefinition *class_of)
+\description See  *class_of)
+class_of for documentation */
+/*!\fn SgClassDefinition *SgPointerMemberType::get_class_of() const
+\description See  const
+class_of for documentation */
+/*!\fn virtual SgNode *SgPointerMemberType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgPointerMemberType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgPointerMemberType::get_numberOfTraversalSuccessors()
+\description See  SgPointerMemberType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPointerMemberType::get_traversalSuccessorContainer()
+\description See  SgPointerMemberType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPointerMemberType::get_traversalSuccessorNamesContainer()
+\description See  SgPointerMemberType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgPointerMemberType::SgPointerMemberType(SgType *base_type=(0),SgClassDefinition *class_of=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1351060729;

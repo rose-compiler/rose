@@ -1,0 +1,17 @@
+
+These tests demonstrate the slicing and the generation and use of the System Dependence
+Graph.
+
+test1.C works fine and is a simple demonstration.
+
+test2.C demonstrates a bug when the printf() function is marked as a slice target
+    (we have fixed this in the input code by makring the use of the variable "i"
+     by marking "i;" instead.  Then it all appears to work fine.
+
+Problems:
+   1) The function arguments to a function call marked as a target slice are not marked.
+      
+
+   2) Quotes around literals need to be escaped in the dot output to avoid generation of 
+      qhost nodes in the visualization of the dependence graphs.
+

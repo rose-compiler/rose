@@ -1,0 +1,37 @@
+          StatementDataBase* localDataBase;
+
+       // Special constructor for CLASSNAME;
+          CLASSNAME ( ROSE_Statement* stmt );
+
+       // Make this class an abstract base class so that we can be certain that
+       // we will not ever try to build one of these directly.
+          virtual ROSE_TransformableNode* transform ();
+
+          ROSE_Statement* getRoseStatement ();
+          void setRoseStatement ( ROSE_Statement* stmt );
+
+       // ROSE_TransformableExpression* getExpression ();
+       // void setExpression ( ROSE_TransformableExpression* expr );
+          ROSE_TransformableBinaryOperatorEquals* getExpression ();
+          void setExpression ( ROSE_TransformableBinaryOperatorEquals* expr );
+
+       // The transformation process is divided into several subtransformations
+          void oncePerScopeSubtransformation                  ( SgStatement *currentStatement );
+          void oncePerTransformationSubtransformation         ( SgStatement *currentStatement );
+          void repeatedForEachTransformationSubtransformation ( SgStatement *currentStatement );
+          void outerLoopStructureSubtransformation            ( SgStatement *currentStatement, SgStatement* transformedStatement );
+          void buildForLoopStructureAndModifySageTree         ( SgStatement *exprStmt,         SgStatement *transformedStatement );
+
+       // Data base access functions
+          void setUpDataBase();
+          int numberOfRhsOperands();
+
+     private:
+       // This grammar (and the obejcts implementing its pieces) are very specific
+       // thus we specify here that a TransformableStatement IS a statement containing
+       // a TransformableBinaryOperatorEquals.  This is much more specific than saying 
+       // that a statement contains an experssion.
+          ROSE_TransformableBinaryOperatorEquals* transformableBinaryOperatorEquals;
+
+
+

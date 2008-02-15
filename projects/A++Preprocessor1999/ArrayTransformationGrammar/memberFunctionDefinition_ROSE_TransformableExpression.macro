@@ -1,0 +1,53 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+#if 0
+CLASSNAME::CLASSNAME ()
+   {
+     ROSE_Node::setUp (CLASSNAME_TAG,NULL);
+   }
+#endif
+
+CLASSNAME::CLASSNAME ( ROSE_Expression* expr )
+   : BASECLASSNAME(expr)
+   {
+  // ArrayOperators are implemented as member functions or friend functions and so this function
+  // looks for array operators by looking for either array friend functions or array member functions
+  // the function name is required to be from a specific set of qualified names as well.
+
+     ROSE_ASSERT (expr != NULL);
+     ROSE_TransformableNode::setUp (CLASSNAME_TAG,expr);
+
+  // showSgExpression (cout, expr, "Called from CLASSNAME::CLASSNAME ( SgExpression* expr )");
+   }
+
+ROSE_TransformableNode* CLASSNAME::transform()
+   {
+     printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+     ROSE_ABORT();
+
+  // getRoseExpression()->transform();
+
+     return this;
+   }
+
+void CLASSNAME::setRoseExpression ( ROSE_Expression* expr )
+   {
+     ROSE_ASSERT (expr != NULL);
+
+     printf ("Not clear where we need this function! \n");
+     ROSE_ABORT();
+
+  // roseExpression = expr;
+   }
+
+ROSE_Expression* CLASSNAME::getRoseExpression ()
+   {
+  // ROSE_ASSERT (roseExpression != NULL);
+  // return roseExpression;
+
+  // Casting this to a ROSE_Expression then seems to hide it being a derived type, could this be???
+     return (ROSE_Expression*) getRoseSubTree();
+   }
+

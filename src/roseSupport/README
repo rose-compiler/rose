@@ -1,0 +1,43 @@
+This is a directory of ROSE specific support code.
+
+
+memoryUsage.C: is a mechanism to total the amount of memory in use by ROSE.
+     It is used in the performance monitors (along with time) to report on
+     details of ROSE performance (and help us spot problems in the 
+     implementation).
+
+optionDeclaration.[hC]:  This is an old part of ROSE which may be removed 
+     and should not be used.  Likely more standard annotation methods are 
+     more powerful.  I forget why this even exists, but it may have preceeded 
+     pragma support in ROSE.
+
+roseTranslators.[hC]: This is an approach toware a higher level interface for 
+     AST processing.  It needs to be demonstrated in the ROSE tutorial before
+     it can be expected to be a clear alternative for users.  It is however
+     nice work (mostly by Markus Schordan, as I recall).
+
+sourceLocationInheritedAttribute.[hC]: This an attempt to define a standard
+     base class for inherited attributes in ROSE.  It might be being used in 
+     the high level interface in the rewrite mechansim in ROSE (as I recall).
+     I don't think it has been a great sucess within ROSE generally, but perhaps
+     because it is not documented in the ROSE tutorial (which might change this).
+
+templateSupport.[hC]: This is dead code with assertions in place to prevent it
+     from being used.  Early on this was part of support for templates and 
+     early instantiation mechansims, but it used an awkward mechanism defined by
+     EDG and others to use "nm" as a way to control template instantiation.
+     Eventually this was discarded and now all required templated are instantatiated
+     and selected for specialization within the code generation in ROSE if they are
+     modified.
+
+transformationSupport.[hC]: This is general support for transformations, and AST handling
+     specific to SageIII.  It should likely be mored to the SageInterface namespace
+     and location within the frontend/SageIII/sageInterface directory.
+
+utility_functions.[hC]: This is some old code which has mostly been moved to 
+     the string support library, but some of which is used (like more of it
+     by Rosetta).  It should be phased out as soon as possible.
+
+
+
+

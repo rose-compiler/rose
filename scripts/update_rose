@@ -1,0 +1,121 @@
+#!/bin/sh
+#----------------------------------
+# Author: Jeremiah
+# Documented by Liao, Jan. 7, 2008
+#
+# Purpose: Dan frequently releases some development snapshots for us to work on.
+# Manual synchronizing our working copies with the new snapshots is tedious.
+# This script is here to help you.
+#
+# Usage
+#
+# 1. preparation:
+#  x. the old snapshot you based your working copy on: NEW_ROSE.old
+#  x. the new snapshot to update to: NEW_ROSE
+#  x. your modified code. e.g. NEW_ROSE.mod
+#  x. this script in the parent directory of the rose directories mentioned above
+#
+# 2. backup your working copy
+#   cp -r NEW_ROSE.mod NEW_ROSE.modXXX.bak
+#
+# 3. test run of the script
+#  ./update_rose --dry-run NEW_ROSE.old NEW_ROSE NEW_ROSE.mod
+#
+# 4. if dry run is successful, do the real update
+#  ./update_rose NEW_ROSE.old NEW_ROSE NEW_ROSE.mod
+#
+# 5. manual handling for conflicts reported on screen during the update
+#
+# 6. Done! Now your working copy keeps your modifications while synchronized with
+#    the latest snapshot.
+#-----------------------------------------
+
+# \
+exec tclsh "$0" "$@"
+
+set dry_run 0
+if {[lindex $argv 0] == "--dry-run"} {
+  set dry_run 1
+  set argv [lrange $argv 1 end]
+}
+
+if {[llength $argv] != 3} {
+  puts stderr "Usage: $argv0 \[--dry-run\] previous_snapshot current_snapshot tree_being_edited"
+  exit 1
+}
+
+set previous_snapshot [lindex $argv 0]
+if {[string index $previous_snapshot end] != "/"} {append previous_snapshot /}
+set current_snapshot [lindex $argv 1]
+if {[string index $current_snapshot end] != "/"} {append current_snapshot /}
+set tree_being_edited [lindex $argv 2]
+if {[string index $tree_being_edited end] != "/"} {append tree_being_edited /}
+
+set the_diff [exec sh -c "diff -aqr --exclude \*.pdf\* $previous_snapshot $current_snapshot || true"]
+
+proc begins_with {s1 s2} {
+  return [expr {[string first $s2 $s1] == 0}]
+}
+
+set conflictFiles {}
+set deletionFiles {}
+
+foreach line [split $the_diff "\n"] {
+  set only_in_prev "Only in $previous_snapshot"
+  set only_in_curr "Only in $current_snapshot"
+  set files_differ "Files $previous_snapshot"
+  if {[begins_with $line $only_in_prev]} {
+    set deleted_file [string range $line [string length $only_in_prev] end]
+    regsub "^: " $deleted_file "" deleted_file
+    regsub ": " $deleted_file "/" deleted_file
+    puts "Deleting file $deleted_file (not actually doing deletion for safety)"
+    puts "# rm [file join $tree_being_edited $deleted_file]"
+    lappend deletionFiles $deleted_file
+  } elseif {[begins_with $line $only_in_curr]} {
+    set added_file [string range $line [string length $only_in_curr] end]
+    regsub "^: " $added_file "" added_file
+    regsub ": " $added_file "/" added_file
+    puts "Adding file $added_file"
+    if {!$dry_run} {
+      catch {exec mkdir -p [file dirname [file join $tree_being_edited $added_file]]}
+      catch {exec cp -p [file join $current_snapshot $added_file] [file join $tree_being_edited $added_file]}
+    }
+  } elseif {[begins_with $line $files_differ]} {
+    set changed_file [string range $line [string length $files_differ] end]
+    regsub " and .*" $changed_file "" changed_file
+    puts "Updating file $changed_file"
+    set errorCode ""
+    if {$dry_run} {
+      catch {exec merge -p -q [file join $tree_being_edited $changed_file] [file join $previous_snapshot $changed_file] [file join $current_snapshot $changed_file] >/dev/null}
+    } else {
+      catch {exec merge -q [file join $tree_being_edited $changed_file] [file join $previous_snapshot $changed_file] [file join $current_snapshot $changed_file]}
+    }
+    set mergeResult [lindex $errorCode end]
+    if {$mergeResult == ""} {set mergeResult 0}
+    switch -exact -- $mergeResult {
+      0 {}
+      1 {lappend conflictFiles [file join $tree_being_edited $changed_file]}
+      default {error "--- Something wrong in merge"}
+    }
+  } else {
+    error "Bad diff output line $line"
+  }
+}
+
+if {[llength $deletionFiles] == 0} {
+  puts "No files to delete"
+} else {
+  puts "Files deleted in new snapshot:"
+  foreach f $deletionFiles {
+    puts $f
+  }
+}
+
+if {[llength $conflictFiles] == 0} {
+  puts "No conflicts during merge"
+} else {
+  puts "Conflicts found:"
+  foreach f $conflictFiles {
+    puts $f
+  }
+}

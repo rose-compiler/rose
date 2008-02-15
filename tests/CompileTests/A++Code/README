@@ -1,0 +1,13 @@
+This is a directory of C++ code from the A++ library.
+A++ is an array class library developed in the mid 1990's and
+for which there is a companion P++ library that permits
+applications using A++ to be compiled to run in distributed
+memory parallel machines.  This body of code is a excellent
+test code for ROSE since it is both a moderatly large project
+and full on realiztic complexity (though not template complexity).
+
+In general, if we don't use it as a test code for ROSE we often 
+discover that we broke something, so we continue to use it as 
+a test code within the ROSE distribution so that it will be tested
+often.
+

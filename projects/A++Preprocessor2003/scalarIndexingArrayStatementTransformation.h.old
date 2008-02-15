@@ -1,0 +1,80 @@
+#ifndef ROSE_SCALAR_INDEXING_ARRAY_STATEMENT_TRANSFORMATION_H
+#define ROSE_SCALAR_INDEXING_ARRAY_STATEMENT_TRANSFORMATION_H
+
+#if 0
+
+#include "specification.h"
+
+#include "programTransformation.h"
+
+#include "scalarDataBase.h"
+
+class ScalarIndexingStatementQueryAccumulatorType;
+
+// class ArrayStatementTransformation : public TransformationSpecificationType
+class ScalarIndexingArrayStatementTransformation
+   {
+  // This class holds the details of the implementation of the array statement transformation.
+  // Unfortunately the current implementation usd globally scoped functions which don't access data
+  // in this class.  We want to avoid having static data since that makes it difficult to nest
+  // transformations.
+
+     public:
+
+#if 0
+       // Storage for names of variables used in transformation
+       // static list<string> operandNameStringList;
+
+       // Save the global declarations associated with transformations here!
+          list<string> globalDeclarationStrings;
+
+       // Save the variable declarations associated with transformations here!
+          list<string> variableDeclarationStrings;
+
+       // Save the variable initializations associated with transformations here!
+          list<string> variableInitializationStrings;
+#endif
+
+#if 0
+       // Example of support for accumulator attributes
+          ScalarIndexingStatementQueryAccumulatorType & accumulatorValue;
+
+       // Access to the operand database (stores variable names and index names used with each variable)
+          ScalarIndexingOperandDataBaseType operandDataBase;
+
+          ScalarIndexingOperandDataBaseType & getOperandDataBase();
+#endif
+
+         ~ScalarIndexingArrayStatementTransformation();
+          ScalarIndexingArrayStatementTransformation();
+
+       // this is a static function called before a transformation object is built.
+       // transformation objects are build only if the targetForTransformation member
+       // function returns TRUE.
+          static bool targetForTransformation( SgNode* astNode );
+
+       // ProgramTransformationSynthesizedAttributeType transformation( SgNode* astNode );
+          static SynthesizedAttributeBaseClassType transformation ( SgProject & project, SgNode* astNode );
+
+#if 0
+       // virtual function from base class defined
+          static char* internalSupportingGlobalDeclarations( SgNode* astNode );
+
+       // Access function for globalDeclarationStrings
+          list<string> getGlobalDeclarationStrings();
+          void setGlobalDeclarationStrings      ( list<string> & X );
+
+       // Access function for variableDeclarationStrings
+          list<string> getVariableDeclarationStrings();
+          void setVariableDeclarationStrings    ( list<string> & X );
+
+       // Access function for variableInitializationStrings
+          list<string> getVariableInitializationStrings();
+          void setVariableInitializationStrings ( list<string> & X );
+#endif
+   };
+
+#endif
+
+// endif for ROSE_SCALAR_INDEXING_ARRAY_STATEMENT_TRANSFORMATION_H
+#endif

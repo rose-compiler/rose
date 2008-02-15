@@ -1,0 +1,3 @@
+InternalDataSharing: internalDataSharingTest1.C:5.21-29: SgReturnStmt: Member function returns non-const pointer or reference to member
+InternalDataSharing: internalDataSharingTest1.C:7.21-30: SgReturnStmt: Member function returns non-const pointer or reference to member
+InternalDataSharing: internalDataSharingTest1.C:9.25-33: SgReturnStmt: Member function returns non-const pointer or reference to member

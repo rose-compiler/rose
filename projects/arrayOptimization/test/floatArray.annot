@@ -1,0 +1,370 @@
+class floatArray {
+    array {
+      dimension = 6; 
+      length(i) =  this.Array_Descriptor.Array_Domain.Size[i];
+      elem(i:dim:1:dimension) = this(i$dim);
+      reshape(i:dim:1:dimension) = this.resize(i$dim);
+     };
+     array_optimize {
+      define {
+       float* _pointer = this.getDataPointer();
+       int _size:dim:1:dimension = this.Array_Descriptor.Array_Domain.Size[dim-1];
+       int _stride:dim:1:dimension = this.Array_Descriptor.Array_Domain.Stride[dim-1];
+       int _length:dim:1:dimension =  this.Array_Descriptor.Array_Domain.getLength(dim-1)
+      }
+      length(i) = _length$(i+1);
+      elem(i:dim:1:dimension) =
+           _pointer[i$1 + repeat(x,2,dimension, i$x * _stride$(x-1) * _size$(x-1))];
+     };
+     has_value { dimension = 6; length_0 = this.length(0); 
+                 length_1 = this.length(1); length_2 = this.length(2); };
+  }
+
+operator floatArray::operator() (int index) 
+              {
+                   modify none; read {index};
+                   alias none;
+                   restrict_value { this = { dimension = 1; } };
+                   inline { this.elem(index) };
+              }
+
+operator floatArray::getLength( int dim) 
+              {
+                   modify none; read {dim}; alias none;
+                   inline { this.length(dim) };
+              }
+
+operator floatArray::operator() ( const InternalIndex& index) 
+              {
+                   modify none; read {this, index};
+                   alias { (result, this) };
+                   restrict_value 
+                       { this = { dimension = 1; }; 
+                         result = {dimension = 1; length_0 = index.length;}; };
+                   construct_array (this) { 
+                       dimension = 1;
+                       length(0) = index.length;
+                       elem(i) = this.elem(i * index.stride + index.base); 
+                   }; 
+               }
+operator floatArray::operator()(const InternalIndex& index1, 
+                                const InternalIndex& index2) 
+              {
+                   modify none; read {this, index1, index2};
+                   alias { (result, this) };
+                   restrict_value
+                       { this = { dimension = 2; };
+                         result = {dimension = 2; length_0 = index1.length; 
+                                   length_1 = index2.length}; 
+                       };
+                   construct_array (this) {
+                       dimension = 2;
+                       length(0) = index1.length; length(1) = index2.length;
+                       elem(i,j) = this.elem(i * index1.stride + index1.base,
+                                             j * index2.stride + index2.base);
+                   };
+               }
+operator floatArray::operator()(const InternalIndex& index1,
+                                const InternalIndex& index2,
+                                const InternalIndex& index3) 
+              {
+                   modify none; read {this, index1, index2, index3};
+                   alias { (result, this) };
+                   restrict_value
+                       { this = { dimension = 3; };
+                         result = {dimension = 3; length_0 = index1.length;
+                                   length_1 = index2.length; length_2 = index3.length; };
+                       };
+                   construct_array (this) {
+                       dimension = 3;
+                       length(0) = index1.length; length(1) = index2.length;
+                       length(2) = index3.length;
+                       elem(i,j,k) = this.elem(i * index1.stride + index1.base,
+                                             j * index2.stride + index2.base,
+                                             k * index3.stride + index3.base);
+                   };
+               }
+
+
+
+operator floatArray::operator= (const floatArray& that) 
+              { 
+                   modify {this}; read {that}; alias none;
+                   restrict_value {
+                      result = { dimension = that.dimension; length_0 = that.length_0;};
+                   };
+                   modify_array (this) { 
+                       dimension = that.dimension;
+                       length(i) = that.length(i);
+                       elem(i:dim:1:dimension) = that.elem(i$dim);
+                   }; 
+               }
+operator floatArray::operator= (float val) 
+              {
+                   modify {this}; read {val}; alias none;
+                   modify_array (this) {
+                       elem(i:dim:1:dimension) = val;
+                   };
+               }
+operator floatArray::fill( float val) 
+              {
+                   modify {this}; read {val}; alias none;
+                   modify_array (this) {
+                       elem(i:dim:1:dimension) = val;
+                   };
+               }
+operator floatArray::replace( const intArray& cond, float val) 
+              {
+                   modify {this}; read {cond, val}; alias none;
+               }
+operator floatArray::replace( const intArray& cond, const floatArray& val) 
+              {
+                   modify {this}; read {cond, val}; alias none;
+               }
+
+                                          
+operator operator+ (const floatArray& lhs, const floatArray& rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) + rhs.elem(i$dim);
+                  } ; 
+               }
+operator operator+ ( float lhs, const floatArray & rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = rhs.dimension;
+                       length(i) = rhs.length(i);
+                       elem(i:dim:1:dimension) = lhs + rhs.elem(i$dim);
+                  } ; 
+               }
+operator operator+ ( const floatArray & lhs, float rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) + rhs;
+                  } ; 
+               }
+operator operator- ( const floatArray & lhs, const floatArray & rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) - rhs.elem(i$dim);
+                  } ; 
+               }
+operator operator- ( const floatArray & lhs, float rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) - rhs;
+                  } ; 
+               }
+operator operator* ( const floatArray & lhs, const floatArray & rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) * rhs.elem(i$dim);
+                  } ; 
+               }
+operator operator* ( float lhs, const floatArray & rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = rhs.dimension;
+                       length(i) = rhs.length(i);
+                       elem(i:dim:1:dimension) = lhs * rhs.elem(i$dim);
+                  } ; 
+               }
+operator operator* ( const floatArray & lhs, float rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) * rhs;
+                  } ; 
+               }
+operator operator/ ( const floatArray & lhs, const floatArray & rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) / rhs.elem(i$dim);
+                  } ; 
+               }
+operator operator/ ( const floatArray & lhs, float rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = lhs.elem(i$dim) / rhs;
+                  } ; 
+               }
+operator operator/ ( float lhs, const floatArray & rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = rhs.dimension;
+                       length(i) = rhs.length(i);
+                       elem(i:dim:1:dimension) = lhs / rhs.elem(i$dim);
+                  } ; 
+               }
+operator sqrt ( const floatArray & rhs) 
+              {
+                  modify none; read{rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) {
+                       dimension = rhs.dimension;
+                       length(i) = rhs.length(i);
+                       elem(i:dim:1:dimension) = sqrt( rhs.elem(i$dim));
+                  } ;
+               }
+operator pow (const floatArray& lhs, float rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = pow(lhs.elem(i$dim), rhs);
+                  } ; 
+               }
+operator pow (const floatArray& lhs, const floatArray& rhs) 
+              {
+                  modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) { 
+                       dimension = lhs.dimension;
+                       length(i) = lhs.length(i);
+                       elem(i:dim:1:dimension) = pow(lhs.elem(i$dim),rhs.elem(i$dim));
+                  } ; 
+               }
+operator sin ( floatArray & rhs) 
+              {
+                  modify none; read{rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+                  construct_array (none) {
+                       dimension = rhs.dimension;
+                       length(i) = rhs.length(i);
+                       elem(i:dim:1:dimension) = sin( rhs.elem(i$dim));
+                  } ;
+               }
+operator floatArray::operator- () 
+              {
+                  modify none; read{this}; alias none;
+                  restrict_value {
+                      result = { dimension = this.dimension; length_0 = this.length_0;};
+                   };
+                  construct_array (none) {
+                       dimension = this.dimension;
+                       length(i) = this.length(i);
+                       elem(i:dim:1:dimension) = -this.elem(i$dim);
+                  } ;
+               }
+operator operator<= ( const floatArray& lhs, float rhs) 
+              {
+                   modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                   };
+               }
+operator operator<= ( float lhs, const floatArray& rhs) 
+              {
+                   modify none; read{lhs, rhs }; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};                   };
+               }
+operator operator<= ( const floatArray& lhs, const floatArray& rhs) 
+              {
+                  modify none; read{lhs, rhs }; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};
+                   };
+               }
+operator operator>= ( const floatArray& lhs, float rhs) 
+              {
+                   modify none; read{lhs, rhs}; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};                   };
+               }
+operator operator>= ( float lhs, const floatArray& rhs) 
+              {
+                   modify none; read{lhs, rhs }; alias none;
+                   restrict_value {
+                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};                   };
+               }
+operator operator>= ( const floatArray& lhs, const floatArray& rhs) 
+              {
+                   modify none; read{lhs, rhs }; alias none;
+                   restrict_value {
+                      result = { dimension = lhs.dimension; length_0 = lhs.length_0;};                      result = { dimension = rhs.dimension; length_0 = rhs.length_0;};                   };
+               }
+
+
+operator floatArray::floatArray (int len) 
+              { 
+                   modify none; read {len}; alias none;
+                   restrict_value {this = { dimension = 1; length_0 = len; } };
+                 construct_array (none) { dimension = 1; length(0) = len }; 
+               }
+

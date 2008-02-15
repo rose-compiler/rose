@@ -1,0 +1,49 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgEndfileStatement
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgEndfileStatement::SgEndfileStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgEndfileStatement::SgEndfileStatement(const SgEndfileStatementStorageClass &source)
+*/
+/*!\fn inline static void SgEndfileStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgEndfileStatement *SgEndfileStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgEndfileStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgEndfileStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgEndfileStatement::initializeStorageClassArray(SgEndfileStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgEndfileStatement::clearMemoryPool()
+*/
+/*!\fn static void SgEndfileStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgEndfileStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgEndfileStatement::roseRTI()
+*/
+/*!\fn virtual SgEndfileStatement::~SgEndfileStatement()
+*/
+/*!\fn virtual SgNode *SgEndfileStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgEndfileStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgEndfileStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgEndfileStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgEndfileStatement::get_numberOfTraversalSuccessors()
+\description See  SgEndfileStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgEndfileStatement::get_traversalSuccessorContainer()
+\description See  SgEndfileStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgEndfileStatement::get_traversalSuccessorNamesContainer()
+\description See  SgEndfileStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgEndfileStatement::SgEndfileStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_761239465;

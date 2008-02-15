@@ -1,0 +1,108 @@
+
+\section{CERT-POS33-C: No Vfork}
+\label{NoVfork::overview}
+``CERT Secure Coding POS33-C'' states
+\begin{quote}
+Using the {\tt vfork} function introduces many portability and security issues. There are many cases in which undefined and implementation specific behavior can occur, leading to a denial of service vulnerability.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that visits all function reference expressions. If a functino reference expression node corresponds to the {\tt vfork()} function, then a violation is flagged.
+
+\subsection{Non-Compliant Code Example}
+This non-compliant example calls {\tt vfork()}.
+
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hldir{\#include\ $<$stdlib.h$>$\\
+}\hlline{\ \ \ \ 2\ }\hldir{}\hlstd{}\hldir{\#include\ $<$unistd.h$>$\\
+}\hlline{\ \ \ \ 3\ }\hldir{}\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hltyp{int\ }\hlstd{main}\hlsym{()\\
+}\hlline{\ \ \ \ 5\ }\hlsym{\{\\
+}\hlline{\ \ \ \ 6\ }\hlsym{\hlstd{\ \ }}\hlstd{pid\textunderscore t\ pid\ =\ vfork}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ \ 7\ }\hlstd{\\
+}\hlline{\ \ \ \ 8\ }\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{}\hlsym{(\ }\hlstd{pid\ ==\ }\hlnum{0\ }\hlstd{}\hlsym{)\hlstd{\ \ }}\hlstd{}\hlcom{/*\ child\ */}\hlstd{\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\hlstd{\ \ }}\hlsym{\{\\
+}\hlline{\ \ \ 10\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{system}\hlsym{(\ }\hlstd{}\hlstr{"echo\ }\hlesc{$\backslash$"}\hlstr{Hello\ World}\hlesc{$\backslash$"}\hlstr{"}\hlstd{\ }\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 11\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 12\ }\hlsym{\\
+}\hlline{\ \ \ 13\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{return\ }\hlstd{}\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ 14\ }\hlstd{}\hlsym{\}}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+\subsection{Compliant Solution}
+The compliant solution calls {\tt fork()} instead.
+
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hldir{\#include\ $<$stdlib.h$>$\\
+}\hlline{\ \ \ \ 2\ }\hldir{}\hlstd{}\hldir{\#include\ $<$unistd.h$>$\\
+}\hlline{\ \ \ \ 3\ }\hldir{}\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hltyp{int\ }\hlstd{main}\hlsym{()\\
+}\hlline{\ \ \ \ 5\ }\hlsym{\{\\
+}\hlline{\ \ \ \ 6\ }\hlsym{\hlstd{\ \ }}\hlstd{pid\textunderscore t\ pid\ =\ fork}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ \ 7\ }\hlstd{\\
+}\hlline{\ \ \ \ 8\ }\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{}\hlsym{(\ }\hlstd{pid\ ==\ }\hlnum{0\ }\hlstd{}\hlsym{)\hlstd{\ \ }}\hlstd{}\hlcom{/*\ child\ */}\hlstd{\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\hlstd{\ \ }}\hlsym{\{\\
+}\hlline{\ \ \ 10\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{system}\hlsym{(\ }\hlstd{}\hlstr{"echo\ }\hlesc{$\backslash$"}\hlstr{Hello\ World}\hlesc{$\backslash$"}\hlstr{"}\hlstd{\ }\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 11\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 12\ }\hlsym{\\
+}\hlline{\ \ \ 13\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{return\ }\hlstd{}\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ 14\ }\hlstd{}\hlsym{\}}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform a simple AST traversal visiting all function reference expressions.
+\item For each node visited, if the function reference expression corresponds to {\tt vfork()} then flag violation.
+\item Report any violations.
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{Secure Coding : POS33-C. Do not use vfork()}{https://www.securecoding.cert.org/confluence/display/seccode/POS33-C.+Do+not+use+vfork\%28\%29}

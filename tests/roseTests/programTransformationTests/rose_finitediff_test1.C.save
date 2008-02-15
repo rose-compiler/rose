@@ -1,0 +1,15 @@
+
+int foo(int n)
+{
+  int y;
+// Finite differencing: cache_fd__1 is a cache of (n * x)
+  int cache_fd__1;
+{
+    int x;
+    for (cache_fd__1 = 0 , x = 0; x < 1000; cache_fd__1 += n , ++x) {
+      y = cache_fd__1;
+    }
+  }
+  return y;
+}
+

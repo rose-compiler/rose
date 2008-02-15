@@ -1,0 +1,83 @@
+
+#if 0
+// DQ (7/24/2005): Removed from SAGE III (old code).
+// this code represented an approach to the representation of AST as multiple trees
+// which became difficult to justify and support when transformations got more complex.
+
+// This class represents the main class for the grammar (all terminal and nonterminal 
+// classes are supporting classes).  Supporting function prototypes are contained in
+// the rose.h header file.  So include that here.
+// include <rose.h>
+
+// By default the intermediate form is output to a file (for debugging)
+#define OUTPUT_SHOWFILE_TO_FILE TRUE
+
+class $CLASSNAME : public $GRAMMAR_BASECLASS
+   {
+  // This class now sees the entire program tree so this design is
+  // capable of more than just single statement optimizations.
+
+     public:
+         ~$CLASSNAME();
+          $CLASSNAME ();
+       // $CLASSNAME ( SgFile *file );
+
+       // There is only one root grammar for a heirachy of grammars
+          static bool isRootGrammar();
+
+          static $GRAMMAR_PREFIX_Global* parse ( SgFile* file );
+
+#if 0
+       // This function is a Virtual function in the base class (ROSE_TransformationBase)
+          ROSE_StatementBlock* pass( ROSE_StatementBlock* roseProgramTree );
+
+       // Return the ROSE_StatementBlock so that we can have a handle 
+       // on the program tree using the new intermediate form
+          ROSE_StatementBlock* traverseProgramTree ();
+
+      // This is where the transformation is done
+          void transform( ROSE_StatementBlock* roseProgramTree );
+
+MEMBER_FUNCTION_DECLARATIONS
+
+#if 0
+          ROSE_Statement*  parse ( SgStatement*  stmt );
+
+       // What should be the return type???
+          ROSE_Expression* parse ( SgExpression* expr );
+
+       // These should return more specific types within the grammar that is defined
+          ROSE_Statement*      parse ( SgFunctionDeclaration *functionDeclaration );
+          ROSE_Statement*      parse ( SgMemberFunctionDeclaration *memberFunctionDeclaration );
+          ROSE_Statement*      parse ( SgForStatement *forStatement );
+          ROSE_StatementBlock* parse ( SgBasicBlock *basicBlock );
+#endif
+#endif
+
+     private:
+      // $CLASSNAME();
+         $CLASSNAME ( const $CLASSNAME & X );
+         $CLASSNAME & operator= ( const $CLASSNAME & X );
+   };
+
+// DQ (7/24/2005): Removed from SAGE III (old code).
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

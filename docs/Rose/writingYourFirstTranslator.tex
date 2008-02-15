@@ -1,0 +1,279 @@
+% \chapter{Writing Your First Translator}
+% \chapter{Writing Your First Source-To-Source Translator}
+\chapter{Writing a Source-To-Source Translator}
+
+\label{writingYourFirstTranslator:writingYourFirstTranslator}
+
+
+This chapter contains information about how to build ROSE translators.
+Numerous specific examples are in the {\em ROSE Tutorial}, a separate document
+from this {\em ROSE User Manual}.
+
+\section{ROSE Tutorial}
+
+% Reference significant ROSE mechanism that are in the tutorial (in more detail):
+% traversals, queries, PDF output, DOT output, rewrite mechanism.
+
+    The ROSE Tutorial contains additional details and the steps used in  
+examples of increasing sophistication. The ROSE Tutorial also explains
+a number of useful features of ROSE, including:
+\begin{itemize}
+   \item AST Traversals. \\
+         There are a number of different kinds of traversals, including a classic
+         object-oriented visitor pattern and a more general useful traversal 
+         mechanism that supports a single {\tt visit} function.  Each traversal
+         can operate on either just those IR nodes that have positions in the 
+         source file (non-shared), typically statements and expressions, or 
+         over all IR nodes (shared and non-shared).
+   \item AST Queries. \\ 
+         The ROSE Tutorial demonstrates the ROSE AST query mechanism and how to build more
+         complex user-defined queries.
+   \item PDF Output of AST. \\
+         ROSE includes a number of ways to visualize the AST to support debugging and
+         AST construction (i.e. how specific C++ examples map to the IR).  A PDF 
+         representation of the AST permits the hierarchy of bookmarks to index the tree
+         structure of the AST.  This technique works on large-scale ASTs (typically
+         a 300K-node AST [from a 40K-line source code] will define a 400Meg PDF file).
+   \item DOT Output of AST. \\
+         For smaller ASTs (less than 100K nodes) the AST can be viewed as a DOT graph.
+         For very small ASTs, the graph can be converted to postscript files, but for
+         larger graphs (500+ IR nodes), special dot viewers are required (e.g. {\em zgrviewer}).
+   \item AST Rewrite Mechanism. \\
+         The ROSE Tutorial shows examples of how to use a range of AST rewrite
+         mechanisms for supporting program transformations.
+%  \item Additional ROSE features are also presented
+\end{itemize}
+
+
+\section{Example Translator}
+
+    This section shows an example translator that uses ROSE and how to build it.
+The ROSE Tutorial discusses the design of the translator in more detail; for now we need 
+only an example translator to demonstrate the practical aspects of how to compile and
+link an application (translator) using ROSE.
+
+\fixme{Where is the example for this section? We need to get the figure closer to the text.}
+
+   In this example, line 12 builds the AST
+(a pointer of type {\tt SgProject}).  Line 15 runs optional internal tests on the AST.
+These are optional because they can be expensive (several times the cost of building the
+AST).  Look for details in the {\em Related Pages} of the {\em Programmer's Reference}
+for what tests are run.  Line 20 generates the source code from the AST {\em and} compiles it
+using the associated vendor compiler (the backend compiler).
+
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+% Put the code into a boxed figure instead (see below)
+%  \lstinputlisting{\TranslatorExampleDirectory/identityTranslator.C}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     Example Source-to-Source Translator
+\\\hline\hline
+   \lstinputlisting{\TranslatorExampleDirectory/identityTranslator.C}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example of simple translator, building and AST, unparsing it, and compiling
+    the generated (unparsed) code. }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TranslatorExampleDirectory/identityTranslator.C}
+\end{htmlonly}
+
+\label{usingRose:simpleTranslator}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+
+
+\section{Compiling a Translator}
+\label{gettingStarted:compilingTranslator}
+
+
+   We can use the following {\tt makefile} to build this translator, which we will call
+{\tt exampleMakefile} to avoid name collisions within the build system's {\tt Makefile}.
+
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+%  \lstinputlisting{\TranslatorExampleCompileTreeDirectory/exampleMakefile}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     Simple Makefile To Compile exampleTranslator
+\\\hline\hline
+   \lstinputlisting{\TranslatorExampleCompileTreeDirectory/exampleMakefile}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example of makefile to build the example translator. Notice that we use the
+    {\tt identityTranslator.C} file presented in section \ref{translatorDesign:simpleTranslator}. }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TranslatorExampleCompileTreeDirectory/exampleMakefile}
+\end{htmlonly}
+
+\label{usingRose:simpleTranslator}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+   In this case, the test code and makefile have been placed into the following directory:
+{\tt \{CompileTree\}/ExampleTranslators/DocumentedExamples/SimpleTranslatorExamples}.
+The makefile {\tt exampleMakefile} is also there.
+
+\fixme{Need to get the figure closer to the test.}
+
+To compile the test application, type {\tt make -f exampleMakefile}.  This builds an 
+example translator and completes the demonstration of the build process, a process 
+much like what the user can create using any directory outside of the ROSE compile tree.
+
+\section{Running the Processor}
+
+   This section covers how to run the translator that you built in the previous
+section.  Translators built with ROSE can be handed several options; these are covered
+in subsection \ref{usingRose:options}.  The command line required for the example
+translator is presented in subsection \ref{usingRose:commandline}.  Example
+output from a translator is presented in subsection
+\ref{usingRose:executableOutput}.
+
+\subsection{Translator Options Defined by ROSE}
+\label{usingRose:options}
+The details of
+these options can be obtained by using the {\tt --help} option on the command line when
+executing the translator.  For example, using the example translator from the 
+previous section, type {\tt exampleTranslator --help}.  Figure
+\ref{usingRose:helpOptionOutput} shows the output from the {\tt --help} option.
+
+\fixme{It appears that the figure reference numbers are incorrect here.}
+
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     {\tt --help} Option Output
+\\\hline\hline
+   \lstinputlisting{roseHelpOutput.txt}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example output from current version of translator build in {\tt ROSE/src}. }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{roseHelpOutput.txt}
+   \vspace{0.5in}
+   Example output from current version of translator build in {\tt ROSE/src}.
+\end{htmlonly}
+
+\label{usingRose:helpOptionOutput}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+\subsection{Command Line for ROSE Translators}
+\label{usingRose:commandline}
+
+  Executing a translator built with ROSE is just like running a compiler
+with the compiler name changed to the name of the translator executable.
+All the command line arguments (except ROSE-specific and EDG-specific options) 
+are internally handed to the backend compiler (additional command line options 
+required for the EDG front-end are specified for the frontend along with any 
+EDG-specific options; e.g. {\tt --edg:no\_warnings}). All ROSE and EDG specific 
+options are stripped from the command line that is passed to the backend compiler 
+for final compilation of the ROSE generated code; so as not to confuse the backend
+compiler.
+
+Figure \ref{usingRose:exampleCommandline} shows the execution of a test code through an example translator.
+
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     Example command-line to execute {\tt exampleTranslator}
+\\\hline\hline
+\lstinputlisting{roseCommandline.txt}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example command-line for compilation of C++ source file (roseTestProgram.C). }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{roseCommandline.txt}
+\end{htmlonly}
+
+\label{usingRose:exampleCommandline}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+\subsection{Example Output from a ROSE Translator}
+\label{usingRose:executableOutput}
+
+   Figure \ref{usingRose:exampleTranslatorOutput} shows the output 
+of the processing through the translator.
+
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     Example Output From Execution of {\tt exampleTranslator}
+\\\hline\hline
+\lstinputlisting{roseExecutionOutput.txt}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example of output from execution of {\tt exampleTranslator}. }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{roseExecutionOutput.txt}
+\end{htmlonly}
+
+\label{usingRose:exampleTranslatorOutput}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+

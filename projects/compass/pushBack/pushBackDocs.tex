@@ -1,0 +1,125 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Push Back}
+\label{PushBack::overview}
+
+Tests if the source uses front or back insertion in sequences using
+insert or resize where a \texttt{push\_front} or \texttt{push\_back}
+could be used. The patterns are very simple and matches simple calls
+like \texttt{vector.insert(vector.end(), ...)}.
+
+In these case, \texttt{push\_back} and \texttt{push\_front} only are
+insured to be efficient. All other calls may be quadratic.
+
+%%FIXME: use bibtex
+This test is inspired by the rule 80 of C++ Coding Standards: ``Use the
+accepted idioms to really shrink capacity and really erase elements''.
+
+\subsection{Parameter Requirements}
+
+There is no parameter required.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+   No implementation yet!
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+#include <vector>
+#include <list>
+
+void g()
+{
+  std::vector<int> v;
+  v.insert(v.end(), 1);
+
+  v.resize(v.size() + 1, 1);
+
+  std::list<int>* vv = new std::list<int>();
+  vv->insert(vv->begin(), 1);
+
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+#include <vector>
+#include <list>
+
+void g()
+{
+  std::vector<int> v;
+  v.push_back(1);
+  v.push_back(1);
+
+  std::list<int>* vv = new std::list<int>();
+  vv->push_front(1);
+
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis}
+
+Compliance with this rule can be checked using structural static
+analysis checkers looking for these patterns:
+
+For all types \texttt{T},\\
+where \texttt{V} variable of type \texttt{vector<T>},\\
+where \texttt{Vp} variable of type \texttt{vector<T>*},\\
+where \texttt{L} variable of type \texttt{list<T>},\\
+where \texttt{Lp} variable of type \texttt{list<T>*},\\
+where \texttt{S} variable of type \texttt{slist<T>},\\
+where \texttt{Sp} variable of type \texttt{slist<T>*},\\
+where \texttt{D} variable of type \texttt{deque<T>},\\
+where \texttt{Dp} variable of type \texttt{deque<T>*},\\
+where \texttt{Value} expression of type \texttt{T},\\
+the check will look for these patterns in the source code.
+
+\begin{verbatim}
+V.resize(V.size() + 1, Value)
+Vp->resize(Vp->size() + 1, Value)
+D.resize(D.size() + 1, Value)
+Dp->resize(Dp->size() + 1, Value)
+L.resize(L.size() + 1, Value)
+Lp->resize(Lp->size() + 1, Value)
+V.resize(1 + V.size(), Value)
+Vp->resize(1 + Vp->size(), Value)
+D.resize(1 + D.size(), Value)
+Dp->resize(1 + Dp->size(), Value)
+L.resize(1 + L.size(), Value)
+Lp->resize(1 + Lp->size(), Value)
+V.insert(V.end(), Value)
+Vp->insert(Vp->end(), Value)
+D.insert(D.end(), Value)
+Dp->insert(Dp->end(), Value)
+L.insert(L.end(), Value)
+Lp->insert(Lp->end(), Value)
+S.insert(S.begin(), Value)
+Sp->insert(Sp->begin(), Value)
+D.insert(D.begin(), Value)
+Dp->insert(Dp->begin(), Value)
+L.insert(L.begin(), Value)
+Lp->insert(Lp->begin(), Value)
+\end{verbatim}
+
+For all \texttt{resize} and back \texttt{insert} patterns, \texttt{push\_back}
+could be used. For front \texttt{insert} patterns, \texttt{push\_front} could
+be used instead.
+
+\subsection{References}
+
+Alexandrescu A. and Sutter H. {\it C++ Coding Standards 101 Rules, Guidelines, and Best Practices}. Addison-Wesley 2005.

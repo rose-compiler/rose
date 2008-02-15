@@ -1,0 +1,21 @@
+       // Special constructor for this class
+          CLASSNAME ( ROSE_Expression* expr );
+
+       // Make this class an abstract base class so that we can be certain that
+       // we will not ever try to build one of these directly.
+          virtual ROSE_TransformableNode* transform();
+
+       // Member functions specific to CLASSNAME
+          virtual ROSE_Expression* getRoseExpression();
+          virtual void setRoseExpression ( ROSE_Expression* expr );
+
+          virtual void setTransformableExpression ( ROSE_TransformableExpression* expr );
+          virtual ROSE_TransformableExpression* getTransformableExpression ();
+
+       // void setSageBinaryOperator ( SgBinaryOp* newBinaryOperator );
+       // SgBinaryOp* getSageBinaryOperator ();
+
+     protected:
+       // SgBinaryOp* sageBinaryOperator;
+
+          ROSE_TransformableExpression* transformableExpression;

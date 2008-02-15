@@ -1,0 +1,125 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGotoStatement
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgGotoStatement
+\brief This class represents the concept of a C or C++ goto statement.
+\sa
+\ref SgGotoStatement_usage  "Example of using a SgGotoStatement object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGotoStatement data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGotoStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgGotoStatement_create "Example:create an SgGotoStatement object"
+*/
+/*!
+\fn SgGotoStatement::~SgGotoStatement()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgGotoStatement::isSgGotoStatement (SgNode *s)
+\brief Cast function (from derived class to SgGotoStatement pointer).
+   This functions returns a SgGotoStatement pointer for any input of a 
+pointer to an object derived from a SgGotoStatement.
+\return Returns valid pointer to SgGotoStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgGotoStatement::isSgGotoStatement (const SgNode *s)
+\brief Cast function (from derived class to SgGotoStatement pointer).
+   This functions returns a SgGotoStatement pointer for any input of a 
+pointer to an object derived from a SgGotoStatement.
+\return Returns valid pointer to SgGotoStatement if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgLabelStatement *SgGotoStatement::p_label
+\brief This pointer points to the SgLabelStatement where control flow will be transfered
+    during execution.
+\internal This is always a valid pointer.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgGotoStatement::SgGotoStatement(Sg_File_Info *startOfConstruct,SgLabelStatement *label=(0))
+\brief This is the constructor.
+   This constructor builds the SgGotoStatement base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgGotoStatement::SgGotoStatement(const SgGotoStatementStorageClass &source)
+*/
+/*!\fn inline static void SgGotoStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgGotoStatement *SgGotoStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgGotoStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgGotoStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgGotoStatement::initializeStorageClassArray(SgGotoStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgGotoStatement::clearMemoryPool()
+*/
+/*!\fn static void SgGotoStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgGotoStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgGotoStatement::roseRTI()
+*/
+/*!\fn virtual SgGotoStatement::~SgGotoStatement()
+*/
+/*!\fn virtual SgNode *SgGotoStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual bool SgGotoStatement::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual bool SgGotoStatement::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgGotoStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgGotoStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgGotoStatement::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgGotoStatement::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgGotoStatement::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgGotoStatement::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgGotoStatement::post_construction_initialization()
+*/
+/*!
+\fn void SgGotoStatement::set_label(SgLabelStatement *label)
+\brief Access function for p_label.
+See  *label)
+label for documentation \return Returns void.
+*/
+/*!
+\fn SgLabelStatement *SgGotoStatement::get_label() const
+\brief Returns pointer to SgLabelStatement where control flow will be transfered during execution.
+See  const
+label for documentation \return Returns pointer to SgLabelStatement.
+*/
+/*!\fn virtual SgNode *SgGotoStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgGotoStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgGotoStatement::get_numberOfTraversalSuccessors()
+\description See  SgGotoStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGotoStatement::get_traversalSuccessorContainer()
+\description See  SgGotoStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGotoStatement::get_traversalSuccessorNamesContainer()
+\description See  SgGotoStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgGotoStatement::SgGotoStatement(SgLabelStatement *label)
+*/
+//@}
+int SAGE_Doxygen_Dummy_5032805224942;

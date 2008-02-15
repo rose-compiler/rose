@@ -1,0 +1,11 @@
+#! /bin/sh
+
+make rose_testcode
+testcode > testcode.out
+rose_testcode > rose_testcode.out
+diff testcode.out rose_testcode.out
+
+make rose_testppp
+testppp > testppp.out
+rose_testppp > rose_testppp.out
+diff testppp.out rose_testppp.out

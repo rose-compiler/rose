@@ -1,0 +1,46 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Friend Declaration Modifier}
+
+\label{FriendDeclarationModifier::overview}
+
+\quote{Namespace: \texttt{FriendDeclarationModifier}}
+
+\subsection{Introduction}
+Avoid using the ``friend'' keyword modifier because they bypass access 
+restrictions and hide dependencies between classes and functions. Also 
+``friends'' are often indicative of poor design. Taken from
+``Elements of C++ Style'' by by Misfeldt, Bumgardner, and Gray; item \#96.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked with a simple AST traversal that seeks declaration
+statements and determines if any use the ``friend'' modifier keyword. Any
+declaration statements found with the ``friend'' modifier are flagged as
+violations.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: friendDeclarationModifierTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../friendDeclarationModifier/friendDeclarationModifierTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

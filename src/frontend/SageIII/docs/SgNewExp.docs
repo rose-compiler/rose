@@ -1,0 +1,213 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNewExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgNewExp
+\brief This class represents the concept of a C++ call to the new operator.
+\todo Provide some examples to detail the difference between placement, constructor, and
+    builtin arguments.
+\todo I believe we can associate the constructors from the class with 
+      new operators.
+\internal  This is one of the few SgExpression IR nodes that are required to store
+    the internal type explicitly.  In this case the p_specified_type is used and 
+    it is set to the type specified in the new expression (e.g. int *x = new int[1000];,
+    the p_expression_type would be SgTypeInt.  However the return type of the new operator
+    is a pointer to this type so the get_type() member function returns a pointer to this
+    type.
+\sa
+\ref SgNewExp_usage  "Example of using a SgNewExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNewExp data members
+/////////////////////////////////////////////////////////////////////////
+/*! \var SgNewExp::p_expression_type
+\brief This pointer points to the type of the variable being allocated.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNewExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgNewExp_create "Example:create an SgNewExp object"
+*/
+/*!
+\fn SgNewExp::~SgNewExp()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgNewExp::isSgNewExp (SgNode *s)
+\brief Cast function (from derived class to SgNewExp pointer).
+   This functions returns a SgNewExp pointer for any input of a 
+pointer to an object derived from a SgNewExp.
+\return Returns valid pointer to SgNewExp if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgNewExp::isSgNewExp (const SgNode *s)
+\brief Cast function (from derived class to SgNewExp pointer).
+   This functions returns a SgNewExp pointer for any input of a 
+pointer to an object derived from a SgNewExp.
+\return Returns valid pointer to SgNewExp if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgNewExp::get_variable() const
+\brief Access function for p_variable.
+\return Returns pointer to SgExpression.
+*/
+/*!
+\fn SgNewExp::set_variable(SgExpression* variable)
+\brief Access function for p_variable.
+\param variable is the variable to be deleted.
+\return Returns void.
+*/
+/*!
+\fn SgNewExp::get_is_array() const
+\brief Access function for p_is_array.
+\return Returns bool.
+*/
+/*!
+\fn SgNewExp::set_is_array(SgExpression* is_array)
+\brief Access function for p_is_array.
+\param is_array flag to record use of array delete.
+\return Returns void.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgConstructorInitializer *SgNewExp::p_constructor_args
+\brief This is a pointer to the constructor initializer (which holds its constructor arguments) for the new operator.
+\todo Provide some examples to detail the difference between placement, constructor, and
+    builtin arguments.
+*/
+/*! \var SgExprListExp *SgNewExp::p_placement_args
+\brief This is a pointer to the memory allocation placement arguments for the new
+    operator.
+   An example would be "class X{}; void* p; X* item2 = new (p) X();".  Placement arguments
+permit the new opperator to allocate space at a specific location (address).
+\todo Provide some examples to detail the difference between placement, constructor, and
+    builtin arguments (these are rarely used in C++).
+*/
+/*! \var SgExpression *SgNewExp::p_builtin_args
+\brief This is a pointer to the builtin arguments for the new operator (typically the
+    "this" pointer where specified optionally).
+\todo Provide some examples to detail the difference between placement, constructor, and
+    builtin arguments.
+*/
+/*!\var SgType *SgNewExp::p_specified_type
+*/
+/*! \var short SgNewExp::p_need_global_specifier
+\brief This new operator needs to be output with "::".
+\internal This should be a bool instead of a short.
+*/
+/*!\var SgFunctionDeclaration *SgNewExp::p_newOperatorDeclaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgNewExp::SgNewExp(Sg_File_Info *startOfConstruct,SgType *specified_type=(0),SgExprListExp *placement_args=(0),SgConstructorInitializer *constructor_args=(0),SgExpression *builtin_args=(0),short need_global_specifier=0,SgFunctionDeclaration *newOperatorDeclaration=(0))
+*/
+/*!
+\fn SgNewExp::SgNewExp(const SgNewExpStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgNewExp base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn inline static void SgNewExp::operator delete(void *pointer)
+*/
+/*!\fn static SgNewExp *SgNewExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgNewExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgNewExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgNewExp::initializeStorageClassArray(SgNewExpStorageClass *storageArray)
+*/
+/*!\fn static void SgNewExp::clearMemoryPool()
+*/
+/*!\fn static void SgNewExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgNewExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgNewExp::roseRTI()
+*/
+/*!\fn virtual SgNewExp::~SgNewExp()
+*/
+/*!\fn virtual SgNode *SgNewExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual int SgNewExp::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgNewExp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgNewExp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgNewExp::cfgFindChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgNewExp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgNewExp::post_construction_initialization()
+*/
+/*!\fn void SgNewExp::set_builtin_args(SgExpression *builtin_args)
+\description See  *builtin_args)
+builtin_args for documentation */
+/*!\fn void SgNewExp::set_constructor_args(SgConstructorInitializer *constructor_args)
+\description See  *constructor_args)
+constructor_args for documentation */
+/*!
+\fn void SgNewExp::set_need_global_specifier(short need_global_specifier)
+\brief Access function for p_need_global_specifier.
+See  need_global_specifier)
+need_global_specifier for documentation \param need_global_specifier flag to record use of array delete.
+\return Returns void.
+*/
+/*!\fn void SgNewExp::set_newOperatorDeclaration(SgFunctionDeclaration *newOperatorDeclaration)
+\description See  *newOperatorDeclaration)
+newOperatorDeclaration for documentation */
+/*!\fn void SgNewExp::set_placement_args(SgExprListExp *placement_args)
+\description See  *placement_args)
+placement_args for documentation */
+/*!\fn void SgNewExp::set_specified_type(SgType *specified_type)
+\description See  *specified_type)
+specified_type for documentation */
+/*!\fn SgConstructorInitializer *SgNewExp::get_constructor_args() const
+\description See  const
+constructor_args for documentation */
+/*!\fn SgExprListExp *SgNewExp::get_placement_args() const
+\description See  const
+placement_args for documentation */
+/*!\fn SgExpression *SgNewExp::get_builtin_args() const
+\description See  const
+builtin_args for documentation */
+/*!\fn SgExpression *SgNewExp::get_next(int &n) const
+\description See  const
+next for documentation */
+/*!\fn SgFunctionDeclaration *SgNewExp::get_newOperatorDeclaration() const
+\description See  const
+newOperatorDeclaration for documentation */
+/*!\fn SgType *SgNewExp::get_specified_type() const
+\description See  const
+specified_type for documentation */
+/*!
+\fn short SgNewExp::get_need_global_specifier() const
+\brief Access function for p_need_global_specifier.
+See  const
+need_global_specifier for documentation \return Returns bool.
+*/
+/*!\fn virtual SgNode *SgNewExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgNewExp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgNewExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgNewExp::get_numberOfTraversalSuccessors()
+\description See  SgNewExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNewExp::get_traversalSuccessorContainer()
+\description See  SgNewExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNewExp::get_traversalSuccessorNamesContainer()
+\description See  SgNewExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgNewExp::SgNewExp(SgType *specified_type,SgExprListExp *placement_args,SgConstructorInitializer *constructor_args,SgExpression *builtin_args,short need_global_specifier,SgFunctionDeclaration *newOperatorDeclaration)
+*/
+//@}
+int SAGE_Doxygen_Dummy_376240622782;

@@ -1,0 +1,27 @@
+//#include <A++.h>
+#include "simpleA++.h"
+
+void interpolate1D(class floatArray &fineGrid,class floatArray &coarseGrid)
+{
+  int coarseGrid_length_1 = (coarseGrid.Array_Descriptor.Array_Domain.getLength(0));
+  int coarseGrid_stride_1 = (coarseGrid.Array_Descriptor.Array_Domain.Stride[0]);
+  int coarseGrid_size_1 = (coarseGrid.Array_Descriptor.Array_Domain.Size[0]);
+  float *coarseGrid_pointer = (coarseGrid.getDataPointer());
+  int fineGrid_length_1 = (fineGrid.Array_Descriptor.Array_Domain.getLength(0));
+  int fineGrid_stride_1 = (fineGrid.Array_Descriptor.Array_Domain.Stride[0]);
+  int fineGrid_size_1 = (fineGrid.Array_Descriptor.Array_Domain.Size[0]);
+  float *fineGrid_pointer = (fineGrid.getDataPointer());
+  int _var_2;
+  int _var_1;
+  int _var_0;
+  int fineGridSize = (fineGrid_length_1);
+  int coarseGridSize = (coarseGrid_length_1);
+// Interior fine points
+  class Range If(2,_var_1 = fineGridSize - 2,2);
+  class Range Ic(1,coarseGridSize - 1,1);
+  for (_var_0 = 0; _var_0 <= -1 + (_var_1 + -1) / 2; _var_0 += 1) {
+    fineGrid_pointer[_var_0 * 2 + 2] = coarseGrid_pointer[_var_0 * 1 + 1];
+    fineGrid_pointer[2 - 1 + _var_0 * 2] = (coarseGrid_pointer[1 - 1 + _var_0 * 1] + coarseGrid_pointer[_var_0 * 1 + 1]) / 2.00000000000;
+  }
+}
+

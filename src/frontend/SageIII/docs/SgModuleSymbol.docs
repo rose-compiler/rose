@@ -1,0 +1,65 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgModuleSymbol
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgModuleStatement *SgModuleSymbol::p_declaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgModuleSymbol::SgModuleSymbol(const SgModuleSymbolStorageClass &source)
+*/
+/*!\fn inline static void SgModuleSymbol::operator delete(void *pointer)
+*/
+/*!\fn static SgModuleSymbol *SgModuleSymbol::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgModuleSymbol::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgModuleSymbol::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgModuleSymbol::initializeStorageClassArray(SgModuleSymbolStorageClass *storageArray)
+*/
+/*!\fn static void SgModuleSymbol::clearMemoryPool()
+*/
+/*!\fn static void SgModuleSymbol::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgModuleSymbol::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgModuleSymbol::roseRTI()
+*/
+/*!\fn virtual SgModuleSymbol::~SgModuleSymbol()
+*/
+/*!\fn virtual SgNode *SgModuleSymbol::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgModuleSymbol::set_declaration(SgModuleStatement *declaration)
+\description See  *declaration)
+declaration for documentation */
+/*!\fn SgModuleStatement *SgModuleSymbol::get_declaration() const
+\description See  const
+declaration for documentation */
+/*!\fn virtual SgName SgModuleSymbol::get_name() const
+\description See  const
+name for documentation */
+/*!\fn virtual SgNode *SgModuleSymbol::get_symbol_basis() const
+\description See  const
+symbol_basis for documentation */
+/*!\fn virtual SgNode *SgModuleSymbol::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgModuleSymbol::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgModuleSymbol::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgModuleSymbol::get_numberOfTraversalSuccessors()
+\description See  SgModuleSymbol::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgModuleSymbol::get_traversalSuccessorContainer()
+\description See  SgModuleSymbol::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgModuleSymbol::get_traversalSuccessorNamesContainer()
+\description See  SgModuleSymbol::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgModuleSymbol::SgModuleSymbol(SgModuleStatement *declaration=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_41510538;

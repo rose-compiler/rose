@@ -1,0 +1,25 @@
+#define EOF_Sym	0	/* EOF */
+#define identSym	1	/* ident */
+#define stringSym	2	/* string */
+#define badstringSym	3	/* badstring */
+#define numberSym	4	/* number */
+#define COMPILERSym	5	/* "COMPILER" */
+#define PRODUCTIONSSym	6	/* "PRODUCTIONS" */
+#define ENDSym	7	/* "END" */
+#define PointSym	8	/* "." */
+#define EqualSym	9	/* "=" */
+#define BarSym	10	/* "|" */
+#define LbraceSym	11	/* "{" */
+#define RbraceSym	12	/* "}" */
+#define LbrackSym	13	/* "[" */
+#define RbrackSym	14	/* "]" */
+#define TOKENSSym	15	/* "TOKENS" */
+#define LessSym	16	/* "<" */
+#define GreaterSym	17	/* ">" */
+#define LessPointSym	18	/* "<." */
+#define PointGreaterSym	19	/* ".>" */
+#define LparenPointSym	20	/* "(." */
+#define PointRparenSym	21	/* ".)" */
+#define No_Sym	22	/* not */
+#define OptionsSym	23	/* Options */
+#define MAXT	No_Sym	/* Max Terminals */

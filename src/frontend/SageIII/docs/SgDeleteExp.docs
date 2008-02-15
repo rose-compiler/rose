@@ -1,0 +1,168 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeleteExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgDeleteExp
+\brief This class represents the concept of a C++ call to the delete operator.
+\todo I believe we can associate the destructors from the class with 
+      delete operators.
+\sa
+\ref SgDeleteExp_usage  "Example of using a SgDeleteExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeleteExp data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeleteExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgDeleteExp_create "Example:create an SgDeleteExp object"
+*/
+/*!
+\fn SgDeleteExp::~SgDeleteExp()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgDeleteExp::isSgDeleteExp (SgNode *s)
+\brief Cast function (from derived class to SgDeleteExp pointer).
+   This functions returns a SgDeleteExp pointer for any input of a 
+pointer to an object derived from a SgDeleteExp.
+\return Returns valid pointer to SgDeleteExp if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgDeleteExp::isSgDeleteExp (const SgNode *s)
+\brief Cast function (from derived class to SgDeleteExp pointer).
+   This functions returns a SgDeleteExp pointer for any input of a 
+pointer to an object derived from a SgDeleteExp.
+\return Returns valid pointer to SgDeleteExp if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgExpression *SgDeleteExp::p_variable
+\brief This pointer points to the variable being deleted.
+*/
+/*! \var short SgDeleteExp::p_is_array
+\brief This bool value is true only if the delete operator is called on an array (array delete).
+*/
+/*! \var short SgDeleteExp::p_need_global_specifier
+\brief This delete operator needs to be output with "::".
+\todo Check if this bool data member is used and/or required.
+\internal  Not clear if this is required since Sage III should have the scope sufficent to output
+    any required name qualification.  More generally we should be able to eliminate this
+    once we explicitly store all explicit qualified names.
+*/
+/*!\var SgFunctionDeclaration *SgDeleteExp::p_deleteOperatorDeclaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDeleteExp::SgDeleteExp(Sg_File_Info *startOfConstruct,SgExpression *variable=(0),short is_array=0,short need_global_specifier=0,SgFunctionDeclaration *deleteOperatorDeclaration=(0))
+*/
+/*!
+\fn SgDeleteExp::SgDeleteExp(const SgDeleteExpStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgDeleteExp base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn inline static void SgDeleteExp::operator delete(void *pointer)
+*/
+/*!\fn static SgDeleteExp *SgDeleteExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDeleteExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDeleteExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDeleteExp::initializeStorageClassArray(SgDeleteExpStorageClass *storageArray)
+*/
+/*!\fn static void SgDeleteExp::clearMemoryPool()
+*/
+/*!\fn static void SgDeleteExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDeleteExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgDeleteExp::roseRTI()
+*/
+/*!\fn virtual SgDeleteExp::~SgDeleteExp()
+*/
+/*!\fn virtual SgNode *SgDeleteExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual int SgDeleteExp::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgDeleteExp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgDeleteExp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgDeleteExp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgDeleteExp::post_construction_initialization()
+*/
+/*!\fn void SgDeleteExp::set_deleteOperatorDeclaration(SgFunctionDeclaration *deleteOperatorDeclaration)
+\description See  *deleteOperatorDeclaration)
+deleteOperatorDeclaration for documentation */
+/*!
+\fn void SgDeleteExp::set_is_array(short is_array)
+\brief Access function for p_is_array.
+See  is_array)
+is_array for documentation \param is_array flag to record use of array delete.
+\return Returns void.
+*/
+/*!
+\fn void SgDeleteExp::set_need_global_specifier(short need_global_specifier)
+\brief Access function for p_need_global_specifier.
+See  need_global_specifier)
+need_global_specifier for documentation \param need_global_specifier flag to record use of array delete.
+\return Returns void.
+*/
+/*!
+\fn void SgDeleteExp::set_variable(SgExpression *variable)
+\brief Access function for p_variable.
+See  *variable)
+variable for documentation \param variable is the variable to be deleted.
+\return Returns void.
+*/
+/*!\fn SgExpression *SgDeleteExp::get_next(int &n) const
+\description See  const
+next for documentation */
+/*!
+\fn SgExpression *SgDeleteExp::get_variable() const
+\brief Access function for p_variable.
+See  const
+variable for documentation \return Returns pointer to SgExpression.
+*/
+/*!\fn SgFunctionDeclaration *SgDeleteExp::get_deleteOperatorDeclaration() const
+\description See  const
+deleteOperatorDeclaration for documentation */
+/*!
+\fn short SgDeleteExp::get_is_array() const
+\brief Access function for p_is_array.
+See  const
+is_array for documentation \return Returns bool.
+*/
+/*!
+\fn short SgDeleteExp::get_need_global_specifier() const
+\brief Access function for p_need_global_specifier.
+See  const
+need_global_specifier for documentation \return Returns bool.
+*/
+/*!\fn virtual SgNode *SgDeleteExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgDeleteExp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgDeleteExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDeleteExp::get_numberOfTraversalSuccessors()
+\description See  SgDeleteExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDeleteExp::get_traversalSuccessorContainer()
+\description See  SgDeleteExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDeleteExp::get_traversalSuccessorNamesContainer()
+\description See  SgDeleteExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgDeleteExp::SgDeleteExp(SgExpression *variable,short is_array,short need_global_specifier,SgFunctionDeclaration *deleteOperatorDeclaration)
+*/
+//@}
+int SAGE_Doxygen_Dummy_14510211021820;

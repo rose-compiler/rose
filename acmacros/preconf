@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# $Id: preconf,v 1.1 2008/01/08 02:55:30 dquinlan Exp $
+
+topdir="`echo $0 | sed 's:[^/]\{1,\}$::'`"
+
+set -x
+
+# Go to the top-level directory.
+cd "$topdir"
+
+test ! -d aux && mkdir aux
+
+# This generates the aclocal.m4 file.
+# aclocal grabs macros an put it in aclocal.m4
+aclocal -I . || exit 1
+
+# This generates configure
+autoconf || exit 1
+
+# This generates config.h.in
+autoheader || exit 1
+
+# This generates Makefile.in and stamp-h.in
+# The -a flag tells automake to generate missing files
+# it will need, such as COPYING, install.sh, etc.
+# The -c flag copies instead of link to the missing files.
+automake -a -c || exit 1
+
+# This makes config.h.in more recent, or make will touch it
+# to do the same.
+touch aux/config.h.in || exit 1

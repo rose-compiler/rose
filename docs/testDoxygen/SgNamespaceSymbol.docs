@@ -1,0 +1,122 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceSymbol
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgNamespaceSymbol
+\brief This class represents the concept of a namespace name within the compiler.
+
+   This symbol holds a reference to a SgNamespaceDeclarationStatement and also
+any of its alias (referencing a SgNamespaceAliasDeclarationStatement).
+
+\internal The constructor for this symbol takes a name and a declaration.
+    The reason is that it is used to handle the case of a namespace alias which uses
+    the same symbol but uses a different name.  I'm not certain that this is
+    the best implementation since it stores the symbol in the symbol table under
+    two names.  It is not clear if that would be clear if the name were changes and 
+    this could cause the symbol table to not be completely removed from the
+    symbol table.
+
+\todo It might be that we should have a SgNamespaceAliasSymbol so that namespace 
+    aliasing can be better supported.  We can consider this for future work.
+
+\sa \ref SgSymbol for more details about symbols and why they are used in ROSE.
+
+\sa
+\ref SgNamespaceSymbol_usage  "Example of using a SgNamespaceSymbol object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceSymbol data members
+/////////////////////////////////////////////////////////////////////////
+
+/*
+\var SgNamespaceSymbol::p_name
+\brief This is the name of the namespace declaration.
+
+    It is redundently stored for a normal namespace declaration and is different from that
+    of the SgNamespaceDeclarationStatement in the case of a namespace alias declaration.
+*/
+
+/*
+\var SgNamespaceSymbol::p_declaration
+\brief This pointer is always valid is the declaration of the namespace.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceSymbol member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgNamespaceSymbol::SgNamespaceSymbol (const SgNamespaceSymbol &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgNamespaceSymbol::SgNamespaceSymbol()
+\brief This is the default constructor.
+
+   This constructor builds the SgNamespaceSymbol base class.
+
+\sa 
+\ref SgNamespaceSymbol_create "Example:create an SgNamespaceSymbol object"
+*/
+
+/*!
+\fn SgNamespaceSymbol::~SgNamespaceSymbol()
+\brief This is the destructor.
+
+*/
+
+/*!
+\fn SgNamespaceSymbol::get_name() const
+\brief Access function for getting name stored internally (not the one in the declaration).
+
+\return Returns SgName.
+*/
+
+/*!
+\fn SgNamespaceSymbol::get_type() const 
+\brief This function returns the type associated with the named entity.
+
+\return Returns SgType*.
+*/
+
+/*!
+\fn SgNamespaceSymbol::get_declaration() const
+\brief Access function for getting the declaration of the original namespace.
+
+\return Returns SgNamespaceDeclarationStatement.
+*/
+
+/*!
+\fn SgNamespaceSymbol::set_declaration(SgNamespaceDeclarationStatement *declaration)
+\brief Access function for setting the declaration stored internally.
+
+\return Returns SgNamespaceDeclarationStatement.
+*/
+
+/*!
+\fn SgNamespaceSymbol::isSgNamespaceSymbol (SgNode *s)
+\brief Cast function (from derived class to SgNamespaceSymbol pointer).
+
+   This functions returns a SgNamespaceSymbol pointer for any input of a 
+pointer to an object derived from a SgNamespaceSymbol.
+
+\return Returns valid pointer to SgNamespaceSymbol if input is derived from a SgNamespaceSymbol.
+*/
+
+/*!
+\fn SgNamespaceSymbol::isSgNamespaceSymbol (const SgNode *s)
+\brief Cast function (from derived class to SgNamespaceSymbol pointer).
+
+   This functions returns a SgNamespaceSymbol pointer for any input of a 
+pointer to an object derived from a SgNamespaceSymbol.
+
+\return Returns valid pointer to SgNamespaceSymbol if input is derived from a
+    SgNamespaceSymbol.
+*/
+

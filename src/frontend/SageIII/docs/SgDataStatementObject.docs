@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgDataStatementObject
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExprListExp *SgDataStatementObject::p_variableReference_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDataStatementObject::SgDataStatementObject(const SgDataStatementObjectStorageClass &source)
+*/
+/*!\fn inline static void SgDataStatementObject::operator delete(void *pointer)
+*/
+/*!\fn static SgDataStatementObject *SgDataStatementObject::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDataStatementObject::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDataStatementObject::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDataStatementObject::initializeStorageClassArray(SgDataStatementObjectStorageClass *storageArray)
+*/
+/*!\fn static void SgDataStatementObject::clearMemoryPool()
+*/
+/*!\fn static void SgDataStatementObject::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDataStatementObject::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgDataStatementObject::roseRTI()
+*/
+/*!\fn virtual SgDataStatementObject::~SgDataStatementObject()
+*/
+/*!\fn virtual SgNode *SgDataStatementObject::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgDataStatementObject::set_variableReference_list(SgExprListExp *variableReference_list)
+\description See  *variableReference_list)
+variableReference_list for documentation */
+/*!\fn SgExprListExp *SgDataStatementObject::get_variableReference_list() const
+\description See  const
+variableReference_list for documentation */
+/*!\fn virtual SgNode *SgDataStatementObject::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgDataStatementObject::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDataStatementObject::get_numberOfTraversalSuccessors()
+\description See  SgDataStatementObject::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDataStatementObject::get_traversalSuccessorContainer()
+\description See  SgDataStatementObject::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDataStatementObject::get_traversalSuccessorNamesContainer()
+\description See  SgDataStatementObject::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgDataStatementObject::SgDataStatementObject()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_409036451;

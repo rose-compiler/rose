@@ -1,0 +1,1259 @@
+# DQ (5/30/2007): Move to new modern automake macros (previous versions have been depricated)
+# AC_INIT
+AC_INIT(ROSE, 0.9.1a)
+
+# DQ (5/30/2007): Move to newer version of autoconf (I think this is required to get the new macros).
+# This is reported as bad style at http://sources.redhat.com/automake/automake.html#Extending-aclocal
+# DQ (12/21/2001) Make sure that only autoconf 2.52 or later is used (since so many details are not backward compatabile)
+# AC_PREREQ([2.52])
+AC_PREREQ([2.59])
+
+AC_CONFIG_SRCDIR([README])
+
+# DQ (5/30/2007): Added square brackets to try to conform to new standard
+AC_CONFIG_AUX_DIR([config])
+
+# DQ (1/16/2007): Also use the tar option ``tar-pax'' from
+# ``info automake'' (wait until after we are done with the release).
+# Change the version number for ROSE here!
+# AM_INIT_AUTOMAKE(tar-pax,ROSE,0.8.11a)
+# AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
+AM_INIT_AUTOMAKE([1.9.5])
+
+# DQ (6/5/2007): Try to make package name use upper case for ROSE (this does not work)
+# AC_PACKAGE_TARNAME([ROSE])
+
+# DQ (3/11/2006): Changed name of config.h to rose_config.h 
+# to avoid collisions with other projects using a config.h file.
+AM_CONFIG_HEADER(rose_config.h)
+
+configure_date=`date '+%A %B %e %H:%M:%S %Y'`
+AC_SUBST(configure_date)
+# echo "In ROSE/con figure: configure_date = $configure_date"
+
+# DQ (9/7/2006): Allow the default prefix to be the current build tree
+# This does not appear to work properly
+# AC_PREFIX_DEFAULT(`pwd`)
+
+# echo "In configure: prefix = $prefix"
+# echo "In configure: pwd = $PWD"
+
+if (test "$prefix" = NONE); then
+   echo "Setting prefix to default: $PWD"
+   prefix=$PWD
+# else
+#   echo "prefix was exlicitly set to: $prefix"
+fi
+# echo "In configure (after testing prefix): prefix = $prefix"
+# echo "In configure (after testing prefix): prefix = $libdir"
+
+# exit 1
+
+# Handle differences in GNU tar versions pre and post 1.14 (use of -o option redefined and
+# handling of 100 character absolute paths compromised).
+tar_version=`tar --version | grep "GNU tar" | cut -c14-18`
+echo "tar_version = $tar_version"
+if test $tar_version = 1.14; then
+   ROSE_TAR_OPTIONS=-chf
+   echo "This is GNU tar 1.14: skip use of -o option ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
+else
+   ROSE_TAR_OPTIONS=-chof
+   echo "This is NOT GNU tar 1.14 ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
+fi
+
+AC_SUBST(ROSE_TAR_OPTIONS)
+
+# DQ (4/13/2005):
+# Control use of EDG source code within ROSE.  This option allows the user
+# to use the EDG source code within ROSE.  By default ROSE distributions
+# are built to use binaries of anything from the EDG source code so as to
+# not publish any part of the EDG interface.  This is consistant with the
+# requirements of the free EDG research license.
+USE_EDG_SOURCE_CODE
+
+# echo "In configure: with_edg_source_code = $with_edg_source_code"
+
+# Setup Automake conditional in src/frontend/EDG/EDG_3.3/src/Makefile.am
+AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
+
+# echo "At top of configure.in: with_edg_source_code = $with_edg_source_code"
+
+# Set up for use of bison to build dot2gml tool in directory
+# src/roseIndependentSupport/dot2gml.  This is made optional
+# because it seems that many don't have the correct version of bison
+# to support the compilation of this tool.  This is it is a configure
+# option to build it (or have the makefile system have it be built).
+AC_ARG_ENABLE(dot2gml_translator,
+[--enable-dot2gml_translator   Configure option to have DOT to GML translator built (bison version specific tool).],
+[ echo "Setting up optional DOT-to-GML translator in directory: src/roseIndependentSupport/dot2gml"
+])
+AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
+
+# exit 1
+
+# Set the value of srcdir so that it will be an absolute path instead of a relative path
+# srcdir=`dirname "$0"`
+# echo "In ROSE/con figure: srcdir = $srcdir"
+# echo "In ROSE/con figure: $0"
+# Record the location of the build tree (so it can be substituted into ROSE/docs/Rose/rose.cfg)
+# topSourceDirectory=`dirname "$0"`
+# echo "In ROSE/con figure: topSourceDirectory = $topSourceDirectory"
+# AC_SUBST(topSourceDirectory)
+
+# echo "Before test for CANONICAL HOST: CC (CC = $CC)"
+
+AC_CANONICAL_HOST
+
+# DQ: added here to see if it would be defined for the template tests and avoid placing 
+# a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
+CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
+
+# I don't like to use environment variables to setup the CC and CXX variables
+SETUP_COMPILERS_THE_WAY_I_WANT
+
+# ROSE_HOME should be relative to top_srcdir or top_builddir.
+ROSE_HOME=.
+# ROSE_HOME=`pwd`/$top_srcdir
+AC_SUBST(ROSE_HOME)
+# echo "In ROSE/configure: ROSE_HOME = $ROSE_HOME"
+
+# Support for Gabriel's QRose GUI Library
+ROSE_SUPPORT_QROSE
+
+# AS (01/2005) Support for Andreas's Wave work
+ROSE_SUPPORT_LIBWAVE
+
+AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_boost_wave" = yes)
+# AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
+
+# Test this macro here at the start to avoid long processing times (before it fails)
+CHOOSE_BACKEND_COMPILER
+
+# For testing the configure script generation this link can be commented out
+# to improve performance of tests unrelated to backend compiler headr files.
+# DQ (9/17/2006): This must be done for BOTH C++ and C compilers (since the
+# compiler-specific header files for each can be different; as is the case 
+# for GNU).
+# GENERATE_BACKEND COMPILER_SPECIFIC_HEADERS
+# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+
+# echo "DONE: configure.in ...(after calling: generate backend C compiler specific headers)"
+# echo "Exiting in configure.in ...(after calling: generate backend C compiler specific headers)"
+# exit 1
+
+# DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
+# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
+# specific and system specific header files as for the backend compiler.  These depend
+# upon the selection of the back-end compiler.
+GET_COMPILER_SPECIFIC_DEFINES
+
+# DQ (1/15/2007): These are no longer used, I think!
+# Setup the location of header files after building the 
+# default header files based on the back-end compiler.
+# ROSE_C_HEADER_OPTIONS
+# ROSE_CXX_HEADER_OPTIONS
+
+# echo "DONE: configure.in ...(after calling: rose C and Cxx header options)"
+# echo "Exiting in configure.in ...(after calling: rose C and Cxx header options)"
+# exit 1
+
+# This must go after the setup of the headers options
+# Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
+# SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
+SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
+SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
+
+# echo "DONE: configure.in ...(after calling: setup backend C and Cxx compiler specific references)"
+# echo "Exiting in configure.in ...(after calling: setup backend C and Cxx compiler specific references)"
+# exit 1
+
+# echo "Before test for LEX: CC (CC = $CC)"
+
+# DQ (1/15/2007): Check if longer internal make check rule is to be used (default is short tests)
+ROSE_SUPPORT_LONG_MAKE_CHECK_RULE
+
+# Make the use of longer test optional where it is used in some ROSE/tests directories
+AM_CONDITIONAL(ROSE_USE_LONG_MAKE_CHECK_RULE,test "$with_ROSE_LONG_MAKE_CHECK_RULE" = yes)
+
+# The libxml2 library is availabe in /usr/lib on most Linux systems, however this is not
+# enough when using the Intel compilers.  So we need to turn it on explicitly when we
+# expect it to work with a specific platform/compiler combination.
+ROSE_SUPPORT_XML
+
+# Make the use of libxml2 explicitly controled.
+AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
+
+#AC_PROG_SWIG
+#AS (10/23/07): introduced conditional use of javaport
+AC_ARG_WITH(javaport, [  --with-javaport Specify use of javaport], [
+	AC_PROG_SWIG
+	],[
+    AM_CONDITIONAL([HAS_SWIG], [test x$has_swig = xyes])
+	])
+
+
+# Figure out what version of lex we have available
+# flex works better than lex (this gives a preference to flex (flex is gnu))
+AM_PROG_LEX
+AC_SUBST(LEX)
+
+# echo "After test for LEX: CC (CC = $CC)"
+
+# DQ (4/1/2001) Need to call this macro to avoid having "MAKE" set to "make" in the
+# top level Makefile (this is important to getting gmake to be used in the "make distcheck"
+# makefile rule.  (This does not seem to work, since calling "make distcheck" still fails and
+# only "gmake distcheck" seems to work.  I don't know why!
+AC_PROG_MAKE_SET
+
+# Call supporting macro for MySQL (more complex than SQLite, MySQL will be removed from optional use within ROSE)
+ROSE_SUPPORT_MYSQL
+# echo "In configure: with_MySQL = $with_MySQL"
+
+# Setup Automake conditional in Projects/DataBase/Makefile.am
+AM_CONDITIONAL(ROSE_USE_DATABASE,test ! "$with_MySQL" = no)
+
+# Call supporting macro for SQLite (simpler than MySQL)
+ROSE_SUPPORT_SQLITE
+
+# Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
+AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,test ! "$with_SQLite" = no)
+
+# Call supporting macro for MAPLE
+ROSE_SUPPORT_MAPLE
+
+# Setup Automake conditional in Projects/programModeling/Makefile.am
+AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
+
+# Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
+ROSE_SUPPORT_YICES
+
+# Setup Automake conditional in Projects/programModeling/Makefile.am
+AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
+
+# Call supporting macro for Binary Analysis
+ROSE_SUPPORT_BINARY_ANALYSIS
+
+# Setup Automake conditional in Projects/programModeling/Makefile.am
+AM_CONDITIONAL(ROSE_USE_BINARY_ANALYSIS_SUPPORT,test ! "$with_binary_analysis" = no)
+
+ROSE_SUPPORT_XML
+
+# Setup Automake conditional in ROSE/projects/BinaryContextLookup/Makefile.am
+AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
+
+# Control use of debugging support to convert most unions in EDG to structs.
+ROSE_SUPPORT_EDG_DEBUGGING
+
+# Call supporting macro for OpenMP
+ROSE_SUPPORT_OPENMP
+
+# Configuration commandline support for OMP project using ROSE
+AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
+
+# Call supporting macro for python
+ROSE_SUPPORT_PYTHON
+
+# Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
+ROSE_SUPPORT_JAVA
+
+# Call supporting macro for the Java JVM required by the Open Fortran Parser (for Fortran 2003 support)
+ROSE_SUPPORT_JAVA_JVM
+
+# Call supporting macro for the Open Fortran Parser (for Fortran 2003 support)
+ROSE_SUPPORT_FORTRAN
+AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER,test ! "$with_openFortranParser" = no)
+
+# Call supporting macro for bddbddb
+ROSE_SUPPORT_BDDBDDB
+
+# Setup Automake conditional in Projects/DatalogAnalysis/Makefile.am
+AM_CONDITIONAL(ROSE_USE_BDDBDDB,test ! "$with_bddbddb" = no)
+
+# Call supporting macro for VISUALIZATION (FLTK and GraphViz)
+ROSE_SUPPORT_VISUALIZATION
+
+# if ((test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no)); then
+#   echo "Skipping visualization support!"
+# else
+#   echo "Setting up visualization support!"
+# fi
+
+# Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
+AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
+
+# allow either user or developer level documentation using Doxygen
+ROSE_SUPPORT_DOXYGEN
+
+# DQ (8/25/2004): Disabled fast docs option.
+# Setup Automake conditional to allow use of Doxygen Tag file to speedup
+# generation of Rose documentation this does not however provide the
+# best organized documentation so we use it as an option to speed up
+# the development of the documenation and then alternatively build the 
+# final documentation.
+# AM_CONDITIONAL(DOXYGEN_GENERATE_FAST_DOCS,test "$enable_doxygen_generate_fast_docs" = yes)
+# echo "In configure.in: enable_doxygen_generate_fast_docs = $enable_doxygen_generate_fast_docs"
+
+# Test for setup of document merge of Sage docs with Rose docs
+# Causes document build process to take longer but builds better documentation
+if (test "$enable_doxygen_generate_fast_docs" = yes) ; then
+   AC_MSG_NOTICE([Generate Doxygen documentation faster (using tag file mechanism) ...])
+else
+   AC_MSG_NOTICE([Generate Doxygen documentation slower (reading all of Sage III and Rose together) ...])
+fi
+
+AC_PROG_CXXCPP
+dnl AC_PROG_RANLIB
+# echo "In configure.in (before libtool win32 setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
+AC_LIBTOOL_WIN32_DLL
+
+# echo "In configure.in (before libtool setup): disabling static libraries by default (use --enable-static or --enable-static= to override)"
+AC_DISABLE_STATIC
+
+# echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
+AC_PROG_LIBTOOL
+echo 'int i;' > conftest.$ac_ext
+AC_TRY_EVAL(ac_compile);
+# echo "In configure.in (after libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
+
+# exit 1
+
+AC_ARG_WITH(development-libraries,
+   [  --with-development-libraries ... build individual libraries for development purposes causing the main ROSE library to depend on the individual libraries, instead of incorporating their code],with_development_libraries=yes, with_development_libraries=no )
+AM_CONDITIONAL(DEV_LIBS,test "$with_development_libraries" = yes)
+
+# Figure out what version of lex we have available
+# flex works better than lex (this gives a preference to flex (flex is gnu))
+dnl AM_PROG_LEX
+dnl AC_SUBST(LEX)
+# This will work with flex and lex (but flex will not set LEXLIB to -ll unless it finds the gnu
+# flex library which is not often installed (and at any rate not installed on our system at CASC)).
+# Once the lex file contains its own version of yywrap then we will not need this set explicitly.
+
+# next two lines commented out by BP : 10/29/2001,
+# the flex library IS installed on our systems, setting it to -ll causes problems on
+# Linux systems
+# echo "Setting LEXLIB explicitly to -ll (even if flex is used: remove this once lex file contains it's own version of yywrap)"
+# dnl LEXLIB='-ll'
+# dnl AC_SUBST(LEXLIB)
+
+# Determine what C++ compiler is being used.
+AC_MSG_CHECKING(what the C++ compiler $CXX really is)
+BTNG_INFO_CXX_ID
+AC_MSG_RESULT($CXX_ID-$CXX_VERSION)
+
+# Define various C++ compiler options.
+# echo "Before ROSE_FLAG _ CXX_OPTIONS macro"
+ROSE_FLAG_CXX_OPTIONS
+# echo "Outside of ROSE_FLAG _ CXX_OPTIONS macro: CXX_DEBUG= $CXX_DEBUG"
+
+# Enable turning on purify and setting its options, etc.
+ROSE_SUPPORT_PURIFY
+# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER" 
+
+# Enable turning on Insure and setting its options, etc.
+ROSE_SUPPORT_INSURE
+# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER" 
+
+# DQ (7/8/2004): Added support for shared libraries using Brian's macros
+# ROSE_TEST_LIBS="-L`pwd`/src"
+
+# DQ (9/7/2006): build the directory where libs will be placed.
+# mkdir -p $prefix/libs
+echo "Before calling \"mkdir -p $prefix/lib\": prefix = $prefix"
+mkdir -p $prefix/lib
+
+# DQ (1/14/2007): I don't think this is required any more!
+# ROSE_TEST_LIBS="-L$prefix/lib"
+
+# DQ (1/14/2007): I don't know if this is required, but too many people are resetting this variable!
+# LIBS_WITH_RPATH="$(WAVE_LIBRARIES)"
+
+dnl PC (09/15/2006): None of the following should not be relevant any more
+dnl
+dnl echo "Calling LIBS_ADD_RPATH ROSE_TEST_LIBS = $ROSE_TEST_LIBS"
+dnl # Macro copied from Brian Gummey's implementation and turned on by default.
+dnl ROSE_LIBS_ADD_RPATH(ROSE_TEST_LIBS,LIBS_WITH_RPATH,0)
+dnl 
+dnl # This is part of support for Boost-Wave (CPP Preprocessor Library)
+dnl # Only add the Boost-Wave library to rpath if it has been set
+dnl if (test "$with_boost_wave" = yes); then
+dnl    MY_WAVE_PATH="-L$wave_libraries"
+dnl    ROSE_LIBS_ADD_RPATH(MY_WAVE_PATH,LIBS_WITH_RPATH,0)
+dnl fi
+dnl 
+dnl echo "DONE: MY_WAVE_PATH                   = $MY_WAVE_PATH"
+dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
+dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
+dnl 
+dnl # exit 1
+dnl 
+dnl # This is part of support for QRose (specification of QT Graphics Library)
+dnl # Only add the QT library to rpath if it has been set
+dnl if (test "$ac_qt_libraries"); then
+dnl    MY_QT_PATH="-L$ac_qt_libraries"
+dnl    ROSE_LIBS_ADD_RPATH(MY_QT_PATH,LIBS_WITH_RPATH,0)
+dnl fi
+dnl 
+dnl echo "DONE: MY_QT_PATH                     = $MY_QT_PATH"
+dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
+dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
+
+AC_SUBST(LIBS_WITH_RPATH)
+
+# DQ (exit to test rpath macro)
+# exit 1
+
+# Determine how to create C++ libraries.
+AC_MSG_CHECKING(how to create C++ libraries)
+BTNG_CXX_AR
+AC_MSG_RESULT($CXX_STATIC_LIB_UPDATE and $CXX_DYNAMIC_LIB_UPDATE)
+
+# DQ (6/23/2004) Commented out due to warning in running build
+# I do not know why in this case, INCLUDES is not generically
+# defined and automatically substituted.  It usually is.  BTNG.
+# INCLUDES='-I. -I$(srcdir) -I$(top_builddir)'
+# AC_SUBST(INCLUDES)
+
+# We don't need to select between SAGE 2 and SAGE 3 anymore (must use SAGE 3)
+# SAGE_VAR_INCLUDES_AND_LIBS
+
+# Let user specify where to find A++P++ installation.
+# Specify by --with-AxxPxx= or setting AxxPxx_PREFIX.
+# Note that the prefix specified should be that specified
+# when installing A++P++.  The prefix appendages are also
+# added here.
+# BTNG.
+AC_MSG_CHECKING(for A++P++)
+AC_ARG_WITH(AxxPxx,
+[  --with-AxxPxx=PATH	Specify the prefix where A++P++ is installed],
+,
+if test "$AxxPxx_PREFIX" ; then 
+   with_AxxPxx="$AxxPxx_PREFIX"
+else
+   with_AxxPxx=no
+fi
+)
+test "$with_AxxPxx" && test "$with_AxxPxx" != no && AxxPxx_PREFIX="$with_AxxPxx"
+AC_MSG_RESULT($AxxPxx_PREFIX)
+if test "$AxxPxx_PREFIX" ; then
+  # Note that the prefix appendages are added to AxxPxx_PREFIX to find A++ and P++.
+  AC_MSG_RESULT(using $AxxPxx_PREFIX as path to A++ Library)
+  Axx_INCLUDES="-I$AxxPxx_PREFIX/A++/lib/include"
+  Axx_LIBS="-L$AxxPxx_PREFIX/A++/lib/lib -lApp -lApp_static -lApp"
+  Pxx_INCLUDES="-I$AxxPxx_PREFIX/P++/lib/include"
+  Pxx_LIBS="-L$AxxPxx_PREFIX/P++/lib/lib -lApp -lApp_static -lApp"
+  # optional_AxxPxxSpecificExample_subdirs="EXAMPLES"
+  # we will want to setup subdirectories in the TESTS directory later so set it up now
+  # optional_AxxPxxSpecificTest_subdirs="A++Tests"
+else
+  AC_MSG_RESULT(No path specified for A++ Library)
+fi
+AC_SUBST(Axx_INCLUDES)
+AC_SUBST(Axx_LIBS)
+AC_SUBST(Pxx_INCLUDES)
+AC_SUBST(Pxx_LIBS)
+# AC_SUBST(optional_AxxPxxSpecificExample_subdirs)
+# AC_SUBST(optional_AxxPxxSpecificTest_subdirs)
+# Do not append to INCLUDES and LIBS because Axx is not needed everywhere.
+# It is only needed in EXAMPLES.
+# Set up A++/P++ directories that require A++/P++ Libraries (EXAMPLES)
+AM_CONDITIONAL(AXXPXX_SPECIFIC_TESTS,test ! "$with_AxxPxx" = no)
+
+# BTNG_CHOOSE_STL defines STL_DIR and STL_INCLUDES
+# BTNG_CHOOSE_STL
+# echo "STL_INCLUDE = $STL_INCLUDE"
+# AC _SUB ST(STL_INCLUDES)
+# AC _SUB ST(STL_DIR)
+
+# We now only support SAGE III
+AC_DEFINE([USE_SAGE3],[1],[Support for SAGE 3 over SAGE 2.])
+SAGE_INCLUDES='-I$(top_srcdir)/SAGE'
+SAGE_LIBS='$(top_builddir)/SAGE/libsage3.a'
+AC_SUBST(SAGE_INCLUDES)
+AC_SUBST(SAGE_LIBS)
+
+# We no longer want to have the ROSE configure.in setup the PerformanceTests/Makefile
+# PerformanceTests/Makefile
+AC_ARG_WITH(PERFORMANCE_TESTS,
+   [  --with-PERFORMANCE_TESTS ... compile and run performance tests within both A++ and P++],, with_PERFORMANCE_TESTS=no )
+# BTNG_AC_LOG(with_PERFORMANCE_TESTS is $with_PERFORMANCE_TESTS)
+# with_PERFORMANCE_TESTS variable is exported so that other packages
+# (e.g. indirect addressing) can set 
+# themselves up dependent upon the use/non-use of PADRE
+export with_PERFORMANCE_TESTS;
+
+# Inclusion of PerformanceTests and/or its sublibraries.
+# if test "$with_PERFORMANCE_TESTS" = no; then
+#   # If PerformanceTests is not specified, then don't use it.
+#     echo "Skipping PerformanceTests!"
+# else
+#   # If PERFORMANCE_TESTS is specified, then configure in PERFORMANCE_TESTS
+#   # without regard to its sublibraries.
+#   # subdir_list="BenchmarkBase $subdir_list"
+#   # optional_PERFORMANCE_subdirs="TESTS/PerformanceTests/BenchmarkBase"
+#   # optional_PERFORMANCE_subdirs="TESTS/PerformanceTests"
+#   optional_PERFORMANCE_subdirs="PerformanceTests"
+#   # echo "Setup PerformanceTests! optional_PERFORMANCE_subdirs = $optional_PERFORMANCE_subdirs"
+#   AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
+# fi
+
+# PC (8/16/2006): Now we test for GCJ since MOPS uses it
+AC_ARG_WITH(gcj,
+[  --with-gcj .................. Specify use of Java (gcj must be in path, required for use with ROSE/projects/FiniteStateModelChecker which uses MOPS internally)], [
+   AM_PROG_GCJ
+   echo "GCJ = '$GCJ'"
+   if test "x$GCJ" == "x" ; then
+     echo "gcj not found in path; please add gcj to path or omit --with-gcj option"
+     exit 1
+   fi
+   with_gcj=yes
+],[
+   _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
+]) 
+AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
+
+AC_SEARCH_LIBS(clock_gettime, [rt], [
+  RT_LIBS="$LIBS"
+  LIBS=""
+],[
+  RT_LIBS=""
+])
+AC_SUBST(RT_LIBS)
+
+# DQ (9/11/2006): Removed performance tests conditional, the performance tests were
+# removed previously, but we still have the tests/PerformanceTests directory.
+# AM_CONDITIONAL(ROSE_PERFORMANCE_TESTS,test ! "$with_PERFORMANCE_TESTS" = no)
+
+# DQ (9/11/2006): skipping use of optional_PERFORMANCE_subdirs
+# There is no configure.in in TESTS/PerformanceTests (only in TESTS/PerformanceTests/BenchmarkBase)
+# AC_CONFIG_SUBDIRS(TESTS/PerformanceTests)
+# AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
+# AC_SUBST(optional_PERFORMANCE_subdirs)
+
+# Set up for Dan Quinlan's development test directory.
+AC_ARG_ENABLE(dq-developer-tests,
+[--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
+[ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
+])
+AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
+
+## This should be set after a complex test (turn it on as default)
+AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],[],[Use explicit template instantiation.])
+
+# Copied from the P++/configure.in
+# Determine how to build a C++ library.
+AC_MSG_CHECKING(how to build C++ libraries)
+BTNG_CXX_AR
+if test "$CXX_ID" = ibm; then
+  # IBM does not have a method for supporting shared libraries
+  # Here is a kludge.
+  CXX_SHARED_LIB_UPDATE="`cd ${srcdir}/../config && pwd`/mklib.aix -o"
+  BTNG_AC_LOG(CXX_SHARED_LIB_UPDATE changed to $CXX_SHARED_LIB_UPDATE especially for the IBM)
+fi
+AC_MSG_RESULT($CXX_STATIC_LIB_UPDATE and $CXX_SHARED_LIB_UPDATE)
+AC_SUBST(CXX_STATIC_LIB_UPDATE)
+AC_SUBST(CXX_SHARED_LIB_UPDATE)
+
+# DQ (1/15/2007): These should not be required for modern C++ compilers today.
+# Name of certain STL header files.
+# This list was taken from Brian Miller's example
+# Determine pecularities of STL (see compiling-stl.m4).
+# These should go after CHOOSE_STL so they would use the
+# header files defined by that macro.
+# STL lines commented out by Bobby
+
+# BTNG_STL_STRING_HEADER_FILENAME
+# BTNG_STL_LIST_HEADER_FILENAME
+# BTNG_STL_MAP_HEADER_FILENAME
+# BTNG_STL_MAP_NEEDS
+# BTNG_STL_VECTOR_HEADER_FILENAME
+# BTNG_STL_ITERATOR_HEADER_FILENAME
+# BTNG_STL_ALGO_HEADER_FILENAME
+# BTNG_IOSTREAM_HEADER_FILENAME
+# BTNG_FSTREAM_HEADER_FILENAME
+# BTNG_IOMANIP_HEADER_FILENAME
+##BTNG_STL_STRINGSTREAM_HEADER_FILENAME
+# BTNG_STL_STRING_HEADER_FILENAME
+# BTNG_TYPE_NAMESPACE
+
+# DQ 7/6/2002: added stacks to use of STL in ROSE
+# BTNG_STL_STACK_HEADER_FILENAME
+
+# echo "In configure.in: top_srcdir = $(top_srcdir)"
+
+# The STL tests use the CC command line which specifies -ptr$(CXX_TEMPLATE_REPOSITORY_PATH) but this
+# is not defined in the shell so no substitution is done and a directory named
+# $(CXX_TEMPLATE_REPOSITORY_PATH) is built in the top level directory.  The least we can do is
+# delete it if we can't stop it from being generated.
+# AC_MSG_RESULT(deleting temporary template directory built during STL tests.)
+# rm -rf '$(CXX_TEMPLATE_REPOSITORY_PATH)'
+rm -rf Templates.DB
+
+## Include the $CXX_TEMPLATES variable in the $CXXFLAGS variable
+## (after all the configure compiler checks have been done)
+if test "$CXX_TEMPLATES"; then CXXFLAGS="$CXXFLAGS $CXX_TEMPLATES"; fi
+
+## Setup the EDG specific stuff
+SETUP_EDG
+
+# Setup Automake conditional in Projects/DataBase/Makefile.am
+# AM_CONDITIONAL(ROSE_USE_EDG_3_3,test "$with_EDG_3_3" = yes)
+
+
+dnl ---------------------------------------------------------------------
+dnl (8/29/2007): This was added to provide more portable times upon the 
+dnl suggestion of Matt Sottile at LANL.
+dnl ---------------------------------------------------------------------
+AC_C_INLINE
+AC_HEADER_TIME
+AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
+
+AC_CHECK_TYPE([hrtime_t],[AC_DEFINE(HAVE_HRTIME_T, 1, [Define to 1 if hrtime_t is defined in <sys/time.h>])],,[#if HAVE_SYS_TIME_H 
+#include <sys/time.h> 
+#endif])
+
+AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
+
+dnl Cray UNICOS _rtc() (real-time clock) intrinsic
+AC_MSG_CHECKING([for _rtc intrinsic])
+rtc_ok=yes
+AC_TRY_LINK([#ifdef HAVE_INTRINSICS_H
+#include <intrinsics.h>
+#endif], [_rtc()], [AC_DEFINE(HAVE__RTC,1,[Define if you have the UNICOS _rtc() intrinsic.])], [rtc_ok=no])
+AC_MSG_RESULT($rtc_ok)
+dnl ---------------------------------------------------------------------
+
+
+# Record the location of the build tree (so it can be substituted into ROSE/docs/Rose/rose.cfg)
+top_pwd=$PWD
+AC_SUBST(top_pwd)
+# echo "In ROSE/con figure: top_pwd = $top_pwd"
+
+absolute_path_srcdir="`cd $srcdir; pwd`"
+AC_SUBST(absolute_path_srcdir)
+
+# ROSE-HPCT module
+ACROSE_ENABLE_ROSEHPCT
+
+# DQ (11/10/2007): Add paths defined by automake to the generated rose.h.in and rose.h
+# header files so that this information will be available at compile time. Unclear
+# which syntax is best for the specification of these paths.
+AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$top_pwd",[Location of ROSE Compile Tree.])
+
+#AC_DEFINE_UNQUOTED([ROSE_PREFIX_DIR],"$prefix",[Location of ROSE prefix (install tree).])
+#AC_DEFINE_UNQUOTED([ROSE_BUILD_DIR],"$top_builddir",[Location of ROSE Compile Tree.])
+#AC_DEFINE_UNQUOTED([ROSE_SRC_DIR],"@srcdir@",[Location of ROSE Source Tree.])
+#AC_DEFINE_UNQUOTED([ROSE_SRC_TEST1_DIR],@srcdir@,[Location of ROSE Source Tree.])
+#AC_DEFINE_UNQUOTED([ROSE_SRC_TEST2_DIR],[@srcdir@],[Location of ROSE Source Tree.])
+#AC_DEFINE_UNQUOTED([ROSE_DATA_DIR],"$datadir",[Path specified by automake datadir.])
+#AC_DEFINE_UNQUOTED([ROSE_BIN_DIR],"$bindir",[Path specified by automake bindir.])
+#AC_DEFINE_UNQUOTED([ROSE_INCLUDE_DIR],"$includedir",[Path specified by automake includedir.])
+#AC_DEFINE_UNQUOTED([ROSE_INFO_DIR],"$infodir",[Path specified by automake infodir.])
+#AC_DEFINE_UNQUOTED([ROSE_LIB_DIR],"$libdir",[Path specified by automake libdir.])
+#AC_DEFINE_UNQUOTED([ROSE_LIBEXEC_DIR],"$libexecdir",[Path specified by automake libexecdir.])
+#AC_DEFINE_UNQUOTED([ROSE_LOCALSTATE_DIR],"$localstatedir",[Path specified by automake localstatedir.])
+#AC_DEFINE_UNQUOTED([ROSE_MAN_DIR],"$mandir",[Path specified by automake mandir.])
+#AC_DEFINE_UNQUOTED([ROSE_DIST_DIR],"$distdir",[Path specified by automake distdir.])
+
+
+# RV 8/11/2005
+#   Replaced PDFLibrary with latest version, PDFlib-Lite-6.0.2(rv).
+#src/3rdPartyLibraries/PDFLibrary/Makefile
+AC_CONFIG_SUBDIRS(src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv)
+
+
+# RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
+AC_CONFIG_FILES([
+stamp-h
+Makefile
+rose.docs
+rose_paths.h
+config/Makefile
+src/Makefile
+src/util/Makefile
+src/util/stringSupport/Makefile
+src/util/commandlineProcessing/Makefile
+src/util/support/Makefile
+src/util/graphs/Makefile
+src/3rdPartyLibraries/Makefile
+src/3rdPartyLibraries/coco/Makefile
+src/3rdPartyLibraries/coco/cplus2/Makefile
+src/3rdPartyLibraries/coco/sources/Makefile
+src/3rdPartyLibraries/MSTL/Makefile
+src/ROSETTA/Makefile
+src/ROSETTA/src/Makefile
+src/frontend/Makefile
+src/frontend/SageIII/Makefile
+src/frontend/SageIII/sage.docs
+src/frontend/SageIII/astFixup/Makefile
+src/frontend/SageIII/astPostProcessing/Makefile
+src/frontend/SageIII/astFileIO/Makefile
+src/frontend/SageIII/astMerge/Makefile
+src/frontend/SageIII/sageInterface/Makefile
+src/frontend/SageIII/virtualCFG/Makefile
+src/frontend/SageIII/astTokenStream/Makefile
+src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
+src/frontend/SageIII/astVisualization/Makefile
+src/frontend/EDG/Makefile
+src/frontend/EDG/EDG_3.3/Makefile
+src/frontend/EDG/EDG_3.3/misc/Makefile
+src/frontend/EDG/EDG_3.3/src/Makefile
+src/frontend/EDG/EDG_3.3/util/Makefile
+src/frontend/EDG/EDG_3.3/edgFrontEndWithoutSage/Makefile
+src/frontend/EDG_SAGE_Connection/Makefile
+src/frontend/OpenFortranParser_SAGE_Connection/Makefile
+src/frontend/BinaryDisassembly/Makefile
+src/frontend/ObjdumpDisassembler/Makefile
+src/midend/Makefile
+src/midend/astInlining/Makefile
+src/midend/astOutlining/Makefile
+src/midend/astUtil/Makefile
+src/midend/astUtil/astInterface/Makefile
+src/midend/astUtil/astSupport/Makefile  
+src/midend/astUtil/symbolicVal/Makefile  
+src/midend/astUtil/annotation/Makefile
+src/midend/astQuery/Makefile
+src/midend/astProcessing/Makefile
+src/midend/astRewriteMechanism/Makefile
+src/midend/astDiagnostics/Makefile
+src/midend/programAnalysis/Makefile
+src/midend/programAnalysis/CallGraphAnalysis/Makefile
+src/midend/programAnalysis/OAWrap/Makefile
+src/midend/programAnalysis/CFG/Makefile
+src/midend/programAnalysis/dataflowAnalysis/Makefile
+src/midend/programAnalysis/valuePropagation/Makefile
+src/midend/programAnalysis/defUseAnalysis/Makefile
+src/midend/programAnalysis/dominanceAnalysis/Makefile
+src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
+src/midend/programTransformation/Makefile
+src/midend/programTransformation/partialRedundancyElimination/Makefile
+src/midend/programTransformation/finiteDifferencing/Makefile
+src/midend/programTransformation/functionCallNormalization/Makefile
+src/midend/programTransformation/constantFolding/Makefile
+src/midend/programTransformation/implicitCodeGeneration/Makefile
+src/midend/loopProcessing/Makefile
+src/midend/loopProcessing/prepostTransformation/Makefile
+src/midend/loopProcessing/depInfo/Makefile
+src/midend/loopProcessing/depGraph/Makefile
+src/midend/loopProcessing/computation/Makefile
+src/midend/loopProcessing/slicing/Makefile
+src/midend/loopProcessing/driver/Makefile
+src/backend/Makefile
+src/backend/unparser/Makefile
+src/backend/unparser/formatSupport/Makefile
+src/backend/unparser/languageIndependenceSupport/Makefile
+src/backend/unparser/CxxCodeGeneration/Makefile
+src/backend/unparser/FortranCodeGeneration/Makefile
+src/roseSupport/Makefile
+src/roseExtensions/Makefile
+src/roseExtensions/SQLiteConnection/Makefile
+src/roseExtensions/databaseConnection/Makefile
+src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
+src/roseExtensions/dataStructureTraversal/Makefile
+src/roseExtensions/highLevelGrammar/Makefile
+src/roseExtensions/javaport/Makefile
+src/roseExtensions/roseHPCToolkit/Makefile
+src/roseExtensions/roseHPCToolkit/src/Makefile
+src/roseExtensions/roseHPCToolkit/include/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/Makefile
+src/roseExtensions/roseHPCToolkit/src/util/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/util/Makefile
+src/roseExtensions/roseHPCToolkit/src/xml/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/xml/Makefile
+src/roseExtensions/roseHPCToolkit/src/xml-xercesc/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/xml-xercesc/Makefile
+src/roseExtensions/roseHPCToolkit/src/profir/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/profir/Makefile
+src/roseExtensions/roseHPCToolkit/src/xml2profir/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/xml2profir/Makefile
+src/roseExtensions/roseHPCToolkit/src/sage/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/Makefile
+src/roseExtensions/roseHPCToolkit/src/profir2sage/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
+src/roseExtensions/roseHPCToolkit/docs/Makefile
+src/roseIndependentSupport/Makefile
+src/roseIndependentSupport/dot2gml/Makefile
+src/roseIndependentSupport/graphicalUserInterface/Makefile
+src/roseIndependentSupport/graphicalUserInterface/src/Makefile
+src/roseIndependentSupport/graphicalUserInterface/src/QRTree/Makefile
+src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/Makefile
+src/roseIndependentSupport/graphicalUserInterface/src/QRGui/Makefile
+src/roseIndependentSupport/graphicalUserInterface/src/QRGui/icons22/Makefile
+src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/Makefile
+projects/Makefile
+projects/compass/compassVerifier/Makefile
+projects/compass/compassVerifier/compassSupport/Makefile
+projects/compass/Makefile
+projects/compass/compass.tex
+projects/compass/compassSupport/Makefile
+projects/compass/util/Makefile
+projects/compass/util/C-API/Makefile
+projects/compass/util/MPIAbstraction/Makefile
+projects/compass/util/MPIAbstraction/alt-mpi-headers/Makefile
+projects/compass/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/Makefile
+projects/compass/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/Makefile
+projects/compass/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c++/Makefile
+projects/compass/tests/Makefile
+projects/compass/tests/C_tests/Makefile
+projects/compass/tests/Cxx_tests/Makefile
+projects/highLevelGrammars/Makefile
+projects/BabelPreprocessor/Makefile
+projects/checkPointExample/Makefile
+projects/simpleCallGraphAnalysis/Makefile
+projects/CloneDetection/Makefile
+projects/arrayOptimization/Makefile
+projects/arrayOptimization/test/Makefile
+projects/dataStructureGraphing/Makefile
+projects/programModeling/Makefile
+projects/FiniteStateModelChecker/Makefile
+projects/FiniteStateModelChecker/MopsForROSE/Makefile
+projects/FiniteStateModelChecker/src/Makefile
+projects/DatalogAnalysis/Makefile
+projects/DatalogAnalysis/src/Makefile
+projects/DatalogAnalysis/src/DBFactories/Makefile
+projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
+projects/DatalogAnalysis/tests/Makefile
+projects/DocumentationGenerator/Makefile
+projects/NameConsistancyChecker/Makefile
+projects/C_to_Promela/Makefile
+projects/OpenMP_Translator/Makefile
+projects/OpenMP_Translator/tests/Makefile
+projects/OpenMP_Translator/tests/developmentTests/Makefile
+projects/OpenMP_Translator/tests/epcc-c/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/BT/Makefile
+projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
+projects/MPICodeMotion/Makefile
+tests/Makefile
+tests/RunTests/Makefile
+tests/RunTests/A++Tests/Makefile
+tests/PerformanceTests/Makefile
+tests/CompilerOptionsTests/Makefile
+tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
+tests/CompilerOptionsTests/testForSpuriousOutput/Makefile
+tests/CompilerOptionsTests/testHeaderFileOutput/Makefile
+tests/CompilerOptionsTests/testOutputFileOption/Makefile
+tests/CompilerOptionsTests/testFileNamesAndExtensions/Makefile
+tests/CompileTests/Makefile
+tests/CompileTests/A++Tests/Makefile
+tests/CompileTests/P++Tests/Makefile
+tests/CompileTests/A++Code/Makefile
+tests/CompileTests/OvertureCode/Makefile
+tests/CompileTests/ElsaTestCases/Makefile
+tests/CompileTests/ElsaTestCases/ctests/Makefile
+tests/CompileTests/ElsaTestCases/gnu/Makefile
+tests/CompileTests/ElsaTestCases/kandr/Makefile
+tests/CompileTests/ElsaTestCases/std/Makefile
+tests/CompileTests/C_tests/Makefile
+tests/CompileTests/C99_tests/Makefile
+tests/CompileTests/Cxx_tests/Makefile
+tests/CompileTests/C_subset_of_Cxx_tests/Makefile
+tests/CompileTests/Fortran_tests/Makefile
+tests/CompileTests/RoseExample_tests/Makefile
+tests/CompileTests/ExpressionTemplateExample_tests/Makefile
+tests/CompileTests/PythonExample_tests/Makefile
+tests/CompileTests/UPC_tests/Makefile
+tests/CompileTests/copyAST_tests/Makefile
+tests/CompileTests/colorAST_tests/Makefile
+tests/CompileTests/mergeAST_tests/Makefile
+tests/CompileTests/unparseToString_tests/Makefile
+tests/CompileTests/OpenMP_C_tests/Makefile
+tests/CompileTests/boost_tests/Makefile
+tests/CompileTests/virtualCFG_tests/Makefile
+tests/CompileTests/sourcePosition_tests/Makefile
+tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
+tests/roseTests/Makefile
+tests/roseTests/astSymbolTableTests/Makefile
+tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astInliningTests/Makefile
+tests/roseTests/astOutliningTests/Makefile
+tests/roseTests/astOutliningTests/fortranTests/Makefile
+tests/roseTests/utilTests/Makefile
+tests/roseTests/astRewriteTests/Makefile
+tests/roseTests/loopProcessingTests/Makefile
+tests/roseTests/programAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
+tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
+tests/roseTests/programTransformationTests/Makefile
+tests/roseTests/astMergeTests/Makefile
+tests/roseTests/astPerformanceTests/Makefile
+tests/roseTests/astFileIOTests/Makefile
+tests/roseTests/astProcessingTests/Makefile
+tests/roseTests/roseHPCToolkitTests/Makefile
+tests/roseTests/roseHPCToolkitTests/data/Makefile
+tests/roseTests/roseHPCToolkitTests/data/01/Makefile
+tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
+tests/roseTests/roseHPCToolkitTests/data/01/PROFILE/Makefile
+tests/roseTests/roseHPCToolkitTests/data/01/PROGRAM/Makefile
+tests/roseTests/roseHPCToolkitTests/data/02/Makefile
+tests/roseTests/roseHPCToolkitTests/data/02/PROFILE/Makefile
+tests/roseTests/roseHPCToolkitTests/data/02/struct_ls/Makefile
+tests/roseTests/roseHPCToolkitTests/data/03/Makefile
+tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
+tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
+tests/roseTests/astInterfaceTests/Makefile
+tutorial/Makefile
+tutorial/exampleMakefile
+tutorial/database/Makefile
+tutorial/roseHPCT/Makefile
+tutorial/liaOutliner/Makefile
+exampleTranslators/Makefile
+exampleTranslators/AstCopyReplTester/Makefile
+exampleTranslators/DOTGenerator/Makefile
+exampleTranslators/PDFGenerator/Makefile
+exampleTranslators/documentedExamples/Makefile
+exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
+exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
+exampleTranslators/documentedExamples/AstRewriteExamples/Makefile
+exampleTranslators/documentedExamples/dataBaseExamples/Makefile
+exampleTranslators/defaultTranslator/Makefile
+exampleTranslators/graphicalUserInterfaceExamples/Makefile
+exampleTranslators/graphicalUserInterfaceExamples/slicing/Makefile
+exampleTranslators/graphicalUserInterfaceExamples/attributes/Makefile
+exampleTranslators/graphicalUserInterfaceExamples/query/Makefile
+exampleTranslators/graphicalUserInterfaceExamples/layout/Makefile
+docs/Makefile
+docs/Rose/rose.html
+docs/Rose/AvailableDocumentation.docs
+docs/Rose/Makefile
+docs/Rose/manual.tex
+docs/Rose/gettingStarted.tex
+docs/Rose/rose.cfg
+docs/Rose/sage.cfg
+docs/Rose/Tutorial/Makefile
+docs/Rose/Tutorial/tutorial.tex
+docs/Rose/Tutorial/gettingStarted.tex
+docs/testDoxygen/test.cfg
+docs/testDoxygen/Makefile
+tools/Makefile
+proposals/Makefile
+scripts/Makefile
+developersScratchSpace/Makefile
+developersScratchSpace/Dan/Makefile
+developersScratchSpace/Dan/C_tests/Makefile
+developersScratchSpace/Dan/C99_tests/Makefile
+developersScratchSpace/Dan/Cxx_tests/Makefile
+developersScratchSpace/Dan/C_subset_of_Cxx_tests/Makefile
+developersScratchSpace/Dan/Fortran_tests/Makefile
+developersScratchSpace/Dan/RoseExample_tests/Makefile
+developersScratchSpace/Dan/ExpressionTemplateExample_tests/Makefile
+developersScratchSpace/Dan/PythonExample_tests/Makefile
+developersScratchSpace/Dan/UPC_tests/Makefile
+developersScratchSpace/Dan/copyAST_tests/Makefile
+developersScratchSpace/Dan/colorAST_tests/Makefile
+developersScratchSpace/Dan/mergeAST_tests/Makefile
+developersScratchSpace/Dan/unparseToString_tests/Makefile
+developersScratchSpace/Dan/OpenMP_C_tests/Makefile
+developersScratchSpace/Dan/boost_tests/Makefile
+developersScratchSpace/Dan/virtualCFG_tests/Makefile
+developersScratchSpace/Dan/translator_tests/Makefile
+developersScratchSpace/Dan/sourcePosition_tests/Makefile
+developersScratchSpace/Dan/preinclude_tests/Makefile
+developersScratchSpace/Dan/tokenStream_tests/Makefile
+developersScratchSpace/Dan/mergeTraversal_tests/Makefile
+developersScratchSpace/Dan/collectAllCommentsAndDirectives_tests/Makefile
+developersScratchSpace/Dan/nameQualificationAndTypeElaboration_tests/Makefile
+developersScratchSpace/Dan/ObjdumpDisassembler_tests/Makefile
+developersScratchSpace/Dan/Yices_tests/Makefile
+developersScratchSpace/Dan/Compass_tests/Makefile
+])
+
+# DQ (1/24/2008): Removed these directories and consolidated the files.
+# src/midend/astOutlining/src/Makefile
+# src/midend/astOutlining/src/ASTtools/Makefile
+# src/midend/astOutlining/src/CPreproc/Makefile
+# src/midend/astOutlining/src/Preprocess/Makefile
+# src/midend/astOutlining/src/Transform/Makefile
+
+# DQ (1/18/2008): Removed because it has xml dependences that may not be availalbe for users.
+# projects/BinaryContextLookup/Makefile
+
+# DQ (1/18/2008): I have removed this since it is old code superseded by zgrviewer.
+# (zgrviewer is a dot file viewer available on the web, SourceForge).
+# src/roseIndependentSupport/visualization/Makefile
+
+# DQ (1/18/2008): I have removed this since it is old code superseded by a newer design.
+# src/roseIndependentSupport/graphics/Makefile
+
+# DQ (1/7/2008): I would like to have compassVerify not use a util directory.
+# At least I would like to not reproduce the MPI stuff which is not required.
+# projects/compass/compassVerifier/util/Makefile
+# projects/compass/compassVerifier/util/C-API/Makefile
+# projects/compass/compassVerifier/util/MPIAbstraction/Makefile
+# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/Makefile
+# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/Makefile
+# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/Makefile
+# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c++/Makefile
+
+
+# DQ (1/4/2008): Removed while Liao works on getting this test directory to compile.
+# projects/OpenMP_Translator/tests/cvalidationsuite/Makefile
+# projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/Makefile
+# projects/OpenMP_Translator/tests/npb2.3-omp-c/EP/Makefile
+# projects/OpenMP_Translator/tests/npb2.3-omp-c/FT/Makefile
+# projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
+# projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
+# projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
+
+
+
+# DQ (1/2/2008): Removed since it is not used anymore.
+# developersScratchSpace/Dan/FortranParserInterface/Makefile
+# developersScratchSpace/Dan/FortranUnparser_tests/Makefile
+# src/midend/astProcessing/CocoPreprocessor/Makefile
+
+# DQ (1/2/2008): Removed in favor of new Open Fortran Parser based Fortran support in ROSE
+# (saved for possible later use).
+# src/frontend/Open64_SAGE_Connection/Makefile
+# src/frontend/Open64_SAGE_Connection/lib/Makefile
+# src/frontend/Open64_SAGE_Connection/lib/support/Makefile
+# src/frontend/Open64_SAGE_Connection/whirl2rose/Makefile
+
+# DQ (5/3/2007): Removed older versions of program analysis in favor of Christian's newer work.
+#src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/Makefile
+#src/midend/programAnalysis/proceduralSlicing/Makefile
+#src/midend/programAnalysis/staticProgramSlicing/Makefile
+
+# DQ (1/2/2007): Removed (astProcessingExamples are in the tutorial and the absolute 
+# paths are too long for the poxis standard GNU tar 1.14.
+# docs/testDoxygen_copy/test.cfg
+# docs/testDoxygen_copy/Makefile
+# exampleTranslators/documentedExamples/astProcessingExamples/Makefile
+# exampleTranslators/documentedExamples/astProcessingExamples/printVars/Makefile
+# exampleTranslators/documentedExamples/astProcessingExamples/printLoopInfo/Makefile
+# projects/containerParallelizer/Makefile
+# projects/containerParallelizer/test/Makefile
+# projects/containerParallelizer/CPAnalysis/Makefile
+# projects/containerParallelizer/CPTransformation/Makefile
+
+# DQ (9/11/2006): Remove these directories of old performance tests, but leave the 
+# tests/PerformanceTests directory for future use.
+# tests/PerformanceTests/A++Tests/Makefile
+# tests/PerformanceTests/P++Tests/Makefile
+
+# DQ (9/11/2006): ROSE is an internal tool and not documented in 
+# the more public distribution of ROSE.
+# docs/Rosetta/Makefile
+
+# DQ (9/3/2006): This is now redundant with the Cxx_tests directory (and a few others)
+# tests/CompileTests/C++Code/Makefile
+
+# DQ (9/3/2006): Removed in preference to the newer work on OpenMP.
+# projects/OpenMPPreprocessor/Makefile
+
+# DQ (5/31/2006): Added new tests and reorganized how we test ROSE options
+# tests/CompilerOptionsTests/A++Code/Makefile
+
+# DQ (3/27/2006): Removed these make testing go faster (put them back in after we pass all other tests cleanly) 
+# tests/CompileTests/Makefile
+# tests/CompileTests/A++Tests/Makefile
+# tests/CompileTests/P++Tests/Makefile
+# tests/CompileTests/A++Code/Makefile
+# tests/CompileTests/C++Code/Makefile
+# tests/CompileTests/OvertureCode/Makefile
+
+# DQ (3/27/2006): Removed these until I get a betterMakefile.am (fails: make distcheck)
+# tests/CompileTests/ElsaTestCases/Makefile
+
+# DQ (3/25/2006): Removed these until I hear from Qing and Markus
+# developersScratchSpace/Qing/Makefile
+# developersScratchSpace/Markus/Makefile
+# developersScratchSpace/Markus/OmpTransformations/Makefile
+
+# DQ (3/3/2006): Removed from use (very old documentation)
+# docs/Rose/reference.tex
+
+# DQ (1/30/2006): Removed from use (very old documentation)
+# src/frontend/SageIII/sage.docs
+
+# DQ (5/3/2005): This should be moved to ROSE/src (where libraries live)
+# src/roseIndependentSupport/graphicalUserInterface/src/QRoseLib/Makefile
+# DQ (5/3/2005): These have to be moved to the ROSE/exampleTranslators
+# src/roseIndependentSupport/graphicalUserInterface/src/samples/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/samples/slicing/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/samples/attributes/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/samples/query/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/samples/layout/Makefile
+
+# removed to permit compilation of ROSE 0.8.0a->b, MS:10/26/04
+# projects/AtermTranslation/Makefile
+
+
+# Removed to permit test of distcheck as part of preparation for checking in the rewrite
+# mechanism.  Files in these directories either use the old rewrite mechanism or 
+# demonstrate some problem with the latest work (at any rate, some collaboration within
+# the ROSE team is required to check out the problems).
+#
+
+# DQ (10/22/2004): Could not get these to work with "make distcheck" rule (try again later)
+# src/3rdPartyLibraries/checkPointLibrary/Makefile
+# src/midend/programAnalysis/annotationLanguageParser/Makefile
+# src/midend/programAnalysis/sideEffectAnalysis/Makefile
+# tests/roseTests/programAnalysisTests/Makefile
+# tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
+
+
+# Relocated to ROSE/src/roseExtensions/databaseConnection
+# projects/dataBase/Makefile
+# projects/dataBase/GlobalDatabaseConnection.C
+
+# roseLibs/Makefile
+# src/midend/loopProcessing/test/Makefile
+
+# src/midend/loopProcessing/Makefile 
+# src/midend/programAnalysis/Makefile
+# src/command_line_options/Makefile
+
+# MSTL/Makefile
+# AstProcessingLib/Makefile
+# AstProcessingLib/CocoPreprocessor/Makefile
+# ProgramAnalysis/Makefile
+# ProgramAnalysis/OAWrap/Makefile
+# ProgramAnalysis/CFG/Makefile
+# ProgramAnalysis/dataflowAnalysis/Makefile
+# ProgramAnalysis/valuePropagation/Makefile
+
+# AST_RewriteMechanism/Makefile
+# ROSETTA_EXAMPLES/Makefile
+# ROSETTA_EXAMPLES/ArrayASTRestructuringTool/Makefile
+# ROSETTA_EXAMPLES/Cxx_ASTRestructuringTool/Makefile
+# EXAMPLES/Makefile
+
+# coco/Makefile
+# coco/sources/Makefile
+# coco/cplus2/Makefile
+# QueryLibs/Makefile
+# QueryLibs/BooleanQuery/Makefile
+# QueryLibs/NodeQuery/Makefile
+# QueryLibs/NameQuery/Makefile
+# QueryLibs/NumberQuery/Makefile
+# PDF/Makefile
+
+# config/Makefile
+# GNU_HEADERS/Makefile
+# GNU_HEADERS/hdrs1/Makefile
+# GNU_HEADERS/hdrs1/std/Makefile
+# GNU_HEADERS/hdrs3/Makefile
+# GNU_HEADERS/hdrs3/objc/Makefile
+# midend/Makefile
+# midend/astUtil/Makefile
+# midend/astUtil/annotation/Makefile
+# midend/astUtil/astInterface/Makefile
+# midend/astUtil/astSupport/Makefile
+# midend/astUtil/symbolicVal/Makefile
+
+# ExamplePreprocessors/A++P++Preprocessor/Makefile
+# ExamplePreprocessors/A++P++Preprocessor/IndexOffsetQuery/Makefile
+# ExamplePreprocessors/A++P++Preprocessor/ArrayAssignmentStatementQuery/Makefile
+# ExamplePreprocessors/A++P++Preprocessor/ScalarIndexingStatementQuery/Makefile
+
+# src/exampleTranslators/OpenMPPreprocessor/Makefile
+# src/exampleTranslators/PDFGenerator/Makefile
+# src/exampleTranslators/AstCopyReplTester/Makefile
+# src/exampleTranslators/DOTGenerator/Makefile
+# src/exampleTranslators/AnalysisPreprocessor/Makefile
+# src/exampleTranslators/SvPabloPreprocessor/Makefile
+# src/exampleTranslators/DataStructurePreprocessor/Makefile
+# src/exampleTranslators/BabelPreprocessor/Makefile
+
+# SAGE/Makefile
+# SAGE/sage.docs
+
+# ROSETTA/Makefile
+# ROSETTA/src/Makefile
+
+# util/Makefile
+# util/support/Makefile
+# util/graphs/Makefile
+
+# ExamplePreprocessors/Makefile
+# ExamplePreprocessors/DefaultPreprocessor/Makefile
+# ExamplePreprocessors/OpenMPPreprocessor/Makefile
+# ExamplePreprocessors/PDFGenerator/Makefile
+# ExamplePreprocessors/AstCopyReplTester/Makefile
+# ExamplePreprocessors/DOTGenerator/Makefile
+# ExamplePreprocessors/AnalysisPreprocessor/Makefile
+# ExamplePreprocessors/SvPabloPreprocessor/Makefile
+# ExamplePreprocessors/DataStructurePreprocessor/Makefile
+# ExamplePreprocessors/BabelPreprocessor/Makefile
+# ExamplePreprocessors/DocumentedExamples/Makefile
+# ExamplePreprocessors/DocumentedExamples/SimplePreprocessorExamples/Makefile
+# ExamplePreprocessors/DocumentedExamples/SimplePreprocessorExamples/exampleMakefile
+# ExamplePreprocessors/DocumentedExamples/AstRewriteExamples/Makefile
+# ExamplePreprocessors/DocumentedExamples/AstProcessingExamples/Makefile
+# ExamplePreprocessors/DocumentedExamples/DataBaseExamples/Makefile
+
+# Removed as part of directory structure reorganization 
+# (that required to support new version of EDG).
+# src/frontend/EDG/EDG_1.4/Makefile
+# src/frontend/EDG/EDG_1.4/misc/Makefile
+# src/frontend/EDG/EDG_1.4/errinfo/Makefile
+# src/frontend/EDG/EDG_1.4/src/Makefile
+# src/frontend/EDG/EDG_1.4/util/Makefile
+
+# src/EDG_Connection/Makefile
+# EDG_3.3/Makefile
+# EDG_3.3/misc/Makefile
+# EDG_3.3/src/Makefile
+# EDG_3.3/util/Makefile
+# EDG/Makefile
+# EDG/misc/Makefile
+# EDG/errinfo/Makefile
+# EDG/src/Makefile
+# EDG/util/Makefile
+
+# echo "At bottom of configure.in: with_edg_source_code = $with_edg_source_code"
+
+AC_CONFIG_COMMANDS([default],[[
+     echo "Ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)."
+     pathToSourceDir=`cd $srcdir && pwd`
+     test -d src/ROSETTA/Grammar || ( rm -rf src/ROSETTA/Grammar && ln -s $pathToSourceDir/src/ROSETTA/Grammar src/ROSETTA/Grammar )
+
+   # Note that the value of $with_edg_source_code is not available here unless it is exported (now fixed)
+   # echo "How is this set: with_edg_source_code = $with_edg_source_code"
+     if test -r $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la; then
+          echo "Copying $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la binary to compile tree src/frontend/EDG/EDG_3.3/src"
+        # cp -p $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.a  src/frontend/EDG/EDG_3.3/src
+          $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la src/frontend/EDG/EDG_3.3/src
+     else
+          if test "$with_edg_source_code" = true; then
+               echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
+#           else
+#              echo "$pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la not found, rerun configure --with-edg_source_code ..."
+          fi
+     fi
+
+     if test -r $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo ; then
+          echo "Copying $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo binary to compile tree src/frontend/EDG_SAGE_Connection"
+        # cp -p $pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so  src/frontend/EDG_SAGE_Connection
+          $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo src/frontend/EDG_SAGE_Connection
+     else
+          if test "$with_edg_source_code" = true; then
+               echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
+#           else
+#              echo "$pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so not found, rerun configure --with-edg_source_code ..."
+          fi
+     fi
+]],[[
+# These set the environment for commands executing after file generations.
+srcdir=$srcdir
+if test ! `cd $srcdir && pwd -P` = `pwd -P`; then
+  source_tree_is_not_compile_tree=1
+fi
+
+]])
+
+# echo "Calling AC OUTPUT in configure.in file"
+
+# Now generate all the output files (specified above)
+AC_OUTPUT
+
+# echo "Reached base of configure.in file ..."
+echo ""
+echo "******************************"
+echo "Configure Terminated Normally!"
+echo "******************************"
+echo ""

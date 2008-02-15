@@ -1,0 +1,206 @@
+API changes
+===========
+
+This file documents those API changes which affect
+existing PDFlib client programs. Although we go to
+some efforts in maintaining the existing API functions,
+it is sometimes necessary to incorporate a few non-backward
+compatible changes in order to streamline the API and
+incorporate new or extended functions.
+
+
+PDFlib 6.0.2
+============
+
+- In order to work around different behavior in Acrobat 5 and 6 regarding
+  several form field options (e.g. the readonly option for radio buttons
+  was not honored in Acrobat 6) the following restriction is now implemented:
+  options "readonly", "unisonselect", "toggle", and "tooltip" for type=
+  radiobutton are only allowed for PDF_create_fieldgroup(), but no longer
+  for PDF_create_field().
+  Client code which used one of these options for PDF_create_field() created
+  bad PDF output. Such code will now raise a warning unless fieldwarning=false,
+  and thus should be changed to honor the new restrictions.
+
+- The leading handling in PDF_create_textflow()/PDF_fit_textflow() has
+  changed. Previously the behavior for multiple leading instructions on
+  a line was undefined, and didn't match the user expectation in certain
+  cases.  E.g. when leading was specified at the beginning of the text
+  _and_ in the optlist parameter of PDF_create_textflow(), the leading
+  value from the optlist parameter was used, and not the one from the inline
+  option list.
+  The new leading behavior is documented in the manual. In some situations
+  it may cause different formatting results than with earlier versions, but
+  the previous behavior is considered a bug.
+
+
+PDFlib 6.0.1
+============
+
+- No changes which affect compatibility.
+
+
+PDFlib 6.0.0
+============
+
+See the PDFlib manual for information about new functions and parameters
+which should be used instead of the deprecated ones.
+
+Deprecated functions:
+
+- PDF_show_boxed(), PDF_show_boxed2()
+- PDF_add_bookmark(), PDF_add_bookmark2()
+- PDF_attach_file(), PDF_attach_file2()
+- PDF_add_note(), PDF_add_note2()
+- PDF_add_pdflink()
+- PDF_add_locallink()
+- PDF_add_launchlink()
+- PDF_add_weblink()
+- PDF_set_border_style()
+- PDF_set_border_color()
+- PDF_set_border_dash()
+
+Deprecated options for particular functions:
+
+- reftype in PDF_load_image()
+
+Deprecated parameters:
+
+- userpassword, masterpassword, permissions, compatibility, flush, pdfx
+- openaction, base, launchlink:parameters, launchlink:operation,
+  launchlink:defaultdir, transition, duration, openmode
+- hidetoolbar, hidemenubar, hidewindowui, fitwindow, centerwindow,
+  displaydoctitle, nonfullscreenpagemode, direction, viewarea, viewclip,
+  printarea, printclip
+- bookmarkdest
+- pagewidth, pageheight, artbox, bleedbox, cropbox, trimbox
+- pdiusebox
+- defaultrgb/rgb/cmyk
+
+Removed functions:
+
+The functions PDF_setgray*() and PDF_setrgbcolor*() are no longer available
+except in the C language. These functions have been deprecated since PDFlib 4.
+Workaround: use setcolor() instead.
+
+Changes in the Java binding:
+
+All float parameters have been changed to double, which may require
+appropriate adjustments to the data types used in client code.
+
+Deprecated in the C++ binding:
+
+- The overloaded open() calls are no longer available.
+
+- The unsupported method get_message() in the PDFlibException object has
+  been replaced with get_errmsg().
+
+Changes in the PHP binding:
+
+- Stricter parameter checking: detects bad data types
+
+- Optional parameters are no longer supported (all parameters dictated by
+  the API must be provided in the PHP script).
+
+Changes related to encodings:
+
+The "host" encoding translates to "iso8859-1" on non-Windows platforms
+(except EBCDIC-based mainframes) instead of "winansi". It is still
+recommended to explicitly specify the required encoding instead of
+using "host".
+
+
+
+PDFlib 5.0.2
+============
+- COM:
+  - The functions PDF_setgray*() and PDF_setrgbcolor*() are no longer
+    available in the COM wrapper. These functions have been deprecated
+    since PDFlib 4. Workaround: use setcolor() instead.
+
+
+PDFlib 5.0.1
+============
+- No changes which affect compatibility.
+
+
+PDFlib 5.0.0
+============
+
+Deprecated functions:
+
+- PDF_findfont()
+- PDF_setpolydash()
+- PDF_open_image_file()
+- PDF_open_CCITT()
+- PDF_open_image()
+- PDF_place_pdi_page()
+- PDF_boot_dll() and PDF_shutdown_dll()
+
+
+Deprecated options for particular functions:
+
+- reftype option in PDF_load_image()
+
+
+Deprecated parameters:
+
+- prefix
+
+
+Other changes:
+
+- Several resource configuration mechanism are superseded by improved
+  mechanisms. However, the previous configuration scheme is still supported.
+
+- Introduced a dedicated PDFlibException class for Java. This may
+  require modifications to existing catch clauses.
+
+- The new C exception handling with PDF_TRY/PDF_CATCH makes old-style
+  error handlers obsolete. However, PDF_new2() will still accept error
+  handler callbacks.
+
+- The PDF_open_pdi_callback() has been slightly modified; this affects
+  only PDFlib customers who used this feature in a preliminary release.
+
+- Changed the default value of the "inheritgstate" parameter to false.
+
+- By default, PDFlib generates PDF 1.4 (Acrobat 5) output. This can be
+  modified with
+
+  PDF_set_parameter(p, "compatibility", "1.3");
+
+- The following features have been removed:
+
+  PDF_set_parameter(p, "compatibility", "1.2");
+
+  Careful programming can still produce PDF 1.2 compatible documents,
+  albeit with a PDF 1.3 header entry.
+
+- The following functions have been removed:
+
+  PDF_open_pdi_mem() (only implemented in custom versions of PDFlib+PDI)
+  Change existing calls to the following sequence:
+
+  PDF_create_pvf(...);
+  PDF_open_pdi(...);
+
+- C++ binding:
+  Switches to new-style C++ exceptions by default (as opposed to installing
+  an old-style client-supplied error handler callback function).
+
+- PHP binding:
+  Those very old API functions have been removed from the wrapper which
+  stemmed from the prehistoric era before PDFlib GmbH officially supported
+  the PHP wrapper. These functions have never been documented in the PDFlib
+  manual, but have been kept in the PHP wrapper for compatibility reasons.
+  In order to facilitate maintenance we dropped these functions.
+ 
+  The pdf_open_memory_image() API is not affected since it actually added
+  new functionality. Although PDFlib GmbH does not support this function it
+  still works.
+
+  The virtual_dir support has also been dropped. This feature is rather
+  confusing since it is not supported on all platforms and configurations.
+  In addition, it conflicts with the new SearchPatch facility in PDFlib.
+  Finally, it didn't work when generating PDF files with PDF_open_file().

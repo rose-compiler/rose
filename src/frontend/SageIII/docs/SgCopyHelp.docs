@@ -1,0 +1,23 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name User Interface*/
+//@{
+/*!\fn inline SgCopyHelp::SgCopyHelp() : depth(0)
+*/
+/*!\fn inline void SgCopyHelp::clearState()
+*/
+/*!\fn inline void SgCopyHelp::decrementDepth()
+*/
+/*!\fn inline void SgCopyHelp::incrementDepth()
+*/
+/*!\fn virtual SgNode *SgCopyHelp::copyAst(const SgNode *n) = 0
+*/
+/*!\fn virtual inline SgCopyHelp::~SgCopyHelp()
+*/
+/*!\fn inline SgCopyHelp::copiedNodeMapType &SgCopyHelp::get_copiedNodeMap()
+\description See  &SgCopyHelp::copiedNodeMap for documentation */
+/*!\fn inline int SgCopyHelp::get_depth()
+\description See  SgCopyHelp::depth for documentation */
+/*!\fn void SgCopyHelp::insertCopiedNodePair(const SgNode *key,SgNode *value)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2003916580;

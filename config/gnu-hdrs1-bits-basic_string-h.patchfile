@@ -1,0 +1,78 @@
+--- basic_string.h	2004-09-15 10:04:55.000000000 -0700
++++ basic_string.h	2004-09-15 10:10:01.000000000 -0700
+@@ -238,19 +249,33 @@
+ 
+     private:
+       // Data Members (private):
++#ifdef USE_ROSE
++    // DQ (9/14/2004): Use the _Alloc and avoid the empty-base optimization (since EDG can't compile this GNU implementation)
++       mutable _Alloc 	_M_dataplus;
++#else
+       mutable _Alloc_hider 	_M_dataplus;
+-
++#endif
+       // The following storage is init'd to 0 by the linker, resulting
+       // (carefully) in an empty string with one reference.
+       static size_type _S_empty_rep_storage[(sizeof(_Rep) + sizeof(_CharT) + sizeof(size_type) - 1)/sizeof(size_type)];
+ 
+       _CharT*
+       _M_data() const
++#ifdef USE_ROSE
++    // DQ (9/15/2004): Modify return value to avoid access to data member of _Alloc_hider
++      { return  NULL; }
++#else
+       { return  _M_dataplus._M_p; }
++#endif
+ 
+       _CharT*
+       _M_data(_CharT* __p)
++#ifdef USE_ROSE
++    // DQ (9/15/2004): Modify return value to avoid access to data member of _Alloc_hider
++      { return __p; }
++#else
+       { return (_M_dataplus._M_p = __p); }
++#endif
+ 
+       _Rep*
+       _M_rep() const
+@@ -329,7 +354,10 @@
+       // NB: We overload ctors in some cases instead of using default
+       // arguments, per 17.4.4.4 para. 2 item 2.
+ 
++#ifndef USE_ROSE
++   // DQ (9/14/2004): Comment out the inline specifier so that the implementation is not required!
+       inline
++#endif
+       basic_string();
+ 
+       explicit
+@@ -351,8 +379,12 @@
+         basic_string(_InputIterator __beg, _InputIterator __end,
+ 		     const _Alloc& __a = _Alloc());
+ 
+-      ~basic_string()
+-      { _M_rep()->_M_dispose(this->get_allocator()); }
++     ~basic_string() {
++#ifndef USE_ROSE
++       // DQ (9/14/2004): Comment out the call to get_allocator() (EDG can't compile this)
++          _M_rep()->_M_dispose(this->get_allocator()); 
++#endif
++         }
+ 
+       basic_string&
+       operator=(const basic_string& __str) { return this->assign(__str); }
+@@ -855,9 +887,12 @@
+ 	      size_type __n2) const;
+   };
+ 
+-
+   template<typename _CharT, typename _Traits, typename _Alloc>
+-    inline basic_string<_CharT, _Traits, _Alloc>::
++#ifndef USE_ROSE
++ // DQ (9/14/2004): EDG can't compile this if inline is specified here.
++    inline 
++#endif
++    basic_string<_CharT, _Traits, _Alloc>::
+     basic_string()
+     : _M_dataplus(_S_empty_rep()._M_refcopy(), _Alloc()) { }
+ 

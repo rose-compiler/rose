@@ -1,0 +1,12 @@
+edge 
+edge SgVariableDeclaration:float a;SgExprStatement:a = 5.00000000000;SgVariableDeclaration:float b =(6.00000000000);SgVariableDeclaration:float c =(5.00000000000);SgVariableDeclaration:int i;SgVariableDeclaration:int j;SgExprStatement:i = 1;SgExprStatement:j = 0;SgExprStatement:b = 3.00000000000;SgVariableDeclaration:float x =(0.00000000000);SgExprStatement:j = i; SgLessThanOp:j < a always
+edge SgReturnStmt:return 0;  always
+edge SgExprStatement:b--;SgExprStatement:c--;SgVariableDeclaration:int k =(2); SgLessThanOp:k < j always
+edge SgLessThanOp:j < a SgReturnStmt:return 0; false
+edge SgLessThanOp:j < a SgExprStatement:b--;SgExprStatement:c--;SgVariableDeclaration:int k =(2); true
+edge SgPlusPlusOp:j++ SgLessThanOp:j < a always
+edge  SgPlusPlusOp:j++ always
+edge SgExprStatement:x += x * i; SgPlusPlusOp:k++ always
+edge SgLessThanOp:k < j  false
+edge SgLessThanOp:k < j SgExprStatement:x += x * i; true
+edge SgPlusPlusOp:k++ SgLessThanOp:k < j always

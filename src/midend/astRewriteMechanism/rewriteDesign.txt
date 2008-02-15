@@ -1,0 +1,278 @@
+// Class hierarchy for ASTNodeCollection (template parameter to MidLevelRewrite)
+class AbstractInterfaceNodeCollection
+
+class MidLevelInterfaceNodeCollection  : public AbstractInterfaceNodeCollection
+class HighLevelInterfaceNodeCollection : public AbstractInterfaceNodeCollection
+
+
+// final interfaces
+
+// ******************************************
+//     SAGE LEVEL INTERFACE (level 1)
+// ******************************************
+
+// Sage interface (level 1) contained in SAGE classes
+
+// ******************************************
+//     LOW LEVEL INTERFACE (level 2)
+// ******************************************
+
+LowLevelRewrite
+  // Published interface for LowLevelRewrite Mechanism
+     static void insert  ( SgStatement* targetStatement, SgStatement* newStatement, 
+                           bool insertBeforeNode = true );
+     static void replace ( SgStatement* targetStatement, SgStatement* newStatement );
+     static void remove  ( SgStatement* targetStatement );
+
+     static void insert  ( SgStatement* targetStatement, SgStatementPtrList newStatementList, 
+                           bool insertBeforeNode = true );
+     static void replace ( SgStatement* targetStatement, SgStatementPtrList newStatementList );
+     static void remove  ( SgStatementPtrList targetStatementList );
+
+// ******************************************
+//     MID LEVEL INTERFACE (level 3)
+// ******************************************
+
+template <class ASTNodeCollection>
+class MidLevelRewrite
+     class PrefixSuffixGenerationTraversal
+          string generatePrefixStringGlobalDeclarations() const;
+          string generatePrefixStringLocalDeclarations() const;
+          string generateSuffixString() const;
+
+  // protected function
+     static void generatePrefixAndSuffix ( 
+                      SgNode* astNode, string & prefixString,
+                      string & suffixString, bool generateIncludeDirectives = true );
+
+     static typename ASTNodeCollection::NodeCollectionType 
+               stringToNodeCollection ( SgNode* astNode, string transformationString );
+
+     static SgStatementPtrList stringToStatementList ( SgNode* astNode,
+                                                        string transformationString );
+
+     static void insertStatementListWithMarkers ( 
+               SgStatement* target, 
+               SgStatementPtrList statementList, 
+               bool insertBeforeNode = true );
+
+     static void removeCommentsFromMarkerDeclarationsAndReattachToTarget ( 
+               SgVariableDeclaration* varDeclaration, 
+               SgStatement* target, 
+               bool beforeTargetStatement = true );
+
+  // published (public) interface
+     static void insert  ( SgStatement* target, const string & transformationString, 
+                           const string & preAmbleString = "", bool insertBeforeNode = true );
+     static void replace ( SgStatement* target, const string & transformationString, 
+                           const string & preAmbleString = "");
+
+     static void remove  ( SgStatement* target );
+
+// typedef to simplify representation of mid level interface
+typedef MidLevelRewrite<MidLevelInterfaceNodeCollection> MiddleLevelRewrite;
+
+
+// ******************************************
+//     HIGH LEVEL INTERFACE (level 4)
+// ******************************************
+
+class HighLevelRewrite 
+     : public MidLevelRewrite<HighLevelInterfaceNodeCollection>
+
+     class SynthesizedAttribute : public HighLevelInterfaceNodeCollection
+               void insert  ( SgNode* astNode,
+                    const string & transformation,
+                    HighLevelRewrite::ScopeIdentifierEnum inputRelativeScope,
+                    HighLevelRewrite::PlacementPositionEnum inputRelativeLocation,
+                    bool insertBeforeNode = true );
+               void replace ( SgNode* astNode,
+                    const string & transformation,
+                    HighLevelRewrite::ScopeIdentifierEnum inputRelativeScope,
+                    HighLevelRewrite::PlacementPositionEnum inputRelativeLocation );
+
+     template <class RewriteInheritedAttribute, class RewriteSynthesizedAttribute>
+     class RewriteTreeTraversal
+        : public SgTopDownBottomUpProcessing<RewriteInheritedAttribute,RewriteSynthesizedAttribute>
+
+     static void generatePrefixAndSuffix (
+                      SgNode* astNode, string & globalPrefixString, 
+                      string & localPrefixString, string & suffixString, 
+                      bool generateIncludeDirectives = true );
+
+     void remove  ( SgStatement* target );
+
+
+// ###################################################################
+// ###################################################################
+// ###################################################################
+
+Experiences with Brian Miller (using the old rewrite mechanism):
+
+   1) Directives must have a dummy variable declaration appended so that the directive can
+    be attached to a statement and inserted into the AST.
+
+   2) Using the preamble transformation can be specified for the following case:
+        a) transformation in intermediate file and not in final application
+      But greater flexablity is required to specify a transformation in the final
+      application but NOT in the intermediate file.  Example is:
+          #include<vector.h> (STL code) in final application but not in the intermediate
+      file (since we have to parse the intermediate file and we can't parse STL stuff currently).      
+
+   3) Use of -rose:C_only forces the intermediate files to be compiled with the "C only"
+      mode and the way we use variable declarations as markers causes this to fail if
+      non-declaration C code is placed between variable declaration markers.  The
+      intermedate file that we generate is invalid C code if the transformation introduces 
+      a non-declaration statement.  The fix would be to permit markers to be either
+      variable declarations or funcation calls (so that we would not interleave 
+      declarations and non-declarations within a block).
+
+   4) The use of typedef types appearing in a transformation cause an error (Brian
+      generated this using TAU):
+
+      (9/9/03) THIS SHOULD BE FIXED IN MY VERSION (not yet checked in) (See ChangeLog)
+
+          Warnings in EDG Processing! (continuing ...)
+          /* AST Fixes started. */
+          /* AST Fixes finished */
+          default reached in switch within TransformationSupport::getTypeNametype->sage_class_name() = SgTypedefType variant = 71
+          make: *** [test] Aborted
+
+
+// ###################################################################
+// ###################################################################
+// ###################################################################
+
+How to handle source code:
+   This is simple since the source code is valid C++ code which can be
+   placed anywhere in the file (as long as it it placed repective to how 
+   it is used in the final transformation (global scope for declarations, etc.)).
+
+How to handle comments and CPP directives:
+   These have now been handled by using markers to define the surrounding statements
+   and gathering the comments from the markers and extending the low level interface to
+   handle list of comments/directives in addition to lists of statements.
+   A detail here is that for "C only" compilation the makers must be function declarations
+   instaed of variable declarations since the two can't be mixed in striaght line code.
+
+How to handle macros:
+   Macros can't be evaluated by the intermediate file else they would not show up in the
+   final transformation, so we have to disgise them as something else.  Previously we
+   had selected a string with a prefix:
+   For a macro defined somewhere as 
+          #define STATEMENT_MACRO(name) int name
+   the string (string value expression):
+         "ROSE-TRANSFORMATION-MACRO:STATEMENT_MACRO(abc)"
+   defines the macro call. The substring prefix "ROSE-TRANSFORMATION-MACRO:" is stripped
+   off by the unparser when the final source code is generated.  Since type evaluation
+   is not done within the SAGE AST we don't have to worry about the string type being
+   an error when used with other expressions or statements.
+
+   A problem is that this this is a string value expression, it can't appear in a scope
+   that only has declaration statements (since an expresion statement is not a declaration 
+   statements).  So we need a better way to hide the macro (in a declaration!!!).  Macro
+   calls must therefore be wrapped to escape premature evaluation.
+
+        char* ROSE_MACRO_DECLARATION_nnn = "ROSE-TRANSFORMATION-MACRO:STATEMENT_MACRO(xyz)";
+
+   NOTE: functions would be too complex since the macro parameters would have to be generated
+        void ROSE_TRANSFORMATION_MACRO_STATEMENT_MACRO(int xyz);
+
+   which would unparse to:
+   STATEMENT_MACRO(xyz);
+
+   Macros must be classified as declarations or expressions so that we can know which way
+   to encode them in the intermediate file (so that they will not be evaluated).
+
+   Check with Brian to see if this might work!
+
+   header file (myMacro.h), or perhaps a transformation defined on a CPP directive? (but
+   must know types of all macro parameters):
+        #ifdef ROSE_TRANSFORMATION_FILE
+          // make the macro appear as a function
+             void STATEMENT_MACRO(int value);
+        #else
+             #define STATEMENT_MACRO(value) int someDeclaration = value;
+        #endif
+
+   Use of macro in interpreted as a function call in the intermediate file
+        STATEMENT_MACRO(1);
+   and output as a function call in the generated source code (by the unparser)
+        STATEMENT_MACRO(1);
+
+   The macro does not have to have any specific type defined for it's parameters
+   but the function would have to (C++ would permit overloading for different types
+   but C would not!).
+
+   ******************** OR ********************
+
+   We could allow strings to be passed through to the final AST as a string and
+   inserted into the final code as a string.  inserting a string like this would allow
+   the intermediate file to be compiled with the expanded macro and still permit the
+   final string to be placed into the output source code.  But we would have to strip out
+   the code expanded from the macro.  To remove the code expanded by the macro we would
+   have to place markers around the use of the macro so that once expanded we could
+   exclude the code placed between the exclusion markers (more variable declarations).
+   then in place of the excluded code we would have to generate the original call to the
+   macro.  this seems quite possible to do, but a bit complex so is the best solution.
+
+   int macro_marker_start_xxx;
+   STATEMENT_MACRO();
+   int macro_marker_end_xxx;
+   
+
+// ###################################################################
+// ###################################################################
+// ###################################################################
+
+Analysis of factoring of code in present design:
+
+Outline of function calls for Level 3 interface:
+MidLevelRewrite<MidLevelInterfaceNodeCollection>::insert(SgNode*, string, bool)
+     SgStatementPtrList statementList = stringToStatementList((SgNode*)target,finalSourceCodeString);
+          TransformationStringTemplatedType<MidLevelCollectionTypedefs> transformation (
+               NULL,transformationString,scope,location,buildInNewScope);
+          stringAndNodeCollection.addString(NULL,transformation);
+          stringAndNodeCollection.sortInputStrings(astNode);
+          stringAndNodeCollection.compileSortedStringsToGenerateNodeCollection(astNode);
+          statementList = stringAndNodeCollection.getStatementList(MidLevelCollectionTypedefs::CurrentLocation);
+     insertStatementListWithMarkers(target,statementList,insertBeforeNode);
+          LowLevelRewrite::insert(target,statementList);
+
+
+Outline of function calls for Level 4 interface (part 1: Transformation Resistration):
+HighLevelRewrite::SynthesizedAttribute::insert (SgStatement* target, 
+                                                const string & transformationString,
+                                                ScopeIdentifierEnum inputRelativeScope,
+                                                PlacementPositionEnum inputRelativeLocation )
+     TransformationStringTemplatedType<HighLevelCollectionTypedefs> transformation (
+          target,transformationString,scope,location,buildInNewScope);
+     addString(target,transformation);
+
+Outline of function calls for Level 4 interface (part 2: Transformation Commit):
+HighLevelRewrite::SynthesizedAttribute::rewriteAST( SgNode* astNode )
+     sortInputStrings(astNode);
+     compileSortedStringsToGenerateNodeCollection(astNode);
+     insertStatementNodes(astNode);
+          HighLevelRewrite::insertStatementListWithMarkers (targetNodeForTransformation,
+                                                            treeFragement[i],
+                                                            IntermediateFileStringPositionEnum(i));
+
+// High level function to insert
+
+
+     insertContainerOfListsOfStatements ( SgNode* astNode );
+          insertStatementList ( const SgStatementPtrList & X,
+                                SgNode* targetNode,
+                                IntermediateFileStringPositionEnum positionInScope );
+
+
+
+
+
+
+
+
+
+
+

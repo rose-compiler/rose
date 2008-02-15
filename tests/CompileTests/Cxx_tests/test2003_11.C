@@ -1,0 +1,12 @@
+double two = 2;
+double pi  = 3.14159265;
+double alt_two = (double) (int) 2;
+float alt_pi = (int) 3.14159265;
+
+float floatNumber      = -1234567890.123456789012345678901234567890;
+double doubleNumber    = -1234567890.123456789012345678901234567890;
+long double longNumber = -1234567890.123456789012345678901234567890;
+
+long double longNumberA = -12345678901234567890.12345678901234567890;
+
+

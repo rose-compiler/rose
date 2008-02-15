@@ -1,0 +1,403 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgProject
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgProject
+\brief This class represents a source project, with a list of SgFile objects and global
+    information about the project (commandline details, AST merge options, etc.).
+   This IR nodes contains list of files, etc. after internal command-line processing.
+   The original argc and argv are not modified and left in tact for processing by the 
+   ROSE translator.  The SgProject node keeps a deep copy of the original argc and
+   argv as an STL list of strings (representing the command-line arguments).
+   Also, if ROSE and/or EDG specific command-line options are not wanted in the ROSE 
+   translator, they may be stripped from argc and argv, using the member functions:
+     -# void stripRoseCommandLineOptions (int &argc, char **&argv), and\or
+     -# void stripEdgCommandLineOptions (int &argc, char **&argv).
+   These functions will modify the input argc and argv values.
+\internal This IR node does not appear many times in an AST (typically only once).  
+\todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
+    pointer to lists.
+\todo Implement a "-dumpversion" for compatability with GNU (icc does the same).
+\sa
+\ref SgProject_usage  "Example of using a SgProject object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgProject data members
+/////////////////////////////////////////////////////////////////////////
+/*!
+\var SgProject::project_argc
+\brief This is a copy to the argc value (number of command line options specified).
+\internal  This is not processed to group multi-argument command line options. This is a static variable.
+*/
+/*!
+\var SgProject::project_argv
+\brief This is a copy to the argv (pointer) value (array of poitners to C-style strings
+    representing command line options specified).
+\internal  This is not processed to group multi-argument command line options. This is a static variable.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgProject member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgProject::~SgProject()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgProject::isSgProject (SgNode *s)
+\brief Cast function (from derived class to SgProject pointer).
+   This functions returns a SgProject pointer for any input of a 
+pointer to an object derived from a SgProject.
+\return Returns valid pointer to SgProject if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgProject::isSgProject (const SgNode *s)
+\brief Cast function (from derived class to SgProject pointer).
+   This functions returns a SgProject pointer for any input of a 
+pointer to an object derived from a SgProject.
+\return Returns valid pointer to SgProject if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var AstAttributeMechanism *SgProject::p_attributeMechanism
+*/
+/*!
+\var SgFilePtrListPtr SgProject::p_fileList
+\brief This is the list of files within the project.
+\internal  This is an STL list, I think that the get_file() member function should be
+    deprecated so that we acess the list like all other STL lists.
+*/
+/*!
+\var SgStringList SgProject::p_includeDirectorySpecifierList
+\brief List of directories specified with "-I" option on command line
+\internal  
+*/
+/*!
+\var SgStringList SgProject::p_libraryDirectorySpecifierList
+\brief List of directories specified with "-L" option on command line
+\internal  
+*/
+/*!
+\var SgStringList SgProject::p_libraryFileList
+\brief List of all libraries specified on command line.
+   List all libraries specified using ".a" or ".so" syntax.
+\internal  Required to assemble link lines for backend vendor compiler.
+*/
+/*!
+\var SgStringList SgProject::p_librarySpecifierList
+\brief List of libraries specified using "-lxxx" syntax.
+\internal  Required to assemble link lines for backend vendor compiler.
+*/
+/*!
+\var SgStringList SgProject::p_objectFileNameList
+\brief List of all object files specified on the command line.
+\internal  This can be an empty list (if none are specified).
+*/
+/*!
+\var SgStringList SgProject::p_originalCommandLineArgumentList
+\brief Copy of original argc and argv command line passed to ROSE translator (converted to
+    STL list of strings).
+\internal This is a deep copy.
+*/
+/*!
+\var SgStringList SgProject::p_sourceFileNameList
+\brief List of all source file names specified on the command line.
+\internal  This can be an empty list (if none are specified). This should be updated by
+    the AST Merge mechanism.
+*/
+/*!\var bool SgProject::p_C_PreprocessorOnly
+*/
+/*!
+\var bool SgProject::p_astMerge
+\brief This controls the merging of AST when multiple files are being processed.
+    "-rose:astMerge" triggeres the use of the file specificed by
+"-rose:astMergeCommandFile <filename>" which stores the working directory and 
+the command line required to compile the target file.  It is an error to specify 
+"-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
+It is required to specify the "-rose:astMergeCommandFile <filename>" option to
+first build the required "AST Merge Command File" prior to processing of the 
+"AST Merge Command File"using the "-rose:astMerge" option.
+See manual for details of AST merge mechansim.
+\internal New mechanism (not yet documented).
+*/
+/*!
+\var bool SgProject::p_compileOnly
+\brief This controls if we are to act as a linker (by calling the vendor compiler as a
+    linker/prelinker).
+    The value of p_compileOnly is true if "-c" appears on the command line and is false if not.
+\internal  This is a simple pass through to the vendor compiler to do the linking.  If no
+    transformations occured to instantiated templates, then the vendor compiler handles
+    all prelinking template instatiation as well.
+*/
+/*!
+\var bool SgProject::p_prelink
+\brief This controls if we are to handle the prelink (not implemented).
+\internal  We implemented a prelink mechamism, but it was not very robust, so until we
+    have a better one this should be false.  It is use to control teting of the existing
+    prelink mechanism (which will be rewritten).
+*/
+/*!
+\var enum SgProject::template_instantiation_enum SgProject::p_template_instantiation_mode
+\brief This controls the degree of template instatiation by ROSE.  No template
+    instatiation is required by ROSE if all template instationation can be handled by the
+    backend vendor C++ compiler.
+\internal  The default is currently to output only transformed instantiated templates and
+    to do so as static teplate functions where they are instatiated template functions
+    because we don't have a sufficently powerful global prelink mehcanism to control the 
+    assignment of instantiated template functions and member functions to files (to avoid
+    multiply defined symbols at link time).
+*/
+/*!
+\var int SgProject::p_backendErrorCode
+\brief Error code returnd from processing of generated source code using vendor compiler.
+   This value should be passed back out of the main() function by the user translator (for
+   support of makefile processing).
+\internal This error code is returned by the ROSE backend() function.
+*/
+/*!
+\var int SgProject::p_frontendErrorCode
+\brief Error code returned from EDG front-end processing.
+\internal  Value greater than 3 is an error, else just warnings.
+*/
+/*!
+\var static int SgProject::p_verbose
+\brief This is the level of verbosity assumed to apply to the whole project (all AST processing).
+\internal  This is a static variable, which might make it difficult to multiple SgProject
+    IR nodes to coexist within the same problem.
+*/
+/*!
+\var std::string SgProject::p_astMergeCommandFile
+\brief This stores the name of the file where information is collected for the AST Merge mechanism.
+    "-rose:astMerge" triggeres the use of the file specificed by
+"-rose:astMergeCommandFile <filename>" which stores the working directory and 
+the command line required to compile the target file.  It is an error to specify 
+"-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
+It is required to specify the "-rose:astMergeCommandFile <filename>" option to
+first build the required "AST Merge Command File" prior to processing of the 
+"AST Merge Command File"using the "-rose:astMerge" option.
+See manual for details of AST merge mechansim.
+\internal New mechanism (not yet documented).
+*/
+/*!
+\var std::string SgProject::p_outputFileName
+\brief Filename specifiec using "-o" option on command line.
+   Set as part of normal command line processing within ROSE.
+\internal  This is set to a default value of "a.out" if "-o" is not specified.
+*/
+/*!\var std::string SgProject::p_compilationPerformanceFile
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgProject::SgProject()
+\brief This is the constructor.
+   This constructor builds the SgProject base class.
+\sa 
+\ref SgProject_create "Example:create an SgProject object"
+*/
+/*!\fn SgProject::SgProject(const SgProjectStorageClass &source)
+*/
+/*!\fn SgProject::SgProject(int argc,char **argv)
+*/
+/*!\fn inline int SgProject::parse(int argc,char **argv)
+*/
+/*!\fn inline static void SgProject::operator delete(void *pointer)
+*/
+/*!\fn inline void SgProject::processCommandLine(int argc,char **argv)
+*/
+/*!\fn static SgProject *SgProject::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgProject::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgProject::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgProject::initializeStorageClassArray(SgProjectStorageClass *storageArray)
+*/
+/*!\fn static void SgProject::clearMemoryPool()
+*/
+/*!\fn static void SgProject::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgProject::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgProject::roseRTI()
+*/
+/*!\fn virtual SgNode *SgProject::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgProject::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgProject::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgProject::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn void SgProject::display(const std::string &label) const
+*/
+/*!\fn void SgProject::initialization()
+*/
+/*!\fn static void SgProject::set_verbose(int )
+\description See  )
+verbose for documentation */
+/*!\fn virtual void SgProject::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
+\description See  *attributeMechanism)
+attributeMechanism for documentation */
+/*!\fn void SgProject::set_C_PreprocessorOnly(bool C_PreprocessorOnly)
+\description See  C_PreprocessorOnly)
+C_PreprocessorOnly for documentation */
+/*!\fn void SgProject::set_astMerge(bool astMerge)
+\description See  astMerge)
+astMerge for documentation */
+/*!\fn void SgProject::set_astMergeCommandFile(std::string astMergeCommandFile)
+\description See  astMergeCommandFile)
+astMergeCommandFile for documentation */
+/*!\fn void SgProject::set_backendErrorCode(int backendErrorCode)
+\description See  backendErrorCode)
+backendErrorCode for documentation */
+/*!\fn void SgProject::set_compilationPerformanceFile(std::string compilationPerformanceFile)
+\description See  compilationPerformanceFile)
+compilationPerformanceFile for documentation */
+/*!\fn void SgProject::set_compileOnly(bool compileOnly)
+\description See  compileOnly)
+compileOnly for documentation */
+/*!\fn void SgProject::set_fileList(SgFilePtrListPtr fileList)
+\description See  fileList)
+fileList for documentation */
+/*!\fn void SgProject::set_frontendErrorCode(int frontendErrorCode)
+\description See  frontendErrorCode)
+frontendErrorCode for documentation */
+/*!\fn void SgProject::set_includeDirectorySpecifierList(SgStringList includeDirectorySpecifierList)
+\description See  includeDirectorySpecifierList)
+includeDirectorySpecifierList for documentation */
+/*!\fn void SgProject::set_libraryDirectorySpecifierList(SgStringList libraryDirectorySpecifierList)
+\description See  libraryDirectorySpecifierList)
+libraryDirectorySpecifierList for documentation */
+/*!\fn void SgProject::set_libraryFileList(SgStringList libraryFileList)
+\description See  libraryFileList)
+libraryFileList for documentation */
+/*!\fn void SgProject::set_librarySpecifierList(SgStringList librarySpecifierList)
+\description See  librarySpecifierList)
+librarySpecifierList for documentation */
+/*!\fn void SgProject::set_objectFileNameList(SgStringList objectFileNameList)
+\description See  objectFileNameList)
+objectFileNameList for documentation */
+/*!
+\fn void SgProject::set_originalCommandLineArgumentList(SgStringList originalCommandLineArgumentList)
+\brief Sets the list of strings representing the original command-line.
+See  originalCommandLineArgumentList)
+originalCommandLineArgumentList for documentation */
+/*!\fn void SgProject::set_outputFileName(std::string outputFileName)
+\description See  outputFileName)
+outputFileName for documentation */
+/*!\fn void SgProject::set_prelink(bool prelink)
+\description See  prelink)
+prelink for documentation */
+/*!\fn void SgProject::set_sourceFileNameList(SgStringList sourceFileNameList)
+\description See  sourceFileNameList)
+sourceFileNameList for documentation */
+/*!\fn void SgProject::set_template_instantiation_mode(enum SgProject::template_instantiation_enum template_instantiation_mode)
+\description See  template_instantiation_mode)
+template_instantiation_mode for documentation */
+/*!\fn SgFilePtrListPtr SgProject::get_fileList() const
+\description See  const
+fileList for documentation */
+/*!\fn SgStringList SgProject::get_includeDirectorySpecifierList() const
+\description See  const
+includeDirectorySpecifierList for documentation */
+/*!\fn SgStringList SgProject::get_libraryDirectorySpecifierList() const
+\description See  const
+libraryDirectorySpecifierList for documentation */
+/*!\fn SgStringList SgProject::get_libraryFileList() const
+\description See  const
+libraryFileList for documentation */
+/*!\fn SgStringList SgProject::get_librarySpecifierList() const
+\description See  const
+librarySpecifierList for documentation */
+/*!\fn SgStringList SgProject::get_objectFileNameList() const
+\description See  const
+objectFileNameList for documentation */
+/*!
+\fn SgStringList SgProject::get_originalCommandLineArgumentList() const
+\brief Returns a list of strings representing the original command-line.
+See  const
+originalCommandLineArgumentList for documentation */
+/*!\fn SgStringList SgProject::get_sourceFileNameList() const
+\description See  const
+sourceFileNameList for documentation */
+/*!
+\fn bool SgProject::get_C99_only() const
+\brief This controls the c99 mode in the frontend.
+See  const
+C99_only for documentation */
+/*!\fn bool SgProject::get_C_PreprocessorOnly() const
+\description See  const
+C_PreprocessorOnly for documentation */
+/*!\fn bool SgProject::get_C_only() const
+\description See  const
+C_only for documentation */
+/*!\fn bool SgProject::get_F2003_only() const
+\description See  const
+F2003_only for documentation */
+/*!\fn bool SgProject::get_F77_only() const
+\description See  const
+F77_only for documentation */
+/*!\fn bool SgProject::get_F90_only() const
+\description See  const
+F90_only for documentation */
+/*!\fn bool SgProject::get_F95_only() const
+\description See  const
+F95_only for documentation */
+/*!\fn bool SgProject::get_Fortran_only() const
+\description See  const
+Fortran_only for documentation */
+/*!\fn bool SgProject::get_astMerge() const
+\description See  const
+astMerge for documentation */
+/*!\fn bool SgProject::get_compileOnly() const
+\description See  const
+compileOnly for documentation */
+/*!\fn bool SgProject::get_prelink() const
+\description See  const
+prelink for documentation */
+/*!\fn bool SgProject::get_skip_transformation() const
+\description See  const
+skip_transformation for documentation */
+/*!\fn bool SgProject::get_useBackendOnly() const
+\description See  const
+useBackendOnly for documentation */
+/*!\fn enum SgProject::template_instantiation_enum SgProject::get_template_instantiation_mode() const
+\description See  const
+template_instantiation_mode for documentation */
+/*!\fn int SgProject::get_backendErrorCode() const
+\description See  const
+backendErrorCode for documentation */
+/*!\fn int SgProject::get_frontendErrorCode() const
+\description See  const
+frontendErrorCode for documentation */
+/*!\fn std::string SgProject::get_astMergeCommandFile() const
+\description See  const
+astMergeCommandFile for documentation */
+/*!\fn std::string SgProject::get_compilationPerformanceFile() const
+\description See  const
+compilationPerformanceFile for documentation */
+/*!\fn std::string SgProject::get_outputFileName() const
+\description See  const
+outputFileName for documentation */
+/*!\fn virtual AstAttributeMechanism *SgProject::get_attributeMechanism() const
+\description See  const
+attributeMechanism for documentation */
+/*!\fn virtual SgNode *SgProject::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgProject::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgProject::get_numberOfTraversalSuccessors()
+\description See  SgProject::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgProject::get_traversalSuccessorContainer()
+\description See  SgProject::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgProject::get_traversalSuccessorNamesContainer()
+\description See  SgProject::traversalSuccessorNamesContainer for documentation */
+/*!\fn virtual SgProject::~SgProject()
+*/
+//@}
+int SAGE_Doxygen_Dummy_8708318697673;

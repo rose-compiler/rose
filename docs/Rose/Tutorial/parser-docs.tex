@@ -1,0 +1,445 @@
+\documentclass[times, 10pt]{article} 
+
+%\usepackage{akit/latex8}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{subfigure}
+
+\long\def\com#1{}
+
+\title{ROSE Annotation Language and Parser Library}
+
+\begin{document}
+
+\date{}
+
+\maketitle
+
+
+The guiding philosophy of ROSE states that traditional compilers lack
+sufficient semantic understanding of user-defined abstractions to perform
+optimizations and transformations that would otherwise be legal.  A 
+developer may codify this semantic understanding in a transformation that
+neither adheres to the constraints of, nor performs, analyses such as side
+effect or alias analysis.  The transformation guarantees its own safety
+by exploiting knowledge of the abstraction or application (e.g., that
+actual arguments are not aliased, that a virtual function invocation never
+incurs side effects, etc.).
+
+ROSE supports a second approach to optimization-- one that aids rather
+than obviates traditional analysis.  To this end ROSE provides an
+annotation language through which a developer may assert program
+properties that a compiler might otherwise be too conservative to 
+discover (e.g., a function is side-effect free).  The first approach to
+optimization leverages application- or domain-specific transformations,
+while the second approach uses standard and general transformations
+(e.g., code motion and inlining of a function) that are enabled by
+assertions specified by the annotation (e.g., that the function is side-effect
+free).
+
+The annotation language was developed and described by Guyer and Lin~\cite{guyer+:dsl99, guyer03},
+while the implementation is adapted from their C-Breeze compiler.  The
+first reference provides a solid introduction to the annotation language,
+while Guyer's dissertation provides considerable additional depth.  Please
+note that there are some discrepancies between the paper and the final
+implementation incorporated in to ROSE and described in Guyer's
+dissertation.  These discrepancies include changes to nested properties, the
+structure definitions, and the removal of the "none" keyword in relation to 
+properties.
+
+\com{
+The original language included keywords to trigger transformations
+(e.g., specialize, remove, replace) and drive analysis (e.g., analyze).
+The restricted subset of the language implemented in ROSE is intended
+only to provide program assertions in the form of annotations.  Therefore,
+these more dynamic features of the language (appendices A.6 and A.7 of
+the grammar~\cite{guyer+:dsl99}) have been removed.
+}%com
+
+Annotations are specified in a separate file, such as the one shown
+in Figure~\ref{figure:annfile} taken
+from the ROSE distribution.
+
+\begin{figure}
+\begin{verbatim}
+
+%{
+
+}%
+
+procedure fseek(stream, offset, whence)
+{
+        access { stream, offset, whence }
+        modify { stream }
+}
+ 
+procedure ftell(stream, pos)
+{
+        access { stream, pos }
+        modify { pos }
+}
+ 
+\end{verbatim}
+\caption{Annotation File Describing I/O Library}
+\label{figure:annfile}
+\end{figure}
+
+Any statements between {\tt \%\{ \}\% } may be used to provide access to C/C++
+definitions.  For example, {\tt \#include } statements may be placed here.
+While still a requirement in the annotation file, this prologue is
+a vestige of the complete implementation in C-Breeze.
+
+This file models two library calls that would otherwise be inaccessible
+to compiler analysis:  fseek and ftell.  The definitions begin with the
+procedure keyword and are followed by the name of the function, a
+(typeless) parameter list, and a body that provides annotations.
+In the example above the annotations state that all parameters are
+accessed and that a subset of them are modified.
+
+The subset of Guyer's original annotation grammar~\cite{guyer03} supported 
+by ROSE is described in Figures~\ref{annbnf1},~\ref{annbnf2}, 
+and~\ref{annbnf3}.  This grammar departs from Guyer's original specification
+in that neither action annotations nor C-style numerical comparisons
+are supported.
+
+\begin{figure}
+\begin{tabular}[c]{l c l}
+{\it annotation-file} & $\rightarrow$ & {\it annotation} * \\
+\\
+{\it annotation} & $\rightarrow$ & {\it header} \\
+& $|$ & {\it property} \\
+& $|$ & {\it procedure} \\
+& $|$ & {\it global} \\
+\\
+{\it header} & $\rightarrow$ & \%\{ \\
+& & C CODE \\
+& & \%\} \\
+\\
+{\it procedure} & $\rightarrow$ & {\tt procedure} IDENTIFIER ( {\it identifier-list } ) \\
+& & \{ {\it procedure-annotation * } \} \\
+\\
+{\it procedure-annotation} & $\rightarrow$ & {\it pointer-annotation} \\
+& $|$ & {\it dependence-annotation} \\
+& $|$ & {\it analysis-rule-annotation} \\
+& $|$ & {\it report-annotation} \\
+\\
+{\it identifier-list} & $\rightarrow$ & IDENTIFIER [, {\it identifier-list} ] \\
+\\
+{\it pointer-annotation} & $\rightarrow$ & {\tt on\_entry } \{ {\it pointer-structure} * \} \\
+& $|$ & {\tt on\_exit} \{ {\it pointer-structure} * \} \\
+& $|$ & {\tt on\_exit} \{ {\it cond-pointer-structure} * \} \\
+\\
+{\it cond-pointer-structure} & $\rightarrow$ & {\tt if } ( {\it condition} ) \{ {\it pointer-structure} * \} \\
+& $|$ & {\tt default} \{ {\it pointer-structure} * \} \\
+\\
+{\it pointer-structure} & $\rightarrow$ & [{\tt I/O}] IDENTIFIER \\
+& $|$ & IDENTIFIER --\textgreater{} [{\tt new}] {\it pointer-structure} \\
+& $|$ & IDENTIFIER {\it pointer-structure * } \\
+& $|$ & {\tt delete} IDENTIFIER \\
+\\
+{\it dependence-annotation} & $\rightarrow$ & {\tt access} \{ {\it identifier-list} \} \\
+& $|$ & {\tt modify} \{ {\it identifier-list} \} \\
+\\
+{\it property} & $\rightarrow$ & {\tt property} IDENTIFIER : {\it enum-property-definition} \\
+& $|$ & {\tt property} IDENTIFIER : {\it set-property-definition} \\
+\\
+{\it enum-property-definition} & $\rightarrow$ & [ {\it direction} ] {\it property-values } [ {\it initial-value} ] \\
+\\
+{\it direction} & $\rightarrow$ & {\tt @forward} \\
+& $|$ & {\tt @backward} \\
+\\
+{\it initial-value} & $\rightarrow$ & {\tt initially} IDENTIFIER \\
+\\
+{\it property-values} & $\rightarrow$ & {\it property-value-list} \\
+\\
+{\it property-value-list} & $\rightarrow$ & {\it property-value} [, {\it property-value-list}]\\
+\\
+{\it property-value} & $\rightarrow$ & IDENTIFIER [ {\it property-values} ] \\
+\\
+{\it set-property-definition} & $\rightarrow$ & \{ {\tt union-set} \} \\
+& $|$ & \{ {\tt intersect-set} \} \\
+& $|$ & \{ {\tt union-equivalence} \} \\
+& $|$ & \{ {\tt intersect-equivalence} \} \\
+\end{tabular}
+\caption{Annotation Language}
+\label{annbnf1}
+\end{figure}
+
+\begin{figure}
+\begin{tabular}[c]{l c l}
+{\it analysis-rule-annotation} & $\rightarrow$ & {\tt analyze} IDENTIFIER \{ {\it analysis-rule} * \}\\
+& $|$ & {\tt analyze} IDENTIFIER \{ {\it analysis-effect} * \}\\
+\\
+{\it analysis-rule} & $\rightarrow$ & {\tt if} ( {\it condition} ) \{ {\it analysis-effect} * \} \\
+& $|$ & {\tt default} \{ {\it analysis-effect} * \} \\
+\\
+{\it condition} & $\rightarrow$ & {\it test} \\
+& $|$ & {\it condition} {\tt $|$$|$} {\it condition} \\
+& $|$ & {\it condition} {\tt \&\&} {\it condition} \\
+& $|$ & {\tt !} {\it condition} \\
+& $|$ & ( {\it condition} ) \\
+\\
+{\it test} & $\rightarrow$ & {\it enum-property-test} \\
+& $|$ & {\it set-property-test} \\
+& $|$ & {\it numeric-test} \\
+& $|$ & {\it binding-test} \\
+\\
+{\it enum-property-test} & $\rightarrow$ & [IDENTIFIER : ] \\
+& & IDENTIFIER {\it temporal-operator} {\tt is-??} \\
+& $|$ & [IDENTIFIER : ] \\
+& & IDENTIFIER {\it temporal-operator} {\it enum-property-operator} IDENTIFIER \\
+\\
+{\it temporal-operator} & $\rightarrow$ & {\tt @before} \\
+& $|$ & {\tt @after} \\
+& $|$ & {\tt @always} \\
+& $|$ & {\tt @ever} \\
+\\
+{\it enum-property-operator} & $\rightarrow$ & {\tt is-exactly} \\
+& $|$ & {\tt is-atleast} \\
+& $|$ & {\tt could-be} \\
+& $|$ & {\tt is-atmost} \\
+\\
+{\it set-property-test} & $\rightarrow$ & IDENTIFIER IDENTIFIER IDENTIFIER \\
+& $|$ & IDENTIFIER {\tt is-element-of} IDENTIFIER \\
+& $|$ & IDENTIFIERS {\tt is-\{\}} \\
+\\
+{\it numeric-test} & $\rightarrow$ & IDENTIFIER {\tt is-\#} \\
+\end{tabular}
+\caption{Annotation Language}
+\label{annbnf2}
+\end{figure}
+
+\begin{figure}
+\begin{tabular}[c]{l c l}
+{\it binding-test} & $\rightarrow$ & IDENTIFIER {\tt is-aliasof} IDENTIFIER \\
+& $|$ & IDENTIFIER {\tt is-sameas} IDENTIFIER \\
+& $|$ & IDENTIFIER {\tt is-empty} \\
+\\
+{\it analysis-effect} & $\rightarrow$ & {\it numeric-assignment} \\
+& $|$ & {\it enum-property-assignment} \\
+& $|$ & {\it set-property-operation} \\
+\\
+{\it numeric-assignment} & $\rightarrow$ & IDENTIFIER {\tt = } IDENTIFIER \\
+\\
+{\it enum-property-assignment} & $\rightarrow$ & IDENTIFIER \textless{}- IDNETIFIER \\
+& $|$ & IDENTIFIER \textless{}-+ IDENTIFIER \\
+\\
+{\it set-property-operation} & $\rightarrow$ & {\tt add} IDENTIFIER \\
+& $|$ & IDENTIFIER IDENTIFIER IDENTIFIER \\
+\\
+{\it report-annotation} & $\rightarrow$ & {\tt report} {\it report-element-list} ; \\
+& $|$ & {\tt report if} ( {\it condition} ) {\it report-element-list} ; \\
+& $|$ & {\tt error} {\it report-element-list} ; \\
+& $|$ & {\tt error if} ( {\it condition} ) {\it report-element-list} ; \\
+\\
+{\it report-element-list} & $\rightarrow$ & {\it report-element} [{\tt ++}{\it report-element-list}] \\
+\\
+{\it report-element} & $\rightarrow$ & STRING \\
+& $|$ & IDENTIFIER : IDENTIFIER {\it temporal-operator} \\
+& $|$ & {\it num-expresion} {\it temporal-operator} \\
+& $|$ & {\it program-location} \\
+& $|$ & [ IDENTIFIER ] \\
+\\
+{\it program-location} & $\rightarrow$ & {\tt @callsite} \\
+& $|$ & {\tt @context} \\
+\\
+{\it global} & $\rightarrow$ & {\tt global} \{ {\it pointer-structure} * \} \\
+& $|$ & {\it analysis-rule-annotation} \\
+\end{tabular}
+\caption{Annotation Language (continued)}
+\label{annbnf3}
+\end{figure}
+
+Annotations are made accessible to ROSE analysis modules or
+transformations via the Annotations class.  A subset of the functionality 
+provided by the \linebreak {\tt Annotations} class is shown in 
+Figure~\ref{figure:annuse} by a sample application
+that parses each annotation file passed as input and prints 
+the access and modify lists for each procedure modeled within that file.
+
+This class is instantiated with the name of an annotation file and 
+parses annotations within that file upon creation.  The application
+iterates over the procedures in each annotation file via the 
+{\tt procedures()} accessor method.  The {\tt procedureAnn} class exposed by
+this method in turn provides access to the procedure's formal parameters
+(via the {\tt formal\_params()} method), any accessed variables 
+(via the {\tt uses()} method), and any modified variables 
+(via the {\tt defs()} method).
+
+This simple application is intended to be an illustrative example,
+rather than an exhaustive description, of the capabilities of the
+annotation parser.
+
+\begin{figure}
+\begin{verbatim}
+
+#include <iostream> 
+#include "config.h" 
+#include <rose.h> 
+#include "broadway.h" 
+ 
+int main(int argc, char **argv) 
+{ 
+ 
+  for(int n = 1; n < argc; ++n) { 
+ 
+    Annotations * a = new Annotations(*(new string(argv[n])), NULL); 
+ 
+    for (procedures_map_cp p = a->procedures().begin(); 
+         p != a->procedures().end(); 
+         ++p) { 
+      procedureAnn * proc = p->second; 
+ 
+      cout << "procedure " << proc->name() << " ("; 
+       
+      for (var_list_cp p = proc->formal_params().begin(); 
+           p != proc->formal_params().end(); 
+           ++p) { 
+        annVariable * decl = *p; 
+        if (p != proc->formal_params().begin()) 
+          cout << ", "; 
+        cout << decl->name(); 
+      } 
+      cout << ")" << endl; 
+      cout << "{" << endl; 
+       
+      cout << "  access { "; 
+      var_set_cp p;
+      for (p = proc->uses().begin(); p != proc->uses().end(); ++p) { 
+        annVariable * decl = *p; 
+        if (p != proc->uses().begin()) 
+          cout << ", "; 
+        cout << decl->name(); 
+      } 
+      cout << "  }" << endl; 
+       
+      cout << "  modify { "; 
+      for (p = proc->defs().begin(); p != proc->defs().end(); ++p) { 
+        annVariable * decl = *p; 
+        if (p != proc->defs().begin()) 
+          cout << ", "; 
+        cout << decl->name(); 
+      } 
+       
+      cout << "  }" << endl; 
+      cout << "}" << endl; 
+       
+    } 
+  } 
+  return(0); 
+} 
+ 
+\end{verbatim}
+\caption{Example Use of Annotation Library}
+\label{figure:annuse}
+\end{figure}
+
+
+
+
+
+\bibliographystyle{plain}
+\bibliography{parser}
+\end{document}
+
+
+\com{
+ROSE INTERNAL MEMO:
+
+From: "Sam Guyer" <sammy@cs.utexas.edu>
+To: "'Brian White'" <bwhite@csl.cornell.edu>
+Subject: RE: Broadway front end
+Date: Wed, 7 Jan 2004 15:33:55 -0600
+MIME-Version: 1.0
+Content-Type: text/plain;
+        charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+X-Mailer: Microsoft Office Outlook, Build 11.0.5510
+In-Reply-To: <Pine.LNX.4.44.0401071445350.21601-100000@cacao.csl.cornell.edu>
+Thread-Index: AcPVWBOmk8nqbjZsQre+NaPWdyCrfwACggYw
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
+Status: RO
+X-Status:
+X-Keywords:
+X-UID: 90
+ 
+Hi Brian,
+ 
+I'm glad to hear that you're getting somewhere!
+So, the annotation changed in several ways between the paper (which appeared
+in 1999) and the fully implemented system. First, we got rid of the "none"
+option -- the new syntax allows nested properties, so you can just use that
+to give a least element:
+ 
+property Vehicle = { None { car { Ford, Chevy }
+                            boat { sail, power }}
+ 
+We also made the structure definitions more convenient. In the paper you had
+to say "Data of X" and "View of Y". Now you can write things like this:
+ 
+on_entry { obj --> view_1 { DATA --> data_1
+                            Other --> Bar} }
+ 
+This annotation describes a pointer to a structure that contains two
+pointers to other objects. In this context "DATA" and "Other" are field
+names (they may appear multiple times) and you use them just as you would in
+C:
+ 
+access { some_structure.Data }
+ 
+Does that make sense? You can find a much more detailed description of the
+current annotation language in my thesis (on my web page).
+ 
+-Sam
+ 
+--
+Samuel Guyer
+Postdoctoral Fellow
+Dept. of Computer Sciences
+University of Texas at Austin
+http://www.cs.utexas.edu/users/sammy
+ 
+> -----Original Message-----
+> From: Brian White [mailto:bwhite@csl.cornell.edu]
+> Sent: Wednesday, January 07, 2004 1:55 PM
+> To: Sam Guyer
+> Subject: RE: Broadway front end
+>
+>
+> Hello Sam,
+>
+> I'm back at your annotation language and have made some progress.
+>
+> I've liberally gutted some of the glue that seems to have connected the
+> front- and back-ends; I now have a stand-alone annotation parser.  Is
+> there a manual that describes the current version of the annotation
+> language?
+>
+> In doing some rudimentary testing I'm trying to parse the examples from
+> your "An Annotation Language for Optimizing Software Libraries" paper.  It
+> seems like some things have changed:  in particular, properties no longer
+> seem to be specified as
+>
+> property Distribution = { General = none, ColPanel, RowPanel, Local, Empty
+> };
+>
+> [ " = none" specified a name for bottom in the lattice. ]
+>
+> but now should be specified as
+>
+> property Distribution : { General, ColPanel, RowPanel, Local, Empty }
+>
+> where I can't figure out how to name bottom.
+>
+> Also I seem to be having some problems parsing "DATA of view_1" in
+>
+> on_entry { obj --> view_1, DATA of view_1 --> data_1 }
+>
+> At this time I'm most interested in modify and access, so these particular
+> problems might not be important.  But in general it would be helpful if I
+> could have some authoritative manual to supplement my reading of the
+> grammar and guessing at some of the semantics.
+>
+> Thanks,
+> Brian
+}%com

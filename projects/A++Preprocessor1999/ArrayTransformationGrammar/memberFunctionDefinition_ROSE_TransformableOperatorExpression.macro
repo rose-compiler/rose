@@ -1,0 +1,54 @@
+CLASSNAME::~CLASSNAME()
+   {
+   }
+
+#if 0
+CLASSNAME::CLASSNAME()
+   {
+   }
+#endif
+
+CLASSNAME::CLASSNAME( ROSE_Expression* expr )
+   : BASECLASSNAME(expr)
+   {
+     ROSE_ASSERT (expr != NULL);
+     ROSE_TransformableNode::setUp (CLASSNAME_TAG,expr);
+   }
+
+ROSE_TransformableNode* CLASSNAME::transform()
+   {
+     printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+     ROSE_ABORT();
+
+     return this;
+   }
+
+#if 0
+void CLASSNAME::addArgumentExpression ( ROSE_Expression* roseExpression )
+   {
+     ROSE_ASSERT (roseExpression != NULL);
+     roseExpressionList.addElement(*roseExpression);
+   }
+
+int CLASSNAME::numberOfArguments()
+   {
+     return roseExpressionList.getLength();
+   }
+
+void CLASSNAME::setSageExpressionListExpression ( SgExprListExp* exprListExp )
+   {
+     ROSE_ASSERT (exprListExp != NULL);
+     sageExpressionListExpression = exprListExp;
+   }
+
+SgExprListExp* CLASSNAME::getSageExpressionListExpression()
+   {
+     ROSE_ASSERT (sageExpressionListExpression != NULL);
+     return sageExpressionListExpression;
+   }
+
+List<ROSE_Expression> & CLASSNAME::getRoseExpressionList ()
+   {
+     return roseExpressionList;
+   }
+#endif

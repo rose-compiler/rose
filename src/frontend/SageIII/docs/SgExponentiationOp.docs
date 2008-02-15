@@ -1,0 +1,51 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgExponentiationOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgExponentiationOp::SgExponentiationOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgExponentiationOp::SgExponentiationOp(const SgExponentiationOpStorageClass &source)
+*/
+/*!\fn inline static void SgExponentiationOp::operator delete(void *pointer)
+*/
+/*!\fn static SgExponentiationOp *SgExponentiationOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgExponentiationOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgExponentiationOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgExponentiationOp::initializeStorageClassArray(SgExponentiationOpStorageClass *storageArray)
+*/
+/*!\fn static void SgExponentiationOp::clearMemoryPool()
+*/
+/*!\fn static void SgExponentiationOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgExponentiationOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgExponentiationOp::roseRTI()
+*/
+/*!\fn virtual SgExponentiationOp::~SgExponentiationOp()
+*/
+/*!\fn virtual SgNode *SgExponentiationOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgExponentiationOp::precedence() const
+*/
+/*!\fn virtual void SgExponentiationOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgExponentiationOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgExponentiationOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgExponentiationOp::get_numberOfTraversalSuccessors()
+\description See  SgExponentiationOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgExponentiationOp::get_traversalSuccessorContainer()
+\description See  SgExponentiationOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgExponentiationOp::get_traversalSuccessorNamesContainer()
+\description See  SgExponentiationOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgExponentiationOp::SgExponentiationOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_817438150;

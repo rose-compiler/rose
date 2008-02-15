@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgBitAttribute
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned long SgBitAttribute::p_bitflag
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgBitAttribute::SgBitAttribute(const SgBitAttributeStorageClass &source)
+*/
+/*!\fn inline static void SgBitAttribute::operator delete(void *pointer)
+*/
+/*!\fn static SgBitAttribute *SgBitAttribute::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgBitAttribute::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgBitAttribute::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgBitAttribute::initializeStorageClassArray(SgBitAttributeStorageClass *storageArray)
+*/
+/*!\fn static void SgBitAttribute::clearMemoryPool()
+*/
+/*!\fn static void SgBitAttribute::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgBitAttribute::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgBitAttribute::roseRTI()
+*/
+/*!\fn virtual SgBitAttribute::~SgBitAttribute()
+*/
+/*!\fn virtual SgNode *SgBitAttribute::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgBitAttribute::set_bitflag(unsigned long bitflag)
+\description See  bitflag)
+bitflag for documentation */
+/*!\fn unsigned long SgBitAttribute::get_bitflag() const
+\description See  const
+bitflag for documentation */
+/*!\fn virtual SgNode *SgBitAttribute::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgBitAttribute::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgBitAttribute::get_numberOfTraversalSuccessors()
+\description See  SgBitAttribute::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBitAttribute::get_traversalSuccessorContainer()
+\description See  SgBitAttribute::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBitAttribute::get_traversalSuccessorNamesContainer()
+\description See  SgBitAttribute::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgBitAttribute::SgBitAttribute(std::string name=(""),unsigned long bitflag=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1786554716;

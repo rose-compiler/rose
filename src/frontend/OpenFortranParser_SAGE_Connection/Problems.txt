@@ -1,0 +1,69 @@
+This is a list of the problems that I'm having with the 
+Sept 12 release (checked out morning of Sept 13th).
+
+Needed to update all the JNI files into ROSE:
+cp /home/dquinlan/ROSE/OpenFortranParser/fortran-parser/src/parser/c/token.* .
+cp /home/dquinlan/ROSE/OpenFortranParser/fortran-parser/src/parser/c/jni_token_funcs.c .
+cp /home/dquinlan/ROSE/OpenFortranParser/fortran-parser/src/parser/c/jni/jni_token_funcs.h .
+cp /home/dquinlan/ROSE/OpenFortranParser/fortran-parser/src/parser/c/jni/c_actions_jni.c .
+
+
+
+1) R428 is incorrectly associated with char-literal-constant but should be R427.
+ 
+
+2) At first sign of error, end parser with appropriate error code.  The following
+example shows that additional c_actions continue to be called even after an
+error that should have ended the parsing (I think).
+
+The error in the file is: "procedure foo()"
+
+The c_actions are:
+In c_action_main_program__begin(): OpenFortranParser_globalFilePointer = 0xb7f14008
+line 8:10 mismatched input 'foo' expecting T_LPAREN
+line 8:15 mismatched input '\n' expecting T_IDENT
+In c_action_specification_part: numUseStmts = 0 numImportStmts = 0 numDeclConstructs = 1
+line 0:-1 no viable alternative at input '<EOF>'
+lt-preprocessor: /home/dquinlan/ROSE/NEW_ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C:4371: void c_action_main_program(int, int, int): Assertion `astScopeStack.empty() == false' failed.
+make: *** [test2007_06.o] Aborted
+
+3) There is a new an interesting __end() function, how many of these are their and should
+there have been a begin function instead.  R 750:elsewhere-stmt__end
+
+4) Can the elsewhere construct, when used with a mask, be cascaded? Yes!
+where (x)
+   ...
+elsewhere(y)
+   ...
+elsewhere(z)
+   ...
+elsewhere
+   ...
+end where
+
+5) I need to implement a statement stack so that constructs such as the where statement
+   can be processed (since there is no where_stmt__begin() function).
+
+6) What are the rules for converting what appear to be array declarations (to OFP) to
+   implicit functions. This is what I understand them to be:
+   1) The name is not previously defined to be a declated variable or function
+   2) The name matches an existing set of defined implicit functions
+   3) ???
+
+subroutine example()
+    real :: a(nx), b(nx), c(nx)
+    a = sign(b,c)
+end subroutine example
+
+
+New Problems (11/16/2007):
+   1) Blocks can be named in Fortran, these are the relavant statements to support names:
+         R803 if_then_stmt
+         R809 select_case_stmt
+         R817 associate_stmt
+         R827 do_stmt
+         R828 label_do_stmt
+         R745 where_construct_stmt
+         R753 forall_construct_stmt
+
+   2) Support for "associate" is not implemented in the IR yet.

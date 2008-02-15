@@ -1,0 +1,9 @@
+MagicNumber: magicNumberTest1.C:2.22-25: SgDoubleVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:4.11-15: SgDoubleVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:4.20: SgIntVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:7.9-10: SgIntVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:8.9: SgIntVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:8.17: SgIntVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:8.25-28: SgIntVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:10.16: SgIntVal: Occurrence of integer or floating constant.
+MagicNumber: magicNumberTest1.C:16.9-10: SgIntVal: Occurrence of integer or floating constant.

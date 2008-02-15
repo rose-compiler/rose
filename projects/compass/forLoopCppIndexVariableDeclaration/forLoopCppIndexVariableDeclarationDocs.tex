@@ -1,0 +1,64 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{For Loop Cpp Index Variable Declaration}
+\label{ForLoopCppIndexVariableDeclaration::overview}
+
+``ALE3D Coding Standards \& Style Guide'' Item \#6.2 states that
+\begin{quote}
+C++ loop index variables should be declared in the loop statement. Declaration of a loop index variable in the first clause of the for() statement ensures that its scope is limited to the loop body.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks SgForInitStatements that have NULL declaration statements. These nodes are flagged as violations.
+
+\subsection{Non-Compliant Code Example}
+This non-compliant code declares the loop control variable outside the loop statement.
+
+\begin{verbatim}
+int main()
+{
+  int i = 0;
+  for( i = 0; i < 100; i++ ){}
+
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution declares the index variable inside the loop statement.
+
+\begin{verbatim}
+int main()
+{
+  for( int i = 0; i < 100; i++ ){}
+
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting all declaration statement nodes.
+\item For each declaration statement node, if parent node is for loop initialization statement then flag violation.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+Arrighi B., Neely R., Reus J. ``ALE3D Coding Standards \& Style Guide'', 2005.

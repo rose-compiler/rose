@@ -1,0 +1,81 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Char Star For String}
+\label{CharStarForString::overview}
+
+This checker will report when STL strings are used. 
+
+
+% write your introduction
+
+\subsection{Parameter Requirements}
+The checker does not take any parameters.
+
+\subsection{Implementation}
+The checker finds variables declarations, function arguments and typedefs
+of string type. The string type may be of pointer type, reference type,
+array type or it can be modified without any problems.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+#include <string>
+
+typedef std::string string2;
+void bar(std::string arg1){
+
+};
+
+int main(){
+   std::string  foo1;
+   std::string* foo2;
+   std::string  foo4[4];
+
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+typedef char* string2;
+void bar(char* arg1){
+
+};
+
+int main(){
+   char*  foo1;
+   char** foo2;
+   char   foo4[4];
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Traverse the AST
+\item If a variable declaration, functions argument or typedef has a string base type report an error.
+\end{enumerate}
+
+\subsection{References}
+The ALE3D style guide section 16.2 states that C strings must
+be used instead of STL strings due to portability problems. 
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

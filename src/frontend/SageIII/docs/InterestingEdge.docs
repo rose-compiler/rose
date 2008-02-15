@@ -1,0 +1,40 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class VirtualCFG::InterestingEdge
+*/
+/*! \name Class Members*/
+//@{
+/*!\var VirtualCFG::CFGPath VirtualCFG::InterestingEdge::p
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn inline SgExpression *VirtualCFG::InterestingEdge::caseLabel() const
+*/
+/*!\fn inline SgExpression *VirtualCFG::InterestingEdge::conditionBasedOn() const
+*/
+/*!\fn inline VirtualCFG::InterestingEdge::InterestingEdge(VirtualCFG::CFGPath p) : p(p)
+*/
+/*!\fn inline VirtualCFG::InterestingNode VirtualCFG::InterestingEdge::source() const
+*/
+/*!\fn inline VirtualCFG::InterestingNode VirtualCFG::InterestingEdge::target() const
+*/
+/*!\fn inline bool VirtualCFG::InterestingEdge::operator!=(const VirtualCFG::InterestingEdge &o) const
+*/
+/*!\fn inline bool VirtualCFG::InterestingEdge::operator==(const VirtualCFG::InterestingEdge &o) const
+*/
+/*!\fn inline enum VirtualCFG::EdgeConditionKind VirtualCFG::InterestingEdge::condition() const
+*/
+/*!\fn inline std::string VirtualCFG::InterestingEdge::id() const
+*/
+/*!\fn inline std::string VirtualCFG::InterestingEdge::toString() const
+*/
+/*!\fn inline std::string VirtualCFG::InterestingEdge::toStringForDebugging() const
+*/
+/*!\fn inline std::vector< SgInitializedName * , std::allocator< SgInitializedName * >  > VirtualCFG::InterestingEdge::scopesBeingEntered() const
+*/
+/*!\fn inline std::vector< SgInitializedName * , std::allocator< SgInitializedName * >  > VirtualCFG::InterestingEdge::scopesBeingExited() const
+*/
+/*!\fn inline bool VirtualCFG::InterestingEdge::operator<(const VirtualCFG::InterestingEdge &o) const
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_669630035;

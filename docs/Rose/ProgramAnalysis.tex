@@ -1,0 +1,447 @@
+\chapter{Program Analysis}
+
+\label{ProgramAnalysis}
+
+% \newcommand{\DatabaseExampleDirectory}{@top_srcdir@/ExamplePreprocessors/DatabaseTutorials} %??
+% \newcommand{\DatabaseExampleDirectory}{/home/thuerey1/rose/dbtest/examples}
+% \newcommand{\DatabaseExampleDirectory}{/home/dquinlan/ROSE/NEW_ROSE/ExamplePreprocessors/DocumentedExamples/DataBaseExamples}
+
+Program analysis is an important part of required support for sophisticated 
+transformations. This work is currently incomplete and is
+the subject of significant current research work.  Specific support for global analysis 
+is provided via a database mechanism provided within ROSE and as part of work
+in merging multiple ASTs from different files to hold the AST from a whole project
+(many files) in memory at one time.
+
+\section{General Program Analysis}
+
+   General program analysis is a critical piece of the work to
+provide optimization capabilities to ROSE to support DOE applications.
+This work generally lags behind the compiler construction issues
+and robustness required to handle large scale DOE applications.
+
+\subsection{Call Graph Analysis}
+
+   Global call graphs are available, examples are in the
+ROSE Tutorial.
+
+\subsection{C++ Class Hierarchy Graph Analysis}
+
+   Class hierarchy graphs are available, examples are in the
+ROSE Tutorial.
+
+\subsection{Control Flow Graphs}
+
+   Control graphs exist in two forms, one that is closely tied to
+the AST and another that is separate from the AST.  See the ROSE
+Tutorial for examples of how to use these.
+
+\subsection{Dependence Analysis}
+
+   Complete use-def chains are available, the ROSE Tutorial shows examples of
+how to access this information.
+
+\subsection{Open Analysis}
+
+   The Open Analysis project provides a connection to ROSE and permits
+the use of their pointer analysis with ROSE.  More details on Open Analysis
+(and a reference) later.
+
+\subsection{More Program Analysis}
+
+   Current work and collaborations will hopefully support an significant 
+expansion of the program analysis supported within ROSE.  We are working with
+a number of groups on pointer analysis, abstract interpretation, etc.
+
+\section{Database Support for Global Analysis}
+\label{RoseExamples:RoseTutorial:Database}
+
+   The purpose of database support in ROSE is to provide a persistent
+place for the accumulation of analysis results.  The database used within ROSE
+is the publicly available SQLite relational database.  Work has
+been done to provide a simple and extensible interface to SQLite.  The 
+demonstration and testing of the ROSE database mechanism has been supported 
+through the construction of the call graph and class hierarchy graphs. These
+are discussed in subsequent subsections.
+
+See chapter on {\em Getting Started} \ref{gettingStarted:Database}
+for details of SQLite installation and configuration.  Previous work
+supported mySQL, but this was overly complex.
+
+\commentout{
+% Older instructions written by Nils to describe installation and use of SQL Data Base
+\subsection{Database Setup}
+\label{sec:DatabaseRequirements}
+
+ROSE uses a \emph{MySQL} database to store global information over
+multiple runs of a preprocessor. If there is a MySQL database
+running at your workplace, you can skip the installation instructions. Only make
+sure the connection parameters like hostname and login are correct.
+For the persistent storage of global information over multiple preprocessor runs
+, the MySQL database, and
+it's C++ interface \emph{MySQL++} should be installed before installig
+ROSE. Simply download the current production release of MySQL and
+the latest version of the MySQL++ API from the download section
+of http://www.mysql.org , then configure and install first MySQL then
+MySQL++. Under Unix, both can easlily installed locally into a home directory
+without requiring root access. Once everything is in place, make sure the MySQL 
+daemon is running, by e.g. executing ''{\tt ~/local/share/mysql/mysql.server start}''
+if MySQL was installed into {\tt ~/local}.
+\fixme{this isnt really a tutorial...?}
+\fixme{How to configure ROSE parameters for database?}
+} % commented out
+
+\commentout{
+Commands required to install MySQL and set it up for use:
+\begin{verbatim}
+
+% MySQL DataBase must be used with 3.2.2 (not 3.3.2 until the correct patches are available).
+
+% Type:
+% patch -p 1 < ../mysql++-gcc-3.0.patch.gz
+% patch -p 1 < ../mysql++-gcc-3.2.patch.gz
+% patch -p 1 < ../mysql++gcc-3.2.2.patch.gz
+
+% cd MySQL/mysql-4.0.17
+% configure --prefix=`pwd`
+% make -j2
+
+% make install must be run in another directory
+% cd ..
+% mkdir MySQL_Install
+% cd mysql-4.0.17
+% configure --prefix=../MySQL_Install
+% make install
+% cd ../mysql++-1.7.9
+
+% Rerun automake to rebuild Makefile.in files after runing patch (AM v1.4, AC v2.1 needed)
+% /usr/bin/automake -a
+% /usr/bin/autoconf
+
+% ./configure --prefix=/usr/casc/overture/MySQL/MySQL_Install
+%             --with-mysql=/usr/casc/overture/MySQL/MySQL_Install
+%             --with-mysql-lib=/usr/casc/overture/MySQL/MySQL_Install
+% make
+% make install
+
+% Run setup script
+% cd MySQL/mysql-4.0.17/scripts
+% ./mysql_install_db
+
+% Start daemon (first)
+%      We might want to run this in Qing's machines to simplify the access 
+%      to the database through any other machies.
+% cd /usr/casc/overture/MySQL/mysql-4.0.17 ; /usr/casc/overture/MySQL/mysql-4.0.17/bin/mysqld_safe &
+
+% Set the password for access to the database
+% /usr/casc/overture/MySQL/mysql-4.0.17/bin/mysqladmin -u root password 'rose-dq'
+
+% Add a user (so everyone does not have to be root)
+%     DELETE * FROM user WHERE user = '';
+%          Removes default SQL configuration so that username is required
+%     GRANT ALL ON db.* TO roseuser@'%.llnl.gov' IDENTIFIED BY 'rosepwd';
+%          Adds new user; works from any llnl.gov domain and requires password
+%     FLUSH PRIVILEGES;
+%          Forces MySQL to reload privledged information (user table in mysql)
+%
+% /usr/casc/overture/MySQL/MySQL_Install/bin/mysql -u root -prose-dq mysql -e "DELETE FROM user WHERE user = ''; GRANT ALL ON db.* TO dquinlan@'%.llnl.gov' IDENTIFIED BY 'rosepwd'; FLUSH PRIVILEGES; SELECT * FROM user;"
+
+% cd to ROSE Compile Tree
+%     set --with-MySQL=/usr/casc/overture/MySQL/MySQL_Install (specify loaction of MySQL)
+%     set --with-MySQL_username=roseuser (consistant with roseuser@'%.llnl.gov' specificed above)
+%     set --with-MySQL_password=rosepwd (consistant with IDENTIFIED BY 'rosepwd' specified above)
+%     set --with-MySQL_database_name=database-dq (choose unique name for database)
+%
+%  /home/dquinlan/ROSE/NEW_ROSE/configure --with-GNU_HEADERS --with-FLTK_include=/home/thuerey1/local/include --with-FLTK_libs=/home/thuerey1/local/lib --with-GraphViz_include=/home/thuerey1/local/include/graphviz --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/usr/casc/overture/MySQL/MySQL_Install --with-MySQL_username=roseuser --with-MySQL_password=rosepwd --with-MySQL_database_name=database-dq --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/LINUX-3.3.2-FULL_OPTIONS
+
+% How to login to mysql (directly):
+% mysql -h localhost --user root -p
+
+% Currently this only works from a different machine (not tux49)
+% mysql -h tux49 --user roseuser -prosepwd
+% --or--
+% mysql -h tux49 -u roseuser -prosepwd
+
+% How to view the user table in mysql
+% USE mysql;
+% SELECT * FROM user;
+% --or--
+% SHOW DATABASES;
+% USE <database name>;
+% SHOW TABLES;
+
+% Run configure using command:
+% /home/dquinlan/ROSE/NEW_ROSE/configure --with-GNU_HEADERS --with-FLTK_include=/home/thuerey1/local/include --with-FLTK_libs=/home/thuerey1/local/lib --with-GraphViz_include=/home/thuerey1/local/include/graphviz --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/usr/casc/overture/MySQL/MySQL_Install --with-MySQL_username=dquinlan --with-MySQL_server=tux49 --with-MySQL_password=rosepwd --with-MySQL_database_name=database-dq --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/LINUX-3.3.2-FULL_OPTIONS
+
+% Things to Install Tomorrow (with Nils):
+%    Boost
+%    graphviz
+
+\end{verbatim}
+} % commented out
+
+\commentout{
+% Older instructions written by Nils to describe installation and use of SQL Data Base
+Script to help install MySQL:
+\begin{verbatim}
+
+# configure and make
+./configure --prefix=/home/thuerey1/local
+make
+make install
+cd scripts
+./mysql_server_db
+
+# start mysql daemon
+cd /home/thuerey1/local/ ; /home/thuerey1/local//bin/mysqld_safe &
+# set first password to 'rose'
+/home/thuerey1/local//bin/mysqladmin -u root -h tux32.llnl.gov password 'rose'
+
+
+# stop again
+cd ~/local/share/mysql/
+./mysql.server stop
+
+
+# mysql++ install
+# for 3.2.2 :
+# untar... then, cd <dir>
+patch -p1 < ../mysql++-gcc-3.0.patch
+patch -p1 < ../mysql++-gcc-3.2.patch
+patch -p1 < ../mysql++-gcc-3.2.2.patch
+# AM v1.4, AC v2.1 needed - AM v1.5, AC v2.5 as from overture bin's do not work...
+automake -a
+autoconf
+# end 3.2.2
+
+./configure --prefix=/home/thuerey1/local/ --with-mysql=/home/thuerey1/local/ --with-mysql-lib=/home/thuerey1/local/lib/mysql/
+- patch connection.cc to ..."(char *)mysql_info(&mysql);"
+
+# create test tables (start mysql) then
+/home/thuerey1/local/bin/mysql
+use test;
+create table testtab ( id int NOT NULL, text varchar(200), dat date, primary key (id) ) comment='test table';
+show tables;
+insert into testtab values (1, 'bla', '2003-08-08' );
+select * from testtab;
+insert into testtab (id,text,dat) values (2, 'bla', '2003-08-08' );
+
+# create new database
+./mysqladmin -u root create rose
+
+# better config for multiple users from different computers:
+# create roseuser(rosepwd) that can connect from any llnl.gov computer
+# better use safer root pwd in this case
+/home/thuerey1/local/bin/mysqladmin -u root password '<PWD>'
+~/local/bin/mysql -u root -p<PWD> -e "GRANT ALL ON db.* TO roseuser@'%.llnl.gov' IDENTIFIED BY 'rosepwd'; FLUSH PRIVILEGES;"
+
+\end{verbatim}
+} % commented out
+
+
+\subsection{Making a Connection To the Database and Table Creation}
+\label{sec:TutDB:Connection}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     Database Connection Example
+\\\hline\hline
+\lstinputlisting{\DatabaseExampleDirectory/customtable_example.C}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ \label{fig:TutDB:Connection} Source code for the database connection example. }
+\end{figure}
+\end{latexonly}
+
+
+Figure~\ref{fig:TutDB:Connection} shows the listing of a program that connects
+to the ROSE database, creates a custom table, and performs some simple 
+SQL queries. In the main function, at line 12, a \emph{GlobalDatabaseConnection} object is created
+and is used to connect to the database in line 13. When the initialization
+succeeds, the database connection and ROSE database are ready for use.
+
+Line 16 creates a \emph{TableAccess} object. This object can be used to perform 
+SQL queries like SELECT, INSERT or MODIFY on a given table in the database. The TableAccess
+object is templated by a \emph{RowdataInterface} object that defines the structure 
+of the table. For this example program, a RowdataInterface object for a test table
+is created in line 6 and 7. Here, two macros are called that handle the definition of
+the RowdataInterface class and all standard member functions. The general syntax
+is {\tt CREATE\_TABLE\_[n]( [tablename], [column-1-datatype], [column-1-name], 
+[column-2-datatype], [column-2-name], ... [column-n-datatype], [column-n-name] );},
+where the ''[...]'' represents values to be filled in, such as the name of the table. As column datatype, all standard
+C-datatypes as {\em bool,char,short,long,float,double etc.} are valid. The resulting
+RowdataInterface class will contain standard functions to retrieve information about the table or
+its columns. An instance of this class has all private member variables to store
+the data of a single row of the table. Furthermore it has {\tt get\_[column-X-name]()} functions together with 
+the corresponding {\tt set\_[column-X-name]([value])} functions to modify the values. By 
+convention, tables used in ROSE will have one column more than specified, hence, $n+1$ in total.
+The first column, which is always added, is a column of type {\tt int} with the name
+{\em id}. This is used to easily identify all rows of a table. RowdataInterface classes
+used as template argument with a TableAccess class are required to have an {\em id}-column.
+
+The class created by \emph{CREATE\_TABLE} will be called ''[tablename]Rowdata,'' where ''[tablename]''
+is the first argument for the \emph{CREATE\_TABLE} macro-call.  The \emph{DEFINE\_TABLE} call
+is necessary to define global and static member variables of the RowdataInterface class. It has
+to be called once in a project, e.g. in the source file containing the main function, with exactly 
+the same parameters as the \emph{CREATE\_TABLE} call.
+Thus, lines 6 and 7 together with lines 16 and 17 define the test table as having three columns:
+an integer ''id'' column, a ''name'' column storing a string and finally a third column ''number''
+storing a double precision floating point number. The {\tt initialize} call in line 17
+will ensure the table exists and create it if necessary.
+
+The next two statements at line 20 and 21 create a rowdata object that
+stores all fields of a single row of the test table. The constructor has
+initial arguments for all of the fields of a row. In this case ''name'' and
+$1.0$ are used to initialize the field's name and number, which were specified
+in lines 6 and 7. The first argument \emph{UNKNOWNID} is used to set the value
+of the row-id to the default value $0$, which means that the id is not yet
+properly initialized. $0$ is never used as an id for table rows; the lowest 
+possible valid id is $1$. Note that the insert function initializes
+the id of the row, as insert will create a new row in table that has a valid id.
+
+In lines 24 and 25 a SQL query is performed, which selects all rows where the 
+number column is equal to $1.0$. The string passed to the \emph{select} 
+member function call contains the conditional expression (the \emph{WHERE}
+clause) of an SQL statement. Hence, the single equals sign is an SQL
+equality test, and not, for example, an assignment. The selected rows of the table
+are returned as a vector of rowdata objects. As in line 21, a row matching 
+the select condition was inserted into the table, so at least one row should
+be returned (if the example program was executed multiple times without
+deleting the test table, entries from previous runs may be returned as well).
+Assuming that the example program is run for the first time, the SQL
+query should return the inserted row, and the first object in the results vector
+should be identical to the inserted one. Lines 27 and 28 modify the name 
+and number fields in memory. The modify call in line 29 then updates
+the database, by changing the existing row in the table and making the changes
+persistent. Line 32 is an exemplary call to delete a row of the table -- the 
+deletion uses the id of a row, so all other fields do not have to contain the
+same values as the row stored in the database.
+
+The insert statement in line 35 simply inserts the row just deleted into the 
+table again, leaving the test table in a different state. Hence, executing
+the example program multiple times should fill the test table with multiple rows.
+In line 37, the connection to the database is closed. Try to add a call to
+{\tt GlobalDatabase::DEBUG\_dump()} before the shutdown function call, and run
+it multiple times to see how the automatic id assignment works.
+
+
+\subsection{Working With the Predefined Tables}
+\label{sec:TutDB:RoseTables}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb] 
+\begin{center} 
+\begin{tabular}{|c|} \hline
+     Table Creation Example
+\\\hline\hline
+\lstinputlisting{\DatabaseExampleDirectory/rosedb_example.C}
+\\\hline
+\end{tabular} \end{center}
+\caption{ \label{fig:TutDB:RoseTables} Source code for the predefined tables example. }
+\end{figure} 
+\end{latexonly}
+
+While the first database example worked on a self-defined table, this tutorial will 
+explain how to use one of the tables that are predefined for usage within ROSE.
+Its source code is shown in Figure~\ref{fig:TutDB:RoseTables}. These
+tables are easier to use because their structure is already defined in the {\tt TableDefinition.h}
+file. Lines 6 and 7 define the tables used for storing information about projects and files
+in ROSE using the macros \emph{DEFINE\_TABLE\_PROJECTS} and \emph{DEFINE\_TABLE\_FILES}. 
+These macros call the corresponding macros from the previous example to define the structure
+of these tables. 
+
+The easiest way to use these tables is the \emph{CREATE\_TABLE} macro.
+The first parameter is a GlobalDatabaseConnection object, the second one is the name of the
+table. Hence, line 17 will initialize the projects table, and create an instance of
+the projectsTableAccess object having the same name as the table, ''projects.'' Line 18
+initializes the files table in the same way. Now two instances of the TableAccess class
+for the projectsRowdata and the filesRowdata objects are declared in the main scope, and 
+are ready to be used. 
+
+The example program performs an initialization to retrieve the ids for the 
+project and the file currently processed, which is usually needed for 
+a traversal. Lines 21 and 22 set values for project and file name, although
+these values might normally be retrieved from the corresponding SgProject
+and SgFile nodes \fixme{project name? parameter?}. As all projects work on 
+the single ROSE database and share the same tables for function and
+data, each of these tables has a \emph{projectId} column to specify to which 
+project each row belongs. Thus, one of the first tasks a preprocessor using the
+database will do is to enable these ids to select or insert rows.
+
+The \emph{TableAccess::retrieveCreateByColumn} function is used for this purpose.
+It tries to identify an entry using a unique name, and creates that entry
+if it does not yet exist, or retrieves the id of the existing entry otherwise. 
+The function takes a pointer to a rowdata object, the name of the column to use,
+and the unique name of the row as arguments (see line 25). So in this case
+the ''name'' column and the string ''testProject'' are used. As with the 
+normal insert function from the first example, the retrieveCreateByColumn function
+sets the id field of the rowdata to the correct value. A new variable storing
+this project id is created in line 27. For the file id, the procedure is almost
+the same -- with the exception that the project id is also passed to the
+function call in line 32. For most other ids other than the project id,
+the project id is used to retrieve the row for the desired project. If 
+a project id is passed to the retrieveCreateByColumn function, it assumes 
+the table has a ''projectId'' column, which has to match the given value.
+
+Instead of working with these ids, the example program just prints these
+values to stdout, and quits. The ids will remain the same over multiple runs
+of the program. Try changing the file or project ids, to force new entries
+to be created.
+
+
+\subsection{Working With Database Graphs}
+\label{sec:TutDB:DBGraphs}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly} 
+\begin{figure}[tb] 
+\begin{center} 
+\begin{tabular}{|c|} \hline
+    	Database Graph Example
+\\\hline\hline
+\lstinputlisting{\DatabaseExampleDirectory/databasegraph_example.C}
+\\\hline
+\end{tabular} \end{center}
+\caption{ \label{fig:TutDB:DatabaseGraph} Source code for the database graph example }
+\end{figure} 
+\end{latexonly}
+
+The following tutorial program will use the ROSE tables to build a graph for
+a user-defined table. Each execution of the program will enlarge the test
+graph by adding three nodes and edges to them from a random node in the graph.
+
+\subsection{A Simple Callgraph Traversal}
+\label{sec:TutDB:SimpleCG}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly} 
+\begin{figure}[tb] 
+\begin{center} 
+\begin{tabular}{|c|} \hline
+     Simple Callgaph Example
+\\\hline\hline
+\lstinputlisting{\DatabaseExampleDirectory/simplecallgraph_example.C}
+\\\hline
+\end{tabular} \end{center}
+\caption{ \label{fig:TutDB:SimpleCallgraph} Source code for the simple callgraph example }
+\end{figure}
+\end{latexonly}
+
+The last database example tutorial will show how to use the database graph features
+explained in the previous example in combination with a AST-traversal to
+build a simple callgraph.  
+
+
+
+
+
+
+
+
+
+

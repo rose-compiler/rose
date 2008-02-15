@@ -1,0 +1,1 @@
+parallelize loop for(class list::iterator p = l.begin();p!=(l.end());p++) {foo(*p);}

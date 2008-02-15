@@ -1,0 +1,4 @@
+
+     PARAMETER (NX = 800, NY = 360, NTOTAL = NX * NY) 
+END
+

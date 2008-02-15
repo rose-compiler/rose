@@ -1,0 +1,7 @@
+This directory has code which implements diagnostic capabilities to ROSE translators.
+
+DQ (8/29/2007): 
+cycle.h was included (from FFTW) upon the suggestion of Matt Sottile to provide a more
+portable version of timers.
+
+

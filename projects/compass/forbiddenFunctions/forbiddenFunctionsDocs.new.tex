@@ -1,0 +1,109 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Forbidden Functions}
+\label{ForbiddenFunctions::overview}
+Many checks common to Compass center around the forbidden use of certain ``dangerous'' functions. This checker provides a way to forbid the use of those functions through the simple use of their name.
+
+\subsection{Parameter Requirements}
+The forbidden function checker can simultaneously look for any number of
+functions, either member or non-member.  A set of parameters is used, named
+using a counter.  Thus, the parameters of this checker have names of the
+form {\tt ForbiddenFunctions.Function{\it n}}, for {\tt {\it n}} from zero
+to some limit.  The forbidden function analysis checks each name in turn
+until one is missing.  Thus, if you have parameters named {\tt
+ForbiddenFunctions.Function0} and {\tt ForbiddenFunctions.Function1} but no
+parameter named {\tt ForbiddenFunctions.Function2}, the analysis will
+search for two functions.  As a caution, if you skip a number, including
+zero, no larger numbers will be scanned: any functions specified after a
+skipped number will be ignored.
+
+The format of a parameter is {\tt white space, function name, white space,
+comma, reason}.  Leading and trailing white space is allowed next to the
+function name, but any white space after the first comma will become part
+of the reason string.  The function name is a fully qualified name, but the
+leading {\tt ::} to indicate the global scope may be omitted.  Member
+functions are given with their class qualifications, just as they would be
+referred to when accessing a pointer to them.  Choosing one overload from
+an overload set sharing the same name is not supported.  The reason field
+is used to indicate why a particular function is forbidden; it may be any
+string (not containing a newline), and is printed out as part of the error
+message when the corresponding function is found.  It is also possible to
+omit the comma and the reason field, leaving just the function name as the
+parameter; in this case, no reason will be given for the function's
+prohibition.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal visiting all SgFunctionCallExp nodes. For each node the name of the function being called is compared to those listed as forbidden functions. If a match is found between the function call name and the forbidden function name then flag an error.
+
+\subsection{Non-Compliant Code Example}
+In this example, it is assumed that the function {\tt compass\_forbidden\_function\_vfork} is forbidden by the parameter file.
+\begin{verbatim}
+//compass_forbidden_function_vfork() is a function meant to simulate a system
+//routine. This makes no difference as an example of how forbiddenFunctions
+//checks errors as it works only on function names. The reason we have used
+//this example is to prevent compass from treating this test file as an error
+//during `make verify' in which compass checks its own source code.
+
+int compass_forbidden_function_vfork();
+void helloWorld(int, char**);
+
+double function();
+double good_function();
+
+namespace A {
+  double function2();
+}
+
+struct B {
+  void memberFunction();
+};
+
+int main(int argc, char** argv) {
+  int w;
+  w = compass_forbidden_function_vfork() + 5;
+  helloWorld(argc, argv);
+  double x = 3.0 * function();
+  double y = 5.0 * good_function();
+  double z = A::function2();
+  B b;
+  b.memberFunction();
+  int (*fp)() = compass_forbidden_function_vfork;
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant example would use a function not listed in the parameter file.
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each SgFunctionCallExp node if the name of the function being called is forbidden by the parameter file then report error. 
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{Foster}{} , ``James C.Foster, Vitaly Osipov, Nish Bhalla, Niels Heinen, Buffer Overflow Attacks, ISBN 1-932266-67-4, p. 211''
+
+\htmladdnormallink{Secure Coding : MSC30-C. Do not use the rand function}{https://www.securecoding.cert.org/confluence/display/seccode/POS33-C.+Do+not+use+vfork\%28\%29}
+
+\htmladdnormallink{Secure Coding : POS33-C. Do not use vfork()}{https://www.securecoding.cert.org/confluence/display/seccode/POS33-C.+Do+not+use+vfork\%28\%29}
+
+[ \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 7.19.9.2, "The {\tt fseek} function"; 7.19.9.5, "The {\tt rewind} function"
+
+[ \htmladdnormallink{Klein 02}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] [ \\*
+   \htmladdnormallink{ISO/IEC 9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 7.20.1.4, "The strtol, strtoll, strtoul, and strtoull functions," Section 7.20.1.2, "The atoi, atol, and atoll functions," and Section 7.19.6.7, "The sscanf function"
+

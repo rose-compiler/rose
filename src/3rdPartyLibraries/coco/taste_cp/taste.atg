@@ -1,0 +1,184 @@
+/**********************************************************
+**   TASTE.ATG
+**   Coco/R C++ Taste Compiler/Interpreter example.
+**   Adapted to C++ by Frankie Arzu <farzu@uvg.edu.gt>
+**      from Moessenboeck's (1990) Oberon example
+**
+**   May 24, 1996  Version 1.06
+**   Jun 16, 1998  Version 1.08 (Minor changes)
+**********************************************************/
+
+$CX /* Generate main module, C++ */
+
+COMPILER Taste
+/* Taste compiler/interpreter */
+
+#include "tl.hpp"
+#include "tc.hpp"
+#include <string.h>
+
+static void StringToVal (char *s, int &val)
+{ int n = 0;
+  while (*s) n = 10 * n + (*s++ - '0');
+  val = n;
+}
+
+extern SymTable *Table;
+extern Machine *Emulator;
+
+/*--------------------------------------------------------------------------*/
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit = "0123456789".
+  cr = CHR(13).
+  lf = CHR(10).
+  tab = CHR(9).
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+  Taste
+  =                                      (. Name name, progName;
+                                            Object obj; .)
+    "PROGRAM" Ident<progName> ";"        (. Emulator->progStart = Emulator->pc; .)
+    Body
+    Ident<name>                          (. if (strcmp(name, progName) != 0)
+                                              SemError(119);
+                                            Emulator->Emit(HALTc); .)
+    "." .
+
+  Body
+  =                                      (. int fix, type;
+                                            Name name, name1;
+                                            Object obj; .)
+
+                                         (. Table->EnterScope();
+                                            fix = Emulator->pc + 1; Emulator->Emit2(JMP, 0); .)
+    { "VAR"
+      { Ident<name> ":"                  (. obj = Table->NewObj(name, VARS); .)
+        TypeId<(*obj).type> ";"
+      }
+
+    | "PROCEDURE" Ident<name> ";"        (. obj = Table->NewObj(name, PROCS );
+                                            obj->adr = Emulator->pc; .)
+      Body
+      Ident<name1>                       (. Emulator->Emit(RET);
+                                            if (strcmp(name, name1) != 0)
+                                              SemError(119); .)
+      ";"
+    }
+    "BEGIN"                              (. Emulator->Fixup(fix); Emulator->Emit2(RES, Table->DataSpace()); .)
+    StatSeq
+    "END"                                (. Table->LeaveScope(); .).
+
+  TypeId<int &type>
+  =                                      (. type = UNDEF; .)
+    ( "INTEGER"                          (. type = INT; .)
+    | "BOOLEAN"                          (. type = BOOL; .)
+    ).
+
+  Ident<Name name>
+  = ident                                (. LexName(name, sizeof(name)-1); .).
+
+  StatSeq = Stat {";" Stat}.
+
+  Stat
+  =                                      (. int  type;
+                                            Name name;
+                                            Object obj;
+                                            int fix, fix2, loopstart; .)
+
+    [ Ident<name>                        (. obj = Table->Obj(name); .)
+      ( ":" "="                          (. if (obj->kind != VARS) SemError(123); .)
+        Expression<type>                 (. if (type != obj->type) SemError(121);
+                                            Emulator->Emit3(STO, Table->curLevel-obj->level, obj->adr); .)
+      |                                  (. if (obj->kind != PROCS) SemError(124);
+                                            Emulator->Emit3(CALL, Table->curLevel-obj->level, obj->adr); .)
+      )
+    | "IF" Expression<type>              (. if (type != BOOL) SemError(122);
+                                            fix = Emulator->pc + 1; Emulator->Emit2(FJMP, 0); .)
+      "THEN" StatSeq
+      [ "ELSE"                           (. fix2 = Emulator->pc + 1; Emulator->Emit2(JMP, 0);
+                                            Emulator->Fixup(fix); fix = fix2; .)
+         StatSeq
+      ]
+      "END"                              (. Emulator->Fixup(fix); .)
+    | "WHILE"                            (. loopstart = Emulator->pc; .)
+      Expression<type>                   (. if (type != BOOL) SemError(122);
+                                            fix = Emulator->pc + 1; Emulator->Emit2(FJMP, 0); .)
+      "DO" StatSeq                       (. Emulator->Emit2(JMP, loopstart); Emulator->Fixup(fix); .)
+      "END"
+    | "READ" Ident<name>                 (. obj = Table->Obj(name);
+                                            if (obj->type != INT) SemError(120);
+                                            Emulator->Emit3(READ, Table->curLevel-obj->level, obj->adr); .)
+    | "WRITE" Expression<type>           (. if (type != INT) SemError(120);
+                                            Emulator->Emit(WRITE); .)
+    ].
+
+  Expression<int &type>
+  =                                      (. int type1, op; .)
+    SimExpr<type>
+    [ RelOp<op> SimExpr<type1>           (. if (type != type1) SemError(121);
+                                            Emulator->Emit(op); type = BOOL; .)
+    ].
+
+  SimExpr<int &type>
+  =                                      (. int type1, op; .)
+    Term<type>
+    { AddOp<op> Term<type1>              (. if (type != INT || type1 != INT) SemError(120);
+                                            Emulator->Emit(op); .)
+    }.
+
+  Term<int &type>
+  =                                      (. int type1, op; .)
+    Factor<type>
+    { MulOp<op> Factor<type1>            (. if (type != INT || type1 != INT) SemError(120);
+                                            Emulator->Emit(op); .)
+    }.
+
+  Factor<int &type>
+  =                                      (. int val, n;
+                                            Object obj;
+                                            Name name; .)
+
+    ( Ident<name>                        (. obj = Table->Obj(name); type = obj->type;
+                                            if (obj->kind == VARS)
+                                              Emulator->Emit3(LOAD, Table->curLevel-obj->level, obj->adr);
+                                            else SemError(123); .)
+    | "TRUE"                             (. Emulator->Emit2(LIT, 1); type = BOOL; .)
+    | "FALSE"                            (. Emulator->Emit2(LIT, 0); type = BOOL; .)
+    | number                             (. LexString(name, sizeof(name)-1);
+                                            StringToVal(name, n);
+                                            Emulator->Emit2(LIT, n); type = INT; .)
+    | "-" Factor<type>                   (. if (type != INT) { SemError(120); type = INT; }
+                                            Emulator->Emit(NEG); .)
+    ).
+
+  MulOp<int &op>
+  =                                      (. op = -1;  .)
+    ( "*"                                (. op = TIMES; .)
+    | "/"                                (. op = SLASH; .)
+    ).
+
+  AddOp<int &op>
+  =                                      (. op = -1;  .)
+    ( "+"                                (. op = PLUS; .)
+    | "-"                                (. op = MINUS; .)
+    ).
+
+  RelOp<int &op>
+  = (                                    (. op = -1;  .)
+    "="                                  (. op = EQU; .)
+    | "<"                                (. op = LSS; .)
+    | ">"                                (. op = GTR; .)
+    ).
+
+END Taste.
+

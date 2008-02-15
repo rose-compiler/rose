@@ -1,0 +1,44 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+SUBDIRS = stringSupport commandlineProcessing support graphs
+
+# To keep compile commands tidy, please ONLY put required include flags here.
+INCLUDES = $(ROSE_INCLUDES)
+
+## Don't use the repository in ../src
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
+# DQ (7/4/2004): Need this to be explicit so that it will not be set to "libroseutil.a.c"
+# DIST_SOURCES =
+
+# lib_LIBRARIES = libroseutil.a
+# libroseutil_a_DEPENDENCIES = $(libroseutilDependencies)
+
+if DEV_LIBS
+lib_LTLIBRARIES = libroseutil.la
+else
+noinst_LTLIBRARIES = libroseutil.la
+endif
+
+libroseutil_la_SOURCES =
+libroseutil_la_LIBADD = \
+	stringSupport/libRoseStringSupport.la \
+	commandlineProcessing/libRoseCommandlineUtil.la
+
+include_HEADERS = setup.h
+
+EXTRA_DIST = setup.h utilDocumentation.docs
+
+clean-local:
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
+
+distclean-local:
+	rm -rf Templates.DB
+
+
+
+
+
+
+
+

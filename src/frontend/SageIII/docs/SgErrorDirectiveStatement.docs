@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgErrorDirectiveStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgErrorDirectiveStatement::p_dummyString14
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgErrorDirectiveStatement::SgErrorDirectiveStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgErrorDirectiveStatement::SgErrorDirectiveStatement(const SgErrorDirectiveStatementStorageClass &source)
+*/
+/*!\fn inline static void SgErrorDirectiveStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgErrorDirectiveStatement *SgErrorDirectiveStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgErrorDirectiveStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgErrorDirectiveStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgErrorDirectiveStatement::initializeStorageClassArray(SgErrorDirectiveStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgErrorDirectiveStatement::clearMemoryPool()
+*/
+/*!\fn static void SgErrorDirectiveStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgErrorDirectiveStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgErrorDirectiveStatement::roseRTI()
+*/
+/*!\fn virtual SgErrorDirectiveStatement::~SgErrorDirectiveStatement()
+*/
+/*!\fn virtual SgNode *SgErrorDirectiveStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgErrorDirectiveStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgErrorDirectiveStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgErrorDirectiveStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgErrorDirectiveStatement::get_numberOfTraversalSuccessors()
+\description See  SgErrorDirectiveStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgErrorDirectiveStatement::get_traversalSuccessorContainer()
+\description See  SgErrorDirectiveStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgErrorDirectiveStatement::get_traversalSuccessorNamesContainer()
+\description See  SgErrorDirectiveStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgErrorDirectiveStatement::SgErrorDirectiveStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_469918772;

@@ -1,0 +1,9 @@
+PROGRAM Test; CONST Eof = 26; Eol = 10; VAR   A,B,C[10];
+FUNCTION Proc1(I,VAR J); BEGIN WHILE i<j DO J := J + 1 END;
+BEGIN  B := Proc1(A,B) END.
+
+
+
+
+
+

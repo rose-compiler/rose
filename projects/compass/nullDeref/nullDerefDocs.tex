@@ -1,0 +1,174 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{CERT EXP33-C and EXP34-C : Null Dereference}
+
+NULL Dereference checker. If any variable that could be NULL is dereferenced, a warning is issued.
+This is an implementation of US-CERT rules: EXP33-C - Do not reference uninitialized variables and
+EXP34-C - Ensure a pointer is valid before dereferencing it.
+
+\subsubsection{EXP33-C - Do not reference uninitialized variables}
+
+Local, automatic variables can assume unexpected values if they are used before they are 
+initialized. 
+C99 specifies \emph{If an object that has automatic storage duration is not 
+initialized explicitly, its value is indeterminate}
+[ISO/IEC 9899-1999]. In practice, this value defaults to whichever values are currently stored in stack memory. 
+While uninitialized memory often 
+contains zero, this is not guaranteed. Consequently, uninitialized memory can cause a program 
+to behave in an unpredictable or unplanned manner and may provide an avenue for attack.
+
+\subsection{EXP34-C - Ensure a pointer is valid before dereferencing it}
+
+Attempting to dereference an invalid pointer results in undefined behavior, 
+typically abnormal program termination. Given this, pointers should be checked 
+to make sure they are valid before they are dereferenced.
+
+\subsection{Non-Compliant Code Examples}
+
+\subsubsection{EXP33-C - Do not reference uninitialized variables}
+
+In this example, the set\_flag() function is supposed to set a the variable sign to 1 if 
+number is positive and -1 if number is negative. However, the programmer forgot 
+to account for number being 0. If number is 0, then sign will remain uninitialized. 
+Because sign is uninitialized, it assumes whatever value is at that location 
+in the program stack. This may lead to unexpected, incorrect program behavior.
+
+\begin{verbatim}
+void set_flag(int number, int *sign_flag) {
+  if (number > 0) {
+    *sign_flag = 1;
+  }
+  else if (number <0) {
+    *sign_flag = -1;
+  }
+  int x = *sign_flag;
+}
+
+int main(int argc, char** argv) {
+  int sign;
+  set_flag(0,&sign);
+  return 0;
+}
+\end{verbatim}
+
+\subsubsection{EXP34-C - Ensure a pointer is valid before dereferencing it}
+
+
+In this example, input\_str is copied into dynamically allocated memory referenced by str. 
+If malloc() fails, it returns a NULL pointer that is assigned to str. 
+When str is dereferenced in strcpy(), the program behaves in an unpredictable manner.
+
+\begin{verbatim}
+#include "assert.h"
+#include <stdlib.h>
+
+void testme() {
+  // case 1
+  int size = 5;
+  char* str = (char*) malloc(size+1);
+  char z = *str;
+
+  // case 2
+  int *p = 0;
+  int l = *p;
+  
+  // case 3
+  char *k=0;
+  free(k);
+
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\subsubsection{EXP33-C - Do not reference uninitialized variables}
+
+We do not check the expressions in if conditions, and hence 
+it is irrelevant what the if conditions state. However, because
+an if condition occurs, there might be a path that leaves sign\_flag 
+uninitialized. In this case a simple assert helps to avoid the
+warning caused by this analysis.
+
+\begin{verbatim}
+#include "assert.h"
+
+void set_flag(int number, int *sign_flag) {
+  assert(sign_flag);
+  if (number > 0) {
+    *sign_flag = 1;
+  }
+  else if (number <0) {
+    *sign_flag = -1;
+  }
+  int x = *sign_flag;
+}
+
+int main(int argc, char** argv) {
+  int sign;
+  set_flag(0,&sign);
+  return 0;
+}
+\end{verbatim}
+
+\subsection{EXP34-C - Ensure a pointer is valid before dereferencing it}
+\begin{verbatim}
+#include "assert.h"
+#include <stdlib.h>
+
+void testme() {
+  // case 1
+  int size = 5;
+  char* str = (char*) malloc(size+1);
+  if (str==NULL) {
+    *str = '5';
+  }
+  char z = *str;
+
+  // case 2
+  int *p = 0;
+  assert(p);
+  int l = *p;
+  
+  // case 3
+  char *k=0;
+  assert(k);
+  free(k);
+
+}
+\end{verbatim}
+
+\subsection{Parameter Requirements}
+
+None.
+
+\subsection{Implementation}
+
+We use a dataflow analysis to determine null dereference. The
+dataflow analysis is based on an \emph{breadth first search} (bfs) algorithm, implemented in BOOST.
+The implementation does a bfs backwards traversal for each:
+
+a) SgArrowExp
+
+b) SgPointerDerefExp
+
+c) SgAssignInitializer
+
+d) SgFunctionCallExp (free)
+
+The above are the points that need to be validated by the algorithm. At each such point
+the program might be invalid due to NULL pointer dereferences. Therefore, the variable
+at that point must be determined and the programmed is tracked back (dataflow).
+
+If at any point an assertion is found, the analysis is aborted for that run, i.e. 
+no null pointer dereference is present.
+
+\subsection{References}
+
+\htmladdnormallink{EXP33C}{https://www.securecoding.cert.org/confluence/display/seccode/EXP33-C.+Do+not+reference+uninitialized+variables} , ``Do not reference uninitialized variables''\\*
+\htmladdnormallink{EXP34C}{https://www.securecoding.cert.org/confluence/display/seccode/EXP34-C.+Ensure+a+pointer+is+valid+before+dereferencing+it} , ``Ensure a pointer is valid before dereferencing it''
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

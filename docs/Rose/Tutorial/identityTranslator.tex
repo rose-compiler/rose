@@ -1,0 +1,95 @@
+\chapter{Identity Translator}
+
+  Using the input code in Figure~\ref{Tutorial:exampleInputCode_IdentityTranslator}
+we now show a translator which builds the AST, generates the source code from the AST, 
+and compiles the generated code using the backend vendor compiler\footnote{
+Note: that the backend vendor compiler is selected at configuration time.}.
+Figure~\ref{Tutorial:exampleIdentityTranslator} shows the source code for this
+translator, the construction of the AST is identical to the previous code, but
+we make an explicit call to the ROSE {\tt backend()} function.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/identityTranslator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/identityTranslator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Source code for translator to read an input program 
+         and generate an object code (with no translation).}
+\label{Tutorial:exampleIdentityTranslator}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_IdentityTranslator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_IdentityTranslator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to identity translator.}
+\label{Tutorial:exampleInputCode_IdentityTranslator}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleOutputFromTranslator} shows the generated code from the
+processing of the {\tt identityTranslator} build using ROSE and using the input file
+shown in figure~\ref{Tutorial:exampleInputCode_IdentityTranslator}.
+This example also shows that the output generated from and ROSE translator is
+a close reproduction of the input; preserving all comments, preprocessor
+control structure, and most formating.  Note that all macros are expanded in
+the generated code.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_IdentityTranslator.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_IdentityTranslator.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Generated code, from ROSE identity translator, sent to the backend (vendor) compiler.}
+\label{Tutorial:exampleOutputFromTranslator}
+\end{figure}
+
+  In this trivial case of a program in a single file, the translator
+compiles the application to build an executable (since {\tt -c}
+was not specified on the command-line.
+
+
+
+

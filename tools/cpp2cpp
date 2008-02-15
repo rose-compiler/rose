@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+# Author: Markus Schordan, 2003.
+# $Id: cpp2cpp,v 1.2 2006/04/24 00:21:59 dquinlan Exp $
+
+use Getopt::Long;
+
+$rosetool="defaultTranslator";
+
+sub printhelp {
+  print("\nSYNOPSIS:\n cpp2cpp <INPUTFILE> <OUTPUTFILE>\n\n");
+  print("DESCRIPTION:\n");
+  print(" Reads a C++ file and generates a C++ file from the ROSE intermediate represenation.\n\n");
+  print("OPTIONS:\n");
+  print("-h --help              : Print this help message.\n");
+  print("\nEXAMPLES:\n");
+  print("cpp2cpp test1.C preproc_test1.C   : the new file preproc_test1.C is generated\n");
+  print("cpp2cpp test1.C test1.C           : the file test1.C is overwritten with the reformated version\n");
+  print("\n");
+
+}
+
+sub command {
+  $command=$_[0];
+  $string=$_[1];
+  open(RECDIR, "$command $string|");
+  @recDir=<RECDIR>;
+  close(RECDIR);
+  $string=@recDir[0];
+  $string=~ s/\n//;
+  return $string;
+}
+
+GetOptions("outputfile=s" => \$outfile, "help!" => \$printhelp_opt);
+
+if($printhelp_opt) {
+  printhelp();
+  exit 0;
+}
+
+$E_BADARGS=65;
+if(@ARGV < 2) {
+  printhelp();
+  exit $E_BADARGS;
+}
+
+$infile=@ARGV[0];
+$outfile=@ARGV[1];
+$infilebasename=command("basename",$infile);
+
+$exitstatus=system("$rosetool $infile");
+if($exitstatus==0) {
+    system("mv rose_$infilebasename $outfile");
+}
+
+

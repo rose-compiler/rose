@@ -1,0 +1,4 @@
+FloatingPointExactComparison: floatingPointExactComparisonTest1.C:5.7-19: SgEqualityOp: Do not write code that expects floating point calculations to yield exact results.
+FloatingPointExactComparison: floatingPointExactComparisonTest1.C:10.8-19: SgNotEqualOp: Do not write code that expects floating point calculations to yield exact results.
+FloatingPointExactComparison: floatingPointExactComparisonTest1.C:18.12-24: SgNotEqualOp: Do not write code that expects floating point calculations to yield exact results.
+FloatingPointExactComparison: floatingPointExactComparisonTest1.C:20.20-33: SgNotEqualOp: Do not write code that expects floating point calculations to yield exact results.

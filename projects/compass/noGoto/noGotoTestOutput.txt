@@ -1,0 +1,1 @@
+NoGoto: noGotoTest1.C:2.3-13: SgGotoStatement: goto found

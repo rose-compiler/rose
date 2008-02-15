@@ -1,0 +1,27 @@
+#! /bin/csh -f
+# Note: the -f option to /bin/csh means don't execute the user's .cshrc file.
+
+# Equivalent command using find! (by Christian Weiss)
+# find . -type dir -user <enter user name> -print -exec chmod +s {} \;
+
+# echo "change the mode of directories to be executable and have the +s group permission feature"
+
+set cdir = `pwd`
+
+foreach dir (*) 
+  if( -d $dir ) then 
+  # grep -n "<<<<<" $dir/*
+    grep -n "<<<<<" *
+    echo "change directory <$dir>"
+    cd $dir
+    find_cvs_conflicts $dir
+    cd $cdir
+  endif
+end
+
+# grep "<<<<<" *
+# grep "<<<<<" */*
+# grep "<<<<<" */*/*
+# grep "<<<<<" */*/*/*
+# grep "<<<<<" */*/*/*/*
+# grep "<<<<<" */*/*/*/*/*

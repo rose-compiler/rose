@@ -1,0 +1,131 @@
+/****************************************************************************
+** QRToolBar meta object code from reading C++ file 'QRToolBar.h'
+**
+** Created: Sat Apr 23 16:41:48 2005
+**      by: The Qt MOC ($Id: QRToolBar.moc,v 1.1 2005/09/03 19:38:00 dquinlan Exp $)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#undef QT_NO_COMPAT
+#include "QRToolBar.h"
+#include <qmetaobject.h>
+#include <qapplication.h>
+
+#include <private/qucomextra_p.h>
+#if !defined(Q_MOC_OUTPUT_REVISION) || (Q_MOC_OUTPUT_REVISION != 26)
+#error "This file was generated using the moc from 3.3.4. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+const char *QRToolBar::className() const
+{
+    return "QRToolBar";
+}
+
+QMetaObject *QRToolBar::metaObj = 0;
+static QMetaObjectCleanUp cleanUp_QRToolBar( "QRToolBar", &QRToolBar::staticMetaObject );
+
+#ifndef QT_NO_TRANSLATION
+QString QRToolBar::tr( const char *s, const char *c )
+{
+    if ( qApp )
+	return qApp->translate( "QRToolBar", s, c, QApplication::DefaultCodec );
+    else
+	return QString::fromLatin1( s );
+}
+#ifndef QT_NO_TRANSLATION_UTF8
+QString QRToolBar::trUtf8( const char *s, const char *c )
+{
+    if ( qApp )
+	return qApp->translate( "QRToolBar", s, c, QApplication::UnicodeUTF8 );
+    else
+	return QString::fromUtf8( s );
+}
+#endif // QT_NO_TRANSLATION_UTF8
+
+#endif // QT_NO_TRANSLATION
+
+QMetaObject* QRToolBar::staticMetaObject()
+{
+    if ( metaObj )
+	return metaObj;
+    QMetaObject* parentObject = QHBox::staticMetaObject();
+    static const QUMethod slot_0 = {"button_clicked", 0, 0 };
+    static const QMetaData slot_tbl[] = {
+	{ "button_clicked()", &slot_0, QMetaData::Public }
+    };
+    static const QUParameter param_signal_0[] = {
+	{ "id", &static_QUType_int, 0, QUParameter::In },
+	{ "buttonDown", &static_QUType_bool, 0, QUParameter::In }
+    };
+    static const QUMethod signal_0 = {"clicked", 2, param_signal_0 };
+    static const QMetaData signal_tbl[] = {
+	{ "clicked(int,bool)", &signal_0, QMetaData::Public }
+    };
+    metaObj = QMetaObject::new_metaobject(
+	"QRToolBar", parentObject,
+	slot_tbl, 1,
+	signal_tbl, 1,
+#ifndef QT_NO_PROPERTIES
+	0, 0,
+	0, 0,
+#endif // QT_NO_PROPERTIES
+	0, 0 );
+    cleanUp_QRToolBar.setMetaObject( metaObj );
+    return metaObj;
+}
+
+void* QRToolBar::qt_cast( const char* clname )
+{
+    if ( !qstrcmp( clname, "QRToolBar" ) )
+	return this;
+    return QHBox::qt_cast( clname );
+}
+
+#include <qobjectdefs.h>
+#include <qsignalslotimp.h>
+
+// SIGNAL clicked
+void QRToolBar::clicked( int t0, bool t1 )
+{
+    if ( signalsBlocked() )
+	return;
+    QConnectionList *clist = receivers( staticMetaObject()->signalOffset() + 0 );
+    if ( !clist )
+	return;
+    QUObject o[3];
+    static_QUType_int.set(o+1,t0);
+    static_QUType_bool.set(o+2,t1);
+    activate_signal( clist, o );
+}
+
+bool QRToolBar::qt_invoke( int _id, QUObject* _o )
+{
+    switch ( _id - staticMetaObject()->slotOffset() ) {
+    case 0: button_clicked(); break;
+    default:
+	return QHBox::qt_invoke( _id, _o );
+    }
+    return TRUE;
+}
+
+bool QRToolBar::qt_emit( int _id, QUObject* _o )
+{
+    switch ( _id - staticMetaObject()->signalOffset() ) {
+    case 0: clicked((int)static_QUType_int.get(_o+1),(bool)static_QUType_bool.get(_o+2)); break;
+    default:
+	return QHBox::qt_emit(_id,_o);
+    }
+    return TRUE;
+}
+#ifndef QT_NO_PROPERTIES
+
+bool QRToolBar::qt_property( int id, int f, QVariant* v)
+{
+    return QHBox::qt_property( id, f, v);
+}
+
+bool QRToolBar::qt_static_property( QObject* , int , int , QVariant* ){ return FALSE; }
+#endif // QT_NO_PROPERTIES

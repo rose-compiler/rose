@@ -1,0 +1,499 @@
+
+\def \beginfig
+{
+%\begin {minipage}{\figtextwidth}
+%\renewcommand{\baselinestretch}{1}
+}
+
+\def \endfig
+{
+%\renewcommand{\baselinestretch}{2}
+%\end {minipage}
+}
+
+\chapter {Loop Transformations}
+\section {Introduction}
+
+The loop transformation package implements all the algorithms published by Yi and 
+Kennedy~\cite{MyThesis,YK:Report,YK:LACSI02}, including the transitive dependence
+analysis algorithm by Yi, Adve, and Kennedy~\cite{YAK:PLDI00}.\footnote{ The package does not 
+include the recursion transformation algorithm in this publication.}
+These algorithms automatically optimize the
+loop structures of applications for better performance. For now, the
+implementation aims only to improve the cache locality of 
+applications running on a single-processor machine. 
+In the future, it can be expanded to optimize parallel applications
+by maximizing the parallelism and minimizing the communication cost 
+of loop structures~\cite{WL:TOPDS91,CFH:CPPSC95,AJMY:SC98}.
+
+To optimize applications for better cache locality, this package applies the following 
+loop transformations: interchange, fusion, fission(or distribution), and blocking (or tiling). 
+The implementation can successfully optimize arbitrary loop structures,
+including complex, non-perfect loop nests such as the one from LU factorization
+with no pivoting in Figure~\ref {fig-lu}. The following examples illustrate the effect of
+applying the transformations.
+
+Figure~\ref {fig-mm} uses a pseudo code of {\it matrix multiplication} to illustrate 
+the effect of applying the package to optimize perfect loop nests. The original code is in (a). 
+After performing dependence analysis on this loop nest, the package applies
+loop interchange transformation to improve the data reuse in caches (note that in 
+C/C++ language, the matrix is stored in row-major order).
+The transformed code is shown in (b). The cache locality of
+this code can be further improved by loop blocking, and the result is shown in (c).
+
+\input{mm.tex}
+
+Figure~\ref {fig-lu} uses the pseudo code of {\it LU factorization without pivoting}
+to illustrates the effect of 
+applying the package to optimize complex, non-perfectly nested loop structures. 
+Although the original loops in (a) are not perfectly nested, the package recognizes that 
+the $k(s_1)$ loop ($k$ loop surrounding statement $s_1$) can be re-combined with 
+the loop $j(s_2)$ and that the recombined
+loop can then be placed outside of the original $k(s_2)$ loop. The transformed code in 
+(b) simultaneously achieves two effects: the fusion of $k(s_1)$ with $j(s_2)$ loop, and
+the interchange of $k(s_2)$ with $j(s_2)$ loop. 
+Section~\ref {sec-hoisting} explains this combined-interchange-and-fusion
+transformation in more detail. 
+The code in (b) can further be blocked, and the result is shown in (c). 
+
+\input {lu.tex}
+
+Figure~\ref {fig-tridvpk} illustrates the effect of applying loop fusion to 
+a sequence of loop nests in the subroutine $tridvpk$ of the application benchmark 
+{\it Erlebacher} from ICASE.
+The original code in (a) contains four separate loop nests, all of which can be fused 
+into a single one. The package performs multiple levels of
+loop fusion simultaneously using a combined-interchange-and-fusion 
+transformation(see Section~\ref {sec-hoisting}), 
+and the optimized code is shown in (b).
+
+\input {tridvpk.tex}
+
+\section {Interface for End-Users and Compiler Developers}
+
+This package is written in C++ language in a object-oriented style. 
+It utilizes traditional techniques developed to optimize
+loop nests in Fortran programs. 
+When optimizing C or C++ applications, 
+this package only recognizes and optimizes a particular for-loop
+that corresponds to the $DO$ loop construct
+in Fortran programs. 
+Within the ROSE source-to-source compiler infrastructure,
+such a loop is defined to have the following formats:
+\begin {equation}
+for \ (i = lb; i <= ub; i += positiveStep) \ \ or 
+\ \ \ for \ (i = ub; i >= lb; i+=negativeStep)
+\end {equation}
+Here $i$ is an arbitrary integer variable, $lb$ and $ub$ are arbitrary
+integer expressions, and $positiveStep$ and $negativeStep$ are positive
+and negative integer expressions respectively.
+To expand this definition, the user can rewrite the $LoopTransformInterface$ class 
+within the package distribution (see Section~\ref {sec-interface-developer}) or
+use a preprocessor within ROSE to translate all the non-Fortran loops into
+the aforementioned formats.
+Such a loop-normalization  preprocessor will be provided within ROSE.
+
+The package distribution within ROSE also includes a loop optimization tool called
+$LoopProcessor$, which automatically transforms the {Fortran loops} 
+in C/C++ applications for better performance. In addition,
+the package also provides two levels of internal user interfaces:
+one for end users that intend to apply this package
+to optimize their applications, and  one for compiler
+developers that intend to extend this package for various purposes.
+
+\subsection{End-User Interface}
+\label {sec-interface-user}
+
+The following function comprises the package interface for end users of
+the ROSE source-to-source infrastructure,  which applies various traversal
+and rewrite mechanisms to transform C++ applications
+using the SAGE intermediate representation.
+\begin {equation}
+  Boolean \ \ SageLoopTransformation( unsigned \ \ argc, char** \ \ argv, SgGlobal* \ \ r, SgNode* \ \ n);
+\end {equation}
+Here both $SgGlobal$ and $SgNode$ are classes defined by the SAGE intermediate representation:
+the $SgGlobal$ pointer $r$ represents the global root of an input program, 
+and the $SgNode$ pointer $n$
+represents the root of the input code fragment to be transformed by the package.
+The parameters $argc$ and $argv$ represent command-line arguments that
+instruct the package to adopt specific optimization strategies:
+$argc$ contains the number of arguments,
+and $argv$ contains the vector of $string$ arguments.
+
+The package currently recognizes the following arguments:
+\begin {itemize}
+\item {-bk1 $<$blocksize$>$ :} apply outer-loop blocking for better data reuse
+\item {-bk2 $<$blocksize$>$ :} apply inner-loop blocking for better data reuse
+\item {-ic1 :} apply loop interchange for better data reuse
+\item {-fs0 :} perform maximum loop distribution with no fusion afterwards
+\item {-fs1 :} apply hierarchical single-level loop fusion for better data reuse
+\item {-fs2 :} apply simultaneous multi-level loop fusion for better data reuse
+\item {-tm :}  report timing information for each phase of the transformation package
+\item {-ta $<$int$>$ :} set the maximum number of split nodes when performing transitive dependence 
+                analysis
+\item {-clsize $<$int$>$ :} set cache-line size for spatial reuse analysis
+\end {itemize}
+
+The loop transformation tool $LoopProcessor$ within ROSE recognizes 
+these command-line arguments and then automatically selects the corresponding
+optimization strategies.
+When invoked with no argument, $LoopProcessor$ prints out 
+usage information of this package.
+
+\subsection{Developer Interface}
+\label {sec-interface-developer}
+
+Utilizing the available internal interface,
+compiler developers can easily extend this package in two aspects. First,
+they can rewrite the outside-interface classes of the implementation
+to port it to a different compiler infrastructure (other than ROSE).
+Second, they can provide their own profitability analysis  
+to expand the transformation policy classes of the implementation.
+
+\paragraph {Porting to a different compiler infrastructure} 
+The package provides the following infrastructure-independent
+interface to compiler developers.
+\begin {equation}
+AstNodePtr \ \ LoopTransformation( LoopTransformInterface\  \&interface, const \ AstNodePtr\ \&head);
+\end {equation}
+Here the class $LoopTransformInterface$  provides the interface for
+accessing the intermediate representation of an arbitrary compiler,
+and the pointer reference $AstNodePtr$ represents an arbitrary code fragment
+to be transformed. Both classes, $AstNodePtr$ and $LoopTransformInterface$, 
+need to be defined at location $outsideInterface/LoopTransformInterface.h$, 
+which currently contains the ROSE implementation of these two classes.
+By rewriting this file, a compiler developer can port the package
+to a completely different infrastructure (this package already works under 
+two compiler infrastructures: the ROSE C++ infrastructure and the DSystem Fortran infrastructure 
+at Rice University~\cite{AM:PLDI98}).
+
+\paragraph {Plugging in different profitability analysis algorithms}
+This package provides a static configuration class, $LoopTransformOptions$
+(defined in the location 
+$driver$/$LoopTransformOptions.h$ of the package distribution), 
+for plugging in different loop optimization policies.
+This configuration class uses a set of policy classes 
+(automatically selected from the command-line arguments, as 
+described in Section~\ref {sec-interface-user})
+to control
+the application of three loop transformations: interchange, fusion and blocking.
+The currently available policy classes
+are defined in the locations $driver$/$InterchangeAnal.h$,
+$driver$/$FusionAnal.h$ and $driver$/$BlockingAnal.h$ respectively.
+To plug in different optimization strategies,
+the developer can write new profitability policy classes
+and then configure $LoopTransformOptions$ to use 
+the new algorithms.  
+The command-line configurations are automatically
+extended when the developer registers these new policy classes.
+
+\section {Analysis and Transformation Techniques}
+This package implements the following techniques to 
+optimize applications for better cache locality.
+This section provides only brief introductions to the
+algorithms without going into any detail.
+Most algorithms are described in detail in Qing Yi's Ph.D.
+thesis~\cite{MyThesis}.
+
+\subsection {Dependence and Transitive Dependence Analysis}
+Similar to most of the existing  loop optimizing compilers, 
+this package models the safety requirement of loop transformations
+using a dependence graph. The dependence graph includes all the statements of 
+the input code segment as vertices, and a dependence edge is put from
+statement $s_1$ to $s_2$ in the graph if $s_1$ must be executed
+before $s_2$. If a statement reordering transformation does not 
+reverse the direction of any dependence edge, the transformation
+is guaranteed to preserve the original semantics of the program.
+If two statements, $s_1$ and $s_2$, are both surrounded by loops,
+for each dependence edge between $s_1$ and $s_2$, 
+the dependence graph also defines a condition that must hold
+between the iterations of these loops. 
+The compiler then uses the dependence
+relations to determine the safety of transforming these loops.
+
+In traditional unimodular and single loop transformation systems,
+the dependence relation between each pair of statements $s_1$ to $s_2$ is 
+defined using a vector of direction or distance entries, where
+each direction or distance entry defines the relation between
+the iterations of a common loop surrounding both $s_1$ and $s_2$.
+The compiler then uses these dependence vectors to determine
+the safety of transforming a set of common loops that are perfectly
+nested.
+
+In order to effectively transform arbitrary, non-perfectly nested
+loop structures, this package extends the traditional dependence model 
+with a new dependence representation,
+{\em Extended Direction Matrix(EDM)}.
+Given two statements, $s_1$ and $s_2$, a dependence EDM from $s_1$
+to $s_2$ defines a direction or distance entry for each pair of 
+loops ($\ell_1$, $\ell_2$) s.t. $\ell_1$ surrounds $s_1$ and
+$\ell_s$ surrounds $s_2$. This new dependence representation
+thus defines dependence conditions for not only common loops
+surrounding both $s_1$ and $s_2$, but also non-common loops that
+surround only one of the two statements.
+
+To compute the EDM representation of dependences, this package uses
+an adapted Gaussian elimination algorithm to solve a set of integer linear
+equations of loop induction variables.  
+For each array access in the original input program, the algorithm
+first constructs a set of linear equations based on the index expressions
+of the array access.  If no loop induction variable has 
+a symbolic coefficient in the array access expressions, such as the 
+ones in the {\it Matrix Multiplication} code in
+Figure~\ref {fig-mm} and the {\it non-pivoting LU} in Figure~\ref {fig-lu}, 
+the algorithm is at least as powerful as the combined ZIV, SIV, and Delta dependence 
+tests described by Allen and Kennedy~\cite{AK:Book, Wolfe:Book}. 
+However, when loop induction variables do have symbolic coefficients, 
+the algorithm assumes a conservative solution and is less precise 
+than the symbolic solution algorithms described in~\cite{AK:Book, Wolfe:Book}.
+
+This package also extends the traditional dependence model 
+by implementing the transitive dependence analysis algorithm
+published by Yi, Adve, and Kennedy~\cite{YAK:PLDI00}.
+Note that although the algorithm is quite efficient in summarizing the complete
+transitive dependence information between statements,
+this package applies transitive dependence analysis only
+when  transforming complex loop structures that cannot
+be translated into sequences of perfectly nested loops.
+Because the safety of transforming perfect loop nests
+can be determined based on individual dependence edges
+alone, it is often more economic to do without the extra
+cost of transitive dependence analysis.
+This package examines the original loop structures
+of programs and performs transitive dependence analysis only
+when required.
+
+\subsection {Dependence Hoisting Transformation}
+\label {sec-hoisting}
+
+As the base technique for loop interchange, fusion
+and blocking, this package implements a novel loop transformation,
+{\em dependence hoisting} (first introduced by Yi and Kennedy~\cite{YK:Report}), 
+that facilitates a combined fusion and interchange transformation for a group of 
+arbitrarily nested loops.
+Applying the dependence and transitive dependence analysis
+algorithms,
+this transformation first selects a group
+of arbitrarily nested loops, such as the $k(s_1)$ ($k$ loop surrounding $s_1$)
+and the $j(s_2)$ loops in the non-pivoting LU code in
+Figure~\ref {fig-lu}(a), that can be legally fused
+and then placed at the outermost position of a code
+segment.
+It then performs the transformation through a compound
+sequence of traditional transformations on single loops
+and perfectly nested loops. A combined
+interchange and fusion transformation is established 
+on an arbitrary loop structure as a result. An example of
+the transformation result is shown for the non-pivoting
+LU code in Figure~\ref {fig-lu}(b) (here the transformation
+is applied to the $k(s_1)$ and $j(s_2)$ loops in (a)).
+
+Given a group of loops as input for a dependence hoisting
+transformation, the safety of fusing and shifting these loops
+is determined from the dependence constraints on iterations
+of these loops. If the group is a single loop in the original code,
+such as the $i$, $j$ or $k$ loop in the matrix multiplication code
+in Figure~\ref{fig-mm}, 
+traditional loop interchange analysis for perfect loop nests would suffice;
+however, if the group includes non-common loops surrounding different
+statements, such as the $k(s_1)$ and $j(s_2)$ loops in the non-pivoting
+LU code in Figure~\ref {fig-lu}(a), transitive dependence analysis is performed
+on the dependence graph
+and the transitive dependences are used to determine
+the safety of fusing and shifting these loops. 
+
+Because dependence hoisting is realized by combining
+a sequence of traditional loop distribution, interchange
+and index set splitting transformations on single
+or perfectly nested loops,
+the complexity of applying dependence hoisting
+is equivalent to that of the corresponding sequence
+of sub-transformations.
+In the worst case, applying dependence hoisting to
+a loop nest takes time proportional to $N^2 + L^2D$,
+where $N$ is the number of statements in the nest,
+$L$ is the depth of the nest,
+and $D$ is the size of the dependence graph for the nest.
+In an average case, however, dependence hoisting requires
+much less time to finish. For a perfect loop nest,
+dependence hoisting is equivalent to a standard
+loop interchange on perfect loop nests
+followed by a single-loop distribution, in which case
+the required complexity is $O(N + D)$.
+
+\subsection { Transformation Framework}
+
+To optimize applications for better locality,
+this package  uses {\it dependence hoisting} to
+achieve three loop transformations: loop fusion,
+interchange and blocking. 
+It uses a construct, {\it computation slice} (or simply {\it slice}), 
+to encode the input information necessary to perform
+each dependence hoisting transformation.
+For example, for the dependence
+hoisting transformation on the non-pivoting LU code
+from Figure~\ref {fig-lu}(a) to (b), the
+computation slice contains two loops: $k(s_1)$ and $j(s_2)$.
+Each computation slice must be valid in that
+the corresponding dependence hoisting transformation
+does not reverse any dependence direction of the original
+program.
+
+To model the memory performance of applications, this package
+associates each computation slice with a floating point
+number, which defines the number of array references that can be reused 
+at each iteration of the slice,  that is, the number of references
+that can be reused when the loops in the slice are placed
+at the innermost position of a loop structure~\cite{AK:Book}.
+Here the floating point number is necessary 
+to model the spatial reuses resulted from references residing in the same cache line,
+where in average less than one reference could be reused at each iteration
+of the {\it slicing loops} (loops in the computation slice).
+These floating point numbers provide the data reuse information of
+computation slices to the transformation framework, which
+then uses the information to guide loop interchange, fusion and blocking
+transformations. 
+
+Using the data reuse information of computation slices,
+the transformation framework optimizes a code segment in the
+following steps.
+First, it applies dependence analysis and constructs all the legal computation slices
+for an input code segment. It then treats all the
+valid computation slices as if they form a sequence of loop nests and
+rearranges these slices to achieve better cache locality.
+For each set of computation slices
+that forms a single loop nest, the package first selects a nesting order so that
+the loops that are associated with more reuses are nested inside. 
+It then fuses each pair of disjunct computation slices (slices that contain disjunct
+sets of statements) when their statements access a common set of data. 
+After fusion, if some non-innermost slices
+carry data reuses, the package marks the corresponding slice nest to be tiled later.
+Finally, the framework uses the rearranged computation slices to
+perform a sequence of dependence hoisting
+transformations to achieve the desired transformation result.
+Note  that all the transformations are applied only when legal, that is, no semantics
+of the original program is violated by the transformations.
+
+The following briefly describes the optimization strategies 
+implemented in this package. For more details of the optimization
+algorithms, see~\cite{MyThesis}.
+
+\paragraph {Loop Interchange and Blocking}
+To achieve loop interchange,
+the package carefully arranges the order of applying
+dependence hoisting transformations using different computation
+slices. 
+Because each slice represents a set of loops that can
+be fused into a single loop, interchanging the nesting order
+of two slices corresponds directly to the interchange
+of the two sets of slicing loops.
+The effects of applying loop interchange is shown for
+{\it matrix multiplication} in Figure~\ref {fig-mm}(b)
+and for {\it non-pivoting LU factorization} in Figure~\ref {fig-lu}(b).
+
+Because this package implements loop interchange
+using dependence hoisting, 
+it achieves loop blocking by
+combining a sequence of dependence hoisting with loop
+strip-mining transformation.
+Given an input loop nest $C$,
+the algorithm takes the computation slices constructed for $C$
+in the reverse of their desired nesting order and 
+then uses each slice to perform a dependence hoisting
+transformation.
+After each dependence hoisting
+transformation, 
+if the new outermost loop $\ell_f$ should be blocked,
+the algorithm
+strip-mines $\ell_f$ into a strip-counting 
+loop $\ell_c$ and
+a strip-enumerating loop $\ell_t$. It then uses loop $\ell_t$
+as the input loop nest for further dependence hoisting
+transformations, which in turn will shift
+a new set of loops outside loop $\ell_t$ but inside loop $\ell_c$,
+thus blocking loop $\ell_f$. 
+The effects of applying loop blocking is shown for
+{\it matrix multiplication} in Figure~\ref {fig-mm}(c)
+and for {\it non-pivoting LU factorization} in Figure~\ref {fig-lu}(c).
+
+
+\paragraph {Loop Fusion and Distribution (Fission)}
+
+To achieve an aggressive multi-level
+loop fusion effect, the package merges multiple computation
+slices and then uses the merged slices to transform the original code.
+Given two disjunct computation slices (two slices that
+contain disjunct sets of statements), because each computation
+slice fuses a set of loops that can be shifted to
+the same loop level, fusing these two slices
+automatically achieves the fusion of the loops
+in both slices. For example, in Figure~\ref {fig-tridvpk},
+after transformation analysis, the package constructs
+a computation slice for each of the loops in the original code in (a).
+It then performs fusion analysis and realizes that all the
+$j$ slices (and thus all the $j$ loops) can be legally fused 
+into a single loop. After merging these slices, it uses a single $j$ slice
+to perform a dependence hoisting transformation and thus automatically
+achieves the fusion of all the $j$ loops in (a). Similarly,
+all the $i$ loops are also fused into a single loop, and two of the
+$k$ loops are fused.
+
+Because the original loop structure may need to be distributed
+to achieve better performance, before applying loop fusion
+analysis, this package first performs maximum loop fission
+to distribute all the loop nests in the original code. The distributed loop nests
+are then recombined during the loop fusion phase. This strategy 
+ensures that both loop fission and fusion optimizations are
+applied and that the final result of the optimization does not
+depend on the original loop structure of the application.
+
+\paragraph { Combined  Loop Interchange and Fusion} 
+This package optimizes applications to improve the memory performance
+of applications through a combined loop interchange and multi-level fusion 
+strategy~\cite{YK:LACSI02}.
+Since loop fusion is implemented in terms of merging computation slices,
+given a code segment $C$ to optimize, the package first 
+constructs all the valid computation slices. It then
+applies loop interchange analysis to these slices 
+to arrange the best nesting order for each loop nest in $C$. 
+When applying fusion analysis to merge the disjunct computation slices,
+it performs data reuse analysis and performs the actual fusion
+only when loop fusion does not interfere with
+loop interchange or when fusion is more favorable even if
+it interferes with loop interchange.
+Because multiple computation slices are constructed for each loop nests,
+and all of these slices participate in the fusion analysis simultaneously, 
+multiple loops may be fused for each loop nest in a single pass of fusion analysis.
+As the result, this package achieves a combined loop interchange and multi-level
+fusion optimization for a collection of loop nests.
+For example, in Figure~\ref{fig-tridvpk}, even though the $j$ and $i$
+loops are nested at different levels in the original code in (a),
+the package successfully achieves the fusion of these loops because 
+all the loops are collected as computation slices
+in a single pass and together they participate in the fusion analysis.
+
+\subsection {Profitability Analysis}
+
+This package separates the profitability analysis of loop transformations
+from the actual transformations by encoding profitability analysis
+algorithms in a set of policy classes and then using these policy classes to control
+the application of loop transformations. A flexible internal interface
+is provided for compiler writers to plug in their own performance model
+for various optimization purposes (see Section~\ref {sec-interface-developer}).
+
+The currently available performance model includes only the counting of
+array references being reused, including both temporary and spatial cache reuses.
+Because the package has not yet implemented the calculation of the working set size of 
+each loop body, 
+it cannot automatically decide the tile size for each blocked loop nest. Similarly,
+because the current data reuse analysis is insufficient in calculating the trade-off between
+outer-loop blocking and inner-loop blocking, the package asks the user to specify the desired
+strategy. It then applies the specified strategy uniformly for all the loop nests. 
+
+The profitability analysis algorithms within this package are not yet complete 
+and will incorporate more sophisticated algorithms in the future.
+These algorithms include not only various strategies to automate the decision of
+blocking parameters, but also runtime tuning strategies that execute applications 
+on a specific machine and then use the collected performance information to automatically 
+select the best overall transformations.
+

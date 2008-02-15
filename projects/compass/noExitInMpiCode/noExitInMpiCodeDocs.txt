@@ -1,0 +1,57 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{No Exit In Mpi Code}
+
+\label{NoExitInMpiCode::overview}
+
+\quote{Namespace: \texttt{NoExitInMpiCode}}
+
+\subsection{Introduction}
+Calling exit() from a parallel code will cause the code to deadlock. 
+Even if every process calls exit collectively, this can leave some parallel 
+environments in a hung state because MPI resources are not properly cleaned up.
+
+\subsection{Input Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Output Requirements}
+Output is provided in GNU standard source position format.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal seeking function reference
+expressions. These function reference expressions matching a call to the exit()
+function between blocks of MPI code (as delimited between MPI Init and MPI
+Finalize) are flagged as checker violations.
+
+\subsection{Example of Failing Output Code}
+%{\small
+%\begin{verbatim}
+%%include <stdlib.h>
+%%include "mpi.h"
+%
+%int main( int argc, char **argv )
+%{
+%  MPI_Init( &argc, &argv );
+%    exit(1);
+%  MPI_Finalize();
+%
+%  return 0;
+%} //main()
+%\end{verbatim}
+%}
+
+%Examples of the patterns go here.
+     See example: noExitInMpiCodeTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../noExitInMpiCode/noExitInMpiCodeTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

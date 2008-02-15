@@ -1,0 +1,86 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+// I don't know which BASECLASSNAME constructor 
+// we should call in the preinitialization list
+CLASSNAME::CLASSNAME ( SgStatement* stmt )
+   : BASECLASSNAME (stmt)
+   {
+     ROSE_ASSERT (stmt != NULL);
+     if (stmt != NULL)
+        {
+       // Found an declaration Statement (that is the first step)
+       // setVariant ( CLASSNAME_TAG );
+
+          ROSE_Node::setUp (CLASSNAME_TAG,stmt);
+          setParseError(FALSE);
+        }
+       else
+        {
+          setParseError(TRUE);
+        }
+   }
+
+
+ROSE_Node* CLASSNAME::transform()
+   {
+  // printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+  // ROSE_ABORT();
+
+     ROSE_ASSERT (!error());
+
+     SgStatement* stmt = (SgStatement*) getSageSubTree();
+
+     if ( (ROSE_DEBUG > 0) || (ROSE::verbose == TRUE) )
+          printf ("In CLASSNAME::transform(): (file name = %s line number = %d) \n",
+               ROSE::getFileName(stmt),ROSE::getLineNumber(stmt));
+
+     return this;
+   }
+
+void CLASSNAME::recognizeSageSubTree ( SgStatement* stmt )
+   {
+     ROSE_Node::setUp (CLASSNAME_TAG,stmt);
+   }
+
+void CLASSNAME::setRoseExpression ( ROSE_C_Expression* expr )
+   {
+     ROSE_ASSERT (!error());
+
+     ROSE_ASSERT (expr != NULL);
+     roseExpr = expr;
+   }
+
+ROSE_C_Expression* CLASSNAME::getRoseExpression ()
+   {
+     ROSE_ASSERT (!error());
+
+     ROSE_ASSERT (roseExpr != NULL);
+     return roseExpr;
+   }
+
+// CLASSNAME friend function
+CLASSNAME* isRose_C_Statement (ROSE_Node* node)
+   {
+  // This function behaves just like the SAGE II mechanism which we copy
+     ROSE_ASSERT (node != NULL);
+     CLASSNAME* returnRoseStatement = NULL;
+     switch (node->getVariant())
+        {
+       // Include all the object types which have CLASSNAME as a base class
+          case CLASSNAME_TAG:
+             {
+               returnRoseStatement = (CLASSNAME *) node;
+               break;
+             }
+          default:
+             {
+               returnRoseStatement = NULL;
+               break;
+             }
+        }
+
+     return returnRoseStatement;
+   }
+

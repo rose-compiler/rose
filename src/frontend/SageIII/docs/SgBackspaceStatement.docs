@@ -1,0 +1,49 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgBackspaceStatement
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgBackspaceStatement::SgBackspaceStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgBackspaceStatement::SgBackspaceStatement(const SgBackspaceStatementStorageClass &source)
+*/
+/*!\fn inline static void SgBackspaceStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgBackspaceStatement *SgBackspaceStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgBackspaceStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgBackspaceStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgBackspaceStatement::initializeStorageClassArray(SgBackspaceStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgBackspaceStatement::clearMemoryPool()
+*/
+/*!\fn static void SgBackspaceStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgBackspaceStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgBackspaceStatement::roseRTI()
+*/
+/*!\fn virtual SgBackspaceStatement::~SgBackspaceStatement()
+*/
+/*!\fn virtual SgNode *SgBackspaceStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBackspaceStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgBackspaceStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgBackspaceStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgBackspaceStatement::get_numberOfTraversalSuccessors()
+\description See  SgBackspaceStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBackspaceStatement::get_traversalSuccessorContainer()
+\description See  SgBackspaceStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBackspaceStatement::get_traversalSuccessorNamesContainer()
+\description See  SgBackspaceStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgBackspaceStatement::SgBackspaceStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1048938217;

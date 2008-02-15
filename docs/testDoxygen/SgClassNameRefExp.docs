@@ -1,0 +1,89 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassNameRefExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgClassNameRefExp
+\brief This class represents the concept of a C++ expression built from a class name.
+
+   This IR node does not appear within any AST's that I have built, but it is
+part of the EDG/Sage III translation, and I recall that it is part of the 
+support for the AST associated with template declarations (SgTemplateDeclaration)
+but that is currently a string while we debug the support for template declarations 
+as a more meaningful AST.
+
+\todo Need to figure out some examples of whare this is used.
+
+\sa
+\ref SgClassNameRefExp_usage  "Example of using a SgClassNameRefExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassNameRefExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgClassNameRefExp::p_symbol
+\brief This pointer points to a SgClassSymbol.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassNameRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgClassNameRefExp::SgClassNameRefExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgClassNameRefExp base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgClassNameRefExp_create "Example:create an SgClassNameRefExp object"
+*/
+
+/*!
+\fn SgClassNameRefExp::~SgClassNameRefExp()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgClassNameRefExp::isSgClassNameRefExp (SgNode *s)
+\brief Cast function (from derived class to SgClassNameRefExp pointer).
+
+   This functions returns a SgClassNameRefExp pointer for any input of a 
+pointer to an object derived from a SgClassNameRefExp.
+
+\return Returns valid pointer to SgClassNameRefExp if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgClassNameRefExp::isSgClassNameRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgClassNameRefExp pointer).
+
+   This functions returns a SgClassNameRefExp pointer for any input of a 
+pointer to an object derived from a SgClassNameRefExp.
+
+\return Returns valid pointer to SgClassNameRefExp if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgClassNameRefExp::get_symbol() const
+\brief Returns pointer to SgSymbol.
+
+\return Returns pointer to SgSymbol.
+*/
+
+/*!
+\fn SgClassNameRefExp::set_symbol(SgSymbol* symbol)
+\brief Access function for p_symbol.
+
+\return Returns void.
+*/
+
+

@@ -1,0 +1,50 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgTypeDouble
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeDouble *SgTypeDouble::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeDouble::SgTypeDouble(const SgTypeDoubleStorageClass &source)
+*/
+/*!\fn inline static void SgTypeDouble::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeDouble *SgTypeDouble::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeDouble::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeDouble::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeDouble::initializeStorageClassArray(SgTypeDoubleStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeDouble::clearMemoryPool()
+*/
+/*!\fn static void SgTypeDouble::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeDouble::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeDouble::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeDouble::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeDouble::~SgTypeDouble()
+*/
+/*!\fn virtual SgNode *SgTypeDouble::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeDouble::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeDouble::get_numberOfTraversalSuccessors()
+\description See  SgTypeDouble::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeDouble::get_traversalSuccessorContainer()
+\description See  SgTypeDouble::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeDouble::get_traversalSuccessorNamesContainer()
+\description See  SgTypeDouble::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypeDouble::SgTypeDouble()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_754985485;

@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>ROSE</title>
+<link href="../Templates/css_audim.css" rel="stylesheet" type="text/css">
+<link href="../css.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+.style3 {color: #CC6600}
+.style4 {font-size: 10px}
+-->
+</style>
+</head>
+
+<body>
+
+<table width="800" cellpadding="0" cellspacing="0">
+  <!--DWLayoutTable-->
+  <tr>
+    <td width="800" height="203">&nbsp;
+    <div align="center"><img src="compass_rose.gif" width="297" height="200"></div></td>
+  </tr>
+    <tr>
+    <td ><div align="right" class="style4"><a href="http://www.llnl.gov/disclaimer.html">Privacy & Legal Notice&nbsp;&nbsp;&nbsp;  </a></div></td>
+  </tr>
+</table>
+
+<table width="800" border="0" cellpadding="0" cellspacing="0">
+  <!--DWLayoutTable-->
+  <tr>
+    <td width="221" height="388" valign="top">
+	  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <!--DWLayoutTable-->
+        <tr>
+          <td width="221" class="Header3"><p>&nbsp;</p>
+            <p class="style3"><a href="rose.html">Home</a></p>
+            <!-- <p class="style3"><a href="ROSE_UserManual/ROSE-@VERSION@-UserManual.ps">User Manual (postscript)</p> -->
+            <!-- <p class="style3"><a href="ROSE_UserManual/manual.html">User Manual</p> -->
+            <!-- <p class="style3"><a href="ROSE_Tutorial/ROSE-@VERSION@-Tutorial.ps">Tutorial (postscript)</p> -->
+            <p class="style3"><a href="ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf">User Manual (pdf)</p>
+            <p class="style3"><a href="ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf">Tutorial (pdf)</p>
+            <!-- <p class="style3"><a href="ROSE_Tutorial/tutorial.html">Tutorial (generated from Latex, work in progress)</p> -->
+            <p class="style3"><a href="ROSE_HTML_Reference/index.html">Programmer's Reference</p>
+            <p class="style3"><a href="ROSE_HTML_Reference/ProjectPublications.html">Publications</p>
+            <p class="style3"><a href="ROSE_HTML_Reference/Gallery.html">Download Software</p>
+            <p class="style3"><a href="ROSE_HTML_Reference/ProjectDownLoadPage.html">Download Software</p>
+            <!-- <p class="style3"><a href="ROSE_HTML_Reference/ProjectRelatedWorkPage.html">Related Work</p> -->
+          <p>&nbsp;</p></td>
+        </tr>
+        <tr>
+          <td height="46"></td>
+        </tr>
+      </table></td>
+    <td width="12">&nbsp;</td>
+    <td width="567" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <!--DWLayoutTable-->
+      <tr>
+        <td width="567" height="388" class="plaintext14">    
+        <p>ROSE is a project to define a new type of compiler technology which allows
+        compilation techniques to address the optimization of user-defined abstractions.
+        Due to the nature of the solution we provide, it is also an open compiler 
+        infrastructure that can be used for a wide number of other purposes.
+        The software developed to support ROSE research work provides an open general
+        purpose and robust compiler infrastructure to support numerous tools and external
+        collaborations in C, C++, and F90.</p>
+        <p> User-defined abstractions are built from within an existing base language and
+        carry specific semantic information which can't be communicated to the base
+        language's compiler.  In many situations, the semantic information could be useful 
+        within program optimization, but the base-language compiler is forced to ignore 
+        this semantic information because there is no way for applications to pass such 
+        additional information to base-language compiler.  ROSE is a part of general 
+        compiler research related to Telescoping Languages (a term coined by Ken Kennedy at Rice
+        University) and Plus-Minus Languages (a term coined by Bjarne Stroustrup at 
+        Texas A&M), it is also related to work under several other names: semantic
+        inlining, semantic extension of languages.  ROSE research is language independent 
+        but develops tools for specifically addressing the languages used for large-scale 
+        applications within scientific computing: C, C++, and Fortran90 (F90 work is being 
+        done in collaboration with Rice University).</p>
+      </td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td height="72" colspan="3" valign="top">
+	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <!--DWLayoutTable-->
+      <tr>
+        <td width="221"  height="72" valign="top"><p>UCRL-WEB-212214, UCRL-WEB-219260 and UCRL-WEB-225313 (full web site)<br>
+            Last modified:
+    <!-- #BeginDate format:Am1 -->@configure_date@<!-- #EndDate -->
+              <br>
+          <a href="mailto:webmaster-casc@llnl.gov">CASC Webmaster</a>          </p></td>
+
+        <td width="579" valign="top"><hr>          <div align="center"><br>
+            For further information, please contact Dan Quinlan, <a href="mailto:dquinlan at llnl dot gov">dquinlan at llnl dot gov</a><br>
+            <a href="http://www.llnl.gov/casc/">CASC</a>  | <a href="http://www.llnl.gov/CAR/">CAR</a>  | <a href="http://www.llnl.gov/comp/">Computation</a>  | <a href="http://www.llnl.gov/">LLNL</a> </div></td>
+      </tr>
+    </table>
+	</td>
+  </tr>
+    </table>
+</body>
+</html>

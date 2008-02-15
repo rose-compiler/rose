@@ -1,0 +1,110 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgSpecialFunctionModifier
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgBitVector SgSpecialFunctionModifier::p_modifierVector
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgSpecialFunctionModifier &SgSpecialFunctionModifier::operator=(const SgSpecialFunctionModifier &X)
+*/
+/*!\fn SgSpecialFunctionModifier::SgSpecialFunctionModifier(const SgSpecialFunctionModifier &X)
+*/
+/*!\fn SgSpecialFunctionModifier::SgSpecialFunctionModifier(const SgSpecialFunctionModifierStorageClass &source)
+*/
+/*!\fn bool SgSpecialFunctionModifier::isConstructor() const
+*/
+/*!\fn bool SgSpecialFunctionModifier::isConversion() const
+*/
+/*!\fn bool SgSpecialFunctionModifier::isDefault() const
+*/
+/*!\fn bool SgSpecialFunctionModifier::isDestructor() const
+*/
+/*!\fn bool SgSpecialFunctionModifier::isNotSpecial() const
+*/
+/*!\fn bool SgSpecialFunctionModifier::isOperator() const
+*/
+/*!\fn bool SgSpecialFunctionModifier::isUnknown() const
+*/
+/*!\fn inline static void SgSpecialFunctionModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgSpecialFunctionModifier *SgSpecialFunctionModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgSpecialFunctionModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgSpecialFunctionModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgSpecialFunctionModifier::initializeStorageClassArray(SgSpecialFunctionModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgSpecialFunctionModifier::clearMemoryPool()
+*/
+/*!\fn static void SgSpecialFunctionModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgSpecialFunctionModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgSpecialFunctionModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgSpecialFunctionModifier::roseRTI()
+*/
+/*!\fn virtual SgNode *SgSpecialFunctionModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgSpecialFunctionModifier::~SgSpecialFunctionModifier()
+*/
+/*!\fn virtual void SgSpecialFunctionModifier::post_construction_initialization()
+*/
+/*!\fn void SgSpecialFunctionModifier::display(std::string label) const
+*/
+/*!\fn void SgSpecialFunctionModifier::reset()
+*/
+/*!\fn void SgSpecialFunctionModifier::setConstructor()
+*/
+/*!\fn void SgSpecialFunctionModifier::setConversion()
+*/
+/*!\fn void SgSpecialFunctionModifier::setDefault()
+*/
+/*!\fn void SgSpecialFunctionModifier::setDestructor()
+*/
+/*!\fn void SgSpecialFunctionModifier::setNotSpecial()
+*/
+/*!\fn void SgSpecialFunctionModifier::setOperator()
+*/
+/*!\fn void SgSpecialFunctionModifier::setUnknown()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetConstructor()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetConversion()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetDefault()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetDestructor()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetNotSpecial()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetOperator()
+*/
+/*!\fn void SgSpecialFunctionModifier::unsetUnknown()
+*/
+/*!\fn void SgSpecialFunctionModifier::set_modifierVector(SgBitVector modifierVector)
+\description See  modifierVector)
+modifierVector for documentation */
+/*!\fn SgBitVector SgSpecialFunctionModifier::get_modifierVector() const
+\description See  const
+modifierVector for documentation */
+/*!\fn virtual SgNode *SgSpecialFunctionModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgSpecialFunctionModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgSpecialFunctionModifier::get_numberOfTraversalSuccessors()
+\description See  SgSpecialFunctionModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSpecialFunctionModifier::get_traversalSuccessorContainer()
+\description See  SgSpecialFunctionModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSpecialFunctionModifier::get_traversalSuccessorNamesContainer()
+\description See  SgSpecialFunctionModifier::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgSpecialFunctionModifier::SgSpecialFunctionModifier()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2034069705;

@@ -1,0 +1,51 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgXorAssignOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgXorAssignOp::SgXorAssignOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgXorAssignOp::SgXorAssignOp(const SgXorAssignOpStorageClass &source)
+*/
+/*!\fn inline static void SgXorAssignOp::operator delete(void *pointer)
+*/
+/*!\fn static SgXorAssignOp *SgXorAssignOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgXorAssignOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgXorAssignOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgXorAssignOp::initializeStorageClassArray(SgXorAssignOpStorageClass *storageArray)
+*/
+/*!\fn static void SgXorAssignOp::clearMemoryPool()
+*/
+/*!\fn static void SgXorAssignOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgXorAssignOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgXorAssignOp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgXorAssignOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgXorAssignOp::~SgXorAssignOp()
+*/
+/*!\fn virtual inline int SgXorAssignOp::precedence() const
+*/
+/*!\fn virtual void SgXorAssignOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgXorAssignOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgXorAssignOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgXorAssignOp::get_numberOfTraversalSuccessors()
+\description See  SgXorAssignOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgXorAssignOp::get_traversalSuccessorContainer()
+\description See  SgXorAssignOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgXorAssignOp::get_traversalSuccessorNamesContainer()
+\description See  SgXorAssignOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgXorAssignOp::SgXorAssignOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1630967007;

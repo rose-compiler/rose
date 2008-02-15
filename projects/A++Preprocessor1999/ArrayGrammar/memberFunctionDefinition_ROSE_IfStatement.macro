@@ -1,0 +1,85 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+CLASSNAME::CLASSNAME ( SgIfStmt* ifStatement )
+   : BASECLASSNAME(ifStatement)
+   {
+  // This function is a virtual member function 
+     recognizeSageSubTree (ifStatement);
+   }
+
+ROSE_Node* CLASSNAME::transform()
+   {
+  // printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+  // ROSE_ABORT();
+
+     ROSE_ASSERT (!error());
+
+     SgStatement* stmt = (SgStatement*) getSageSubTree();
+
+     if ( (ROSE_DEBUG > 0) || (ROSE::verbose == TRUE) )
+          printf ("In CLASSNAME::transform(): (file name = %s line number = %d)  trueBlock size = %d falseBlock size = %d \n",
+               ROSE::getFileName(stmt),ROSE::getLineNumber(stmt),
+               trueRoseStatementBlock->getNumberOfStatements(),
+               (falseRoseStatementBlock != NULL) ? falseRoseStatementBlock->getNumberOfStatements() : 0 );
+
+     roseConditionalStatement->transform();
+     trueRoseStatementBlock->transform();
+     if (falseRoseStatementBlock != NULL)
+          falseRoseStatementBlock->transform();
+
+  // Return the "this" pointer for now
+     return this;
+   }
+
+void CLASSNAME::recognizeSageSubTree ( SgIfStmt* ifStatement )
+   {
+     if ( (ROSE_DEBUG > 0) || (ROSE::verbose == TRUE) )
+          printf ("Sorry, not implemented: CLASSNAME::recognizeSageSubTree(SgBasicBlock*) \n");
+
+     ROSE_Node::setUp (CLASSNAME_TAG,ifStatement);
+   }
+
+void CLASSNAME::setRoseConditionalStatement  ( ROSE_Statement* roseStatement )
+   {
+     ROSE_ASSERT (roseStatement != NULL);
+     roseConditionalStatement = roseStatement;
+   }
+
+void CLASSNAME::setTrueRoseStatementBlock  ( ROSE_StatementBlock* roseStatementBlock )
+   {
+     ROSE_ASSERT (roseStatementBlock != NULL);
+     trueRoseStatementBlock = roseStatementBlock;
+   }
+
+void CLASSNAME::setFalseRoseStatementBlock ( ROSE_StatementBlock* roseStatementBlock )
+   {
+     ROSE_ASSERT (roseStatementBlock != NULL);
+     falseRoseStatementBlock = roseStatementBlock;
+   }
+
+ROSE_Statement* CLASSNAME::getRoseConditionalStatement  ()
+   {
+     ROSE_ASSERT (roseConditionalStatement != NULL);
+     return roseConditionalStatement;
+   }
+
+ROSE_StatementBlock* CLASSNAME::getTrueRoseStatementBlock  ()
+   {
+     ROSE_ASSERT (trueRoseStatementBlock != NULL);
+     return trueRoseStatementBlock;
+   }
+
+ROSE_StatementBlock* CLASSNAME::getFalseRoseStatementBlock ()
+   {
+     ROSE_ASSERT (falseRoseStatementBlock != NULL);
+     return falseRoseStatementBlock;
+   }
+
+
+
+
+
+
+

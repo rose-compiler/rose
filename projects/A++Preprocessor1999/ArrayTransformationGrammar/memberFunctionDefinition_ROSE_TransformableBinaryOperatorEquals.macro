@@ -1,0 +1,187 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+#if 0
+CLASSNAME::CLASSNAME ()
+   {
+     ROSE_TransformableNode::setUp (CLASSNAME_TAG,NULL);
+   }
+#endif
+
+CLASSNAME::CLASSNAME ( ROSE_Expression* expr )
+   : BASECLASSNAME(expr)
+   {
+     ROSE_ASSERT (expr != NULL);
+     ROSE_TransformableNode::setUp (CLASSNAME_TAG,expr);
+  // setLhsRoseExpression ();
+  // setRhsRoseExpression ();
+   }
+
+ROSE_TransformableNode* 
+CLASSNAME::transform()
+   {
+  // This function calls the transform functions on the Lhs and Rhs expressions and then assembles the 
+  // representative transformation for the CLASSNAME object.
+
+  // printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+  // ROSE_ABORT();
+
+#if 1
+  // get the lhs and rhs rose expressions (from the lover level array grammar)
+  // ROSE_TransformableOperandExpression* localLhsTransformableOperandExpression = 
+  //      (ROSE_TransformableOperandExpression*) getLhsTransformableExpression();
+  // ROSE_TransformableExpression* localRhsTransformableExpression = 
+  //      (ROSE_TransformableExpression*) getRhsTransformableExpression();
+     ROSE_TransformableOperandExpression* localLhsTransformableOperandExpression = 
+          (ROSE_TransformableOperandExpression*) getLhsTransformableExpression();
+     ROSE_TransformableExpression* localRhsTransformableExpression = 
+          getRhsTransformableExpression();
+     ROSE_ASSERT (localLhsTransformableOperandExpression != NULL);
+     ROSE_ASSERT (localRhsTransformableExpression != NULL);
+
+     ROSE_ASSERT (!localLhsTransformableOperandExpression->error());
+     ROSE_ASSERT (!localLhsTransformableOperandExpression->getRoseExpression()->error());
+     ROSE_ASSERT (!localRhsTransformableExpression->error());
+     ROSE_ASSERT (!localRhsTransformableExpression->getRoseExpression()->error());
+
+  // Call tranform() member function of the lhs and rhs expressions
+     ROSE_NonTransformableExpression* localLhsNonTransformableExpression = 
+          (ROSE_NonTransformableExpression*) localLhsTransformableOperandExpression->transform();
+     ROSE_NonTransformableExpression* localRhsNonTransformableExpression = 
+          (ROSE_NonTransformableExpression*) localRhsTransformableExpression->transform();
+     ROSE_ASSERT (localLhsNonTransformableExpression != NULL);
+     ROSE_ASSERT (localRhsNonTransformableExpression != NULL);
+
+     ROSE_ASSERT (!localLhsNonTransformableExpression->error());
+     ROSE_ASSERT (!localLhsNonTransformableExpression->getRoseExpression()->error());
+     ROSE_ASSERT (!localRhsNonTransformableExpression->error());
+     ROSE_ASSERT (!localRhsNonTransformableExpression->getRoseExpression()->error());
+
+  // The transform(expr,expr) is a virtual function and we have to cast the return pointer
+  // virtual functions must have the same return type from all classes (a C++ rule).
+     ROSE_NonTransformableExpression* nonTransformableExpression = (ROSE_NonTransformableExpression*)
+          assembleTransform (localLhsNonTransformableExpression,localRhsNonTransformableExpression);
+     ROSE_ASSERT (nonTransformableExpression != NULL);
+
+     return nonTransformableExpression;
+#else
+  // ROSE_Expression* roseLhsExpression = localLhsNonTransformableExpression->getRoseExpression ();
+  // ROSE_Expression* roseRhsExpression = localRhsNonTransformableExpression->getRoseExpression ();
+  // ROSE_ASSERT (roseLhsExpression != NULL);
+  // ROSE_ASSERT (roseRhsExpression != NULL);
+
+  // The shortest most direct form is (we can use this once the have everything debugged):
+  // ROSE_Expression* roseLhsExpression =  getLhsRoseExpression()->transform()->getRoseExpression ();
+
+     printf ("transform the Lhs in CLASSNAME::transform() \n");
+     ROSE_Expression* roseLhsExpression = (ROSE_Expression*) getLhsRoseExpression()->transform();
+
+     printf ("transform the Rhs in CLASSNAME::transform() \n");
+     ROSE_Expression* roseRhsExpression = (ROSE_Expression*) getRhsRoseExpression()->transform();
+
+     printf ("transform the ARRAY ASSIGNMENT OPERATOR in CLASSNAME::transform() \n");
+  // Now assemble the pieces into a ROSE_Expression
+  // ROSE_Expression* roseRootExpression = (ROSE_BinaryArrayOperatorEquals*) roseSubTree())->transform (roseLhsExpression,roseRhsExpression);
+  // ROSE_C_Expression* roseRootExpression = 
+  //      (ROSE_C_Expression*) ( ((ROSE_Expression*) getRoseSubTree())->transform (roseLhsExpression,roseRhsExpression));
+  // ROSE_C_Expression* roseRootExpression =
+  //      (ROSE_C_Expression*) (getRoseTransformation()->transform (roseLhsExpression,roseRhsExpression));
+
+     ROSE_BinaryArrayOperator* roseLocalExpression = (ROSE_BinaryArrayOperator*) getRoseExpression();
+     ROSE_ASSERT (roseLocalExpression != NULL);
+     ROSE_C_Expression* roseRootExpression =
+          (ROSE_C_Expression*) (roseLocalExpression->assembleTransform (roseLhsExpression,roseRhsExpression));
+
+  // printf ("Exiting at base of CLASSNAME::transform() \n");
+  // ROSE_ABORT();
+
+#if 1
+  // Return a ROSE_NonTransformableExpression object
+     ROSE_NonTransformableExpression* nonTransformableExpression = new ROSE_NonTransformableExpression (roseRootExpression);
+     ROSE_ASSERT (nonTransformableExpression != NULL);
+
+     return nonTransformableExpression;
+#else
+     return NULL;
+#endif
+#endif
+   }
+
+#if 0
+  This is defined in the base class!
+ROSE_TransformableNode* CLASSNAME::transform ( 
+     ROSE_NonTransformableExpression* lhs,
+     ROSE_NonTransformableExpression* rhs )
+   {
+  // The role of this function is the take the ROSE_Transformable grammar objects and
+  // use them from the tranformations of the lhs and rhs to assemble the transformation
+  // for the CLASSNAME object.
+
+     ROSE_Expression* roseLhsExpression = lhs->getRoseExpression ();
+     ROSE_ASSERT (roseLhsExpression != NULL);
+
+     ROSE_Expression* roseRhsExpression = rhs->getRoseExpression ();
+     ROSE_ASSERT (roseRhsExpression != NULL);
+     
+     ROSE_ASSERT (!roseLhsExpression->error());
+     ROSE_ASSERT (!roseRhsExpression->error());
+
+     ROSE_BinaryArrayOperator* roseLocalExpression = (ROSE_BinaryArrayOperator*) getRoseExpression();
+     ROSE_ASSERT (roseLocalExpression != NULL);
+     ROSE_C_Expression* roseRootExpression =
+          (ROSE_C_Expression*) (roseLocalExpression->assembleTransform (roseLhsExpression,roseRhsExpression));
+     ROSE_ASSERT (roseRootExpression != NULL);
+
+  // Return a ROSE_NonTransformableExpression object
+     ROSE_NonTransformableExpression* nonTransformableExpression = new ROSE_NonTransformableExpression (roseRootExpression);
+     ROSE_ASSERT (nonTransformableExpression != NULL);
+
+     return nonTransformableExpression;
+   }
+#endif
+
+// Not clear if this is needed!
+ROSE_TransformableExpression* CLASSNAME::getLhsTransformableExpression()
+   {
+  // We want to define a special implementation of this function since 
+  // we want to return a ROSE_TransformableOperandExpression*
+
+  // The transformable binary operator equals grammar includes only a RHS so that the 
+  // definition includes a Lhs ROSE_ARrayOperandExpression (not a more general lhs expression).
+#if 0
+     printf ("ERROR, the Lhs Operand does not exist in the case of a Transformable Binary Operator Equals! \n");
+     ROSE_ABORT();
+
+     return (ROSE_TransformableOperandExpression*) BASECLASSNAME::getLhsTransformableExpression();
+#else
+ // The BASECLASSNAME::getLhsTransformableExpression() contains an assertion that the pointer is NOT NULL!
+ //  ROSE_ASSERT (BASECLASSNAME::getLhsTransformableExpression() == NULL);
+     ROSE_Expression* roseExpression = getRoseExpression()->getLhsRoseExpression();
+     ROSE_TransformableOperandExpression* returnTransformableOperandExpression =
+          new ROSE_TransformableOperandExpression (roseExpression);
+
+     ROSE_ASSERT (returnTransformableOperandExpression != NULL);
+
+     return returnTransformableOperandExpression;
+#endif
+   }
+
+ROSE_BinaryArrayOperatorEquals* CLASSNAME::getRoseExpression ()
+   {
+     ROSE_BinaryArrayOperatorEquals* roseBinaryOperator = (ROSE_BinaryArrayOperatorEquals*) getRoseSubTree();
+
+     return roseBinaryOperator;
+   }
+
+
+
+
+
+
+
+
+
+
+
+

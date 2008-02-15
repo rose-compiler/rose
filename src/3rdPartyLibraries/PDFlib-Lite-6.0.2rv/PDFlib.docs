@@ -1,0 +1,10 @@
+ /*!
+     \defgroup ROSE_PDFLibGroup PDFlib
+     \ingroup ROSE_3rdPartyLibrariesGroup
+
+     \brief A PDF library for generating PDF files from the AST.
+
+     This library will not likely be distributed as a part of ROSE in the final release.
+
+  */
+

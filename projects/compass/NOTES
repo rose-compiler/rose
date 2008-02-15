@@ -1,0 +1,22 @@
+
+
+Removing all the output files before regeneration:
+find . -name "*TestOutput.txt" -exec rm {} \;
+
+
+DQ (1/4/2008): When commenting out checkers, the "#" cannot be 
+seperated from the name of the checker.
+So,
+#checker 
+instead of 
+# checker
+
+
+Why are there two *.tex files in each directory? (Answer from Gary Yuan)
+   The two .tex files was a fix for highlight and the (un)archive mechanism 
+that would make new tarballs in the repository of current checkers. What 
+happened was that if highlight was turned on then the original .tex file 
+would be overwritten by the highlighted version in the archive. But since 
+there are now two .tex files, one is left as the original (* Docs.tex) 
+and one is automatically generated/highlighted (*Docs.new.tex). Both files 
+are necessary but the .new.tex file can be regenerated if removed.

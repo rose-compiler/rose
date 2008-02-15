@@ -1,0 +1,73 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Malloc Return Value Used In If Stmt}
+\label{MallocReturnValueUsedInIfStmt::overview}
+
+``ALE3D Coding Standards \& Style Guide'' item \#4.5 states that
+\begin{quote}
+When using raw {\tt malloc()} and {\tt new}, developers should check the return value for {\tt NULL}. This is especially important when allocating large blocks of memory, which may exhaust heap resources.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out function references to malloc. Then the parent nodes are traversed up until a basic scope block is found at which point a nested AST traversal seeks If-statement conditional expressions containing the memory block returned from malloc. If no such If-statement conditional is found in the immediate basic containing block scope then an error is flagged.
+
+\subsection{Non-Compliant Code Example}
+The non-compliant code fails to check the return value of {\tt malloc()}.
+
+\begin{verbatim}
+#include <stdlib.h>
+
+int main()
+{
+  int *iptr = (int*)malloc( 256*sizeof(int) );
+
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution uses an if statement to check the return value of {\tt malloc()} for {\tt NULL}.
+
+\begin{verbatim}
+#include <stdlib.h>
+
+int main()
+{
+  int *iptr = (int*)malloc( 256*sizeof(int) );
+
+  if( iptr == NULL )
+    return 1;
+
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform AST traversal visiting function call nodes corresponding to {\tt malloc()}.
+\item For each call to {\tt malloc()} traverse its parent nodes until an if statement or the end of a basic block is reached.
+\item If an if statement is encountered, check that the if statement performs a comparison involving the return value from {\tt malloc()}; if this is not the case then flag a violation.
+\item If a basic block is reached, then flag a violation as the return value of {\tt malloc()} may be out of scope.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+
+Arrighi B., Neely R., Reus J. ``ALE3D Coding Standards \& Style Guide'', 2005.

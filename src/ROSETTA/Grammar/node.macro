@@ -1,0 +1,46 @@
+
+// class ROSE_TreeBaseClass
+class ROSE_Node
+   {
+     public:
+         ~ROSE_Node ();
+          ROSE_Node ();
+
+       // How do we want to build this?
+       // ROSE_Node ( ROSE_GrammarVariants id, SgNode* subTree );
+          ROSE_Node ( SgNode* subTree );
+
+          void setUp ( ROSE_GrammarVariants newId, SgNode* newSubTree );
+          ROSE_GrammarVariants getVariant() const;
+          void setVariant ( const ROSE_GrammarVariants id );
+
+       // This make this class an abstract base class
+          virtual ROSE_Node* transform() = 0;
+
+       // Error recovery mechanism (for the parser)
+          bool error() const;
+          void setParseError ( bool X );
+
+          const SgNode* getSageSubTree();
+          void setSageSubTree ( const SgNode* node );
+
+          static Sg_File_Info* buildSageFileInfo ( char* filename = "default_file_name" );
+
+          static SgTypeDouble* buildTypeDouble();
+          static SgTypeFloat*  buildTypeFloat();
+          static SgTypeInt*    buildTypeInt();
+
+          virtual SgType*      getType();
+
+     private:
+	  ROSE_GrammarVariants id;
+          SgNode* sageSubTree;
+          bool parseError;  // error recovery mechanism for parser
+
+  // We don't want to have these be used within the interface
+     private:
+          ROSE_Node ( const ROSE_Node & X );
+          ROSE_Node & operator= ( const ROSE_Node & X );
+   };
+
+

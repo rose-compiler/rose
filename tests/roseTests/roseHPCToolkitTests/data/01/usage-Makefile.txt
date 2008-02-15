@@ -1,0 +1,30 @@
+***************************************************************
+usage: make <action_1> [<action_2> ...]
+
+Valid <action_k> values include:
+
+*  @TARGET@
+
+Build the program, '@TARGET@'.
+
+*  profile
+
+Run the HPCToolkit on the sample program and collect
+data for these PAPI_[xxx] counters:
+
+   @COUNTERS@
+
+This data is stored in '@OUT_PROFILE@/PAPI_*.xml'.
+
+*  analysis
+
+Run the HPCToolkit analysis tools to generate
+(1) an analysis of the program binary,
+    @OUT_BLOOP@
+(2) input for the hpcviewer tool in a file,
+    @OUT_HPCVIEWER@
+
+*  pdf
+
+Generate a PDF file, @OUT_PDF@, of the ROSE AST.
+***************************************************************

@@ -1,0 +1,65 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgLabelSymbol
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgLabelStatement *SgLabelSymbol::p_declaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgLabelSymbol::SgLabelSymbol(const SgLabelSymbolStorageClass &source)
+*/
+/*!\fn inline static void SgLabelSymbol::operator delete(void *pointer)
+*/
+/*!\fn static SgLabelSymbol *SgLabelSymbol::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgLabelSymbol::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgLabelSymbol::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgLabelSymbol::initializeStorageClassArray(SgLabelSymbolStorageClass *storageArray)
+*/
+/*!\fn static void SgLabelSymbol::clearMemoryPool()
+*/
+/*!\fn static void SgLabelSymbol::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgLabelSymbol::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgLabelSymbol::roseRTI()
+*/
+/*!\fn virtual SgLabelSymbol::~SgLabelSymbol()
+*/
+/*!\fn virtual SgNode *SgLabelSymbol::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgLabelSymbol::set_declaration(SgLabelStatement *declaration)
+\description See  *declaration)
+declaration for documentation */
+/*!\fn SgLabelStatement *SgLabelSymbol::get_declaration() const
+\description See  const
+declaration for documentation */
+/*!\fn virtual SgName SgLabelSymbol::get_name() const
+\description See  const
+name for documentation */
+/*!\fn virtual SgNode *SgLabelSymbol::get_symbol_basis() const
+\description See  const
+symbol_basis for documentation */
+/*!\fn virtual SgNode *SgLabelSymbol::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgLabelSymbol::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgLabelSymbol::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgLabelSymbol::get_numberOfTraversalSuccessors()
+\description See  SgLabelSymbol::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgLabelSymbol::get_traversalSuccessorContainer()
+\description See  SgLabelSymbol::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgLabelSymbol::get_traversalSuccessorNamesContainer()
+\description See  SgLabelSymbol::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgLabelSymbol::SgLabelSymbol(SgLabelStatement *declaration=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1163916051;

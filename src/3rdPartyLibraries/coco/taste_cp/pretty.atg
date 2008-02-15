@@ -1,0 +1,131 @@
+/***********************************************************
+**   PRETTY.ATG
+**   Coco/R C++ Taste Pretty-printer example.
+**   Adapted to C++ by Frankie Arzu <farzu@uvg.edu.gt>
+**      from Moessenboeck's (1990) Oberon example
+**
+**   May 24, 1996  Version 1.06
+************************************************************/
+
+$CX /* Generate main module, C++ */
+
+COMPILER Pretty
+/* Taste pretty printer */
+
+#include "prettypr.hpp"
+#include "prettys.hpp"
+
+/*--------------------------------------------------------------------------*/
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit  = "0123456789".
+  cr     = CHR(13).
+  lf     = CHR(10).
+  tab    = CHR(9).
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+  Pretty =
+   "PROGRAM"                        (. Append("PROGRAM ") .)
+   Ident
+    ";"                             (. Append(";"); IndentNextLine(); .)
+   Body
+   Ident
+   "."                              (. Append(".") .) .
+
+  Body =
+    { "VAR"                         (. Append("VAR"); IndentNextLine() .)
+      { Ident
+        ":"                         (. Append(" : ") .)
+        TypeId
+        ";"                         (. Append(";"); NewLine() .)
+
+      }                             (. ExdentNextLine() .)
+
+    | "PROCEDURE"                   (. NewLine(); Append("PROCEDURE ") .)
+      Ident
+      ";"                           (. Append(";"); IndentNextLine() .)
+      Body
+      Ident
+      ";"                           (. Append(";"); ExdentNextLine();
+                                       NewLine() .)
+
+    }
+    "BEGIN"                         (. Append("BEGIN") .)
+       StatSeq
+    "END"                           (. Append("END ") .) .
+
+  TypeId =  "INTEGER"               (. Append("INTEGER") .)
+           | "BOOLEAN"              (. Append("BOOLEAN") .) .
+
+  Ident = ident                     (. char IdentName[20];
+                                       LexName(IdentName, 19);
+                                       Append(IdentName); .) .
+
+  StatSeq =                         (. IndentNextLine() .)
+    Stat {";"                       (. Append(";"); NewLine() .)
+    Stat}                           (. ExdentNextLine() .) .
+
+  Stat
+  = [ Ident
+      ( ":="                        (. Append(" := ") .)
+      Expression | )
+    | "IF"                          (. Append("IF ") .)
+      Expression
+      "THEN"                        (. Append(" THEN ") .)
+      StatSeq
+      [ "ELSE"                      (. Append("ELSE ") .)
+      StatSeq ]
+      "END"                         (. Append("END") .)
+    | "WHILE"                       (. Append("WHILE ") .)
+      Expression
+      "DO"                          (. Append(" DO") .)
+      StatSeq
+      "END"                         (. Append("END") .)
+    | "READ"                        (. Append("READ ") .)
+      Ident
+    | "WRITE"                       (. Append("WRITE ") .)
+      Expression
+    ] .
+
+  Expression = SimExpr [ RelOp SimExpr ] .
+
+  SimExpr = Term { AddOp Term } .
+
+  Term = Factor { MulOp Factor } .
+
+  Factor
+      = ( Ident
+          | "TRUE"                  (. Append("TRUE ") .)
+          | "FALSE"                 (. Append("FALSE ") .)
+          | number                  (. char Num[20];
+                                       LexString(Num, 19);
+                                       Append(Num); .)
+          | "-"                     (. Append(" - ") .)
+            Factor
+        ) .
+
+  MulOp =   "*"                     (. Append(" * ") .)
+          | "/"                     (. Append(" / ") .)
+          .
+
+  AddOp =   "+"                     (. Append(" + ") .)
+          | "-"                     (. Append(" - ") .)
+          .
+
+  RelOp =   "="                     (. Append(" = ") .)
+          | "<"                     (. Append(" < ") .)
+          | ">"                     (. Append(" > ") .)
+          .
+
+END Pretty.
+
+

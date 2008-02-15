@@ -1,0 +1,112 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateInstantiationDefn
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgTemplateInstantiationDefn
+\brief This class represents the concept of a class definition in C++.
+    Templated class definitions are currently nearly the same as class definitions
+(SgClassDefinition).  I expect that work in the future will provide more features that
+are specific to templates.  Currently this version is different from the SgClassDefinition
+in that its constructor takes a SgTemplateInstantiationDecl instead of a SgClassDeclaration.
+\internal This is not a base class for IR nodes.
+*/
+/*
+\sa
+\ref SgTemplateInstantiationDefn_usage  "Example of using a SgTemplateInstantiationDefn object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateInstantiationDefn data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTemplateInstantiationDefn member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgTemplateInstantiationDefn_create "Example:create an SgTemplateInstantiationDefn object"
+*/
+/*!
+\fn SgTemplateInstantiationDefn::~SgTemplateInstantiationDefn()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgTemplateInstantiationDefn::isSgTemplateInstantiationDefn (SgNode *s)
+\brief Cast function (from derived class to SgTemplateInstantiationDefn pointer).
+   This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
+pointer to an object derived from a SgTemplateInstantiationDefn.
+\return Returns valid pointer to SgTemplateInstantiationDefn if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgTemplateInstantiationDefn::isSgTemplateInstantiationDefn (const SgNode *s)
+\brief Cast function (from derived class to SgTemplateInstantiationDefn pointer).
+   This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
+pointer to an object derived from a SgTemplateInstantiationDefn.
+\return Returns valid pointer to SgTemplateInstantiationDefn if input is derived from a SgLocatedNode.
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgTemplateInstantiationDefn::SgTemplateInstantiationDefn(SgTemplateInstantiationDecl *d)
+*/
+/*!
+\fn SgTemplateInstantiationDefn::SgTemplateInstantiationDefn(Sg_File_Info *f,SgTemplateInstantiationDecl *d)
+\brief This is the constructor.
+   This constructor builds the SgTemplateInstantiationDefn base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgTemplateInstantiationDefn::SgTemplateInstantiationDefn(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgTemplateInstantiationDefn::SgTemplateInstantiationDefn(const SgTemplateInstantiationDefnStorageClass &source)
+*/
+/*!\fn inline static void SgTemplateInstantiationDefn::operator delete(void *pointer)
+*/
+/*!\fn static SgTemplateInstantiationDefn *SgTemplateInstantiationDefn::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTemplateInstantiationDefn::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTemplateInstantiationDefn::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTemplateInstantiationDefn::initializeStorageClassArray(SgTemplateInstantiationDefnStorageClass *storageArray)
+*/
+/*!\fn static void SgTemplateInstantiationDefn::clearMemoryPool()
+*/
+/*!\fn static void SgTemplateInstantiationDefn::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTemplateInstantiationDefn::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTemplateInstantiationDefn::roseRTI()
+*/
+/*!
+\fn virtual SgNode *SgTemplateInstantiationDefn::copy(SgCopyHelp &help) const
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+\return Returns pointer to copy of SgTemplateInstantiationDefn.
+*/
+/*!\fn virtual SgTemplateInstantiationDefn::~SgTemplateInstantiationDefn()
+*/
+/*!\fn virtual void SgTemplateInstantiationDefn::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgTemplateInstantiationDefn::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgTemplateInstantiationDefn::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgTemplateInstantiationDefn::post_construction_initialization()
+*/
+/*!\fn virtual SgName SgTemplateInstantiationDefn::get_qualified_name() const
+\description See  const
+qualified_name for documentation */
+/*!\fn virtual SgNode *SgTemplateInstantiationDefn::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTemplateInstantiationDefn::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTemplateInstantiationDefn::get_numberOfTraversalSuccessors()
+\description See  SgTemplateInstantiationDefn::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTemplateInstantiationDefn::get_traversalSuccessorContainer()
+\description See  SgTemplateInstantiationDefn::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTemplateInstantiationDefn::get_traversalSuccessorNamesContainer()
+\description See  SgTemplateInstantiationDefn::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTemplateInstantiationDefn::SgTemplateInstantiationDefn()
+*/
+//@}
+int SAGE_Doxygen_Dummy_8717441532315;

@@ -1,0 +1,3 @@
+// very simple
+
+int x;

@@ -1,0 +1,65 @@
+\chapter{Making your Contributions to ROSE}
+
+To make the process of contributing to ROSE go more smoothly, the following procedure has
+been established.  Steps 1-3 should be followed for contributions of new code, and
+step 2 for changes to existing code.
+
+\begin{enumerate}
+\item First of all, work outside of the ROSE tree.  You can use your own Makefile to control the build process.  An example of such a Makefile is shown in Figure~\ref{Tutorial:exampleMakefile} .
+
+\item If you find you need to make changes to ROSE, make them directly to the ROSE source tree, and contribute patches as you work.  If you have access to the CVS repository, use the `\verb|cvs diff|' command to create patches.  If you are starting with a heavily patched version of ROSE, or don't have access to CVS, make a pristine copy of ROSE before you start and use the plain `\verb|diff|' command.
+
+In order to meet the standard for ROSE patches, which include:
+\begin{itemize}
+\item Context information
+\item Omission of machine-generated files
+\end{itemize}
+please supply the following flags to your `\verb|diff|' or `\verb|cvs diff|' command:
+
+\begin{verbatim}
+-u --exclude 'aclocal.m4' --exclude 'autom4te.cache' --exclude 'Makefile.in'
+--exclude 'configure'
+\end{verbatim}
+
+If using `\verb|diff|' rather than `\verb|cvs diff|', the `\verb|-r|' flag is also required.
+
+The syntax for the \verb|diff| command is as follows:
+
+\begin{verbatim}
+diff [flags] <dir1> <dir2> > <patchfile>
+\end{verbatim}
+
+For our purposes, the \verb|diff| command should be issued in the directory directly above the ROSE source directory.  Be sure to give the patch file a suitable name such as \verb|enhanced-template-support.patch|.  \verb|<dir1>| should be the name of your pristine source directory; \verb|<dir2>| that of your modified sources.  For example, if your pristine source tree is located at \verb|/home/me/research/ROSE-orig| and your modified sources are in \verb|/home/me/research/ROSE|, you can issue the commands:
+
+\begin{verbatim}
+$ cd /home/me/research
+$ diff -ur --exclude 'aclocal.m4' --exclude 'autom4te.cache' --exclude 'Makefile.in'
+  --exclude 'configure' ROSE-orig ROSE > my-changes.patch
+\end{verbatim}
+
+The syntax for the \verb|cvs diff| command is as follows:
+
+\begin{verbatim}
+cvs diff [flags] <dir> > <patchfile>
+\end{verbatim}
+
+This command should be given in the directory directly above that to which you wish to contribute changes.  Then the \verb|<dir>| option shall be the name of this directory.  For example, to create a patch for the \verb|src/frontend| directory, issue the following commands:
+
+\begin{verbatim}
+$ cd src
+$ cvs diff -u --exclude 'aclocal.m4' --exclude 'autom4te.cache' --exclude 'Makefile.in'
+  --exclude 'configure' frontend > my-changes.patch
+\end{verbatim}
+
+You will need to supply information to the maintainer on how to apply your patch.  You will need to look at the paths following the `\verb|---|' and `\verb|+++|' markers in the patch file.  If you used `\verb|cvs diff|' to create the patch, the paths will likely be relative to the directory you were in when you created the patch, and you'll need to apply the patch with `\verb|patch -p0|' in the same directory.  If you used `\verb|diff|' the path will probably include the name of your source tree root directory, and you'll need to use `\verb|patch -p1|' in the root of the source tree.
+
+\item When you are ready to contribute the work, it should first be integrated into the ROSE tree.  Create a new directory either under \verb|projects| or a subdirectory of \verb|src|.  If you are unsure where to create your directory, contact the maintainer.  Once you have created the directory copy your files there, excluding the Makefile.
+
+You will need to create a Makefile.am which integrates with the ROSE build process.  The best way to learn about these is by looking at other Makefile.am files in sibling directories to yours.  Note the differences between a `\verb|project|' and a `\verb|src|' Makefile.am, e.g. only the latter will create shared libraries.  Remember to add your new directory to the \verb|SUBDIRS| list in the parent directory's Makefile.am, and your Makefile.am to the list of Makefiles in \verb|configure.in| in the root directory.
+
+If your project is in \verb|src|, your test cases should go into a subdirectory of \verb|tests/roseTests|, which mirrors the \verb|src| directory structure.  Otherwise they can go into your project directory.  Again, look at other Makefiles for information on how test cases work.
+
+While making these changes, keep track of all the new files you create within the ROSE tree.  These will typically be all the files in your new directory as well as your test codes and test input codes in the \verb|tests| directory, if applicable.  Once you are done, `\verb|tar|' up all these files and send them to the maintainer, along with patches to existing files, created using `\verb|diff|' or `\verb|cvs diff|' as described in step 2.
+\end{enumerate}
+
+The current maintainer is Dan Quinlan \verb|<dquinlan@llnl.gov>|.

@@ -1,0 +1,15 @@
+VAR
+  A,B,C,D;
+  WRITE 1+(2*3)+4;
+  WRITE 100/10;
+  READ  A;
+  WRITE A;
+  B := A*16;
+  WRITE B*2
+
+
+
+
+
+
+

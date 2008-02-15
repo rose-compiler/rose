@@ -1,0 +1,18 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t
+*/
+/*! \name Class Members*/
+//@{
+/*!\var ROSEAttributesList *wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::currentListOfAttributes
+*/
+/*!\var SgLocatedNode *wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::previousLocNodePtr
+*/
+/*!\var int wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::sizeOfCurrentListOfAttributes
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode *node=(0),ROSEAttributesList *preprocInfo=(0),int len=0)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_95776953;

@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgEqualityOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgEqualityOp::SgEqualityOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgEqualityOp::SgEqualityOp(const SgEqualityOpStorageClass &source)
+*/
+/*!\fn inline static void SgEqualityOp::operator delete(void *pointer)
+*/
+/*!\fn static SgEqualityOp *SgEqualityOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgEqualityOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgEqualityOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgEqualityOp::initializeStorageClassArray(SgEqualityOpStorageClass *storageArray)
+*/
+/*!\fn static void SgEqualityOp::clearMemoryPool()
+*/
+/*!\fn static void SgEqualityOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgEqualityOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgEqualityOp::roseRTI()
+*/
+/*!\fn virtual SgEqualityOp::~SgEqualityOp()
+*/
+/*!\fn virtual SgNode *SgEqualityOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgEqualityOp::precedence() const
+*/
+/*!\fn virtual void SgEqualityOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgEqualityOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgEqualityOp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgEqualityOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgEqualityOp::get_numberOfTraversalSuccessors()
+\description See  SgEqualityOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgEqualityOp::get_traversalSuccessorContainer()
+\description See  SgEqualityOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgEqualityOp::get_traversalSuccessorNamesContainer()
+\description See  SgEqualityOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgEqualityOp::SgEqualityOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_737385813;

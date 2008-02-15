@@ -1,0 +1,464 @@
+\chapter{Using Compass}
+
+\section{Running Compass}
+
+    Compass is currently distributed as part of ROSE, and represents one
+of many tools that can be built using the ROSE open compiler infrastructure.
+Compass resides in the {\tt ROSE/projects/compass}.  As part of building ROSE
+Compass will be automatically built in the Compass directory.  Running compass
+is a matter if typing {\tt compassMain} and handing in a number of options.
+The {\tt compassMain} program acts just like a compiler so it is appropriate
+to hand it the same options required to compile your source file (e.g {\tt -I}
+directory paths and a source file.  Compass will figure out the language from
+the source file suffix.  Using the {\tt --help} option will provide a more
+complete list of options available to ROSE based tools.  See also the section
+of this chapter on the include/exclude options for path and file names as
+these will permit the output from header files to be tailored.
+
+
+\section{Output from Compass}
+
+   Output from compass can be generated in a number of forms, the default is
+ASCII text output of the messages about rule violations with the source code
+position in {\it GNU standard source code position format}.  This form can be
+used to interact with external tools (e.g. Emacs) to permit alternative
+interface to Compass.  Mechanisms available include:
+
+\begin{itemize}
+   \item Emacs: \\
+         Detecting errors while you type \ref{compassEmacs} and \ref{Compass_Emacs_Screenshot}.
+
+   \item CompassGUI: \\
+         There is also a Compass GUI for reviewing Compass output and interactively
+         reruning compass and sifting thorugh the output while relatiting them to the source
+         code \ref{Compass_GUI}. This work uses the QRose library produced at Imperial College
+         London by Gabriel Coutinho, as part of their development of FPGA tools using ROSE.
+         QRose is based on the Qt library and provides a wide number of ROSE aware components
+         to make the development of GUIs for ROSE based tools easy.  The source code for the 
+         Compass GUI is provided, but this work is unfinished (and required the QRose library
+         available from Imperial).
+
+   \item ToolGear post-processing: \\
+         Output in XML permits the use of ToolGear (LLNL tool availalbe on the web) for
+         viewing Compass generated output.  this mechanism is particularly useful for reviewing
+         the results of nightly builds (and associated runs of large projects using
+         Compass). See figure \ref{Compass_ToolGear_Screenshot}
+
+   \item ASCII output: \\
+         Output in ASCII format is of the form shown in \ref{Compass_ASCII_Output}.  This
+         form permits the connection to multiple external tools (the Emacs interface reads
+         the ASCII output format directly).
+ 
+\end{itemize}
+
+
+\begin{figure}
+\includegraphics[width=7in]{emacs_screenshot.jpg}
+\caption{Compass error messages integrated into Emacs}
+\label{Compass_Emacs_Screenshot}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=7in]{CompassScreenshot.pdf}
+\caption{Compass GUI for interpretation of rule violations}
+\label{Compass_GUI}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=7in]{ToolGear_gui_compass_01.pdf}
+\caption{Processing of XML Compass output using ToolGear}
+\label{Compass_ToolGear_Screenshot}
+\end{figure}
+
+\begin{figure}
+{\scriptsize
+\begin{verbatim}
+LocalizedVariables: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_117.C:30.5: Variable pmNull does not seem to be used.
+FunctionDefinitionPrototype: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_123.C:27.1-10: matching function prototype not available
+LocPerFunction: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_117.C:23.1-20: This function has too many lines of code :: LOC = 14 > 10
+MagicNumber: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_117.C:33.14: Occurrence of integer or floating constant.
+MagicNumber: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_117.C:36.14: Occurrence of integer or floating constant.
+MagicNumber: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_117.C:37.14: Occurrence of integer or floating constant.
+FunctionDocumentation: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_123.C:27.1-10: function is not documented: name =  ::main
+FunctionDocumentation: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_123.C:9.10: function is not documented: name =  ::X < int , int , 10 > ::f
+FunctionDocumentation: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_123.C:12.10: function is not documented: name =  ::X < int , int * , 5 > ::f
+FunctionDocumentation: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_123.C:16.10: function is not documented: name =  ::X < int * , float , 10 > ::f
+\end{verbatim}
+}
+\caption{Example of ASCII output from Compass. }
+\label{Compass_ASCII_Output}
+\end{figure}
+
+
+
+\subsection{Using Compass With Emacs}
+
+\label{compass::emacs}
+
+Compass as a checker is most useful when the user is notified as early as possible
+when he violates a desired software property. Although for many purposes it is
+sufficient to run Compass separately  it is possible to use compass
+seamlessly when developing in emacs. By using an emacs extension called {\em flymake} together
+with Compass erroneus lines can be highlighted while programming, and the relevant error messages displayed 
+in a dialog. Syntax errors from ROSE will be displayed as well, see figure \ref{Compass_Emacs_Screenshot}.
+
+Much thanks for David Svoboda at CERT at CMU for first configuring Flymake to work with
+Compass and demonstrating the idea.  It has provided a great way to check code using
+compass and its use in Emacs has stimulate a number of ideas that have made their way
+back into Compass.
+
+\subsubsection{Emacs .emacs Code Requirement}
+
+   Figure \ref{compassEmacs} shows the code that is required to be added to the {\tt .emacs}
+file.  A copy of this code is available in the compass source directory in the file
+{\tt emacs\_compass\_config.el}.
+
+\begin{figure}
+{\scriptsize
+\begin{verbatim}
+; New Compass support for Emacs using version 22 of Emacs and Flymake.
+; Comment out these two lines to use older version of emacs.
+(require 'flymake)
+(setq flymake-allowed-file-name-masks (cons '(".+\\.C\\'" flymake-simple-make-init flymake-simple-cleanup flymake-get-real-file-name) flymake-allowed-file-name-masks))
+
+
+(defun flymake-master-make-header-init ()
+  (flymake-master-make-init 'flymake-get-include-dirs
+			    '("\\.C\\'" "\\.c\\'")
+			    "[ \t]*#[ \t]*include[ \t]*\"\\([[:word:]0-9/\\_.]*%s\\)\""))
+
+(add-hook 'find-file-hook 'flymake-find-file-hook)
+
+(setq flymake-log-level 3)
+(setq flymake-no-changes-timeout 0.5)
+
+(defcustom rose-source-tree "/home/dquinlan/ROSE/NEW_ROSE/" "Location of top of ROSE source tree")
+(defcustom rose-build-tree "/home/dquinlan/ROSE/ROSE_CompileTree/LINUX-64bit-3.4.6/" "Location of top of ROSE build tree")
+(defun add-buildfile-dir-for-rose ()
+  (let ((source-dir-name (file-name-directory buffer-file-name)))
+    ;(message "%S" `(source dir ,source-dir-name))
+    (if
+      ; (string-equal rose-source-tree (substring source-dir-name 0 (length rose-source-tree)))
+        (string-equal rose-source-tree (substring source-dir-name 0 (min (length source-dir-name) (length rose-source-tree))))
+        (let ((buildfile-dir (concat "../../../../../../../../../../../../../../../../../../../" rose-build-tree "/" (substring source-dir-name (length rose-source-tree)))))
+        ; (message "%S" `(buildfile-dir ,buildfile-dir))
+        ; (set-variable 'flymake-buildfile-dirs (cons buildfile-dir flymake-buildfile-dirs) 'local))
+          (set-variable 'flymake-buildfile-dirs (append (mapcar (lambda (dir) (concat buildfile-dir "/" dir)) flymake-buildfile-dirs) flymake-buildfile-dirs) 'local))
+      (progn
+        ;(message "%S" `(bad-prefix))
+        source-dir-name))))
+(defun set-rose-source-dir (dir) "Set the top of the ROSE source tree to use with Flymake" (interactive "DThe top of the ROSE source tree: \n")
+  (setq rose-source-tree dir 'local)
+  (add-buildfile-dir-for-rose))
+(defun set-rose-build-dir (dir) "Set the top of the ROSE build tree to use with Flymake" (interactive "DThe top of the ROSE build tree: \n")
+  (setq rose-build-tree dir 'local)
+  (add-buildfile-dir-for-rose))
+
+(add-hook 'find-file-hook 'add-buildfile-dir-for-rose)
+
+;(list "make"
+;;  (list "-s" "-C" "/home/dquinlan/ROSE/NEW_ROSE/developersScratchSpace/Dan/EmacsCompass_tests/"
+;    (list "-s"
+;   (list "-s -C" "`pwd | sed 's@^/home/dquinlan/ROSE/NEW_ROSE/@/home/dquinlan/ROSE/ROSE_CompileTree/LINUX-64bit-3.4.6/@'`"
+;	   (concat "CHK_SOURCES=" source)
+;	     "SYNTAX_CHECK_MODE=1"
+;		   "check-syntax"))
+
+(global-set-key [f3] 'flymake-display-err-menu-for-current-line)
+(global-set-key [f4] 'flymake-goto-next-error)
+
+\end{verbatim}
+}
+\caption{Addition to .emacs when integrating Compass into emacs. }
+\label{compassEmacs}
+\end{figure}
+
+\subsubsection{Emacs Version Requirement}
+
+Emacs version 22 or newer is required to take advantage of the emacs integration of
+Compass. Before using Compass a 3 step process must be followed:
+\begin{itemize}
+   \item Add the text in figure \ref{compassEmacs} (in {\tt ROSE/projects/compass/emacs\_compass\_config.el}) to .emacs
+   \item Change /path/to/makefile in figure \ref{compassEmacs} to the path to the project you are editing in Compass
+   \item Add a 'check-syntax' rule to the makefile of the project that you are working
+   on in Compass. This rule should compile all the files you want Compass to check 
+   or all files that you are editing with Compass as the compiler.
+\end{itemize}
+
+Figure \ref{compassEmacs} shows the needed changes in .emacs for integrating
+Compass. The last two lines are the most interesting lines since they introduce two
+shortkeys. [f3] can be clicked in order to display all errors for the current line while
+[f4] will move the cursor to the next error. 
+
+A short explanation of the code in figure \ref{compassEmacs} is that the first line will require 
+the flymake extension to be available upon
+loading emacs while the second line will load the find-file-hook and flymake-find-file-hook
+functions. The "setq" sections that follows runs Compass for all files that are being edited
+that has the c and C extensions. The "list" section tells flymake to execute the check-syntax
+rule in the makefile. 
+
+\subsubsection{Example check-syntax rule}
+
+
+\begin{figure}
+\begin{verbatim}
+one: inc.h one.C
+        g++ -c one.C
+\end{verbatim}
+\caption{Example makefile before the Compass addition  }
+\label{beforeProjectCheckRule}
+\end{figure}
+
+
+\begin{figure}
+\begin{verbatim}
+one: inc.h one.C
+        g++ -c one.C
+		
+check-syntax: inc.h one.C
+        /path/to/compass/executable/compassMain -c one.C
+\end{verbatim}
+\caption{Example makefile after addition to support integration of compass  }
+\label{projectCheckRule}
+\end{figure}
+
+
+Figure \ref{beforeProjectCheckRule} shows an example makefile that compiles a file
+"one.C" using g++. If "one.C" is edited using emacs the addition of the "check-syntax"
+rule is needed, as shown in figure \ref{projectCheckRule}.
+
+
+
+
+\section{How To Write A New Checker}
+
+\subsection{Creating A Skeleton}
+
+Compass has scripts for creating a skeleton for a new Compass
+checker. This skeleton can be easily adapted to write all checkers.
+
+Follow these steps to generate a checker skeleton:
+\begin{enumerate}
+   \item Enter a directory where you want the directory of your checker to be created
+   \item Execute {\tt ROSE\_SRC\_DIR/projects/compass/compassRepository/bin/gen\_checker.sh $<$name of your checker$>$}
+\end{enumerate}
+
+The results of executing gen\_checker.sh script is that a new directory name 'multipleCasesOnSameLine' 
+(name of your checker in camel case) is created with the following files:
+
+\begin{verbatim}
+	compass.C           multipleCasesOnSameLine.C
+	compass.h           multipleCasesOnSameLineDocs.tex
+	compass_parameters  multipleCasesOnSameLine.h
+	compassTestMain.C   multipleCasesOnSameLine.inc
+	Makefile            multipleCasesOnSameLineMain.C
+	Makefile.am         multipleCasesOnSameLineTest1.C
+\end{verbatim}
+
+Some of these files (compass.[Ch], compass\_parameters, and compassTestMain.C)
+are copied from the compass\_template\_generator directory; while others are
+generated (multiple*, Makefile, Makefile.am)
+
+It is suggested that you keep the following in mind when using gen\_checker.sh:
+\begin{itemize}
+\item
+   It is advised that you do not invoke the script gen\_checker with words
+   like checker, detector, tester, etc. Adding these verbs at the command
+   line means that these words are added as suffixes into the
+   directory-name. Which will make it redundant, as the compass project is
+   about writing style-checkers!
+\item
+   Some of the files have read-only permissions and are intended only for
+   such use. Please do not change the permissions of these files.
+\item
+Advanced: The file `multipleCasesOnSameLine.inc' is used to pass in custom LDADD lines
+to the Make environment on a per checker basis. The LDADD line specified in
+this file will be added verbatim to the compass makefile.
+
+\end{itemize}
+
+\subsection{Integrating New Checkers Into Compass}
+\label{howToIntegrateNewChecker}
+
+The process for integrating a new checker into Compass has been automated. These directions
+are meant for checkers generated using gen\_checker.sh.
+
+The steps to integrate a new checker is
+\begin{enumerate}
+   \item Create a tar file of the directory tar -zcvf  $<$name of your checker$>$.tar.gz $<$name of your checker$>$
+   \item Add $<$name of your checker$>$ to CHECKER\_LIST
+   \item Copy $<$name of your checker$>$.tar.gz to ROSE\_SRC\_DIR/projects/compass/compassRepository/
+   \item Enter ROSE\_BUILD\_DIR/projects/compass/ 
+   \item Execute 'make regenerate'
+   \item After running 'make regenerate' in the build tree then you may run make as usual.
+\end{enumerate}
+
+In the Makefile, the compass\_submission\_setup.sh handles adding/updating a Compass checker into
+an existing Compass source tree. "regenerate" is an argument that instructs the script to perform a 
+read-only operation on the file CHECKER\_LIST in your projects/compass directory. This file contains 
+a list of checkers that will be integrated by compass\_submission\_setup.sh.
+
+The file `CHECKER\_LIST' can use the `\#' comment delimiter at the beginning of
+any checker name to remove that checker from compilation. The hash mark may
+only appear at the beginning of the line. The compass\_submission\_setup.sh
+script must be run again with the "regenerate" option if any checkers are
+commented out. {\bf Note that no space is permitted between the `\#' and the name
+of the checker.}
+
+As stated previously, the compass\_submission\_setup.sh script handles
+adding/updating Compass checkers into the compass source tree (usually located
+at ROSE/projects/compass). It does this by generating the necessary files
+to compile Compass with the checkers located in $<$COMPASS SUBMIT DIR$>$. These
+files are:
+
+\begin{itemize}
+\item {\bf CHECKER\_LIST}: a file that keeps a running list of all checkers seen by
+	compass\_submission\_setup.sh.
+
+\item {\bf compass\_makefile.inc}: a Make include file that sets the Make environment
+	with the information for each checker. This environment specifies
+	the rules needed to compile each checker object, make the
+	documentation, and test all checkers together or separately.
+   {\bf compass\_makefile.inc}: provides the following Make rules: 
+	(note \$\{CHECKER\} is the name of a checker directory i.e. 
+	doNotDeleteThis)
+   \begin{itemize}
+      \item {\bf docs}:  makes the documentation
+
+      \item test\$\{CHECKER\}: tests a single checker, a single rule is provided
+		      per checker.
+
+      \item testAllCheckersSeparately: tests all checkers separately as a batch.
+
+      \item archive\$\{CHECKER\}: -- tar \& gzips a single checker directory in 
+		projects/compass/\$\{CHECKER\} to 
+		projects/compass/compassRepository/\$\{CHECKER\}.tar.gz
+
+      \item archiveCheckers: archives all checkers (uncommented in CHECKER\_LIST)
+                projects/compass to
+                projects/compass/compassRepository/\$\{CHECKER\}.tar.gz
+   \end{itemize}
+
+\item {\bf checkers.h}: An automatically generated file needed by compassMain.C that 
+	contains a list of \#include directives for each checker header .h file.
+
+\item {\bf buildCheckers.C}: An automatically generated source file needed by 
+	compassMain.C to build the Compass checker traversals.
+
+\item {\bf compassCheckerDocs.tex}: A Latex include file that inputs each checker .tex
+	documentation file into the compass.tex document.
+
+\item {\bf compass\_parameters}: The concatentation of individual checker parameter files
+	to be used with compassMain.
+
+\end{itemize}
+
+
+
+\section{Including/Excluding Checkers in the Compass Build Process}
+\label{CompassBuildProcess}
+
+   This section describes how to select which of the checkers to integrate into Compass
+out of all the checkers available in source form in the Compass source directory. For
+security reasons Compass uses this static build process since it is a central goal
+of Compass that it should run as a trusted part of a project's build process. If the
+integration of checkers had been automatic through a dynamic plugin mechanism it
+would be hard to ensure that the dynamic list of checkers was secure, but for a 
+static list of trusted checkers this is possible.
+
+In order to integrate a checker into Compass the user must:
+\begin{itemize}
+   \item Add the name of the checkers directory in the CHECKER\_LIST in the compass
+      source directory
+   \item Run {\tt make regenerate} in the Compass build directory
+\end{itemize} 
+If a user or developer intends to integrate a new checker into the Compass source
+tree refer to section \ref{howToIntegrateNewCheckers}.
+
+Usually the CHECKER\_LIST is only modified when a user or delevoper wants to 
+add a new checker or select a subset of trusted checkers.  Checkers can be
+commented out using a {\tt \#}, no space is allowed between the {tt \#} and the 
+checker name.
+
+
+\section{Including/Excluding Checkers During Compass Execution}
+
+   This section describes how to execute a subset of the checkers provided in the build
+process (see section \ref{CompassBuildProcess}). This process is significantly more
+interactive than defining what checkers to include in the Compass build process.
+Since it is not unhead of that rules implemented by different checkers can be  
+mutually exclusive or even contradicting this mechanism is essential for selecting the
+subset of checkers that are interesting for a specific program that is checked.
+Seperate projects of developers could easily have their own RULE\_SELECTION file
+to permit high levels of customization in the use of a Compass tool containing
+a large number of checkers (e.g. for different languages).
+
+   When used with the Emacs interface this provides a simple way to turn on and off
+specific checkers by editing a single file (RULE\_SELECTION).  The name of this
+file is specified in the {\tt compass\_parameters} file, this name may be changed.
+The directories searched are: current directory, user home directory, and Compass
+source tree (respectively).
+
+\begin{verbatim}
+   Compass.RuleSelection=RULE_SELECTION
+\end{verbatim}
+
+
+In order to select a checker to run the user must:
+\begin{itemize}
+   \item Add a line '-:$<$name of checker$>$' in a file called RULE\_SELECTION. 
+   \item If a line  '-:$<$name of checker$>$' already exist the '-' can be modified into
+a '+' to enable the checker or into a '-' to disable a checker.
+\end{itemize}
+It is required that every checker integrated into the Compass build is mentioned in
+the RULE\_SELECTION.
+
+
+\section{Including/Excluding Paths and Filenames with Compass}
+
+    Compass permits paths and filenames to be specified for inclusion/exclusion
+in reporting checker rule violations.  Run {\tt compassMain --help} to see
+the commandline options.  Numerous other commandline options provided for all
+tools build using ROSE may also be relavant.
+
+
+
+\section{Checking Security Properties of Checkers}
+
+    Compass is designed for extensability while providing the security for
+the codes being checked.  To support this Compass provides a simple
+mechanism for verifiying specific properties of the checkers used in Compass.
+Compass implements a specific small number of checkers that are used for checking
+the checkers in Compass.  The directory compassVerity contains the implementation
+of this subset of Compass that is used on itself.  These checkers may not
+be modified and in the future MD-5 checksums will be provided to ensure the
+integrity of this ubset of Compass.  To verify the compass checkers run:
+\begin{itemize}
+   \item {\tt make verify} \\
+        This makefile rule runs the compassVerify/compassMain on all the source files in
+    all the checkers directies in Compass.  Because it runs compass on so many seperate
+    files this step can take a long time.
+   \item Or {\tt make oneBigVerify} \\
+        The makefile rule runs the compassVerify/compassMain on a single generated file
+    built from all the checker source files and is particularly quick to run.
+\end{itemize}
+
+
+
+\section{Testing Compass and its Checkers}
+
+   The {\tt tests} directory contains directories of tests that
+are language specific:
+\begin{itemize}
+   \item C\_tests \\ 
+         This directory contains a Makefile which will use the ROSE C test codes 
+         to test Compass.
+   \item Cxx\_tests \\ 
+         This directory contains a Makefile which will use the ROSE C++ test codes 
+         to test Compass.
+\end{itemize}
+To run these tests type {\tt make check} at any level on the Compass directory
+hierarchy of the build tree.
+
+
+

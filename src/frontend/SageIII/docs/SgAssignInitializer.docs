@@ -1,0 +1,137 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAssignInitializer
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgAssignInitializer
+\brief This class represents the rhs of a variable declaration which includes an optional
+    assignment (e.g. "int x = 1;").  In this case the SgValue ("1") is wrapped in an
+    SgAssignInitializer.
+\todo Double check the accuracy of this description.
+\sa
+\ref SgAssignInitializer_usage  "Example of using a SgAssignInitializer object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAssignInitializer data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAssignInitializer member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\fn SgAssignInitializer::SgAssignInitializer (const SgAssignInitializer &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgAssignInitializer::~SgAssignInitializer()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgAssignInitializer::isSgAssignInitializer (SgNode *s)
+\brief Cast function (from derived class to SgAssignInitializer pointer).
+   This functions returns a SgAssignInitializer pointer for any input of a 
+pointer to an object derived from a SgAssignInitializer.
+\return Returns valid pointer to SgAssignInitializer if input is derived from a SgAssignInitializer.
+*/
+/*!
+\fn SgAssignInitializer::isSgAssignInitializer (const SgNode *s)
+\brief Cast function (from derived class to SgAssignInitializer pointer).
+   This functions returns a SgAssignInitializer pointer for any input of a 
+pointer to an object derived from a SgAssignInitializer.
+\return Returns valid pointer to SgAssignInitializer if input is derived from a SgAssignInitializer.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgExpression *SgAssignInitializer::p_operand_i
+\brief This points to the internal SgExpression (right-hand-side expression).
+*/
+/*!
+\var SgType *SgAssignInitializer::p_expression_type
+\brief This points to the SgType of the rhs expression.
+\internal Should this be stored explicitly, it could be obtained from the rhs expression.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAssignInitializer::SgAssignInitializer(Sg_File_Info *startOfConstruct,SgExpression *operand_i=(0),SgType *expression_type=(0))
+*/
+/*!
+\fn SgAssignInitializer::SgAssignInitializer(const SgAssignInitializerStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgAssignInitializer base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgAssignInitializer_create "Example:create an SgAssignInitializer object"
+*/
+/*!\fn inline static void SgAssignInitializer::operator delete(void *pointer)
+*/
+/*!\fn static SgAssignInitializer *SgAssignInitializer::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAssignInitializer::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAssignInitializer::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAssignInitializer::initializeStorageClassArray(SgAssignInitializerStorageClass *storageArray)
+*/
+/*!\fn static void SgAssignInitializer::clearMemoryPool()
+*/
+/*!\fn static void SgAssignInitializer::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAssignInitializer::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAssignInitializer::roseRTI()
+*/
+/*!\fn virtual SgAssignInitializer::~SgAssignInitializer()
+*/
+/*!\fn virtual SgNode *SgAssignInitializer::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual int SgAssignInitializer::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAssignInitializer::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAssignInitializer::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual void SgAssignInitializer::post_construction_initialization()
+*/
+/*!
+\fn void SgAssignInitializer::set_operand(SgExpression *exp)
+\brief This sets the rhs expression.
+See  *exp)
+operand for documentation \param exp - sets value of rhs.
+\return Returns void.
+*/
+/*!\fn void SgAssignInitializer::set_operand_i(SgExpression *operand_i)
+\description See  *operand_i)
+operand_i for documentation */
+/*!\fn SgExpression *SgAssignInitializer::get_next(int &n) const
+\description See  const
+next for documentation */
+/*!
+\fn SgExpression *SgAssignInitializer::get_operand() const
+\brief Returns the rhs.
+See  const
+operand for documentation \return Returns SgExpression.
+*/
+/*!\fn SgExpression *SgAssignInitializer::get_operand_i() const
+\description See  const
+operand_i for documentation */
+/*!\fn virtual SgNode *SgAssignInitializer::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgAssignInitializer::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgAssignInitializer::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAssignInitializer::get_numberOfTraversalSuccessors()
+\description See  SgAssignInitializer::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAssignInitializer::get_traversalSuccessorContainer()
+\description See  SgAssignInitializer::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAssignInitializer::get_traversalSuccessorNamesContainer()
+\description See  SgAssignInitializer::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAssignInitializer::SgAssignInitializer(SgExpression *operand_i,SgType *expression_type)
+*/
+//@}
+int SAGE_Doxygen_Dummy_6167282718825;

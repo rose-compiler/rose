@@ -1,0 +1,63 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Default Constructor}
+\label{DefaultConstructor::overview}
+
+{\it The Elements of C++ Style} item \#97 states that
+\begin{quote}
+Declare a default constructor for every class you create. Although some compilers may be able to automatically generate a more efficient implementation in some situations, choose an explicit default constructor for added clarity.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out instances of SgClassDefinition. The children of these instances are stored in a successor container and looped over to find a default constructor. If no such default constructor exists then a violation is flagged.
+
+\subsection{Non-Compliant Code Example}
+The following trivial example does not declare a default constructor.
+
+\begin{verbatim}
+class Class
+{
+  public:
+    ~Class(){}
+}; //class Class
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution simply adds a default constructor to the class definition.
+
+\begin{verbatim}
+class Class
+{
+  public:
+    Class(){}
+    ~Class(){}
+}; //class bad
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform AST traversal visiting the member functions of class definitions.
+\item If no constructor is found for a single class definition then flag violation.
+\item Report any violations.
+\end{enumerate}
+
+\subsection{References}
+
+Bumgardner G., Gray A., and Misfeldt T. {\it The Elements of C++ Style}. Cambridge University Press 2004

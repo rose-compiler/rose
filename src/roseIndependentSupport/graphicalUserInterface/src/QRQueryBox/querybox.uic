@@ -1,0 +1,231 @@
+/****************************************************************************
+** Form implementation generated from reading ui file 'querybox.ui'
+**
+** Created: Thu Apr 28 21:37:31 2005
+**      by: The User Interface Compiler ($Id: querybox.uic,v 1.1 2005/09/03 19:38:00 dquinlan Exp $)
+**
+** WARNING! All changes made in this file will be lost!
+****************************************************************************/
+
+#include "qu.h"
+
+#include <qvariant.h>
+#include <qpushbutton.h>
+#include <qframe.h>
+#include <qlabel.h>
+#include <qcombobox.h>
+#include <qbuttongroup.h>
+#include <qradiobutton.h>
+#include <qheader.h>
+#include <qlistview.h>
+#include <qlayout.h>
+#include <qtooltip.h>
+#include <qwhatsthis.h>
+
+/*
+ *  Constructs a querybox as a child of 'parent', with the
+ *  name 'name' and widget flags set to 'f'.
+ */
+querybox::querybox( QWidget* parent, const char* name, WFlags fl )
+    : QWidget( parent, name, fl )
+{
+    if ( !name )
+	setName( "querybox" );
+    queryboxLayout = new QVBoxLayout( this, 5, 15, "queryboxLayout"); 
+
+    m_wgTopFrame = new QFrame( this, "m_wgTopFrame" );
+    m_wgTopFrame->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)0, 0, 0, m_wgTopFrame->sizePolicy().hasHeightForWidth() ) );
+    m_wgTopFrame->setFrameShape( QFrame::NoFrame );
+    m_wgTopFrame->setFrameShadow( QFrame::Raised );
+    m_wgTopFrameLayout = new QVBoxLayout( m_wgTopFrame, 0, 0, "m_wgTopFrameLayout"); 
+
+    m_wgDomainLabel = new QLabel( m_wgTopFrame, "m_wgDomainLabel" );
+    m_wgDomainLabel->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)5, (QSizePolicy::SizeType)5, 0, 0, m_wgDomainLabel->sizePolicy().hasHeightForWidth() ) );
+    m_wgDomainLabel->setAlignment( int( QLabel::WordBreak | QLabel::AlignBottom | QLabel::AlignLeft ) );
+    m_wgTopFrameLayout->addWidget( m_wgDomainLabel );
+
+    m_wgDomainFrame = new QFrame( m_wgTopFrame, "m_wgDomainFrame" );
+    m_wgDomainFrame->setFrameShape( QFrame::GroupBoxPanel );
+    m_wgDomainFrame->setFrameShadow( QFrame::Raised );
+    m_wgDomainFrame->setLineWidth( 1 );
+    m_wgDomainFrameLayout = new QVBoxLayout( m_wgDomainFrame, 11, 6, "m_wgDomainFrameLayout"); 
+
+    m_wgDomainLayout1 = new QHBoxLayout( 0, 0, 6, "m_wgDomainLayout1"); 
+
+    m_wgDomainCBox = new QComboBox( FALSE, m_wgDomainFrame, "m_wgDomainCBox" );
+    m_wgDomainCBox->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 10, 0, m_wgDomainCBox->sizePolicy().hasHeightForWidth() ) );
+    m_wgDomainLayout1->addWidget( m_wgDomainCBox );
+
+    m_wgDomainInfo = new QLabel( m_wgDomainFrame, "m_wgDomainInfo" );
+    m_wgDomainInfo->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)3, (QSizePolicy::SizeType)0, 3, 0, m_wgDomainInfo->sizePolicy().hasHeightForWidth() ) );
+    m_wgDomainInfo->setFrameShape( QLabel::StyledPanel );
+    m_wgDomainInfo->setFrameShadow( QLabel::Sunken );
+    m_wgDomainInfo->setLineWidth( 1 );
+    m_wgDomainInfo->setScaledContents( TRUE );
+    m_wgDomainLayout1->addWidget( m_wgDomainInfo );
+    m_wgDomainFrameLayout->addLayout( m_wgDomainLayout1 );
+
+    m_wgDomainLayout2 = new QHBoxLayout( 0, 0, 6, "m_wgDomainLayout2"); 
+
+    m_wgDomainModes = new QButtonGroup( m_wgDomainFrame, "m_wgDomainModes" );
+    m_wgDomainModes->setFrameShape( QButtonGroup::NoFrame );
+    m_wgDomainModes->setAlignment( int( QButtonGroup::AlignVCenter | QButtonGroup::AlignLeft ) );
+    m_wgDomainModes->setColumnLayout(0, Qt::Vertical );
+    m_wgDomainModes->layout()->setSpacing( 0 );
+    m_wgDomainModes->layout()->setMargin( 6 );
+    m_wgDomainModesLayout = new QHBoxLayout( m_wgDomainModes->layout() );
+    m_wgDomainModesLayout->setAlignment( Qt::AlignTop );
+
+    m_wgDomainNoExpansion = new QRadioButton( m_wgDomainModes, "m_wgDomainNoExpansion" );
+    m_wgDomainNoExpansion->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)0, (QSizePolicy::SizeType)0, 0, 0, m_wgDomainNoExpansion->sizePolicy().hasHeightForWidth() ) );
+    m_wgDomainModesLayout->addWidget( m_wgDomainNoExpansion );
+
+    m_wgDomainImmedChildren = new QRadioButton( m_wgDomainModes, "m_wgDomainImmedChildren" );
+    m_wgDomainModesLayout->addWidget( m_wgDomainImmedChildren );
+
+    m_wgDomainAllDesc = new QRadioButton( m_wgDomainModes, "m_wgDomainAllDesc" );
+    m_wgDomainModesLayout->addWidget( m_wgDomainAllDesc );
+    m_wgDomainLayout2->addWidget( m_wgDomainModes );
+    m_wgDomainSpacer = new QSpacerItem( 40, 21, QSizePolicy::Expanding, QSizePolicy::Minimum );
+    m_wgDomainLayout2->addItem( m_wgDomainSpacer );
+
+    m_wgDomainSet = new QPushButton( m_wgDomainFrame, "m_wgDomainSet" );
+    m_wgDomainSet->setPaletteBackgroundColor( QColor( 196, 208, 230 ) );
+    m_wgDomainSet->setToggleButton( TRUE );
+    m_wgDomainSet->setFlat( FALSE );
+    m_wgDomainLayout2->addWidget( m_wgDomainSet );
+
+    m_wgDomainClear = new QPushButton( m_wgDomainFrame, "m_wgDomainClear" );
+    m_wgDomainClear->setPaletteBackgroundColor( QColor( 196, 208, 230 ) );
+    m_wgDomainClear->setFlat( FALSE );
+    m_wgDomainLayout2->addWidget( m_wgDomainClear );
+
+    m_wgDomainDefRoot = new QPushButton( m_wgDomainFrame, "m_wgDomainDefRoot" );
+    m_wgDomainDefRoot->setPaletteBackgroundColor( QColor( 196, 208, 230 ) );
+    m_wgDomainDefRoot->setFlat( FALSE );
+    m_wgDomainLayout2->addWidget( m_wgDomainDefRoot );
+    m_wgDomainFrameLayout->addLayout( m_wgDomainLayout2 );
+    m_wgTopFrameLayout->addWidget( m_wgDomainFrame );
+    queryboxLayout->addWidget( m_wgTopFrame );
+
+    m_wgBtmFrame = new QFrame( this, "m_wgBtmFrame" );
+    m_wgBtmFrame->setFrameShape( QFrame::NoFrame );
+    m_wgBtmFrame->setFrameShadow( QFrame::Raised );
+    m_wgBtmFrameLayout = new QHBoxLayout( m_wgBtmFrame, 0, 15, "m_wgBtmFrameLayout"); 
+
+    m_wgBtmLeftFrame = new QFrame( m_wgBtmFrame, "m_wgBtmLeftFrame" );
+    m_wgBtmLeftFrame->setFrameShape( QFrame::NoFrame );
+    m_wgBtmLeftFrame->setFrameShadow( QFrame::Raised );
+    m_wgBtmLeftFrameLayout = new QVBoxLayout( m_wgBtmLeftFrame, 0, 0, "m_wgBtmLeftFrameLayout"); 
+
+    m_wgOpLabel1 = new QLabel( m_wgBtmLeftFrame, "m_wgOpLabel1" );
+    m_wgBtmLeftFrameLayout->addWidget( m_wgOpLabel1 );
+
+    m_wgOpFrame = new QFrame( m_wgBtmLeftFrame, "m_wgOpFrame" );
+    m_wgOpFrame->setFrameShape( QFrame::GroupBoxPanel );
+    m_wgOpFrame->setFrameShadow( QFrame::Raised );
+    m_wgOpFrameLayout = new QVBoxLayout( m_wgOpFrame, 11, 6, "m_wgOpFrameLayout"); 
+
+    m_wgOpUserDefButton = new QPushButton( m_wgOpFrame, "m_wgOpUserDefButton" );
+    m_wgOpUserDefButton->setPaletteBackgroundColor( QColor( 224, 215, 234 ) );
+    m_wgOpUserDefButton->setToggleButton( TRUE );
+    m_wgOpUserDefButton->setFlat( FALSE );
+    m_wgOpFrameLayout->addWidget( m_wgOpUserDefButton );
+
+    m_wgOpCBox = new QComboBox( FALSE, m_wgOpFrame, "m_wgOpCBox" );
+    m_wgOpFrameLayout->addWidget( m_wgOpCBox );
+    m_wgOpSpacer = new QSpacerItem( 21, 16, QSizePolicy::Minimum, QSizePolicy::Preferred );
+    m_wgOpFrameLayout->addItem( m_wgOpSpacer );
+
+    m_wgOpNodeVariants = new QListView( m_wgOpFrame, "m_wgOpNodeVariants" );
+    m_wgOpFrameLayout->addWidget( m_wgOpNodeVariants );
+
+    m_wgOpPerformQuery = new QPushButton( m_wgOpFrame, "m_wgOpPerformQuery" );
+    m_wgOpPerformQuery->setPaletteBackgroundColor( QColor( 179, 200, 181 ) );
+    m_wgOpPerformQuery->setFlat( FALSE );
+    m_wgOpFrameLayout->addWidget( m_wgOpPerformQuery );
+    m_wgBtmLeftFrameLayout->addWidget( m_wgOpFrame );
+    m_wgBtmFrameLayout->addWidget( m_wgBtmLeftFrame );
+
+    m_wgBtmRightFrame = new QFrame( m_wgBtmFrame, "m_wgBtmRightFrame" );
+    m_wgBtmRightFrame->setFrameShape( QFrame::NoFrame );
+    m_wgBtmRightFrame->setFrameShadow( QFrame::Raised );
+    m_wgBtmRightFrameLayout = new QVBoxLayout( m_wgBtmRightFrame, 0, 0, "m_wgBtmRightFrameLayout"); 
+
+    m_wgRangeLabel1 = new QLabel( m_wgBtmRightFrame, "m_wgRangeLabel1" );
+    m_wgBtmRightFrameLayout->addWidget( m_wgRangeLabel1 );
+
+    m_wgRangeFrame = new QFrame( m_wgBtmRightFrame, "m_wgRangeFrame" );
+    m_wgRangeFrame->setFrameShape( QFrame::GroupBoxPanel );
+    m_wgRangeFrame->setFrameShadow( QFrame::Raised );
+    m_wgRangeFrameLayout = new QVBoxLayout( m_wgRangeFrame, 11, 6, "m_wgRangeFrameLayout"); 
+
+    m_wgRangeInfo = new QLabel( m_wgRangeFrame, "m_wgRangeInfo" );
+    m_wgRangeInfo->setFrameShape( QLabel::StyledPanel );
+    m_wgRangeInfo->setFrameShadow( QLabel::Sunken );
+    m_wgRangeInfo->setLineWidth( 1 );
+    m_wgRangeInfo->setScaledContents( TRUE );
+    m_wgRangeFrameLayout->addWidget( m_wgRangeInfo );
+
+    m_wgRangeRes = new QListView( m_wgRangeFrame, "m_wgRangeRes" );
+    m_wgRangeFrameLayout->addWidget( m_wgRangeRes );
+
+    m_wgRangeButtonLayout = new QHBoxLayout( 0, 0, 5, "m_wgRangeButtonLayout"); 
+
+    m_wgRangeBroadcast = new QPushButton( m_wgRangeFrame, "m_wgRangeBroadcast" );
+    m_wgRangeBroadcast->setPaletteBackgroundColor( QColor( 216, 216, 216 ) );
+    m_wgRangeBroadcast->setFlat( FALSE );
+    m_wgRangeButtonLayout->addWidget( m_wgRangeBroadcast );
+
+    m_wgRangeSetDomain = new QPushButton( m_wgRangeFrame, "m_wgRangeSetDomain" );
+    m_wgRangeSetDomain->setPaletteBackgroundColor( QColor( 216, 216, 216 ) );
+    m_wgRangeSetDomain->setFlat( FALSE );
+    m_wgRangeButtonLayout->addWidget( m_wgRangeSetDomain );
+
+    m_wgRangeClearSel = new QPushButton( m_wgRangeFrame, "m_wgRangeClearSel" );
+    m_wgRangeClearSel->setPaletteBackgroundColor( QColor( 216, 216, 216 ) );
+    m_wgRangeClearSel->setFlat( FALSE );
+    m_wgRangeButtonLayout->addWidget( m_wgRangeClearSel );
+    m_wgRangeFrameLayout->addLayout( m_wgRangeButtonLayout );
+    m_wgBtmRightFrameLayout->addWidget( m_wgRangeFrame );
+    m_wgBtmFrameLayout->addWidget( m_wgBtmRightFrame );
+    queryboxLayout->addWidget( m_wgBtmFrame );
+    languageChange();
+    resize( QSize(726, 431).expandedTo(minimumSizeHint()) );
+    clearWState( WState_Polished );
+}
+
+/*
+ *  Destroys the object and frees any allocated resources
+ */
+querybox::~querybox()
+{
+    // no need to delete child widgets, Qt does it all for us
+}
+
+/*
+ *  Sets the strings of the subwidgets using the current
+ *  language.
+ */
+void querybox::languageChange()
+{
+    setCaption( tr( "Form4" ) );
+    m_wgDomainLabel->setText( tr( "<b>1. Query Domain</b>" ) );
+    m_wgDomainInfo->setText( QString::null );
+    m_wgDomainModes->setTitle( QString::null );
+    m_wgDomainNoExpansion->setText( tr( "no expansion" ) );
+    m_wgDomainImmedChildren->setText( tr( "immediate children" ) );
+    m_wgDomainAllDesc->setText( tr( "all descendants" ) );
+    m_wgDomainSet->setText( tr( "set" ) );
+    m_wgDomainClear->setText( tr( "clear" ) );
+    m_wgDomainDefRoot->setText( tr( "default root" ) );
+    m_wgOpLabel1->setText( tr( "<b>2. Query Operator</b>" ) );
+    m_wgOpUserDefButton->setText( tr( "user-defined operators" ) );
+    m_wgOpPerformQuery->setText( tr( "perform query" ) );
+    m_wgRangeLabel1->setText( tr( "<b>3. Query Range</b>" ) );
+    m_wgRangeInfo->setText( QString::null );
+    m_wgRangeBroadcast->setText( tr( "broadcast" ) );
+    m_wgRangeSetDomain->setText( tr( "set domain" ) );
+    m_wgRangeClearSel->setText( tr( "clear sel" ) );
+}
+

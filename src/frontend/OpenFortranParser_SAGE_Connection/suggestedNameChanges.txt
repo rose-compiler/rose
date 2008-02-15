@@ -1,0 +1,28 @@
+The IR currently has some poorly selected names for the Fortran IR nodes.
+Suggested changes are:
+   SgProgramHeaderStatement -> SgProgramDeclaration
+
+For functions there are:
+   Program
+   Procedure
+   Function
+   Subroutine
+
+IR nodes should be:
+
+SgFunctionDeclaration:
+     SgProgramDeclaration
+         This is just the declaration of the entry point for the program ("main").
+         It has its own IR node in Fortran because it is a seperate language construct.
+
+     SgProcedureDeclaration
+          SgFunctionDeclaration
+          SgSubroutineDeclaration
+          These should be handled as a flag in the parent SgFunctionDeclaration.
+          Note: subroutines return a void type and functions return a non-void type.
+
+
+"SgFortranDo" should be changed to "SgDoStatement"
+   In the do statement the "condition" should be changed to "bound"
+
+

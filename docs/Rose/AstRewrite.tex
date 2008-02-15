@@ -1,0 +1,785 @@
+\chapter{AST Rewrite Mechanism}
+
+\label{AstRewrite:AstRewrite}
+
+% Purpose:
+%\begin{itemize}
+%   \item A. Section overview
+%   \item B. Why you should read this manual
+%   \item C. How to use this manual
+%   \item D. Terminology
+%   \item E. Overview of library
+%   \item F. Program control
+%   \item G. Error messages
+%   \item H. Section summary
+%\end{itemize}
+%\begin{center}
+%*********************  \newline
+%\end{center}
+%\vspace{0.25in}
+
+\commentout{
+Visionary part not to be included in documentation yet!
+
+     Semantics:
+       1) The newest AST is always traversed (rewrite rules are always applied to the
+          newest possible AST).
+           A) Transformations on header files are seen by the intermediate files in
+              subsequent transformations.  In order to make this work we have to write out
+              the whole AST.
+                a) Optimizations could be done if no header files are transformed, since then
+                   the original header files are the same.
+
+    Guiding (problematic) example:
+       1) header file (A.h):
+             class A { int x; };
+          Source file:
+             int main () { A a; a.x = 0; }
+          Transformation 1:
+             Add ``int y;'' to class A (transformation on header file foo.h)
+          Transformation 2:
+             Add ``a.y = 0;'' to main function
+
+          Transformation 2 depends upon transformation 1 and the intermediate source code
+          which specifies transformation 2 requires the updated header file (defined after
+          transformation 1).
+
+    Things to do:
+        1) Add unparse whole AST to SgFile.
+        2) Unparse whole AST and genrate new header files with include statements in the
+           source file.
+
+}
+
+
+% Quote:
+% (e.g.) The successful con artist is a mirror of the time and place where he works.
+
+   The Abstract Syntax Tree (AST) Rewrite Mechanism permits modifications 
+to the AST.  To effect changes to the input source code, modifications to the 
+AST are done by a ROSE translator; and new version of the source code is produced.
+% to effect changes to the input source code output as generated source code.  
+Although analysis is possible by only reading the AST, transformations (and changes in the
+output code from the input code) can only be accomplished by rewriting portions of the AST.
+The AST is the single intermediate form manipulated by the preprocessor.  All changes
+are eventually output as modifications to the input source code after being processed
+through the intermediate form.
+
+% \section{Introduction}
+% \label{AstRewrite:introduction}
+
+   The material in this chapter builds on material presented in the previous two
+chapters; Writing a Source-to-Source Preprocessor (chapter 
+\ref{preprocessorDesign:preprocessorDesign}) and AST Processing 
+(chapter \ref{AstProcessing:astProcessing}). This chapter presents the required
+AST Rewrite Traversal and the simple interface functions to the {\tt AST\_Rewrite} class.  
+A section is included that 
+demonstrates code that rewrites the AST for any input code. More complex examples are
+possible but each uses the AST Rewrite Mechanism in a similar way.  The ROSE Tutorial 
+documents a few more interesting examples.% \ref{RoseExamples:RoseExamples}.
+
+\section{Introduction}
+
+   The rewrite mechanism in ROSE contains four different levels of interface
+within its design.  Table \ref{tab:RewriteInterface} shows the different levels of
+the interface design for the ROSE rewrite mechanism.  Each level consists of
+simple tree editing operations ({\tt insert()}, {\tt replace()}, and 
+{\tt remove()}) that can operate on statements within the AST.
+
+\begin{table}[htb]
+{\begin{center}
+    \renewcommand{\arraystretch}{1.25}
+
+\begin{tabular}{|c|c|c|l|}
+\hline
+\multirow{3}{35mm}{Relative Positioning (contains state)} 
+     & \multirow{3}{15mm}{String-Based} 
+          & \multirow{3}{35mm}{High Level Interface (level 4)} 
+               & {insert(SgNode*,string,scope,location)} \\
+     & {} & {} & {replace(SgNode*,string,scope,location)} \\
+     & {} & {} & {remove(SgNode*)} \\\hline
+\multirow{9}{35mm}{Absolute Positioning (contains no state)} 
+     & \multirow{3}{15mm}{String-Based} 
+          & \multirow{3}{35mm}{Mid Level Interface (level 3)} 
+          & {insert(SgNode*,string,location)} \\ 
+     & {} & {} & {replace(SgNode*,string,location)} \\
+     & {} & {} & {remove(SgNode*)} \\\cline{2-4}
+     & \multirow{6}{15mm}{SgNode*} 
+          & \multirow{3}{35mm}{Low Level Interface (level 2)} 
+          & {insert(SgNode*,SgNode*)} \\ 
+     & {} & {} & {replace()} \\
+     & {} & {} & {remove(SgNode*)} \\\cline{3-4}
+     & {} & \multirow{3}{35mm}{SAGE III Interface (level 1)} 
+          & {insert(SgNode*,SgNode*)} \\ 
+     & {} & {} & {replace(SgNode*,SgNode*)} \\ 
+     & {} & {} & {remove(SgNode*)} \\\hline 
+\end{tabular}
+
+ \end{center}
+}
+  \caption{Different levels of the ROSE Rewrite mechanism.}
+  \label{tab:RewriteInterface}
+\end{table}
+
+% Many attempts to input source code from files
+% \verbatiminput{\AstRewriteExampleDirectory/testExample1.C}
+% \verbatiminput{/home/dquinlan/ROSE/NEW_ROSE/AST_RewriteMechanism/testExample1.C}
+% \verbatimfiles{/home/dquinlan/ROSE/NEW_ROSE/AST_RewriteMechanism/testExample1.C}
+% \verbatimlisting{/home/dquinlan/ROSE/NEW_ROSE/AST_RewriteMechanism/testExample1.C}
+% \begin{listing}
+%     testExample1.C
+% \end{listing}
+% \listinginput{5}{/home/dquinlan/ROSE/NEW_ROSE/AST_RewriteMechanism/testExample1.C}
+
+\section{Multiple Interfaces to Rewrite Mechanism}
+
+   There are four different levels of interfaces in the rewrite mechanism
+because there are many different program transformations requirements.  Each level
+builds on the lower level, and the highest level interface is the most sophisticated 
+internally. Each interface has only three functions: {\tt insert()}, {\tt replace()}, 
+and {\tt remove()}.
+
+\subsection{SAGE III Rewrite Interface}
+   This lowest possible level of interface is implemented as member functions on the
+SgNode objects. It is used interanlly to implement the higher level interfaces (including
+the Low Level Rewrite Interface.  Uniformally,
+operations of {\tt insert()}, {\tt replace()}, and {\tt remove()} apply only to SAGE III 
+objects representing containers (SAGE III objects that have containers internally, 
+such as SgGlobal, SgBasicBlock, etc.).  Strings cannot be specified at this level of
+interface; only subtrees of the AST may be specified.  New AST fragments must be
+built separately and may be inserted or used to replace existing AST subtrees in the AST.
+Operations using this interface have the following properties:
+\begin{itemize}
+   \item Operations performed on collections only.
+   \item Operations are immediate executed.
+   \item Operations are local on the specified node of the AST.
+   \item Operations do not take attached comments or preprocessor directives into account. \\
+    This can lead to unexpected results (e.g. removing or moving {\tt \#include} directives
+    by accident).
+\end{itemize}
+
+\subsection{Low Level Rewrite Interface}
+    This interface is similar to the SAGE III Rewrite Interface except that operations
+are performed on any statement and not on the containers that store the statement lists.
+The domain of the operations -- on the statements instead of on the parent nodes of the 
+statements -- is the most significant difference between the two interfaces.  An additional
+feature includes support for repositioning attached comments/directives from removed
+nodes to their surrounding nodes to preserve them within {\tt replace()} and 
+{\tt remove()} operations.  Additional support is provided for marking inserted statements
+as transformations within the Sg\_File\_Info objects.
+Operations using this interface have the following properties:
+\begin{itemize}
+   \item Attached comments/directives are relocated.
+   \item Inserted AST fragments are marked within the Sg\_File\_Info objects.
+   \item Operations are immediate.
+   \item Operations are local on the specified node of the AST.
+\end{itemize}
+
+\subsection{Mid Level Rewrite Interface}
+    This interface builds on the low-level interface and adds the string interface,
+which permits simpler specification of transformations.
+Operations using this interface have the following properties:
+\begin{itemize}
+   \item Strings used to specify transformations.
+   \item Operations are immediate.
+   \item Operations are local on the specified node of the AST.
+\end{itemize}
+
+\subsection{High Level Rewrite Interface}
+    This interface presents the same string based rewrite mechanism as the mid-level
+interface but adds additional capabilities.
+This interface is the most flexible rewrite interface within ROSE.  Although it 
+must be used within a traversal to operate on the AST, it provides a mechanism to express
+more sophisticated transformations with less complexity due to its support of relative 
+positioning of transformation strings within the AST (relative to the current node within
+a traversal). 
+
+    The high-level rewrite mechanism uses the same three functions as the other rewrite
+interfaces, but with an expanded range of enum values to specify the intended scope
+and the location in that scope.  The scope is specified using the ScopeIdentifierEnum
+type defined in the HighLevelCollectionTypedefs class. These enum values are:
+\begin{itemize}
+   \item unknownScope
+   \item LocalScope 
+   \item ParentScope 
+   \item NestedLoopScope
+   \item NestedConditionalScope
+   \item FunctionScope
+   \item FileScope
+   \item GlobalScope
+   \item Preamble
+\end{itemize}
+The position in any scope is specified by the PlacementPositionEnum
+type, which is defined in the HighLevelCollectionTypedefs class. 
+These enum values are:
+\begin{itemize}
+     \item PreamblePositionInScope
+     \item TopOfScope
+     \item TopOfIncludeRegion
+     \item BottomOfIncludeRegion
+     \item BeforeCurrentPosition
+     \item ReplaceCurrentPosition
+     \item AfterCurrentPosition
+     \item BottomOfScope
+\end{itemize}
+
+Function prototypes of interface functions:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+   void insert (SgNode*, string ,HighLevelCollectionTypedefs::ScopeIdentifierEnum,HighLevelCollectionTypedefs::PlacementPositionEnum);
+\end{verbatim}
+}}
+Example of how to use specific insertion of transformation into the AST (required traversal not shown):
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+   insert (astNode, ``int x;'' ,HighLevelCollectionTypedefs::FunctionScope,HighLevelCollectionTypedefs::TopOfScope);
+\end{verbatim}
+}}
+Operations using this interface have the following properties:
+\begin{itemize}
+   \item Adds relative positioning to the specification of transformations.
+   \item Requires traversal for operation on the AST.
+   \item Operations are delayed and occur durring the required traversal, all operations
+    are completed by the end of the traversal.
+   \item Operations occure on AST nodes along a path defined by the chain from the current
+    input node to the operator to the root node of the AST (SgProject).
+\end{itemize}
+
+
+
+\subsection{Advantages and Disadvantages of Rewrite Interfaces}
+
+   Each interface builds upon the lower level interfaces and each 
+has some advantages and disadvantages. Table 
+\ref{tab:RewriteInterfaceAdvantagesDisadvantages} lists the
+major features and requirements associated with each.  The
+high-level interface (Level 4) presents the most sophisticated 
+features, but only works as part of a traversal of the AST.  The 
+mid-level interface is the lowest level interface that permits 
+the specification of transformations as strings.  The low-level interface
+is useful when AST fragments are built directly using the SAGE III
+classes through their constructors (a somewhat tedious process).
+The low level interface preserves the original interfaces adopted 
+from SAGE II.
+
+\begin{table}[htb]
+{\begin{center}
+    \renewcommand{\arraystretch}{1.25}
+
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+ {Interface:Features} & {Contains State}  & {Positioning} & {String} & {Traversal} \\\hline
+     Level 1 & No State &  Absolute  & AST Subtree & Not Used    \\
+     Level 2 & No State &  Absolute  & AST Subtree & Not Used    \\
+     Level 3 & No State &  Absolute  &    String   & Not Used    \\
+     Level 4 &  State   &  Relative  &    String   & Required    \\
+\hline
+\end{tabular}
+
+ \end{center}
+}
+  \caption{Advantages and disadvantages of different level interfaces 
+           within the ROSE Rewrite Mechanism.}
+  \label{tab:RewriteInterfaceAdvantagesDisadvantages}
+\end{table}
+
+\section{Generation of Input for Transformation Operators}
+    Providing operators to {\tt insert()}, {\tt replace()}, {\tt remove()}
+solves only part of the problem of simplifying transformations.  The other part 
+of the problem is generating the input to the transformation operators.  Both 
+{\tt insert()} and {\tt replace()} require input, either as an AST fragement or
+as a string containing source code.  This section presents the pros and cons of the
+specification of transformations as strings.
+
+\subsection{Use of Strings to Specify Transformations}
+
+    The mid-level and high-level rewrite interfaces introduce the use of
+strings to specify transformations.  Using strings to specify transformations 
+attempts to define a simple mechanism for a non-compiler audience 
+to express moderately complex transformations.  The alternative is to build the
+AST fragments to be inserted directly using SAGE III and the constructors
+for its objects.  In general, the direct construction of AST fragments
+is exceedingly tedious, and while aspects can be automated, the most
+extreme example of this automation is the AST constructions from source 
+code strings.  A disadvantage is that the generation of the AST fragment
+from strings is slower, but it is only a compile-time issue.
+
+\subsection{Using SAGE III Directly to Specify Transformations}
+
+   It is possible to build AST fragments directly using SAGE III and insert these into
+the AST.  This alternative to the use of strings is more complex and is only
+briefly referenced in this section.
+
+   The constructors for each of the SAGE III objects form the user interface required to
+build up the ASTfragments.  The documentation for these appear in the reference chapter
+of this manual.
+
+A few notes:
+\begin{enumerate}
+ \item Use the {\tt Sg\_File\_Info* Sg\_File\_Info::generateDefaultFileInfoForTransformationNode();} 
+static member function to generate the Sg\_File\_Info object required for each of the
+constructor calls.  This marks the IR nodes as being part of a transformation and signals
+that they should be output within code generation (unparsing).
+\end{enumerate}
+
+
+\section{AST Rewrite Traversal of the High-Level Inteface}
+
+    The AST Rewrite Mechanism uses a traversal of the AST, similar to the
+design of a traversal using the AST Processing 
+(Chapter \ref{AstProcessing:astProcessing}) part of ROSE.
+The example code \ref{AstRewrite:example1} specifically shows an {\bf AstTopDownBottomUpProcessing}
+\ref{AstProcessing:AstTopDownBottomUpProcessing}
+traversal of the AST.  Using conditional compilation,
+the example code shows the somewhat trivial changes required to convert
+a read-only AST traversal into a read-write AST rewrite operation. In this
+example the AST traversal is converted to be ready for rewrite operations, but
+no rewrite operations are shown. The purpose of this example is only to show the
+modifications to an existing traversal that are required to use the AST rewrite
+mechanism.
+
+   The specialized AST rewrite traversal is internally derived from the ASTProcessing
+{\bf TopDownBottomUp} traversal (processing) but adds additional operations
+in recording the local context of source code position (in the inherited attribute)
+and performs additional operations on the way back up the AST (on the synthesized attribute).
+
+% \vspace{0.5in}
+
+% A note to the reader about a difference between the two versions
+% of the documentation that we generate.
+\begin{latexonly}
+% This listing appears in B\&W within the html version of the documentation.
+\end{latexonly}
+\begin{htmlonly}
+% This listing appears in color within the generated latex postscript document.
+\end{htmlonly}
+% This reference doesn't seem to work properly.
+% See link to postscript documentation at \ref{Rose:postscriptVersionOfUserManual}.
+
+% DQ (9/12/2006): If we make this a figure then it will overflow the page.
+% maby we should split this figure into two pieces (as is done in the ROSE tutorial for
+% some of the longer examples there.
+% \begin{figure}[tb]
+{\indent
+{\mySmallFontSize
+\label{AstRewrite:exampleShowingModificationsToUseAstRewriteMechanism}
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\AstRewriteExampleDirectory/astRewriteExample1.C}
+\end{latexonly}
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\AstRewriteExampleDirectory/astRewriteExample1.C}
+\end{htmlonly}
+%end of scope in font size
+}
+% End of scope in indentation
+}
+% \caption{ Example of now to use AST Rewrite Mechanism. }
+% \label{AST_Code}
+% \end{figure}
+
+\fixme{This should be a figure that fits onto a single page.}
+
+\commentout{
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     Example Showing AST Rewrite Traversal
+\\\hline\hline
+
+% \lstinputlisting{/home/dquinlan/ROSE/NEW_ROSE/AST_RewriteMechanism/testExample1.C}
+\lstinputlisting{\AstRewriteExampleDirectory/astRewriteExample1.C}
+
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example of now to use AST Rewrite Mechanism. }
+\label{AST_Code}
+\end{figure}
+\end{latexonly}
+}
+
+   This example shows the setup required to use the AST Rewrite Mechanism.
+The next section shows how to add new code to the AST.  The {\tt main()}
+function is as in example of how to use a traversal (see chapter 
+\ref{preprocessorDesign:AstTraversalPreprocessor}).
+
+   Note that the differences between the traversal required for use
+with the AST Rewrite Mechanism is different from the traversals associated
+with \ref{AstProcessing:AstTopDownBottomUpProcessing}.  The exact differences
+are enabled and disabled in the example
+\ref{AstRewrite:exampleShowingModificationsToUseAstRewriteMechanism}
+by setting the macro {\tt USE\_REWRITE\_MECHANISM} to zero (0) or one (1).
+
+   The differences between traversals using
+{\tt AstTopDownBottomUpProcessing<InheritedAttrbute,SynthesizedAttribute>}
+and traversals using the AST Rewrite Mechanism (
+{\tt AST\_Rewrite::RewriteTreeTraversal<InheritedAttrbute,SynthesizedAttribute>})
+are both required to use the AST Rewrite Mechanism. They are:
+\begin{enumerate}
+     \item InheritedAttributes must derive from {\tt AST\_Rewrite::InheritedAttribute}.
+     \item Must define constructor {\tt InheritedAttribute::InheritedAttribute(SgNode* astNode)}.
+     \item Must define copy constructor: \\
+              {\tt InheritedAttribute::InheritedAttribute(const InheritedAttribute \& X, SgNode* astNode)}.
+     \item SynthesizedAttribute must derive from {\tt AST\_Rewrite::SynthesizedAttribute}
+     \item Must derive new traversal from \\ 
+              {\tt AST\_Rewrite::RewriteTreeTraversal<InheritedAttrbute,SynthesizedAttribute>})
+           instead of \\
+              {\tt AstTopDownBottomUpProcessing<InheritedAttrbute,SynthesizedAttribute>}.
+\end{enumerate}
+
+
+\section{Examples}
+    This section presents several examples using the different interfaces
+to specify simple transformations.  
+
+\commentout{
+\subsection{SAGE III Interface Example}
+
+\fixme{Incomplete documentation.}
+
+\subsection{Low-Level Interface Example}
+
+\fixme{Incomplete documentation.}
+
+\subsection{Mid-Level Interface Example}
+
+\fixme{Incomplete documentation.}
+
+\subsection{High-Level Interface Example}
+
+\fixme{Incomplete documentation.}
+}
+
+\subsection{String Specification of Source Code}
+    Both the mid-level and high-level interfaces use strings to
+specify source code. The examples below show how to specify 
+the strings.
+\subsubsection{Specification of Source Code}
+    Specification of source code is straight forward.
+However, quoted strings must be escaped and strings spanning
+more then one line must use the string continuation character ("$\backslash$").
+\begin{itemize}
+   \item {\tt MiddleLevelRewrite::insert(statement,"int newVariable;",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,"timer($\backslash$"functionName$\backslash$");",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,\\ "/* Starting Comment */
+    $\backslash$n $\backslash$\\ int y; { int y; } for (y=0; y < 10; y++){z = 1;}
+    $\backslash$n $\backslash$\\ /* Ending Comment */$\backslash$n",locationInScope);}
+\end{itemize}
+
+\subsubsection{Specification of CPP Directives}
+    Specification of CPP directives as strings is as one would expect
+except that where quotes ("") appear in the string they must be escaped
+($\backslash$"$\backslash$") to remain persistent in the input string.
+\begin{itemize}
+   \item {\tt MiddleLevelRewrite::insert(statement,"\#define TEST",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,"\#include<foo.h>",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,"\#include $\backslash$"foo.h$\backslash$"",locationInScope);}
+\end{itemize}
+
+\subsubsection{Specification of Comments}
+    Specification of comments are similar.
+\begin{itemize}
+   \item {\tt MiddleLevelRewrite::insert(statement,"/* C style comment test */",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,"// C++ comment test ",locationInScope);}
+\end{itemize}
+
+\subsubsection{Specification of Macros}
+    The specification of macros is similar to CPP directives
+except that longer macros often have line continuation and formatting.
+We show how to preserve this in the example macro definition below.
+Transformation involving the use of a macro is more complex if the
+macro call is to be preserved in the final transformation 
+(left unexpanded in the generation of the AST fragment with the 
+rewrite mechanism).
+
+\paragraph{Macro Definition:}
+   A macro definition is similar to a CPP directive. The long example is taken from the
+Tuning Analysis Utilities (TAU) project which instruments code with similar macro calls.
+\begin{itemize}
+   \item {\tt MiddleLevelRewrite::insert(statement,"\#include<foo.h>",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,"\#include $\backslash$"foo.h$\backslash$"",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,"\#define PRINT\_MACRO(name) name;",locationInScope);}
+   \item {\tt MiddleLevelRewrite::insert(statement,\\
+"$\backslash$n$\backslash$\\
+\#ifdef USE\_ROSE$\backslash$n$\backslash$\\
+// If using a translator built using ROSE process the simpler tauProtos.h header  $\backslash$n$\backslash$\\
+// file instead of the more complex TAU.h header file (until ROSE is more robust) $\backslash$n$\backslash$\\
+   \#include $\backslash$"tauProtos.h$\backslash$"$\backslash$n$\backslash$n\\
+// This macro definition could be placed into the tauProtos.h header file $\backslash$n$\backslash$\\
+   \#define TAU\_PROFILE(name, type, group) $\backslash$$\backslash$$\backslash$n$\backslash$\\
+        static TauGroup\_t tau\_gr = group; $\backslash$$\backslash$$\backslash$n$\backslash$\\
+        static FunctionInfo tauFI(name, type, tau\_gr, \#group); $\backslash$$\backslash$$\backslash$n$\backslash$\\
+        Profiler tauFP(\&tauFI, tau\_gr); $\backslash$n$\backslash$\\
+\#else$\backslash$n$\backslash$\\
+   \#include $\backslash$"TAU.h$\backslash$"$\backslash$n$\backslash$\\
+\#endif"$\backslash$$\backslash$\\
+,locationInScope);}
+\end{itemize}
+
+\paragraph{Macro Use:}
+   This example of macro use shows how to leave the macro unexpanded in the
+AST fragment (which is generated to be patched into the application's AST).
+\begin{itemize}
+   \item {\tt MiddleLevelRewrite::insert(statement, \\
+                 MiddleLevelRewrite::postponeMacroExpansion("PRINT\_MACRO($\backslash$"Hello World!$\backslash$")"),locationInScope);} \\
+   \item {\tt MiddleLevelRewrite::insert(statement, \\
+                 MiddleLevelRewrite::postponeMacroExpansion("TAU\_PROFILE($\backslash$"main$\backslash$", \\
+                 $\backslash$"$\backslash$",TAU\_USER)"),locationInScope);}
+\end{itemize}
+
+
+\commentout{
+\section{Rewriting the AST}
+
+   Modifications to the AST involve the specification of new source code
+(as a string) and a relative or absolute position within the AST.  
+Since the specification of new source code occurs within a traversal 
+(at any node of the AST), the position specified is relative to the 
+current node within the traversal.
+
+The new source code can be added before or after any location in the AST.
+The specification of a position for new source code requires the
+specification of a scope and a position within the scope.
+New source code can also replace existing subtrees of the AST (internally
+this is handled by insertion of new code and removal of old subtrees).
+
+The scope is specified relative to the current position in the AST (during a traversal 
+of the AST) using either:
+\begin{enumerate}
+     \item Local Scope (default)
+     \item Parent Scope \\
+           The specification of an optional parameter permits backing up the tree though
+           multiple nestings (parent of parent scope, applied recursively upto the 
+           Global Scope).
+     \item Global Scope
+\end{enumerate}
+
+Within any specific scope, new source code may be positioned at either:
+\begin{enumerate}
+     \item Top of scope \\
+           This applies only to AST scope statements: \fixme{Complete the list of scope statements.}
+          \begin{itemize}
+               \item Basic Blocks
+               \item {\tt for} Statements
+               \item {\tt while} statements
+          \end{itemize}
+     \item Before current statement
+     \item Replace current statement
+     \item After current statement
+     \item Bottom of scope \\
+           This applies to all of the same statements (locations) listed above 
+           for top of scope.  In case a {\tt return} statement exists the new
+           code is placed before the {\tt return} statement.
+\end{enumerate}
+
+Within the global scope additional locations can be specified:
+\begin{enumerate}
+     \item Top of {\tt \#include} region
+     \item Bottom of {\tt \#include} region
+\end{enumerate}
+
+
+Information about the position of new source code (relative or absolute scope and position
+in scope) and is used together with a string (C++ {\tt std::string} type) containing the new
+source code. This data in used in the single user interface function of the 
+{\tt AST\_Rewrite} class \ref{AstRewrite:AstRewriteInterfaceFunction}.
+
+{\indent
+{\mySmallFontSize
+
+\label{AstRewrite:AstRewriteInterfaceFunction}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\AstRewriteExampleDirectory/astRewriteInterfaceFunction.codeFragment}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\AstRewriteExampleDirectory/astRewriteInterfaceFunction.codeFragment}
+\end{htmlonly}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+
+The function defined \ref{AstRewrite:AstRewriteInterfaceFunction} takes the following
+parameters:
+\begin{enumerate}
+     \item Synthesized attribute (defined and used within the {\tt
+           evaluateRewriteSynthesizedAttribute()} function.
+     \item A C++ {\tt std::string} object representing new source 
+           code to add to the AST \label{inputString}.
+     \item Inherited attribute (defined and used within the {\tt
+           evaluateRewriteSynthesizedAttribute()} function.
+     \item Relative scope (selected values from 
+           {\tt AST\_Rewrite::ScopeIdentifierEnum}.
+     \item Position in scope selected values from 
+           {\tt AST\_Rewrite::PlacementPositionEnum} inputRelativeLocation,
+     \item Type of source string from
+           {\tt AST\_Rewrite::SourceCodeStringClassificationEnum}
+     \item Specification of source code in new scope ({\tt boolean} value)
+           (equivalent to adding opening and closing braces ({\tt \{} and {\tt \}}) to the beginning and end 
+           of the input string \ref{inputString}, respectively.
+\end{enumerate}
+}
+
+\section{Example Using AST Rewrite}
+
+    This section demonstrates a simple example using the AST Rewrite Mechanism.
+The input code \ref{AstRewrite:ExampleInputCode} contains the variable declaration statement {\tt int x;}
+which example preprocessor {\tt testRewritePermutations} (a testcode in the 
+{\bf ROSE/tests/roseTests/astRewriteTests} directory) will use to place additional variable
+declarations in all possible relative/absolute positions.
+
+{\indent
+{\mySmallFontSize
+
+\label{AstRewrite:ExampleInputCode}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\AstRewriteExampleDirectory/inputRewrite1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\AstRewriteExampleDirectory/inputRewrite1.C}
+\end{htmlonly}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+The new variable declarations contain, as a substring of the variable name,
+the relative scope and location in that scope (relative to the target 
+declaration {\tt int x;}.  The output of processing this input file is a new 
+code \ref{AstRewrite:ExampleOutputCode} with many added
+declarations, one for each possible relative/absolute position possible
+(relative to the declaration: {\tt int x;}).
+
+{\indent
+{\mySmallFontSize
+
+\label{AstRewrite:ExampleOutputCode}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\AstRewriteExampleDirectory/exampleRewrite1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\AstRewriteExampleDirectory/exampleRewrite1.C}
+\end{htmlonly}
+
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+\section{Limitations (Known Bugs)}
+
+   There are several types of statements the AST rewrite mechanism can not 
+currently process.  This section enumerates these and explains why each is difficult 
+or not currently possible. Note that some appear unable to be handled,
+while others will only require special handling that is not yet implemented.
+\begin{enumerate}
+     \item Why we have to skip SgCaseOptionStmt statements. \\
+        Example of code in generated intermediate file for a SgCaseOptionStmt:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+             int GlobalScopePreambleStart;
+             int GlobalScopePreambleEnd;
+             int CurrentLocationTopOfScopeStart;
+             int CurrentLocationTopOfScopeEnd;
+             int CurrentLocationBeforeStart;
+             int CurrentLocationBeforeEnd;
+             int CurrentLocationReplaceStart;
+             case 0:{y++;break;}
+             int CurrentLocationReplaceEnd;
+             int CurrentLocationAfterStart;
+             int CurrentLocationAfterEnd;
+             int CurrentLocationBottomOfScopeStart;
+             int CurrentLocationBottomOfScopeEnd;
+\end{verbatim}
+}}
+        The problem is that marker declarations that appear after the SgCaseOptionStmt 
+        are included in the scope of the SgCaseOptionStmt while those that appear 
+        before it are not in the same scope.
+
+     \item SgDefaultOptionStmt (see reason \#1 above).
+     \item SgCtorInitializerList \\
+        This case would require special handling to be generated in the 
+        intermediate file, and it would require special handling isolated 
+        from the AST.  This case can probably be handled in the future with extra work.
+     \item SgFunctionParameterList (see reason \#3 above).
+     \item SgClassDefinition \\
+        Since the SgClassDefinition is so structurally tied to the SgClassDeclaration, 
+        it makes more sense to process the SgClassDeclaration associated with the 
+        SgClassDefinition instead of the SgClassDefinition directly.  Presently the 
+        processing of the SgClassDefinition is not supported through any indirect 
+        processing of the SgClassDeclaration, this could be implemented in the future.
+     \item SgGlobal \\
+        This case is not implemented. It would require special handling, but it might be 
+        implemented in the future.
+     \item SgBasicBlock used in a SgForStatement \\
+        Because of the declaration of the {\tt for} loop (C language construct) index
+        variable, this case would 
+        require special handling. This case could be implemented in the future.
+     \item SgBasicBlock used in a SgFunctionDefinition \\
+        Because of the declaration of the function parameter variable, this case would 
+        require special handling. This case could be implemented in the future.
+     \item SgBasicBlock used in a SgSwitchStatement \\
+        Example of code in generated intermediate file for a SgBasicBlock used in 
+        SgSwitchStatement:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+             int main()
+             { /* local stack #0 */
+             int x;
+             int y;
+             switch(x)
+             { /* local stack #1 */ 
+             int GlobalScopePreambleStart;
+             int GlobalScopePreambleEnd;
+             int CurrentLocationTopOfScopeStart;
+             int CurrentLocationTopOfScopeEnd;
+             int CurrentLocationBeforeStart;
+             int CurrentLocationBeforeEnd;
+             int CurrentLocationReplaceStart;
+             {case 0:{y++;break;}default:{y++;break;}}
+             int CurrentLocationReplaceEnd;
+             int CurrentLocationAfterStart;
+             int CurrentLocationAfterEnd;
+             int CurrentLocationBottomOfScopeStart;
+             int CurrentLocationBottomOfScopeEnd;
+             /* Reference marker variables to avoid compiler warnings */
+                };     };
+\end{verbatim}
+}}
+        This is more difficult because the declaration markers must appear after 
+        the {\tt "\{ /* local stack \#1 */"} but then the statement 
+        {\tt "{case 0:{y++;break;}default:{y++;break;}}"}
+        cannot appear after a switch.  It is probably impossible to fix this case due to the
+        design and constraints of the C++ language (design and limitations of the switch statement).
+        This is not a serious problem; it just means that the whole switch statement must
+        be operated upon instead of the block within the switch statement separately (not
+        a serious limitation).
+\end{enumerate}
+
+
+
+
+
+

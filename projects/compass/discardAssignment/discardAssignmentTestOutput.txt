@@ -1,0 +1,2 @@
+DiscardAssignment: discardAssignmentTest1.C:15.13: SgFunctionCallExp: Result of assignment should be discarded.
+DiscardAssignment: discardAssignmentTest1.C:23.13-22: SgAssignOp: Result of assignment should be discarded.

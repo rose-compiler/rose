@@ -1,0 +1,45 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgClassDecl_attr
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgClassDecl_attr::SgClassDecl_attr()
+*/
+/*!\fn SgClassDecl_attr::SgClassDecl_attr(const SgClassDecl_attrStorageClass &source)
+*/
+/*!\fn inline static void SgClassDecl_attr::operator delete(void *pointer)
+*/
+/*!\fn static SgClassDecl_attr *SgClassDecl_attr::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgClassDecl_attr::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgClassDecl_attr::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgClassDecl_attr::initializeStorageClassArray(SgClassDecl_attrStorageClass *storageArray)
+*/
+/*!\fn static void SgClassDecl_attr::clearMemoryPool()
+*/
+/*!\fn static void SgClassDecl_attr::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgClassDecl_attr::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgClassDecl_attr::roseRTI()
+*/
+/*!\fn virtual SgNode *SgClassDecl_attr::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgClassDecl_attr::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgClassDecl_attr::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgClassDecl_attr::get_numberOfTraversalSuccessors()
+\description See  SgClassDecl_attr::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClassDecl_attr::get_traversalSuccessorContainer()
+\description See  SgClassDecl_attr::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClassDecl_attr::get_traversalSuccessorNamesContainer()
+\description See  SgClassDecl_attr::traversalSuccessorNamesContainer for documentation */
+/*!\fn virtual SgClassDecl_attr::~SgClassDecl_attr()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_4128627;

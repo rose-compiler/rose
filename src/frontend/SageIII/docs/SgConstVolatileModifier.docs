@@ -1,0 +1,88 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgConstVolatileModifier
+*/
+/*! \name Class Members*/
+//@{
+/*!\var enum SgConstVolatileModifier::cv_modifier_enum SgConstVolatileModifier::p_modifier
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgConstVolatileModifier &SgConstVolatileModifier::operator=(const SgConstVolatileModifier &X)
+*/
+/*!\fn SgConstVolatileModifier::SgConstVolatileModifier(const SgConstVolatileModifier &X)
+*/
+/*!\fn SgConstVolatileModifier::SgConstVolatileModifier(const SgConstVolatileModifierStorageClass &source)
+*/
+/*!\fn bool SgConstVolatileModifier::isConst() const
+*/
+/*!\fn bool SgConstVolatileModifier::isDefault() const
+*/
+/*!\fn bool SgConstVolatileModifier::isUnknown() const
+*/
+/*!\fn bool SgConstVolatileModifier::isVolatile() const
+*/
+/*!\fn inline static void SgConstVolatileModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgConstVolatileModifier *SgConstVolatileModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgConstVolatileModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgConstVolatileModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgConstVolatileModifier::initializeStorageClassArray(SgConstVolatileModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgConstVolatileModifier::clearMemoryPool()
+*/
+/*!\fn static void SgConstVolatileModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgConstVolatileModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgConstVolatileModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgConstVolatileModifier::roseRTI()
+*/
+/*!\fn virtual SgConstVolatileModifier::~SgConstVolatileModifier()
+*/
+/*!\fn virtual SgNode *SgConstVolatileModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgConstVolatileModifier::post_construction_initialization()
+*/
+/*!\fn void SgConstVolatileModifier::display(std::string label) const
+*/
+/*!\fn void SgConstVolatileModifier::reset()
+*/
+/*!\fn void SgConstVolatileModifier::setConst()
+*/
+/*!\fn void SgConstVolatileModifier::setDefault()
+*/
+/*!\fn void SgConstVolatileModifier::setUnknown()
+*/
+/*!\fn void SgConstVolatileModifier::setVolatile()
+*/
+/*!\fn void SgConstVolatileModifier::unsetConst()
+*/
+/*!\fn void SgConstVolatileModifier::unsetVolatile()
+*/
+/*!\fn void SgConstVolatileModifier::set_modifier(enum SgConstVolatileModifier::cv_modifier_enum modifier)
+\description See  modifier)
+modifier for documentation */
+/*!\fn enum SgConstVolatileModifier::cv_modifier_enum SgConstVolatileModifier::get_modifier() const
+\description See  const
+modifier for documentation */
+/*!\fn virtual SgNode *SgConstVolatileModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgConstVolatileModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgConstVolatileModifier::get_numberOfTraversalSuccessors()
+\description See  SgConstVolatileModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgConstVolatileModifier::get_traversalSuccessorContainer()
+\description See  SgConstVolatileModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgConstVolatileModifier::get_traversalSuccessorNamesContainer()
+\description See  SgConstVolatileModifier::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgConstVolatileModifier::SgConstVolatileModifier()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2042680414;

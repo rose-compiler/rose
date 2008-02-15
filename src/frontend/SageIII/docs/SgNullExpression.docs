@@ -1,0 +1,58 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgNullExpression
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgNullExpression::SgNullExpression(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgNullExpression::SgNullExpression(const SgNullExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgNullExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgNullExpression *SgNullExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgNullExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgNullExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgNullExpression::initializeStorageClassArray(SgNullExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgNullExpression::clearMemoryPool()
+*/
+/*!\fn static void SgNullExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgNullExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgNullExpression::roseRTI()
+*/
+/*!\fn virtual SgNode *SgNullExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNullExpression::~SgNullExpression()
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgNullExpression::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgNullExpression::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgNullExpression::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgNullExpression::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgNullExpression::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgNullExpression::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgNullExpression::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgNullExpression::get_numberOfTraversalSuccessors()
+\description See  SgNullExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNullExpression::get_traversalSuccessorContainer()
+\description See  SgNullExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNullExpression::get_traversalSuccessorNamesContainer()
+\description See  SgNullExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgNullExpression::SgNullExpression()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_795689459;

@@ -1,0 +1,132 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgThisExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgThisExp
+\brief This class represents the "this" operator (can be applied to any member data).
+   This shows up in the access to member data and is sometimes implicit.
+Recent changed to the strictness of C++ addressed in several compilers has 
+made this recently more explicitly required.
+\internal 
+\sa
+\ref SgThisExp_usage  "Example of using a SgThisExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgThisExp data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgThisExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgThisExp::SgThisExp (const SgThisExp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgThisExp::~SgThisExp()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgThisExp::isSgThisExp (SgNode *s)
+\brief Cast function (from derived class to SgThisExp pointer).
+   This functions returns a SgThisExp pointer for any input of a 
+pointer to an object derived from a SgThisExp.
+\return Returns valid pointer to SgThisExp if input is derived from a SgThisExp.
+*/
+/*!
+\fn SgThisExp::isSgThisExp (const SgNode *s)
+\brief Cast function (from derived class to SgThisExp pointer).
+   This functions returns a SgThisExp pointer for any input of a 
+pointer to an object derived from a SgThisExp.
+\return Returns valid pointer to SgThisExp if input is derived from a SgThisExp.
+*/
+/*! \name Deprecated*/
+//@{
+/*!
+\var int SgThisExp::p_pobj_this
+\brief This is not used and is related to a flag from CC++.
+\deprecated This will be removed in a future release.
+*/
+//@}
+/*! \name Class Members*/
+//@{
+/*!
+\var SgClassSymbol *SgThisExp::p_class_symbol
+\brief This is the symbol of the class to which the "this" operator is applied.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgThisExp::SgThisExp(Sg_File_Info *startOfConstruct,SgClassSymbol *class_symbol=(0),int pobj_this=0)
+*/
+/*!
+\fn SgThisExp::SgThisExp(const SgThisExpStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgThisExp base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgThisExp_create "Example:create an SgThisExp object"
+*/
+/*!\fn inline static void SgThisExp::operator delete(void *pointer)
+*/
+/*!\fn static SgThisExp *SgThisExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgThisExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgThisExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgThisExp::initializeStorageClassArray(SgThisExpStorageClass *storageArray)
+*/
+/*!\fn static void SgThisExp::clearMemoryPool()
+*/
+/*!\fn static void SgThisExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgThisExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgThisExp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgThisExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgThisExp::~SgThisExp()
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgThisExp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgThisExp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgThisExp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgThisExp::post_construction_initialization()
+*/
+/*!\fn void SgThisExp::set_class_symbol(SgClassSymbol *class_symbol)
+\description See  *class_symbol)
+class_symbol for documentation */
+/*!\fn void SgThisExp::set_pobj_this(int pobj_this)
+\description See  pobj_this)
+pobj_this for documentation */
+/*!\fn SgClassSymbol *SgThisExp::get_class_symbol() const
+\description See  const
+class_symbol for documentation */
+/*!\fn int SgThisExp::get_pobj_this() const
+\description See  const
+pobj_this for documentation */
+/*!\fn virtual SgNode *SgThisExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgThisExp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgThisExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgThisExp::get_numberOfTraversalSuccessors()
+\description See  SgThisExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgThisExp::get_traversalSuccessorContainer()
+\description See  SgThisExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgThisExp::get_traversalSuccessorNamesContainer()
+\description See  SgThisExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgThisExp::SgThisExp(SgClassSymbol *class_symbol,int pobj_this)
+*/
+//@}
+int SAGE_Doxygen_Dummy_30410318879089;

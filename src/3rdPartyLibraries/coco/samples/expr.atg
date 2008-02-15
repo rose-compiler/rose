@@ -1,0 +1,68 @@
+$C   /* Generate Main Module */
+COMPILER Expr
+/* This is a simple expression calculator */
+
+/*----------------- Scanner Specifications ----------------------*/
+
+CHARACTERS
+    letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+    digit  = "0123456789".
+    tab    = CHR(9).
+    eol    = CHR(10).
+
+TOKENS
+    ident   =  letter {letter|digit}.
+    number  =  digit  { digit }.
+
+IGNORE eol+tab
+
+COMMENTS FROM "--" TO eol
+
+/*--------------------Parser Specification -------------------*/
+
+PRODUCTIONS
+    Expr = StatSeq .
+
+    StatSeq = SYNC { Stat ";" SYNC} .
+
+    Stat =                          (. int value; .)
+       Expression<&value>           (. printf("%d\n", value); .)
+      .
+
+    Expression<int *result> =       (. int result1, result2; .)
+       Term<&result1>
+       {   "+" Term<&result2>       (. result1 += result2; .)
+	 | "-" Term<&result2>       (. result1 -= result2; .)
+       }                            (. *result = result1; .)
+       .
+
+    Term<int *result> =             (. int result1, result2; .)
+       Factor<&result1>
+       {   '*' Factor<&result2>     (. result1 *= result2; .)
+	 | '/' Factor<&result2>     (. result1 /= result2; .)
+       }                            (. *result = result1; .)
+       .
+
+    Factor<int *result> =           (. int sign = 1; .)
+      [ "-"                         (. sign =- 1; .)
+      ]
+      (   Number<result>
+	| "(" Expression<result> ")"
+      )                            (. *result *= sign; .)
+      .
+
+   Number<int *result>
+	=                          (. char buff[20]; .)
+	number                     (. S_GetString(S_Pos, S_Len, buff, sizeof(buff) - 1);
+				      *result = atoi(buff); .)
+	.
+
+/*
+   Ident<char *name>
+	=
+	ident                      (. S_GetString(S_Pos, S_Len, name, 20); .)
+	.
+*/
+
+END Expr.
+

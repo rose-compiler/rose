@@ -1,0 +1,5 @@
+enum X
+   {
+     True,
+     False
+   };

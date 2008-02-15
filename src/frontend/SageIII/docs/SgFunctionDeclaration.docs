@@ -1,0 +1,357 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeclarationStatement
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgFunctionDeclaration
+\brief This class represents the concept of a function declaration statement.
+    A function declaration can be either a forward declaration or a defining declaration.
+If it is a defining declaration then it contains a pointer to the function definition.
+Future work will allow this class to have a valide defining and non-defining declaration
+similar to the class declaration, but this is not yet implemented.
+   This class is used as a base class for member function declarations and both template 
+functions and template member function declarations.
+   The name of the function is stored in "p_name". However, if the function is a constructor
+or destructor the value of "p_name" is ignored (should be unset, perhaps) and the name is
+generated from the unqualified class name.  This handles the complexity of resetting
+templated names which likely have been stored in the constructor before the template
+names have been reset from the form "ABC____L8" to "ABC<int>" as requied to compile the
+unparsed code.
+\internal This is a base class for all function and member declaration statments
+          (including templated functions and member functions).
+\todo Need to mark function declarations appearing in the file
+    rose_edg_required_macros_and_functions.h as compiler generated
+    since they are either builtin functions for gcc and g++ or those those
+    builtin function that gcc and g++ required and which EDG fails to include
+    as builtin when compiling with EDG's GNU_COMPATABILITY_MODE (current 
+    default for ROSE).
+\todo Need to better handle fiend injection rules, currently the SgFunctionSymbol
+    for a friend function is placed into the global scope.  It likely should be
+    the outer scope for a non-defining declaration and the class scope for a defining 
+    declaration.  But the exact rules for this are more complex.  So the location
+    of the SgFunctionSymbol in the symbol table of SgGlobal is a poor approximation.
+*/
+/*
+\sa
+\ref SgFunctionDeclaration_usage  "Example of using a SgFunctionDeclaration object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionDeclaration data members
+/////////////////////////////////////////////////////////////////////////
+/*! \var SgFunctionDeclaration::p_args
+\brief This variable stores the function parameters (as declared).
+   This variable stores the function parameters. The names and types are 
+stored as they are declared so different for old K&R C style from newer C
+style (both of which are acdeptable within ANSI C!).
+*/
+/*! \var SgFunctionDeclaration::p_forwardDefinition
+\brief This variable stores the SgFunctionDefinition.
+   This variable stores the SgFunctionDefinition. It is presently NULL if
+the declaration is a forward declaration.  This will be made more uniform
+with how defining vs. non-defining declarations are handled in the 
+SgClassDeclaration.
+\deprecated This is now redundant with the more general mechanism of defining and
+            non-defining declarations which is implemented at the SgDeclaration level.
+\internal The handling via defining and non-defining declaration for function declarations
+          is not yet implemented and will be implemented similar to that done for class 
+          declarations.
+*/
+/*! \var SgFunctionDeclaration::p_definition_ref
+\brief This variable stores the SgFunctionDefinition.
+   This variable stores the SgFunctionDefinition. It is presently NULL if
+the declaration is a forward declaration.  This will be made more uniform
+with how defining vs. non-defining declarations are handled in the 
+SgClassDeclaration.
+\deprecated This is now redundant with the more general mechanism of defining and
+            non-defining declarations which is implemented at the SgDeclaration level.
+\internal The handling via defining and non-defining declaration for function declarations
+          is not yet implemented and will be implemented similar to that done for class 
+          declarations.
+*/
+/*! \var SgFunctionDeclaration::p_mangled_name
+\brief This variable stores the mangled name.
+   This variable stores the string representing the mangled function name.
+This name is unique within the AST (as required by C and C++ language definition).
+*/
+/*! \var SgFunctionDeclaration::p_orig_return_type
+\brief This variable stores the SgType pointer representing the function return type.
+   This variable stores the function return type (SgType).  All types are shared within
+the Sage III AST.  Not clear why it is called the "original return type" since functions
+can't be overloaded upon their return type (virtual or otherwise).
+*/
+/*! \var SgFunctionDeclaration::p_from_template
+\brief This boolean variable records if the function originally came from a template
+    function (now largely redundant information).
+   This boolean variable records if the function originally came from a template
+function (now largely redundant information).  The IR now has a special type for
+functions that are instantiated from function templates. 
+\deprecated This variable will likely be removed in the future.
+\internal This value is ALWAYS true for a SgTemplateInstantiationFunctionDecl and 
+          SgTemplateInstantiationMemberFunctionDecl; otherwise it is ALWAYS false.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionDeclaration member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgFunctionDeclaration_create "Example:create an SgFunctionDeclaration object"
+*/
+/*!
+\fn SgFunctionDeclaration::~SgFunctionDeclaration()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgFunctionDeclaration::isSgFunctionDeclaration (SgNode *s)
+\brief Cast function (from derived class to SgFunctionDeclaration pointer).
+   This functions returns a SgFunctionDeclaration pointer for any input of a 
+pointer to an object derived from a SgFunctionDeclaration.
+\return Returns valid pointer to SgFunctionDeclaration if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgFunctionDeclaration::isSgFunctionDeclaration (const SgNode *s)
+\brief Cast function (from derived class to SgFunctionDeclaration pointer).
+   This functions returns a SgFunctionDeclaration pointer for any input of a 
+pointer to an object derived from a SgFunctionDeclaration.
+\return Returns valid pointer to SgFunctionDeclaration if input is derived from a SgLocatedNode.
+*/
+/*! \name Deprecated*/
+//@{
+/*! \var SgFunctionDefinition *SgFunctionDeclaration::p_definition
+\brief This variable stores the SgFunctionDefinition.
+   This variable stores the SgFunctionDefinition. It is presently NULL if
+the declaration is a forward declaration.  This will be made more uniform
+with how defining vs. non-defining declarations are handled in the 
+SgClassDeclaration.
+\deprecated This is now redundant with the more general mechanism of defining and
+            non-defining declarations which is implemented at the SgDeclaration level.
+\internal The handling via defining and non-defining declaration for function declarations
+          is not yet implemented and will be implemented similar to that done for class 
+          declarations.
+*/
+//@}
+/*! \name Class Members*/
+//@{
+/*! \var SgFunctionModifier SgFunctionDeclaration::p_functionModifier
+\brief This variable stores flags representing use of inline, virtual, etc.
+   This variable stores what the C++ grammar referes to as "function modifiers".
+Values held here are: inline, virtual, pure virtual, default, explicit.
+*/
+/*!\var SgFunctionParameterList *SgFunctionDeclaration::p_parameterList
+*/
+/*! \var SgFunctionType *SgFunctionDeclaration::p_type
+\brief This variable stores the SgFunctionType.
+   This variable stores the SgFunctionType.  All types are shared within
+the Sage III AST.
+*/
+/*! \var SgName SgFunctionDeclaration::p_name
+\brief This variable stores the string representing the function name. 
+   This variable stores the string representing the function name.  The value is
+ignored in the case of a member function constructor or destructor (where upon the
+name returned from get_name() is generated from the class name). This handling is
+important for constructors and constructor initializer handling associated with 
+instantiated template class declarations).
+   The name of the function is stored in "p_name". However, if the function is a constructor
+or destructor the value of "p_name" is ignored (should be unset, perhaps) and the name is
+generated from the unqualified class name.  This handles the complexity of resetting
+templated names which likely have been stored in the constructor before the template
+names have been reset from the form "ABC____L8" to "ABC<int>" as requied to compile the
+unparsed code.
+\internal The value held is not shared within the Sage III AST.
+*/
+/*!\var SgScopeStatement *SgFunctionDeclaration::p_scope
+*/
+/*! \var SgSpecialFunctionModifier SgFunctionDeclaration::p_specialFunctionModifier
+\brief This variable stores flags representing use of constructor, destructor, etc.
+   This variable stores what the C++ grammar referes to as "special function modifiers".
+Values held here are: default, not special, constructor, destructor, conversion operator,
+operator.
+*/
+/*!\var SgTypePtrListPtr SgFunctionDeclaration::p_exceptionSpecification
+*/
+/*!\var bool SgFunctionDeclaration::p_named_in_end_statement
+*/
+/*! \var bool SgFunctionDeclaration::p_oldStyleDefinition
+\brief This boolean variable records if the function uses the old style definition.
+   This boolean variable records if the function was declared using the old style
+definition.
+\internal This should maybe be moved to the SgFunctionParameterList class.
+*/
+/*!\var enum SgDeclarationStatement::template_specialization_enum SgFunctionDeclaration::p_specialization
+*/
+/*!\var bool SgFunctionDeclaration::p_requiresNameQualificationOnReturnType
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgFunctionDeclaration::SgFunctionDeclaration(Sg_File_Info *startOfConstruct,SgName name=(""),SgFunctionType *type=(0),SgFunctionDefinition *definition=(0))
+*/
+/*!
+\fn SgFunctionDeclaration::SgFunctionDeclaration(const SgFunctionDeclarationStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgFunctionDeclaration base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn bool SgFunctionDeclaration::isPartialSpecialization() const
+*/
+/*!\fn bool SgFunctionDeclaration::isSpecialization() const
+*/
+/*!
+\fn bool SgFunctionDeclaration::isTemplateFunction() const
+\brief Determines if function is a template or non-template function.
+   This function returns true if the current function is explicitly declared to be a
+   template function. It returns fals if it is a normal function, member function, or 
+   member function of a templated class.
+\internal This function is required because member function of template are represented by
+          SgTemplateInstantiationMemberFunction IR nodea the same as explicitly templated 
+          member functions.  This function helps distinguish between the two types and is
+          used in determining which functions to output as template specializations (which
+          is now ROSE puts out template instantiations that it generates).
+\return Returns bool value.
+*/
+/*!\fn inline static void SgFunctionDeclaration::operator delete(void *pointer)
+*/
+/*!\fn static SgFunctionDeclaration *SgFunctionDeclaration::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFunctionDeclaration::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFunctionDeclaration::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFunctionDeclaration::initializeStorageClassArray(SgFunctionDeclarationStorageClass *storageArray)
+*/
+/*!\fn static void SgFunctionDeclaration::clearMemoryPool()
+*/
+/*!\fn static void SgFunctionDeclaration::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFunctionDeclaration::resetValidFreepointers()
+*/
+/*!\fn std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator SgFunctionDeclaration::append_arg(SgInitializedName *element)
+*/
+/*!\fn std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator SgFunctionDeclaration::insert_arg(const std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator &list,SgInitializedName *element)
+*/
+/*!\fn std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator SgFunctionDeclaration::prepend_arg(SgInitializedName *element)
+*/
+/*!\fn virtual RTIReturnType SgFunctionDeclaration::roseRTI()
+*/
+/*!\fn virtual SgFunctionDeclaration::~SgFunctionDeclaration()
+*/
+/*!\fn virtual SgNode *SgFunctionDeclaration::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual bool SgFunctionDeclaration::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgFunctionDeclaration::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgFunctionDeclaration::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgFunctionDeclaration::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgFunctionDeclaration::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFunctionDeclaration::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFunctionDeclaration::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFunctionDeclaration::post_construction_initialization()
+*/
+/*!\fn void SgFunctionDeclaration::hasEllipses()
+*/
+/*!\fn virtual void SgFunctionDeclaration::set_scope(SgScopeStatement *scope)
+\description See  *scope)
+scope for documentation */
+/*!\fn void SgFunctionDeclaration::set_definition(SgFunctionDefinition *definition)
+\description See  *definition)
+definition for documentation */
+/*!\fn void SgFunctionDeclaration::set_exceptionSpecification(SgTypePtrListPtr exceptionSpecification)
+\description See  exceptionSpecification)
+exceptionSpecification for documentation */
+/*!\fn void SgFunctionDeclaration::set_name(SgName name)
+\description See  name)
+name for documentation */
+/*!\fn void SgFunctionDeclaration::set_named_in_end_statement(bool named_in_end_statement)
+\description See  named_in_end_statement)
+named_in_end_statement for documentation */
+/*!\fn void SgFunctionDeclaration::set_oldStyleDefinition(bool oldStyleDefinition)
+\description See  oldStyleDefinition)
+oldStyleDefinition for documentation */
+/*!\fn void SgFunctionDeclaration::set_parameterList(SgFunctionParameterList *parameterList)
+\description See  *parameterList)
+parameterList for documentation */
+/*!\fn void SgFunctionDeclaration::set_requiresNameQualificationOnReturnType(bool requiresNameQualificationOnReturnType)
+\description See  requiresNameQualificationOnReturnType)
+requiresNameQualificationOnReturnType for documentation */
+/*!\fn void SgFunctionDeclaration::set_specialization(enum SgDeclarationStatement::template_specialization_enum specialization)
+\description See  specialization)
+specialization for documentation */
+/*!\fn void SgFunctionDeclaration::set_type(SgFunctionType *type)
+\description See  *type)
+type for documentation */
+/*!\fn SgFunctionDefinition *SgFunctionDeclaration::get_definition() const
+\description See  const
+definition for documentation */
+/*!\fn SgFunctionModifier &SgFunctionDeclaration::get_functionModifier()
+\description See  &SgFunctionDeclaration::functionModifier for documentation */
+/*!\fn SgFunctionParameterList *SgFunctionDeclaration::get_parameterList() const
+\description See  const
+parameterList for documentation */
+/*!\fn SgFunctionType *SgFunctionDeclaration::get_type() const
+\description See  const
+type for documentation */
+/*!\fn SgInitializedNamePtrList &SgFunctionDeclaration::get_args()
+\description See  &SgFunctionDeclaration::args for documentation */
+/*!\fn SgName SgFunctionDeclaration::get_name() const
+\description See  const
+name for documentation */
+/*!\fn SgSpecialFunctionModifier &SgFunctionDeclaration::get_specialFunctionModifier()
+\description See  &SgFunctionDeclaration::specialFunctionModifier for documentation */
+/*!\fn SgTypePtrListPtr SgFunctionDeclaration::get_exceptionSpecification() const
+\description See  const
+exceptionSpecification for documentation */
+/*!\fn bool SgFunctionDeclaration::get_named_in_end_statement() const
+\description See  const
+named_in_end_statement for documentation */
+/*!\fn bool SgFunctionDeclaration::get_oldStyleDefinition() const
+\description See  const
+oldStyleDefinition for documentation */
+/*!\fn bool SgFunctionDeclaration::get_requiresNameQualificationOnReturnType() const
+\description See  const
+requiresNameQualificationOnReturnType for documentation */
+/*!\fn const SgFunctionModifier &SgFunctionDeclaration::get_functionModifier() const
+\description See  const
+functionModifier for documentation */
+/*!\fn const SgInitializedNamePtrList &SgFunctionDeclaration::get_args() const
+\description See  const
+args for documentation */
+/*!\fn const SgSpecialFunctionModifier &SgFunctionDeclaration::get_specialFunctionModifier() const
+\description See  const
+specialFunctionModifier for documentation */
+/*!\fn enum SgDeclarationStatement::template_specialization_enum SgFunctionDeclaration::get_specialization() const
+\description See  const
+specialization for documentation */
+/*!\fn virtual SgName SgFunctionDeclaration::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgName SgFunctionDeclaration::get_qualified_name() const
+\description See  const
+qualified_name for documentation */
+/*!\fn virtual SgNode *SgFunctionDeclaration::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgScopeStatement *SgFunctionDeclaration::get_scope() const
+\description See  const
+scope for documentation */
+/*!\fn virtual SgSymbol *SgFunctionDeclaration::get_symbol_from_symbol_table() const
+\description See  const
+symbol_from_symbol_table for documentation */
+/*!\fn virtual size_t SgFunctionDeclaration::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFunctionDeclaration::get_numberOfTraversalSuccessors()
+\description See  SgFunctionDeclaration::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionDeclaration::get_traversalSuccessorContainer()
+\description See  SgFunctionDeclaration::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionDeclaration::get_traversalSuccessorNamesContainer()
+\description See  SgFunctionDeclaration::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFunctionDeclaration::SgFunctionDeclaration(SgName name,SgFunctionType *type,SgFunctionDefinition *definition)
+*/
+//@}
+int SAGE_Doxygen_Dummy_126602496819371;

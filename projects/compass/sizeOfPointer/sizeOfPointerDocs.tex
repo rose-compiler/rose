@@ -1,0 +1,102 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Size Of Pointer}
+\label{SizeOfPointer::overview}
+
+% write your introduction
+Do not take the size of a pointer to a type when you are trying to
+determine the size of the type. Taking the size of a pointer to a type
+always returns the size of the pointer and not the size of the type.
+
+This can be particularly problematic when tyring to determine the size
+of an array.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameter specifications yet!
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+
+   Finds calls to the sizeof function.  Checks argument for level of
+pointer (ie pointer to pointer etc...) then checks the number of
+dereference levels.  If these do not match an alert is raised.
+
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+This non-compliant code example mistakenly calls the sizeof() operator
+on the variable d\_array which is declared as a pointer to double
+instead of the variable d which is declared as a double.
+\begin{verbatim}
+double *d_array;
+size_t num_elems;
+/* ... */
+
+if (num_elems > SIZE_MAX/sizeof(d_array)){
+  /* handle error condition */
+}
+else {
+  d_array = malloc(sizeof(d_array) * num_elems);
+}
+\end{verbatim}
+The test of num\_elems is to ensure that the multiplication of
+sizeof(d\_array) * num\_elems does not result in an integer overflow
+
+For many implementaion, the size of a pointer and the size of double
+(or other type) is likely to be different. On IA-32 implementations,
+for example, the sizeof(d\_array) is four, while the sizeof(d) is
+eight. In this case, insufficient space is allocated to contain an
+array of 100 values of type double.
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+Make sure you correctly calculate the size of the element to be
+contained in the aggregate data structure. The expression sizeof
+(*d\_array) returns the size of the data structure referenced by
+d\_array and not the size of the pointer.
+\begin{verbatim}
+
+double *d_array;
+size_t num_elems;
+/* ... */
+
+if (num_elems > SIZE_MAX/sizeof(*d_array)){
+  /* handle error condition */
+}
+else {
+  d_array = malloc(sizeof(*d_array) * num_elems);
+
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Write your checker algorithm
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+\htmladdnormallink{ISO/IEC
+  9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References}
+[Viega 05] Section 5.6.8, ``Use of sizeof() on a pointer type''
+[ISO/IEC 9899-1999] Section 6.5.3.4, ``The sizeof operator''
+[Drepper 06] Section 2.1.1, ``Respecting Memory Bounds''

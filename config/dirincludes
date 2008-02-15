@@ -1,0 +1,39 @@
+#! /bin/sh
+
+######################################################################################
+# Author:             Bobby Philip                                                   #
+# Creation Date:      11/20/2001                                                     #
+# Last Modified Date: 12/04/2001                                                     #
+######################################################################################
+
+#given a target directory name, creates a list of include subdirectories
+if [ $# -ne 1 ] 
+then
+  echo "ERROR: Usage is create_include_path parentdir"
+else
+   if [ -d "$1" ]
+   then
+     includeString=""
+     current_dir=`pwd`
+     cd "$1"
+     parent_dir=`pwd`
+     for fName in *
+     do
+       if [ -d $fName ]
+       then
+         #AS(2/21/07) Changed dirincludes so that edg sees them as
+         #system includes and not normal includes. This is important for
+         #correct include order (system include directories should be
+         #processed after all other directories) and for the handling
+         #of the -nostdinc++ and -nostdinc options.
+         #includeString="$includeString-I$parent_dir/$fName "
+         includeString="$includeString--sys_include $parent_dir/$fName "
+
+       fi
+     done
+     cd "$current_dir"
+     echo "$includeString"
+   else
+     echo "ERROR: $1 is not a directory"
+   fi
+fi

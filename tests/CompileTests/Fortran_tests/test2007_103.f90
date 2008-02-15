@@ -1,0 +1,4 @@
+
+     CHARACTER*52 LETTER 
+     DATA LETTER(1:26)/'ABCDEFGHIJKLMNOPQRSTUVWXYZ'/, LETTER(27:) /'abcdefghijklmnopqrstuvwxyz'/
+END

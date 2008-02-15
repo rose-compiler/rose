@@ -1,0 +1,26 @@
+This directory tests the ROSE options:
+
+   These tests are currently incomplete.
+
+1) testCpreprocessorOption
+   This directory includes tests of the -E option.
+
+2) testForSpuriousOutput
+   This directory includes tests of debugging output from running the preprocessor.
+
+3) testHeaderFileOutput
+   This directory includes tests of the -H option.   
+
+4) testOutputFileOption
+   This directory includes tests of the -o option to specify the output file.
+
+5) Rama has filename tests which test the limitations of mechanism to handle filenames.
+
+DQ (1/9/2007): Tests needed in the future:
+  1) Test the mechanism to unparse the header files directly instead of including the
+     #include directives.
+
+  2) Test the mechanism to unparse with #line directives (might not yet be an option that
+    can be specified on the command line, but it needs to be there).
+
+  3) Test the mechanism to include comments in the header files.

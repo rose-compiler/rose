@@ -1,0 +1,56 @@
+Hi,
+   Here is ROSE 0.9.0a, the current version of the manual, tutorial, and
+HTML documentation is pre-built for you in the docs/Rose directory.
+The README should get you started.
+
+A couple of details, this version requires you to:
+     1) have "." in your path (though it should work without this).
+     2) have the g++ version 3.3.x or higher compiler in your path (named "g++")
+     3) Build the compile tree in a different location than your source tree.
+        (if you have problems consider using an absolute path with running configure)
+
+If you have followed steps 1-3 above, then sufficient steps to configure, build, 
+and install ROSE are:
+
+  1) ../ROSE-0.9.0a/configure --with-edg_source_code=true
+          Note that "--prefix="<install path> is optional and the
+          default is now the build tree (new for ROSE-0.8.9a).
+  2) make
+  3) make check
+  4) make install
+  5) make installcheck
+
+If you have recieved a version of ROSE containing binaries of the front-end
+then please use (this will become the more typical form of distribution in 
+the future):
+
+  1) ../ROSE-0.9.0a/configure
+          Note that "--prefix="<install path> is optional and the
+          default is now the build tree (new for ROSE-0.8.9a).
+  2) make
+  3) make check
+  4) make install
+  5) make installcheck
+
+If you received split files (because your email would not accept large files)
+then I have likely used a command like:
+     split --bytes=10m ROSE-0.9.0a.tar.gz ROSE-0.9.0a.tar.gz.
+In which case you should reassemble the files using the command:
+     cat ROSE-0.9.0a.tar.gz.a[a-c] > ROSE-0.9.0a.tar.gz
+
+NOTES:
+
+1) Users of ROSE should find the following free software useful
+but not required for using ROSE:
+
+   dot version 1.12 (Sun Aug 15 02:43:07 UTC 2004)
+      (dot is free software that also called GraphViz,
+      and it useful for building graphs of the AST).
+   zgrviewer is an open source viewer for dot graphs.
+   Adobe Acrobat is free and useful for the pdf 
+      representation of the AST.
+
+
+Thanks,
+Dan
+

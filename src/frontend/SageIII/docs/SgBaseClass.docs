@@ -1,0 +1,84 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgBaseClass
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgClassDeclaration *SgBaseClass::p_base_class
+*/
+/*!\var bool SgBaseClass::p_isDirectBaseClass
+*/
+/*!\var SgBaseClassModifier *SgBaseClass::p_baseClassModifier
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgBaseClass &SgBaseClass::operator=(const SgBaseClass &ptr)
+*/
+/*!\fn SgBaseClass::SgBaseClass(const SgBaseClass &ptr)
+*/
+/*!\fn SgBaseClass::SgBaseClass(const SgBaseClassStorageClass &source)
+*/
+/*!\fn bool SgBaseClass::operator<(const SgBaseClass &) const
+*/
+/*!\fn bool SgBaseClass::operator==(const SgBaseClass &) const
+*/
+/*!\fn inline static void SgBaseClass::operator delete(void *pointer)
+*/
+/*!\fn static SgBaseClass *SgBaseClass::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgBaseClass::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgBaseClass::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgBaseClass::initializeStorageClassArray(SgBaseClassStorageClass *storageArray)
+*/
+/*!\fn static void SgBaseClass::clearMemoryPool()
+*/
+/*!\fn static void SgBaseClass::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgBaseClass::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgBaseClass::roseRTI()
+*/
+/*!\fn virtual SgBaseClass::~SgBaseClass()
+*/
+/*!\fn virtual SgNode *SgBaseClass::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBaseClass::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBaseClass::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBaseClass::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBaseClass::post_construction_initialization()
+*/
+/*!\fn void SgBaseClass::set_base_class(SgClassDeclaration *base_class)
+\description See  *base_class)
+base_class for documentation */
+/*!\fn void SgBaseClass::set_isDirectBaseClass(bool isDirectBaseClass)
+\description See  isDirectBaseClass)
+isDirectBaseClass for documentation */
+/*!\fn SgBaseClassModifier &SgBaseClass::get_baseClassModifier()
+\description See  &SgBaseClass::baseClassModifier for documentation */
+/*!\fn SgClassDeclaration *SgBaseClass::get_base_class() const
+\description See  const
+base_class for documentation */
+/*!\fn bool SgBaseClass::get_isDirectBaseClass() const
+\description See  const
+isDirectBaseClass for documentation */
+/*!\fn virtual SgNode *SgBaseClass::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgBaseClass::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgBaseClass::get_numberOfTraversalSuccessors()
+\description See  SgBaseClass::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBaseClass::get_traversalSuccessorContainer()
+\description See  SgBaseClass::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBaseClass::get_traversalSuccessorNamesContainer()
+\description See  SgBaseClass::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgBaseClass::SgBaseClass(SgClassDeclaration *base_class=(0),bool isDirectBaseClass=false)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1538517781;

@@ -1,0 +1,87 @@
+\chapter{Resolving Overloaded Functions}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/resolveOverloadedFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/resolveOverloadedFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing mapping of function calls to overloaded function declarations.}
+\label{Tutorial:exampleResolvingOverloadedFunctions}
+\end{figure}
+
+   Figure~\ref{Tutorial:exampleResolvingOverloadedFunctions} shows a translator which
+reads an application and reposts on the mapping between function calls and function
+declarations.  This is trivial since all overloaded function resolution is done within
+the frontend and so need not be computed (this is because all type resolution is done 
+in the frontend and stored in the AST explicitly).  Other compiler infrastructures often
+require this to be figured out from the AST, when type resolution is unavailable, and
+while not too hard for C, this is particularly complex for C++ (due to overloading
+and type promotion within function arguments).  
+
+   Figure~\ref{Tutorial:exampleInputCode_ResolvingOverloadedFunctions} shows the
+input code used to get the translator.
+Figure~\ref{Tutorial:exampleOutput_ResolvingOverloadedFunctions} shows the resulting output.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_ResolvingOverloadedFunctions.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_ResolvingOverloadedFunctions.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to resolveOverloadedFunction.C.}
+\label{Tutorial:exampleInputCode_ResolvingOverloadedFunctions}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/resolveOverloadedFunction.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/resolveOverloadedFunction.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to resolveOverloadedFunction.C.}
+\label{Tutorial:exampleOutput_ResolvingOverloadedFunctions}
+\end{figure}
+
+
+

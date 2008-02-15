@@ -1,0 +1,11 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class FixupAstDefiningAndNondefiningDeclarations
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn virtual inline FixupAstDefiningAndNondefiningDeclarations::~FixupAstDefiningAndNondefiningDeclarations()
+*/
+/*!\fn virtual void FixupAstDefiningAndNondefiningDeclarations::visit(SgNode *node)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1755558453;

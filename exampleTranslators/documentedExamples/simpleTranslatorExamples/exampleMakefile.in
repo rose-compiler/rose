@@ -1,0 +1,83 @@
+# Example Makefile for ROSE users
+# This makefile is provided as an example of how to use ROSE when ROSE is
+# installed (using "make install").  This makefile is tested as part of the
+# "make distcheck" rule (run as part of tests before any CVS checkin).
+# The test of this makefile can also be run by using the "make installcheck"
+# rule (run as part of "make distcheck").
+
+# Location of include directory after "make install"
+ROSE_INCLUDE_DIR = @prefix@/include
+
+# Location of library directory after "make install"
+ROSE_LIB_DIR = @prefix@/lib
+
+# Support for lex (flex on Linux)
+LEXLIB              = @LEXLIB@
+
+# We can't use automake conditional support here
+# Support for Gabriel's QRose GUI Library 
+QT_LDFLAGS          = @QT_LDFLAGS@
+LIB_QT              = @LIB_QT@
+
+# Support for rpath (allows users to avoid setting 
+# their LD_LIBRARY_PATH, so it is simple to test ROSE)
+# LIBS_WITH_RPATH     = @LIBS_WITH_RPATH@
+
+# DQ (8/14/2005): Updated from $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+# ROSE_LIBS = -lrose -ledg $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(LIB_QT) -lm -lrt
+ROSE_LIBS = -L$(ROSE_LIB_DIR) -lrose $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(LIB_QT) -lm -lrt
+
+# DQ (9/03/2005): Updated from $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+# This definition needs to be kept up to date (in syn).  It is copied here because we
+# want as simple as possible of an example makefile for users.
+# ROSE_SEPERATE_LIBS = \
+#   -lRoseStringSupport -lRoseCommandlineUtil -lsupport -lgraphs -lroseutil \
+#   -lcr -lmstl -lpdf -lsage3 -ledgutil -ledg33 -ledgSage -lastinlining -lastInterface \
+#   -lastSupport -lsymbolicVal -lannotation -lrewrite -lOAWrap -lCFG \
+#   -ldataflowAnalysis -lvaluePropagation  -ldepInfo \
+#   -ldepGraph -lcomputation -lslicing -ldriver -lprepostloop -lLoopProcessing -lunparse \
+#   -lroseSupport -lquery -lastDiagnostics -lastprocessing $(ROSE_SIDEEFFECTS_LIBS) \
+#   $(ROSE_DATABASE_LIBS) $(MYSQL_DATABASE_LIBS) $(LEXLIB) $(LIB_QT) -lrt
+
+# QY 11/10/04  removed -lastoutlining from ROSE_SEPERATE_LIBS
+
+# Location of source code
+ROSE_SOURCE_DIR = @top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples
+
+# Default make rule to use
+# all: exampleTranslator exampleTranslatorMultiLib
+all: exampleTranslator
+
+# Example suffix rule for more experienced makefile users
+# .C.o:
+#	g++ -c -I$(ROSE_INCLUDE_DIR) -o $@ $(@:.o=.C)
+
+# Compile the exampleTranslator using the file identityTranslator.C
+exampleTranslator.lo:
+	@top_builddir@/libtool --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o exampleTranslator.lo $(ROSE_SOURCE_DIR)/identityTranslator.C
+
+exampleTranslator: exampleTranslator.lo
+	@top_builddir@/libtool --mode=link g++ -o exampleTranslator exampleTranslator.lo $(ROSE_LIBS)
+
+# Example of how to use multiple ROSE libraries (speeds up linking during 
+# development of ROSE project, mostly useful for ROSE developers)
+# ROSE_SEPERATE_LIBS is a makefile variable containing the list of ROSE libs
+# DQ (10/22/2004): Copied from $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+# QY 11/10/04  removed -lastoutlining from ROSE_SEPERATE_LIBS
+# ROSE_SEPERATE_LIBS = \
+#   -lRoseStringSupport -lRoseCommandlineUtil -lsupport -lgraphs -lroseutil \
+#   -lcr -lmstl -lpdf -lsage3 -ledg33 -ledgSage -lastinlining -lastInterface \
+#   -lastSupport -lsymbolicVal -lannotation -lrewrite -lOAWrap -lCFG \
+#   -ldataflowAnalysis -lvaluePropagation  -ldepInfo \
+#   -ldepGraph -lcomputation -lslicing -ldriver -lLoopProcessing -lunparse \
+#   -lroseSupport -lquery -lastDiagnostics -lastprocessing
+
+# This line uses multiple ROSE libraries to do linking
+# exampleTranslatorMultiLib: exampleTranslator.o
+#	g++ -o exampleTranslatorMultiLib exampleTranslator.o $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+
+# Rule used by make installcheck to verify correctness of installed libraries
+check:
+	./exampleTranslator -c $(ROSE_SOURCE_DIR)/testCode.C
+#	./exampleTranslatorMultiLib -c $(ROSE_SOURCE_DIR)/testCode.C
+

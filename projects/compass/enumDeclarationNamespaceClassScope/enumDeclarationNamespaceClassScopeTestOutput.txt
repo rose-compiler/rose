@@ -1,0 +1,1 @@
+EnumDeclarationNamespaceClassScope: enumDeclarationNamespaceClassScopeTest1.C:1.1-30: SgEnumDeclaration: This checker checks that enumerations are declared in a namespace or class scope

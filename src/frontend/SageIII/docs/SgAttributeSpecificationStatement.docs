@@ -1,0 +1,102 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgAttributeSpecificationStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgDataStatementGroupPtrList SgAttributeSpecificationStatement::p_data_statement_group_list
+*/
+/*!\var SgExprListExp *SgAttributeSpecificationStatement::p_bind_list
+*/
+/*!\var SgExprListExp *SgAttributeSpecificationStatement::p_parameter_list
+*/
+/*!\var SgStringList SgAttributeSpecificationStatement::p_name_list
+*/
+/*!\var enum SgAttributeSpecificationStatement::attribute_spec_enum SgAttributeSpecificationStatement::p_attribute_kind
+*/
+/*!\var int SgAttributeSpecificationStatement::p_intent
+*/
+/*!\var SgDimensionObjectPtrList SgAttributeSpecificationStatement::p_dimension_object_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAttributeSpecificationStatement::SgAttributeSpecificationStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgAttributeSpecificationStatement::SgAttributeSpecificationStatement(const SgAttributeSpecificationStatementStorageClass &source)
+*/
+/*!\fn inline static void SgAttributeSpecificationStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgAttributeSpecificationStatement *SgAttributeSpecificationStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAttributeSpecificationStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAttributeSpecificationStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAttributeSpecificationStatement::initializeStorageClassArray(SgAttributeSpecificationStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgAttributeSpecificationStatement::clearMemoryPool()
+*/
+/*!\fn static void SgAttributeSpecificationStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAttributeSpecificationStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAttributeSpecificationStatement::roseRTI()
+*/
+/*!\fn virtual SgAttributeSpecificationStatement::~SgAttributeSpecificationStatement()
+*/
+/*!\fn virtual SgNode *SgAttributeSpecificationStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgAttributeSpecificationStatement::post_construction_initialization()
+*/
+/*!\fn void SgAttributeSpecificationStatement::set_attribute_kind(enum SgAttributeSpecificationStatement::attribute_spec_enum attribute_kind)
+\description See  attribute_kind)
+attribute_kind for documentation */
+/*!\fn void SgAttributeSpecificationStatement::set_bind_list(SgExprListExp *bind_list)
+\description See  *bind_list)
+bind_list for documentation */
+/*!\fn void SgAttributeSpecificationStatement::set_intent(int intent)
+\description See  intent)
+intent for documentation */
+/*!\fn void SgAttributeSpecificationStatement::set_parameter_list(SgExprListExp *parameter_list)
+\description See  *parameter_list)
+parameter_list for documentation */
+/*!\fn SgDataStatementGroupPtrList &SgAttributeSpecificationStatement::get_data_statement_group_list()
+\description See  &SgAttributeSpecificationStatement::data_statement_group_list for documentation */
+/*!\fn SgDimensionObjectPtrList &SgAttributeSpecificationStatement::get_dimension_object_list()
+\description See  &SgAttributeSpecificationStatement::dimension_object_list for documentation */
+/*!\fn SgExprListExp *SgAttributeSpecificationStatement::get_bind_list() const
+\description See  const
+bind_list for documentation */
+/*!\fn SgExprListExp *SgAttributeSpecificationStatement::get_parameter_list() const
+\description See  const
+parameter_list for documentation */
+/*!\fn SgStringList &SgAttributeSpecificationStatement::get_name_list()
+\description See  &SgAttributeSpecificationStatement::name_list for documentation */
+/*!\fn const SgStringList &SgAttributeSpecificationStatement::get_name_list() const
+\description See  const
+name_list for documentation */
+/*!\fn enum SgAttributeSpecificationStatement::attribute_spec_enum SgAttributeSpecificationStatement::get_attribute_kind() const
+\description See  const
+attribute_kind for documentation */
+/*!\fn int SgAttributeSpecificationStatement::get_intent() const
+\description See  const
+intent for documentation */
+/*!\fn virtual SgName SgAttributeSpecificationStatement::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgAttributeSpecificationStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgAttributeSpecificationStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAttributeSpecificationStatement::get_numberOfTraversalSuccessors()
+\description See  SgAttributeSpecificationStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAttributeSpecificationStatement::get_traversalSuccessorContainer()
+\description See  SgAttributeSpecificationStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAttributeSpecificationStatement::get_traversalSuccessorNamesContainer()
+\description See  SgAttributeSpecificationStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgAttributeSpecificationStatement::SgAttributeSpecificationStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_965517889;

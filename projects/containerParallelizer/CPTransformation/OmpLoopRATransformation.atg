@@ -1,0 +1,551 @@
+/* Abstract C++ Attribute Grammar */
+$CX /* Generate C++ code */
+
+COMPILER SgNode
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+// #include "sgnodes.hpp"
+#include <stdio.h>
+#include <iostream>
+#include <typeinfo>
+
+#include "sage3.h"
+#include "roseInternal.h"
+#include "AstNodeScanner.h"
+#include "AgProcessing.h"
+#include "BodyTransformation.h"
+#include "AstRestructure.h"
+#include "AstClearVisitFlags.h"
+
+#include "AstInterface.h"
+#include "TestParallelLoop.h"
+
+extern AstRestructure* subst;
+extern TestParallelLoop* analysis;
+
+extern SgNode* currentAstNode;
+
+class Utility {
+public:
+  string newUniqueVariable() { string s="_t"; return s; }
+};
+
+Utility util;
+
+class Query {
+public:
+  string iteratorVariableName(SgNode* astNode) { string s="i"; return s; }
+  string iteratorContainerName(SgNode* astNode) { string s="l"; return s; }
+};
+
+Query query;
+
+#include "BodyTransformationParser.h"
+class OmpTransformationUtility {
+public:
+  string derefToIndexBody(SgForStatement* astNode,string iVarName,string iContName) { 
+    cout << "\nBodyTransformation started." << endl;
+    AstClearVisitFlags cl1;
+    cl1.traverse(astNode->get_parent());	
+    BodyTransformation ag2;
+    string s=ag2.transform(astNode,iVarName,iContName);
+    cout << s << endl;
+    //AstClearVisitFlags cl2;
+    //cl2.traverse(astNode->get_parent());	
+    cout << "\nBodyTransformation finished." << endl;
+    return s;
+  }
+};
+
+OmpTransformationUtility ompTransUtil;
+
+
+
+TOKENS
+
+SgName
+SgSymbolTable
+SgInitializedName
+SgModifierNodes
+Sg_File_Info
+SgFile
+SgProject
+SgOptions
+SgUnparse_Info
+SgBaseClass
+SgTypedefSeq
+SgFunctionParameterTypeList
+SgPragma
+SgFuncDecl_attr
+SgClassDecl_attr
+SgFunctionTypeTable
+SgExprStatement
+SgLabelStatement
+SgCaseOptionStmt
+SgTryStmt
+SgDefaultOptionStmt
+SgBreakStmt
+SgContinueStmt
+SgReturnStmt
+SgGotoStatement
+SgSpawnStmt
+SgPragmaStatement
+SgForInitStatement
+SgCatchStatementSeq
+SgClinkageStartStatement
+SgIncludeDirectiveStatement
+SgDefineDirectiveStatement
+SgUndefDirectiveStatement
+SgIfdefDirectiveStatement
+SgIfndefDirectiveStatement
+SgIfDirectiveStatement
+SgElseDirectiveStatement
+SgElseifDirectiveStatement
+SgEndifDirectiveStatement
+SgLineDirectiveStatement
+SgErrorDirectiveStatement
+SgC_StyleCommentStatement
+SgCxxStyleCommentStatement
+SgVariableDeclaration
+SgVariableDefinition
+SgEnumDeclaration
+SgAsmStmt
+SgTypedefDeclaration
+SgTemplateDeclaration
+SgFunctionParameterList
+SgCtorInitializerList
+SgTemplateInstantiationDecl
+SgMemberFunctionDeclaration
+SgFunctionDeclaration
+SgGlobal
+SgBasicBlock
+SgIfStmt
+SgForStatement
+SgFunctionDefinition
+SgWhileStmt
+SgDoWhileStmt
+SgSwitchStatement
+SgCatchOptionStmt
+SgTemplateInstantiationDefn
+SgExprListExp
+SgVarRefExp
+SgClassNameRefExp
+SgFunctionRefExp
+SgMemberFunctionRefExp
+SgFunctionCallExp
+SgSizeOfOp
+SgTypeIdOp
+SgConditionalExp
+SgNewExp
+SgDeleteExp
+SgThisExp
+SgRefExp
+SgAggregateInitializer
+SgConstructorInitializer
+SgAssignInitializer
+SgBoolValExp
+SgStringVal
+SgShortVal
+SgCharVal
+SgUnsignedCharVal
+SgWcharVal
+SgUnsignedShortVal
+SgIntVal
+SgEnumVal
+SgUnsignedIntVal
+SgLongIntVal
+SgLongLongIntVal
+SgUnsignedLongLongIntVal
+SgUnsignedLongVal
+SgFloatVal
+SgDoubleVal
+SgLongDoubleVal
+SgArrowExp
+SgDotExp
+SgDotStarOp
+SgArrowStarOp
+SgEqualityOp
+SgLessThanOp
+SgGreaterThanOp
+SgNotEqualOp
+SgLessOrEqualOp
+SgGreaterOrEqualOp
+SgAddOp
+SgSubtractOp
+SgMultiplyOp
+SgDivideOp
+SgIntegerDivideOp
+SgModOp
+SgAndOp
+SgOrOp
+SgBitXorOp
+SgBitAndOp
+SgBitOrOp
+SgCommaOpExp
+SgLshiftOp
+SgRshiftOp
+SgPntrArrRefExp
+SgScopeOp
+SgAssignOp
+SgPlusAssignOp
+SgMinusAssignOp
+SgAndAssignOp
+SgIorAssignOp
+SgMultAssignOp
+SgDivAssignOp
+SgModAssignOp
+SgXorAssignOp
+SgLshiftAssignOp
+SgRshiftAssignOp
+SgExpressionRoot
+SgMinusOp
+SgUnaryAddOp
+SgNotOp
+SgPointerDerefExp
+SgAddressOfOp
+SgMinusMinusOp
+SgPlusPlusOp
+SgBitComplementOp
+SgCastExp
+SgThrowOp
+SgVariableSymbol
+SgFunctionTypeSymbol
+SgTemplateSymbol
+SgEnumSymbol
+SgEnumFieldSymbol
+SgTypedefSymbol
+SgLabelSymbol
+SgDefaultSymbol
+SgTemplateInstantiationSymbol
+SgMemberFunctionSymbol
+SgFunctionSymbol
+SgTypeUnknown
+SgTypeChar
+SgTypeSignedChar
+SgTypeUnsignedChar
+SgTypeShort
+SgTypeSignedShort
+SgTypeUnsignedShort
+SgTypeInt
+SgTypeSignedInt
+SgTypeUnsignedInt
+SgTypeLong
+SgTypeSignedLong
+SgTypeUnsignedLong
+SgTypeVoid
+SgTypeGlobalVoid
+SgTypeWchar
+SgTypeFloat
+SgTypeDouble
+SgTypeLongLong
+SgTypeUnsignedLongLong
+SgTypeLongDouble
+SgTypeString
+SgTypeBool
+SgComplex
+SgTypeDefault
+SgReferenceType
+SgModifierType
+SgArrayType
+SgTypeEllipse
+SgPartialFunctionType
+SgUnknownMemberFunctionType
+SgEnumType
+SgTypedefType
+SgTemplateInstantiationType
+SgPointerMemberType
+SgClassDeclaration
+SgClassDefinition
+
+PRODUCTIONS
+
+SgNode = SgSupport
+    | SgLocatedNode
+    | SgSymbol
+    .
+SgSupport = SgName  "("  ")" 
+    | SgSymbolTable  "("  ")" 
+    | SgInitializedNameNT
+    | SgModifierNodes  "("  ")" 
+    | SgFileNT
+    | SgProject  "(" { SgFileNT } ")" 
+    | SgOptions  "("  ")" 
+    | SgBaseClass  "(" SgClassDeclarationNT  ")" 
+    | SgFunctionParameterTypeList  "("  ")" 
+    | SgAttribute
+    .
+
+SgGlobalNT = SgGlobal "(" { SgDeclarationStatement } ")"
+    .
+
+SgFileNT = SgFile  "(" SgGlobalNT ")"
+    .
+
+SgInitializedNameNT = SgInitializedName  "(" [SgInitializedNameNT] [SgInitializer]  ")"
+    .
+
+SgAttribute = SgPragma  "("  ")" 
+    | SgBitAttribute
+    .
+SgBitAttribute = SgFuncDecl_attr  "("  ")" 
+    | SgClassDecl_attr  "("  ")" 
+    .
+SgLocatedNode = (. unsigned int forNestingLevel=0; .) 
+      SgStatement<forNestingLevel>
+    | SgExpression
+    .
+SgStatement<unsigned int forNestingLevel> = SgExprStatement "(" SgExpressionRootNT ")"
+    | SgLabelStatement  "("  ")" 
+    | SgCaseOptionStmt  "(" SgBasicBlockNT<forNestingLevel> SgExpressionRootNT  ")" 
+    | SgTryStmt  "(" SgBasicBlockNT<forNestingLevel> SgCatchStatementSeq  ")" 
+    | SgDefaultOptionStmt  "(" SgBasicBlockNT<forNestingLevel>  ")" 
+    | SgBreakStmt  "("  ")" 
+    | SgContinueStmt  "("  ")" 
+    | SgReturnStmt  "(" SgExpressionRootNT  ")" 
+    | SgGotoStatement  "(" SgLabelStatement  ")" 
+    | SgSpawnStmt  "(" SgFunctionCallExpNT SgExpressionRootNT  ")" 
+    | SgPragmaStatement  "(" SgPragma  ")"
+    | SgCatchStatementSeq  "("  { SgStatement<forNestingLevel> }   ")" 
+    | SgClinkageStartStatement  "("  ")" 
+    | SgC_PreprocessorDirectiveStatement
+    | SgCommentStatement
+    | SgDeclarationStatement
+    | SgScopeStatement<forNestingLevel>
+    | SgForInitStatementNT<forNestingLevel>
+    .
+
+SgForInitStatementNT<unsigned int forNestingLevel> = 
+    SgForInitStatement  
+    (.
+    .)
+    "("  { SgStatement<forNestingLevel> }   ")" 
+    .
+
+SgC_PreprocessorDirectiveStatement = SgIncludeDirectiveStatement  "("  ")" 
+    | SgDefineDirectiveStatement  "("  ")" 
+    | SgUndefDirectiveStatement  "("  ")" 
+    | SgIfdefDirectiveStatement  "("  ")" 
+    | SgIfndefDirectiveStatement  "("  ")" 
+    | SgIfDirectiveStatement  "("  ")" 
+    | SgElseDirectiveStatement  "("  ")" 
+    | SgElseifDirectiveStatement  "("  ")" 
+    | SgEndifDirectiveStatement  "("  ")" 
+    | SgLineDirectiveStatement  "("  ")" 
+    | SgErrorDirectiveStatement  "("  ")" 
+    .
+SgCommentStatement = SgC_StyleCommentStatement  "("  ")" 
+    | SgCxxStyleCommentStatement  "("  ")" 
+    .
+
+SgDeclarationStatement = SgVariableDeclaration  "("  { SgInitializedNameNT }   ")" 
+    | SgVariableDefinition  "(" SgInitializedNameNT SgUnsignedLongValNT SgExpressionRootNT  ")" 
+    | SgEnumDeclaration  "("  ")" 
+    | SgAsmStmt  "(" SgExpressionRootNT  ")" 
+    | SgTemplateDeclaration  "("  ")" 
+    | SgFunctionParameterListNT
+    | SgCtorInitializerListNT
+    | SgClassDeclarationNT
+    | SgFunctionDeclarationNT
+    | SgTypedefDeclaration  "(" [SgDeclarationStatement]  ")" 
+    .
+
+SgUnsignedLongValNT = SgUnsignedLongVal "(" ")"
+    .
+
+SgCtorInitializerListNT = SgCtorInitializerList  "("  { SgInitializedNameNT }   ")"
+    .
+
+SgFunctionParameterListNT = 
+    SgFunctionParameterList  "("  { SgInitializedNameNT }   ")" 
+    .
+
+SgClassDeclarationNT = SgClassDeclaration "(" [ SgClassDefinitionNT ] ")" 
+    | SgTemplateInstantiationDecl  "(" SgClassDefinitionNT SgNode  ")" 
+    .
+SgFunctionDeclarationNT = SgFunctionDeclaration "(" SgFunctionParameterListNT [ SgFunctionDefinitionNT ] ")" 
+    | SgMemberFunctionDeclaration  "(" SgFunctionParameterListNT [SgFunctionDefinitionNT] SgCtorInitializerListNT  ")" 
+    .
+SgScopeStatement<unsigned int forNestingLevel> = SgGlobal  "("  { SgDeclarationStatement }   ")" 
+    | SgIfStmt  "(" SgStatement<forNestingLevel> SgBasicBlockNT<forNestingLevel> [SgBasicBlockNT<forNestingLevel>]  ")" 
+    | 
+    (. /* class SgForStatement* astNode=0; */.)
+      
+      SgForStatement 
+      (. 
+	  slangScanner* sscanner = dynamic_cast<slangScanner*>(Scanner);
+          cout << "SCANNER:" << sscanner << endl;
+          class SgNode* tnode=(sscanner->getCurrentAstToken()).node;
+          cout << "NODE:" << tnode  << " Sym:" << sscanner->getCurrentAstToken().scannerSymbol << endl;
+          cout << "SgForStatment:" << dynamic_cast<SgForStatement*>(tnode) << endl;
+	  cout << "REPLACE(" << astNode->sage_class_name() << "=" << astNode << ", " << "TEXT" << endl;
+          bool isOmpQualifiedForStatement=analysis->LoopParallelizable(astNode);
+      .)
+      "(" SgForInitStatementNT<forNestingLevel> SgExpressionRootNT SgExpressionRootNT SgBasicBlockNT<forNestingLevel+1>  ")"
+      (. 
+      if(isOmpQualifiedForStatement) {
+        string ivarName=query.iteratorVariableName(astNode);
+        string icontName=query.iteratorContainerName(astNode);
+        string modifiedBodyString = ompTransUtil.derefToIndexBody(astNode,ivarName,icontName); // separate evaluation
+        string beforeForStmt = "//#pragma omp parallel for\n";
+        string newForStmt = "for( int "+ivarName+"=0;"
+                            + ivarName+"<"+icontName+".size();"
+                            + ivarName+"++ ) "+modifiedBodyString;
+	if(astNode) {
+	  cout << "REPLACE(" << astNode->sage_class_name() << "=" << astNode << ", " << endl << beforeForStmt+newForStmt << endl;
+        } else { cout << "REPLACE: ASTNODE == NULL!" << endl; }
+
+        subst->delayedReplace(astNode,beforeForStmt+newForStmt);
+      }
+    .)
+
+    | SgWhileStmt  "(" SgStatement<forNestingLevel> SgBasicBlockNT<forNestingLevel>  ")" 
+    | SgDoWhileStmt  "(" SgStatement<forNestingLevel> SgBasicBlockNT<forNestingLevel>  ")" 
+    | SgSwitchStatement  "(" SgBasicBlockNT<forNestingLevel> SgExpressionRootNT  ")" 
+    | SgCatchOptionStmt  "(" SgVariableDeclaration SgBasicBlockNT<forNestingLevel>  ")" 
+    | SgClassDefinitionNT
+    | SgFunctionDefinitionNT
+    | SgBasicBlockNT<forNestingLevel>
+    .
+
+SgBasicBlockNT<unsigned int forNestingLevel> =
+    SgBasicBlock  "("  { SgStatement<forNestingLevel> }   ")" 
+    .
+
+SgFunctionDefinitionNT = (. unsigned int forNestingLevel=0; .) 
+    SgFunctionDefinition  "(" [ SgBasicBlockNT<forNestingLevel> ] ")" 
+    .
+
+SgClassDefinitionNT = SgClassDefinition  "("  { SgDeclarationStatement }   ")" 
+    | SgTemplateInstantiationDefn  "("  { SgDeclarationStatement }   ")" 
+    .
+
+SgExpression =
+    /* SgExprListExpNT */
+      SgVarRefExp  "("  ")" 
+    | SgClassNameRefExp  "("  ")" 
+    | SgFunctionRefExp  "("  ")" 
+    | SgMemberFunctionRefExp  "("  ")" 
+    | SgFunctionCallExpNT
+    | SgSizeOfOp  "(" SgExpression  ")" 
+    | SgConditionalExp  "(" SgExpression SgExpression [ SgExpression ] ")" 
+    | SgNewExp  "(" [ SgExprListExpNT ] SgConstructorInitializerNT [ SgExpression ] ")" 
+    | SgDeleteExp  "(" SgExpression  ")" 
+    | SgThisExp  "("  ")" 
+    | SgRefExp  "("  ")" 
+    | SgInitializer
+    | SgValueExp
+    | 
+      SgBinaryOp (.
+      .)
+    | SgUnaryOp
+    .
+
+SgFunctionCallExpNT =
+    SgFunctionCallExp  "(" [ SgExpression ] [ SgExprListExpNT ] ")"
+    .
+
+SgExprListExpNT = SgExprListExp  "("  { SgExpression }   ")"
+    .
+
+SgInitializer = SgAggregateInitializer  "(" [ SgExprListExpNT ] ")" 
+    | SgConstructorInitializerNT
+    | SgAssignInitializer  "(" [ SgExpression ] ")" 
+    .
+
+SgConstructorInitializerNT = SgConstructorInitializer  "(" [ SgExprListExpNT ] ")"
+    .
+
+SgValueExp = SgBoolValExp  "("  ")" 
+    | SgStringVal  "("  ")" 
+    | SgShortVal  "("  ")" 
+    | SgCharVal  "("  ")" 
+    | SgUnsignedCharVal  "("  ")" 
+    | SgWcharVal  "("  ")" 
+    | SgUnsignedShortVal  "("  ")" 
+    | SgIntVal  "("  ")" 
+    | SgEnumVal  "("  ")" 
+    | SgUnsignedIntVal  "("  ")" 
+    | SgLongIntVal  "("  ")" 
+    | SgLongLongIntVal  "("  ")" 
+    | SgUnsignedLongLongIntVal  "("  ")" 
+    | SgUnsignedLongVal  "("  ")" 
+    | SgFloatVal  "("  ")" 
+    | SgDoubleVal  "("  ")" 
+    | SgLongDoubleVal  "("  ")" 
+    .
+SgBinaryOp = SgArrowExp  "(" SgExpression [ SgExpression ] ")" 
+    | SgDotExp  "(" SgExpression [ SgExpression ] ")"
+    | SgDotStarOp  "(" SgExpression SgExpression  ")" 
+    | SgArrowStarOp  "(" SgExpression SgExpression  ")" 
+    | SgEqualityOp  "(" SgExpression SgExpression  ")" 
+    | SgLessThanOp  "(" SgExpression SgExpression  ")" 
+    | SgGreaterThanOp  "(" SgExpression SgExpression  ")" 
+    | SgNotEqualOp  "(" SgExpression SgExpression  ")" 
+    | SgLessOrEqualOp  "(" SgExpression SgExpression  ")" 
+    | SgGreaterOrEqualOp  "(" SgExpression SgExpression  ")" 
+    | SgAddOp  "(" SgExpression SgExpression  ")" 
+    | SgSubtractOp  "(" SgExpression SgExpression  ")" 
+    | SgMultiplyOp  "(" SgExpression SgExpression  ")" 
+    | SgDivideOp  "(" SgExpression SgExpression  ")" 
+    | SgIntegerDivideOp  "(" SgExpression SgExpression  ")" 
+    | SgModOp  "(" SgExpression SgExpression  ")" 
+    | SgAndOp  "(" SgExpression SgExpression  ")" 
+    | SgOrOp  "(" SgExpression SgExpression  ")" 
+    | SgBitXorOp  "(" SgExpression SgExpression  ")" 
+    | SgBitAndOp  "(" SgExpression SgExpression  ")" 
+    | SgBitOrOp  "(" SgExpression SgExpression  ")" 
+    | SgCommaOpExp  "(" SgExpression SgExpression  ")" 
+    | SgLshiftOp  "(" SgExpression SgExpression  ")" 
+    | SgRshiftOp  "(" SgExpression SgExpression  ")" 
+    | SgPntrArrRefExp  "(" SgExpression SgExpression  ")" 
+    | SgScopeOp  "(" SgExpression SgExpression  ")" 
+    | SgAssignOp  "(" SgExpression [ SgExpression ] ")" 
+    | SgPlusAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgMinusAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgAndAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgIorAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgMultAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgDivAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgModAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgXorAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgLshiftAssignOp  "(" SgExpression SgExpression  ")" 
+    | SgRshiftAssignOp  "(" SgExpression SgExpression  ")" 
+    .
+
+SgExpressionRootNT =
+    SgExpressionRoot  "(" [ SgExpression ] ")"
+    .
+
+SgUnaryOp = SgExpressionRootNT
+    | SgMinusOp  "(" SgExpression  ")" 
+    | SgUnaryAddOp  "(" SgExpression  ")" 
+    | SgNotOp  "(" SgExpression  ")" 
+    | SgPointerDerefExp  "(" SgExpression  ")" /* SgExpression<sub&> .. (. if(ompable) replace(astnode,containerName+"["+backend(sub)+"]" .) */
+    | SgAddressOfOp  "(" SgExpression  ")" 
+    | SgMinusMinusOp  "(" SgExpression  ")" 
+    | SgPlusPlusOp  "(" SgExpression  ")" 
+    | SgBitComplementOp  "(" SgExpression  ")" 
+    | SgCastExp  "(" [ SgExpression ] ")" 
+    | SgThrowOp  "(" SgExpression  ")" 
+    .
+SgSymbol = SgVariableSymbol  "("  ")" 
+    | SgTemplateSymbol  "(" SgTemplateDeclaration  ")" 
+    | SgEnumSymbol  "(" SgEnumDeclaration  ")" 
+    | SgEnumFieldSymbol  "("  ")" 
+    | SgLabelSymbol  "(" SgLabelStatement  ")" 
+    | SgDefaultSymbol  "("  ")" 
+    | SgClassSymbol
+    | SgFunctionSymbolNT
+    | SgTypedefSymbol  "(" SgTypedefDeclaration  ")" 
+    .
+SgClassSymbol = SgTemplateInstantiationSymbol  "(" SgClassDeclarationNT  ")" 
+    .
+SgFunctionSymbolNT = SgFunctionSymbol  "(" SgFunctionDeclarationNT  ")" 
+    | SgMemberFunctionSymbol  "(" SgFunctionDeclarationNT  ")" 
+    .
+
+END SgNode.
+

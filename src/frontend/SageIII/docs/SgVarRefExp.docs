@@ -1,0 +1,149 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgVarRefExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgVarRefExp
+\brief This class represents the variable refernece in expressions.
+\todo Test to verify that each variable reference is associated with the inner
+    most scoped variable with that name, except where name qualified.  Applies most easily
+    to local variables.  The same test could be used for function references, actually
+    all references. 
+\todo Make sure that declarations appear before variable references.
+\sa
+\ref SgVarRefExp_usage  "Example of using a SgVarRefExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgVarRefExp data members
+/////////////////////////////////////////////////////////////////////////
+/*!
+\var SgVarRefExp::p_lvalue
+\brief This boolean variable marks the current expression as a 
+left hand side value (lvalue).
+*/
+/*!
+\var SgVarRefExp::p_need_paren
+\brief This boolean value marks the current expression as requiring parenthises.
+This boolean value marks the current expression as requiring parenthises (the
+information comes from the frontend's interpretation of the requirement and is 
+almost always overly conservative.  The unparser currently backs out more
+accurate rules based on operator precedence and removed then where they
+are not truely required.  Thus the purpose of this variable is to capture the
+interpritation of the frontend regarding the use of parenthesis.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgVarRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgVarRefExp::SgVarRefExp (const SgVarRefExp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgVarRefExp::~SgVarRefExp()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgVarRefExp::isSgVarRefExp (SgNode *s)
+\brief Cast function (from derived class to SgVarRefExp pointer).
+   This functions returns a SgVarRefExp pointer for any input of a 
+pointer to an object derived from a SgVarRefExp.
+\return Returns valid pointer to SgVarRefExp if input is derived from a SgVarRefExp.
+*/
+/*!
+\fn SgVarRefExp::isSgVarRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgVarRefExp pointer).
+   This functions returns a SgVarRefExp pointer for any input of a 
+pointer to an object derived from a SgVarRefExp.
+\return Returns valid pointer to SgVarRefExp if input is derived from a SgVarRefExp.
+*/
+/*!
+\fn SgVarRefExp::set_type()
+\brief Set the type associated with this expression
+   This is an internally called function, it sets up the type of the expression 
+based upon the types of the subexpressions (if any). Thus it takes no 
+arguments.
+\return Returns void
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgVariableSymbol *SgVarRefExp::p_symbol
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgVarRefExp::SgVarRefExp(Sg_File_Info *startOfConstruct,SgVariableSymbol *symbol=(0))
+\brief This is the constructor.
+   This constructor builds the SgVarRefExp base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgVarRefExp_create "Example:create an SgVarRefExp object"
+*/
+/*!\fn SgVarRefExp::SgVarRefExp(const SgVarRefExpStorageClass &source)
+*/
+/*!\fn inline static void SgVarRefExp::operator delete(void *pointer)
+*/
+/*!\fn static SgVarRefExp *SgVarRefExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgVarRefExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgVarRefExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgVarRefExp::initializeStorageClassArray(SgVarRefExpStorageClass *storageArray)
+*/
+/*!\fn static void SgVarRefExp::clearMemoryPool()
+*/
+/*!\fn static void SgVarRefExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgVarRefExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgVarRefExp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgVarRefExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgVarRefExp::~SgVarRefExp()
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgVarRefExp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgVarRefExp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgVarRefExp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgVarRefExp::post_construction_initialization()
+*/
+/*!\fn void SgVarRefExp::set_symbol(SgVariableSymbol *symbol)
+\description See  *symbol)
+symbol for documentation */
+/*!\fn SgVariableSymbol *SgVarRefExp::get_symbol() const
+\description See  const
+symbol for documentation */
+/*!\fn virtual SgNode *SgVarRefExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!
+\fn virtual SgType *SgVarRefExp::get_type() const
+\brief Get the type associated with this expression
+     Note that the return value is either:
+   -# SgFunctionType : normal function call
+   -# SgMemberFunctionType : normal member function call
+   -# SgTypedefType : in teh case of a function call from a pointer
+   It should always be a vailid pointer.  These details are verified in the AST
+   Consistancy Tests.
+See  const
+type for documentation \return Returns SgType (but not any SgType).
+*/
+/*!\fn virtual size_t SgVarRefExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgVarRefExp::get_numberOfTraversalSuccessors()
+\description See  SgVarRefExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgVarRefExp::get_traversalSuccessorContainer()
+\description See  SgVarRefExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgVarRefExp::get_traversalSuccessorNamesContainer()
+\description See  SgVarRefExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgVarRefExp::SgVarRefExp(SgVariableSymbol *symbol)
+*/
+//@}
+int SAGE_Doxygen_Dummy_2078133504409;

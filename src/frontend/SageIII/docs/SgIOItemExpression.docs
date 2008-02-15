@@ -1,0 +1,71 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgIOItemExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgName SgIOItemExpression::p_name
+*/
+/*!\var SgExpression *SgIOItemExpression::p_io_item
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgIOItemExpression::SgIOItemExpression(Sg_File_Info *startOfConstruct,SgName name=(""),SgExpression *io_item=(0))
+*/
+/*!\fn SgIOItemExpression::SgIOItemExpression(const SgIOItemExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgIOItemExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgIOItemExpression *SgIOItemExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgIOItemExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgIOItemExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgIOItemExpression::initializeStorageClassArray(SgIOItemExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgIOItemExpression::clearMemoryPool()
+*/
+/*!\fn static void SgIOItemExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgIOItemExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgIOItemExpression::roseRTI()
+*/
+/*!\fn virtual SgIOItemExpression::~SgIOItemExpression()
+*/
+/*!\fn virtual SgNode *SgIOItemExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgIOItemExpression::post_construction_initialization()
+*/
+/*!\fn void SgIOItemExpression::set_io_item(SgExpression *io_item)
+\description See  *io_item)
+io_item for documentation */
+/*!\fn void SgIOItemExpression::set_name(SgName name)
+\description See  name)
+name for documentation */
+/*!\fn SgExpression *SgIOItemExpression::get_io_item() const
+\description See  const
+io_item for documentation */
+/*!\fn SgName SgIOItemExpression::get_name() const
+\description See  const
+name for documentation */
+/*!\fn virtual SgNode *SgIOItemExpression::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgIOItemExpression::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgIOItemExpression::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgIOItemExpression::get_numberOfTraversalSuccessors()
+\description See  SgIOItemExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIOItemExpression::get_traversalSuccessorContainer()
+\description See  SgIOItemExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIOItemExpression::get_traversalSuccessorNamesContainer()
+\description See  SgIOItemExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgIOItemExpression::SgIOItemExpression(SgName name,SgExpression *io_item)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_166006258;

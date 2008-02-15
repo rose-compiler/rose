@@ -1,0 +1,7 @@
+PDFlib license file 1.0
+
+# This is a license file template for PDFlib GmbH products.
+# You can accumulate multiple CPU keys here (line by line).
+# Replace the 0 in the third column with your actual license key.
+
+PDFlib		6.0.2		0

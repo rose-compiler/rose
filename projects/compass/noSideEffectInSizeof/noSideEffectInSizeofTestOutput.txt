@@ -1,0 +1,2 @@
+NoSideEffectInSizeof: noSideEffectInSizeofTest1.C:9.10-20: SgSizeOfOp: Operands to the sizeof operator should not contain side effects
+NoSideEffectInSizeof: noSideEffectInSizeofTest1.C:12.6-16: SgSizeOfOp: Operands to the sizeof operator should not contain side effects

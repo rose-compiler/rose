@@ -1,0 +1,136 @@
+\chapter{AST File I/O}
+
+   Figure~\ref{Tutorial:example_astFileIO} shows an
+example of how to use the AST File I/O mechanism.  This chapter 
+presents an example translator to write out an AST to a file and 
+then read it back in.
+
+
+\section{Source Code for File I/O}
+
+    Figure~\ref{Tutorial:example_astFileIO}
+shows an example translator which reads an the input application, forms the
+AST, writes out the AST to a file, then deletes the ASt and reads the
+AST from the previously written file. 
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_astFileIO},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_astFileIO}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inlineTransformations.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inlineTransformations.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to use the AST file I/O support.}
+\label{Tutorial:example_astFileIO}
+\end{figure}
+
+
+
+\section{Input to Demonstrate File I/O}
+
+   Figure~\ref{Tutorial:exampleInputCode_astFileIO}
+shows the example input used for demonstration of the AST file I/O.
+In this case we are reusing the example used in the inlining example.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_inlineTransformations.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_inlineTransformations.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to demonstrate the AST file I/O support.}
+\label{Tutorial:exampleInputCode_astFileIO}
+\end{figure}
+
+
+
+\section{Output from File I/O}
+
+   Figure~\ref{Tutorial:exampleOutput_astFileIO} 
+shows the output from the example file I/O tutorial example.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/astFileIO_GenerateBinaryFile.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/astFileIO_GenerateBinaryFile.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code after inlining transformations.}
+\label{Tutorial:exampleOutput_astFileIO}
+\end{figure}
+
+\section{Final Code After Passing Through File I/O}
+
+   Figure~\ref{Tutorial:exampleOutput_astFileIOSource}
+shows the same file as the input demonstrating that the file I/O
+didn't change the resulting generated code.  
+{\em Much more sophisticated tests are applied internally to verify 
+the correctness of the AST after AST file I/O.}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_inlineTransformations.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_inlineTransformations.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code after file I/O.}
+\label{Tutorial:exampleOutput_astFileIOSource}
+\end{figure}
+
+
+
+
+
+
+

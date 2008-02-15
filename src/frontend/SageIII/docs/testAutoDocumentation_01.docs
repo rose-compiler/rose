@@ -1,0 +1,8 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \class XYZ
+    Doxygen Comment 
+*/
+/*!\fn void XYZ::foobar()
+\todo Document this
+*/
+extern int SAGE_Doxygen_Dummy_xyz;

@@ -1,0 +1,4 @@
+
+Example of patch syntax:
+   patch -p0 < src/ROSETTA/src/20060807-extended-copy.patch
+

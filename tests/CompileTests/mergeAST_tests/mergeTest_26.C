@@ -1,0 +1,3 @@
+enum { X };
+enum { Y };
+

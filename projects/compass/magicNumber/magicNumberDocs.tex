@@ -1,0 +1,89 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Magic Number}
+\label{MagicNumber::overview}
+
+% write your introduction
+This test checks for the presence of `magic numbers' in the source code. Magic
+numbers are all constants of integer or floating point type that occur outside
+of initializer expressions. The user may configure the checker to ignore
+certain common constants such as 0 or 1. This detector reports not only
+hand-written constants but also those that were created by macro expansion.
+ 
+Note that C++ does not have negative constants; \verb|-1| is not an integer
+constant but rather the unary minus operator applied to the constant~\verb|1|.
+To ignore occurrences of \verb|-1|, you must therefore instruct the checker to
+ignore the constant \verb|1|, but this will also ignore all `positive'
+occurrences.
+
+\subsection{Parameter Requirements}
+
+The magic number detector requires two entries in the parameter file, one of
+which is the list of integer constants to ignore, the other the list of
+floating point constants to ignore. Constants in both lists are separated by
+whitespace; as explained above, it does not make sense to specify negative
+values.
+ 
+An example of parameter entries is:
+\begin{quote}
+{\bf MagicNumberDetector.allowedIntegers = }
+
+{\bf MagicNumberDetector.allowedFloats = 42.0 3.14159}
+\end{quote}
+ 
+This specification has an empty list of integers, so every integer constant
+(of any type) will be flagged as a magic number; the floating point constants
+42.0 and 3.14159 are allowed to appear in the source code, but
+all others are treated as magic numbers. Note that floating point numbers are
+compared by numeric value, which may result in strange effects due to inexact
+representation.
+
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+int f_noncompliant(int n)
+{
+    int x;
+    x = 42; // not OK: magic number
+    return x + n;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+int f_compliant(int n)
+{
+    int x = 42; // OK: constant only used in initializer
+    return x + n;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For every integer or floating point literal, examine the enclosing
+statement to find out whether it occurs as part of the initializer in a
+variable declaration. If not, emit a diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference for this pattern is: H.~Sutter, A.~Alexandrescu: ``C++ Coding
+Standards'', Item~17: ``Avoid magic numbers''. 

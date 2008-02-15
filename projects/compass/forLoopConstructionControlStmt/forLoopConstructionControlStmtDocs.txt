@@ -1,0 +1,46 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{For Loop Construction Control Stmt}
+
+\label{ForLoopConstructionControlStmt::overview}
+
+\quote{Namespace: \texttt{ForLoopConstructionControlStmt}}
+
+\subsection{Introduction}
+Unlike while loop constructs, non-control statements in for loop constructors
+tend to appear beyond the test expression. Often these statements may be moved
+in to the body of the for loop construct easily and results in greater clarity
+in the for loop construction code. Taken from ``LLNL ALE3D'', sec 6.1.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out for loop
+statement constructs. Once a for loop is found the for loop construction block,
+e.g. for( ; ; ) is string searched for instances of the comma operator 
+that indicates the use of non-control expressions in for loop construction code.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: forLoopConstructionControlStmtTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../forLoopConstructionControlStmt/forLoopConstructionControlStmtTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

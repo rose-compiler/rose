@@ -1,0 +1,50 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgTypeUnsignedShort
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeUnsignedShort *SgTypeUnsignedShort::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeUnsignedShort::SgTypeUnsignedShort(const SgTypeUnsignedShortStorageClass &source)
+*/
+/*!\fn inline static void SgTypeUnsignedShort::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeUnsignedShort *SgTypeUnsignedShort::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeUnsignedShort::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeUnsignedShort::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeUnsignedShort::initializeStorageClassArray(SgTypeUnsignedShortStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeUnsignedShort::clearMemoryPool()
+*/
+/*!\fn static void SgTypeUnsignedShort::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeUnsignedShort::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeUnsignedShort::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeUnsignedShort::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeUnsignedShort::~SgTypeUnsignedShort()
+*/
+/*!\fn virtual SgNode *SgTypeUnsignedShort::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeUnsignedShort::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeUnsignedShort::get_numberOfTraversalSuccessors()
+\description See  SgTypeUnsignedShort::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeUnsignedShort::get_traversalSuccessorContainer()
+\description See  SgTypeUnsignedShort::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeUnsignedShort::get_traversalSuccessorNamesContainer()
+\description See  SgTypeUnsignedShort::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypeUnsignedShort::SgTypeUnsignedShort()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_201898114;

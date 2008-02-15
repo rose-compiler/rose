@@ -1,0 +1,179 @@
+
+#ifndef TREE_IMPL_H
+#define TREE_IMPL_H
+
+#include <iostream>
+#include <assert.h>
+#include <DoublyLinkedList.h>
+
+template<class T>
+class TreeNodeImpl
+{
+  T* parent;
+  DoublyLinkedListWrap<T*> children;
+  typedef DoublyLinkedEntryWrap<T*> HolderType;
+  HolderType *holder;
+
+ protected:
+  void Unlink() 
+    { if (holder != 0) {
+          parent->children.Delete(holder); holder = 0; parent = 0; 
+      }
+    }
+
+ public:
+  TreeNodeImpl() : parent(0), holder(0) {}
+  virtual ~TreeNodeImpl() 
+    { for (Iterator p = ChildrenIterator(); !p.ReachEnd(); ++p) {
+         TreeNodeImpl<T>* n = (*p);
+         n->holder = 0;
+         delete n;
+      }
+      Unlink(); 
+    }
+  typedef typename DoublyLinkedListWrap<T*>::Iterator Iterator;
+  typedef enum {AsFirstChild, AsLastChild, AsPrevSibling, AsNextSibling} LinkOption;
+
+  T* Parent() const { return parent; }
+  T* FirstChild() const { return (ChildCount() > 0)? children.First()->GetEntry() : 0; }
+  T* LastChild() const { return (ChildCount() > 0)? children.Last()->GetEntry() : 0; }
+  Iterator ChildrenIterator() const { return Iterator(children); }
+  T* NextSibling() const {  HolderType *h = (holder==0)? 0 : parent->children.Next(holder);
+                            return (h != 0)? h->GetEntry() : 0; }
+  T* PrevSibling() const { HolderType *h = (holder==0)? 0 : parent->children.Prev(holder);
+                           return (h != 0)? h->GetEntry() : 0; }
+  unsigned ChildCount() const { return children.NumberOfEntries(); }
+
+  void Link(T* pos, LinkOption opt)
+     { assert(holder == 0);
+       T* entry = static_cast<T*>(this);
+       switch (opt) {
+       case AsFirstChild: 
+           parent = pos; holder = pos->children.PushFirst(entry); break;
+       case AsLastChild:
+           parent = pos; holder = pos->children.AppendLast(entry); break;
+       case AsPrevSibling:
+           parent = pos->parent; 
+           holder = parent->children.InsertBefore(entry, pos->holder);
+           break;
+       case AsNextSibling:
+           parent = pos->parent;
+           holder = parent->children.InsertAfter(entry, pos->holder);
+           break;
+       default:
+           assert(false);
+       }
+     }
+
+  virtual void write(std::ostream& out) const {}
+
+#if 0
+// DQ (9/4/2005): This is Peter's fix (I think)
+  void writeTree() const
+    { 
+      // pmp 09JUN05
+      //   I believe this is a bug; out is nowhere declared, so I assume that
+      //   this function has not been instantiated before
+      //   was: write(out);
+      //        for (Iterator p = ChildrenIterator(); !p.ReachEnd(); ++p)        
+      //          (*p)->write(out);
+      using std::cerr;
+      write(std::cerr);
+#else
+// DQ (9/4/2005): This is Qing's fix (I think) (I assume it is better since it adds the declaration of "out"
+  void writeTree(std::ostream& out) const
+    { write(out);
+#endif
+      for (Iterator p = ChildrenIterator(); !p.ReachEnd(); ++p) 
+         (*p)->write(std::cerr);
+      if (ChildCount() > 0) 
+        std::cerr << "endtree\n";
+    }
+};
+
+template <class T>
+class TreeTraverse 
+{
+ public:
+  typedef enum {PreOrder, PostOrder, ChildrenOnly} TraversalOpt;
+  static T* FirstNode(T *n, TraversalOpt opt=PreOrder)
+    { switch (opt) {
+       case PreOrder: return n;
+       case PostOrder:
+          while (n->FirstChild() != 0)
+             n = n->FirstChild();
+          return n;
+       case ChildrenOnly:
+          return n->FirstChild();
+       default:
+          assert(false);
+      }
+    }
+  static T* LastNode( T *n, TraversalOpt opt=PreOrder)
+   { switch (opt) {
+      case PostOrder: return n;
+      case PreOrder:
+         while (n->LastChild() != 0)
+             n = n->LastChild();
+         return n;
+      case ChildrenOnly: return n->LastChild();
+      default:
+         assert(false);
+      }
+   }
+  static T* PrevNode( T *n, TraversalOpt opt=PreOrder)
+   { T *result = 0;
+     switch (opt ) {
+      case PreOrder:
+          result = n->PrevSibling();
+          if ( result != 0)
+              return LastNode( result, PreOrder );
+          else
+              return n->Parent();
+      case PostOrder:
+          result = n->LastChild();
+          if ( result == 0) {
+             for ( result = n->PrevSibling(); result == 0;
+                   result = n->PrevSibling()) {
+                n = n->Parent();
+               if (n == 0)
+                  break;
+             }
+          }
+          return result;
+      case ChildrenOnly:
+          return n->PrevSibling();
+      default:
+          assert(false);
+     }
+   }
+  static T* NextNode( T *n, TraversalOpt opt=PreOrder)
+   { T *result = 0;
+     switch (opt ) {
+      case PostOrder:
+         result = n->NextSibling();
+         if ( result != 0)
+            return FirstNode( result, PostOrder );
+         else
+            return n->Parent();
+      case PreOrder:
+         result = n->FirstChild();
+         if ( result == 0) {
+            for ( result = n->NextSibling(); result == 0;
+                  result = n->NextSibling()) {
+                n = n->Parent();
+                if (n == 0)
+                  break;
+            }
+         }
+         return result;
+     case ChildrenOnly:
+          return n->NextSibling();
+     default:
+          assert(false);
+     }
+   }
+};
+
+#endif
+

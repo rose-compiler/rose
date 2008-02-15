@@ -1,0 +1,26 @@
+// Class Definition for CLASSNAME
+class CLASSNAME BASECLASSNAME
+   {
+     public:
+         ~CLASSNAME ();
+
+MEMBER_FUNCTION_DECLARATIONS
+
+     public:
+       // We want to make this a pure virtual function in the base 
+       // classes and a virtual function in the leaf classes
+       // virtual ROSE_Node* transform() = 0;
+
+       // Member function defined similarly across all array grammar objects
+       // this MUST be a virtual function
+          virtual Boolean error();
+
+  // We don't want to have these be used within the interface
+     private:
+          CLASSNAME ();
+          CLASSNAME ( const CLASSNAME & X );
+          CLASSNAME & operator= ( const CLASSNAME & X );
+   };
+
+
+

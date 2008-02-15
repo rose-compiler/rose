@@ -1,0 +1,90 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Non Standard Type Ref Args}
+\label{NonStandardTypeRefArgs::overview}
+
+Per the Abbreviated C++ Code Inspection Checklist ``While it is
+cheaper to pass ints, longs, and such by value, passing objects this
+way incurs significant expense due to the construction of temporary
+objects. The problem becomes more severe when inheritance is
+involved. Simulate pass-by-value by passing const references.''
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+No parameters necessary
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+The arguments to all functions are checked for base type in the
+declaration.  If the base type is found to be a struct or a class, it
+is then checked to ensure it is a reference.  If it is not, a
+notification is raised.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+class incrediblyComplex
+{
+private:
+//loads of members
+}
+
+bool justLooking(incrediblyComplex fullCopy)
+{
+return (! &fullCopy);
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+
+class incrediblyComplex
+{
+private:
+//loads of members
+}
+
+bool justLooking(incrediblyComplex& fullCopy)
+{
+return (! &fullCopy);
+}
+
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Identify function declaration
+\item Check arguments for base type
+\item if non-intrinsic type and not a reference, notify
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{Abbreviated Code Inspection
+  Checklist}{http://www.lore.ua.ac.be/Teaching/SE3BAC} Section 13.1,
+Argument Passing''

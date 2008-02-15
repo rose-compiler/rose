@@ -1,0 +1,133 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeleteExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgDeleteExp
+\brief This class represents the concept of a C++ call to the delete operator.
+
+\todo I believe we can associate the destructors from the class with 
+      delete operators.
+
+\sa
+\ref SgDeleteExp_usage  "Example of using a SgDeleteExp object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeleteExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgDeleteExp::p_variable
+\brief This pointer points to the variable being deleted.
+
+*/
+
+/*! \var SgDeleteExp::p_is_array
+\brief This bool value is true only if the delete operator is called on an array (array delete).
+
+*/
+
+/*! \var SgDeleteExp::p_need_global_specifier
+\brief This delete operator needs to be output with "::".
+
+\todo Check if this bool data member is used and/or required.
+
+\internal  Not clear if this is required since Sage III should have the scope sufficent to output
+    any required name qualification.  More generally we should be able to eliminate this
+    once we explicitly store all explicit qualified names.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDeleteExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgDeleteExp::SgDeleteExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgDeleteExp base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgDeleteExp_create "Example:create an SgDeleteExp object"
+*/
+
+/*!
+\fn SgDeleteExp::~SgDeleteExp()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgDeleteExp::isSgDeleteExp (SgNode *s)
+\brief Cast function (from derived class to SgDeleteExp pointer).
+
+   This functions returns a SgDeleteExp pointer for any input of a 
+pointer to an object derived from a SgDeleteExp.
+
+\return Returns valid pointer to SgDeleteExp if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDeleteExp::isSgDeleteExp (const SgNode *s)
+\brief Cast function (from derived class to SgDeleteExp pointer).
+
+   This functions returns a SgDeleteExp pointer for any input of a 
+pointer to an object derived from a SgDeleteExp.
+
+\return Returns valid pointer to SgDeleteExp if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgDeleteExp::get_variable() const
+\brief Access function for p_variable.
+
+\return Returns pointer to SgExpression.
+*/
+
+/*!
+\fn SgDeleteExp::set_variable(SgExpression* variable)
+\brief Access function for p_variable.
+
+\param variable is the variable to be deleted.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeleteExp::get_is_array() const
+\brief Access function for p_is_array.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeleteExp::set_is_array(SgExpression* is_array)
+\brief Access function for p_is_array.
+
+\param is_array flag to record use of array delete.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgDeleteExp::get_need_global_specifier() const
+\brief Access function for p_need_global_specifier.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgDeleteExp::set_need_global_specifier(SgExpression* need_global_specifier)
+\brief Access function for p_need_global_specifier.
+
+\param need_global_specifier flag to record use of array delete.
+
+\return Returns void.
+*/
+

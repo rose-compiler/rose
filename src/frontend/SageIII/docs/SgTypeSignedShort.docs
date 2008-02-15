@@ -1,0 +1,50 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgTypeSignedShort
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeSignedShort *SgTypeSignedShort::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeSignedShort::SgTypeSignedShort(const SgTypeSignedShortStorageClass &source)
+*/
+/*!\fn inline static void SgTypeSignedShort::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeSignedShort *SgTypeSignedShort::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeSignedShort::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeSignedShort::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeSignedShort::initializeStorageClassArray(SgTypeSignedShortStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeSignedShort::clearMemoryPool()
+*/
+/*!\fn static void SgTypeSignedShort::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeSignedShort::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeSignedShort::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeSignedShort::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeSignedShort::~SgTypeSignedShort()
+*/
+/*!\fn virtual SgNode *SgTypeSignedShort::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeSignedShort::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeSignedShort::get_numberOfTraversalSuccessors()
+\description See  SgTypeSignedShort::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeSignedShort::get_traversalSuccessorContainer()
+\description See  SgTypeSignedShort::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeSignedShort::get_traversalSuccessorNamesContainer()
+\description See  SgTypeSignedShort::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypeSignedShort::SgTypeSignedShort()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1456376738;

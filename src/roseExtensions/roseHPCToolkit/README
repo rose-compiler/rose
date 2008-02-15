@@ -1,0 +1,68 @@
+****************************************************************
+ROSE-HPCT
+Interfaces for accessing HPCToolkit data within ROSE translators
+Last major update: October 21, 2005
+Maintainer: Rich Vuduc <richie@llnl.gov>
+****************************************************************
+
+---------------
+Getting Started
+---------------
+
+ROSE-HPCT is *not* built by default during a typical build
+of ROSE. To enable it, specify the configure-time option:
+
+  --enable-rosehpct
+
+A successful build creates librosehpct.so, installed by
+default in <prefix>/lib along with the other ROSE libraries.
+Since ROSE-HPCT is experimental, it is *not* included in
+librose.so, and so needs to be linked against explicitly.
+
+
+*** External library dependencies ***
+
+ROSE-HPCT does *not* depend on having an HPCToolkit installation
+because it operates on the XML-output of HPCToolkit.
+
+ROSE-HPCT does depend on the Gnome libxml2 XML parsing library to
+process the HPCToolkit data files, and configure will try to
+auto-detect this on your system. If it fails, you can specify
+the root of the libxml2 installation tree manually:
+
+  --with-libxml2=<install-tree>
+
+where the libxml2 header files are assumed to be installed in
+<install-tree>/libxml2/*, and the libraries are in
+<install-tree>/lib. These are the default locations paths
+for libxml2.
+
+Alternatively, the implementation can also use the Xerces-C XML
+processing library, but this is currently disabled.
+
+-----------
+Basic Usage
+-----------
+
+To get a quick overview of how to augment a ROSE translator
+to import HPCToolkit data, see:
+
+  examples/test_highlevel.cc
+
+This example compiles to a driver that can import HPCToolkit
+data, attach it to an AST, and dumps a PDF with attributes
+corresponding to the metric data.
+
+The Bourne-shell script, examples/test_hl*.sh, shows how
+to run the above driver on the test data in
+examples/data subdirectory.
+
+
+-------------
+Documentation
+-------------
+
+The documentation for ROSE-HPCT is included and built with
+the ROSE documentation.
+
+# eof

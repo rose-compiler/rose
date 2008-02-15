@@ -1,0 +1,52 @@
+$CX   /* Generate Main Module, C++ */
+COMPILER Decl
+/* Translate simple C declarations into English
+   Based on Kernighan and Ritchie: "C Programming language", page 122
+   See also: Parr et.al. "PCCTS reference manual", page 53 in ACM SIGPLAN
+   Notices 27(2), 88-165, 1992 */
+
+#include <stdlib.h>
+#include <iostream.h>
+
+CHARACTERS
+  digit =  "0123456789" .
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyx_" .
+
+IGNORE CHR(9) .. CHR(13)
+
+TOKENS
+  number = digit { digit } .
+  name = letter { letter } .
+
+PRODUCTIONS
+
+  Decl       =                            (. char Tipe[100]; .)
+               { name                     (. Scanner->GetName(&Scanner->CurrSym, Tipe, 100); .)
+                 Dcl                      (. cout << ' ' << Tipe << endl; .)
+                 ";" } .
+
+  Dcl        =   "*" Dcl                  (. cout << " pointer to"; .)
+               | DirectDcl .
+
+  DirectDcl  =                            (. char Name[100]; .)
+                name                      (. Scanner->GetName(&Scanner->CurrSym, Name, 100);
+                                             cout << ' ' << Name << " is"; .)
+                 Descriptor
+               | "(" Dcl ")" Descriptor .
+
+  Descriptor =                            (. char buff[100]; .)
+               [  "["                     (. cout << " array "; .)
+                  ( number                (. Scanner->GetString(&Scanner->CurrSym, buff, 100);
+                                             cout << '[' << atoi(buff) << "] "; .)
+                    | /* no dimension */
+                  )
+                  "]"                     (. cout << "of"; .)
+                  Descriptor
+                | "(" ")"                 (. cout << " function returning"; .)
+               ] .
+
+END Decl.
+
+
+
+

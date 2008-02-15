@@ -1,0 +1,73 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Sub Expression Evaluation Order}
+\label{SubExpressionEvaluationOrder::overview}
+
+This checker detects if there exist, within an expression, sub-expressions that update the same variable.
+As the order of evaluation of such expressions is not guaranteed to be left-to-right, any of the sub-expressions can be taken place first.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+None.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+This checker uses a simple traversal. For every function call statement, the checker examines 1) whether the function call has sub-expressions that update variables and 2) the variables updated are identical.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+int bar(int a, int b);
+
+void foo()
+{
+  int i = 0;
+
+  i = bar(++i, ++i); // either ++i could be evaluated first
+  i = bar((i=3), (i=4)); // no particular order is guaranteed.
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+
+int bar(int a, int b);
+
+void foo()
+{
+  int i = 0;
+
+  i = bar(2, 3); // fine
+  i = bar((i=2), 3); //fine
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each node, check if the node is a function call statement.
+\item Examine if the function call has sub-expressions that update variables.
+\item If yes, examine further if the variables updated are identical.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The Programming Research Group, High-Integrity C++ Coding Standard Manual, Item 10.3: ``Do not assume the order of evaluation of operands in an expression."

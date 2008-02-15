@@ -1,0 +1,66 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class PreprocessingInfo
+*/
+/*! \name Class Members*/
+//@{
+/*!\var Sg_File_Info *PreprocessingInfo::file_info
+*/
+/*!\var enum PreprocessingInfo::DirectiveType PreprocessingInfo::whatSortOfDirective
+*/
+/*!\var int PreprocessingInfo::numberOfLines
+*/
+/*!\var std::string PreprocessingInfo::internalString
+*/
+/*!\var enum PreprocessingInfo::RelativePositionType PreprocessingInfo::relativePosition
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn PreprocessingInfo::PreprocessingInfo()
+*/
+/*!\fn PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo &prepInfo)
+*/
+/*!\fn PreprocessingInfo::PreprocessingInfo(enum PreprocessingInfo::DirectiveType ,const std::string &inputString,const std::string &filenameString,int line_no,int col_no,int nol,enum PreprocessingInfo::RelativePositionType relPos,bool copiedFlag,bool unparsedFlag)
+*/
+/*!\fn PreprocessingInfo::~PreprocessingInfo()
+*/
+/*!\fn char *PreprocessingInfo::packed() const
+*/
+/*!\fn enum PreprocessingInfo::DirectiveType PreprocessingInfo::getTypeOfDirective() const
+*/
+/*!\fn enum PreprocessingInfo::RelativePositionType PreprocessingInfo::getRelativePosition() const
+*/
+/*!\fn int PreprocessingInfo::getColumnNumber() const
+*/
+/*!\fn int PreprocessingInfo::getColumnNumberOfEndOfString() const
+*/
+/*!\fn int PreprocessingInfo::getLineNumber() const
+*/
+/*!\fn int PreprocessingInfo::getNumberOfLines() const
+*/
+/*!\fn int PreprocessingInfo::getStringLength() const
+*/
+/*!\fn static std::string PreprocessingInfo::directiveTypeName(const enum PreprocessingInfo::DirectiveType &directive)
+*/
+/*!\fn static std::string PreprocessingInfo::relativePositionName(const enum PreprocessingInfo::RelativePositionType &position)
+*/
+/*!\fn std::string PreprocessingInfo::getString() const
+*/
+/*!\fn unsigned int PreprocessingInfo::packed_size() const
+*/
+/*!\fn void PreprocessingInfo::display(const std::string &label) const
+*/
+/*!\fn void PreprocessingInfo::setRelativePosition(enum PreprocessingInfo::RelativePositionType relPos)
+*/
+/*!\fn void PreprocessingInfo::setString(const std::string &s)
+*/
+/*!\fn void PreprocessingInfo::unpacked(char *storePointer)
+*/
+/*!\fn Sg_File_Info *PreprocessingInfo::get_file_info() const
+\description See  const
+file_info for documentation */
+/*!\fn void PreprocessingInfo::set_file_info(Sg_File_Info *info)
+\description See  *info)
+file_info for documentation */
+//@}
+extern int SAGE_Doxygen_Dummy_1544971620;

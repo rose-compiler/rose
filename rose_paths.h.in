@@ -1,0 +1,64 @@
+/* DQ (11/10/2007:
+   This header file exists because I could not use the automake mechanism
+   to generate correctly configured paths from automake variables.  
+   Note that variable substitution for @distdir@ is unavailable.
+
+   These paths are provide to support external tools built using ROSE.
+*/
+#define ROSE_AUTOMAKE_TOP_SRCDIR "@top_srcdir@"
+#define ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "@absolute_path_srcdir@"
+#define ROSE_AUTOMAKE_TOP_BUILDDIR "@top_pwd@"
+#define ROSE_AUTOMAKE_PREFIX "@prefix@"
+#define ROSE_AUTOMAKE_DATADIR "@datadir@"
+#define ROSE_AUTOMAKE_BINDIR "@bindir@"
+#define ROSE_AUTOMAKE_INCLUDEDIR "@includedir@"
+#define ROSE_AUTOMAKE_INFODIR "@infodir@"
+#define ROSE_AUTOMAKE_LIBDIR "@libdir@"
+#define ROSE_AUTOMAKE_LIBEXECDIR "@libexecdir@"
+#define ROSE_AUTOMAKE_LOCALSTATEDIR "@localstatedir@"
+#define ROSE_AUTOMAKE_MANDIR "@mandir@"
+
+/* Additional interesting data to provide */
+#define ROSE_CONFIGURE_DATA "@configure_date@"
+#define ROSE_AUTOMAKE_BUILD_OS "@build_os@"
+#define ROSE_AUTOMAKE_BUILD_CPU "@build_cpu@"
+#define ROSE_AUTOMAKE_BUILT_WITH_EDG_SOURCE_CODE "@with_edg_source_code@"
+
+/* Define the location of the Compass tool within ROSE */
+#define COMPASS_SOURCE_DIRECTORY "@absolute_path_srcdir@/projects/compass"
+
+/*
+This use of automake in configure.in failed to generate correct paths:
+AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$top_pwd",[Location of ROSE Compile Tree.])
+AC_DEFINE_UNQUOTED([ROSE_PREFIX_DIR],"$prefix",[Location of ROSE prefix (install tree).])
+AC_DEFINE_UNQUOTED([ROSE_BUILD_DIR],"$top_builddir",[Location of ROSE Compile Tree.])
+AC_DEFINE_UNQUOTED([ROSE_SRC_DIR],"@srcdir@",[Location of ROSE Source Tree.])
+AC_DEFINE_UNQUOTED([ROSE_SRC_TEST1_DIR],@srcdir@,[Location of ROSE Source Tree.])
+AC_DEFINE_UNQUOTED([ROSE_SRC_TEST2_DIR],[@srcdir@],[Location of ROSE Source Tree.])
+AC_DEFINE_UNQUOTED([ROSE_DATA_DIR],"$datadir",[Path specified by automake datadir.])
+AC_DEFINE_UNQUOTED([ROSE_BIN_DIR],"$bindir",[Path specified by automake bindir.])
+AC_DEFINE_UNQUOTED([ROSE_INCLUDE_DIR],"$includedir",[Path specified by automake includedir.])
+AC_DEFINE_UNQUOTED([ROSE_INFO_DIR],"$infodir",[Path specified by automake infodir.])
+AC_DEFINE_UNQUOTED([ROSE_LIB_DIR],"$libdir",[Path specified by automake libdir.])
+AC_DEFINE_UNQUOTED([ROSE_LIBEXEC_DIR],"$libexecdir",[Path specified by automake libexecdir.])
+AC_DEFINE_UNQUOTED([ROSE_LOCALSTATE_DIR],"$localstatedir",[Path specified by automake localstatedir.])
+AC_DEFINE_UNQUOTED([ROSE_MAN_DIR],"$mandir",[Path specified by automake mandir.])
+AC_DEFINE_UNQUOTED([ROSE_DIST_DIR],"$distdir",[Path specified by automake distdir.])
+
+Generated:
+#define ROSE_BIN_DIR "${exec_prefix}/bin"
+#define ROSE_BUILD_DIR ""
+#define ROSE_COMPILE_TREE_PATH "/home/dquinlan/ROSE/ROSE_CompileTree/LINUX-64bit-3.4.6"
+#define ROSE_DATA_DIR "${prefix}/share"
+#define ROSE_DIST_DIR ""
+#define ROSE_INCLUDE_DIR "${prefix}/include"
+#define ROSE_INFO_DIR "${prefix}/info"
+#define ROSE_LIBEXEC_DIR "${exec_prefix}/libexec"
+#define ROSE_LIB_DIR "${exec_prefix}/lib"
+#define ROSE_LOCALSTATE_DIR "${prefix}/var"
+#define ROSE_MAN_DIR "${prefix}/man"
+#define ROSE_PREFIX_DIR "/home/dquinlan/ROSE/ROSE_CompileTree/LINUX-64bit-3.4.6_install"
+#define ROSE_SRC_DIR "@srcdir@"
+#define ROSE_SRC_TEST1_DIR @srcdir@
+#define ROSE_SRC_TEST2_DIR @srcdir@
+*/

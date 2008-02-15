@@ -1,0 +1,213 @@
+COMPILER Umbriel
+/* COCO/R - like  Grammar for Umbriel
+
+   Umbriel is a simple Modula-2 / Pascal like language
+
+   This grammar is not LL(1), so a Coco/R generated parser will be incorrect
+   The description here is intended to aid semantic understanding! */
+
+CHARACTERS
+  eol      = CHR(13) .
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit    = "0123456789" .
+  noQuote1 = ANY - "'" - eol .
+  noQuote2 = ANY - '"' - eol .
+
+IGNORE
+  CHR(9) .. CHR(13)
+  COMMENTS FROM '(*' TO '*)' NESTED
+  /* The language is case sensitive */
+
+TOKENS
+  identifier =  letter { letter | digit } .
+  char       =  "'" [ noQuote1 ] "'" | '"' [ noQuote2 ] '"' | digit {digit} "C" .
+
+/* The xxC variation uses decimal numbers, not the octal form of Wirth's other
+   languages */
+
+  integer    =    digit { digit }
+                | digit { digit }  CONTEXT ("..") .
+
+  real       =  digit { digit } "." { digit }
+                [ ( "E" | "e" ) [ "+" | "-" ] digit { digit } ] .
+
+  string     =  "'" { noQuote1 } "'" | '"' { noQuote2 } '"' .
+
+PRODUCTIONS
+
+  Umbriel               = "MODULE" ModuleIdentifier ";"
+                             Block ModuleIdentifier "." .
+
+  ModuleIdentifier      = identifier .
+
+/* The same identifier appears in both places */
+
+  Block                 = { NonVarDeclaration }
+                          { NonProcDeclaration }
+                          [ "BEGIN" StatementSequence ] "END" .
+
+  NonVarDeclaration     =   "CONST" { ConstantDeclaration ";" }
+                          | "TYPE" { TypeDeclaration ";" }
+                          | ProcedureDeclaration ";" .
+
+  NonProcDeclaration    =   "CONST" { ConstantDeclaration ";" }
+                          | "TYPE" { TypeDeclaration ";" }
+                          | "VAR" { VariableDeclaration ";" } .
+
+/* Declarations may be mixed in order, but for all identifiers
+   declaration-before-use is required.  The syntax prevents "global"
+   variables from being seen in procedures directly */
+
+  ConstantDeclaration   = ConstIdentifier "=" ConstExpression .
+  ConstIdentifier       = identifier .
+  ConstExpression       = Expression .
+
+/* A ConstExpression may only contain constants, literals, and some standard
+   function calls */
+
+  TypeDeclaration       = TypeIdentifier "=" Type .
+  Type                  = TypeIdentifier | ArrayType | RecordType .
+  TypeIdentifier        = identifier .
+
+  ArrayType             = "ARRAY" IndexType { "," IndexType } "OF" Type .
+  IndexType             = "[" ConstExpression ".." ConstExpression "]" .
+
+/* The index type is an anonymous subrange type.  It has to be declared like
+   this; implicit subranges like CHAR and BOOLEAN may not be used by quoting
+   the type names. */
+
+  RecordType            = "RECORD" FieldListSequence "END" .
+  FieldListSequence     = FieldList { ";" FieldList } .
+  FieldList             = [ IdentList ":" Type ] .
+  IdentList             = VariableIdentifier { "," VariableIdentifier } .
+  VariableIdentifier    = identifier .
+
+/* The syntax allows the "permissive" use of extra ; symbols as in Modula-2,
+   and also completely empty records, as in Wirth's other languages */
+
+  VariableDeclaration   = IdentList ":" TypeIdentifier .
+
+/* Unlike Modula-2 and Pascal, a variable has to be declared in terms of a
+   named type.  This is to encourage simple abstraction. */
+
+  ProcedureDeclaration  = ProperProcDeclaration | FunctionDeclaration .
+
+  ProperProcDeclaration = "PROCEDURE" ProcedureIdentifier
+                           [ "(" [ FormalParameters ] ")" ]
+                          ";" Block ProcedureIdentifier .
+  ProcedureIdentifier   = identifier .
+
+  FunctionDeclaration   = "PROCEDURE" FunctionIdentifier
+                           "(" [ FormalParameters ] ")" ":" ResultType
+                          ";" Block FunctionIdentifier .
+  FunctionIdentifier    = identifier .
+  ResultType            = ScalarTypeIdentifier .
+  ScalarTypeIdentifier  = TypeIdentifier .
+
+/* Procedures may omit the ( brackets ) if there are no parameters.
+   Functions may have no parameters, but require the ( brackets ),
+   as in Modula-2.
+   Functions may only return INTEGER, REAL, CHAR, COLORS or BOOLEAN values */
+
+  FormalParameters      = FormalParameter { ";" FormalParameter } .
+  FormalParameter       = ValueSpecification | VariableSpecification .
+  ValueSpecification    = IdentList ":" TypeIdentifier .
+  VariableSpecification = "VAR" IdentList ":" TypeIdentifier .
+
+  StatementSequence     = Statement { ";" Statement } .
+
+  Statement             = [  Assignment | ProcedureCall
+                           | IfStatement | CaseStatement
+                           | WhileStatement | RepeatStatement
+                           | ForStatement | LoopStatement
+                           | ExitStatement | ReturnStatement ] .
+
+/* The statements are as in Modula-2, other than WITH */
+
+  Assignment            = VarDesignator ":=" Expression .
+  VarDesignator         = VariableIdentifier { Selector } .
+  Selector              =  "." VariableIdentifier | "[" IndexList "]" .
+  IndexList             = OrdinalExpression { "," OrdinalExpression } .
+
+  ProcedureCall         = ProcedureIdentifier [ "(" [ ActualParameters ] ")" ] .
+  ActualParameters      = Expression [ FormatSpecifier ]
+                          { "," Expression [ FormatSpecifier ] } .
+  FormatSpecifier       = ":" IntegerExpression [ ":" IntegerExpression ] .
+
+/* FormatSpecifier is only allowed in calls to the standard procedures
+   Write and WriteLn */
+
+  IfStatement           = "IF" BooleanExpression "THEN" StatementSequence
+                          { "ELSIF" BooleanExpression
+                            "THEN" StatementSequence }
+                          [ "ELSE" StatementSequence ]
+                          "END" .
+
+  CaseStatement         = "CASE" Expression "OF"
+                             Case
+                          { "|" Case }
+                          [ "ELSE" StatementSequence ]
+                          "END" .
+  Case                  = [ CaseLabelList ":" StatementSequence ] .
+  CaseLabelList         = CaseLabels { "," CaseLabels } .
+  CaseLabels            = ConstExpression [ ".." ConstExpression ] .
+
+/* The syntax allows the "permissive" use of extra | symbols as in Modula-2 */
+
+  WhileStatement        = "WHILE" BooleanExpression "DO"
+                             StatementSequence
+                          "END" .
+
+  RepeatStatement       = "REPEAT"
+                             StatementSequence
+                          "UNTIL" BooleanExpression .
+
+  ForStatement          = "FOR" VariableIdentifier ":=" OrdinalExpression
+                          "TO" OrdinalExpression [ "BY" ConstExpression ] "DO"
+                             StatementSequence
+                          "END" .
+
+/* The BY step requires a constant expression so that the compiler can decide
+   at compile time whether it is a "to" or "downto" loop.  The control
+   variable must be declared locally, and the implementation tries to detect
+   situations where it would be threatened (changed in the body of the loop) */
+
+  LoopStatement         = "LOOP" StatementSequence "END" .
+
+  ExitStatement         = "EXIT" .
+
+/* An ExitStatement is only allowed within the StatementSequence of a
+   LoopStatement.  It transfers control out of the closest enclosing
+   LoopStatement. */
+
+  ReturnStatement       = "RETURN" [ Expression ] .
+
+/* A ReturnStatement within a function must incorporate an Expression; within
+   a regular procedure or a program block it must not incorporate an
+   Expression. */
+
+  BooleanExpression     = Expression .
+  OrdinalExpression     = Expression .
+  IntegerExpression     = Expression .
+
+  Expression            = SimpleExpression [ Relation SimpleExpression ] .
+  SimpleExpression      = [ "+" | "-" ] Term { AddOperator Term } .
+  Term                  = Factor { MulOperator Factor } .
+  Factor                =   ConstantLiteral
+                          | ConstIdentifier
+                          | VarDesignator
+                          | FunctionCall
+                          | NotOperator Factor
+                          | "(" Expression ")" .
+
+  ConstantLiteral       = integer | char | real | string .
+
+  FunctionCall          = FunctionIdentifier "(" [ ActualParameters ] ")" .
+
+  NotOperator           = "NOT" | "~" /* synonyms */ .
+  MulOperator           = "*" | "/" | "DIV" | "MOD" | AndOperator .
+  AndOperator           = "AND" | "&"  /* synonyms */ .
+  AddOperator           = "+" | "-" | "OR" .
+  Relation              = "=" | "#" | "<>" | "<" | "<=" | ">" | ">=" .
+
+END Umbriel.

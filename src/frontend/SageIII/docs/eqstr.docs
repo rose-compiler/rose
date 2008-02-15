@@ -1,0 +1,9 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class eqstr
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn inline bool eqstr::operator()(const SgName &s1,const SgName &s2) const
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1876935815;

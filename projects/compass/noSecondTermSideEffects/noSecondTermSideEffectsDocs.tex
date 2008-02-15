@@ -1,0 +1,78 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Second Term Side Effects}
+\label{NoSecondTermSideEffects::overview}
+The logical AND and logical OR operators (\&\&, $||$) exhibit ``short
+circuit'' operation. That is, the second operand is not evaluated if
+the result can be deduced solely by evaluating the first
+operand. Consequently, the second operand should not contain side
+effects because, if it does, it is not apparent if the side effect occurs
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+ No parameters required.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+We check for And or Or.  We then query for any of a set of operators
+known to have side effects.  This checker has the known deficiency of
+not checking function calls for side-effects.  To avoid false
+positives, it does not notify of functions at all.  
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+int i;
+int max;
+
+if ( (i >= 0 && (i++) <= max) ) {
+  /* code */
+}
+\end{verbatim}
+
+It is unclear whether the value of i will be incremented as a result
+of evaluating the condition.
+
+\subsection{Compliant Solution}
+In this compliant solution, the behavior is much clearer.
+
+\begin{verbatim}
+int i;
+int max;
+
+if ( (i >= 0 && (i + 1) <= max) ) {
+  i++;
+  /* code */
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Find the And or Or operator
+\item query the right-hand child for known side-effect having operators
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+\htmladdnormallink{ISO/IEC
+  9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References}
+[ISO/IEC 9899-1999] Section 6.5.13, ``Logical AND operator,'' and
+Section 6.5.14, ``Logical OR operator''

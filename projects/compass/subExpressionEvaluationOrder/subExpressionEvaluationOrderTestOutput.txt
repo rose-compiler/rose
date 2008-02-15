@@ -1,0 +1,2 @@
+SubExpressionEvaluationOrder: subExpressionEvaluationOrderTest1.C:10.16-18: SgPlusPlusOp: The order of evaluation of sub-expressions is not guaranteed to be left-to-right.
+SubExpressionEvaluationOrder: subExpressionEvaluationOrderTest1.C:12.19-21: SgAssignOp: The order of evaluation of sub-expressions is not guaranteed to be left-to-right.

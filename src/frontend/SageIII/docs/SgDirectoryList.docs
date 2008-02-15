@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgDirectoryList
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgDirectoryPtrList SgDirectoryList::p_listOfDirectories
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDirectoryList::SgDirectoryList(const SgDirectoryListStorageClass &source)
+*/
+/*!\fn inline static void SgDirectoryList::operator delete(void *pointer)
+*/
+/*!\fn static SgDirectoryList *SgDirectoryList::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDirectoryList::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDirectoryList::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDirectoryList::initializeStorageClassArray(SgDirectoryListStorageClass *storageArray)
+*/
+/*!\fn static void SgDirectoryList::clearMemoryPool()
+*/
+/*!\fn static void SgDirectoryList::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDirectoryList::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgDirectoryList::roseRTI()
+*/
+/*!\fn virtual SgDirectoryList::~SgDirectoryList()
+*/
+/*!\fn virtual SgNode *SgDirectoryList::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgDirectoryList::set_listOfDirectories(SgDirectoryPtrList listOfDirectories)
+\description See  listOfDirectories)
+listOfDirectories for documentation */
+/*!\fn SgDirectoryPtrList SgDirectoryList::get_listOfDirectories() const
+\description See  const
+listOfDirectories for documentation */
+/*!\fn virtual SgNode *SgDirectoryList::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgDirectoryList::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDirectoryList::get_numberOfTraversalSuccessors()
+\description See  SgDirectoryList::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDirectoryList::get_traversalSuccessorContainer()
+\description See  SgDirectoryList::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDirectoryList::get_traversalSuccessorNamesContainer()
+\description See  SgDirectoryList::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgDirectoryList::SgDirectoryList()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_237627937;

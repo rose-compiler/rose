@@ -1,0 +1,1 @@
+SingleParameterConstructorExplicitModifier: singleParameterConstructorExplicitModifierTest1.C:5.5-18: SgMemberFunctionDeclaration: This checker checks that single paramater constructors are declared using the explicit keyword.

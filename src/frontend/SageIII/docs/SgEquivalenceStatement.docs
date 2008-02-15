@@ -1,0 +1,63 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgEquivalenceStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExprListExp *SgEquivalenceStatement::p_equivalence_set_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgEquivalenceStatement::SgEquivalenceStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgEquivalenceStatement::SgEquivalenceStatement(const SgEquivalenceStatementStorageClass &source)
+*/
+/*!\fn inline static void SgEquivalenceStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgEquivalenceStatement *SgEquivalenceStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgEquivalenceStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgEquivalenceStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgEquivalenceStatement::initializeStorageClassArray(SgEquivalenceStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgEquivalenceStatement::clearMemoryPool()
+*/
+/*!\fn static void SgEquivalenceStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgEquivalenceStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgEquivalenceStatement::roseRTI()
+*/
+/*!\fn virtual SgEquivalenceStatement::~SgEquivalenceStatement()
+*/
+/*!\fn virtual SgNode *SgEquivalenceStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgEquivalenceStatement::post_construction_initialization()
+*/
+/*!\fn void SgEquivalenceStatement::set_equivalence_set_list(SgExprListExp *equivalence_set_list)
+\description See  *equivalence_set_list)
+equivalence_set_list for documentation */
+/*!\fn SgExprListExp *SgEquivalenceStatement::get_equivalence_set_list() const
+\description See  const
+equivalence_set_list for documentation */
+/*!\fn virtual SgName SgEquivalenceStatement::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgEquivalenceStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgEquivalenceStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgEquivalenceStatement::get_numberOfTraversalSuccessors()
+\description See  SgEquivalenceStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgEquivalenceStatement::get_traversalSuccessorContainer()
+\description See  SgEquivalenceStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgEquivalenceStatement::get_traversalSuccessorNamesContainer()
+\description See  SgEquivalenceStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgEquivalenceStatement::SgEquivalenceStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1493308044;

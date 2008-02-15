@@ -1,0 +1,35 @@
+/* JH (01/01/2006) This file is generated using ROSETTA. It should never be 
+   manipulated by hand. The generation is located in buildStorageClasses.C!
+
+    This file contains all declarations for the StorageClasses used for the ast file IO.
+*/
+
+#include "StorageClassMemoryManagement.h"
+
+class SgSymbolTableStorageClass;
+class AstSpecificDataManagingClass;
+
+class AstSpecificDataManagingClassStorageClass
+   {
+
+    protected:
+     unsigned long rootOfAst;
+     unsigned long listOfAccumulatedPoolSizes [ $REPLACE_NUMBEROFIRNODES + 1 ];
+
+
+$REPLACE_STORAGECLASSDATAMEMBERS
+
+    public:
+      void pickOutIRNodeData ( AstSpecificDataManagingClass* source );
+      static void arrangeStaticDataOfEasyStorageClassesInOneBlock ( );
+      static void deleteStaticDataOfEasyStorageClasses ( );
+      static void writeEasyStorageDataToFile (std::ostream& out);
+      static void readEasyStorageDataFromFile (std::istream& in);
+      friend class AstSpecificDataManagingClass;
+   };
+
+#if 0 // done in AST_FILE_IO.h
+typedef AstSpecificDataManagingClass AstData;
+#endif
+typedef AstSpecificDataManagingClassStorageClass AstDataStorageClass;
+

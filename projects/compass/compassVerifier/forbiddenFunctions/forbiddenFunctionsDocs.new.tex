@@ -1,0 +1,136 @@
+
+\section{Forbidden Functions}
+\label{ForbiddenFunctions::overview}
+Many checks common to Compass center around the forbidden use of certain ``dangerous'' functions. This checker provides a way to forbid the use of those functions through the simple use of their name.
+
+\subsection{Parameter Requirements}
+The forbidden function checker can simultaneously look for any number of
+functions, either member or non-member.  A set of parameters is used, named
+using a counter.  Thus, the parameters of this checker have names of the
+form {\tt ForbiddenFunctions.Function{\it n}}, for {\tt {\it n}} from zero
+to some limit.  The forbidden function analysis checks each name in turn
+until one is missing.  Thus, if you have parameters named {\tt
+ForbiddenFunctions.Function0} and {\tt ForbiddenFunctions.Function1} but no
+parameter named {\tt ForbiddenFunctions.Function2}, the analysis will
+search for two functions.  As a caution, if you skip a number, including
+zero, no larger numbers will be scanned: any functions specified after a
+skipped number will be ignored.
+
+The format of a parameter is {\tt white space, function name, white space,
+comma, reason}.  Leading and trailing white space is allowed next to the
+function name, but any white space after the first comma will become part
+of the reason string.  The function name is a fully qualified name, but the
+leading {\tt ::} to indicate the global scope may be omitted.  Member
+functions are given with their class qualifications, just as they would be
+referred to when accessing a pointer to them.  Choosing one overload from
+an overload set sharing the same name is not supported.  The reason field
+is used to indicate why a particular function is forbidden; it may be any
+string (not containing a newline), and is printed out as part of the error
+message when the corresponding function is found.  It is also possible to
+omit the comma and the reason field, leaving just the function name as the
+parameter; in this case, no reason will be given for the function's
+prohibition.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal visiting all SgFunctionCallExp nodes. For each node the name of the function being called is compared to those listed as forbidden functions. If a match is found between the function call name and the forbidden function name then flag an error.
+
+\subsection{Non-Compliant Code Example}
+In this example, it is assumed that the function {\tt compass\_forbidden\_function\_vfork} is forbidden by the parameter file.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hlcom{//compass\textunderscore forbidden\textunderscore function\textunderscore vfork()\ is\ a\ function\ meant\ to\ simulate\ a\ system\\
+}\hlline{\ \ \ \ 2\ }\hlcom{}\hlstd{}\hlcom{//routine.\ This\ makes\ no\ difference\ as\ an\ example\ of\ how\ forbiddenFunctions\\
+}\hlline{\ \ \ \ 3\ }\hlcom{}\hlstd{}\hlcom{//checks\ errors\ as\ it\ works\ only\ on\ function\ names.\ The\ reason\ we\ have\ used\\
+}\hlline{\ \ \ \ 4\ }\hlcom{}\hlstd{}\hlcom{//this\ example\ is\ to\ prevent\ compass\ from\ treating\ this\ test\ file\ as\ an\ error\\
+}\hlline{\ \ \ \ 5\ }\hlcom{}\hlstd{}\hlcom{//during\ `make\ verify'\ in\ which\ compass\ checks\ its\ own\ source\ code.\\
+}\hlline{\ \ \ \ 6\ }\hlcom{}\hlstd{\\
+}\hlline{\ \ \ \ 7\ }\hlstd{}\hltyp{int\ }\hlstd{compass\textunderscore forbidden\textunderscore function\textunderscore vfork}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ \ 8\ }\hlstd{}\hltyp{void\ }\hlstd{helloWorld}\hlsym{(}\hlstd{}\hltyp{int}\hlstd{,\ }\hltyp{char}\hlstd{**}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\\
+}\hlline{\ \ \ 10\ }\hlstd{}\hltyp{double\ }\hlstd{function}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 11\ }\hlstd{}\hltyp{double\ }\hlstd{good\textunderscore function}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 12\ }\hlstd{\\
+}\hlline{\ \ \ 13\ }\hlstd{}\hlkey{namespace\ }\hlstd{A\ }\hlsym{\{\\
+}\hlline{\ \ \ 14\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hltyp{double\ }\hlstd{function2}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 15\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ 16\ }\hlsym{\\
+}\hlline{\ \ \ 17\ }\hlsym{}\hlstd{}\hltyp{struct\ }\hlstd{B\ }\hlsym{\{\\
+}\hlline{\ \ \ 18\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hltyp{void\ }\hlstd{memberFunction}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 19\ }\hlstd{}\hlsym{\}}\hlstd{;\\
+}\hlline{\ \ \ 20\ }\hlstd{\\
+}\hlline{\ \ \ 21\ }\hlstd{}\hltyp{int\ }\hlstd{main}\hlsym{(}\hlstd{}\hltyp{int\ }\hlstd{argc,\ }\hltyp{char}\hlstd{**\ argv}\hlsym{)\ \{\\
+}\hlline{\ \ \ 22\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hltyp{int\ }\hlstd{w;\\
+}\hlline{\ \ \ 23\ }\hlstd{\hlstd{\ \ }w\ =\ compass\textunderscore forbidden\textunderscore function\textunderscore vfork}\hlsym{()\ }\hlstd{+\ }\hlnum{5}\hlstd{;\\
+}\hlline{\ \ \ 24\ }\hlstd{\hlstd{\ \ }helloWorld}\hlsym{(}\hlstd{argc,\ argv}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 25\ }\hlstd{\hlstd{\ \ }}\hltyp{double\ }\hlstd{x\ =\ }\hlnum{3.0\ }\hlstd{*\ function}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 26\ }\hlstd{\hlstd{\ \ }}\hltyp{double\ }\hlstd{y\ =\ }\hlnum{5.0\ }\hlstd{*\ good\textunderscore function}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 27\ }\hlstd{\hlstd{\ \ }}\hltyp{double\ }\hlstd{z\ =\ A::function2}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 28\ }\hlstd{\hlstd{\ \ }B\ b;\\
+}\hlline{\ \ \ 29\ }\hlstd{\hlstd{\ \ }b.memberFunction}\hlsym{()}\hlstd{;\\
+}\hlline{\ \ \ 30\ }\hlstd{\hlstd{\ \ }}\hltyp{int\ }\hlstd{}\hlsym{(}\hlstd{*fp}\hlsym{)()\ }\hlstd{=\ compass\textunderscore forbidden\textunderscore function\textunderscore vfork;\\
+}\hlline{\ \ \ 31\ }\hlstd{\hlstd{\ \ }}\hlkey{return\ }\hlstd{}\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ 32\ }\hlstd{}\hlsym{\}}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+\subsection{Compliant Solution}
+The compliant example would use a function not listed in the parameter file.
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each SgFunctionCallExp node if the name of the function being called is forbidden by the parameter file then report error. 
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{Foster}{} , ``James C.Foster, Vitaly Osipov, Nish Bhalla, Niels Heinen, Buffer Overflow Attacks, ISBN 1-932266-67-4, p. 211''
+
+\htmladdnormallink{Secure Coding : MSC30-C. Do not use the rand function}{https://www.securecoding.cert.org/confluence/display/seccode/POS33-C.+Do+not+use+vfork\%28\%29}
+
+\htmladdnormallink{Secure Coding : POS33-C. Do not use vfork()}{https://www.securecoding.cert.org/confluence/display/seccode/POS33-C.+Do+not+use+vfork\%28\%29}
+
+[ \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 7.19.9.2, "The {\tt fseek} function"; 7.19.9.5, "The {\tt rewind} function"
+
+[ \htmladdnormallink{Klein 02}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] [ \\*
+   \htmladdnormallink{ISO/IEC 9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 7.20.1.4, "The strtol, strtoll, strtoul, and strtoull functions," Section 7.20.1.2, "The atoi, atol, and atoll functions," and Section 7.19.6.7, "The sscanf function"
+

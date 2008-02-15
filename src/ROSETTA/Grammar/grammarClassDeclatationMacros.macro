@@ -1,0 +1,24 @@
+
+// WARNING -- GENERATED CODE -- DO NOT MODIFY THIS CODE -- WARNING!
+//      This code is automatically generated for each 
+//      terminal and non-terminal within the defined 
+//      grammar.  There is a simple way to change the 
+//      code to fix bugs etc.  See the ROSE README file
+//      for directions.
+
+// predeclarations for $CLASSNAME
+$PREDECLARATIONS
+
+// Class Definition for $CLASSNAME
+class $CLASSNAME $BASECLASS
+   {
+     public:
+
+MEMBER_FUNCTION_DECLARATIONS
+
+   };
+
+// postdeclarations for $CLASSNAME
+$POSTDECLARATIONS
+
+

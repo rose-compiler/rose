@@ -1,0 +1,116 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgUsingDeclarationStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgUsingDeclarationStatement
+\brief This class represents the concept of a C++ using declaration.
+
+   The using declaration permits named declaration or declarations within the named
+namespace to be used in the scope of the using declaration without name qualification.
+
+\sa
+\ref SgUsingDeclarationStatement_usage  "Example of using a SgUsingDeclarationStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgUsingDeclarationStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgUsingDeclarationStatement::p_declaration
+\brief This pointer points to a SgDeclarationStatement whose declaration(s) are available
+    for use in the scope containing this using declaration.
+
+\internal this is a valid pointer if the IR nodes specified using a declaration (else
+    p_initializedName is valid).  Only one of p_declaration and p_initializedName are
+    valid pointers.
+
+*/
+
+/*! \var SgUsingDeclarationStatement::p_initializedName
+\brief This pointer points to a SgDeclarationStatement whose declaration(s) are available
+    for use in the scope containing this using declaration.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgUsingDeclarationStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgUsingDeclarationStatement::SgUsingDeclarationStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgUsingDeclarationStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgUsingDeclarationStatement_create "Example:create an SgUsingDeclarationStatement object"
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::~SgUsingDeclarationStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::isSgUsingDeclarationStatement (SgNode *s)
+\brief Cast function (from derived class to SgUsingDeclarationStatement pointer).
+
+   This functions returns a SgUsingDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgUsingDeclarationStatement.
+
+\return Returns valid pointer to SgUsingDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::isSgUsingDeclarationStatement (const SgNode *s)
+\brief Cast function (from derived class to SgUsingDeclarationStatement pointer).
+
+   This functions returns a SgUsingDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgUsingDeclarationStatement.
+
+\return Returns valid pointer to SgUsingDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::get_declaration() const
+\brief Access function for p_declaration.
+
+    This is a valid pointer if the using declaration references 
+a declaration, else it is null and p_initializedName is a valid pointer.
+One or the other is a valid pointer, but not both.
+
+\return Returns pointer to SgDeclaration.
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::set_declaration(SgDeclarationStatement* declaration)
+\brief Access function for p_declaration.
+
+\return Returns void.
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::get_initializedName() const
+\brief Access function for p_initializedName.
+
+    This is a valid pointer if the using declaration references 
+a variable name, else it is null and p_declaration is a valid pointer.
+One or the other is a valid pointer, but not both.
+
+\return Returns pointer to SgInitializedName.
+*/
+
+/*!
+\fn SgUsingDeclarationStatement::set_initializedName(SgInitializedName* initializedName)
+\brief Access function for p_initializedName.
+
+\return Returns void.
+*/
+

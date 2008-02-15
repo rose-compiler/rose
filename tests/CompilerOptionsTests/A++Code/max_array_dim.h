@@ -1,0 +1,2 @@
+
+#define MAX_ARRAY_DIMENSION 6

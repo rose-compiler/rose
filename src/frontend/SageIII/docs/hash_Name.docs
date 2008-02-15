@@ -1,0 +1,12 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var __gnu_cxx::hash< const char * > hash_Name::hasher
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn inline size_t hash_Name::operator()(const SgName &name) const
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1312169431;

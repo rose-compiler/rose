@@ -1,0 +1,91 @@
+
+   \section{Secure Coding : FIO07-A. Prefer fseek() to rewind()}
+
+   {\tt rewind()} sets the file position indicator for a stream to the beginning of that stream. However, {\tt rewind()} is equivalent to {\tt fseek()} with {\tt 0L} for the offset and {\tt SEEK\_SET} for the mode with the error return value suppressed. Therefore, to validate that moving back to the beginning of a stream actually succeeded, {\tt fseek()} should be used instead of {\tt rewind()}.
+   \subsection{Non-Compliant Code Example}
+
+   The following non-compliant code sets the file position indicator of an input stream back to the beginning using {\tt rewind()}.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{FILE}\hlstd{*\ fptr\ =\ fopen}\hlsym{(}\hlstd{}\hlstr{"file.ext"}\hlstd{,\ }\hlstr{"r"}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{fptr\ ==\ NULL}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 3\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlcom{/*\ handle\ open\ error\ */}\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ \ 5\ }\hlsym{\\
+}\hlline{\ \ \ \ 6\ }\hlsym{}\hlstd{}\hlcom{/*\ read\ data\ */}\hlstd{\\
+}\hlline{\ \ \ \ 7\ }\hlstd{\\
+}\hlline{\ \ \ \ 8\ }\hlstd{rewind}\hlsym{(}\hlstd{fptr}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\\
+}\hlline{\ \ \ 10\ }\hlstd{}\hlcom{/*\ continue\ */}\hlstd{\\
+}\hlline{\ \ \ 11\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+   However, there is no way of knowing if {\tt rewind()} succeeded or not.
+   \subsection{Compliant Solution}
+
+   This compliant solution instead using {\tt fseek()} and checks to see if the operation actually succeeded.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{FILE}\hlstd{*\ fptr\ =\ fopen}\hlsym{(}\hlstd{}\hlstr{"file.ext"}\hlstd{,\ }\hlstr{"r"}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{fptr\ ==\ NULL}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 3\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlcom{/*\ handle\ open\ error\ */}\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ \ 5\ }\hlsym{\\
+}\hlline{\ \ \ \ 6\ }\hlsym{}\hlstd{}\hlcom{/*\ read\ data\ */}\hlstd{\\
+}\hlline{\ \ \ \ 7\ }\hlstd{\\
+}\hlline{\ \ \ \ 8\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{fseek}\hlsym{(}\hlstd{fptr,\ }\hlnum{0L}\hlstd{,\ SEEK\textunderscore SET}\hlsym{)\ }\hlstd{!=\ }\hlnum{0}\hlstd{}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 9\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlcom{/*\ handle\ repositioning\ error\ */}\hlstd{\\
+}\hlline{\ \ \ 10\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ 11\ }\hlsym{\\
+}\hlline{\ \ \ 12\ }\hlsym{}\hlstd{}\hlcom{/*\ continue\ */}\hlstd{\\
+}\hlline{\ \ \ 13\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+   \subsection{Risk Assessment}
+
+   Using {\tt rewind()} makes it impossible to know whether the file position indicator was actually set back to the beginning of the file. If the call does fail, the result may be incorrect program flow.
+
+   \begin{tabular}[c]{| c| c| c| c| c| c|}
+   \hline
+   {\bf Rule} & {\bf Severity} & {\bf Likelihood} & {\bf Remediation Cost} & {\bf Priority} & {\bf Level} \\ \hline
+   FIO07-A & {\bf 1} (low) & {\bf 1} (unlikely) & {\bf 2} (medium) & {\bf P2} & {\bf L3} \\ \hline
+   \end{tabular}
+   \subsubsection{Related Vulnerabilities}
+
+   Search for vulnerabilities resulting from the violation of this rule on the \htmladdnormallink{CERT website}{https://www.kb.cert.org/vulnotes/bymetric?searchview\&query=FIELD+contains+FIO07-A} .
+   \subsection{References}
+
+   [ \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 7.19.9.2, "The {\tt fseek} function"; 7.19.9.5, "The {\tt rewind} function"

@@ -1,0 +1,27 @@
+       // Special constructor for this class
+          CLASSNAME ( SgExpression* expr );
+
+       // Make this class an abstract base class so that we can be certain that
+       // we will not ever try to build one of these directly.
+          virtual ROSE_Node* transform() = 0;
+
+          void           setSageExpressionListExpression ( SgExprListExp* exprListExp );
+          SgExprListExp* getSageExpressionListExpression();
+
+          void addArgumentExpression ( ROSE_Expression* roseExpression );
+          int  numberOfArguments();
+
+       // I don't know if using the operator[] is really required (too cute for now!)
+       // ROSE_Expression & operator[](int i);
+          void resetArgumentExpression ( ROSE_Expression* expr, int index );
+          void addArgumentExpression   ( ROSE_Expression* expr, int index );
+          ROSE_Expression* getArgumentExpression ( int index );
+
+       // Or the user can get the list and manipulate it more directly (as a backup mechanism)
+          List<ROSE_Expression> & getRoseExpressionList ();
+
+     private:
+          SgExprListExp* sageExpressionListExpression;
+          List<ROSE_Expression> roseExpressionList;
+
+          

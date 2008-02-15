@@ -1,0 +1,16 @@
+%{
+
+}%
+
+procedure fseek(stream, offset, whence)
+{
+	access { stream, offset, whence }
+	modify { stream }
+}
+
+procedure ftell(stream, pos)
+{
+	access { stream, pos }
+	modify { pos }
+}
+

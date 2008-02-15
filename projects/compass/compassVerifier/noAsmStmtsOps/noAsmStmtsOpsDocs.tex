@@ -1,0 +1,62 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Asm Stmts Ops}
+\label{NoAsmStmtsOps::overview}
+
+% write your introduction
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file
+
+\subsection{Implementation}
+This checker uses a simple AST traversal that checks for SgAsmStmt(s) and SgAsmOp(s). Any such nodes that are found are flagged as violations
+
+\subsection{Non-Compliant Code Example}
+This example is taken from Cxx\_tests/test2006\_98.C
+\begin{verbatim}
+typedef int _Atomic_word;
+
+#ifndef __INTEL_COMPILER
+// Intel complains that the input register "m" cannot have a modifier "+"
+static inline _Atomic_word
+__attribute__ ((__unused__))
+__exchange_and_add (volatile _Atomic_word *__mem, int __val)
+{
+  register _Atomic_word __result;
+  __asm__ __volatile__ ("lock; xadd{l} {%0,%1|%1,%0}"
+                        : "=r" (__result), "+m" (*__mem)
+                        : "0" (__val)
+                        : "memory");
+  return __result;
+}
+#endif
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution does not make use of C assembly.
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting SgAsmStmt and SgAsmOp nodes.
+\item For each such node flag violation.
+\item Report all violations. 
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

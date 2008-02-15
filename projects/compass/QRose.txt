@@ -1,0 +1,4 @@
+
+To Size QRose windows run "xwininfo" and click on the top level QRose
+window to get information about the current size.
+

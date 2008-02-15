@@ -1,0 +1,90 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Dynamic Cast}
+\label{DynamicCast::overview}
+
+% write your introduction
+   The rule is that dynamic\_cast<> should always be used when a downcast is needed (ALE3D 14.5).
+   Downcasting is a term for casting a pointer to a base class to a derived class, and should
+   only be done with extreme care. Using dynamic\_cast<> will ensure that the object pointed to
+   by the base class pointer is really of the derived class. It will return a nill pointer if
+   it is not. Any other type of cast is unsafe.
+
+\subsection{Parameter Requirements}
+   This checker does not take any paramaters.
+
+\subsection{Implementation}
+    This pattern is detected using a simple traversal without inherited 
+or synthesized attributes.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+   class A//not polymorphic
+    {
+      public:
+        ~A(){}
+        virtual void foo(){};
+    };
+   
+   class B: public A
+    {
+    };
+
+   int main()
+     {
+       A * p  = new B;
+       B * p2 = (B*) p;
+     }
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+\begin{verbatim}
+
+   class A//not polymorphic
+    {
+      public:
+        ~A(){}
+        virtual void foo(){};
+    };
+   
+   class B: public A
+    {
+    };
+
+   int main()
+     {
+       A * p = new B;
+       B * p2 = dynamic_cast<B* > (p);
+     }
+
+\end{verbatim}
+
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+
+\begin{enumerate}
+\item traverse AST
+\item for each cast expression that is a downcast if dynamic cast is not used report an error.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

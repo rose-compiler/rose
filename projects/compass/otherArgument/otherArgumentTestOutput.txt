@@ -1,0 +1,1 @@
+OtherArgument: otherArgumentTest1.C:2.3-17: SgMemberFunctionDeclaration: A copy operations should have its main argument named "other".

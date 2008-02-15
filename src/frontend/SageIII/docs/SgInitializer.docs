@@ -1,0 +1,120 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializer
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgInitializer
+\brief This class represents the notion of an initializer for a variable declaration or
+    expression in a function call argument list.
+    There are no direct uses of this IR node anywhere.  All initializers
+are derived from this IR node to build derived classes such as SgConstructorInitializer,
+SgAssignInitializer, and SgAggregateInitializer.
+\internal This is a base class for all initializers.
+\sa
+\ref SgInitializer_usage  "Example of using a SgInitializer object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializer data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializer member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\fn SgInitializer::SgInitializer (const SgInitializer &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgInitializer::~SgInitializer()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgInitializer::isSgInitializer (SgNode *s)
+\brief Cast function (from derived class to SgInitializer pointer).
+   This functions returns a SgInitializer pointer for any input of a 
+pointer to an object derived from a SgInitializer.
+\return Returns valid pointer to SgInitializer if input is derived from a SgInitializer.
+*/
+/*!
+\fn SgInitializer::isSgInitializer (const SgNode *s)
+\brief Cast function (from derived class to SgInitializer pointer).
+   This functions returns a SgInitializer pointer for any input of a 
+pointer to an object derived from a SgInitializer.
+\return Returns valid pointer to SgInitializer if input is derived from a SgInitializer.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var bool SgInitializer::p_is_explicit_cast
+\brief This boolean variable marks the initializer ans part of an explicit or implicit
+    cast.  It is used for all of the different types of initalizers.
+\internal This may now be duplicate information with the compiler generated flag in Sg_File_Info.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgInitializer::SgInitializer(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgInitializer base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgInitializer_create "Example:create an SgInitializer object"
+*/
+/*!\fn SgInitializer::SgInitializer(const SgInitializerStorageClass &source)
+*/
+/*!\fn inline static void SgInitializer::operator delete(void *pointer)
+*/
+/*!\fn static SgInitializer *SgInitializer::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgInitializer::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgInitializer::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgInitializer::initializeStorageClassArray(SgInitializerStorageClass *storageArray)
+*/
+/*!\fn static void SgInitializer::clearMemoryPool()
+*/
+/*!\fn static void SgInitializer::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgInitializer::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgInitializer::roseRTI()
+*/
+/*!\fn virtual SgInitializer::~SgInitializer()
+*/
+/*!\fn virtual SgNode *SgInitializer::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual unsigned int SgInitializer::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgInitializer::post_construction_initialization()
+*/
+/*!
+\fn void SgInitializer::set_is_explicit_cast(bool is_explicit_cast)
+\brief This function allows the p_is_explicit_cast flag to be set (used internally).
+See  is_explicit_cast)
+is_explicit_cast for documentation \param explicit_cast - sets value of internal p_is_explicit_cast flag (true if explicit).
+\return Returns void.
+*/
+/*!
+\fn bool SgInitializer::get_is_explicit_cast() const
+\brief returns bool value if front-end considers this cast as explicit.
+See  const
+is_explicit_cast for documentation \return Returns bool value.
+*/
+/*!\fn virtual SgNode *SgInitializer::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgInitializer::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgInitializer::get_numberOfTraversalSuccessors()
+\description See  SgInitializer::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgInitializer::get_traversalSuccessorContainer()
+\description See  SgInitializer::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgInitializer::get_traversalSuccessorNamesContainer()
+\description See  SgInitializer::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgInitializer::SgInitializer()
+*/
+//@}
+int SAGE_Doxygen_Dummy_29500998125607;

@@ -1,0 +1,277 @@
+$C   /* Generate Main Module */
+COMPILER Clang2
+/* CLANG level 2 pretty printer */
+
+int level = 0;
+
+void NewLine()
+{ int i;
+  printf("\n");
+  for (i = 0; i < level; i++) printf("   ");
+}
+
+void Indent()         { level++; }
+void Exdent()         { level--; }
+void IndentNextLine() { Indent(); NewLine(); }
+void ExdentNextLine() { Exdent(); NewLine(); }
+
+void Append(char *s)
+{ printf("%s", s);}
+
+void WriteIdent()
+{
+    char IdentName[21];
+    S_GetString(S_Pos, S_Len, IdentName, sizeof(IdentName) - 1);
+    Append(IdentName);
+}
+
+void WriteNumber()
+{
+    char IdentName[20];
+    S_GetString(S_Pos, S_Len, IdentName, sizeof(IdentName) - 1);
+    Append(IdentName);
+}
+
+void WriteString()
+{
+    char IdentName[80];
+    S_GetString(S_Pos, S_Len, IdentName, sizeof(IdentName) - 1);
+    Append(IdentName);
+}
+
+IGNORE CASE
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  lowline  = "_".
+  octdigit = "01234567".
+  digit    = octdigit + "89".
+  eol      = CHR(10).
+  noquote1 = ANY - "'" - eol.
+  noquote2 = ANY - '"' - eol.
+
+IGNORE  CHR(9) .. CHR(13)
+
+COMMENTS FROM "{" TO "}"  NESTED
+
+ TOKENS
+
+  identifier = letter {letter | digit} .
+  number     = digit { digit} .
+  string     =  "'" noquote1 {noquote1} "'" | '"' noquote2 {noquote2} '"' .
+
+PRODUCTIONS
+
+ Clang2 =
+   "PROGRAM"                         (. Append("PROGRAM "); .)
+   identifier                        (. WriteIdent(); .)
+   ";"                               (. Append(";"); IndentNextLine(); .)
+   Block
+   "."                               (. Append("."); .).
+
+ Block =
+   { ConstDeclaration
+     | VarDeclaration
+     | ProcDeclaration }
+   StatementPart .
+
+ ConstDeclaration =
+   "CONST"                           (. Append("CONST"); IndentNextLine(); .)
+      OneConst
+      {                              (. NewLine(); .)
+        OneConst }                   (. ExdentNextLine(); .) .
+
+ OneConst =
+   identifier                        (. WriteIdent(); .)
+   "="                               (. Append(" = "); .)
+   number                            (. WriteNumber(); .)
+   ";"                               (. Append(";"); .) .
+
+ VarDeclaration =
+   "VAR"                             (. Append("VAR"); IndentNextLine(); .)
+      OneVar
+      { ","                          (. Append(", "); .)
+        OneVar }
+   ";"                               (. Append(";"); ExdentNextLine(); .) .
+
+ OneVar =
+   identifier                        (. WriteIdent(); .)
+   [ "["                             (. Append("["); .)
+     number                          (. WriteNumber(); .)
+     "]"                             (. Append("]"); .)
+   ] .
+
+ ProcDeclaration =
+   ( "PROCEDURE"                     (. NewLine(); Append("PROCEDURE "); .)
+     | "FUNCTION"                    (. NewLine(); Append("FUNCTION "); .)
+   )
+   identifier                        (. WriteIdent(); .)
+   [ FormalParameters ]
+   ";"                               (. Append(";"); IndentNextLine(); .)
+   ProcBlock
+   ";"                               (. Append(";"); ExdentNextLine();
+                                        NewLine(); .) .
+
+ FormalParameters =
+   "("                               (. Append(" ("); .)
+     OnePar
+     { ","                           (. Append(", "); .)
+       OnePar }
+   ")"                               (. Append(")"); .) .
+
+ OnePar =
+   [ "VAR"                           (. Append("VAR "); .)
+   ]
+   identifier                        (. WriteIdent(); .) .
+
+ ProcBlock =
+     "FORWARD"                       (. Append("FORWARD"); .)
+   | Block .
+
+ StatementPart =
+   CompoundStatement .
+
+ CompoundStatement =
+   "BEGIN"                           (. Append("BEGIN"); IndentNextLine(); .)
+      Statement
+        { ";"                        (. Append(";"); NewLine(); .)
+          Statement }
+   "END"                             (. ExdentNextLine(); Append("END"); .).
+
+ Statement =
+   [   CompoundStatement
+     | CallOrAssignment
+     | IfStatement
+     | WhileStatement
+     | ReturnStatement
+     | WriteStatement
+     | ReadStatement
+     | StackDump
+   ] .
+
+ CallOrAssignment =
+   identifier                        (. WriteIdent(); .)
+   (
+       [ Subscript ]
+       ":="                          (. Append(" := "); .)
+       Expression
+     | [ ActualParameters ]
+   ) .
+
+ IfStatement =
+   "IF"                              (. Append("IF "); .)
+      Condition
+   "THEN"                            (. IndentNextLine(); Append("THEN "); .)
+      Statement
+   { "ELSIF"                         (. NewLine(); Append("ELSIF "); .)
+        Condition
+     "THEN"                          (. IndentNextLine(); Append("THEN "); .)
+        Statement                    (. Exdent(); .)
+   }
+   [ "ELSE"                          (. NewLine(); Append("ELSE "); .)
+        Statement ]
+                                     (. Exdent(); .) .
+
+ WhileStatement =
+   "WHILE"                           (. Append("WHILE "); .)
+      Condition
+   "DO"                              (. Append(" DO "); .)
+      Statement .
+
+ ReturnStatement =
+   "RETURN"                          (. Append("RETURN "); .)
+      [ Expression ] .
+
+ WriteStatement =
+   "WRITE"                           (. Append("WRITE"); .)
+     [ "("                           (. Append("("); .)
+         WriteList
+       ")"                           (. Append(")"); .)
+     ] .
+
+ ReadStatement =
+   "READ" "("                        (. Append("READ("); .)
+      ReadList
+   ")"                               (. Append(")"); .).
+
+ StackDump =
+   "STACKDUMP"                       (. Append("STACKDUMP"); .) .
+
+ Condition =
+     "ODD" "("                       (. Append("ODD("); .)
+        Expression
+     ")"                             (. Append(")"); .)
+   | Expression RelOp Expression .
+
+ Expression =
+   [ Sign ] Term { AddOp Term } .
+
+ Term =
+   Factor { MulOp Factor } .
+
+ Factor =
+     identifier                      (. WriteIdent(); .)
+     (   ActualParameters
+        |  Subscript |
+     )
+   | number                          (. WriteNumber(); .)
+   | "("                             (. Append("("); .)
+        Expression
+     ")"                             (. Append(")"); .) .
+
+ ActualParameters =
+   "("                               (. Append("("); .)
+      Expression
+      { ","                          (. Append(", "); .)
+        Expression }
+   ")"                               (. Append(")"); .) .
+
+ WriteList =
+   ( Expression
+     | string                        (. WriteString(); .)
+   )
+   { ","                             (. Append(", "); .)
+     ( Expression
+       | string                      (. WriteString(); .)
+     )
+   } .
+
+ ReadList =
+   VarDesignator
+   { ","                             (. Append(", "); .)
+     VarDesignator
+   } .
+
+ VarDesignator =
+   identifier                        (. WriteIdent(); .)
+   [ Subscript ] .
+
+ Subscript =
+   "["                               (. Append("["); .)
+     Expression
+   "]"                               (. Append("]"); .) .
+
+ Sign =  AddOp .
+
+ AddOp =
+     "+"                             (. Append(" + "); .)
+   | "-"                             (. Append(" - "); .) .
+
+ MulOp =
+     "*"                             (. Append(" * "); .)
+   | "/"                             (. Append(" / "); .) .
+
+ RelOp =
+     "="                             (. Append(" = "); .)
+   | "<>"                            (. Append(" <> "); .)
+   | "<"                             (. Append(" < "); .)
+   | "<="                            (. Append(" <= "); .)
+   | ">"                             (. Append(" > "); .)
+   | ">="                            (. Append(" >= "); .) .
+
+END Clang2.
+
+
+
+
+

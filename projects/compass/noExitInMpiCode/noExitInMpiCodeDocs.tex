@@ -1,0 +1,76 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Exit In Mpi Code}
+\label{NoExitInMpiCode::overview}
+
+``ALE3D Coding Standards \& Style Guide'' item \#19.1 states that
+\begin{quote}
+{\tt exit()} must never be called from a parallel code. Calling {\tt exit()} from a parallel code will cause the code to deadlock. Even if you can guarantee that every processor will call {\tt exit()} collectively, this can leave some parallel environments in a hung state because MPI resources are not properly cleaned up. 
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal seeking function reference
+expressions. These function reference expressions matching a call to the exit()
+function between blocks of MPI code (as delimited between MPI Init and MPI
+Finalize) are flagged as checker violations.
+
+\subsection{Non-Compliant Code Example}
+This trivial non-compliant code calls {\tt exit()} from an MPI block.
+
+\begin{verbatim}
+#include <stdlib.h>
+#include "mpi.h"
+
+int main( int argc, char **argv )
+{
+  MPI_Init( &argc, &argv );
+    exit(1);
+  MPI_Finalize();
+
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution uses {\tt MPI\_Abort()} instead.
+
+\begin{verbatim}
+#include <stdlib.h>
+#include "mpi.h"
+
+int main( int argc, char **argv )
+{
+  MPI_Init( &argc, &argv );
+    MPI_Abort( MPI_COMM_WORLD, 1 );
+  MPI_Finalize();
+
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform a simple AST traversal of nodes that occur between {\tt MPI\_Init()} and {\tt MPI\_Finalize()} blocks.
+\item For each node between MPI blocks, if node is call to {\tt exit()} then flag violation.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+Arrighi B., Neely R., Reus J. ``ALE3D Coding Standards \& Style Guide'', 2005.

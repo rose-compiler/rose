@@ -1,0 +1,86 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Cpp Calls Setjmp Longjmp}
+\label{CppCallsSetjmpLongjmp::overview}
+
+{\it The Elements of C++ Style} state that:
+\begin{quote}
+[The setjmp() and longjmp()] functions provide exception handling for C programs. You cannot safely use these functions in C++ code because the exception-handling mechanism they implement does not respect normal object lifecycle semantics--a jump will not result in destruction of scoped, automatically allocated objects.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out calls
+to setjmp() and longjmp() in source files without the ``.c'' extension. These
+nodes are flagged as violations.
+
+\subsection{Non-Compliant Code Example}
+This contrived trivial example calls setjmp() and longjmp() in C++ code
+
+\begin{verbatim}
+#include <setjmp.h>
+
+int main()
+{
+  jmp_buf env;
+  my_container c1;
+  int i = setjmp(env);
+
+  if( i != 0 ) exit( 1 );
+
+  int err = c1.clear();
+
+  if( err != 0 ) longjmp( env, 1 );
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+The compliant solution uses C++ exception handling.
+
+\begin{verbatim}
+int main()
+{
+  my_container c1;
+
+  try
+  {
+    c1.clear();    
+  }
+  catch(...)
+  {
+    exit( 1 );
+  } 
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting function reference codes.
+\item Flag all function references named {\tt setjmp()} or {\tt longjmp()} as violations.
+\item Report all violations.
+\end{enumerate}
+
+\subsection{References}
+
+Bumgardner G., Gray A., and Misfeldt T. {\it The Elements of C++ Style}. Cambridge University Press 2004.

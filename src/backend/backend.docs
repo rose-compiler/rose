@@ -1,0 +1,8 @@
+ /*!
+     \defgroup ROSE_BackEndGroup ROSE Backend
+
+     \brief The ROSE back-end section contains tools for generating source code from the AST.
+
+
+  */
+

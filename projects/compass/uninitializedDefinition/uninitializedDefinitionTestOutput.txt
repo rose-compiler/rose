@@ -1,0 +1,3 @@
+UninitializedDefinition: uninitializedDefinitionTest1.C:14.5-25: SgVariableDeclaration: Variable definition without an initializer.
+UninitializedDefinition: uninitializedDefinitionTest1.C:16.5-28: SgVariableDeclaration: Variable definition without an initializer.
+UninitializedDefinition: uninitializedDefinitionTest1.C:29.5-9: SgVariableDeclaration: Variable definition without an initializer.

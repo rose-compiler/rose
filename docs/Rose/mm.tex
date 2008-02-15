@@ -1,0 +1,47 @@
+
+
+\begin {figure*}
+\beginfig
+{\footnotesize %\fontfamily{pcr} \selectfont
+\begin {minipage}{.2\textwidth}
+\begin {tabbing}
+=\==\==\==\==\kill
+\> for ($i = 0; i <= n-1; i+= 1$)  \\
+\>\>  for ($j = 0; j <= n-1; j+= 1$) \\
+\>\>\>  for ($k = 0; k <= N-1; k+=1$)  \\
+\>\>\>\>  $c[i][j] = c[i][j] + a[i][k] * b[k][j]$; 
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{.2\textwidth}
+\begin {tabbing}
+=\==\==\==\==\kill
+\> for ($i = 0; i <= n-1; i+= 1$)  \\
+\>\>  for ($k = 0; k <= n-1; k+= 1$) \\
+\>\>\>  for ($j = 0; j <= N-1; j+=1$)  \\
+\>\>\>\>  $c[i][j] = c[i][j] + a[i][k] * b[k][j]$; 
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{.3\textwidth}
+\begin {tabbing}
+=\==\==\==\==\==\==\==\==\kill
+\> for ($x_k = 0; x_k <= n-1; x_k += b$)  \\
+\>\>  for ($x_j = 0; x_j <= n-1; x_j += b$)  \\
+\>\>\>  for ($i = 0; i <= n-1; i += 1$)  \\
+\>\>\>\>  for ($k = x_k; k <= min(n-1,x_k + b-1); k += 1$)  \\
+\>\>\>\>\>  for ($j = x_j; j <= min(n-1,x_j + b-1); j += 1$)  \\
+\>\>\>\>\>\>  $c[i][j] = c[i][j] + a[i][k] * b[k][j]$; 
+\end {tabbing}
+\end {minipage}
+\begin {minipage}{\textwidth}
+\hspace{.08\textwidth} (a) original code  \hspace{.1\textwidth}
+(b) after loop interchange 
+\hspace{.1\textwidth} (c) after loop blocking
+\end {minipage}
+}
+\endfig
+\caption {Optimizing matrix multiplication, first applying loop interchange
+to arrange the best nesting order in (b), then applying blocking to 
+exploit data reuses carried by $k$ and $j$ loops in (c).}
+\label {fig-mm}
+\end {figure*}
+

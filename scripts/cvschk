@@ -1,0 +1,269 @@
+#!/bin/csh -f
+
+# Pete Beckman (PHB) (9/10/93)
+# Modified by Dan Quinlan to handle LONG files (12/15/99)
+# Markus Schordan: Added output of automake, autoconf, and g++ version (01/03/02)
+# Markus Schordan: Added output of doxygen, latex, html2latex version (01/16/02)
+
+# Display CVS info about your changes in nice tabular form
+
+# Should add conditions for "no longer in repository" and "lost"
+
+# Use PID as unique filename
+set X=$$
+# for debugging use the existing output from cvs
+# set X=000
+
+echo Please wait...
+cvs -n update |& grep -v "cvs update: Updating" > /tmp/cvs0$X
+
+echo "********* Extra Files (skipping output of all Makefile.in files) *********"
+# Cut out the first two columns of the output from CVS that contain "? "
+# grep "^? " /tmp/cvs0$X | cut -c3- > /tmp/cvs1$X
+grep "^? " /tmp/cvs0$X | grep -v Makefile.in | cut -c3- > /tmp/cvs1$X
+
+# for debugging use the exisiting file
+/bin/rm -f /tmp/cvs2$X
+touch /tmp/cvs2$X
+
+# Find out what kind of files they are
+#foreach i (`cat /tmp/cvs1$X`)
+#  file $i >> /tmp/cvs2$X
+#end
+
+# Process the file in chunks since it is often too bug
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs1$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs1$X | tail -$tailSize`)
+      file $i >> /tmp/cvs2$X
+   end
+   @ num += $maxListSize
+end
+
+# No need to report on executables...
+paste -d: /tmp/cvs1$X /tmp/cvs2$X | grep -v "sparc demand paged" \
+   | cut -d: -f1 > /tmp/cvs3$X
+
+# foreach i (`cat /tmp/cvs3$X`)
+#   echo ":Extra file        " $i
+# end
+
+# Process the file in chunks since it is often too bug
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs3$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs3$X | tail -$tailSize`)
+      echo ":Extra file        " $i
+   end
+   @ num += $maxListSize
+end
+
+echo "********* TESTED with **************"
+echo -n "(*)  "
+automake --version | grep '[A|a]utomake'
+echo -n "(*)  "
+autoconf --version | grep '[A|a]utoconf'
+echo -n "(*)  "
+gmake --version | grep 'Make version' | sed 's/,.*//'
+echo -n "(**) "
+g++ --version | grep '\([0-9]\+[.]\)\+[0-9]\+'
+echo -n "(**) "
+gcc --version | grep '\([0-9]\+[.]\)\+[0-9]\+'
+echo -n "(**) "
+bison --version | grep '\([0-9]\+[.]\)\+[0-9]\+'
+echo -n "(*)  "
+echo -n "doxygen "
+doxygen --version
+echo -n "(*)  "
+echo -n "dot "
+dot -V
+echo -n "(*)  "
+echo -n "libtool "
+libtool --version
+echo -n "(*)  "
+if ($SHELL == "/bin/bash") then
+ # echo "Bash specific output: "
+   dot -V 2>&1
+else
+ # echo "NonBash specific output: "
+   dot -V
+endif
+echo -n "(*)  "
+latex -version | grep 'TeX ('
+echo -n "(*)  "
+latex2html -v | grep 'Original LaTeX2HTML' 
+
+# mysql stuff
+# echo -n "mysql (requires g++ 3.2.2)"
+# absolute link, shouldn't be here
+# /usr/casc/overture/MySQL/MySQL_Install/bin/mysql --version
+
+# SQLite stuff
+echo -n "(*)  "
+echo -n "sqlite (requires g++ 3.3.2) "
+# absolute link, shouldn't be here
+/home/dquinlan/SQLite/sqliteCompileTree/bin/sqlite3 -version
+
+echo ""
+echo "(*)  Optional for use of ROSE (by users), but required for internal ROSE development (by ROSE project team)"
+echo "(**) Required for use of ROSE (and for all internal development)"
+echo ""
+
+echo "********* Locally Modified *********"
+grep "^M " /tmp/cvs0$X | cut -c3- > /tmp/cvs1$X
+# foreach i (`cat /tmp/cvs1$X`)
+#   echo ">Locally modified  " $i
+# end
+
+# Process the file in chunks since it is often too bug
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs1$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs1$X | tail -$tailSize`)
+      echo ">Locally modified  " $i
+   end
+   @ num += $maxListSize
+end
+
+echo "********* Needs CVS Update *********"
+grep "^U " /tmp/cvs0$X | cut -c3- > /tmp/cvs1$X
+# foreach i (`cat /tmp/cvs1$X`)
+#   echo "<Needs Update       " $i
+# end
+
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs1$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs1$X | tail -$tailSize`)
+      echo "<Needs Update       " $i
+   end
+   @ num += $maxListSize
+end
+
+echo "********* FILES NEEDING A MERGE *********"
+grep "^C " /tmp/cvs0$X | cut -c3- > /tmp/cvs1$X
+# foreach i (`cat /tmp/cvs1$X`)
+#   echo "\!NEEDS MERGE       " $i
+# end
+
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs1$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs1$X | tail -$tailSize`)
+      echo "\!NEEDS MERGE       " $i
+   end
+   @ num += $maxListSize
+end
+
+echo "********* Files Scheduled to be added *********"
+grep "^A " /tmp/cvs0$X | cut -c3- > /tmp/cvs1$X
+# foreach i (`cat /tmp/cvs1$X`)
+#   echo "+Scheduled for add     " $i
+# end
+
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs1$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs1$X | tail -$tailSize`)
+      echo "+Scheduled for add     " $i
+   end
+   @ num += $maxListSize
+end
+
+echo "********* Files Scheduled to be removed *********"
+grep "^R " /tmp/cvs0$X | cut -c3- > /tmp/cvs1$X
+# foreach i (`cat /tmp/cvs1$X`)
+#   echo "-Scheduled for removal " $i
+# end
+
+@ num = 0
+@ complete = 0
+@ maxListSize = 1000
+@ fileSize = `wc /tmp/cvs1$X | cut -c1-8`
+while ($complete == 0)
+   @ headSize = $num + $maxListSize
+   @ tailSize = $maxListSize
+   if ($headSize > $fileSize) then
+      @ tailSize = $fileSize - $num
+      @ complete = 1
+   endif
+   foreach i (`head -$headSize /tmp/cvs1$X | tail -$tailSize`)
+      echo "-Scheduled for removal " $i
+   end
+   @ num += $maxListSize
+end
+
+echo "********* WARNINGS *********"
+grep "warning:" /tmp/cvs0$X
+
+echo "********* ERRORS *********"
+grep "update aborted" /tmp/cvs0$X
+
+# Skip removing the files while we debug the script
+/bin/rm -f /tmp/cvs?$X
+# echo "intermidiate files in /tmp not removed\!"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

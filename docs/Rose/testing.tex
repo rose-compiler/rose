@@ -1,0 +1,329 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Author: Gary Yuan
+% Date: 8/7/06
+% File: qm.tex
+% Purpose: qm.sh documentation
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Testing Within ROSE}
+
+\label{testing::overviewOfTesting}
+
+{\scriptsize \include{qmTestScript} }
+
+\section{Introduction}
+{\tt qm.sh} is a wrapper for the compile-line in an arbitrary project build 
+system that creates qmtest test files that test ROSE. The basic assumption
+is that it is possible to isolate and modify the compile-line command in most
+project build systems. For example, Makefile systems using {\tt make} specify
+compile-line commands after labels delimited by a colon. One example of this
+may be:
+
+\begin{center}
+  {\tt gcc -c -g -Wall hello.c}
+\end{center}
+From this line {\tt qm.sh} would create a qmtest test file that executes
+a ROSE translator in the place of {\tt gcc} but with the exact same arguments
+{\tt -c -g -Wall} and more if the user of {\tt qm.sh} should specify them.
+{\tt qm.sh} also mimics the compile-line process of the project's build system
+so that all dependencies are built as normal by the backend compiler.
+
+\section{Usage}
+
+{\tt qm.sh <f|o> <QMTest test class> <ROSE translator> <Backend compiler> 
+\{compiler arguments\ldots\} \{ROSE arguments\ldots\}}
+
+\begin{description}
+  \item[{\large {\tt <f|o>}}] : The output file naming mode. Option ``f'' specifies
+	{\tt qm.sh} to use source file names in naming output {\tt .qmt} files.
+	Option ``o'' specifies {\tt qm.sh} to use object file names, as
+	specified by the compile-line {\tt -o} flag to the backend compiler,
+	for naming {\tt .qmt} output files.
+  \item[$<$QMTest test class$>$] : The test class of the created test file,
+	i.e rose.RoseTest or command.ExecTest.
+  \item[$<$ROSE translator$>$] : The full path specifying a ROSE translator.
+  \item[$<$Backend compiler$>$] : The name of the backend compiler used in
+	the normal compilation of the project build system. Specify ``NULL'' as
+	the $<$Backend compiler$>$ if you want to skip backend compilation.
+  \item[\{compiler arguments\ldots\}] : The arguments specified on
+	the command-line of the project build system.
+  \item[\{ROSE arguments\ldots\}] : The arguments to the ROSE translator
+	prefixed with -rose:$<$ROSE argument$>$, e.x. 
+	{\tt -rose:--edg:no\_warnings}. Note, these may be placed anywhere
+	after the $<$Backend Compiler$>$ argument.
+\end{description}
+
+\section{Variables}
+
+\begin{description}
+  \item[COUNT] : The for loop counter, keeps track of number of {\tt qm.sh}
+	arguments.
+  \item[FLAG] : Logical flag variable used in naming output {\tt .qmt} files.
+  \item[TEST] : The name of the QMTest test file created.
+  \item[TEST\_CLASS] : The QMTest class specified on command-line.
+  \item[PROGRAM] : The ROSE translator specified on command-line.
+  \item[BACKEND] : The original command-line of the project build system with
+	the backend compiler.
+  \item[ARGUMENTS] : The compile-line arguments specified on the command-line
+	with any script user specified arguments for the ROSE translator such
+	as {\tt --edg:no\_warnings} bound for the QMTest test file.
+  \item[LAST\_ARG] : The closing stub to the QMTest arguments format along with
+	the {\tt -o <object file name>} argument.
+  \item[ARG] : The current compile-line argument place holder used in
+	constructing the argument format to QMTest arguments
+	{\tt ARGUMENTS="['arg1','arg2',...,'argN']"}. 
+
+\end{description}
+
+\section{Execution Walkthrough}
+{\tt qm.sh} is broken into code blocks which each perform some procedure. These
+blocks are delimited with a solid line of 80 {\tt \#} characters.
+
+\subsection{Backend and ROSE arguments}
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+1 for ARG in $@
+2 do
+3   ((COUNT++))
+                                                                                
+4   if ((COUNT > 3)); then
+                                                                                
+5     if [[ ${ARG:0:6} == "-rose:" ]]; then
+6       ARGUMENTS="${ARGUMENTS} '`echo $ARG | sed -e 's/-rose://g'`', "
+7       continue
+8     fi
+                                                                                
+9     BACKEND="${BACKEND} $ARG" # build original compile-line
+\end{verbatim}
+}
+\caption{Backend and ROSE argument construction block}
+\end{figure}
+
+This block of code builds the original compile line of the project's build
+system along with the arguments passed specifically to the ROSE compiler. In
+the {\tt for} loop all the arguments passed to {\tt qm.sh} are looped through,
+however, the first three arguments are skipped due to the {\tt if} statement on
+line 4. All other arguments after the third are considered arguments of either
+ROSE or the original project's build system. ROSE arguments must be prefixed
+with {\tt -rose:<ROSE argument>} when specified on the compile-line. Each
+argument with this prefix is stripped of the prefix {\tt -rose:} and added to
+the {\tt ARGUMENT} list of the QMTest test file. ROSE arguments are not
+carried over to the {\tt BACKEND} compile-line variable but all other arguments
+are appended without change with the exception of the 
+{\tt -o <Object file Name>} flag.
+
+\subsection{Relative Path Compile-line Arguments}
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+1    case $ARG in
+2        -I*) includeFullPath;;
+                                                                                
+3        [!/]*.c | [!/]*.cpp | [!/]*.C | [!/]*.[cC]* ) ARG="`pwd`/$ARG";;
+                                                                                
+4        -o) BOOL=1 ; continue;; # spike out -o outputfilename
+                                                                                
+5        *) ;;
+6    esac
+\end{verbatim}
+}
+\caption{Relative to Absolute Paths in Arguments}
+\end{figure}
+
+This block of code handles all compile-line arguments containing relative file
+or include paths. The {\tt case...esac} switch statement compares against
+patterns indicative of C/C++ source files or an include directive. All source
+files without absolute paths stemming from root are simply appended with their
+present working directory. Directories specified by the {\tt -I} include 
+directive call the function {\tt includeFullPath} which changed relative paths
+to absolute paths.
+
+\subsection{Naming QMTest Files}
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+1      if [[ ${ARG:0:1} != '/' ]]; then
+2        ARG=`pwd`/$ARG
+3      fi
+                                                                                
+4      TEST=`echo $ARG | sed -e 's/\//_/g' | sed -e 's/\./_/g' | gawk '{print tolower($0)}'`.qmt
+                                                                                
+5      OBJECT=${TEST%%.*}.o
+\end{verbatim}
+}
+\caption{Naming procedure for QMTest Files}
+\end{figure}
+
+At this block of code it is assumed that {\tt ARG} contains name of either the 
+source or object file specified by the command-line. This name is must first
+contain its absolute path to prevent name collisions which is handled by the
+{\tt if} construct on lines 1-3. The {\tt TEST} name is then created on line 4
+by replacing any {\tt '/'}(forward slashes) or {\tt '.'}(dots) in {\tt ARG} 
+with underscores. The {\tt OBJECT} name is simply the {\tt TEST} name value
+with the {\tt.o} extension. The object file name argument held in {\tt OBJECT}
+is appended to the end of the QMTest argument list along with the {\tt -o} 
+flag. Note that QMTest does not allow capital alphabetic letters or periods
+in the names of individual tests.
+
+\subsection{Create QMTest test and Execute Backend}
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+1 qmtest create -o "$TEST" -a program="$PROGRAM" -a arguments="$ARGUMENTS" test $TEST_CLASS;;
+                                                                                
+2 $BACKEND # Execute the old command-line to fake the makefile
+3 exit $?
+\end{verbatim}
+}
+\caption{Create .qmt and Execute Backend}
+\end{figure}
+
+Line 1 creates a {\tt .qmt} QMTest file with the name {\tt TEST} that executes
+{\tt PROGRAM} with arguments {\tt ARGUMENTS} using the class {\tt TEST\_CLASS}.
+The {\tt .qmt} test file is created in the present working directory of the
+project's build system file structure under the ``make'' process.
+Lines 2-3 execute the reconstructed original backend compile-line of project's
+build system. The script {\tt qm.sh} exits with the same code as the exit
+status of the backend process.
+
+\section{Example}
+
+The following example edits a trivial makefile and builds QMTest files with
+{\tt qm.sh} by editing the makefile.
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+CXX = g++
+CFLAGS = -g -Wall
+
+CPU.out : main.o registers.o reader.o decoder.o
+        $(CXX) $(CFLAGS) -o CPU.out reader.o registers.o decoder.o main.o
+                                                                                
+main.o : main.c registers.h reader.h decoder.h instruction.h
+        $(CXX) $(CFLAGS) -c main.c -o main.o
+                                                                                
+registers.o : registers.c registers.h main.h
+        $(CXX) $(CFLAGS) -c registers.c -o registers.o
+                                                                                
+reader.o : reader.c reader.h instruction.h
+        $(CXX) $(CFLAGS) -c reader.c -o reader.o
+                                                                                
+decoder.o : decoder.c decoder.h
+        $(CXX) $(CFLAGS) -c decoder.c -o decoder.o
+\end{verbatim}
+}
+\caption{makefile before editing}
+\end{figure}
+By inserting the {\tt qm.sh} wrapper before each instance of {\tt g++} in this
+case it is possible to generate {\tt .qmt} test files. The modified makefile is
+shown below:
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+QM = /home/yuan5/RoseQMTest/scripts/qm.sh
+ROSE = /home/yuan5/bin/identityTranslator
+MYCC = $(QM) rose.RoseTest $(ROSE)
+CXX = $(MYCC) g++
+ROSEFLAGS = -rose:--edg:no_warnings
+CFLAGS = $(ROSEFLAGS) -g -Wall
+                                                                                
+CPU.out : main.o registers.o reader.o decoder.o
+        $(CXX) $(CFLAGS) -o CPU.out reader.o registers.o decoder.o main.o
+                                                                                
+main.o : main.c registers.h reader.h decoder.h instruction.h
+        $(CXX) $(CFLAGS) -c main.c -o main.o
+                                                                                
+registers.o : registers.c registers.h main.h
+        $(CXX) $(CFLAGS) -c registers.c -o registers.o
+                                                                               
+reader.o : reader.c reader.h instruction.h
+        $(CXX) $(CFLAGS) -c reader.c -o reader.o
+                                                                                
+decoder.o : decoder.c decoder.h
+        $(CXX) $(CFLAGS) -c decoder.c -o decoder.o
+\end{verbatim}
+}
+\caption{makefile after editing}
+\end{figure}
+
+After the edits have taken place it is evident that {\tt qm.sh} wraps around
+each compile-line of the makefile. The arguments to {\tt qm.sh} are themselves
+encompassed by the variable {\tt MYCC} leaving minimal edits to the makefile
+itself. The makefile may now be run with {\tt make} and the project will
+be made along with all the QMTest {\tt .qmt} files.
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+bash-2.05b$ make
+/home/yuan5/RoseQMTest/scripts/qm_file.sh rose.RoseTest /home/yuan5/bin/identityTranslator 
+g++ -rose:--edg:no_warnings -g -Wall -c main.c
+/home/yuan5/RoseQMTest/scripts/qm_file.sh rose.RoseTest /home/yuan5/bin/identityTranslator 
+g++ -rose:--edg:no_warnings -g -Wall -c registers.c
+/home/yuan5/RoseQMTest/scripts/qm_file.sh rose.RoseTest /home/yuan5/bin/identityTranslator
+g++ -rose:--edg:no_warnings -g -Wall -c reader.c
+/home/yuan5/RoseQMTest/scripts/qm_file.sh rose.RoseTest /home/yuan5/bin/identityTranslator 
+g++ -rose:--edg:no_warnings -g -Wall -c decoder.c
+/home/yuan5/RoseQMTest/scripts/qm_file.sh rose.RoseTest /home/yuan5/bin/identityTranslator 
+g++ -rose:--edg:no_warnings -g -Wall -o CPU.out reader.o registers.o decoder.o main.o
+\end{verbatim}
+}
+\caption{{\tt make} output}
+\end{figure}
+
+\begin{figure}[!ht]
+{\scriptsize
+\begin{verbatim}
+bash-2.05b$ find . -name "*.qmt" 
+_home_yuan5_roseqmtest_project_p2_cpu_out.qmt
+_home_yuan5_roseqmtest_project_p2_decoder_c.qmt
+_home_yuan5_roseqmtest_project_p2_main_c.qmt
+_home_yuan5_roseqmtest_project_p2_reader_c.qmt
+_home_yuan5_roseqmtest_project_p2_registers_c.qmt
+\end{verbatim}
+}
+\caption{{\tt find . -name "*.qmt"} output}
+\end{figure}
+
+\section{Running the Tests}
+
+This section describes how to collect and run the test created by {\tt qm.sh}
+after building the project with an edited build system. When the project has
+completed building, the QMTest files will most likely be scattered across all
+the local directories containing their object file counterparts. Thus it's
+necessary to collect them all into one directory which will serve as a QMTest
+database. From the directory where {\tt make} or the project's build system
+was launched type the command:
+\begin{center}
+{\tt find . -name "*.qmt" -exec mv \{\} test\_database $\backslash$; }
+\end{center}
+
+This will recursively find all files with extensions {\tt .qmt} and move them
+to the directory test\_database which was created by the user. Change directory
+to test\_database and type the command:
+\begin{center}
+{\tt qmtest -D`pwd` create-tdb}
+\end{center}
+This command will allow QMTest to access the test files by creating a test
+database. Once this test database has been created by QMTest it is possible to
+run tests from the command-line or GUI with the respective commands:
+
+\begin{verbatim}
+qmtest run -o results.qmr 
+# runs command-line and writes QMTest output to results.qmr 
+
+qmtest gui 
+# runs the QMTest GUI by which the user may read results stored in results.qmr 
+# or run additional tests.
+\end{verbatim}
+
+

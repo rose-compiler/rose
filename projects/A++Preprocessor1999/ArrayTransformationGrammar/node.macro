@@ -1,0 +1,36 @@
+
+// class ROSE_TreeBaseClass
+class ROSE_TransformableNode // : public ArrayAssignmentUsingTransformationGrammar // : public ROSE_Node
+   {
+     public:
+         ~ROSE_TransformableNode ();
+
+          ROSE_TransformableNode ( ROSE_Node* subTree );
+
+          void setUp ( ROSE_TransformableGrammarVariants newId, ROSE_Node* newSubTree );
+          ROSE_TransformableGrammarVariants getVariant();
+          void setVariant ( ROSE_TransformableGrammarVariants id );
+
+       // This make this class an abstract base class
+          virtual ROSE_TransformableNode* transform() = 0;
+
+       // Error recovery mechanism (for the parser)
+          Boolean error();
+          void setParseError ( Boolean X );
+
+          const ROSE_Node* getRoseSubTree();
+          void setRoseSubTree ( const ROSE_Node* node );
+
+     private:
+	  ROSE_TransformableGrammarVariants id;
+          ROSE_Node* roseSubTree;
+          Boolean parseError;  // error recovery mechanism for parser
+
+  // We don't want to have these be used within the interface
+     private:
+          ROSE_TransformableNode ();
+          ROSE_TransformableNode ( const ROSE_TransformableNode & X );
+          ROSE_TransformableNode & operator= ( const ROSE_TransformableNode & X );
+   };
+
+

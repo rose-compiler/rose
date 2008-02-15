@@ -1,0 +1,70 @@
+/*!
+\defgroup ROSEHPCT  ROSE HPCToolkit Module
+\ingroup ROSE_ProjectsGroup
+
+\authors Rich Vuduc <richie@llnl.gov>
+
+The \ref ROSEHPCT (ROSE-HPCT) implements routines that attach
+HPCToolkit profile data (stored in XML files) to the ROSE Sage III IR
+tree.
+
+The core external interfaces of this module live in the RoseHPCT
+namespace. The intended end-user interface is documented in \ref
+ROSEHPCT_HL and in the example program, \ref
+examples/test_highlevel.cc .
+
+The implementation consists of five primary submodules designed to
+make the attachment of profile data to the Sage III IR independent of
+the format used to store the profile data. The first three submodules
+provide core data structures:
+-# \ref ROSEHPCT_LIBXML2 :
+Provides parsing support and defines data structures to store the raw
+XML files in memory, based on the Gnome libxml2 library. We also
+provide an alternative version of this module, \ref ROSEHPCT_XERCESC ,
+based on the Xerces-C library.
+-# \ref ROSEHPCT_PROFIR :
+Defines data structures to store the contents of the profile files,
+independent of the XML representation.
+-# \ref ROSEHPCT_SAGE :
+Defines the metric attributes used to tag nodes in the Sage III
+representation with HPCToolkit metrics.
+
+The remaining two submodules implement conversion between these data
+structures:
+-# \ref ROSEHPCT_XML2PROFIR : Converts the in-memory XML data structure
+to the profile IR.
+-# \ref ROSEHPCT_PROFIR2SAGE : Interprets the profile IR and attaches
+metric data to the appropriate Sage IR nodes.
+
+HPCToolkit generates profile data at a variety of levels, from basic
+statement-level data only (i.e., metrics are associated with
+individual source file lines) to scope-level data (i.e., metrics
+associated with scoping structures like module, procedures, or
+loops). ROSE-HPCT attaches this raw data to the corresponding
+statement or scope-level nodes in the Sage III IR. To handle the case
+when only statement-level data is available, ROSE-HPCT also defines a
+simple traversal to propagate statement-level approximately to
+higher-level scopes (see \ref RoseHPCT::propagateMetrics).
+
+There are two additional submodules, which provide generic utility
+support and demonstrations of the ROSE-HPCT module:
+-# \ref ROSEHPCT_UTIL : Varoius generic utility routines, imported from
+other projects.
+-# \ref ROSEHPCT_EXAMPLES : Provides a few example programs.
+
+$Id: roseHPCToolkit.docs,v 1.1 2008/01/08 02:56:42 dquinlan Exp $
+ */
+
+/*!
+\defgroup ROSEHPCT_EXAMPLES   ROSE-HPCT Examples
+\ingroup ROSEHPCT
+
+The main example is \ref test_highlevel.cc, which demonstrates the
+simplest interface for using ROSE-HPCT. For additional control,
+see also \ref attach_metrics.cc and \ref propagate_metrics.cc,
+which expose the steps needed to use ROSE-HPCT at a finer level
+(e.g., detailed command-line processing, the internal data
+structures used).
+ */
+
+/* eof */

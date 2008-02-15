@@ -1,0 +1,3406 @@
+/*-----------------------------------------------------------------------
+Goal:
+  Insert default compiler-generated class constructors, destructor,
+  copy constructor, assignment operator into AST
+  if they are called somewhere and not defined by users.
+
+Divide and Conquer:
+
+* judge if a class constructor(and others) is needed or not(= invoked or not)
+    find all constructor call sites( SgConstructorInitializer  ?)
+
+* judge if a constructor,etc exists or not, 
+   Must traverse from the call site to the class declaration site
+   lookup all member functions for a constructor
+
+  Note: Since a copy constructor might be also tagged as a constructor,
+  A 'lazy' compiler may treat it as a constructor and stop generating
+  default constructor once it sees a copy constructor.
+
+  A 'diligent' compiler will check both constructor name and argument list
+  to decide if it is necessary to generate a default constructor, even if
+  a user-defined copy constructor already exists. 
+
+  I use the lazy policy here since both GCC and Intel seem lazy in this case. 
+
+* create default member functions in the form of AST subtree
+    refer to a full AST with a constructor etc. to see what nodes and edges are needed
+      SgMemberFunctionType, SgFunctionDefinition,SgFunctionParameterList
+    Must set special function modifier to isConstructor 
+
+** generated both declaration and definition when applicable(copy constructor&operator=)
+
+** mark it as compiler generated/transformation generated 
+   Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
+
+** insert it into the right place,and build connections:
+    SgConstructorInitializer -> add declaration, 
+
+Todo:
+   consider inheritance case
+   virtual or not for destructor 
+   fine grained control of copy constructor&operator= generation
+   refuse to generate default functions 
+	e.g. encouter members of reference type 
+
+Reference code: ROSE/tutorial/addFunctionDeclaration.C
+
+By Chunhua Liao
+Date: June 2, 2006
+Modified: June 9, 2006
+******************************************************************************/
+
+/*
+
+Here is a summary of what I (Brian) believe to be the behavior of 
+compiler-generated default and copy constructors, destructors, and 
+operator=.  References are to Stroustrup's 3rd edition, except section 
+r.12.8 which is in the 2nd edition.  I could not track this down in the 
+3rd edition.  
+ 
+3rd edition Section 12.2.2 states: 
+ 
+"Default constructors can be invoked implicitly.  However, if all 
+constructors for a base require arguments, then a constructor for that 
+base must be explicitly called." 
+ 
+-> Default constructors can be implicitly invoked by user-defined 
+constructors. 
+ 
+3rd Section 12.2.3 about operator= does not state that it is implicitly 
+invoked.  Therefore, and buttressed by your extended example below, it 
+seems C++ does not implicitly invoke operator=. 
+ 
+-> operator= and copy constructor are not implicitly invoked by 
+user-defined methods, but ... 
+ 
+2nd Edition r.12.8 (Copying Class Objects) states that if the assignment 
+operator and copy constructor are "not defined by the programmer, they 
+will be defined as memberwise assignment and memberwise initialization of 
+the members of X, respectively." 
+ 
+-> The compiler will generate operator= and copy constructor if not 
+defined by the user. 
+ 
+And: "Memberwise assignment and memberwise initialization implies that if 
+a class X has a member of a class M, M's assignment operator and M's copy 
+constructor are used to implement assignment and initialization of the 
+member, respectively." 
+ 
+-> Compiler-generated operator= and copy constructors will implicitly 
+invoke compiler-generated or user-defined operator= and copy constructors. 
+ 
+3rd Edition Section 10.4.2 talks about default constructors: 
+
+"A default constructor is a constructor that can be called without 
+supplying an argument [so it can have default args] ... If a user has 
+declared a default constructor, that one will be used; otherwise, the 
+compiler will try to generate one if needed and if the user HASN'T 
+DECLARED other constructors." 
+ 
+-> The compiler will generate a default constructor if there are no other 
+user-defined constructors. 
+ 
+*/
+
+/***
+ * 
+ *  How to infer which constructor is invoked when the method
+ *  dangling off a SgConstructorInitializer is NULL or when there
+ *  is a SgInitializer where we would expect a SgConstructor Initializer.
+ *
+    From bwhite@csl.cornell.edu Wed Jun 21 12:57:27 2006
+    Date: Fri, 16 Jun 2006 11:52:02 -0400 (EDT)
+    From: Brian White <bwhite@csl.cornell.edu>
+    To: Daniel J. Quinlan <dquinlan@llnl.gov>
+    Cc: Chunhua Liao <liaoch@llnl.gov>
+    Subject: Re: problems with constructor initializers
+    
+    
+    Dan,
+    
+    You're right-- it is possible to distinguish whether a default or copy
+    constructor should be invoked.  This e-mail gives examples that show how
+    to do that.  Once I have hand this back to you the
+    defaultFunctionGenerator should be doing everything necessary to
+    facilitate the "fixing up" of constructor calls such that they do not have
+    NULL SgConstructorInitializers.  That is, given the templates below you
+    should be able to distinguish between the cases, look up the methods
+    generated by defaultFunctionGenerator, and attach references to them as
+    necessary.  In each case I've given my opinion of what needs to be done to
+    normalize the calls.
+    
+    Here is an example program:
+    
+    class FooBar
+    {
+     public:
+    };
+    
+    int main()
+    {
+      FooBar fb;                       // case 1
+      FooBar fb2(fb);                  // case 2
+    
+      FooBar *fb3 = new FooBar();      // case 3
+      FooBar *fb4 = new FooBar(*fb3);  // case 4
+    
+      return 0;
+    
+    }
+    
+    I have attached the dot output so you can see what is going on.
+    
+    Here is a breakdown of the 4 cases, not all of which can be inferred from
+    the dot output.
+    
+    case 1:  FooBar fb;
+    
+    The SgInitializedName has type FooBar.
+    The initializer is NULL.
+    
+    This is the distinguishing signature of an invocation of a default
+    constructor (for a stack variable).
+    
+    To normalize:  Add a SgConstructorInitializer from the SgInitializedName
+    which points to the default constructor for FooBar which
+    defaultFunctionGEnerator will create.
+    
+    case 2:  FooBar fb2(fb);
+    
+    The SgInitializedName has type FooBar.
+    The initializer is a SgAssignInitializer, whose operand is "fb" with type
+    FooBar.
+    
+    This is the signature of a copy constructor invoked for a stack variable.
+    
+    To normalize:  Change the SgInitializedName's initializer from a
+    SgAssignInitializer to a SgConstructorInitializer.  Make this constructor
+    initializer point to the copy constructor created by
+    defaultFunctionGenerator.
+    
+    case 3:  FooBar *fb3 = new FooBar();
+    
+    The SgInitializedName has type FooBar*.
+    The initializer is a SgAssignInitializer, whose operand is a SgNewExp with
+    a NULL SgConstructorInitializer (via get_constructor_args).  The built_in
+    args is NULL.
+    
+    This is the signature of a default constructor invoked for new.
+    
+    To normalize:  Make the SgNewExp's
+    get_constructor_args/SgConstructorIntializer point to the default
+    constructor created by defaultFunctionGenerator.
+    
+    case 4:  FooBar *fb4 = new FooBar(*fb3);
+    
+    The SgInitializedName has type FooBar*.
+    The initializer is a SgAssignInitializer, whose operand is a SgNewExp with
+    a NULL SgConstructorInitializer (via get_constructor_args).  The built_in
+    args has a single expression (for *fb3).
+    
+    This is the signature of a copy constructor invoked via new.
+    
+    To normalize:  Make the SgNewExp's
+    get_constructor_args/SgConstructorIntializer point to the copy
+    constructor created by defaultFunctionGenerator.
+    
+    Thanks,
+    Brian
+ */
+
+/***
+ * KNOWN ISSUES (bwhite 6/21/06 as of rev 0.2)
+ *
+ * 1.  Need to introduce destructor calls where they would be
+ *     called implicitly.  Currently, we only introduce destructor
+ *     calls, i.e., this->~Foo(), within a destructor Bar, where
+ *     Foo is a base class of Bar.
+ *
+ * 2.  Need to fix constructor calls in which the constructor
+ *     may be inferred, but is not directly specified.  In cases
+ *     in which the constructor had not been defined (prior to
+ *     running this traversal) but was invoked, SAGE might not
+ *     have a method declaration to use at the call site.  In such
+ *     cases, the method dangling from a SgConstructorInitializer
+ *     might be NULL (e.g., if it represents a call to a default
+ *     constructor) or where we would expect a SgConstructorInitializer
+ *     we instead see a SgAssignInitializer (e.g., if it represents
+ *     a call to the copy constructor).  Please see the above
+ *     note on 'inferring which constructor is invoked' above.
+ *
+ *     NB:  We have introduced calls to all special methods
+ *          where they were implicit (except for destructor calls
+ *          as noted in (1) ).  These calls are different:
+ *          there _are_ explicit calls, but they do not directly
+ *          name the invoked special method.
+ *
+ * 3.  Where invocations of special methods are introduced, they
+ *     are not necessarily introduced in the proper order.
+ *     The procedure for introducing implicit methods is as follows
+ *     (please see generateImplicitInvocations).  For a given
+ *     special method C::m, we determine all superclasses C' of C.
+ *     We then determine all base classes C'' invoked within C::m.
+ *     Roughly, this means any method C''::m invoked from C::m.
+ *     Note however that if m were a copy constructor, then we would
+ *     also collect any class C'' whose _default_ constructor was
+ *     invoked.  Now, for all superclasses C' of C (visited in
+ *     order as returned from get_inheritances()), if C' is not in
+ *     C'', we generate a method call.  Presumably, methods are
+ *     supposed to be called according to some special order,
+ *     e.g., the order in which their base classes are listed in
+ *     the inheriting class' definition.
+ *
+ * 4.  There is no special provisioning for virtual base classes.
+ *     Should there be?  I think so.  For example,
+ *
+ *     class A { };
+ *     class B : public virtual A { };
+ *     class C : public virtual A, public virtual B { };
+ *
+ *     ...
+ * 
+ *     C c;   // invokes C's default constructor.
+ *
+ *     The invocation of C's default constructor should only invoke
+ *     A's default constructor once.  Currently, we will make the
+ *     following definitions:
+ *
+ *     C::C() : A(), B() { }
+ *     B::B() : A() { }
+ *     A::A() { }
+ *
+ *     Thus, when C is invoked, we call A::A() twice.  Instead,
+ *     we should have created:
+ *
+ *     C::C() : B() { }   // no call to A() here, since we get in 
+ *                        // from B()
+ *     B::B() : A() { }
+ *     A::A() { }
+ *
+ * 5.  We generate ambiguous code due to multiple heritance
+ *     of the same base class, which will not compile.  I do not
+ *     believe this is a problem because this generated code will
+ *     not be emitted by the unparser and should not confuse analyses.
+ *     The issues are summarized below in two e-mails:
+ *
+    From bwhite@csl.cornell.edu Wed Jun 21 13:14:26 2006
+    Date: Wed, 21 Jun 2006 11:00:51 -0400 (EDT)
+    From: Brian White <bwhite@csl.cornell.edu>
+    To: dan quinlan <dquinlan@llnl.gov>
+    Cc: collingbourne2@llnl.gov
+    Subject: ambiguities due to multiple inheritance
+    
+    
+    Hi Dan,
+    
+    I've run across an issue this morning in introducing implicit
+    constructor calls under multiple inheritance.  Briefly:  doing the obvious
+    thing (introducing a call for each direct base class) can produce
+    ambiguous code which some compilers will reject.  I believe this is _not_
+    a problem because we won't actually pass this code to the backend and I
+    can't see any reason why analyses should get confused.  Could you verify
+    my suspicion that the approach desribed below is OK, although it would
+    introduce bad code if we actually compiled it.
+    
+    [I would have called, but I thought it easier to communicate the example
+    over e-mail.]
+    
+    Here is my simple example:
+    
+    #include <iostream>
+    
+    class A {
+     public:
+      A() { std::cout << "A" << std::endl; };
+    };
+    class B: public A { };
+    class C: public A, public B {
+     public:
+      C() : A() {
+        std::cout << "C" << std::endl;
+      }
+    };
+    
+    int main()
+    {
+      C c;
+      return 0;
+    }
+    
+    The point is:  C inherits from A and B and B inherits from A.  [None of
+    this inheritance is virtual.]  Therefore, C has two copies of A (or two
+    routes to A if I had used virtual inheritance).  Therefore, the invocation
+    of A() in C() is ambigous, though I would have expected it to refer to C's
+    direct base class A.
+    
+    Notice two things:
+    
+    1.  I expect the invocation of C(), as in 'C c;', to invoke A's
+    constructor twice and C's once.
+    
+    2.  If C() had been defined as:
+    
+      C() {
+        std::cout << "C" << std::endl;
+      }
+    
+    i.e., where the call to A() is implicit, our translator would have
+    generated the above (first) definition of C() in which this implicit
+    invocation was made explicit.  [We would have also added an explicit call
+    to B().]
+    
+    This code does not compile on tux using g++ 3.3.3:
+    
+    [bwhite@tux83 default-function-translator]$ g++ -o example example.C
+    example.C:8: warning: direct base `A' inaccessible in `C' due to ambiguity
+    example.C: In constructor `C::C()':
+    example.C:10: error: `A' is an ambiguous base of `C'
+    example.C:10: error: type `class A' is not a direct base of `C'
+    
+    It does compile on my laptop using g++ 2.95.3:
+    
+    localbwhite@dhcp-bwhite:~> g++ -o example example.C ; ./example
+    example.C:13: warning: direct base `A' inaccessible in `C' due to
+    ambiguity
+    A
+    A
+    C
+    
+    Notice it invokes the constructors as I expected it should.
+    
+    The default-function translator marks nodes as either compiler-generated
+    or as transformation nodes:
+    
+    #define COMPILERGENERATED_FILE_INFO
+    Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+    //#define COMPILERGENERATED_FILE_INFO
+    Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
+    
+    The first define is useful for debugging (so that we can verify we are
+    doing the right thing), but the second define is how we will actually use
+    this translator.  Thus, any code we introduce will not be passed to the
+    backend compiler (if we use the second define).  Therefore, I don't have
+    to be concerned that this code which the translator will add to the AST:
+    
+      C() : A() {
+        std::cout << "C" << std::endl;
+      }
+    
+    may or may not compile.  Do you agree?
+    
+    Thanks,
+    Brian
+
+ // And Dan's response:
+    From dquinlan@llnl.gov Wed Jun 21 13:14:57 2006
+    Date: Wed, 21 Jun 2006 09:15:09 -0700
+    From: Daniel J. Quinlan <dquinlan@llnl.gov>
+    To: Brian White <bwhite@csl.cornell.edu>
+    Cc: collingbourne2@llnl.gov
+    Subject: Re: ambiguities due to multiple inheritance
+    
+    Hi Brian,
+        You can put them into the constructor body, as shown below,
+    but that is not a great solution.  Instead you might just go
+    ahead and place them into the constructor's preinitialization list
+    but mark them as compiler generated AND mark them as not to be
+    output in the generated code (this may not apply to expressions
+    currently, and in fact I have identified a ROSE bug when the
+    default constructor is specified (as below)).
+    
+        This might be a subject to discuss, I not sure that this
+    is as easy as I expected it to be if you plan to unparse and
+    compile the normalized code (for the reasons that you noted).
+    
+    Thanks,
+    Dan
+    
+    
+    #include <iostream>
+    
+    class A {
+      public:
+       A() { std::cout << "A" << std::endl; };
+    };
+    class B: public A {
+      public:
+       B() : A() {
+         std::cout << "B" << std::endl;
+       }
+    };
+    class B2: public A {
+      public:
+       B2() : A() {
+         std::cout << "B2" << std::endl;
+       }
+    };
+    class C: public B2, B, A {
+      public:
+           C() : B2(), B(), A() //but mark the added ones as compiler generated {
+         std::cout << "C" << std::endl;
+    
+      // This might be an alternative form of specification of the constructor calls
+      // But I don't like it much since it is misleading
+         B();
+         B2();
+         A();
+    
+      // C++ Trivial (assess to the base types)
+      // Access to A can be direct
+         A a_from_A;
+    
+      // Access to A requires qualification
+         B::A a_from_B;
+         B2::A a_from_B2;
+       }
+    };
+    
+    int main()
+    {
+       C c;
+       return 0;
+    }
+ *
+ */
+
+/** ChangeLog
+ *
+ *  rev 0.1    Chunhua Liao  June  9, 2006
+ *  - Generate default declarations and definitions for special
+ *    methods-- i.e., copy or default constructors, destructors, and
+ *    operator=.
+ *
+ *  rev 0.2    Brian White   June 21, 2006
+ *  - Added invocations of special methods where they would be
+ *    implicitly invoked (except for destructors invoked outside
+ *    of a destructor-- see KNOWN ISSUES (1) above).
+ *  - Changed Leo's visit routine so that it always creates
+ *    special method declarations and definitions if they do
+ *    not exist (as opposed to when they are needed because they
+ *    are invoked within the program).
+ */
+
+//-----------------------------------------------------------------------------
+#include <iostream>
+using namespace std;
+
+#include "defaultFunctionGenerator.h"
+
+// Describe how new nodes should be added to the AST.
+// Debugging purposes:  mark nodes as transformation nodes
+//                      (i.e., generateCompilerGeneratedNodes = false)
+//                      In this case they will be emitted by the unparser
+//                      and passed to the backend compiler.
+// "Real" runs:  mark nodes as compiler generated
+//               (i.e., generateCompilerGeneratedNodes = true)
+//               In this case they will _not_ be emitted by the unparser
+//               and will _not_ be passed to the backend compiler.
+//               Thus they only exist in the AST for analysis purposes,
+//               which is our intent.  There are a few reasons for doing this:
+//               1.  We don't want to confuse the user by introducing
+//                   code which isn't in the original program.
+//               2.  We introduce definitions a bit liberally.  e.g.,
+//                   we always provide a default constructor if one does
+//                   not exist.  This is not consistent with the C++
+//                   language definition, which states that a compiler
+//                   should only introduce a definition "if needed"
+//                   (i.e., invoked).
+//               3.  (and most importantly)  Some of the source code
+//                   we introduce will not compile.  In particular,
+//                   in the face of multiple inheritance of the same
+//                   base class, we may introduce ambiguous constructor
+//                   calls.  These should not confuse analysis, but may
+//                   upset the backend compiler.  Please seee the
+//                   comment above regarding "multiple inheritance"
+//                   under "known issues".
+
+// Set this to false to mark new nodes as transformation nodes,
+// rather than compiler-generated nodes.  The former will be unparsed,
+// the latter will not.
+static bool generateCompilerGeneratedNodes = false;
+
+#define COMPILERGENERATED_FILE_INFO \
+  ( generateCompilerGeneratedNodes ? Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode() : Sg_File_Info::generateDefaultFileInfoForTransformationNode() )
+
+/****************************
+ *  Utility Functions
+ ****************************/
+
+/** \brief  Return boolean indicating whether the node is
+ *          "compiler-generated."  i.e., generated by ROSE.
+ *  \param node  A Sage node.
+ *  \returns  Boolean indicating whether the node is compiler-generated.
+ *
+ *  As invoked within defaultFunctionGenerator, isCompilerGenerated
+ *  is intended to signify that a node was generated by 
+ *  defaultFunctionGenerator.  I do not suspect problems will arise
+ *  if it is passed a compiler-generated node which was generated
+ *  by some other traversal
+ */
+static bool isCompilerGenerated(SgNode *node)
+{
+  ROSE_ASSERT(node != NULL);
+  Sg_File_Info *fileInfo = node->get_file_info();
+  bool compilerGenerated = false;
+  if ( generateCompilerGeneratedNodes && fileInfo->isCompilerGenerated() )
+    compilerGenerated = true;
+  if ( !generateCompilerGeneratedNodes && fileInfo->isTransformation() )
+    compilerGenerated = true;
+
+  // If the node is a function/method declaration, consider it
+  // compiler-generated if its definition is compiler generated.
+  if ( !compilerGenerated ) {
+    SgFunctionDeclaration *functionDeclaration = 
+      isSgFunctionDeclaration(node);
+    if ( functionDeclaration != NULL ) {
+      SgFunctionDeclaration *definingDeclaration =
+	isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+      ROSE_ASSERT(definingDeclaration != NULL);
+      SgFunctionDefinition *functionDefinition = 
+	definingDeclaration->get_definition();
+      compilerGenerated = ( functionDefinition == NULL ? true :
+			    isCompilerGenerated(functionDefinition) );
+    }
+  }
+  return compilerGenerated;
+}
+
+/** \brief Strip the "const" keyword from a string.
+ *  \param name  A string (intending to represent a formal parameter
+ *               type).
+ *  \returns  A string holding name stripped of the "const" prefix.
+ *
+ *  This was copied from 
+ *  .../ROSE/src/midend/astUtil/astInterface/AstInterface.C
+ *
+ *  To do:  move this to a generally-accessible utilities file
+ *          or make it accessible from AstInterface (by adding
+ *          its declaration to AstInterface.h).
+ */
+static string StripParameterType( const string& name)
+{
+  char *const_start = strstr( name.c_str(), "const");
+  string r = (const_start == 0)? name : string(const_start + 5);
+  int end = r.size()-1;
+  if (r[end] == '&') {
+       r[end] = ' ';
+  }
+  string result = "";
+  for (unsigned int i = 0; i < r.size(); ++i) {
+    if (r[i] != ' ')
+      result.push_back(r[i]);
+  }
+  return result; 
+} 
+
+/** \brief Return a type's name and size.
+ *  \param t  A Sage type.
+ *  \param tname  On output, holds the string name of the type.
+ *  \param stripname  On output, holds the string name of the type,
+ *                    stripped of any "const" prefix.
+ *  \param size  On output, holds the size?  I don't know what
+ *               this size corresponds to.  Certainly not the size
+ *               of the type (which needn't be a word) or string.
+ *
+ *  This was copied from 
+ *  .../ROSE/src/midend/astUtil/astInterface/AstInterface.C
+ *
+ *  To do:  move this to a generally-accessible utilities file
+ *          or make it accessible from AstInterface (by adding
+ *          its declaration to AstInterface.h).
+ */
+void GetTypeInfo(SgType *t, string *tname, string* stripname, int* size = 0)
+{
+  string r1 = get_type_name(t);
+  string result = "";
+  for (unsigned int i = 0; i < r1.size(); ++i) {
+    if (r1[i] != ' ')
+      result.push_back(r1[i]);
+  }
+  if (tname != 0)
+    *tname = result;
+  if (stripname != 0)
+    *stripname = StripParameterType(result);
+  if (size != 0)
+    *size = 4;
+}
+
+/** \brief Returns boolean indicating whether the invoked
+ *         function has name funcName.
+ *  \param  functionCallExp A SgFunctionCallExp representing
+ *          an invoked function.
+ *  \param  funcName  A string representing the name of a function.
+ *  \returns  Boolean indicating whether the name of the invoked
+ *            function is funcName.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/MemSage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isFunc(SgFunctionCallExp *functionCallExp,
+		   const std::string& funcName)
+{
+  if( functionCallExp == NULL) return false;
+
+  SgExpression *expression = functionCallExp->get_function();
+  ROSE_ASSERT(expression != NULL);
+
+  SgFunctionRefExp *functionRefExp = 
+    isSgFunctionRefExp(expression);
+
+  if (functionRefExp == NULL) return false;
+
+  // Found a standard function reference.  
+  SgFunctionDeclaration *functionDeclaration = 
+    functionRefExp->get_symbol_i()->get_declaration(); 
+  ROSE_ASSERT(functionDeclaration != NULL);
+  
+  SgName name = functionDeclaration->get_name();
+  return ( funcName == name.str() );
+}
+
+/** \brief Returns boolean indicating whether the invoked
+ *         function is malloc.
+ *  \param  functionCallExp A SgFunctionCallExp representing
+ *          an invoked function.
+ *  \returns  Boolean indicating whether the invoked funciton is malloc.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/MemSage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isMalloc(SgFunctionCallExp *functionCallExp)
+{
+  return isFunc(functionCallExp, "malloc");
+}
+
+/** \brief Strip off any leading SgCastExps or SgAssignInitializers
+ *         in the tree rooted at node.
+ *  \param node  A Sage node.
+ *  \returns  node stripped of any leading SgCastExps or
+ *                 SgAssignInitializers.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static
+SgNode *
+lookThroughCastExpAndAssignInitializer(SgNode *node)
+{
+  ROSE_ASSERT(node != NULL);
+
+  SgNode *ret = NULL;
+
+  switch(node->variantT()) {
+
+  case V_SgCastExp:
+    {
+      SgCastExp *castExp = isSgCastExp(node);
+      ROSE_ASSERT(castExp != NULL);
+
+      // Do not look past the cast if the operand is a malloc.
+      // In that case, we include the cast as part of the MemRefExpr.
+
+      SgNode *operand = castExp->get_operand();
+      SgFunctionCallExp *functionCallExp = isSgFunctionCallExp(operand);
+
+      // This cast is attached to a malloc.
+      if ( ( functionCallExp != NULL ) && ( isMalloc(functionCallExp) ) ) {
+	ret = node;
+      } else {
+	ret = lookThroughCastExpAndAssignInitializer(operand);
+      }
+
+      break;
+    }
+
+  case V_SgAssignInitializer:
+    {
+      SgAssignInitializer *assignInitializer = isSgAssignInitializer(node);
+      ROSE_ASSERT(assignInitializer != NULL);
+
+      ret = lookThroughCastExpAndAssignInitializer(assignInitializer->get_operand_i());
+
+      break;
+    }
+
+  default:
+    {
+      ret = node;
+      break;
+    }
+  }
+  return ret;
+}
+
+/** \brief Return the declaration of the class with a given type.
+ *  \param type  a SgNode representing a type.
+ *  \return a SgClassDeclaration that is the class declaration
+ *          for the given type, or NULL if type does not
+ *          correspond to a class.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static SgClassDeclaration *
+getClassDeclaration(SgType *type)
+{
+  SgClassDeclaration *classDeclaration = NULL;
+
+  if ( type == NULL ) 
+    return NULL;
+  
+  switch(type->variantT()) {
+    
+  case V_SgTypedefType:
+    {
+      SgTypedefType *typedefType = isSgTypedefType(type);
+      ROSE_ASSERT(typedefType != NULL);
+      
+      SgDeclarationStatement *declStmt = typedefType->get_declaration();
+      ROSE_ASSERT(declStmt != NULL);
+      
+      SgTypedefDeclaration *typedefDeclaration = isSgTypedefDeclaration(declStmt);
+      ROSE_ASSERT(typedefDeclaration != NULL);
+      
+      SgType *baseType = typedefDeclaration->get_base_type();
+      ROSE_ASSERT(baseType != NULL);
+
+      if ( isSgTypedefType(baseType) || isSgReferenceType(baseType) || isSgModifierType(baseType) ) {
+	// Recursive case:  base type of typedef is also a typedef type or a reference type.
+	classDeclaration = getClassDeclaration(baseType);
+      } else if ( isSgNamedType(baseType) ) {
+
+	SgNamedType *namedType = isSgNamedType(baseType);
+
+	SgDeclarationStatement *innerDecl = 
+	  namedType->get_declaration();
+	ROSE_ASSERT(innerDecl != NULL);
+	
+	classDeclaration = isSgClassDeclaration(innerDecl);
+      }
+
+      break;
+    }
+  case V_SgClassType:
+    {
+      SgClassType *classType = isSgClassType(type);
+      ROSE_ASSERT(classType != NULL);
+      
+      SgDeclarationStatement *declStmt = classType->get_declaration();
+      ROSE_ASSERT(declStmt != NULL);
+      
+      classDeclaration = isSgClassDeclaration(declStmt);
+      ROSE_ASSERT(classDeclaration != NULL);
+      
+      break;
+    }
+  case V_SgReferenceType:
+    {
+      SgReferenceType *refType = isSgReferenceType(type);
+      ROSE_ASSERT(refType != NULL);
+
+      SgType *baseType = refType->get_base_type();
+      ROSE_ASSERT(baseType != NULL);
+
+      classDeclaration = getClassDeclaration(baseType);
+      break;
+    }
+  case V_SgModifierType:
+    {
+      SgModifierType *modType = isSgModifierType(type);
+      ROSE_ASSERT(modType != NULL);
+
+      SgType *baseType = modType->get_base_type();
+      ROSE_ASSERT(baseType != NULL);
+
+      classDeclaration = getClassDeclaration(baseType);
+      break;
+    }
+  default:
+    {
+      break;
+    }
+  }
+
+  return classDeclaration;
+}
+
+/** \brief Return the declaration of the class with a given method.
+ *  \param methodDeclaration  A SgMemberFunctionDeclaration.
+ *  \return a SgClassDeclaration that is the class declaration
+ *          definining the given method declaration.
+ */
+static SgClassDeclaration *
+getClassDeclaration(SgMemberFunctionDeclaration *methodDeclaration)
+{
+  SgClassDefinition *classDefinition = 
+    isSgClassDefinition(methodDeclaration->get_scope());
+  return classDefinition->get_declaration();
+}
+
+/** \brief  Return the SgFunctionDeclaration invoked by a function call.
+ *  \param  functionCall  A SgFunctionCallExp representing a function
+ *                        call site.
+ *  \returns  The SgFunctionDeclaration representing the function or
+ *            method invoked at the call site.
+ *
+ *  This function does not perform any analysis, therefore it can not
+ *  determine which function or method is invoked through a pointer.
+ *  If functionCall is a pointer dereference expression, this function
+ *  will abort.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static SgFunctionDeclaration * 
+getFunctionDeclaration(SgFunctionCallExp *functionCall) 
+{ 
+  SgFunctionDeclaration *funcDec = NULL; 
+
+  SgExpression *expression = functionCall->get_function();
+  ROSE_ASSERT(expression != NULL);
+
+  switch(expression->variantT()) {
+  case V_SgMemberFunctionRefExp:
+    {
+      SgMemberFunctionRefExp *memberFunctionRefExp =
+	isSgMemberFunctionRefExp(expression);
+      ROSE_ASSERT(memberFunctionRefExp != NULL);
+
+      funcDec = memberFunctionRefExp->get_symbol_i()->get_declaration(); 
+
+      ROSE_ASSERT(funcDec != NULL);
+
+      break;
+    }
+  case V_SgDotExp:
+    {
+      SgDotExp *dotExp = isSgDotExp(expression);
+      ROSE_ASSERT(dotExp != NULL);
+
+      SgMemberFunctionRefExp *memberFunctionRefExp = 
+        isSgMemberFunctionRefExp(dotExp->get_rhs_operand()); 
+      funcDec = memberFunctionRefExp->get_symbol_i()->get_declaration(); 
+
+      ROSE_ASSERT(funcDec != NULL);
+
+      break;
+    }
+  case V_SgArrowExp:
+    {
+      SgArrowExp *arrowExp = isSgArrowExp(expression);
+      ROSE_ASSERT(arrowExp != NULL);
+
+      SgMemberFunctionRefExp *memberFunctionRefExp = 
+        isSgMemberFunctionRefExp(arrowExp->get_rhs_operand()); 
+      funcDec = memberFunctionRefExp->get_symbol_i()->get_declaration(); 
+
+      ROSE_ASSERT(funcDec != NULL);
+
+      break;
+    }
+  case V_SgFunctionRefExp:
+    {
+      SgFunctionRefExp *functionRefExp = 
+	isSgFunctionRefExp(expression);
+      ROSE_ASSERT(functionRefExp != NULL);
+
+      // found a standard function reference  
+      funcDec = functionRefExp->get_symbol_i()->get_declaration(); 
+
+      ROSE_ASSERT(funcDec != NULL);
+
+      break;
+    }
+  case V_SgPointerDerefExp:
+    {
+      ROSE_ABORT();
+      break;
+    }
+  default:
+    {
+      ROSE_ABORT();
+    }
+  }
+
+  return funcDec; 
+} 
+
+/** \brief Returns true if the method is a constructor.
+ *  \param memberFunctionDeclaration  A method declaration.
+ *  \returns  Boolean indicating whether methodFunctionDeclaration is
+ *            a constructor.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isConstructor(SgMemberFunctionDeclaration *memberFunctionDeclaration)
+{
+  ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+  SgSpecialFunctionModifier &specialFunctionModifier =
+    memberFunctionDeclaration->get_specialFunctionModifier();
+
+  // Determine whether method is a constructor.
+  return ( specialFunctionModifier.isConstructor() );
+}
+
+/** \brief Returns true if the method is a default constructor.
+ *  \param memberFunctionDeclaration  A method declaration.
+ *  \returns  Boolean indicating whether methodFunctionDeclaration is
+ *            a default constructor.
+ *
+ *  A default constructor is one which may be invoked without an argument,
+ *  i.e., one which has no formals or all of whose formals have default
+ *  values.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isDefaultConstructor(SgMemberFunctionDeclaration *memberFunctionDeclaration)
+{
+  ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+  if ( !isConstructor(memberFunctionDeclaration) )
+    return false;
+
+  // Determine number of non-default formals. If none
+  // then this is the default constructor.
+  SgInitializedNamePtrList& params = memberFunctionDeclaration->get_args();
+  SgInitializedNamePtrList::iterator p = params.begin();
+
+  int numNonDefaultParams = 0;
+  for (; p != params.end(); ++p) {
+    if ((*p)->get_initializer() == 0) // non-default parameter
+      ++numNonDefaultParams;
+  }
+
+  return ( numNonDefaultParams == 0 );
+}
+
+/** \brief  Strip off all leading references, pointers, and modifiers
+ *          from a type.
+ *  \param  type  A Sage type.
+ *  \returns  type stripped of any leading references, pointers, or
+ *            modifiers.
+ */
+static SgType *getBaseType(SgType *type)
+{
+  if ( type == NULL )
+    return NULL;
+
+  SgType *ret = type;
+
+  switch(type->variantT()) {
+  case V_SgReferenceType:
+    {
+      SgReferenceType *referenceType =
+	isSgReferenceType(type);
+      ROSE_ASSERT(referenceType != NULL);
+      
+      ret = getBaseType(referenceType->get_base_type());
+      break;
+    }
+  case V_SgPointerType:
+    {
+      SgPointerType *pointerType =
+	isSgPointerType(type);
+      ROSE_ASSERT(pointerType != NULL);
+      
+      ret = getBaseType(pointerType->get_base_type());
+      break;
+    }
+  case V_SgModifierType:
+    {
+      SgModifierType *modifierType =
+	isSgModifierType(type);
+      ROSE_ASSERT(modifierType != NULL);
+      
+      ret = getBaseType(modifierType->get_base_type());
+      break;
+    }
+  default:
+    {
+      break;
+    }
+  }
+
+  return ret;
+}
+
+/** \brief Returns true if the method is a copy constructor.
+ *  \param memberFunctionDeclaration  A method declaration.
+ *  \returns  Boolean indicating whether methodFunctionDeclaration is
+ *            a copy constructor.
+ *
+ *  A copy constructor is one which may be invoked without an argument,
+ *  i.e., one which has no formals or all of whose formals have default
+ *  values.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isCopyConstructor(SgMemberFunctionDeclaration *memberFunctionDeclaration)
+{
+  ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+  if ( !isConstructor(memberFunctionDeclaration) )
+    return false;
+
+  // Determine the number of non-default formals. If there is only
+  // one non-default formal and it is const or non-const reference
+  // to an object of the method's class, this is a copy constructor.
+  SgInitializedNamePtrList& params = memberFunctionDeclaration->get_args();
+  SgInitializedNamePtrList::iterator p = params.begin();
+
+  int numNonDefaultParams = 0;
+  bool firstParam = true;
+  for (; p != params.end(); ++p) {
+    // The first parameter must be a reference to an object.
+    if ( firstParam ) {
+      SgType *type = (*p)->get_type();
+      ROSE_ASSERT(type != NULL);
+
+      SgReferenceType *referenceType = 
+	isSgReferenceType(type);
+      // Make certain this is a reference.
+      if ( referenceType == NULL )
+	return false;
+
+      SgClassType *classType =
+	isSgClassType(getBaseType(referenceType));
+      if ( classType == NULL )
+	return false;
+
+      // Make certain the formal is an object of the
+      // method's class.
+      SgClassDeclaration *classDeclaration =
+	getClassDeclaration(classType);
+
+      if ( classDeclaration == NULL ) 
+	return false;
+
+      // Get the class declaration associated with this method.
+      SgClassDefinition *methodClassDefinition =
+	memberFunctionDeclaration->get_class_scope();
+      ROSE_ASSERT(methodClassDefinition != NULL);
+
+      SgClassDeclaration *methodClassDeclaration =
+	methodClassDefinition->get_declaration();
+
+      if ( classDeclaration->get_type()->get_name() != 
+	   methodClassDeclaration->get_type()->get_name() )
+	return false;
+
+      if ((*p)->get_initializer() != 0) // default parameter
+	return false;
+      else
+	++numNonDefaultParams;
+
+      firstParam = false;
+    }
+  }
+
+  return ( numNonDefaultParams == 1 );
+}
+
+/** \brief Returns true if the method is a destructor.
+ *  \param memberFunctionDeclaration  A method declaration.
+ *  \returns  Boolean indicating whether methodFunctionDeclaration is
+ *            a destructor.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isDestructor(SgMemberFunctionDeclaration *memberFunctionDeclaration)
+{
+  ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+  SgSpecialFunctionModifier &specialFunctionModifier =
+    memberFunctionDeclaration->get_specialFunctionModifier();
+  
+  // Determine whether method is a destructor.
+  return specialFunctionModifier.isDestructor();
+}
+
+/**
+ *  \brief Returns true if the second operand matches the first according
+ *         to the rules for type equivalency in the context of the
+ *         copy assignment operator, as defined by s12.8.9 of the C++ Standard.
+ */
+static bool isCopyAssignmentTypeEquivalent(SgClassType *classType, SgType *typeToMatch)
+   {
+     while (SgTypedefType *typedefType = isSgTypedefType(typeToMatch))
+	{
+	  typeToMatch = typedefType->get_base_type();
+	}
+
+     if (SgClassType *classTypeToMatch = isSgClassType(typeToMatch))
+	{
+	  return classType->get_declaration() == classTypeToMatch->get_declaration();
+	}
+     else if (SgReferenceType *refType = isSgReferenceType(typeToMatch))
+	{
+	  typeToMatch = refType->get_base_type();
+	  
+	  while (SgTypedefType *typedefType = isSgTypedefType(typeToMatch))
+	     {
+	       typeToMatch = typedefType->get_base_type();
+	     }
+
+	  if (SgClassType *classTypeToMatch = isSgClassType(typeToMatch))
+	     {
+	       return classType->get_declaration() == classTypeToMatch->get_declaration();
+	     }
+	  else if (SgModifierType *modType = isSgModifierType(typeToMatch))
+	     {
+	       typeToMatch = modType->get_base_type();
+
+	       while (SgTypedefType *typedefType = isSgTypedefType(typeToMatch))
+		  {
+		    typeToMatch = typedefType->get_base_type();
+		  }
+
+	       if (SgClassType *classTypeToMatch = isSgClassType(typeToMatch))
+		  {
+		    return classType->get_declaration() == classTypeToMatch->get_declaration();
+		  }
+	     }
+	}
+     return false;
+   }
+
+/** \brief Returns true if the method is operator=.
+ *  \param memberFunctionDeclaration  A method declaration.
+ *  \returns  Boolean indicating whether methodFunctionDeclaration is
+ *            operator=, by which is meant the implicitly-declared or
+ *            user-declared copy assignment operator as defined by
+ *            sections 12.8.10 and 12.8.9 respectively of the C++ Standard.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+static bool isOperatorEquals(SgMemberFunctionDeclaration *memberFunctionDeclaration)
+{
+  ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+  SgSpecialFunctionModifier &specialFunctionModifier =
+    memberFunctionDeclaration->get_specialFunctionModifier();
+
+  SgName functionName = memberFunctionDeclaration->get_name();
+
+  if (! ( specialFunctionModifier.isOperator() &&
+	   functionName == SgName("operator=") ) )
+     {
+       return false;
+     }
+
+  SgFunctionType *memberFnType = memberFunctionDeclaration->get_type();
+  if (memberFnType->get_arguments().size() != 1) // I can't imagine when this would be false
+     {
+       return false;
+     }
+
+  SgClassDefinition *desiredClass = memberFunctionDeclaration->get_class_scope();
+  SgClassType *desiredClassType = SgClassType::createType(desiredClass->get_declaration());
+
+  return isCopyAssignmentTypeEquivalent(desiredClassType, memberFnType->get_arguments().front());
+}
+
+/** \brief  Converts a SgMemberFunctionDeclaration to a 
+ *          defaultEnumFunctionType.
+ *  \param  func  A SgMemberFunctionDeclaration representing a method
+ *                declaration.
+ *  \returns  A defaultEnumFunctionType corresponding to the method.
+ */
+static defaultEnumFunctionType declarationToEnumType(SgMemberFunctionDeclaration *func)
+{
+  defaultEnumFunctionType enumFunctionType = e_unknown;
+
+  SgSpecialFunctionModifier sfMod = func->get_specialFunctionModifier();
+
+  if ( isDefaultConstructor(func) ) {
+    enumFunctionType = e_constructor;
+  } else if ( isCopyConstructor(func) ) {
+    enumFunctionType = e_copy_constructor;
+  } else if ( sfMod.isDestructor() ) {
+    enumFunctionType = e_destructor;
+  } else if ( isOperatorEquals(func) ) {
+    enumFunctionType = e_assignment_operator;
+  }
+
+  return enumFunctionType;
+}
+
+/** \brief   Returns a method declaration within a class of the same
+ *           type as a specified method.
+ *  \param   memberFunctionDeclaration  A method declaration.
+ *  \param   classDefinition  a SgNode representing a class definition.
+ *  \returns A SgMemberFunctionDeclaration from classDefinition that
+ *           has the "same type" as method.
+ *
+ *  Note:  By "same type" we mean the following:
+ *  If method is a default constructor, return the default constructor defined
+ *  within classDefinition, else NULL.
+ *  If method is a copy constructor, return the copy constructor defined
+ *  within classDefinition, else NULL.
+ *  If method is a destructor, return the destructor defined
+ *  within classDefinition, else NULL.
+ *  If method is operator=, return the operator= defined
+ *  within classDefinition, else NULL.
+ *  Otherwise, if method has type signature s and name n, return the
+ *  method defined within classDefinition having type signature s and name n.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+SgMemberFunctionDeclaration *
+lookupMethodInClass(SgMemberFunctionDeclaration *method,
+		    SgClassDefinition *classDefinition)
+{
+  ROSE_ASSERT(method != NULL);
+  ROSE_ASSERT(classDefinition != NULL);
+
+  SgMemberFunctionDeclaration *matchingMethod = NULL;
+
+  bool lookingForDefaultConstructor = isDefaultConstructor(method);
+  bool lookingForCopyConstructor = isCopyConstructor(method);
+  bool lookingForDestructor = isDestructor(method);
+  bool lookingForOperatorEquals = isOperatorEquals(method);
+
+  SgDeclarationStatementPtrList &members = classDefinition->get_members(); 
+  for (SgDeclarationStatementPtrList::iterator it = members.begin(); 
+       it != members.end(); ++it) { 
+	
+    SgDeclarationStatement *declarationStatement = *it; 
+    ROSE_ASSERT(declarationStatement != NULL);
+    
+    switch(declarationStatement->variantT()) {
+      
+    case V_SgMemberFunctionDeclaration:
+    case V_SgTemplateInstantiationMemberFunctionDecl:
+      {
+	SgMemberFunctionDeclaration *functionDeclaration =  
+	  isSgMemberFunctionDeclaration(declarationStatement); 
+	ROSE_ASSERT(functionDeclaration != NULL);
+	
+	if ( lookingForDefaultConstructor ) {
+	  if ( isDefaultConstructor(functionDeclaration) ) {
+	    return functionDeclaration;
+	  }
+	} else if ( lookingForCopyConstructor ) {
+	  if ( isCopyConstructor(functionDeclaration) ) {
+	    return functionDeclaration;
+	  }
+	} else if ( lookingForDestructor ) {
+	  if ( isDestructor(functionDeclaration) ) {
+	    return functionDeclaration;
+	  }
+	} else if ( lookingForOperatorEquals ) {
+	  if ( isOperatorEquals(functionDeclaration) ) {
+	    return functionDeclaration;
+	  }
+	} else {
+	  // This is not one of the special methods.  We need
+	  // to compare the types and names of the two methods.
+	  // We can do this easily be comparing mangled names.
+	  if ( method->get_mangled_name() == functionDeclaration->get_mangled_name() ) {
+	    return functionDeclaration;
+	  }
+	  
+	}
+
+	break;
+      }
+
+    default:
+      {
+	break;
+      }
+    }
+  }
+
+  return matchingMethod;
+}
+
+/** \brief   Returns a default constructor method declaration within a class 
+ *           if it exists.
+ *  \param   classDefinition  a SgNode representing a class definition.
+ *  \returns A SgMemberFunctionDeclaration from classDefinition that
+ *           representing a default constructor, or NULL if it is not
+ *           defined.
+ *
+ *  This was copied from 
+ *  .../UseOA-ROSE-trunk/OAWraps/Sage2OA.C
+ *  which isn't yet part of the ROSE distribution.
+ *
+ *  To do:  move this to a generally-accessible utilities file.
+ */
+SgMemberFunctionDeclaration *
+lookupDefaultConstructorInClass(SgClassDefinition *classDefinition)
+{
+  ROSE_ASSERT(classDefinition != NULL);
+
+  SgDeclarationStatementPtrList &members = classDefinition->get_members(); 
+  for (SgDeclarationStatementPtrList::iterator it = members.begin(); 
+       it != members.end(); ++it) { 
+	
+    SgDeclarationStatement *declarationStatement = *it; 
+    ROSE_ASSERT(declarationStatement != NULL);
+    
+    switch(declarationStatement->variantT()) {
+      
+    case V_SgMemberFunctionDeclaration:
+    case V_SgTemplateInstantiationMemberFunctionDecl:
+      {
+	SgMemberFunctionDeclaration *functionDeclaration =  
+	  isSgMemberFunctionDeclaration(declarationStatement); 
+	ROSE_ASSERT(functionDeclaration != NULL);
+	
+	if ( isDefaultConstructor(functionDeclaration) ) {
+	  return functionDeclaration;
+	}
+
+	break;
+      }
+
+    default:
+      {
+	break;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/** \brief  Store in invokedClasses any class whose constructor is
+ *          invoked within subtree.
+ *  \param  subtree  A SgNode representing an AST subtree.
+ *  \param  invokedClasses  A set of SgClassDeclarations
+ *                          representing classes of invoked methods.  
+ *                          On output, any classes whose constructors 
+ *                          were invoked within subtree are 
+ *                          union'ed with invokedClasses.
+ */
+static void findClassesInvokedViaConstructors(SgNode *subtree, std::set<SgClassDeclaration *> &invokedClasses)
+{
+  // Find any initialized names within subtree.
+
+  // Constructor invocations on the base class dangle off of initialized names.
+  Rose_STL_Container<SgNode *> nodes = NodeQuery::querySubTree(subtree, V_SgInitializedName);
+
+  for (Rose_STL_Container<SgNode *>::iterator it = nodes.begin();
+       it != nodes.end(); ++it ) {
+
+    SgNode *n = *it;
+    ROSE_ASSERT(n != NULL);
+
+    SgInitializedName *initName = isSgInitializedName(n);
+    ROSE_ASSERT(initName != NULL);
+
+    SgType *initType = initName->get_type();
+    ROSE_ASSERT(initType != NULL);
+
+    // If the type of the initialized name is not a class,
+    // then obviously it was not initialized via a 
+    // constructor.
+    SgClassType *classType = isSgClassType(initType);
+    if ( classType == NULL ) 
+      continue;
+
+    SgClassDeclaration *classDeclaration = 
+      isSgClassDeclaration(classType->get_declaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+
+    SgInitializer *initializer = initName->get_initializer();
+    ROSE_ASSERT(initializer != NULL);
+
+    switch(initializer->variantT()) {
+
+    case V_SgConstructorInitializer:
+      {
+	SgConstructorInitializer *ctorInitializer =
+	  isSgConstructorInitializer(initializer);
+	ROSE_ASSERT(ctorInitializer != NULL);
+	
+	// This method will be NULL if the invoked method
+	// is a compiler-generated default constructor,
+	// so don't even both looking at it.
+	// The point is, an constructor has been invoked on this
+	// class.
+
+	//	SgMemberFunctionDeclaration *invokedMethodDeclaration =
+	//	  ctorInitializer->get_declaration();
+
+	invokedClasses.insert(classDeclaration);
+	
+	break;
+      }
+    case V_SgAssignInitializer:
+      {
+	SgAssignInitializer *assignInitializer =
+	  isSgAssignInitializer(initializer);
+	ROSE_ASSERT(assignInitializer != NULL);
+
+	// Invocation on compiler-generated copy constructors
+	// are represented by: 
+	// SgInitializedName -> SgAssignInitializer -> SgVarRef.
+
+	// Notice that if the type of the SgInitiliazedName
+	// is a class type, we can not do a simple assign.
+	// Instead this assign is standing in for a copy constructor.
+
+	invokedClasses.insert(classDeclaration);
+
+	break;
+      }
+    default:
+      {
+	break;
+      }
+    }
+  }
+  
+}
+
+/** \brief  Return a 'this' expression relevant to the specified class.
+ *  \param  classDecl   A SgClassDeclaration.
+ *  \returns  A SgThisExp appropriate for classDecl.  User is
+ *            responsible for freeing the memory.
+ */
+static SgThisExp *getThisExp(SgClassDeclaration *classDecl)
+{
+#if 0
+	SgShallowCopy shallowCopy;
+	SgTreeCopy treeCopy;
+	SgClassDeclaration *classDeclaration = 
+	  isSgClassDeclaration(classDecl->copy(treeCopy));
+  SgClassSymbol *classSymbol = new SgClassSymbol(classDeclaration);
+#endif
+	SgClassSymbol *classSymbol = new SgClassSymbol(classDecl);
+  SgThisExp *thisExp = new SgThisExp(COMPILERGENERATED_FILE_INFO,
+				     classSymbol,
+				     0);
+  return thisExp;
+}
+
+/** \brief Return the receiver (i.e., lhs) of a method invocation.
+ *         Else return NULL.
+ *  \param  functionCall  A function or method invocation.
+ *  \returns  A SgNode representing the lhs of the method invocation
+ *            or NULL if this is not a non-static method invocation.
+ */
+static SgNode *
+getMethodInvocationLhs(SgFunctionCallExp *functionCall)
+{
+  ROSE_ASSERT(functionCall != NULL);
+
+  SgNode *lhs = NULL;
+
+  SgExpression *expression = functionCall->get_function();
+  ROSE_ASSERT(expression != NULL);
+
+// bool isMethod = false;
+
+  switch(expression->variantT()) {
+  case V_SgDotExp:
+    {
+      SgDotExp *dotExp = isSgDotExp(expression);
+      ROSE_ASSERT(dotExp != NULL);
+	  
+      lhs = dotExp->get_lhs_operand();
+      ROSE_ASSERT(lhs != NULL);
+	  
+      SgPointerDerefExp *pointerDerefExp =
+	isSgPointerDerefExp(lhs);
+	  
+      if ( pointerDerefExp != NULL ) {
+	
+	// This is (*b).foo() == b->foo();
+	lhs = pointerDerefExp->get_operand_i();
+	
+      } 
+
+      break;
+    }
+  case V_SgArrowExp:
+    {
+      SgArrowExp *arrowExp = isSgArrowExp(expression);
+      ROSE_ASSERT(arrowExp != NULL);
+
+      lhs = arrowExp->get_lhs_operand();
+      ROSE_ASSERT(lhs != NULL);
+
+      break;
+    }
+  case V_SgMemberFunctionRefExp:
+  case V_SgFunctionRefExp:
+  case V_SgPointerDerefExp:
+    {
+      break;
+    }
+  default:
+    {
+      cerr << "Was not expecting an " << expression->sage_class_name() << endl;
+      cerr << "in a function call." << endl;
+      ROSE_ABORT();
+    }
+  }
+
+  return lhs;
+}
+
+/** \brief  Return a variable reference expression for the
+ *          formalNum^th formal of the given function.
+ *  \param  functionDefinition  A SgFunctionDefinition representing
+ *          a function definition.
+ *  \param  formalNum  An integer representing the position of the
+ *          desired formal.  The first formal is specified by
+ *          formalNum = 0.
+ *  \returns  A SgVarRefExp for the specified formal of the function.
+ *            User is responsible for freeing the memory.
+ */
+static SgVarRefExp *
+getVarRefForFormal(SgFunctionDefinition *functionDefinition, 
+		   int formalNum)
+{
+  SgFunctionDeclaration *functionDeclaration = 
+    functionDefinition->get_declaration();
+  ROSE_ASSERT(functionDeclaration != NULL);
+
+  SgFunctionParameterList *parameterList = 
+    functionDeclaration->get_parameterList(); 
+  ROSE_ASSERT(parameterList != NULL);
+
+  SgInitializedName *specifiedInitName = NULL;
+  // Iterate over the formal parameters as represented by
+  // SgInitializedNames.  
+  int num = 0;
+  const SgInitializedNamePtrList &formalParams = parameterList->get_args(); 
+  for(SgInitializedNamePtrList::const_iterator formalIt = formalParams.begin();
+      formalIt != formalParams.end(); ++formalIt) { 
+      
+    SgInitializedName* formalParam = *formalIt;  
+    ROSE_ASSERT(formalParam != NULL); 
+      
+    if ( num == formalNum )
+      specifiedInitName = formalParam;
+
+    ++num;
+  }
+
+  ROSE_ASSERT(specifiedInitName != NULL);
+
+  SgVariableSymbol *symbol = new SgVariableSymbol(specifiedInitName);
+  SgVarRefExp *varRef = new SgVarRefExp(COMPILERGENERATED_FILE_INFO,
+					symbol);
+
+  return varRef;
+}
+
+/** \brief  Store in invokedClasses any class whose destructor is
+ *          explicitly invoked as this->~Foo within subtree,
+ *          where Foo is a base class of this' class.
+ *  \param  subtree  A SgNode representing an AST subtree.
+ *  \param  invokedClasses  A set of SgClassDeclarations
+ *                          representing classes of invoked methods.  
+ *                          On output, any classes whose destructors
+ *                          were invoked within subtree are 
+ *                          union'ed with invokedClasses.
+ *
+ *  NB:  This method does not seek or find destructors invoked
+ *       via delete.
+ */
+static void 
+findClassesInvokedViaDestructors(SgNode *subtree,
+				 SgThisExp *thisExp,
+				 std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
+{
+  // Find any function callsites within subtree.
+  Rose_STL_Container<SgNode *> nodes = NodeQuery::querySubTree(subtree, V_SgFunctionCallExp);
+
+  // Iterate over the callsites and append the method declarations
+  // for any invoked constructors to invokedMethods.
+  for (Rose_STL_Container<SgNode *>::iterator it = nodes.begin();
+       it != nodes.end(); ++it ) {
+
+    SgNode *n = *it;
+    ROSE_ASSERT(n != NULL);
+
+    SgFunctionCallExp *functionCallExp = isSgFunctionCallExp(n);
+    ROSE_ASSERT(functionCallExp != NULL);
+    
+    SgFunctionDeclaration *invokedFuncDeclaration =
+      getFunctionDeclaration(functionCallExp);
+    if ( invokedFuncDeclaration == NULL )
+      continue;
+
+    SgMemberFunctionDeclaration *invokedMethodDeclaration =
+      isSgMemberFunctionDeclaration(invokedFuncDeclaration);
+    if ( invokedMethodDeclaration == NULL )
+      continue;
+
+    // Is this an explicit invocation of a destructor?
+    // i.e., not via delete?
+    if ( !isDestructor(invokedMethodDeclaration) )
+      continue;
+
+    // Is this destructor invoked on this?
+    SgNode *receiver = getMethodInvocationLhs(functionCallExp);
+    if ( isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
+      SgClassDefinition *classDefinition = 
+	isSgClassDefinition(invokedMethodDeclaration->get_scope());
+      ROSE_ASSERT(classDefinition != NULL);
+    
+      SgClassDeclaration *classDeclaration = 
+	isSgClassDeclaration(classDefinition->get_declaration());
+
+      explicitlyInvokedClasses.insert(classDeclaration);
+    }
+  }
+}
+
+/** \brief  Store in invokedClasses any class whose operator= is
+ *          invoked within subtree, as this->Foo::operator=(arg),
+ *          where Foo is a base class of this' class.
+ *  \param  subtree  A SgNode representing an AST subtree.
+ *  \param  invokedClasses  A set of SgClassDeclarations
+ *                          representing classes of invoked methods.  
+ *                          On output, any classes whose operator=
+ *                          were invoked within subtree are 
+ *                          union'ed with invokedClasses.
+ */
+static void 
+findClassesInvokedViaOperatorEquals(SgNode *subtree,
+				    SgThisExp *thisExp,
+				    std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
+{
+  // Find any function callsites within subtree.
+  Rose_STL_Container<SgNode *> nodes = NodeQuery::querySubTree(subtree, V_SgFunctionCallExp);
+
+  // Iterate over the callsites and append the method declarations
+  // for any invoked constructors to invokedMethods.
+  for (Rose_STL_Container<SgNode *>::iterator it = nodes.begin();
+       it != nodes.end(); ++it ) {
+
+    SgNode *n = *it;
+    ROSE_ASSERT(n != NULL);
+
+    SgFunctionCallExp *functionCallExp = isSgFunctionCallExp(n);
+    ROSE_ASSERT(functionCallExp != NULL);
+    
+    SgFunctionDeclaration *invokedFuncDeclaration =
+      getFunctionDeclaration(functionCallExp);
+    if ( invokedFuncDeclaration == NULL )
+      continue;
+
+    SgMemberFunctionDeclaration *invokedMethodDeclaration =
+      isSgMemberFunctionDeclaration(invokedFuncDeclaration);
+    if ( invokedMethodDeclaration == NULL )
+      continue;
+
+    // Is this an explicit invocation of operator=?
+    if ( !isOperatorEquals(invokedMethodDeclaration) )
+      continue;
+
+    // Is this operator= invoked on this?
+    SgNode *receiver = getMethodInvocationLhs(functionCallExp);
+    if ( isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
+      SgClassDefinition *classDefinition = 
+	isSgClassDefinition(invokedMethodDeclaration->get_scope());
+      ROSE_ASSERT(classDefinition != NULL);
+    
+      SgClassDeclaration *classDeclaration = 
+	isSgClassDeclaration(classDefinition->get_declaration());
+      ROSE_ASSERT(classDeclaration != NULL);
+
+      explicitlyInvokedClasses.insert(classDeclaration);
+    }
+  }
+}
+
+/********************************************
+ *  DefaultFunctionGeneration implementation
+ ********************************************/
+
+/** \brief   Returns a method declaration within a class of the same
+ *           type as a specified method.  If the method declaration
+ *           does not exist, create it and the method definition.
+ *  \param   memberFunctionDeclaration  A method declaration.  If method
+ *           is NULL lookup the default constructor.
+ *  \param   classDefinition  a SgNode representing a class definition.
+ *  \returns A SgMemberFunctionDeclaration from classDefinition that
+ *           has the "same type" as method.
+ *
+ *  Note:  By "same type" we mean the following:
+ *  If method is a default constructor, return the default constructor defined
+ *  within classDefinition, else NULL.
+ *  If method is a copy constructor, return the copy constructor defined
+ *  within classDefinition, else NULL.
+ *  If method is a destructor, return the destructor defined
+ *  within classDefinition, else NULL.
+ *  If method is operator=, return the operator= defined
+ *  within classDefinition, else NULL.
+ *  Otherwise, if method has type signature s and name n, return the
+ *  method defined within classDefinition having type signature s and name n.
+ */
+SgMemberFunctionDeclaration *
+DefaultFunctionGenerator::getMethodInClass(SgMemberFunctionDeclaration *method,
+					   SgClassDefinition *classDefinition)
+{
+  SgMemberFunctionDeclaration *targetFunctionDeclaration = NULL;
+  if ( method == NULL ) {
+    // Lookup the default constructor in classDefinition.
+    defaultEnumFunctionType enumFunctionType = e_constructor;
+    targetFunctionDeclaration = 
+      lookupDefaultConstructorInClass(classDefinition);
+    if ( targetFunctionDeclaration == NULL ) {
+      // The method does not exist in the base class.
+      // It will be generated by the backend compiler,
+      // so generate it now.
+      cout << "Generating default constructor for getMethodInClass" << endl;
+      generateDefaultFunctionDeclaration(enumFunctionType,
+					 classDefinition);
+      targetFunctionDeclaration = 
+	lookupDefaultConstructorInClass(classDefinition);
+    }
+  } else {
+    defaultEnumFunctionType enumFunctionType = 
+      declarationToEnumType(method);
+    targetFunctionDeclaration = 
+      lookupMethodInClass(method, classDefinition);
+    if ( targetFunctionDeclaration == NULL ) {
+      cout << "Generating method for getMethodInClass" << endl;
+      generateDefaultFunctionDeclaration(enumFunctionType,
+					 classDefinition);
+      targetFunctionDeclaration = 
+	lookupMethodInClass(method, classDefinition);
+    }
+  }
+  ROSE_ASSERT(targetFunctionDeclaration != NULL);
+  return targetFunctionDeclaration;
+}
+
+/** \brief  Return an existing default member function with a class
+ *          or NULL if none exists.
+ *  \param  enumFunctionType  A defaultEnumFunctionType describing the
+ *                            method to be looked up in the class.
+ *  \param  classDef1  A SgClassDefinition representing a class
+ *                     within which we will search for the specified method.
+ *  \returns  A SgMemberFunctionDeclaration representing the requested
+ *            method, if it exists within the class, and NULL otherwise.
+ *
+ *  NB:  I re-interpreted e_constructor to mean the default constructor,
+ *       not any constructor (and certainly not the copy constructor
+ *       which is specified via e_copy_constructor).
+ */
+SgMemberFunctionDeclaration* 
+  DefaultFunctionGenerator::findDefaultFunctionDeclaration(defaultEnumFunctionType enumFunctionType, \
+                                 SgClassDefinition* classDef1)
+{
+//       SgClassDefinition * classDef1 = get_ClassDeclarationFromNewOp(ctorIniter);
+//      cout<<"The name of class missing constructor is: "<<classDef1->get_qualified_name().str()<<endl;
+                                                                                                                       
+        //lookup all member functions for a constructor
+        SgDeclarationStatementPtrList memList=classDef1->get_members();
+        typedef Rose_STL_Container<SgDeclarationStatement*>::iterator memListIterator;
+        SgMemberFunctionDeclaration * func=NULL ;
+
+     for (memListIterator listElement=memList.begin();listElement!=memList.end();++listElement)
+        {
+          SgMemberFunctionDeclaration* mfDec1=isSgMemberFunctionDeclaration(*listElement);
+          if(mfDec1!=NULL){
+          SgSpecialFunctionModifier sfMod1= mfDec1->get_specialFunctionModifier();
+          if (  // (enumFunctionType==e_constructor)&&(sfMod1.isConstructor ()) ||
+	      ((enumFunctionType==e_constructor)&&( isDefaultConstructor(mfDec1) )) ||
+	        ((enumFunctionType==e_destructor)&&(sfMod1.isDestructor ())) ||
+	      //		(enumFunctionType==e_copy_constructor)&&(sfMod1.isConstructor ()) ||
+	      ((enumFunctionType==e_copy_constructor)&&(isCopyConstructor(mfDec1))) ||
+		((enumFunctionType==e_assignment_operator)&&(isOperatorEquals(mfDec1))) 
+	     )
+                {
+                func=mfDec1;// keep the constructor's address
+                break;
+                }
+          }
+        }
+    return func;
+}
+
+/** \brief  Generate the method definition for a default
+ *          copy constructor or operator=.
+ *  \param  enumFunctionType  A defaultEnumFunctionType describing the
+ *                            method defintion to be created.
+ *  \param  func  A SgMemberFunctionDeclaration representing the 
+ *                declaration of the method whose definition will
+ *                be provided.  On output the body of the method
+ *                definition is inserted into the definition's
+ *                basic block, which is accessible from func.
+ *
+ *  Generated method definition for operator= looks like:
+ *  Foo &operator=(const class Foo &rhs)
+ *  {
+ *    if ((this) == &rhs) {
+ *      return  *(this);
+ *    }
+ *    else {
+ *    }
+ *    return  *(this);
+ *  }
+ *
+ *  Generated method definition for copy constructor looks like:
+ *  myClass1(const myClass1 &rhs):_count(rhs._count),_data(rhs._data) {}
+ */
+void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
+	(defaultEnumFunctionType enumFunctionType, SgMemberFunctionDeclaration * func)
+{
+	// The default constructor and destructor have empty bodies.
+	// Only the copy constructor and operator= have non-trivial
+	// bodies.  If we were requested to do one of the former,
+	// simply return.
+        if ( ( enumFunctionType != e_copy_constructor ) &&
+	     ( enumFunctionType != e_assignment_operator ) )
+	  return;
+
+	SgClassDefinition* parentClassDef1=func->get_class_scope();
+	SgClassDeclaration * classDec1 = parentClassDef1->get_declaration();
+
+	SgShallowCopy shallowCopy;
+	SgTreeCopy treeCopy;
+#if 0
+	SgClassDeclaration *classDeclaration = 
+	  isSgClassDeclaration(classDec1->copy(treeCopy));
+#else
+	SgClassDeclaration *classDeclaration = 
+	  isSgClassDeclaration(classDec1);
+#endif
+	SgBasicBlock * bBlock1= func->get_definition()->get_body();
+	SgInitializedNamePtrList& argList= func->get_parameterList()->get_args();
+        SgInitializedName* parameter1=*(argList.begin()); //only 1 parameter for copy constructor	
+
+	SgClassSymbol * classSymbol1 = NULL;
+	if(enumFunctionType==e_assignment_operator){
+	  // "if (this ==&rhs) return *this;" for operator=
+	  classSymbol1=new SgClassSymbol(classDeclaration);
+              //return *this
+	  SgPointerDerefExp * derefExp1=new SgPointerDerefExp(COMPILERGENERATED_FILE_INFO,\
+                                     new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0),NULL);
+	  SgReturnStmt * myReturn1=new SgReturnStmt(COMPILERGENERATED_FILE_INFO,derefExp1);
+               // true body & false body
+	  SgBasicBlock * trueBody1=new SgBasicBlock(COMPILERGENERATED_FILE_INFO,NULL);
+	  // Need to generate a false body.  Later when we invoke copy(),
+	  // SgScopeStatement::generateStatementList will assume that
+	  // get_false_body() is non-NULL
+	  // SgStatementPtrList falseList = ifStatement->get_false_body()->getStatementList();
+	  SgBasicBlock * falseBody1=new SgBasicBlock(COMPILERGENERATED_FILE_INFO,NULL);
+	  trueBody1->append_statement(myReturn1);
+           // this==&rhs	  
+	  SgVariableSymbol * symbolPar1=new SgVariableSymbol(parameter1);
+	  SgVarRefExp* varPar1=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,symbolPar1);
+	  SgAddressOfOp * addressOp1=new SgAddressOfOp(COMPILERGENERATED_FILE_INFO,isSgExpression(varPar1), NULL);
+          SgEqualityOp * equalityOp1=new SgEqualityOp(COMPILERGENERATED_FILE_INFO,isSgExpression(new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0)),\
+					 isSgExpression(addressOp1), NULL);
+	  SgExprStatement * conditionStmt1=new SgExprStatement(COMPILERGENERATED_FILE_INFO,equalityOp1);
+
+	  SgIfStmt * ifStmt1=new SgIfStmt(COMPILERGENERATED_FILE_INFO,isSgStatement(conditionStmt1),\
+				   trueBody1, falseBody1);
+	  bBlock1->append_statement(ifStmt1);
+	  ROSE_ASSERT(ifStmt1->get_scope() != NULL);
+	  ROSE_ASSERT(ifStmt1->get_scope() != ifStmt1);
+	  ROSE_ASSERT(ifStmt1->get_scope() == bBlock1);
+	  ROSE_ASSERT(ifStmt1->get_parent() != NULL);
+	}
+
+
+	// handling member variables in copy constructor and operator=
+        SgDeclarationStatementPtrList & declareList=parentClassDef1->get_members();
+        typedef Rose_STL_Container<SgDeclarationStatement*>::iterator declareListIterator;
+        for (declareListIterator listElement=declareList.begin();listElement!=declareList.end();++listElement)
+          {
+            SgVariableDeclaration * varDec1= isSgVariableDeclaration(*(listElement));
+            if (varDec1!=NULL) {
+                SgInitializedNamePtrList & nameList=varDec1->get_variables();
+                typedef Rose_STL_Container<SgInitializedName* >::iterator variableListIterator;
+             for(variableListIterator listVariable=nameList.begin();listVariable!=nameList.end();++listVariable){
+
+                 SgName varName=(*listVariable)->get_name();
+                 SgType* varType= (*listVariable)->get_type();
+                 //cout<<"name is "<<varName.str()<<" of type "<<(varType->get_mangled()).str()<<endl;
+
+                SgVariableSymbol* varSymbol1=new SgVariableSymbol(parameter1);
+                SgVariableSymbol* varSymbol2=new SgVariableSymbol(*listVariable);
+               SgVarRefExp* lhsOperator=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol1);
+               SgVarRefExp* rhsOperator=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol2);
+                SgDotExp* dotExp1=new SgDotExp(COMPILERGENERATED_FILE_INFO,lhsOperator,rhsOperator,varType);
+		//"_member(rhs._member)" for copy constructor
+		if (enumFunctionType==e_copy_constructor) {
+                   SgAssignInitializer * assignInit1= new SgAssignInitializer(COMPILERGENERATED_FILE_INFO,dotExp1,varType);
+                   SgInitializedName* initName1=new SgInitializedName(varName,varType,assignInit1,NULL);
+		   initName1->set_file_info(COMPILERGENERATED_FILE_INFO);
+              	  // Must set scope to global here!!
+	           initName1->set_scope(isSgGlobal(parentClassDef1->get_declaration()->get_scope()));
+        	   func->get_CtorInitializerList()->append_ctor_initializer(initName1);
+                 } //end if    
+
+		// "_member=rhs.member;" for operator=
+		if (enumFunctionType==e_assignment_operator) { 
+		  SgVarRefExp* rhsOperator2=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol2);
+		  SgArrowExp * arrowExp1=new SgArrowExp(COMPILERGENERATED_FILE_INFO,new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0), rhsOperator2);
+		  SgAssignOp * assignOp1=new SgAssignOp(COMPILERGENERATED_FILE_INFO, arrowExp1, dotExp1, varType);
+		  SgExprStatement* myExpStmt1=new SgExprStatement(COMPILERGENERATED_FILE_INFO, assignOp1); 
+		  bBlock1->append_statement(myExpStmt1);  
+		}
+              } //end for
+            } //end if 
+          } //end for 
+
+        // "return *this;" for operator=
+        if(enumFunctionType==e_assignment_operator){
+          SgPointerDerefExp * derefExp1=new SgPointerDerefExp(COMPILERGENERATED_FILE_INFO,\
+                                     new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0),NULL);
+
+          SgReturnStmt * myReturn1=new SgReturnStmt(COMPILERGENERATED_FILE_INFO,derefExp1);
+          bBlock1->append_statement(myReturn1);
+        }
+	// AstPostProcessing(func->get_definition());
+   
+}
+
+/** \brief  Return the class instantiated by a constructor initializer.
+ *  \param  ctorInitNode  A SgConstructorInitializer.
+ *  \returns  A SgClassDefinition representing the class instantiated
+ *            by ctorInitNode.
+ */
+SgClassDefinition * DefaultFunctionGenerator::get_ClassDeclarationFromNewOp(SgConstructorInitializer * ctorInitNode)
+{
+  SgConstructorInitializer* ctorIniter = isSgConstructorInitializer(ctorInitNode);
+  ROSE_ASSERT(ctorIniter != NULL);
+  //get the corresponding class definition node from a call site, a long road to go
+  SgClassDefinition * classDef1 = isSgClassDeclaration(isSgClassType(isSgNewExp(ctorIniter->get_parent())->\
+                get_specified_type())->get_declaration())->get_definition();
+  return classDef1;
+}
+
+/** \brief  Return the method name corresponding to the method
+ *          specified via enumFunctionType.
+ *  \param  enumFunctionType  A defaultEnumFunctionType indicating a 
+ *                            special method-- a copy or default constructor,
+ *                            a destructor, or an operator=.
+ *  \param  parentClassDef  A SgClassDefinition representing the class
+ *                          of the method whose name we seek.
+ *  \returns  A string holding the name of the special method for the
+ *            specified class.
+ */
+SgName
+DefaultFunctionGenerator::generateDefaultFunctionName(defaultEnumFunctionType enumFunctionType, SgClassDefinition *parentClassDef)
+{
+  SgName func_name;
+  
+  if (SgTemplateInstantiationDefn *tempDef = isSgTemplateInstantiationDefn(parentClassDef))
+     {
+       SgTemplateInstantiationDecl *tempDecl = isSgTemplateInstantiationDecl(tempDef->get_declaration());
+       ROSE_ASSERT(tempDecl);
+       func_name = tempDecl->get_templateName();
+     }
+  else
+     {
+       func_name = parentClassDef->get_declaration()->get_name(); 
+     }
+  
+  //function name 
+  if(enumFunctionType==e_destructor) 
+    {
+      std::string strDesName('~'+func_name.getString());
+      func_name=SgName(strDesName.c_str()); 
+    }
+  if(enumFunctionType==e_assignment_operator)
+    func_name=SgName("operator="); 
+  
+  cout << "func_name = " << func_name.getString() << endl;
+  return func_name;
+}
+
+/** \brief  Return the method type corresponding to the method
+ *          specified via enumFunctionType.
+ *  \param  enumFunctionType  A defaultEnumFunctionType indicating a 
+ *                            special method-- a copy or default constructor,
+ *                            a destructor, or an operator=.
+ *  \param  parentClassDef  A SgClassDefinition representing the class
+ *                          of the method whose type we seek.
+ *  \returns  The SgMemberFunctionType representing the type of the
+ *            special method for the specified class.  The caller
+ *            is responsible for freeing this memory.
+ */
+SgMemberFunctionType *
+DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType enumFunctionType, SgClassDefinition *parentClassDef)
+{
+  //return type
+  // the return type of constructor, destructor, copy constructor is void
+  // operator= has className& as return type
+  SgType *func_return_type;
+  //param type
+  // operator= and copy constructor have className& as param type, others have 0 params
+  SgType *func_param_type;
+  SgType *base_type;
+  
+  if( (enumFunctionType==e_assignment_operator) ||
+      (enumFunctionType==e_copy_constructor) ) // PC : this disjunct not necessary?
+    {
+      // has to get the type from the firstNodDefiningDeclaration node, runtime abort otherwise
+      base_type=isSgClassDeclaration(parentClassDef->get_declaration() \
+				      ->get_firstNondefiningDeclaration())->get_type();
+      ROSE_ASSERT(base_type != NULL);
+      func_return_type  = new SgReferenceType(base_type);
+      func_param_type = SgReferenceType::createType(base_type);
+    }
+  else
+    {
+      func_return_type = SgTypeVoid::createType();
+      func_param_type = NULL;
+    }
+  
+  SgMemberFunctionType *func_type = 
+    new SgMemberFunctionType(func_return_type, false, parentClassDef);
+  func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
+  if (func_param_type != NULL)
+     {
+       func_type->append_argument(func_param_type);
+     }
+
+  return func_type;
+}
+
+/** \brief  Generate a method declaration for a special method
+ *          and associate it with the specified class definitino.
+ *  \param  enumFunctionType  A defaultEnumFunctionType describing the
+ *                            method declaration to be created.
+ *  \param  parentClassDef1  A SgClassDefinition representing the
+ *                           class to which the method will be added.
+ *  \returns  A SgMemberFunctionDeclaration representing the 
+ *            declaration created for the specified special method
+ *            (a default or copy constructor, a destructor, or an
+ *            operator=).
+ */
+SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDeclaration \
+                        (defaultEnumFunctionType enumFunctionType, SgClassDefinition* parentClassDef1)
+{
+    SgMemberFunctionDeclaration * func ;
+
+       //debug
+    if (enumFunctionType==e_constructor) 
+         cout<<"Generating constructor for "<<parentClassDef1->get_qualified_name().str()<<endl;
+     else if(enumFunctionType==e_destructor)
+         cout<<"Generating destructor for "<<parentClassDef1->get_qualified_name().str()<<endl;
+     else if(enumFunctionType==e_copy_constructor)
+         cout<<"Generating copy constructor for "<<parentClassDef1->get_qualified_name().str()<<endl;
+
+ 	//return type
+	// the return type of constructor, destructor, copy constructor is void
+	// operator= has className& as return type
+    SgType * func_return_type;
+    SgType* base_type1;
+
+    if(enumFunctionType==e_assignment_operator)
+       {
+	// has to get the type from the firstNodDefiningDeclaration node, runtime abort otherwise
+        base_type1=isSgClassDeclaration(parentClassDef1->get_declaration()\
+                ->get_firstNondefiningDeclaration())->get_type();
+        ROSE_ASSERT(base_type1!=NULL);
+        func_return_type  = new SgReferenceType(base_type1);
+	}
+     else
+         func_return_type = new SgTypeVoid();
+
+    SgName func_name = generateDefaultFunctionName(enumFunctionType, parentClassDef1);
+
+     SgMemberFunctionType *func_type = generateDefaultFunctionType(enumFunctionType, parentClassDef1);
+
+     //     SgMemberFunctionType * func_type = new SgFunctionType(func_return_type,false);
+     func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
+
+     if (isSgTemplateInstantiationDefn(parentClassDef1))
+	{
+	  SgTemplateInstantiationDecl *classDecl = isSgTemplateInstantiationDecl(parentClassDef1->get_declaration());
+	  ROSE_ASSERT(classDecl);
+
+	  SgTemplateInstantiationMemberFunctionDecl *tempFunc =  new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
+	  tempFunc->set_definingDeclaration(tempFunc);
+	  tempFunc->set_templateName(func_name);
+	  func = tempFunc;
+	}
+     else
+	{
+	  func =  new SgMemberFunctionDeclaration(COMPILERGENERATED_FILE_INFO,func_name, func_type);
+	  func->set_definingDeclaration(func);
+	}
+
+  // DQ (10/10/2006): These were never used and have been superceeded by explicit name qualification list stored in the SgDeclarationStatement.
+  // func->set_need_name_qualifier(true);
+     printf ("func->set_need_name_qualifier() member function was removed from use (it was never used)! \n");
+
+	//set Special function modifier: constructor, destructor or operator member function
+    //  void type will show up during unparsing otherwise
+     SgSpecialFunctionModifier &sfModifier= func->get_specialFunctionModifier ();
+     if((enumFunctionType==e_constructor)||(enumFunctionType==e_copy_constructor))
+        sfModifier.setConstructor();
+     else if (enumFunctionType==e_destructor)
+        sfModifier.setDestructor();
+     else if (enumFunctionType==e_assignment_operator)
+        sfModifier.setOperator();                                                                                          
+	
+     SgFunctionDefinition * func_def =new SgFunctionDefinition(COMPILERGENERATED_FILE_INFO,func);
+     SgBasicBlock *func_body = new SgBasicBlock(COMPILERGENERATED_FILE_INFO);
+
+     func_def->set_body(func_body);
+     func_def->set_parent(func); //necessary or not?
+
+        // parameter list
+     SgFunctionParameterList * parameterList = new SgFunctionParameterList(COMPILERGENERATED_FILE_INFO);
+     ROSE_ASSERT(parameterList != NULL); /*why assert here, not before for all new operations?*/
+     func->set_parameterList(parameterList);
+
+     // generate the argument for copy constructor and assignment operator
+    SgInitializedName * var1_init_name;
+     if((enumFunctionType==e_copy_constructor)||(enumFunctionType==e_assignment_operator))
+     {
+     	SgName var1_name = "rhs";
+	// has to get the type from the firstNodDefiningDeclaration node, runtime abort otherwise
+        base_type1=isSgClassDeclaration(parentClassDef1->get_declaration()\
+                ->get_firstNondefiningDeclaration())->get_type();
+        ROSE_ASSERT(base_type1!=NULL);
+	SgModifierType * modifier_type1=new SgModifierType(base_type1);
+//	SgTypeModifier &type_modifier1 = modifier_type1->get_typeModifier();
+// SgConstVolatileModifier & const_modifier1= type_modifier1.get_constVolatileModifier();
+	//	const_modifier1.setConst();
+
+	SgReferenceType * ref_type = new SgReferenceType(modifier_type1);
+	SgInitializer * var1_initializer = NULL;
+	var1_init_name = new SgInitializedName(var1_name, ref_type,var1_initializer,NULL);
+	var1_init_name->set_scope(func_def);
+	var1_init_name->set_file_info(COMPILERGENERATED_FILE_INFO);
+
+	ROSE_ASSERT(func->get_parameterList()!=NULL);
+	func->get_parameterList()->append_arg(var1_init_name);
+      }
+        /*insert to class scope, move to this point because generateDefinition() needs scope info for func*/
+     func->set_scope(parentClassDef1);
+     func->set_parent(parentClassDef1);
+     parentClassDef1->append_member(func);
+
+     SgMemberFunctionSymbol *funcSymbol = new SgMemberFunctionSymbol(func);
+     cout << "inserting " << func_name.getString() << " = " << func << endl;
+     parentClassDef1->insert_symbol(func_name, funcSymbol);
+
+       /*default constructor and destructor have empty bodies */
+        /*copy constructor and operator=: insert statements into the function body */
+     if ( ( enumFunctionType == e_copy_constructor ) ||
+	  ( enumFunctionType == e_assignment_operator ) )
+       generateDefaultFunctionDefinition(enumFunctionType, func);
+
+  // Add any implicit method invocations to this compiler-generated
+  // method definition.
+
+  // In some cases, a method may be implicitly invoked from another.
+  // - A default constructor may be implicitly invoked from
+  //   a (user-defined or default) constructor.
+  // - A default destructor may be implicitly invoked from
+  //   a (user-defined or default) destructor.
+  // - Copy constructors and operator= are _not_ implicitly
+  //   invoked by user-defined methods, but are implicitly
+  //   invoked by compiler-generated constructors and operator=,
+  //   respectively.
+  // See the notes above, with references to Stroustrup.
+  
+  // In this case, the function definition in question is
+  // a compiler-generated definition.  Therefore, regardless
+  // of whether this is a constructor, a destructor, or
+  // operator=, we have work to do!
+  // AstPostProcessing(parentClassDef1);
+  // AstPostProcessing(func_def);
+  generateImplicitInvocations(func_def);
+
+  if ( enumFunctionType == e_copy_constructor )
+    ROSE_ASSERT(isCopyConstructor(func));
+  return func;
+}
+
+/** \brief  Generate code that invokes a method and _prepends_ the
+ *          invocation to the specified basic block.
+ *  \param  methodFunc  A SgMemberFunctionDeclaration representing the
+ *                      declaration of the method to be invoked.
+ *  \param  parentClassDef  A SgClassDefinition representing the
+ *                          method's class.
+ *  \param  receiver  A SgExpression that is the receiver expression
+ *                    upon which the method will be invoked.
+ *  \param  arg A SgExpression that is the actual argument expression
+ *              to be passed to the method.  May be NULL if no
+ *              actual is to be passed.
+ *  \param  basicBlock  A SgBasicBlock that is the basic block to
+ *                      which the newly created invocation will be
+ *                      prepended.
+ */
+void
+DefaultFunctionGenerator::generateDefaultFunctionCall(SgMemberFunctionDeclaration *methodFunc, SgClassDefinition *parentClassDef, SgExpression *receiver, SgExpression *arg, SgBasicBlock *basicBlock)
+{
+  SgSpecialFunctionModifier sfMod = methodFunc->get_specialFunctionModifier();
+
+  defaultEnumFunctionType enumFunctionType = declarationToEnumType(methodFunc);
+
+  ROSE_ASSERT(enumFunctionType == e_destructor || enumFunctionType == e_assignment_operator);
+
+  SgShallowCopy shallowCopy;
+  SgTreeCopy treeCopy;
+#if 0
+  SgMemberFunctionDeclaration *func = isSgMemberFunctionDeclaration(methodFunc->copy(treeCopy));
+  func->set_parent(parentClassDef);
+  ROSE_ASSERT(func != NULL);
+#else
+  SgMemberFunctionDeclaration *func = methodFunc;
+#endif
+
+  //debug
+  if (enumFunctionType==e_constructor) 
+    cout<<"Generating constructor call for "<<parentClassDef->get_qualified_name().str()<<endl;
+  else if(enumFunctionType==e_destructor)
+    cout<<"Generating destructor call for "<<parentClassDef->get_qualified_name().str()<<endl;
+  else if(enumFunctionType==e_copy_constructor)
+    cout<<"Generating copy constructor call for "<<parentClassDef->get_qualified_name().str()<<endl;
+
+  SgMemberFunctionType *functype = 
+    generateDefaultFunctionType(enumFunctionType, parentClassDef);
+
+  // Create SgMemberFunctionSymbol.
+  SgMemberFunctionSymbol *functionSymbol =
+    new SgMemberFunctionSymbol(func);
+
+  // Create SgMemberFunctionRefExp.
+  bool virtual_call = 0;
+  SgMemberFunctionRefExp *functionRefExp =
+    new SgMemberFunctionRefExp(COMPILERGENERATED_FILE_INFO,
+			       functionSymbol,
+			       virtual_call,
+			       functype,
+			       false);
+  functionRefExp->set_need_qualifier(false);
+
+  // Create the function expression-- a dot or arrow expression
+  // depending on the type (pointer or non-pointer) of the receiver.
+  
+  // The type of the function expression is the return type of
+  // the function.
+  SgType *expressionType = functype->get_return_type();
+
+  // The lhs of the dot/arrow expression is the receiver and
+  // the rhs is the member function ref expression created above.
+
+  SgType *receiverType = receiver->get_type();
+  ROSE_ASSERT(receiverType != NULL);
+
+  SgBinaryOp *function = NULL;
+  if ( isSgPointerType(receiverType) ) {
+    // The receiver is a pointer; create an arrow expression.
+    function = new SgArrowExp(COMPILERGENERATED_FILE_INFO,
+			    receiver,
+			    functionRefExp,
+			    expressionType);
+    ROSE_ASSERT(receiver != NULL);
+  } else {
+    // The receiver is not a pointer; create a dot expression.
+    function = new SgDotExp(COMPILERGENERATED_FILE_INFO,
+			    receiver,
+			    functionRefExp,
+			    expressionType);
+    ROSE_ASSERT(receiver != NULL);
+  }
+  receiver->set_parent(function);
+  
+  // Create the arg list.
+  SgExprListExp *args = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
+
+  // Put the arg, if any, in the arg list.
+  if ( arg != NULL ) {
+    args->append_expression(arg);
+  }
+
+  // Finally, create the function call.
+  SgFunctionCallExp *functionCallExp = 
+    new SgFunctionCallExp(COMPILERGENERATED_FILE_INFO,
+			  function,
+			  args,
+			  expressionType);
+
+
+  // Put the function call in an expression statement.
+  SgExprStatement *exprStatement =
+    new SgExprStatement(COMPILERGENERATED_FILE_INFO,
+			functionCallExp);
+
+  // Prepend the expression statement to the basic block.
+  // NB:  appending might put this after a return statement!
+  basicBlock->prepend_statement(exprStatement);
+
+  // Clean up the basic block to which we have just added this
+  // expression.
+  // AstPostProcessing(basicBlock);
+}
+
+/** \brief  Generate code that invokes a constructor and _appends_ the
+ *          invocation to the specified constructor initializer list.
+ *  \param  methodFunc  A SgMemberFunctionDeclaration representing the
+ *                      declaration of the constructor to be invoked.
+ *  \param  parentClassDef  A SgClassDefinition representing the
+ *                          constructor's class.
+ *  \param  arg A SgExpression that is the actual argument expression
+ *              to be passed to the constructor.  May be NULL if no
+ *              actual is to be passed (i.e., if the constructor is
+ *              the default, rather than the copy, constructor).
+ *  \param  ctorInitializerList  A SgCtorInitializerList that is the 
+ *                               constructor initializer list to which 
+ *                               the newly created constructor invocation 
+ *                               will be appended.
+ */
+void
+DefaultFunctionGenerator::generateDefaultConstructorCall(SgMemberFunctionDeclaration *methodFunc, SgClassDefinition *parentClassDef, SgExpression *arg, SgCtorInitializerList *ctorInitializerList)
+{
+  SgSpecialFunctionModifier sfMod = methodFunc->get_specialFunctionModifier();
+
+  defaultEnumFunctionType enumFunctionType = declarationToEnumType(methodFunc);
+
+  ROSE_ASSERT(enumFunctionType == e_constructor || enumFunctionType == e_copy_constructor);
+
+  SgShallowCopy shallowCopy;
+  SgTreeCopy treeCopy;
+#if 0
+  SgMemberFunctionDeclaration *func = 
+    isSgMemberFunctionDeclaration(methodFunc->copy(treeCopy));
+  func->set_parent(parentClassDef);
+#else
+  SgMemberFunctionDeclaration *func = methodFunc;
+#endif
+
+  //debug
+  if (enumFunctionType==e_constructor) 
+    cout<<"Generating constructor call for "<<parentClassDef->get_qualified_name().str() << " within method: " << ctorInitializerList->get_parent()->unparseToString() << endl;
+  else if(enumFunctionType==e_destructor)
+    cout<<"Generating destructor call for "<<parentClassDef->get_qualified_name().str()<<endl;
+  else if(enumFunctionType==e_copy_constructor)
+    cout<<"Generating copy constructor call for "<<parentClassDef->get_qualified_name().str()<<endl;
+
+// SgMemberFunctionType *func_type = generateDefaultFunctionType(enumFunctionType, parentClassDef);
+
+  // Do this bottom up:  A constructor, as invoked from a 
+  // SgConstructorInitializer, looks like:
+  // SgCtorInitializerList -> SgInitializedName -> SgConstructorInitializer ->
+  //            SgExprList
+
+  // Create the argument list.
+  // Create the arg list.
+  SgExprListExp *args = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
+
+  // Put the arg, if any, in the arg list.
+  if ( arg != NULL ) {
+    args->append_expression(arg);
+  }
+
+  // Create the SgConstructorInitializer.
+  cout << "parent class def: " << parentClassDef->unparseToString() << endl;
+#if 0
+  SgClassDeclaration *classDeclaration = 
+    isSgClassDeclaration(parentClassDef->get_declaration()->copy(treeCopy));
+  ROSE_ASSERT(classDeclaration != NULL);
+#else
+  SgClassDeclaration *classDeclaration = 
+    isSgClassDeclaration(parentClassDef->get_declaration());
+  ROSE_ASSERT(classDeclaration != NULL);
+#endif
+  
+  // These are the default arguments.
+  bool need_name = false;
+  bool need_qualifier = false;
+  bool need_parenthesis_after_name = false;
+  bool associated_class_unknown = false;
+
+  /**
+     I believe this corresponds to the SgConstructorInitializer
+     which is created by the call to 
+       a_SgInitializer_ptr sageInit = 
+          sage_gen_dynamic_init ( ctor_init->initializer, type, 
+          *parenthesized_init=* TRUE,
+          *force_parens=* TRUE, fileInfo);
+     from sage_gen_ctor_initializers in sage_gen_be.C.
+     Therefore, we force parens to be true.
+  */
+  need_parenthesis_after_name = true;
+  SgConstructorInitializer *ctorInitializer =
+    new SgConstructorInitializer(COMPILERGENERATED_FILE_INFO,
+				 func,
+				 args,
+				 classDeclaration->get_type(),
+				 need_name,
+				 need_qualifier,
+				 need_parenthesis_after_name,
+				 associated_class_unknown);
+  
+  // Create the SgInitializedName.
+  // The name of the SgInitializedName is simply the name of the
+  // class.  The type of the SgInitializedName is the type of the class.
+  // The declaration statement of the SgInitializedName is the 
+  // SgCtorInitializerList.  
+  SgName  className = classDeclaration->get_name();
+  SgType *classType = isSgClassDeclaration(classDeclaration->get_firstNondefiningDeclaration())->get_type();
+  ROSE_ASSERT(classType != NULL);
+
+  SgInitializedName *initializedName =
+    new SgInitializedName(className,
+			  classType,
+			  ctorInitializer,
+			  func);
+  initializedName->set_file_info(COMPILERGENERATED_FILE_INFO);
+  initializedName->set_parent(ctorInitializerList);
+  initializedName->set_scope(func->get_scope());
+  ctorInitializerList->append_ctor_initializer(initializedName);
+
+  // Clean up the initializer list.
+  // AstPostProcessing(ctorInitializerList);
+}
+
+/** \brief  Makes explicit any implicit invocations of copy constructors,
+ *          default constructors, operator=, or destructors within
+ *          functionDefinition.
+ *  \param  functionDefinition  A SgFunctionDefinition representing
+ *          a function definition.
+ *
+ *  Assumes functionDefinition is the definition of a method.
+ *  If the method is a constructor, destructor, or operator=, 
+ *  other copy or default constructors, destructors, or operator=
+ *  methods may be implicitly invoked from it.  Please see
+ *  the discussion at the top of this file.
+ *
+ *  Let the method's "flavor" describe whether it is a 
+ *  constructor, destructor, or operator=.  generateImplicitInvocations
+ *  finds any _explicit_ invocations within the method of a
+ *  method of the same flavor invoked on one of its base classes.
+ *  It then iterates over each of base class and records
+ *  which of these had a method (of the same flavor) invoked upon it.
+ *  Those which did not will have their method implicitly invoked.
+ *  The task of generateImplicitInvocations is to make these
+ *  implicit invocations explicit by creating the necessary
+ *  AST nodes.
+ *
+ *  For each base class which has not been invoked, we look up 
+ *  the method of the correct flavor in that base class and create
+ *  an invocation of it.  If that method does not exist, it would
+ *  be automatically generated by the backend compiler.  Therefore,
+ *  we generate the method definition here.
+ *  
+ *  NB:  The generated order of invocation is probably not correct.
+ *  I imagine C++ dictates the order in which constructors, destructors,
+ *  etc. are invoked on base classes.  Instead, I just iterate
+ *  over the base classes and invoke methods in that order (modulo
+ *  those base classes which have already been invoked).  At the
+ *  bare minimum the ordering of implicit invocations should probably
+ *  be interleaved with existing explicit invocations (in some way).
+ *
+ *  NB:  Assuming that a base class is only registered once in
+ *  get_inheritances, we should only invoke a constructor, destructor, etc.
+ *  once per base class.  Is this the correct behavior with respect
+ *  to multiple inheritance?  How about multiple inheritance when the
+ *  base class is virtual.
+ */
+void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition *functionDefinition)
+{
+  SgMemberFunctionDeclaration *memberFunctionDeclaration =
+    isSgMemberFunctionDeclaration(functionDefinition->get_declaration());
+  ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+  bool compilerGenerated = isCompilerGenerated(functionDefinition);
+
+  SgClassDeclaration *classDeclaration = 
+    getClassDeclaration(memberFunctionDeclaration);
+
+  // Determine which base classes have methods invoked
+  // within this method.
+  std::set<SgClassDeclaration *> invokedBaseClasses;
+  if ( isConstructor(memberFunctionDeclaration) ) {
+    // Base constructors are explicitly invoked from a constructor's
+    // initializer list.
+    SgCtorInitializerList *ctorInitList = 
+      memberFunctionDeclaration->get_CtorInitializerList();
+    findClassesInvokedViaConstructors(ctorInitList, invokedBaseClasses);
+  } else if ( isDestructor(memberFunctionDeclaration) ) {
+    // Look for any destructors which are invoked on base classes.
+    // Such invocations occur not through 'delete foo', but
+    // via explicit destructor invocation this->BaseClass::~BaseClass().
+    SgThisExp *thisExp = getThisExp(classDeclaration);
+    findClassesInvokedViaDestructors(functionDefinition,
+				     thisExp,
+				     invokedBaseClasses);
+    delete thisExp;
+  } else if ( isOperatorEquals(memberFunctionDeclaration) ) {
+    // Look for any operator= which are invoked on base classes.
+    // Such invocations occur via explicit operator=
+    // invocation on this:  this->BaseClass::operator=(arg).
+    SgThisExp *thisExp = getThisExp(classDeclaration);
+    findClassesInvokedViaOperatorEquals(functionDefinition,
+					thisExp,
+					invokedBaseClasses);
+    
+    delete thisExp;
+  }
+
+  // Get a handle on the class whose method was explicitly invoked.
+  SgClassDefinition *targetClassDefinition = 
+    isSgClassDefinition(memberFunctionDeclaration->get_scope());
+  ROSE_ASSERT(targetClassDefinition != NULL);
+
+// SgClassDeclaration *targetClassDeclaration = isSgClassDeclaration(targetClassDefinition->get_declaration());
+
+  // Determine the base classes of targetClassDefinition.
+  // Iterate over each to determine if one of its methods was explicitly
+  // invoked (i.e., is in invokedBaseClasses).  If not, it was
+  // implicitly invoked.
+  SgBaseClassPtrList & baseClassList = targetClassDefinition->get_inheritances(); 
+
+  std::set<string> invokedBaseClassTypes;
+  for (std::set<SgClassDeclaration *>::iterator it = invokedBaseClasses.begin();
+       it != invokedBaseClasses.end(); ++it) {
+    SgClassDeclaration *baseClassDecl = isSgClassDeclaration(*it);
+    ROSE_ASSERT(baseClassDecl != NULL);
+
+    SgClassType *classType = baseClassDecl->get_type();
+    ROSE_ASSERT(classType != NULL);
+
+    string typeName;
+    GetTypeInfo(classType, &typeName, NULL);
+    invokedBaseClassTypes.insert(typeName);
+
+    cout << "invoked base class: " << typeName << endl;
+
+  }
+
+  for (SgBaseClassPtrList::iterator i = baseClassList.begin(); 
+       i != baseClassList.end(); ++i) {
+ 
+    SgBaseClass *baseClass = *i;
+    ROSE_ASSERT(baseClass != NULL);
+
+    SgClassDeclaration *baseClassDeclaration = baseClass->get_base_class(); 
+    ROSE_ASSERT(baseClassDeclaration != NULL);
+
+    SgClassDeclaration *baseClassDefiningDeclaration =
+      isSgClassDeclaration(baseClassDeclaration->get_definingDeclaration());
+    ROSE_ASSERT(baseClassDefiningDeclaration != NULL);
+
+    SgClassDefinition *baseClassDefn =
+      baseClassDefiningDeclaration->get_definition();
+    ROSE_ASSERT(baseClassDefn != NULL);
+
+    // Extract the type of the base class.
+    SgClassType *baseClassType = baseClassDeclaration->get_type();
+    ROSE_ASSERT(baseClassType != NULL);
+
+    string typeName;
+    GetTypeInfo(baseClassType, &typeName, NULL);
+
+    if ( invokedBaseClassTypes.find(typeName) ==
+	 invokedBaseClassTypes.end() ) {
+
+      invokedBaseClassTypes.insert(typeName);
+
+      cout << "uninvoked base class: " << baseClassDefn->unparseToString() << endl;
+
+      // No method was explicitly invoked on the base class, 
+      // baseClassDefn.  We will need an implicit
+      // method call here.  Add one according to the following:
+
+      // - Copy constructors and operator= are _not_ implicitly
+      //   invoked by user-defined methods, but are implicitly
+      //   invoked by compiler-generated constructors and operator=,
+      //   respectively.
+      // - A default constructor may be implicitly invoked from
+      //   a (user-defined or default) constructor.
+      // - A default destructor may be implicitly invoked from
+      //   a (user-defined or default) destructor.
+      // See the notes above, with references to Stroustrup.
+
+      SgMemberFunctionDeclaration *targetFunctionDeclaration = NULL;
+      SgExpression *arg = NULL;
+      SgCtorInitializerList *ctorInitializerList = 
+	memberFunctionDeclaration->get_CtorInitializerList();
+      SgBasicBlock *basicBlock = functionDefinition->get_body();
+      ROSE_ASSERT(basicBlock != NULL);
+      if ( isCopyConstructor(memberFunctionDeclaration) ) {
+	if ( compilerGenerated ) {
+	  // Implicitly invoke the base class' copy constructor
+	  // from a compiler-generated copy constructor.
+	  // The argument is the same argument passed to 
+	  // the copy constructor, memberFunctionDeclaration.
+	  // The invocation should be appended to the copy constructor's
+	  // constructor initializer list.
+	  targetFunctionDeclaration = 
+	    getMethodInClass(memberFunctionDeclaration, baseClassDefn);
+          arg = getVarRefForFormal(functionDefinition, 0);
+	  generateDefaultConstructorCall(targetFunctionDeclaration,
+					 baseClassDefn,
+					 arg,
+					 ctorInitializerList);
+	} else {
+	  // Implicitly invoke a default constructor from
+	  // a user-defined copy constructor.
+	  // There is no argument to a default constructor.
+	  // The invocation should be appended to the copy constructor's
+	  // constructor initializer list.
+	  targetFunctionDeclaration = 
+	    getMethodInClass(NULL, baseClassDefn);
+	  generateDefaultConstructorCall(targetFunctionDeclaration,
+					 baseClassDefn,
+					 arg,
+					 ctorInitializerList);
+	}
+      } else if ( isConstructor(memberFunctionDeclaration) ) {
+	// In all non-copy constructor cases, invoke the base class'
+	// default constructor.
+	// There is no argument.
+	// The invocation should be appended to the constructor's
+	// initializer list.
+	targetFunctionDeclaration = 
+	  getMethodInClass(NULL, baseClassDefn);
+	generateDefaultConstructorCall(targetFunctionDeclaration,
+				       baseClassDefn,
+				       arg,
+				       ctorInitializerList);
+      } else if ( isDestructor(memberFunctionDeclaration) ) {
+	// Invoke the base class' destructor.
+	// Invoke the destructor on 'this'.
+	// There is no argument to a destructor.
+	// Prepend the invocation to the function body.
+
+	// Please see the comment below for the isOperatorEquals
+	// case.  We need to case the lhs to get:
+	//    (baseClassType *)this->~baseClassType();
+	// instead of:
+	//    this->~baseClassType();
+
+	// Cast the lhs to (baseClassType *)this:
+	SgThisExp *thisExp = getThisExp(classDeclaration);
+#if 1
+	SgPointerType *pointerType = 
+	  new SgPointerType(baseClassType);
+	
+	SgCastExp *lhs = 
+	  new SgCastExp(COMPILERGENERATED_FILE_INFO, thisExp, pointerType);
+#endif
+	targetFunctionDeclaration = 
+	  getMethodInClass(memberFunctionDeclaration, baseClassDefn);
+	generateDefaultFunctionCall(targetFunctionDeclaration, 
+				    baseClassDefn,
+				    lhs,
+				    arg,
+				    basicBlock);
+      } else if ( isOperatorEquals(memberFunctionDeclaration) ) {
+	if ( compilerGenerated ) {
+	  // Implicitly invoke the base class' operator= constructor
+	  // from a compiler-generated operator= constructor.
+	  // Invoke operator= on 'this'.
+	  // The argument is the same as passed to the
+	  // operator=, memberFunctionDeclaration.
+	  // Prepend the invocation to the function body.
+
+	  // We have a little extra work to do here, according
+	  // to the e-mail below.  The short of it is the following:
+	  // making an implicit assignment operator call explicit
+	  // as in:
+	  // 
+	  // FooBar &operator=(const class FooBar &rhs) {
+	  //    (*(this))=rhs;
+	  // 
+	  // does not do the intended thing because it would result
+	  // in infinite recursion.
+	  //
+	  // We really want:
+	  // 
+	  // FooBar &operator=(const class FooBar &rhs) {
+	  //     this->Foo::operator=(rhs);
+	  //
+	  // However, there seems to be some bug which prevents us
+	  // from generating this code.  Therefore, we instead emit:
+	  //
+	  // FooBar &operator=(const class FooBar &rhs) {
+	  //     (*((Bar *)this)) = (Bar &)rhs;
+	  // So, just add a cast to the left and right-hand sides.
+	  /**
+              Date: Tue, 20 Jun 2006 10:31:09 -0400 (EDT)
+              From: Brian White <bwhite@csl.cornell.edu>
+              To: dan quinlan <dquinlan@llnl.gov>
+              Subject: constructor normalization: introducing name qualifiers
+              
+              
+              Hi Dan,
+              
+              I've made implicit calls to operator= explicit:
+              
+                FooBar &operator=(const class FooBar &rhs)
+              {
+                  (*(this))=rhs;
+              
+              Unfortunately, this will result in infinite recursion.  The operator= I
+              introduced is actually Foo::operator=, where Foo is the base class of
+              FooBar.  How can I force the unparser to qualify operator=:
+              
+               FooBar &operator=(const class FooBar &rhs)
+              {
+                  this->Foo::operator=(rhs);
+              
+              [I think that is the correct syntax.]
+              
+              I am currently creating the SgMemberFunctionRefExp as:
+              
+                      SgMemberFunctionRefExp *fr =
+                         new SgMemberFunctionRefExp(COMPILERGENERATED_FILE_INFO, f, 0,
+              functype, 0);
+                      fr->set_need_qualifier(false);
+              
+              i.e., the last need_qualifier arg to the constructor is false.  I then
+              explicitly set need_qualifier to false.  Presumably, this is redundant.
+              If I set these to true, I get:
+              
+                FooBar &operator=(const class FooBar &rhs)
+              {
+                  =rhs;
+              
+              I suppose I could cast rhs to be of type Foo, so that I wouldn't need it
+              to be qualified.  i.e.,
+              
+                FooBar &operator=(const class FooBar &rhs)
+              {
+                  (*(this))= (Foo&)rhs;
+              
+              should invoke Foo::operator=.  Is this the preferred method?
+              
+              Thanks,
+              Brian
+
+	  */
+  
+	  // And Dan's response:
+	  /**
+              Date: Tue, 20 Jun 2006 16:21:19 -0700
+              From: Daniel J. Quinlan <dquinlan@llnl.gov>
+              To: Brian White <bwhite@csl.cornell.edu>
+              Cc: Peter Collingbourne <collingbourne2@llnl.gov>
+              Subject: Re: constructor normalization: introducing name qualifiers
+              
+              Hi Brian,
+                  I think you may have to do it the last
+              way, you have come up against a bug reported
+              by Andreas and I that I have not fixed.  I
+              tried a few months ago, and it was much harder
+              than I expected, so I backed off and I have not
+              returned to it.
+
+	  */
+
+	  // Get the type of the class whose operator= we will invoke.
+	  // We already have it, baseClassType.
+
+	  targetFunctionDeclaration = 
+	    getMethodInClass(memberFunctionDeclaration, baseClassDefn);
+
+	  // Cast the lhs to (baseClassType *)this:
+	  SgThisExp *thisExp = getThisExp(classDeclaration);
+#if 1
+	  SgPointerType *pointerType = 
+	    new SgPointerType(baseClassType);
+
+	  SgCastExp *lhs = 
+	    new SgCastExp(COMPILERGENERATED_FILE_INFO, thisExp, pointerType);
+#endif
+	  // Cast the rhs to (baseClassType &)arg:
+          arg = getVarRefForFormal(functionDefinition, 0);
+
+	  SgReferenceType *referenceType = 
+	    new SgReferenceType(baseClassType);
+
+	  SgCastExp *rhs = 
+	    new SgCastExp(COMPILERGENERATED_FILE_INFO, arg, referenceType);
+
+	  generateDefaultFunctionCall(targetFunctionDeclaration, 
+				      baseClassDefn,
+				      lhs,
+				      rhs,
+				      basicBlock);
+	} else {
+	  // Do nothing.
+	}
+      }
+    }
+  }
+}
+
+SgClassDefinition *getClassDefinition(SgType *objType)
+   {
+      SgClassDeclaration *objClsDecl = getClassDeclaration(objType);
+      if (objClsDecl == NULL)
+	 {
+	   return NULL;
+	 }
+      
+      SgDeclarationStatement *objClsDefDeclStmt = objClsDecl->get_definingDeclaration();
+#if 0
+      ROSE_ASSERT(objClsDefDeclStmt != NULL);
+#else
+      // I have encountered template instantations where the definingDeclaration is null
+      // but the definition is set correctly.  TODO: fix the EDG->SAGE conversion and
+      // maybe add a test to astDiagnostica
+      if (objClsDefDeclStmt == NULL)
+	 {
+	   objClsDefDeclStmt = objClsDecl;
+	 }
+#endif
+
+      SgClassDeclaration *objClsDefDecl = isSgClassDeclaration(objClsDefDeclStmt);
+      ROSE_ASSERT(objClsDefDecl != NULL);
+
+      SgClassDefinition *objClsDef = objClsDefDecl->get_definition();
+#if 0
+      ROSE_ASSERT(objClsDef != NULL);
+#else
+      // It is legal to instantiate a templated class with an undefined parameter with
+      // a function that has as one of its parameters or local variables an object of
+      // this type.  If we encounter a case such as this, we can assume the function
+      // is never called and thus has no bearing on any analysis.
+      if (objClsDef == NULL)
+	 {
+	   return NULL;
+	 }
+#endif
+     
+      return objClsDef;
+   }
+
+// XXX: This function exists only because some class definitions (mainly template
+// instantiations) are not found during a normal traversal of the AST.  To be
+// replaced with findDefaultFunctionDeclaration when:
+//
+//  - The translator for classes operates on memory pools rather than the AST, or
+//  - EDG->SAGE connection is fixed to attach these instantiations to AST (ideal)
+SgMemberFunctionDeclaration *DefaultFunctionGenerator::findOrGenerateDefaultFunctionDeclaration(
+		defaultEnumFunctionType enumFunctionType, SgClassDefinition* parentClassDef1)
+   {
+     SgMemberFunctionDeclaration *fnDecl = findDefaultFunctionDeclaration(enumFunctionType,
+		     parentClassDef1);
+     if (fnDecl)
+	{
+	  return fnDecl;
+	}
+     else
+	{
+	  return generateDefaultFunctionDeclaration(enumFunctionType, parentClassDef1);
+	}
+   }
+
+void DefaultFunctionGenerator::normalizeCtorInitializer(SgConstructorInitializer *ctorInit)
+   {
+     if (ctorInit->get_declaration() != NULL)
+	{
+	  return;
+	}
+
+     SgClassDefinition *objClsDef = getClassDefinition(ctorInit->get_type());
+     ROSE_ASSERT(objClsDef != NULL);
+     if (objClsDef->get_declaration()->get_name() == "") // anonymous classes/structs
+	{
+	  return;
+	}
+
+     SgExprListExp *ctorArgs = ctorInit->get_args();
+     SgMemberFunctionDeclaration *replacementCtor;
+     if (ctorArgs->empty())
+	{
+	  // Default constructor (0 args)
+	  replacementCtor = findOrGenerateDefaultFunctionDeclaration(e_constructor, objClsDef);
+	}
+     else
+	{
+	  // Copy constructor (1 arg)
+	  replacementCtor = findOrGenerateDefaultFunctionDeclaration(e_copy_constructor, objClsDef);
+	}
+
+     ROSE_ASSERT(replacementCtor != NULL);
+     ctorInit->set_declaration(replacementCtor);
+   }
+
+SgConstructorInitializer *DefaultFunctionGenerator::normalizeAssignInitializer(SgAssignInitializer *assignInit)
+   {
+     SgClassDefinition *objClsDef = getClassDefinition(assignInit->get_type());
+     ROSE_ASSERT(objClsDef != NULL);
+     if (objClsDef->get_declaration()->get_name() == "") // anonymous classes/structs
+	{
+	  return NULL;
+	}
+
+     SgMemberFunctionDeclaration *copyCtorDecl =
+	     findOrGenerateDefaultFunctionDeclaration(e_copy_constructor, objClsDef);
+
+     SgExpression *operand = assignInit->get_operand_i();
+     SgTreeCopy tc;
+     SgExpression *operandCopy = isSgExpression(operand->copy(tc));
+     ROSE_ASSERT(operandCopy != NULL);
+
+     SgExprListExp *rhsArgList = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
+     rhsArgList->append_expression(operandCopy);
+     operandCopy->set_parent(rhsArgList);
+
+     SgConstructorInitializer *newCtorInit = new SgConstructorInitializer(
+		     COMPILERGENERATED_FILE_INFO,
+		     copyCtorDecl,
+		     rhsArgList,
+#if 1
+		     objClsDef->get_declaration()->get_type()
+#else
+	       // For newest version of ROSE, where a constructor initializer may have any type
+		     objType
+#endif
+		     );
+     rhsArgList->set_parent(newCtorInit);
+
+     newCtorInit->set_need_parenthesis_after_name(true);
+
+     return newCtorInit;
+   }
+
+SgInitializer *DefaultFunctionGenerator::normalizeInitializer(SgInitializer *origInit, SgType *objType)
+   {
+
+     SgClassDefinition *objClsDef = getClassDefinition(objType);
+
+     if (objClsDef == NULL)
+	{
+	  return origInit;
+	}
+
+      if (origInit == NULL)
+	 {
+	   // Default constructor call
+	   // TODO: or copy constroctor
+	   SgMemberFunctionDeclaration *defaultCtorDecl =
+		   findOrGenerateDefaultFunctionDeclaration(e_constructor, objClsDef);
+
+	   SgExprListExp *emptyArgList = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
+	   SgConstructorInitializer *newCtorInit = new SgConstructorInitializer(
+		COMPILERGENERATED_FILE_INFO,
+		defaultCtorDecl,
+		emptyArgList,
+#if 1
+		objClsDef->get_declaration()->get_type()
+#else
+	  // For newest version of ROSE, where a constructor initializer may have any type
+		objType
+#endif
+	   );
+	   emptyArgList->set_parent(newCtorInit);
+
+	   return newCtorInit;
+	 }
+
+      if (SgAssignInitializer *origAssignInit = isSgAssignInitializer(origInit))
+	 {
+	   SgConstructorInitializer *newCtorInit = normalizeAssignInitializer(origAssignInit);
+	   if (newCtorInit != NULL)
+	      {
+		return newCtorInit;
+	      }
+	   else
+	      {
+		return origAssignInit;
+	      }
+	 }
+	   
+      if (SgConstructorInitializer *origCtorInit = isSgConstructorInitializer(origInit))
+	 {
+	   if (origCtorInit->get_class_decl() == NULL)
+	      {
+		// This case is encountered when a function returns an object and the
+		// object has a copy constructor, and we are assigning it for the first
+		// time.  This case means that due to an optimization by the compiler,
+		// the copy constructor is not even called.  So we change it to an
+		// AssignInitializer.
+		SgExpressionPtrList &origCtorInitParams = origCtorInit->get_args()->get_expressions();
+		ROSE_ASSERT(origCtorInitParams.size() == 1);
+
+		SgTreeCopy tc;
+		SgExpression *origCtorInitParamCopy = isSgExpression(origCtorInitParams.front()->copy(tc));
+		SgAssignInitializer *newAssignInit = new SgAssignInitializer(COMPILERGENERATED_FILE_INFO, origCtorInitParamCopy);
+		origCtorInitParamCopy->set_parent(newAssignInit);
+		return newAssignInit;
+	      }
+	   normalizeCtorInitializer(origCtorInit);
+	   return origCtorInit;
+	 }
+
+      if (SgAggregateInitializer *origAggrInit = isSgAggregateInitializer(origInit))
+	 {
+	   return origAggrInit;
+	 }
+
+      cout << "DefaultFunctionGenerator::normalizeInitializer: unknown case (type = " << origInit->class_name() << ")" << endl;
+      ROSE_ABORT();
+   }
+
+SgFunctionCallExp *DefaultFunctionGenerator::translateAssignmentToOperatorEqCall(SgExpression *lhs, SgExpression *rhs, SgClassDefinition *clsDef)
+   {
+     SgMemberFunctionDeclaration *operatorEqDecl = findOrGenerateDefaultFunctionDeclaration(e_assignment_operator, clsDef);
+     if (operatorEqDecl == NULL)
+	{
+	  cout << clsDef->unparseToString();
+	}
+     ROSE_ASSERT(operatorEqDecl != NULL);
+
+//     SgMemberFunctionSymbol *operatorEqSym = isSgMemberFunctionSymbol(clsDef->lookup_function_symbol("operator=")); // XXX: : won't work if the class defines an operator= with parameter of different type.  The same also applies to findDefaultFuncitonDeclaration... needs to be fixed!
+     SgMemberFunctionSymbol *operatorEqSym = new SgMemberFunctionSymbol(operatorEqDecl); // Should really be taken from symbol table.
+     ROSE_ASSERT(operatorEqSym != NULL);
+     
+     SgMemberFunctionRefExp *operatorEqRef = new SgMemberFunctionRefExp(COMPILERGENERATED_FILE_INFO, operatorEqSym);
+     SgTreeCopy tc1;
+     SgExpression *lhsCopy = isSgExpression(lhs->copy(tc1));
+     ROSE_ASSERT(lhsCopy != NULL);
+
+     SgDotExp *dotExp = new SgDotExp(COMPILERGENERATED_FILE_INFO, lhsCopy, operatorEqRef);
+     operatorEqRef->set_parent(dotExp);
+     lhsCopy->set_parent(dotExp);
+
+     SgTreeCopy tc2;
+     SgExpression *rhsCopy = isSgExpression(rhs->copy(tc2));
+     ROSE_ASSERT(rhsCopy != NULL);
+     
+     SgExprListExp *paramList = new SgExprListExp(COMPILERGENERATED_FILE_INFO);
+     paramList->append_expression(rhsCopy);
+     rhsCopy->set_parent(paramList);
+
+     SgFunctionCallExp *operatorEqCall = new SgFunctionCallExp(COMPILERGENERATED_FILE_INFO, dotExp, paramList);
+     dotExp->set_parent(operatorEqCall);
+     paramList->set_parent(operatorEqCall);
+
+     return operatorEqCall;
+   }
+     
+     
+/** \brief  The visit routine for DefaultFunctionGenerator, which
+ *          makes any implicit invocations within a method definition
+ *          explicit and which creates any necessary default
+ *          method declaration and definitions for each class.
+ *  \param  astNode  A Sage node.
+ *
+ *  This is the driver for the DefaultFunctionGenerator.  It
+ *  handles method definitions (SgFunctionDefinitions) and
+ *  class definition (SgClassDefinitions).
+ *
+ *  For each method definition:  if the method is a constructor
+ *  or destructor, invoke generateImplicitInvocations to make
+ *  explicit any implicit invocations within the method.
+ *  Implicit method invocations do not occur within user-defined
+ *  operator=.  We will generate implicit invocations within
+ *  compiler-generated operator= when we generate those methods
+ *  (from generateDefaultFunctionDefinition).
+ *
+ *  For each class definition:  if a special method (i.e., a copy
+ *  or default constructor, a destructor, or an operator=) is not
+ *  defined, generate a method declaration and definition for it.
+ *  NB:  This runs contrary to Stroustrup's intention (and Leo's
+ *       original implementation) which only create compiler-generated
+ *       methods "as needed."  Our approach is OK because the
+ *       unparser won't actually emit any of the method declarations
+ *       or definitions.k
+ */
+void DefaultFunctionGenerator::visit (SgNode * astNode)
+{
+  // Now split into 2 passes.  Why? Because if a template is instantiated,
+  // its instantiation may appear after it is referenced
+  if (pass == 1) {
+  switch(astNode->variantT()) {
+    case V_SgFunctionDefinition:
+      {
+        SgFunctionDefinition *functionDefinition = 
+  	isSgFunctionDefinition(astNode);
+        ROSE_ASSERT(functionDefinition != NULL);
+  
+        // Is this a method definition?
+        SgMemberFunctionDeclaration *memberFunctionDeclaration =
+  	isSgMemberFunctionDeclaration(functionDefinition->get_declaration());
+        if ( memberFunctionDeclaration != NULL ) {
+  
+  	std::cout << "Visiting memberFunctionDecl: " << memberFunctionDeclaration->unparseToString() << std::endl;
+  
+  	// In some cases, a method may be implicitly invoked from another.
+  	// - A default constructor may be implicitly invoked from
+  	//   a (user-defined or default) constructor.
+  	// - A default destructor may be implicitly invoked from
+  	//   a (user-defined or default) destructor.
+  	// - Copy constructors and operator= are _not_ implicitly
+  	//   invoked by user-defined methods, but are implicitly
+  	//   invoked by compiler-generated constructors and operator=,
+  	//   respectively.
+  	// See the notes above, with references to Stroustrup.
+  
+  	// We assume that this traversal is iterating over the AST
+  	// _before_ any default definitions have been added.  Thus,
+  	// any definitions discovered here are user-defined.
+  	// Therefore, if this is a constructor (default, copy, or
+  	// otherwise) or a destructor, we may have to insert
+  	// implicit invocations of a default constructor or
+  	// destructor, respectively.
+  
+  	// Not true!  There are no assumptions here.  
+  	// If we have already made implicit method invocations
+  	// explicit in functionDefinition, 
+  	// generateImplicitInvocations will detect this and will 
+  	// not re-create them.
+  
+  	// Notice that we do not generate implicit invocations
+  	// for operator= here.  Implicit
+  	// invocations only occur for compiler-generated 
+  	// operator= methods;
+  	// therefore, we create those invocations when we
+  	// generate the special methods.
+  	if ( isConstructor(memberFunctionDeclaration) || 
+  	     isDestructor(memberFunctionDeclaration) ) {
+  	  generateImplicitInvocations(functionDefinition);
+  	}
+        }
+  
+        break;
+      }
+    case V_SgClassDefinition:
+    case V_SgTemplateInstantiationDefn:
+      {
+        SgClassDefinition *classDefinition = 
+  	isSgClassDefinition(astNode);
+        ROSE_ASSERT(classDefinition != NULL);
+  
+        /**
+         * Despite Stroustrup's contention that default constructors
+         * are only created when needed (i.e., invoked in the program):
+         *
+         * 3rd Edition Section 10.4.2 talks about default constructors: 
+         * 
+         * "A default constructor is a constructor that can be called without 
+         * supplying an argument [so it can have default args] ... If a user has 
+         * declared a default constructor, that one will be used; otherwise, the 
+         * compiler will try to generate one if needed and if the user HASN'T 
+         * DECLARED other constructors." 
+         *
+         * we are going to go ahead and create a default or copy contructor,
+         * destructor, or operator= whenever they are not defined for
+         * a class.  Note, however, that they are marked in such
+         * a way that they will not be emitted by the unparser, so
+         * the backend will not see spurious method definitions.
+         */
+        
+        if(findDefaultFunctionDeclaration(e_constructor, classDefinition)==NULL)
+  	generateDefaultFunctionDeclaration(e_constructor,classDefinition);
+        if(findDefaultFunctionDeclaration(e_destructor, classDefinition)==NULL)
+  	generateDefaultFunctionDeclaration(e_destructor,classDefinition);
+        if(findDefaultFunctionDeclaration(e_copy_constructor, classDefinition)==NULL)
+  	generateDefaultFunctionDeclaration(e_copy_constructor,classDefinition);
+        if(findDefaultFunctionDeclaration(e_assignment_operator, classDefinition)==NULL)
+  	generateDefaultFunctionDeclaration(e_assignment_operator,classDefinition);
+        
+        break;
+      }
+     default:
+     {
+     }
+    }
+  }
+  if (pass == 2) {
+    switch (astNode->variantT()) {
+   // 
+    case V_SgInitializedName:
+      {
+        SgInitializedName *initName = isSgInitializedName(astNode);
+        ROSE_ASSERT(initName != NULL);
+  
+        if (initName->get_storageModifier().isExtern())
+  	 {
+  	   break;
+  	 }
+        if (SgVariableDeclaration *varDecl = isSgVariableDeclaration(initName->get_parent()))
+  	 {
+
+   // DQ (5/10/2007): Fixed linkage to be a std::string instead of char*
+   // if (varDecl->get_linkage() != NULL || varDecl->get_declarationModifier().get_storageModifier().isExtern())
+  	   if (varDecl->get_linkage().empty() == false || varDecl->get_declarationModifier().get_storageModifier().isExtern())
+  	      {
+  		break;
+  	      }
+  	 }
+  
+        if (!getClassDefinition(initName->get_type()))
+  	 {
+  	   break;
+  	 }
+  
+	SgInitializer *newInit = normalizeInitializer(initName->get_initializer(), initName->get_type());
+        initName->set_initializer(newInit);
+	newInit->set_parent(initName);
+        break;
+      }
+  // Cases 3,4
+    case V_SgNewExp:
+      {
+        SgNewExp *newExp = isSgNewExp(astNode);
+        ROSE_ASSERT(newExp != NULL);
+
+        SgExpression *builtinArgs = newExp->get_builtin_args();
+        SgConstructorInitializer *ctorArgs = newExp->get_constructor_args();
+  
+        SgType *t = newExp->get_specified_type();
+  
+        if (!getClassDefinition(t))
+  	 {
+  	   break;
+  	 }
+  
+        if (SgAssignInitializer *builtinArgsAssignInit = isSgAssignInitializer(builtinArgs))
+  	 {
+  	   SgInitializer *newCtorArgs =
+  		   normalizeInitializer(builtinArgsAssignInit, t);
+  	   
+  	   newExp->set_builtin_args(NULL);
+  	   delete builtinArgs;
+  	   delete ctorArgs;
+  
+  	   newExp->set_constructor_args(isSgConstructorInitializer(newCtorArgs));
+  	   newCtorArgs->set_parent(newExp);
+  	 }
+        else
+  	 {
+  	   SgInitializer *newCtorArgs =
+  		   normalizeInitializer(ctorArgs, t);
+  	   
+  	   newExp->set_constructor_args(isSgConstructorInitializer(newCtorArgs));
+  	   if (newCtorArgs != ctorArgs)
+  	      {
+  		delete ctorArgs;
+  	      }
+  	 }
+  
+        break;
+      }
+   // Special Cases (temporaries)
+    case V_SgConstructorInitializer:
+    case V_SgAssignInitializer:
+      {
+        // if handled by above 2 cases
+        SgNode *parent = astNode->get_parent();
+        if (isSgInitializedName(parent) || isSgNewExp(parent))
+  	 {
+  	   break;
+  	 }
+  
+        if (!getClassDefinition(isSgInitializer(astNode)->get_type()))
+  	 {
+  	   break;
+  	 }
+  
+        if (SgConstructorInitializer *ctorInit = isSgConstructorInitializer(astNode))
+  	 {
+  	   normalizeCtorInitializer(ctorInit);
+  	 }
+        else if (SgAssignInitializer *assignInit = isSgAssignInitializer(astNode))
+  	 {
+  	   SgConstructorInitializer *newCtorInit = normalizeAssignInitializer(assignInit);
+  	   if (newCtorInit != NULL)
+  	      {
+  		SgExpression *assignInitParent = isSgExpression(assignInit->get_parent());
+  		ROSE_ASSERT(assignInitParent != NULL);
+  
+  		if (!assignInitParent->replace_expression(assignInit, newCtorInit))
+  		   {
+  		     ROSE_ASSERT(false);
+  		   }
+  
+  		// delete assignInit; // this will work for postorder I think
+  	      }
+  	 }
+        break;
+      } 
+    case V_SgAssignOp:
+      {
+        SgAssignOp *assignOp = isSgAssignOp(astNode);
+        ROSE_ASSERT(assignOp != NULL);
+  
+        SgExpression *lhs = assignOp->get_lhs_operand();
+        
+        SgClassDefinition *clsDef = getClassDefinition(lhs->get_type());
+        if (clsDef == NULL)
+  	 {
+  	   break;
+  	 }
+        if (clsDef->get_declaration()->get_name() == "")
+  	 {
+  	   break;
+  	 }
+  
+        SgFunctionCallExp *fnCall = translateAssignmentToOperatorEqCall(lhs, assignOp->get_rhs_operand(), clsDef);
+  
+        SgExpression *assignOpParent = isSgExpression(assignOp->get_parent());
+        ROSE_ASSERT(assignOpParent != NULL);
+  
+        assignOpParent->replace_expression(assignOp, fnCall);
+      }
+    default:
+      {
+      }
+    }
+  }
+}
+
+void
+defaultFunctionGenerator(SgProject *prj)
+   {
+     DefaultFunctionGenerator dfg;
+     dfg.pass = 1;
+     dfg.traverse(prj, preorder);
+     dfg.pass = 2;
+     dfg.traverse(prj, preorder);
+     AstPDFGeneration g;
+     g.generate("before", prj);
+     AstPostProcessing(prj);
+     g.generate("after", prj);
+     AstTests::runAllTests(prj);
+   }

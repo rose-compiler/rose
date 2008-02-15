@@ -1,0 +1,68 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgToken
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static const SgToken::token_element SgToken::ROSE_Fortran_keyword_map[127]
+*/
+/*!\var std::string SgToken::p_lexeme_string
+*/
+/*!\var unsigned int SgToken::p_classification_code
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgToken::SgToken(Sg_File_Info *startOfConstruct,std::string lexeme_string=(""),unsigned int classification_code=(0))
+*/
+/*!\fn SgToken::SgToken(const SgTokenStorageClass &source)
+*/
+/*!\fn inline static void SgToken::operator delete(void *pointer)
+*/
+/*!\fn static SgToken *SgToken::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgToken::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgToken::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgToken::initializeStorageClassArray(SgTokenStorageClass *storageArray)
+*/
+/*!\fn static void SgToken::clearMemoryPool()
+*/
+/*!\fn static void SgToken::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgToken::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgToken::roseRTI()
+*/
+/*!\fn virtual SgNode *SgToken::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgToken::~SgToken()
+*/
+/*!\fn void SgToken::set_classification_code(unsigned int classification_code)
+\description See  classification_code)
+classification_code for documentation */
+/*!\fn void SgToken::set_lexeme_string(std::string lexeme_string)
+\description See  lexeme_string)
+lexeme_string for documentation */
+/*!\fn std::string SgToken::get_lexeme_string() const
+\description See  const
+lexeme_string for documentation */
+/*!\fn unsigned int SgToken::get_classification_code() const
+\description See  const
+classification_code for documentation */
+/*!\fn virtual SgNode *SgToken::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgToken::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgToken::get_numberOfTraversalSuccessors()
+\description See  SgToken::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgToken::get_traversalSuccessorContainer()
+\description See  SgToken::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgToken::get_traversalSuccessorNamesContainer()
+\description See  SgToken::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgToken::SgToken(std::string lexeme_string,unsigned int classification_code)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_32387489;

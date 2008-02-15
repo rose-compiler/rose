@@ -1,0 +1,92 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClinkageStartStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgClinkageStartStatement
+\brief This class represents the concept of a C style "extern \"C\" " declaration.  But
+    such information (linkage) is stored within linkage modifiers currently.
+
+    This class is no longer used, see SgLinkageModifier for more details on 
+how this is handled currently.
+
+\deprecated This class is not used and will be removed in a later release.
+
+\sa
+\ref SgClinkageStartStatement_usage  "Example of using a SgClinkageStartStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClinkageStartStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgClinkageStartStatement::p_dummyString14
+\brief This pointer points to C style character string.
+
+\deprecated This data member (and the whole class) is not used and will be removed in a later release.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClinkageStartStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgClinkageStartStatement::SgClinkageStartStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgClinkageStartStatement base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgClinkageStartStatement_create "Example:create an SgClinkageStartStatement object"
+*/
+
+/*!
+\fn SgClinkageStartStatement::~SgClinkageStartStatement()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgClinkageStartStatement::isSgClinkageStartStatement (SgNode *s)
+\brief Cast function (from derived class to SgClinkageStartStatement pointer).
+
+   This functions returns a SgClinkageStartStatement pointer for any input of a 
+pointer to an object derived from a SgClinkageStartStatement.
+
+\return Returns valid pointer to SgClinkageStartStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgClinkageStartStatement::isSgClinkageStartStatement (const SgNode *s)
+\brief Cast function (from derived class to SgClinkageStartStatement pointer).
+
+   This functions returns a SgClinkageStartStatement pointer for any input of a 
+pointer to an object derived from a SgClinkageStartStatement.
+
+\return Returns valid pointer to SgClinkageStartStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgClinkageStartStatement::get_dummyString14() const
+\brief Returns pointer to a char (C style string).
+
+\deprecated This access function (and the whole class) is not used and will be removed in a later release.
+
+\return Returns pointer to char.
+*/
+
+/*!
+\fn SgClinkageStartStatement::set_dummyString14(char* dummyString14)
+\brief Access function for p_dummyString14 (C style string).
+
+\deprecated This access function (and the whole class) is not used and will be removed in a later release.
+
+\return Returns void.
+*/
+

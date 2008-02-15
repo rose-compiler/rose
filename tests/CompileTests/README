@@ -1,0 +1,31 @@
+This directory contains tests for ROSE.  All rose preprocessors should
+be able to parse, process internally (generate ASTs), unparse, and
+compile (with a C++ compiler)  the codes in each of these directories.
+
+   The execution of the codes is not tested using theses tests, though
+we might add that later.  A more complete test is to use a ROSE preprocessor
+to compile a separate projects (like A++/P++) and then test if the resulting
+libraries and executables pass the project's tests.  This can (and likely 
+should) be done separately from the testing of ROSE to avoid secondary project
+dependencies within ROSE's tests.
+
+A++Tests: 
+    This directory contains the A++ source code with header files and is used
+    to test the parsing, construction of AST's, and unparsing.  If the tests pass
+    the we know that the ROSE preprocessor has correctly read, processed, and unparsed
+    the resulting files.  The test pass if ROSE generates good sufficient to compile
+    properly using the target C++ compiler (KCC for the moment).
+
+A++MDI:
+   This directory contains the C code used within A++ and represents a test of
+   the ROSE preprocessor to read C code, generate internal AST's, and unparse 
+   it correctly (so that it will compile properly).
+
+C++Code:
+   A collection of C++ test codes (not dependent upon any external libraries (e.g. A++)).
+
+C_Code:
+   A collection of C test codes (not dependent upon any external libraries (e.g. A++)).
+
+
+

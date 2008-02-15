@@ -1,0 +1,141 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSymbol
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgSymbol
+\brief This class represents the concept of a name within the compiler.
+
+Symbols are a simpler way for the compiler to quickly associate types, 
+declarations and names.  It is also more compact than carrying around 
+names as strings.  The SgSymbol can contain many references and is a shared 
+IR node.
+
+    A "symbol" within the compiler is a concept of a name.  The simplest
+example is a variable name, the variable most often has a name but internally 
+within the compiler the variable is referenced as a symbol, the symbol data
+struction contains a name, type, and declaration (where the name was first
+associated with the type).  Each variable has an associated symbol and each
+variable reference internally stores a pointer to the single symbol representing
+that variable.  this avoids the compiler internally relying upon string
+processing to compile variable (different symbols can be trivially
+compared to either have the same address on not).  Each named entity
+within the language's translation within the AST has a unique symbol.
+Mappings from names to symbols are held in the "Symbol Table" which provides
+for a quick (hashed) lookup on the symbol for any name.  Mappings from the symbol to
+the name are held through pointers to the declaration (stored within the symbol).
+
+   To organize the symbols, they are differentiated by type, each symbol is
+derived from the SgSymbol class and defines a specialized interface for that
+specific kind of IR node.  For example, there are symbol objects specific to classes,
+templates, variable, enums, functions, member functions, lables, function types,
+namespaces, typedefs, etc.  In each case these symbols contain a name (or method
+for generating a name when it is located elsewhere), and a declaration, and
+often a reference to a type (or function to returning the type if not held 
+in the symbol directly).
+
+   Each SgSymbol has a get_name() member function which gets the associated name
+of the symbol, usually from the stored declaration. A few symbols have an explicitly 
+stored name (SgName), this is done where the name is derived from a named type (SgNamedType).
+
+    IMPORTANT: Declarations in Symbols \n
+Indepedent of the different kinds of declarations (declarations are statements),
+declarations can be considered to be definind and non-defining.  See
+\ref SgDeclarationStatement for details.  where there exist defining and 
+non-defining declarations symbols within Sage III always reference non-defining 
+declarations (only non-defining declarations are shared within the AST).
+
+    There are no uses of this IR node anywhere.  All expressions and statements
+are derived from this IR node to build either SgExpression or SgStatement 
+derived classes.
+
+\internal This is a base class for all symbols.
+
+\todo Consider derivation of SgEnumSymbol, SgClassSymbol, and SgTypedefSymbol from a
+    common SgTypeSymbol.  Then supporting functions for SgTypeSymbol would lookup
+    any of these type based symbols.
+
+\sa \ref SgDeclarationStatement
+
+\sa
+\ref SgSymbol_usage  "Example of using a SgSymbol object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSymbol data members
+/////////////////////////////////////////////////////////////////////////
+
+/*
+\var SgSymbol::p_startOfConstruct
+\brief This pointer is always valid and stores the source position of the start of the
+current construct.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSymbol member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgSymbol::SgSymbol (const SgSymbol &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+
+/*!
+\fn SgSymbol::SgSymbol()
+\brief This is the default constructor.
+
+   This constructor builds the SgSymbol base class.
+
+\sa 
+\ref SgSymbol_create "Example:create an SgSymbol object"
+*/
+
+/*!
+\fn SgSymbol::~SgSymbol()
+\brief This is the destructor.
+
+*/
+
+/*!
+\fn SgSymbol::get_name() const
+\brief Access function for getting name from declarations or types internally.
+
+\internal This is a virtual function.
+
+\return Returns SgName.
+*/
+
+/*!
+\fn SgSymbol::get_type() const 
+\brief This function returns the type associated with the named entity.
+
+\internal This is a virtual function.
+
+\return Returns SgType*.
+*/
+
+/*!
+\fn SgSymbol::isSgSymbol (SgNode *s)
+\brief Cast function (from derived class to SgSymbol pointer).
+
+   This functions returns a SgSymbol pointer for any input of a 
+pointer to an object derived from a SgSymbol.
+
+\return Returns valid pointer to SgSymbol if input is derived from a SgSymbol.
+*/
+
+/*!
+\fn SgSymbol::isSgSymbol (const SgNode *s)
+\brief Cast function (from derived class to SgSymbol pointer).
+
+   This functions returns a SgSymbol pointer for any input of a 
+pointer to an object derived from a SgSymbol.
+
+\return Returns valid pointer to SgSymbol if input is derived from a SgSymbol.
+*/
+
+
+
+

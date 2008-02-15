@@ -1,0 +1,15 @@
+ /*!
+     \defgroup LanguageIndependentCodeGenerator Backend Language Independent Code Generator
+     \ingroup ROSE_BackEndGroup
+
+     \brief Generates calls to the appropriate language to build source code from the AST.
+
+     Generates source code directly from AST.
+
+     \note There are no user level functions within the backend.  The only three related
+          functions are available from the SgNode interface ( SgNode::unparseToString() ) and
+          SgFile and SgProject interfaces ( SgFile::unparse() and SgProject::unparse(),
+          respectively).
+
+  */
+

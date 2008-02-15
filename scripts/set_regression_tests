@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# Author: Dan Quinlan
+# Date: 8/28/2006
+# File: set_regression_tests
+# Purpose: Change location of example ROSE translator used 
+#          for QMTest testing on desktop vs. laptop.
+#
+###############################################################################
+
+# Usage
+
+if (( $# < 1 )); then
+  echo "Usage: set_regression_tests {desktop|laptop}"
+  exit 1
+fi
+
+case $1 in
+   desktop)
+      list="rose_regression_*"
+      for arg in $list
+      do
+       # copy the *.desktop files into place.
+         if [ -f ${arg}.desktop ]; then
+            echo "copying ${arg}.desktop to $arg"
+            cp ${arg}.desktop $arg
+         else
+            echo "file not found (searching for ${arg}.desktop using $arg)!"
+         fi
+      done;;
+
+   laptop) 
+      echo "laptop files not handled yet"
+      list="rose_regression_*"
+      for arg in $list
+      do
+       # copy the *.desktop files into place.
+         if [ -f ${arg}.desktop ]; then
+            echo "copying ${arg}.laptop to $arg"
+            cp ${arg}.laptop $arg
+         else
+            echo "file not found (searching for ${arg}.laptop using $arg)!"
+         fi
+      done;;
+
+   *)
+      echo "Usage: set_regression_tests {desktop|laptop}: Unrecognized argument"; exit 1;;
+
+esac
+
+

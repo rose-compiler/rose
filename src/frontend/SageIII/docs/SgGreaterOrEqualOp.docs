@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgGreaterOrEqualOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgGreaterOrEqualOp::SgGreaterOrEqualOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgGreaterOrEqualOp::SgGreaterOrEqualOp(const SgGreaterOrEqualOpStorageClass &source)
+*/
+/*!\fn inline static void SgGreaterOrEqualOp::operator delete(void *pointer)
+*/
+/*!\fn static SgGreaterOrEqualOp *SgGreaterOrEqualOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgGreaterOrEqualOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgGreaterOrEqualOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgGreaterOrEqualOp::initializeStorageClassArray(SgGreaterOrEqualOpStorageClass *storageArray)
+*/
+/*!\fn static void SgGreaterOrEqualOp::clearMemoryPool()
+*/
+/*!\fn static void SgGreaterOrEqualOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgGreaterOrEqualOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgGreaterOrEqualOp::roseRTI()
+*/
+/*!\fn virtual SgGreaterOrEqualOp::~SgGreaterOrEqualOp()
+*/
+/*!\fn virtual SgNode *SgGreaterOrEqualOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgGreaterOrEqualOp::precedence() const
+*/
+/*!\fn virtual void SgGreaterOrEqualOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgGreaterOrEqualOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgGreaterOrEqualOp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgGreaterOrEqualOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgGreaterOrEqualOp::get_numberOfTraversalSuccessors()
+\description See  SgGreaterOrEqualOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGreaterOrEqualOp::get_traversalSuccessorContainer()
+\description See  SgGreaterOrEqualOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGreaterOrEqualOp::get_traversalSuccessorNamesContainer()
+\description See  SgGreaterOrEqualOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgGreaterOrEqualOp::SgGreaterOrEqualOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_593437576;

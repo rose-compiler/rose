@@ -1,0 +1,337 @@
+/* rose_config.h.in.  Generated from configure.in by autoheader.  */
+
+/* Major version number of backend C++ compiler. */
+#undef BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER
+
+/* Minor version number of backend C++ compiler. */
+#undef BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
+
+/* Name of backend C++ compiler excluding path (used to select code generation
+   options). */
+#undef BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH
+
+/* Name of backend C++ compiler including path (may or may not explicit
+   include path; used to call backend). */
+#undef BACKEND_CXX_COMPILER_NAME_WITH_PATH
+
+/* Name of backend C compiler including path (may or may not explicit include
+   path; used to call backend). */
+#undef BACKEND_C_COMPILER_NAME_WITH_PATH
+
+/* Internal consistancy tests. */
+#undef CHECKING
+
+/* Include path for backend C++ compiler. */
+#undef CXX_INCLUDE_STRING
+
+/* -D options to hand to EDG C++ front-end. */
+#undef CXX_SPEC_DEF
+
+/* Include path for backend C compiler. */
+#undef C_INCLUDE_STRING
+
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
+/* Define to 1 if you have the <c_asm.h> header file. */
+#undef HAVE_C_ASM_H
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Use explicit template instantiation. */
+#undef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
+
+/* Define to 1 if you have the `getcwd' function. */
+#undef HAVE_GETCWD
+
+/* Define to 1 if you have the `gethrtime' function. */
+#undef HAVE_GETHRTIME
+
+/* Define to 1 if you have the `getpagesize' function. */
+#undef HAVE_GETPAGESIZE
+
+/* Define to 1 if you have the `getwd' function. */
+#undef HAVE_GETWD
+
+/* Define to 1 if hrtime_t is defined in <sys/time.h> */
+#undef HAVE_HRTIME_T
+
+/* Define to 1 if you have the <intrinsics.h> header file. */
+#undef HAVE_INTRINSICS_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* libjpeg present */
+#undef HAVE_LIBJPEG
+
+/* libpng present */
+#undef HAVE_LIBPNG
+
+/* Define if you have libxml2. */
+#undef HAVE_LIBXML2
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if long double works and has more range or precision than
+   double. */
+#undef HAVE_LONG_DOUBLE
+
+/* Define to 1 if you have the `mach_absolute_time' function. */
+#undef HAVE_MACH_ABSOLUTE_TIME
+
+/* Define to 1 if you have the <mach/mach_time.h> header file. */
+#undef HAVE_MACH_MACH_TIME_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mktime' function. */
+#undef HAVE_MKTIME
+
+/* Define to 1 if you have a working `mmap' system call. */
+#undef HAVE_MMAP
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+#undef HAVE_NDIR_H
+
+/* Define to 1 if you have the `read_real_time' function. */
+#undef HAVE_READ_REAL_TIME
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcoll' function and it is properly defined.
+   */
+#undef HAVE_STRCOLL
+
+/* Define to 1 if you have the `strcspn' function. */
+#undef HAVE_STRCSPN
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the `strftime' function. */
+#undef HAVE_STRFTIME
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strspn' function. */
+#undef HAVE_STRSPN
+
+/* Define to 1 if you have the `strstr' function. */
+#undef HAVE_STRSTR
+
+/* Define to 1 if you have the `strtod' function. */
+#undef HAVE_STRTOD
+
+/* Define to 1 if you have the `strtol' function. */
+#undef HAVE_STRTOL
+
+/* Define to 1 if you have the `strtoul' function. */
+#undef HAVE_STRTOUL
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the `time_base_to_time' function. */
+#undef HAVE_TIME_BASE_TO_TIME
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define if you have the UNICOS _rtc() intrinsic. */
+#undef HAVE__RTC
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if the C compiler supports function prototypes. */
+#undef PROTOTYPES
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Location of ROSE Compile Tree. */
+#undef ROSE_COMPILE_TREE_PATH
+
+/* Control use of SAGE within EDG. */
+#undef SAGE_TRANSFORM
+
+/* Define to 1 if the `setvbuf' function takes the buffering type as its
+   second argument and the buffer pointer as the third, as on System V before
+   release 3. */
+#undef SETVBUF_REVERSED
+
+/* The size of a `char', as computed by sizeof. */
+#undef SIZEOF_CHAR
+
+/* The size of a `double', as computed by sizeof. */
+#undef SIZEOF_DOUBLE
+
+/* The size of a `float', as computed by sizeof. */
+#undef SIZEOF_FLOAT
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of a `long double', as computed by sizeof. */
+#undef SIZEOF_LONG_DOUBLE
+
+/* The size of a `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of a `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of a `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
+#undef TM_IN_SYS_TIME
+
+/* Link-time support for Insure. */
+#undef USE_INSURE
+
+/* Support for Purify */
+#undef USE_PURIFY
+
+/* Support for Purify API (Compiling with the Purify library). */
+#undef USE_PURIFY_API
+
+/* Link-time support for Purify. */
+#undef USE_PURIFY_LINKER
+
+/* Controls use of ROSE support for bddbddb (Binary decision diagrams (BDD)
+   BDD-Based Deductive DataBase. */
+#undef USE_ROSE_BDDBDDB_SUPPORT
+
+/* Controls use of ROSE support for Binary Analysis. */
+#undef USE_ROSE_BINARY_ANALYSIS_SUPPORT
+
+/* Controls use of BOOST WAVE support in ROSE. */
+#undef USE_ROSE_BOOST_WAVE_SUPPORT
+
+/* Controls if EDG Union/Struct debugging support is to be used. */
+#undef USE_ROSE_EDG_DEBUGGING_SUPPORT
+
+/* Controls use of ROSE support for JavaJVM (required for the Open Fortran
+   Parser from LANL). */
+#undef USE_ROSE_JAVA_JVM_SUPPORT
+
+/* Controls use of ROSE support for Java (required for the Open Fortran Parser
+   from LANL). */
+#undef USE_ROSE_JAVA_SUPPORT
+
+/* Controls use of ROSE support for Maple Symbolic Algebra Package. */
+#undef USE_ROSE_MAPLE_SUPPORT
+
+/* Controls use of ROSE support for OpenMP Translator. */
+#undef USE_ROSE_OPENMP_SUPPORT
+
+/* Controls use of ROSE support for Fortran 2003 (using the Open Fortran
+   Parser from LANL). */
+#undef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
+/* Controls use of ROSE SQLite Database Support. */
+#undef USE_ROSE_SQL_DATABASE_SUPPORT
+
+/* Controls use of ROSE support for XML (libxml2). */
+#undef USE_ROSE_XML_SUPPORT
+
+/* Controls use of ROSE support for Yices Satisfiability Modulo Theories (SMT)
+   Solver Package. */
+#undef USE_ROSE_YICES_SUPPORT
+
+/* Support for SAGE 3 over SAGE 2. */
+#undef USE_SAGE3
+
+/* Support for PURIFY debugging software. */
+#undef USING_PURIFY
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Define to 1 if type `char' is unsigned and you are not using gcc.  */
+#ifndef __CHAR_UNSIGNED__
+# undef __CHAR_UNSIGNED__
+#endif
+
+/* Define like PROTOTYPES; this can be used by system headers. */
+#undef __PROTOTYPES
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `long' if <sys/types.h> does not define. */
+#undef off_t
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t

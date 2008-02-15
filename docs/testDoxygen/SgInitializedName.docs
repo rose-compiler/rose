@@ -1,0 +1,355 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializedName
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgInitializedName 
+\brief This class represents the notion of a declared variable.  
+ 
+
+Each variable in the program has a SgInitializedName object which
+represents its definition. A SgVariableDeclaration for example might
+contain several SgInitializedName objects, while the
+SgInitializedName contains the declaration for \em one
+variable. Each variable use (VarRefExp for example) must have a link
+to the SgInitializedName object where that specific variable was
+defined.
+
+\b What \b really \b happens
+
+Currently, each SgVariableDeclaration contains \b only \b one SgInitializedName
+
+In order to have a valid SgInitializedName object, this information must be provided :
+- the variable name which represents the variable that is being declared in this class.
+- the variable type
+- the declaration object which contains the SgInitializedName ( this might be a SgVariableDeclaration, SgFunctionParameterList, SgClassDeclaration,etc)
+ 
+\sa 
+
+\ref SgInitializedName_create "Example of creating an SgInitializedName object"
+
+\ref SgInitializedName_usage  "Example of using an SgInitializedName object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializedName data members
+/////////////////////////////////////////////////////////////////////////
+
+
+
+/*!
+\var SgInitializedName::p_fileInfo
+\brief This pointer is always valid and stores the source position of the start a name.
+
+This is an Sg_File_Info object which represents the source position of the starting of
+the name represented by the SgInitializedName object (variable name, function name, etc.).
+*/
+
+/*!
+\var SgInitializedName::p_name
+\brief The variable that is declared in this declaration
+
+This is a SgName object which represents the variable that is being declared in this SgInitializedName object.
+For example, if there is a "int x" declaration in the code, "x" is the variable that will be stored in SgInitializedName::p_name as a SgName object.
+*/
+
+/*!
+\var SgInitializedName::p_typeptr
+\brief Pointer to a type object that has been associated with SgInitializedName::p_name
+
+
+This is a pointer that points to an SgType object that represents
+the type the variable SgInitializedName::p_name declared in this SgInitializedName
+class (in this declaration). For example, if the variable is of type
+"int" (as in "int x"), then a SgTypeInt object has to be allocated , and a pointer
+to this SgTypeInt object has to be stored in SgInitializedName::p_typeptr to represent
+the type of SgInitializedName::p_name.
+
+*/
+/*!
+\var SgInitializedName::p_initptr
+\brief  Pointer to an initializer for the variable.
+
+In the case that the declaration contains an initializer for the variable, for example "int x=5" or "int x=y" (in these cases the intializers for the declared variable are "5" and "y"), that initializer has to be stored in SgInitializedName::p_initptr as a pointer that points to the SgInitializer object that the SgInitializedName::p_name variable is initialized with. 
+
+*/
+
+/*!
+\var SgInitializedName::p_prev_decl_item
+\brief Pointer to the initial uses of this variable previous to its redeclaration declaration.
+
+\b Dan's \b intuitive \b explanation
+This pointer references any initialized name previously built to define a SgVarRefExp,
+which requires a pointer to a variable declaration (but points to a SgInitializedName
+since a SgVariableDeclaration could stand for many variables (not just one, e.g. 
+"int x,y,z;"), since uniqueness is required.  Although non-intuative, C++ code defined 
+within a class definition can
+reference variables before they are defined (e.g. "class X { int foo() { return x; } int x; };"), 
+see test2005_67.C (non-static data member) and test2005_68.C (static data member).  
+It is also used by a SgInitializedName in a static declaration outside the class to
+refer to the preliminary declaration inside the class.
+(e.g. "class X { static int a;}; int X::a = 0; };")
+
+*/
+
+
+/*!
+\var SgInitializedName::p_is_initializer
+\brief flag to determine whether the declaration has an initializer.
+
+If the declaration has an initializer, for example "int x=5", then
+this flag is set to true. The flag is set to false otherwise.
+*/
+
+/*!
+\var SgInitializedName::p_declptr
+\brief Pointer to the declaration object where this SgInitializedName object belongs to.
+
+\b Alin's \b intuitive \b explanation
+
+Each SgInitializedName object contains the declaration of \em one
+variable. In the case where the code has more declarations in a
+single statement, for example "int x=5,y=3;", that declaration is
+composed of two SgInitializedName objects, one for each variable
+declared in that statment. So, this SgInitializedName::p_declptr points to the
+statement (actually the declaration - SgDeclaration) that contains it.
+
+\b What \b really \b happens
+
+
+For the first SgInitializedName, this points to the the
+SgDeclarationStatement that contains this SgInitializedName. For the
+second one, it is set to an unknown SgDeclarationStatement that does
+not show up in the pdf or the dot files (not traversed).
+
+\b Dan's \b explaination
+
+   This points to the SgVariableDefinition and is the same as get_definition().
+
+*/
+
+/*!
+\var SgInitializedName::p_itemptr
+\brief Pointer to the next SgInitializedName in the declaration.
+
+
+\b Alin's \b intuitive \b explanation
+
+This is a pointer to the next SgInitializedName in a declaration
+statement. For example, if there is a declaration statement of this
+form "int x=5,y=3", and the current SgInitializedName represents
+variable "x", the next SgInitializedName in the current declaration
+is for the variable "y".
+
+\b What \b really \b happens
+
+This is the pointer that points to a nested SgInitializedName object
+that has the same variable name, variable type, but it has a
+different declaration statement and a different SgStorageModifier
+(this one makes sens). For the nested SgInitalizedName::p_itemptr
+object, this data member is set to 0 and the SgInitializedName::p_prev_itemptr data
+member is set to the parent SgInitializedName.
+
+*/
+
+
+/*!
+\var SgInitializedName::p_prev_itemptr
+\brief  Pointer to the previous SgInitializedName in the declaration.
+
+ \b Alin's \b intuitive \b explanation
+
+This is a pointer to the previous SgInitializedName in a declaration
+statement. For example, if there is a declaration statement of this
+form "int x=5,y=3", and the current SgInitializedName represents
+variable "y", the next SgInitializedName in the current declaration
+is for the variable "x".
+
+\b What \b really \b happens
+
+For the first level SgInitializedName, this data member is set to 0. For the nested one, this is set to the parent SgInitializedName.
+
+*/
+
+/*!
+\var SgInitializedName::p_storageModifier
+\brief This is the storage modifier (static, auto, register, mutable, asm, etc.).
+
+This is the storage modifier (static, auto, register, mutable, asm, etc.), see complete
+list in source code for more details.  This is an implementation of the modifier system
+as outlined in appendix A of Bjarne's book.
+
+\internal Note that isStatic() in the SgInitializedName is always false, is is set in the
+SgStorageModifier stored in the SgVariableDeclaration (where it is filed of the SgDeclarationModifier).
+*/
+
+/*!
+\var SgInitializedName::p_scope
+\brief This pointer is always valid and stores the current scope of the variable.
+
+This is the current scope of the variable (required because variables can be defined
+separately from their declaration).  See test2004_133.C (approx).
+*/
+
+/*!
+\var SgInitializedName::p_preinitialization
+\brief This data member stores an enum value.
+
+This value is set based on an enum value to indicate the type of use of the initialized
+name (valid values are: virtual base class, non-virtual base, data member).
+
+\internal I think that the preinitalization information might be redundant with the
+SgStorageModifier information.
+*/
+
+/*!
+\var SgInitializedName::p_register_name_code
+\brief Code (following GNU standard) for register name.
+
+This value is set based on an enum value of GNU standard codes mappings to register names.
+
+\internal This is a very architecture dependent aspect of the Sage III IR.  We only
+    currently represent code for the Intel X86 processor.
+*/
+
+/*!
+\var SgInitializedName::p_register_name_name
+\brief String representing the register name, used when associated GNU code can't be translated.
+
+This is a string value representing the name specified (untranslated to the GNU standard
+register codes). The string is used when the name specified by theused was
+untranslatable to a more compact GNU code.  This forces the IR to hold an rarely
+used string object in a frequently used IR node, but I don't think we have any
+simple way around this detail since we have to support the more general use of 
+the asm options in C and C++.
+
+\internal This is less architecture dependent than the GNU standard register codes, but
+    takes more storage (though it is not used often).
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializedName member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\fn SgInitializedName::error
+\brief 
+
+*/
+
+/*!
+\fn SgInitializedName::get_storageModifier()
+\brief returns a reference to the storage modifier
+
+*/
+/*!
+\fn SgInitializedName::post_construction_initialization ()
+\brief Allocates a new storage modifier and sets the storage modifier to default values
+
+*/
+
+
+
+/*!
+\fn SgInitializedName::SgInitializedName (const SgInitializedName &ptr)
+\brief This is the copy constructor
+
+*/
+
+/*!
+\fn SgInitializedName::SgInitializedName ( Sg_File_Info* fileInfo, const SgName& name, SgType *typeptr, SgInitializer* iptr, 
+                                           SgDeclarationStatement *declptr, SgScopeStatement* scope, SgInitializedName *prev_itemptr );
+\brief This is the constructor
+
+
+
+\param fileInfo pointer to source position (also used to mark compiler generated or transformed code)
+\param name the variable name
+\param typeptr a pointer to the variable's type object
+\param iptr pointer to the initializer of the variable ( if any)
+\param declptr pointer to the declaration statement to which this SgInitializedName belongs to
+\param scope pointer to SgScopeStatement to explicitly represent the scope of the variable (required for ROSE, but mostly useful in C++)
+\param itemptr the next SgInitializedName object in the parent declaration statement
+\param prev_itemptr the previous SgInitializedName object in the parent declaration statement
+\sa 
+\ref SgInitializedName_create "Example:create an SgInitializedName object"
+*/
+
+/*!
+\fn SgInitializedName::SgInitializedName(const SgName &name, SgType *typeptr, SgInitializer *iptr=0, SgDeclarationStatement *declptr=0, SgInitializedName *itemptr=0, SgInitializedName *prev_itemptr=0)
+\brief This is the constructor
+
+\deprecated This is an older constructor which does not include the Sg_File_Info or the
+    SgScopeStatement in its parameter list.  These must be set explicitly using the data
+    member's access functions when using this constructor.
+
+\param name the variable name
+\param typeptr a pointer to the variable's type object
+\param iptr pointer to the initializer of the variable ( if any)
+\param declptr pointer to the declaration statement to which this SgInitializedName belongs to
+\param itemptr the next SgInitializedName object in the parent declaration statement
+\param prev_itemptr the previous SgInitializedName object in the parent declaration statement
+\sa 
+\ref SgInitializedName_create "Example:create an SgInitializedName object"
+*/
+
+/*!
+\fn  SgNode * SgInitializedName::copy (const SgCopyHelp &help) const
+\brief It clones the current SgInitializedName object recursively or not, depending on the argument
+
+
+\param help - If this argument is of type SgTreeCopy, then the
+SgInitializedName is cloned recursively. If it's of type SgShallowCopy
+only the first level of SgInitializedName is copied, everything else
+pointing to the the original SgInitializedName object's data members.
+
+
+\return a pointer to the new clone.
+
+*/
+
+
+
+/*!
+\fn SgInitializedName & SgInitializedName::operator= (const SgInitializedName &ptr)
+\brief assignment operator. It copies \b everything (including pointers) from the rhs object to the lhs object
+
+
+It copies all the data members of the rhs SgInitializedName object
+to the lhs (this) object. The copying is done by value, so all the
+data member pointers are copied by \b value. After the assignment
+operator is executed, both operands \b share the same data
+members. Actually there is a note in the source code (Cxx_Grammar.h)
+that says that this needs to be executed recursively ( allocating
+new data members for the newly assigned object).  
+
+*/
+
+
+/*!
+\fn bool SgInitializedName::operator== (const SgInitializedName &) const
+\brief  Equal operator : it checks if all the data members are the same or point to the same objects
+
+\b What \b really \b happens
+It returns false all the time. 
+
+*/
+
+
+/*!
+\fn SgInitializedName::p_name
+\brief variable x
+
+detailed variable x
+*/
+
+
+/*!
+\fn bool SgInitializedName::get_declaration() const
+\brief  Equal operator : it checks if all the data members are the same or point to the same objects
+
+\returns Pointer to SgDeclarationStatement
+
+*/
+

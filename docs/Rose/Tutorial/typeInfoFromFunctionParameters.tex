@@ -1,0 +1,99 @@
+% \chapter{Getting Type Information from Function Parameters}
+\chapter{Function Parameter Types}
+
+   The analysis of functions often requires the query of the
+function types.  This tutorial example shows how to obtain the
+the function parameter types for any function.  Note that functions
+also have a type which is based on their signature, a combination
+of their return type and functions parameter types.  Any functions 
+sharing the same return type and function parameter types have the 
+same function type (the function type, a SgFunctionType IR node, 
+will be shared between such functions).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/typeInfoFromFunctionParameters.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/typeInfoFromFunctionParameters.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to get type information from function parameters.}
+\label{Tutorial:exampleTypeInfoFromFunctionParameters}
+\end{figure}
+
+   Figure~\ref{Tutorial:exampleTypeInfoFromFunctionParameters} shows a translator which
+reads an application (shown in
+figure~\ref{Tutorial:exampleInputCode_TypeInfoFromFunctionParameters}) 
+and outputs information about the function parameter types for each function,
+shown in figure~\ref{Tutorial:exampleOutput_TypeInfoFromFunctionParameters}.
+This information includes the order of the function declaration in the global
+scope, and name of the function, and the types of each parameter declared in 
+the function declaration.
+
+Note that there are a number of builtin functions defined as part of the
+GNU g++ and gcc compatibility and these are output as well.  These are
+marked as compiler generated functions within ROSE.  The code shows how
+to differentiate between the two different types.  Notice also that 
+instantiated template functions are classified as {\em compiler generated}.
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_TypeInfoFromFunctionParameters.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_TypeInfoFromFunctionParameters.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to typeInfoFromFunctionParameters.C.}
+\label{Tutorial:exampleInputCode_TypeInfoFromFunctionParameters}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/typeInfoFromFunctionParameters.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/typeInfoFromFunctionParameters.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to typeInfoFromFunctionParameters.C.}
+\label{Tutorial:exampleOutput_TypeInfoFromFunctionParameters}
+\end{figure}
+
+
+

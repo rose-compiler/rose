@@ -1,0 +1,79 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Operator Overloading}
+\label{OperatorOverloading::overview}
+
+This test detects function declaration that overloads operators that can cause subtle bugs, such as ``\texttt{\&\&}", ``\texttt{||}", or ``\texttt{,}".
+That is, one can not ensure that the overloaded operators will be evaluated in left-to-right order. This is based on the following rules:
+\begin{itemize}
+\item Function calls always evaluate all arguments before execution.
+\item The order of evaluation of function arguments is unspecified.
+\end{itemize}
+
+For example, 
+\begin{verbatim}
+auto_ptr<Employee> e = GetEmployee();
+if(e && e->Manager())
+\end{verbatim}
+
+The usual evaluation order (left to right) prevents the test from executing \texttt{e->Manager()} and the code above looks fine. However, the code above can invoke an overloaded \texttt{operator\&\&} and it will potentially call \texttt{e->Manager()} before checking if \texttt{e} is \texttt{NULL}.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+None.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+   This pattern is detected using a simple traversal. It traverses AST to find function declarations and check whether or not the name of the functions is ``\texttt{operator\&\&}", ``\texttt{operator||}", or ``\texttt{operator,}".
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+class Test
+{
+  public:
+    Test();
+    ~Test();
+    Test operator&&(const Test &);
+    Test operator||(const Test &);
+    Test operator,(const Test &);
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+N/A
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Check if a node is a function declaration
+\item Check if the name of the function contains ``\texttt{operator\&\&}", ``\texttt{operator||}", or ``\texttt{operator,}".
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+T. Misfeldt, G. Bumgardner, A. Gray, ``The Elements of C++ Style", Item 111: ``Do not overload \texttt{operator \&\&} or \texttt{operator ||}".

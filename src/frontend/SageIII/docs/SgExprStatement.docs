@@ -1,0 +1,136 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExprStatement
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgExprStatement
+\brief This class represents the concept of a C or C++ statement which contains a
+    expression.
+    Any expression can be used alone as statement in C and C++, the expression statment
+provides a mechanism to wrap any SgExpression and make it a SgStaement for use
+anywhere a SgStatement might be required (e.g. in a list of SgStatement objects in a
+SgBasicBlock).
+\sa
+\ref SgExprStatement_usage  "Example of using a SgExprStatement object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExprStatement data members
+/////////////////////////////////////////////////////////////////////////
+/*! \var SgExprStatement::p_expression_root
+\brief This pointer points to the SgExpressionRoot which wraps the SgExpression. 
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExprStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgExprStatement_create "Example:create an SgExprStatement object"
+*/
+/*!
+\fn SgExprStatement::~SgExprStatement()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgExprStatement::isSgExprStatement (SgNode *s)
+\brief Cast function (from derived class to SgExprStatement pointer).
+   This functions returns a SgExprStatement pointer for any input of a 
+pointer to an object derived from a SgExprStatement.
+\return Returns valid pointer to SgExprStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgExprStatement::isSgExprStatement (const SgNode *s)
+\brief Cast function (from derived class to SgExprStatement pointer).
+   This functions returns a SgExprStatement pointer for any input of a 
+pointer to an object derived from a SgExprStatement.
+\return Returns valid pointer to SgExprStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgExprStatement::get_the_expr() const
+\brief Returns pointer to SgExpression obtained from SgExpressionRoot wrapper for SgExpression.
+\return Returns pointer to SgExpression.
+*/
+/*!
+\fn SgExprStatement::set_the_expr(SgExpression* the_expr)
+\brief Sets pointer in the SgExpressionRoot (constructed as required) to wrap the SgExpression.
+\return Returns void.
+*/
+/*!
+\fn SgExprStatement::get_expression_root() const
+\brief Access function for p_expression_root.
+\return Returns pointer to SgExpressionRoot.
+*/
+/*!
+\fn SgExprStatement::set_the_expr(SgExpressionRoot* expression_root)
+\brief Access function for p_expression_root.
+\return Returns void.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgExprStatement::p_expression
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgExprStatement::SgExprStatement(Sg_File_Info *startOfConstruct,SgExpression *expression=(0))
+*/
+/*!\fn SgExprStatement::SgExprStatement(const SgExprStatementStorageClass &source)
+*/
+/*!\fn inline static void SgExprStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgExprStatement *SgExprStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgExprStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgExprStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgExprStatement::initializeStorageClassArray(SgExprStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgExprStatement::clearMemoryPool()
+*/
+/*!\fn static void SgExprStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgExprStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgExprStatement::roseRTI()
+*/
+/*!\fn virtual SgExprStatement::~SgExprStatement()
+*/
+/*!\fn virtual SgNode *SgExprStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual int SgExprStatement::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgExprStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgExprStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgExprStatement::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgExprStatement::post_construction_initialization()
+*/
+/*!\fn void SgExprStatement::set_expression(SgExpression *expression)
+\description See  *expression)
+expression for documentation */
+/*!\fn SgExpression *SgExprStatement::get_expression() const
+\description See  const
+expression for documentation */
+/*!\fn virtual SgNode *SgExprStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgExprStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgExprStatement::get_numberOfTraversalSuccessors()
+\description See  SgExprStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgExprStatement::get_traversalSuccessorContainer()
+\description See  SgExprStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgExprStatement::get_traversalSuccessorNamesContainer()
+\description See  SgExprStatement::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgExprStatement::SgExprStatement(SgExpression *expression)
+\brief This is the constructor.
+   This constructor builds the SgExprStatement base class.
+\param startOfConstruct represents the position in the source code
+*/
+//@}
+int SAGE_Doxygen_Dummy_27401843527287;

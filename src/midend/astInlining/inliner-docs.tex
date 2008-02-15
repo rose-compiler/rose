@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{listings}
+
+\begin{document}
+\author{Jeremiah Willcock}
+\title{Inliner documentation}
+\maketitle
+
+\lstset{language=C++}
+\newcommand{\Cpp}{C\texttt{++}}
+
+The implementation of inlining in ROSE is in
+\texttt{src/midend/astInlining}.  The inlining optimization is in the
+function \lstinline{doInline}, which takes a single function call as an
+argument, and replaces it with the body of the function being called.
+There are many details that make the process more complicated, but it
+conceptually fairly simple.  In order to inline a function call, the
+inliner first locates the function being called, and finds its definition.
+It will fail if the definition cannot be found.  After this, a recursion
+check is performed to ensure that a function is not inlined into itself
+(which will terminate and work correctly, but may be undesirable to some
+users).  Next, a copy of the function body is created, and variable
+declarations are created to store the parameters of the function call.  Two
+layers of variables are used to avoid name shadowing issues: an outer layer
+of shadow variables with unique names, and an inner layer of variables
+whose names match the parameter names of the function.  This inner layer of
+variables is what the inlined function body will reference instead of the
+parameters.  Also, all references to \lstinline{this} in the function body
+are replaced with references to a variable, and all \lstinline{return}
+statements are replaced with \lstinline{goto} statements to a particular,
+newly-created label.  If the function returns a type other than
+\lstinline{void}, a variable is created for the result of the function, and
+returns of values within the function are replaced with assignments to this
+variable.  Now that a correct, insertable function body has been created,
+the function call is replaced by this body.  This is difficult because the
+function body is a statement while the call was an expression.  Thus, a
+possibly large amount of code may need to be rearranged.  In particular,
+loop tests are particularly difficult to handle.  The function
+\lstinline{replaceExpressionWithStatement} handles the insertion process.
+One of its arguments is a statement generator, which is an object which
+produces a statement when given a variable in which to write the
+statement's result (this is a way of emulating blocks which return values).
+The replacement function rewrites the code around the expression to replace
+(using a variety of helper functions documented in
+\texttt{replaceExpressionWithStatement.h}) into the form \lstinline{v = e;},
+where \lstinline{v} is a variable and \lstinline{e} is the expression
+to be replaced.  Then, the generator can be applied to \lstinline{v} to
+produce a statement \lstinline{s[v]}, and so the statement \lstinline{v = e;}
+can be replaced by the statement \lstinline{s[v]}.  Statement
+replacement is easy to do in \Cpp{}, and so the inlining process is
+complete.
+
+\end{document}

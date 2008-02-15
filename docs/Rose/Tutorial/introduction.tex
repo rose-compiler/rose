@@ -1,0 +1,379 @@
+\chapter{Introduction}
+
+% Sections suggested by Carol Eidt (at Microsoft)
+\section{Why you should be interested in ROSE}
+ROSE is a tool for building source-to-source translators.
+You should be interested in ROSE if you want to 
+understand or improve any aspect of your software. ROSE
+makes it easy to build tools that read and operate on source code
+from large scale applications (millions of lines).  Whole projects
+may be analyzed and even optimized using tools built using ROSE.
+
+To get started immediately consult the ROSE User Manual, chapter
+{\em Getting Started} for details).
+
+\section{Problems that ROSE can address}
+    ROSE is a mechanism to build source-to-source analysis or 
+optimization tools that operate directly on the source code of large 
+scale applications.  Example tools that {\em have} been built include:
+\begin{itemize}
+   \item Array Class abstraction optimizer,
+   \item Source-to-source instrumenter,
+   \item Loop analyzer,
+   \item Symbolic complexity analyzer,
+   \item Code coverage tools,
+   \item and many more.
+\end{itemize}
+Example tools that {\em can} be built include:
+\begin{itemize}
+   \item Custom optimization tools,
+   \item Custom documentation generators,
+   \item Custom analysis tools,
+   \item Code pattern recognition tools,
+   \item Security analysis tools,
+   \item and many more.
+\end{itemize}
+
+
+
+\section{Examples in this ROSE Tutorial}
+
+    This tutorial lays out a set of progressively
+complex example programs that serve as a tutorial for the use of ROSE.
+Translators built using ROSE can either just analyze (and output results)
+or compile the input programs just like a compiler (generating object files 
+or executables).  Many of the examples in this tutorial just do simple analysis
+of the input source code, and a few show the full compilation of the input source code.
+Where the translators generate either object files of executables, the 
+vendor's compiler is used to compile the final ROSE-generated code.  Within
+ROSE, the call to generate source code from the AST and call the vendor's compiler
+is referred to as the {\em backend processing}.  The specification of the vendor's compiler
+as a backend is done within the configuration step within ROSE (see options for 
+{\tt configure} in the ROSE User Manual).
+
+   Within the example programs below, the user can provide alternative input programs
+for more complex evaluation of the tutorial examples and ROSE.  The end of the chapter,
+section~\ref{TutorialMakefiles}, shows the makefiles required to compile the
+tutorial programs using an installed version of ROSE (compiled using 
+{\tt make install}).  This {\tt example\_makefile} is run as part of the testing using the 
+{\tt make installcheck} rule.
+
+% Each example is described and can be alternatively assigned as an exercise for the reader.
+
+Nearly all the chapters in this tutorial introduce a different tutorial example. 
+Specific chapters in this tutorial include:
+\begin{enumerate}
+     \item Introduction {\em (this chapter)}
+     \item Getting Started \\
+           This chapter covers where to find ROSE documentation and how to install ROSE.
+     \item AST Graph Generator \\
+           This translator reads a C or C++ application code and builds the AST, internally.
+           The translator does not regenerate code from the AST and so does not
+           call the backend vendor's compiler. This shows how simple it could be
+           to build source code analysis tools; the code calls an internal ROSE function
+           to generate a dot graph of the AST, the makefile has the details of converting
+           the dot graph into a postscript file (also shown).
+
+     \item AST PDF Generator \\
+           This translator reads an C or C++ application code builds the AST internally.
+           The translator does not regenerate code from the AST and so does not
+           call the backend vendor's compiler. This shows how simple it could be
+           to build source code analysis tools, the code calls an internal ROSE function
+           to generate a {\tt pdf} file with bookmarks representing the AST.  The 
+           pdf file show as output is in this case a previously generated figure of a
+           screen shot obtained by viewing the output pdf file using {\tt acroread}.
+
+     \item Identity Translator \\
+           This example translator reads a C or C++ application, builds the AST
+           internally, generates source code from the AST (unparsing), and calls
+           the backend vendor compiler to compile the generated C or C++ application 
+           code.  Thus the translator acts like and can be used to replace any compiler 
+           since it takes in source code and outputs an object code (or executable).
+           This example also shows that the output generated from and ROSE translator is
+           a close reproduction of the input; preserving all comments, preprocessor
+           control structure, and most formating.
+
+     \item AST Query Library \\
+           This example translator shows the use of the AST query library to generate
+           a list of function declarations for any input program (and output the list
+           of function names).  It can be trivially modified to return a list of any
+           IR node type (C or C++ language construct).
+
+     \item Introduction to AST Traversals and Attributes \\
+           This collection of examples show the use of the simple visitor pattern for 
+           the traversal of the AST within ROSE.  The simple visitor pattern permits
+           operations to be programmed which will be invoked on different nodes 
+           within the AST.  To handle communication of context information down into the
+           AST and permit communication of analysis information up the AST, we have 
+           provided inherited and synthesized attributes (respectively). Note that
+           an AST is most often represented as a tree with extra edges and with shared IR
+           nodes that make the full graph (representing all edges) not a tree.  We present
+           two styles of traversal, one over the tree representing the AST (which
+           excludes some types of IR nodes) and one over the full AST with all extra
+           nodes and shared nodes.  Extra nodes are nodes such as SgType and SgSymbol 
+           IR nodes.
+
+     \begin{enumerate}
+        \item AST traversals \\
+              These traversals visit each node of the tree embedded within the AST
+              (excluding shared SgType and SgSymbol IR nodes).  These traversals
+              visit the IR nodes is an order dependent upon the structure of the AST
+              (the source code from which the AST is built).
+        \begin{enumerate}
+          \item Classic Object-Oriented Visitor Patterns \\
+                This example, classicObjectOrientedVisitorPatternMemoryPoolTraversal.C,
+                show the use of a classic visitor patterns.  At the moment this example
+                uses the AST's memory pools as a basis but it is identical to a future
+                traversal. The ROSE visitor Pattern (below) is generally more useful. 
+                The classic visitor pattern traversals are provided for completeness.
+          \item Visitor Traversal (visitorTraversal.C) \\
+                Conventional visitor patterns without no attributes. This pattern can 
+                explicitly access global variables to provide the effect of accumulator
+                attributes (using static data members we later show the handling of
+                accumulator attributes).
+          \item Inherited Attributes (inheritedAttributeTraversal.C) \\
+                Inherited attributes are used to communicate the context of any location
+                within the AST in terms of other parent AST nodes.
+          \item Synthesized Attributes (synthesizedAttributeTraversal.C) \\
+                Synthesized attributes are used to pass analysis results from the leaves
+                of the AST to the parents (all the way to the root of the AST if
+                required).
+          \item Accumulator Attributes (accumulatorAttributeTraversal.C) \\
+                Accumulator attributes permit the interaction of data within inherited
+                attributes with data in synthesized attributes. In our example program we
+                will show the use of accumulator attributes implemented as static data
+                members.  Accumulator attributes are a fancy name for what is essentially
+                global variables (or equivalently a data structure passed by reference 
+                to all the IR nodes in the AST).
+          \item Inherited and Synthesized Attributes (inheritedAndSynthesizedAttributeTraversal.C) \\
+                The combination of using inherited and synthesized attributes permits 
+                more complex analysis and is often required to compute analysis results on
+                the AST within a specific context (e.g. number of loop nests of specific depth).
+          \item Persistent Attributes (persistantAttributes.C) \\
+                Persistent attributes may be added the the AST for access to stored results
+                for later traversals of the AST.  The user controls the lifetime of these
+                persistent attributes.
+          \item Nested traversals \\
+                Complex operations upon the AST can require many subordinate operations.
+                Such subordinate operations can be accommodated using nested traversals.
+                All traversals can operate on any subtree of the AST, and may even be 
+                nested arbitrarily.  Interestingly, ROSE traversals may also be
+                applied recursively (though care should be take using recursive traversals
+                using accumulator attributes to avoid {\em over} accumulation).
+        \end{enumerate}
+        \item Memory Pool traversals \\
+              These traversals visit all IR nodes (including shared IR nodes such as
+              SgTypes and SgSymbols).  By design this traversal can visit ALL IR nodes
+              without the worry of getting into cycles.  These traversals are mostly 
+              useful for building specialized tools that operate on the AST.    
+        \begin{enumerate}
+          \item Visit Traversal on Memory Pools \\
+              This is a similar traversal as to the Visitor Traversal over the tree in the AST.
+          \item Classic Object-Oriented Visitor Pattern on Memory Pools \\
+              This is similar to the Classic Object-Oriented Visitor Pattern on the AST.
+          \item IR node Type Traversal on Memory Pools \\
+              This is a specialized traversal which visits each type of IR node, but one
+              one of each type of IR nodes. This specialized traversal is useful for
+              building tools that call static member functions on each type or IR node.
+              A number of memory based tools for ROSE are built using this traversal.
+        \end{enumerate}
+
+     \end{enumerate}
+
+     \item Database Support (dataBaseUsage.C) \\
+           This example shows how to use the optional (see {\tt configure --help})
+           SQLite database to hold persistent program analysis results across the
+           compilation of multiple files. This mechanism may become less critical
+           as the only mechanism to support global analysis once we can support
+           whole program analysis more generally within ROSE.
+
+     \item Recognizing loops within applications (loopRecognition.C) \\
+           This example program shows the use of inherited and synthesized attributes
+           form a list of loop nests and report their depth.  The inherited attributes are
+           required to record when the traversal is within outer loop and the synthesized 
+           attributes are required to pass the list of loop nests back up of the AST.
+
+     \item Getting the type parameters in function declaration (functionParameterTypes.C) \\
+           This example translator builds a list to record the types used in each
+           function.  It shows an example of the sort of type information present 
+           within the AST.  ROSE specifically maintains all type information.
+
+     \item Resolving overloaded functions (resolvingOverloadedFunctions.C -- C++ specific) \\
+           The AST has all type information pre-evaluated, particularly important for C++
+           applications where type resolution is required for determining function
+           invocation. This example translator builds a list of functions called within
+           each function, showing that overloaded function are fully resolved within the
+           AST.  Thus the user is not required to compute the type resolution required
+           to identify which over loaded functions are called.
+
+     \item Getting template parameters to a templated class (templateParameters.C -- C++ specific) \\
+           All template information is saved within the AST.  Templated classes and
+           functions are separately instantiated as specializations, as such they
+           can be transformed separately depending upon their template values.
+           This example code shows the template types used the instantiate a specific
+           templated class.
+
+     \item Simple Instrumentor Translator (simpleInstrumentor.C) \\
+           This example modifies an the input application to place new code at the top and
+           bottom of each block.  The output is show with the instrumentation in place 
+           in the generated code.
+
+     \item Adding a variable declaration (addingVariableDeclaration.C) \\
+           Here we show how to add a variable declaration to the input application.
+           Perhaps we should show this in two ways to make it clear.  This is
+           a particularly simple use of the AST IR nodes to build an AST fragment
+           and add it to the application's AST.
+
+     \item Adding a function (addingFunctionDeclaration.C) \\
+           This example program shows the addition of a new function 
+           to the global scope.  This example is a bit more involved
+           than the previous example.
+
+\fixme{Consider a section on ``Program Analysis'' with subsections.}
+     \item Generating a CFG (buildCFG.C) \\
+           This example shows the generation of a control flow graph 
+           within ROSE.  The example is intended to be simple.  Many other
+           graphs can be built, we need to show them as well.
+
+     \item Generating a CG (buildCG.C) \\
+           This example shows the generation of a call graph 
+           within ROSE.
+     \item Generating a CH (classHierarchyGraph.C) \\
+           This example shows the generation of a class hierarchy graph 
+           within ROSE.
+
+%    \item Calling something from Qing's work \\
+%          \fixme{Ask Qing what she might like to show off here.}
+
+     \item Call loop optimizer on set of loops (loopOptimization.C) \\
+           This example program shows the optimization of a loop in C.
+           This section contains several subsections each of which shows
+           different sorts of optimizations.  There are a large number of
+           loop optimizations only two are shown here, we need to add more.
+     \begin{enumerate}
+          \item Optimization of Matrix Multiply 
+          \item Loop Fusion Optimizations
+     \end{enumerate}
+
+     \item Calling the inliner (inlinerExample.C) \\
+           This example shows the use of the inliner mechanism within ROSE.
+           The function to be inlined in specified and the transformation upon the 
+           AST is done to inline the function where it is called and clean up the
+           resulting code.
+
+     \item Calling the outliner (outlinerExample.C) \\
+           This example shows the use of the outliner mechanism within ROSE.
+           A segment of code is selected and a function is generated to 
+           hold the resulting code.  Any required variables (including global variables)
+           are passed through the generated function's interface.  The outliner is 
+           a useful part of the empirical optimization mechanisms being developed 
+           within ROSE.
+
+     \item Program slicing (programSlicingExample.C) \\
+           This example shows the interface to the program slicing mechanism 
+           within ROSE.  Program slicing has been implemented to two ways within
+           ROSE.
+
+% \commentout{
+   % This is not ready yet
+     \item Recognition of Abstractions (recognitionOfAbstractions.C) \\
+           This example program shows the automated recognition of 
+           classes and functions defined within libraries and used by 
+           applications.  This is work with Brian White as part of
+           general support for recognition and optimization of 
+           user-defined abstractions.
+%}
+
+     \item Generating Unique Names for Declarations (generatingUniqueNamesFromDeclaration.C) \\
+           A recurring issue in the development of many tools and program analysis is the
+           representation of unique strings from language constructs (functions, variable
+           declarations, etc.).  This example demonstrated support in ROSE for the
+           generation of unique names. Names are unique across different ROSE tools and
+           compilation of different files.
+
+     \item Scopes of Declarations (scopeInformation.C) \\
+           This example shows the scopes represented by different IR nodes in the AST.
+
+     \item Symbol Table Handling (symbolTableHandling.C) \\
+           This example shows how to use the symbol tables held within the AST for each scope.
+
+     \item AST File I/O (astFileIO\_GenerateBinaryFile.C) \\
+           This example demonstrates the file I/O for AST.  This is part of
+           ROSE support for whole program analysis.
+
+     \item Debugging Tips \\
+           There are numerous methods ROSE provides to help debug the 
+           development of specialized source-to-source translators.
+           This section shows some of the techniques for getting
+           information from IR nodes and displaying it.  Show how to 
+           use the PDF generator for AST's.  This section may
+           contain several subsections.
+     \begin{enumerate}
+          \item Generating the code representing any IR node
+          \item Displaying the source code position of any IR node
+     \end{enumerate}
+
+     \item Command-line processing \\
+           ROSE includes mechanism to simplify the processing of command-line arguments
+           so that translators using ROSE can trivially replace compilers within
+           makefiles.  This example shows some of the many command-line handling
+           options within ROSE and the ways in which customized options may be added.
+     \begin{enumerate}
+          \item Recognizing custom command-line options
+          \item Adding options to internal ROSE command-line driven mechanisms
+     \end{enumerate}
+
+     \item Building custom graphs of program information \\
+           The mechanisms used internally to build different graphs of program data
+           is also made externally available. This section shows how new graphs of 
+           program information can be built or existing graphs customized.
+
+     \item Example Makefiles demonstrating the command lines to compile and link the 
+           example translators in this tutorial are found in 
+           {\tt <ROSE\_Compile\_Tree>/tutorial/exampleMakefile}.
+
+\end{enumerate}
+
+   Other examples included come specifically from external collaborations
+and are more practically oriented.  Each is useful as an example because each 
+solves a specific technical problem.  More of these will be included over time.
+\begin{enumerate}
+     \item Tau Performance Analysis Instrumentation (tauInstrumenter.C) \\
+           Tau currently uses an automate mechanism that modified the source code text
+           file.  This example shows the modification of the AST and the generation 
+           of the correctly instrumented files (which can otherwise be a problem when
+           macros are used).  This is part of collaborations with the Tau project.
+     \item Fortran promotion of constants to double precision (typeTransformation.C) \\
+           Fortran constants are by default singe precision, and must be modified to
+           be double precision.  This is a common problem in older Fortran applications.
+           This is part of collaborations with LANL to eventually automatically 
+           update/modify older Fortran applications.
+     \item Automated Runtime Library Support (charmSupport.C) \\
+           Getting research runtime libraries into use within large scale applications
+           requires automate mechanism to make minor changes to large amounts of code.
+           This is part of collaborations with the Charm++ team (UIUC).
+     \item Code Coverage Analysis (codeCoverage.C) \\
+           Code coverage is a useful tool by itself, but is particularly useful when
+           combined with automated detection of bugs in programs.  This is part of
+           work with IBM, Haifa.
+     \begin{enumerate}
+        \item Shared Threaded Variable Detection Instrumentation (interveneAtVariables.C) \\
+              Instrumentation support for variables, required to support detection of 
+              threaded bugs in applications.
+        \item Automated Modification of Function Parameters (changeFunction.C) \\
+              This example program addresses a common problem where an applications
+              function must be modified to include additional information.  In this
+              case each function in a threaded library is modified to include additional 
+              information to a corresponding wrapper library which instruments the
+              library's use.
+     \end{enumerate}
+\end{enumerate}
+
+\fixme{Add make installcheck in Makefile.am to build example translators using the
+       installed libraries.}
+
+% \fixme{Add more tutorial examples}
+
+\fixme{Comments at the top of each tutorial example should match the comments in the
+       caption for the figures that introduce them in the text.}
+

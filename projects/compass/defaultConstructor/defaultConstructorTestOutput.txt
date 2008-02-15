@@ -1,0 +1,1 @@
+DefaultConstructor: defaultConstructorTest1.C:7.1-11.1: SgClassDefinition: This checker checks that every class has a non-generated default constructor.

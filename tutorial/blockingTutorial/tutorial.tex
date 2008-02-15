@@ -1,0 +1,131 @@
+\chapter{ROSE Tutorial}
+
+\label{RoseExamples:RoseTutorial}
+
+    This chapter lays out a set of progressively
+complex example programs which serve as a tutorial for the use of ROSE.
+Each example is described and can be alternatively assigned as
+an exercise for the reader.
+
+\fixme{Add more tutorial examples}
+
+
+
+\chapter{Rewrite Tutorial}
+\label{RoseExamples:RewriteTutorial}
+
+This chapter will explain how to use the rewrite system with three 
+example programs each performing more complex transformations. The 
+last program will be able to
+perform a blocking transformation on a simple loop nest, however, missing
+the analysis that would be usually required to automatically perform a
+similar transformation.
+
+\section{A very simple rewrite traversal}
+
+The first example program ''rewriteExample1.C'' shows a minimal preprocessor, that
+performs a very simple rewrite operation. Hence, it is similar to the 
+''ROSE/ExamplePreprocessors/DocumentedExamples/AstRewriteExamples/astRewriteExample1.C'' code. It 
+sets up a traversal using synthesized and inherited attributes, with a main function
+that initializes the frontend and starts the rewrite traversal.
+
+In contrast to the other rewrite example, this program performs a rewrite operation
+in \emph{evaluateRewriteSynthesizedAttribute} function using the high level rewrite interface. 
+Whenever a \emph{SgVariableDeclaration}
+node is found, the preprocessor adds a line after the declaration, containing the comment
+''// declaration found!''. Note that the \emph{insert} function of the high level interface
+is a member function of the synthesized attribute. As first parameter the current node is
+passed, the second parameter contains the source code to insert as a string. The third 
+and fourth parameter use enumeration values of the \emph{HighLevelCollectionTypedefs}
+to specify where to insert the code relative to the current node. In this case, the line
+after the current statement in the local scope is chosen.
+
+When you compile this test code, and run it on ''rewriteTestprog1\_small.c'' by typing:
+\begin{verbatim}
+./rewriteExample1 rewriteTestprog1_small.c
+\end{verbatim}
+a new file ''rose\_rewriteTestprog1\_small.c'' will be created, that will have the additional
+comment after the ''int i'' declaration.
+
+
+\section{Replacing variable reference expressions}
+
+Although there are different ways to perform a blocking transformation, the one
+presented in this tutorial will leave the declaration of the old loop variables 
+unmodified. Thus it is necessary to have the loop kernel use the loop variables
+of the added blocked loops. As a first step, this tutorial will present a preprocessor
+to replace the references to a variable in the corresponding scope.
+
+The basic layout of the code is similar to that of the first example, only
+that the synthesized attributes are used to store and pass along information about the AST,
+and the \emph{evaluateRewriteSynthesizedAttribute} needs to perform more tasks. Now,
+when it comes across a SgVariableDeclaration, it checks if this is really the ''int i''
+declaration we are looking for, and if yes, it adds a new variable ''int newInt'' after
+the old declaration. This ''newInt'' variable now should replace all following occurrences
+of ''i''. 
+
+To achieve this, the declaration
+of the \emph{MySynthesizedAttribute} has become more complex. It needs to store the information whether
+the variable to be replaced has been found. The synthesized attributes are used to 
+pass information to higher nodes in the AST -- this is necessary in this case, as it is
+only possible to replace whole statments (and not single expressions). So once
+a statement containing a reference to the variable that should be replaced is found,
+it has to be replaced by the same expression referencing the new variable. In this
+case this is done by using the \emph{AstRestructure::unparserReplace} function. This
+adds a string to an expression, that will be used if \emph{unparseToString} is called
+on this node. Hence, it does not yet modify the AST, but can be used to easily 
+replace the variable references in the following way: each reference expression
+to the old ''i'' is changed to the string ''newInt'' using the \emph{AstRestructure::unparserReplace}
+function. If this is done somewhere in a statement, the \emph{setVarRefFound} flag
+if the MySynthesizedAttribute is set, and on the next \emph{SgStatement} node,
+the whole statement is replaced by it's unparsed string. Note that before this
+replace call, the AST is not modified. Only new strings will be added as
+attributes to the AST. Upon calling replace, the AST nodes for the modified source
+code (using the ''newInt'' variable) will be created, and inserted instead 
+of the old subtree. Note that it is necessary to implement \emph{operator=} and
+\emph{operator+=} for the synthesized attribute, so that it passes along all needed
+variables (''bool varRefFound'' in this case).
+
+Another addition is ''mReplaceVariable'' as member variable of the ''MyTraversal'' class.
+This variable is used keep track of the scopes, in which the added variable is valid. 
+For this, the ''evaluateRewriteInheritedAttribute'' function is used, to increase ''mReplaceVariable''
+for every scope that is found after inserting ''newInt''. For every scope that is left
+during a call to ''evaluateRewriteSynthesizedAttribute'', it is decreased again. Running
+this preprocessor on the test code ''rewriteTestprog1\_small.c'' should result in a modified
+file with the new ''newInt'' variable used instead of the old ''int i''. To test the
+scope feature just mentioned, run the preprocessor on ''rewriteTestprog2\_scopes.c''. This
+test code contains several variables and scopes, but only the references to ''int i'' in
+the correct scope will be replaced by the preprocessor.
+
+\section{A simple blocking transformation}
+
+The last example program ''rewriteExample3.C'' is now capable of performing a blocking
+transformation on a loop nest. This is done in several steps. First, the inherited attribute
+is used to count the encountered nested loops by storing a
+vector containing information about these loops. Here the ''forBlockInfo'' struct contains all necessary
+information about a loop -- it's position in the AST, information about the loop variable,
+and whether it was blocked or not. A list of all loops is also stored in the traversal object 
+(in contrast to the inherited attribute, which only stores the vector of nested loops), to 
+simplify the replacing of loop variable reference expressions.
+
+The loop kernel is found, when a loop does not contain any other loops. For this,
+a node query is used. Once the loop kernel of a loop nest is
+found, which means that the current AST-node is the scope of the loop body, 
+some simple validation of the loops is done. The transformation of this tutorial
+only works for loops using ''++'' as increment, and ''<='' as test expression. Inside
+of the loop kernel, all loop variable reference expressions are replaced, as described
+in the previous section. When the loop body is encountered in the ''evaluateRewriteSynthesizedAttribute''
+function again, the blocked loops are inserted between the old loop nest and
+the loop kernel. This is done in the ''insertTransformedLoopBody'' function. It traverses
+the vector of found loops from the inherited attribute, and builds blocked loops, each
+with a new variable to test the upper bound of the loop.
+
+The last thing to do is to modify the original ''++'' increment, to match the
+size of the blocks. This is done in the ''V\_SgForStatement'' block of
+the switch statement in ''evaluateRewriteSynthesizedAttribute''. To test this preprocessor,
+compile it, and run it on ''rewriteTestprog3\_loop.c''. This test program contains
+three nested loops, that will be correctly blocked by the preprocessor. A
+more complex example can be found in ''rewriteTestprog4\_moreloops.c''. In this case,
+only those loop nests matching the requirements of this tutorial preprocessor
+will be blocked.
+

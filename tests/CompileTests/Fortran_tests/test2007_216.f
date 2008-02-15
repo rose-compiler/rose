@@ -1,0 +1,12 @@
+!     SUBROUTINE DDAWTS(RTOL,ATOL,Y,WT)
+      SUBROUTINE foobar(Y,WT)
+C
+!     IMPLICIT DOUBLE PRECISION(A-H,O-Z)
+!     DIMENSION RTOL(*),ATOL(*),Y(*),WT(*)
+      DIMENSION Y(*),WT(*)
+!     DIMENSION RPAR(*),IPAR(*)
+!     RTOLI=RTOL(1)
+!     ATOLI=ATOL(1)
+      RETURN
+      end
+

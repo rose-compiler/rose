@@ -1,0 +1,51 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgLshiftOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgLshiftOp::SgLshiftOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgLshiftOp::SgLshiftOp(const SgLshiftOpStorageClass &source)
+*/
+/*!\fn inline static void SgLshiftOp::operator delete(void *pointer)
+*/
+/*!\fn static SgLshiftOp *SgLshiftOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgLshiftOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgLshiftOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgLshiftOp::initializeStorageClassArray(SgLshiftOpStorageClass *storageArray)
+*/
+/*!\fn static void SgLshiftOp::clearMemoryPool()
+*/
+/*!\fn static void SgLshiftOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgLshiftOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgLshiftOp::roseRTI()
+*/
+/*!\fn virtual SgLshiftOp::~SgLshiftOp()
+*/
+/*!\fn virtual SgNode *SgLshiftOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgLshiftOp::precedence() const
+*/
+/*!\fn virtual void SgLshiftOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgLshiftOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgLshiftOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgLshiftOp::get_numberOfTraversalSuccessors()
+\description See  SgLshiftOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgLshiftOp::get_traversalSuccessorContainer()
+\description See  SgLshiftOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgLshiftOp::get_traversalSuccessorNamesContainer()
+\description See  SgLshiftOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgLshiftOp::SgLshiftOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1065097513;

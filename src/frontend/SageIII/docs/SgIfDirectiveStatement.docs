@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgIfDirectiveStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgIfDirectiveStatement::p_dummyString8
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgIfDirectiveStatement::SgIfDirectiveStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgIfDirectiveStatement::SgIfDirectiveStatement(const SgIfDirectiveStatementStorageClass &source)
+*/
+/*!\fn inline static void SgIfDirectiveStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgIfDirectiveStatement *SgIfDirectiveStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgIfDirectiveStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgIfDirectiveStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgIfDirectiveStatement::initializeStorageClassArray(SgIfDirectiveStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgIfDirectiveStatement::clearMemoryPool()
+*/
+/*!\fn static void SgIfDirectiveStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgIfDirectiveStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgIfDirectiveStatement::roseRTI()
+*/
+/*!\fn virtual SgIfDirectiveStatement::~SgIfDirectiveStatement()
+*/
+/*!\fn virtual SgNode *SgIfDirectiveStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgIfDirectiveStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgIfDirectiveStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgIfDirectiveStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgIfDirectiveStatement::get_numberOfTraversalSuccessors()
+\description See  SgIfDirectiveStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgIfDirectiveStatement::get_traversalSuccessorContainer()
+\description See  SgIfDirectiveStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgIfDirectiveStatement::get_traversalSuccessorNamesContainer()
+\description See  SgIfDirectiveStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgIfDirectiveStatement::SgIfDirectiveStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_890831574;

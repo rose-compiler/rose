@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var SgType *SgReferenceType::p_base_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgReferenceType::SgReferenceType(const SgReferenceTypeStorageClass &source)
+*/
+/*!\fn inline static void SgReferenceType::operator delete(void *pointer)
+*/
+/*!\fn static SgReferenceType *SgReferenceType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgReferenceType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgReferenceType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgReferenceType::initializeStorageClassArray(SgReferenceTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgReferenceType::clearMemoryPool()
+*/
+/*!\fn static void SgReferenceType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgReferenceType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgReferenceType::roseRTI()
+*/
+/*!\fn virtual SgNode *SgReferenceType::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgReferenceType::~SgReferenceType()
+*/
+/*!\fn void SgReferenceType::set_base_type(SgType *base_type)
+\description See  *base_type)
+base_type for documentation */
+/*!\fn SgType *SgReferenceType::get_base_type() const
+\description See  const
+base_type for documentation */
+/*!\fn virtual SgNode *SgReferenceType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgReferenceType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgReferenceType::get_numberOfTraversalSuccessors()
+\description See  SgReferenceType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgReferenceType::get_traversalSuccessorContainer()
+\description See  SgReferenceType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgReferenceType::get_traversalSuccessorNamesContainer()
+\description See  SgReferenceType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgReferenceType::SgReferenceType(SgType *base_type=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1155417915;

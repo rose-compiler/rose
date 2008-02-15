@@ -1,0 +1,55 @@
+#include "supported_dimensions.h"
+
+       // Special constructor for CLASSNAME;
+          CLASSNAME ( SgExpression* expr );
+
+		  // Define the abstractBaseClass function
+		  // We later want to make this a pure vitual function (making this class and abstract base class)
+          virtual ROSE_Node* transform() = 0;
+
+          void recognizeSageSubTree ( SgExpression* expr );
+
+          SgExpression* getExpression();
+
+       // Stuff about the indexing of array operands
+          virtual Boolean isAnIndexedOperand();
+          virtual int getNumberOfDimensions();
+
+       // Rules on how we modify variable names (unique names are required)
+          static SgName transformationVariablePrefix();
+          static SgName transformationVariableSuffix();
+
+       // get the names of the different parts
+          virtual SgName getOperandName();
+          virtual SgName getOperandPointerName();
+          SgName getIndexName (int dimension);
+
+       // Build a new operand as a SgExpression*
+          SgPntrArrRefExp* buildOperand (
+               SgName arrayName,                                             // variable name
+#if USE_SAGE3
+               Cxx_GrammarVariants arrayType,                                // Type for the array pointer
+#else
+               variant_type_enum arrayType,                                  // Type for the array pointer
+#endif
+            // DQ: Changed by CW?
+            // SgName indexName                [ROSE_MAX_ARRAY_DIMENSION],   // variable name
+               SgName indexName,                                             // variable name
+#if USE_SAGE3
+               Cxx_GrammarVariants indexOperator [ROSE_MAX_ARRAY_DIMENSION],   // ADD_OP, SUBT_OP, etc. (semantics of A++/P++ Index and Range objects only)
+#else
+               variant_type_enum indexOperator [ROSE_MAX_ARRAY_DIMENSION],   // ADD_OP, SUBT_OP, etc. (semantics of A++/P++ Index and Range objects only)
+#endif
+               SgExpression* rhsExpression     [ROSE_MAX_ARRAY_DIMENSION],   // integer expression for the rhs of the indexOperator
+               int statementDimension,                                       // Dimention of the entire statement (not just this operand!)
+               Boolean normalOrderOfOperands   [ROSE_MAX_ARRAY_DIMENSION] ); // I+1 is the normal order, but 1-I is handled properly
+
+
+	// CW: private utility functions:
+	private:
+		SgPntrArrRefExp* buildIntValArrayRefExp(const SgName &name, int intVal);
+
+		// CW: find out number of dimensions from SgVarRefExp if possible
+		int CLASSNAME::getNumberOfDimensions(SgVarRefExp *variableRefExp);
+		// CW: returns variable declaration of variable reference expression
+		SgDeclarationStatement *CLASSNAME::getDeclarationStatement(SgVarRefExp *variableRefExp);

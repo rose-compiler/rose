@@ -1,0 +1,32 @@
+// DQ And JH (1/17/2006): Example of code to be produced by ROSETTA
+bool
+$CLASSNAME::isInMemoryPool ()
+   {
+     typedef unsigned char* TestType;
+
+     bool found = false;
+
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(p_freepointer == AST_FileIO::IS_VALID_POINTER());
+
+     TestType tested = (TestType) ( this ) ;
+
+     std::vector < unsigned char* > :: const_iterator block = Memory_Block_List.begin();
+
+  // DQ (1/17/2006): Modified conditional test to use "!=" instead of "<" 
+  // while (found == false && block < Memory_Block_List.end())
+     while ( (found == false) && (block != Memory_Block_List.end()) )
+        {
+          found = ( ( (*block) <= tested ) && ( tested  < (*block) + CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) ) ) ;
+          ++block;
+        }
+
+  // Special handling for static data
+     $CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED
+
+  // DQ (1/17/2006): Make it an error to not find a pointers value somewhere in the memory pools
+     ROSE_ASSERT(found == true);
+
+     return found;
+   }

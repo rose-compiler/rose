@@ -1,0 +1,57 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Void Star}
+\label{VoidStar::overview}
+
+This checker enforces the guideline of section 87 of \textit{the Elements
+of C++ Style} (Misfeldt and al., 2004). No public method should be
+using \texttt{void*} type for arguments or return type. If needed, it
+can be wrapped.
+
+\subsection{Parameter Requirements}
+
+There is not parameter requirement.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+class A {
+public:
+  const void* getData();
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+class A {
+public:
+  const Data getData();
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis}
+
+Compliance with this rule can be checked using structural static
+analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each public member function declaration, check all argument types
+  and the return type are not \texttt{void*}.
+\end{enumerate}
+
+\subsection{References}
+
+Bumgardner G., Gray A., and Misfeldt T. {\it The Elements of C++
+Style}. Cambridge University Press 2004.

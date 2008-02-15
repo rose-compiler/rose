@@ -1,0 +1,10 @@
+This is a Java tool for the visualization of text.
+the text can be embedded with comments of the form
+"/* colorCode:red:on */" which permit the text to
+be highlighted.  
+
+To compile the code:
+   javac *.java
+
+To run the program:
+   java tview <filename>

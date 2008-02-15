@@ -1,0 +1,12 @@
+### 00 System Interfaces -- U
+ualarm  
+ulimit  
+umask  
+uname  
+#ungetc  
+#ungetwc 
+unlink  
+unlockpt  
+usleep
+#utime  
+#utimes

@@ -1,0 +1,1 @@
+ConstCast: constCastTest1.C:4.11-17: SgCastExp: Casting the const away form a type is not allowed.

@@ -1,0 +1,79 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgSubscriptExpression
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgSubscriptExpression::p_lowerBound
+*/
+/*!\var SgExpression *SgSubscriptExpression::p_upperBound
+*/
+/*!\var SgExpression *SgSubscriptExpression::p_stride
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgSubscriptExpression::SgSubscriptExpression(Sg_File_Info *startOfConstruct,SgExpression *lowerBound=(0),SgExpression *upperBound=(0),SgExpression *stride=(0))
+*/
+/*!\fn SgSubscriptExpression::SgSubscriptExpression(const SgSubscriptExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgSubscriptExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgSubscriptExpression *SgSubscriptExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgSubscriptExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgSubscriptExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgSubscriptExpression::initializeStorageClassArray(SgSubscriptExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgSubscriptExpression::clearMemoryPool()
+*/
+/*!\fn static void SgSubscriptExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgSubscriptExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgSubscriptExpression::roseRTI()
+*/
+/*!\fn virtual SgNode *SgSubscriptExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgSubscriptExpression::~SgSubscriptExpression()
+*/
+/*!\fn virtual void SgSubscriptExpression::post_construction_initialization()
+*/
+/*!\fn void SgSubscriptExpression::set_lowerBound(SgExpression *lowerBound)
+\description See  *lowerBound)
+lowerBound for documentation */
+/*!\fn void SgSubscriptExpression::set_stride(SgExpression *stride)
+\description See  *stride)
+stride for documentation */
+/*!\fn void SgSubscriptExpression::set_upperBound(SgExpression *upperBound)
+\description See  *upperBound)
+upperBound for documentation */
+/*!\fn SgExpression *SgSubscriptExpression::get_lowerBound() const
+\description See  const
+lowerBound for documentation */
+/*!\fn SgExpression *SgSubscriptExpression::get_stride() const
+\description See  const
+stride for documentation */
+/*!\fn SgExpression *SgSubscriptExpression::get_upperBound() const
+\description See  const
+upperBound for documentation */
+/*!\fn virtual SgNode *SgSubscriptExpression::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgSubscriptExpression::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgSubscriptExpression::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgSubscriptExpression::get_numberOfTraversalSuccessors()
+\description See  SgSubscriptExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSubscriptExpression::get_traversalSuccessorContainer()
+\description See  SgSubscriptExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSubscriptExpression::get_traversalSuccessorNamesContainer()
+\description See  SgSubscriptExpression::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgSubscriptExpression::SgSubscriptExpression(SgExpression *lowerBound,SgExpression *upperBound,SgExpression *stride)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1860786973;

@@ -1,0 +1,1 @@
+NoExitInMpiCode: noExitInMpiCodeTest1.C:7.5-8: SgFunctionRefExp: finds call to exit() in MPI code block(s)

@@ -1,0 +1,15 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = $(ROSE_INCLUDES)
+
+unparseFortranCodeGeneration_headers = unparseFortran.h unparseFortran_types.h
+unparseFortranCodeGeneration_sources = unparseFortran_expressions.C unparseFortran_statements.C unparseFortran_types.C
+
+include_HEADERS = $(unparseFortranCodeGeneration_headers)
+
+noinst_LTLIBRARIES = libunparseFortran.la
+
+libunparseFortran_la_SOURCES = $(unparseFortranCodeGeneration_sources)
+
+clean-local:
+	rm -rf ii_files ti_files core

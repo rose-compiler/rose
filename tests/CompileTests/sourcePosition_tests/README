@@ -1,0 +1,8 @@
+This directory contains tests that use the tview testing tool 
+to colorize the input source code and help us identify errors
+in the source position information stored in the Sg_File_Info
+object in the AST.
+
+The "tview" tool has been written by Thomas Panas and is in 
+ROSE/src/roseIndependentSupport/tview (see the README file there).
+

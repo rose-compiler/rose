@@ -1,0 +1,111 @@
+INSTRUCTIONS for installing Coco/R for C versions 1.08 - 1.17
+-------------------------------------------------------------
+
+Here are the basic steps to install and build Coco/R for C/C++ :
+
+1. Set up the CRFRAMES environment variable to the path where the frame
+   files can be found:
+
+    DOS: Give a command llike
+         SET CRFRAMES=C:\COCOR\FRAMES
+
+    UNIX: Give a command like
+         CRFRAMES=/usr/local/cocor/frames;export CRFRAMES
+
+    (The exact form of this will depend on the shell you are using, and on
+    the directory set up.  You can also set the values of the variables on
+    the command line)
+
+2. Run the proper make file:
+
+    DOS: Give the command
+         make -f borlandc.mk
+
+      This will compile the Coco/R sources and some examples.
+
+    UNIX:
+      First uudecode the "dos2unix.uue" file to create the file
+      "dos2unix.sh".  In this way we can be sure that dos2unix.sh is
+      correct; it contains a critical ASCII 13 (^M or CR) character in
+      its code.  Give the command
+
+         uudecode dos2unix.uue
+
+      Make this file executable.  Give the command
+         chmod +x dos2unix.sh
+
+      Execute dos2unix.sh as a shell script to correct the file unix.mk.  
+      Give the command
+         ./dos2unix.sh unix.mk
+
+      Convert all files to "unix" format.  Give the command
+         make -f unix.mk dos2unix
+
+      Finally build the distribution.  Give the command
+         make -f unix.mk
+
+      ++++ You may have to edit the makefiles to select the correct compiler
+      for your system.  If "make -f unix.mk" does not work properly, study
+      the make files and edit them appropriately.  You may need to invoke
+      "gmake" rather than "make".
+
+Use of the Borland C++ IDE
+==========================
+
+If you are a DOS user, you can also use the Borland C++ integrated
+development environment to build the programs.  Create a .prj file, and
+remember to change the include directories to have the correct include
+directories for you.  (Menu: Options, Directories)
+
+
+File extension conventions
+==========================
+
+The C++ source files in the kit have been supplied with ".cpp" and ".hpp"
+extensions.
+
+These work well with Borland C++, Linux g++, and several other C++ compilers.
+However, some UNIX C++ compilers (like GNU C on Sun's Solaris) use a ".cpp"
+extension to mean "c preprocessed files", so that the compiler will NOT
+preprocess the file.  To fix this problem, you have to
+
+  (1) Rename the files to have a valid C++ extension for your compiler, for
+      example, ".C" or ".cxx".
+
+      In all the directories that have C++ sources, the "unix.mk" makefiles
+      have 2 entry points, named "fix_2_cpp" and "fix_2_cxx".  These will
+      help you rename the files in the distribution.
+
+      From the main Coco/R directory, to change all the C++ file extensions
+      from ".cpp" to ".cxx", give the command:
+
+            make -f unix.mk fix_2_cxx
+
+  (2) Do not forget to set the "CRCEXT" environment variable to "cxx".
+      Rebuild the distribution if necessary.
+
+You can tell Coco/R to use a customized file extension for your own
+applications by using the CRCEXT and CRHEXT environment variables.
+
+For example, suppose you need to use ".cxx" extensions for C++ files and
+".hxx" for the header files
+
+   DOS:  Give the commands
+         SET CRCEXT=cxx
+         SET CRHEXT=hxx
+   UNIX: Give the command
+         CRCEXT=cxx;CRHEXT=hxx;export CRCEXT CRHEXT
+
+In this way, Coco/R will generate files with these extensions.  It would
+probably be useful to set all the Coco/R environment variables in your
+AUTOEXEC.BAT, .profile or .login file, so that each time you login these 
+variables will be correctly set up.
+
+As from version 1.08 you can also set these options using a command line
+option, for example
+
+              -DCRFRAMES=/usr/lib/coco/frames
+
+=end=
+
+

@@ -1,0 +1,92 @@
+\section{[No Reference] Buffer Overflow Functions}
+
+This analysis detects possible buffer overflows due to the usage of 
+'unsafe' function calls. The results need to be either inspected by the user
+or if applicable, unsafe function calls can be exchanged against their
+safe counterparts.
+
+
+
+\subsection{Non-Compliant Code Examples}
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hldir{\#include\ $<$stdio.h$>$\\
+}\hlline{\ \ \ \ 2\ }\hldir{}\hlstd{}\hldir{\#include\ $<$string.h$>$\\
+}\hlline{\ \ \ \ 3\ }\hldir{}\hlstd{\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlkey{using\ namespace\ }\hlstd{std;\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\\
+}\hlline{\ \ \ \ 6\ }\hlstd{}\hltyp{void\ }\hlstd{fail}\hlsym{()\ \{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hltyp{char\ }\hlstd{string}\hlsym{[}\hlstd{}\hlnum{50}\hlstd{}\hlsym{]}\hlstd{;\\
+}\hlline{\ \ \ \ 8\ }\hlstd{\hlstd{\ \ }}\hltyp{int\ }\hlstd{file\textunderscore number\ =\ }\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\hlstd{\ \ }sprintf}\hlsym{(\ }\hlstd{string,\ }\hlstr{"file.\%d"}\hlstd{,\ file\textunderscore number\ }\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 10\ }\hlstd{\\
+}\hlline{\ \ \ 11\ }\hlstd{\hlstd{\ \ }}\hltyp{char\ }\hlstd{result}\hlsym{[}\hlstd{}\hlnum{100}\hlstd{}\hlsym{]}\hlstd{;\\
+}\hlline{\ \ \ 12\ }\hlstd{\hlstd{\ \ }}\hltyp{float\ }\hlstd{fnum\ =\ }\hlnum{3.14159}\hlstd{;\\
+}\hlline{\ \ \ 13\ }\hlstd{\hlstd{\ \ }sprintf}\hlsym{(\ }\hlstd{result,\ }\hlstr{"\%f"}\hlstd{,\ fnum\ }\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 14\ }\hlstd{\\
+}\hlline{\ \ \ 15\ }\hlstd{\\
+}\hlline{\ \ \ 16\ }\hlstd{\hlstd{\ \ }}\hltyp{char\ }\hlstd{str1}\hlsym{[]}\hlstd{=}\hlstr{"Sample\ string"}\hlstd{;\\
+}\hlline{\ \ \ 17\ }\hlstd{\hlstd{\ \ }}\hltyp{char\ }\hlstd{str2}\hlsym{[}\hlstd{}\hlnum{40}\hlstd{}\hlsym{]}\hlstd{;\\
+}\hlline{\ \ \ 18\ }\hlstd{\hlstd{\ \ }}\hltyp{char\ }\hlstd{str3}\hlsym{[}\hlstd{}\hlnum{40}\hlstd{}\hlsym{]}\hlstd{;\\
+}\hlline{\ \ \ 19\ }\hlstd{\hlstd{\ \ }memcpy\ }\hlsym{(}\hlstd{str2,str1,strlen}\hlsym{(}\hlstd{str1}\hlsym{)}\hlstd{+}\hlnum{1}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 20\ }\hlstd{\hlstd{\ \ }memcpy\ }\hlsym{(}\hlstd{str3,}\hlstr{"copy\ successful"}\hlstd{,}\hlnum{16}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 21\ }\hlstd{\hlstd{\ \ }printf\ }\hlsym{(}\hlstd{}\hlstr{"str1:\ \%s}\hlesc{$\backslash$n}\hlstr{str2:\ \%s}\hlesc{$\backslash$n}\hlstr{str3:\ \%s}\hlesc{$\backslash$n}\hlstr{"}\hlstd{,str1,str2,str3}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 22\ }\hlstd{\\
+}\hlline{\ \ \ 23\ }\hlstd{}\hlsym{\}}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+\subsection{Compliant Solution}
+Example as above; use snprintf instead of sprintf.
+
+\subsection{Parameter Requirements}
+
+None.
+
+\subsection{Implementation}
+
+The following functions are checked for
+
+\begin{itemize}
+\item sprintf
+\item scanf
+\item sscanf
+\item gets
+\item strcpy
+\item \_mbscpy
+\item lstrcat
+\item memcpy
+\item strcat
+\end{itemize}
+
+\subsection{References}
+
+\htmladdnormallink{Foster}{} , ``James C.Foster, Vitaly Osipov, Nish Bhalla, Niels Heinen, Buffer Overflow Attacks, ISBN 1-932266-67-4, p. 211''
+

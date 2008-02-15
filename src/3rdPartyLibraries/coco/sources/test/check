@@ -1,0 +1,8 @@
+../cocor cr.atg
+diff crp.h ../crp.h
+diff crp.c ../crp.c
+diff crs.h ../crs.h
+diff crs.c ../crs.c
+diff cre.h ../cre.h
+diff crc.h ../crc.h
+diff cr.c ../cr.c

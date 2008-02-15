@@ -1,0 +1,56 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgTemplateArgumentList
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgTemplateArgumentPtrList SgTemplateArgumentList::p_args
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTemplateArgumentList::SgTemplateArgumentList(const SgTemplateArgumentListStorageClass &source)
+*/
+/*!\fn inline static void SgTemplateArgumentList::operator delete(void *pointer)
+*/
+/*!\fn static SgTemplateArgumentList *SgTemplateArgumentList::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTemplateArgumentList::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTemplateArgumentList::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTemplateArgumentList::initializeStorageClassArray(SgTemplateArgumentListStorageClass *storageArray)
+*/
+/*!\fn static void SgTemplateArgumentList::clearMemoryPool()
+*/
+/*!\fn static void SgTemplateArgumentList::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTemplateArgumentList::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTemplateArgumentList::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTemplateArgumentList::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTemplateArgumentList::~SgTemplateArgumentList()
+*/
+/*!\fn void SgTemplateArgumentList::set_args(SgTemplateArgumentPtrList args)
+\description See  args)
+args for documentation */
+/*!\fn SgTemplateArgumentPtrList SgTemplateArgumentList::get_args() const
+\description See  const
+args for documentation */
+/*!\fn virtual SgNode *SgTemplateArgumentList::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTemplateArgumentList::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTemplateArgumentList::get_numberOfTraversalSuccessors()
+\description See  SgTemplateArgumentList::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTemplateArgumentList::get_traversalSuccessorContainer()
+\description See  SgTemplateArgumentList::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTemplateArgumentList::get_traversalSuccessorNamesContainer()
+\description See  SgTemplateArgumentList::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTemplateArgumentList::SgTemplateArgumentList()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_967162548;

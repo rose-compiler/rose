@@ -1,0 +1,51 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgMinusAssignOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgMinusAssignOp::SgMinusAssignOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgMinusAssignOp::SgMinusAssignOp(const SgMinusAssignOpStorageClass &source)
+*/
+/*!\fn inline static void SgMinusAssignOp::operator delete(void *pointer)
+*/
+/*!\fn static SgMinusAssignOp *SgMinusAssignOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgMinusAssignOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgMinusAssignOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgMinusAssignOp::initializeStorageClassArray(SgMinusAssignOpStorageClass *storageArray)
+*/
+/*!\fn static void SgMinusAssignOp::clearMemoryPool()
+*/
+/*!\fn static void SgMinusAssignOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgMinusAssignOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgMinusAssignOp::roseRTI()
+*/
+/*!\fn virtual SgMinusAssignOp::~SgMinusAssignOp()
+*/
+/*!\fn virtual SgNode *SgMinusAssignOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgMinusAssignOp::precedence() const
+*/
+/*!\fn virtual void SgMinusAssignOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgMinusAssignOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgMinusAssignOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgMinusAssignOp::get_numberOfTraversalSuccessors()
+\description See  SgMinusAssignOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgMinusAssignOp::get_traversalSuccessorContainer()
+\description See  SgMinusAssignOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgMinusAssignOp::get_traversalSuccessorNamesContainer()
+\description See  SgMinusAssignOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgMinusAssignOp::SgMinusAssignOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1872323463;

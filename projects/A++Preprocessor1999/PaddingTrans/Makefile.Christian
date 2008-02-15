@@ -1,0 +1,34 @@
+all: libpadtransform.a
+
+include dependencies.incl
+include ofiles.incl
+
+SAGE_INCLUDES =  -I/home/dquinlan/ROSE/drose/sage2/newCCplusplus/sage2/src/baseclasses -I/home/dquinlan/ROSE/drose/sage2/SUN_built/sage2/src/generated
+
+
+VPATH = .:../ListT:../Transform_2:../../include:../Padding:../TransformBaseClass
+INCLUDES = $(SAGE_INCLUDES) -I../ListT -I../Transform_2 -I../../include -I../Padding -I../TransformBaseClass
+
+CXX=CC
+CXXFLAGS= -g -ptr.. $(INCLUDES)
+LDFLAGS= -g -ptr..
+LIBS= 
+
+##########################
+# general compiling rule #
+##########################
+
+.C.o: $*.h
+	$(CXX) $(CXXFLAGS) -c $*.C
+
+
+##################
+# target rules : #
+##################
+
+# rb depends on rb.o
+libpadtransform.a: $(OFILES)
+	ar -r $@ $(OFILES)
+
+clean:
+	rm -rf *.o libpadtransform.a Templates.DB

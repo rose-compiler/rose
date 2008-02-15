@@ -1,0 +1,26 @@
+0x9581780:<SgExprStatement> (Par=0x959714c:<SgForInitStatement>) = (32767 flops) / (32767 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:25]
+0x95817a4:<SgExprStatement> (Par=0x958a55c:<SgForStatement>) = (32767 flops) / (32767 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:25]
+0x95817c8:<SgExprStatement> (Par=0x945df18:<SgBasicBlock>) = (98301 flops) / (65534 cy) ~= 1.5 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:26]
+0x9581954:<SgExprStatement> (Par=0x958a5c4:<SgForStatement>) = (98301 flops) / (98301 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:56]
+0x9581978:<SgExprStatement> (Par=0x95971b8:<SgForInitStatement>) = (98301 flops) / (65534 cy) ~= 1.5 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:61]
+0x958199c:<SgExprStatement> (Par=0x958a5f8:<SgForStatement>) = (98301 flops) / (98301 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:61]
+0x95819c0:<SgExprStatement> (Par=0x945e0d0:<SgBasicBlock>) = (262136 flops) / (327670 cy) ~= 0.8 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:62]
+0x959714c:<SgForInitStatement> (Par=0x958a55c:<SgForStatement>) = (32767 flops) / (32767 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:25]
+0x9597194:<SgForInitStatement> (Par=0x958a5c4:<SgForStatement>) = (98301 flops) / (98301 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:56]
+0x95971b8:<SgForInitStatement> (Par=0x958a5f8:<SgForStatement>) = (98301 flops) / (98301 cy) ~= 1 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:61]
+0x958a55c:<SgForStatement> (Par=0x945def0:<SgBasicBlock>) = (163835** flops) / (131068** cy) ~= 1.25 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:25]
+0x958a5c4:<SgForStatement> (Par=0x945e080:<SgBasicBlock>) = (655340** flops) / (720874** cy) ~= 0.909091 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:56]
+0x958a5f8:<SgForStatement> (Par=0x945e0a8:<SgBasicBlock>) = (458738** flops) / (524272** cy) ~= 0.875 flops/cy
+  [/home/vuduc2/projects/ROSE/src-0.8.10c-rc/tutorial/roseHPCT/profiled.c:61]

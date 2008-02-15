@@ -1,0 +1,4 @@
+       // Special constructor for this class
+          CLASSNAME ( SgExpression* expr );
+
+          virtual ROSE_Node* transform();

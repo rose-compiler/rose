@@ -1,0 +1,10 @@
+.include common
+
+global_variable_declaration( v:node )
+global_variable_declaration( v ) :- \
+    globalScope( g ), \
+    varD( v ), \
+    parent( g, v ).
+
+global_variable_declaration( V ) ?
+

@@ -1,0 +1,13 @@
+ROSE uses EDG as a front-end to parsing C and C++.  We then read 
+the EDG AST to generate the AST in ROSE using the Sage III IR.
+
+We currently use version 3.3 of EDG, and although this has been
+robust and feature rich, we have some reasons for wanting to
+upgrade to later versions of EDG.
+
+We use EDG mostly as is, and make only minor changes:
+   1) Adding pointers to Sage III IR nodes to some structs in EDG (see il_def.h)
+   2) We add the work to save literals as strings in the Sage III IR.
+
+We need a more complete list, some of what has been modified in 3.3 is no longer required
+in versions after 3.7. 

@@ -1,0 +1,60 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgNullifyStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgInitializedNamePtrList SgNullifyStatement::p_pointer_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgNullifyStatement::SgNullifyStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgNullifyStatement::SgNullifyStatement(const SgNullifyStatementStorageClass &source)
+*/
+/*!\fn inline static void SgNullifyStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgNullifyStatement *SgNullifyStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgNullifyStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgNullifyStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgNullifyStatement::initializeStorageClassArray(SgNullifyStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgNullifyStatement::clearMemoryPool()
+*/
+/*!\fn static void SgNullifyStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgNullifyStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgNullifyStatement::roseRTI()
+*/
+/*!\fn virtual SgNode *SgNullifyStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNullifyStatement::~SgNullifyStatement()
+*/
+/*!\fn virtual void SgNullifyStatement::post_construction_initialization()
+*/
+/*!\fn void SgNullifyStatement::set_pointer_list(SgInitializedNamePtrList pointer_list)
+\description See  pointer_list)
+pointer_list for documentation */
+/*!\fn SgInitializedNamePtrList SgNullifyStatement::get_pointer_list() const
+\description See  const
+pointer_list for documentation */
+/*!\fn virtual SgNode *SgNullifyStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgNullifyStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgNullifyStatement::get_numberOfTraversalSuccessors()
+\description See  SgNullifyStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNullifyStatement::get_traversalSuccessorContainer()
+\description See  SgNullifyStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNullifyStatement::get_traversalSuccessorNamesContainer()
+\description See  SgNullifyStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgNullifyStatement::SgNullifyStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_148079738;

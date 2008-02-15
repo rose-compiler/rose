@@ -1,0 +1,114 @@
+COMPILER Mod2
+/* Alternative grammar for Modula-2 */
+
+CHARACTERS
+  eol      = CHR(10) .
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  octDigit = "01234567" .
+  digit    = octDigit + '89'.
+  hexDigit = digit + 'ABCDEF'.
+  noQuote1 = ANY - "'" - eol .
+  noQuote2 = ANY - '"' - eol .
+
+IGNORE  CHR(9) .. CHR(13)
+
+COMMENTS
+  FROM '(*' TO '*)' NESTED
+
+TOKENS
+  id      =  letter { letter | digit }.
+  integer =    digit { digit }
+             | digit { digit }  CONTEXT ("..")
+             | octDigit { octDigit } ("B" | "C")
+             | digit { hexDigit } "H".
+  real    =  digit { digit } "." { digit }
+             [ "E" [ "+" | "-" ] digit { digit } ].
+  string  =    "'" { noQuote1 } "'"
+             | '"' { noQuote2 } '"'.
+
+PRODUCTIONS
+  Mod2         =  DefMod | [ "IMPLEMENTATION" ] ProgMod .
+  ProgMod      =  "MODULE" id [ Priority ] ";" { Import } Block id "." .
+  Def          =    "CONST" { ConstDecl ";" }
+                  | "TYPE"  { id [ "=" Type ] ";" }
+                  | "VAR"   { VarDecl ";" }
+                  | ProcHead ";" .
+  DefMod       =  "DEFINITION" "MODULE" id ";" { Import } { Def } "END" id "." .
+  Import       =  "FROM" id "IMPORT" IdList ";" | "IMPORT" id { "," id } ";" .
+  Export       =  "EXPORT" [ "QUALIFIED" ] IdList ";" .
+  Priority     =  "[" ConstExpr "]" .
+  ModDecl      =  "MODULE" id [ Priority ] ";" { Import } [ Export ] Block id .
+  FormType     =  [ "ARRAY" "OF" ] QualId .
+  QualId       =  id { "." id } .
+  FPSect       =  [ "VAR" ] IdList ":" FormType .
+  FormPar      =  "(" [ FPSect { ";" FPSect } ] ")" [ ":" QualId ] .
+  Decl         =    "CONST" { ConstDecl ";" }
+                  | "TYPE"  { TypeDecl  ";" }
+                  | "VAR"   { VarDecl   ";" }
+                  | ProcDecl ";"
+                  | ModDecl  ";" .
+  Block        =  { Decl } [ "BEGIN"  StatSeq ] "END" .
+  StatSeq      =  Stat { ";" Stat } .
+  Stat         =  [ Design ( ":=" Expr | [ ActPar ] )
+                  | IfStat  | CaseStat | LoopStat | ForStat
+                  | RepeatStat | WhileStat | WithStat
+                  | "EXIT" | "RETURN" [ Expr ]
+                  ] .
+  ProcHead     =  "PROCEDURE" id [ FormPar ] .
+  ProcDecl     =  ProcHead ";" ( Block id | "FORWARD" ) .
+  WithStat     =  "WITH" Design "DO" StatSeq "END" .
+  LoopStat     =  "LOOP" StatSeq "END" .
+  ForStat      =  "FOR" id ":=" Expr "TO" Expr [ "BY" ConstExpr ]
+                  "DO" StatSeq "END".
+  RepeatStat   =  "REPEAT" StatSeq "UNTIL" Expr  .
+  WhileStat    =  "WHILE" Expr "DO" StatSeq "END" .
+  Case         =  [ CaseLabList ":" StatSeq ] .
+  CaseStat     =  "CASE" Expr "OF" Case { "|" Case } [ "ELSE" StatSeq ] "END" .
+  IfStat       =  "IF" Expr "THEN" StatSeq
+                  { "ELSIF" Expr "THEN" StatSeq }
+                  [ "ELSE" StatSeq ]
+                  "END" .
+  ActPar       =  "(" [ ExpList ] ")" .
+  Elem         =  ConstExpr [ ".." ConstExpr ] .
+  Fact         =    integer | real | string | SetRest
+                  | id { SetRest | "." id | "[" ExpList "]" | "^" } [ ActPar ]
+                  | "(" Expr ")"
+                  | ( "NOT" | "~" ) Fact.
+  SetRest      =  "{" [ Elem { "," Elem } ] "}" .
+  MulOp        =  "*" | "/" | "DIV" | "REM" | "MOD" | "AND" | "&" .
+  Term         =  Fact { MulOp Fact }.
+  AddOp        =  "+" | "-" | "OR" .
+  SimExpr      =  [ "+" | "-" ] Term { AddOp Term }.
+  Rel          =  "=" | "#" | "<>" | "<" | "<=" | ">" | ">=" | "IN" .
+  Expr         =  SimExpr [ Rel SimExpr ] .
+  ConstDecl    =  id "=" ConstExpr .
+  ConstExpr    =  Expr.
+  TypeDecl     =  id "=" Type .
+  Type         =    SimType | ArrayType | RecType
+                  | SetType | PointerType | ProcType .
+  SimType      =    QualId [ "[" ConstExpr ".." ConstExpr "]" ]
+                  | Enum | "[" ConstExpr ".." ConstExpr "]" .
+  Enum         =  "(" IdList ")" .
+  IdList       =  id { "," id } .
+  ArrayType    =  "ARRAY" SimType { "," SimType } "OF" Type.
+  RecType      =  "RECORD" FieldListSeq "END" .
+  FieldListSeq =  FieldList { ";" FieldList } .
+  FieldList    =  [ IdList ":" Type
+                   | "CASE" [ id ] ":" QualId "OF" Variant { "|" Variant }
+                     [ "ELSE" FieldListSeq ] "END"
+                  ].
+  Variant      =  [ CaseLabList ":" FieldListSeq ] .
+  CaseLabList  =  CaseLabs { "," CaseLabs } .
+  CaseLabs     =  ConstExpr [ ".." ConstExpr ] .
+  SetType      =  "SET" "OF" SimType .
+  PointerType  =  "POINTER" "TO" Type .
+  ProcType     =  "PROCEDURE" [ FormTypeList ] .
+  FormTypeList =  "(" [ [ "VAR" ] FormType { "," [ "VAR" ] FormType } ] ")"
+                  [ ":" QualId ] .
+  VarDecl      =  IdList ":" Type .
+  Design       =  id { "[" ExpList "]" | "^" | "." id }.
+  ExpList      =  Expr { "," Expr }.
+
+END Mod2.
+
+

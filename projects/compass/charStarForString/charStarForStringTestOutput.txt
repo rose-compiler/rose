@@ -1,0 +1,5 @@
+CharStarForString: charStarForStringTest1.C:3.1-27: SgTypedefDeclaration: char* should be used instead of std::string
+CharStarForString: charStarForStringTest1.C:5.10: SgInitializedName: char* should be used instead of std::string
+CharStarForString: charStarForStringTest1.C:11.3: SgInitializedName: char* should be used instead of std::string
+CharStarForString: charStarForStringTest1.C:12.3: SgInitializedName: char* should be used instead of std::string
+CharStarForString: charStarForStringTest1.C:13.3: SgInitializedName: char* should be used instead of std::string

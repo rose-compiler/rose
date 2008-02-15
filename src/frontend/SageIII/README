@@ -1,0 +1,158 @@
+This directory implements the details of the SageIII IR used in ROSE.
+
+Documentation for lexical preprocessing step called by ROSE to collect
+list of comments, preprocessor directives, and recently the token 
+stream.
+
+preproc.lex:
+First version was written by Markus Shordan (preproc.lex).
+This version collected comments and CPP directives only.
+
+preproc.lex.1-13-2007:
+Second version by Rama. This version fixed some regular
+expressions, buffer handling problems, and represented
+a rewrite of the first version of the code (preproc.lex)
+
+preproc.lex.5-10-2007:
+Third version by Rama.  This version fixes comment handling,
+better matching construct handling, keyword handling (with 
+techniques developed in Fortran preprocessor) and has a lot
+of C and C++ techniques which will provide for better 
+lexical processing of C and C++.
+
+
+
+**********************************************************************
+*                         Generated  Files                           *
+**********************************************************************
+
+A number of important C++ files are automatically generated, by ROSETTA.
+These are placed into the compile tree (we generally assume that there
+is both a source tree and a compile tree and that they are different).
+Generated files include (complete list as of 5/27/2007):
+
+   Cxx_Grammar.h and Cxx_Grammar.C
+      Implementation of IR node classes, member functions, and supporting declarations and
+      definitions.
+
+   Cxx_GrammarTreeTraversalAccessEnums.h
+      Generation of enum values used in the synthesized attributes and in 
+      tests against the variant (see get_variantT() function in documentation).
+
+   Cxx_GrammarNewConstructors.C
+      Implementation of constructors (new style, without Sg_File_Info objects which are
+      meant to be set separately)
+
+   Cxx_GrammarReturnDataMemberPointers.C
+      Generated function that returns child pointers all child IR nodes.
+
+   Cxx_GrammarReturnDataMemberReferenceToPointers.C
+      Generated function that returns references to all child IR node pointers.
+
+   Cxx_GrammarTraverseMemoryPool.C
+      Generated memory pool traversal (see tutorial for details of memory pool traversals)
+
+   Cxx_GrammarCopyMemberFunctions.C
+      Generated function to copy IR nodes (deep, shallow, and custom levels of copying are
+      supported)
+
+   Cxx_GrammarNewAndDeleteOperators.C
+      Generated new and delete operators (implements memory pools for each IR class).
+
+   Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C
+      Generated functions for checking if data members are in the memory pool (since they 
+      could in theory be on the stack or in global scope etc. and we only support fast 
+      file I/O for those in the heap).  In practice all IR nodes are in the heap, but it
+      is possible for users to not do so and so this is the test to support these details
+      in the AST file I/O.
+
+   Cxx_GrammarVariantEnumNames.C
+      Generated global variable (roseGlobalVariantNameList) holding array of strings of
+      all class names.
+
+   Cxx_GrammarRTI.C
+      Generated support for Runtime Type Interface (usually called RTTI).
+
+   Cxx_GrammarTreeTraversalSuccessorContainer.C
+      Generated function to compute list of child IR nodes in the strictly defined AST
+      (this is a subset of all references to IR nodes defined by function generated in
+      Cxx_GrammarReturnDataMemberPointers.C and Cxx_GrammarReturnDataMemberReferenceToPointers.C).
+
+   Cxx_GrammarGetChildIndex.C
+      More generated functions supporting the AST file I/O.  These generate the functions
+      to support computation of unique index values in to the global memory pool of all IR
+      nodes.  These are called in a way that makes there semantics unclear.
+ 
+   Cxx_GrammarCocoSymbolsMapping.C
+      Generated support for Coco parser generator (no longer used, but similar input could
+      be used for other parser generator to permit parsers on the AST to be automatically
+      generated).  This should be considered to be the grammar for the AST.
+
+
+**********************************************************************
+*                    Summaries of directories                        *
+**********************************************************************
+
+Here we summarize the separate sub-directoies of this directory:
+
+   astCommentsAndCppSupport
+      This is the support for extraction of comments and preprocessor control directives
+      (it includes the support for using Wave as well).
+
+   astHiddenTypeAndDeclarationLists
+      This is the implementation of the generation of list of symbols in each scope
+      associated with: hidden types, hidden declarations, and types requiring type
+      elaboration. Each case is held in a separate list in each scope. This work
+      supports the name qualification within the unparser (code generation).
+
+   astFileIO
+      This is the support for binary file I/O on the AST (much of which is generated code).
+
+   astFixup
+      This is the location of code which makes corrections to the AST after construction.
+      Most of these eventually make there way into the generation of the AST so that is 
+      does not need to be fixed up afterward, but some are either implemented here or
+      are placed here and fixed in the generation of the AST later.
+
+   astPostProcessing
+      This is the implementation of added post processing of the AST to compute things
+      that are not possible or difficult to compute during construction of the AST.
+      Some template details are of this sort and handled here, and compete list is
+      in the postProcessingSupport() function in the astPostProcessing.C file.
+
+   astMerge
+      This implements the merging of separate ASTs (typically from different files of the
+      same program, but could be different programs).
+
+   astTokenStream
+      This is the support for weaving of the preprocessed token stream (the post processed
+      token stream is the one generated from cpp preprocessing).
+
+   astVisualization
+      This is the support for visualization of either the AST or the whole graph
+      representing the AST with all symbols, types, etc.  The strict AST does not
+      include such IR nodes as they are considered attributes to an AST.  The graphs of
+      the whole graph associated with the AST are useful for internal debugging or
+      for understanding complex relations between IR nodes (not represented in the
+      simpler graph of just the AST).
+
+   docs
+      This is the location of doxygen documentation (the input files for doxygen).
+      These are copied form the ROSE/docs/testDoxygen directory where the originals
+      are located and developed.
+
+   sageInterface
+      These are functions that support all different levels of support on the SageIII
+      AST used in ROSE.  The functions here don't make sense to include in the
+      automatically generated functions (built in Cxx_Grammar.C and other files).
+      Users should consider looking here before they resort to implementing their
+      own supporting functions for operating on the AST.
+
+   virtualCFG
+      This is the implementation of a stateless control flow graph threaded onto the AST.
+      It is particularly convinent basis for other forms of analysis using the control
+      flow graph.
+
+
+
+

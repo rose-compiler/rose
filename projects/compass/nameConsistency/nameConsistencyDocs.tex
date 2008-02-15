@@ -1,0 +1,91 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Name Consistency}
+\label{NameConsistency::overview}
+A naming convention is a collection of rules followed by a set of names. The intent is that users of these names will be able to deduce useful information, based on the names' character sequence and knowledge of the rules followed. In software naming conventions can make source code easier to
+read and understand with less effort and it can enhance source code appearance by disallowing overly long names or abbrevations.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameter specifications yet!
+
+\subsection{Implementation}
+
+The name consistency checker takes a paramater "NameConsistency.RulesFile\=ale3d-style.sn" which 
+specifies the naming convention rules to be following.
+
+Each rule is specified by the kind of constructs it applies to in the AST (like for instance variable
+	declarations with a static modifier) and the rule itself. The rule is a regular expression and if
+that regular expression do not match the name of the construct an error is returned.
+
+Rules can be made for:
+\begin{enumerate}
+
+\item Write your checker algorithm
+\item static\_class\_field
+\item static\_ptr\_class\_field 
+\item static\_ref\_class\_field
+\item class\_field
+\item ptr\_class\_field
+\item ref\_class\_field
+\item stack\_variable    
+\item global\_variable
+\item ptr\_global\_variable 
+\item ref\_global\_variable 
+\item static\_global\_variable 
+\item static\_ptr\_global\_variable 
+\item static\_ref\_global\_variable 
+\item member\_function 
+\item global\_function
+\item static\_global\_function 
+\item static\_member\_function
+\item class\_name
+\item enum\_name
+\item enum\_label
+\item macro\_name
+\item filter\_namespace \_\_gnu\_cxx
+\item filter\_path /usr/include/
+\item filter\_path /g++\_HEADERS/
+\end{enumerate}
+
+\subsection{Non-Compliant Code Example}
+
+If you have the rule 
+\begin{verbatim}
+variable           ([a-z]+[A-Z]?)+
+\end{verbatim}
+the following code is a violation
+\begin{verbatim}
+int Foo_bar;
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+int fooBar;
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Find all named constructs int the AST
+\item If a named construct violates a naming rule report an error.
+\end{enumerate}
+
+\subsection{References}
+
+ALE3D style guide section 1.1, 1.2 and 3.2.

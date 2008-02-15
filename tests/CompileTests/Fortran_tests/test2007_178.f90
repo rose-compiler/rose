@@ -1,0 +1,8 @@
+TYPE PERSON
+  SEQUENCE
+  CHARACTER*1 GENDER     ! Offset 0
+  INTEGER(4) AGE         ! Offset 1
+  CHARACTER(30) NAME     ! Offset 5
+END TYPE PERSON
+END
+

@@ -1,0 +1,100 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgValueExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgValueExp
+\brief This class represents the notion of an value (expression value).
+\internal This is a base class for all value expressions.
+\todo We should add a SgComplexValue IR nodes for C99 support of complex constants.
+      At the moment these are internally represented as SgFloatValue, SgDoubleValue, 
+      or SgLongDoubleValue IR nodes.
+\sa
+\ref SgValueExp_usage  "Example of using a SgValueExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgValueExp data members
+/////////////////////////////////////////////////////////////////////////
+/*!
+\var SgValueExp::p_valueExpressionTree
+\brief This is the root of the expression tree to which the front-end applied constant
+    folding.  
+left hand side value (lvalue).
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgValueExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgValueExp::~SgValueExp()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgValueExp::p_originalExpressionTree
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgValueExp::SgValueExp(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgValueExp base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgValueExp_create "Example:create an SgValueExp object"
+*/
+/*!\fn SgValueExp::SgValueExp(const SgValueExpStorageClass &source)
+*/
+/*!\fn inline static void SgValueExp::operator delete(void *pointer)
+*/
+/*!\fn static SgValueExp *SgValueExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgValueExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgValueExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgValueExp::initializeStorageClassArray(SgValueExpStorageClass *storageArray)
+*/
+/*!\fn static void SgValueExp::clearMemoryPool()
+*/
+/*!\fn static void SgValueExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgValueExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgValueExp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgValueExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgValueExp::~SgValueExp()
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgValueExp::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgValueExp::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgValueExp::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgValueExp::post_construction_initialization()
+*/
+/*!\fn void SgValueExp::set_originalExpressionTree(SgExpression *originalExpressionTree)
+\description See  *originalExpressionTree)
+originalExpressionTree for documentation */
+/*!\fn SgExpression *SgValueExp::get_originalExpressionTree() const
+\description See  const
+originalExpressionTree for documentation */
+/*!\fn virtual SgNode *SgValueExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgValueExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgValueExp::get_numberOfTraversalSuccessors()
+\description See  SgValueExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgValueExp::get_traversalSuccessorContainer()
+\description See  SgValueExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgValueExp::get_traversalSuccessorNamesContainer()
+\description See  SgValueExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgValueExp::SgValueExp()
+*/
+//@}
+int SAGE_Doxygen_Dummy_307082843024887;

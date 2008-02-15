@@ -1,0 +1,35 @@
+
+/** 
+\brief Generated destructor
+
+This destructor is automatically generated (by ROSETTA). This destructor
+only frees memory of data members associated with the parts of the current IR node which 
+are NOT traversed. Those data members that are part of a traversal can be freed using
+a traversal (calling this destructor on all children in a post-order traversal).  Such 
+a traversal which deletes a whole AST is provided by DeleteSgTree(SgNode*).
+
+\internal  All IR nodes with data members specified using setDataPrototype() within ROSETTA
+     are specified as NO_DELETE is also specified as DEF_TRAVERSAL.  Those marked as
+     NO_TRAVERSAL can be marked as NO_DELETE or DEF_DELETE.
+
+\note All SgSymbol IR nodes are deleted when the symbol table is deleted.  Currently most
+     SgType IR nodes are not deleted (since they are shared).  Also, all STL lists of
+     pointers are not yet implemented to call delete on eash pointer in the container.
+     (This could be done by derivation from the STL containers to define containers that
+     automatically deleted their members.)
+
+*/
+$CLASSNAME::~$CLASSNAME ()
+   {
+#if 0
+  // debugging information!
+     printf ("In $CLASSNAME::~$CLASSNAME (destructor) \n");
+#endif
+
+#if 1
+  // DQ (6/25/2006): Commented out destructor body to allow the File I/O to work.
+     $DESTRUCTOR_BODY
+#endif
+   }
+
+

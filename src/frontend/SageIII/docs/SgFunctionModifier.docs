@@ -1,0 +1,122 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgFunctionModifier
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgBitVector SgFunctionModifier::p_modifierVector
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgFunctionModifier &SgFunctionModifier::operator=(const SgFunctionModifier &X)
+*/
+/*!\fn SgFunctionModifier::SgFunctionModifier(const SgFunctionModifier &X)
+*/
+/*!\fn SgFunctionModifier::SgFunctionModifier(const SgFunctionModifierStorageClass &source)
+*/
+/*!\fn bool SgFunctionModifier::isDefault() const
+*/
+/*!\fn bool SgFunctionModifier::isElemental() const
+*/
+/*!\fn bool SgFunctionModifier::isExplicit() const
+*/
+/*!\fn bool SgFunctionModifier::isInline() const
+*/
+/*!\fn bool SgFunctionModifier::isPure() const
+*/
+/*!\fn bool SgFunctionModifier::isPureVirtual() const
+*/
+/*!\fn bool SgFunctionModifier::isRecursive() const
+*/
+/*!\fn bool SgFunctionModifier::isUnknown() const
+*/
+/*!\fn bool SgFunctionModifier::isVirtual() const
+*/
+/*!\fn inline static void SgFunctionModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgFunctionModifier *SgFunctionModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFunctionModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFunctionModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFunctionModifier::initializeStorageClassArray(SgFunctionModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgFunctionModifier::clearMemoryPool()
+*/
+/*!\fn static void SgFunctionModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFunctionModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgFunctionModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgFunctionModifier::roseRTI()
+*/
+/*!\fn virtual SgFunctionModifier::~SgFunctionModifier()
+*/
+/*!\fn virtual SgNode *SgFunctionModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFunctionModifier::post_construction_initialization()
+*/
+/*!\fn void SgFunctionModifier::display(std::string label) const
+*/
+/*!\fn void SgFunctionModifier::reset()
+*/
+/*!\fn void SgFunctionModifier::setDefault()
+*/
+/*!\fn void SgFunctionModifier::setElemental()
+*/
+/*!\fn void SgFunctionModifier::setExplicit()
+*/
+/*!\fn void SgFunctionModifier::setInline()
+*/
+/*!\fn void SgFunctionModifier::setPure()
+*/
+/*!\fn void SgFunctionModifier::setPureVirtual()
+*/
+/*!\fn void SgFunctionModifier::setRecursive()
+*/
+/*!\fn void SgFunctionModifier::setUnknown()
+*/
+/*!\fn void SgFunctionModifier::setVirtual()
+*/
+/*!\fn void SgFunctionModifier::unsetDefault()
+*/
+/*!\fn void SgFunctionModifier::unsetElemental()
+*/
+/*!\fn void SgFunctionModifier::unsetExplicit()
+*/
+/*!\fn void SgFunctionModifier::unsetInline()
+*/
+/*!\fn void SgFunctionModifier::unsetPure()
+*/
+/*!\fn void SgFunctionModifier::unsetPureVirtual()
+*/
+/*!\fn void SgFunctionModifier::unsetRecursive()
+*/
+/*!\fn void SgFunctionModifier::unsetUnknown()
+*/
+/*!\fn void SgFunctionModifier::unsetVirtual()
+*/
+/*!\fn void SgFunctionModifier::set_modifierVector(SgBitVector modifierVector)
+\description See  modifierVector)
+modifierVector for documentation */
+/*!\fn SgBitVector SgFunctionModifier::get_modifierVector() const
+\description See  const
+modifierVector for documentation */
+/*!\fn virtual SgNode *SgFunctionModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgFunctionModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFunctionModifier::get_numberOfTraversalSuccessors()
+\description See  SgFunctionModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionModifier::get_traversalSuccessorContainer()
+\description See  SgFunctionModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionModifier::get_traversalSuccessorNamesContainer()
+\description See  SgFunctionModifier::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFunctionModifier::SgFunctionModifier()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1985998353;

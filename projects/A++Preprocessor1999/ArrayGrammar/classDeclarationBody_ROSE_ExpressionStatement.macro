@@ -1,0 +1,15 @@
+       // Special constructor for CLASSNAME;
+          CLASSNAME ( SgStatement* stmt );
+
+       // Define the abstractBaseClass function
+          virtual ROSE_Node* transform();
+
+          friend CLASSNAME* isRoseExpressionStatement (ROSE_Node* node);
+
+          void recognizeSageSubTree ( SgStatement* stmt );
+
+          void setRoseExpression ( ROSE_Expression* expr );
+          ROSE_Expression* getRoseExpression ();
+
+     private:
+          ROSE_Expression* roseExpr;

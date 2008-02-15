@@ -1,0 +1,78 @@
+\chapter{Template Parameter Extraction}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/templateParameter.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/templateParameter.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used to extract template parameter information.}
+\label{Tutorial:exampleTemplateParameterExtration}
+\end{figure}
+
+   Figure~\ref{Tutorial:exampleTemplateParameterExtration} shows a translator which
+reads an application and gathers a list of loop nests.  At the end of the traversal it
+reports information about each instantiated template, including the template arguments.
+
+   Figure~\ref{Tutorial:exampleInputCode_TemplateParameterExtration} shows the
+input code used to get the translator.
+Figure~\ref{Tutorial:exampleOutput_TemplateParameterExtration} shows the resulting output.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_TemplateParameterExtration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_TemplateParameterExtration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to templateParameter.C.}
+\label{Tutorial:exampleInputCode_TemplateParameterExtration}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/templateParameter.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/templateParameter.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to templateParameter.C.}
+\label{Tutorial:exampleOutput_TemplateParameterExtration}
+\end{figure}
+
+
+

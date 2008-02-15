@@ -1,0 +1,127 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceAliasDeclarationStatement
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgNamespaceAliasDeclarationStatement
+\brief This class represents the concept of a C++ namespace alias declaration statement.
+   For a namespace Y, this appears in the code as "namespace X = Y;".  In general
+"X" is a shorter name for what in "Y" might be unwieldy.
+\sa
+\ref SgNamespaceAliasDeclarationStatement_usage  "Example of using a SgNamespaceAliasDeclarationStatement object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceAliasDeclarationStatement data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceAliasDeclarationStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgNamespaceAliasDeclarationStatement_create "Example:create an SgNamespaceAliasDeclarationStatement object"
+*/
+/*!
+\fn SgNamespaceAliasDeclarationStatement::~SgNamespaceAliasDeclarationStatement()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgNamespaceAliasDeclarationStatement::isSgNamespaceAliasDeclarationStatement (SgNode *s)
+\brief Cast function (from derived class to SgNamespaceAliasDeclarationStatement pointer).
+   This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
+\return Returns valid pointer to SgNamespaceAliasDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgNamespaceAliasDeclarationStatement::isSgNamespaceAliasDeclarationStatement (const SgNode *s)
+\brief Cast function (from derived class to SgNamespaceAliasDeclarationStatement pointer).
+   This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
+pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
+\return Returns valid pointer to SgNamespaceAliasDeclarationStatement if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgName SgNamespaceAliasDeclarationStatement::p_name
+\brief This the name of the new namespace alias (usually a shorter name).
+*/
+/*! \var SgNamespaceDeclarationStatement *SgNamespaceAliasDeclarationStatement::p_namespaceDeclaration
+\brief This the namespace to which the alis references.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgNamespaceAliasDeclarationStatement::SgNamespaceAliasDeclarationStatement(Sg_File_Info *startOfConstruct,SgName name=(""),SgNamespaceDeclarationStatement *namespaceDeclaration=(0))
+*/
+/*!
+\fn SgNamespaceAliasDeclarationStatement::SgNamespaceAliasDeclarationStatement(const SgNamespaceAliasDeclarationStatementStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgNamespaceAliasDeclarationStatement base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn inline static void SgNamespaceAliasDeclarationStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgNamespaceAliasDeclarationStatement *SgNamespaceAliasDeclarationStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgNamespaceAliasDeclarationStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgNamespaceAliasDeclarationStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgNamespaceAliasDeclarationStatement::initializeStorageClassArray(SgNamespaceAliasDeclarationStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgNamespaceAliasDeclarationStatement::clearMemoryPool()
+*/
+/*!\fn static void SgNamespaceAliasDeclarationStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgNamespaceAliasDeclarationStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgNamespaceAliasDeclarationStatement::roseRTI()
+*/
+/*!\fn virtual SgNamespaceAliasDeclarationStatement::~SgNamespaceAliasDeclarationStatement()
+*/
+/*!\fn virtual SgNode *SgNamespaceAliasDeclarationStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgNamespaceAliasDeclarationStatement::post_construction_initialization()
+*/
+/*!
+\fn void SgNamespaceAliasDeclarationStatement::set_name(SgName name)
+\brief Access function for p_name.
+See  name)
+name for documentation \return Returns void.
+*/
+/*!
+\fn void SgNamespaceAliasDeclarationStatement::set_namespaceDeclaration(SgNamespaceDeclarationStatement *namespaceDeclaration)
+\brief Access function for p_namespaceDeclaration.
+See  *namespaceDeclaration)
+namespaceDeclaration for documentation \return Returns void.
+*/
+/*!
+\fn SgName SgNamespaceAliasDeclarationStatement::get_name() const
+\brief Access function for p_name.
+See  const
+name for documentation \return Returns SgName.
+*/
+/*!
+\fn SgNamespaceDeclarationStatement *SgNamespaceAliasDeclarationStatement::get_namespaceDeclaration() const
+\brief Access function for p_namespaceDeclaration.
+See  const
+namespaceDeclaration for documentation \return Returns SgNamespaceDeclarationStatement.
+*/
+/*!\fn virtual SgName SgNamespaceAliasDeclarationStatement::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgNamespaceAliasDeclarationStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgNamespaceAliasDeclarationStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgNamespaceAliasDeclarationStatement::get_numberOfTraversalSuccessors()
+\description See  SgNamespaceAliasDeclarationStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNamespaceAliasDeclarationStatement::get_traversalSuccessorContainer()
+\description See  SgNamespaceAliasDeclarationStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNamespaceAliasDeclarationStatement::get_traversalSuccessorNamesContainer()
+\description See  SgNamespaceAliasDeclarationStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgNamespaceAliasDeclarationStatement::SgNamespaceAliasDeclarationStatement(SgName name,SgNamespaceDeclarationStatement *namespaceDeclaration)
+*/
+//@}
+int SAGE_Doxygen_Dummy_2176884073218;

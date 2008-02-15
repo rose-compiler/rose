@@ -1,0 +1,1450 @@
+==============================
+PDFlib 6.0.2 (August 09, 2005)
+==============================
+
+- 2005-08-09 (bug #420)
+  Textflow: if the text before a ruler tab exceeded the tab position the
+  text after the tab overlapped the text before the tab if tabalignment
+  was different from left. Now the text after the tab will be placed
+  immediately after the text before the tab.
+
+- 2005-08-09 (bug #164/reopened)
+  Textflow ignored the values of parindent and/or leftindent when calculating
+  the position of ruler tab positions.
+
+- 2005-08-08 (bug #418)
+  The option "space" in an inline option list for Textflow didn't cause any
+  line breaking opportunity before the next text snippet.
+
+- 2005-08-08
+  Inserted a new implementation of TIFFFindFieldInfo() from libtiff 3.7.0
+  to avoid a static variable and a potential memory-related crash with custom
+  tags.
+
+- 2005-08-08
+  Fixed a memory problem in libtiff related to tags of type RATIONAL.
+
+- 2005-08-07 (bug #416)
+  Redirect libjpeg error and warning messages to the PDFlib log file if
+  logging is enabled.
+
+- 2005-08-05 (bug #368/partial)
+  OpenType CFF fonts which require rewriting to CID and contain accented
+  characters that use the deprecated seac/endchar operator are not properly
+  converted (e.g. FontShop's AbsaraSansOT). Pending the full bug fix we
+  now throw an exception if the problematic situation is detected.
+  If CID conversion is not required and subsetting is enabled both the
+  base and accent characters are now included in the subset, which fixes
+  an Acrobat display problem in this case.
+  Possible workaround for the remaining CID case: 8-bit encodings are not
+  affected by this problem.
+
+- 2005-08-05 (bug #372)
+  Added a sample for .NET 2.0 and Visual Studio 2005 (tested with beta 2).
+
+- 2005-08-05
+  Changed the definition of slot 0xCA (dec 202, oct 312) in "macroman_apple"
+  encoding from U+0020 (space) to U+00A0 (no-break space).
+
+- 2005-08-03 (bug #411)
+  The "willclose" action didn't work properly in Acrobat due to a bug in
+  the PDF reference.
+
+- 2005-07-28 (bug #401)
+  Calling PDF_open_pdi() with a PVF file and the "inmemory" option resulted
+  in a crash.
+
+- 2005-07-26 (bug #107)
+  Added support for PostScript host fonts on the Mac (Carbon builds only).
+
+- 2005-07-25 (bug #398)
+  The ColSpan and RowSpan properties were incorrectly rejected for the TD
+  tag, and accepted only for TH.
+
+- 2005-07-23 (bug #158)
+  Fixed a problem caused by inconsistent handling of enum values in the
+  Classic and Carbon CodeWarrior builds.
+
+- 2005-07-22 (bug #387)
+  Uses "SYS$SCRATCH" for temporary files on VMS, and support logical names
+  in the SearchPath resource category.
+
+- 2005-07-22 (bug #394)
+  Implemented the "orientate" option for PDF_fit_textflow() and corresponding
+  property for Textflow blocks in PDF_fill_textblock().
+
+- 2005-07-20 (bug #393)
+  The Textflow engine could place text on the top edge of the box (instead of
+  below the edge) under the following conditions because the leading was not
+  applied:
+  - A line break occurs at the first line break opportunity in the first line
+    and
+  - The second line break opportunity is not considered.
+
+- 2005-07-19 (bug #392)
+  The emulation of the deprecated function PDF_add_note() incorrectly set the
+  annotation's "enable printing" flag, making it incompatible with the
+  behavior of PDFlib 5.
+
+- 2005-07-19 (bug #379)
+  PDF_create_textflow() could incorrectly raise an exception
+  "Font 'Helvetica' must be embedded in PDF/X-1 and PDF/X-3" in PDF/X mode
+  if no fontname was supplied in the optlist parameter but only via
+  inline options.
+
+- 2005-07-19 (bug #383)
+  Improved the build process for PDFlib with PHP, and added support for
+  PHP 4 DSOs on Mac OS X.
+
+- 2005-07-19 (bug #325)
+  Switched the default build for HP-UX on Itanium from ILP32 to LP64 which
+  makes more sense on a 64-bit platform.
+
+- 2005-07-19 (bug #217)
+  Fixes a long-standing problem with libtool which caused problems on 
+  several platforms. Most notably, the standard build on Linux x86_64
+  created a static library by default since no PIC code was created,
+  and on AIX the shared library was included in the shipped libpdf.a.
+
+- 2005-07-18 (bug #299)
+  Don't use the current fill color as alternate color for the "All" and "None"
+  spot colors to avoid an internal error message when the current fill color
+  was another spot color. We now use DeviceGray as alternate, or DeviceRGB for
+  DeviceRGB output intents to be compatible with PDF/X-3.
+
+- 2005-07-18 (bug #304)
+  Added a check to make sure that the output device is characterized by an
+  embedded ICC profile if HKS or Pantone spot colors are used in PDF/X-3 mode.
+  This is mandated by the PDF/X-3 standard and was already documented in
+  the PDFlib manual, but not yet enforced by the code. While Acrobat 6
+  Preflight does not check this condition, Acrobat 7 does.
+
+- 2005-07-15 (bug #355)
+  Adjusted the RB samples for compatibility with REALbasic 2005.
+
+- 2005-07-14 (bug #149)
+  Replaced a deprecated call to PDF_set_parameter() in the chartab examples
+  with the equivalent option list in PDF_begin_document().
+
+- 2005-07-06 (bug #319)
+  A crash could happen when PDF_delete() was called for cleanup after an
+  exception because the output file couldn't be written (e.g. disk full).
+
+- 2005-07-06 (bug #365)
+  Adds support for PHP 4.4.0 RC2.
+
+- 2005-07-05 (bug #241)
+  Removed the VBScript samples for ASP from package and manual since VBS
+  is really unpopular for ASP development.
+
+- 2005-07-05 (bug #190)
+  Set the PDFlib object to "Nothing" in all ASP.NET and VB.NET samples in
+  order to avoid output files remaining locked in case of an exception.
+  Client code should apply the same technique.
+
+- 2005-07-04 (bug #105 and bug #106)
+  Adds support for building PDFlib as a framework on Mac OS X with xcode.
+
+- 2005-07-04 (bug #167)
+  Improved the flushing behavior, and fixed various bugs related to the
+  "flush" parameter.
+
+- 2005-07-04 (bug #318)
+  PDF_suspend_page() could crash when the trace was enabled. In addition,
+  PDFlib now checks whether any suspended pages are still pending at the
+  end of the document, and throws an exception if this is the case.
+
+- 2005-06-29 (bug #369)
+  Negative glyph width entries in TrueType or OpenType fonts (e.g. FSI's
+  DaxlinePro) are now accepted although the spec calls for a USHORT value
+  in the advanceWidth entry of the hmtx table.
+
+- 2005-06-29 (bug #170)
+  Linearization could fail for files containing a very large number of
+  bookmarks.
+
+- 2005-06-26 (bug #352)
+  PDI now accepts abbreviated filter names for content streams.
+
+- 2005-06-26 (bug #322 and bug #328)
+  The PDI cache for page handles hasn't been emptied when the output PDF
+  was closed. This could result in invalid output when an input PDF was
+  opened in object scope, and caused a memory leak.
+
+- 2005-06-26 (bug #223)
+  Updated the block API version number to 5.
+
+- 2005-06-24 (bug #330)
+  Implements support for character references (option/parameter "charref")
+  for UTF-8 text format.
+
+- 2005-06-24 (bug #356)
+  Implements the "rotate" option for PDF_fit_textflow().
+
+- 2005-06-24 (bug #321)
+  Allows an empty string for the "destname" option of PDF_create_bookmark()
+  to create bookmarks without any action.
+
+- 2005-06-24 (bug #347)
+  Implements the "passthrough" option for PDF_load_image() to control
+  TIFF pass-through mode and JPEG transcoding.
+
+- 2005-06-23
+  Adjusted the naming conventions for the trace feature to match the new
+  logging facility.
+  
+- 2005-06-23 (bug #348)
+  An exception would be thrown if underline/overline/strikeout was enabled
+  for fonts containing an underline width value of 0. PDFlib now sets
+  the linewidth to the default of 50 in this case.
+
+- 2005-06-17 (bug #341)
+  OpenType fonts without an internal glyph name list could crash PDFlib.
+
+- 2005-06-17 (bug #264)
+  Detects masks which have different orientation than the image, and
+  rejects them.
+
+- 2005-06-17 (bug #317)
+  Added support for 16 bit BMP images (actually 5+5+5 plus 1 unused bit).
+
+- 2005-06-09 (bug #207)
+  Adds special code for querying the second value of the position array in
+  with "vdp/Blocks[%d]/position[1]" paths for cases with only entry (i.e.
+  both values are the same, and the Block plugin wrote only one entry).
+  Same handling for the "dpi", "margin", and "scale" properties.
+
+- 2005-06-08 (bug #100)
+  Adds large file support for OpenBSD.
+
+- 2005-06-03 (bug #220)
+  Detect and reject JPEG-compressed TIFF images with separate image planes
+  since libtiff cannot handle this flavor. In many cases these aliens can
+  be processed with type=jpeg, but PDFlib does not automatically try this.
+
+- 2005-06-02 (bug #242)
+  Added the keywords left/center/right and bottom/center/top to the "position"
+  option of PDF_fit_textline(), PDF_create_field(), and PDF_create_fieldgroup().
+
+- 2005-06-01 (bug #52)
+  Added full LZW decompression support to PDI. This is required only for
+  the very rare case of content streams with mixed compression filters
+  (LZW plus other) which was rejected in the past.
+
+- 2005-05-31 (bug #299)
+  The special spot color names "All" and "None" didn't work when the current
+  fill color space was another spot color. PDFlib now generates a simple
+  DeviceGray alternate color space for these two special color spaces.
+
+
+=============================
+PDFlib 6.0.1p7 (May 20, 2005)
+=============================
+
+- 2005-05-20 (bug #236 and bug #265)
+  Adds support for Mac OS X 10.4 aka Tiger, including a special build for
+  the version of Perl included in Tiger.
+
+- 2005-05-20 (bug #235)
+  Minor adjustments to allow builds with GCC 4.
+
+- 2005-05-18 (bug #266)
+  The businesscard.php sample in the php-50x tree was actually the sample
+  code for PHP 4.
+
+- 2005-05-13 (bug #261)
+  The scope check for PDF_load_image() was executed too late, which could
+  result in misleading or plain wrong error messages when the function was
+  called in object scope.
+
+- 2005-05-12 (bug #260)
+  Implemented the "opacity", "createdate", and "subject" options for
+  PDF_create_annotation().
+
+- 2005-05-12 (bug #262)
+  Encoding "auto" didn't work properly for the PDF core fonts (e.g. "builtin"
+  was used instead of "winansi" even for text fonts).
+
+- 2005-05-09 (bug #257)
+  OpenType fonts with an empty classrecords table could raise an exception.
+
+- 2005-05-06
+  No longer raise an exception for empty upr configuration files.
+
+
+=============================
+PDFlib 6.0.1p6 (May 03, 2005)
+=============================
+
+- 2005-05-03
+  Added support for images with JPEG2000 compression (using type=jpeg2000
+  in PDF_load_image()).
+
+- 2005-04-26 (bug #212)
+  Calling get_errmsg() in a Unicode-capable binding would clear the error
+  number, i.e. a subsequent call to get_errnum() returned 0 (calling both in
+  opposite order worked well).
+
+- 2005-04-22 (bug #155)
+  Implements the "underlinewidth" and "underlineposition" options for the
+  text output functions in order to allow constant underline width even
+  across font changes.
+
+- 2005-04-21 (bug #218)
+  Empty strings supplied to PDF_create_textflow() could result in a crash in
+  the Java binding on some systems. Similarly, the length parameter of
+  PDF_create_textflow() in C was not properly ignored if a NULL pointer was
+  supplied for the text.
+
+
+===============================
+PDFlib 6.0.1p5 (April 19, 2005)
+===============================
+
+- 2005-04-19 (bug #213)
+  PDI now accepts hexadecimal strings with an odd number of hex digits or
+  whitespace between hex digits.
+
+- 2005-04-19 (bug #208)
+  Encryption didn't work properly in builds with the Borland C++ compiler
+  (valid PDF was created, but the password was modified).
+
+- 2005-04-19 (bug #214)
+  Implemented the "leftlinex/y" and "rightlinex/y" keywords for
+  PDF_info_textflow().
+
+- 2005-04-18 (bug #196)
+  Introduces numerical addressing mode for the fonts contained in a TrueType
+  Collection (TTC) file, e.g. "msgothic:1".
+
+- 2005-04-18 (bug #211)
+  Malformed TIFFs with non-conforming data types in custom tags could result
+  in a crash or a warning "tried to allocate 0 or negative number of bytes".
+  Since we don't use custom tags PDFlib now ignores those when reading the
+  image.
+
+- 2005-04-18 (bug #210)
+  When conflicting options for PDF_load_font() were supplied (e.g. fontstyle
+  and embedding) the font engine could emit wrong error messages related to
+  AFM, PFM, and TTF/OTF files (e.g. "Out of memory" or "Metrics data not
+  found").
+
+- 2005-04-15 (bug #166)
+  Implemented the "metadata" option for page-related XMP metadata in
+  PDF_begin_page_ext() and PDF_end_page_ext().
+
+- 2005-04-15 (bug #151)
+  Eliminates display problems with Photoshop CMYK JPEG images in Acrobat 7.
+  In order to avoid reintroducing a similar problem with Apple Preview we
+  now always transcode Photoshop CMYK JPEGs.
+  This also eliminates a display problem in Acrobat 6 with rare JPEGs which
+  have a ColorTransform entry of 2 in the Adobe marker.
+
+- 2005-04-15 (bug #165 and bug #156)
+  TrueType or OpenType fonts may contain glyphs without any Unicode mapping.
+  E.g. swash characters cannot map to the same Unicode value as the
+  corresponding regular characters. While Adobe OpenType fonts generally map
+  such glyphs to the CUS, other vendors do not provide any Unicode value for
+  them. Since PDFlib's internal handling relies on unique Unicode values
+  the glyphs were not accessible, not even with a custom name-based encoding.
+  To solve this PDFlib now maps those glyphs to the PUA internally. The PUA
+  values are not visible to the client, but name-based glyph access will work
+  now.
+
+- 2005-04-12 (bug #114)
+  In order to work around different behavior in Acrobat 5 and 6 regarding
+  several form field options (e.g. the readonly option for radio buttons
+  was not honored in Acrobat 6) the following restriction is now implemented:
+  options "readonly", "unisonselect", "toggle", and "tooltip" for type=
+  radiobutton are only allowed for PDF_create_fieldgroup(), but no longer
+  for PDF_create_field().
+
+- 2005-04-12 (bug #169)
+  BMP images with 32 bits per pixel were accepted, but not properly converted
+  to PDF. Now they are treated as RGB images where 8 bits per pixel are skipped.
+
+- 2005-04-12 (bug #205)
+  The position of overline/underline/strikeout lines was wrong when
+  horizontalscaling was negative or a topdown coordinate system was used.
+
+- 2005-04-12 (bug #204)
+  When charref=true and an isolated "&" character is found in the text an
+  exception is only thrown when glyphwarning=true. This allows clients to
+  use character references while not having to worry about stray "&"
+  characters.
+
+- 2005-04-09 (bug #201)
+  PDF_load_font() could crash if fontwarning=false and an unknown encoding
+  name was supplied.
+
+- 2005-04-09 (bug #198)
+  If the string value of the "destname" option (supported in the option lists
+  of multiple functions) was not UTF-8 it was treated as PDFDocEncoding
+  instead of the encoding specified as hypertextencoding.
+
+
+==============================
+PDFlib 6.0.1p4 (April 4, 2005)
+==============================
+
+- 2005-04-04 (bug #189)
+  Creating trace output could crash with Unicode bindings (e.g. Java) on
+  some platforms (e.g. Solaris) when a NULL pointer was supplied to the
+  printf() function for a %s parameter.
+
+- 2005-04-01 Fixed various problems with textflow:
+
+  - (Bug #183) PDF_fit_textflow() placed the text on a wrong position (text
+    started in the vertical middle of the target rectangle) when the options
+    "fitmethod=nofit verticalalign=center" were set and the text didn't fit
+    into the box. Now it will be correctly centered, and extend beyond the
+    top and bottom of the rectangle (because of nofit).
+
+  - (Bugs #137, #138, and #145)
+    Calculating the leading value was inconsistent. This affected situations
+    where leading was specified at the beginning of the text and in the
+    optlist parameter of PDF_create_textflow(). In this situation the leading
+    value from the optlist parameter was used, and not the one from the inline
+    option list.
+    The new behavior is documented in the manual. Note that it may cause
+    different formatting results than with earlier versions!.
+
+  - (Bug #142 and #157) When a sequence of option lists didn't contain any
+    text in between, some settings (e.g. color, fontname) or commands (e.g.
+    nextline) in the first option list were ignored.
+
+  - (Bug #163) When the option list for PDF_fit_textflow() set the
+    firstlinedist option to capheight or ascender (but not leading),
+    the distance between the first and second lines was too small.
+
+  - (Bug #164) An unnecessary linebreak could occur for lines containing
+    multiple tabs when the text between two tabs was too long.
+
+  - (Bug #181) When empty text was supplied to PDF_fit_textflow(), the value
+    returned for "textendy" in PDF_info_textflow() would always be the
+    upper right y value of the box, even if the lower left and upper right
+    corners were supplied in reverse order (which is allowed).
+
+
+- 2005-03-31 (bug #188)
+  The "refpoint" option didn't work for PDF_fill_imageblock() and
+  PDF_fill_pdfblock().
+
+
+
+==================================
+PDFlib 6.0.1p3 (February 14, 2005)
+==================================
+
+- 2005-02-14
+  License keys didn't work with the new package for OpenVMS.
+
+- 2005-01-27 (bug #159)
+  A bug in hypertext string processing resulted in the wrong exception
+  "Invalid UTF-16 string (odd byte count)" when a hypertext function
+  (PDF_add_nameddest(), PDF_create_bookmark(), PDF_create_field(),
+  PDF_create_fieldgroup()) was called, and all of the following conditions
+  are true:
+  - A non-Unicode-capable language binding is used (C, PHP, etc.)
+  - "hypertextencoding" has not been set.
+  - "hypertextformat" has not been set, or has been set to "utf16xx"
+  - PDF_set_info() has not yet been called.
+
+  Workaround: set "hypertextencoding" or call PDF_set_info().
+
+- 2005-01-13 (bug #150)
+  In rare cases a ToUnicode map was not created even with unicodemap=true.
+  This affected TrueType and OpenType/TT fonts with an encoding different
+  from winansi/macroman/ebcdic if the encoding contained only AGL names.
+
+
+=================================
+PDFlib 6.0.1p2 (January 11, 2005)
+=================================
+
+- 2005-01-11 (bug #148)
+  When using CMYK images in PDF/X-3 mode with one of the Standard OutputIntents
+  PDFlib required the user to set a DefaultCMYK color space. This is wrong,
+  since all of the Standard OutputIntents are CMYK, and a DefaultCMYK color
+  space is only required if the output device is not CMYK. As a result of this
+  bug PDF/X-3 with untagged images could not be created. Explicitly specifying
+  the output intent via an ICC file provides a workaround, however.
+
+- 2005-01-10 (bug #147)
+  Five symbols from the PNG library had their name mappings missing, resulting
+  in conflicts when an application was linked against both PDFlib and libpng
+  with certain compilation flags.
+
+- 2005-01-10 (bug #133)
+  Analyzed iDEFENSE Security Advisory 12.21.04; the recommended patch is not
+  required since PDFlib automatically traps attempts at allocating 0 bytes.
+  However, the patch has been applied nevertheless since it results in a
+  slightly less generic exception message.
+
+- 2005-01-07 (bug #144)
+  PDFlib would crash when the same named destination was set multiply on
+  different pages.
+
+- 2005-01-07 (bug #142)
+  With two sequential Textflow option lists without any text in between, any
+  color settings in the first list would be ignored.
+
+- 2005-01-05 (bug #139)
+  Textflows containing only an option list, but no actual text would raise
+  an exception "Handle parameter or option of type 'textflow' has bad value"
+  in PDF_fit_textflow(). Now this is treated like an empty Textflow.
+
+- 2005-01-04 (bug #141)
+  "make install" for PDFlib Lite would fail if /usr/local/bin did not exist.
+
+- 2005-01-04 (bug #140)
+  Textflow could ignore the "minlinecount" option in certain situations.
+
+
+==================================
+PDFlib 6.0.1p1 (December 17, 2004)
+==================================
+
+- 2004-12-17 (bug #124)
+  PDF_fill_textblock() in Unicode-capable languages could raise the exception
+  "Warning: End character U+003E for inline option list not found" when no
+  text was supplied and the default text of the block contained an inline
+  option list.
+
+- 2004-12-17 (bug #113)
+  A crash could occur after a field-related exception due to an error in
+  the cleanup code.
+
+- 2004-12-16 (bug #120)
+  The large file support introduced in 6.0.1 could create a performance
+  bottleneck on Windows when reading files from a network drive.
+
+- 2004-12-14 (bug #119)
+  Due to inconsistent input material the builtin HKS tables contained errors:
+  - added "HKS 207 E" and "HKS 243 E"
+  - removed "HKS 98 E" and "HKS 99 E" which don't actually exist
+  - added "HKS 98 K" and "HKS 99 K"
+
+- 2004-12-13 (bug #117)
+  The following combination of options for PDF_define_layer():
+  "intent=View initialviewstate=false initialprintstate=true"
+  (for creating a layer which is visible, but doesn't print) didn't work;
+  the layer was invisible on screen as well.
+
+- 2004-12-13 (bug #116)
+  Using the "inmemory" option in PDF_open_pdi() caused a memory leak.
+
+- 2004-12-09 (bug #83)
+  Removes the DLL edition of PDFlib.NET from the installer package and
+  manual, and builds PDFlib.NET against Framework 1.1 to avoid the dreaded
+  AppDomainUnloadedException problem (Microsoft KB bug Q309694) without
+  requiring the DLL edition. As a consequence, Framework 1.1 is now required
+  to use PDFlib.NET.
+
+- 2004-12-06 (bug #110)
+  PDF_set_parameter(p, "trace", "true") didn't automatically flush the output.
+
+
+================================
+PDFlib 6.0.1 (November 26, 2004)
+================================
+
+- 2004-11-26
+  PDF_set_layer_dependency() didn't work in the Java binding for iSeries.
+
+- 2004-11-26 (bug #101)
+  CodeWarrior builds on Mac and Windows couldn't deal with more than 126
+  Indexed color spaces. An exception "Unkown color space -128" could
+  occur when importing more than 125 images.
+
+- 2004-11-22 (bug #81)
+  Changes the definition of "host" encoding on iSeries from EBCDIC code page
+  1047 to code page 037 to better match the conventions used for compiling
+  C code. This may affect client code, but using "host" encoding is not
+  recommended anyway.
+
+- 2004-11-19 (bug #92)
+  The ICC profile handle returned by PDF_get_value() for "image:iccprofile"
+  was off by 1 in the PHP language binding.
+
+- 2004-11-19 (bug #88)
+  PDFs containing subsets of symbolic TrueType fonts (e.g. Wingdings) with
+  encoding "builtin" resulted in PostScript printing errors.
+
+- 2004-11-19 (bug #40)
+  Adds the PDF_utf8_to_utf16() and PDF_utf16_to_utf8() utility functions to
+  the PHP, Perl, Python, Cobol, and RPG language bindings.
+
+- 2004-11-18 (bug #86)
+  Emits a better message when an OpenType CID font is used with an 8-bit
+  encoding (instead of a standard CMap or "unicode" encoding).
+
+- 2004-11-18 (bug #82)
+  The textflow options charspacing, wordspacing, and textrise didn't work
+  properly (wrong alignment) if specified as a percentage (as opposed to
+  absolute values).
+
+- 2004-11-18 (bug #89)
+  Layer nesting didn't work for the second and subsequent top-level layer, i.e.
+  subsequent nested layer names would appear as top-level layers in Acrobat's
+  layer pane.
+
+- 2004-11-18 (bug #71)
+  Eliminated a memory leak which could occur when an exception was thrown
+  in PDF_end_page_ext().
+
+- 2004-11-18 (bug #63)
+  JPEG transcoding (introduced in 6.0.0p3) didn't work for images containing
+  some garbage bytes at the beginning.
+
+- 2004-11-17 (bug #70)
+  Encrypted PDF with compressed object streams can only be opened with the
+  proper password, even with the "infomode" option. Failing to supply the
+  password will now be properly reported in PDF_open_pdi(), instead of raising
+  an exception in PDF_get_pdi_value() because of damaged PDF.
+
+- 2004-11-17 (bug #56)
+  Improved large file support (files > 2 GB) to work on more platforms,
+  including Windows and Mac OS X.
+
+- 2004-11-17 (bug #68)
+  PDI couldn't uncompress a certain flavor of Flate-compressed content streams
+  with damaged or incomplete Flate data.
+
+- 2004-11-16 (bug #72)
+  Rectifies handling of TIFF images with an orientation tag:
+  - Implements the "ignoreorientation" option for PDF_load_image() in addition
+    to the existing PDF_fit_image() (documentation for 6.0.0 claimed
+    otherwise, but this was a bug in the manual).
+  - Implements the "orientation" parameter for querying the value of the
+    orientation tag for TIFF images with PDF_get_value().
+  - The resx/resy and imagewidth/height parameters will be swapped if the
+    image contains an orientation tag which requires swapping.
+
+- 2004-11-15 (bug #74)
+  Symbolic fonts in the TrueType and OpenType formats with "unicode"
+  encoding can now be addressed in two different ways:
+  - Unicode values U+F000 and above
+  - Unicode values U+0020-U+00FF for (pseudo) single-byte addressing
+  PDFlib will automatically detect the user's choice and convert the
+  incoming strings to the required internal format. This means that
+  both Unicode-savvy code as well as "old-style" single-byte addressing
+  will work for fonts such as WebDings.
+
+- 2004-11-15 (bug #79)
+  The PDFlib PECL module (version 2.0.3) now supports old PDFlib 4
+  installations. The changes were implemented both in the PDFlib CVS and
+  the PHP/PECL CVS.
+
+- 2004-11-12 (bug #73)
+  Some fonts wouldn't be found as host fonts on the Mac. In particular,
+  bold and italic styles didn't work, and plain-style fonts didn't work
+  if they contained the word "Regular" in the font name. The new code
+  requires the QuickDraw font name to be supplied by the user
+  (ftxinstalledfonts -q), as opposed to the previous recommendation of using
+  the full name (ftxinstalledfonts -f).
+
+- 2004-11-10 (bug #76)
+  On the Mac the SearchPath logic was not applied to LWFN PostScript font
+  files, so the file names had to be specified with their full path names.
+  Now they will be searched in all SearchPath directories.
+
+- 2004-11-10 (bug #63)
+  Analyzed and fixed the following security vulnerabilities in libtiff:
+  - CAN-2004-0803: three vulnerabilities fixed (one in deactivated
+    Thunderscan code, though)
+  - CAN-2004-0804: vulnerability not present in PDFlib 6.0.x
+  - CAN-2004-0886: multiple vulnerabilities fixed
+  - CAN-2004-0929: overflow problem in OJPEG code fixed
+  - (No CAN) YCbCr subsampling code initialization was missing.
+
+- 2004-11-06
+  Improves memory management and cleanup in the Tagged PDF module.
+
+- 2004-11-05 (bug #54)
+  Clarifies the use of encodings for passwords, and implements auto-detection
+  of password encodings for compatibility with PDFs which have been encrypted
+  with Acrobat on the Mac. For encryption, WinAnsi is used as password encoding.
+
+
+==================================
+PDFlib 6.0.0p6 (November 04, 2004)
+==================================
+
+- 2004-11-04 (bug #56)
+  Added large file support, i.e. PDFlib can now create files > 2 GB, and
+  PDI can process such files.
+
+- 2004-10-29 (bug #67)
+  Textflow could crash when the text contained more than 64 (for textformat=
+  bytes) or 32 consecutive spaces (for textformat=utf16xx and all Unicode-
+  capable languages) after a newline character.
+
+- 2004-10-28 (bug #61)
+  Renamed the variable "form" in the invoice samples with "stationery" to
+  avoid a name clash in ColdFusion MX.
+
+- 2004-10-28 (bug #65)
+  Moves the target area for PDFlib-private Unicode mappings from the start
+  of the PUA (U+E000) to U+F5FF (increasing downwards) in order to avoid
+  potential conflicts with Adobe's use of the corporate-use area, which
+  starts at U+F600 and is actually used by some OpenType fonts.
+
+- 2004-10-28 (bug #59)
+  Documents and expands the list of character pairs for the Unicode replacement
+  mechanism (e.g. soft hyphen will be replaced with hyphen-minus if the font
+  doesn't provide a glyph for the former).
+
+- 2004-10-26 (bug #51)
+  Implements the "iconname" option for the PDF_load_image() and
+  PDF_open_pdi_page() functions.
+
+- 2004-10-25 (bug #44)
+  Implements the min/maxlinelength and min/maxliney parameters for
+  PDF_info_textflow().
+
+- 2004-10-25 (bug #34)
+  The "tempdirname" option was ignored on all platforms except MVS.
+
+- 2004-10-25 (bug #53)
+  Implements the "inmemory" option for PDF_open_pdi().
+
+- 2004-10-22 (bug #35)
+  Embedded OpenType fonts with PostScript outlines could result in PostScript
+  printing problems (Acrobat 5 would crash; Acrobat 6 would only print
+  .notdef characters, such as a crossed box). The problem occurs only when
+  the font is embedded in the PDF output as CIDFontType0, which happens for
+  encoding= unicode, glyphid, or any name-based encoding with at least one
+  character outside Adobe's standard Latin character set (in the latter case
+  only if autocidfont=true, which is the default).
+  The specific reason for the printing problem was that the font data was
+  incorrectly written in the SID format; now it is written in the CID format
+  with Ordering=Identity-H.
+  As a side effect, the new algorithm brings down file size of embedded
+  OpenType fonts significantly.
+
+- 2004-10-22 (bug #49)
+  Invalid PDF was generated (Acrobat popup: "An unrecognized token 'obj' was
+  found.") when PDF_begin_template() or PDF_begin_pattern() were called in
+  page scope (as of PDFlib 6, this allowed per PDFlib's scoping rules).
+  
+- 2004-10-22
+  Reworks handling of PNG images:
+
+  - Switches to libpng 1.2.7
+
+  - Adds a new header file for custom preprocessor statements.
+
+  - Changes handling of gray and RGB images with an associated alpha
+    channel: let libpng multiply the image against a white background.
+    This changes the old treatment of alpha channels, but the previous
+    results could be considered wrong anyway.
+
+- 2004-10-20 (bug #46)
+  Font data could be modified when a TrueType or OpenType font was supplied
+  as a PVF file and subsetting was active. Now PDFlib makes a copy of the
+  font data before creating the subset.
+
+- 2004-10-20 (bug #47)
+  The REALbasic wrapper could crash on the Mac when an exception occurred in
+  a function which takes string arguments.
+
+
+=================================
+PDFlib 6.0.0p5 (October 18, 2004)
+=================================
+
+- 2004-10-15
+  Adds support for custom CJK OpenType fonts in combination with predefined
+  CMaps. However, PDF_stringwidth(), subsetting, and kerning are not yet
+  supported for these fonts.
+
+- 2004-10-14
+  The "honoriccprofile" option in PDF_load_image() will be ignored if
+  "mask" has been supplied since Acrobat doesn't accept masks with
+  ICCBased color spaces.
+
+- 2004-10-13
+  The COM wrapper could crash with "Access violation in OLEAUT32" when
+  PDF_create_pvf() was called with a variable of wrong type for the data
+  parameter, i.e. either not an array or not filled with bytes.
+
+- 2004-10-12 (bug #40)
+  Implements PDF_utf8_to_utf16() and PDF_utf16_to_utf8() in all non-Unicode
+  language bindings (previously it was only available in C).
+
+- 2004-10-12 (bug #37)
+  In PHP, when an ICC profile handle was supplied to the defaultgray/rgb/cmyk
+  options in PDF_begin_page_ext() an exception "Option 'defaultrgb' has bad
+  iccprofile handle x" was thrown.
+  
+- 2004-10-12 (bug #36)
+  When PDF_fit_pdi_page() was used in a topdown coordinate system and the
+  "blind" option was supplied, blocks were translated to the wrong position,
+  and the contents appeared mirrored.
+
+- 2004-10-12 (bug #32)
+  Option list syntax: strings between braces could not end with a backslash \
+  character; an exception "Braces aren't balanced in option list..." would be
+  thrown. This combination is now possible by supplying two backslash
+  characters, e.g "{text\\}". However, the sequence "\}" can not be specified
+  since this would require a backward-incompatible change.
+
+- 2004-10-11 (bug #38)
+  An inappropriate exception "Label option 'group' is illegal for this
+  function" was thrown when the labels options was used without required
+  suboptions. PDFlib now reports "Option 'labels' requires suboption X
+  if used with this function".
+
+- 2004-10-11
+  When a core font or a font with an AFM metrics file was used with encoding=
+  unicode the generated encoding vector included redundant /.notdef entries.
+  The new optimization compresses the encoding vector, which can result in up
+  to 2 KB output file size savings.
+
+- 2004-10-06
+  Fixed porting problems with SGI Irix.
+
+- 2004-10-06 (bug #33)
+  PDF_get_parameter() crashed in PHP when the modifier parameter was missing.
+  
+
+=================================
+PDFlib 6.0.0p4 (October 01, 2004)
+=================================
+
+- 2004-09-30
+  Due to a bug in the output engine byte values 0x85 in PDF strings would
+  wrongly be converted to 0x0A. Only the 6.0.0p3 patchlevel was affected,
+  though.
+
+- 2004-09-28 (bug #30)
+  Clarifies textflow's handling of optlists surrounded by spaces when
+  alignment=justify, i.e. situations like "sss  <optlist>   ttt":
+
+  - When a linebreak occurred after "sss" the line was not justified, but
+    the spaces before the option list would remain at the end of the line.
+
+  - The value of "remainchars" was wrong because the spaces before the
+    option list were counted twice.
+
+  - Introduces a new rule which clearly describes this situation: the optlist
+    creates a line break opportunity, but there is no break opportunity at
+    the start of "ttt". If there is a linebreak at the option list the spaces
+    before the optlist will be discarded, but the spaces after the optlist
+    will be retained, and appear at the beginning of the next line.
+  
+- 2004-09-28 (bug #29)
+  PDF_create_field() could create invalid PDF (bad -1 object reference in the
+  /MK dict) when PDF_load_image() was used with the "template" option, and
+  the resulting image handle was used as an icon, but had been closed 
+  before the page was finished (which is allowed).
+
+- 2004-09-28 (bug #27 and bug #28)
+  Fixes bugs in handling blocks with non-ASCII characters in their names:
+
+  - PDF_get_pdi_parameter() wrongly accepted UTF-8 strings without BOM
+    in non-Unicode capable languages. If a block name contained at least
+    one character >0x7F an empty string was returned in Unicode-capable
+    language wrappers when querying its properties since the block
+    wouldn't be found.
+    This fix may create an incompatibility for non-Unicode languages since
+    formerly UTF-8 strings without BOM were accepted, but now these will
+    be treated as host-encoded strings.
+
+  - PDF_get_pdi_parameter() returned a wrong block name if the block name
+    contained characters > 0x7F.
+  
+- 2004-09-27 (bug #26)
+  The built-in definition of "winansi" encoding mapped the following code
+  points to U+2022 (BULLET) instead of U+0000: 0x7F, 0x81, 0x8D, 0x8F, 0x90,
+  0x9D. Since these slots are unused in winansi users should not be affected,
+  but encoding mapping of encryption passwords requires the proper definitions.
+
+- 2004-09-27 (bug #25)
+  OpenType input fonts which were already subset fonts could cause a crash
+  because of memory problems in SID-to-GID mapping. Since such fonts don't
+  actually occur in real life this didn't pose any practical problem.
+   
+
+===================================
+PDFlib 6.0.0p3 (September 24, 2004)
+===================================
+
+- 2004-09-24
+  Added several missing function name prefixes for libtiff functions. Since
+  some of these were missing an appplication could crash when another instance
+  of libtiff was linked in.
+
+- 2004-09-23
+  PDI translated the "\b" escape sequence in PDF strings to 0x09 instead of
+  0x08 because of a typo in the string generation table.
+  
+- 2004-09-22
+  Always emit zero entries in the FontBBox of Type3 fonts for colorized=
+  true and false, since they are not required, and the previous approximation
+  was inaccurate anyway.
+
+- 2004-09-22
+  Removed the version test for ICC profiles.
+
+- 2004-09-22
+  Reworks the JPEG import module with the following results:
+
+  - Multiscan JPEGs, which were previously rejected since they are not
+    supported by Acrobat, are now accepted and re-encoded as single-scan
+    images (with a little help from libjpeg).
+
+  - Redundant JPEG marker segments are no longer written to the output;
+    this includes ICC profiles (since the profile is written as a separate
+    object), as well as all APP and COM markers. Writing ICC profile to
+    the output only as PDF objects, and no longer as APP markers in the JPEG
+    data streams significantly brings down file size.
+
+  - No longer including the Adobe APP marker works around an "inverted image"
+    problem in Mac OS X preview.
+
+- 2004-09-21 (bug #23)
+  The "resetfont" option for textflow is only reasonable after the second
+  change of font-related parameters, but PDFlib did not enforce this condition.
+
+- 2004-09-20
+  Detects several conflicting cases of options of PDF_load_image() and 
+  image-internal properties:
+
+  - The "colorize" option will be ignored if "honoriccprofile" has been
+    supplied.
+
+  - The "honoriccprofile" option will be ignored if "colorize" has been
+    supplied.
+
+- 2004-09-20
+  Adds full support for LZW-compressed TIFF and GIF images. This eliminates
+  a number of restrictions for acceptable input data as well as restrictions
+  on allowed images in PDF/X mode.
+
+- 2004-09-15
+  Textflow: when begoptlistchar=none was used with an 8-bit encoding, the
+  exception "Begin character U+xxxx for inline option list not found in
+  font encoding" was issued erroneously.
+
+- 2004-09-13
+  The size check for raw image data did not accurately reflect the condition
+  in the manual (which is correct). Consequently, some images where the data
+  was not a multiple of 8 bits were wrongly rejected.
+
+- 2004-09-08
+  When a font allows only a single choice of encoding (e.g. "builtin" for
+  a symbol font) and encoding "auto" has been specified, PDFlib will
+  automatically choose the correct encoding without issuing a warning.
+ 
+- 2004-09-06
+  The following code points in the cp1252 code page had Unicode mappings
+  which differed from the Microsoft specification (to achieve compatibility
+  with PostScript fonts):
+  0xD0 ==> U+00D0 (instead of U+0110)
+  0xF0 ==> U+00F0 (instead of U+0111)
+
+  All Microsoft code pages had the following incorrect mapping:
+  0x7F ==> U+0000 (instead of U+007F)
+
+  These resulted in problems when a Unicode text format was used.
+  PDFlib now includes the fixed character assignments, plus additional
+  logic to resolve situations where a PostScript font does not contain the
+  appropriate glyphs (alternate glyph names will be used in such a situation).
+
+- 2004-09-02
+  Decreased the step width for the fitmethod=auto method for forcing text
+  into a fitbox.
+
+- 2004-09-02 (bug #22)
+  Setting the color for a text line in textflow (underline/overline/strikeout)
+  did not affect the adjacent text snippet, but only the next one.
+
+- 2004-09-02
+  Loading a GIF image with the page option and a value different from 1
+  (which isn't supported anyway) resulted in an exception, rather than
+  returning with -1.
+
+- 2004-09-02
+  No longer overrides non-AGL1 glyph names in the predefined encodings
+  with their AGL1 counterparts (e.g. space vs. nbspace, hyphen vs.
+  sfthyphen)
+
+- 2004-08-26 (bug #18)
+  Detect and reject CMYK TIFF images with a mask, since we can't handle
+  these.
+
+- 2004-08-24
+  Treat references to object 0 and other non-existing objects in imported
+  PDFs as equivalent to the null object. Although it is rare, some Producers
+  create such output.
+
+- 2004-08-23 (bug #16)
+  Linearization didn't work with non-ASCII file names on Windows
+  ("Couldn't open PDF file ... for writing").
+
+- 2004-08-19 (bug #15)
+  When linearization was on and an exception occurred, the linearization temp
+  file was not deleted.
+
+- 2004-08-19 (bug #14)
+  The test for transparency in gstates didn't take into account uninitialized
+  opacity entries, resulting in a wrong error message 
+  "PDF_create_gstate: transparency (opacityfill/stroke) not allowed in PDF/X".
+  in PDF/X mode.
+
+- 2004-08-19 (bug #5)
+  Check the return value of PDF_create_textflow() in the invoice sample.
+
+- 2004-08-11
+  Various API functions in the RPG binding (e.g. PDF_begin_document())
+  did not return any result code.
+
+- 2004-08-11
+  Fixed various bugs in the RPG examples.
+
+- 2004-08-09
+  Added the PDFlib-in-PHP-HowTo document.
+
+
+================================
+PDFlib 6.0.0p2 (August 03, 2004)
+================================
+
+- 2004-08-02
+  Improves ICC color profile handling:
+  - Added a workaround for malformed JPEGs with wrong total count entries
+    in APP2 marker segments comprising a fragmented ICC profile.
+  - PDFlib could crash when an error occurred while reading an ICC profile.
+  - Improved error messages for problems with ICC profiles embedded in images.
+  - The internal message created by the ICC profile parser will be included
+    in the exception text.
+
+- 2004-08-02
+  The MS VC++ workspace for the "pdflib" and "pdflib_dll" PDFlib Lite projects
+  didn't include all required dependencies, resulting in linker errors.
+
+- 2004-07-30
+  Fixed a bug (introduced in 6.0.0p1) which prevented querying certain block
+  properties with PDF_get_pdi_parameter().
+
+- 2004-07-30
+  Changes in the handling of OpenType fonts with PostScript outlines (CFF):
+  - Some OpenType fonts (such AGaramondPro-Regular) couldn't be used with
+    textflow, and resulted in a message "Can't show text character with
+    Unicode value x0020".
+  - Improves creation of the ToUnicode CMap for certain glyphs with
+    double mappings in the CFF tables.
+
+- 2004-07-30
+  Updated the PDFlib C demo programs pdfimage, text2pdf, and pdfimpose to
+  use the new API functions instead of various deprecated calls.
+
+- 2004-07-30
+  Various changes related to textflow:
+  - The linebreaking algorithm didn't recognize the transition from
+    avoidbreak=false to avoidbreak=true as a break opportunity.
+  - PDF_create_textflow() rejects vertical writing mode, i.e. CJK fonts with
+    one of the predefined CMaps ending in -V.
+  - Implements the following textflow options: fontscale, fitmethod,
+    verticalalign, featherlimit.
+  - PDF_create_textflow() always returned -1 if the text parameter was an empty
+    string; an error message couldn't be retrieved even if textwarning was true.
+    Empty strings are now explicitly allowed, and result in a valid textflow
+    handle.
+
+- 2004-07-29
+  Implements the "richtext" option for PDF_create_field() with type=text.
+
+- 2004-07-29
+  When the first call to PDF_create_field() for text fields contained
+  alignment=right or =center all subsequently generated text fields
+  used the alignment from the first field, even when alignment=left was
+  supplied.
+
+- 2004-07-29
+  Encrypted PDF 1.5 couldn't be opened with PDF_open_pdi() if the plainmetadata
+  permission flag was set, but the document didn't actually contain any
+  metadata (even if the proper master password was supplied). This case
+  actually can't be created with Acrobat 6, but only with third-party
+  software (e.g. PDFlib 6).
+
+- 2004-07-29
+  Changes in the PHP wrapper (new PECL package 2.0.2):
+  - The PHP binding did not work with PHP versions before 4.3.x
+    ("php_error_docref is used but not defined").
+  - pear install now also works on Mac OS X.
+  - Fixed a crash in the wrapper function of PDF_set_polydash().
+
+- 2004-07-29
+  Works around a bug in the malloc() system function related to not
+  providing properly aligned memory blocks for use with setjmp() on
+  Itanium systems with Linux and gcc.
+
+- 2004-07-23
+  Makes the trace feature configurable (enable, disable, options) via an
+  environment variable.
+
+- 2004-07-23
+  Fixed a bug related to subsetting OpenType fonts with PostScript outlines,
+  a.k.a. OTF or CFF fonts. Although PDFs with subset fonts display fine in
+  Acrobat, trying to print the document to a PostScript printer could result
+  in the message "An error occurred while downloading a font. This document
+  might not print correctly". Other viewers, such as Ghostscript, could also 
+  reject the PDF with the message "Error: missing tables at [...]".
+
+- 2004-07-19
+  Changes in the PHP wrapper:
+  - Finetunes handling of long parameters (cast to int where required).
+  - The wrapper for PDF_load_image() didn't check the length of the data
+    string, and the subsequent parameters were wrong.
+  - One parameter was missing for PDF_attach_file().
+
+- 2004-07-19
+  Fixed an infinite loop in PDF_fill_textblock() for fitmethod=auto if the
+  text didn't completely fit into a block and contained an inline option
+  list containing the "fontsize" option.
+
+- 2004-07-19
+  Supplying an image or PDF handle -1 to a block without any default image
+  or PDF path now results in a warning to alert the user of the problem
+  instead of silently returning.
+
+- 2004-07-13
+  Setting the "debug" parameter to "true" in object scope resulted in a crash.
+
+- 2004-07-12
+  If a Type 1 font was loaded with AFM metrics, encoding "unicode" was
+  used with PDF_load_font(), and certain font conditions were true, the
+  last glyph specified in the AFM file would not be displayed.
+
+- 2004-07-12
+  Updates the Tcl samples to avoid deprecated functions, and use the
+  textflow feature in the invoice example.
+
+- 2004-07-09
+  When a TrueType font was used for a form field and the font's external
+  name differed from its internal name (e.g. Arial vs. ArialMT), PDFlib
+  recorded the wrong font name in the form field, with the result that
+  Acrobat didn't recognize the font. The problem was particularly evident
+  with signature fields, since Acrobat complained "Creation of this
+  signature could not be completed" when trying to save the file.
+
+- 2004-07-08
+  Adds CJK linebreaking support to textflow. All relevant CJK character
+  properties as defined by the Unicode standard are implemented now. Most
+  importantly, all ideographic characters are classified as such, resulting
+  in the corresponding CJK (as opposed to Western) hyphenation rules.
+
+- 2004-07-08
+  Fixes various textflow bugs:
+  - When begoptlistchar=0 or =none is specified in an option list,
+    PDF_create_textflow() would return -1 (if textwarning=false) or throw
+    an exception 0 without any text (if textwarning=true).
+  - When processing the first text line for justified text with the split
+    method it could appear too long, and extend beyond the fitbox.
+  - The wrong treatment of tab+space combinations still wasn't completely
+    fixed: spaces after tabs could result in wrong text placement for tabular
+    text.
+  - hyphenchar=0 didn't prevent the hyphen, and resulted in wrong line length
+    calculation.
+  - hyphenchar=0 and (new) hyphenchar=none can be used to suppress the hyphen
+    character for soft or forced hyphenation in non-symbol text. This is
+    particularly important for CJK text.
+
+- 2004-07-08
+  Using the UniJIS-UCS2-HW-H and UniJIS-UCS2-HW-V CMaps for the
+  KozMinPro-Regular-Acro and KozGoPro-Medium-Acro fonts resulted in wrong
+  stringwidths for ASCII characters because these fonts contain only
+  proportional ASCII characters, but not any halfwidth forms. Now these
+  combinations are discouraged in the manual, and will result in an
+  exception.
+
+- 2004-07-07
+  Updates the Python binding and samples to the PDFlib 6 API.
+
+
+==============================
+PDFlib 6.0.0p1 (July 06, 2004)
+==============================
+
+- 2004-07-06
+  The Python wrapper expected the "reserved" argument for PDF_makespotcolor()
+  although this is required only in the C language binding.
+
+- 2004-07-06
+  The PHP wrapper contained in pdflib-2.0.tgz had a bug in PDF_setcolor()
+  which resulted in an incorrect third color value.
+  Precompiled binaries did not suffer from this bug.
+
+- 2004-07-03
+  Uses the library function localtime_r() where available (instead of
+  localtime()) to achieve thread-safety.
+
+- 2004-07-01
+  In REALbasic on Windows file names were converted to UTF-8, i.e.
+  non-ASCII characters modified file names.
+
+- 2004-06-30
+  PDF_create_action() was allowed object scope, but using the "scriptname"
+  option without any open document would result in a crash.
+
+- 2004-06-29
+  Textflow didn't move the y position to the next line for text lines
+  which completely consist of space characters.
+
+- 2004-06-29
+  An exception "Option xy not found" happened when multiple (deprecated)
+  viewer preferences parameters were supplied to PDF_begin/end_document().
+
+- 2004-06-28
+  PDF_end_document() crashed when linearisation was enabled and bookmark
+  destinations were defined.
+
+- 2004-06-25
+  PDFlib for PHP wouldn't load on some Unix platforms due to missing
+  linearization code (plop_lin_init()).
+
+- 2004-06-25
+  Updates the Tcl binding to the PDFlib 6 API.
+
+- 2004-06-23
+  Fixed alignment problems on platforms which restrict access to short
+  variables (HP-UX, SGI, Tru64, Linux Itanium).
+
+- 2004-06-24
+  The .NET version could raise a wrong exception for non-winansi file names.
+
+- 2004-06-23
+  Various EBCDIC-related fixes.
+
+- 2004-06-24
+  Textflow could break lines before an apostrophe character (U+0027). Now
+  this character is considered a regular character without any break
+  opportunity before or after.
+
+
+============================
+PDFlib 6.0.0 (June 21, 2004)
+============================
+
+Bug fixes
+=========
+
+- The tempdirname and tempfilenames were not implemented.
+
+- TrueType host fonts didn't work with the Carbon build on the Mac.
+
+- 8-bit file names didn't work properly.
+
+- Lots of portability and robustness fixes, including EBCDIC conversion.
+
+- When an empty filename was supplied to PDF_begin_document() an exception
+  "Parameter len has bad value" could be raised due to over-agressive
+  parameter validation.
+
+- Lots of minor improvements, mainly for portability and robustness.
+
+- Fixed a crash when creating Tagged PDF with a large number of structure
+  elements.
+
+- AFM files with "StartKernPairs 0" have been rejected when kerning=true.
+
+- Really fixes the problem of left-over linearization temp files on Mac
+  and Windows.
+
+
+New features
+============
+
+- Adds the PECL package to the PDFlib distribution package.
+
+- Various improvements for making insert page and suspend/resume page
+  compatible with other features such as bookmarks and named destinations.
+
+- Modified the PDF_begin_item() interface: parent and index are no longer
+  parameters, but options instead. This abbreviates the majority of calls
+  which create the elements in their natural order.
+
+- Normalize file names which are written into the PDF output, e.g. external
+  link targets.
+
+- Implements the option "globaltextformat" for textflow.
+
+
+==================================
+PDFlib 6.0.0 beta 2 (May 25, 2004)
+==================================
+
+
+Bug fixes
+=========
+
+- Fine-tuned the interaction between the width/height parameters and options
+  in PDF_begin/end_page_ext(), and the relation to the topdown parameter or
+  option.
+
+- The memory for an ICC profile supplied as a virtual file in memory could
+  get freed twice unless the "copy" option in PDF_create_pvf() was set.
+
+- Linearization left over temporary files on non-Unix file systems, in
+  particular Mac OS Classic and Windows.
+
+- Textflow ignored the tab in a tab+space combination.
+
+- The character combination space+tab in textflow could create a random
+  character in front of the tabbed text.
+
+- Embedded TrueType/OpenType subsets were too large since they still
+  included additional tables which are only useful for debugging, but
+  not required in production mode.
+
+- The "topdown" in PDF_begin_page_ext() didn't work correctly (mirrored
+  text output).
+
+- The ToUnicode CMap contained wrong entries for core fonts or fonts loaded
+  with an AFM metrics file if "unicode" was supplied as encoding.
+
+- PDI: characters outside the range 0x21-0x7E were considered illegal
+  in names, although the PDF reference says that #XX notation for those
+  characters is recommended but not required.
+
+
+New features
+============
+
+- Adds support for hooking up XMP metadata in the document Catalog.
+
+- Adds support for supplying /SeparationInfo for a page.
+
+- Adds support for resolving numeric and character entity references in
+  content strings (charref option and parameter).
+
+- Supports multi-byte code pages on Windows, e.g. cp932 with Shift-JIS.
+
+
+Bindings
+========
+
+- C++
+  - Removed the obsolete overloaded open() methods.
+
+- PHP
+  - Extends support for the object-oriented interface in PHP 5, and improves
+    exception handling.
+
+
+====================================
+PDFlib 6.0.0 beta 1 (April 22, 2004)
+====================================
+
+Note: only minor changes and bug fixes are listed here; for major new
+features please review the PDFlib manual.
+
+
+New features
+============
+
+- Full support for the Orientation tag in TIFF files; this involved disabling
+  the partial implementation of orientation support which was present in
+  TIFFlib. Honoring the Orientation tag can also be disabled via a new
+  option.
+
+- The following encoding tables have been extended to allow the identical
+  Unicode values in the respective slots:
+
+  iso8859-? and U+0000: 0x00-0x31 and 0x7F-0x9F
+  winansi, cp????, and pdfdoc: 0x00-0x31
+  ebcdic: 0x00-0x39 (non-contiguous Unicode values as per transformation table)
+
+  This allows control characters such as linefeed to be used within these
+  encodings.
+
+- No longer convert \n and \r in 8-bit hypertext strings to space to allow
+  using linefeeds e.g. for annotations.
+
+- Supports the following CMaps introduced in PDF 1.5: UniGB-UTF16-H,
+  UniGB-UTF16-V, UniCNS-UTF16-H, UniCNS-UTF16-V, UniJIS-UTF16-H, UniJIS-UTF16-V,
+  UniKS-UTF16-H, UniKS-UTF16-V.
+
+- PDF_stringwidth() returns proper string widths for the following CMaps:
+  UniJIS-UCS2-HW-H, UniJIS-UCS2-HW-V.
+
+- Adds special Unicode handling for TrueType and OpenType fonts: Unicode
+  values without any corresponding glyph ID in the font will be mapped
+  to a visually equivalent Unicode value < 0xFF if such a value is available
+  in an internal table (instead of mapping to the space character. The table
+  currently holds entries for hyphen, minus, mu, asterisk and a few other
+  glyphs which often generate problems with common fonts.
+
+- PDF_fit_textline() now sets the text position to the end of the placed
+  text so that it can be queried with the textx/texty parameters.
+
+
+Bug fixes
+=========
+
+- When the "rotate" option or property was supplied only the block contents
+  were rotated, but not the rectangular area and the border. This bug was
+  only visible when bordercolor or backgroundcolor was supplied.
+
+- TIFF images would appear flipped horizontally if pass-through mode was not
+  active and the TIFF contained an Orientation tag with one of the values
+  3, 4, 7, or 8.
+
+- If one or both scaling factors in PDF_fit_image() were negative PDFlib, used
+  a line through the reference point for mirroring. Now a line through the
+  mid-point of the image is used, i.e. the image is mirrored "in-place".
+
+- Using the same font twice, with "unicode" and "glyphid" encoding, and
+  emitting the exact same set of glyphs for both combinations resulted
+  in two font subsets with the same font name prefix, which some versions
+  of Acrobat don't like (although the font data streams were identical).
+
+- Improves the AFM parser to gracefully handle exotic AFMs:
+
+  - Throws a warning (which can be disabled with the fontwarning parameter or
+    option when an unsupported AFM flavor is parsed. Unsupported are ACFM,
+    AMFM, or AFMs for CID fonts.
+
+  - New keywords are known to the parser, and they no longer throw an exception.
+
+  - Hexadecimal character codes and all horizontal metrics data are now
+    supported.
+
+  - Fixed a crash with AFMs containing less than 256 characters along with
+    "unicode" encoding.
+
+- PDF_stringwidth() returned incorrect results for 8-bit encodings with
+  a character different from space at 0x20 when wordspacing was set.
+
+- Optimizes the case where the client loads a font, but never uses it.
+  Previously this resulted in redundant font objects; now these will be
+  detected and don't show up in the PDF output.
+
+- TrueType fonts with iso8859-1 encoding will no longer be written as a
+  CID font, but rather a plain TrueType font with /WinAnsiEncoding.
+
+- Modifies handling of the "mu" glyph: the built-in encoding definitions
+  including winansi now contain U+00B5 for "mu" (MICRO SIGN); encoding slots
+  which require SMALL GREEK LETTER MU still map to U+03BC. Finally, U+3BC is
+  reverse-mapped to "mugreek". This has the following consequences:
+
+  - The mu character disappeared in TrueType fonts which include a Unicode
+    mapping for U+00B5, but no mapping for U+03BC. Now it works.
+
+  - The "mu" glyph works in Greek Type 1 fonts containing a "mu" glyph only
+    if the font is used with "builtin" encoding (=uses encoding scheme
+    "fontspecific"). For example, the "mu" will drop out when using the
+    standard Symbol font with "iso8859-7" encoding.
+
+Bindings
+========
+
+- C++
+  - Removed the conditional code for compiling the C++ wrapper without support
+    for C++ exceptions.
+
+- REALbasic
+  - Introduce a new binding and examples for REALbasic on Mac and Windows.

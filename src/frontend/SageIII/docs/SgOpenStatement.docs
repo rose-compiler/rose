@@ -1,0 +1,156 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgOpenStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgOpenStatement::p_access
+*/
+/*!\var SgExpression *SgOpenStatement::p_action
+*/
+/*!\var SgExpression *SgOpenStatement::p_blank
+*/
+/*!\var SgExpression *SgOpenStatement::p_delim
+*/
+/*!\var SgExpression *SgOpenStatement::p_file
+*/
+/*!\var SgExpression *SgOpenStatement::p_form
+*/
+/*!\var SgExpression *SgOpenStatement::p_pad
+*/
+/*!\var SgExpression *SgOpenStatement::p_position
+*/
+/*!\var SgExpression *SgOpenStatement::p_recl
+*/
+/*!\var SgExpression *SgOpenStatement::p_round
+*/
+/*!\var SgExpression *SgOpenStatement::p_sign
+*/
+/*!\var SgExpression *SgOpenStatement::p_status
+*/
+/*!\var SgExpression *SgOpenStatement::p_asynchronous
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgOpenStatement::SgOpenStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgOpenStatement::SgOpenStatement(const SgOpenStatementStorageClass &source)
+*/
+/*!\fn inline static void SgOpenStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgOpenStatement *SgOpenStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgOpenStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgOpenStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgOpenStatement::initializeStorageClassArray(SgOpenStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgOpenStatement::clearMemoryPool()
+*/
+/*!\fn static void SgOpenStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgOpenStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgOpenStatement::roseRTI()
+*/
+/*!\fn virtual SgNode *SgOpenStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgOpenStatement::~SgOpenStatement()
+*/
+/*!\fn virtual void SgOpenStatement::post_construction_initialization()
+*/
+/*!\fn void SgOpenStatement::set_access(SgExpression *access)
+\description See  *access)
+access for documentation */
+/*!\fn void SgOpenStatement::set_action(SgExpression *action)
+\description See  *action)
+action for documentation */
+/*!\fn void SgOpenStatement::set_asynchronous(SgExpression *asynchronous)
+\description See  *asynchronous)
+asynchronous for documentation */
+/*!\fn void SgOpenStatement::set_blank(SgExpression *blank)
+\description See  *blank)
+blank for documentation */
+/*!\fn void SgOpenStatement::set_delim(SgExpression *delim)
+\description See  *delim)
+delim for documentation */
+/*!\fn void SgOpenStatement::set_file(SgExpression *file)
+\description See  *file)
+file for documentation */
+/*!\fn void SgOpenStatement::set_form(SgExpression *form)
+\description See  *form)
+form for documentation */
+/*!\fn void SgOpenStatement::set_pad(SgExpression *pad)
+\description See  *pad)
+pad for documentation */
+/*!\fn void SgOpenStatement::set_position(SgExpression *position)
+\description See  *position)
+position for documentation */
+/*!\fn void SgOpenStatement::set_recl(SgExpression *recl)
+\description See  *recl)
+recl for documentation */
+/*!\fn void SgOpenStatement::set_round(SgExpression *round)
+\description See  *round)
+round for documentation */
+/*!\fn void SgOpenStatement::set_sign(SgExpression *sign)
+\description See  *sign)
+sign for documentation */
+/*!\fn void SgOpenStatement::set_status(SgExpression *status)
+\description See  *status)
+status for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_access() const
+\description See  const
+access for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_action() const
+\description See  const
+action for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_asynchronous() const
+\description See  const
+asynchronous for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_blank() const
+\description See  const
+blank for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_delim() const
+\description See  const
+delim for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_file() const
+\description See  const
+file for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_form() const
+\description See  const
+form for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_pad() const
+\description See  const
+pad for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_position() const
+\description See  const
+position for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_recl() const
+\description See  const
+recl for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_round() const
+\description See  const
+round for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_sign() const
+\description See  const
+sign for documentation */
+/*!\fn SgExpression *SgOpenStatement::get_status() const
+\description See  const
+status for documentation */
+/*!\fn virtual SgNode *SgOpenStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgOpenStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgOpenStatement::get_numberOfTraversalSuccessors()
+\description See  SgOpenStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgOpenStatement::get_traversalSuccessorContainer()
+\description See  SgOpenStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgOpenStatement::get_traversalSuccessorNamesContainer()
+\description See  SgOpenStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgOpenStatement::SgOpenStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_568928916;

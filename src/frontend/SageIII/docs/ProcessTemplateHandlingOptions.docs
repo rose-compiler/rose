@@ -1,0 +1,18 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class ProcessTemplateHandlingOptions
+*/
+/*! \name Class Members*/
+//@{
+/*!\var bool ProcessTemplateHandlingOptions::buildImplicitTemplates
+*/
+/*!\var bool ProcessTemplateHandlingOptions::buildImplicitInlineTemplates
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn ProcessTemplateHandlingOptions::ProcessTemplateHandlingOptions(SgFile *file,bool buildImplicitTemplates,bool buildImplicitInlineTemplates)
+*/
+/*!\fn virtual void ProcessTemplateHandlingOptions::visit(SgNode *node)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1023340323;

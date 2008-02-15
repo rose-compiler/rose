@@ -1,0 +1,69 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Function Call Allocates Multiple Resources}
+\label{FunctionCallAllocatesMultipleResources::overview}
+``CERT Secure Coding RES30-C'' states
+\begin{quote}
+Allocating more than one resource in a single statement could result in a memory leak, and this could lead to a denial-of-service attack.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal on each SgFunctionCallExp node. For each node get the expression list of its arguments and check if any such argument expressions are the {\tt new} keyword. If the number of {\tt new} expressions exceeds one then flag an error.
+
+\subsection{Non-Compliant Code Example}
+\begin{verbatim}
+class A
+{
+};
+
+class B
+{
+};
+
+int foo( A *a, B *b )
+{
+  return 0;
+}
+
+int main()
+{
+  A *a = new A;
+  B *b = new B;
+  int i = foo( a, b ); //ok...
+
+  return foo( new A, new B ); //bad
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+See the call to {\tt foo} above.
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Traverse all SgFunctionCallExp nodes
+\item For each node get the list of argument expressions
+\item Count the number of {\tt new} keyword argument expressions
+\item If the number of {\tt new} keyword argument expressions exceeds one then flag an error.
+\item Report all violations.
+\end{enumerate}
+
+\subsection{References}
+\htmladdnormallink{RES30-C. Never allocate more than one resource in a single statement}{https://www.securecoding.cert.org/confluence/display/cplusplus/RES30-C.+Never+allocate+more+than+one+resource+in+a+single+statement}
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

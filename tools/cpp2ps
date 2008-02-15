@@ -1,0 +1,110 @@
+#!/usr/bin/perl
+# Author: Markus Schordan, 2003.
+# $Id: cpp2ps,v 1.3 2006/04/24 00:21:59 dquinlan Exp $
+
+############################################################################
+# Reads a C++ file and generates a postscript file, showing the corresponding
+# abstract syntax tree (=subset of sage3 representation).
+############################################################################
+
+use Getopt::Long;
+
+$rosetool="dotGenerator";
+
+sub printhelp {
+  print("\nSYNOPSIS:\n cpp2ps [--topdown] [--bottomup] [--preorder] [--postorder] [-I <DIRECTORY>] [-all] <INPUTFILE> <OUTPUTFILE>\n\n");
+  print("OPTIONS:\n");
+  print("-pr --preorder         : generate postscript file showing a preorder traversal.\n");
+  print("-po --postorder        : generate postscript file showing a postorder traversal.\n");
+  print("-t  --topdown          : generate postscript file showing a topdown processing.\n");
+  print("                         can be combined with --bottomup\n");
+  print("-b  --bottomup         : generate postscript file showing a bottomup processing.\n");
+  print("                         can be combined with --topdown\n");
+  print("-a  --all              : generates postscript file of input file and all include files.\n)");
+  print("-I  --include <DIR>    : specify include path (note that a space before <PATH> is required)\n");
+  print("-h  --help             : print this help message.\n");
+  print("\nEXAMPLES:\n");
+  print("cpp2ps -t test.C test.ps\n");
+  print("cpp2ps -t -b test.C test.ps\n");
+  print("\n");
+}
+
+sub command {
+  $command=$_[0];
+  $string=$_[1];
+  open(RECDIR, "$command $string|");
+  @recDir=<RECDIR>;
+  close(RECDIR);
+  $string=@recDir[0];
+  $string=~ s/\n//;
+  return $string;
+}
+
+GetOptions("topdown!" => \$opt_topdown, "bottomup!" => \$opt_bottomup, "preorder!" => \$opt_preorder, "postorder!" => \$opt_postorder, "include=s" => \$opt_includepath, "help!" => \$opt_printhelp);
+
+if($opt_printhelp) {
+  printhelp();
+  exit 0;
+}
+
+$E_BADARGS=65;
+if(@ARGV < 2) {
+  printhelp();
+  exit $E_BADARGS;
+}
+
+if(!($opt_topdown || $opt_bottomup || $opt_preorder || $opt_postorder)) {
+  # no option specified, make topdown-bottomup mode default
+  $opt_topdown=1; $opt_bottomup=1;
+}
+# make sure exactly one option(combination) is used
+if(! (($opt_topdown || $opt_bottomup) xor $opt_preorder xor $opt_postorder) ) {
+  print("error: illegal combination of modes specified.\n");
+  exit 0;
+}
+
+# topdown and bottomup specifies topdownbottomup 
+if($opt_topdown && $opt_bottomup) {
+  $opt_topdownbottomup=$opt_topdown || $opt_bottomup;
+}
+
+# if no inlcudepath is specified use '.' as default path
+if(!$opt_includepath) {
+  $opt_includepath=".";
+}
+$opt_includepath="-I$opt_includepath";
+
+$infile=@ARGV[0];
+$outfile=@ARGV[1];
+
+$infilebasename=command("basename",$infile);
+$exitstatus=system("$rosetool $opt_includepath $infile");
+if($exitstatus==0) {
+  if($opt_topdown) {
+    $genfile="$infilebasename.TopDown.dot";
+  }    
+  if($opt_bottomup) {
+    $genfile="$infilebasename.BottomUp.dot";
+  }    
+  if($opt_topdownbottomup) {
+    $genfile="$infilebasename.TopDownBottomUp.dot";
+  }    
+  if($opt_preorder) {
+    $genfile="$infilebasename.Preorder.dot";
+  }    
+  if($opt_postorder) {
+    $genfile="$infilebasename.Postorder.dot";
+  }    
+  
+  $outfile=@ARGV[1];
+  system("dot2ps $genfile $outfile");
+
+  #remove all generated files
+  system("rm -f $infilebasename.TopDown.dot");  
+  system("rm -f $infilebasename.BottomUp.dot");  
+  system("rm -f $infilebasename.TopDownBottomUp.dot");  
+  system("rm -f $infilebasename.Preorder.dot");  
+  system("rm -f $infilebasename.Postorder.dot");  
+  system("rm -f $infilebasename.AllTopDownBottomUp.dot");  
+}
+

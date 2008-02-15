@@ -1,0 +1,403 @@
+\chapter{Handling Comments and Preprocessor Directives}
+
+\paragraph{What To Learn From These Examples}
+Learn how to access existing comments and CPP directives
+and modify programs to include new ones. Where such comments 
+can be automated they can be used to explain transformations 
+or for more complex transformations using other tools
+designed to read the generated comments.
+
+   This chapter deals with comments and preprocessor directives.
+These are often droppped from compiler infrstructures and ignored
+by make tools.  ROSE takes great care to preserve all comments and
+preprocessor directives.  Where they exist in the input code we 
+save them (note that EDG drops them from their AST) and weave them
+back into the AST.  
+
+Note that {\it \#pragma} is not a CPP directive and is part of the
+C and C++ grammar, thus represented explicitly in the AST (see SgPragmaDeclaration).
+
+\section{How to Access Comments and Preprocessor Directives}
+
+   Comments and CPP directives are treated identically within ROSE and are 
+saved as special preprocessor attributes to IR nodes within the AST.
+Not all IR nodes can have these specific type of attributes, only 
+SgLocatedNodes can be associated with such preprocessor attributes.
+The more general {\it persistant attribute mechanism} within ROSE is separate from this
+preprocessor attribute mechanism and is available on a wider selection of IR nodes.
+
+\subsection{Source Code Showing How to Access Comments and Preprocessor Directives}
+
+    Figure~\ref{Tutorial:example_collectComments}
+shows an example translator which access the comments and preprocessor directives on each
+statement. Note that in this example the AST is traversed twice, first header files are
+ignored and then the full AST (including header files) are traversed (generated additional
+comments).
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_collectComments},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_collectComments} for the source file only.
+Figure~\ref{Tutorial:exampleOutput_collectComments_including_headers} shows the
+same input code processed to output comments and preprocessor directives assembled from 
+the source file {\em and} all header files.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/collectComments.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/collectComments.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to access comments. }
+\label{Tutorial:example_collectComments}
+\end{figure}
+
+
+
+\subsection{Input to example showing how to access comments and CPP directives}
+
+   Figure~\ref{Tutorial:exampleInputCode_collectComments}
+shows the example input used for demonstration of how to collect comments and CPP directives.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_collectComments.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_collectComments.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to collection of comments and CPP directives.}
+\label{Tutorial:exampleInputCode_collectComments}
+\end{figure}
+
+
+
+\subsection{Comments and CPP Directives collected from source file (skipping headers)}
+
+   Figure~\ref{Tutorial:exampleOutput_collectComments} 
+shows the results from the collection of comments and CPP directives within the input
+source file only (without -rose:collectAllCommentsAndDirectives).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/collectCommentsSkipHeaderFiles.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/collectCommentsSkipHeaderFiles.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output from collection of comments and CPP directives on the input source file only.}
+\label{Tutorial:exampleOutput_collectComments}
+\end{figure}
+
+
+\subsection{Comments and CPP Directives collected from source file and all header files}
+
+   Figure~\ref{Tutorial:exampleOutput_collectComments_including_headers} 
+shows the results from the collection of comments and CPP directives within the input
+source file and all headers (with -rose:collectAllCommentsAndDirectives).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/collectCommentsAcrossHeaderFiles.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/collectCommentsAcrossHeaderFiles.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output from collection of comments and CPP directives on the input source file
+    and all header files.}
+\label{Tutorial:exampleOutput_collectComments_including_headers}
+\end{figure}
+
+
+
+
+\section{Collecting \#define C Preprocessor Directives}
+
+   This example shows how to collect the \#define directives as
+a list for lateer processing.
+
+\subsection{Source Code Showing How to Collect \#define Directives}
+
+    Figure~\ref{Tutorial:example_collectDefineDirectives}
+shows an example translator which access the comments and preprocessor directives on each
+statement. Note that in this example the AST is traversed twice, first header files are
+ignored and then the full AST (including header files) are traversed (generated additional
+comments).
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_collectDefineDirectives},
+the output of this code is shown in 
+Figure~\ref{Tutorial:exampleOutput_collectDefineDirectives} shows the
+same input code processed to output comments and preprocessor directives assembled from 
+the source file {\em and} all header files.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/collectDefineDirectives.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/collectDefineDirectives.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to access comments. }
+\label{Tutorial:example_collectDefineDirectives}
+\end{figure}
+
+
+
+\subsection{Input to example showing how to access comments and CPP directives}
+
+   Figure~\ref{Tutorial:exampleInputCode_collectDefineDirectives}
+shows the example input used for demonstration of how to collect comments and CPP directives.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_collectDefineDirectives.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_collectDefineDirectives.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to collection of comments and CPP directives.}
+\label{Tutorial:exampleInputCode_collectDefineDirectives}
+\end{figure}
+
+
+\subsection{Comments and CPP Directives collected from source file and all header files}
+
+   Figure~\ref{Tutorial:exampleOutput_collectDefineDirectives} 
+shows the results from the collection of comments and CPP directives within the input
+source file and all headers (with -rose:collectAllCommentsAndDirectives).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/collectDefineDirectives.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/collectDefineDirectives.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output from collection of comments and CPP directives on the input source file
+    and all header files.}
+\label{Tutorial:exampleOutput_collectDefineDirectives}
+\end{figure}
+
+
+
+
+
+\section{Source Code Showing Automated Comment Generation}
+
+   Figure~\ref{Tutorial:example_addComments} shows an
+example of how to introduce comments into the AST which will
+then show up in the generated source code. The purpose for this is
+generally to add comments to where transformations are introduced.
+If the code is read by the use the generated comments can be
+useful in identifying, marking, and/or explaining the transformation.
+
+This chapter presents an example translator which just introduces a 
+comment at the top of each function.  The comment includes the
+name of the function and indicates that the comment is automatically 
+generated.
+
+Where appropriate such techniques could be used to automate the 
+generation of documentation templates in source code that would be
+further filled in by the used.  In this case the automatically generated
+templates would be put into the generated source code and a patch formed
+between the generated source and the original source.  The patch could
+be easily inspected and applied to the original source code to place
+the documentation templates into the original source.  The skeleton
+of the documentation in the source code could been be filled in by
+the use.  the template would have all relevant information obtained by analysis
+(function parameters, system functions used, security information, side-effects,
+anything that could come from an analysis of the source code using ROSE).
+
+\subsection{Source Code Showing Automated Comment Generation}
+
+    Figure~\ref{Tutorial:example_addComments}
+shows an example translator which calls the mechanism to 
+add a comment to the IR node representing a function declaration (SgFunctionDeclaration).
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_addComments},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_addComments}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addComments.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addComments.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how automate comments. }
+\label{Tutorial:example_addComments}
+\end{figure}
+
+
+
+\subsection{Input to Automated Addition of Comments}
+
+   Figure~\ref{Tutorial:exampleInputCode_addComments}
+shows the example input used for demonstration of an automated commenting.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_addComments.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_addComments.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to automate generation of comments.}
+\label{Tutorial:exampleInputCode_addComments}
+\end{figure}
+
+
+
+\subsection{Final Code After Automatically Adding Comments}
+
+   Figure~\ref{Tutorial:exampleOutput_addComments} 
+shows the results from the addition of comments to the generated source code.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_addComments.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_addComments.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code after automating generation of comments.}
+\label{Tutorial:exampleOutput_addComments}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

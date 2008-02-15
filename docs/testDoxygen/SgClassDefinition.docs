@@ -1,0 +1,148 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassDefinition
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgClassDefinition
+\brief This class represents the concept of a class definition in C++.
+
+    Class definitions are distinquished from class declaration by the
+definition of the member data and specification of inheritance (if any).
+Where class declarations can appear multiple times withouth a class definition (forward
+class declarations), the class definition may appear only once in an application.
+Within C++ there is the "One Time Definition Rule" which requires that within multiple
+compilation usints (typically separately compiled files), the definition of all
+classes of the name qualified name must be identical.  Thus the class is considered to
+be defined only once.
+
+\internal This is a base class for the SgTemplateInstantiationDefn statements.
+
+*/
+
+/*
+\sa
+\ref SgClassDefinition_usage  "Example of using a SgClassDefinition object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassDefinition data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgClassDefinition::p_members
+\brief This the list of member declarations in the class.
+
+\internal The order of declarations within this list is unimportant in C++.
+
+*/
+
+/*! \var SgClassDefinition::p_inheritances
+\brief This the list of base classes specificed in the class definition.
+
+\internal The order of base classes can be important.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassDefinition member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgClassDefinition::SgClassDefinition ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgClassDefinition base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+/*
+\sa 
+\ref SgClassDefinition_create "Example:create an SgClassDefinition object"
+*/
+
+/*!
+\fn SgClassDefinition::~SgClassDefinition()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgClassDefinition::isSgClassDefinition (SgNode *s)
+\brief Cast function (from derived class to SgClassDefinition pointer).
+
+   This functions returns a SgClassDefinition pointer for any input of a 
+pointer to an object derived from a SgClassDefinition.
+
+\return Returns valid pointer to SgClassDefinition if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgClassDefinition::isSgClassDefinition (const SgNode *s)
+\brief Cast function (from derived class to SgClassDefinition pointer).
+
+   This functions returns a SgClassDefinition pointer for any input of a 
+pointer to an object derived from a SgClassDefinition.
+
+\return Returns valid pointer to SgClassDefinition if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgClassDefinition::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgClassDefinition.
+*/
+
+/*!
+\fn SgClassDefinition::get_members()
+\brief Returns a list to the data member declarations.
+
+\return Returns an STL list by reference.
+*/
+
+/*!
+\fn SgClassDefinition::get_members() const
+\brief Returns a const list to the data member declarations.
+
+\return Returns a const STL list by reference.
+*/
+
+/*!
+\fn SgClassDefinition::get_inheritances()
+\brief Returns a list to the base classes.
+
+\return Returns an STL list by reference.
+*/
+
+/*!
+\fn SgClassDefinition::get_inheritances() const
+\brief Returns a const list to the base classes.
+
+\return Returns a const STL list by reference.
+*/
+
+/*!
+\fn SgClassDefinition::get_qualified_name() const
+\brief Returns SgName (a string) representing the name of the current scope.
+
+   See discussion of qualified names in the documentation.
+
+\return Returns SgName (a string).
+*/
+
+/*!
+\fn SgClassDefinition::get_mangled_qualified_name() const
+\brief Returns SgName (a string) representing the mangled name of the current scope.
+
+   See discussion of mangled names in the documentation.
+
+\return Returns SgName (a string).
+*/
+
+/*!
+\fn SgClassDefinition::get_declaration()
+\brief returns the class declaration associated with this class decinition.
+
+\return Returns SgClassDeclaration pointer.
+*/
+

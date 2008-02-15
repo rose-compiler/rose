@@ -1,0 +1,72 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypedefSeq
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgTypedefSeq
+\brief This class represents a list of associated typedefs for the SgType IR nodes which
+    reference this list.
+
+
+\internal This list is not well tested yet.
+
+\sa
+\ref SgTypedefSeq_usage  "Example of using a SgTypedefSeq object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypedefSeq data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgTypePtrList SgTypedefSeq::p_typedefs
+\brief This holds the STL list of pointers to SgTypes.
+
+\todo It might be better for this to be a list of SgTypedefTypes
+
+\todo Think about if we could also store a reference to all pointers and reference types
+    where they share a common base_type.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypedefSeq member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTypedefSeq::SgTypedefSeq()
+\brief This is the constructor.
+
+   This constructor builds the SgTypedefSeq base class.
+
+\sa 
+\ref SgTypedefSeq_create "Example:create an SgTypedefSeq object"
+*/
+
+/*!
+\fn SgTypedefSeq::~SgTypedefSeq()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgTypedefSeq::isSgTypedefSeq (SgNode *s)
+\brief Cast function (from derived class to SgTypedefSeq pointer).
+
+   This functions returns a SgTypedefSeq pointer for any input of a 
+pointer to an object derived from a SgTypedefSeq.
+
+\return Returns valid pointer to SgTypedefSeq if input is derived from a SgSupport.
+*/
+
+/*!
+\fn SgTypedefSeq::isSgTypedefSeq (const SgNode *s)
+\brief Cast function (from derived class to SgTypedefSeq pointer).
+
+   This functions returns a SgTypedefSeq pointer for any input of a 
+pointer to an object derived from a SgTypedefSeq.
+
+\return Returns valid pointer to SgTypedefSeq if input is derived from a SgSupport.
+*/
+

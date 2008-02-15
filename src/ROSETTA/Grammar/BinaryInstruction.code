@@ -1,0 +1,1044 @@
+// #########################################################
+// #########################################################
+//                      HEADER CODE
+// #########################################################
+// #########################################################
+
+
+
+HEADER_BINARY_START
+
+ /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
+     All Asm Instructions are derived from this class and thus contain the following functionality.
+  */
+
+  public:
+   virtual unsigned int cfgBinFindChildIndex();
+   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges();
+   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges();
+
+HEADER_BINARY_END
+
+
+HEADER_BINARY_INSTRUCTION_START
+  public:
+   virtual unsigned int cfgBinFindChildIndex();
+   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges();
+   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges();
+   void append_sources( SgAsmInstruction* instruction );	
+   bool isSuccessorControlFlowEdge(SgAsmInstruction* predecessor);
+   bool isPredecessorControlFlowEdge(SgAsmInstruction* successor);
+   SgAsmInstruction* cfgBinFlowOutEdge();
+   SgAsmInstruction* cfgBinFlowInEdge();
+HEADER_BINARY_INSTRUCTION_END
+
+
+HEADER_BINARY_FILE_START
+
+       // enums for ELF header information
+
+       // unsigned char	e_ident[EI_NIDENT]
+       // typedef unsigned char magic_number_vector_type[EI_NIDENT];
+
+       // Executable and Linking Format class kind
+          enum elf_class_kind_enum
+             {
+               e_class_error   = 0,
+               e_class_unknown = 1,
+               e_class_none    = 2, // value maps to ELFCLASSNONE
+               e_class_32      = 3, // value maps to ELFCLASS32
+               e_class_64      = 4, // value maps to ELFCLASS64
+               e_class_last
+             };
+
+          enum elf_data_encoding_enum
+             {
+               e_data_encoding_error                  = 0,
+               e_data_encoding_unknown                = 1,
+               e_data_encoding_none                   = 2, // value maps to ELFDATANONE
+               e_data_encoding_least_significant_byte = 3, // value maps to ELFDATA2LSB
+               e_data_encoding_most_significant_byte  = 4, // value maps to ELFDATA2MSB
+               e_data_encoding_last
+             };
+
+          enum elf_version_enum
+             {
+               e_version_error   = 0,
+               e_version_unknown = 1,
+               e_version_none    = 2, // value maps to EV_NONE
+               e_version_current = 3, // value maps to EV_CURRENT
+               e_version_last
+             };
+
+
+          enum elf_OS_ABI_identification_enum
+             {
+               e_OS_ABI_error      = 0,
+               e_OS_ABI_unknown    = 1,
+               e_OS_ABI_none       = 2,
+               e_OS_ABI_SYSV       = 3, // Note that ELFOSABI_SYSV == ELFOSABI_NONE (the two are alised)
+               e_OS_ABI_HPUX       = 4,
+               e_OS_ABI_NETBSD     = 5,
+               e_OS_ABI_LINUX      = 6,
+               e_OS_ABI_SOLARIS    = 7,
+               e_OS_ABI_AIX        = 8,
+               e_OS_ABI_IRIX       = 9,
+               e_OS_ABI_FREEBSD    = 10,
+               e_OS_ABI_TRU64      = 11,
+               e_OS_ABI_MODESTO    = 12,
+               e_OS_ABI_OPENBSD    = 13,
+               e_OS_ABI_ARM        = 14,
+               e_OS_ABI_STANDALONE = 15,
+               e_OS_ABI_last
+             };
+
+          enum elf_object_file_type_enum
+             {
+               e_file_type_error       = 0,
+               e_file_type_unknown     = 1,
+               e_file_type_none        = 2,
+               e_file_type_relocatable = 3,
+               e_file_type_executable  = 4,
+               e_file_type_shared      = 5,
+               e_file_type_core        = 6,
+               e_file_type_last
+             };
+
+
+       // DQ (1/8/2008): For a collection of interesting binaries go to: http://www.distributed.net/source/
+          enum elf_machine_architecture_enum
+             {
+               e_machine_architecture_error                    = 0,
+               e_machine_architecture_unknown                  = 1,
+               e_machine_architecture_none                     = 2, // Maps to EM_NONE
+               e_machine_architecture_ATT_WE_32100             = 3,
+               e_machine_architecture_Sun_Sparc                = 4,
+               e_machine_architecture_Intel_80386              = 5,
+               e_machine_architecture_Motorola_m68k_family     = 6,
+               e_machine_architecture_Motorola_m88k_family     = 7,
+               e_machine_architecture_Intel_80860              = 8,
+               e_machine_architecture_MIPS_R3000_big_endian    = 9,
+               e_machine_architecture_IBM_System_370           = 10,
+               e_machine_architecture_MIPS_R3000_little_endian = 11,
+               e_machine_architecture_HPPA                     = 12,
+               e_machine_architecture_Fujitsu_VPP500           = 13,
+               e_machine_architecture_Sun_v8plus               = 14,
+               e_machine_architecture_Intel_80960              = 15,
+               e_machine_architecture_PowerPC                  = 16,
+               e_machine_architecture_PowerPC_64bit            = 17,
+               e_machine_architecture_IBM_S390                 = 18,
+               e_machine_architecture_NEC_V800_series          = 19,
+               e_machine_architecture_Fujitsu_FR20             = 20,
+               e_machine_architecture_TRW_RH_32                = 21,
+               e_machine_architecture_Motorola_RCE             = 22,
+               e_machine_architecture_ARM                      = 23,
+               e_machine_architecture_Digital_Alpha_fake       = 24,
+               e_machine_architecture_Hitachi_SH               = 25,
+               e_machine_architecture_SPARC_v9_64bit           = 26,
+               e_machine_architecture_Siemens_Tricore          = 27,
+               e_machine_architecture_Argonaut_RISC_Core       = 28,
+               e_machine_architecture_Hitachi_H8_300           = 29,
+               e_machine_architecture_Hitachi_H8_300H          = 30,
+               e_machine_architecture_Hitachi_H8S              = 31,
+               e_machine_architecture_Hitachi_H8_500           = 32,
+               e_machine_architecture_Intel_Merced             = 33,
+               e_machine_architecture_Stanford_MIPS_X          = 34,
+               e_machine_architecture_Motorola_Coldfire        = 35,
+               e_machine_architecture_Motorola_M68HC12         = 36,
+               e_machine_architecture_Fujitsu_MMA_Multimedia_Accelerator                  = 37,
+               e_machine_architecture_Siemens_PCP                                         = 38,
+               e_machine_architecture_Sony_nCPU_embeeded_RISC                             = 39,
+               e_machine_architecture_Denso_NDR1_microprocessor                           = 40,
+               e_machine_architecture_Motorola_Start_Core_processor                       = 41,
+               e_machine_architecture_Toyota_ME16_processor                               = 42,
+               e_machine_architecture_STMicroelectronic_ST100_processor                   = 43,
+               e_machine_architecture_Advanced_Logic_Corp_Tinyj_emb_family                = 44,
+               e_machine_architecture_AMD_x86_64_architecture                             = 45,
+               e_machine_architecture_Sony_DSP_Processor                                  = 46,
+               e_machine_architecture_Siemens_FX66_microcontroller                        = 47,
+               e_machine_architecture_STMicroelectronics_ST9_plus_8_16_micocontroler      = 48,
+               e_machine_architecture_STMicroelectronics_ST7_8bit_micocontroler           = 49,
+               e_machine_architecture_Motorola_MC68HC16_microcontroller                   = 50,
+               e_machine_architecture_Motorola_MC68HC11_microcontroller                   = 51,
+               e_machine_architecture_Motorola_MC68HC08_microcontroller                   = 52,
+               e_machine_architecture_Motorola_MC68HC05_microcontroller                   = 53,
+               e_machine_architecture_Silicon_Graphics_SVx                                = 54,
+               e_machine_architecture_STMicroelectronics_ST19_8bit_microcontroller        = 55,
+               e_machine_architecture_Digital_VAX                                         = 56,
+               e_machine_architecture_Axis_Communications_32bit_embedded_processor        = 57,
+               e_machine_architecture_Infineon_Technologies_32bit_embedded_processor      = 58,
+               e_machine_architecture_Element_14_64bit_DSP_Processor                      = 59,
+               e_machine_architecture_LSI_Logic_16bit_DSP_Processor                       = 60,
+               e_machine_architecture_Donald_Knuths_educational_64bit_processor           = 61,
+               e_machine_architecture_Harvard_University_machine_independent_object_files = 62,
+               e_machine_architecture_SiTera_Prism                                        = 63,
+               e_machine_architecture_Atmel_AVR_8bit_microcontroller                      = 64,
+               e_machine_architecture_Fujitsu_FR30                                        = 65,
+               e_machine_architecture_Mitsubishi_D10V                                     = 66,
+               e_machine_architecture_Mitsubishi_D30V                                     = 67,
+               e_machine_architecture_NEC_v850                                            = 68,
+               e_machine_architecture_Mitsubishi_M32R                                     = 69,
+               e_machine_architecture_Matsushita_MN10300                                  = 70,
+               e_machine_architecture_Matsushita_MN10200                                  = 71,
+               e_machine_architecture_picoJava                                            = 72,
+               e_machine_architecture_OpenRISC_32bit_embedded_processor                   = 73,
+               e_machine_architecture_ARC_Cores_Tangent_A5                                = 74,
+               e_machine_architecture_Tensilica_Xtensa_Architecture                       = 75,
+               e_machine_architecture_Digital_Alpha                                       = 76,
+               e_machine_architecture_last
+             };
+
+
+HEADER_BINARY_FILE_END
+
+
+HEADER_BINARY_FILE_SECTION_HEADER_START
+
+          enum elf_version_enum
+             {
+               e_version_error   = 0,
+               e_version_unknown = 1,
+               e_version_none    = 2, // value maps to EV_NONE
+               e_version_current = 3, // value maps to EV_CURRENT
+               e_version_last
+             };
+
+HEADER_BINARY_FILE_SECTION_HEADER_END
+
+
+HEADER_BINARY_FILE_PROGRAM_HEADER_START
+
+          enum elf_type_enum
+             {
+               e_type_error                = 0,
+               e_type_unknown              = 1,
+               e_type_null                 = 2,
+               e_type_loadable_segment     = 3,
+               e_type_dynamic_linking_info = 4,
+               e_type_interpreter          = 5,
+               e_type_note                 = 6,
+               e_type_shlib_reserved       = 7,
+               e_type_program_header_table = 8,
+               e_type_processor_specific   = 9,
+               e_type_last
+             };
+
+HEADER_BINARY_FILE_PROGRAM_HEADER_END
+
+
+HEADER_BINARY_FILE_SECTION_HEADER_LIST_START
+          const SgAsmSectionHeaderPtrList & get_section_headers() const;
+          SgAsmSectionHeaderPtrList & get_section_headers();
+
+HEADER_BINARY_FILE_SECTION_HEADER_LIST_END
+
+
+HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_START
+          const SgAsmProgramHeaderPtrList & get_program_headers() const;
+          SgAsmProgramHeaderPtrList & get_program_headers();
+
+HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_END
+
+SOURCE_BINARY_FILE_SECTION_HEADER_LIST_START
+
+#if 1
+const SgAsmSectionHeaderPtrList &
+SgAsmSectionHeaderList::get_section_headers() const
+   {
+     return p_section_headers;
+   }
+
+SgAsmSectionHeaderPtrList &
+SgAsmSectionHeaderList::get_section_headers()
+   {
+     return p_section_headers;
+   }
+#endif
+
+SOURCE_BINARY_FILE_SECTION_HEADER_LIST_END
+
+SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_START
+
+#if 1
+const SgAsmProgramHeaderPtrList &
+SgAsmProgramHeaderList::get_program_headers() const
+   {
+     return p_program_headers;
+   }
+
+SgAsmProgramHeaderPtrList &
+SgAsmProgramHeaderList::get_program_headers()
+   {
+     return p_program_headers;
+   }
+#endif
+
+SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
+
+
+HEADER_BINARY_CONTROLTRANSFER_INSTRUCTION_START
+  public:
+    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges();	
+    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges();
+    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdgesNextIntraproceduralNode();
+    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdgesNextConditionalNodes();
+    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdgesLastIntraproceduralNode();
+    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdgesLastConditionalNodes();
+
+HEADER_BINARY_CONTROLTRANSFER_INSTRUCTION_END
+
+
+HEADER_BINARY_DECLARATION_START
+HEADER_BINARY_DECLARATION_END
+
+
+HEADER_BINARY_RET_START
+   void append_dest( SgAsmStatement* instruction );	
+HEADER_BINARY_RET_END
+
+
+HEADER_BINARY_FUNCTION_CALL_START
+HEADER_BINARY_FUNCTION_CALL_END
+
+HEADER_BINARY_BLOCK_START
+          void append_statement( SgAsmStatement* statement );
+          void remove_statement( SgAsmStatement* statement );
+          void remove_children (  );
+HEADER_BINARY_BLOCK_END
+
+
+
+HEADER_BINARY_OPERAND_LIST_START
+          void append_operand( SgAsmExpression* operand );
+HEADER_BINARY_OPERAND_LIST_END
+
+
+
+HEADER_BINARY_FUNCTION_DECLARATION_START
+          //void append_block( SgAsmBlock* operand );
+          void append_statement( SgAsmStatement* statement );
+          void remove_statement( SgAsmStatement* statement );	
+	  void append_dest( SgAsmStatement* instruction );		
+          void remove_children (  );
+
+       //! enum declaration as specified in proposed Sabre database schema
+          enum function_kind_enum
+             {
+               e_unknown  = 0,
+               e_standard = 1,
+               e_library  = 2,
+               e_imported = 3,
+               e_thunk    = 4,
+               e_last
+             };
+HEADER_BINARY_FUNCTION_DECLARATION_END
+
+HEADER_BINARY_DATA_STRUCTURE_START
+          void append_declaration( SgAsmDeclaration* declaration );
+
+          SgAsmDeclarationPtrList & get_declarationList();
+
+     protected:
+
+          SgAsmDeclarationPtrList p_declarationList;
+
+     public:
+HEADER_BINARY_DATA_STRUCTURE_END
+
+
+
+
+HEADER_BINARY_EXPRESSION_START
+
+      //! Generate the type for the expression
+          virtual SgAsmType* get_type();
+
+      //! Return the precedence of the operator (see C and C++ examples for details)
+          virtual int get_precedence();
+
+HEADER_BINARY_EXPRESSION_END
+
+
+
+HEADER_BINARY_TYPE_START
+
+       // static SgAsmType* create_type();
+
+HEADER_BINARY_TYPE_END
+
+HEADER_BINARY_TYPE_BYTE_START
+          static SgAsmTypeByte* create_type();
+HEADER_BINARY_TYPE_BYTE_END
+
+HEADER_BINARY_TYPE_WORD_START
+          static SgAsmTypeWord* create_type();
+HEADER_BINARY_TYPE_WORD_END
+
+HEADER_BINARY_TYPE_DOUBLE_WORD_START
+          static SgAsmTypeDoubleWord* create_type();
+HEADER_BINARY_TYPE_DOUBLE_WORD_END
+
+HEADER_BINARY_TYPE_QUAD_WORD_START
+          static SgAsmTypeQuadWord* create_type();
+HEADER_BINARY_TYPE_QUAD_WORD_END
+
+HEADER_BINARY_TYPE_SINGLE_FLOAT_START
+          static SgAsmTypeSingleFloat* create_type();
+HEADER_BINARY_TYPE_SINGLE_FLOAT_END
+
+HEADER_BINARY_TYPE_DOUBLE_FLOAT_START
+          static SgAsmTypeDoubleFloat* create_type();
+HEADER_BINARY_TYPE_DOUBLE_FLOAT_END
+
+HEADER_BINARY_TYPE_VECTOR_START
+          static SgAsmTypeVector* create_type();
+HEADER_BINARY_TYPE_VECTOR_END
+
+
+HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
+
+     /*! \brief X86 specific register set used for representation of binaries.
+          This is the X86 specific register set used for representation of binaries 
+          (it is not the same as that used in the handlingof the C asm statements, 
+          elsewhere in ROSE).  The "r" prefix is used by Intel to be non-specific to
+          32 bit or 64 bit names (e.g. EAX is the 32 bit register name, while RAX 
+          is the 64 bit register name; Intel uses "rAX" as the bit width independent 
+          name). We have combined control registers with general purpose registers
+          so that we can have a single enum for all register codes (used in the 
+          SgAsmRegisterReferenceExpression constructor).
+
+          \internal Not clear on when 1st and 2nd bytes of some registers have names, 
+                    is this the case for DI, SI, SP, BP, also what about the numbered 
+                    regesters and segment registers?
+
+          \todo Need to add the floating point register (a stack reference), and control 
+                registers, etc.  The current work is still incomplete.
+      */
+          enum x86_register_enum
+             {
+               undefined_general_register = 0, /*!< unknown (error or unitialized value) */
+               rAX = 1,  /*!< Used for either RAX, EAX, AX, AL, or AH */
+               rBX = 2,  /*!< Used for either RBX, EBX, BX, BL, or BH */
+               rCX = 3,  /*!< Used for either RCX, ECX, CX, CL, or CH */
+               rDX = 4,  /*!< Used for either RDX, EDX, DX, DL, or EH */
+               rDI = 5,  /*!< Used for either RDI, EDI, DI */
+               rSI = 6,  /*!< Used for either RSI, ESI, SI */
+               rSP = 7,  /*!< Used for either RSP, ESP, SP */
+               rBP = 8,  /*!< Used for either RBP, EBP, BP */
+               r8  = 9,  /*!< numbered registers */
+               r9  = 10, /*!< numbered registers */
+               r10 = 11, /*!< numbered registers */
+               r11 = 12, /*!< numbered registers */
+               r12 = 13, /*!< numbered registers */
+               r13 = 14, /*!< numbered registers */
+               r14 = 15, /*!< numbered registers */
+               r15 = 16, /*!< numbered registers */
+               CS  = 17, /*!< segment register */
+               DS  = 18, /*!< segment register */
+               SS  = 19, /*!< segment register */
+               ES  = 20, /*!< segment register */
+               FS  = 21, /*!< segment register, only ES and FS are used in for 64 bit modes */
+               GS  = 22, /*!< segment register, only ES and FS are used in for 64 bit modes */
+	       ST  = 23, /*Register appears in IDA */
+               last_register
+             };
+
+     /*! \brief This permits the specification of different parts of a register
+          Intel registers contain aliasing where for example register name AX is the lower 16 
+          bits of register EAX, similarly AL are bits 0-7 of AX and AH are bits 8-15 of AX.
+          The position in register allows us to represent AX, AL, and AH as rAX which qualification.
+          The value "all" is the default and refers to the whole of the register (e.g. rAX).
+     */
+          enum x86_position_in_register_enum
+             {
+               undefined_position_in_register = 0, /*!< unknown (error or unitialized value) */
+               low_byte  = 1, /*!< 1st byte of larger register (bits 0-7) */
+               high_byte = 2, /*!< 2nd byte of larger register (bits 8-15) */
+               word  = 3, /*!< 16 bit part of larger register */
+               dword = 4, /*!< lower 32 bit part of larger register (typically the first part of a 64 bit register) */
+               qword = 5, /*!< 64 bit part of 128 bit register (not in common use) */
+               all       = 6, /*!< the full register is used (default value) */
+               last_position_in_register
+             };
+
+          enum arm_register_enum
+             {
+               undefined_arm_register = 0, /*!< unknown (error or unitialized value) */
+               reg1 = 1,  /*!< Used for either RAX, EAX, AX, AL, or AH */
+               reg2 = 2,  /*!< Used for either RBX, EBX, BX, BL, or BH */
+               reg3 = 3,  /*!< Used for either RCX, ECX, CX, CL, or CH */
+               reg4 = 4,  /*!< Used for either RDX, EDX, DX, DL, or EH */
+               reg5 = 5,  /*!< Used for either RDI, EDI, DI */
+               reg6 = 6,  /*!< Used for either RSI, ESI, SI */
+               reg7 = 7,  /*!< Used for either RSP, ESP, SP */
+               reg8 = 8,  /*!< Used for either RBP, EBP, BP */
+               reg9  = 9,  /*!< numbered registers */
+               reg10 = 10, /*!< numbered registers */
+               reg11 = 11, /*!< numbered registers */
+               reg12 = 12, /*!< numbered registers */
+               reg13 = 13, /*!< numbered registers */
+               reg14 = 14, /*!< numbered registers */
+               reg15 = 15, /*!< numbered registers */
+               SP  = 16, /*!< segment register */
+               PC  = 17, /*!< segment register */
+               LR  = 18, /*!< segment register */
+               SL  = 19, /*!< segment register */
+               IP  = 20, /*!< segment register, only ES and FS are used in for 64 bit modes */
+               FP  = 21, /*!< segment register, only ES and FS are used in for 64 bit modes */
+               last_arm_register
+             };
+
+          enum arm_position_in_register_enum
+             {
+               undefined_arm_position_in_register = 0, /*!< unknown (error or unitialized value) */
+               arm_dword = 1, /*!< lower 32 bit part of larger register (typically the first part of a 64 bit register) */
+               arm_qword = 2, /*!< 64 bit part of 128 bit register (not in common use) */
+               last_arm_position_in_register
+             };
+
+          enum arm_condition_field_enum
+             {
+               undefined_position_in_condition = 0, /*!< unknown (error or unitialized value) */
+               C_EQ = 1, // equal
+               C_NE = 2, // not equal
+               C_CS = 3, // unsigned higher or same
+               C_CC = 4, // unsigned lower
+               C_MI = 5, // negative
+               C_PL = 6, // positive or zero
+               C_VS = 7, // overflow
+               C_VC = 8, // no overflow
+               C_HI = 9, // unsigned higher
+               C_LS = 10, // unsigned lower or same
+               C_GE = 11, // greater or equal
+               C_LT = 12, // less than
+               C_GT = 13, // greater than
+               C_LE = 14, // less than or equal
+               C_AL = 15, // always
+               last_position_in_condition
+             };
+
+          enum arm_suffix_field_enum
+             {
+               undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
+               c = 1, // control field mask bit
+               f = 2, // flags field mask bit
+               s = 3, // status field mask bit
+               x = 4, // extension field mask bit
+               last_position_in_suffix
+             };
+
+HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_END
+
+
+
+
+
+/* --------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------- */
+
+
+
+SOURCE_BINARY_BLOCK_START
+void
+SgAsmBlock::append_statement( SgAsmStatement* statement )
+   {
+     p_statementList.push_back(statement);
+   }
+
+void
+SgAsmBlock::remove_children(  )
+   {
+     p_statementList.clear();
+   }
+
+void
+SgAsmBlock::remove_statement( SgAsmStatement* statement )
+   {
+     SgAsmStatementPtrList::iterator l = p_statementList.begin();
+     for (;l!=p_statementList.end();l++) {
+	SgAsmStatement* st = *l;
+	if (st==statement) {
+             break;
+        }
+     }	
+	if (l!=p_statementList.end())
+            p_statementList.erase(l);
+   }
+
+SOURCE_BINARY_BLOCK_END
+
+
+
+SOURCE_BINARY_RET_START
+void
+SgAsmx86Ret::append_dest( SgAsmStatement* statement )
+   {
+     p_dest.push_back(statement);
+   }
+
+SOURCE_BINARY_RET_END
+
+
+
+SOURCE_BINARY_OPERAND_LIST_START
+void
+SgAsmOperandList::append_operand( SgAsmExpression* operand )
+   {
+  /* implemented directly until we can fix how the statementList is built */
+     p_operands.push_back(operand);
+   }
+
+SOURCE_BINARY_OPERAND_LIST_END
+
+
+SOURCE_BINARY_DATA_STRUCTURE_START
+void
+SgAsmDataStructureDeclaration::append_declaration( SgAsmDeclaration* declaration )
+   {
+     p_declarationList.push_back(declaration);
+   }
+
+SOURCE_BINARY_DATA_STRUCTURE_END
+
+
+SOURCE_BINARY_FUNCTION_DECLARATION_START
+void
+SgAsmFunctionDeclaration::remove_children(  )
+   {
+     p_statementList.clear();
+   }
+
+void
+SgAsmFunctionDeclaration::append_dest( SgAsmStatement* statement )
+   {
+     p_dest.push_back(statement);
+   }
+
+void
+SgAsmFunctionDeclaration::append_statement( SgAsmStatement* statement )
+   {
+     p_statementList.push_back(statement);
+   }
+
+void
+SgAsmFunctionDeclaration::remove_statement( SgAsmStatement* statement )
+   {
+     SgAsmStatementPtrList::iterator l = p_statementList.begin();
+     for (;l!=p_statementList.end();l++) {
+	SgAsmStatement* st = *l;
+	if (st==statement) {
+             break;
+        }
+     }	
+	if (l!=p_statementList.end())
+            p_statementList.erase(l);
+   }
+
+
+/*
+void
+SgAsmFunctionDeclaration::append_block( SgAsmBlock* operand )
+   {
+     p_body.push_back(operand);
+   }
+*/
+
+SOURCE_BINARY_FUNCTION_DECLARATION_END
+
+
+SOURCE_BINARY_INSTRUCTION_START
+
+void
+SgAsmInstruction::append_sources( SgAsmInstruction* inst )
+   {
+     p_sources.push_back(inst);
+   }
+
+unsigned int
+SgAsmInstruction::cfgBinFindChildIndex()
+   {
+    SgAsmFunctionDeclaration* block = isSgAsmFunctionDeclaration(this->get_parent());
+    ROSE_ASSERT(block);
+    size_t idx = block->get_childIndex(this);
+    ROSE_ASSERT ((unsigned long)idx != (size_t)(-1));
+    return idx;
+   }
+
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmInstruction::cfgBinOutEdges() {
+  int idx = this->cfgBinFindChildIndex();
+
+  std::vector<VirtualBinCFG::CFGEdge> result;
+ // access the parent (functionDecl) and check for all the children
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  int max = succs.size()-1;
+  
+  //cerr << idx << "   " << max << endl; 
+  if (idx == max) {
+	// nothing to do for intraprocedural call
+
+  } else if (idx < max) {
+    makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
+	//this->getNextBinCFGNode(idx)), result);
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+
+bool SgAsmInstruction::isSuccessorControlFlowEdge(SgAsmInstruction* predecessor) {
+ROSE_ASSERT(predecessor);
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+ // access the parent (functionDecl) and check for all the children
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  if (idx == 0) 
+  { }
+  else {
+     SgAsmInstruction* node = isSgAsmInstruction(succs[idx-1]);
+     if (node==predecessor)
+	return true;    
+  }
+  return false;
+}
+
+bool SgAsmInstruction::isPredecessorControlFlowEdge(SgAsmInstruction* successor) {
+ROSE_ASSERT(successor);
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+ // access the parent (functionDecl) and check for all the children
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  int max = succs.size()-1;
+
+  if (idx == max) 
+  { }
+  else {
+     SgAsmInstruction* node = isSgAsmInstruction(succs[idx+1]);
+     if (successor==node)
+	return true;    
+  }
+  return false;
+}
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmInstruction::cfgBinInEdges() {
+  int idx = this->cfgBinFindChildIndex();
+
+  std::vector<VirtualBinCFG::CFGEdge> result;
+ // access the parent (functionDecl) and check for all the children
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+
+  if (idx == 0) {
+  // change this to bind to the calling function
+	std::vector <SgAsmStatement*> dest_list = this->get_sources();
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	  ROSE_ASSERT(dest);
+	  //cerr << " jump on end of func :: found destination: " << dest << endl;
+	  makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);	
+	}	
+  } else if (idx > 0) {
+	// this is a jump, the control changes
+	std::vector <SgAsmStatement*> dest_list = this->get_sources();
+	//cerr << " backward cfg ... sources = " << dest_list.size() << endl;
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	 if (dest) {
+           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+           makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);
+	 } else {
+	   //cerr << " no dest found " << endl;
+	 }
+	}
+        makeEdge(VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this), result);
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+
+
+  return result;
+}
+
+SgAsmInstruction*
+SgAsmInstruction::cfgBinFlowOutEdge() {
+  int idx = this->cfgBinFindChildIndex();
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  int max = succs.size()-1;
+  if (idx==max) {
+    return NULL;
+  } else if (idx < max) {
+    SgAsmInstruction* inst = isSgAsmInstruction(succs[idx+1]);
+	if (inst)
+	return inst;
+	else return NULL;
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return NULL;
+}
+
+
+SgAsmInstruction*
+SgAsmInstruction::cfgBinFlowInEdge() {
+  int idx = this->cfgBinFindChildIndex();
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  if (idx == 0) {
+	return NULL;
+  } else if (idx > 0) {
+       SgAsmInstruction* inst = isSgAsmInstruction(succs[idx-1]);
+	if (inst)
+	return inst;
+	else
+	return NULL;
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return NULL;
+}
+
+SOURCE_BINARY_INSTRUCTION_END
+
+SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION_START
+
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmx86ControlTransferInstruction::cfgBinOutEdges() {
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  int max = succs.size()-1;
+  //cerr << " found Control transfer ... " << endl;
+
+
+// this code is correct, but it rather should be part of the binary AST build.
+
+  if (isSgAsmx86Ret(this)) {
+       // if we reach the end of a function, make sure we draw the edges to the caller
+	std::vector <SgAsmStatement*> dest_list = isSgAsmx86Ret(this)->get_dest();
+//	cerr << " ret cfg ... destinations = " << dest_list.size() << endl;
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	   if (dest) {
+             //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+             makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
+	   } else {
+	     //cerr << " no dest found " << endl;
+	   }
+	}
+    return result;
+  }
+
+
+  if (idx == max) {
+	SgAsmInstruction* dest = this->get_destination();
+	//cerr << " jump on end of func :: found destination: " << dest << endl;
+	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);		
+  } else if (idx < max) {
+	// this is a jump, the control changes
+	SgAsmInstruction* dest = this->get_destination();
+	if (dest) {
+           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+           makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
+	} else {
+	   //cerr << " no dest found " << endl;
+	}
+	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmx86ControlTransferInstruction::cfgBinOutEdgesNextIntraproceduralNode() {
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  int max = succs.size()-1;
+  //cerr << " found Control transfer ... " << endl;
+  if (idx == max) {}
+  else if (idx < max) {
+	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmx86ControlTransferInstruction::cfgBinOutEdgesNextConditionalNodes() {
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  int max = succs.size()-1;
+  //cerr << " found Control transfer ... " << endl;
+
+  if (isSgAsmx86Ret(this)) {
+       // if we reach the end of a function, make sure we draw the edges to the caller
+	std::vector <SgAsmStatement*> dest_list = isSgAsmx86Ret(this)->get_dest();
+//	cerr << " ret cfg ... destinations = " << dest_list.size() << endl;
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	   if (dest) {
+             //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+             makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
+	   } else {
+	     //cerr << " no dest found " << endl;
+	   }
+	}
+    return result;
+  }
+
+  if (idx == max) {
+	SgAsmInstruction* dest = this->get_destination();
+	//cerr << " jump on end of func :: found destination: " << dest << endl;
+	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);		
+  } else if (idx < max) {
+	// this is a jump, the control changes
+	SgAsmInstruction* dest = this->get_destination();
+	if (dest) {
+           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+           makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
+	} else {
+	   //cerr << " no dest found " << endl;
+	}
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmx86ControlTransferInstruction::cfgBinInEdges() {
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  //cerr << " found Control transfer ... " << idx << endl;
+
+// uncomment the following if AsmCalls should not be resolved for CFG (inter-procedural)
+/*
+  if (isSgAsmCall(this)) {
+    // skip binary calls for now
+    if (idx!=0)
+      makeEdge( VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this),result);
+    return result;
+  }
+*/
+
+  if (idx == 0) {
+  // change this to bind to the calling function
+	std::vector <SgAsmStatement*> dest_list = this->get_sources();
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	  ROSE_ASSERT(dest);
+	  //cerr << " jump on end of func :: found destination: " << dest << endl;
+	  makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);	
+	}	
+  } else if (idx > 0) {
+	// this is a jump, the control changes
+	std::vector <SgAsmStatement*> dest_list = this->get_sources();
+	//cerr << " backward cfg ... sources = " << dest_list.size() << endl;
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	 if (dest) {
+           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+           makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);
+	 } else {
+	   //cerr << " no dest found " << endl;
+	 }
+	}
+        makeEdge(VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this), result);
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmx86ControlTransferInstruction::cfgBinInEdgesLastIntraproceduralNode() {
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  //cerr << " found Control transfer ... " << idx << endl;
+
+  if (idx == 0) {
+  } else if (idx > 0) {
+        makeEdge(VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this), result);
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+
+std::vector<VirtualBinCFG::CFGEdge>
+SgAsmx86ControlTransferInstruction::cfgBinInEdgesLastConditionalNodes() {
+  int idx = this->cfgBinFindChildIndex();
+  std::vector<VirtualBinCFG::CFGEdge> result;
+
+  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
+  //cerr << " found Control transfer ... " << idx << endl;
+
+  if (idx == 0) {
+  // change this to bind to the calling function
+	std::vector <SgAsmStatement*> dest_list = this->get_sources();
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	  ROSE_ASSERT(dest);
+	  //cerr << " jump on end of func :: found destination: " << dest << endl;
+	  makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);	
+	}	
+  } else if (idx > 0) {
+	// this is a jump, the control changes
+	std::vector <SgAsmStatement*> dest_list = this->get_sources();
+	//cerr << " backward cfg ... sources = " << dest_list.size() << endl;
+	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
+	for (; it!=dest_list.end();++it) {
+	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
+	 if (dest) {
+           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
+           makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);
+	 } else {
+	   //cerr << " no dest found " << endl;
+	 }
+	}
+  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  return result;
+}
+
+
+
+SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION_END
+
+
+SOURCE_BINARY_NODE_START
+
+
+
+unsigned int
+$CLASSNAME::cfgBinFindChildIndex() {
+  ROSE_ASSERT (!"CFG functions works on SgAsmInstruction only");
+  return 0;
+}
+
+
+
+std::vector<VirtualBinCFG::CFGEdge>
+$CLASSNAME::cfgBinOutEdges() {
+  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
+  return std::vector<VirtualBinCFG::CFGEdge>();
+}
+
+
+std::vector<VirtualBinCFG::CFGEdge>
+$CLASSNAME::cfgBinInEdges() {
+  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
+  return std::vector<VirtualBinCFG::CFGEdge>();
+}
+
+
+SOURCE_BINARY_NODE_END
+
+

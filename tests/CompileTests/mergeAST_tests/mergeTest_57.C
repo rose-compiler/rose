@@ -1,0 +1,2 @@
+struct { typedef int X };
+

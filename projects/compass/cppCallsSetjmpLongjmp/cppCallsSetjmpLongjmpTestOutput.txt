@@ -1,0 +1,2 @@
+CppCallsSetjmpLongjmp: cppCallsSetjmpLongjmpTest1.C:7.3: SgFunctionRefExp: finds calls to setjmp() or longjmp() in C++ code calls: setjmp()
+CppCallsSetjmpLongjmp: cppCallsSetjmpLongjmpTest1.C:8.3-9: SgFunctionRefExp: finds calls to setjmp() or longjmp() in C++ code calls: longjmp()

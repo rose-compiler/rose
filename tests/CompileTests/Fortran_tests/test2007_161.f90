@@ -1,0 +1,5 @@
+! BLOCK DATA FOO
+! COMMON /VARS/ X, Y, Z
+  COMMON X, Y, Z
+!  DATA X, Y, Z / 3., 4., 5. /
+END

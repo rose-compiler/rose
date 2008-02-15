@@ -1,0 +1,121 @@
+\chapter{Command-line Processing Within Translators}
+
+     ROSE includes mechanism to simplify the processing of command-line arguments
+so that translators using ROSE can trivially replace compilers within
+makefiles.  This example shows some of the many command-line handling
+options within ROSE and the ways in which customized options may be added for 
+specific translators.
+
+% \subsection{Recognizing custom command-line options}
+% \subsection{Adding options to internal ROSE command-line driven mechanisms}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleCommandlineProcessing}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/commandlineProcessing.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/commandlineProcessing.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing simple command-line processing within ROSE translator.}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleOutput_CommandlineProcessing}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/commandlineProcessing.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/commandlineProcessing.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using commandlineProcessing.C}
+\end{figure}
+
+
+\section{Commandline Selection of Files}
+
+\paragraph{Overview} This example shows the optional processing of specific files selected
+after the call to the frontend to build the project.  First the SgProject if build and
+{\em then} the files are selected for processing via ROSE or the backend compiler
+directly.
+
+   This example demonstrates the separation of the constuction of a SgProject with
+valid SgFile objects for each file on the command line, but with an empty SgGlobal scope,
+and the call to the frontend, called for each SgFile in a separate loop over all the 
+SgFile objects.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleCommandlineProcessing}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/commandlineProcessing.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/commandlineProcessing.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing simple command-line processing within ROSE translator.}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleOutput_CommandlineProcessing}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/commandlineProcessing.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/commandlineProcessing.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using commandlineProcessing.C}
+\end{figure}
+
+
+
+

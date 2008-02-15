@@ -1,0 +1,21 @@
+README -- ROSE/src/roseIndependentSupport/graphics
+
+DQ (5/26/2007):  I don't think this is correct!
+   We are revisiting this subject.  We might just
+   want to use this in place of the Boost graphs
+   and then provide mechanism to build a Boost graph 
+   from this simpler graph when we require Boost graph
+   functionality.
+
+**********************************************************
+   The files in this directory have been depricated!  ROSE
+now uses Boost for generation of graphs and so these files 
+are no longer required.
+**********************************************************
+
+
+This directory contains files to support the generation of 
+graphs using techniques defined in the STL Components Book 
+(chapter on Graphs).
+
+

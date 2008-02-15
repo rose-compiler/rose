@@ -1,0 +1,42 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class VirtualCFG::CFGEdge
+*/
+/*! \name Class Members*/
+//@{
+/*!\var VirtualCFG::CFGNode VirtualCFG::CFGEdge::src
+*/
+/*!\var VirtualCFG::CFGNode VirtualCFG::CFGEdge::tgt
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgExpression *VirtualCFG::CFGEdge::caseLabel() const
+*/
+/*!\fn SgExpression *VirtualCFG::CFGEdge::conditionBasedOn() const
+*/
+/*!\fn enum VirtualCFG::EdgeConditionKind VirtualCFG::CFGEdge::condition() const
+*/
+/*!\fn inline VirtualCFG::CFGEdge::CFGEdge(VirtualCFG::CFGNode src,VirtualCFG::CFGNode tgt) : src(src), tgt(tgt)
+*/
+/*!\fn inline VirtualCFG::CFGNode VirtualCFG::CFGEdge::source() const
+*/
+/*!\fn inline VirtualCFG::CFGNode VirtualCFG::CFGEdge::target() const
+*/
+/*!\fn inline bool VirtualCFG::CFGEdge::operator!=(const VirtualCFG::CFGEdge &o) const
+*/
+/*!\fn inline bool VirtualCFG::CFGEdge::operator==(const VirtualCFG::CFGEdge &o) const
+*/
+/*!\fn std::string VirtualCFG::CFGEdge::id() const
+*/
+/*!\fn std::string VirtualCFG::CFGEdge::toString() const
+*/
+/*!\fn std::string VirtualCFG::CFGEdge::toStringForDebugging() const
+*/
+/*!\fn std::vector< SgInitializedName * , std::allocator< SgInitializedName * >  > VirtualCFG::CFGEdge::scopesBeingEntered() const
+*/
+/*!\fn std::vector< SgInitializedName * , std::allocator< SgInitializedName * >  > VirtualCFG::CFGEdge::scopesBeingExited() const
+*/
+/*!\fn inline bool VirtualCFG::CFGEdge::operator<(const VirtualCFG::CFGEdge &o) const
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_702075537;

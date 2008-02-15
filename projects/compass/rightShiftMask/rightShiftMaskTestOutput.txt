@@ -1,0 +1,1 @@
+RightShiftMask: rightShiftMaskTest1.C:7.29-43: SgRshiftOp: Finding a RightShift with no Bit Mask

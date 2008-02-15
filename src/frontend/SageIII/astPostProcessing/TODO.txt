@@ -1,0 +1,6 @@
+Possible post processing of the AST that we might want:
+
+   1) SgInitializedName objects in function prototypes could be set to 
+      have the scope of the function definition in the defining declaration 
+      if it exists.  This might be better than having the scope be NULL.
+

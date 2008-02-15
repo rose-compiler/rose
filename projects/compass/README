@@ -1,0 +1,99 @@
+Useage:
+Commands to update the compass directory using the compassRepository:
+
+  Building compass from the checker tarballs in the compassRepository:
+     From ROSE/projects/compass directory run the command:
+        compassRepository/bin/compass_submission_setup.sh compassRepository `pwd`
+
+     Note that this will overwite any existing checkers in the ROSE/projects/compass
+     directory.
+
+  Rebuilding the compass tarballs in the compassRepository from compass:
+     If changes are made to the files in the ROSE/projects/compass directory, then
+     these changes can be saved back into the ROSE/projects/compass/compassRepository
+     (or where ever the compassRepository is located).  The command to do this is:
+        make archiveExplicitCharSign
+     (this example shows it's use for the "ExplicitCharSign" test, each test should be
+     run seperately).  This feature addresses the rare but practical circumstance where
+     changes to ROSE can force changes to a few of the checkers and we want to save the 
+     changes to existing checkers into a new set of distributable checker tarballs.
+
+
+Compass Process at LLNL:
+   1) Dan will maintain the current version of Compass and it will
+      initially reside in the ROSE/projects/compass directory.
+      I will send a patch and the ROSE/project/compass directory 
+      out to everyone so that they can update there versions
+      if they choose to track the development.  Soon this will
+      be checked in to SVN separately.
+
+   2) We will do 2 checkers per week, and submit 5 ideas every two
+      weeks (until we change the rules).  Checkers are due on Wed's,
+      new ideas are due on Thursdays.  This allows some time for 
+      any last minute arbitration.  Implementation can be in any order 
+      you choose.  The next deadline is 7/5/07 for more checkers,
+      7/18/07 for the last checkers (those defined 6/22/07) and 7/12/07 
+      for new ideas about what checkers will be next.
+
+   3) Please try to submit ideas in the following format (to the 
+      arbitrators), so that we can maintin the list electronically.
+
+     Examples are:
+
+     Name: UninitializedDefinitionDetector
+     Reference: [HA05] Item 19: Always initialize variables.
+     Pattern: Non-static variable definition of non-class type without an
+     initializer expression
+
+     Name: DeepNestingChecker
+     Reference: [HA05] Item 20: [...] Avoid deep nesting.
+     Pattern: Function definition contains more than n nested scopes.
+
+     Name: DataMemberAccessChecker
+     Reference: [HA05] Item 41: Make data members private, except in
+     behaviorless aggregates (C-style structs)
+     Pattern: Class definition contains a mix of public and protected/private
+     data members
+
+     References:
+     [HA05] H. Sutter, A. Alexandrescu. C++ Coding Standards: 101 Rules,
+     Guidelines, and Best Practices
+
+
+   4) Contributors should submit ideas to arbitration (Rama and Gergo 
+      while I'm on travel).
+
+   5) Valentin will define the testing mechanism and add any listing
+      environment to the latex system.
+
+   6) We will use pdflatex to process the latex documentation.
+      
+   7) Directory names should start with lower case and be camel case
+      (this is a ROSE wide rule which we might as well follow since
+      we will have hundreds of directories eventually).  Directory names
+      should be clear (there will be hundreds at some point), no
+      abrivations if possible.
+
+   8) The submitted directories should untar and only require update
+      to the ROSE/configure.in and the ROSE/projects/compass/Makefile.am
+      files to add a single entry (specified checker name). All the checkers 
+      should be designed to be untared and used directly (after running
+      the ROSE build script and reruning the ROSE configure script).
+
+   9) Rama will build a script which generates the skeleton of the 
+      code and Makefile.am from the input of the specified checker name.
+      This is an orthogonal mechanism from the design of the checkers
+      so it can be ignored for more complex checkers if required.
+
+  10) All checkers should use the new compass template generator for
+      consistancy.  See compass_template_generator-final.tar.gz
+      for details and ask Rama as required.
+
+
+GUI setup:
+  1) To set font sizes run qtconfig and select options.
+
+QT GUI programming:
+  1) To get size of QRose windows run "xwininfo" and click on the top level QRose
+window to get information about the current size.
+

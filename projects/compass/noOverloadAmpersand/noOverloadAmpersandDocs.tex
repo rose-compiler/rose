@@ -1,0 +1,88 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Overload Ampersand}
+\label{NoOverloadAmpersand::overview}
+The C++ standard [ISO/IEC 14882-2003] says in Section 5.3.1 paragraph
+4 that
+
+    The address of an object of incomplete type can be taken, but if
+    the complete type of that object is a class type that declares
+    operator\&() as a member function, then the behavior is undefined
+    (and no diagnostic is required).
+
+Therefore, to avoid possible undefined behavior, the operator \& should
+not be overloaded.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameters Required.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+We check any member function then compare the name to 'operator\&'.
+If this combination is found an alert is raised.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+class peanutButter
+{
+  string name;
+  void operator&()
+  {
+    name += '&jelly';
+  }
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+
+class peanutButter
+{
+  string name;
+  void addJelly()
+  {
+    name += '&jelly';
+  }
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Find member function
+\item Check name
+\item raise alert
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. 
+\htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References}
+ISO/IEC 14882-2003 Section 5.3.1, ``Unary operators''\\
+Lockheed Martin 05 AV Rule 159, ``Operators $||$, \&\&, and unary \&
+    shall not be overloaded''

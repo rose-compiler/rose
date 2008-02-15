@@ -1,0 +1,59 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{File Read Only Access}
+\label{FileReadOnlyAccess::overview}
+Attempting to open files for writing on read-only file systems and files causes errors. This checker checks that all standard C/C++ file I/O is read-only. This checker is normally used only internally for compass verify.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal visiting all function call expressions calling the function {\tt fopen}. The mode parameter to {\tt fopen} is checked to be either ``r'' or ``rb'' only. Any parameter that violates this restriction is flagged as an error. Additionally, all variable declarations of type {\tt fstream} and {\tt ofstream} are forbidden by this checker.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+#include <fstream>
+#include <stdio.h>
+
+int main()
+{
+  FILE *f1 = fopen( "f1.txt", "w" );
+  std::fstream f2( "f2.txt", std::ios::app | std::ios::out );
+
+  FILE *f1r = fopen( "f1.txt", "r" );
+  std::ifstream f2r( "f2.txt", std::ios::in );
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+Do not write to file.
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal on all function call expressions calling the {\tt fopen} function.
+\item Check the mode parameter of {\tt fopen} to be either ``r'' or ``rb''; if not, then flag violation.
+\item Perform simple AST traversal on all variable declarations of the type {\tt fstream} or {\tt ofstream}. Forbid the use of these declarations and mark them as violations.
+\item Report all violations. 
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

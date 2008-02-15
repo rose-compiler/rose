@@ -1,0 +1,143 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceSymbol
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgNamespaceSymbol
+\brief This class represents the concept of a namespace name within the compiler.
+   This symbol holds a reference to a SgNamespaceDeclarationStatement and also
+any of its alias (referencing a SgNamespaceAliasDeclarationStatement).
+\internal The constructor for this symbol takes a name and a declaration.
+    The reason is that it is used to handle the case of a namespace alias which uses
+    the same symbol but uses a different name.  I'm not certain that this is
+    the best implementation since it stores the symbol in the symbol table under
+    two names.  It is not clear if that would be clear if the name were changes and 
+    this could cause the symbol table to not be completely removed from the
+    symbol table.
+\todo It might be that we should have a SgNamespaceAliasSymbol so that namespace 
+    aliasing can be better supported.  We can consider this for future work.
+\sa \ref SgSymbol for more details about symbols and why they are used in ROSE.
+\sa
+\ref SgNamespaceSymbol_usage  "Example of using a SgNamespaceSymbol object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceSymbol data members
+/////////////////////////////////////////////////////////////////////////
+/*
+\var SgNamespaceSymbol::p_name
+\brief This is the name of the namespace declaration.
+    It is redundently stored for a normal namespace declaration and is different from that
+    of the SgNamespaceDeclarationStatement in the case of a namespace alias declaration.
+*/
+/*
+\var SgNamespaceSymbol::p_declaration
+\brief This pointer is always valid is the declaration of the namespace.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNamespaceSymbol member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgNamespaceSymbol::SgNamespaceSymbol (const SgNamespaceSymbol &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgNamespaceSymbol::~SgNamespaceSymbol()
+\brief This is the destructor.
+*/
+/*!
+\fn SgNamespaceSymbol::isSgNamespaceSymbol (SgNode *s)
+\brief Cast function (from derived class to SgNamespaceSymbol pointer).
+   This functions returns a SgNamespaceSymbol pointer for any input of a 
+pointer to an object derived from a SgNamespaceSymbol.
+\return Returns valid pointer to SgNamespaceSymbol if input is derived from a SgNamespaceSymbol.
+*/
+/*!
+\fn SgNamespaceSymbol::isSgNamespaceSymbol (const SgNode *s)
+\brief Cast function (from derived class to SgNamespaceSymbol pointer).
+   This functions returns a SgNamespaceSymbol pointer for any input of a 
+pointer to an object derived from a SgNamespaceSymbol.
+\return Returns valid pointer to SgNamespaceSymbol if input is derived from a
+    SgNamespaceSymbol.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgName SgNamespaceSymbol::p_name
+*/
+/*!\var SgNamespaceDeclarationStatement *SgNamespaceSymbol::p_declaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgNamespaceSymbol::SgNamespaceSymbol(const SgNamespaceSymbolStorageClass &source)
+\brief This is the default constructor.
+   This constructor builds the SgNamespaceSymbol base class.
+\sa 
+\ref SgNamespaceSymbol_create "Example:create an SgNamespaceSymbol object"
+*/
+/*!\fn inline static void SgNamespaceSymbol::operator delete(void *pointer)
+*/
+/*!\fn static SgNamespaceSymbol *SgNamespaceSymbol::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgNamespaceSymbol::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgNamespaceSymbol::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgNamespaceSymbol::initializeStorageClassArray(SgNamespaceSymbolStorageClass *storageArray)
+*/
+/*!\fn static void SgNamespaceSymbol::clearMemoryPool()
+*/
+/*!\fn static void SgNamespaceSymbol::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgNamespaceSymbol::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgNamespaceSymbol::roseRTI()
+*/
+/*!\fn virtual SgNamespaceSymbol::~SgNamespaceSymbol()
+*/
+/*!\fn virtual SgNode *SgNamespaceSymbol::copy(SgCopyHelp &help) const
+*/
+/*!
+\fn void SgNamespaceSymbol::set_declaration(SgNamespaceDeclarationStatement *declaration)
+\brief Access function for setting the declaration stored internally.
+See  *declaration)
+declaration for documentation \return Returns SgNamespaceDeclarationStatement.
+*/
+/*!
+\fn SgNamespaceDeclarationStatement *SgNamespaceSymbol::get_declaration() const
+\brief Access function for getting the declaration of the original namespace.
+See  const
+declaration for documentation \return Returns SgNamespaceDeclarationStatement.
+*/
+/*!
+\fn virtual SgName SgNamespaceSymbol::get_name() const
+\brief Access function for getting name stored internally (not the one in the declaration).
+See  const
+name for documentation \return Returns SgName.
+*/
+/*!\fn virtual SgNode *SgNamespaceSymbol::get_symbol_basis() const
+\description See  const
+symbol_basis for documentation */
+/*!\fn virtual SgNode *SgNamespaceSymbol::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!
+\fn virtual SgType *SgNamespaceSymbol::get_type() const
+\brief This function returns the type associated with the named entity.
+See  const
+type for documentation \return Returns SgType*.
+*/
+/*!\fn virtual size_t SgNamespaceSymbol::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgNamespaceSymbol::get_numberOfTraversalSuccessors()
+\description See  SgNamespaceSymbol::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNamespaceSymbol::get_traversalSuccessorContainer()
+\description See  SgNamespaceSymbol::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNamespaceSymbol::get_traversalSuccessorNamesContainer()
+\description See  SgNamespaceSymbol::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgNamespaceSymbol::SgNamespaceSymbol(SgName name=(""),SgNamespaceDeclarationStatement *declaration=(0))
+*/
+//@}
+int SAGE_Doxygen_Dummy_320803250931940;

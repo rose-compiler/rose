@@ -1,0 +1,22 @@
+       // Special constructor for CLASSNAME;
+          CLASSNAME ( SgIfStmt* ifStatement );
+
+       // Define the abstractBaseClass function
+          virtual ROSE_Node* transform();
+
+          void recognizeSageSubTree ( SgIfStmt* ifStatement );
+
+          void setRoseConditionalStatement ( ROSE_Statement*      roseStatement );
+          void setTrueRoseStatementBlock   ( ROSE_StatementBlock* roseStatementBlock );
+          void setFalseRoseStatementBlock  ( ROSE_StatementBlock* roseStatementBlock );
+
+          ROSE_Statement*      getRoseConditionalStatement  ();
+          ROSE_StatementBlock* getTrueRoseStatementBlock  ();
+          ROSE_StatementBlock* getFalseRoseStatementBlock ();
+
+     private:
+       // The different parts of an "if" statement
+          ROSE_Statement* roseConditionalStatement;
+          ROSE_StatementBlock* trueRoseStatementBlock;
+          ROSE_StatementBlock* falseRoseStatementBlock;
+

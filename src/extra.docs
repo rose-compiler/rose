@@ -1,0 +1,25 @@
+/*!
+  // Group this doxygen module into the QueryLib module
+     \ingroup localNodeQueryLib
+     \defgroup transformationSupportLib Transformation Support Library
+     \brief General support for transformations.
+     \authors Quinlan
+
+     This file holds functions that are generally useful for a broad cross-section of
+     transformations.  Support includes: \n
+      -# Recognition of C++ overloaded operators \n
+      -# Recognition of general transformation hints within applications \n
+      -# Construction of macros for placement into the AST \n
+      -# Extraction of names from AST nodes (or subtrees); function names, 
+         type names, etc. (these should eventually be placed into Sage III directly) \n
+
+     \internal functions that get name strings from AST nodes should be placed 
+               into Sage III within the appropriate AST node interfaces.
+
+     \internal Question: Should the transformationSupportLib group be a subgroup 
+                         of the RewriteMechanism group?
+
+     \todo Fixup interfaces in Sage III using code from the TransformationSupport class.
+ */
+
+

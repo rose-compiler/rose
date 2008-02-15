@@ -1,0 +1,76 @@
+// Note: Must have space between the "include" and the "<filename>" substrings
+#include<stdlib.h>
+#include<stdio.h>
+#include <assert.h>
+// Unparser Bug (currently addressed by test2001_06.C)
+// 2001/1/6 DQ Error in unparsing:
+//   Original code:
+//      ((Array_Domain_Type*)(this))->IndexBase  [i] = Index_Array[i]->Array_Descriptor.Array_Domain.Base   [i];
+//   Unparsed code:
+//      ((Array_Domain_Type & )(*this).IndexBase)[i] = ((((*(this -> Index_Array)[i]).Array_Descriptor).Array_Domain).Base)[i];
+
+int main()
+{
+
+/* Found and expression tree representing a constant */
+(1 == 1)?0:( /* colorCode:red:on */ __assert_
+fa
+il /* colorCode:red:off */ (
+/* Found and expression tree representing a constant */
+ /* colorCode:orange:on */ "1 == 1" /* colorCode:orange:off */ ,
+/* Found and expression tree representing a constant */
+ /* colorCode:orange:on */ "/home/dquinlan/ROSE/NEW_ROSE/developersScratchSpace/Dan/Cxx_tests/test2001_03.C" /* colorCode:orange:off */ ,
+/* Found and expression tree representing a constant */
+ /* colorCode:orange:on */ (16) /* colorCode:orange:off */ ,__PRETTY_FUNCTION__) , 0);
+  /* colorCode:red:on */ printf /* colorCode:red:off */ (
+/* Found and expression tree representing a constant */
+ /* colorCode:red:on */red/* colorCode:orange:on */ "Program Termnated Normally! \n" /* colorCode:orange:off */ /* colorCode:red:off */ );
+/* Found and expression tree representing a constant */
+ /* colorCode:red:on */red/* colorCode:orange:on */ /* colorCode:red:on */"Program Termnated Normally! \n" /* colorCode:red:off */ /* colorCode:orange:off */ /* colorCode:red:off */ );
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+ /* colorCode:yellow:on */ (16) /* colorCode:yellow:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:blue:on */ (16) /* colorCode:blue:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:green:on */ (16) /* colorCode:green:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:brown:on */ (16) /* colorCode:brown:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:purple:on */ (16) /* colorCode:purple:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:violet:on */ (16) /* colorCode:violet:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+ /* colorCode:yellow:on */ (16) /* colorCode:yellow:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:blue:on */ (16) /* colorCode:blue:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:green:on */ (16) /* colorCode:green:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:brown:on */ (16) /* colorCode:brown:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:purple:on */ (16) /* colorCode:purple:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:violet:on */ (16) /* colorCode:violet:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+ /* colorCode:yellow:on */ (16) /* colorCode:yellow:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:blue:on */ (16) /* colorCode:blue:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:green:on */ (16) /* colorCode:green:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:brown:on */ (16) /* colorCode:brown:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:purple:on */ (16) /* colorCode:purple:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+ /* colorCode:violet:on */ (16) /* colorCode:violet:off */ ,__PRETTY_FUNCTION__) , 0);
+/* Found and expression tree representing a constant */
+/* Found and expression tree representing a constant */
+ return 0;
+} 

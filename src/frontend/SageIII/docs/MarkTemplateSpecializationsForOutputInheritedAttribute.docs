@@ -1,0 +1,12 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var bool MarkTemplateSpecializationsForOutputInheritedAttribute::insideDeclarationToOutput
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn MarkTemplateSpecializationsForOutputInheritedAttribute::MarkTemplateSpecializationsForOutputInheritedAttribute()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_568238984;

@@ -1,0 +1,155 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGlobal
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgGlobal
+\brief This class represents the concept of a namespace definition.  
+   Namespace definitions
+are coupled with namespace declarations to defin the namespace (hold the list of
+declarations in the namespace.  Within C++ namespaces are "reentrant" and
+as a result multiple namespace declarations (SgNamespaceDeclarationStatement) 
+and definitions (SgGlobal) may exist for a single namespace.
+\note Note that the namespace "std" is special in C++, such that a program
+with the statement "using namespace std" can exist all by itself and is a
+valid program (even though "std" as a namespace is not defined).
+    Scopes are an important aspect of language design. They allow
+declarations to have a local context and so promote good programming style.
+Scope statments in C++ include a number of different kinds of statements;
+the SgGlobal is a base class for these. Each scope statement contains
+a symbol table and the SgGlobals role is mostly to provide this
+symbol table and an interface to accessing it.
+\internal This is a base class for scope statements.
+\todo Cleanup interface which presently has multiple append,prepend, insert functions. It
+    might be best to eliminate them and use STL directly.
+*/
+/*
+\sa
+\ref SgGlobal_usage  "Example of using a SgGlobal object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGlobal data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgGlobal member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgGlobal_create "Example:create an SgGlobal object"
+*/
+/*!
+\fn SgGlobal::~SgGlobal()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgGlobal::isSgGlobal (SgNode *s)
+\brief Cast function (from derived class to SgGlobal pointer).
+   This functions returns a SgGlobal pointer for any input of a 
+pointer to an object derived from a SgGlobal.
+\return Returns valid pointer to SgGlobal if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgGlobal::isSgGlobal (const SgNode *s)
+\brief Cast function (from derived class to SgGlobal pointer).
+   This functions returns a SgGlobal pointer for any input of a 
+pointer to an object derived from a SgGlobal.
+\return Returns valid pointer to SgGlobal if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgDeclarationStatementPtrList SgGlobal::p_declarations
+\brief This is an STL list of SgDeclarationStatement objects.
+\internal The name is perhaps all too similar to p_declaration (which exists on many IR nodes).
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgGlobal::SgGlobal(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgGlobal base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgGlobal::SgGlobal(const SgGlobalStorageClass &source)
+*/
+/*!\fn inline static void SgGlobal::operator delete(void *pointer)
+*/
+/*!\fn static SgGlobal *SgGlobal::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgGlobal::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgGlobal::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgGlobal::initializeStorageClassArray(SgGlobalStorageClass *storageArray)
+*/
+/*!\fn static void SgGlobal::clearMemoryPool()
+*/
+/*!\fn static void SgGlobal::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgGlobal::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgGlobal::roseRTI()
+*/
+/*!\fn virtual SgGlobal::~SgGlobal()
+*/
+/*!
+\fn virtual SgNode *SgGlobal::copy(SgCopyHelp &help) const
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+\return Returns pointer to copy of SgGlobal.
+*/
+/*!\fn virtual bool SgGlobal::insert_child(SgStatement *,SgStatement *,bool inFront=true,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual bool SgGlobal::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual void SgGlobal::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgGlobal::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgGlobal::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgGlobal::post_construction_initialization()
+*/
+/*!\fn void SgGlobal::append_declaration(SgDeclarationStatement *element)
+*/
+/*!\fn void SgGlobal::insert_declaration(const std::vector < SgDeclarationStatement * , std::allocator< SgDeclarationStatement * > > ::iterator &list,SgDeclarationStatement *element)
+*/
+/*!\fn void SgGlobal::prepend_declaration(SgDeclarationStatement *element)
+*/
+/*!
+\fn SgDeclarationStatementPtrList &SgGlobal::get_declarations()
+\brief Returns a list to the global scope declarations.
+See  &SgGlobal::declarations for documentation \return Returns an STL list by reference.
+*/
+/*!
+\fn const SgDeclarationStatementPtrList &SgGlobal::get_declarations() const
+\brief Returns a const list to the global scope declarations.
+See  const
+declarations for documentation \return Returns a const STL list by reference.
+*/
+/*!\fn virtual SgName SgGlobal::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!
+\fn virtual SgName SgGlobal::get_qualified_name() const
+\brief Returns SgName (a string) representing the name of the current scope (empty string).
+   See discussion of mangled names in the documentation.
+See  const
+qualified_name for documentation \return Returns SgName (a string).
+*/
+/*!\fn virtual SgNode *SgGlobal::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgGlobal::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgGlobal::get_numberOfTraversalSuccessors()
+\description See  SgGlobal::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGlobal::get_traversalSuccessorContainer()
+\description See  SgGlobal::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGlobal::get_traversalSuccessorNamesContainer()
+\description See  SgGlobal::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgGlobal::SgGlobal()
+*/
+//@}
+int SAGE_Doxygen_Dummy_10267138782818;

@@ -1,0 +1,155 @@
+leave -> Leave
+ret -> Ret
+lea -> Lea
+call -> Call
+mov -> Mov
+cmove cmovz -> CMove
+cmovne cmovnz -> CMovne
+cmova cmovnbe -> CMova
+cmovae cmovnb -> CMovae
+cmovb cmovnae -> CMovb
+cmovbe cmovna -> CMovbe
+cmovg cmovnle -> CMovg
+cmovge cmovnl -> CMovge
+cmovl cmovnge -> CMovl
+cmovle cmovng -> CMovle
+cmovc -> CMovc
+cmovnc -> CMovnc
+cmovo -> CMovo
+cmovno -> CMovno
+cmovs -> CMovs
+cmovns -> CMovns
+cmovp cmovpe -> CMovp
+cmovnp cmovpo -> CMovnp
+xchg -> Xchg
+bswap -> Bswap
+xadd -> Xadd
+cmpxchg -> Cmpxchg
+cmpxchg8b -> Cmpxchg8b
+push -> Push
+pop -> Pop
+pusha pushad -> Pusha
+popa popad -> Popa
+cwd cdq -> Cwd
+cbw cwde -> Cbw
+movsx -> Movsx
+movzx -> Movzx
+sub -> Sub
+add -> Add
+adc -> Adc
+sbb -> Sbb
+imul -> IMul
+mul -> Mul
+idiv -> IDiv
+div -> Div
+inc -> Inc
+dec -> Dec
+neg -> Neg
+cmp -> Cmp
+daa -> Daa
+das -> Das
+aaa -> Aaa
+aas -> Aas
+aam -> Aam
+aad -> Aad
+and -> And
+or -> Or
+xor -> Xor
+not -> Not
+shl sal -> Shl
+shr -> Shr
+sar -> Sar
+shrd -> Shrd
+shld -> Shld
+ror -> Ror
+rol -> Rol
+rcr -> Rcr
+rcl -> Rcl
+bt -> Bt
+bts -> Bts
+btr -> Btr
+btc -> Btc
+bsf -> Bsf
+bsr -> Bsr
+sete setz -> Sete
+setne setnz -> Setne
+seta setnbe -> Seta
+setae setnb setnc -> Setae
+setb setae setc -> Setb
+setbe setna -> Setbe
+setg setnle -> Setg
+setge setnl -> Setge
+setl setnge -> Setl
+setle setng -> Setle
+sets -> Sets
+setns -> Setns
+seto -> Seto
+setno -> Setno
+setpe setp -> Setpe
+setpo setnp -> Setpo
+test -> Test
+jmp -> Jmp
+je jz -> Je
+jne jnz -> Jne
+ja jnbe -> Ja
+jae jnb -> Jae
+jb jnae -> Jb
+jbe jna -> Jbe
+jg jnle -> Jg
+jge jnl -> Jge
+jl jnge -> Jl
+jle jng -> Jle
+jc -> Jc
+jnc -> Jnc
+jo -> Jo
+jno -> Jno
+js -> Js
+jns -> Jns
+jpo jnp -> Jpo
+jpe jp -> Jpe
+jcxz jecxz -> Jcxz
+loop -> Loop
+loopz loope -> Loopz
+loopnz loopne -> Loopnz
+iret -> IRet
+int -> Int
+into -> Into
+bound -> Bound
+enter -> Enter
+movs movsb movsw movsd -> Movs
+cmps cmpsb cmpsw cmpsd -> Cmps
+scas scasb scasw scasd -> Scas
+lods lodsb lodsw lodsd -> Lods
+stos stosb stosw stosd -> Stos
+rep -> Rep
+repe repz -> Repe
+repne repnz -> Repne
+in -> In
+out -> Out
+ins insb insw insd -> Ins
+outs outsb outsw outsd -> Outs
+nop -> Nop
+ud2 -> Ud2
+xlat sclatb -> Xlat
+cpuid -> Cpuid
+rdtsc -> Rdtsc
+stc -> Stc
+clc -> Clc
+cmc -> Cmc
+cld -> Cld
+std -> Std
+lahf -> Lahf
+sahf -> Sahf
+pushf pushfd -> Pushf
+popf popfd -> Popf
+sti -> Sti
+cli -> Cli
+lds -> Lds
+les -> Les
+lfs -> Lfs
+lgs -> Lgs
+lss -> Lss
+esc -> Esc
+lock -> Lock
+wait -> Wait
+hlt -> Hlt

@@ -1,0 +1,282 @@
+/* This is part of libio/iostream, providing -*- C++ -*- input/output.
+Copyright (C) 2000 Free Software Foundation
+
+This file is part of the GNU IO Library.  This library is free
+software; you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option)
+any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this library; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+As a special exception, if you link this library with files
+compiled with a GNU compiler to produce an executable, this does not cause
+the resulting executable to be covered by the GNU General Public License.
+This exception does not however invalidate any other reasons why
+the executable file might be covered by the GNU General Public License. */
+
+/* Written by Magnus Fromreide (magfr@lysator.liu.se). */
+
+#ifndef __SSTREAM__
+#define __SSTREAM__
+
+#include <string>
+#include <iostream.h>
+#include <streambuf.h>
+
+namespace std
+{
+  class stringbuf : public streambuf
+  {
+  public:
+    typedef char	char_type;
+    typedef int		int_type;
+    typedef streampos	pos_type;
+    typedef streamoff	off_type;
+
+    explicit stringbuf(int which=ios::in|ios::out) :
+      streambuf(which), buf(), mode(static_cast<ios::open_mode>(which)),
+      rpos(0), bufsize(1)
+    { }
+	
+    explicit stringbuf(const std::string &s, int which=ios::in|ios::out) :
+      streambuf(which), buf(s), mode(static_cast<ios::open_mode>(which)),
+      bufsize(1)
+    {
+      if(mode & ios::in)
+	{
+	  setg(&defbuf, &defbuf + bufsize, &defbuf + bufsize);
+	}
+      if(mode & ios::out)
+	{
+	  setp(&defbuf, &defbuf + bufsize);
+	}
+      rpos = (mode & ios::ate ? s.size() : 0);
+    }
+	
+    std::string str() const
+    {
+      const_cast<stringbuf*>(this)->sync();  // Sigh, really ugly hack
+      return buf;
+    };
+
+    void str(const std::string& s)
+    {
+      buf = s;
+      if(mode & ios::in)
+	{
+	  gbump(egptr() - gptr());
+	}
+      if(mode & ios::out)
+	{
+	  pbump(pbase() - pptr());
+	}
+      rpos = (mode & ios::ate ? s.size() : 0);
+    }
+    inline streampos seekoff(streamoff o, _seek_dir d, int mode=ios::in|ios::out);
+    inline streampos seekpos(streampos pos, int mode = ios::in|ios::out);
+
+  protected:
+    inline virtual int sync();
+    inline virtual int overflow(int = EOF);
+    inline virtual int underflow();
+  private:
+    std::string			buf;
+    ios::open_mode		mode;
+    std::string::size_type	rpos;
+    streamsize			bufsize;
+    char			defbuf;
+  };
+
+  class stringstreambase : virtual public ios {
+  protected:
+    stringbuf __my_sb;
+  public:
+    std::string str() const
+    {
+      return dynamic_cast<stringbuf*>(_strbuf)->str();
+    }
+    void str(const std::string& s)
+    {
+      clear();
+      dynamic_cast<stringbuf*>(_strbuf)->str(s);
+    }
+	
+    stringbuf* rdbuf()
+    {
+      return &__my_sb;
+    }
+  protected:
+    stringstreambase(int which) :
+      __my_sb(which)
+    {
+      init (&__my_sb);
+    }
+	
+    stringstreambase(const std::string& s, int which) :
+      __my_sb(s, which)
+    {
+      init (&__my_sb);
+    }
+  };
+    
+  class istringstream : public stringstreambase, public istream {
+  public:
+    istringstream(int which=ios::in) :
+      stringstreambase(which)
+    { }
+	
+    istringstream(const std::string& s, int which=ios::in) :
+      stringstreambase(s, which)
+    { }
+
+    istringstream& seekg(streampos pos)
+    { pos = __my_sb.seekpos(pos, ios::in); if (pos == streampos(EOF)) set(ios::badbit); return *this; }
+
+    istringstream& seekg(streamoff off, _seek_dir dir)
+    { off = __my_sb.seekoff(off, dir, ios::in); if (off == streamoff(EOF)) set(ios::badbit); return *this; }
+
+    streampos tellg()
+    { streampos pos = __my_sb.seekoff(0, ios::cur, ios::in); if (pos == streampos(EOF)) set(ios::badbit); return pos; }
+  };
+    
+  class ostringstream : public stringstreambase, public ostream {
+  public:
+    ostringstream(int which=ios::out) :
+      stringstreambase(which)
+    { }
+	
+    ostringstream(const std::string& s, int which=ios::out) :
+      stringstreambase(s, which)
+    { }
+
+    ostringstream& seekp(streampos pos)
+    { pos = __my_sb.seekpos(pos, ios::out); if (pos == streampos(EOF)) set(ios::badbit); return *this; }
+
+    ostringstream& seekp(streamoff off, _seek_dir dir)
+    { off = __my_sb.seekoff(off, dir, ios::out); if (off == streamoff(EOF)) set(ios::badbit); return *this; }
+
+    streampos tellp()
+    { streampos pos = __my_sb.seekoff(0, ios::cur, ios::out); if (pos == streampos(EOF)) set(ios::badbit); return pos; }
+  };
+    
+  class stringstream : public stringstreambase, public iostream {
+  public:
+    stringstream(int which=ios::in|ios::out) :
+      stringstreambase(which)
+    { }
+    
+    stringstream(const std::string &s, int which=ios::in|ios::out) :
+      stringstreambase(s, which)
+    { }
+
+    stringstream& seekg(streampos pos)
+    { pos = __my_sb.seekpos(pos, ios::in); if (pos == streampos(EOF)) set(ios::badbit); return *this; }
+
+    stringstream& seekg(streamoff off, _seek_dir dir)
+    { off = __my_sb.seekoff(off, dir, ios::in); if (off == streamoff(EOF)) set(ios::badbit); return *this; }
+
+    streampos tellg()
+    { streampos pos = __my_sb.seekoff(0, ios::cur, ios::in); if (pos == streampos(EOF)) set(ios::badbit); return pos; }
+
+    stringstream& seekp(streampos pos)
+    { pos = __my_sb.seekpos(pos, ios::out); if (pos == streampos(EOF)) set(ios::badbit); return *this; }
+
+    stringstream& seekp(streamoff off, _seek_dir dir)
+    { off = __my_sb.seekoff(off, dir, ios::out); if (off == streamoff(EOF)) set(ios::badbit); return *this; }
+
+    streampos tellp()
+    { streampos pos = __my_sb.seekoff(0, ios::cur, ios::out); if (pos == streampos(EOF)) set(ios::badbit); return pos; }
+  };
+}
+
+inline int std::stringbuf::sync()
+{
+  if((mode & ios::out) == 0)
+    return EOF;
+
+  streamsize n = pptr() - pbase();
+  if(n)
+    {
+      buf.replace(rpos, std::string::npos, pbase(), n);
+      if(buf.size() - rpos != (std::string::size_type) n)
+	return EOF;
+      rpos += n;
+      pbump(-n);
+      gbump(egptr() - gptr());
+    }
+  return 0;
+}
+
+inline int std::stringbuf::overflow(int ch)
+{
+  if((mode & ios::out) == 0)
+    return EOF;
+
+  streamsize n = pptr() - pbase();
+
+  if(n && sync())
+    return EOF;
+
+  if(ch != EOF)
+    {
+      buf.replace(rpos, std::string::npos, ch);
+      ++rpos;
+    }
+  return 0;
+}
+
+inline int std::stringbuf::underflow()
+{
+  sync();
+  if((mode & ios::in) == 0)
+    {
+      return EOF;
+    }
+  if(rpos >= buf.size())
+    {
+      return EOF;
+    }
+  
+  std::string::size_type n = egptr() - eback();
+  std::string::size_type s;
+
+  s = buf.copy(eback(), n, rpos);
+  pbump(pbase() - pptr());
+  gbump(eback() - gptr());
+  int res = (0377 & buf[rpos]);
+  rpos += s;
+  return res;
+}
+
+inline streampos std::stringbuf::seekoff(streamoff o, _seek_dir d, int mode=ios::in|ios::out)
+{
+  sync();
+  streamoff newpos = rpos;
+  switch (d)
+    {
+    case ios::beg: newpos = o; break;
+    case ios::cur: if ((mode & (ios::in|ios::out)) == (ios::in|ios::out))
+		     return streampos(EOF);
+		   newpos += o; break;
+    case ios::end: newpos = buf.size() + o; break;
+    }
+  if (newpos < 0 || newpos > buf.size())
+    return streampos(EOF);
+  rpos = newpos;
+  return newpos;
+}
+
+inline streampos std::stringbuf::seekpos(streampos pos, int mode = ios::in|ios::out)
+{
+  return seekoff(pos, ios::beg, mode);
+}
+
+#endif /* not __STRSTREAM__ */

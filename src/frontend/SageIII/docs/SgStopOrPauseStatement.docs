@@ -1,0 +1,68 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgStopOrPauseStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var enum SgStopOrPauseStatement::stop_or_pause_enum SgStopOrPauseStatement::p_stop_or_pause
+*/
+/*!\var SgName SgStopOrPauseStatement::p_code
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement(const SgStopOrPauseStatementStorageClass &source)
+*/
+/*!\fn inline static void SgStopOrPauseStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgStopOrPauseStatement *SgStopOrPauseStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgStopOrPauseStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgStopOrPauseStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgStopOrPauseStatement::initializeStorageClassArray(SgStopOrPauseStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgStopOrPauseStatement::clearMemoryPool()
+*/
+/*!\fn static void SgStopOrPauseStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgStopOrPauseStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgStopOrPauseStatement::roseRTI()
+*/
+/*!\fn virtual SgNode *SgStopOrPauseStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgStopOrPauseStatement::~SgStopOrPauseStatement()
+*/
+/*!\fn virtual void SgStopOrPauseStatement::post_construction_initialization()
+*/
+/*!\fn void SgStopOrPauseStatement::set_code(SgName code)
+\description See  code)
+code for documentation */
+/*!\fn void SgStopOrPauseStatement::set_stop_or_pause(enum SgStopOrPauseStatement::stop_or_pause_enum stop_or_pause)
+\description See  stop_or_pause)
+stop_or_pause for documentation */
+/*!\fn SgName SgStopOrPauseStatement::get_code() const
+\description See  const
+code for documentation */
+/*!\fn enum SgStopOrPauseStatement::stop_or_pause_enum SgStopOrPauseStatement::get_stop_or_pause() const
+\description See  const
+stop_or_pause for documentation */
+/*!\fn virtual SgNode *SgStopOrPauseStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgStopOrPauseStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgStopOrPauseStatement::get_numberOfTraversalSuccessors()
+\description See  SgStopOrPauseStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgStopOrPauseStatement::get_traversalSuccessorContainer()
+\description See  SgStopOrPauseStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgStopOrPauseStatement::get_traversalSuccessorNamesContainer()
+\description See  SgStopOrPauseStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgStopOrPauseStatement::SgStopOrPauseStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1387774767;

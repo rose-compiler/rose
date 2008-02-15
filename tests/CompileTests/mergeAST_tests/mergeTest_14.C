@@ -1,0 +1,4 @@
+struct X 
+   {
+     int e;
+   };

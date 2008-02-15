@@ -1,0 +1,82 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+CLASSNAME::CLASSNAME ( SgForStatement* forStatement )
+   : BASECLASSNAME(forStatement)
+   {
+  // This function is a virtual member function 
+     recognizeSageSubTree (forStatement);
+   }
+
+ROSE_Node* CLASSNAME::transform()
+   {
+  // printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+  // ROSE_ABORT();
+
+     ROSE_ASSERT (!error());
+
+     SgStatement* stmt = (SgStatement*) getSageSubTree();
+
+     if ( (ROSE_DEBUG > 0) || (ROSE::verbose == TRUE) )
+          printf ("In CLASSNAME::transform(): (file name = %s line number = %d)  StatementBlock size = %d Next ElseWhereStatement pointer = %s \n",
+               ROSE::getFileName(stmt),ROSE::getLineNumber(stmt),
+               roseElseWhereStatementBlock->getNumberOfStatements(),
+               (roseNextElseWhereStatement != NULL) ? "VALID POINTER" : "NULL" );
+
+  // roseConditionalStatement->transform();
+     roseElseWhereStatementBlock->transform();
+     if (roseNextElseWhereStatement != NULL)
+          roseNextElseWhereStatement->transform();
+
+  // Return the "this" pointer for now
+     return this;
+   }
+
+void CLASSNAME::recognizeSageSubTree ( SgForStatement* forStatement )
+   {
+     printf ("Sorry, not implemented: CLASSNAME::recognizeSageSubTree(SgForStatement*) \n");
+
+     ROSE_Node::setUp (CLASSNAME_TAG,forStatement);
+   }
+
+#if 0
+void CLASSNAME::setRoseConditionalStatement  ( ROSE_Statement* roseStatement )
+   {
+     ROSE_ASSERT (roseStatement != NULL);
+     roseConditionalStatement = roseStatement;
+   }
+#endif
+
+void CLASSNAME::setRoseElseWhereStatementBlock  ( ROSE_StatementBlock* roseStatementBlock )
+   {
+     ROSE_ASSERT (roseStatementBlock != NULL);
+     roseElseWhereStatementBlock = roseStatementBlock;
+   }
+
+void CLASSNAME::setRoseNextElseWhereStatement ( ROSE_ElseWhereStatement* roseStatement )
+   {
+     ROSE_ASSERT (roseStatement != NULL);
+     roseNextElseWhereStatement = roseStatement;
+   }
+
+#if 0
+ROSE_Statement* CLASSNAME::getRoseConditionalStatement  ()
+   {
+     ROSE_ASSERT (roseConditionalStatement != NULL);
+     return roseConditionalStatement;
+   }
+#endif
+
+ROSE_StatementBlock* CLASSNAME::getRoseElseWhereStatementBlock ()
+   {
+     ROSE_ASSERT (roseElseWhereStatementBlock != NULL);
+     return roseElseWhereStatementBlock;
+   }
+
+ROSE_ElseWhereStatement* CLASSNAME::getRoseNextElseWhereStatement ()
+   {
+     ROSE_ASSERT (roseNextElseWhereStatement != NULL);
+     return roseNextElseWhereStatement;
+   }
+

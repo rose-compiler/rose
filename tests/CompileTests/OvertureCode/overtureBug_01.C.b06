@@ -1,0 +1,31 @@
+#define MAKE_SAGE_FAIL 1
+#define ALTERNATE_FIX 1
+
+class GenericGridData
+   {
+     public:
+          int computedGeometry;
+   };
+
+class GenericGrid
+   {
+     public:
+#if !ALTERNATE_FIX
+          void computedGeometry()
+             { rcData->computedGeometry = 0; }
+#endif
+
+#if MAKE_SAGE_FAIL
+          typedef GenericGridData RCData;
+          RCData* rcData;
+#else
+          GenericGridData* rcData;
+#endif
+
+#if ALTERNATE_FIX
+          void computedGeometry()
+             { rcData->computedGeometry = 0; }
+#endif
+
+   };
+

@@ -1,0 +1,159 @@
+
+   \section{Secure Coding : INT06-A. Use strtol() to convert a string token to an integer}
+
+   Use {\tt strtol()} or a related function to convert a string token to an integer. The {\tt strtol()}, {\tt strtoll()}, {\tt strtoul()}, and {\tt strtoull()} functions convert the initial portion of a string token to {\tt long int}, {\tt long long int}, {\tt unsigned long int}, and {\tt unsigned long long int} representation, respectively. These functions provide more robust error handling than alternative solutions.
+   \subsection{Non-Compliant Example}
+
+   This non-compliant code example converts the string token stored in the static array {\tt buff} to a signed integer value using the {\tt atoi()} function.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{int\ }\hlstd{si;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{\\
+}\hlline{\ \ \ \ 3\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{argc\ $>$\ }\hlnum{1}\hlstd{}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 4\ }\hlsym{\hlstd{\ \ }}\hlstd{si\ =\ atoi}\hlsym{(}\hlstd{argv}\hlsym{[}\hlstd{}\hlnum{1}\hlstd{}\hlsym{])}\hlstd{;\\
+}\hlline{\ \ \ \ 5\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ \ 6\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+}
+
+
+   The {\tt atoi()}, {\tt atol()}, and {\tt atoll()} functions convert the initial portion of a string token to {\tt int}, {\tt long int}, and {\tt long long int} representation, respectively. Except for the behavior on error, they are equivalent to
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{atoi:\ }\hlsym{(}\hlstd{}\hltyp{int}\hlstd{}\hlsym{)}\hlstd{strtol}\hlsym{(}\hlstd{nptr,\ }\hlsym{(}\hlstd{}\hltyp{char\ }\hlstd{**}\hlsym{)}\hlstd{NULL,\ }\hlnum{10}\hlstd{}\hlsym{)\\
+}\hlline{\ \ \ \ 2\ }\hlsym{}\hlstd{atol:\ strtol}\hlsym{(}\hlstd{nptr,\ }\hlsym{(}\hlstd{}\hltyp{char\ }\hlstd{**}\hlsym{)}\hlstd{NULL,\ }\hlnum{10}\hlstd{}\hlsym{)\\
+}\hlline{\ \ \ \ 3\ }\hlsym{}\hlstd{atoll:\ strtoll}\hlsym{(}\hlstd{nptr,\ }\hlsym{(}\hlstd{}\hltyp{char\ }\hlstd{**}\hlsym{)}\hlstd{NULL,\ }\hlnum{10}\hlstd{}\hlsym{)\\
+}\hlline{\ \ \ \ 4\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+}
+
+
+   Unfortunately, {\tt atoi()} and related functions lack a mechanism for reporting errors for invalid values. Specifically, the {\tt atoi()}, {\tt atol()}, and {\tt atoll()} functions:
+   \subsection{Non-Compliant Example}
+
+   This non-compliant example uses the {\tt sscanf()} function to convert a string token to an integer. The {\tt sscanf()} function has the same problems as {\tt atoi()}.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{int\ }\hlstd{si;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{\\
+}\hlline{\ \ \ \ 3\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{argc\ $>$\ }\hlnum{1}\hlstd{}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 4\ }\hlsym{\hlstd{\ \ }}\hlstd{sscanf}\hlsym{(}\hlstd{argv}\hlsym{[}\hlstd{}\hlnum{1}\hlstd{}\hlsym{]}\hlstd{,\ }\hlstr{"\%d"}\hlstd{,\ \&si}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 5\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ \ 6\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+}
+
+   \subsection{Compliant Solution}
+
+   This compliant example uses {\tt strtol()} to convert a string token to an integer value and provides error checking to make sure that the value is in the range of {\tt int}.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{long\ }\hlstd{sl;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hltyp{int\ }\hlstd{si;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{}\hltyp{char\ }\hlstd{*end\textunderscore ptr;\\
+}\hlline{\ \ \ \ 4\ }\hlstd{\\
+}\hlline{\ \ \ \ 5\ }\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{argc\ $>$\ }\hlnum{1}\hlstd{}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 6\ }\hlsym{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ }}\hlstd{errno\ =\ }\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ \ 8\ }\hlstd{\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\hlstd{\ \ }sl\ =\ strtol}\hlsym{(}\hlstd{argv}\hlsym{[}\hlstd{}\hlnum{1}\hlstd{}\hlsym{]}\hlstd{,\ \&end\textunderscore ptr,\ }\hlnum{10}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 10\ }\hlstd{\\
+}\hlline{\ \ \ 11\ }\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{ERANGE\ ==\ errno}\hlsym{)\ \{\\
+}\hlline{\ \ \ 12\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{puts}\hlsym{(}\hlstd{}\hlstr{"number\ out\ of\ range}\hlesc{$\backslash$n}\hlstr{"}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 13\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 14\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{else\ if\ }\hlstd{}\hlsym{(}\hlstd{sl\ $>$\ INT\textunderscore MAX}\hlsym{)\ \{\\
+}\hlline{\ \ \ 15\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{printf}\hlsym{(}\hlstd{}\hlstr{"\%ld\ too\ large!}\hlesc{$\backslash$n}\hlstr{"}\hlstd{,\ sl}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 16\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 17\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{else\ if\ }\hlstd{}\hlsym{(}\hlstd{sl\ $<$\ INT\textunderscore MIN}\hlsym{)\ \{\\
+}\hlline{\ \ \ 18\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{printf}\hlsym{(}\hlstd{}\hlstr{"\%ld\ too\ small!}\hlesc{$\backslash$n}\hlstr{"}\hlstd{,\ sl}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 19\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 20\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{else\ if\ }\hlstd{}\hlsym{(}\hlstd{end\textunderscore ptr\ ==\ argv}\hlsym{[}\hlstd{}\hlnum{1}\hlstd{}\hlsym{])\ \{\\
+}\hlline{\ \ \ 21\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{puts}\hlsym{(}\hlstd{}\hlstr{"invalid\ numeric\ input}\hlesc{$\backslash$n}\hlstr{"}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 22\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 23\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{else\ if\ }\hlstd{}\hlsym{(}\hlstd{}\hlstr{'}\hlesc{$\backslash$0}\hlstr{'}\hlstd{\ !=\ *end\textunderscore ptr}\hlsym{)\ \{\\
+}\hlline{\ \ \ 24\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{puts}\hlsym{(}\hlstd{}\hlstr{"extra\ characters\ on\ input\ line}\hlesc{$\backslash$n}\hlstr{"}\hlstd{}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ 25\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 26\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{else\ }\hlstd{}\hlsym{\{\\
+}\hlline{\ \ \ 27\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{si\ =\ }\hlsym{(}\hlstd{}\hltyp{int}\hlstd{}\hlsym{)}\hlstd{sl;\\
+}\hlline{\ \ \ 28\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 29\ }\hlsym{\}\\
+}\hlline{\ \ \ 30\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+   If you are attempting to convert a string token to a smaller integer type ({\tt int}, {\tt short}, or {\tt signed char}), then you only need test the result against the limits for that type. The tests do nothing if the smaller type happens to have the same size and representation on a particular compiler.
+   \subsection{Risk Assessment}
+
+   While it is relatively rare for a violation of this rule to result in a security vulnerability, it could more easily result in loss or misinterpreted data.
+
+   \begin{tabular}[c]{| c| c| c| c| c| c|}
+   \hline
+   {\bf Rule} & {\bf Severity} & {\bf Likelihood} & {\bf Remediation Cost} & {\bf Priority} & {\bf Level} \\ \hline
+   INT06-A & {\bf 2} (medium) & {\bf 2} (probable) & {\bf 2} (medium) & {\bf P8} & {\bf L2} \\ \hline
+   \end{tabular}
+   \subsubsection{Related Vulnerabilities}
+
+   Search for vulnerabilities resulting from the violation of this rule on the \htmladdnormallink{CERT website}{https://www.kb.cert.org/vulnotes/bymetric?searchview\&query=FIELD+contains+INT06-A} .
+   \subsection{References}
+
+   [ \htmladdnormallink{Klein 02}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] [ \\*
+   \htmladdnormallink{ISO/IEC 9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 7.20.1.4, "The strtol, strtoll, strtoul, and strtoull functions," Section 7.20.1.2, "The atoi, atol, and atoll functions," and Section 7.19.6.7, "The sscanf function"

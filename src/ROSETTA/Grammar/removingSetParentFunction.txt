@@ -1,0 +1,2 @@
+Exploring if the set_parent member function can be removed from the SAGE/EDG and SAGE code
+so that it could be setup by a separatetraversal.

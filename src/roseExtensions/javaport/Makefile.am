@@ -1,0 +1,126 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+#							-*- Makefile -*-
+
+EXTRA_DIST	= sage3.i sgname.i wchart.i test.java input.cc	\
+		  GenericVector.java testjava.sh		\
+		  generate_casts.sh
+
+if HAS_SWIG
+
+# To keep compile commands tidy, please ONLY put required include flags here.
+INCLUDES = $(ROSE_INCLUDES)
+
+#INCLUDES	=						\
+#	-I.							\
+#	-I$(top_srcdir)/src/frontend/SageIII			\
+#	-I$(top_builddir)/src/frontend/SageIII			\
+#	-I$(top_srcdir)/src/midend/astProcessing		\
+#	-I$(top_srcdir)/src/3rdPartyLibraries/MSTL		\
+#	-I$(top_srcdir)/src/frontend/SageIII/virtualCFG		\
+#	-I$(top_srcdir)/src/util/stringSupport			\
+#	-I$(top_srcdir)/src/roseSupport				\
+#	-I$(top_srcdir)/src/util/commandlineProcessing		\
+#	-I$(top_srcdir)/src/util				\
+#	-I$(top_srcdir)/src					\
+#	-I$(top_srcdir)/src/frontend/SageIII/astPostProcessing	\
+#	-I$(top_srcdir)/src/frontend/SageIII/astFixup		\
+#	-I$(top_srcdir)/src/frontend/SageIII/sageInterface	\
+#	-I$(top_srcdir)/src/midend/astDiagnostics		\
+#	-I$(top_srcdir)/src/backend/unparser			\
+#	-I$(top_srcdir)/src/3rdPartyLibraries/PDFLibrary	\
+#	-I$(top_srcdir)/src/3rdPartyLibraries/coco/cplus2	\
+#	-I$(top_srcdir)/src/midend/astRewriteMechanism		\
+#	-I$(top_srcdir)/src/midend/astQuery			\
+#	-I$(top_srcdir)/src/frontend/SageIII/astMerge		\
+#	-I$(top_builddir)/src/frontend/SageIII/astFileIO	\
+#	-I$(top_srcdir)/src/midend/astInlining			\
+#	-I$(top_srcdir)/src/midend/programTransformation/partialRedundancyElimination	\
+#	-I$(top_srcdir)/src/midend/programTransformation/constantFolding	\
+#	-I$(top_srcdir)/src/midend/programAnalysis/CFG		\
+#	-I$(top_srcdir)/src/midend/astUtil/astInterface		\
+#	-I$(top_srcdir)/src/util/support			\
+#	-I$(top_srcdir)/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/libs/pdflib
+
+# This is just to get the environment for Java.
+dummy_JAVA=
+dummydir=$(datadir)/java
+
+# This programs just make sure that no symbol are missing.
+noinst_PROGRAMS = testlink
+testlink_SOURCES= testlink.cc
+testlink_LDFLAGS= -lsage3_wrap -L.
+
+testlink.o: libsage3_wrap.la
+
+bin_PROGRAMS = frontendAndDump
+frontendAndDump_SOURCES=frontendAndDump.cc
+frontendAndDump_LDFLAGS= -lrt -lrose -L..
+
+javalib_DATA	= sage3.jar
+javalibdir	= $(datadir)/java
+
+lib_LTLIBRARIES	= libsage3_wrap.la
+libsage3_wrap_la_SOURCES	= missing.cc
+nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
+libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
+libsage3_wrap_la_LDFLAGS	= -lrt -lrose -L..
+
+sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i		\
+		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h
+	mkdir -p gov/llnl/casc/rose
+	test $(srcdir) = . || ln -sf $(srcdir)/sage3.i .
+	$(SWIG) $(INCLUDES) -c++ -java -I$(srcdir)			\
+	  -package gov.llnl.casc.rose -outdir gov/llnl/casc/rose	\
+	  sage3.i
+
+casts.i: generate_casts.sh
+	$<
+
+gov/llnl/casc/rose/GenericVector.java: GenericVector.java
+	mkdir -p gov/llnl/casc/rose
+	ln -sf ../../../../$< $@
+
+gov/llnl/casc/rose/Ptr.java: Ptr.java
+	cp $< $@
+
+gov/llnl/casc/rose/Log.java: Log.java
+	cp $< $@
+
+compile_java_files: sage3_wrap.cxx gov/llnl/casc/rose/GenericVector.java \
+		    gov/llnl/casc/rose/Ptr.java \
+		    gov/llnl/casc/rose/Log.java
+	mkdir -p class/gov/llnl/casc/rose
+	rm -f class/gov/llnl/casc/rose/*.class
+	$(CLASSPATH_ENV) $(JAVAC) $(AM_JAVACFLAGS) $(JAVACFLAGS)	\
+	  gov/llnl/casc/rose/*.java -d class
+	touch compile_java_files
+
+sage3.jar: compile_java_files
+	$(JAR) cf $@ -C class .
+
+TESTS=testjava.sh
+TESTS_ENVIRONMENT=MAKE=$(MAKE) AM_MAKEFLAGS=$(AM_MAKEFLAGS)
+
+test: test.class sage3.jar .libs/libsage3_wrap.so input.cc
+	java -Djava.library.path=`pwd`/../.libs":"`pwd`/.libs		\
+	  -classpath sage3.jar:. test $(srcdir)/input.cc -o /dev/null
+
+test.class: test.java sage3.jar
+	javac -classpath sage3.jar:. $(srcdir)/test.java -d .
+
+CLEANFILES	= sage3_wrap.cxx compile_java_files sage3.jar		\
+		  rose_input.cc casts.i
+
+clean: clean-am clean-hook
+
+clean-hook:
+	rm -rf gov class
+	test $(srcdir) = . || rm -f sage3.i
+
+else
+
+# Still export source files.
+EXTRA_DIST += testlink.cc frontendAndDump.cc missing.cc
+
+endif

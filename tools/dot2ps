@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+# Author: Markus Schordan, 2003.
+# $Id: dot2ps,v 1.1 2003/03/24 20:12:54 markus Exp $
+
+use Getopt::Long;
+
+sub printhelp {
+  print("\nSYNOPSIS:\n dot2ps <INPUTFILE> [<OUTPUTFILE>]\n\n");
+  print("DESCRIPTION:\n");
+  print(" Converts a dot file to a postscript file (by using dot).\n\n");
+}  
+
+GetOptions("help!" => \$opt_printhelp);
+
+if($opt_printhelp) {
+  printhelp();
+  exit 0;
+}
+
+$E_BADARGS=65;
+if(@ARGV < 1) {
+  printhelp();
+  exit $E_BADARGS;
+}
+
+$infile=@ARGV[0];
+
+if(@ARGV == 1) {
+    $outfile="$infile.ps";
+} else {
+    $outfile=@ARGV[1];
+}
+
+system("dot -Gratio=compact -Gfontname=\"Helvetica\" $infile -Tps -o $outfile -Gordering=\"out\"");
+
+
+
+
+
+

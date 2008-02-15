@@ -1,0 +1,121 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgQualifiedName
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgQualifiedName
+\brief This class represents qualified names within the IR nodes.
+   Qualified names appear as "X::Y" where "X" is the qualified name and
+refers to a class or namespace (or global scope in the case of "::").
+It is applied to names (SgInitializedName), expressions (SgFunctionCallExp),
+and types (SgNamedType).  But since SgTypes are shared, we have to store
+the name qualifer list (SgQualifiedNamePtrList) at the locations where the
+types are referenced (instead of in the shared SgType IR nodes directly).
+The only valid SgScopeStatement objects are:
+   - SgGlobal
+   - SgClassDefinition
+   - SgTemplateInstantiationDefn
+   - SgNamespaceDefinitionStatement
+These are the scopes (except for SgFunctionDefinition) that have an associated name
+(the less obvious case of SgGlobal has the name "::").
+The SgQualifiedName is used internally in a list (SgQualifiedNamePtrList)
+which is located at the following IR nodes:
+   - SgTypedefDeclaration
+   - SgInitializedName
+   - SgFunctionType (for the return type)
+\note In this sense it might be worth while to consider a less memory efficient 
+IR design that would have not shared SgType IR nodes.
+\sa
+\ref SgQualifiedName_usage  "Example of using a SgQualifiedName object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgQualifiedName data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgQualifiedName member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgQualifiedName::~SgQualifiedName()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgQualifiedName::isSgQualifiedName (SgNode *s)
+\brief Cast function (from derived class to SgQualifiedName pointer).
+   This functions returns a SgQualifiedName pointer for any input of a 
+pointer to an object derived from a SgQualifiedName.
+\return Returns valid pointer to SgQualifiedName if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgQualifiedName::isSgQualifiedName (const SgNode *s)
+\brief Cast function (from derived class to SgQualifiedName pointer).
+   This functions returns a SgQualifiedName pointer for any input of a 
+pointer to an object derived from a SgQualifiedName.
+\return Returns valid pointer to SgQualifiedName if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgScopeStatement *SgQualifiedName::p_scope
+\brief This pointer points to SgScopeStatement used to represent the explicitly named
+    scope of the expression's reference.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgQualifiedName::SgQualifiedName(const SgQualifiedNameStorageClass &source)
+*/
+/*!\fn inline static void SgQualifiedName::operator delete(void *pointer)
+*/
+/*!\fn static SgQualifiedName *SgQualifiedName::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgQualifiedName::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgQualifiedName::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgQualifiedName::initializeStorageClassArray(SgQualifiedNameStorageClass *storageArray)
+*/
+/*!\fn static void SgQualifiedName::clearMemoryPool()
+*/
+/*!\fn static void SgQualifiedName::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgQualifiedName::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgQualifiedName::roseRTI()
+*/
+/*!\fn virtual SgNode *SgQualifiedName::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgQualifiedName::~SgQualifiedName()
+*/
+/*!
+\fn void SgQualifiedName::set_scope(SgScopeStatement *scope)
+\brief This is the access function to set p_scope.
+See  *scope)
+scope for documentation \return void
+*/
+/*!
+See  const
+scope for documentation \fn SgScopeStatement *SgQualifiedName::get_scope() const
+\brief This is the access function to read p_scope.
+\return pointer to SgScopeStatement
+*/
+/*!\fn virtual SgNode *SgQualifiedName::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgQualifiedName::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgQualifiedName::get_numberOfTraversalSuccessors()
+\description See  SgQualifiedName::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgQualifiedName::get_traversalSuccessorContainer()
+\description See  SgQualifiedName::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgQualifiedName::get_traversalSuccessorNamesContainer()
+\description See  SgQualifiedName::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgQualifiedName::SgQualifiedName(SgScopeStatement *scope=(0))
+\brief This is the constructor.
+   This constructor builds the SgQualifiedName base class.
+\sa 
+\ref SgQualifiedName_create "Example:create an SgQualifiedName object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_6683243418227;

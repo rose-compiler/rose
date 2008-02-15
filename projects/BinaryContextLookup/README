@@ -1,0 +1,43 @@
+Project goal:
+   The goal of the BinaryContextLookup-tool is to provide the means to identify functions
+and their context from debug information (filename and line-number) in the binary. In the
+first step a database is build by the bcl_writer using roses front- and midend. In step
+two the reader provides line and context lookup functionality. For this step Rose is not
+necessary anymore.
+
+   The tool uses input of file and line-number to find the current function and all
+possible functions calling that function. Either the reader can be used as a interactive
+query-style lookup-tool or in a streamed pip to identify path and line-numbers.
+
+ Examples are provided to demonstrate a possible use of this tool. Use `make test` to
+demonstrate possible use.
+
+Building:
+ This tool depends on the libxml2-library which must be ready to be used. Use 
+`xml2-config --version` to check if libxml is installed and if it meets the version
+requirements of at least 2.5.10 (earlier versions might work, but have not been tested).
+
+ If you have not initially used the --with-libxml2 option on the configure command-line for
+ROSE to activate project, please rerun configure using this option with your other options.
+
+Documentation:
+   Some documentation is written in the source files.
+
+Files:
+*bcl_reader.C
+*bcl_writer.C
+*example1.C
+*example2.C
+*example3.1.C
+*example3.2.C
+*example.g++.param
+*example.objdump.param
+*Makefile.am
+*README
+
+Compatibility:
+* Works with LibXML 2.5.10
+* Works with libXML 2.6.27
+
+
+

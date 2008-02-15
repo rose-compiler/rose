@@ -1,0 +1,14 @@
+#!/bin/sh
+case $# in
+0) input="test.dot"
+   output="test.ps";;
+1) input=$1; output="test.ps";;
+2) input=$1; output=$2;;
+esac
+
+dot -Gratio=compact -Gfontname="Helvetica" $input -Tpdf -o $output -Gordering="out"
+
+
+
+
+

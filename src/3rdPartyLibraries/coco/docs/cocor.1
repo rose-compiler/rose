@@ -1,0 +1,215 @@
+.TH COCOR 1 "local \- March 1996"
+.SH NAME
+cocor \- Compiler generator generator
+.SH SYNOPSIS
+.B cocor
+.I filename.atg
+[
+.I options
+]...
+.br
+.SH DESCRIPTION
+.PP
+.I cocor
+reads a specification from
+.I filename.atg
+and generate a compiler (
+.I "scanner, parser and main module"
+)
+.SH OPTIONS
+.PP
+.B \-C
+Generate complete compiler driving module, including source listing
+featuring interleaved error message reporting.  To use this option the file
+.I "COMPILER.FRM"
+(or
+.I "<grammar>.FRM"
+) must be available.
+.sp
+.B \-D
+Generate Source line number 
+.I "(#line)"
+for each semantic action. This causes the semantic actions in the generated
+C program to be labelled with reference to the original .ATG file, so that
+one can use a symbolic debugger on the .ATG file.
+.sp
+.B \-L
+.I "(Listing)"
+Force listing (Normally the listing of the grammar
+is suppressed if the compilation is error free).
+.sp
+.B \-P
+.I "(Parser only)"
+Suppress generation of the scanner.
+As with the regeneration of the definition modules, regeneration
+of the scanner is often tedious, and results in no changes from
+the one first generated.  This option must be used with care.  It can
+also be used if a hand crafted scanner is to be supplied (see
+the notes on the use of hand crafted scanners in the file COCOL).
+.sp
+.B \-T
+.I "(Tests)"
+Suppress Generation of Scanner and Parser.  (If this option
+is exercised, the generation of the scanner and parser is suppressed,
+but the attributed grammar is parsed and checked for grammatical
+inconsistencies, LL(1) violations and so on).
+.sp 2
+The following options are really intended to help with debugging/teaching
+applications.  Their effect may best be seen by judicious experimentation.
+.sp 2
+.B \-A
+Trace automaton
+.sp
+.B \-F
+Give Start and Follower sets for each non-terminal in the grammar
+.sp
+.B \-G
+Print top-down graph
+.sp
+.B \-S
+Print symbol table
+.PP
+When using Coco/R, the frame files 
+.I "SCAN_C.FRM"
+and
+.I "SCAN_H.FRM"
+and
+.I "PARSER_C.FRM"
+and
+.I "PARSER_H.FRM"
+must exist in the current directory, or
+in the directories specified by the environment variable
+.I CRFRAMES.
+.SH GRAMMAR TESTS
+.PP
+Coco/R performs several tests to check if the grammar is well-formed.  If one
+of the following error messages is produced, no compiler parts are generated.
+.PP
+.B  NO PRODUCTION FOR X
+.br
+The nonterminal
+.I X 
+has been used, but there is no production for it.
+.PP
+.B  X CANNOT BE REACHED
+.br
+There is a production for nonterminal
+.I X,
+but
+.I X 
+cannot be derived from the start symbol.
+.PP
+.B  X CANNOT BE DERIVED TO TERMINALS
+.br
+For example, if there is a production
+.br
+.sp
+.DS
+.I
+      X = "(" X ")" .
+.I
+      X = Y.
+.I
+      Y = X.
+.DE
+.sp
+.I X
+and
+.I Y
+are nonterminals with circular derivations.
+.PP
+.B "TOKENS X AND Y CANNOT BE DISTINGUISHED"
+.br
+The terminal symbols
+.I X
+and
+.I Y
+are declared to have the same structure,
+.br
+.sp
+.DS
+e.g.:
+.I
+          integer = digit { digit } .
+.I
+          real = digit { digit } ["." { digit } ].
+.DE
+.sp
+In this example, a digit string appears ambiguously to be recognized as
+an integer or as a real.
+.PP
+The following messages are warnings.  They may indicate an error but they may
+also describe desired effects.  The generated compiler parts may still be
+valid.  If an 
+.I "LL(1) error"
+ is reported for a construct
+.I "X"
+, one must be aware that
+the generated parser will choose the first of several possible alternatives for
+.I X.
+.PP
+.B "X NULLABLE"
+.br
+.I X
+can be derived to the empty string, e.g.
+.I "X = { Y }" .
+.PP
+.B "LL(1) ERROR IN X:Y IS START OF MORE THAN ONE ALTERNATIVE"
+.br
+Several alternatives in the production of
+.I X
+start with the terminal
+.I Y
+.br
+.DS
+e.g.:
+.I
+       Statement = ident ":=" Expression
+.I
+                 | ident [ ActualParameters ] .
+.DE
+.PP
+.B "LL(1) ERROR IN X:Y IS START AND SUCCESSOR OF NULLABLE STRUCTURE"
+.br
+Nullable structures are 
+.B "[ ... ]"
+and
+.B "{ ... }"
+.br
+.DS
+e.g.:
+.I
+       qualident = [ ident "." ] ident .
+.I
+       Statement = "IF" Expression "THEN" Statement 
+.I
+                   [ "ELSE" Statement ] .
+.DE
+.sp
+The
+.I ELSE
+at the start of the else part may also be a successor of a
+statement.  This LL(1) conflict is known under the name
+.I "dangling else".
+
+.SH "SEE ALSO"
+Moessenboeck, H., 
+.I "A Generator for Fast Compiler Front-Ends."
+Report 127, Dept. Informatik, ETH Zurich
+.BR (1990)
+.PP
+Moessenboeck, H., 
+.I "A generator for production quality compilers."
+Proc 3rd Int'l Workshop on Compiler-Compilers, Schwerin FRG,
+.BR 1990
+
+.SH BUGS
+Mail bug reports to:
+.sp
+C Version:              Frankie Arzu (farzu@uvg.edu.gt)
+
+
+
+
+
+

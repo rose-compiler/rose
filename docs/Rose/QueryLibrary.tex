@@ -1,0 +1,1345 @@
+\chapter{Query Library}
+
+\label{QueryLibrary:QueryLibrary}
+
+% Purpose:
+%\begin{itemize}
+%   \item A. Section overview
+%   \item B. Why you should read this manual
+%   \item C. How to use this manual
+%   \item D. Terminology
+%   \item E. Overview of library
+%   \item F. Program control
+%   \item G. Error messages
+%   \item H. Section summary
+%\end{itemize}
+%\begin{center}
+%*********************  \newline
+%\end{center}
+%\vspace{0.25in}
+
+\commentout{
+Visonary part that it would be silly to share with the outside world :-)
+}
+
+\section{Introduction}
+
+   This chapter presents defined techniques in ROSE to do simple queries on the AST that
+don't require an explicit traversal of the AST to be defined.  As a result, these AST
+queries are only a single function call and can be composed with one another to define
+even composite queries (using function composition).  Builtin queries are defined
+to return: AST IR nodes (Node Queries), strings (name queries), or numbers (number 
+queries).
+
+Any query can optionally execute a user-defined function on a SgNode. This makes
+it easier to customize a query over a large set of nodes.
+% The Ast Query Mechanism provides an interface which makes it easier to
+% query the wanted subset of SgNode's from the AST of the program at hand.
+Internally these functions will accumulate the results from the application 
+of the user-defined function on each IR node and return them as an STL list
+(std::list<SgNode*>).
+
+There are three different types of queries in the NodeQuery mechanism:
+\begin{enumerate}
+   \item queries of a sub tree of a AST from a SgNode, 
+   \item queries of a node list, and 
+   \item queries of the memory pool. 
+\end{enumerate}
+If the last parameter of the querySubTree has the value: {\em NodeQuery::ChildrenOnly} 
+then only the IR nodes which are immediate children of the input IR node 
+(SgNode*) in the AST are traversed, else the whole of the AST subtree will be
+traversed. 
+
+VariantVector objects are internally a bitvector or IR node types (from the hierarchy of
+IR nodes).  VariantVector can be formed via masks built from variant names.
+{\mySmallestFontSize
+\begin{verbatim}
+   VariantVector ir_nodes (V_SgType);
+
+\end{verbatim}
+}
+
+For all AST queries taking a VariantVector, if no VariantVector is provided (to the 
+function {\em queryMemoryPool()}) the whole memory pool will be traversed (all IR nodes
+from all files).
+
+
+% NODE QUERY
+\section{Node Queries}
+
+    AST Queries can return list of IR nodes.  These queries are useful
+as a simple way to extract subsets of the AST.  Node queries can be applied to 
+the whole of the memory pool or any subtree of the AST.  The result of
+an AST Node query on the AST is a list of IR nodes, the same interface
+permits additional AST Node queries to be done of the STL list of IR nodes.
+this permits compositional queries using simple function composition.
+
+%INTERFACE FUNCTIONS AVAILABLE
+\subsection{Interface Functions}
+   
+   The functions supported in the AST Node Query interface are:
+{\mySmallestFontSize
+\begin{verbatim}
+namespace NodeQuery
+{
+//** Functions that visits every node in a subtee of the AST and returns a
+//std::list<SgNode*>s. It is the subtree of the first parameter of the
+//interface which is traversed**//
+
+  template<typename NodeFunctional>
+   querySubTree( SgNode*, NodeFunctional, 
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+
+  querySubTree( SgNode*, TypeOfQueryTypeOneParameter,
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+
+   querySubTree( SgNode*, roseFunctionPointerOneParameter,
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+
+   querySubTree( SgNode*, SgNode*, roseFunctionPointerTwoParameters,
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+  
+  querySubTree( SgNode*, SgNode*, TypeOfQueryTypeTwoParameters,
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+
+  querySubTree( SgNode*, VariantT,
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+     
+  querySubTree( SgNode*, VariantVector,
+     AstQueryNamespace::QueryDepth = AstQueryNamespace::AllNodes)
+
+//** Functions that visits every node in a std::list<SgNode*>'s and returns a 
+//std::list<SgNode*>s **//
+  
+  queryNodeList( NodeQuerySynthesizedAttributeType,
+     TypeOfQueryTypeOneParameter elementReturnType)
+
+  queryNodeList( std::list<SgNode*>, roseFunctionPointerOneParameter )
+
+  queryNodeList( std::list<SgNode*>, SgNode*, roseFunctionPointerTwoParameters)
+
+  queryNodeList( std::list<SgNode*>, SgNode*, TypeOfQueryTypeTwoParameters)
+ 
+  queryNodeList( std::list<SgNode*>, VariantT)
+
+  queryNodeList( std::list<SgNode*>, VariantVector*)
+
+//** Functions that visit only the nodes in the memory pool that is
+//specified in a VariantVector and returns a std::list<SgNode*>s **// 
+
+  template<typename NodeFunctional>
+  queryMemoryPool( NodeFunctional, VariantVector* = NULL)
+
+  queryMemoryPool( roseFunctionPointerOneParameter, 
+     VariantVector* = NULL)
+
+  queryMemoryPool( SgNode*, roseFunctionPointerTwoParameters, 
+     VariantVector* = NULL)
+
+  queryMemoryPool( TypeOfQueryTypeOneParameter,
+     VariantVector* = NULL)
+
+  queryMemoryPool( SgNode*, TypeOfQueryTypeTwoParameters,
+     VariantVector* = NULL)
+
+}
+\end{verbatim}
+}
+
+
+% PREDEFINED QUERIES
+\section{Predefined Queries}
+
+For the convenience of the user some common functions are preimplemented and
+can be invoked by the user through an enum variable. There are two types of
+preimplemented queries; a TypeOfQueryTypeOneParameter and a
+TypeOfQueryTypeTwoParameters. 
+
+{\mySmallestFontSize
+\begin{verbatim}
+  enum TypeOfQueryTypeOneParameter
+  {
+    VariableDeclarations,
+    VariableTypes,
+    FunctionDeclarations,
+    MemberFunctionDeclarations,
+    ClassDeclarations,
+    StructDeclarations,
+    UnionDeclarations,
+    Arguments,
+    ClassFields,
+    StructFields,
+    UnionFields,
+    StructDefinitions,
+    TypedefDeclarations,
+    AnonymousTypedefs,
+    AnonymousTypedefClassDeclarations
+  };
+\end{verbatim}
+}
+
+A TypeOfQueryTypeTwoParameters requires an
+extra parameter of SgNode* type like for instance the
+TypeOfQueryTypeTwoParameters::ClassDeclarationNames which takes a SgName*
+which represents the class name to look for.
+
+{\mySmallestFontSize
+\begin{verbatim}
+  enum TypeOfQueryTypeTwoParameters
+  {
+    FunctionDeclarationFromDefinition,
+    ClassDeclarationFromName,
+    ClassDeclarationsFromTypeName,
+    PragmaDeclarationFromName,
+    VariableDeclarationFromName,
+  };
+\end{verbatim}
+}
+
+
+
+
+
+% USER-DEFINED FUNCTIONS
+\section{User-Defined Functions}
+
+Both C style functions and C++ style functionals can be used for the
+user-defined query functions. The C++ style functionals can be used together
+with powerful concepts like std::bind etc. to make the interface very 
+flexible. An example functional is:
+
+{\mySmallestFontSize
+\begin{verbatim}
+     class DefaultNodeFunctional :  public std::unary_function<SgNode*, std::list<SgNode*> > 
+     {
+       public:
+	    result_type operator()(SgNode* node ) 
+	       { 
+		 result_type returnType;
+		 returnType.push_back(node);
+		 return returnType; 
+	       }
+     };
+\end{verbatim}
+}
+
+
+For the legacy C-Style interface there are two type of functions:
+  typedef std::list <SgNode*>(*roseFunctionPointerOneParameter) (SgNode *);
+  typedef std::list <SgNode*>(*roseFunctionPointerTwoParameters) (SgNode *, SgNode *);
+The second function allows a user-defined second parameter which  can be
+provided to the interfaces directly. This parameter has no side-effect outside
+the user-defined function. For the querySubTree the second parameter to the interface 
+will be the parameter to the user-defined function, but for the memory pool
+traversal and the query of a node list the first parameter will be the second
+parameter to the user defined function.
+
+
+
+% THE NAME QUERY
+\section{Name Queries}
+
+The name query provides exactly the same interfaces as the NodeQuery except
+for two differences; the user defined functions returns a
+std::list<std::string>s and the C-Style functions take a std::string as a
+second parameter. The predefined functions implemented in this interface are:
+
+{\mySmallestFontSize
+\begin{verbatim}
+namespace NameQuery{
+
+  enum TypeOfQueryTypeOneParameter
+  {
+    VariableNames,
+    VariableTypeNames,
+    FunctionDeclarationNames,
+    MemberFunctionDeclarationNames,
+    ClassDeclarationNames,
+    ArgumentNames,
+    ClassFieldNames,
+    UnionFieldNames,
+    StructFieldNames,
+    FunctionReferenceNames,
+    StructNames,
+    UnionNames,
+    TypedefDeclarationNames,
+    TypeNames
+  };
+
+  enum TypeOfQueryTypeTwoParameters
+  {
+    VariableNamesWithTypeName
+  };
+
+}
+\end{verbatim}
+}
+
+% THE NUMBER QUERY
+\section{Number Queries}
+
+The number query provides exactly the same interfaces as the NodeQuery except
+for two differences; the user defined functions returns a
+std::list<int>s and the C-Style functions take an 'int' as a
+second parameter. The predefined functions implemented in this interface are:
+
+{\mySmallestFontSize
+\begin{verbatim}
+namespace NumberQuery{
+     enum TypeOfQueryTypeOneParameter
+	{
+	  NumberOfArgsInConstructor,
+	  NumberOfOperands,
+	  NumberOfArgsInScalarIndexingOperator,
+	};
+
+     enum TypeOfQueryTypeTwoParameters
+	{
+	  NumberOfArgsInParanthesisOperator
+	};
+}
+\end{verbatim}
+}
+
+
+\commentout{
+    The Query Library provides a simple means to ask questions of the AST and is
+internally based upon the use of the traversal mechanism defined within ROSE. 
+The Query Library is intended to address the requirements of relatively simple questions
+that can be posed on an AST.  The library is user exstensible, but more complex
+queries quickly require the full power of a specialized traversal.  The Query Library
+is most helpful for handling the many nested queries that are required within 
+complex transformations.
+
+\section{Limitations}
+    The query library is provided to address simple queries often required
+by more complex transformations (within the traversals associated with them).
+The Query Library is exstensible, but still with significant limitations.  More
+complex queries and most transformations are expected to use the traversal mechanisms
+defined in the AST Processing chapter (Chapter \ref{AstProcessing:astProcessing}).
+The next step beyond the query library would be a query language, but even it would 
+be less powerful than the existing tree traversal mechanisms that use concepts
+borrowed from attribute grammars. Since both the extensible query library and
+the attributed tree traversal are provided in ROSE, we have not added any
+sort of query langugae (which might be a lot of work and require added 
+resources to maintain).  We would however be happy to work with anyone interested
+in defining and building such a query language for AST.
+
+\section{Mathematical Representation of Query Operators}
+   The query library is divided into three parts (node queries, name queries, and 
+number queries) and represents operators on a domain defined by and AST and SgNode 
+list.  The Query Library represents a set of operators $Op$ which operate on a 
+domain $D$ and map to a range $R$.  Thus fundamentally,
+{\LARGE $$ R = Op(D) $$ }. 
+
+\subsection{Domain of Operators: $D$}
+    The domain of the operators defined in the Query Library is:
+% both the AST and a list of SgNode pointers.
+\begin{itemize}
+     \item Abstract Syntax Tree (AST)
+     \item STL list of SgNode pointers ({\tt list<SgNode*>})
+\end{itemize}
+
+\subsection{Range of Operators: $R$}
+    The range of the operators defined in the Query Library is:
+\begin{itemize}
+     \item STL list of SgNode pointers ({\tt list<SgNode*>})
+     \item STL list of strings ({\tt list<string>})
+     \item STL list of integers ({\tt list<int>})
+\end{itemize}
+
+Since lists of SgNode pointers are both in the domain and range of the Query Library
+operators the operators may be composed to build relatively complex queries.  The examples
+section shows several cases of common queries and how simple they are to express
+using the Query Library operators.  Importantly, the Query Library is exstensible
+by the user through the construction of simple global functions of the type:
+\begin{itemize}
+     \item {\tt list<SgNode*> userQueryFunction ( SgNode* );}
+     \item {\tt list<SgNode*> userQueryFunction ( SgNode*, SgNode* );}
+\end{itemize}
+
+\section{Overview of Query Library}
+    The Query Library is divided into three parts:
+\begin{itemize}
+     \item Node List Query Library
+     \item String List Query Library
+     \item Integer List Query Library
+\end{itemize}
+Each library contains operators which define operations on the domain $D$ and
+return elements of the range $R$.
+
+\subsection{Node List Query Library}
+     Operators defined within the Node Query Library are:
+\begin{itemize}
+     \item IR Node Variants
+     \item Declarations
+     \item Variable Declarations
+     \item Function Declarations
+     \item Class Declarations
+     \item Struct Declarations
+     \item Enum Declarations
+     \item Fields
+     \item Unions
+     \item etc.
+\end{itemize}
+
+\subsection{String List Query Library}
+     Operators defined within the String Query Library are:
+\begin{itemize}
+     \item Declarations
+     \item Variable Declarations
+     \item Function Declarations
+     \item Class Declarations
+     \item Struct Declarations
+     \item Enum Declarations
+     \item Fields
+     \item Unions
+     \item etc.
+\end{itemize}
+
+
+\subsection{Integer Query Library}
+     Operators defined within the Integer Query Library are:
+\begin{itemize}
+     \item Declarations
+     \item Variable Declarations
+     \item Function Declarations
+     \item Class Declarations
+     \item Struct Declarations
+     \item Enum Declarations
+     \item Fields
+     \item Unions
+     \item etc.
+\end{itemize}
+
+
+\section{Node Query Library}
+ 
+The class NodeQuery of the QueryLib library defines operators that 
+return list of SgNode* (SgNodePtrList). The scope of the query (domain) is
+the AST. The interface to the NameQuery library is through a few
+overloaded static member-functions in the class NodeQuery.
+
+\begin{verbatim}
+
+  static NodeQuerySynthesizedAttributeType NodeQuery::querySubTree (
+	 SgNode* subTree, roseFunctionPointerOneParameter 
+         querySolverFunction, QueryDepth defineQueryType = AllNodes );
+
+  static NodeQuerySynthesizedAttributeType NodeQuery::querySubTree( 
+         SgNode* subTree, TypeOfQueryTypeOneParameter elementReturnType,
+         QueryDepth defineQueryType = AllNodes);
+	 	
+  static NodeQuerySynthesizedAttributeType NodeQuery::querySubTree (
+         SgNode*  subTree, SgNode* targetNode,
+         roseFunctionPointerTwoParameters  querySolverFunction,
+         QueryDepth defineQueryType = AllNodes );
+	  
+  static NodeQuerySynthesizedAttributeType NodeQuery::querySubTree( 
+         SgNode* subTree, SgNode* targetNode, 
+         TypeOfQueryTypeTwoParameters elementReturnType, 
+         QueryDepth defineQueryType = AllNodes);
+
+\end{verbatim}
+
+By default the query will traverse the AST through all the children of the
+first parameter 'SgNode subTree'. If 'SgNode subTree' is of type SgProject, 
+SgFile or SgGlobal the whole AST will be traversed. To traverse only children
+of 'SgNode subTree' the last parameter must be NodeQuery::ChildrenOnly.
+
+The second parameter is dependent upon your use of the library. The
+first two functions are referring to queries where the query function
+only needs one parameter, while the last two refer to queries where the 
+query solver function needs two parameters. In the first function the second
+parameter is a 'roseFunctionPointerOneParameter', the second function's
+second parameter refers to an enum 'TypeOfQueryTypeOneParameter' which 
+refers to a set of predefined functions of type 
+'roseFunctionPointerOneParameter'. Thus there are several common queries that
+are made available within an extensible mechanism.
+
+For the two last functions the query function need two
+parameters. Therefore the second parameter is a SgNode* which is the
+second parameter to the 'roseFunctionPointerTwoParameters'. As in the
+one-paramterer case you may refer to predefined functions.
+
+The class NodeQuery also have an extended functionality with a query
+on a list<SgNode*>. This functionality is also replicated in the
+NameQuery and NumberQuery. This will allow you to query the result
+from a NodeQuery. The interface to this query is also through a few
+overloaded static member-functions in the class NodeQuery.
+\begin{verbatim}
+  static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
+         list<SgNode*> nodeList, roseFunctionPointerOneParameter
+         querySolverFunction);
+
+  static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
+         list<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
+	  
+  static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
+         list<SgNode*> nodeList,  SgNode* targetNode, 
+         roseFunctionPointerTwoParameters querySolverFunction);  
+
+  static NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList(
+         list<SgNode*> nodeList,  SgNode* targetNode, 
+         TypeOfQueryTypeTwoParameters elementReturnType);
+\end{verbatim}
+The syntax of this interface is allmost identical to the interface to a query
+of an subTree of an AST.  The only difference is that you input a
+list<SgNode*> as an first argument instead of a subTree of an AST. You
+do not specify a subTree, since the scope of the qyery is the list<SgNode*> itself.  
+
+\subsection{Pre-Defined Function Documentation}
+\label{FunctionDocumentation}
+
+In the NodeQuery library we have two enums
+\begin{verbatim}
+           enum TypeOfQueryTypeOneParameter		
+	       {
+               UnknownListElementType              =  0,
+               VariableDeclarations                =  1,
+               VariableTypes                       =  2,
+               FunctionDeclarations                =  3,
+               MemberFunctionDeclarations          =  4,
+               ClassDeclarations                   =  5,
+	       StructDeclarations                  =  6,
+	       UnionDeclarations                   =  7,
+               Arguments                           =  8,
+               ClassFields                         =  9,
+	       StructFields                        = 10,
+               UnionFields                         = 11,
+               StructDefinitions                   = 12,
+               TypedefDeclarations                 = 13,
+               END_OF_NODE_TYPE_LIST_ONE_PARAMETER
+             };
+	 
+	  enum TypeOfQueryTypeTwoParameters
+             {
+               UnknownListElementTypeTwoParameters         =  0,
+	       FunctionDeclarationFromDefinition           =  1,
+	       END_OF_NODE_TYPE_LIST_TWO_PARAMETERS
+             };
+\end{verbatim}
+The enum TypeOfQueryTypeOneParameter defines the reference to the
+already implemented one-parameter query functions, and the enum 
+TypeOfQueryTypeTwoParameters defines the reference to the already
+implemented two-paramter query functions. You may refer to any of
+these definitions by writing NodeQuery::enumerateName, e.g.
+\begin{verbatim}
+     NodeQuery::VariableTypes
+\end{verbatim}
+An example of a query would be 
+\begin{verbatim}
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "rose.h"
+
+int main ( int argc, char * argv[] ) {
+  SgProject* project = frontend(argc,argv);
+  NodeQuerySynthesizedAttributeType testList;
+  
+  testList = NodeQuery::querySubTree(project, NodeQuery::VariableTypes);
+
+} /* End function: main() */
+\end{verbatim}
+Where you could use the example makefile to compile
+\begin{verbatim}
+EXAMPLE MAKEFILE
+\end{verbatim}
+And make a call to the function by supplying any c or c++ code at the commandline.
+\begin{verbatim}
+[saebjorn@tux44 nameQueryTest]: examplePreprocessor exampleTestCode.c
+\end{verbatim}
+
+\section{Number Query Library}
+ 
+The class NumberQuery of the QueryLib library has the puropose of
+counting properties in the scope of the query and returns a list of
+strings (list<string>). The scope of the query is
+the AST. The interface to the NumberQuery library is through a few
+overloaded static member-functions in the class NumberQuery.
+
+\begin{verbatim}
+
+  static NumberQuerySynthesizedAttributeType NumberQuery::querySubTree (
+	 SgNumber* subTree, roseFunctionPointerOneParameter 
+         querySolverFunction, QueryDepth defineQueryType = AllNodes );
+
+  static NumberQuerySynthesizedAttributeType NumberQuery::querySubTree( 
+         SgNumber* subTree, TypeOfQueryTypeOneParameter elementReturnType,
+         QueryDepth defineQueryType = AllNodes);
+	 	
+  static NumberQuerySynthesizedAttributeType NumberQuery::querySubTree (
+         SgNumber*  subTree, SgNumber* targetNumber,
+         roseFunctionPointerTwoParameters  querySolverFunction,
+         QueryDepth defineQueryType = AllNodes );
+	  
+  static NumberQuerySynthesizedAttributeType NumberQuery::querySubTree( 
+         SgNumber* subTree, SgNumber* targetNumber, 
+         TypeOfQueryTypeTwoParameters elementReturnType,
+         QueryDepth defineQueryType = AllNodes);
+	  
+\end{verbatim}  
+
+As default the query will traverse the AST through all the childrens of the
+first parameter 'SgNode subTree'. If 'SgNode subTree' is of type SgProject, 
+SgFile or SgGlobal the whole AST will be traversed. To traverse only children
+of 'SgNode subTree' the last parameter must be NodeQuery::ChildrenOnly. 
+
+The second parameter is dependent upon your use of the library. The
+first two functions are referring to queries where the query function
+only need one parameter, while the last two refer to queries where the 
+query solver function need two parameters. In the first function the second
+parameter is a 'roseFunctionPointerOneParameter', the second functions
+second parameter refers to an enum 'TypeOfQueryTypeOneParameter' which 
+refer to allready implementet functions of type 
+'roseFunctionPointerOneParameter'. 
+
+For the two last functions the query function need two
+parameters. Therefore the second parameter is a string which is the
+second parameter to the 'roseFunctionPointerTwoParameters'. As in the
+one-paramterer case you may refer to predefined functions.
+
+The class NumberQuery also have an extended functionality with a query
+on a list<SgNode*>. This functionality is also replicated in the
+NodeQuery and NameQuery. This will allow you to query the result
+from a NodeQuery. The interface to this query is also through a few
+overloaded static member-functions in the class NumberQuery.
+\begin{verbatim}
+  static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
+         list<SgNode*> nodeList, roseFunctionPointerOneParameter
+         querySolverFunction);
+
+  static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
+         list<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
+	  
+  static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
+         list<SgNode*> nodeList, string matchingNumber, 
+         roseFunctionPointerTwoParameters querySolverFunction);  
+
+  static NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList(
+         list<SgNode*> nodeList, string matchingNumber, 
+         TypeOfQueryTypeTwoParameters elementReturnType);
+\end{verbatim}
+The syntax of this interface is allmost identical to the interface to a query
+of an subTree of an AST.  The only difference is that you input a
+list<SgNode*> as an first argument instead of a subTree of an AST. You
+do not specify a subTree, since the scope of the qyery is the list<SgNode*> itself.  
+
+
+\subsection{Pre-Defined Function Documentation}
+\label{FunctionDocumentation}
+
+In the NodeQuery library we have two enums
+\begin{verbatim}
+          enum TypeOfQueryTypeOneParameter
+             {
+               UnknownListElementType               =  0,
+	       NumberOfArgsInConstructor            =  1,
+               NumberOfOperands                     =  2,
+               NumberOfArgsInScalarIndexingOperator =  3,
+	       END_OF_NODE_TYPE_LIST_ONE_PARAMETER
+             };
+	 
+	  enum TypeOfQueryTypeTwoParameters
+             {
+               UnknownListElementTypeTwoParameters         =  0,
+	        NumberOfArgsInParanthesisOperator          =  1,
+	       END_OF_NODE_TYPE_LIST_TWO_PARAMETERS
+             };
+\end{verbatim}
+The enum TypeOfQueryTypeOneParameter defines the reference to the
+already implemented one-parameter query functions, and the enum 
+TypeOfQueryTypeTwoParameters defines the reference to the already
+implemented two-paramter query functions. You may refer to any of
+these definitions by writing NumberQuery::enumerateName, e.g.
+\begin{verbatim}
+     NumberQuery::NumberOfOperands
+\end{verbatim}
+An example of a query would be 
+\begin{verbatim}
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "rose.h"
+
+int main ( int argc, char * argv[] ) {
+  SgProject* project = frontend(argc,argv);
+  NumberQuerySynthesizedAttributeType testList;
+  
+  testList = NumberQuery::querySubTree(project, NumberQuery::NumberOfOperands);
+
+} /* End function: main() */
+\end{verbatim}
+Where you could use the example makefile to compile
+\begin{verbatim}
+EXAMPLE MAKEFILE
+\end{verbatim}
+And make a call to the function by supplying any c or c++ code at the commandline.
+\begin{verbatim}
+[saebjorn@tux44 nameQueryTest]: examplePreprocessor exampleTestCode.c
+\end{verbatim}
+
+
+ 
+\section{Name Query Library}
+
+The class NameQuery of the QueryLib library has the puropose of
+finding the names in the scope of the query and returns a list of
+strings (list<string>). The scope of the query is
+the AST. The interface to the NameQuery library is through a few
+overloaded static member-functions in the class NodeQuery.
+
+\begin{verbatim}
+  static NameQuerySynthesizedAttributeType NameQuery::querySubTree (
+	 SgNode* subTree, roseFunctionPointerOneParameter 
+         querySolverFunction, QueryDepth defineQueryType = AllNodes );
+
+  static NameQuerySynthesizedAttributeType NameQuery::querySubTree( 
+         SgNode* subTree, TypeOfQueryTypeOneParameter elementReturnType,
+         QueryDepth defineQueryType = AllNodes);
+	 	
+  static NameQuerySynthesizedAttributeType NameQuery::querySubTree (
+         SgNode*  subTree, string targetName,
+         roseFunctionPointerTwoParameters  querySolverFunction,
+         QueryDepth defineQueryType = AllNodes );
+	  
+  static NameQuerySynthesizedAttributeType NameQuery::querySubTree( 
+         SgNode* subTree, string targetName, 
+         TypeOfQueryTypeTwoParameters elementReturnType,
+         QueryDepth defineQueryType = AllNodes);	  
+\end{verbatim}  
+
+
+As default the query will traverse the AST through all the childrens of the
+first parameter 'SgNode subTree'. If 'SgNode subTree' is of type SgProject, 
+SgFile or SgGlobal the whole AST will be traversed. To traverse only children
+of 'SgNode subTree' the last parameter must be NodeQuery::ChildrenOnly. 
+
+The second parameter is dependent upon your use of the library. The
+first two functions are referring to queries where the query function
+only need one parameter, while the last two refer to queries where the 
+query solver function need two parameters. In the first function the second
+parameter is a 'roseFunctionPointerOneParameter', the second functions
+second parameter refers to an enum 'TypeOfQueryTypeOneParameter' which 
+refer to allready implementet functions of type 
+'roseFunctionPointerOneParameter'. 
+
+For the two last functions the query function need two
+parameters. Therefore the second parameter is a string which is the
+second parameter to the 'roseFunctionPointerTwoParameters'. As in the
+one-paramterer case you may refer to predefined functions.
+
+The class NameQuery also have an extended functionality with a query
+on a list<SgNode*>. This functionality is also replicated in the
+NodeQuery and NumberQuery. This will allow you to query the result
+from a NodeQuery. The interface to this query is also through a few
+overloaded static member-functions in the class NameQuery.
+\begin{verbatim}
+  static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
+         list<SgNode*> nodeList, roseFunctionPointerOneParameter
+         querySolverFunction);
+
+  static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
+         list<SgNode*> nodeList, TypeOfQueryTypeOneParameter elementReturnType);
+	  
+  static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
+         list<SgNode*> nodeList, string targetName, 
+         roseFunctionPointerTwoParameters querySolverFunction);  
+
+  static NameQuerySynthesizedAttributeType NameQuery::queryNodeList(
+         list<SgNode*> nodeList, string targetName, 
+         TypeOfQueryTypeTwoParameters elementReturnType);
+\end{verbatim}
+The syntax of this interface is allmost identical to the interface to a query
+of an subTree of an AST.  The only difference is that you input a
+list<SgNode*> as an first argument instead of a subTree of an AST. You
+do not specify a subTree, since the scope of the qyery is the list<SgNode*> itself.  
+ 
+
+
+\subsection{Pre-Defined Function Documentation}
+\label{FunctionDocumentation}
+
+In the NameQuery library we have two enums
+\begin{verbatim}
+          enum TypeOfQueryTypeOneParameter
+             {
+               UnknownListElementType         =  0,
+               VariableNames                  =  1,
+               VariableTypeNames              =  2,
+               FunctionDeclarationNames       =  3,
+               MemberFunctionDeclarationNames =  4,
+               ClassDeclarationNames          =  5,
+               ArgumentNames                  =  6,
+               ClassFieldNames                =  7,
+               UnionFieldNames                =  8,
+               StructFieldNames               =  9,
+               FunctionReferenceNames         = 10,
+               StructNames                    = 11,
+               UnionNames                     = 12,
+               END_OF_NAME_TYPE_LIST
+             };
+	 
+          enum TypeOfQueryTypeTwoParameters
+             {
+               UnknownListElementTypeTwoParameters    =  0,
+               VariableNamesWithTypeName              =  1,
+               END_OF_NODE_TYPE_LIST_TWO_PARAMETERS
+             };
+\end{verbatim}
+The enum TypeOfQueryTypeOneParameter defines the reference to the
+already implemented one-parameter query functions, and the enum 
+TypeOfQueryTypeTwoParameters defines the reference to the already
+implemented two-paramter query functions. You may refer to any of
+these definitions by writing NameQuery::enumerateName, e.g.
+\begin{verbatim}
+     NameQuery::VariableTypeNames
+\end{verbatim}
+An example of a query would be 
+\begin{verbatim}
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "rose.h"
+
+int main ( int argc, char * argv[] ) {
+  SgProject* project = frontend(argc,argv);
+  NameQuerySynthesizedAttributeType testList;
+  
+  testList = NameQuery::querySubTree(project, NameQuery::MemberFunctionDeclarationNames);
+
+} /* End function: main() */
+\end{verbatim}
+Where you could use the example makefile to compile
+\begin{verbatim}
+EXAMPLE MAKEFILE
+\end{verbatim}
+And make a call to the function by supplying any c or c++ code at the commandline.
+\begin{verbatim}
+[saebjorn@tux44 nameQueryTest]$ test exampleTest.c
+"exampleTest.c", line 10: warning: variable "var4" was set but never used
+        int var4 = 0;
+            ^
+
+"exampleTest.c", line 38: warning: variable "var9" was set but never used
+    int var9;
+        ^
+
+Finished building EDG AST, now build the SAGE AST ...
+Warnings in EDG Processing! (continuing ...)
+/* AST Fixes started. */
+/* AST Fixes finished */
+C++ source(s) parsed. AST generated.
+[saebjorn@tux44 nameQueryTest]$
+\end{verbatim}
+
+\section{Examples}
+   This section shows numerous examples of the use of the Query Libraries and
+the operators defined within them.  The section is divided into sets of 
+examples from each type of query library and also shows the composition
+of queries and demonstrated the extensibility of the query library design.
+
+\subsection{Node Query Examples}
+   Common node query library operator examples.
+
+\textbf{Arguments}
+
+The NameQuery library has a predefined function which finds all 
+arguments of functions in the sub-tree of the AST that the user supply the
+traversal with, that includes all member function arguments too. That
+predefined function may be refered to as
+NodeQuery::Arguments. An example code of a
+pre-processor is
+\begin{verbatim}
+1:  #ifdef HAVE_CONFIG_H
+2:  #include <config.h>
+3:  #endif
+4:  #include "rose.h"
+5:
+6:  int main ( int argc, char * argv[] ) {
+7:     SgProject* project = frontend(argc,argv);
+8:     NodeQuerySynthesizedAttributeType testList;
+9:	
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::Arguments);
+11: } /* End function: main() */
+\end{verbatim}
+All parts of the other NameQuery examples is equal to this except for line 10.
+
+\textbf{VariableDeclarations}
+
+NodeQuery::VariableDeclarations is a predefined function for finding
+all variable declarations in the subTree of the AST that user supply
+the traversal with. It even finds the variable declarations in the
+argument of a function. That predefined function may be refered to as 
+NodeQuery::VariableDeclarations  . An example code of a pre-processor
+is
+\begin{verbatim}
+..
+10:   testList = NodeQuery::querySubTree(project,NodeQuery::VariableDeclarations);
+..
+\end{verbatim}
+
+\textbf{VariableTypes}
+
+NodeQuery::VariableTypes is a predefined function for finding all
+types of all variable declarations in the subTree of the AST that the
+user supply the traversal with. It even finds the types of variable
+declarations in the argument of a function. That predefined function
+may be refered to as NodeQuery::VariableTypes. An example code of a
+pre-processor is
+\begin{verbatim}
+..
+10:   testList = NodeQuery::querySubTree(project,NodeQuery::VariableTypes);
+..
+\end{verbatim}
+
+\textbf{FunctionDeclarations}
+
+NodeQuery::FunctionDeclarations is a predefined function for finding
+all function declarations in the subTree of the AST that the user
+supply the traversal with, that includes all member function
+declarations. The predefined funciton may be refered to as
+NodeQuery::FunctionDeclarations. An example code of a pre-processor is
+\begin{verbatim}
+..
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::FunctionDeclarations);
+..
+\end{verbatim}
+
+\textbf{MemberFunctionDeclarations}
+
+NodeQuery::MemberFunctionDeclarations is a predefined function for finding
+all member function declarations in the subTree of the AST that the user
+supply the traversal with. The predefined funciton may be refered to as
+NodeQuery::MemberFunctionDeclarations. An example code of a pre-processor is
+\begin{verbatim}
+..
+10:   testList = NodeQuery::querySubTree(project,NodeQuery::MemberFunctionDeclarations);
+..
+\end{verbatim}
+
+
+\textbf{ClassDeclarations}
+
+NodeQuery::ClassDeclarations is a predefined funciton for finding all
+class declarations in the subTree of the AST that the user supply the
+traversal with. The predefined function may be refered to as
+NodeQuery::ClassDeclarations. An example code of pre-processor is
+\begin{verbatim}
+..	
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::ClassDeclarations);
+..
+\end{verbatim}
+
+
+\textbf{StructDeclarations}
+
+NodeQuery::StuctDeclarations is a predefined funciton for finding all
+stucts in the subTree of the AST that the user supply the
+traversal with. The predefined function may be refered to as
+NodeQuery::StructDeclarations. An example code of pre-processor is
+\begin{verbatim}
+..
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::StructDeclarations);
+..
+\end{verbatim}
+
+\textbf{UnionDeclarations}
+
+
+NodeQuery::UnionDeclarations is a predefined funciton for finding all
+unions in the subTree of the AST that the user supply the
+traversal with. The predefined function may be refered to as
+NodeQuery::UnionDeclarations. An example code of pre-processor is
+\begin{verbatim}
+..
+10:  testList = NodeQuery::querySubTree(project,NodeQuery::UnionDeclarations);
+..
+\end{verbatim}
+
+\textbf{ClassFields}
+
+NodeQuery::ClassFields is a predefined function for finding all fields
+of classes in the subTree of the AST that the user supply the
+traversal with. The predefined function may be refered to as
+NodeQuery::ClassFields. An example code of a pre-processor is
+\begin{verbatim}
+..
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::ClassFields);
+..
+\end{verbatim}
+
+
+\textbf{StructFields}
+
+NodeQuery::StructFields is a predefined function for finding all fields
+of structs in the subTree of the AST that the user supply the
+traversal with. The predefined function may be refered to as
+NodeQuery::StuctFields. An example code of a pre-processor is
+\begin{verbatim}
+..	
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::StructFields);
+..
+\end{verbatim}
+
+
+
+\textbf{UnionFields}
+
+NodeQuery::UnionFields is a predefined function for finding all fields
+of unions in the subTree of the AST that the user supply the
+traversal with. The predefined function may be refered to as
+NodeQuery::UnionFields. An example code of a pre-processor is
+\begin{verbatim}
+..
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::UnionFields);
+..
+\end{verbatim}
+
+\textbf{TypedefDeclarations}
+
+NodeQuery::TypedefDeclarations is a predefined function for finding
+all declarations of type-definitions in the subTree of the AST that
+the user supply the traversal with. The predefined function may be 
+refered to as NodeQuery::TypedefDeclarations. An example code of a 
+pre-processor is 
+\begin{verbatim}
+..
+10:    testList = NodeQuery::querySubTree(project,NodeQuery::TypedefDeclarations);
+..
+\end{verbatim}
+
+\textbf{FunctionDeclarationFromDefinition}
+
+NodeQuery::TypedefDeclarations is a specialiced funciton. At the
+SgFunctionDefinition you may ask for the SgMemberFunctionDeclaration
+if it is a member function. The declaration that you get is not the
+one which is inside the class declaration. This function will,
+provided a SgFunctionDefinition which is a member function, return a
+pointer to the function declaration in the class declaration. The
+predefined funciton may be refered to as
+NodeQuery::FunctionDeclarationFromDefinition. An example code of a
+pre-processor is
+\begin{verbatim}
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "rose.h"
+
+int main ( int argc, char * argv[] ) {
+   SgProject* project = frontend(argc,argv);
+  NodeQuerySynthesizedAttributeType testList;
+  NodeQuerySynthesizedAttributeType memberFunctionDeclarationList; 
+  NameQuerySynthesizedAttributeType returnList;
+ 
+  //Finds all member function definitions from member function declarations 
+  testList = NodeQuery::querySubTree(project,NodeQuery::MemberFunctionDeclarations);
+  typedef list<SgNode*>::iterator testListIterator;
+  
+  for (testListIterator  listElement = testList.begin(); listElement != testList.end(); ++listElement) 
+    {
+    SgMemberFunctionDeclaration* sgMemberFunctionDeclaration = isSgMemberFunctionDeclaration(*listElement);
+    ROSE_ASSERT( sgMemberFunctionDeclaration != NULL);
+    //There may be memberFunctionDeclarations which is only declared
+    if ( sgMemberFunctionDeclaration->get_definition()!=NULL)
+      *listElement = sgMemberFunctionDeclaration->get_definition();
+    }
+
+  //Finds all memeber function declarations in header 
+  i = 0;
+  for (testListIterator  listElement = testList.begin(); listElement != testList.end(); ++listElement) 
+    {
+    SgNode* sgFunctionDefinition = *listElement;
+    ROSE_ASSERT( sgFunctionDefinition != NULL);
+    memberFunctionDeclarationList = NodeQuery::querySubTree(project,sgFunctionDefinition, 
+                                        NodeQuery::FunctionDeclarationFromDefinition );
+    returnList = NameQuery::queryNodeList(memberFunctionDeclarationList, NameQuery::FunctionDeclarationNames);
+    }
+} /* End function: main() */
+\end{verbatim}
+ 
+\subsection{String Query Examples}
+   Common string query library operator examples.
+
+
+
+\subsubsection{Member function names}
+
+The NameQuery library has a predefined function which finds all member
+function names in the sub-tree of the AST that the user supply the
+traversal with. That predefined function may be refered to as
+NameQuery::MemberFunctionDeclarationNames. 
+
+An example call to that function is given in section \ref{FunctionDocumentation}.
+
+
+\subsubsection{Function names}
+
+
+The NameQuery library has a predefined function which finds all 
+function names in the sub-tree of the AST that the user supply the
+traversal with, that includes all member function names too. That
+predefined function may be refered to as
+NameQuery::MemberFunctionDeclarationNames. An example code of a
+pre-processor is
+\begin{verbatim}
+1:  #ifdef HAVE_CONFIG_H
+2:  #include <config.h>
+3:  #endif
+4:  #include "rose.h"
+5:
+6:  int main ( int argc, char * argv[] ) {
+7:      SgProject* project = frontend(argc,argv);
+8:      NameQuerySynthesizedAttributeType testList;
+9:  
+10:     testList = NameQuery::querySubTree(project, NameQuery::FunctionDeclarationNames);
+11:
+12:  } /* End function: main() */
+\end{verbatim}
+All parts of the other NameQuery examples is equal to this except for line 10.
+
+\subsubsection{Variable Names}
+
+In the NameQuery library there is a query which finds all variable
+names in the sub-tree of the AST which the user provide. It may be
+refered to as NameQuery::VariableNames. An example code of a
+preprocessor is
+\begin{verbatim}
+..  
+10:  testList = NameQuery::querySubTree(project, NameQuery::VariableNames);
+..
+\end{verbatim}
+
+
+\subsubsection{Variable Type-Names}
+
+In the NameQuery library there is a query which finds all variable 
+type-names in the sub-tree of the AST which the user provide. It may be
+refered to as NameQuery::VariableTypeNames. An example code of a
+preprocessor is
+\begin{verbatim}
+..  
+10:  testList = NameQuery::querySubTree(project, NameQuery::VariableTypeNames);
+..
+\end{verbatim}
+
+\subsubsection{Class Declaration Names}
+
+
+In the NameQuery library there is a query which finds all the names of
+the class declarations in the sub-tree of the AST which the user provide. It may be
+refered to as NameQuery::ClassDeclarationNames. An example code of a
+preprocessor is
+\begin{verbatim}
+..  
+10:  testList = NameQuery::querySubTree(project, NameQuery::ClassDeclarationNames);
+..
+\end{verbatim}
+
+\subsubsection{Argument Names}
+
+In the NameQuery library there is a query which finds all the
+arguments of all functions in the sub-tree the user defines, and
+extracts the names of those arguments. This query is refered to as
+NameQuery::ArgumentNames. An example preprocessor is
+
+\begin{verbatim}
+..  
+10:  testList = NameQuery::querySubTree(project, NameQuery::ArgumentNames);
+..
+\end{verbatim}
+
+\subsubsection{Field Names}
+
+In the NameQuery library there is a pre-written query for finding the
+Field names of a class, a struct or a union. These are refered to as
+NameQuery::ClassFields, NameQuery::StructFields and
+NameQuery::UnionFields. An example preprocessor is
+\begin{verbatim}
+..
+10:  testList = NameQuery::querySubTree(project, NameQuery::UnionFieldNames);
+..
+\end{verbatim}
+
+\subsubsection{Variable Names With A Specified Type Name}
+
+In the NameQuery library there is a pre-written query which finds all
+the variable declarations with a specified type like e.g. 'int'. This
+query is refered to as NameQuery::VariableNamesWithTypeName. This
+query need two parameters as input to the querySubTree as shown in the
+example below.
+\begin{verbatim}
+..
+10:  testList = NameQuery::querySubTree(project, "int", NameQuery::VariableNamesWithTypeName);
+..
+\end{verbatim}
+
+\subsection{Integer Query Examples}
+   Common integer query library operator examples.
+
+
+\textbf{NumberOfArgsInConstructor}
+
+The NumberQuery library has a predefined function which counts the arguments 
+constructors in the sub-tree of the AST that the user supply the
+traversal with. That predefined function may be refered to as
+NumberQuery::NumberOfArgsInConstructor. An example code of a
+pre-processor is
+\begin{verbatim}
+1:  #ifdef HAVE_CONFIG_H
+2:  #include <config.h>
+3:  #endif
+4:  #include "rose.h"
+5:
+6:  int main ( int argc, char * argv[] ) {
+7:    SgProject* project = frontend(argc,argv);
+8:    NumberQuerySynthesizedAttributeType testList;
+9: 	
+10:   testList = NodeQuery::querySubTree(project,NumberQuery::NumberOfArgsInConstructor);
+11: } /* End function: main() */
+\end{verbatim}
+All parts of the other NameQuery examples is equal to this except for line 10.
+
+\textbf{NumberOfOperands}
+
+NumberQuery::NumberOfOperands is a predefined function for counding
+all operands in the subTree of the AST that user supply
+the traversal with. That predefined function may be refered to as 
+NumberQuery::NumberOfOperands. An example code of a pre-processor
+is
+\begin{verbatim}
+..
+10:  testList = NodeQuery::querySubTree(project,NumberQuery::NumberOfOperands);
+..
+\end{verbatim}
+
+\textbf{NumberOfArgsInScalarIndexingOperator}
+
+NumberQuery::VariableTypes is a predefined function for counting all
+arguments in the scalar indexing operator in the subTree of the AST 
+that the user supply the traversal with. It even finds the types of variable
+declarations in the argument of a function. That predefined function
+may be refered to as
+NumberQuery::NumberOfArgsInScalarIndexingOperator. 
+An example code of a pre-processor is
+\begin{verbatim}
+..
+10:  testList = NumberQuery::querySubTree(project,
+11:                NumberQuery::NumberOfArgsInScalarIndexingOperator);
+..
+\end{verbatim}
+
+\textbf{NumberOfArgsInParanthesisOperator}
+
+NumberQuery::NumberOfArgsInParanthesisOperator is a predefined function for finding
+all function declarations in the subTree of the AST that the user
+supply the traversal with, that includes all member function
+declarations. This function need two arguments, where the second
+parameter is the function type-name you are interested in. The
+predefined funciton may be refered to as
+NumberQuery::NumberOfArgsInParanthesisOperator. 
+An example code of a pre-processor is
+\begin{verbatim}
+..
+10:  testList = NumberQuery::querySubTree(project,"int", 
+11:                NumberQuery::NumberOfArgsInParanthesisOperator);
+..
+\end{verbatim}
+
+\subsection{Composition of Query Operators}
+    Taking advantage of the intersection of the range $R$ and the domain $D$,
+operations can be composed with one another to easily tailor more complex
+query operators.
+
+\section{Query Library Extensibility}
+   An important feature of the Query Library design is its ability
+to use simple global functions defined defined by the user.  Internally
+the supported operations are built in exactly this manner.  This subsection
+shows and example global function definition, the user is encouraged to
+define additional simlar global functions to extend the functionality 
+of the query library.  Note that in many cases more complex queries are
+required and the user is encouraged to use the more powerful traversal
+mechanism defined in the Ast Processing chapter 
+(Chapter \ref{AstProcessing:astProcessing}).
+
+\subsection{How to write your own functions}
+
+Each of the Query Libraries are extensible, this section demonstrates
+how user-defined functions can be used to extend the capability of the
+existing query libraries.  We demonstrate this for the Name Query Library.
+
+When writing a Name Query, the first thing to think of is how many
+parameters your query function needs. If you are to use the NameQuery
+library your choice is one or two parameters. The form of you function
+in the one-parameter case should be
+\begin{verbatim}
+list<string> functionNameOneParameter(SgNode* param1);
+\end{verbatim}
+In the two paramter case
+\begin{verbatim}
+list<string> functionNameTwoParameters(SgNode* param1, string param2);
+\end{verbatim}
+An example of a one-parameter function is
+\begin{verbatim}
+list<string> queryNameMemberFunctionDeclarationNames(SgNode* astNode)
+{
+  ROSE_ASSERT(astNode != 0);
+  list<string> returnNameList;
+
+  SgMemberFunctionDeclaration* sageMemberFunctionDeclaration = isSgMemberFunctionDeclaration(astNode);
+
+  if(sageMemberFunctionDeclaration != NULL)
+    {
+      string name = sageMemberFunctionDeclaration->get_name().str();
+      returnNameList.push_back (name);
+    }
+  return returnNameList;
+}/* End function queryNameMemberFunctionDeclarationNames() */
+
+\end{verbatim}
+An example of a two-paramter function is
+\begin{verbatim}
+list<string> queryVariableNamesWithTypeName(SgNode* astNode, string matchingName)
+{
+
+  ROSE_ASSERT(astNode != 0);
+  ROSE_ASSERT (matchingName.length() > 0);
+  list<string> returnNameList;
+
+  SgVarRefExp* sageVarRefExp = isSgVarRefExp(astNode);
+
+  if(sageVarRefExp != NULL)
+    {
+      SgVariableSymbol* variableSymbol = sageVarRefExp->get_symbol();
+      ROSE_ASSERT (variableSymbol != NULL);
+      SgType* type = variableSymbol->get_type();
+      ROSE_ASSERT (type != NULL);
+      string typeName = TransformationSupport::getTypeName(type);
+      ROSE_ASSERT (typeName.length() > 0);
+
+      if ( typeName == matchingName){
+	// Only define the variable name if we are using an object of array type
+	SgInitializedName* initializedName = variableSymbol->get_declaration();
+	ROSE_ASSERT (initializedName != NULL);
+	SgName variableName = initializedName->get_name();
+	
+	// copy the string to avoid corruption of the AST's version of the string
+	string name = variableName.str();
+	returnNameList.push_back (name);
+      }
+    }
+  return returnNameList;
+}/* End function queryNameVariableNames() */
+\end{verbatim}
+
+\subsection{Example of How To Use User-Defined Functions}
+   Here we show how user-defined function are used with the function pointer interface to
+permit custom queries. (NEED SOME EXAMPLES)
+
+% end of commented out section
+}

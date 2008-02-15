@@ -1,0 +1,133 @@
+/****************************************************************************
+** QRCodeBox meta object code from reading C++ file 'QRCodeBox.h'
+**
+** Created: Tue May 3 15:22:39 2005
+**      by: The Qt MOC ($Id: QRCodeBox.moc,v 1.1 2005/09/03 19:37:58 dquinlan Exp $)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#undef QT_NO_COMPAT
+#include "QRCodeBox.h"
+#include <qmetaobject.h>
+#include <qapplication.h>
+
+#include <private/qucomextra_p.h>
+#if !defined(Q_MOC_OUTPUT_REVISION) || (Q_MOC_OUTPUT_REVISION != 26)
+#error "This file was generated using the moc from 3.3.4. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+const char *QRCodeBox::className() const
+{
+    return "QRCodeBox";
+}
+
+QMetaObject *QRCodeBox::metaObj = 0;
+static QMetaObjectCleanUp cleanUp_QRCodeBox( "QRCodeBox", &QRCodeBox::staticMetaObject );
+
+#ifndef QT_NO_TRANSLATION
+QString QRCodeBox::tr( const char *s, const char *c )
+{
+    if ( qApp )
+	return qApp->translate( "QRCodeBox", s, c, QApplication::DefaultCodec );
+    else
+	return QString::fromLatin1( s );
+}
+#ifndef QT_NO_TRANSLATION_UTF8
+QString QRCodeBox::trUtf8( const char *s, const char *c )
+{
+    if ( qApp )
+	return qApp->translate( "QRCodeBox", s, c, QApplication::UnicodeUTF8 );
+    else
+	return QString::fromUtf8( s );
+}
+#endif // QT_NO_TRANSLATION_UTF8
+
+#endif // QT_NO_TRANSLATION
+
+QMetaObject* QRCodeBox::staticMetaObject()
+{
+    if ( metaObj )
+	return metaObj;
+    QMetaObject* parentObject = QWidget::staticMetaObject();
+    static const QUParameter param_slot_0[] = {
+	{ 0, &static_QUType_ptr, "QTextParagraph", QUParameter::In }
+    };
+    static const QUMethod slot_0 = {"expandBlock", 1, param_slot_0 };
+    static const QUParameter param_slot_1[] = {
+	{ 0, &static_QUType_ptr, "QTextParagraph", QUParameter::In }
+    };
+    static const QUMethod slot_1 = {"collapseBlock", 1, param_slot_1 };
+    static const QUParameter param_slot_2[] = {
+	{ 0, &static_QUType_int, 0, QUParameter::In }
+    };
+    static const QUMethod slot_2 = {"broadcastTargetNode", 1, param_slot_2 };
+    static const QUParameter param_slot_3[] = {
+	{ "point", &static_QUType_varptr, "\x0e", QUParameter::In },
+	{ "line", &static_QUType_int, 0, QUParameter::In },
+	{ "col", &static_QUType_int, 0, QUParameter::In }
+    };
+    static const QUMethod slot_3 = {"listSgNodes", 3, param_slot_3 };
+    static const QUParameter param_slot_4[] = {
+	{ 0, &static_QUType_int, 0, QUParameter::In },
+	{ 0, &static_QUType_bool, 0, QUParameter::In }
+    };
+    static const QUMethod slot_4 = {"toolbarClicked", 2, param_slot_4 };
+    static const QMetaData slot_tbl[] = {
+	{ "expandBlock(QTextParagraph*)", &slot_0, QMetaData::Public },
+	{ "collapseBlock(QTextParagraph*)", &slot_1, QMetaData::Public },
+	{ "broadcastTargetNode(int)", &slot_2, QMetaData::Public },
+	{ "listSgNodes(const QPoint&,int,int)", &slot_3, QMetaData::Public },
+	{ "toolbarClicked(int,bool)", &slot_4, QMetaData::Public }
+    };
+    metaObj = QMetaObject::new_metaobject(
+	"QRCodeBox", parentObject,
+	slot_tbl, 5,
+	0, 0,
+#ifndef QT_NO_PROPERTIES
+	0, 0,
+	0, 0,
+#endif // QT_NO_PROPERTIES
+	0, 0 );
+    cleanUp_QRCodeBox.setMetaObject( metaObj );
+    return metaObj;
+}
+
+void* QRCodeBox::qt_cast( const char* clname )
+{
+    if ( !qstrcmp( clname, "QRCodeBox" ) )
+	return this;
+    if ( !qstrcmp( clname, "QRoseGroupWidget" ) )
+	return (QRoseGroupWidget*)this;
+    return QWidget::qt_cast( clname );
+}
+
+bool QRCodeBox::qt_invoke( int _id, QUObject* _o )
+{
+    switch ( _id - staticMetaObject()->slotOffset() ) {
+    case 0: expandBlock((QTextParagraph*)static_QUType_ptr.get(_o+1)); break;
+    case 1: collapseBlock((QTextParagraph*)static_QUType_ptr.get(_o+1)); break;
+    case 2: broadcastTargetNode((int)static_QUType_int.get(_o+1)); break;
+    case 3: listSgNodes((const QPoint&)*((const QPoint*)static_QUType_ptr.get(_o+1)),(int)static_QUType_int.get(_o+2),(int)static_QUType_int.get(_o+3)); break;
+    case 4: toolbarClicked((int)static_QUType_int.get(_o+1),(bool)static_QUType_bool.get(_o+2)); break;
+    default:
+	return QWidget::qt_invoke( _id, _o );
+    }
+    return TRUE;
+}
+
+bool QRCodeBox::qt_emit( int _id, QUObject* _o )
+{
+    return QWidget::qt_emit(_id,_o);
+}
+#ifndef QT_NO_PROPERTIES
+
+bool QRCodeBox::qt_property( int id, int f, QVariant* v)
+{
+    return QWidget::qt_property( id, f, v);
+}
+
+bool QRCodeBox::qt_static_property( QObject* , int , int , QVariant* ){ return FALSE; }
+#endif // QT_NO_PROPERTIES

@@ -1,0 +1,138 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionType
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgFunctionType
+\brief This class represents a type for all functions.
+   Note that covariant return types of virtual functions are permited in C++,
+thus this class has explicit support for the function return type and the 
+original function's return type.
+\internal This type is derived from to build member function types
+    (SgMemberFunctionType), partial function types (SgPartialFunctionType),
+    and also (SgPartialFunctionModifierType and SgUnknownMemberFunctionType).
+\sa
+\ref SgFunctionType_usage  "Example of using a SgFunctionType object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionType data members
+/////////////////////////////////////////////////////////////////////////
+/*! \var SgBasicBlock::p_argument_list
+\brief This points to the SgTypes used in the function's parameter list.
+*/
+/*! \var SgBasicBlock::p_orig_return_type
+\brief This points to the SgType of the original function type's return type.
+*/
+/*! \var SgBasicBlock::p_return_type
+\brief This points to the SgType of the current function type's return type.
+*/
+/*! \var SgBasicBlock::p_has_ellipses
+\brief This boolean variable is true if the function use the "..." type 
+   (support for variable number of parameters).
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFunctionType member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgFunctionType::~SgFunctionType()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgFunctionType::isSgFunctionType (SgNode *s)
+\brief Cast function (from derived class to SgFunctionType pointer).
+   This functions returns a SgFunctionType pointer for any input of a 
+pointer to an object derived from a SgFunctionType.
+\return Returns valid pointer to SgFunctionType if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgFunctionType::isSgFunctionType (const SgNode *s)
+\brief Cast function (from derived class to SgFunctionType pointer).
+   This functions returns a SgFunctionType pointer for any input of a 
+pointer to an object derived from a SgFunctionType.
+\return Returns valid pointer to SgFunctionType if input is derived from a SgFunctionType node.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgType *SgFunctionType::p_orig_return_type
+*/
+/*!\var SgType *SgFunctionType::p_return_type
+*/
+/*!\var bool SgFunctionType::p_has_ellipses
+*/
+/*!\var SgFunctionParameterTypeList *SgFunctionType::p_argument_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgFunctionType::SgFunctionType(SgPartialFunctionType *)
+\brief This is the constructor.
+   This constructor builds the SgFunctionType base class.
+\sa 
+\ref SgFunctionType_create "Example:create an SgFunctionType object"
+*/
+/*!\fn SgFunctionType::SgFunctionType(const SgFunctionTypeStorageClass &source)
+*/
+/*!\fn inline static void SgFunctionType::operator delete(void *pointer)
+*/
+/*!\fn static SgFunctionType *SgFunctionType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFunctionType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFunctionType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFunctionType::initializeStorageClassArray(SgFunctionTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgFunctionType::clearMemoryPool()
+*/
+/*!\fn static void SgFunctionType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFunctionType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgFunctionType::roseRTI()
+*/
+/*!\fn virtual SgFunctionType::~SgFunctionType()
+*/
+/*!\fn virtual SgNode *SgFunctionType::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgFunctionType::set_argument_list(SgFunctionParameterTypeList *argument_list)
+\description See  *argument_list)
+argument_list for documentation */
+/*!\fn void SgFunctionType::set_has_ellipses(bool has_ellipses)
+\description See  has_ellipses)
+has_ellipses for documentation */
+/*!\fn void SgFunctionType::set_orig_return_type(SgType *orig_return_type)
+\description See  *orig_return_type)
+orig_return_type for documentation */
+/*!\fn void SgFunctionType::set_return_type(SgType *return_type)
+\description See  *return_type)
+return_type for documentation */
+/*!\fn SgFunctionParameterTypeList *SgFunctionType::get_argument_list() const
+\description See  const
+argument_list for documentation */
+/*!\fn SgType *SgFunctionType::get_orig_return_type() const
+\description See  const
+orig_return_type for documentation */
+/*!\fn SgType *SgFunctionType::get_return_type() const
+\description See  const
+return_type for documentation */
+/*!\fn bool SgFunctionType::get_has_ellipses() const
+\description See  const
+has_ellipses for documentation */
+/*!\fn virtual SgNode *SgFunctionType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgFunctionType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFunctionType::get_numberOfTraversalSuccessors()
+\description See  SgFunctionType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFunctionType::get_traversalSuccessorContainer()
+\description See  SgFunctionType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFunctionType::get_traversalSuccessorNamesContainer()
+\description See  SgFunctionType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFunctionType::SgFunctionType(SgType *return_type=(0),bool has_ellipses=(1))
+*/
+//@}
+int SAGE_Doxygen_Dummy_2152459417970;

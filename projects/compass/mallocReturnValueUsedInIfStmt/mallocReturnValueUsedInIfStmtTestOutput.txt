@@ -1,0 +1,1 @@
+MallocReturnValueUsedInIfStmt: mallocReturnValueUsedInIfStmtTest1.C:5.21-26: SgFunctionRefExp: This checker checks if the return value of calling malloc is part of an If-Statement conditional test.

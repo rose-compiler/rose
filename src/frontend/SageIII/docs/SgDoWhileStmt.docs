@@ -1,0 +1,156 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDoWhileStmt
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgDoWhileStmt
+\brief This class represents the concept of a do-while statement.
+\internal 
+\todo The conditional test should be an expression (different from a SgWhileStmt),
+      see test2005_114.C for examples and details.
+*/
+/*
+\sa
+\ref SgDoWhileStmt_usage  "Example of using a SgDoWhileStmt object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDoWhileStmt data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgDoWhileStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgDoWhileStmt_create "Example:create an SgDoWhileStmt object"
+*/
+/*!
+\fn SgDoWhileStmt::~SgDoWhileStmt()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgDoWhileStmt::isSgDoWhileStmt (SgNode *s)
+\brief Cast function (from derived class to SgDoWhileStmt pointer).
+   This functions returns a SgDoWhileStmt pointer for any input of a 
+pointer to an object derived from a SgDoWhileStmt.
+\return Returns valid pointer to SgDoWhileStmt if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgDoWhileStmt::isSgDoWhileStmt (const SgNode *s)
+\brief Cast function (from derived class to SgDoWhileStmt pointer).
+   This functions returns a SgDoWhileStmt pointer for any input of a 
+pointer to an object derived from a SgDoWhileStmt.
+\return Returns valid pointer to SgDoWhileStmt if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgBasicBlock *SgDoWhileStmt::p_body
+\brief This pointer a SgBasicBlock, and holds the statements in the body of the loop.
+*/
+/*! \var SgStatement *SgDoWhileStmt::p_condition
+\brief This pointer a SgStatement, the conditional expression in the loop construct.
+\todo This should be changed to be a SgExpression (to follow the C++ standard).
+    We also have the condition specified before the body within the ROSETTA
+    specification and this causes the traversal to travers the condition and body in the
+    wrong order (for do-while, the traversal should be body forst and condition second).
+    See test2005_114.C for more details and example code (example of strange loops).
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDoWhileStmt::SgDoWhileStmt(Sg_File_Info *startOfConstruct,SgBasicBlock *body=(0),SgStatement *condition=(0))
+*/
+/*!
+\fn SgDoWhileStmt::SgDoWhileStmt(const SgDoWhileStmtStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgDoWhileStmt base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn inline static void SgDoWhileStmt::operator delete(void *pointer)
+*/
+/*!\fn static SgDoWhileStmt *SgDoWhileStmt::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDoWhileStmt::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDoWhileStmt::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDoWhileStmt::initializeStorageClassArray(SgDoWhileStmtStorageClass *storageArray)
+*/
+/*!\fn static void SgDoWhileStmt::clearMemoryPool()
+*/
+/*!\fn static void SgDoWhileStmt::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDoWhileStmt::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgDoWhileStmt::roseRTI()
+*/
+/*!\fn virtual SgDoWhileStmt::~SgDoWhileStmt()
+*/
+/*!
+\fn virtual SgNode *SgDoWhileStmt::copy(SgCopyHelp &help) const
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+\return Returns pointer to copy of SgDoWhileStmt.
+*/
+/*!\fn virtual bool SgDoWhileStmt::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual bool SgDoWhileStmt::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgDoWhileStmt::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgDoWhileStmt::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgDoWhileStmt::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgDoWhileStmt::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgDoWhileStmt::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgDoWhileStmt::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgDoWhileStmt::post_construction_initialization()
+*/
+/*!
+\fn void SgDoWhileStmt::set_body(SgBasicBlock *body)
+\brief Access function for p_body.
+See  *body)
+body for documentation \param body SgBasicBlock pointer
+\return Returns void.
+*/
+/*!
+\fn void SgDoWhileStmt::set_condition(SgStatement *condition)
+\brief Access function for p_condition.
+See  *condition)
+condition for documentation \param condition SgStatement pointer
+\return Returns void.
+*/
+/*!
+\fn SgBasicBlock *SgDoWhileStmt::get_body() const
+\brief Access function for p_body.
+See  const
+body for documentation \return Returns a pointer to a SgBasicBlock.
+*/
+/*!
+\fn SgStatement *SgDoWhileStmt::get_condition() const
+\brief Access function for p_condition.
+See  const
+condition for documentation \return Returns a pointer to a SgStatement.
+*/
+/*!\fn virtual SgName SgDoWhileStmt::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgDoWhileStmt::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgDoWhileStmt::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDoWhileStmt::get_numberOfTraversalSuccessors()
+\description See  SgDoWhileStmt::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDoWhileStmt::get_traversalSuccessorContainer()
+\description See  SgDoWhileStmt::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDoWhileStmt::get_traversalSuccessorNamesContainer()
+\description See  SgDoWhileStmt::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgDoWhileStmt::SgDoWhileStmt(SgBasicBlock *body,SgStatement *condition)
+*/
+//@}
+int SAGE_Doxygen_Dummy_296603102419590;

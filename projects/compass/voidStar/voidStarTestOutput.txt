@@ -1,0 +1,1 @@
+VoidStar: voidStarTest1.C:3.3-26: SgMemberFunctionDeclaration: Public method getPointer uses void* parameters or return type.

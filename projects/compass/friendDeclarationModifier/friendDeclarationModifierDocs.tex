@@ -1,0 +1,78 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Friend Declaration Modifier}
+\label{FriendDeclarationModifier::overview}
+
+{\it The Elements of C++ Style} item \#96 states that
+\begin{quote}
+Friend declarations are often indicative of poor design because they bypass access restrictions and hide dependencies between classes and functions.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked with a simple AST traversal that seeks declaration statements and determines if any use the ``friend'' modifier keyword. Any declaration statements found with the ``friend'' modifier are flagged as violations.
+
+\subsection{Non-Compliant Code Example}
+This non-compliant example uses ``friend'' to access private data.
+
+\begin{verbatim}
+class Class
+{
+  int privateData;
+  friend int foo( Class & c );
+
+  public:
+    Class(){ privateData=0; }
+}; //class Class
+
+int foo( Class & c )
+{
+  return c.privateData + 1;
+} //foo( Class & c )
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution simply uses an accessor function instead.
+
+\begin{verbatim}
+class Class
+{
+  int privateData;
+
+  public:
+    Class(){ privateData=0; }
+    int getPrivateData(){ return privateData; }
+}; //class Class
+
+int foo( Class & c )
+{
+  return c.getPrivateData() + 1;
+} //foo( Class & c )
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal and visit all declaration statement nodes
+\item For each declaration statement check the ``friend'' modifier. If ``friend'' modifier is set then flag violation.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+
+Bumgardner G., Gray A., and Misfeldt T. {\it The Elements of C++ Style}. Cambridge University Press 2004.

@@ -1,0 +1,66 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Explicit Copy}
+
+\label{ExplicitCopy::overview}
+
+   This test detects missing copy constructors and operators. In case
+the user wants to use the default ones then the class has to be
+annotated with a special comment. These comments should contain
+``\texttt{use default copy constructor}'' or ``\texttt{use default
+copy operator}''.
+
+This checker enforces the rule 53 from H. Sutter, A. Alexandrescu
+\emph{C++ Coding Standards}: ``Explicitly enable or disable copying''.
+
+
+\subsection{Parameter Requirements}
+
+   No parameter is required.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+class A {
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+class A {
+public:
+  A(const A& other) {
+
+  }
+  A& operator=(const A& other) {
+    return this;
+  }
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis}
+
+Compliance with this rule can be checked using structural static
+analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For all class definitions, try to find a copy constructor
+and a copy operator, or user comments describing that the class should
+use the default ones.
+\end{enumerate}
+
+\subsection{References}
+
+Alexandrescu A. and Sutter H. {\it C++ Coding Standards 101 Rules, Guidelines, and Best Practices}. Addison-Wesley 2005.

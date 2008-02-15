@@ -1,0 +1,6 @@
+BLOCK DATA abc
+    IMPLICIT NONE
+!   COMMON /PAIR/ X, Y
+    REAL :: X, Y
+!   DATA X, Y /1, -1/
+END BLOCK DATA

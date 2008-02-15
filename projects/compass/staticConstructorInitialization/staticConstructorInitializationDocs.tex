@@ -1,0 +1,49 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Static Constructor Initialization}
+
+\label{StaticConstructorInitialization::overview}
+
+\quote{Namespace: \texttt{StaticConstructorInitialization}}
+
+\subsection{Introduction}
+
+   Static constructor initialization is a common portability bug for large
+scale applications; this detector finds these and reports the locations.
+This test locates where static initialization would force constructors to be called
+(i.e. for classes).  When this happens the order can be dependent upon the compiler
+and is typically different across different compiler and versions of compilers.  The
+result is that subtle dependences can be broken which are a frequent portability problem
+for large scale applications.
+
+The reference for this checker is: \\
+   This test was a special request from a LLNL code team.
+
+\subsection{Parameter Requirements}
+
+   This test requires no input parameters.
+
+\subsection{Implementation}
+
+    This pattern is detected using a simple traversal without inherited 
+or synthesized attributes.  The implementation does not yet look behind typedefs to
+identify more complex cases where static constructor initiaization might be hidden,
+it is not yet clear if typedefs can hide such cases and so this detector requires
+more testing.
+
+\subsection{Example of Failing Output Code}
+
+     See example: tests/staticConstructorInitializationDetectorTest.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+\codeFontSize{
+\lstinputlisting{\ExampleDirectory/../staticConstructorInitialization/staticConstructorInitializationTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

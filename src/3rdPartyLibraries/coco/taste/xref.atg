@@ -1,0 +1,102 @@
+/**********************************************************
+**   XREF.ATG
+**   Coco/R C Taste Cross-reference Generator Example.
+**   Adapted to C++ by Frankie Arzu <farzu@uvg.edu.gt>
+**      from Moessenboeck's (1990) Oberon example
+**
+**   May 24, 1996  Version 1.06
+**   Oct 11, 1997  Version 1.07 (No change)
+**   Mar 31, 1998  Version 1.08 (No change)
+**********************************************************/
+
+$C /* Generate Main module */
+
+COMPILER XRef
+/* Taste cross reference generator */
+
+#include "crossref.h"
+#define  APPLIED  0
+#define  DEFINED  1
+
+static  char Name[15];
+
+/*------------------------------------------------------------------------*/
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit  = "0123456789" .
+  cr     = CHR(13) .
+  lf     = CHR(10) .
+  tab    = CHR(9) .
+
+TOKENS
+  ident  = letter {letter | digit} .
+  number = digit {digit} .
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+
+  XRef =                          (. Create(); .)
+   "PROGRAM" Ident                (. Add(Name, S_Line, DEFINED); .)
+    ";" Body Ident                (. Add(Name, S_Line, APPLIED); .)
+    "." .
+
+  Body
+  =
+    { "VAR"
+      { Ident ":"                 (. Add(Name, S_Line, DEFINED); .)
+        TypeId ";" }
+
+    | "PROCEDURE" Ident           (. Add(Name, S_Line, DEFINED); .)
+      ";" Body
+      Ident                       (. Add(Name, S_Line, APPLIED); .)
+      ";"
+    }
+    "BEGIN" StatSeq "END" .
+
+  TypeId =  "INTEGER"             (. Add("INTEGER", S_Line, APPLIED); .)
+           | "BOOLEAN"            (. Add("BOOLEAN", S_Line, APPLIED); .).
+
+  Ident = ident                   (. LexName(Name, sizeof(Name)-1); .) .
+
+  StatSeq = Stat {";" Stat} .
+
+  Stat
+  = [ Ident                       (. Add(Name, S_Line, APPLIED); .)
+      ( ":=" Expression | )
+    | "IF" Expression
+      "THEN" StatSeq
+      [ "ELSE" StatSeq ]
+      "END"
+    | "WHILE" Expression
+      "DO" StatSeq "END"
+    | "READ" Ident                (. Add(Name, S_Line, APPLIED); .)
+    | "WRITE" Expression
+    ] .
+
+  Expression = SimExpr [ RelOp SimExpr ] .
+
+  SimExpr = Term { AddOp Term } .
+
+  Term = Factor { MulOp Factor } .
+
+  Factor
+      = ( Ident                   (. Add(Name, S_Line, APPLIED); .)
+          | "TRUE"                (. Add("TRUE", S_Line, APPLIED); .)
+          | "FALSE"               (. Add("FALSE", S_Line, APPLIED); .)
+          | number | "-" Factor
+        ) .
+
+  MulOp = "*" | "/" .
+
+  AddOp =  "+" | "-" .
+
+  RelOp = "=" | "<" | ">"  .
+
+END XRef.
+
+
+

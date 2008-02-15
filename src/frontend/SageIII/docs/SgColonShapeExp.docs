@@ -1,0 +1,52 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgColonShapeExp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgColonShapeExp::SgColonShapeExp(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgColonShapeExp::SgColonShapeExp(const SgColonShapeExpStorageClass &source)
+*/
+/*!\fn inline static void SgColonShapeExp::operator delete(void *pointer)
+*/
+/*!\fn static SgColonShapeExp *SgColonShapeExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgColonShapeExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgColonShapeExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgColonShapeExp::initializeStorageClassArray(SgColonShapeExpStorageClass *storageArray)
+*/
+/*!\fn static void SgColonShapeExp::clearMemoryPool()
+*/
+/*!\fn static void SgColonShapeExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgColonShapeExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgColonShapeExp::roseRTI()
+*/
+/*!\fn virtual SgColonShapeExp::~SgColonShapeExp()
+*/
+/*!\fn virtual SgNode *SgColonShapeExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgColonShapeExp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgColonShapeExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgColonShapeExp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgColonShapeExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgColonShapeExp::get_numberOfTraversalSuccessors()
+\description See  SgColonShapeExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgColonShapeExp::get_traversalSuccessorContainer()
+\description See  SgColonShapeExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgColonShapeExp::get_traversalSuccessorNamesContainer()
+\description See  SgColonShapeExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgColonShapeExp::SgColonShapeExp()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_445696814;

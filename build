@@ -1,0 +1,37 @@
+#! /bin/sh
+
+# Debugging output is provided using the -x option as in "#! /bin/sh -x"
+
+# DQ (12/22/2005): remove the autoconf caches
+rm -rf autom4te.cache src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/autom4te.cache
+
+./makelinks
+
+# RV 9/14/2005 -- Upgrade of PDF library
+(cd src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv ; ./bootstrap)
+
+aclocal -I ./config -I ./acmacros || : exit 1
+
+# autoheader --warnings=obsolete,all || : exit 1
+autoheader || : exit 1
+
+# autoconf --warnings=syntax,obsolete,all || : exit 1
+autoconf || : exit 1
+
+# automake -a -c --include-deps --foreign --verbose || : exit 1
+# automake -a -c -i --foreign $AUTOMAKE_FLAGS || : exit 1
+# automake -a -c -i --foreign |& grep -v "is not a standard library name" || : exit 1
+# automake -a -c -i --foreign || : exit 1
+automake -a -c -i --foreign 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
+
+# Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
+touch stamp-h.in  || : exit 1
+touch stamp-h1.in || : exit 1
+
+echo "***** BUILD TERMINATED NORMALLY *****"
+
+# run build or better yet RUN_ME_AFTER_CHECKOUT.sh
+# echo "Call tests/performanceTests/BenchmarkBase/RUN_ME_AFTER_CHECKOUT.sh ..."
+# cd tests/PerformanceTests/BenchmarkBase; RUN_ME_AFTER_CHECKOUT.sh; 
+# cd ../../..;
+

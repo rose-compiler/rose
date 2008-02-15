@@ -1,0 +1,55 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+CLASSNAME::CLASSNAME ( SgStatement* stmt )
+   : BASECLASSNAME ()
+   {
+     ROSE_ASSERT (stmt != NULL);
+
+  // setVariant ( CLASSNAME_TAG );
+  // setParseError(FALSE);
+     ROSE_Node::setUp (CLASSNAME_TAG,stmt);
+
+#if 0
+  // I don't think this is the correct test (just that there is a SgStatement is enough)
+     SgExprStatement* exprStmt = isSgExprStatement( stmt );
+     if (exprStmt != NULL)
+        {
+       // Found an expression Statement (that is the first step)
+          ROSE_ASSERT (exprStmt != NULL);
+          SgExpression *expr = exprStmt->get_the_expr();
+          ROSE_ASSERT (expr != NULL);
+
+          setVariant ( CLASSNAME_TAG );
+
+          setParseError(FALSE);
+        }
+       else
+        {
+          setParseError(TRUE);
+        }
+#endif
+   }
+
+ROSE_Node* CLASSNAME::transform()
+   {
+     printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+     ROSE_ABORT();
+
+     ROSE_ASSERT (!error());
+
+     return NULL;
+   }
+
+SgStatement* CLASSNAME::getSageStatement ()
+   {
+  // ROSE_ASSERT (!error());
+     return (SgStatement*) getSageSubTree(); 
+   }
+
+void CLASSNAME::setSageStatement ( SgStatement* stmt )
+   {
+     ROSE_ASSERT (stmt != NULL);
+     setSageSubTree(stmt);
+   }

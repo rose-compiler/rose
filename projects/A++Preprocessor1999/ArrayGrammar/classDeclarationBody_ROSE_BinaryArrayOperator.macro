@@ -1,0 +1,36 @@
+       // Special constructor for this class
+          CLASSNAME ( SgExpression* expr );
+
+       // Make this class an abstract base class so that we can be certain that
+       // we will not ever try to build one of these directly.
+          virtual ROSE_Node* transform() = 0;
+
+       // Member functions specific to CLASSNAME
+          virtual SgExpression* getLhsSageExpression();
+          virtual SgExpression* getRhsSageExpression();
+
+          virtual void setLhsSageExpression ( SgExpression* expr );
+          virtual void setRhsSageExpression ( SgExpression* expr );
+
+          virtual void setLhsRoseExpression ( ROSE_Expression* lhsExpr );
+          virtual void setRhsRoseExpression ( ROSE_Expression* rhsExpr );
+
+          virtual ROSE_Expression* getLhsRoseExpression ();
+          virtual ROSE_Expression* getRhsRoseExpression ();
+
+          void setSageBinaryOperator ( SgBinaryOp* newBinaryOperator );
+          SgBinaryOp* getSageBinaryOperator ();
+
+       // Make this a pure virtual function after we have it debugged!
+       // Also it might make more sense for this function to return a ROSE_Expression
+          virtual ROSE_Node* transform ( ROSE_Expression* lhs, ROSE_Expression* rhs );
+
+     protected:
+          SgBinaryOp* sageBinaryOperator;
+
+       // We should use the List mechanism in the base class ROSE_ArrayOperator
+       // ROSE_ArrayOperandExpression* roseLhsOperand;
+       // ROSE_ArrayExpression*        roseRhsExpression;
+
+
+

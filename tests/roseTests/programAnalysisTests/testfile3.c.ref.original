@@ -1,0 +1,22 @@
+a = 5.00000000000;
+modref:  a ;  readref:  ;  killref:  a
+i = 1;
+modref:  i ;  readref:  ;  killref:  i
+j = 0;
+modref:  j ;  readref:  ;  killref:  j
+b = 3.00000000000;
+modref:  b ;  readref:  ;  killref:  b
+for(j = i;j < a;j++) {b--;c--;for(int k =(2);k < j;k++) {#pragma startx += x * i;#pragma end}}
+modref:  j j b c  k x ;  readref:  i j a j b c k j k x x i ;  killref:  j j b c  k x
+j = i;
+modref:  j ;  readref:  i ;  killref:  j
+b--;
+modref:  b ;  readref:  b ;  killref:  b
+c--;
+modref:  c ;  readref:  c ;  killref:  c
+for(int k =(2);k < j;k++) {#pragma startx += x * i;#pragma end}
+modref:   k x ;  readref:  k j k x x i ;  killref:   k x
+x += x * i;
+modref:  x ;  readref:  x x i ;  killref:  x
+return 0;
+modref:  ;  readref:  ;  killref: 

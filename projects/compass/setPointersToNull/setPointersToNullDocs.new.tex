@@ -1,0 +1,94 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Set Pointers To Null}
+\label{SetPointersToNull::overview}
+
+% write your introduction
+Dangling pointers can lead to exploitable double-free and access-freed-memory
+vulnerabilities. A simple yet effective way to eliminate dangling pointers and
+avoid many memory related vulnerabilities is to set pointers to NULL after they
+have been freed. Calling free() on a NULL pointer results in no action being
+taken by free().
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameter specifications.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+In this example, the type of a message is used to determine how to process the
+message itself. It is assumed that message\_type is an integer and message is a
+pointer to an array of characters that were allocated dynamically. If
+message\_type equals value\_1, the message is processed accordingly. A similar
+operation occurs when message\_type equals value\_2. However, if message\_type
+== value\_1 evaluates to true and message\_type == value\_2 also evaluates to
+true, then message will be freed twice, resulting in an error.
+
+\begin{verbatim}
+
+if (message\_type == value\_1) {
+  /* Process message type 1 */
+  free(message);
+}
+/* ...*/
+if (message\_type == value\_2) {
+   /* Process message type 2 */
+  free(message);
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+As stated above, calling free() on a NULL pointer results in no action being
+taken by free(). By setting message equal to NULL after it has been freed, the
+double-free vulnerability has been eliminated.
+
+\begin{verbatim}
+
+if (message_type == value_1) {
+  /* Process message type 1 */
+  free(message);
+  message = NULL;
+}
+/* ...*/
+if (message_type == value_2) {
+  /* Process message type 2 */
+  free(message);
+  message = NULL;
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Write your checker algorithm
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+
+\htmladdnormallink{ISO/IEC 9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/MEM01-A.+Eliminate+dangling+pointers} MEM01-A. Eliminate dangling pointers

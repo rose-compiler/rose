@@ -1,0 +1,26 @@
+DATA_ACCESS_FUNCTION_START
+// *** DATA ACCESS FUNCTION SECTION BEGINS HERE ***
+
+$DATA_TYPE 
+$CLASSNAME::get_$DATA () const
+   {
+     assert (this != NULL);
+     if (get_$WRAP() == 0)
+         return  0;
+     return dynamic_cast<$DATA_TYPE>(get_$WRAP()->get_$WDATA());
+   }
+
+void
+$CLASSNAME::set_$DATA ( $DATA_TYPE $DATA )
+   {
+     assert (this != NULL);
+     if ( $DATA == NULL)
+          set_$WRAP(NULL);
+     else if (get_$WRAP() == NULL) 
+          set_$WRAP(new $WRAP_TYPE($DATA->get_file_info(), $DATA));
+     else
+          get_$WRAP()->set_$WDATA($DATA);
+   }
+
+// *** DATA ACCESS FUNCTION SECTION ENDS HERE ***
+DATA_ACCESS_FUNCTION_END

@@ -1,0 +1,2740 @@
+
+#include <rose.h>
+
+#include "CallGraph.h"
+
+// DQ (12/31/2005): This is OK if not declared in a header file
+using namespace std;
+
+bool 
+dummyFilter::operator() (SgFunctionDeclaration* node) const{
+  return true;
+};
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+Properties::Properties(){
+  functionType = NULL;
+  functionDeclaration = NULL;
+  invokedClass = NULL;
+  isPolymorphic = isPointer = false;
+};
+
+
+CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, SgType *ty,
+	        bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls )
+	   : GraphNode( NULL ), label( label )
+  {
+  hasDefinition = hasDef;
+  properties = new FunctionProperties();
+  properties->isPointer = isPtr;;
+  properties->isPolymorphic = isPoly;
+  properties->invokedClass = invokedCls;
+  if ( properties->isPolymorphic )
+    cout << "IsPolymorphic is set to true on "
+         << properties->invokedClass->get_qualified_name().getString() << "\n";
+  properties->functionDeclaration = fctDeclaration;
+  properties->functionType = ty;
+  if ( properties->functionDeclaration != NULL )
+    {
+       ROSE_ASSERT ( isSgFunctionDeclaration( properties->functionDeclaration ) );
+       ROSE_ASSERT ( ty && ty == properties->functionDeclaration->get_type()->findBaseType() );
+     }
+ }
+
+CallGraphNode::CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef ) : GraphNode ( NULL )
+ {
+   this->label = label;
+   properties = fctProps;
+   hasDefinition = hasDef;
+ }
+
+bool 
+CallGraphNode::isDefined () 
+ { 
+   return hasDefinition; 
+ }
+void 
+CallGraphNode::Dump() const 
+{ 
+   printf ("NODE: function declaration = %p label = %s \n", properties->functionDeclaration,label.c_str());
+}
+
+std::string 
+CallGraphNode::ToString() const 
+ { 
+   return label;
+ }
+
+
+CallGraphEdge::CallGraphEdge ( std::string label = "default edge" ) : GraphEdge( NULL ), label( label )
+ {
+   properties = new FunctionProperties();
+  
+ }
+
+void 
+CallGraphEdge::Dump() const 
+ { 
+   printf ("EDGE: label = %s \n",label.c_str()); 
+ }
+   
+std::string 
+CallGraphEdge::ToString() const 
+ { 
+   return label;
+ }
+
+
+bool 
+FunctionData::isDefined () 
+ { 
+   return hasDefinition; 
+ }
+
+
+#else
+CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, bool hasDef )
+	   : GraphNode(NULL), label(label), functionDeclaration(fctDeclaration) {
+   hasDefinition = hasDef;
+
+   // DQ (9/4/2005): This means nothing since it is set in the constructors preinitialization list! (noticed by the compiler in warning)
+	// if (fctDeclaration == NULL)
+	//   this->functionDeclaration == NULL;
+ }
+
+bool 
+CallGraphNode::isDefined () 
+ { 
+   return hasDefinition; 
+ }
+
+void 
+CallGraphNode::Dump() const 
+ { 
+   printf ("NODE: function declaration = %p label = %s \n",functionDeclaration,label.c_str()); 
+ }
+
+std::string 
+CallGraphNode::ToString() const 
+ { 
+   return label;
+ }
+
+
+CallGraphEdge::CallGraphEdge ( std::string label ) : GraphEdge( NULL ), label( label ) 
+  {};
+	 
+void 
+CallGraphEdge::Dump() const 
+  { 
+    printf ("EDGE: label = %s \n",label.c_str()); 
+  }
+
+std::string 
+CallGraphEdge::ToString() const 
+  { 
+    return label;
+  }
+
+bool 
+FunctionData::isDefined () 
+  { 
+    return hasDefinition; 
+  }
+
+#endif
+
+
+CallGraphBuilder::CallGraphBuilder( SgProject *proj )
+  {
+    project = proj;
+    graph = NULL;
+  }
+
+CallGraphCreate*
+CallGraphBuilder::getGraph() 
+  { 
+    return graph; 
+  }
+
+CallGraphDotOutput::CallGraphDotOutput( CallGraphCreate & graph ) : GraphDotOutput(graph), callGraph(graph) 
+  {}
+
+
+namespace CallTargetSet
+{
+
+
+	Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType ) 
+	{ 
+		Rose_STL_Container<SgFunctionDeclaration*> functionList;
+
+		SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
+		ROSE_ASSERT( fctDecl != NULL );
+		//if ( functionType == fctDecl->get_type() )
+		//Find all function declarations which is both first non-defining declaration and
+		//has a mangled name which is equal to the mangled name of 'functionType'
+		if( functionType->get_mangled().getString() == fctDecl->get_type()->get_mangled().getString() )
+		{
+			//ROSE_ASSERT( functionType->get_mangled().getString() == fctDecl->get_mangled().getString() );
+
+			SgFunctionDeclaration *nonDefDecl =
+				isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+
+			//The ROSE AST normalizes functions so that there should be a nondef function decl for
+			//every function
+			//ROSE_ASSERT( nonDefDecl != NULL );
+			if( fctDecl == nonDefDecl )
+				functionList.push_back( nonDefDecl );
+			else
+			    functionList.push_back( fctDecl );
+		}//else
+		//ROSE_ASSERT( functionType->get_mangled().getString() != fctDecl->get_type()->get_mangled().getString() );
+
+		return functionList; 
+	}
+
+
+
+	SgFunctionDeclarationPtrList
+		solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgProject *project )
+		{
+			SgFunctionDeclarationPtrList functionList;
+
+			SgFunctionType *fctType = isSgFunctionType( pointerDerefExp->get_type()->findBaseType() );
+			ROSE_ASSERT ( fctType );
+			ROSE_ASSERT ( project );
+			// SgUnparse_Info ui;
+			// string type1str = fctType->get_mangled( ui ).str();
+			string type1str = fctType->get_mangled().str();
+			cout << "Return type of function pointer " << type1str << "\n";
+
+			cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
+				" l" << pointerDerefExp->get_file_info()->get_line() << 
+				" c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
+			// getting all possible functions with the same type
+			// DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
+			// SgType *ty = Sgfunc_type_table.lookup_function_type( fctType->get_mangled( ui ) );
+			ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
+			// SgType *ty = SgNode::get_globalFunctionTypeTable()->lookup_function_type( fctType->get_mangled( ui ) );
+			// ROSE_ASSERT ( ty->get_mangled( ui ) == type1str );
+#if 0
+			//AS (10/02/06) This condition should not be necessary since types should be the same
+			//for functions that are of the same type.
+
+			SgType *ty = SgNode::get_globalFunctionTypeTable()->lookup_function_type( fctType->get_mangled() );
+			if( ty == NULL )
+			{
+				ty = fctType;
+			};
+			//AS (09/23/06) Had problems with:
+			//   void    hypre_PCGFunctionsCreate(
+			//		                             void (*CAlloc)        ( )
+			//					                             )
+			//	        {
+			//		                          CAlloc( );
+			//					     };
+			// FIXME: hypothesis is that if the type is not in the global function table the current type
+			// should be used. Maybe ty should be removed? I can not see that it is used anywhere later
+			// Why do we need to do this mangled name check? Isnt it obvious that it will always be correct?
+
+
+			ROSE_ASSERT ( ty->get_mangled() == type1str );
+#endif
+
+			// if there are multiple forward declarations of the same function
+			// there will be multiple nodes in the AST containing them
+			// but just one link in the call graph
+			//  list<SgNode *> fctDeclarationList = NodeQuery::querySubTree( project, V_SgFunctionDeclaration );
+			//AS (09/23/06) Query the memory pool instead of subtree of project
+			//AS (10/2/06)  Modified query to only query for functions or function templates
+			//VariantVector vv = V_SgFunctionDeclaration;
+			VariantVector vv;
+			vv.push_back(V_SgFunctionDeclaration);
+			vv.push_back(V_SgTemplateInstantiationFunctionDecl);
+
+			functionList =  AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType), &vv );
+			std::cout << "The size of the list: " << functionList.size() << std::endl;
+			return functionList;
+#if 0
+			functionList.clear();
+			AstQueryNamespace::DefaultNodeFunctional defFunc;
+			std::list<SgNode*> fctDeclarationList =  AstQueryNamespace::queryMemoryPool(defFunc, &vv );
+
+			//     #if 0 
+			for ( list<SgNode *>::iterator it = fctDeclarationList.begin(); it != fctDeclarationList.end(); it++ )
+			{
+				// disregarding member function declarations, we focus on regular functions
+				//AS (10/2/06)  Modified query to only query for functions or function templates
+				//if ( !isSgMemberFunctionDeclaration( *it ) ){
+				SgFunctionDeclaration *fctDecl = isSgFunctionDeclaration( *it );
+				SgType *possibleType = fctDecl->get_type();
+
+
+				// remove duplicates from the list of declarations
+				for ( list<SgNode *>::iterator it2 = it; it2 != fctDeclarationList.end(); )
+				{
+					SgFunctionDeclaration *fctDecl2 = isSgFunctionDeclaration( *it2 );
+					ROSE_ASSERT ( fctDecl && fctDecl2 );
+					if ( fctDecl->get_qualified_name().getString() + fctDecl->get_mangled_name().getString() ==
+							fctDecl2->get_qualified_name().getString() + fctDecl2->get_mangled_name().getString()
+							&& fctDecl != fctDecl2 )
+					{
+						list<SgNode *>::iterator temp = it2;
+						it2++;
+						fctDeclarationList.erase( temp );
+					}
+					else
+						it2++;
+				}
+
+				string type2str = possibleType->get_mangled().getString();
+				if ( type1str == type2str )
+				{
+					SgFunctionDeclaration *nonDefDecl =
+						isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+					if ( nonDefDecl )
+						functionList.push_back( nonDefDecl );
+					else
+						functionList.push_back( fctDecl );
+				}
+				//AS (10/2/06)  Modified query to only query for functions or function templates
+				//}
+			}
+			std::cout << "Size of List: " << functionList.size() << std::endl;
+			return functionList;
+#endif
+
+
+		}
+}
+
+
+namespace CallTargetSet
+{
+SgFunctionDeclarationPtrList
+solveMemberFunctionPointerCall ( SgExpression *functionExp, ClassHierarchyWrapper *classHierarchy )
+   {
+     SgBinaryOp *binaryExp = isSgBinaryOp( functionExp );
+     ROSE_ASSERT ( isSgArrowStarOp( binaryExp ) || isSgDotStarOp( binaryExp ) );//|| isSgArrowExp ( binaryExp ) || isSgDotExp ( binaryExp ) );
+
+     SgExpression *left = NULL, *right = NULL;
+     SgClassType *classType = NULL;
+     SgClassDefinition *classDefinition = NULL;
+     SgFunctionDeclarationPtrList functionList;
+     string type1str;
+     SgMemberFunctionType *memberFunctionType = NULL;
+
+     left  = binaryExp->get_lhs_operand();
+     right = binaryExp->get_rhs_operand();
+
+     printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
+     printf ("left  = %p = %s \n",left,left->class_name().c_str());
+     printf ("right = %p = %s \n",right,right->class_name().c_str());
+
+  // left side of the expression should have class type
+     classType = isSgClassType( left->get_type()->findBaseType() );
+     ROSE_ASSERT ( classType != NULL );
+     printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
+
+  // DQ (2/23/2006): bug fix
+  // classDefinition = isSgClassDeclaration( classType->get_declaration() )->get_definition();
+     ROSE_ASSERT ( classType->get_declaration() != NULL );
+     ROSE_ASSERT ( classType->get_declaration()->get_definingDeclaration() != NULL );
+     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classType->get_declaration()->get_definingDeclaration());
+     ROSE_ASSERT ( definingClassDeclaration != NULL );
+     classDefinition = definingClassDeclaration->get_definition();
+     ROSE_ASSERT ( classDefinition != NULL);
+
+  // right side of the expression should have member function type
+     memberFunctionType = isSgMemberFunctionType( right->get_type()->findBaseType() );
+     ROSE_ASSERT( memberFunctionType );
+     type1str = memberFunctionType->get_mangled().getString();
+
+     SgDeclarationStatementPtrList &allMembers = classDefinition->get_members();
+     for ( SgDeclarationStatementPtrList::iterator it = allMembers.begin(); it != allMembers.end(); it++ )
+        {
+          SgMemberFunctionDeclaration *memberFunctionDeclaration = isSgMemberFunctionDeclaration( *it );
+          if ( memberFunctionDeclaration )
+             {
+               SgMemberFunctionDeclaration *nonDefDecl = isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
+               if ( nonDefDecl )
+                    memberFunctionDeclaration = nonDefDecl;
+
+               SgType *possibleType = memberFunctionDeclaration->get_type();
+               string type2str = possibleType->get_mangled().getString();
+               if ( type1str == type2str )
+                  {
+                    if ( !(  memberFunctionDeclaration->get_functionModifier().isPureVirtual() ) )
+                         functionList.push_back( memberFunctionDeclaration );
+                 // cout << "PUSHING " << memberFunctionDeclaration << "\n";
+                  }
+
+            // for virtual functions in polymorphic calls, we need to search down in the hierarchy of classes
+            // and retrieve all declarations of member functions with the same type
+               if ( ( memberFunctionDeclaration->get_functionModifier().isVirtual() ||
+                      memberFunctionDeclaration->get_functionModifier().isPureVirtual() ) && !isSgThisExp( left ) )
+                  {
+                    SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( classDefinition );
+                    cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
+                    string name2 = memberFunctionDeclaration->get_qualified_name().getString() +
+                    memberFunctionDeclaration->get_mangled_name().getString();
+                    for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
+                       {
+                         SgClassDefinition *cls = isSgClassDefinition( *it_cls );
+                         SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+                         for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+                            {
+                              SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+                              string name3 = cls_mb_decl->get_qualified_name().getString() +
+                              cls_mb_decl->get_mangled_name().getString();
+                              string type3str = cls_mb_decl->get_type()->get_mangled().getString();
+                              if ( name2 == name3 )
+                                 {
+                                   SgMemberFunctionDeclaration *nonDefDecl = isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+                                   SgMemberFunctionDeclaration *defDecl = isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+                                   ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+
+                                   if ( nonDefDecl )
+                                      {
+                                        if ( !( nonDefDecl->get_functionModifier().isPureVirtual() ) && nonDefDecl->get_functionModifier().isVirtual() )
+                                             functionList.push_back( nonDefDecl );
+                                      }
+                                     else
+                                        if ( !( defDecl->get_functionModifier().isPureVirtual() ) && defDecl->get_functionModifier().isVirtual() )
+                                             functionList.push_back( defDecl ); // == cls_mb_decl
+                                 }
+                           }
+                       }
+                  }
+             }
+        }
+
+     cout << "Function list size: " << functionList.size() << "\n";
+     return functionList;
+   }
+
+/*
+FunctionProperties
+CallTargetSet::solveMemberFunctionPointerProperties ( SgExpression *functionExp )
+{
+  FunctionProperties fprops;
+  SgBinaryOp *binaryExp = isSgBinaryOp( functionExp );
+  ROSE_ASSERT ( isSgArrowStarOp( binaryExp ) || isSgDotStarOp( binaryExp ) );//|| isSgArrowExp ( binaryExp ) || isSgDotExp ( binaryExp ) );
+
+  SgExpression *left, *right;
+  SgClassType *classType;
+  string type1str;
+  SgMemberFunctionType *memberFunctionType;
+
+  left = binaryExp->get_lhs_operand();
+  right = binaryExp->get_rhs_operand();
+
+  // left side of the expression should have class type
+  classType = isSgClassType( left->get_type()->findBaseType() );
+  ROSE_ASSERT ( classType );
+  if ( !isSgThisExp( left ) )
+    {
+      fprops.invokedClass = isSgClassDeclaration( classType->get_declaration() )->get_definition();
+      fprops.isPolymorphic = true;
+    }
+  else
+    {
+      fprops.invokedClass = NULL;
+      fprops.isPolymorphic = false;
+    }
+
+  memberFunctionType = isSgMemberFunctionType( right->get_type()->findBaseType() );
+  ROSE_ASSERT( memberFunctionType );
+
+  fprops.isPointer = true;
+  return fprops;
+}
+*/
+SgFunctionDeclarationPtrList
+solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
+						  SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic )
+{
+  SgFunctionDeclarationPtrList functionList;
+  ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
+  //  memberFunctionDeclaration->get_file_info()->display( "Member function we are considering" );
+
+  SgDeclarationStatement *nonDefDeclInClass = NULL;
+  nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+  SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+	   
+  // memberFunctionDeclaration is outside the class
+  if ( nonDefDeclInClass )
+    {
+      //      nonDefDeclInClass->get_file_info()->display( "found nondefining" );
+      functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+    }
+  // in class declaration, since there is no non-defining declaration
+  else
+    {
+      functionDeclarationInClass = memberFunctionDeclaration;
+      //      functionDeclarationInClass->get_file_info()->display("declaration in class already");
+    }
+
+  ROSE_ASSERT ( functionDeclarationInClass );
+  // we need the inclass declaration so we can determine if it is a virtual function
+  if ( functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic )
+    {
+      SgFunctionDefinition *functionDefinition = memberFunctionDeclaration->get_definition();
+
+      // if it's not pure virtual then
+      // the current function declaration is a candidate function to be called
+      if ( functionDefinition )
+	functionList.push_back( functionDeclarationInClass );
+      else
+	functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
+
+      // search down the class hierarchy to get
+      // all redeclarations of the current member function
+      // which may be the ones being called via polymorphism
+      SgClassDefinition *crtClsDef = NULL;
+      // selecting the root of the hierarchy
+      if ( crtClass )
+	{
+	  SgClassDeclaration *tmp = isSgClassDeclaration( crtClass->get_declaration() );
+	  ROSE_ASSERT ( tmp );
+	  SgClassDeclaration* tmp2 = isSgClassDeclaration(tmp->get_definingDeclaration());
+	  ROSE_ASSERT (tmp2);
+	  crtClsDef = tmp2->get_definition();
+	  ROSE_ASSERT ( crtClsDef );
+	}
+      else
+	{
+	  crtClsDef = isSgClassDefinition( memberFunctionDeclaration->get_scope() );
+	  ROSE_ASSERT ( crtClsDef );
+	}
+
+      // for virtual functions, we need to search down in the hierarchy of classes
+      // and retrieve all declarations of member functions with the same type
+      SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( crtClsDef );
+      functionDeclarationInClass = NULL;
+      string f1 = memberFunctionDeclaration->get_mangled_name().str();
+      string f2;
+      for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
+	{
+	  SgClassDefinition *cls = isSgClassDefinition( *it_cls );
+	  SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+	  for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+	    {
+	      SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+
+	      f2 = cls_mb_decl->get_mangled_name().str();
+	      if ( f1 == f2 )
+		{
+		  SgMemberFunctionDeclaration *nonDefDecl =
+		    isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+		  SgMemberFunctionDeclaration *defDecl =
+		    isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+		  ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+		  if ( nonDefDecl )
+		    functionDeclarationInClass = nonDefDecl;
+		  else
+		    functionDeclarationInClass = defDecl;
+		  ROSE_ASSERT ( functionDeclarationInClass );
+		  if ( !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
+		    functionList.push_back( functionDeclarationInClass );
+		}
+	    }
+	}
+    } // end if virtual
+  // non virtual (standard) member function or call not polymorphic (or both)
+  else
+    if ( functionDeclarationInClass->get_declarationModifier().get_storageModifier().isStatic() )
+      {
+	cout << "Found static function declaration called as member function " << functionDeclarationInClass << "\n";
+	exit( 1 );
+      }
+    else
+      {
+	// always pushing the in-class declaration, so we need to find that one
+	SgDeclarationStatement *nonDefDeclInClass = NULL;
+	nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+	SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+	
+	// memberFunctionDeclaration is outside the class
+	if ( nonDefDeclInClass )
+	  functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+	// in class declaration, since there is no non-defining declaration
+	else
+	  functionDeclarationInClass = memberFunctionDeclaration;
+	
+	ROSE_ASSERT ( functionDeclarationInClass );
+	//      			   cout << "Pushing non-virtual function declaration for function "
+	//<< functionDeclarationInClass->get_name().str() << "   " << functionDeclarationInClass << "\n";
+	functionList.push_back ( functionDeclarationInClass );
+      }
+  return functionList;
+}
+}
+	
+
+
+Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType ) 
+   { 
+     Rose_STL_Container<SgFunctionDeclaration*> functionList;
+
+     SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
+     ROSE_ASSERT( fctDecl != NULL );
+     //if ( functionType == fctDecl->get_type() )
+     //Find all function declarations which is both first non-defining declaration and
+     //has a mangled name which is equal to the mangled name of 'functionType'
+     if( functionType->get_mangled().getString() == fctDecl->get_type()->get_mangled().getString() )
+	{
+       //ROSE_ASSERT( functionType->get_mangled().getString() == fctDecl->get_mangled().getString() );
+
+	  SgFunctionDeclaration *nonDefDecl =
+		  isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+
+       //The ROSE AST normalizes functions so that there should be a nondef function decl for
+       //every function
+	  ROSE_ASSERT( nonDefDecl != NULL );
+	  if( fctDecl == nonDefDecl )
+	       functionList.push_back( nonDefDecl );
+	}//else
+           //ROSE_ASSERT( functionType->get_mangled().getString() != fctDecl->get_type()->get_mangled().getString() );
+
+     return functionList; 
+   }
+
+
+#if 0 
+	SgFunctionDeclarationPtrList
+CallGraphFunctionSolver::solveMemberFunctionPointerCall ( SgExpression *functionExp, ClassHierarchyWrapper *classHierarchy )
+   {
+     SgBinaryOp *binaryExp = isSgBinaryOp( functionExp );
+     ROSE_ASSERT ( isSgArrowStarOp( binaryExp ) || isSgDotStarOp( binaryExp ) );//|| isSgArrowExp ( binaryExp ) || isSgDotExp ( binaryExp ) );
+
+     SgExpression *left = NULL, *right = NULL;
+     SgClassType *classType = NULL;
+     SgClassDefinition *classDefinition = NULL;
+     SgFunctionDeclarationPtrList functionList;
+     string type1str;
+     SgMemberFunctionType *memberFunctionType = NULL;
+
+     left  = binaryExp->get_lhs_operand();
+     right = binaryExp->get_rhs_operand();
+
+     printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
+     printf ("left  = %p = %s \n",left,left->class_name().c_str());
+     printf ("right = %p = %s \n",right,right->class_name().c_str());
+
+  // left side of the expression should have class type
+     classType = isSgClassType( left->get_type()->findBaseType() );
+     ROSE_ASSERT ( classType != NULL );
+     printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
+
+  // DQ (2/23/2006): bug fix
+  // classDefinition = isSgClassDeclaration( classType->get_declaration() )->get_definition();
+     ROSE_ASSERT ( classType->get_declaration() != NULL );
+     ROSE_ASSERT ( classType->get_declaration()->get_definingDeclaration() != NULL );
+     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classType->get_declaration()->get_definingDeclaration());
+     ROSE_ASSERT ( definingClassDeclaration != NULL );
+     classDefinition = definingClassDeclaration->get_definition();
+     ROSE_ASSERT ( classDefinition != NULL);
+
+  // right side of the expression should have member function type
+     memberFunctionType = isSgMemberFunctionType( right->get_type()->findBaseType() );
+     ROSE_ASSERT( memberFunctionType );
+     type1str = memberFunctionType->get_mangled().getString();
+
+     SgDeclarationStatementPtrList &allMembers = classDefinition->get_members();
+     for ( SgDeclarationStatementPtrList::iterator it = allMembers.begin(); it != allMembers.end(); it++ )
+        {
+          SgMemberFunctionDeclaration *memberFunctionDeclaration = isSgMemberFunctionDeclaration( *it );
+          if ( memberFunctionDeclaration )
+             {
+               SgMemberFunctionDeclaration *nonDefDecl = isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
+               if ( nonDefDecl )
+                    memberFunctionDeclaration = nonDefDecl;
+
+               SgType *possibleType = memberFunctionDeclaration->get_type();
+               string type2str = possibleType->get_mangled().getString();
+               if ( type1str == type2str )
+                  {
+                    if ( !(  memberFunctionDeclaration->get_functionModifier().isPureVirtual() ) )
+                         functionList.push_back( memberFunctionDeclaration );
+                 // cout << "PUSHING " << memberFunctionDeclaration << "\n";
+                  }
+
+            // for virtual functions in polymorphic calls, we need to search down in the hierarchy of classes
+            // and retrieve all declarations of member functions with the same type
+               if ( ( memberFunctionDeclaration->get_functionModifier().isVirtual() ||
+                      memberFunctionDeclaration->get_functionModifier().isPureVirtual() ) && !isSgThisExp( left ) )
+                  {
+                    SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( classDefinition );
+                    cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
+                    string name2 = memberFunctionDeclaration->get_qualified_name().getString() +
+                    memberFunctionDeclaration->get_mangled_name().getString();
+                    for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
+                       {
+                         SgClassDefinition *cls = isSgClassDefinition( *it_cls );
+                         SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+                         for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+                            {
+                              SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+                              string name3 = cls_mb_decl->get_qualified_name().getString() +
+                              cls_mb_decl->get_mangled_name().getString();
+                              string type3str = cls_mb_decl->get_type()->get_mangled().getString();
+                              if ( name2 == name3 )
+                                 {
+                                   SgMemberFunctionDeclaration *nonDefDecl = isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+                                   SgMemberFunctionDeclaration *defDecl = isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+                                   ROSE_ASSERT ( !nonDefDecl && defDecl == cls_mb_decl || nonDefDecl == cls_mb_decl && nonDefDecl );
+
+                                   if ( nonDefDecl )
+                                      {
+                                        if ( !( nonDefDecl->get_functionModifier().isPureVirtual() ) && nonDefDecl->get_functionModifier().isVirtual() )
+                                             functionList.push_back( nonDefDecl );
+                                      }
+                                     else
+                                        if ( !( defDecl->get_functionModifier().isPureVirtual() ) && defDecl->get_functionModifier().isVirtual() )
+                                             functionList.push_back( defDecl ); // == cls_mb_decl
+                                 }
+                           }
+                       }
+                  }
+             }
+        }
+
+     cout << "Function list size: " << functionList.size() << "\n";
+     return functionList;
+   }
+
+
+
+
+
+SgFunctionDeclarationPtrList
+CallGraphFunctionSolver::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgProject *project )
+{
+  SgFunctionDeclarationPtrList functionList;
+
+  SgFunctionType *fctType = isSgFunctionType( pointerDerefExp->get_type()->findBaseType() );
+  ROSE_ASSERT ( fctType );
+  ROSE_ASSERT ( project );
+// SgUnparse_Info ui;
+// string type1str = fctType->get_mangled( ui ).str();
+  string type1str = fctType->get_mangled().str();
+  cout << "Return type of function pointer " << type1str << "\n";
+
+  cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
+	  " l" << pointerDerefExp->get_file_info()->get_line() << 
+	  " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
+  // getting all possible functions with the same type
+  // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
+  // SgType *ty = Sgfunc_type_table.lookup_function_type( fctType->get_mangled( ui ) );
+     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
+  // SgType *ty = SgNode::get_globalFunctionTypeTable()->lookup_function_type( fctType->get_mangled( ui ) );
+  // ROSE_ASSERT ( ty->get_mangled( ui ) == type1str );
+#if 0
+     //AS (10/02/06) This condition should not be necessary since types should be the same
+     //for functions that are of the same type.
+     
+     SgType *ty = SgNode::get_globalFunctionTypeTable()->lookup_function_type( fctType->get_mangled() );
+     if( ty == NULL )
+	  {
+	    ty = fctType;
+	  };
+  //AS (09/23/06) Had problems with:
+  //   void    hypre_PCGFunctionsCreate(
+  //		                             void (*CAlloc)        ( )
+  //					                             )
+  //	        {
+  //		                          CAlloc( );
+  //					     };
+  // FIXME: hypothesis is that if the type is not in the global function table the current type
+  // should be used. Maybe ty should be removed? I can not see that it is used anywhere later
+  // Why do we need to do this mangled name check? Isnt it obvious that it will always be correct?
+     
+     
+     ROSE_ASSERT ( ty->get_mangled() == type1str );
+#endif
+     
+  // if there are multiple forward declarations of the same function
+  // there will be multiple nodes in the AST containing them
+  // but just one link in the call graph
+//  list<SgNode *> fctDeclarationList = NodeQuery::querySubTree( project, V_SgFunctionDeclaration );
+     //AS (09/23/06) Query the memory pool instead of subtree of project
+     //AS (10/2/06)  Modified query to only query for functions or function templates
+     //VariantVector vv = V_SgFunctionDeclaration;
+     VariantVector vv;
+     vv.push_back(V_SgFunctionDeclaration);
+     vv.push_back(V_SgTemplateInstantiationFunctionDecl);
+
+     functionList =  AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType), &vv );
+     std::cout << "The size of the list: " << functionList.size() << std::endl;
+     return functionList;
+}
+
+SgFunctionDeclarationPtrList
+CallGraphFunctionSolver::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
+						  SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic )
+{
+  SgFunctionDeclarationPtrList functionList;
+  ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
+  //  memberFunctionDeclaration->get_file_info()->display( "Member function we are considering" );
+
+  SgDeclarationStatement *nonDefDeclInClass = NULL;
+  nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+  SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+	   
+  // memberFunctionDeclaration is outside the class
+  if ( nonDefDeclInClass )
+    {
+      //      nonDefDeclInClass->get_file_info()->display( "found nondefining" );
+      functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+    }
+  // in class declaration, since there is no non-defining declaration
+  else
+    {
+      functionDeclarationInClass = memberFunctionDeclaration;
+      //      functionDeclarationInClass->get_file_info()->display("declaration in class already");
+    }
+
+  ROSE_ASSERT ( functionDeclarationInClass );
+  // we need the inclass declaration so we can determine if it is a virtual function
+  if ( functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic )
+    {
+      SgFunctionDefinition *functionDefinition = memberFunctionDeclaration->get_definition();
+
+      // if it's not pure virtual then
+      // the current function declaration is a candidate function to be called
+      if ( functionDefinition )
+	functionList.push_back( functionDeclarationInClass );
+      else
+	functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
+
+      // search down the class hierarchy to get
+      // all redeclarations of the current member function
+      // which may be the ones being called via polymorphism
+      SgClassDefinition *crtClsDef = NULL;
+      // selecting the root of the hierarchy
+      if ( crtClass )
+	{
+	  SgClassDeclaration *tmp = isSgClassDeclaration( crtClass->get_declaration() );
+	  ROSE_ASSERT ( tmp );
+	  crtClsDef = tmp->get_definition();
+	}
+      else
+	crtClsDef = isSgClassDefinition( memberFunctionDeclaration->get_scope() );
+      ROSE_ASSERT ( crtClsDef );
+
+      // for virtual functions, we need to search down in the hierarchy of classes
+      // and retrieve all declarations of member functions with the same type
+      SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( crtClsDef );
+      functionDeclarationInClass = NULL;
+      string f1 = memberFunctionDeclaration->get_mangled_name().str();
+      string f2;
+      for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
+	{
+	  SgClassDefinition *cls = isSgClassDefinition( *it_cls );
+	  SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+	  for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+	    {
+	      SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+
+	      f2 = cls_mb_decl->get_mangled_name().str();
+	      if ( f1 == f2 )
+		{
+		  SgMemberFunctionDeclaration *nonDefDecl =
+		    isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+		  SgMemberFunctionDeclaration *defDecl =
+		    isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+		  ROSE_ASSERT ( !nonDefDecl && defDecl == cls_mb_decl || nonDefDecl == cls_mb_decl && nonDefDecl );
+		  if ( nonDefDecl )
+		    functionDeclarationInClass = nonDefDecl;
+		  else
+		    functionDeclarationInClass = defDecl;
+		  ROSE_ASSERT ( functionDeclarationInClass );
+		  if ( !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
+		    functionList.push_back( functionDeclarationInClass );
+		}
+	    }
+	}
+    } // end if virtual
+  // non virtual (standard) member function or call not polymorphic (or both)
+  else
+    if ( functionDeclarationInClass->get_declarationModifier().get_storageModifier().isStatic() )
+      {
+	cout << "Found static function declaration called as member function " << functionDeclarationInClass << "\n";
+	exit( 1 );
+      }
+    else
+      {
+	// always pushing the in-class declaration, so we need to find that one
+	SgDeclarationStatement *nonDefDeclInClass = NULL;
+	nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+	SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+	
+	// memberFunctionDeclaration is outside the class
+	if ( nonDefDeclInClass )
+	  functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+	// in class declaration, since there is no non-defining declaration
+	else
+	  functionDeclarationInClass = memberFunctionDeclaration;
+	
+	ROSE_ASSERT ( functionDeclarationInClass );
+	//      			   cout << "Pushing non-virtual function declaration for function "
+	//<< functionDeclarationInClass->get_name().str() << "   " << functionDeclarationInClass << "\n";
+	functionList.push_back ( functionDeclarationInClass );
+      }
+  return functionList;
+}
+
+#endif
+
+
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
+			     SgProject *project, ClassHierarchyWrapper *classHierarchy )
+   {
+     hasDefinition = false;
+     properties = new FunctionProperties();
+     properties->functionDeclaration = inputFunctionDeclaration;
+     ROSE_ASSERT( properties->functionDeclaration != NULL );
+
+     properties->functionType = inputFunctionDeclaration->get_type()->findBaseType();
+     properties->invokedClass = NULL;
+     properties->isPointer = properties->isPolymorphic = false;
+     SgFunctionDeclaration *defDecl =
+       isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() );
+
+     //cout << "!!!" << inputFunctionDeclaration->get_name().str() << " has definition " << defDecl << "\n";
+     //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n"; 
+
+     // Test for a forward declaration (declaration without a definition)
+     if ( defDecl )
+       {
+	 SgFunctionDefinition* functionDefinition = defDecl->get_definition();
+	 ROSE_ASSERT ( functionDefinition != NULL );
+	 hasDefinition = true;
+	 Rose_STL_Container<SgNode*> functionCallExpList;
+	 functionCallExpList = NodeQuery::querySubTree ( functionDefinition, V_SgFunctionCallExp );
+	 
+	 // printf ("functionCallExpList.size() = %zu \n",functionCallExpList.size());
+	 
+	 // list<SgFunctionDeclaration*> functionList;
+	 Rose_STL_Container<SgNode*>::iterator i = functionCallExpList.begin();
+
+	  // for all functions getting called in the body of the current function
+	  // we need to get their declarations, or the set of declarations for
+	  // function pointers and virtual functions
+          while (i != functionCallExpList.end())
+             {
+	       FunctionProperties *fctProps = new FunctionProperties();
+	       fctProps->functionDeclaration = NULL;
+	       fctProps->functionType = NULL;
+	       fctProps->invokedClass = NULL;
+	       fctProps->isPointer = fctProps->isPolymorphic = false;
+
+               SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
+               ROSE_ASSERT ( functionCallExp != NULL );
+
+               SgExpression* functionExp = functionCallExp->get_function();
+               ROSE_ASSERT ( functionExp != NULL );
+
+	       switch ( functionExp->variantT() )
+		 {
+		 case V_SgArrowStarOp:
+		 case V_SgDotStarOp:
+		   {
+		     /*
+		     SgFunctionDeclarationPtrList fD =
+		       CallGraphFunctionSolver::solveMemberFunctionPointerCall( functionExp, classHierarchy );
+		     for ( SgFunctionDeclarationPtrList::iterator it = fD.begin(); it != fD.end(); it++ )
+		       {
+			 ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+			 functionList.push_back( *it );
+		       }
+		     */
+		     SgBinaryOp *binaryExp = isSgBinaryOp( functionExp );
+		     ROSE_ASSERT ( isSgArrowStarOp( binaryExp ) || isSgDotStarOp( binaryExp ) );//|| isSgArrowExp ( binaryExp ) || isSgDotExp ( binaryExp ) );
+
+		     SgExpression *left, *right;
+		     SgClassType *classType;
+ 
+		     left = binaryExp->get_lhs_operand();
+		     right = binaryExp->get_rhs_operand();
+		     // left side of the expression should have class type
+		     classType = isSgClassType( left->get_type()->findBaseType() );
+		     ROSE_ASSERT ( classType );
+		     if ( !isSgThisExp( left ) ||
+			  isSgPointerDerefExp( left ) && isSgThisExp( isSgPointerDerefExp( left )->get_operand() ))
+		       {
+			 fctProps->invokedClass = isSgClassDeclaration( classType->get_declaration() )->get_definition();
+			 fctProps->isPolymorphic = true;
+		       }
+		     else
+		       {
+			 fctProps->invokedClass = NULL;
+			 fctProps->isPolymorphic = false;
+		       }
+		     fctProps->functionDeclaration = NULL;
+		     fctProps->functionType = isSgMemberFunctionType( right->get_type()->findBaseType() );
+		     ROSE_ASSERT ( fctProps->functionType );
+		     fctProps->isPointer = true;
+		     functionList.push_back( fctProps );
+		   }
+		   break;
+		 case V_SgDotExp:
+		 case V_SgArrowExp:
+		   {
+		     SgMemberFunctionDeclaration *memberFunctionDeclaration = NULL;
+		     SgClassType *crtClass = NULL;
+		     fctProps->isPointer = false;
+		     ROSE_ASSERT ( isSgBinaryOp( functionExp ) );
+
+		     SgExpression *leftSide = isSgBinaryOp( functionExp )->get_lhs_operand();
+		     SgType *leftType = leftSide->get_type()->findBaseType();
+		     crtClass = isSgClassType( leftType );
+
+		     SgMemberFunctionRefExp *memberFunctionRefExp =
+		       isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() );
+		     memberFunctionDeclaration =
+		       isSgMemberFunctionDeclaration( memberFunctionRefExp->get_symbol()->get_declaration() );
+		     ROSE_ASSERT ( memberFunctionDeclaration && crtClass );
+		     SgMemberFunctionDeclaration *nonDefDecl =
+		       isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
+		     if ( nonDefDecl )
+		       memberFunctionDeclaration = nonDefDecl;
+
+		     fctProps->functionDeclaration = memberFunctionDeclaration;
+		     ROSE_ASSERT ( isSgFunctionDeclaration( memberFunctionDeclaration ) );
+		     fctProps->functionType = fctProps->functionDeclaration->get_type()->findBaseType();
+		     ROSE_ASSERT ( fctProps->functionType );
+		     if ( isSgThisExp( leftSide ) || !( memberFunctionDeclaration->get_functionModifier().isVirtual() ) )
+		       {
+			 fctProps->isPolymorphic = false;
+			 fctProps->invokedClass = NULL;
+		       }
+		     else
+		       {
+			 fctProps->isPolymorphic = true;
+			 fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration() )->get_definition();
+			 cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
+			      << "\t" << fctProps << "\n";
+		       }
+		     functionList.push_back( fctProps );
+		   }
+		   break;
+		 case V_SgPointerDerefExp:
+		   {
+		     fctProps->isPointer = true;
+		     fctProps->isPolymorphic = false;
+		     fctProps->invokedClass = NULL;
+		     fctProps->functionDeclaration = NULL; 
+		     fctProps->functionType =
+		       isSgFunctionType( isSgPointerDerefExp( functionExp )->get_type()->findBaseType() );
+		     ROSE_ASSERT ( fctProps->functionType );
+		     functionList.push_back( fctProps );
+		   }
+		   break;
+		 case V_SgMemberFunctionRefExp:
+		   {
+		     SgMemberFunctionDeclaration *mbFctDecl =
+		       isSgMemberFunctionRefExp( functionExp )->get_symbol()->get_declaration();
+		     ROSE_ASSERT ( mbFctDecl );
+		     SgMemberFunctionDeclaration *nonDefDecl =
+		       isSgMemberFunctionDeclaration( mbFctDecl->get_firstNondefiningDeclaration() );
+		     if ( nonDefDecl )
+		       mbFctDecl = nonDefDecl;
+		     ROSE_ASSERT( mbFctDecl );
+		     fctProps->functionDeclaration = mbFctDecl;
+		     fctProps->functionType = mbFctDecl->get_type()->findBaseType();
+		     ROSE_ASSERT ( fctProps->functionType );
+		     fctProps->isPointer = false;
+		     fctProps->isPolymorphic = false;
+		     fctProps->invokedClass = NULL;
+		     functionList.push_back( fctProps );
+
+		     /*
+		     functionList.push_back( mbFctDecl );
+		     */
+		   }
+		   break;
+		 case V_SgFunctionRefExp:
+		   {
+		     SgFunctionDeclaration *fctDecl =
+		       isSgFunctionDeclaration( isSgFunctionRefExp( functionExp )->get_symbol()->get_declaration() );
+		     ROSE_ASSERT ( fctDecl );
+		     SgFunctionDeclaration *nonDefDecl =
+		       isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+		     if ( nonDefDecl )
+		       fctProps->functionDeclaration = nonDefDecl;
+		     else
+		       fctProps->functionDeclaration = fctDecl;
+		     ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
+		     fctProps->functionType = fctProps->functionDeclaration->get_type()->findBaseType();
+		     ROSE_ASSERT ( fctProps->functionType );
+		     fctProps->isPointer = false;
+		     fctProps->isPolymorphic = false;
+		     fctProps->invokedClass = NULL;
+		     functionList.push_back( fctProps );
+		   }
+		   break;
+		 default:
+		   {
+		     cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
+		     ROSE_ASSERT ( false );
+		   }
+		 }
+	       ROSE_ASSERT ( !( fctProps->functionDeclaration ) || isSgFunctionDeclaration( fctProps->functionDeclaration ) );
+	       ROSE_ASSERT ( isSgType( fctProps->functionType ) );
+               i++;
+             }
+	}
+   }
+
+#else
+
+FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration, bool hasDef,
+			     SgProject *project, ClassHierarchyWrapper *classHierarchy )
+{
+  hasDefinition = hasDef;
+  functionDeclaration = inputFunctionDeclaration;
+  ROSE_ASSERT( functionDeclaration != NULL );
+  SgFunctionDeclaration *defDecl =
+    isSgFunctionDeclaration( functionDeclaration->get_definingDeclaration() );
+  
+  //cout << " " << functionDeclaration->get_name().str() << " has definition " << functionDefinition << "\n";
+  // cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n";
+  
+  // Test for a forward declaration (declaration without a definition)
+  if ( defDecl )
+    {
+      SgFunctionDefinition* functionDefinition = defDecl->get_definition();
+      ROSE_ASSERT ( functionDefinition != NULL );
+      Rose_STL_Container<SgNode*> functionCallExpList;
+      functionCallExpList = NodeQuery::querySubTree ( functionDefinition, V_SgFunctionCallExp );
+
+      // printf ("functionCallExpList.size() = %zu \n",functionCallExpList.size());
+
+      // list<SgFunctionDeclaration*> functionList;
+      Rose_STL_Container<SgNode*>::iterator i = functionCallExpList.begin();
+      
+      // for all functions getting called in the body of the current function
+      // we need to get their declarations, or the set of declarations for
+      // function pointers and virtual functions
+      while (i != functionCallExpList.end())
+	{
+	  SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(*i);
+	  ROSE_ASSERT ( functionCallExp != NULL );
+	  
+	  SgExpression* functionExp = functionCallExp->get_function();
+	  ROSE_ASSERT ( functionExp != NULL );
+	  //cout << "Function expression " << functionExp->sage_class_name() << "\n";
+	  
+	  switch ( functionExp->variantT() )
+	    {
+	    case V_SgArrowStarOp:
+	    case V_SgDotStarOp:
+	      {
+		SgFunctionDeclarationPtrList fD =
+		  CallTargetSet::solveMemberFunctionPointerCall( functionExp, classHierarchy );
+		for ( SgFunctionDeclarationPtrList::iterator it = fD.begin(); it != fD.end(); it++ )
+		  {
+		    ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+		    functionList.push_back( *it );
+		  }
+	      }
+	      break;
+	    case V_SgDotExp:
+	    case V_SgArrowExp:
+	      {
+		SgMemberFunctionDeclaration *memberFunctionDeclaration = NULL;
+		SgClassType *crtClass = NULL;
+		bool polymorphic = false;
+		
+		ROSE_ASSERT ( isSgBinaryOp( functionExp ) );
+		SgExpression *leftSide = isSgBinaryOp( functionExp )->get_lhs_operand();
+		if ( isSgThisExp( leftSide ) )
+		  polymorphic = false;
+		else
+		  polymorphic = true;
+		
+		SgMemberFunctionRefExp *memberFunctionRefExp =
+		  isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() );
+		SgType *leftType = leftSide->get_type();
+		leftType = leftType->findBaseType();
+
+		crtClass = isSgClassType( leftType );
+                //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
+                //return a type corresponding to an operator some-type() declared within the constructed class. An example is:
+                //   struct Foo {
+                //      operator  bool () const
+                //          { return true; }
+                //   };
+                //
+                //   struct Bar {
+                //      bool foobar()
+                //          { return Foo (); }
+                //   };
+                //where the call to the constructor of the class Foo will cause a call to the operator bool(), where bool corresponds
+                //type of the member function foobar declared within Bar.
+                if(isSgConstructorInitializer(leftSide)!= NULL){
+                     SgClassDeclaration* constInit = isSgConstructorInitializer(leftSide)->get_class_decl();
+
+                     //ROSE_ASSERT(constInit!=NULL);
+                     if(constInit)
+                        crtClass = constInit->get_type();
+                     else{
+                        //AS(010306) A compiler constructed SgConstructorInitializer may wrap a function call which return a class type.
+                        //In an dot or arrow expression this returned class type may be used as an expression left hand side. To handle
+                        //this case the returned class type must be extracted from the expression list. An example demonstrating this is:
+                        //class Vector3d {
+                        //   public:
+                        //    Vector3d(){};
+                        //    Vector3d(const Vector3d &vector3d){};
+                        //   Vector3d     cross() const
+                        //        { return Vector3d();};
+                        //   void   GetZ(){};
+                        //};
+                        //void foo(){
+                        //  Vector3d vn1;
+                        //  (vn1.cross()).GetZ();
+                        //}
+ 
+                        SgExprListExp* expLst = isSgExprListExp(isSgConstructorInitializer(leftSide)->get_args());
+                        ROSE_ASSERT(expLst!=NULL);
+                        ROSE_ASSERT(expLst->get_expressions().size()==1);
+                        SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type());
+                        
+                        crtClass = lhsClassType;
+                        }
+
+                        
+                        ROSE_ASSERT(crtClass!=NULL);
+                }
+		memberFunctionDeclaration =
+		  isSgMemberFunctionDeclaration( memberFunctionRefExp->get_symbol()->get_declaration() );
+		ROSE_ASSERT ( memberFunctionDeclaration && crtClass );
+                ROSE_ASSERT ( crtClass != NULL );
+	
+		// returns the list of all in-class declarations of functions potentially called
+		// ( may be several because of polymorphism )
+		SgFunctionDeclarationPtrList fD =
+		  CallTargetSet::solveMemberFunctionCall( crtClass, classHierarchy,
+								    memberFunctionDeclaration, polymorphic );
+		for ( SgFunctionDeclarationPtrList::iterator it = fD.begin(); it != fD.end(); it++ )
+		  {
+		    ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+		    functionList.push_back( *it );
+		  }
+	      }
+	      break;
+	    case V_SgPointerDerefExp:
+	      // function pointer:
+	      // a. can be returned by another function
+	      // b. can be pointed to by a variable
+	      {
+		SgFunctionDeclarationPtrList fD =
+		  CallTargetSet::solveFunctionPointerCall( isSgPointerDerefExp( functionExp ), project );
+		for ( SgFunctionDeclarationPtrList::iterator it = fD.begin(); it != fD.end(); it++ )
+		  {
+		    ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+		    functionList.push_back( *it );
+		  }
+	      }
+	      break;
+	    case V_SgMemberFunctionRefExp:
+	      {
+		SgMemberFunctionDeclaration *mbFctDecl =
+		  isSgMemberFunctionRefExp( functionExp )->get_symbol()->get_declaration();
+		ROSE_ASSERT ( mbFctDecl );
+		SgMemberFunctionDeclaration *nonDefDecl =
+		  isSgMemberFunctionDeclaration( mbFctDecl->get_firstNondefiningDeclaration() );
+		if ( nonDefDecl )
+		  mbFctDecl = nonDefDecl;
+		functionList.push_back( mbFctDecl );
+	      }
+	      break;
+	    case V_SgFunctionRefExp:
+	      {
+		//cout << "Member fct or fct ref\n";
+		SgFunctionDeclaration *fctDecl =
+		  isSgFunctionDeclaration( isSgFunctionRefExp( functionExp )->get_symbol()->get_declaration() );
+		ROSE_ASSERT ( fctDecl );
+		SgFunctionDeclaration *nonDefDecl =
+		  isSgFunctionDeclaration( fctDecl->get_firstNondefiningDeclaration() );
+		if ( nonDefDecl )
+		  functionList.push_back( nonDefDecl );
+		else
+		  functionList.push_back( fctDecl );
+	      }
+	      break;
+	    default:
+	      {
+		cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
+		ROSE_ASSERT ( false );
+	      }
+	    }
+	  i++;
+	}
+    }
+}
+#endif
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+// finds node based on address of function declaration
+CallGraphNode* 
+findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration )
+   {
+     Rose_STL_Container<CallGraphNode*>::iterator k = nodeList.begin();
+
+     CallGraphNode* returnNode = NULL;
+
+     bool found = false;
+     while ( !found && (k != nodeList.end()) )
+        {
+          if ( (*k)->properties->functionDeclaration == functionDeclaration )
+             {
+               returnNode = *k;
+               found = true;
+             }
+          k++;
+        }
+
+     if ( !returnNode )
+       cout << "NO node found for " << functionDeclaration->get_name().str() << "  " << functionDeclaration << "\n";
+     // ROSE_ASSERT (returnNode != NULL);
+     return returnNode;
+   }
+
+// finds node based on node label
+CallGraphNode* 
+findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, string name )
+   {
+     Rose_STL_Container<CallGraphNode*>::iterator k = nodeList.begin();
+
+     CallGraphNode* returnNode = NULL;
+
+     bool found = false;
+     while ( !found && (k != nodeList.end()) )
+        {
+          if ((*k)->label == name)
+             {
+               returnNode = *k;
+               found = true;
+             }
+          k++;
+        }
+
+     //ROSE_ASSERT (returnNode != NULL);
+     if ( !returnNode )
+       cout << "No node found for " << name << "\n";
+     return returnNode;
+   }
+
+
+#else
+
+CallGraphNode*
+findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration )
+   {
+     Rose_STL_Container<CallGraphNode*>::iterator k = nodeList.begin();
+
+     CallGraphNode* returnNode = NULL;
+
+     bool found = false;
+     while ( !found && (k != nodeList.end()) )
+        {
+          if ((*k)->functionDeclaration == functionDeclaration)
+             {
+               returnNode = *k;
+               found = true;
+             }
+          k++;
+        }
+
+     if ( !returnNode )
+       cout << "NO node found for " << functionDeclaration->get_name().str() << " " << functionDeclaration << "\n";
+     // ROSE_ASSERT (returnNode != NULL);
+     return returnNode;
+   }
+
+CallGraphNode*
+findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, string name )
+   {
+     Rose_STL_Container<CallGraphNode*>::iterator k = nodeList.begin();
+
+     CallGraphNode* returnNode = NULL;
+
+     bool found = false;
+     while ( !found && (k != nodeList.end()) )
+        {
+          if ((*k)->label == name)
+             {
+               returnNode = *k;
+               found = true;
+             }
+          k++;
+        }
+
+     //ROSE_ASSERT (returnNode != NULL);
+     if ( !returnNode )
+       cout << "No node found for " << name << "\n";
+     return returnNode;
+   }
+
+#endif
+
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+void
+CallGraphBuilder::buildCallGraph (){
+    buildCallGraph(dummyFilter());
+}
+
+template<typename Predicate>
+void
+CallGraphBuilder::buildCallGraph (Predicate pred)
+   {
+     Rose_STL_Container<FunctionData *> callGraphData;
+
+  //AS (09/23/06) Query the memory pool instead of subtree of project
+     VariantVector vv( V_SgFunctionDeclaration );
+     AstQueryNamespace::DefaultNodeFunctional defFunc;
+    Rose_STL_Container<SgNode *> functionList = NodeQuery::queryMemoryPool(defFunc, &vv );
+
+
+  //   list<SgNode *> functionList = NodeQuery::querySubTree ( project, V_SgFunctionDeclaration );
+     
+     ClassHierarchyWrapper classHierarchy( project );
+     Rose_STL_Container<SgNode *>::iterator i = functionList.begin();
+
+     printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
+
+     while ( i != functionList.end() )
+        {
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration( *i );
+          ROSE_ASSERT ( functionDeclaration != NULL );
+
+	  // determining the in-class declaration
+	  if ( isSgMemberFunctionDeclaration( functionDeclaration ) )
+	    {
+	      // always saving the in-class declaration, so we need to find that one
+	      SgDeclarationStatement *nonDefDeclInClass =
+		isSgMemberFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
+	      // functionDeclaration is outside the class (so it must have a definition)
+	      if ( nonDefDeclInClass )
+		  functionDeclaration = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+	    }
+	  else
+	    {
+	      // we need to have only one declaration for regular functions as well
+	      SgFunctionDeclaration *nonDefDecl =
+		isSgFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
+	      if ( nonDefDecl )
+		functionDeclaration = nonDefDecl;
+	    }
+	  FunctionData* functionData = new FunctionData( functionDeclaration, project, &classHierarchy );
+	  //*i = functionDeclaration;
+
+          //AS(032806) Filter out functions baced on criteria in predicate
+          if(pred(functionDeclaration)==true) 
+          callGraphData.push_back( functionData );
+          i++;
+        }
+
+     // Build the graph
+     CallGraphCreate *returnGraph = new CallGraphCreate();
+     ROSE_ASSERT (returnGraph != NULL);
+
+     Rose_STL_Container<FunctionData *>::iterator j = callGraphData.begin();
+
+     printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
+
+     Rose_STL_Container<CallGraphNode *> nodeList;
+     while ( j != callGraphData.end() )
+        {
+          string functionName;
+	  ROSE_ASSERT ( (*j)->properties->functionDeclaration );
+	  functionName = (*j)->properties->functionDeclaration->get_mangled_name().getString();
+
+	  // Generate a unique name to test against later
+          SgFunctionDeclaration* id = (*j)->properties->functionDeclaration;
+	  SgDeclarationStatement *nonDefDeclInClass =
+	    isSgMemberFunctionDeclaration( id->get_firstNondefiningDeclaration() );
+	  if ( nonDefDeclInClass )
+	    ROSE_ASSERT ( id == nonDefDeclInClass );
+          CallGraphNode* node = new CallGraphNode( functionName, (*j)->properties, (*j)->isDefined() );
+	  cout << "Function: "
+	       << (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
+	    (*j)->properties->functionDeclaration->get_mangled_name().getString()
+	       << " has declaration " << (*j)->isDefined() << "\n";
+          nodeList.push_back( node );
+	  /*
+	  // show graph
+	  cout << "Function " << functionName << "   " << id << " has pointers to:\n";
+	  list <FunctionProperties *> &fL = (*j)->functionList;
+          list<FunctionProperties *>::iterator k = fL.begin();
+ 	  while (k != fL.end())
+	    {
+	      cout << "\tfunction: " << *k << "\n";
+	      k++;
+	    }
+	  */
+	  ROSE_ASSERT ( node->properties->functionType );
+          returnGraph->addNode( node );
+          j++;
+        }
+
+     j = callGraphData.begin();
+     cout << "NodeList size: " << nodeList.size() << "\n";
+     int totEdges = 0;
+     while (j != callGraphData.end())
+        {
+	  //          printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
+          CallGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration );
+          ROSE_ASSERT (startingNode != NULL);
+
+          Rose_STL_Container<FunctionProperties *> & functionList = (*j)->functionList;
+          Rose_STL_Container<FunctionProperties *>::iterator k = functionList.begin();
+
+          while ( k != functionList.end() )
+             {
+	       ROSE_ASSERT ( (*k)->functionType );
+	       string label = "POINTER";
+
+	       CallGraphEdge* edge = new CallGraphEdge( " " );
+	       if ( (*k)->functionDeclaration )
+		 edge->label = (*k)->functionDeclaration->get_mangled_name().getString();
+	       ROSE_ASSERT ( edge != NULL );
+	       edge->properties = *k;
+	       // if we have a pointer (no function declaration) or a virtual function, create dummy node
+	       if ( !( (*k)->functionDeclaration ) || (*k)->isPolymorphic )
+		 {
+		   CallGraphNode *dummy;
+		   if ( (*k)->functionDeclaration && (*k)->functionDeclaration->get_definingDeclaration() )
+		       dummy = new CallGraphNode( "DUMMY", *k, true );
+		   else
+		      dummy = new CallGraphNode( "DUMMY", *k, false );
+		   returnGraph->addNode( dummy );
+
+		   returnGraph->addEdge( startingNode, dummy, edge );
+		 }
+	       else
+		 {
+		   CallGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration );
+		   ROSE_ASSERT ( endNode );
+		   if(returnGraph->edgeExists(startingNode,endNode)==false)
+          		   returnGraph->addEdge( startingNode, endNode, edge );
+		   cout << "\tEndNode "
+			<< (*k)->functionDeclaration->get_name().str() << "\t" << endNode->isDefined() << "\n";
+		 }
+	       totEdges++;
+	       k++;
+	     }
+	  j++;
+        }
+
+     cout << "Total number of edges: " << totEdges << "\n";
+     // printf ("Return graph \n");
+
+     graph = returnGraph;
+   }
+
+#else // !SOLVE_FNCTION_CALLS_IN_DB
+
+void
+CallGraphBuilder::buildCallGraph (){
+    buildCallGraph(dummyFilter());
+};
+
+
+template<typename Predicate>
+void
+CallGraphBuilder::buildCallGraph (Predicate pred)
+{
+  Rose_STL_Container<FunctionData*> callGraphData;
+  
+ // list<SgNode*> functionList = NodeQuery::querySubTree ( project, V_SgFunctionDeclaration );
+   //AS (09/23/06) Query the memory pool instead of subtree of project
+  VariantVector vv(V_SgFunctionDeclaration);
+  AstQueryNamespace::DefaultNodeFunctional defFunc;
+  Rose_STL_Container<SgNode *> functionList = NodeQuery::queryMemoryPool(defFunc, &vv );
+       
+
+  ClassHierarchyWrapper classHierarchy( project );
+  Rose_STL_Container<SgNode*>::iterator i = functionList.begin();
+  
+  printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
+  
+  while (i != functionList.end())
+    {
+      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
+      ROSE_ASSERT (functionDeclaration != NULL);
+      bool hasDef = false;
+      
+      if ( functionDeclaration->get_definition() != NULL )
+	{
+	  // printf ("Insert function declaration containing function definition \n");
+	  hasDef = true;
+	}
+      
+      // determining the in-class declaration
+      if ( isSgMemberFunctionDeclaration( functionDeclaration ) )
+	{
+	  // always saving the in-class declaration, so we need to find that one
+	  SgDeclarationStatement *nonDefDeclInClass =
+	    isSgMemberFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
+	  // functionDeclaration is outside the class (so it must have a definition)
+	  if ( nonDefDeclInClass )
+	    functionDeclaration = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+	}
+      else
+	{
+	  // we need to have only one declaration for regular functions as well
+	  SgFunctionDeclaration *nonDefDecl =
+	    isSgFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
+	  if ( nonDefDecl )
+	    functionDeclaration = nonDefDecl;
+	}
+  
+      FunctionData* functionData = new FunctionData( functionDeclaration, hasDef, project, &classHierarchy );
+      *i = functionDeclaration;
+
+
+      //AS(032806) Filter out functions baced on criteria in predicate
+      if(pred(functionDeclaration)==true) 
+        callGraphData.push_back( functionData );
+      i++;
+    }
+  
+  // Build the graph
+  CallGraphCreate *returnGraph = new CallGraphCreate();
+  ROSE_ASSERT (returnGraph != NULL);
+  
+  Rose_STL_Container<FunctionData*>::iterator j = callGraphData.begin();
+  
+  // printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
+  
+  Rose_STL_Container<CallGraphNode*> nodeList;
+  while (j != callGraphData.end())
+    {
+      string functionName = (*j)->functionDeclaration->get_name().str();
+      
+      // Generate a unique name to test against later
+      SgFunctionDeclaration* id = (*j)->functionDeclaration;
+      
+      SgDeclarationStatement *nonDefDeclInClass =
+	isSgMemberFunctionDeclaration( id->get_firstNondefiningDeclaration() );
+      if ( nonDefDeclInClass )
+	ROSE_ASSERT ( id == nonDefDeclInClass );
+
+      CallGraphNode* node = new CallGraphNode(functionName, id, (*j)->isDefined());
+      nodeList.push_back(node);
+      // show graph
+      /*
+	cout << "Function " << functionName << " " << id << " has pointers to:\n";
+	list <SgFunctionDeclaration *> &fL = (*j)->functionList;
+	list<SgFunctionDeclaration*>::iterator k = fL.begin();
+	while (k != fL.end())
+	{
+	cout << "\tfunction: " << ( *k )->get_name().str() << ( *k ) << "\n";
+	k++;
+	}
+      */
+
+      returnGraph->addNode(node);
+      j++;
+    }
+  
+  j = callGraphData.begin();
+  // cout << "NodeList size: " << nodeList.size() << "\n";
+  int totEdges = 0;
+  while (j != callGraphData.end())
+    {
+      // printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
+      CallGraphNode* startingNode = findNode(nodeList,(*j)->functionDeclaration);
+      ROSE_ASSERT (startingNode != NULL);
+      
+      Rose_STL_Container<SgFunctionDeclaration*> & functionList = (*j)->functionList;
+      Rose_STL_Container<SgFunctionDeclaration*>::iterator k = functionList.begin();
+      
+      // printf ("Now iterate over the list (size = %d) for function %s \n",
+      // functionList.size(),(*j)->functionDeclaration->get_name().str());
+      while (k != functionList.end())
+	{
+	  CallGraphNode* endingNode = findNode( nodeList, *k );
+	  /*
+	    if ( !endingNode )
+	    endingNode = findNode( nodeList,
+	    ( *k )->get_qualified_name().getString() +
+	    ( *k )->get_mangled_name().getString(), 1 );
+	  */
+	  if ( endingNode )
+	    {
+	      ROSE_ASSERT (endingNode != NULL);
+	      
+	      CallGraphEdge* edge = new CallGraphEdge(endingNode->functionDeclaration->get_name().getString());
+	      ROSE_ASSERT (edge != NULL);
+  	      if(returnGraph->edgeExist(startingNode,endingNode)==false)
+	          returnGraph->addEdge(startingNode,endingNode,edge);
+	      totEdges++;
+	    }
+	  else
+	    {
+	      cout << "COULDN'T FIND: " << ( *k )->get_qualified_name().str() << "\n";
+	      //isSgFunctionDeclaration( *k )->get_file_info()->display("AVOIDED CALL");
+	    }
+	  k++;
+	}
+      j++;
+    }
+  
+  cout << "Total number of edges: " << totEdges << "\n";
+  // printf ("Return graph \n");
+  
+  graph = returnGraph;
+}
+
+#endif
+
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+void
+CallGraphBuilder::classifyCallGraph ()
+   {
+     ROSE_ASSERT(graph != NULL);
+
+     //     printf ("Output the graph information! (number of nodes = %zu) \n",graph->size());
+
+     int counter = 0;
+
+  // This iteration over the graph verifies that we have a valid graph!
+     CallGraphCreate::NodeIterator nodeIterator;
+     for (nodeIterator = graph->GetNodeIterator(); !nodeIterator.ReachEnd(); ++nodeIterator) 
+        {
+       // printf ("In loop using node iterator ... \n");
+       // DAGBaseNodeImpl* nodeImpl = nodeIterator.Current();
+          CallGraphNode* node = *nodeIterator;
+
+          ROSE_ASSERT (node != NULL);
+	  string filename = "./__pointers";
+          if ( node->properties->functionDeclaration )
+	  {
+	    ROSE_ASSERT (node->properties->functionDeclaration->get_file_info() != NULL);
+	    ROSE_ASSERT (node->properties->functionDeclaration->get_file_info()->get_filename() != NULL);
+	    string tmp = node->properties->functionDeclaration->get_file_info()->get_filename();
+	    filename = tmp;
+	    if ( node->properties->functionDeclaration->get_file_info()->isCompilerGenerated() )
+	      filename = "/__compilerGenerated";
+	    if ( node->properties->functionDeclaration->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
+	      filename = "./__compilerGenearatedToBeUnparsed";
+	  }
+
+	  // If not in the sub graph map then add it and increment the counter!
+          if (graph->getSubGraphMap().find(filename) == graph->getSubGraphMap().end())
+             {
+            // This must be done on the DOT graph
+            // graph->addSubgraph(filename);
+               graph->getSubGraphMap()[filename] = counter;
+               graph->subGraphNames[counter] = filename;
+               counter++;
+             }
+	}
+     ROSE_ASSERT (graph->getSubGraphMap().size() == graph->subGraphNames.size());
+     for (int i = 0; i < graph->getSubGraphMap().size(); i++)
+       {
+	 // Make sure that the filename are correct
+	 ROSE_ASSERT(graph->subGraphNames[i] == graph->subGraphNames[graph->getSubGraphMap()[graph->subGraphNames[i]]]);
+	 ROSE_ASSERT(graph->getSubGraphMap()[graph->subGraphNames[i]] == i);
+       }
+     printf ("Leaving ClassifyCallGraph ... \n");
+   }
+
+#else
+
+void
+CallGraphBuilder::classifyCallGraph ()
+{
+  ROSE_ASSERT(graph != NULL);
+  
+  // printf ("Output the graph information! (number of nodes = %zu) \n",graph->size());
+  
+  int counter = 0;
+
+  // This iteration over the graph verifies that we have a valid graph!
+  CallGraphCreate::NodeIterator nodeIterator;
+  for (nodeIterator = graph->GetNodeIterator(); !nodeIterator.ReachEnd(); ++nodeIterator)
+    {
+      // printf ("In loop using node iterator ... \n");
+      // DAGBaseNodeImpl* nodeImpl = nodeIterator.Current();
+      CallGraphNode* node = *nodeIterator;
+      
+      ROSE_ASSERT (node != NULL);
+      ROSE_ASSERT (node->functionDeclaration != NULL);
+      ROSE_ASSERT (node->functionDeclaration->get_file_info() != NULL);
+      // ROSE_ASSERT (node->functionDeclaration->get_file_info()->getCurrentFilename() != NULL);
+      // string filename = node->functionDeclaration->get_file_info()->getCurrentFilename();
+      ROSE_ASSERT (node->functionDeclaration->get_file_info()->get_filename() != NULL);
+      string filename = node->functionDeclaration->get_file_info()->get_filename();
+      if ( node->functionDeclaration->get_file_info()->isCompilerGenerated() )
+	filename = "/__compilerGenerated";
+      if ( node->functionDeclaration->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
+	filename = "./__compilerGenearatedToBeUnparsed";
+      // printf ("function location = %s \n",filename.c_str());
+      
+      // If not in the sub graph map then add it and increment the counter!
+      if (graph->getSubGraphMap().find(filename) == graph->getSubGraphMap().end())
+	{
+            // This must be done on the DOT graph
+            // graph->addSubgraph(filename);
+	  graph->getSubGraphMap()[filename] = counter;
+	  graph->subGraphNames[counter] = filename;
+	  counter++;
+	}
+    }
+  
+  ROSE_ASSERT (graph->getSubGraphMap().size() == graph->subGraphNames.size());
+  for (unsigned int i = 0; i < graph->getSubGraphMap().size(); i++)
+    {
+      // printf ("subgraphMap[%d] = %s \n",i,graph->subGraphNames[i].c_str());
+      
+      // Make sure that the filename are correct
+      ROSE_ASSERT(graph->subGraphNames[i] == graph->subGraphNames[graph->getSubGraphMap()[graph->subGraphNames[i]]]);
+      ROSE_ASSERT(graph->getSubGraphMap()[graph->subGraphNames[i]] == (int) i);
+    }
+}
+
+#endif
+
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+int 
+CallGraphDotOutput::getVertexSubgraphId ( GraphNode & v )
+   {
+     CallGraphNode & node = dynamic_cast<CallGraphNode &>(v);
+     if (node.properties->functionDeclaration)
+       {
+	 string filename = node.properties->functionDeclaration->get_file_info()->get_filename();
+	 int returnValue = callGraph.getSubGraphMap()[filename];
+	 return returnValue;
+       }
+
+     // when recreating the graph, we have lost the function declaration
+     return -2;
+   }
+
+#else
+
+int
+CallGraphDotOutput::getVertexSubgraphId ( GraphNode & v)
+{
+  CallGraphNode & node = dynamic_cast<CallGraphNode&>(v);
+  if (node.functionDeclaration)
+    {
+      string filename = node.functionDeclaration->get_file_info()->get_filename();
+      int returnValue = callGraph.getSubGraphMap()[filename];
+      return returnValue;
+    }
+
+  // when recreating the graph, we have lost the function declaration
+  return -2;
+}
+
+#endif
+
+
+void
+GenerateDotGraph ( CallGraphCreate *graph, string fileName )
+   {
+     ROSE_ASSERT(graph != NULL);
+
+     //     printf ("Building the GraphDotOutput object ... \n");
+     CallGraphDotOutput output(*graph);
+     output.writeToDOTFile(fileName);
+   }
+
+
+#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// creates a db and tables for storage of graphs
+void
+CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, string dbName )
+{
+  *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  assert(*gDB);
+  
+  // drop previous database and create a new one
+  (*gDB)->initialize( 1 );
+
+  //Query query = (*gDB)->getQuery();
+  const char *c = "CREATE TABLE Graph (gid, pgid, filename TEXT);\
+	CREATE TABLE Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid, scope));\
+        CREATE TABLE Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT, PRIMARY KEY (nid1, nid2, type));";
+
+  (*gDB)->execute(c);
+  cout << "Tables created\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// reads from DB the current maximal index of a subgraph
+int
+CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
+{
+  Query *q = gDB->getQuery();
+  q->set("SELECT MAX(gid) FROM Graph;");
+  Result *res = gDB->select();
+  assert(res->rows() >= 0);
+
+  if (res->rows() == 0)
+    return 0;
+  int i = (*res)[0][0];
+  return i;
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// writes the subgraph, edge, and node info to DB
+void
+CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
+{
+  // writing the Graph table
+  cout << "Writing graph...\n";
+  /*
+  for ( CallGraphCreate::NodeIterator it = callGraph.GetNodeIterator(); !it.ReachEnd(); it++ )
+    {
+      CallGraphNode *node = *it;
+      SgFunctionDeclaration *fctDecl = isSgFunctionDeclaration( node->properties->functionDeclaration );
+      if ( fctDecl )
+	cout << "Node: " << fctDecl->get_scope()->get_qualified_name().str()
+	     << fctDecl->get_mangled_name().str() << "\t" << node->hasDefinition << "\n";
+    }
+  */
+
+  int crtSubgraph = GetCurrentMaxSubgraph(gDB);
+  for (unsigned int i=0; i < callGraph.subGraphNames.size(); i++)
+    {
+      string filename = callGraph.subGraphNames[i];
+      string filenameWithoutPath = basename(filename.c_str());
+      string subGraphName = filenameWithoutPath;
+      ostringstream st;
+      // TODO: define a hierarchical structure, don't use -1 as a default parent
+      st << "INSERT INTO Graph VALUES (" << i + crtSubgraph << ", " << -1 << ", " << "\"" << filename << "\");";
+      string sts = st.str();
+      gDB->execute(sts.c_str());
+    }
+
+  cout << "Writing nodes and edges...\n";
+  //----------------------------------------------------------
+  // writing the Nodes & Edges tables
+  for (CallGraphCreate::NodeIterator i = callGraph.GetNodeIterator(); !i.ReachEnd(); ++i)
+    {
+      CallGraphNode *node = *i;//.Current();
+      ROSE_ASSERT ( node );
+      if ( isSgFunctionDeclaration( node->properties->functionDeclaration ) )
+	{
+      string filename = "POINTER_FUNCTION", mnglName = "POINTER", scope = "NULL";
+      int nV = getVertexSubgraphId(*node);
+      if ( node->properties->functionDeclaration )
+	{
+	  filename = node->properties->functionDeclaration->get_file_info()->get_filename();
+	  mnglName = node->properties->functionDeclaration->get_qualified_name().getString() +
+	    node->properties->functionDeclaration->get_mangled_name().getString();
+	  scope = node->properties->functionDeclaration->get_scope()->get_qualified_name().getString();
+	}
+
+      ostringstream st;
+      SgUnparse_Info ui;
+      ROSE_ASSERT ( node->properties->functionType );
+      string mnglType = node->properties->functionType->get_mangled( ui ).getString();
+      /*
+      clsName = isSgClasssDefinition( node->functionDeclaration->get_scope() );
+      if ( clsDef )
+	{
+	  clsName = clsDef->get_qualified_name().getString();
+	  //cout << "CLSCLSCLS: " << clsName << "\n";
+	}      
+      */
+      int isDef = node->isDefined() ? 1 : 0;
+      string lbl = "POINTER_LABEL";
+
+      if ( node->properties->functionDeclaration )
+	lbl = node->properties->functionDeclaration->get_mangled_name().getString();
+
+      string command;
+
+      if ( isDef )
+	{
+	  command = "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";";
+	  Query *q = gDB->getQuery();
+	  q->set(command.c_str());
+	  gDB->execute();
+
+	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
+	     << lbl << "\", " << 1 << ", \"" << mnglType << "\", \"" << scope << "\");";
+	  command = st.str();
+	}
+      else
+	{
+	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
+	     << lbl << "\", " << 0 << ", \"" << mnglType << "\", \"" << scope << "\");";
+	  command = st.str();
+	}
+
+      Query *q = gDB->getQuery();
+      q->set(command.c_str());
+      cout << command << "\n";
+      gDB->execute();
+
+      CallGraphCreate::EdgeIterator ei;
+      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeOut;
+
+      for ( ei = callGraph.GetNodeEdgeIterator(node, dir)  ; !ei.ReachEnd(); ++ei )
+	{
+	  CallGraphEdge *edge = ei.Current();
+	  CallGraphNode *end;
+	  ostringstream st;
+	  end = dynamic_cast<CallGraphNode *>( getTargetVertex(*edge) );
+	  ROSE_ASSERT ( end );
+	  string n2mnglName = "POINTER";
+
+	  string typeF = "", cls = "", nid2 = "NULL";
+	  if ( edge->properties->isPolymorphic )
+	    {
+	      ROSE_ASSERT ( isSgClassDefinition( edge->properties->invokedClass ) );
+	      cls = edge->properties->invokedClass->get_qualified_name().getString();
+	    }
+
+	  ROSE_ASSERT ( end->properties->functionType );
+	  typeF = edge->properties->functionType->get_mangled( ui ).getString();
+	  if ( !( edge->properties->isPointer ) )
+	    {
+	      ROSE_ASSERT ( end->properties->functionDeclaration &&
+			    end->properties->functionDeclaration == edge->properties->functionDeclaration );
+	      n2mnglName = edge->properties->functionDeclaration->get_qualified_name().getString() +
+		edge->properties->functionDeclaration->get_mangled_name().getString();
+	    }
+	  st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->label
+	     << "\", \"" << edge->properties->functionType->get_mangled( ui ).getString() << "\", \"" << cls << "\");";
+	  cout << st.str() << "\n";
+	  gDB->execute(st.str().c_str());
+
+	  /*
+       	  st << "INSERT INTO EdgesOld VALUES (\"" << mnglName << "\", \"" <<
+	    n2mnglName << "\", \"" << edge->label << "\");";
+	  gDB->execute(st.str().c_str());
+	  */
+	}
+	}
+    }
+  cout << "Done writing to DB\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions defined in the files stored in a specified database
+// the default value for the database name is "__filter.db"
+void
+CallGraphDotOutput::filterNodesByDB ( string dbName, string filterDB )
+{
+  cout << "Filtering system calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string command = "ATTACH DATABASE \"" + filterDB + "\" AS filter;";
+  Query *q = gDB->getQuery();
+  q->set(command);
+  gDB->execute();
+
+  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g, filter.files f WHERE f.filename = g.filename;";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 1: " << q->error() << "\n";
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 2: " << q->error() << "\n";
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
+    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 3: " << q->error() << "\n";
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions defined in the specified file
+void
+CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
+{
+  cout << "Filtering system calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+  string command;
+  Query *q = gDB->getQuery();
+
+  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = " + filterFile + ";";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 1: " << q->error() << "\n";
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 2: " << q->error() << "\n";
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
+    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 3: " << q->error() << "\n";
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions with a specific name
+void
+CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration *function )
+{
+  ROSE_ASSERT ( function );
+  cout << "Filtering system calls...\n";
+  string functionName = function->get_qualified_name().getString() + function->get_mangled_name().getString();
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string command;
+  Query *q = gDB->getQuery();
+
+  command = "DELETE FROM Nodes WHERE nid = " + functionName + ";\
+    DELETE FROM Edges WHERE nid1 = " + functionName + "  OR nid2 = " + functionName + ";";
+  q->set(command);
+  gDB->execute();
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// solve function pointers based on type
+// TODO: virtual function pointers are not properly solved ( they are treated as regular member function pointers )
+void
+CallGraphDotOutput::solveFunctionPointers( string dbName )
+{
+  cout << "Solving function pointers...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection( dbName.c_str() );
+  gDB->initialize();
+
+  string command = "";
+  Query *q = gDB->getQuery();
+  command = command + "INSERT INTO Edges SELECT e.nid1, nid, n1.label, e.type, e.objClass from Nodes n1, Edges e WHERE " +
+    "e.nid2 = \"POINTER\" AND e.type = n1.type;";// AND e.objClass = n1.scope;";
+  q->set( command );
+  gDB->execute();
+  if ( q->success() != 0 )
+    cout << "Error (if any): " << q->error() << "\n";
+  else
+    {
+      command = "DELETE FROM Edges WHERE nid2 = \"POINTER\" AND objClass = \"\";";
+      cout << command << "\t" << "CLEANUP\n";
+      q->set( command );
+      gDB->execute();
+      if ( q->success() != 0 )
+	cout << "Error (if any): " << q->error() << "\n";
+    }
+  gDB->shutdown();
+  cout << "Done with function pointers\n";
+}
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// solve virtual function calls ( but not via pointers )
+void
+CallGraphDotOutput::solveVirtualFunctions( string dbName, string dbHierarchy )
+{
+  cout << "Solving virtual function calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection( dbName.c_str() );
+  gDB->initialize();
+
+  string command = "";
+  Query *q = gDB->getQuery();
+  // determine descendants of edges.objClass
+  command += "SELECT * from Edges WHERE objClass <> \"\";"; // AND nid2 <> \"POINTER\";";
+  q->set( command );
+  Result *rows = gDB->select();
+  if ( !rows )
+    {
+      cout << q->error();
+      exit ( -1 );
+    }
+
+  command = "DELETE FROM Edges WHERE objClass <> \"\";";// AND nid2 <> \"POINTER\";";
+  q->set( command );
+  gDB->execute();
+  command = "DELETE FROM Nodes WHERE nid = \"DUMMY\";";
+  q->set( command );
+  gDB->execute();
+
+  cout << "Classes with virtual functions called:\n";
+
+  rows->showResult();
+
+  for ( Result::iterator i = rows->begin(); i != rows->end(); i++ )
+    {
+      string nid1 = (*i)[0].get_string();
+      string nid2 = (*i)[1].get_string();
+      string lbl2 = (*i)[2].get_string();
+      string fType = (*i)[3].get_string();
+      string objClass = (*i)[4].get_string();
+
+      ClassHierarchyWrapper clsHierarchy ( "ClassHierarchy" );
+      Rose_STL_Container<string> subclasses = clsHierarchy.getSubclasses( objClass );
+      subclasses.push_back( objClass );
+      for ( Rose_STL_Container<string>::iterator it = subclasses.begin(); it != subclasses.end(); it++ )
+	{
+	  if ( nid2 == "POINTER" )
+	    command = "SELECT * FROM Nodes WHERE scope = \"" + *it + "\" AND type = \"" + fType + "\";";
+	  else
+	    command = "SELECT * FROM Nodes WHERE scope = \"" + *it + "\" AND label = \"" + lbl2 + "\";";// AND def = 1;";
+	  q->set( command );
+	  cout << "Now executing: " << q->preview();
+	  Result *virtualCalls = gDB->select();
+	  if ( !virtualCalls )
+	    {
+	      cout << q->error();
+	      exit ( -1 );
+	    }
+	  else
+	    virtualCalls->showResult();
+
+	  for ( Result::iterator itr = virtualCalls->begin(); itr != virtualCalls->end(); itr++ )
+	    {
+	      string nnid = (*itr)[0];
+	      //	      int gid = (*itr)[1];
+	      string lbl = (*itr)[2].get_string();
+	      //	      int is_def = (*itr)[3];
+	      string fType = (*itr)[4].get_string();
+	      string scope = (*itr)[3].get_string();
+	      command = "INSERT INTO Edges VALUES ( \"" + nid1 + "\", \"" + nnid + "\", \"" + lbl + "\", \"" + fType +
+		"\", \"\" );";
+	      q->set( command );
+	      cout << command << "\n";
+	      gDB->execute();
+	      if ( q->success() != 0 )
+		cout << "Error: " << q->error() << "\n";
+	    }
+	  delete virtualCalls;
+	}
+    }
+
+  delete rows;
+  gDB->shutdown();
+  cout << "Done with virtual functions\n";
+}
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions defined in the files of a specified directory
+void
+CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
+{
+  cout << "Filtering system calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string command;
+  Query *q = gDB->getQuery();
+
+  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename LIKE \"" + directory + "%\";";
+  q->set(command);
+  gDB->execute();
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  q->set(command);
+  gDB->execute();
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
+    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  q->set(command);
+  gDB->execute();
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// generate a graph from the DB
+// TODO: as is now, clustering info is lost
+CallGraphCreate *
+CallGraphDotOutput::loadGraphFromDB ( string dbName )
+{
+  cout << "Loading...\n";
+  CallGraphCreate *graph = new CallGraphCreate();
+
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string loadNodes = "SELECT * FROM Nodes;",
+    loadGraph = "SELECT * FROM Graph;",
+    loadEdges = "SELECT * FROM Edges;";
+
+  Query *q = gDB->getQuery();
+
+  // reading nodes
+  q->set(loadNodes);
+  Result *nodes = gDB->select();
+
+  // reading edges
+  q->set(loadEdges);
+  Result *result_query = gDB->select();
+  result_query->showResult();
+  Rose_STL_Container<CallGraphNode *> nodeList;
+
+  for (Result::iterator i = nodes->begin(); i != nodes->end(); i++)
+    {
+      string nid = (*i)[0].get_string();
+      string label = (*i)[2].get_string();
+      int is_def = (*i)[3];
+      string typeF = (*i)[4].get_string();
+      string scope = (*i)[5].get_string();
+
+      CallGraphNode *n = new CallGraphNode( nid, NULL, NULL, is_def, false, false, NULL );
+      
+      graph->addNode(n);
+      //     cout << "Node pushed: " << nid << "\t" << n << "\n";
+      nodeList.push_back(n);
+    }
+
+  for (Result::iterator i = result_query->begin(); i != result_query->end(); i++)
+    {
+      string nid1 = (*i)[0].get_string(),
+	nid2 = (*i)[1].get_string(),
+	label = (*i)[2].get_string();
+
+      // find end points of edges, by their name
+      CallGraphNode* startingNode = findNode(nodeList, nid1);
+      CallGraphNode* endNode = findNode(nodeList, nid2);
+      assert(startingNode);
+
+      if (endNode)
+	{
+	  //cout << "Nodes retrieved: " << nid1 << "\t" << startingNode << "\t"
+	  //   << nid2 << "\t" << endNode << "\n";
+	  CallGraphEdge *e = new CallGraphEdge(label);
+          if(returnGraph->edgeExists(startingNode,endNode)==false)
+	     graph->addEdge(startingNode, endNode, e);
+	}
+    }
+
+  cout << "After recreating the graph\n";
+  delete nodes;
+  delete result_query;
+  gDB->shutdown();
+  return graph;
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+
+#else // !SOLVE_FUNCTION_CALLS_IN_DB
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// creates a db and tables for storage of graphs
+void
+CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, string dbName )
+{
+  *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  assert(*gDB);
+  
+  // drop previous database and create a new one
+  (*gDB)->initialize( 1 );
+  
+  //Query query = (*gDB)->getQuery();
+  const char *c = "CREATE TABLE Graph (gid, pgid, filename TEXT);\
+ CREATE TABLE Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, PRIMARY KEY (nid, def)); \
+ CREATE TABLE Edges (nid1 TEXT, nid2 TEXT, label TEXT, PRIMARY KEY (nid1, nid2));";
+  
+  (*gDB)->execute(c);
+  cout << "Tables created\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// reads from DB the current maximal index of a subgraph
+int
+CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
+{
+  Query *q = gDB->getQuery();
+  q->set("SELECT MAX(gid) FROM Graph;");
+  Result *res = gDB->select();
+  assert(res->rows() >= 0);
+
+  if (res->rows() == 0)
+    return 0;
+  int i = (*res)[0][0];
+  return i;
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// writes the subgraph, edge, and node info to DB
+void
+CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
+{
+  // writing the Graph table
+  cout << "Writing graph...\n";
+  int crtSubgraph = GetCurrentMaxSubgraph(gDB);
+  for (unsigned int i=0; i < callGraph.subGraphNames.size(); i++)
+    {
+      string filename = callGraph.subGraphNames[i];
+      string filenameWithoutPath = basename(filename.c_str());
+      string subGraphName = filenameWithoutPath;
+      ostringstream st;
+      // TODO: define a hierarchical structure, don't use -1 as a default parent
+      st << "INSERT INTO Graph VALUES (" << i + crtSubgraph << ", " << -1 << ", " << "\"" << filename << "\");";
+      string sts = st.str();
+      gDB->execute(sts.c_str());
+    }
+
+  cout << "Writing nodes and edges...\n";
+  //----------------------------------------------------------
+  // writing the Nodes & Edges tables
+  for (CallGraphCreate::NodeIterator i = callGraph.GetNodeIterator(); !i.ReachEnd(); ++i)
+    {
+      CallGraphNode *node = i.Current();
+      assert(node);
+      string filename = node->functionDeclaration->get_file_info()->get_filename();
+      
+      int nV = getVertexSubgraphId(*node);
+      
+      ostringstream st;
+      string clsName = "";
+      SgClassDefinition *clsDef = isSgClassDefinition( node->functionDeclaration->get_scope() );
+
+      // get_scope returns NULL when it shouldn't....
+      if ( clsDef )
+	{
+	  clsName = clsDef->get_qualified_name().getString();
+	  //cout << "CLSCLSCLS: " << clsName << "\n";
+	}
+      
+      /*get_mangled_name()*/
+      string mnglName = node->functionDeclaration->get_qualified_name().getString() +
+	node->functionDeclaration->get_mangled_name().getString();
+      int isDef = node->isDefined() ? 1 : 0;
+      string command;
+      
+      if ( isDef )
+	{
+	  command = "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";";
+	  Query *q = gDB->getQuery();
+	  q->set(command.c_str());
+	  gDB->execute();
+
+	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
+	     << node->ToString() << "\", \"" << 1 << "\");";
+	  command = st.str();
+	}
+      else
+	{
+	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
+	     << node->ToString() << "\", \"" << 0 << ", \");";
+	  command = st.str();
+	}
+
+      Query *q = gDB->getQuery();
+      q->set( command.c_str() );
+      cout << command << "\n";
+      gDB->execute();
+      
+      CallGraphCreate::EdgeIterator ei;
+      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeOut;
+      
+      for (ei = callGraph.GetNodeEdgeIterator(node, dir) ; !ei.ReachEnd(); ++ei)
+	{
+	  CallGraphEdge *edge = ei.Current();
+	  CallGraphNode *end;
+	  ostringstream st;
+
+	  // string n1mnglName = node->functionDeclaration->get_mangled_name().getString();
+	  string clsName = "";
+	  assert ( node->functionDeclaration );
+	  SgClassDefinition *clsDef = isSgClassDefinition( node->functionDeclaration->get_scope() );
+	  
+	  // get_scope returns NULL... is it NOT virtual???
+	  if ( clsDef )
+	    clsName = clsDef->get_qualified_name().getString();
+	  
+	  end = dynamic_cast<CallGraphNode *>(getTargetVertex(*edge));
+	  assert(end);
+	  string n2mnglName = end->functionDeclaration->get_qualified_name().getString() +
+	    end->functionDeclaration->get_mangled_name().getString();
+	  
+	  st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" <<
+	    n2mnglName << "\", \"" << edge->label << "\");";
+	  gDB->execute(st.str().c_str());
+	}
+    }
+  cout << "Done writing to DB\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions defined in the files stored in a specified database
+// the default value for the database name is "__filter.db"
+void
+CallGraphDotOutput::filterNodesByDB ( string dbName, string filterDB )
+{
+  cout << "Filtering system calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string command = "ATTACH DATABASE \"" + filterDB + "\" AS filter;";
+  Query *q = gDB->getQuery();
+  q->set(command);
+  gDB->execute();
+
+  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g, filter.files f WHERE f.filename = g.filename;";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 1: " << q->error() << "\n";
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 2: " << q->error() << "\n";
+  
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
+    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 3: " << q->error() << "\n";
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions defined in the specified file
+void
+CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
+{
+  cout << "Filtering system calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+  string command;
+  Query *q = gDB->getQuery();
+
+  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = " + filterFile + ";";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 1: " << q->error() << "\n";
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 2: " << q->error() << "\n";
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
+    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  q->set(command);
+  gDB->execute();
+  cout << "Error 3: " << q->error() << "\n";
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions with a specific name
+void
+CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration *function )
+{
+  ROSE_ASSERT ( function );
+  cout << "Filtering system calls...\n";
+  string functionName = function->get_qualified_name().getString() + function->get_mangled_name().getString();
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string command;
+  Query *q = gDB->getQuery();
+
+  command = "DELETE FROM Nodes WHERE nid = " + functionName + ";\
+    DELETE FROM Edges WHERE nid1 = " + functionName + " OR nid2 = " + functionName + ";";
+  q->set(command);
+  gDB->execute();
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// remove nodes and edges of functions defined in the files of a specified directory
+void
+CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
+{
+  cout << "Filtering system calls...\n";
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string command;
+  Query *q = gDB->getQuery();
+
+  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename LIKE \"" + directory + "%\";";
+  q->set(command);
+  gDB->execute();
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  q->set(command);
+  gDB->execute();
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
+    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  q->set(command);
+  gDB->execute();
+
+  gDB->shutdown();
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+#endif
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// generate a graph from the DB
+// TODO: as is now, clustering info is lost
+CallGraphCreate *
+CallGraphDotOutput::loadGraphFromDB ( string dbName )
+{
+  CallGraphCreate *graph = new CallGraphCreate();
+
+  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
+  gDB->initialize();
+
+  string loadNodes = "SELECT * FROM Nodes;",
+    loadGraph = "SELECT * FROM Graph;",
+    loadEdges = "SELECT * FROM Edges;";
+
+  Query *q = gDB->getQuery();
+
+  // reading nodes
+  q->set(loadNodes);
+  Result *nodes = gDB->select();
+
+  // reading edges
+  q->set(loadEdges);
+  Result *result_query = gDB->select();
+  result_query->showResult();
+  Rose_STL_Container<CallGraphNode *> nodeList;
+
+  for (Result::iterator i = nodes->begin(); i != nodes->end(); i++)
+    {
+      string nid = (*i)[0].get_string();
+      string label = (*i)[2].get_string();
+      int is_def = (*i)[3];
+
+      CallGraphNode *n = new CallGraphNode(nid, NULL, is_def);
+      
+      graph->addNode( n );
+      // cout << "Node pushed: " << nid << "\t" << n << "\n";
+      nodeList.push_back( n );
+    }
+
+  for (Result::iterator i = result_query->begin(); i != result_query->end(); i++)
+    {
+      string nid1 = (*i)[0].get_string(),
+	nid2 = (*i)[1].get_string(),
+	label = (*i)[2].get_string();
+      
+      // find end points of edges, by their name
+      CallGraphNode* startingNode = findNode( nodeList, nid1 );
+      CallGraphNode* endNode = findNode( nodeList, nid2 );
+      ROSE_ASSERT ( startingNode );
+      
+      if ( endNode )
+	{
+	  //cout << "Nodes retrieved: " << nid1 << "\t" << startingNode << "\t"
+	  // << nid2 << "\t" << endNode << "\n";
+	  CallGraphEdge *e = new CallGraphEdge(label);
+          if(returnGraph->edgeExists(startingNode,endNode)==false)
+	     graph->addEdge(startingNode, endNode, e);
+	}
+    }
+
+  cout << "After recreating the graph\n";
+  delete nodes;
+  delete result_query;
+  gDB->shutdown();
+  return graph;
+}
+
+#endif // USE_ROSE_SQL_DB_SUPP
+
+#endif // SOLVE_FCT_CALLS_IN_DB
+
+// DQ (7/28/2005): Don't include the data base
+#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+// save graph to DB,  i == 0 - don't generate new dbase
+int
+CallGraphDotOutput::writeToDB ( int i, string dbName )
+{
+  GlobalDatabaseConnection *gDB = NULL;
+  if (i)
+    createCallGraphSchema(&gDB, dbName);
+  else
+    {
+      gDB = new GlobalDatabaseConnection(dbName.c_str());
+#if DEBUG_SQLITE
+      assert(gDB);
+#endif
+      gDB->initialize();
+    }
+  writeSubgraphToDB(gDB);
+  gDB->shutdown();
+  //  delete gDB;
+  return 0;
+}
+// DQ (7/28/2005): Don't include the data base
+#endif

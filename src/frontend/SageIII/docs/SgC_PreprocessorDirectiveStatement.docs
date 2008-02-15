@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgC_PreprocessorDirectiveStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgC_PreprocessorDirectiveStatement::p_directiveString
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgC_PreprocessorDirectiveStatement::SgC_PreprocessorDirectiveStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgC_PreprocessorDirectiveStatement::SgC_PreprocessorDirectiveStatement(const SgC_PreprocessorDirectiveStatementStorageClass &source)
+*/
+/*!\fn inline static void SgC_PreprocessorDirectiveStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgC_PreprocessorDirectiveStatement *SgC_PreprocessorDirectiveStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgC_PreprocessorDirectiveStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgC_PreprocessorDirectiveStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgC_PreprocessorDirectiveStatement::initializeStorageClassArray(SgC_PreprocessorDirectiveStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgC_PreprocessorDirectiveStatement::clearMemoryPool()
+*/
+/*!\fn static void SgC_PreprocessorDirectiveStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgC_PreprocessorDirectiveStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgC_PreprocessorDirectiveStatement::roseRTI()
+*/
+/*!\fn virtual SgC_PreprocessorDirectiveStatement::~SgC_PreprocessorDirectiveStatement()
+*/
+/*!\fn virtual SgNode *SgC_PreprocessorDirectiveStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgC_PreprocessorDirectiveStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgC_PreprocessorDirectiveStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgC_PreprocessorDirectiveStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgC_PreprocessorDirectiveStatement::get_numberOfTraversalSuccessors()
+\description See  SgC_PreprocessorDirectiveStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgC_PreprocessorDirectiveStatement::get_traversalSuccessorContainer()
+\description See  SgC_PreprocessorDirectiveStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgC_PreprocessorDirectiveStatement::get_traversalSuccessorNamesContainer()
+\description See  SgC_PreprocessorDirectiveStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgC_PreprocessorDirectiveStatement::SgC_PreprocessorDirectiveStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1973992472;

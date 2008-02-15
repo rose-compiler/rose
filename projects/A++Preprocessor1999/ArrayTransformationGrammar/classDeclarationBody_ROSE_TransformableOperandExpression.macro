@@ -1,0 +1,32 @@
+       // Special constructor for CLASSNAME;
+          CLASSNAME ( ROSE_Expression* expr );
+
+       // Define the abstractBaseClass function
+       // We later want to make this a pure virtual function (making this class and abstract base class)
+#if 1
+          virtual ROSE_TransformableNode* transform();
+#else
+          virtual ROSE_TransformableNode* transform() = 0;
+#endif
+          void recognizeSageSubTree ( ROSE_Expression* expr );
+
+#if 0
+       // Stuff about the indexing of array operands
+          Boolean isAnIndexedOperand();
+          int numberOfDimensions();
+
+       // Rules on how we modify variable names (unique names are required)
+          char* transformationVariablePrefix();
+          char* transformationVariableSuffix();
+
+       // get the names of the different parts
+          char* getOperandName ();
+          char* getIndexName (int dimension);
+
+       // Build a new operand as a SgExpression*
+          SgExpression* buildOperand ( char* arrayName,                 // variable name
+                                       variant_type_enum arrayType,     // Type for the array pointer
+                                       char* indexName,                 // variable name
+                                       variant_type_enum indexOperator, // ADD_OP, SUBT_OP, etc. (semantics of A++/P++ Index and Range objects only)
+                                       SgExpression* rhsExpression );   // integer expression for the rhs of the indexOperator
+#endif

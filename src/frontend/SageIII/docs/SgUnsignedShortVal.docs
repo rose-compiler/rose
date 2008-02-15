@@ -1,0 +1,71 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgUnsignedShortVal
+*/
+/*! \name Class Members*/
+//@{
+/*!\var unsigned short SgUnsignedShortVal::p_value
+*/
+/*!\var std::string SgUnsignedShortVal::p_valueString
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgUnsignedShortVal::SgUnsignedShortVal(Sg_File_Info *startOfConstruct,unsigned short value=0,std::string valueString=(""))
+*/
+/*!\fn SgUnsignedShortVal::SgUnsignedShortVal(const SgUnsignedShortValStorageClass &source)
+*/
+/*!\fn inline static void SgUnsignedShortVal::operator delete(void *pointer)
+*/
+/*!\fn static SgUnsignedShortVal *SgUnsignedShortVal::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgUnsignedShortVal::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgUnsignedShortVal::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgUnsignedShortVal::initializeStorageClassArray(SgUnsignedShortValStorageClass *storageArray)
+*/
+/*!\fn static void SgUnsignedShortVal::clearMemoryPool()
+*/
+/*!\fn static void SgUnsignedShortVal::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgUnsignedShortVal::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgUnsignedShortVal::roseRTI()
+*/
+/*!\fn virtual SgNode *SgUnsignedShortVal::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgUnsignedShortVal::~SgUnsignedShortVal()
+*/
+/*!\fn virtual void SgUnsignedShortVal::post_construction_initialization()
+*/
+/*!\fn void SgUnsignedShortVal::set_value(unsigned short value)
+\description See  value)
+value for documentation */
+/*!\fn void SgUnsignedShortVal::set_valueString(std::string valueString)
+\description See  valueString)
+valueString for documentation */
+/*!\fn std::string SgUnsignedShortVal::get_valueString() const
+\description See  const
+valueString for documentation */
+/*!\fn unsigned short SgUnsignedShortVal::get_value() const
+\description See  const
+value for documentation */
+/*!\fn virtual SgNode *SgUnsignedShortVal::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgUnsignedShortVal::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgUnsignedShortVal::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgUnsignedShortVal::get_numberOfTraversalSuccessors()
+\description See  SgUnsignedShortVal::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgUnsignedShortVal::get_traversalSuccessorContainer()
+\description See  SgUnsignedShortVal::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgUnsignedShortVal::get_traversalSuccessorNamesContainer()
+\description See  SgUnsignedShortVal::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgUnsignedShortVal::SgUnsignedShortVal(unsigned short value,std::string valueString)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_274492303;

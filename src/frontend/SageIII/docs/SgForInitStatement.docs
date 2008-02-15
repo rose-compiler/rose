@@ -1,0 +1,142 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgForInitStatement
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgForInitStatement
+\brief This class represents the variable declaration or variable initialization withn a
+    for loop.
+    This class is only used in a SgForStatement; and represents "*" within 
+         "for(*; <condition>; <expression>)".
+\internal The design of the ROSE traversal mechanism requires that the child list at any
+    IR node be a list or a collection of data members (but not both, since it would not be
+    clear when the list ended and another list or data member begain).  this class is
+    required so that list of initializers in a for loop (an arbitary length list) can
+    be isolated from the other data members in the SgForStatement.
+\todo Evaluate if this should be derived from SgSupport, like other "list" based IR nodes.
+\todo Evaluate if we should even have this IR node.  If the SgVariableDeclaration were to
+    be fixed to really use the list of SgInitializedName objects where multiple variables
+    are declared in the same variable declaration then we might not need this (I think). 
+    And if it didn't exist it would make the use of the SgForStatement a little bit
+    simpler.
+\sa
+\ref SgForInitStatement_usage  "Example of using a SgForInitStatement object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgForInitStatement data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgForInitStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgForInitStatement_create "Example:create an SgForInitStatement object"
+*/
+/*!
+\fn SgForInitStatement::~SgForInitStatement()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgForInitStatement::isSgForInitStatement (SgNode *s)
+\brief Cast function (from derived class to SgForInitStatement pointer).
+   This functions returns a SgForInitStatement pointer for any input of a 
+pointer to an object derived from a SgForInitStatement.
+\return Returns valid pointer to SgForInitStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgForInitStatement::isSgForInitStatement (const SgNode *s)
+\brief Cast function (from derived class to SgForInitStatement pointer).
+   This functions returns a SgForInitStatement pointer for any input of a 
+pointer to an object derived from a SgForInitStatement.
+\return Returns valid pointer to SgForInitStatement if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgStatementPtrList SgForInitStatement::p_init_stmt
+\brief This pointer points to list of initializers in a SgForStatement.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgForInitStatement::SgForInitStatement(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgForInitStatement base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgForInitStatement::SgForInitStatement(const SgForInitStatementStorageClass &source)
+*/
+/*!\fn inline static void SgForInitStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgForInitStatement *SgForInitStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgForInitStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgForInitStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgForInitStatement::initializeStorageClassArray(SgForInitStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgForInitStatement::clearMemoryPool()
+*/
+/*!\fn static void SgForInitStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgForInitStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgForInitStatement::roseRTI()
+*/
+/*!\fn virtual SgForInitStatement::~SgForInitStatement()
+*/
+/*!\fn virtual SgNode *SgForInitStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual bool SgForInitStatement::insert_child(SgStatement *,SgStatement *,bool inFront=true,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual bool SgForInitStatement::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgForInitStatement::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgForInitStatement::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgForInitStatement::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgForInitStatement::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgForInitStatement::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgForInitStatement::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgForInitStatement::post_construction_initialization()
+*/
+/*!\fn void SgForInitStatement::append_init_stmt(SgStatement *element)
+*/
+/*!\fn void SgForInitStatement::insert_init_stmt(const std::vector < SgStatement * , std::allocator< SgStatement * > > ::iterator &list,SgStatement *element)
+*/
+/*!\fn void SgForInitStatement::prepend_init_stmt(SgStatement *element)
+*/
+/*!
+\fn SgStatementPtrList &SgForInitStatement::get_init_stmt()
+\brief Returns non-const reference to a SgStatementPtrList (typedef to a STL list).
+See  &SgForInitStatement::init_stmt for documentation \return Returns non-const reference to STL list.
+*/
+/*!
+\fn const SgStatementPtrList &SgForInitStatement::get_init_stmt() const
+\brief Returns const reference to a SgStatementPtrList (typedef to a STL list).
+See  const
+init_stmt for documentation \return Returns const reference to STL list.
+*/
+/*!\fn virtual SgNode *SgForInitStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgForInitStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgForInitStatement::get_numberOfTraversalSuccessors()
+\description See  SgForInitStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgForInitStatement::get_traversalSuccessorContainer()
+\description See  SgForInitStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgForInitStatement::get_traversalSuccessorNamesContainer()
+\description See  SgForInitStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgForInitStatement::SgForInitStatement()
+*/
+//@}
+int SAGE_Doxygen_Dummy_26588182828122;

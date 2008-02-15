@@ -1,0 +1,152 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTryStmt
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgTryStmt
+\brief This class represents the concept of try statement within the try-catch
+    support for exception handling in C++.
+\sa
+\ref SgTryStmt_usage  "Example of using a SgTryStmt object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTryStmt data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTryStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgTryStmt_create "Example:create an SgTryStmt object"
+*/
+/*!
+\fn SgTryStmt::~SgTryStmt()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgTryStmt::isSgTryStmt (SgNode *s)
+\brief Cast function (from derived class to SgTryStmt pointer).
+   This functions returns a SgTryStmt pointer for any input of a 
+pointer to an object derived from a SgTryStmt.
+\return Returns valid pointer to SgTryStmt if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgTryStmt::isSgTryStmt (const SgNode *s)
+\brief Cast function (from derived class to SgTryStmt pointer).
+   This functions returns a SgTryStmt pointer for any input of a 
+pointer to an object derived from a SgTryStmt.
+\return Returns valid pointer to SgTryStmt if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgBasicBlock *SgTryStmt::p_body
+\brief This pointer points to a SgBasicBlock containing the statements to be execued by
+    the try block.
+*/
+/*! \var SgCatchStatementSeq *SgTryStmt::p_catch_statement_seq_root
+\brief This pointer points to a SgCatchStatementSeq and connects the try statement to the
+    sequence of catch statements within the support of exception handling.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgTryStmt::SgTryStmt(Sg_File_Info *startOfConstruct,SgBasicBlock *body=(0))
+\brief This is the constructor.
+   This constructor builds the SgTryStmt base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgTryStmt::SgTryStmt(const SgTryStmtStorageClass &source)
+*/
+/*!\fn inline static void SgTryStmt::operator delete(void *pointer)
+*/
+/*!\fn static SgTryStmt *SgTryStmt::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTryStmt::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTryStmt::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTryStmt::initializeStorageClassArray(SgTryStmtStorageClass *storageArray)
+*/
+/*!\fn static void SgTryStmt::clearMemoryPool()
+*/
+/*!\fn static void SgTryStmt::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTryStmt::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTryStmt::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTryStmt::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTryStmt::~SgTryStmt()
+*/
+/*!\fn virtual bool SgTryStmt::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual bool SgTryStmt::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgTryStmt::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgTryStmt::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgTryStmt::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgTryStmt::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgTryStmt::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgTryStmt::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgTryStmt::post_construction_initialization()
+*/
+/*!\fn void SgTryStmt::append_catch_statement(SgStatement *element)
+*/
+/*!\fn void SgTryStmt::insert_catch_statement(const std::vector < SgStatement * , std::allocator< SgStatement * > > ::iterator &list,SgStatement *element)
+*/
+/*!\fn void SgTryStmt::prepend_catch_statement(SgStatement *element)
+*/
+/*!
+\fn void SgTryStmt::set_body(SgBasicBlock *body)
+\brief Access function for p_body.
+See  *body)
+body for documentation \return Returns void.
+*/
+/*!
+\fn void SgTryStmt::set_catch_statement_seq_root(SgCatchStatementSeq *catch_statement_seq_root)
+\brief Access function for p_catch_statement_seq_root.
+See  *catch_statement_seq_root)
+catch_statement_seq_root for documentation \return Returns void.
+*/
+/*!
+\fn SgBasicBlock *SgTryStmt::get_body() const
+\brief Returns pointer to SgBasicBlock.
+See  const
+body for documentation \return Returns pointer to SgBasicBlock.
+*/
+/*!
+\fn SgCatchStatementSeq *SgTryStmt::get_catch_statement_seq_root() const
+\brief Returns pointer to SgCatchStatementSeq.
+See  const
+catch_statement_seq_root for documentation \return Returns pointer to SgCatchStatementSeq.
+*/
+/*!\fn SgStatementPtrList &SgTryStmt::get_catch_statement_seq()
+\description See  &SgTryStmt::catch_statement_seq for documentation */
+/*!\fn const SgStatementPtrList &SgTryStmt::get_catch_statement_seq() const
+\description See  const
+catch_statement_seq for documentation */
+/*!\fn virtual SgNode *SgTryStmt::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTryStmt::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTryStmt::get_numberOfTraversalSuccessors()
+\description See  SgTryStmt::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTryStmt::get_traversalSuccessorContainer()
+\description See  SgTryStmt::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTryStmt::get_traversalSuccessorNamesContainer()
+\description See  SgTryStmt::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTryStmt::SgTryStmt(SgBasicBlock *body)
+*/
+//@}
+int SAGE_Doxygen_Dummy_9376176755149;

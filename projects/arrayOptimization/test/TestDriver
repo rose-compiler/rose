@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 srcdir" 1>&2
+  exit 1
+fi
+srcdir=$1
+
+test1="../ArrayProcessor -fs2 -annot $srcdir/floatArray.annot -annot $srcdir/funcs.annot -annot $srcdir/Index.annot $srcdir/interp1.C"
+echo $test1
+$test1
+diff rose_interp1.C $srcdir/rose_interp1.C.save
+rm rose_interp1.C
+
+test2="../ArrayProcessor -fs2 -annot $srcdir/floatArray.annot -annot $srcdir/funcs.annot -annot $srcdir/Index.annot $srcdir/redBlack1.C"
+echo $test2
+$test2
+diff rose_redBlack1.C $srcdir/rose_redBlack1.C.save
+rm rose_redBlack1.C
+
+test3="../ArrayProcessor -fs2 -annot $srcdir/floatArray.annot -annot $srcdir/funcs.annot -annot $srcdir/Index.annot -splitloop $srcdir/redBlack1.C"
+echo $test3
+$test3
+diff rose_redBlack1.C $srcdir/rose_redBlack1_split.C.save
+rm rose_redBlack1.C

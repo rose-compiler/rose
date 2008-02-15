@@ -1,0 +1,18 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var std::string RTIMemberData::name
+*/
+/*!\var std::string RTIMemberData::type
+*/
+/*!\var std::string RTIMemberData::value
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn inline RTIMemberData::RTIMemberData(std::string type0,std::string name0,std::string value0) : type(type0), name(name0), value(value0)
+*/
+/*!\fn inline RTIMemberData::RTIMemberData(char *type0,char *name0,char *value0) : type(::std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string((type0))), name(::std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string((name0))), value(::std::basic_string < char , std::char_traits< char > , std::allocator< char > > ::basic_string((value0)))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1669208649;

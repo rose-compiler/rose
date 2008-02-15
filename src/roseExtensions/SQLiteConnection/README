@@ -1,0 +1,5 @@
+
+This is Radu's work to connect ROSE to use SQLite, instead of MySQL.
+This directory inclused the sqlite3.h header file from SQLite, it
+can be removed once the configure scripts are setup to optionally 
+use SQLite.  The sqlite3.h header file is an unmodified copy from SQLite.

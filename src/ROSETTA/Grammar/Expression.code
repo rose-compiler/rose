@@ -1,0 +1,5712 @@
+// #########################################################    -*- C++ -*-
+// #########################################################
+//                      HEADER CODE
+// #########################################################
+// #########################################################
+
+HEADER_START
+
+//! This class represents the base class of all the expressions within this grammar.
+/*! It contains all the base functionality for the construction, manipulation, and unparsing support.
+ */
+     public:
+       // $CLASSNAME();
+       // $CLASSNAME(Sg_File_Info* info);
+
+      //! Function to get user defined attributes (as I recall)
+      //  SgAttributePtrList& get_uattributes();
+
+      //! Replace an expression child of this node with another one.
+          virtual int replace_expression(SgExpression *oldChild,SgExpression *newChild);
+      
+      //! unparsing support for pragmas
+      //  void output_pragma(ostream& os);
+
+       // Set pragmas associated with this expression
+       // note: pragmas are typically associated with statements not expressions
+       // void set_pragma() ROSE_DEPRECATED_FUNCTION;
+
+      //! get the type associated with this expression
+          virtual SgType* get_type() const;
+
+       // set the type \attention{why does this not take a parameter?}
+       // DQ (1/14/2006): Because the type is computed internally (often from operands stored internally).
+       // virtual void set_type();
+
+      //! return precedence (scale of 0-10, as I recall)
+          virtual int precedence() const ;
+
+       // DQ (8/21/2004): Support for pragmas (this is the old Sage II support for pragmas)
+       // It is largely redundant to the newer statement based pragma support.  However, this
+       // is support for pragmas on a expression level.  I'm not clear if this is important
+       // to support.
+       // void add_pragma(int cnt, SgPragma** plist);
+       // SgPragma* add_pragma(char *nm);
+       // SgPragma* get_pragma(char *nm) const;
+       // int remove_pragma(char *nm);
+
+       // get attribute
+       // SgAttribute* get_user_attribute(char *nm) const;
+       // SgAttribute* add_user_attribute(char *nm, SgAttribute* attr);
+       // int remove_user_attribute(char *nm);
+
+     public:
+
+	  // Overriding SgNode versions of these
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int index) const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // DQ (11/6/2006): use this to return the operatorPosition 
+       // (instead of the startOfConstruct as it is used for SgStatement objects)
+          virtual Sg_File_Info* get_file_info(void) const;
+          virtual void set_file_info(Sg_File_Info* X);
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called seperately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+#else
+       // DQ (11/1/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+
+HEADER_END
+
+
+HEADER_X_EXPRESSION_START
+       // void post_construction_initialization();
+HEADER_X_EXPRESSION_END
+
+
+HEADER_NON_X_EXPRESSION_START
+       // void post_construction_initialization();
+HEADER_NON_X_EXPRESSION_END
+
+
+HEADER_FUNCTIONS_START
+HEADER_FUNCTIONS_END
+
+HEADER_GET_TYPE_START
+          SgType* get_type() const;
+HEADER_GET_TYPE_END
+
+
+HEADER_SET_TYPE_START
+
+#error "Error: set_type() is being removed"
+
+       // DQ (1/14/2006): set_type is removed
+       // void set_type();
+
+HEADER_SET_TYPE_END
+
+
+HEADER_POST_CONSTRUCTION_INITIALIZATION_START
+          void post_construction_initialization();
+HEADER_POST_CONSTRUCTION_INITIALIZATION_END
+
+
+HEADER_PRECEDENCE_START
+          int precedence() const { return PRECEDENCE_VALUE; }
+HEADER_PRECEDENCE_END
+
+
+HEADER_GET_NEXT_EXPRESSION_START
+          SgExpression *get_next( int& n) const ROSE_DEPRECATED_FUNCTION;
+          int replace_expression( SgExpression *, SgExpression *) ROSE_DEPRECATED_FUNCTION;
+HEADER_GET_NEXT_EXPRESSION_END
+
+
+HEADER_EXTRA_FUNCTIONS_START
+          int length() const ROSE_DEPRECATED_FUNCTION;
+          bool empty() const ROSE_DEPRECATED_FUNCTION;
+       // void operator_unparse( const char *, Unparse_Info &, ostream & );
+HEADER_EXTRA_FUNCTIONS_END
+
+HEADER_LIST_FUNCTIONS_START
+          void append_LIST_NAME(SgExpression* what);
+       // void insert_LIST_NAME(const SgExpression::iterator & where, SgExpression* what);
+          void insert_LIST_NAME(const SgExpressionPtrList::iterator & where, SgExpression* what);
+HEADER_LIST_FUNCTIONS_END
+
+HEADER_UNARY_EXPRESSION_START
+
+          SgExpression* get_operand() const;
+          void set_operand (SgExpression * exp);
+          SgType* get_type() const;
+
+       // Enums are not properly scoped in the class declaration and are assigned 
+       // to a global scope so we have to change the name to make it unique across 
+       // different grammars
+      /*! \brief Enum value defines operators as prefix or postfix, as appropriate, e.g. operator++().
+
+          This enum type provides support for specification of prefix/postfix operators such 
+          as operator++() using a simpler mechanism thatn that provided by C++.  See C++
+          standard for details of specification of prefix and postfix operators.
+
+          \internal There should be an additional value added to support unknown setting (with value 0)
+       */
+          enum Sgop_mode
+             {
+               prefix=0 /*! Prefix Operator Specifier */, 
+               postfix  /*! Postfix Operator Specifier */
+             };
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_UNARY_EXPRESSION_END
+
+HEADER_BINARY_EXPRESSION_START
+          SgExpression* get_lhs_operand() const;
+          void set_lhs_operand(SgExpression * exp);
+          SgExpression* get_rhs_operand() const;
+          void set_rhs_operand(SgExpression * exp);
+          SgType* get_type() const;
+
+	  virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_BINARY_EXPRESSION_END
+
+
+HEADER_EXPRESSION_ROOT_EXPRESSION_START
+       // QY: 9/30/2004: removed stmt pointer inside exprRoot. Use parent pointer instead.
+       // void initialize_root (SgExpression* exp, SgStatement* stmt);
+
+       // DQ (12/17/2006): Removed to clean up code (not used, I think).
+       // void set_statement( SgStatement* stmt );
+       // SgStatement* get_statement() const;
+
+HEADER_EXPRESSION_ROOT_EXPRESSION_END
+
+
+HEADER_EXPRESSION_LIST_EXPRESSION_START
+
+          SgExpressionPtrList& get_expressions();
+          const SgExpressionPtrList& get_expressions() const;
+
+HEADER_LIST_DECLARATIONS
+
+          void prepend_expression(SgExpression *what);
+
+          bool empty() const ROSE_DEPRECATED_FUNCTION;
+
+          //SgExpression* get_first() const ROSE_DEPRECATED_FUNCTION;
+          //SgExpression* get_end() const ROSE_DEPRECATED_FUNCTION;
+          //int get_index(SgExpression*) const ROSE_DEPRECATED_FUNCTION;
+
+        // void insert_expression(const SgExpressionPtrList::iterator &, SgExpression*);
+        // void insert_expression( SgExpression*, SgExpression*, int);
+
+          int replace_expression(SgExpression *o, SgExpression *n) ROSE_DEPRECATED_FUNCTION;
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_EXPRESSION_LIST_EXPRESSION_END
+
+
+HEADER_VAR_REF_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // DQ (11/7/2007): I think this is not used any more.
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+       // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+
+HEADER_VAR_REF_EXPRESSION_END
+
+
+HEADER_LABEL_REF_EXPRESSION_START
+
+          SgName get_name() const;
+       // const SgName & get_name() const;
+
+          int get_numeric_label_value() const;
+
+       // DQ (12/30/2007): I don't think there is any control flow through this sorts of variables, but this 
+       // should be discussed (might apply to assigned goto).
+       // virtual unsigned int cfgIndexForEnd() const;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_LABEL_REF_EXPRESSION_END
+
+
+HEADER_CLASS_NAME_REF_EXPRESSION_START
+HEADER_CLASS_NAME_REF_EXPRESSION_END
+
+
+HEADER_FUNCTION_REF_EXPRESSION_START
+          SgFunctionSymbol* get_symbol() const;
+          void set_symbol(SgFunctionSymbol * symbol);
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // DQ (11/7/2007): I think this is not used any more.
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+       // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+
+HEADER_FUNCTION_REF_EXPRESSION_END
+
+
+HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
+          SgMemberFunctionSymbol* get_symbol() const;
+          void set_symbol(SgMemberFunctionSymbol * symbol);
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // DQ (11/7/2007): I think this is not used any more.
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+       // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+
+HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
+
+
+HEADER_VALUE_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_VALUE_EXPRESSION_END
+
+
+HEADER_BOOLEAN_VALUE_EXPRESSION_START
+HEADER_BOOLEAN_VALUE_EXPRESSION_END
+
+
+HEADER_STRING_VALUE_EXPRESSION_START
+      // DQ (3/25/2006): This is not generated by ROSETTA automatically (using C++ style string type)
+      // $CLASSNAME( Sg_File_Info* file_info = NULL, char* value = NULL );
+      // ~$CLASSNAME();
+
+HEADER_STRING_VALUE_EXPRESSION_END
+
+
+HEADER_SHORT_VALUE_EXPRESSION_START
+HEADER_SHORT_VALUE_EXPRESSION_END
+
+
+HEADER_CHAR_VALUE_EXPRESSION_START
+HEADER_CHAR_VALUE_EXPRESSION_END
+
+
+HEADER_UNSIGNED_CHAR_VALUE_EXPRESSION_START
+HEADER_UNSIGNED_CHAR_VALUE_EXPRESSION_END
+
+
+HEADER_WCHAR_VALUE_EXPRESSION_START
+          wchar_t get_value() const;
+          void set_value(wchar_t new_val);
+
+HEADER_WCHAR_VALUE_EXPRESSION_END
+
+
+HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION_START
+HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION_END
+
+
+HEADER_INT_VALUE_EXPRESSION_START
+HEADER_INT_VALUE_EXPRESSION_END
+
+
+HEADER_ENUM_VALUE_EXPRESSION_START
+HEADER_ENUM_VALUE_EXPRESSION_END
+
+
+HEADER_UNSIGNED_INT_VALUE_EXPRESSION_START
+HEADER_UNSIGNED_INT_VALUE_EXPRESSION_END
+
+
+HEADER_LONG_INT_VALUE_EXPRESSION_START
+HEADER_LONG_INT_VALUE_EXPRESSION_END
+
+
+HEADER_LONG_LONG_VALUE_EXPRESSION_START
+HEADER_LONG_LONG_VALUE_EXPRESSION_END
+
+
+HEADER_UNSIGNED_LONG_LONG_VALUE_EXPRESSION_START
+HEADER_UNSIGNED_LONG_LONG_VALUE_EXPRESSION_END
+
+
+HEADER_UNSIGNED_LONG_VALUE_EXPRESSION_START
+HEADER_UNSIGNED_LONG_VALUE_EXPRESSION_END
+
+
+HEADER_FLOAT_VALUE_EXPRESSION_START
+HEADER_FLOAT_VALUE_EXPRESSION_END
+
+
+HEADER_DOUBLE_VALUE_EXPRESSION_START
+HEADER_DOUBLE_VALUE_EXPRESSION_END
+
+
+HEADER_LONG_DOUBLE_VALUE_EXPRESSION_START
+HEADER_LONG_DOUBLE_VALUE_EXPRESSION_END
+
+
+HEADER_COMPLEX_VALUE_EXPRESSION_START
+HEADER_COMPLEX_VALUE_EXPRESSION_END
+
+
+HEADER_FUNCTION_CALL_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_FUNCTION_CALL_EXPRESSION_END
+
+
+HEADER_ARROW_EXPRESSION_START
+          SgType* get_type() const;
+
+HEADER_ARROW_EXPRESSION_END
+
+
+HEADER_DOT_EXPRESSION_START
+          SgType* get_type() const;
+
+HEADER_DOT_EXPRESSION_END
+
+
+HEADER_DOT_STAR_OPERATOR_START
+          SgType* get_type() const;
+
+HEADER_DOT_STAR_OPERATOR_END
+
+
+HEADER_ARROW_STAR_OPERATOR_START
+          SgType* get_type() const;
+
+HEADER_ARROW_STAR_OPERATOR_END
+
+
+HEADER_BOOLEAN_GET_TYPE_START
+       // DQ (6/20/2006): Used for all relational operators
+          virtual SgType* get_type() const;
+HEADER_BOOLEAN_GET_TYPE_END
+
+HEADER_EQUALITY_OPERATOR_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_EQUALITY_OPERATOR_END
+
+HEADER_LESS_THAN_OPERATOR_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_LESS_THAN_OPERATOR_END
+
+HEADER_GREATER_THAN_OPERATOR_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_GREATER_THAN_OPERATOR_END
+
+HEADER_NOT_EQUAL_OPERATOR_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_NOT_EQUAL_OPERATOR_END
+
+HEADER_LESS_OR_EQUAL_OPERATOR_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_LESS_OR_EQUAL_OPERATOR_END
+
+HEADER_GREATER_OR_EQUAL_OPERATOR_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_GREATER_OR_EQUAL_OPERATOR_END
+
+
+HEADER_ADD_OPERATOR_START
+HEADER_ADD_OPERATOR_END
+
+
+HEADER_SUBTRACT_OPERATOR_START
+HEADER_SUBTRACT_OPERATOR_END
+
+
+HEADER_MULTIPLY_OPERATOR_START
+HEADER_MULTIPLY_OPERATOR_END
+
+
+HEADER_DIVIDE_OPERATOR_START
+HEADER_DIVIDE_OPERATOR_END
+
+
+HEADER_INTEGER_DIVIDE_OPERATOR_START
+HEADER_INTEGER_DIVIDE_OPERATOR_END
+
+
+HEADER_MOD_OPERATOR_START
+HEADER_MOD_OPERATOR_END
+
+
+HEADER_AND_OPERATOR_START
+          SgType* get_type() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_AND_OPERATOR_END
+
+
+HEADER_OR_OPERATOR_START
+          SgType* get_type() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_OR_OPERATOR_END
+
+
+HEADER_BIT_XOR_OPERATOR_START
+HEADER_BIT_XOR_OPERATOR_END
+
+
+HEADER_BIT_AND_OPERATOR_START
+HEADER_BIT_AND_OPERATOR_END
+
+
+HEADER_BIT_OR_OPERATOR_START
+HEADER_BIT_OR_OPERATOR_END
+
+
+HEADER_COMMA_OPERATOR_EXPRESSION_START
+
+       // get the type associated with this expression (using the rhs)
+          virtual SgType* get_type() const;
+
+HEADER_COMMA_OPERATOR_EXPRESSION_END
+
+
+HEADER_LEFT_SHIFT_OPERATOR_START
+HEADER_LEFT_SHIFT_OPERATOR_END
+
+
+HEADER_RIGHT_SHIFT_OPERATOR_START
+HEADER_RIGHT_SHIFT_OPERATOR_END
+
+
+HEADER_MINUS_OPERATOR_START
+HEADER_MINUS_OPERATOR_END
+
+
+HEADER_UNARY_ADD_OPERATOR_START
+HEADER_UNARY_ADD_OPERATOR_END
+
+
+HEADER_SIZEOF_OPERATOR_START
+HEADER_SIZEOF_OPERATOR_END
+
+
+HEADER_TYPE_ID_OPERATOR_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_TYPE_ID_OPERATOR_END
+
+HEADER_VARARG_START_OPERATOR_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_VARARG_START_OPERATOR_END
+
+HEADER_VARARG_OPERATOR_START
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // void set_type( SgType* type );
+
+HEADER_VARARG_OPERATOR_END
+
+HEADER_VARARG_END_OPERATOR_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_VARARG_END_OPERATOR_END
+
+HEADER_NOT_OPERATOR_START
+          SgType* get_type() const;
+
+HEADER_NOT_OPERATOR_END
+
+
+HEADER_POINTER_DEREF_EXPRESSION_START
+          SgType* get_type() const;
+
+HEADER_POINTER_DEREF_EXPRESSION_END
+
+
+HEADER_ADDRESS_OF_OPERATOR_START
+          SgType* get_type() const;
+
+HEADER_ADDRESS_OF_OPERATOR_END
+
+
+HEADER_MINUS_MINUS_OPERATOR_START
+          $CLASSNAME ( Sg_File_Info* file_info, SgExpression* operand_i, Sgop_mode a_mode );
+          $CLASSNAME ( SgExpression* operand_i, Sgop_mode a_mode );
+
+HEADER_MINUS_MINUS_OPERATOR_END
+
+
+HEADER_PLUS_PLUS_OPERATOR_START
+          $CLASSNAME ( Sg_File_Info* file_info, SgExpression* operand_i, Sgop_mode a_mode );
+          $CLASSNAME ( SgExpression* operand_i, Sgop_mode a_mode );
+
+HEADER_PLUS_PLUS_OPERATOR_END
+
+
+HEADER_BIT_COMPLEMENT_OPERATOR_START
+HEADER_BIT_COMPLEMENT_OPERATOR_END
+
+
+HEADER_CONDITIONAL_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_CONDITIONAL_EXPRESSION_END
+
+
+HEADER_CAST_EXPRESSION_START
+       // DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
+       // enum Sg$GRAMMAR_X_MARKER_e_cast_type 
+      /*! \brief Classification of Casts
+
+          Must be either C style cast or C++ style const_cast<>, static_cast<>, 
+          dynamic_cast<>, or reinterpret_cast<>.
+
+          \internal Only a single value is permited.
+       */
+          enum cast_type_enum
+             {
+               e_unknown          = 0,  /*!< Unknown value (error value) */
+               e_default          = 1,  /*!< Default value (default) */
+               e_C_style_cast     = 2,  /*!< C style cast */
+               e_const_cast       = 3,  /*!< C++ const cast */
+               e_static_cast      = 4,  /*!< C++ static cast */
+               e_dynamic_cast     = 5,  /*!< C++ dynamic cast */
+               e_reinterpret_cast = 6   /*!< C++ reinterpret cast */
+             };
+
+       // Sg$GRAMMAR_X_MARKER_e_cast_type cast_type();
+          cast_type_enum cast_type();
+
+       // DQ (1/16/2006): Added to support special version of get_type which uses the p_expression_type 
+       // (one of the few places where we have to store the expression type explicitly).
+          SgType* get_type() const;
+
+	  virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
+
+       // DQ (1/17/2008): Added to permit the type to be set.
+          void set_type (SgType* type);
+
+HEADER_CAST_EXPRESSION_END
+
+
+HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_START
+       // DQ (1/16/2006): Added to support special version of get_type.
+       // returns get_lhs_operand()->get_type()  (maybe we should call get_base_type() ???)
+          SgType* get_type() const;
+HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_END
+
+
+HEADER_NEW_OPERATOR_EXPRESSION_START
+       // DQ (1/16/2006): Added to support special version of get_type.
+       // returns SgPointerType::createType(p_expression_type)
+       // SgType* get_type() const;
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_NEW_OPERATOR_EXPRESSION_END
+
+
+HEADER_DELETE_OPERATOR_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_DELETE_OPERATOR_EXPRESSION_END
+
+HEADER_THIS_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_THIS_EXPRESSION_END
+
+
+HEADER_SCOPE_OPERATOR_START
+HEADER_SCOPE_OPERATOR_END
+
+
+HEADER_ASSIGNMENT_OPERATOR_START
+HEADER_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_PLUS_ASSIGNMENT_OPERATOR_START
+HEADER_PLUS_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_MINUS_ASSIGNMENT_OPERATOR_START
+HEADER_MINUS_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_AND_ASSIGNMENT_OPERATOR_START
+HEADER_AND_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_IOR_ASSIGNMENT_OPERATOR_START
+HEADER_IOR_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
+HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
+HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_MOD_ASSIGNMENT_OPERATOR_START
+HEADER_MOD_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_XOR_ASSIGNMENT_OPERATOR_START
+HEADER_XOR_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
+HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
+HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
+
+
+HEADER_REFERENCE_EXPRESSION_START
+HEADER_REFERENCE_EXPRESSION_END
+
+
+HEADER_THROW_OPERATOR_START
+
+      //! Throw IR node can be used in three different ways.
+          enum e_throw_kind
+             {
+               unknown_throw = 0             /*! error value */,
+               throw_expression              /*! throw expression (takes an expression) */,
+               throw_exception_specification /*! takes a list of types */,
+               rethrow                       /*! rethow expression (as in \"rethrow;\") */
+             };
+
+       // DQ (1/16/2006): Added to support special version of get_type()
+          SgType* get_type() const;
+
+HEADER_THROW_OPERATOR_END
+
+
+HEADER_CONCATENATION_OPERATOR_START
+HEADER_CONCATENATION_OPERATOR_END
+
+
+HEADER_INITIALIZER_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+
+HEADER_INITIALIZER_EXPRESSION_END
+
+
+HEADER_AGGREGATE_INITIALIZER_EXPRESSION_START
+HEADER_LIST_DECLARATIONS
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_AGGREGATE_INITIALIZER_EXPRESSION_END
+
+
+HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+      /*! \brief Get the SgClassDeclaration associated with this constructor call.
+
+          Note that in rare cases where the constructor is associated with a primative type
+          this function will return a NULL pointer.  In which case p_expression_type is a 
+          pointer to a SgType which is not a SgClassType, but is a valid pointer to a
+          primative type.
+
+          \internal if p_declaration is NULL then p_associated_class_unknown is true.
+       */
+          SgClassDeclaration* get_class_decl () const;
+HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_END
+
+
+HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+          SgExpression * get_operand() const;
+          void set_operand(SgExpression * exp);
+
+HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+HEADER_REPLACE_EXPRESSION_START
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+HEADER_REPLACE_EXPRESSION_END
+
+HEADER_NULL_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_NULL_EXPRESSION_END
+
+HEADER_VARIANT_EXPRESSION_START
+HEADER_VARIANT_EXPRESSION_END
+
+HEADER_STATEMENT_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_STATEMENT_EXPRESSION_END
+
+HEADER_ASM_OP_START
+
+       // DQ (7/22/2006): Added support for asm operands and their modifiers
+      /*! \brief ASM Operand modifiers (multiple values can be specified)
+
+          \internal Multiple values can be specified
+       */
+           enum asm_operand_modifier_enum
+             {
+               e_unknown           = 0x00, /*!< error */
+               e_input             = 0x01, /*!< no mod: input operand */
+               e_output            = 0x02, /*!< =: output operand */
+               e_modify            = 0x03, /*!< +: read-mod-write operand */
+               e_earlyclobber      = 0x04, /*!< &: modified early, cannot overlap inputs */
+               e_commutative       = 0x08, /*!< %: commutative with next operand */
+               e_ignore_next       = 0x10, /*!< *: ignore next letter as a register pref */
+               e_ignore_till_comma = 0x20, /*!< #: ignore up to comma as a register pref */
+               e_poor_choice       = 0x40, /*!< ?: avoid choosing this */
+               e_bad_choice        = 0x80  /*!< !: really avoid choosing this */
+             };
+
+       // DQ (7/22/2006): Added support for asm operands and their constraints
+      /*! \brief ASM operand constraints (multiple values can be specified)
+
+          \internal Only one value can be specified
+       */
+          enum asm_operand_constraint_enum
+             {
+               e_invalid = 0,
+               e_any,              /*!< X: unconstrained */
+               e_general,          /*!< g: r or i or m */
+               e_match_0, aoc_match_1, aoc_match_2, aoc_match_3, aoc_match_4,
+               e_match_5, aoc_match_6, aoc_match_7, aoc_match_8, aoc_match_9, /*!< 0-9: same as a previous operand */
+            /* registers constraints */
+               e_reg_integer,      /*!< r: any integer register */
+               e_reg_float,        /*!< f: any float register */
+            /* memory constraints */
+               e_mem_any,          /*!< m: any memory location */
+               e_mem_offset,       /*!< o: memory location, if (val + sizeof(object))
+                                           is also acceptable in this context */
+               e_mem_nonoffset,    /*!< V: m but not o */
+               e_mem_autoinc,      /*!< >: mem, ptr incremented before or after op */
+               e_mem_autodec,      /*!< <: mem, ptr decremented before or after op */
+            /* immediate constraints */
+               e_imm_int,          /*!< i: any integer (including symbolic references) */
+               e_imm_number,       /*!< n: any number known to the compiler (no symbols) */
+               e_imm_symbol,       /*!< s: any symbolic reference */
+               e_imm_float,        /*!< E, F: any floating point constant */
+
+            // DQ (7/22/2006): Let's assume we want to include these (controled by EDG's setting of GNU_X86_ASM_EXTENSIONS_ALLOWED start)
+            /* register constraints */
+               e_reg_a,            /*!< a: ax */
+               e_reg_b,            /*!< b: bx */
+               e_reg_c,            /*!< c: cx */
+               e_reg_d,            /*!< d: dx */
+               e_reg_si,           /*!< s: si */
+               e_reg_di,           /*!< d: di */
+               e_reg_legacy,       /*!< R: ax bx cx dx si di bp sp (avail. on non-x86-64) */
+               e_reg_q,            /*!< Q: ax bx cx dx (non-x86-64), same as 'r' (x86-64) */
+               e_reg_ad,           /*!< A: ax dx */
+               e_reg_float_tos,    /*!< t: %st(0) */
+               e_reg_float_second, /*!< u: %st(1) */
+               e_reg_sse,          /*!< x: any SSE register */
+               e_reg_sse2,         /*!< Y: any SSE2 register */
+               e_reg_mmx,          /*!< y: any MMX register */
+            /* immediate constraints */
+               e_imm_short_shift,  /*!< I: [0, 32) */
+               e_imm_long_shift,   /*!< J: [0, 64) */
+               e_imm_lea_shift,    /*!< M: [0, 4) */
+               e_imm_signed8,      /*!< K: [-128, 127] */
+               e_imm_unsigned8,    /*!< N: [0, 255] */
+               e_imm_and_zext,     /*!< L: {0xFF, 0xFFFF} */
+               e_imm_80387,        /*!< G: any 80387 standard constant */
+               e_imm_sse,          /*!< H: any SSE standard constant */
+               e_imm_sext32,       /*!< e: any 32-bit quantity sign extended to 64 bits */
+               e_imm_zext32,       /*!< Z: any 32-bit quantity zero extended to 64 bits */
+            // DQ (7/22/2006): Let's assume we want to include these (controled by EDG's setting of GNU_X86_ASM_EXTENSIONS_ALLOWED end)
+               e_last
+             };
+
+HEADER_ASM_OP_END
+
+
+// HEADER_INTRINSICFN_EXPRESSION_START
+//         void append_arg($GRAMMAR_PREFIX_Expression*);
+// HEADER_INTRINSICFN_EXPRESSION_END
+
+HEADER_SUBSCRIPT_EXPR_EXPRESSION_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_SUBSCRIPT_EXPR_EXPRESSION_END
+
+// HEADER_SUBSCRIPT_COLON_EXPRESSION_START
+// HEADER_SUBSCRIPT_COLON_EXPRESSION_END
+
+HEADER_COLON_SHAPE_EXPRESSION_START
+HEADER_COLON_SHAPE_EXPRESSION_END
+
+// HEADER_SUBSCRIPT_ASTERISK_EXPRESSION_START
+// HEADER_SUBSCRIPT_ASTERISK_EXPRESSION_END
+
+HEADER_ASTERISK_SHAPE_EXPRESSION_START
+HEADER_ASTERISK_SHAPE_EXPRESSION_END
+
+HEADER_USE_ONLY_EXPR_START
+HEADER_USE_ONLY_EXPR_END
+
+HEADER_USE_RENAME_EXPR_START
+HEADER_USE_RENAME_EXPR_END
+
+HEADER_IO_ITEM_EXPR_START
+HEADER_IO_ITEM_EXPR_END
+
+HEADER_IMPLIED_DO_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_IMPLIED_DO_END
+
+HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_START
+HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
+
+HEADER_ACTUAL_ARGUMENT_EXPRESSION_START
+HEADER_ACTUAL_ARGUMENT_EXPRESSION_END
+
+
+// #########################################################
+// #########################################################
+//                      SOURCE CODE
+// #########################################################
+// #########################################################
+
+NOTES: SgAggregateInitializer, SgConstructorInitializer, and 
+       SgAssignInitializer all have different set_type functions 
+       (is this a bug?).
+
+       set_type in SgPlusAssignOp is different from every other SgxxxAssignOp 
+
+       SgBitComplementOp set_type function is different from all other Bit operators
+
+// #########################################################
+// #########################################################
+
+
+SOURCE_BASECLASS_EXPRESSION_START
+
+Sg_File_Info*
+SgExpression::get_file_info() const
+   {
+  // DQ (11/8/2006): Note that the EDG/SageIII translation only 
+  // uses set_startOfConstruct() and set_endOfConstruct().
+
+  // This redefines get_file_info() as it is implemented for a SgLocatedNode 
+  // to use the "get_operatorPosition()" instead of the get_startOfConstruct()"
+  // Most if not all operator positions will associated with syntax for the operator.
+  // return get_operatorPosition();
+     Sg_File_Info* returnFileInfo = get_operatorPosition();
+     if (returnFileInfo == NULL)
+          returnFileInfo = get_startOfConstruct();
+     return returnFileInfo;
+   }
+
+void
+SgExpression::set_file_info(Sg_File_Info* fileInfo)
+   {
+  // DQ (11/8/2006): Note that the EDG/SageIII translation only 
+  // uses set_startOfConstruct() and set_endOfConstruct().
+
+  // This redefines get_file_info() as it is implemented for a SgLocatedNode
+  // to use the "get_operatorPosition()" instead of the get_startOfConstruct()"
+  // Most if not all operator positions will associated with syntax for the operator.
+     return set_operatorPosition(fileInfo);
+   }
+
+unsigned int 
+SgExpression::cfgIndexForEnd() const 
+   {
+     std::cerr << "Bad expression case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
+     ROSE_ASSERT (false);
+   }
+
+bool
+SgExpression::cfgIsIndexInteresting(unsigned int idx) const {
+    // Default -- overridden in short-circuiting operators
+    return idx == this->cfgIndexForEnd();
+  }
+
+unsigned int
+SgExpression::cfgFindChildIndex(SgNode* n) {
+    // Default -- overridden in some cases
+    size_t idx = this->get_childIndex(n);
+    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    return idx;
+  }
+
+unsigned int
+SgExpression::cfgFindNextChildIndex(SgNode* n) {
+    return this->cfgFindChildIndex(n) + 1;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int) {
+    std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
+    ROSE_ASSERT (false);
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int) {
+    std::cerr << "Bad expression case " << this->class_name() << " in cfgInEdges()" << std::endl;
+    ROSE_ASSERT (false);
+  }
+
+void
+SgExpression::post_construction_initialization()
+   {
+   }
+
+int
+SgExpression::replace_expression(SgExpression *,SgExpression *)
+   {
+     printf ("Error: base class  SgExpression::replace_expression called, likely a mistake! \n");
+     ROSE_ASSERT(false);
+     return 0;
+   }
+
+#if 0
+// DQ (1/14/2006): set_type is removed
+void
+SgExpression::set_type()
+   {
+    /* 
+     * this is a quick hack to allow me to rely on being to create a non
+     * abstract object.  For some expression classes this had not been 
+     * overridden
+     */
+     
+     cerr << "Call to undefined set_type(): aborting" << endl;
+     exit(1);
+   }
+#endif
+
+SgType*
+SgExpression::get_type() const
+   {
+  // DQ: With this function defined we can be sure that we don't call it by accident.
+  // This catches any IR nodes where the fucntion should have been overwritten and was not.
+
+     cerr << "Call to undefined $CLASSNAME::get_type(): aborting" << endl;
+     ROSE_ASSERT(false);
+
+     return 0;
+   }
+
+#if 0
+// DQ (8/18/2004): removing this older pragma mechanism
+void
+SgExpression::output_pragma(ostream& os)
+   {
+     ::print_pragma( p_uattributes, os);
+   }
+#endif
+
+int
+SgExpression::precedence() const
+   {
+     return 0;
+   }
+
+#if 0
+int
+SgExpression::length() const
+   {
+     return 0;
+   }
+#endif
+
+#if 0
+bool
+SgExpression::empty() const
+   {
+     return 1;
+   }
+#endif
+
+#if 0
+SgExpression*
+SgExpression::get_first() const
+   {
+     int p = 0;
+     return get_next(p);
+   }
+#endif
+
+#if 0
+SgExpression*
+SgExpression::get_next(int&) const
+   {
+     printf ("Error: baseClass called! \n");
+     abort();
+
+     return NULL;
+   }
+#endif
+
+#if 0
+SgExpression*
+SgExpression::get_end() const
+   {
+     printf ("Error: baseClass called! \n");
+     abort();
+
+     return NULL;
+   }
+#endif
+
+#if 0
+void
+SgExpression::insert_next(int,SgExpression *)
+   {
+   }
+#endif
+
+#if 0
+SgExpressionPtrList::iterator
+SgExpression::begin()
+   { return get_first(); }
+
+SgExpressionPtrList::iterator
+SgExpression::end()
+   { return get_end(); }
+#endif
+
+#if 0
+// DQ (8/18/2004): Removed since it is not used!
+void
+SgExpression::set_lvalue()
+   {
+#if 0
+     printf ("ERROR: not yet implemented in SAGE3! \n");
+     abort();
+#else
+     set_system_bitflag(p_uattributes,e_lvalue);
+#endif
+   }
+
+int
+SgExpression::get_is_lvalue() const 
+   { return is_system_bitflag(p_uattributes,e_lvalue); }
+#endif
+
+ 
+#if 0
+void
+SgExpression::unset_lvalue() 
+   { unset_system_bitflag(p_uattributes,e_lvalue); }
+
+void
+SgExpression::add_pragma(int cnt, SgPragma** plist)
+   {
+     for(int i=0; i<cnt; i++)
+        {
+          ::add_pragma(p_uattributes, plist[i]);
+          plist[i]=0; 
+        }
+   }
+
+SgPragma*
+SgExpression::add_pragma(char *nm) 
+   { return ::add_pragma(p_uattributes, nm); }
+
+SgPragma*
+SgExpression::get_pragma(char *nm) const
+   { return ::get_pragma(p_uattributes, nm); }
+
+int
+SgExpression::remove_pragma(char *nm) 
+   { return ::remove_pragma(p_uattributes,nm); }
+
+// get attribute,
+SgAttribute*
+SgExpression::get_user_attribute(char *nm) const
+   { return ::Sgget_user_attribute(p_uattributes,nm); }
+
+SgAttribute*
+SgExpression::add_user_attribute(char *nm, SgAttribute* attr)
+   { return ::Sgadd_user_attribute(p_uattributes,nm,attr); }
+
+int
+SgExpression::remove_user_attribute(char *nm)
+   { return ::remove_user_attribute(p_uattributes,nm); }
+#endif
+
+#if 0
+// DQ (8/18/2004): Removed since it uses the old attribute mechanism
+// Some global functions that are used by expressions
+SgAttribute*
+get_system_bitflag(const SgAttributePtrList & pattr)
+   {
+     SgAttributePtrList::const_iterator p = pattr.begin();
+     if(p == pattr.end())
+          return NULL;
+       else
+        {
+          assert((*p) != NULL);
+          return (SgAttribute *)(*p); // first one
+        }
+   }
+
+/* always the first SgAttributePtr in the list */
+void
+set_system_bitflag(SgAttributePtrList & pattr, unsigned long int bit)
+   {
+     SgAttributePtrList::iterator p = pattr.begin();
+     if(p==pattr.end())
+        {
+          SgBitAttribute* newAttribute = new SgBitAttribute("SYS_BITFLAG");
+          assert(newAttribute != NULL);
+          p = pattr.insert(p, newAttribute);
+      //  p = pattr.insert(p,(SgAttribute *) new SgBitAttribute("SYS_BITFLAG"));
+        }
+
+     SgBitAttribute *bp = (SgBitAttribute *)(*p);
+     assert(bp != NULL);
+     bp->setAttribute(bit);
+   }
+
+void
+unset_system_bitflag(SgAttributePtrList& pattr, unsigned long int bit)
+   {
+     SgAttributePtrList::iterator p=pattr.begin();  
+     if(p==pattr.end())
+        {
+          SgBitAttribute* newAttribute = new SgBitAttribute("SYS_BITFLAG");
+          assert(newAttribute != NULL);
+          p=pattr.insert(p,(SgAttribute *) newAttribute);
+       // p=pattr.insert(p,(SgAttribute *) new SgBitAttribute("SYS_BITFLAG"));
+        }
+
+     SgBitAttribute* bp = (SgBitAttribute *)(*p);
+     assert(bp != NULL);
+     bp->unsetAttribute(bit);
+   }
+
+int
+is_system_bitflag(const SgAttributePtrList& pattr, unsigned long int bit)
+   {
+     SgAttributePtrList::const_iterator p=pattr.begin();  
+     if(p==pattr.end())
+          return 0;
+
+     SgBitAttribute *bp = (SgBitAttribute *)(*p);
+     assert(bp != NULL);
+     return bp->isAttributeSet(bit);
+   }
+
+SgAttribute*
+Sgadd_user_attribute(SgAttributePtrList& pattr, char *attr_name, SgAttribute* attr)
+   {
+     SgAttributePtrList::iterator p=pattr.begin();
+     if(p==pattr.end())
+        {
+          SgBitAttribute* newAttribute = new SgBitAttribute("SYS_BITFLAG");
+          assert(newAttribute != NULL);
+          pattr.insert(p,newAttribute);
+       // pattr.insert(p,(SgAttribute *)new SgBitAttribute("SYS_BITFLAG"));
+        }
+     p++;
+
+  // I think it would not make much sense to insert a NULL pointer
+     assert(attr != NULL);
+     pattr.insert(pattr.end(), attr);
+     p++;
+
+  // DQ: Not sure we can assert that the return value is a valid pointer
+     assert((*p) != NULL);
+     return (SgAttribute *)(*p);
+   }
+
+// get user attribute,
+SgAttribute*
+Sgget_user_attribute(const SgAttributePtrList& pattr, char *attr_name)
+   {
+     assert(attr_name != NULL);
+     SgAttributePtrList::const_iterator p = pattr.begin();
+     if(p == pattr.end())
+          return 0;
+       else
+          p++; // skip the system attribute
+
+     while( p != pattr.end())
+        {
+          assert((*p) != NULL);
+          if( !(*p)->isPragma() && (*p)->isSame(attr_name) ) 
+             {
+               assert((*p) != NULL);
+               return (SgAttribute *)(*p);
+             }
+          p++;
+        }
+
+     return NULL;
+   }
+
+int
+remove_user_attribute(SgAttributePtrList& pattr, char *attr_name)
+   {
+     assert(attr_name != NULL);
+     SgAttributePtrList::iterator p = pattr.begin();
+     if(p==pattr.end())
+          return 0;
+       else
+          p++; // skip the system one
+
+     while( p!=pattr.end())
+        {
+          assert((*p) != NULL);
+          if( !(*p)->isPragma() && (*p)->isSame(attr_name) )
+             {
+               pattr.remove((*p));
+               return 1;
+             }
+          p++;
+        }
+
+     return 0;
+   }
+#endif
+
+SOURCE_BASECLASS_EXPRESSION_END
+
+
+SOURCE_X_EXPRESSION_START
+
+#error "Error code included from SOURCE_X_EXPRESSION"
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+   }
+
+SOURCE_X_EXPRESSION_END
+
+
+SOURCE_X_EXPRESSION_UNKNOWN_START
+
+// This is not a terminal that we really need, so I'm
+// not sure it should be a part of the X grammar.
+
+#error "Error code included from SOURCE_X_EXPRESSION_UNKNOWN"
+
+SOURCE_X_EXPRESSION_UNKNOWN_END
+
+
+SOURCE_NON_X_EXPRESSION_START
+
+#error "Error code included from SOURCE_NON_X_EXPRESSION"
+
+SOURCE_NON_X_EXPRESSION_END
+
+
+SOURCE_UNARY_EXPRESSION_START
+
+unsigned int
+SgUnaryOp::cfgIndexForEnd() const 
+   {
+     return 1;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgUnaryOp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgUnaryOp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+void
+SgUnaryOp::post_construction_initialization()
+   {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (get_operand())
+          get_operand()->set_parent(this);
+// #endif
+     p_mode = SgUnaryOp::prefix;
+   }
+
+SgExpression*
+SgUnaryOp::get_operand() const
+   { return get_operand_i(); }
+
+void
+SgUnaryOp::set_operand(SgExpression * exp)
+   {
+     set_operand_i(exp);
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (exp)
+          exp->set_parent(this);
+// #endif
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+SgType*
+SgUnaryOp::get_type() const
+   {
+  // DQ (1/14/2006): Get the type from the operand
+  // return get_expression_type();
+  // printf ("$CLASSNAME::get_type(): getting type from operand \n");
+     ROSE_ASSERT(get_operand() != NULL);
+
+     SgType* returnType = get_operand()->get_type();
+
+     return returnType;
+   }
+
+int
+SgUnaryOp::length() const 
+   { return 1;}
+
+bool
+SgUnaryOp::empty() const
+   { return 0; }
+
+// void $CLASSNAME::operator_unparse(const char * op, Unparse_Info & info, ostream & os);
+
+#if 0
+// This should be automatically generated!
+int
+SgUnaryOp::get_mode() 
+   { return p_mode; }
+
+void
+SgUnaryOp::set_mode(Sgop_mode m)
+   { p_mode=m; }
+#endif
+
+SgExpression*
+SgUnaryOp::get_next (int &n) const
+   {
+     if(n)
+        {
+          return NULL;
+        }
+       else
+        {
+          n++;
+          return get_operand();
+        }
+   }
+
+int
+SgUnaryOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand() == o)
+        {
+          set_operand(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgUnaryOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   }
+
+SOURCE_UNARY_EXPRESSION_END
+
+
+SOURCE_BINARY_EXPRESSION_START
+unsigned int SgBinaryOp::cfgIndexForEnd() const
+   {
+     return 2;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgBinaryOp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_lhs_operand()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_rhs_operand()->cfgForBeginning(), result); break;
+          case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgBinaryOp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_lhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          case 2: makeEdge(this->get_rhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+void
+SgBinaryOp::post_construction_initialization()
+   {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (get_lhs_operand())
+          get_lhs_operand()->set_parent(this);
+     if (get_rhs_operand())
+          get_rhs_operand()->set_parent(this);
+// #endif
+   }
+
+SgExpression*
+SgBinaryOp::get_lhs_operand() const
+   { return get_lhs_operand_i(); }
+
+void
+SgBinaryOp::set_lhs_operand(SgExpression * exp)
+   {
+     set_lhs_operand_i(exp);
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (exp) 
+        exp->set_parent(this);
+// #endif
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+int
+SgBinaryOp::length() const
+   {
+     return 2;
+   }
+
+// I don't think this is used (so exclude it until we clearly need it)!
+bool
+SgBinaryOp::empty() const
+   {
+     return false;  // return 0;
+   }
+
+SgExpression*
+SgBinaryOp::get_rhs_operand() const
+   { return get_rhs_operand_i(); }
+
+void
+SgBinaryOp::set_rhs_operand(SgExpression * exp)
+   {
+     set_rhs_operand_i(exp);
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (exp) 
+          exp->set_parent(this);
+// #endif
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+SgType*
+SgBinaryOp::get_type() const
+   {
+  // We have to select one, so for now chose the lhs, it might be that 
+  // we have to explicitly store the return type of binary operators.
+
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* lhsType = get_lhs_operand()->get_type();
+     ROSE_ASSERT(lhsType != NULL);
+
+     ROSE_ASSERT(get_rhs_operand()->get_type() != NULL);
+
+  // DQ (9/27/2006): Ideally, this should not be set, though sometimes it is.
+  // ROSE_ASSERT(p_expression_type != NULL);
+     string expression_type_name = "NULL";
+     if (p_expression_type != NULL)
+        {
+          expression_type_name = p_expression_type->class_name();
+          printf ("Found an case where $CLASSNAME::p_expression_type != NULL on %s expression_type_name = %s \n",
+               this->class_name().c_str(),expression_type_name.c_str());
+        }
+
+     return lhsType;
+   }
+
+SgExpression*
+SgBinaryOp::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++; 
+          return get_lhs_operand();
+        }
+       else
+        {
+          if (n==1)
+             {
+               n++;
+               return get_rhs_operand();
+             }
+        }
+
+     return 0;
+   }
+
+int
+SgBinaryOp::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_lhs_operand() == o)
+        {
+          set_lhs_operand(n);
+          return 1;
+        }
+       else
+          if (get_rhs_operand() == o)
+             {
+               set_rhs_operand(n);
+               return 1;  
+             } 
+            else 
+             {
+               printf ("Warning: inside of SgBinaryOp::replace_expression original SgExpression unidentified \n");
+               return 0;
+             }
+   }
+
+SOURCE_BINARY_EXPRESSION_END
+
+
+SOURCE_EXPRESSION_ROOT_START
+//QY:9/30/2004: removed stmt pointer inside exprRoot. Use parent pointer instead.
+#if 0
+void
+SgExpressionRoot::initialize_root ( SgExpression* exp, SgStatement* stmt )
+   {
+  // The root of an expression should be an expression.  
+  // If the expression's parent is a statement then the
+  // statement should contain an expression root object.
+
+  // stmt should always be initialized to calling object's this pointer
+     ROSE_ASSERT(stmt != NULL);
+
+  // set the parent of this expression to the calling statement
+  // (this might be better off set to NULL or some other value!)
+  // set_parent(stmt);
+  // Let the parent of the expression root be NULL (since it really should be an expression type)
+  // Access the parent through the p_statement pointer!
+  // set_parent(NULL);
+  // We can't call the set_parent function because it can't take a NULL pointer
+
+  // We don't want to call set_statement since this will attempt to 
+  // initialize the parent of stmt (which would be backwards)
+  // set_statement(stmt);
+  // p_statement = stmt;
+  // call the modified set_statement function
+     set_statement(stmt);
+
+  // We use the SgExpressionRoot as the parent of the exp 
+  // (this is the purpose of the SgExpressionRoot object)
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (exp)
+          exp->set_parent(this);
+// #endif
+     set_operand(exp);
+   }
+#endif
+
+#if 0
+// DQ (1/14/2006): set_type is removed
+void
+SgExpressionRoot::set_type()
+   {
+     if (get_operand())
+          set_expression_type(get_operand()->get_type()); 
+       else
+          set_expression_type(SgTypeDefault::createType());
+   }
+#endif
+
+#if 0
+// DQ (12/17/2006): Removed to clean up code (not used, I think).
+//QY:9/30/2004: removed stmt pointer inside exprRoot. Use parent pointer instead.
+void
+SgExpressionRoot::set_statement( SgStatement* stmt )
+   {
+     set_parent(stmt);
+   }
+
+//QY:9/30/2004: removed stmt pointer inside exprRoot. Use parent pointer instead.
+SgStatement*
+SgExpressionRoot::get_statement() const
+   {
+     if (get_parent() == 0)
+        return 0;
+     SgStatement* res= isSgStatement( get_parent());
+     assert(res != 0);
+     return res; 
+   }
+#endif
+
+SOURCE_EXPRESSION_ROOT_END
+
+
+SOURCE_EXPRESSION_LIST_EXPRESSION_START
+unsigned int
+SgExprListExp::cfgIndexForEnd() const
+   {
+     return this->get_expressions().size();
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgExprListExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     if (idx == this->get_expressions().size())
+        {
+          makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+        }
+       else
+          if (idx < this->get_expressions().size())
+             {
+               makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_expressions(), idx)->cfgForBeginning(), result);
+             }
+            else
+               ROSE_ASSERT (!"Bad index for SgExprListExp");
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgExprListExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     if (idx == 0)
+        {
+          makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+        }
+       else
+          if (idx <= this->get_expressions().size())
+             {
+               makeEdge(indexList(this->get_expressions(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+             }
+            else
+               ROSE_ASSERT (!"Bad index for SgExprListExp");
+
+     return result;
+   }
+
+bool
+SgExprListExp::empty() const
+   {
+     if (p_expressions.empty())
+          return 1;
+       else
+          return 0;
+   }
+
+SgExpressionPtrList&
+SgExprListExp::get_expressions()
+   { return p_expressions; }
+
+const SgExpressionPtrList&
+SgExprListExp::get_expressions() const
+   { return p_expressions; }
+
+void
+SgExprListExp::append_expression(SgExpression *what)
+   { insert_expression(p_expressions.end(),what); }
+
+void
+SgExprListExp::prepend_expression(SgExpression *what)
+   { insert_expression(p_expressions.begin(),what); }
+
+void
+SgExprListExp::insert_expression(const SgExpressionPtrList::iterator &where, SgExpression *what)
+   {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     what->set_parent(this);
+// #endif
+     p_expressions.insert(where,what);
+   }
+
+#if 0
+SgExpression*
+SgExprListExp::get_first() const
+   {
+     if(get_expressions().empty())
+          return 0;
+     SgExpressionPtrList::const_iterator p=get_expressions().begin();
+#if USE_SAGE3
+     ROSE_ASSERT( (*p) != NULL );
+     return (*p);
+#else
+     return (*p).irep();
+#endif
+   }
+#endif
+
+#if 0
+SgExpression*
+SgExprListExp::get_end() const
+   {
+     return NULL;
+   }
+#endif
+
+#if 0
+int
+SgExprListExp::get_index(SgExpression *e) const
+   {
+     if(get_expressions().empty()) return -1;
+     SgExpressionPtrList::const_iterator p=get_expressions().begin();
+     int i=0;
+     while(p!=p_expressions.end())
+        {
+#if 0
+          if( (*p).irep()== e )
+             return i;
+#else
+          printf ("ERROR: not yet implemented in SAGE3 \n");
+          abort();
+#endif
+          i++;
+          p++;
+        }
+     return -1;
+   }
+#endif
+
+#if 1
+int
+SgExprListExp::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (10/5/2007): This is a new version of this function (from Jeremiah) which observes STL vector iterator semantics.
+
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     for (SgExpressionPtrList::iterator i=p_expressions.begin();
+          i != p_expressions.end(); ++i)
+        {
+          if( (*i) == o)
+             {
+               *i = n;
+               return 1;
+             }
+        }
+     return 0;
+   }
+#else
+int
+SgExprListExp::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     SgExpressionPtrList::iterator i=p_expressions.begin();
+     while (i != p_expressions.end())
+        {
+          if( (*i) == o)
+             {
+               insert_expression(i, n);
+               p_expressions.erase(i);
+               return 1;
+             }
+/*
+          printf ("ERROR: not yet implemented in SAGE3 \n");
+          abort();
+*/
+          i++;
+        }
+     return 0;
+   }
+#endif
+
+#if 0
+void
+SgExprListExp::insert_expression(SgExpression *o, SgExpression *n, int inFront)
+   {
+     SgExpressionPtrList::iterator i=p_expressions.begin();
+     while(i!=p_expressions.end())
+        {
+#if 0
+          if((*i).irep() == o)
+             {
+               if(!inFront) i++;
+#ifndef REMOVE_SET_PARENT_FUNCTION
+               n->set_parent(this);
+#endif
+               insert_expression(i,n);
+             }
+#else
+          printf ("ERROR: not yet implemented in SAGE3 \n");
+          abort();
+#endif
+        }
+   }
+#endif
+
+SOURCE_EXPRESSION_LIST_EXPRESSION_END
+
+
+SOURCE_VARIABLE_REFERENCE_EXPRESSION_START
+unsigned int
+SgVarRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgVarRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgVarRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+
+#if 0
+// DQ (11/7/2007): I think this is not used any more.
+void
+SgVarRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
+   {
+  // This is the empty default inplementation, not a problem if it is called!
+     printf ("Inside of SgVarRefExp::fixupCopy() \n");
+
+     SgVarRefExp* variableRefExpression_copy = isSgVarRefExp(copy);
+
+  // We could first check if the declarations are the same, but that would not imply that they had to be reset!
+
+     ROSE_ASSERT(variableRefExpression_copy->get_symbol() != NULL);
+     SgNode* declaration_key = variableRefExpression_copy->get_symbol()->get_declaration();
+     ROSE_ASSERT(declaration_key != NULL);
+
+  // If this is a reference to a declaration that was copied, then we have a new symbol that should be referencec by the reference.
+  // The declaration is saved into a map held as state in the SgCopyHelp object.
+     SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(declaration_key);
+     if (i != help.get_copiedNodeMap().end())
+        {
+       // Found the key (a declaration SgDeclarationStatement or a SgInitializedName) so get the symbol and reset the symbol in the referencec to the value's associated symbol!
+          SgNode* declaration_value = i->second;
+          SgInitializedName* initializedName_copy = isSgInitializedName(declaration_value);
+          ROSE_ASSERT(initializedName_copy != NULL);
+          SgSymbol* symbol_copy = initializedName_copy->get_symbol_from_symbol_table();
+
+       // DQ (10/8/2007): It might be too early to expect this to work!
+       // ROSE_ASSERT(symbol_copy != NULL);
+          printf ("Inside of SgVarRefExp::fixupCopy(): symbol_copy = %p \n",symbol_copy);
+          if (symbol_copy != NULL)
+             {
+               SgVariableSymbol* variableSymbol_copy = isSgVariableSymbol(symbol_copy);
+               ROSE_ASSERT(variableSymbol_copy != NULL);
+               variableRefExpression_copy->set_symbol(variableSymbol_copy);
+             }
+        }
+   }
+#endif
+
+SOURCE_VARIABLE_REFERENCE_EXPRESSION_END
+
+
+SOURCE_LABEL_REFERENCE_EXPRESSION_START
+
+SgName
+SgLabelRefExp::get_name() const
+   {
+     ROSE_ASSERT(p_symbol != NULL);
+     return p_symbol->get_name();
+   }
+
+int
+SgLabelRefExp::get_numeric_label_value() const
+   {
+     ROSE_ASSERT(p_symbol != NULL);
+     return p_symbol->get_numeric_label_value();
+   }
+
+
+#if 0
+const SgName & 
+SgLabelRefExp::get_name() const
+   {
+     ROSE_ASSERT(p_symbol != NULL);
+     return p_symbol->get_name();
+   }
+#endif
+
+#if 0
+// DQ (12/30/2007): I don't think there is any control flow through this sorts of variables, but this 
+// should be discussed (might apply to assigned goto).
+
+unsigned int
+SgLabelRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgLabelRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgLabelRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+#endif
+
+SOURCE_LABEL_REFERENCE_EXPRESSION_END
+
+
+SOURCE_CLASS_NAME_REFERENCE_EXPRESSION_START
+SOURCE_CLASS_NAME_REFERENCE_EXPRESSION_END
+
+
+SOURCE_FUNCTION_REFERENCE_EXPRESSION_START
+
+#if 0
+// DQ (11/7/2007): I think this is not used any more.
+void
+SgFunctionRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
+   {
+  // This is the empty default inplementation, not a problem if it is called!
+     printf ("Inside of SgFunctionRefExp::fixupCopy() \n");
+
+     SgFunctionRefExp* functionRefExpression_copy = isSgFunctionRefExp(copy);
+
+  // We could first check if the declarations are the same, but that would not imply that they had to be reset!
+
+     ROSE_ASSERT(functionRefExpression_copy->get_symbol() != NULL);
+     SgNode* declaration_key = functionRefExpression_copy->get_symbol()->get_declaration();
+     ROSE_ASSERT(declaration_key != NULL);
+
+  // If this is a reference to a declaration that was copied, then we have a new symbol that should be referencec by the reference.
+  // The declaration is saved into a map held as state in the SgCopyHelp object.
+     SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(declaration_key);
+     if (i != help.get_copiedNodeMap().end())
+        {
+       // Found the key (a declaration SgDeclarationStatement or a SgInitializedName) so get the symbol and reset the symbol in the referencec to the value's associated symbol!
+          SgNode* declaration_value = i->second;
+          SgFunctionDeclaration* functionDeclaration_copy = isSgFunctionDeclaration(declaration_value);
+          ROSE_ASSERT(functionDeclaration_copy != NULL);
+          SgSymbol* symbol_copy = functionDeclaration_copy->get_symbol_from_symbol_table();
+       // ROSE_ASSERT(symbol_copy != NULL);
+          if (symbol_copy != NULL)
+             {
+               SgFunctionSymbol* functionSymbol_copy = isSgFunctionSymbol(symbol_copy);
+               ROSE_ASSERT(functionSymbol_copy != NULL);
+               functionRefExpression_copy->set_symbol(functionSymbol_copy);
+             }
+        }
+   }
+#endif
+
+unsigned int
+SgFunctionRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgFunctionRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgFunctionRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+
+void
+SgFunctionRefExp::post_construction_initialization()
+   {
+  // DQ (1/14/2006): set_type is removed
+  // if (! get_function_type())
+  //      set_type(); 
+   }
+
+SgFunctionSymbol*
+SgFunctionRefExp::get_symbol() const
+   { return get_symbol_i(); }
+
+void
+SgFunctionRefExp::set_symbol(SgFunctionSymbol * symbol)
+   {
+     set_symbol_i(symbol);
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+#if 0
+// DQ (1/14/2006): set_type is removed
+void
+SgFunctionRefExp::set_type()
+   {
+  // The p_function_type member data's existence forces the use of a set_symbol() 
+  // function that can not only set the symbol but also call the function to fixup the type.
+  // As a result we need to manually maintain the get_symbol() function and have ROSETTA
+  // automatically generate another access function for the symbol_i.  The
+  // solution is to get rid of the p_function_type data member so that we 
+  // don't have to set it explicitly.  Then we could just write a get_type() 
+  // member function which got the type directly from the symbol rather than 
+  // storing it locally.
+
+  // This function does not set the is_modified flag so if this is called the AST 
+  // is not correctly marked as updated (modified).
+
+  // The debugging technique is to search for set_<function name> functions, since 
+  // all of these should be automatically generated by ROSETTA and so should not be 
+  // explicitly represented here.
+
+     SgFunctionSymbol *fsym = get_symbol();
+     ROSE_ASSERT(fsym != NULL);
+     p_function_type = (SgFunctionType *)(fsym->get_type());
+     if ( p_function_type == NULL )
+        {
+          cout << "bad" << fsym->get_name().str() << endl;
+          ROSE_ASSERT(false);
+        }
+   }
+#endif
+
+SOURCE_FUNCTION_REFERENCE_EXPRESSION_END
+
+
+SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_START
+
+#if 0
+// DQ (11/7/2007): I think this is not used any more.
+void
+SgMemberFunctionRefExp::fixupCopy(SgNode* copy, SgCopyHelp & help) const
+   {
+  // This is the empty default inplementation, not a problem if it is called!
+     printf ("Inside of SgMemberFunctionRefExp::fixupCopy() \n");
+
+     SgFunctionRefExp* functionRefExpression_copy = isSgFunctionRefExp(copy);
+
+  // We could first check if the declarations are the same, but that would not imply that they had to be reset!
+
+     ROSE_ASSERT(functionRefExpression_copy->get_symbol() != NULL);
+     SgNode* declaration_key = functionRefExpression_copy->get_symbol()->get_declaration();
+     ROSE_ASSERT(declaration_key != NULL);
+
+  // If this is a reference to a declaration that was copied, then we have a new symbol that should be referencec by the reference.
+  // The declaration is saved into a map held as state in the SgCopyHelp object.
+     SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(declaration_key);
+     if (i != help.get_copiedNodeMap().end())
+        {
+       // Found the key (a declaration SgDeclarationStatement or a SgInitializedName) so get the symbol and reset the symbol in the referencec to the value's associated symbol!
+          SgNode* declaration_value = i->second;
+          SgMemberFunctionDeclaration* functionDeclaration_copy = isSgMemberFunctionDeclaration(declaration_value);
+          ROSE_ASSERT(functionDeclaration_copy != NULL);
+          SgSymbol* symbol_copy = functionDeclaration_copy->get_symbol_from_symbol_table();
+       // ROSE_ASSERT(symbol_copy != NULL);
+          if (symbol_copy != NULL)
+             {
+               SgMemberFunctionSymbol* functionSymbol_copy = isSgMemberFunctionSymbol(symbol_copy);
+               ROSE_ASSERT(functionSymbol_copy != NULL);
+               functionRefExpression_copy->set_symbol(functionSymbol_copy);
+             }
+        }
+   }
+#endif
+
+unsigned int
+SgMemberFunctionRefExp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgMemberFunctionRefExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgMemberFunctionRefExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+
+void
+SgMemberFunctionRefExp::post_construction_initialization() 
+   {
+  // DQ (1/14/2006): set_type is removed
+  // if (!p_function_type)
+  //      set_type();
+
+  // DQ (4/13/2004): Qing reports this as a bug, since it is set by the constructor parameter already!
+  // p_need_qualifier = 1; // default is always true
+   }
+
+SgMemberFunctionSymbol*
+SgMemberFunctionRefExp::get_symbol() const
+   { return get_symbol_i(); }
+
+void
+SgMemberFunctionRefExp::set_symbol(SgMemberFunctionSymbol * symbol)
+   {
+     set_symbol_i(symbol);
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+#if 0
+void
+SgMemberFunctionRefExp::set_type()
+   {
+     SgMemberFunctionSymbol *mfsym = get_symbol();
+     ROSE_ASSERT(mfsym != NULL);
+     p_function_type = (SgFunctionType *)(mfsym->get_type());
+     if ( p_function_type == NULL )
+        {
+          cout << "bad" << mfsym->get_name().str() << endl;
+
+       // DQ (9/12/2004): Made this an error (I think it should be and it is in the case of a function pointer)
+          ROSE_ASSERT(false);
+        }
+   }
+#endif
+
+SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_END
+
+
+SOURCE_VALUE_EXPRESSION_START
+
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 0;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    ROSE_ASSERT (idx == 0);
+    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    ROSE_ASSERT (idx == 0);
+    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+    return result;
+  }
+SOURCE_VALUE_EXPRESSION_END
+
+
+SOURCE_BOOLEAN_VALUE_EXPRESSION_START
+SOURCE_BOOLEAN_VALUE_EXPRESSION_END
+
+
+SOURCE_STRING_VALUE_EXPRESSION_START
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+  // We can't initialize this to NULL since it might have just been set!
+  // p_value = (char*)0L;
+   }
+
+#if 0
+$CLASSNAME::$CLASSNAME ( Sg_File_Info* file_info, string value )
+   : $BASECLASS(file_info)
+   {
+  // Build a custom constructor since we have to make a
+  // copy (using strdup(char*)) of the input string (value)
+
+  // Copy the string (else it is lost and not represented in the unparsed output code)
+  // p_value = (value == 0)? 0 : strdup(value);
+     p_value = value;
+
+  // Test the variant virtual function
+     assert(STRING_VAL == variant());
+     post_construction_initialization();
+
+  // Test the isSgStringVal() function since it has been problematic
+     assert(isSgStringVal(this) != NULL);
+   }
+#endif
+
+#if 0
+$CLASSNAME::~$CLASSNAME()
+   {
+  // Delete the array of char (so use "delete []")
+     delete [] p_value;
+     p_value = NULL;
+   }
+#endif
+
+SOURCE_STRING_VALUE_EXPRESSION_END
+
+
+SOURCE_SHORT_VALUE_EXPRESSION_START
+SOURCE_SHORT_VALUE_EXPRESSION_END
+
+
+SOURCE_CHAR_VALUE_EXPRESSION_START
+SOURCE_CHAR_VALUE_EXPRESSION_END
+
+
+SOURCE_UNSIGNED_CHAR_VALUE_EXPRESSION_START
+SOURCE_UNSIGNED_CHAR_VALUE_EXPRESSION_END
+
+
+SOURCE_WCHAR_VALUE_EXPRESSION_START
+void
+$CLASSNAME::post_construction_initialization()
+   {
+  // We can't initialize this to NULL since it might have just been set!
+  // p_valueUL = 0L;
+   }
+
+wchar_t
+$CLASSNAME::get_value() const
+   {
+     return p_valueUL;
+   }
+
+void
+$CLASSNAME::set_value(wchar_t new_val)
+   {
+     p_valueUL = new_val;
+   }
+
+SOURCE_WCHAR_VALUE_EXPRESSION_END
+
+
+SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION_START
+SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION_END
+
+
+SOURCE_INTEGER_VALUE_EXPRESSION_START
+SOURCE_INTEGER_VALUE_EXPRESSION_END
+
+
+SOURCE_ENUM_VALUE_EXPRESSION_START
+SOURCE_ENUM_VALUE_EXPRESSION_END
+
+
+SOURCE_UNSIGNED_INTEGER_VALUE_EXPRESSION_START
+SOURCE_UNSIGNED_INTEGER_VALUE_EXPRESSION_END
+
+
+SOURCE_LONG_INTEGER_VALUE_EXPRESSION_START
+SOURCE_LONG_INTEGER_VALUE_EXPRESSION_END
+
+
+SOURCE_LONG_LONG_INTEGER_VALUE_EXPRESSION_START
+SOURCE_LONG_LONG_INTEGER_VALUE_EXPRESSION_END
+
+
+SOURCE_UNSIGNED_LONG_LONG_INTEGER_VALUE_EXPRESSION_START
+SOURCE_UNSIGNED_LONG_LONG_INTEGER_VALUE_EXPRESSION_END
+
+
+SOURCE_UNSIGNED_LONG_VALUE_EXPRESSION_START
+SOURCE_UNSIGNED_LONG_VALUE_EXPRESSION_END
+
+
+SOURCE_FLOAT_VALUE_EXPRESSION_START
+SOURCE_FLOAT_VALUE_EXPRESSION_END
+
+
+SOURCE_DOUBLE_VALUE_EXPRESSION_START
+SOURCE_DOUBLE_VALUE_EXPRESSION_END
+
+
+SOURCE_LONG_DOUBLE_VALUE_EXPRESSION_START
+SOURCE_LONG_DOUBLE_VALUE_EXPRESSION_END
+
+
+SOURCE_COMPLEX_VALUE_EXPRESSION_START
+SOURCE_COMPLEX_VALUE_EXPRESSION_END
+
+
+SOURCE_FUNCTION_CALL_EXPRESSION_START
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 3;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
+      case 2: {
+	SgFunctionDeclaration* decl =
+	  interproceduralControlFlowGraph ?
+	  VirtualCFG::getDeclaration(this->get_function()) : NULL;
+	if (decl)
+	  makeEdge(VirtualCFG::CFGNode(this, idx), decl->cfgForBeginning(),
+		   result);
+	else
+	  makeEdge(VirtualCFG::CFGNode(this, idx),
+		   VirtualCFG::CFGNode(this, 3), result);
+	break;
+      }
+      case 3: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_function()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      case 2: makeEdge(this->get_args()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      case 3: {
+	SgFunctionDeclaration* decl =
+	  interproceduralControlFlowGraph ?
+	  VirtualCFG::getDeclaration(this->get_function()) : NULL;
+	if (decl)
+	  makeEdge(decl->cfgForEnd(), VirtualCFG::CFGNode(this, idx),
+		   result);
+	else
+	  makeEdge(VirtualCFG::CFGNode(this, 2),
+		   VirtualCFG::CFGNode(this, idx), result);
+	break;
+      }
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+void
+SgFunctionCallExp::post_construction_initialization() 
+   {
+     if (p_function != NULL)
+          p_function->set_parent(this);
+   }
+
+#if 1
+// DQ: trying to remove the nested iterator class
+void
+SgFunctionCallExp::append_arg(SgExpression* what)
+   {
+     assert(this != NULL);
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+     ROSE_ASSERT(p_args != NULL);
+     if (p_args == NULL)
+        {
+       // set_args(new SgExprListExp(this->get_file_info()));
+          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          newArgs->set_endOfConstruct( this->get_file_info() );
+          set_args(newArgs);
+        }
+
+    // insert_arg(p_args->end(),what);
+       p_args->append_expression(what);
+   }
+#endif
+
+#if 0
+// DQ: trying to remove the nested iterator class
+// $CLASSNAME::insert_arg(const SgExpression::iterator& where, SgExpression* what)
+void
+SgFunctionCallExp::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
+   {
+     p_args->insert_expression(where,what); 
+   }
+#endif
+
+SgExpression*
+SgFunctionCallExp::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_function();
+        } 
+       else 
+          if(p_args && n==1)
+             {
+               n++;
+               return get_args();
+             }
+
+     return 0;
+   }
+
+int
+SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_function() == o)
+        {
+          set_function(n);
+          printf ("SgFunctionCallExp::replace_expression(): This should set the parent of the new expression. \n");
+          n->set_parent(this);
+
+          return 1;
+        }
+       else
+        {
+          if (p_args == o)
+             {
+            // DQ (12/17/2006): Make this code safer (avoid passing NULL pointers to functions that we call!
+            // set_args(isSgExprListExp(n));
+               SgExprListExp* expressionList = isSgExprListExp(n);
+               ROSE_ASSERT(expressionList != NULL);
+               set_args(expressionList);
+               n->set_parent(this);
+               return 1;
+             }
+        }
+
+     return 0;
+   }
+
+SgType*
+SgFunctionCallExp::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
+
+  // DQ (7/20/2006): Peter's patch now allows this function to be simplified to the following (suggested by Jeremiah).
+     SgType* returnType = NULL;
+
+     ROSE_ASSERT(p_function != NULL);
+  // printf ("In SgFunctionCallExp::get_type(): calling get_type() on p_function = %p = %s \n",p_function,p_function->class_name().c_str());
+     SgType* likelyFunctionType = p_function->get_type();
+     ROSE_ASSERT(likelyFunctionType != NULL);
+     SgFunctionType* functionType = isSgFunctionType(likelyFunctionType);
+     if (functionType == NULL)
+        {
+       // printf ("Error: unexpected type found for likelyFunctionType = %p = %s \n",likelyFunctionType,likelyFunctionType->class_name().c_str());
+       // get_file_info()->display("Location of call to SgFunctionCallExp::get_type(): debug");
+
+       // DQ (7/15/2007): Handle case of typedef of function type
+          likelyFunctionType = likelyFunctionType->stripType(SgType::STRIP_TYPEDEF_TYPE);
+
+          functionType = isSgFunctionType(likelyFunctionType);
+          ROSE_ASSERT(functionType != NULL);
+        }
+     
+     ROSE_ASSERT(functionType != NULL);
+     returnType = functionType->get_return_type();
+     ROSE_ASSERT(returnType != NULL);
+
+     return returnType;
+   }
+
+SOURCE_FUNCTION_CALL_EXPRESSION_END
+
+
+SOURCE_ARROW_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // For the SgArrowExp, the type is the type of the rhs operand (e.g. "Aptr->x" where "x" is the data member of the pointer to class "A").
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
+
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* returnType = get_rhs_operand()->get_type();
+
+     ROSE_ASSERT(returnType != NULL);
+
+  // printf ("$CLASSNAME::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_ARROW_EXPRESSION_END
+
+
+SOURCE_DOT_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // For the SgDotExp, the type is the type of the rhs operand (e.g. "A.x" where "x" is the data member of the class "A").
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
+
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* returnType = get_rhs_operand()->get_type();
+
+     ROSE_ASSERT(returnType != NULL);
+
+  // printf ("$CLASSNAME::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_DOT_EXPRESSION_END
+
+
+SOURCE_DOT_STAR_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // For the SgDotStarExp, the type is the type of the rhs operand (e.g. "A.*x" where "x" is a member function pointer of the class "A").
+
+  // Comment from Jeremiah (7/20/2006)
+  // In SOURCE_DOT_STAR_OPERATOR_EXPRESSION's get_type() method, the expression type is computed as the type of the RHS operand.  
+  // This is most likely a pointer to member type, though, not the type of the underlying member (assuming the types of 
+  // pointer-to-member expressions are set correctly).  The same issue applies to SOURCE_ARROW_STAR_OPERATOR_EXPRESSION.
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
+
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* someType = get_rhs_operand()->get_type();
+
+     SgType* returnType = NULL;
+     keepStripping:
+     ROSE_ASSERT (someType != NULL);
+     switch(someType->variantT())
+        {
+       // These cases all have base types and the pointer dereferencing returns the base type
+       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // to handle each case separately.
+          case V_SgPointerType:
+             {
+               SgPointerType* pointerType = isSgPointerType(someType);
+               returnType = pointerType->get_base_type();
+               break;
+             }
+       // DQ (7/31/2006): Added a new case so now this code is no longer a clone of what is used in SgPointerDerefExp and SgPntrArrRefExp.
+          case V_SgPointerMemberType:
+             {
+               SgPointerMemberType* pointerMemberType = isSgPointerMemberType(someType);
+               returnType = pointerMemberType->get_base_type();
+               break;
+             }
+          case V_SgArrayType:
+             {
+               SgArrayType* arrayType = isSgArrayType(someType);
+               returnType = arrayType->get_base_type();
+               break;
+             }
+          case V_SgTypedefType:
+             {
+               SgTypedefType* typedefType = isSgTypedefType(someType);
+               someType = typedefType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgReferenceType:
+             {
+               SgReferenceType* referenceType = isSgReferenceType(someType);
+               someType = referenceType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgModifierType:
+             {
+               SgModifierType* modifierType = isSgModifierType(someType);
+               someType = modifierType->get_base_type();
+               goto keepStripping;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+
+  // printf ("$CLASSNAME::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_DOT_STAR_OPERATOR_EXPRESSION_END
+
+
+SOURCE_ARROW_STAR_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // For the SgArrowStarExp, the type is the type of the rhs operand (e.g. "A->*x" where "x" is a member function pointer of the pointer to the class "A").
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type from rhs = %s \n",get_rhs_operand()->class_name().c_str());
+
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* someType = get_rhs_operand()->get_type();
+
+     SgType* returnType = NULL;
+     keepStripping:
+     ROSE_ASSERT (someType != NULL);
+     switch(someType->variantT())
+        {
+       // These cases all have base types and the pointer dereferencing returns the base type
+       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // to handle each case separately.
+          case V_SgPointerType:
+             {
+               SgPointerType* pointerType = isSgPointerType(someType);
+               returnType = pointerType->get_base_type();
+               break;
+             }
+       // DQ (7/31/2006): Added a new case so now this code is no longer a clone of what is used in SgPointerDerefExp and SgPntrArrRefExp.
+          case V_SgPointerMemberType:
+             {
+               SgPointerMemberType* pointerMemberType = isSgPointerMemberType(someType);
+               returnType = pointerMemberType->get_base_type();
+               break;
+             }
+          case V_SgArrayType:
+             {
+               SgArrayType* arrayType = isSgArrayType(someType);
+               returnType = arrayType->get_base_type();
+               break;
+             }
+          case V_SgTypedefType:
+             {
+               SgTypedefType* typedefType = isSgTypedefType(someType);
+               someType = typedefType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgReferenceType:
+             {
+               SgReferenceType* referenceType = isSgReferenceType(someType);
+               someType = referenceType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgModifierType:
+             {
+               SgModifierType* modifierType = isSgModifierType(someType);
+               someType = modifierType->get_base_type();
+               goto keepStripping;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+
+  // printf ("$CLASSNAME::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_ARROW_STAR_OPERATOR_EXPRESSION_END
+
+
+SOURCE_BOOLEAN_GET_TYPE_START
+
+// DQ (6/20/2006): Used for all relational operators: ==, !=, <, >, <=, >=, !
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (8/27/2006): We can get this result more quickly without searching the AST backward to the root and 
+  // if we do so it will be more consistant with what we have to do for the SgTypeBool which similarly must 
+  // be unparsed differently for C99 and C++ (gnu gcc also accepts "_Bool" as a type).
+     SgType* returnType = (SageInterface::is_C_language() == true) ? 
+                               static_cast<SgType*>(SgTypeInt::createType()) : 
+                               static_cast<SgType*>(SgTypeBool::createType());
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+SOURCE_BOOLEAN_GET_TYPE_END
+
+SOURCE_EQUALITY_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_EQUALITY_OPERATOR_EXPRESSION_END
+
+
+SOURCE_LESS_THAN_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_LESS_THAN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_GREATER_THAN_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_GREATER_THAN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_NOT_EQUAL_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_NOT_EQUAL_OPERATOR_EXPRESSION_END
+
+
+SOURCE_LESS_OR_EQUAL_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_LESS_OR_EQUAL_OPERATOR_EXPRESSION_END
+
+
+SOURCE_GREATER_OR_EQUAL_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_GREATER_OR_EQUAL_OPERATOR_EXPRESSION_END
+
+SOURCE_NOT_OPERATOR_EXPRESSION_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_NOT_OPERATOR_EXPRESSION_END
+
+
+SOURCE_ADD_OPERATOR_EXPRESSION_START
+SOURCE_ADD_OPERATOR_EXPRESSION_END
+
+
+SOURCE_SUBTRACT_OPERATOR_EXPRESSION_START
+SOURCE_SUBTRACT_OPERATOR_EXPRESSION_END
+
+
+SOURCE_MULTIPLY_OPERATOR_EXPRESSION_START
+SOURCE_MULTIPLY_OPERATOR_EXPRESSION_END
+
+
+SOURCE_DIVIDE_OPERATOR_EXPRESSION_START
+SOURCE_DIVIDE_OPERATOR_EXPRESSION_END
+
+
+SOURCE_INTEGER_DIVIDE_OPERATOR_EXPRESSION_START
+SOURCE_INTEGER_DIVIDE_OPERATOR_EXPRESSION_END
+
+
+SOURCE_MOD_OPERATOR_EXPRESSION_START
+SOURCE_MOD_OPERATOR_EXPRESSION_END
+
+
+SOURCE_AND_OPERATOR_EXPRESSION_START
+
+bool
+$CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const
+   {
+     return idx == 1 || idx == 2;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_lhs_operand()->cfgForBeginning(), result); break;
+       case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_rhs_operand()->cfgForBeginning(), result);
+	       makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result); break;
+       case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+       default: ROSE_ASSERT (!"Bad index in $CLASSNAME");
+     }
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgInEdges(unsigned int idx) 
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+       case 1: makeEdge(this->get_lhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+       case 2: makeEdge(this->get_rhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+	       makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result); break;
+       default: ROSE_ASSERT (!"Bad index in $CLASSNAME");
+     }
+     return result;
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an integer representing the logical type 
+
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+  // DQ (7/20/2006): Modified to remove redundant SgTypeInt qualifier.
+  // SgType* returnType = SgTypeInt::SgTypeInt::createType();
+     SgType* returnType = SgTypeInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_AND_OPERATOR_EXPRESSION_END
+
+
+SOURCE_OR_OPERATOR_EXPRESSION_START
+
+bool
+$CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const 
+   {
+     return idx == 1 || idx == 2;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_lhs_operand()->cfgForBeginning(), result); break;
+       case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_rhs_operand()->cfgForBeginning(), result);
+	       makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result); break;
+       case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+       default: ROSE_ASSERT (!"Bad index in $CLASSNAME");
+     }
+     return result;
+   }
+
+   std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+       case 1: makeEdge(this->get_lhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+       case 2: makeEdge(this->get_rhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+	       makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result); break;
+       default: ROSE_ASSERT (!"Bad index in $CLASSNAME");
+     }
+     return result;
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an integer representing the logical type 
+
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+  // DQ (7/20/2006): Modified to remove redundant SgTypeInt qualifier.
+     SgType* returnType = SgTypeInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_OR_OPERATOR_EXPRESSION_END
+
+
+SOURCE_BIT_XOR_OPERATOR_EXPRESSION_START
+SOURCE_BIT_XOR_OPERATOR_EXPRESSION_END
+
+
+SOURCE_BIT_AND_OPERATOR_EXPRESSION_START
+SOURCE_BIT_AND_OPERATOR_EXPRESSION_END
+
+
+SOURCE_BIT_OR_OPERATOR_EXPRESSION_START
+SOURCE_BIT_OR_OPERATOR_EXPRESSION_END
+
+
+SOURCE_COMMA_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (10/2/2006): Comma operator's get_type function didn't previously exist, but it should 
+  // because its semantics is different from the default SgBinaryOp::get_type() which returns 
+  // the type associated with the lhs.  This returns the type of the rhs.
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+     SgType* returnType = get_rhs_operand()->get_type();
+     ROSE_ASSERT(returnType != NULL);
+
+  // printf ("$CLASSNAME::get_type(): get the type of the rhs operand returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_COMMA_OPERATOR_EXPRESSION_END
+
+SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION_START
+SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION_END
+
+SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION_START
+SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION_END
+
+SOURCE_MINUS_OPERATOR_EXPRESSION_START
+SOURCE_MINUS_OPERATOR_EXPRESSION_END
+
+SOURCE_UNARY_ADD_OPERATOR_EXPRESSION_START
+SOURCE_UNARY_ADD_OPERATOR_EXPRESSION_END
+
+SOURCE_SIZE_OF_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
+
+SOURCE_TYPE_ID_OPERATOR_EXPRESSION_START
+
+unsigned int
+SgTypeIdOp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgTypeIdOp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgTypeIdOp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+
+#if 0
+// DQ (1/17/2008): There is already an operand_type with get and set functions generated by ROSETTA.
+// DQ (1/17/2008): Added set_type function since this is one of three IR nodes that require 
+// the type to be held explicitly, for all other IR nodes the type is computed dynamicly.
+void
+SgTypeIdOp::set_type( SgType* type )
+   {
+     p_expression_type = type;
+   }
+#endif
+
+SgType*
+SgTypeIdOp::get_type() const
+   {
+  // DQ (7/20/2006): The typeid operator returns an lvalue of type const std::type_info that represents the 
+  // type of expression expr. You must include the standard template library header <typeinfo> to use the 
+  // typeid operator (obtained from IBM C++ web page).  So it seems that the correct return type is a 
+  // SgClassType with reference to the class declaration that should have been seen or we can perhaps assume to be
+  // simply: "std::type_info"
+
+  // DQ (8/8/2006): The C++ standard requires that this return a "std::type_info" classType
+     SgType* returnType = p_expression_type;
+     ROSE_ASSERT(returnType != NULL);
+
+     return returnType;
+   }
+
+SOURCE_TYPE_ID_OPERATOR_EXPRESSION_END
+
+
+SOURCE_VARARG_START_OPERATOR_START
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 2;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_lhs_operand()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_rhs_operand()->cfgForBeginning(), result); break;
+      case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_lhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      case 2: makeEdge(this->get_rhs_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+SOURCE_VARARG_START_OPERATOR_END
+
+
+SOURCE_VARARG_OPERATOR_START
+
+#if 0
+// There is a set_expression_type function alread, soe we don't need this.
+// DQ (1/17/2008): Added set_type function since this is one of a few IR nodes that require 
+// the type to be held explicitly, for all other IR nodes the type is computed dynamicly.
+void
+$CLASSNAME::set_type( SgType* type )
+   {
+     p_expression_type = type;
+   }
+#endif
+
+// This function helps to provide a uniform interface even though the type is help in a field called p_expression_type.
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an explicitly stored type
+
+     SgType* returnType = p_expression_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 1;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_operand_expr()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_operand_expr()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+SOURCE_VARARG_OPERATOR_END
+
+
+SOURCE_VARARG_END_OPERATOR_START
+
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 1;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_operand_expr()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_operand_expr()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+SOURCE_VARARG_END_OPERATOR_END
+
+SOURCE_POINTER_DEREFERENCE_EXPRESSION_START
+
+// SgType* SgPointerDerefExp::get_type() const
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // DQ (7/28/2006): This code can't be used for both the SgPointerDerefExp and the SgPntrArrRefExp IR nodes because 
+  // it is a bit different (one node is a unary operator and the other is a binary operator).
+
+  // This function returns the base type of the type returned from get_operand()->get_type() (which should be a SgPointerType).
+
+     ROSE_ASSERT(get_operand() != NULL);
+
+  // printf ("In $CLASSNAME::get_type(): get_operand() = %p = %s \n",get_operand(),get_operand()->class_name().c_str());
+
+     SgType* someType = get_operand()->get_type();
+     ROSE_ASSERT(someType != NULL);
+#if 0
+     printf ("In $CLASSNAME::get_type(): %s->get_type() = %p = %s \n",
+          get_operand()->class_name().c_str(),get_operand()->get_type(),
+          get_operand()->get_type()->class_name().c_str());
+#endif
+     if (p_expression_type != NULL)
+        {
+          printf ("In $CLASSNAME::get_type(): p_expression_type = %s \n",p_expression_type->class_name().c_str());
+        }
+
+  // This code should be shared between the SgPntrArrRefExp and the SgPointerDerefExp IR nodes
+  // A better idea would be to have a function that strips off types based on a set of flags
+  // that would control stripping of pointer references, array references, C++ references, 
+  // modifiers, and typedefs.
+
+     SgType* returnType = NULL;
+     keepStripping:
+     ROSE_ASSERT (someType);
+     switch(someType->variantT())
+        {
+       // These cases all have base types and the pointer dereferencing returns the base type
+       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // to handle each case separately.
+          case V_SgPointerType:
+             {
+               SgPointerType* pointerType = isSgPointerType(someType);
+               returnType = pointerType->get_base_type();
+               break;
+             }
+          case V_SgArrayType:
+             {
+               SgArrayType* arrayType = isSgArrayType(someType);
+               returnType = arrayType->get_base_type();
+               break;
+             }
+          case V_SgTypedefType:
+             {
+               SgTypedefType* typedefType = isSgTypedefType(someType);
+               someType = typedefType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgReferenceType:
+             {
+               SgReferenceType* referenceType = isSgReferenceType(someType);
+               someType = referenceType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgModifierType:
+             {
+               SgModifierType* modifierType = isSgModifierType(someType);
+               someType = modifierType->get_base_type();
+               goto keepStripping;
+             }
+
+       // DQ (6/18/2007): The dereference of a function type is a function call so the type is it's return type (I think)
+          case V_SgFunctionType:
+             {
+               SgFunctionType* functionType = isSgFunctionType(someType);
+            // returnType = functionType->get_return_type();
+               returnType = functionType;
+               break;
+             }
+#if 0
+       // DQ (10/3/2006): I think this is no longer required, since we fixed the case of sizeof taking an 
+       // expression (not required to be an lvalue)!
+       // DQ (9/30/2006): This case appears where the expression of sizeof is a literal (in this case a char*).
+       // This can be a SgTypeChar for "sizeof('\x1234567890123456789012345678901234567890')", 
+       // it is not clear how to handle this case, at present we just return the SgTypeChar type.
+          case V_SgTypeChar:
+             {
+               returnType = someType;
+               break;
+             }
+#endif
+          default:
+             {
+#if 1
+               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               get_file_info()->display("location of error: debug");
+
+            // DQ (9/27/2006): This can be a compiler generated IR nde so look at the parent.
+               SgLocatedNode* locatedNode = isSgLocatedNode(get_parent());
+               if (locatedNode != NULL)
+                    locatedNode->get_file_info()->display("location of parent: debug");
+#endif
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_POINTER_DEREFERENCE_EXPRESSION_END
+
+
+SOURCE_ADDRESS_OF_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // This function returns a pointer to the type return from get_operand()->get_type().
+
+     ROSE_ASSERT(get_operand() != NULL);
+     SgType* baseType = get_operand()->get_type();
+     ROSE_ASSERT(baseType != NULL);
+
+  // DQ (7/31/2006): Suggested change by Jeremiah.
+  // SgType* returnType = SgPointerType::createType(baseType);
+     SgClassDefinition* classDefinition = NULL;
+
+  // DQ (7/31/2006): check if this is a data member of a class
+  // (and save the class for the SgPointerMemberType::createType() function!)
+     SgVarRefExp* varRefExp = isSgVarRefExp(get_operand());
+     if (varRefExp != NULL)
+        {
+          ROSE_ASSERT(varRefExp->get_symbol() != NULL);
+          ROSE_ASSERT(varRefExp->get_symbol()->get_declaration() != NULL);
+          SgInitializedName* variable = varRefExp->get_symbol()->get_declaration();
+          ROSE_ASSERT(variable != NULL);
+          SgScopeStatement* scope = variable->get_scope();
+          ROSE_ASSERT(scope != NULL);
+
+          classDefinition = isSgClassDefinition(scope);
+        }
+
+  // printf ("In SgAddressOfOp::get_type(): classDefinition is valid = %s \n",(classDefinition != NULL) ? "true" : "false");
+
+     SgType* returnType = NULL;
+     if (classDefinition != NULL)
+        {
+          returnType = SgPointerMemberType::createType(baseType,classDefinition);
+        }
+       else
+        {
+          returnType = SgPointerType::createType(baseType);
+        }
+
+   //  ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_ADDRESS_OF_OPERATOR_EXPRESSION_END
+
+
+SOURCE_MINUS_MINUS_OPERATOR_EXPRESSION_START
+$CLASSNAME::$CLASSNAME(Sg_File_Info * fi, SgExpression * exp, Sgop_mode a_mode)
+   : $BASECLASS(fi, exp, NULL)
+   {
+     set_mode(a_mode);
+     if (exp)
+          exp->set_parent(this); 
+   }
+
+$CLASSNAME::$CLASSNAME(SgExpression * exp, Sgop_mode a_mode)
+   : $BASECLASS(exp, NULL)
+   {
+     set_mode(a_mode);
+     if (exp)
+          exp->set_parent(this); 
+   }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+     set_mode(SgUnaryOp::prefix);
+   }
+
+SOURCE_MINUS_MINUS_OPERATOR_EXPRESSION_END
+
+
+SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION_START
+$CLASSNAME::$CLASSNAME(Sg_File_Info * fi, SgExpression * exp, Sgop_mode a_mode)
+   : $BASECLASS(fi, exp, NULL)
+   {
+     set_mode(a_mode); 
+     if (exp)
+          exp->set_parent(this);
+   }
+
+$CLASSNAME::$CLASSNAME( SgExpression * exp, Sgop_mode a_mode)
+   : $BASECLASS(exp, NULL)
+   {
+     set_mode(a_mode); 
+     if (exp)
+          exp->set_parent(this);
+   }
+
+void
+$CLASSNAME::post_construction_initialization() 
+   {
+     set_mode(SgUnaryOp::prefix);
+   }
+
+SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION_END
+
+
+SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION_START
+SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION_END
+
+
+SOURCE_CONDITIONAL_EXPRESSION_START
+unsigned int
+$CLASSNAME::cfgIndexForEnd() const 
+  {
+    return 2;
+  }
+
+  bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
+    return idx == 1 || idx == 2;
+  }
+
+unsigned int
+$CLASSNAME::cfgFindChildIndex(SgNode* n)
+   {
+  // DQ (8/24/2006): Could be rewritten as:
+  // Make sure that this is either the conditional, true body, or the fals body
+  // ROSE_ASSERT (n == this->get_conditional_exp() || n == this->get_true_exp() || n == this->get_false_exp() );
+  // return (n == this->get_conditional_exp()) ? 0 : 1;
+
+     if (n == this->get_conditional_exp())
+        {
+          return 0;
+        }
+       else
+          if (n == this->get_true_exp() || n == this->get_false_exp())
+             {
+               return 1;
+             }
+            else
+               ROSE_ASSERT (!"Bad child in conditional expression");
+
+  // DQ (8/24/2006): Added return to avoid compiler warning.
+     return 0;
+   }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_conditional_exp()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_true_exp()->cfgForBeginning(), result);
+	      makeEdge(VirtualCFG::CFGNode(this, idx), this->get_false_exp()->cfgForBeginning(), result); break;
+      case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index in $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_conditional_exp()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      case 2: makeEdge(this->get_true_exp()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+	      makeEdge(this->get_false_exp()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index in $CLASSNAME");
+    }
+    return result;
+  }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (p_conditional_exp != NULL)
+          p_conditional_exp->set_parent(this);
+     if (p_true_exp != NULL)
+          p_true_exp->set_parent(this);
+     if (p_false_exp != NULL)
+          p_false_exp->set_parent(this);
+// #endif
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // In this function we want to return the type of the true of false option but it only makes sense for them to be the same type.
+
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
+
+  // Jeremiah (7/20/2006): Despite the comments, SOURCE_CONDITIONAL_EXPRESSION refers to a p_expression_type member, 
+  // but then ignores it.  I think you may want to store the type explicitly for this operator, as computing it is 
+  // difficult (requires handling user-defined conversions and such).  The return type can be either the true or false 
+  // types, and they can be different.
+
+     ROSE_ASSERT(p_true_exp  != NULL);
+     ROSE_ASSERT(p_false_exp != NULL);
+
+     SgType* trueType   = p_true_exp->get_type();
+     ROSE_ASSERT(trueType != NULL);
+
+     SgType* falseType  = p_false_exp->get_type();
+     ROSE_ASSERT(falseType != NULL);
+
+#if PRINT_DEVELOPER_WARNINGS
+     string expression_type_name = "NULL";
+     if (p_expression_type != NULL)
+          expression_type_name = p_expression_type->class_name();
+
+  // ROSE_ASSERT(trueType == falseType);
+     if (trueType != falseType)
+        {
+          printf ("Warning: In SgConditionalExp::get_type(): trueType = %s != falseType = %s  (p_expression_type = %s) \n",
+               trueType->class_name().c_str(),falseType->class_name().c_str(),expression_type_name.c_str());
+       // get_file_info()->display("Warning: In SgConditionalExp::get_type(): trueType != falseType");
+        }
+#endif
+
+  // This was the previous choice for how p_expression_type was set, 
+  // so to be consistant we will select the same branch.
+     SgType* returnType = trueType;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SgExpression*
+$CLASSNAME::get_next(int& n) const
+   {
+     SgExpression *tmp = NULL;
+     switch (n)
+        {
+          case 0: tmp = get_conditional_exp(); n++; break;
+          case 1: tmp = get_true_exp(); n++; break;
+          case 2: tmp = get_false_exp(); n++; break;
+        }
+
+     return tmp;
+   }
+
+int
+$CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_conditional_exp() == o)
+        {
+          set_conditional_exp(n);
+          n->set_parent(this);
+          return 1;
+        } 
+       else
+        {
+          if (get_true_exp() == o)
+             {
+               set_true_exp(n);
+               n->set_parent(this);
+               return 1; 
+             }
+            else
+             {
+               if (get_false_exp() == o)
+                  {
+                    set_false_exp(n);
+                    n->set_parent(this);
+                    return 1;
+                  }
+                 else
+                  {
+                    return 0;
+                  }
+             }
+        }
+   }
+
+SOURCE_CONDITIONAL_EXPRESSION_END
+
+
+SOURCE_CAST_EXPRESSION_START
+
+void
+SgCastExp::post_construction_initialization() 
+   {
+  // p_cast_type = c_cast_e;
+     p_cast_type = e_C_style_cast;
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+// DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
+// $CLASSNAME::Sg$GRAMMAR_X_MARKER_e_cast_type
+SgCastExp::cast_type_enum
+SgCastExp::cast_type()
+   {
+     return p_cast_type;
+   }
+
+// DQ (1/17/2008): Added set_type function since this is one of a few IR nodes that require 
+// the type to be held explicitly, for all other IR nodes the type is computed dynamicly.
+void
+SgCastExp::set_type( SgType* type )
+   {
+     p_expression_type = type;
+   }
+
+SgType*
+SgCastExp::get_type() const
+   {
+  // DQ (1/16/2006): In this function we want to return the stored p_expression_type.
+  // This IR node has to store the type explicitly since there is no other way to 
+  // recover what the cast is TO (since the operand stored what the cast in FROM).
+
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // printf ("SgCastOp::get_type(): p_expression_type has been removed from many IR nodes but is required for SgCastOp \n");
+
+     ROSE_ASSERT(p_expression_type != NULL);
+     return p_expression_type;
+   }
+
+unsigned int
+SgCastExp::cfgFindChildIndex(SgNode* n)
+   {
+     if (n == this->get_operand()) return 0;
+     ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgCastExp");
+   }
+
+SOURCE_CAST_EXPRESSION_END
+
+
+SOURCE_POINTER_ARRAY_REFERENCE_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/16/2006): In this function we want to return the base type of the array being referenced (lhs->get_type()).
+
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // printf ("SgPntrArrRefExp::get_type(): p_expression_type has been removed from many IR nodes \n");
+
+  // ROSE_ASSERT(p_expression_type != NULL);
+     if (p_expression_type != NULL)
+        {
+          printf ("In SgPntrArrRefExp::get_type(): p_expression_type = %s \n",p_expression_type->class_name().c_str());
+        }
+
+     ROSE_ASSERT(get_lhs_operand() != NULL);
+     ROSE_ASSERT(get_rhs_operand() != NULL);
+
+  // SgType* returnType = get_lhs_operand()->get_type();
+     SgType* someType = get_lhs_operand()->get_type();
+     ROSE_ASSERT(someType != NULL);
+
+  // This code should be shared between the SgPntrArrRefExp and the SgPointerDerefExp IR nodes
+  // A better idea would be to have a function that strips off types based on a set of flags
+  // that would control stripping of pointer references, array references, C++ references, 
+  // modifiers, and typedefs.
+
+     SgType* returnType = NULL;
+     keepStripping:
+     ROSE_ASSERT (someType);
+     switch(someType->variantT())
+        {
+       // These cases all have base types and the pointer dereferencing returns the base type
+       // But since p_base_type is placed at each of the different SgType IR nodes we have 
+       // to handle each case separately.
+          case V_SgPointerType:
+             {
+               SgPointerType* pointerType = isSgPointerType(someType);
+               returnType = pointerType->get_base_type();
+               break;
+             }
+          case V_SgArrayType:
+             {
+               SgArrayType* arrayType = isSgArrayType(someType);
+               returnType = arrayType->get_base_type();
+               break;
+             }
+          case V_SgTypedefType:
+             {
+               SgTypedefType* typedefType = isSgTypedefType(someType);
+               someType = typedefType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgReferenceType:
+             {
+               SgReferenceType* referenceType = isSgReferenceType(someType);
+               someType = referenceType->get_base_type();
+               goto keepStripping;
+             }
+          case V_SgModifierType:
+             {
+               SgModifierType* modifierType = isSgModifierType(someType);
+               someType = modifierType->get_base_type();
+               goto keepStripping;
+             }
+
+       // DQ (10/3/2006): Added case of array reference of string type (assume it returns a char).
+       // Once we have a wcharString type then we have to add that case to this list as well!
+          case V_SgTypeString:
+             {
+            // SgTypeString* stringType = isSgTypeString(someType);
+            // someType = stringType->get_base_type();
+               returnType = SgTypeChar::createType();
+               break;
+             }
+
+          default:
+             {
+#if 1
+               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               get_file_info()->display("location of error: debug");
+
+            // DQ (9/27/2006): This can be a compiler generated IR nde so look at the parent.
+               SgLocatedNode* locatedNode = isSgLocatedNode(get_parent());
+               if (locatedNode != NULL)
+                    locatedNode->get_file_info()->display("location of parent: debug");
+#endif
+               printf ("Error: default reached in In $CLASSNAME::get_type() someType = %s \n",someType->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+  // printf ("In SgPntrArrRefExp::get_type(): returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_POINTER_ARRAY_REFERENCE_EXPRESSION_END
+
+
+SOURCE_NEW_OPERATOR_EXPRESSION_START
+
+unsigned int
+$CLASSNAME::cfgIndexForEnd() const
+  {
+    return 2; // At most one of constructor args or array size are present
+  }
+
+unsigned int
+$CLASSNAME::cfgFindChildIndex(SgNode* n)
+   {
+  // DQ (8/24/2006): Could be rewritten as:
+  // Make sure that this is either the conditional, true body, or the fals body
+  // ROSE_ASSERT (n == this->get_placement_args() || n == this->get_constructor_args() || n == this->get_builtin_args() );
+  // return (n == this->get_placement_args()) ? 0 : 1;
+
+     if (n == this->get_placement_args())
+        {
+          return 0;
+        }
+       else
+          if (n == this->get_constructor_args() || n == this->get_builtin_args())
+             {
+               return 1;
+             }
+            else
+               ROSE_ASSERT (!"Bad child in new expression");
+
+  // DQ (8/24/2006): Added return to avoid compiler warning.
+     return 0;
+   }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: {
+	if (this->get_placement_args()) {
+	  makeEdge(VirtualCFG::CFGNode(this, idx), this->get_placement_args()->cfgForBeginning(), result);
+	} else {
+	  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 1), result);
+	}
+	break;
+      }
+      case 1: {
+	if (this->get_constructor_args()) {
+	  makeEdge(VirtualCFG::CFGNode(this, idx), this->get_constructor_args()->cfgForBeginning(), result);
+	} else if (this->get_builtin_args()) {
+	  makeEdge(VirtualCFG::CFGNode(this, idx), this->get_builtin_args()->cfgForBeginning(), result);
+	} else {
+	  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result);
+	}
+	break;
+      }
+      case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: {
+	if (this->get_placement_args()) {
+	  makeEdge(this->get_placement_args()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+	} else {
+	  makeEdge(VirtualCFG::CFGNode(this, 0), VirtualCFG::CFGNode(this, idx), result);
+	}
+	break;
+      }
+      case 2: {
+	if (this->get_constructor_args()) {
+	  makeEdge(this->get_constructor_args()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+	} else if (this->get_builtin_args()) {
+	  makeEdge(this->get_builtin_args()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+	} else {
+	  makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result);
+	}
+	break;
+      }
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+     if(p_constructor_args)
+        {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+          p_constructor_args->set_parent(this);
+// #endif
+          p_constructor_args->set_need_paren(true);
+        }
+
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if(p_builtin_args)
+        {
+          p_builtin_args->set_parent(this);
+        }
+
+     if(p_placement_args)
+          p_placement_args->set_parent(this);
+// #endif
+   }
+
+
+SgExpression*
+$CLASSNAME::get_next(int& n) const
+   {
+  // SgExpression *tmp = NULL;
+     if(n==0)
+        {
+          n++;
+          if(get_placement_args()) return get_placement_args();
+            else
+             {
+               n++;
+               if(get_constructor_args())
+                    return get_constructor_args();
+                 else
+                    return get_builtin_args();
+             }
+        }
+       else 
+          if(n==1)
+             {
+               n++;
+               if(get_constructor_args())
+                    return get_constructor_args();
+                 else
+                    return get_builtin_args();
+             }
+
+     return NULL;
+   }
+
+int
+$CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if(get_placement_args()==o)
+        {
+          set_placement_args(isSgExprListExp(n));
+          n->set_parent(this);
+          return 1; 
+        }
+       else
+        {
+          if(get_constructor_args()==o)
+             {
+               set_constructor_args(isSgConstructorInitializer(n));
+               n->set_parent(this);
+               return 1;
+             }
+            else
+             {
+               if(get_builtin_args()==o)
+                  {
+                    set_builtin_args(n);
+                    n->set_parent(this);
+                    return 1;
+                  }
+                 else
+                  {
+                    return 0;
+                  }
+             }
+        }
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type \n");
+
+  // The p_constructor_args really just identifies the constructor being called, 
+  // from which we can get the type to be returned from the new operator!
+  // If there is no constructor then this might be a primative type or perhaps 
+  // a class or struct without an explicit constructor.
+     ROSE_ASSERT(p_constructor_args != NULL);
+
+  // Since where the p_constructor_args->get_declaration() == NULL (often for primative types) 
+  // we need the explicitly stored p_expression_type pointer anyway so we can just make it the 
+  // return type for all cases.
+  // SgType* returnType = p_expression_type;
+  // SgType* returnType = SgPointerType::createType(p_expression_type);
+     ROSE_ASSERT(p_specified_type != NULL);
+     SgType* returnType = SgPointerType::createType(p_specified_type);
+
+     ROSE_ASSERT(returnType != NULL);
+  // printf ("$CLASSNAME::get_type(): We might have to return a pointer to this type! returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_NEW_OPERATOR_EXPRESSION_END
+
+SOURCE_DELETE_OPERATOR_EXPRESSION_START
+
+unsigned int
+SgDeleteExp::cfgIndexForEnd() const
+   {
+     return 1;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgDeleteExp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_variable()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgDeleteExp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_variable()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+#if 0
+// This should be generated automatically
+SgDeleteExp::SgDeleteExp(Sg_File_Info* info , SgExpression* variable, short is_array, short need_global_specifier)
+   : $BASECLASS(info)
+   {
+     p_variable = variable;
+     p_is_array = is_array;
+     p_need_global_specifier = need_global_specifier;
+  /* now a call to the user defined intialization function */
+     post_construction_initialization();
+   }
+#endif
+
+void
+SgDeleteExp::post_construction_initialization()
+   {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if(p_variable)
+          p_variable->set_parent(this);
+// #endif
+   }
+
+SgType*
+SgDeleteExp::get_type() const
+   {
+  // The delete operator always returns "void" as a type.  This used to return SgDefaultType (but that didn't seem quite right)
+
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we now return SgTypeVoid \n");
+
+     SgType* returnType = SgTypeVoid::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SgExpression*
+SgDeleteExp::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_variable();
+        }
+       else
+        {
+          return 0;
+        }
+   }
+
+int
+SgDeleteExp::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_variable() == o)
+        {
+          set_variable(n);
+          n->set_parent(this);
+          return 1;
+        }
+       else
+        {
+          return 0;
+        }
+   }
+
+SOURCE_DELETE_OPERATOR_EXPRESSION_END
+
+
+SOURCE_THIS_EXPRESSION_START
+unsigned int
+$CLASSNAME::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+  }
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
+
+SOURCE_THIS_EXPRESSION_END
+
+
+SOURCE_SCOPE_OPERATOR_EXPRESSION_START
+SOURCE_SCOPE_OPERATOR_EXPRESSION_END
+
+
+SOURCE_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_REFERENCE_EXPRESSION_START
+SOURCE_REFERENCE_EXPRESSION_END
+
+
+SOURCE_THROW_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // DQ (1/14/2006): For a list of types held internally it is not clear what to return.
+  // So return a SgDefaultType as in Sage II previously.  Might be better to research
+  // this in more details later.
+     SgType* returnType = SgTypeDefault::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_THROW_OPERATOR_EXPRESSION_END
+
+
+SOURCE_CONCATENATION_OPERATOR_EXPRESSION_START
+SOURCE_CONCATENATION_OPERATOR_EXPRESSION_END
+
+
+SOURCE_INITIALIZER_EXPRESSION_START
+unsigned int $CLASSNAME::cfgIndexForEnd() const
+   {
+     return 1;
+   }
+
+SOURCE_INITIALIZER_EXPRESSION_END
+
+
+SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_START
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_initializers()->cfgForBeginning(), result); break;
+       case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+       default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+     }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+$CLASSNAME::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx) {
+       case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+       case 1: makeEdge(this->get_initializers()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+       default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+     }
+
+     return result;
+   }
+
+void
+$CLASSNAME::post_construction_initialization() 
+   {
+     if (get_initializers())
+          get_initializers()->set_parent(this);
+   }
+
+#if 1
+// DQ: trying to remove the nested iterator class
+void
+$CLASSNAME::append_initializer(SgExpression* what)
+   {
+     assert(this != NULL);
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+     ROSE_ASSERT(p_initializers != NULL);
+     if(!p_initializers)
+        {
+       // set_initializers(new SgExprListExp(this->get_file_info()));
+          SgExprListExp* newArgs = new SgExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          newArgs->set_endOfConstruct( this->get_file_info() );
+          set_initializers(newArgs);
+        }
+
+  // insert_initializer(p_initializers->end(),what);
+     p_initializers->append_expression(what);
+   }
+#endif
+
+#if 0
+// DQ: trying to remove the nested iterator class
+// $CLASSNAME::insert_initializer(const SgExpression::iterator& where, SgExpression* what) 
+void
+$CLASSNAME::insert_initializer(const SgExpressionPtrList::iterator& where, SgExpression* what) 
+   {
+     p_initializers->insert_expression(where,what);
+   }
+#endif
+
+//#if 0
+SgExpression*
+$CLASSNAME::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_initializers();
+        }
+       else
+          return 0;
+   }
+//#endif
+
+int
+$CLASSNAME::replace_expression(SgExpression* o, SgExpression* n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_initializers() == o)
+        {
+          set_initializers(isSgExprListExp(n));
+          n->set_parent(this);
+          return 1;
+        }
+       else
+        {
+          return 0;
+        }
+   }
+
+SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_END
+
+
+SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_args()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_args()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+SgClassDeclaration*
+SgConstructorInitializer::get_class_decl () const
+   {
+  // This function replaces access function for a data member that is 
+  // now removed to permit the class to be more general as required to
+  // handle constructors of primative types (e.g. "double* x = new double();")
+  // Note that in this case the member function pointer "p_declaration" is NULL.
+
+     SgClassDeclaration* returnType = NULL;
+
+     ROSE_ASSERT(p_expression_type != NULL);
+     SgClassType* classType = isSgClassType(p_expression_type);
+     if (classType != NULL)
+        {
+          returnType = isSgClassDeclaration(classType->get_declaration());
+          ROSE_ASSERT(returnType != NULL);
+        }
+       else
+        {
+       // verify that "p_declaration" is NULL in this case.
+          ROSE_ASSERT(p_declaration == NULL);
+        }
+
+     return returnType;
+   }
+
+void
+SgConstructorInitializer::post_construction_initialization()
+   {
+     ROSE_ASSERT(p_expression_type != NULL);
+     if (p_declaration == NULL)
+        {
+       // This can be NULL for the case of an undeclared constructor.
+          ROSE_ASSERT( (isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+        }
+
+  // DQ (11/15/2006): avoid setting newArgs this late in the process.
+  // ROSE_ASSERT(p_args != NULL);
+     if (p_args == NULL)
+        {
+       // Build an empty argument list
+
+       // DQ (11/16/2006): Need to handle use in new constructors that don't have fileInfo parameters.
+       // p_args = new SgExprListExp(New_File_Info(this));
+          if (get_startOfConstruct() != NULL)
+             {
+               p_args = new SgExprListExp(New_File_Info(this));
+               p_args->set_endOfConstruct(New_File_Info(this));
+             }
+            else
+             {
+               p_args = new SgExprListExp();
+             }
+          ROSE_ASSERT(p_args != NULL);
+        }
+
+  // if (get_args() != NULL)
+  //      get_args()->set_parent(this);
+     get_args()->set_parent(this);
+
+     ROSE_ASSERT(p_args != NULL);
+   }
+
+#if 0
+SgClassDeclaration* 
+SgConstructorInitializer::get_class_decl () const
+   {
+     assert (this != NULL);
+
+  // Look this up from the SgType that we now store explicitly instead of the SgClassDeclaration
+  // return p_class_decl;
+
+     SgClassDeclaration* classDeclaration = NULL;
+     ROSE_ASSERT(this->get_type() != NULL);
+     
+     return classDeclaration;
+   }
+#endif
+
+#if 0
+// Need a feature in the grammar code generator to permit 
+// user specification of the set_DATA member function
+void
+SgConstructorInitializer::set_declaration(SgMemberFunctionDeclaration* new_val)
+   {
+     p_declaration = new_val;
+#ifndef REMOVE_SET_PARENT_FUNCTION
+     if(p_declaration)p_declaration->set_parent(this);
+#endif
+   }
+
+void
+SgConstructorInitializer::set_args(SgExprListExp* new_val)
+   {
+     p_args = new_val;
+#ifndef REMOVE_SET_PARENT_FUNCTION
+     if(p_args)p_args->set_parent(this);
+#endif
+   }
+
+void
+SgConstructorInitializer::set_class_decl(SgClassDeclaration* new_val)
+   {
+     p_class_decl = new_val;
+#ifndef REMOVE_SET_PARENT_FUNCTION
+     if(p_class_decl)p_class_decl->set_parent(this);
+#endif
+   }
+#endif
+
+//#if 0
+SgExpression*
+SgConstructorInitializer::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_args();
+        }
+     return 0;
+   }
+//#endif
+
+int
+SgConstructorInitializer::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if(get_args() == o)
+        {
+          set_args(isSgExprListExp(n));
+          n->set_parent(this);
+          return 1;
+        }
+       else
+          return 0;
+   }
+
+SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION_END
+
+SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION_START
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
+      case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_operand()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+    }
+    return result;
+  }
+
+SgExpression*
+$CLASSNAME::get_operand() const
+   { return get_operand_i(); }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (get_operand() != NULL)
+          get_operand()->set_parent(this);
+// #endif
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type(); 
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)
+
+  // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, getting the return type from the stored internal operand \n");
+
+     ROSE_ASSERT(get_operand() != NULL);
+     SgType* returnType = get_operand()->get_type();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+void
+$CLASSNAME::set_operand(SgExpression * exp)
+   {
+     set_operand_i(exp);
+// #ifndef REMOVE_SET_PARENT_FUNCTION
+     if (exp)
+          exp->set_parent(this);
+// #endif
+
+  // DQ (1/14/2006): set_type is removed
+  // set_type();
+   }
+
+SgExpression*
+$CLASSNAME::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_operand();
+        } 
+       else
+          return 0;
+   }
+
+int
+$CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if(get_operand()==o)
+        {
+          set_operand(n);
+          n->set_parent(this);
+          return 1;
+        }
+       else
+          return 0;
+   }
+
+SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+
+// ######################################################
+// ######################################################
+// ######################################################
+// ######################################################
+// ######################################################
+// ######################################################
+
+// ******************************************************
+// $CLASSNAME::post_construction_initialization() function
+// ******************************************************
+
+SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION_START
+void
+$CLASSNAME::post_construction_initialization()
+   {
+   }
+
+SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION_END
+
+
+SOURCE_POST_CONSTRUCTION_INITIALIZATION_USING_SET_TYPE_START
+
+#error "This code from SOURCE_POST_CONSTRUCTION_INITIALIZATION_USING_SET_TYPE should not be used"
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+     set_type();
+   }
+SOURCE_POST_CONSTRUCTION_INITIALIZATION_USING_SET_TYPE_END
+
+
+// *******************************************
+//       $CLASSNAME::set_Type() function
+// *******************************************
+
+// SgExprListExp
+// SgVarRefExp
+// SgClassNameRefExp
+// SgValueExp
+// SgNewExp
+// SgDeleteExp
+// SgThisExp
+// SgAggregateInitializer
+SOURCE_EMPTY_SET_TYPE_FUNCTION_START
+
+#error "This code from SOURCE_EMPTY_SET_TYPE_FUNCTION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   {
+   }
+
+SOURCE_EMPTY_SET_TYPE_FUNCTION_END
+
+
+// SgEqualityOp
+// SgLessThanOp
+// SgGreaterThanOp
+// SgNotEqualOp
+// SgLessOrEqualOp
+// SgGreaterOrEqualOp
+SOURCE_SET_TYPE_BOOLEAN_OPERATOR_EXPRESSION_START
+
+#error "This code from SOURCE_SET_TYPE_BOOLEAN_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   { 
+     set_expression_type(SgTypeBool::createType());
+   }
+
+SOURCE_SET_TYPE_BOOLEAN_OPERATOR_EXPRESSION_END
+
+
+// SgAddOp
+// SgSubtractOp
+// SgMultiplyOp
+// SgDivideOp
+// SgIntegerDivideOp
+// SgModOp
+SOURCE_ARITHMETIC_OPERATOR_EXPRESSION_START
+
+#if 0
+#error "This code from SOURCE_ARITHMETIC_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   {
+     assert(get_lhs_operand() != NULL);
+     assert(get_rhs_operand() != NULL);
+     SgType * op_type = SgType::arithmetic_conversions(get_lhs_operand()->get_type(), get_rhs_operand()->get_type());
+     set_expression_type(op_type);
+   }
+#endif
+
+SOURCE_ARITHMETIC_OPERATOR_EXPRESSION_END
+
+
+// SgAndOp
+// SgOrOp
+// SgNotOp
+SOURCE_INTEGER_OPERATOR_EXPRESSION_START
+
+#if 0
+#error "This code from SOURCE_INTEGER_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   {
+     set_expression_type(SgTypeInt::createType());
+   }
+#endif
+
+SOURCE_INTEGER_OPERATOR_EXPRESSION_END
+
+
+// SgBitXorOp
+// SgBitAndOp
+// SgBitOrOp
+SOURCE_BIT_OPERATOR_EXPRESSION_START
+
+#if 0
+#error "This code from SOURCE_BIT_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   {
+     assert(get_lhs_operand() != NULL);
+     assert(get_rhs_operand() != NULL);
+     SgType * int_type = SgType::integer_promotion(get_lhs_operand()->get_type(), get_rhs_operand()->get_type());
+     assert(int_type != NULL);
+     set_expression_type(int_type);
+   }
+#endif
+
+SOURCE_BIT_OPERATOR_EXPRESSION_END
+
+
+// SgFunctionCallExp
+// SgFunctionRefExp
+SOURCE_GET_FUNCTION_SET_TYPE_FUNCTION_EXPRESSION_START
+SOURCE_GET_FUNCTION_SET_TYPE_FUNCTION_EXPRESSION_END
+
+// SgArrowExp
+// SgDotExp
+// SgScopeOp
+SOURCE_GET_RHS_OPERAND_FUNCTION_EXPRESSION_START
+SOURCE_GET_RHS_OPERAND_FUNCTION_EXPRESSION_END
+
+
+// SgLshiftOp
+// SgRshiftOp
+// SgAssignOp
+// SgPlusAssignOp (not used currently, suspected bug?)
+// SgMinusAssignOp
+// SgAndAssignOp
+// SgIorAssignOp
+// SgMinusAssignOp
+// SgMultAssignOp
+// SgDivAssignOp
+// SgModAssignOp
+// SgXorAssignOp
+// SgLshiftAssignOp
+// SgRshiftAssignOp
+SOURCE_SET_TYPE_SHIFT_OPERATOR_EXPRESSION_START
+
+#error "This code from SOURCE_SET_TYPE_SHIFT_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type() 
+   { 
+     assert(get_lhs_operand() != NULL);
+     set_expression_type(get_lhs_operand()->get_type());
+   }
+
+SOURCE_SET_TYPE_SHIFT_OPERATOR_EXPRESSION_END
+
+
+// SgMinusOp
+// SgUnaryAddOp
+// SgMinusMinusOp
+// SgPlusPlusOp
+// SgBitComplementOp  // Why is this not like the other Bit operators?
+// SgAssignInitializer
+SOURCE_SET_TYPE_UNARY_OPERATOR_EXPRESSION_START
+
+#error "This code from SOURCE_SET_TYPE_UNARY_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type() 
+   {
+     assert(get_operand() != NULL);
+     set_expression_type(get_operand()->get_type());
+   }
+
+SOURCE_SET_TYPE_UNARY_OPERATOR_EXPRESSION_END
+
+
+// SgSizeOfOp
+// SgTypeIdOp
+SOURCE_SET_TYPE_SIZEOF_TYPEID_OPERATOR_EXPRESSION_START
+
+#error "This code from SOURCE_SET_TYPE_SIZEOF_TYPEID_OPERATOR_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   {
+     if(get_operand_expr() != NULL)
+          set_expression_type(get_operand_expr()->get_type());
+       else 
+          set_expression_type(get_operand_type());
+   }
+
+SOURCE_SET_TYPE_SIZEOF_TYPEID_OPERATOR_EXPRESSION_END
+
+
+// SgThrowOp
+SOURCE_SET_TYPE_DEFAULT_TYPE_EXPRESSION_START
+
+#error "This code from SOURCE_SET_TYPE_DEFAULT_TYPE_EXPRESSION should not be used"
+
+// DQ (1/14/2006): set_type is removed
+void
+$CLASSNAME::set_type()
+   {
+     set_expression_type(SgTypeDefault::createType());
+   }
+
+SOURCE_SET_TYPE_DEFAULT_TYPE_EXPRESSION_END
+
+
+// *******************************************
+//       CLASSNAME::get_Type() function
+// *******************************************
+
+
+// SgExprListExp
+SOURCE_DEFAULT_GET_TYPE_START
+SgType*
+
+$CLASSNAME::get_type() const
+   { 
+     return SgTypeDefault::createType();
+   }
+
+SOURCE_DEFAULT_GET_TYPE_END
+
+
+SOURCE_GET_TYPE_FROM_SYMBOL_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     ROSE_ASSERT(get_symbol() != NULL);
+  // DQ (9/27/2006): Added assertion
+     ROSE_ASSERT(get_symbol()->get_type() != NULL);
+     return get_symbol()->get_type();
+   }
+
+SOURCE_GET_TYPE_FROM_SYMBOL_END
+
+// SgFunctionRefExp
+// SgMemberFunctionRefExp
+SOURCE_GET_TYPE_FUNCTION_REFERENCE_EXPRESSION_START
+
+unsigned int
+$CLASSNAME::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    ROSE_ASSERT (idx == 0);
+    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+    return result;
+  }
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    ROSE_ASSERT (idx == 0);
+    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+    return result;
+  }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): explicit type is now computed instead of being stored.
+  // assert(p_function_type != NULL);
+
+  // DQ (7/30/2004): The type of a SgFunctionRefExp should be a SgFunctionType, 
+  // not the return type of the function associated with the SgFunctionRefExp.
+  // return p_function_type->get_return_type();
+  // return get_function_type();
+
+     printf ("$CLASSNAME::get_type() for FUNCTION_REFERENCE_EXPRESSION not implemented (p_function_type removed) \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
+SOURCE_GET_TYPE_FUNCTION_REFERENCE_EXPRESSION_END
+
+// SgBoolValExp
+// SgStringVal
+// SgShortVal
+// SgCharVal
+// SgUnsignedCharVal
+// SgWcharVal
+// SgUnsignedShortVal
+// SgIntVal
+// SgEnumVal
+// SgUnsignedIntVal
+// SgLongIntVal
+// SgLongLongIntVal
+// SgUnsignedLongLongIntVal
+// SgUnsignedLongVal
+// SgFloatVal
+// SgDoubleVal
+// SgLongDoubleVal
+// SgDeleteExp
+SOURCE_GET_TYPE_GENERIC_START
+
+SgType*
+$CLASSNAME::get_type(void) const
+   {
+     return GENERIC_TYPE::createType();
+   }
+
+SOURCE_GET_TYPE_GENERIC_END
+
+SOURCE_GET_TYPE_COMPLEX_START
+
+SgType*
+$CLASSNAME::get_type(void) const
+   {
+     SgTypeComplex::floating_point_precision_enum precision = SgTypeComplex::e_errorPrecision;
+
+  // Use the stored SgType to return the correct SgTypeComplex using the correct precision.
+     ROSE_ASSERT(p_precisionType != NULL);
+     switch(p_precisionType->variantT())
+        {
+          case V_SgTypeFloat:
+               precision = SgTypeComplex::e_floatPrecision;
+               break;
+          case V_SgTypeDouble:
+               precision = SgTypeComplex::e_doublePrecision;
+               break;
+          case V_SgTypeLongDouble:
+               precision = SgTypeComplex::e_longDoublePrecision;
+               break;
+
+          default:
+             {
+               printf ("Error, default reached precisionType = %s \n",p_precisionType->class_name().c_str());
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
+
+  // returns a shared SgTypeComplex type
+     return SgTypeComplex::createType(precision);
+   }
+
+SOURCE_GET_TYPE_COMPLEX_END
+
+// SgConstructorInitializer (DQ (8/1/2006): This code fragment is no longer used!)
+SOURCE_GET_TYPE_CLASS_DECL_START
+
+// DQ (7/19/2006): Function suggested by Jeremiah Willcock and fixed up for general use by DQ
+// A better fix (later) will allow us to save the SgType and not use a SgDefaultType for the
+// special case below.
+SgType*
+$CLASSNAME::get_type(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // DQ (8/5/2006): Now that we store the expression type explicitly this is a simpler function.
+     SgType* returnType = p_expression_type;
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_GET_TYPE_CLASS_DECL_END
+
+// SgFunctionCallExp
+// SgSizeOfOp
+// SgTypeIdOp
+// SgConditionalExp
+// SgAssignInitializer
+SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION_START
+
+#error "This is not IR node dependent since we compute the type"
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (not implemented)
+  // return get_expression_type();
+
+     printf ("$CLASSNAME::get_type(): p_expression_type has been removed, we have to compute the appropriate type (not implemented) \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
+SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION_END
+
+
+SOURCE_GET_TYPE_THIS_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+  // DQ (1/14/2006): The p_pobj_this data member was CC++ specific and no longer used (deprecated in Sage III), p_pobj_this is now removed
+     ROSE_ASSERT(get_class_symbol() != NULL);
+     ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+     return SgPointerType::createType(get_class_symbol()->get_type());
+   }
+
+SOURCE_GET_TYPE_THIS_EXPRESSION_END
+
+SOURCE_NULL_EXPRESSION_START
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 0;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    ROSE_ASSERT (idx == 0);
+    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+    return result;
+  }
+
+  std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+    std::vector<VirtualCFG::CFGEdge> result;
+    ROSE_ASSERT (idx == 0);
+    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+    return result;
+  }
+
+SOURCE_NULL_EXPRESSION_END
+
+SOURCE_VARIANT_EXPRESSION_START
+SOURCE_VARIANT_EXPRESSION_END
+
+SOURCE_STATEMENT_EXPRESSION_START
+unsigned int
+SgStatementExpression::cfgIndexForEnd() const 
+   {
+     return 1;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgStatementExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_statement()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgStatementExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_statement()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgType* returnType = NULL;
+
+     ROSE_ASSERT(p_statement != NULL);
+
+  // DQ (7/21/2006): For now we implement this partially and fix it up later.
+  // We might want to store the type explicitly since it might be difficult 
+  // to compute for complex sequences of statements.  It appears that the 
+  // type is just the type of the expression in the last statement of the block,
+  // but it is not clear if it can be more complex than this!
+
+  // The rules are: The last thing in the compound statement should be an expression 
+  // followed by a semicolon; the value of this subexpression serves as the value of 
+  // the entire construct. (If you use some other kind of statement last within the 
+  // braces, the construct has type void, and thus effectively no value.).
+
+  // printf ("$CLASSNAME::get_type() for GNU Statement Expression extension not implemented p_statement = %p = %s \n",p_statement,p_statement->class_name().c_str());
+  // ROSE_ASSERT(false);
+
+  // This is the default case (we can look at the last statement of the block later)
+  // returnType = SgTypeVoid::createType();
+
+  // DQ (8/6/2006): The rules for the type of a statement expression are that it is the 
+  // type of the last expression in the statement list or void if the last statement is 
+  // not an expression (expression statement, SgExpressionStatement).
+     SgBasicBlock* block = isSgBasicBlock(p_statement);
+     ROSE_ASSERT(block != NULL);
+
+     SgStatementPtrList & statementList = block->getStatementList();
+     ROSE_ASSERT(statementList.empty() == false);
+     SgStatement* lastStatement = *(statementList.rbegin());
+     SgExprStatement* expressionStatement = isSgExprStatement(lastStatement);
+     if (expressionStatement != NULL)
+        {
+       // The type of the statement expression is the 
+       // SgExpression* expression = expressionStatement->get_the_expr();
+          SgExpression* expression = expressionStatement->get_expression();
+          ROSE_ASSERT(expression != NULL);
+          returnType = expression->get_type();
+        }
+       else
+        {
+       // This is the default type if last statement in block is not an expression statement (C++ standard)
+          returnType = SgTypeVoid::createType();
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+
+  // printf ("$CLASSNAME::get_type() for GNU Statement Expression extension returnType = %s \n",returnType->class_name().c_str());
+
+     return returnType;
+   }
+
+SOURCE_STATEMENT_EXPRESSION_END
+
+SOURCE_ASM_OP_START
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgType* returnType = NULL;
+
+     ROSE_ASSERT(p_expression != NULL);
+
+  // printf ("$CLASSNAME::get_type() for asm operand not implemented p_expression = %p = %s \n",p_expression,p_expression->class_name().c_str());
+  // ROSE_ASSERT(false);
+
+  // This is the default case (we can look at the last statement of the block later)
+     returnType = p_expression->get_type();
+     ROSE_ASSERT(returnType != NULL);
+
+     return returnType;
+   }
+
+SOURCE_ASM_OP_END
+
+
+
+SOURCE_EXPONENTIATION_EXPRESSION_START
+
+void
+$CLASSNAME::post_construction_initialization() 
+   {
+   }
+
+#if 0
+SgType*
+$CLASSNAME::get_type() const
+   {
+     return NULL;
+   }
+#endif
+
+SOURCE_EXPONENTIATION_EXPRESSION_END
+
+
+
+SOURCE_INTRINSICFN_EXPRESSION_START
+
+#error "DEAD CODE!"
+
+void
+SgIntrinsicFn::post_construction_initialization() 
+   { }
+
+#error "DEAD CODE!"
+
+SgType*
+SgIntrinsicFn::get_type() const
+   {
+     printf ("In SgIntrinsicFn::get_type(): Not clear what this type should be. \n");
+     ROSE_ASSERT(false);
+     return NULL;
+   }
+
+#error "DEAD CODE!"
+
+void
+SgIntrinsicFn::append_arg($GRAMMAR_PREFIX_Expression* what)
+   {
+     assert(this != NULL);
+     if (p_args == NULL)
+        {
+       // set_args(new $GRAMMAR_PREFIX_ExprListExp(this->get_file_info()));
+          $GRAMMAR_PREFIX_ExprListExp* newArgs = new $GRAMMAR_PREFIX_ExprListExp ( this->get_file_info() );
+          assert(newArgs != NULL);
+          set_args(newArgs);
+        }
+
+    // insert_arg(p_args->end(),what);
+       p_args->append_expression(what);
+   }
+
+#error "DEAD CODE!"
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgIntrinsicFn::replace_expression($GRAMMAR_PREFIX_Expression *,$GRAMMAR_PREFIX_Expression *)
+   { return 0; }
+#endif
+
+#error "DEAD CODE!"
+
+SOURCE_INTRINSICFN_EXPRESSION_END
+
+
+SOURCE_SUBSCRIPT_EXPR_EXPRESSION_START
+unsigned int SgSubscriptExpression::cfgIndexForEnd() const
+   {
+     return 3;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgSubscriptExpression::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_lowerBound()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_upperBound()->cfgForBeginning(), result); break;
+          case 2: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_stride()->cfgForBeginning(), result); break;
+          case 3: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgSubscriptExpression::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_lowerBound()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          case 2: makeEdge(this->get_upperBound()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          case 3: makeEdge(this->get_stride()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+
+void
+SgSubscriptExpression::post_construction_initialization() 
+   { }
+
+SgType*
+SgSubscriptExpression::get_type() const
+   {
+  // printf ("Not clear what the type should be for a SgSubscriptExpression: returning type of lower bound,upper bound, and string; or SgIntType if none are available. \n");
+  // ROSE_ASSERT(false);
+
+     SgType* returnType = NULL;
+
+     bool isLowerBoundNullExpression = (isSgNullExpression(get_lowerBound()) != NULL);
+     bool isUpperBoundNullExpression = (isSgNullExpression(get_upperBound()) != NULL);
+     bool isStrideNullExpression     = (isSgNullExpression(get_stride()) != NULL);
+
+  // Even if the stride was not specified it should default to unit stride (value == 1).
+     ROSE_ASSERT(isStrideNullExpression == false);
+
+     if (isLowerBoundNullExpression == true)
+        {
+       // There was no lower bound specified
+          if (isUpperBoundNullExpression == true)
+             {
+            // There was no upper bound specified, so we have to assume SgIntType is OK!
+               returnType = SgTypeInt::createType();
+             }
+            else
+             {
+               returnType = get_upperBound()->get_type();
+             }
+        }
+       else
+        {
+          returnType = get_lowerBound()->get_type();
+          if (isUpperBoundNullExpression == true)
+             {
+            // Not a problem since the lower bound was specified
+             }
+            else
+             {
+            // Just make sure that they are the same type, not clear how important this is!
+               SgType* upperBoundType = get_upperBound()->get_type();
+            // ROSE_ASSERT(upperBoundType->variantT() == returnType->variantT());
+               if (upperBoundType->variantT() != returnType->variantT())
+                  {
+                 // These are a different type..., I wonder why
+                    printf ("In SgSubscriptExpression::get_type(): Note that lowerBound = %s and upperBound = %s are different types \n",returnType->class_name().c_str(),upperBoundType->class_name().c_str());
+                    this->get_startOfConstruct()->display("In SgSubscriptExpression::get_type(): lowerBound and upperBound are different types");
+                  }
+             }
+        }
+
+     return returnType;
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgSubscriptExpression::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PREFIX_Expression *n)
+   {
+     if(get_lowerBound()==o)
+        {
+          set_lowerBound(n);
+          return 1;
+        }
+       else
+          if(get_upperBound()==o)
+             {
+               set_upperBound(n);
+               return 1;  
+             }
+          else
+             if(get_stride()==o)
+                {
+                  set_stride(n);
+                  return 1;  
+                } 
+                else
+                  return 0;
+   }
+#endif
+
+SOURCE_SUBSCRIPT_EXPR_EXPRESSION_END
+
+
+SOURCE_SUBSCRIPT_COLON_EXPRESSION_START
+
+#error "DEAD CODE!"
+
+void
+SgSubscriptColon::post_construction_initialization() 
+   { }
+
+
+#error "DEAD CODE!"
+
+SgType*
+SgSubscriptColon::get_type() const
+   {
+     printf ("In SgSubscriptColon::get_type(): Not clear what this type should be. \n");
+     ROSE_ASSERT(false);
+     return NULL;
+   }
+
+#error "DEAD CODE!"
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgSubscriptColon::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PREFIX_Expression *n)
+   {
+     if(get_lowerBound()==o)
+        {
+          set_lowerBound(n);
+          return 1;
+        }
+       else
+          if(get_stride()==o)
+             {
+               set_stride(n);
+               return 1;  
+             } 
+             else
+               return 0;
+   }
+#endif
+
+#error "DEAD CODE!"
+
+SOURCE_SUBSCRIPT_COLON_EXPRESSION_END
+
+
+SOURCE_COLON_SHAPE_EXPRESSION_START
+
+void
+SgColonShapeExp::post_construction_initialization() 
+   { }
+
+
+SgType*
+SgColonShapeExp::get_type() const
+   {
+  // printf ("In SgColonShapeExp::get_type(): Not clear what this type should be. \n");
+  // ROSE_ASSERT(false);
+     return SgTypeDefault::createType();
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgColonShapeExp::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PREFIX_Expression *n)
+   {
+     if(get_lowerBound()==o)
+        {
+          set_lowerBound(n);
+          return 1;
+        }
+       else
+          if(get_stride()==o)
+             {
+               set_stride(n);
+               return 1;  
+             } 
+             else
+               return 0;
+   }
+#endif
+
+SOURCE_COLON_SHAPE_EXPRESSION_END
+
+
+SOURCE_ASTERISK_SHAPE_EXPRESSION_START
+
+void
+SgAsteriskShapeExp::post_construction_initialization() 
+   { }
+
+SgType*
+SgAsteriskShapeExp::get_type() const
+   {
+  // printf ("In SgAsteriskShapeExp::get_type(): Not clear what this type should be. \n");
+  // ROSE_ASSERT(false);
+     return SgTypeDefault::createType();
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgAsteriskShapeExp::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PREFIX_Expression *n)
+   {
+     if(get_lowerBound()==o)
+        {
+          set_lowerBound(n);
+          return 1;
+        }
+       else
+          if(get_stride()==o)
+             {
+               set_stride(n);
+               return 1;  
+             } 
+             else
+               return 0;
+   }
+#endif
+
+SOURCE_ASTERISK_SHAPE_EXPRESSION_END
+
+
+SOURCE_USE_ONLY_EXPR_START
+
+void
+SgUseOnlyExpression::post_construction_initialization() 
+   { }
+
+SgType*
+SgUseOnlyExpression::get_type() const
+   {
+     printf ("In SgUseOnlyExpression::get_type(): Not clear what this type should be. \n");
+     ROSE_ASSERT(false);
+     return NULL;
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+UseOnlyExpression::replace_expression($GRAMMAR_PREFIX_Expression* o, $GRAMMAR_PREFIX_Expression* n)
+   {
+     if(get_access_list()==o)
+        {
+          set_access_list(is$GRAMMAR_PREFIX_ExprListExp(n));
+          return 1;
+        }
+       else
+          return 0;
+   }
+#endif
+
+SOURCE_USE_ONLY_EXPR_END
+
+
+SOURCE_USE_RENAME_EXPR_START
+
+void
+SgUseRenameExpression::post_construction_initialization() 
+   { }
+
+SgType*
+SgUseRenameExpression::get_type() const
+   {
+     printf ("In SgUseRenameExpression::get_type(): Not clear what this type should be. \n");
+     ROSE_ASSERT(false);
+     return NULL;
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgUseRenameExpression::replace_expression($GRAMMAR_PREFIX_Expression *o, $GRAMMAR_PREFIX_Expression *n)
+   {
+     if(get_newname()==o)
+        {
+          set_newname(n);
+          return 1;
+        }
+       else
+          if(get_oldname()==o)
+             {
+               set_oldname(n);
+               return 1;  
+             } 
+            else 
+               return 0;
+   }
+#endif
+
+SOURCE_USE_RENAME_EXPR_END
+
+
+SOURCE_IO_ITEM_EXPR_START
+
+void
+SgIOItemExpression::post_construction_initialization() 
+   { }
+
+SgType*
+SgIOItemExpression::get_type() const
+   {
+     printf ("In SgIOItemExpression::get_type(): Not clear what this type should be. \n");
+     ROSE_ASSERT(false);
+     return NULL;
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgIOItemExpression::replace_expression($GRAMMAR_PREFIX_Expression* o, $GRAMMAR_PREFIX_Expression* n)
+   {
+     if(get_io_item()==o)
+        {
+          set_io_item(n);
+          return 1;
+        }
+       else
+          return 0;
+   }
+#endif
+
+SOURCE_IO_ITEM_EXPR_END
+
+
+SOURCE_IMPLIED_DO_START
+unsigned int SgImpliedDo::cfgIndexForEnd() const
+   {
+     return 4;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgImpliedDo::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_do_var()->cfgForBeginning(), result); break;
+          case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_first_val()->cfgForBeginning(), result); break;
+          case 2: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_last_val()->cfgForBeginning(), result); break;
+          case 3: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
+          case 4: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgImpliedDo::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
+          case 1: makeEdge(this->get_do_var()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          case 2: makeEdge(this->get_first_val()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          case 3: makeEdge(this->get_last_val()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          case 4: makeEdge(this->get_increment()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
+          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
+        }
+
+     return result;
+   }
+
+
+void
+SgImpliedDo::post_construction_initialization() 
+   { }
+
+SgType*
+SgImpliedDo::get_type() const
+   {
+  // printf ("In SgImpliedDo::get_type(): Not clear what this type should be (returning SgTypeDefault). \n");
+  // ROSE_ASSERT(false);
+  // return NULL;
+     return SgTypeDefault::createType();
+   }
+
+#if 0
+// DQ (3/20/2007): This is an older function now depricated.
+int
+SgImpliedDo::replace_expression($GRAMMAR_PREFIX_Expression* o, $GRAMMAR_PREFIX_Expression* n)
+   {
+     if(get_object_list()==o)
+        {
+          set_object_list(is$GRAMMAR_PREFIX_ExprListExp(n));
+          return 1;
+        }
+       else
+          return 0;
+   }
+#endif
+
+SOURCE_IMPLIED_DO_END
+
+
+SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_START
+
+void
+SgUnknownArrayOrFunctionReference::post_construction_initialization() 
+   { }
+
+SgType*
+SgUnknownArrayOrFunctionReference::get_type() const
+   {
+     printf ("In SgUnknownArrayOrFunctionReference::get_type(): Not clear what this type should be (returning SgTypeDefault). \n");
+  // ROSE_ASSERT(false);
+  // return NULL;
+     return SgTypeDefault::createType();
+   }
+
+SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
+
+
+SOURCE_ACTUAL_ARGUMENT_EXPRESSION_START
+
+void
+SgActualArgumentExpression::post_construction_initialization() 
+   {
+     ROSE_ASSERT(p_expression != NULL);
+     p_expression->set_parent(this);
+   }
+
+SgType*
+SgActualArgumentExpression::get_type() const
+   {
+     ROSE_ASSERT(p_expression != NULL);
+     return p_expression->get_type();
+   }
+
+SOURCE_ACTUAL_ARGUMENT_EXPRESSION_END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

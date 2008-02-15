@@ -1,0 +1,5 @@
+   MODULE stack
+   CONTAINS
+    SUBROUTINE foo
+    END SUBROUTINE foo
+   END MODULE stack

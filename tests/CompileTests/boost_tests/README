@@ -1,0 +1,15 @@
+ROSE Tests: Markus Schordan
+Here is a short summary of the encountered problems and files that demonstrate it. See the test files for detailed problem descriptions.
+
+test_boost_lambda.C
+ROSE 0.8.7a source: OK
+ROSE 0.8.8a binary: FAIL
+
+test_boost_phoenix_v1.C [use phoenix V1 for testing!]
+ROSE 0.8.7a source: OK
+ROSE 0.8.8a binary: OK
+
+test_boost_phoenix_v2.C [use phoenix V2 for testing!]
+ROSE 0.8.7a source: FAIL
+ROSE 0.8.8a binary: FAIL
+

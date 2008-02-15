@@ -1,0 +1,80 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgArrayType
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExprListExp *SgArrayType::p_dim_info
+*/
+/*!\var SgExpression *SgArrayType::p_index
+*/
+/*!\var SgType *SgArrayType::p_base_type
+*/
+/*!\var int SgArrayType::p_rank
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgArrayType::SgArrayType(const SgArrayTypeStorageClass &source)
+*/
+/*!\fn inline static void SgArrayType::operator delete(void *pointer)
+*/
+/*!\fn static SgArrayType *SgArrayType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgArrayType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgArrayType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgArrayType::initializeStorageClassArray(SgArrayTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgArrayType::clearMemoryPool()
+*/
+/*!\fn static void SgArrayType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgArrayType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgArrayType::roseRTI()
+*/
+/*!\fn virtual SgArrayType::~SgArrayType()
+*/
+/*!\fn virtual SgNode *SgArrayType::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgArrayType::set_base_type(SgType *base_type)
+\description See  *base_type)
+base_type for documentation */
+/*!\fn void SgArrayType::set_dim_info(SgExprListExp *dim_info)
+\description See  *dim_info)
+dim_info for documentation */
+/*!\fn void SgArrayType::set_index(SgExpression *index)
+\description See  *index)
+index for documentation */
+/*!\fn void SgArrayType::set_rank(int rank)
+\description See  rank)
+rank for documentation */
+/*!\fn SgExprListExp *SgArrayType::get_dim_info() const
+\description See  const
+dim_info for documentation */
+/*!\fn SgExpression *SgArrayType::get_index() const
+\description See  const
+index for documentation */
+/*!\fn SgType *SgArrayType::get_base_type() const
+\description See  const
+base_type for documentation */
+/*!\fn int SgArrayType::get_rank() const
+\description See  const
+rank for documentation */
+/*!\fn virtual SgNode *SgArrayType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgArrayType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgArrayType::get_numberOfTraversalSuccessors()
+\description See  SgArrayType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgArrayType::get_traversalSuccessorContainer()
+\description See  SgArrayType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgArrayType::get_traversalSuccessorNamesContainer()
+\description See  SgArrayType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgArrayType::SgArrayType(SgType *base_type=(0),SgExpression *index=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1748813276;

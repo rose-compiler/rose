@@ -1,0 +1,64 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgBreakStmt::p_do_string_label
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgBreakStmt::SgBreakStmt(const SgBreakStmtStorageClass &source)
+*/
+/*!\fn inline static void SgBreakStmt::operator delete(void *pointer)
+*/
+/*!\fn static SgBreakStmt *SgBreakStmt::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgBreakStmt::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgBreakStmt::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgBreakStmt::initializeStorageClassArray(SgBreakStmtStorageClass *storageArray)
+*/
+/*!\fn static void SgBreakStmt::clearMemoryPool()
+*/
+/*!\fn static void SgBreakStmt::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgBreakStmt::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgBreakStmt::roseRTI()
+*/
+/*!\fn virtual SgBreakStmt::~SgBreakStmt()
+*/
+/*!\fn virtual SgNode *SgBreakStmt::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual bool SgBreakStmt::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgBreakStmt::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgBreakStmt::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgBreakStmt::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgBreakStmt::post_construction_initialization()
+*/
+/*!\fn void SgBreakStmt::set_do_string_label(std::string do_string_label)
+\description See  do_string_label)
+do_string_label for documentation */
+/*!\fn std::string SgBreakStmt::get_do_string_label() const
+\description See  const
+do_string_label for documentation */
+/*!\fn virtual SgNode *SgBreakStmt::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgBreakStmt::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgBreakStmt::get_numberOfTraversalSuccessors()
+\description See  SgBreakStmt::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBreakStmt::get_traversalSuccessorContainer()
+\description See  SgBreakStmt::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBreakStmt::get_traversalSuccessorNamesContainer()
+\description See  SgBreakStmt::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgBreakStmt::SgBreakStmt()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_378247630;

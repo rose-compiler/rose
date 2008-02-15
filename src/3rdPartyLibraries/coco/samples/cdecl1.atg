@@ -1,0 +1,52 @@
+$C   /* Generate Main Module, C */
+COMPILER Decl
+/* Translate simple C declarations into English
+   Based on Kernighan and Ritchie: "C Programming language", page 122
+   See also: Parr et.al. "PCCTS reference manual", page 53 in ACM SIGPLAN
+   Notices 27(2), 88-165, 1992 */
+
+#include <stdlib.h>
+#include <stdio.h>
+
+CHARACTERS
+  digit =  "0123456789" .
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyx_" .
+
+IGNORE CHR(9) .. CHR(13)
+
+TOKENS
+  number = digit { digit } .
+  name = letter { letter } .
+
+PRODUCTIONS
+
+  Decl       =                            (. char Tipe[100]; .)
+               { name                     (. LexName(Tipe, sizeof(Tipe) - 1); .)
+                 Dcl                      (. printf(" %s\n", Tipe); .)
+                 ";" } .
+
+  Dcl        =   "*" Dcl                  (. printf(" pointer to"); .)
+               | DirectDcl .
+
+  DirectDcl  =                            (. char Name[100]; .)
+                name                      (. LexName(Name, sizeof(Name) - 1);
+                                             printf(" %s is", Name); .)
+                 Descriptor
+               | "(" Dcl ")" Descriptor .
+
+  Descriptor =                            (. char buff[100]; .)
+               [  "["                     (. printf(" array "); .)
+                  ( number                (. LexString(buff, sizeof(buff) - 1);
+                                             printf("[%d] ", atoi(buff)); .)
+                    | /* no dimension */
+                  )
+                  "]"                     (. printf("of"); .)
+                  Descriptor
+                | "(" ")"                 (. printf(" function returning"); .)
+               ] .
+
+END Decl.
+
+
+
+

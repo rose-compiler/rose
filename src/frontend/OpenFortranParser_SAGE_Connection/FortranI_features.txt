@@ -1,0 +1,15 @@
+The initial release of FORTRAN for the IBM 704 contained 32 statements, including:
+
+    * DIMENSION and EQUIVALENCE statements
+    * Assignment statements
+    * Three-way arithmetic IF statement. [5]
+    * IF statements for checking exceptions (ACCUMULATOR OVERFLOW, QUOTIENT OVERFLOW, and DIVIDE CHECK); and IF statements for manipulating sense switches and sense lights
+    * GOTO, computed GOTO, ASSIGN, and assigned GOTO
+    * DO loops
+    * Formatted I/O: FORMAT, READ, READ INPUT TAPE, WRITE, WRITE OUTPUT TAPE, PRINT, and PUNCH
+    * Unformatted I/O: READ TAPE, READ DRUM, WRITE TAPE, and WRITE DRUM
+    * Other I/O: END FILE, REWIND, and BACKSPACE
+    * PAUSE, STOP, and CONTINUE
+    * FREQUENCY statement (for providing optimization hints to the compiler) [6]
+
+

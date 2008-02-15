@@ -1,0 +1,86 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Fopen Format Parameter}
+\label{FopenFormatParameter::overview}
+``CERT Secure Coding FIO11-A'' states
+\begin{quote}
+The C standard specifies specific strings to use for the {\tt mode} for the function {\tt fopen()}. An implementation may define extra strings that define additional modes, but only the modes in the following table (adapted from the C99 standard) are fully portable and C99 compliant:
+\end{quote}
+
+\begin{enumerate}
+\item r
+\item w
+\item a
+\item rb
+\item wb
+\item ab
+\item r+
+\item w+
+\item a+
+\item r+b or rb+
+\item w+b or wb+
+\item a+b or ab+
+\end{enumerate}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that visits all function call expressions. For each function call expression the function name is confirmed to be {\tt fopen()} then the format parameter is checked against the list of specified strings. If the given parameter is not a standard format string then a violation is flagged.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+#include <stdio.h>
+
+int main()
+{
+  FILE *f = fopen( "/tmp/tmp.txt", "wr" );
+
+  fclose( f );
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution uses the ``r+'' specified parameter string instead.
+
+\begin{verbatim}
+#include <stdio.h>
+
+int main()
+{
+  FILE *f = fopen( "/tmp/tmp.txt", "r+" );
+
+  fclose( f );
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting all function call expression nodes.
+\item For each function call expression node, unparse node string then to determine the function name and parse the format parameter.
+\item Check the format parameter against list of standard values. If given format parameter does not conform to list of specified values, then flag violation.
+\item Report any violations.
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{Secure Coding : FIO11-A. Take care when specifying the mode parameter of fopen()}{https://www.securecoding.cert.org/confluence/display/seccode/FIO11-A.+Take+care+when+specifying+the+mode+parameter+of+fopen\%28\%29}

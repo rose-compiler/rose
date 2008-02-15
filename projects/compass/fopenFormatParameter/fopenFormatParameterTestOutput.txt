@@ -1,0 +1,1 @@
+FopenFormatParameter: fopenFormatParameterTest1.C:5.13-17: SgFunctionCallExp: This checker checks that only C standard specified strings are used in the mode argument to fopen().

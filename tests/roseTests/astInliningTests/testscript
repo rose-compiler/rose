@@ -1,0 +1,33 @@
+#!/bin/sh
+# \
+exec tclsh "$0" "$@"
+
+exec make inlineEverything
+set passes 0
+set fails 0
+foreach i [lsort -dictionary [glob -nocomplain tests/pass*.C]] {
+  puts -nonewline "$i: "
+  if {[catch {exec ./inlineEverything $i 2>/dev/null >/dev/null}]} {
+    puts "failed: compile"
+    incr fails
+  } else {
+    if {[catch {exec ./a.out}]} {
+      puts "failed: run"
+      incr fails
+    } else {
+      puts "passed"
+      incr passes
+    }
+  }
+}
+foreach i [lsort -dictionary [glob -nocomplain tests/fail*.C]] {
+  puts -nonewline "$i: "
+  if {![catch {exec ./inlineEverything $i 2>/dev/null >/dev/null}]} {
+    puts "failed: compile"
+    incr fails
+  } else {
+    puts "passed"
+    incr passes
+  }
+}
+puts "Total: $passes pass(es), $fails failure(s)"

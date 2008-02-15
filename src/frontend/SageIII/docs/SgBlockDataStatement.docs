@@ -1,0 +1,60 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgBlockDataStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgBasicBlock *SgBlockDataStatement::p_body
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgBlockDataStatement::SgBlockDataStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgBlockDataStatement::SgBlockDataStatement(const SgBlockDataStatementStorageClass &source)
+*/
+/*!\fn inline static void SgBlockDataStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgBlockDataStatement *SgBlockDataStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgBlockDataStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgBlockDataStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgBlockDataStatement::initializeStorageClassArray(SgBlockDataStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgBlockDataStatement::clearMemoryPool()
+*/
+/*!\fn static void SgBlockDataStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgBlockDataStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgBlockDataStatement::roseRTI()
+*/
+/*!\fn virtual SgBlockDataStatement::~SgBlockDataStatement()
+*/
+/*!\fn virtual SgNode *SgBlockDataStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBlockDataStatement::post_construction_initialization()
+*/
+/*!\fn void SgBlockDataStatement::set_body(SgBasicBlock *body)
+\description See  *body)
+body for documentation */
+/*!\fn SgBasicBlock *SgBlockDataStatement::get_body() const
+\description See  const
+body for documentation */
+/*!\fn virtual SgNode *SgBlockDataStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgBlockDataStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgBlockDataStatement::get_numberOfTraversalSuccessors()
+\description See  SgBlockDataStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBlockDataStatement::get_traversalSuccessorContainer()
+\description See  SgBlockDataStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBlockDataStatement::get_traversalSuccessorNamesContainer()
+\description See  SgBlockDataStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgBlockDataStatement::SgBlockDataStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1526153277;

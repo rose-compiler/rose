@@ -1,0 +1,41 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = $(ROSE_INCLUDES)
+
+## The grammar generator (ROSETTA) should use its own template repository
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
+libmstlSources = \
+   PDFGeneration.C AttributeMechanism.C DOTRepresentation.C DOTGeneration.C \
+   DOTSubgraphRepresentation.C DOTGraphInterface.C TreeTraversal.C
+
+# lib_LIBRARIES = libmstl.a
+# libmstl_a_SOURCES  = $(libmstlSources)
+
+if DEV_LIBS
+lib_LTLIBRARIES = libmstl.la
+else
+noinst_LTLIBRARIES = libmstl.la
+endif
+libmstl_la_SOURCES = $(libmstlSources)
+
+clean-local:
+	rm -rf Templates.DB ii_files ti_files cxx_templates
+
+distclean-local:
+	rm -rf Templates.DB
+
+# Some source files are included so that templates can be included
+include_HEADERS = \
+   PDFGeneration.h AttributeMechanism.h DOTGeneration.h DOTRepresentation.h \
+   Translator.h DOTSubgraphRepresentation.h DOTGraphInterface.h TreeTraversal.h \
+   $(libmstlSources)
+
+EXTRA_DIST = MSTL.docs
+
+
+
+
+
+
+

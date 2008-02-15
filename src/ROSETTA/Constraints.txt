@@ -1,0 +1,130 @@
+*****************************************************
+Constraints in the development of high level grammars
+*****************************************************
+
+This document explains the system of constraints used to define higher
+level grammars.  The principle is to include and exclude terminals in
+an existing grammar (the Base grammar for our purposes is the C++
+grammar).  Since the addition of new types adds to the number of
+terminals (and non terminals in a grammar, nearly doubling the size of
+the grammar's implementation) the exclusion mechanism is applied to
+the newly added terminals (and non-terminals). Thus the existed grammar
+is modified in how it is extended through the addition of new types.
+
+   Within this approach, through the design of the higher level grammars,
+we permit user defined types and their expressions and statements to be
+treated as implicit keywords within an user's application.
+
+1.  Terminals and non-terminals can be easily added to the existing grammar
+by the specification of new terminals.  
+
+     A. The inclusion of a new statement type
+for example adds an X statement to the existing grammar.
+
+Example of new statement:
+     Terminal & loopStatement = ForStatement | WhileStatement | DoWhileStatement;
+     X_Grammar.addTerminal(loopStatement);
+
+     B. The addition of a new expression to an existing grammar is more interesting.
+
+Example of new expression:
+     Terminal & functionExpression = ForStatement | WhileStatement | DoWhileStatement;
+     X_Grammar.addTerminal(functionExpression);
+
+     An consequence is that the addition of a new expression element
+     forces the creation of any of any possible statement (since
+     expressions can be combined into statements in so many ways).
+     So a set of all possible statement terminals is defined whenever
+     an expression terminal is defined.
+
+     C. The addition of a new type occures through a well defined mechanism
+     (the addition of a new class type).  Consequently, with the
+     addition of a new type and since expressions could be defined with
+     objects of the new type, a whole set of expressions are added to the
+     new grammar.  Just as with the addition of a new expression (above)
+     the addition of the set of expressions forces the addition of all
+     possible statements that can be defined from the new expressions.
+
+Example of adding a new type to a grammar (expansion):
+
+     Grammar sageGrammar ("Cxx_Grammar","Sg","ROSE_BaseGrammar");
+
+  // Build the header files and source files representing the grammar's implementation
+     sageGrammar.buildCode();
+
+     Grammar X_Grammar ("X_Grammar","XG_","ROSE_BaseGrammar",&sageGrammar);
+
+  // Build a new terminal as a copy of an existing terminal (this leverages the 
+  // existing terminals implementation and can be sublemented with constraints).
+  // Copy a terminal and give it a new name (with a new tag name).
+  // The copy is then a child of the copied terminal, parsing the parent triggers the 
+  // parsing of the children (constraints are tested and a child is built if a constraint 
+  // test passes, else the parent is built).
+  // In the tree heirarchy the new terminal is DERIVED from the parent (thus the doubleArrayType
+  // is derived from the ClassType.  This makes sense because the doubleArrayType is a 
+  // "specialization" of the X_ClassType terminal).
+     Terminal & doubleArrayType = X_Grammar.getTerminal("ClassType").copy("doubleArrayType","DOUBLE_ARRAY_TYPE_TAG");
+
+  // Build a constraint (using the SAGE interface) and add it to the new terminal.
+     char* constraintString = "isSgClassDeclaration() && isSgClassDeclaration()->getName() == \"doubleArray\"";
+     doubleArrayType.addConstraint("declaration",constraintString);
+
+  // Adding a terminal to the grammar will automatically place the 
+  // terminal in the correct location within the tree heirarchy
+     X_Grammar.addNewTerminal(doubleArrayType);
+
+  // Build the header files and source files representing the grammar's implementation
+     X_Grammar.buildCode();
+
+
+A shorter form is possible if we are just interested in adding a type
+is a specialized member function (this is an interface issue only).
+
+     X_Grammar.addType("doubleArray");
+
+2.  At this point the creation of higher level grammars is largely
+doubious since we have only defined a mechanism to recognize the
+ocurance of a user defined type within a program tree (AST).  A
+similar result could be obtained (perhaps not as elegantly) through a
+traversal of the program tree.  The point is to go much farther in the
+definition of the higher level grammar and to both expand and restrict
+the added elements defining the higher level grammar.
+
+The restriction of a user defined type's use is important in how it is
+applied in expressions to define optimizable stratements.  For new
+user defined types representing element wise semantics, Statements
+containing expressions with user defined functions must disqualify
+optimization (though a more complex transformation can be developed).
+Disqualifying this case
+   A = B + foo(); // example showing the use of a user defined
+                  // function foo() which can't be optimized directly.
+demonstrates an example of how the higher level grammar must remove
+this terminal from it's representation within the expanded part of the
+higher level grammar. Thus without it's representation within the grammar
+such a defined function would not permit the definition of an expression
+as a special (e.g. "X" expression) within the program tree.
+
+
+Example of restriction (removal of elements from the grammar):
+    
+     X_Grammar.removeType("doubleArray");
+
+3.  Addition and specification of explicit semantics:
+
+  // Here we endow the "X" class with predefined semantics 
+  // to simplify the specification of the transformations
+     X.hasCollectionElementSemantics(TRUE);
+     X.hasArraySemantics(TRUE);
+     X.hasAsynchronousExecutionSemantics(TRUE);
+
+
+4.  Examples
+
+
+
+
+
+
+
+
+

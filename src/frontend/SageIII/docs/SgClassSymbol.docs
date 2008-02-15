@@ -1,0 +1,136 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassSymbol
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgClassSymbol
+\brief This class represents the concept of a class name within the compiler.
+   Symbols are a simpler way for the compiler to quickly associate types, 
+declarations and names.
+Indepedent of the different kinds of declarations (declarations are statements),
+declarations can be considered to be definind and non-defining.  See
+\ref SgDeclarationStatement for details.  where there exist defining and 
+non-defining declarations symbols within Sage III always reference non-defining 
+declarations (only non-defining declarations are shared within the AST).
+\sa \ref SgDeclarationStatement
+\sa
+\ref SgClassSymbol_usage  "Example of using a SgClassSymbol object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassSymbol data members
+/////////////////////////////////////////////////////////////////////////
+/*
+\var SgClassSymbol::p_declaration
+\brief This pointer is always valid and stores the first non-defining declaration 
+where the class was defined.  
+    It is important to note that this is the first non-defining declaration as 
+opposed to the defining declaration.  Thus is it the first forward declaration for the
+named class or a non-defining version of the declaration if the named class is
+defined at the locations where it was declared.
+\internal The value held is sharable across many references where as the defining
+          declaration (not held by this variable) should have one unique reference
+          within the Sage III AST, except where reference though the declarations
+          definingDeclaration data member pointer.  See declarations for details
+          (SgDeclarationStatements).
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClassSymbol member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgClassSymbol::SgClassSymbol (const SgClassSymbol &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgClassSymbol::~SgClassSymbol()
+\brief This is the destructor.
+*/
+/*!
+\fn SgClassSymbol::isSgClassSymbol (SgNode *s)
+\brief Cast function (from derived class to SgClassSymbol pointer).
+   This functions returns a SgClassSymbol pointer for any input of a 
+pointer to an object derived from a SgClassSymbol.
+\return Returns valid pointer to SgClassSymbol if input is derived from a SgClassSymbol.
+*/
+/*!
+\fn SgClassSymbol::isSgClassSymbol (const SgNode *s)
+\brief Cast function (from derived class to SgClassSymbol pointer).
+   This functions returns a SgClassSymbol pointer for any input of a 
+pointer to an object derived from a SgClassSymbol.
+\return Returns valid pointer to SgClassSymbol if input is derived from a SgClassSymbol.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgClassDeclaration *SgClassSymbol::p_declaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgClassSymbol::SgClassSymbol(const SgClassSymbolStorageClass &source)
+*/
+/*!\fn inline static void SgClassSymbol::operator delete(void *pointer)
+*/
+/*!\fn static SgClassSymbol *SgClassSymbol::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgClassSymbol::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgClassSymbol::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgClassSymbol::initializeStorageClassArray(SgClassSymbolStorageClass *storageArray)
+*/
+/*!\fn static void SgClassSymbol::clearMemoryPool()
+*/
+/*!\fn static void SgClassSymbol::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgClassSymbol::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgClassSymbol::roseRTI()
+*/
+/*!\fn virtual SgClassSymbol::~SgClassSymbol()
+*/
+/*!\fn virtual SgNode *SgClassSymbol::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgClassSymbol::set_declaration(SgClassDeclaration *declaration)
+\description See  *declaration)
+declaration for documentation */
+/*!\fn SgClassDeclaration *SgClassSymbol::get_declaration() const
+\description See  const
+declaration for documentation */
+/*!
+\fn virtual SgName SgClassSymbol::get_name() const
+\brief Access function for getting name from declarations or types internally.
+\internal This is a virtual function.
+See  const
+name for documentation \return Returns SgName.
+*/
+/*!\fn virtual SgNode *SgClassSymbol::get_symbol_basis() const
+\description See  const
+symbol_basis for documentation */
+/*!\fn virtual SgNode *SgClassSymbol::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!
+\fn virtual SgType *SgClassSymbol::get_type() const
+\brief This function returns the type associated with the named entity.
+\internal This is a virtual function.
+See  const
+type for documentation \return Returns SgType*.
+*/
+/*!\fn virtual size_t SgClassSymbol::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgClassSymbol::get_numberOfTraversalSuccessors()
+\description See  SgClassSymbol::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClassSymbol::get_traversalSuccessorContainer()
+\description See  SgClassSymbol::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClassSymbol::get_traversalSuccessorNamesContainer()
+\description See  SgClassSymbol::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgClassSymbol::SgClassSymbol(SgClassDeclaration *declaration=(0))
+\brief This is the only constructor.
+   This constructor builds the SgClassSymbol base class.
+\sa 
+\ref SgClassSymbol_create "Example:create an SgClassSymbol object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_17102033515175;

@@ -1,0 +1,51 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Constructor Destructor Calls Virtual Function}
+
+\label{ConstructorDestructorCallsVirtualFunction::overview}
+
+\quote{Namespace: \texttt{ConstructorDestructorCallsVirtualFunction}}
+
+\subsection{Introduction}
+Virtual function calls in constructors and destructors almost never behave as
+intended. During base class contruction, the virtual functions never inherit
+down into derived classes. The virtual function of the base class is called
+instead of that of the derived class. One reason for this behavior is that
+base class constructors execute before those of the derived class. Checking
+such uses of virtual functions promotes care in using the functionality of
+virtual in construction and destruction. Taken from ``C++ Coding Standards'',
+by H. Sutter, A. Alexandrescu, item 49.
+
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file
+
+\subsection{Implementation}
+This pattern is checked using a nested AST traversal in which the top level
+traversal seeks out definitions of constructors and destructors and two
+nested traversals seek out calls to virtual functions of member functions
+and non-member functions respectively.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: constructorDestructorCallsVirtualFunctionTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../constructorDestructorCallsVirtualFunction/constructorDestructorCallsVirtualFunctionTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

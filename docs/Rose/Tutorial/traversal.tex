@@ -1,0 +1,1299 @@
+\chapter{Introduction to AST Traversals}
+\label{chap:traversals}
+
+    An essential operation in the analysis and construction of ASTs is the
+definition of traversals upon the AST to gather information and modify
+targeted internal representation (IR) nodes.  ROSE includes different
+sorts of traversals to address the different requirements of numerous
+program analysis and transformation operations.  This section demonstrates
+the different types of traversals that are possible using ROSE.
+
+    ROSE translators most commonly introduce transformations and analysis
+through a traversal over the AST.  Alternatives could be to generate
+a simpler IR that is more suitable to a specific transformation and
+either convert modification to that transformation specific IR
+into changes to the AST or generate source code from the transformation specific
+IR directly.  These approaches are more complex than introducing changes
+to the AST directly, but may be better for specific transformations.
+
+   Traversals represent an essential operation on the AST and there are a
+number of different types of traversals.  The suggested traversals for users
+are explained in Section~\ref{Tutorial:astStructureTraversals}.
+Section~\ref{Tutorial:memoryPoolTraversals} introduces specialized traversals
+(that traverse the AST in different orders and traverse types and symbols),
+typically not appropriate for most translators (but perhaps appropriate for
+specialized tools, often internal tools within ROSE).
+
+See the ROSE User Manual for a more complete introduction to the different types of
+traversals.  The purpose of this tutorial is to present examples, but we focus less on
+the background and philosophy here than in the ROSE User Manual.
+
+% GB (9/10/2007): I think these points are now taken care of.
+%\fixme{Comments from Jacob:
+%    1) Describe what the traversals are used for.
+%    2) Reference ROSE User Manual.
+%  }
+
+   This chapter presents a number of ways of traversing the AST
+of any input source code.  These {\em traversals} permit operations
+on the AST, which may either read or modify the AST in place.  Modifications
+to the AST will be reflected in the source code generated when the AST is 
+{\em unparsed}; the code generation phase of the source-to-source process
+defined by ROSE.  Note that for all examples, the input code described in 
+section~\ref{Tutorial:exampleInputCodeDescription} is used to generate
+all outputs shown with each translator.
+
+
+\section{Input For Example Traversals}
+\label{Tutorial:exampleInputCodeDescription}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_ExampleTraversals.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_ExampleTraversals.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+         traversals shown in this chapter.}
+\label{Tutorial:exampleInputCode_ExampleTraversals}
+\end{figure}
+
+   The code shown in figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}
+shows the input code that will be used to demonstrate the traversals in this 
+chapter.  It may be modified by the user to experiment with the use of the traversals
+on alternative input codes.
+
+
+%\clearpage
+\section{Traversals of the AST Structure}
+\label{Tutorial:astStructureTraversals}
+
+    This collection of traversals operates on the AST in an order
+which matches the structure of the AST and the associated source code.
+These types of traversals are the most common traversals for users
+to use.  A subsequent section of this chapter demonstrated more
+specialized traversals over all IR nodes (more than just those IR nodes
+in the AST representing the structure of the source code) that are 
+suitable for some tools, mostly tools built internally within ROSE.
+
+   Because the traversals in this section traverse the structure of
+the source code (see the AST graph presented in the first tutorial 
+example) they are more appropriate for most transformations
+of the source code.  We suggest that the user focus on these 
+traversals which represent the interface we promote for analysis
+and transformation of the AST, instead of the memory pools traversals
+which are suitable mostly for highly specialized internal tools.
+The simple traversals of both kinds have the same interface so the user may
+easily switch between them with out significant difficulty.
+
+% \clearpage
+\subsection{Classic Object-Oriented Visitor Pattern for the AST (Not Yet Implemented)}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing simple visitor pattern.}
+\label{Tutorial:exampleClassicVisitorPattern}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the visitor pattern traversal over the memory pools.}
+\label{Tutorial:exampleOutput_ClassicVisitorPattern}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleClassicVisitorPattern} shows the source code 
+for a translator using the classic object-oriented visitor pattern 
+to traverse the AST.  {\em This visitor pattern is not yet implemented
+except for the memory pool based traversal.  It is however expected
+to appear identical to the classing visitor pattern shown for the 
+memory pool traversal.} 
+Figure~\ref{Tutorial:exampleOutput_ClassicVisitorPattern} shows the 
+output from this traversal using the example input source from 
+figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
+
+
+
+% \clearpage
+\subsection{Simple Traversal (no attributes)}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/visitorTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/visitorTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing simple visitor pattern.}
+\label{Tutorial:exampleVisitorTraversal}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/visitorTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/visitorTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the visitor traversal.}
+\label{Tutorial:exampleOutput_VisitorTraversal}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleVisitorTraversal} shows the source code 
+for a translator which traverses the AST.  At each node the 
+{\tt visit()} function is called using only the input information
+represented by the current node.  Note that using this simple traversal
+the only context information available to the visit function is what is stored
+in its member variables.
+The only option is to traverse the AST in either pre-order or postorder.
+The {\tt atTraversalEnd()} function may be defined by the user to do final
+processing after all nodes have been visited (or to perform preparations
+before the nodes are visited, in the case of the corresponding {\tt
+atTraversalStart()} function).
+Figure~\ref{Tutorial:exampleOutput_VisitorTraversal} shows the 
+output from this traversal using the example input source from 
+figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
+
+\subsection{Simple Pre- and Postorder Traversal}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/prePostTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/prePostTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing simple pre- and postorder pattern.}
+\label{Tutorial:examplePrePostTraversal}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/prePostTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/prePostTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the pre- and postorder traversal.}
+\label{Tutorial:exampleOutput_PrePostTraversal}
+\end{figure}
+
+Figure~\ref{Tutorial:examplePrePostTraversal} shows the source code for a
+translator that traverses the AST without attributes (like the one in the
+previous subsection), but visiting each node twice, once in preorder (before
+its children) and once in postorder (after all children).
+Figure~\ref{Tutorial:exampleOutput_PrePostTraversal} shows the 
+output from this traversal using the example input source from 
+figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
+
+
+% \clearpage
+\subsection{Inherited Attributes}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inheritedAttributeTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inheritedAttributeTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of inherited attributes (passing context
+         information {\bf down} the AST.}
+\label{Tutorial:exampleInheritedAttributeTraversal}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/inheritedAttributeTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/inheritedAttributeTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the inherited attribute traversal.}
+\label{Tutorial:exampleOutput_InheritedAttributeTraversal}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleInheritedAttributeTraversal} shows the use
+of inherited attributes associated with each IR node.  Within this
+traversal the attributes are managed by the traversal and exist on the
+stack.  Thus the lifetime of the attributes is only as long as the
+processing of the IR node and its subtree.  Attributes such as this
+are used to communicate context information {\bf down} the AST and
+called {\em Inherited attributes}.
+
+In the example the class \verb+Inherited Attribute+ is used to represent 
+inherited attribute. Each instance of the class represents an attribute 
+value. When the AST is traversed we obtain as output the loop nest depth 
+at each point in the AST. The output uses the example input source from 
+figure~\ref{Tutorial:exampleInputCode_ExampleTraversals}.
+
+Note that inherited attributes are passed by-value down the AST. In very rare
+cases you might want to pass a pointer to dynamically allocated memory as an
+inherited attribute. In this case you can define the virtual member function
+{\tt void destroyInheritedValue(SgNode *n, InheritedAttribute inheritedValue)}
+which is called after the last use of the inherited attribute computed at this
+node, i.\,e.~after all children have been visited. You can use this function
+to free the memory allocated for this inherited attribute.
+
+
+
+
+\clearpage
+\subsection{Synthesized Attributes}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/synthesizedAttributeTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/synthesizedAttributeTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of synthesized attributed (passing analysis
+         information {\bf up} the AST).}
+\label{Tutorial:exampleSynthesizedAttributeTraversal}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/synthesizedAttributeTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/synthesizedAttributeTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the synthesized attribute traversal.}
+\label{Tutorial:exampleOutput_SynthesizedAttributeTraversal}
+\end{figure}
+
+  Figure~\ref{Tutorial:exampleSynthesizedAttributeTraversal} shows the use of
+attributes to pass information {\bf up} the AST.  The lifetime of the attributes
+are similar as for inherited attributes.  Attributes such as these are called
+synthesized attributes.  
+
+   This code shows the code for a translator which does an analysis of 
+an input source code to determine the presence of loops.  It returns true if
+a loop exists in the input code and false otherwise.  The list of synthesized
+attributes representing the information passed up the AST from a node's
+children is of type {\tt SynthesizedAttributesList}, which is a type that
+behaves very similarly to {\tt vector<SynthesizedAttribute>} (it supports
+iterators, can be indexed, and can be used with STL algorithms).
+
+   The example determines the existence of loops for a given program.
+
+
+
+\clearpage
+\subsection{Accumulator Attributes}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/accumulatorAttributeTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/accumulatorAttributeTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of accumulator attributes (typically to count
+    things in the AST).}
+\label{Tutorial:exampleAccumulatorAttributeTraversal}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/accumulatorAttributeTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/accumulatorAttributeTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the accumulator attribute traversal.}
+\label{Tutorial:exampleOutput_AccumulatorAttributeTraversal}
+\end{figure}
+
+   Figure~\ref{Tutorial:exampleAccumulatorAttributeTraversal} shows the use of
+a different sort of attribute.  This attribute has a lifetime equal to the
+lifetime of the traversal object (much longer than the traversal of any subset 
+of IR nodes).  The same attribute is accessible from each IR node.  Such 
+attributes are called {\em accumulator} attributes and are semantically 
+equivalent to a global variable. Accumulator attributes
+act as global variables which can easily be used to count application 
+specific properties within the AST. 
+
+Note that due to the limitation that the computation of inherited attributes cannot be made dependent on the values of synthesized attributes, counting operations cannot be implemented by combining these attributes as is usually done in attribute grammars. However, the use of accumulator attributes serves well for this purpose. Therefore all counting-like operations should be implemented using accumulator attributes (= member variables of traversal or processing classes).
+
+     Although not shown in this tutorial explicitly, accumulator attributes
+may be easily mixed with inherited and/or synthesized attributes.
+
+In this example we count the number of for-loops in an input program.
+
+
+
+
+
+
+
+% DQ (9/3/2006): We need an example of this for completeness.
+% We can replace the current version with a newer version from 
+% Markus when it is available.
+% MS: commented out the following section because the implementation
+% is not finished yet. Also, this case is covered by the new example
+% loopNestingInfoProcessing which I've just added.
+% GB (9/10/2007): Provided a simple example for this section.
+% \commentout{
+% \clearpage
+\subsection{Inherited and Synthesized Attributes}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inheritedAndSynthesizedAttributeTraversal.C}
+%  \lstinputlisting{\TutorialExampleBuildDirectory/inheritedAndSynthesizedAttributeTraversal.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inheritedAndSynthesizedAttributeTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of both inherited and synthesized attributes
+         working together (part 1).}
+\label{Tutorial:exampleInheritedAndSynthesizedAttributeTraversal-part1}
+\end{figure}
+
+\commentout{
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/inheritedAndSynthesizedAttributeTraversal.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inheritedAndSynthesizedAttributeTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing the use of both inherited and synthesized attributes
+         working together (part 2).}
+\label{Tutorial:exampleInheritedAndSynthesizedAttributeTraversal-part2}
+\end{figure}
+
+% commented out
+}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/inheritedAndSynthesizedAttributeTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/inheritedAndSynthesizedAttributeTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the inherited and synthesized attribute traversal.}
+\label{Tutorial:exampleOutput_InheritedAndSynthesizedAttributeTraversal}
+\end{figure}
+
+   Figure~\ref{Tutorial:exampleInheritedAndSynthesizedAttributeTraversal-part1}
+shows the combined use of inherited and synthesized attributes.  The example
+source code shows the mixed use of such attributes to list the functions 
+containing loop.  Inherited attributes are used to communicate that 
+the traversal is in a function, which the synthesized attributes are
+used to pass back the existence of loops deeper within the subtrees
+associated with each function.
+
+    List of functions containing loops.
+
+% DQ (9/3/2006): uncommented by Dan.
+% Commented out by Markus because it is not finished
+% }
+
+
+
+
+
+
+\clearpage
+\subsection{Persistent Attributes}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/persistantAttributes.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/persistantAttributes.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of persistent attributes used to pass information
+         across multiple passes over the AST.}
+\label{Tutorial:examplePersistentAttributes}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/persistantAttributes.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/persistantAttributes.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the persistent attribute traversal showing the passing of
+    information from one AST traversal to a second AST traversal.}
+\label{Tutorial:exampleOutput_PersistentAttributes}
+\end{figure}
+
+     Figure~\ref{Tutorial:examplePersistentAttributes} shows the use of
+another form of attribute.  This attribute has a lifetime which is controlled explicitly
+by the user; it lives on the heap typically.  These attributes are explicitly attached to 
+the IR nodes and are not managed directly by the traversal.  There attributes are
+called {\em persistent} attributes and are not required to be associated with any
+traversal.  Persistent attributes are useful for storing information across multiple
+traversals (or permanently within the AST) for later traversal passes.  
+
+   Persistent attributes may be used at any time and combined with other traversals
+(similar to accumulator attributes).  Traversals may combine any or all of the
+types of attributes within in ROSE as needed to store, gather, or propagate
+information within the AST for complex program analysis.
+
+
+
+
+
+
+
+\clearpage
+\subsection{Nested Traversals}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/nestedTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/nestedTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use nested traversals.}
+\label{Tutorial:exampleNestedTraversal}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/nestedTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/nestedTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the nested traversal example.}
+\label{Tutorial:exampleOutput_NestedTraversal}
+\end{figure}
+
+     Figure~\ref{Tutorial:exampleNestedTraversal} shows the use of multiple 
+traversals in composition. Figure~\ref{Tutorial:exampleOutput_NestedTraversal}
+shows the output of the nested traversal.
+
+
+
+
+
+\clearpage
+\subsection{Combining all Attributes and Using Primitive Types}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_loopNestingInfoProcessing.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_loopNestingInfoProcessing.C}
+\end{htmlonly}
+}
+}
+\caption{Input code with nested loops for nesting info processing}
+\label{Tutorial:exampleInputCode_ExampleLoopNestingInfoProcessing}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopNestingInfoProcessing.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/loopNestingInfoProcessing.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of inherited, synthesized, accumulator, and persistent attributes (part 1).}
+\label{Tutorial:exampleLoopNestingInfoProcessing}
+\end{figure}
+
+
+
+\begin{latexonly}
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopNestingInfoProcessing.ab}
+% end of scope in font size
+}
+% End of scope in indentation
+
+}\caption{Example source code showing use of inherited, synthesized, accumulator, and persistent attributes (part 2).}
+\label{Tutorial:exampleLoopNestingInfoProcessing2}
+\end{figure}
+\end{latexonly}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/loopNestingInfoProcessing.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/loopNestingInfoProcessing.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output code showing the result of using inherited, synthesized, and accumulator attributes.}
+\label{Tutorial:exampleOutput_loopNestingInfoProcessing}
+\end{figure}
+
+The previous examples have shown cases where attributes were classes,
+alternatively attributes can be any primitive type (int, bool,
+etc.). This example demonstrates how to use
+AstTopDownBottomUpProcessing to compute inherited and synthesized
+attributes, generate pdf and dot output, how to accumulate
+information, and how to attach attributes to AST nodes in the same
+pass.
+
+The attributes are used to compute the nesting level and the nesting
+depth of for/while/do-while loops: The nesting level is computed using
+an inherited attribute. It holds that $nesting-level(innerloop) =
+nesting-level(outerloop) + 1$ starting with 1 at the outer most loop.
+The nesting depth is computed using a synthesized attribute. It holds
+that $nesting-depth(innerloop) = nesting-level(outerloop) - 1$
+starting with 1 at the inner most loop.
+
+To compute the values we use a primitive type (unsigned int). This
+example also shows how to use defaultSynthesizedAttribute to
+initialize a synthesized attribute of primitive type. The values of
+the attributes are attached to the AST using AstAttribute and the AST
+node attribute mechanism available at every AST node (which can be
+accessed with \verb+node->attribute+).  (see
+loopNestingInfoProcessing.C)
+
+For the entire program the maximum nesting level (= max nesting depth)
+is computed as accumulated value using member variable
+\verb+_maxNestingLevel+ of class LoopNestingInfoProcessing. We also
+demonstrate how to customize an AstAttribute such that the value of
+the attribute is printed in a pdf output.  (by overriding toString,
+see LoopNestingInfo class)
+
+In the generated pdf file (for some C++ input file) the values of the
+attributes can be viewed for each node (see printLoopInfo
+implementation). Further more we also generate a dot file, to
+visualize the tree using the graph visualization tool dot. The
+generated file can be converted to postscript (using dot) and viewed
+with gv.
+
+\subsection{Combined Traversals}
+
+Performing a large number of program analyses as separate traversals of the
+AST can be somewhat inefficient as there is some overhead associated with
+visiting every node several times. ROSE therefore provides a mechanism for
+combining traversal objects of the same base type and evaluating them in a
+single traversal of the AST. This is entirely transparent to the individual
+traversal object, so existing code can be reused with the combination
+mechanism, and analyzers can be developed and tested in isolation and combined
+when needed.
+
+The one requirement that is placed on traversals to be combined is that they
+be independent of each other; in particular, this means that they should not
+modify the AST or any shared global data. Any output produced by the analyzers
+will be interleaved.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/combinedTraversals.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/combinedTraversals.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing the combination of traversals.}
+\label{Tutorial:exampleCombinedTraversals}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/combinedTraversals.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/combinedTraversals.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the combined traversals. Note that the order
+of outputs changes as execution of several analyzers is interleaved.}
+\label{Tutorial:exampleOutput_CombinedTraversals}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleCombinedTraversals} shows the source code for a
+translator that combines three different analyzers into one traversal, each
+one counting the occurrences of a different type of AST node (as determined by
+a VariantT value). First three traversals are run after each other, as usual;
+then three traversal objects are passed (by pointer) to an object of type {\tt
+AstCombinedSimpleProcessing} using its {\tt addTraversal} method. One then
+invokes one of the usual traverse methods on this combined object with the
+same effect as if it had been called for each of the traversal objects
+individually.
+
+Any operation on the list of analyzers is possible using the {\tt
+get\_traversalPtrListRef} method of the combined processing class that returns
+a reference to its internal list of analyzers (an object of type {\tt
+vector<AstSimpleProcessing *>}). Any changes made through this reference will
+be reflected in further traversals.
+
+In addition to {\tt AstCombinedSimpleProcessing}, there is also a combined
+class for each of the other types of traversals discussed above: {\tt
+AstCombinedTopDownProcessing}, {\tt AstCombinedBottomUpProcessing}, etc. Where
+traversals using attributes are combined, all of the combined traversals must
+have the same attribute types (i.\,e.~the same template parameters). Attributes
+are passed to and returned from the combined traversal as a vector.
+
+\clearpage
+\subsection{Short-Circuiting Traversals}
+
+   The traversal short-circuit mechanism is a simple way to cut short
+the traversal of a large AST once specific information has been obtained.
+It is purely an optimization mechanism, and a bit of a hack, but common
+within the C++ Boost community.  Since the technique works we present it
+as a way of permitting users to avoid the full traversal of an AST
+that they might deam to be redundant of inappropriate.  We don't
+expect that this mechanism will be particularly useful to most users
+and we don't recommend it.  It may even at some point not be supported.
+However, we present it because it is a common technique used in the C++ 
+Booost community and it happens to work (at one point it didn't work and
+so we have no idea what we fixed that permitted it to work now).  We have
+regarded this technique as a rather ugly hack.  It is presented in case
+you really need it.  It is, we think, better than the direct use of lower
+level mechanisms that are used to support the AST traversal.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_traversalShortCircuit.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_traversalShortCircuit.C}
+\end{htmlonly}
+}
+}
+\caption{Input code with used to demonstrate the traversal short-circuit mechanism.}
+\label{Tutorial:exampleInputCode_ExampleLoopNestingInfoProcessing}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/traversalShortCircuit.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/traversalShortCircuit.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of short-circuit mechanism to avoid traversal of full AST.}
+\label{Tutorial:exampleTraversalShortCircuit}
+\end{figure}
+
+Figure~\ref{Tutorial:exampleTraversalShortCircuit} shows the example code demonstrating a
+traversal setup to support the short-circuit mechanism (a conventional mechanism used
+often within the C++ Boost community). The input code shown in 
+figure~\ref{Tutorial:exampleInputCode_ExampleLoopNestingInfoProcessing}
+is compiled using the example translator, the output is shown in 
+figure~\ref{Tutorial:exampleOutput_traversalShortCircuit}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/traversalShortCircuit.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/traversalShortCircuit.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output code showing the result of short-circuiting the traversal.}
+\label{Tutorial:exampleOutput_traversalShortCircuit}
+\end{figure}
+
+   The output shown in figure~\ref{Tutorial:exampleOutput_traversalShortCircuit}
+demonstrates the initiation of a traversal over the AST and that traversal
+being short-circuited after a specific point in the evaluation.  The result is
+that there is no further traversal of the AST after that point where it is
+short-circuited.
+
+
+
+
+   
+\clearpage
+\section{Memory Pool Traversals}
+\label{Tutorial:memoryPoolTraversals}
+
+   Allocation of IR nodes in ROSE is made more efficient through the
+use of specialized allocators implemented at member function new operators
+for each class of the IR in Sage III.  Such specialized memory allocators 
+avoid significant fragmentation of memory, provide more efficient packing 
+of memory, improve performance of allocation of memory and IR node access, and additionally
+provide a secondary mechanism to accessing all the IR nodes.  Each IR
+node has a memory pool which is an STL vector of blocks (a fixed or variable 
+sized array of contiguously stored IR nodes).  
+
+   The three types of traversals are:
+\begin{enumerate}
+   \item ROSE Memory Pool Visit Traversal \\
+         This traversal is similar to the one provided by the SimpleProcessing Class 
+    (using the visit() function and no inherited or synthesized attributes).
+   \item Classic Object-Oriented Visitor Pattern for Memory Pool \\
+         This is a classic object-oriented visitor pattern.
+   \item IR node type traversal, visits one type of IR node for all IR types in the AST.
+         This is useful for building specialized tools.
+\end{enumerate}
+
+
+\subsection{ROSE Memory Pool Visit Traversal}
+
+Figure~\ref{Tutorial:exampleMemoryPoolVisitorTraversal} shows the source code 
+for a translator which traverses the memory pool containing the AST.  At each 
+node the {\tt visit()} function is called using only the input information
+represented by the current node.  Note that using this simple traversal
+no context information is available to the visit function. 
+All the IR nodes for a given memory pool are iterated over at one time.
+The order of the traversal of the different memory pools is random but fixed.
+Thus the order of the traversal of the IR nodes is in no way connected to the
+structure of the AST (unlike the previous non-memory pool traversals that were
+very much tied to the structure of the AST and which matched the structure of the 
+original input source code being compiled).
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/visitorMemoryPoolTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/visitorMemoryPoolTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing simple visit traversal over the memory pools.}
+\label{Tutorial:exampleMemoryPoolVisitorTraversal}
+\end{figure}
+
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/visitorMemoryPoolTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/visitorMemoryPoolTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the visitor traversal over the memory pool.}
+\label{Tutorial:exampleOutput_MemoryPoolVisitorTraversal}
+\end{figure}
+
+
+\clearpage
+\subsection{Classic Object-Oriented Visitor Pattern for Memory Pool}
+
+Figure~\ref{Tutorial:exampleMemoryPoolVisitorPattern} shows the source code 
+for a translator which traverses the memory pools containing the AST.  
+At each node the {\tt visit()} function is called using only the input 
+information represented by the current node.  Note that using this simple 
+traversal no context information is available to the visit function. 
+The traversal order is the same as in the \ref{Tutorial:exampleMemoryPoolVisitorTraversal}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing simple visitor pattern.}
+\label{Tutorial:exampleMemoryPoolVisitorPattern}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/classicObjectOrientedVisitorPatternMemoryPoolTraversal.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the visitor pattern traversal over the memory pools.}
+\label{Tutorial:exampleOutput_MemoryPoolVisitorPattern}
+\end{figure}
+
+\clearpage
+\subsection{ROSE IR Type Traversal (uses Memory Pools)}
+
+Figure~\ref{Tutorial:exampleIRTypeMemoryPoolVisitorTraversal} shows the source code 
+for a translator which traverses only one type of IR node using the memory pool 
+containing the AST.  This traversal is useful for building specialized tools
+(often tools which only call static functions on each type of IR node).
+
+This example shows the use of an alternative traversal which traverses a 
+representative of each type or IR node just one, but only if it exists
+in the AST (memory pools).  This sort of traversal is useful for building
+tools that need only operate on static member functions of the IR nodes
+or need only sample one of each type or IR node present in the AST.
+this specific example also appears in:
+     {\em ROSE/src/midend/astDiagnostics/AstStatistics.C}.
+
+The user's use of the traversal is the same as for other ROSE AST traversals
+except that the ROSE\_VisitTraversal::traverseRepresentativeIRnodes() member
+function is called instead of ROSE\_VisitTraversal::traverseMemoryPool().
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/traverseIRnodeTypes.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/traverseIRnodeTypes.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source showing simple visit traversal over each type of IR node (one only) in the memory pools.}
+\label{Tutorial:exampleIRTypeMemoryPoolVisitorTraversal}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/traverseIRnodeTypes.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/traverseIRnodeTypes.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input file to the IR Type traversal over the memory pool.}
+\label{Tutorial:exampleOutput_IRTypeMemoryPoolVisitorTraversal}
+\end{figure}
+
+   This mechanism can be used to generate more complete reports of the memory consumption
+of the AST, which is reported on if {\em -rose:verbose 2} is used.
+Figure~\ref{Tutorial:exampleOutput_IRTypeMemoryUse}
+shows a partial snapshot of current IR node frequency and memory consumption for
+a moderate 40,000 line source code file (one file calling a number of header files),
+sorted by memory consumption.  The AST contains approximately 280K IR nodes.
+Note that the Sg\_File\_Info IR nodes is most frequent and consumes the greatest amount 
+of memory, this reflects our bias toward preserving significant information about the
+mapping of language constructs back to the positions in the source file to support
+a rich set of source-to-source functionality.
+{\em Note: more complete information about the memory use of the AST in in the ROSE User Manual appendix.}
+
+\begin{figure}[!h]
+{\mySmallFontSize
+\begin{verbatim}
+AST Memory Pool Statistics: numberOfNodes = 114081 memory consumption = 5019564 node = Sg_File_Info
+AST Memory Pool Statistics: numberOfNodes =  31403 memory consumption =  628060 node = SgTypedefSeq
+AST Memory Pool Statistics: numberOfNodes =  14254 memory consumption =  285080 node = SgStorageModifier
+AST Memory Pool Statistics: numberOfNodes =  14254 memory consumption = 1140320 node = SgInitializedName
+AST Memory Pool Statistics: numberOfNodes =   8458 memory consumption =  169160 node = SgFunctionParameterTypeList
+AST Memory Pool Statistics: numberOfNodes =   7868 memory consumption = 1101520 node = SgModifierType
+AST Memory Pool Statistics: numberOfNodes =   7657 memory consumption =  398164 node = SgClassType
+AST Memory Pool Statistics: numberOfNodes =   7507 memory consumption = 2071932 node = SgClassDeclaration
+AST Memory Pool Statistics: numberOfNodes =   7060 memory consumption =  282400 node = SgTemplateArgument
+AST Memory Pool Statistics: numberOfNodes =   6024 memory consumption =  385536 node = SgPartialFunctionType
+AST Memory Pool Statistics: numberOfNodes =   5985 memory consumption = 1388520 node = SgFunctionParameterList
+AST Memory Pool Statistics: numberOfNodes =   4505 memory consumption = 1477640 node = SgTemplateInstantiationDecl
+AST Memory Pool Statistics: numberOfNodes =   3697 memory consumption =  162668 node = SgReferenceType
+AST Memory Pool Statistics: numberOfNodes =   3270 memory consumption =  758640 node = SgCtorInitializerList
+AST Memory Pool Statistics: numberOfNodes =   3178 memory consumption =   76272 node = SgMemberFunctionSymbol
+AST Memory Pool Statistics: numberOfNodes =   2713 memory consumption =  119372 node = SgPointerType
+AST Memory Pool Statistics: numberOfNodes =   2688 memory consumption =  161280 node = SgThrowOp
+AST Memory Pool Statistics: numberOfNodes =   2503 memory consumption =   60072 node = SgFunctionSymbol
+AST Memory Pool Statistics: numberOfNodes =   2434 memory consumption =  107096 node = SgFunctionTypeSymbol
+AST Memory Pool Statistics: numberOfNodes =   2418 memory consumption =  831792 node = SgFunctionDeclaration
+AST Memory Pool Statistics: numberOfNodes =   2304 memory consumption =   55296 node = SgVariableSymbol
+AST Memory Pool Statistics: numberOfNodes =   2298 memory consumption =  101112 node = SgVarRefExp
+AST Memory Pool Statistics: numberOfNodes =   2195 memory consumption =  114140 node = SgSymbolTable
+AST Memory Pool Statistics: numberOfNodes =   2072 memory consumption =  721056 node = SgMemberFunctionDeclaration
+AST Memory Pool Statistics: numberOfNodes =   1668 memory consumption =  400320 node = SgVariableDeclaration
+AST Memory Pool Statistics: numberOfNodes =   1667 memory consumption =  393412 node = SgVariableDefinition
+AST Memory Pool Statistics: numberOfNodes =   1579 memory consumption =  101056 node = SgMemberFunctionType
+AST Memory Pool Statistics: numberOfNodes =   1301 memory consumption =   31224 node = SgTemplateSymbol
+AST Memory Pool Statistics: numberOfNodes =   1300 memory consumption =  364000 node = SgTemplateDeclaration
+AST Memory Pool Statistics: numberOfNodes =   1198 memory consumption =  455240 node = SgTemplateInstantiationMemberFunctionDecl
+AST Memory Pool Statistics: numberOfNodes =   1129 memory consumption =   54192 node = SgIntVal
+AST Memory Pool Statistics: numberOfNodes =   1092 memory consumption =   56784 node = SgAssignInitializer
+AST Memory Pool Statistics: numberOfNodes =   1006 memory consumption =   52312 node = SgExpressionRoot
+
+Truncated results presented ...
+\end{verbatim}
+}
+\caption{Example of output using -rose:verbose 2 (memory use report for AST).}
+\label{Tutorial:exampleOutput_IRTypeMemoryUse}
+\end{figure}

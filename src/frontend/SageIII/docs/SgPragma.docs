@@ -1,0 +1,82 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgPragma
+*/
+/*! \name Class Members*/
+//@{
+/*!\var Sg_File_Info *SgPragma::p_startOfConstruct
+*/
+/*!\var short SgPragma::p_printed
+*/
+/*!\var AstAttributeMechanism *SgPragma::p_attributeMechanism
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgPragma::SgPragma(const SgPragmaStorageClass &source)
+*/
+/*!\fn bool SgPragma::gotPrinted() const
+*/
+/*!\fn bool SgPragma::isPragma() const
+*/
+/*!\fn bool SgPragma::samePragma(const std::string &str)
+*/
+/*!\fn inline static void SgPragma::operator delete(void *pointer)
+*/
+/*!\fn static SgPragma *SgPragma::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgPragma::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgPragma::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgPragma::initializeStorageClassArray(SgPragmaStorageClass *storageArray)
+*/
+/*!\fn static void SgPragma::clearMemoryPool()
+*/
+/*!\fn static void SgPragma::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgPragma::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgPragma::roseRTI()
+*/
+/*!\fn virtual SgNode *SgPragma::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgPragma::~SgPragma()
+*/
+/*!\fn virtual void SgPragma::post_construction_initialization()
+*/
+/*!\fn void SgPragma::setPrinted(bool s=true)
+*/
+/*!\fn virtual void SgPragma::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
+\description See  *attributeMechanism)
+attributeMechanism for documentation */
+/*!\fn void SgPragma::set_startOfConstruct(Sg_File_Info *startOfConstruct)
+\description See  *startOfConstruct)
+startOfConstruct for documentation */
+/*!\fn std::string SgPragma::get_pragma() const
+\description See  const
+pragma for documentation */
+/*!\fn virtual AstAttributeMechanism *SgPragma::get_attributeMechanism() const
+\description See  const
+attributeMechanism for documentation */
+/*!\fn virtual SgNode *SgPragma::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual Sg_File_Info *SgPragma::get_file_info() const
+\description See  const
+file_info for documentation */
+/*!\fn virtual Sg_File_Info *SgPragma::get_startOfConstruct() const
+\description See  const
+startOfConstruct for documentation */
+/*!\fn virtual size_t SgPragma::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgPragma::get_numberOfTraversalSuccessors()
+\description See  SgPragma::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPragma::get_traversalSuccessorContainer()
+\description See  SgPragma::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPragma::get_traversalSuccessorNamesContainer()
+\description See  SgPragma::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgPragma::SgPragma(std::string name=(""),Sg_File_Info *startOfConstruct=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_568144535;

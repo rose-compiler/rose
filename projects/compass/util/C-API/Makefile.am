@@ -1,0 +1,50 @@
+#==========================================================================
+
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
+
+#==========================================================================
+# Auxiliary library.
+
+C_API_SRCS = C-API.C SigBase.C FuncSig.C Recognizer.C
+C_API_HDRS = $(C_API_SRCS:.C=.h) ConstSig.h TypeSig.h
+
+if DEV_LIBS
+lib_LTLIBRARIES = libC-API.la
+else
+noinst_LTLIBRARIES = libC-API.la
+endif
+
+libC_API_la_SOURCES = $(C_API_SRCS) $(C_API_HDRS)
+
+#==========================================================================
+# Unit test
+
+noinst_PROGRAMS = testC-API
+
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../../compassSupport/libCompass.la \
+  libC-API.la
+
+testC_API_SOURCES = libC-API.la testC-API.C
+testC_API_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libC-API.la
+
+test: libC-API.la testC-API$(EXEEXT) \
+	    $(srcdir)/c-string.api $(srcdir)/c-string.c
+	./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only \
+	    -c $(srcdir)/c-string.c
+
+check-local:
+	@$(MAKE) test
+	@echo "*********************************************************************************************************************"
+	@echo "*** ROSE/projects/compass/util/C-API: make check rule complete (terminated normally) ***"
+	@echo "*********************************************************************************************************************"
+
+#==========================================================================
+
+EXTRA_DIST = c-string.api c-string.c
+
+clean-local:
+	rm -f *.ti a.out rose_*.c
+
+# eof

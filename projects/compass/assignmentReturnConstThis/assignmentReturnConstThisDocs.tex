@@ -1,0 +1,92 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Assignment Return Const This}
+\label{AssignmentReturnConstThis::overview}
+Here we check to make sure that all assignment operators
+   (operator=) return const classType\&. By making the return a
+   reference we can use a = b = c; which is legal C++.  By making the reference
+   const we prevent (a = b) = c; which is illegal C++. 
+% write your introduction
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No parameters necessary.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+Every member function is checked to see if the name matches
+'operator='.  If so we check to make sure the return type is const
+nameofclass\&.  All three (const, ref, classname) must be present.
+We then make sure there is at least one explicit return of *this
+and no explicit returns of anything else.
+Note:  At this time we do not make sure that all paths must reach
+an explicit return.  This is, however, already a warning in ROSE                                                                                                      
+when there is not an explicit return for a non-void returning
+function.  There is also another checker to ensure explicit
+returns. 
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+class smallCat
+{
+smallCat& operator=(smallCat& other);
+}
+
+smallCat& smallCat::operator=(smallCat& other)
+{
+...
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+
+class smallCat
+{
+const smallCat& operator=(smallCat& other);
+}
+
+const smallCat& smallCat::operator=(smallCat& other)
+{
+...
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Identify member function
+\item Check Name for operator=
+\item Get return type
+\item check for typename and const
+\item find explicit return and check for this.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{Abbreviated Code Inspection
+  Checklist}{http://www.lore.ua.ac.be/Teaching/SE3BAC} Section 12.1.4, Assignment Operator''

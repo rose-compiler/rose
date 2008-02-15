@@ -1,0 +1,53 @@
+# This is the configuration file for A++P++ remote testing.
+
+--verbose10
+
+# second to wait between logging in to remote machine to check for completion
+--wait_interval=60
+
+# Define the test accounts.
+# The format for specifying an account is "--account: " (or "--account="),
+# 1 or more white spaces, index (i.e. lx, linux, sun, etc),
+# 1 or more white spaces, tcl syntax for an 8-element list.
+#
+# Account info list are the following:
+# 0 host (it is a good idea to include the full host name so that LLNL
+#   computers can authenticate without interactive password input.)
+# 1 account user name (blank to not specify)
+# 2 port number (such as 922 for the LLNL computers; blank if unspecified)
+# 3 patience (seconds to wait for the initial prompt before
+#   testing to see of we are in without a recognized prompt.
+#   Also seconds to wait for that test.
+# 4 initial prompt pattern (a regular expression)
+# 5 top directory.  Relative paths are taken relative
+#   to the account home directory.)
+# 6 friendly domain (domain on which no interactive password is required.
+#   If a remote site shares this domain, we try to set things up so that
+#   a password is not needed.)
+# 7 remote program options (arguments to the remote program run)
+#
+# Define accounts we will be using:
+
+--account: sun-bobalek {bobalek.llnl.gov} {} {} 300 {(\{dquinlan\}.*:)|($ipp_shell)} {auto-test-runs-ap/sun} {llnl.gov} {-config_for sun -dist_file ROSE-*.tar.gz}
+--account: sun {galerkin.llnl.gov} {} {} 300 {(\{dquinlan\}.*:)|($ipp_shell)} {auto-test-runs-ap/sun} {llnl.gov} {-config_for sun -dist_file ROSE-*.tar.gz}
+
+--account: lx	{lx01.llnl.gov} {} {} 60 {(:~>)|($ipp_shell)} {auto-test-runs-ap/lx} {llnl.gov} {-config_for lx -dist_file A++P++-*.tar.gz}
+--account: linux	{cogneato.llnl.gov} {} {} 60 {(:~>)|($ipp_shell)} {auto-test-runs-ap/linux} {llnl.gov} {-config_for linux -dist_file A++P++-*.tar.gz}
+--account: tera	{tc01.llnl.gov} {} {} 120 {(:~>)|($ipp_shell)} {auto-test-runs-ap/tera} {llnl.gov} {-config_for tera -dist_file A++P++-*.tar.gz}
+--account: tera_noppp	{tc02.llnl.gov} {} {} 120 {(:~>)|($ipp_shell)} {auto-test-runs-ap/tera} {llnl.gov} {-config_for tera_noppp -dist_file A++P++-*.tar.gz}
+--account: blue_nopadre_mpcc	{blue099.pacific.llnl.gov} {} {} 40 {(:~>)|($ipp_shell)} {auto-test-runs-ap/blue} {llnl.gov} {-config_for blue_nopadre_mpcc -dist_file A++P++-*.tar.gz}
+--account: sunX	{bloch.llnl.gov} {} {} 40 {(:~>)|($ipp_shell)} {auto-test-runs-ap/sun} {llnl.gov} {-config_for sun -dist_file A++P++-*.tar.gz}
+--account: riptide	{riptide.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/riptide} {llnl.gov} {-config_for riptide -dist_file A++P++-*.tar.gz}
+--account: ncsa	{modi4.ncsa.uiuc.edu} {dquinlan} {} 45 {($ipp_shell)|(\[a-zA-Z0-9\]+)\{(\[a-zA-Z0-9\]+)\}\[0-9\]*:} {auto-test-runs-ap/ncsa} {} {-config_for ncsa -dist_file A++P++-*.tar.gz}
+--account: compass_nopadre	{west.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/west} {llnl.gov} {-config_for compass_nopadre -dist_file A++P++-*.tar.gz}
+--account: compas_nopadre_mpcc	{south.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/south} {llnl.gov} {-config_for sun_mpcc -dist_file A++P++-*.tar.gz}
+--account: sun_mpcc	{galerkin.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/sun_mpcc} {llnl.gov} {-config_for sun_kcc -dist_file A++P++-*.tar.gz}
+--account: sun_kcc	{bloch.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/sun_kcc} {llnl.gov} {-config_for sun_kcc -dist_file A++P++-*.tar.gz}
+--account: tera_gnu	{tc01.llnl.gov} {} {} 120 {($ipp_shell)|(:~>)} {auto-test-runs-ap/tera_gnu} {llnl.gov} {-config_for tera_gnu -dist_file A++P++-*.tar.gz}
+--account: tera_kcc	{tc02.llnl.gov} {} {} 120 {($ipp_shell)|(:~>)} {auto-test-runs-ap/tera_kcc} {llnl.gov} {-config_for tera_kcc -dist_file A++P++-*.tar.gz}
+--account: sun_gnu	{koch.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/sun_gnu} {llnl.gov} {-config_for sun_gnu -dist_file A++P++-*.tar.gz}
+--account: sun_ccv5	{bobalek.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/sun_ccv5} {llnl.gov} {-config_for sun_ccv5 -dist_file A++P++-*.tar.gz}
+--account: sun_ccv4_on_v5	{bobalek.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/sun_ccv4_on_v5} {llnl.gov} {-config_for sun_ccv4_on_v5 -dist_file A++P++-*.tar.gz}
+--account: sun_nopadre	{rieman.llnl.gov} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/sun_nopadre} {llnl.gov} {-config_for sun_nopadre -dist_file A++P++-*.tar.gz}
+--account: tera_nopadre	{tc03.llnl.gov} {} {} 120 {($ipp_shell)|(:~>)} {auto-test-runs-ap/tera_nopadre} {llnl.gov} {-config_for tera_nopadre -dist_file A++P++-*.tar.gz}
+--account: linux_nopadre	{grashof.engr.colostate.edu} {} {} 45 {($ipp_shell)|(:~>)} {auto-test-runs-ap/linux} {} {-config_for linux_nopadre -dist_file A++P++-*.tar.gz}

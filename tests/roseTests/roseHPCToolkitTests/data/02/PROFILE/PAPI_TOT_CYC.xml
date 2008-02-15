@@ -1,0 +1,430 @@
+<?xml version="1.0"?>
+<!DOCTYPE PROFILE [
+<!-- Profile: correlates profiling info with program structure. -->
+<!ELEMENT PROFILE (PROFILEHDR, PROFILEPARAMS, PROFILESCOPETREE)>
+<!ATTLIST PROFILE
+	version CDATA #REQUIRED>
+  <!ELEMENT PROFILEHDR (#PCDATA)>
+  <!ELEMENT PROFILEPARAMS (TARGET, METRICS)>
+    <!ELEMENT TARGET EMPTY>
+    <!ATTLIST TARGET
+	name CDATA #REQUIRED>
+    <!ELEMENT METRICS (METRIC)+>
+    <!ELEMENT METRIC EMPTY>
+    <!ATTLIST METRIC
+	shortName   CDATA #REQUIRED
+	nativeName  CDATA #REQUIRED
+	period      CDATA #REQUIRED
+	units       CDATA #IMPLIED
+	displayName CDATA #IMPLIED
+	display     (true|false) #IMPLIED>
+  <!ELEMENT PROFILESCOPETREE (PGM)*>
+    <!-- This is essentially the PGM dtd with M element added. -->
+    <!ELEMENT PGM (G|LM|F|M)+>
+    <!ATTLIST PGM
+	n CDATA #REQUIRED>
+    <!-- Groups create arbitrary sets of other elements except PGM. -->
+    <!ELEMENT G (G|LM|F|P|L|S|M)*>
+    <!ATTLIST G
+	n CDATA #IMPLIED>
+    <!-- Runtime load modules for PGM (e.g., DSOs, exe) -->
+    <!ELEMENT LM (G|F|M)*>
+    <!ATTLIST LM
+	n CDATA #REQUIRED>
+    <!-- Files contain procedures and source line info -->
+    <!ELEMENT F (G|P|L|S|M)*>
+    <!ATTLIST F
+	n CDATA #REQUIRED>
+    <!-- Procedures contain source line info 
+         n: processed name; ln: link name -->
+    <!ELEMENT P (G|L|S|M)*>
+    <!ATTLIST P
+	n  CDATA #REQUIRED
+	ln CDATA #IMPLIED
+	b CDATA #IMPLIED
+	e CDATA #IMPLIED>
+    <!-- Loops -->
+    <!ELEMENT L (G|L|S|M)*>
+    <!ATTLIST L
+	b CDATA #IMPLIED
+	e CDATA #IMPLIED>
+    <!-- Statement/Statement range -->
+    <!ELEMENT S (M)*>
+    <!ATTLIST S
+	b CDATA #REQUIRED
+	e CDATA #IMPLIED
+	id CDATA #IMPLIED>
+    <!ELEMENT M EMPTY>
+    <!ATTLIST M
+	n CDATA #REQUIRED
+	v CDATA #REQUIRED>
+]>
+<PROFILE version="3.0">
+<PROFILEHDR></PROFILEHDR>
+<PROFILEPARAMS>
+  <TARGET name="/home/vuduc2/projects/smg2000/data/../preproc-dev/test/smg2000"/>
+  <METRICS>
+    <METRIC shortName="0" nativeName="PAPI_TOT_CYC" displayName="PAPI_TOT_CYC" period="32767" units="PAPI events"/>
+  </METRICS>
+</PROFILEPARAMS>
+<PROFILESCOPETREE>
+<PGM n="/home/vuduc2/projects/smg2000/data/../preproc-dev/test/smg2000">
+  <LM n="/home/vuduc2/projects/smg2000/preproc-dev/test/smg2000">
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/CPP-smg_residual.c">
+      <P n="hypre_SMGResidual">
+        <S b="157">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="411">
+          <M n="0" v="1.73665e+06"/>
+        </S>
+        <S b="413">
+          <M n="0" v="917476"/>
+        </S>
+        <S b="414">
+          <M n="0" v="98301"/>
+        </S>
+        <S b="456">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="612">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="682">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="684">
+          <M n="0" v="458738"/>
+        </S>
+        <S b="687">
+          <M n="0" v="9.6335e+06"/>
+        </S>
+        <S b="690">
+          <M n="0" v="3.24393e+06"/>
+        </S>
+        <S b="691">
+          <M n="0" v="327670"/>
+        </S>
+        <S b="693">
+          <M n="0" v="98301"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/cyclic_reduction.c">
+      <P n="hypre_CycRedSetupCoarseOp">
+        <S b="367">
+          <M n="0" v="98301"/>
+        </S>
+        <S b="371">
+          <M n="0" v="98301"/>
+        </S>
+      </P>
+      <P n="hypre_CyclicReduction">
+        <S b="837">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="851">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="853">
+          <M n="0" v="393204"/>
+        </S>
+        <S b="855">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="882">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="886">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="908">
+          <M n="0" v="98301"/>
+        </S>
+        <S b="910">
+          <M n="0" v="1.04854e+06"/>
+        </S>
+        <S b="912">
+          <M n="0" v="1.37621e+06"/>
+        </S>
+        <S b="956">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="972">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="978">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="990">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="996">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="998">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="999">
+          <M n="0" v="2.16262e+06"/>
+        </S>
+        <S b="1000">
+          <M n="0" v="851942"/>
+        </S>
+        <S b="1002">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="1026">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="1059">
+          <M n="0" v="131068"/>
+        </S>
+        <S b="1061">
+          <M n="0" v="589806"/>
+        </S>
+        <S b="1128">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="1130">
+          <M n="0" v="786408"/>
+        </S>
+        <S b="1131">
+          <M n="0" v="3.21117e+06"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/semi_interp.c">
+      <P n="hypre_SemiInterp">
+        <S b="225">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="227">
+          <M n="0" v="98301"/>
+        </S>
+        <S b="229">
+          <M n="0" v="229369"/>
+        </S>
+        <S b="292">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="294">
+          <M n="0" v="131068"/>
+        </S>
+        <S b="295">
+          <M n="0" v="425971"/>
+        </S>
+        <S b="297">
+          <M n="0" v="65534"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/semi_restrict.c">
+      <P n="hypre_SemiRestrict">
+        <S b="262">
+          <M n="0" v="294903"/>
+        </S>
+        <S b="263">
+          <M n="0" v="622573"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/smg.c">
+      <P n="hypre_SMGSetStructVectorConstantValues">
+        <S b="413">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="415">
+          <M n="0" v="131068"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/smg2_setup_rap.c">
+      <P n="hypre_SMG2BuildRAPSym">
+        <S b="375">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="385">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="387">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="442">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="446">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/smg3_setup_rap.c">
+      <P n="hypre_SMG3BuildRAPSym">
+        <S b="595">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="600">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="607">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="608">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="652">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="654">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="679">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="695">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/smg_axpy.c">
+      <P n="hypre_SMGAxpy">
+        <S b="67">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="69">
+          <M n="0" v="229369"/>
+        </S>
+        <S b="71">
+          <M n="0" v="98301"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/smg_relax.c">
+      <P n="hypre_SMGRelax">
+        <S b="343">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_ls/smg_setup_interp.c">
+      <P n="hypre_SMGSetupInterpOp">
+        <S b="292">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/box.c">
+      <P n="hypre_BoxGetStrideSize">
+        <S b="355">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="358">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/struct_axpy.c">
+      <P n="hypre_StructAxpy">
+        <S b="67">
+          <M n="0" v="98301"/>
+        </S>
+        <S b="69">
+          <M n="0" v="196602"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/struct_grid.c">
+      <P n="hypre_StructGridDestroy">
+        <S b="72">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/struct_innerprod.c">
+      <P n="hypre_StructInnerProd">
+        <S b="91">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/struct_matrix.c">
+      <P n="hypre_StructMatrixDestroy">
+        <S b="96">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+      <P n="hypre_StructMatrixSetBoxValues">
+        <S b="554">
+          <M n="0" v="98301"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/struct_stencil.c">
+      <P n="hypre_StructStencilElementRank">
+        <S b="104">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="107">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/struct_mv/struct_vector.c">
+      <P n="hypre_StructVectorSetConstantValues">
+        <S b="576">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="578">
+          <M n="0" v="131068"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/test/smg2000.c">
+      <P n="main">
+        <S b="389">
+          <M n="0" v="32767"/>
+        </S>
+        <S b="401">
+          <M n="0" v="65534"/>
+        </S>
+        <S b="415">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/utilities/memory.c">
+      <P n="hypre_ReAlloc">
+        <S b="162">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+    <F n="/home/vuduc2/projects/smg2000/data/../preproc-dev/utilities/timing.c">
+      <P n="hypre_BeginTiming">
+        <S b="310">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+      <P n="hypre_EndTiming">
+        <S b="332">
+          <M n="0" v="32767"/>
+        </S>
+      </P>
+    </F>
+  </LM>
+  <LM n="/lib/tls/libc-2.3.2.so">
+    <F n="&lt;unknown&gt;">
+      <P n="_int_malloc">
+        <M n="0" v="32767"/>
+      </P>
+      <P n="advance">
+        <M n="0" v="65534"/>
+      </P>
+      <P n="gettimeofday">
+        <M n="0" v="32767"/>
+      </P>
+    </F>
+  </LM>
+</PGM>
+</PROFILESCOPETREE>
+</PROFILE>

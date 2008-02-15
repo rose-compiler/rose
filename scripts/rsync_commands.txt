@@ -1,0 +1,13 @@
+How to sync ROSE on laptop with ROSE on desktop (after working at home):
+
+Typical usage: rsync [OPTION]... SRC [USER@]HOST:DEST
+
+On laptop execute (to sync laptop with desktop):
+     rsync -avz NEW_ROSE tux212.llnl.gov:/home/dquinlan/ROSE
+OR on laptop to sync desktop with laptop:
+     rsync -avz tux212.llnl.gov:/home/dquinlan/ROSE/NEW_ROSE .
+
+Also, should use -exlude option as in:
+rsync -avz --exclude=aclocal.m4 --exclude="*/autom4te.cache/*" --exclude="*.in" tux212.llnl.gov:/home/dquinlan/ROSE/NEW_ROSE .
+
+

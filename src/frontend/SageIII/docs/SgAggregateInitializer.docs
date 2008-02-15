@@ -1,0 +1,129 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAggregateInitializer
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgAggregateInitializer
+\brief This class represents the rhs of an array variable declaration which includes an optional
+    assignment (e.g. "int x[2] = {1,2};").  In this case the SgExprListExp ("{1,2}") is wrapped in an
+    SgAggregateInitializer.
+\sa
+\ref SgAggregateInitializer_usage  "Example of using a SgAggregateInitializer object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAggregateInitializer data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgAggregateInitializer member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\fn SgAggregateInitializer::SgAggregateInitializer (const SgAggregateInitializer &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgAggregateInitializer::~SgAggregateInitializer()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgAggregateInitializer::isSgAggregateInitializer (SgNode *s)
+\brief Cast function (from derived class to SgAggregateInitializer pointer).
+   This functions returns a SgAggregateInitializer pointer for any input of a 
+pointer to an object derived from a SgAggregateInitializer.
+\return Returns valid pointer to SgAggregateInitializer if input is derived from a SgAggregateInitializer.
+*/
+/*!
+\fn SgAggregateInitializer::isSgAggregateInitializer (const SgNode *s)
+\brief Cast function (from derived class to SgAggregateInitializer pointer).
+   This functions returns a SgAggregateInitializer pointer for any input of a 
+pointer to an object derived from a SgAggregateInitializer.
+\return Returns valid pointer to SgAggregateInitializer if input is derived from a SgAggregateInitializer.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgExprListExp *SgAggregateInitializer::p_initializers
+\brief This points to a SgExprListExp (list of expressions).
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgAggregateInitializer::SgAggregateInitializer(Sg_File_Info *startOfConstruct,SgExprListExp *initializers=(0))
+*/
+/*!\fn SgAggregateInitializer::SgAggregateInitializer(const SgAggregateInitializerStorageClass &source)
+*/
+/*!\fn inline static void SgAggregateInitializer::operator delete(void *pointer)
+*/
+/*!\fn static SgAggregateInitializer *SgAggregateInitializer::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgAggregateInitializer::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgAggregateInitializer::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgAggregateInitializer::initializeStorageClassArray(SgAggregateInitializerStorageClass *storageArray)
+*/
+/*!\fn static void SgAggregateInitializer::clearMemoryPool()
+*/
+/*!\fn static void SgAggregateInitializer::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgAggregateInitializer::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgAggregateInitializer::roseRTI()
+*/
+/*!\fn virtual SgAggregateInitializer::~SgAggregateInitializer()
+*/
+/*!\fn virtual SgNode *SgAggregateInitializer::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual int SgAggregateInitializer::replace_expression(SgExpression *,SgExpression *)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAggregateInitializer::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgAggregateInitializer::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual void SgAggregateInitializer::post_construction_initialization()
+*/
+/*!\fn void SgAggregateInitializer::append_initializer(SgExpression *what)
+*/
+/*!\fn void SgAggregateInitializer::insert_initializer(const std::vector < SgExpression * , std::allocator< SgExpression * > > ::iterator &where,SgExpression *what)
+*/
+/*!
+\fn void SgAggregateInitializer::set_initializers(SgExprListExp *initializers)
+\brief This sets the rhs expression.
+See  *initializers)
+initializers for documentation \param initializersp - sets value of rhs.
+\return Returns void.
+*/
+/*!
+\fn SgExprListExp *SgAggregateInitializer::get_initializers() const
+\brief Returns the rhs.
+See  const
+initializers for documentation \return Returns SgExprListExp.
+*/
+/*!\fn SgExpression *SgAggregateInitializer::get_next(int &n) const
+\description See  const
+next for documentation */
+/*!\fn virtual SgNode *SgAggregateInitializer::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgAggregateInitializer::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgAggregateInitializer::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgAggregateInitializer::get_numberOfTraversalSuccessors()
+\description See  SgAggregateInitializer::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgAggregateInitializer::get_traversalSuccessorContainer()
+\description See  SgAggregateInitializer::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgAggregateInitializer::get_traversalSuccessorNamesContainer()
+\description See  SgAggregateInitializer::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgAggregateInitializer::SgAggregateInitializer(SgExprListExp *initializers)
+\brief This is the constructor.
+   This constructor builds the SgAggregateInitializer base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgAggregateInitializer_create "Example:create an SgAggregateInitializer object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_115041673227354;

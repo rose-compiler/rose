@@ -1,0 +1,3939 @@
+// #########################################################    -*- C++ -*-
+// #########################################################
+//                      HEADER CODE
+// #########################################################
+// #########################################################
+
+HEADER_START
+
+ /*  This class forms a base class for all of the types represented in the C++ grammar.
+     All types are derived from this class and thus contain the following functionality.
+  */
+
+     public:
+      /*
+          \if documentDevelopmentVersionUsingDoxygen 
+          name Friend Classes
+               \brief Friend classes declarations
+
+          \endif
+       */
+          friend class SgPointerType;     //!< provide access to private data
+          friend class SgReferenceType;   //!< provide access to private data
+          friend class SgTypedefType;     //!< provide access to private data
+       /*! */
+
+     public:
+      /*! \if documentDevelopmentVersionUsingDoxygen 
+               \brief default constructor
+
+               Default constructor and destructors are not documented in user 
+               interface \ref defaultConstructorDestructorDocumentationPage.
+               \sa \ref defaultConstructorDestructorDocumentationPage
+          \endif
+       */
+          SgType();
+
+      /*! \brief copy constructor
+
+          The Copy constructor is provide to support the AST copy mechanism, where 
+          types are copied to support copying of named types.
+       */
+          SgType(const SgType & X);
+
+      /*! \if documentDevelopmentVersionUsingDoxygen 
+          \brief default destructor
+          \endif
+       */
+      // ~$CLASSNAME();
+
+      //! return string representing the mangled name
+      /*! This function is required to provide a unique identifier for type names internally
+       */
+       // virtual SgName get_mangled(SgUnparse_Info& = SgNO_UNPARSE_INFO);
+       // virtual SgName get_mangled( SgUnparse_Info & info );
+
+       // RV (1/30/2006)
+      /*! Returns a mangled string representation of this type.
+          Equivalent types have the same mangled string.
+       */
+          virtual SgName get_mangled (void) const;
+
+#if 0
+       // DQ (3/2/2003): Implement get_parent from SgNode
+      //! get the parent node in the AST
+      /*! \ref memberFunction_getParent_DocumentationPage
+          The parent node permits access to higher levels of context information.
+       */
+          SgType* get_parent() const;
+#endif
+
+       // name TypeModifierGroup1 Type Modifiers
+      /* 
+          name Type Modifiers
+          \brief Compute modifier values.
+
+          These modifiers define associated properties of the type (e.g. const, extern,
+          etc.) At present these appear to be unimplemented (all functions return false).
+
+          \internal Return type should be changed to "bool."
+          \todo implement type modifier query functions in SgType class.
+       */
+#if 0
+      //! Tests for declaration as const
+          virtual bool isConst() const ;
+      //! Test for declaration as volatile
+          virtual bool isVolatile() const ;
+      //! Tests for declaration as restrict
+          virtual bool isRestrict() const ;
+      //! Tests for declaration as UPC shared
+          virtual bool isUPC_Shared() const ;
+      //! Tests for declaration as UPC strict
+          virtual bool isUPC_Strict() const ;
+      //! Tests for declaration as UPC relaxed
+          virtual bool isUPC_Relaxed() const ;
+#endif
+#if 0
+      //! Tests for declaration as extern
+          virtual bool isExtern() const ;
+      //! Tests for declaration as typedef
+          virtual bool isTypedef() const ;
+      //! Tests for declaration as virtual
+          virtual bool isVirtual() const ;
+      //! Test for declaration as protected
+          virtual bool isProtected() const ;
+      //! Test for declaration as private
+          virtual bool isPrivate() const ;
+      //! Test for declaration as public
+          virtual bool isPublic() const ;
+      //! Test for declaration as global
+//        virtual bool isGlobal() const ;
+      //! Test for declaration as auto (default)
+          virtual bool isAuto() const ;
+      //! Test for declaration as sync (depricated not used )
+//        virtual bool isSync() const ;
+#endif
+       /*! */
+
+      /*! 
+          name Numerical Modifiers
+          \brief Compute numerical properties of type.
+
+          These define numeric properties of the type (e.g. int, float, etc.)
+
+          \internal Return type should be changed to "bool."
+       */
+          bool isUnsignedType() const;  //!< There are many sorts of unsigned types (this queries an arbitrary type).
+          bool isIntegerType() const;   //!< There are many sorts of integer types (this queries an arbitrary type).
+          bool isFloatType() const;     //!< There are several sorts of float types (this queries an arbitrary type).
+       /*! */
+
+#if 0
+       // These are unimplemented within SAGE 2
+          bool isLong() const;
+          bool isShort() const;
+#endif
+
+      // DQ (10/11/2007): These sorts of values are usually handled as enum fields in ROSE. They could be redone at some point.
+      // PC and AS new variables to support a flexible stripType() which takes an bit array as a paramater
+         static const unsigned char STRIP_MODIFIER_TYPE  = ((unsigned char) 1 << 0); // 0x01
+         static const unsigned char STRIP_REFERENCE_TYPE = ((unsigned char) 1 << 1); // 0x02
+         static const unsigned char STRIP_POINTER_TYPE   = ((unsigned char) 1 << 2); // 0x04
+         static const unsigned char STRIP_ARRAY_TYPE     = ((unsigned char) 1 << 3); // 0x08
+         static const unsigned char STRIP_TYPEDEF_TYPE   = ((unsigned char) 1 << 4); // 0x016
+
+// DQ (9/7/2007): What is this and where did it come from???
+// #define PREFERENCE_READS_BOOKS      ((unsigned char) 1 << 3) // 0x08
+	 
+      //! Return the base type of the associated type.
+      /*! The base type is important when dealing with pointers, etc.
+       */
+          SgType* findBaseType() const;
+
+          SgType * dereference();              //!< Returns type hidden behind pointr of reference.
+          const SgType * dereference() const ; //!< Returns type hidden behind pointr of reference.
+
+       // DQ (6/21/2005): Added to support getting a deeply nested type quickly and easily.
+      //! Returns hidden type beneath layers of typedefs, pointers, references, modifiers, array representation, etc.
+          //SgType* stripType() const;
+          SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+
+       // DQ (6/30/2005): Added to support invistigation of hidden types
+          SgType* stripTypedefsAndModifiers() const;
+
+       // DQ (6/30/2005): Would these functions also be useful?
+       // SgType* stripTypedefs() const;
+       // SgType* stripModifiers() const;
+
+      //! Performs a test against bit flags representing the modifiers internally
+       // SgModifierType* matchModifiers(unsigned int f);
+       // void printName(SgUnparse_Info& ui, ostream& os);
+
+#if 0
+      // DQ (3/26/2001): This does not appear to be used anywhere so comment it out for now!
+      // All possible sorts of basic types
+          enum basic_type_enum { t_Char, t_SignedChar, t_UnsignedChar,
+                                 t_Short, t_SignedShort, t_UnsignedShort, t_Int, t_SignedInt,
+                                 t_UnsignedInt, t_Long, t_SignedLong, t_UnsignedLong, t_Void,
+                                 t_Wchar, t_Float, t_Double, t_LongLong, t_LongDouble, t_Bool,
+                                 t_Default };
+#endif
+
+#if 0
+       // This codes was part of an experiment to distinguish struct tag { int x; } X; from struct tag X;
+       // It turns out that the declaration of the tag in this case in placed into the EDG orphan list
+       // as a type and that we don't require this mechanism (thought we might in the future so for now
+       // it is just commented out.
+
+       // DQ Added to support unparsing of autonomous declarations
+       // Support for variable declearations where the type is explicitly defined as a structure
+          enum useWithinDeclarationEnum {
+           // handle cases of struct B btag { int x; } b_1st; and struct btag b_2nd;
+               e_first_declaration          = 0x00000001,
+           // distinguish between B { int x; } b; and B btag { int x; } b;
+               e_autonomous_tag_declaration = 0x00000002
+                                    };
+          useWithinDeclarationEnum p_useWithinDeclaration;
+
+       // These are for support of the useWithinDeclaration variable
+          bool isFirstDeclaration() const;
+          void setFirstDeclaration();
+          void unsetFirstDeclaration();
+          bool isAutonomousTagDeclaration() const;
+          void setAutonomousTagDeclaration();
+          void unsetAutonomousTagDeclaration();
+#endif
+
+#if 0
+        // DQ (9/7/2007): This does not appear to be used anywhere!
+      /*! 
+          \brief Possible sorts of modifiers
+          \deprecated Values used previously in CC++ will be removed at some point.
+          \todo add additional modifieds for private, const, etc.; to match access functions.
+
+          Some of these modifiers are not used.
+       */
+          enum basic_modifier_enum { e_const = 0x00000001, //!< value for const modifier
+                                     e_sync  = 0x00000002, //!< (used only for CC++).
+                                     e_global= 0x00000004, //!< not used.
+                                   };
+#endif
+
+       // DQ (9/7/2007): Support for Fortran attribute specifiers
+          enum fortran_attribute_specifiers_enum
+             {
+               e_unknown_attribute_specifier = 0, 
+               e_public_access,
+               e_private_access,
+               e_allocatable, 
+               e_asynchronous,
+               e_bind,
+               e_data,
+               e_dimension,
+               e_intent,
+               e_optional,
+               e_parameter,
+               e_pointer,
+               e_protected,
+               e_save, 
+               e_target,
+               e_value,
+               e_volatile,
+               e_last_attribute_specifier
+             };
+
+   
+
+      /* 
+          name Conversion Functions
+          \brief Simple conversion functions.
+          \internal Not sure these are useful when using the string interface.
+       */
+      //! performs simple conversions
+          static SgType * arithmetic_conversions(SgType *, SgType *);
+
+      //! handles promotion to integer
+          static SgType * integer_promotion     (SgType *, SgType *);
+
+      //! handles promotion to float
+          static SgType * float_promotion       (SgType *, SgType *);
+      /*! */
+
+      /* 
+          \if documentDevelopmentVersionUsingDoxygen
+          name Editing functions for modifiers
+          \brief Permits editing of modifiers (addition/removal).
+          \internal How are these meant to be used, since modifiers are not dynamic?
+          \endif
+       */
+
+#if 0
+       // DQ (4/5/2004): Removed since it is not used anywhere!
+      //! Permits removal of modifiers
+          static SgType * rmModifier  (SgType *, int);
+
+       // DQ (4/5/2004): Removed since it is not used anywhere!
+      //! Permits addition of modifiers
+          static SgType * addModifier (SgType *, int);
+#endif
+      /*! */
+
+       // DQ (4/27/2005): Added protected function to support refactored code for name mangling
+     protected:
+      //! \deprecated by RV (2/2/2006)
+          SgName mangledNameSupport(SgName & fname, SgUnparse_Info& info);
+
+     public:
+
+HEADER_END
+
+
+HEADER_X_TYPE_START
+HEADER_X_TYPE_END
+
+
+HEADER_NON_X_TYPE_START
+HEADER_NON_X_TYPE_END
+
+HEADER_BUILTIN_TYPE_SUPPORT_START
+#if 0
+       // DQ (12/26/2005): Supporting function for traverseMemoryPool
+       // where static IR nodes (only isn soem SgType IR nodes) are
+       // present and must be traversed using specially generated code.
+          static void executeVisitorMemberFunctionOnBuiltinData(ROSE_VisitorPattern & visitor);
+#endif
+HEADER_BUILTIN_TYPE_SUPPORT_END
+
+
+HEADER_COMMON_CREATE_TYPE_START
+      //! example of type used where construction is particularly simple
+       // DQ (1/31/2006): Modified to build all types in the memory pools
+       // static $CLASSNAME builtin_type;
+       // static $CLASSNAME* builtin_type;
+
+       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required 
+       // since we don't store the type explicitly anymore except in a few IR nodes which have there 
+       // own data member and associated access function.
+       // static $CLASSNAME* get_builtin_type();
+
+       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required 
+       // since we don't store the type explicitly anymore except in a few IR nodes which have there 
+       // own data member and associated access function.
+       // static void set_builtin_type($CLASSNAME* builtin_type);
+
+      //! function returns example of type
+          static $CLASSNAME* createType(void);
+HEADER_COMMON_CREATE_TYPE_END
+
+
+HEADER_CREATE_TYPE_WITH_PARAMETER_START
+       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required 
+       // since we don't store the type explicitly anymore except in a few IR nodes which have there 
+       // own data member and associated access function.
+       // static $CLASSNAME* get_builtin_type();
+
+       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required 
+       // since we don't store the type explicitly anymore except in a few IR nodes which have there 
+       // own data member and associated access function.
+       // static void set_builtin_type($CLASSNAME* builtin_type);
+
+      //! more sophisticated version for more complex types like $CLASSNAME (types whose constructors take parameters)
+          static $CLASSNAME* createType(CREATE_TYPE_PARAMETER);
+HEADER_CREATE_TYPE_WITH_PARAMETER_END
+
+
+HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_TYPE_ARRAY_START
+       // static $CLASSNAME* get_builtin_type();
+       // static void set_builtin_type($CLASSNAME* builtin_type);
+
+       //! builtin_type variable specific to the SgArrayType object (for maxBitLength=32 bit integers)
+       // Could not use maxBitLength in array size below (so I just used the #define value directly).
+       // DQ (1/31/2006): Modified to build all types in the memory pools
+       // static $CLASSNAME builtin_type[ROSE_INTEGER_TYPE_MAX_BIT_LENGTH];
+       // static $CLASSNAME* builtin_type[ROSE_INTEGER_TYPE_MAX_BIT_LENGTH];
+HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_TYPE_ARRAY_END
+
+
+HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_START
+       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required 
+       // since we don't store the type explicitly anymore except in a few IR nodes which have there 
+       // own data member and associated access function.
+       // static $CLASSNAME* get_builtin_type();
+
+       // DQ (6/18/2007): This does not appear to be used anywhere in ROSE.  It is no longer required 
+       // since we don't store the type explicitly anymore except in a few IR nodes which have there 
+       // own data member and associated access function.
+       // static set_builtin_type($CLASSNAME* builtin_type);
+
+       //! builtin_type variable specific to the $CLASSNAME object
+       // DQ (1/31/2006): Modified to build all types in the memory pools
+       // static $CLASSNAME builtin_type;
+       // static $CLASSNAME* builtin_type;
+HEADER_BUILTIN_FOR_CREATE_TYPE_WITH_PARAMETER_END
+
+
+HEADER_GET_MANGLED_START
+       // SgName get_mangled ( SgUnparse_Info & info );
+
+      //! Mangled name support for unparser support
+       // SgName get_mangled ( SgUnparse_Info & info );
+       // RV (1/31/2006): Removed dependence on SgUnparse_Info.
+          virtual SgName get_mangled (void) const;
+
+HEADER_GET_MANGLED_END
+
+HEADER_TYPEDEF_TYPE_START
+
+       // DQ (10/18/2007): Added copy constructor so that the typedef lists on each type could be updated properly.
+      //! Copy constructor to support AST copy mechanism.
+          SgTypedefType ( const SgTypedefType & X );
+
+HEADER_TYPEDEF_TYPE_END
+
+HEADER_VIRTUAL_GET_NAME_START
+       //! Gets name of the type (useful for debugging, unparsing, etc.)
+       /*! Avoid making abstract base classes (if we can) because in the 
+           automated generation of code we want to avoid placing constraints 
+           on derived classes.
+        */
+       // virtual SgName get_name() const = 0;
+          virtual SgName get_name() const;
+
+          SgNamedType ( const SgNamedType & X );
+HEADER_VIRTUAL_GET_NAME_END
+
+
+HEADER_GET_NAME_START
+      //! Support for some classes which have pure virtual function in base classes.
+      /*! For the classes derived from where the pure  virtual "virtual SgName get_name() = 0;"
+          This applies to the SgClassType, SgTypedef and the 
+          SgEnumType (derived from SgNamedType)
+       */
+          SgName get_name() const;
+HEADER_GET_NAME_END
+
+
+HEADER_GET_QUALIFIED_NAME_START
+      //! Used for the SgNamedType object (base class for the SgClassType, SgTypedefType and the SgEnumType object)
+          SgName get_qualified_name() const;
+HEADER_GET_QUALIFIED_NAME_END
+
+
+HEADER_GET_BASE_TYPE_START
+      //! This is used in the SgTypedefType object (is not associated with a base_type data field)
+          SgType* get_base_type() const;
+HEADER_GET_BASE_TYPE_END
+
+
+HEADER_CLASS_TYPE_START
+          SgClassType ( const SgClassType & X );
+HEADER_CLASS_TYPE_END
+
+HEADER_ENUM_TYPE_START
+          SgEnumType ( const SgEnumType & X );
+HEADER_ENUM_TYPE_END
+
+HEADER_TEMPLATE_TYPE_START
+HEADER_TEMPLATE_TYPE_END
+
+
+HEADER_MODIFIER_TYPE_START
+
+       // name TypeModifierGroup3 Type Modifiers
+      /* 
+          name Type Modifiers
+          \brief Compute modifier values.
+
+          These return false in the implementation of the virtual functions 
+          in SgType and are overridden here.
+
+          \internal Return type should be changed to "bool."
+          \todo implement type modifier query functions in SgType class.
+       */
+#if 0
+      //! Tests for declaration as const
+          bool isConst() const ;
+      //! Test for declaration as volatile
+          bool isVolatile() const ;
+      //! Tests for declaration as restrict
+          bool isRestrict() const ;
+      //! Tests for declaration as UPC shared
+          bool isUPC_Shared() const ;
+      //! Tests for declaration as UPC strict
+          bool isUPC_Strict() const ;
+      //! Tests for declaration as UPC relaxed
+          bool isUPC_Relaxed() const ;
+#endif
+       /*! */
+
+      //! Access function for modifier
+          SgTypeModifier & get_typeModifier();
+
+       // RV (2/2/2006): Added a 'const' version
+          const SgTypeModifier& get_typeModifier (void) const;
+
+#if 0
+          void unsetRestrict();
+          void setRestrict();
+          void unsetConst();
+          void setConst();
+          void unsetVolatile();
+          void setVolatile();
+          void unsetUPC_Shared();
+          void setUPC_Shared();
+          void unsetUPC_Strict();
+          void setUPC_Strict();
+          void unsetUPC_Relaxed();
+          void setUPC_Relaxed();
+#endif
+
+#if 0
+       // Tests not implemented!
+
+      //! Tests for declaration as extern
+          bool isExtern() const ;
+      //! Tests for declaration as typedef
+          bool isTypedef() const ;
+      //! Tests for declaration as virtual
+          bool isVirtual() const ;
+      //! Test for declaration as protected
+          bool isProtected() const ;
+      //! Test for declaration as private
+          bool isPrivate() const ;
+      //! Test for declaration as public
+          bool isPublic() const ;
+      //! Test for declaration as auto (default)
+          bool isAuto() const ;
+#endif
+
+#if 0
+      //! Enum type containing all modifiers
+          enum modifiers 
+             {
+               m_volatile = 0x01, //!< storage modifier
+               m_global   = 0x02, //!< not use by ROSE
+               m_sync     = 0x04, //!< not use by ROSE
+               m_const    = 0x08, //!< const modifier
+               m_restrict = 0x10,//!< support for restrict keyword (specifies non-aliased pointers)
+               m_shared   = 0x20, //!< UPC shared modifier
+               m_strict   = 0x40, //!< UPC strict modifier
+               m_relaxed  = 0x80, //!< UPC relaxed modifier
+             };
+
+       //! mask bits on
+          void set_modifier   (int flag);
+
+       //! mask bits off
+          void unset_modifier (int flag);
+
+      //! Access function for modifiers
+          bool isConst() const;
+          bool isSync() const;
+          bool isGlobal() const;
+          bool isVolatile() const;
+          bool isRestrict() const;
+
+       // UPC specific
+          bool isShared() const;
+          bool isStrict() const;
+          bool isRelaxed() const;
+
+      //! Set/unset functions for specific modifiers
+          void unsetSync();
+          void setSync();
+          void unsetGlobal();
+          void setGlobal();
+          void unsetConst();
+          void setConst();
+          void unsetRestrict();
+          void setRestrict();
+
+       // UPC specific
+          void unsetShared();
+          void setShared();
+          void unsetStrict();
+          void setStrict();
+          void unsetRelaxed();
+          void setRelaxed();
+
+      //! Get whole bit field fr modifier set
+          unsigned int bitfield(void);
+#endif
+
+#if 0
+       // DQ (4/6/2004): Added to provide uniform support for type modifiers
+          enum type_modifier_enum
+             {
+            // Bit values can support multiple values in a single enum type
+               e_unknown     =   0x000,   // Unknown value (default)
+               e_const       =   0x001,   // Const qualifier
+               e_volatile    =   0x002,   // Volatile qualifier
+               e_restrict    =   0x004,   // Restrict qualifier
+               e_unaligned   =   0x008,   // Microsoft __unaligned qualifier
+               e_near        =   0x010,   // near
+               e_far         =   0x020,   // far
+               e_upc_shared  =   0x040,   // UPC shared
+               e_upc_strict  =   0x080,   // UPC strict
+               e_upc_relaxed =   0x100,   // UPC relaxed
+               e_last_type_modifier = 0x200
+             };
+
+       // DQ (4/6/2004): Added to provide uniform support for storage modifiers
+          enum storage_modifier_enum
+             {
+            // Only one value can be specified (at least in C, what about C++)
+               e_unknown_storage,
+               e_extern,
+               e_static,
+               e_auto,
+               e_unspecified,
+               e_typedef,
+               e_register,
+               e_asm,
+#ifdef FORTRAN_SUPPORTED
+               e_local,              // Auto or static at back end's preference
+               e_common,             // A COMMON block
+               e_associated,         // Variable is part of an association
+               e_intrinsic,          // Intrinsic function or subroutine
+               e_pointer_based,      // Pointee of a POINTER definition
+#endif
+               e_last_storage_modifier
+             };
+
+       // DQ (4/6/2004): Added to provide uniform support for access modifiers
+          enum access_modifier_enum
+             {
+            // Only one value can be specified (at least in C, what about C++)
+               e_unknown_access,
+               e_private,
+               e_protected,
+               e_public,
+               e_virtual,  // support for virtual base class (applies only in case of inheritance)
+               e_last_access_modifier
+             };
+
+          int checkBit(type_modifier_enum bit) const;
+          void setBit(type_modifier_enum bit);
+          void unsetBit(type_modifier_enum bit);
+#endif
+
+#if 0
+       // DQ (4/13/2004): This new design organizes the modifiers in SAGE
+
+      //! Modifier Interface (implementation is hidden in specific modifier objects)
+      //! Type Modifier Support
+
+       // Interface from cv-specifier in type-specifier
+          int isConst() const;
+          void setConst();
+          void unsetConst();
+
+       // Interface from cv-specifier in type-specifier
+          int isVolatile() const;
+          void setVolatile();
+          void unsetVolatile();
+
+       // Interface from type-specifier
+          int isRestrict() const;
+          void setRestrict();
+          void unsetRestrict();
+#if 0
+          int isUnaligned() const;
+          void setUnaligned();
+          void unsetUnaligned();
+
+          int isNear() const;
+          void setNear();
+          void unsetNear();
+
+          int isFar() const;
+          void setFar();
+          void unsetFar();
+#endif
+          int isUPC_Shared() const;
+          void setUPC_Shared();
+          void unsetUPC_Shared();
+
+          int isUPC_Strict() const;
+          void setUPC_Strict();
+          void unsetUPC_Strict();
+
+          int isUPC_Relaxed() const;
+          void setUPC_Relaxed();
+          void unsetUPC_Relaxed();
+
+      //! Storage Modifier Support
+          int isUnknownStorage() const;
+          void setUnknownStorage();
+
+          int isExtern() const;
+          void setExtern();
+
+          int isStatic() const;
+          void setStatic();
+
+          int isAuto() const;
+          void setAuto();
+
+          int isUnspecified() const;
+          void setUnspecified();
+
+       // This is not used (but is present in the EDG AST)
+          int isTypedef() const;
+          void setTypedef();
+
+          int isRegister() const;
+          void setRegister();
+
+          int isAsm() const;
+          void setAsm();
+
+#ifdef FORTRAN_SUPPORTED
+       // These remaining access functions are specific to FORTRAN
+          int isLocal() const;
+          void setLocal();
+
+          int isCommon() const;
+          void setCommon();
+
+          int isAssociated() const;
+          void setAssociated();
+
+          int isIntrinsic() const;
+          void setIntrinsic();
+
+          int isPointerBased() const;
+          void setPointerBased();
+#endif
+
+      //! Access Modifier Support
+          int isUnknownAccess() const;
+          void setUnknownAccess();
+
+          int isPrivate() const;
+          void setPrivate();
+
+          int isProtected() const;
+          void setProtected();
+
+          int isPublic() const;
+          void setPublic();
+
+          int isVirtual() const;
+          void setVirtual();
+
+      //! Get whole bit field fr modifier set
+          unsigned int bitfield(void);
+#endif
+
+HEADER_MODIFIER_TYPE_END
+
+
+HEADER_QUALIFIED_NAME_TYPE_START
+          SgName get_prefix() const;
+
+       // SgName get_mangled (void) const;
+
+       // DQ (10/10/2006): Handle qualified name list at the declarations directly, instead of at the types.
+       // At present these are useful for SgVariableDeclaration and SgTypedefDeclaration, but likely others
+       // at some point.
+          SgQualifiedNamePtrList & get_qualifiedNameList();
+          const SgQualifiedNamePtrList & get_qualifiedNameList() const;
+          void set_qualifiedNameList( const SgQualifiedNamePtrList & x );
+
+HEADER_QUALIFIED_NAME_TYPE_END
+
+
+HEADER_FUNCTION_TYPE_ARGUMENTS_START
+
+      //! Constructor for building a function type
+          SgFunctionType(SgPartialFunctionType *);
+
+       // static SgFunctionType* createType(SgPartialFunctionType *);
+
+      //! Performs final initialization of data members (called by constructors)
+          void post_construction_initialization ();
+
+      //! Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+          const SgTypePtrList & get_arguments() const;
+
+      //! Get the list of input types (types of the parameters list) to this function type
+          SgTypePtrList & get_arguments();
+
+       // WAS: void append_argument(const SgTypePtr& what);
+       // WAS: void insert_argument(const SgTypePtrList::iterator& where, const SgTypePtr & what)
+
+      //! Append new argument to argument type list
+          void append_argument( SgType* what);
+
+      //! Insert new argument to argument type list
+          void insert_argument(const SgTypePtrList::iterator& where, SgType* what);
+
+      //! get the mangled name (this version is used in unparsing)
+      /*! This version can be tailored using the input SgUnparse_Info parameter.
+       */
+       // DQ (2/7/2006): Removed as a test
+       // virtual SgName get_mangled_name ( SgUnparse_Info & info );
+
+      //! get the mangled name
+      //! get the mangled name \deprecated by RV (2/2/2006)
+          virtual SgName get_mangled_type ();
+
+      //! I forget why this is here.
+      //  SgFunctionType* mkAnotherType(SgType *);
+
+      //! I forget why this is here.
+      //  void sym_print(std::ostream& os);
+
+          SgSymbol* get_symbol_from_symbol_table() const;
+
+HEADER_FUNCTION_TYPE_ARGUMENTS_END
+
+HEADER_MEMBER_FUNCTION_TYPE_START
+
+      //! Constructor
+          SgMemberFunctionType(SgPartialFunctionType *);
+
+      //! Performs final initialization of data members (called by constructors)
+          void post_construction_initialization();
+
+#if 1
+      //! Enum for const and volatile function modifiers
+          enum mfunc_specifier_enum
+             {
+               e_const     =     0x00000001,
+               e_volatile  =     0x00000002,
+               e_restrict  =     0x00000004
+             };
+
+       // static SgMemberFunctionType* createType(SgPartialFunctionType *);
+
+#if 0
+      //! const access/set/unset member functions for member function type
+          int isUnknownFunc();
+          void setUnknownFunc();
+
+      //! const access/set/unset member functions for member function type
+          int isDefaultFunc();
+          void setDefaultFunc();
+#endif
+      //! const access/set/unset member functions for member function type
+          int isConstFunc() const; // RV (2/1/2006): Made 'const' member
+          void setConstFunc();
+          void unsetConstFunc();
+
+      //! volatile access/set/unset member functions for member function type
+          int isVolatileFunc() const; // RV (2/1/2006): Made 'const' member
+          void setVolatileFunc();
+          void unsetVolatileFunc();
+#if 0
+      //! volatile access/set/unset member functions for member function type
+          int isRestrictFunc();
+          void setRestrictFunc();
+          void unsetRestrictFunc();
+#endif
+#endif
+
+       // void set_mfunc_specifier(unsigned long i);
+       // SgName get_mangled(SgUnparse_Info &);
+
+      //! Mangled name support for unparser
+      //  SgName get_mangled_name(SgUnparse_Info&); 
+
+      //! Mangled name support
+       // SgName get_mangled_type();
+       // RV (2/1/2006): Changed signature, and removed 'get_mangled_type()'.
+          virtual SgName get_mangled_name (void) const;
+
+      //! I forget why this is here.
+          SgMemberFunctionType * mkAnotherType(SgType *);
+
+HEADER_MEMBER_FUNCTION_TYPE_END
+
+HEADER_PARTIAL_FUNCTION_TYPE_START
+          void post_construction_initialization ();
+HEADER_PARTIAL_FUNCTION_TYPE_END
+
+HEADER_TYPEDEF_TYPE_START
+HEADER_TYPEDEF_TYPE_END
+
+
+HEADER_TYPE_INT_TYPE_START
+       // DQ (12/26/2005): C++ allows initialization in-class of static const, but it is not very portable yet.
+       // static const int maxBitLength = ROSE_INTEGER_TYPE_MAX_BIT_LENGTH;
+          static const int maxBitLength; // = ROSE_INTEGER_TYPE_MAX_BIT_LENGTH;
+
+       // DQ (12/26/2005): Supporting function for traverseMemoryPool
+       // where static IR nodes (only isn soem SgType IR nodes) are
+       // present and must be traversed using specially generated code.
+       // virtual void executeVisitorMemberFunctionOnBuiltinData(ROSE_Visitor & visitor);
+HEADER_TYPE_INT_TYPE_END
+
+HEADER_TYPE_COMPLEX_TYPE_START
+      /*! \brief Complex values come in float (32 bit), double (64 bit), and long double (128 bit).
+
+          \internal Note that the zero value is an error.
+       */
+          enum floating_point_precision_enum
+             {
+               e_errorPrecision      = 0, //!< error value (always zero within ROSE)
+               e_defaultPrecision    = 1, //!< default value (not sure if complex has a default value)
+               e_floatPrecision      = 2, //!< value for float _Complex
+               e_doublePrecision     = 3, //!< value for double _Complex
+               e_longDoublePrecision = 4, //!< value for long double _Complex
+               e_last                     //!< last value used to computing bounds
+             };
+
+      //! function returns example of type
+          static $CLASSNAME* createType($CLASSNAME::floating_point_precision_enum);
+HEADER_TYPE_COMPLEX_TYPE_END
+
+
+// #########################################################
+// #########################################################
+//                      SOURCE CODE
+// #########################################################
+// #########################################################
+
+SOURCE_CONSTRUCTOR_BODY_START
+  // JJW 10-26-2007 ensure that this object is not on the stack
+     preventConstructionOnStack(this);
+
+ //! now a call to the user defined intialization function
+     post_construction_initialization();
+SOURCE_CONSTRUCTOR_BODY_END
+
+
+SOURCE_GET_MANGLED_START
+#if 1
+/*! Support for mangled names (for unparser)
+    There are two different cases of source code for the get_mangled member function
+    This one is used in all but the classes containing a base type
+ */
+// SgName $CLASSNAME::get_mangled ( SgUnparse_Info & info )
+SgName
+$CLASSNAME::get_mangled (void) const
+   {
+     return SgName("MANGLED_ID_STRING");
+   }
+#endif
+SOURCE_GET_MANGLED_END
+
+SOURCE_GET_MANGLED_BASE_TYPE_START
+
+/*! Returns a mangled name representation of types with base types
+ *  (e.g., pointer, reference).
+ */
+SgName
+$CLASSNAME::get_mangled (void) const
+   {
+     const SgType* base_type = get_base_type();
+     ROSE_ASSERT (base_type);
+     SgName base_name = base_type->get_mangled();
+
+  // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
+  // ROSE_ASSERT (base_name.get_length ());
+     if (base_name.is_null() == true)
+        {
+       // This happens for code such as: "typedef struct {int id; } *XYZ;"
+       // printf ("Warning: In $CLASSNAME::get_mangled(), empty base type name found \n");
+          base_name = "un_named_base_type";
+        }
+     ROSE_ASSERT (base_name.is_null() == false);
+
+     SgName mangled_name;
+     mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << base_name.str () // base type
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+     return mangled_name;
+   }
+
+#if 0
+// Old version of function
+SgName
+$CLASSNAME::get_mangled ( SgUnparse_Info & info )
+   {
+     SgName tmp("MANGLED_ID_STRING");
+
+  // DQ (3/15/2005): Should be be using a qualified name???
+
+     ROSE_ASSERT(get_base_type() != NULL);
+     ROSE_ASSERT(get_base_type()->get_mangled(info).get_length() > 0);
+     tmp << get_base_type()->get_mangled(info).str();
+
+#if 0
+     printf ("###########  In $CLASSNAME::get_mangled(): tmp = %s (get_base_type() = %s is a %s) ########## \n",
+          tmp.str(),get_base_type()->get_mangled(info).str(),get_base_type()->sage_class_name());
+  // ROSE_ASSERT(false);
+#endif
+
+     return tmp;
+   }
+#endif
+
+SOURCE_GET_MANGLED_BASE_TYPE_END
+
+
+SOURCE_POINTER_MEMBER_GET_MANGLED_START
+// RV (2/3/2006): Updated this routine to use the mangling of the parent type.
+SgName
+$CLASSNAME::get_mangled (void) const
+   {
+  // Generate a pointer type _without_ the class name in it
+     string base_str = SgPointerType::get_mangled ().getString ();
+
+  // Mangle the class name
+     const SgClassDefinition* cls_def = get_class_of ();
+     ROSE_ASSERT (cls_def);
+     string cls_name = cls_def->get_mangled_name ().getString ();
+
+  // Now embed the fully qualified class name in it
+     string mangled_name (base_str);
+     const string ptr_begin_tag ("__Pb__");
+     string::size_type pos_begin = mangled_name.find (ptr_begin_tag);
+     mangled_name.replace (pos_begin, ptr_begin_tag.size (),
+                           "__PMb__" + cls_name);
+ 
+     return SgName (mangled_name.c_str ());
+   }
+
+#if 0
+// Old code
+SgName
+$CLASSNAME::get_mangled ( SgUnparse_Info& info )
+   {
+     SgName tmp("M");
+     int cnt = 0;
+     ROSE_ASSERT(get_class_of() != NULL);
+     tmp << get_class_of()->get_mangled_qualified_name(cnt).str();
+
+#if 0
+     printf ("###########  In $CLASSNAME::get_mangled(): tmp = %s (get_base_type() = %s is a %s) ########## \n",
+          tmp.str(),get_class_of()->get_mangled_qualified_name(cnt).str(),get_class_of()->sage_class_name());
+  // ROSE_ASSERT(false);
+#endif
+
+     return tmp;
+   }
+#endif
+
+SOURCE_POINTER_MEMBER_GET_MANGLED_END
+
+
+SOURCE_CONSTRUCTOR_START
+#if 0
+/*! this is the generated constructor */
+$CLASSNAME::$CLASSNAME ( INITIALIZER_LIST_SOURCE )
+   BASE_CLASS_CONSTRUCTOR_CALL
+   {
+     p_field_size = field_size;
+ //! now a call to the user defined intialization function
+     post_construction_initialization();
+   }
+#endif
+SOURCE_CONSTRUCTOR_END
+
+SOURCE_CONSTRUCTOR_WITH_BASECLASS_TAKING_PARAMETER_START
+#if 0
+/*! this is the generated constructor */
+$CLASSNAME::$CLASSNAME ( SgDeclarationStatement* declaration )
+   :BASECLASS(declaration)
+   {
+  //! now a call to the user defined intialization function
+     post_construction_initialization();
+   }
+#endif
+SOURCE_CONSTRUCTOR_WITH_BASECLASS_TAKING_PARAMETER_END
+
+SOURCE_DATA_ACCESS_FUNCTIONS_START
+#if 0
+DATA_TYPE
+$CLASSNAME::get_DATA() const
+   {
+     return p_DATA;
+   }
+
+void $CLASSNAME::set_DATA ( DATA_TYPE )
+   {
+     p_DATA = DATA;
+   }
+#endif
+SOURCE_DATA_ACCESS_FUNCTIONS_END
+
+
+SOURCE_GET_NAME_START
+//! Return the name of the type
+SgName
+$CLASSNAME::get_name() const
+   {
+     if(get_declaration())
+          return isSg$GRAMMAR_X_MARKER_ClassDeclaration(get_declaration())->get_name();
+       else 
+          return SgName((char *)0L);
+   }
+SOURCE_GET_NAME_END
+
+
+SOURCE_TYPEDEF_GET_BASE_TYPE_START
+SgType*
+$CLASSNAME::get_base_type() const
+   {
+     return (get_declaration()) ? isSg$GRAMMAR_X_MARKER_TypedefDeclaration(get_declaration())->get_base_type() : (SgType*)0L;
+   }
+SOURCE_TYPEDEF_GET_BASE_TYPE_END
+
+SOURCE_GET_BASE_TYPE_START
+SgType*
+$CLASSNAME::get_base_type() const
+   {
+     return p_base_type;
+   }
+SOURCE_GET_BASE_TYPE_END
+
+
+SOURCE_SET_BASE_TYPE_START
+void
+$CLASSNAME::set_base_type(SgType* new_val)
+   {
+     p_base_type = new_val;
+#ifndef REMOVE_SET_PARENT_FUNCTION
+     if(p_base_type)
+          p_base_type->set_parent(this);
+#endif
+   }
+SOURCE_SET_BASE_TYPE_END
+
+
+// ########################################################
+// ########################################################
+//           TYPE SPECIFIC FUNCTION DEFINITIONS
+// ########################################################
+// ########################################################
+
+SOURCE_MAIN_TYPE_START
+
+//! SgType default constructor (initializes all local variables)
+SgType::SgType()
+   : p_substitutedForTemplateParam(false),
+     p_ref_to(NULL),
+     p_ptr_to(NULL),
+     p_modifiers(NULL),
+     p_typedefs(NULL),
+     p_attributeMechanism(NULL)
+  // DQ (12/1/2007): This has been moved to the SgModifierType
+  // p_type_kind(NULL)
+   {
+     ROSE_ASSERT(p_ref_to == NULL);
+     ROSE_ASSERT(p_ptr_to == NULL);
+     ROSE_ASSERT(p_modifiers == NULL);
+     p_typedefs = new SgTypedefSeq();
+     ROSE_ASSERT(p_typedefs != NULL);
+
+  // DQ (12/1/2007): This has been moved to the SgModifierType
+  // ROSE_ASSERT(p_type_kind == NULL);
+
+  // DQ (1/25/2007): Let's try this again!
+  // DQ (6/25/2006): Commented out to allow File I/O to work, I don't understand why it is required!
+  // DQ (5/11/2006): Added to avoid NULL pointer
+     p_typedefs->set_parent(this);
+   }
+
+
+SgType::SgType(const SgType & X)
+   : p_substitutedForTemplateParam(X.p_substitutedForTemplateParam),
+     p_ref_to(X.p_ref_to), 
+     p_ptr_to(X.p_ptr_to),
+     p_modifiers(X.p_modifiers),
+     p_typedefs(X.p_typedefs),
+     p_attributeMechanism(X.p_attributeMechanism)
+  // DQ (12/1/2007): This has been moved to the SgModifierType
+  // p_type_kind(X.p_type_kind)
+   {
+  // DQ (10/17/2007): This copy constructor is built to support the AST copy mechanism where for
+  // some declarations that generate named types, the types are copied. and fixed up in a later 
+  // phase (e.g. SgClassDeclaration::fixupCopy()).
+
+  // I think if we copy X then we want to assume that it has these values, but it might
+  // be acceptable if it didn't, but then a more complex copy would be required.
+
+#if 0
+  // DQ (10/17/2007) Commented out (see copytest2007_14.C).
+     ROSE_ASSERT(p_ref_to == NULL);
+     ROSE_ASSERT(p_ptr_to == NULL);
+     ROSE_ASSERT(p_modifiers == NULL);
+  // DQ (12/1/2007): This has been moved to the SgModifierType
+  // ROSE_ASSERT(p_type_kind == NULL);
+#endif
+
+     p_typedefs = new SgTypedefSeq();
+     ROSE_ASSERT(p_typedefs != NULL);
+     p_typedefs->set_parent(this);
+   }
+
+
+#if 0
+SgType::~SgType()
+   {
+     delete p_modifiers;
+     delete p_typedefs;
+   }
+#endif
+
+// SgName $CLASSNAME::get_mangled(SgUnparse_Info& info)
+SgName
+SgType::get_mangled(void) const
+   {
+  // This should be an error, I think!
+     printf ("ERROR: base calss get_mangled functions should not be called! \n");
+     ROSE_ABORT();
+
+     return "";
+   }
+
+#if 0
+// DQ (3/2/2003): Implement get_parent from SgNode
+SgNode*
+SgType::get_parent() const
+   {
+     ROSE_ASSERT(this != NULL);
+     return NULL;   // this is the original sage 2 code (but I think it should return p_parent)
+  // return (SgType*) p_parent;
+   }
+#endif
+
+#if 0
+//! virtual functions define to return false
+//! (will be overwritten on only a few of the derived classes)
+bool SgType::isConst() const       { return false; }
+bool SgType::isVolatile() const    { return false; }
+bool SgType::isRestrict() const    { return false; }
+bool SgType::isUPC_Shared() const  { return false; }
+bool SgType::isUPC_Strict() const  { return false; }
+bool SgType::isUPC_Relaxed() const { return false; }
+#endif
+
+#if 0
+bool SgType::isExtern() const    { return false; }
+bool SgType::isTypedef() const   { return false; }
+bool SgType::isVirtual() const   { return false; }
+bool SgType::isProtected() const { return false; }
+bool SgType::isPrivate() const   { return false; }
+bool SgType::isPublic() const    { return false; }
+bool SgType::isAuto() const      { return false; }
+#endif
+
+// bool SgType::isGlobal() const    { return false; }
+// bool SgType::isSync() const      { return false; }
+
+#if 0
+// These are unimplemented within SAGE 2
+bool
+SgType::isLong() const
+   { return false; }
+
+bool
+SgType::isShort() const
+   { return false; }
+#endif
+
+#if 0
+// This codes was part of an experiment to distinguish struct tag { int x; } X; from struct tag X;
+// It turns out that the declaration of the tag in this case in placed into the EDG orphan list
+// as a type and that we don't require this mechanism (thought we might in the future so for now
+// it is just commented out.
+bool
+SgType::isFirstDeclaration() const
+   { return (p_useWithinDeclaration & e_first_declaration); }
+
+void
+SgType::setFirstDeclaration()
+   { p_useWithinDeclaration |= e_first_declaration; }
+
+void
+SgType::unsetFirstDeclaration()
+   { p_useWithinDeclaration &= ~e_first_declaration; }
+
+bool
+SgType::isAutonomousTagDeclaration() const
+   { return (p_useWithinDeclaration & e_autonomous_tag_declaration); }
+
+void
+SgType::setAutonomousTagDeclaration()
+   { p_useWithinDeclaration |= e_autonomous_tag_declaration; }
+
+void
+SgType::unsetAutonomousTagDeclaration()
+   { p_useWithinDeclaration &= ~e_autonomous_tag_declaration; }
+#endif
+
+#if 0
+SgModifierType*
+SgType::matchModifiers (unsigned int f)
+   {
+     if (p_modifiers) 
+        {
+          return p_modifiers->match(this, f);
+        } 
+       else 
+        {
+          return (p_modifiers = new SgModifierNodes())->match(this, f);
+        }
+   }
+#endif
+
+bool
+SgType::isIntegerType() const
+   {
+     const $CLASSNAME* t = this;
+     ROSE_ASSERT(t != NULL);
+
+     while (t->variant() == T_TYPEDEF)
+        {
+          t = ((SgTypedefType *) t)->get_base_type();
+          ROSE_ASSERT(t != NULL);
+        }
+
+     switch (variant())
+        {
+          case T_CHAR:	
+          case T_SIGNED_CHAR:
+          case T_UNSIGNED_CHAR:
+          case T_SHORT:
+          case T_SIGNED_SHORT:
+          case T_UNSIGNED_SHORT:
+          case T_INT:
+          case T_SIGNED_INT:
+          case T_UNSIGNED_INT:
+          case T_LONG:
+          case T_SIGNED_LONG:
+          case T_UNSIGNED_LONG:
+          case T_WCHAR:
+          case T_LONG_LONG:
+          case T_UNSIGNED_LONG_LONG:
+          case T_BOOL:
+               return true; // 1
+               break;
+          default:
+               return false; // 0
+        }
+   }
+
+bool
+SgType::isFloatType() const
+   {
+     const SgType* t = this;
+     ROSE_ASSERT(t != NULL);
+
+     while (t->variant() == T_TYPEDEF)
+          t = ((SgTypedefType *) t)->get_base_type();
+
+     switch (t->variant())
+        {
+          case T_FLOAT :
+          case T_DOUBLE:
+          case T_LONG_DOUBLE:
+               return 1;
+          default:
+               return 0;
+        }
+   }
+
+bool
+SgType::isUnsignedType() const
+   {
+     switch (variant()) 
+        {
+          case T_UNSIGNED_CHAR:
+          case T_UNSIGNED_SHORT:
+          case T_UNSIGNED_INT:
+               return 1;
+               break;
+          default:
+               return 0;
+        }
+   }
+
+SgType*
+SgType::integer_promotion(SgType * t1, SgType * t2)
+   {
+     if(!t1) return t2; 
+     if(!t2) return t1;
+
+     if (t1->variant() == T_UNSIGNED_LONG || t2->variant() == T_UNSIGNED_LONG) 
+          return SgTypeUnsignedLong::createType();
+
+  // This should only be if long can hold unsigned int, not always true!!
+     if (t1->variant() == T_UNSIGNED_INT || t2->variant() == T_UNSIGNED_INT) 
+          return SgTypeLong::createType();
+
+     if (t1->isUnsignedType()) 
+          return t1;
+       else
+          if (t2->isUnsignedType() )
+               return t2; 
+            else
+               return SgTypeInt::createType();
+   }
+
+SgType*
+SgType::float_promotion( SgType* t1, SgType* t2 )
+   {
+     if(!t1) return t2; 
+     if(!t2) return t1;
+
+     if (t1->variant() == T_LONG_DOUBLE)
+          return t1;
+       else
+          if (t2->variant() == T_LONG_DOUBLE)
+               return t2;
+            else
+               if (t1->variant() == T_DOUBLE)
+                    return t1;
+                 else
+                    if (t2->variant() == T_DOUBLE)
+                         return t2;
+                      else
+                         return t1;
+   }
+
+#if 0
+// DQ (4/5/2004): Removed since it is not used anywhere!
+SgType*
+SgType::rmModifier ( SgType* t1, int which )
+   {
+     $CLASSNAME* tmp_type = t1;
+
+     ROSE_ASSERT(t1 != NULL);
+
+     if(t1->variant()==T_MODIFIER)
+        {
+          SgModifierType *mod = (SgModifierType *) t1;
+          ROSE_ASSERT(mod != NULL);
+
+          SgType *btype = mod->get_base_type();
+
+          int modval = mod->get_bitfield();
+
+          if(mod->isSync() && (which & e_sync))
+               modval &= ~SgModifierType::m_sync;
+
+          if(mod->isGlobal() && (which & e_global))
+               modval &= ~SgModifierType::m_global;
+
+          if(mod->isConst() && (which & e_const))
+               modval &= ~SgModifierType::m_const;
+
+          tmp_type = (modval) ? SgModifierType::createType(btype,modval) : btype;
+        }
+
+     return tmp_type;
+   }
+#endif
+
+#if 0
+// DQ (4/5/2004): Removed since it is not used anywhere!
+SgType*
+SgType::addModifier(SgType *t1, int which)
+   {
+     $CLASSNAME* tmp_type = t1;
+     $CLASSNAME* btype;
+     int modval;
+
+     ROSE_ASSERT(t1 != NULL);
+
+     if(t1->variant()==T_MODIFIER)
+        {
+          SgModifierType *mod=(SgModifierType *) t1;
+          btype=mod->get_base_type();
+          modval=mod->get_bitfield();
+        }
+       else
+        {
+          btype=t1;
+          modval=0;
+        }
+
+     if(which & e_sync)   modval |= SgModifierType::m_sync;
+     if(which & e_global) modval |= SgModifierType::m_global;
+     if(which & e_const)  modval |= SgModifierType::m_const;
+
+     tmp_type = SgModifierType::createType(btype,modval);
+
+     return tmp_type;
+   }
+#endif
+
+SgType* 
+SgType::arithmetic_conversions ( SgType* t1, SgType* t2 )
+   {
+     if(!t1) return t2;
+     if(!t2) return t1;
+
+  // DQ (4/5/2004): Removed since it is the only use of rmModifier and e_sync is not used anywhere!
+  // if (isSgModifierType(t1)) t1 = rmModifier(t1,e_sync);
+  // if (isSgModifierType(t2)) t2 = rmModifier(t2,e_sync);
+
+     if (t1->isFloatType() && t2->isIntegerType()) 
+          return t1;
+
+     if (t2->isFloatType() && t1->isIntegerType()) 
+          return t2;
+
+     if (t1->isIntegerType()) 
+          return integer_promotion(t1,t2);
+       else
+          return float_promotion(t1,t2);
+   }
+
+SgType*
+SgType::dereference() 
+   {
+  // This function does not recursively decend into types, so it should not use the lower 
+  // level SgType::stripType() member function.
+
+     SgType* t = this;
+     ROSE_ASSERT(t != NULL);
+     while (t->variant() == T_TYPEDEF)
+          t = ((SgTypedefType *) t)->get_base_type();
+
+     if (t->variant() == T_POINTER)
+          return ((SgPointerType *) t)->get_base_type();
+       else
+          if (t->variant() == T_REFERENCE) 
+               return ((SgReferenceType *) t)->get_base_type();
+            else
+               if(t->variant() == T_ARRAY)
+                    return ((SgArrayType *) t)->get_base_type();
+                 else
+                    return (SgType*)t;
+   }
+
+SgType*
+SgType::stripTypedefsAndModifiers() const
+   {
+  // DQ (6/30/2005): This function answers the question of what type is this? It recursively 
+  // strips away typedefs until we reach something not typedefeds, thus we stop at any pointer 
+  // or references (but not modifiers).
+#if 0
+     SgType *returnType = const_cast<SgType*>(this);
+     ROSE_ASSERT(returnType != NULL);
+
+     SgTypedefType* typedefType   = isSgTypedefType(returnType);
+     SgModifierType* modifierType = isSgModifierType(returnType);
+     while (typedefType != NULL || modifierType != NULL)
+  // while (isSgTypedefType(returnType) != NULL || isSgModifierType(returnType) != NULL)
+        {
+          if (typedefType != NULL)
+             {
+               returnType = typedefType->get_base_type();
+             }
+          if (modifierType != NULL)
+             {
+               returnType = modifierType->get_base_type();
+             }
+
+       // reset the typedefType and modifierType variables
+          typedefType  = isSgTypedefType(returnType);
+          modifierType = isSgModifierType(returnType);          
+        }
+
+     ROSE_ASSERT (returnType != NULL);
+
+     return returnType;
+#else
+  // DQ (10/11/2007): Modified this function to use SgType::stripType().
+  // This uses a subset of the possible or'd values available with SgType::stripType()
+     return stripType(STRIP_MODIFIER_TYPE | STRIP_TYPEDEF_TYPE);
+#endif
+   }
+
+SgType*
+SgType::findBaseType() const
+   {
+#if 0
+// Cast away const of "this" pointer
+     SgType* currentType = (SgType*) this;
+
+     SgModifierType*  modType     = NULL;
+     SgPointerType*   pointType   = NULL;
+     SgReferenceType* refType     = NULL;
+     SgArrayType*     arrayType   = NULL;
+     SgTypedefType*   typedefType = NULL;
+
+
+     while (true)
+	{
+
+	
+	  if ( modType = isSgModifierType(currentType) )
+	     {
+         	 currentType = modType->get_base_type();
+	     }
+	  else if ( (refType = isSgReferenceType(currentType)) )
+	     {
+	       currentType = refType->get_base_type();
+	     }
+	  else if ( (pointType = isSgPointerType(currentType)) )
+	     {
+	       currentType = pointType->get_base_type();
+	     }
+	  else if ( (arrayType = isSgArrayType(currentType)) )
+	     {
+	       currentType = arrayType->get_base_type();
+	     }
+	  else if ( (typedefType = isSgTypedefType(currentType)) )
+	     {
+	    // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
+
+	       currentType = typedefType->get_base_type();
+	     }
+	  else {
+	    // Exit the while(true){} loop!
+	       break;
+	  }
+
+	}
+#else
+  // This uses the default value for SgType::stripType(), namely 
+  // (bit_array == STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
+     return stripType();
+#endif
+   }
+
+SgType*
+SgType::stripType(unsigned char bit_array) const
+   {
+  // This function forms the low level support for both SgType::findBaseType() 
+  // and SgType::stripTypedefsAndModifiers().  It takes a default valued 
+  // bit_array == (STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE)
+  // Alternatively any of these value may be ORed together to for other combinations.
+
+  // Cast away const of "this" pointer
+     SgType* currentType = (SgType*) this;
+
+     SgModifierType*  modType     = NULL;
+     SgPointerType*   pointType   = NULL;
+     SgReferenceType* refType     = NULL;
+     SgArrayType*     arrayType   = NULL;
+     SgTypedefType*   typedefType = NULL;
+
+     while (true)
+        {
+          if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
+             {
+               currentType = modType->get_base_type();
+             }
+            else
+             {
+               if ( (bit_array & STRIP_REFERENCE_TYPE) &&  (refType = isSgReferenceType(currentType)) )
+                  {
+                    currentType = refType->get_base_type();
+                  }
+                 else
+                  {
+                    if ( (bit_array & STRIP_POINTER_TYPE) && (pointType = isSgPointerType(currentType)) )
+                       {
+                         currentType = pointType->get_base_type();
+                       }
+                      else
+                       {
+                         if ( (bit_array & STRIP_ARRAY_TYPE) && (arrayType = isSgArrayType(currentType)) )
+                            {
+                              currentType = arrayType->get_base_type();
+                            }
+                           else
+                            {
+                              if ( (bit_array & STRIP_TYPEDEF_TYPE) && (typedefType = isSgTypedefType(currentType)) )
+                                 {
+                                // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
+                                   currentType = typedefType->get_base_type();
+                                 }
+                                else
+                                 {
+                                // Exit the while(true){} loop!
+                                   break;
+                                 }
+                            }
+                       }
+                  }
+             }
+        }
+
+     return currentType;
+   }
+
+#if 0
+SgType*
+SgType::stripType() const
+   {
+  // DQ (6/21/2005): strip type of all typedefs, modifiers, pointers, references, and array typing
+     SgType* returnType = ($CLASSNAME*) this;
+     while ( (isSgTypedefType(returnType) != NULL) || 
+             (isSgPointerType(returnType) != NULL) || 
+             (isSgModifierType(returnType) != NULL) || 
+             (isSgReferenceType(returnType) != NULL) || 
+             (isSgArrayType(returnType) != NULL) )
+        {
+          returnType = returnType->findBaseType();
+          ROSE_ASSERT (returnType != NULL);
+       // printf ("In stripType(): returnType = %s hidden behind this = %s \n",returnType->sage_class_name(),sage_class_name());
+        }
+
+     return returnType;
+   }
+#endif
+
+
+SgName
+SgType::mangledNameSupport(SgName & fname, SgUnparse_Info & info) 
+   {
+  // DQ (4/27/2005): This protected function refactors code located into two places into a single implementation!
+     SgName rtmp;
+
+  // This only makes sense to call from either the SgFunctionType or the SgMemberFunctionType
+     ROSE_ASSERT(isSgFunctionType(this) != NULL || isSgMemberFunctionType(this) != NULL);
+
+     int len = fname.getString().size();
+     std::string opstr  = "operator";
+     std::string newstr = "new";
+     std::string delstr = "delete";
+     unsigned int m = opstr.size();
+
+  // printf ("In SgType::mangledNameSupport(): class_name = %s len = %d m = %d fname = %s \n",sage_class_name(),len,m,fname.str());
+
+     if (len > 0 && fname.getString().substr(0, m) == opstr)
+        {
+          if (fname.getString()[m]==' ')
+             {
+            // DQ (4/27/2005): "m+2" should be "m+1"
+               if (fname.getString().substr(m + 1, newstr.size()) == newstr)
+                  {
+                 // DQ (4/27/2005): Added support for array new
+                    int parenStart = m+1+newstr.size();
+                    if (len > parenStart && fname.getString().substr(parenStart, 2) == "[]")
+                         rtmp << "__na";
+                      else
+                         rtmp << "__nw";
+                  }
+                 else
+                  {
+                 // DQ (4/27/2005): Added support for array delete
+                    if (fname.getString().substr(m + 1, delstr.size()) == delstr)
+                       {
+                         int deleteStringLength = delstr.size();
+                         int parenStart = m+1+deleteStringLength;
+                         if (len > parenStart && fname.getString().substr(parenStart, 2) == "[]")
+                              rtmp << "__da";
+                           else
+                              rtmp << "__dl";
+                       }
+                      else
+                       {
+                      // DQ (4/27/2005): Not clear where this is used (unless it is used in casting operators)!
+                      // This is the only part that is dependent upon either the SgFunctionType or SgMemberFunctionType.
+                         SgFunctionType *functionType = isSgFunctionType(this);
+                         ROSE_ASSERT(functionType != NULL);
+                         ROSE_ASSERT(functionType->get_return_type() != NULL);
+
+                         rtmp << "__op" << functionType->get_return_type()->get_mangled().str();
+                       }
+                  }
+             }
+            else
+             {
+            // real operator (suffix after the substring "operator ")
+
+            // I think that this case could be used to handle "operator new", "operator new[]",
+            // "operator delete", and "operator delete[]".
+
+               SgName opname=&(fname.str()[m]);
+
+               if (opname == SgName("->"))     rtmp << "__rf";
+               else if (opname==SgName("->*")) rtmp << "__rm";
+               else if (opname==SgName("=="))  rtmp << "__eq";
+               else if (opname==SgName("<"))   rtmp << "__lt";
+               else if (opname==SgName(">"))   rtmp << "__gt";
+               else if (opname==SgName("!="))  rtmp << "__ne";
+               else if (opname==SgName("<="))  rtmp << "__le";
+               else if (opname==SgName(">="))  rtmp << "__ge";
+               else if (opname==SgName("+"))   rtmp << "__pl";
+               else if (opname==SgName("-"))   rtmp << "__mi";
+               else if (opname==SgName("*"))   rtmp << "__ml";
+               else if (opname==SgName("/"))   rtmp << "__dv";
+               else if (opname==SgName("%"))   rtmp << "__md";
+               else if (opname==SgName("&&"))  rtmp << "__aa";
+               else if (opname==SgName("!"))   rtmp << "__nt";
+               else if (opname==SgName("||"))  rtmp << "__oo";
+               else if (opname==SgName("^"))   rtmp << "__er";
+               else if (opname==SgName("&"))   rtmp << "__ad";
+               else if (opname==SgName("|"))   rtmp << "__or";
+               else if (opname==SgName(","))   rtmp << "__cm";
+               else if (opname==SgName("<<"))  rtmp << "__ls";
+               else if (opname==SgName(">>"))  rtmp << "__rs";
+               else if (opname==SgName("--"))  rtmp << "__mm";
+               else if (opname==SgName("++"))  rtmp << "__pp";
+               else if (opname==SgName("~"))   rtmp << "__co";
+               else if (opname==SgName("="))   rtmp << "__as";
+               else if (opname==SgName("+="))  rtmp << "__apl";
+               else if (opname==SgName("-="))  rtmp << "__ami";
+               else if (opname==SgName("&="))  rtmp << "__aad";
+               else if (opname==SgName("|="))  rtmp << "__aor";
+               else if (opname==SgName("*="))  rtmp << "__amu";
+               else if (opname==SgName("/="))  rtmp << "__adv";
+               else if (opname==SgName("%="))  rtmp << "__amd";
+               else if (opname==SgName("^="))  rtmp << "__aer";
+               else if (opname==SgName("<<=")) rtmp << "__als";
+               else if (opname==SgName(">>=")) rtmp << "__ars";
+               else if (opname==SgName("()"))  rtmp << "__cl";
+               else if (opname==SgName("[]"))  rtmp << "__xi";
+               else
+                  {
+                 // printf ("In SgType::mangledNameSupport(): This case should never be reached (fname = %s) \n",fname.str());
+                 // ROSE_ASSERT(false);
+
+                 // DQ (1/8/2006): This is the case of a name that just happends to start with 
+                 // the work "operator" (e.g. operator_takes_lvalue_operand, in test2005_198.C)
+                 // the mangle form is just the unmodified function name.
+                    rtmp = fname;
+                  }
+             }
+        }
+       else
+          rtmp << fname.str();
+
+     return rtmp;
+   }
+SOURCE_MAIN_TYPE_END
+
+
+SOURCE_BUILTIN_TYPE_SUPPORT_START
+
+#if 0
+// DQ (12/26/2005): Supporting function for traverseMemoryPool
+// where static IR nodes (only isn soem SgType IR nodes) are
+// present and must be traversed using specially generated code.
+void
+$CLASSNAME::executeVisitorMemberFunctionOnBuiltinData(ROSE_Visitor & visitor)
+   {
+     $CLASSNAME::builtin_type.executeVisitorMemberFunction(visitor);
+   }
+#endif
+
+SOURCE_BUILTIN_TYPE_SUPPORT_END
+
+
+SOURCE_TYPE_UNKNOWN_TYPE_START
+SOURCE_TYPE_UNKNOWN_TYPE_END
+
+
+SOURCE_TYPE_CHAR_TYPE_START
+SOURCE_TYPE_CHAR_TYPE_END
+
+
+SOURCE_TYPE_SIGNED_CHAR_TYPE_START
+SOURCE_TYPE_SIGNED_CHAR_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_CHAR_TYPE_START
+SOURCE_TYPE_UNSIGNED_CHAR_TYPE_END
+
+
+SOURCE_TYPE_SHORT_TYPE_START
+SOURCE_TYPE_SHORT_TYPE_END
+
+
+SOURCE_TYPE_SIGNED_SHORT_TYPE_START
+SOURCE_TYPE_SIGNED_SHORT_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_SHORT_TYPE_START
+SOURCE_TYPE_UNSIGNED_SHORT_TYPE_END
+
+
+SOURCE_TYPE_INT_TYPE_START
+SOURCE_TYPE_INT_TYPE_END
+
+
+SOURCE_TYPE_SIGNED_INT_TYPE_START
+SOURCE_TYPE_SIGNED_INT_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_INT_TYPE_START
+SOURCE_TYPE_UNSIGNED_INT_TYPE_END
+
+
+SOURCE_TYPE_LONG_TYPE_START
+SOURCE_TYPE_LONG_TYPE_END
+
+
+SOURCE_TYPE_SIGNED_LONG_TYPE_START
+SOURCE_TYPE_SIGNED_LONG_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_LONG_TYPE_START
+SOURCE_TYPE_UNSIGNED_LONG_TYPE_END
+
+
+SOURCE_TYPE_VOID_TYPE_START
+SOURCE_TYPE_VOID_TYPE_END
+
+
+SOURCE_TYPE_GLOBAL_VOID_TYPE_START
+SOURCE_TYPE_GLOBAL_VOID_TYPE_END
+
+
+SOURCE_TYPE_WCHAR_TYPE_START
+
+SOURCE_TYPE_WCHAR_TYPE_END
+
+
+SOURCE_TYPE_FLOAT_TYPE_START
+SOURCE_TYPE_FLOAT_TYPE_END
+
+
+SOURCE_TYPE_DOUBLE_TYPE_START
+SOURCE_TYPE_DOUBLE_TYPE_END
+
+
+SOURCE_TYPE_LONG_LONG_TYPE_START
+SOURCE_TYPE_LONG_LONG_TYPE_END
+
+
+SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_START
+SOURCE_TYPE_UNSIGNED_LONG_LONG_TYPE_END
+
+
+SOURCE_TYPE_LONG_DOUBLE_TYPE_START
+SOURCE_TYPE_LONG_DOUBLE_TYPE_END
+
+
+SOURCE_TYPE_STRING_TYPE_START
+SOURCE_TYPE_STRING_TYPE_END
+
+
+SOURCE_TYPE_BOOL_TYPE_START
+SOURCE_TYPE_BOOL_TYPE_END
+
+
+SOURCE_TYPE_COMPLEX_TYPE_START
+SOURCE_TYPE_COMPLEX_TYPE_END
+
+
+SOURCE_TYPE_DEFAULT_TYPE_START
+SOURCE_TYPE_DEFAULT_TYPE_END
+
+
+SOURCE_POINTER_TYPE_START
+SOURCE_POINTER_TYPE_END
+
+
+SOURCE_POINTER_MEMBER_TYPE_START
+SOURCE_POINTER_MEMBER_TYPE_END
+
+
+SOURCE_REFERENCE_TYPE_START
+SOURCE_REFERENCE_TYPE_END
+
+
+SOURCE_NAMED_TYPE_START
+// DQ (12/21/2005): Build the static empty list to use as a default argument for the SgQualifiedNameType constructor
+// SgQualifiedNamePtrList SgNamedType::p_defaultQualifiedNamePtrList;
+
+SgNamedType::SgNamedType ( const SgNamedType & X )
+   {
+     p_declaration            = X.p_declaration;
+ 	  p_autonomous_declaration = X.p_autonomous_declaration;
+
+     ROSE_ASSERT(p_declaration != NULL);
+   }
+
+SgName
+SgNamedType::get_name() const
+   {
+     printf ("Error: base class $CLASSNAME::get_name() called! \n");
+     ROSE_ABORT();
+
+     return SgName();
+   }
+
+
+SgName
+SgNamedType::get_qualified_name() const
+   {
+  // DQ (10/15/2004): This function is similar to the one for SgClassDeclaration.
+  // This function calls get_scope() which uses the parent pointers, thus 
+  // it should not be called before the parent pointers are set (within the AST fixup after 
+  // the Sage III AST is fully constructed).
+
+  // printf ("In $CLASSNAME::get_qualified_name() for %p = %s name = %s \n",this,sage_class_name(),get_name().str());
+
+     ROSE_ASSERT(get_declaration() != NULL);
+
+  // DQ (6/23/2005): This does not appear to be required any more (I think)
+  // ROSE_ASSERT(get_declaration()->get_parent() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_qualified_name() get_declaration() = %p = %s at: \n",get_declaration(),get_declaration()->sage_class_name());
+     get_declaration()->get_file_info()->display("In $CLASSNAME::get_qualified_name(): location of declaration");
+#endif
+
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_declaration()->get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+  // printf ("In $CLASSNAME::get_qualified_name(): scope->sage_class_name() = %s \n",scope->sage_class_name());
+
+     SgName returnName = SgName::assembleQualifiedName(scope->get_qualified_name(),get_name());
+
+  // printf ("In $CLASSNAME::get_qualified_name() returnName = %s \n",returnName.str());
+
+  // printf ("Exiting at end of $CLASSNAME::get_qualified_name() \n");
+  // ROSE_ASSERT(false);
+
+     return returnName;
+   }
+
+SOURCE_NAMED_TYPE_END
+
+
+SOURCE_CLASS_TYPE_START
+SgClassType::SgClassType ( const SgClassType & X )
+   : SgNamedType(X)
+   {
+   }
+
+
+SgName
+SgClassType::get_name() const
+   {
+     if(get_declaration()) 
+          return isSg$GRAMMAR_X_MARKER_ClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+#if 0
+SgName
+$CLASSNAME::get_mangled(SgUnparse_Info&)
+   {
+     return get_name();
+   }
+#endif
+
+// RV (1/31/2006): Changed behavior to return a fully-qualified, mangled name.
+/*! Returns a mangled name (with embedded, mangled qualifiers).
+ *  \note If the class is anonymous, e.g.,
+ *    typedef struct { int a; char b; } tag_t;
+ *  then this routine returns an empty name.
+ */
+SgName
+$CLASSNAME::get_mangled (void) const
+   {
+     SgName mangled_name;
+     if (get_name ().get_length () != 0) // not anonymous
+       {
+         const SgClassDeclaration* cls_decl = isSgClassDeclaration (get_declaration ());
+         if (cls_decl)
+           mangled_name = cls_decl->get_mangled_name ();
+       }
+     return mangled_name;
+   }
+
+#if 0
+// Older code
+SgName
+$CLASSNAME::get_mangled(SgUnparse_Info&)
+   {
+     SgName tmp;
+  // todo: what should be done when the class name is nil (anonymous class?)
+
+#if 0
+     SgName name = get_name();
+     if (!name.is_null())
+        {
+          tmp << strlen(name.str()) << name.str();
+        }
+#else
+     SgName name = get_qualified_name();
+  // printf ("Using get_qualified_name() instead of get_name() in get_mangled() name = %s \n",name.str());
+     if (!name.is_null())
+        {
+       // DQ (6/23/2005): type names put into the symbol table (function symbol table) should be name qualified (maybe)
+       // tmp << strlen(get_name().str()) << get_name().str();
+       // tmp << strlen(get_mangled_name().str()) << get_mangled_name().str();
+          tmp << strlen(name.str()) << name.str();
+        }
+#endif
+
+     return tmp;
+   }
+#endif
+
+SOURCE_CLASS_TYPE_END
+
+SOURCE_TEMPLATE_TYPE_START
+
+SOURCE_TEMPLATE_TYPE_END
+
+
+SOURCE_ENUM_TYPE_START
+
+SgEnumType::SgEnumType ( const SgEnumType & X )
+   : SgNamedType(X)
+   {
+   }
+
+SgName
+SgEnumType::get_name() const
+   {
+     if(get_declaration())
+          return isSgEnumDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// RV (2/1/2006): Updated to use the declaration's mangling routine.
+SgName
+SgEnumType::get_mangled (void) const
+    {
+     const SgEnumDeclaration* decl = isSgEnumDeclaration (get_declaration());
+     ROSE_ASSERT (decl);
+     return decl->get_mangled_name ();
+   }
+
+#if 0
+// Older code 
+SgName
+SgEnumType::get_mangled(SgUnparse_Info&)
+   {
+  // DQ (6/23/2005): Use the qualified name here
+  // return get_name();
+     return get_qualified_name();
+   }
+#endif
+
+SOURCE_ENUM_TYPE_END
+
+
+SOURCE_TYPEDEF_TYPE_START
+
+SgTypedefType::SgTypedefType ( const SgTypedefType & X )
+// : SgNamedType(X.get_declaration())
+   : SgNamedType(X), p_parent_scope(X.p_parent_scope)
+   {
+  // DQ (10/18/2007): This copy constructor is to support the AST copy mechansim, specifically 
+  // to permit the SgTypedefSeq to be updated with new copies of SgTypedefType objects.
+
+  // DQ (10/19/2007): Make sure that this is true (though we could not test it before building the base class.
+     ROSE_ASSERT( X.get_declaration() != NULL);
+
+  // Typedefs need to setup the fixup the SgTypedefSeq list.
+     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(X.get_declaration());
+     ROSE_ASSERT( typedefDeclaration != NULL);
+     SgType* baseType = typedefDeclaration->get_base_type();
+     ROSE_ASSERT(baseType != NULL);
+
+  // Fixup the SgTypedefSeq object.
+     baseType->get_typedefs()->append_typedef(this);
+   }
+
+SgName
+SgTypedefType::get_name() const
+   {
+     if (get_declaration() != NULL)
+        {
+          return isSgTypedefDeclaration(get_declaration())->get_name();
+        }
+       else
+        {
+          printf ("Warning: Returning an empty name from $CLASSNAME::get_name() \n");
+          return SgName((char *)0L);
+        }
+   }
+
+SgType*
+SgTypedefType::get_base_type() const
+   {
+  // DQ (6/30/2005): Added assertion (I think this makes sense!)
+     ROSE_ASSERT(isSgTypedefDeclaration(get_declaration()) != NULL);
+     return (get_declaration() != NULL) ? isSgTypedefDeclaration(get_declaration())->get_base_type() : NULL;
+   }
+
+// RV (2/1/2006): Updated to use the declaration's mangling routine.
+SgName
+SgTypedefType::get_mangled (void) const
+   {
+     const SgTypedefDeclaration* decl = isSgTypedefDeclaration (get_declaration());
+     ROSE_ASSERT (decl);
+     return decl->get_mangled_name();
+   }
+
+SOURCE_TYPEDEF_TYPE_END
+
+
+SOURCE_MODIFIER_TYPE_START
+
+// mask some bit on or off
+// void set_modifier   (int flag);
+// void unset_modifier (int flag);
+
+SgTypeModifier &
+SgModifierType::get_typeModifier ()
+   {
+     assert (this != NULL);
+     return p_typeModifier;
+   }
+
+// RV (2/2/2006): Created this 'const' version.
+const SgTypeModifier &
+SgModifierType::get_typeModifier (void) const
+   {
+     assert (this != NULL);
+     return p_typeModifier;
+   }
+
+#if 0
+bool
+SgModifierType::isSync() const
+   {
+  // CC++ specific modifier!
+     return p_bitfield & m_sync; 
+   }
+
+bool
+SgModifierType::isGlobal() const
+   { return p_bitfield & m_global; }
+#endif
+#if 0
+void
+SgModifierType::unsetSync()
+   { p_bitfield &= ~m_sync; }
+
+void
+SgModifierType::setSync()
+   {
+  // DQ (12/7/2003): != is meaningless
+  // p_bitfield != m_sync; 
+     p_bitfield |= m_sync; 
+   }
+
+void
+SgModifierType::unsetGlobal()
+   { p_bitfield &= ~m_global; }
+
+void
+SgModifierType::setGlobal()
+   { 
+  // DQ (12/7/2003): != is meaningless
+  // p_bitfield != m_global; 
+     p_bitfield |= m_global; 
+   }
+#endif
+
+#if 0
+// Access the function at the lower level typeModifier, storageModifier, or accessModifier objects
+bool $CLASSNAME::isRestrict() const    { return p_typeModifier.isRestrict(); }
+bool $CLASSNAME::isConst() const       { return p_typeModifier.get_constVolatileModifier().isConst(); }
+bool $CLASSNAME::isVolatile() const    { return p_typeModifier.get_constVolatileModifier().isVolatile(); }
+bool $CLASSNAME::isUPC_Shared() const  { return p_typeModifier.get_upcModifier().isUPC_Shared(); }
+bool $CLASSNAME::isUPC_Strict() const  { return p_typeModifier.get_upcModifier().isUPC_Strict(); }
+bool $CLASSNAME::isUPC_Relaxed() const { return p_typeModifier.get_upcModifier().isUPC_Relaxed(); }
+
+void $CLASSNAME::unsetRestrict()    { p_typeModifier.unsetRestrict(); }
+void $CLASSNAME::setRestrict()      { p_typeModifier.setRestrict(); }
+#endif
+
+#if 0
+void $CLASSNAME::unsetConst()       { p_typeModifier.get_constVolatileModifier().unsetConst(); }
+void $CLASSNAME::setConst()         { p_typeModifier.get_constVolatileModifier().setConst();   }
+void $CLASSNAME::unsetVolatile()    { p_typeModifier.get_constVolatileModifier().unsetVolatile(); }
+void $CLASSNAME::setVolatile()      { p_typeModifier.get_constVolatileModifier().setVolatile();   }
+void $CLASSNAME::unsetUPC_Shared()  { p_typeModifier.get_upcModifier().unsetUPC_Shared(); }
+void $CLASSNAME::setUPC_Shared()    { p_typeModifier.get_upcModifier().setUPC_Shared(); }
+void $CLASSNAME::unsetUPC_Strict()  { p_typeModifier.get_upcModifier().unsetUPC_Strict(); }
+void $CLASSNAME::setUPC_Strict()    { p_typeModifier.get_upcModifier().setUPC_Strict(); }
+void $CLASSNAME::unsetUPC_Relaxed() { p_typeModifier.get_upcModifier().unsetUPC_Relaxed(); }
+void $CLASSNAME::setUPC_Relaxed()   { p_typeModifier.get_upcModifier().setUPC_Relaxed(); }
+#endif
+
+#if 0
+bool $CLASSNAME::isExtern() const      { return p_storageModifier.isExtern(); }
+bool $CLASSNAME::isStatic() const      { return p_storageModifier.isStatic(); }
+bool $CLASSNAME::isAuto() const        { return p_storageModifier.isAuto(); }
+bool $CLASSNAME::isUnspecified() const { return p_storageModifier.isUnspecified(); }
+bool $CLASSNAME::isTypedef() const     { return p_storageModifier.isTypedef(); }
+bool $CLASSNAME::isRegister() const    { return p_storageModifier.isRegister(); }
+bool $CLASSNAME::isAsm() const         { return p_storageModifier.isAsm(); }
+bool $CLASSNAME::isVirtual() const     { return p_accessModifier.isVirtual(); }
+bool $CLASSNAME::isProtected() const   { return p_accessModifier.isProtected(); }
+bool $CLASSNAME::isPrivate() const     { return p_accessModifier.isPrivate(); }
+bool $CLASSNAME::isPublic() const      { return p_accessModifier.isPublic(); }
+
+void $CLASSNAME::setExtern()        { p_storageModifier.setExtern(); }
+void $CLASSNAME::setStatic()        { p_storageModifier.setStatic(); }
+void $CLASSNAME::setAuto()          { p_storageModifier.setAuto();   }
+void $CLASSNAME::setUnspecified()   { p_storageModifier.setUnspecified(); }
+void $CLASSNAME::setTypedef()       { p_storageModifier.setTypedef(); }
+void $CLASSNAME::setRegister()      { p_storageModifier.setRegister(); }
+void $CLASSNAME::setAsm()           { p_storageModifier.setAsm(); }
+void $CLASSNAME::setPrivate()       { p_accessModifier.setPrivate(); }
+void $CLASSNAME::setProtected()     { p_accessModifier.setProtected(); }
+void $CLASSNAME::setPublic()        { p_accessModifier.setPublic(); }
+void $CLASSNAME::setVirtual()       { p_accessModifier.setVirtual(); }
+#endif
+
+#if 0
+unsigned int
+SgModifierType::bitfield(void)
+   { return p_bitfield; }
+#endif
+
+// RV (1/31/2006): Removed dependence on SgUnparse_Info
+SgName
+SgModifierType::get_mangled (void) const
+   {
+     SgName mangled_name;
+
+     const SgTypeModifier& type_mod = get_typeModifier ();
+     const SgConstVolatileModifier& cv_mod =
+       type_mod.get_constVolatileModifier ();
+     const SgUPC_AccessModifier& upc_mod =
+       type_mod.get_upcModifier ();
+ 
+     if (cv_mod.isConst())       mangled_name << "C";
+     if (cv_mod.isVolatile())    mangled_name << "V";
+  // DQ (4/22/2004): Removed support for CC++
+  // if (isSync())        mangled_name << "SYN";
+  // if (isGlobal())      mangled_name << "GLB";
+     if (type_mod.isRestrict())    mangled_name << "RST";
+     if (upc_mod.isUPC_Shared())  mangled_name << "SHD";
+     if (upc_mod.isUPC_Strict())  mangled_name << "STR";
+     if (upc_mod.isUPC_Relaxed()) mangled_name << "RLX";
+ 
+     mangled_name << get_base_type ()->get_mangled ().str ();
+     return mangled_name;
+   }
+
+#if 0
+// Older code
+SgName
+SgModifierType::get_mangled(SgUnparse_Info& info)
+   {
+     SgName tmp;
+     if (get_typeModifier().get_constVolatileModifier().isConst())       tmp << "C";
+     if (get_typeModifier().get_constVolatileModifier().isVolatile())    tmp << "V";
+  // DQ (4/22/2004): Removed support for CC++
+  // if (isSync())        tmp << "SYN";
+  // if (isGlobal())      tmp << "GLB";
+     if (get_typeModifier().isRestrict())    tmp << "RST";
+     if (get_typeModifier().get_upcModifier().isUPC_Shared())  tmp << "SHD";
+     if (get_typeModifier().get_upcModifier().isUPC_Strict())  tmp << "STR";
+     if (get_typeModifier().get_upcModifier().isUPC_Relaxed()) tmp << "RLX";
+
+     tmp << get_base_type()->get_mangled(info).str();
+
+     return tmp;
+   }
+#endif
+
+SOURCE_MODIFIER_TYPE_END
+
+
+SOURCE_QUALIFIED_NAME_TYPE_START
+// DQ (12/21/2005): Build the static empty list to use as a default argument for the SgQualifiedNameType constructor
+// SgQualifiedNamePtrList SgQualifiedNameType::p_defaultQualifiedNamePtrList;
+
+SgQualifiedNamePtrList &
+SgQualifiedNameType::get_qualifiedNameList()
+   {
+     return p_qualifiedNameList;
+   }
+
+const SgQualifiedNamePtrList &
+SgQualifiedNameType::get_qualifiedNameList() const
+   {
+     return p_qualifiedNameList;
+   }
+
+void
+SgQualifiedNameType::set_qualifiedNameList( const SgQualifiedNamePtrList & x )
+   {
+     p_qualifiedNameList = x;
+   }
+
+SgName
+SgQualifiedNameType::get_prefix() const
+   {
+     SgName tmp;
+
+#if 1
+     SgQualifiedNamePtrList::const_iterator i = p_qualifiedNameList.begin();
+     while(i != p_qualifiedNameList.end())
+        {
+          printf ("Found a qualified name \n");
+          if (isSgGlobal((*i)->get_scope()) != NULL)
+             {
+               printf ("Output the global scope qualifier \n");
+               tmp << "::";
+             }
+            else
+             {
+            // Use the generated name until we are ready to select between generated or stored qualified names
+               printf ("Use the generated name until we are ready to select between generated or stored qualified names \n");
+             }
+          i++;
+        }
+#else
+     printf ("Error: SgQualifiedNameType::get_prefix() not used! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return tmp;
+   }
+
+#if 1
+// SgName $CLASSNAME::get_mangled (SgUnparse_Info & info)
+SgName
+SgQualifiedNameType::get_mangled (void) const
+   {
+     SgName tmp;
+
+  // DQ (6/23/2005): Get the name (and qualified name) of the type into the mangled name
+  // info.set_name();
+  // printf ("In $CLASSNAME::get_mangled_type(): calling info.set_PrintName() \n");
+  // info.set_PrintName();
+  // ROSE_ASSERT(info.PrintName() == true);
+
+  // return get_mangled (SgNO_UNPARSE_INFO);
+
+  // printf ("WARNING: The generated name in SgQualifiedNameType::get_mangled() should use a prefix generated from mangled names \n");
+
+#if 1
+  // SgName qualifiedName = get_prefix();
+
+  // tmp << qualifiedName.str() << get_base_type()->get_mangled(info).str();
+
+  // DQ (10/10/2006): The base_type should be fully qualified before mangling, so I don't think we need the prefix!
+  // tmp << qualifiedName.str() << get_base_type()->get_mangled().str();
+     tmp << "qualified_name_" << get_base_type()->get_mangled().str();
+#else
+     printf ("Error: SgQualifiedNameType::get_mangled() not used! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return tmp;
+   }
+#endif
+
+SOURCE_QUALIFIED_NAME_TYPE_END
+
+
+SOURCE_FUNCTION_TYPE_START
+
+// Specialized constructor
+SgFunctionType::SgFunctionType(SgPartialFunctionType *ft)
+   {
+     assert(ft != NULL);
+     p_return_type      = ft->p_return_type;
+     p_has_ellipses     = ft->p_has_ellipses;
+
+#if 0
+     p_orig_return_type = ft->p_return_type;
+
+  // DQ (6/25/2006): Handle the allocation of the SgFunctionParameterTypeList in one place if possible!
+  // This is part of debugging the AST File I/O.
+
+  /* process argument type */
+     p_argument_list = new SgFunctionParameterTypeList();
+     ROSE_ASSERT(p_argument_list != NULL);
+
+  // DQ (5/11/2006): Set the parent to avoid having NULL pointers
+     p_argument_list->set_parent(this);
+#else
+     post_construction_initialization();
+#endif
+
+     SgTypePtrList::iterator p = ft->get_arguments().begin();
+  // printf ("PartialFunctionType->get_arguments().size() = %zu \n",ft->get_arguments().size());
+     while(p != ft->get_arguments().end())
+        {
+       // printf ("     function argument = %p = %s \n",*p,(*p)->sage_class_name());
+          append_argument((*p));
+          p++;
+        }
+   }
+
+void
+SgFunctionType::post_construction_initialization () 
+   {
+     p_orig_return_type = NULL;
+     p_argument_list    = new SgFunctionParameterTypeList();
+     ROSE_ASSERT(p_argument_list != NULL);
+
+  // DQ (6/25/2006): Commented out to allow File I/O to work, I don't understand why it is required!
+  // DQ (5/11/2006): Set the parent to avoid having NULL pointers
+     p_argument_list->set_parent(this);
+
+  // DQ (6/22/2006): Initialize the orig_return_type
+     ROSE_ASSERT(p_return_type != NULL);
+     set_orig_return_type(p_return_type);
+     ROSE_ASSERT(p_orig_return_type != NULL);
+
+   }
+
+const SgTypePtrList & 
+SgFunctionType::get_arguments() const 
+   { return p_argument_list->get_arguments(); }
+
+SgTypePtrList & 
+SgFunctionType::get_arguments() 
+   { return p_argument_list->get_arguments(); }
+
+void
+SgFunctionType::append_argument( SgType* what) 
+   {
+    p_argument_list->append_argument(what);
+   }
+
+void
+SgFunctionType::insert_argument(const SgTypePtrList::iterator& where, SgType* what)
+   {
+     p_argument_list->insert_argument(where,what);
+   }
+
+
+// RV (1/31/2006): Changed the form of the mangled name.
+SgName
+SgFunctionType::get_mangled (void) const
+   {
+  // process argument type
+     const SgTypePtrList& args = get_arguments ();
+     SgName arg_names = mangleTypes (args.begin (), args.end ());
+
+  // process return type
+     const SgType* ret_type = get_return_type ();
+     ROSE_ASSERT (ret_type);
+     SgName ret_name = ret_type->get_mangled ();
+
+  // Build complete mangled name
+     SgName mangled_name;
+     mangled_name << "_Fb_" // begin function signature
+                  << ret_name.str () // return type
+                  << "_Gb_" // argument list begin
+                  << arg_names.str () // argument types
+                  << "_Fe_" // end function signature
+       ;
+
+#if 0
+     printf ("In SgFunctionType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
+    }
+
+
+#if 0
+// virtual SgName SgFunctionType::get_mangled_name ( SgUnparse_Info & info );
+SgName
+SgFunctionType::get_mangled_name(SgUnparse_Info& info) 
+   {
+     SgName rtmp;
+  // SgDeclarationStatement *dstmt = info.get_decl_stmt();
+     SgFunctionDeclaration *dstmt = isSgFunctionDeclaration(info.get_decl_stmt());
+     ROSE_ASSERT (dstmt != NULL);
+     SgName fname = info.get_name();
+
+  // int len = strlen(fname.str());
+  // SgName tmp(fname);
+  // char *opstr  = "operator";
+  // char *newstr = "new";
+  // char *delstr = "delete";
+  // int m = strlen(opstr);
+
+#if 0
+     printf ("In SgFunctionType::get_mangled_name(): fname = %s \n",fname.str());
+     printf ("     unused function qualified name = %s \n",dstmt->get_qualified_name().str());
+#endif
+
+#if 0
+  // DQ (4/28/2005): These should be false since this is not a member function
+     ROSE_ASSERT(dstmt->get_specialFunctionModifier().isConstructor() == false);
+     ROSE_ASSERT(dstmt->get_specialFunctionModifier().isConversion()  == false);
+     ROSE_ASSERT(dstmt->get_specialFunctionModifier().isDestructor()  == false);
+
+  // DQ (4/29/2005): This is all that we need since non-member function can never be 
+  // constructor, destructors, or conversion operators.
+     rtmp = mangledNameSupport(fname,info);
+#else
+     if (dstmt->get_specialFunctionModifier().isConstructor())
+          rtmp << "__ct";
+       else
+          if (dstmt->get_specialFunctionModifier().isDestructor()) rtmp << "__dt";
+            else
+               if (dstmt->get_specialFunctionModifier().isConversion())
+                  {
+                    rtmp << "__conversion__";
+                 // rtmp = mangledNameSupport(fname,info);
+                  }
+                 else
+                  {
+                 // These are just normal functions
+                 // ROSE_ASSERT (dstmt->get_specialFunctionModifier().isOperator());
+                    rtmp = mangledNameSupport(fname,info);
+                  }
+#endif
+
+     string mangledName = rtmp.str();
+     ROSE_ASSERT (mangledName.find("<") == string::npos);
+     ROSE_ASSERT (mangledName.find(">") == string::npos);
+
+     ROSE_ASSERT(mangledName.find('`') == string::npos);
+     ROSE_ASSERT(mangledName.find('~') == string::npos);
+     ROSE_ASSERT(mangledName.find('!') == string::npos);
+     ROSE_ASSERT(mangledName.find('@') == string::npos);
+     ROSE_ASSERT(mangledName.find('#') == string::npos);
+     ROSE_ASSERT(mangledName.find('$') == string::npos);
+     ROSE_ASSERT(mangledName.find('%') == string::npos);
+     ROSE_ASSERT(mangledName.find('^') == string::npos);
+     ROSE_ASSERT(mangledName.find('&') == string::npos);
+     ROSE_ASSERT(mangledName.find('*') == string::npos);
+     ROSE_ASSERT(mangledName.find('(') == string::npos);
+     ROSE_ASSERT(mangledName.find(')') == string::npos);
+     ROSE_ASSERT(mangledName.find('-') == string::npos);
+     ROSE_ASSERT(mangledName.find('+') == string::npos);
+     ROSE_ASSERT(mangledName.find('=') == string::npos);
+     ROSE_ASSERT(mangledName.find('{') == string::npos);
+     ROSE_ASSERT(mangledName.find('}') == string::npos);
+     ROSE_ASSERT(mangledName.find('[') == string::npos);
+     ROSE_ASSERT(mangledName.find(']') == string::npos);
+     ROSE_ASSERT(mangledName.find('|') == string::npos);
+     ROSE_ASSERT(mangledName.find('\\') == string::npos);
+     ROSE_ASSERT(mangledName.find(':') == string::npos);
+     ROSE_ASSERT(mangledName.find(';') == string::npos);
+     ROSE_ASSERT(mangledName.find('\"') == string::npos);
+     ROSE_ASSERT(mangledName.find('\'') == string::npos);
+     ROSE_ASSERT(mangledName.find('?') == string::npos);
+     ROSE_ASSERT(mangledName.find('.') == string::npos);
+     ROSE_ASSERT(mangledName.find('/') == string::npos);
+     ROSE_ASSERT(mangledName.find(',') == string::npos);
+
+  // These are the most common cases that fail
+     ROSE_ASSERT(mangledName.find('<') == string::npos);
+     ROSE_ASSERT(mangledName.find('>') == string::npos);
+
+#if 0
+     if (dstmt->get_specialFunctionModifier().isConstructor())
+          rtmp << "__ct";
+       else
+          if (dstmt->get_specialFunctionModifier().isDestructor())
+               rtmp << "__dt";
+            else
+#if 1
+             {
+               rtmp = mangledNameSupport(fname,info);
+             }
+#else
+               if (len > 0 && strncmp(fname.str(),opstr,m) == 0)
+                  {
+                    if (fname.str()[m]==' ')
+                       {
+                      // DQ (4/27/2005): "m+2" should be "m+1"
+                         if (strncmp(&(fname.str()[m+1]),newstr,strlen(newstr)) == 0)
+                            {
+                           // DQ (4/27/2005): Added support for array new
+                              int newStringLength = strlen(newstr);
+                              int parenStart = m+1+newStringLength;
+                              if (len > parenStart && strncmp(&(fname.str()[parenStart]),"[]",2) == 0)
+                                   rtmp << "__na";
+                                else
+                                   rtmp << "__nw";
+                            }
+                           else
+                            {
+                           // DQ (4/27/2005): Added support for array delete
+                              if (strncmp(&(fname.str()[m+1]),delstr,strlen(delstr)) == 0)
+                                 {
+                                   int deleteStringLength = strlen(delstr);
+                                   int parenStart = m+1+deleteStringLength;
+                                   if (len > parenStart && strncmp(&(fname.str()[parenStart]),"[]",2) == 0)
+                                        rtmp << "__da";
+                                     else
+                                        rtmp << "__dl";
+                                 }
+                                else
+                                 {
+                                // DQ (4/27/2005): Not clear where this is used (unless it is used in casting operators)!
+                                   rtmp << "__op" << get_return_type()->get_mangled(info).str();
+                                 }
+                            }
+                       }
+                      else
+                       {
+                      // real operator  
+                         SgName opname=&(fname.str()[m]);
+                         if(opname==SgName("->"))        rtmp << "__rf";
+                         else if (opname==SgName("->*")) rtmp << "__rm";
+                         else if (opname==SgName("=="))  rtmp << "__eq";
+                         else if (opname==SgName("<"))   rtmp << "__lt";
+                         else if (opname==SgName(">"))   rtmp << "__gt";
+                         else if (opname==SgName("!="))  rtmp << "__ne";
+                         else if (opname==SgName("<="))  rtmp << "__le";
+                         else if (opname==SgName(">="))  rtmp << "__ge";
+                         else if (opname==SgName("+"))   rtmp << "__pl";
+                         else if (opname==SgName("-"))   rtmp << "__mi";
+                         else if (opname==SgName("*"))   rtmp << "__ml";
+                         else if (opname==SgName("/"))   rtmp << "__dv";
+                         else if (opname==SgName("%"))   rtmp << "__md";
+                         else if (opname==SgName("&&"))  rtmp << "__aa";
+                         else if (opname==SgName("!"))   rtmp << "__nt";
+                         else if (opname==SgName("||"))  rtmp << "__oo";
+                         else if (opname==SgName("^"))   rtmp << "__er";
+                         else if (opname==SgName("&"))   rtmp << "__ad";
+                         else if (opname==SgName("|"))   rtmp << "__or";
+                         else if (opname==SgName(","))   rtmp << "__cm";
+                         else if (opname==SgName("<<"))  rtmp << "__ls";
+                         else if (opname==SgName(">>"))  rtmp << "__rs";
+                         else if (opname==SgName("--"))  rtmp << "__mm";
+                         else if (opname==SgName("++"))  rtmp << "__pp";
+                         else if (opname==SgName("~"))   rtmp << "__co";
+                         else if (opname==SgName("="))   rtmp << "__as";
+                         else if (opname==SgName("+="))  rtmp << "__apl";
+                         else if (opname==SgName("-="))  rtmp << "__ami";
+                         else if (opname==SgName("&="))  rtmp << "__aad";
+                         else if (opname==SgName("|="))  rtmp << "__aor";
+                         else if (opname==SgName("*="))  rtmp << "__amu";
+                         else if (opname==SgName("/="))  rtmp << "__adv";
+                         else if (opname==SgName("%="))  rtmp << "__amd";
+                         else if (opname==SgName("^="))  rtmp << "__aer";
+                         else if (opname==SgName("<<=")) rtmp << "__als";
+                         else if (opname==SgName(">>=")) rtmp << "__ars";
+                         else if (opname==SgName("()"))  rtmp << "__cl";
+                         else if (opname==SgName("[]"))  rtmp << "__xi";
+                         else
+                            {
+                              printf ("In SgFunctionType::get_mangled_name(): This case should never be reached (fname = %s) \n",fname.str());
+                              ROSE_ASSERT(false);
+                            }
+                       }
+                  }
+                 else
+                    rtmp << fname.str();
+#endif
+#endif
+
+     return rtmp;
+   }
+#endif
+
+#if 0
+// Old code
+
+// this routine can do 2 things,
+// mangle a type - without funcname and class name(if member function)
+// mangle a complete function declaration with name and class name
+SgName
+SgFunctionType::get_mangled(SgUnparse_Info & info)
+   {
+     SgName tmp;
+
+  // printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&) info.PrintName() = %s \n",(info.PrintName() == true) ? "true" : "false");
+
+  /* should have a name to start with */
+     if (info.PrintName())
+        {
+       // DQ (6/23/2005): This path is taken for constructors, destructors and conversion operators (I think!)
+       // SgName name = get_mangled_name(info);
+       // printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): (assuming info.PrintName() == true): name = %s \n",name.str());
+       // tmp << get_mangled_name(info).str();
+          tmp << name.str();
+        }
+
+     tmp << "__";
+     tmp << "F";
+
+  /* process argument type */
+     SgTypePtrList::iterator p = get_arguments().begin();
+     while(p != get_arguments().end())
+        {
+          tmp << (*p)->get_mangled(info).str();
+
+       // DQ (5/2/2005): Added to handle function arguments which are templates
+          tmp = fixupTemplateNameForMangledNameSupport(tmp);
+
+          p++;
+        }
+
+  /* process return type */
+     SgName returnTypeName = get_return_type()->get_mangled(info);
+  // tmp << "_" << get_return_type()->get_mangled(info).str();
+     tmp << "_" << returnTypeName.str();
+
+  // DQ (5/2/2005): Added to handle function arguments which are templates
+     tmp = fixupTemplateNameForMangledNameSupport(tmp);
+
+#if 0
+     printf ("########## In SgFunctionType::get_mangled(): tmp = %s (returnTypeName = %s is a %s) ########## \n",
+          tmp.str(),returnTypeName.str(),get_return_type()->sage_class_name());
+  // ROSE_ASSERT(false);
+#endif
+
+     return tmp;
+   }
+#endif
+
+//! \deprecated by RV (1/31/2006)
+SgName
+SgFunctionType::get_mangled_type () 
+   { 
+     return get_mangled();
+   }
+
+#if 0
+SgName 
+SgFunctionType::get_mangled_type () 
+   { 
+     SgUnparse_Info info;
+
+  // DQ (6/23/2005): Get the name (and qualified name) of the type into the mangled name
+  // info.set_name();
+  // printf ("In $CLASSNAME::get_mangled_type(): calling info.set_PrintName() \n");
+  // info.set_PrintName();
+  // ROSE_ASSERT(info.PrintName() == true);
+
+  // return get_mangled (SgNO_UNPARSE_INFO);
+     return get_mangled (info);
+   }
+#endif
+
+
+// SgFunctionType* SgFunctionType::mkAnotherType(SgType *);
+// void sym_print(ostream& os);
+
+// DQ (2/6/2007): Get the associated symbol from the symbol table in the stored scope
+SgSymbol*
+SgFunctionType::get_symbol_from_symbol_table() const
+   {
+     return SgNode::get_globalFunctionTypeTable()->get_function_type_table()->find(this);
+   }
+
+SOURCE_FUNCTION_TYPE_END
+
+
+SOURCE_MEMBER_FUNCTION_TYPE_START
+
+$CLASSNAME::$CLASSNAME ( SgPartialFunctionType* ft )
+   : SgFunctionType(ft)
+   {
+     p_struct_name     = ft->p_struct_name;
+     p_mfunc_specifier = ft->p_mfunc_specifier;
+   }
+
+void
+$CLASSNAME::post_construction_initialization()
+   { 
+     p_struct_name=0; 
+     p_mfunc_specifier = 0;
+   }
+
+// static SgMemberFunctionType* createType(SgPartialFunctionType *);
+
+// RV (2/1/2006): Made a 'const' member function.
+int
+$CLASSNAME::isConstFunc() const
+   { return (p_mfunc_specifier & e_const); }
+
+void
+$CLASSNAME::setConstFunc()
+   { p_mfunc_specifier |= e_const; }
+
+void
+$CLASSNAME::unsetConstFunc()
+   { p_mfunc_specifier &= ~e_const; }
+
+// RV (2/1/2006): Made a 'const' member function.
+int
+$CLASSNAME::isVolatileFunc() const
+   { return (p_mfunc_specifier & e_volatile); }
+
+void
+$CLASSNAME::setVolatileFunc()
+   { p_mfunc_specifier |= e_volatile; }
+
+void
+$CLASSNAME::unsetVolatileFunc()
+   { p_mfunc_specifier &= ~e_volatile; }
+
+SgName
+$CLASSNAME::get_mangled_name (void) const
+   {
+     return get_mangled ();
+   }
+ 
+// RV (1/31/2006): Changed form of mangling to include begin/end tags.
+SgName
+$CLASSNAME::get_mangled (void) const
+   {
+  // Member-function specific information (class name, const/volatile qualifiers)
+     SgName mangled_cls_tag;
+
+  // Compute class scope
+  //! \todo Figure out why member function types are sometimes used
+  //! incorrectly in place of plain function types.
+     const SgClassDefinition* cls = get_struct_name ();
+     if (cls)
+       {
+         SgName class_scope = cls->get_mangled_name ();
+         mangled_cls_tag += class_scope;
+       }
+
+  // Append modifiers
+     if (isConstFunc ())
+       mangled_cls_tag << "_cf";
+     if (isVolatileFunc ())
+       mangled_cls_tag << "_vf";
+
+  // Mangle the function type without qualifiers
+     SgName basic_func_type = SgFunctionType::get_mangled ();
+
+  // Compute mangled member function pointer type
+     SgName mangled_name;
+     if (mangled_cls_tag.get_length () > 0)
+       mangled_name << "__MFb_" << mangled_cls_tag.str (); // really is a member function
+     mangled_name << "_" << basic_func_type.str (); // Append standard argument signature.
+     return mangled_name;
+   }
+
+
+#if 0
+SgName
+$CLASSNAME::get_mangled_type()
+   { 
+     SgUnparse_Info info;
+
+  // DQ (6/23/2005): Get the name (and qualified name) of the type into the mangled name
+  // printf ("In $CLASSNAME::get_mangled_type(): calling info.set_PrintName() \n");
+  // info.set_PrintName();
+  // ROSE_ASSERT(info.PrintName() == true);
+
+  // return get_mangled(SgNO_UNPARSE_INFO);
+     return get_mangled(info);
+   }
+#endif
+
+#if 0
+// SgMemberFunctionType::get_mangled_name(SgUnparse_Info&);
+
+//! This function repreents the name mangleing support for unparsing
+SgName
+$CLASSNAME::get_mangled_name(SgUnparse_Info& info) 
+   {
+     SgName rtmp;
+  // SgDeclarationStatement *dstmt = info.get_decl_stmt();
+     SgFunctionDeclaration *dstmt = isSgFunctionDeclaration(info.get_decl_stmt());
+     ROSE_ASSERT (dstmt != NULL);
+     SgName fname = info.get_name();
+
+  // int len = strlen(fname.str());
+  // SgName tmp(fname);
+  // char *opstr  = "operator";
+  // char *newstr = "new";
+  // char *delstr = "delete";
+  // int m = strlen(opstr);
+
+  // printf ("In SgMemberFunctionType::get_mangled_name(): fname = %s \n",fname.str());
+
+#if 0
+  // ***** What about cast operators !!! *****
+     if (dstmt->get_specialFunctionModifier().isConversion())
+        {
+          printf ("Found a conversion operator in $CLASSNAME::get_mangled_name \n");
+        }
+
+     if (dstmt->get_specialFunctionModifier().isOperator())
+        {
+          printf ("Found an operator in $CLASSNAME::get_mangled_name \n");
+        }
+#endif
+
+     if (dstmt->get_specialFunctionModifier().isConstructor())
+          rtmp << "__ct";
+       else
+          if (dstmt->get_specialFunctionModifier().isDestructor()) rtmp << "__dt";
+            else
+               if (dstmt->get_specialFunctionModifier().isConversion())
+                  {
+                    rtmp << "__conversion__";
+                 // rtmp = mangledNameSupport(fname,info);
+                  }
+                 else
+                  {
+                 // These are just normal member functions
+                 // ROSE_ASSERT (dstmt->get_specialFunctionModifier().isOperator());
+                    rtmp = mangledNameSupport(fname,info);
+                  }
+
+     string mangledName = rtmp.str();
+     ROSE_ASSERT (mangledName.find("<") == string::npos);
+     ROSE_ASSERT (mangledName.find(">") == string::npos);
+
+     ROSE_ASSERT(mangledName.find('`') == string::npos);
+     ROSE_ASSERT(mangledName.find('~') == string::npos);
+     ROSE_ASSERT(mangledName.find('!') == string::npos);
+     ROSE_ASSERT(mangledName.find('@') == string::npos);
+     ROSE_ASSERT(mangledName.find('#') == string::npos);
+     ROSE_ASSERT(mangledName.find('$') == string::npos);
+     ROSE_ASSERT(mangledName.find('%') == string::npos);
+     ROSE_ASSERT(mangledName.find('^') == string::npos);
+     ROSE_ASSERT(mangledName.find('&') == string::npos);
+     ROSE_ASSERT(mangledName.find('*') == string::npos);
+     ROSE_ASSERT(mangledName.find('(') == string::npos);
+     ROSE_ASSERT(mangledName.find(')') == string::npos);
+     ROSE_ASSERT(mangledName.find('-') == string::npos);
+     ROSE_ASSERT(mangledName.find('+') == string::npos);
+     ROSE_ASSERT(mangledName.find('=') == string::npos);
+     ROSE_ASSERT(mangledName.find('{') == string::npos);
+     ROSE_ASSERT(mangledName.find('}') == string::npos);
+     ROSE_ASSERT(mangledName.find('[') == string::npos);
+     ROSE_ASSERT(mangledName.find(']') == string::npos);
+     ROSE_ASSERT(mangledName.find('|') == string::npos);
+     ROSE_ASSERT(mangledName.find('\\') == string::npos);
+     ROSE_ASSERT(mangledName.find(':') == string::npos);
+     ROSE_ASSERT(mangledName.find(';') == string::npos);
+     ROSE_ASSERT(mangledName.find('\"') == string::npos);
+     ROSE_ASSERT(mangledName.find('\'') == string::npos);
+     ROSE_ASSERT(mangledName.find('?') == string::npos);
+     ROSE_ASSERT(mangledName.find('.') == string::npos);
+     ROSE_ASSERT(mangledName.find('/') == string::npos);
+     ROSE_ASSERT(mangledName.find(',') == string::npos);
+
+  // These are the most common cases that fail
+     ROSE_ASSERT(mangledName.find('<') == string::npos);
+     ROSE_ASSERT(mangledName.find('>') == string::npos);
+
+  // printf ("Leaving SgMemberFunctionType::get_mangled_name(): mangledName = %s \n",mangledName.c_str());
+
+#if 0
+            // This code has been refactored and place in a seperate function: mangledNameSupport()
+               if (len > 0 && strncmp(fname.str(),opstr,m)==0)
+                  {
+                    if (fname.str()[m]==' ')
+                       {
+#if 0
+                         if (strncmp(&(fname.str()[m+2]),newstr,strlen(newstr)))
+                              rtmp << "__nw"; 
+                           else
+                              if (strncmp(&(fname.str()[m+2]),delstr, strlen(delstr)))
+                                   rtmp << "__dl";
+                                else
+                                   rtmp << "__op" << get_return_type()->get_mangled(info).str();
+#else
+                      // DQ (4/27/2005): "m+2" should be "m+1"
+                         if (strncmp(&(fname.str()[m+1]),newstr,strlen(newstr)) == 0)
+                            {
+                           // DQ (4/27/2005): Added support for array new
+                              int newStringLength = strlen(newstr);
+                              int parenStart = m+1+newStringLength;
+                              if (len > parenStart && strncmp(&(fname.str()[parenStart]),"[]",2) == 0)
+                                   rtmp << "__na";
+                                else
+                                   rtmp << "__nw";
+                            }
+                           else
+                            {
+                           // DQ (4/27/2005): Added support for array delete
+                              if (strncmp(&(fname.str()[m+1]),delstr,strlen(delstr)) == 0)
+                                 {
+                                   int deleteStringLength = strlen(delstr);
+                                   int parenStart = m+1+deleteStringLength;
+                                   if (len > parenStart && strncmp(&(fname.str()[parenStart]),"[]",2) == 0)
+                                        rtmp << "__da";
+                                     else
+                                        rtmp << "__dl";
+                                 }
+                                else
+                                 {
+                                // DQ (4/27/2005): Not clear where this is used (unless it is used in casting operators)!
+                                   rtmp << "__op" << get_return_type()->get_mangled(info).str();
+                                 }
+                            }
+#endif
+                       }
+                      else
+                       {
+                      // real operator  
+                         SgName opname=&(fname.str()[m]);
+                         if (opname==SgName("->"))       rtmp << "__rf";
+                         else if (opname==SgName("->*")) rtmp << "__rm";
+                         else if (opname==SgName("=="))  rtmp << "__eq";
+                         else if (opname==SgName("<"))   rtmp << "__lt";
+                         else if (opname==SgName(">"))   rtmp << "__gt";
+                         else if (opname==SgName("!="))  rtmp << "__ne";
+                         else if (opname==SgName("<="))  rtmp << "__le";
+                         else if (opname==SgName(">="))  rtmp << "__ge";
+                         else if (opname==SgName("+"))   rtmp << "__pl";
+                         else if (opname==SgName("-"))   rtmp << "__mi";
+                         else if (opname==SgName("*"))   rtmp << "__ml";
+                         else if (opname==SgName("/"))   rtmp << "__dv";
+                         else if (opname==SgName("%"))   rtmp << "__md";
+                         else if (opname==SgName("&&"))  rtmp << "__aa";
+                         else if (opname==SgName("!"))   rtmp << "__nt";
+                         else if (opname==SgName("||"))  rtmp << "__oo";
+                         else if (opname==SgName("^"))   rtmp << "__er";
+                         else if (opname==SgName("&"))   rtmp << "__ad";
+                         else if (opname==SgName("|"))   rtmp << "__or";
+                         else if (opname==SgName(","))   rtmp << "__cm";
+                         else if (opname==SgName("<<"))  rtmp << "__ls";
+                         else if (opname==SgName(">>"))  rtmp << "__rs";
+                         else if (opname==SgName("--"))  rtmp << "__mm";
+                         else if (opname==SgName("++"))  rtmp << "__pp";
+                         else if (opname==SgName("~"))   rtmp << "__co";
+                         else if (opname==SgName("="))   rtmp << "__as";
+                         else if (opname==SgName("+="))  rtmp << "__apl";
+                         else if (opname==SgName("-="))  rtmp << "__ami";
+                         else if (opname==SgName("&="))  rtmp << "__aad";
+                         else if (opname==SgName("|="))  rtmp << "__aor";
+                         else if (opname==SgName("*="))  rtmp << "__amu";
+                         else if (opname==SgName("/="))  rtmp << "__adv";
+                         else if (opname==SgName("%="))  rtmp << "__amd";
+                         else if (opname==SgName("^="))  rtmp << "__aer";
+                         else if (opname==SgName("<<=")) rtmp << "__als";
+                         else if (opname==SgName(">>=")) rtmp << "__ars";
+                         else if (opname==SgName("()"))  rtmp << "__cl";
+                         else if (opname==SgName("[]"))  rtmp << "__xi";
+                         else
+                            {
+                              printf ("In SgMemberFunctionType::get_mangled_name(): This case should never be reached (fname = %s) \n",fname.str());
+                              ROSE_ASSERT(false);
+                            }
+                       }
+                  }
+                 else
+                    rtmp << fname.str();
+#endif
+
+     return rtmp;
+   }
+#endif
+
+#if 0
+//! This function repreents the name mangling support for unparsing
+/*! this routine can do 2 things,
+    mangle a type with class name - without funcname 
+    mangle a complete function declaration with name and class name
+ */
+SgName
+$CLASSNAME::get_mangled(SgUnparse_Info & info)
+   {
+     SgName tmp;
+
+  // printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&) info.PrintName() = %s \n",(info.PrintName() == true) ? "true" : "false");
+
+  /* should have a name to start with */
+     if (info.PrintName())
+        {
+       // DQ (6/23/2005): This path is taken for constructors, destructors and conversion operators (I think!)
+       // tmp << get_mangled_name(info).str();
+       // SgName name = get_mangled_name(info);
+       // printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): (assuming info.PrintName() == true): name = %s \n",name.str());
+          tmp << name.str();
+        }
+#if 0
+     printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): #1 tmp = %s \n",tmp.str());
+#endif
+     tmp << "__";
+  // if(info.PrintName()) { // only if needs to print name
+     if (p_struct_name != NULL)
+        {
+       // a member function
+          int cnt=0;
+          SgName p_nm = p_struct_name->get_mangled_qualified_name(cnt);
+          if(cnt>1)
+               tmp << "Q" << cnt << p_nm.str();
+            else
+               tmp << p_nm.str(); 
+        }
+     // }
+     tmp << "F";
+#if 0
+     printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): #2 tmp = %s \n",tmp.str());
+#endif
+  /* process argument type */
+     SgTypePtrList::iterator p = get_arguments().begin();
+     while (p != get_arguments().end())
+        {
+          tmp << (*p)->get_mangled(info).str();
+
+       // DQ (5/2/2005): Added to handle function arguments which are templates
+          tmp = fixupTemplateNameForMangledNameSupport(tmp);
+
+          p++;
+        }
+#if 0
+     printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): #3 tmp = %s \n",tmp.str());
+#endif
+  /* process return type */
+     SgName returnTypeName = get_return_type()->get_mangled(info);
+#if 0
+     printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): get_return_type() = %s returnTypeName = %s \n",
+          get_return_type()->sage_class_name(),returnTypeName.str());
+#endif
+
+     returnTypeName = fixupTemplateNameForMangledNameSupport(returnTypeName);
+#if 0
+     printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): #4 tmp = %s \n",tmp.str());
+#endif
+  // tmp << "_" << get_return_type()->get_mangled(info).str();
+     tmp << "_" << returnTypeName.str();
+
+     if (isConstFunc())
+          tmp << "_cf";
+
+     if (isVolatileFunc())
+          tmp << "_vf";
+#if 0
+     printf ("In $CLASSNAME::get_mangled(SgUnparse_Info&): #5 tmp = %s \n",tmp.str());
+#endif
+#if 0
+     printf ("###########  In SgMemberFunctionType::get_mangled(): tmp = %s (returnTypeName = %s is a %s) ########## \n",
+          tmp.str(),returnTypeName.str(),get_return_type()->sage_class_name());
+  // ROSE_ASSERT(false);
+#endif
+
+     return tmp;
+   }
+#endif
+
+
+// SgMemberFunctionType * mkAnotherType(SgType *);
+SgMemberFunctionType *
+$CLASSNAME::mkAnotherType(SgType *rtype)
+   {
+     if (rtype == get_return_type())
+          return NULL;
+
+     SgPartialFunctionType *part_type = SgPartialFunctionType::createType(rtype);
+
+  /* process argument type */
+     SgTypePtrList::iterator p = this->get_arguments().begin();
+     while (p != this->get_arguments().end())
+        {
+          part_type->append_argument((*p));
+          p++;
+        }
+     part_type->set_struct_name(this->get_struct_name());
+     part_type->set_mfunc_specifier(this->get_mfunc_specifier());
+
+     SgMemberFunctionType *ntype = SgMemberFunctionType::createType(part_type);
+     if (ntype == this)
+          return NULL;
+       else
+          return ntype;
+   }
+
+
+SOURCE_MEMBER_FUNCTION_TYPE_END
+
+
+SOURCE_PARTIAL_FUNCTION_TYPE_START
+//! This is an empty function (no data to initialize)
+void
+$CLASSNAME::post_construction_initialization () 
+   {
+   }
+
+SOURCE_PARTIAL_FUNCTION_TYPE_END
+
+
+SOURCE_ARRAY_TYPE_START
+// RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
+SgName
+SgArrayType::get_mangled (void) const
+   {
+     const SgType* base_type = get_base_type();
+     ROSE_ASSERT (base_type != NULL);
+     SgName base_name  = base_type->get_mangled();
+
+     const SgExpression* index_exp = get_index();
+     SgName index_name;
+     if (index_exp != NULL)
+        {
+          index_name = index_exp->unparseToString();
+        }
+
+  // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
+  // ROSE_ASSERT (base_name.get_length ());
+     if (base_name.is_null() == true)
+        {
+       // This happens for code such as: "typedef struct {int id; } *XYZ;"
+       // printf ("Warning: In $CLASSNAME::get_mangled(), empty base type name found \n");
+          base_name = "unnamed_base_type";
+        }
+     ROSE_ASSERT (base_name.is_null() == false);
+
+     if (index_name.is_null() == true)
+        {
+       // This happens for code such as: "typedef struct {int id; } *XYZ;"
+       // printf ("Warning: In $CLASSNAME::get_mangled(), no empty base type name found \n");
+          index_name = "unnamed_index";
+        }
+     ROSE_ASSERT (base_name.is_null() == false);
+
+     SgName mangled_name;
+     mangled_name << "_Ab_"
+                  << base_name.str ()
+                  << "_index_"
+                  << index_name.str ()
+                  << "_Ae_";
+
+  // printf ("SgArrayType::get_mangled(): mangled_name = %s \n",mangled_name.str());
+
+     return mangled_name;
+   }
+
+SOURCE_ARRAY_TYPE_END
+ 
+SOURCE_TYPE_ELLIPSE_TYPE_START
+SgName
+$CLASSNAME::get_mangled (void) const
+   {
+     return SgName ("_E_");
+   }
+ SOURCE_TYPE_ELLIPSE_TYPE_END
+
+
+
+// ###################################################################
+// ###################################################################
+//             CREATE TYPE MEMBER FUNCTION DEFINITIONS
+// ###################################################################
+// ###################################################################
+
+SOURCE_COMMON_CREATE_TYPE_START
+
+// DQ (1/31/2006): Modified to build all types in the memory pools
+// $CLASSNAME $CLASSNAME::builtin_type;
+// $CLASSNAME* $CLASSNAME::builtin_type = new $CLASSNAME();
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+$CLASSNAME*
+$CLASSNAME::createType(void) 
+   {
+  // DQ (12/22/2005): Jochen thinks that we need this because the SgNode constructor 
+  // is not called (likely because static initialization is compiler dependent).
+  // DQ (1/31/2006): Modified to build all types in the memory pools
+  // builtin_type.p_freepointer = AST_FileIO::IS_VALID_POINTER();
+  // return &builtin_type;
+
+     static bool firstCallToFunction = true;
+     if (firstCallToFunction == true)
+        {
+       // printf ("Build the $CLASSNAME object for the p_builtin_type \n");
+          p_builtin_type = new $CLASSNAME();
+       // p_builtin_type = new $CLASSNAME(NULL,true,NULL,0);
+        }
+     firstCallToFunction = false;
+
+     ROSE_ASSERT(p_builtin_type != NULL);
+     p_builtin_type->p_freepointer = AST_FileIO::IS_VALID_POINTER();
+     return p_builtin_type;
+   }
+
+SOURCE_COMMON_CREATE_TYPE_END
+
+
+// NOT USED!
+SOURCE_CREATE_TYPE_WITH_PARAMETER_START
+/* now the textually included definitions*/
+// DQ (1/31/2006): Modified to build all types in the memory pools
+// $CLASSNAME $CLASSNAME::builtin_type;
+// $CLASSNAME* $CLASSNAME::builtin_type = new $CLASSNAME();
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+$CLASSNAME*
+$CLASSNAME::createType ( TYPE_INITIALIZER_LIST_SOURCE ) 
+   {
+     static bool firstCallToFunction = true;
+     if (firstCallToFunction == true)
+        {
+       // printf ("Build the $CLASSNAME object for the p_builtin_type \n");
+          p_builtin_type = new $CLASSNAME();
+        }
+     firstCallToFunction = false;
+
+  // DQ (12/22/2005): Jochen thinks that we need this because the SgNode constructor 
+  // is not called (likely because static initialization is compiler dependent).
+  // DQ (1/31/2006): Modified to build all types in the memory pools
+  // builtin_type.p_freepointer = AST_FileIO::IS_VALID_POINTER();
+  // return &builtin_type;
+     ROSE_ASSERT(p_builtin_type != NULL);
+     p_builtin_type->p_freepointer = AST_FileIO::IS_VALID_POINTER();
+     return p_builtin_type; 
+   }
+
+SOURCE_CREATE_TYPE_WITH_PARAMETER_END
+
+
+SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_START
+$CLASSNAME* 
+$CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_Type* rtype)
+   {
+  // return new $CLASSNAME(rtype);
+
+     $CLASSNAME* returnType = new $CLASSNAME(rtype);
+     ROSE_ASSERT(returnType != NULL);
+
+     return returnType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_TypedefDeclaration *decl) 
+   {
+#if 1
+  // printf ("Inside of SgTypedefType::createType() \n");
+     assert(decl != NULL);
+  // if (!decl->get_type())
+     if (decl->get_type() == NULL)
+        {
+          assert(decl->get_base_type() != NULL);
+
+          ROSE_ASSERT (decl->get_base_type() != NULL);
+          ROSE_ASSERT (decl->get_base_type()->p_typedefs != NULL);
+       // printf ("Before loop over typedef chain: (decl->get_base_type()->p_typedefs)->get_typedefs().size() = %d \n",
+       //      (decl->get_base_type()->p_typedefs)->get_typedefs().size());
+
+          SgTypePtrList::iterator i = ((decl->get_base_type()->p_typedefs)->get_typedefs().begin());
+          while (i != ((decl->get_base_type()->p_typedefs)->get_typedefs().end()))
+             {
+            // printf ("In loop over typedef chain \n");
+
+            // SgName dname = decl->get_name();
+            // SgTypedefType *tptr= isSgTypedefType((*i).irep());
+               ROSE_ASSERT( (*i) != NULL);
+               Sg$GRAMMAR_X_MARKER_TypedefType *tptr= isSg$GRAMMAR_X_MARKER_TypedefType(*i);
+               ROSE_ASSERT(tptr != NULL);
+               if( (decl->get_name() == tptr->get_name()) && 
+                   (decl->get_parent_scope() == tptr->get_parent_scope()) )
+                    return (tptr);
+               i++;
+             }
+
+       // decl->set_type(new Sg$GRAMMAR_X_MARKER_TypedefType(decl, decl->get_parent_scope()));
+
+       // debugging code
+       // decl->get_file_info()->display("declration used in $CLASSNAME::createType()");
+
+       // Parent scope is NULL for declarations in global scope
+       // ROSE_ASSERT (decl->get_parent_scope() != NULL);
+          Sg$GRAMMAR_X_MARKER_TypedefType* tempType =
+               new Sg$GRAMMAR_X_MARKER_TypedefType(decl, decl->get_parent_scope());
+          ROSE_ASSERT (tempType != NULL);
+          decl->set_type(tempType);
+
+          ROSE_ASSERT (decl->get_type() != NULL);
+          ROSE_ASSERT (decl->get_base_type() != NULL);
+          ROSE_ASSERT (decl->get_base_type()->p_typedefs != NULL);
+
+       // printf ("Before updating list: (decl->get_base_type()->p_typedefs)->get_typedefs().size() = %d \n",
+       //      (decl->get_base_type()->p_typedefs)->get_typedefs().size());
+
+          (decl->get_base_type()->p_typedefs)->get_typedefs().push_back(decl->get_type());
+        }
+
+  // printf ("Leaving SgTypedefType::createType() \n");
+
+     ROSE_ASSERT(decl != NULL);
+     ROSE_ASSERT(decl->get_type() != NULL);  // I think we can assert this!
+
+     ROSE_ASSERT ((decl->get_base_type()->p_typedefs)->get_typedefs().size() > 0);
+
+     return decl->get_type();
+#else
+     printf ("Exiting in Sg$GRAMMAR_X_MARKER_TypedefType::createType() \n");
+     ROSE_ABORT();
+
+     return NULL;
+#endif
+   }
+
+SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_FUNCTION_TYPE_START
+SgFunctionType*
+SgFunctionType::createType(SgPartialFunctionType* ft)
+   {
+  // The problem with this function is that I have not added the name mangling into SAGE 3 yet!
+
+     ROSE_ASSERT(ft != NULL);
+
+#if 1
+  // DQ (3/29/2006): 
+  // Simplify this function to not use the function type table, thus SgFunctionType nodes are not
+  // shared. During function creation.  As a result we don't have to call the functions to mangle 
+  // the names of things (which traverse parents to compute scopes and can be a problem if called
+  // before the parents are set, done in post processing of AST).  However, this design requires
+  // that the funtion type symbol table be constructed after the AST is build (and parent pointers 
+  // are set).  If functions are created then the function type table must also be updated.
+     SgFunctionType* theType = new SgFunctionType(ft);
+
+  // DQ (6/21/2006): Since we mangle the return type into the mangled function as part of building 
+  // the symbol table we don't have to worry about sharing function types that would have different 
+  // return types.  Here we set the orig_return_type stored explicitly (it seems it is always the
+  // same as the return_type.
+     ROSE_ASSERT (ft->get_return_type() != NULL);
+     theType->set_orig_return_type(ft->get_return_type());
+#else
+  // printf ("In $CLASSNAME::createType(SgPartialFunctionType* ft): calling ft->get_mangled_type \n");
+  // SgName nname = ft->get_mangled_type();
+
+  // DQ (3/29/2006): experiment with generating a unique name for the function type table lookup
+  // This will avoid calling the get_mangled_type() function durring the construction 
+  // of the AST.  Because the name will be unique there will be no collision in the 
+  // function type symbol table.  The function type symbol tabel will then have to
+  // be rebuilt after the AST is build (in a post-processing phase).
+     static int functionCounter = 0;
+     string baseName = "function_";
+     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     SgName nname = mangleName;
+
+#if 0
+     SgName nname = "NOT YET SUPPORTED IN SAGE3 YET"; // ft->get_mangled_type();
+     printf ("WARNING: Name mangling not yet suppported in SAGE 3! (required in SgFunctionType::createType()) \n");
+#endif
+
+  // check the function type table
+  // DQ (1/31/2006): Modified to build all types in the memory pools
+  // SgType *t = Sgfunc_type_table.lookup_function_type(nname);
+     ROSE_ASSERT(get_globalFunctionTypeTable() != NULL);
+     SgType *t = get_globalFunctionTypeTable()->lookup_function_type(nname);
+
+     $CLASSNAME *theType = is$CLASSNAME(t);
+  // if(!theType)
+     if(theType == NULL)
+        {
+       // printf ("##### Building a default type since theType == NULL \n");
+          theType = new $CLASSNAME(ft);
+          ROSE_ASSERT(theType != NULL);
+       // DQ (1/31/2006): Modified to build all types in the memory pools
+       // Sgfunc_type_table.insert_function_type(nname, theType);
+          ROSE_ASSERT(get_globalFunctionTypeTable() != NULL);
+          get_globalFunctionTypeTable()->insert_function_type(nname, theType);
+        }
+       else
+          theType->set_orig_return_type(ft->get_return_type());
+
+  // Commented out to avoid deleting the input data (poor design, I think)
+  // delete ft;
+#endif
+
+     ROSE_ASSERT(theType != NULL);
+     return theType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_FUNCTION_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE_START
+SgMemberFunctionType*
+SgMemberFunctionType::createType(SgPartialFunctionType* ft)
+   {
+     ROSE_ASSERT(ft != NULL);
+  // printf ("In $CLASSNAME::createType(SgPartialFunctionType* ft): calling ft->get_mangled_type \n");
+  // SgName nname = ft->get_mangled_type();
+
+#if 1
+  // DQ (3/29/2006): 
+  // Simplify this function to not use the function type table, thus SgFunctionType nodes are not
+  // shared. During function creation.  As a result we don't have to call the functions to mangle 
+  // the names of things (which traverse parents to compute scopes and can be a problem if called
+  // before the parents are set, done in post processing of AST).  However, this design requires
+  // that the funtion type symbol table be constructed after the AST is build (and parent pointers 
+  // are set).  If functions are created then the function type table must also be updated.
+     SgMemberFunctionType* theType = new SgMemberFunctionType(ft);
+
+  // DQ (6/22/2006): Since we mangle the return type into the mangled function as part of building 
+  // the symbol table we don't have to worry about sharing function types that would have different 
+  // return types.  Here we set the orig_return_type stored explicitly (it seems it is always the
+  // same as the return_type.
+     ROSE_ASSERT (ft->get_return_type() != NULL);
+     theType->set_orig_return_type(ft->get_return_type());
+#else
+  // DQ (3/29/2006): experiment with generating a unique name for the function type table lookup
+  // This will avoid calling the get_mangled_type() function durring the construction 
+  // of the AST.  Because the name will be unique there will be no collision in the 
+  // function type symbol table.  The function type symbol tabel will then have to
+  // be rebuilt after the AST is build (in a post-processing phase).
+     static int functionCounter = 0;
+     string baseName = "memberfunction_";
+     string mangleName = baseName + StringUtility::numberToString(functionCounter++);
+     SgName nname = mangleName;
+
+#if 0
+     SgName nname = "NOT YET SUPPORTED"; // ft->get_mangled_type();
+     printf ("WARNING: Name mangling not yet suppported in SAGE 3! (required in SgFunctionType::createType()) \n");
+#endif
+
+  // check the function type table
+  // DQ (1/31/2006): Modified to build all types in the memory pools
+  // SgType *t = Sgfunc_type_table.lookup_function_type(nname);
+     ROSE_ASSERT(get_globalFunctionTypeTable() != NULL);
+     SgType *t = get_globalFunctionTypeTable()->lookup_function_type(nname);
+     $CLASSNAME* theType = is$CLASSNAME(t);
+  // if (!theType)
+     if (theType == NULL)
+        {
+          theType = new $CLASSNAME(ft);
+          ROSE_ASSERT(theType != NULL);
+       // printf ("In $CLASSNAME::createType(): insert function type into symbol table: nname = %s \n",nname.str());
+       // Sgfunc_type_table.insert_function_type(nname, theType);
+          ROSE_ASSERT(get_globalFunctionTypeTable() != NULL);
+          get_globalFunctionTypeTable()->insert_function_type(nname, theType);
+        }
+       else
+        {
+       // printf ("In $CLASSNAME::createType(): function type found in symbol table: nname = %s \n",nname.str());
+          theType->set_orig_return_type(ft->get_return_type());
+        }
+
+  // DQ: commented out the delete of the input structure (poor design, I think)
+  // delete ft;
+#endif
+
+     ROSE_ASSERT(theType != NULL);
+     return theType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType ( SgType* base_type, Sg$GRAMMAR_X_MARKER_ClassDefinition *class_definition )
+   {
+     $CLASSNAME* returnType = new $CLASSNAME(base_type,class_definition);
+     assert(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE_START
+const int SgTypeInt::maxBitLength = ROSE_INTEGER_TYPE_MAX_BIT_LENGTH;
+// DQ (1/31/2006): Modified to build all types in the memory pools
+// SgTypeInt SgTypeInt::builtin_type[maxBitLength];
+#if 0
+#if defined __x86_64__
+// 64 bit support
+SgTypeInt* SgTypeInt::p_builtin_type[maxBitLength] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL };
+#else
+// 32 bit support
+SgTypeInt* SgTypeInt::p_builtin_type[maxBitLength] = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                                                     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL };
+#endif
+#else
+// DQ (1/31/2006): Convert to a single builtin pointer rather than an array of them.
+// I don't think we really need an array of these internally.
+SgTypeInt* SgTypeInt::p_builtin_type = NULL;
+#endif
+
+$CLASSNAME*
+$CLASSNAME::createType(int bitLength) 
+   {
+#if 0
+     static bool firstCallToFunction = true;
+     if (firstCallToFunction == true)
+        {
+       // printf ("Build the SgTypeInt objects within the builtin_type array (for bit modified types) \n");
+       // Allocate all the required integer types (we require 32 of them for 
+       // 32 bit architectures because "int i:n" (where "n" is the number of 
+       // bits), forms a valid type).
+          for (int i=0; i < maxBitLength; i++)
+             {
+               p_builtin_type[bitLength] = new $CLASSNAME();
+             }
+        }
+     firstCallToFunction = false;
+
+     ROSE_ASSERT(bitLength < maxBitLength);
+
+  // DQ (12/22/2005): Jochen thinks that we need this because the SgNode constructor 
+  // is not called (likely because static initialization is compiler dependent).
+  // DQ (1/31/2006): Modified to build all types in the memory pools
+  // builtin_type[bitLength].p_freepointer = AST_FileIO::IS_VALID_POINTER();
+  // return &builtin_type[bitLength];
+     ROSE_ASSERT(p_builtin_type[bitLength] != NULL);
+     p_builtin_type[bitLength]->p_freepointer = AST_FileIO::IS_VALID_POINTER();
+     return p_builtin_type[bitLength];
+#else
+  // DQ (1/31/2006): Convert to a single builtin pointer rather than an array of them.
+  // I don't think we really need an array of these internally.
+     if (p_builtin_type == NULL)
+        {
+          p_builtin_type = new $CLASSNAME(bitLength);
+        }
+     ROSE_ASSERT(p_builtin_type != NULL);
+     return p_builtin_type;
+#endif
+   }
+
+#if 0
+// DQ (12/26/2005): Supporting function for traverseMemoryPool
+// where static IR nodes (only isn soem SgType IR nodes) are
+// present and must be traversed using specially generated code.
+void
+$CLASSNAME::executeVisitorMemberFunctionOnBuiltinData(ROSE_Visitor & visitor)
+   {
+     for (int i=0; i < SgTypeInt::maxBitLength; i++)
+          SgTypeInt::builtin_type[i].executeVisitorMemberFunction(visitor);
+   }
+#endif
+SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(SgEnumDeclaration* cd)
+   {
+     $CLASSNAME* returnType = NULL;
+  // return cd->get_type() ? cd->get_type() : new $CLASSNAME(cd); 
+
+     assert(cd != NULL);
+     returnType = cd->get_type();
+     if (returnType == NULL)
+          returnType = new $CLASSNAME(cd);
+
+     assert(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_ClassDeclaration * cd)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+#if 0
+     printf ("cd = %p = %s cd->get_definition() = %p = %s \n",
+          cd,cd->sage_class_name(),
+          cd->get_definition(),(cd->get_definition() != NULL) ? cd->get_definition()->sage_class_name() : "NULL");
+     printf ("cd->get_type() = %p \n",cd->get_type());
+     printf ("cd = %p cd->get_definingDeclaration()         = %p \n",cd,cd->get_definingDeclaration());
+     printf ("cd = %p cd->get_firstNondefiningDeclaration() = %p \n",cd,cd->get_firstNondefiningDeclaration());
+#endif
+
+     if (!cd->get_type()) 
+        {
+          $CLASSNAME* newType = new $CLASSNAME(cd);
+          ROSE_ASSERT(newType != NULL);
+          cd->set_type(newType);
+       // cd->set_type(new $CLASSNAME(cd));
+        }
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START
+
+SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(SgType* base_type)
+   {
+     assert(base_type != NULL);
+     if (base_type->$GRAMMAR_X_MARKER_p_ptr_to)
+        {
+          return base_type->$GRAMMAR_X_MARKER_p_ptr_to;
+        }
+       else
+        {
+          $CLASSNAME* newType = new $CLASSNAME(base_type);
+          assert(newType != NULL);
+
+          base_type->$GRAMMAR_X_MARKER_p_ptr_to = newType;
+          assert(base_type->$GRAMMAR_X_MARKER_p_ptr_to != NULL);
+
+          return base_type->$GRAMMAR_X_MARKER_p_ptr_to;
+       // return (base_type->ptr_to = new $CLASSNAME(base_type));
+        }
+   }
+
+SOURCE_CREATE_TYPE_FOR_POINTER_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(SgType* base_type)
+   {
+     assert(base_type != NULL);
+     if (base_type->$GRAMMAR_X_MARKER_p_ref_to)
+        {
+          return base_type->$GRAMMAR_X_MARKER_p_ref_to;
+        }
+       else
+        {
+          $CLASSNAME* newType = new $CLASSNAME(base_type);
+          assert(newType != NULL);
+
+          base_type->$GRAMMAR_X_MARKER_p_ref_to = newType;
+          assert(base_type->$GRAMMAR_X_MARKER_p_ref_to != NULL);
+
+          return base_type->$GRAMMAR_X_MARKER_p_ref_to;
+       // return (base_type->ref_to = new $CLASSNAME(base_type));
+        }
+   }
+
+SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START
+$CLASSNAME*
+SgArrayType::createType ( SgType* base_type, SgExpression* idx )
+   {
+     $CLASSNAME* returnType = new $CLASSNAME(base_type, idx);
+     assert(returnType != NULL);
+
+  // DQ (2/20/2007): Added setting the parent (which should not have been set already)
+  // note also that the index expression is not required to be specified.
+     if (idx != NULL)
+        {
+          ROSE_ASSERT(idx->get_parent() == NULL);
+          idx->set_parent(returnType);
+        }
+
+     return returnType;
+  // return new $CLASSNAME(base_type, idx);
+   }
+
+SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(SgType* base_type, unsigned int f)
+   {
+     assert(base_type != NULL);
+
+  // DQ (4/13/2004): See if we can get rid of this function, but first lets find out where it is called!
+  // This is part of the work to reorganize now modifiers are used internally.
+  // return base_type->matchModifiers(f);
+
+     printf ("Error, no longer supported! \n");
+     ROSE_ASSERT (false);
+
+     return NULL;
+   }
+
+SOURCE_CREATE_TYPE_FOR_MODIFIER_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_QUALIFIED_NAME_TYPE_START
+$CLASSNAME*
+$CLASSNAME::createType(SgType* base_type, unsigned int f)
+   {
+     assert(base_type != NULL);
+
+  // DQ (12/21/2005): This is a copy of the function from SgModifierType 
+  // (I think we need it to override the base class implementation).
+
+     printf ("Error, this function $CLASSNAME should not have been called! \n");
+     ROSE_ASSERT (false);
+
+     return NULL;
+   }
+
+SOURCE_CREATE_TYPE_FOR_QUALIFIED_NAME_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_START
+
+// DQ (8/27/2006): This code is used for both SgTypeComplex and SgTypeImaginary.
+
+// DQ (8/10/2006): Three kinds of SgComplex IR nodes (for float, double, and long double) 
+// which we want to be able to share within the AST.
+$CLASSNAME* $CLASSNAME::p_builtin_float_complex       = NULL;
+$CLASSNAME* $CLASSNAME::p_builtin_double_complex      = NULL;
+$CLASSNAME* $CLASSNAME::p_builtin_long_double_complex = NULL;
+
+$CLASSNAME*
+$CLASSNAME::createType($CLASSNAME::floating_point_precision_enum precision)
+   {
+  // This function build any of three versions of Complex type IR nodes, but enforces sharing between the different versions.
+     static bool firstCallToFunctionForFloatPrecision      = true;
+     static bool firstCallToFunctionForDoublePrecision     = true;
+     static bool firstCallToFunctionForLongDoublePrecision = true;
+
+     $CLASSNAME* returnType = NULL;
+     switch (precision)
+        {
+          case e_floatPrecision:
+             {
+            // This is protection that is required to support file I/O and the unknown order of static initialization.
+               if (firstCallToFunctionForFloatPrecision == true)
+                  {
+                    p_builtin_float_complex = new $CLASSNAME(precision);
+                  }
+               firstCallToFunctionForFloatPrecision = false;
+               returnType = p_builtin_float_complex;
+               ROSE_ASSERT(returnType != NULL);
+               break;
+             }
+
+          case e_doublePrecision:
+             {
+            // This is protection that is required to support file I/O and the unknown order of static initialization.
+               if (firstCallToFunctionForDoublePrecision == true)
+                  {
+                    p_builtin_double_complex = new $CLASSNAME(precision);
+                  }
+               firstCallToFunctionForDoublePrecision = false;
+               returnType = p_builtin_double_complex;
+               ROSE_ASSERT(returnType != NULL);
+               break;
+             }
+
+          case e_longDoublePrecision:
+             {
+            // This is protection that is required to support file I/O and the unknown order of static initialization.
+               if (firstCallToFunctionForLongDoublePrecision == true)
+                  {
+                    p_builtin_long_double_complex = new $CLASSNAME(precision);
+                  }
+               firstCallToFunctionForLongDoublePrecision = false;
+               returnType = p_builtin_long_double_complex;
+               ROSE_ASSERT(returnType != NULL);
+               break;
+             }
+
+          default:
+               printf ("Error: precision out of range (%d) \n",precision);
+               ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_END
+
+
+
+
+
+
+
+
+
+
+
+

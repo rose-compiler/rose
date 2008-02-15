@@ -1,0 +1,161 @@
+%%
+%% This is file `fixme.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% fixme.dtx 
+%% 
+
+
+%% Copyright (C) 1998-2001 Didier Verna
+
+%% This file is part of FiXme.
+
+%% FiXme may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.1
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%% http://www.latex-project.org/lppl.txt
+%% and version 1.1 or later is part of all distributions of LaTeX
+%% version 1999/06/01 or later.
+
+%% FiXme consists of the files listed in the file `README'.
+
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+\NeedsTeXFormat{LaTeX2e}
+
+\ProvidesPackage{fixme}[2001/04/23 v1.3
+                        Insert fixme notes in your draft documents]
+
+\newif\if@fixmes\@fixmesfalse
+\newcommand\listoffixmes{\if@fixmes\@listoffixmes\fi}
+\newcommand*\listfixmename{}
+
+\newcommand\@listoffixmes@article{%
+  \section*{\listfixmename
+    \@mkboth{\MakeUppercase\listfixmename}%
+    {\MakeUppercase\listfixmename}}%
+  \@starttoc{lox}%
+  }
+\newcommand*\l@fixme@article{\@dottedtocline{1}{1.5em}{2.3em}}
+
+\newcommand\@listoffixmes@report{%
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \chapter*{\listfixmename
+    \@mkboth{\MakeUppercase\listfixmename}%
+    {\MakeUppercase\listfixmename}}%
+  \@starttoc{lox}%
+  \if@restonecol\twocolumn\fi
+  }
+\newcommand*\l@fixme@report{\@dottedtocline{1}{1.5em}{2.3em}}
+
+\newcommand\@listoffixmes@book{%
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \chapter*{\listfixmename
+    \@mkboth{\MakeUppercase\listfixmename}%
+    {\MakeUppercase\listfixmename}}%
+  \@starttoc{lox}%
+  \if@restonecol\twocolumn\fi
+  }
+\newcommand*\l@fixme@book{\@dottedtocline{1}{1.5em}{2.3em}}
+
+\newcommand\fixme[1]{}
+
+\newcommand\FiXmeMargin[1]{%
+  \marginpar{\footnotesize\flushright\textbf{FIXME:} \emph{#1}}}
+\newcommand\FiXmeFootnote[1]{%
+  \footnote{\textbf{FIXME:} \emph{#1}}}
+\newcommand\FiXmeIndex[1]{\index{***@FIXME's:!#1}}
+\newcommand\FiXmeInfo[1]{\PackageInfo{FiXme}{`#1'}}
+\newcommand\FiXmeWarning[1]{\PackageWarning{FiXme}{`#1'}}
+\newcommand\FiXmeUser[1]{}
+
+\newif\iffixme@margin\fixme@marginfalse
+\newif\iffixme@footnote\fixme@footnotefalse
+\newif\iffixme@index\fixme@indexfalse
+\newif\iffixme@info\fixme@infofalse
+\newif\iffixme@warning\fixme@warningfalse
+\newif\iffixme@user\fixme@userfalse
+
+\DeclareOption{margin}{\fixme@margintrue}
+\DeclareOption{nomargin}{\fixme@marginfalse}
+\DeclareOption{footnote}{\fixme@footnotetrue}
+\DeclareOption{nofootnote}{\fixme@footnotefalse}
+\DeclareOption{index}{\fixme@indextrue}
+\DeclareOption{noindex}{\fixme@indexfalse}
+\DeclareOption{info}{\fixme@infotrue}
+\DeclareOption{noinfo}{\fixme@infofalse}
+\DeclareOption{warning}{\fixme@warningtrue}
+\DeclareOption{nowarning}{\fixme@warningfalse}
+\DeclareOption{user}{\fixme@usertrue}
+\DeclareOption{nouser}{\fixme@userfalse}
+
+\DeclareOption{english}{\renewcommand*{\listfixmename}{List of FIXME's}}
+\DeclareOption{french}{\renewcommand*{\listfixmename}{Liste des FIXME's}}
+\DeclareOption{francais}{\ExecuteOptions{french}}
+\DeclareOption{german}{\renewcommand*{\listfixmename}{Liste der FIXME's}}
+\DeclareOption{ngerman}{\ExecuteOptions{german}}
+\DeclareOption{italian}{\renewcommand*{\listfixmename}{Corrigenda}}
+
+\DeclareOption{final}{
+  \renewcommand{\fixme}[1]{%
+    \PackageError{FiXme}{`#1' fixme left in final version}{%
+      You are processing your document in final mode,\MessageBreak
+      but you still have some FiXme's left behind.\MessageBreak
+      Type X to quit, fix your document, and rerun LaTeX.}}
+  }
+
+\DeclareOption{draft}{
+  \renewcommand{\fixme}[1]{%
+    \@fixmestrue%
+    \iffixme@margin\FiXmeMargin{#1}\fi%
+    \iffixme@footnote\FiXmeFootnote{#1}\fi%
+    \iffixme@warning\FiXmeWarning{#1}\else\iffixme@info\FiXmeInfo{#1}\fi\fi%
+    \iffixme@index\FiXmeIndex{#1}\fi%
+    \iffixme@user\FiXmeUser{#1}\fi%
+    \addcontentsline{lox}{fixme}{#1}}
+  \@ifclassloaded{article}{
+    \let\l@fixme\l@fixme@article
+    \let\@listoffixmes\@listoffixmes@article}{
+    \@ifclassloaded{report}{
+      \let\l@fixme\l@fixme@report
+      \let\@listoffixmes\@listoffixmes@report}{
+      \@ifclassloaded{book}{
+        \let\l@fixme\l@fixme@book
+        \let\@listoffixmes\@listoffixmes@book}{
+        %% Use the article layout by default.
+        \let\l@fixme\l@fixme@article
+        \let\@listoffixmes\@listoffixmes@article}
+      }
+    }
+  }
+
+\ExecuteOptions{english,final,margin}
+\ProcessOptions*
+
+\endinput
+%%
+%% End of file `fixme.sty'.

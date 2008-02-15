@@ -1,0 +1,20 @@
+This directory contains the code for computation of hidden types and declaration lists.
+
+
+Questions:
+   1) Why use char* instead of C++ string objects.
+
+   2) Some test code demonstrate and infinite loop (or so it appears):
+        test2001_01.C
+        test2001_10.C
+
+Comments:
+   1) Need to use namespace to isolate the implementation (and types)
+      from the rest of ROSE.
+
+   2) Need more test codes (if they are available).
+
+
+
+
+

@@ -1,0 +1,638 @@
+The compiler description language Cocol/R
+=========================================
+
+ (This is a modified version of parts of Professor Moessenboeck's 1990 paper
+  to allow for the fact that this implementation is for C/C++.  The full
+  version of the paper should be consulted by serious users.)
+
+A compiler description can be viewed as a module consisting of imports,
+declarations and grammar rules that describe the lexical and syntactical
+structure of a language as well as its translation into a target language.
+The vocabulary of Cocol/R uses identifiers, strings and numbers in the usual
+way:
+
+   CHARACTERS
+     cntl     = CHR(0)..CHR(31).
+     back     = CHR(92) .
+     noQuote1 = ANY - '"' - cntl - back .
+     noQuote2 = ANY - "'" - cntl - back .
+     graphic  = ANY - cntl .
+   TOKENS
+     ident  = letter { letter | digit } .
+     number = digit { digit } .
+     string =   '"' {noQuote1 | back graphic } '"'
+              | "'" {noQuote2 | back graphic } "'" .
+
+Upper case letters are distinct from lower case letters.  Strings must not
+cross line borders.  Coco/R keywords are
+
+    ANY  CASE  CHARACTERS  CHR  COMMENTS  COMPILER  CONTEXT  END  EOF FROM
+    IGNORE  NAMES  NESTED  PRAGMAS  PRODUCTIONS  SYNC  TO  TOKENS  WEAK
+
+(NAMES is an extension over the original Oberon implementation.)
+
+The following metasymbols are used to form EBNF expressions:
+
+      (    )       for grouping
+      {    }       for iterations
+      [    ]       for options
+      <    >       for attributes
+      (.  .)       for semantic parts
+      = . | + -    as explained below
+
+Comments are enclosed in "/*" and "*/" brackets, and may be nested.  The
+semantic parts may contain declarations or statements in a general purpose
+programming language (in this case, C or C++).
+
+The Oberon, Modula-2 and Pascal implementations use "(*" and "*)" for
+comments; the C/C++ versions use C like comments because "(*" can cause
+problems in semantic actions, for example: (. while (*s) do *s++ .)
+where "(*" clearly is not intended to begin a comment.
+
+
+Overall Structure
+=================
+
+A compiler description is made up of the following parts
+
+   Cocol =   "COMPILER" GoalIdentifier
+                 ArbitraryText 
+                 ScannerSpecification 
+                 ParserSpecification 
+             "END" GoalIdentifier "." . 
+
+The name after the keyword COMPILER is the grammar name and must match the
+name after the keyword END.  The grammar name also denotes the topmost
+non-terminal (the start symbol).
+
+After the grammar name, arbitrary C/C++ text may follow; this is not checked
+by Coco/R.  It usually contains C/C++ declarations of global objects
+(constants, types, variables, or procedures) that are needed in the semantic
+actions later on.
+
+The remaining parts of the compiler description specify the lexical and
+syntactical structure of the language to be processed.  Effectively two
+grammars are specified - one for the lexical analyser or scanner, and the
+other for the syntax analyser or parser.  The non-terminals (token classes)
+recognized by the scanner are regarded as terminals by the parser.
+
+
+Scanner Specification
+=====================
+
+A scanner has to read source text, skip meaningless characters, and recognize 
+tokens that have to be passed to the parser.  Tokens may be classified as
+literals or as token classes.  Literals (like "END" and "!=") may be
+introduced directly into productions as strings, and do not need to be named.
+Token classes (such as identifiers or numbers) must be named, and have
+structures that are specified by regular expressions, defined in EBNF.
+
+In Cocol, a scanner specification consists of six optional parts, that may, in
+fact, be introduced in arbitrary order. 
+
+   ScannerSpecification =  {  CharacterSets 
+                             | Ignorable 
+                             | Comments 
+                             | Tokens 
+                             | Pragmas 
+                             | UserNames 
+                            } . 
+
+CHARACTERS
+----------
+
+The CharacterSets component allows for the declaration of names for character
+sets like letters or digits, and defines the characters that may occur as
+members of these sets.  These names then may be used in the other sections of
+the scanner specification (but not, it should be noted, in the parser
+specification).
+
+   CharacterSets   =  "CHARACTERS" { NamedCharSet } . 
+   NamedCharSet    =  SetIdent "=" CharacterSet "." . 
+   CharacterSet    =  SimpleSet { ( "+" | "-" ) SimpleSet } . 
+   SimpleSet       =    SetIdent | string | "ANY"
+                      | SingleChar [ ".." SingleChar ] .
+   SingleChar      =  "CHR" "(" number | string ")" .
+   SetIdent        =  identifier . 
+
+Simple character sets are denoted by one of 
+
+   SetIdent           a previously declared character set with that name 
+   string             a set consisting of all characters in the string 
+   CHR(i)             a set of one character with ordinal value i
+   CHR("x")           a set of one character "x"
+   CHR(i) .. CHR(j)   a set consisting of all characters whose ordinal
+                      values are in the range i ... j.
+   ANY                the set of all characters acceptable to the
+                      implementation
+
+Simple sets may then be combined by the union (+) and difference operators
+(-). 
+
+The ability to specify a range like CHR(7) .. CHR(31) or CHR("A") .. CHR("Z")
+is an extension over the original Oberon implementation.
+
+   EXAMPLES:
+      digit = "0123456789" .           The set of all digits
+      hexdigit = digit + "ABCDEF" .    The set of all hexadecimal digits
+      eol = CHR(13) .                  End-of-line character
+      noDigit = ANY - digit .          Any character that is not a digit
+      ctrlChars = CHR(1) .. CHR(31) .  The ascii control characters
+
+
+COMMENTS AND IGNORABLE CHARACTERS
+---------------------------------
+
+Usually spaces within the source text of a program are irrelevant, and in
+scanning for the start of a token, a Coco/R generated scanner will simply
+ignore them.  Other separators like tabs, line ends, and form feeds may also
+be declared irrelevant, and some applications may prefer to ignore the
+distinction between upper and lower case input.
+
+Comments are difficult to specify with the regular expressions used to denote
+tokens - indeed, nested comments may not be specified at all in this way.
+Since comments are usually discarded by a parsing process, and may typically
+appear in arbitrary places in source code, it makes sense to have a special
+construct to express their structure.
+
+Ignorable aspects of the scanning process are defined in Cocol by 
+
+   Comments  = "COMMENTS" "FROM" TokenExpr "TO" TokenExpr [ "NESTED" ] . 
+   Ignorable = "IGNORE" ( "CASE" | CharacterSet ) . 
+
+where the optional keyword NESTED should have an obvious meaning.  A practical
+restriction is that comment brackets must not be longer than 2 characters.  It
+is possible to declare several kinds of comments within a single grammar, for
+example, for C++:
+
+      COMMENTS FROM "/*" TO "*/" 
+      COMMENTS FROM "//" TO eol 
+      IGNORE CHR(9) .. CHR(13) 
+
+The set of ignorable characters in this example is that which includes the
+standard white space separators in ASCII files.  The null character CHR(0)
+should not be included in any ignorable set.  It is used internally by Coco/R
+to mark the end of the input file.
+
+
+TOKENS
+------
+
+A very important part of the scanner specification declares the form of
+terminal tokens: 
+
+   Tokens       =  "TOKENS" { Token } . 
+   Token        =  TokenSymbol [ "=" TokenExpr "." ] . 
+   TokenExpr    =  TokenTerm { "|" TokenTerm } . 
+   TokenTerm    =  TokenFactor { TokenFactor } [ "CONTEXT" "(" TokenExpr ")" ] . 
+   TokenFactor  =  SetIdent | string 
+                     | "(" TokenExpr ")" 
+                     | "[" TokenExpr "]" 
+                     | "{" TokenExpr "}" . 
+   TokenSymbol  =  TokenIdent | string . 
+   TokenIdent   =  identifier . 
+
+Tokens may be declared in any order.  A token declaration defines a
+TokenSymbol together with its structure. Usually the symbol on the left-hand
+side of the declaration is an identifier, which is then used in other parts of
+the grammar to denote the structure described on the right-hand side of the
+declaration by a regular expression (expressed in EBNF).  This expression may
+contain literals denoting themselves (for example "END"), or the names of
+character sets (for example letter), denoting an arbitrary character from such
+sets.  The restriction to regular expressions means that it may not contain
+the names of any other tokens.
+
+While token specification is usually straightforward, there are a number of
+subtleties that may need emphasizing: 
+
+ - There is one predeclared token EOF that can be used in productions where
+   it is necessary to check explicitly that the end of the source has been
+   reached.  When the Scanner detects that the end of the source has been
+   reached further attempts to obtain a token return only this one.
+
+ - Since spaces are deemed to be irrelevant when they come between tokens in
+   the input for most languages, one should not attempt to declare literal
+   tokens that have spaces within them.
+
+ - The grammar for tokens allows for empty right-hand sides.  This may seem
+   strange, especially as no scanner is generated if the right-hand side of a
+   declaration is missing.  This facility is used if the user wishes to supply
+   a hand-crafted scanner, rather than the one generated by Coco/R.  In this
+   case, the symbol on the left-hand side of a token declaration may also
+   simply be specified by a string, with no right-hand side.
+
+ - Tokens specified without right-hand sides are numbered consecutively
+   starting from 0, and the hand-crafted scanner has to return token codes
+   according to this numbering scheme.
+
+ - The CONTEXT phrase in a TokenTerm means that the term is only recognized
+   when its right hand context in the input stream is the TokenExpr specified
+   in brackets.
+
+   EXAMPLES:
+      ident   =   letter { letter | digit } .
+      real    =   digit { digit } "." { digit }
+                   [ "E" [ "+" | "-" ] digit { digit } ] .
+      number  =   digit { digit }
+                | digit { digit } CONTEXT ( ".." ) .
+      and     =   "&".
+
+The CONTEXT phrase in the above example allows a distinction between reals
+(e.g. 1.23) and range constructs (e.g. 1..2) that could otherwise not be
+scanned with a single character lookahead.
+
+
+PRAGMAS
+-------
+
+A pragma, like a comment, is a token that may occur anywhere in the input
+stream, but, unlike a comment, it cannot be ignored.  Pragmas are often used
+to allow programmers to select compiler switches dynamically.  Since it
+becomes impractical to modify the phrase structure grammar to handle this, a
+special mechanism is provided for the recognition and treatment of pragmas.
+In Cocol they are declared like tokens, but may have an associated semantic
+action that is executed whenever they are recognized by the scanner.
+
+   Pragmas     =  "PRAGMAS" { Pragma } . 
+   Pragma      =  Token [ Action ] . 
+   Action      =  "(." arbitraryText ".)" . 
+
+   EXAMPLE:
+     option = "$" { letter } .
+         (. char str[50]; int i;
+            S_GetString(S_Pos, S_Len, str);
+            i = 0;
+            while (i < S_Len) {
+              switch (str[i]) {
+              ...
+              }
+              i++;
+            } .)
+
+
+USER NAMES
+----------
+
+Coco/R, by default, generates symbolic names for token symbols, sometimes
+having a rather stereotyped form.  The UserNames section may be used to prefer
+user-defined names, or to help resolve name clashes (for example, between the
+default names that would be chosen for "point" and ".").
+
+   UserNames  = "NAMES" { UserName } . 
+   UserName   = TokenIdent  "=" ( identifier | string ) "." . 
+
+   EXAMPLES:
+      NAMES 
+        period   = "." . 
+        ellipsis = "..." . 
+
+For special purposes the symbol on the left-hand side may also be a string,
+in which case no right-hand side may be specified; this is used if the user
+wishes to supply a hand-crafted scanner.  Indeed, if the right-hand side
+of a declaration is missing, no scanner is generated.
+
+The ability to use names is an extension over the original Oberon
+implementation.
+
+
+Parser Specification
+====================
+
+The parser specification is the main part of the input to Coco/R.  It contains
+the productions of an attributed grammar specifying the syntax of the language
+to be recognized, as well as the action to be taken as each phrase or token is
+recognized.
+
+The form of the parser specification may itself be described in EBNF as
+follows.  For the Modula-2 and Pascal versions we have:
+
+   ParserSpecification =  "PRODUCTIONS" { Production } . 
+   Production          =  NonTerminal [ FormalAttributes ] 
+                            [ LocalDeclarations ]     (* Modula-2 and Pascal *)
+                            "=" Expression "." . 
+   FormalAttributes    =  "<"  arbitraryText ">" | "<."  arbitraryText ".>" .
+   LocalDeclarations   =  "(." arbitraryText ".)" . 
+   NonTerminal         =  identifier . 
+
+For the C and C++ versions the LocalDeclarations follow the "=" instead: 
+
+   Production          =  NonTerminal [ FormalAttributes ] 
+                            "=" [ LocalDeclarations ] /* C and C++ */
+                            Expression "." . 
+
+Any identifier appearing in a production that was not previously declared as a
+terminal token is considered to be the name of a NonTerminal, and there must
+be exactly one production for each NonTerminal that is used in the
+specification (this may, of course, specify a list of alternative right
+sides).
+
+A production may be considered as a specification for creating a routine that
+parses the NonTerminal.  This routine will constitute its own scope for
+parameters and other local components like variables and constants.  The
+left-hand side of a Production specifies the name of the NonTerminal as well
+as its FormalAttributes (which effectively specify the formal parameters of
+the routine).  In the Modula-2 and Pascal versions the optional
+LocalDeclarations allow the declaration of local components to precede the
+block of statements that follow.  The C and C++ versions define their local
+components within this statement block, as required by the host language.
+
+As in the case of tokens, some subtleties in the specification of productions
+should be emphasized: 
+
+ - The productions may be given in any order.
+
+ - A production must be given for a GoalIdentifier that matches the name used
+   for the grammar.
+
+ - The formal attributes enclosed in angle brackets "<" and ">" or "<." and
+   ".>" simply consist of parameter declarations in C/C++.  Similarly, where
+   they are required and permitted, local declarations take the form of C/C++
+   declarations enclosed in "(." and ".)" brackets.  However, the syntax of
+   these components is not checked by Coco/R; this is left to the
+   responsibility of the compiler that will actually compile the generated
+   application.
+
+ - Allowing formal attribute to be enclosed in angle brackets "<." and ".>" is
+   an extension over the original implementation, but allows for a > character
+   to appear as part of an actual parameter expression.
+
+ - All routines give rise to "regular procedures" (in Modula-2 terminology) or
+   "void functions" (in C++ terminology).  Coco/R cannot construct true
+   functions that can be called from within other expressions; any return
+   values must be transmitted using reference parameter mechanisms.
+
+ - The goal symbol may not have any FormalAttributes.  Any information that
+   the parser is required to pass back to the calling driver program must be
+   handled in other ways.  At times this may prove slightly awkward.
+
+ - While a production constitutes a scope for its formal attributes and its
+   locally declared objects, terminals and non-terminals, globally declared
+   objects, and imported modules are visible in any production.
+
+ - It may happen that an identifier chosen as the name of a NonTerminal may
+   clash with one of the internal names used in the rest of the system.  Such
+   clashes will only become apparent when the application is compiled and
+   linked, and may require the user to redefine the grammar to use other
+   identifiers.
+
+   EXAMPLE:
+      Expression <int *Item> =                  /* parameters */
+                 (. int y;
+                    int operator.)              /* local variables */
+      /* definition of Expression */ .
+
+
+EXPRESSIONS
+-----------
+
+The Expression on the right-hand-side of each Production defines the
+context-free structure of some part of the source language, together with the
+attributes and semantic actions that specify how the parser must react to the
+recognition of each component.  The syntax of an Expression may itself be
+described in EBNF (albeit not in LL(1) form) as
+
+   Expression   =  Term { "|" Term } . 
+   Term         =  Factor { Factor }  . 
+   Factor       =     [ "WEAK" ] TokenSymbol 
+                   |  NonTerminal [ Attributes ] 
+                   |  Action 
+                   |  "ANY" 
+                   |  "SYNC" 
+                   |  "(" Expression ")" 
+                   |  "[" Expression "]" 
+                   |  "{" Expression "}" . 
+   Attributes   =  "<"  arbitraryText ">"  | "<."  arbitraryText ".>" .
+   Action       =  "(." arbitraryText ".)" . 
+
+The Attributes enclosed in angle brackets that may follow a NonTerminal
+effectively denote the actual parameters that will be used in calling the
+corresponding routine.  If a NonTerminal is defined on the left-hand side of a
+Production to have FormalAttributes, then every occurrence of that NonTerminal
+in a right-hand side Expression must have a list of actual attributes that
+correspond to the FormalAttributes according to the parameter compatibility
+rules of C/C++.  However, the conformance is only checked when the generated
+parser module is compiled.
+
+Allowing formal attribute to be enclosed in angle brackets "<." and ".>" is an
+extension over the original implementation, but allows for a > character to
+appear as part of an actual parameter expression.
+
+An Action is an arbitrary sequence of C/C++ statements enclosed in "(." and
+".)".  These are simply incorporated into the generated parser in situ; once
+again, no syntax is checked at that stage.  To prevent hard-to-find errors
+resulting from the accidental omission of a closing ".)", the digraph "(."
+is not allowed within the arbitrary text comprising an action.  Nor is an
+unterminated string literal allowed within such text.
+
+
+The symbol ANY denotes any terminal that is not an alternative of this ANY
+symbol.  It can conveniently be used to parse structures that contain
+arbitrary text.  For example, the translation of a Cocol/R attribute list
+is essentially as follows:
+
+    Attributes <long *pos, long *len> =
+        "<"               (. *pos = S_Pos + 1 .)
+        { ANY }
+        ">"               (. *len = S_Pos - *pos .) .
+
+In this example the closing angle bracket is an implicit alternative of the
+ANY symbol in curly brackets.  The meaning is that ANY matches any terminal
+except ">".  S_pos is the source text position of the most recently
+recognized terminal.  It is exported by the generated scanner.
+
+
+Error Handling
+==============
+
+Good and efficient error recovery is difficult in recursive descent parsers,
+since little information about the parsing process is available when an error
+occurs.  What has to be done in case of an error:
+
+1.  Find all symbols with which parsing can be resumed at a certain location
+    in the grammar reachable from the error location (recovery symbols).
+
+2.  Skip the input up to the first symbol that is in the recovery set.
+
+3.  Drive the parser to the location where the recovery symbol can be 
+    recognised.
+
+4.  Resume parsing from there.
+
+In recursive descent parsers, information about the parsing location and about
+the expected symbols is only implicitly contained in the parser code (and in
+the procedure call stack) and cannot be exploited for error recovery.  One
+method to overcome this is to compute the recovery set dynamically during
+parsing.  Then, when an error occurs, the recovery symbols are already known
+and all that one has to do is to skip erroneous input and to "unroll" the
+procedure stack up to a legal continuation point [Wirth 76].  This technique,
+although systematically applicable, slows down error-free parsing and inflates
+the parser code.
+
+Another technique has therefore been suggested in [Wirth 86].  Recovery takes
+place only at certain synchronization points in the grammar.  Errors at other
+points are reported but cause no recovery.  Parsing simply continues up to the
+next synchronization point where the grammar and the input are synchronized
+again.  This requires the designer of the grammar to specify synchronization
+points explicitly - not a very difficult task if one thinks for a moment.  The
+advantage is that no recovery sets have to be computed at run time.  This
+makes the parser small and fast.
+
+The programmer has to give some hints in order to allow Coco/R to generate
+good and efficient error-handling.
+
+First, synchronization points have to be specified.  A synchronization point
+is a location in the grammar where especially safe terminals are expected that
+are hardly ever missing or mistyped.  When the generated parser reaches such a
+point, it adjusts the input to the next symbol that is expected at this point.
+In most languages good candidates for synchronization points are the beginning
+of a statement (where IF, WHILE, etc are expected), the beginning of a
+declaration sequence (where CONST, VAR, etc are expected), and the beginning
+of a type (where RECORD, ARRAY, etc. are expected).  The end-of-file symbol is
+always among the synchronization symbols, guaranteeing that synchronization
+terminates at least at the end of the source text.  A synchronization point is
+specified by the symbol SYNC.
+
+A synchronization point is translated into a loop that skips all symbols not
+expected at this point (except end-of-file).  The set of these symbols can be
+precomputed at parser generation time.  The following example shows two
+synchronization points and their counterparts in the generated parser.
+
+PRODUCTION                          SPIRIT OF GENERATED PARSING PROCEDURE
+
+Declarations =
+   SYNC                             while (!(IN(sym{const, type, var, proc,
+                                                     begin, end, eof})) {
+                                       Error(...); Get();
+                                    };
+{                                   while (IN(sym,{const, type, var, proc})) {
+  ( "CONST" { ConstDecl ";" }         if (sym == const) { Get();...
+  | "TYPE" { TypeDecl ";" }           else if (sym == type) { Get();...
+  | "VAR" { VarDecl ";" }             else if (sym == var) { Get();...
+  | ProcDecl                          else ProcDecl()
+  )                                 }
+  SYNC                              while (!IN(sym,{const, type, var, proc,
+                                                    begin, end, eof})) {
+                                       Error(...); Get();
+                                    }
+}
+
+To avoid spurious error messages, an error is only reported when a certain
+amount of text has been correctly parsed since the last error.
+
+
+WEAK SYMBOLS
+------------
+
+Error-handling can further be improved by specifying which terminals are
+"weak" in a certain context.  A weak terminal is a symbol that is often
+mistyped or missing, such as the semicolon between statements.  A weak
+terminal is denoted by preceding it with the keyword WEAK.  When the generated
+parser does not find a terminal specified as weak, it adjusts the input to the
+next symbol that is either a legal successor of the weak symbol or a symbol
+expected at any synchronization point (symbols expected at synchronization
+points are considered to be very "strong", so that it makes sense that they
+never be skipped).
+
+   EXAMPLE:
+      StatementSeq = Statement { WEAK ";" Statement } .
+
+If the parser tries to recognize a weak symbol and finds it missing, it
+reports an error and skips the input until a legal successor of the symbol is
+found (or a symbol that is expected at any synchronization point;  this is a
+useful heuristic that avoids skipping safe symbols).  The following example
+shows the translation of a weak symbol.
+
+                       SPIRIT OF GENERATED PARSING CODE
+Statement =
+   ident                Expect(ident);
+   WEAK ":="            ExpectWeak(becomes, {start symbols of Expression});
+   Expression           Expression()
+
+
+The procedure ExpectWeak is implemented roughly as follows:
+
+  int ExpectWeak (int s; Set expected);
+  { if (sym == s) Get();
+    else {
+      Error(s);
+      while (!IN(sym,expected + {symbols expected at
+                                 synchronization points})) {
+        Get();
+      }
+    }
+  }
+
+Weak symbols give the parser another chance to synchronize in case of an
+error.  Again, the set of expected symbols can be precomputed at parser
+generation time and cause no run time overhead in error-free parsing.
+
+When an iteration starts with a weak symbol, this symbol is called a weak
+separator and is handled in a special way.  If it cannot be recognized, the
+input is skipped until a symbol that is contained in one of the following
+three sets is found:
+
+      symbols that may follow the weak separator
+      symbols that may follow the iteration
+      symbols expected at any synchronization point (including eof)
+
+The following example shows the translation of a weak separator
+
+                           GENERATED PARSING PROCEDURE
+  StatSequence =
+     Stat                  Stat;
+     { WEAK ";" Stat }.    while (WeakSeparator(semicolon, A, B)) { Stat; }
+
+In this example, A is the set of start symbols of a statement (ident, IF,
+WHILE, etc.) and B is the set of successors of a statement sequence (END,
+ELSE, UNTIL, etc.).  Both sets can be precomputed at parser generation time.
+
+WeakSeparator is implemented on the following lines:
+
+   int WeakSeparator (int s; Set sySucc, Set iterSucc)
+   { if (sym == s) { Get(); return 1; }
+       else if (IN(sym, iterSucc)) return 0;
+       else {
+         Error(s);
+         while (!IN(sym, sySucc + iterSucc + eof)) Get();
+         return IN(sym, sySucc); /* 1 means 's inserted' */
+       }
+   }
+
+The observant reader may have noticed that the set B contains the successors
+of a statement sequence in any possible context.  This set may be too large.
+If the statement sequence occurs within a REPEAT statement, only UNTIL is a
+legal successor, but not END or ELSE.  We accept this fault, since it allows
+us to precompute the set B at parser generation time.  The occurrence of END
+or ELSE is very unlikely in this context and can only lead to incorrect
+synchronization, causing the parser to synchronize again.
+
+
+LL(1) REQUIREMENTS
+==================
+
+Recursive descent parsing requires that the grammar of the parsed language
+satisfies the LL(1) property.  This means that at any point in the grammar the
+parser must be able to decide on the bases of a single lookahead symbol which
+of several possible alternatives have to be selected.  For example, the
+following production is not LL(1):
+
+   Statement = ident ":=" Expression
+             | ident [ "(" ExpressionList ")" ] .
+
+Both alternatives start with the symbol ident, and the parser cannot
+distinguish between them if it comes across a statement, and finds an ident as
+the next input symbol.  However, the production can easily be transformed into
+
+   Statement = ident (   ":=" Expression
+                      |  [ "(" ExpressionList ")"  ]
+                     ) .
+
+where all alternatives start with distinct symbols.  There are LL(1) conflicts
+that are not as easy to detect as in the above example.  For a programmer, it
+can be hard to find them if he has no tool to check the grammar.  The result
+would be a parser that in some situations selects a wrong alternative.  Coco/R
+checks if the grammar satisfies the LL(1) property and gives appropriate error
+messages that show how to correct any violations.
+
+=END=
+

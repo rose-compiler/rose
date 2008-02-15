@@ -1,0 +1,96 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgElaboratedTypeModifier
+*/
+/*! \name Class Members*/
+//@{
+/*!\var enum SgElaboratedTypeModifier::elaborated_type_modifier_enum SgElaboratedTypeModifier::p_modifier
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgElaboratedTypeModifier &SgElaboratedTypeModifier::operator=(const SgElaboratedTypeModifier &X)
+*/
+/*!\fn SgElaboratedTypeModifier::SgElaboratedTypeModifier(const SgElaboratedTypeModifier &X)
+*/
+/*!\fn SgElaboratedTypeModifier::SgElaboratedTypeModifier(const SgElaboratedTypeModifierStorageClass &source)
+*/
+/*!\fn bool SgElaboratedTypeModifier::isClass() const
+*/
+/*!\fn bool SgElaboratedTypeModifier::isDefault() const
+*/
+/*!\fn bool SgElaboratedTypeModifier::isEnum() const
+*/
+/*!\fn bool SgElaboratedTypeModifier::isStruct() const
+*/
+/*!\fn bool SgElaboratedTypeModifier::isTypename() const
+*/
+/*!\fn bool SgElaboratedTypeModifier::isUnion() const
+*/
+/*!\fn bool SgElaboratedTypeModifier::isUnknown() const
+*/
+/*!\fn inline static void SgElaboratedTypeModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgElaboratedTypeModifier *SgElaboratedTypeModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgElaboratedTypeModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgElaboratedTypeModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgElaboratedTypeModifier::initializeStorageClassArray(SgElaboratedTypeModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgElaboratedTypeModifier::clearMemoryPool()
+*/
+/*!\fn static void SgElaboratedTypeModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgElaboratedTypeModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgElaboratedTypeModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgElaboratedTypeModifier::roseRTI()
+*/
+/*!\fn virtual SgElaboratedTypeModifier::~SgElaboratedTypeModifier()
+*/
+/*!\fn virtual SgNode *SgElaboratedTypeModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgElaboratedTypeModifier::post_construction_initialization()
+*/
+/*!\fn void SgElaboratedTypeModifier::display(std::string label) const
+*/
+/*!\fn void SgElaboratedTypeModifier::reset()
+*/
+/*!\fn void SgElaboratedTypeModifier::setClass()
+*/
+/*!\fn void SgElaboratedTypeModifier::setDefault()
+*/
+/*!\fn void SgElaboratedTypeModifier::setEnum()
+*/
+/*!\fn void SgElaboratedTypeModifier::setStruct()
+*/
+/*!\fn void SgElaboratedTypeModifier::setTypename()
+*/
+/*!\fn void SgElaboratedTypeModifier::setUnion()
+*/
+/*!\fn void SgElaboratedTypeModifier::setUnknown()
+*/
+/*!\fn void SgElaboratedTypeModifier::set_modifier(enum SgElaboratedTypeModifier::elaborated_type_modifier_enum modifier)
+\description See  modifier)
+modifier for documentation */
+/*!\fn enum SgElaboratedTypeModifier::elaborated_type_modifier_enum SgElaboratedTypeModifier::get_modifier() const
+\description See  const
+modifier for documentation */
+/*!\fn virtual SgNode *SgElaboratedTypeModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgElaboratedTypeModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgElaboratedTypeModifier::get_numberOfTraversalSuccessors()
+\description See  SgElaboratedTypeModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgElaboratedTypeModifier::get_traversalSuccessorContainer()
+\description See  SgElaboratedTypeModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgElaboratedTypeModifier::get_traversalSuccessorNamesContainer()
+\description See  SgElaboratedTypeModifier::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgElaboratedTypeModifier::SgElaboratedTypeModifier()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1177205016;

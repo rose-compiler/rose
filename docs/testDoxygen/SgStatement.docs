@@ -1,0 +1,188 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgStatement
+\brief This class represents the notion of a statement.
+
+    There are no uses of this IR node anywhere.  All statements
+are derived from this SgStatement class.
+
+\internal This is a base class for all statements.
+
+\todo There are a number of statements that contain a SgBasicBlock
+    where they should contain a SgStatement.  In each case changing 
+    the data member to be a SgStatement will unfortunately change
+    the constructor parameter list and thus the ROSE API.  So these 
+    changes have to be organized a a point where it is clear we will 
+    be changing some details of the ROSE API (prior to external release).
+    Problem IR nodes are:
+      - SgCaseOptionStmt
+      - SgTryStmt
+      - SgDefaultOptionStmt
+      - SgIfStmt
+      - SgForStatement
+      - SgWhileStmt
+      - SgDoWhileStmt
+      - SgSwitchStatement
+
+\todo Fortran support for modifiers can be used as statement (must be added to IR): 
+      see section 5.2, 5.3 in Fortran 2003 standard. Note that type modifiers can 
+      be used as statements.
+
+\todo Fortran support requires statements in section 6.3.
+
+\todo Fortran support requires for "where" and "forall" statements.
+
+\todo Fortran support requires for case statement ranges (gnu extension for C, but
+    standard in Fortran).  
+
+\todo Fortran support requires statements in section 8.1.4, 8.1.5.
+
+\todo Fortran support requires statements in section 15 (modifiers for ISO_C_BINDING).
+
+
+
+
+
+\sa
+\ref SgStatement_usage  "Example of using a SgStatement object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*
+   There are no data members for this class.
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgStatement::SgStatement ( Sg_File_Info* startOfConstruct = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgStatement base class.
+
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgStatement_create "Example:create an SgStatement object"
+*/
+
+/*!
+\fn SgStatement::~SgStatement()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgStatement::isSgStatement (SgNode *s)
+\brief Cast function (from derived class to SgStatement pointer).
+
+   This functions returns a SgStatement pointer for any input of a 
+pointer to an object derived from a SgStatement.
+
+\return Returns valid pointer to SgStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgStatement::isSgStatement (const SgNode *s)
+\brief Cast function (from derived class to SgStatement pointer).
+
+   This functions returns a SgStatement pointer for any input of a 
+pointer to an object derived from a SgStatement.
+
+\return Returns valid pointer to SgStatement if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgStatement::get_scope() const
+\brief Returns scope of current statement.
+
+   This functions returns a pointer to the inner most SgScopeStatement where the current 
+statement is located.
+This is a function called after the parents have been set.  It is not called by the
+EDG/SAGE interface and is only called after the SAGE AST has been built and the parent
+pointers set within a separate phase.
+Improtant exception: The SgFunctionParameterList should have as it's scope the
+SgFunctionDefinition, but it is a sibling of the SgFunctionDefinition (both the
+SgFunctionParameterList and the SgFunctionDefinition have the SgFunctionDeclaration
+as a parent.  Thus the scope of the SgFunctionParameterList is computed to be the 
+SgGlobal (global scope) most often; which is an error).  So we handle this case 
+explicitly.
+
+\return Returns valid pointer to SgScopeStatement.
+*/
+
+/*!
+\fn SgStatement::setExtern()
+\brief This function sets "extern" status for the current statement.
+
+    The new modifier mechanism makes this older function interface redundent.
+
+\deprecated This function should not be called anywhere the new modifier handling make is obsolete.
+*/
+
+/*!
+\fn SgStatement::setStatic()
+\brief This function sets "static" status for the current statement.
+
+    The new modifier mechanism makes this older function interface redundent.
+
+\deprecated This function should not be called anywhere the new modifier handling make is obsolete.
+*/
+
+/*! @{
+     @name Private Supporting Functions for Low-Level Rewrite Interface
+     \brief Low-level Support for mutation of the AST.
+
+     This is the lowest level of support for the mutation of the AST.
+
+     \internal Need to document this section more fully.
+ */
+
+/*!
+\fn SgStatement::replace_child (SgStatement *, SgStatement *, bool extractListFromBasicBlock=false)
+\brief Private supporting function for low level SageIII rewrite interface.
+
+     This function implements special semantics for the insertion of a collection of
+statements in a block.  If extractListFromBasicBlock is true then the statements in
+the block are extracts and placed into the same scope as the target position.
+
+\return Returns bool.
+*/
+
+/*!
+\fn SgStatement::insert_child (SgStatement *, SgStatement *, bool inFront=true, bool extractListFromBasicBlock=false)
+\brief Private supporting function for low level SageIII rewrite interface.
+
+     This function implements special semantics for the insertion of a collection of
+statements in a block.  If extractListFromBasicBlock is true then the statements in
+the block are extracts and placed into the same scope as the target position.
+
+\return Returns bool.
+*/
+
+
+/*! @} */
+
+/*!
+\fn SgStatement::get_symbol_from_symbol_table()
+\brief Virtual function to obtain the SgSymbol from the scope's symbol table.
+
+     This function permits retrival of the associated SgSymbol, where it exists
+for that IR node, where is is associated with this exact declaration. If no
+symbol is found in the symbol table the function returns NULL. If it is not
+implemented for the associated statement or declaration it is an error
+(assertion failure).   This fucntion is ONLY defined for those IR nodes for
+which symbols can be constructed.
+
+\return Returns SgSymbol pointer.
+*/
+

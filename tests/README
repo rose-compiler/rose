@@ -1,0 +1,38 @@
+This directory contains tests for ROSE.  
+
+The tests are divided into separate directories to test the ability to
+compile code and the ability to execute the compiled code separately. Other
+tests isolate parts of the internal ROSE infrastructure for testing that
+use to be in the ROSE/src directory but could not be colocated there under the
+new directory structure.
+
+Since ROSE optimizes the use of libraries and A++ is the only current library that
+ROSE can optimize, tests that test the ability of ROSe to optimize performance
+are located in the RunTests directory.  Before any optimization can occur, we have to
+be able to process the code through ROSE, this is sufficiently significant as a problem
+that we have a separate directory of compile tests to test the ability of the preprocessor 
+(and all of it's different phases). These compiler tests (code fragments that are or have been
+a problem to compile properly) are located in the CompileTests directory.
+
+   All translators build using ROSE should
+be able to parse, process internally (generate ASTs), unparse, and
+compile (with a C++ compiler)  the codes in each of these directories.
+
+CompileTests:
+   This directory contains code fragments that test the internal compiler mechanisms.
+Many code fragments or whole codes are present which have or continue to present
+problems in the compilation.  The CompileTests directory consists of several directories,
+the README file in that CompileTests directory gives more specific information.
+
+RunTests:
+   This directory contains subdirectories representing code which uses libraries that
+ROSE can optimize.  It's purpose is to test the optimization mechanisms within ROSE.
+A testing harness (used in A++/P++ and developed by Brian Miller) will be use to report
+the performance of the optimizations at a later stage.
+
+roseTests:
+   This directory tests the internal ROSE infrastructure. It contains separate 
+subdirectories for individual parts of ROSE. See ROSE/tests/roseTests/README 
+for details.
+
+

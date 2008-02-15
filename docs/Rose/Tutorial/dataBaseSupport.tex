@@ -1,0 +1,179 @@
+\chapter{Data-Base Support}
+
+    This chapter is specific to support in ROSE for persistent storage.
+ROSE uses the SQLite database and makes it simple to store data in the
+data base for retrieval in later phases of processing large multiple file projects.
+
+\fixme{Need more information here.}
+
+\section{ROSE DB Support for Persistent Analysis}
+
+   This section presents figure~\ref{Tutorial:exampleDataBase1}, a simple 
+C++ source code using a template. It is used as a basis for showing how 
+template instantiations are handled within ROSE.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/dataBaseUsage.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/dataBaseUsage.aa}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example translator (part 1) using data base connection to store function names.}
+\label{Tutorial:exampleDataBaseTranslator}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/dataBaseUsage.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/dataBaseUsage.ab}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example translator (part 2) using data base connection to store function names.}
+\label{Tutorial:exampleDataBaseTranslator}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_dataBaseExample1.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_dataBaseExample1.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to data base example.}
+\label{Tutorial:exampleDataBase1}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/dataBaseExample1.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/dataBaseExample1.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output from processing input code through data base example dataBaseTranslator\ref{Tutorial:exampleDataBaseTranslator}.}
+\label{Tutorial:exampleTemplate1}
+\end{figure}
+
+
+\section{Call Graph for Multi-file Application}
+
+   This section shows an example of the use of the ROSE Data-Base mechanism
+where information is stored after processing each file as part of generating the
+call graph for a project consisting of multiple files.  The separate files
+are show in figures~\ref{Tutorial:exampleDataBase1} and ~\ref{Tutorial:exampleDataBase2}.
+These files are processed using the translator in figure~\ref{Tutorial:exampleDataBase2}
+to generate the final project call graph shown in figure~\ref{Tutorial:exampleDataBase2}.
+
+\fixme{This example still needs to be implemented to use the new ROSE call graph generator.}
+
+
+\section{Class Hierarchy Graph}
+
+   This section presents a translator in figure~\ref{Tutorial:exampleDataBase2}, to
+generate the class hierarchy graph of the example shown in
+figure~\ref{Tutorial:exampleDataBase2}. The input is a multi-file application
+show in figure~\ref{Tutorial:exampleDataBase2} and 
+figure~\ref{Tutorial:exampleDataBase2}. {\em This example is incomplete.}
+
+\fixme{This example is still incomplete.}
+
+\commentout{
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_templateExample2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_templateExample2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing use of a C++ template.}
+\label{Tutorial:exampleDataBase2}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_templateExample2.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_templateExample2.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code after processing using 
+identityTranslator\ref{Tutorial:exampleIdentityTranslator}.}
+\label{Tutorial:exampleTemplate1}
+\end{figure}
+}
+
+

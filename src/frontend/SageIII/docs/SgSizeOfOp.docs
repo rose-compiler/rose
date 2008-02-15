@@ -1,0 +1,130 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSizeOfOp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgSizeOfOp
+\brief This class represents the "sizeof()" operator (applied to any type).
+\todo Need to implement support in EDG/SageIII translation for this operator.
+\internal This operator is only seen in the AST within expression trees
+    which came from constant folded expression.
+\sa
+\ref SgSizeOfOp_usage  "Example of using a SgSizeOfOp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSizeOfOp data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSizeOfOp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgSizeOfOp::SgSizeOfOp (const SgSizeOfOp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgSizeOfOp::~SgSizeOfOp()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgSizeOfOp::isSgSizeOfOp (SgNode *s)
+\brief Cast function (from derived class to SgSizeOfOp pointer).
+   This functions returns a SgSizeOfOp pointer for any input of a 
+pointer to an object derived from a SgSizeOfOp.
+\return Returns valid pointer to SgSizeOfOp if input is derived from a SgSizeOfOp.
+*/
+/*!
+\fn SgSizeOfOp::isSgSizeOfOp (const SgNode *s)
+\brief Cast function (from derived class to SgSizeOfOp pointer).
+   This functions returns a SgSizeOfOp pointer for any input of a 
+pointer to an object derived from a SgSizeOfOp.
+\return Returns valid pointer to SgSizeOfOp if input is derived from a SgSizeOfOp.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgExpression *SgSizeOfOp::p_operand_expr
+\brief This a pointer to the expression given to the sizeof operator.
+   This is the expression provided as an argument to the sizeof operator
+(if it is an expression).
+*/
+/*!
+\var SgType *SgSizeOfOp::p_operand_type
+\brief This a pointer to the SgType given to the sizeof operator.
+   This is the type provided as an argument to the sizeof operator
+(if it is a type).
+*/
+/*!
+\var SgType *SgSizeOfOp::p_expression_type
+\brief This a SgType, the type of the expression.
+\internal Not clear if this is always a valid pointer.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgSizeOfOp::SgSizeOfOp(Sg_File_Info *startOfConstruct,SgExpression *operand_expr=(0),SgType *operand_type=(0),SgType *expression_type=(0))
+*/
+/*!
+\fn SgSizeOfOp::SgSizeOfOp(const SgSizeOfOpStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgSizeOfOp base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgSizeOfOp_create "Example:create an SgSizeOfOp object"
+*/
+/*!\fn inline static void SgSizeOfOp::operator delete(void *pointer)
+*/
+/*!\fn static SgSizeOfOp *SgSizeOfOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgSizeOfOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgSizeOfOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgSizeOfOp::initializeStorageClassArray(SgSizeOfOpStorageClass *storageArray)
+*/
+/*!\fn static void SgSizeOfOp::clearMemoryPool()
+*/
+/*!\fn static void SgSizeOfOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgSizeOfOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgSizeOfOp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgSizeOfOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgSizeOfOp::~SgSizeOfOp()
+*/
+/*!\fn virtual void SgSizeOfOp::post_construction_initialization()
+*/
+/*!\fn void SgSizeOfOp::set_operand_expr(SgExpression *operand_expr)
+\description See  *operand_expr)
+operand_expr for documentation */
+/*!\fn void SgSizeOfOp::set_operand_type(SgType *operand_type)
+\description See  *operand_type)
+operand_type for documentation */
+/*!\fn SgExpression *SgSizeOfOp::get_operand_expr() const
+\description See  const
+operand_expr for documentation */
+/*!\fn SgType *SgSizeOfOp::get_operand_type() const
+\description See  const
+operand_type for documentation */
+/*!\fn virtual SgNode *SgSizeOfOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgSizeOfOp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgSizeOfOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgSizeOfOp::get_numberOfTraversalSuccessors()
+\description See  SgSizeOfOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSizeOfOp::get_traversalSuccessorContainer()
+\description See  SgSizeOfOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSizeOfOp::get_traversalSuccessorNamesContainer()
+\description See  SgSizeOfOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgSizeOfOp::SgSizeOfOp(SgExpression *operand_expr,SgType *operand_type,SgType *expression_type)
+*/
+//@}
+int SAGE_Doxygen_Dummy_40541132032485;

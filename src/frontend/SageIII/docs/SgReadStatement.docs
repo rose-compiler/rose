@@ -1,0 +1,116 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgReadStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgReadStatement::p_advance
+*/
+/*!\var SgExpression *SgReadStatement::p_end
+*/
+/*!\var SgExpression *SgReadStatement::p_eor
+*/
+/*!\var SgExpression *SgReadStatement::p_format
+*/
+/*!\var SgExpression *SgReadStatement::p_namelist
+*/
+/*!\var SgExpression *SgReadStatement::p_rec
+*/
+/*!\var SgExpression *SgReadStatement::p_size
+*/
+/*!\var SgExpression *SgReadStatement::p_asynchronous
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgReadStatement::SgReadStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgReadStatement::SgReadStatement(const SgReadStatementStorageClass &source)
+*/
+/*!\fn inline static void SgReadStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgReadStatement *SgReadStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgReadStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgReadStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgReadStatement::initializeStorageClassArray(SgReadStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgReadStatement::clearMemoryPool()
+*/
+/*!\fn static void SgReadStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgReadStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgReadStatement::roseRTI()
+*/
+/*!\fn virtual SgNode *SgReadStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgReadStatement::~SgReadStatement()
+*/
+/*!\fn virtual void SgReadStatement::post_construction_initialization()
+*/
+/*!\fn void SgReadStatement::set_advance(SgExpression *advance)
+\description See  *advance)
+advance for documentation */
+/*!\fn void SgReadStatement::set_asynchronous(SgExpression *asynchronous)
+\description See  *asynchronous)
+asynchronous for documentation */
+/*!\fn void SgReadStatement::set_end(SgExpression *end)
+\description See  *end)
+end for documentation */
+/*!\fn void SgReadStatement::set_eor(SgExpression *eor)
+\description See  *eor)
+eor for documentation */
+/*!\fn void SgReadStatement::set_format(SgExpression *format)
+\description See  *format)
+format for documentation */
+/*!\fn void SgReadStatement::set_namelist(SgExpression *namelist)
+\description See  *namelist)
+namelist for documentation */
+/*!\fn void SgReadStatement::set_rec(SgExpression *rec)
+\description See  *rec)
+rec for documentation */
+/*!\fn void SgReadStatement::set_size(SgExpression *size)
+\description See  *size)
+size for documentation */
+/*!\fn SgExpression *SgReadStatement::get_advance() const
+\description See  const
+advance for documentation */
+/*!\fn SgExpression *SgReadStatement::get_asynchronous() const
+\description See  const
+asynchronous for documentation */
+/*!\fn SgExpression *SgReadStatement::get_end() const
+\description See  const
+end for documentation */
+/*!\fn SgExpression *SgReadStatement::get_eor() const
+\description See  const
+eor for documentation */
+/*!\fn SgExpression *SgReadStatement::get_format() const
+\description See  const
+format for documentation */
+/*!\fn SgExpression *SgReadStatement::get_namelist() const
+\description See  const
+namelist for documentation */
+/*!\fn SgExpression *SgReadStatement::get_rec() const
+\description See  const
+rec for documentation */
+/*!\fn SgExpression *SgReadStatement::get_size() const
+\description See  const
+size for documentation */
+/*!\fn virtual SgNode *SgReadStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgReadStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgReadStatement::get_numberOfTraversalSuccessors()
+\description See  SgReadStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgReadStatement::get_traversalSuccessorContainer()
+\description See  SgReadStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgReadStatement::get_traversalSuccessorNamesContainer()
+\description See  SgReadStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgReadStatement::SgReadStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1212744367;

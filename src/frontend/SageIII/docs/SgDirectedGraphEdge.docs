@@ -1,0 +1,64 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgDirectedGraphEdge
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgGraphNode *SgDirectedGraphEdge::p_from
+*/
+/*!\var SgGraphNode *SgDirectedGraphEdge::p_to
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDirectedGraphEdge::SgDirectedGraphEdge(const SgDirectedGraphEdgeStorageClass &source)
+*/
+/*!\fn inline static void SgDirectedGraphEdge::operator delete(void *pointer)
+*/
+/*!\fn static SgDirectedGraphEdge *SgDirectedGraphEdge::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDirectedGraphEdge::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDirectedGraphEdge::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDirectedGraphEdge::initializeStorageClassArray(SgDirectedGraphEdgeStorageClass *storageArray)
+*/
+/*!\fn static void SgDirectedGraphEdge::clearMemoryPool()
+*/
+/*!\fn static void SgDirectedGraphEdge::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDirectedGraphEdge::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgDirectedGraphEdge::roseRTI()
+*/
+/*!\fn virtual SgDirectedGraphEdge::~SgDirectedGraphEdge()
+*/
+/*!\fn virtual SgNode *SgDirectedGraphEdge::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgDirectedGraphEdge::set_from(SgGraphNode *from)
+\description See  *from)
+from for documentation */
+/*!\fn void SgDirectedGraphEdge::set_to(SgGraphNode *to)
+\description See  *to)
+to for documentation */
+/*!\fn SgGraphNode *SgDirectedGraphEdge::get_from() const
+\description See  const
+from for documentation */
+/*!\fn SgGraphNode *SgDirectedGraphEdge::get_to() const
+\description See  const
+to for documentation */
+/*!\fn virtual SgNode *SgDirectedGraphEdge::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgDirectedGraphEdge::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDirectedGraphEdge::get_numberOfTraversalSuccessors()
+\description See  SgDirectedGraphEdge::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDirectedGraphEdge::get_traversalSuccessorContainer()
+\description See  SgDirectedGraphEdge::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDirectedGraphEdge::get_traversalSuccessorNamesContainer()
+\description See  SgDirectedGraphEdge::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgDirectedGraphEdge::SgDirectedGraphEdge(std::string name=(""),std::string type=(""),int graph_id=0,SgGraphNode *from=(0),SgGraphNode *to=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2022602793;

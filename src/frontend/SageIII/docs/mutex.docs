@@ -1,0 +1,18 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class mutex
+*/
+/*! \name Class Members*/
+//@{
+/*!\var sem_t mutex::mut
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn inline mutex::mutex()
+*/
+/*!\fn inline void mutex::lock()
+*/
+/*!\fn inline void mutex::unlock()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1211389524;

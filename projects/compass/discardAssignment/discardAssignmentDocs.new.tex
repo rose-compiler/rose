@@ -1,0 +1,68 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Discard Assignment}
+\label{DiscardAssignment::overview}
+
+According to some coding standards, the assignment operator should not be used
+within larger constructs, but only as a stand-alone expression statement; in
+particular, it should not be used as the controlling expression in a branch
+because it might be confused with the equality operator. This checker reports
+any use of the assignment operator (built-in or overloaded) that is not the
+sole expression in an expression statement.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+void strcpy_noncompliant(char *dest, const char *source)
+{
+    while (*dest++ = *source++)
+        ;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+void strcpy_compliant(char *dest, const char *source)
+{
+    char last = *source;
+    do {
+        last = *source;
+        *dest++ = *source++;
+    } while (last != '\0');
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each assignment, geneate a diagnostic if its parent is not an expression statement.
+\item For each assignment that has an expression statement as its parent, generate a diagnostic if that expression
+statement is the controlling expression statement of a loop, if, or switch.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference to this pattern is: The Programming Research Group:
+``High-Integrity C++ Coding Standard Manual'', Item~10.5: ``Always discard the
+result of an assignment operator.''
+

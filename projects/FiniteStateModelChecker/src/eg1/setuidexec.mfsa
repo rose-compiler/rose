@@ -1,0 +1,3 @@
+setuid.fsa exec.fsa
+q euid_0 before_exec
+f euid_0 after_exec

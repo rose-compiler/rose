@@ -1,0 +1,136 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStatementExpression
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgStatementExpression
+\brief This class represents the GNU extension "statement expression" (thus is
+    non-standard C and C++).
+The statement expression is a GNU extension that is helpful in the implementation of
+macros and expressions.  In most cases an alternative construction of code is possible.
+More information is at: \n
+   http://developer.apple.com/documentation/developertools/gcc-4.0.1/gcc/Statement-Exprs.html \n
+In g++, the result value of a statement expression undergoes array and function pointer
+decay, and is returned by value to the enclosing expression. For instance, if A is a
+class, then: \n
+             A a; ({a;}).Foo() \n
+will construct a temporary A object to hold the result of the statement expression, and
+that will be used to invoke Foo. Therefore the this pointer observed by Foo will not be
+the address of a.
+\internal This sort of expression can be useful and is important to at least one user so
+    it is implemented in ROSE. 
+\sa
+\ref SgStatementExpression_usage  "Example of using a SgStatementExpression object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStatementExpression data members
+/////////////////////////////////////////////////////////////////////////
+/*!
+\var SgStatementExpression::p_operand_type
+\brief This a pointer to the SgType given to the sizeof operator.
+   This is the type provided as an argument to the sizeof operator
+(if it is a type).
+*/
+/*!
+\var SgStatementExpression::p_expression_type
+\brief This a SgType, the type of the expression.
+\internal Not clear if this is always a valid pointer.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStatementExpression member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgStatementExpression::SgStatementExpression (const SgStatementExpression &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgStatementExpression::~SgStatementExpression()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgStatementExpression::isSgStatementExpression (SgNode *s)
+\brief Cast function (from derived class to SgStatementExpression pointer).
+   This functions returns a SgStatementExpression pointer for any input of a 
+pointer to an object derived from a SgStatementExpression.
+\return Returns valid pointer to SgStatementExpression if input is derived from a SgStatementExpression.
+*/
+/*!
+\fn SgStatementExpression::isSgStatementExpression (const SgNode *s)
+\brief Cast function (from derived class to SgStatementExpression pointer).
+   This functions returns a SgStatementExpression pointer for any input of a 
+pointer to an object derived from a SgStatementExpression.
+\return Returns valid pointer to SgStatementExpression if input is derived from a
+    SgStatementExpression.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgStatement *SgStatementExpression::p_statement
+\brief This a pointer to the SgStatement (usually a SgBasicBlock).
+   This is the expression provided as an argument to the sizeof operator
+(if it is an expression).
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgStatementExpression::SgStatementExpression(Sg_File_Info *startOfConstruct,SgStatement *statement=(0))
+*/
+/*!\fn SgStatementExpression::SgStatementExpression(const SgStatementExpressionStorageClass &source)
+*/
+/*!\fn inline static void SgStatementExpression::operator delete(void *pointer)
+*/
+/*!\fn static SgStatementExpression *SgStatementExpression::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgStatementExpression::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgStatementExpression::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgStatementExpression::initializeStorageClassArray(SgStatementExpressionStorageClass *storageArray)
+*/
+/*!\fn static void SgStatementExpression::clearMemoryPool()
+*/
+/*!\fn static void SgStatementExpression::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgStatementExpression::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgStatementExpression::roseRTI()
+*/
+/*!\fn virtual SgNode *SgStatementExpression::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgStatementExpression::~SgStatementExpression()
+*/
+/*!\fn virtual void SgStatementExpression::post_construction_initialization()
+*/
+/*!\fn void SgStatementExpression::set_statement(SgStatement *statement)
+\description See  *statement)
+statement for documentation */
+/*!\fn SgStatement *SgStatementExpression::get_statement() const
+\description See  const
+statement for documentation */
+/*!\fn virtual SgNode *SgStatementExpression::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgStatementExpression::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgStatementExpression::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgStatementExpression::get_numberOfTraversalSuccessors()
+\description See  SgStatementExpression::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgStatementExpression::get_traversalSuccessorContainer()
+\description See  SgStatementExpression::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgStatementExpression::get_traversalSuccessorNamesContainer()
+\description See  SgStatementExpression::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgStatementExpression::SgStatementExpression(SgStatement *statement)
+\brief This is the constructor.
+   This constructor builds the SgStatementExpression base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgStatementExpression_create "Example:create an SgStatementExpression object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_39301969820836;

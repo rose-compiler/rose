@@ -1,0 +1,95 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Floating Point Exact Comparison}
+\label{FloatingPointExactComparison::overview}
+
+% write your introduction
+This checker detects a test clause that compares a variable to a floating point value. The rationale for this checker is, floating point representations are platform dependent, so it is necessary to avoid exact comparisons.
+
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+None.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+This checker is implemented with a simple AST traversal. It traverses AST and finds a test clause. If the test clause has a double value on either left-hand-side or right-hand-side, and if the operator used for the test is "==" or "!=", then the checker reports this clause.
+
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+void foo( double f )
+{
+	if ( f == (float)3)
+	{
+		f = 1.234;
+	}
+
+	while(f != 1.23456)
+	{
+		f += 0.00001;
+	}
+
+	do
+	{
+		f += 0.000001;
+	} while ( f != 1.234567);
+
+	for(f = 1.234567; f != 1.2345678; f += 0.0000001)
+	{
+		int i = f + 1;
+	}
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+bool double_equal(const double a, const double b)
+{
+	const bool equal = fabs(a-b) < numeric_limits<double>::epsilon;
+	return equal;
+}
+
+void foo(double f)
+{
+	if(double_equal(f, 3.142))
+	{
+		// do something
+	}
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Check if a node is a test clause
+\item Check further if the clause has a double value and if the test is for (in)equality.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The Programming Research Group, High-Integrity C++ Coding Standard Manual, ``Item 10.15: Do not write code that expects floating point calculations to yield exact results''.
+

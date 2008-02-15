@@ -1,0 +1,83 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Non Associative Relational Operators}
+\label{NonAssociativeRelationalOperators::overview}
+{\it C++ Secure Coding Practices} states that:
+\begin{quote}
+The relational and equality operators are left-associative, not non-associative as they often are in other languages. This allows a C++ programmer to write an expression (particularly an expression used as a condition) that can be easily misinterpreted.
+\end{quote}
+This checker checks that relational binary operators $(==,!=,<,>,<=,>=)$ are not treated as if they were non-associative.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file
+
+\subsection{Implementation}
+This pattern is checked using a nested AST traversal on the parent nodes of the operand of a binary operator expression. Any such parent node that treats relational binary operators as non-associative will use more than one binary relational operator. Flag these expressions as violations.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+#include <stdio.h>
+
+int main()
+{
+  int a = 2;
+  int b = 2;
+  int c = 2;
+
+  if ( a < b < c ) // condition #1, misleading, likely bug
+    printf( "a < b < c\n" );
+  if ( a == b == c ) // condition #2, misleading, likely bug
+    printf( "a == b == c\n" );
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+#include <stdio.h>
+
+int main()
+{
+  int a = 2;
+  int b = 2;
+  int c = 2;
+
+  if ( a < b && b < c ) // clearer, and probably what was intended
+    printf( "a < b && b < c\n" );
+  if ( a == b && a == c ) // ditto
+    printf( "a == b && a == c\n" );
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal and locate SgBinaryOp nodes.
+\item At each SgBinaryOp node perform a nested traversal of the operands parent node and count the number of relational binary operators used.
+\item If said count is greater than one then flag error.
+\item Report all errors. 
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+\htmladdnormallink{EXP09-A. Treat relational and equality operators as if they were nonassociative}{https://www.securecoding.cert.org/confluence/display/cplusplus/EXP09-A.+Treat+relational+and+equality+operators+as+if+they+were+nonassociative}
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

@@ -1,0 +1,185 @@
+/**********************************************************
+**   TASTE.ATG
+**   Coco/R C Taste Compiler/Interpreter Example.
+**   Adapted to C++ by Frankie Arzu <farzu@uvg.edu.gt>
+**      from Moessenboeck's (1990) Oberon example
+**
+**   May 24, 1996  Version 1.06
+**   Oct 11, 1997  Version 1.07 (No change)
+**   Jun 16, 1998  Version 1.08 (Minor changes)
+**********************************************************/
+
+$C /* Generate Main module */
+
+COMPILER Taste
+/* Taste compiler/interpreter */
+
+#include <string.h>
+#include "tl.h"
+#include "tc.h"
+
+typedef char Name[15];
+
+void StringToVal (char *s, int *val)
+{ int n = 0;
+  while (*s) n = 10 * n + (*s++ - '0');
+  *val = n;
+}
+
+/*--------------------------------------------------------------------------*/
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit = "0123456789".
+  cr = CHR(13).
+  lf = CHR(10).
+  tab = CHR(9).
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+  Taste
+  =                                      (. Name name, progName;
+                                            Object obj; .)
+                                         (. tl_init(); .)
+    "PROGRAM" Ident<progName> ";"        (. progStart = pc; .)
+    Body
+    Ident<name>                          (. if (strcmp(name, progName) != 0)
+                                              SemError(119);
+                                            Emit(HALTc); .)
+    "." .
+
+  Body
+  =                                      (. int fix, type;
+                                            Name name, name1;
+                                            Object obj; .)
+
+                                         (. EnterScope();
+                                            fix = pc + 1; Emit2(JMP, 0); .)
+    { "VAR"
+      { Ident<name> ":"                  (. obj = NewObj(name, VARS); .)
+        TypeId<&(*obj).type> ";"
+      }
+
+    | "PROCEDURE" Ident<name> ";"        (. obj = NewObj(name, PROCS);
+                                            obj->adr = pc; .)
+      Body
+      Ident<name1>                       (. Emit(RET);
+                                            if (strcmp(name, name1) != 0)
+                                              SemError(119); .)
+      ";"
+    }
+    "BEGIN"                              (. Fixup(fix); Emit2(RES, DataSpace()); .)
+    StatSeq
+    "END"                                (. LeaveScope(); .).
+
+  TypeId<int *type>
+  =                                      (. *type = UNDEF; .)
+    ( "INTEGER"                          (. *type = INT; .)
+    | "BOOLEAN"                          (. *type = BOOL; .)
+    ).
+
+  Ident<Name name>
+  = ident                                (. LexName(name, sizeof(Name)-1); .).
+
+  StatSeq = Stat {";" Stat}.
+
+  Stat
+  =                                      (. int  type;
+                                            Name name;
+                                            Object obj;
+                                            int fix, fix2, loopstart; .)
+
+    [ Ident<name>                        (. obj = Obj(name); .)
+      ( ":" "="                          (. if (obj->kind != VARS) SemError(123); .)
+        Expression<&type>                (. if (type != obj->type) SemError(121);
+                                            Emit3(STO, curLevel-obj->level, obj->adr); .)
+      |                                  (. if (obj->kind != PROCS) SemError(124);
+                                            Emit3(CALL, curLevel-obj->level, obj->adr); .)
+      )
+    | "IF" Expression<&type>             (. if (type != BOOL) SemError(122);
+                                            fix = pc + 1; Emit2(FJMP, 0); .)
+      "THEN" StatSeq
+      [ "ELSE"                           (. fix2 = pc + 1; Emit2(JMP, 0);
+                                            Fixup(fix); fix = fix2; .)
+  StatSeq
+      ]
+      "END"                              (. Fixup(fix); .)
+    | "WHILE"                            (. loopstart = pc; .)
+      Expression<&type>                  (. if (type != BOOL) SemError(122);
+                                            fix = pc + 1; Emit2(FJMP, 0); .)
+      "DO" StatSeq                       (. Emit2(JMP, loopstart); Fixup(fix); .)
+      "END"
+    | "READ" Ident<name>                 (. obj = Obj(name);
+                                            if (obj->type != INT) SemError(120);
+                                            Emit3(READ, curLevel-obj->level, obj->adr) .)
+    | "WRITE" Expression<&type>          (. if (type != INT) SemError(120);
+                                            Emit(WRITE); .)
+    ].
+
+  Expression<int *type>
+  =                                      (. int type1, op; .)
+    SimExpr<type>
+    [ RelOp<&op> SimExpr<&type1>         (. if (*type != type1) SemError(121);
+                                            Emit(op); *type = BOOL; .)
+    ].
+
+  SimExpr<int *type>
+  =                                      (. int type1, op; .)
+    Term<type>
+    { AddOp<&op> Term<&type1>            (. if (*type != INT || type1 != INT) SemError(120);
+                                            Emit(op); .)
+    }.
+
+  Term<int *type>
+  =                                      (. int type1, op; .)
+    Factor<type>
+    { MulOp<&op> Factor<&type1>          (. if (*type != INT || type1 != INT) SemError(120);
+                                            Emit(op); .)
+    }.
+
+  Factor<int *type>
+  =                                      (. int val, n;
+                                            Object obj;
+                                            Name name; .)
+
+    ( Ident<name>                        (. obj = Obj(name); *type = obj->type;
+                                            if (obj->kind == VARS)
+                                              Emit3(LOAD, curLevel-obj->level, obj->adr);
+                                            else SemError(123); .)
+    | "TRUE"                             (. Emit2(LIT, 1); *type = BOOL; .)
+    | "FALSE"                            (. Emit2(LIT, 0); *type = BOOL; .)
+    | number                             (. LexName(name, sizeof(name)-1);
+                                            StringToVal(name, &n);
+                                            Emit2(LIT, n); *type = INT .)
+    | "-" Factor<type>                   (. if (*type != INT) { SemError(120); *type = INT; }
+                                            Emit(NEG); .)
+    ).
+
+  MulOp<int *op>
+  =                                      (. *op = -1; .)
+    ( "*"                                (. *op = TIMES; .)
+    | "/"                                (. *op = SLASH; .)
+    ).
+
+  AddOp<int *op>
+  =                                      (. *op = -1; .)
+    ( "+"                                (. *op = PLUS; .)
+    | "-"                                (. *op = MINUS; .)
+    ).
+
+  RelOp<int *op>
+  =                                      (. *op = -1; .)
+    ( "="                                (. *op = EQU; .)
+    | "<"                                (. *op = LSS; .)
+    | ">"                                (. *op = GTR; .)
+    ).
+
+END Taste.
+

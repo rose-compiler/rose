@@ -1,0 +1,110 @@
+$C   /* Generate Main Module */
+COMPILER Calc
+
+#define upcase(c)       ((c >= 'a' && c <= 'z')? c-32:c)
+int VARS[10000];
+
+int GetSpix()
+{
+  char VarName[20];
+  S_GetString(S_Pos, S_Len, VarName, sizeof(VarName) - 1);
+  if (strlen(VarName) >= 2)
+    return 26*(upcase(VarName[1])-'A')+(upcase(VarName[0])-'A');
+  else return (upcase(VarName[0])-'A');
+}
+
+int GetNumber()
+{
+  char VarName[20];
+  S_GetString(S_Pos, S_Len, VarName, sizeof(VarName) - 1);
+  return atoi(VarName);
+}
+
+int NewVar(int spix)
+{
+  VARS[spix] = 0;
+}
+
+int GetVar(int spix)
+{
+  return VARS[spix];
+}
+
+int WriteVal(int val)
+{
+  printf("%d\n", val);
+}
+
+int ReadVal(int spix)
+{
+  printf("READ ?");
+  scanf("%d", &VARS[spix]);
+}
+
+int SetVar(int spix, int val)
+{
+  VARS[spix] = val;
+}
+
+IGNORE CASE    
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit  = "0123456789".
+  eol    = CHR(13) .
+  lf     = CHR(10) .
+
+COMMENTS
+  FROM '--' TO eol
+
+IGNORE eol + lf
+
+TOKENS
+  ident  = letter {letter | digit} .
+  number = digit {digit} .
+
+PRODUCTIONS
+  Calc =
+    [Declarations] StatSeq .
+
+  Declarations
+    =                                     (. int spix; .)
+       'VAR'
+       Ident <&spix>                      (. NewVar(spix); .)
+       { ',' Ident <&spix>                (. NewVar(spix); .)
+       } ';'.
+
+  StatSeq =
+    Stat {';' Stat}.
+
+  Stat
+    =                                     (. int spix, val; .)
+        "READ"  Ident <&spix>             (. ReadVal(spix); .)
+      | "WRITE" Expr <&val>               (. WriteVal(val); .)
+      | Ident <&spix> ":=" Expr <&val>    (. SetVar(spix, val); .) .
+
+  Expr <int *exprVal>
+    =                                     (. int termVal; .)
+      Term <exprVal>
+      {  '+' Term <&termVal>              (. *exprVal += termVal; .)
+      |  '-' Term <&termVal>              (. *exprVal -= termVal; .)
+      } .
+
+  Term <int *termVal>
+    =                                     (. int factVal; .)
+      Fact <termVal>
+      {  '*' Fact <&factVal>              (. *termVal *= factVal; .)
+      |  '/' Fact <&factVal>              (. *termVal /= factVal; .)
+      } .
+
+  Fact <int *factVal>
+    =                                     (. int spix; .)
+         Ident <&spix>                    (. *factVal = GetVar(spix); .)
+      |  number                           (. *factVal = GetNumber(); .)
+      | '(' Expr <factVal> ')' .
+
+  Ident <int *spix>
+    = ident                               (. *spix = GetSpix(); .) .
+
+END Calc.
+

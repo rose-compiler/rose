@@ -1,0 +1,42 @@
+README -- ROSE/src/roseIndependentSupport/visualization
+
+DQ (5/26/2007): This work is old and a bit unfinished.
+   We now use zgrviewer which is available as an open
+   source project on the web and it works very well.
+   zgrviewer replaced our need for this work, which 
+   preceeded zgrviewer by several years.
+
+
+These files implement the dotgl tool for the visualization of
+large dot graphs.
+
+Dependencies:
+     FLTK     - Window Management Tool Kit
+     X11      - General Windowing Package
+     FreeType - vector font library
+     GraphViz - Graph Vizualization Support (for DOT files) (version 1.10)
+     OpenGL   - Graphics Library
+     GLUT     - OpenGL Tool Kit
+
+
+To compile on LLNL systems use configure options 
+(had to install fresh versions of fltk and freeglut):
+    --with-GraphViz_include=/usr/apps/graphviz/1.10/include/graphviz
+    --with-GraphViz_libs=/usr/apps/graphviz/1.10/lib/graphviz
+    --with-FLTK_include="/home/dquinlan/FLTK/fltk_install/include -I/home/dquinlan/FreeGlut/freeglut_install/include"
+    --with-FLTK_libs="/home/dquinlan/FLTK/fltk_install/lib -L/home/dquinlan/FreeGlut/freeglut_install/lib"
+
+After compiling dotgl:
+  1) Set LD_LIBRARY_PATH to include graphviz,freeglut, and fltk
+  2) Find a *.dot file and run "dot -Tdot test2004_21.c.dot > test2004_21.c.pdot"
+     (any extension can be used, e.g. pdot)
+  3) then run "dotgl test2004_21.c.pdot"
+
+
+
+Things To Do:
+
+    1) Setup GLUT_include and GLUT_libs configure options.
+
+    2) 
+

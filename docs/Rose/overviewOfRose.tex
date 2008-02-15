@@ -1,0 +1,83 @@
+\chapter{The ROSE Infrastructure}
+
+\label{overviewOfRose:overviewOfRose}
+
+\fixme{This chapter is incomplete and will be filled in by Rich.}
+
+This chapter includes many details about how to
+use ROSE. This is a chapter that I think Rich would like to write
+(or at least start and contribute to it).  It will cover:
+\begin{itemize}
+   \item ROSE documentation
+   \begin{itemize}
+      \item ROSE features
+      \item Language front-ends
+      \item Code generation
+      \item ROSE directory organization
+   \end{itemize}
+   \item SAGE III Overview
+   \begin{itemize}
+      \item Figure to describe IR node hierarchy
+      \item description of categories of IR nodes
+      \item relationship to C++ grammar
+      \item Integrate with current "Sage III Intermediate Representation" (current Chapter 10).
+      \item Properties of IR nodes (No null pointers, what few pointers are NULL, what IR nodes are shared,defining/non-defining declarations)
+      \item AST Merge Mechanism
+      \item File I/O
+      \item How modifiers are handled
+   \end{itemize}
+\end{itemize}
+
+
+\section{Introduction}
+     This chapter was requested by several people who wanted to understand 
+how ROSE was designed and implemented.
+
+\section{Design}
+     This section will cover the design goals etc. of ROSE.
+
+\section{Directory Structure}
+
+     This section presents the directory structure of the ROSE project.
+
+\fixme{Add more detail about each directory.}
+
+
+\begin{latexonly}
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{figure}[tb]
+%\centerline{\epsfig{file=roseDirectoryMap.ps,height=1.0\linewidth,width=1.4\linewidth,angle=270}}
+
+%\centerline{\psfig{file=roseDirectoryMap.pdf,height=1.0\linewidth,width=1.4\linewidth,angle=270}}
+\includegraphics[scale=0.12,angle=270]{roseDirectoryMap}
+\caption{Directory structure of ROSE project.}
+\end{figure}
+\end{latexonly}
+
+\begin{htmlonly}
+% Do this when processing latex to generate non-html (not using latex2html) 
+% Note that specification of the angle causes latex2html to SKIP output of 
+% the figure and the "height=1.5\linewidth,width=4.0\linewidth" is also required
+% (I suspect this is a bug in latex2html).
+\begin{figure}[tb]
+%\centerline{\epsfig{file=ROSE.ps,height=1.0\linewidth,width=1.0\linewidth,angle=0}}
+%\centerline{\epsfig{file=roseDirectoryMap.ps,height=1.5\linewidth,width=4.0\linewidth,angle=0}}
+%\centerline{\epsfig{file=roseDirectoryMap.ps,height=1.5\linewidth,width=4.0\linewidth}}
+%\centerline{\epsfig{file=roseDirectoryMap.ps}}
+
+%\centerline{\psfig{file=roseDirectoryMap.pdf,height=1.5\linewidth,width=4.0\linewidth}}
+\includegraphics[scale=0.25,angle=270]{roseDirectoryMap}
+\caption{Directory structure of ROSE project.}
+\label{designAndImplementation:directoryStructure}
+\end{figure}
+\end{htmlonly}
+
+   This figure is formed from a Perl script ({\tt ROSE/scripts/lsvis}) which generates
+the graph when the documentation is built.
+
+\section{Implementation of ROSE}
+     This section will be added to in the future.
+     
+\section{Implementation of ROSETTA}
+     This section will be added to in the future.
+

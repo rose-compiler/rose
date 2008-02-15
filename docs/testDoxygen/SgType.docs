@@ -1,0 +1,134 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgType
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgType
+\brief This class represents the base class for all types.
+
+    There are no uses of this IR node anywhere.  All SgType based IR nodes
+are derived from this SgType class.
+
+Discussion of get_base_type() and findBaseType():
+    -# fileBaseType() will recusively strip away all typedefs, reference, pointers, arrays,
+       and modifiers
+    -# get_base_type() is a member function on some IR nodes derived from SgType and
+       returns the non-recursively striped (immediate) type under the typedefs, reference,
+       pointers, arrays, modifiers, etc.
+
+
+Note that the typedefs for which the current SgType is the base type are stored in a list.
+There is a special IR node (SgTypedefSeq) to maintain this list (which is internally an
+STL list).  We could also store pointers to other SgType IR nodes where pointers and 
+references have been taken to the current IR node, but currently only typedefs are
+stored explicitly.  As a result of storing the typedefs, the builtin types store the
+list for most SgType IR nodes (since ther is only a single SgType IR node for most
+SgType derived classes).  We could imagine storing the SgTypedefSeq as static data members
+of the derived SgType classes, but this would not work since then all SgNamedType IR nodes
+would share the same list of typedefs.  So this is the correct location for this list.
+
+
+\internal This is a base class for all SgType objects.
+
+\todo Several classes derived from SgType are not used and can be removed:
+   -# SgTypeUnknown
+   -# SgUnknownMemberFunctionType
+
+\todo The signed types (except for signed char) are not used in SAGE III and do not exist
+      in C or C++.  These IR nodes should be removed, specifically SgTypeSignedshort,
+      SgTypeSignedInt, SgTypeSignedLong.
+
+\todo For Fortran support we need to add the kind, length data member to specify the width.
+      To support handling of kind, length parameters we should use the information about
+      the target backend compiler and map kind information to bit widths (not a high
+      priority).
+
+\todo Labels appear to be used as types in "foo(*,*)", see example from 
+      Chris (LANL, 4/19/2007).
+
+
+\sa
+\ref SgType_usage  "Example of using a SgType object"
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgType data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var int SgType::p_substitutedForTemplateParam
+\brief This boolean variable marks if the current type was originally a template
+    parameter.
+
+\internal This mechanism is not fully implemented and might be modified when it is.
+          Also, this variables type should have been bool.
+*/
+
+/*!
+\var SgReferenceType SgType::p_ref_to
+\brief This holds the pointer to a SgReferenceType if this type is a reference to another type.
+
+*/
+
+/*!
+\var SgPointerType SgType::p_ptr_to
+\brief This holds the pointer to a SgPointerType if this type is a pointer to another type.
+
+*/
+
+/*!
+\var SgReferenceType SgType::p_modifiers
+\brief This points to any SgModifierNodes if this type contains type modifiers.
+
+*/
+
+/*!
+\var SgTypedefSeq SgType::p_typedefs
+\brief This points to IR node which holds a list of typedefs where the base_type if this SgType.
+
+\sa SgTypedefSeq
+
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgType member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgType::SgType()
+\brief This is the constructor.
+
+   This constructor builds the SgType base class.
+
+\sa 
+\ref SgType_create "Example:create an SgType object"
+*/
+
+/*!
+\fn SgType::~SgType()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgType::isSgType (SgNode *s)
+\brief Cast function (from derived class to SgType pointer).
+
+   This functions returns a SgType pointer for any input of a 
+pointer to an object derived from a SgType.
+
+\return Returns valid pointer to SgType if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgType::isSgType (const SgNode *s)
+\brief Cast function (from derived class to SgType pointer).
+
+   This functions returns a SgType pointer for any input of a 
+pointer to an object derived from a SgType.
+
+\return Returns valid pointer to SgType if input is derived from a SgType node.
+*/
+

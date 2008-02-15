@@ -1,0 +1,7 @@
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:22.8-20: SgConditionalExp: Explicit test statements are required.
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:24.12-24: SgConditionalExp: Explicit test statements are required.
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:9.3-10.10: SgIfStmt: Explicit test statements are required.
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:12.3-13.10: SgWhileStmt: Explicit test statements are required.
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:15.3-17.17: SgDoWhileStmt: Explicit test statements are required.
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:19.3-20.9: SgForStatement: Explicit test statements are required.
+ExplicitTestForNonBooleanValue: explicitTestForNonBooleanValueTest1.C:24.3-25.11: SgForStatement: Explicit test statements are required.

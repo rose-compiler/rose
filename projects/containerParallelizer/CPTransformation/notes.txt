@@ -1,0 +1,11 @@
+parser_h.frm:
+has been extended with the include:
+#include "-->ParserClass_Declarations.h"
+
+The '_' in the name is necessary otherwise the replace mechanism in frames
+does not work.
+
+This becomes:
+<NAME>Parser_Declarations.h
+BodyTransformationsParser_Declarations.h
+

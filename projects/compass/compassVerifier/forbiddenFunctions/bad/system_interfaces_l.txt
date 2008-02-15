@@ -1,0 +1,26 @@
+### 00 System Interfaces -- L
+_longjmp
+#l64a
+#labs
+lchown
+#lcong48
+#ldexp
+#ldiv
+#lfind
+#lgamma
+link
+lio_listio
+loc1
+localeconv
+#localtime
+lockf
+locs
+#log
+#log10
+#log1p
+#logb
+longjmp
+#lrand48
+#lsearch
+lseek
+lstat

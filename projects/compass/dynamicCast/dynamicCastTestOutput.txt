@@ -1,0 +1,1 @@
+DynamicCast: dynamicCastTest1.C:15.11-16: SgCastExp: When downcasting C-style casts should not be used.

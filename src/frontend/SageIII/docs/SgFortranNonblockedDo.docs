@@ -1,0 +1,60 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgFortranNonblockedDo
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgStatement *SgFortranNonblockedDo::p_end_statement
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgFortranNonblockedDo::SgFortranNonblockedDo(Sg_File_Info *startOfConstruct,SgExpression *initialization=(0),SgExpression *condition=(0),SgExpression *increment=(0),SgBasicBlock *body=(0),SgStatement *end_statement=(0))
+*/
+/*!\fn SgFortranNonblockedDo::SgFortranNonblockedDo(const SgFortranNonblockedDoStorageClass &source)
+*/
+/*!\fn inline static void SgFortranNonblockedDo::operator delete(void *pointer)
+*/
+/*!\fn static SgFortranNonblockedDo *SgFortranNonblockedDo::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFortranNonblockedDo::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFortranNonblockedDo::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFortranNonblockedDo::initializeStorageClassArray(SgFortranNonblockedDoStorageClass *storageArray)
+*/
+/*!\fn static void SgFortranNonblockedDo::clearMemoryPool()
+*/
+/*!\fn static void SgFortranNonblockedDo::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFortranNonblockedDo::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgFortranNonblockedDo::roseRTI()
+*/
+/*!\fn virtual SgFortranNonblockedDo::~SgFortranNonblockedDo()
+*/
+/*!\fn virtual SgNode *SgFortranNonblockedDo::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFortranNonblockedDo::post_construction_initialization()
+*/
+/*!\fn void SgFortranNonblockedDo::set_end_statement(SgStatement *end_statement)
+\description See  *end_statement)
+end_statement for documentation */
+/*!\fn SgStatement *SgFortranNonblockedDo::get_end_statement() const
+\description See  const
+end_statement for documentation */
+/*!\fn virtual SgNode *SgFortranNonblockedDo::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgFortranNonblockedDo::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFortranNonblockedDo::get_numberOfTraversalSuccessors()
+\description See  SgFortranNonblockedDo::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFortranNonblockedDo::get_traversalSuccessorContainer()
+\description See  SgFortranNonblockedDo::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFortranNonblockedDo::get_traversalSuccessorNamesContainer()
+\description See  SgFortranNonblockedDo::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgFortranNonblockedDo::SgFortranNonblockedDo(SgExpression *initialization,SgExpression *condition,SgExpression *increment,SgBasicBlock *body,SgStatement *end_statement)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1444678483;

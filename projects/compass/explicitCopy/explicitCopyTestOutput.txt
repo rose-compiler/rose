@@ -1,0 +1,1 @@
+ExplicitCopy: explicitCopyTest1.C:1.1-2.1: SgClassDefinition: Class definition misses copy constructor and operator.

@@ -1,0 +1,87 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgGraphNode
+*/
+/*! \name Class Members*/
+//@{
+/*!\var int SgGraphNode::p_graph_id
+*/
+/*!\var std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > SgGraphNode::p_properties
+*/
+/*!\var std::string SgGraphNode::p_name
+*/
+/*!\var std::string SgGraphNode::p_type
+*/
+/*!\var SgNode *SgGraphNode::p_SgNode
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgGraphNode::SgGraphNode(const SgGraphNodeStorageClass &source)
+*/
+/*!\fn inline static void SgGraphNode::operator delete(void *pointer)
+*/
+/*!\fn static SgGraphNode *SgGraphNode::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgGraphNode::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgGraphNode::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgGraphNode::initializeStorageClassArray(SgGraphNodeStorageClass *storageArray)
+*/
+/*!\fn static void SgGraphNode::clearMemoryPool()
+*/
+/*!\fn static void SgGraphNode::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgGraphNode::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgGraphNode::roseRTI()
+*/
+/*!\fn virtual SgGraphNode::~SgGraphNode()
+*/
+/*!\fn virtual SgNode *SgGraphNode::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgGraphNode::append_properties(int addr,std::string prop)
+*/
+/*!\fn void SgGraphNode::set_SgNode(SgNode *SgNode)
+\description See  *SgNode)
+SgNode for documentation */
+/*!\fn void SgGraphNode::set_name(std::string name)
+\description See  name)
+name for documentation */
+/*!\fn void SgGraphNode::set_properties(std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > properties)
+\description See  properties)
+properties for documentation */
+/*!\fn void SgGraphNode::set_type(std::string type)
+\description See  type)
+type for documentation */
+/*!\fn SgNode *SgGraphNode::get_SgNode() const
+\description See  const
+SgNode for documentation */
+/*!\fn int SgGraphNode::get_graph_id() const
+\description See  const
+graph_id for documentation */
+/*!\fn std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > SgGraphNode::get_properties() const
+\description See  const
+properties for documentation */
+/*!\fn std::string SgGraphNode::get_name() const
+\description See  const
+name for documentation */
+/*!\fn std::string SgGraphNode::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual SgNode *SgGraphNode::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgGraphNode::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgGraphNode::get_numberOfTraversalSuccessors()
+\description See  SgGraphNode::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGraphNode::get_traversalSuccessorContainer()
+\description See  SgGraphNode::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGraphNode::get_traversalSuccessorNamesContainer()
+\description See  SgGraphNode::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgGraphNode::SgGraphNode(std::string name=(""),std::string type=(""),int graph_id=0)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1675235752;

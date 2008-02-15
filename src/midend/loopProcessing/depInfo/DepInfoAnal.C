@@ -1,0 +1,656 @@
+
+#include <general.h>
+
+#include <sstream>
+#include <DoublyLinkedList.h>
+#include <DomainInfo.h>
+#include <DepInfo.h>
+#include <DepInfoAnal.h>
+#include <SymbolicVal.h>
+#include <StmtInfoCollect.h>
+#include <StmtDepAnal.h>
+#include <LoopInfoInterface.h>
+
+// DQ (12/31/2005): This is OK if not declared in a header file
+using namespace std;
+
+// DQ (3/8/2006): Since this is not used in a heade file it is OK here!
+#define Boolean int
+
+extern bool DebugDep();
+
+class AccuAstRefs : public CollectObject<pair<AstNodePtr,AstNodePtr> >
+{
+   CollectObject<AstNodePtr> &col;
+  public:
+   AccuAstRefs( CollectObject<AstNodePtr> &_col) 
+      :  col(_col) {}
+   Boolean operator()(const pair<AstNodePtr,AstNodePtr>& n)
+   {
+      return col(n.first);
+   }
+};
+bool AnalyzeStmtRefs(LoopTransformInterface &la, const AstNodePtr& n, 
+                      CollectObject<AstNodePtr> &wRefs, 
+                      CollectObject<AstNodePtr> &rRefs)
+{
+  AstInterface &fa = la;
+  AccuAstRefs colw(wRefs);
+  AccuAstRefs colr(rRefs);
+  return StmtSideEffectCollect(la.getSideEffectInterface())(fa,n,&colw,&colr);
+}
+
+string ToString( vector<SymbolicVal> & analvec)
+{
+  stringstream out;
+  out << "[";
+          for (unsigned int j = 0; j < analvec.size(); ++j) {
+             if (j != 0) out << ", ";
+             out << analvec[j].ToString();
+          }
+  out << "]";
+  return out.str();
+}
+string ToString( vector< vector<SymbolicVal> > & analMatrix)
+{
+   string result = "[";
+      for (unsigned int i = 0; i < analMatrix.size(); ++i) {
+         result = result + ToString(analMatrix[i]) + "\n";
+      }
+  return result + "]";
+}
+
+DepInfo ComputePrivateDep( LoopTransformInterface &la, DepInfoAnal& anal,
+                          const DepInfoAnal::StmtRefDep& ref, 
+                          DepType t, int pos)
+  {
+     const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(la, ref.r1.stmt);
+     const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(la, ref.r2.stmt);
+     int dim1 = info1.domain.NumOfLoops(), dim2 = info2.domain.NumOfLoops();
+
+     if (! ref.commLevel && pos <= 0)
+       return DepInfo();
+     DepInfo result=DepInfoGenerator::GetDepInfo( dim1, dim2, t, 
+                                   ref.r1.ref, ref.r2.ref, false,ref.commLevel);
+     int i;
+     for ( i = 0; i < ref.commLevel-1; i++) {
+        result.Entry( i,i) = DepRel(DEPDIR_EQ, 0);
+     }
+     if (ref.commLevel > 0) {
+       if (pos >= 0) 
+	 result.Entry( i,i) = DepRel(DEPDIR_EQ, 0);
+       else 
+	 result.Entry( i,i) = DepRel(DEPDIR_LE, -1);
+     }
+     info2.domain.RestrictDepInfo( result, DEP_SINK);
+     info1.domain.RestrictDepInfo( result, DEP_SRC);
+     return result;
+  }
+      
+DepInfo ComputeGlobalDep(LoopTransformInterface &la, DepInfoAnal& anal,
+                          const DepInfoAnal::StmtRefDep& ref, 
+                          DepType t, int pos)
+  {
+     const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(la, ref.r1.stmt);
+     const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(la, ref.r2.stmt);
+     int dim1 = info1.domain.NumOfLoops();
+     int  dim2 = info2.domain.NumOfLoops();
+     if (! ref.commLevel && pos <= 0)
+       return DepInfo();
+     DepInfo result =  DepInfoGenerator::GetDepInfo(dim1, dim2, t, 
+                                 ref.r1.ref, ref.r2.ref, false, ref.commLevel );
+     if (ref.commLevel > 0) {
+       if (pos >= 0)
+         result.Entry( ref.commLevel,ref.commLevel) = DepRel(DEPDIR_LE, 0);
+       else
+         result.Entry( ref.commLevel,ref.commLevel) = DepRel(DEPDIR_LE, -1);
+     }
+     return result;
+  }
+
+class MakeUniqueVar : public MapObject<SymbolicVal, SymbolicVal>, 
+                     public SymbolicVisitor
+{
+  string postfix;
+  SymbolicVal res;
+  AstNodePtr curloop, curref;
+  const DepInfoAnal::ModifyVariableInfo &varmodInfo;
+  map <string, pair<string,AstNodePtr> > &reverse;
+
+ void VisitVar( const SymbolicVar &v) 
+     {  
+        string name = v.GetVarName();
+        if (varmodInfo.Modify(curloop,name)) {
+            res = new SymbolicVar(name + postfix, v.GetVarScope());
+            reverse[name+postfix] = pair<string,AstNodePtr>(name,curref);
+            if (DebugDep())
+                std::cerr << "replacing var " << v.ToString() << " => " << res.ToString() << "postfix = " << postfix << std::endl;
+        }
+        else
+           reverse[name] = pair<string,AstNodePtr>(name,curref);
+     }
+ 
+ public:
+  MakeUniqueVar(const DepInfoAnal::ModifyVariableInfo& r, 
+                  map<string,pair<string,AstNodePtr> >& r1)  
+      : varmodInfo(r), reverse(r1) {}
+  SymbolicVal operator()(const SymbolicVal& v) 
+  {
+    res = SymbolicVal();
+    v.Visit(this); 
+    return res;
+  }
+  SymbolicVal operator()(const AstNodePtr& l, const AstNodePtr& r,
+                         const SymbolicVal& v, const string& p) 
+  {
+    postfix = p;
+    curloop = l;
+    curref = r;
+    return ReplaceVal(v, *this);
+  }
+};
+
+class DepInfoAnalInterface {
+  DepInfoAnal& anal;
+  LoopTransformInterface& ai;
+ public:
+  DepInfoAnalInterface(DepInfoAnal& a, LoopTransformInterface& _ai)
+    : anal(a), ai(_ai) {}
+  AstNodePtr GetParent( const AstNodePtr& s)
+     { AstInterface& fa = ai;
+        return fa.GetParent(s); }
+  VarInfo GetVarInfo(const AstNodePtr& s) 
+  { 
+    SymbolicVar ivar;
+    SymbolicVal lb,ub,step;
+    if (ai.IsFortranLoop(s, &ivar, &lb, &ub,&step))  
+       return (step <= 0)? VarInfo(ivar,SymbolicBound(ub,lb)) 
+                         : VarInfo(ivar, SymbolicBound(lb,ub));
+    return VarInfo();
+ }
+};
+class MakeUniqueVarGetBound 
+  : public SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>
+{
+  map <string,pair<string, AstNodePtr> > &reverse;
+  void VisitVar( const SymbolicVar& var)
+   { result = GetBound(var); }
+ public:
+   MakeUniqueVarGetBound( map<string,pair<string,AstNodePtr> >& r1, LoopTransformInterface& ai, DepInfoAnal& a) 
+     : SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>(DepInfoAnalInterface(a, ai),0),
+       reverse(r1) {} 
+  SymbolicBound GetBound(const SymbolicVar& var)
+   {
+      pair<string, AstNodePtr>& entry = reverse[var.GetVarName()];
+      node = entry.second;
+      assert(node != 0);
+      SymbolicBound r = SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>::GetConstBound(SymbolicVar(entry.first,var.GetVarScope()));
+      if (DebugDep())
+         std::cerr << "bound of " << var.ToString() << " is " << r.ToString() << std::endl;
+      return r;
+   }
+};
+
+class SetDepEntry
+{
+  DepInfo* dep;
+  DomainCond &domain1, &domain2;
+  int l1, l2;
+  bool& succ;
+ public:
+  SetDepEntry(DomainCond& _d1, DomainCond& _d2, DepInfo* _d, 
+             int _l1, bool& _succ)
+    : dep(_d), domain1(_d1), domain2(_d2), l1(_l1),l2(-1), succ(_succ) {}
+  SetDepEntry& operator[](int i)
+  { l2 = i; assert( l1 < l2); return *this; }
+  void operator = (const DepRel& e)
+  {
+     if (!e.IsBottom()) {
+       int dim1 = domain1.NumOfLoops();
+       if (l1 >= dim1) {
+         SetDomainRel(domain2, e, l1-dim1, l2-dim1);
+         if (DebugDep())
+            std::cerr << "setting domain2 entry(" << l1-dim1 << ", " << l2-dim1 << ") = " << e.ToString() << "\n";
+       }
+       else if ( l2 >= dim1) {
+         assert(dep != 0);
+	 SetDepRel( *dep, e, l1, l2-dim1);
+         if (DebugDep())
+            std::cerr << "setting dep entry(" << l1 << ", " << l2-dim1 << ") = " << e.ToString() << "\n";
+       }
+       else  {
+         SetDomainRel( domain1, e, l1, l2);
+         if (DebugDep())
+            std::cerr << "setting domain1 entry(" << l1 << ", " << l2 << ") = " << e.ToString() << "\n";
+       }
+     }
+  }
+  void SetDepRel(DepInfo& d, const DepRel& e, int i1, int i2)
+  {
+    DepRel e1 = e & d.Entry(i1,i2);
+    if (e1.IsTop())
+       succ = false;
+    d.Entry(i1,i2) = e1;
+  }
+  void SetDomainRel (DomainCond& d, const DepRel& e, int i1, int i2)
+  {
+    DepRel e1 = e & d.Entry(i1,i2);
+    if (e1.IsTop())
+       succ = false;
+    d.SetLoopRel( i1,i2,e1);
+  }
+};
+
+class SetDep
+{
+  DomainCond domain1, domain2;
+  DepInfo* dep;
+  bool succ;
+ public:
+  SetDep(const DomainCond& _d1, const DomainCond& _d2, DepInfo* _d)
+    : domain1(_d1), domain2(_d2), dep(_d), succ(true) {}
+    
+  SetDepEntry operator [](int i)
+   { return SetDepEntry(domain1, domain2, dep, i, succ); }
+
+  operator bool() { return succ; }
+  void finalize()
+   { 
+     if (DebugDep())
+        std::cerr << "finalizing: domain1 = " << domain1.ToString() << std::endl << "domain2 = " << domain2.ToString() << std::endl;
+     domain1.RestrictDepInfo( *dep, DEP_SRC);
+     domain2.RestrictDepInfo( *dep, DEP_SINK);
+   }
+   const DomainCond& get_domain1() const { return domain1; }
+   const DomainCond& get_domain2() const { return domain2; }
+};
+
+DepInfoAnal :: DepInfoAnal(LoopTransformInterface& la)
+  : varmodInfo(la, SelectLoop())
+{
+  AstInterface& ai  = la;
+  AstNodePtr root = ai.GetRoot();
+  varmodInfo.Collect(root, la.getSideEffectInterface());
+}
+
+const DepInfoAnal::LoopDepInfo& DepInfoAnal::
+GetStmtInfo( LoopTransformInterface &la, const AstNodePtr& _s)
+{
+    AstInterface& fa = la;
+    AstNodePtr s = la.IsFortranLoop(_s)? _s : GetEnclosingLoop(_s, fa);
+    const LoopDepInfo& info = GetLoopInfo(la, s);
+    return info;
+}
+
+const DepInfoAnal::LoopDepInfo& DepInfoAnal::
+GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
+{
+    SymbolicVar ivar;
+    SymbolicVal lb, ub;
+    if (s == 0 || !la.IsFortranLoop(s, &ivar, &lb, &ub))
+       return stmtInfo[0];
+    AstInterface& ai = la;
+    LoopDepInfo& info= stmtInfo[s];
+    if (info.IsTop()) {
+       AstNodePtr l = GetEnclosingLoop(s,ai);
+       const LoopDepInfo& info1 = GetLoopInfo(la, l);
+       int dim1 = info1.domain.NumOfLoops();
+       info.domain = DomainCond(dim1+1);
+       for (int j = 0; j < dim1; ++j) {
+         info.ivars.push_back(info1.ivars[j]);
+         info.ivarbounds.push_back(info1.ivarbounds[j]);
+         for (int k = j+1; k < dim1; ++k)
+            info.domain.SetLoopRel(j,k,info1.domain.Entry(j,k));
+       }
+       info.ivars.push_back(ivar); 
+       SymbolicConstBoundAnalysis<AstNodePtr,DepInfoAnalInterface> 
+            boundop( DepInfoAnalInterface(*this, la), s);
+       info.ivarbounds.push_back(boundop.GetConstBound(ivar));
+       vector<SymbolicVal>  lbvec, ubvec;
+       SymbolicVal lbleft = 
+         DecomposeAffineExpression(la,lb,info1.ivars,lbvec,dim1);
+       lbvec.push_back(-1);
+       lbvec.push_back(-lbleft);
+       SetDep op(info.domain, DomainCond(), 0);
+       if (!AnalyzeEquation(lbvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_LE, 0)))
+         if (DebugDep())
+            std::cerr << "unable to analyze equation: " << ToString(lbvec) << std::endl;
+       SymbolicVal ubleft = 
+         DecomposeAffineExpression(la,ub,info1.ivars,ubvec,dim1);
+       ubvec.push_back(-1);
+       ubvec.push_back(-ubleft);
+       if (!AnalyzeEquation(ubvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_GE, 0))) 
+          if (DebugDep())
+             std::cerr << "unable to analyze equation: " << ToString(ubvec) << std::endl;
+       info.domain = op.get_domain1();
+       info.domain.ClosureCond();
+       if (DebugDep())
+         std::cerr << "domain of statement " << AstInterface::AstToString(s) << " is : " << info.domain.ToString() << std::endl;
+    }
+    assert(!info.IsTop());
+    return info;
+}
+
+void DepInfoAnal :: 
+ComputePrivateScalarDep( LoopTransformInterface &fa, const StmtRefDep& ref,
+                             DepInfoCollect &outDeps, DepInfoCollect &inDeps)
+{
+   DepType t1 = DEPTYPE_SCALAR, t2 = DEPTYPE_BACKSCALAR;
+   if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+     DepInfo d = ComputePrivateDep( fa, *this, ref, t1, 1);
+     assert(!d.IsTop());
+     outDeps(d);
+   }
+   if ( ref.commLevel > 0 && ref.r1.ref != ref.r2.ref) {
+      StmtRefDep ref2(ref.r2, ref.r1, ref.commLoop, ref.commLevel);
+      DepInfo d1 = ComputePrivateDep( fa, *this, ref2, t2, -1);
+      assert(!d1.IsTop());
+      inDeps(d1);
+  }
+}
+
+void DepInfoAnal :: 
+ComputeGlobalScalarDep(LoopTransformInterface &fa, const StmtRefDep& ref,
+                             DepInfoCollect &outDeps, DepInfoCollect &inDeps)
+{
+   DepType t1 = DEPTYPE_SCALAR, t2 = DEPTYPE_BACKSCALAR;
+   if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+     DepInfo d = ComputeGlobalDep( fa, *this, ref, t1, 1);
+     assert( !d.IsTop());
+     outDeps(d);
+   }
+   if ( ref.commLevel > 0) {
+      StmtRefDep ref2(ref.r2, ref.r1, ref.commLoop, ref.commLevel);
+      DepInfo d1 = ComputeGlobalDep( fa, *this, ref2, t2, -1);
+      assert(!d1.IsTop());
+      inDeps(d1); 
+   }
+}
+
+DepInfo ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
+                       const DepInfoAnal::StmtRefDep& ref, DepType deptype)
+{
+  if (DebugDep())
+     std::cerr << "compute array dep between " << AstInterface::AstToString(ref.r1.ref) << " and " << AstInterface::AstToString(ref.r2.ref) << std::endl;
+
+  const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(fa,ref.r1.stmt);
+  const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(fa,ref.r2.stmt);
+  unsigned int dim1 = info1.domain.NumOfLoops(), dim2 = info2.domain.NumOfLoops();
+  unsigned int dim = dim1+dim2, i;
+
+  vector<SymbolicBound> bounds;
+  for (i = 0; i < dim1; ++i) 
+     bounds.push_back(info1.ivarbounds[i]);
+  for (i = 0 ; i < dim2; ++i)
+     bounds.push_back(info2.ivarbounds[i]);
+
+  map<string, pair<string,AstNodePtr> > varmap;
+  MakeUniqueVar varop(anal.GetModifyVariableInfo(),varmap);
+  MakeUniqueVarGetBound boundop(varmap, fa, anal);
+
+  AstInterface::AstNodeList sub1, sub2;
+  bool succ1 =  fa.IsArrayAccess(ref.r1.ref, 0, &sub1);
+  bool succ2 = fa.IsArrayAccess(ref.r2.ref, 0, &sub2);
+  assert(succ1 && succ2);
+
+  AstInterface::AstNodeListIterator iter1 = AstInterface::GetAstNodeListIterator(sub1);
+  AstInterface::AstNodeListIterator iter2 = AstInterface::GetAstNodeListIterator(sub2);
+
+  int postfix = 0;
+  stringstream varpostfix1, varpostfix2;
+  ++postfix;
+  varpostfix1 << "___depanal_" << postfix;
+  ++postfix;
+  varpostfix2 << "___depanal_" << postfix;
+
+  Boolean precise = true;
+  AstNodePtr s1, s2;
+  vector <vector<SymbolicVal> > analMatrix;
+  for ( ; !iter1.ReachEnd() && !iter2.ReachEnd(); ++iter1, ++iter2) {
+    s1 = *iter1; s2 = *iter2;
+    SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(fa, s1);
+    SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(fa, s2);
+
+    vector<SymbolicVal> cur;
+    SymbolicVal left1 = DecomposeAffineExpression(fa, val1, info1.ivars, cur,dim1); 
+    SymbolicVal left2 = DecomposeAffineExpression(fa, -val2, info2.ivars,cur,dim2); 
+    if (left1.IsNIL() || left2.IsNIL()) {
+         precise = false;
+         continue;
+    }
+    for (i = 0; i < dim1; ++i) {
+       cur[i] = varop(ref.commLoop, ref.r1.ref, cur[i], varpostfix1.str()); 
+    }
+    left1 = varop(ref.commLoop, ref.r1.ref, left1, varpostfix1.str());
+    for (; i < dim; ++i) {
+       cur[i] = varop(ref.commLoop, ref.r2.ref, cur[i], varpostfix2.str()); 
+    }
+    left2 = varop(ref.commLoop, ref.r2.ref, left2, varpostfix2.str());
+    SymbolicVal leftVal = -left2 - left1;
+    cur.push_back(leftVal);  
+    if (DebugDep()) {
+       assert(dim+1 == cur.size());
+       std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
+       for (unsigned int i = 0; i < dim; ++i) 
+         std::cerr << cur[i].ToString() << bounds[i].ToString() << " " ;
+       std::cerr << cur[dim].ToString() << std::endl;
+    }
+
+    for ( unsigned int i = 0; i < dim; ++i) {
+        SymbolicVal cut = cur[i];
+        if (cut == 1 || cut == 0 || cut == -1)
+             continue;
+        vector<SymbolicVal> split;
+        if (SplitEquation( fa, cur, cut, bounds, boundop, split)) 
+             analMatrix.push_back(split);
+    }
+    analMatrix.push_back(cur);
+  }
+  if (DebugDep()) 
+      std::cerr << "analyzing relation matrix : \n" <<  ToString(analMatrix) << std::endl;
+  if (! NormalizeMatrix(analMatrix, analMatrix.size(), dim+1) )
+	return false;
+  if (DebugDep()) 
+      std::cerr << "after normalization, relation matrix = \n" << ToString(analMatrix) << std::endl;
+   DepInfo result=DepInfoGenerator::GetDepInfo(dim1, dim2, deptype, ref.r1.ref, ref.r2.ref, false, ref.commLevel);
+  SetDep setdep( info1.domain, info2.domain, &result);
+  for (unsigned int k = 0; setdep && k < analMatrix.size(); ++k) {
+       unsigned int j = 0;
+       for (; j < dim+1; ++j) {
+          if (analMatrix[k][j] != 0)
+              break;
+       }
+       if (j == dim+1) // equation has only 0
+          continue;
+       if (!AnalyzeEquation( analMatrix[k], bounds, boundop,setdep, DepRel(DEPDIR_EQ,0))) {
+           precise = false;
+           if (DebugDep())
+              std::cerr << "unable to analyze equation " << k  << std::endl;
+       }
+  }
+  if (!setdep)
+      return DepInfo();
+  if (precise) 
+      result.set_precise(); 
+  if (DebugDep()) 
+       std::cerr << "after analyzing relation matrix, result =: \n" << result.ToString() << std::endl;
+  setdep.finalize();
+  if (DebugDep()) 
+       std::cerr << "after restrictions from stmt domain, result =: \n" << result.ToString() << std::endl;
+  return result;
+}
+
+void DepInfoAnal::
+ComputeArrayDep( LoopTransformInterface &fa, const StmtRefDep& ref, 
+                           DepType deptype, 
+                           DepInfoCollect &outDeps, DepInfoCollect &inDeps) 
+{
+   if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+     DepInfo d=::ComputeArrayDep(fa, *this, ref, deptype);
+     if ( !d.IsTop()) {
+        if (ref.commLevel > 0) {
+           DepInfo d1 = Reverse(d);
+           SetDepDirection( d1, ref.commLevel, inDeps);
+        }
+        if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+          int carryLevel = SetDepDirection( d, ref.commLevel, outDeps);
+          if ( ! d.IsTop() && 
+              !(carryLevel > ref.commLevel && ref.r1.ref == ref.r2.ref) )
+               outDeps( d );
+        }
+     }
+   }
+}
+
+DepInfoAnal::StmtRefDep DepInfoAnal::
+GetStmtRefDep( LoopTransformInterface &la,
+               const AstNodePtr& s1,  const AstNodePtr& r1,
+               const AstNodePtr& s2, const AstNodePtr& r2)
+{
+  StmtRefDep r( StmtRefInfo(s1,r1), StmtRefInfo(s2,r2),0,0);
+  AstInterface& fa = la;
+  r.commLoop = GetCommonLoop(fa, s1, GetStmtInfo(la, s1).domain.NumOfLoops(),
+                             s2, GetStmtInfo(la, s2).domain.NumOfLoops(),
+                             &r.commLevel);
+  return r;
+}
+
+void DepInfoAnal ::
+ComputeIODep(LoopTransformInterface &fa,  
+             const AstNodePtr& s1,  const AstNodePtr& s2,
+               DepInfoCollect &outDeps, DepInfoCollect &inDeps, DepType t)
+{
+  StmtRefDep ref = GetStmtRefDep(fa, s1, s1, s2, s2);
+  if (ref.commLevel > 0 || s1 != s2) {
+    DepInfo d = ComputeGlobalDep( fa, *this, ref, t, 1);
+    assert(!d.IsTop());
+    outDeps(d);
+  }
+  if (ref.commLevel > 0 && s1 != s2) {
+       StmtRefDep ref2( ref.r2, ref.r1, ref.commLoop, ref.commLevel);
+       DepInfo d1 = ComputeGlobalDep( fa, *this, ref2, t, -1);
+       assert(!d1.IsTop());
+       inDeps(d1);
+  }
+}
+
+void DepInfoAnal::
+ComputeCtrlDep(LoopTransformInterface &fa,  
+               const AstNodePtr& s1,  const AstNodePtr& s2,
+               DepInfoCollect &outDeps, DepInfoCollect &inDeps, DepType t)
+{
+  StmtRefDep ref = GetStmtRefDep(fa, s1, s1, s2, s2);
+  if (ref.commLevel > 0 || s1 != s2) {
+     DepInfo d = ComputePrivateDep( fa, *this, ref, t, 1);
+     assert(!d.IsTop());
+     outDeps(d);
+  }
+}
+
+
+void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la, 
+                       DepInfoAnal::StmtRefDep& ref,
+                       DoublyLinkedListWrap<AstNodePtr> *rs1, 
+                       DoublyLinkedListWrap<AstNodePtr> *rs2,
+                       DepType t, CollectObject<DepInfo> &outDeps, 
+                       CollectObject<DepInfo> &inDeps)
+{
+  AstInterface& fa = la;
+  for (DoublyLinkedListWrap<AstNodePtr>::iterator iter1 = rs1->begin(); 
+      iter1 != rs1->end(); ++iter1) {
+    AstNodePtr r1 = *iter1, array1;
+    Boolean b1 = la.IsArrayAccess(r1, &array1);
+    if (!b1)
+       array1 = r1; 
+    ref.r1.ref = r1;
+    for (DoublyLinkedListWrap<AstNodePtr>::iterator  iter2 = 
+              (rs1 == rs2)? iter1 : rs2->begin();
+         iter2 != rs2->end(); ++iter2) {
+       AstNodePtr r2 = *iter2, array2;
+       Boolean b2 = la.IsArrayAccess(r2, &array2);
+       if (!b2)
+          array2 = r2;
+       ref.r2.ref = r2;
+       if ( fa.IsSameVarRef( array1, array2) ) {
+           if (b1 && b2) 
+               anal.ComputeArrayDep( la, ref, t, outDeps, inDeps);
+           else if (b1 || b2) 
+               anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps);
+           else 
+               anal.ComputePrivateScalarDep( la, ref, outDeps, inDeps);
+       }
+       else if ( la.IsAliasedRef( r1, r2)) {
+          anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps); 
+       }
+    }
+  }
+}
+
+void RemoveIvars( AstInterface& ai, DoublyLinkedListWrap<AstNodePtr>& refs,
+                  const vector<SymbolicVar>& ignore)
+{
+  for (DoublyLinkedEntryWrap<AstNodePtr>* p = refs.First(); p != 0; ) {
+     DoublyLinkedEntryWrap<AstNodePtr>* p1 = p;
+     p = refs.Next(p);
+     AstNodePtr cur = p1->GetEntry();
+     string name;
+     AstNodePtr scope;
+     if (cur != 0 && ai.IsVarRef(cur, 0,&name, &scope)) {
+         SymbolicVar curvar(name, scope);
+         for (unsigned int i = 0; i < ignore.size(); ++i) 
+             if (ignore[i] == curvar) 
+                refs.Delete(p1);
+     } 
+   }
+}
+
+void DepInfoAnal ::
+ComputeDataDep(LoopTransformInterface &fa, 
+               const AstNodePtr& s1,  const AstNodePtr& s2,
+               DepInfoCollect &outDeps, DepInfoCollect &inDeps, int t)
+{
+  DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1, rRef2, wRef2;
+  CollectDoublyLinkedList<AstNodePtr> crRef1(rRef1),cwRef1(wRef1),crRef2(rRef2),cwRef2(wRef2);
+  if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1) || 
+        (s1 != s2 && !AnalyzeStmtRefs(fa, s2, cwRef2, crRef2))) {
+       if (DebugDep())
+          std::cerr << "cannot determine side effects of statements: " << AstInterface::AstToString(s1) << "; or " << AstInterface::AstToString(s2) << std::endl;
+       ComputeIODep( fa, s1, s2, outDeps, inDeps, DEPTYPE_IO);
+  }
+  StmtRefDep ref = GetStmtRefDep(fa, s1, 0, s2, 0);
+  if (s1 == s2 && ref.commLevel == 0)
+        return;
+
+  if (s1 == s2) {
+     RemoveIvars(fa, rRef1, GetStmtInfo(fa,s1).ivars);
+     RemoveIvars(fa, wRef1, GetStmtInfo(fa,s1).ivars);
+     if (t & DEPTYPE_OUTPUT)
+          ComputeRefSetDep( *this, fa, ref, &wRef1, &wRef1, 
+                            DEPTYPE_OUTPUT, outDeps, inDeps);
+     if (t & DEPTYPE_TRUE || t & DEPTYPE_ANTI)
+          ComputeRefSetDep( *this, fa, ref, &rRef1, &wRef1, 
+                            DEPTYPE_ANTI, outDeps, inDeps);
+     if (t & DEPTYPE_INPUT)
+          ComputeRefSetDep( *this, fa, ref, &rRef1, &rRef1, 
+                            DEPTYPE_INPUT, outDeps, inDeps);
+  }
+  else {
+     RemoveIvars(fa, rRef1, GetStmtInfo(fa,s1).ivars);
+     RemoveIvars(fa, rRef2, GetStmtInfo(fa,s2).ivars);
+     RemoveIvars(fa, wRef1, GetStmtInfo(fa,s1).ivars);
+     RemoveIvars(fa, wRef2, GetStmtInfo(fa,s2).ivars);
+     if (t & DEPTYPE_OUTPUT)
+          ComputeRefSetDep( *this, fa, ref, &wRef1, &wRef2, 
+                            DEPTYPE_OUTPUT, outDeps, inDeps);
+     if (t & DEPTYPE_TRUE)
+          ComputeRefSetDep( *this, fa, ref, &wRef1, &rRef2, 
+                            DEPTYPE_TRUE, outDeps, inDeps);
+     if (t & DEPTYPE_ANTI)
+          ComputeRefSetDep( *this, fa, ref, &rRef1, &wRef2, 
+                            DEPTYPE_ANTI, outDeps, inDeps);
+     if (t & DEPTYPE_INPUT)
+          ComputeRefSetDep( *this, fa, ref, &rRef1, &rRef2, 
+                            DEPTYPE_INPUT, outDeps, inDeps);
+   }
+}
+

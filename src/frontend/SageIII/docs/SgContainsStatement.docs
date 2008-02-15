@@ -1,0 +1,63 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgContainsStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgStringList SgContainsStatement::p_name_list
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgContainsStatement::SgContainsStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgContainsStatement::SgContainsStatement(const SgContainsStatementStorageClass &source)
+*/
+/*!\fn inline static void SgContainsStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgContainsStatement *SgContainsStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgContainsStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgContainsStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgContainsStatement::initializeStorageClassArray(SgContainsStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgContainsStatement::clearMemoryPool()
+*/
+/*!\fn static void SgContainsStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgContainsStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgContainsStatement::roseRTI()
+*/
+/*!\fn virtual SgContainsStatement::~SgContainsStatement()
+*/
+/*!\fn virtual SgNode *SgContainsStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgContainsStatement::post_construction_initialization()
+*/
+/*!\fn void SgContainsStatement::set_name_list(SgStringList name_list)
+\description See  name_list)
+name_list for documentation */
+/*!\fn SgStringList SgContainsStatement::get_name_list() const
+\description See  const
+name_list for documentation */
+/*!\fn virtual SgName SgContainsStatement::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgContainsStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgContainsStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgContainsStatement::get_numberOfTraversalSuccessors()
+\description See  SgContainsStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgContainsStatement::get_traversalSuccessorContainer()
+\description See  SgContainsStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgContainsStatement::get_traversalSuccessorNamesContainer()
+\description See  SgContainsStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgContainsStatement::SgContainsStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1727883299;

@@ -1,0 +1,100 @@
+/**********************************************************
+**   XREF.ATG
+**   Coco/R C++ Taste cross-reference generator example.
+**   Adapted to C++ by Frankie Arzu <farzu@uvg.edu.gt>
+**      from Moessenboeck's (1990) Oberon example
+**
+**   May 24, 1996  Version 1.06
+**********************************************************/
+
+$CX   /* Generate Main Module (C) and C++ options enable (X) */
+
+COMPILER XRef
+/* Taste cross reference generator */
+
+#include "crossref.hpp"
+#define  APPLIED  0
+#define  DEFINED  1
+
+static  char Name[15];
+RefTable Table;
+
+/*------------------------------------------------------------------------*/
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit  = "0123456789" .
+  cr     = CHR(13) .
+  lf     = CHR(10) .
+  tab    = CHR(9) .
+
+TOKENS
+  ident  = letter {letter | digit} .
+  number = digit {digit} .
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+
+  XRef =
+   "PROGRAM" Ident                (. Table.Add(Name, Scanner->CurrSym.Line, DEFINED); .)
+    ";" Body Ident                (. Table.Add(Name, Scanner->CurrSym.Line, APPLIED); .)
+    "." .
+
+  Body
+  =
+    { "VAR"
+      { Ident ":"                 (. Table.Add(Name, Scanner->CurrSym.Line, DEFINED); .)
+  TypeId ";" }
+
+    | "PROCEDURE" Ident           (. Table.Add(Name, Scanner->CurrSym.Line, DEFINED); .)
+      ";" Body
+      Ident                       (. Table.Add(Name, Scanner->CurrSym.Line, APPLIED); .)
+      ";"
+    }
+    "BEGIN" StatSeq "END" .
+
+  TypeId =  "INTEGER"             (. Table.Add("INTEGER", Scanner->CurrSym.Line, APPLIED); .)
+           | "BOOLEAN"            (. Table.Add("BOOLEAN", Scanner->CurrSym.Line, APPLIED); .).
+
+  Ident = ident                   (. LexName(Name, sizeof(Name)-1); .) .
+
+  StatSeq = Stat {";" Stat} .
+
+  Stat
+  = [ Ident                       (. Table.Add(Name, Scanner->CurrSym.Line, APPLIED); .)
+      ( ":=" Expression | )
+    | "IF" Expression
+      "THEN" StatSeq
+      [ "ELSE" StatSeq ]
+      "END"
+    | "WHILE" Expression
+      "DO" StatSeq "END"
+    | "READ" Ident                (. Table.Add(Name, Scanner->CurrSym.Line, APPLIED); .)
+    | "WRITE" Expression
+    ] .
+
+  Expression = SimExpr [ RelOp SimExpr ] .
+
+  SimExpr = Term { AddOp Term } .
+
+  Term = Factor { MulOp Factor } .
+
+  Factor
+      = ( Ident                   (. Table.Add(Name, Scanner->CurrSym.Line, APPLIED); .)
+          | "TRUE"                (. Table.Add("TRUE", Scanner->CurrSym.Line, APPLIED); .)
+          | "FALSE"               (. Table.Add("FALSE", Scanner->CurrSym.Line, APPLIED); .)
+    | number | "-" Factor
+  ) .
+
+  MulOp = "*" | "/" .
+
+  AddOp =  "+" | "-" .
+
+  RelOp = "=" | "<" | ">"  .
+
+END XRef.
+
+

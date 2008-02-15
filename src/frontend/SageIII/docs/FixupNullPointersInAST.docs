@@ -1,0 +1,7 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name User Interface*/
+//@{
+/*!\fn virtual void FixupNullPointersInAST::visit(SgNode *node)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1925486616;

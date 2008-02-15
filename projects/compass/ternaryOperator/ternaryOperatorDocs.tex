@@ -1,0 +1,76 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Ternary Operator}
+\label{TernaryOperator::overview}
+
+% write your introduction
+This checker detects a expression that uses the ternary operator. The rationale for this checker is, according to ``High-Integrity C++ Coding Standard Manual", because evaluation of a complex condition is best achieved through explicit conditional statements.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+None.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+This checker is implemented with a simple traversal. It traverses AST, checks if a statement uses a ternary operator, and reports it if yes.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+void foo()
+{
+	int i = 0;
+	int j;
+
+	(i==3) ? (j=1) : (j=2);
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+void foo()
+{
+	int i = 0;
+	int j;
+
+	if(i == 4)
+		j = 1;
+	else
+		j = 2;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each node, check if a node represents a ternary operator.
+\item If yes, report it
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+
+The Programming Research Group, High-Integrity C++ Coding Standard Manual, Item 10.20: ``Do not use the thernary operator(?:) in expressions."

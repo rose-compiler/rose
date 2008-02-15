@@ -1,0 +1,84 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgArithmeticIfStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgExpression *SgArithmeticIfStatement::p_conditional
+*/
+/*!\var SgLabelStatement *SgArithmeticIfStatement::p_label_1
+*/
+/*!\var SgLabelStatement *SgArithmeticIfStatement::p_label_2
+*/
+/*!\var SgLabelStatement *SgArithmeticIfStatement::p_label_3
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgArithmeticIfStatement::SgArithmeticIfStatement(Sg_File_Info *startOfConstruct,SgExpression *conditional=(0),SgLabelStatement *label_1=(0),SgLabelStatement *label_2=(0),SgLabelStatement *label_3=(0))
+*/
+/*!\fn SgArithmeticIfStatement::SgArithmeticIfStatement(const SgArithmeticIfStatementStorageClass &source)
+*/
+/*!\fn inline static void SgArithmeticIfStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgArithmeticIfStatement *SgArithmeticIfStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgArithmeticIfStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgArithmeticIfStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgArithmeticIfStatement::initializeStorageClassArray(SgArithmeticIfStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgArithmeticIfStatement::clearMemoryPool()
+*/
+/*!\fn static void SgArithmeticIfStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgArithmeticIfStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgArithmeticIfStatement::roseRTI()
+*/
+/*!\fn virtual SgArithmeticIfStatement::~SgArithmeticIfStatement()
+*/
+/*!\fn virtual SgNode *SgArithmeticIfStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgArithmeticIfStatement::post_construction_initialization()
+*/
+/*!\fn void SgArithmeticIfStatement::set_conditional(SgExpression *conditional)
+\description See  *conditional)
+conditional for documentation */
+/*!\fn void SgArithmeticIfStatement::set_label_1(SgLabelStatement *label_1)
+\description See  *label_1)
+label_1 for documentation */
+/*!\fn void SgArithmeticIfStatement::set_label_2(SgLabelStatement *label_2)
+\description See  *label_2)
+label_2 for documentation */
+/*!\fn void SgArithmeticIfStatement::set_label_3(SgLabelStatement *label_3)
+\description See  *label_3)
+label_3 for documentation */
+/*!\fn SgExpression *SgArithmeticIfStatement::get_conditional() const
+\description See  const
+conditional for documentation */
+/*!\fn SgLabelStatement *SgArithmeticIfStatement::get_label_1() const
+\description See  const
+label_1 for documentation */
+/*!\fn SgLabelStatement *SgArithmeticIfStatement::get_label_2() const
+\description See  const
+label_2 for documentation */
+/*!\fn SgLabelStatement *SgArithmeticIfStatement::get_label_3() const
+\description See  const
+label_3 for documentation */
+/*!\fn virtual SgNode *SgArithmeticIfStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgArithmeticIfStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgArithmeticIfStatement::get_numberOfTraversalSuccessors()
+\description See  SgArithmeticIfStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgArithmeticIfStatement::get_traversalSuccessorContainer()
+\description See  SgArithmeticIfStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgArithmeticIfStatement::get_traversalSuccessorNamesContainer()
+\description See  SgArithmeticIfStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgArithmeticIfStatement::SgArithmeticIfStatement(SgExpression *conditional,SgLabelStatement *label_1,SgLabelStatement *label_2,SgLabelStatement *label_3)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1025078135;

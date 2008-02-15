@@ -1,0 +1,12 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var bool MarkTransformationsForOutputInheritedAttribute::insideTransformationToOutput
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn inline MarkTransformationsForOutputInheritedAttribute::MarkTransformationsForOutputInheritedAttribute() : insideTransformationToOutput(false)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_774583691;

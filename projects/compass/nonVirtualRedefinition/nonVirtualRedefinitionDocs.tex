@@ -1,0 +1,78 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Non Virtual Redefinition}
+\label{NonVirtualRedefinition::overview}
+
+Calls of nonvirtual member functions are resolved at compile time, not run
+time. Redefinition of an inherited nonvirtual function in a derived class has
+different semantics that can result in surprising behavior and should
+therefore be avoided. This checker reports cases where a class redefines a
+function that was declared nonvirtual in one of its superclasses.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+namespace NonCompliant {
+    class Base {
+    public:
+        virtual void overrideIfYouWish(int);
+        void doNotOverride(int);
+    };
+
+    class Inherited: public Base {
+    public:
+        void doNotOverride(int); // trying to override nonvirtual function
+    };
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+namespace Compliant {
+    class Base {
+    public:
+        virtual void overrideIfYouWish(int);
+        void doNotOverride(int);
+    };
+
+    class Inherited: public Base {
+    public:
+        void overrideIfYouWish(int); // overriding virtual function
+    };
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For every member function declaration, traverse the inheritance DAG of
+the enclosing class.
+\item Identify any functions that may be overridden by the current one (by
+checking name and type).
+\item Issue a diagnostic if the overridden function is not declared virtual.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference for this checker is: S.~Meyers: ``Effective C++ Second Edition'',
+Item~37: ``Never redefine an inherited nonvirtual function.''

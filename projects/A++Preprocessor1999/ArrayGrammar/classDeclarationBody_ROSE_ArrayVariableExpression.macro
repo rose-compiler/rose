@@ -1,0 +1,8 @@
+       // Special constructor for this class
+          CLASSNAME ( SgExpression* expr );
+
+          virtual ROSE_Node* transform() = 0;
+
+       // get the names of the different parts
+          virtual SgName getOperandName ();
+          virtual SgName getOperandPointerName();

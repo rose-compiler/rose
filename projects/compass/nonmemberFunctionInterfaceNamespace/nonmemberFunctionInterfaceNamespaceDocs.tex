@@ -1,0 +1,74 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Nonmember Function Interface Namespace}
+\label{NonmemberFunctionInterfaceNamespace::overview}
+
+User-defined classes should typically reside in the same namespace as their
+nonmember function interface, i.e. friend functions and operators for that
+class. The reasons are uniform lookup of overloaded functions and that the
+interface of a class consists not only of its member functions. This checker
+enforces this guideline. It reports friend function declarations that refer to
+functions from a different namespace. Further, it makes sure that every class
+mentioned in a nonmember operator's signature (return and argument types) is
+in the same namespace as the operator, or in the global std namespace.
+
+\subsection{Parameter Requirements}
+
+No parameters are required.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+void f(); // not OK: used as friend in class N::A, not in same namespace
+namespace N
+{
+    class A
+    {
+    public:
+        friend void ::f();
+    };
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+namespace M
+{
+    void f(); // OK: used as friend in M::B, same namespace
+
+    class B
+    {
+    public:
+        friend void f();
+    };
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each friend function or operator for a class, look up the namespace
+it is declared in and compare to the namespace of the class.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The reference for this checker is: H.~Sutter, A.~Alexandrescu:
+``C++ Coding Standards'', Item~57: ``Keep a type and its nonmenber function
+interface in the same namespace''.

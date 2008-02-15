@@ -1,0 +1,62 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Cpp Calls Setjmp Longjmp}
+
+\label{CppCallsSetjmpLongjmp::overview}
+
+\quote{Namespace: \texttt{CppCallsSetjmpLongjmp}}
+
+\subsection{Introduction}
+Never use setjmp() or longjmp() is C++ code. These functions provide exception
+handling for C programs. You cannot safely use these functions in C++ code
+because the exception handling mechanism they implement does not respect
+normal object lifecycle semantics---a jump will not result in destruction
+of scoped, automatically allocated objec
+
+\subsection{Input Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Output Requirements}
+   Output is provided in GNU standard source position format.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out calls
+to setjmp() and longjmp() in source files without the ``.c'' extension. These
+nodes are flagged as violations.
+
+\subsection{Example of Failing Output Code}
+
+%{\small
+%\begin{verbatim}
+%/// This test code demonstrates C++ code that calls both setjmp and longjmp.
+%#include <setjmp.h>
+%
+%int main()
+%{
+%  jmp_buf env;
+%
+%  setjmp(env);
+%  longjmp(env,2);
+%
+%  return 0;
+%} //main()
+%\end{verbatim}
+%}
+
+
+%Examples of the patterns go here.
+     See example: cppCallsSetjmpLongjmpTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+
+\begin{latexonly}
+\codeFontSize{
+\lstinputlisting{\ExampleDirectory/../cppCallsSetjmpLongjmp/cppCallsSetjmpLongjmpTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

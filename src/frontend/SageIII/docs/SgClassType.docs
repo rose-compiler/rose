@@ -1,0 +1,47 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgClassType
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgClassType::SgClassType(const SgClassType &X)
+*/
+/*!\fn SgClassType::SgClassType(const SgClassTypeStorageClass &source)
+*/
+/*!\fn inline static void SgClassType::operator delete(void *pointer)
+*/
+/*!\fn static SgClassType *SgClassType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgClassType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgClassType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgClassType::initializeStorageClassArray(SgClassTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgClassType::clearMemoryPool()
+*/
+/*!\fn static void SgClassType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgClassType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgClassType::roseRTI()
+*/
+/*!\fn virtual SgClassType::~SgClassType()
+*/
+/*!\fn virtual SgNode *SgClassType::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgNode *SgClassType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgClassType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgClassType::get_numberOfTraversalSuccessors()
+\description See  SgClassType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClassType::get_traversalSuccessorContainer()
+\description See  SgClassType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClassType::get_traversalSuccessorNamesContainer()
+\description See  SgClassType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgClassType::SgClassType(SgDeclarationStatement *declaration=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1145653239;

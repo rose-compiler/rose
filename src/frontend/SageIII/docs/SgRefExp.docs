@@ -1,0 +1,107 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgRefExp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgRefExp
+\brief This class represents the "&" operator (applied to any lvalue).
+\todo Double check this description.
+\internal 
+\sa
+\ref SgRefExp_usage  "Example of using a SgRefExp object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgRefExp data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgRefExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgRefExp::SgRefExp (const SgRefExp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgRefExp::~SgRefExp()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgRefExp::isSgRefExp (SgNode *s)
+\brief Cast function (from derived class to SgRefExp pointer).
+   This functions returns a SgRefExp pointer for any input of a 
+pointer to an object derived from a SgRefExp.
+\return Returns valid pointer to SgRefExp if input is derived from a SgRefExp.
+*/
+/*!
+\fn SgRefExp::isSgRefExp (const SgNode *s)
+\brief Cast function (from derived class to SgRefExp pointer).
+   This functions returns a SgRefExp pointer for any input of a 
+pointer to an object derived from a SgRefExp.
+\return Returns valid pointer to SgRefExp if input is derived from a SgRefExp.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgType *SgRefExp::p_type_name
+\brief This a SgType, but I forget its significance.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgRefExp::SgRefExp(Sg_File_Info *startOfConstruct,SgType *type_name=(0))
+\brief This is the constructor.
+   This constructor builds the SgRefExp base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgRefExp_create "Example:create an SgRefExp object"
+*/
+/*!\fn SgRefExp::SgRefExp(const SgRefExpStorageClass &source)
+*/
+/*!\fn inline static void SgRefExp::operator delete(void *pointer)
+*/
+/*!\fn static SgRefExp *SgRefExp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgRefExp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgRefExp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgRefExp::initializeStorageClassArray(SgRefExpStorageClass *storageArray)
+*/
+/*!\fn static void SgRefExp::clearMemoryPool()
+*/
+/*!\fn static void SgRefExp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgRefExp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgRefExp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgRefExp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgRefExp::~SgRefExp()
+*/
+/*!\fn virtual void SgRefExp::post_construction_initialization()
+*/
+/*!\fn void SgRefExp::set_type_name(SgType *type_name)
+\description See  *type_name)
+type_name for documentation */
+/*!\fn SgType *SgRefExp::get_type_name() const
+\description See  const
+type_name for documentation */
+/*!\fn virtual SgNode *SgRefExp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgRefExp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgRefExp::get_numberOfTraversalSuccessors()
+\description See  SgRefExp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgRefExp::get_traversalSuccessorContainer()
+\description See  SgRefExp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgRefExp::get_traversalSuccessorNamesContainer()
+\description See  SgRefExp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgRefExp::SgRefExp(SgType *type_name)
+*/
+//@}
+int SAGE_Doxygen_Dummy_258152107628587;

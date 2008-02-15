@@ -1,0 +1,61 @@
+COMPILER MAda
+/* A micro subset of Ada as used by H Dobler in "Compilerbau I". */
+
+IGNORE CASE
+
+CHARACTERS
+  letter      = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit       = "0123456789".
+  eol         = CHR(10) .
+  anyButQuote = ANY - '"' - eol .
+
+COMMENTS
+  FROM "--" TO eol
+
+TOKENS
+  id     = letter { ["_"] (letter | digit) }.
+  number = digit { ["_"] digit }.
+  string = '"' { anyButQuote | '""' } '"'.
+
+PRODUCTIONS
+  MAda        =  "PACKAGE" id "IS" {Declaration} "BEGIN" {Stat} "END" [id] ";".
+  Declaration =  ObjsDecl | ProcDecl.
+  ObjsDecl    =  IdList ":" Type.
+  IdList      =  id {"," id}.
+  Type        =  "ARRAY" "(" Range ")" "OF" SimpleType.
+  SimpleType  =  "INTEGER" | "CHARACTER" | "BOOLEAN".
+  ProcDecl    =  "PROCEDURE" id FormalPart 
+                 ["IS" {Declaration} "BEGIN" {Stat} "END" [id]] ";".
+  FormalPart  =  ["(" ParamDecl {";" ParamDecl} ")"].
+  ParamDecl   =  IdList ":" [ParamMode] ["ARRAY" "OF"] SimpleType.
+  ParamMode   =  "IN" ["OUT"] | "OUT".
+  Stat        =    Name ":=" Expr ";"
+                 | Name ";"
+                 | "IF" Expr "THEN" {Stat}
+                     ["ELSIF" Expr "THEN" {Stat}] ["ELSE" {Stat}] "END" "IF" ";"
+                 | [id ":"] [IterClause] "LOOP" {Stat} "END" "LOOP" ";"
+                 | "EXIT" [id] ["WHEN" Expr] ";"
+                 | "RETURN" ";"
+                 | "NULL" ";"
+                 | "READ" "(" Name "," Name ")" ";"
+                 | "READLN" "(" Name ")" ";"
+                 | "WRITE" "(" Expr ["," Expr] ")" ";"
+                 | "WRITELN" ";".
+  IterClause  =  "WHILE" Expr | "FOR" id "IN" ["REVERSE"] Range.
+  Range       =  Expr ".." Expr.
+  Name        =  id [NameSuffix] | SimpleType "'" "VAL" "(" Expr ")".
+  NameSuffix  =    "(" Expr {"," Expr} ")" | "'" "CHAR"
+                 | "'" "FIRST" | "'" "LAST".
+  Expr        =  Relation [ ( "AND" ["THEN"] | "OR" ["ELSE"] ) Relation].
+  Relation    =  SimpleExpr [RelOp SimpleExpr].
+  SimpleExpr  =  [AddOp] Term {AddOp Term}.
+  Term        =  Factor {MulOp Factor}.
+  Factor      =  [ "NOT" | "ABS" ] Primary.
+  Primary     =  Name | number | string | "TRUE" | "FALSE" | "(" Expr ")".
+  RelOp       =  "<" | "<=" | "=" | "/=" | ">=" | ">".
+  AddOp       =  "+" | "-".
+  MulOp       =  "*" | "/" | "MOD".
+
+END MAda.
+
+

@@ -1,0 +1,79 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgGraphEdge
+*/
+/*! \name Class Members*/
+//@{
+/*!\var int SgGraphEdge::p_graph_id
+*/
+/*!\var std::string SgGraphEdge::p_name
+*/
+/*!\var std::string SgGraphEdge::p_type
+*/
+/*!\var std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > SgGraphEdge::p_properties
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgGraphEdge::SgGraphEdge(const SgGraphEdgeStorageClass &source)
+*/
+/*!\fn inline static void SgGraphEdge::operator delete(void *pointer)
+*/
+/*!\fn static SgGraphEdge *SgGraphEdge::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgGraphEdge::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgGraphEdge::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgGraphEdge::initializeStorageClassArray(SgGraphEdgeStorageClass *storageArray)
+*/
+/*!\fn static void SgGraphEdge::clearMemoryPool()
+*/
+/*!\fn static void SgGraphEdge::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgGraphEdge::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgGraphEdge::roseRTI()
+*/
+/*!\fn virtual SgGraphEdge::~SgGraphEdge()
+*/
+/*!\fn virtual SgNode *SgGraphEdge::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgGraphEdge::append_properties(int addr,std::string prop)
+*/
+/*!\fn void SgGraphEdge::set_name(std::string name)
+\description See  name)
+name for documentation */
+/*!\fn void SgGraphEdge::set_properties(std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > properties)
+\description See  properties)
+properties for documentation */
+/*!\fn void SgGraphEdge::set_type(std::string type)
+\description See  type)
+type for documentation */
+/*!\fn int SgGraphEdge::get_graph_id() const
+\description See  const
+graph_id for documentation */
+/*!\fn std::map< int  , std::string  , std::less< int  >  , std::allocator< std::pair< const int  , std::string  >  >  > SgGraphEdge::get_properties() const
+\description See  const
+properties for documentation */
+/*!\fn std::string SgGraphEdge::get_name() const
+\description See  const
+name for documentation */
+/*!\fn std::string SgGraphEdge::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual SgNode *SgGraphEdge::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgGraphEdge::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgGraphEdge::get_numberOfTraversalSuccessors()
+\description See  SgGraphEdge::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgGraphEdge::get_traversalSuccessorContainer()
+\description See  SgGraphEdge::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgGraphEdge::get_traversalSuccessorNamesContainer()
+\description See  SgGraphEdge::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgGraphEdge::SgGraphEdge(std::string name=(""),std::string type=(""),int graph_id=0)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_603826306;

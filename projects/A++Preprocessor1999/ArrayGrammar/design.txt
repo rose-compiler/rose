@@ -1,0 +1,22 @@
+There are several possible designs for the transformation mechanism:
+
+1) The Puzzle Piece Design
+
+      In this approach the objects which represent our grammar
+   contain inputs and outputs.  The point is to maintain the same inputs
+   and outputs and transform the sage tree between the inputs and outputs.
+   In doing this the outputs change slightly (they change type; for example, 
+   from function call expression to a add operator expression).
+
+
+   To reflect the output changing, we have to return the output type from 
+   the transformation function (we currently return a ROSE_Node*, we should 
+   return a SgNode* instead).
+
+2) Grammar Design
+
+   In this approach we define a grammar for a specific transformation and use the
+   existing C++ and Array Grammar to write another parser specific to that grammar.
+   Then the objects which define that new transformation grammar contain the 
+   transformation mechanisms.
+

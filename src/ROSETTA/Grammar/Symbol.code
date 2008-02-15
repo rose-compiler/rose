@@ -1,0 +1,531 @@
+// #########################################################
+// #########################################################
+//                      HEADER CODE
+// #########################################################
+// #########################################################
+
+HEADER_START
+          virtual SgName  get_name() const = 0;
+          virtual SgType* get_type() const = 0;
+          virtual SgNode* get_symbol_basis() const; // from HEADER
+
+       // DQ (6/10/007): supports test of symbol declaration scope against symbol table's associated scope
+          virtual SgScopeStatement* get_scope() const;
+HEADER_END
+
+HEADER_X_SYMBOL_START
+          virtual SgName  get_name() const = 0;
+          virtual SgType* get_type() const = 0;
+          virtual SgNode* get_symbol_basis() const; // from X_SYMBOL
+HEADER_X_SYMBOL_END
+
+HEADER_NON_X_SYMBOL_START
+HEADER_NON_X_SYMBOL_END
+
+
+HEADER_GET_TYPE_START
+          SgType* get_type() const;
+       // SgNode* get_symbol_basis() const; // from GET_TYPE
+HEADER_GET_TYPE_END
+
+HEADER_GET_NAME_START
+          SgName get_name() const;
+          SgNode* get_symbol_basis() const; // from GET_NAME
+HEADER_GET_NAME_END
+
+
+HEADER_DECLARATION_START
+          SgMemberFunctionDeclaration *get_declaration() const;
+
+       // DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
+          SgClassDefinition *get_scope() const ROSE_DEPRECATED_FUNCTION;
+
+       // SgNode* get_symbol_basis() const; // from DECLARATION
+HEADER_DECLARATION_END
+
+HEADER_TEMPLATE_INSTANTIATION_DECLARATION_START
+          ** This code is not used by ROSETTA! **
+          SgTemplateInstantiationDecl *get_declaration() const;
+HEADER_TEMPLATE_INSTANTIATION_DECLARATION_END
+
+
+HEADER_LABEL_SYMBOL_START
+
+      //! Type of label used (fortran only)
+          enum label_type_enum
+             {
+               e_unknown_label_type     = 0,
+               e_non_numeric_label_type = 1,
+               e_start_label_type       = 2,
+               e_else_label_type        = 3,
+               e_end_label_type         = 4,
+               e_last_label_type        = 5
+             };
+
+HEADER_LABEL_SYMBOL_END
+
+
+// #########################################################
+// #########################################################
+//                      SOURCE CODE
+// #########################################################
+// #########################################################
+
+SOURCE_START
+#if 1
+// DQ (2/6/2007): This returns the basis for SgSymbol
+SgNode*
+SgSymbol::get_symbol_basis() const
+   {
+     return NULL;
+   }
+#endif
+
+// This function has been implement to support testing of the scope of 
+// the declartion with the scope of where the symbols are placed 
+// (within the inserion and checking og symbol tables).
+SgScopeStatement*
+SgSymbol::get_scope() const
+   {
+     SgScopeStatement* scope = NULL;
+     const SgNode* basis = get_symbol_basis();
+
+     ROSE_ASSERT(basis != NULL);
+  // printf ("In SgSymbol::get_scope(): basis = %p = %s \n",basis,basis->class_name().c_str());
+
+     const SgInitializedName* initializedName = isSgInitializedName(basis);
+     if (initializedName != NULL)
+        {
+          scope = initializedName->get_scope();
+        }
+
+     const SgStatement* statement = isSgStatement(basis);
+     if (statement != NULL)
+        {
+          scope = statement->get_scope();
+        }
+
+     ROSE_ASSERT(scope != NULL);
+     return scope;
+   }
+
+SOURCE_END
+
+SOURCE_X_SYMBOL_START
+SOURCE_X_SYMBOL_END
+
+
+SOURCE_NON_X_SYMBOL_START
+
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     return NULL;
+   }
+
+SgName
+$CLASSNAME::get_name() const
+   {
+     return SgName("undefined_non_X_symbol");
+   }
+
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+SOURCE_NON_X_SYMBOL_END
+
+
+SOURCE_LONG_GET_NAME_START
+SgName 
+SgVariableSymbol::get_name() const
+   {
+#if 0
+   // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
+      SgName theName;
+
+      if (get_declaration() != NULL) 
+         {
+           theName = get_declaration()->get_name();
+         } 
+        else 
+         {
+           theName = SgName("undefined");
+         }
+
+      return theName;
+#else
+      return (get_declaration() != NULL) ? get_declaration()->get_name() : SgName("undefined");
+#endif
+   }
+
+#if 1
+// DQ (2/6/2007): This returns the basis for the SgVariableSymbol (an SgInitializedName object)
+SgNode*
+SgVariableSymbol::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+#endif
+
+SOURCE_LONG_GET_NAME_END
+
+
+SOURCE_GET_TYPE_START
+SgType*
+$CLASSNAME::get_type() const
+   {
+     return (get_declaration() != NULL) ? get_declaration()->get_type() : NULL;
+   }
+
+#if 0
+// DQ (2/6/2007): This returns the basis for the type based symbol (get_type for the SgFunctionTypeSymbol)
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return get_type();
+   }
+#endif
+SOURCE_GET_TYPE_END
+
+
+SOURCE_EMPTY_GET_TYPE_START
+SgType*
+$CLASSNAME::get_type() const 
+   {
+     return NULL;
+   }
+
+#if 0
+// DQ (2/6/2007): This returns the basis for the EMPTY_GET_TYPE
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+#endif
+SOURCE_EMPTY_GET_TYPE_END
+
+
+SOURCE_SHORT_GET_NAME_START
+SgName
+$CLASSNAME::get_name() const 
+   {
+     return (get_declaration() != NULL) ? get_declaration()->get_name() : SgName("undefined");
+   }
+
+// DQ (2/6/2007): This returns the basis for the SHORT_GET_NAME
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+SOURCE_SHORT_GET_NAME_END
+
+SOURCE_SHORT_EMPTY_GET_NAME_START
+SgName
+$CLASSNAME::get_name() const 
+   {
+     return NULL;
+   }
+
+#if 1
+// DQ (2/6/2007): This returns the basis for the SHORT_EMPTY_GET_NAME
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+#endif
+SOURCE_SHORT_EMPTY_GET_NAME_END
+
+SOURCE_SHORT_DEFAULT_GET_NAME_START
+SgName
+$CLASSNAME::get_name() const 
+   {
+     return "Default_Symbol_Name";
+   }
+
+// DQ (2/6/2007): This returns the basis for the SHORT_DEFAULT_GET_NAME
+SgNode*
+$CLASSNAME::get_symbol_basis() const
+   {
+     return NULL;
+   }
+SOURCE_SHORT_DEFAULT_GET_NAME_END
+
+
+SOURCE_LABEL_SYMBOL_START
+SgName
+SgLabelSymbol::get_name() const
+   {
+  // DQ (12/9/2007): This IR node has been modified to hold a SgStatement in addition 
+  // to a SgLabelStatement. by leaving the pointer to a SgLabelStatement I don't change
+  // anything about how the C/C++ case works, but I have added a pointer to a SgStatement
+  // so that the Fortran support can reference any statement (to support numeric labels
+  // and non-numeric labels as well, though this is not yet implemented).  I plan to
+  // merge the support for C/C++ and fortran a bit later after I am sure that this 
+  // approach will work.
+
+  // This handles the general case where for C/C++ the declaration statement is not set, 
+  // but I think this should be an error.  Except that we have to handle the case of a 
+  // label with unassociated statement in C.  So maybe we need to handle this case!
+
+  // Previous implementation.
+  // return (get_declaration() != NULL) ? get_declaration()->get_name() : SgName("undefined");
+
+     SgName name;
+     if (get_declaration() != NULL)
+        {
+          name = get_declaration()->get_name();
+        }
+       else
+        {
+          SgStatement* fortranStatement = get_fortran_statement();
+          ROSE_ASSERT(fortranStatement != NULL);
+
+       // int numericLabel = fortranStatement->get_numeric_label();
+          int numericLabel = get_numeric_label_value();
+       // printf ("SgLabelSymbol::get_name(): numericLabel = %d \n",numericLabel);
+
+          name = StringUtility::numberToString(numericLabel);
+        }
+
+     return name;
+   }
+
+// DQ (2/6/2007): This returns the basis for the SHORT_GET_NAME
+SgNode*
+SgLabelSymbol::get_symbol_basis() const
+   {
+  // DQ (12/9/2007): Modified (see comment above).
+  // return get_declaration();
+
+     SgStatement* returnStatement = get_declaration();
+     if (returnStatement == NULL)
+        {
+          SgStatement* fortranStatement = get_fortran_statement();
+          ROSE_ASSERT(fortranStatement != NULL);
+          returnStatement = fortranStatement;
+        }
+
+     return returnStatement;
+   }
+
+SgType*
+SgLabelSymbol::get_type() const 
+   {
+  // It is not clear that the symbol should have an associated type (return NULL).
+  // return NULL;
+     return SgTypeDefault::createType();
+   }
+SOURCE_LABEL_SYMBOL_END
+
+
+SOURCE_DECLARATION_START
+
+SgMemberFunctionDeclaration*
+SgMemberFunctionSymbol::get_declaration() const
+   {
+     SgFunctionDeclaration* funcionDeclaration = SgFunctionSymbol::get_declaration();
+     if (funcionDeclaration == NULL)
+          return NULL;
+     SgMemberFunctionDeclaration* memberFuncionDeclaration = isSgMemberFunctionDeclaration(funcionDeclaration);
+     ROSE_ASSERT(memberFuncionDeclaration != NULL);
+     return memberFuncionDeclaration; 
+   }
+
+#if 1
+// DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
+// This is used in the hidden list intersection code: 
+//      astHiddenTypeAndDeclarationLists/HiddenList_Intersection.C
+// and maybe else where as well.
+SgClassDefinition*
+SgMemberFunctionSymbol::get_scope() const
+   {
+  // DQ (7/28/2007): Call the base class instead
+  // ROSE_ASSERT(get_declaration() != NULL);
+  // return get_declaration()->get_class_scope();
+     SgScopeStatement* scope = SgSymbol::get_scope();
+     ROSE_ASSERT(scope != NULL);
+     SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+
+     if (classDefinition == NULL)
+        {
+#if PRINT_DEVELOPER_WARNINGS
+          printf ("In SgMemberFunctionSymbol::get_scope() (scope is not a SgClassDefinition, likely a pointer to member function): scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+        }
+  // ROSE_ASSERT(classDefinition != NULL);
+
+     return classDefinition;
+   }
+#endif
+#if 0
+// DQ (2/6/2007): This returns the basis for the DECLARATION
+SgNode*
+SgMemberFunctionSymbol::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+#endif
+SOURCE_DECLARATION_END
+
+SOURCE_TEMPLATE_INSTANTIATION_DECLARATION_START
+
+ *** This case of ROSETTA test is not used! ***
+
+SgTemplateInstantiationDecl*
+#if 0
+// DQ (12/23/2005): Not sure why this was eliminated a lot time ago.
+$CLASSNAME::get_declaration() const
+   {
+     SgFunctionDeclaration* r = SgFunctionSymbol::get_declaration();
+     if (r == 0)
+          return 0;
+     SgTemplateInstantiationDecl* r1 = isSgTemplateInstantiationDecl(r);
+     ROSE_ASSERT(r1 != 0);
+     return r1;
+   }
+#endif
+
+SOURCE_TEMPLATE_INSTANTIATION_DECLARATION_END
+
+SOURCE_MODULE_GET_NAME_START
+SgName 
+SgModuleSymbol::get_name() const
+   {
+#if 1 
+   // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
+      $GRAMMAR_PREFIX_Name theName;
+
+      if (get_declaration()) 
+         {
+           theName = get_declaration()->get_name();
+         } 
+        else 
+         {
+           theName = $GRAMMAR_PREFIX_Name("undefined");
+         }
+
+      return theName;
+#else
+      return (get_declaration) ? get_declaration()->get_name() : $GRAMMAR_PREFIX_Name("undefined");
+#endif
+   }
+
+// DQ (2/6/2007): This returns the basis for the SgModuleSymbol
+SgNode*
+SgModuleSymbol::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+
+SOURCE_MODULE_GET_NAME_END
+
+SOURCE_COMMON_GET_NAME_START
+SgName 
+SgCommonSymbol::get_name() const
+   {
+#if 1 
+   // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
+      $GRAMMAR_PREFIX_Name theName;
+
+      if (get_declaration()) 
+         {
+           theName = get_declaration()->get_name();
+         } 
+        else 
+         {
+           theName = $GRAMMAR_PREFIX_Name("undefined");
+         }
+
+      return theName;
+#else
+      return (get_declaration) ? get_declaration()->get_name() : $GRAMMAR_PREFIX_Name("undefined");
+#endif
+   }
+
+SgNode*
+SgCommonSymbol::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+
+SOURCE_COMMON_GET_NAME_END
+
+SOURCE_INTRIN_GET_NAME_START
+SgName 
+SgIntrinsicSymbol::get_name() const
+   {
+#if 1 
+   // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
+      $GRAMMAR_PREFIX_Name theName;
+
+      if (get_declaration()) 
+         {
+           theName = get_declaration()->get_name();
+         } 
+        else 
+         {
+           theName = $GRAMMAR_PREFIX_Name("undefined");
+         }
+
+      return theName;
+#else
+      return (get_declaration) ? get_declaration()->get_name() : $GRAMMAR_PREFIX_Name("undefined");
+#endif
+   }
+
+SgNode*
+SgIntrinsicSymbol::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+
+SOURCE_INTRIN_GET_NAME_END
+
+SOURCE_INTERFACE_GET_NAME_START
+SgName
+SgInterfaceSymbol::get_name() const
+   {
+#if 1 
+   // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
+      $GRAMMAR_PREFIX_Name theName;
+
+      if (get_declaration()) 
+         {
+           theName = get_declaration()->get_name();
+         } 
+        else 
+         {
+           theName = $GRAMMAR_PREFIX_Name("undefined");
+         }
+
+      return theName;
+#else
+      return (get_declaration) ? get_declaration()->get_name() : $GRAMMAR_PREFIX_Name("undefined");
+#endif
+   }
+
+SgNode*
+SgInterfaceSymbol::get_symbol_basis() const
+   {
+     return get_declaration();
+   }
+
+SOURCE_INTERFACE_GET_NAME_END
+
+
+
+
+
+
+
+
+
+
+
+
+

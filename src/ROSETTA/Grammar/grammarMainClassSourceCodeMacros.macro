@@ -1,0 +1,48 @@
+
+#if 0
+// DQ (7/24/2005): Removed from SAGE III (old code).
+// this code represented an approach to the representation of AST as multiple trees
+// which became difficult to justify and support when transformations got more complex.
+
+// Macro taken from grammarMainClassSourceCodeMacros.macro
+
+$CLASSNAME::~$CLASSNAME ()
+   {
+   // No variables to delete
+   }
+
+$CLASSNAME::$CLASSNAME ()
+   : $GRAMMAR_BASECLASS()
+   {
+  // Nothing for this constructor to do except to call the base class constructor
+   }
+
+#if 0
+$CLASSNAME::$CLASSNAME ( SgFile *file )
+   : $GRAMMAR_BASECLASS(file)
+   {
+  // Nothing for this constructor to do except to call the base class constructor
+   }
+#endif
+
+// DQ (7/24/2005): Removed from SAGE III (old code).
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

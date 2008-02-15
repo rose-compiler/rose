@@ -1,0 +1,63 @@
+Hi Dan,
+
+I have rose compiled on my mac OS X, 10.3.9, machine. 
+Here are some notes:
+
+I) add the following argument to the configure line:
+  --with-cxx_shared_lib_update='g++ -install_name `pwd`/$@ -dynamiclib -flat_namespace -undefined suppress -o'
+  
+  This option will make Darwin Mach-O dynamically loaded libraries.  Generally these have
+  the extension "dynlib" instead of "so" on Darwin systems.  "so" is usually used by 
+  "bundles" but since we want the dynamic lib functionality and changing all the names
+   would not be fun I went with this combination.
+
+II) since gmake is hard coded into the makefiles, you have to type
+  % make MAKE=make
+  to get anything to compile.  
+
+III) make the following change to ROSE-0.8.3b/src/frontend/EDG/EDG_3.3/src/float_pt.c :
+
+old >>
+#endif /* TARG_HAS_IEEE_FLOATING_POINT */
+
+new >>
+/* KKC 050624 Added the following defines for c99 IEEE floating point checks
+ * for C++ compilers that do not have the c99 standard math calls */
+#if !defined(__STDC_IEC_559__)
+                                                                                             
+#if !defined(isnan)
+                                                                                             
+#if defined(is_NaN)
+#undef is_NaN
+#endif
+                                                                                             
+/* nans are not even equal to themselves! */
+#define is_NaN(x) (!(x==x))
+                                                                                             
+#endif
+                                                                                             
+#endif
+                                                                                             
+#endif /* TARG_HAS_IEEE_FLOATING_POINT */
+
+IV) remove the edgFrontEndWithoutSage directory from the SUBDIRS in src/frontend/EDG/EDG_3.3/Makefile
+
+V) removed all occurences of _T in the following files (replaced with rose_T) :
+    src/midend/loopProcessing/depGraph/DepGraphTransform.C
+    src/util/graphs/GraphUpdate.h
+    src/midend/loopProcessing/depInfo/DepInfoUpdate.h
+
+  
+VI) replaced ftime with gettimeofday in 
+     src/midend/loopProcessing/driver/TransformComputation.C 
+    since ftime is now deprecated (even on linux) and replaced by gettimeofday
+
+-- Kyle K. Chand mailto:chand1@llnl.gov phoneto: (925) 422 7740 
+
+After later discussions with Kyle (7/31/2006), he suggested using (but then I found the
+currently file of information above):
+../ROSE-0.8.3b/configure --with-edg_source_code=true --prefix=/Users/chand1/rose/0.8.3b/gcc3.3.2 --with-cxx_shared_lib_update='g++ -install_name `pwd`/$@ -dynamiclib -flat_namespace -undefined suppress -o'
+
+or use this instead of "-dynamic_lib blah blah blah"
+
+-dynamiclib -single_module -Wl-bind_at_load

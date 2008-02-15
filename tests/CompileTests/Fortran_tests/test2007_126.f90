@@ -1,0 +1,8 @@
+SUBROUTINE DGEMM ()
+!    REAL ONE
+     DOUBLE PRECISION ONE
+! Current error
+!    PARAMETER ( ONE = 1.0 )
+     PARAMETER ( ONE = 1.0 )
+     RETURN
+END

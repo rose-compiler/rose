@@ -1,0 +1,17 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class FixupSourcePositionInformation
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn virtual FixupSourcePositionInformationInheritedAttribute FixupSourcePositionInformation::evaluateInheritedAttribute(SgNode *node,FixupSourcePositionInformationInheritedAttribute ia)
+*/
+/*!\fn virtual FixupSourcePositionInformationSynthesizedAttribute FixupSourcePositionInformation::evaluateSynthesizedAttribute(SgNode *node,FixupSourcePositionInformationInheritedAttribute ia,AstTopDownBottomUpProcessing < FixupSourcePositionInformationInheritedAttribute , FixupSourcePositionInformationSynthesizedAttribute > ::SynthesizedAttributesList salist)
+*/
+/*!\fn void FixupSourcePositionInformation::fixupCompilerGeneratedNodesToBeUniformlyMarked(SgLocatedNode *locatedNode)
+*/
+/*!\fn void FixupSourcePositionInformation::processChildSynthesizedAttributes(FixupSourcePositionInformationSynthesizedAttribute &returnAttribute,AstTopDownBottomUpProcessing < FixupSourcePositionInformationInheritedAttribute , FixupSourcePositionInformationSynthesizedAttribute > ::SynthesizedAttributesList &l)
+*/
+/*!\fn void FixupSourcePositionInformation::fixupSourcePositionUnavailableInFrontendToBeUniformlyMarked(SgLocatedNode *locatedNode)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_252309559;

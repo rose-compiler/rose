@@ -1,0 +1,7 @@
+ /*!
+     \defgroup ROSE_FrontEndGroup ROSE Frontend
+     \brief The ROSE front-end section contains tools for the construction of the AST.
+
+
+  */
+

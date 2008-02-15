@@ -1,0 +1,68 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgNamedType
+*/
+/*! \name Class Members*/
+//@{
+/*!\var SgDeclarationStatement *SgNamedType::p_declaration
+*/
+/*!\var static SgNamedType *SgNamedType::p_builtin_type
+*/
+/*!\var bool SgNamedType::p_autonomous_declaration
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgNamedType::SgNamedType(const SgNamedType &X)
+*/
+/*!\fn SgNamedType::SgNamedType(const SgNamedTypeStorageClass &source)
+*/
+/*!\fn inline static void SgNamedType::operator delete(void *pointer)
+*/
+/*!\fn static SgNamedType *SgNamedType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgNamedType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgNamedType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgNamedType::initializeStorageClassArray(SgNamedTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgNamedType::clearMemoryPool()
+*/
+/*!\fn static void SgNamedType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgNamedType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgNamedType::roseRTI()
+*/
+/*!\fn virtual SgNamedType::~SgNamedType()
+*/
+/*!\fn virtual SgNode *SgNamedType::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgNamedType::set_autonomous_declaration(bool autonomous_declaration)
+\description See  autonomous_declaration)
+autonomous_declaration for documentation */
+/*!\fn void SgNamedType::set_declaration(SgDeclarationStatement *declaration)
+\description See  *declaration)
+declaration for documentation */
+/*!\fn SgDeclarationStatement *SgNamedType::get_declaration() const
+\description See  const
+declaration for documentation */
+/*!\fn bool SgNamedType::get_autonomous_declaration() const
+\description See  const
+autonomous_declaration for documentation */
+/*!\fn virtual SgNode *SgNamedType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgNamedType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgNamedType::get_numberOfTraversalSuccessors()
+\description See  SgNamedType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgNamedType::get_traversalSuccessorContainer()
+\description See  SgNamedType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgNamedType::get_traversalSuccessorNamesContainer()
+\description See  SgNamedType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgNamedType::SgNamedType(SgDeclarationStatement *declaration=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1348089527;

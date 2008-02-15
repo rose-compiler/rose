@@ -1,0 +1,2 @@
+OneLinePerDeclaration: oneLinePerDeclarationTest1.C:5.3-16: SgVariableDeclaration: This checker checks that only one variable declaration occurs per line.
+OneLinePerDeclaration: oneLinePerDeclarationTest1.C:5.3-24: SgVariableDeclaration: This checker checks that only one variable declaration occurs per line.

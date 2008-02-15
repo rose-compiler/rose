@@ -1,0 +1,168 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+# Include the "." to force the current directory to be compiled 
+# before the subdirectories.
+SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
+
+# Force sage.docs to be make by default 
+# (if sage.docs.in is modified)
+all-local: sage.docs
+
+# INCLUDES = $(ROSE_INCLUDES)
+# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+
+## The grammar generator (ROSETTA) should use its own template repository
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
+# Bugfix (10/17/2001)
+# For development we want to build the lex.yy.c file from the  preproc.lex file
+# but for distributions we want to use the distributed lex.yy.c file
+$(srcdir)/preproc.C : preproc.lex
+	$(LEX) -PRose_C_Cxx_ -o$(srcdir)/preproc.C $(srcdir)/preproc.lex
+
+preproc.o : $(srcdir)/preproc.C
+	$(CXXCOMPILE) -D__EXTERN_C__ -c $(srcdir)/preproc.C -o $@
+
+# Copy the original lex file and the C++ file generated from it to the distribution
+# so that users don't have to find an appropriate version of lex (flex).  Flex should
+# be used by developers so that ANSI C code is generated for g++.  This is something
+# for developers to worry about in the generation of sufficently portable distributions.
+# EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
+# EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
+EXTRA_DIST = preproc.lex preproc.C docs
+CLEANFILES = preproc.o
+
+
+# DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
+# Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
+GENERATED_SOURCE  = \
+   Cxx_Grammar.C \
+   Cxx_GrammarReturnClassHierarchySubTree.C \
+   Cxx_GrammarNewConstructors.C \
+   Cxx_GrammarTreeTraversalSuccessorContainer.C \
+   Cxx_GrammarVariantEnumNames.C \
+   Cxx_GrammarRTI.C \
+   Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
+   Cxx_GrammarReturnDataMemberPointers.C \
+   Cxx_GrammarReturnDataMemberReferenceToPointers.C \
+   Cxx_GrammarCopyMemberFunctions.C \
+   Cxx_GrammarTraverseMemoryPool.C \
+   Cxx_GrammarNewAndDeleteOperators.C \
+   Cxx_GrammarGetChildIndex.C \
+   AST_FILE_IO.C StorageClasses.C
+
+#  Cxx_GrammarCocoSymbolsMapping.C 
+
+GENERATED_OBJECTS = \
+   Cxx_Grammar.o \
+   Cxx_GrammarReturnClassHierarchySubTree.o \
+   Cxx_GrammarTreeTraversalSuccessorContainer.o \
+   Cxx_GrammarRTI.o \
+   Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.o \
+   Cxx_GrammarReturnDataMemberPointers.o \
+   Cxx_GrammarGetChildIndex.o
+
+$(GENERATED_SOURCE):
+	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
+
+libsage3Sources = \
+   $(GENERATED_SOURCE) \
+   rose_attributes_list.C \
+   attach_all_info.C \
+   attachPreprocessingInfo.C \
+   attributeListMap.C \
+   manglingSupport.C \
+   sageSupport.C \
+   fixupCopy_scopes.C \
+   fixupCopy_symbols.C \
+   fixupCopy_references.C
+
+# DQ (5/27/2007): Files moved or removed
+#   generateAST.C
+#   AstAttributeDOT.C
+#   astGraph.C
+#   insert.C
+#   stripWrapper.C
+#   grammarBaseClass.C
+
+if DEV_LIBS
+lib_LTLIBRARIES = libsage3.la
+else
+noinst_LTLIBRARIES = libsage3.la
+endif
+
+libsage3_la_SOURCES = $(libsage3Sources) preproc.C
+
+if ROSE_USE_BOOST_WAVE
+libsage3_la_LIBADD  = \
+	astFixup/libastFixup.la \
+	astPostProcessing/libastPostProcessing.la \
+	astMerge/libastMerge.la \
+	sageInterface/libsageInterface.la \
+	astTokenStream/libastTokenStream.la \
+	virtualCFG/libvirtualCFG.la \
+	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+   astVisualization/libastVisualization.la
+else
+libsage3_la_LIBADD  = \
+	astFixup/libastFixup.la \
+	astPostProcessing/libastPostProcessing.la \
+	astMerge/libastMerge.la \
+	sageInterface/libsageInterface.la \
+	virtualCFG/libvirtualCFG.la \
+	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+   astVisualization/libastVisualization.la
+endif
+
+#	astFileIO/libastFileIO.la 
+#	astFileIO/libastFileIO.la 
+
+# $(CXX_TEMPLATE_OBJECTS)
+# libsage3_la_DEPENDENCIES = preproc.o $(GENERATED_OBJECTS) astFixup/*.o astPostProcessing/*.o astMerge/*.o astFileIO/*.o sageInterface/*.o virtualCFG/*.o 
+
+rose_attributes_list.o : rose_attributes_list.h
+
+# DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
+# Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
+include_HEADERS = \
+   sage3.h rose_attributes_list.h \
+   attachPreprocessingInfo.h Cxx_Grammar.h \
+   Cxx_GrammarTreeTraversalAccessEnums.h \
+   attach_all_info.h manglingSupport.h C++_include_files.h \
+   AST_FILE_IO.h StorageClasses.h \
+   AstQueryMemoryPool.h	fixupCopy.h \
+   general_token_defs.h
+
+# DQ (9/9/2007): Put C++_include_files.h back into place
+# since it is a convinient mechanism to handle included headers 
+# in the Cxx_Grammar.C file (a ROSETTA generated file).
+# DQ (5/27/2007): Files moved or removed
+# grammarBaseClass.h 
+# AstAttributeDOT.h
+# astGraph.h
+# astGraphTemplate.C
+# sageSupport.h
+# C++_include_files.h
+
+clean-local:
+	rm -rf Templates.DB ii_files ti_files cxx_templates
+	rm -rf Cxx_Grammar*
+	rm -rf generated_abstractcppgrammar.atg
+
+distclean-local:
+	rm -rf Templates.DB *.C *.h 
+
+removeHashLineDirectivesFromGeneratedCode:
+	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives
+	grep -v "#line" Cxx_Grammar.h > Cxx_Grammar.h.withoutLineDirectives
+	cp Cxx_Grammar.h.withoutLineDirectives Cxx_Grammar.h
+
+
+
+
+
+
+
+
+

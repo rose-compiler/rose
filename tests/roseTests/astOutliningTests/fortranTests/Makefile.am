@@ -1,0 +1,159 @@
+# Liao, 12/28/2007, test outliner for Fortran
+# based on the example: tests/CompileTests/Fortran_tests/Makefile.am
+#-----------------------------------
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+#srcdir = workingRose/src/midend/astOutlining/tests
+#builddir = buildWorkingRose/tests/roseTests/astOutliningTests
+
+F77_TESTCODES_REQUIRED_TO_PASS = \
+assignment.f \
+assignmentmain2.f \
+assignmentmain.f \
+dimension.f \
+format.f \
+function2.f \
+function.f \
+hello.f \
+integer.f \
+lengthlimit.f \
+loan.f \
+parameter2.f \
+parameter.f \
+ugoto.f \
+write.f
+
+F77_TESTCODES_CURRENTLY_FAILING =
+# arithmeticIf.f, bug 166 refer to labels 
+# doloop2.f , bug 178, shared continue of two loops
+# print.f, bug 170
+# read.f, need label symbol for format field
+# read2.f , bug 179, openfortran parser's problem, won't fix
+# real8.f bug 168, won't fix
+# format2.f, bug 180, not my problem, test it again when Dan's ready
+# power.f, END SUBROUTINE problem
+# doloop.f , deep copy error
+
+F90_TESTCODES_REQUIRED_TO_PASS = \
+contains.f90 \
+intent.f90 \
+moduleParameter.f90 \
+subroutine.f90 
+
+F90_TESTCODES_CURRENTLY_FAILING = 
+# doloop4.f90, bug 181, label gets lost
+# contains1.f90, subprogram in module not supported
+# contains.f90, bug 182, contains is missing
+# doloop4.f90 bug 171
+# doloop5.f90 bug 183
+# module3.f90, contains in module not supported
+# module.f90, similar to the above
+# moduleSubprogram.f90 , similar to above
+# stop1.f90, stop code not supported
+# stop.f90, stop not supported
+# useModule1.f90 , USE not supported
+# module1.f90, supluous END
+#-----------
+#blockdo.f90 , deepcopy of Do fails
+#doloop3.f90 
+
+F03_TESTCODES_REQUIRED_TO_PASS = 
+
+F03_TESTCODES_CURRENTLY_FAILING =
+
+noinst_headers =
+
+# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
+F77_TESTCODES = \
+$(F77_TESTCODES_REQUIRED_TO_PASS)
+
+F90_TESTCODES = \
+$(F90_TESTCODES_REQUIRED_TO_PASS)
+
+F03_TESTCODES = \
+$(F03_TESTCODES_REQUIRED_TO_PASS)
+
+# QMTest allows both passing and failing tests.
+ALL_F90_TESTCODES = \
+$(F90_TESTCODES_REQUIRED_TO_PASS) \
+$(F90_TESTCODES_CURRENTLY_FAILING)
+
+ALL_F77_TESTCODES = \
+$(F77_TESTCODES_REQUIRED_TO_PASS) \
+$(F77_TESTCODES_CURRENTLY_FAILING)
+
+ALL_F03_TESTCODES = \
+$(F03_TESTCODES_REQUIRED_TO_PASS) \
+$(F03_TESTCODES_CURRENTLY_FAILING)
+
+# will conflict with implict rules and cause circular dependency!
+#ALL_TESTCODES = \
+#$(ALL_F77_TESTCODES) \
+#$(ALL_F90_TESTCODES) \
+#$(ALL_F03_TESTCODES)
+
+ROSE_FLAGS = -rose:verbose 2 -rose:outline:seq 7 -ffixed-line-length-none
+#ROSE_F77_FLAGS = -rose:outline:seq 7 -rose:f77 -ffixed-line-length-none
+#ROSE_F90_FLAGS = -rose:outline:seq 7 -rose:f90
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
+
+VALGRIND =
+
+#TEST_F77_Objects = ${F77_TESTCODES:.f77=.o}
+TEST_F77_Objects = ${F77_TESTCODES:.f=.o}
+TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
+TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
+
+if ROSE_USE_OPEN_FORTRAN_PARSER
+
+$(TEST_F77_Objects): ../outlineSelection 
+	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f)
+
+#$(TEST_F90_Objects): ../outlineSelection $(F90_TESTCODES_REQUIRED_TO_PASS) 
+$(TEST_F90_Objects): ../outlineSelection $(ALL_TESTCODES)
+	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f90)
+
+$(TEST_F03_Objects): ../outlineSelection $(ALL_TESTCODES)
+	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f03)
+
+PASSING_TEST_Objects = \
+$(TEST_F77_Objects) \
+$(TEST_F90_Objects) \
+$(TEST_F03_Objects)
+
+
+QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
+# Make rule to build the QMTest database files
+CURRENT_DIRECTORY = `pwd` $(QMTEST_Objects): ../outlineSelection $(srcdir)/$(@:.qmt=.c)
+	@echo "Calling QMTEST_Objects rule: "
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../outlineSelection NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
+
+# Include makefile rules specific to QMTest
+include $(top_srcdir)/config/QMTest_makefile.inc
+
+check-local:
+	@echo "Tests for outlining Fortran."
+#	@$(MAKE) $(TEST_F77_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests check rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************"
+
+else
+
+# Fortran support not available in ROSE unless specified on the configure command line. check-local:
+	@echo "***********************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests: FORTRAN NOT CONFIGURED IN ROSE ******"
+	@echo "***********************************************************************************"
+endif
+ # This will output the example testcodes that are failing
+listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) 
+	egrep -n "*"  $(srcdir)/$(?)
+
+EXTRA_DIST = $(ALL_TESTCODES)
+
+
+clean-local:
+	rm -f rose_* *.o *.dot *.out *.mod core* *.s *.dot *.pdf *.log *.ps *~
+	rm -rf QMTest
+

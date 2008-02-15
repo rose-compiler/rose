@@ -1,0 +1,84 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Lower Range Limit}
+\label{LowerRangeLimit::overview}
+
+By always using inclusive lower limits and exclusive upper
+limits, a whole class of off-
+by-one errors is eliminated. Furthermore, the following
+assumptions always apply:
+1)the size of the interval equals the
+difference of the two  \\
+2) the limits are equal if the interval is empty\\
+3) the upper limit is never less than the lower limit\\
+
+Examples: instead of saying x>=23 and x<=42, use x>=23 and
+x<43.
+
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No parameters required.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+   In a fairly straight-forward implementation we search the strictly
+   lower than operator.  
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+
+\begin{verbatim}
+int x = 5;
+if (x < 5)
+{
+x++;
+}
+% write your non-compliant code example
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+int x = 5;
+if (x <= 4)
+{
+x++;
+}
+% write your compliant code example
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item find less than operator 
+\item raise alert 
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{Abbreviated Code Inspection
+  Checklist}{http://www.lore.ua.ac.be/Teaching/SE3BAC} Section 11.1.1,
+Control Variables''

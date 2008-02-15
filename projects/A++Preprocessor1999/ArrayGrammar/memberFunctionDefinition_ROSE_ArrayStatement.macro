@@ -1,0 +1,35 @@
+CLASSNAME::~CLASSNAME ()
+   {
+   }
+
+CLASSNAME::CLASSNAME ( SgStatement* stmt )
+   : BASECLASSNAME (stmt)
+   {
+     ROSE_ASSERT (stmt != NULL);
+     SgExprStatement* exprStmt = isSgExprStatement( stmt );
+     if (exprStmt != NULL)
+        {
+       // Found an expression Statement (that is the first step)
+          ROSE_ASSERT (exprStmt != NULL);
+          SgExpression *expr = exprStmt->get_the_expr();
+          ROSE_ASSERT (expr != NULL);
+
+          setVariant ( CLASSNAME_TAG );
+
+          setParseError(FALSE);
+        }
+       else
+        {
+          setParseError(TRUE);
+        }
+   }
+
+
+ROSE_Node* CLASSNAME::transform()
+   {
+     printf ("Sorry not implemented, CLASSNAME::Tranform() \n");
+     ROSE_ABORT();
+
+     return NULL;
+   }
+

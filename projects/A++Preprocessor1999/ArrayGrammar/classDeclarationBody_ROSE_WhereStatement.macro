@@ -1,0 +1,24 @@
+       // Special constructor for CLASSNAME;
+          CLASSNAME ( SgForStatement* whereStatement );
+
+       // Define the abstractBaseClass function
+          virtual ROSE_Node* transform();
+
+          void recognizeSageSubTree ( SgForStatement* whereStatement );
+
+          void setRoseConditionalStatement ( ROSE_Statement*      roseStatement );
+          void setRoseWhereStatementBlock  ( ROSE_StatementBlock* roseStatementBlock );
+          void setRoseElseWhereStatement   ( ROSE_ElseWhereStatement* roseElseWhereStatement );
+
+          ROSE_Statement*          getRoseConditionalStatement();
+          ROSE_StatementBlock*     getRoseWhereStatementBlock ();
+          ROSE_ElseWhereStatement* getRoseElseWhereStatement  ();
+
+     private:
+       // The different parts of a "where" statement
+       // later we have to connect the where and elsewhere statements
+          ROSE_Statement* roseConditionalStatement;
+          ROSE_StatementBlock* roseWhereStatementBlock;
+
+       // Connection to the Elsewhere statement (part of our grammar)
+          ROSE_ElseWhereStatement* roseElseWhereStatement;

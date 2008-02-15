@@ -1,0 +1,647 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFile
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgFile
+\brief This class represents a source file for a project (which may contian 
+       many source files and or directories).
+    This IR node contains information specific to this file and references the 
+project for more project (global) information.  The dominately useful data in 
+this IR node is the pointer to the global scope for this file (structurally
+global scope, but actually file scope and global scope by C++ scoping rules).
+\internal This IR node does not appear many times in an AST.  Also it is current
+rather bizzar that we keep all the file names instead of just the single relavant 
+one!   This should be fixed as it is confusing.
+\todo The ROSEAttributesListContainerPtr p_preprocessorDirectivesAndCommentsList
+    should be implemented a list instead of a pointer to a list.  This might require
+    a list copy in the internal hand,ing, but would simplify the design and there is
+    not the same memory constraint of having a pointer to a list vs. a list here because 
+    the list is almost always valid (most source code incluses at least one comment or
+    CPP directive) and there is only one SgFile object per source file (so there are
+    relatively few SgFile nodes in even a very large AST).
+\todo This IR nodes now has a Sg_File_Info pointer, however it needs to be made consistant
+    with the filename that is returned from SgFile::get_fileName().
+\todo The default constructor for SgFile sets the SgGlobal pointer to NULL and perhaps it
+    would be better if it set it to a valid SgGlobal object then we would have a better
+    defined empty list of declarations.
+\todo Yarden has suggested we provide a way to modify the link line that would be 
+    generated to support the backend compilation.  I think we should have a list 
+    of strings that could be added to the link line (appended to the end would be 
+    the simplist).  Else we need a virtual function that could be overloaded to 
+    customize the control over the link command generation (however we want to 
+    discourage the derivation of user defined IR nodes from existing IR nodes 
+    since this would break some of the internal mechanisms that use the memory pools).
+\sa
+\ref SgFile_usage  "Example of using a SgFile object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFile data members
+/////////////////////////////////////////////////////////////////////////
+/*!
+\var SgFile::p_file_info
+\brief This object permits the file name map mechanism to be used on SgFile objects.
+    This Sg_File_Info object encapsulates the file id mechanism which maps file ids
+    (integers) to filenames (strings). This permist us to save significant storage
+    by holding string names only once in memory and associating integers with them
+    saving memory and simplify matching file names.  The memory saving is because there 
+    would otherwise be a LOT of redundant filename strings, 2 per IR node in many cases.
+    the performance advantage is that integer comparisons are significantly than string
+    comparisions and there are a lot of these (one per IR node) in the traversal
+    mechanisms.
+\internal The filename is not currently correct, I think.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgFile member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgFile::~SgFile()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgFile::isSgFile (SgNode *s)
+\brief Cast function (from derived class to SgFile pointer).
+   This functions returns a SgFile pointer for any input of a 
+pointer to an object derived from a SgFile.
+\return Returns valid pointer to SgFile if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgFile::isSgFile (const SgNode *s)
+\brief Cast function (from derived class to SgFile pointer).
+   This functions returns a SgFile pointer for any input of a 
+pointer to an object derived from a SgFile.
+\return Returns valid pointer to SgFile if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var AstAttributeMechanism *SgFile::p_attributeMechanism
+*/
+/*!
+\var ROSEAttributesListContainerPtr SgFile::p_preprocessorDirectivesAndCommentsList
+\brief This is the container of comments and preprocessor control statements that was
+    extracted from the file and which has been woven back into the AST (using heuristics).
+   This information is extracted from the file using a lex based parser.  Within AST post
+   processing the comments and preprocessor control statements are woven back into the 
+   AST using simple heuristics.  They are attached to the IR nodes as attributes
+   (see AST attribute Mechanism).  They are unparsed as part of the code generation 
+   phase.
+*/
+/*!
+\var SgGlobal *SgFile::p_root
+\brief This is the global scope.
+    Note that the global scope contains the file scope as the two are not structurally
+    differentiated within the source code.
+\internal  This name will be changed to "globalScope" at some point.
+*/
+/*!
+\var SgStringList SgFile::p_originalCommandLineArgumentList
+\brief Copy of original argc and argv command line passed to ROSE translator (converted to
+    STL list of strings).
+\internal This is a deep copy.
+*/
+/*!\var Sg_File_Info *SgFile::p_startOfConstruct
+*/
+/*!\var bool SgFile::p_C99_only
+*/
+/*!\var bool SgFile::p_C_only
+*/
+/*!\var bool SgFile::p_F2003_only
+*/
+/*!\var bool SgFile::p_F77_only
+*/
+/*!\var bool SgFile::p_F90_only
+*/
+/*!\var bool SgFile::p_F95_only
+*/
+/*!\var bool SgFile::p_Fortran_only
+*/
+/*!\var bool SgFile::p_KCC_frontend
+*/
+/*!\var bool SgFile::p_collectAllCommentsAndDirectives
+*/
+/*!\var bool SgFile::p_compileOnly
+*/
+/*!\var bool SgFile::p_disable_edg_backend
+*/
+/*!\var bool SgFile::p_disable_sage_backend
+*/
+/*!\var bool SgFile::p_enable_cp_backend
+*/
+/*!\var bool SgFile::p_fixedFormat
+*/
+/*!\var bool SgFile::p_fortran_implicit_none
+*/
+/*!\var bool SgFile::p_fortran_openmp
+*/
+/*!\var bool SgFile::p_freeFormat
+*/
+/*!\var bool SgFile::p_markGeneratedFiles
+*/
+/*!\var bool SgFile::p_negative_test
+*/
+/*!\var bool SgFile::p_new_frontend
+*/
+/*!
+\var bool SgFile::p_no_implicit_inline_templates
+\brief This is a reference to the GNU g++ command line option (same name).
+    If the option "-no_implicit_inline_templates" is seen on the command line then this is true.
+    Else it may be manipulated directly within the ROSE command line processing.
+    This option controls if instantiated templates for inline functions should be output where they are
+    not specified explicitly via explicit template instatiation directives (see
+    SgTemplateInstatiationDirectiveStatement, formally part of C++).
+\internal  We need to see this option since it effects how template instantiations are
+    generated.  Other backend compilers may force this to be recognized in other ways so that
+    we map other vendor's equivalent compiler options to this one.
+*/
+/*!
+\var bool SgFile::p_no_implicit_templates
+\brief This is a reference to the GNU g++ command line option (same name).
+    If the option "-no_implicit_templates" is seen on the command line then this is true.
+    Else it may be manipulated directly within the ROSE command line processing.
+    This option controls if instantiated templates should be output where they are
+    not specified explicitly via explicit template instatiation directives (see
+    SgTemplateInstatiationDirectiveStatement, formally part of C++).
+\internal  We need to see this option since it effects how template instantiations are
+    generated. Other backend compilers may force this to be recognized in other ways so that
+    we map other vendor's equivalent compiler options to this one.
+*/
+/*!\var bool SgFile::p_outputGrammarTreeFiles
+*/
+/*!\var bool SgFile::p_outputGrammarTreeFilesForEDG
+*/
+/*!\var bool SgFile::p_outputGrammarTreeFilesForHeaderFiles
+*/
+/*!\var bool SgFile::p_preinit_il
+*/
+/*!\var bool SgFile::p_skip_commentsAndDirectives
+*/
+/*!\var bool SgFile::p_skip_transformation
+*/
+/*!\var bool SgFile::p_skip_unparse
+*/
+/*!\var bool SgFile::p_skipfinalCompileStep
+*/
+/*!\var bool SgFile::p_sourceFileUsesCppFileExtension
+*/
+/*!\var bool SgFile::p_sourceFileUsesFortran2003FileExtension
+*/
+/*!\var bool SgFile::p_sourceFileUsesFortran77FileExtension
+*/
+/*!\var bool SgFile::p_sourceFileUsesFortran90FileExtension
+*/
+/*!\var bool SgFile::p_sourceFileUsesFortran95FileExtension
+*/
+/*!\var bool SgFile::p_sourceFileUsesFortranFileExtension
+*/
+/*!\var bool SgFile::p_strict_language_handling
+*/
+/*!\var bool SgFile::p_travTraceToDOT
+*/
+/*!\var bool SgFile::p_unparse_includes
+*/
+/*!\var bool SgFile::p_useBackendOnly
+*/
+/*!\var enum SgFile::outputFormatOption_enum SgFile::p_outputFormat
+*/
+/*!\var enum SgFile::outputLanguageOption_enum SgFile::p_outputLanguage
+*/
+/*!\var int SgFile::p_embedColorCodesInGeneratedCode
+*/
+/*!\var int SgFile::p_generateSourcePositionCodes
+*/
+/*!\var int SgFile::p_testingLevel
+*/
+/*!\var int SgFile::p_verbose
+*/
+/*!\var std::string SgFile::p_savedEdgCommandLine
+*/
+/*!\var std::string SgFile::p_sourceFileNameWithPath
+*/
+/*!\var std::string SgFile::p_sourceFileNameWithoutPath
+*/
+/*!\var std::string SgFile::p_unparse_output_filename
+*/
+/*!\var SgFile *SgFile::p_binaryFile
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgFile::SgFile()
+\brief This is the constructor.
+   This constructor builds the SgFile base class.
+\sa 
+\ref SgFile_create "Example:create an SgFile object"
+*/
+/*!\fn SgFile::SgFile(const SgFile &X)
+*/
+/*!\fn SgFile::SgFile(const SgFileStorageClass &source)
+*/
+/*!\fn SgFile::SgFile(std::vector< std::string  , std::allocator< std::string  >  > &argv,int &errorCode,int fileNameIndex=0,SgProject *project=(0))
+*/
+/*!\fn inline static void SgFile::operator delete(void *pointer)
+*/
+/*!\fn int SgFile::compileOutput(std::vector< std::string  , std::allocator< std::string  >  > &argv,int fileNameIndex,const std::string &compilerName)
+*/
+/*!\fn static SgFile *SgFile::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgFile::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgFile::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgFile::initializeStorageClassArray(SgFileStorageClass *storageArray)
+*/
+/*!\fn static void SgFile::clearMemoryPool()
+*/
+/*!\fn static void SgFile::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgFile::resetValidFreepointers()
+*/
+/*!\fn std::string SgFile::buildCompilerCommandLineOptions(std::vector< std::string  , std::allocator< std::string  >  > &argv,int fileNameIndex,const std::string &compilerName)
+*/
+/*!\fn std::string SgFile::getSourceDirectory()
+*/
+/*!\fn virtual RTIReturnType SgFile::roseRTI()
+*/
+/*!\fn virtual SgNode *SgFile::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFile::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFile::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgFile::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn void SgFile::build_EDG_CommandLine(std::vector< std::string  , std::allocator< std::string  >  > &inputCommandLine,std::vector< std::string  , std::allocator< std::string  >  > &argv,int fileNameIndex)
+*/
+/*!\fn void SgFile::display(const std::string &label) const
+*/
+/*!\fn void SgFile::doSetupForConstructor(const std::vector< std::string  , std::allocator< std::string  >  > &argv,int &errorCode,int fileNameIndex,SgProject *project)
+*/
+/*!\fn void SgFile::processBackendSpecificCommandLineOptions(const std::vector< std::string  , std::allocator< std::string  >  > &argv)
+*/
+/*!\fn virtual void SgFile::set_attributeMechanism(AstAttributeMechanism *attributeMechanism)
+\description See  *attributeMechanism)
+attributeMechanism for documentation */
+/*!\fn void SgFile::set_C99_only(bool C99_only)
+\description See  C99_only)
+C99_only for documentation */
+/*!\fn void SgFile::set_C_only(bool C_only)
+\description See  C_only)
+C_only for documentation */
+/*!\fn void SgFile::set_F2003_only(bool F2003_only)
+\description See  F2003_only)
+F2003_only for documentation */
+/*!\fn void SgFile::set_F77_only(bool F77_only)
+\description See  F77_only)
+F77_only for documentation */
+/*!\fn void SgFile::set_F90_only(bool F90_only)
+\description See  F90_only)
+F90_only for documentation */
+/*!\fn void SgFile::set_F95_only(bool F95_only)
+\description See  F95_only)
+F95_only for documentation */
+/*!\fn void SgFile::set_Fortran_only(bool Fortran_only)
+\description See  Fortran_only)
+Fortran_only for documentation */
+/*!\fn void SgFile::set_KCC_frontend(bool KCC_frontend)
+\description See  KCC_frontend)
+KCC_frontend for documentation */
+/*!\fn void SgFile::set_binaryFile(SgFile *binaryFile)
+\description See  *binaryFile)
+binaryFile for documentation */
+/*!\fn void SgFile::set_collectAllCommentsAndDirectives(bool collectAllCommentsAndDirectives)
+\description See  collectAllCommentsAndDirectives)
+collectAllCommentsAndDirectives for documentation */
+/*!\fn void SgFile::set_compileOnly(bool compileOnly)
+\description See  compileOnly)
+compileOnly for documentation */
+/*!\fn void SgFile::set_disable_edg_backend(bool disable_edg_backend)
+\description See  disable_edg_backend)
+disable_edg_backend for documentation */
+/*!\fn void SgFile::set_disable_sage_backend(bool disable_sage_backend)
+\description See  disable_sage_backend)
+disable_sage_backend for documentation */
+/*!\fn void SgFile::set_embedColorCodesInGeneratedCode(int embedColorCodesInGeneratedCode)
+\description See  embedColorCodesInGeneratedCode)
+embedColorCodesInGeneratedCode for documentation */
+/*!\fn void SgFile::set_enable_cp_backend(bool enable_cp_backend)
+\description See  enable_cp_backend)
+enable_cp_backend for documentation */
+/*!\fn void SgFile::set_fixedFormat(bool fixedFormat)
+\description See  fixedFormat)
+fixedFormat for documentation */
+/*!\fn void SgFile::set_fortran_implicit_none(bool fortran_implicit_none)
+\description See  fortran_implicit_none)
+fortran_implicit_none for documentation */
+/*!\fn void SgFile::set_fortran_openmp(bool fortran_openmp)
+\description See  fortran_openmp)
+fortran_openmp for documentation */
+/*!\fn void SgFile::set_freeFormat(bool freeFormat)
+\description See  freeFormat)
+freeFormat for documentation */
+/*!\fn void SgFile::set_generateSourcePositionCodes(int generateSourcePositionCodes)
+\description See  generateSourcePositionCodes)
+generateSourcePositionCodes for documentation */
+/*!\fn void SgFile::set_markGeneratedFiles(bool markGeneratedFiles)
+\description See  markGeneratedFiles)
+markGeneratedFiles for documentation */
+/*!\fn void SgFile::set_negative_test(bool negative_test)
+\description See  negative_test)
+negative_test for documentation */
+/*!\fn void SgFile::set_new_frontend(bool new_frontend)
+\description See  new_frontend)
+new_frontend for documentation */
+/*!\fn void SgFile::set_no_implicit_inline_templates(bool no_implicit_inline_templates)
+\description See  no_implicit_inline_templates)
+no_implicit_inline_templates for documentation */
+/*!\fn void SgFile::set_no_implicit_templates(bool no_implicit_templates)
+\description See  no_implicit_templates)
+no_implicit_templates for documentation */
+/*!
+\fn void SgFile::set_originalCommandLineArgumentList(SgStringList originalCommandLineArgumentList)
+\brief Sets the list of strings representing the original command-line.
+See  originalCommandLineArgumentList)
+originalCommandLineArgumentList for documentation */
+/*!\fn void SgFile::set_outputFormat(enum SgFile::outputFormatOption_enum outputFormat)
+\description See  outputFormat)
+outputFormat for documentation */
+/*!\fn void SgFile::set_outputGrammarTreeFiles(bool outputGrammarTreeFiles)
+\description See  outputGrammarTreeFiles)
+outputGrammarTreeFiles for documentation */
+/*!\fn void SgFile::set_outputGrammarTreeFilesForEDG(bool outputGrammarTreeFilesForEDG)
+\description See  outputGrammarTreeFilesForEDG)
+outputGrammarTreeFilesForEDG for documentation */
+/*!\fn void SgFile::set_outputGrammarTreeFilesForHeaderFiles(bool outputGrammarTreeFilesForHeaderFiles)
+\description See  outputGrammarTreeFilesForHeaderFiles)
+outputGrammarTreeFilesForHeaderFiles for documentation */
+/*!\fn void SgFile::set_outputLanguage(enum SgFile::outputLanguageOption_enum outputLanguage)
+\description See  outputLanguage)
+outputLanguage for documentation */
+/*!\fn void SgFile::set_preinit_il(bool preinit_il)
+\description See  preinit_il)
+preinit_il for documentation */
+/*!\fn void SgFile::set_preprocessorDirectivesAndCommentsList(ROSEAttributesListContainerPtr preprocessorDirectivesAndCommentsList)
+\description See  preprocessorDirectivesAndCommentsList)
+preprocessorDirectivesAndCommentsList for documentation */
+/*!\fn void SgFile::set_root(SgGlobal *root)
+\description See  *root)
+root for documentation */
+/*!\fn void SgFile::set_savedEdgCommandLine(std::string savedEdgCommandLine)
+\description See  savedEdgCommandLine)
+savedEdgCommandLine for documentation */
+/*!\fn void SgFile::set_skip_commentsAndDirectives(bool skip_commentsAndDirectives)
+\description See  skip_commentsAndDirectives)
+skip_commentsAndDirectives for documentation */
+/*!\fn void SgFile::set_skip_transformation(bool skip_transformation)
+\description See  skip_transformation)
+skip_transformation for documentation */
+/*!\fn void SgFile::set_skip_unparse(bool skip_unparse)
+\description See  skip_unparse)
+skip_unparse for documentation */
+/*!\fn void SgFile::set_skipfinalCompileStep(bool skipfinalCompileStep)
+\description See  skipfinalCompileStep)
+skipfinalCompileStep for documentation */
+/*!\fn void SgFile::set_sourceFileNameWithPath(std::string sourceFileNameWithPath)
+\description See  sourceFileNameWithPath)
+sourceFileNameWithPath for documentation */
+/*!\fn void SgFile::set_sourceFileNameWithoutPath(std::string sourceFileNameWithoutPath)
+\description See  sourceFileNameWithoutPath)
+sourceFileNameWithoutPath for documentation */
+/*!\fn void SgFile::set_sourceFileUsesCppFileExtension(bool sourceFileUsesCppFileExtension)
+\description See  sourceFileUsesCppFileExtension)
+sourceFileUsesCppFileExtension for documentation */
+/*!\fn void SgFile::set_sourceFileUsesFortran2003FileExtension(bool sourceFileUsesFortran2003FileExtension)
+\description See  sourceFileUsesFortran2003FileExtension)
+sourceFileUsesFortran2003FileExtension for documentation */
+/*!\fn void SgFile::set_sourceFileUsesFortran77FileExtension(bool sourceFileUsesFortran77FileExtension)
+\description See  sourceFileUsesFortran77FileExtension)
+sourceFileUsesFortran77FileExtension for documentation */
+/*!\fn void SgFile::set_sourceFileUsesFortran90FileExtension(bool sourceFileUsesFortran90FileExtension)
+\description See  sourceFileUsesFortran90FileExtension)
+sourceFileUsesFortran90FileExtension for documentation */
+/*!\fn void SgFile::set_sourceFileUsesFortran95FileExtension(bool sourceFileUsesFortran95FileExtension)
+\description See  sourceFileUsesFortran95FileExtension)
+sourceFileUsesFortran95FileExtension for documentation */
+/*!\fn void SgFile::set_sourceFileUsesFortranFileExtension(bool sourceFileUsesFortranFileExtension)
+\description See  sourceFileUsesFortranFileExtension)
+sourceFileUsesFortranFileExtension for documentation */
+/*!\fn void SgFile::set_startOfConstruct(Sg_File_Info *startOfConstruct)
+\description See  *startOfConstruct)
+startOfConstruct for documentation */
+/*!\fn void SgFile::set_strict_language_handling(bool strict_language_handling)
+\description See  strict_language_handling)
+strict_language_handling for documentation */
+/*!\fn void SgFile::set_testingLevel(int testingLevel)
+\description See  testingLevel)
+testingLevel for documentation */
+/*!\fn void SgFile::set_travTraceToDOT(bool travTraceToDOT)
+\description See  travTraceToDOT)
+travTraceToDOT for documentation */
+/*!\fn void SgFile::set_unparse_includes(bool unparse_includes)
+\description See  unparse_includes)
+unparse_includes for documentation */
+/*!\fn void SgFile::set_unparse_output_filename(std::string unparse_output_filename)
+\description See  unparse_output_filename)
+unparse_output_filename for documentation */
+/*!\fn void SgFile::set_useBackendOnly(bool useBackendOnly)
+\description See  useBackendOnly)
+useBackendOnly for documentation */
+/*!\fn void SgFile::set_verbose(int verbose)
+\description See  verbose)
+verbose for documentation */
+/*!\fn ROSEAttributesListContainerPtr SgFile::get_preprocessorDirectivesAndCommentsList() const
+\description See  const
+preprocessorDirectivesAndCommentsList for documentation */
+/*!\fn SgFile *SgFile::get_binaryFile() const
+\description See  const
+binaryFile for documentation */
+/*!
+\fn SgGlobal *SgFile::get_globalScope() const
+\brief Function to return global scope (list of declaration statments, SgGlobal).
+   This functions returns a SgGlobal pointer.
+See  const
+globalScope for documentation \return Returns valid pointer to SgGlobal.
+\internal This return value is never NULL, but could be a SgGlobal containing
+    an empty list.
+*/
+/*!\fn SgGlobal *SgFile::get_root() const
+\description See  const
+root for documentation */
+/*!
+\fn SgStringList SgFile::get_originalCommandLineArgumentList() const
+\brief Returns a list of strings representing the original command-line.
+See  const
+originalCommandLineArgumentList for documentation */
+/*!\fn bool SgFile::get_C99_only() const
+\description See  const
+C99_only for documentation */
+/*!\fn bool SgFile::get_C_only() const
+\description See  const
+C_only for documentation */
+/*!\fn bool SgFile::get_F2003_only() const
+\description See  const
+F2003_only for documentation */
+/*!\fn bool SgFile::get_F77_only() const
+\description See  const
+F77_only for documentation */
+/*!\fn bool SgFile::get_F90_only() const
+\description See  const
+F90_only for documentation */
+/*!\fn bool SgFile::get_F95_only() const
+\description See  const
+F95_only for documentation */
+/*!\fn bool SgFile::get_Fortran_only() const
+\description See  const
+Fortran_only for documentation */
+/*!\fn bool SgFile::get_KCC_frontend() const
+\description See  const
+KCC_frontend for documentation */
+/*!\fn bool SgFile::get_collectAllCommentsAndDirectives() const
+\description See  const
+collectAllCommentsAndDirectives for documentation */
+/*!\fn bool SgFile::get_compileOnly() const
+\description See  const
+compileOnly for documentation */
+/*!\fn bool SgFile::get_disable_edg_backend() const
+\description See  const
+disable_edg_backend for documentation */
+/*!\fn bool SgFile::get_disable_sage_backend() const
+\description See  const
+disable_sage_backend for documentation */
+/*!\fn bool SgFile::get_enable_cp_backend() const
+\description See  const
+enable_cp_backend for documentation */
+/*!\fn bool SgFile::get_fixedFormat() const
+\description See  const
+fixedFormat for documentation */
+/*!\fn bool SgFile::get_fortran_implicit_none() const
+\description See  const
+fortran_implicit_none for documentation */
+/*!\fn bool SgFile::get_fortran_openmp() const
+\description See  const
+fortran_openmp for documentation */
+/*!\fn bool SgFile::get_freeFormat() const
+\description See  const
+freeFormat for documentation */
+/*!\fn bool SgFile::get_markGeneratedFiles() const
+\description See  const
+markGeneratedFiles for documentation */
+/*!\fn bool SgFile::get_negative_test() const
+\description See  const
+negative_test for documentation */
+/*!\fn bool SgFile::get_new_frontend() const
+\description See  const
+new_frontend for documentation */
+/*!\fn bool SgFile::get_no_implicit_inline_templates() const
+\description See  const
+no_implicit_inline_templates for documentation */
+/*!\fn bool SgFile::get_no_implicit_templates() const
+\description See  const
+no_implicit_templates for documentation */
+/*!\fn bool SgFile::get_outputGrammarTreeFiles() const
+\description See  const
+outputGrammarTreeFiles for documentation */
+/*!\fn bool SgFile::get_outputGrammarTreeFilesForEDG() const
+\description See  const
+outputGrammarTreeFilesForEDG for documentation */
+/*!\fn bool SgFile::get_outputGrammarTreeFilesForHeaderFiles() const
+\description See  const
+outputGrammarTreeFilesForHeaderFiles for documentation */
+/*!\fn bool SgFile::get_preinit_il() const
+\description See  const
+preinit_il for documentation */
+/*!\fn bool SgFile::get_skip_commentsAndDirectives() const
+\description See  const
+skip_commentsAndDirectives for documentation */
+/*!\fn bool SgFile::get_skip_transformation() const
+\description See  const
+skip_transformation for documentation */
+/*!\fn bool SgFile::get_skip_unparse() const
+\description See  const
+skip_unparse for documentation */
+/*!\fn bool SgFile::get_skipfinalCompileStep() const
+\description See  const
+skipfinalCompileStep for documentation */
+/*!\fn bool SgFile::get_sourceFileUsesCppFileExtension() const
+\description See  const
+sourceFileUsesCppFileExtension for documentation */
+/*!\fn bool SgFile::get_sourceFileUsesFortran2003FileExtension() const
+\description See  const
+sourceFileUsesFortran2003FileExtension for documentation */
+/*!\fn bool SgFile::get_sourceFileUsesFortran77FileExtension() const
+\description See  const
+sourceFileUsesFortran77FileExtension for documentation */
+/*!\fn bool SgFile::get_sourceFileUsesFortran90FileExtension() const
+\description See  const
+sourceFileUsesFortran90FileExtension for documentation */
+/*!\fn bool SgFile::get_sourceFileUsesFortran95FileExtension() const
+\description See  const
+sourceFileUsesFortran95FileExtension for documentation */
+/*!\fn bool SgFile::get_sourceFileUsesFortranFileExtension() const
+\description See  const
+sourceFileUsesFortranFileExtension for documentation */
+/*!\fn bool SgFile::get_strict_language_handling() const
+\description See  const
+strict_language_handling for documentation */
+/*!\fn bool SgFile::get_travTraceToDOT() const
+\description See  const
+travTraceToDOT for documentation */
+/*!\fn bool SgFile::get_unparse_includes() const
+\description See  const
+unparse_includes for documentation */
+/*!\fn bool SgFile::get_useBackendOnly() const
+\description See  const
+useBackendOnly for documentation */
+/*!\fn enum SgFile::outputFormatOption_enum SgFile::get_outputFormat() const
+\description See  const
+outputFormat for documentation */
+/*!\fn enum SgFile::outputLanguageOption_enum SgFile::get_outputLanguage() const
+\description See  const
+outputLanguage for documentation */
+/*!\fn int SgFile::get_embedColorCodesInGeneratedCode() const
+\description See  const
+embedColorCodesInGeneratedCode for documentation */
+/*!\fn int SgFile::get_generateSourcePositionCodes() const
+\description See  const
+generateSourcePositionCodes for documentation */
+/*!\fn int SgFile::get_testingLevel() const
+\description See  const
+testingLevel for documentation */
+/*!\fn int SgFile::get_verbose() const
+\description See  const
+verbose for documentation */
+/*!\fn std::string SgFile::get_savedEdgCommandLine() const
+\description See  const
+savedEdgCommandLine for documentation */
+/*!\fn std::string SgFile::get_sourceFileNameWithPath() const
+\description See  const
+sourceFileNameWithPath for documentation */
+/*!\fn std::string SgFile::get_sourceFileNameWithoutPath() const
+\description See  const
+sourceFileNameWithoutPath for documentation */
+/*!\fn std::string SgFile::get_unparse_output_filename() const
+\description See  const
+unparse_output_filename for documentation */
+/*!\fn virtual AstAttributeMechanism *SgFile::get_attributeMechanism() const
+\description See  const
+attributeMechanism for documentation */
+/*!\fn virtual SgNode *SgFile::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual Sg_File_Info *SgFile::get_startOfConstruct() const
+\description See  const
+startOfConstruct for documentation */
+/*!\fn virtual size_t SgFile::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgFile::get_numberOfTraversalSuccessors()
+\description See  SgFile::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgFile::get_traversalSuccessorContainer()
+\description See  SgFile::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgFile::get_traversalSuccessorNamesContainer()
+\description See  SgFile::traversalSuccessorNamesContainer for documentation */
+/*!\fn virtual SgFile::~SgFile()
+*/
+//@}
+int SAGE_Doxygen_Dummy_11062806014698;

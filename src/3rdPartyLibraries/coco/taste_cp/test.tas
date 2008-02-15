@@ -1,0 +1,25 @@
+(* This is a test program which can be compiled by the Taste-compiler.
+  It asks for a number and computes the sum of all integers up to this number.*)
+
+PROGRAM Test;
+
+  VAR
+    i: INTEGER;
+
+  PROCEDURE SumUp;
+    VAR sum: INTEGER;
+  BEGIN
+    sum:=0;
+    WHILE i>0 DO sum:=sum+i; i:=i-1 END;
+    WRITE sum
+  END SumUp;
+
+BEGIN
+  READ i;
+  WHILE i>0 DO
+    SumUp;
+    READ i
+  END
+END Test.
+
+

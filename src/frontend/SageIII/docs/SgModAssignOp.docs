@@ -1,0 +1,51 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgModAssignOp
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgModAssignOp::SgModAssignOp(Sg_File_Info *startOfConstruct,SgExpression *lhs_operand_i=(0),SgExpression *rhs_operand_i=(0),SgType *expression_type=(0))
+*/
+/*!\fn SgModAssignOp::SgModAssignOp(const SgModAssignOpStorageClass &source)
+*/
+/*!\fn inline static void SgModAssignOp::operator delete(void *pointer)
+*/
+/*!\fn static SgModAssignOp *SgModAssignOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgModAssignOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgModAssignOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgModAssignOp::initializeStorageClassArray(SgModAssignOpStorageClass *storageArray)
+*/
+/*!\fn static void SgModAssignOp::clearMemoryPool()
+*/
+/*!\fn static void SgModAssignOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgModAssignOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgModAssignOp::roseRTI()
+*/
+/*!\fn virtual SgModAssignOp::~SgModAssignOp()
+*/
+/*!\fn virtual SgNode *SgModAssignOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual inline int SgModAssignOp::precedence() const
+*/
+/*!\fn virtual void SgModAssignOp::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgModAssignOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgModAssignOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgModAssignOp::get_numberOfTraversalSuccessors()
+\description See  SgModAssignOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgModAssignOp::get_traversalSuccessorContainer()
+\description See  SgModAssignOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgModAssignOp::get_traversalSuccessorNamesContainer()
+\description See  SgModAssignOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgModAssignOp::SgModAssignOp(SgExpression *lhs_operand_i,SgExpression *rhs_operand_i,SgType *expression_type)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_2092410908;

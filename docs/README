@@ -1,0 +1,33 @@
+ROSE/docs/README:
+
+This directory contains documentation for the ROSE Project,
+separate directories are:
+
+Rose:
+   This directry contains all the documentation (both latex and 
+   doxygen generated) for the entire ROSE project.  All documentation
+   in in the subdirectory ROSE_WebPages.
+
+testDoxygen:
+   This is a staging directory for most Doxygen relavant input files.
+   All the file in this directory are copied using the "make copyDocumentation"
+   makefile rule (defined in ROSE/docs/testDoxygen/Makefile.am).
+   This directory is where we can easily build and test just the doxygen
+   specific documentation as part of testing new ideas specific to 
+   documenting ROSE better.
+
+Rosetta:
+   This directory contains documentation specific to ROSETTA.
+   Rosetta is a library for construction of source code generations 
+   we have developed to simplify the development of source code 
+   within ROSE. For example, an aplication developed with ROSETTA was 
+   used to generate the Sage III intermediate form used within ROSE.
+   ROSETTA also helps with other related source code generation as well.
+   ROSETTA is however a tool for the construction of many parts of ROSE
+   and is not particularly useful to users wishing to only develop 
+   source-to-source preprocessors using ROSE.
+
+Other directories specific to 3rd party documentation used by ROSE 
+might be placed here as well (e.g. PDFlib, etc.) in the future.
+
+

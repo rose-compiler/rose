@@ -1,0 +1,50 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class ROSEAttributesList
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string ROSEAttributesList::fileName
+*/
+/*!\var std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > ROSEAttributesList::attributeList
+*/
+/*!\var int ROSEAttributesList::index
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn PreprocessingInfo *ROSEAttributesList::operator[](int i)
+*/
+/*!\fn ROSEAttributesList::ROSEAttributesList()
+*/
+/*!\fn ROSEAttributesList::~ROSEAttributesList()
+*/
+/*!\fn inline std::vector< PreprocessingInfo * , std::allocator< PreprocessingInfo * >  > &ROSEAttributesList::getList()
+*/
+/*!\fn int ROSEAttributesList::getIndex()
+*/
+/*!\fn int ROSEAttributesList::getLength()
+*/
+/*!\fn int ROSEAttributesList::size()
+*/
+/*!\fn std::string ROSEAttributesList::getFileName()
+*/
+/*!\fn void ROSEAttributesList::addElement(PreprocessingInfo &pRef)
+*/
+/*!\fn void ROSEAttributesList::addElement(enum PreprocessingInfo::DirectiveType ,const std::string &pLine,const std::string &filename,int lineNumber,int columnNumber,int numberOfLines)
+*/
+/*!\fn void ROSEAttributesList::clean()
+*/
+/*!\fn void ROSEAttributesList::deepClean()
+*/
+/*!\fn void ROSEAttributesList::insertElement(PreprocessingInfo &pRef)
+*/
+/*!\fn void ROSEAttributesList::moveElements(ROSEAttributesList &)
+*/
+/*!\fn void ROSEAttributesList::setFileName(const std::string &fName)
+*/
+/*!\fn void ROSEAttributesList::setIndex(int i)
+*/
+/*!\fn void ROSEAttributesList::display(const std::string &label)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1948046965;

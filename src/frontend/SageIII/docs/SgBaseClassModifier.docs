@@ -1,0 +1,87 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgBaseClassModifier
+*/
+/*! \name Class Members*/
+//@{
+/*!\var enum SgBaseClassModifier::baseclass_modifier_enum SgBaseClassModifier::p_modifier
+*/
+/*!\var SgAccessModifier SgBaseClassModifier::p_accessModifier
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgBaseClassModifier &SgBaseClassModifier::operator=(const SgBaseClassModifier &X)
+*/
+/*!\fn SgBaseClassModifier::SgBaseClassModifier(const SgBaseClassModifier &X)
+*/
+/*!\fn SgBaseClassModifier::SgBaseClassModifier(const SgBaseClassModifierStorageClass &source)
+*/
+/*!\fn bool SgBaseClassModifier::isDefault() const
+*/
+/*!\fn bool SgBaseClassModifier::isUnknown() const
+*/
+/*!\fn bool SgBaseClassModifier::isVirtual() const
+*/
+/*!\fn inline static void SgBaseClassModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgBaseClassModifier *SgBaseClassModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgBaseClassModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgBaseClassModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgBaseClassModifier::initializeStorageClassArray(SgBaseClassModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgBaseClassModifier::clearMemoryPool()
+*/
+/*!\fn static void SgBaseClassModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgBaseClassModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgBaseClassModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgBaseClassModifier::roseRTI()
+*/
+/*!\fn virtual SgBaseClassModifier::~SgBaseClassModifier()
+*/
+/*!\fn virtual SgNode *SgBaseClassModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgBaseClassModifier::post_construction_initialization()
+*/
+/*!\fn void SgBaseClassModifier::display(std::string label) const
+*/
+/*!\fn void SgBaseClassModifier::reset()
+*/
+/*!\fn void SgBaseClassModifier::setDefault()
+*/
+/*!\fn void SgBaseClassModifier::setUnknown()
+*/
+/*!\fn void SgBaseClassModifier::setVirtual()
+*/
+/*!\fn void SgBaseClassModifier::set_modifier(enum SgBaseClassModifier::baseclass_modifier_enum modifier)
+\description See  modifier)
+modifier for documentation */
+/*!\fn SgAccessModifier &SgBaseClassModifier::get_accessModifier()
+\description See  &SgBaseClassModifier::accessModifier for documentation */
+/*!\fn const SgAccessModifier &SgBaseClassModifier::get_accessModifier() const
+\description See  const
+accessModifier for documentation */
+/*!\fn enum SgBaseClassModifier::baseclass_modifier_enum SgBaseClassModifier::get_modifier() const
+\description See  const
+modifier for documentation */
+/*!\fn virtual SgNode *SgBaseClassModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgBaseClassModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgBaseClassModifier::get_numberOfTraversalSuccessors()
+\description See  SgBaseClassModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgBaseClassModifier::get_traversalSuccessorContainer()
+\description See  SgBaseClassModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgBaseClassModifier::get_traversalSuccessorNamesContainer()
+\description See  SgBaseClassModifier::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgBaseClassModifier::SgBaseClassModifier()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_851370342;

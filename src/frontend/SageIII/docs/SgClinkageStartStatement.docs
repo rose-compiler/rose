@@ -1,0 +1,114 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClinkageStartStatement
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgClinkageStartStatement
+\brief This class represents the concept of a C style "extern \"C\" " declaration.  But
+    such information (linkage) is stored within linkage modifiers currently.
+    This class is no longer used, see SgLinkageModifier for more details on 
+how this is handled currently.
+\deprecated This class is not used and will be removed in a later release.
+\sa
+\ref SgClinkageStartStatement_usage  "Example of using a SgClinkageStartStatement object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClinkageStartStatement data members
+/////////////////////////////////////////////////////////////////////////
+/*! \var SgClinkageStartStatement::p_dummyString14
+\brief This pointer points to C style character string.
+\deprecated This data member (and the whole class) is not used and will be removed in a later release.
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgClinkageStartStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgClinkageStartStatement_create "Example:create an SgClinkageStartStatement object"
+*/
+/*!
+\fn SgClinkageStartStatement::~SgClinkageStartStatement()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgClinkageStartStatement::isSgClinkageStartStatement (SgNode *s)
+\brief Cast function (from derived class to SgClinkageStartStatement pointer).
+   This functions returns a SgClinkageStartStatement pointer for any input of a 
+pointer to an object derived from a SgClinkageStartStatement.
+\return Returns valid pointer to SgClinkageStartStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgClinkageStartStatement::isSgClinkageStartStatement (const SgNode *s)
+\brief Cast function (from derived class to SgClinkageStartStatement pointer).
+   This functions returns a SgClinkageStartStatement pointer for any input of a 
+pointer to an object derived from a SgClinkageStartStatement.
+\return Returns valid pointer to SgClinkageStartStatement if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgClinkageStartStatement::get_dummyString14() const
+\brief Returns pointer to a char (C style string).
+\deprecated This access function (and the whole class) is not used and will be removed in a later release.
+\return Returns pointer to char.
+*/
+/*!
+\fn SgClinkageStartStatement::set_dummyString14(char* dummyString14)
+\brief Access function for p_dummyString14 (C style string).
+\deprecated This access function (and the whole class) is not used and will be removed in a later release.
+\return Returns void.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgClinkageStartStatement::p_dummyString16
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgClinkageStartStatement::SgClinkageStartStatement(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgClinkageStartStatement base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgClinkageStartStatement::SgClinkageStartStatement(const SgClinkageStartStatementStorageClass &source)
+*/
+/*!\fn inline static void SgClinkageStartStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgClinkageStartStatement *SgClinkageStartStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgClinkageStartStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgClinkageStartStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgClinkageStartStatement::initializeStorageClassArray(SgClinkageStartStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgClinkageStartStatement::clearMemoryPool()
+*/
+/*!\fn static void SgClinkageStartStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgClinkageStartStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgClinkageStartStatement::roseRTI()
+*/
+/*!\fn virtual SgClinkageStartStatement::~SgClinkageStartStatement()
+*/
+/*!\fn virtual SgNode *SgClinkageStartStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgClinkageStartStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgClinkageStartStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgClinkageStartStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgClinkageStartStatement::get_numberOfTraversalSuccessors()
+\description See  SgClinkageStartStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgClinkageStartStatement::get_traversalSuccessorContainer()
+\description See  SgClinkageStartStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgClinkageStartStatement::get_traversalSuccessorNamesContainer()
+\description See  SgClinkageStartStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgClinkageStartStatement::SgClinkageStartStatement()
+*/
+//@}
+int SAGE_Doxygen_Dummy_99802901226020;

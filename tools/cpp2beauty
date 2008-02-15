@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+# Author: Markus Schordan, 2003.
+# $Id: cpp2beauty,v 1.1 2003/04/28 18:25:45 markus Exp $
+
+# this program requires bcpp (a C/C++ beautifier)
+# download at: http://dickey.his.com/bcpp/bcpp.html
+
+use Getopt::Long;
+
+sub printhelp {
+  print("\nSYNOPSIS:\n cpp2beauty <INPUTFILE> <OUTPUTFILE>\n\n");
+  print("DESCRIPTION:\n");
+  print(" Reads a C++ file and generates a beautified C++ file\n\n");
+  print("OPTIONS:\n");
+  print("-h --help              : Print this help message.\n");
+  print("\nEXAMPLES:\n");
+  print("cpp2beauty test1.C test1.C.beautified : the new file test1.C.beautified is generated\n");
+  print("cpp2beauty test1.C test1.C            : the file test1.C is overwritten with the reformated version\n");
+  print("\nREQUIRES:\n");
+  print("bcpp (a C/C++ beautifier)\n");
+  print("download bcpp from: http://dickey.his.com/bcpp/bcpp.html\n\n");
+}
+
+sub command {
+  $command=$_[0];
+  $string=$_[1];
+  open(RECDIR, "$command $string|");
+  @recDir=<RECDIR>;
+  close(RECDIR);
+  $string=@recDir[0];
+  $string=~ s/\n//;
+  return $string;
+}
+
+$configFileLocation=command("dirname",$0);
+
+GetOptions("outputfile=s" => \$outfile, "help!" => \$printhelp_opt);
+
+if($printhelp_opt) {
+  printhelp();
+  exit 0;
+}
+
+$E_BADARGS=65;
+if(@ARGV < 2) {
+  printhelp();
+  exit $E_BADARGS;
+}
+
+$infile=@ARGV[0];
+$outfile=@ARGV[1];
+$infilebasename=command("basename",$infile);
+
+$exitstatus=system("bcpp -fnc $configFileLocation -f 2 -qb 1000 -na -no -ylcnc -bcl $infile > $infile.__reformat");
+if($exitstatus==0) {
+    system("mv $infilebasename.__reformat $outfile");
+}

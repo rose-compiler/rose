@@ -1,0 +1,48 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Enum Declaration Namespace Class Scope}
+
+\label{EnumDeclarationNamespaceClassScope::overview}
+
+\quote{Namespace: \texttt{EnumDeclarationNamespaceClassScope}}
+
+\subsection{Introduction}
+Declare enumerations in the scope of a class or namespace to avoid symbolic
+name conflicts between enumerations and global variables. It is best to
+nest enumeration declarations in the closest related class or namespace. When
+this is not possible, give the enumeration a unique name identifier. Taken
+from ``Elements of C++ Style'' by Misfeldt, Bumgardner, and Gray; item \#79.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that locates nodes that
+are enumeration declarations. If a enumeration declaration is found then its
+parent nodes are traversed until a class or namespace declaration is found. 
+If no namespace or class declaration(s) are found then a violation is flagged
+by this checker. 
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: enumDeclarationNamespaceClassScopeTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../enumDeclarationNamespaceClassScope/enumDeclarationNamespaceClassScopeTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

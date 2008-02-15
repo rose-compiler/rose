@@ -1,0 +1,456 @@
+
+\chapter{ Appendix }
+
+%  Purpose:
+% \begin{itemize}
+%    \item A. Error messages
+%    \item B. How to add new IR nodes (prep for F90 work with Rice)
+% \end{itemize}
+% \begin{center}
+% *********************  \newline
+% \end{center}
+% \vspace{0.25in}
+% 
+%     Put text here!
+
+   This appendix covers a number of relavant topics to the use of ROSE
+which have not been worked into the main body of text in the ROSE User Manual.
+
+\fixme{ The sections within this Appendix are staged here while we figure out where they
+        belong in the ROSE User Manual (or elsewhere).}
+
+% DQ: Until we have error message we can ignore this section (suggested by Rich)
+\section {Error Messages}
+
+   The user will mostly only see error messages from EDG, these will
+appear like normal C++ compiler error messages.
+
+   These can be turned off using the edg option: \\
+   --edg:no\_warnings \\
+or \\
+   -edg:w \\
+on the command-line of any translator built using ROSE.
+
+\section {Specifying EDG options}
+
+   The EDG options are specified using --edg:$<$edg option$>$ for edg options starting 
+with "--" or -edg:$<$edg option$>$ for edg options starting with "-".
+
+The details of the EDG specific options are available at: \\
+    http://www.edg.com/docs/edg\_cpp.pdf
+available from the EDG web page at:\\
+    http://www.edg.com/cpp.html
+
+\section{Easy Mistakes to Make: How to Ruin Your Day as a ROSE Developer}
+
+   There are a few ways in which you can make mistakes within the development of
+the ROSE project:
+
+\begin{enumerate}
+     \item Never run {\tt configure} in your source tree.  If you do, then never run 
+     {\tt make distclean}, since this will remove many things required to develop 
+     ROSE. Things removed by {\tt make distclean} are:
+     \begin{enumerate}
+          \item documentation (including several of the directories in {\tt ROSE/docs/Rose})
+     \end{enumerate}
+\end{enumerate}
+
+\section{Handling of source-filename extensions in ROSE}
+    On case-sensitive systems, ROSE handles .c as the (only) valid filename extension
+for c-language and .cc, .cp, .c++, .cpp, .cxx, as the valid filename extensions for
+C++ language. On case-insensitive systems, ROSE handles .c and .C as valid filename
+extensions for c-language, and .cc, .cp, .c++, .cpp, .cxx, .CC,
+.CP, .C++, .CPP, .CXX as valid filename extensions for C++.
+
+There are some inconsistencies in the filename handler such as: (1) not recognizing
+.CC, .CP, .C++, .CPP, .CXX as valid filename extensions for C++ language on case-sensitive
+systems and  (2) not recognizing .CxX, .cPp, etc. as valid filename extensions for
+C++ language on case-sensitive systems. The sole reason for the inconsistency is that
+of compatibility with GNU (as well as EDG).
+
+
+\section{IR Memory Consumption}
+    The Internal Representation is used to build the AST and, for large programs,
+it can translate into a large number of IR nodes.  Typically the total number of 
+IR nodes is about seven times the number of lines of codes (seems to be a general 
+rule, perhaps a bit more when templates are used more dominantly).  The memory
+consumption of any one file is not very significant, but within support for whole
+program analysis, the size of the AST can be expected to be quite large.  Significant
+sharing of declarations is made possible via the AST merge mechanisms.  C and C++
+have a One-time Definition Rule (ODR) that requires definitions be the same
+across separate compilations of files intended to be linked into a single application.
+ODR is significantly leveraged within the AST merge mechanism to share all declarations
+that appear across multiple merged files.  Still, a one-million line C++ application 
+making significant use of templates can be expected to translate into 10-20 million 
+IR nodes in the AST, so memory space is worth considering.
+
+   The following is a snapshot of current IR node frequency and memory consumption for
+a moderate 40,000 line source code file (one file calling a number of header files).
+% The AST contains a total of 
+Note that the Sg\_File\_Info IR nodes are most frequent and consume the greatest amount 
+of memory. This reflects our bias toward preserving significant information about the
+mapping of language constructs back to the positions in the source file to support
+a rich set of source-to-source functionality.
+
+{\mySmallestFontSize
+\begin{verbatim}
+AST Memory Pool Statistics: numberOfNodes = 114081 memory consumption = 5019564 node = Sg_File_Info
+AST Memory Pool Statistics: numberOfNodes =  31403 memory consumption =  628060 node = SgTypedefSeq
+AST Memory Pool Statistics: numberOfNodes =  14254 memory consumption =  285080 node = SgStorageModifier
+AST Memory Pool Statistics: numberOfNodes =  14254 memory consumption = 1140320 node = SgInitializedName
+AST Memory Pool Statistics: numberOfNodes =   8458 memory consumption =  169160 node = SgFunctionParameterTypeList
+AST Memory Pool Statistics: numberOfNodes =   7868 memory consumption = 1101520 node = SgModifierType
+AST Memory Pool Statistics: numberOfNodes =   7657 memory consumption =  398164 node = SgClassType
+AST Memory Pool Statistics: numberOfNodes =   7507 memory consumption = 2071932 node = SgClassDeclaration
+AST Memory Pool Statistics: numberOfNodes =   7060 memory consumption =  282400 node = SgTemplateArgument
+AST Memory Pool Statistics: numberOfNodes =   6024 memory consumption =  385536 node = SgPartialFunctionType
+AST Memory Pool Statistics: numberOfNodes =   5985 memory consumption = 1388520 node = SgFunctionParameterList
+AST Memory Pool Statistics: numberOfNodes =   4505 memory consumption = 1477640 node = SgTemplateInstantiationDecl
+AST Memory Pool Statistics: numberOfNodes =   3697 memory consumption =  162668 node = SgReferenceType
+AST Memory Pool Statistics: numberOfNodes =   3270 memory consumption =  758640 node = SgCtorInitializerList
+AST Memory Pool Statistics: numberOfNodes =   3178 memory consumption =   76272 node = SgMemberFunctionSymbol
+AST Memory Pool Statistics: numberOfNodes =   2713 memory consumption =  119372 node = SgPointerType
+AST Memory Pool Statistics: numberOfNodes =   2688 memory consumption =  161280 node = SgThrowOp
+AST Memory Pool Statistics: numberOfNodes =   2503 memory consumption =   60072 node = SgFunctionSymbol
+AST Memory Pool Statistics: numberOfNodes =   2434 memory consumption =  107096 node = SgFunctionTypeSymbol
+AST Memory Pool Statistics: numberOfNodes =   2418 memory consumption =  831792 node = SgFunctionDeclaration
+AST Memory Pool Statistics: numberOfNodes =   2304 memory consumption =   55296 node = SgVariableSymbol
+AST Memory Pool Statistics: numberOfNodes =   2298 memory consumption =  101112 node = SgVarRefExp
+AST Memory Pool Statistics: numberOfNodes =   2195 memory consumption =  114140 node = SgSymbolTable
+AST Memory Pool Statistics: numberOfNodes =   2072 memory consumption =  721056 node = SgMemberFunctionDeclaration
+AST Memory Pool Statistics: numberOfNodes =   1668 memory consumption =  400320 node = SgVariableDeclaration
+AST Memory Pool Statistics: numberOfNodes =   1667 memory consumption =  393412 node = SgVariableDefinition
+AST Memory Pool Statistics: numberOfNodes =   1579 memory consumption =  101056 node = SgMemberFunctionType
+AST Memory Pool Statistics: numberOfNodes =   1301 memory consumption =   31224 node = SgTemplateSymbol
+AST Memory Pool Statistics: numberOfNodes =   1300 memory consumption =  364000 node = SgTemplateDeclaration
+AST Memory Pool Statistics: numberOfNodes =   1198 memory consumption =  455240 node = SgTemplateInstantiationMemberFunctionDecl
+AST Memory Pool Statistics: numberOfNodes =   1129 memory consumption =   54192 node = SgIntVal
+AST Memory Pool Statistics: numberOfNodes =   1092 memory consumption =   56784 node = SgAssignInitializer
+AST Memory Pool Statistics: numberOfNodes =   1006 memory consumption =   52312 node = SgExpressionRoot
+AST Memory Pool Statistics: numberOfNodes =    922 memory consumption =   36880 node = SgBasicBlock
+AST Memory Pool Statistics: numberOfNodes =    861 memory consumption =   27552 node = SgNullStatement
+AST Memory Pool Statistics: numberOfNodes =    855 memory consumption =   47880 node = SgFunctionType
+AST Memory Pool Statistics: numberOfNodes =    837 memory consumption =   40176 node = SgThisExp
+AST Memory Pool Statistics: numberOfNodes =    817 memory consumption =   42484 node = SgArrowExp
+AST Memory Pool Statistics: numberOfNodes =    784 memory consumption =   31360 node = SgFunctionDefinition
+AST Memory Pool Statistics: numberOfNodes =    781 memory consumption =  212432 node = SgTypedefDeclaration
+AST Memory Pool Statistics: numberOfNodes =    764 memory consumption =   18336 node = SgTypedefSymbol
+AST Memory Pool Statistics: numberOfNodes =    762 memory consumption =   42672 node = SgTypedefType
+AST Memory Pool Statistics: numberOfNodes =    753 memory consumption =   18072 node = SgEnumFieldSymbol
+AST Memory Pool Statistics: numberOfNodes =    643 memory consumption =   33436 node = SgDotExp
+AST Memory Pool Statistics: numberOfNodes =    630 memory consumption =   22680 node = SgReturnStmt
+AST Memory Pool Statistics: numberOfNodes =    605 memory consumption =   26620 node = SgExprListExp
+AST Memory Pool Statistics: numberOfNodes =    601 memory consumption =   33656 node = SgCastExp
+AST Memory Pool Statistics: numberOfNodes =    548 memory consumption =   28496 node = SgFunctionCallExp
+AST Memory Pool Statistics: numberOfNodes =    399 memory consumption =   19152 node = SgBoolValExp
+AST Memory Pool Statistics: numberOfNodes =    371 memory consumption =   13356 node = SgExprStatement
+AST Memory Pool Statistics: numberOfNodes =    351 memory consumption =    8424 node = SgClassSymbol
+AST Memory Pool Statistics: numberOfNodes =    325 memory consumption =   18200 node = SgMemberFunctionRefExp
+AST Memory Pool Statistics: numberOfNodes =    291 memory consumption =   68676 node = SgUsingDeclarationStatement
+AST Memory Pool Statistics: numberOfNodes =    290 memory consumption =   15080 node = SgPntrArrRefExp
+AST Memory Pool Statistics: numberOfNodes =    223 memory consumption =   10704 node = SgFunctionRefExp
+AST Memory Pool Statistics: numberOfNodes =    209 memory consumption =   78584 node = SgTemplateInstantiationFunctionDecl
+AST Memory Pool Statistics: numberOfNodes =    201 memory consumption =    8844 node = SgClassDefinition
+AST Memory Pool Statistics: numberOfNodes =    193 memory consumption =   10036 node = SgMultiplyOp
+AST Memory Pool Statistics: numberOfNodes =    181 memory consumption =    8688 node = SgStringVal
+AST Memory Pool Statistics: numberOfNodes =    168 memory consumption =    8064 node = SgArrayType
+AST Memory Pool Statistics: numberOfNodes =    157 memory consumption =    7536 node = SgUnsignedLongVal
+AST Memory Pool Statistics: numberOfNodes =    151 memory consumption =   35032 node = SgTemplateInstantiationDirectiveStatement
+AST Memory Pool Statistics: numberOfNodes =    150 memory consumption =    6600 node = SgTemplateInstantiationDefn
+AST Memory Pool Statistics: numberOfNodes =    126 memory consumption =    6048 node = SgUnsignedIntVal
+AST Memory Pool Statistics: numberOfNodes =    118 memory consumption =    6136 node = SgAssignOp
+AST Memory Pool Statistics: numberOfNodes =    115 memory consumption =    5980 node = SgAddOp
+AST Memory Pool Statistics: numberOfNodes =    101 memory consumption =    4040 node = SgBaseClassModifier
+AST Memory Pool Statistics: numberOfNodes =    101 memory consumption =    2828 node = SgBaseClass
+AST Memory Pool Statistics: numberOfNodes =     82 memory consumption =    4592 node = SgConditionalExp
+AST Memory Pool Statistics: numberOfNodes =     77 memory consumption =    3388 node = SgNamespaceDefinitionStatement
+AST Memory Pool Statistics: numberOfNodes =     77 memory consumption =   19712 node = SgNamespaceDeclarationStatement
+AST Memory Pool Statistics: numberOfNodes =     72 memory consumption =    3744 node = SgEqualityOp
+AST Memory Pool Statistics: numberOfNodes =     61 memory consumption =    3172 node = SgCommaOpExp
+AST Memory Pool Statistics: numberOfNodes =     53 memory consumption =    3180 node = SgConstructorInitializer
+AST Memory Pool Statistics: numberOfNodes =     49 memory consumption =    1568 node = SgPragma
+AST Memory Pool Statistics: numberOfNodes =     49 memory consumption =   11368 node = SgPragmaDeclaration
+AST Memory Pool Statistics: numberOfNodes =     46 memory consumption =    3312 node = SgEnumVal
+AST Memory Pool Statistics: numberOfNodes =     46 memory consumption =    2208 node = SgIfStmt
+AST Memory Pool Statistics: numberOfNodes =     42 memory consumption =    2184 node = SgEnumType
+AST Memory Pool Statistics: numberOfNodes =     42 memory consumption =   11088 node = SgEnumDeclaration
+AST Memory Pool Statistics: numberOfNodes =     42 memory consumption =    1008 node = SgEnumSymbol
+AST Memory Pool Statistics: numberOfNodes =     36 memory consumption =    1872 node = SgPointerDerefExp
+AST Memory Pool Statistics: numberOfNodes =     35 memory consumption =    1680 node = SgShortVal
+AST Memory Pool Statistics: numberOfNodes =     32 memory consumption =    1664 node = SgSubtractOp
+AST Memory Pool Statistics: numberOfNodes =     28 memory consumption =     560 node = SgQualifiedName
+AST Memory Pool Statistics: numberOfNodes =     26 memory consumption =    1352 node = SgAddressOfOp
+AST Memory Pool Statistics: numberOfNodes =     24 memory consumption =    1152 node = SgCharVal
+AST Memory Pool Statistics: numberOfNodes =     23 memory consumption =    1196 node = SgLessThanOp
+AST Memory Pool Statistics: numberOfNodes =     22 memory consumption =    1144 node = SgGreaterOrEqualOp
+AST Memory Pool Statistics: numberOfNodes =     21 memory consumption =    1092 node = SgPlusPlusOp
+AST Memory Pool Statistics: numberOfNodes =     19 memory consumption =     988 node = SgNotEqualOp
+AST Memory Pool Statistics: numberOfNodes =     19 memory consumption =     912 node = SgUnsignedShortVal
+AST Memory Pool Statistics: numberOfNodes =     18 memory consumption =     936 node = SgAndOp
+AST Memory Pool Statistics: numberOfNodes =     18 memory consumption =     864 node = SgPointerMemberType
+AST Memory Pool Statistics: numberOfNodes =     18 memory consumption =     864 node = SgLongIntVal
+AST Memory Pool Statistics: numberOfNodes =     15 memory consumption =     780 node = SgDivideOp
+AST Memory Pool Statistics: numberOfNodes =     14 memory consumption =     728 node = SgBitAndOp
+AST Memory Pool Statistics: numberOfNodes =     12 memory consumption =     624 node = SgMinusMinusOp
+AST Memory Pool Statistics: numberOfNodes =     11 memory consumption =     616 node = SgDoubleVal
+AST Memory Pool Statistics: numberOfNodes =     11 memory consumption =     572 node = SgFloatVal
+AST Memory Pool Statistics: numberOfNodes =     10 memory consumption =     520 node = SgUnsignedLongLongIntVal
+AST Memory Pool Statistics: numberOfNodes =     10 memory consumption =     520 node = SgModOp
+AST Memory Pool Statistics: numberOfNodes =     10 memory consumption =     520 node = SgLongLongIntVal
+AST Memory Pool Statistics: numberOfNodes =      9 memory consumption =     540 node = SgLongDoubleVal
+AST Memory Pool Statistics: numberOfNodes =      9 memory consumption =     468 node = SgNotOp
+AST Memory Pool Statistics: numberOfNodes =      8 memory consumption =     416 node = SgBitOrOp
+AST Memory Pool Statistics: numberOfNodes =      7 memory consumption =     364 node = SgMinusOp
+AST Memory Pool Statistics: numberOfNodes =      7 memory consumption =     308 node = SgWhileStmt
+AST Memory Pool Statistics: numberOfNodes =      5 memory consumption =     260 node = SgForStatement
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     208 node = SgOrOp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     208 node = SgGreaterThanOp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     192 node = SgDeleteExp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     192 node = SgAggregateInitializer
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     176 node = SgNamespaceSymbol
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     144 node = SgForInitStatement
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgRshiftOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgRshiftAssignOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgPlusAssignOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgLshiftOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgBitXorOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgBitComplementOp
+AST Memory Pool Statistics: numberOfNodes =      2 memory consumption =     104 node = SgDivAssignOp
+AST Memory Pool Statistics: numberOfNodes =      2 memory consumption =     104 node = SgAndAssignOp
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      96 node = SgFile
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      84 node = SgProject
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      48 node = SgCatchOptionStmt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      44 node = SgTypeInt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeWchar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeVoid
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedShort
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedLongLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedInt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedChar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeString
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeSignedChar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeShort
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeLongLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeLongDouble
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeFloat
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeEllipse
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeDouble
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeDefault
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeChar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeBool
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTryStmt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgGlobal
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      36 node = SgFunctionTypeTable
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      36 node = SgCatchStatementSeq
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =     232 node = SgUsingDirectiveStatement
+\end{verbatim}
+}
+
+\commentout{
+{\mySmallestFontSize
+\begin{verbatim}
+AST Memory Pool Statistics: numberOfNodes = 114081 memory consumption = 5019564 node = Sg_File_Info
+AST Memory Pool Statistics: numberOfNodes =   7507 memory consumption = 2071932 node = SgClassDeclaration
+AST Memory Pool Statistics: numberOfNodes =   4505 memory consumption = 1477640 node = SgTemplateInstantiationDecl
+AST Memory Pool Statistics: numberOfNodes =   5985 memory consumption = 1388520 node = SgFunctionParameterList
+AST Memory Pool Statistics: numberOfNodes =  14254 memory consumption = 1140320 node = SgInitializedName
+AST Memory Pool Statistics: numberOfNodes =   7868 memory consumption = 1101520 node = SgModifierType
+AST Memory Pool Statistics: numberOfNodes =   2418 memory consumption =  831792 node = SgFunctionDeclaration
+AST Memory Pool Statistics: numberOfNodes =   3270 memory consumption =  758640 node = SgCtorInitializerList
+AST Memory Pool Statistics: numberOfNodes =   2072 memory consumption =  721056 node = SgMemberFunctionDeclaration
+AST Memory Pool Statistics: numberOfNodes =  31403 memory consumption =  628060 node = SgTypedefSeq
+AST Memory Pool Statistics: numberOfNodes =   1198 memory consumption =  455240 node = SgTemplateInstantiationMemberFunctionDecl
+AST Memory Pool Statistics: numberOfNodes =   1668 memory consumption =  400320 node = SgVariableDeclaration
+AST Memory Pool Statistics: numberOfNodes =   7657 memory consumption =  398164 node = SgClassType
+AST Memory Pool Statistics: numberOfNodes =   1667 memory consumption =  393412 node = SgVariableDefinition
+AST Memory Pool Statistics: numberOfNodes =   6024 memory consumption =  385536 node = SgPartialFunctionType
+AST Memory Pool Statistics: numberOfNodes =   1300 memory consumption =  364000 node = SgTemplateDeclaration
+AST Memory Pool Statistics: numberOfNodes =  14254 memory consumption =  285080 node = SgStorageModifier
+AST Memory Pool Statistics: numberOfNodes =   7060 memory consumption =  282400 node = SgTemplateArgument
+AST Memory Pool Statistics: numberOfNodes =    781 memory consumption =  212432 node = SgTypedefDeclaration
+AST Memory Pool Statistics: numberOfNodes =   8458 memory consumption =  169160 node = SgFunctionParameterTypeList
+AST Memory Pool Statistics: numberOfNodes =   3697 memory consumption =  162668 node = SgReferenceType
+AST Memory Pool Statistics: numberOfNodes =   2688 memory consumption =  161280 node = SgThrowOp
+AST Memory Pool Statistics: numberOfNodes =   2713 memory consumption =  119372 node = SgPointerType
+AST Memory Pool Statistics: numberOfNodes =   2195 memory consumption =  114140 node = SgSymbolTable
+AST Memory Pool Statistics: numberOfNodes =   2434 memory consumption =  107096 node = SgFunctionTypeSymbol
+AST Memory Pool Statistics: numberOfNodes =   2298 memory consumption =  101112 node = SgVarRefExp
+AST Memory Pool Statistics: numberOfNodes =   1579 memory consumption =  101056 node = SgMemberFunctionType
+AST Memory Pool Statistics: numberOfNodes =    209 memory consumption =   78584 node = SgTemplateInstantiationFunctionDecl
+AST Memory Pool Statistics: numberOfNodes =   3178 memory consumption =   76272 node = SgMemberFunctionSymbol
+AST Memory Pool Statistics: numberOfNodes =    291 memory consumption =   68676 node = SgUsingDeclarationStatement
+AST Memory Pool Statistics: numberOfNodes =   2503 memory consumption =   60072 node = SgFunctionSymbol
+AST Memory Pool Statistics: numberOfNodes =   1092 memory consumption =   56784 node = SgAssignInitializer
+AST Memory Pool Statistics: numberOfNodes =   2304 memory consumption =   55296 node = SgVariableSymbol
+AST Memory Pool Statistics: numberOfNodes =   1129 memory consumption =   54192 node = SgIntVal
+AST Memory Pool Statistics: numberOfNodes =   1006 memory consumption =   52312 node = SgExpressionRoot
+AST Memory Pool Statistics: numberOfNodes =    855 memory consumption =   47880 node = SgFunctionType
+AST Memory Pool Statistics: numberOfNodes =    762 memory consumption =   42672 node = SgTypedefType
+AST Memory Pool Statistics: numberOfNodes =    817 memory consumption =   42484 node = SgArrowExp
+AST Memory Pool Statistics: numberOfNodes =    837 memory consumption =   40176 node = SgThisExp
+AST Memory Pool Statistics: numberOfNodes =    922 memory consumption =   36880 node = SgBasicBlock
+AST Memory Pool Statistics: numberOfNodes =    151 memory consumption =   35032 node = SgTemplateInstantiationDirectiveStatement
+AST Memory Pool Statistics: numberOfNodes =    601 memory consumption =   33656 node = SgCastExp
+AST Memory Pool Statistics: numberOfNodes =    643 memory consumption =   33436 node = SgDotExp
+AST Memory Pool Statistics: numberOfNodes =    784 memory consumption =   31360 node = SgFunctionDefinition
+AST Memory Pool Statistics: numberOfNodes =   1301 memory consumption =   31224 node = SgTemplateSymbol
+AST Memory Pool Statistics: numberOfNodes =    548 memory consumption =   28496 node = SgFunctionCallExp
+AST Memory Pool Statistics: numberOfNodes =    861 memory consumption =   27552 node = SgNullStatement
+AST Memory Pool Statistics: numberOfNodes =    605 memory consumption =   26620 node = SgExprListExp
+AST Memory Pool Statistics: numberOfNodes =    630 memory consumption =   22680 node = SgReturnStmt
+AST Memory Pool Statistics: numberOfNodes =     77 memory consumption =   19712 node = SgNamespaceDeclarationStatement
+AST Memory Pool Statistics: numberOfNodes =    399 memory consumption =   19152 node = SgBoolValExp
+AST Memory Pool Statistics: numberOfNodes =    764 memory consumption =   18336 node = SgTypedefSymbol
+AST Memory Pool Statistics: numberOfNodes =    325 memory consumption =   18200 node = SgMemberFunctionRefExp
+AST Memory Pool Statistics: numberOfNodes =    753 memory consumption =   18072 node = SgEnumFieldSymbol
+AST Memory Pool Statistics: numberOfNodes =    290 memory consumption =   15080 node = SgPntrArrRefExp
+AST Memory Pool Statistics: numberOfNodes =    371 memory consumption =   13356 node = SgExprStatement
+AST Memory Pool Statistics: numberOfNodes =     49 memory consumption =   11368 node = SgPragmaDeclaration
+AST Memory Pool Statistics: numberOfNodes =     42 memory consumption =   11088 node = SgEnumDeclaration
+AST Memory Pool Statistics: numberOfNodes =    223 memory consumption =   10704 node = SgFunctionRefExp
+AST Memory Pool Statistics: numberOfNodes =    193 memory consumption =   10036 node = SgMultiplyOp
+AST Memory Pool Statistics: numberOfNodes =    201 memory consumption =    8844 node = SgClassDefinition
+AST Memory Pool Statistics: numberOfNodes =    181 memory consumption =    8688 node = SgStringVal
+AST Memory Pool Statistics: numberOfNodes =    351 memory consumption =    8424 node = SgClassSymbol
+AST Memory Pool Statistics: numberOfNodes =    168 memory consumption =    8064 node = SgArrayType
+AST Memory Pool Statistics: numberOfNodes =    157 memory consumption =    7536 node = SgUnsignedLongVal
+AST Memory Pool Statistics: numberOfNodes =    150 memory consumption =    6600 node = SgTemplateInstantiationDefn
+AST Memory Pool Statistics: numberOfNodes =    118 memory consumption =    6136 node = SgAssignOp
+AST Memory Pool Statistics: numberOfNodes =    126 memory consumption =    6048 node = SgUnsignedIntVal
+AST Memory Pool Statistics: numberOfNodes =    115 memory consumption =    5980 node = SgAddOp
+AST Memory Pool Statistics: numberOfNodes =     82 memory consumption =    4592 node = SgConditionalExp
+AST Memory Pool Statistics: numberOfNodes =    101 memory consumption =    4040 node = SgBaseClassModifier
+AST Memory Pool Statistics: numberOfNodes =     72 memory consumption =    3744 node = SgEqualityOp
+AST Memory Pool Statistics: numberOfNodes =     77 memory consumption =    3388 node = SgNamespaceDefinitionStatement
+AST Memory Pool Statistics: numberOfNodes =     46 memory consumption =    3312 node = SgEnumVal
+AST Memory Pool Statistics: numberOfNodes =     53 memory consumption =    3180 node = SgConstructorInitializer
+AST Memory Pool Statistics: numberOfNodes =     61 memory consumption =    3172 node = SgCommaOpExp
+AST Memory Pool Statistics: numberOfNodes =    101 memory consumption =    2828 node = SgBaseClass
+AST Memory Pool Statistics: numberOfNodes =     46 memory consumption =    2208 node = SgIfStmt
+AST Memory Pool Statistics: numberOfNodes =     42 memory consumption =    2184 node = SgEnumType
+AST Memory Pool Statistics: numberOfNodes =     36 memory consumption =    1872 node = SgPointerDerefExp
+AST Memory Pool Statistics: numberOfNodes =     35 memory consumption =    1680 node = SgShortVal
+AST Memory Pool Statistics: numberOfNodes =     32 memory consumption =    1664 node = SgSubtractOp
+AST Memory Pool Statistics: numberOfNodes =     49 memory consumption =    1568 node = SgPragma
+AST Memory Pool Statistics: numberOfNodes =     26 memory consumption =    1352 node = SgAddressOfOp
+AST Memory Pool Statistics: numberOfNodes =     23 memory consumption =    1196 node = SgLessThanOp
+AST Memory Pool Statistics: numberOfNodes =     24 memory consumption =    1152 node = SgCharVal
+AST Memory Pool Statistics: numberOfNodes =     22 memory consumption =    1144 node = SgGreaterOrEqualOp
+AST Memory Pool Statistics: numberOfNodes =     21 memory consumption =    1092 node = SgPlusPlusOp
+AST Memory Pool Statistics: numberOfNodes =     42 memory consumption =    1008 node = SgEnumSymbol
+AST Memory Pool Statistics: numberOfNodes =     19 memory consumption =     988 node = SgNotEqualOp
+AST Memory Pool Statistics: numberOfNodes =     18 memory consumption =     936 node = SgAndOp
+AST Memory Pool Statistics: numberOfNodes =     19 memory consumption =     912 node = SgUnsignedShortVal
+AST Memory Pool Statistics: numberOfNodes =     18 memory consumption =     864 node = SgPointerMemberType
+AST Memory Pool Statistics: numberOfNodes =     18 memory consumption =     864 node = SgLongIntVal
+AST Memory Pool Statistics: numberOfNodes =     15 memory consumption =     780 node = SgDivideOp
+AST Memory Pool Statistics: numberOfNodes =     14 memory consumption =     728 node = SgBitAndOp
+AST Memory Pool Statistics: numberOfNodes =     12 memory consumption =     624 node = SgMinusMinusOp
+AST Memory Pool Statistics: numberOfNodes =     11 memory consumption =     616 node = SgDoubleVal
+AST Memory Pool Statistics: numberOfNodes =     11 memory consumption =     572 node = SgFloatVal
+AST Memory Pool Statistics: numberOfNodes =     28 memory consumption =     560 node = SgQualifiedName
+AST Memory Pool Statistics: numberOfNodes =      9 memory consumption =     540 node = SgLongDoubleVal
+AST Memory Pool Statistics: numberOfNodes =     10 memory consumption =     520 node = SgUnsignedLongLongIntVal
+AST Memory Pool Statistics: numberOfNodes =     10 memory consumption =     520 node = SgModOp
+AST Memory Pool Statistics: numberOfNodes =     10 memory consumption =     520 node = SgLongLongIntVal
+AST Memory Pool Statistics: numberOfNodes =      9 memory consumption =     468 node = SgNotOp
+AST Memory Pool Statistics: numberOfNodes =      8 memory consumption =     416 node = SgBitOrOp
+AST Memory Pool Statistics: numberOfNodes =      7 memory consumption =     364 node = SgMinusOp
+AST Memory Pool Statistics: numberOfNodes =      7 memory consumption =     308 node = SgWhileStmt
+AST Memory Pool Statistics: numberOfNodes =      5 memory consumption =     260 node = SgForStatement
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =     232 node = SgUsingDirectiveStatement
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     208 node = SgOrOp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     208 node = SgGreaterThanOp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     192 node = SgDeleteExp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     192 node = SgAggregateInitializer
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     176 node = SgNamespaceSymbol
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgRshiftOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgRshiftAssignOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgPlusAssignOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgLshiftOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgBitXorOp
+AST Memory Pool Statistics: numberOfNodes =      3 memory consumption =     156 node = SgBitComplementOp
+AST Memory Pool Statistics: numberOfNodes =      4 memory consumption =     144 node = SgForInitStatement
+AST Memory Pool Statistics: numberOfNodes =      2 memory consumption =     104 node = SgDivAssignOp
+AST Memory Pool Statistics: numberOfNodes =      2 memory consumption =     104 node = SgAndAssignOp
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      96 node = SgFile
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      84 node = SgProject
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      48 node = SgCatchOptionStmt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      44 node = SgTypeInt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeWchar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeVoid
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedShort
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedLongLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedInt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeUnsignedChar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeString
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeSignedChar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeShort
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeLongLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeLongDouble
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeLong
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeFloat
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeEllipse
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeDouble
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeDefault
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeChar
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTypeBool
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgTryStmt
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      40 node = SgGlobal
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      36 node = SgFunctionTypeTable
+AST Memory Pool Statistics: numberOfNodes =      1 memory consumption =      36 node = SgCatchStatementSeq
+\end{verbatim}
+}
+}
+
+% \newpage
+
+\section{Compilation Performance Timings}
+
+    An initial snapshot of the performance for the previous 40,000 line
+single file is included so that it is clear that the performance code of
+the source-to-source is a small multiple of the cost of the compilation
+using g++ (when g++ is used at its fastest, with no optimization).
+
+{\mySmallestFontSize
+\begin{verbatim}
+Performance Report (resolution = 0.010000, number of IR nodes = 289439, memory used = 20144 Kilobytes):
+     AST (SgProject::parse(argc,argv)): time (sec) =  18.382917
+          AST (SgProject::parse()): time (sec) =  18.381067
+               AST SgFile Constructor: time (sec) =  18.380805
+                    AST Front End Processing (SgFile): time (sec) =  4.846442
+                         AST Constrution (included Sage III Translation): time (sec) =  4.840888
+                              EDG AST Constrution: time (sec) =  0.807095
+                              AST EDG/Sage III Translation: time (sec) =  3.926241
+                    AST post-processing: time (sec) =  13.513127
+                         (fixup function definitions - missing body) time (sec) =  0.379914
+                         (fixup template declarations) time (sec) =  0.435447
+                         (reset parent pointers) time (sec) =  2.468755
+                         (subTemporaryAstFixes) time (sec) =  1.303070
+                         (initialize IR nodes containing explicit scope data member) time (sec) =  0.122380
+                         (reset template names) time (sec) =  1.433229
+                         (fixup class data member initialization) time (sec) =  0.575695
+                         (fixup for generation of GNU compatable code) time (sec) =  0.580172
+                         (testing declarations (no side-effects to AST))) time (sec) =  0.638836
+                         (fixup storage access of forward template declarations (EDG bug)) time (sec) =  0.542976
+                         (fixup template specializations) time (sec) =  0.860818
+                         (mark template specializations for output) time (sec) =  0.595816
+                         (mark template instantiations for output) time (sec) =  0.567450
+                         (fixup defining and non-defining declarations) time (sec) =  0.686581
+                         (fixup symbol tables) time (sec) =  0.547633
+                              (fixup global symbol table) time (sec) =  0.000000
+                              (fixup local symbol tables) time (sec) =  0.547604
+                         (fixup templateHandlingOptions) time (sec) =  0.546708
+                         (mark transformations for output) time (sec) =  0.529240
+                         (check the isModifiedFlag in each IR node) time (sec) =  0.130703
+                    AST Comment Processing: time (sec) =  0.020377
+     AST Consistancy Tests: time (sec) =  9.429836
+     AST Object Code Generation (backend): time (sec) =  0.756793
+          AST Code Generation (unparsing): time (sec) =  0.009177
+          AST Backend Compilation (SgProject): time (sec) =  0.744890
+               AST Object Code Generation (compile output): time (sec) =  0.743146
+\end{verbatim}
+}

@@ -1,0 +1,29 @@
+This directory contains code stands on its own, is not
+specific to ROSE, but which we use and wish to avoid having
+be separate from the ROSE distribution.  Usually the tools
+are small and not large enough to justify separate distributions
+outside of ROSE.  They could be useful to external project and
+we welcome there use by others. All of ROSE is open source,
+though we have some dependence on EDG for C and C++ at present
+and so clearly the EDG work is not open source.
+
+dot2gml: contains a translator from dot to gml.
+
+graphicalUserInterface: contains the initial version of QRose (which
+   will be replace by a later version this summer from Gabriel Coutinho at
+   Imperial College London).
+
+graphics: contains a templated graph class based on STL
+   and adapted from an STL book (referenced in the source code).
+   This might be the graph class that we use in ROSE.
+
+tview: Text visualization (reads embedded codes in text to
+   highlight the test). See the tview/README file for more
+   details.
+
+visualization: this is the old dot2gl program that has been
+   replaced by our use of zgrviewer for the visualization of 
+   dot graphs).
+
+
+

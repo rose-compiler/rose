@@ -1,0 +1,5 @@
+AssignmentReturnConstThis: assignmentReturnConstThisTest1.C:7.1-49: SgMemberFunctionDeclaration: Finding assignment operators that do not return constant references to this
+AssignmentReturnConstThis: assignmentReturnConstThisTest1.C:14.3-46: SgMemberFunctionDeclaration: Finding assignment operators that do not return constant references to this
+AssignmentReturnConstThis: assignmentReturnConstThisTest1.C:19.3-41: SgMemberFunctionDeclaration: Finding assignment operators that do not return constant references to this
+AssignmentReturnConstThis: assignmentReturnConstThisTest1.C:24.3-49: SgMemberFunctionDeclaration: Finding assignment operators that do not return constant references to this
+AssignmentReturnConstThis: assignmentReturnConstThisTest1.C:29.3-51: SgMemberFunctionDeclaration: Finding assignment operators that do not return constant references to this

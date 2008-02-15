@@ -1,0 +1,96 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Explicit Test For Non Boolean Value}
+\label{ExplicitTestForNonBooleanValue::overview}
+
+   This test examines all the test statements whether there is a statement that calls a function call returning a non-boolean value and that does not compare the return value to an explicit value.
+   For example, if a function \texttt{foo()} returns an integer value and the function is used in a conditional statement, such as \texttt{"if", "while", "do-while", "for"}, or the first operand of "?" operator, the boolean expressions in the conditional statement should always use an explicit test of equality or non-equality. Therefore the following code can pass this checker:
+
+\begin{verbatim}
+	if(foo()!=0)
+	{// do something}
+\end{verbatim}
+
+whereas, 
+\begin{verbatim}
+	if(foo())
+	{// do something}
+\end{verbatim}
+
+will be caught by this checker because \texttt{foo()} returns an integer, non-boolean value.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+None   
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+This pattern is detected using a simple traversal. It traverses AST to search conditional statements and if an implicit expression is used in the test, AST contains a casting expression node underneath the conditional statement to convert from a non-boolean values to a boolean value. The checker captures this structure.
+
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+int bar();
+
+void foo()
+{
+  int i;
+  if(bar())
+    i = 2;
+
+  while(bar())
+    i = 3;
+
+  do {
+    i = 4;
+  } while(bar());
+
+  for(i=0; bar(); i++)
+    i =5;
+
+  i = (bar() ? 6 : 7);
+
+  for(i = (bar() ? 8 : 9); bar(); i++)
+    i = 10;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+	if(foo()!=0)
+	{// do something}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Check if a node is a conditional statement
+\item Check further if the conditional statement contains an implicit expression.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The Programming Research Group, High-Integrity C++ Coding Standard Manual, Item 5.2: ``For boolean epressions('if', 'for', 'while', 'do' and the first operand of the ternary operator '?:') involving non-boolean values, always use an explicit test of equality or non-equality."

@@ -1,0 +1,6 @@
+OFILES = ArrayPaddingTransform.o aptScope.o arrayDeclInfo.o \
+		arrayRefInfo.o 
+
+CLASSFILES = 
+
+

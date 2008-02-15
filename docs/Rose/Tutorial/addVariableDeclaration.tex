@@ -1,0 +1,92 @@
+\chapter{Adding a Variable Declaration}
+
+   Figure~\ref{Tutorial:exampleAddVariableDeclaration} shows the low level
+construction of an AST fragment (a variable declaration) and its insertion 
+into the AST at the top of each block.  Note that the code does not handle 
+symbol table issues.
+
+   Building a variable declaration directly from SAGE III.
+
+\fixme{The input code should use the LowLevelRewrite classes instead of the 
+       still lower level AST nodes member functions directly.}
+
+\fixme{Both this section and the next section (adding a function declaration)
+       and the section(s) specific to the string based rewrite mechanism
+       could be subsections of a section on AST Rewrite Mechanisms.}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code to read an input program and add a new variable 
+         declaration at the top of each block.}
+\label{Tutorial:exampleAddVariableDeclaration}
+\end{figure}
+
+
+   Figure~\ref{Tutorial:exampleInputCode_AddVariableDeclaration} shows the
+input code used to get the translator.
+Figure~\ref{Tutorial:exampleOutput_AddVariableDeclaration} shows the resulting output.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_AddVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AddVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to translator adding new variable.}
+\label{Tutorial:exampleInputCode_AddVariableDeclaration}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_AddVariableDeclaration.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_AddVariableDeclaration.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to translator adding new variable.}
+\label{Tutorial:exampleOutput_AddVariableDeclaration}
+\end{figure}
+
+

@@ -1,0 +1,20 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class FixupSourcePositionInformationSynthesizedAttribute
+*/
+/*! \name Class Members*/
+//@{
+/*!\var Sg_File_Info *FixupSourcePositionInformationSynthesizedAttribute::endingPosition
+*/
+/*!\var Sg_File_Info *FixupSourcePositionInformationSynthesizedAttribute::startingPosition
+*/
+/*!\var SgNode *FixupSourcePositionInformationSynthesizedAttribute::associatedNode
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn FixupSourcePositionInformationSynthesizedAttribute::FixupSourcePositionInformationSynthesizedAttribute()
+*/
+/*!\fn FixupSourcePositionInformationSynthesizedAttribute::FixupSourcePositionInformationSynthesizedAttribute(const FixupSourcePositionInformationSynthesizedAttribute &X)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1001543570;

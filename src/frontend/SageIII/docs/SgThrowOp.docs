@@ -1,0 +1,148 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgThrowOp
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgThrowOp
+\brief This class represents the C++ throw expression (handled as a unary operator).
+    This class represents three different approaches to the use of the throw 
+expression within a C++ program. 
+   1) throw expression (with specified function)
+   2) throw exceoption specification (with list of types to throw)
+   3) rethrow current exception (specified as simply "throw;")
+The constructor takes the parameters required to empliment these three kinds of throws.
+\internal We should perhaps define specialized constructors for each kind of throw.
+\todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
+    pointer to lists.
+\todo Consider that get_type() returns a SgDefalutType and should return the SgType 
+    associated with the last expression in the list (research details of the list of
+    pointers in the C++ throw operator).
+\sa
+\ref SgThrowOp_create "Example:create an SgThrowOp object"
+\ref SgThrowOp_usage  "Example of using a SgThrowOp object"
+\sa
+\ref SgThrowOp_usage  "Example throw in C++ example"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgThrowOp data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgThrowOp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+      NOT IMPELEMENTED IN C++ SOURCE CODE
+\fn SgThrowOp::SgThrowOp (const SgThrowOp &X)
+\brief Copy constructor (made private to prevent being called by accident).
+*/
+/*!
+\fn SgThrowOp::~SgThrowOp()
+\brief This is the destructor.
+   Only the Sg_File_Info object can be deleted in this object.
+*/
+/*!
+\fn SgThrowOp::isSgThrowOp (SgNode *s)
+\brief Cast function (from derived class to SgThrowOp pointer).
+   This functions returns a SgThrowOp pointer for any input of a 
+pointer to an object derived from a SgThrowOp.
+\return Returns valid pointer to SgThrowOp if input is derived from a SgThrowOp.
+*/
+/*!
+\fn SgThrowOp::isSgThrowOp (const SgNode *s)
+\brief Cast function (from derived class to SgThrowOp pointer).
+   This functions returns a SgThrowOp pointer for any input of a 
+pointer to an object derived from a SgThrowOp.
+\return Returns valid pointer to SgThrowOp if input is derived from a SgThrowOp.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgTypePtrListPtr SgThrowOp::p_typeList
+\brief This list of types required to support the exception-specification throw.
+   The throw operator can take a list of types, this is called and 
+exception-specification throw (see C++ specification for details).
+*/
+/*!
+\var enum SgThrowOp::e_throw_kind SgThrowOp::p_throwKind
+\brief This enum value classifies the throw as either of three different kinds.
+   This variable is used to classify the throw and either:
+   #) throw expression (with specified function)
+   #) throw exceoption specification (with list of types to throw)
+   #) rethrow current exception (specified as simply "throw;")
+which are used internally to guide the unparsing and interogation of
+the IR node.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgThrowOp::SgThrowOp(Sg_File_Info *startOfConstruct,SgExpression *operand_i=(0),SgType *expression_type=(0),SgTypePtrListPtr typeList=(0),enum SgThrowOp::e_throw_kind throwKind=SgThrowOp::unknown_throw)
+\brief This is the only constructor.
+   This constructor builds the SgThrowOp base class.
+\param startOfConstruct represents the position in the source code
+\sa 
+\ref SgThrowOp_create "Example:create an SgThrowOp object"
+\ref SgThrowOp_usage  "Example of using a SgThrowOp object"
+*/
+/*!\fn SgThrowOp::SgThrowOp(const SgThrowOpStorageClass &source)
+*/
+/*!\fn inline static void SgThrowOp::operator delete(void *pointer)
+*/
+/*!\fn static SgThrowOp *SgThrowOp::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgThrowOp::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgThrowOp::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgThrowOp::initializeStorageClassArray(SgThrowOpStorageClass *storageArray)
+*/
+/*!\fn static void SgThrowOp::clearMemoryPool()
+*/
+/*!\fn static void SgThrowOp::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgThrowOp::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgThrowOp::roseRTI()
+*/
+/*!\fn virtual SgNode *SgThrowOp::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgThrowOp::~SgThrowOp()
+*/
+/*!\fn virtual inline int SgThrowOp::precedence() const
+*/
+/*!\fn virtual void SgThrowOp::post_construction_initialization()
+*/
+/*!\fn void SgThrowOp::set_throwKind(enum SgThrowOp::e_throw_kind throwKind)
+\description See  throwKind)
+throwKind for documentation */
+/*!\fn void SgThrowOp::set_typeList(SgTypePtrListPtr typeList)
+\description See  typeList)
+typeList for documentation */
+/*!
+\fn SgTypePtrListPtr SgThrowOp::get_typeList() const
+\brief Return internal pointer to SgTypePtrList (STL list of SgType pointers).
+   Return internal pointer to SgTypePtrList (STL list of SgType pointers).
+See  const
+typeList for documentation \return Returns valid pointer to SgTypePtrList.
+*/
+/*!\fn enum SgThrowOp::e_throw_kind SgThrowOp::get_throwKind() const
+\description See  const
+throwKind for documentation */
+/*!\fn virtual SgNode *SgThrowOp::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgThrowOp::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgThrowOp::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgThrowOp::get_numberOfTraversalSuccessors()
+\description See  SgThrowOp::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgThrowOp::get_traversalSuccessorContainer()
+\description See  SgThrowOp::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgThrowOp::get_traversalSuccessorNamesContainer()
+\description See  SgThrowOp::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgThrowOp::SgThrowOp(SgExpression *operand_i,SgType *expression_type,SgTypePtrListPtr typeList,enum SgThrowOp::e_throw_kind throwKind)
+*/
+//@}
+int SAGE_Doxygen_Dummy_139951546727386;

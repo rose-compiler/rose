@@ -1,0 +1,233 @@
+COMPILER Pascal
+/* J & W Pascal - not Turbo Pascal */
+/* This grammar is not LL(1) */
+
+CHARACTERS
+  eol      = CHR(13) .
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit    = "0123456789".
+  noQuote1 = ANY - "'" - eol .
+
+IGNORE CHR(9) .. CHR(13)
+IGNORE CASE
+
+COMMENTS FROM "(*" TO "*)"
+COMMENTS FROM "{" TO "}"
+
+TOKENS
+  identifier  =  letter { letter | digit } .
+  integer     =  digit { digit } | digit { digit }  CONTEXT ("..") .
+  real        =  digit { digit } "." digit { digit }
+                 [ "E" ["+" | "-"] digit { digit } ]
+                 |  digit { digit } "E" ["+" | "-"] digit { digit }  .
+  string      = "'" { noQuote1 | "''" } "'" .
+
+PRODUCTIONS
+
+  Pascal            = "program"  NewIdent [ ExternalFiles ] ";"
+                      Block "." .
+
+  ExternalFiles     = "(" NewIdentList ")" .
+
+  Block             =  DeclarationPart StatementPart .
+
+  DeclarationPart   = LabelDeclarations ConstDefinitions
+                      TypeDefinitions VarDeclarations
+                      { ProcDeclarations } .
+
+/* -------------------------------------------------------------------- */
+
+  LabelDeclarations = [ "label" Labels ";" ] .
+
+  Labels            = Label { "," Label } .
+
+  Label             = UnsignedInt .
+
+/* -------------------------------------------------------------------- */
+
+  ConstDefinitions  = [ "const" ConstDef { ConstDef } ] .
+
+  ConstDef          = NewIdent "=" Constant ";" .
+
+  Constant          = [ "+" | "-" ] ( UnsignedNumber | ConstIdent ) | String .
+
+  UnsignedNumber    = UnsignedInt | UnsignedReal .
+
+  ConstIdent        = identifier .
+
+/* -------------------------------------------------------------------- */
+
+  TypeDefinitions   = [ "type" TypeDef { TypeDef } ] .
+
+  TypeDef           = NewIdent "=" Type ";" .
+
+  Type              = SimpleType | [ "packed" ] StructType | "^" TypeIdent .
+
+  SimpleType        = TypeIdent | EnumerationType | SubrangeType .
+
+  TypeIdent         = identifier .
+
+  EnumerationType   = "(" NewIdentList ")" .
+
+  SubrangeType      = Constant ".." Constant .
+
+  StructType        = ArrayType | RecordType | SetType | FileType .
+
+  ArrayType         = "array" "[" IndexList "]" "of" Type .
+
+  IndexList         = SimpleType { "," SimpleType } .
+
+  RecordType        = "record" FieldList "end" .
+
+  SetType           = "set" "of" SimpleType .
+
+  FileType          = "file" "of" Type .
+
+  FieldList         = [ ( fixedPart [ ";" VariantPart ] | VariantPart ) [ ";" ] ] .
+
+  fixedPart         = RecordSection { ";" RecordSection } .
+
+  RecordSection     = NewIdentList ":" Type .
+
+  VariantPart       = "case" VariantSelector "of" Variant { ";" Variant } .
+
+  VariantSelector   = [ NewIdent ":" ] TypeIdent .
+
+  Variant           = CaseLabelList ":" "(" FieldList ")" .
+
+/* -------------------------------------------------------------------- */
+
+  VarDeclarations   = [ "var" VarDecl { VarDecl } ] .
+
+  VarDecl           = NewIdentList ":" Type ";" .
+
+/* -------------------------------------------------------------------- */
+
+  ProcDeclarations  = ( ProcHeading | FuncHeading ) ";" Body ";" .
+
+  ProcHeading       = "procedure" NewIdent [ FormalParams ] .
+
+  FuncHeading       = "function" NewIdent [ FormalParams ] ReturnType .
+
+  ReturnType        = [ /* empty if forward referenced */ ":" TypeIdent ] .
+
+  Body              = Block | "forward" .
+
+  FormalParams      = "(" FormalSection { ";" FormalSection } ")"  .
+
+  FormalSection     = [ "var" ] ParamGroup | ProcHeading | FuncHeading .
+
+  ParamGroup        = NewIdentList ":" ParamType .
+
+  ParamType         =   TypeIdent
+                      | "array" "[" IndexSpecList "]" "of" ParamType
+                      | "packed" "array" "[" IndexSpec "]" "of" TypeIdent .
+
+  IndexSpecList     = IndexSpec { ";" IndexSpec } .
+
+  IndexSpec         = NewIdent ".." NewIdent ":" TypeIdent .
+
+/* -------------------------------------------------------------------- */
+
+  StatementPart     = CompoundStatement .
+
+  CompoundStatement = "begin" StatementSequence "end" .
+
+  StatementSequence = Statement { ";" Statement } .
+
+  Statement         = [ Label ":" ]
+                      [   AssignmentOrCall
+                        | CompoundStatement
+                        | GotoStatement
+                        | WhileStatement
+                        | RepeatStatement
+                        | IfStatement
+                        | CaseStatement
+                        | ForStatement
+                        | WithStatement ] .
+
+  AssignmentOrCall  = Designator ( ":=" Expression | [ ActualParams ] ) .
+
+  ActualParams      = "(" ActualParameter { "," ActualParameter } ")" .
+
+  ActualParameter   = Expression [ FieldWidth /* only in i/o */ ] .
+
+  FieldWidth        = ":" IntegerExpression [ ":" IntegerExpression ] .
+
+  GotoStatement     = "goto" Label .
+
+  WhileStatement    = "while" BooleanExpression "do" Statement .
+
+  RepeatStatement   = "repeat" StatementSequence "until" BooleanExpression .
+
+  IfStatement       = "if" BooleanExpression "then" Statement
+                      [ "else" Statement ] .
+
+  CaseStatement     = "case" OrdinalExpression "of" CaseList "end" .
+
+  CaseList          = OneCase { ";" OneCase } [ ";" ] .
+
+  OneCase           = CaseLabelList ":" Statement .
+
+  CaseLabelList     = CaseLabel { "," CaseLabel } .
+
+  CaseLabel         = Constant .
+
+  ForStatement      = "for" ControlVariable ":=" OrdinalExpression
+                      ( "to" | "downto" ) OrdinalExpression "do" Statement .
+
+  ControlVariable   = identifier .
+
+  WithStatement     = "with" RecVarList "do" Statement .
+
+  RecVarList        = Designator { "," Designator } .
+
+/* -------------------------------------------------------------------- */
+
+  IntegerExpression = Expression .
+
+  BooleanExpression = Expression .
+
+  OrdinalExpression = Expression .
+
+  Expression        = SimpleExpression [ RelOp SimpleExpression ] .
+
+  RelOp             = "=" | "<" | ">" | "<=" | ">=" | "<>" | "in" .
+
+  SimpleExpression  = ( "+" Term | "-" Term | Term ) { AddOp Term } .
+
+  AddOp             = "+" | "-" | "or" .
+
+  Term              = Factor { MulOp Factor } .
+
+  MulOp             = "*" | "/" | "div" | "mod" | "and" .
+
+  Factor            =   Designator [ ActualParams ]
+                      | UnsignedLiteral
+                      | SetConstructor
+                      | "(" Expression ")"
+                      | "not" Factor .
+
+  Designator        = identifier { "." identifier | "[" ExpList "]" | "^" } .
+
+  ExpList           = Expression { "," Expression } .
+
+  UnsignedLiteral   = UnsignedNumber | "nil" | String .
+
+  SetConstructor    = "[" Member { "," Member } "]" .
+
+  Member            = Expression [ ".." Expression ] .
+
+/* -------------------------------------------------------------------- */
+
+  NewIdentList      = NewIdent { "," NewIdent } .
+
+  NewIdent          = identifier .
+
+  UnsignedInt       = integer .
+
+  UnsignedReal      = real .
+
+  String            = string .
+
+END Pascal.

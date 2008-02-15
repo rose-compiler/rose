@@ -1,0 +1,57 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{[No Reference] Computational Functions}
+
+This analysis computes the amount of floating point, integer, floating point pointer and
+integer pointer operations within each function. If the value is larger than
+specified, than a warning is triggered. The analysis helps to identify functions
+with high computatuional value.
+
+
+\subsection{Non-Compliant Code Examples}
+\begin{verbatim}
+void fail() {
+  int x=4;
+  int y=x+5+7;
+  int *z = &x;
+  y = *z+*z+6+8+9;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+\begin{verbatim}
+void pass() {
+  int x= 4;
+  int y = x+5+7;
+}
+\end{verbatim}
+
+
+
+\subsection{Parameter Requirements}
+
+computationalFunctions.maxIntOps defines the maximum of integer operations permitted.
+computationalFunctions.maxFloatOps defines the maximum of floating point operations permitted.
+
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+The implementation checks for the following direct types:
+\begin{itemize}
+\item SgAddOp
+\item SgSubtractOp
+\item SgDivideOp
+\item SgMultiplyOp
+\end{itemize}
+
+The implementation checks for the following indirect types:
+\begin{itemize}
+\item SgCastExp - operations hidden behind cast
+\item SgVarRefExp - variable operations
+\item SgPointerDerefExp - pointer operations
+\item SgPntrArrRefExp - array operations
+\end{itemize}
+
+\subsection{References}
+

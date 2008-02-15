@@ -1,0 +1,2 @@
+FloatForLoopCounter: floatForLoopCounterTest1.C:4.8-18: SgVariableDeclaration: This checker checks that floating point variables are not used as for loop counters
+FloatForLoopCounter: floatForLoopCounterTest1.C:8.8-15: SgVariableDeclaration: This checker checks that floating point variables are not used as for loop counters

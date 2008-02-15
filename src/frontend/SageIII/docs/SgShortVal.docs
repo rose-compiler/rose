@@ -1,0 +1,71 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgShortVal
+*/
+/*! \name Class Members*/
+//@{
+/*!\var short SgShortVal::p_value
+*/
+/*!\var std::string SgShortVal::p_valueString
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgShortVal::SgShortVal(Sg_File_Info *startOfConstruct,short value=0,std::string valueString=(""))
+*/
+/*!\fn SgShortVal::SgShortVal(const SgShortValStorageClass &source)
+*/
+/*!\fn inline static void SgShortVal::operator delete(void *pointer)
+*/
+/*!\fn static SgShortVal *SgShortVal::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgShortVal::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgShortVal::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgShortVal::initializeStorageClassArray(SgShortValStorageClass *storageArray)
+*/
+/*!\fn static void SgShortVal::clearMemoryPool()
+*/
+/*!\fn static void SgShortVal::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgShortVal::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgShortVal::roseRTI()
+*/
+/*!\fn virtual SgNode *SgShortVal::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgShortVal::~SgShortVal()
+*/
+/*!\fn virtual void SgShortVal::post_construction_initialization()
+*/
+/*!\fn void SgShortVal::set_value(short value)
+\description See  value)
+value for documentation */
+/*!\fn void SgShortVal::set_valueString(std::string valueString)
+\description See  valueString)
+valueString for documentation */
+/*!\fn short SgShortVal::get_value() const
+\description See  const
+value for documentation */
+/*!\fn std::string SgShortVal::get_valueString() const
+\description See  const
+valueString for documentation */
+/*!\fn virtual SgNode *SgShortVal::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgShortVal::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgShortVal::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgShortVal::get_numberOfTraversalSuccessors()
+\description See  SgShortVal::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgShortVal::get_traversalSuccessorContainer()
+\description See  SgShortVal::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgShortVal::get_traversalSuccessorNamesContainer()
+\description See  SgShortVal::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgShortVal::SgShortVal(short value,std::string valueString)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_492219829;

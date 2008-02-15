@@ -1,0 +1,301 @@
+\chapter{Appendix}
+
+   This appendix includes information useful in supporting 
+the ROSE Tutorial.
+
+\section{Location of To Do List}
+
+   This was an older location for the Tutorial Tod List.
+We now keep the Tod list in the 
+{\tt ROSE/docs/testDoxygen/ProjectToDoList.docs } in the section
+called: {\tt ROSE Tutorial Todo List}.
+
+
+\section{Abstract Grammar}
+
+In this section we show an abstract grammar for the ROSE AST. The grammar
+generates the set of all ASTs. On the left hand side of a production
+we have a non-terminal that corresponds to an inner node of the class
+hierarchy. On the right hand side of a production we have either one
+non-terminal or one terminal. The terminal corresponds to a leaf-node
+where the children of the respective node are listed as double-colon
+separated pairs, consisting of an access name (= name for get
+function) and a name that directly corresponds to the class of the
+child. Details like pointers are hidden. The asterisk shows where
+lists of children (containers) are used in the ROSE AST. For each terminal, a name followed by '(' and ')', a variant exists in ROSE with the prefix \verb+V_+ that can be obtained by using the function variantT() on a node. Note, that concrete classes of AST nodes directly correspond to terminals and base classes to non-terminals.
+
+\begin{verbatim}
+START:SgNode
+SgNode : SgSupport
+ | SgLocatedNode
+ | SgSymbol
+ ;
+
+SgSupport : SgName()
+ | SgSymbolTable()
+ | SgInitializedName ( initptr:SgInitializer )
+ | SgFile ( root:SgGlobal ( declarations:SgDeclarationStatement* ) )
+ | SgProject ( fileList:SgFile ( root:SgGlobal ( declarations:SgDeclarationStatement* ) ) )
+ | SgOptions()
+ | SgBaseClass ( base_class:SgClassDeclaration )
+ | SgTemplateParameter ( expression:SgExpression, defaultExpressionParameter:SgExpression, 
+                         templateDeclaration:SgTemplateDeclaration(), 
+                         defaultTemplateDeclarationParameter:SgTemplateDeclaration() )
+ | SgTemplateArgument ( expression:SgExpression, 
+                        templateInstantiation:SgTemplateInstantiationDecl 
+                           ( definition:SgClassDefinition ) )
+ | SgFunctionParameterTypeList()
+ | SgAttribute
+ | SgModifier
+ ;
+
+SgAttribute : SgPragma()
+ | SgBitAttribute
+ ;
+
+SgBitAttribute : SgFuncDecl_attr()
+ | SgClassDecl_attr()
+ ;
+
+SgModifier : SgModifierNodes()
+ | SgConstVolatileModifier()
+ | SgStorageModifier()
+ | SgAccessModifier()
+ | SgFunctionModifier()
+ | SgUPC_AccessModifier()
+ | SgSpecialFunctionModifier()
+ | SgElaboratedTypeModifier()
+ | SgLinkageModifier()
+ | SgBaseClassModifier()
+ | SgDeclarationModifier()
+ ;
+
+SgLocatedNode : SgStatement
+ | SgExpression
+ ;
+
+SgStatement : SgExprStatement ( expression_root:SgExpressionRoot ( operand_i:SgExpression ) )
+ | SgLabelStatement()
+ | SgCaseOptionStmt ( key_root:SgExpressionRoot ( operand_i:SgExpression ), 
+                      body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgTryStmt ( body:SgBasicBlock ( statements:SgStatement* ), 
+               catch_statement_seq_root:SgCatchStatementSeq ( catch_statement_seq:SgStatement* ) )
+ | SgDefaultOptionStmt ( body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgBreakStmt()
+ | SgContinueStmt()
+ | SgReturnStmt ( expression_root:SgExpressionRoot ( operand_i:SgExpression ) )
+ | SgGotoStatement()
+ | SgSpawnStmt ( the_func_root:SgExpressionRoot ( operand_i:SgExpression ) )
+ | SgForInitStatement ( init_stmt:SgStatement* )
+ | SgCatchStatementSeq ( catch_statement_seq:SgStatement* )
+ | SgClinkageStartStatement()
+ | SgDeclarationStatement
+ | SgScopeStatement
+ ;
+
+SgDeclarationStatement : 
+   SgVariableDeclaration ( variables:SgInitializedName ( initptr:SgInitializer ) )
+ | SgVariableDefinition ( vardefn:SgInitializedName ( initptr:SgInitializer ), 
+                          bitfield:SgUnsignedLongVal() )
+ | SgEnumDeclaration()
+ | SgAsmStmt ( expr_root:SgExpressionRoot ( operand_i:SgExpression ) )
+ | SgTemplateDeclaration()
+ | SgNamespaceDeclarationStatement ( definition:SgNamespaceDefinitionStatement 
+                                          ( declarations:SgDeclarationStatement* ) 
+                                   )
+ | SgNamespaceAliasDeclarationStatement()
+ | SgUsingDirectiveStatement()
+ | SgUsingDeclarationStatement()
+ | SgFunctionParameterList ( args:SgInitializedName ( initptr:SgInitializer ) )
+ | SgCtorInitializerList ( ctors:SgInitializedName ( initptr:SgInitializer ) )
+ | SgPragmaDeclaration ( pragma:SgPragma() )
+ | SgClassDeclaration
+ | SgFunctionDeclaration
+ ;
+
+SgClassDeclaration : SgTemplateInstantiationDecl ( definition:SgClassDefinition )
+ ;
+
+SgFunctionDeclaration : 
+   SgTemplateInstantiationFunctionDecl ( parameterList:SgFunctionParameterList 
+                                           ( args:SgInitializedName ( initptr:SgInitializer ) ), 
+                                             definition:SgFunctionDefinition
+                                                ( body:SgBasicBlock ( statements:SgStatement* ) )
+                                       )
+ | SgMemberFunctionDeclaration
+ ;
+
+SgMemberFunctionDeclaration : 
+    SgTemplateInstantiationMemberFunctionDecl ( parameterList:SgFunctionParameterList 
+                                                  ( args:SgInitializedName ( initptr:SgInitializer ) ), 
+                                                definition:SgFunctionDefinition 
+                                                  ( body:SgBasicBlock ( statements:SgStatement* ) ), 
+                                                CtorInitializerList:SgCtorInitializerList 
+                                                  ( ctors:SgInitializedName ( initptr:SgInitializer ) ) 
+                                              )
+ ;
+
+SgScopeStatement : SgGlobal ( declarations:SgDeclarationStatement* )
+ | SgBasicBlock ( statements:SgStatement* )
+ | SgIfStmt ( conditional:SgStatement, 
+              true_body:SgBasicBlock ( statements:SgStatement* ), 
+              false_body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgForStatement ( for_init_stmt:SgForInitStatement ( init_stmt:SgStatement* ), 
+                    test_expr_root:SgExpressionRoot ( operand_i:SgExpression ), 
+                    increment_expr_root:SgExpressionRoot ( operand_i:SgExpression ), 
+                    loop_body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgFunctionDefinition ( body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgWhileStmt ( condition:SgStatement, body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgDoWhileStmt ( condition:SgStatement, body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgSwitchStatement ( item_selector_root:SgExpressionRoot ( operand_i:SgExpression ), 
+                       body:SgBasicBlock ( statements:SgStatement* ) )
+ | SgCatchOptionStmt ( condition:SgVariableDeclaration
+                                      ( variables:SgInitializedName ( initptr:SgInitializer ) ), 
+                                        body:SgBasicBlock ( statements:SgStatement* ) 
+                     )
+ | SgNamespaceDefinitionStatement ( declarations:SgDeclarationStatement* )
+ | SgClassDefinition
+ ;
+
+SgClassDefinition : SgTemplateInstantiationDefn ( members:SgDeclarationStatement* )
+ ;
+
+SgExpression : SgExprListExp ( expressions:SgExpression* )
+ | SgVarRefExp()
+ | SgClassNameRefExp()
+ | SgFunctionRefExp()
+ | SgMemberFunctionRefExp()
+ | SgFunctionCallExp ( function:SgExpression, args:SgExprListExp ( expressions:SgExpression* ) )
+ | SgSizeOfOp ( operand_expr:SgExpression )
+ | SgConditionalExp ( conditional_exp:SgExpression, 
+                      true_exp:SgExpression, 
+                      false_exp:SgExpression )
+ | SgNewExp ( placement_args:SgExprListExp ( expressions:SgExpression* ), 
+              constructor_args:SgConstructorInitializer(
+                                           args:SgExprListExp(expressions:SgExpression*)
+                                                       ), 
+              builtin_args:SgExpression )
+ | SgDeleteExp ( variable:SgExpression )
+ | SgThisExp()
+ | SgRefExp()
+ | SgVarArgStartOp ( lhs_operand:SgExpression, rhs_operand:SgExpression )
+ | SgVarArgOp ( operand_expr:SgExpression )
+ | SgVarArgEndOp ( operand_expr:SgExpression )
+ | SgVarArgCopyOp ( lhs_operand:SgExpression, rhs_operand:SgExpression )
+ | SgVarArgStartOneOperandOp ( operand_expr:SgExpression )
+ | SgInitializer
+ | SgValueExp
+ | SgBinaryOp
+ | SgUnaryOp
+ ;
+
+SgInitializer : 
+   SgAggregateInitializer ( initializers:SgExprListExp ( expressions:SgExpression* ) )
+ | SgConstructorInitializer ( args:SgExprListExp ( expressions:SgExpression* ) )
+ | SgAssignInitializer ( operand_i:SgExpression )
+ ;
+
+SgValueExp : SgBoolValExp()
+ | SgStringVal()
+ | SgShortVal()
+ | SgCharVal()
+ | SgUnsignedCharVal()
+ | SgWcharVal()
+ | SgUnsignedShortVal()
+ | SgIntVal()
+ | SgEnumVal()
+ | SgUnsignedIntVal()
+ | SgLongIntVal()
+ | SgLongLongIntVal()
+ | SgUnsignedLongLongIntVal()
+ | SgUnsignedLongVal()
+ | SgFloatVal()
+ | SgDoubleVal()
+ | SgLongDoubleVal()
+ ;
+
+SgBinaryOp : SgArrowExp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgDotExp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgDotStarOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgArrowStarOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgEqualityOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgLessThanOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgGreaterThanOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgNotEqualOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgLessOrEqualOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgGreaterOrEqualOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgAddOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgSubtractOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgMultiplyOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgDivideOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgIntegerDivideOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgModOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgAndOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgOrOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgBitXorOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgBitAndOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgBitOrOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgCommaOpExp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgLshiftOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgRshiftOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgPntrArrRefExp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgScopeOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgPlusAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgMinusAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgAndAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgIorAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgMultAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgDivAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgModAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgXorAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgLshiftAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ | SgRshiftAssignOp ( lhs_operand_i:SgExpression, rhs_operand_i:SgExpression )
+ ;
+
+SgUnaryOp : SgExpressionRoot ( operand_i:SgExpression )
+ | SgMinusOp ( operand_i:SgExpression )
+ | SgUnaryAddOp ( operand_i:SgExpression )
+ | SgNotOp ( operand_i:SgExpression )
+ | SgPointerDerefExp ( operand_i:SgExpression )
+ | SgAddressOfOp ( operand_i:SgExpression )
+ | SgMinusMinusOp ( operand_i:SgExpression )
+ | SgPlusPlusOp ( operand_i:SgExpression )
+ | SgBitComplementOp ( operand_i:SgExpression )
+ | SgCastExp ( operand_i:SgExpression )
+ | SgThrowOp ( operand_i:SgExpression )
+ ;
+
+SgSymbol : SgVariableSymbol()
+ | SgClassSymbol ( declaration:SgClassDeclaration )
+ | SgTemplateSymbol ( declaration:SgTemplateDeclaration() )
+ | SgEnumSymbol ( declaration:SgEnumDeclaration() )
+ | SgEnumFieldSymbol()
+ | SgLabelSymbol ( declaration:SgLabelStatement() )
+ | SgDefaultSymbol()
+ | SgNamespaceSymbol ( declaration:SgNamespaceDeclarationStatement 
+                       ( definition:SgNamespaceDefinitionStatement 
+                          ( declarations:SgDeclarationStatement* ) 
+                       ) 
+                     )
+ | SgFunctionSymbol
+ ;
+
+SgFunctionSymbol : SgMemberFunctionSymbol ( declaration:SgFunctionDeclaration )
+ ;
+
+SgPartialFunctionType : 
+   SgPartialFunctionModifierType ( ref_to:SgReferenceType, ptr_to:SgPointerType, 
+                                   modifiers:SgModifierNodes(), typedefs:SgTypedefSeq, 
+                                   return_type:SgType, orig_return_type:SgType )
+ ;
+
+\end{verbatim}
+
+This grammar was generated with GRATO, a grammar transformation tool,
+written by Markus Schordan. The input is a representation generated by
+ROSETTA. Several other versions of the grammar can be generated as
+well, such as eliminating nested tree nodes by introducing auxiliary
+non-terminals, introducing base types as non-terminals etc. Additionally from
+that grammar we can also generate grammars that can be used with yacc/bison, Coco, and other attribute grammar tools, as well as tree grammar based tools such as burg (requires a transformation to a binary tree).
+

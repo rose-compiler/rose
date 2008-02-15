@@ -1,0 +1,66 @@
+/**********************************************************
+**   PRETTY.ATG
+**   Coco/R C Taste Pretty Printer Example.
+**   Adapted to C++ by Frankie Arzu <farzu@uvg.edu.gt>
+**      from Moessenboeck's (1990) Oberon example
+**
+**   May 24, 1996  Version 1.06
+**   Oct 11, 1997  Version 1.07 (No change)
+**   Mar 31, 1998  Version 1.08 (No change)
+**********************************************************/
+
+$C /* Generate main module */
+
+COMPILER Slang
+/* Taste pretty printer */
+
+#include <stdio.h>
+#include "prettypr.h"
+#include "slangs.h"
+
+void WriteIdent()
+{
+    char IdentName[20];
+    LexString(IdentName, sizeof(IdentName)-1);
+    Append(IdentName);
+}
+
+void WriteNumber()
+{
+    char IdentName[20];
+    LexString(IdentName, sizeof(IdentName)-1);
+    Append(IdentName);
+}
+
+/*--------------------------------------------------------------------------*/
+
+TOKENS
+  number
+
+PRODUCTIONS
+  Slang = Expression .
+
+  Expression = SimExpr .
+
+  SimExpr = Term { AddOp Term } .
+
+  Term = Factor { MulOp Factor } .
+
+  Factor
+      = (
+          | number                  (. WriteNumber(); .)
+            Factor
+        ) .
+
+  MulOp =   "*"                     (. Append(" * "); .)
+          | "/"                     (. Append(" / "); .)
+          .
+
+  AddOp =   "+"                     (. Append(" + "); .)
+          | "-"                     (. Append(" - "); .)
+          .
+
+END Slang.
+
+
+

@@ -1,0 +1,104 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeComplex
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgTypeComplex
+\brief This class represents a C99 complex type.
+   This type can be used in C++ codes by using either the new "_Complex" syntax or the
+    older syntax __complex__ (older syntax may be GNU specific).  Note that C++ codes
+can alternatively use the complex classes and avoid use of this type. This is here 
+mostly to support C99 extensions to C.
+\sa
+\ref SgTypeComplex_usage  "Example of using a SgTypeComplex object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeComplex data members
+/////////////////////////////////////////////////////////////////////////
+/* Not variables here */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypeComplex member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTypeComplex::~SgTypeComplex()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgTypeComplex::isSgTypeComplex (SgNode *s)
+\brief Cast function (from derived class to SgTypeComplex pointer).
+   This functions returns a SgTypeComplex pointer for any input of a 
+pointer to an object derived from a SgTypeComplex.
+\return Returns valid pointer to SgTypeComplex if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgTypeComplex::isSgTypeComplex (const SgNode *s)
+\brief Cast function (from derived class to SgTypeComplex pointer).
+   This functions returns a SgTypeComplex pointer for any input of a 
+pointer to an object derived from a SgTypeComplex.
+\return Returns valid pointer to SgTypeComplex if input is derived from a SgTypeComplex node.
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeComplex *SgTypeComplex::p_builtin_double_complex
+*/
+/*!\var static SgTypeComplex *SgTypeComplex::p_builtin_float_complex
+*/
+/*!\var static SgTypeComplex *SgTypeComplex::p_builtin_long_double_complex
+*/
+/*!\var enum SgTypeComplex::floating_point_precision_enum SgTypeComplex::p_precision
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!
+\fn SgTypeComplex::SgTypeComplex(const SgTypeComplexStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgTypeComplex base class.
+\sa 
+\ref SgTypeComplex_create "Example:create an SgTypeComplex object"
+*/
+/*!\fn inline static void SgTypeComplex::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeComplex *SgTypeComplex::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeComplex::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeComplex::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeComplex::initializeStorageClassArray(SgTypeComplexStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeComplex::clearMemoryPool()
+*/
+/*!\fn static void SgTypeComplex::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeComplex::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeComplex::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeComplex::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeComplex::~SgTypeComplex()
+*/
+/*!\fn void SgTypeComplex::set_precision(enum SgTypeComplex::floating_point_precision_enum precision)
+\description See  precision)
+precision for documentation */
+/*!\fn enum SgTypeComplex::floating_point_precision_enum SgTypeComplex::get_precision() const
+\description See  const
+precision for documentation */
+/*!\fn virtual SgNode *SgTypeComplex::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeComplex::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeComplex::get_numberOfTraversalSuccessors()
+\description See  SgTypeComplex::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeComplex::get_traversalSuccessorContainer()
+\description See  SgTypeComplex::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeComplex::get_traversalSuccessorNamesContainer()
+\description See  SgTypeComplex::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypeComplex::SgTypeComplex(enum SgTypeComplex::floating_point_precision_enum precision=SgTypeComplex::e_errorPrecision)
+*/
+//@}
+int SAGE_Doxygen_Dummy_235621747420763;

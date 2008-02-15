@@ -1,0 +1,11 @@
+This is the support in ROSE for java to call ROSE (by Valentin David).
+
+The std_list.i file is a fix coming from recent work on SWIG and is 
+a modified version of std_vector.i.  It contains a simpler definition
+of STL list for SWIG.
+
+testlink.cc is a program to test if all the function prototypes in 
+ROSE have corresponding definitions.  It links ROSE with the extension 
+of ROSE for JAVA.
+
+

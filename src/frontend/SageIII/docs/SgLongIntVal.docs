@@ -1,0 +1,71 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgLongIntVal
+*/
+/*! \name Class Members*/
+//@{
+/*!\var long SgLongIntVal::p_value
+*/
+/*!\var std::string SgLongIntVal::p_valueString
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgLongIntVal::SgLongIntVal(Sg_File_Info *startOfConstruct,long value=(0),std::string valueString=(""))
+*/
+/*!\fn SgLongIntVal::SgLongIntVal(const SgLongIntValStorageClass &source)
+*/
+/*!\fn inline static void SgLongIntVal::operator delete(void *pointer)
+*/
+/*!\fn static SgLongIntVal *SgLongIntVal::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgLongIntVal::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgLongIntVal::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgLongIntVal::initializeStorageClassArray(SgLongIntValStorageClass *storageArray)
+*/
+/*!\fn static void SgLongIntVal::clearMemoryPool()
+*/
+/*!\fn static void SgLongIntVal::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgLongIntVal::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgLongIntVal::roseRTI()
+*/
+/*!\fn virtual SgLongIntVal::~SgLongIntVal()
+*/
+/*!\fn virtual SgNode *SgLongIntVal::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgLongIntVal::post_construction_initialization()
+*/
+/*!\fn void SgLongIntVal::set_value(long value)
+\description See  value)
+value for documentation */
+/*!\fn void SgLongIntVal::set_valueString(std::string valueString)
+\description See  valueString)
+valueString for documentation */
+/*!\fn long SgLongIntVal::get_value() const
+\description See  const
+value for documentation */
+/*!\fn std::string SgLongIntVal::get_valueString() const
+\description See  const
+valueString for documentation */
+/*!\fn virtual SgNode *SgLongIntVal::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual SgType *SgLongIntVal::get_type() const
+\description See  const
+type for documentation */
+/*!\fn virtual size_t SgLongIntVal::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgLongIntVal::get_numberOfTraversalSuccessors()
+\description See  SgLongIntVal::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgLongIntVal::get_traversalSuccessorContainer()
+\description See  SgLongIntVal::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgLongIntVal::get_traversalSuccessorNamesContainer()
+\description See  SgLongIntVal::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgLongIntVal::SgLongIntVal(long value,std::string valueString)
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1720051843;

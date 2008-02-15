@@ -1,0 +1,54 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Paper: Cyclomatic Complexity}
+
+This is a checker to detect functions with high complexity.
+High complexity is defined by Mc Cabe's cyclomatic complexity metric.
+This metric measures the amount of branches in a function, i.e.
+through if and switch conditions.
+
+\subsection{Non-Compliant Code Examples}
+\begin{verbatim}
+void fail() {
+  int x;
+  x=5;
+  if (x>3) {
+  }
+  if (x>3) {
+  }
+  if (x>3) {
+  }
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+\begin{verbatim}
+void pass() {
+  int x;
+  x=5;
+  if (x>3) {
+  }
+}
+\end{verbatim}
+
+
+
+\subsection{Parameter Requirements}
+
+CyclomaticComplexity.maxComplexity defines the max value for the complexity analysis.
+
+\subsection{Implementation}
+
+The algorithm searches for each function the number of occurances of:
+
+\begin{verbatim}
+  if (isSgIfStmt(node) || isSgCaseOptionStmt(node) || isSgForStatement(node) || isSgDoWhileStmt(node) || isSgWhileStmt(node)) {
+    complexity++;
+  }
+\end{verbatim}
+
+\subsection{References}
+
+\htmladdnormallink{McCabe}{} , ``Thomas McCabe, A Complexity Measure - IEEE Transactions on Software Engineering, Vol SE-2, No.4, December 1976.''
+
+

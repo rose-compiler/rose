@@ -1,0 +1,81 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Uninitialized Definition}
+\label{UninitializedDefinition::overview}
+
+% write your introduction
+This test ensures that all variables are initialized at their point of
+definition. The detector will report all variable declarations without
+initializer expressions, except for some special cases:
+                                                                                                                                                                                                  
+\begin{itemize}
+\item Variables declared extern: Such declarations refer to variables defined
+elsewhere, initializers are therefore not required at this point.
+\item Variables declared static: These variables are automatically initialized
+to~0 (of the appropriate type) if no explicit initializer is present.
+\item Class member variables: The class constructor is responsible for
+initializing such variables.
+\item Variables of class type: Class objects are default-initialized if no
+explicit initializer expression is present.
+\item Variables declared at file (`global') scope: File scope declarations are
+implicitly static; they can be changed to extern by an explicit modifier. One
+of the above cases will always apply.
+\end{itemize}
+ 
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+void f_noncompliant()
+{
+    int x; // not OK, no initializer
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+struct foo {
+    int member; // OK, class member
+};
+
+void f_compliant(int n)
+{
+    int x = n; // OK, initializer present
+    static int y; // OK, static
+    struct foo st; // OK, class type (has constructor)
+    extern int not_here; // OK, extern
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each variable declaration without an initializer expression, check
+the above criteria.
+\item If none of the exceptions apply, generate a diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference for this rule is: H.~Sutter, A.~Alexandrescu: ``C++ Coding
+Standards'', Item~19: ``Always initialize variables''.

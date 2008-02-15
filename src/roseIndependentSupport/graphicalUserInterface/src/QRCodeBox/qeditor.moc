@@ -1,0 +1,183 @@
+/****************************************************************************
+** QEditor meta object code from reading C++ file 'qeditor.h'
+**
+** Created: Fri Apr 22 20:31:23 2005
+**      by: The Qt MOC ($Id: qeditor.moc,v 1.1 2005/09/03 19:37:59 dquinlan Exp $)
+**
+** WARNING! All changes made in this file will be lost!
+*****************************************************************************/
+
+#undef QT_NO_COMPAT
+#include "qeditor.h"
+#include <qmetaobject.h>
+#include <qapplication.h>
+
+#include <private/qucomextra_p.h>
+#if !defined(Q_MOC_OUTPUT_REVISION) || (Q_MOC_OUTPUT_REVISION != 26)
+#error "This file was generated using the moc from 3.3.4. It"
+#error "cannot be used with the include files from this version of Qt."
+#error "(The moc has changed too much.)"
+#endif
+
+const char *QEditor::className() const
+{
+    return "QEditor";
+}
+
+QMetaObject *QEditor::metaObj = 0;
+static QMetaObjectCleanUp cleanUp_QEditor( "QEditor", &QEditor::staticMetaObject );
+
+#ifndef QT_NO_TRANSLATION
+QString QEditor::tr( const char *s, const char *c )
+{
+    if ( qApp )
+	return qApp->translate( "QEditor", s, c, QApplication::DefaultCodec );
+    else
+	return QString::fromLatin1( s );
+}
+#ifndef QT_NO_TRANSLATION_UTF8
+QString QEditor::trUtf8( const char *s, const char *c )
+{
+    if ( qApp )
+	return qApp->translate( "QEditor", s, c, QApplication::UnicodeUTF8 );
+    else
+	return QString::fromUtf8( s );
+}
+#endif // QT_NO_TRANSLATION_UTF8
+
+#endif // QT_NO_TRANSLATION
+
+QMetaObject* QEditor::staticMetaObject()
+{
+    if ( metaObj )
+	return metaObj;
+    QMetaObject* parentObject = QTextEdit::staticMetaObject();
+    static const QUParameter param_slot_0[] = {
+	{ "line", &static_QUType_int, 0, QUParameter::In }
+    };
+    static const QUMethod slot_0 = {"doGotoLine", 1, param_slot_0 };
+    static const QUMethod slot_1 = {"configChanged", 0, 0 };
+    static const QUMethod slot_2 = {"refresh", 0, 0 };
+    static const QUParameter param_slot_3[] = {
+	{ 0, &static_QUType_ptr, "QTextCursor", QUParameter::In }
+    };
+    static const QUMethod slot_3 = {"doMatch", 1, param_slot_3 };
+    static const QUParameter param_slot_4[] = {
+	{ 0, &static_QUType_int, 0, QUParameter::In },
+	{ 0, &static_QUType_int, 0, QUParameter::In }
+    };
+    static const QUMethod slot_4 = {"slotCursorPositionChanged", 2, param_slot_4 };
+    static const QMetaData slot_tbl[] = {
+	{ "doGotoLine(int)", &slot_0, QMetaData::Public },
+	{ "configChanged()", &slot_1, QMetaData::Public },
+	{ "refresh()", &slot_2, QMetaData::Public },
+	{ "doMatch(QTextCursor*)", &slot_3, QMetaData::Private },
+	{ "slotCursorPositionChanged(int,int)", &slot_4, QMetaData::Private }
+    };
+    static const QUMethod signal_0 = {"parsed", 0, 0 };
+    static const QUParameter param_signal_1[] = {
+	{ 0, &static_QUType_ptr, "QTextParagraph", QUParameter::In }
+    };
+    static const QUMethod signal_1 = {"ensureTextIsVisible", 1, param_signal_1 };
+    static const QUParameter param_signal_2[] = {
+	{ 0, &static_QUType_varptr, "\x0e", QUParameter::In },
+	{ 0, &static_QUType_int, 0, QUParameter::In },
+	{ 0, &static_QUType_int, 0, QUParameter::In }
+    };
+    static const QUMethod signal_2 = {"rightClicked", 3, param_signal_2 };
+    static const QMetaData signal_tbl[] = {
+	{ "parsed()", &signal_0, QMetaData::Public },
+	{ "ensureTextIsVisible(QTextParagraph*)", &signal_1, QMetaData::Public },
+	{ "rightClicked(const QPoint&,int,int)", &signal_2, QMetaData::Public }
+    };
+    metaObj = QMetaObject::new_metaobject(
+	"QEditor", parentObject,
+	slot_tbl, 5,
+	signal_tbl, 3,
+#ifndef QT_NO_PROPERTIES
+	0, 0,
+	0, 0,
+#endif // QT_NO_PROPERTIES
+	0, 0 );
+    cleanUp_QEditor.setMetaObject( metaObj );
+    return metaObj;
+}
+
+void* QEditor::qt_cast( const char* clname )
+{
+    if ( !qstrcmp( clname, "QEditor" ) )
+	return this;
+    return QTextEdit::qt_cast( clname );
+}
+
+// SIGNAL parsed
+void QEditor::parsed()
+{
+    activate_signal( staticMetaObject()->signalOffset() + 0 );
+}
+
+#include <qobjectdefs.h>
+#include <qsignalslotimp.h>
+
+// SIGNAL ensureTextIsVisible
+void QEditor::ensureTextIsVisible( QTextParagraph* t0 )
+{
+    if ( signalsBlocked() )
+	return;
+    QConnectionList *clist = receivers( staticMetaObject()->signalOffset() + 1 );
+    if ( !clist )
+	return;
+    QUObject o[2];
+    static_QUType_ptr.set(o+1,t0);
+    activate_signal( clist, o );
+}
+
+// SIGNAL rightClicked
+void QEditor::rightClicked( const QPoint& t0, int t1, int t2 )
+{
+    if ( signalsBlocked() )
+	return;
+    QConnectionList *clist = receivers( staticMetaObject()->signalOffset() + 2 );
+    if ( !clist )
+	return;
+    QUObject o[4];
+    static_QUType_varptr.set(o+1,&t0);
+    static_QUType_int.set(o+2,t1);
+    static_QUType_int.set(o+3,t2);
+    activate_signal( clist, o );
+}
+
+bool QEditor::qt_invoke( int _id, QUObject* _o )
+{
+    switch ( _id - staticMetaObject()->slotOffset() ) {
+    case 0: doGotoLine((int)static_QUType_int.get(_o+1)); break;
+    case 1: configChanged(); break;
+    case 2: refresh(); break;
+    case 3: doMatch((QTextCursor*)static_QUType_ptr.get(_o+1)); break;
+    case 4: slotCursorPositionChanged((int)static_QUType_int.get(_o+1),(int)static_QUType_int.get(_o+2)); break;
+    default:
+	return QTextEdit::qt_invoke( _id, _o );
+    }
+    return TRUE;
+}
+
+bool QEditor::qt_emit( int _id, QUObject* _o )
+{
+    switch ( _id - staticMetaObject()->signalOffset() ) {
+    case 0: parsed(); break;
+    case 1: ensureTextIsVisible((QTextParagraph*)static_QUType_ptr.get(_o+1)); break;
+    case 2: rightClicked((const QPoint&)*((const QPoint*)static_QUType_ptr.get(_o+1)),(int)static_QUType_int.get(_o+2),(int)static_QUType_int.get(_o+3)); break;
+    default:
+	return QTextEdit::qt_emit(_id,_o);
+    }
+    return TRUE;
+}
+#ifndef QT_NO_PROPERTIES
+
+bool QEditor::qt_property( int id, int f, QVariant* v)
+{
+    return QTextEdit::qt_property( id, f, v);
+}
+
+bool QEditor::qt_static_property( QObject* , int , int , QVariant* ){ return FALSE; }
+#endif // QT_NO_PROPERTIES

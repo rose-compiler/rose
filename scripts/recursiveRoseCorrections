@@ -1,0 +1,21 @@
+#! /bin/csh -f
+# Note: the -f option to /bin/csh means don't execute the user's .cshrc file.
+
+# Equivalent command using find! (by Christian Weiss)
+# find . -type dir -user <enter user name> -print -exec chmod +s {} \;
+
+# echo "execute tabExpand on each directory in a hierarchy"
+
+set cdir = `pwd`
+
+# Call C++ program to expand all tabs in each file on the command line
+roseCorrections *.C *.h *.code
+
+foreach dir (*) 
+  if( -d $dir ) then
+    echo "change directory <$dir>"
+    cd $dir
+    recursiveRoseCorrections $dir
+    cd $cdir
+  endif
+end

@@ -1,0 +1,89 @@
+#--------------------------------------------------------------
+# Driver Makefile to generate a sample HPCToolkit data.
+
+CC = gcc
+CFLAGS = -O3 -g
+CLDFLAGS =
+
+COUNTERS = TOT_CYC FP_OPS L1_DCA L1_DCM L2_TCM
+
+TARGET = example
+
+#--------------------------------------------------------------
+# HPCToolkit variables
+HPCT_ROOT = $(HOME)/local/HPCToolkit/1.0.4
+HPCT_RUN = $(HPCT_ROOT)/bin/hpcrun
+HPCT_PROF = $(HPCT_ROOT)/bin/hpcprof
+HPCT_BLOOP = $(HPCT_ROOT)/bin/bloop
+HPCT_QUICK = $(HPCT_ROOT)/bin/hpcquick
+
+OUT_PROFILE = PROFILE
+OUT_ANALYSIS = ANALYSIS
+OUT_PROGRAM = PROGRAM
+OUT_BLOOP = $(OUT_PROGRAM)/$(TARGET).xml
+OUT_HPCVIEW = $(OUT_ANALYSIS)/analysis_config.hpcview
+OUT_HPCVIEWER = $(OUT_ANALYSIS)/scope_tree.hpcviewer
+
+#--------------------------------------------------------------
+AST2PDF = $(HOME)/projects/ROSE/tmp/ast2pdf/ast2pdf
+OUT_PDF = $(TARGET).c.pdf
+
+#--------------------------------------------------------------
+help:
+	@cat usage-Makefile.txt \
+		| sed "s,@COUNTERS@,$(COUNTERS),g" \
+		| sed "s,@OUT_PROFILE@,$(OUT_PROFILE),g" \
+		| sed "s,@OUT_HPCVIEWER@,$(OUT_HPCVIEWER),g" \
+		| sed "s,@OUT_PDF@,$(OUT_PDF),g" \
+		| sed "s,@OUT_BLOOP@,$(OUT_BLOOP),g" \
+		| sed "s,@TARGET@,$(TARGET),g"
+
+all: $(TARGET) profile scope analysis
+
+pdf: $(OUT_PDF)
+
+profile: $(OUT_PROFILE)
+
+scope: $(OUT_BLOOP)
+
+analysis: $(OUT_ANALYSIS)
+
+$(OUT_PDF): $(TARGET).c
+	$(AST2PDF) $(TARGET).c
+
+$(TARGET): $(TARGET).o
+	$(CC) $(CFLAGS) -o $@ $(TARGET).o
+
+$(OUT_PROFILE): $(TARGET)
+	mkdir -p $(OUT_PROFILE)
+	for c in $(COUNTERS) ; do \
+		$(HPCT_RUN) -o $(OUT_PROFILE) -e PAPI_$$c -- ./$(TARGET) 5000 ; \
+	done
+	for c in $(COUNTERS) ; do \
+		$(HPCT_PROF) --profile --recursive-directory . $(TARGET) \
+			$(OUT_PROFILE)/$(TARGET).PAPI_$$c* > $(OUT_PROFILE)/PAPI_$$c.xml ; \
+	done
+
+$(OUT_BLOOP): $(TARGET)
+	mkdir -p `dirname $@`
+	$(HPCT_BLOOP) $(TARGET) > $@
+
+$(OUT_ANALYSIS): $(OUT_BLOOP) $(OUT_PROFILE)
+	outprof_list='' ; \
+	for c in $(COUNTERS) ; do \
+		outprof_list="$${outprof_list} $(OUT_PROFILE)/PAPI_$$c.xml" ; \
+	done ; \
+	$(HPCT_QUICK) -x -I './*' -S $(OUT_BLOOP) -P $${outprof_list} ; \
+	rm -rf $(OUT_ANALYSIS) ; \
+	mv hpcquick.db $(OUT_ANALYSIS) ; \
+	mv $(OUT_ANALYSIS)/hpcquick.hpcviewer $(OUT_HPCVIEWER) ; \
+	mv hpcquick.xml $(OUT_HPCVIEW)
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+clean:
+	rm -f *.o core *~ $(TARGET) $(OUT_PDF) hpcquick.log
+	rm -rf $(OUT_PROFILE) $(OUT_PROGRAM) $(OUT_ANALYSIS)
+
+# eof

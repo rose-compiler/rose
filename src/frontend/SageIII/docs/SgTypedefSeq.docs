@@ -1,0 +1,94 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypedefSeq
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgTypedefSeq
+\brief This class represents a list of associated typedefs for the SgType IR nodes which
+    reference this list.
+\internal This list is not well tested yet.
+\sa
+\ref SgTypedefSeq_usage  "Example of using a SgTypedefSeq object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypedefSeq data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTypedefSeq member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgTypedefSeq::~SgTypedefSeq()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgTypedefSeq::isSgTypedefSeq (SgNode *s)
+\brief Cast function (from derived class to SgTypedefSeq pointer).
+   This functions returns a SgTypedefSeq pointer for any input of a 
+pointer to an object derived from a SgTypedefSeq.
+\return Returns valid pointer to SgTypedefSeq if input is derived from a SgSupport.
+*/
+/*!
+\fn SgTypedefSeq::isSgTypedefSeq (const SgNode *s)
+\brief Cast function (from derived class to SgTypedefSeq pointer).
+   This functions returns a SgTypedefSeq pointer for any input of a 
+pointer to an object derived from a SgTypedefSeq.
+\return Returns valid pointer to SgTypedefSeq if input is derived from a SgSupport.
+*/
+/*! \name Class Members*/
+//@{
+/*!
+\var SgTypePtrList SgTypedefSeq::p_typedefs
+\brief This holds the STL list of pointers to SgTypes.
+\todo It might be better for this to be a list of SgTypedefTypes
+\todo Think about if we could also store a reference to all pointers and reference types
+    where they share a common base_type.
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypedefSeq::SgTypedefSeq(const SgTypedefSeqStorageClass &source)
+*/
+/*!\fn inline static void SgTypedefSeq::operator delete(void *pointer)
+*/
+/*!\fn static SgTypedefSeq *SgTypedefSeq::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypedefSeq::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypedefSeq::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypedefSeq::initializeStorageClassArray(SgTypedefSeqStorageClass *storageArray)
+*/
+/*!\fn static void SgTypedefSeq::clearMemoryPool()
+*/
+/*!\fn static void SgTypedefSeq::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypedefSeq::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypedefSeq::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypedefSeq::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypedefSeq::~SgTypedefSeq()
+*/
+/*!\fn virtual SgNode *SgTypedefSeq::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypedefSeq::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypedefSeq::get_numberOfTraversalSuccessors()
+\description See  SgTypedefSeq::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypedefSeq::get_traversalSuccessorContainer()
+\description See  SgTypedefSeq::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypedefSeq::get_traversalSuccessorNamesContainer()
+\description See  SgTypedefSeq::traversalSuccessorNamesContainer for documentation */
+/*!
+\fn SgTypedefSeq::SgTypedefSeq()
+\brief This is the constructor.
+   This constructor builds the SgTypedefSeq base class.
+\sa 
+\ref SgTypedefSeq_create "Example:create an SgTypedefSeq object"
+*/
+//@}
+int SAGE_Doxygen_Dummy_14066724811990;

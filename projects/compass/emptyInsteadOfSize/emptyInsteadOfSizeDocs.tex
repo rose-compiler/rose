@@ -1,0 +1,79 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Empty Instead Of Size}
+\label{EmptyInsteadOfSize::overview}
+
+While comparing the result of the size() member function on STL containers
+against 0 is functionally equivalent to calling the empty() member function,
+empty() is to be preferred as it is always a constant-time operation, while
+size() on std::list may take linear time. This checker detects cases where the
+result of size() is compared against the constant 0.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+#include <vector>
+
+bool f(const std::vector<int> &v)
+{
+    if (v.size() > 0) // not OK: use !v.empty() instead
+        return true;
+    if (0 == v.size()) // not OK: use v.empty() instead
+        return false;
+    return false;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+#include <vector>
+bool f2(const std::vector<int> &v)
+{
+    if (!v.empty())
+        return true;
+    if (v.empty())
+        return false;
+    return false;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each member function call, see if the called member function is
+named `size' and if the call is embedded in an expression that compares its
+return value against the constant 0.
+\item If the above check evaluates to true, emit a diagnostic.
+\end{enumerate}
+
+There are numerous ways to defeat this simple analysis, for instance by
+assigning the return value from size() to a variable, by comparing the return
+value against a variable that is always 0, or by calling size() through a
+member function pointer. Further, the analysis only looks for member functions
+named `size' but does not try to ascertain that it belongs to a `container'
+(as that is not something that can be checked reliably).
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The reference for this checker is: S.~Meyers: ``Effective STL'', Item~3:
+``Call \verb+empty+ instead of checking \verb+size()+ against zero.''

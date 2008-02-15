@@ -1,0 +1,296 @@
+#define PNG_STATIC  /* PDFlib GmbH: always create a static lib under Cygwin */
+
+#define PNG_PREFIX  /* PDFlib GmbH: use private function names */
+#define PNG_USER_MEM_SUPPORTED /* PDFlib GmbH: allow private alloc functions */
+#define PNG_NO_WRITE_SUPPORTED /* PDFlib GmbH: we don't need write support */
+#define PNG_NO_ERROR_NUMBERS /* PDFlib GmbH: we don't need this */
+
+/* PDFlib GmbH: prefix public PNG names with pdf_ */
+/* Make sure to observe the limit of 31 characters for function names! */
+#ifdef PNG_PREFIX
+#define png_IDAT pdf_png_IDAT
+#define png_IEND pdf_png_IEND
+#define png_IHDR pdf_png_IHDR
+#define png_PLTE pdf_png_PLTE
+#define png_access_version_number pdf_png_access_version_number
+#define png_bKGD pdf_png_bKGD
+#define png_cHRM pdf_png_cHRM
+#define png_calculate_crc pdf_png_calculate_crc
+#define png_check_sig pdf_png_check_sig
+#define png_convert_to_rfc1123 pdf_png_convert_to_rfc1123
+#define png_create_info_struct pdf_png_create_info_struct
+#define png_data_freer pdf_png_data_freer
+#define png_destroy_info_struct pdf_png_destroy_info_struct
+#define png_free_data pdf_png_free_data
+#define png_gAMA pdf_png_gAMA
+#define png_get_copyright pdf_png_get_copyright
+#define png_get_header_ver pdf_png_get_header_ver
+#define png_get_header_version pdf_png_get_header_version
+#define png_get_io_ptr pdf_png_get_io_ptr
+#define png_get_libpng_ver pdf_png_get_libpng_ver
+#define png_hIST pdf_png_hIST
+#define png_handle_as_unknown pdf_png_handle_as_unknown
+#define png_iCCP pdf_png_iCCP
+#define png_iTXt pdf_png_iTXt
+#define png_info_destroy pdf_png_info_destroy
+#define png_info_init pdf_png_info_init
+#define png_info_init_3 pdf_png_info_init_3
+#define png_init_io pdf_png_init_io
+#define png_init_mmx_flags pdf_png_init_mmx_flags
+#define png_libpng_ver pdf_png_libpng_ver
+#define png_mmx_support pdf_png_mmx_support
+#define png_oFFs pdf_png_oFFs
+#define png_pCAL pdf_png_pCAL
+#define png_pHYs pdf_png_pHYs
+#define png_pass_dsp_mask pdf_png_pass_dsp_mask
+#define png_pass_inc pdf_png_pass_inc
+#define png_pass_mask pdf_png_pass_mask
+#define png_pass_start pdf_png_pass_start
+#define png_pass_yinc pdf_png_pass_yinc
+#define png_pass_ystart pdf_png_pass_ystart
+#define png_reset_crc pdf_png_reset_crc
+#define png_reset_zstream pdf_png_reset_zstream
+#define png_sBIT pdf_png_sBIT
+#define png_sCAL pdf_png_sCAL
+#define png_sPLT pdf_png_sPLT
+#define png_sRGB pdf_png_sRGB
+#define png_set_sig_bytes pdf_png_set_sig_bytes
+#define png_sig pdf_png_sig
+#define png_sig_cmp pdf_png_sig_cmp
+#define png_tEXt pdf_png_tEXt
+#define png_tIME pdf_png_tIME
+#define png_tRNS pdf_png_tRNS
+#define png_zTXt pdf_png_zTXt
+#define png_zalloc pdf_png_zalloc
+#define png_zfree pdf_png_zfree
+#define png_permit_empty_plte pdf_png_permit_empty_plte
+#define png_permit_mng_features pdf_png_permit_mng_features
+#define png_set_IHDR pdf_png_set_IHDR
+#define png_set_PLTE pdf_png_set_PLTE
+#define png_set_asm_flags pdf_png_set_asm_flags
+#define png_set_bKGD pdf_png_set_bKGD
+#define png_set_cHRM pdf_png_set_cHRM
+#define png_set_cHRM_fixed pdf_png_set_cHRM_fixed
+
+/* Note: function name shortened to facilitate porting */
+#define png_set_compression_buffer_size pdf_png_set_comp_buffer_size
+
+#define png_set_gAMA pdf_png_set_gAMA
+#define png_set_gAMA_fixed pdf_png_set_gAMA_fixed
+#define png_set_hIST pdf_png_set_hIST
+#define png_set_iCCP pdf_png_set_iCCP
+#define png_set_invalid pdf_png_set_invalid
+#define png_set_keep_unknown_chunks pdf_png_set_keep_unknown_chunks
+#define png_set_mmx_thresholds pdf_png_set_mmx_thresholds
+#define png_set_oFFs pdf_png_set_oFFs
+#define png_set_pCAL pdf_png_set_pCAL
+#define png_set_pHYs pdf_png_set_pHYs
+#define png_set_read_user_chunk_fn pdf_png_set_read_user_chunk_fn
+#define png_set_rows pdf_png_set_rows
+#define png_set_sBIT pdf_png_set_sBIT
+#define png_set_sCAL pdf_png_set_sCAL
+#define png_set_sPLT pdf_png_set_sPLT
+#define png_set_sRGB pdf_png_set_sRGB
+#define png_set_sRGB_gAMA_and_cHRM pdf_png_set_sRGB_gAMA_and_cHRM
+#define png_set_tIME pdf_png_set_tIME
+#define png_set_tRNS pdf_png_set_tRNS
+#define png_set_text pdf_png_set_text
+#define png_set_text_2 pdf_png_set_text_2
+
+/* Note: function name shortened to facilitate porting */
+#define png_set_unknown_chunk_location pdf_png_set_unk_chunk_location
+
+#define png_set_unknown_chunks pdf_png_set_unknown_chunks
+#define png_get_IHDR pdf_png_get_IHDR
+#define png_get_PLTE pdf_png_get_PLTE
+#define png_get_asm_flagmask pdf_png_get_asm_flagmask
+#define png_get_asm_flags pdf_png_get_asm_flags
+#define png_get_bKGD pdf_png_get_bKGD
+#define png_get_bit_depth pdf_png_get_bit_depth
+#define png_get_cHRM pdf_png_get_cHRM
+#define png_get_cHRM_fixed pdf_png_get_cHRM_fixed
+#define png_get_channels pdf_png_get_channels
+#define png_get_color_type pdf_png_get_color_type
+
+/* Note: function name shortened to facilitate porting */
+#define png_get_compression_buffer_size pdf_png_get_comp_buffer_size
+
+#define png_get_compression_type pdf_png_get_compression_type
+#define png_get_filter_type pdf_png_get_filter_type
+#define png_get_gAMA pdf_png_get_gAMA
+#define png_get_gAMA_fixed pdf_png_get_gAMA_fixed
+#define png_get_hIST pdf_png_get_hIST
+#define png_get_iCCP pdf_png_get_iCCP
+#define png_get_image_height pdf_png_get_image_height
+#define png_get_image_width pdf_png_get_image_width
+#define png_get_interlace_type pdf_png_get_interlace_type
+
+/* Note: function name shortened to facilitate porting */
+#define png_get_mmx_bitdepth_threshold pdf_png_get_mmx_bitdpth_thresh
+
+#define png_get_mmx_flagmask pdf_png_get_mmx_flagmask
+
+/* Note: function name shortened to facilitate porting */
+#define png_get_mmx_rowbytes_threshold pdf_png_get_mmx_rowbytes_thresh
+
+#define png_get_oFFs pdf_png_get_oFFs
+#define png_get_pCAL pdf_png_get_pCAL
+#define png_get_pHYs pdf_png_get_pHYs
+#define png_get_pixel_aspect_ratio pdf_png_get_pixel_aspect_ratio
+#define png_get_pixels_per_meter pdf_png_get_pixels_per_meter
+#define png_get_rgb_to_gray_status pdf_png_get_rgb_to_gray_status
+#define png_get_rowbytes pdf_png_get_rowbytes
+#define png_get_rows pdf_png_get_rows
+#define png_get_sBIT pdf_png_get_sBIT
+#define png_get_sCAL pdf_png_get_sCAL
+#define png_get_sPLT pdf_png_get_sPLT
+#define png_get_sRGB pdf_png_get_sRGB
+#define png_get_signature pdf_png_get_signature
+#define png_get_tIME pdf_png_get_tIME
+#define png_get_tRNS pdf_png_get_tRNS
+#define png_get_text pdf_png_get_text
+#define png_get_unknown_chunks pdf_png_get_unknown_chunks
+#define png_get_user_chunk_ptr pdf_png_get_user_chunk_ptr
+#define png_get_valid pdf_png_get_valid
+#define png_get_x_offset_microns pdf_png_get_x_offset_microns
+#define png_get_x_offset_pixels pdf_png_get_x_offset_pixels
+#define png_get_x_pixels_per_meter pdf_png_get_x_pixels_per_meter
+#define png_get_y_offset_microns pdf_png_get_y_offset_microns
+#define png_get_y_offset_pixels pdf_png_get_y_offset_pixels
+#define png_get_y_pixels_per_meter pdf_png_get_y_pixels_per_meter
+#define png_check_chunk_name pdf_png_check_chunk_name
+#define png_combine_row pdf_png_combine_row
+#define png_crc_error pdf_png_crc_error
+#define png_crc_finish pdf_png_crc_finish
+#define png_crc_read pdf_png_crc_read
+#define png_decompress_chunk pdf_png_decompress_chunk
+#define png_do_read_interlace pdf_png_do_read_interlace
+#define png_get_int_32 pdf_png_get_int_32
+#define png_get_uint_16 pdf_png_get_uint_16
+#define png_get_uint_32 pdf_png_get_uint_32
+#define png_handle_IEND pdf_png_handle_IEND
+#define png_handle_IHDR pdf_png_handle_IHDR
+#define png_handle_PLTE pdf_png_handle_PLTE
+#define png_handle_bKGD pdf_png_handle_bKGD
+#define png_handle_cHRM pdf_png_handle_cHRM
+#define png_handle_gAMA pdf_png_handle_gAMA
+#define png_handle_hIST pdf_png_handle_hIST
+#define png_handle_iCCP pdf_png_handle_iCCP
+#define png_handle_oFFs pdf_png_handle_oFFs
+#define png_handle_pCAL pdf_png_handle_pCAL
+#define png_handle_pHYs pdf_png_handle_pHYs
+#define png_handle_sBIT pdf_png_handle_sBIT
+#define png_handle_sCAL pdf_png_handle_sCAL
+#define png_handle_sPLT pdf_png_handle_sPLT
+#define png_handle_sRGB pdf_png_handle_sRGB
+#define png_handle_tEXt pdf_png_handle_tEXt
+#define png_handle_tIME pdf_png_handle_tIME
+#define png_handle_tRNS pdf_png_handle_tRNS
+#define png_handle_unknown pdf_png_handle_unknown
+#define png_handle_zTXt pdf_png_handle_zTXt
+#define png_read_filter_row pdf_png_read_filter_row
+#define png_read_finish_row pdf_png_read_finish_row
+#define png_read_start_row pdf_png_read_start_row
+#define png_do_bgr pdf_png_do_bgr
+#define png_do_invert pdf_png_do_invert
+#define png_do_packswap pdf_png_do_packswap
+#define png_do_strip_filler pdf_png_do_strip_filler
+#define png_do_swap pdf_png_do_swap
+#define png_get_user_transform_ptr pdf_png_get_user_transform_ptr
+#define png_set_bgr pdf_png_set_bgr
+#define png_set_filler pdf_png_set_filler
+#define png_set_interlace_handling pdf_png_set_interlace_handling
+#define png_set_invert_alpha pdf_png_set_invert_alpha
+#define png_set_invert_mono pdf_png_set_invert_mono
+#define png_set_packing pdf_png_set_packing
+#define png_set_packswap pdf_png_set_packswap
+#define png_set_shift pdf_png_set_shift
+#define png_set_swap pdf_png_set_swap
+#define png_set_swap_alpha pdf_png_set_swap_alpha
+#define png_set_user_transform_info pdf_png_set_user_transform_info
+#define png_create_read_struct pdf_png_create_read_struct
+#define png_create_read_struct_2 pdf_png_create_read_struct_2
+#define png_destroy_read_struct pdf_png_destroy_read_struct
+#define png_read_destroy pdf_png_read_destroy
+#define png_read_end pdf_png_read_end
+#define png_read_image pdf_png_read_image
+#define png_read_info pdf_png_read_info
+#define png_read_init pdf_png_read_init
+#define png_read_init_2 pdf_png_read_init_2
+#define png_read_init_3 pdf_png_read_init_3
+#define png_read_png pdf_png_read_png
+#define png_read_row pdf_png_read_row
+#define png_read_rows pdf_png_read_rows
+#define png_read_update_info pdf_png_read_update_info
+#define png_set_read_status_fn pdf_png_set_read_status_fn
+#define png_start_read_image pdf_png_start_read_image
+#define png_default_read_data pdf_png_default_read_data
+#define png_read_data pdf_png_read_data
+#define png_set_read_fn pdf_png_set_read_fn
+#define png_build_gamma_table pdf_png_build_gamma_table
+#define png_build_grayscale_palette pdf_png_build_grayscale_palette
+#define png_do_background pdf_png_do_background
+#define png_do_chop pdf_png_do_chop
+#define png_do_dither pdf_png_do_dither
+#define png_do_expand pdf_png_do_expand
+#define png_do_expand_palette pdf_png_do_expand_palette
+#define png_do_gamma pdf_png_do_gamma
+#define png_do_gray_to_rgb pdf_png_do_gray_to_rgb
+#define png_do_read_filler pdf_png_do_read_filler
+#define png_do_read_intrapixel pdf_png_do_read_intrapixel
+#define png_do_read_invert_alpha pdf_png_do_read_invert_alpha
+#define png_do_read_swap_alpha pdf_png_do_read_swap_alpha
+#define png_do_read_transformations pdf_png_do_read_transformations
+#define png_do_rgb_to_gray pdf_png_do_rgb_to_gray
+#define png_do_unpack pdf_png_do_unpack
+#define png_do_unshift pdf_png_do_unshift
+
+/* Note: function name shortened to facilitate porting */
+#define png_init_read_transformations pdf_png_init_read_transforms
+
+#define png_read_transform_info pdf_png_read_transform_info
+#define png_set_background pdf_png_set_background
+#define png_set_crc_action pdf_png_set_crc_action
+#define png_set_dither pdf_png_set_dither
+#define png_set_expand pdf_png_set_expand
+#define png_set_gamma pdf_png_set_gamma
+#define png_set_gray_1_2_4_to_8 pdf_png_set_gray_1_2_4_to_8
+#define png_set_gray_to_rgb pdf_png_set_gray_to_rgb
+#define png_set_palette_to_rgb pdf_png_set_palette_to_rgb
+
+/* Note: function name shortened to facilitate porting */
+#define png_set_read_user_transform_fn pdf_png_set_read_user_trans_fn
+
+#define png_set_rgb_to_gray pdf_png_set_rgb_to_gray
+#define png_set_rgb_to_gray_fixed pdf_png_set_rgb_to_gray_fixed
+#define png_set_strip_16 pdf_png_set_strip_16
+#define png_set_strip_alpha pdf_png_set_strip_alpha
+#define png_set_tRNS_to_alpha pdf_png_set_tRNS_to_alpha
+#define png_create_struct pdf_png_create_struct
+#define png_create_struct_2 pdf_png_create_struct_2
+#define png_destroy_struct pdf_png_destroy_struct
+#define png_destroy_struct_2 pdf_png_destroy_struct_2
+#define png_free pdf_png_free
+#define png_free_default pdf_png_free_default
+#define png_get_mem_ptr pdf_png_get_mem_ptr
+#define png_malloc pdf_png_malloc
+#define png_malloc_default pdf_png_malloc_default
+#define png_malloc_warn pdf_png_malloc_warn
+#define png_memcpy_check pdf_png_memcpy_check
+#define png_memset_check pdf_png_memset_check
+#define png_set_mem_fn pdf_png_set_mem_fn
+#define png_chunk_error pdf_png_chunk_error
+#define png_chunk_warning pdf_png_chunk_warning
+#define png_error pdf_png_error
+#define png_get_error_ptr pdf_png_get_error_ptr
+#define png_set_error_fn pdf_png_set_error_fn
+#define png_set_strip_error_numbers pdf_png_set_strip_error_numbers
+#define png_warning pdf_png_warning
+#define png_set_user_limits pdf_png_set_user_limits
+#define png_get_user_height_max pdf_png_get_user_height_max
+#define png_get_user_width_max pdf_png_get_user_width_max
+#define png_get_uint_31 pdf_png_get_uint_31
+#define png_set_add_alpha pdf_png_set_add_alpha
+
+#endif /* PNG_PREFIX */
+

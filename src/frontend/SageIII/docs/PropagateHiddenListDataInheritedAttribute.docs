@@ -1,0 +1,9 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*! \name Class Members*/
+//@{
+/*!\var std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > PropagateHiddenListDataInheritedAttribute::inherited_hidden_type_list
+*/
+/*!\var std::set< SgSymbol * , std::less< SgSymbol * >  , std::allocator< SgSymbol * >  > PropagateHiddenListDataInheritedAttribute::inherited_hidden_declaration_list
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_796385428;

@@ -1,0 +1,47 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgPartialFunctionType
+*/
+/*! \name User Interface*/
+//@{
+/*!\fn SgPartialFunctionType::SgPartialFunctionType(const SgPartialFunctionTypeStorageClass &source)
+*/
+/*!\fn inline static void SgPartialFunctionType::operator delete(void *pointer)
+*/
+/*!\fn static SgPartialFunctionType *SgPartialFunctionType::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgPartialFunctionType::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgPartialFunctionType::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgPartialFunctionType::initializeStorageClassArray(SgPartialFunctionTypeStorageClass *storageArray)
+*/
+/*!\fn static void SgPartialFunctionType::clearMemoryPool()
+*/
+/*!\fn static void SgPartialFunctionType::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgPartialFunctionType::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgPartialFunctionType::roseRTI()
+*/
+/*!\fn virtual SgNode *SgPartialFunctionType::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgPartialFunctionType::~SgPartialFunctionType()
+*/
+/*!\fn virtual void SgPartialFunctionType::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgPartialFunctionType::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgPartialFunctionType::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgPartialFunctionType::get_numberOfTraversalSuccessors()
+\description See  SgPartialFunctionType::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgPartialFunctionType::get_traversalSuccessorContainer()
+\description See  SgPartialFunctionType::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgPartialFunctionType::get_traversalSuccessorNamesContainer()
+\description See  SgPartialFunctionType::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgPartialFunctionType::SgPartialFunctionType(SgType *return_type=(0),bool has_ellipses=(1),SgClassDefinition *struct_name=(0),unsigned int mfunc_specifier=(0))
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1966163864;

@@ -1,0 +1,235 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgVariableDeclaration
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgVariableDeclaration
+\brief This class represents the concept of a C or C++ variable declaration.
+   A variable declaration can be either a forward declaration (specified as "extern")
+or a defining declaration (typical case).  Because of this separation (as with classes,
+functions, etc.) the scope of a variable must be stored explicitly because name
+qualification can associate a definition in a scope different from the original
+declaration (see test2005_34.C for examples).
+\internal Since multiple variables may be declared in a single variable declaration,
+    the scope information is held in the SgInitializedName object directly, and not the 
+    SgVariableDeclaration.  The scope of a SgVariableDeclaration is ...
+\todo Finish explaination of variable declaration, relationship to variable definition,
+    and the scope issue.
+\todo template static variable declaration are instantiated and this is at least sometimes
+    an error (at least when not part of a transformation). See test2005_69.C for example
+    of this problem.
+\sa
+\ref SgVariableDeclaration_usage  "Example of using a SgVariableDeclaration object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgVariableDeclaration data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgVariableDeclaration member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgVariableDeclaration_create "Example:create an SgVariableDeclaration object"
+*/
+/*!
+\fn SgVariableDeclaration::~SgVariableDeclaration()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgVariableDeclaration::isSgVariableDeclaration (SgNode *s)
+\brief Cast function (from derived class to SgVariableDeclaration pointer).
+   This functions returns a SgVariableDeclaration pointer for any input of a 
+pointer to an object derived from a SgVariableDeclaration.
+\return Returns valid pointer to SgVariableDeclaration if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgVariableDeclaration::isSgVariableDeclaration (const SgNode *s)
+\brief Cast function (from derived class to SgVariableDeclaration pointer).
+   This functions returns a SgVariableDeclaration pointer for any input of a 
+pointer to an object derived from a SgVariableDeclaration.
+\return Returns valid pointer to SgVariableDeclaration if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgDeclarationStatement *SgVariableDeclaration::p_baseTypeDefiningDeclaration
+\brief This is used to traverse type definitions within variable declarations.
+    In cases where a class or other named type is defined within (and as the
+base type of) a variable declaration, the traversal code must be able to
+traverse this definition. The traversal code computes the appropriate value
+for this pointer when needed.
+*/
+/*! \var SgInitializedNamePtrList SgVariableDeclaration::p_variables
+\brief This is an STL list of pointers to SgInitializedName objects.
+    Each variable is a SgInitializedName object, their can be a list of
+then, so this list holds that collection of variables.
+*/
+/*! \var bool SgVariableDeclaration::p_variableDeclarationContainsBaseTypeDefiningDeclaration
+\brief This bool records if the variable declaration has the explicit defining declaration
+    associated with its type.
+    Since types are shared, we can't store such information in the type (else each 
+reference to the type would trigger the output of the full definition of the type).
+The value of this variable is most typically false.
+\todo Provide an example of where p_variableDeclarationContainsBaseTypeDefiningDeclaration
+    is true and where it is false.
+*/
+/*! \var enum SgDeclarationStatement::template_specialization_enum SgVariableDeclaration::p_specialization
+\brief This is part of template support (variables of templated types).
+    This is most often set to SgDeclarationStatement::e_no_specialization, but where
+templates are involved can be set to either SgDeclarationStatement::e_specialization or
+SgDeclarationStatement::e_partial_specialization.
+*/
+/*!\var bool SgVariableDeclaration::p_requiresGlobalNameQualificationOnType
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDeclarationStatement *SgVariableDeclaration::compute_baseTypeDefiningDeclaration() const
+*/
+/*!\fn SgVariableDeclaration::SgVariableDeclaration(Sg_File_Info *info,const SgName &var_name,SgType *type,SgInitializer *initializer=(0))
+*/
+/*!
+\fn SgVariableDeclaration::SgVariableDeclaration(Sg_File_Info *startOfConstruct)
+\brief This is the constructor.
+   This constructor builds the SgVariableDeclaration base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn SgVariableDeclaration::SgVariableDeclaration(const SgName &var_name,SgType *type,SgInitializer *initializer)
+*/
+/*!\fn SgVariableDeclaration::SgVariableDeclaration(const SgVariableDeclarationStorageClass &source)
+*/
+/*!\fn bool SgVariableDeclaration::isPartialSpecialization() const
+*/
+/*!\fn bool SgVariableDeclaration::isSpecialization() const
+*/
+/*!\fn inline static void SgVariableDeclaration::operator delete(void *pointer)
+*/
+/*!\fn static SgVariableDeclaration *SgVariableDeclaration::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgVariableDeclaration::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgVariableDeclaration::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgVariableDeclaration::initializeStorageClassArray(SgVariableDeclarationStorageClass *storageArray)
+*/
+/*!\fn static void SgVariableDeclaration::clearMemoryPool()
+*/
+/*!\fn static void SgVariableDeclaration::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgVariableDeclaration::resetValidFreepointers()
+*/
+/*!\fn std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator SgVariableDeclaration::append_variable(SgInitializedName *what,SgInitializer *init)
+*/
+/*!\fn std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator SgVariableDeclaration::insert_variable(const std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator &where,SgInitializedName *what)
+*/
+/*!\fn std::vector < SgInitializedName * , std::allocator< SgInitializedName * > > ::iterator SgVariableDeclaration::prepend_variable(SgInitializedName *what,SgInitializer *init)
+*/
+/*!\fn virtual RTIReturnType SgVariableDeclaration::roseRTI()
+*/
+/*!\fn virtual SgNode *SgVariableDeclaration::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgVariableDeclaration::~SgVariableDeclaration()
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgVariableDeclaration::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgVariableDeclaration::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgVariableDeclaration::cfgFindChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgVariableDeclaration::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgVariableDeclaration::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgVariableDeclaration::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgVariableDeclaration::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgVariableDeclaration::post_construction_initialization()
+*/
+/*!\fn virtual void SgVariableDeclaration::setExtern()
+*/
+/*!\fn virtual void SgVariableDeclaration::setStatic()
+*/
+/*!\fn void SgVariableDeclaration::initializeData(Sg_File_Info *info,const SgName &var_name,SgType *type,SgInitializer *initializer)
+*/
+/*!\fn void SgVariableDeclaration::setDeclarationOnly()
+*/
+/*!\fn int SgVariableDeclaration::reset_initializer(SgInitializer *)
+*/
+/*!\fn void SgVariableDeclaration::set_baseTypeDefiningDeclaration(SgDeclarationStatement *d)
+\description See  *d)
+baseTypeDefiningDeclaration for documentation */
+/*!\fn void SgVariableDeclaration::set_bitfield(SgUnsignedLongVal *)
+\description See  *)
+bitfield for documentation */
+/*!\fn void SgVariableDeclaration::set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType)
+\description See  requiresGlobalNameQualificationOnType)
+requiresGlobalNameQualificationOnType for documentation */
+/*!
+\fn void SgVariableDeclaration::set_specialization(enum SgDeclarationStatement::template_specialization_enum specialization)
+\brief Access function for p_specialization.
+See  specialization)
+specialization for documentation \return Returns void.
+*/
+/*!
+\fn void SgVariableDeclaration::set_variableDeclarationContainsBaseTypeDefiningDeclaration(bool variableDeclarationContainsBaseTypeDefiningDeclaration)
+\brief Access function for p_variableDeclarationContainsBaseTypeDefiningDeclaration.
+See  variableDeclarationContainsBaseTypeDefiningDeclaration)
+variableDeclarationContainsBaseTypeDefiningDeclaration for documentation \return Returns void.
+*/
+/*!\fn SgInitializedName *SgVariableDeclaration::get_decl_item(const SgName &)
+\description See  &)
+decl_item for documentation */
+/*!
+\fn SgInitializedNamePtrList &SgVariableDeclaration::get_variables()
+\brief Access function for p_variables.
+See  &SgVariableDeclaration::variables for documentation \return Returns a non-const reference to SgInitializedNamePtrList.
+*/
+/*!\fn SgStatement *SgVariableDeclaration::get_next(int &) const
+\description See  const
+next for documentation */
+/*!\fn SgUnsignedLongVal *SgVariableDeclaration::get_bitfield()
+\description See  *SgVariableDeclaration::bitfield for documentation */
+/*!\fn SgVariableDefinition *SgVariableDeclaration::get_definition(SgInitializedName *ditem=(0))
+\description See  *ditem=(0))
+definition for documentation */
+/*!\fn bool SgVariableDeclaration::get_requiresGlobalNameQualificationOnType() const
+\description See  const
+requiresGlobalNameQualificationOnType for documentation */
+/*!
+\fn bool SgVariableDeclaration::get_variableDeclarationContainsBaseTypeDefiningDeclaration() const
+\brief Access function for p_variableDeclarationContainsBaseTypeDefiningDeclaration.
+See  const
+variableDeclarationContainsBaseTypeDefiningDeclaration for documentation \return Returns bool.
+*/
+/*!
+\fn const SgInitializedNamePtrList &SgVariableDeclaration::get_variables() const
+\brief Access function for p_variables.
+See  const
+variables for documentation \return Returns a const reference to SgInitializedNamePtrList.
+*/
+/*!
+\fn enum SgDeclarationStatement::template_specialization_enum SgVariableDeclaration::get_specialization() const
+\brief Access function for p_specialization.
+See  const
+specialization for documentation \return Returns value of type SgDeclarationStatement::template_specialization_enum.
+*/
+/*!\fn virtual SgName SgVariableDeclaration::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgVariableDeclaration::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgVariableDeclaration::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgVariableDeclaration::get_numberOfTraversalSuccessors()
+\description See  SgVariableDeclaration::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgVariableDeclaration::get_traversalSuccessorContainer()
+\description See  SgVariableDeclaration::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgVariableDeclaration::get_traversalSuccessorNamesContainer()
+\description See  SgVariableDeclaration::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgVariableDeclaration::SgVariableDeclaration()
+*/
+//@}
+int SAGE_Doxygen_Dummy_300172137014526;

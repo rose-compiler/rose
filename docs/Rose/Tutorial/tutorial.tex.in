@@ -1,0 +1,355 @@
+\documentclass[10pt]{book}
+
+%\usepackage{epsfig}
+%\usepackage{graphicx}
+%\usepackage{amsmath}
+%\usepackage{html,color,makeidx}
+%\usepackage{amsmath}
+%\usepackage{verbatim}
+%\usepackage{moreverb}
+%\usepackage{graphics}    
+%\usepackage{epsfig}    
+%\usepackage{multicol}
+%\usepackage{color}
+%\usepackage{subfigure}
+%\usepackage{multirow}
+
+% Fixme margin note package (turn on draft mode)
+%\usepackage[final]{fixme}
+\usepackage[draft]{fixme}
+
+\usepackage{listings}
+% \lstloadlanguages{APP}
+
+\usepackage{html}
+\usepackage{color}
+\usepackage[pdftex]{graphicx}
+
+\usepackage{moreverb}
+
+% I could not make these work well with pdflatex
+%\usepackage{epsfig}
+%\usepackage{psfig}
+
+% required by listings package???
+%\usepackage{keyval}
+
+% \psfigdriver{dvips}
+
+\newcommand{\mySmallFontSize}{\scriptsize}
+\newcommand{\mySmallestFontSize}{\tiny}
+
+% New commands to represent the location of example files (used in latex documentation)
+% \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
+% \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
+% \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/AstRewriteExamples}
+% \newcommand{\DatabaseExampleDirectory}{/home/dquinlan/ROSE/NEW_ROSE/ExampleTranslator/DocumentedExamples/DataBaseExamples}
+
+\newcommand{\TranslatorExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
+\newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
+\newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/AstRewriteExamples}
+\newcommand{\TutorialExampleDirectory}{@top_srcdir@/tutorial}
+\newcommand{\TutorialExampleBuildDirectory}{@top_builddir@/tutorial}
+\newcommand{\DatabaseExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/dataBaseExamples}
+
+% Software version number
+\newcommand{\VersionNumber}{@VERSION@}
+
+% Latex trick to allow us to comment out large sections of documentation
+\newcommand{\commentout}[1]{}
+
+% change the title of the Fixme List
+\renewcommand{\listfixmename}{Things to Fix in Documentation of ROSE}
+
+\newcommand{\comm}[2]{\bigskip
+                      \begin{tabular}{|p{11cm}|}\hline
+                      \multicolumn{1}{|c|}{{\bf Comment by #1}}\\ \hline
+                      #2\\ \hline
+                      \end{tabular}
+                      \bigskip
+                     }
+
+\def\verbatimfile#1{\begingroup
+                    \@verbatim \frenchspacing \@vobeyspaces
+                    \input#1 \endgroup
+}
+
+
+% Not sure why we need this.
+%\newcounter{lineno}
+
+% Taken from verbatimfiles.sty on web
+%\makeatletter %JCL
+
+\def\verbatimlisting#1{\setcounter{lineno}{0}%
+    \begingroup \@verbatim \frenchspacing \@vobeyspaces \parindent=20pt
+    \everypar{\stepcounter{lineno}\llap{\thelineno\ \ }}\input#1
+    \endgroup
+}
+
+%\makeatother %JCL
+
+% \endinput
+
+
+\addtolength{\oddsidemargin}{-1.0in}
+\addtolength{\evensidemargin}{-1.0in}
+\addtolength{\textwidth}{1.0in}
+
+% Old values
+%\addtolength{\textwidth}{1.0in}
+%\addtolength{\topmargin}{-0.5in}
+%\addtolength{\textheight}{1.5in}
+
+% \pagenumbering{roman}
+% \pagestyle{empty}
+% \setcounter{page}{0}
+% \thispagestyle{empty}
+
+%\sloppy
+
+%---------------------------------------------------------------------
+% Begin Document
+%---------------------------------------------------------------------
+
+\begin{document}
+
+%\bibliographystyle{plain}
+%
+%\psdraft
+
+\frontmatter
+
+\title{ {\bf \textcolor{red}{          ROSE  Tutorial: \\ 
+                                     A Tool for Building \\
+                                Source-to-Source Translators} \\
+                             \textcolor{blue}{Draft Tutorial} \\
+                               \textcolor{green}{(version @VERSION@)} } }
+
+\author{ 
+    {\bf Daniel Quinlan, Markus Schordan, Richard Vuduc, Qing Yi} \\
+    {\bf Thomas Panas, Liao Chunhua, and Jeremiah J. Willcock} \\
+         Lawrence Livermore National Laboratory \\ 
+         Livermore, CA  94550 \\
+         925-423-2668 (office) \\
+         925-422-6278 (fax) \\
+         \{dquinlan,panas2,liao6,willcock2\}@llnl.gov \\
+          markus@complang.tuwien.ac.at \\
+          qingyi@cs.utsa.edu \\
+          richie@cc.gatech.edu \\
+         Project Web Page: www.llnl.gov/casc/rose \\
+         UCRL Number for ROSE User Manual: UCRL-SM-210137-DRAFT \\
+         UCRL Number for ROSE Tutorial: UCRL-SM-210032-DRAFT \\
+         UCRL Number for ROSE Source Code: UCRL-CODE-155962 \\
+%        \htmladdnormallink{ROSE User Manual (postscript version)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.ps} \\
+%        \htmladdnormallink{ROSE User Manual (html version)}{../ROSE_UserManual/manual.html} \\
+%        \htmladdnormallink{ROSE Tutorial (html version)}{../ROSE_Tutorial/tutorial.html} \\
+         \htmladdnormallink{ROSE User Manual (pdf)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf} \\
+         \htmladdnormallink{ROSE Tutorial (pdf)}{../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf} \\
+         \htmladdnormallink{ROSE HTML Reference (html only)}{../ROSE_HTML_Reference/index.html}
+       }
+
+% Replaced with relative links
+% \htmladdnormallink{ROSE User Manual (postscript version)}{file://@top_pwd@/docs/Rose/ROSE-@VERSION@-UserManual.ps}
+% \htmladdnormallink{ROSE Tutorial (postscript version)}{file://@top_pwd@/docs/Rose/Tutorial/ROSE-@VERSION@-Tutorial.ps}
+% \htmladdnormallink{ROSE User Manual (html version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_UserManual/manual.html}
+% \htmladdnormallink{ROSE Tutorial (html version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_Tutorial/tutorial.html}
+% \htmladdnormallink{ROSE HTML Reference (html only)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html}
+
+
+% This doesn't seem to work.  References to this label are not resolved.
+\label{Rose:postscriptVersionOfTutorial}
+
+\begin{htmlonly}
+   \centering \includegraphics[width=3in]{../compass_rose.gif}
+\end{htmlonly}
+
+\maketitle
+
+\begin{htmlonly}
+   \centering \includegraphics[width=5in]{../compass_rose.gif}
+\end{htmlonly}
+
+\begin{center}
+\today
+\end{center}
+
+%\newpage
+%\input{Copyright}
+%\newpage
+
+%\input{preface}
+%\input{Forward}
+%\input{acknowledgments}
+
+\tableofcontents
+\listoffigures
+% \listoftables
+\newpage
+%
+
+%\newpage
+% \input{Copyright}
+%\newpage
+
+% % Not sure why this causes a line to be printed in the latex file.
+% % The strange line is not printed if we place the lstset command 
+% % here (not sure why?).
+% \lstset{
+%    language=C++,
+%  % language=APP,
+%  % basicstyle=\small,                 % print whole listing small
+%    basicstyle=\scriptsize,            % print whole listing scriptsize
+%  % keywordstyle=\color{red}\bfseries\underbar, % underlined bold red keywords
+%  % keywordstyle=\bfseries\underbar, % underlined bold red keywords
+%    keywordstyle=\color{red}\bfseries, % underlined bold red keywords
+%    ndkeywordstyle=\color{blue}, % underlined bold red keywords
+%  % rdkeywordstyle=\color{blue}, % underlined bold red keywords
+%    identifierstyle={},                % nothing happens to other identifiers
+%  % identifierstyle=\color{blue},                % nothing happens to other identifiers
+%    commentstyle=\color{green},                % nothing happens to other identifiers
+%  % stringstyle=\ttfamily,             % typerwriter type for strings
+%  % stringstyle=\color{cyan}\ttfamily,             % typerwriter type for strings Magenta
+%    stringstyle=\color{magenta}\ttfamily,             % typerwriter type for strings Magenta
+%    stringspaces=false,                % no special string spaces
+%    labelstyle=\scriptsize,
+%    labelstep=1,
+%    labelsep=10pt
+% }
+
+% \input{Tutorial/tutorial}
+
+\mainmatter
+
+\input{introduction}
+
+% \part[Mature Parts of ROSE]{ Mature Parts of ROSE \\
+\part[Stable Parts of ROSE]{  Stable Parts of ROSE \\
+\vspace{1.0in}
+\normalsize{These parts of ROSE are tested regularly on large scale applications and are
+    suitable for use on ROSE projects requiring the greatest levels of robustness.}
+\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+}
+
+\input{gettingStarted}
+
+\input{ASTGraphGenerator}
+
+\input{AST_PDF_Generator}
+
+\input{identityTranslator}
+
+\input{queryLibraryExample}
+
+\input{traversal}
+
+%\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
+\part[Testing Parts of ROSE]{ Testing Parts of ROSE \\
+\vspace{1.0in}
+\normalsize{These parts of ROSE are moderately well tested but not tested at a scale sufficent for
+our own use on large scale applications.}
+\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+}
+
+\input{dataBaseSupport}
+
+\input{loopRecognition}
+
+\input{typeInfoFromFunctionParameters}
+
+\input{resolveOverloadedFunction}
+
+\input{templateParameter}
+
+\input{templateSupport}
+
+\input{instrumentationExample}
+
+\input{addVariableDeclaration}
+
+\input{addFunctionDeclaration}
+
+\input{loopOptimization}
+
+%\part[Bleeding-Edge Parts of ROSE]{ Bleeding-Edge Parts of ROSE \\
+\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
+\vspace{1.0in}
+\normalsize{These parts of ROSE are either new or not well tested on real
+    applications.}
+\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+}
+
+\input{buildCFG}
+
+\input{defuseAnalysis}
+
+\input{binaryAnalysis}
+
+\input{buildCG}
+
+\input{classHierarchyGraph}
+
+\input{inliner}
+
+\input{outliner}
+
+\input{partialRedundancyElimination}
+
+% \input{recognitionOfAbstractions}
+
+\input{astFileIO}
+
+\input{uniqueNames}
+
+\input{scopeInformation}
+
+% These should not be separate chapters!
+% \input{debuggingIRnodeToString}
+% \input{debuggingSourceCodePositionInformation}
+
+\input{debuggingSupport}
+
+\input{addingComments}
+
+\input{codeGenerationFormatControl}
+
+\input{commandlineProcessing}
+
+\input{customGraphs}
+
+\input{wholeGraphAST}
+
+\input{tutorialMakefile}
+
+\input{wrapup}
+
+\input{codeCoverage}
+
+\input{globalVariableHandling}
+
+\input{tauInstrumentation}
+
+\input{roseHPCT}
+
+\input{copyHelp}
+
+\input{sharedMemoryTraversals}
+
+\input{distributedMemoryTraversals}
+
+\input{howToContribute}
+
+\backmatter
+
+% Appendix is for new ideas about how to organize the tutorial
+\input{appendix}
+
+% Borrow glossary from ROSE User Manual (copyied into docs/Rose/Tutorial by Makefile)
+\input{glossary}
+
+\end{document}
+
+
+
+
+

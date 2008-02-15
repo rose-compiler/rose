@@ -1,0 +1,173 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSymbolTable
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgSymbolTable
+\brief This class represents the symbol tables used in both SgScopeStatement and
+    the SgFunctionTypeSymbolTable IR node.
+\todo The rose_hash_multimap should perhaps be included as a data member instead of
+    implemented as a pointer.  We should consider this detail.
+\todo We should decide if we want to give Symbol Tables a name or not, it seems that
+      we rarely if ever do this so perhaps we should not have such a field.
+\sa
+\ref SgSymbolTable_usage  "Example of using a SgSymbolTable object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSymbolTable data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgSymbolTable member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgSymbolTable::~SgSymbolTable()
+\brief This is the destructor.
+   There is nothing to delete in this object.
+*/
+/*!
+\fn SgSymbolTable::isSgSymbolTable (SgNode *s)
+\brief Cast function (from derived class to SgSymbolTable pointer).
+   This functions returns a SgSymbolTable pointer for any input of a 
+pointer to an object derived from a SgSymbolTable.
+\return Returns valid pointer to SgSymbolTable if input is a SgSymbolTable.
+*/
+/*!
+\fn SgSymbolTable::isSgSymbolTable (const SgNode *s)
+\brief Cast function (from derived class to SgSymbolTable pointer).
+   This functions returns a SgSymbolTable pointer for any input of a 
+pointer to an object derived from a SgSymbolTable.
+\return Returns valid pointer to SgSymbolTable if input is a SgSymbolTable.
+*/
+/*! \name Deprecated*/
+//@{
+/*!
+\var SgSymbolTable::hash_iterator SgSymbolTable::p_iterator
+\brief This iterator is used within some of the deprecated functions.
+\deprecated I think this iterator should be removed.
+*/
+//@}
+/*! \name Class Members*/
+//@{
+/*!
+\var SgName SgSymbolTable::p_name
+\brief This is the symbol name (mangled is required).
+*/
+/*!
+\var bool SgSymbolTable::p_no_name
+\brief This is a flag to indicate that p_name is empty
+   Some symbols don't have a name.
+\todo generate a list of instances where symbols don't have names.
+      (Namespaces don't have to have a name for example).
+*/
+/*!
+\var rose_hash_multimap *SgSymbolTable::p_table
+\brief This is lower level symbol table implementation (using an STL hash_multimap)
+*/
+/*!\var SgNodeSet SgSymbolTable::p_symbolSet
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgClassSymbol *SgSymbolTable::findclass(const SgName &)
+*/
+/*!\fn SgClassSymbol *SgSymbolTable::findfirstclass()
+*/
+/*!\fn SgClassSymbol *SgSymbolTable::nextclass()
+*/
+/*!\fn SgFunctionSymbol *SgSymbolTable::findfirstfunction()
+*/
+/*!\fn SgFunctionSymbol *SgSymbolTable::findfunc(const SgName &)
+*/
+/*!\fn SgFunctionSymbol *SgSymbolTable::findfunc(const SgName &,const SgType *)
+*/
+/*!\fn SgFunctionSymbol *SgSymbolTable::nextfunc()
+*/
+/*!\fn SgFunctionTypeSymbol *SgSymbolTable::findfunctype(const SgName &)
+*/
+/*!\fn SgSymbol *SgSymbolTable::findany(const SgName &)
+*/
+/*!\fn SgSymbol *SgSymbolTable::findfirstany()
+*/
+/*!\fn SgSymbol *SgSymbolTable::nextany()
+*/
+/*!\fn SgSymbol *SgSymbolTable::operator[](const SgName &)
+*/
+/*!
+\fn SgSymbolTable::SgSymbolTable()
+\brief This is the constructor.
+   This constructor builds the SgSymbolTable base class.
+\sa 
+\ref SgSymbolTable_create "Example:create an SgSymbolTable object"
+*/
+/*!\fn SgSymbolTable::SgSymbolTable(const SgSymbolTableStorageClass &source)
+*/
+/*!\fn SgVariableSymbol *SgSymbolTable::findfirstvar()
+*/
+/*!\fn SgVariableSymbol *SgSymbolTable::findvar(const SgName &)
+*/
+/*!\fn SgVariableSymbol *SgSymbolTable::nextvar()
+*/
+/*!\fn inline static void SgSymbolTable::operator delete(void *pointer)
+*/
+/*!\fn int SgSymbolTable::find(const SgName &,SgSymbol *sp)
+*/
+/*!\fn static SgSymbolTable *SgSymbolTable::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgSymbolTable::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgSymbolTable::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgSymbolTable::initializeStorageClassArray(SgSymbolTableStorageClass *storageArray)
+*/
+/*!\fn static void SgSymbolTable::clearMemoryPool()
+*/
+/*!\fn static void SgSymbolTable::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgSymbolTable::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgSymbolTable::roseRTI()
+*/
+/*!\fn virtual SgNode *SgSymbolTable::copy(SgCopyHelp &help) const
+*/
+/*!\fn void SgSymbolTable::insert(const SgName &,SgSymbol *sp)
+*/
+/*!\fn void SgSymbolTable::set_name(SgName name)
+\description See  name)
+name for documentation */
+/*!\fn void SgSymbolTable::set_no_name(bool no_name)
+\description See  no_name)
+no_name for documentation */
+/*!\fn void SgSymbolTable::set_symbolSet(SgNodeSet symbolSet)
+\description See  symbolSet)
+symbolSet for documentation */
+/*!\fn void SgSymbolTable::set_table(rose_hash_multimap *table)
+\description See  *table)
+table for documentation */
+/*!\fn SgName SgSymbolTable::get_name() const
+\description See  const
+name for documentation */
+/*!\fn SgNodeSet SgSymbolTable::get_symbolSet() const
+\description See  const
+symbolSet for documentation */
+/*!\fn bool SgSymbolTable::get_no_name() const
+\description See  const
+no_name for documentation */
+/*!\fn rose_hash_multimap *SgSymbolTable::get_table() const
+\description See  const
+table for documentation */
+/*!\fn virtual SgNode *SgSymbolTable::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgSymbolTable::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgSymbolTable::get_numberOfTraversalSuccessors()
+\description See  SgSymbolTable::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgSymbolTable::get_traversalSuccessorContainer()
+\description See  SgSymbolTable::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgSymbolTable::get_traversalSuccessorNamesContainer()
+\description See  SgSymbolTable::traversalSuccessorNamesContainer for documentation */
+/*!\fn virtual SgSymbolTable::~SgSymbolTable()
+*/
+//@}
+int SAGE_Doxygen_Dummy_236457778169;

@@ -1,0 +1,50 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgTypeUnknown
+*/
+/*! \name Class Members*/
+//@{
+/*!\var static SgTypeUnknown *SgTypeUnknown::p_builtin_type
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgTypeUnknown::SgTypeUnknown(const SgTypeUnknownStorageClass &source)
+*/
+/*!\fn inline static void SgTypeUnknown::operator delete(void *pointer)
+*/
+/*!\fn static SgTypeUnknown *SgTypeUnknown::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgTypeUnknown::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgTypeUnknown::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgTypeUnknown::initializeStorageClassArray(SgTypeUnknownStorageClass *storageArray)
+*/
+/*!\fn static void SgTypeUnknown::clearMemoryPool()
+*/
+/*!\fn static void SgTypeUnknown::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgTypeUnknown::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgTypeUnknown::roseRTI()
+*/
+/*!\fn virtual SgNode *SgTypeUnknown::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual SgTypeUnknown::~SgTypeUnknown()
+*/
+/*!\fn virtual SgNode *SgTypeUnknown::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgTypeUnknown::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgTypeUnknown::get_numberOfTraversalSuccessors()
+\description See  SgTypeUnknown::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgTypeUnknown::get_traversalSuccessorContainer()
+\description See  SgTypeUnknown::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgTypeUnknown::get_traversalSuccessorNamesContainer()
+\description See  SgTypeUnknown::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgTypeUnknown::SgTypeUnknown()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_571283123;

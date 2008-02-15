@@ -1,0 +1,167 @@
+/* GENERATED FILE - DO NOT MODIFY */
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgWhileStmt
+//////////////////////////////////////////////////////////////////////////
+/*!
+\class SgWhileStmt
+\brief This class represents the concept of a do-while statement.
+\internal 
+*/
+/*
+\sa
+\ref SgWhileStmt_usage  "Example of using a SgWhileStmt object"
+*/
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgWhileStmt data members
+/////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgWhileStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*
+\sa 
+\ref SgWhileStmt_create "Example:create an SgWhileStmt object"
+*/
+/*!
+\fn SgWhileStmt::~SgWhileStmt()
+\brief This is the destructor.
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+/*!
+\fn SgWhileStmt::isSgWhileStmt (SgNode *s)
+\brief Cast function (from derived class to SgWhileStmt pointer).
+   This functions returns a SgWhileStmt pointer for any input of a 
+pointer to an object derived from a SgWhileStmt.
+\return Returns valid pointer to SgWhileStmt if input is derived from a SgLocatedNode.
+*/
+/*!
+\fn SgWhileStmt::isSgWhileStmt (const SgNode *s)
+\brief Cast function (from derived class to SgWhileStmt pointer).
+   This functions returns a SgWhileStmt pointer for any input of a 
+pointer to an object derived from a SgWhileStmt.
+\return Returns valid pointer to SgWhileStmt if input is derived from a SgLocatedNode.
+*/
+/*! \name Class Members*/
+//@{
+/*! \var SgBasicBlock *SgWhileStmt::p_body
+\brief This pointer a SgBasicBlock, and holds the statements in the body of the loop.
+*/
+/*! \var SgStatement *SgWhileStmt::p_condition
+\brief This pointer a SgStatement, the conditional expression in the loop construct.
+*/
+/*!\var int SgWhileStmt::p_end_numeric_label
+*/
+/*!\var std::string SgWhileStmt::p_string_label
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgWhileStmt::SgWhileStmt(Sg_File_Info *startOfConstruct,SgStatement *condition=(0),SgBasicBlock *body=(0))
+*/
+/*!
+\fn SgWhileStmt::SgWhileStmt(const SgWhileStmtStorageClass &source)
+\brief This is the constructor.
+   This constructor builds the SgWhileStmt base class.
+\param startOfConstruct represents the position in the source code
+*/
+/*!\fn inline static void SgWhileStmt::operator delete(void *pointer)
+*/
+/*!\fn static SgWhileStmt *SgWhileStmt::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgWhileStmt::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgWhileStmt::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgWhileStmt::initializeStorageClassArray(SgWhileStmtStorageClass *storageArray)
+*/
+/*!\fn static void SgWhileStmt::clearMemoryPool()
+*/
+/*!\fn static void SgWhileStmt::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgWhileStmt::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgWhileStmt::roseRTI()
+*/
+/*!
+\fn virtual SgNode *SgWhileStmt::copy(SgCopyHelp &help) const
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+\return Returns pointer to copy of SgWhileStmt.
+*/
+/*!\fn virtual SgWhileStmt::~SgWhileStmt()
+*/
+/*!\fn virtual bool SgWhileStmt::cfgIsIndexInteresting(unsigned int ) const
+*/
+/*!\fn virtual bool SgWhileStmt::replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock=false)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgWhileStmt::cfgInEdges(unsigned int index)
+*/
+/*!\fn virtual std::vector< VirtualCFG::CFGEdge  , std::allocator< VirtualCFG::CFGEdge  >  > SgWhileStmt::cfgOutEdges(unsigned int index)
+*/
+/*!\fn virtual unsigned int SgWhileStmt::cfgFindNextChildIndex(SgNode *n)
+*/
+/*!\fn virtual unsigned int SgWhileStmt::cfgIndexForEnd() const
+*/
+/*!\fn virtual void SgWhileStmt::fixupCopy_references(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgWhileStmt::fixupCopy_scopes(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgWhileStmt::fixupCopy_symbols(SgNode *copy,SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgWhileStmt::post_construction_initialization()
+*/
+/*!
+\fn void SgWhileStmt::set_body(SgBasicBlock *body)
+\brief Access function for p_body.
+See  *body)
+body for documentation \param body SgBasicBlock pointer
+\return Returns void.
+*/
+/*!
+\fn void SgWhileStmt::set_condition(SgStatement *condition)
+\brief Access function for p_condition.
+See  *condition)
+condition for documentation \param condition SgStatement pointer
+\return Returns void.
+*/
+/*!\fn void SgWhileStmt::set_end_numeric_label(int end_numeric_label)
+\description See  end_numeric_label)
+end_numeric_label for documentation */
+/*!\fn void SgWhileStmt::set_string_label(std::string string_label)
+\description See  string_label)
+string_label for documentation */
+/*!
+\fn SgBasicBlock *SgWhileStmt::get_body() const
+\brief Access function for p_body.
+See  const
+body for documentation \return Returns a pointer to a SgBasicBlock.
+*/
+/*!
+\fn SgStatement *SgWhileStmt::get_condition() const
+\brief Access function for p_condition.
+See  const
+condition for documentation \return Returns a pointer to a SgStatement.
+*/
+/*!\fn int SgWhileStmt::get_end_numeric_label() const
+\description See  const
+end_numeric_label for documentation */
+/*!\fn std::string SgWhileStmt::get_string_label() const
+\description See  const
+string_label for documentation */
+/*!\fn virtual SgName SgWhileStmt::get_mangled_name() const
+\description See  const
+mangled_name for documentation */
+/*!\fn virtual SgNode *SgWhileStmt::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgWhileStmt::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgWhileStmt::get_numberOfTraversalSuccessors()
+\description See  SgWhileStmt::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgWhileStmt::get_traversalSuccessorContainer()
+\description See  SgWhileStmt::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgWhileStmt::get_traversalSuccessorNamesContainer()
+\description See  SgWhileStmt::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgWhileStmt::SgWhileStmt(SgStatement *condition,SgBasicBlock *body)
+*/
+//@}
+int SAGE_Doxygen_Dummy_2468619114343;

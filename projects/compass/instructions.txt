@@ -1,0 +1,18 @@
+
+commands to update the compass directory using the compassRepository:
+
+  1) From ROSE/projects/compass directory:
+          compassRepository/bin/compass_submission_setup.sh compassRepository `pwd`
+
+     Note that this will overwite any existing checkers in the ROSE/projects/compass
+     directory.
+
+  2) If changes are made to the files in the ROSE/projects/compass directory, then
+     these changes can be saved back into the ROSE/projects/compass/compassRepository
+     (or where ever the compassRepository is located).  The command to do this is:
+        make archiveExplicitCharSign
+     (this example shows it's use for the "ExplicitCharSign" test, each test should be
+     run seperately).  This feature address the rare but practical circumstance where
+     changes to ROSE for changes to a few of the checkers and we want to save the changes
+     in to a new set of distributable checker tarballs.
+

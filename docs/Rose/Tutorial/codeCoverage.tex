@@ -1,0 +1,214 @@
+\chapter{Code Coverage}
+
+   This translator is part of ongoing collaboration with IBM on the support of code
+coverage analysis tools for C, C++ and F90 applications.  the subject of code coverage is
+much more complex than this example code would cover.  The following web site:
+{\em http://www.bullseye.com/coverage.html} contains more information and is the source 
+for the descriptions below. Code coverage can include:
+\begin{itemize}
+   \item Statement Coverage \\
+      This measure reports whether each executable statement is encountered.
+   \item Decision Coverage \\
+      This measure reports whether boolean expressions tested in control structures 
+      (such as the if-statement and while-statement) evaluated to both true and false. 
+      The entire boolean expression is considered one true-or-false predicate regardless 
+      of whether it contains logical-and or logical-or operators. Additionally, this
+      measure includes coverage of switch-statement cases, exception handlers, and
+      interrupt handlers.
+   \item Condition Coverage \\
+      Condition coverage reports the true or false outcome of each boolean sub-expression, 
+      separated by logical-and and logical-or if they occur. Condition coverage measures 
+      the sub-expressions independently of each other.
+   \item Multiple Condition Coverage \\
+      Multiple condition coverage reports whether every possible combination of boolean 
+      sub-expressions occurs. As with condition coverage, the sub-expressions are
+      separated by logical-and and logical-or, when present. The test cases required for 
+      full multiple condition coverage of a condition are given by the logical operator
+      truth table for the condition.
+   \item Condition/Decision Coverage \\
+      Condition/Decision Coverage is a hybrid measure composed by the union of condition
+      coverage and decision coverage. This measure was created at Boeing and is required 
+      for aviation software by RCTA/DO-178B.
+   \item Modified Condition/Decision Coverage \\
+      This measure requires enough test cases to verify every condition can affect the
+      result of its encompassing decision. 
+   \item Path Coverage \\
+      This measure reports whether each of the possible paths in each function have been 
+      followed. A path is a unique sequence of branches from the function entry to the
+      exit.
+   \item Function Coverage \\
+      This measure reports whether you invoked each function or procedure. It is useful
+      during preliminary testing to assure at least some coverage in all areas of the
+      software. Broad, shallow testing finds gross deficiencies in a test suite quickly.
+   \item Call Coverage \\
+      This measure reports whether you executed each function call. The hypothesis is that
+      faults commonly occur in interfaces between modules.
+   \item Linear Code Sequence and Jump (LCSAJ) Coverage \\
+      This variation of path coverage considers only sub-paths that can easily be
+      represented in the program source code, without requiring a flow graph.
+      An LCSAJ is a sequence of source code lines executed in sequence. This
+      "linear" sequence can contain decisions as long as the control flow actually continues
+      from one line to the next at run-time. Sub-paths are constructed by concatenating
+      LCSAJs. Researchers refer to the coverage ratio of paths of length n LCSAJs as the
+      test effectiveness ratio (TER) n+2.
+   \item Data Flow Coverage \\
+      This variation of path coverage considers only the sub-paths from variable
+      assignments to subsequent references of the variables.
+   \item Object Code Branch Coverage \\
+      This measure reports whether each machine language conditional branch instruction
+      both took the branch and fell through.
+   \item Loop Coverage \\
+      This measure reports whether you executed each loop body zero times, exactly once,
+      and more than once (consecutively). For do-while loops, loop coverage reports whether
+      you executed the body exactly once, and more than once. The valuable aspect of this
+      measure is determining whether while-loops and for-loops execute more than once,
+      information not reported by others measure.
+   \item Race Coverage \\
+      This measure reports whether multiple threads execute the same code at the same
+      time. It helps detect failure to synchronize access to resources. It is useful for
+      testing multi-threaded programs such as in an operating system.
+   \item Relational Operator Coverage \\
+      This measure reports whether boundary situations occur with relational operators (<,
+      <=, >, >=). The hypothesis is that boundary test cases find off-by-one errors and
+      mistaken uses of wrong relational operators such as < instead of <=. 
+   \item Weak Mutation Coverage \\
+      This measure is similar to relational operator coverage but much more general
+      [Howden1982]. It reports whether test cases occur which would expose the use of wrong
+      operators and also wrong operands. It works by reporting coverage of conditions
+      derived by substituting (mutating) the program's expressions with alternate operators,
+      such as "-" substituted for "+", and with alternate variables substituted.
+   \item Table Coverage \\
+      This measure indicates whether each entry in a particular array has been
+      referenced. This is useful for programs that are controlled by a finite state machine.
+\end{itemize}
+
+
+   The rest of this text must be changed to refer to the code coverage example within ROSE/tutorial.
+
+   Figure~\ref{Tutorial:exampleCodeCoverage} shows the low level
+construction of a more complex AST fragment (a function declaration) and its insertion 
+into the AST at the top of each block.  Note that the code does not handle 
+symbol table issues, yet.
+
+   Building a function in global scope.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+\label{Tutorial:exampleCodeCoverage}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+%  \lstinputlisting{\TutorialExampleDirectory/addFunctionDeclaration.C}
+   \lstinputlisting{\TutorialExampleBuildDirectory/codeCoverage.aa}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/codeCoverage.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows instrumentation to call a test function from the top of
+         each function body in the application (part 1).}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+\label{Tutorial:exampleCodeCoverage2}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/codeCoverage.ab}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/codeCoverage.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows instrumentation to call a test function from the top of
+         each function body in the application (part 2).}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+\label{Tutorial:exampleCodeCoverage2}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/codeCoverage.ac}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/codeCoverage.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code shows instrumentation to call a test function from the top of
+         each function body in the application (part 3).}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleInputCode_ExampleCodeCoverage}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_ExampleCodeCoverage.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_ExampleCodeCoverage.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to translator adding new function.}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+\label{Tutorial:exampleOutput_ExampleCodeCoverage}
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_ExampleCodeCoverage.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_ExampleCodeCoverage.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to translator adding new function.}
+\end{figure}
+
+

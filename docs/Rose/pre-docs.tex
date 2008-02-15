@@ -1,0 +1,69 @@
+\documentclass{article}
+\usepackage{listings}
+
+\begin{document}
+\author{Jeremiah Willcock}
+\title{Partial redundancy elimination documentation}
+\maketitle
+
+\newcommand{\Cpp}{C\texttt{++}}
+
+The implementation of partial redundancy elimination (PRE) in ROSE is in
+\texttt{src/midend/programTransformation/partialRedundancyElimination}.
+The version in ROSE is a straightforward implementation of the algorithm in
+Paleri et al~\cite{paleri}.  \Cpp{} statements are considered to be the
+basic unit for PRE, and conversion to triple form (as done in the paper) is
+not performed.  The standard control flow graph structure in ROSE is used
+for control flow analysis, and so its limitations also apply to the PRE
+implementation.
+
+In order to perform partial redundancy elimination on a
+given function definition, ROSE first generates a control flow graph of the
+function.  It then adds information to each edge of the control flow graph
+showing where to insert statements into the source code so that they will
+be executed during every transition along that edge.  Currently, not all
+edges can be handled because of limitations in the API used by the control
+flow graph implementation (not enough information about how control
+structures correspond to graph structures is given to the graph
+implementation).  Most edges are properly annotated, however.
+
+Other than the creation of the control flow graph, the rest of PRE is done
+for one expression at a time.  This could be optimized in the future to use
+bit vectors to do multiple expressions in one iteration through the source
+code.
+
+For a given expression, PRE proceeds by examining each of the control flow
+graph nodes (basic blocks) to find computations and modifications to the
+value of the expression.  Finding modifications is done by looking at all
+variables used in the expression and finding statements which modify any of
+them.  A more sophisticated alias analysis should be used for this than
+what is currently present.  Also, this pass removes redundant computations
+within a single basic block.
+
+Next, a series of analysis variables is computed on the basic blocks of the
+control flow graph.  These are named as in~\cite{paleri}, and that paper
+should be consulted to understand their functions.  The worklist algorithm
+is used to compute fix-points of systems of boolean equations during this
+computation.
+
+Finally, the analysis recommends changes to the program, and so these
+changes are made.  These include replacing computations of the selected
+expression with uses of a cache variable and updating the cache variable
+with new values of the expression.  These are done in a straightforward
+way, and match the paper fairly closely.
+
+After this is done for each expression in the program (with some
+expressions skipped because they are too simple or have side effects), all
+partial redundancies have been removed.  One caveat is that loop-invariant
+expressions will only be moved if the loop will definitely execute at least
+one iteration (for example, by using a do-while structure).  This is
+because PRE is a conservative analysis that will not insert any
+computations into the program, and moving a loop-invariant expression out
+of a loop could add an extra computation if the loop executes zero
+iterations.  Finite differencing can be used for some kinds of
+loop-invariant code motion in cases like this.
+
+\bibliography{docs}
+\bibliographystyle{abbrv}
+
+\end{document}

@@ -1,0 +1,54 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgDefineDirectiveStatement
+*/
+/*! \name Class Members*/
+//@{
+/*!\var std::string SgDefineDirectiveStatement::p_dummyString4
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgDefineDirectiveStatement::SgDefineDirectiveStatement(Sg_File_Info *startOfConstruct)
+*/
+/*!\fn SgDefineDirectiveStatement::SgDefineDirectiveStatement(const SgDefineDirectiveStatementStorageClass &source)
+*/
+/*!\fn inline static void SgDefineDirectiveStatement::operator delete(void *pointer)
+*/
+/*!\fn static SgDefineDirectiveStatement *SgDefineDirectiveStatement::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgDefineDirectiveStatement::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgDefineDirectiveStatement::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgDefineDirectiveStatement::initializeStorageClassArray(SgDefineDirectiveStatementStorageClass *storageArray)
+*/
+/*!\fn static void SgDefineDirectiveStatement::clearMemoryPool()
+*/
+/*!\fn static void SgDefineDirectiveStatement::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgDefineDirectiveStatement::resetValidFreepointers()
+*/
+/*!\fn virtual RTIReturnType SgDefineDirectiveStatement::roseRTI()
+*/
+/*!\fn virtual SgDefineDirectiveStatement::~SgDefineDirectiveStatement()
+*/
+/*!\fn virtual SgNode *SgDefineDirectiveStatement::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgDefineDirectiveStatement::post_construction_initialization()
+*/
+/*!\fn virtual SgNode *SgDefineDirectiveStatement::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgDefineDirectiveStatement::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgDefineDirectiveStatement::get_numberOfTraversalSuccessors()
+\description See  SgDefineDirectiveStatement::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgDefineDirectiveStatement::get_traversalSuccessorContainer()
+\description See  SgDefineDirectiveStatement::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgDefineDirectiveStatement::get_traversalSuccessorNamesContainer()
+\description See  SgDefineDirectiveStatement::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgDefineDirectiveStatement::SgDefineDirectiveStatement()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_613014077;

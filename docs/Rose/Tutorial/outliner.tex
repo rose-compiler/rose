@@ -1,0 +1,520 @@
+%==========================================================================
+\chapter{Function Outlining using the LiaOutliner}
+\label{chap:outliner}
+%==========================================================================
+
+\emph{Function outlining} is the process of replacing a block of
+consecutive statements with a function call to a new function
+containing those statements. Conceptually, outlining the inverse of
+inlining (Chapter~\ref{chap:inliner}). This chapter shows how to use
+the basic experimental outliner implementation, the
+LiaOutliner,\footnote{Pronounced, ``lee-outliner'', named after
+Chunhua Liao, who implemented the initial version of this outliner
+during a summer 2006 internship at LLNL while he was a graduate
+student at the University of Houston.} included in the ROSE projects
+directory.
+
+There are two basic ways to use the LiaOutliner. The first is a
+``user-level'' method, in which you may use a special pragma to mark
+outline targets in the input program, and then call a high-level
+driver routine to process these pragmas. The second method is to call
+``low-level'' outlining routines that operate directly on AST nodes.
+After a brief example of what the LiaOutliner can do and a discussion
+of its limits
+(Sections~\ref{sec:liaOutliner:example}--\ref{sec:liaOutliner:limits}),
+we discuss each of these methods in
+Sections~\ref{sec:liaOutliner:basic} and~\ref{sec:liaOutliner:direct},
+respectively.
+
+%==========================================================================
+\section{An Outlining Example}
+\label{sec:liaOutliner:example}
+
+Figure~\ref{fig:liaOutliner:input1} shows a small program with a
+pragma marking the outline target, a nested for loop, and
+Figure~\ref{fig:liaOutliner:output1} shows the result. The outliner
+extracts the loop and inserts it into the body of a new function, and
+inserts a call to that function. The outlined code's input and output
+variables are wrapped up as parameters to this function. We make the
+following observations about this output.
+
+\textbf{Placement and forward declarations}. The function itself is
+placed, by default, at the end of the input file to guarantee that it
+has access to all of the same declarations that were available at the
+outline target site. The outliner inserts any necessary forward
+declarations as well, including any necessary \texttt{friend}
+declarations if the outline target appeared in a class member
+function.
+
+\textbf{Calling convention}. The LiaOutliner generates a C-callable
+function (\texttt{extern ``C''}, with pointer arguments). This design
+choice is motivated by our need to use the outliner to extract code
+into external, dynamically loadable library modules.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!b]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/liaOutliner/inputCode_OutlineLoop.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/liaOutliner/inputCode_OutlineLoop.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{inputCode\_OutlineLoop.cc: Sample input program. The \texttt{\#pragma} directive marks the nested for loop for outlining.}
+\label{fig:liaOutliner:input1}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined-inputCode_OutlineLoop.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined-inputCode_OutlineLoop.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_outlined-inputCode\_OutlineLoop.cc: The nested for loop of Figure~\ref{fig:liaOutliner:input1} has been outlined.}
+\label{fig:liaOutliner:output1}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%==========================================================================
+\section{Limitations of the LiaOutliner}
+\label{sec:liaOutliner:limits}
+
+The main limitation of the outliner implementation is that it can only
+outline single SgStatement nodes. However, since an SgStatement node
+may be a block (\emph{i.e.}, an SgBasicBlock node), a ``single
+statement'' may actually comprise a sequence of complex statements.
+
+The rationale for restricting to single SgStatement nodes is to avoid
+subtly changing the program's semantics when outlining code. Consider
+the following example, in which we wish to outline the middle 3 lines
+of executable code.
+%
+\lstset{language=C++,numbers=left,firstnumber=1,stepnumber=2}
+\begin{lstlisting}
+  int x = 5;
+// START outlining here.
+  foo (x);
+  Object y (x);
+  y.foo ();
+// STOP outlining here.
+  y.bar ();
+\end{lstlisting}
+%
+This example raises a number of issues. How should an outliner handle
+the declaration of \texttt{y}, which constructs an object in local
+scope? It cannot just cut-and-paste the declaration of \texttt{y} to
+the body of the new outlined function because that will change its
+scope and lifetime, rendering the call to \texttt{y.bar()}
+impossible. Additionally, it may be unsafe to move the declaration of
+\texttt{y} so that it precedes the outlined region because the
+constructor call may have side-effects that could affect the execution
+of \texttt{foo(x)}. It is possible to heap-allocate \texttt{y} inside
+the body of the outlined function so that it can be returned to the
+caller and later freed, but it is not clear if changing \texttt{y}
+from a stack-allocated variable to a heap-allocated one will always be
+acceptable, particularly if the developer of the original program has,
+for instance, implemented a customized memory allocator. Restricting
+outlining to well-defined SgStatement objects avoids these issues.  It
+is possible to build a ``higher-level'' outliner that extends the
+LiaOutliner's basic infrastructure to handle these and other issues.
+
+The LiaOutliner cannot outline all possible SgStatement nodes.
+However, the LiaOutliner interface provides a routine,
+\texttt{LiaOutliner::isOutlineable(s)}, for testing whether an
+SgStatement object \texttt{s} is known to satisfy the outliner's
+preconditions (see Section~\ref{sec:liaOutliner:direct} for details).
+
+%==========================================================================
+\section{User-Directed Outlining \emph{via} Pragmas}
+\label{sec:liaOutliner:basic}
+
+Figure~\ref{fig:liaOutliner:basic} shows the basic translator,
+\texttt{outline}, that produces Figure~\ref{fig:liaOutliner:output1}
+from Figure~\ref{fig:liaOutliner:input1}. This translator extends the
+identity translator with an include directive on line 5 of
+Figure~\ref{fig:liaOutliner:basic}, and a call to the LiaOutliner on
+line 16. All LiaOutliner routines live in the \texttt{LiaOutliner}
+namespace. Here, the call to \texttt{LiaOutliner::outlineAll (proj)}
+on line 16 traverses the AST, looks for \texttt{\#pragma
+rose\_outline} directives, outlines the SgStatement objects to which
+each pragma is attached, and returns the number of outlined objects.
+
+\textbf{A slightly lower-level outlining primitive}. The
+\texttt{LiaOutliner::outlineAll()} routine is a wrapper around calls
+to a simpler routine, \texttt{LiaOutliner::outline()}, that operates
+on pragmas:
+%
+\begin{lstlisting}
+  LiaOutliner::Result  LiaOutliner::outline (SgPragmaDeclaration* s);
+\end{lstlisting}
+%
+Given a pragma statement AST node \texttt{s}, this routine checks if
+\texttt{s} is a \texttt{rose\_outline} directive, and if so, outlines
+the statement with which \texttt{s} is associated. It returns a
+\texttt{LiaOutliner::Result} object, which is simply a structure that
+points to (a) the newly generated outlined function and (b) the
+statement corresponding to the new function call (\emph{i.e.}, the
+outlined function call-site). See \texttt{LiaOutliner.hh} or the ROSE
+Programmer's Reference for more details.
+
+\textbf{The \texttt{LiaOutliner::outlineAll()} wrapper}. The advantage
+of using the wrapper instead of the lower-level primitive is that the
+wrapper processes the pragmas in an order that ensures the outlining
+can be performed correctly in-place. This order is neither a preorder
+nor a postorder traversal, but in fact a ``reverse'' preorder
+traversal; refer to the wrapper's documentation for an explanation.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/liaOutliner/outline.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/liaOutliner/outline.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{outline.cc: A basic outlining translator, which generates
+Figure~\ref{fig:liaOutliner:output1} from
+Figure~\ref{fig:liaOutliner:input1}. This outliner relies on the
+high-level driver, \texttt{LiaOutliner::outlineAll()}, which scans the
+AST for outlining pragma directives (\texttt{\#pragma rose\_outline})
+that mark outline targets.}
+\label{fig:liaOutliner:basic}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%==========================================================================
+\section{Calling LiaOutliner Directly on AST Nodes}
+\label{sec:liaOutliner:direct}
+
+The preceding examples rely on the LiaOutliner's \texttt{\#pragma}
+interface to identify outline targets. In this section, we show how
+to call the outliner directly on SgStatement nodes from within your
+translator.
+
+Figure~\ref{fig:liaOutliner:direct} shows an example translator that
+finds all \texttt{if} statements and outlines them. A sample input
+appears in Figure~\ref{fig:liaOutliner:input3}, with the corresponding
+output shown in Figure~\ref{fig:liaOutliner:output3}. Notice that
+valid preprocessor control structure is accounted for and preserved in
+the output.
+
+The translator has two distinct phases. The first phase selects all
+\emph{outlineable} if-statements, using the
+\texttt{CollectOutlineableIfs} helper class. This class produces a
+list that stores the targets in an order appropriate for outlining
+them in-place. The second phase iterates over the list of statements
+and outlines each one. The rest of this section explains these phases,
+as well as various aspects of the sample input and output.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/liaOutliner/outlineIfs.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/liaOutliner/outlineIfs.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{outlineIfs.cc: A lower-level outlining translator, which
+calls \texttt{LiaOutliner::outline()} directly on SgStatement
+nodes. This particular translator outlines all SgIfStmt nodes.}
+\label{fig:liaOutliner:direct}
+\end{figure}
+%--------------------------------------------------------------------------
+
+\subsection{Selecting the \emph{outlineable} \texttt{if} statements}
+\label{sec:liaOutliner:direct:translator}
+
+Line~45 of Figure~\ref{fig:liaOutliner:direct} builds a list,
+\texttt{ifs} (declared on line~44), of outlineable if-statements.  The
+helper class, \texttt{CollectOutlineableIfs} in lines~12--35,
+implements a traversal to build this list. Notice that a node is
+inserted into the target list only if it satisifies the LiaOutliner's
+preconditions; this check is the call to
+\texttt{LiaOutliner::isOutlineable()} on line~28.
+
+The function \texttt{LiaOutliner::isOutlineable()} also accepts an
+optional second boolean parameter (not shown). When this parameter is
+true and the statement cannot be outlined, the check will print an
+explanatory message to standard error. Such messages are useful for
+discovering why the LiaOutliner will not outline a particular
+statement. The default value of this parameter is \texttt{false}.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/liaOutliner/inputCode_Ifs.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/liaOutliner/inputCode_Ifs.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{inputCode\_Ifs.cc: Sample input program, without explicit
+outline targets specified using \texttt{\#pragma rose\_outline}, as in
+Figures~\ref{fig:liaOutliner:input1}
+and~\ref{fig:liaOutliner:input2}.}
+\label{fig:liaOutliner:input3}
+\end{figure}
+%--------------------------------------------------------------------------
+
+\subsection{Properly ordering statements for in-place outlining}
+\label{sec:liaOutliner:direct:ordering}
+
+Each call to \texttt{LiaOutliner::outline(*i)} on line~50 of
+Figure~\ref{fig:liaOutliner:direct} outlines a target if-statement
+\texttt{*i} in \texttt{if\_targets}. However, in order for these
+statements to be outlined in-place, it is essential to outline the
+statements in the proper order.
+
+The postorder traversal implemented by the helper class,
+\texttt{CollectOutlineableIfs}, produces the correct ordering.  To see
+why, consider the following example code:
+%
+\begin{lstlisting}
+if (a) // [1]
+{
+  if (b) foo (); // [2]
+}
+else if (c) // [3]
+{
+  if (d) bar (); // [4]
+}
+\end{lstlisting}
+%
+The corresponding AST is (roughly)
+\begin{verbatim}
+       SgIfStmt:[1]
+      /            \
+     /              \
+SgIfStmt:[2]    SgIfStmt:[3]
+                     | 
+                SgIfStmt:[4]
+\end{verbatim}
+%
+The postorder traversal---2, 4, 3, 1---ensures that child
+if-statements are outlined before their parents.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/liaOutliner/rose_inputCode_Ifs.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/liaOutliner/rose_inputCode_Ifs.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_inputCode\_Ifs.cc: Figure~\ref{fig:liaOutliner:input3},
+after outlining using the translator in
+Figure~\ref{fig:liaOutliner:direct}.}
+\label{fig:liaOutliner:output3}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%==========================================================================
+\section{LiaOutliner's Preprocessing Phase}
+\label{sec:liaOutliner:preproc}
+
+Internally, the LiaOutliner implementation itself has two distinct
+phases. The first is a \emph{preprocessing phase}, in which an
+arbitrary outlineable target is placed into a canonical form that is
+relatively simple to extract. The second phase then creates the
+outlined function, replacing the original target with a call to the
+outlined function. It is possible to run just the preprocessing phase,
+which is useful for understanding or even debugging the LiaOutliner
+implementation.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/liaOutliner/outlinePreproc.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/liaOutliner/outlinePreproc.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{outlinePreproc.cc: The basic translator of
+Figure~\ref{fig:liaOutliner:basic}, modified to execute the
+LiaOutliner's preprocessing phase only.  In particular, the original
+call to \texttt{LiaOutliner::outlineAll()} has been replaced by a call
+to \texttt{LiaOutliner::preprocessAll()}.}
+\label{fig:liaOutliner:preproc}
+\end{figure}
+%--------------------------------------------------------------------------
+
+To call just the preprocessor, simply replace a call to
+\texttt{LiaOutliner::outlineAll(s)} or
+\texttt{LiaOutliner::outline(s)} with a call to
+\texttt{LiaOutliner::preprocessAll(s)} or
+\texttt{LiaOutliner::preprocess(s)}, respectively. The translator in
+Figure~\ref{fig:liaOutliner:preproc} modifies the translator in
+Figure~\ref{fig:liaOutliner:basic} in this way to create a
+preprocessing-only translator.
+
+The preprocessing phase consists of a sequence of initial analyses and
+transformations that the LiaOutliner performs in order to put the
+outline target into a particular canonical form. Roughly speaking,
+this form is an enclosing SgBasicBlock node, possibly preceded or
+followed by start-up and tear-down code. Running just the
+preprocessing phase on Figure~\ref{fig:liaOutliner:input1} produces
+the output in Figure~\ref{fig:liaOutliner:preproc1}. In this example,
+the original loop is now enclosed in two additional SgBasicBlocks
+(Figure~\ref{fig:liaOutliner:preproc1}, lines 24--35), the outermost
+of which contains a declaration that shadows the object's
+\texttt{this} pointer, replacing all local references to \texttt{this}
+with the new shadow pointer. In this case, this initial transformation
+is used by the main underlying outliner implementation to explicitly
+identify all references to the possibly implicit references to
+\texttt{this}.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined_pp-inputCode_OutlineLoop.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined_pp-inputCode_OutlineLoop.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_outlined\_pp-inputCode\_OutlineLoop.cc:
+Figure~\ref{fig:liaOutliner:input1} after outline preprocessing only,
+\emph{i.e.}, specifying \texttt{-rose:outline:preproc-only} as an
+option to the translator of Figure~\ref{fig:liaOutliner:basic}.}
+\label{fig:liaOutliner:preproc1}
+\end{figure}
+%--------------------------------------------------------------------------
+
+The preprocessing phase is more interesting in the presence of
+non-local control flow outside the outline target. Consider
+Figure~\ref{fig:liaOutliner:input2}, in which the outline target
+contains two \texttt{break} statements, which require jumping to a
+regions of code outside the target. We show the preprocessed code in
+Figure~\ref{fig:liaOutliner:preproc2}. The original non-local jumps
+are first transformed into assignments to a flag,
+\texttt{EXIT\_TAKEN\_\_} (lines 18--20 and 26--29), and then relocated
+to a subsequent block of code (lines 38--53) with their execution
+controlled by the value of the flag. The final outlined result appears
+in Figure~\ref{fig:liaOutliner:output2}; the initial preprocessing
+simplifies this final step of extracting the outline target.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/liaOutliner/inputCode_OutlineNonLocalJumps.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/liaOutliner/inputCode_OutlineNonLocalJumps.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{inputCode\_OutlineNonLocalJumps.cc: Sample input program,
+with an outlining target that contains two non-local jumps (here,
+\texttt{break} statements).}
+\label{fig:liaOutliner:input2}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined_pp-inputCode_OutlineNonLocalJumps.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined_pp-inputCode_OutlineNonLocalJumps.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_outlined\_pp-inputCode\_OutlineNonLocalJumps.cc: The
+non-local jump example of Figure~\ref{fig:liaOutliner:input2} after
+outliner preprocessing, but before the actual outlining.  The
+non-local jump is handled by an additional flag,
+\texttt{EXIT\_TAKEN\_\_}, which indicates what non-local jump is to be
+taken.}
+\label{fig:liaOutliner:preproc2}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined-inputCode_OutlineNonLocalJumps.cc}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/liaOutliner/rose_outlined-inputCode_OutlineNonLocalJumps.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_outlined-inputCode\_OutlineNonLocalJumps.cc:
+Figure~\ref{fig:liaOutliner:input2} after outlining.}
+\label{fig:liaOutliner:output2}
+\end{figure}
+%--------------------------------------------------------------------------
+
+% eof

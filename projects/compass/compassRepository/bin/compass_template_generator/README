@@ -1,0 +1,63 @@
+Description of this directory
+-----------------------------
+compass_template_generator has a couple of source files and a 
+generator script gen_checker.sh.
+
+Invocation of the script gen_checker.sh
+---------------------------------------
+The style-checker-writer (you!) would invoke the script gen_checker.sh with 
+the functionality of the desired project. The script generates the directory
+and the code templates that you can use to build the style-checkers from.
+
+Example
+-------
+Suppose you want to build a style-checker with functionality
+"multiple cases on same line", you invoke the gen_checker script 
+in the following way:
+
+   $ gen_checker.sh multiple cases on same line
+
+Some notes about the generated sources:
+
+1. A new directory named 'multipleCasesOnSameLine' is created with the 
+   following files:
+
+         compass.C
+         compass.h
+         compass_parameters
+         compassTestMain.C
+         Makefile
+         Makefile.am
+         multipleCasesOnSameLine.C
+         multipleCasesOnSameLineDocs.tex
+         multipleCasesOnSameLine.h
+         multipleCasesOnSameLineMain.C
+         multipleCasesOnSameLineTest1.C
+
+   Some of the files (compass.[Ch], compass_parameters and
+   compass_parameters) are copied from the current directory, while the
+   others (multiple*, Makefile, Makefile.am) are generated.
+  
+2. The class/namespace names have prefixes
+   'MultipleCasesOnSameLine'.
+
+3. The ifdef-guard is named 'COMPASS_MULTIPLE_CASES_ON_SAME_LINE_H'
+
+4. The project description will be "Multiple Cases On Same Line".
+
+Some suggestions:
+-----------------
+
+1. It is advised that you do not invoke the script gen_checker with words
+   like checker, detector, tester, etc. Adding these verbs at the command
+   line means that these words are added as suffixes into the
+   directory-name. Which will make it redundant, as the compass project is
+   about writing style-checkers!
+
+2. Some of the files have read-only permissions and are intended only for
+   such use. Please do not change the permissions of these files.
+
+Enjoy your style-traversals!
+
+===============================================
+This file has last been updated on July-18-2007

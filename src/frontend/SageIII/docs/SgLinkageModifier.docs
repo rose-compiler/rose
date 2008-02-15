@@ -1,0 +1,88 @@
+/* GENERATED FILE - DO NOT MODIFY */
+/*!\class SgLinkageModifier
+*/
+/*! \name Class Members*/
+//@{
+/*!\var enum SgLinkageModifier::linkage_modifier_enum SgLinkageModifier::p_modifier
+*/
+//@}
+/*! \name User Interface*/
+//@{
+/*!\fn SgLinkageModifier &SgLinkageModifier::operator=(const SgLinkageModifier &X)
+*/
+/*!\fn SgLinkageModifier::SgLinkageModifier(const SgLinkageModifier &X)
+*/
+/*!\fn SgLinkageModifier::SgLinkageModifier(const SgLinkageModifierStorageClass &source)
+*/
+/*!\fn bool SgLinkageModifier::isC_Linkage() const
+*/
+/*!\fn bool SgLinkageModifier::isCppLinkage() const
+*/
+/*!\fn bool SgLinkageModifier::isDefault() const
+*/
+/*!\fn bool SgLinkageModifier::isFortranLinkage() const
+*/
+/*!\fn bool SgLinkageModifier::isUnknown() const
+*/
+/*!\fn inline static void SgLinkageModifier::operator delete(void *pointer)
+*/
+/*!\fn static SgLinkageModifier *SgLinkageModifier::getPointerFromGlobalIndex(AstSpecificDataManagingClass *astInPool,unsigned long globalIndex)
+*/
+/*!\fn static unsigned long SgLinkageModifier::getNumberOfLastValidPointer()
+*/
+/*!\fn static unsigned long SgLinkageModifier::getNumberOfValidNodesAndSetGlobalIndexInFreepointer(unsigned long )
+*/
+/*!\fn static unsigned long SgLinkageModifier::initializeStorageClassArray(SgLinkageModifierStorageClass *storageArray)
+*/
+/*!\fn static void SgLinkageModifier::clearMemoryPool()
+*/
+/*!\fn static void SgLinkageModifier::extendMemoryPoolForFileIO()
+*/
+/*!\fn static void SgLinkageModifier::resetValidFreepointers()
+*/
+/*!\fn std::string SgLinkageModifier::displayString() const
+*/
+/*!\fn virtual RTIReturnType SgLinkageModifier::roseRTI()
+*/
+/*!\fn virtual SgLinkageModifier::~SgLinkageModifier()
+*/
+/*!\fn virtual SgNode *SgLinkageModifier::copy(SgCopyHelp &help) const
+*/
+/*!\fn virtual void SgLinkageModifier::post_construction_initialization()
+*/
+/*!\fn void SgLinkageModifier::display(std::string label) const
+*/
+/*!\fn void SgLinkageModifier::reset()
+*/
+/*!\fn void SgLinkageModifier::setC_Linkage()
+*/
+/*!\fn void SgLinkageModifier::setCppLinkage()
+*/
+/*!\fn void SgLinkageModifier::setDefault()
+*/
+/*!\fn void SgLinkageModifier::setFortranLinkage()
+*/
+/*!\fn void SgLinkageModifier::setUnknown()
+*/
+/*!\fn void SgLinkageModifier::set_modifier(enum SgLinkageModifier::linkage_modifier_enum modifier)
+\description See  modifier)
+modifier for documentation */
+/*!\fn enum SgLinkageModifier::linkage_modifier_enum SgLinkageModifier::get_modifier() const
+\description See  const
+modifier for documentation */
+/*!\fn virtual SgNode *SgLinkageModifier::get_traversalSuccessorByIndex(size_t idx)
+\description See  idx)
+traversalSuccessorByIndex for documentation */
+/*!\fn virtual size_t SgLinkageModifier::get_childIndex(SgNode *child)
+\description See  *child)
+childIndex for documentation */
+/*!\fn virtual size_t SgLinkageModifier::get_numberOfTraversalSuccessors()
+\description See  SgLinkageModifier::numberOfTraversalSuccessors for documentation */
+/*!\fn virtual std::vector< SgNode * , std::allocator< SgNode * >  > SgLinkageModifier::get_traversalSuccessorContainer()
+\description See  SgLinkageModifier::traversalSuccessorContainer for documentation */
+/*!\fn virtual std::vector< std::string  , std::allocator< std::string  >  > SgLinkageModifier::get_traversalSuccessorNamesContainer()
+\description See  SgLinkageModifier::traversalSuccessorNamesContainer for documentation */
+/*!\fn SgLinkageModifier::SgLinkageModifier()
+*/
+//@}
+extern int SAGE_Doxygen_Dummy_1540011844;
