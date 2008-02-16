@@ -289,6 +289,9 @@ using __gnu_cxx::hash;
 // #include "sageSupport.h"
 #include "sageInterface.h"
 
+//Liao, 2/8/2008. SAGE III node building interface
+#include "sageBuilder.h"
+
 // DQ (5/27/2007): Removed all entries in this file (only had AST Merge API and 
 // these were moved to merge.h).  One less header file make everything a little simpler!
 // DQ (7/7/2005): This is now a file where temporary functions may be
@@ -308,9 +311,6 @@ using __gnu_cxx::hash;
 // DQ (7/6/2005): Added to support performance analysis of ROSE.
 // This is located in ROSE/src/midend/astDiagnostics
 #include "AstPerformance.h"
-
-// DQ (Summer 2006): This is some AST interface support from Jeremiah.
-#include<loopHelpers.h>
 
 // DQ (5/28/2007): Added new AST Merge API
 #include "astMergeAPI.h"

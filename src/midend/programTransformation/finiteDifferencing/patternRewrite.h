@@ -12,6 +12,8 @@
 class RewriteRule {
   public:
   virtual bool doRewrite(SgNode*& n) const = 0;
+// Liao (2/7/2008): Added destructor to eliminate g++ compiler warning.
+  virtual ~RewriteRule(){}
 };
 
 //! Combine several rules into one, doing the constituents in order
@@ -44,6 +46,8 @@ class Pattern {
   public:
   virtual bool match(SgNode* top, PatternVariables& vars) const = 0;
   virtual SgNode* subst(PatternVariables& vars) const = 0;
+// Liao (2/7/2008): Added destructor to eliminate g++ compiler warning.
+  virtual ~Pattern(){}
 };
 
 //! A rule which changes one pattern of code to another
@@ -56,6 +60,8 @@ class PatternActionRule: public RewriteRule {
     pattern(pattern), action(action) {}
 
   virtual bool doRewrite(SgNode*& n) const;
+// Liao (2/7/2008): Added destructor to eliminate g++ compiler warning.
+  virtual ~PatternActionRule(){}
 };
 
 //! Create a PatternActionRule

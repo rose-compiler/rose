@@ -10,7 +10,7 @@
 are derived from this SgType class.
 
 Discussion of get_base_type() and findBaseType():
-    -# fileBaseType() will recusively strip away all typedefs, reference, pointers, arrays,
+    -# fileBaseType() will recursively strip away all typedefs, reference, pointers, arrays,
        and modifiers
     -# get_base_type() is a member function on some IR nodes derived from SgType and
        returns the non-recursively striped (immediate) type under the typedefs, reference,
@@ -31,11 +31,11 @@ would share the same list of typedefs.  So this is the correct location for this
 \internal This is a base class for all SgType objects.
 
 \todo Several classes derived from SgType are not used and can be removed:
-   -# SgTypeUnknown
+   -# SgTypeUnknown (Used by SageInterface to specify references to undeclared variables)
    -# SgUnknownMemberFunctionType
 
 \todo The signed types (except for signed char) are not used in SAGE III and do not exist
-      in C or C++.  These IR nodes should be removed, specifically SgTypeSignedshort,
+      in C or C++.  These IR nodes should be removed, specifically SgTypeSignedShort,
       SgTypeSignedInt, SgTypeSignedLong.
 
 \todo For Fortran support we need to add the kind, length data member to specify the width.

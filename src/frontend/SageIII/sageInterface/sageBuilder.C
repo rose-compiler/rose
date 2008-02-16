@@ -51,11 +51,9 @@ void SageBuilder::clearScopeStack()
 // deferred symbol insertion, scope setting , etc
 // do them when it is actually used with the  parameterList!!
 SgInitializedName *
-SageBuilder::buildInitializedName \
- ( const SgName & name, SgType* type, SgScopeStatement* scope)
-// ( const SgName & name, SgType* type, SgScopeStatement* scope = NULL )
+SageBuilder::buildInitializedName ( const SgName & name, SgType* type)
 {
-#if 1
+#if 0
   // If the scope was not specified, then get it from the scope stack.
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
@@ -90,42 +88,27 @@ SageBuilder::buildVariableDeclaration \
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
-     ROSE_ASSERT(scope != NULL);
-     ROSE_ASSERT(name.is_null() == false);
-     ROSE_ASSERT(type != NULL);
+//   ROSE_ASSERT(scope != NULL); // enable bottomup construction: scope can be unknown
+   ROSE_ASSERT(name.is_null() == false);
+   ROSE_ASSERT(type != NULL);
 
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
-  SgInitializedName *initName = varDecl->get_decl_item (name);
-  ROSE_ASSERT(initName);
-  initName->set_scope(scope);
-
-  SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
-  if (varSymbol==NULL)
+  if (scope!=NULL) 
   {
-    varSymbol = new SgVariableSymbol(initName);
-  ROSE_ASSERT(varSymbol);
-  scope->insert_symbol(name, varSymbol);
+    fixVariableDeclaration(varDecl,scope);
   }
-  else
-  {
-//   cout<<"sageBuilder.C:112 debug: found a previous one!!...."<<endl;
-    SgInitializedName* prev_decl = varSymbol->get_declaration();
-    ROSE_ASSERT(prev_decl);
-    initName->set_prev_decl_item(prev_decl);
-  }
-  // optional?
-  varDecl->set_parent(scope);
-
 #if 0
   // SgVariableDefinition should be created internally
   SgVariableDefinition * variableDefinition = new SgVariableDefinition(initName,(SgInitializer*)NULL);
   initName->set_declptr(variableDefinition);
   variableDefinition->set_parent(initName);
 #endif
+  SgInitializedName *initName = varDecl->get_decl_item (name);   
+  ROSE_ASSERT(initName); 
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
 #if 1
@@ -141,6 +124,21 @@ SageBuilder::buildVariableDeclaration \
   return varDecl;
 }
 
+SgVariableDeclaration*
+SageBuilder::buildVariableDeclaration \
+ (const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+{
+  SgName name2(name);
+  return buildVariableDeclaration(name2,type, varInit,scope);
+}
+
+SgVariableDeclaration*
+SageBuilder::buildVariableDeclaration \
+ (const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+{
+  SgName name2(name);
+  return buildVariableDeclaration(name2,type, varInit,scope);
+}
 //-----------------------------------------------
 // Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null' 
 SgFunctionParameterList * 
@@ -242,8 +240,9 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * ar
 // 2. secondary building after another nondefining functiondeclaration
 // 3. secondary building after another defining function declaration
 // 4. fortran ?
-SgFunctionDeclaration *
-SageBuilder::buildNonDefiningFunctionDeclaration \
+template <class actualFunction>
+actualFunction*
+SageBuilder::buildNondefiningFunctionDeclaration_T \
 (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
   // argument verification
@@ -257,26 +256,33 @@ SageBuilder::buildNonDefiningFunctionDeclaration \
   ROSE_ASSERT(paralist!= NULL);
 
   // tentatively build a function type, since it is shared
-  // by all prototype and defining declarations of a same function!
+  // by all prototypes and defining declarations of a same function!
   SgFunctionType * func_type = buildFunctionType(return_type,paralist);
 
   // function declaration
-  SgFunctionDeclaration * func;
+  actualFunction * func;
 
   // search before using the function type to create the function declaration 
   // TODO only search current scope or all ancestor scope??
+   //We dont't have lookup_member_function_symbol  yet
   SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
+
   if (func_symbol ==NULL)
   {
    //first prototype declaration
-    func = new SgFunctionDeclaration (name,func_type,NULL);
+    func = new actualFunction (name,func_type,NULL);
     ROSE_ASSERT(func);
 
     // function symbol table
-    func_symbol= new SgFunctionSymbol(func);
+   if (isSgMemberFunctionDeclaration(func))
+     func_symbol= new SgMemberFunctionSymbol(func);
+   else
+     func_symbol= new SgFunctionSymbol(func);
+
     ROSE_ASSERT(func_symbol);
     scope->insert_symbol(name, func_symbol);
-    ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL);
+   //  ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
+    //ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL);// Did not pass for member function?
 
    func->set_firstNondefiningDeclaration(func);
    func->set_definingDeclaration(NULL);
@@ -291,10 +297,13 @@ SageBuilder::buildNonDefiningFunctionDeclaration \
 //   delete func_type; // bug 189
    
    func_type = func_symbol->get_declaration()->get_type();
-   func = new SgFunctionDeclaration (name,func_type,NULL);
+   func = new actualFunction(name,func_type,NULL);
    ROSE_ASSERT(func);
-
-   SgFunctionDeclaration* prevDecl = func_symbol->get_declaration();
+   
+   //we don't care if it is member function or function here for a pointer
+   SgFunctionDeclaration* prevDecl = NULL;
+   prevDecl=func_symbol->get_declaration();
+   
    func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
    func->set_definingDeclaration(prevDecl->get_definingDeclaration());
    }
@@ -309,20 +318,36 @@ SageBuilder::buildNonDefiningFunctionDeclaration \
    // std::cout<<"patching argument's scope.... "<<std::endl;
     (*argi)->set_scope(scope);
   }
-
-  // mark as a forward declartion
-  func->setForward();
-
   // TODO double check if there are exceptions
    func->set_scope(scope);
    func->set_parent(scope);
+
+  // mark as a forward declartion
+  func->setForward();
 
   // set File_Info as transformation generated
   setSourcePositionForTransformation(func);
   return func;  
 }
 
-//----------------- function declaration------------
+SgFunctionDeclaration* SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+{
+  SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist,scope);
+  return result;
+}
+
+SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+{
+  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
+  // set definingdecl for SgCtorInitializerList
+  SgCtorInitializerList * ctor= result-> get_CtorInitializerList ();
+  ROSE_ASSERT(ctor);
+  //required ty AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
+  ctor->set_definingDeclaration(ctor);
+  ctor->set_firstNondefiningDeclaration(ctor);
+  return result;
+}
+//----------------- defining function declaration------------
 // a template builder for all kinds of defining SgFunctionDeclaration
 // handle common chores for function type, symbol, paramter etc.
 
@@ -414,9 +439,39 @@ SageBuilder::buildDefiningFunctionDeclaration \
 {
   SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration> \
  (name,return_type,paralist,scope);
-
   return func;
+}
 
+//------------------build value expressions -------------------
+//-------------------------------------------------------------
+SgBoolValExp* SageBuilder::buildBoolValExp(int value /*=0*/)
+{
+  //TODO does valueString matter here?
+  SgBoolValExp* boolValue= new SgBoolValExp(value);
+  ROSE_ASSERT(boolValue);
+  setOneSourcePositionForTransformation(boolValue);
+  return boolValue;
+}
+SgBoolValExp* SageBuilder::buildBoolValExp(bool value /*=0*/)
+{
+  return buildBoolValExp(int(value));
+}
+
+SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)
+{
+  SgCharVal* result = SageBuilder::buildCharVal(value);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgComplexVal* SageBuilder::buildComplexVal(long double real_value /*= 0.0*/, 
+                              long double imaginary_value /*= 0.0*/ )
+{
+  SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,NULL,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
 }
 
 SgDoubleVal* SageBuilder::buildDoubleVal(double t)
@@ -427,63 +482,14 @@ SgDoubleVal* SageBuilder::buildDoubleVal(double t)
   return value;
 }
 
-SgUnsignedLongVal* SageBuilder::buildUnsignedLongVal(unsigned long v)
+SgFloatVal* SageBuilder::buildFloatVal(float value /*= 0.0*/)
 {
-  SgUnsignedLongVal* result = new SgUnsignedLongVal(v,"");
+  SgFloatVal* result = SageBuilder::buildFloatVal(value);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-
   return result;
 }
 
-SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExpression* index)
-//SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL)
-{
-  SgArrayType* result = new SgArrayType(base_type,index);
-  ROSE_ASSERT(result); 
-  if (index!=NULL) index->set_parent(result); // important!
-  return result;
-}
-
-SgConditionalExp* SageBuilder::buildConditionalExp(SgExpression* test, SgExpression* a, SgExpression* b)
-{
-  SgConditionalExp* result = new SgConditionalExp(test, a, b, NULL);
-  test->set_parent(result);
-  a->set_parent(result);
-  b->set_parent(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-}
-
-SgAddOp * SageBuilder::buildAddOp(SgExpression* lhs, SgExpression* rhs)
-{
-   return buildBinaryExpression<SgAddOp>(lhs,rhs);
-}
-
-SgPntrArrRefExp* SageBuilder::buildPntrArrRefExp(SgExpression* lhs, SgExpression* rhs)
-{
-   return buildBinaryExpression<SgPntrArrRefExp>(lhs,rhs);
-}
-
-SgLessThanOp * SageBuilder::buildLessThanOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return buildBinaryExpression<SgLessThanOp>(lhs,rhs);
-}
-
-SgEqualityOp * SageBuilder::buildEqualityOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return buildBinaryExpression<SgEqualityOp>(lhs,rhs);
-}
-
-SgPlusAssignOp * SageBuilder::buildPlusAssignOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return buildBinaryExpression<SgPlusAssignOp>(lhs,rhs);
-}
-
-SgGreaterThanOp* SageBuilder::buildGreaterThanOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return buildBinaryExpression<SgGreaterThanOp>(lhs,rhs);
-}
 SgIntVal* SageBuilder::buildIntVal(int value)
 {
   //TODO does valueString matter here?
@@ -492,22 +498,139 @@ SgIntVal* SageBuilder::buildIntVal(int value)
   setOneSourcePositionForTransformation(intValue);
   return intValue;
 }
-SgBoolValExp* SageBuilder::buildBoolValExp(bool value)
+
+SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 {
-  //TODO does valueString matter here?
-  SgBoolValExp* boolValue= new SgBoolValExp(value);
-  ROSE_ASSERT(boolValue);
-  setOneSourcePositionForTransformation(boolValue);
-  return boolValue;
+  SgLongDoubleVal* result = SageBuilder::buildLongDoubleVal(value);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
 }
 
-SgNullExpression* SageBuilder::buildNullExpression()
+SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 {
-  SgNullExpression* ne= new SgNullExpression();
-  ROSE_ASSERT(ne);
-  setOneSourcePositionForTransformation(ne);
-  return ne;
+  SgStringVal* result = SageBuilder::buildStringVal(value);
+  ROSE_ASSERT(result);   
+  setOneSourcePositionForTransformation(result);
+  return result;
 }
+
+SgUnsignedLongVal* SageBuilder::buildUnsignedLongVal(unsigned long v)
+{
+  SgUnsignedLongVal* result = new SgUnsignedLongVal(v,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+
+  return result;
+}
+//----------------------build unary expressions----------------------
+template <class T>
+T* SageBuilder::buildUnaryExpression(SgExpression* operand)
+{ 
+  SgExpression* myoperand=operand;
+  
+#if 0
+ // it is very tempting to reuse expressions during translation,
+  // so try to catch such a mistake here
+  if (operand!=NULL)
+    if (operand->get_parent()!=NULL)
+    {
+      cout<<"Warning! Found an illegal attempt to reuse operand of type "
+          << operand->class_name() << 
+        " when building a unary expression . Operand is being copied."<<endl;
+     ROSE_ABORT();// remind user the issue
+      myoperand = isSgExpression(deepCopy(operand));
+    }
+#endif
+  T* result = new T(myoperand, NULL);
+  ROSE_ASSERT(result);   
+  if (myoperand!=NULL) 
+  { 
+    myoperand->set_parent(result);
+  // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result; 
+}
+
+SgAddressOfOp* 
+SageBuilder::buildAddressOfOp (SgExpression* operand)
+{
+  return buildUnaryExpression<SgAddressOfOp>(operand);
+}
+
+SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
+                SgType * expression_type,
+                SgCastExp::cast_type_enum cast_type)
+{
+  SgCastExp* result = new SgCastExp(operand_i, expression_type, cast_type);
+
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+   
+}
+
+SgMinusMinusOp *SageBuilder::buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgMinusMinusOp* result = new SgMinusMinusOp(operand_i,a_mode);
+  ROSE_ASSERT(result);
+  if (operand_i!=NULL)
+  {
+    operand_i->set_parent(result);
+   // set lvalue, it asserts operand!=NULL
+   markLhsValues(result);
+ }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgMinusMinusOp *SageBuilder::buildMinusMinusOp(SgExpression* operand_i)
+{
+  return buildUnaryExpression<SgMinusMinusOp>(operand_i);
+}
+
+SgMinusOp* SageBuilder::buildMinusOp(SgExpression* operand)
+{
+  return buildUnaryExpression<SgMinusOp> (operand);
+}
+
+SgNotOp* SageBuilder::buildNotOp(SgExpression* operand)
+{
+  return buildUnaryExpression<SgNotOp> (operand);
+
+}
+
+SgPlusPlusOp* SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgPlusPlusOp* result = new SgPlusPlusOp(operand_i,a_mode);
+  ROSE_ASSERT(result);
+  if (operand_i!=NULL)
+  {
+    operand_i->set_parent(result);
+   // set lvalue, it asserts operand!=NULL
+   markLhsValues(result);
+ }
+  setOneSourcePositionForTransformation(result);   return result;
+}
+
+SgPlusPlusOp *SageBuilder::buildPlusPlusOp(SgExpression* operand_i)
+{
+  return buildUnaryExpression<SgPlusPlusOp>(operand_i); 
+}
+
+SgPointerDerefExp* SageBuilder::buildPointerDerefExp(SgExpression* operand)
+{
+  return buildUnaryExpression<SgPointerDerefExp> (operand);
+}
+
+SgUnaryAddOp* SageBuilder::buildUnaryAddOp(SgExpression * operand_i)
+{
+  return buildUnaryExpression<SgUnaryAddOp> (operand_i);
+}
+
+//---------------------binary expressions-----------------------
 
 template <class T>
 T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
@@ -516,7 +639,7 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
   mylhs = lhs;
   myrhs = rhs;
 
-#if 0 // Jeremiah complaine this, sometimes users just move expressions around
+#if 0 // Jeremiah complained this, sometimes users just move expressions around
  // it is very tempting to reuse expressions during translation,
   // so try to catch such a mistake here
   if (lhs!=NULL)
@@ -552,58 +675,91 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
   return result;
 
 }
-
-
-template <class T>
-T* SageBuilder::buildUnaryExpression(SgExpression* operand)
-{ 
-  SgExpression* myoperand=operand;
-  
 #if 0
- // it is very tempting to reuse expressions during translation,
-  // so try to catch such a mistake here
-  if (operand!=NULL)
-    if (operand->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse operand of type "
-          << operand->class_name() << 
-        " when building a unary expression . Operand is being copied."<<endl;
-     ROSE_ABORT();// remind user the issue
-      myoperand = isSgExpression(deepCopy(operand));
-    }
+SgAddOp * SageBuilder::buildAddOp(SgExpression* lhs, SgExpression* rhs)
+{
+   return buildBinaryExpression<SgAddOp>(lhs,rhs);
+}
 #endif
-   T* result = new T(myoperand, NULL);
-  ROSE_ASSERT(result);   
-  if (myoperand!=NULL) 
-  { 
-    myoperand->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
-    markLhsValues(result);
+#define BUILD_BINARY_DEF(suffix) \
+  Sg##suffix* SageBuilder::build##suffix(SgExpression* lhs, SgExpression* rhs) \
+  { \
+     return buildBinaryExpression<Sg##suffix>(lhs, rhs); \
   }
+
+BUILD_BINARY_DEF(AddOp)
+BUILD_BINARY_DEF(AndAssignOp)
+BUILD_BINARY_DEF(AndOp)
+BUILD_BINARY_DEF(ArrowExp)
+BUILD_BINARY_DEF(ArrowStarOp)
+BUILD_BINARY_DEF(AssignOp)
+BUILD_BINARY_DEF(BitAndOp)
+BUILD_BINARY_DEF(BitOrOp)
+BUILD_BINARY_DEF(BitXorOp)
+
+BUILD_BINARY_DEF(CommaOpExp)
+BUILD_BINARY_DEF(ConcatenationOp)
+BUILD_BINARY_DEF(DivAssignOp)
+BUILD_BINARY_DEF(DotExp)
+BUILD_BINARY_DEF(EqualityOp)
+
+BUILD_BINARY_DEF(ExponentiationOp)
+BUILD_BINARY_DEF(GreaterOrEqualOp)
+BUILD_BINARY_DEF(GreaterThanOp)
+BUILD_BINARY_DEF(IntegerDivideOp)
+BUILD_BINARY_DEF(IorAssignOp)
+
+BUILD_BINARY_DEF(LessOrEqualOp)
+BUILD_BINARY_DEF(LessThanOp)
+BUILD_BINARY_DEF(LshiftAssignOp)
+BUILD_BINARY_DEF(LshiftOp)
+
+BUILD_BINARY_DEF(MinusAssignOp)
+BUILD_BINARY_DEF(ModAssignOp)
+BUILD_BINARY_DEF(ModOp)
+BUILD_BINARY_DEF(MultAssignOp)
+BUILD_BINARY_DEF(MultiplyOp)
+
+BUILD_BINARY_DEF(NotEqualOp)
+BUILD_BINARY_DEF(OrOp)
+BUILD_BINARY_DEF(PlusAssignOp)
+BUILD_BINARY_DEF(PntrArrRefExp)
+BUILD_BINARY_DEF(RshiftAssignOp)
+
+BUILD_BINARY_DEF(RshiftOp)
+BUILD_BINARY_DEF(ScopeOp)
+BUILD_BINARY_DEF(SubtractOp)
+BUILD_BINARY_DEF(XorAssignOp)
+
+#undef BUILD_BINARY_DEF
+
+
+
+SgArrayType* SageBuilder::buildArrayType(SgType* base_type/*=NULL*/, SgExpression* index/*=NULL*/)
+{
+  SgArrayType* result = new SgArrayType(base_type,index);
+  ROSE_ASSERT(result); 
+  if (index!=NULL) index->set_parent(result); // important!
+  return result;
+}
+
+SgConditionalExp* SageBuilder::buildConditionalExp(SgExpression* test, SgExpression* a, SgExpression* b)
+{
+  SgConditionalExp* result = new SgConditionalExp(test, a, b, NULL);
+  test->set_parent(result);
+  a->set_parent(result);
+  b->set_parent(result);
   setOneSourcePositionForTransformation(result);
-  return result; 
+  return result;
 }
 
-SgAndOp* SageBuilder::buildAndOp(SgExpression* lhs, SgExpression* rhs)
+SgNullExpression* SageBuilder::buildNullExpression()
 {
-  return buildBinaryExpression<SgAndOp>(lhs,rhs);
+  SgNullExpression* ne= new SgNullExpression();
+  ROSE_ASSERT(ne);
+  setOneSourcePositionForTransformation(ne);
+  return ne;
 }
-
-SgOrOp* SageBuilder::buildOrOp(SgExpression* lhs, SgExpression* rhs)
-{
- return buildBinaryExpression<SgOrOp>(lhs,rhs);
-}
-
-SgBitAndOp* SageBuilder::buildBitAndOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return buildBinaryExpression<SgBitAndOp>(lhs,rhs);
-}
-
-SgBitOrOp* SageBuilder::buildBitOrOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return buildBinaryExpression<SgBitOrOp>(lhs,rhs);
-}
-
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/)
 {
@@ -611,21 +767,7 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand
   return buildUnaryExpression<SgAssignInitializer>(operand_i);
 }
 
-SgPointerDerefExp* SageBuilder::buildPointerDerefExp(SgExpression* operand)
-{
-  return buildUnaryExpression<SgPointerDerefExp> (operand);
-}
 
-SgMinusOp* SageBuilder::buildMinusOp(SgExpression* operand)
-{
-  return buildUnaryExpression<SgMinusOp> (operand);
-}
-
-SgNotOp* SageBuilder::buildNotOp(SgExpression* operand)
-{
-  return buildUnaryExpression<SgNotOp> (operand);
-
-}
 
 SgExprListExp * SageBuilder::buildExprListExp()
 {
@@ -762,7 +904,7 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
     SgFunctionParameterList *parList = buildFunctionParameterList(paraTypeList);
 
     SgGlobal* globalscope = getGlobalScope(scope);
-    SgFunctionDeclaration * funcDecl= buildNonDefiningFunctionDeclaration(name,return_type,parList,globalscope);
+    SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
      funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
     // This will conflict with prototype in a header
@@ -877,12 +1019,6 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   return labelstmt;
 }
 
-SgAddressOfOp* 
-SageBuilder::buildAddressOfOp (SgExpression* operand)
-{
-  return buildUnaryExpression<SgAddressOfOp>(operand);
-}
-
 SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgBasicBlock * true_body, SgBasicBlock * false_body)
 {
   ROSE_ASSERT(conditional);
@@ -992,17 +1128,7 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
 }
 
 
-SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
-                SgType * expression_type,
-                SgCastExp::cast_type_enum cast_type)
-{
-  SgCastExp* result = new SgCastExp(operand_i, expression_type, cast_type);
 
-  ROSE_ASSERT(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-   
-}
 
 SgPointerType* SageBuilder::buildPointerType(SgType * base_type /*= NULL*/)
 {
@@ -1152,7 +1278,12 @@ SgTypeLong * SageBuilder::buildLongType()
   ROSE_ASSERT(result); 
   return result;
 }
-
+SgTypeString * SageBuilder::buildStringType() 
+{ 
+  SgTypeString * result =SgTypeString::createType(); 
+  ROSE_ASSERT(result); 
+  return result;
+}
 SgTypeInt * SageBuilder::buildIntType() 
 { 
   SgTypeInt * result =SgTypeInt::createType(); 
@@ -1171,10 +1302,77 @@ SgTypeFloat * SageBuilder::buildFloatType()
   ROSE_ASSERT(result); 
   return result;
 }
+// It is easy to forget the namespace qualifier, so use this lazy method
+//----------------------------------------------------------------------
+namespace SageBuilder{
+  SgClassDefinition* buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
+  {
+    SgClassDefinition* result = NULL;
+    if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
+    {
+      result = new SgClassDefinition(d);
+     // result->set_parent(d); // set_declaration() == set_parent() in this case
+    }
+    else 
+      result = new SgClassDefinition();
+    
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
 
+  SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+  {
+    if (scope == NULL)
+      scope = SageBuilder::topScopeStack();
+     //TODO How about class type??
+    // build defining declaration
+    SgClassDefinition* classDef = buildClassDefinition();
+   
+    SgClassDeclaration* defdecl = new SgClassDeclaration 
+           (name,SgClassDeclaration::e_struct,NULL,classDef);
+    ROSE_ASSERT(defdecl);
+    setOneSourcePositionForTransformation(defdecl);
+    // constructor is side-effect free
+    classDef->set_declaration(defdecl);
+    defdecl->set_definingDeclaration(defdecl);
 
+    // build the nondefining declaration
+    SgClassDeclaration* nondefdecl = new SgClassDeclaration
+           (name,SgClassDeclaration::e_struct,NULL,NULL);
+    ROSE_ASSERT(nondefdecl);
+    setOneSourcePositionForTransformation(nondefdecl);
+    nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+    nondefdecl->set_definingDeclaration(defdecl);
+    defdecl->set_firstNondefiningDeclaration(nondefdecl);
+    nondefdecl->setForward();    
 
+    if (scope !=NULL )  // put into fixStructDeclaration() or alike later on
+    {
+      fixStructDeclaration(nondefdecl,scope);
+#if 0
+      SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
+      ROSE_ASSERT(mysymbol);
+      scope->insert_symbol(name, mysymbol);
+      defdecl->set_scope(scope);
+      nondefdecl->set_scope(scope);
+      defdecl->set_parent(scope);
+      nondefdecl->set_parent(scope);
+#endif
+    }
+    return defdecl;    
+  }
 
+  SgClassDeclaration * buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
+  {
+    SgName myname(name);
+    return buildStructDeclaration(myname, scope);
+  }
 
+  SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope/*=NULL*/)
+  {
+    SgName myname(name);
+    return buildStructDeclaration(myname, scope);
+  }
 
-
+} // end of namespace 
