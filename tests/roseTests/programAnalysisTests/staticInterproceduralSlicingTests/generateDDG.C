@@ -76,8 +76,11 @@ int main(int argc, char *argv[])
 #endif
 						//printf("DDG for %s:\n", fD->get_name().str());
 						
-            filename = (fD->get_definition()->get_file_info()->get_filenameString ()) + "." +
-                (fD->get_name().getString()) + ".ddg.dot";
+// Liao, Feb. 7/2008,
+//strip off absolute path to avoid polluting the source tree with generated .dot files
+            //filename = (fD->get_definition()->get_file_info()->get_filenameString ()) 
+            filename = StringUtility::stripPathFromFileName((fD->get_definition()->get_file_info()->get_filenameString ()))
+         + "." + (fD->get_name().getString()) + ".ddg.dot";
             ddg->writeDot((char *)filename.c_str());
 
         }   

@@ -18,7 +18,7 @@ extern bool DebugAnnot();
 extern void FixFileInfo(SgNode* n);
 class UnparseFormatHelp;
 class UnparseDelegate;
-void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp /*= NULL*/, UnparseDelegate *repl  /*= NULL */);
 
 void PrintUsage( char* name)
 {

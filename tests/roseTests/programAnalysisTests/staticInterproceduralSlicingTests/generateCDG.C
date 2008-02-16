@@ -64,8 +64,9 @@ int main(int argc, char *argv[])
 //						cdg->computeInterproceduralInformation(ipi);
 //						cdg->debugCoutNodeList();
 
-            filename =
-								(fD->get_definition()->get_file_info()->get_filenameString ())
+// Liao, Feb. 7/2008, 
+//strip off absolute path to avoid polluting the source tree with generated .dot files
+            filename = StringUtility::stripPathFromFileName((fD->get_definition()->get_file_info()->get_filenameString ()))
                  + "." +
                 (fD->get_name().getString()) + ".cdg.dot";
             cdg->writeDot((char *)filename.c_str());
