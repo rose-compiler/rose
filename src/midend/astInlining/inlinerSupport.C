@@ -8,7 +8,6 @@
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
 #include "inlinerSupport.h"
-#include "typeTraits.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
