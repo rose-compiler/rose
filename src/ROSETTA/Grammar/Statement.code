@@ -8154,7 +8154,7 @@ SgFunctionParameterList::cfgOutEdges(unsigned int idx)
         {
           if (idx < this->get_args().size())
              {
-               makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_args(), idx)->cfgForBeginning(), result);
+               makeEdge(VirtualCFG::CFGNode(this, idx), this->get_args()[idx]->cfgForBeginning(), result);
              }
             else
              {
