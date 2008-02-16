@@ -662,7 +662,7 @@ generatedCodeExamples = \
    graphTraversal.pdf \
    rose_inputCode_addComments.C \
    rose_inputCode_codeGenerationFormatControl.C \
-   rose_inputCode_addStruct.C \  
+   rose_inputCode_addStruct.C \
    traversalShortCircuit.out \
    wholeGraphAST.pdf \
    collectCommentsSkipHeaderFiles.out \
