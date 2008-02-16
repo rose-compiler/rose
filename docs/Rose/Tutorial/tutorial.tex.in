@@ -331,7 +331,8 @@ our own use on large scale applications.}
 
 \input{roseHPCT}
 
-\input{copyHelp}
+% Disabled as it breaks new assertion in Copy Mechanism, Liao, 2/7/2008
+%\input{copyHelp}
 
 \input{sharedMemoryTraversals}
 
