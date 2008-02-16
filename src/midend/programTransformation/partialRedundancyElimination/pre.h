@@ -7,7 +7,6 @@
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"
 #include "expressionTreeEqual.h"
-#include "typeTraits.h"
 #include "controlFlowGraph.h"
 
 // DQ (3/21/2006): Moved this outside of PRE namespace since it is also used in 
