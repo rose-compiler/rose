@@ -6,7 +6,6 @@
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"
 #include "expressionTreeEqual.h"
-#include "typeTraits.h"
 #include "controlFlowGraph.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
