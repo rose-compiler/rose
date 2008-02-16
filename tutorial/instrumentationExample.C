@@ -45,7 +45,8 @@ main ( int argc, char * argv[] )
 
      SimpleInstrumentation treeTraversal;
      treeTraversal.traverseInputFiles ( project, preorder );
-
+     
+     AstTests::runAllTests(project);
      return backend(project);
    }
 

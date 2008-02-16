@@ -33,6 +33,9 @@ SimpleInstrumentation::visit ( SgNode* astNode )
        // DQ (6/18/2007): The unparser requires that the scope be set (for name qualification to work).
           initializedName->set_scope(block);
 
+       // Liao (2/13/2008): AstTests requires this to be set
+          variableDeclaration->set_firstNondefiningDeclaration(variableDeclaration);
+
           ROSE_ASSERT(block->get_statements().size() > 0);
 
           block->insert_statement(block->get_statements().begin(),variableDeclaration);
@@ -51,7 +54,8 @@ main ( int argc, char * argv[] )
 
      SimpleInstrumentation treeTraversal;
      treeTraversal.traverseInputFiles ( project, preorder );
-
+    
+     AstTests::runAllTests(project);
      return backend(project);
    }
 

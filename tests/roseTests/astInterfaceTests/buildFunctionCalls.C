@@ -4,7 +4,6 @@
 *   - build a function call statement without previous declaration, a header is inserted first
 */
 #include "rose.h"
-#include "sageBuilder.h"
 #include <iostream>
 using namespace std;
 using namespace SageInterface;

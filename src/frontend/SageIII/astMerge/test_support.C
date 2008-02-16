@@ -11,7 +11,6 @@ TestUniqueNameGenerationTraversal::visit ( SgNode* node)
      printf ("TestUniqueNameGenerationTraversal::visit: node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
-     string key = generateUniqueName(node,false);
 
 #if 0
      printf ("TestUniqueNameGenerationTraversal::visit(): node = %p = %s key = %s \n",node,node->class_name().c_str(),key.c_str());

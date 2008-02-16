@@ -283,6 +283,7 @@ namespace Trees
      *  'visit()' on each subtree.
      */
     virtual void traverse (TreeParamPtr_t tree) = 0;
+    virtual ~Traversal(){};
 
   protected:
     /*!
@@ -321,6 +322,7 @@ namespace Trees
     typedef typename Traversal<TreeType, isConst>::TreeParamPtr_t
     TreeParamPtr_t;
     virtual void traverse (TreeParamPtr_t tree);
+    virtual ~PreTraversal(){}
 
   protected:
     typedef typename Traversal<TreeType, isConst>::ChildIter_t ChildIter_t;

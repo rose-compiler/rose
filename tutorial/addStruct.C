@@ -13,7 +13,6 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
   // This is the class definition (the fileInfo is the position of the opening brace)
      SgClassDefinition* classDefinition   = new SgClassDefinition(SOURCE_POSITION);
      assert(classDefinition != NULL);
-     classDefinition->set_endOfConstruct(SOURCE_POSITION);
 
   // Set the end of construct explictly (where not a transformation this is the location of the closing brace)
      classDefinition->set_endOfConstruct(SOURCE_POSITION);
@@ -41,12 +40,20 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
   // Set the nondefining declaration as a forward declaration!
      nondefiningClassDeclaration->setForward();
 
+  // Liao (2/13/2008), symbol for the declaration
+     SgClassSymbol* mysymbol = new SgClassSymbol(nondefiningClassDeclaration);
+     scope->insert_symbol(name, mysymbol);
+
   // Don't forget the set the declaration in the definition (IR node constructors are side-effect free!)!
      classDefinition->set_declaration(classDeclaration);
 
   // set the scope explicitly (name qualification tricks can imply it is not always the parent IR node!)
      classDeclaration->set_scope(scope);
      nondefiningClassDeclaration->set_scope(scope);
+
+  //set parent
+     classDeclaration->set_parent(scope);
+     nondefiningClassDeclaration->set_parent(scope);
 
   // some error checking
      assert(classDeclaration->get_definingDeclaration() != NULL);
@@ -76,6 +83,15 @@ buildStructVariable ( SgScopeStatement* scope,
           classDeclaration->get_definition()->append_member(memberDeclaration);
 
           memberDeclaration->set_parent(classDeclaration->get_definition());
+        // Liao (2/13/2008) scope and symbols for member variables
+          SgInitializedName* initializedName = *(memberDeclaration->get_variables().begin());
+          initializedName->set_scope(classDeclaration->get_definition());
+
+        // set nondefning declaration pointer
+         memberDeclaration->set_firstNondefiningDeclaration(memberDeclaration);
+
+         SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+         classDeclaration->get_definition()->insert_symbol(*memberNameIterator,variableSymbol);
 
           typeIterator++;
           memberNameIterator++;
@@ -85,10 +101,21 @@ buildStructVariable ( SgScopeStatement* scope,
      SgVariableDeclaration* variableDeclaration = new SgVariableDeclaration(SOURCE_POSITION,varName,classType,initializer);
      variableDeclaration->set_endOfConstruct(SOURCE_POSITION);
 
+   //Liao (2/13/2008) scope and symbols for struct variable
+     SgInitializedName* initializedName = *(variableDeclaration->get_variables().begin());
+     initializedName->set_scope(scope);
+
+     SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+     scope->insert_symbol(varName,variableSymbol);
+
+  //set nondefining declaration 
+    variableDeclaration->set_firstNondefiningDeclaration(variableDeclaration);
+
   // This is required, since it is not set in the SgVariableDeclaration constructor
      initializer->set_parent(variableDeclaration);
 
      variableDeclaration->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+     variableDeclaration->set_baseTypeDefiningDeclaration(classDeclaration->get_definingDeclaration());
 
      classDeclaration->set_parent(variableDeclaration);
 
@@ -141,6 +168,7 @@ main( int argc, char * argv[] )
      file->get_globalScope()->prepend_declaration(variableDeclaration);
      variableDeclaration->set_parent(file->get_globalScope());
 
+    AstTests::runAllTests(project);
   // Code generation phase (write out new application "rose_<input file name>")
      return backend(project);
    }

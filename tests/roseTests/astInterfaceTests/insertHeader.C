@@ -1,6 +1,5 @@
-#include "sageBuilder.h"
+#include "rose.h"
 #include <iostream>
-using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 

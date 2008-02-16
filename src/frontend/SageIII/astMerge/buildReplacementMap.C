@@ -2,6 +2,7 @@
 #include "rose.h"
 
 using namespace std;
+using namespace SageInterface; // Liao, 2/8/2009, for  generateUniqueName()
 
 ReplacementMapTraversal::ReplacementMapTraversal( MangledNameMapTraversal::MangledNameMapType & inputMangledNameMap, 
                                                   ReplacementMapTraversal::ReplacementMapType & inputReplacementMap,
@@ -204,8 +205,8 @@ ReplacementMapTraversal::verifyODR( SgNode* node, SgNode* duplicateNodeFromOrigi
 #if 1
      if (passesODR == false)
         {
-          string node_generatedName         = generateUniqueName(node,false);
-          string originalNode_generatedName = generateUniqueName(duplicateNodeFromOriginalAST,false);
+          string node_generatedName         = SageInterface::generateUniqueName(node,false);
+          string originalNode_generatedName = SageInterface::generateUniqueName(duplicateNodeFromOriginalAST,false);
           printf ("ODR Violation Source code: nodeString                         = \n%s\n \n",nodeString.c_str());
           printf ("ODR Violation Source code: duplicateNodeFromOriginalASTstring = \n%s\n \n",duplicateNodeFromOriginalASTstring.c_str());
           printf ("nodeString = %s \n",nodeString.c_str());
@@ -302,7 +303,7 @@ void ReplacementMapTraversal::visit ( SgNode* node)
        // into the mangled name map to build entries for the replacement map.
        // This could be made much faster by separating out the different kinds of IR nodes
        // and building many different maps instead of just one using a SgNode pointer.
-          const string & key = generateUniqueName(node,false);
+          const string & key = SageInterface::generateUniqueName(node,false);
        // printf ("ReplacementMapTraversal::visit(): node = %p = %s generated name (key) = %s \n",node,node->class_name().c_str(),key.c_str());
 
        // All cases (above) should generate a valid name, however SgSymbolTable, SgCtorInitializerList, 

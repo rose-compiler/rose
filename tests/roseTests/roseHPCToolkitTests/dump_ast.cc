@@ -53,16 +53,20 @@ main ( int argc, char* argv[] )
   REGISTER_ATTRIBUTE_FOR_FILE_IO(MetricAttr);
   AST_FILE_IO::startUp (proj);
   AST_FILE_IO::writeASTToFile ("input.perf.bin");
-#if 1
+#if 0
   // read it back
   REGISTER_ATTRIBUTE_FOR_FILE_IO(MetricAttr);
   AST_FILE_IO::clearAllMemoryPools();
   SgProject * proj2 = (SgProject*) (AST_FILE_IO::readASTFromFile("input.perf.bin"));
-#endif
   // verify result
   cerr << "[Dumping to PDF...]" << endl;
   AstPDFGeneration pdf;
   pdf.generateInputFiles (proj2);
+#else
+  cerr << "[Dumping to PDF...]" << endl;
+  AstPDFGeneration pdf;
+  pdf.generateInputFiles (proj);
+#endif
 
   return 0;
 }

@@ -43,7 +43,7 @@ SimpleInstrumentation::visit ( SgNode* astNode )
           ROSE_ASSERT(func->get_firstNondefiningDeclaration() == NULL);
 
        // DQ (9/8/2007): Need to add function symbol to global scope!
-          printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",globalScope,globalScope->class_name().c_str(),func,func->get_name().str());
+          //printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",globalScope,globalScope->class_name().c_str(),func,func->get_name().str());
           SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
           globalScope->insert_symbol(func->get_name(),functionSymbol);
           ROSE_ASSERT(globalScope->lookup_function_symbol(func->get_name()) != NULL);
@@ -64,7 +64,7 @@ SimpleInstrumentation::visit ( SgNode* astNode )
           var1_init_name->set_scope(func_def);
 
        // DQ (9/8/2007): Need to add variable symbol to global scope!
-          printf ("Fixing up the symbol table in scope = %p = %s for SgInitializedName = %p = %s \n",globalScope,globalScope->class_name().c_str(),var1_init_name,var1_init_name->get_name().str());
+          //printf ("Fixing up the symbol table in scope = %p = %s for SgInitializedName = %p = %s \n",globalScope,globalScope->class_name().c_str(),var1_init_name,var1_init_name->get_name().str());
           SgVariableSymbol *var_symbol = new SgVariableSymbol(var1_init_name);
           func_def->insert_symbol(var1_init_name->get_name(),var_symbol);
           ROSE_ASSERT(func_def->lookup_variable_symbol(var1_init_name->get_name()) != NULL);

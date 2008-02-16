@@ -273,7 +273,7 @@ MangledNameMapTraversal::visit ( SgNode* node)
                  // of unique names for the AST merge.
                  // string key = generateUniqueName(node,false);
                     bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = false;
-                    string key = generateUniqueName(node,ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+                    string key = SageInterface::generateUniqueName(node,ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
                     ROSE_ASSERT(key.empty() == false);
 #if 1
                     SgDeclarationStatement* declaration = isSgDeclarationStatement(node);

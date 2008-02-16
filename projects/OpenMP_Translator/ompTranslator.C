@@ -171,7 +171,7 @@ SgVariableDeclaration * ASTtools::buildSgVariableDeclaration(SgType* varType,\
 SgInitializedName * ASTtools::buildSgInitializedName(SgName &name, SgType* typeptr,\
 	SgDeclarationStatement * declptr, SgScopeStatement* scope, SgInitializer * iptr=0)
 {
-  return buildInitializedName (name, typeptr, scope);
+  return buildInitializedName (name, typeptr);
 } 
 
 //--------------------------------------------------------------

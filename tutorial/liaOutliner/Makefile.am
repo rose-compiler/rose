@@ -82,8 +82,8 @@ rose_outlined-inputCode_OutlineLoop.cc: outline$(EXEEXT) \
 	./outline$(EXEEXT) -c outlined-inputCode_OutlineLoop.cc
 #	echo "int main() {return 0;} // Test Failed!" | tee rose_outlined-inputCode_OutlineLoop.cc
 	test -f $@
-	if test -x `which $(INDENT_BIN)` ; then \
-	  $(INDENT_BIN) $(INDENT_ARGS) $@ ; \
+	if which $(INDENT_BIN); then \
+	  $(INDENT_BIN) $(INDENT_ARGS) $@; \
 	fi
 
 #==========================================================================
@@ -106,7 +106,7 @@ rose_outlined-inputCode_OutlineNonLocalJumps.cc: outline$(EXEEXT) \
 		outlined-inputCode_OutlineNonLocalJumps.cc
 	./outline$(EXEEXT) -c outlined-inputCode_OutlineNonLocalJumps.cc
 	test -f $@
-	if test -x `which $(INDENT_BIN)` ; then \
+	if which $(INDENT_BIN); then \
 	  $(INDENT_BIN) $(INDENT_ARGS) $@ ; \
 	fi
 
@@ -136,8 +136,9 @@ outlined_pp-inputCode_OutlineLoop.cc: $(srcdir)/inputCode_OutlineLoop.cc
 rose_outlined_pp-inputCode_OutlineLoop.cc : outlinePreproc$(EXEEXT) outlined_pp-inputCode_OutlineLoop.cc
 	./outlinePreproc$(EXEEXT) -c outlined_pp-inputCode_OutlineLoop.cc
 	test -f $@
-	if test -x `which $(INDENT_BIN)` ; then \
-	  $(INDENT_BIN) $(INDENT_ARGS) $@ ; \
+#	if test -x `which $(INDENT_BIN)` ; then 
+	if which $(INDENT_BIN) ;  then \
+	  $(INDENT_BIN) $(INDENT_ARGS) $@ ;  \
 	fi
 
 # Copies the input file so unparsed output has the desired filename.
@@ -149,7 +150,7 @@ rose_outlined_pp-inputCode_OutlineNonLocalJumps.cc: outlinePreproc$(EXEEXT) \
 	./outlinePreproc$(EXEEXT) -c \
 	  outlined_pp-inputCode_OutlineNonLocalJumps.cc
 	test -f $@
-	if test -x `which $(INDENT_BIN)` ; then \
+	if which $(INDENT_BIN) ; then \
 	  $(INDENT_BIN) $(INDENT_ARGS) $@ ; \
 	fi
 

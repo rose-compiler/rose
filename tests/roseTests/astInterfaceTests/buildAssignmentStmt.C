@@ -4,7 +4,6 @@
 *   - the reversed order of building assignment(variable reference) and variable declaration
 */
 #include "rose.h"
-#include "sageBuilder.h"
 #include <iostream>
 using namespace std;
 using namespace SageInterface;
@@ -45,7 +44,6 @@ int main (int argc, char *argv[])
   lastStmt = getLastStatement(topScopeStack());
   insertStatement(lastStmt,assignStmt2);
 
-#if 1
    SgVariableDeclaration *varDecl_j = buildVariableDeclaration
     (SgName ("j"), SgTypeInt::createType ());
 
@@ -53,7 +51,6 @@ int main (int argc, char *argv[])
   SgStatement* firstStmt = getFirstStatement(topScopeStack());
   insertStatement(firstStmt,varDecl_j,false);
 
-#endif
  //for reversed order building variable references and declarations
   cout<<"fixed "<<fixVariableReferences(topScopeStack())<<" variable references."<<endl;
   popScopeStack();

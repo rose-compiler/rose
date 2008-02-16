@@ -213,6 +213,8 @@ extern int gensym_counter;
      buildForwardFunctionDeclaration
         (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
 
+  //! Check if a SgNode is a declaration for a structure
+  bool isStructDeclaration(SgNode * node);
 #if 0
 // DQ (8/28/2005): This is already a member function of the SgFunctionDeclaration 
 // (so that it can handle template functions and member functions)
@@ -412,11 +414,6 @@ PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader
 
 
 //------------------------------------------------------------------------
-//@{
-/*! @name Data type
-  \brief
-*/
-
 //@{
 /*! @name Data type
   \brief
@@ -658,7 +655,16 @@ void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paral
 void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);
 
   //! replace an expression with another, used for variable reference substitution and others. the old expression can be deleted (default case)  or kepted.
-  void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp=false);
+void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp=false);
+
+//! set operandis for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
+void setOperand(SgExpression* target, SgExpression* operand);
+
+//!set left hand operand for binary expressions, transparently downcasting target expressions when necessary
+void setLhsOperand(SgExpression* target, SgExpression* lhs);
+
+//!set left hand operand for binary expression
+void setRhsOperand(SgExpression* target, SgExpression* rhs);
 
 //! Set original expression trees to NULL for SgValueExp or SgCastExp expressions, so you can change the value and have it unparsed correctly.
 void removeAllOriginalExpressionTrees(SgNode* top);
@@ -676,6 +682,16 @@ void removeAllOriginalExpressionTrees(SgNode* top);
  variable decalations are in place.
 */
 int fixVariableReferences(SgNode* root);
+
+//!Patch up symbol, scope, and parent information when a SgVariableDeclaration's scope is known.
+/*!
+It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general. 
+In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usally used internally within appendStatment(), insertStatement().
+*/
+void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
+
+//! fixup symobls, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
+void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
 
 //@}
 

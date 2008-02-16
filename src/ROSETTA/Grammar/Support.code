@@ -9538,7 +9538,8 @@ SgFile::generateOutputFileName() const
 // defined UnparseFormatHelp object (to control code generation).
 // DQ (8/20/2005): Removed default parameter from extern function declaration
 // extern void unparseFile( SgFile&, UnparseDelegate* repl = NULL );
-extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL );
+// Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
+extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
 
 void
 // SgFile::unparse ()

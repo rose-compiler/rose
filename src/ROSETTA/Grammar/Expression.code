@@ -1761,7 +1761,7 @@ SgExprListExp::cfgOutEdges(unsigned int idx)
        else
           if (idx < this->get_expressions().size())
              {
-               makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_expressions(), idx)->cfgForBeginning(), result);
+               makeEdge(VirtualCFG::CFGNode(this, idx), this->get_expressions()[idx]->cfgForBeginning(), result);
              }
             else
                ROSE_ASSERT (!"Bad index for SgExprListExp");
@@ -1780,7 +1780,7 @@ SgExprListExp::cfgInEdges(unsigned int idx)
        else
           if (idx <= this->get_expressions().size())
              {
-               makeEdge(indexList(this->get_expressions(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+               makeEdge(this->get_expressions()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
              }
             else
                ROSE_ASSERT (!"Bad index for SgExprListExp");
@@ -3355,7 +3355,7 @@ $CLASSNAME::get_type() const
                someType = modifierType->get_base_type();
                goto keepStripping;
              }
-     // Liao (1/25/2008) SgTypeUnknown is used (abused ?) to specify a temporary InitializedName generated in translation when the corresponding variable declaration is not yet available. HighLevel_Sage_Builder_Interface::fixVariableReferences() will fix this temporary inconsistence in AST after transformation is complete.
+     // Liao (1/25/2008) SgTypeUnknown is used (abused ?) to specify a temporary InitializedName generated in translation when the corresponding variable declaration is not yet available. SageBuilder::fixVariableReferences() will fix this temporary inconsistence in AST after transformation is complete.
           case V_SgTypeUnknown:
              {
                returnType = SgTypeUnknown::createType();

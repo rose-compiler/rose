@@ -6644,7 +6644,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
   if (idx == this->get_statements().size()) {
     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_statements().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_statements(), idx)->cfgForBeginning(), result);
+    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_statements()[idx]->cfgForBeginning(), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }
@@ -6655,7 +6655,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
   if (idx == 0) {
     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
   } else if (idx <= this->get_statements().size()) {
-    makeEdge(indexList(this->get_statements(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+    makeEdge(this->get_statements()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }
@@ -6943,7 +6943,7 @@ SgForInitStatement::cfgOutEdges(unsigned int idx) {
   if (idx == this->get_init_stmt().size()) {
     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_init_stmt().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_init_stmt(), idx)->cfgForBeginning(), result);
+    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_init_stmt()[idx]->cfgForBeginning(), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }
@@ -6955,7 +6955,7 @@ SgForInitStatement::cfgInEdges(unsigned int idx) {
   if (idx == 0) {
     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
   } else if (idx <= this->get_init_stmt().size()) {
-    makeEdge(indexList(this->get_init_stmt(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+    makeEdge(this->get_init_stmt()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }
@@ -8178,7 +8178,7 @@ SgFunctionParameterList::cfgInEdges(unsigned int idx)
         {
           if (idx <= this->get_args().size())
              {
-               makeEdge(indexList(this->get_args(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+               makeEdge(this->get_args()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
              }
             else
              {
@@ -9126,7 +9126,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
   if (idx == this->get_variables().size()) {
     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_variables().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_variables(), idx)->cfgForBeginning(), result);
+    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_variables()[idx]->cfgForBeginning(), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }
@@ -9137,7 +9137,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
   if (idx == 0) {
     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
   } else if (idx <= this->get_variables().size()) {
-    makeEdge(indexList(this->get_variables(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+    makeEdge(this->get_variables()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }
@@ -11725,7 +11725,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
   if (idx == this->get_catch_statement_seq().size()) {
     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_catch_statement_seq().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), indexList(this->get_catch_statement_seq(), idx)->cfgForBeginning(), result);
+    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_catch_statement_seq()[idx]->cfgForBeginning(), result);
   }
   return result;
 }
@@ -11737,7 +11737,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
   if (idx == 0) {
     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
   } else if (idx <= this->get_catch_statement_seq().size()) {
-    makeEdge(indexList(this->get_catch_statement_seq(), idx - 1)->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
+    makeEdge(this->get_catch_statement_seq()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
   } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
   return result;
 }

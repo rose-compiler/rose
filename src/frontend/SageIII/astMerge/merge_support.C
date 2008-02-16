@@ -53,15 +53,6 @@ displaySet ( const set<SgNode*> & inputSet, const std::string & label )
    }
 
 
-string
-generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations )
-   {
-  // This functionality is now supported more directly within ROSE 
-     return SageInterface::generateUniqueName(node,ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
-   }
-
-
-
 set<SgNode*>
 generateNodeListFromAST ( SgNode* node )
    {

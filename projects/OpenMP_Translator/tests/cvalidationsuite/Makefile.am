@@ -115,8 +115,8 @@ check-local:
 if ROSE_USE_OPENMP
 # enable make check to build and run the final executable, Liao 1/31/2008
 LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
-runme:$(PASSING_TEST_Objects)
-check_PROGRAMS = runme
+main:$(PASSING_TEST_Objects)
+check_PROGRAMS = main
 TESTS = $(check_PROGRAMS)
 
 endif
@@ -135,6 +135,6 @@ endif
 EXTRA_DIST = omp_my_sleep.h omp_testsuite.h $(ALL_TESTCODES)
 
 clean-local:
-	rm -f *.o rose_*.[cC] runme test.log
+	rm -f *.o rose_*.[cC] main test.log
 	rm -rf QMTest
 

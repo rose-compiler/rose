@@ -1,12 +1,10 @@
 // Liao, 1/15/2008
-// Demostrate how to build a function using the interface close to C language
+// Demostrate how to build a function using the SageBuilder interface 
 //
 // SageBuilder contains the AST nodes/subtrees builders
 // SageInterface contains any other AST utitily tools 
-// HighLevel_Sage_C_Builder_Interface
 //-------------------------------------------------------------------
 #include "rose.h"
-#include "sageBuilder.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;

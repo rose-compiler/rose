@@ -465,13 +465,6 @@ int SAGE_DEBUG = 0;  // default value is zero
 // interprocedural
 bool interproceduralControlFlowGraph = false;
 
-// ########################################
-// Some global functions used within SAGE 3
-// ########################################
-
-#include "loopHelpers.h"
-
-
 // ###############################
 // Start of source code for SgNode
 // ###############################
@@ -66277,7 +66270,7 @@ std::vector<VirtualCFG::CFGEdge> SgForStatement::cfgInEdges(unsigned int idx) {
     }
     case 4: {
       makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = findBreakStmts(this->get_loop_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_loop_body());
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -67568,7 +67561,7 @@ std::vector<VirtualCFG::CFGEdge> SgWhileStmt::cfgInEdges(unsigned int idx) {
     case 1: makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
     case 2: {
       makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result);
-      std::vector<SgBreakStmt*> breakStmts = findBreakStmts(this->get_body());
+      std::vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -67968,7 +67961,7 @@ std::vector<VirtualCFG::CFGEdge> SgDoWhileStmt::cfgInEdges(unsigned int idx) {
     }
     case 3: {
       makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = findBreakStmts(this->get_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -68366,7 +68359,7 @@ std::vector<VirtualCFG::CFGEdge> SgSwitchStatement::cfgInEdges(unsigned int idx)
     case 1: makeEdge(this->get_item_selector()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
     case 2: {
       makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = findBreakStmts(this->get_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }

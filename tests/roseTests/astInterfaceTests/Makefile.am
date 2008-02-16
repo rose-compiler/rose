@@ -4,7 +4,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES =  \
-        -I$(top_srcdir) -I$(top_builddir) \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 
@@ -13,7 +12,7 @@ noinst_PROGRAMS = \
     buildFunctionDeclaration buildNondefiningFunction \
     findMain buildVariableDeclaration buildAssignmentStmt \
     buildFunctionCalls buildPragmaDeclaration attachComment \
-    insertHeader 
+    insertHeader buildExpression buildStructDeclaration
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -21,20 +20,19 @@ buildNondefiningFunction_SOURCES = buildNondefiningFunction.C
 findMain_SOURCES                 = findMain.C
 buildVariableDeclaration_SOURCES = buildVariableDeclaration.C
 buildAssignmentStmt_SOURCES      = buildAssignmentStmt.C
-buildFunctionCalls_SOURCES       = buildFunctionCalls.C  buildFunctionCalls.h
+buildFunctionCalls_SOURCES       = buildFunctionCalls.C 
 buildPragmaDeclaration_SOURCES   = buildPragmaDeclaration.C
 attachComment_SOURCES            = attachComment.C
 insertHeader_SOURCES             = insertHeader.C
-
+buildExpression_SOURCES          = buildExpression.C
+buildStructDeclaration_SOURCES   = buildStructDeclaration.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
 #    $(top_builddir)/src/frontend/SageIII/sageInterface/libsageInterface.la 
 if ROSE_USE_LONG_MAKE_CHECK_RULE
-
 else
-
 endif
 generatedCodeExamples = \
   rose_inputBlank1.C \
@@ -45,37 +43,51 @@ generatedCodeExamples = \
   rose_inputbuildFunctionCalls.C \
   rose_inputbuildPragmaDeclaration.c \
   rose_inputAttachComment.C \
-  rose_inputInsertHeader.C
+  rose_inputInsertHeader.C \
+  rose_inputbuildExpression.C \
+  rose_inputbuildStructDeclaration.C
+
+# turn off edg warnings such as "variable x declared but never referenced" for test input files
+TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
 
 rose_inputBlank1.C:buildFunctionDeclaration
-	./buildFunctionDeclaration $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank1.C
+	./buildFunctionDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank1.C
 rose_inputBlank2.C:buildNondefiningFunction
-	./buildNondefiningFunction $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank2.C
+	./buildNondefiningFunction$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank2.C
 rose_inputfindMain.C:findMain
-	./findMain  $(TEST_CXXFLAGS) -c  $(srcdir)/inputfindMain.C
+	./findMain$(EXEEXT)  $(TEST_CXXFLAGS) -c  $(srcdir)/inputfindMain.C
 rose_inputbuildVariableDeclaration.C:buildVariableDeclaration
-	./buildVariableDeclaration  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildVariableDeclaration.C
+	./buildVariableDeclaration$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildVariableDeclaration.C
 rose_inputbuildAssignmentStmt.C:buildAssignmentStmt
-	./buildAssignmentStmt $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAssignmentStmt.C	
+	./buildAssignmentStmt$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAssignmentStmt.C	
 
 rose_inputbuildFunctionCalls.C:buildFunctionCalls
-	./buildFunctionCalls $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFunctionCalls.C	
+	./buildFunctionCalls$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFunctionCalls.C	
 rose_inputbuildPragmaDeclaration.c:buildPragmaDeclaration
-	./buildPragmaDeclaration $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildPragmaDeclaration.c
+	./buildPragmaDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildPragmaDeclaration.c
 rose_inputAttachComment.C:attachComment
-	./attachComment  $(TEST_CXXFLAGS) -c $(srcdir)/inputAttachComment.C	
+	./attachComment$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputAttachComment.C	
 rose_inputInsertHeader.C:insertHeader
-	./insertHeader $(TEST_CXXFLAGS) -c $(srcdir)/inputInsertHeader.C
+	./insertHeader$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputInsertHeader.C
+rose_inputbuildExpression.C: buildExpression
+	./buildExpression$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildExpression.C
+rose_inputbuildStructDeclaration.C:buildStructDeclaration
+	./buildStructDeclaration$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildStructDeclaration.C
 
-TEST_CXXFLAGS = -rose:verbose 0 -g3
 
+# MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
-       inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildPragmaDeclaration.c \
-       inputAttachComment.C
+       inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
+       inputbuildPragmaDeclaration.c inputAttachComment.C inputInsertHeader.C \
+       inputbuildExpression.C inputbuildStructDeclaration.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
 	$(MAKE) $(generatedCodeExamples)
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astInterfaceTests: make check rule complete (terminated normally) ******"
+	@echo "***********************************************************************************************************"
+
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.C *.C.pdf *.c.pdf
 

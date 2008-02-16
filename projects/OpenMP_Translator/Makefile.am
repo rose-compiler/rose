@@ -14,7 +14,7 @@ SUBDIRS = . tests
 # This is a parameter provided through the ROSE configure script (configure commandline)
 OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
 
-INCLUDES = $(ROSE_INCLUDES) $(srcdir)/includes
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes
 
 bin_PROGRAMS = ompTranslator
 

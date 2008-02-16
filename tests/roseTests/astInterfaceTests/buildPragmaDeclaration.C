@@ -4,9 +4,6 @@
 // SageInterface contains any other AST utitily tools 
 //-------------------------------------------------------------------
 #include "rose.h"
-#include "sageBuilder.h"
-#include <string>
-using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 

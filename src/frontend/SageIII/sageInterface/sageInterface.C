@@ -4339,7 +4339,8 @@ SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool inclu
 
 SgFunctionDefinition* SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf)
 {
-    SgNode* temp = getEnclosingNode(n, V_SgFunctionDefinition,includingSelf);   if (temp)
+    SgNode* temp = getEnclosingNode(n, V_SgFunctionDefinition,includingSelf);
+  if (temp)
     return isSgFunctionDefinition(temp);
   else
     return NULL;
@@ -4645,6 +4646,7 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
   }
 }
 
+//----------------------------------enclosing into the namespace ---------------
 namespace SageInterface {
 
   SgBasicBlock* getLoopBody(SgScopeStatement* loopStmt) {
@@ -4793,6 +4795,7 @@ namespace SageInterface {
     return isSgExpression(deepCopy(e));
   }
 
+  //----------------- add into AST tree --------------------
   void appendExpression(SgExprListExp *expList, SgExpression* exp)
   {
     ROSE_ASSERT(expList);
@@ -4841,52 +4844,6 @@ namespace SageInterface {
 
   }
 
-  //TODO handle side effect like SageBuilder::append_statement() does
-  void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
-  {
-
-    ROSE_ASSERT(targetStmt);
-    ROSE_ASSERT(newStmt);
-    SgScopeStatement* scope= targetStmt->get_scope();
-    ROSE_ASSERT(scope);
-    newStmt->set_parent(targetStmt->get_parent());
-    if (isSgStatement(newStmt)==NULL) // not all SgNode can have explicit scope
-      newStmt->set_scope(scope);
-
-    isSgStatement(targetStmt->get_parent())->insert_statement(targetStmt,newStmt,insertBefore);
-  #if 0
-    ROSE_ASSERT(scope);
-    switch(scope->variantT())
-    {
-      case V_SgBasicBlock:
-      case V_SgScopeStatement:
-	  scope->insert_statement(targetStmt,newStmt,insertBefore);
-	  break;
-      default:
-	std::cout<<"default reached in SageBuilder::insert_statement()!"<<endl;
-	ROSE_ASSERT(false);
-    }
-  #endif
-
-  }
-  void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt)
-  {
-    insertStatement(targetStmt,newStmt,false);
-  }
-
-  void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt)
-  {
-    insertStatement(targetStmt,newStmt,true);
-  }
-
-  void prependStatement(SgStatement *stmt, SgScopeStatement* scope)
-  {
-   if (scope == NULL)
-      scope = SageBuilder::topScopeStack();
-    ROSE_ASSERT(scope != NULL);
-    //TODO handle side effect like SageBuilder::append_statement() does
-   scope->insertStatementInScope(stmt,true);
-  }
 
   void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
   {
@@ -4901,6 +4858,7 @@ namespace SageInterface {
   {
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
+    ROSE_ASSERT(stmt);
     ROSE_ASSERT(scope != NULL);
 
     // handle side effect for function declaration insertion.
@@ -4963,6 +4921,15 @@ namespace SageInterface {
       }
     #endif
 
+    // A variable declaration could be built without known scope information 
+    // during bottom-up construction TODO: possible conflicting with copied vardecl
+    if (isSgVariableDeclaration(stmt)) 
+      fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
+     
+    // fix symbol table,parent, scope pointers for a struct declaration
+    if (isStructDeclaration(stmt))
+      fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+
     //TODO: try lowlevel rewrite mechanism to handle preprocessing info.
     //several cases:
     //1. comments of empty file is attached AFTER SgGlobal,
@@ -4976,6 +4943,252 @@ namespace SageInterface {
     //scope->append_statement (stmt);
     scope->insertStatementInScope(stmt,false);
     stmt->set_parent(scope); // needed?
+  }
+
+  void prependStatement(SgStatement *stmt, SgScopeStatement* scope)
+  {
+   if (scope == NULL)
+      scope = SageBuilder::topScopeStack();
+    ROSE_ASSERT(scope != NULL);
+    //TODO handle side effect like SageBuilder::append_statement() does
+
+   // Must fix it before insert it into the scope, 
+   // otherwise assertions in insertStatementInScope() would fail
+  if (isSgVariableDeclaration(stmt))
+      fixVariableDeclaration(isSgVariableDeclaration(stmt), scope); 
+
+    // fix symbol table,parent, scope pointers for a struct declaration
+   if (isStructDeclaration(stmt))
+      fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+
+   scope->insertStatementInScope(stmt,true);
+
+  }
+
+  //TODO handle side effect like SageBuilder::append_statement() does
+  void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
+  {
+
+    ROSE_ASSERT(targetStmt);
+    ROSE_ASSERT(newStmt);
+    SgScopeStatement* scope= targetStmt->get_scope();
+    ROSE_ASSERT(scope);
+
+    newStmt->set_parent(targetStmt->get_parent());
+    if (isSgStatement(newStmt)==NULL) // not all SgNode can have explicit scope
+      newStmt->set_scope(scope);
+
+    if (isSgVariableDeclaration(newStmt))
+      fixVariableDeclaration(isSgVariableDeclaration(newStmt), scope); 
+
+    // fix symbol table,parent, scope pointers for a struct declaration
+   if (isStructDeclaration(newStmt))
+      fixStructDeclaration(isSgClassDeclaration(newStmt),scope);
+
+    isSgStatement(targetStmt->get_parent())->insert_statement(targetStmt,newStmt,insertBefore);
+  #if 0
+    ROSE_ASSERT(scope);
+    switch(scope->variantT())
+    {
+      case V_SgBasicBlock:
+      case V_SgScopeStatement:
+	  scope->insert_statement(targetStmt,newStmt,insertBefore);
+	  break;
+      default:
+	std::cout<<"default reached in SageBuilder::insert_statement()!"<<endl;
+	ROSE_ASSERT(false);
+    }
+  #endif
+
+  }
+  void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt)
+  {
+    insertStatement(targetStmt,newStmt,false);
+  }
+
+  void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt)
+  {
+    insertStatement(targetStmt,newStmt,true);
+  }
+
+  //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
+  // special concern for lvalue, parent, 
+  // todo: warning overwritting existing operands
+  void setOperand(SgExpression* target, SgExpression* operand)
+  {
+    ROSE_ASSERT(target);
+    ROSE_ASSERT(operand);
+    ROSE_ASSERT(target!=operand);
+    switch (target->variantT()) 
+    {
+      case V_SgActualArgumentExpression:
+        isSgActualArgumentExpression(target)->set_expression(operand);
+        break;
+      case V_SgAsmOp:
+        isSgAsmOp(target)->set_expression(operand);
+        break;
+      case V_SgSizeOfOp:
+        isSgSizeOfOp(target)->set_operand_expr(operand);
+	break;
+      case V_SgTypeIdOp:
+        isSgTypeIdOp(target)->set_operand_expr(operand);
+	break;
+      case V_SgVarArgOp:
+        isSgVarArgOp(target)->set_operand_expr(operand);
+	break;
+      case V_SgVarArgStartOneOperandOp:
+        isSgVarArgStartOneOperandOp(target)->set_operand_expr(operand);
+	break;
+      default:
+        if (isSgUnaryOp(target)!=NULL) isSgUnaryOp(target)->set_operand_i(operand);
+	else 
+	  { 
+            cout<<"SageInterface::setOperand(): unhandled case for target expression of type "
+	           <<target->class_name()<<endl; 
+	    ROSE_ASSERT(false); 
+	  }
+    }// end switch
+    operand->set_parent(target);
+    markLhsValues(target);
+  }
+
+  // binary and SgVarArgCopyOp, SgVarArgStartOp
+  void setLhsOperand(SgExpression* target, SgExpression* lhs)
+  {
+    ROSE_ASSERT(target);
+    ROSE_ASSERT(lhs);
+    ROSE_ASSERT(target!=lhs);
+    bool hasrhs = false;
+
+    SgVarArgCopyOp* varargcopy = isSgVarArgCopyOp(target);
+    SgVarArgStartOp* varargstart = isSgVarArgStartOp(target);
+    SgBinaryOp* binary = isSgBinaryOp(target);
+
+    if (varargcopy!=NULL) 
+    {  
+      varargcopy->set_lhs_operand(lhs);
+       if( varargcopy->get_rhs_operand()!=NULL) hasrhs= true;
+    }
+    else if(varargstart!=NULL) 
+    {  
+      varargstart->set_lhs_operand(lhs);
+      if( varargstart->get_rhs_operand()!=NULL) hasrhs= true;
+    }
+    else if(binary!=NULL) 
+    {  
+      binary->set_lhs_operand(lhs);
+      if( binary->get_rhs_operand()!=NULL) hasrhs= true;
+    }
+    else 
+    {
+      cout<<"SageInterface::setLhsOperand(): unhandled case for target expression of type "
+                <<target->class_name()<<endl;
+      ROSE_ASSERT(false);
+    }
+    lhs->set_parent(target);
+// only when both lhs and rhs are available, can we set lvalue
+// there is assertion(rhs!=NULL) in markLhsValues()
+   if (hasrhs) 
+      markLhsValues(target);
+  }
+
+  void setRhsOperand(SgExpression* target, SgExpression* rhs)
+  {
+    ROSE_ASSERT(target);
+    ROSE_ASSERT(rhs);
+    ROSE_ASSERT(target!=rhs);
+    bool haslhs = false;
+
+    SgVarArgCopyOp* varargcopy = isSgVarArgCopyOp(target);
+    SgVarArgStartOp* varargstart = isSgVarArgStartOp(target);
+    SgBinaryOp* binary = isSgBinaryOp(target);
+
+    if (varargcopy!=NULL) 
+    { 
+       varargcopy->set_rhs_operand(rhs); 
+       if( varargcopy->get_lhs_operand()!=NULL) haslhs= true;
+    }
+    else if(varargstart!=NULL) 
+    {
+      varargstart->set_rhs_operand(rhs);
+      if( varargstart->get_lhs_operand()!=NULL) haslhs= true;
+    }
+    else if(binary!=NULL) 
+    { 
+      binary->set_rhs_operand(rhs);
+      if( binary->get_lhs_operand()!=NULL) haslhs= true;
+    }
+    else
+    {
+      cout<<"SageInterface::setRhsOperand(): unhandled case for target expression of type "
+                <<target->class_name()<<endl;
+      ROSE_ASSERT(false);
+    }
+    rhs->set_parent(target);
+// only when both lhs and rhs are available, can we set lvalue
+   if (haslhs) 
+      markLhsValues(target);
+  }
+
+//------------------------- AST repair----------------------------
+//----------------------------------------------------------------
+  void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT(structDecl);
+    ROSE_ASSERT(scope);
+    SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefdecl);
+    SgName name= structDecl->get_name();
+    SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
+    if (mysymbol==NULL) 
+    {
+      mysymbol = new SgClassSymbol(nondefdecl);
+      ROSE_ASSERT(mysymbol);
+      scope->insert_symbol(name, mysymbol);
+      SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
+      ROSE_ASSERT(defdecl);
+      defdecl->set_scope(scope);
+      nondefdecl->set_scope(scope);
+
+      defdecl->set_parent(scope);
+      nondefdecl->set_parent(scope);
+    }
+  }
+  void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT(varDecl);
+    ROSE_ASSERT(scope);
+
+    SgInitializedNamePtrList namelist = varDecl->get_variables();
+
+    //avoid duplicated work
+    if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
+    SgInitializedNamePtrList::iterator i;
+    for (i=namelist.begin();i!=namelist.end();i++)
+   {
+      SgInitializedName *initName =*i;   
+      ROSE_ASSERT(initName);   
+
+      SgName name= initName->get_name();
+      initName->set_scope(scope);
+     // optional?
+      varDecl->set_parent(scope);
+      // symbol table
+      SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
+      if (varSymbol==NULL)
+      {
+	varSymbol = new SgVariableSymbol(initName);
+	ROSE_ASSERT(varSymbol);   
+	scope->insert_symbol(name, varSymbol);
+      }
+      else
+      { // TODO consider prepend() and insert(), prev_decl_time is position dependent.
+    //   cout<<"sageInterface.C:5130 debug: found a previous var declaration!!...."<<endl;     
+	SgInitializedName* prev_decl = varSymbol->get_declaration();
+	ROSE_ASSERT(prev_decl);
+	initName->set_prev_decl_item(prev_decl);
+      } //end if
+    } //end for
   }
 
   int fixVariableReferences(SgNode* root)
@@ -4992,6 +5205,7 @@ namespace SageInterface {
       SgInitializedName* initname= varRef->get_symbol()->get_declaration();
       if (initname->get_type()==SgTypeUnknown::createType())
   //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
+
       {
 	SgName varName=initname->get_name();
 	SgSymbol* realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
@@ -5121,5 +5335,16 @@ PreprocessingInfo* attachComment(
       }
     }
   }
+
+  bool isStructDeclaration(SgNode* node)
+  {
+    ROSE_ASSERT(node!=NULL);
+    SgClassDeclaration *decl = isSgClassDeclaration(node);
+    if (decl==NULL) 
+      return false;
+    else
+       return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
+  }
+
   } // end namespace SageInterface
 

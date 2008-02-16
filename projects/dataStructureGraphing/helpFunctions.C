@@ -3,12 +3,6 @@
 using namespace std;
 
 
-
-/* The function:
- *     getScope
- * 
- */
-
 /*
  * The function:
  *     leftTrim() 

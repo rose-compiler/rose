@@ -850,13 +850,6 @@ int SAGE_DEBUG = 0;  // default value is zero
 // interprocedural
 bool interproceduralControlFlowGraph = false;
 
-// ########################################
-// Some global functions used within SAGE 3
-// ########################################
-
-#include "loopHelpers.h"
-
-
 // ###############################
 // Start of source code for SgNode
 // ###############################

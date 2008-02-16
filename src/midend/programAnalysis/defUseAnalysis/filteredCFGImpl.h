@@ -1,6 +1,5 @@
 #include <rose.h>
 #include "filteredCFG.h"
-#include "loopHelpers.h"
 #include <sstream>
 #include <iomanip>
 #include <stdint.h>

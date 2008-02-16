@@ -37,22 +37,14 @@ main (int argc, char* argv[])
 {
  vector<string> argvList(argv, argv+argc);
 
-#if 1
   cerr << "[Loading HPCToolkit profiles]...]" << endl;
-  RoseHPCT::FilenameList_t filenames =
-    RoseHPCT::getProfileOptions (argvList);
-  RoseHPCT::ProgramTreeList_t profiles =
-    RoseHPCT::loadXMLTrees (filenames);
-  RoseHPCT::EquivPathMap_t eqpaths =
-    RoseHPCT::getEquivPaths (argvList);
-#endif
+  RoseHPCT::FilenameList_t filenames =  RoseHPCT::getProfileOptions (argvList);
+  RoseHPCT::ProgramTreeList_t profiles = RoseHPCT::loadXMLTrees (filenames);
+  RoseHPCT::EquivPathMap_t eqpaths = RoseHPCT::getEquivPaths (argvList);
 
-#if 1
   cerr << "[Creating a Sage IR...]" << endl;
   SgProject* proj = frontend (argvList);
-#endif
 
-#if 1
   cerr << "[Attaching HPCToolkit profiles to Sage IR tree...]" << endl;
   for (RoseHPCT::ProgramTreeList_t::const_iterator hpctree = profiles.begin ();
        hpctree != profiles.end ();
@@ -61,13 +53,10 @@ main (int argc, char* argv[])
       RoseHPCT::translateFilePaths (*hpctree, eqpaths);
       RoseHPCT::attachMetrics (*hpctree, proj, true);
     }
-#endif
 
-#if 1
   cerr << "[Dumping to PDF...]" << endl;
   AstPDFGeneration pdf;
   pdf.generateInputFiles (proj);
-#endif
 
   return 0;
 }

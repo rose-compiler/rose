@@ -6,7 +6,6 @@
 // HighLevel_Sage_C_Builder_Interface
 //-------------------------------------------------------------------
 #include "rose.h"
-#include "sageBuilder.h"
 
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -26,13 +25,13 @@ int main (int argc, char *argv[])
   appendArg(paraList,arg1);  
   appendArg(paraList,arg2);  
 	  // build nondefining function declaration 
-  SgFunctionDeclaration * func1 = buildNonDefiningFunctionDeclaration \
+  SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration \
      (SgName("foo"),SgTypeVoid::createType(),paraList);
   appendStatement (func1);
 
     // SgFunctionParameterList should not be shared, deepcopy
   SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
-  SgFunctionDeclaration * func2 = buildNonDefiningFunctionDeclaration \
+  SgFunctionDeclaration * func2 = buildNondefiningFunctionDeclaration \
      (SgName("foo"),SgTypeVoid::createType(),paraList2);
   // insert prototype function declaration
   appendStatement (func2);
@@ -64,7 +63,7 @@ int main (int argc, char *argv[])
 #if 1
   // build nondefining  int foo(int x, float) the 3rd time
   SgFunctionParameterList * paraList4= isSgFunctionParameterList(deepCopy(paraList));
-  SgFunctionDeclaration * func4 = buildNonDefiningFunctionDeclaration \
+  SgFunctionDeclaration * func4 = buildNondefiningFunctionDeclaration \
      (SgName("foo"),SgTypeVoid::createType(),paraList4);
   appendStatement (func4);
 #endif 

@@ -103,6 +103,8 @@ namespace StringUtility
            std::string numberToString ( unsigned long x );
            std::string numberToString ( int x );
            std::string numberToString ( unsigned int x );
+       //! convert an integer to a Hex string
+           std::string intToHex(uint32_t i);
        //! convert a unsigned integer (size_t) to a string
        //  string numberToString ( unsigned int x );
        //  std::string numberToString ( size_t x );

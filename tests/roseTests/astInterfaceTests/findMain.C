@@ -2,9 +2,7 @@
 
 */
 #include "rose.h"
-#include "sageBuilder.h"
 #include <iostream>
-using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -14,7 +12,7 @@ int main (int argc, char *argv[])
 
   // go to the function body
   SgFunctionDeclaration* mainFunc= findMain(project);
-  cout<<mainFunc->unparseToString()<<endl;
+  std::cout<<mainFunc->unparseToString()<<std::endl;
 
   // translation only
    project->unparse();
