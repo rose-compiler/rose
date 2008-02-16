@@ -3687,11 +3687,6 @@ SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, S
   if (currentScope == NULL)
     currentScope = SageBuilder::topScopeStack();
   ROSE_ASSERT(currentScope != NULL);
-  // enable default search from top of StackScope, Liao, 1/24/2008
-     SgFunctionSymbol* functionSymbol = NULL;
-  if (currentScope == NULL)
-    currentScope = HighLevel_Sage_Builder_Interface::topScopeStack();
-  ROSE_ASSERT(currentScope != NULL);
 
      SgScopeStatement* tempScope = currentScope;
      while ((functionSymbol == NULL) && (tempScope != NULL))

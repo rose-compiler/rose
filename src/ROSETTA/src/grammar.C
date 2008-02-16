@@ -117,13 +117,13 @@ Grammar::Grammar ( const string& inputGrammarName,
 
   // JJW 2-12-2008 Use a file for this list so the numbers will be more stable
      {
-       std::string astNodeListFilename = ROSE_AUTOMAKE_TOP_SRCDIR "/src/ROSETTA/astNodeList";
+       std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/src/ROSETTA/astNodeList";
        std::ifstream astNodeList(astNodeListFilename.c_str());
        size_t c = 1;
        while (astNodeList) {
          std::string name;
          astNodeList >> name;
-         if (name == "") break;
+         if (name == "") continue;
          this->astNodeToVariantMap[name] = c;
          this->astVariantToNodeMap[c] = name;
          ++c;
@@ -131,6 +131,7 @@ Grammar::Grammar ( const string& inputGrammarName,
        ROSE_ASSERT (astNodeList.eof());
        astNodeList.close();
      }
+     ROSE_ASSERT (this->astNodeToVariantMap.size() >= 10); // A reasonable count
 
   // DQ (3/15/2007): Added support for binaries
      setUpBinaryInstructions();
@@ -2863,11 +2864,13 @@ Grammar::buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & out
   // startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarPrefixName());
      startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarName());
 
+     size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
+
   // char* listLengthString = strtoul(nonTerminalList.size());
      char* listLengthString = new char [10];
 
   // Build a string representing the number of elements (add 1 for the LAST_TAG)
-     sprintf (listLengthString,"%zu",(size_t)(nonTerminalList.size()+terminalList.size()+1U));
+     sprintf (listLengthString,"%zu",maxVariant + 2);
 
   // COPY the length into the string at "LIST_LENGTH"
      startString = GrammarString::copyEdit (startString,"$LIST_LENGTH",listLengthString);
@@ -2908,11 +2911,13 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
   // startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarPrefixName());
      startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarName());
 
+     size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
+
   // char* listLengthString = strtoul(nonTerminalList.size());
      char* listLengthString = new char [10];
 
   // Build a string representing the number of elements (add 1 for the LAST_TAG)
-     sprintf (listLengthString,"%zu",(size_t)(nonTerminalList.size()+terminalList.size()+1U));
+     sprintf (listLengthString,"%zu",(size_t)(maxVariant+2U));
 
   // COPY the length into the string at "LIST_LENGTH"
      startString = GrammarString::copyEdit (startString,"$LIST_LENGTH",listLengthString);
@@ -2929,25 +2934,18 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
 
      string middleString;
 
-    for( it = nonTerminalList.begin(); it != nonTerminalList.end(); it++)
-        {
-	  assert( (*it) != NULL );
-	  NonTerminal &currentNonTerminal = (NonTerminal &)**it;
-
-  // DQ (10/26/2007): Modified generated Cxx_GrammarTerminalNames to reflect newer IR variants
-  // middleString += openString + currentNonTerminal.getTagName() + seperatorString + currentNonTerminal.getName() + closeString;
-	  middleString += openString + "V_" + currentNonTerminal.getName() + seperatorString + currentNonTerminal.getName() + closeString;
-	}
-
-     for( it = terminalList.begin(); it != terminalList.end(); it++)
-        {
-	  assert( (*it) != NULL );
-	  Terminal &currentTerminal = (Terminal &)**it;
-
-  // DQ (10/26/2007): Modified generated Cxx_GrammarTerminalNames to reflect newer IR variants
-  // middleString += openString + currentTerminal.getTagName() + seperatorString + currentTerminal.getName() + closeString;
-	  middleString += openString + "V_" + currentTerminal.getName() + seperatorString + currentTerminal.getName() + closeString;
-	}
+     vector<string> variantNames;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+       if (i->first + 1 > variantNames.size()) {
+         variantNames.resize(i->first + 1, "<ERROR: unknown VariantT>");
+       }
+       variantNames[i->first] = i->second;
+     }
+     bool first = true;
+     for (size_t i=0; i < variantNames.size(); i++) {
+       middleString += openString + "(VariantT)" + StringUtility::numberToString(i) + seperatorString + variantNames[i] + closeString;
+       first = false;
+     }
 
   // string endString = "          {$MARKER_LAST_TAG, \"last tag\" } \n   }; \n\n\n";
      string endString = "          {V_SgNumVariants, \"last tag\" } \n   }; \n\n\n";
