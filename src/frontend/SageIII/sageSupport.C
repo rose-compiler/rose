@@ -4876,7 +4876,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           if (get_Fortran_only() == true)
              {
             // compilerNameString = "f77 ";
-               compilerNameString[0] = "gfortran ";
+               compilerNameString[0] = "gfortran";
 
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
