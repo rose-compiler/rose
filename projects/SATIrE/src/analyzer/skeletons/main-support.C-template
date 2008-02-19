@@ -54,40 +54,62 @@ get_statement_post_info(DFI_STORE store, SgStatement *stmt)
   return select_info(store, stmt, "PAG statement end");
 }
 
-DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,char* output, bool noresult, bool verbose)
+DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
 {
-    if (verbose) std::cout << "collecting functions: ";
+  bool verbose=opt->verbose();
+  
+    if (verbose) std::cout << "collecting functions ... ";
     ProcTraversal s;
+    s.setPrintCollectedFunctionNames(opt->printCollectedFunctionNames());
     s.traverse(root, preorder);
-    if (verbose) std::cout << "... done" << std::endl;
+    if (verbose) std::cout << "done" << std::endl;
 
     if (verbose) std::cout << "generating cfg ... ";
     CFGTraversal t(s.get_procedures());
     t.traverse(root, preorder);
     if (verbose) std::cout << "done" << std::endl;
 
-    if (verbose) std::cout << "testing cfg ... " << std::endl;
-    int test_result = kfg_testit(t.getCFG(), !verbose, "cfg_dump.gdl");
+    if (verbose) std::cout << "testing cfg ... ";
+
+    int test_result = kfg_testit(t.getCFG(), 1 /* quiet */);
     if (test_result == 0)
     {
+      std::cout << "failed." << std::endl;
       std::cerr << std::endl
-		<< "Warning: There are problems in the CFG."
+		<< "Warning: PAG reports: there are problems in the ICFG."
 		<< std::endl;
-    }
-    else {
-        if (verbose) std::cout << "no problems found" << std::endl;
+    } else {
+      if (verbose) std::cout << "done" << std::endl;
     }
     
+    if(opt->outputIcfg()) {
+      if(verbose) std::cout << "generating icfg visualization " << opt->getOutputIcfgFileName() << " ... ";
+      outputIcfg(t.getCFG(),const_cast<char*>(opt->getOutputIcfgFileName().c_str()));
+      if (verbose) std::cout << "done" << std::endl;
+    }
+
     if (verbose) std::cout << "performing analysis " stringize(ANALYSIS) " ... ";
     std::cout.flush();
     DFI_STORE results = doit(ANALYSIS)(t.getCFG());
     if (verbose) std::cout << "done" << std::endl;
-    if(!noresult) {
-      if (verbose) std::cout << "generating visualization " << output << " ... ";
-      gdl_create(output, 0);
+    
+    /* we must run gdl_create for both single file and animation */
+    std::string outputgdlfile;
+    if(opt->outputGdl())
+      outputgdlfile=opt->getOutputGdlFileName();
+    else
+      if(opt->outputGdlAnim())
+	outputgdlfile=opt->getOutputGdlAnimDirName() + "/result.gdl"; // we cannot create an animation, but not create a gdl file
+
+    if(opt->outputGdl() || opt->outputGdlAnim()) {
+      if(verbose) std::cout << "generating ";
+      if(verbose && opt->outputGdl()) std::cout << "visualization " << outputgdlfile << " ";
+      if(verbose && opt->outputGdl() && opt->outputGdlAnim()) std::cout << "and ";
+      if(verbose && opt->outputGdlAnim()) std::cout << "animation in directory " << opt->getOutputGdlAnimDirName() << " ";
+      if(verbose) std::cout << "... ";
+      gdl_create(const_cast<char*>(outputgdlfile.c_str()), 0);
       if (verbose) std::cout << "done" << std::endl;
-    } else {
-      if (verbose) std::cout << "no visualization generated." << std::endl;
     }
+
     return results;
 }

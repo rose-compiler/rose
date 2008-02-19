@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.5 2008-01-25 16:09:17 adrian Exp $
+// $Id: ProcTraversal.C,v 1.6 2008-02-19 19:08:00 markus Exp $
 
 #include <iostream>
 #include <string.h>
@@ -13,11 +13,22 @@ ProcTraversal::ProcTraversal() : procedures(new std::deque<Procedure *>()),
 				 procnum(0), 
 				 original_ast_nodes(0), 
 				 original_ast_statements(0) {
+  setPrintCollectedFunctionNames(false);
 }
 
 std::deque<Procedure *>*
 ProcTraversal::get_procedures() const {
     return procedures;
+}
+
+void 
+ProcTraversal::setPrintCollectedFunctionNames(bool pcf) {
+  _printCollectedFunctionNames=pcf;
+}
+
+bool 
+ProcTraversal::getPrintCollectedFunctionNames() {
+  return _printCollectedFunctionNames;
 }
 
 void 
@@ -217,8 +228,10 @@ ProcTraversal::visit(SgNode *node) {
       proc->returnvar = Ir::createVariableSymbol(varname.str(),
 						 decl->get_type()->get_return_type());
       procedures->push_back(proc);
-      std::cout << (proc->memberf_name ? proc->memberf_name : proc->name)
-		<< " " /*<< proc->decl << std::endl*/;
+      if(getPrintCollectedFunctionNames()) {
+	std::cout << (proc->memberf_name ? proc->memberf_name : proc->name)
+		  << " " /*<< proc->decl << std::endl*/;
+      }
     }
   }
 }

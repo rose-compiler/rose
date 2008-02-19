@@ -1,6 +1,6 @@
 /*
  * attribute defines for AnalyzerOptions
- * Author: Viktor Pavlu
+ * Author: Viktor Pavlu, Markus Schordan
  * 
  * STRING_ATTR(AttributeName, "defaultstring")
  * INT_ATTR(AttributeName, 42)
@@ -17,6 +17,7 @@ STRING_ATTR(HelpOptionsText, "")
 STRING_ATTR(OutputSourceFileName, "")
 STRING_ATTR(OutputFilePrefix, "")
 STRING_ATTR(OutputGdlFileName, "")
+STRING_ATTR(OutputIcfgFileName, "")
 STRING_ATTR(OutputTermFileName, "")
 STRING_ATTR(OutputGdlAnimDirName, "")
 
@@ -29,12 +30,13 @@ INT_ATTR(StartBank, 0) /* ?? */
 INT_ATTR(ShareMin,  0) /* ?? */
 INT_ATTR(ShareNum,  0) /* ?? */
 
+BOOL_ATTR(printCollectedFunctionNames, Off)
 BOOL_ATTR(analysisAnnotation, On)
 BOOL_ATTR(checkRoseAst, Off)
 BOOL_ATTR(resultGeneration, On)
 BOOL_ATTR(helpMessageRequested, Off)
 BOOL_ATTR(quiet, Off)
-BOOL_ATTR(pagVerbose, Off)
+BOOL_ATTR(verbose, On)
 BOOL_ATTR(preInfo, Off)
 BOOL_ATTR(postInfo, On)
 BOOL_ATTR(statistics, Off)
@@ -44,6 +46,7 @@ BOOL_ATTR(outputText, Off)
 BOOL_ATTR(analysisResultsAnnotation, On)
 BOOL_ATTR(outputSource, Off)
 BOOL_ATTR(outputTerm, Off)
+BOOL_ATTR(outputIcfg, Off)
 BOOL_ATTR(outputGdl, Off)
 BOOL_ATTR(outputGdlAnim, Off)
 BOOL_ATTR(vivu, Off) /* callstring length defines chop size */

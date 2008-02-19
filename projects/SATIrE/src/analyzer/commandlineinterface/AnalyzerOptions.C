@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.12 2008-02-14 22:31:47 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.13 2008-02-19 19:08:00 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -54,9 +54,11 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --statistics=yes|no            output analyzer statistics on stdout\n"
     "   --verbose=yes|no               output analyzer debug info on stdout\n"
     "   --quiet                        suppress most progress info\n"
-    "   --output-text=yes|no           output the analysis results for each statement on stdout\n"
+    "   --output-text=yes|no           output analysis results for each statement on stdout\n"
+    "   --output-collectedfuncs=yes|no output all functions that are collected for the icfg generation\n"
     "   --output-sourcefile <FILENAME> generate source file with annotated analysis results for each statement\n"
-    "   --output-termfile <FILENAME>   generate term (Prolog) representation with annotated analysis results\n"
+    "   --output-termfile <FILENAME>   generate Prolog term representation of input program AST\n"
+    "   --output-icfgfile <FILENAME>   output icfg of input program (shows forward and backward edges)\n"
     "   --help                         output this help message on stdout\n"
     "\n"
     " Handling of multiple input and output files\n"
@@ -67,7 +69,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     " GDL output options:\n"
     "   --gdl-preinfo=yes|no           output analysis info before cfg nodes [default=no]\n"
     "   --gdl-postinfo=yes|no          output analysis info after cfg nodes [default=yes]\n"
-    "   --output-gdlfile <filename>    output gdl graph\n"
+    "   --output-gdlfile <filename>    output program as gdl graph\n"
     "   --output-gdlanimdir <dirname>  output animation gdl files in directory <dirname>\n"
     "\n"
     /*
@@ -91,7 +93,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
 std::string AnalyzerOptions::toString() {
   return "Program Name: "+getProgramName()+"\n"
     + "Input FileName: "+getInputFileName()+"\n"
-    + "Output Source Filename: "+getOutputTermFileName()+"\n"
+    + "Output Source Filename: "+getOutputSourceFileName()+"\n"
     + "Output Term Filename: "+getOutputTermFileName()+"\n"
     + "Output GDL Filename: "+getOutputGdlFileName()+"\n"
     + "Output GDL Anim DirName: "+getOutputGdlAnimDirName()+"\n"

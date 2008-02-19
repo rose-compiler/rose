@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: testcfg.c,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: testcfg.c,v 1.3 2008-02-19 19:08:00 markus Exp $
 
 /*
  * TestCFG: consistency test for a cfg and its PAG-interface
@@ -1725,7 +1725,7 @@ static void writegdl (char *name)
 
 
 /* The main testfunction. Returns 0 if any error is found in the cfg */
-int kfg_testit (KFG kfg, int quiet_mode, char *gdl_name)
+int kfg_testit (KFG kfg, int quiet_mode)
 {
   cfg           = kfg;
   quiet         = (quiet_mode == 1);
@@ -1759,9 +1759,14 @@ int kfg_testit (KFG kfg, int quiet_mode, char *gdl_name)
   else
     diagnostic (" ** errors found **\n");
 
-  writegdl (gdl_name);
-
   return (error_found == 0);
 }
+
+void outputIcfg(KFG kfg, char *gdl_name) {
+  cfg=kfg;
+  writegdl (gdl_name);
+}
+
+
 
 #endif /* ifdef NDEBUG */

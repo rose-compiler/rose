@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.9 2008-02-14 22:31:47 markus Exp $
+// $Id: CommandLineParser.C,v 1.10 2008-02-19 19:08:00 markus Exp $
 
 #include <config.h>
 
@@ -49,7 +49,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
 
   int old_i = i;
 
-  if (!strcmp(argv[i], "--pag:cfgordering")) {
+  if (!strcmp(argv[i], "--cfgordering")) {
     cl->setCfgOrdering(atoi(argv[++i]));
   } else if (optionMatch(argv[i], "--pag-gc-lowperc")) {
     cl->setGcLow(atoi(argv[++i]));
@@ -70,9 +70,9 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--callstringinfinite")) {
     cl->setCallStringLength(-1);
   } else if (optionMatch(argv[i], "--verbose=yes")) {
-    cl->pagVerboseOn();
+    cl->verboseOn();
   } else if (optionMatch(argv[i], "--verbose=no")) {
-    cl->pagVerboseOff();
+    cl->verboseOff();
   } else if (optionMatch(argv[i], "--quiet=yes")) {
     cl->quietOn();
   } else if (optionMatch(argv[i], "--quiet=no")) {
@@ -103,6 +103,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->analysisAnnotationOn();
   } else if (optionMatch(argv[i], "--analysis-annotation=no")) {
     cl->analysisAnnotationOff();
+  } else if (optionMatch(argv[i], "--output-collectedfuncs=yes")) {
+    cl->printCollectedFunctionNamesOn();
+  } else if (optionMatch(argv[i], "--output-collectedfuncs=no")) {
+    cl->printCollectedFunctionNamesOff();
   } else if (optionMatch(argv[i], "--output-text=yes")) {
     cl->outputTextOn();
   } else if (optionMatch(argv[i], "--output-text=no")) {
@@ -118,6 +122,9 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--output-sourcefile")) {
     cl->outputSourceOn();
     cl->setOutputSourceFileName(strdup(argv[++i]));
+  } else if (optionMatch(argv[i], "--output-icfgfile")) {
+    cl->outputIcfgOn();
+    cl->setOutputIcfgFileName(strdup(argv[++i]));
   } else if (optionMatch(argv[i], "--output-file-prefix")) {
     cl->outputSourceOn();
     cl->setOutputFilePrefix(strdup(argv[++i]));
@@ -145,14 +152,14 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
      * with SATIrE command line options we use '--rose:' but pass
      * all options through unchanged as '-rose:' */
     cl->appendCommandLine(std::string(argv[i]+1));
-  } else if (optionMatch(argv[i], "--rose:help")) {
+  } else if (optionMatch(argv[i], "--rose-help")) {
     cl->appendCommandLine("-rose:help");
-  } else if (optionMatch(argv[i], "--pag:vivu")) {
+  } else if (optionMatch(argv[i], "--pag-vivu")) {
     cl->vivuOn();
-  } else if (optionMatch(argv[i], "--pag:vivuLoopUnrolling")) {
+  } else if (optionMatch(argv[i], "--pag-vivuLoopUnrolling")) {
     if(i+1>=argc) { failed(cl); }
     cl->setVivuLoopUnrolling(atoi(argv[++i]));
-  } else if (optionMatch(argv[i], "--pag:vivu4MaxUnrolling")) {
+  } else if (optionMatch(argv[i], "--pag-vivu4MaxUnrolling")) {
     if(i+1>=argc) { failed(cl); }
     cl->setVivu4MaxUnrolling(atoi(argv[++i]));
   } else if (optionMatch(argv[i], "--help")) {
@@ -178,9 +185,9 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     /* handle as filename, pass filenames through */
     std::cout << "Found Input filename." << std::endl;
     cl->setInputFileName(argv[i]);
-      //cl->appendCommandLine(std::string(argv[i]));
+    //cl->appendCommandLine(argv[i]);
   } else {
-    std::cout << "nothing found!" << std::endl;
+    std::cout << "Commandline: ERROR: unrecognized option." << argv[i] << std::endl;
     return 0;
   }
   return i+1-old_i;
@@ -207,6 +214,7 @@ void CommandLineParser::failed(AnalyzerOptions *opt) {
 
 bool CommandLineParser::optionMatch(char* s1, char* s2) {
   bool match=!strcmp(s1,s2);
+  if(match) std::cout << "INFO: found option: " << s1 << std::endl;
   return match;
 }
 

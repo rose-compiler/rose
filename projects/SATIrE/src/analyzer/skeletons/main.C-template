@@ -32,9 +32,7 @@ int main(int argc, char **argv)
    * attributing the statements of the AST with analysis
    * information. Use the StatementAttributeTraversal class for accessing
    * the analysis information on each statement */
-  char* outputfile=(char*)opt->getOutputGdlFileName().c_str();
-  bool gdloutput=!(opt->outputGdlAnim() || opt->outputGdl());
-  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,gdloutput, !opt->quiet());
+  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
 
   /* Handle command line option --textoutput */
   if(opt->outputText()) {
@@ -46,8 +44,8 @@ int main(int argc, char **argv)
   
   /* Handle command line option --output-XXX 
    * The source code (i.e. the AST) is annotated with comments showing
-   * the analysis results and by calling the backend an annotated C/C++
-   * file is generated (named rose_<inputfilename>) */
+   * the analysis results and by calling the backend, and an annotated C/C++
+   * file is generated (is specified on command line) */
   if(opt->analysisResultsAnnotation()) {
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
