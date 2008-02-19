@@ -7,7 +7,7 @@ FILES=`find tests -name \*.[cC] 2>/dev/null` `find tests -name \*.c[px][px] 2>/d
 CURRENTDIR=`pwd`
 ANALYSIS=`basename $CURRENTDIR`
 MODES="--output-text=yes"
-OPTIONS="--analysis-files=all --output-gdlfile test.gdl --gdl-preinfo=yes --gdl-postinfo=yes"
+OPTIONS="--analysis-files=all --output-gdlfile test.gdl --gdl-preinfo=yes --gdl-postinfo=yes --output-termfile test.pl"
 
 CUSTOM_MODES="--aliastextoutput --aliassourceoutput"   # not available in all analyses, checked against --help text of $(ANALYSIS)
 CUSTOM_OPTIONS="--foldgraphs --summarygraph --individualgraphs"

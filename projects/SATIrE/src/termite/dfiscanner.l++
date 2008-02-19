@@ -41,8 +41,15 @@ undef \<undefined\ dfi\>
 {bottom} { return BOTTOM; }
 {assign} { return ASSIGN; }
 
-{int}   { /*cerr<<"INT "<<yytext<<endl;*/   dfilval.intValue = (int)strtol(dfitext, NULL, 10); return(INT); }
-{token} { /*cerr<<"TOKEN "<<yytext<<endl;*/ dfilval.strValue = new string(dfitext); return(TOKEN); }
-.       { /*cerr<<"ID "<<yytext<<endl;*/    return(dfitext[0]); }
+{int}   { //cerr<<"INT "<<yytext<<endl; 
+          dfilval.intValue = (int)strtol(dfitext, NULL, 10); 
+	  return(INT); }
+{token} { //cerr<<"TOKEN "<<yytext<<endl; 
+          dfilval.strValue = new string(dfitext); 
+	  return(TOKEN); }
+\,\}    { //cerr<<"my }"<< endl;
+          return '}'; /* don't want to deal with this ugliness in the parser*/}
+.       { //cerr<<"ID "<<yytext<<endl;    
+          return(dfitext[0]); }
 
 %%
