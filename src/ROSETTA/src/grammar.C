@@ -3084,7 +3084,11 @@ size_t Grammar::getVariantForNode(const std::string& name) const {
   if (it == this->astNodeToVariantMap.end()) {
     it = this->astNodeToVariantMap.find(this->grammarPrefixName + name);
   }
-  ROSE_ASSERT (it != this->astNodeToVariantMap.end());
+  if (it == this->astNodeToVariantMap.end()) {
+    std::cerr << "Could not find variant number for " << name << std::endl;
+    std::cerr << "This node name must be added to the list in $(top_srcdir)/src/ROSETTA/astNodeList" << std::endl;
+    abort();
+  }
   return it->second;
 }
 
@@ -3488,12 +3492,7 @@ Grammar::buildVariantEnums() {
       s+=string(",\n");
     }
     notFirst=true;
-    std::map<std::string, size_t>::const_iterator it = this->astNodeToVariantMap.find(nonTerminalList[i].name);
-    if (it == this->astNodeToVariantMap.end()) {
-      std::cerr << "Could not find entry for " << nonTerminalList[i].name << " in AST node list" << std::endl;
-      ROSE_ABORT();
-    }
-    size_t varNum = it->second;
+    size_t varNum = this->getVariantForNode(nonTerminalList[i].name);
     s+=(string("V_")+nonTerminalList[i].name+" = "+StringUtility::numberToString(varNum));
   }
   for (i=0; i < terminalList.size(); i++) {
@@ -3501,12 +3500,7 @@ Grammar::buildVariantEnums() {
       s+=string(",\n");
     }
     notFirst=true;
-    std::map<std::string, size_t>::const_iterator it = this->astNodeToVariantMap.find(terminalList[i].name);
-    if (it == this->astNodeToVariantMap.end()) {
-      std::cerr << "Could not find entry for " << terminalList[i].name << " in AST node list" << std::endl;
-      ROSE_ABORT();
-    }
-    size_t varNum = it->second;
+    size_t varNum = this->getVariantForNode(terminalList[i].name);
     s+=(string("V_")+terminalList[i].name+" = "+StringUtility::numberToString(varNum));
   }
   // add an ENUM to get the number of enums declared.
