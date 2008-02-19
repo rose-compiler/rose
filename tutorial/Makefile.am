@@ -84,6 +84,7 @@ noinst_PROGRAMS = \
    traverseIRnodeTypes \
    typeInfoFromFunctionParameters \
    typeTransformation \
+   virtualCFG \
    virtualFunctionIdentification \
    visitorMemoryPoolTraversal \
    visitorTraversal \

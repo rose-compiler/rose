@@ -7100,7 +7100,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     case 2: makeEdge(this->get_test()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
     case 3: {
       makeEdge(this->get_loop_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body());
+      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), "");
       for (unsigned int i = 0; i < continueStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -7108,7 +7108,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     }
     case 4: {
       makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), "");
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -11189,7 +11189,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     case 0: {
       makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
       makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      std::vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body());
+      std::vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), this->get_string_label());
       for (unsigned int i = 0; i < continueStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -11198,7 +11198,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     case 1: makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
     case 2: {
       makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result);
-      std::vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
+      std::vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), this->get_string_label());
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -11287,7 +11287,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
 	    makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result); break;
     case 1: {
       makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body());
+      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), "");
       for (unsigned int i = 0; i < continueStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -11299,7 +11299,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     }
     case 3: {
       makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), "");
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -11380,7 +11380,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     case 1: makeEdge(this->get_item_selector()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
     case 2: {
       makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), "");
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
 	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -11955,12 +11955,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
   std::vector<VirtualCFG::CFGEdge> result;
   switch (idx) {
     case 0: {
-      SgStatement* enc = this;
-      while (enc && !isSgDoWhileStmt(enc) && !isSgForStatement(enc) &&
-             !isSgWhileStmt(enc) && !isSgSwitchStatement(enc) &&
-             !isSgFortranDo(enc)) {
-	enc = isSgStatement(enc->get_parent());
-      }
+      SgStatement* enc = SageInterface::findEnclosingLoop(this, this->get_do_string_label(), true); // May also find a switch statement in C or C++
       ROSE_ASSERT (enc);
       unsigned int newIndex;
       switch (enc->variantT()) {
@@ -12014,11 +12009,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
   std::vector<VirtualCFG::CFGEdge> result;
   switch (idx) {
     case 0: {
-      SgStatement* loop = this;
-      while (loop && !isSgDoWhileStmt(loop) && !isSgForStatement(loop) &&
-             !isSgWhileStmt(loop) && !isSgFortranDo(loop)) {
-	loop = isSgStatement(loop->get_parent());
-      }
+      SgStatement* loop = SageInterface::findEnclosingLoop(this, this->get_do_string_label(), false);
       ROSE_ASSERT (loop);
       unsigned int newIndex;
       switch (loop->variantT()) {
@@ -14512,7 +14503,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     case 4: makeEdge(VirtualCFG::CFGNode(this, 3), VirtualCFG::CFGNode(this, idx), result); break;
     case 5: {
       makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body());
+      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), this->get_string_label());
       for (unsigned int i = 0; i < continueStmts.size(); ++i) {
         makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }
@@ -14520,7 +14511,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
     }
     case 6: {
       makeEdge(VirtualCFG::CFGNode(this, 3), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body());
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), this->get_string_label());
       for (unsigned int i = 0; i < breakStmts.size(); ++i) {
         makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
       }

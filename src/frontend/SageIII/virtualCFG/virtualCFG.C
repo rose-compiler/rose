@@ -51,7 +51,7 @@ namespace VirtualCFG {
       if (isSgInitializedName(node)) {
 	nodeText = variableName(isSgInitializedName(node));
       } else {
-	nodeText = node->unparseToString();
+	// nodeText = node->unparseToString(); -- Fortran CFG nodes can't always be unparsed
         ostringstream nt;
         nt << "@" << node->get_startOfConstruct()->get_line();
         nodeText += nt.str();
