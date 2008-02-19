@@ -4245,52 +4245,84 @@ SageInterface::getFirstVarSym (SgVariableDeclaration* decl)
 
 
 
-static void findBreakStmtsHelper(SgStatement* code, vector<SgBreakStmt*>& breakStmts) {
+static void findBreakStmtsHelper(SgStatement* code, const std::string& fortranLabel, bool inOutermostBody, vector<SgBreakStmt*>& breakStmts) {
   if (isSgWhileStmt(code) || isSgDoWhileStmt(code) || isSgForStatement(code) || isSgSwitchStatement(code)) {
-    return;
+    if (fortranLabel == "") {
+      // Outermost loop only
+      return;
+    } else {
+      // Set this for query on children
+      inOutermostBody = false;
+    }
   }
   if (isSgBreakStmt(code)) {
-    breakStmts.push_back(isSgBreakStmt(code));
+    SgBreakStmt* bs = isSgBreakStmt(code);
+    bool breakMatchesThisConstruct = false;
+    if (bs->get_do_string_label() == "") {
+      // Break matches closest construct
+      breakMatchesThisConstruct = inOutermostBody;
+    } else {
+      breakMatchesThisConstruct = (fortranLabel == bs->get_do_string_label());
+    }
+    if (breakMatchesThisConstruct) {
+      breakStmts.push_back(bs);
+    }
     return;
   }
   vector<SgNode*> children = code->get_traversalSuccessorContainer();
   for (unsigned int i = 0; i < children.size(); ++i) {
     if (isSgStatement(children[i])) {
-      findBreakStmtsHelper(isSgStatement(children[i]), breakStmts);
+      findBreakStmtsHelper(isSgStatement(children[i]), fortranLabel, inOutermostBody, breakStmts);
     }
   }
 }
 
-vector<SgBreakStmt*> SageInterface::findBreakStmts(SgStatement* code) {
+vector<SgBreakStmt*> SageInterface::findBreakStmts(SgStatement* code, const std::string& fortranLabel) {
   // Run this on the body of a loop or switch, because it stops at any
   // construct which defines a new scope for break statements
   vector<SgBreakStmt*> result;
-  findBreakStmtsHelper(code, result);
+  findBreakStmtsHelper(code, fortranLabel, true, result);
   return result;
 }
 
 
-static void findContinueStmtsHelper(SgStatement* code, vector<SgContinueStmt*>& continueStmts) {
+static void findContinueStmtsHelper(SgStatement* code, const std::string& fortranLabel, bool inOutermostBody, vector<SgContinueStmt*>& continueStmts) {
   if (isSgWhileStmt(code) || isSgDoWhileStmt(code) || isSgForStatement(code)) {
-    return;
+    if (fortranLabel == "") {
+      // Outermost loop only
+      return;
+    } else {
+      // Set this for query on children
+      inOutermostBody = false;
+    }
   }
   if (isSgContinueStmt(code)) {
-    continueStmts.push_back(isSgContinueStmt(code));
+    SgContinueStmt* cs = isSgContinueStmt(code);
+    bool continueMatchesThisConstruct = false;
+    if (cs->get_do_string_label() == "") {
+      // Continue matches closest construct
+      continueMatchesThisConstruct = inOutermostBody;
+    } else {
+      continueMatchesThisConstruct = (fortranLabel == cs->get_do_string_label());
+    }
+    if (continueMatchesThisConstruct) {
+      continueStmts.push_back(cs);
+    }
     return;
   }
   vector<SgNode*> children = code->get_traversalSuccessorContainer();
   for (unsigned int i = 0; i < children.size(); ++i) {
     if (isSgStatement(children[i])) {
-      findContinueStmtsHelper(isSgStatement(children[i]), continueStmts);
+      findContinueStmtsHelper(isSgStatement(children[i]), fortranLabel, inOutermostBody, continueStmts);
     }
   }
 }
 
-vector<SgContinueStmt*> SageInterface::findContinueStmts(SgStatement* code) {
+vector<SgContinueStmt*> SageInterface::findContinueStmts(SgStatement* code, const std::string& fortranLabel) {
   // Run this on the body of a loop, because it stops at any construct which
   // defines a new scope for continue statements
   vector<SgContinueStmt*> result;
-  findContinueStmtsHelper(code, result);
+  findContinueStmtsHelper(code, fortranLabel, true, result);
   return result;
 }
 
@@ -4547,6 +4579,37 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   }
   ROSE_ASSERT (s);
   return isSgSwitchStatement(s);
+}
+
+SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& fortranLabel, bool stopOnSwitches) {
+  for (; s; s = isSgStatement(s->get_parent())) {
+    SgScopeStatement* sc = isSgScopeStatement(s);
+    switch (s->variantT()) {
+      case V_SgDoWhileStmt: return sc;
+      case V_SgForStatement: return sc;
+      case V_SgFortranDo:
+      case V_SgFortranNonblockedDo: {
+        if (fortranLabel.empty() ||
+            fortranLabel == isSgFortranDo(sc)->get_string_label()) {
+          return sc;
+        }
+        break;
+      }
+      case V_SgWhileStmt: {
+        if (fortranLabel.empty() ||
+            fortranLabel == isSgWhileStmt(sc)->get_string_label()) {
+          return sc;
+        }
+        break;
+      }
+      case V_SgSwitchStatement: {
+        if (stopOnSwitches) return sc;
+        break;
+      }
+      default: continue;
+    }
+  }
+  return NULL;
 }
 
 void SageInterface::removeJumpsToNextStatement(SgNode* top)

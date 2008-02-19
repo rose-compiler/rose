@@ -499,18 +499,21 @@ SgFunctionDeclaration* findMain(SgNode* currentNode);
 //! find referenced symbols within an expression
 std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
 
-//! Find break statements inside a particular statement, stopping at nested loops or switchs
+//! Find break statements inside a particular statement, stopping at nested loops or switches
 /*! loops or switch statements defines their own contexts for break
  statements.  The function will stop immediately if run on a loop or switch
- statement.
+ statement.  If fortranLabel is non-empty, breaks (EXITs) to that label within
+ nested loops are included in the returned list.
 */
-std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code); 
+std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& fortranLabel = ""); 
 
 //! Find all continue statements inside a particular statement, stopping at nested loops
 /*! Nested loops define their own contexts for continue statements.  The
- function will stop immediately if run on a loop.
+ function will stop immediately if run on a loop
+ statement.  If fortranLabel is non-empty, continues (CYCLEs) to that label
+ within nested loops are included in the returned list.
 */
-  std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code);
+  std::vector<SgContinueStmt*> findContinueStmts(SgStatement* code, const std::string& fortranLabel = "");
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgReturnStmt*> findReturnStmts(SgStatement* scope);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw); 
@@ -546,7 +549,11 @@ SgScopeStatement* getScope(const SgNode* astNode);
 
   SgFunctionDefinition* getEnclosingFunctionDefinition(SgNode* astNode, const bool includingSelf=false);
 
+  //! Find the closest switch outside a given statement (normally used for case and default statements)
   SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
+
+  //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
+  SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);
 
   SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
 
