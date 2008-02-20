@@ -136,6 +136,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Neg , "Asmx86Neg", "Asmx86NegTag" );
      NEW_TERMINAL_MACRO ( Asmx86Cmp , "Asmx86Cmp", "Asmx86CmpTag" );
 
+     NEW_TERMINAL_MACRO ( Asmx86Psub , "Asmx86Psub", "Asmx86PsubTag" );
+
      // decimal arithmetic instructions
      NEW_TERMINAL_MACRO ( Asmx86Daa , "Asmx86Daa", "Asmx86DaaTag" );
      NEW_TERMINAL_MACRO ( Asmx86Das , "Asmx86Das", "Asmx86DasTag" );
@@ -402,7 +404,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( Asmx86ArithmeticInstruction, 
                              Asmx86Sub | Asmx86Add | Asmx86Inc |
 			     Asmx86Adc | Asmx86Sbb | Asmx86Mul | Asmx86IMul | Asmx86Div | Asmx86IDiv | 
-			     Asmx86Dec | Asmx86Neg | Asmx86Cmp |
+			     Asmx86Dec | Asmx86Neg | Asmx86Cmp | Asmx86Psub |
 			     Asmx86Daa | Asmx86Das | Asmx86Aaa | 
 			     Asmx86Aas | Asmx86Aam | Asmx86Aad  , "Asmx86ArithmeticInstruction", "Asmx86ArithmeticInstructionTag" );
 

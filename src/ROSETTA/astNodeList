@@ -142,6 +142,7 @@ SgAsmx86Inc
 SgAsmx86Dec
 SgAsmx86Neg
 SgAsmx86Cmp
+SgAsmx86Psub
 SgAsmx86Daa
 SgAsmx86Das
 SgAsmx86Aaa
