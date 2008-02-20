@@ -14,6 +14,7 @@ class ObserveInfo
  public:
   virtual void UpdateObserver( Observer& o) const = 0;
   virtual STD string toString() { return ""; };
+  virtual ~ObserveInfo() {}
 };
 
 template <class Observer>

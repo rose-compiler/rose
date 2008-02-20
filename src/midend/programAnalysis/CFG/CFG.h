@@ -2,6 +2,7 @@
 #define CFG_ROSE_H
 
 #include <AstInterface.h>
+// See include of <CFG_ROSE.h> at bottom
 
 class CFGConfig {
  public:
@@ -41,8 +42,8 @@ void OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng);
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
 };
-// #define TEMPLATE_ONLY
-// #include <CFG_ROSE.C>
-// #undef TEMPLATE_ONLY
+
+// This has to be at the bottom of the file
+#include <CFG_ROSE.h>
 
 #endif
