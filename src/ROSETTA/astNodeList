@@ -593,6 +593,16 @@ SgModuleSymbol
 SgInterfaceSymbol
 SgCommonSymbol
 SgToken
+SgAsmx86Psrl
+SgAsmx86Psll
+SgAsmx86Pause
+SgAsmx86Padd
+SgAsmx86Movntq
+SgAsmx86Movdqu
+SgAsmx86Arpl
+SgAsmx86Emms
+SgAsmx86Pand
+SgAsmx86Pandn
 SgAsmx86Data16
 SgAsmx86F2xm1
 SgAsmx86Fabs
