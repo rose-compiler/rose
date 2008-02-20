@@ -1943,6 +1943,28 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
+          case 's': { // 'ps'
+            if (mnemonic[2] == 'u') { // 'psu'
+              if (mnemonic[3] == 'b') { // 'psub'
+                switch (mnemonic[4]) {
+                  case 'b': { // 'psubb'
+                    {instruction = new SgAsmx86Psub(address,  mnemonic, ""); goto done;}
+                  }
+                  case 'd': { // 'psubd'
+                    {instruction = new SgAsmx86Psub(address,  mnemonic, ""); goto done;}
+                  }
+                  case 'w': { // 'psubw'
+                    {instruction = new SgAsmx86Psub(address,  mnemonic, ""); goto done;}
+                  }
+                  default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
           case 'u': { // 'pu'
             if (mnemonic[2] == 's') { // 'pus'
               if (mnemonic[3] == 'h') { // 'push'
