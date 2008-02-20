@@ -107,7 +107,7 @@ js -> Js
 jns -> Jns
 jpo jnp -> Jpo
 jpe jp -> Jpe
-jcxz jecxz -> Jcxz
+jcxz jecxz jrcxz -> Jcxz
 loop -> Loop
 loopz loope -> Loopz
 loopnz loopne -> Loopnz
@@ -116,21 +116,21 @@ int -> Int
 into -> Into
 bound -> Bound
 enter -> Enter
-movs movsb movsw movsd -> Movs
-cmps cmpsb cmpsw cmpsd -> Cmps
-scas scasb scasw scasd -> Scas
-lods lodsb lodsw lodsd -> Lods
-stos stosb stosw stosd -> Stos
+movs movsb movsw movsd movsq -> Movs
+cmps cmpsb cmpsw cmpsd cmpsq -> Cmps
+scas scasb scasw scasd scasq -> Scas
+lods lodsb lodsw lodsd lodsq -> Lods
+stos stosb stosw stosd stosq -> Stos
 rep -> Rep
 repe repz -> Repe
 repne repnz -> Repne
 in -> In
 out -> Out
-ins insb insw insd -> Ins
-outs outsb outsw outsd -> Outs
+ins insb insw insd insq -> Ins
+outs outsb outsw outsd outsq -> Outs
 nop -> Nop
 ud2 -> Ud2
-xlat sclatb -> Xlat
+xlat xlatb -> Xlat
 cpuid -> Cpuid
 rdtsc -> Rdtsc
 stc -> Stc
@@ -140,8 +140,8 @@ cld -> Cld
 std -> Std
 lahf -> Lahf
 sahf -> Sahf
-pushf pushfd -> Pushf
-popf popfd -> Popf
+pushf pushfd pushfq -> Pushf
+popf popfd popfq -> Popf
 sti -> Sti
 cli -> Cli
 lds -> Lds
