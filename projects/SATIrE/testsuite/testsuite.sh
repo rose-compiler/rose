@@ -31,9 +31,9 @@ for file in $FILES; do
 
       echo "--- testing $ANALYSIS on file $file ---"
       outfile=`basename $file`
-      options="--analysis-files=all --output-text --output-termfile $outfile.pl \
+      options="--analysis-files=all --output-text=yes --output-termfile $outfile.pl \
                                                   --output-sourcefile $outfile.dfi \
-                                                  --quiet"
+                                                  --verbose=no"
       $analysis $options $file >/dev/null
       result=$?
       # Expected FAIL

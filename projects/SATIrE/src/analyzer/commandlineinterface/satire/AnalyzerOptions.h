@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.h,v 1.5 2008-01-25 16:09:17 adrian Exp $
+// $Id: AnalyzerOptions.h,v 1.6 2008-02-20 21:21:32 markus Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -49,6 +49,7 @@ public:
   void setOptionsInfo(std::string infoString);
 
   std::string getOptionsErrorMessage();
+  void setOptionsErrorMessage(std::string);
   bool optionsError();
 
   void clearCommandLine();

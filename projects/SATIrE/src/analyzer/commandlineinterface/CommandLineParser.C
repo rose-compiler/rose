@@ -1,8 +1,9 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.10 2008-02-19 19:08:00 markus Exp $
+// $Id: CommandLineParser.C,v 1.11 2008-02-20 21:21:32 markus Exp $
 
 #include <config.h>
 
+#include <sstream>
 #include "CommandLineParser.h"
 
 void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
@@ -16,6 +17,8 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
     n_consumed = handleOption(cl, i, argc, argv);
     i += n_consumed;
   }
+  if(cl->frontendWarnings()) 
+    cl->appendCommandLine("--edg:no_warnings");
 
   //cl->setAnimationDirectoryName("anim-out");
   //cl->setGdlFileName(cl->getProgramName()+"_result.gdl");
@@ -40,7 +43,7 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
     failed(cl);
   }
   }
-  cl->appendCommandLine(cl->getInputFileName());
+  //cl->appendCommandLine(cl->getInputFileName());
 }
 
 int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char **argv) {
@@ -125,7 +128,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--output-icfgfile")) {
     cl->outputIcfgOn();
     cl->setOutputIcfgFileName(strdup(argv[++i]));
-  } else if (optionMatch(argv[i], "--output-file-prefix")) {
+  } else if (optionMatch(argv[i], "--output-fileprefix")) {
     cl->outputSourceOn();
     cl->setOutputFilePrefix(strdup(argv[++i]));
   } else if (optionMatch(argv[i], "--output-termfile")) {
@@ -153,7 +156,11 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
      * all options through unchanged as '-rose:' */
     cl->appendCommandLine(std::string(argv[i]+1));
   } else if (optionMatch(argv[i], "--rose-help")) {
-    cl->appendCommandLine("-rose:help");
+    cl->appendCommandLine("--help");
+  } else if (optionMatch(argv[i], "--frontend-warnings=yes")) {
+    cl->frontendWarningsOn():
+  } else if (optionMatch(argv[i], "--frontend-warnings=no")) {
+    cl->frontendWarningsOff():
   } else if (optionMatch(argv[i], "--pag-vivu")) {
     cl->vivuOn();
   } else if (optionMatch(argv[i], "--pag-vivuLoopUnrolling")) {
@@ -181,14 +188,16 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
       failed(cl);
     }
     i++;
-  } else if (true || (!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
+  } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     std::cout << "Found Input filename." << std::endl;
     cl->setInputFileName(argv[i]);
-    //cl->appendCommandLine(argv[i]);
+    cl->appendCommandLine(argv[i]);
   } else {
-    std::cout << "Commandline: ERROR: unrecognized option." << argv[i] << std::endl;
-    return 0;
+    std::stringstream s;
+    s << "ERROR: unrecognized option: " << argv[i] << std::endl;
+    cl->setOptionsErrorMessage(s.str());
+    return 1;
   }
   return i+1-old_i;
 }

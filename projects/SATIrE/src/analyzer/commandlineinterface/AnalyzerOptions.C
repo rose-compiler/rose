@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.13 2008-02-19 19:08:00 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.14 2008-02-20 21:21:32 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -33,6 +33,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --language c++ [default]\n"
     "   --language c99\n"
     "   --language c89\n"
+    "   --frontend-warnings=yes|no     show Front End warnings when parsing file(s) [default=no]\n"
     "\n"
     " Analysis options:\n"
     "   --callstringlength <num>       set callstring length to <num> [default:0]\n"
@@ -46,7 +47,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "                                          6 : topsort scc bfs preorder\n"
     "                                          7 : topsort scc reversed bfs dfs postorder\n"
     "                                          8 : topsort scc bfs postorder\n"
-    "   --check-ast                    run all ROSE specific test for checking whether ROSE-AST is correct\n"
+    "   --check-ast=yes|no             run all ROSE specific test for checking whether ROSE-AST is correct\n"
     "   --analysis-files=all|cl        analyse all source files [default=all]\n"
     "   --analysis-annotation=yes|no   annotate analysis results in AST and output [default=yes]\n"
     "\n"
@@ -125,7 +126,7 @@ std::string AnalyzerOptions::getOptionsInfo() {
 
 void AnalyzerOptions::setCfgOrdering(int ordering) { 
   if(ordering <1 || ordering>8) {
-    optionsError("Cfg ordering must be a value between 1 to 8.");
+    setOptionsErrorMessage("Cfg ordering must be a value between 1 to 8.");
   } else {
     _CfgOrdering=ordering; 
   }
@@ -133,7 +134,7 @@ void AnalyzerOptions::setCfgOrdering(int ordering) {
 void AnalyzerOptions::setGcLow(int perc) { 
   if(perc < 0 || perc>99) {
     _GcLow=30; 
-    optionsError("GC Low-percentage of garbage collection must be within 0..99.");
+    setOptionsErrorMessage("GC Low-percentage of garbage collection must be within 0..99.");
   } else {
     _GcLow=perc;
   }
@@ -141,7 +142,7 @@ void AnalyzerOptions::setGcLow(int perc) {
 void AnalyzerOptions::setGcHigh(int perc) { 
   if(perc < 0 || perc>99) {
     _GcHigh=30; 
-    optionsError("GC High-percentage of garbage collection must be within 0..99.");
+    setOptionsErrorMessage("GC High-percentage of garbage collection must be within 0..99.");
   } else {
     _GcHigh=perc;
   }
@@ -154,7 +155,7 @@ void AnalyzerOptions::setLanguage(AnalyzerOptions::Language language) { _languag
 bool AnalyzerOptions::optionsError() {
   return _optionsErrorMessage!="";
 }
-void AnalyzerOptions::optionsError(std::string message) {
+void AnalyzerOptions::setOptionsErrorMessage(std::string message) {
   _optionsErrorMessage=message;
 }
 std::string AnalyzerOptions::getOptionsErrorMessage() {

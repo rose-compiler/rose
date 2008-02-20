@@ -30,6 +30,7 @@ INT_ATTR(StartBank, 0) /* ?? */
 INT_ATTR(ShareMin,  0) /* ?? */
 INT_ATTR(ShareNum,  0) /* ?? */
 
+BOOL_ATTR(frontendWarnings, Off)
 BOOL_ATTR(printCollectedFunctionNames, Off)
 BOOL_ATTR(analysisAnnotation, On)
 BOOL_ATTR(checkRoseAst, Off)
