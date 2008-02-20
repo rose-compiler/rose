@@ -50,7 +50,7 @@ generateCompassHeader()
   echo "// This is an automatically generated file" >> $header
   for dir in ${SUBDIRS[@]}
   do
-    echo "#include \"${dir}.h\"" >> $header
+    echo "#include \"${dir}/${dir}.h\"" >> $header
   done
 } #generateCompassHeader() <path to compass main header>
 
