@@ -11,7 +11,7 @@
 
 # This fixes some problem caused by automake or autoconf
 # (detailed documentation is in the ChangeLog)
-MAKE=gmake
+# MAKE=gmake
 
 # DQ (8/10/2007): Valentin suggested this be commented out.
 # DQ (4/23/2006): This is the default when build using automake version 1.6.3 but it

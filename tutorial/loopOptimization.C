@@ -15,18 +15,18 @@ using namespace std;
 int
 main ( int argc,  char * argv[] )
    {
-     CmdOptions::GetInstance()->SetOptions(argc, argv);
-     SetLoopTransformOptions(argc, argv);
+     vector<string> argvList(argv, argv + argc);
+     CmdOptions::GetInstance()->SetOptions(argvList);
+     SetLoopTransformOptions(argvList);
      AssumeNoAlias aliasInfo;
 
-     vector<string> argvList(argv, argv + argc);
-     SgProject project ( argvList);
+     SgProject* project = new SgProject(argvList);
 
   // Loop over the number of files in the project
-     int filenum = project.numberOfFiles();
+     int filenum = project->numberOfFiles();
      for (int i = 0; i < filenum; ++i)
         {
-          SgFile & file = project.get_file(i);
+          SgFile & file = project->get_file(i);
           SgGlobal *root = file.get_root();
           SgDeclarationStatementPtrList& declList = root->get_declarations ();
 
@@ -56,6 +56,6 @@ main ( int argc,  char * argv[] )
         }
 
   // Generate source code from AST and call the vendor's compiler
-     return backend(&project);
+     return backend(project);
    }
 

@@ -1,13 +1,13 @@
 #include <fstream>
 #include <iostream>
-#include <strstream>
+#include <sstream>
 #include <CPPAstInterface.h>
 #include <AnnotExpr.h>
 #include <ValueAnnot.h>
 
 bool DebugValuePropogate();
 
-void HasValueDescriptor::replace_var( const STD string& name, const SymbolicVal& repl)
+void HasValueDescriptor::replace_var( const std::string& name, const SymbolicVal& repl)
 {
   for (iterator p = begin(); p != end(); ++p) {
     SymbolicValDescriptor& cur = (*p).second;
@@ -16,7 +16,7 @@ void HasValueDescriptor::replace_var( const STD string& name, const SymbolicVal&
 }
 
 bool HasValueDescriptor::
-has_value( const STD string& name, SymbolicValDescriptor* r) const
+has_value( const std::string& name, SymbolicValDescriptor* r) const
     {
       const_iterator p = find(name);
       if (p == end())
@@ -36,9 +36,9 @@ bool HasValueDescriptor::merge (const HasValueDescriptor& that)
   return change;
 }
 
-STD string HasValueDescriptor :: toString() const
+std::string HasValueDescriptor :: toString() const
 {
-  STD strstream out;
+  std::stringstream out;
   write(out);
   return out.str();
 }
@@ -60,13 +60,13 @@ void RestrictValueOpDescriptor :: replace_val( MapObject<SymbolicVal, SymbolicVa
   }
 }
 
-STD string HasValueCollection::
+std::string HasValueCollection::
 is_known_member_function( AstInterface& fa,
                         const SymbolicVal& exp, AstNodePtr* objp,
                         SymbolicFunction::Arguments* argsp , 
                         HasValueDescriptor* descp )
 {
- STD string op1, op2;
+ std::string op1, op2;
  SymbolicFunction::Arguments arg1, arg2;
  if (!exp.isFunction(op1,&arg1))
       return "";
@@ -83,13 +83,13 @@ is_known_member_function( AstInterface& fa,
  return arg2.back().toString();
 }
 
-STD string HasValueCollection::
+std::string HasValueCollection::
 is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,
                           AstNodePtr* objp, AstInterface::AstNodeList* args,
                           HasValueDescriptor* desc)
 {
   AstNodePtr obj;
-  STD string func;
+  std::string func;
   if (!fa.IsMemberAccess( exp, &obj, &func) &&
      !fa.IsMemberFunctionCall(exp, &obj, &func, 0, args))
      return "";
@@ -204,17 +204,17 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
       HasValueDescriptor curval = cur.second;
       if (repl(curval)) {
          if (DebugValuePropogate()) {
-             STD cerr << "found restrict value : " << AstToString(curast) << ":" << AstToString(exp);
+             std::cerr << "found restrict value : " << AstToString(curast) << ":" << AstToString(exp);
              curval.Dump();
-             STD cerr << STD endl;
+             std::cerr << std::endl;
           }
          (*descp)( curast, curval);
       }
       else {
         if (DebugValuePropogate()) {
-             STD cerr << "discard restrict value : " << AstToString(curast) << ":" << AstToString(exp);
+             std::cerr << "discard restrict value : " << AstToString(curast) << ":" << AstToString(exp);
              curval.Dump();
-             STD cerr << STD endl;
+             std::cerr << std::endl;
           }
       }
   }
@@ -222,10 +222,10 @@ is_value_restrict_op( AstInterface& fa, const AstNodePtr& exp,
 }
 
 bool ValueAnnotation::
-is_access_value( CPPAstInterface& fa, const AstNodePtr& exp, AstNodePtr* obj, STD string* name,
+is_access_value( CPPAstInterface& fa, const AstNodePtr& exp, AstNodePtr* obj, std::string* name,
 		 AstInterface::AstNodeList* args, HasValueDescriptor* desc)
 {
-  STD string funcname = values.is_known_member_function( fa, exp, obj, args, desc);
+  std::string funcname = values.is_known_member_function( fa, exp, obj, args, desc);
   if (funcname != "") {
     if (name != 0)
       *name = funcname;

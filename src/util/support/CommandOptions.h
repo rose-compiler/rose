@@ -1,19 +1,21 @@
 #ifndef COMMAND_OPTIONS_H
 #define COMMAND_OPTIONS_H
-#include <stdlib.h>
 #include <string>
+#include <vector>
 #include <iostream>
-
-#define STD std::
 
 class CmdOptions
 {
-  STD string cmd;
   static CmdOptions *inst;
  public:
-  CmdOptions() : cmd("") {}
-  void SetOptions  (int argc, char* argv[]);
-  const char* HasOption( const STD string& opt); 
+  std::vector<std::string> opts; // So its .end() method is accessible
+
+  CmdOptions() : opts() {}
+  void SetOptions  (const std::vector<std::string>& opts);
+  void SetOptions  (int argc, const char* argv[] );
+  void SetOptions  (int argc, char* argv[] );
+  bool HasOption( const std::string& opt); 
+  std::vector<std::string>::const_iterator GetOptionPosition( const std::string& opt); 
   static CmdOptions* GetInstance();
 };
 

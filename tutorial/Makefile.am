@@ -1151,7 +1151,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 	@echo ""
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
 	cd liaOutliner; $(MAKE) docs
-	cd roseHPCT; make docs
+	cd roseHPCT; $(MAKE) docs
 	@echo "******************************************************************"
 	@echo "Generated required documentation for tutorial (make docs rule) ..."
 	@echo "******************************************************************"

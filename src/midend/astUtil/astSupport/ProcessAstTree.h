@@ -14,9 +14,9 @@ class ProcessAstTreeBase : public ProcessAstNode
       AstNodePtr scope;  int state;  int skip;
       TraverseState( const AstNodePtr &_scope, int _skip, 
                      TraverseLocation _state)
-                    : scope(_scope), skip(_skip), state(_state) {}
+                    : scope(_scope), state(_state), skip(_skip) {}
       TraverseState( const TraverseState& that)
-                    : scope(that.scope), skip(that.skip), state(that.state) {}
+                    : scope(that.scope), state(that.state), skip(that.skip) {}
       void operator = ( const TraverseState& that)
          { scope = that.scope; skip = that.skip; state = that.state; }
   };
