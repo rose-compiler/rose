@@ -17,12 +17,12 @@ endif
 libastMerge_la_SOURCES      = \
      merge_support.C test_support.C buildMangledNameMap.C buildSetOfFrontendSpecificNodes.C \
      deleteNodes.C fixupTraversal.C nullifyAST.C buildReplacementMap.C collectAssociateNodes.C \
-     deleteOrphanNodes.C normalizeTypes.C requiredNodes.C merge.C
+     deleteOrphanNodes.C normalizeTypes.C requiredNodes.C merge.C AstFixParentTraversal.C
 
 libastMerge_la_LIBADD       = 
 libastMerge_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
 include_HEADERS = \
      buildMangledNameMap.h  buildReplacementMap.h  collectAssociateNodes.h  deleteOrphanNodes.h \
-     fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h astMergeAPI.h
+     fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h astMergeAPI.h AstFixParentTraversal.h
 

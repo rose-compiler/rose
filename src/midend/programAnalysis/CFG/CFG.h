@@ -41,8 +41,8 @@ void OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng);
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
 };
-#define TEMPLATE_ONLY
-#include <CFG_ROSE.C>
-#undef TEMPLATE_ONLY
+// #define TEMPLATE_ONLY
+// #include <CFG_ROSE.C>
+// #undef TEMPLATE_ONLY
 
 #endif

@@ -129,6 +129,9 @@ string RoseBin_unparse_visitor::resolveRegister(SgAsmRegisterReferenceExpression
   case SgAsmRegisterReferenceExpression::GS: {
     return "gs";
   } 
+  case SgAsmRegisterReferenceExpression::ST: {
+    return "st";
+  } 
   case SgAsmRegisterReferenceExpression::rIP: {
     return getNameForPartialRegister("rip", pos);
   } 
@@ -305,6 +308,9 @@ string getPointerTypeName(SgAsmType* ty) {
     case V_SgAsmTypeWord: return "WORD";
     case V_SgAsmTypeDoubleWord: return "DWORD";
     case V_SgAsmTypeQuadWord: return "QWORD";
+    case V_SgAsmTypeSingleFloat: return "DWORD";
+    case V_SgAsmTypeDoubleFloat: return "QWORD";
+    // case V_SgAsmTypeLongDoubleFloat: return "TENBYTES";
     default: {std::cerr << "getPointerTypeName: Bad class " << ty->class_name() << std::endl; ROSE_ABORT();}
   }
 }

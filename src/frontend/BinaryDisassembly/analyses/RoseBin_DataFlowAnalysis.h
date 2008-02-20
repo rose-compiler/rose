@@ -37,11 +37,6 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   void traverseEdges(RoseBin_DataFlowAbstract* analysis);
 
-  void traverseGraph(std::vector <SgDirectedGraphNode*>& rootNodes,
-		     RoseBin_DataFlowAbstract* defuse, 
-		     bool interprocedural);
-
-  void getRootNodes(std::vector <SgDirectedGraphNode*>& rootNodes);
 
   void init();
 
@@ -86,9 +81,21 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     }
   }
 
+  void traverseGraph(std::vector <SgDirectedGraphNode*>& rootNodes,
+		     RoseBin_DataFlowAbstract* defuse, 
+		     bool interprocedural);
+
+  void getRootNodes(std::vector <SgDirectedGraphNode*>& rootNodes);
+
   void init(bool interp, bool pedges) { 
     interprocedural = interp;
     printEdges = pedges;
+  }
+
+  void init(bool interp, bool pedges, RoseBin_Graph* g) { 
+    interprocedural = interp;
+    printEdges = pedges;
+    vizzGraph = g;
   }
 
   RoseBin_DefUseAnalysis* getDefUseAnalysis() { return defuse;}

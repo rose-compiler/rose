@@ -6,10 +6,10 @@ EXTRA_DIST	= sage3.i sgname.i wchart.i test.java input.cc	\
 		  GenericVector.java testjava.sh		\
 		  generate_casts.sh
 
-if HAS_SWIG
+if ENABLE_JAVAPORT
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport
 
 #INCLUDES	=						\
 #	-I.							\
@@ -48,29 +48,33 @@ dummydir=$(datadir)/java
 
 # This programs just make sure that no symbol are missing.
 noinst_PROGRAMS = testlink
-testlink_SOURCES= testlink.cc
-testlink_LDFLAGS= -lsage3_wrap -L.
+testlink_SOURCES = testlink.cc
+testlink_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libsage3_wrap.la
+testlink_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS) libsage3_wrap.la
 
-testlink.o: libsage3_wrap.la
+# testlink.o: libsage3_wrap.la
 
 bin_PROGRAMS = frontendAndDump
-frontendAndDump_SOURCES=frontendAndDump.cc
-frontendAndDump_LDFLAGS= -lrt -lrose -L..
+frontendAndDump_SOURCES = frontendAndDump.cc
+frontendAndDump_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+frontendAndDump_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
 
 javalib_DATA	= sage3.jar
 javalibdir	= $(datadir)/java
 
-lib_LTLIBRARIES	= libsage3_wrap.la
+lib_LTLIBRARIES	= libsage3_wrap.la 
 libsage3_wrap_la_SOURCES	= missing.cc
-nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
+nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx $(top_srcdir)/projects/compass/buildCheckers.C
+#libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
-libsage3_wrap_la_LDFLAGS	= -lrt -lrose -L..
+libsage3_wrap_la_LIBADD		= -lrt -lrose -lCompass
+libsage3_wrap_la_LDFLAGS	= -L..
 
-sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i		\
-		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h
+sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i		
+#		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
 	mkdir -p gov/llnl/casc/rose
 	test $(srcdir) = . || ln -sf $(srcdir)/sage3.i .
-	$(SWIG) $(INCLUDES) -c++ -java -I$(srcdir)			\
+	$(SWIG) $(INCLUDES) -c++ -java -Wall -v -I$(srcdir)			\
 	  -package gov.llnl.casc.rose -outdir gov/llnl/casc/rose	\
 	  sage3.i
 
@@ -87,9 +91,13 @@ gov/llnl/casc/rose/Ptr.java: Ptr.java
 gov/llnl/casc/rose/Log.java: Log.java
 	cp $< $@
 
+gov/llnl/casc/rose/MakeSgNode.java: MakeSgNode.java
+	cp $< $@
+
 compile_java_files: sage3_wrap.cxx gov/llnl/casc/rose/GenericVector.java \
 		    gov/llnl/casc/rose/Ptr.java \
-		    gov/llnl/casc/rose/Log.java
+		    gov/llnl/casc/rose/Log.java \
+		    gov/llnl/casc/rose/MakeSgNode.java
 	mkdir -p class/gov/llnl/casc/rose
 	rm -f class/gov/llnl/casc/rose/*.class
 	$(CLASSPATH_ENV) $(JAVAC) $(AM_JAVACFLAGS) $(JAVACFLAGS)	\
@@ -97,7 +105,7 @@ compile_java_files: sage3_wrap.cxx gov/llnl/casc/rose/GenericVector.java \
 	touch compile_java_files
 
 sage3.jar: compile_java_files
-	$(JAR) cf $@ -C class .
+	jar cf $@ -C class .
 
 TESTS=testjava.sh
 TESTS_ENVIRONMENT=MAKE=$(MAKE) AM_MAKEFLAGS=$(AM_MAKEFLAGS)

@@ -23,7 +23,7 @@ cmovp cmovpe -> CMovp
 cmovnp cmovpo -> CMovnp
 xchg -> Xchg
 bswap -> Bswap
-xadd -> Xadd
+xadd xaddl -> Xadd
 cmpxchg -> Cmpxchg
 cmpxchg8b -> Cmpxchg8b
 push -> Push
@@ -154,3 +154,64 @@ lock -> Lock
 wait -> Wait
 hlt -> Hlt
 data16 -> Data16
+f2xm1 -> F2xm1
+fabs -> Fabs
+fadd faddl fadds -> Fadd
+faddp -> Faddp
+fchs -> Fchs
+fcom fcoml fcoms -> Fcom
+fcomp fcompl fcomps -> Fcomp
+fcompp -> Fcompp
+fcos -> Fcos
+fdiv fdivl fdivs -> Fdiv
+fdivp -> Fdivp
+fdivr fdivrl fdivrs -> Fdivr
+fdivrp -> Fdivrp
+ffree -> Ffree
+fiadd fiaddl -> Fiadd
+fidiv fidivl -> Fidiv
+fild fildl -> Fild
+fimul fimull -> Fimul
+fist fistl -> Fist
+fistp fistpl -> Fistp
+fld fldl flds -> Fld
+fld1 -> Fld1
+fldcw -> Fldcw
+fldl2e -> Fldl2e
+fldln2 -> Fldln2
+fldl2t -> Fldl2t
+fldlg2 -> Fldlg2
+fldpi -> Fldpi
+fldz -> Fldz
+fmul fmull fmuls -> Fmul
+fmulp -> Fmulp
+fnstcw -> Fnstcw
+fnstsw -> Fnstsw
+fnop -> Fnop
+fpatan -> Fpatan
+fprem -> Fprem
+fptan -> Fptan
+fsave -> Fsave
+fscale -> Fscale
+fsin -> Fsin
+fsqrt -> Fsqrt
+fst fstl fsts -> Fst
+fstp fstpl fstps -> Fstp
+fsub fsubl fsubs -> Fsub
+fsubp -> Fsubp
+fsubr fsubrl fsubrs -> Fsubr
+fsubrp -> Fsubrp
+ftst -> Ftst
+fucom fucomi -> Fucom
+fucomp -> Fucomp
+fucompp -> Fucompp
+fwait -> Fwait
+fxch -> Fxch
+fxsave -> Fxsave
+fyl2x -> Fyl2x
+xorps -> Xorps
+xorpd -> Xorpd
+verr -> Verr
+verw -> Verw
+sldt sldtl -> Sldt
+pxor -> Pxor

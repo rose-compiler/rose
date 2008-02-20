@@ -1,5 +1,8 @@
 %module(directors="1") sage3
-#pragma SWIG nowarn=516,401
+#pragma SWIG nowarn=516
+
+class SgNode;
+%typemap(javaout) SgNode *, SgNode const *, SgNode const*& %{{return gov.llnl.casc.rose.MakeSgNode.makeDerivedJavaNodeClass($jnicall, $owner);}%}
 
 %include <various.i>
 %include <std_vector.i>
@@ -12,6 +15,8 @@
 
 %include "wchart.i"
 %include "sgname.i"
+
+#define Rose_STL_Container std::vector
 
 %define SG_NODE_BODY(TYPENAME)
 %typemap(javabody) TYPENAME  %{
@@ -158,6 +163,9 @@ Sg_Options& Sg_options()
 
 #include "rose.h"
 #include "AstFixParentTraversal.h"
+#include "compass.h"
+
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
 
 typedef std::vector<SgNode*> AstNodePointersList;
 
@@ -172,37 +180,37 @@ namespace __gnu_cxx {}
 
 %apply char **STRING_ARRAY { char **argv };
 
-namespace std {
+// namespace std {
 
 #define GEN_TYPE(T, VT, JT, VJT)					\
-   %typemap(javainterfaces) VT<T*> "GenericVector<" #T ">"		\
-   %template(VJT) VT<T*>;
+   %typemap(javainterfaces) std::VT<T*> "GenericVector<" #T ">"		\
+   %template(VJT) std::VT<T*>;
 
 #define VECT_TYPE(T)   GEN_TYPE(T, vector, T, T##Vector)
-#define LIST_TYPE(T)   GEN_TYPE(T, list, T, T##List)
+// #define LIST_TYPE(T)   GEN_TYPE(T, list, T, T##List)
 
    VECT_TYPE(SgNode)
    VECT_TYPE(SgFile)
-   LIST_TYPE(SgDeclarationStatement)
-   LIST_TYPE(SgType)
-   LIST_TYPE(SgStatement)
-   LIST_TYPE(SgInitializedName)
-   LIST_TYPE(SgBaseClass)
+   VECT_TYPE(SgDeclarationStatement)
+   VECT_TYPE(SgType)
+   VECT_TYPE(SgStatement)
+   VECT_TYPE(SgInitializedName)
+   VECT_TYPE(SgBaseClass)
    VECT_TYPE(SgDirectory)
-   LIST_TYPE(SgExpression)
-   LIST_TYPE(SgTemplateArgument)
-   LIST_TYPE(SgQualifiedName)
+   VECT_TYPE(SgExpression)
+   // LIST_TYPE(SgTemplateArgument)
+   VECT_TYPE(SgQualifiedName)
    VECT_TYPE(SgModifierType)
 
-   %template(unsignedVector) vector<unsigned>;
+   %template(unsignedVector) std::vector<unsigned long>;
 
-   %template(SgNodeStringPair) pair<SgNode*,string>;
-   %typemap(javainterfaces) vector<pair<SgNode*,string> >
+   %template(SgNodeStringPair) std::pair<SgNode*,std::string>;
+   %typemap(javainterfaces) std::vector<std::pair<SgNode*,std::string> >
       "GenericVector<SgNodeStringPair>"
-   %template(SgNodeStringPairVector) vector<pair<SgNode*,string> >;
+   %template(SgNodeStringPairVector) std::vector<std::pair<SgNode*,std::string> >;
 
-   %template(AttachedPreprocessingInfoType) list<PreprocessingInfo*>;
-}
+   %template(AttachedPreprocessingInfoType) std::list<PreprocessingInfo*>;
+// }
 
 %ignore *::operator=;
 %ignore *::operator new;
@@ -225,6 +233,7 @@ namespace std {
 %rename(toString) operator std::string;
 
 %feature("director") ROSE_VisitTraversal;
+%feature("director") Compass::OutputObject;
 
 %include sage3.h
 %include utility_functions.h
@@ -236,16 +245,33 @@ namespace std {
 %template(AstTDP_ParentAttr) AstTopDownProcessing<ParentAttribute>;
 %include AstFixParentTraversal.h
 %include AST_FILE_IO.h
+%include AstProcessing.h
+%include astQueryInheritedAttribute.h
+%include astQuery.h
+%include nodeQuery.h
+%include compass.h
+
+%template(TraversalBaseVector) std::vector<Compass::TraversalBase*>;
+%typemap(javainterfaces) std::vector<Compass::TraversalBase*> "GenericVector<TraversalBase>"
+
+%template(OutputObjectVector) std::vector<Compass::OutputObject*>;
+%typemap(javainterfaces) std::vector<Compass::OutputObject*> "GenericVector<OutputObject>"
+
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+
+%{
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+%}
 
 %include "casts.i"
 
 %extend SgNode {
-    std::vector<unsigned> get_graph() {
-	std::vector<unsigned> ret;
+    std::vector<unsigned long> get_graph() {
+	std::vector<unsigned long> ret;
 	typedef std::vector<std::pair<SgNode*, std::string> > t;
         t v = $self->returnDataMemberPointers();
 	for (t::iterator i = v.begin(); i != v.end(); i++) {
-	  ret.push_back((unsigned)((*i).first));
+	  ret.push_back((unsigned long)((*i).first));
         }
 	return ret;
     }

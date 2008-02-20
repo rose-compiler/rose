@@ -1535,11 +1535,13 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
 // Note that there is a redundant use of the SelectObject name so I have placed the Wine header files into a namespace.
 //      ROSE/src/util/support/FunctionObject.h:5: error: previous declaration of `template<class T> class SelectObject'
 // We are using the Wine project and their header files to handle the details of the structure of Windows binaries.
+#if 0
 namespace Rose_Wine
    {
 // I have modified the win.h file to change the data member "class" to "window_class" (see note in win.h).
 #include "win.h"
    }
+#endif
 
 bool
 isBinaryExecutableFile ( string sourceFilename )
@@ -1748,6 +1750,7 @@ machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_archit
      return s;
    }
 
+#if 0
 void
 generateBinaryExecutableFileInformation_Windows ( string sourceFilename, SgAsmFile* asmFile )
    {
@@ -2169,7 +2172,7 @@ typedef struct _IMAGE_SECTION_HEADER {
      printf ("Exiting at base of generateBinaryExecutableFileInformation_Windows() \n");
      ROSE_ASSERT(false);
    }
- 
+#endif
  
 void
 generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* asmFile )
@@ -2765,9 +2768,9 @@ void
 generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
    {
   // Need a mechanism to select what kind of binary we will process.
-  // generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
+     generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
 
-     generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+  // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
    }
 
 #endif

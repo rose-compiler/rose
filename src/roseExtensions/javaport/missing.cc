@@ -1,35 +1,37 @@
 #include "rose.h"
 #include <list>
 
-void SgCtorInitializerList::insert_ctor_initializer(std::list<SgInitializedName*>::iterator const&, SgInitializedName*) {
+void SgCtorInitializerList::insert_ctor_initializer(Rose_STL_Container<SgInitializedName*>::iterator const&, SgInitializedName*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
-void SgFunctionCallExp::insert_arg(std::_List_iterator<SgExpression*> const&, SgExpression*) {
+void SgFunctionCallExp::insert_arg(Rose_STL_Container<SgExpression*>::iterator const&, SgExpression*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
-void SgAggregateInitializer::insert_initializer(std::_List_iterator<SgExpression*> const&, SgExpression*)  {
+void SgAggregateInitializer::insert_initializer(Rose_STL_Container<SgExpression*>::iterator const&, SgExpression*)  {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
-void SgMemberFunctionDeclaration::insert_ctor_initializer(std::_List_iterator<SgInitializedName*> const&, SgInitializedName*) {
+void SgMemberFunctionDeclaration::insert_ctor_initializer(Rose_STL_Container<SgInitializedName*>::iterator const&, SgInitializedName*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
-char* ROSE::identifyVariant(int) {
+std::string ROSE::identifyVariant(int) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
+#if 0
 std::string ROSE::stringCopyEdit(std::string, std::string, std::string) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
+#endif
 
 SgPragma* ROSE::getPragma(SgBinaryOp*) {
   std::cerr << "missing function" << std::endl;
@@ -46,17 +48,17 @@ SgPragma* ROSE::getPragma(SgExpression*) {
   exit(1);
 }
 
-char* ROSE::getPragmaString(SgExpression*) {
+std::string ROSE::getPragmaString(SgExpression*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
-char* ROSE::getPragmaString(SgStatement*) {
+std::string ROSE::getPragmaString(SgStatement*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
 
-void ROSE::writeFile(char const*, char const*, char const*) {
+void writeFile(char const*, char const*, char const*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
@@ -76,7 +78,7 @@ void ROSE::ROSE_Unparse(SgFile*, std::ostream*) {
   exit(1);
 }
 
-char* ROSE::copyEdit(char*, char const*, char const*) {
+char* copyEdit(char*, char const*, char const*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
@@ -91,6 +93,7 @@ void dummyTests(SgProject*) {
   exit(1);
 }
 
+#if 0
 void Unparser::unparseStructType(SgType*, SgUnparse_Info&) {
   std::cerr << "missing function" << std::endl;
   exit(1);
@@ -123,11 +126,12 @@ void Unparser::unparseDeclStmt(SgStatement*, SgUnparse_Info&) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
-void Unparser::unparseProject(SgProject*, SgUnparse_Info&) {
+bool Unparser::RemoveArgs(SgExpression*) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }
-bool Unparser::RemoveArgs(SgExpression*) {
+#endif
+void Unparser::unparseProject(SgProject*, SgUnparse_Info&) {
   std::cerr << "missing function" << std::endl;
   exit(1);
 }

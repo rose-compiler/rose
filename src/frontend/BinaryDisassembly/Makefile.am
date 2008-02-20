@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/mysql_include -I$(srcdir)/analyses -I$(srcdir)/graph 
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/analyses -I$(srcdir)/graph -I/home/panas2/development/ROSE-64bit/NEW_ROSE/src/frontend/BinaryDisassembly/mysql_include
 
 # binarylibdir = $(libdir)
 

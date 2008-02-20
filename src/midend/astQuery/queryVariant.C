@@ -1443,7 +1443,36 @@ querySolverGrammarElementFromVariantVector (
        // DQ (1/9/2008): The binary IR nodes must be handled here as well!
           case V_SgAsmFile:
           case V_SgAsmBlock:
+          case V_SgAsmMemoryReferenceExpression:
+          case V_SgAsmRegisterReferenceExpression:
+          case V_SgAsmDoubleWordValueExpression:
+	  case V_SgAsmQuadWordValueExpression:
+	  case V_SgAsmByteValueExpression:
+          case V_SgAsmInstruction:
+          case V_SgAsmx86Instruction:
+          case V_SgAsmArmInstruction:
+          case V_SgAsmOperandList:
+          case V_SgAsmx86Call:
+          case V_SgAsmx86Mov:
           case V_SgAsmx86Push:
+          case V_SgAsmx86Pop:
+          case V_SgAsmx86Ret:
+          case V_SgAsmBinaryAdd:
+          case V_SgAsmFunctionDeclaration:
+          case V_SgAsmx86Jmp:
+          case V_SgAsmx86Leave:
+          case V_SgAsmx86Nop:
+          case V_SgAsmx86Add:
+          case V_SgAsmx86Test:
+          case V_SgAsmx86Sub:
+          case V_SgAsmx86Xor:
+          case V_SgAsmx86Hlt:
+          case V_SgAsmx86Jne:
+          case V_SgAsmx86Je:
+          case V_SgAsmx86Shl:
+          case V_SgAsmx86Inc:
+          case V_SgAsmx86Cmp:
+          case V_SgAsmx86Lea:
 #endif
 
        // Liao, 12/13/2007, new fortran nodes, put in ignoring list temporarily

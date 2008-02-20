@@ -134,13 +134,21 @@ proc read_operand_addr {op} {
   }
 }
 
-proc letterToSize {letter} {
+proc letterToSizeInt {letter} {
   switch -exact $letter {
-    b {return 1}
-    w {return 2}
-    l {return 4}
-    q {return 8}
-    default {return 0}
+    b {return sizeByte}
+    w {return sizeWord}
+    l {return sizeDWord}
+    q {return sizeQWord}
+    default {return sizeUnknown}
+  }
+}
+
+proc letterToSizeFloat {letter} {
+  switch -exact $letter {
+    s {return sizeFloat}
+    l {return sizeDouble}
+    default {return sizeLongDouble}
   }
 }
 
@@ -160,114 +168,117 @@ proc convert_insn {next_addr insn} {
       catch {set op$i [read_operand $op]}
       incr i
     }
-    set size [letterToSize [string index $opcode end]]
+    set sizeInt [letterToSizeInt [string index $opcode end]]
+    set sizeFloat [letterToSizeFloat [string index $opcode end]]
     switch -glob $opcode {
-      mov? {puts -nonewline "\"mov\" $op1 size$size $op0 size$size 2 insn"}
-      movzbw {puts -nonewline "\"movzx\" $op1 size2 $op0 size1 2 insn"}
-      movzbl {puts -nonewline "\"movzx\" $op1 size4 $op0 size1 2 insn"}
-      movzwl {puts -nonewline "\"movzx\" $op1 size4 $op0 size2 2 insn"}
-      movzbq {puts -nonewline "\"movzx\" $op1 size8 $op0 size1 2 insn"}
-      movzwq {puts -nonewline "\"movzx\" $op1 size8 $op0 size2 2 insn"}
-      movzlq {puts -nonewline "\"movzx\" $op1 size8 $op0 size4 2 insn"}
-      movsbw {puts -nonewline "\"movsx\" $op1 size2 $op0 size1 2 insn"}
-      movsbl {puts -nonewline "\"movsx\" $op1 size4 $op0 size1 2 insn"}
-      movswl {puts -nonewline "\"movsx\" $op1 size4 $op0 size2 2 insn"}
-      movsbq {puts -nonewline "\"movsx\" $op1 size8 $op0 size1 2 insn"}
-      movswq {puts -nonewline "\"movsx\" $op1 size8 $op0 size2 2 insn"}
-      movslq {puts -nonewline "\"movsx\" $op1 size8 $op0 size4 2 insn"}
-      bswap {puts -nonewline "\"bswap\" $op0 size4 1 insn"}
-      xchg? {puts -nonewline "\"xchg\" $op1 size$size $op0 size$size 2 insn"}
-      cmpxchg? {puts -nonewline "\"cmpxchg\" $op1 size$size $op0 size$size 2 insn"}
+      mov? {puts -nonewline "\"mov\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      movzbw {puts -nonewline "\"movzx\" $op1 sizeWord $op0 sizeByte 2 insn"}
+      movzbl {puts -nonewline "\"movzx\" $op1 sizeDWord $op0 sizeByte 2 insn"}
+      movzwl {puts -nonewline "\"movzx\" $op1 sizeDWord $op0 sizeWord 2 insn"}
+      movzbq {puts -nonewline "\"movzx\" $op1 sizeQWord $op0 sizeByte 2 insn"}
+      movzwq {puts -nonewline "\"movzx\" $op1 sizeQWord $op0 sizeWord 2 insn"}
+      movzlq {puts -nonewline "\"movzx\" $op1 sizeQWord $op0 sizeDWord 2 insn"}
+      movsbw {puts -nonewline "\"movsx\" $op1 sizeWord $op0 sizeByte 2 insn"}
+      movsbl {puts -nonewline "\"movsx\" $op1 sizeDWord $op0 sizeByte 2 insn"}
+      movswl {puts -nonewline "\"movsx\" $op1 sizeDWord $op0 sizeWord 2 insn"}
+      movsbq {puts -nonewline "\"movsx\" $op1 sizeQWord $op0 sizeByte 2 insn"}
+      movswq {puts -nonewline "\"movsx\" $op1 sizeQWord $op0 sizeWord 2 insn"}
+      movslq {puts -nonewline "\"movsx\" $op1 sizeQWord $op0 sizeDWord 2 insn"}
+      bswap {puts -nonewline "\"bswap\" $op0 sizeDWord 1 insn"}
+      xchg? {puts -nonewline "\"xchg\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      cmpxchg? {puts -nonewline "\"cmpxchg\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      cbtw {puts -nonewline "\"cbw\" 0 insn"}
       cwtl {puts -nonewline "\"cwde\" 0 insn"}
       cltd {puts -nonewline "\"cdq\" 0 insn"}
       cltq {puts -nonewline "\"cdqe\" 0 insn"}
       cqto {puts -nonewline "\"cqo\" 0 insn"}
-      inc? {puts -nonewline "\"inc\" $op0 size$size 1 insn"}
-      dec? {puts -nonewline "\"dec\" $op0 size$size 1 insn"}
-      add? {puts -nonewline  "\"add\"   $op1 size$size $op0 size$size 2 insn"}
-      adc? {puts -nonewline  "\"adc\"   $op1 size$size $op0 size$size 2 insn"}
-      sub? {puts -nonewline  "\"sub\"   $op1 size$size $op0 size$size 2 insn"}
-      sbb? {puts -nonewline  "\"sbb\"   $op1 size$size $op0 size$size 2 insn"}
-      and? {puts -nonewline  "\"and\"   $op1 size$size $op0 size$size 2 insn"}
-      or? {puts -nonewline   "\"or\"    $op1 size$size $op0 size$size 2 insn"}
-      xor? {puts -nonewline  "\"xor\"   $op1 size$size $op0 size$size 2 insn"}
-      cmp? {puts -nonewline  "\"cmp\"   $op1 size$size $op0 size$size 2 insn"}
-      test? {puts -nonewline "\"test\"  $op1 size$size $op0 size$size 2 insn"}
-      neg? {puts -nonewline "\"neg\" $op0 size$size 1 insn"}
-      not? {puts -nonewline "\"not\" $op0 size$size 1 insn"}
-      mul? {puts -nonewline "\"mul\" $op0 size$size 1 insn"}
+      inc? {puts -nonewline "\"inc\" $op0 $sizeInt 1 insn"}
+      dec? {puts -nonewline "\"dec\" $op0 $sizeInt 1 insn"}
+      add? {puts -nonewline  "\"add\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      adc? {puts -nonewline  "\"adc\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      sub? {puts -nonewline  "\"sub\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      sbb? {puts -nonewline  "\"sbb\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      and? {puts -nonewline  "\"and\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      or? {puts -nonewline   "\"or\"    $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      xor? {puts -nonewline  "\"xor\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      cmp? {puts -nonewline  "\"cmp\"   $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      test? {puts -nonewline "\"test\"  $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      neg? {puts -nonewline "\"neg\" $op0 $sizeInt 1 insn"}
+      not? {puts -nonewline "\"not\" $op0 $sizeInt 1 insn"}
+      mul? {puts -nonewline "\"mul\" $op0 $sizeInt 1 insn"}
       imul? {
 	switch -exact [llength $operands] {
-	  1 {puts -nonewline "\"imul\" $op0 size$size 1 insn"}
-	  2 {puts -nonewline "\"imul\" $op1 size$size $op0 size$size 2 insn"}
-	  3 {puts -nonewline "\"imul\" $op2 size$size $op0 size$size $op1 size$size 3 insn"}
+	  1 {puts -nonewline "\"imul\" $op0 $sizeInt 1 insn"}
+	  2 {puts -nonewline "\"imul\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+	  3 {puts -nonewline "\"imul\" $op2 $sizeInt $op0 $sizeInt $op1 $sizeInt 3 insn"}
 	}
       }
-      div? {puts -nonewline "\"div\" $op0 size$size 1 insn"}
-      idiv? {puts -nonewline "\"idiv\" $op0 size$size 1 insn"}
+      div? {puts -nonewline "\"div\" $op0 $sizeInt 1 insn"}
+      idiv? {puts -nonewline "\"idiv\" $op0 $sizeInt 1 insn"}
       shl? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"shl\" $op0 size$size 1 insn"
+	  puts -nonewline "\"shl\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"shl\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"shl\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
       shldl {
-	puts -nonewline "\"shld\" $op2 size$size $op0 size$size $op1 size$size 3 insn"
+	puts -nonewline "\"shld\" $op2 $sizeInt $op0 $sizeInt $op1 $sizeInt 3 insn"
       }
       shr? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"shr\" $op0 size$size 1 insn"
+	  puts -nonewline "\"shr\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"shr\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"shr\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
       sar? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"sar\" $op0 size$size 1 insn"
+	  puts -nonewline "\"sar\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"sar\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"sar\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
       shrdl {
-	puts -nonewline "\"shrd\" $op2 size$size $op0 size$size $op1 size$size 3 insn"
+	puts -nonewline "\"shrd\" $op2 $sizeInt $op0 $sizeInt $op1 $sizeInt 3 insn"
       }
       rol? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"rol\" $op0 size$size 1 insn"
+	  puts -nonewline "\"rol\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"rol\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"rol\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
       ror? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"ror\" $op0 size$size 1 insn"
+	  puts -nonewline "\"ror\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"ror\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"ror\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
       rcl? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"rcl\" $op0 size$size 1 insn"
+	  puts -nonewline "\"rcl\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"rcl\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"rcl\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
       rcr? {
 	if {![info exists op1]} {
-	  puts -nonewline "\"rcr\" $op0 size$size 1 insn"
+	  puts -nonewline "\"rcr\" $op0 $sizeInt 1 insn"
 	} else {
-	  puts -nonewline "\"rcr\" $op1 size$size $op0 size1 2 insn"
+	  puts -nonewline "\"rcr\" $op1 $sizeInt $op0 sizeByte 2 insn"
 	}
       }
-      lea? {puts -nonewline "\"lea\" $op1 size$size $op0 size$size 2 insn"}
-      push? {puts -nonewline "\"push\" $op0 size$size 1 insn"}
+      lea? {puts -nonewline "\"lea\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      lds? {puts -nonewline  "\"lds\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      push? {puts -nonewline "\"push\" $op0 $sizeInt 1 insn"}
       pushfw {puts -nonewline "\"pushf\" 0 insn"}
       pushfl {puts -nonewline "\"pushfd\" 0 insn"}
       pushfq {puts -nonewline "\"pushfq\" 0 insn"}
       pushaw {puts -nonewline "\"pusha\" 0 insn"}
       pushal {puts -nonewline "\"pushad\" 0 insn"}
-      pop? {puts -nonewline "\"pop\" $op0 size$size 1 insn"}
+      pop? {puts -nonewline "\"pop\" $op0 $sizeInt 1 insn"}
       popfw {puts -nonewline "\"popf\" 0 insn"}
       popfl {puts -nonewline "\"popfd\" 0 insn"}
       popfq {puts -nonewline "\"popfq\" 0 insn"}
@@ -278,53 +289,53 @@ proc convert_insn {next_addr insn} {
       jmpl -
       jmpw {
 	if {[string index $op0_raw 0] == "*"} {
-	  puts -nonewline "\"jmp\" [read_operand [string range $op0_raw 1 end]] size$size 1 insn"
+	  puts -nonewline "\"jmp\" [read_operand [string range $op0_raw 1 end]] $sizeInt 1 insn"
 	} elseif {[string range $op0_raw 0 1] == "0x"} {
 	  puts -nonewline "\"jmp\" [read_operand \$$op0_raw] 1 insn"; get_insn $op0_raw
 	} else {
 	  puts -nonewline "\"jmp\" [read_operand \$0x$op0_raw] 1 insn"; get_insn 0x$op0_raw
 	}
       }
-      jcxz {puts -nonewline "\"jcxz\" [read_operand \$0x$op0_raw] size4 1 insn"; get_insn $op0}
-      jecxz {puts -nonewline "\"jecxz\" [read_operand \$0x$op0_raw] size4 1 insn"; get_insn $op0}
-      jrcxz {puts -nonewline "\"jrcxz\" [read_operand \$0x$op0_raw] size4 1 insn"; get_insn $op0}
-      loop* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] size$size 1 insn"; get_insn $op0}
-      j* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] size$size 1 insn"; get_insn $op0}
-      set* {puts -nonewline "\"$opcode\" $op0 size1 1 insn"}
+      jcxz {puts -nonewline "\"jcxz\" [read_operand \$0x$op0_raw] sizeDWord 1 insn"; get_insn $op0}
+      jecxz {puts -nonewline "\"jecxz\" [read_operand \$0x$op0_raw] sizeDWord 1 insn"; get_insn $op0}
+      jrcxz {puts -nonewline "\"jrcxz\" [read_operand \$0x$op0_raw] sizeDWord 1 insn"; get_insn $op0}
+      loop* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] $sizeInt 1 insn"; get_insn $op0}
+      j* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] $sizeInt 1 insn"; get_insn $op0}
+      set* {puts -nonewline "\"$opcode\" $op0 sizeByte 1 insn"}
       cmov* {puts -nonewline "\"$opcode\" $op1 $op0 2 insn"}
       cld {puts -nonewline "\"cld\" 0 insn"}
       std {puts -nonewline "\"std\" 0 insn"}
       sahf {puts -nonewline "\"sahf\" 0 insn"}
-      bsr? {puts -nonewline "\"bsr\" $op1 size$size $op0 size$size 2 insn"}
-      bsf? {puts -nonewline "\"bsf\" $op1 size$size $op0 size$size 2 insn"}
+      bsr? {puts -nonewline "\"bsr\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      bsf? {puts -nonewline "\"bsf\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
       bt? -
       bts? -
       btc? -
       btr? {
-	puts -nonewline "\"$opcode\" $op0 size$size $op1 size$size 2 insn"
+	puts -nonewline "\"$opcode\" $op0 $sizeInt $op1 $sizeInt 2 insn"
       }
       repz-* {convert_insn $next_addr [string range $insn 5 end]; puts -nonewline " repe"}
       repnz-* {convert_insn $next_addr [string range $insn 6 end]; puts -nonewline " repne"}
-      scasl {puts -nonewline "\"scasd\" $op1 size$size $op0 size$size 2 insn"}
-      scas? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
-      cmpsl {puts -nonewline "\"cmpsd\" $op1 size$size $op0 size$size 2 insn"}
-      cmps? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
-      movsl {puts -nonewline "\"movsd\" $op1 size$size $op0 size$size 2 insn"}
-      movs? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
-      stosl {puts -nonewline "\"stosd\" $op1 size$size $op0 size$size 2 insn"}
-      stos? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
-      lodsl {puts -nonewline "\"lodsd\" $op1 size$size $op0 size$size 2 insn"}
-      lods? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
-      insl {puts -nonewline "\"insd\" $op1 size$size $op0 size$size 2 insn"}
-      ins? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
-      outsl {puts -nonewline "\"outsd\" $op1 size$size $op0 size$size 2 insn"}
-      outs? {puts -nonewline "\"$opcode\" $op1 size$size $op0 size$size 2 insn"}
+      scasl {puts -nonewline "\"scasd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      scas? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      cmpsl {puts -nonewline "\"cmpsd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      cmps? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      movsl {puts -nonewline "\"movsd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      movs? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      stosl {puts -nonewline "\"stosd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      stos? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      lodsl {puts -nonewline "\"lodsd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      lods? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      insl {puts -nonewline "\"insd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      ins? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      outsl {puts -nonewline "\"outsd\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
+      outs? {puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeInt 2 insn"}
       call -
       callq -
       calll -
       callw {
 	if {[string index $op0_raw 0] == "*"} {
-	  puts -nonewline "\"call\" [read_operand [string range $op0_raw 1 end]] size$size 1 insn"
+	  puts -nonewline "\"call\" [read_operand [string range $op0_raw 1 end]] $sizeInt 1 insn"
 	} elseif {[string range $op0_raw 0 1] == "0x"} {
 	  puts -nonewline "\"call\" [read_operand \$$op0_raw] 1 insn"; get_insn $op0_raw
 	} else {
@@ -336,7 +347,7 @@ proc convert_insn {next_addr insn} {
       retq {if {[info exists op0]} {puts -nonewline "\"ret\"$op0 1 insn"} else {puts -nonewline "\"ret\" 0 insn"}}
       leavel -
       leaveq {puts -nonewline "\"leave\" 0 insn"}
-      int {puts -nonewline "\"int\" $op0 size1 1 insn"}
+      int {puts -nonewline "\"int\" $op0 sizeByte 1 insn"}
       rdtsc {puts -nonewline "\"rdtsc\" 0 insn"}
       hlt {puts -nonewline "\"hlt\" 0 insn"}
       lock-* {convert_insn $next_addr [string range $insn 5 end]; puts -nonewline " lock"}
@@ -344,12 +355,41 @@ proc convert_insn {next_addr insn} {
       .byte {puts -nonewline "\".byte\" 0 insn"}
       data16 {puts -nonewline "\"data16\" 0 insn"}
 
+      fist {
+        puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeFloat 2 insn"
+      }
+
+      fi* {
+	set result "\"$opcode\" "
+	for {set i 0} {[info exists op$i]} {incr i} {}
+	set opcount $i
+	for {incr i -1} {$i >= 0} {incr i -1} {
+	  append result " [set op$i]"
+          if {$i != $opcount - 1} {
+            append result " $sizeInt"
+          } else {
+            append result " $sizeFloat"
+          }
+	}
+	puts -nonewline "$result $opcount insn"
+      }
+
+      f* {
+	set result "\"$opcode\" "
+	for {set i 0} {[info exists op$i]} {incr i} {}
+	set opcount $i
+	for {incr i -1} {$i >= 0} {incr i -1} {
+	  append result " [set op$i] $sizeFloat"
+	}
+	puts -nonewline "$result $opcount insn"
+      }
+
       default {
 	set result "\"$opcode\" "
 	for {set i 0} {[info exists op$i]} {incr i} {}
 	set opcount $i
 	for {incr i -1} {$i >= 0} {incr i -1} {
-	  append result \ [set op$i]
+	  append result " [set op$i] $sizeInt"
 	}
 	puts -nonewline "$result $opcount insn"
       }

@@ -178,8 +178,8 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86ControlTransferInstructio
       ROSE_ASSERT(exp);
       SgAsmRegisterReferenceExpression* regRef = isSgAsmRegisterReferenceExpression(exp);
 
-      if (RoseBin_support::DEBUG_MODE())
-	cout << " inst (jmp):: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << endl;
+      //if (RoseBin_support::DEBUG_MODE())
+      //	cout << " inst (jmp):: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << endl;
       SgAsmValueExpression* valExpr = isSgAsmValueExpression(exp);
       SgAsmMemoryReferenceExpression* memExpr = isSgAsmMemoryReferenceExpression(exp);
       string valStr = "";
@@ -196,8 +196,8 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86ControlTransferInstructio
 					double_word_val,
 					quad_word_val);
 
-	if (RoseBin_support::DEBUG_MODE())
-	  cout << "   found value ....... :: " << valStr << endl;
+	//if (RoseBin_support::DEBUG_MODE())
+	//cout << "   found value ....... :: " << valStr << endl;
 	funcName = valExpr->get_replacement();
       }
       if (memExpr) {
@@ -221,9 +221,9 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86ControlTransferInstructio
 	  // we set the target (jump to for each control instruction)
 	  ROSE_ASSERT(target);
 
-	  //	      if (target) {
-	  if (RoseBin_support::DEBUG_MODE())
-	    cout << "    >>> target found! " << target << endl;
+	  
+	  //if (RoseBin_support::DEBUG_MODE())
+	  //cout << "    >>> target found! " << target << endl;
 	  if (funcName!="") {
 	    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(target->get_parent());
 	    //SgAsmFunctionDeclaration* funcNode = isSgAsmFunctionDeclaration(inst->get_parent());
@@ -360,7 +360,7 @@ void RoseBin_FlowAnalysis::process_jumps() {
       }
     } // if ret
   }
-  cerr << "\n >>>>>>>>> resolving RET jumps ... done." << endl;
+  cerr << " >>>>>>>>> resolving RET jumps ... done." << endl;
 }
 
 

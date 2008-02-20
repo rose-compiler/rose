@@ -8,7 +8,7 @@
 #ifndef __RoseBin_DB__
 #define __RoseBin_DB__
 
-#include "mysql_include/mysql.h"
+#include <mysql.h>
 #include <stdio.h>
 #include <iostream>
 // #include "rose.h"

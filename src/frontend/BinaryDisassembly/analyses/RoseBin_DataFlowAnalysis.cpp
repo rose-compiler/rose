@@ -49,6 +49,7 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, SgAsmRegisterReferenceEx
 void 
 RoseBin_DataFlowAnalysis::getRootNodes(vector <SgDirectedGraphNode*>& rootNodes) {
   nrOfFunctions=0;
+  ROSE_ASSERT(vizzGraph);
   nodeType::iterator itn = vizzGraph->nodes.begin();
   for (; itn!=vizzGraph->nodes.end();++itn) {
     string hex_address = itn->first;
@@ -375,15 +376,6 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << "\n ********************** running DataFlowAnalysis ... " << fileName << endl;
 
-  /*
-  // check if graph exists, if yes, get it out, otherwise create
-  __gnu_cxx::hash_map <std::string, SgDirectedGraph*>::iterator itG = graphs.find(analysisName);
-  if (itG!=graphs.end()) {
-  // note: this does currently not work because graph and nodes are disconnected (Grammar problem)
-  vizzGraph->graph = itG->second;
-  cerr << " >>> found existing dfa graph ... using that one. " << endl;
-  } else {
-  */
   // create a new Dataflow Graph
   vizzGraph->graph   = new SgDirectedGraph(analysisName,analysisName);
   nr_target_missed=0;

@@ -199,14 +199,17 @@ ROSE_SUPPORT_XML
 # Make the use of libxml2 explicitly controled.
 AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
 
-#AC_PROG_SWIG
+AC_PROG_SWIG
 #AS (10/23/07): introduced conditional use of javaport
-AC_ARG_WITH(javaport, [  --with-javaport Specify use of javaport], [
-	AC_PROG_SWIG
-	],[
-    AM_CONDITIONAL([HAS_SWIG], [test x$has_swig = xyes])
-	])
-
+AC_ARG_WITH(javaport,
+   [  --with-javaport ... Enable Java bindings using Swig],with_javaport=yes, with_javaport=no )
+AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
+#AC_ARG_WITH(javaport, [  --with-javaport Specify use of javaport], [
+#	AC_PROG_SWIG
+#	],[
+#    AM_CONDITIONAL([HAS_SWIG], [test x$has_swig = xyes])
+#	])
+#
 
 # Figure out what version of lex we have available
 # flex works better than lex (this gives a preference to flex (flex is gnu))
@@ -804,6 +807,9 @@ src/roseIndependentSupport/graphicalUserInterface/src/QRGui/Makefile
 src/roseIndependentSupport/graphicalUserInterface/src/QRGui/icons22/Makefile
 src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/Makefile
 projects/Makefile
+projects/binCompass/Makefile
+projects/binCompass/analyses/Makefile
+projects/binCompass/graphanalyses/Makefile
 projects/compass/compassVerifier/Makefile
 projects/compass/compassVerifier/compassSupport/Makefile
 projects/compass/Makefile

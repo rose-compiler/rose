@@ -379,6 +379,11 @@ void RoseBin::visit(SgNode* node) {
     //ROSE_ASSERT(func);
   }
   */
+  if (isSgAsmMemoryReferenceExpression(node)) {
+    SgAsmMemoryReferenceExpression* n = isSgAsmMemoryReferenceExpression(node);
+    cerr << "Found a SgAsmMemoryReferenceExpression" << endl;
+    ROSE_ASSERT(n->get_type());
+  }
   if (instr) {
     trav_inst++;
     SgAsmFunctionDeclaration* ins = isSgAsmFunctionDeclaration(instr->get_parent());

@@ -11,6 +11,21 @@ using namespace std;
 
 using namespace RoseBin_Def;
 
+SgAsmType* getRegisterType(SgAsmRegisterReferenceExpression::x86_position_in_register_enum regSize) {
+	SgAsmType* type = NULL;
+	switch(regSize) {
+	case SgAsmRegisterReferenceExpression::low_byte : type=SgAsmTypeByte::createType(); break; 
+	case SgAsmRegisterReferenceExpression::high_byte : type=SgAsmTypeByte::createType(); break; 
+	case SgAsmRegisterReferenceExpression::word : type=SgAsmTypeWord::createType(); break; 
+	case SgAsmRegisterReferenceExpression::dword : type=SgAsmTypeDoubleWord::createType(); break; 
+	case SgAsmRegisterReferenceExpression::qword : type=SgAsmTypeQuadWord::createType(); break; 
+	case SgAsmRegisterReferenceExpression::all : type=SgAsmTypeQuadWord::createType(); break; 
+	default:
+	  ROSE_ASSERT(false);
+	}
+	return type;
+}
+
 /****************************************************
  * create a BinaryNode
  ****************************************************/
@@ -62,6 +77,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       resolveRegister(symbol, &registerSg, &regSize);
       if (isSgAsmMemoryReferenceExpression(child)) {
         binNode = new SgAsmRegisterReferenceExpression();
+	isSgAsmRegisterReferenceExpression(binNode)->set_type(getRegisterType(regSize));
         (isSgAsmRegisterReferenceExpression(binNode))->set_x86_register_code(registerSg);
         (isSgAsmRegisterReferenceExpression(binNode))->set_x86_position_in_register_code(regSize);
 	isSgAsmMemoryReferenceExpression(child)->set_segment(binNode);
@@ -183,6 +199,9 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       // the child is another expression, like +, - , ...
       ROSE_ASSERT(child);
       binNode = new SgAsmMemoryReferenceExpression();
+      isSgAsmMemoryReferenceExpression(binNode)->set_type(SgAsmTypeQuadWord::createType());
+      ROSE_ASSERT (binNode->get_type());
+
       isSgAsmMemoryReferenceExpression(binNode)->set_address(child);
       child->set_parent(binNode);
       //      isSgAsmMemoryReferenceExpression(binNode)->set_offset(rememberOffset);
@@ -194,6 +213,20 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       // since b4, b2, b1 are types and no nodes,
       // we return the binNode of the child
       binNode = *(children->begin());
+      if (isSgAsmMemoryReferenceExpression(binNode)) {
+	SgAsmMemoryReferenceExpression* memRefT = isSgAsmMemoryReferenceExpression(binNode);
+	if (expt->symbol=="b1") 
+	  memRefT->set_type(SgAsmTypeByte::createType());
+	else if (expt->symbol=="b2") 
+	  memRefT->set_type(SgAsmTypeWord::createType());
+	else if (expt->symbol=="b4") 
+	  memRefT->set_type(SgAsmTypeDoubleWord::createType());
+	else if (expt->symbol=="b6") 
+	  ROSE_ASSERT(false);
+	else if (expt->symbol=="b8") 
+	  memRefT->set_type(SgAsmTypeQuadWord::createType());
+	ROSE_ASSERT (memRefT->get_type());
+      } 
     }
 
     else {
@@ -266,6 +299,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       resolveRegister(symbol, &registerSg, &regSize);
       //binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
       binNode = new SgAsmRegisterReferenceExpression();
+      isSgAsmRegisterReferenceExpression(binNode)->set_type(getRegisterType(regSize));
       (isSgAsmRegisterReferenceExpression(binNode))->set_x86_register_code(registerSg);
       (isSgAsmRegisterReferenceExpression(binNode))->set_x86_position_in_register_code(regSize);
     } else if (RoseAssemblyLanguage==arm) {
@@ -278,6 +312,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       resolveRegister(symbol, &registerSg, &regSize);
       //      binNode = new SgAsmRegisterReferenceExpression(registerSg, regSize);
       binNode = new SgAsmRegisterReferenceExpression();
+      // todo : find out types for ARM
       (isSgAsmRegisterReferenceExpression(binNode))->set_arm_register_code(registerSg);
       (isSgAsmRegisterReferenceExpression(binNode))->set_arm_position_in_register_code(regSize);
     }

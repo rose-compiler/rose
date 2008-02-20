@@ -195,14 +195,20 @@ namespace ObjdumpToRoseBinaryAst {
 #undef HANDLEREG
 
   static SgAsmType* sizeCommandToType(const string& cmd) {
-    if (cmd == "size1") {
+    if (cmd == "sizeByte") {
       return SgAsmTypeByte::createType();
-    } else if (cmd == "size2") {
+    } else if (cmd == "sizeWord") {
       return SgAsmTypeWord::createType();
-    } else if (cmd == "size4") {
+    } else if (cmd == "sizeDWord") {
       return SgAsmTypeDoubleWord::createType();
-    } else if (cmd == "size8") {
+    } else if (cmd == "sizeQWord") {
       return SgAsmTypeQuadWord::createType();
+    } else if (cmd == "sizeFloat") {
+      return SgAsmTypeSingleFloat::createType();
+    } else if (cmd == "sizeDouble") {
+      return SgAsmTypeDoubleFloat::createType();
+    } else if (cmd == "sizeLongDouble") {
+      return SgAsmTypeDoubleFloat::createType(); // FIXME -- needs a separate type
     } else {
       return NULL;
     }
@@ -246,24 +252,30 @@ namespace ObjdumpToRoseBinaryAst {
       baseAddr->set_segment(segReg);
       segReg->set_parent(baseAddr);
       st.push(seNode(baseAddr));
-    } else if (cmd == "size0" || cmd == "size1" || cmd == "size2" || cmd == "size4" || cmd == "size8") { // These don't seem to be used, but they can adjust sizes of constants
+    } else if (cmd == "sizeUnknown") {
+      // Do nothing
+      ROSE_ASSERT (!st.empty());
+      SgAsmExpression* e1 = isSgAsmExpression(st.top().asNode());
+      ROSE_ASSERT (e1);
+      // std::cerr << "Found operand with unknown size: " << e1->class_name() << std::endl;
+    } else if (cmd == "sizeByte" || cmd == "sizeWord" || cmd == "sizeDWord" || cmd == "sizeQWord" || cmd == "sizeFloat" || cmd == "sizeDouble" || cmd == "sizeLongDouble") {
       SgAsmExpression* e1 = isSgAsmExpression(st.top().asNode());
       st.pop();
       ROSE_ASSERT (e1);
       if (isSgAsmQuadWordValueExpression(e1)) {
-        if (cmd == "size1") {
+        if (cmd == "sizeByte") {
           SgAsmByteValueExpression* e = new SgAsmByteValueExpression();
           e->set_value(isSgAsmQuadWordValueExpression(e1)->get_value());
           st.push(seNode(e));
-        } else if (cmd == "size2") {
+        } else if (cmd == "sizeWord") {
           SgAsmWordValueExpression* e = new SgAsmWordValueExpression();
           e->set_value(isSgAsmQuadWordValueExpression(e1)->get_value());
           st.push(seNode(e));
-        } else if (cmd == "size4") {
+        } else if (cmd == "sizeDWord") {
           SgAsmDoubleWordValueExpression* e = new SgAsmDoubleWordValueExpression();
           e->set_value(isSgAsmQuadWordValueExpression(e1)->get_value());
           st.push(seNode(e));
-        } else if (cmd == "size8" || cmd == "size0") { // I don't know where size0 comes from
+        } else if (cmd == "sizeQWord") {
           st.push(seNode(e1));
         } else {
           ROSE_ASSERT (!"Bad size cmd");
@@ -487,69 +499,5 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* 
     // fprintf(stderr, "Done getting instructions\n");
  // return file;
   }
-
-#if 0
-  class FunctionScanner {
-    map<SgAsmBlock*, SgAsmBlock*> functionMembership; // A disjoint union set
-    set<SgAsmBlock*> functions;
-
-    public:
-    void addFunction(SgAsmBlock* b) {
-      functions.insert(b);
-    }
-
-    SgAsmBlock* lookupFunctionForBlock(SgAsmBlock* b) {
-      while (true) {
-	map<SgAsmBlock*, SgAsmBlock*>::iterator it = functionMembership.find(b);
-	if (it == functionMembership.end()) {
-	  return b;
-	} else {
-	  SgAsmBlock* func = lookupFunctionForBlock(it->second);
-	  it->second = func;
-	  return func;
-	}
-      }
-    }
-
-    void mergeFunctions(SgAsmBlock* a, SgAsmBlock* b) {
-      a = lookupFunctionForBlock(a);
-      b = lookupFunctionForBlock(b);
-      if (a == b) return;
-      ROSE_ASSERT (functions.find(a) != functions.end());
-      ROSE_ASSERT (functions.find(b) != functions.end());
-      functions.erase(b);
-      functionMembership[b] = a;
-    }
-
-    bool startsWithFunctionPrologue(SgAsmBlock* b) {
-      const vector<SgAsmInstruction>& insns = b->get_instructions();
-      if (insns.size() < 2) return false;
-      SgAsmPushInstruction* insn0 = isSgAsmPushInstruction(insns[0]);
-      if (!insn0) return false;
-      SgAsmRegisterReferenceExpression* insn0arg = isSgAsmRegisterReferenceExpression(insn0->get_operand());
-      if (!insn0arg) return false;
-      if (insn0arg->get_x86_register() != rSP) return false;
-      SgAsmMovInstruction* insn1 = isSgAsmMovInstruction(insns[1]);
-      if (!insn1) return false;
-      SgAsmRegisterReferenceExpression* insn1arg0 = isSgAsmRegisterReferenceExpression(insn1->get_lhs_operand());
-      if (!insn1arg0 || insn1arg0->get_x86_register() != rSP) return false;
-      SgAsmRegisterReferenceExpression* insn1arg1 = isSgAsmRegisterReferenceExpression(insn1->get_rhs_operand());
-      if (!insn1arg1 || insn1arg1->get_x86_register() != rBP) return false;
-      return true;
-    }
-  };
-
-  vector<set<SgAsmBlock*> > identifyFunctions(SgAsmBlock* top) {
-    FunctionScanner fs;
-    fs.scan(top);
-    vector<set<SgAsmBlock*> > result;
-    for (set<SgAsmBlock*>::const_iterator i = fs.functions.begin();
-	 i != fs.functions.end(); ++i) {
-      set<SgAsmBlock*>
-      result.push_back(s);
-    map<SgAsmBlock*, SgAsmBlock*> functionMembership;
-
-  }
-#endif
 
 }

@@ -105,7 +105,7 @@ class UnparseFormat
 	  //Unparser* unp;
      public:
 	  //UnparserFormat(Unparser* unp,std::ostream* _os, UnparseFormatHelp *help = NULL):unp(unp){};
-               UnparseFormat( std::ostream* _os, UnparseFormatHelp *help = NULL );
+               UnparseFormat( std::ostream* _os = NULL, UnparseFormatHelp *help = NULL );
          ~UnparseFormat();
 
       //! the ultimate formatting functions
