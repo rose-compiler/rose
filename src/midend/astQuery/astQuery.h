@@ -197,8 +197,9 @@ namespace AstQueryNamespace
 	       typedef typename NodeFunctional::result_type AstQueryReturnType;
 	       AstQueryReturnType listOfNodes;
 	       public:
+	       AstQuery();
 
-	       AstQuery(NodeFunctional* funct = new DefaultNodeFunctional());
+	       AstQuery(NodeFunctional* funct);
 
 	       virtual ~AstQuery();
 
@@ -224,6 +225,12 @@ namespace AstQueryNamespace
 	     AstQuery<AST_Query_Base,NodeFunctional>::AstQuery(NodeFunctional* funct)  
 		{
 		  nodeFunc = funct;
+		}
+
+     template<typename AST_Query_Base, typename NodeFunctional>
+	     AstQuery<AST_Query_Base,NodeFunctional>::AstQuery()  
+		{
+		  nodeFunc = new DefaultNodeFunctional();
 		}
 
      template<typename AST_Query_Base, typename NodeFunctional>

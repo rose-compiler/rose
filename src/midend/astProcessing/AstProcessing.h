@@ -45,7 +45,7 @@
 typedef void *DummyAttribute;
 // We initialize DummyAttributes to this value to avoid "may not be
 // initialized" warnings. If you change the typedef, adjust the constant...
-const static DummyAttribute defaultDummyAttribute = NULL;
+static const DummyAttribute defaultDummyAttribute = NULL;
 // The attribute _DummyAttribute is reserved for the implementation, so we
 // should deprecate it, but there is code using it explicitly. Which it
 // shouldn't.
