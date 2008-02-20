@@ -114,7 +114,7 @@ operator()(CompSliceLocalityRegistry *reg, CompSliceNest& n1, CompSliceNest& n2,
     return GetFusionInfo(e, j, k);
 }
 
-FusionInfo InnermostLoopFision:: 
+FusionInfo InnermostLoopFission:: 
 operator()(CompSliceLocalityRegistry *anal, CompSliceNest& n1, CompSliceNest& n2, int j, int k, const DepInfo& e)
 {
    FusionInfo result = OrigLoopFusionAnal::operator()(anal, n1, n2, j, k, e); 

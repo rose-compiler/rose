@@ -2782,8 +2782,8 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
 
   // this->display("In SgFile::setupSourceFilename()");
-     printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+     // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+     // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
 
      if (fileList.empty() == false)
         {
@@ -3008,7 +3008,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
-     printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
+     // printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
 
   // BP: (11/26/2001) trying out a new method of figuring out internal compiler definitions
 #if defined(CXX_SPEC_DEF)
@@ -3676,7 +3676,7 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-     printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
+     // printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
 
   // builds file list (or none if this is a link line)
 	  processCommandLine(argv);
@@ -3764,7 +3764,7 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
 
-     printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+     // printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
@@ -3845,7 +3845,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-     printf ("Inside of SgFile::doSetupForConstructor() \n");
+     // printf ("Inside of SgFile::doSetupForConstructor() \n");
 
   // DQ (4/21/2006): I think we can now assert this! This is an unused function parameter!
      ROSE_ASSERT(fileNameIndex == 0);
@@ -3997,7 +3997,7 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
        // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
           validExecutableFileSuffixes.push_back("");
 
-          printf ("CASE_SENSITIVE_SYSTEM = %d \n",CASE_SENSITIVE_SYSTEM);
+          // printf ("CASE_SENSITIVE_SYSTEM = %d \n",CASE_SENSITIVE_SYSTEM);
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
           validExecutableFileSuffixes.push_back(".exe");
@@ -4015,7 +4015,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
    {
      initExecutableFileSuffixList();
 
-     printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+     // printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -4023,13 +4023,13 @@ CommandlineProcessing::isExecutableFilename ( string name )
         {
           int jlength = (*j).size();
 
-          printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
+          // printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
 
           if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
              {
                bool returnValue = false;
 
-               printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
+               // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
                FILE* f = fopen(name.c_str(), "r");
@@ -4042,20 +4042,22 @@ CommandlineProcessing::isExecutableFilename ( string name )
                   {
                  // Check for if this is a binary executable file!
                     int character0 = fgetc(f);
+                    int character1 = fgetc(f);
 
-                 // The first character of an ELF binary is '\127' and for a PE binary it is 'M'
+                 // The first character of an ELF binary is '\177' and for a PE binary it is 'M'
                  // if (character0 == 127)
-                    if (character0 == 127 || character0 == 77)
+                    if ((character0 == 0x7F && character1 == 0x45) ||
+                        (character0 == 0x4D && character1 == 0x56))
                        {
                          returnValue = true;
                        }
 
-                    printf ("First character in file: character0 = %d  (77 == %c) \n",character0,'\77');
+                    // printf ("First character in file: character0 = %d  (77 == %c) \n",character0,'\77');
 
                     fclose(f);
                   }
 
-               return returnValue;
+               if (returnValue) return true;
              }
         }
 
@@ -4131,7 +4133,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
        // DQ (1/5/2008): Ignore things that would be obvious options using a "-" or "+" prefix.
        // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
-          if ( ((*i)[0] != '-') && ((*i)[0] != '+') )
+          if ( (*i).empty() || (((*i)[0] != '-') && ((*i)[0] != '+')) )
              {
             // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
 
@@ -4141,9 +4143,10 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
             // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
                if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
                   {
-                    printf ("This is an executable file: *i = %s \n",(*i).c_str());
+                    // printf ("This is an executable file: *i = %s \n",(*i).c_str());
                  // executableFileList.push_back(*i);
                     sourceFileList.push_back(*i);
+                    goto incrementPosition;
                   }
 #endif
             // PC (4/27/2006): Support for custom source file suffixes
@@ -4153,6 +4156,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                  // printf ("This is a source file: *i = %s \n",(*i).c_str());
                  // foundSourceFile = true;
                     sourceFileList.push_back(*i);
+                    goto incrementPosition;
                   }
 #if 0
                if ( isObjectFilename(*i) )
@@ -4170,6 +4174,8 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                counter++;
                i++;
              }
+
+incrementPosition:
 
           counter++;
           i++;
@@ -4226,7 +4232,7 @@ SgFile::callFrontEnd ()
         }
 #endif
 
-     printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+     // printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
 
   // Save this so that it can be used in the template instantiation phase later.
   // This file is later written into the *.ti file so that the compilation can 
@@ -4268,7 +4274,7 @@ SgFile::callFrontEnd ()
   // ROSE_ASSERT (get_sourceFileNamesWithoutPath() != NULL);
   // ROSE_ASSERT (get_sourceFileNameWithoutPath().empty() == false);
 
-     display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
+     // display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
 
   // Exit if we are to ONLY call the vendor's backend compiler
      if (p_useBackendOnly == true)
@@ -4332,6 +4338,7 @@ SgFile::callFrontEnd ()
           if ( get_new_frontend() == true )
              {
             // Use the current version of the EDG frontend from EDG (or any other version)
+               abort();
                printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
                if ( get_KCC_frontend() == true )
@@ -4369,7 +4376,7 @@ SgFile::callFrontEnd ()
             // int edg_errorLevel = edg_main (numberOfCommandLineArguments, inputCommandLine,*this);
             // int frontendErrorLevel = 0;
 
-#if 1
+#if 0
                display("SgFile::callFrontEnd()");
                printf ("get_C_only()       = %s \n",(get_C_only() == true) ? "true" : "false");
                printf ("get_C99_only()     = %s \n",(get_C99_only() == true) ? "true" : "false");

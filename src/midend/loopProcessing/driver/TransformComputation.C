@@ -14,6 +14,8 @@
 #include <LoopTransformOptions.h>
 #include <GraphIO.h>
 
+using namespace std;
+
 void LoopTransformation( LoopTransformInterface &fa, LoopTreeDepComp& comp,
                          DependenceHoisting& op, LoopTreeLocalityAnal &anal,
                          int optlevel, CopyArrayOperator* cp = 0);
@@ -64,10 +66,15 @@ int OptLevel()
   static int level = -1;
   if (level < 0) {
     level = 0;
-    const char* p = CmdOptions::GetInstance()->HasOption("-opt");
-    if (p != 0) {
-       p = p + 4;
-       sscanf(p, "%d", &level);
+    vector<string>::const_iterator p = CmdOptions::GetInstance()->GetOptionPosition("-opt");
+    if (p != CmdOptions::GetInstance()->opts.end()) {
+      string str = p->substr(4);
+      if (str.empty()) {
+        ++p;
+        assert (p != CmdOptions::GetInstance()->opts.end());
+        str = *p;
+      }
+      sscanf(str.c_str(), "%d", &level);
     }
   }
   return level;

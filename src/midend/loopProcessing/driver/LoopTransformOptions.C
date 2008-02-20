@@ -8,6 +8,8 @@
 #include <CommandOptions.h>
 #include <CopyArrayAnal.h>
 
+using namespace std;
+
 class DynamicTuning {
   static int dt;  
  public:
@@ -25,35 +27,39 @@ bool DynamicTuning::Do()
 }
 
 
-static void ReadDefaultBlockSize(LoopTransformOptions& opt, char** argv, unsigned& index)
+static void ReadDefaultBlockSize(LoopTransformOptions& opt, vector<string>& argv, unsigned index)
 {
- int defaultblocksize = atoi(argv[index]);
+ assert (index < argv.size());
+ int defaultblocksize = atoi(argv[index].c_str());
  if (defaultblocksize <= 1) {
-       STD cerr << "invalid blocking size: " << argv[index] << "; Use default (16)\n";
+       std::cerr << "invalid blocking size: " << argv[index] << "; Use default (16)\n";
        defaultblocksize = 16;
-       --index;
+ } else {
+       argv.erase(argv.begin() + index);
  }
  opt.SetDefaultBlockSize(defaultblocksize);
 }
 
-static int ReadDefaultCopyDim(LoopTransformOptions& opt, char** argv, unsigned& index)
+static int ReadDefaultCopyDim(LoopTransformOptions& opt, vector<string>& argv, unsigned index)
 {
+ assert (index < argv.size());
+ assert (!argv[index].empty());
  int defaultcopysize = 0;
  char hint = argv[index][0]; 
  if (hint >= '0' && hint <= '9' ) {
-       defaultcopysize = atoi(argv[index]);
+       defaultcopysize = atoi(argv[index].c_str());
+       argv.erase(argv.begin() + index);
  }
  else {
-    STD cerr << "invalid array copy dimension: " << argv[index] << "; Use default (0)\n";
-    --index;
+    std::cerr << "invalid array copy dimension: " << argv[index] << "; Use default (0)\n";
  }
  return defaultcopysize;
 }
 class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv) 
+    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv) 
       { 
-        ++index;
+        argv.erase(argv.begin() + index);
 	ReadDefaultBlockSize(opt,argv,index); 
         opt.SetBlockSel( new OuterLoopReuseBlocking( 1 )); 
       }
@@ -63,9 +69,9 @@ class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
       { 
-        ++index;
+        argv.erase(argv.begin() + index);
 	ReadDefaultBlockSize(opt,argv,index); 
         opt.SetBlockSel( new InnerLoopReuseBlocking());
       }
@@ -75,9 +81,9 @@ class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class BlockAllLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
       {
-        ++index;
+        argv.erase(argv.begin() + index);
 	ReadDefaultBlockSize(opt,argv,index); 
         opt.SetBlockSel( new AllLoopReuseBlocking());
       }
@@ -87,9 +93,9 @@ class BlockAllLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class CopyArrayOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
       {
-        ++index;
+        argv.erase(argv.begin() + index);
 	int dim = ReadDefaultCopyDim(opt,argv,index); 
         opt.SetCopySel( new CopyArrayUnderSizeLimit(dim));
       }
@@ -100,32 +106,32 @@ class CopyArrayOpt : public LoopTransformOptions::OptRegistryType
 
 class ReuseInterchangeOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
-         { opt.SetInterchangeSel( new ArrangeReuseOrder() ); }
+    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+         { argv.erase(argv.begin() + index); opt.SetInterchangeSel( new ArrangeReuseOrder() ); }
   public:
      ReuseInterchangeOpt() : OptRegistryType("-ic1", " :loop interchange for more reuses") {}
 };
 
-class FisionOpt : public LoopTransformOptions::OptRegistryType
+class FissionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
-         { opt.SetFusionSel( new LoopNestFusion() ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+         { argv.erase(argv.begin() + index); opt.SetFusionSel( new LoopNestFusion() ); }
   public:
-     FisionOpt() : OptRegistryType("-fs0", " : maximum distribution at all loops") {}
+     FissionOpt() : OptRegistryType("-fs0", " : maximum distribution at all loops") {}
 };
 
-class InnerFisionOpt : public LoopTransformOptions::OptRegistryType
+class InnerFissionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
-         { opt.SetFusionSel( new SameLevelFusion( new InnermostLoopFision() ) ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+         { argv.erase(argv.begin() + index); opt.SetFusionSel( new SameLevelFusion( new InnermostLoopFission() ) ); }
   public:
-     InnerFisionOpt() : OptRegistryType("-fs01", " : maximum distribution at inner-most loops") {}
+     InnerFissionOpt() : OptRegistryType("-fs01", " : maximum distribution at inner-most loops") {}
 };
 
 class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
-         { opt.SetFusionSel( new SameLevelFusion( new AnyReuseFusionAnal() ) ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+         { argv.erase(argv.begin() + index); opt.SetFusionSel( new SameLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
      SingleReuseFusionOpt() 
         : OptRegistryType("-fs1", " :single-level loop fusion for more reuses") {}
@@ -133,8 +139,8 @@ class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
-         { opt.SetFusionSel( new MultiLevelFusion( new AnyReuseFusionAnal() ) ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+         { argv.erase(argv.begin() + index); opt.SetFusionSel( new MultiLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
     MultiReuseFusionOpt() 
      : OptRegistryType("-fs2",  " :multi-level loop fusion for more reuses") {}
@@ -142,10 +148,12 @@ class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
          { 
-            index++;
-            int limit = atoi(argv[index]);
+            argv.erase(argv.begin() + index);
+            assert (index < argv.size());
+            int limit = atoi(argv[index].c_str());
+            argv.erase(argv.begin() + index);
             opt.SetTransAnalSplitLimit( limit ) ; 
          }
   public:
@@ -155,11 +163,12 @@ class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 
 class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 { 
-  virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
          { 
-           index ++;
-           int size = atoi(argv[index]); 
+           argv.erase(argv.begin() + index);
+           int size = atoi(argv[index].c_str()); 
            opt.SetCacheLineSize(size);
+           argv.erase(argv.begin() + index);
          }
  public:
    CacheLineSizeOpt() : OptRegistryType("-clsize", " <int> :set cache line size") {}
@@ -167,11 +176,13 @@ class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 
 class ReuseDistOpt : public LoopTransformOptions::OptRegistryType
 {
-  virtual void operator()( LoopTransformOptions &opt, unsigned &index, char** argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
          {
-           index ++;
-           int size = atoi(argv[index]);
+           argv.erase(argv.begin() + index);
+           assert (index < argv.size());
+           int size = atoi(argv[index].c_str());
            opt.SetReuseDistance(size);
+           argv.erase(argv.begin() + index);
          }
  public:
    ReuseDistOpt() : OptRegistryType("-reuse_dist", " <int> :set reuse distance") {}
@@ -236,8 +247,8 @@ LoopTransformOptions* LoopTransformOptions::GetInstance()
      inst->RegisterOption( new BlockAllLoopOpt);
      inst->RegisterOption( new CopyArrayOpt);
      inst->RegisterOption( new ReuseInterchangeOpt);
-     inst->RegisterOption( new FisionOpt);
-     inst->RegisterOption( new InnerFisionOpt);
+     inst->RegisterOption( new FissionOpt);
+     inst->RegisterOption( new InnerFissionOpt);
      inst->RegisterOption( new SingleReuseFusionOpt);
      inst->RegisterOption( new MultiReuseFusionOpt);
      inst->RegisterOption( new SplitLimitOpt);
@@ -247,12 +258,12 @@ LoopTransformOptions* LoopTransformOptions::GetInstance()
   return inst;
 }
 
-void LoopTransformOptions :: PrintUsage(STD ostream& stream) const
+void LoopTransformOptions :: PrintUsage(std::ostream& stream) const
 {  
    for ( SinglyLinkedListWrap <OptRegistryType*>::Iterator p(reg); !p.ReachEnd(); ++p) {
       stream << (*p)->GetName() << (*p)->GetExpl() << "\n";
    }
-   stream << "-dt :perform dynamic tuning" << STD endl;
+   stream << "-dt :perform dynamic tuning" << std::endl;
 }
 
 bool LoopTransformOptions :: DoDynamicTuning() const
@@ -270,24 +281,23 @@ void LoopTransformOptions :: RegisterOption( OptRegistryType* t)
    reg.AppendLast(t);
 }
 
-int LoopTransformOptions :: SetOptions (int argc, char* argv[])
+void LoopTransformOptions :: SetOptions (std::vector<std::string>& argvList)
       {
-        int index = 1;
-        for (unsigned i = 1; i < argc; ++i) {
+        for (size_t i = 1;
+             i < argvList.size() /* May shrink, so this must be checked in every iteration */ ;
+             /* Options should be removed by handlers */ ) {
             SinglyLinkedListWrap <OptRegistryType*>::Iterator p(reg); 
+            bool isValidOption = false;
             for ( ; !p.ReachEnd(); ++p) {
-                if ( argv[i] != 0 && !strcmp( (*p)->GetName().c_str(), argv[i])) {
-                    (*(*p))(*this, i, argv);
+                std::string name = (*p)->GetName();
+                if ( argvList[i] == name) {
+                    (*(*p))(*this, i, argvList);
+                    isValidOption = true;
                     break;
                 }
             }
-            if (p.ReachEnd())  {
-               if (index < i) 
-                  argv[index] = argv[i]; 
-                ++index;
-            }
+            if (!isValidOption) {++i;} // Skip this option
          }
-          return index;
       }
 
 

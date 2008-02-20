@@ -33,7 +33,7 @@ class OrigLoopFusionAnal : public LoopFusionAnal
   virtual LoopTransformOptions::OptType GetOptimizationType() { return LoopTransformOptions::NO_OPT; }
 };
 
-class InnermostLoopFision : public OrigLoopFusionAnal
+class InnermostLoopFission : public OrigLoopFusionAnal
 {
   public:
    FusionInfo operator()(CompSliceLocalityRegistry *anal, CompSliceNest& n1, CompSliceNest& n2,

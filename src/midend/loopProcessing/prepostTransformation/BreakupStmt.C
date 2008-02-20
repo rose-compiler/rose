@@ -5,20 +5,23 @@
 #include <assert.h>
 #include <CommandOptions.h>
 
-STD string BreakupStatement:: cmdline_help() 
+using namespace std;
+
+std::string BreakupStatement:: cmdline_help() 
    { 
     return "-bs <stmtsize> : break up statements in loops at <stmtsize>";
    }
 
 bool BreakupStatement:: cmdline_configure()
 {
-        const char* config = CmdOptions::GetInstance()->HasOption("-bs");
-        if (config == 0)
+        vector<string>::const_iterator config = CmdOptions::GetInstance()->GetOptionPosition("-bs");
+        if (config == CmdOptions::GetInstance()->opts.end())
             return false;
-        config += 3;
-        sscanf( config, "%d", &breaksize);
+        ++config;
+        assert (config != CmdOptions::GetInstance()->opts.end());
+        sscanf( (*config).c_str(), "%d", &breaksize);
         if (breaksize <= 0) {
-           STD cerr << "invalid breaking size. Use default (12)\n";
+           std::cerr << "invalid breaking size. Use default (12)\n";
            breaksize = 12;
         }
        return true;
@@ -35,7 +38,7 @@ bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
            AstNodePtr  exp = rhs;
            SinglyLinkedListWrap<AstNodePtr> refList;
            AstNodePtr opd2, opd1;
-           STD list<AstNodePtr> stmtlist;
+           std::list<AstNodePtr> stmtlist;
            while ( fa.IsBinaryOp( exp, &opr, &opd1, &opd2 ) && opr == AstInterface::BOP_PLUS) {
              CollectSinglyLinkedList<AstNodePtr> colref(refList);
              AnalyzeStmtRefs(*la, opd2, colref, colref);
@@ -57,7 +60,7 @@ bool BreakupStatement::operator() ( AstInterface& fa, const AstNodePtr& s,
              }
              exp = opd1;
            }
-           for (STD list<AstNodePtr>::reverse_iterator p = stmtlist.rbegin(); p != stmtlist.rend(); ++p) {
+           for (std::list<AstNodePtr>::reverse_iterator p = stmtlist.rbegin(); p != stmtlist.rend(); ++p) {
               AstNodePtr cur = *p;
               fa.InsertStmt(s, cur);
            }    

@@ -14,15 +14,15 @@ ReadAnnotation* ReadAnnotation::get_inst()
 
 void ReadAnnotation::read()
     {
-       const char* p = CmdOptions::GetInstance()->HasOption("-annot");
-       while (p != 0) {
-	  p += 7;
-          stringstream in(p);
-          string p1;
-          in >> p1;
-	  ifstream is(p1.c_str());
-	  read(is);
-          p = strstr(p, "-annot");
+       const vector<string>& opts = CmdOptions::GetInstance()->opts;
+       for (size_t i = 0; i < opts.size(); ++i) {
+         if (opts[i] == "-annot") {
+           assert (i + 1 < opts.size());
+           string p1 = opts[i + 1];
+           ifstream is(p1.c_str());
+           read(is);
+           ++i;
+         }
        }
     }
 void ReadAnnotation:: read( istream & in)

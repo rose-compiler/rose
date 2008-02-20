@@ -9,12 +9,14 @@
 #include <CommandOptions.h>
 #include <AstInterface_ROSE.h>
 
-void PrintUsage( char* name)
+using namespace std;
+
+void PrintUsage( const string& name)
 {
-  STD cerr << name << " <options> " << "<program name>" << "\n";
-  STD cerr << "-toarrayonly : rewrite to array form \n";
-  STD cerr << ReadAnnotation::OptionString();
-  PrintLoopTransformUsage(STD cerr);
+  std::cerr << name << " <options> " << "<program name>" << "\n";
+  std::cerr << "-toarrayonly : rewrite to array form \n";
+  std::cerr << ReadAnnotation::OptionString();
+  PrintLoopTransformUsage(std::cerr);
 }
 
 bool GenerateObj()
@@ -24,26 +26,27 @@ bool GenerateObj()
 
 extern bool DebugAnnot();
 
-bool ToArrayOnly( int argc,  char * argv[] )
+bool ToArrayOnly( const vector<string>& argv )
 {
-  for (int i = 1; i < argc; ++i) {
-    if ( argv[i] != 0 && !strcmp(argv[i], "-toarrayonly"))
+  for (int i = 1; i < argv.size(); ++i) {
+    if ( argv[i] == "-toarrayonly")
         return true;
   }
   return false;
 }
 
 int
-main ( unsigned argc,  char * argv[] )
+main ( int argc,  char * argv[] )
    {
 
      if (argc <= 1) {
          PrintUsage(argv[0]);
-         return -1;
+         return 1;
      }
-    CmdOptions::GetInstance()->SetOptions(argc, argv);
-    argc = SetLoopTransformOptions( argc, argv);
-    bool toOnly = ToArrayOnly(argc, argv);
+    vector<string> argvList(argv, argv + argc);
+    SetLoopTransformOptions( argvList);
+    CmdOptions::GetInstance()->SetOptions(argvList);
+    bool toOnly = ToArrayOnly(argvList);
 
     ArrayAnnotation* annot = ArrayAnnotation::get_inst();
     annot->register_annot();
@@ -53,10 +56,10 @@ main ( unsigned argc,  char * argv[] )
     if (CmdOptions::GetInstance()->HasOption("-dumpannot"))
        annot->Dump();
 
-    SgProject sageProject ( (int)argc,argv);
-    int filenum = sageProject.numberOfFiles();
+    SgProject* sageProject = new SgProject( argvList);
+    int filenum = sageProject->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject.get_file(i);
+     SgFile &sageFile = sageProject->get_file(i);
      SgGlobal *root = sageFile.get_root();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
@@ -91,9 +94,9 @@ main ( unsigned argc,  char * argv[] )
 
   // Generate the final C++ source code from the potentially modified SAGE AST
   if (!GenerateObj())
-     sageProject.unparse();
+     sageProject->unparse();
   else
-     return backend(&sageProject);
+     return backend(sageProject);
   return 0;
 }
 

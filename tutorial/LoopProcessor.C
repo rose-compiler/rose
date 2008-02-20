@@ -60,8 +60,9 @@ main ( int argc,  char * argv[] )
   SgProject sageProject ( argvList);
 #else
 // DQ (2/10/2008): Using command-line support similar to that in tests/roseTests/loopProcessor
-  CmdOptions::GetInstance()->SetOptions(argc, argv);
-  argc = SetLoopTransformOptions(argc, argv);
+  vector<string> argvList(argv, argv + argc);
+  SetLoopTransformOptions(argvList);
+  CmdOptions::GetInstance()->SetOptions(argvList);
 
 #ifdef USE_OMEGA
   DepStats.SetFileName(buffer.str());
@@ -74,7 +75,7 @@ main ( int argc,  char * argv[] )
   if (DebugAnnot())
      funcInfo->Dump();
   AssumeNoAlias aliasInfo;
-  SgProject *sageProject = new SgProject ( argc,argv);
+  SgProject *sageProject = new SgProject ( argvList);
 #endif
 
    int filenum = sageProject->numberOfFiles();

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <SinglyLinkedList.h>
 #include <AstInterface.h>
 
@@ -18,13 +19,13 @@ class LoopTransformOptions
  public:
   class OptRegistryType
         { 
-          STD string name, expl;
+          std::string name, expl;
         public:
-          virtual void operator () ( LoopTransformOptions &opt, unsigned &index, 
-                                     char* argv[])=0; 
-          OptRegistryType( const STD string &s1, const STD string &s2) : name(s1), expl(s2) {}
-          STD string GetName() const { return name; }
-          STD string GetExpl() const { return expl; }
+          virtual void operator () ( LoopTransformOptions &opt, unsigned index, 
+                                     std::vector<std::string>& argv)=0; 
+          OptRegistryType( const std::string &s1, const std::string &s2) : name(s1), expl(s2) {}
+          std::string GetName() const { return name; }
+          std::string GetExpl() const { return expl; }
          };
  private:
   static LoopTransformOptions *inst;
@@ -42,7 +43,7 @@ class LoopTransformOptions
  public:
   static LoopTransformOptions* GetInstance () ;
 
-  void PrintUsage(STD ostream& stream) const ;
+  void PrintUsage(std::ostream& stream) const ;
   void RegisterOption( OptRegistryType* t);
 
   LoopBlockingAnal* GetBlockSel() const  { return bkOp; }
@@ -61,7 +62,7 @@ class LoopTransformOptions
 
   OptType GetOptimizationType();
  
-  int SetOptions  (int argc, char* argv[]);
+  void SetOptions  (std::vector<std::string>& argvList);
 
   void SetBlockSel( LoopBlockingAnal* sel); 
   void SetCopySel( CopyArrayOperator* sel); 

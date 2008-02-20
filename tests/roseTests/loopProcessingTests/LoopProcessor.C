@@ -8,6 +8,8 @@
 #include <OperatorAnnotation.h>
 #include <AstInterface_ROSE.h>
 
+using namespace std;
+
 #ifdef USE_OMEGA
 #include <DepTestStatistics.h>
 
@@ -20,16 +22,16 @@ class UnparseFormatHelp;
 class UnparseDelegate;
 void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp /*= NULL*/, UnparseDelegate *repl  /*= NULL */);
 
-void PrintUsage( char* name)
+void PrintUsage( const string& name)
 {
-  STD cerr << name << " <options> " << "<program name>" << "\n";
-  STD cerr << "-gobj: generate object file\n";
-  STD cerr << "-orig: copy non-modified statements from original file\n";
-  STD cerr << "-splitloop: applying loop splitting to remove conditionals inside loops\n";
-  STD cerr << ReadAnnotation::get_inst()->OptionString() << STD endl;
-//  STD cerr << "-pre:  apply partial redundancy elimination\n";
-//  STD cerr << "-fd:  apply finite differencing to array index expressions\n";
-  PrintLoopTransformUsage( STD cerr );
+  std::cerr << name << " <options> " << "<program name>" << "\n";
+  std::cerr << "-gobj: generate object file\n";
+  std::cerr << "-orig: copy non-modified statements from original file\n";
+  std::cerr << "-splitloop: applying loop splitting to remove conditionals inside loops\n";
+  std::cerr << ReadAnnotation::get_inst()->OptionString() << std::endl;
+//  std::cerr << "-pre:  apply partial redundancy elimination\n";
+//  std::cerr << "-fd:  apply finite differencing to array index expressions\n";
+  PrintLoopTransformUsage( std::cerr );
 }
 
 bool GenerateObj()
@@ -50,8 +52,9 @@ main ( int argc,  char * argv[] )
       return -1;
   }
 
-  CmdOptions::GetInstance()->SetOptions(argc, argv);
-  argc = SetLoopTransformOptions(argc, argv);
+  vector<string> argvList(argv, argv + argc);
+  SetLoopTransformOptions(argvList);
+  CmdOptions::GetInstance()->SetOptions(argvList);
 
 #ifdef USE_OMEGA
   DepStats.SetFileName(buffer.str());
@@ -65,7 +68,7 @@ main ( int argc,  char * argv[] )
      funcInfo->Dump();
   AssumeNoAlias aliasInfo;
 
-  SgProject *sageProject = new SgProject ( argc,argv);
+  SgProject *sageProject = new SgProject ( argvList);
   FixFileInfo(sageProject);
 
    int filenum = sageProject->numberOfFiles();

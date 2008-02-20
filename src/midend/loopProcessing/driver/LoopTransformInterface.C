@@ -9,14 +9,16 @@
 #include <LoopUnroll.h>
 #include <CommandOptions.h>
 
+using namespace std;
+
 bool LoopTransformation( LoopTransformInterface &fa, const AstNodePtr& head, 
                             AstNodePtr& result);  
 
 int LoopTransformInterface::configIndex = 0;
 
-int SetLoopTransformOptions( int argc, char** argv)
+int SetLoopTransformOptions( std::vector<std::string>& argvList)
 { 
-  return LoopTransformOptions::GetInstance()->SetOptions(argc, argv) ; 
+  return LoopTransformOptions::GetInstance()->SetOptions(argvList) ; 
 }
 
 bool ArrayUseAccessFunction::
@@ -26,7 +28,7 @@ IsArrayAccess( AstInterface& fa, const AstNodePtr& s, AstNodePtr* array,
   AstInterface::AstNodeList args;
   if (prev != 0 &&  prev->IsArrayAccess(fa, s, array, index))
        return true;
-  STD string sig;
+  std::string sig;
   AstNodePtr f;
   if (fa.IsFunctionCall(s, &f,&args) && fa.IsVarRef(f,0,&sig) && sig == funcname) {
       AstInterface::AstNodeList::const_iterator p = args.begin();
@@ -57,7 +59,7 @@ bool ArrayUseAccessFunction::get_modify(AstInterface& fa, const AstNodePtr& fc,
   AstInterface::AstNodeList args;
   if (prev1 != 0 && prev1->get_modify(fa, fc, collect))
        return true;
-  STD string sig;
+  std::string sig;
   AstNodePtr f;
   if (fa.IsFunctionCall(fc, &f,&args) && fa.IsVarRef(f,0,&sig) && sig == funcname) {
        return true;
@@ -71,7 +73,7 @@ bool ArrayUseAccessFunction::get_read(AstInterface& fa, const AstNodePtr& fc,
   AstInterface::AstNodeList args;
   if (prev1 != 0 && prev1->get_read(fa, fc, collect))
        return true;
-  STD string sig;
+  std::string sig;
   AstNodePtr f;
   if (fa.IsFunctionCall(fc, &f,&args) && fa.IsVarRef(f,0,&sig) && sig == funcname) {
        if (collect != 0)  {
@@ -110,16 +112,16 @@ class LoopTransformationWrap : public TransformAstTree
                            ArrayAbstractionInterface* array = 0)
      : aliasInfo(alias), funcInfo(func), arrayInfo(array) 
    {
-     const char* p = CmdOptions::GetInstance()->HasOption("-arracc");
-     if (p != 0) {
-        p += 7;
-        STD string name;
-        while (*p == ' ')
+     vector<string>::const_iterator p = CmdOptions::GetInstance()->GetOptionPosition("-arracc");
+     if (p != CmdOptions::GetInstance()->opts.end()) {
+        string name;
+        if (p->size() == 7) { // The argument is the next option
           ++p;
-        while (*p != ' ') {
-          name.push_back(*p);
-          ++p; 
-        } 
+          assert (p != CmdOptions::GetInstance()->opts.end());
+          name = *p;
+        } else {
+          name = p->substr(7);
+        }
         ArrayUseAccessFunction* r = new ArrayUseAccessFunction(name, array, func);
         funcInfo = r;
         arrayInfo = r;
@@ -172,15 +174,15 @@ AstNodePtr LoopTransformTraverse( AstInterface& fa, const AstNodePtr& head,
   return result;
 }
 
-void PrintLoopTransformUsage( STD ostream& out)
+void PrintLoopTransformUsage( std::ostream& out)
 {
-  STD cerr << "-debugloop: print debugging information for loop transformations; \n";
-  STD cerr << "-debugdep: print debugging information for dependence analysis; \n";
-  STD cerr << "-tmloop: print timing information for loop transformations; \n";
-  STD cerr << "-arracc <funcname>: use function <funcname> to denote multi-dimensional array access;\n";
-  STD cerr << "opt <level=0>: the level of loop optimizations to apply; by default, only the outermost level is optimized;\n";
-  STD cerr << LoopUnrolling::cmdline_help() << STD endl;
-  STD cerr << BreakupStatement::cmdline_help() << STD endl;
+  std::cerr << "-debugloop: print debugging information for loop transformations; \n";
+  std::cerr << "-debugdep: print debugging information for dependence analysis; \n";
+  std::cerr << "-tmloop: print timing information for loop transformations; \n";
+  std::cerr << "-arracc <funcname>: use function <funcname> to denote multi-dimensional array access;\n";
+  std::cerr << "opt <level=0>: the level of loop optimizations to apply; by default, only the outermost level is optimized;\n";
+  std::cerr << LoopUnrolling::cmdline_help() << std::endl;
+  std::cerr << BreakupStatement::cmdline_help() << std::endl;
   LoopTransformOptions::GetInstance()->PrintUsage(out);
 }
 
@@ -196,7 +198,7 @@ GetFunctionCallSideEffect( const AstNodePtr& fc,
 AstNodePtr LoopTransformInterface:: 
 CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList& args, int &id)
 { 
-  STD string name = "DynamicFusionConfig";
+  std::string name = "DynamicFusionConfig";
   ++configIndex;
   args.push_front( fa.CreateConstInt( args.size() ) );
   args.push_front( fa.CreateConstInt(configIndex) );
@@ -219,7 +221,7 @@ IsDynamicFusionConfig( const AstNodePtr& n, AstNodePtr* configvar, int* configID
   if (!fa.IsAssignment(n, configvar, &invoc))
     return false;
   AstInterface::AstNodeList args;
-  STD string sig;
+  std::string sig;
   AstNodePtr f;
   if (!fa.IsFunctionCall(invoc, &f, &args) || !fa.IsVarRef(f, 0, &sig) )
     return false;
@@ -241,7 +243,7 @@ IsDynamicFusionConfig( const AstNodePtr& n, AstNodePtr* configvar, int* configID
 
 bool LoopTransformInterface::IsDynamicFusionEnd(const AstNodePtr& n)
 {
-  STD string sig;
+  std::string sig;
   AstNodePtr f;
   if (!fa.IsFunctionCall(n, &f) || !fa.IsVarRef(f, 0, &sig))
     return false;
@@ -271,7 +273,7 @@ IsFortranLoop( const AstNodePtr& s, SymbolicVar* ivar ,
   AstNodePtr ivarast, lbast, ubast, stepast, ivarscope;
   if (!fa.IsFortranLoop(s, &ivarast, &lbast, &ubast, &stepast, body))
       return false;
-  STD string varname;
+  std::string varname;
   if (! fa.IsVarRef(ivarast, 0, &varname, &ivarscope)) {
          return false; 
   }

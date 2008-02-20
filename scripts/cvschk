@@ -81,7 +81,7 @@ automake --version | grep '[A|a]utomake'
 echo -n "(*)  "
 autoconf --version | grep '[A|a]utoconf'
 echo -n "(*)  "
-gmake --version | grep 'Make version' | sed 's/,.*//'
+make --version | grep 'Make version' | sed 's/,.*//'
 echo -n "(**) "
 g++ --version | grep '\([0-9]\+[.]\)\+[0-9]\+'
 echo -n "(**) "

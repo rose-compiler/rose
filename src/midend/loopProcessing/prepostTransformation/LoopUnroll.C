@@ -8,28 +8,32 @@
 #include <assert.h>
 #include <CommandOptions.h>
 
+using namespace std;
 
-STD string LoopUnrolling:: cmdline_help() 
+std::string LoopUnrolling:: cmdline_help() 
    { 
     return "-unroll [locond] [nvar] <unrollsize> : unrolling innermost loops at <unrollsize>"; }
 bool LoopUnrolling:: cmdline_configure()
 {
         opt = DEFAULT;
-        const char* config = CmdOptions::GetInstance()->HasOption("-unroll");
-        if (config == 0)
-            return false;
-        config += 8;
-        if (strstr(config,"locond")==config) {
+        const vector<string>& opts = CmdOptions::GetInstance()->opts;
+        vector<string>::const_iterator i = std::find(opts.begin(), opts.end(), "-unroll");
+        if (i == opts.end()) return false;
+        ++i;
+        assert (i != opts.end());
+        if (*i == "locond") {
            opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
-           config += 7;
+           ++i;
         }
-        if (strstr(config,"nvar")==config)  {
+        assert (i != opts.end());
+        if (*i == "nvar")  {
            opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::USE_NEWVAR);
-           config += 5;
+           ++i;
         }
-        sscanf(config, "%d",&unrollsize);      
+        assert (i != opts.end());
+        sscanf((*i).c_str(), "%d",&unrollsize);      
         if (unrollsize <= 0) {
-           STD cerr << "invalid unrolling size. Use default (4)\n";
+           std::cerr << "invalid unrolling size. Use default (4)\n";
            unrollsize = 4;
         }
        return true;
@@ -56,7 +60,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           SymbolicVal nubval = ubval;
 
           bool hasleft = true, negativeStep = (stepval < 0);
-          STD vector<AstNodePtr> bodylist;
+          std::vector<AstNodePtr> bodylist;
           AstNodePtr leftbody, lefthead;
 
           int stepnum=0, loopnum = 0;
@@ -89,7 +93,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           r = s1; 
 
           AstNodePtr origbody = fa.CopyAstTree(body);
-          STD string nvarname = "";
+          std::string nvarname = "";
           SymbolicVal nvar;
           if (opt & USE_NEWVAR) {
                nvarname = fa.NewVar(fa.GetType("int"),"",true,body, ivar.CodeGen(fa)); 

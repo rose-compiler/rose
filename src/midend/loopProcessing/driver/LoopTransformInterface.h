@@ -119,7 +119,7 @@ class LoopTransformInterface
 };
 
 class SgGlobal;
-int SetLoopTransformOptions( int argc, char** argv);
+int SetLoopTransformOptions( std::vector<std::string>& argvList);
 void PrintLoopTransformUsage( STD ostream& out);
 AstNodePtr LoopTransformTraverse( AstInterface& fa, const AstNodePtr& head, 
                                  AliasAnalysisInterface& aliasInfo,

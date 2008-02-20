@@ -29,16 +29,16 @@ if (1) then
    echo "*****************************************************"
    echo "**************   DONE with configure  ***************"
    echo "*****************************************************"
-   gmake -j16 |& tee make.out
+   make -j16 |& tee make.out
    echo "*******************************************************"
    echo "**************   DONE with Compilation  ***************"
    echo "*******************************************************"
-   gmake -j16 check |& tee make_check.out
+   make -j16 check |& tee make_check.out
    echo "******************************************************"
    echo "**************   DONE with make check  ***************"
    echo "******************************************************"
    echo "We can't run make distcheck from a distribution!"
- # gmake -j16 distcheck |& tee make_distcheck.out
+ # make -j16 distcheck |& tee make_distcheck.out
    cd ..
    echo "*****************************************************"
    echo "**************   DONE with all tests  ***************"
@@ -57,7 +57,7 @@ if (0) then
    make -j4 |& tee make.out
  # Can't use -j is "make check" for AST_RewriteMechanism directory
    make check |& tee make_check.out
-   gmake distcheck |& tee make_distcheck.out
+   make distcheck |& tee make_distcheck.out
    cd ..
 endif
 
@@ -70,7 +70,7 @@ if (0) then
    ../ROSE/configure --with-edg_source_code=true --prefix=`pwd` |& tee configure.out
    make -j16 |& tee make.out
    make -j16 check |& tee make_check.out
-   gmake -j16 distcheck |& tee make_distcheck.out
+   make -j16 distcheck |& tee make_distcheck.out
    cd ..
 endif
 
@@ -83,7 +83,7 @@ if (0) then
    ../ROSE/configure --with-edg_source_code=true --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=`pwd` |& tee configure.out
    make -j4 |& tee make.out
    make -j4 check |& tee make_check.out
-   gmake -j4 distcheck |& tee make_distcheck.out
+   make -j4 distcheck |& tee make_distcheck.out
    cd ..
 endif
 
@@ -101,7 +101,7 @@ if (0) then
       --prefix=/home/dquinlan2/ROSE/LINUX-3.2.3 --enable-doxygen-developer-docs |& tee configure.out
    make -j4 |& tee make.out
    make -j4 check |& tee make_check.out
-   gmake -j4 distcheck |& tee make_distcheck.out
+   make -j4 distcheck |& tee make_distcheck.out
    cd ..
 endif
 
@@ -114,7 +114,7 @@ if (0) then
    ../ROSE/configure --with-edg_source_code=true --with-FLTK_include=/home/thuerey1/local/include --with-FLTK_libs=/home/thuerey1/local/lib --with-GraphViz_include=/home/thuerey1/local/include/graphviz --with-GraphViz_libs=/home/thuerey1/local/lib/graphviz --with-MySQL=/home/thuerey1/local --with-MySQL_server=tux32.llnl.gov --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=`pwd` |& tee configure.out
    make -j4 |& tee make.out
    make -j4 check |& tee make_check.out
-   gmake -j4 distcheck |& tee make_distcheck.out
+   make -j4 distcheck |& tee make_distcheck.out
    cd ..
 endif
 
@@ -129,7 +129,7 @@ if (0) then
    ../ROSE/configure --enable-dq-developer-tests --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-AxxPxx=/home/dquinlan/ROSE/A++P++Install --prefix=/home/dquinlan2/ROSE/AndreasWork/CompilerTree --with-GraphViz_include=/usr/apps/graphviz/1.10/include/graphviz --with-GraphViz_libs=/usr/apps/graphviz/1.10/lib/graphviz --with-FLTK_include=/home/dquinlan/FLTK/fltk_install/include --with-GLUT_include=/home/dquinlan/FreeGlut/freeglut_install/include --with-FLTK_libs=/home/dquinlan/FLTK/fltk_install/lib --with-GLUT_libs=/home/dquinlan/FreeGlut/freeglut_install/lib --with-qt-includes=/home/jose/local/qt/include --with-qt-libraries=/home/jose/local/qt/lib --with-edg_source_code=true --prefix=`pwd` --with-QRose |& tee configure.out
    make -j4 |& tee make.out
    make -j4 check |& tee make_check.out
-   gmake -j4 distcheck |& tee make_distcheck.out
+   make -j4 distcheck |& tee make_distcheck.out
    cd ..
 endif
 
