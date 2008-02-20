@@ -48,13 +48,19 @@ main ( int argc, char* argv[] )
       RoseHPCT::collectMetricNames (*hpctree, metrics);
     }
 
-  RoseHPCT::propagateMetrics (proj, getKeys (metrics));
- // test dump 
+ RoseHPCT::propagateMetrics (proj, getKeys (metrics));
+#if 0  // get the original pdf dump
+  cerr << "[Dumping to PDF...]" << endl;
+  AstPDFGeneration pdf;
+  pdf.generateInputFiles (proj);
+#else // get the pdf dump generated from a binary file
+  // dump 
+// Liao, 2/19/2008. Cannot dump a pdf file from IR if the IR has been attempted to write to a file!
   REGISTER_ATTRIBUTE_FOR_FILE_IO(MetricAttr);
   AST_FILE_IO::startUp (proj);
   AST_FILE_IO::writeASTToFile ("input.perf.bin");
-#if 0
-  // read it back
+
+ // read it back
   REGISTER_ATTRIBUTE_FOR_FILE_IO(MetricAttr);
   AST_FILE_IO::clearAllMemoryPools();
   SgProject * proj2 = (SgProject*) (AST_FILE_IO::readASTFromFile("input.perf.bin"));
@@ -62,10 +68,6 @@ main ( int argc, char* argv[] )
   cerr << "[Dumping to PDF...]" << endl;
   AstPDFGeneration pdf;
   pdf.generateInputFiles (proj2);
-#else
-  cerr << "[Dumping to PDF...]" << endl;
-  AstPDFGeneration pdf;
-  pdf.generateInputFiles (proj);
 #endif
 
   return 0;
