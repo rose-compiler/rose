@@ -16,9 +16,9 @@ bool LoopTransformation( LoopTransformInterface &fa, const AstNodePtr& head,
 
 int LoopTransformInterface::configIndex = 0;
 
-int SetLoopTransformOptions( std::vector<std::string>& argvList)
+void SetLoopTransformOptions( std::vector<std::string>& argvList)
 { 
-  return LoopTransformOptions::GetInstance()->SetOptions(argvList) ; 
+  LoopTransformOptions::GetInstance()->SetOptions(argvList) ; 
 }
 
 bool ArrayUseAccessFunction::

@@ -6,7 +6,7 @@
  ****************************************************/
 #include "rose.h"
 #include "RoseBin_DB.h"
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 using namespace std;
 

@@ -33,6 +33,29 @@ declare -a SUBDIR_COUNT=0
 
 ###
 #
+# The generateCompassHeader() function generates the header file
+# ${COMPASS_HEADER} that contains #include directives to the individual
+# Compass checker header files
+#
+###
+generateCompassHeader()
+{
+  local header=$1
+
+  if [[ -f $header ]]; then
+    echo "Removing old ${header}..."
+    rm -f ${header}
+  fi
+
+  echo "// This is an automatically generated file" >> $header
+  for dir in ${SUBDIRS[@]}
+  do
+    echo "#include \"${dir}.h\"" >> $header
+  done
+} #generateCompassHeader() <path to compass main header>
+
+###
+#
 # The generateCompassSource() function generates the .C file containing the
 # function call to generate all Compass Checker Traversals. This is compiled
 # with compassMain.C
@@ -80,6 +103,6 @@ do
 done
 
 # generateMakefile ${COMPASS_MAKEINC}
-# generateCompassHeader ${COMPASS_HEADER}
+generateCompassHeader ${COMPASS_HEADER}
 generateCompassSource ${COMPASS_SOURCE}
 # generateCompassDocs ${COMPASS_DOCS}

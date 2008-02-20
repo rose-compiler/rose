@@ -17,9 +17,8 @@ using namespace std;
 
 #ifndef __RoseBin__
 #define __RoseBin__
-#include <mysql.h>
+#include <mysql/mysql.h>
 
-#include <mysql.h>
 #include <stdio.h>
 #include <iostream>
 #include "rose.h"

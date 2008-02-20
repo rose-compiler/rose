@@ -25,7 +25,7 @@ compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $
 #	$(MAKE) regenerate
 
 # This rule makes sure that "make regenerate" (below) will only be called once with using parallel make
-$(top_builddir)/projects/compass/buildCheckers.C : $(top_builddir)/projects/compass/checkers.h
+$(top_builddir)/projects/compass/buildCheckers.C : $(top_builddir)/projects/compass/checkers.h #$(top_builddir)/projects/compassVerifier/checkers.h
 
 # We need to have the regeneration depend on the checkers.h file since the "make dist" rule will copy the
 # buildCheckers.C file into the distribution (srcdir) and then makefile will not trigger the regenerate rule.

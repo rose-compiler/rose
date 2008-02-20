@@ -65,10 +65,10 @@ ror -> Ror
 rol -> Rol
 rcr -> Rcr
 rcl -> Rcl
-bt -> Bt
-bts -> Bts
-btr -> Btr
-btc -> Btc
+bt btl -> Bt
+bts btsl -> Bts
+btr btrl -> Btr
+btc btcl -> Btc
 bsf -> Bsf
 bsr -> Bsr
 sete setz -> Sete
@@ -108,14 +108,14 @@ jns -> Jns
 jpo jnp -> Jpo
 jpe jp -> Jpe
 jcxz jecxz jrcxz -> Jcxz
-loop -> Loop
+loop loopl -> Loop
 loopz loope -> Loopz
 loopnz loopne -> Loopnz
-iret -> IRet
+iret iretd iretq iretl -> IRet
 int -> Int
 into -> Into
-bound -> Bound
-enter -> Enter
+bound boundl -> Bound
+enter enterl -> Enter
 movs movsb movsw movsd movsq -> Movs
 cmps cmpsb cmpsw cmpsd cmpsq -> Cmps
 scas scasb scasw scasd scasq -> Scas
@@ -124,7 +124,7 @@ stos stosb stosw stosd stosq -> Stos
 rep -> Rep
 repe repz -> Repe
 repne repnz -> Repne
-in -> In
+in inb ind inw inl -> In
 out -> Out
 ins insb insw insd insq -> Ins
 outs outsb outsw outsd outsq -> Outs
@@ -216,3 +216,13 @@ verw -> Verw
 sldt sldtl -> Sldt
 pxor -> Pxor
 psubb psubw psubd -> Psub
+psrlw psrld psrlq -> Psrl
+psllw pslld psllq -> Psll
+pause -> Pause
+pand -> Pand
+pandn -> Pandn
+paddb paddw paddd paddq -> Padd
+movntq -> Movntq
+movdqu -> Movdqu
+arpl -> Arpl
+emms -> Emms
