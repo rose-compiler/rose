@@ -49,6 +49,7 @@ STD string AstToString( const AstNodePtr& s);
 class AstObserver {
   public:
    virtual void ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& n) = 0;
+   virtual ~AstObserver() {}
 };
 
 class CopyAstRecord : public ObserveInfo< AstObserver>
@@ -57,7 +58,7 @@ class CopyAstRecord : public ObserveInfo< AstObserver>
   AstInterfaceImpl& fa;
  public:
   CopyAstRecord(AstInterfaceImpl& _fa, const AstNodePtr& o, const AstNodePtr& _n) 
-      : fa(_fa), orig(o), n(_n) {}
+      : orig(o), n(_n), fa(_fa) {}
   virtual void UpdateObserver( AstObserver& o) const 
          {  o.ObserveCopyAst(fa, orig, n); }
 };
@@ -230,6 +231,7 @@ class ProcessAstNode
   public:
    virtual bool Traverse( AstInterface &fa, const AstNodePtr& n, 
                              AstInterface::TraversalVisitType t) = 0;
+   virtual ~ProcessAstNode() {}
 };
 
 bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
@@ -241,6 +243,7 @@ class TransformAstTree
  public:
   virtual bool operator()( AstInterface& fa, const AstNodePtr& n, 
                            AstNodePtr& result) = 0;
+  virtual ~TransformAstTree() {}
 };
 
 AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
