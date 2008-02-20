@@ -49,9 +49,8 @@ int main(int argc, char **argv)
 	 * attributing the statements of the AST with analysis
 	 * information. Use the StatementAttributeTraversal class for accessing
 	 * the analysis information on each statement */
-	char* outputfile=(char*)opt->getOutputGdlFileName().c_str();
-	bool gdloutput=!(opt->outputGdlAnim() || opt->outputGdl());
-	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,outputfile,gdloutput, !opt->quiet());
+
+	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
 	/* Extract all Pairs of Expressions from the Program so that they
 	 * can be compared for aliasing. */
 	ExpressionCollector ec;
