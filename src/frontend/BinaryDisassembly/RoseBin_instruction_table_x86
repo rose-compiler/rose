@@ -215,3 +215,4 @@ verr -> Verr
 verw -> Verw
 sldt sldtl -> Sldt
 pxor -> Pxor
+psubb psubw psubd -> Psub

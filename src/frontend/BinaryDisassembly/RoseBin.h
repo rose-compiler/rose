@@ -9,7 +9,8 @@
 #define __RoseBin__
 
 
-#include <mysql.h>
+//#include <mysql.h>
+
 #include <stdio.h>
 #include <iostream>
 // #include "rose.h"

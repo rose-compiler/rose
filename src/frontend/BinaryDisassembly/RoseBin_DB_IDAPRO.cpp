@@ -7,6 +7,7 @@
 #include "rose.h"
 #include "RoseBin_DB_IDAPRO.h"
 #include <errno.h>
+#include <mysql.h>
 
 using namespace std;
 using namespace __gnu_cxx;
