@@ -1,0 +1,7 @@
+#!/bin/sh
+svnrepository="file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE"
+version=`svn -q -r HEAD log ${svnrepository} | sed -n 2p | cut -f1 -d \ `
+dirnameBase="rose-svn-`date +%b%d-%Y`-${version}"
+svn export ${svnrepository} ${dirnameBase}
+tar zcf ${dirnameBase}.tar.gz ${dirnameBase}
+rm -rf ${dirnameBase}
