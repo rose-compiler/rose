@@ -250,6 +250,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 
 /* Convert the PAG analysis result into a Prolog Term */
 extern const char* dfi_input;
+extern const char* dfi_input_start;
 extern const char* dfi_name;
 extern int dfiparse (void);
 extern void dfirestart(FILE*);
@@ -259,8 +260,7 @@ template<typename DFI_STORE_TYPE>
 PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
   dfi_name = name.c_str();
-  dfi_input = dfi.c_str();
-  //cerr<<dfi<<endl;
+  dfi_input = dfi_input_start = dfi.c_str();
   dfirestart(0);
   dfiparse();
   return dfiterm;

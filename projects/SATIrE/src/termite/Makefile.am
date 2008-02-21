@@ -34,7 +34,7 @@ termparser.tab.h++ termparser.tab.c++: $(srcdir)/termparser.y++
 	mv y.tab.h termparser.tab.h++
 
 dfiparser.tab.h++ dfiparser.tab.c++: $(srcdir)/dfiparser.y++ 
-	bison -p dfi -d $(srcdir)/dfiparser.y++ 
+	bison -p dfi -d $(srcdir)/dfiparser.y++
 
 dfiscanner.c++: $(srcdir)/dfiscanner.l++ 
 	flex -Pdfi $(srcdir)/dfiscanner.l++

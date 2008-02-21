@@ -54,7 +54,7 @@ void dfierror(char *);
 /*grammar*/
 
 result:
-  '[' topbot ':' ']' { 
+  '[' value ':' ']' { 
     dfiterm = new PrologCompTerm(dfi_name);
     dfiterm->addSubterm($2); 
     dfiterm->addSubterm(new PrologList());
@@ -121,12 +121,14 @@ values:
 %%
 
 extern const char* dfi_input;
+extern const char* dfi_input_start;
 
 void dfierror(char* msg) 
 {
   cerr << std::string(msg) 
        << " near token '" << dfitext << "'" 
        << " before " << dfi_input << endl;
+  cerr << "In DFI string " << dfi_input_start << endl;
   dfiterm = new PrologCompTerm(dfi_name);
   dfiterm->addSubterm(new PrologAtom("parse error"));
   dfiterm->addSubterm(new PrologAtom(dfitext));

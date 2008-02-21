@@ -12,6 +12,7 @@ using namespace std;
 
 // This global variable is our "yyin"
 const char* dfi_input = 0;
+const char* dfi_input_start = 0;
 
 #define YY_INPUT(buf,result,max_size) { \
       if (dfi_input == 0 || *dfi_input == 0) \
