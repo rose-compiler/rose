@@ -260,6 +260,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
   dfi_name = name.c_str();
   dfi_input = dfi.c_str();
+  //cerr<<dfi<<endl;
   dfirestart(0);
   dfiparse();
   return dfiterm;

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.11 2008-02-20 21:21:32 markus Exp $
+// $Id: CommandLineParser.C,v 1.12 2008-02-21 14:31:17 adrian Exp $
 
 #include <config.h>
 
@@ -158,9 +158,9 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--rose-help")) {
     cl->appendCommandLine("--help");
   } else if (optionMatch(argv[i], "--frontend-warnings=yes")) {
-    cl->frontendWarningsOn():
+    cl->frontendWarningsOn();
   } else if (optionMatch(argv[i], "--frontend-warnings=no")) {
-    cl->frontendWarningsOff():
+    cl->frontendWarningsOff();
   } else if (optionMatch(argv[i], "--pag-vivu")) {
     cl->vivuOn();
   } else if (optionMatch(argv[i], "--pag-vivuLoopUnrolling")) {

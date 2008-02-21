@@ -43,7 +43,7 @@ void dfierror(char *);
 /*nonterminal types*/
 %type <singleTerm> result
 %type <singleTerm> value
-%type <singleTerm> indicator
+%type <singleTerm> topbot
 %type <singleTerm> assignment
  //%type <termList>   ints
 %type <termList>   assignments
@@ -54,19 +54,24 @@ void dfierror(char *);
 /*grammar*/
 
 result:
-  '[' indicator ':' ']' { 
+  '[' topbot ':' ']' { 
     dfiterm = new PrologCompTerm(dfi_name);
     dfiterm->addSubterm($2); 
     dfiterm->addSubterm(new PrologList());
     //cerr << dfiterm->getRepresentation() << endl;
   }
-  | '[' indicator ':' assignments ']' { 
+  | '[' value ':' assignments ']' { 
     dfiterm = new PrologCompTerm(dfi_name);
     dfiterm->addSubterm($2); 
     dfiterm->addSubterm(new PrologList(*$4));
     //cerr << dfiterm->getRepresentation() << endl;
   } 
   | '{' values '}' { 
+    dfiterm = new PrologCompTerm(dfi_name);
+    dfiterm->addSubterm(new PrologList(*$2));
+    //cerr << dfiterm->getRepresentation() << endl;
+  } 
+  | '(' values ')' { 
     dfiterm = new PrologCompTerm(dfi_name);
     dfiterm->addSubterm(new PrologList(*$2));
     //cerr << dfiterm->getRepresentation() << endl;
@@ -89,7 +94,7 @@ assignment:
   }
 ;
 
-indicator: 
+topbot: 
   TOP      { $$ = new PrologAtom("top"); }
   | BOTTOM { $$ = new PrologAtom("bottom"); }
 ;
@@ -97,7 +102,7 @@ indicator:
 value:
   INT              { $$ = new PrologInt($1); }
   | TOKEN          { $$ = new PrologAtom(*$1); delete $1; }
-  | indicator      { $$ = $1; }
+  | topbot         { $$ = $1; }
   | '(' values ')' { $$ = new PrologList(*$2); }
   | '{' values '}' { 
       PrologCompTerm* t = new PrologCompTerm("set");
@@ -105,11 +110,6 @@ value:
       $$ = t;
     }
 ;
-
-//ints:
-//  INT            { $$ = new deque<PrologTerm*>(); $$->push_front(new PrologInt($1)); }
-//  | INT ',' ints { $3->push_front(new PrologInt($1)); $$=$3; }
-//;
 
 values:
   value              { $$ = new deque<PrologTerm*>(); $$->push_front($1); }
