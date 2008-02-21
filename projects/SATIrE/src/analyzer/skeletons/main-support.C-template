@@ -70,16 +70,16 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
     if (verbose) std::cout << "done" << std::endl;
 
     if (verbose) std::cout << "testing cfg ... ";
-
     int test_result = kfg_testit(t.getCFG(), 1 /* quiet */);
-    if (test_result == 0)
-    {
-      std::cout << "failed." << std::endl;
-      std::cerr << std::endl
-		<< "Warning: PAG reports: there are problems in the ICFG."
-		<< std::endl;
-    } else {
-      if (verbose) std::cout << "done" << std::endl;
+    if (verbose) {
+      if (test_result == 0) {
+	std::cout << "failed." << std::endl;
+	std::cerr << std::endl
+		  << "Warning: PAG reports: there are problems in the ICFG."
+		  << std::endl;
+      } else {
+	std::cout << "done" << std::endl;
+      }
     }
     
     if(opt->outputIcfg()) {

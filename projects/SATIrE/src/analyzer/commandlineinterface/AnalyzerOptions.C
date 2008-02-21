@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.14 2008-02-20 21:21:32 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.15 2008-02-21 17:00:24 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -47,23 +47,22 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "                                          6 : topsort scc bfs preorder\n"
     "                                          7 : topsort scc reversed bfs dfs postorder\n"
     "                                          8 : topsort scc bfs postorder\n"
-    "   --check-ast=yes|no             run all ROSE specific test for checking whether ROSE-AST is correct\n"
+    "   --check-ast=yes|no             run all ROSE specific test for checking whether ROSE-AST is correct [default=no]\n"
     "   --analysis-files=all|cl        analyse all source files [default=all]\n"
     "   --analysis-annotation=yes|no   annotate analysis results in AST and output [default=yes]\n"
     "\n"
     " Output options:\n"
-    "   --statistics=yes|no            output analyzer statistics on stdout\n"
-    "   --verbose=yes|no               output analyzer debug info on stdout\n"
-    "   --quiet                        suppress most progress info\n"
-    "   --output-text=yes|no           output analysis results for each statement on stdout\n"
-    "   --output-collectedfuncs=yes|no output all functions that are collected for the icfg generation\n"
+    "   --statistics=yes|no            output analyzer statistics on stdout [default=no]\n"
+    "   --verbose=yes|no               output analyzer debug info on stdout [default=yes]\n"
+    "   --output-text=yes|no           output analysis results for each statement on stdout [default=no]\n"
+    "   --output-collectedfuncs=yes|no output all functions that are collected for the icfg generation [default=no]\n"
     "   --output-sourcefile <FILENAME> generate source file with annotated analysis results for each statement\n"
     "   --output-termfile <FILENAME>   generate Prolog term representation of input program AST\n"
     "   --output-icfgfile <FILENAME>   output icfg of input program (shows forward and backward edges)\n"
     "   --help                         output this help message on stdout\n"
     "\n"
     " Handling of multiple input and output files\n"
-    "   --output-source=yes|no         output source files (only useful with option 'output-fileprefix')\n"
+    "   --output-source=yes|no         output source files (only useful with option 'output-fileprefix') [default=no]\n"
     "   --output-fileprefix <PREFIX>   generate for each input file one output file with prefixed name\n"
     "                                  (only applied to source files in this version)                 \n"
     "\n"
@@ -75,16 +74,16 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "\n"
     /*
     " PAG garbage collection options:\n"
-    "   --pag:gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
+    "   --pag-gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
     "                                 at which GC is started\n"
-    "   --pag:gc-highperc <num>           if after a GC less than <num>% [0..99] of space in the heap\n"
+    "   --pag-gc-highperc <num>           if after a GC less than <num>% [0..99] of space in the heap\n"
     "                                 is free, a new bank is allocated and added to the heap\n"
     " VIVU options:\n"
     "   --pag:vivu                        turns on vivu computation\n"
     "                                 use --callstringlength to set vivu chop size\n"
-    "   --pag:vivuLoopUnrolling <num>     if set to 2 it is distinguished between first and other executions\n"
+    "   --pag-vivuLoopUnrolling <num>     if set to 2 it is distinguished between first and other executions\n"
     "                                 [default 2]\n"
-    "   --pag:vivu4MaxUnrolling <num>     maximal unrolling for VIVU4 mapping [default: -1]\n"
+    "   --pag-vivu4MaxUnrolling <num>     maximal unrolling for VIVU4 mapping [default: -1]\n"
     "\n";
     */
     ;

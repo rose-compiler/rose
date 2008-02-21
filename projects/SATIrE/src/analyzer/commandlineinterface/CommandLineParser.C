@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.12 2008-02-21 14:31:17 adrian Exp $
+// $Id: CommandLineParser.C,v 1.13 2008-02-21 17:00:24 markus Exp $
 
 #include <config.h>
 
@@ -12,16 +12,11 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
   cl->clearCommandLine();
   cl->appendCommandLine(std::string(argv[0]));
 
-  int n_consumed;
-  for (int i=1; i < argc;) {
-    n_consumed = handleOption(cl, i, argc, argv);
-    i += n_consumed;
-  }
-  if(cl->frontendWarnings()) 
-    cl->appendCommandLine("--edg:no_warnings");
+  for (int i=1; i < argc; i += handleOption(cl, i, argc, argv));
 
-  //cl->setAnimationDirectoryName("anim-out");
-  //cl->setGdlFileName(cl->getProgramName()+"_result.gdl");
+  // handle edg warnings by modifying the command line that is passed to ROSE
+  if(!cl->frontendWarnings()) 
+    cl->appendCommandLine("--edg:no_warnings");
 
   // post-processing of parsed values
   if(cl->helpMessageRequested()) {
@@ -74,12 +69,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setCallStringLength(-1);
   } else if (optionMatch(argv[i], "--verbose=yes")) {
     cl->verboseOn();
+    cl->quietOff();
   } else if (optionMatch(argv[i], "--verbose=no")) {
     cl->verboseOff();
-  } else if (optionMatch(argv[i], "--quiet=yes")) {
     cl->quietOn();
-  } else if (optionMatch(argv[i], "--quiet=no")) {
-    cl->quietOff();
   } else if (optionMatch(argv[i], "--pag-startbank")) {
     cl->setStartBank(atoi(argv[++i]));
   } else if (optionMatch(argv[i], "--pag-sharemin")) {
@@ -155,7 +148,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
      * with SATIrE command line options we use '--rose:' but pass
      * all options through unchanged as '-rose:' */
     cl->appendCommandLine(std::string(argv[i]+1));
-  } else if (optionMatch(argv[i], "--rose-help")) {
+  } else if (optionMatch(argv[i], "--help-rose")) {
     cl->appendCommandLine("--help");
   } else if (optionMatch(argv[i], "--frontend-warnings=yes")) {
     cl->frontendWarningsOn();
@@ -223,7 +216,7 @@ void CommandLineParser::failed(AnalyzerOptions *opt) {
 
 bool CommandLineParser::optionMatch(char* s1, char* s2) {
   bool match=!strcmp(s1,s2);
-  if(match) std::cout << "INFO: found option: " << s1 << std::endl;
+  //if(match) std::cout << "INFO: found option: " << s1 << std::endl;
   return match;
 }
 
