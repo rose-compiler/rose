@@ -1,7 +1,21 @@
 #!/bin/sh
 svnrepository="file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE"
-version=`svn -q -r HEAD log ${svnrepository} | sed -n 2p | cut -f1 -d \ `
-dirnameBase="rose-svn-`date +%b%d-%Y`-${version}"
-svn export ${svnrepository} ${dirnameBase}
-tar zcf ${dirnameBase}.tar.gz ${dirnameBase}
-rm -rf ${dirnameBase}
+versioninfo="`svn -q -r HEAD log ${svnrepository} | sed -n 2p`"
+version=`echo "${versioninfo}" | cut -f1 -d \ `
+modificationdate=`echo "${versioninfo}" | cut -f5 -d \ `
+
+dirnameBase="rose-svn-`date -d ${modificationdate} +%b%d-%Y`-${version}"
+
+if [ -e "${dirnameBase}" ]; then
+  echo "File or directory ${dirnameBase} already exists -- please remove it" 1>&2
+  exit 1
+fi
+if [ -e "${dirnameBase}.tar.gz" ]; then
+  echo "Already have a tarball ${dirnameBase}.tar.gz -- don't need to rebuild it" 1>&2
+  exit 1
+fi
+svn export "${svnrepository}" "${dirnameBase}"
+tar zcf "${dirnameBase}.tar.gz" "${dirnameBase}/"
+rm -rf "${dirnameBase}/"
+echo "Built tarball ${dirnameBase}.tar.gz from trunk SVN revision ${version}"
+exit 0
