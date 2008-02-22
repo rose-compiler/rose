@@ -74,7 +74,7 @@ EXTRA_DIST = \
    CompositeTopology.h          ListOfDoubleArray.h                     OGTrigFunction.h                       conversion.h \
    CrossSectionMapping.h        ListOfDoubleCompositeGridFunction.h     OGgetIndex.h                           davidsReal.h \
    CylinderMapping.h            ListOfDoubleDistributedArray.h          OVFortranDefine.h                      depend \
-   DPtr.H                       ListOfDoubleGenericGridFunction.h       OVFortranDefine.h.in                   depend.bak \
+   DPtr.H                       ListOfDoubleGenericGridFunction.h       OVFortranDefine.h.in                   \
    DataBaseAccessFunctions.h    ListOfDoubleGridCollectionFunction.h    OffsetShell.h                          derivativeDefinitions.h \
    DataBaseBuffer.h             ListOfDoubleMappedGridFunction.h        Ogen.h                                 display.h \
    DataFormats.h                ListOfDoubleSerialArray.h               Oges.h                                 doubleCompositeGridFunction.h \
