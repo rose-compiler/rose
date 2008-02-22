@@ -3,8 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-//Liao, 2/22/2008, fix the undefined STD in projects/arrayOptimization/ArrayAnnot.h
-#define STD std::
+
 class CmdOptions
 {
   static CmdOptions *inst;

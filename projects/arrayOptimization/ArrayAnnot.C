@@ -23,20 +23,20 @@ bool ArrayShapeDescriptor:: get_dimension( int& val) const
 }
 
 
-bool ArrayShapeDescriptor::read( STD istream& in)
+bool ArrayShapeDescriptor::read( std::istream& in)
 {
   return ReadContainer<ArrayShapeDescriptor, ReadSymbolicFunctionDeclaration,
                         ';', '{','}'>::
     read(*this, in);
 }
 
-bool ArrayElemDescriptor::read( STD istream& in)
+bool ArrayElemDescriptor::read( std::istream& in)
 {
   return ReadContainer<ArrayElemDescriptor, ReadSymbolicFunctionDeclaration,';', '{','}'>::
     read(*this, in);
 }
 
-bool ArrayDescriptor::read( STD istream& in)
+bool ArrayDescriptor::read( std::istream& in)
 {
   return ReadContainer<ArrayDescriptor, ReadSymbolicFunctionDeclaration,';', '{','}'>::
     read(*this, in);
@@ -44,7 +44,7 @@ bool ArrayDescriptor::read( STD istream& in)
 
 void ArrayShapeDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur)
   {
-    STD string annot = cur.first.first;
+    std::string annot = cur.first.first;
     if (annot == "dimension") {
         assert(cur.first.second.size() == 0);
         dimension = cur.second;
@@ -53,19 +53,19 @@ void ArrayShapeDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cu
         length.push_back( SymbolicFunctionDeclaration( cur.first.second, cur.second) );
     }
     else {
-      STD cerr << "Error: non-recognized annotation: " << annot << STD endl;
+      std::cerr << "Error: non-recognized annotation: " << annot << std::endl;
       assert(false);
     }
   }
 
 void ArrayElemDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur)
 {
-  STD string annot = cur.first.first;
+  std::string annot = cur.first.first;
   if (annot == "elem") {
     elem.push_back( SymbolicFunctionDeclaration( cur.first.second, cur.second) );
   }
   else{
-      STD cerr << "Error: non-recognized annotation: " << annot << STD endl;
+      std::cerr << "Error: non-recognized annotation: " << annot << std::endl;
       assert(false);
     }
 
@@ -73,14 +73,14 @@ void ArrayElemDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur
   
 void ArrayDescriptor:: push_back( const ReadSymbolicFunctionDeclaration& cur)
 {
-  STD string annot = cur.first.first;
+  std::string annot = cur.first.first;
   if (annot == "elem") {
      ArrayElemDescriptor::push_back( cur);
   }
   else 
     ArrayShapeDescriptor::push_back(cur) ;
 }
-void ArrayShapeDescriptor::write( STD ostream& out) const
+void ArrayShapeDescriptor::write( std::ostream& out) const
 {
   out << "dimension=";
   dimension.write(out); 
@@ -90,10 +90,10 @@ void ArrayShapeDescriptor::write( STD ostream& out) const
 
 void ArrayShapeDescriptor :: Dump() const
 {
-  write(STD cerr);
+  write(std::cerr);
 }
 
-void ArrayElemDescriptor::write( STD ostream& out) const
+void ArrayElemDescriptor::write( std::ostream& out) const
 {
   out << ";  elem=";
   elem.write(out);
@@ -101,10 +101,10 @@ void ArrayElemDescriptor::write( STD ostream& out) const
 
 void ArrayElemDescriptor :: Dump() const
 {
-  write(STD cerr);
+  write(std::cerr);
 }
 
-void ArrayDescriptor::write( STD ostream& out) const
+void ArrayDescriptor::write( std::ostream& out) const
 {
   out << "{";
   ArrayShapeDescriptor::write(out);
@@ -114,11 +114,11 @@ void ArrayDescriptor::write( STD ostream& out) const
 
 void ArrayDescriptor :: Dump() const
 {
-  write(STD cerr);
+  write(std::cerr);
 }
 
 void ArrayDefineDescriptor ::
-replace_var(  const STD string& varname, const SymbolicVal& repl)
+replace_var(  const std::string& varname, const SymbolicVal& repl)
 { 
   ArrayDescriptor::replace_var( varname, repl);
   reshape.replace_var( varname, repl);
@@ -133,7 +133,7 @@ replace_val(MapObject<SymbolicVal, SymbolicVal>& repl)
 
 void ArrayDefineDescriptor::push_back( const ReadSymbolicFunctionDeclaration& cur)
 {
-  STD string annot = cur.first.first;
+  std::string annot = cur.first.first;
   if (annot == "reshape")  {
     if ( cur.first.second.size() > 1) {
       cur.Dump();
@@ -145,13 +145,13 @@ void ArrayDefineDescriptor::push_back( const ReadSymbolicFunctionDeclaration& cu
      ArrayDescriptor::push_back(cur);
 }
 
-bool ArrayDefineDescriptor :: read( STD istream& in)
+bool ArrayDefineDescriptor :: read( std::istream& in)
 {
   return ReadContainer< ArrayDefineDescriptor, ReadSymbolicFunctionDeclaration,';', '{','}'>::
                read(*this, in);
 }
 
-void ArrayDefineDescriptor :: write( STD ostream& out) const
+void ArrayDefineDescriptor :: write( std::ostream& out) const
 { 
   ArrayDescriptor::write(out);
   out << "reshape = ";
@@ -160,11 +160,11 @@ void ArrayDefineDescriptor :: write( STD ostream& out) const
 
 void ArrayDefineDescriptor :: Dump() const
 {
-  write(STD cerr);
+  write(std::cerr);
 }
 
 
-bool ArrayOptDescriptor :: read( STD istream& in)
+bool ArrayOptDescriptor :: read( std::istream& in)
 {
   read_ch(in, '{');
   if (peek_id(in) == "define") { 
@@ -175,14 +175,14 @@ bool ArrayOptDescriptor :: read( STD istream& in)
                read(*this, in);
 }
 
-void ArrayOptDescriptor :: write( STD ostream& out) const
+void ArrayOptDescriptor :: write( std::ostream& out) const
 { 
   defs.write(out);
   ArrayDescriptor::write(out);
 }
 
 void ArrayOptDescriptor :: 
-replace_var(  const STD string& varname, const SymbolicVal& repl)
+replace_var(  const std::string& varname, const SymbolicVal& repl)
 { 
   ArrayDescriptor::replace_var( varname, repl);
   for (DefContainer::iterator p = defs.begin();
@@ -205,7 +205,7 @@ replace_val(MapObject<SymbolicVal, SymbolicVal>& repl)
 
 void ArrayOptDescriptor :: Dump() const
 {
-  write(STD cerr);
+  write(std::cerr);
 }
 
 ArrayAnnotation* ArrayAnnotation::inst = 0;
@@ -267,9 +267,9 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
   ArrayModifyDescriptor desc;
   if (!arrayModify.known_operator( fa, arrayExp, &args, &desc, true)) {
      if (DebugArrayAnnot()) {
-        STD cerr << "NOT mod-array operator: ";
-        STD cerr << AstToString(arrayExp);
-        STD cerr << STD endl;
+        std::cerr << "NOT mod-array operator: ";
+        std::cerr << AstToString(arrayExp);
+        std::cerr << std::endl;
      }
     return false;
   }
@@ -287,9 +287,9 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
   }
 
   if (DebugArrayAnnot()) {
-     STD cerr << "recognized mod-array operator: ";
-     STD cerr << AstToString(arrayExp);
-     STD cerr << STD endl;
+     std::cerr << "recognized mod-array operator: ";
+     std::cerr << AstToString(arrayExp);
+     std::cerr << std::endl;
 
      return true;
   }
@@ -309,7 +309,7 @@ is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, CPPAstIn
     *descp = desc.second;
   }
   if (alias != 0) {
-    for (STD list<SymbolicValDescriptor>::const_iterator p = desc.first.begin(); 
+    for (std::list<SymbolicValDescriptor>::const_iterator p = desc.first.begin(); 
          p != desc.first.end(); ++p) {
        SymbolicValDescriptor cur = *p;
        AstNodePtr curarg;
@@ -421,7 +421,7 @@ is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig,
 
 bool ArrayAnnotation ::
 may_alias(AstInterface& _fa, const AstNodePtr& fc, const AstNodePtr& result,
-                         CollectObject< STD pair<AstNodePtr, int> >& collectalias)
+                         CollectObject< std::pair<AstNodePtr, int> >& collectalias)
 {
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   if (is_access_array_elem( fa, fc) || is_access_array_length(fa, fc) ||
@@ -432,7 +432,7 @@ may_alias(AstInterface& _fa, const AstNodePtr& fc, const AstNodePtr& result,
 
 bool ArrayAnnotation ::
 allow_alias(AstInterface& fa, const AstNodePtr& fc, 
-                         CollectObject< STD pair<AstNodePtr, int> >& collectalias)
+                         CollectObject< std::pair<AstNodePtr, int> >& collectalias)
 {
   return OperatorAliasAnnotation::get_inst()->allow_alias(fa, fc, collectalias);
 }

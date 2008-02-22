@@ -68,7 +68,7 @@ class ContainerLoopBodyParallelizable : StmtInfoCollect
        }
        else {
              AstNodePtr var;
-             STD string funcname;
+             std::string funcname;
              if (fa.IsMemberFunctionCall(loc, &var, &funcname)) {
                 if (funcname != "operator*") {
 		   if (DebugCPTest()) 
