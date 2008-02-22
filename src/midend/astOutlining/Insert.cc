@@ -223,7 +223,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       // Insert it into the class.
       if (i != mems.end ())
         ASTtools::moveBeforePreprocInfo ((*i), friend_proto);
-      cls_scope->insert_member (i, friend_proto);
+      cls_scope->get_members().insert(i, friend_proto);
       friend_proto->set_parent (cls_scope);
       friend_proto->set_scope (scope);
     }

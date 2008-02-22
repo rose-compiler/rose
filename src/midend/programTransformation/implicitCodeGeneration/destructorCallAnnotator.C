@@ -731,7 +731,7 @@ class Transformer : public AstSimpleProcessing
 			    {
 			      SgStatement *dtorStmt = buildDestructorStmt(*i);
 			      ROSE_ASSERT(dtorStmt != NULL);
-			      stmtBB->insert_statement(retPos.second, dtorStmt);
+			      stmtBB->get_statements().insert(retPos.second, dtorStmt);
 			      dtorStmt->set_parent(stmtBB);
 			    }
 		       }

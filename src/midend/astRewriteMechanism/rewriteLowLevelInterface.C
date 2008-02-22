@@ -41,7 +41,7 @@ LowLevelRewrite::insert  ( SgStatement* targetStatement, SgStatement* newStateme
      ROSE_ASSERT (targetStatement != NULL);
      ROSE_ASSERT (newStatement != NULL);
      SgStatementPtrList list;
-	
+        
      list.push_back(newStatement);
      insert(targetStatement,list,insertBeforeNode);
    }
@@ -405,7 +405,9 @@ insertStatementUsingDependenceInformation (
        // printf ("##### Append the new statement after the last position where a dependent variable is declared in the local scope \n");
        // Use new function added to append/prepend at a specified location in the list of statements
        // currentBlock->append_statement (furthestDeclarationInSourceSequence,*transformationStatementIterator);
-          currentBlock->append_statement (furthestDeclarationInSourceSequence,newTransformationStatement);
+          SgStatementPtrList::iterator furthestDeclarationInSourceSequence_copy = furthestDeclarationInSourceSequence;
+          ++furthestDeclarationInSourceSequence_copy;
+          currentBlock->get_statements().insert(furthestDeclarationInSourceSequence_copy, newTransformationStatement);
         }
 
 #if 0

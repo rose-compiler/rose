@@ -293,7 +293,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		 SgStatement *parentScope = isSgStatement( stm->get_scope() );
 		 SgBasicBlock *body = forStm->get_loop_body();
 		 ROSE_ASSERT ( !inForTest.empty() && body && parentScope );
-		 SgStatementPtrList &list = body->get_statements();
+		 // SgStatementPtrList &list = body->get_statements();
 
 		 // if function call is in loop condition, we add initialized variable before the loop and at its end
 		 // hoist initialized variable declarations outside the loop
@@ -321,7 +321,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		   }
 
 		 // in a for-loop, always insert assignments at the end of the loop
-		 body->insert_statement( list.end(), d->assignment );
+		 body->get_statements().push_back( d->assignment );
 		 d->assignment->set_parent( body );
 
 		 // remove marker
@@ -342,8 +342,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		       SgBasicBlock *body = isSgBasicBlock( isSgWhileStmt( scope )->get_body() );
 		       ROSE_ASSERT ( body );
 		       d->assignment->set_parent( body );
-		       SgStatementPtrList &list = body->get_statements();
-		       body->insert_statement( list.end(), d->assignment );
+		       body->get_statements().push_back( d->assignment );
 		     }
 
 		     // SgForInitStatement has scope SgForStatement, move declarations before the for loop;
@@ -383,8 +382,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		       // adding assignemts at the end of the do-while loop
 		       SgBasicBlock *body = isSgDoWhileStmt( scope )->get_body();
 		       ROSE_ASSERT ( body );
-		       SgStatementPtrList &list = body->get_statements();
-		       body->insert_statement( list.end(), d->assignment );
+		       body->get_statements().push_back( d->assignment );
 		     }
 		     break;
 

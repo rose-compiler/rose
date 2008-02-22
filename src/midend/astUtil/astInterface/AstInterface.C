@@ -265,6 +265,7 @@ SgVarRefExp* ToVarRef( AstInterface& fa, const AstNodePtr& _exp)
       r->set_parent(GetNullScope()); 
       return isSgVarRefExp(r);
      }
+  default: break;
   }
   return 0;
 }
@@ -784,7 +785,7 @@ string AstToString( const AstNodePtr& _s)
             break;
           default: {
                assert(isSgType(s) == 0);
-               SgNode* p = s->get_parent(); 
+               s->get_parent(); 
                r = r + s->unparseToString();
               }
           }
@@ -1301,7 +1302,7 @@ CreateAssignment( const AstNodePtr& _lhs, const AstNodePtr& _rhs)
   SgType* lhstype = lhsexp->get_type(); 
   SgExpression* rhsexp = ToExpression(*this, _rhs);
 
-  SgVarRefExp *var = isSgVarRefExp( lhs );
+  isSgVarRefExp( lhs );
   if (lhstype->variantT() == V_SgClassType) {
     SgClassType *lhstype1 = isSgClassType(lhstype);
     SgName classname = lhstype1->get_name();
@@ -1311,7 +1312,7 @@ CreateAssignment( const AstNodePtr& _lhs, const AstNodePtr& _rhs)
     args.push_back( rhsexp);
     SgMemberFunctionSymbol *f = GetMemberFunc( impl, c, "operator=", &args);
     if (f != 0) {
-        SgClassDefinition *def = GetClassDefn(c->get_declaration());
+        GetClassDefn(c->get_declaration());
         SgMemberFunctionRefExp *NEW_MFUNCTION_REF(fr,f);
         SgExpression *NEW_BIN_OP(func, SgDotExp, lhsexp, fr);
         SgExprListExp *NEW_EXPR_LIST(argexp);
@@ -1889,6 +1890,7 @@ bool AstInterface::IsBlock( const AstNodePtr& _exp)
   case V_SgSwitchStatement:
   case V_SgForInitStatement:
     return true;
+  default: break;
   };
   return false;
 }
@@ -1950,6 +1952,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
           args->push_back(AST_NULL);
          break;
       }
+  default: break;
   }
   if (argexp != 0) {
      SgExpressionPtrList l = argexp->get_expressions();
@@ -2102,6 +2105,7 @@ IsScalarType( const AstNodeType& _type)
   case V_SgTypeComplex:
   case V_SgTypeImaginary:
      return true;
+  default: break;
   }
   return false;
 }
@@ -2147,6 +2151,7 @@ IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
       case V_SgExpressionRoot:
            exp = isSgExpressionRoot(exp)->get_operand();
            break;
+      default: break;
       }
     //std::cerr << "IsExpresssion: " << exp->sage_class_name() << "\n";
           if (exptype != 0)
@@ -2284,6 +2289,7 @@ bool AstInterface::IsPostTestLoop( const AstNodePtr& _s)
   switch (s->variantT()) {
   case V_SgDoWhileStmt:
     return true;
+  default: break;
   }
   return false;
 }
@@ -3231,6 +3237,7 @@ class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
             var->set_symbol( r);
         }
         break;
+     default: break;
      }
     return ast;
   }

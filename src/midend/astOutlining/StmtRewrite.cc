@@ -94,7 +94,7 @@ ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
   ROSE_ASSERT (i != targetBB_list.end ());
   SgStatement* oldblock = (*i);
 
-  targetBB->insert_statement (i, s_new);
+  targetBB->get_statements().insert(i, s_new);
   LowLevelRewrite::remove (oldblock);
 }
 
