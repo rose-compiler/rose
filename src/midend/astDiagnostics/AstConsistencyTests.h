@@ -73,7 +73,7 @@ class TestAstNullPointers : public AstNodePtrs {
 
 
   // these dummy classes are just to show the interfaces of the 4 kinds of traversals
-  void dummyTests(SgProject* sageProject); // traverse AST with all 4 kinds of traversals
+  // void dummyTests(SgProject* sageProject); // traverse AST with all 4 kinds of traversals
   class DI : AstInheritedAttribute {}; // Dummy inherited attribute
   class DS : AstSynthesizedAttribute {}; // Dummy synthesized attribute
   class DummyISTestQuery1 : public AstTopDownBottomUpProcessing<DI,DS> {
@@ -206,7 +206,7 @@ class TestExpressionTypes : public AstSimpleProcessing
      public:
 
       //! static function to do test on any IR node
-          static void test(SgNode* node);
+       // static void test(SgNode* node);
 
       //! visit function required for traversal
           void visit ( SgNode* node );
@@ -340,7 +340,7 @@ class TestLValueExpressions : public AstSimpleProcessing
      public:
 
       //! static function to do test on any IR node
-          static void test(SgNode* node);
+      //  static void test(SgNode* node);
 
       //! visit function required for traversal
           void visit ( SgNode* node );

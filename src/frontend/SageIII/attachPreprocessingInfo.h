@@ -15,7 +15,7 @@
 #if 1
 // DQ (4/5/2006): Andreas has removed this code!
 
-void printOutComments ( SgLocatedNode* locatedNode );
+// void printOutComments ( SgLocatedNode* locatedNode );
 
 // This function is defined in preproc.C and used to collect the attributes
 // extern ROSEAttributesList *getPreprocessorDirectives(const char *fileName);

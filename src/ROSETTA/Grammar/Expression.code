@@ -2559,7 +2559,7 @@ SgFunctionCallExp::append_arg(SgExpression* what)
    }
 #endif
 
-#if 0
+#if 1
 // DQ: trying to remove the nested iterator class
 // $CLASSNAME::insert_arg(const SgExpression::iterator& where, SgExpression* what)
 void
