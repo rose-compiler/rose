@@ -74,7 +74,7 @@ InsertFortranContainsStatement::visit ( SgNode* node )
                          SageInterface::setSourcePosition(containsStatement);
                          containsStatement->set_definingDeclaration(containsStatement);
 
-                         block->insert_statement(i,containsStatement);
+                         block->get_statements().insert(i,containsStatement);
                          ROSE_ASSERT(containsStatement->get_parent() != NULL);
                        }
                   }
@@ -108,7 +108,7 @@ InsertFortranContainsStatement::visit ( SgNode* node )
                          containsStatement->set_definingDeclaration(containsStatement);
 
                       // This insert function does not set the parent (unlike for SgBasicBlock)
-                         classDefinition->insert_member(i,containsStatement);
+                         classDefinition->get_members().insert(i,containsStatement);
                          containsStatement->set_parent(classDefinition);
                          ROSE_ASSERT(containsStatement->get_parent() != NULL);
                        }

@@ -583,15 +583,15 @@ HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_END
 
 HEADER_LIST_DECLARATIONS_START
      public:
-          LIST_FUNCTION_RETURN_TYPE append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
-          LIST_FUNCTION_RETURN_TYPE prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
+          void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
+          void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
 
      public:
        // New functions added
        // LIST_FUNCTION_RETURN_TYPE append_LIST_FUNCTION_NAME  ( const LIST_DATA_TYPE::iterator & list, LIST_ELEMENT_DATA_TYPE element );
        // LIST_FUNCTION_RETURN_TYPE prepend_LIST_FUNCTION_NAME ( const LIST_DATA_TYPE::iterator & list, LIST_ELEMENT_DATA_TYPE element );
 
-          LIST_FUNCTION_RETURN_TYPE insert_LIST_FUNCTION_NAME  ( const LIST_DATA_TYPE::iterator & list, LIST_ELEMENT_DATA_TYPE element );
+       // LIST_FUNCTION_RETURN_TYPE insert_LIST_FUNCTION_NAME  ( const LIST_DATA_TYPE::iterator & list, LIST_ELEMENT_DATA_TYPE element );
 
 
      public:
@@ -672,8 +672,8 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
-          void prepend_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
-          void append_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
+       // void prepend_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
+       // void append_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called seperately (see documentation)
@@ -1098,9 +1098,9 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           SgInitializedNamePtrList::iterator insert_variable  ( const SgInitializedNamePtrList::iterator & where, const SgInitializedName & what );
 #else
        // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
-          SgInitializedNamePtrList::iterator append_variable  ( SgInitializedName* what, SgInitializer* init );
-          SgInitializedNamePtrList::iterator prepend_variable ( SgInitializedName* what, SgInitializer* init );
-          SgInitializedNamePtrList::iterator insert_variable  ( const SgInitializedNamePtrList::iterator & where, SgInitializedName* what );
+          void append_variable  ( SgInitializedName* what, SgInitializer* init );
+          void prepend_variable ( SgInitializedName* what, SgInitializer* init );
+          // void insert_variable  ( const SgInitializedNamePtrList::iterator & where, SgInitializedName* what );
 #endif
 
           virtual unsigned int cfgIndexForEnd() const;
@@ -5025,7 +5025,7 @@ SgGlobal::append_declaration(SgDeclarationStatement * what)
      ROSE_ASSERT(find(get_declarations().begin(),get_declarations().end(),what) == get_declarations().end() || what->get_file_info()->isShared() == true);
 #endif
 
-     insert_declaration(get_declarations().end(),what);
+     get_declarations().push_back(what);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -5035,12 +5035,13 @@ SgGlobal::append_declaration(SgDeclarationStatement * what)
 void
 SgGlobal::prepend_declaration(SgDeclarationStatement * what) 
    {
-     insert_declaration(get_declarations().begin(),what);
+     get_declarations().insert(get_declarations().begin(), what);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
    }
 
+#if 0
 void
 SgGlobal::insert_declaration ( const SgDeclarationStatementPtrList::iterator& where, SgDeclarationStatement* what)
    {
@@ -5055,6 +5056,7 @@ SgGlobal::insert_declaration ( const SgDeclarationStatementPtrList::iterator& wh
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
    }
+#endif
 #endif
 
 bool
@@ -6720,7 +6722,7 @@ SgBasicBlock::append_statement(SgStatement * what)
 //   printf ("In $CLASSNAME::append_statement(): Call to insert_statement() commented out \n");
 //   ROSE_ABORT();
 
-     insert_statement(get_statements().end(),what);
+     get_statements().push_back(what);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -6730,14 +6732,14 @@ SgBasicBlock::append_statement(SgStatement * what)
 void
 SgBasicBlock::prepend_statement(SgStatement *what)
    {
-     insert_statement(get_statements().begin(), what);
+     get_statements().insert(get_statements().begin(), what);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
    }
 #endif
 
-#if 1
+#if 0
 void
 SgBasicBlock::append_statement(const SgStatementPtrList::iterator& where, SgStatement * what) 
    {
@@ -6761,7 +6763,7 @@ SgBasicBlock::append_statement(const SgStatementPtrList::iterator& where, SgStat
    }
 #endif
 
-#if 1
+#if 0
 void
 SgBasicBlock::prepend_statement(const SgStatementPtrList::iterator& where, SgStatement *what)
    {
@@ -6773,7 +6775,7 @@ SgBasicBlock::prepend_statement(const SgStatementPtrList::iterator& where, SgSta
    }
 #endif
 
-#if 1
+#if 0
 void
 SgBasicBlock::insert_statement(const SgStatementPtrList::iterator& where, SgStatement * what)
    {
@@ -6968,15 +6970,16 @@ SgForInitStatement::post_construction_initialization()
 void
 SgForInitStatement::append_init_stmt(SgStatement * what)
    {
-     insert_init_stmt(get_init_stmt().end(),what);
+     get_init_stmt().push_back(what);
    }
 
 void
 SgForInitStatement::prepend_init_stmt(SgStatement * what)
    {
-     insert_init_stmt(get_init_stmt().begin(),what);
+     get_init_stmt().insert(get_init_stmt().begin(), what);
    }
 
+#if 0
 void
 SgForInitStatement::insert_init_stmt(const SgStatementPtrList::iterator& where, SgStatement * what)
    {
@@ -6989,6 +6992,7 @@ SgForInitStatement::insert_init_stmt(const SgStatementPtrList::iterator& where, 
 
      get_init_stmt().insert(where,what);
    }
+#endif
 
 bool
 SgForInitStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
@@ -7237,6 +7241,7 @@ SgForStatement::prepend_init_stmt(SgStatement * what)
      get_for_init_stmt()->prepend_init_stmt(what); 
    }
 
+#if 0
 void
 SgForStatement::insert_init_stmt(const SgStatementPtrList::iterator& where, SgStatement * what) 
    {
@@ -7255,6 +7260,7 @@ SgForStatement::insert_init_stmt(const SgStatementPtrList::iterator& where, SgSt
 #endif
      get_for_init_stmt()->insert_init_stmt(where,what);
    }
+#endif
 
 bool
 SgForStatement::replace_child(SgStatement *target,SgStatement *newstmt,
@@ -7583,6 +7589,7 @@ SgFunctionDeclaration::hasEllipses()
      get_type()->set_has_ellipses(1);
    }
 
+#if 0
 /* InitalizedName tuple : (SgName, DeclStmt, type, Initializer) */
 SgInitializedNamePtrList::iterator 
 SgFunctionDeclaration::insert_arg(const SgInitializedNamePtrList::iterator& where, SgInitializedName* what)
@@ -7592,23 +7599,24 @@ SgFunctionDeclaration::insert_arg(const SgInitializedNamePtrList::iterator& wher
 
      return get_parameterList()->insert_arg(where,what);
    }
+#endif
 
-SgInitializedNamePtrList::iterator
+void
 SgFunctionDeclaration::append_arg( SgInitializedName* what)
    {
   // DQ (7/19/2005): This is now set in the post_construction_initialization()
      ROSE_ASSERT(get_parameterList() != NULL);
 
-     return get_parameterList()->append_arg(what);
+     get_parameterList()->append_arg(what);
    }
 
-SgInitializedNamePtrList::iterator
+void
 SgFunctionDeclaration::prepend_arg( SgInitializedName* what)
    {
   // DQ (7/19/2005): This is now set in the post_construction_initialization()
      ROSE_ASSERT(get_parameterList() != NULL);
 
-     return get_parameterList()->prepend_arg(what);
+     get_parameterList()->prepend_arg(what);
    }
 
 SgInitializedNamePtrList & 
@@ -8204,6 +8212,7 @@ SgFunctionParameterList::post_construction_initialization()
         }
    }
 
+#if 0
 SgInitializedNamePtrList::iterator 
 SgFunctionParameterList::insert_arg(const SgInitializedNamePtrList::iterator& where, SgInitializedName* what)
    {
@@ -8236,19 +8245,18 @@ SgFunctionParameterList::insert_arg(const SgInitializedNamePtrList::iterator& wh
 #endif
      return new_item;
    }
+#endif
 
-SgInitializedNamePtrList::iterator
+void
 SgFunctionParameterList::append_arg( SgInitializedName* what)
    {
-     SgInitializedNamePtrList::iterator new_item = insert_arg(get_args().end(), what);
-     return new_item;
+     get_args().push_back(what);
    }
 
-SgInitializedNamePtrList::iterator
+void
 SgFunctionParameterList::prepend_arg( SgInitializedName* what)
    {
-     SgInitializedNamePtrList::iterator new_item = insert_arg(get_args().begin(), what);
-     return new_item;
+     get_args().insert(get_args().begin(), what);
    }
 
 // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
@@ -9233,10 +9241,10 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // SgInitializedName *decl_item=&(*(this->append_variable(c_item,0)));
   // SgInitializedName *decl_item = *(this->append_variable(c_item,NULL));
-     SgInitializedName *decl_item = *(this->append_variable(c_item,initializer));
+     /* SgInitializedName *decl_item = */ this->append_variable(c_item,initializer);
 
   // DQ (6/1/2004): Can we enforce this?
-     ROSE_ASSERT (decl_item == c_item);
+  // ROSE_ASSERT (decl_item == c_item);
 
   // DQ (10/6/2004): Adding documentation - this is to support the unparser and is always set to be true (so it seems).
   // A newer mechanism explicitly marks the variable declaration if it contains a class definition which must be output 
@@ -9502,22 +9510,22 @@ SgVariableDeclaration::setDeclarationOnly()
    }
 
 // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
-SgInitializedNamePtrList::iterator
+void
 SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *initializer )
    {
      ROSE_ASSERT (what != NULL);
 
-     SgInitializedNamePtrList::iterator new_item = insert_variable(get_variables().end(),what);
+     get_variables().push_back(what);
 
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // SgInitializedName *decl_item = &(*new_item);
-     SgInitializedName *decl_item = *new_item;
+  // SgInitializedName *decl_item = *new_item;
 
   // printf ("Inside of SgVariableDeclaration::append_variable what = %p \n",what);
   // printf ("Inside of SgVariableDeclaration::append_variable decl_item = %p \n",decl_item);
 
   // DQ (6/1/2004): Can we assert this
-     ROSE_ASSERT (decl_item == what);
+  // ROSE_ASSERT (decl_item == what);
 
      assert(this != NULL);
      ROSE_ASSERT (what != NULL);
@@ -9543,7 +9551,7 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
                copyOfFileInfo = new Sg_File_Info(*(this->get_file_info()));
                ROSE_ASSERT (copyOfFileInfo != NULL);
 
-               defn_stmt = new SgVariableDefinition(copyOfFileInfo,decl_item,initializer);  
+               defn_stmt = new SgVariableDefinition(copyOfFileInfo,get_variables().back(),initializer);  
                assert (defn_stmt != NULL);
                copyOfFileInfo->set_parent(defn_stmt);
 
@@ -9559,27 +9567,25 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
              }
             else
              {
-               defn_stmt = new SgVariableDefinition(decl_item,initializer);
+               defn_stmt = new SgVariableDefinition(get_variables().back(),initializer);
              }
         }
-
-     return new_item;
    }
 
 // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
-SgInitializedNamePtrList::iterator
+void
 SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer *initializer )
    {
      ROSE_ASSERT (what != NULL);
 
-     SgInitializedNamePtrList::iterator new_item = insert_variable(get_variables().begin(),what);
+     get_variables().insert(get_variables().begin(),what);
 
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // SgInitializedName *decl_item = &(*new_item);
-     SgInitializedName *decl_item = *new_item;
+  // SgInitializedName *decl_item = *new_item;
 
   // DQ (6/1/2004): Can we assert this
-     ROSE_ASSERT (decl_item == what);
+  // ROSE_ASSERT (decl_item == what);
 
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
@@ -9602,7 +9608,7 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
                copyOfFileInfo = new Sg_File_Info(*(this->get_file_info()));
                ROSE_ASSERT (copyOfFileInfo != NULL);
 
-               defn_stmt = new SgVariableDefinition(copyOfFileInfo,decl_item,initializer);  
+               defn_stmt = new SgVariableDefinition(copyOfFileInfo,get_variables().front(),initializer);  
                assert (defn_stmt != NULL);
                copyOfFileInfo->set_parent(defn_stmt);
 
@@ -9614,12 +9620,12 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
              }
             else
              {
-               defn_stmt = new SgVariableDefinition(decl_item,initializer);
+               defn_stmt = new SgVariableDefinition(get_variables().front(),initializer);
              }
         }
-     return new_item;
    }
 
+#if 0
 // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
 SgInitializedNamePtrList::iterator
 SgVariableDeclaration::insert_variable( const SgInitializedNamePtrList::iterator& where, SgInitializedName* what)
@@ -9640,6 +9646,7 @@ SgVariableDeclaration::insert_variable( const SgInitializedNamePtrList::iterator
   // this->setNameOnly();
      return new_item;
    }
+#endif
 
 //QY 11/5/04 not needed any more since removed named_item in SgInitializedName
 #if 0
@@ -10616,6 +10623,7 @@ SgClassDefinition::SgClassDefinition( SgClassDeclaration *decl)
      p_packingAlignment = 0;
    }
 
+#if 0
 void
 SgClassDefinition::insert_member(const SgDeclarationStatementPtrList::iterator& where, SgDeclarationStatement * what)
    {
@@ -10624,39 +10632,42 @@ SgClassDefinition::insert_member(const SgDeclarationStatementPtrList::iterator& 
 #endif
      get_members().insert(where,what);
    }
+#endif
 
 void
 SgClassDefinition::append_member(SgDeclarationStatement * what) 
    {
-     insert_member(get_members().end(),what);
+     get_members().push_back(what);
    }
 
 void
 SgClassDefinition::prepend_member(SgDeclarationStatement * what) 
    {
-     insert_member(get_members().begin(),what);
+     get_members().insert(get_members().begin(), what);
    }
 
 void
 // $CLASSNAME::append_inheritance(const SgBaseClass & what)
 SgClassDefinition::append_inheritance(SgBaseClass* what)
    {
-     insert_inheritance(get_inheritances().end(),what);
+     get_inheritances().push_back(what);
    }
 
 void
 // $CLASSNAME::prepend_inheritance(const SgBaseClass & what)
 SgClassDefinition::prepend_inheritance(SgBaseClass* what)
    {
-     insert_inheritance(get_inheritances().begin(),what);
+     get_inheritances().insert(get_inheritances().begin(), what);
    }
 
+#if 0
 void
 // $CLASSNAME::insert_inheritance(const SgBaseClassList::iterator & where, const SgBaseClass & what)
 SgClassDefinition::insert_inheritance(const SgBaseClassPtrList::iterator & where, SgBaseClass* what)
    { 
      get_inheritances().insert(where,what);
    }
+#endif
 
 SgName
 SgClassDefinition::get_qualified_name() const
@@ -10751,20 +10762,21 @@ SgEnumDeclaration::post_construction_initialization()
         }
    }
 
-SgInitializedNamePtrList::iterator
+void
 // $CLASSNAME::append_enumerator(const SgInitializedName & what)
 SgEnumDeclaration::append_enumerator( SgInitializedName* what)
    {
-     return insert_enumerator(get_enumerators().end(),what);
+     get_enumerators().push_back(what);
    }
 
-SgInitializedNamePtrList::iterator
+void
 // $CLASSNAME::prepend_enumerator(const SgInitializedName & what)
 SgEnumDeclaration::prepend_enumerator( SgInitializedName* what)
    {
-     return insert_enumerator(get_enumerators().begin(),what);
+     get_enumerators().insert(get_enumerators().begin(), what);
    }
 
+#if 0
 SgInitializedNamePtrList::iterator
 // $CLASSNAME::insert_enumerator(const SgInitializedNamePtrList::iterator& where, const SgInitializedName & what) 
 SgEnumDeclaration::insert_enumerator(const SgInitializedNamePtrList::iterator& where, SgInitializedName* what) 
@@ -10774,6 +10786,7 @@ SgEnumDeclaration::insert_enumerator(const SgInitializedNamePtrList::iterator& w
      (*new_item)->set_parent(this);
      return new_item;
    }
+#endif
 
 SgName
 SgEnumDeclaration::get_qualified_name() const
@@ -11696,6 +11709,7 @@ SgTryStmt::prepend_catch_statement(SgStatement * what)
    }
 
 
+#if 0
 // MS: C++98: handler (catch_statement in SAGE)
 void
 SgTryStmt::insert_catch_statement(const SgStatementPtrList::iterator& where, SgStatement * what)
@@ -11705,6 +11719,7 @@ SgTryStmt::insert_catch_statement(const SgStatementPtrList::iterator& where, SgS
 #endif
      get_catch_statement_seq_root()->insert_catch_statement(where,what);
    }
+#endif
 
 SOURCE_TRY_STATEMENT_END
 
@@ -11758,16 +11773,17 @@ SgCatchStatementSeq::post_construction_initialization() {
 void
 SgCatchStatementSeq::append_catch_statement(SgStatement * what)
    {
-     insert_catch_statement(get_catch_statement_seq().end(),what);
+     get_catch_statement_seq().push_back(what);
    }
 
 // MS: C++98: handler (catch_statement in SAGE)
 void
 SgCatchStatementSeq::prepend_catch_statement(SgStatement * what)
    {
-     insert_catch_statement(get_catch_statement_seq().begin(),what);
+     get_catch_statement_seq().insert(get_catch_statement_seq().begin(), what);
    }
 
+#if 0
 // MS: C++98: handler (catch_statement in SAGE)
 void
 SgCatchStatementSeq::insert_catch_statement(const SgStatementPtrList::iterator& where, SgStatement * what)
@@ -11777,6 +11793,7 @@ SgCatchStatementSeq::insert_catch_statement(const SgStatementPtrList::iterator& 
 #endif
      get_catch_statement_seq().insert(where,what);
    }
+#endif
 
 SOURCE_CATCH_STATEMENT_SEQ_END
 
@@ -12859,15 +12876,16 @@ SgNamespaceDefinitionStatement::isSameNamespace(const SgNamespaceDefinitionState
 void
 SgNamespaceDefinitionStatement::append_declaration(SgDeclarationStatement * what) 
    {
-     insert_declaration(get_declarations().end(),what);
+     get_declarations().push_back(what);
    }
 
 void
 SgNamespaceDefinitionStatement::prepend_declaration(SgDeclarationStatement * what) 
    {
-     insert_declaration(get_declarations().begin(),what);
+     get_declarations().insert(get_declarations().begin(), what);
    }
 
+#if 0
 void
 SgNamespaceDefinitionStatement::insert_declaration ( const SgDeclarationStatementPtrList::iterator& where, 
                                  SgDeclarationStatement* what)
@@ -12877,6 +12895,7 @@ SgNamespaceDefinitionStatement::insert_declaration ( const SgDeclarationStatemen
 #endif
      get_declarations().insert(where,what);
    }
+#endif
 
 // DQ (8/27/2004): Turn this back on!
 #if 1

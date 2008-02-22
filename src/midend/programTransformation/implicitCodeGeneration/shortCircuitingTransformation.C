@@ -427,7 +427,7 @@ void initialTransformation(SgNode *n)
 
 			    condExprStmt = splitVarDecl(varDecl);
 
-			    ifStmtParent->insert_statement(ifStmtParent->get_statements().begin() + ifStmtPos, varDecl);
+			    ifStmtParent->get_statements().insert(ifStmtParent->get_statements().begin() + ifStmtPos, varDecl);
 			    varDecl->set_parent(ifStmtParent);
 
 			    break;
@@ -458,13 +458,13 @@ void initialTransformation(SgNode *n)
 
                SgVariableDeclaration *varDecl = new SgVariableDeclaration(SgNULL_FILE);
 	       varDecl->set_firstNondefiningDeclaration(varDecl);
-               varDecl->insert_variable(varDecl->get_variables().end(), in);
+               varDecl->get_variables().insert(varDecl->get_variables().end(), in);
                in->set_parent(varDecl);
 
                SgVariableSymbol *varSym = new SgVariableSymbol(in);
                ifStmtParent->insert_symbol(varName, varSym);
 
-	       ifStmtParent->insert_statement(ifStmtParent->get_statements().begin() + ifStmtPos, varDecl);
+	       ifStmtParent->get_statements().insert(ifStmtParent->get_statements().begin() + ifStmtPos, varDecl);
 	       varDecl->set_parent(ifStmtParent);
 
 	       SgVarRefExp *varRef = new SgVarRefExp(SgNULL_FILE, varSym);
@@ -494,7 +494,7 @@ void initialTransformation(SgNode *n)
 	       ifStmt->set_conditional(exprStmt);
 	       exprStmt->set_parent(ifStmt);
 
-	       ifStmtParent->insert_statement(ifStmtParent->get_statements().begin() + ifStmtPos, newIfStmt);
+	       ifStmtParent->get_statements().insert(ifStmtParent->get_statements().begin() + ifStmtPos, newIfStmt);
 	       newIfStmt->set_parent(ifStmtParent);
 	     }
 	}
@@ -652,7 +652,7 @@ void initialTransformation(SgNode *n)
 	       for (SgStatementPtrList::iterator i = initStmts.begin(); i != initStmts.end(); ++i)
 		  {
 		    SgStatement *initStmt = *i;
-		    forStmtParentBB->insert_statement(forParentStmtsIter, *i);
+		    forStmtParentBB->get_statements().insert(forParentStmtsIter, *i);
 		    initStmt->set_parent(forStmtParentBB);
 		  }
 
@@ -705,7 +705,7 @@ void initialTransformation(SgNode *n)
 	       ROSE_ASSERT(varDeclParent);
 
 	       SgExprStatement *varAssign = splitVarDecl(varDecl);
-	       varDeclParent->insert_statement(++findIterator(varDeclParent->get_statements(), varDecl), varAssign);
+	       varDeclParent->get_statements().insert(++findIterator(varDeclParent->get_statements(), varDecl), varAssign);
 	     }
 	}
    }
