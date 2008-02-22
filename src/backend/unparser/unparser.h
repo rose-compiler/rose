@@ -81,7 +81,7 @@ class Unparser_Nameq;
   */
 // string globalUnparseToString ( SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL );
 
-void printOutComments ( SgLocatedNode* locatedNode );
+// void printOutComments ( SgLocatedNode* locatedNode );
 std::string get_output_filename( SgFile& file);
 //! returns the name of type t
 std::string get_type_name( SgType* t);
