@@ -38,7 +38,7 @@ SimpleInstrumentation::visit ( SgNode* astNode )
 
           ROSE_ASSERT(block->get_statements().size() > 0);
 
-          block->insert_statement(block->get_statements().begin(),variableDeclaration);
+          block->get_statements().insert(block->get_statements().begin(),variableDeclaration);
 
        // Add a symbol to the sybol table for the new variable
           SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
