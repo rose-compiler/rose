@@ -17,7 +17,7 @@ libCompassCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) compassSupport/li
 # We need to have $(top_builddir)/projects/compass/buildCheckers.C to force the buildCheckers.o into the link line
 # We also need it to make sure that the "make regenerate rule is called.
 compassMain_SOURCES = compassMain.C
-compassMain_LDADD = -lCompassCheckers
+compassMain_LDADD = -lCompassCheckers $(ROSE_LIBS)
 
 # This does not contribute to the link line
 compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
