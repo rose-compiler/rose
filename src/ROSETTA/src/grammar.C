@@ -5423,6 +5423,8 @@ Grammar::isAstObject(GrammarTreeNode& node)
   string name = node.getName();
   return (isTerminal(node.getName()) ||
 	  node.getName().find("AsmInstruction") != string::npos ||
+	  node.getName().find("Asmx86Instruction") != string::npos ||
+	  node.getName().find("AsmArmInstruction") != string::npos ||
 	  node.getName().find("ClassDeclaration") != string::npos ||
 	  node.getName().find("FunctionDeclaration") != string::npos ||
 	  node.getName().find("BasicBlock") != string::npos ||
