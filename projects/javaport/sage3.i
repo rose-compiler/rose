@@ -169,10 +169,10 @@ void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Pa
 
 typedef std::vector<SgNode*> AstNodePointersList;
 
-extern "C" {
-  extern void data_state_save();
-  extern void data_state_reset();
-}
+// extern "C" {
+//   extern void data_state_save();
+//   extern void data_state_reset();
+// }
 
 %}
 
@@ -277,7 +277,7 @@ void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Pa
     }
 }
 
-extern "C" {
-  extern void data_state_save();
-  extern void data_state_reset();
-}
+// extern "C" {
+//   extern void data_state_save();
+//   extern void data_state_reset();
+// }

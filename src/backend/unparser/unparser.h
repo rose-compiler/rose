@@ -226,7 +226,7 @@ class Unparser
 
       //! friend string globalUnparseToString ( SgNode* astNode );
 
-          void unparseProject ( SgProject* project, SgUnparse_Info& info );
+       // void unparseProject ( SgProject* project, SgUnparse_Info& info );
           void unparseFile    ( SgFile* file, SgUnparse_Info& info );
 
       //! remove unneccessary white space to build a condensed string

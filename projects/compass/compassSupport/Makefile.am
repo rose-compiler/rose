@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 if DEV_LIBS
 lib_LTLIBRARIES = libCompass.la
 else
-noinst_LTLIBRARIES = libCompass.la
+lib_LTLIBRARIES = libCompass.la
 endif
 
 bin_PROGRAMS = compassEmptyMain

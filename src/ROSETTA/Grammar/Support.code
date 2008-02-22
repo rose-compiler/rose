@@ -48,7 +48,7 @@ HEADER_MODIFIER_NODES_START
        // SgModifierType* match(SgType*, unsigned int);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
-          void reset();
+       // void reset();
 
 HEADER_MODIFIER_NODES_END
 

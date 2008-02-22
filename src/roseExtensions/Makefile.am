@@ -5,5 +5,4 @@ SUBDIRS = \
    databaseConnection \
    dataStructureTraversal \
    highLevelGrammar \
-   javaport \
    roseHPCToolkit

@@ -432,7 +432,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 HEADER_BINARY_DATA_STRUCTURE_START
           void append_declaration( SgAsmDeclaration* declaration );
 
-          SgAsmDeclarationPtrList & get_declarationList();
+       // SgAsmDeclarationPtrList & get_declarationList();
 
      protected:
 

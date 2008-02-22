@@ -18,7 +18,8 @@ SUBDIRS = \
      simpleCallGraphAnalysis \
      NameConsistancyChecker \
      C_to_Promela \
-     MPICodeMotion
+     MPICodeMotion \
+     javaport
 
 # DQ (1/18/2008): This is removed because it has dependence on xml libraries 
 # that may not be available for users.

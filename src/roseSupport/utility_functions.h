@@ -42,17 +42,15 @@ void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::strin
 
 // output of EDG AST (useful for debugging connection to SAGE)
 //void pdfPrintAbstractSyntaxTreeEDG ( SgFile *file );
-void generatePDFofEDG ( const SgProject & project );
+// void generatePDFofEDG ( const SgProject & project );
 
 
 #if 1
-class ROSE
+namespace ROSE
    {
   // This class serves as a catch all location for functions of general use within ROSE
   // we have added variables that are set using command line parameters to avoid the use of
   // global variables.  
-
-     public:
 
        // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
        // DQ (8/11/2004): Need to put this back so that there is a global concept of verbosity for all of ROSE.
@@ -61,54 +59,54 @@ class ROSE
        // These functions trim the header files from the unparsed output.
        // static int isCutStart ( SgStatement *st );
        // static int isCutEnd ( SgStatement *st );
-          static void ROSE_Unparse ( SgFile *f , std::ostream *of );
+       // void ROSE_Unparse ( SgFile *f , std::ostream *of );
 
        // This function helps isolate the details of the UNIX strcmp function
           // static int isSameName ( const std::string& s1, const std::string& s2 );
-          static int containsString ( const std::string& masterString, const std::string& targetString );
+          int containsString ( const std::string& masterString, const std::string& targetString );
 
-          static std::string getFileNameByTraversalBackToFileNode ( const SgNode* astNode );
-          static std::string getFileName ( const SgFile* file );
+          std::string getFileNameByTraversalBackToFileNode ( const SgNode* astNode );
+          std::string getFileName ( const SgFile* file );
 
        // DQ (5/25/2005): Removed from ROSE class (since they are redundant with other uses)
-          static std::string getFileName     ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-          static int   getLineNumber   ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-          static int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-          static bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+          std::string getFileName     ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+          int   getLineNumber   ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+          int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
+          bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
 #if 0
           static char* getWorkingDirectory (); //! get the current directory
           static char* getSourceDirectory  ( char* fileNameWithPath ); //! get the sourceDirectory directory
 #else
-          static std::string getWorkingDirectory (); //! get the current directory
-          static std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
+          std::string getWorkingDirectory (); //! get the current directory
+          std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 #endif
-          static std::string getFileNameWithoutPath ( SgStatement* statementPointer );
-          static std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
+          std::string getFileNameWithoutPath ( SgStatement* statementPointer );
+          std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
 #if 0
-          static char* getPathFromFileName   ( const char* fileNameWithPath ); //! get the path from the full filename
+          char* getPathFromFileName   ( const char* fileNameWithPath ); //! get the path from the full filename
 #else
-          static std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
+          std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 #endif
-          static std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
+          std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
 
-          static std::string getPragmaString ( SgStatement  *stmt );
-          static std::string getPragmaString ( SgExpression *expr );
+       // std::string getPragmaString ( SgStatement  *stmt );
+       // std::string getPragmaString ( SgExpression *expr );
 
-          static SgPragma* getPragma ( SgExpression *expr );
-          static SgPragma* getPragma ( SgStatement  *stmt );
-          static SgPragma* getPragma ( SgBinaryOp   *binaryOperator );
+       // SgPragma* getPragma ( SgExpression *expr );
+       // SgPragma* getPragma ( SgStatement  *stmt );
+       // SgPragma* getPragma ( SgBinaryOp   *binaryOperator );
 
-          static std::string identifyVariant ( int Code );
+       // std::string identifyVariant ( int Code );
 
-          static SgName concatenate ( const SgName & X, const SgName & Y );
+          SgName concatenate ( const SgName & X, const SgName & Y );
 
-          static void usage (int status);
+          void usage (int status);
 
-          static void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
+          void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
 
       //! Functions to move to SgStatement object in SAGE III later
-          static SgStatement* getPreviousStatement ( SgStatement *targetStatement );
-          static SgStatement* getNextStatement     ( SgStatement *targetStatement );
+          SgStatement* getPreviousStatement ( SgStatement *targetStatement );
+          SgStatement* getNextStatement     ( SgStatement *targetStatement );
 #if 0
        // Moved to ROSE/src/midend/astDiagnostics/astPerformance.[hC].
        // DQ (12/11/2006): Added simpler function than ramust mechanism, used for computing the memory in use.
@@ -116,16 +114,6 @@ class ROSE
        // static double getCurrentMemoryUsage();
           static long int getCurrentMemoryUsage();
 #endif
-
-     public:
-      //! Should be public to avoid EDG warning
-          ROSE();
-
-     private:
-       // Define these here to prevent them from being defined by the compiler
-       // Except that the EDG front end complains (a warning) about this so we will make the default constructor public
-          ROSE ( const ROSE & X );
-          ROSE & operator= ( const ROSE & X ); 
    };
 #endif
 

@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/projects/compass/compass_makefile.inc
 
 #							-*- Makefile -*-
 
@@ -63,12 +64,11 @@ javalib_DATA	= sage3.jar
 javalibdir	= $(datadir)/java
 
 lib_LTLIBRARIES	= libsage3_wrap.la 
-libsage3_wrap_la_SOURCES	= missing.cc
-nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx $(top_srcdir)/projects/compass/buildCheckers.C
+nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 #libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
-libsage3_wrap_la_LIBADD		= -lrt -lrose -lCompass
-libsage3_wrap_la_LDFLAGS	= -L..
+libsage3_wrap_la_LIBADD		= -lrt -lrose -lCompass -lCompassCheckers
+libsage3_wrap_la_LDFLAGS	= -L.. -L../compass
 
 sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i		
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
@@ -129,6 +129,6 @@ clean-hook:
 else
 
 # Still export source files.
-EXTRA_DIST += testlink.cc frontendAndDump.cc missing.cc
+EXTRA_DIST += testlink.cc frontendAndDump.cc
 
 endif

@@ -10,12 +10,17 @@ bin_PROGRAMS = compassMain
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) compassSupport/libCompass.la $(compass_detector_libs)
 
+lib_LTLIBRARIES = libCompassCheckers.la
+libCompassCheckers_la_SOURCES = $(COMPASS_CHECKER_SRCS) buildCheckers.C
+libCompassCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) compassSupport/libCompass.la
+
 # We need to have $(top_builddir)/projects/compass/buildCheckers.C to force the buildCheckers.o into the link line
 # We also need it to make sure that the "make regenerate rule is called.
-compassMain_SOURCES = compassMain.C $(top_builddir)/projects/compass/buildCheckers.C $(COMPASS_CHECKER_SRCS) 
+compassMain_SOURCES = compassMain.C
+compassMain_LDADD = -lCompassCheckers
 
 # This does not contribute to the link line
-compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $(compass_detector_libs)
+compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
 
 # This rule makes sure that "make regenerate" (below) will only be called once with using parallel make
 #$(top_builddir)/projects/compass/checkers.h: $(top_builddir)/projects/compass/buildCheckers.C

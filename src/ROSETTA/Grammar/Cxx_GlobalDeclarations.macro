@@ -46,7 +46,7 @@ void         print_pragma          ( SgAttributePtrList&       , std::ostream& )
 //int          remove_pragma         ( SgAttributePtrList&       , char* );
 
 //extern SgPragma *Sgfound_pragma_list[];
-extern int       found_pragma_cnt;
+//extern int       found_pragma_cnt;
 //extern int       pure_cc_depth;
 
 // Custom function declarations for debugging!

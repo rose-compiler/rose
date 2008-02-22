@@ -777,7 +777,6 @@ src/roseExtensions/databaseConnection/Makefile
 src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
 src/roseExtensions/dataStructureTraversal/Makefile
 src/roseExtensions/highLevelGrammar/Makefile
-src/roseExtensions/javaport/Makefile
 src/roseExtensions/roseHPCToolkit/Makefile
 src/roseExtensions/roseHPCToolkit/src/Makefile
 src/roseExtensions/roseHPCToolkit/include/Makefile
@@ -860,6 +859,7 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
 projects/MPICodeMotion/Makefile
+projects/javaport/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
