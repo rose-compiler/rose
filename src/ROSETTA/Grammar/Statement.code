@@ -5026,6 +5026,7 @@ SgGlobal::append_declaration(SgDeclarationStatement * what)
 #endif
 
      get_declarations().push_back(what);
+     what->set_parent(this);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -5036,6 +5037,7 @@ void
 SgGlobal::prepend_declaration(SgDeclarationStatement * what) 
    {
      get_declarations().insert(get_declarations().begin(), what);
+     what->set_parent(this);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
