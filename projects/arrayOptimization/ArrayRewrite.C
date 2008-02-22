@@ -11,15 +11,15 @@ bool RecognizeArrayOp( CPPAstInterface& fa, ArrayInterface& anal,
       return false;
   }
   if (anal.is_array_mod_op( fa, orig)) {
-    STD cerr << "recognized array mod op: " << AstToString(orig) << "\n";
+    std::cerr << "recognized array mod op: " << AstToString(orig) << "\n";
     return true;
   }
   else if ( anal.is_array_construct_op( fa, orig)) {
-    STD cerr << "recognized array construct op: " << AstToString(orig) << "\n";
+    std::cerr << "recognized array construct op: " << AstToString(orig) << "\n";
     return true;
   }
   else  {
-    STD cerr << "not recognize array op: " << AstToString(orig) << "\n";
+    std::cerr << "not recognize array op: " << AstToString(orig) << "\n";
   }
   return false;
 }
@@ -45,8 +45,8 @@ class RewriteModArrayAccess : public CreateTmpArray, public TransformAstTree
 public:
   RewriteModArrayAccess( CPPAstInterface& ai, ArrayInterface& a, 
                          const AstNodePtr& _stmt, const AstNodePtr& _lhs,
-                         STD map<STD string, AstNodePtr>& _varmap,
-                         STD list<AstNodePtr>& _newstmts)
+                         std::map<std::string, AstNodePtr>& _varmap,
+                         std::list<AstNodePtr>& _newstmts)
     : la( ai, a, ArrayAnnotation::get_inst(), &a),
       depAnal(la),
       anal(a), stmt(_stmt), lhs(_lhs), 
@@ -74,7 +74,7 @@ public:
   else 
      test.get_result() = la.IsAliasedRef(array, modarray);
   if (test.get_result()) {
-      STD string splitname = fa.GetVarName(array) + "_tmp";
+      std::string splitname = fa.GetVarName(array) + "_tmp";
       result = create_tmp_array( fa, array, splitname);
       AstInterface::AstNodeList subscopy;
       for (AstInterface::AstNodeList::iterator p = subs.begin(); 
@@ -102,17 +102,17 @@ rewritable( const SymbolicVal& orig)
 }
 
 AstNodePtr CreateTmpArray::
-create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const STD string name)
+create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const std::string name)
 {
-  STD string expname;
+  std::string expname;
   if (!fa.IsVarRef(arrayExp,0,&expname))
       assert(false);
   AstNodePtr& split = varmap[expname];
   if (split == 0) {
      AstNodeType t =  fa.GetExpressionType(arrayExp);
-     STD string tname;
+     std::string tname;
      fa.GetTypeInfo( t, 0, &tname);
-     STD string splitname = fa.NewVar( fa.GetType(tname), name, true );
+     std::string splitname = fa.NewVar( fa.GetType(tname), name, true );
      if (model == 0) {
         split = fa.CreateVarRef(splitname);
      }
@@ -134,7 +134,7 @@ operator()( const SymbolicVal& orig)
 {
   SymbolicVal result;
   SymbolicVal dim;
-  STD vector<SymbolicVal> args;
+  std::vector<SymbolicVal> args;
   AstNodePtr arrayExp;
   if (ArrayAnnotation::get_inst()->is_access_array_elem( fa, orig, &arrayExp, &args)) {
     anal.set_array_dimension( arrayExp, args.size());
@@ -210,8 +210,8 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
   if (!elem.get_val( ivarList, rhs))
     assert(false);
 
-  STD map<STD string,AstNodePtr> varmap;
-  STD list<AstNodePtr> newStmts;
+  std::map<std::string,AstNodePtr> varmap;
+  std::list<AstNodePtr> newStmts;
   RewriteConstructArrayAccess constructArrayRewrite(fa, anal, varmap, newStmts);
   if (!constructArrayRewrite.rewritable( rhs ))
        return false;
@@ -249,7 +249,7 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
       result = body;
   else {
       result = fa.CreateBlock();
-      for (STD list<AstNodePtr>::iterator p = newStmts.begin(); p != newStmts.end();
+      for (std::list<AstNodePtr>::iterator p = newStmts.begin(); p != newStmts.end();
            ++p) {
          AstNodePtr cur = (*p);
          AstNodePtr ncur = cur;

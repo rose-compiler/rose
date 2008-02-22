@@ -14,9 +14,9 @@ class ArrayShapeDescriptor {
   SymbolicFunctionDeclarationGroup length;
  public:
   void push_back( const ReadSymbolicFunctionDeclaration& cur);
-  void write(STD ostream& out) const;
+  void write(std::ostream& out) const;
   void Dump() const;
-  bool read( STD istream& in);
+  bool read( std::istream& in);
 
   const SymbolicValDescriptor& get_dimension() const { return dimension; }
   SymbolicValDescriptor& get_dimension() { return dimension; }
@@ -26,12 +26,12 @@ class ArrayShapeDescriptor {
   SymbolicFunctionDeclarationGroup get_length() const { return length; }
   bool get_length( int dim, SymbolicVal& result) const 
     {
-       STD vector<SymbolicVal> args;
+       std::vector<SymbolicVal> args;
        args.push_back( SymbolicConst(dim));
        return length.get_val(args, result);
     }
 
-  void replace_var(  const STD string& varname, const SymbolicVal& repl)
+  void replace_var(  const std::string& varname, const SymbolicVal& repl)
    { 
      dimension.replace_var( varname, repl);
      length.replace_var(varname, repl);
@@ -49,9 +49,9 @@ class ArrayElemDescriptor
  public:
   void push_back( const ReadSymbolicFunctionDeclaration& cur);
   void Dump() const;
-  void write(STD ostream& out) const;
-  bool read(STD istream& in);
-  void replace_var(  const STD string& varname, const SymbolicVal& repl)
+  void write(std::ostream& out) const;
+  bool read(std::istream& in);
+  void replace_var(  const std::string& varname, const SymbolicVal& repl)
    { 
      elem.replace_var( varname, repl);
    }
@@ -68,10 +68,10 @@ class ArrayDescriptor
 {
  public:
   void push_back( const ReadSymbolicFunctionDeclaration& cur);
-  bool read( STD istream& in) ;
-  void write(STD ostream& out) const;
+  bool read( std::istream& in) ;
+  void write(std::ostream& out) const;
   void Dump() const;
-  void replace_var(  const STD string& varname, const SymbolicVal& repl)
+  void replace_var(  const std::string& varname, const SymbolicVal& repl)
    { 
      ArrayShapeDescriptor::replace_var( varname, repl);
      ArrayElemDescriptor::replace_var( varname, repl);
@@ -88,10 +88,10 @@ class ArrayDefineDescriptor : public ArrayDescriptor
   SymbolicFunctionDeclarationGroup reshape;
  public:
   void push_back( const ReadSymbolicFunctionDeclaration& cur);
-  bool read( STD istream& in) ;
-  void write(STD ostream& out) const;
+  bool read( std::istream& in) ;
+  void write(std::ostream& out) const;
   void Dump() const;
-  void replace_var(  const STD string& varname, const SymbolicVal& repl);
+  void replace_var(  const std::string& varname, const SymbolicVal& repl);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 
   SymbolicFunctionDeclarationGroup get_reshape() const 
@@ -103,11 +103,11 @@ class ArrayDefineDescriptor : public ArrayDescriptor
 
 class ArrayOptDescriptor : public ArrayDescriptor
 {
-  typedef ContainerDescriptor <STD list<DefineVariableDescriptor>, 
+  typedef ContainerDescriptor <std::list<DefineVariableDescriptor>, 
                                DefineVariableDescriptor, ';', '{', '}'> DefContainer;
   DefContainer defs;
  public:
-  typedef STD list<DefineVariableDescriptor>::iterator InitVarIterator;
+  typedef std::list<DefineVariableDescriptor>::iterator InitVarIterator;
   
   InitVarIterator init_var_begin() 
     {
@@ -120,28 +120,28 @@ class ArrayOptDescriptor : public ArrayDescriptor
   
       
 
-  bool read( STD istream& in) ;
-  void write(STD ostream& out) const;
+  bool read( std::istream& in) ;
+  void write(std::ostream& out) const;
   void Dump() const;
-  void replace_var(  const STD string& varname, const SymbolicVal& repl);
+  void replace_var(  const std::string& varname, const SymbolicVal& repl);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
 
 class ArrayConstructDescriptor 
 : public OPDescriptorTemp
-          < CollectPair< ContainerDescriptor<STD list<SymbolicValDescriptor>,
+          < CollectPair< ContainerDescriptor<std::list<SymbolicValDescriptor>,
                                              SymbolicValDescriptor, ',', '(', ')'>,
                          ArrayDescriptor, 0 > >
 {
   typedef OPDescriptorTemp
-          < CollectPair< ContainerDescriptor<STD list<SymbolicValDescriptor>, 
+          < CollectPair< ContainerDescriptor<std::list<SymbolicValDescriptor>, 
                                              SymbolicValDescriptor, ',', '(', ')'>,
                          ArrayDescriptor, 0 > 
           > BaseClass;
  public:
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl)
    {
-     for (STD list<SymbolicValDescriptor>::iterator p = first.begin(); p != first.end(); ++p) { 
+     for (std::list<SymbolicValDescriptor>::iterator p = first.begin(); p != first.end(); ++p) { 
          (*p).replace_val(repl);
      }
      second.replace_val(repl);
@@ -168,45 +168,45 @@ class ArrayCollection
     public CPPTypeCollection< ArrayDefineDescriptor>
 {
    typedef TypeAnnotCollection< ArrayDefineDescriptor > BaseClass;
-  virtual bool read_annot_name( const STD string& annotName) const 
+  virtual bool read_annot_name( const std::string& annotName) const 
     { return annotName == "array"; }
  public:
   ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
   void Dump() const 
-    { STD cerr << "arrays: \n"; BaseClass::Dump(); }
+    { std::cerr << "arrays: \n"; BaseClass::Dump(); }
 };
 
 class ArrayOptCollection : public TypeAnnotCollection< ArrayOptDescriptor>
 {
   typedef TypeAnnotCollection< ArrayOptDescriptor > BaseClass;
-  virtual bool read_annot_name( const STD string& annotName) const 
+  virtual bool read_annot_name( const std::string& annotName) const 
     { return annotName == "array_optimize"; }
  public:
   void Dump() const 
-    { STD cerr << "array optimizations: \n"; BaseClass::Dump(); }
+    { std::cerr << "array optimizations: \n"; BaseClass::Dump(); }
 };
 
 class ArrayConstructOpCollection
 : public OperatorAnnotCollection<ArrayConstructDescriptor>
 {
-  virtual bool read_annot_name( const STD string& annotName) const
+  virtual bool read_annot_name( const std::string& annotName) const
     { return annotName == "construct_array"; }
  public:
   void Dump() const
     {
-      STD cerr << "construct_array: \n";
+      std::cerr << "construct_array: \n";
       OperatorAnnotCollection<ArrayConstructDescriptor>::Dump();
     }
 };
 
 class ArrayModifyOpCollection : public OperatorAnnotCollection<ArrayModifyDescriptor>
 {
-  virtual bool read_annot_name( const STD string& annotName) const
+  virtual bool read_annot_name( const std::string& annotName) const
     { return annotName == "modify_array"; }
  public:
   void Dump() const
     { 
-      STD cerr << "modify_array: \n"; 
+      std::cerr << "modify_array: \n"; 
       OperatorAnnotCollection<ArrayModifyDescriptor>::Dump(); 
     }
 };
@@ -215,7 +215,7 @@ class ArrayAnnotation
     : public FunctionSideEffectInterface,
       public FunctionAliasInterface
 {
-  //map <STD string, OperatorDeclaration> decl;
+  //map <std::string, OperatorDeclaration> decl;
   ArrayCollection arrays;
   ArrayOptCollection arrayopt;
   ArrayModifyOpCollection arrayModify;
@@ -225,9 +225,9 @@ class ArrayAnnotation
 
   virtual bool may_alias(AstInterface& fa, const AstNodePtr& fc, 
                          const AstNodePtr& result,
-                         CollectObject< STD pair<AstNodePtr, int> >& collectalias);
+                         CollectObject< std::pair<AstNodePtr, int> >& collectalias);
   virtual bool allow_alias(AstInterface& fa, const AstNodePtr& fc, 
-                         CollectObject< STD pair<AstNodePtr, int> >& collectalias);
+                         CollectObject< std::pair<AstNodePtr, int> >& collectalias);
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,

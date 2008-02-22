@@ -6,13 +6,13 @@
 
 class CreateTmpArray
 {
-  STD map<STD string, AstNodePtr>& varmap;
-  STD list<AstNodePtr>& newStmts;
+  std::map<std::string, AstNodePtr>& varmap;
+  std::list<AstNodePtr>& newStmts;
   AstNodePtr model;
  public:
-  CreateTmpArray( STD map<STD string, AstNodePtr>& _varmap, STD list<AstNodePtr>& _newstmts) 
+  CreateTmpArray( std::map<std::string, AstNodePtr>& _varmap, std::list<AstNodePtr>& _newstmts) 
      :  newStmts(_newstmts), varmap(_varmap), model() {} 
-  AstNodePtr create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const STD string name);
+  AstNodePtr create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const std::string name);
   void set_model_array( const AstNodePtr& mod) { model = mod; }
 };
 
@@ -25,8 +25,8 @@ class RewriteConstructArrayAccess
   CPPAstInterface& fa;
 public:
   RewriteConstructArrayAccess( CPPAstInterface& _fa, ArrayInterface& a,
-                               STD map<STD string, AstNodePtr>& _varmap,
-                               STD list<AstNodePtr>& _newstmts)
+                               std::map<std::string, AstNodePtr>& _varmap,
+                               std::list<AstNodePtr>& _newstmts)
       : fa(_fa), anal(a), CreateTmpArray(_varmap, _newstmts) {}
   bool rewritable( const SymbolicVal& head);
   SymbolicVal operator()( const SymbolicVal& orig);

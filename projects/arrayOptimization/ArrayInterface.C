@@ -19,10 +19,10 @@ void ArrayInterface::observe( AstInterface& fa)
 void ArrayInterface::
 ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy)
 {
-  STD map <AstNodePtr, int>::const_iterator p1 = dimmap.find(orig);
+  std::map <AstNodePtr, int>::const_iterator p1 = dimmap.find(orig);
   if (p1 != dimmap.end())
     dimmap[copy] = (*p1).second;
-  STD map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p2 = lenmap.find(orig);
+  std::map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p2 = lenmap.find(orig);
   if (p2 != lenmap.end())
     lenmap[copy] = (*p2).second;
 }
@@ -51,21 +51,21 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
   else if ( (elem1 && elem2)  || (len1 && len2)) {
      if (may_alias(fa, array1, array2)) {
         if (DebugAliasAnal())
-            STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
+            std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
         return true;
      }
   }
   else if (elem1 || len1) {
      if (may_alias(fa, array1, r2)) {
         if (DebugAliasAnal())
-            STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
+            std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
         return true;
      }
   }
   else if (elem2 || len2) {
      if (may_alias(fa, r1, array2)) {
         if (DebugAliasAnal())
-            STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
+            std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
         return true;
      }
   }
@@ -77,7 +77,7 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
           AstNodePtr cur = *p;
           if (may_alias( fa, cur, r2)) {
             if (DebugAliasAnal())
-               STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
+               std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
              return true;
           }
         }
@@ -89,7 +89,7 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
           AstNodePtr cur = *p;
           if (may_alias( fa, cur, r1)) {
             if (DebugAliasAnal())
-               STD cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << STD endl;
+               std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
              return true;
           }
         }
@@ -103,11 +103,11 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
 bool ArrayInterface::
 get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& r)
 {
-  STD string name;
+  std::string name;
   if (!fa.IsVarRef(array, 0, &name))
     return false;
   
-  STD map <STD string, ArrayOptDescriptor>::const_iterator p = optmap.find(name);
+  std::map <std::string, ArrayOptDescriptor>::const_iterator p = optmap.find(name);
   if (p != optmap.end()) 
   {
     r = (*p).second;
@@ -122,7 +122,7 @@ get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& 
        p != desc.init_var_end(); ++p) {
     DefineVariableDescriptor& cur = *p;
     ExtendibleParamDescriptor &par = cur.get_var();
-    STD string parname = par.get_param_name();
+    std::string parname = par.get_param_name();
     par.get_param() = SymbolicVar( name + parname, AST_NULL);
     SymbolicVal newpar = new SymbolicVar(name + parname, AST_NULL);
     desc.replace_var(parname, newpar);
@@ -135,7 +135,7 @@ get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& 
 void ArrayInterface ::
 set_array_dimension( const AstNodePtr& arrayexp, int dim)
 {
-  STD map <AstNodePtr, int>::const_iterator p = dimmap.find(arrayexp);
+  std::map <AstNodePtr, int>::const_iterator p = dimmap.find(arrayexp);
   if (p != dimmap.end()) {
      int olddim = (*p).second;
      assert(olddim == dim);
@@ -153,7 +153,7 @@ is_array_exp( CPPAstInterface& fa, const AstNodePtr& array,
     return false;
   if (lenp != 0) 
   {
-    STD map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p = lenmap.find(array);
+    std::map <AstNodePtr, SymbolicFunctionDeclarationGroup>::const_iterator p = lenmap.find(array);
     if (p != lenmap.end()) 
     {
       *lenp = (*p).second;
@@ -163,7 +163,7 @@ is_array_exp( CPPAstInterface& fa, const AstNodePtr& array,
   int dim=0;
   if (dimp != 0 || lenp != 0) 
   {
-    STD map <AstNodePtr, int>::const_iterator p = dimmap.find(array);
+    std::map <AstNodePtr, int>::const_iterator p = dimmap.find(array);
     if (p != dimmap.end()) 
     {
       dim = (*p).second;
@@ -209,7 +209,7 @@ is_array_exp( CPPAstInterface& fa, const AstNodePtr& array,
       SymbolicValDescriptor parval(i);
       ExtendibleParamDescriptor par_i(parval);
       SymbolicValDescriptor tmp;
-      if (hasval && valdesc.has_value( STD string(buf), &tmp)
+      if (hasval && valdesc.has_value( std::string(buf), &tmp)
 	  && !tmp.is_bottom() && !tmp.is_top()) 
 	len.push_back( SymbolicFunctionDeclaration( par_i, tmp));
     }
@@ -316,13 +316,13 @@ impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, bool insertIn
     cur.replace_var( "dimension", dim);
 
     const ExtendibleParamDescriptor& par = cur.get_var();
-    STD string extname = par.get_extend_var();
-    STD string parname = par.get_param_name();
+    std::string extname = par.get_extend_var();
+    std::string parname = par.get_param_name();
     int lb = -1, ub = -1;
     par.get_extension( lb, ub);
-    STD string vartype = cur.get_var_type();
+    std::string vartype = cur.get_var_type();
     for (int i = lb; i <= ub; ++i) {
-      STD string varname = parname;
+      std::string varname = parname;
       SymbolicValDescriptor initval = cur.get_var_init();
       if (i >= 0) {
 	varname = SymbolicExtendVar::get_varname( varname, i);
@@ -330,11 +330,11 @@ impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, bool insertIn
       }
       AstNodePtr init = initval.get_val().CodeGen(fa);
       if (insertInit) {
-	STD string varname1 = fa.NewVar( fa.GetType(vartype), varname, false, AST_NULL, init);
+	std::string varname1 = fa.NewVar( fa.GetType(vartype), varname, false, AST_NULL, init);
 	assert( varname1 == varname);
       }
       else {
-	STD string varname1 = fa.NewVar( fa.GetType(vartype), varname);
+	std::string varname1 = fa.NewVar( fa.GetType(vartype), varname);
 	assert( varname1 == varname);
 	AstNodePtr var = fa.CreateVarRef( varname);
 	AstNodePtr assign = fa.CreateAssignment( var, init);
@@ -360,9 +360,9 @@ impl_reshape_array( CPPAstInterface& fa,
 
   AstNodePtr r;
   if (!reshape.get_val( fa, ivarAst, r)) {
-     STD cerr << "Error: cannot extract value from reshape spec: \n";
-     reshape.write(STD cerr);
-     STD cerr << STD endl;
+     std::cerr << "Error: cannot extract value from reshape spec: \n";
+     reshape.write(std::cerr);
+     std::cerr << std::endl;
      assert(false);
   }
   return r;
@@ -468,7 +468,7 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
   if (!is_array_exp( fa, array, 0, &len))
     assert(false);
 
-  STD vector<SymbolicVal> pars;
+  std::vector<SymbolicVal> pars;
   pars.push_back( SymbolicConst(dim));
 
   SymbolicVal rval;

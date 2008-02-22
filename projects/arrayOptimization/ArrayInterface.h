@@ -12,9 +12,9 @@ class ArrayInterface
 {
   StmtVarAliasCollect aliasCollect;
   ValuePropagate valueCollect;
-  STD map <AstNodePtr, int> dimmap;
-  STD map <AstNodePtr, SymbolicFunctionDeclarationGroup> lenmap;
-  STD map <STD string, ArrayOptDescriptor> optmap;
+  std::map <AstNodePtr, int> dimmap;
+  std::map <AstNodePtr, SymbolicFunctionDeclarationGroup> lenmap;
+  std::map <std::string, ArrayOptDescriptor> optmap;
   void ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy);
 
   virtual bool IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t);
