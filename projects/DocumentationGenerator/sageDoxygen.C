@@ -428,7 +428,7 @@ DoxygenFile::DoxygenFile(SgProject *prj, string filename)
      iname->set_prev_decl_item(iname);
      SgGlobal *glob = prj->get_file(0).get_globalScope();
 //     glob->insertStatementInScope(decl, true);
-     glob->insert_declaration(glob->get_declarations().begin(),decl);
+     glob->get_declarations().insert(glob->get_declarations().begin(),decl);
      SgVariableSymbol* variableSymbol = new SgVariableSymbol(iname);
      glob->insert_symbol(sname.str(),variableSymbol);
 
