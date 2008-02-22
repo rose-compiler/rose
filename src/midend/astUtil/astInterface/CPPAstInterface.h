@@ -8,11 +8,11 @@ class CPPAstInterface : public AstInterface
  public:
   CPPAstInterface(AstInterfaceImpl* _impl) : AstInterface(_impl) {}
   bool IsMemberAccess( const AstNodePtr& n, AstNodePtr* obj = 0,
-                                         STD string* fieldname = 0);
+                                         std::string* fieldname = 0);
 
   bool IsMemberFunctionCall( const AstNodePtr& n, 
                                        AstNodePtr* obj = 0,
-	                               STD string* funcname = 0, 
+	                               std::string* funcname = 0, 
                                        AstNodePtr* access = 0,
                                        AstInterface::AstNodeList* args = 0);
   AstNodePtr CreateFunctionCall( const AstNodePtr& func, 

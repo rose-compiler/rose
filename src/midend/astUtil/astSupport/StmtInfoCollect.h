@@ -20,13 +20,13 @@ class StmtInfoCollect : public ProcessAstTreeBase
      ModRecord( const AstNodePtr& _rhs, bool _readlhs)
       : rhs(_rhs), readlhs(_readlhs) {}
   };
-  typedef STD map<AstNodePtr, ModRecord, STD less<AstNodePtr> > ModMap;
+  typedef std::map<AstNodePtr, ModRecord, std::less<AstNodePtr> > ModMap;
   struct ModStackEntry {
       AstNodePtr root;
       ModMap modmap;
       ModStackEntry(const AstNodePtr& r) : root(r) {}
   };
-  STD list<ModStackEntry> modstack;
+  std::list<ModStackEntry> modstack;
   AstNodePtr curstmt;
  protected:
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod, 
@@ -50,7 +50,7 @@ class StmtSideEffectCollect
  private:
   bool modunknown, readunknown;
   FunctionSideEffectInterface* funcanal;
-  CollectObject< STD pair<AstNodePtr,AstNodePtr> > *modcollect, *readcollect, *killcollect;
+  CollectObject< std::pair<AstNodePtr,AstNodePtr> > *modcollect, *readcollect, *killcollect;
 
 
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
@@ -62,14 +62,14 @@ class StmtSideEffectCollect
      : funcanal(a), modunknown(false), readunknown(false),modcollect(0), 
        readcollect(0), killcollect(0) {}
   bool get_side_effect(AstInterface& fa, const AstNodePtr& h,
-		       CollectObject<STD pair<AstNodePtr,AstNodePtr> >* collectmod,
-		       CollectObject<STD pair<AstNodePtr,AstNodePtr> >* collectread = 0,
-                       CollectObject<STD pair<AstNodePtr,AstNodePtr> >* collectkill = 0)
+		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectmod,
+		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectread = 0,
+                       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectkill = 0)
     { return operator()( fa, h, collectmod, collectread, collectkill); }
   bool operator()( AstInterface& fa, const AstNodePtr& h, 
-                   CollectObject< STD pair<AstNodePtr,AstNodePtr> >* mod, 
-                   CollectObject< STD pair<AstNodePtr,AstNodePtr> >* read=0,
-                   CollectObject< STD pair<AstNodePtr,AstNodePtr> >* kill = 0) 
+                   CollectObject< std::pair<AstNodePtr,AstNodePtr> >* mod, 
+                   CollectObject< std::pair<AstNodePtr,AstNodePtr> >* read=0,
+                   CollectObject< std::pair<AstNodePtr,AstNodePtr> >* kill = 0) 
     {
       modcollect = mod;
       readcollect = read;
@@ -81,13 +81,13 @@ class StmtSideEffectCollect
 };
 
 class Ast2StringMap {
-  typedef STD map<AstNodePtr, STD string, STD less<AstNodePtr> > MapType;
+  typedef std::map<AstNodePtr, std::string, std::less<AstNodePtr> > MapType;
   MapType astmap;
   int cur;
  public:
   Ast2StringMap() : cur(0) {}
-  STD string get_string( const AstNodePtr& s); 
-  STD string get_string( const AstNodePtr& s) const; 
+  std::string get_string( const AstNodePtr& s); 
+  std::string get_string( const AstNodePtr& s) const; 
 };
 
 class InterProcVariableUniqueRepr {
@@ -122,17 +122,17 @@ class StmtVarAliasCollect
 {
  public:
    class VarAliasMap {
-      STD map<STD string, UF_elem, STD less<STD string> > aliasmap;
+      std::map<std::string, UF_elem, std::less<std::string> > aliasmap;
       Ast2StringMap scopemap;
      public:
-        UF_elem& get_alias_map( const STD string& varname, const AstNodePtr& scope);
+        UF_elem& get_alias_map( const std::string& varname, const AstNodePtr& scope);
    };
  private:
   FunctionAliasInterface* funcanal;
   VarAliasMap aliasmap;
   bool hasunknown, hasresult;
 
-  UF_elem& get_alias_map( const STD string& varname, const AstNodePtr& scope);
+  UF_elem& get_alias_map( const std::string& varname, const AstNodePtr& scope);
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr());
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc);
@@ -147,17 +147,17 @@ class StmtVarAliasCollect
 
 template <class Select>
 class ModifyVariableMap 
-   : public CollectObject<STD pair<AstNodePtr,AstNodePtr> >,
+   : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >,
      public StmtSideEffectCollect
 {
   AstInterface& ai;
-  class VarModSet : public STD set<AstNodePtr> {};
-  typedef STD map <STD string, VarModSet, STD less<STD string> > VarModInfo;
+  class VarModSet : public std::set<AstNodePtr> {};
+  typedef std::map <std::string, VarModSet, std::less<std::string> > VarModInfo;
   VarModInfo varmodInfo;
   Select sel;
-  bool operator()(const STD pair<AstNodePtr,AstNodePtr>& cur)
+  bool operator()(const std::pair<AstNodePtr,AstNodePtr>& cur)
    {
-     STD string varname;
+     std::string varname;
      if (ai.IsVarRef(cur.first,0, &varname)) {
          AstNodePtr l = ai.GetParent(cur.first);
          VarModSet& cur = varmodInfo[varname];
@@ -176,7 +176,7 @@ class ModifyVariableMap
      {
       StmtSideEffectCollect::get_side_effect(ai, root, this);
      }
-   bool Modify( const AstNodePtr& l, const STD string& varname) const
+   bool Modify( const AstNodePtr& l, const std::string& varname) const
       { 
          typename VarModInfo::const_iterator p = varmodInfo.find(varname);
          if (p != varmodInfo.end()) {

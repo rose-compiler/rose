@@ -84,7 +84,7 @@ class ValGetBound : public SymbolicVisitor
          SymbolicBound orig = result;
          bool change = false, isrepl = true, reverse = false;
          SymOpType op = exp.GetOpType(); 
-         STD list<SymbolicBound> args;
+         std::list<SymbolicBound> args;
          for (SymbolicExpr::OpdIterator iter = exp.GetOpdIterator();
                !iter.ReachEnd(); iter.Advance()) {
             SymbolicVal cur = exp.Term2Val(iter.Current());
@@ -98,7 +98,7 @@ class ValGetBound : public SymbolicVisitor
             args.push_back(curbound); 
          }
          if (change) {
-            STD list<SymbolicBound>::const_iterator p = args.begin(); 
+            std::list<SymbolicBound>::const_iterator p = args.begin(); 
             result = *p;
             for ( ++p ; p != args.end(); ++p) {
                SymbolicBound cur = *p;
@@ -186,7 +186,7 @@ SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal
   ValGetBound op(op1);
   SymbolicVal r = op.GetRepl(v);
   if (DebugReplaceVal()) {
-     STD cerr << "replacing " << v.toString() << "->" << r.toString() << STD endl;
+     std::cerr << "replacing " << v.toString() << "->" << r.toString() << std::endl;
   }
   return r;
 }
@@ -202,13 +202,13 @@ GetValBound(SymbolicVal val, MapObject<SymbolicVal, SymbolicBound>& f)
 { 
    SymbolicBound b = ValGetBound(f).GetBound(val); 
    if (DebugValBound()) {
-     STD cerr << " bound of ";
+     std::cerr << " bound of ";
      val.Dump();
-     STD cerr << " : ";
+     std::cerr << " : ";
      b.lb.Dump();
-     STD cerr << " -> ";
+     std::cerr << " -> ";
      b.ub.Dump();
-     STD cerr << STD endl;
+     std::cerr << std::endl;
    }
    return b;
 }

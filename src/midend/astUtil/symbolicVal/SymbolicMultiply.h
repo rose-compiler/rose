@@ -5,7 +5,7 @@
 
 class SymbolicMultiply : public SymbolicExpr
 {
-  STD string GetOPName() const { return "*"; }
+  std::string GetOPName() const { return "*"; }
   virtual SymOpType GetTermOP() const {  return SYMOP_POW; }
  public:
   SymbolicMultiply() {}

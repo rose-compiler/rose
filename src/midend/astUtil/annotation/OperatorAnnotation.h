@@ -36,11 +36,11 @@ class OperatorAnnotCollection
     AstInterface::AstNodeList args;
     AstInterface::AstTypeList params;
     AstNodePtr f;
-    STD string fname;
+    std::string fname;
     if (!(fa.IsFunctionCall(exp,&f, &args, 0, &params) && fa.IsVarRef(f,0,&fname))
        && !fa.IsFunctionDefinition(exp,&fname,&args,0,0, &params))
         return false;
-    STD string sig = OperatorDeclaration::get_signiture(fa, fname, params);
+    std::string sig = OperatorDeclaration::get_signiture(fa, fname, params);
     if (known_type( sig, desc)) {
        if (argp != 0)
           *argp = args;

@@ -15,12 +15,12 @@ class ValuePropagateNode : public DefUseChainNode
 
   const HasValueDescriptor& get_desc() const { return desc; }
   HasValueDescriptor& get_desc() { return desc; }
-  virtual STD string toString() const;
+  virtual std::string toString() const;
 };
 
 class HasValueMap : public AstObserver
 {
-  STD map<AstNodePtr, HasValueDescriptor> valmap;
+  std::map<AstNodePtr, HasValueDescriptor> valmap;
 
   void ObserveCopyAst(AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy);
  public:
@@ -49,7 +49,7 @@ class HasValueMapReplace
 
 class HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>
 {
-  STD map<AstNodePtr, AstNodePtr> astmap;
+  std::map<AstNodePtr, AstNodePtr> astmap;
  public:
   AstNodePtr operator() (AstInterface* const& fa, const AstNodePtr& orig);
 };
@@ -57,7 +57,7 @@ class HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>
 class ValuePropagate 
 : public DefUseChain<ValuePropagateNode>
 {
-  STD map<AstNodePtr, ValuePropagateNode*> nodemap;
+  std::map<AstNodePtr, ValuePropagateNode*> nodemap;
   HasValueMap valmap;
   HasValueCodeGen astmap;
 

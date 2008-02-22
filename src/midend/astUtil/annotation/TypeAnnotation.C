@@ -101,7 +101,7 @@ bool TypeCollection<Descriptor>::
       AstNodeType type;
       if (fa.IsExpression(exp, &type)==AST_NULL)
          return false;
-      STD string tname;
+      std::string tname;
       fa.GetTypeInfo(type, 0, &tname);
       return known_type( tname, desc);
 
@@ -110,7 +110,7 @@ template <class Descriptor>
 bool TypeCollection<Descriptor>:: 
   known_type( AstInterface& fa, const AstNodeType& type, Descriptor* desc) const
     {
-      STD string tname;
+      std::string tname;
       fa.GetTypeInfo(type, 0, &tname);
       return known_type( tname, desc);
     }

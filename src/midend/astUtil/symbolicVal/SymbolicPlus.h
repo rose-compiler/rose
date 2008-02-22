@@ -6,7 +6,7 @@
 
 class SymbolicPlus : public SymbolicExpr
 {
-  STD string GetOPName() const { return "+"; }
+  std::string GetOPName() const { return "+"; }
   virtual SymOpType GetTermOP() const { return SYMOP_MULTIPLY; }
  public:
   SymbolicPlus() : SymbolicExpr() {}

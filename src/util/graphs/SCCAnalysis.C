@@ -17,8 +17,8 @@ private:
     SCCNodeStatus(unsigned int l=0, unsigned int d=0, bool i=false)
       : lowlink(l), dfnumber(d), inStack(i), mark(false) { }
   };
-  STD map <GraphAccessInterface::Node*, SCCNodeStatus,
-           STD less <GraphAccessInterface::Node*> > status;
+  std::map <GraphAccessInterface::Node*, SCCNodeStatus,
+           std::less <GraphAccessInterface::Node*> > status;
   SinglyLinkedListWrap<GraphAccessInterface::Node*> nodeStack;
   unsigned int count;
 public:

@@ -7,7 +7,7 @@
 class CFGConfig {
  public:
   typedef enum {COND_TRUE, COND_FALSE, ALWAYS} EdgeType;
-  static STD string EdgeType2String( EdgeType e);
+  static std::string EdgeType2String( EdgeType e);
 };
 
 template <class Node>

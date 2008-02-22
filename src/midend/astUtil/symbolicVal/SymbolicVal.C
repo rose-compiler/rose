@@ -8,14 +8,14 @@
 #include <sstream>
 
 void SymbolicValImpl :: Dump() const
-{ STD cerr << toString(); }
+{ std::cerr << toString(); }
 
 void SymbolicVal::Dump() const
-{ STD cerr << toString(); }
+{ std::cerr << toString(); }
 
-STD string SymbolicVal::toString() const
+std::string SymbolicVal::toString() const
 { 
-   return (ConstPtr() != 0)? ConstRef().toString() : STD string("");
+   return (ConstPtr() != 0)? ConstRef().toString() : std::string("");
 }
 
 SymbolicVal ::SymbolicVal (int val)
@@ -33,7 +33,7 @@ SymbolicConst::  SymbolicConst( int _val, int _d)
         val = buf;
      }
 
-SymbolicConst:: SymbolicConst( STD string _val, STD string t) : val(_val), type(t)
+SymbolicConst:: SymbolicConst( std::string _val, std::string t) : val(_val), type(t)
  {
     if (type == "int") {
       intval = atoi(_val.c_str());
@@ -41,7 +41,7 @@ SymbolicConst:: SymbolicConst( STD string _val, STD string t) : val(_val), type(
     }
  }
 
-STD string SymbolicConst :: toString() const
+std::string SymbolicConst :: toString() const
 {
      return val;
 }
@@ -54,7 +54,7 @@ AstNodePtr  SymbolicConst :: CodeGen(AstInterface &fa) const
     return fa.CreateConstant( type, val);
 }
 
-STD string SymbolicVar :: toString() const
+std::string SymbolicVar :: toString() const
 {
  return varname;
 }
@@ -72,16 +72,16 @@ AstNodePtr SymbolicAstWrap::CodeGen( AstInterface &fa) const
              return (*codegen)(&fa, ast);
       }
 
-STD string SymbolicAstWrap::toString() const
+std::string SymbolicAstWrap::toString() const
 {
    return "AstWrap(" + AstToString(ast) + ")";
 }
 
 void SymbolicAstWrap::Dump() const
 {
-   STD cerr << "AstWrap: " << ast.get_ptr();
+   std::cerr << "AstWrap: " << ast.get_ptr();
    if (codegen != 0)
-       STD cerr << "(codegen = " << codegen << ")\n";
+       std::cerr << "(codegen = " << codegen << ")\n";
 }
 
 bool SymbolicVar :: operator == (const SymbolicVar &that) const
@@ -90,9 +90,9 @@ bool SymbolicVar :: operator == (const SymbolicVar &that) const
 }
 
 
-STD string SymbolicFunction :: toString() const
+std::string SymbolicFunction :: toString() const
 {
-  STD string r = "(";
+  std::string r = "(";
   if (args.size() == 0)
       r= "()";
   for (const_iterator i = args.begin(); i != args.end(); ++i) {
@@ -150,7 +150,7 @@ AstNodePtr SymbolicSelect:: CodeGen(  AstInterface &fa ) const
            ++size;
       }
       assert( size > 1);
-      STD string func = (opt< 0)? "min" : "max";
+      std::string func = (opt< 0)? "min" : "max";
 
       return fa.CreateFunctionCall(func, list);
    }
@@ -177,7 +177,7 @@ ReplaceVars(  MapObject<SymbolicVal,SymbolicBound>& f)
    }
 
 
-STD string RelToString( CompareRel r)
+std::string RelToString( CompareRel r)
 {
   switch (r) {
   case REL_EQ: return "=="; 
@@ -193,15 +193,15 @@ STD string RelToString( CompareRel r)
 }
 
 
-STD string SymbolicCond :: toString() const
+std::string SymbolicCond :: toString() const
 {
-  STD string r = val1.toString() + RelToString(GetRelType()) + val2.toString();
+  std::string r = val1.toString() + RelToString(GetRelType()) + val2.toString();
   return r;
 }
 
 void SymbolicCond:: Dump() const
 {
-  STD cerr << toString();
+  std::cerr << toString();
 }
 
 AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
@@ -257,7 +257,7 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
 SymbolicVal SymbolicValGenerator ::
 GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
 {
-  STD string name;
+  std::string name;
   AstNodePtr scope;
   int val = 0;
   AstNodePtr s1, s2;

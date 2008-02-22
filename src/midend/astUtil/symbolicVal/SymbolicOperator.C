@@ -34,7 +34,7 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       PlusApplicator op; 
       r = ApplyBinOP(op, v1, v2);
       if (DebugOp())
-         STD cerr << v1.toString() << " + " << v2.toString() << " = " << r.toString() << STD endl;  
+         std::cerr << v1.toString() << " + " << v2.toString() << " = " << r.toString() << std::endl;  
       return r;
      }
   case SYMOP_MULTIPLY: 
@@ -42,18 +42,18 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       MultiplyApplicator op; 
       r = ApplyBinOP(op, v1, v2);
       if (DebugOp())
-         STD cerr << v1.toString() << " * " << v2.toString() << " = " << r.toString() << STD endl;  
+         std::cerr << v1.toString() << " * " << v2.toString() << " = " << r.toString() << std::endl;  
       return r;
     }
   case SYMOP_MIN: 
       r = Min(v1,v2);
       if (DebugOp())
-         STD cerr << "Min( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << STD endl;  
+         std::cerr << "Min( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
       return r;
   case SYMOP_MAX: return Max(v1, v2);
       r = Max(v1,v2);
       if (DebugOp())
-         STD cerr << "Max( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << STD endl;  
+         std::cerr << "Max( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
       return r;
   case SYMOP_POW: 
      {
@@ -68,7 +68,7 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
       else   
          r = new SymbolicPow(v1, val2);
       if (DebugOp())
-         STD cerr << "Pow( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << STD endl;  
+         std::cerr << "Pow( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;  
       return r;
      }
   default:
@@ -267,7 +267,7 @@ class CompareOperator : public SymbolicVisitor
    {  
      Default1(v1,v2);
      if (DebugCompareVal())
-         STD cerr << " in CompareOperator::Default \n";
+         std::cerr << " in CompareOperator::Default \n";
      if (result == REL_UNKNOWN) {
        int tmp = comparetime;
        SymbolicVal diff = v1 - v2;
@@ -309,7 +309,7 @@ void ExprTermCompare( const SymbolicExpr &e1, const SymbolicVal& v2,
                        MapObject<SymbolicVal,SymbolicBound>* f)
 {  
    if (DebugCompareVal())
-       STD cerr << " in ExprTermCompare1 \n";
+       std::cerr << " in ExprTermCompare1 \n";
    int i = 0;
    for (SymbolicExpr::OpdIterator p1 = e1.GetOpdIterator();
         !p1.ReachEnd(); ++p1,++i) {
@@ -323,7 +323,7 @@ void ExprTermCompare( const SymbolicExpr &e1, const SymbolicExpr &e2,
                        MapObject<SymbolicVal,SymbolicBound>* f)
 { 
    if (DebugCompareVal())
-       STD cerr << " in ExprTermCompare2 \n";
+       std::cerr << " in ExprTermCompare2 \n";
    int i = 0;
    for (SymbolicExpr::OpdIterator p1 = e1.GetOpdIterator();
         !p1.ReachEnd(); ++p1,++i) {
@@ -503,7 +503,7 @@ CompareRel CompareVal(const SymbolicVal &v1, const SymbolicVal &v2,
    { 
      assert( !v1.IsNIL() && !v2.IsNIL());
      if (DebugCompareVal())
-         STD cerr << "comparing " << v1.toString() << " with " << v2.toString() << " under " <<  f << STD endl;
+         std::cerr << "comparing " << v1.toString() << " with " << v2.toString() << " under " <<  f << std::endl;
      comparetime = 0;
      return CompareValHelp(v1,v2,f);
    }
@@ -515,7 +515,7 @@ CompareRel CompareValHelp(const SymbolicVal &v1, const SymbolicVal &v2,
     if (++comparetime < COMPARE_MAX)
         r = ValCompare(f)(v1,v2); 
     if (DebugCompareVal())
-         STD cerr << v1.toString() << RelToString(r) << v2.toString() << " under " << f << STD endl;
+         std::cerr << v1.toString() << RelToString(r) << v2.toString() << " under " << f << std::endl;
      return r;
    }
 
@@ -566,7 +566,7 @@ class SplitFraction : public SymbolicVisitor
   virtual void VisitFunction( const SymbolicFunction &v)  
    {
      bool _hasfrac = hasfrac;
-     STD string op = v.GetOp();
+     std::string op = v.GetOp();
      if (op == "pow" && v.last_arg() < 0) {
          _hasfrac = true;
          if (frp != 0) *frp = v;  

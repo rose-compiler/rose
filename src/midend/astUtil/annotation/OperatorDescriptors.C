@@ -49,10 +49,10 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
 
 bool OperatorDeclaration::unique = false; 
 string OperatorDeclaration:: 
-get_signiture( AstInterface& fa, const STD string& fname,
+get_signiture( AstInterface& fa, const std::string& fname,
                                     const AstInterface::AstTypeList& plist)
 {
-  STD string r = fname;
+  std::string r = fname;
   if (!unique)
     for ( AstInterface::AstTypeList::const_iterator p = plist.begin();
           p != plist.end();  ++p) {

@@ -3,7 +3,6 @@
 
 #include <map>
 #include <iostream>
-#define STD std::
 
 struct PointerHolder
 {
@@ -12,7 +11,7 @@ struct PointerHolder
   PointerHolder( void *_p) : p(_p) {}
 };
 
-class VoidPtrMap : public STD map<const void*, PointerHolder, STD less<const void*> > {};
+class VoidPtrMap : public std::map<const void*, PointerHolder, std::less<const void*> > {};
 
 template <class T1, class T2>
 class PtrMapWrap 
@@ -62,7 +61,7 @@ class PtrMapWrap
     void Advance() { if (p != impl->end()) { ++p; SetCurrent(); } }
     void operator ++() { Advance(); }
     void operator ++(int) { Advance(); }
-    bool ReachEnd() const { STD cerr << ""; return p == impl->end(); }
+    bool ReachEnd() const { std::cerr << ""; return p == impl->end(); }
     friend class PtrMapWrap<T1,T2>;
   };
 

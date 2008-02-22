@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string>
 
-#define STD std::
-
 template <class T>
 class IteratorImpl 
 {
@@ -137,18 +135,18 @@ unsigned CountIteratorSize( Iter iter)
 } 
 
 template <class Iter>
-STD string IteratorToString1( Iter iter)
+std::string IteratorToString1( Iter iter)
 {
-  STD string res;
+  std::string res;
   for ( Iter p = iter; !p.ReachEnd(); ++p)
      res = res + (*p).toString();
   return res;
 } 
 
 template <class Iter>
-STD string IteratorToString2( Iter iter)
+std::string IteratorToString2( Iter iter)
 {
-  STD string res;
+  std::string res;
   for ( Iter p = iter; !p.ReachEnd(); ++p)
      res = res + (*p)->toString();
   return res;

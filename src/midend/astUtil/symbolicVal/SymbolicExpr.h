@@ -21,7 +21,7 @@ class SymbolicTerm
   SymbolicTerm& operator = (const SymbolicTerm& that)
      { time1 = that.time1; time2 = that.time2; v = that.v; return *this; }
 
-  STD string toString() const;
+  std::string toString() const;
   bool IsConst() const
       {  return v.IsNIL(); }
   bool IsConstInt( int& val1, int& val2) const 
@@ -74,7 +74,7 @@ class SymbolicOperands
   unsigned NumOfOpds() const { return opds.NumberOfEntries(); }
   OpdIterator GetOpdIterator() const { return OpdIterator(opds); }
   SymbolicTerm& First() const { return opds.First()->GetEntry(); }
-  STD string toString() const;
+  std::string toString() const;
 
   SymbolicOperands* Clone() const { return new SymbolicOperands(*this); }
 };
@@ -103,10 +103,10 @@ class SymbolicExpr : public SymbolicValImpl,
   virtual SymbolicExpr* DistributeExpr(SymOpType t, const SymbolicVal& that) const = 0;
   void Visit( SymbolicVisitor* op) const { op->VisitExpr(*this); }
   SymbolicValImpl* Clone() const { return CloneExpr(); }
-  STD string toString() const;
+  std::string toString() const;
   SymbolicValType GetType() const { return VAL_EXPR; }
   void push_back( const SymbolicVal& v) { ApplyOpd(v); }
-  virtual STD string GetOPName () const = 0;
+  virtual std::string GetOPName () const = 0;
 
   virtual SymOpType GetOpType() const = 0;
   virtual SymbolicExpr* CloneExpr() const  = 0;
