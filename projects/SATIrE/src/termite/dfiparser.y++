@@ -45,7 +45,6 @@ void dfierror(char *);
 %type <singleTerm> value
 %type <singleTerm> topbot
 %type <singleTerm> assignment
- //%type <termList>   ints
 %type <termList>   assignments
 %type <termList>   values
 
@@ -66,14 +65,9 @@ result:
     dfiterm->addSubterm(new PrologList(*$4));
     //cerr << dfiterm->getRepresentation() << endl;
   } 
-  | '{' values '}' { 
+  | value { 
     dfiterm = new PrologCompTerm(dfi_name);
-    dfiterm->addSubterm(new PrologList(*$2));
-    //cerr << dfiterm->getRepresentation() << endl;
-  } 
-  | '(' values ')' { 
-    dfiterm = new PrologCompTerm(dfi_name);
-    dfiterm->addSubterm(new PrologList(*$2));
+    dfiterm->addSubterm($1);
     //cerr << dfiterm->getRepresentation() << endl;
   } 
   | UNDEF { $$ = new PrologAtom("undefined dfi"); }
@@ -126,9 +120,9 @@ extern const char* dfi_input_start;
 void dfierror(char* msg) 
 {
   cerr << std::string(msg) 
-       << " near token '" << dfitext << "'" 
-       << " before " << dfi_input << endl;
-  cerr << "In DFI string " << dfi_input_start << endl;
+       << " near token """ << dfitext << """" 
+       << " before """ << dfi_input << """" << endl;
+  cerr << "in DFI string """ << dfi_input_start << """." << endl;
   dfiterm = new PrologCompTerm(dfi_name);
   dfiterm->addSubterm(new PrologAtom("parse error"));
   dfiterm->addSubterm(new PrologAtom(dfitext));
