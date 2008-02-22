@@ -11,8 +11,8 @@ using namespace std;
 
 void PrintUsage( char* name)
 {
-  STD cerr << name << " <options> " << "<program name>" << "\n";
-  TestParallelLoop::DumpOptions(STD cerr);
+  std::cerr << name << " <options> " << "<program name>" << "\n";
+  TestParallelLoop::DumpOptions(std::cerr);
 }
 
 class TestParallelLoopWrap : public TransformAstTree
