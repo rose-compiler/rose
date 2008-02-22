@@ -131,7 +131,7 @@ HEADER_EXTRA_FUNCTIONS_END
 HEADER_LIST_FUNCTIONS_START
           void append_LIST_NAME(SgExpression* what);
        // void insert_LIST_NAME(const SgExpression::iterator & where, SgExpression* what);
-          void insert_LIST_NAME(const SgExpressionPtrList::iterator & where, SgExpression* what);
+       // void insert_LIST_NAME(const SgExpressionPtrList::iterator & where, SgExpression* what);
 HEADER_LIST_FUNCTIONS_END
 
 HEADER_UNARY_EXPRESSION_START
@@ -1807,12 +1807,13 @@ SgExprListExp::get_expressions() const
 
 void
 SgExprListExp::append_expression(SgExpression *what)
-   { insert_expression(p_expressions.end(),what); }
+   { p_expressions.push_back(what); }
 
 void
 SgExprListExp::prepend_expression(SgExpression *what)
-   { insert_expression(p_expressions.begin(),what); }
+   { p_expressions.insert(p_expressions.begin(), what); }
 
+#if 0
 void
 SgExprListExp::insert_expression(const SgExpressionPtrList::iterator &where, SgExpression *what)
    {
@@ -1821,6 +1822,7 @@ SgExprListExp::insert_expression(const SgExpressionPtrList::iterator &where, SgE
 // #endif
      p_expressions.insert(where,what);
    }
+#endif
 
 #if 0
 SgExpression*
@@ -2559,7 +2561,7 @@ SgFunctionCallExp::append_arg(SgExpression* what)
    }
 #endif
 
-#if 1
+#if 0
 // DQ: trying to remove the nested iterator class
 // $CLASSNAME::insert_arg(const SgExpression::iterator& where, SgExpression* what)
 void
