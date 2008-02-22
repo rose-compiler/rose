@@ -16,11 +16,11 @@ int GetConstArrayBound( LoopTransformInterface& a, const AstNodePtr& array,
 
 class AstRefGetAccessStride : public ProcessAstNode
 {
-  STD string name;
+  std::string name;
   bool Traverse ( AstInterface &fa, const AstNodePtr& v,
                        AstInterface::TraversalVisitType t)
   { 
-   STD string name1;
+   std::string name1;
    if (fa.IsVarRef(v, 0, &name1)) {
        if (name == name1) {
           return false;
@@ -30,7 +30,7 @@ class AstRefGetAccessStride : public ProcessAstNode
   }
  public:
   bool SweepArrayDimension( LoopTransformInterface &fa, const AstNodePtr& r, 
-                                STD string ivar, int dim)
+                                std::string ivar, int dim)
   {
    AstInterface::AstNodeList subs;
    if (! fa.IsArrayAccess(r, 0, &subs)) 
@@ -43,7 +43,7 @@ class AstRefGetAccessStride : public ProcessAstNode
    return !ReadAstTraverse(fa, sub, *this, AstInterface::PreOrder);
   }
   unsigned operator() ( LoopTransformInterface &fa, const AstNodePtr& r, 
-                        STD string _name, unsigned arrayBound)
+                        std::string _name, unsigned arrayBound)
   {
    AstNodePtr nameAst;
    AstInterface::AstNodeList subs;
@@ -74,19 +74,19 @@ class AstRefGetAccessStride : public ProcessAstNode
 };
 
 bool ReferenceDimension(LoopTransformInterface& la, const AstNodePtr& r,
-                       const STD string& ivarname, int dim)
+                       const std::string& ivarname, int dim)
 {
   return AstRefGetAccessStride()(la, r, ivarname, dim);
 }
 
 int ReferenceStride(LoopTransformInterface& la, const AstNodePtr& r, 
-                    const STD string& ivarname, unsigned arrayBound)
+                    const std::string& ivarname, unsigned arrayBound)
 {
    return AstRefGetAccessStride()(la, r, ivarname, arrayBound );
 }
 
 float SelfSpatialReuse( LoopTransformInterface& la, const AstNodePtr& r, 
-                        const STD string& ivarname, unsigned linesize,
+                        const std::string& ivarname, unsigned linesize,
                         unsigned defaultArrayBound)
 {
         int size = AstRefGetAccessStride()(la, r, ivarname, defaultArrayBound );

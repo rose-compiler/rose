@@ -39,7 +39,7 @@ TemporaryReuses( const CompSlice *slice1, const CompSlice *slice2, AstNodeSet &r
 class CollectArrayNames : public CollectObject<AstNodePtr>
 {
   LoopTransformInterface& la;
-  typedef STD set <STD string, STD less<STD string> > StringSet;
+  typedef std::set <std::string, std::less<std::string> > StringSet;
   StringSet&  result;
  public:
   CollectArrayNames(LoopTransformInterface& _la, StringSet& r) 
@@ -47,7 +47,7 @@ class CollectArrayNames : public CollectObject<AstNodePtr>
    bool operator()(const AstNodePtr& r) 
    {
       AstNodePtr arr;
-      STD string arrname;
+      std::string arrname;
       AstInterface& fa = la;
       if (la.IsArrayAccess(r, &arr)  && fa.IsVarRef(arr,0,&arrname)) {
           result.insert(arrname);
@@ -60,7 +60,7 @@ class CollectArrayNames : public CollectObject<AstNodePtr>
 class CollectRegisteredArrayRefs : public CollectObject<AstNodePtr>
 {
   LoopTransformInterface& la;
-  typedef STD set <STD string, STD less<STD string> > StringSet;
+  typedef std::set <std::string, std::less<std::string> > StringSet;
   StringSet&  reg;
   CompSliceLocalityAnal::AstNodeSet& refset;
  public:
@@ -69,7 +69,7 @@ class CollectRegisteredArrayRefs : public CollectObject<AstNodePtr>
       : la(_la), reg(r), refset(s){}
    bool operator()(const AstNodePtr& r) {
       AstNodePtr arr;
-      STD string arrname;
+      std::string arrname;
        AstInterface& fa = la;
       if (la.IsArrayAccess(r, &arr)  && fa.IsVarRef(arr,0,&arrname)
           && reg.find(arrname) != reg.end())  {
@@ -84,7 +84,7 @@ int CompSliceLocalityAnal::
 SpatialReuses( const CompSlice *slice1, const CompSlice *slice2,
                  AstNodeSet &refSet)
 {
-  typedef STD set<STD string,STD less<STD string> > StringSet;
+  typedef std::set<std::string,std::less<std::string> > StringSet;
   StringSet arrnames;
   CompSlice::ConstStmtIterator stmtIter1 = slice1->GetConstStmtIterator();
   LoopTransformInterface& fa = anal.GetLoopTransformInterface();
@@ -102,10 +102,10 @@ SpatialReuses( const CompSlice *slice1, const CompSlice *slice2,
   return refSet.size();
 }
 
-inline STD string toString( const CompSliceLocalityRegistry::SliceSelfInfo& info) 
+inline std::string toString( const CompSliceLocalityRegistry::SliceSelfInfo& info) 
   { return info.toString(); }
 
-inline STD string toString( const CompSliceLocalityRegistry::SliceRelInfo& info) 
+inline std::string toString( const CompSliceLocalityRegistry::SliceRelInfo& info) 
   { return info.toString(); }
 
 class CompSliceLocalityRegistry::Impl

@@ -8,20 +8,20 @@
 // returns whether the increase of induction variable ivarname
 // sweeps array dimension 'dim
 bool ReferenceDimension(LoopTransformInterface& la, const AstNodePtr& r,
-                       const STD string& ivarname, int dim);
+                       const std::string& ivarname, int dim);
 
 // returns the tride of the array access 'r' at each increase of the induction 
 // variable 'ivarname' ; if 'r' is not array access, returns 0.
 // For arrays with unknown bounds, assume defaulrArrayBound
 int ReferenceStride(LoopTransformInterface& la, const AstNodePtr& r, 
-                    const STD string& ivarname, unsigned arrayBound = 100);
+                    const std::string& ivarname, unsigned arrayBound = 100);
 
 // returns the percentage of the array access 'r' being reused at each increase of 
 // the induction variable 'ivarname' due to spatial locality, assuming
 // cache line size is 'linesize'; invokes referenceStride internally;
 // if 'r' is not array access, returns 0
 float SelfSpatialReuse( LoopTransformInterface& la, const AstNodePtr& r, 
-                        const STD string& ivarname, unsigned linesize, 
+                        const std::string& ivarname, unsigned linesize, 
                         unsigned  defaultArrayBound = 100);
 
 // input: ep: a list of DepInfos between references; 

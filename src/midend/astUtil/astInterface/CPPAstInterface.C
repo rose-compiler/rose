@@ -5,7 +5,7 @@
 using namespace std;
 
 bool CPPAstInterface ::
-IsMemberAccess( const AstNodePtr& _s,  AstNodePtr* obj, STD string* field)
+IsMemberAccess( const AstNodePtr& _s,  AstNodePtr* obj, std::string* field)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   SgVarRefExp* var = 0;
@@ -43,7 +43,7 @@ CreateFunctionCall( const AstNodePtr& func, const AstNodeList& args)
 
 bool CPPAstInterface :: 
 IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj, 
-                      STD string* func,
+                      std::string* func,
                            AstNodePtr* access, AstNodeList* _args)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();

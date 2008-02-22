@@ -89,7 +89,7 @@ class LoopTreeDepGraphNode
         assert(false); }
    const DepInfo& GetLoopMap() const { return loopMap; }
    const DomainCond& GetDomain() const { return domain; }
-   STD string toString() const { return GetInfo()->toString(); }
+   std::string toString() const { return GetInfo()->toString(); }
 
  friend class LoopTreeDepGraphCreate;
 };

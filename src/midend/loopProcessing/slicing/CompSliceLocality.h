@@ -46,9 +46,9 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
             return tmpRefSet.size();
          }
     int SpatialReuses() const { return spRefSet.size(); }
-    STD string toString() const
+    std::string toString() const
     {  
-       STD stringstream out;
+       std::stringstream out;
        out << " Temporary reuse: " << TemporaryReuses(); 
        return out.str();
     }
@@ -78,9 +78,9 @@ class CompSliceLocalityRegistry : protected CompSliceLocalityAnal
             return tmpRefSet.size();
          }
    float SpatialReuses() { return spatialReuses; }
-   STD string toString() const
+   std::string toString() const
     {  
-       STD stringstream out;
+       std::stringstream out;
        out << "spatial reuse: " << spatialReuses << "; Temporary reuse: " <<
               TemporaryReuses();
        return out.str();

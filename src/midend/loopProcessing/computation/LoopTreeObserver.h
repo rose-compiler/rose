@@ -51,7 +51,7 @@ class LoopTreeObserver
 
    virtual void UpdateDeleteNode( const LoopTreeNode *n )
                { if (next != 0) next->UpdateDeleteNode( n ); }
-   virtual void write(STD ostream& out) const {}
+   virtual void write(std::ostream& out) const {}
 };
 
 class LoopTreeObserveInfo  : public ObserveInfo<LoopTreeObserver>

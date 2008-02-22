@@ -10,12 +10,12 @@
 #include <LoopTreeDummyNode.h>
 #include <StmtDepAnal.h>
 
-void save_value( AstInterface& fa, SymbolicVal& v, const STD string& name, int i, AstNodePtr& prep)
+void save_value( AstInterface& fa, SymbolicVal& v, const std::string& name, int i, AstNodePtr& prep)
 {
   SymbolicValType t = v.GetValType();
   if (t == VAL_CONST || t == VAL_VAR)
       return;
-  STD stringstream out;
+  std::stringstream out;
   out << name << "_" << i;
   SymbolicVar var(fa.NewVar(fa.GetType("int"), out.str(),true), fa.GetRoot());
   
@@ -425,9 +425,9 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
    AstInterface& fa = la;
    bool mod = false;
 
-   STD vector <SymbolicVar> ivars;
-   STD vector <STD pair<SymbolicVar, SymbolicVal> > repl;
-   STD vector <SymbolicBound> bounds;
+   std::vector <SymbolicVar> ivars;
+   std::vector <std::pair<SymbolicVar, SymbolicVal> > repl;
+   std::vector <SymbolicBound> bounds;
    LoopTreeGetVarConstBound boundop(stmt,cproot);
    for (LoopTreeNode* c = stmt; c != cproot; c = c->Parent()) {
       LoopInfo* info = c->GetLoopInfo();
@@ -440,7 +440,7 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
          VarInfo vinfo = c->GetVarInfo();
          const SymbolicBound& b = vinfo.GetBound();
          if (b.lb == b.ub)
-            repl.push_back(STD pair<SymbolicVar,SymbolicVal>(vinfo.GetVar(), b.lb));
+            repl.push_back(std::pair<SymbolicVar,SymbolicVal>(vinfo.GetVar(), b.lb));
       }
    }
    LoopTreeGetVarBound context(cproot);
@@ -449,9 +449,9 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
       SymbolicVal cur = SymbolicValGenerator::GetSymbolicVal(fa, *indexp);
       for (int k = 0; k < repl.size(); ++k) 
          cur = ReplaceVal(cur, repl[k].first, repl[k].second);
-      typedef STD pair<SymbolicVal, STD vector<SymbolicVal> > CopyDim; 
-      STD list <CopyDim> coeffs; 
-      CopyDim curdim(1, STD vector<SymbolicVal>());
+      typedef std::pair<SymbolicVal, std::vector<SymbolicVal> > CopyDim; 
+      std::list <CopyDim> coeffs; 
+      CopyDim curdim(1, std::vector<SymbolicVal>());
       SymbolicVal lb = 
         DecomposeAffineExpression(la, cur, ivars, curdim.second, ivars.size()); 
       for (int j = 0; j < ivars.size(); ++j) {
@@ -476,7 +476,7 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
            if (cut != 0) {
              if (cut != 1) {
                curdim.second.push_back(0);  
-               CopyDim split(cut*incr, STD vector<SymbolicVal>()); 
+               CopyDim split(cut*incr, std::vector<SymbolicVal>()); 
                if (SplitEquation(la, curdim.second, cut, bounds, context, split.second))
                    coeffs.push_back(split);
              }
@@ -492,7 +492,7 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
         }
         if (selsize <= 1 && startdiff == 0)
            continue;
-        STD list<ArrayDim>::iterator p = selinfo.begin(); 
+        std::list<ArrayDim>::iterator p = selinfo.begin(); 
         for ( ; p != selinfo.end(); ++p) {
             ArrayDim& cursel = *p;
             if (cursel.dim < i) 
@@ -526,7 +526,7 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
                 mod= true;
                 selsize = Max(cursel.size * cursel.incr, incr * selsize, 
                               &context); 
-                STD list<ArrayDim>::iterator p1 = p; 
+                std::list<ArrayDim>::iterator p1 = p; 
                 for ( ; p1 != selinfo.end(); p = p1++) {
                   ArrayDim& sel1 = *p1;
                   assert(sel1.dim >= i);
@@ -568,10 +568,10 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
    return mod;
 }
 
-STD string SelectArray::toString() const
+std::string SelectArray::toString() const
 {
-  STD string r = "(";
-  STD list<ArrayDim>::const_iterator selp = selinfo.begin();
+  std::string r = "(";
+  std::list<ArrayDim>::const_iterator selp = selinfo.begin();
   for (int i = 0; i < selstart.size(); ++i) {
       r = r + selstart[i].toString();
       for ( ; selp != selinfo.end() && (*selp).dim == i; ++selp) 
@@ -583,7 +583,7 @@ STD string SelectArray::toString() const
 }
 
 CopyArrayConfig::
-CopyArrayConfig( AstInterface& fa, const STD string& arr, const AstNodeType& base, 
+CopyArrayConfig( AstInterface& fa, const std::string& arr, const AstNodeType& base, 
                 const SelectArray& _sel, LoopTreeNode* root)
    : arrname(arr),basetype(base), sel(_sel), shift(0)
 { 
@@ -591,7 +591,7 @@ CopyArrayConfig( AstInterface& fa, const STD string& arr, const AstNodeType& bas
         shift = root->GetLoopInfo();
    if (shift != 0) {
      LoopTreeGetVarConstBound boundop(root);
-     STD vector<SymbolicVal> copyvec;
+     std::vector<SymbolicVal> copyvec;
      for (int i = 0; i < sel.arr_dim(); ++i) 
         copyvec.push_back(0);
      for (SelectArray::iterator p = sel.begin(); !(p == sel.end()); ++p) {
@@ -642,7 +642,7 @@ void CopyArrayConfig:: set_bufname(AstInterface& fa)
             assert(false);
        bufname = fa.NewVar(buftype, arrname + "_buf", true);
        for (int i = 1; i < bufsizeval; ++i) {
-          STD stringstream out;
+          std::stringstream out;
           out << bufname << "_" << i;
           fa.NewVar(buftype, out.str(), false); 
        }
@@ -685,7 +685,7 @@ buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
       if (offsetval == 0)
          return fa.CreateVarRef(bufname);
       else {
-         STD stringstream out;
+         std::stringstream out;
          out << bufname << "_" << offsetval;
          return fa.CreateVarRef(out.str());
       }
@@ -698,7 +698,7 @@ buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
 }
 
 SymbolicVal CopyArrayConfig::
-buf_offset( AstInterface& fa, STD vector<SymbolicVal>& arrindex) const
+buf_offset( AstInterface& fa, std::vector<SymbolicVal>& arrindex) const
 {
    SymbolicVal bufoffset = 0;
    SelectArray::const_iterator selp = sel.begin();
@@ -728,7 +728,7 @@ buf_offset( AstInterface& fa, STD vector<SymbolicVal>& arrindex) const
 AstNodePtr CopyArrayConfig::
 buf_codegen( AstInterface& fa, AstInterface::AstNodeList& arrindex) const
 {
-   STD vector <SymbolicVal> indexval;
+   std::vector <SymbolicVal> indexval;
    int i = 0;
    for (AstInterface::AstNodeList::const_iterator indexp = arrindex.begin();
           indexp != arrindex.end(); ++indexp, ++i) {
@@ -783,9 +783,9 @@ AstNodePtr CopyArrayConfig::allocate_codegen(AstInterface& fa) const
      return prep; 
 }
 
-STD string CopyArrayConfig::toString() const
+std::string CopyArrayConfig::toString() const
 {
-  STD string r = arrname + sel.toString() + ":" + AstToString(prep); 
+  std::string r = arrname + sel.toString() + ":" + AstToString(prep); 
   if (shift != 0) {
       r = r + " : shift " + shift->toString();
 /*
@@ -799,7 +799,7 @@ STD string CopyArrayConfig::toString() const
 void CopyArrayConfig::
 copy_scalar_codegen(LoopTransformInterface& la, 
                     SelectArray::const_iterator selp, 
-                    STD vector<SymbolicVal>& arrindex, CopyOpt opt,
+                    std::vector<SymbolicVal>& arrindex, CopyOpt opt,
                     AstNodePtr& r, int &size) const
 {
   AstInterface& fa = la;
@@ -813,7 +813,7 @@ copy_scalar_codegen(LoopTransformInterface& la,
     }
     if (rhs == 0) {
       AstInterface::AstNodeList indexlist;
-      for (STD vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
+      for (std::vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
             indexp != arrindex.end(); ++indexp) 
               indexlist.push_back((*indexp).CodeGen(fa));
       rhs = la.CreateArrayAccess(fa.CreateVarRef(arrname),indexlist); 
@@ -844,7 +844,7 @@ copy_scalar_codegen(LoopTransformInterface& la,
 
 void CopyArrayConfig:: 
 copy_loop_codegen(LoopTransformInterface& la, SelectArray::const_iterator selp, 
-                  STD vector<SymbolicVal>& arrindex, CopyOpt opt,
+                  std::vector<SymbolicVal>& arrindex, CopyOpt opt,
                   AstNodePtr& r, const AstNodePtr& bufoffset) const
 {
   AstInterface& fa = la;
@@ -863,7 +863,7 @@ copy_loop_codegen(LoopTransformInterface& la, SelectArray::const_iterator selp,
         rhs = fa.CreateArrayAccess(fa.CreateVarRef(bufname), bufindex); 
     }
     else {
-       for (STD vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
+       for (std::vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
             indexp != arrindex.end(); ++indexp) 
               indexlist.push_back((*indexp).CodeGen(fa));
        AstNodePtr arrnode = fa.CreateVarRef(arrname);
@@ -904,7 +904,7 @@ copy_loop_codegen(LoopTransformInterface& la, SelectArray::const_iterator selp,
       }
    }
    else {
-      STD string ivarname = fa.NewVar(fa.GetType("int"));
+      std::string ivarname = fa.NewVar(fa.GetType("int"));
       AstNodePtr ivar = fa.CreateVarRef(ivarname); 
 
       int dim = selp.cur_dim();
@@ -943,7 +943,7 @@ copy_codegen( LoopTransformInterface& la, CopyOpt opt) const
    AstInterface& fa = la;
    AstNodePtr r = fa.CreateBlock(); 
 
-   STD vector<SymbolicVal> arrindex;
+   std::vector<SymbolicVal> arrindex;
    if (opt == SHIFT_COPY) {
       assert(shift != 0);
       for (int i = 0; i < sel.arr_dim(); ++i) 
@@ -965,7 +965,7 @@ copy_codegen( LoopTransformInterface& la, CopyOpt opt) const
        copy_scalar_codegen(la, sel.begin(), arrindex, opt, r, size); 
    }
    else {
-      STD string bufoffsetname = fa.NewVar(fa.GetType("int"));
+      std::string bufoffsetname = fa.NewVar(fa.GetType("int"));
       AstNodePtr bufoffset = fa.CreateVarRef(bufoffsetname);
       fa.BlockAppendStmt(r, fa.CreateAssignment(fa.CopyAstTree(bufoffset),
                                              fa.CreateConstInt(0)));
@@ -979,9 +979,9 @@ copy_codegen( LoopTransformInterface& la, CopyOpt opt) const
    return r;
 }
 
-STD string CopyArrayConfig:: CopyOpt2String( int opt)
+std::string CopyArrayConfig:: CopyOpt2String( int opt)
 {
-  STD string r;
+  std::string r;
   if (opt & ALLOC_COPY)
        r = r + "_alloc"; 
   if (opt & INIT_COPY)
@@ -1023,7 +1023,7 @@ operator()(LoopTransformInterface& la, LoopTreeNode* h,
 class ApplyLoopSplittingImpl
 {
   typedef SymbolicVal SplitEntry;
-  typedef STD list<SplitEntry> SplitList;
+  typedef std::list<SplitEntry> SplitList;
 
   struct LoopLevelCompare {
      bool operator()(const LoopTreeNode* n1, const LoopTreeNode* n2) const
@@ -1031,7 +1031,7 @@ class ApplyLoopSplittingImpl
          return n1->LoopLevel() > n2->LoopLevel();
       }
   };
-  typedef STD map <LoopTreeNode*, SplitList, LoopLevelCompare> SplitMap;
+  typedef std::map <LoopTreeNode*, SplitList, LoopLevelCompare> SplitMap;
 
   void SplitLoop( LoopTreeNode* loop, 
                   SplitList::const_iterator cur, SplitList::const_iterator end)
@@ -1083,7 +1083,7 @@ class ApplyLoopSplittingImpl
    } 
    for (SplitMap::const_iterator splitp = splitmap.begin();
        splitp != splitmap.end(); ++splitp) {
-     const STD pair<LoopTreeNode* const, SplitList>& cur = *splitp;
+     const std::pair<LoopTreeNode* const, SplitList>& cur = *splitp;
      SplitLoop( cur.first, cur.second.begin(),cur.second.end());
    }
   }

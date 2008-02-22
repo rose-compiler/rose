@@ -4,9 +4,7 @@
 #include <set>
 #include <FunctionObject.h>
 
-#define STD std::
-
-class VoidPtrSet : public STD set<void*, STD less<void*> > {};
+class VoidPtrSet : public std::set<void*, std::less<void*> > {};
 
 template <class T>
 class PtrSetWrap  
@@ -112,9 +110,9 @@ class PtrSetWrap
 template<class T>
 class AppendSTLSet : public CollectObject<T>
 {
-  STD set<T, STD less<T> >& res;
+  std::set<T, std::less<T> >& res;
  public:
-  AppendSTLSet( STD set<T, STD less<T> >& r) : res(r) {}
+  AppendSTLSet( std::set<T, std::less<T> >& r) : res(r) {}
   bool operator()(const T& cur) 
    {
       if (res.find(cur) != res.end())
@@ -142,9 +140,9 @@ class AppendPtrSet : public CollectObject<T*>
 template<class T>
 class SelectSTLSet : public SelectObject<T>
 {
-  STD set<T> res;
+  std::set<T> res;
  public:
-  SelectSTLSet( const STD set<T> r) : res(r) {}
+  SelectSTLSet( const std::set<T> r) : res(r) {}
   bool operator()(const T& cur) 
    {
       return (res.find(cur) != res.end());

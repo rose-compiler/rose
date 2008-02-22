@@ -17,7 +17,7 @@ typedef enum { DEPTYPE_NONE = 0, DEPTYPE_TRUE = 1, DEPTYPE_ANTI = 2,
                DEPTYPE_INPUT = 32, DEPTYPE_ARRAY = 39, 
                DEPTYPE_IO = 64, DEPTYPE_DATA = 95, DEPTYPE_CTRL = 128, DEPTYPE_BACKCTRL = 256,
                DEPTYPE_ALL = 479, DEPTYPE_TRANS = 512} DepType;
-STD string DepType2String( DepType t);
+std::string DepType2String( DepType t);
 typedef enum {DEP_SRC = 1, DEP_SINK = 2, DEP_SRC_SINK = 3} DepDirection;
 
 typedef Matrix<DepRel> DepEDD;
@@ -95,8 +95,8 @@ class DepInfo : protected CountRefHandle <DepInfoImpl>
   const DepEDD& GetEDD() const { return ConstRef().GetEDD(); }
   void Initialize( const DepRel &init) { UpdateRef().Initialize(init); }
 
-  void Dump() const { STD cerr << toString() << STD endl; }
-  STD string toString() const;
+  void Dump() const { std::cerr << toString() << std::endl; }
+  std::string toString() const;
   void CarryLevels( int &minLevel, int &maxLevel) const;
   int CarryLevel() const;
   bool IsTop( ) const;

@@ -9,7 +9,7 @@
 
 bool debug_cfg();
 
-inline STD string CFGConfig::EdgeType2String( EdgeType e)
+inline std::string CFGConfig::EdgeType2String( EdgeType e)
 {
   switch (e) {
   case COND_TRUE: return "true";
@@ -58,16 +58,16 @@ class BuildCFGTraverse : public ProcessAstTree
     AstNodePtr first;
     if (fa.IsBlock(s) && (first = fa.GetBlockFirstStmt(s)) == AST_NULL) {
       if (debug_cfg())
-         STD cerr << "block " << AstToString(s) << " is empty " << STD endl;
+         std::cerr << "block " << AstToString(s) << " is empty " << std::endl;
       return true;
     }
     else {
       if (debug_cfg()) {
-         STD cerr << "block " << AstToString(s) << " is not empty " ;
+         std::cerr << "block " << AstToString(s) << " is not empty " ;
          if (first != AST_NULL) 
-            STD cerr << "first statement: " << AstToString(first) << STD endl;
+            std::cerr << "first statement: " << AstToString(first) << std::endl;
          else
-            STD cerr << STD endl;
+            std::cerr << std::endl;
       }
     }
     return false; 
@@ -87,8 +87,8 @@ class BuildCFGTraverse : public ProcessAstTree
   void SetStmtNode( const AstNodePtr& s, Node* n, MapType t)
    {
       if (debug_cfg()) {
-         STD cerr << "mapping stmt " << ((t == START)? "START" : "EXIT");
-         STD cerr << AstToString(s) << " to " << n << STD endl;
+         std::cerr << "mapping stmt " << ((t == START)? "START" : "EXIT");
+         std::cerr << AstToString(s) << " to " << n << std::endl;
       }
       switch (t) {
       case EXIT:
@@ -111,7 +111,7 @@ class BuildCFGTraverse : public ProcessAstTree
          
       n = graph.CreateNode();
       if (debug_cfg()) {
-         STD cerr << " create node : " << n << STD endl; 
+         std::cerr << " create node : " << n << std::endl; 
       }
       if (add) {
           assert ( t==START);
@@ -135,8 +135,8 @@ class BuildCFGTraverse : public ProcessAstTree
        else
           graph.AddNodeStmt(n, s); 
        if (debug_cfg()) {
-          STD cerr << " add stmt " << AstToString(s);
-          STD cerr << " to node " << n << STD endl;
+          std::cerr << " add stmt " << AstToString(s);
+          std::cerr << " to node " << n << std::endl;
        }
        if (node == n)
           ++stmtnum;
@@ -150,7 +150,7 @@ class BuildCFGTraverse : public ProcessAstTree
           return;
        graph.CreateEdge(cur, dest, val);
        if (debug_cfg()) 
-             STD cerr << "add " << CFGConfig::EdgeType2String(val) << " edge from " << cur << " to " << dest << STD endl;
+             std::cerr << "add " << CFGConfig::EdgeType2String(val) << " edge from " << cur << " to " << dest << std::endl;
     }
 
 
@@ -160,18 +160,18 @@ class BuildCFGTraverse : public ProcessAstTree
       if (node == 0 && createnew) {
         node = graph.CreateNode();
         if (debug_cfg()) 
-           STD cerr << "create node in GetCurNode " << node << STD endl;
+           std::cerr << "create node in GetCurNode " << node << std::endl;
         stmtnum = 0;
       }
       if (debug_cfg()) 
-        STD cerr << "current node : " << node << STD endl;
+        std::cerr << "current node : " << node << std::endl;
       return node;
    }
   void SetCurNode( Node *n)
    {
      if (debug_cfg()) {
         if (n == 0)
-           STD cerr << "resetting current node to 0 \n"; 
+           std::cerr << "resetting current node to 0 \n"; 
      }
      node = n;
      stmtnum = 0;
@@ -185,8 +185,8 @@ class BuildCFGTraverse : public ProcessAstTree
                                      AstInterface::TraversalVisitType t)
    {
      if (debug_cfg()) {
-        STD cerr << "processing function def " ; 
-        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
+        std::cerr << "processing function def " ; 
+        std::cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << std::endl;
      }
      if (t == AstInterface::PreVisit) {
             Node *exit = GetCurNode(true);
@@ -212,8 +212,8 @@ class BuildCFGTraverse : public ProcessAstTree
         Node *exitNode = MapStmt(fa, s, EXIT);
 
      if (debug_cfg()) {
-        STD cerr << "processing loop ";
-        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
+        std::cerr << "processing loop ";
+        std::cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << std::endl;
      }
        AstNodePtr init, cond, incr;
        if (!fa.IsLoop( s, &init, &cond,&incr))
@@ -286,8 +286,8 @@ class BuildCFGTraverse : public ProcessAstTree
                                AstInterface::TraversalVisitType t)
    {
      if (debug_cfg()) {
-        STD cerr << "processing if ";
-        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
+        std::cerr << "processing if ";
+        std::cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << std::endl;
       }
         Node *exitNode = MapStmt(fa, s, EXIT);
 
@@ -333,8 +333,8 @@ class BuildCFGTraverse : public ProcessAstTree
                                     AstInterface::TraversalVisitType t)
     {
      if (debug_cfg()) {
-        STD cerr << "processing basic block " ; 
-        STD cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << STD endl;
+        std::cerr << "processing basic block " ; 
+        std::cerr << ((t == AstInterface::PreVisit)? " previsit " : " postvisit ") << std::endl;
      }
 
         Node* lastNode = GetCurNode(false);
@@ -361,7 +361,7 @@ class BuildCFGTraverse : public ProcessAstTree
                                const AstNodePtr& _dest)
      {
      if (debug_cfg()) {
-        STD cerr << "processing go to  " ; 
+        std::cerr << "processing go to  " ; 
      }
         AstNodePtr dest = _dest;
         Node *lastNode = GetCurNode( false );
@@ -391,7 +391,7 @@ class BuildCFGTraverse : public ProcessAstTree
   virtual bool ProcessStmt(AstInterface &fa, const AstNodePtr& s)
      {
        if (debug_cfg()) 
-          STD cerr << "processing stmt " << AstToString(s) << STD endl;
+          std::cerr << "processing stmt " << AstToString(s) << std::endl;
 
          Node *lastNode = GetCurNode();
          Node *n = GetStmtNode(s, START);

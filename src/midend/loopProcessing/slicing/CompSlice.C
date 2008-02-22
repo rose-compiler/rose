@@ -58,15 +58,15 @@ CompSlice ::  ~CompSlice()
   delete obImpl; 
 }
 
-STD string CompSliceNest::toString() const
+std::string CompSliceNest::toString() const
 { 
-  STD string res;
+  std::string res;
   for (int i = 0;i<NumberOfEntries();++i)
      res = res + Entry(i)->toString();
   return res;
 }
 
-STD string CompSlice :: toString() const
+std::string CompSlice :: toString() const
 {
   return impl->toString();
 }
@@ -321,12 +321,12 @@ LoopStepInfo SliceLoopStep(const CompSlice *slice)
 
 SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
 {
-  typedef STD set<STD string, STD less<STD string> > nameset;
+  typedef std::set<std::string, std::less<std::string> > nameset;
   nameset sliceVars, usedVars;
   CompSlice::ConstLoopIterator loopIter = slice->GetConstLoopIterator();
   LoopTreeInterface interface;
   for (LoopTreeNode *loop; loop = loopIter.Current(); loopIter.Advance()) {
-    STD string name = loop->GetLoopInfo()->GetVar().GetVarName();
+    std::string name = loop->GetLoopInfo()->GetVar().GetVarName();
     sliceVars.insert( name);
     CompSlice::ConstStmtIterator stmtIter=loopIter.GetConstStmtIterator();
     for (LoopTreeNode *stmt; stmt=stmtIter.Current(); stmtIter.Advance()) {

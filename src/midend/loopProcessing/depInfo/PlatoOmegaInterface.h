@@ -140,8 +140,8 @@ namespace PlatoOmegaInterface
 
 		private:
 
-			typedef STD map<STD string, StandardVar*> STD_VAR_MAP;
-			typedef STD map<STD string, FreeVar*> FREE_VAR_MAP;
+			typedef std::map<std::string, StandardVar*> STD_VAR_MAP;
+			typedef std::map<std::string, FreeVar*> FREE_VAR_MAP;
 
 			/**	PlatoRelation is analogous to the Omega Relation
 			*		in that it is what is used to add all of the
@@ -190,7 +190,7 @@ namespace PlatoOmegaInterface
 			MakeUniqueVar::ReverseRecMap *_varmap;
 			MakeUniqueVar *_varop;
 			MakeUniqueVarGetBound *_boundop;
-			STD vector<SymbolicBound> *_bounds;
+			std::vector<SymbolicBound> *_bounds;
 
 			/** Dependence relation variables **/
 			Relation *_omega_relation;

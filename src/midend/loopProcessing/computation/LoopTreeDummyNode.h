@@ -12,7 +12,7 @@ class LoopTreeDummyNode : public LoopTreeNode
   virtual ~LoopTreeDummyNode() {}
  public:
   LoopTreeDummyNode() {}
-  STD string GetClassName() const { return "LoopTreeDummyNode"; }
+  std::string GetClassName() const { return "LoopTreeDummyNode"; }
   bool SelfRemove() { RemoveSelf(); return true; }
   LoopTreeNode* Clone() const {return new LoopTreeDummyNode(); }
 };
@@ -26,7 +26,7 @@ class LoopTreeBlockLoopNode : public LoopTreeLoopNode
                           const SymbolicVal& ub, const SymbolicVal& step)
      : LoopTreeLoopNode(ivar, lb, ub, step) {}
 
-   STD string GetClassName() const { return "LoopTreeBlockLoopNode"; }
+   std::string GetClassName() const { return "LoopTreeBlockLoopNode"; }
    int IncreaseLoopLevel() const { return 0; }
    LoopTreeNode* Clone() const
      { return new LoopTreeBlockLoopNode( *this); }
@@ -54,7 +54,7 @@ class LoopTreeRestrLoopRange
 
   LoopTreeNode* GetRestrLoop() const { return loop.GetAncesLoop(); }
 
-  STD string GetClassName() const { return "LoopTreeRestrLoopRange"; }
+  std::string GetClassName() const { return "LoopTreeRestrLoopRange"; }
   SymbolicVar GetVar() const 
       { return GetRestrLoop()->GetLoopInfo()->GetVar(); }
   VarInfo GetVarInfo() const 
@@ -62,7 +62,7 @@ class LoopTreeRestrLoopRange
         int align = loop.GetLoopAlign();
         return VarInfo(GetRestrLoop()->GetLoopInfo()->GetVar(), b - align);
       }
-  virtual STD string toString() const;
+  virtual std::string toString() const;
   AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
 
   bool RemoveSelf();
@@ -86,11 +86,11 @@ class LoopTreeRelateLoopIvar : public LoopTreeNode
   SymbolicVar GetIvar1() const { return GetLoop1()->GetLoopInfo()->GetVar(); }
   SymbolicVar GetIvar2() const { return GetLoop2()->GetLoopInfo()->GetVar(); }
   int GetAlign() const { return loop2.GetLoopAlign() - loop1.GetLoopAlign();}
-  STD string GetClassName() const { return "LoopTreeRelateLoopIvar"; }
+  std::string GetClassName() const { return "LoopTreeRelateLoopIvar"; }
 
   bool SelfRemove();
   bool MergeSibling( int opt);
-  virtual STD string toString() const;
+  virtual std::string toString() const;
   AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
   LoopTreeNode* Clone() const
     { return new LoopTreeRelateLoopIvar(GetLoop1(), GetLoop2(), GetAlign()); }
@@ -115,9 +115,9 @@ class LoopTreeReplLoopVar : public LoopTreeNode,
       { SymbolicVal v = GetNewVal();
         return VarInfo(oldvar, SymbolicBound(v,v)); }
 
-  STD string GetClassName() const { return "LoopTreeReplLoopVar"; }
+  std::string GetClassName() const { return "LoopTreeReplLoopVar"; }
   bool SelfRemove() ;
-  virtual STD string toString() const;
+  virtual std::string toString() const;
   AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const; 
   LoopTreeNode* Clone()  const
       { return new LoopTreeReplLoopVar( newval, align, oldvar); }
@@ -130,8 +130,8 @@ class LoopTreeReplAst :  public LoopTreeNode
     : LoopTreeNode(), orig(o),repl(r) {}
   ~LoopTreeReplAst() {}
 
-  STD string GetClassName() const { return "LoopTreeReplAst"; }
-  virtual STD string toString() const;
+  std::string GetClassName() const { return "LoopTreeReplAst"; }
+  virtual std::string toString() const;
   AstNodePtr CodeGen( LoopTransformInterface &fa) const; 
   LoopTreeNode* Clone()  const
       { return new LoopTreeReplAst(orig, repl); }
@@ -152,8 +152,8 @@ class LoopTreeCopyArray : public LoopTreeNode,
   const CopyArrayConfig& get_config() const { return config; }
   CopyArrayConfig& get_config() { return config; }
 
-  STD string GetClassName() const { return "LoopTreeCopyArray"; }
-  virtual STD string toString() const;
+  std::string GetClassName() const { return "LoopTreeCopyArray"; }
+  virtual std::string toString() const;
   AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const; 
   LoopTreeNode* Clone()  const
       { return new LoopTreeCopyArray( config, opt); }

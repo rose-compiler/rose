@@ -21,8 +21,8 @@ class MapVarBound
   public SymbolicVisitor
 {
   SymbolicBound result;
-  typedef STD pair<STD string,AstNodePtr> Key;
-  typedef STD map< Key, SymbolicBound, STD less<Key> > MapBound;
+  typedef std::pair<std::string,AstNodePtr> Key;
+  typedef std::map< Key, SymbolicBound, std::less<Key> > MapBound;
   MapBound bmap;
   
   void VisitVar( const SymbolicVar& var)
@@ -52,7 +52,7 @@ class VarInfo : public MapObject<SymbolicVal, SymbolicBound>
            const SymbolicVal& _ub) : var(_var),b(_lb,_ub) {}
   VarInfo( const SymbolicVar& _var, const SymbolicBound& _b)
            : var(_var),b(_b) {}
-  STD string toString() const {
+  std::string toString() const {
       return  var.toString() + " : " + b.toString();
   }
   SymbolicBound operator() ( const SymbolicVal& v)

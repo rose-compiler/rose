@@ -19,23 +19,23 @@ bool DebugReachingDef()
 
 
 class ConstructReachingDefinitionBase
-  : public  CollectObject< STD pair<AstNodePtr, AstNodePtr> >
+  : public  CollectObject< std::pair<AstNodePtr, AstNodePtr> >
 {
   ReachingDefinitionBase& base;
   AstInterface& fa;
-  bool operator()( const STD pair<AstNodePtr, AstNodePtr>& mod)
+  bool operator()( const std::pair<AstNodePtr, AstNodePtr>& mod)
   {
-    STD string varname;
+    std::string varname;
     AstNodePtr scope;
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       base.add_ref( varname, scope, mod);
       if (DebugReachingDef()) 
-         STD cerr << "collecting var ref: " << varname << ":" << AstToString(mod.second) << STD endl;
+         std::cerr << "collecting var ref: " << varname << ":" << AstToString(mod.second) << std::endl;
     }
     else {
       base.add_unknown_def( mod);
       if (DebugReachingDef()) 
-         STD cerr << "collecting unknown ref: " << AstToString(mod.first) << ":" << AstToString(mod.second) << STD endl;
+         std::cerr << "collecting unknown ref: " << AstToString(mod.first) << ":" << AstToString(mod.second) << std::endl;
     }
     return true;
   }
@@ -45,10 +45,10 @@ public:
 };
 
 void ReachingDefinitionBase:: 
-add_ref( const STD string& varname, const AstNodePtr& scope, const STD pair<AstNodePtr,AstNodePtr>& def)
+add_ref( const std::string& varname, const AstNodePtr& scope, const std::pair<AstNodePtr,AstNodePtr>& def)
 { 
-   STD string scopename = scopemap.get_string(scope);
-   STD string name = varname + scopename;
+   std::string scopename = scopemap.get_string(scope);
+   std::string name = varname + scopename;
    if (DebugReachingDef()) 
        std:: cerr << "adding variable name: " << name << "\n";
    add_data(name, def); 
@@ -62,10 +62,10 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
   for (AstInterface::AstNodeList::iterator p = in->begin();
        p != in->end(); ++p) {
      AstNodePtr cur = *p;
-     STD string varname;
+     std::string varname;
      AstNodePtr scope;
      if (fa.IsVarRef( cur, 0, &varname, &scope))
-        add_ref(varname, scope, STD pair<AstNodePtr, AstNodePtr>(cur, AST_NULL) ); 
+        add_ref(varname, scope, std::pair<AstNodePtr, AstNodePtr>(cur, AST_NULL) ); 
   }
   ConstructReachingDefinitionBase collect(fa, *this);
   StmtSideEffectCollect op(a);
@@ -73,36 +73,36 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
 }
 
 void ReachingDefinitionGenerator::
-add_def( ReachingDefinitions& repr, const STD string& varname, const AstNodePtr& scope,
-                const STD pair<AstNodePtr,AstNodePtr>& def) const
+add_def( ReachingDefinitions& repr, const std::string& varname, const AstNodePtr& scope,
+                const std::pair<AstNodePtr,AstNodePtr>& def) const
 {
-   STD string scopename = scopemap.get_string(scope);
-   STD string name = varname + scopename;
+   std::string scopename = scopemap.get_string(scope);
+   std::string name = varname + scopename;
    add_member(repr, name, def);
 }
 
 ReachingDefinitions ReachingDefinitionGenerator::
-get_def_set( const STD string& varname, const AstNodePtr& scope) const
+get_def_set( const std::string& varname, const AstNodePtr& scope) const
 {
-   STD string scopename = scopemap.get_string(scope);
-   STD string name = varname + scopename;
+   std::string scopename = scopemap.get_string(scope);
+   std::string name = varname + scopename;
    return get_data_set(name);
 }
 
-class CollectLocalDefinitions : public CollectObject< STD pair<AstNodePtr, AstNodePtr> >
+class CollectLocalDefinitions : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >
 {
   AstInterface& fa;
-  STD map<STD string, STD pair<AstNodePtr, STD pair<AstNodePtr,AstNodePtr> > > defvars;
+  std::map<std::string, std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> > > defvars;
   ReachingDefinitions gen;
   const ReachingDefinitionGenerator& g;
   
-  bool operator()( const STD pair<AstNodePtr,AstNodePtr>& mod)
+  bool operator()( const std::pair<AstNodePtr,AstNodePtr>& mod)
   {
-    STD string varname;
+    std::string varname;
     AstNodePtr scope;
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       assert(mod.second != AST_NULL);
-      defvars[varname] = STD pair<AstNodePtr, STD pair<AstNodePtr,AstNodePtr> >(scope, mod);
+      defvars[varname] = std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> >(scope, mod);
     }
     else {
       g.add_unknown_def( gen, mod);
@@ -117,9 +117,9 @@ public:
    }
   ReachingDefinitions get_gen()  
     { 
-      for (STD map<STD string, STD pair<AstNodePtr, STD pair<AstNodePtr,AstNodePtr> > >::const_iterator p = defvars.begin();
+      for (std::map<std::string, std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> > >::const_iterator p = defvars.begin();
            p != defvars.end(); ++p) {
-         STD pair <STD string, STD pair<AstNodePtr,STD pair<AstNodePtr,AstNodePtr> > > cur = *p;
+         std::pair <std::string, std::pair<AstNodePtr,std::pair<AstNodePtr,AstNodePtr> > > cur = *p;
          g.add_def( gen, cur.first, cur.second.first, cur.second.second);
       }
       defvars.clear();
@@ -132,15 +132,15 @@ public:
   }
 };
 
-class CollectKillDefinitions : public CollectObject< STD pair<AstNodePtr, AstNodePtr> >
+class CollectKillDefinitions : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >
 {
   AstInterface& fa;
   ReachingDefinitions kill;
   const ReachingDefinitionGenerator& g;
 
-  bool operator()( const STD pair<AstNodePtr,AstNodePtr>& mod)
+  bool operator()( const std::pair<AstNodePtr,AstNodePtr>& mod)
   {
-    STD string varname;
+    std::string varname;
     AstNodePtr scope;
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       kill |= g.get_def_set(varname, scope);
@@ -165,8 +165,8 @@ finalize( AstInterface& fa, const ReachingDefinitionGenerator& g,
   CollectLocalDefinitions collectgen(fa, g);
   CollectKillDefinitions collectkill(fa, g);
   StmtSideEffectCollect op(a);
-  STD list <AstNodePtr>& stmts = GetStmts();
-  for (STD list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
+  std::list <AstNodePtr>& stmts = GetStmts();
+  for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
        ++p) {
     op( fa, *p, &collectgen, 0, &collectkill);
   }
@@ -186,9 +186,9 @@ finalize( AstInterface& fa, const ReachingDefinitionGenerator& g,
 void ReachingDefNode::Dump() const
 {
   DataFlowNode<ReachingDefinitions>::Dump();
-  STD cerr << "Entry ReachingDefinitions:" << in.toString();
-  STD cerr << "Exit  ReachingDefinitions:" << out.toString();
-  STD cerr << STD endl;
+  std::cerr << "Entry ReachingDefinitions:" << in.toString();
+  std::cerr << "Exit  ReachingDefinitions:" << out.toString();
+  std::cerr << std::endl;
 }
 
 
@@ -198,10 +198,10 @@ void ReachingDefinitionAnalysis:: FinalizeCFG( AstInterface& fa)
   for (AstInterface::AstNodeList::iterator p = pars.begin();
        p != pars.end(); ++p) {
       AstNodePtr cur = *p;
-      STD string name;
+      std::string name;
       AstNodePtr scope;
       if (fa.IsVarRef(cur, 0, &name, &scope))
-         g->add_def( in, name, scope, STD pair<AstNodePtr,AstNodePtr>(cur,AST_NULL));
+         g->add_def( in, name, scope, std::pair<AstNodePtr,AstNodePtr>(cur,AST_NULL));
   } 
   NodeIterator p = GetNodeIterator();
   (*p)->finalize( fa, *g, a, &in);
@@ -227,15 +227,15 @@ operator()( AstInterface& fa, const AstNodePtr& h,  FunctionSideEffectInterface*
   a = anal;
 
   if (DebugReachingDef())
-     STD cerr << "start building reaching definitions \n";
+     std::cerr << "start building reaching definitions \n";
   DataFlowAnalysis<ReachingDefNode, ReachingDefinitions>::operator()( fa, h);
   if (DebugReachingDef()) 
-     STD cerr << "finished building reaching definitions \n" << GraphToString(*this);
+     std::cerr << "finished building reaching definitions \n" << GraphToString(*this);
 }
 
 void ReachingDefinitionAnalysis:: 
 collect_ast( const ReachingDefinitions& repr, 
-             CollectObject< STD pair<AstNodePtr, AstNodePtr> >& collect)
+             CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect)
 {
   assert(g != 0);
   g->collect_member( repr, collect);

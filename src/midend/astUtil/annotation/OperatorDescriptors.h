@@ -70,7 +70,7 @@ public:
   OperatorDeclaration() : signiture("") {}
   
   std::string get_signiture () const { return signiture; }
-  static std::string get_signiture( AstInterface& fa, const STD string& fname,
+  static std::string get_signiture( AstInterface& fa, const std::string& fname,
                                     const AstInterface::AstTypeList& params);
   static void set_unique() { unique = true; }
   

@@ -147,7 +147,7 @@ static char * str_dir_vec (plato::dddir dv, int dvLevel)
 
 void print_debug(std::string s1, std::string s2, int f) {
 	if (f) {
-		STD cerr << s1 << " " << s2 << STD endl;
+		std::cerr << s1 << " " << s2 << std::endl;
 	}
 }
 
@@ -758,8 +758,8 @@ void PlatoOmegaDepTesting::AddCommonLoopIndices(void)
 {
 	int i = 1;
 	STD_VAR_U *std_var_u;
-	STD vector<SymbolicVar>::iterator iter1 = _info1->ivars.begin();
-	STD vector<SymbolicVar>::iterator iter2 = _info2->ivars.begin();
+	std::vector<SymbolicVar>::iterator iter1 = _info1->ivars.begin();
+	std::vector<SymbolicVar>::iterator iter2 = _info2->ivars.begin();
 	print_debug("AddCommonLoopIndices","entering",debug_AddCommonLoopIndices);
 	while (iter1 != _info1->ivars.end() && iter2 != _info2->ivars.end())
 	{
@@ -825,7 +825,7 @@ void PlatoOmegaDepTesting::AddLocalLoopIndices(void/*DepInfoAnal::LoopDepInfo in
 	StandardVar *var_ref = 0;
 	DepInfoAnal::LoopDepInfo *info;
 	bool is_input;
-	STD vector<SymbolicVar>::iterator iter;
+	std::vector<SymbolicVar>::iterator iter;
 	print_debug("AddLocalLoopIndices","entering",debug_AddLocalLoopIndices);
 	for (int i = 0;i < 2;i++)
 	{
@@ -1184,8 +1184,8 @@ Relation PlatoOmegaDepTesting::GetNewRelationFromDV(const plato::dddir &dv)
 
 	print_debug("GetNewRelationFromDV", "entering",debug_GetNewRelationFromDV);
 
-	STD vector<SymbolicVar>::iterator iter1 = _info1->ivars.begin();
-	STD vector<SymbolicVar>::iterator iter2 = _info2->ivars.begin();
+	std::vector<SymbolicVar>::iterator iter1 = _info1->ivars.begin();
+	std::vector<SymbolicVar>::iterator iter2 = _info2->ivars.begin();
 	while (iter1 != _info1->ivars.end() && iter2 != _info2->ivars.end())
 	{
 		const SymbolicVal &index = *iter1;
@@ -1412,7 +1412,7 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
 
 	int postfix = 0, i;
 	AstInterface::AstNodeList sub1, sub2;
-	STD stringstream varpostfix1, varpostfix2;
+	std::stringstream varpostfix1, varpostfix2;
 	++postfix;
 	varpostfix1 << "___depanal_" << postfix;
 	++postfix;
@@ -1439,7 +1439,7 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
 	AstInterface::AstNodeList::reverse_iterator iter1 = sub1.rbegin();
 	AstInterface::AstNodeList::reverse_iterator iter2 = sub2.rbegin();
    AstNodePtr s1, s2;
-	STD vector <STD vector<SymbolicVal> > analMatrix;
+	std::vector <std::vector<SymbolicVal> > analMatrix;
 	print_debug("RenameDupedVars","fixing to parse vals",debug_RenameDupedVars);
 	for (;iter1 != sub1.rend() && iter2 != sub2.rend();iter1++,iter2++)
 	{
@@ -1447,7 +1447,7 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
 		s1 = *iter1; s2 = *iter2;
 		SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(*_fa, s1);
     	SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(*_fa, s2);
-		STD vector<SymbolicVal> cur;
+		std::vector<SymbolicVal> cur;
 		SymbolicVal left1 = DecomposeAffineExpression(fa, val1, _info1->ivars, cur,_dim1);
     	SymbolicVal left2 = DecomposeAffineExpression(fa, -val2, _info2->ivars,cur,_dim2);
 		for (i = 0; i < _dim1; ++i)
@@ -1470,16 +1470,16 @@ void PlatoOmegaDepTesting::RenameDupedVars(void)
 		//if (DebugDep())
 		{
 			//assert(dim+1 == cur.size());
-			//STD cerr << "coefficients for induction variables (" << _dim1 << " + " << _dim2 << "+ 1)\n";
+			//std::cerr << "coefficients for induction variables (" << _dim1 << " + " << _dim2 << "+ 1)\n";
 			//for (int i = 0; i < _dim1 + _dim2; ++i)
-				//STD cerr << cur[i].toString() << _bounds[i]->toString() << " " ;
-			//STD cerr << cur[_dim1+_dim2].toString() << STD endl;
+				//std::cerr << cur[i].toString() << _bounds[i]->toString() << " " ;
+			//std::cerr << cur[_dim1+_dim2].toString() << std::endl;
 		}
 		for ( int i = 0; i < _dim1 + _dim2; ++i) {
         SymbolicVal cut = cur[i];
         if (cut == 1 || cut == 0 || cut == -1)
              continue;
-        STD vector<SymbolicVal> split;
+        std::vector<SymbolicVal> split;
         if (SplitEquation( fa, cur, cut, *_bounds, boundop, split)) 
              analMatrix.push_back(split);
 		}
@@ -1524,7 +1524,7 @@ ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
 	_anal = &anal;
 	_ref = (DepInfoAnal::StmtRefDep *) &ref;
 
-	_bounds = new STD vector<SymbolicBound>;
+	_bounds = new std::vector<SymbolicBound>;
 
 	MakeUniqueVar::ReverseRecMap varmap;
   	MakeUniqueVar varop(anal.GetModifyVariableInfo(),varmap);

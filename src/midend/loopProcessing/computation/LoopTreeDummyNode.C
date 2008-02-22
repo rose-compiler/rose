@@ -31,9 +31,9 @@ void LoopTreeRestrLoopRange :: UpdateSwapNode( const SwapNodeInfo &info)
        }
    }
 
-STD string LoopTreeRestrLoopRange :: toString() const
+std::string LoopTreeRestrLoopRange :: toString() const
    {
-      STD stringstream out;
+      std::stringstream out;
       out << "restrict loop ivar ";
       out << loop.GetAncesLoop()->GetLoopInfo()->GetVar().toString();
       out << " + " << loop.GetLoopAlign() << " within range:\n ( " << b.toString();
@@ -305,9 +305,9 @@ bool LoopTreeRelateLoopIvar :: MergeSibling( int opt)
      return false;
    }
 
-STD string LoopTreeRelateLoopIvar :: toString() const
+std::string LoopTreeRelateLoopIvar :: toString() const
    {
-     STD stringstream out;
+     std::stringstream out;
      out << "relate loop ivar :";
      out << loop1.GetAncesLoop()->GetLoopInfo()->GetVar().toString();
      out << loop1.GetAncesLoop()->LoopLevel();
@@ -364,9 +364,9 @@ bool LoopTreeReplLoopVar :: SelfRemove()
       return false;
     }
 
-STD string LoopTreeReplLoopVar :: toString() const
+std::string LoopTreeReplLoopVar :: toString() const
    {
-     STD stringstream out;
+     std::stringstream out;
       out << "replace loop index variable " <<  oldvar.toString();
       out << " with val:" << newval.toString();
       out << " + " << align;
@@ -385,12 +385,12 @@ AstNodePtr LoopTreeReplLoopVar :: CodeGen( LoopTransformInterface &fa, const Ast
     return result;
   }
 
-STD string LoopTreeCopyArray::toString() const
+std::string LoopTreeCopyArray::toString() const
 {
    return config.toString() + CopyArrayConfig::CopyOpt2String(opt);
 }
 
-STD string LoopTreeReplAst::toString() const
+std::string LoopTreeReplAst::toString() const
 {
   return "replace " + AstToString(orig) + " -> " + AstToString(repl);
 }

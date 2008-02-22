@@ -23,7 +23,7 @@ struct SliceInfo
     : stmt(s), loop(l), looplevel(level), reversible(r), alignInfo(mina,maxa) {}
   void SetLoop(LoopTreeNode *l, int level) { loop=l; looplevel=level; }
   operator bool() { return alignInfo; }
-  void write(STD ostream& out) const 
+  void write(std::ostream& out) const 
    { out << "slice stmt: \n";
      stmt->write(out);
      out << "slice loop: \n";
@@ -129,10 +129,10 @@ class TransSlicingAnal
    LoopTreeNode* SliceStmt(int i) { return sliceLoops[i].stmt; }
    SliceInfo& SliceLoop(int i) { return sliceLoops[i]; } 
    LoopTreeNode* LastSliceStmt() { return sliceLoops[size-1].stmt; }
-   void write(STD ostream& out) const;
+   void write(std::ostream& out) const;
 };
 
-void TransSlicingAnal:: write(STD ostream& out) const
+void TransSlicingAnal:: write(std::ostream& out) const
 {
       for (int i = 0; i < size; ++i) {
          sliceLoops[i].write(out);

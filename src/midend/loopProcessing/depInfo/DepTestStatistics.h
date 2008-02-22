@@ -38,7 +38,7 @@ class DepTestStatistics
 		double _adhoc_t0;
 		double _plato_t0;
 		double _omega_t0;
-		STD string _filename;
+		std::string _filename;
 		unsigned int _dep_test_choice;
 
 	public:
@@ -75,7 +75,7 @@ class DepTestStatistics
 		int AddProcessedPlato(int p);
 		int AddProcessedOmega(int p);
 		void GetProcessed(int *a, int *p, int *o);
-		void SetFileName(const STD string fname);
+		void SetFileName(const std::string fname);
 		bool CompareDepTests(unsigned int c, DepInfo a, DepInfo p, DepInfo o);
 		unsigned int RoseToPlatoDV(const DepRel dr);
 		DepDirType PlatoToRoseDV(unsigned int _dv);

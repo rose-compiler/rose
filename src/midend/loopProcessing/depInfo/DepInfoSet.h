@@ -28,7 +28,7 @@ class DepInfoSet : protected CountRefHandle <DepInfoSetImpl>
 
    bool IsTop() const;
    bool IsBottom(int commLevel = 0) const;
-   STD string toString() const;
+   std::string toString() const;
 
    bool AddDep( const DepInfo &c);
    bool operator |= (const DepInfoSet &that);

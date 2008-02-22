@@ -201,7 +201,7 @@ AstNodePtr LoopTreeNode :: CodeGen( LoopTransformInterface &la) const
   return CodeGen(la, result); 
 }
 
-STD string LoopTreeStmtNode :: toString() const
+std::string LoopTreeStmtNode :: toString() const
 {
   return AstToString( start );
 }
@@ -243,7 +243,7 @@ LoopInfo:: LoopInfo( SymbolicVar ivar,SymbolicVal lb, SymbolicVal ub,
   }
 }
 
-STD string LoopTreeLoopNode :: toString() const
+std::string LoopTreeLoopNode :: toString() const
 { return info.toString(); }
 
 AstNodePtr LoopTreeLoopNode :: 
@@ -268,9 +268,9 @@ CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
                             info.GetStep().CodeGen(fa), c, info.ReverseEnum());
 }
 
-STD string LoopTreeNode :: TreeToString() const
+std::string LoopTreeNode :: TreeToString() const
 {
-  STD string res = toString();
+  std::string res = toString();
   if (ChildCount() > 0) {
      for (LoopTreeNode *n = FirstChild(); n != 0; n = n->NextSibling()) {
         res = res + "\n" + n->TreeToString();
@@ -280,11 +280,11 @@ STD string LoopTreeNode :: TreeToString() const
   return res;
 }
 
-STD string LoopTreeRoot :: toString() const
+std::string LoopTreeRoot :: toString() const
 {
   char buf[20];
   sprintf( buf, "%d", level);
-  return "LOOP_TREE_ROOT at level" + STD string(buf);
+  return "LOOP_TREE_ROOT at level" + std::string(buf);
 }
 
 

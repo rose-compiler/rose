@@ -27,9 +27,9 @@ void DepInfoSet :: UpdateDepInfo( bool (*Update)(DepInfo &info) )
 
 int DepInfoSet :: NumOfDeps() const { return ConstRef().NumberOfEntries(); }
 
-STD string DepInfoSet :: toString() const
+std::string DepInfoSet :: toString() const
  { 
-   STD string r;
+   std::string r;
    for (DepInfoSetIterator iter(ConstRef()); !iter.ReachEnd(); iter.Advance()) {
      r = r + iter.Current().toString();
    }

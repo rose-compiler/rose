@@ -20,9 +20,9 @@ class CondSliceStmt : public CompSliceStmt
   void Dump() const
     { 
       CompSliceStmt::Dump();
-      STD cerr << "slicing group: " <<  groupIndex << "\n";
+      std::cerr << "slicing group: " <<  groupIndex << "\n";
     }
-  virtual STD string GetClassName() const { return "CondSliceStmt"; }
+  virtual std::string GetClassName() const { return "CondSliceStmt"; }
 };
 
 
@@ -86,7 +86,7 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
   int num = slice->QuerySliceGroupNumber();
   LoopTreeNode *nr = root;
   if (num > 1) {
-    STD string groupVar = fa.NewVar(fa.GetType("int")), groupVarN = groupVar + "N";
+    std::string groupVar = fa.NewVar(fa.GetType("int")), groupVarN = groupVar + "N";
     fa.NewVar( fa.GetType("int"), groupVarN);
     LoopTreeCreate *tc = c.GetLoopTreeCreate();
     nr = tc->CreateLoopNode( SymbolicVar(groupVar, AST_NULL), 1, SymbolicVar(groupVarN, AST_NULL), 1);
@@ -96,7 +96,7 @@ Transform( LoopTransformInterface &la, LoopTreeDepComp& c,
     char buf[10];
     for (int i = 1; i <= num; ++i) {
        sprintf(buf, "%1d", i);
-       STD string name = groupVar + buf;
+       std::string name = groupVar + buf;
        fa.NewVar(fa.GetType("int"), name);
        args.push_back( fa.CreateVarRef( name) );
     }

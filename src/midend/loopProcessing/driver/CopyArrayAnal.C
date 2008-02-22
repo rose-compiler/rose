@@ -37,7 +37,7 @@ void CopyArrayOperator::operator()
    refDep.Build(la, tc, root);
 
    if (DebugCrossGraph())
-      write_graph(refDep, STD cerr, "reuse");
+      write_graph(refDep, std::cerr, "reuse");
    DepCompCopyArrayCollect collect(la,  root);
    DepCompCopyArrayToBuffer().CollectCopyArray(la, collect, refDep);
    ModifyCopyArrayCollect(la, collect, refDep);
@@ -61,7 +61,7 @@ OutmostReuseLevel ( DepCompCopyArrayCollect::CopyArrayUnit& unit,
       }
   }
   if (DebugCopyRoot()) { 
-     STD cerr << "outmost reuse level for " << IteratorToString2(unit.refs.begin()) << " is " << res << STD endl;
+     std::cerr << "outmost reuse level for " << IteratorToString2(unit.refs.begin()) << " is " << res << std::endl;
   }
   return res;
 }
@@ -81,7 +81,7 @@ EnforceCopyDimension( DepCompCopyArrayCollect::CopyArrayUnit& unit,
          if (!refDep.SelfReuseLevel(cur, level)) {
             ++curdim; 
             if (DebugCopyRoot())
-               STD cerr << "processing node " << cur << ":  loop at level " << level << "do not carry reuse \n";
+               std::cerr << "processing node " << cur << ":  loop at level " << level << "do not carry reuse \n";
          }
          if (curdim > copydim && cuts != 0) {
             cuts->insert(cur);
@@ -158,13 +158,13 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
 {
    LoopTreeInterface interface;
    if (DebugCopyRoot()) 
-      STD cerr << "copydim = " << copydim << STD endl;
+      std::cerr << "copydim = " << copydim << std::endl;
    for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
         arrays != collect.end(); ) {
        DepCompCopyArrayCollect::CopyArrayUnit& unit = *arrays;
        LoopTreeNode* origroot = unit.root;
        if (DebugCopySplit() || DebugCopyRoot()) 
-         STD cerr << " modifying copy unit: " << IteratorToString2(unit.refs.begin()) << " with root = " << ((unit.root == 0)? "null" : unit.root->toString()) << STD endl;
+         std::cerr << " modifying copy unit: " << IteratorToString2(unit.refs.begin()) << " with root = " << ((unit.root == 0)? "null" : unit.root->toString()) << std::endl;
        unit.root = collect.OutmostCopyRoot(unit, refDep, collect.get_tree_root());
 
        int curdim = -1;
@@ -182,13 +182,13 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
                  p = GetEnclosingLoop(p, interface); 
              }
              if (DebugCopyRoot()) 
-               STD cerr << "resetting copy root to be " << n->toString() << STD endl;
+               std::cerr << "resetting copy root to be " << n->toString() << std::endl;
              unit.root = n;
              unit.carrybyroot = true;
              continue;
           }
           if (DebugCopySplit())
-             STD cerr << "Enforce copy dimension by removing " << IteratorToString2(cuts.begin()) << STD endl;
+             std::cerr << "Enforce copy dimension by removing " << IteratorToString2(cuts.begin()) << std::endl;
           collect.AddCopyArray() = 
                 DepCompCopyArrayCollect::CopyArrayUnit(cuts, collect.ComputeCommonRoot(cuts));
           unit.refs -= cuts;
@@ -200,7 +200,7 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
           origroot = collect.ComputeCommonRoot(cuts);
           DepCompCopyArrayCollect::CopyArrayUnit::NodeSet left = unit.refs;
           if (DebugCopySplit() || DebugCopyRoot()) 
-             STD cerr << " Spliting disconnected refs: removing " << IteratorToString2(cuts.begin()) << STD endl;
+             std::cerr << " Spliting disconnected refs: removing " << IteratorToString2(cuts.begin()) << std::endl;
           left -= cuts;
           collect.AddCopyArray() = DepCompCopyArrayCollect::CopyArrayUnit(left,collect.ComputeCommonRoot(left));
           unit.refs = cuts;
@@ -215,18 +215,18 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
               for (int curlevel = origroot->LoopLevel(); reuselevel  <= curlevel; 
                    cur = GetEnclosingLoop(cur, interface), --curlevel);
               if (DebugCopyRoot()) 
-                  STD cerr << "After reuse anal, resetting copy root to be " << cur->toString() << STD endl;
+                  std::cerr << "After reuse anal, resetting copy root to be " << cur->toString() << std::endl;
               unit.root = cur;
               curdim -= (reuselevel - copylevel+1);
            }
            else if (DebugCopyRoot()) 
-                STD cerr << "do not reset copy root because copylevel = " << copylevel << " and copy root = " << unit.root->toString() << STD endl;
+                std::cerr << "do not reset copy root because copylevel = " << copylevel << " and copy root = " << unit.root->toString() << std::endl;
        }
        DepCompCopyArrayCollect::iterator tmp = arrays;
        ++arrays;
        if (IsRedundantCopy(li, unit, curdim)) {
          if (DebugCopyRemove()) {
-             STD cerr << "remove redundant copy " <<  IteratorToString2(unit.refs.begin()) << " with root = " << unit.root->toString() << STD endl;
+             std::cerr << "remove redundant copy " <<  IteratorToString2(unit.refs.begin()) << " with root = " << unit.root->toString() << std::endl;
          }
          collect.RemoveCopyArray(tmp);
        }

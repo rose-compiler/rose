@@ -9,7 +9,7 @@
 class LoopBlockingAnal 
 {
  protected:
-  STD vector<SymbolicVal> blocksize;
+  std::vector<SymbolicVal> blocksize;
  public:
   SymbolicVal GetBlockSize( int index) { return blocksize[index]; }
   virtual void SetBlocking( AstInterface& fa, CompSliceLocalityRegistry *anal, CompSliceNest& n) = 0;

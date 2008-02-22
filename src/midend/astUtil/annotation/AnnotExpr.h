@@ -158,7 +158,7 @@ class SymbolicFunctionDeclaration
   void Dump() const;
   std::string toString() const { std::stringstream out; write(out); return out.str(); }
 
-  bool get_val( const STD vector<SymbolicVal>& args, SymbolicVal& r) const;
+  bool get_val( const std::vector<SymbolicVal>& args, SymbolicVal& r) const;
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
@@ -171,7 +171,7 @@ class SymbolicFunctionDeclarationGroup
                                 SymbolicFunctionDeclaration, ',', '(', ')'>
       BaseClass;
 public:
- bool get_val( const STD vector<SymbolicVal>& argList, SymbolicVal& r) const;
+ bool get_val( const std::vector<SymbolicVal>& argList, SymbolicVal& r) const;
  bool get_val( AstInterface& fa, AstInterface::AstNodeList& argList, 
                   AstNodePtr& r) const;
  void replace_var( const std::string& varname, const SymbolicVal& val);

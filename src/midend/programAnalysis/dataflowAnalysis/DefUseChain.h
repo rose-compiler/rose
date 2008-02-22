@@ -16,7 +16,7 @@ class DefUseChainNode : public MultiGraphElem
   AstNodePtr get_ref() const { return ref; }
   AstNodePtr get_stmt() const { return stmt; }
   void Dump() const;
-  STD string toString() const;
+  std::string toString() const;
 };
 
   

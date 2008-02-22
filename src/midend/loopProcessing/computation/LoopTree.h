@@ -32,7 +32,7 @@ class LoopInfo  : public VarInfo
                     SymbolicVal s);
   LoopInfo( LoopTransformInterface &fa, const AstNodePtr& l);
 
-  STD string toString() const 
+  std::string toString() const 
        { return VarInfo::toString() + ":" + step.toString();}
 
   bool ReverseEnum() const { return reverse; }
@@ -62,7 +62,7 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
        { return Parent()->LoopLevel() + Parent()->IncreaseLoopLevel(); }
   virtual int IncreaseLoopLevel() const { return 0; }
 
-  virtual STD string GetClassName() const = 0;
+  virtual std::string GetClassName() const = 0;
 
   virtual VarInfo GetVarInfo() const { return VarInfo(); }
   virtual AstNodePtr GetOrigStmt()  const { return AST_NULL; }
@@ -73,16 +73,16 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
   virtual bool SelfRemove() { return false; }
   virtual LoopTreeNode* Clone() const = 0;
 
-  void Dump() const { STD cerr << toString() << STD endl; }
-  virtual STD string toString() const { return ""; }
+  void Dump() const { std::cerr << toString() << std::endl; }
+  virtual std::string toString() const { return ""; }
   virtual AstNodePtr CodeGen( LoopTransformInterface &fa) const;
 
   void AttachObserver( LoopTreeObserver &o) const;
   void DetachObserver( LoopTreeObserver &o) const;
   void Notify( const LoopTreeObserveInfo &info) const;
   unsigned NumberOfObservers() const;
-  void DumpTree() const { STD cerr << TreeToString() << STD endl; }
-  STD string TreeToString() const;
+  void DumpTree() const { std::cerr << TreeToString() << std::endl; }
+  std::string TreeToString() const;
 
   bool IsPerfectLoopNest() const;
   bool ContainLoop() const;
@@ -98,8 +98,8 @@ class LoopTreeStmtNode : public LoopTreeNode
    LoopTreeStmtNode(  const LoopTreeStmtNode& that)
      : LoopTreeNode(that), start(that.start) {}
  public:
-   STD string toString() const;
-   STD string GetClassName() const { return "LoopTreeStmtNode"; }
+   std::string toString() const;
+   std::string GetClassName() const { return "LoopTreeStmtNode"; }
 
    virtual AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
    AstNodePtr GetOrigStmt() const { return start; }
@@ -121,8 +121,8 @@ class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
   virtual AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const;
   void UpdateSwapNode( const SwapNodeInfo& info);
  public:
-  STD string toString() const;
-  STD string GetClassName() const { return "LoopTreeLoopNode"; }
+  std::string toString() const;
+  std::string GetClassName() const { return "LoopTreeLoopNode"; }
   int IncreaseLoopLevel() const { return 1; }
   LoopTreeNode* Clone() const
      { return new LoopTreeLoopNode( *this ); }
@@ -141,9 +141,9 @@ class LoopTreeRoot : public LoopTreeNode
     : LoopTreeNode(), level(_level) {}
 
  public:
-  STD string toString() const;
+  std::string toString() const;
   LoopTreeNode* Clone() const { return 0; }
-  STD string GetClassName() const { return "LoopTreeRoot"; }
+  std::string GetClassName() const { return "LoopTreeRoot"; }
   virtual int LoopLevel() const { return level; }
 
  friend class LoopTreeCreate;

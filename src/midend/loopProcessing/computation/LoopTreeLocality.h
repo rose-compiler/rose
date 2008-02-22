@@ -9,8 +9,8 @@ struct DepCompAstRef {
   LoopTreeNode* stmt; 
   DepCompAstRef(const AstNodePtr& o, LoopTreeNode* s) 
        : orig(o),stmt(s) {}
-  STD string ToHandle() const;
-  STD string toString() const;
+  std::string ToHandle() const;
+  std::string toString() const;
 };
 
 class DepCompAstRefGraphNode : public MultiGraphElemTemplate<DepCompAstRef> 
@@ -18,13 +18,13 @@ class DepCompAstRefGraphNode : public MultiGraphElemTemplate<DepCompAstRef>
  public:
   DepCompAstRefGraphNode(MultiGraphCreate* c, const DepCompAstRef& r)
     : MultiGraphElemTemplate<DepCompAstRef>(c, r) {}
-  STD string toString() const { return GetInfo().toString(); }
+  std::string toString() const { return GetInfo().toString(); }
 };
 
 class DepCompAstRefAnal
 {
-  typedef STD map<LoopTreeNode*, int, STD less<LoopTreeNode*> > StmtMap;
-  typedef STD map<AstNodePtr,int, STD less<AstNodePtr> > RefMap;
+  typedef std::map<LoopTreeNode*, int, std::less<LoopTreeNode*> > StmtMap;
+  typedef std::map<AstNodePtr,int, std::less<AstNodePtr> > RefMap;
   StmtMap stmtmap;
   RefMap refmap;
   LoopTreeNode* root;
@@ -81,7 +81,7 @@ class LoopTreeLocalityAnal
   void ComputeInputDep( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, 
                         DepCompAstRefAnal& stmtorder);
  public:
-  typedef STD set<AstNodePtr, STD less<AstNodePtr> > AstNodeSet;
+  typedef std::set<AstNodePtr, std::less<AstNodePtr> > AstNodeSet;
   LoopTreeLocalityAnal( LoopTransformInterface& _fa, LoopTreeDepCompCreate& c);
   ~LoopTreeLocalityAnal();
 
@@ -96,7 +96,7 @@ class LoopTreeLocalityAnal
 
 class DepCompAstRefGraphCreate: public DepInfoGraphCreate<DepCompAstRefGraphNode> 
 {
-  typedef STD map<DepCompAstRef, DepCompAstRefGraphNode*, STD less<DepCompAstRef> > AstRefNodeMap; 
+  typedef std::map<DepCompAstRef, DepCompAstRefGraphNode*, std::less<DepCompAstRef> > AstRefNodeMap; 
   AstRefNodeMap refNodeMap; 
 
  public:

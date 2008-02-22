@@ -33,9 +33,9 @@ bool DomainInfo::operator |= (const DomainInfo &that)
 void DomainInfo:: UpdateDomainCond( bool (*Update)(DomainCond &info) )
       { UpdateRef().UpdateElem(Update); }
 
-STD string DomainInfo::toString() const 
+std::string DomainInfo::toString() const 
 { 
-  STD string res;
+  std::string res;
   const LatticeElemList<DomainCond>& list = ConstRef();
   for ( LatticeElemList<DomainCond>::iterator iter(list); 
         !iter.ReachEnd(); iter++) {
@@ -70,9 +70,9 @@ void DomainCond :: SetLoopRel(int index1, int index2, const DepRel &r)
    ClosureCond();
 } 
 
-STD string DomainCond :: toString() const 
+std::string DomainCond :: toString() const 
 {  
-   STD stringstream res;
+   std::stringstream res;
 
    int num = NumOfLoops();
    res << "# of loops = " << num << ": ";

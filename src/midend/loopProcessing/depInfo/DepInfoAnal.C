@@ -39,13 +39,13 @@ void PrintResults(const std::string buffer) {
    }
 }
 
-class AccuAstRefs : public CollectObject<STD pair<AstNodePtr,AstNodePtr> >
+class AccuAstRefs : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >
 {
    CollectObject<AstNodePtr> &col;
   public:
    AccuAstRefs( CollectObject<AstNodePtr> &_col) 
       :  col(_col) {}
-   bool operator()(const STD pair<AstNodePtr,AstNodePtr>& n)
+   bool operator()(const std::pair<AstNodePtr,AstNodePtr>& n)
    {
       return col(n.first);
    }
@@ -60,16 +60,16 @@ bool AnalyzeStmtRefs(LoopTransformInterface &la, const AstNodePtr& n,
   return StmtSideEffectCollect(la.getSideEffectInterface())(fa,n,&colw,&colr);
 }
 
-STD string toString( STD vector<SymbolicVal> & analvec)
+std::string toString( std::vector<SymbolicVal> & analvec)
 {
-  STD stringstream out;
+  std::stringstream out;
           for (int j = 0; j < analvec.size(); ++j)
              out << analvec[j].toString();
   return out.str();
 }
-STD string toString( STD vector< STD vector<SymbolicVal> > & analMatrix)
+std::string toString( std::vector< std::vector<SymbolicVal> > & analMatrix)
 {
-   STD string result;
+   std::string result;
       for (int i = 0; i < analMatrix.size(); ++i) {
          result = result + toString(analMatrix[i]) + "\n";
       }
@@ -157,7 +157,7 @@ GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
        SymbolicConstBoundAnalysis<AstNodePtr,DepInfoAnalInterface> 
             boundop( DepInfoAnalInterface(*this, la), s, AST_NULL);
        info.ivarbounds.push_back(boundop.GetConstBound(ivar));
-       STD vector<SymbolicVal>  lbvec, ubvec;
+       std::vector<SymbolicVal>  lbvec, ubvec;
        SymbolicVal lbleft = 
          DecomposeAffineExpression(la,lb,info1.ivars,lbvec,dim1);
        lbvec.push_back(-1);
@@ -165,18 +165,18 @@ GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
        SetDep op(info.domain, DomainCond(), 0);
        if (!AnalyzeEquation(lbvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_LE, 0)))
          if (DebugDep())
-            STD cerr << "unable to analyze equation: " << toString(lbvec) << STD endl;
+            std::cerr << "unable to analyze equation: " << toString(lbvec) << std::endl;
        SymbolicVal ubleft = 
          DecomposeAffineExpression(la,ub,info1.ivars,ubvec,dim1);
        ubvec.push_back(-1);
        ubvec.push_back(-ubleft);
        if (!AnalyzeEquation(ubvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_GE, 0))) 
           if (DebugDep())
-             STD cerr << "unable to analyze equation: " << toString(ubvec) << STD endl;
+             std::cerr << "unable to analyze equation: " << toString(ubvec) << std::endl;
        info.domain = op.get_domain1();
        info.domain.ClosureCond();
        if (DebugDep())
-         STD cerr << "domain of statement " << AstToString(s) << " is : " << info.domain.toString() << STD endl;
+         std::cerr << "domain of statement " << AstToString(s) << " is : " << info.domain.toString() << std::endl;
     }
     assert(!info.IsTop());
     return info;
@@ -394,7 +394,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype)
 {
   if (DebugDep())
-     STD cerr << "compute array dep between " << AstToString(ref.r1.ref) << " and " << AstToString(ref.r2.ref) << STD endl;
+     std::cerr << "compute array dep between " << AstToString(ref.r1.ref) << " and " << AstToString(ref.r2.ref) << std::endl;
 
   const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(fa,ref.r1.stmt);
   const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(fa,ref.r2.stmt);
@@ -405,7 +405,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
   double t0, adhocTime;
   std::stringstream buffer;
   
-  STD vector<SymbolicBound> bounds;
+  std::vector<SymbolicBound> bounds;
   for (i = 0; i < dim1; ++i) 
      bounds.push_back(info1.ivarbounds[i]);
   for (i = 0 ; i < dim2; ++i)
@@ -424,7 +424,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
   AstInterface::AstNodeList::const_iterator iter2 = sub2.begin();
 
   int postfix = 0;
-  STD stringstream varpostfix1, varpostfix2;
+  std::stringstream varpostfix1, varpostfix2;
   ++postfix;
   varpostfix1 << "___depanal_" << postfix;
   ++postfix;
@@ -432,13 +432,13 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
 
   bool precise = true;
   AstNodePtr s1, s2;
-  STD vector <STD vector<SymbolicVal> > analMatrix;
+  std::vector <std::vector<SymbolicVal> > analMatrix;
   for ( ; iter1 != sub1.end() && iter2 != sub2.end(); ++iter1, ++iter2) {
     s1 = *iter1; s2 = *iter2;
     SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(fa, s1);
     SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(fa, s2);
 
-    STD vector<SymbolicVal> cur;
+    std::vector<SymbolicVal> cur;
     SymbolicVal left1 = DecomposeAffineExpression(fa, val1, info1.ivars, cur,dim1); 
     SymbolicVal left2 = DecomposeAffineExpression(fa, -val2, info2.ivars,cur,dim2); 
     if (left1.IsNIL() || left2.IsNIL()) {
@@ -457,24 +457,24 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
     cur.push_back(leftVal);  
     if (DebugDep()) {
        assert(dim+1 == cur.size());
-       STD cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
+       std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
        for (int i = 0; i < dim; ++i) 
-         STD cerr << cur[i].toString() << bounds[i].toString() << " " ;
-       STD cerr << cur[dim].toString() << STD endl;
+         std::cerr << cur[i].toString() << bounds[i].toString() << " " ;
+       std::cerr << cur[dim].toString() << std::endl;
     }
 
     for ( int i = 0; i < dim; ++i) {
         SymbolicVal cut = cur[i];
         if (cut == 1 || cut == 0 || cut == -1)
              continue;
-        STD vector<SymbolicVal> split;
+        std::vector<SymbolicVal> split;
         if (SplitEquation( fa, cur, cut, bounds, boundop, split)) 
              analMatrix.push_back(split);
     }
     analMatrix.push_back(cur);
   }
   if (DebugDep()) 
-      STD cerr << "analyzing relation matrix : \n" <<  toString(analMatrix) << STD endl;
+      std::cerr << "analyzing relation matrix : \n" <<  toString(analMatrix) << std::endl;
 
 #ifdef OMEGA
   DepStats.InitAdhocTime();
@@ -485,7 +485,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
 	return false;
   }
   if (DebugDep()) 
-      STD cerr << "after normalization, relation matrix = \n" << toString(analMatrix) << STD endl;
+      std::cerr << "after normalization, relation matrix = \n" << toString(analMatrix) << std::endl;
    DepInfo result=DepInfoGenerator::GetDepInfo(dim1, dim2, deptype, ref.r1.ref, ref.r2.ref, false, ref.commLevel);
   SetDep setdep( info1.domain, info2.domain, &result);
   for (int k = 0; setdep && k < analMatrix.size(); ++k) {
@@ -502,7 +502,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
 		 {
            precise = false;
            if (DebugDep())
-              STD cerr << "unable to analyze equation " << k  << STD endl;
+              std::cerr << "unable to analyze equation " << k  << std::endl;
        }
   }
 
@@ -510,7 +510,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
   DepStats.SetAdhocTime();  
 
   AstInterface *temp = (AstInterface*) &fa;
-  STD string adhocDV;
+  std::string adhocDV;
   temp->get_fileInfo(ref.r1.ref,&filename,&lineNo1);
   temp->get_fileInfo(ref.r2.ref,&filename,&lineNo2);
   if (ref.commLevel > 0)
@@ -528,10 +528,10 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
   if (precise) 
       result.set_precise(); 
   if (DebugDep()) 
-       STD cerr << "after analyzing relation matrix, result =: \n" << result.toString() << STD endl;
+       std::cerr << "after analyzing relation matrix, result =: \n" << result.toString() << std::endl;
   setdep.finalize();
   if (DebugDep())
-       STD cerr << "after restrictions from stmt domain, result =: \n" << result.toString() << STD endl;
+       std::cerr << "after restrictions from stmt domain, result =: \n" << result.toString() << std::endl;
   return result;
 }
 
@@ -620,13 +620,13 @@ void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la,
 }
 
 void RemoveIvars( AstInterface& ai, DoublyLinkedListWrap<AstNodePtr>& refs,
-                  const STD vector<SymbolicVar>& ignore)
+                  const std::vector<SymbolicVar>& ignore)
 {
   for (DoublyLinkedEntryWrap<AstNodePtr>* p = refs.First(); p != 0; ) {
      DoublyLinkedEntryWrap<AstNodePtr>* p1 = p;
      p = refs.Next(p);
      AstNodePtr cur = p1->GetEntry();
-     STD string name;
+     std::string name;
      AstNodePtr scope;
      if (cur != AST_NULL && ai.IsVarRef(cur, 0,&name, &scope)) {
          SymbolicVar curvar(name, scope);
@@ -649,7 +649,7 @@ ComputeDataDep(LoopTransformInterface &fa,
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1) || 
         (s1 != s2 && !AnalyzeStmtRefs(fa, s2, cwRef2, crRef2))) {
        if (DebugDep())
-          STD cerr << "cannot determine side effects of statements: " << AstToString(s1) << "; or " << AstToString(s2) << STD endl;
+          std::cerr << "cannot determine side effects of statements: " << AstToString(s1) << "; or " << AstToString(s2) << std::endl;
        ComputeIODep( fa, s1, s2, outDeps, inDeps, DEPTYPE_IO);
   }
   StmtRefDep ref = GetStmtRefDep(fa, s1, AST_NULL, s2, AST_NULL);

@@ -16,7 +16,7 @@ class BreakupStatement : public PrePostTransformation
      return TransformAstTraverse(_la, root, *this, AstInterface::PreVisit );
   }
   bool cmdline_configure();
-  static STD string cmdline_help();
+  static std::string cmdline_help();
 };
 
 #endif

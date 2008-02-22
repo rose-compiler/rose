@@ -57,7 +57,7 @@ void ReportTime(bool doit, const char* msg)
    if (doit) {
      struct timeb tb;
      ftime (&tb);
-     STD cout << msg << ": " << tb.time << " : " << tb.millitm << STD endl;
+     std::cout << msg << ": " << tb.time << " : " << tb.millitm << std::endl;
     }
 }
 
@@ -93,7 +93,7 @@ class AstTreeOptimizable : public ProcessAstTree
                                       AstInterface::TraversalVisitType t) 
    {
         if (DebugLoop()) 
-              STD cerr << "if fun definition ";
+              std::cerr << "if fun definition ";
         succ = -1;
         return false;
    }
@@ -102,7 +102,7 @@ class AstTreeOptimizable : public ProcessAstTree
      {
         if (fa.IsVariableDecl(s) && fa.GetParent(s) != top) {
            if (DebugLoop()) 
-              STD cerr << "has declaration " << AstToString(s) << "\n";
+              std::cerr << "has declaration " << AstToString(s) << "\n";
             succ = -1;
             return false;
         } 
@@ -115,7 +115,7 @@ class AstTreeOptimizable : public ProcessAstTree
            return false;
         if (!fa.IsFortranLoop(s)) {
            if (DebugLoop()) {
-              STD cerr << "not fortran loop " << AstToString(s) << STD endl;
+              std::cerr << "not fortran loop " << AstToString(s) << std::endl;
            }
            succ = -1;
            return false;
@@ -125,7 +125,7 @@ class AstTreeOptimizable : public ProcessAstTree
               loop = s;
            else if (loop != 0 && !(optType & LoopTransformOptions::LOOP_DATA_OPT)) {
               if (DebugLoop())
-                  STD cerr << "no optimization specified \n";
+                  std::cerr << "no optimization specified \n";
               succ = -1;
               return false;
            }
@@ -243,18 +243,18 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
   bool debugloop = DebugLoop(), debugdep = DebugDep();
 
   if (debugloop) {
-    STD cerr << "try applying loop transformation to \n";
-    STD cerr << AstToString(head) << STD endl;
+    std::cerr << "try applying loop transformation to \n";
+    std::cerr << AstToString(head) << std::endl;
   }
   ReportTime(reportPhaseTimings, "Start constructing dependence graph." );
   LoopTreeDepCompCreate comp(la, head);
   ReportTime(reportPhaseTimings, "Finish constructing dependence graph." );
   if (debugloop) {
-    STD cerr << "original LoopTree : \n";
+    std::cerr << "original LoopTree : \n";
      comp.DumpTree();
   }
   if (debugdep) {
-     STD cerr << "LoopTree dependence graph: \n";
+     std::cerr << "LoopTree dependence graph: \n";
      comp.DumpDep();
   }
 
@@ -262,7 +262,7 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
       LoopTreeLocalityAnal loopAnal(la, comp);
       CopyArrayOperator *cp = LoopTransformOptions::GetInstance()->GetCopyArraySel();
       if (debugdep) 
-          STD cerr << "LoopTree input dep graph: \n" << GraphToString(*loopAnal.GetInputGraph()) << STD endl;
+          std::cerr << "LoopTree input dep graph: \n" << GraphToString(*loopAnal.GetInputGraph()) << std::endl;
       if (lopt->DoDynamicTuning()) {
            DynamicSlicing op;
            LoopTransformation( la, comp, op, loopAnal, OptLevel(), cp);
@@ -272,11 +272,11 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
            LoopTransformation( la, comp, op, loopAnal, OptLevel(), cp);
       }
       if (debugloop) {
-            STD cerr << "\n final LoopTree : \n";
+            std::cerr << "\n final LoopTree : \n";
             comp.DumpTree();
       }
      if (debugdep) {
-        STD cerr << "final dependence graph: \n";
+        std::cerr << "final dependence graph: \n";
         comp.DumpDep();
      }
   }
@@ -303,7 +303,7 @@ void RearrangeCompSliceGraph( LoopTransformInterface &fa, LoopTreeDepComp &comp,
 {
  bool debugslice = (CmdOptions::GetInstance()->HasOption("-debugslice") != 0);
  if (debugslice) 
-   STD cerr << "computation slice graph: \n" << GraphToString(graph) << STD endl;
+   std::cerr << "computation slice graph: \n" << GraphToString(graph) << std::endl;
  LoopTransformOptions *opt = LoopTransformOptions::GetInstance();
 
  ArrangeNestingOrder *icOp = opt->GetInterchangeSel();
@@ -313,13 +313,13 @@ void RearrangeCompSliceGraph( LoopTransformInterface &fa, LoopTreeDepComp &comp,
  }
 
  if (debugslice) 
-   STD cerr << "after interchange: \n" << GraphToString(graph) << STD endl;
+   std::cerr << "after interchange: \n" << GraphToString(graph) << std::endl;
 
  LoopNestFusion* fsOp = opt->GetFusionSel();
  SliceNestTypedFusion( &sliceAnal, graph, *fsOp);
  SliceNestReverseTypedFusion( &sliceAnal, graph, *fsOp);
  if (debugslice) 
-   STD cerr << "after fusion: \n" << GraphToString(graph) << STD endl;
+   std::cerr << "after fusion: \n" << GraphToString(graph) << std::endl;
 }
 
 class SelectSlice
@@ -378,14 +378,14 @@ LoopTreeNode* SliceNestTransform( LoopTransformInterface &la, LoopTreeDepComp& c
 
   LoopTreeNode *head = 0;
   if (debugloop) {
-        STD cerr << "\n from\n";
+        std::cerr << "\n from\n";
         top->DumpTree();
   }
   AstInterface& fa = la;
   for ( int j; (j = selSlice.CurrentIndex()) >= 0; selSlice++)  {
     top = op.Transform( la, comp, g[j], top);
     if (debugloop) {
-        STD cerr << "\n transforming into\n";
+        std::cerr << "\n transforming into\n";
         if (head == 0)
            top->DumpTree();
         else
@@ -474,7 +474,7 @@ void LoopTransformation( LoopTransformInterface &fa, LoopTreeDepComp& comp,
          if (cp != 0) {
              LoopTreeTransform().InsertHandle(h,-1);
              if (DebugLoop())
-                STD cerr << "applying array copy to " << h->TreeToString() << STD endl;
+                std::cerr << "applying array copy to " << h->TreeToString() << std::endl;
              (*cp)(fa, loopAnal, h->Parent());
          }
       }

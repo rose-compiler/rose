@@ -4,7 +4,7 @@
 #include <CommandOptions.h>
 
 
-STD string PrivatizeScalar:: cmdline_help() 
+std::string PrivatizeScalar:: cmdline_help() 
    { 
     return "-pv : move scalar-assignments to innermost privatizable loops before loop transformation";
    }

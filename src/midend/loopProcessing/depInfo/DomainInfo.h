@@ -18,7 +18,7 @@ class DomainCond :  protected DepInfo
   int NumOfLoops() const { return DepInfo::rows(); }
   bool IsTop() const;
   bool IsBottom() const;
-  STD string toString() const;
+  std::string toString() const;
 
   const DepRel& Entry(int index1, int index2) const
     { return DepInfo::Entry(index1, index2); }
@@ -83,7 +83,7 @@ class DomainInfo : protected CountRefHandle <DomainInfoImpl>
 
    bool IsTop() const;
    bool IsBottom() const;
-   STD string toString() const;
+   std::string toString() const;
 
    DomainCondConstIterator GetConstIterator() const;
    DomainCondUpdateIterator GetUpdateIterator();

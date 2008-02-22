@@ -6,14 +6,12 @@
 #include <PtrSet.h>
 #include <string>
 
-#define STD std::
-
 template <class Observer>
 class ObserveInfo
 {
  public:
   virtual void UpdateObserver( Observer& o) const = 0;
-  virtual STD string toString() { return ""; };
+  virtual std::string toString() { return ""; };
   virtual ~ObserveInfo() {}
 };
 

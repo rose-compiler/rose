@@ -20,7 +20,7 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
        sliceNode = CreateNode(scope, op);
     }
     else {
-      STD cerr << "construct transitive dep. graph" << "\n";
+      std::cerr << "construct transitive dep. graph" << "\n";
       sliceNode = CreateNode(scope, op, tc);
     }
     LoopTreeTraverseSelectStmt stmts(n);

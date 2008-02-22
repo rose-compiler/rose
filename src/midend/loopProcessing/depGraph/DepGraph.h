@@ -10,7 +10,7 @@ class DepInfoEdge : public MultiGraphElemTemplate<DepInfo>
  public:
   DepInfoEdge(MultiGraphCreate* c, const DepInfo& d) 
            : MultiGraphElemTemplate<DepInfo>(c, d) {} 
-  STD string toString() const { return GetInfo().toString(); }
+  std::string toString() const { return GetInfo().toString(); }
   DepInfoConstIterator get_depIterator() const
     { return new SingleIterator<DepInfo>(GetInfo()); }
 };
@@ -20,7 +20,7 @@ class DepInfoSetEdge : public MultiGraphElemTemplate<DepInfoSet>
  public:
   DepInfoSetEdge(MultiGraphCreate* c, const DepInfoSet& d) 
            : MultiGraphElemTemplate<DepInfoSet>(c, d) {} 
-  STD string toString() const { return GetInfo().toString(); }
+  std::string toString() const { return GetInfo().toString(); }
   DepInfoConstIterator get_depIterator() const
     { return GetInfo().GetConstIterator(); }
 };

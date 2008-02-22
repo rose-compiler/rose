@@ -8,7 +8,7 @@
 class SymbolicSelect : public SymbolicExpr
 {
   int opt;
-  STD string GetOPName() const { return ((opt < 0)? "Min" : "Max"); }
+  std::string GetOPName() const { return ((opt < 0)? "Min" : "Max"); }
   virtual SymOpType GetTermOP() const { return SYMOP_NIL; }
  public:
   SymbolicSelect(int t) : opt(t) {}

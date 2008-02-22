@@ -75,7 +75,7 @@ GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePt
                       DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel))
                      :  DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; }
 
-STD string DepType2String(DepType t) 
+std::string DepType2String(DepType t) 
 {
   switch (t) {
   case DEPTYPE_CTRL: return "CTRL_DEP;"; 
@@ -94,9 +94,9 @@ STD string DepType2String(DepType t)
   }
 }
   
-STD string DepInfo :: toString() const
+std::string DepInfo :: toString() const
 {
-  STD stringstream out;
+  std::stringstream out;
   out << rows() << "*" << cols();
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
 

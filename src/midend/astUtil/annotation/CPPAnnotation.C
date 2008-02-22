@@ -14,7 +14,7 @@ string CPPTypeCollection<Descriptor>::
 is_known_member_function( CPPAstInterface& fa, const SymbolicVal& exp, AstNodePtr* objp,
                         SymbolicFunction::Arguments* argsp , Descriptor* descp )
 {
- STD string op1, op2;
+ std::string op1, op2;
  SymbolicFunction::Arguments arg1,arg2;
  if (!exp.isFunction(op1,&arg1))
    return "";
@@ -43,7 +43,7 @@ is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,
 			  Descriptor* desc)
 {
   AstNodePtr obj;
-  STD string fname;
+  std::string fname;
   if (!fa.IsMemberAccess( exp, &obj, &fname) && 
      !fa.IsMemberFunctionCall(exp, &obj, &fname, 0, args))
      return "";

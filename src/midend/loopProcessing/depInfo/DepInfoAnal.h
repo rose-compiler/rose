@@ -20,8 +20,8 @@ class DepInfoAnal
  public:
   struct LoopDepInfo { 
       DomainCond domain; 
-      STD vector<SymbolicVar> ivars;
-      STD vector<SymbolicBound> ivarbounds;
+      std::vector<SymbolicVar> ivars;
+      std::vector<SymbolicBound> ivarbounds;
       bool IsTop() const { return domain.IsTop(); }
    };
    struct StmtRefInfo { 
@@ -77,7 +77,7 @@ class DepInfoAnal
 
  private:
 	DependenceTesting& handle;
-  	STD map <AstNodePtr, LoopDepInfo, STD less <AstNodePtr> > stmtInfo;
+  	std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
   	ModifyVariableInfo varmodInfo;
 };
 
@@ -116,18 +116,18 @@ class SetDepEntry
        if (l1 >= dim1) {
          SetDomainRel(domain2, e, l1-dim1, l2-dim1);
          if (DebugDep())
-            STD cerr << "setting domain2 entry(" << l1-dim1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
+            std::cerr << "setting domain2 entry(" << l1-dim1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
        }
        else if ( l2 >= dim1) {
          assert(dep != 0);
 	 SetDepRel( *dep, e, l1, l2-dim1);
          if (DebugDep())
-            STD cerr << "setting dep entry(" << l1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
+            std::cerr << "setting dep entry(" << l1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
        }
        else  {
          SetDomainRel( domain1, e, l1, l2);
          if (DebugDep())
-            STD cerr << "setting domain1 entry(" << l1 << ", " << l2 << ") = " << e.toString() << "\n";
+            std::cerr << "setting domain1 entry(" << l1 << ", " << l2 << ") = " << e.toString() << "\n";
        }
      }
   }
@@ -163,7 +163,7 @@ class SetDep
   void finalize()
    { 
      if (DebugDep())
-        STD cerr << "finalizing: domain1 = " << domain1.toString() << STD endl << "domain2 = " << domain2.toString() << STD endl;
+        std::cerr << "finalizing: domain1 = " << domain1.toString() << std::endl << "domain2 = " << domain2.toString() << std::endl;
      domain1.RestrictDepInfo( *dep, DEP_SRC);
      domain2.RestrictDepInfo( *dep, DEP_SINK);
    }
@@ -175,10 +175,10 @@ class MakeUniqueVar : public MapObject<SymbolicVal, SymbolicVal>,
                      public SymbolicVisitor
 {
 public:
-  typedef STD pair<STD string,AstNodePtr> ReverseRec;
-  typedef STD map <STD string,ReverseRec, STD less<STD string> > ReverseRecMap;
+  typedef std::pair<std::string,AstNodePtr> ReverseRec;
+  typedef std::map <std::string,ReverseRec, std::less<std::string> > ReverseRecMap;
 private:
-  STD string postfix;
+  std::string postfix;
   SymbolicVal res;
   AstNodePtr curloop, curref;
   const DepInfoAnal::ModifyVariableInfo &varmodInfo;
@@ -186,12 +186,12 @@ private:
 
  void VisitVar( const SymbolicVar &v) 
      {  
-        STD string name = v.GetVarName();
+        std::string name = v.GetVarName();
         if (varmodInfo.Modify(curloop,name)) {
             res = new SymbolicVar(name + postfix, v.GetVarScope());
             reverse[name+postfix] = ReverseRec(name,curref);
             if (DebugDep())
-                STD cerr << "replacing var " << v.toString() << " => " << res.toString() << "postfix = " << postfix << STD endl;
+                std::cerr << "replacing var " << v.toString() << " => " << res.toString() << "postfix = " << postfix << std::endl;
         }
         else
            reverse[name] = ReverseRec(name,curref);
@@ -207,7 +207,7 @@ private:
     return res;
   }
   SymbolicVal operator()(const AstNodePtr& l, const AstNodePtr& r,
-                         const SymbolicVal& v, const STD string& p) 
+                         const SymbolicVal& v, const std::string& p) 
   {
     postfix = p;
     curloop = l;
@@ -257,13 +257,13 @@ class MakeUniqueVarGetBound
       assert(node != AST_NULL);
       SymbolicBound r = SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>::GetConstBound(SymbolicVar(entry.first,var.GetVarScope()));
       if (DebugDep())
-         STD cerr << "bound of " << var.toString() << " is " << r.toString() << STD endl;
+         std::cerr << "bound of " << var.toString() << " is " << r.toString() << std::endl;
       return r;
    }
 };
 
 
-std::string ToString( STD vector< STD vector<SymbolicVal> > & analMatrix);
+std::string ToString( std::vector< std::vector<SymbolicVal> > & analMatrix);
 
 void PrintResults(const std::string buffer);
 

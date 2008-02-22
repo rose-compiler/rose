@@ -31,7 +31,7 @@ class MultiGraphElem
       return count; 
     }
   MultiGraphCreate* GetGraphCreate() const { return gc; }
-  STD string toString() const { return ""; }
+  std::string toString() const { return ""; }
  friend class MultiGraphCreate;
 };
 
@@ -59,7 +59,7 @@ class MultiGraphElemTemplate : public MultiGraphElem
     : MultiGraphElem(c), info(_info) {}
   Info&  GetInfo() { return info; }
   Info GetInfo() const { return info; }
-  STD string toString() const { return info.toString(); }
+  std::string toString() const { return info.toString(); }
 };
 
 #endif

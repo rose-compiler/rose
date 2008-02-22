@@ -39,7 +39,7 @@ FusionInfo GetFusionInfo(const DepInfo& e, int index1, int index2)
    DepDirType t = r.GetDirType() ;
    if (t == DEPDIR_EQ || t == DEPDIR_LE) {
        if (DebugFusion()) {
-         STD cerr << "fusion align is " << r.GetMaxAlign() << " from dep" << r.toString() << STD endl;
+         std::cerr << "fusion align is " << r.GetMaxAlign() << " from dep" << r.toString() << std::endl;
        }
        return FusionInfo(true, r.GetMaxAlign());
    }

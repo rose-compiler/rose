@@ -23,7 +23,7 @@ class LoopUnrolling : public PrePostTransformation
      return TransformAstTraverse(_la, root, *this, AstInterface::PostVisit );
   }
   bool cmdline_configure(); 
-  static STD string cmdline_help() ;
+  static std::string cmdline_help() ;
 };
 
 #endif

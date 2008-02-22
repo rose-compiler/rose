@@ -91,10 +91,10 @@ void LoopTreeDepComp :: DumpDep() const
    GraphAccessTemplate<LoopTreeDepGraphNode, DepInfoEdge>::NodeIterator nodes
              = GetDepGraph()->GetNodeIterator();
    assert(!nodes.ReachEnd());
-   write_graph(*GetDepGraph(), STD cerr, STD string("dep"));
+   write_graph(*GetDepGraph(), std::cerr, std::string("dep"));
 }
 void LoopTreeDepComp :: DumpNode( LoopTreeNode *s) const
-   { STD cerr << GraphNodeToString(*GetDepGraph(),  GetDepNode(s) ) << STD endl; }
+   { std::cerr << GraphNodeToString(*GetDepGraph(),  GetDepNode(s) ) << std::endl; }
 
 void LoopTreeDepGraphCreate :: UpdateSplitStmt2( const SplitStmtInfo2 &info)
 {

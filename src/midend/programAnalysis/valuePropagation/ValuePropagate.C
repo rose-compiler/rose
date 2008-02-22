@@ -16,9 +16,9 @@ bool DebugValuePropogate()
   return r == 1;
 }
 
-STD string ValuePropagateNode:: toString() const
+std::string ValuePropagateNode:: toString() const
 {
-  STD stringstream out;
+  std::stringstream out;
   out << DefUseChainNode::toString();
   out << "ref address: " << get_ref().get_ptr(); 
   out << "has_value: ";
@@ -28,7 +28,7 @@ STD string ValuePropagateNode:: toString() const
 
 bool HasValueMap :: has_value( const AstNodePtr& ast, HasValueDescriptor* r) const
    {
-     STD map<AstNodePtr,HasValueDescriptor>::const_iterator p = valmap.find(ast);
+     std::map<AstNodePtr,HasValueDescriptor>::const_iterator p = valmap.find(ast);
      if (p == valmap.end())
          return false;
      if (r != 0)
@@ -37,15 +37,15 @@ bool HasValueMap :: has_value( const AstNodePtr& ast, HasValueDescriptor* r) con
    }
 void HasValueMap:: set_val( const AstNodePtr& ast, const HasValueDescriptor& val)
   { 
-    STD map<AstNodePtr,HasValueDescriptor>::iterator p = valmap.find(ast);
+    std::map<AstNodePtr,HasValueDescriptor>::iterator p = valmap.find(ast);
     if (p == valmap.end())
       valmap[ast] = val;
     else
       (*p).second.merge(val);
     if (DebugValuePropogate())  {
-       STD cerr << "set value for " << ast.get_ptr() << ":" << AstToString(ast) << " : ";
+       std::cerr << "set value for " << ast.get_ptr() << ":" << AstToString(ast) << " : ";
        valmap[ast].Dump();
-       STD cerr << STD endl;
+       std::cerr << std::endl;
     }
   }
 
@@ -54,7 +54,7 @@ HasValueCodeGen :: operator() (AstInterface* const& fa, const AstNodePtr& orig)
 {
   if (fa->IsConstant(orig))
       return fa->CopyAstTree(orig);
-  STD map<AstNodePtr, AstNodePtr>::const_iterator p = astmap.find(orig);
+  std::map<AstNodePtr, AstNodePtr>::const_iterator p = astmap.find(orig);
   if (p != astmap.end()) { 
       AstNodePtr r = (*p).second;
       return fa->CopyAstTree(r); 
@@ -62,7 +62,7 @@ HasValueCodeGen :: operator() (AstInterface* const& fa, const AstNodePtr& orig)
   AstNodeType valtype;
   if (fa->IsExpression( orig, &valtype) == AST_NULL)
      assert(false);
-  STD string varname = fa->NewVar( valtype);
+  std::string varname = fa->NewVar( valtype);
   AstNodePtr var = fa->CreateVarRef (varname);
   astmap[orig] = var;
   AstNodePtr assign = fa->CreateAssignment( fa->CopyAstTree(var), fa->CopyAstTree(orig)); 
@@ -83,7 +83,7 @@ void HasValueMapReplace :: VisitFunction (const SymbolicFunction& u)
     if (dot != 0 && dot->first_arg().GetValType() == VAL_AST) {
        AstNodePtr curast;
        if (!dot->first_arg().isAstWrap(curast)) assert(false);
-       STD string field = dot->last_arg().toString();
+       std::string field = dot->last_arg().toString();
        HasValueDescriptor curval;
        SymbolicValDescriptor replval;
        bool hasval = valmap.has_value( curast, &curval);
@@ -100,11 +100,11 @@ void HasValueMapReplace :: VisitFunction (const SymbolicFunction& u)
 
 class AppendValueNode : public Collect2Object< AstNodePtr, HasValueDescriptor >
 {
-  const STD map<AstNodePtr, ValuePropagateNode*>& nodemap;
+  const std::map<AstNodePtr, ValuePropagateNode*>& nodemap;
   HasValueMap& valmap;
   CollectObject< ValuePropagateNode*>* nodeCollect;
  public:
-  AppendValueNode( const STD map<AstNodePtr, ValuePropagateNode*>& m,
+  AppendValueNode( const std::map<AstNodePtr, ValuePropagateNode*>& m,
                    HasValueMap& v)
    : nodemap(m), nodeCollect(0), valmap(v) {} 
 
@@ -120,13 +120,13 @@ class AppendValueNode : public Collect2Object< AstNodePtr, HasValueDescriptor >
   {
     valmap.set_val( curast, curval);
     if (nodeCollect != 0) {
-      STD map<AstNodePtr,ValuePropagateNode*>::const_iterator p = nodemap.find(curast); 
+      std::map<AstNodePtr,ValuePropagateNode*>::const_iterator p = nodemap.find(curast); 
       if (p != nodemap.end()) {
          if ((*p).second->get_desc().merge( curval) ) {
              (*nodeCollect)( (*p).second);
          }
          if (DebugValuePropogate()) {
-            STD cerr << "found node for ref: " << AstToString(curast) << STD endl;
+            std::cerr << "found node for ref: " << AstToString(curast) << std::endl;
             (*p).second->Dump();
          } 
       }
@@ -194,7 +194,7 @@ class UpdateValuePropagateNode
 public:
   UpdateValuePropagateNode( AstInterface& _fa, const AstNodePtr& h,
                             HasValueMap& vm, HasValueCodeGen& cg, 
-                            const STD map<AstNodePtr, ValuePropagateNode*>& m) 
+                            const std::map<AstNodePtr, ValuePropagateNode*>& m) 
     : fa(_fa), head(h), valmap(vm), astcodegen(cg), valappend(m, valmap) {}
   void init(CollectObject<ValuePropagateNode*>& append ) 
   {
@@ -247,20 +247,20 @@ build(AstInterface& fa, const AstNodePtr& h, ReachingDefinitionAnalysis& r,
            AliasAnalysisInterface& alias, FunctionSideEffectInterface* f) 
 {
   if (DebugValuePropogate())
-     STD cerr << "building def-use chain\n";
+     std::cerr << "building def-use chain\n";
 
   DefUseChain<ValuePropagateNode>::build(fa, r, alias, f);
   if (DebugValuePropogate())
-      write_graph(*this, STD cout, "def-use");
+      write_graph(*this, std::cout, "def-use");
 
   if (DebugValuePropogate()) {
-    STD cerr << "finshed building def-use chain\n";
-    STD cerr << "propagating values on def-use chain\n";
+    std::cerr << "finshed building def-use chain\n";
+    std::cerr << "propagating values on def-use chain\n";
   }
   UpdateValuePropagateNode  update(fa, h, valmap, astmap, nodemap);
   PropagateDefUseChainUpdate( this, update); 
   if (DebugValuePropogate()) 
-     STD cerr << "\nfinished propagating values on def-use chain\n" << GraphToString(*this) << STD endl;
+     std::cerr << "\nfinished propagating values on def-use chain\n" << GraphToString(*this) << std::endl;
 }
 
 void ValuePropagate::
@@ -269,10 +269,10 @@ build(AstInterface& fa, const AstNodePtr& head,
 {
   ReachingDefinitionAnalysis r;
   if (DebugValuePropogate())
-     STD cerr << "constructing reaching definitions\n";
+     std::cerr << "constructing reaching definitions\n";
   r(fa, head, f);
   if (DebugValuePropogate()) 
-     STD cerr << "finished reaching definition\n" << GraphToString(*this) << STD endl;
+     std::cerr << "finished reaching definition\n" << GraphToString(*this) << std::endl;
   build(fa, head, r, alias, f);
 }
 
@@ -289,8 +289,8 @@ copy_value( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy
   if (has_value( orig, &desc)) {
      set_val(copy, desc); 
      if (DebugValuePropogate()) {
-        STD cerr << "copying ast: " << AstToString(copy) << copy.get_ptr() 
-                 << " to have value " << desc.toString() << STD endl;
+        std::cerr << "copying ast: " << AstToString(copy) << copy.get_ptr() 
+                 << " to have value " << desc.toString() << std::endl;
      }
   }
 }
@@ -299,7 +299,7 @@ bool ValuePropagate::
 known_value( const AstNodePtr& exp, HasValueDescriptor* result,
              bool *change)
 {
-  STD map<AstNodePtr, ValuePropagateNode*>::const_iterator p = nodemap.find(exp);
+  std::map<AstNodePtr, ValuePropagateNode*>::const_iterator p = nodemap.find(exp);
   if (p == nodemap.end())  {
      bool r = valmap.has_value( exp, result);
      if (change != 0)
@@ -321,8 +321,8 @@ known_value( const AstNodePtr& exp, HasValueDescriptor* result,
           if (tmp.merge(node->get_desc())) {
               *change = true;
               if (DebugValuePropogate()) {
-                  STD cerr << "HasValue descriptors differ : " << cur->toString() << " : " 
-                          << node->toString() << STD endl;
+                  std::cerr << "HasValue descriptors differ : " << cur->toString() << " : " 
+                          << node->toString() << std::endl;
               }
               break;
           } 

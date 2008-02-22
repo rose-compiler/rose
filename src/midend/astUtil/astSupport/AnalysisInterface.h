@@ -31,9 +31,9 @@ class SideEffectAnalysisInterface
   // returns false if stmts may ---modify-- unknown (non-collected) locations
   virtual bool 
    get_side_effect( AstInterface& fa, const AstNodePtr& stmts,
-                    CollectObject< STD pair<AstNodePtr, AstNodePtr> >* mod,
-                    CollectObject< STD pair<AstNodePtr, AstNodePtr> >* read= 0,
-                    CollectObject< STD pair<AstNodePtr, AstNodePtr> >* kill = 0) = 0;
+                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >* mod,
+                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >* read= 0,
+                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >* kill = 0) = 0;
 };
 
 class FunctionAliasInterface
@@ -42,10 +42,10 @@ class FunctionAliasInterface
   // returns false if unknown function encountered
   virtual bool
      may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-               CollectObject< STD pair<AstNodePtr, int> >& collectalias) = 0;
+               CollectObject< std::pair<AstNodePtr, int> >& collectalias) = 0;
   virtual bool
      allow_alias(AstInterface& fa, const AstNodePtr& fc, 
-               CollectObject< STD pair<AstNodePtr, int> >& collectalias) = 0;
+               CollectObject< std::pair<AstNodePtr, int> >& collectalias) = 0;
 };
 
 class NoFunctionAliasAnalysis : public FunctionAliasInterface
@@ -53,7 +53,7 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
  public:
   virtual bool
     may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-	      CollectObject< STD pair<AstNodePtr, int> >& collectalias) 
+	      CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
    { return false; }
 };
 

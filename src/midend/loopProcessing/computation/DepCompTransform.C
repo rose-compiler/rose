@@ -152,7 +152,7 @@ public:
          }
       }   
       if (DebugRefFuse()) {
-         STD cerr << GraphToString(*this) << STD endl;
+         std::cerr << GraphToString(*this) << std::endl;
       }
    }
 };
@@ -165,7 +165,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
         FuseNodeInfo(int t = -1, DepCompCopyArrayCollect::CopyArrayUnit* c = 0)
            : nodetype(t), collect(c) {}
     };
-    typedef STD map<DepCompAstRefGraphNode*,FuseNodeInfo, STD less<DepCompAstRefGraphNode*> > NodeMap;
+    typedef std::map<DepCompAstRefGraphNode*,FuseNodeInfo, std::less<DepCompAstRefGraphNode*> > NodeMap;
     NodeMap nodeMap;
     int size;
     LoopTransformInterface& la;
@@ -182,7 +182,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
             if  (nodeMap.find(n1) != nodeMap.end()) 
                   continue;
             if (DebugRefFuse())
-              STD cerr << "mapping node " << n1->toString() << " to " << size << STD endl;
+              std::cerr << "mapping node " << n1->toString() << " to " << size << std::endl;
             nodeMap[n1] = FuseNodeInfo(size);
             AddNodeType(g, n1);
          }
@@ -204,7 +204,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
            AstNodePtr arr;
            if (la.IsArrayAccess(r, &arr) && fa.IsVarRef(arr))  {
               if (DebugRefFuse())
-                  STD cerr << "mapping node " << n->toString() << " to " << size << STD endl;
+                  std::cerr << "mapping node " << n->toString() << " to " << size << std::endl;
               nodeMap[n] = size;
               AddNodeType(g, n);
               ++size;
@@ -216,7 +216,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
         GraphAccessWrapTemplate<void,void,DepCompAstRefDAG> access(dag);
         for (int i = 0; i < size; ++i) {
            if (DebugRefFuse()) 
-              STD cerr << "fusing node type " << i << STD endl;
+              std::cerr << "fusing node type " << i << std::endl;
            TypedFusion()(&access, *this, i);
         }
         for (DepCompAstRefGraphCreate::NodeIterator nodes = dag->GetNodeIterator();
@@ -245,7 +245,7 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
          DepCompAstRefGraphNode* n1 = static_cast<DepCompAstRefGraphNode*>(gn1);
          DepCompAstRefGraphNode* n2 = static_cast<DepCompAstRefGraphNode*>(gn2);
          if (DebugRefFuse())
-            STD cerr << "fusing refs: " << n1->toString() << " with " << n2->toString() << "\n";
+            std::cerr << "fusing refs: " << n1->toString() << " with " << n2->toString() << "\n";
          FuseNodeInfo &info1 = nodeMap[n1], &info2 = nodeMap[n2] ;
          assert(info2.collect == 0);
          if (info1.collect == 0) {
@@ -262,16 +262,16 @@ class AstRefTypedFusionOperator : public TypedFusionOperator
          DepCompAstRefGraphNode* n1 = static_cast<DepCompAstRefGraphNode*>(src);
          DepCompAstRefGraphNode* n2 = static_cast<DepCompAstRefGraphNode*>(snk);
          if (DebugRefFuse())
-            STD cerr << "checking fusion between " << n1->toString() << " and " << n2->toString();
+            std::cerr << "checking fusion between " << n1->toString() << " and " << n2->toString();
          DepInfoEdge *e = static_cast<DepInfoEdge*>(ge);
          DepInfo& info = e->GetInfo();
          if (!info.IsTop() && !info.is_precise()) {
             if (DebugRefFuse())
-              STD cerr << "No because of edge " << e->toString() << STD endl;
+              std::cerr << "No because of edge " << e->toString() << std::endl;
             return true;
          }
          if (DebugRefFuse())
-            STD cerr << "Yes from edge " << e->toString() << STD endl;
+            std::cerr << "Yes from edge " << e->toString() << std::endl;
          return false;
      }
 };
@@ -389,7 +389,7 @@ EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit,
          return;
 
     if (DebugCopySplit())  {
-      STD cerr << IteratorToString2( curunit.refs.begin()) << " ; \n with root = " << curunit.root->TreeToString() << STD endl;
+      std::cerr << IteratorToString2( curunit.refs.begin()) << " ; \n with root = " << curunit.root->TreeToString() << std::endl;
     }
     
     DepCompCopyArrayCollect::CopyArrayUnit::NodeSet outnodes; 
@@ -462,7 +462,7 @@ ComputeCopyConfig( LoopTransformInterface& la, const DepCompAstRefAnal& stmtorde
     bool has_write = false;
 
     AstNodePtr arr;
-    STD string arrname, elemtypename;
+    std::string arrname, elemtypename;
     //ai.GetTypeInfo(inittype, &elemtypename);
     //AstNodeType elemtype = ai.GetType(elemtypename);
     AstNodeType elemtype = inittype;
@@ -491,7 +491,7 @@ ComputeCopyConfig( LoopTransformInterface& la, const DepCompAstRefAnal& stmtorde
        shift = unit.root; 
    CopyArrayConfig curconfig(ai, arrname, elemtype, cursel, shift);
    if (DebugCopyConfig()) 
-         STD cerr << "copy config " << curconfig.toString() << " : " << STD endl;
+         std::cerr << "copy config " << curconfig.toString() << " : " << std::endl;
 
    if (!is_init) 
       copyopt |= CopyArrayConfig::INIT_COPY;
@@ -537,7 +537,7 @@ ApplyCopyArray( LoopTransformInterface& la, DepCompCopyArrayCollect& collect,
         arrays != collect.end(); ++arrays) {
       DepCompCopyArrayCollect::CopyArrayUnit& curarray = *arrays;
       if (DebugCopyConfig())
-        STD cerr << IteratorToString2(curarray.refs.begin()) << STD endl;
+        std::cerr << IteratorToString2(curarray.refs.begin()) << std::endl;
 
 
       const DepCompAstRefGraphNode* initcut = 0, *savecut = 0;
@@ -565,11 +565,11 @@ ApplyCopyArray( LoopTransformInterface& la, DepCompCopyArrayCollect& collect,
       }
 
       if (DebugCopyConfig() && initstmt != 0) 
-           STD cerr << "init cutting node: " << initstmt->toString() << STD endl;
+           std::cerr << "init cutting node: " << initstmt->toString() << std::endl;
       if (DebugCopyConfig() && savestmt != 0) 
-           STD cerr << "save cutting node: " << savestmt->toString() << STD endl;
+           std::cerr << "save cutting node: " << savestmt->toString() << std::endl;
       if (DebugCopyConfig())
-           STD cerr << "CopyOpt = " << CopyArrayConfig::CopyOpt2String(copyopt) << STD endl;
+           std::cerr << "CopyOpt = " << CopyArrayConfig::CopyOpt2String(copyopt) << std::endl;
 
       LoopTreeCopyArrayToBuffer()(la, initstmt, savestmt, curconfig, copyopt);
 

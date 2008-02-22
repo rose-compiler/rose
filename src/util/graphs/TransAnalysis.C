@@ -240,7 +240,7 @@ class TransAnalSCCGraphNode : public GroupGraphNode
    } TwinNode;
 
 
-    STD vector <TwinNode> splitVec;
+    std::vector <TwinNode> splitVec;
     CloneShadowGraphCreate *cloneCreate;
     DAGBaseGraphImpl *cloneBase;
     DAGOP <T> *dagOp;

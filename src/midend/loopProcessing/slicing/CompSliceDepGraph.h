@@ -24,7 +24,7 @@ class CompSliceDepGraphNode
   void UpdateFusion( const CompSliceNestFusionInfo& info);
  public:
   CompSliceNest& GetInfo() { return vec; }
-  STD string toString() const { return vec.toString(); }
+  std::string toString() const { return vec.toString(); }
   
   LoopTreeNodeIterator GetSliceRootIterator() const;
   

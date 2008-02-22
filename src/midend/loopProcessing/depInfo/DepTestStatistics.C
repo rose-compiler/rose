@@ -41,7 +41,7 @@ void DepTestStatistics::GetProcessed(int *a, int *p, int *o)
 	*o = _num_processed_omega;
 }
 
-void DepTestStatistics::SetFileName(const STD string fname)
+void DepTestStatistics::SetFileName(const std::string fname)
 {
 	_filename = fname;
 }
@@ -476,28 +476,28 @@ void DepTestStatistics::PrintResults(void)
 			//buffer << ">>>>>>\t";
 			//buffer << "******\t";
 			//buffer << "--Total Probs--\t";
-			//buffer << "--Total Time--" << STD endl;
+			//buffer << "--Total Time--" << std::endl;
 			buffer << "Adhoc\t";
 			buffer << _num_equal_dvs_adhoc;
 			buffer << "\t" << _num_less_than_dvs_adhoc;
 			buffer << "\t" << _num_greater_than_dvs_adhoc;
 			buffer << "\t" << _num_star_dvs_adhoc;
 			buffer << "\t" << _total_problems;
-			buffer << "\t\t" << _total_time_adhoc << STD endl;
+			buffer << "\t\t" << _total_time_adhoc << std::endl;
 			buffer << "Plato\t";
 			buffer << _num_equal_dvs_plato;
 			buffer << "\t" << _num_less_than_dvs_plato;
 			buffer << "\t" << _num_greater_than_dvs_plato;
 			buffer << "\t" << _num_star_dvs_plato;
 			buffer << "\t" << _total_problems;
-			buffer << "\t\t" << _total_time_plato << STD endl;
+			buffer << "\t\t" << _total_time_plato << std::endl;
 			buffer << "Omega\t";
 			buffer << _num_equal_dvs_omega;
 			buffer << "\t" << _num_less_than_dvs_omega;
 			buffer << "\t" << _num_greater_than_dvs_omega;
 			buffer << "\t" << _num_star_dvs_omega;
 			buffer << "\t" << _total_problems;
-			buffer << "\t\t" << _total_time_omega << STD endl;
+			buffer << "\t\t" << _total_time_omega << std::endl;
 		}
 		break;
 		default :

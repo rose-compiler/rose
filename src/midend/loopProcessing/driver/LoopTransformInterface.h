@@ -23,11 +23,11 @@ class ArrayAbstractionInterface {
 class ArrayUseAccessFunction 
   : public ArrayAbstractionInterface, public FunctionSideEffectInterface
 {
-  STD string funcname;
+  std::string funcname;
   ArrayAbstractionInterface* prev;
   FunctionSideEffectInterface* prev1;
  public:
-  ArrayUseAccessFunction( const STD string& fn, ArrayAbstractionInterface* n = 0,
+  ArrayUseAccessFunction( const std::string& fn, ArrayAbstractionInterface* n = 0,
                            FunctionSideEffectInterface* n1 = 0) 
      : funcname(fn), prev(n), prev1(n1) {}
   virtual ~ArrayUseAccessFunction() {}
@@ -120,7 +120,7 @@ class LoopTransformInterface
 
 class SgGlobal;
 void SetLoopTransformOptions( std::vector<std::string>& argvList);
-void PrintLoopTransformUsage( STD ostream& out);
+void PrintLoopTransformUsage( std::ostream& out);
 AstNodePtr LoopTransformTraverse( AstInterface& fa, const AstNodePtr& head, 
                                  AliasAnalysisInterface& aliasInfo,
                                  FunctionSideEffectInterface* funcInfo=0,

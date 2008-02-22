@@ -450,7 +450,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 bool SymbolicFunctionDeclarationGroup::
 get_val(AstInterface& fa, AstInterface::AstNodeList& argList, AstNodePtr& r) const
 {
-  STD vector<SymbolicVal> argVal;
+  std::vector<SymbolicVal> argVal;
   int index = 0;
   for (AstInterface::AstNodeList::iterator p = argList.begin();
        p != argList.end(); ++p, ++index) {
@@ -469,7 +469,7 @@ void SymbolicFunctionDeclarationGroup::Dump() const
 { write(cerr); }
 
 bool SymbolicFunctionDeclaration:: 
-get_val(const STD vector<SymbolicVal>& parList, SymbolicVal& r) const
+get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
   vector< pair<SymbolicVar, SymbolicVal> > params;
 
@@ -511,7 +511,7 @@ get_val(const STD vector<SymbolicVal>& parList, SymbolicVal& r) const
 }
 
 bool SymbolicFunctionDeclarationGroup :: 
-get_val( const STD vector<SymbolicVal>& parList, SymbolicVal& r) const
+get_val( const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
   for (const_iterator p = begin(); p != end(); ++p) {
     const SymbolicFunctionDeclaration& cur = *p;

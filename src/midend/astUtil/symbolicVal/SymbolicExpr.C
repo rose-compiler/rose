@@ -100,9 +100,9 @@ bool SymbolicExpr:: operator == (const SymbolicExpr& that) const
    }
 
 
-STD string SymbolicTerm :: toString() const
+std::string SymbolicTerm :: toString() const
 {
-  STD stringstream out;
+  std::stringstream out;
 
   if (v.IsNIL()) {
     out << time1;
@@ -123,9 +123,9 @@ STD string SymbolicTerm :: toString() const
   return out.str();
 }
 
-STD string SymbolicExpr :: toString() const
+std::string SymbolicExpr :: toString() const
 {
-  STD string r = GetOPName() + "(";
+  std::string r = GetOPName() + "(";
   for (OpdIterator iter = GetOpdIterator(); 
        !iter.ReachEnd(); iter.Advance())  
     r = r + iter.Current().toString();
@@ -155,7 +155,7 @@ SymbolicVal GetExprVal( SymbolicExpr *r)
          case SYMOP_PLUS: return 0;
          case SYMOP_MULTIPLY: return 1;
          default: 
-              STD cerr << "non-recognized expression type: " << r->toString() << STD endl;
+              std::cerr << "non-recognized expression type: " << r->toString() << std::endl;
               assert(false);
          }
       }

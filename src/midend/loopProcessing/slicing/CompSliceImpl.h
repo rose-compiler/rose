@@ -38,15 +38,15 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
   CompSlice::SliceLoopInfo GetSliceInfo() const;
   bool LoopReversible() const { return reversible; }
   LoopTreeNode* GetSliceLoop() const { return GetRepr(); }
-  void Dump() const { STD cerr << toString() << STD endl; }
-  virtual STD string toString() const
+  void Dump() const { std::cerr << toString() << std::endl; }
+  virtual std::string toString() const
     { 
-      STD string res =  "slice loop: \n" + GetRepr()->toString();
+      std::string res =  "slice loop: \n" + GetRepr()->toString();
       if ( LoopReversible())
          res = res + " loop reversible \n";
       return res;
     }
-  virtual STD string GetClassName() const { return "CompSliceLoop"; }
+  virtual std::string GetClassName() const { return "CompSliceLoop"; }
 };
 
 class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
@@ -87,14 +87,14 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
        Link(loop, AsLastChild);
        align = a;
      }
-  void Dump() const { STD cerr << toString() << STD endl; }
-  virtual STD string toString() const
+  void Dump() const { std::cerr << toString() << std::endl; }
+  virtual std::string toString() const
     { 
        char buf[20];
        sprintf( buf, "%d", align);
-       return  " stmt: \n" + GetRepr()->toString() + "\nslicing alignment: " + STD string(buf);
+       return  " stmt: \n" + GetRepr()->toString() + "\nslicing alignment: " + std::string(buf);
     }
-  virtual STD string GetClassName() const { return "CompSliceStmt"; }
+  virtual std::string GetClassName() const { return "CompSliceStmt"; }
 };
 
 inline CompSlice::SliceLoopInfo CompSliceLoop:: GetSliceInfo() const
@@ -136,7 +136,7 @@ class CompSliceImpl : public LoopTreeShadowCreate
     { return new CompSliceImpl( QuerySliceLevel() ); }
 
   void Dump() const { GetTreeRoot()->DumpTree(); }
-  STD string toString() const { return GetTreeRoot()->TreeToString(); }
+  std::string toString() const { return GetTreeRoot()->TreeToString(); }
   CompSliceStmt * QuerySliceStmt( const LoopTreeNode *n) const
     { return (n->GetOrigStmt() != 0)? 
                 static_cast <CompSliceStmt*>( QueryShadowNode(n)):0;

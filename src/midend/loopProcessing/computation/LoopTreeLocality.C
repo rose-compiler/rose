@@ -88,12 +88,12 @@ class AccumulateSpatialReuse : public CollectObject<AstNodePtr>
 {
   float res;
   LoopTransformInterface& la;
-  STD string ivarname;
+  std::string ivarname;
   int linesize;
  public:
   bool operator()(const AstNodePtr& cur)
   { res +=  SelfSpatialReuse( la, cur, ivarname, linesize); return true;}
-  AccumulateSpatialReuse( LoopTransformInterface& _la, const STD string& _ivarname, int _linesize)
+  AccumulateSpatialReuse( LoopTransformInterface& _la, const std::string& _ivarname, int _linesize)
     : la(_la), ivarname(_ivarname), linesize(_linesize), res(0) {}
   float get_result() const { return res; }
 };
@@ -103,7 +103,7 @@ SelfSpatialReuses( LoopTreeNode *n, int loop, int linesize)
 {
    int loop1 = comp.GetDepNode(n)->LoopTreeDim2AstTreeDim(loop);
    AstNodePtr s = n->GetOrigStmt();
-   STD string name = anal.GetStmtInfo(fa, s).ivars[loop1].GetVarName();
+   std::string name = anal.GetStmtInfo(fa, s).ivars[loop1].GetVarName();
    AccumulateSpatialReuse  col(fa, name, linesize);
    AnalyzeStmtRefs( fa, s, col, col);
    return col.get_result();
@@ -149,16 +149,16 @@ bool operator < (const DepCompAstRef& n1, const DepCompAstRef& n2)
    }
 
 
-STD string DepCompAstRef::ToHandle() const 
+std::string DepCompAstRef::ToHandle() const 
 {
-   STD stringstream res;
+   std::stringstream res;
    res <<  stmt  << orig.get_ptr();
    return res.str();
 }
 
-STD string DepCompAstRef::toString() const 
+std::string DepCompAstRef::toString() const 
 {
-  STD stringstream out;
+  std::stringstream out;
   out << AstToString(orig) << " : " << stmt << ":" << stmt->toString(); 
   return out.str();
 }
@@ -186,7 +186,7 @@ CreateEdge( DepCompAstRefGraphNode* src,  DepCompAstRefGraphNode* snk, const Dep
    DepInfoEdge *e = new DepInfoEdge(this, dep); 
    AddEdge(src, snk, e);
    if (DebugRefGraph()) {
-      STD cerr << "creating edge in ref graph: " << src->toString() << "->" << snk->toString() << " : " << e->toString() << STD endl;
+      std::cerr << "creating edge in ref graph: " << src->toString() << "->" << snk->toString() << " : " << e->toString() << std::endl;
    }
    return e;
 }
@@ -227,13 +227,13 @@ Build(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root)
 void DepCompAstRefAnal:: Append(LoopTransformInterface& ai, LoopTreeNode* _root)
      {
        
-       typedef STD map<AstNodePtr,int,STD less<AstNodePtr> > AstIntMap;
-       class CollectModRef : public CollectObject<STD pair<AstNodePtr,AstNodePtr> >  
+       typedef std::map<AstNodePtr,int,std::less<AstNodePtr> > AstIntMap;
+       class CollectModRef : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >  
         { 
          AstIntMap& refmap;
          public:
          CollectModRef(AstIntMap&  m) : refmap(m){}
-         bool operator()(const STD pair<AstNodePtr,AstNodePtr>& cur)
+         bool operator()(const std::pair<AstNodePtr,AstNodePtr>& cur)
           {
             if (refmap.find(cur.first) == refmap.end()) {
                 int num = refmap.size();
@@ -243,12 +243,12 @@ void DepCompAstRefAnal:: Append(LoopTransformInterface& ai, LoopTreeNode* _root)
             return false;
           }
        } modcollect(refmap);
-       class CollectReadRef : public CollectObject<STD pair<AstNodePtr,AstNodePtr> >  
+       class CollectReadRef : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >  
         { 
          AstIntMap& refmap;
          public:
          CollectReadRef(AstIntMap&  m) : refmap(m){}
-         bool operator()(const STD pair<AstNodePtr,AstNodePtr>& cur)
+         bool operator()(const std::pair<AstNodePtr,AstNodePtr>& cur)
           {
             if (refmap.find(cur.first) == refmap.end()) {
                 int num = refmap.size();

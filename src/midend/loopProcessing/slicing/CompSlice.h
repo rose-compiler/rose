@@ -28,8 +28,8 @@ class CompSlice
   CompSlice( const CompSlice& that);
   ~CompSlice();
 
-  void Dump() const { STD cerr << toString() << STD endl;}
-  STD string toString() const;
+  void Dump() const { std::cerr << toString() << std::endl;}
+  std::string toString() const;
   int QuerySliceLevel() const;
 
   struct SliceStmtInfo {
@@ -171,8 +171,8 @@ class CompSliceNest
   int NumberOfEntries() const { return size; }
   const CompSlice* Entry(int index) const { return sliceVec[index]; }
   const CompSlice* operator [] (int index) const { return sliceVec[index]; }
-  void Dump() const  { STD cerr << toString() << STD endl; }
-  STD string toString() const ;
+  void Dump() const  { std::cerr << toString() << std::endl; }
+  std::string toString() const ;
 
   void AttachObserver( CompSliceNestObserver &o) const ;
   void DetachObserver( CompSliceNestObserver &o) const;

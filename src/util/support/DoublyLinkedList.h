@@ -7,8 +7,6 @@
 #include <FunctionObject.h>
 #include <iostream>
 
-#define STD std::
-
 template <class T> class DoublyLinkedListWrap;
 
 template <class T>
@@ -273,7 +271,7 @@ class DoublyLinkedListWrap
 };
 
 template <class T> 
-void writeList( const DoublyLinkedListWrap<T>& list, STD ostream& out)
+void writeList( const DoublyLinkedListWrap<T>& list, std::ostream& out)
 { for ( typename DoublyLinkedListWrap<T>::Iterator iter(list); !iter.ReachEnd(); 
        iter.Advance()) 
      iter.Current().write(out);

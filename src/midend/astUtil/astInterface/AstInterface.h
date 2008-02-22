@@ -6,8 +6,6 @@
 #include <list>
 #include <ObserveObject.h>
 
-#define STD std::
-
 class AstInterfaceImpl;
 class AstNodePtr {
  protected:
@@ -44,7 +42,7 @@ class AstNodeType {
   void * get_ptr() const { return repr; }
 };
 
-STD string AstToString( const AstNodePtr& s);
+std::string AstToString( const AstNodePtr& s);
 
 class AstObserver {
   public:
@@ -92,8 +90,8 @@ class AstInterface
   typedef enum { PreOrder, PostOrder, ReversePreOrder, ReversePostOrder, 
                  PreAndPostOrder } TraversalOrderType;
   typedef enum {PreVisit, PostVisit} TraversalVisitType;
-  typedef STD list<AstNodePtr>  AstNodeList;
-  typedef STD list<AstNodeType> AstTypeList;
+  typedef std::list<AstNodePtr>  AstNodeList;
+  typedef std::list<AstNodeType> AstTypeList;
 
   void AttachObserver(AstObserver* ob);
   void DetachObserver(AstObserver* ob);
@@ -159,11 +157,11 @@ class AstInterface
                        AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
   bool IsMin(const AstNodePtr& exp);
   bool IsMax(const AstNodePtr& exp);
-  AstNodePtr CreateFunctionCall(const STD string& func, const AstNodeList& args);
+  AstNodePtr CreateFunctionCall(const std::string& func, const AstNodeList& args);
   AstNodePtr CreateFunctionCall(const AstNodePtr& func, const AstNodeList& args);
 
   AstNodePtr GetFunctionDefinition( const AstNodePtr &n, std::string* name=0);
-  bool IsFunctionDefinition(  const AstNodePtr& s, STD string* name = 0,
+  bool IsFunctionDefinition(  const AstNodePtr& s, std::string* name = 0,
                     AstNodeList* params = 0, AstNodeList* outpars = 0,
                     AstNodePtr* body = 0,
                     AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
@@ -182,30 +180,30 @@ class AstInterface
   bool IsConstInt( const AstNodePtr& exp, int* value = 0) ;
   AstNodePtr CreateConstInt( int val)  ;
 
-  bool IsConstant( const AstNodePtr& exp, STD string* valtype=0, STD string* value = 0) ;
-  AstNodePtr CreateConstant( const STD string& valtype, const STD string& val);
+  bool IsConstant( const AstNodePtr& exp, std::string* valtype=0, std::string* value = 0) ;
+  AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
 
   bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
-                   STD string* varname = 0, AstNodePtr* scope = 0, 
+                   std::string* varname = 0, AstNodePtr* scope = 0, 
                     bool *isglobal = 0) ;
-  STD string GetVarName( const AstNodePtr& exp);
+  std::string GetVarName( const AstNodePtr& exp);
 
   bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
   bool IsAliasedRef( const AstNodePtr& s1, const AstNodePtr& s2);
-  STD string NewVar (const AstNodeType& t, const STD string& name = "", 
+  std::string NewVar (const AstNodeType& t, const std::string& name = "", 
                 bool makeunique = false, const AstNodePtr& declLoc=AstNodePtr(),
                 const AstNodePtr& init = AstNodePtr());
   void AddNewVarDecls(const AstNodePtr& nblock, const AstNodePtr& oldblock); 
-  AstNodePtr CreateVarRef( STD string varname, const AstNodePtr& declLoc = AstNodePtr()); 
+  AstNodePtr CreateVarRef( std::string varname, const AstNodePtr& declLoc = AstNodePtr()); 
 
   bool IsScalarType( const AstNodeType& t);
   bool IsPointerType( const AstNodeType& t);
-  AstNodeType GetType( const STD string& name);
+  AstNodeType GetType( const std::string& name);
   bool IsCompatibleType( const AstNodeType& t1, const AstNodeType& t2);
-  void GetTypeInfo( const AstNodeType& t, STD string* name = 0, 
-                           STD string* stripname = 0, int* size = 0);
-  STD string GetTypeName(const AstNodeType& t) 
-     { STD string r; GetTypeInfo(t, &r); return r; }
+  void GetTypeInfo( const AstNodeType& t, std::string* name = 0, 
+                           std::string* stripname = 0, int* size = 0);
+  std::string GetTypeName(const AstNodeType& t) 
+     { std::string r; GetTypeInfo(t, &r); return r; }
 
   bool GetArrayBound( const AstNodePtr& arrayname, int dim, int &lb, int &ub) ;
   AstNodeType GetArrayType( const AstNodeType& base, const AstNodeList& indexsize);

@@ -337,7 +337,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
 void PtrAnal::
 ProcessAssign( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs, bool readlhs)
 {
-  STD string modname, readname;
+  std::string modname, readname;
   AstNodePtr modscope, readscope;
  
   if (!fa.IsVarRef(mod, 0, &modname, &modscope) )  {
@@ -381,7 +381,7 @@ may_alias(AstInterface& fa, const AstNodePtr& _r1, const AstNodePtr& _r2)
   AstNodePtr r2 = fa.IsExpression(_r2);
   if (r1 == AST_NULL || r2 == AST_NULL)
     assert(false);
-  STD string varname1 = Get_VarName(fa, r1), varname2 = Get_VarName(fa, r2);
+  std::string varname1 = Get_VarName(fa, r1), varname2 = Get_VarName(fa, r2);
   return may_alias(varname1, varname2);
 }
 
@@ -391,7 +391,7 @@ void PtrAnal:: operator()( AstInterface& fa, const AstNodePtr& funcdef)
   AstInterface::AstNodeList params, outpars;
   std::string fname;
   if (!fa.IsFunctionDefinition(funcdef, &fname, &params, &outpars, &body)) {
-     STD cerr << "Error: analysis requires function definition as input instead of " << AstToString(funcdef) << STD endl;
+     std::cerr << "Error: analysis requires function definition as input instead of " << AstToString(funcdef) << std::endl;
      assert(false);
   }
   typedef std::pair<AstNodePtr,std::string>  RefRec;

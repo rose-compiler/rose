@@ -7,8 +7,6 @@
 #include <assert.h>
 #include <sstream>
 
-#define STD std::
-
 class BitVectorReprImpl {
   unsigned* impl;
   unsigned  num;
@@ -46,9 +44,9 @@ class BitVectorReprImpl {
     }
   }
 
-  STD string toString() const
+  std::string toString() const
   {
-    STD stringstream r;
+    std::stringstream r;
     r <<  ":";
     for (unsigned i = 0; i < num; ++i) {
        r << impl[i];
@@ -141,7 +139,7 @@ class BitVectorRepr : public CountRefHandle<BitVectorReprImpl>
   { UpdateRef() &= that.ConstRef(); }
   void complement() 
     { UpdateRef().complement(); }
-  STD string toString() const
+  std::string toString() const
     { ConstRef().toString();  }
 };
 
@@ -156,7 +154,7 @@ class BitVectorReprBase
       : name(n), data(d), index(i) {}
   };
   typedef DoublyLinkedListWrap<DataEntry> DataList;
-  typedef STD map<Name, DoublyLinkedEntryWrap<DataEntry>* > DataMap;
+  typedef std::map<Name, DoublyLinkedEntryWrap<DataEntry>* > DataMap;
   
   DataList datalist;
   DataMap datamap; 
@@ -168,7 +166,7 @@ class BitVectorReprBase
 
   BitVectorReprBase( const BitVectorReprBase<Name,Data>& that)
     {
-      STD string name = "";
+      std::string name = "";
       for ( iterator p = that.datalist.begin(); !p.ReachEnd(); ++p) {
 	DataEntry& cur = *p;
         DoublyLinkedEntryWrap<DataEntry>* e = datalist.AppendLast(cur);
@@ -201,7 +199,7 @@ class BitVectorReprBase
 	cur.index = index;
       }
     }
-  iterator find( const STD string& name) const
+  iterator find( const std::string& name) const
     {
       typename DataMap::const_iterator mp = datamap.find(name);
       if (mp == datamap.end()) {
@@ -211,7 +209,7 @@ class BitVectorReprBase
       iterator lp( datalist, (*mp).second);  
       return lp;
     }
-  STD string get_name ( iterator p) const
+  std::string get_name ( iterator p) const
     { return (*p).name; }
   Data get_data ( iterator p) const
     { return (*p).data; }

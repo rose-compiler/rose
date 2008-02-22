@@ -35,12 +35,12 @@ class LoopTreeShadowNode : public LoopTreeNode
   LoopTreeNode* GetRepr() const { return repr; }
   int IncreaseLoopLevel() const { return repr->IncreaseLoopLevel(); }
   
-  STD string GetClassName() const { return "LoopTreeShadowNode"; }
+  std::string GetClassName() const { return "LoopTreeShadowNode"; }
   LoopTreeNode *Clone() const { return 0; }
   virtual LoopTreeShadowNode* CloneNode(LoopTreeNode *n) const
     { return new LoopTreeShadowNode(n, *this); }
   
-  void write( STD ostream& out) const { if (repr != NULL) repr->write(out); }
+  void write( std::ostream& out) const { if (repr != NULL) repr->write(out); }
   AstNodePtr CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const
     { return repr->CodeGen(fa, c); }
  friend class LoopTreeShadowCreate;
