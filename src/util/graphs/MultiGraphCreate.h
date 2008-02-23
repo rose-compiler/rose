@@ -31,7 +31,7 @@ class MultiGraphElem
       return count; 
     }
   MultiGraphCreate* GetGraphCreate() const { return gc; }
-  std::string toString() const { return ""; }
+  virtual std::string ToString() const { return ""; }
  friend class MultiGraphCreate;
 };
 
@@ -59,7 +59,8 @@ class MultiGraphElemTemplate : public MultiGraphElem
     : MultiGraphElem(c), info(_info) {}
   Info&  GetInfo() { return info; }
   Info GetInfo() const { return info; }
-  std::string toString() const { return info.toString(); }
+  // Liao, 2/22/2008, some instantiated objects do not have this member function
+ // std::string ToString() const { return info.ToString(); }
 };
 
 #endif

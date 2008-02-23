@@ -17,7 +17,8 @@ class GraphDotOutput
 	if(debug) std::cerr << " dot output to " << filename << std::endl; 
         std::ofstream dotfile(filename.c_str());
 
-        dotfile <<  "digraph " << graphname << " {\n";
+       //Liao, add "" to enclose the graphname,otherwise syntax error for .dot file. 2/22/2008
+        dotfile <<  "digraph \"" << graphname <<"\""<< " {\n";
         for(typename Graph::NodeIterator p=g.GetNodeIterator(); !p.ReachEnd(); ++p) {
             typename Graph::Node* node = *p;
             dotfile << ((long)node) << "[label=\"" << getVertexName(node) << "\" ];" << std::endl;
@@ -63,14 +64,14 @@ class GraphDotOutput
      //! get the name of a vertex
      std::string getVertexName(typename Graph::Node* v) 
        { 
-         std::string r1 = v->toString();
+         std::string r1 = v->ToString();
          std::string r2 = Translate(r1); 
          return r2;
        }
 
      std::string getEdgeLabel(typename Graph::Edge* e) 
        {
-          std::string r1 = e->toString();
+          std::string r1 = e->ToString();
           return Translate(r1);
        }
 

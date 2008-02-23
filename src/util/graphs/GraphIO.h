@@ -36,13 +36,13 @@ void write_graph( const Graph& g, OUT& out, const std::string& hint)
         typename Graph::EdgeIterator edges 
                         = g.GetNodeEdgeIterator(curnode,GraphAccess::EdgeOut);
         if (edges.ReachEnd()) 
-            out << hint << " " << curnode->toString() << std::endl; 
+            out << hint << " " << curnode->ToString() << std::endl; 
         else for ( ;!edges.ReachEnd(); ++edges) {
             typename Graph::Edge *e = (*edges);
             typename Graph::Node* n = 
                   g.GetEdgeEndPoint(e, GraphAccess::EdgeIn);
-            out << hint << " " << curnode->toString() << " " << n->toString() 
-               <<  " " << e->toString() << std::endl; 
+            out << hint << " " << curnode->ToString() << " " << n->ToString() 
+               <<  " " << e->ToString() << std::endl; 
         }
      }
   }
@@ -59,7 +59,7 @@ void write_graph_node_edge(Graph& g, const Node* curnode,
        typename Graph::Node* n = 
              g.GetEdgeEndPoint(e, GraphAccess::Reverse(dir));
        out << hint << " " << curnode << " " << n  
-          << " " << e->toString() << std::endl; 
+          << " " << e->ToString() << std::endl; 
    }
 }
 
@@ -69,7 +69,7 @@ void write_graph2( const Graph& g, OUT& out, const std::string& hint)
      typename Graph::NodeIterator nodes = g.GetNodeIterator();
      for ( ; !nodes.ReachEnd() ; ++nodes) {
         typename Graph::Node* curnode = *nodes;
-        out << "node " << curnode << ":" << curnode->toString() << std::endl;
+        out << "node " << curnode << ":" << curnode->ToString() << std::endl;
      }
      for ( nodes.Reset(); !nodes.ReachEnd() ; ++nodes) {
         typename Graph::Node* curnode = *nodes;
@@ -90,7 +90,7 @@ template <class Graph, class Node>
 std::string GraphNodeToString( const Graph& g, const Node* n) 
    {
      std::stringstream result;
-     result << "node" << " " << n->toString() << std::endl;
+     result << "node" << " " << n->ToString() << std::endl;
      write_graph_node_edge(g, n, result, "edge-out", GraphAccess::EdgeOut);
      write_graph_node_edge(g, n, result, "edge-in", GraphAccess::EdgeIn);
      return result.str();

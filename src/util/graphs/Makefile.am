@@ -26,6 +26,7 @@ distclean-local:
 include_HEADERS = \
    VirtualGraphCreate.C \
    BaseGraphCreate.h  GraphScope.h     VirtualGraphCreate.h \
-   TransAnalysis.h    GraphGroup.h   \
+   TransAnalysis.h    GraphGroup.h   MultiGraphCreate.h \
    TypedFusion.h DGBaseGraphImpl.h  GraphAccess.h GraphUtils.h\
-   GraphUpdate.h    SCCAnalysis.h GraphDotOutput.h GraphIO.h 
+   GraphUpdate.h    SCCAnalysis.h GraphDotOutput.h GraphIO.h \
+   MultiGraphObserve.h
