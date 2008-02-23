@@ -68,7 +68,7 @@ nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 #libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
 libsage3_wrap_la_LIBADD		= -lrt -lrose -lCompass -lCompassCheckers
-libsage3_wrap_la_LDFLAGS	= -L.. -L../compass
+libsage3_wrap_la_LDFLAGS	= -L.. -L../compass -L../compass/compassSupport
 
 sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
@@ -117,7 +117,7 @@ test: test.class sage3.jar .libs/libsage3_wrap.so input.cc
 test.class: test.java sage3.jar
 	javac -classpath sage3.jar:. $(srcdir)/test.java -d .
 
-Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h Makefile
+Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	echo '// vim: syn=cpp:' > Cxx_Grammar.i
 	cat ../../src/frontend/SageIII/Cxx_Grammar.h | \
 	sed '/StorageClass/d' | \
