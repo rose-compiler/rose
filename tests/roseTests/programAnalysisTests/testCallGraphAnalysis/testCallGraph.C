@@ -33,10 +33,10 @@ struct filterNodes : public unary_function<CallGraphNode*,bool>{
               string filename = CallGraphNode2->get_file_info()->get_filename();
               if( filename.find("g++_HEADERS")!=string::npos ||
                   filename.find("/usr/include")!=string::npos){
-//               std::cout << "Filter out STL headers " << test->ToString()<<std::endl;
+//               std::cout << "Filter out STL headers " << test->toString()<<std::endl;
                 returnValue= true;
               }
-              if(test->ToString().find(string("_"))!=string::npos)
+              if(test->toString().find(string("_"))!=string::npos)
                 returnValue = true;
               if(filename.find("rose_edg_macros_and_functions_required_for_gnu.h")!=string::npos)
                  returnValue = true;

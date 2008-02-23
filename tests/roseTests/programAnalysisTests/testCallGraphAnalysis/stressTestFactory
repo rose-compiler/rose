@@ -17,17 +17,17 @@ while ($count < 2)
 	chomp($count);
 }
 
-$filename_praefix = "sT";
-$filename=$filename_praefix. $count. ".C";
+$filename_prefix = "sT";
+$filename=$filename_prefix. $count. ".C";
 
-$graphCmpFileNmae=$filename_praefix. $count.".cmp.dmp";
+$graphCmpFileName=$filename_prefix. $count.".cmp.dmp";
 
 #create the target.C file
 open(STRESSTEST,">$filename");
 #create the comparision-graph-dump-file
-open(STRESSTESTCMP,">$graphCmpFileNmae");
+open(STRESSTESTCMP,">$graphCmpFileName");
 
-@funtion_list;
+# @funtion_list;
 
 #create the list of function-names, needs only to be writte to the stress-stest-file
 for ($i = 0; $i < $count; ++$i)

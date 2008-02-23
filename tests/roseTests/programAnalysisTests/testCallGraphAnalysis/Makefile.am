@@ -32,10 +32,10 @@ test02: testCG stressTestFactory
 	echo " $(srcdir)/stressTestFactory 10"
 	$(srcdir)/stressTestFactory 10
 	./testCG sT10.C -o sT10
-	test -z "$(shell diff sT10.cg.dmp sT10.cmp.dmp)"
+	diff -U5 sT10.cmp.dmp sT10.cg.dmp
 	$(srcdir)/stressTestFactory 100
 	./testCG sT100.C -o sT100
-	test -z "$(shell diff sT100.cg.dmp sT100.cmp.dmp)"
+	diff -U5 sT100.cmp.dmp sT100.cg.dmp
 
 TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C  test6.C test7.C
 
@@ -64,7 +64,7 @@ check-local:
 	@echo "***********************************************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test* rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test* rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot *.dmp sT*.C
 
 distclean-local:
 	rm -rf Templates.DB *.C *.dmp 
