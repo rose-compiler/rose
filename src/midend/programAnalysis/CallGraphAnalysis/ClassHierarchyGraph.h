@@ -10,7 +10,7 @@ class ClassHierarchyNode : public MultiGraphElem
      public:
        SgClassDefinition *classDefinition;
        ClassHierarchyNode( SgClassDefinition *cls ); 
-       virtual std::string ToString() const; 
+       virtual std::string toString() const; 
    };
 
 

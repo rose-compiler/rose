@@ -260,12 +260,12 @@ GenerateDotGraph ( CallGraphCreate* graph )
      GraphDotOutput output(*graph);
 
  #if 1
-     cout << graph->ToString();
+     cout << graph->toString();
  #else
   #if 1
      fstream f;
      f.open(fname.c_str(),ios_base::out);
-     f << graph.ToString();
+     f << graph.toString();
   #else
      string fileName = "callgraph.dot";
      printf ("Write out file %s \n",fileName.c_str());

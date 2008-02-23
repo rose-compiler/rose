@@ -64,14 +64,14 @@ class GraphDotOutput
      //! get the name of a vertex
      std::string getVertexName(typename Graph::Node* v) 
        { 
-         std::string r1 = v->ToString();
+         std::string r1 = v->toString();
          std::string r2 = Translate(r1); 
          return r2;
        }
 
      std::string getEdgeLabel(typename Graph::Edge* e) 
        {
-          std::string r1 = e->ToString();
+          std::string r1 = e->toString();
           return Translate(r1);
        }
 

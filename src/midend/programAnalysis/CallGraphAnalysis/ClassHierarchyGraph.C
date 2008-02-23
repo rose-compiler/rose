@@ -13,7 +13,7 @@ ClassHierarchyNode::ClassHierarchyNode( SgClassDefinition *cls ) : MultiGraphEle
  {}
 
 std::string 
-ClassHierarchyNode::ToString() const 
+ClassHierarchyNode::toString() const 
  { 
   return classDefinition->get_qualified_name().getString(); 
  }
@@ -189,7 +189,7 @@ ClassHierarchyWrapper::getHierarchy ( SgClassDefinition * cls, ClassHierarchy::E
 	    ClassHierarchyNode *end =
 	      dynamic_cast<ClassHierarchyNode *>( classGraph.GetEdgeEndPoint( edge, dir_rev ) );
 	    ROSE_ASSERT ( end );
-	    //cout << "Descendant " << end->ToString() << "\n";
+	    //cout << "Descendant " << end->toString() << "\n";
 	    classList.push_back( end->classDefinition );
 	    visited.insert( end->classDefinition );
 	  }
@@ -221,7 +221,7 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
 	    ClassHierarchyNode *end =
 	      dynamic_cast<ClassHierarchyNode *>( classGraph.GetEdgeEndPoint( edge, ClassHierarchy::EdgeIn ) );
 	    ROSE_ASSERT ( end );
-	    //cout << "Descendant " << end->ToString() << "\n";
+	    //cout << "Descendant " << end->toString() << "\n";
 	    classList.push_back( end->classDefinition );
 	  }
     }

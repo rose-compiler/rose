@@ -29,7 +29,7 @@ class Node : public MultiGraphElem {
      public:
           std::string name;
           Node( std::string n ) : MultiGraphElem( NULL ), name( n ) {}
-          virtual std::string ToString() const { return name; }
+          virtual std::string toString() const { return name; }
    };
 
 class Edge : public MultiGraphElem {
@@ -37,7 +37,7 @@ class Edge : public MultiGraphElem {
           std::string label;
           Edge ( std::string label = "default edge" ) : MultiGraphElem( NULL ), label( label ) {};
           void Dump() const { printf ("EDGE: label = %s \n",label.c_str()); }
-          virtual std::string ToString() const { return label;}
+          virtual std::string toString() const { return label;}
    };
 
 template <class NodeType, class EdgeType>
@@ -92,7 +92,7 @@ void translateGraph(_GraphStructure& graph, _NodePredicate _nodePred, _EdgePredi
 struct filterNodes : public unary_function<Node*,bool>{
    public:
      bool operator()(Node* test){
-        if("src" == test->ToString())
+        if("src" == test->toString())
           return true;
         return false;
         }

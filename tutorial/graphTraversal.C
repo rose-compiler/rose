@@ -29,7 +29,7 @@ class Vertex : public MultiGraphElem
      public:
        std::string name;
        Vertex( std::string n ) : MultiGraphElem( NULL ), name( n ) {}
-       virtual std::string ToString() const { return name; }
+       virtual std::string toString() const { return name; }
    };
 
 class EdgeImpl : public MultiGraphElem
@@ -40,7 +40,7 @@ class EdgeImpl : public MultiGraphElem
          EdgeImpl ( std::string label = "default edge" ) : MultiGraphElem( NULL ), label( label ) {};
                                                                                                                                                               
          void Dump() const { printf ("EDGE: label = %s \n",label.c_str()); }
-         virtual std::string ToString() const { return label;}
+         virtual std::string toString() const { return label;}
                                                                                                                                                               
    };
 

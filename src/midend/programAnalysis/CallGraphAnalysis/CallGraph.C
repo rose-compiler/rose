@@ -60,7 +60,7 @@ CallGraphNode::Dump() const
 }
 
 std::string 
-CallGraphNode::ToString() const 
+CallGraphNode::toString() const 
  { 
    return label;
  }
@@ -79,7 +79,7 @@ CallGraphEdge::Dump() const
  }
    
 std::string 
-CallGraphEdge::ToString() const 
+CallGraphEdge::toString() const 
  { 
    return label;
  }
@@ -115,7 +115,7 @@ CallGraphNode::Dump() const
  }
 
 std::string 
-CallGraphNode::ToString() const 
+CallGraphNode::toString() const 
  { 
    return label;
  }
@@ -131,7 +131,7 @@ CallGraphEdge::Dump() const
   }
 
 std::string 
-CallGraphEdge::ToString() const 
+CallGraphEdge::toString() const 
   { 
     return label;
   }
@@ -2463,13 +2463,13 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 	  gDB->execute();
 
 	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
-	     << node->ToString() << "\", \"" << 1 << "\");";
+	     << node->toString() << "\", \"" << 1 << "\");";
 	  command = st.str();
 	}
       else
 	{
 	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
-	     << node->ToString() << "\", \"" << 0 << ", \");";
+	     << node->toString() << "\", \"" << 0 << ", \");";
 	  command = st.str();
 	}
 
