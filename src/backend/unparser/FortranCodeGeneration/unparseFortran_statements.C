@@ -263,6 +263,8 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgEntryStatement:             unparseEntryStatement(stmt, info); break;
 
+          case V_SgFortranIncludeLine:         unparseFortranIncludeLine(stmt, info); break;
+
        // Language independent code generation (placed in base class)
        // scope
        // case V_SgGlobal:                     unparseGlobalStmt(stmt, info); break;
@@ -287,6 +289,23 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
                break;
              }
         }
+   }
+
+
+
+void
+FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // This is support for the language specific include mechanism.
+     SgFortranIncludeLine* includeLine = isSgFortranIncludeLine(stmt);
+
+     curprint("include ");
+
+     curprint("\"");
+     curprint(includeLine->get_filename());
+     curprint("\"");
+
+     unp->cur.insert_newline(1);
    }
 
 

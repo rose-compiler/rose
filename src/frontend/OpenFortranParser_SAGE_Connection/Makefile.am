@@ -30,7 +30,8 @@ FORTRAN_LEX_SCANNERS = preproc-fortran.C preproc-fortran-fixed.C
 if ROSE_USE_OPEN_FORTRAN_PARSER
 if DEV_LIBS
 # lib_LTLIBRARIES = libroseFortran.la libparser_java_FortranParserActionJNI.la
-lib_LTLIBRARIES = libroseFortran.la libfortran_ofp_parser_java_FortranParserActionJNI.la
+# lib_LTLIBRARIES = libroseFortran.la libfortran_ofp_parser_java_FortranParserActionJNI.la
+lib_LTLIBRARIES = libroseFortran.la libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
 else
 # This will cause the dynamic library to be built (as libroseFortran.so)
 # noinst_LTLIBRARIES = libroseFortran.la
@@ -44,7 +45,8 @@ noinst_LTLIBRARIES = libroseFortran.la
 # To build a similar library using libtool we indicate that we want an installed 
 # library (which will then be made into a dynamic shared library).
 # lib_LTLIBRARIES = libparser_java_FortranParserActionJNI.la
-lib_LTLIBRARIES = libfortran_ofp_parser_java_FortranParserActionJNI.la
+# lib_LTLIBRARIES = libfortran_ofp_parser_java_FortranParserActionJNI.la
+lib_LTLIBRARIES = libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
 endif
 else
 # DQ (10/21/2007): build an empyy lib file so that ROSE/src/Makefile.am need not be conditional on Fortran.
@@ -71,11 +73,14 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 # library so that they can be called by the Java based Open Fortran Parser.
 # libparser_java_FortranParserActionJNI_la_SOURCES      = FortranParserActionROSE.C token.c jni_token_funcs.c c_actions_jni.c
 # libparser_java_FortranParserActionJNI_la_DEPENDENCIES =
-libfortran_ofp_parser_java_FortranParserActionJNI_la_SOURCES      = FortranParserActionROSE.C token.c jni_token_funcs.c c_actions_jni.c
-libfortran_ofp_parser_java_FortranParserActionJNI_la_DEPENDENCIES =
+# libfortran_ofp_parser_java_FortranParserActionJNI_la_SOURCES      = FortranParserActionROSE.C token.c jni_token_funcs.c c_actions_jni.c
+# libfortran_ofp_parser_java_FortranParserActionJNI_la_DEPENDENCIES =
+libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES      = FortranParserActionROSE.C token.c jni_token_funcs.c c_actions_jni.c
+libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_DEPENDENCIES =
 
 # To support the Open Fortran Parser we need to build a shared library with a specific name and which will have
-# all of the c_action() function implementations.  The name to match is: libparser_java_FortranParserActionJNI.so
+# all of the c_action() function implementations.  The name to match is: XXX libparser_java_FortranParserActionJNI.so
+# As of Feb 18 2008: the name is changed to libfortran_ofp_parser_c_jni_FortranParserActionJNI.so
 
 include_HEADERS = ActionEnums.h  FortranParserAction.h  token.h rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jni_token_funcs.h
 

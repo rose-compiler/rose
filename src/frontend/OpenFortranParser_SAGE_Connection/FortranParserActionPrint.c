@@ -1,7 +1,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "ActionEnums.h"
 #include "token.h"
 #include "FortranParserAction.h"
@@ -1277,30 +1279,12 @@ void c_action_private_components_stmt(Token_t *carg_0, Token_t *carg_1, Token_t 
 	return;
 }
 
-void c_action_type_bound_procedure_part(Token_t *carg_0, Token_t *carg_1, int carg_2, ofp_bool carg_3)
+void c_action_type_bound_procedure_part(int carg_0, ofp_bool carg_1)
 {
-	printf("c_action_%s arguments (%d args):\n", "type_bound_procedure_part", 4);
+	printf("c_action_%s arguments (%d args):\n", "type_bound_procedure_part", 2);
 
-	if(carg_0 != NULL)
-	{
-		printf("carg_0 token: ");
-		print_token(carg_0);
-	}
-	else
-	{
-		printf("carg_0 token is NULL\n");
-	}
-	if(carg_1 != NULL)
-	{
-		printf("carg_1 token: ");
-		print_token(carg_1);
-	}
-	else
-	{
-		printf("carg_1 token is NULL\n");
-	}
-	printf("carg_2 = %d\n", carg_2);
-	printf("carg_3 = %d\n", carg_3);
+	printf("carg_0 = %d\n", carg_0);
+	printf("carg_1 = %d\n", carg_1);
 
 	return;
 }
@@ -2448,10 +2432,19 @@ void c_action_data_i_do_object_list(int carg_0)
 	return;
 }
 
-void c_action_data_stmt_value()
+void c_action_data_stmt_value(Token_t *carg_0)
 {
-	printf("c_action_%s arguments (%d args):\n", "data_stmt_value", 0);
+	printf("c_action_%s arguments (%d args):\n", "data_stmt_value", 1);
 
+	if(carg_0 != NULL)
+	{
+		printf("carg_0 token: ");
+		print_token(carg_0);
+	}
+	else
+	{
+		printf("carg_0 token is NULL\n");
+	}
 
 	return;
 }
@@ -7559,28 +7552,10 @@ void c_action_end_module_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2,
 	return;
 }
 
-void c_action_module_subprogram_part(Token_t *carg_0, Token_t *carg_1)
+void c_action_module_subprogram_part()
 {
-	printf("c_action_%s arguments (%d args):\n", "module_subprogram_part", 2);
+	printf("c_action_%s arguments (%d args):\n", "module_subprogram_part", 0);
 
-	if(carg_0 != NULL)
-	{
-		printf("carg_0 token: ");
-		print_token(carg_0);
-	}
-	else
-	{
-		printf("carg_0 token is NULL\n");
-	}
-	if(carg_1 != NULL)
-	{
-		printf("carg_1 token: ");
-		print_token(carg_1);
-	}
-	else
-	{
-		printf("carg_1 token is NULL\n");
-	}
 
 	return;
 }
@@ -8717,9 +8692,9 @@ void c_action_end_subroutine_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *car
 	return;
 }
 
-void c_action_entry_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, ofp_bool carg_3, ofp_bool carg_4)
+void c_action_entry_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, ofp_bool carg_4, ofp_bool carg_5)
 {
-	printf("c_action_%s arguments (%d args):\n", "entry_stmt", 5);
+	printf("c_action_%s arguments (%d args):\n", "entry_stmt", 6);
 
 	if(carg_0 != NULL)
 	{
@@ -8748,8 +8723,17 @@ void c_action_entry_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, ofp_
 	{
 		printf("carg_2 token is NULL\n");
 	}
-	printf("carg_3 = %d\n", carg_3);
+	if(carg_3 != NULL)
+	{
+		printf("carg_3 token: ");
+		print_token(carg_3);
+	}
+	else
+	{
+		printf("carg_3 token is NULL\n");
+	}
 	printf("carg_4 = %d\n", carg_4);
+	printf("carg_5 = %d\n", carg_5);
 
 	return;
 }
@@ -8786,6 +8770,41 @@ void c_action_return_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, ofp
 		printf("carg_2 token is NULL\n");
 	}
 	printf("carg_3 = %d\n", carg_3);
+
+	return;
+}
+
+void c_action_contains_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2)
+{
+	printf("c_action_%s arguments (%d args):\n", "contains_stmt", 3);
+
+	if(carg_0 != NULL)
+	{
+		printf("carg_0 token: ");
+		print_token(carg_0);
+	}
+	else
+	{
+		printf("carg_0 token is NULL\n");
+	}
+	if(carg_1 != NULL)
+	{
+		printf("carg_1 token: ");
+		print_token(carg_1);
+	}
+	else
+	{
+		printf("carg_1 token is NULL\n");
+	}
+	if(carg_2 != NULL)
+	{
+		printf("carg_2 token: ");
+		print_token(carg_2);
+	}
+	else
+	{
+		printf("carg_2 token is NULL\n");
+	}
 
 	return;
 }
@@ -8839,6 +8858,26 @@ void c_action_end_of_stmt(Token_t *carg_0)
 	{
 		printf("carg_0 token is NULL\n");
 	}
+
+	return;
+}
+
+void c_action_start_of_file(const char *carg_0)
+{
+	printf("c_action_%s arguments (%d args):\n", "start_of_file", 1);
+
+	if(carg_0 != NULL)
+	{
+		fprintf(stdout, "carg_0 is: %s\n", carg_0);
+	}
+
+	return;
+}
+
+void c_action_end_of_file()
+{
+	printf("c_action_%s arguments (%d args):\n", "end_of_file", 0);
+
 
 	return;
 }

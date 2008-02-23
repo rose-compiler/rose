@@ -338,6 +338,7 @@ namespace Trees
     typedef typename Traversal<TreeType, isConst>::TreeParamPtr_t
     TreeParamPtr_t;
     virtual void traverse (TreeParamPtr_t tree);
+    virtual ~PostTraversal(){}
 
   protected:
     typedef typename Traversal<TreeType, isConst>::ChildIter_t ChildIter_t;

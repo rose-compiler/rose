@@ -69,6 +69,10 @@ std::list<SgIfStmt*> astIfStatementStack;
 // test2007_162.h demonstrates this problems (and test2007_184.f)
 AstNameListType astActualArgumentNameStack;
 
+// DQ (2/18/2008): This is the support for the Frotran include stack.
+// This is specific to the Fortran include mechanism, not the CPP include 
+// mechanism. Though at some point a unified approach might be required.
+std::vector<std::string> astIncludeStack;
 
 
 #if 0
@@ -102,6 +106,33 @@ Token_t *create_token(int line, int col, int type, const char *text)
 
 	 return tmp_token;
   }
+
+
+string
+getCurrentFilename()
+   {
+#if 0
+  // Old code before implementation of Fortran include mechanism.
+     string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#else
+     string filename;
+  // ROSE_ASSERT (astIncludeStack.empty() == false);
+
+     if (astIncludeStack.size() <= 1)
+        {
+       // Note that the original source file in OFP does not have to use an absolute file name so use the one from ROSE.
+          filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+        }
+       else
+        {
+       // If the astIncludeStack.size() > 1 then we are in an include file and we need to get the filename so that 
+       // we can associate the source position with the correct file.
+          filename = astIncludeStack.back();
+        }
+#endif
+
+     return filename;
+   }
 
 void
 setSourcePosition( SgLocatedNode* locatedNode )
@@ -199,8 +230,12 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
      ROSE_ASSERT(firstToken->line > 0);
      ROSE_ASSERT(lastToken->line  > 0);
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           printf ("In setSourcePosition(%p = %s) line = %d column = %d filename = %s \n",locatedNode,locatedNode->class_name().c_str(),firstToken->line,firstToken->col,filename.c_str());
@@ -248,8 +283,12 @@ setSourcePosition  ( SgInitializedName* initializedName, Token_t* token )
 
      ROSE_ASSERT(token->line > 0);
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
   // printf ("In setSourcePosition(SgInitializedName %p = %s) line = %d column = %d filename = %s \n",initializedName,initializedName->get_name().str(),token->line,token->col,filename.c_str());
      ROSE_ASSERT(filename.empty() == false);
 
@@ -292,9 +331,15 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
      ROSE_ASSERT(locatedNode->get_endOfConstruct() == NULL);
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
+
   // printf ("In setSourcePosition(SgInitializedName %p = %s) line = %d column = %d filename = %s \n",locatedNode,locatedNode->class_name().c_str(),token->line,token->col,filename.c_str());
+
      ROSE_ASSERT(filename.empty() == false);
 
   // Set these based on the source position information from the tokens
@@ -326,8 +371,12 @@ setSourcePosition  ( SgInitializedName* initializedName, const TokenListType & t
      ROSE_ASSERT(firstToken->line > 0);
      ROSE_ASSERT(lastToken->line  > 0);
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
 
      if ( SgProject::get_verbose() > 0 )
           printf ("In setSourcePosition(SgInitializedName %p = %s) line = %d column = %d filename = %s \n",initializedName,initializedName->get_name().str(),firstToken->line,firstToken->col,filename.c_str());
@@ -355,8 +404,13 @@ setOperatorSourcePosition  ( SgExpression* expr, Token_t* token )
 
      ROSE_ASSERT(token->line > 0);
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
+
   // printf ("In setOperatorSourcePosition(SgExpression %p = %s) line = %d column = %d filename = %s \n",expr,expr->class_name().c_str(),token->line,token->col,filename.c_str());
      ROSE_ASSERT(filename.empty() == false);
 
@@ -396,8 +450,13 @@ resetSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList
      ROSE_ASSERT(firstToken->line > 0);
      ROSE_ASSERT(lastToken->line > 0);
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
+
   // printf ("In resetSourcePosition(%p = %s) filename = %s \n",locatedNode,locatedNode->class_name().c_str(),filename.c_str());
      ROSE_ASSERT(filename.empty() == false);
 
@@ -441,8 +500,12 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      delete targetLocatedNode->get_startOfConstruct();
      delete targetLocatedNode->get_endOfConstruct();
 
+#if 1
+     string filename = getCurrentFilename();
+#else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
   // printf ("In resetSourcePosition(%p = %s) filename = %s \n",targetLocatedNode,targetLocatedNode->class_name().c_str(),filename.c_str());
      ROSE_ASSERT(filename.empty() == false);
 
@@ -1357,7 +1420,7 @@ setStatementNumericLabelUsingStack(SgStatement* statement)
   // Set the label using the stack 
      if (astLabelSymbolStack.empty() == false)
         {
-       // printf ("There is a label on the stack \n");
+          printf ("There is a label on the stack \n");
 
        // Get the label info from the astLabelSymbolStack
           SgLabelSymbol* labelSymbol = astLabelSymbolStack.front();
@@ -1408,6 +1471,10 @@ setStatementNumericLabel(SgStatement* stmt, Token_t* label)
         {
           ROSE_ASSERT(label->line > 0);
           ROSE_ASSERT(label->text != NULL);
+
+       // DQ (2/18/2008): There are two mechanisms for setting labels, make sure that if 
+       // this one is being used that we don't leave labels on the astLabelSymbolStack
+       // ROSE_ASSERT (astLabelSymbolStack.empty() == true);
 
           SgLabelSymbol* labelSymbol = buildNumericLabelSymbolAndAssociateWithStatement(stmt,label);
           ROSE_ASSERT(labelSymbol != NULL);

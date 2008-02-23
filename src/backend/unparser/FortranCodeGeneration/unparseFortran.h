@@ -39,6 +39,9 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
 #endif
 #endif
 
+      //! Support for Fortran include mechanism (not a Fortran statement in the grammar)
+          virtual void unparseFortranIncludeLine ( SgStatement* stmt, SgUnparse_Info& info );
+
       //! Support for Fortran numeric labels (can appear on any statement), this is an empty function for C/C++.
           virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
        // virtual void unparseStatementNumbers ( SgStatement* stmt );

@@ -367,11 +367,13 @@ get_unique_name(AstInterface& fa, const AstNodePtr& _scope, const std::string& v
  }
 
 
-UF_elem&  StmtVarAliasCollect::VarAliasMap::
+UF_elem*  StmtVarAliasCollect::VarAliasMap::
 get_alias_map( const std::string& varname, const AstNodePtr& scope)
 {
   std::string scopename = scopemap.get_string(scope);
   std::string name = varname + scopename;
+  if (aliasmap.find(name) == aliasmap.end())
+     aliasmap[name] = new UF_elem();
   return aliasmap[name];
 }
 
@@ -407,7 +409,7 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
     AstNodePtr rhsscope;
     if (fa.IsVarRef(rhs, &rhstype, &rhsname, &rhsscope)) {
       if (!fa.IsScalarType(rhstype)) 
-         aliasmap.get_alias_map(modname, modscope).union_with(&aliasmap.get_alias_map(rhsname, rhsscope));
+         aliasmap.get_alias_map(modname, modscope)->union_with(aliasmap.get_alias_map(rhsname, rhsscope));
     }
   }
 }
@@ -468,7 +470,7 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
     }
     return true;
   }
-  if ( aliasmap.get_alias_map(varname1, scope1).in_same_group( &aliasmap.get_alias_map(varname2, scope2))) {
+  if ( aliasmap.get_alias_map(varname1, scope1)->in_same_group( aliasmap.get_alias_map(varname2, scope2))) {
     if (DebugAliasAnal()) {
        std::cerr << "alias analysis performed \n";
        std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;

@@ -1,7 +1,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "ActionEnums.h"
 #include "token.h"
 #include "FortranParserAction.h"
@@ -330,7 +332,7 @@ void c_action_private_components_stmt(Token_t *carg_0, Token_t *carg_1, Token_t 
 {
 }
 
-void c_action_type_bound_procedure_part(Token_t *carg_0, Token_t *carg_1, int carg_2, ofp_bool carg_3)
+void c_action_type_bound_procedure_part(int carg_0, ofp_bool carg_1)
 {
 }
 
@@ -630,7 +632,7 @@ void c_action_data_i_do_object_list(int carg_0)
 {
 }
 
-void c_action_data_stmt_value()
+void c_action_data_stmt_value(Token_t *carg_0)
 {
 }
 
@@ -1702,7 +1704,7 @@ void c_action_end_module_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2,
 {
 }
 
-void c_action_module_subprogram_part(Token_t *carg_0, Token_t *carg_1)
+void c_action_module_subprogram_part()
 {
 }
 
@@ -1918,11 +1920,15 @@ void c_action_end_subroutine_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *car
 {
 }
 
-void c_action_entry_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, ofp_bool carg_3, ofp_bool carg_4)
+void c_action_entry_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, ofp_bool carg_4, ofp_bool carg_5)
 {
 }
 
 void c_action_return_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, ofp_bool carg_3)
+{
+}
+
+void c_action_contains_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2)
 {
 }
 
@@ -1931,6 +1937,14 @@ void c_action_stmt_function_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg
 }
 
 void c_action_end_of_stmt(Token_t *carg_0)
+{
+}
+
+void c_action_start_of_file(const char *carg_0)
+{
+}
+
+void c_action_end_of_file()
 {
 }
 

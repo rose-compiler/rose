@@ -2608,6 +2608,16 @@ HEADER_FORMAT_STATEMENT_START
 
 HEADER_FORMAT_STATEMENT_END
 
+HEADER_FORTRAN_INCLUDE_LINE_START
+       // Not sure if we need these...
+       // virtual unsigned int cfgIndexForEnd() const;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+          virtual SgName get_mangled_name() const;
+HEADER_FORTRAN_INCLUDE_LINE_END
+
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -15328,5 +15338,19 @@ SgFormatStatement::set_format_item_list(const SgFormatItemPtrList & format_item_
 #endif
 
 SOURCE_FORMAT_STATEMENT_END
+
+
+SOURCE_FORTRAN_INCLUDE_LINE_START
+       // Not sure if we need these...
+       // virtual unsigned int cfgIndexForEnd() const;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+SgName
+SgFortranIncludeLine::get_mangled_name(void) const
+   {
+     return SgName ("__fortran_include_line__");
+   }
+SOURCE_FORTRAN_INCLUDE_LINE_END
 
 

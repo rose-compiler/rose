@@ -122,17 +122,23 @@ class StmtVarAliasCollect
 {
  public:
    class VarAliasMap {
-      std::map<std::string, UF_elem, std::less<std::string> > aliasmap;
+      std::map<std::string, UF_elem*, std::less<std::string> > aliasmap;
       Ast2StringMap scopemap;
      public:
-        UF_elem& get_alias_map( const std::string& varname, const AstNodePtr& scope);
+       ~VarAliasMap() {
+         for (std::map<std::string, UF_elem*, std::less<std::string> >::
+             const_iterator p = aliasmap.begin(); p != aliasmap.end(); ++p) {
+               delete (*p).second;
+         }
+       }
+       UF_elem* get_alias_map( const std::string& varname, const AstNodePtr& scope);
    };
  private:
   FunctionAliasInterface* funcanal;
   VarAliasMap aliasmap;
   bool hasunknown, hasresult;
 
-  UF_elem& get_alias_map( const std::string& varname, const AstNodePtr& scope);
+  UF_elem* get_alias_map( const std::string& varname, const AstNodePtr& scope);
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr());
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc);
