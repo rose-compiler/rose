@@ -399,8 +399,8 @@ class ECRmap {
          e->set_type(t1);
          if (t2 == BOT) {
              if (pending2->size()) {
-               for (std::list<ECR*>::const_iterator p=pending2.begin();
-                    p != pending2.end(); ++p) 
+               for (std::list<ECR*>::const_iterator p=pending2->begin();
+                    p != pending2->end(); ++p) 
                   join(e, *p);
              }
          }
