@@ -867,17 +867,18 @@ rose_inputCode_LoopOptimization_mm.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
 #	./loopOptimization -bk1 -fs0 -c $(srcdir)/inputCode_LoopOptimization_mm.C
 # DQ (1/2/2008): This used to work, but it is part of what Qing is fixing.
-#	$(VALGRIND) ./loopProcessor $(ROSE_FLAGS) -bk1 -fs0 -c $(srcdir)/inputCode_LoopOptimization_mm.C
-	echo "Test Failed!" | tee rose_inputCode_LoopOptimization_mm.C
+	$(VALGRIND) ./loopProcessor $(ROSE_FLAGS) -bk1 -fs0 -c $(srcdir)/inputCode_LoopOptimization_mm.C
+#	echo "Test Failed!" | tee rose_inputCode_LoopOptimization_mm.C
 
 rose_inputCode_LoopOptimization_dgemm.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
+#	echo "Test Failed!" | tee rose_inputCode_LoopOptimization_dgemm.C
 	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll nvar 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
 
 rose_inputCode_LoopOptimization_lufac.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
-#	./loopProcessor $(ROSE_FLAGS) -bk1 -fs0  -splitloop -annotation -c $(srcdir)/inputCode_LoopOptimization_lufac.C
-	echo "Test Failed!" | tee rose_inputCode_LoopOptimization_lufac.C
+	./loopProcessor $(ROSE_FLAGS) -bk1 -fs0  -splitloop -annotation -c $(srcdir)/inputCode_LoopOptimization_lufac.C
+#	echo "Test Failed!" | tee rose_inputCode_LoopOptimization_lufac.C
 
 rose_inputCode_LoopOptimization_tridvpk.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
