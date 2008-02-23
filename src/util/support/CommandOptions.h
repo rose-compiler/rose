@@ -9,6 +9,7 @@ class CmdOptions
   static CmdOptions *inst;
  public:
   std::vector<std::string> opts; // So its .end() method is accessible
+  // This is modified by some code to prevent ROSE trying to parse loop transformation options
 
   CmdOptions() : opts() {}
   void SetOptions  (const std::vector<std::string>& opts);

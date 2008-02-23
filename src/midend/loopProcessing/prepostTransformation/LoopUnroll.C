@@ -12,31 +12,37 @@ using namespace std;
 
 std::string LoopUnrolling:: cmdline_help() 
    { 
-    return "-unroll [locond] [nvar] <unrollsize> : unrolling innermost loops at <unrollsize>"; }
+    return "-unroll [locond] [nvar] <unrollsize> : unrolling innermost loops at <unrollsize>";
+   }
+
 bool LoopUnrolling:: cmdline_configure()
 {
         opt = DEFAULT;
-        const vector<string>& opts = CmdOptions::GetInstance()->opts;
+        vector<string>& opts = CmdOptions::GetInstance()->opts;
         vector<string>::const_iterator i = std::find(opts.begin(), opts.end(), "-unroll");
         if (i == opts.end()) return false;
-        ++i;
-        assert (i != opts.end());
-        if (*i == "locond") {
+        size_t idx = i - opts.begin();
+        opts.erase(opts.begin() + idx);
+        if (idx != opts.size() && opts[idx] == "locond") {
            opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
-           ++i;
+           opts.erase(opts.begin() + idx);
         }
-        assert (i != opts.end());
-        if (*i == "nvar")  {
+        if (idx != opts.size() && opts[idx] == "nvar") {
            opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::USE_NEWVAR);
-           ++i;
+           opts.erase(opts.begin() + idx);
         }
-        assert (i != opts.end());
-        sscanf((*i).c_str(), "%d",&unrollsize);      
-        if (unrollsize <= 0) {
-           std::cerr << "invalid unrolling size. Use default (4)\n";
-           unrollsize = 4;
+        int localUnrollsize = 0;
+        if (idx != opts.size()) {
+          sscanf(opts[idx].c_str(), "%d",&localUnrollsize);
+          if (localUnrollsize >= 1) {
+            unrollsize = localUnrollsize;
+            opts.erase(opts.begin() + idx);
+          } else {
+             std::cerr << "invalid unrolling size. Use default (4)\n";
+             unrollsize = 4;
+          }
         }
-       return true;
+        return true;
 }
 
 bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodePtr& r)

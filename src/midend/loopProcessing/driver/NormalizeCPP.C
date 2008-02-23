@@ -1,7 +1,6 @@
-
-#include <ProcessAstTree.h>
-#include <sage3.h>
-#include <AstInterface_ROSE.h>
+#include "ProcessAstTree.h"
+#include "rose.h"
+#include "AstInterface_ROSE.h"
 #include <vector>
 
 extern Sg_File_Info* GetFileInfo();
