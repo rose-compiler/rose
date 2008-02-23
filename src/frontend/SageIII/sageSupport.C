@@ -4579,7 +4579,6 @@ SgFile::callFrontEnd ()
                     frontEndCommandLine.push_back(argv[0]);
                     frontEndCommandLine.push_back("--class");
                     frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
-                    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 #if 0
                     get_project()->display("Calling SgProject display");
                     display("Calling SgFile display");
