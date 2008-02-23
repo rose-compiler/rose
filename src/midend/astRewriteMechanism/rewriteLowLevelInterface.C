@@ -408,6 +408,7 @@ insertStatementUsingDependenceInformation (
           SgStatementPtrList::iterator furthestDeclarationInSourceSequence_copy = furthestDeclarationInSourceSequence;
           ++furthestDeclarationInSourceSequence_copy;
           currentBlock->get_statements().insert(furthestDeclarationInSourceSequence_copy, newTransformationStatement);
+          newTransformationStatement->set_parent(currentBlock);
         }
 
 #if 0

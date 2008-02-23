@@ -383,6 +383,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		       SgBasicBlock *body = isSgDoWhileStmt( scope )->get_body();
 		       ROSE_ASSERT ( body );
 		       body->get_statements().push_back( d->assignment );
+                       d->assignment->set_parent(body);
 		     }
 		     break;
 

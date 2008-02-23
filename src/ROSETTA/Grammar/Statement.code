@@ -6725,6 +6725,7 @@ SgBasicBlock::append_statement(SgStatement * what)
 //   ROSE_ABORT();
 
      get_statements().push_back(what);
+     what->set_parent(this);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -6735,6 +6736,7 @@ void
 SgBasicBlock::prepend_statement(SgStatement *what)
    {
      get_statements().insert(get_statements().begin(), what);
+     what->set_parent(this);
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -6973,12 +6975,14 @@ void
 SgForInitStatement::append_init_stmt(SgStatement * what)
    {
      get_init_stmt().push_back(what);
+     what->set_parent(this);
    }
 
 void
 SgForInitStatement::prepend_init_stmt(SgStatement * what)
    {
      get_init_stmt().insert(get_init_stmt().begin(), what);
+     what->set_parent(this);
    }
 
 #if 0
@@ -8253,12 +8257,14 @@ void
 SgFunctionParameterList::append_arg( SgInitializedName* what)
    {
      get_args().push_back(what);
+     SgFunctionDeclaration* declStmt = isSgFunctionDeclaration(this->get_parent());
    }
 
 void
 SgFunctionParameterList::prepend_arg( SgInitializedName* what)
    {
      get_args().insert(get_args().begin(), what);
+     SgFunctionDeclaration* declStmt = isSgFunctionDeclaration(this->get_parent());
    }
 
 // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
@@ -9518,6 +9524,7 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
      ROSE_ASSERT (what != NULL);
 
      get_variables().push_back(what);
+     what->set_parent(this);
 
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // SgInitializedName *decl_item = &(*new_item);
@@ -9581,6 +9588,7 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
      ROSE_ASSERT (what != NULL);
 
      get_variables().insert(get_variables().begin(),what);
+     what->set_parent(this);
 
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // SgInitializedName *decl_item = &(*new_item);
@@ -10640,12 +10648,14 @@ void
 SgClassDefinition::append_member(SgDeclarationStatement * what) 
    {
      get_members().push_back(what);
+     what->set_parent(this);
    }
 
 void
 SgClassDefinition::prepend_member(SgDeclarationStatement * what) 
    {
      get_members().insert(get_members().begin(), what);
+     what->set_parent(this);
    }
 
 void
@@ -10769,6 +10779,7 @@ void
 SgEnumDeclaration::append_enumerator( SgInitializedName* what)
    {
      get_enumerators().push_back(what);
+     what->set_parent(this);
    }
 
 void
@@ -10776,6 +10787,7 @@ void
 SgEnumDeclaration::prepend_enumerator( SgInitializedName* what)
    {
      get_enumerators().insert(get_enumerators().begin(), what);
+     what->set_parent(this);
    }
 
 #if 0
@@ -11701,6 +11713,7 @@ void
 SgTryStmt::append_catch_statement(SgStatement * what)
    {
      get_catch_statement_seq_root()->append_catch_statement(what);
+     what->set_parent(this);
    }
 
 // MS: C++98: handler (catch_statement in SAGE)
@@ -11708,6 +11721,7 @@ void
 SgTryStmt::prepend_catch_statement(SgStatement * what)
    {
      get_catch_statement_seq_root()->prepend_catch_statement(what);
+     what->set_parent(this);
    }
 
 
@@ -11776,6 +11790,7 @@ void
 SgCatchStatementSeq::append_catch_statement(SgStatement * what)
    {
      get_catch_statement_seq().push_back(what);
+     what->set_parent(this);
    }
 
 // MS: C++98: handler (catch_statement in SAGE)
@@ -11783,6 +11798,7 @@ void
 SgCatchStatementSeq::prepend_catch_statement(SgStatement * what)
    {
      get_catch_statement_seq().insert(get_catch_statement_seq().begin(), what);
+     what->set_parent(this);
    }
 
 #if 0
@@ -12879,12 +12895,14 @@ void
 SgNamespaceDefinitionStatement::append_declaration(SgDeclarationStatement * what) 
    {
      get_declarations().push_back(what);
+     what->set_parent(this);
    }
 
 void
 SgNamespaceDefinitionStatement::prepend_declaration(SgDeclarationStatement * what) 
    {
      get_declarations().insert(get_declarations().begin(), what);
+     what->set_parent(this);
    }
 
 #if 0

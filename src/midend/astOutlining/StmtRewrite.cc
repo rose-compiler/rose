@@ -95,6 +95,7 @@ ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
   SgStatement* oldblock = (*i);
 
   targetBB->get_statements().insert(i, s_new);
+  s_new->set_parent(targetBB);
   LowLevelRewrite::remove (oldblock);
 }
 

@@ -141,6 +141,7 @@ main( int argc, char * argv[] )
                       // Note that insert is not defined for empty body, since the iterator is not defined
                          ROSE_ASSERT(functionBody->get_statements().empty() == false);
                          functionBody->get_statements().insert(functionBody->get_statements().begin(),variableDeclaration);
+                         variableDeclaration->set_parent(functionBody);
 
                          initializedName->set_scope(functionBody);
                          SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
