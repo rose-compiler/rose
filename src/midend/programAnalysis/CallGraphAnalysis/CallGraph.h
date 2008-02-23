@@ -51,7 +51,7 @@ class CallGraphNode: public MultiGraphElem
 	 CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef );
          bool isDefined ();
          void Dump() const;
-         virtual std::string ToString() const;
+         virtual std::string toString() const;
 #else
    public:
          std::string label;
@@ -61,7 +61,7 @@ class CallGraphNode: public MultiGraphElem
 	 
          bool isDefined (); 
          void Dump() const;
-         virtual std::string ToString() const;
+         virtual std::string toString() const;
 	 
    private:
          bool hasDefinition;
@@ -79,7 +79,7 @@ class CallGraphEdge : public MultiGraphElem
          CallGraphEdge ( std::string label = "default edge" );
 
          void Dump() const;
-         virtual std::string ToString() const;
+         virtual std::string toString() const;
 #else
 
    public:
@@ -88,7 +88,7 @@ class CallGraphEdge : public MultiGraphElem
          CallGraphEdge ( std::string label = "default edge" ); 
 	 
          void Dump() const;
-         virtual std::string ToString() const;
+         virtual std::string toString() const;
 
 #endif
    };
