@@ -706,6 +706,7 @@ void initialTransformation(SgNode *n)
 
 	       SgExprStatement *varAssign = splitVarDecl(varDecl);
 	       varDeclParent->get_statements().insert(++findIterator(varDeclParent->get_statements(), varDecl), varAssign);
+               varAssign->set_parent(varDeclParent);
 	     }
 	}
    }

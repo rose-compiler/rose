@@ -1807,11 +1807,11 @@ SgExprListExp::get_expressions() const
 
 void
 SgExprListExp::append_expression(SgExpression *what)
-   { p_expressions.push_back(what); }
+   { what->set_parent(this); p_expressions.push_back(what); }
 
 void
 SgExprListExp::prepend_expression(SgExpression *what)
-   { p_expressions.insert(p_expressions.begin(), what); }
+   { what->set_parent(this); p_expressions.insert(p_expressions.begin(), what); }
 
 #if 0
 void

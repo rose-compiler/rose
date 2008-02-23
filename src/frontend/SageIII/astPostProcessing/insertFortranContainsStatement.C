@@ -75,6 +75,7 @@ InsertFortranContainsStatement::visit ( SgNode* node )
                          containsStatement->set_definingDeclaration(containsStatement);
 
                          block->get_statements().insert(i,containsStatement);
+                         containsStatement->set_parent(block);
                          ROSE_ASSERT(containsStatement->get_parent() != NULL);
                        }
                   }
