@@ -872,8 +872,7 @@ rose_inputCode_LoopOptimization_mm.C: loopProcessor
 
 rose_inputCode_LoopOptimization_dgemm.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
-#	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll nvar 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
-	echo "Test Failed!" | tee rose_inputCode_LoopOptimization_dgemm.C
+	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll nvar 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
 
 rose_inputCode_LoopOptimization_lufac.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."

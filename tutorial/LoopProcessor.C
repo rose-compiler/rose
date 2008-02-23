@@ -17,8 +17,17 @@
 
 using namespace std;
 
-// DQ (2/10/2008): Using API support similar to that in tests/roseTests/loopProcessor
+#ifdef USE_OMEGA
+#include <DepTestStatistics.h>
+
+extern DepTestStatistics DepStats;
+#endif
+
 extern bool DebugAnnot();
+extern void FixFileInfo(SgNode* n);
+class UnparseFormatHelp;
+class UnparseDelegate;
+void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp /*= NULL*/, UnparseDelegate *repl  /*= NULL */);
 
 void PrintUsage( char* name)
 {
@@ -93,6 +102,7 @@ main ( int argc,  char * argv[] )
           SgBasicBlock *stmts = defn->get_body();  
           AstInterfaceImpl faImpl = AstInterfaceImpl(stmts);
           AstInterface fa(&faImpl);
+          NormalizeForLoop(fa, AstNodePtrImpl(stmts));
           LoopTransformTraverse( fa, AstNodePtrImpl(stmts), aliasInfo, funcInfo);
        // JJW 10-29-2007 Adjust for iterator invalidation and possible changes to declList
           p = std::find(declList.begin(), declList.end(), func);
@@ -107,6 +117,10 @@ main ( int argc,  char * argv[] )
    if (CmdOptions::GetInstance()->HasOption("-pre")) {
        PRE::partialRedundancyElimination(sageProject);
    }
+#ifdef USE_OMEGA
+     DepStats.SetDepChoice(0x1 | 0x2 | 0x4);
+     DepStats.PrintResults();
+#endif
 
    unparseProject(sageProject);
    if (GenerateObj())
