@@ -5,22 +5,23 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 srcdir=$1
+DIFF="diff -U5"
 echo "testing interp1.C"
 ../CPAnalysis/ContainerAnalyzer --edg:no_warnings -w -annot $srcdir/Container.annot -I$srcdir $srcdir/UserDefList2b.C  
-diff UserDefList2b.C.out $srcdir/UserDefList2b.C.out.save
+${DIFF} $srcdir/UserDefList2b.C.out.save UserDefList2b.C.out
 rm UserDefList2b.C.out
 ../CPAnalysis/ContainerAnalyzer --edg:no_warnings -w -annot $srcdir/Container.annot -I$srcdir $srcdir/UserDefList2c.C
-diff UserDefList2c.C.out $srcdir/UserDefList2c.C.out.save
+${DIFF} $srcdir/UserDefList2c.C.out.save UserDefList2c.C.out
 rm UserDefList2c.C.out
 ../CPAnalysis/ContainerAnalyzer --edg:no_warnings -w -annot $srcdir/Container.annot -I$srcdir $srcdir/UserDefList3.C
-diff UserDefList3.C.out $srcdir/UserDefList3.C.out.save
+${DIFF} $srcdir/UserDefList3.C.out.save UserDefList3.C.out
 rm UserDefList3.C.out
 ../CPAnalysis/ContainerAnalyzer --edg:no_warnings -w -annot $srcdir/Container.annot -I$srcdir $srcdir/UserDefList2.C
-diff UserDefList2.C.out $srcdir/UserDefList2.C.out.save
+${DIFF} $srcdir/UserDefList2.C.out.save UserDefList2.C.out
 rm UserDefList2.C.out
 ../CPAnalysis/ContainerAnalyzer --edg:no_warnings -w -annot $srcdir/Container.annot -I$srcdir $srcdir/UserDefList2d.C
-diff UserDefList2d.C.out $srcdir/UserDefList2d.C.out.save
+${DIFF} $srcdir/UserDefList2d.C.out.save UserDefList2d.C.out
 rm UserDefList2d.C.out
 ../CPAnalysis/ContainerAnalyzer --edg:no_warnings -w -annot $srcdir/Container.annot -I$srcdir $srcdir/UserDefList.C
-diff UserDefList.C.out $srcdir/UserDefList.C.out.save
+${DIFF} $srcdir/UserDefList.C.out.save UserDefList.C.out
 rm UserDefList.C.out

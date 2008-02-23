@@ -15,7 +15,7 @@ using namespace std;
 
 bool TestFile( string name, string srcdir)
    {
-     string compare = "diff " + name + " " + srcdir + "/" + name + " > ./diffout2";
+     string compare = "diff -U5 " + srcdir + "/" + name + " " + name + " > ./diffout2";
      cerr << compare << endl;
      bool  fail = system(compare.c_str());
      if (fail)
