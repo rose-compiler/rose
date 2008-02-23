@@ -70,7 +70,7 @@ libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
 libsage3_wrap_la_LIBADD		= -lrt -lrose -lCompass -lCompassCheckers
 libsage3_wrap_la_LDFLAGS	= -L.. -L../compass
 
-sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i		
+sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
 	mkdir -p gov/llnl/casc/rose
 	test $(srcdir) = . || ln -sf $(srcdir)/sage3.i .
@@ -116,6 +116,42 @@ test: test.class sage3.jar .libs/libsage3_wrap.so input.cc
 
 test.class: test.java sage3.jar
 	javac -classpath sage3.jar:. $(srcdir)/test.java -d .
+
+Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h Makefile
+	echo '// vim: syn=cpp:' > Cxx_Grammar.i
+	cat ../../src/frontend/SageIII/Cxx_Grammar.h | \
+	sed '/StorageClass/d' | \
+	sed '/getPointerFrom/d' | \
+	sed '/CLASS_ALLOCATION_POOL_SIZE/d' | \
+	sed '/Current_Link/d' | \
+	sed '/allocation_mutex/d' | \
+	sed '/Memory_Block_List/d' | \
+	sed '/InMemoryPool/d' | \
+	sed '/static void traverseMemoryPool/d' | \
+	sed '/executeVisitorMemberFunction/d' | \
+	sed '/postdeclarations for SgAsmNode/,$$s!^[ 	]*virtual [^b][^;0]*;$$!//&!' | \
+	sed '/postdeclarations for SgAsmNode/,$$s!virtual RTIReturnType roseRTI!//&!' | \
+	sed '/postdeclarations for SgAsmNode/,$$s!virtual VariantT variantT!//&!' | \
+	sed 's,//.*,,' | \
+	sed '/^#line/d' | \
+	sed '/^ *$$/d' | \
+	sed '/SgInitializedName($$/,/)/d' | \
+	sed '/ROSE_DEPRECATED/d' | \
+	sed '/visitRepresentativeNode/d' | \
+	sed '/numberOfNodes/d' | \
+	sed '/memoryUsage/d' | \
+	sed '/ friend /d' | \
+	sed '/operator new/d' | \
+	sed '/ operator delete/d' | \
+	sed '/post_construction_initialization/d' | \
+	sed '/Cxx_GrammarTerminalNames/d' | \
+	sed '/isSg/d' | \
+	sed '/p_[_A-Za-z0-9]*;$$/d' | \
+	sed '/AST Memory Allocation Support Functions/,/getNumberOfLastValidPointer/d' | \
+	sed '/<semaphore.h>/,/};/d' | \
+	sed '/namespace AST_FileIO/,/}/d' | \
+	sed 's/ class / struct /g' | \
+	cat >> Cxx_Grammar.i
 
 CLEANFILES	= sage3_wrap.cxx compile_java_files sage3.jar		\
 		  rose_input.cc casts.i

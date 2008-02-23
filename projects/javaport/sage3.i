@@ -235,49 +235,44 @@ namespace __gnu_cxx {}
 %feature("director") ROSE_VisitTraversal;
 %feature("director") Compass::OutputObject;
 
-%include sage3.h
-%include utility_functions.h
-%include Cxx_Grammar.h
-%include AstConsistencyTests.h
-%include unparser.h
-%include rose_attributes_list.h
-%include AstProcessing.h
-%template(AstTDP_ParentAttr) AstTopDownProcessing<ParentAttribute>;
-%include AstFixParentTraversal.h
-%include AST_FILE_IO.h
-%include AstProcessing.h
-%include astQueryInheritedAttribute.h
-%include astQuery.h
-%include nodeQuery.h
-%include compass.h
-
-%template(TraversalBaseVector) std::vector<Compass::TraversalBase*>;
-%typemap(javainterfaces) std::vector<Compass::TraversalBase*> "GenericVector<TraversalBase>"
-
-%template(OutputObjectVector) std::vector<Compass::OutputObject*>;
-%typemap(javainterfaces) std::vector<Compass::OutputObject*> "GenericVector<OutputObject>"
-
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
-
-%{
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
-%}
-
-%include "casts.i"
-
-%extend SgNode {
-    std::vector<unsigned long> get_graph() {
-	std::vector<unsigned long> ret;
-	typedef std::vector<std::pair<SgNode*, std::string> > t;
-        t v = $self->returnDataMemberPointers();
-	for (t::iterator i = v.begin(); i != v.end(); i++) {
-	  ret.push_back((unsigned long)((*i).first));
-        }
-	return ret;
-    }
-}
-
-// extern "C" {
-//   extern void data_state_save();
-//   extern void data_state_reset();
+// %include sage3.h
+// %include utility_functions.h
+%include Cxx_Grammar.i
+// %include AstConsistencyTests.h
+// %include unparser.h
+// %include rose_attributes_list.h
+// %include AstProcessing.h
+// %template(AstTDP_ParentAttr) AstTopDownProcessing<ParentAttribute>;
+// %include AstFixParentTraversal.h
+// %include AST_FILE_IO.h
+// %include AstProcessing.h
+// %include astQueryInheritedAttribute.h
+// %include astQuery.h
+// %include nodeQuery.h
+// %include compass.h
+// 
+// %template(TraversalBaseVector) std::vector<Compass::TraversalBase*>;
+// %typemap(javainterfaces) std::vector<Compass::TraversalBase*> "GenericVector<TraversalBase>"
+// 
+// %template(OutputObjectVector) std::vector<Compass::OutputObject*>;
+// %typemap(javainterfaces) std::vector<Compass::OutputObject*> "GenericVector<OutputObject>"
+// 
+// void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+// 
+// %{
+// void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+// %}
+// 
+// %include "casts.i"
+// 
+// %extend SgNode {
+//     std::vector<unsigned long> get_graph() {
+// 	std::vector<unsigned long> ret;
+// 	typedef std::vector<std::pair<SgNode*, std::string> > t;
+//         t v = $self->returnDataMemberPointers();
+// 	for (t::iterator i = v.begin(); i != v.end(); i++) {
+// 	  ret.push_back((unsigned long)((*i).first));
+//         }
+// 	return ret;
+//     }
 // }
