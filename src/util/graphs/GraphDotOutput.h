@@ -13,7 +13,7 @@ class GraphDotOutput
 
     void writeToDOTFile(const std::string& filename, const std::string& graphname)
      {
-	bool debug = true;
+	bool debug = false;
 	if(debug) std::cerr << " dot output to " << filename << std::endl; 
         std::ofstream dotfile(filename.c_str());
 
