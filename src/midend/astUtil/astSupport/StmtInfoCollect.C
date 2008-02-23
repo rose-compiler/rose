@@ -303,14 +303,14 @@ public:
     if (cur.first == AST_NULL || !fa.IsVarRef(cur.first, 0, &varname, &scope))
       return false;
     if (cur.second == index) {
-      aliasmap.get_alias_map(varname, scope).union_with(repr);
+      aliasmap.get_alias_map(varname, scope)->union_with(repr);
       if (DebugAliasAnal())  {
          std::cerr << "aliasing with: " << varname << std::endl;
       }
     }
     else {
       assert( cur.second > index); 
-      repr = &aliasmap.get_alias_map(varname, scope);
+      repr = aliasmap.get_alias_map(varname, scope);
       if (DebugAliasAnal()) 
          std::cerr << "cur alias-var repr:" << varname << std::endl;
       index = cur.second;
