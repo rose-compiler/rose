@@ -243,7 +243,7 @@ namespace __gnu_cxx {}
 %include rose_attributes_list.h
 %include AstProcessing.h
 %template(AstTDP_ParentAttr) AstTopDownProcessing<ParentAttribute>;
-%include AstFixParentTraversal.h
+// %include AstFixParentTraversal.h
 %include AST_FILE_IO.h
 %include AstProcessing.h
 %include astQueryInheritedAttribute.h

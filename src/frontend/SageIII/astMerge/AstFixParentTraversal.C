@@ -13,6 +13,7 @@ ParentAttribute AstFixParentTraversal::evaluateInheritedAttribute(SgNode * node,
 
 }
 
+#if 0
 //This operates in much the same way as AstFixParentTraversal
 ParentAttribute AstCheckParentTraversal::evaluateInheritedAttribute(SgNode * node, ParentAttribute p) {
 
@@ -20,4 +21,4 @@ ParentAttribute AstCheckParentTraversal::evaluateInheritedAttribute(SgNode * nod
   return ParentAttribute(node);
 
 }
-
+#endif

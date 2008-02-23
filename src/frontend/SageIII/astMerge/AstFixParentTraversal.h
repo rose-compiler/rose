@@ -25,11 +25,13 @@ protected:
 
 };
 
+#if 0
 //This traversal checks that the parent points of a subtree are valid
 class AstCheckParentTraversal : public AstTopDownProcessing<ParentAttribute> {
 
 protected:
   virtual ParentAttribute evaluateInheritedAttribute (SgNode * node, ParentAttribute p);
 };
+#endif
 #endif
 

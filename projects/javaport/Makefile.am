@@ -107,12 +107,13 @@ compile_java_files: sage3_wrap.cxx gov/llnl/casc/rose/GenericVector.java \
 sage3.jar: compile_java_files
 	jar cf $@ -C class .
 
-TESTS=testjava.sh
-TESTS_ENVIRONMENT=MAKE=$(MAKE) AM_MAKEFLAGS=$(AM_MAKEFLAGS)
+# TESTS=testjava.sh
+
+check: test
 
 test: test.class sage3.jar .libs/libsage3_wrap.so input.cc
-	java -Djava.library.path=`pwd`/../.libs":"`pwd`/.libs		\
-	  -classpath sage3.jar:. test $(srcdir)/input.cc -o /dev/null
+	env LD_LIBRARY_PATH="../.libs:.libs:${LD_LIBRARY_PATH}" \
+	  java -classpath sage3.jar:. test $(srcdir)/input.cc -o /dev/null
 
 test.class: test.java sage3.jar
 	javac -classpath sage3.jar:. $(srcdir)/test.java -d .
