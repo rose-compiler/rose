@@ -1744,6 +1744,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (11/30/2007): Added support for another IR node.
           case V_SgAssociateStatement:
 
+       // DQ (2/18/2008): Added support for another IR node.
+          case V_SgFortranIncludeLine:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgBasicBlock:
           case V_SgNamespaceDefinitionStatement:

@@ -143,12 +143,6 @@ TemporaryReuseRefs(LoopTreeNode *s1, int loop1, LoopTreeNode *s2, int loop2,
   return refSet.size();
 }
 
-bool operator < (const DepCompAstRef& n1, const DepCompAstRef& n2) 
-   { 
-      return n1.ToHandle() < n2.ToHandle();
-   }
-
-
 std::string DepCompAstRef::ToHandle() const 
 {
    std::stringstream res;

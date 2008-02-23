@@ -23,8 +23,9 @@ extern "C" {
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
+// DQ (2/18/2008): I think this might be fixed now!
 // DQ (12/16/2007): This is associated with a bug that cause lables for the computed goto to be processed twice with R313
-#define OFP_LABEL_BUG TRUE
+#define OFP_LABEL_BUG FALSE
 
 // We make heavy use of ROSE IR nodes and support for build the AST from actions 
 // that will be specified by the LANL Fortran 2003 parser.  This is header file 
@@ -106,7 +107,13 @@ extern std::list<SgIfStmt*> astIfStatementStack;
 // test2007_162.h demonstrates this problems (and test2007_184.f)
 extern AstNameListType astActualArgumentNameStack;
 
+// DQ (2/18/2008): This is the support for the Frotran include stack.
+// This is specific to the Fortran include mechanism, not the CPP include 
+// mechanism. Though at some point a unified approach might be required.
+extern std::vector<std::string> astIncludeStack;
 
+
+std::string getCurrentFilename();
 
 void setSourcePosition  ( SgLocatedNode* locatedNode );
 void setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode );

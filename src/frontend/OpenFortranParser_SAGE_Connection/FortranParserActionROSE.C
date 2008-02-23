@@ -1759,10 +1759,13 @@ void c_action_private_components_stmt(Token_t *label, Token_t *privateKeyword, T
  * @param hasBindingPrivateStmt True if has a keyword "private".
  */
 // void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStmt)
-void c_action_type_bound_procedure_part(Token_t * containsKeyword, Token_t * eos, int count, ofp_bool hasBindingPrivateStmt) 
+// void c_action_type_bound_procedure_part(Token_t * containsKeyword, Token_t * eos, int count, ofp_bool hasBindingPrivateStmt) 
+void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStmt) 
    {
+  // printf ("In c_action_type_bound_procedure_part(): containsKeyword = %p = %s hasBindingPrivateStmt = %s \n",containsKeyword,containsKeyword != NULL ? containsKeyword->text : "NULL",hasBindingPrivateStmt ? "true" : "false");
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_type_bound_procedure_part(): containsKeyword = %p = %s hasBindingPrivateStmt = %s \n",containsKeyword,containsKeyword != NULL ? containsKeyword->text : "NULL",hasBindingPrivateStmt ? "true" : "false");
+          printf ("In c_action_type_bound_procedure_part(): count = %d hasBindingPrivateStmt = %s \n",count,hasBindingPrivateStmt ? "true" : "false");
 
      printf ("Is this used! \n");
      ROSE_ASSERT(false);
@@ -2734,7 +2737,7 @@ void c_action_entity_decl(Token_t * id)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R504 c_action_entity_decl(): save variableName = %s \n",id->text);
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 c_action_entity_decl()");
 #endif
@@ -2827,7 +2830,7 @@ void c_action_entity_decl(Token_t * id)
 
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -3195,8 +3198,9 @@ void c_action_array_spec_element(int type)
  * @param hasUpperBound Whether the shape spec is of the form x:y.
  */
 void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
-{
-}
+   {
+     printf ("In c_action_explicit_shape_spec(): hasUpperBound = %s \n",hasUpperBound ? "true" : "false");
+   }
 
 /** R511 list
  * explicit_shape_spec_list
@@ -3205,11 +3209,23 @@ void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
  * @param count The number of items in the list.
  */
 void c_action_explicit_shape_spec_list__begin()
-{
-}
+   {
+     printf ("In c_action_explicit_shape_spec_list__begin() \n");
+   }
+
 void c_action_explicit_shape_spec_list(int count)
-{
-}
+   {
+     printf ("In c_action_explicit_shape_spec_list(): count = %d \n",count);
+
+  // DQ (2/20/2008): Call the mechanism used to build an array type
+     c_action_array_spec(count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R511 c_action_explicit_shape_spec_list()");
+#endif
+   }
+
 
 /** R517
  * intent_spec
@@ -3939,10 +3955,11 @@ void c_action_data_i_do_object_list(int count)
  *
  * TODO: This action method may need params.  Look at the grammar rule.
  */
-void c_action_data_stmt_value()
+// void c_action_data_stmt_value()
+void c_action_data_stmt_value(Token_t *asterisk)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_data_stmt_value() \n");
+          printf ("In c_action_data_stmt_value(): asterisk = %p = %s \n",asterisk,asterisk != NULL ? asterisk->text : "NULL");
 
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R530 c_action_data_stmt_value()");
@@ -9236,6 +9253,7 @@ void c_action_computed_goto_stmt(Token_t *label, Token_t *goKeyword, Token_t *to
           astLabelSymbolStack.pop_front();
 
 #if OFP_LABEL_BUG
+       // DQ (2/18/2008): I think this might be fixed now!
        // Due to a bug in OFP, where labels are processed twice by R313, we have to pop two elements from the stack.
           ROSE_ASSERT(astLabelSymbolStack.empty() == false);
           astLabelSymbolStack.pop_front();
@@ -10549,6 +10567,14 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
 // void c_action_print_stmt(Token_t * label, ofp_bool hasOutputItemList)
 void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, ofp_bool hasOutputItemList)
    {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_print_stmt(): label = %p = %s printKeyword = %p = %s hasOutputItemList = %s \n",
+               label,label != NULL ? label->text : "NULL",printKeyword,printKeyword != NULL ? printKeyword->text : "NULL",hasOutputItemList ? "true" : "false");
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R912 c_action_print_stmt()");
+#endif
+
      SgPrintStatement* printStatement = new SgPrintStatement();
      ROSE_ASSERT(printStatement != NULL);
 
@@ -12507,12 +12533,16 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
  * @param containsKeyword T_CONTAINS token.
  * @param eos T_EOS token.
  */
-void c_action_module_subprogram_part(Token_t* containsKeyword, Token_t* eos)
+
+// DQ (2/18/2008): New version of OFP does not have function parameters for this function.
+// void c_action_module_subprogram_part(Token_t* containsKeyword, Token_t* eos)
+void c_action_module_subprogram_part()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_module_subprogram_part(): containsKeyword = %p = %s \n",containsKeyword,containsKeyword != NULL ? containsKeyword->text : "NULL");
+       // printf ("In c_action_module_subprogram_part(): containsKeyword = %p = %s \n",containsKeyword,containsKeyword != NULL ? containsKeyword->text : "NULL");
+          printf ("In c_action_module_subprogram_part(): \n");
 
-     ROSE_ASSERT(containsKeyword != NULL);
+  // ROSE_ASSERT(containsKeyword != NULL);
 
 #if 0
   // This is processed too late to be useful, so the "CONTAINS" statement
@@ -13735,6 +13765,11 @@ void c_action_subroutine_stmt(Token_t * label, Token_t * keyword, Token_t * name
      setSourcePosition(subroutineDeclaration->get_parameterList(),keyword);
 
 #if 0
+     subroutineDeclaration->get_startOfConstruct()->display("In c_action_subroutine_stmt()");
+     subroutineDeclaration->get_endOfConstruct()->display("In c_action_subroutine_stmt()");
+#endif
+
+#if 0
   // This is now set in buildProcedureSupport()
 
   // This will be the defining declaration.
@@ -13933,18 +13968,23 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
  *
  * @param label The label.
  * @param keyword The ENTRY keyword token.
+ * @param id T_IDENT for entry name.
  * @param eos End of statement token.
  * @param hasDummyArgList True if has a dummy argument list.
  * @param hasSuffix True if has a suffix.
  */
 // void c_action_entry_stmt(Token_t * label, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
-void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
+// void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
+void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasDummyArgList, ofp_bool hasSuffix)
    {
-     printf ("In c_action_entry_stmt(): label = %p = %s keyword = %p = %s hasDummyArgList = %s hasSuffix = %s \n",
+     printf ("In c_action_entry_stmt(): label = %p = %s keyword = %p = %s id = %p = %s hasDummyArgList = %s hasSuffix = %s \n",
           label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL",
-          hasDummyArgList ? "true" : "false",hasSuffix ? "true" : "false");
+          id,id != NULL ? id->text : "NULL",hasDummyArgList ? "true" : "false",hasSuffix ? "true" : "false");
 
-     SgName entryFunctionName = "entry_function_name_unavailable_from_OFP";
+  // This bug appears to be fixed in OFP as of Feb 18th 2008.
+  // SgName entryFunctionName = "entry_function_name_unavailable_from_OFP";
+     ROSE_ASSERT(id != NULL);
+     SgName entryFunctionName = id->text;
 
   // Unclear how we should handle the entry, since it shares only a part of the function definition!
 
@@ -14068,6 +14108,21 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
      astScopeStack.front()->append_statement(returnStatement);
    }
 
+	/** R1237
+	 * contains_stmt
+	 *
+	 *	(label)? T_CONTAINS ( expr )? T_EOS
+	 *
+	 * @param label The label.
+	 * @param keyword The CONTAINS keyword token.
+	 * @param eos End of statement token.
+	 */
+void c_action_contains_stmt(Token_t *label, Token_t *keyword, Token_t *eos)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_contains_stmt(): label = %p = %s keyword = %p = %s \n",label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL");
+   }
+
 /** R1238
  * stmt_function_stmt
  *
@@ -14091,6 +14146,51 @@ void c_action_end_of_stmt(Token_t * eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_stmt() astNodeStack = %zu \n",astNodeStack.size());
+   }
+
+void c_action_start_of_file(const char *filename)
+   {
+  // New function to support Fortran include mechanism
+     printf ("In c_action_start_of_file(%s) \n",filename);
+
+  // This is the earliest location to setup the global scope (I think).
+     initialize_global_scope_if_required();
+
+     string filenameString = filename;
+
+     static bool firstTime = true;
+     if (firstTime == true)
+        {
+          firstTime = false;
+        }
+       else
+        {
+          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filenameString);
+
+       // We need a way to get the source position o fthe Fortran include line.
+       // setSourcePositionCompilerGenerated(includeLine);
+          setSourcePosition(includeLine);
+
+          ROSE_ASSERT(astScopeStack.empty() == false);
+
+          printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
+
+          astScopeStack.front()->append_statement(includeLine);
+        }
+
+     astIncludeStack.push_back(filenameString);
+   }
+
+void c_action_end_of_file()
+   {
+  // New function to support Fortran include mechanism
+
+     ROSE_ASSERT(astIncludeStack.empty() == false);
+     string filenameString = astIncludeStack.back();
+
+     printf ("In c_action_end_of_file() filenameString = %s \n",filenameString.c_str());
+
+     astIncludeStack.pop_back();
    }
 
 void c_action_cleanUp()

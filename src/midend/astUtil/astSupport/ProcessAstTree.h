@@ -39,6 +39,9 @@ class ProcessAstTreeBase : public ProcessAstNode
   void SkipOnly( const AstNodePtr& s);
  public:
   bool operator()( AstInterface &fa, const AstNodePtr& s);
+
+// DQ (2/18/2008): Added to fix warning from GNU g++
+   virtual ~ProcessAstTreeBase() {}      
 };
 
 

@@ -59,6 +59,9 @@ class CopyAstRecord : public ObserveInfo< AstObserver>
       : orig(o), n(_n), fa(_fa) {}
   virtual void UpdateObserver( AstObserver& o) const 
          {  o.ObserveCopyAst(fa, orig, n); }
+
+// DQ (2/18/2008): Added to fix warning from GNU g++
+   virtual ~CopyAstRecord() {}
 };
  
 

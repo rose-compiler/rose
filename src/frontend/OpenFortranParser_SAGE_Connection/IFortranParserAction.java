@@ -75,9 +75,7 @@ public abstract interface IFortranParserAction {
 
 	/** R210
 	 * internal_subprogram_part
-	 *	:	T_CONTAINS T_EOS internal_subprogram (internal_subprogram)*
-	 *
-	 * T_CONTAINS inlined for contains_stmt
+	 *	:	contains_stmt internal_subprogram (internal_subprogram)*
 	 *
 	 * @param count The number of internal subprograms
 	 */
@@ -742,9 +740,7 @@ public abstract interface IFortranParserAction {
 	 * @param hasBindingPrivateStmt True if has a keyword "private".
 	 */
 	public abstract 
-	void type_bound_procedure_part(Token containsKeyword, 
-											 Token eos, int count, 
-											 boolean hasBindingPrivateStmt);
+	void type_bound_procedure_part(int count, boolean hasBindingPrivateStmt);
 
 	/** R449
 	 * binding_private_stmt
@@ -1368,9 +1364,9 @@ public abstract interface IFortranParserAction {
 	 * R530
 	 * data_stmt_value
 	 *
-	 * TODO: This action method may need params.  Look at the grammar rule.
+	 * @param asterisk The T_ASTERISK token (null if no data-stmt-repeat)
 	 */
-	public abstract void data_stmt_value();
+	public abstract void data_stmt_value(Token asterisk);
 
 	/** R530 list
 	 * data_stmt_value_list
@@ -3743,8 +3739,7 @@ public abstract interface IFortranParserAction {
 	 * @param containsKeyword T_CONTAINS token.
 	 * @param eos T_EOS token.
 	 */
-	public abstract void module_subprogram_part(Token containsKeyword, 
-															  Token eos);
+	public abstract void module_subprogram_part();
 
 	/** R1108
 	 * module_subprogram
@@ -4325,12 +4320,14 @@ public abstract interface IFortranParserAction {
 	 *
 	 * @param label The label.
 	 * @param keyword The ENTRY keyword token.
+	 * @param id T_IDENT for entry name.
 	 * @param eos End of statement token.
 	 * @param hasDummyArgList True if has a dummy argument list.
 	 * @param hasSuffix True if has a suffix.
 	 */
-	public abstract void entry_stmt(Token label, Token keyword, Token eos, 
-											  boolean hasDummyArgList, boolean hasSuffix);
+	public abstract void entry_stmt(Token label, Token keyword, Token id,
+											  Token eos, boolean hasDummyArgList, 
+											  boolean hasSuffix);
 
 	/** R1236
 	 * return_stmt
@@ -4344,6 +4341,17 @@ public abstract interface IFortranParserAction {
 	 */
 	public abstract void return_stmt(Token label, Token keyword, Token eos, 
 												boolean hasScalarIntExpr);
+
+	/** R1237
+	 * contains_stmt
+	 *
+	 *	(label)? T_CONTAINS ( expr )? T_EOS
+	 *
+	 * @param label The label.
+	 * @param keyword The CONTAINS keyword token.
+	 * @param eos End of statement token.
+	 */
+	public abstract void contains_stmt(Token label, Token keyword, Token eos);
 
 	/** R1238
 	 * stmt_function_stmt
@@ -4365,8 +4373,19 @@ public abstract interface IFortranParserAction {
 	 * end_of_stmt
 	 * 
 	 * @param eos T_EOS or EOF token.
+	 * @param currStreamName Name of the current input stream the parser is
+	 * processing.
+	 * @param nextStreamName Name of the stream that the parser will switch to 
+	 * next, starting with the next statement.  This is null if there is no 
+	 * new stream.  This variable signals to the action method that an include 
+	 * statement followed the current statement ended by this end_of_stmt.
 	 */
+// 	public abstract void end_of_stmt(Token eos, String currStreamName, 
+// 												String nextStreamName);
 	public abstract void end_of_stmt(Token eos);
+
+	public abstract void start_of_file(String fileName);
+	public abstract void end_of_file();
 
 	public abstract void cleanUp();
 

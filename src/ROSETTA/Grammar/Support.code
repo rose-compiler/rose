@@ -9460,11 +9460,15 @@ SgFile::getSourceDirectory ()
      for (i=0; i < maxPathNameLength; i++)
           currentDirectory[i] = '\0';  // set to NULL string
 
-#endif
      printf ("SgFile::getSourceDirectory not implemented! \n");
      ROSE_ABORT();
 
      return "";
+#endif
+
+     string sourceFile = get_sourceFileNameWithPath();
+     ROSE_ASSERT(sourceFile.empty() == false);
+     return StringUtility::getPathFromFileName(sourceFile);
    }
 
 

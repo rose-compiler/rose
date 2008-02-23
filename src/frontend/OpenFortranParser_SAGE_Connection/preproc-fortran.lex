@@ -495,7 +495,7 @@ clean_up_stream()
 
 
 #if 0
-    for(SE_ITR ii = ROSE_Fortran_free_format_token_stream.begin(); ii != ROSE_Fortran_free_format_token_stream.end(); ii++)
+    for(SE_ITR ii = ROSE_Fortran_free_format_token_stream_pointer->begin(); ii != ROSE_Fortran_free_format_token_stream_pointer->end(); ii++)
     {
         if((*ii)->p_tok_elem->token_id == SgToken::FORTRAN_COMMENTS)
         { 

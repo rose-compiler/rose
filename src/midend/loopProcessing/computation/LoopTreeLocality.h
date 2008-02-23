@@ -9,6 +9,9 @@ struct DepCompAstRef {
   LoopTreeNode* stmt; 
   DepCompAstRef(const AstNodePtr& o, LoopTreeNode* s) 
        : orig(o),stmt(s) {}
+  bool operator < (const DepCompAstRef& that) const {
+      return this->ToHandle() < that.ToHandle();
+  }
   std::string ToHandle() const;
   std::string toString() const;
 };

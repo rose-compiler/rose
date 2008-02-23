@@ -4578,7 +4578,38 @@ SgFile::callFrontEnd ()
                     vector<string> frontEndCommandLine;
                     frontEndCommandLine.push_back(argv[0]);
                     frontEndCommandLine.push_back("--class");
-                    frontEndCommandLine.push_back("fortran.ofp.parser.java.FortranParserActionJNI");
+                    frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
+                    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+#if 0
+                    get_project()->display("Calling SgProject display");
+                    display("Calling SgFile display");
+#endif
+                    const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+
+                    bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
+                 // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
+                    for (int i = 0; i < includeList.size(); i++)
+                       {
+                         frontEndCommandLine.push_back(includeList[i]);
+
+                      // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+                      // I think we have to permit an optional space between the "-I" and the path
+                         if (	"-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+                            {
+                           // The source file path is already included!
+                              foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+                            }
+                       }
+
+                    printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+                    if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+                       {
+                      // Add the source directory to the include list so that we reproduce the semantics of gfortran
+                         frontEndCommandLine.push_back("-I" + getSourceDirectory() );
+                       }
+
                     frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
 #if 0

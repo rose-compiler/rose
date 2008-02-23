@@ -231,7 +231,11 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (ImportStatement,           "ImportStatement",            "TEMP_Import_Statement" ); 
 
   // DQ (11/30/2007): Added new IR node to support "associate" statement (F2003)
-     NEW_TERMINAL_MACRO (AssociateStatement,        "AssociateStatement",         "TEMP_Associate_Statement" ); 
+     NEW_TERMINAL_MACRO (AssociateStatement,        "AssociateStatement",         "TEMP_Associate_Statement" );
+
+  // DQ (2/18/2008): Added support for language specific Fortran include line (not a statement in Fortran, 
+  // but a declaration statement in ROSE similar to the CPP IncludeDirectiveStatement).
+     NEW_TERMINAL_MACRO (FortranIncludeLine,        "FortranIncludeLine",         "TEMP_Fortran_Include_Line" ); 
 #endif
 
   // NEW_TERMINAL_MACRO (ClinkageStartStatement, "ClinkageStartStatement", "C_LINKAGE_START_STMT" );
@@ -331,19 +335,12 @@ Grammar::setUpStatements ()
           UsingDirectiveStatement                 | ClassDeclaration     | ImplicitStatement    | 
           UsingDeclarationStatement               | NamelistStatement    | ImportStatement      |
           FunctionDeclaration                  /* | ModuleStatement */   | ContainsStatement    |
-          C_PreprocessorDirectiveStatement,
+          C_PreprocessorDirectiveStatement        | FortranIncludeLine,
           "DeclarationStatement","DECL_STMT");
 #else
 
 #error "DEAD CODE!"
 
-     NEW_NONTERMINAL_MACRO (DeclarationStatement,
-          FunctionDeclaration   | VariableDeclaration | VariableDefinition | ClassDeclaration |
-          EnumDeclaration       | AsmStmt             | TypedefDeclaration | 
-          TemplateDeclaration   | TemplateInstantiationDirectiveStatement | NamespaceDeclarationStatement | 
-          NamespaceAliasDeclarationStatement | UsingDirectiveStatement | UsingDeclarationStatement |
-          FunctionParameterList | CtorInitializerList | PragmaDeclaration ,
-          "DeclarationStatement","DECL_STMT");
 #endif
 
 #if USE_FORTRAN_IR_NODES
@@ -2448,6 +2445,11 @@ Grammar::setUpStatements ()
      FormatStatement.setDataPrototype          ( "SgFormatItemList*", "format_item_list", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/18/2008): Added support for Fortran specific include mechanism (separate from CPP 
+  // include mechanism which is language independent).
+     FortranIncludeLine.setFunctionPrototype   ( "HEADER_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );
+     FortranIncludeLine.setDataPrototype       ( "std::string"   , "filename", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #if 0
@@ -2782,9 +2784,12 @@ Grammar::setUpStatements ()
      ErrorDirectiveStatement.setFunctionSource          ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
      EmptyDirectiveStatement.setFunctionSource          ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
 
-     ClinkageDeclarationStatement.setFunctionSource    ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
-     ClinkageStartStatement.setFunctionSource          ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
-     ClinkageEndStatement.setFunctionSource            ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     ClinkageDeclarationStatement.setFunctionSource     ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     ClinkageStartStatement.setFunctionSource           ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     ClinkageEndStatement.setFunctionSource             ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+
+     FortranIncludeLine.setFunctionSource               ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     FortranIncludeLine.setFunctionSource               ( "SOURCE_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );
    }
 
 

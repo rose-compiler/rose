@@ -250,10 +250,16 @@ class ECRmap {
       else
          return false;
    }
+   ~ECRmap() {
+      for (std::list<ECR*>::const_iterator p = ecrList.begin();
+           p != ecrList.end(); ++p) {
+          delete (*p);
+      }
+   }
 
  private:
   std::map<Variable, ECR*> table;
-  std::list<ECR> ecrList;
+  std::list<ECR*> ecrList;
   std::list<Lambda> lambdaList;
   ECR* get_ECR(Variable x) {
      assert(x != "");
@@ -270,8 +276,8 @@ class ECRmap {
      return res;
   }
   ECR* new_ECR() {
-     ecrList.push_back(ECR());
-     return &ecrList.back();
+     ecrList.push_back(new ECR());
+     return ecrList.back();
   }
   Lambda* new_Lambda() {
      lambdaList.push_back(Lambda());
@@ -297,12 +303,12 @@ class ECRmap {
   void set_type(ECR * e, ECR * t) {
       e->set_type(t);
      assert(t != BOT && e->get_type() == t);
-      std::list<ECR*>& pending = e->get_pending();
+      std::list<ECR*> pending = e->get_pending();
       if (pending.size()) {
          for (std::list<ECR*>::const_iterator p=pending.begin(); 
               p != pending.end(); ++p) 
-            join(e, *p);
-         pending.clear();
+            join(t, *p);
+         e->get_pending().clear();
       }
    }
    
@@ -349,7 +355,7 @@ class ECRmap {
       ECR* t2 = e2->get_type();
       Lambda* l1 = e1->get_lambda();
       Lambda* l2 = e2->get_lambda();
-      std::list<ECR*> &pending1 = e1->get_pending(), &pending2 = e2->get_pending();
+      std::list<ECR*> *pending1 = &e1->get_pending(), *pending2 = &e2->get_pending();
       ECR* e = e1->union_with(e2);
       if (l1 == BOT) {
          if (l2 != BOT) 
@@ -361,41 +367,46 @@ class ECRmap {
             unify_lambda(l1,l2); 
       }
 
-      std::list<ECR*> &pending = e->get_pending();
+      std::list<ECR*> *pending = &e->get_pending();
  
       if (t1 == BOT) {
          e->set_type(t2);
          if (t2 == BOT) {
             if (e == e2) {
-               assert(&pending != &pending1);
-               pending.insert(pending.end(), pending1.begin(), pending1.end());
+               assert(pending != pending1);
+               pending->insert(pending->end(), pending1->begin(), pending1->end());
             }
             else if (e == e1) {
-              assert(&pending != &pending2);
-               pending.insert(pending.end(), pending2.begin(), pending2.end());
+              assert(pending != pending2);
+               pending->insert(pending->end(), pending2->begin(), pending2->end());
             }
             else {
-              assert(&pending != &pending2 && &pending != &pending1);
-               pending = pending1;
-               pending.insert(pending.end(), pending2.begin(), pending2.end());
+              assert(pending != pending2 && pending != pending1);
+               *pending = *pending1;
+               pending->insert(pending->end(), pending2->begin(), pending2->end());
               }
          }
          else {
-            for (std::list<ECR*>::const_iterator p=pending1.begin();
-                 p != pending1.end(); ++p) 
-               join(e, *p);
-            pending.clear();
+           if (pending1->size()) {
+              for (std::list<ECR*>::const_iterator p=pending1->begin();
+                   p != pending1->end(); ++p) 
+                 join(e, *p);
+            }
+            pending->clear();
         }
       }
       else {
          e->set_type(t1);
-         if (t2 == BOT)
-            for (std::list<ECR*>::const_iterator p=pending2.begin();
-                 p != pending2.end(); ++p) 
-               join(e, *p);
+         if (t2 == BOT) {
+             if (pending2->size()) {
+               for (std::list<ECR*>::const_iterator p=pending2.begin();
+                    p != pending2.end(); ++p) 
+                  join(e, *p);
+             }
+         }
          else
             unify(t1, t2);
-         pending.clear();
+         pending->clear();
       }
    }
 };
