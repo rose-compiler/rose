@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <stdint.h>
 #include <errno.h>
+#include "sageSupport.h"
 
 #include "RoseBin_support.h"
 
@@ -408,9 +409,7 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* 
     map<uint64_t, uint64_t> nextAddress;
  // FILE* f = popen(("./asmToRoseAst.tcl " + fileName).c_str(), "r");
  // FILE* f = popen(( "/home/panas2/development/ROSE-64bit/NEW_ROSE/src/frontend/ObjdumpDisassembler/asmToRoseAst.tcl " + fileName).c_str(), "r");
-    string dirOfScript = proj->get_runningFromInstalledRose() ?
-                         ROSE_AUTOMAKE_LIBEXECDIR :
-                         (ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/src/frontend/ObjdumpDisassembler");
+    string dirOfScript = findRoseSupportPathFromSource("src/frontend/ObjdumpDisassembler", ROSE_AUTOMAKE_LIBEXECDIR);
     string pathToScript = dirOfScript + "/asmToRoseAst.tcl";
     vector<string> args(2);
     args[0] = pathToScript;
@@ -418,11 +417,14 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* 
     FILE* f = popenReadFromVector(args);
     if (!f) {ROSE_ASSERT(!"Could not open file"); abort();}
     stack<StackEntry> st;
-    while (!feof(f)) {
+    while (true) {
       errno = 0;
       int c = getc(f);
       if (c == EOF) {
         if (errno != 0) {perror("Error reading from pipe"); abort();}
+        // There should have been a "done" command
+        cerr << "Error in objdumpToRoseBinaryAst -- spawned process failed" << endl;
+        abort();
         break;
       } else if (c == '"') {
         string str;

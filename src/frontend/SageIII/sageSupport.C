@@ -13,19 +13,20 @@ using namespace std;
 int systemFromVector(const vector<string>& argv) {
   ROSE_ASSERT (!argv.empty());
   pid_t pid = fork();
-  if (pid == -1) {perror("fork: "); abort();}
+  if (pid == -1) {perror("fork"); abort();}
   if (pid == 0) { // Child
     vector<const char*> argvC(argv.size() + 1);
     for (size_t i = 0; i < argv.size(); ++i) {
       argvC[i] = strdup(argv[i].c_str());
     }
     argvC.back() = NULL;
-    int err = execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+    execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+    perror(("execvp in systemFromVector: " + argv[0]).c_str());
     exit(1); // Should not get here normally
   } else { // Parent
     int status;
     pid_t err = waitpid(pid, &status, 0);
-    if (err == -1) {perror("waitpid: "); abort();}
+    if (err == -1) {perror("waitpid"); abort();}
     return status;
   }
 }
@@ -37,20 +38,25 @@ FILE* popenReadFromVector(const vector<string>& argv) {
   ROSE_ASSERT (!argv.empty());
   int pipeDescriptors[2];
   int pipeErr = pipe(pipeDescriptors);
-  if (pipeErr == -1) {perror("pipe: "); abort();}
+  if (pipeErr == -1) {perror("pipe"); abort();}
   pid_t pid = fork();
-  if (pid == -1) {perror("fork: "); abort();}
+  if (pid == -1) {perror("fork"); abort();}
   if (pid == 0) { // Child
     vector<const char*> argvC(argv.size() + 1);
     for (size_t i = 0; i < argv.size(); ++i) {
       argvC[i] = strdup(argv[i].c_str());
     }
     argvC.back() = NULL;
+    int closeErr = close(pipeDescriptors[0]);
+    if (closeErr == -1) {perror("close (in child)"); abort();}
     int dup2Err = dup2(pipeDescriptors[1], 1); // stdout
-    if (dup2Err == -1) {perror("dup2: "); abort();}
-    int err = execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+    if (dup2Err == -1) {perror("dup2"); abort();}
+    execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+    perror(("execvp in popenReadFromVector: " + argv[0]).c_str());
     exit(1); // Should not get here normally
   } else { // Parent
+    int closeErr = close(pipeDescriptors[1]);
+    if (closeErr == -1) {perror("close (in parent)"); abort();}
     return fdopen(pipeDescriptors[0], "r");
   }
 }
@@ -101,6 +107,32 @@ static bool sameFile(const string& a, const string& b) {
   return aStat.st_dev == bStat.st_dev && aStat.st_ino == bStat.st_ino;
 }
 
+static bool isRoseInBuildTree() {
+  const char* envVar = getenv("ROSE_IN_BUILD_TREE");
+  if (envVar) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+string
+findRoseSupportPathFromSource(const string& sourceTreeLocation,
+                              const string& installTreeLocation) {
+  return isRoseInBuildTree() ?
+         (string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/" + sourceTreeLocation) :
+         installTreeLocation;
+}
+
+string
+findRoseSupportPathFromBuild(const string& buildTreeLocation,
+                             const string& installTreeLocation) {
+  const char* envVar = getenv("ROSE_IN_BUILD_TREE");
+  return isRoseInBuildTree() ?
+         (string(envVar) + "/" + buildTreeLocation) :
+         installTreeLocation;
+}
+
 void 
 SgProject::processCommandLine(const vector<string>& input_argv)
    {
@@ -140,44 +172,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // Build the empty STL lists
      p_fileList = new SgFilePtrList();
      ROSE_ASSERT (p_fileList != NULL);
-
-  // JJW (1/30/2008): added detection of path of current executable
-     {
-       ROSE_ASSERT (!local_commandLineArgumentList.empty());
-       string argv0 = local_commandLineArgumentList.front();
-    // printf("Have argv[0] = '%s'\n", argv0.c_str());
-       string fullExecutableFile;
-       if (argv0.find('/') == string::npos) { // Need to search $PATH
-         const char* pathRaw = getenv("PATH");
-         string path = pathRaw ? pathRaw : "/usr/bin:/bin";
-      // printf("Searching path '%s'\n", path.c_str());
-         for (string::size_type oldi = (string::size_type)(-1),
-                                i = path.find(':');
-              i != string::npos; oldi = i, i = path.find(':', i + 1)) {
-           string pathDir = path.substr(oldi + 1, i - 1 - oldi);
-        // printf("Get path entry '%s'\n", pathDir.c_str());
-           bool fileExists = false;
-           string fullNameToTest = pathDir + "/" + argv0;
-           FILE* f = fopen(fullNameToTest.c_str(), "r");
-           if (f) {fileExists = true; fclose(f);}
-           if (fileExists) {
-             fullExecutableFile = fullNameToTest;
-             break;
-           }
-         }
-       } else {
-         fullExecutableFile = argv0;
-      // printf("argv[0] has /, so this is a full path\n");
-       }
-    // printf("Found executable file name '%s'\n", fullExecutableFile.c_str());
-       ROSE_ASSERT(!fullExecutableFile.empty());
-       string executablePath = ROSE::getPathFromFileName(fullExecutableFile);
-       ROSE_ASSERT(!executablePath.empty());
-    // printf("Found executable path '%s'\n", executablePath.c_str());
-       bool inInstallDir = sameFile(executablePath, ROSE_AUTOMAKE_BINDIR);
-    // printf(inInstallDir ? "Running from installed ROSE\n" : "Running from build tree\n");
-       this->set_runningFromInstalledRose(inInstallDir);
-     }
 
   // return value for calls to SLA
      int optionCount = 0;
@@ -2964,11 +2958,8 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
   // display("SgFile::setupSourceFilename()");
    }
 
-static string makeSysIncludeList(const Rose_STL_Container<string>& dirs,
-                                 bool useInstalledIncludedir) {
-  string includeBase = useInstalledIncludedir ?
-                       ROSE_AUTOMAKE_INCLUDEDIR :
-                       (ROSE_AUTOMAKE_TOP_BUILDDIR "/include-staging");
+static string makeSysIncludeList(const Rose_STL_Container<string>& dirs) {
+  string includeBase = findRoseSupportPathFromBuild("include-staging", ROSE_AUTOMAKE_INCLUDEDIR);
   string result;
   for (Rose_STL_Container<string>::const_iterator i = dirs.begin();
        i != dirs.end(); ++i) {
@@ -3145,11 +3136,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                     if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
                        {
                          initString += roseHeaderDirCPP;
-                         initString += makeSysIncludeList(C_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
+                         initString += makeSysIncludeList(C_ConfigIncludeDirs);
                        }
                       else
                        {
-                         initString += makeSysIncludeList(Cxx_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
+                         initString += makeSysIncludeList(Cxx_ConfigIncludeDirs);
                        }
                   }
 
@@ -3165,7 +3156,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                   }
                  else
                   {
-                    initString += makeSysIncludeList(C_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
+                    initString += makeSysIncludeList(C_ConfigIncludeDirs);
                   }
        
             // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
@@ -3184,11 +3175,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
                   {
                     initString += roseHeaderDirCPP;
-                    initString += makeSysIncludeList(C_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
+                    initString += makeSysIncludeList(C_ConfigIncludeDirs);
                   }
                  else
                   {
-                    initString += makeSysIncludeList(Cxx_ConfigIncludeDirs, myProject->get_runningFromInstalledRose());
+                    initString += makeSysIncludeList(Cxx_ConfigIncludeDirs);
                   }
              }
 
