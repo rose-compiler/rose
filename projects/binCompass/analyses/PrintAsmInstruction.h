@@ -4,7 +4,7 @@
 #define __BinCompass_printAsmInstruction__
 
 #include "rose.h"
-#include "../AnalysisInterface.h"
+#include "../binCompassAnalysisInterface.h"
 
 class PrintAsmInstruction: public BC_AnalysisInterface {
 

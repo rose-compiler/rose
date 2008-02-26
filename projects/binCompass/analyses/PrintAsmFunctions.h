@@ -4,7 +4,7 @@
 #define __BinCompass_printAsmFunctions__
 
 #include "rose.h"
-#include "../AnalysisInterface.h"
+#include "../binCompassAnalysisInterface.h"
 
 class PrintAsmFunctions: public BC_AnalysisInterface {
 

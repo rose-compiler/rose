@@ -17,7 +17,7 @@ endif
 
 # Make sure these SAGE specific header files are placed into a distribution
 BINARY_DISASSEMBLY_HEADER_FILES = \
-   PrintAsmFunctions.h PrintAsmInstruction.h ../AnalysisInterface.h
+   PrintAsmFunctions.h PrintAsmInstruction.h ../binCompassAnalysisInterface.h
 
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)

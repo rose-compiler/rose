@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <string>
 
-#include "AnalysisInterface.h"
+#include "binCompassAnalysisInterface.h"
 #include "GraphAnalysisInterface.h"
 #include <sys/types.h>
 #include <dirent.h>
@@ -132,6 +132,7 @@ int main(int argc, char** argv) {
     edges = false;
   }
 
+  RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   fprintf(stderr, "Starting binCompass frontend...\n");
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
