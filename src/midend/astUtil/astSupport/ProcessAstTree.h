@@ -2,8 +2,8 @@
 #ifndef PROCESS_AST_TREE
 #define PROCESS_AST_TREE
 
-#include <AstInterface.h>
-#include <SinglyLinkedList.h>
+#include "AstInterface.h"
+#include "SinglyLinkedList.h"
 
 class ProcessAstTreeBase : public ProcessAstNode
 {

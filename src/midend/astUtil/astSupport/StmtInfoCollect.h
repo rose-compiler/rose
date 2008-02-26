@@ -2,11 +2,11 @@
 #ifndef STMT_INFO_COLLECT_H
 #define STMT_INFO_COLLECT_H
 
-#include <AstInterface.h>
-#include <SinglyLinkedList.h>
-#include <ProcessAstTree.h>
-#include <AnalysisInterface.h>
-#include <union_find.h>
+#include "AstInterface.h"
+#include "SinglyLinkedList.h"
+#include "ProcessAstTree.h"
+#include "AnalysisInterface.h"
+#include "union_find.h"
 #include <map>
 #include <sstream>
 

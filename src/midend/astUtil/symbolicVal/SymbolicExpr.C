@@ -1,8 +1,8 @@
-#include <SymbolicExpr.h>
+#include "SymbolicExpr.h"
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
-#include <CommandOptions.h>
+#include "CommandOptions.h"
 
 bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
          { if (v == that.v) {

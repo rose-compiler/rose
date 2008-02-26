@@ -1,7 +1,7 @@
 #ifndef SYMBOLIC_MULTIPLY
 #define SYMBOLIC_MULTIPLY
 
-#include <SymbolicExpr.h>
+#include "SymbolicExpr.h"
 
 class SymbolicMultiply : public SymbolicExpr
 {

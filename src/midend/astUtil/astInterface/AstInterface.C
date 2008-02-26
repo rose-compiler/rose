@@ -1,8 +1,8 @@
 
-#include <AstInterface.h>
+#include "AstInterface.h"
 //#include <sage3.h>
 #include <rose.h>
-#include <AstInterface_ROSE.h>
+#include "AstInterface_ROSE.h"
 #include <stdlib.h>
 
 #define NEW_EXPR_STMT(stmt,exp)  \

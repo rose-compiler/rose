@@ -2,7 +2,7 @@
 #ifndef SYMBOLIC_PLUS_H
 #define SYMBOLIC_PLUS_H
 
-#include <SymbolicExpr.h>
+#include "SymbolicExpr.h"
 
 class SymbolicPlus : public SymbolicExpr
 {

@@ -1181,5 +1181,5 @@ installcheck: exampleMakefile
 	@echo "Remove existing binaries so that they can be rebuilt using the installed libraries."
 	rm -f $(noinst_PROGRAMS) *.o
 	@echo "Call exampleMakefile to show how to build ROSE tutorial examples using installed libraries."
-	$(MAKE) -f exampleMakefile
+	env -u ROSE_IN_BUILD_TREE $(MAKE) -f exampleMakefile
 

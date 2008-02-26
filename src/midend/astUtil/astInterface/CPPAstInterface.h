@@ -1,7 +1,7 @@
 #ifndef CPPAST_INTERFACE
 #define CPPAST_INTERFACE
 
-#include <AstInterface.h>
+#include "AstInterface.h"
 
 class CPPAstInterface : public AstInterface
 {

@@ -1,8 +1,8 @@
-#include <SymbolicVal.h>
+#include "SymbolicVal.h"
 
-#include <SymbolicMultiply.h>
-#include <SymbolicPlus.h>
-#include <SymbolicSelect.h>
+#include "SymbolicMultiply.h"
+#include "SymbolicPlus.h"
+#include "SymbolicSelect.h"
 
 #include <stdio.h>
 #include <sstream>

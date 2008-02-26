@@ -2,7 +2,7 @@
 #ifndef ANNOT_DESCRIPTORS_H
 #define ANNOT_DESCRIPTORS_H
 
-#include <AnnotIO.h>
+#include "AnnotIO.h"
 #include <set>
 #include <string>
 #include <map>

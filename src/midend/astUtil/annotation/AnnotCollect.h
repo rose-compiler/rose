@@ -2,7 +2,7 @@
 #ifndef __ANNOT_COLLECT_H
 #define __ANNOT_COLLECT_H
 
-#include <OperatorDescriptors.h>
+#include "OperatorDescriptors.h"
 
 typedef AnnotCollectionBase<OperatorDeclaration> OperatorCollectionBase;
 typedef ReadAnnotCollection<OperatorDeclaration, '{', ';','}'> 

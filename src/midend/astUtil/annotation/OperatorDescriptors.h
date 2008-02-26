@@ -2,9 +2,9 @@
 #ifndef ___OPERATION_DESCRIPTORS_H
 #define ___OPERATION_DESCRIPTORS_H
 
-#include <TypeAnnotation.h>
-#include <AnnotExpr.h>
-#include <FunctionObject.h>
+#include "TypeAnnotation.h"
+#include "AnnotExpr.h"
+#include "FunctionObject.h"
 
 typedef ContainerDescriptor<std::vector<NameDescriptor>, NameDescriptor,',','(',')'>
     ParamDescriptor;

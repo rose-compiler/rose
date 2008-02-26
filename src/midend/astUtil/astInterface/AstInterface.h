@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <list>
-#include <ObserveObject.h>
+#include "ObserveObject.h"
 
 class AstInterfaceImpl;
 class AstNodePtr {
