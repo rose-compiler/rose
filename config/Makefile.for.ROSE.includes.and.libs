@@ -24,6 +24,11 @@
 # libraries as the default within ROSE.
 RANLIB = touch
 
+# JJW (2/25/2008): set a flag (only used when running ROSE applications) to
+# have them run using the build tree rather than the install tree -- this is
+# important for "make check" in an uninstalled copy of ROSE.
+export ROSE_IN_BUILD_TREE = $(top_builddir)
+
 # This is control over the use of MySQL (which is complicated to use and install)
 # This support for MySQL will be removed in the future.
 if ROSE_USE_DATABASE

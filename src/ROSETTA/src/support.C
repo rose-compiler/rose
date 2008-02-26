@@ -1126,10 +1126,6 @@ Grammar::setUpSupport ()
      Project.setDataPrototype         ( "bool", "C_PreprocessorOnly", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // JJW (1/30/2008): Added detection of running from install vs. build directory
-     Project.setDataPrototype("bool","runningFromInstalledRose", "",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 #if 1
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
