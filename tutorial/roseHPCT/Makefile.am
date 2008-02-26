@@ -78,9 +78,10 @@ profiled.out: attachMetrics $(HPCT_FILES) $(srcdir)/profiled.c
 	  > command-line.tex ; \
 	$$cmdline > profiled.out
 
+# Liao, 2/25/2008. the page number has been changed to 1898 in recent snapshot, pdf dump is much more thorough than before for unknown reasons to me.
 profiled-p93.pdf: profiled.c.pdf
 	if ! gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ \
-	    -dFirstPage=93 -dLastPage=93 profiled.c.pdf ; then \
+	    -dFirstPage=1898 -dLastPage=1898 profiled.c.pdf ; then \
 	  cp $(srcdir)/profiled-p93-save.pdf $@ ; \
 	fi
 
