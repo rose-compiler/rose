@@ -4,9 +4,9 @@
 #include <list>
 #include <string>
 #include <iostream>
-#include <AstInterface.h>
-#include <SymbolicVal.h>
-#include <AnalysisInterface.h>
+#include "AstInterface.h"
+#include "SymbolicVal.h"
+#include "AnalysisInterface.h"
 
 class ArrayAbstractionInterface {
  public:

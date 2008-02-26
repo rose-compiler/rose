@@ -23,7 +23,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  AstInterface.h  CPPAstInterface.h
+include_HEADERS =  AstInterface.h  CPPAstInterface.h AstInterface_ROSE.h
 
 
 
