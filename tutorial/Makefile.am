@@ -685,7 +685,7 @@ generatedCodeExamples = \
 
 inputCode_ASTGraphGenerator.pdf: ASTGraphGenerator
 	@echo "Generating required documentation for tutorial (inputCode_ASTGraphGenerator.pdf) ..."
- # Build smaller versions of these files (so that they fit onto two separate pages (within the tutorial))
+# Build smaller versions of these files (so that they fit onto two separate pages (within the tutorial))
 	split -80 $(srcdir)/addFunctionDeclaration.C addFunctionDeclaration.
 	split -80 $(srcdir)/inheritedAndSynthesizedAttributeTraversal.C inheritedAndSynthesizedAttributeTraversal.
 	split -64 $(srcdir)/loopRecognition.C loopRecognition.
