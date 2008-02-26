@@ -1,4 +1,4 @@
-#include <AnnotGen.h>
+#include "AnnotGen.h"
 
 bool POET::GenAnnot_AstParse::operator()
 (AstInterface& fa, const AstNodePtr& n, AstNodePtr& result)

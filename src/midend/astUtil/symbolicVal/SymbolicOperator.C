@@ -1,9 +1,9 @@
-#include <Matrix.h>
-#include <SymbolicExpr.h>
-#include <SymbolicPlus.h>
-#include <SymbolicMultiply.h>
-#include <SymbolicSelect.h>
-#include <CommandOptions.h>
+#include "Matrix.h"
+#include "SymbolicExpr.h"
+#include "SymbolicPlus.h"
+#include "SymbolicMultiply.h"
+#include "SymbolicSelect.h"
+#include "CommandOptions.h"
 
 #define COMPARE_MAX  10
 static int comparetime = 0;

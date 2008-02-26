@@ -2,10 +2,10 @@
 #include <iostream>
 #include <sstream>
 
-#include <StmtInfoCollect.h>
-#include <AnalysisInterface.h>
+#include "StmtInfoCollect.h"
+#include "AnalysisInterface.h"
 #include <assert.h>
-#include <CommandOptions.h>
+#include "CommandOptions.h"
 
 
 bool DebugLocalInfoCollect ()

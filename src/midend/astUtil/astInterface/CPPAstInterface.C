@@ -1,7 +1,7 @@
 #include "sage3.h"
 
-#include <CPPAstInterface.h>
-#include <AstInterface_ROSE.h>
+#include "CPPAstInterface.h"
+#include "AstInterface_ROSE.h"
 using namespace std;
 
 bool CPPAstInterface ::

@@ -1,10 +1,10 @@
 #include "rose.h"
 
-#include <AstInterface.h>
-#include <StmtInfoCollect.h>
-#include <ReachingDefinition.h>
-#include <DefUseChain.h>
-#include <DirectedGraph.h>
+#include "AstInterface.h"
+#include "StmtInfoCollect.h"
+#include "ReachingDefinition.h"
+#include "DefUseChain.h"
+#include "DirectedGraph.h"
 #include "DependenceGraph.h"
 
 #include "SlicingInfo.h"

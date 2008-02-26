@@ -24,6 +24,6 @@ clean-local:
 installcheck:
 	rm -f identityTranslator identityTranslator.o
 	@echo "Testing build using installed libraries ..."
-	$(MAKE) -f exampleMakefile
+	env -u ROSE_IN_BUILD_TREE $(MAKE) -f exampleMakefile
 	@echo "Testing executable built using installed libraries ..."
-	$(MAKE) -f exampleMakefile check
+	env -u ROSE_IN_BUILD_TREE $(MAKE) -f exampleMakefile check

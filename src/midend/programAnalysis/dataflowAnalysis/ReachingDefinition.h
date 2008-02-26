@@ -3,11 +3,11 @@
 
 #include <assert.h>
 #include <string>
-#include <DataFlowAnalysis.h>
-#include <BitVectorRepr.h>
-#include <AnalysisInterface.h>
-#include <StmtInfoCollect.h>
-#include <AstInterface.h>
+#include "DataFlowAnalysis.h"
+#include "BitVectorRepr.h"
+#include "AnalysisInterface.h"
+#include "StmtInfoCollect.h"
+#include "AstInterface.h"
 
 typedef BitVectorRepr ReachingDefinitions;
 

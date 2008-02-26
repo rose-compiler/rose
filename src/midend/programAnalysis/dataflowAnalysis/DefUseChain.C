@@ -1,10 +1,10 @@
 
-#include <DefUseChain.h>
-#include <StmtInfoCollect.h>
-#include <SinglyLinkedList.h>
-#include <CommandOptions.h>
-#include <GraphUtils.h>
-#include <GraphIO.h>
+#include "DefUseChain.h"
+#include "StmtInfoCollect.h"
+#include "SinglyLinkedList.h"
+#include "CommandOptions.h"
+#include "GraphUtils.h"
+#include "GraphIO.h"
 
 #include <vector>
 

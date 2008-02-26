@@ -1,7 +1,7 @@
 #ifndef DATA_FLOW_ANALYSIS
 #define DATA_FLOW_ANALYSIS
 
-#include <CFGImpl.h>
+#include "CFGImpl.h"
 
 template <class Data>
 class DataFlowNode : public CFGNodeImpl

@@ -4,6 +4,7 @@
 #include "SimpleDirectedGraph.h"
 #include "CFGImpl.h"
 #include "GraphDotOutput.h"
+#include "virtualCFG.h"
 
 #include <map>
 #include <queue>
@@ -148,7 +149,7 @@ public:
       char buf[sizeof(SgNode *) * 2 + 3];
       sprintf(buf, "%p", _node);
       os << buf << ":" << _node->sage_class_name() << " ";
-      os << "[" << _node->unparseToString() << "]";
+      os << "[" << escapeString(_node->unparseToString()) << "]";
     }
   }
 

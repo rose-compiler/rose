@@ -2,9 +2,9 @@
 #ifndef OPERATOR_ANNOTATION_H
 #define OPERATOR_ANNOTATION_H
 
-#include <AnnotCollect.h>
-#include <AnalysisInterface.h>
-#include <AstInterface.h>
+#include "AnnotCollect.h"
+#include "AnalysisInterface.h"
+#include "AstInterface.h"
 #include <iostream>
 #include <list>
 

@@ -1,8 +1,8 @@
 #ifndef DEF_USE_CHAIN_H
 #define DEF_USE_CHAIN_H
 
-#include <ReachingDefinition.h>
-#include <StmtInfoCollect.h>
+#include "ReachingDefinition.h"
+#include "StmtInfoCollect.h"
 
 class DefUseChainNode : public MultiGraphElem
 {

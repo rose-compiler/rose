@@ -1,10 +1,10 @@
 #ifndef _DEPENDENCEGRAPH_H_
 #define _DEPENDENCEGRAPH_H_
 
-#include <AstInterface.h>
-#include <StmtInfoCollect.h>
-#include <ReachingDefinition.h>
-#include <DefUseChain.h>
+#include "AstInterface.h"
+#include "StmtInfoCollect.h"
+#include "ReachingDefinition.h"
+#include "DefUseChain.h"
 
 #include <ostream>
 #include <string>

@@ -1,7 +1,7 @@
 #ifndef ANALYSIS_INTERFACE_H
 #define ANALYSIS_INTERFACE_H
 
-#include <FunctionObject.h>
+#include "FunctionObject.h"
 
 class FunctionSideEffectInterface
 {

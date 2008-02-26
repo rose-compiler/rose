@@ -2,9 +2,9 @@
 #ifndef SYMBOLIC_VAL
 #define SYMBOLIC_VAL
 
-#include <CountRefHandle.h>
-#include <FunctionObject.h>
-#include <AstInterface.h>
+#include "CountRefHandle.h"
+#include "FunctionObject.h"
+#include "AstInterface.h"
 #include <assert.h>
 #include <string>
 #include <vector>

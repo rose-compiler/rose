@@ -1,7 +1,7 @@
 #ifndef ANNOT_GEN_H
 #define ANNOT_GEN_H
 
-#include <AstInterface.h>
+#include "AstInterface.h"
 
 namespace POET {
 class GenAnnot_AstParse : public TransformAstTree {

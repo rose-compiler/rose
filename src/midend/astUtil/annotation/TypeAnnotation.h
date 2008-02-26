@@ -7,8 +7,8 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <AnnotDescriptors.h>
-#include <SymbolicVal.h>
+#include "AnnotDescriptors.h"
+#include "SymbolicVal.h"
 
 template <class TargetInfo>
 class  AnnotCollectionBase {

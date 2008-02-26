@@ -1,8 +1,8 @@
 #ifndef SYMBOLIC_SELECT
 #define SYMBOLIC_SELECT
 
-#include <SymbolicExpr.h>
-#include <const.h>
+#include "SymbolicExpr.h"
+#include "const.h"
 #include <iostream>
 
 class SymbolicSelect : public SymbolicExpr

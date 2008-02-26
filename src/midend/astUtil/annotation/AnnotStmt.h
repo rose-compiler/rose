@@ -1,7 +1,7 @@
 #ifndef ANNOT_STMT_H
 #define ANNOT_STMT_H
 
-#include <AnnotExpr.h>
+#include "AnnotExpr.h"
 
 class VariableDefinitionDescriptor 
   : public CollectPair< CollectPair<TypeDescriptor, NameDescriptor,0>, 

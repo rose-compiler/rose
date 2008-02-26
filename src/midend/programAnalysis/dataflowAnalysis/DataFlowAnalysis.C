@@ -1,5 +1,5 @@
-#include <DataFlowAnalysis.h>
-#include <DGBaseGraphImpl.h>
+#include "DataFlowAnalysis.h"
+#include "DGBaseGraphImpl.h"
 
 template<class Node, class Data>
 DataFlowAnalysis<Node, Data>::DataFlowAnalysis()

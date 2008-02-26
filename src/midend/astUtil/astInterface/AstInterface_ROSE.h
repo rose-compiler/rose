@@ -4,8 +4,8 @@
 #include <list>
 #include <string>
 #include <iostream>
-#include <ObserveObject.h>
-#include <AstInterface.h>
+#include "ObserveObject.h"
+#include "AstInterface.h"
 
 class SgNode;
 class SgType;

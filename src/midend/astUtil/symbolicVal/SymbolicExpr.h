@@ -1,8 +1,8 @@
 #ifndef SYMBOLIC_EXPR
 #define SYMBOLIC_EXPR
 
-#include <SymbolicVal.h>
-#include <LatticeElemList.h>
+#include "SymbolicVal.h"
+#include "LatticeElemList.h"
 #include <iostream>
 
 

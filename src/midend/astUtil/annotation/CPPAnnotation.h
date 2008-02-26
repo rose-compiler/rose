@@ -2,9 +2,9 @@
 #ifndef ___CPP_ANNOTATION_H
 #define ___CPP_ANNOTATION_H
 
-#include <TypeAnnotation.h>
-#include <CPPAstInterface.h>
-#include <SymbolicVal.h>
+#include "TypeAnnotation.h"
+#include "CPPAstInterface.h"
+#include "SymbolicVal.h"
 
 template <class Descriptor>
 class CPPTypeCollection 
