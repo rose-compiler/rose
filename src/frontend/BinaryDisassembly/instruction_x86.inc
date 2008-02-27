@@ -801,6 +801,9 @@ switch (mnemonic.size()) {
                 case 's': { // 'flds'
                   {instruction = new SgAsmx86Fld(address,  mnemonic, ""); goto done;}
                 }
+                case 't': { // 'fldt'
+                  {instruction = new SgAsmx86Fld(address,  mnemonic, ""); goto done;}
+                }
                 case 'z': { // 'fldz'
                   {instruction = new SgAsmx86Fldz(address,  mnemonic, ""); goto done;}
                 }
@@ -1755,6 +1758,9 @@ switch (mnemonic.size()) {
                       {instruction = new SgAsmx86Fstp(address,  mnemonic, ""); goto done;}
                     }
                     case 's': { // 'fstps'
+                      {instruction = new SgAsmx86Fstp(address,  mnemonic, ""); goto done;}
+                    }
+                    case 't': { // 'fstpt'
                       {instruction = new SgAsmx86Fstp(address,  mnemonic, ""); goto done;}
                     }
                     default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
@@ -3103,6 +3109,60 @@ switch (mnemonic.size()) {
                 if (mnemonic[5] == 'p') { // 'fucomp'
                   if (mnemonic[6] == 'p') { // 'fucompp'
                     {instruction = new SgAsmx86Fucompp(address,  mnemonic, ""); goto done;}
+                  } else {
+                    instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          } else {
+            instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          }
+        } else {
+          instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+        }
+      }
+      case 'l': { // 'l'
+        if (mnemonic[1] == 'd') { // 'ld'
+          if (mnemonic[2] == 'm') { // 'ldm'
+            if (mnemonic[3] == 'x') { // 'ldmx'
+              if (mnemonic[4] == 'c') { // 'ldmxc'
+                if (mnemonic[5] == 's') { // 'ldmxcs'
+                  if (mnemonic[6] == 'r') { // 'ldmxcsr'
+                    {instruction = new SgAsmx86Ldmxcsr(address,  mnemonic, ""); goto done;}
+                  } else {
+                    instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          } else {
+            instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          }
+        } else {
+          instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+        }
+      }
+      case 's': { // 's'
+        if (mnemonic[1] == 't') { // 'st'
+          if (mnemonic[2] == 'm') { // 'stm'
+            if (mnemonic[3] == 'x') { // 'stmx'
+              if (mnemonic[4] == 'c') { // 'stmxc'
+                if (mnemonic[5] == 's') { // 'stmxcs'
+                  if (mnemonic[6] == 'r') { // 'stmxcsr'
+                    {instruction = new SgAsmx86Stmxcsr(address,  mnemonic, ""); goto done;}
                   } else {
                     instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                   }

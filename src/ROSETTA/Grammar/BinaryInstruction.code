@@ -411,6 +411,7 @@ HEADER_BINARY_OPERAND_LIST_END
 
 
 HEADER_BINARY_FUNCTION_DECLARATION_START
+	int nrOfValidInstructions();
           //void append_block( SgAsmBlock* operand );
           void append_statement( SgAsmStatement* statement );
           void remove_statement( SgAsmStatement* statement );	
@@ -716,6 +717,29 @@ SOURCE_BINARY_DATA_STRUCTURE_END
 
 
 SOURCE_BINARY_FUNCTION_DECLARATION_START
+int 
+SgAsmFunctionDeclaration::nrOfValidInstructions(  ) {
+  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
+  std::vector<SgNode*>::iterator j = succs.end();
+  int instructions = succs.size();
+  bool foundRet=false;
+  if (j!=succs.begin())
+    j--;
+  else
+    return 0;
+  for (;j!=succs.begin(); j--) {
+     SgNode* n = *j;
+     if (isSgAsmx86Ret(n)) {
+          foundRet=true;
+          break;
+    } else 
+       instructions--;
+  }
+  if (!foundRet)
+     instructions = succs.size();
+  return instructions;
+}
+
 void
 SgAsmFunctionDeclaration::remove_children(  )
    {

@@ -174,7 +174,7 @@ fild fildl -> Fild
 fimul fimull -> Fimul
 fist fistl -> Fist
 fistp fistpl -> Fistp
-fld fldl flds -> Fld
+fld fldl flds fldt -> Fld
 fld1 -> Fld1
 fldcw -> Fldcw
 fldl2e -> Fldl2e
@@ -196,7 +196,7 @@ fscale -> Fscale
 fsin -> Fsin
 fsqrt -> Fsqrt
 fst fstl fsts -> Fst
-fstp fstpl fstps -> Fstp
+fstp fstpl fstps fstpt -> Fstp
 fsub fsubl fsubs -> Fsub
 fsubp -> Fsubp
 fsubr fsubrl fsubrs -> Fsubr
@@ -226,3 +226,5 @@ movntq -> Movntq
 movdqu -> Movdqu
 arpl -> Arpl
 emms -> Emms
+stmxcsr -> Stmxcsr
+ldmxcsr -> Ldmxcsr

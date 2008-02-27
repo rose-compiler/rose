@@ -23,8 +23,15 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
   void printEdges_multiple( bool forward_analysis, std::ofstream& myfile);
   void printEdges( bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
 
+  bool skipFunctions;
+  bool skipInternalEdges;
+
  public:
-  RoseBin_GMLGraph() {}
+  RoseBin_GMLGraph() {
+    //added this for vizz3d visualization
+    skipFunctions=true;
+    skipInternalEdges=true;
+  }
   virtual ~RoseBin_GMLGraph() {}
 
   void printNodes( bool dfg,  bool forward_analysis, 

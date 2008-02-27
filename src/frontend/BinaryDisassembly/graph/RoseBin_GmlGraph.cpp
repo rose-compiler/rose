@@ -47,7 +47,27 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
       funcMap[func]=counter;
       nodesMap[func]=count;
       string name = func->get_name();
-      string text = "node [\n   id " + RoseBin_support::ToString(counter) + "\n   label \"" + name + "\"\n  isGroup 1\n ]\n";
+      string text = "node [\n   id " + RoseBin_support::ToString(counter) + "\n  id_ " + 
+	RoseBin_support::ToString(counter) + "\n  label \"" + name + "\"\n  ";
+      text +="   nrinstr_ "+RoseBin_support::ToString(func->nrOfValidInstructions())+" \n";
+      text+= " isGroup 1\n isGroup_ 1\n ]\n";
+
+      if (name=="frame_dummy") {
+	cerr << text << endl;
+	vector<SgNode*> succs = func->get_traversalSuccessorContainer();
+	vector<SgNode*>::iterator j = succs.begin();
+	cerr << " ------------- free_dummy"<<endl;
+	int ii=0;
+	for (;j!=succs.end();j++) {
+	  SgNode* n = *j;
+	  cerr << " Node contained at pos:"<<ii<<"  - " << n->class_name() << endl;
+	  ii++;
+	}
+      cerr << " number of validInstructions: " << func->nrOfValidInstructions() << endl;
+      }
+
+
+
       if (grouping)
 	myfile << text;
     } 
@@ -103,17 +123,28 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
       RoseBin_support::checkText(name);
       int length = name.length();
       text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n   label \"" + name + "\"\n";
-      if (nodest_jmp)
+      if (nodest_jmp) {
 	text += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"circle\" fill \"#FF0000\"  ]\n";
-      else if (nodest_call)
+	text +="   Node_Color_ \"FF0000\" \n";
+      }      else if (nodest_call) {
 	text += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"circle\" fill \"#FF9900\"  ]\n";
-      else if (interrupt)
+	text +="   Node_Color_ \"FF9900\" \n";
+      }      else if (interrupt) {
 	text += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"circle\" fill \"#0000FF\"  ]\n";
-      else if (error)
+	text +="   Node_Color_ \"0000FF\" \n";
+      }      else if (error) {
 	text += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"circle\" fill \"#66FFFF\"  ]\n";
-      else
+	text +="   Node_Color_ \"66FFFF\" \n";
+      }else {
 	text += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"circle\" fill \"#9933FF\"  ]\n";
-      text +="   gid "+RoseBin_support::ToString(parent)+" ]\n";
+	text +="   Node_Color_ \"9933FF\" \n";
+      }
+      text +="   gid "+RoseBin_support::ToString(parent)+" \n";
+      text +="   skip_ 1 \n";
+      text +="   gid_ "+RoseBin_support::ToString(parent)+" ]\n";
+      // skip functions for now
+      if (skipFunctions)
+	text ="";
     } /*not a func*/ else {
       SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
       SgAsmFunctionDeclaration* funcDecl_parent = 
@@ -134,6 +165,16 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
 	cerr << " GMLGraph parent == 0 " << endl;
 
       text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n" + name ;
+
+      SgAsmInstruction* pre = bin_inst->cfgBinFlowInEdge();
+      if (pre==NULL) {
+	// first node
+	text +="   first_ 1 \n";
+      }
+
+      int instrnr = funcDecl_parent->get_childIndex(bin_inst);
+      text +="   instrnr_ "+RoseBin_support::ToString(instrnr)+" \n";
+      text +="   gid_ "+RoseBin_support::ToString(parent)+" \n";
       text +="   gid "+RoseBin_support::ToString(parent)+" ]\n";
     }
     
@@ -224,34 +265,34 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   string add = "";
   if (call || ret) {
     if (nodest_call)
-      add = " fill \"#FF9900\" ";
+      add = " FF9900 ";
     else if (error)
-      add = " fill \"#3399FF\" ";
+      add = " 3399FF ";
     else
-      add = " fill \"#FFCCFF\" ";
+      add = " FFCCFF ";
   } else if (jmp) {
     if (nodest_jmp)
-      add = " fill \"#FF0000\" ";
+      add = " FF0000 ";
     else
-      add = " fill \"#00FF00\" ";
+      add = " 00FF00 ";
   } else
     if (control) {
       if (isSgAsmx86Int(control))
-	add = " fill \"#0000FF\" ";
+	add = " 0000FF ";
       else
-	add = " fill \"#008800\" ";
+	add = " 008800 ";
     } else
-      add = " fill \"#FFFF66\" ";
+      add = " FFFF66 ";
 
   if (checked)
-    add = " fill \"#777777\" ";
+    add = " 777777 ";
 
   if (dfa_standard)
-    add = " fill \"#FFFF00\" ";
+    add = " FFFF00 ";
   if (dfa_resolved_func)
-    add = " fill \"#00FF00\" ";
+    add = " 00FF00 ";
   if (dfa_unresolved_func)
-    add = " fill \"#FF0000\" ";
+    add = " FF0000 ";
 
 
   string nodeStr = "";
@@ -261,7 +302,8 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   name = name+/*" " +regs +*/ "  " +dfa_variable+" "+"vis:"+visitedCounter;
   nodeStr= "   label \"" + name+"\"\n ";
   int length = name.length();
-  nodeStr += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"rectangle\" " + add +  "  ]\n";
+  nodeStr += "  Node_Color_ " + add + "  \n";
+  nodeStr += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"rectangle\" fill \"#" + add +  "\"  ]\n";
   return nodeStr;
 }
 
@@ -409,8 +451,18 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	output += "   graphics [ type \"line\" arrow \"last\" fill \"#000000\" ]  ]\n";
       else output +=add;
 
+      // skip the function declaration edges for now
+      if (skipFunctions)
+	if (isSgAsmFunctionDeclaration(binStat_s))
+	  output="";
+      if (skipInternalEdges) {
+	SgAsmx86ControlTransferInstruction* contrl = isSgAsmx86ControlTransferInstruction(source->get_SgNode());
+	SgAsmx86Ret* ret = isSgAsmx86Ret(contrl);
+	if (contrl && ret==NULL) {} 
+	else
+	  output="";
+      }
 
-      
       myfile << output;
     }
 

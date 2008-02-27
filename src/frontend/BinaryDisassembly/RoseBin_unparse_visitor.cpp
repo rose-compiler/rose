@@ -135,7 +135,33 @@ string RoseBin_unparse_visitor::resolveRegister(SgAsmRegisterReferenceExpression
   case SgAsmRegisterReferenceExpression::rIP: {
     return getNameForPartialRegister("rip", pos);
   } 
+  case SgAsmRegisterReferenceExpression::STnumbered: {
+    return "st(0)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+1: {
+    return "st(1)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+2: {
+    return "st(2)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+3: {
+    return "st(3)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+4: {
+    return "st(4)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+5: {
+    return "st(5)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+6: {
+    return "st(6)";
+  }
+  case SgAsmRegisterReferenceExpression::STnumbered+7: {
+    return "st(7)";
+  }
+
   default:
+    std::cerr << " Undefined Register " << std::endl;
     abort();
     res = "undefined";
     break;
@@ -369,6 +395,8 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 	exception=true;
       res = "[";
       if (exception==false) {
+	if (expr->get_type()==NULL)
+	  cerr << " expr = " << expr->class_name() << "  " << mnemonic << endl;
         ROSE_ASSERT (expr->get_type());
 	res = getPointerTypeName(expr->get_type()) + " PTR [";
       }

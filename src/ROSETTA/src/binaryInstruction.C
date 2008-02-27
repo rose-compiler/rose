@@ -250,6 +250,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Verr ,     "Asmx86Verr",     "Asmx86VerrTag" );
      NEW_TERMINAL_MACRO ( Asmx86Verw ,     "Asmx86Verw",     "Asmx86VerwTag" );
      NEW_TERMINAL_MACRO ( Asmx86Sldt ,     "Asmx86Sldt",     "Asmx86SldtTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Stmxcsr ,  "Asmx86Stmxcsr",  "Asmx86StmxcsrTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Ldmxcsr ,  "Asmx86Ldmxcsr",  "Asmx86LdmxcsrTag" );
 
      // Misc Instructions
      NEW_TERMINAL_MACRO ( Asmx86Lea ,      "Asmx86Lea",     "Asmx86LeaTag" );
@@ -399,7 +401,7 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_NONTERMINAL_MACRO ( Asmx86IOInstruction, 
 			     Asmx86In | Asmx86Out | Asmx86Ins | Asmx86Outs | Asmx86Verr | Asmx86Verw |
-			     Asmx86Sldt
+			     Asmx86Sldt | Asmx86Stmxcsr | Asmx86Ldmxcsr
 			     , "Asmx86IOInstruction", "Asmx86IOInstructionTag" );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagDataTransferInstruction, 
