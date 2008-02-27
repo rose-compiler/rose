@@ -34,6 +34,21 @@ proc split_on_unwrapped_comma {str} {
   return [split $ls " "]
 }
 
+proc get_register_size {reg} {
+  if {[string match %* $reg]} {set reg [string range $reg 1 end]}
+  switch -regexp -- $reg {
+    {^[cdefgs]s$} {return sizeWord}
+    {^e.*$} {return sizeDWord}
+    {^r.*b$} {return sizeByte}
+    {^r.*w$} {return sizeWord}
+    {^r.*d$} {return sizeDWord}
+    {^r.*$} {return sizeQWord}
+    {^[abcd]h$} {return sizeByte}
+    {^.*l$} {return sizeByte}
+    default {return sizeWord}
+  }
+}
+
 proc read_operand {op} {
   # puts stderr "read_operand $op"
   # if {[string match *:* $op]} { puts stderr "read_operand $op"}
@@ -302,7 +317,7 @@ proc convert_insn {next_addr insn} {
       loop* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] $sizeInt 1 insn"; get_insn $op0}
       j* {puts -nonewline "\"$opcode\" [read_operand \$0x$op0_raw] $sizeInt 1 insn"; get_insn $op0}
       set* {puts -nonewline "\"$opcode\" $op0 sizeByte 1 insn"}
-      cmov* {puts -nonewline "\"$opcode\" $op1 $op0 2 insn"}
+      cmov* {puts -nonewline "\"$opcode\" $op1 [get_register_size $op1] $op0 [get_register_size $op1] 2 insn"}
       cld {puts -nonewline "\"cld\" 0 insn"}
       std {puts -nonewline "\"std\" 0 insn"}
       sahf {puts -nonewline "\"sahf\" 0 insn"}
@@ -354,6 +369,9 @@ proc convert_insn {next_addr insn} {
       nop {puts -nonewline "\"nop\" 0 insn"}
       .byte {puts -nonewline "\".byte\" 0 insn"}
       data16 {puts -nonewline "\"data16\" 0 insn"}
+
+      stmxcsr {puts -nonewline "\"stmxcsr\" $op0 sizeDWord 1 insn"}
+      ldmxcsr {puts -nonewline "\"ldmxcsr\" $op0 sizeDWord 1 insn"}
 
       fist {
         puts -nonewline "\"$opcode\" $op1 $sizeInt $op0 $sizeFloat 2 insn"
