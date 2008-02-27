@@ -117,6 +117,8 @@ SgAsmx86CMovs
 SgAsmx86CMovns
 SgAsmx86CMovp
 SgAsmx86CMovnp
+SgAsmx86Stmxcsr
+SgAsmx86Ldmxcsr
 SgAsmx86Push
 SgAsmx86Pop
 SgAsmx86Xchg
