@@ -80,7 +80,7 @@ class CFGEdgeImpl : public MultiGraphElem
 {
  public:
   typedef CFGConfig::EdgeType EdgeType;
-  CFGEdgeImpl( EdgeType val, MultiGraphCreate *c) : t(val), MultiGraphElem(c) {}
+  CFGEdgeImpl( EdgeType val, MultiGraphCreate *c) : MultiGraphElem(c), t(val) {}
   EdgeType GetEdgeType() const { return t; }
   virtual std:: string toString() const
     {

@@ -64,6 +64,8 @@ class TransInfoOP
 
    // The transitive path representation associated with edge e.
    virtual T  GetTransInfo( const GraphAccessInterface::Edge *e) =0;
+
+   virtual ~TransInfoOP() {}
 };
 
 /****************************************************
@@ -97,6 +99,8 @@ class TransInfoGraph
 
   // for debugging purpose only
   virtual void Dump() const {}
+
+  virtual ~TransInfoGraph() {}
 };
 
 // class used in the implementation of transitive analysis algorithm

@@ -140,7 +140,7 @@ class BitVectorRepr : public CountRefHandle<BitVectorReprImpl>
   void complement() 
     { UpdateRef().complement(); }
   std::string toString() const
-    { ConstRef().toString();  }
+    { return ConstRef().toString();  }
 };
 
 template <class Name, class Data>
@@ -151,7 +151,7 @@ class BitVectorReprBase
     Name name;
     int index;
     DataEntry( const Name& n, const Data& d, int i = 0) 
-      : name(n), data(d), index(i) {}
+      : data(d), name(n), index(i) {}
   };
   typedef DoublyLinkedListWrap<DataEntry> DataList;
   typedef std::map<Name, DoublyLinkedEntryWrap<DataEntry>* > DataMap;

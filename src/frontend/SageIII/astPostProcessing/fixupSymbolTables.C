@@ -180,7 +180,7 @@ FixupAstSymbolTables::visit ( SgNode* node )
                SgSymbol* symbol = isSgSymbol((*i).second);
                ROSE_ASSERT ( symbol != NULL );
 
-            // We have to look at each type of symbol seperately!  This is because there is no virtual function,
+            // We have to look at each type of symbol separately!  This is because there is no virtual function,
             // the reason for this is that each get_declaration() function returns a different type!
             // ROSE_ASSERT ( symbol->get_declaration() != NULL );
                switch(symbol->variantT())

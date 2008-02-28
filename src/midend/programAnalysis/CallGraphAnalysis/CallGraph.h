@@ -259,6 +259,7 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
     // DQ (9/4/2005): Swapped order to avoid compiler waring (and reflect proper order of initialization)
     // CallGraphDotOutput( CallGraphCreate & graph ) : callGraph(graph), GraphDotOutput(graph) {}
        CallGraphDotOutput( CallGraphCreate & graph ); 
+       virtual ~CallGraphDotOutput() {}
 
        virtual int getVertexSubgraphId ( GraphNode & v );
 

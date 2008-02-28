@@ -5,11 +5,7 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
@@ -17,23 +13,6 @@ using namespace std;
 // ################################################################
 // #                   Grammar Member Functions                   #
 // ################################################################
-
-//#############################################################################
-/* JH (10/25/2005): Convert a integer to a string. Perhaps, a similar
- * function is declared  elsewhere or is already defined in one of 
- * the string manipulation files. However, I was tired of searching 
- * for the suitable function and so I wrote my own version. It just 
- * converts an integer in an ostringstream, from which a string is built.
- */
-std::string 
-IntToString(int num)
-   {
-  // creates an ostringstream object
-     ostringstream myStream;
-     myStream << num << flush;
-  // returns the string form of the stringstream object
-     return (myStream.str());
-   }
 
 //#############################################################################
 /* JH(03/30/2006) Method for generating the code of the AST_FILE_IO.h
@@ -76,8 +55,8 @@ std::string Terminal::buildStaticDataMemberListDeleteStaticData()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -125,20 +104,19 @@ std::string Terminal::buildStaticDataMemberListDeleteStaticData()
  * for its static data by the method above!
  */
 std::string
-Grammar::buildStaticDataMemberListDeleteStaticDataSource(GrammarTreeNode & node)
+Grammar::buildStaticDataMemberListDeleteStaticDataSource(Terminal & node)
    {
-     std::string classMembers = node.getToken().buildStaticDataMemberListDeleteStaticData();
+     std::string classMembers = node.buildStaticDataMemberListDeleteStaticData();
      string temp = classMembers;
-     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
+     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
 
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
+     vector<Terminal *>::const_iterator treeListIterator;
+     for( treeListIterator = node.subclasses.begin();
+          treeListIterator != node.subclasses.end();
           treeListIterator++ )
        {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
+         ROSE_ASSERT ((*treeListIterator) != NULL);
+         ROSE_ASSERT ((*treeListIterator)->getBaseClass() != NULL);
          classMembers += buildStaticDataMemberListDeleteStaticDataSource(**treeListIterator);
         }
       return classMembers;
@@ -151,13 +129,13 @@ Grammar::buildStaticDataMemberListDeleteStaticDataSource(GrammarTreeNode & node)
  * object of those classes, only of derived classes. Therefore, we keep
  * this list, in order to skip the handling of these memory pools!  
  */
-std::list<std::string>& 
+std::vector<std::string>& 
 Grammar::getListOfAbstractClasses()
    {
   /* JH (03/30/2006) The class types are managed in a static STL list, 
    * containing the class names of the abstract classes as string.
    */
-     static std::list <std::string> listOfAbstractClasses;
+     static std::vector <std::string> listOfAbstractClasses;
      if ( listOfAbstractClasses.empty() )
         {
           listOfAbstractClasses.push_back ("SgSymbol");
@@ -176,14 +154,9 @@ Grammar::buildStorageClassDeclarations()
      std::string declareStorageClasses;
      declareStorageClasses += "// JH (01/18/2006) Forward declarations for the StorageClasses,"\
                               " needed by the ast file i/o\n\n";
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i )
-        {
-          nodeNameString = nonTerminalList[i].name;
-          declareStorageClasses += "  class " + nodeNameString + "StorageClass; \n";
-        }
      for ( unsigned int i = 0 ; i < terminalList.size() ; ++i )
         {
-          nodeNameString = terminalList[i].name;
+          nodeNameString = terminalList[i]->name;
           declareStorageClasses += "  class " + nodeNameString + "StorageClass; \n";
         }
      declareStorageClasses += "\n  template <class A>\n  class EasyStorage;";
@@ -206,7 +179,7 @@ Grammar::build_header_AST_FILE_IO_CLASS()
      ROSE_ASSERT (!this->astVariantToNodeMap.empty());
      size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
      std::string replacement = "     enum { totalNumberOfIRNodes = " + 
-                               IntToString ( maxVariant + 1 ) +
+                               StringUtility::numberToString ( maxVariant + 1 ) +
                                "} ; ";
     
      string returnString = StringUtility::toString(StringUtility::copyEdit(readFromFile,"$PLACE_ENUM_SIZE", replacement )); 
@@ -232,10 +205,10 @@ Grammar::build_source_AST_FILE_IO_CLASS()
    * name the corresponding iterators, to have a nicer use within
    * the following code generation!
    */
-     std::list<std::string> listOfAbstractClasses = getListOfAbstractClasses();
+     std::vector<std::string> listOfAbstractClasses = getListOfAbstractClasses();
      assert ( listOfAbstractClasses.empty() == false );
-     std::list<std::string>::iterator abstractClassesListStart = listOfAbstractClasses.begin() ;
-     std::list<std::string>::iterator abstractClassesListEnd = listOfAbstractClasses.end();
+     std::vector<std::string>::const_iterator abstractClassesListStart = listOfAbstractClasses.begin() ;
+     std::vector<std::string>::const_iterator abstractClassesListEnd = listOfAbstractClasses.end();
 
   /* JH (03/30/2006) Some working strings. nodeNameString denotes the name 
    * of the IR node, nbr holds the string cast of an integer.
@@ -270,11 +243,8 @@ Grammar::build_source_AST_FILE_IO_CLASS()
      std::string startUp;
 
      set<string> presentNames;
-     for ( unsigned int i = 0 ; i < nonTerminalList.size() ; ++i ) {
-       presentNames.insert(nonTerminalList[i].name);
-     }
      for ( unsigned int i = 0 ; i < terminalList.size() ; ++i ) {
-       presentNames.insert(terminalList[i].name);
+       presentNames.insert(terminalList[i]->name);
      }
 
      startUp += "     listOfMemoryPoolSizes [ 0 ] =  globalIndexCounter;\n"  ;
@@ -290,7 +260,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                         " :: getNumberOfValidNodesAndSetGlobalIndexInFreepointer ( globalIndexCounter ) ; \n" ;
           }
        }
-       startUp +=  "     listOfMemoryPoolSizes [ " +  IntToString ( i + 1) + " ] "\
+       startUp +=  "     listOfMemoryPoolSizes [ " +  StringUtility::numberToString ( i + 1) + " ] "\
                     "=  globalIndexCounter; \n"  ;
      }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_STARTUP", startUp.c_str() );

@@ -66,7 +66,7 @@ HEADER_START
           virtual void set_file_info(Sg_File_Info* X);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -593,7 +593,7 @@ HEADER_CONDITIONAL_EXPRESSION_END
 
 HEADER_CAST_EXPRESSION_START
        // DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
-       // enum Sg$GRAMMAR_X_MARKER_e_cast_type 
+       // enum Sg_e_cast_type 
       /*! \brief Classification of Casts
 
           Must be either C style cast or C++ style const_cast<>, static_cast<>, 
@@ -612,7 +612,7 @@ HEADER_CAST_EXPRESSION_START
                e_reinterpret_cast = 6   /*!< C++ reinterpret cast */
              };
 
-       // Sg$GRAMMAR_X_MARKER_e_cast_type cast_type();
+       // Sg_e_cast_type cast_type();
           cast_type_enum cast_type();
 
        // DQ (1/16/2006): Added to support special version of get_type which uses the p_expression_type 
@@ -3700,7 +3700,7 @@ SgCastExp::post_construction_initialization()
    }
 
 // DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
-// $CLASSNAME::Sg$GRAMMAR_X_MARKER_e_cast_type
+// $CLASSNAME::Sg_e_cast_type
 SgCastExp::cast_type_enum
 SgCastExp::cast_type()
    {

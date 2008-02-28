@@ -9,6 +9,7 @@ class SCCAnalOperator
   public:
     virtual void CreateSCC() = 0;
     virtual void SCCAdd( GraphAccessInterface::Node *n) = 0;
+    virtual ~SCCAnalOperator() {}
 };
  
 class SCCAnalysis
@@ -26,7 +27,8 @@ class SCCAnalysis
 class SCCGroupGraphOperator : public SCCAnalOperator
 {
   public:
-   SCCGroupGraphOperator(GroupGraphCreate *g) : graph(g),sccNode(0) {}
+   SCCGroupGraphOperator(GroupGraphCreate *g) : sccNode(0), graph(g) {}
+   virtual ~SCCGroupGraphOperator() {}
    virtual void CreateSCC() { SetCurSCC( new GroupGraphNode(graph) ); }
    void SCCAdd( GraphAccessInterface::Node *n)
       { sccNode->AddNode( n );

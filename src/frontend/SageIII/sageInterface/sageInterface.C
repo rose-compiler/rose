@@ -1643,7 +1643,7 @@ SageInterface::isOverloaded ( SgFunctionDeclaration* functionDeclaration )
         }
 
   // DQ (10/11/2007): Fixup to use the counter and consider more than 1 function with the same name an overloaded member function.
-  // This might be a problem for friend functions, so test this seperately.
+  // This might be a problem for friend functions, so test this separately.
   // return result;
      return (counter > 1);
    }
@@ -2382,7 +2382,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
         }
 
   // Generate a copy of the statement list (this is simpler than handling the cases of a 
-  // declaration list and a statement list seperately for the scopes that contain one or the other.
+  // declaration list and a statement list separately for the scopes that contain one or the other.
      SgStatementPtrList statementList = scope->generateStatementList();
 
   // Loop through the statements and for each declaration build a symbol and add it to the symbol table
@@ -2859,7 +2859,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                SgLabelStatement* labelStatement = isSgLabelStatement(*i);
                if (labelStatement != NULL)
                   {
-                 // Handle the case of a label statement seperately since it is not a declaration 
+                 // Handle the case of a label statement separately since it is not a declaration 
                  // (and it is not a declaration in the C++ grammar, so this has to be a special case).
 
                  // printf ("Found a label statement = %p = %s (building a SgLabelSymbol and inserting it into scope = %p = %s \n",labelStatement,SageInterface::get_name(labelStatement).c_str(),scope,scope->class_name().c_str());

@@ -2,7 +2,6 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 void
 Grammar::setUpBinaryInstructions ()
@@ -65,24 +64,24 @@ Grammar::setUpBinaryInstructions ()
                              AsmArmSub | AsmArmAdd | AsmArmAdc | AsmArmSbc | AsmArmRsb | AsmArmRsc |
 			     AsmArmMul | AsmArmMla | AsmArmUmull | AsmArmUmlal | AsmArmSmull | AsmArmSmlal |
 			     AsmArmCmp | AsmArmCmn
-			     , "AsmArmArithmeticInstruction", "AsmArmArithmeticInstructionTag" );
+			     , "AsmArmArithmeticInstruction", "AsmArmArithmeticInstructionTag", false );
      
      NEW_NONTERMINAL_MACRO ( AsmArmDataTransferInstruction, AsmArmMov | AsmArmMvn | AsmArmMrs | AsmArmMsr 
 			      | AsmArmLdr | AsmArmLdm | AsmArmStr | AsmArmStm | AsmArmArithmeticInstruction
-			     , "AsmArmDataTransferInstruction", "AsmArmDataTransferInstructionTag" );
+			     , "AsmArmDataTransferInstruction", "AsmArmDataTransferInstructionTag", false );
      
 
      NEW_NONTERMINAL_MACRO ( AsmArmControlTransferInstruction, 
 			     AsmArmB | AsmArmBl | AsmArmBx
-			     , "AsmArmControlTransferInstruction", "AsmArmControlTransferInstructionTag" );
+			     , "AsmArmControlTransferInstruction", "AsmArmControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmArmMiscInstruction, 
 			     AsmArmSwp | AsmArmSwi
-			     , "AsmArmMiscInstruction", "AsmArmMiscInstructionTag" );
+			     , "AsmArmMiscInstruction", "AsmArmMiscInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmArmLogicalInstruction, 
 			     AsmArmTst | AsmArmTeq | AsmArmAnd | AsmArmEor | AsmArmOrr | AsmArmBic
-			     , "AsmArmLogicalInstruction", "AsmArmLogicalInstructionTag" );
+			     , "AsmArmLogicalInstruction", "AsmArmLogicalInstructionTag", false );
 
 
   // tps (08/08/07): added most of the 80086 instructions (except 80087)
@@ -377,81 +376,81 @@ Grammar::setUpBinaryInstructions ()
 			     Asmx86Fsubp | Asmx86Fsubr | Asmx86Fsubrp | Asmx86Ftst | Asmx86Fucom |
 			     Asmx86Fucomp | Asmx86Fucompp | Asmx86Fwait | Asmx86Fxch | Asmx86Fxsave |
 			     Asmx86Fyl2x | Asmx86Xorps | Asmx86Xorpd
-			     , "Asmx86FloatingPointInstruction", "Asmx86FloatingPointInstructionTag" );
+			     , "Asmx86FloatingPointInstruction", "Asmx86FloatingPointInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagStringInstruction, 
 			     Asmx86Repe | Asmx86Repne | Asmx86Rep
-			     , "Asmx86ConditionalFlagStringInstruction", "Asmx86ConditionalFlagStringInstructionTag" );
+			     , "Asmx86ConditionalFlagStringInstruction", "Asmx86ConditionalFlagStringInstructionTag", false );
 
 
      NEW_NONTERMINAL_MACRO ( Asmx86StringInstruction, Asmx86ConditionalFlagStringInstruction |
 			     Asmx86Movs | Asmx86Cmps | Asmx86Scas | Asmx86Lods |
-			     Asmx86Stos | Asmx86Repe | Asmx86Repne
-			     , "Asmx86StringInstruction", "Asmx86StringInstructionTag" );
+			     Asmx86Stos
+			     , "Asmx86StringInstruction", "Asmx86StringInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86FlagControlInstruction, 
 			     Asmx86Stc | Asmx86Clc | Asmx86Cmc | Asmx86Cld | Asmx86Std |
 			     Asmx86Lahf | Asmx86Sahf | Asmx86Pushf | Asmx86Popf | 
 			     Asmx86Sti | Asmx86Cli
-			     , "Asmx86FlagControlInstruction", "Asmx86FlagControlInstructionTag" );
+			     , "Asmx86FlagControlInstruction", "Asmx86FlagControlInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86SegmentRegisterInstruction,
 			     Asmx86Lds | Asmx86Les | Asmx86Lfs | Asmx86Lgs | Asmx86Lss
-			     , "Asmx86SegmentRegisterInstruction", "Asmx86SegmentRegisterInstructionTag" );
+			     , "Asmx86SegmentRegisterInstruction", "Asmx86SegmentRegisterInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86IOInstruction, 
 			     Asmx86In | Asmx86Out | Asmx86Ins | Asmx86Outs | Asmx86Verr | Asmx86Verw |
 			     Asmx86Sldt | Asmx86Stmxcsr | Asmx86Ldmxcsr
-			     , "Asmx86IOInstruction", "Asmx86IOInstructionTag" );
+			     , "Asmx86IOInstruction", "Asmx86IOInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagDataTransferInstruction, 
                              Asmx86CMovc | Asmx86CMovnc | Asmx86CMovo | Asmx86CMovno | 
                              Asmx86CMovs | Asmx86CMovns | Asmx86CMovp | Asmx86CMovnp |
                              Asmx86CMove | Asmx86CMovne | Asmx86CMova | Asmx86CMovae | Asmx86CMovb | Asmx86CMovbe | Asmx86CMovg | 
                              Asmx86CMovge | Asmx86CMovl | Asmx86CMovle 
-			     , "Asmx86ConditionalFlagDataTransferInstruction", "Asmx86ConditionalFlagDataTransferInstructionTag" );
+			     , "Asmx86ConditionalFlagDataTransferInstruction", "Asmx86ConditionalFlagDataTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalDataTransferInstruction,  Asmx86Cmpxchg | Asmx86Cmpxchg8b 
-			     , "Asmx86ConditionalDataTransferInstruction", "Asmx86ConditionalDataTransferInstructionTag" );
+			     , "Asmx86ConditionalDataTransferInstruction", "Asmx86ConditionalDataTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ArithmeticInstruction, 
                              Asmx86Sub | Asmx86Add | Asmx86Inc |
 			     Asmx86Adc | Asmx86Sbb | Asmx86Mul | Asmx86IMul | Asmx86Div | Asmx86IDiv | 
 			     Asmx86Dec | Asmx86Neg | Asmx86Cmp | Asmx86Psub | Asmx86Padd | 
 			     Asmx86Daa | Asmx86Das | Asmx86Aaa | 
-			     Asmx86Aas | Asmx86Aam | Asmx86Aad  , "Asmx86ArithmeticInstruction", "Asmx86ArithmeticInstructionTag" );
+			     Asmx86Aas | Asmx86Aam | Asmx86Aad  , "Asmx86ArithmeticInstruction", "Asmx86ArithmeticInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86DataTransferInstruction, Asmx86Push | Asmx86Mov | Asmx86Pop | 
 			     Asmx86ConditionalDataTransferInstruction | Asmx86ConditionalFlagDataTransferInstruction | 
 			     Asmx86ArithmeticInstruction | 
 			     Asmx86Xchg | Asmx86Bswap | Asmx86Xadd | Asmx86Movntq | Asmx86Movdqu |
 			     Asmx86Pusha | Asmx86Popa | Asmx86Cwd | Asmx86Cbw | Asmx86Movsx | Asmx86Movzx 
-			     , "Asmx86DataTransferInstruction", "Asmx86DataTransferInstructionTag" );
+			     , "Asmx86DataTransferInstruction", "Asmx86DataTransferInstructionTag", false );
 
 
      NEW_NONTERMINAL_MACRO ( Asmx86LogicalInstruction, 
 			     Asmx86And | Asmx86Or | Asmx86Xor | Asmx86Not | Asmx86Pxor | Asmx86Pand |
 			     Asmx86Pandn
-			     , "Asmx86LogicalInstruction", "Asmx86LogicalInstructionTag" );
+			     , "Asmx86LogicalInstruction", "Asmx86LogicalInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86MiscInstruction, 
 			     Asmx86Lea | Asmx86Nop | Asmx86Ud2 | Asmx86Xlat | Asmx86Cpuid | Asmx86Rdtsc | Asmx86Esc | Asmx86Lock | Asmx86Wait | Asmx86Hlt | 
 			     Asmx86Data16 | Asmx86Pause | Asmx86Arpl | Asmx86Emms
-			     , "Asmx86MiscInstruction", "Asmx86MiscInstructionTag" );
+			     , "Asmx86MiscInstruction", "Asmx86MiscInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ShiftAndRotateInstruction, 
                              Asmx86Shl | Asmx86Shr | Asmx86Psrl | Asmx86Psll |
 			     Asmx86Sar | Asmx86Shrd | Asmx86Shld | Asmx86Ror | Asmx86Rol | Asmx86Rcr |
-			     Asmx86Rcl , "Asmx86ShiftAndRotateInstruction", "Asmx86ShiftAndRotateInstructionTag" );
+			     Asmx86Rcl , "Asmx86ShiftAndRotateInstruction", "Asmx86ShiftAndRotateInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagBitAndByteInstruction, 
 			     Asmx86Sete | Asmx86Setne | Asmx86Seta | Asmx86Setae | Asmx86Setb | Asmx86Setbe |
 			     Asmx86Setg | Asmx86Setge | Asmx86Setl | Asmx86Setle | Asmx86Sets | Asmx86Setns |
-			     Asmx86Seto | Asmx86Setno | Asmx86Setpe | Asmx86Setpo | Asmx86Test , "Asmx86ConditionalFlagBitAndByteInstruction", "Asmx86ConditionalFlagBitAndByteInstructionTag" );
+			     Asmx86Seto | Asmx86Setno | Asmx86Setpe | Asmx86Setpo | Asmx86Test , "Asmx86ConditionalFlagBitAndByteInstruction", "Asmx86ConditionalFlagBitAndByteInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86BitAndByteInstruction, Asmx86ConditionalFlagBitAndByteInstruction | 
 			     Asmx86Bt | Asmx86Bts | Asmx86Btr | Asmx86Btc | Asmx86Bsf | Asmx86Bsr 
-			     , "Asmx86BitAndByteInstruction", "Asmx86BitAndByteInstructionTag" );
+			     , "Asmx86BitAndByteInstruction", "Asmx86BitAndByteInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagControlTransferInstruction, 
 			     Asmx86Je | Asmx86Jne | Asmx86Ja | Asmx86Jae |
@@ -459,35 +458,35 @@ Grammar::setUpBinaryInstructions ()
 			     Asmx86Jle | Asmx86Jc | Asmx86Jnc | Asmx86Jo | Asmx86Jno |
 			     Asmx86Js | Asmx86Jns | Asmx86Jpo | Asmx86Jpe | Asmx86Jcxz |
 			     Asmx86Loopz | Asmx86Loopnz |  Asmx86Into | Asmx86Bound 
-			     , "Asmx86ConditionalFlagControlTransferInstruction", "Asmx86ConditionalFlagControlTransferInstructionTag" );
+			     , "Asmx86ConditionalFlagControlTransferInstruction", "Asmx86ConditionalFlagControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalControlTransferInstruction, 
-			     Asmx86Loop   , "Asmx86ConditionalControlTransferInstruction", "Asmx86ConditionalControlTransferInstructionTag" );
+			     Asmx86Loop   , "Asmx86ConditionalControlTransferInstruction", "Asmx86ConditionalControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86UnConditionalControlTransferInstruction, 
 			     Asmx86Call | Asmx86Jmp | Asmx86Ret | Asmx86IRet | Asmx86Int | Asmx86Enter | Asmx86Leave 
-			     , "Asmx86UnConditionalControlTransferInstruction", "Asmx86UnConditionalControlTransferInstructionTag" );
+			     , "Asmx86UnConditionalControlTransferInstruction", "Asmx86UnConditionalControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ControlTransferInstruction, 
 			     Asmx86ConditionalFlagControlTransferInstruction | Asmx86ConditionalControlTransferInstruction | 
 			     Asmx86UnConditionalControlTransferInstruction 
-			      , "Asmx86ControlTransferInstruction", "Asmx86ControlTransferInstructionTag" );
+			      , "Asmx86ControlTransferInstruction", "Asmx86ControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmArmInstruction, AsmArmControlTransferInstruction //| AsmArmArithmeticInstruction  
 			     | AsmArmDataTransferInstruction 
 			     | AsmArmLogicalInstruction | AsmArmMiscInstruction
-			     , "AsmArmInstruction", "AsmArmInstructionTag" );
+			     , "AsmArmInstruction", "AsmArmInstructionTag", true );
 
      NEW_NONTERMINAL_MACRO ( Asmx86Instruction, Asmx86ControlTransferInstruction | //Asmx86ArithmeticInstruction | 
 			     Asmx86DataTransferInstruction | 
 			     Asmx86LogicalInstruction | Asmx86ShiftAndRotateInstruction | Asmx86BitAndByteInstruction |
 			     Asmx86StringInstruction | Asmx86IOInstruction | Asmx86MiscInstruction |
 			     Asmx86FlagControlInstruction | Asmx86SegmentRegisterInstruction | Asmx86FloatingPointInstructions  
-			     , "Asmx86Instruction", "Asmx86InstructionTag" );
+			     , "Asmx86Instruction", "Asmx86InstructionTag", true );
 
   // This is currently a AsmFunctionCall plus other unspecified uses of Asmx86Instruction, it may be refied later.
      NEW_NONTERMINAL_MACRO ( AsmInstruction, Asmx86Instruction | AsmArmInstruction
-			     , "AsmInstruction", "AsmInstructionTag" );
+			     , "AsmInstruction", "AsmInstructionTag", true );
 
 
      NEW_TERMINAL_MACRO ( AsmDataStructureDeclaration , "AsmDataStructureDeclaration", "AsmDataStructureDeclarationTag" );
@@ -495,9 +494,9 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmFieldDeclaration         , "AsmFieldDeclaration",         "AsmFieldDeclarationTag" );
 
      NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmDataStructureDeclaration | AsmFunctionDeclaration | 
-                             AsmFieldDeclaration, "AsmDeclaration", "AsmDeclarationTag" );
+                             AsmFieldDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
 
-     NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag" );
+     NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
 
   // DQ (3/30/2007): Fixed up the names where were "AsmUnaryAdd"
      NEW_TERMINAL_MACRO ( AsmBinaryAdd    ,  "AsmBinaryAdd",  "AsmBinaryAddTag" );
@@ -507,12 +506,12 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmBinaryMod,      "AsmBinaryMod", "AsmBinaryModTag" );
 
      NEW_NONTERMINAL_MACRO ( AsmBinaryExpression, AsmBinaryAdd | AsmBinarySubtract | AsmBinaryMultiply | 
-                             AsmBinaryDivide | AsmBinaryMod, "AsmBinaryExpression", "AsmBinaryExpressionTag" );
+                             AsmBinaryDivide | AsmBinaryMod, "AsmBinaryExpression", "AsmBinaryExpressionTag", false );
 
      NEW_TERMINAL_MACRO ( AsmUnaryPlus , "AsmUnaryPlus",  "AsmUnaryPlusTag" );
      NEW_TERMINAL_MACRO ( AsmUnaryMinus, "AsmUnaryMinus", "AsmUnaryMinusTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmUnaryExpression, AsmUnaryPlus | AsmUnaryMinus, "AsmUnaryExpression", "AsmUnaryExpressionTag" );
+     NEW_NONTERMINAL_MACRO ( AsmUnaryExpression, AsmUnaryPlus | AsmUnaryMinus, "AsmUnaryExpression", "AsmUnaryExpressionTag", false );
 
      NEW_TERMINAL_MACRO ( AsmMemoryReferenceExpression   , "AsmMemoryReferenceExpression",   "AsmMemoryReferenceExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmControlFlagsExpression      , "AsmControlFlagsExpression",      "AsmControlFlagsExpressionTag" );
@@ -532,13 +531,13 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmValueExpression, AsmByteValueExpression | AsmWordValueExpression | 
                              AsmDoubleWordValueExpression | AsmQuadWordValueExpression | 
                              AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression | 
-                             AsmVectorValueExpression, "AsmValueExpression", "AsmValueExpressionTag" );
+                             AsmVectorValueExpression, "AsmValueExpression", "AsmValueExpressionTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmExpression, AsmValueExpression | AsmBinaryExpression | AsmUnaryExpression | 
                              AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression | 
                              AsmCommonSubExpression 
 			     //| AsmArmRegisterReferenceExpression
-			     , "AsmExpression", "AsmExpressionTag" );
+			     , "AsmExpression", "AsmExpressionTag", false );
 
   // These are attached to the SgAsmNode object (the root for the IR used for binaries)
      NEW_TERMINAL_MACRO ( AsmTypeByte        , "AsmTypeByte",        "AsmTypeByteTag" );
@@ -557,7 +556,7 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeVector.setDataPrototype                  ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | 
-                             AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector, "AsmType", "AsmTypeTag" );
+                             AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector, "AsmType", "AsmTypeTag", false );
 
      NEW_TERMINAL_MACRO ( AsmFile                     , "AsmFile",                     "AsmFileTag" );
 
@@ -571,7 +570,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmSectionHeaderList, "AsmSectionHeaderList", "AsmSectionHeaderListTag" );
 
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmOperandList | AsmType, "AsmNode","AsmNodeTag");
-     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType, "AsmNode","AsmNodeTag");
+     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType, "AsmNode","AsmNodeTag", false);
 
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)

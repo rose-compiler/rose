@@ -3,7 +3,6 @@
 
 #include "ROSETTA_macros.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -21,10 +20,10 @@ Grammar::setUpSupport ()
 
   // Since these represent generic support we should remove the "Sg" (though
   // we clearly build them from ideas laid out within SAGE++ and SAGE 2.
+     NEW_TERMINAL_MACRO (Name, "Name", "NameTag" );
      NEW_TERMINAL_MACRO (SymbolTable, "SymbolTable", "SymbolTableTag" );
 
      NEW_TERMINAL_MACRO (InitializedName, "InitializedName", "InitializedNameTag" );
-     NEW_TERMINAL_MACRO (Name, "Name", "NameTag" );
      NEW_TERMINAL_MACRO (Pragma, "Pragma", "PragmaTag" );
   // Grammar::Terminal  Attribute( "Attribute", sageGrammar, "Attribute" );
   // Grammar::Terminal  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
@@ -77,7 +76,7 @@ Grammar::setUpSupport ()
           ModifierNodes           | ConstVolatileModifier  | StorageModifier    | 
           AccessModifier          | FunctionModifier       | UPC_AccessModifier | 
           SpecialFunctionModifier | ElaboratedTypeModifier | LinkageModifier    |
-          BaseClassModifier       | TypeModifier           | DeclarationModifier, "Modifier", "ModifierTag");
+          BaseClassModifier       | TypeModifier           | DeclarationModifier, "Modifier", "ModifierTag", false);
 
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
      NEW_TERMINAL_MACRO (File, "File", "FileTag" );
@@ -102,7 +101,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (TemplateParameter, "TemplateParameter", "TemplateParameterTag" );
      NEW_TERMINAL_MACRO (TemplateArgument, "TemplateArgument", "TemplateArgumentTag" );
 
-  // DQ (4/2/2007): Added list as seperate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
+  // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      NEW_TERMINAL_MACRO (TemplateParameterList, "TemplateParameterList", "TemplateParameterListTag" );
      NEW_TERMINAL_MACRO (TemplateArgumentList, "TemplateArgumentList", "TemplateArgumentListTag" );
 
@@ -110,9 +109,9 @@ Grammar::setUpSupport ()
   // Grammar::Terminal  ApplyFunction( "ApplyFunction", sageGrammar, "ApplyFunction" );
   // Grammar::Terminal  printFunction( "printFunction", sageGrammar, "printFunction" );
 
-     NEW_NONTERMINAL_MACRO (BitAttribute, FuncDecl_attr | ClassDecl_attr /* | TemplateInstDecl_attr */,"BitAttribute","BitAttributeTag");
+     NEW_NONTERMINAL_MACRO (BitAttribute, FuncDecl_attr | ClassDecl_attr /* | TemplateInstDecl_attr */,"BitAttribute","BitAttributeTag", false);
 
-     NEW_NONTERMINAL_MACRO (Attribute, Pragma | BitAttribute, "Attribute", "AttributeTag");
+     NEW_NONTERMINAL_MACRO (Attribute, Pragma | BitAttribute, "Attribute", "AttributeTag", false);
 
   // DQ (4/25/2004): Must be placed before the modifiers (since it includes one as a data member)
      NEW_TERMINAL_MACRO (BaseClass, "BaseClass", "BaseClassTag" );
@@ -124,9 +123,9 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
      NEW_TERMINAL_MACRO (DirectedGraphEdge, "DirectedGraphEdge", "DirectedGraphEdgeTag" );
 
-     NEW_NONTERMINAL_MACRO (GraphNode, DirectedGraphNode, "GraphNode", "GraphNodeTag");
-     NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge, "GraphEdge", "GraphEdgeTag");
-     NEW_NONTERMINAL_MACRO (Graph, DirectedGraph, "Graph", "GraphTag");
+     NEW_NONTERMINAL_MACRO (GraphNode, DirectedGraphNode, "GraphNode", "GraphNodeTag", false);
+     NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
+     NEW_NONTERMINAL_MACRO (Graph, DirectedGraph, "Graph", "GraphTag", false);
 #else
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
    // tps (10/24/07): extended the set of graphs
@@ -134,8 +133,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (IntKeyedBidirectionalGraph,     "IntKeyedBidirectionalGraph",     "IntKeyedBidirectionalGraphTag" );
      NEW_TERMINAL_MACRO (DummyGraph,     "DummyGraph",     "DummyGraphTag" );
 
-     NEW_NONTERMINAL_MACRO (BidirectionalGraph,  StringKeyedBidirectionalGraph | IntKeyedBidirectionalGraph,  "BidirectionalGraph",     "BidirectionalGraphTag" );
-     NEW_NONTERMINAL_MACRO (IncidenceDirectedGraph, BidirectionalGraph | DummyGraph,    "IncidenceDirectedGraph",     "IncidenceDirectedGraphTag" );
+     NEW_NONTERMINAL_MACRO (BidirectionalGraph,  StringKeyedBidirectionalGraph | IntKeyedBidirectionalGraph,  "BidirectionalGraph",     "BidirectionalGraphTag" , false);
+     NEW_NONTERMINAL_MACRO (IncidenceDirectedGraph, BidirectionalGraph | DummyGraph,    "IncidenceDirectedGraph",     "IncidenceDirectedGraphTag" , false);
      NEW_TERMINAL_MACRO (IncidenceUndirectedGraph,     "IncidenceUndirectedGraph",     "IncidenceUndirectedGraphTag" );
 
 
@@ -145,8 +144,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (DirectedGraphEdge,   "DirectedGraphEdge",   "DirectedGraphEdgeTag" );
 
      NEW_TERMINAL_MACRO (GraphNode, "GraphNode", "GraphNodeTag");
-     NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge | UndirectedGraphEdge, "GraphEdge", "GraphEdgeTag");
-     NEW_NONTERMINAL_MACRO (Graph,  IncidenceDirectedGraph | IncidenceUndirectedGraph ,"Graph", "GraphTag");
+     NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge | UndirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
+     NEW_NONTERMINAL_MACRO (Graph,  IncidenceDirectedGraph | IncidenceUndirectedGraph ,"Graph", "GraphTag", false);
 #endif
 
   // DQ (12/19/2005): Support for explicit qualified names in the source code (currently we generate them
@@ -185,7 +184,7 @@ Grammar::setUpSupport ()
           TemplateParameterList | Graph                     | GraphNode           | GraphEdge            |
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
-          "Support", "SupportTag");
+          "Support", "SupportTag", false);
 
 
 #if 0
@@ -422,8 +421,8 @@ Grammar::setUpSupport ()
      FunctionModifier.setFunctionPrototype        ( "HEADER_FUNCTION_MODIFIER"        , "../Grammar/Support.code");
      UPC_AccessModifier.setFunctionPrototype      ( "HEADER_UPC_ACCESS_MODIFIER"     , "../Grammar/Support.code");
      SpecialFunctionModifier.setFunctionPrototype ( "HEADER_SPECIAL_FUNCTION_MODIFIER", "../Grammar/Support.code");
-     DeclarationModifier.setFunctionPrototype     ( "HEADER_DECLARATION_MODIFIER"     , "../Grammar/Support.code");
      TypeModifier.setFunctionPrototype            ( "HEADER_TYPE_MODIFIER"            , "../Grammar/Support.code");
+     DeclarationModifier.setFunctionPrototype     ( "HEADER_DECLARATION_MODIFIER"     , "../Grammar/Support.code");
      ElaboratedTypeModifier.setFunctionPrototype  ( "HEADER_ELABORATED_TYPE_MODIFIER" , "../Grammar/Support.code");
      LinkageModifier.setFunctionPrototype         ( "HEADER_LINKAGE_MODIFIER"         , "../Grammar/Support.code");
      BaseClassModifier.setFunctionPrototype       ( "HEADER_BASECLASS_MODIFIER"       , "../Grammar/Support.code");
@@ -1385,7 +1384,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "bool", "explicitlySpecified", "= true",
 						CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (4/2/2007): Added list as seperate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
+  // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateArgumentList.setFunctionPrototype ( "HEADER_TEMPLATE_ARGUMENT_LIST", "../Grammar/Support.code");
      TemplateArgumentList.setDataPrototype ( "SgTemplateArgumentPtrList", "args",  "",
                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1562,7 +1561,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateParameter.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER", "../Grammar/Support.code");
      TemplateArgument.setFunctionSource  ( "SOURCE_TEMPLATE_ARGUMENT" , "../Grammar/Support.code");
 
-  // DQ (4/2/2007): Added list as seperate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
+  // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
      TemplateParameterList.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_LIST" , "../Grammar/Support.code");
      TemplateArgumentList.setFunctionSource  ( "SOURCE_TEMPLATE_ARGUMENT_LIST" , "../Grammar/Support.code");
 
@@ -1593,6 +1592,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
           (InitializedName.associatedGrammar->getParentGrammar() == NULL) ? 
                "ROOT GRAMMAR" : 
                InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
+#if 0
      if (InitializedName.associatedGrammar->isRootGrammar() == false)
         {
           printf ("ADDING SPECIAL X VERSION SOURCE CODE!!! \n");
@@ -1602,6 +1602,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
         {
           printf ("NOT ADDING SPECIAL X VERSION SOURCE CODE!!! \n");
         }
+#endif
 
      FormatItem.setFunctionSource ( "SOURCE_FORMAT_ITEM", "../Grammar/Support.code");
      FormatItemList.setFunctionSource ( "SOURCE_FORMAT_ITEM_LIST", "../Grammar/Support.code");

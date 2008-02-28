@@ -223,7 +223,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling fixupInstantiatedTemplates() \n");
 
-       // DQ (9/6/2005): I think this is handled seperately within post processing 
+       // DQ (9/6/2005): I think this is handled separately within post processing 
        // (either that or they are just marked for output n the post processing)
        // fixupInstantiatedTemplates(project);
 

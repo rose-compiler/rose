@@ -2,7 +2,6 @@
 #include "grammar.h"
 #include "ROSETTA_macros.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -53,11 +52,7 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( CommonSymbol,         "CommonSymbol",         "COMMON_SYMBOL" );
 #endif
 
-     NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol,"FunctionSymbol","FUNCTION_NAME");
-
-  // DQ (5/7/2004): ClassSymbol is not longer a nonterminal (not certain about this)
-  // NEW_NONTERMINAL_MACRO ( ClassSymbol, TemplateInstantiationSymbol, "ClassSymbol", "CLASS_NAME" );
-
+     NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol,"FunctionSymbol","FUNCTION_NAME", true);
 
 #if USE_FORTRAN_IR_NODES
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -67,13 +62,13 @@ Grammar::setUpSymbols ()
           ClassSymbol      | TemplateSymbol | EnumSymbol     | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol   |InterfaceSymbol | CommonSymbol,
-          "Symbol","SymbolTag");
+          "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol /*| TypeSymbol*/   | FunctionSymbol | FunctionTypeSymbol | 
           ClassSymbol      | TemplateSymbol | EnumSymbol     | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol,
-          "Symbol","SymbolTag");
+          "Symbol","SymbolTag", false);
 #endif
 
   // ***********************************************************************

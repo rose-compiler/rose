@@ -162,7 +162,7 @@ $POST_CONSTRUCT_COPY
        // Call the fixup mechanism to correct details of the AST copy mechanism.
        // printf ("Calling $CLASSNAME::fixupCopy() (from root of AST being copied) \n");
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           fixupCopy_scopes (result,help);
           fixupCopy_symbols (result,help);
           fixupCopy_references (result,help);

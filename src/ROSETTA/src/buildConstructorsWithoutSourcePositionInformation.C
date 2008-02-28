@@ -5,24 +5,19 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
 
 void
-Grammar::markNodeForConstructorWithoutSourcePositionInformation ( GrammarTreeNode & node )
+Grammar::markNodeForConstructorWithoutSourcePositionInformation ( Terminal & node )
    {
   // DQ (11/7/2006): Where we find the SgLocatedNode mark a data member so that we can use the
   // same code generation mechanisms to generate different constructors.
 
-     ROSE_ASSERT(node.token != NULL);
   // string dataMemberSpecificString = node.token->buildReturnDataMemberPointers();
-     string nodeName = node.token->name;
+     string nodeName = node.name;
 
   // printf ("In markNodeForConstructorWithoutSourcePositionInformation(): nodeName = %s \n",nodeName.c_str());
 
@@ -52,20 +47,19 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformation ( GrammarTreeNod
    }
 
 void
-Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( GrammarTreeNode & node )
+Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal & node )
    {
      markNodeForConstructorWithoutSourcePositionInformation(node);
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::const_iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           markNodeForConstructorWithoutSourcePositionInformationSupport(**treeNodeIterator);
         }
@@ -73,11 +67,11 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( GrammarT
    }
 
 GrammarString* 
-Grammar::getNamedDataMember ( GrammarTreeNode & node, const string & name )
+Grammar::getNamedDataMember ( Terminal & node, const string & name )
    {
      GrammarString* returnValue = NULL;
-     const list<GrammarString*> & terminalList = node.token->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-     list<GrammarString*>::const_iterator i = terminalList.begin();
+     const vector<GrammarString*> & terminalList = node.getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     vector<GrammarString*>::const_iterator i = terminalList.begin();
      while (i != terminalList.end())
         {
        // printf ("GrammarString i = %s \n",(*i)->variableNameString);
@@ -94,17 +88,17 @@ Grammar::getNamedDataMember ( GrammarTreeNode & node, const string & name )
      return returnValue;
    }
 
-GrammarTreeNode* 
-Grammar::getNamedNode ( GrammarTreeNode & node, const string & name )
+Terminal* 
+Grammar::getNamedNode ( Terminal & node, const string & name )
    {
   // This function only operates on the parent chain.
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes. Test for this.
-     GrammarTreeNode* parentNode = node.parentTreeNode;
+     Terminal* parentNode = node.getBaseClass();
      while ( parentNode != NULL && string(parentNode->getName()) != name )
         {
        // printf ("node %s parent node: %s \n",name.c_str(),parentNode->getName());
-          parentNode = parentNode->parentTreeNode;
+          parentNode = parentNode->getBaseClass();
         }
      if (parentNode != NULL)
         {
@@ -117,7 +111,7 @@ Grammar::getNamedNode ( GrammarTreeNode & node, const string & name )
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildConstructorWithoutSourcePositionInformation ( GrammarTreeNode & node )
+Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
    {
   // DQ (11/6/2006): This function generates the code for a newer form of the constructor 
   // that has not source position information in it's parameter list.  This new form of the constructor
@@ -146,10 +140,10 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( GrammarTreeNode & no
 
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes. Test for this.
-     GrammarTreeNode* parentNode = getNamedNode ( node, "SgLocatedNode" );
+     Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes.
-     if (parentNode != NULL && node.getToken().generateConstructor() == TRUE)
+     if (parentNode != NULL && node.generateConstructor() == TRUE)
         {
           string constructorTemplateFileName = "../Grammar/grammarConstructorDefinitionMacros.macro";
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = Grammar::readFileWithPos (constructorTemplateFileName);
@@ -157,7 +151,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( GrammarTreeNode & no
           bool complete  = false;
           ConstructParamEnum config = (ConstructParamEnum)1;
           int i = 1;
-          if  (node.getToken().getBuildDefaultConstructor())
+          if  (node.getBuildDefaultConstructor())
              {
                config = NO_CONSTRUCTOR_PARAMETER;
                i = 0;
@@ -167,19 +161,16 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( GrammarTreeNode & no
           for ( ; !complete && config < CONSTRUCTOR_PARAMETER; config = (ConstructParamEnum)(1 << i++))
              {
 	       StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-               if (node.hasParent() == TRUE)
+               if (node.getBaseClass() != NULL)
                   {
-                    string parentClassName = node.getParentName();
+                    string parentClassName = node.getBaseClass()->getName();
                  // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
                  // printf ("Calling base class default constructor (should call paramtererized version) \n");
 
                     string baseClassParameterString = "";
-                    if (node.hasParent() == TRUE)
-                       {
-                         bool withInitializers = FALSE;
-                         bool withTypes        = FALSE;
-                         baseClassParameterString = buildConstructorParameterListString (node.getParent(),withInitializers,withTypes, config);
-                       }
+                    bool withInitializers = FALSE;
+                    bool withTypes        = FALSE;
+                    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
                     string preInitializationString = ": " + parentClassName + "($BASECLASS_PARAMETERS)";
                     preInitializationString = StringUtility::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
                     constructorSource = StringUtility::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
@@ -201,7 +192,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( GrammarTreeNode & no
                   }
                  else
                   {
-                    string constructorFunctionBody = node.getToken().buildConstructorBody(withInitializers, config);
+                    string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
                     constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
                   }
 
@@ -215,14 +206,14 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( GrammarTreeNode & no
    }
 
 void
-Grammar::buildConstructorWithoutSourcePositionInformationSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildConstructorWithoutSourcePositionInformationSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildConstructorWithoutSourcePositionInformation(node);
 
      editString = StringUtility::copyEdit (editString,"$CLASSNAME",node.getName());
      editString = StringUtility::copyEdit (editString,"$GRAMMAR_NAME",getGrammarName());  // grammarName string defined in Grammar class
   // Set these to NULL strings if they are still present within the string
-     editString = StringUtility::copyEdit (editString,"$CLASSTAG",node.getToken().getTagName());
+     editString = StringUtility::copyEdit (editString,"$CLASSTAG",node.getTagName());
 
 #if 1
   // Also output strings to single file
@@ -233,14 +224,13 @@ Grammar::buildConstructorWithoutSourcePositionInformationSupport( GrammarTreeNod
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::const_iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildConstructorWithoutSourcePositionInformationSupport(**treeNodeIterator,outputFile);
         }

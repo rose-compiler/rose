@@ -27,7 +27,8 @@
 
 // using namespace std;
 
-class GrammarTreeNode;   // forward declaration
+// class GrammarTreeNode;   // forward declaration
+class Terminal;
 
 class GrammarString
 {
@@ -78,7 +79,7 @@ class GrammarString
   GrammarString & operator= ( const GrammarString & X );
 
   void setVirtual ( const bool & X );
-  virtual std::string getFunctionNameString ( GrammarTreeNode & node );
+  virtual std::string getFunctionNameString ( Terminal & node );
 
   std::string getConstructorPrototypeParameterString();
   std::string getConstructorSourceParameterString();
@@ -101,9 +102,9 @@ class GrammarString
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
   // char* getFunctionNameStringTestAgainstExclusions ( GrammarTreeNode & node );
   std::string getFunctionNameStringTestAgainstExclusions 
-    ( GrammarTreeNode & node,
-      std::list<GrammarString *> &,
-      std::list<GrammarString *> & excludeList );
+    ( Terminal & node,
+      std::vector<GrammarString *> &,
+      std::vector<GrammarString *> & excludeList );
 
   // Access functions
   const std::string& getTypeNameString() const;

@@ -165,7 +165,7 @@ class ReplaceValue
  public:
    ReplaceValue( AstInterface& _fa, 
                  MapObject<SymbolicVal, SymbolicVal>* _valmap = 0) 
-         : fa(_fa), succ(false), valmap(_valmap)  {}
+         : valmap(_valmap), fa(_fa), succ(false)  {}
    bool operator()( HasValueDescriptor& desc) 
    {
       bool onesucc = false;

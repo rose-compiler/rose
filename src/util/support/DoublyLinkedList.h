@@ -15,7 +15,7 @@ class DoublyLinkedEntryWrap
    T *o;
    DoublyLinkedEntryWrap<T>* next, *prev;
  public:
-   DoublyLinkedEntryWrap<T>() : next(0), prev(0), o(0) {}
+   DoublyLinkedEntryWrap<T>() : o(0), next(0), prev(0) {}
    DoublyLinkedEntryWrap( const T& _o) : o(new T(_o)), next(0), prev(0) {}
    DoublyLinkedEntryWrap& operator = ( const T& _o)
          { 
@@ -113,7 +113,7 @@ class DoublyLinkedListWrap
     void Sort( MapObject<T, int>& f)
      {
        DoublyLinkedEntryWrap<T> **buf = new DoublyLinkedEntryWrap<T>*[count];
-       for (int i = 0; i < count; ++i)
+       for (size_t i = 0; i < count; ++i)
             buf[i] = 0;
        for (DoublyLinkedEntryWrap<T> *p = First(); p; p = Next(p)) {
            unsigned index = f(p->GetEntry());

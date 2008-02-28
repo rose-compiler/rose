@@ -2,7 +2,6 @@
 #include "grammar.h"
 #include "ROSETTA_macros.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 /*
   DQ (3/2/2004): After March 1st meeting with Bjarne, it seems clear we should 
@@ -169,22 +168,16 @@ Grammar::setUpStatements ()
   // NEW_TERMINAL_MACRO (RewindStatement,           "RewindStatement",           "REWIND_STATEMENT" );
 
   // DQ (3/22/2007): Added Fortran non-blocked do statement (derived from FortranDo)
-     NEW_NONTERMINAL_MACRO (FortranDo, FortranNonblockedDo, "FortranDo", "FORTRAN_DO");
+     NEW_NONTERMINAL_MACRO (FortranDo, FortranNonblockedDo, "FortranDo", "FORTRAN_DO", true);
 
      NEW_TERMINAL_MACRO (ForAllStatement,  "ForAllStatement",              "FOR_ALL_STMT");
 
-#if 0
-     NEW_NONTERMINAL_MACRO (IOControlStatement,
-       // InputOutputStatement | OpenStatement | CloseStatement | InquireStatement | IOFileControlStmt,
-          ReadStatement | WriteStatement | OpenStatement | CloseStatement | InquireStatement,
-          "IOControlStatement", "IO_CONTROL_STATEMENT");
-#else
      NEW_NONTERMINAL_MACRO (IOStatement,
        // InputOutputStatement | OpenStatement | CloseStatement | InquireStatement | IOFileControlStmt,
           PrintStatement   | ReadStatement  | WriteStatement     | OpenStatement   | CloseStatement   |
           InquireStatement | FlushStatement | BackspaceStatement | RewindStatement | EndfileStatement |
           WaitStatement,
-          "IOStatement", "IO_STATEMENT");
+          "IOStatement", "IO_STATEMENT", false);
 #endif
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
@@ -210,7 +203,7 @@ Grammar::setUpStatements ()
   //      AccessStatement, AllocatableStatement, AsynchronousStatement, BindStatement, DataStatement, DimensionStatement, 
   //      IntentStatement, IntrinsicStatement, OptionalStatement, ParameterStatement, PointerStatement, ProtectedStatement, SaveStatement, 
   //      TargetStatement, ValueStatement, VolatileStatement
-  // And then define seperate statements for: AllocateStatement, DeallocateStatement, ContainsStatement, SequenceStatement
+  // And then define separate statements for: AllocateStatement, DeallocateStatement, ContainsStatement, SequenceStatement
 
      NEW_TERMINAL_MACRO (AttributeSpecificationStatement, "AttributeSpecificationStatement",   "TEMP_Attribute_Specification_Statement" );
      NEW_TERMINAL_MACRO (AllocateStatement,        "AllocateStatement",         "TEMP_Allocate_Statement" );
@@ -236,7 +229,6 @@ Grammar::setUpStatements ()
   // DQ (2/18/2008): Added support for language specific Fortran include line (not a statement in Fortran, 
   // but a declaration statement in ROSE similar to the CPP IncludeDirectiveStatement).
      NEW_TERMINAL_MACRO (FortranIncludeLine,        "FortranIncludeLine",         "TEMP_Fortran_Include_Line" ); 
-#endif
 
   // NEW_TERMINAL_MACRO (ClinkageStartStatement, "ClinkageStartStatement", "C_LINKAGE_START_STMT" );
 
@@ -253,10 +245,8 @@ Grammar::setUpStatements ()
   // DQ (4/16/2005): Added specific support in the IR for explicit template instantiation directives (to fix linking issues)
      NEW_TERMINAL_MACRO (TemplateInstantiationDirectiveStatement, "TemplateInstantiationDirectiveStatement", "TEMPLATE_INST_DIRECTIVE_STMT" );
 
-  // NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl, "ClassDeclaration", "CLASS_DECL_STMT" );
-  // NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement, "ClassDeclaration", "CLASS_DECL_STMT" );
-     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT" );
-     NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT" );
+     NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to 
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
@@ -265,21 +255,21 @@ Grammar::setUpStatements ()
           ClassDefinition              | WhileStmt          | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement | AssociateStatement | FortranDo       | ForAllStatement
        /* | TemplateInstantiationDefn */,
-          "ScopeStatement","SCOPE_STMT");
+          "ScopeStatement","SCOPE_STMT", false);
 
   // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as terminal)
-     NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration,TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT");
+     NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration,TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT", true);
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/20/2007): ProgramHeaderStatement and ProcedureHeaderStatement are derived from FunctionDeclaration
      NEW_NONTERMINAL_MACRO (FunctionDeclaration,
           MemberFunctionDeclaration | TemplateInstantiationFunctionDecl | ProgramHeaderStatement | ProcedureHeaderStatement | EntryStatement,
-          "FunctionDeclaration","FUNC_DECL_STMT");
+          "FunctionDeclaration","FUNC_DECL_STMT", true);
 #else
   // DQ (3/22/2004): Modified FunctionDeclaration to add  derivation of TemplateInstantiationFunctionDecl
      NEW_NONTERMINAL_MACRO (FunctionDeclaration,
           MemberFunctionDeclaration | TemplateInstantiationFunctionDecl,
-          "FunctionDeclaration","FUNC_DECL_STMT");
+          "FunctionDeclaration","FUNC_DECL_STMT", true);
 #endif
 
 #if 0
@@ -312,7 +302,7 @@ Grammar::setUpStatements ()
           IfdefDirectiveStatement   | IfndefDirectiveStatement      | IfDirectiveStatement     | DeadIfDirectiveStatement   | 
           ElseDirectiveStatement    | ElseifDirectiveStatement      | EndifDirectiveStatement  |
           LineDirectiveStatement    | WarningDirectiveStatement     | ErrorDirectiveStatement  | EmptyDirectiveStatement,
-          "C_PreprocessorDirectiveStatement", "CPP_DIRECTIVE_STMT" );
+          "C_PreprocessorDirectiveStatement", "CPP_DIRECTIVE_STMT", false );
 
      NEW_TERMINAL_MACRO (ClinkageStartStatement,"ClinkageStartStatement","C_LINKAGE_START_STMT" );
 
@@ -320,7 +310,7 @@ Grammar::setUpStatements ()
 
      NEW_NONTERMINAL_MACRO (ClinkageDeclarationStatement,
           ClinkageStartStatement | ClinkageEndStatement,
-          "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT" );
+          "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT", false );
 
 #if USE_FORTRAN_IR_NODES
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -336,7 +326,7 @@ Grammar::setUpStatements ()
           UsingDeclarationStatement               | NamelistStatement    | ImportStatement      |
           FunctionDeclaration                  /* | ModuleStatement */   | ContainsStatement    |
           C_PreprocessorDirectiveStatement        | FortranIncludeLine,
-          "DeclarationStatement","DECL_STMT");
+          "DeclarationStatement","DECL_STMT", false);
 #else
 
 #error "DEAD CODE!"
@@ -355,7 +345,7 @@ Grammar::setUpStatements ()
              AssignStatement      | ComputedGotoStatement  | AssignedGotoStatement           |
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             |
              SequenceStatement,
-			    "Statement","StatementTag");
+			    "Statement","StatementTag", false);
 
           // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
           // InterfaceStatement   | ModuleStatement        | UseStatement                    | ContainsStatement     |
@@ -371,7 +361,7 @@ Grammar::setUpStatements ()
 			    BreakStmt        | ContinueStmt       | ReturnStmt           | GotoStatement     |
              SpawnStmt        | NullStatement      | VariantStatement     |
 			    ForInitStatement | CatchStatementSeq,
-			    "Statement","StatementTag");
+			    "Statement","StatementTag", false);
 #endif
 
   // ***********************************************************************

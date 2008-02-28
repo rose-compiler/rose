@@ -2,7 +2,6 @@
 #include "grammar.h"
 #include "ROSETTA_macros.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -73,13 +72,13 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( PartialFunctionType , "PartialFunctionType",  "T_PARTIAL_FUNCTION" );
 #else
      NEW_NONTERMINAL_MACRO (PartialFunctionType, PartialFunctionModifierType,
-                           "PartialFunctionType","T_PARTIAL_FUNCTION");
+                           "PartialFunctionType","T_PARTIAL_FUNCTION", true);
 #endif
 
   // It seems that ROSETTA has a bug in the copy constructor that forces us 
   // to specify product rules with more than one Terminal or nonTerminal object 
   // (under some circomstances at least).
-#define ROSETTA_BUG TRUE
+#define ROSETTA_BUG FALSE
 #if ROSETTA_BUG
   // Dummy Terminal so that we can add avoid the NonTerminal copy constructor (this may be a bug)
   // I think that this is not a problem now (Terminals can be reused in multiple BNF statements) though
@@ -87,21 +86,16 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( UnknownMemberFunctionType , "UnknownMemberFunctionType", "UnknownMemberFunctionTag" );
 #endif
 
-#if 0
-     NEW_NONTERMINAL_MACRO ( ClassType,
-                             TemplateInstantiationType,
-                             "ClassType", "T_CLASS" );
-#endif
 
      NEW_NONTERMINAL_MACRO (MemberFunctionType,
-                            PartialFunctionType | UnknownMemberFunctionType,
-                            "MemberFunctionType","T_MEMBERFUNCTION");
+                            PartialFunctionType /* | UnknownMemberFunctionType */,
+                            "MemberFunctionType","T_MEMBERFUNCTION", true);
      NEW_NONTERMINAL_MACRO (FunctionType,
-                            MemberFunctionType | UnknownMemberFunctionType,
-                            "FunctionType","T_FUNCTION");
+                            MemberFunctionType /* | UnknownMemberFunctionType */,
+                            "FunctionType","T_FUNCTION", true);
      NEW_NONTERMINAL_MACRO (PointerType,
                             PointerMemberType,
-                            "PointerType","T_POINTER");
+                            "PointerType","T_POINTER", true);
 
   // Note that TemplateInstantiationType can't be both a child of the NamedType and ClassType
   // This is an error that ROSETTA currently does not catch and which I need to discuss with Danny Thorne
@@ -113,7 +107,7 @@ Grammar::setUpTypes ()
   //                        "NamedType","T_NAME");
      NEW_NONTERMINAL_MACRO (NamedType,
                             ClassType | EnumType | TypedefType,
-                            "NamedType","T_NAME");
+                            "NamedType","T_NAME", false);
 
   // DQ (12/21/2005): Support for qualified named types (wraps SgType (always a SgNamedType) with SgQualifiedName)
      NEW_TERMINAL_MACRO ( QualifiedNameType        , "QualifiedNameType",         "T_QUALIFIED_NAME" );
@@ -133,7 +127,8 @@ Grammar::setUpTypes ()
           TypeLongDouble   | TypeString        | TypeBool          | PointerType          |
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
-          TypeComplex      | TypeImaginary     | TypeDefault , "Type","TypeTag");
+          TypeComplex      | TypeImaginary     | TypeDefault ,
+     "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -327,7 +322,7 @@ Grammar::setUpTypes ()
      TypeEllipse.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // TemplateType.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QualifiedNameType.setDataPrototype    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     UnknownMemberFunctionType.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // UnknownMemberFunctionType.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PartialFunctionType.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      PartialFunctionModifierType.setDataPrototype ("static SgPartialFunctionModifierType*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 

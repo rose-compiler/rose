@@ -11986,7 +11986,7 @@ void c_action_format_item(Token_t * descOrDigit, ofp_bool hasFormatItemList)
        // ROSE_ASSERT(astNodeStack.empty() == false);
           if (astNodeStack.empty() == false)
              {
-            // This is the case of "format (10/)" which processes "10" and "/" seperately (I think this is a bug, see test2007_241.f).
+            // This is the case of "format (10/)" which processes "10" and "/" separately (I think this is a bug, see test2007_241.f).
                SgFormatItemList* formatItemList = isSgFormatItemList(astNodeStack.front());
                astNodeStack.pop_front();
 

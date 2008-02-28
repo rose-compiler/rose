@@ -80,7 +80,7 @@ class SymbolicBoundAnalysis
    { result = GetBound(var); }
  public:
   SymbolicBoundAnalysis(Interface _interface, Stmt n, Stmt a = 0)
-      : node(n), interface(_interface), ances(a) {}
+      : interface(_interface), node(n), ances(a) {}
   SymbolicBound GetBound(const SymbolicVar& var, Stmt* stop = 0)
        {
          SymbolicBound tmp;

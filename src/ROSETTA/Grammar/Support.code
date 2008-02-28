@@ -2756,7 +2756,7 @@ HEADER_BASECLASS_START
           SgBaseClassModifier & get_baseClassModifier();
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -2958,7 +2958,7 @@ HEADER_INITIALIZED_NAME_START
           SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -3206,7 +3206,7 @@ HEADER_FILE_INFORMATION_START
                 -# required templates assigned to specific files (see ROSE prelinking details)
              - Examples of shared IR nodes include:
                 -# All types (not implemented yet)
-                -# All IR nodes shared across originally seperate ASTs (see AST Merge Mechanism)
+                -# All IR nodes shared across originally separate ASTs (see AST Merge Mechanism)
              - Examples of frontend specific IR nodes include:
                 -# float __builtin_acosf (float __builtin__x);
                 -# #define __builtin_va_start va_start
@@ -3604,7 +3604,7 @@ HEADER_APPLICATION_FILE_START
           void set_file_info( Sg_File_Info* fileinfo );
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -3751,7 +3751,7 @@ HEADER_APPLICATION_PROJECT_START
           friend std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::string> & l );
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -4312,7 +4312,7 @@ HEADER_TEMPLATE_ARGUMENT_START
           SgScopeStatement* get_scope () const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;

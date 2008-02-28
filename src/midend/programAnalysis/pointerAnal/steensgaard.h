@@ -29,7 +29,7 @@ class ECR : public UF_elem
 
 
 public:
-   ECR() : type(BOT),UF_elem(),lambda(BOT) {}
+   ECR() : UF_elem(), type(BOT), lambda(BOT) {}
    ~ECR() {}
 
    ECR * union_with(ECR *that) {
@@ -250,7 +250,7 @@ class ECRmap {
       else
          return false;
    }
-   ~ECRmap() {
+   virtual ~ECRmap() {
       for (std::list<ECR*>::const_iterator p = ecrList.begin();
            p != ecrList.end(); ++p) {
           delete (*p);

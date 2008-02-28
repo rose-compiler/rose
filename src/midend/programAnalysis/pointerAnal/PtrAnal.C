@@ -24,6 +24,7 @@ inline PtrAnal::Stmt stmts_back(std::vector<PtrAnal::Stmt>& stmts)
 static std::string func_return_name(const std::string fname)  
    { return InterProcVariableUniqueRepr::get_unique_name(fname,0); }
 
+#if 0
 static bool is_constant(const std::string& name)
 {
   if ( name != "" && name[0] == 'c') {
@@ -35,6 +36,7 @@ static bool is_constant(const std::string& name)
      std::cerr << " not constant : " << name << "\n";
   return false;
 }
+#endif
 
 static std::string 
 Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
@@ -77,7 +79,7 @@ PtrAnal::StmtRef PtrAnal::translate_stmt(const AstNodePtr& s) const
   StmtMap::const_iterator p = stmtmap.find(s.get_ptr());
   if (p != stmtmap.end()) {
      std::pair<size_t,size_t> i = (*p).second;
-     for (int j = i.first; j <= i.second; ++j) {
+     for (size_t j = i.first; j <= i.second; ++j) {
         cur.push_back(stmts[j]);
      }
   }
@@ -256,6 +258,7 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
          case AstInterface::BOP_LE: opt = LE; break;
          case AstInterface::BOP_GE: opt = GE; break;
          case AstInterface::BOP_NE: opt = NE; break;
+         default: assert (!"Default reached in ProcessExpression");
          }
          stmt_last = x_eq_op_y( opt, modname, opds);
          stmts_pushback(stmts,stmt_last);
@@ -281,7 +284,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
           std::list<std::string>& fields, const AstNodePtr& mod)
 {
   std::string modname;
-  Stmt first = 0;
+  // Stmt first = 0;
   if (fa.IsVarRef(mod)) {
       modname = Get_VarName(fa,mod);
       Stmt stmt_last = fields.size()?
@@ -437,7 +440,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
     }
 
     if (fa.IsReturn(s,&rhs)) {
-       size_t stmt_firstIndex = stmts.size();
+       // size_t stmt_firstIndex = stmts.size();
        std::string fname = fdefined.back(); 
        if (rhs != AST_NULL) {
           std::string rhsname = Get_VarName(fa, rhs);
@@ -450,7 +453,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
        Skip(s);
     }
     else if (fa.IsVariableDecl( s, &vars, &args)) {
-       size_t stmt_firstIndex = stmts.size();
+       // size_t stmt_firstIndex = stmts.size();
        AstInterface::AstNodeList::const_iterator pv = vars.begin();
        AstInterface::AstNodeList::const_iterator pa = args.begin();
        while (pv != vars.end()) {

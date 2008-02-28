@@ -191,7 +191,7 @@ HEADER_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -405,7 +405,7 @@ HEADER_SCOPE_STATEMENT_START
   // protected:
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -534,7 +534,7 @@ HEADER_DECLARATION_STATEMENT_START
      public:
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -626,7 +626,7 @@ HEADER_LIST_DECLARATIONS
      public:
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -676,7 +676,7 @@ HEADER_LIST_DECLARATIONS
        // void append_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -704,7 +704,7 @@ HEADER_IF_STATEMENT_START
           virtual SgName get_mangled_name() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -750,7 +750,7 @@ HEADER_LIST_DECLARATIONS
           virtual SgName get_mangled_name() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -775,7 +775,7 @@ HEADER_FOR_INIT_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -805,7 +805,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -844,7 +844,7 @@ HEADER_FUNCTION_DECLARATION_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -898,7 +898,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -953,7 +953,7 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1014,7 +1014,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1109,7 +1109,7 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1304,7 +1304,7 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1350,7 +1350,7 @@ HEADER_LIST_DECLARATIONS_2
           SgClassDefinition( SgClassDeclaration* d);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1374,7 +1374,7 @@ HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_START
           SgTemplateInstantiationDefn( SgTemplateInstantiationDecl* d);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1407,7 +1407,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1429,7 +1429,7 @@ HEADER_EXPRESSION_STATEMENT_START
           int replace_expression(SgExpression *,SgExpression *);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1456,7 +1456,7 @@ HEADER_LABEL_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1492,7 +1492,7 @@ HEADER_WHILE_STATEMENT_START
           virtual SgName get_mangled_name() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1519,7 +1519,7 @@ HEADER_DO_WHILE_STATEMENT_START
           virtual SgName get_mangled_name() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1553,7 +1553,7 @@ HEADER_SWITCH_STATEMENT_START
           virtual SgName get_mangled_name() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1577,7 +1577,7 @@ HEADER_CASE_OPTION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1610,7 +1610,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1642,7 +1642,7 @@ HEADER_CATCH_OPTION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1671,7 +1671,7 @@ HEADER_DEFAULT_OPTION_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1726,7 +1726,7 @@ HEADER_GOTO_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1810,7 +1810,7 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
           SgDeclarationStatement* get_baseTypeDefiningDeclaration() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1859,7 +1859,7 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1916,7 +1916,7 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -1969,7 +1969,7 @@ HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -2021,7 +2021,7 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -2075,7 +2075,7 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
           bool isSameNamespace( const SgNamespaceDeclarationStatement* n ) const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -2098,7 +2098,7 @@ HEADER_NAMESPACE_DEFINITION_STATEMENT_START
           bool isSameNamespace(const SgNamespaceDefinitionStatement* n ) const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -2155,7 +2155,7 @@ HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_START
           virtual SgName get_mangled_name(void) const;
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
@@ -5552,7 +5552,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     break;
                   }
 
-            // DQ (4/13/2005): Combine these two cases since they are identical (error: both cases must be seperate!)
+            // DQ (4/13/2005): Combine these two cases since they are identical (error: both cases must be separate!)
                case V_SgTemplateInstantiationFunctionDecl:
             // case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
@@ -8267,14 +8267,14 @@ void
 SgFunctionParameterList::append_arg( SgInitializedName* what)
    {
      get_args().push_back(what);
-     SgFunctionDeclaration* declStmt = isSgFunctionDeclaration(this->get_parent());
+     // SgFunctionDeclaration* declStmt = isSgFunctionDeclaration(this->get_parent());
    }
 
 void
 SgFunctionParameterList::prepend_arg( SgInitializedName* what)
    {
      get_args().insert(get_args().begin(), what);
-     SgFunctionDeclaration* declStmt = isSgFunctionDeclaration(this->get_parent());
+     // SgFunctionDeclaration* declStmt = isSgFunctionDeclaration(this->get_parent());
    }
 
 // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).

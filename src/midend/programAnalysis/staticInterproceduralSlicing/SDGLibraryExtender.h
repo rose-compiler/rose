@@ -9,5 +9,6 @@ class SDGLibraryExtender
   virtual bool isKnownLibraryFunction(SgFunctionDeclaration *fDec){return false;}
   virtual void createConnectionsForLibaryFunction(SgFunctionDeclaration *fDec,
 SystemDependenceGraph * sdg){};
+  virtual ~SDGLibraryExtender() {}
 };
 #endif

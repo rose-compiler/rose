@@ -3,7 +3,7 @@
 // ################################################################
 
 #include "grammarString.h"
-#include "grammarTreeNode.h"
+#include "terminal.h"
 #include "string_functions.h"
 #include <string>
 
@@ -715,7 +715,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
    }
 
 string
-GrammarString::getFunctionNameString ( GrammarTreeNode & node )
+GrammarString::getFunctionNameString ( Terminal & node )
    {
 
   // printf ("Inside of GrammarString::getFunctionNameString(node) \n");
@@ -739,9 +739,9 @@ GrammarString::getFunctionNameString ( GrammarTreeNode & node )
 
        // printf ("EDIT className (%s) durring copy \n",className);
           string parentClassName    = "NO PARENT FOUND";
-          if (node.isRootNode() == TRUE)
+          if (node.getBaseClass() == NULL)
              {
-               parentClassName    = node.parentTreeNode->getName();
+               parentClassName    = node.getBaseClass()->getName();
 
             // Later this has to be automatically derived
                derivedClassString = ": " + parentClassName + "(exp)";
@@ -751,7 +751,7 @@ GrammarString::getFunctionNameString ( GrammarTreeNode & node )
              }
 
           string pureVirtualMarkerString = "";
-          if (node.isLeafNode() == FALSE)
+          if (!node.subclasses.empty())
              {
                pureVirtualMarkerString = " = 0";
              }

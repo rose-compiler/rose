@@ -1067,7 +1067,7 @@ SgName
 $CLASSNAME::get_name() const
    {
      if(get_declaration())
-          return isSg$GRAMMAR_X_MARKER_ClassDeclaration(get_declaration())->get_name();
+          return isSgClassDeclaration(get_declaration())->get_name();
        else 
           return SgName((char *)0L);
    }
@@ -1078,7 +1078,7 @@ SOURCE_TYPEDEF_GET_BASE_TYPE_START
 SgType*
 $CLASSNAME::get_base_type() const
    {
-     return (get_declaration()) ? isSg$GRAMMAR_X_MARKER_TypedefDeclaration(get_declaration())->get_base_type() : (SgType*)0L;
+     return (get_declaration()) ? isSgTypedefDeclaration(get_declaration())->get_base_type() : (SgType*)0L;
    }
 SOURCE_TYPEDEF_GET_BASE_TYPE_END
 
@@ -2007,7 +2007,7 @@ SgName
 SgClassType::get_name() const
    {
      if(get_declaration()) 
-          return isSg$GRAMMAR_X_MARKER_ClassDeclaration(get_declaration())->get_name();
+          return isSgClassDeclaration(get_declaration())->get_name();
        else
           return SgName((char *)0L);
    }
@@ -3013,7 +3013,7 @@ $CLASSNAME::get_mangled_name(SgUnparse_Info& info)
   // printf ("Leaving SgMemberFunctionType::get_mangled_name(): mangledName = %s \n",mangledName.c_str());
 
 #if 0
-            // This code has been refactored and place in a seperate function: mangledNameSupport()
+            // This code has been refactored and place in a separate function: mangledNameSupport()
                if (len > 0 && strncmp(fname.str(),opstr,m)==0)
                   {
                     if (fname.str()[m]==' ')
@@ -3375,7 +3375,7 @@ SOURCE_CREATE_TYPE_WITH_PARAMETER_END
 
 SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_START
 $CLASSNAME* 
-$CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_Type* rtype)
+$CLASSNAME::createType(SgType* rtype)
    {
   // return new $CLASSNAME(rtype);
 
@@ -3390,7 +3390,7 @@ SOURCE_CREATE_TYPE_FOR_PARTIAL_FUNCTION_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_START
 $CLASSNAME*
-$CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_TypedefDeclaration *decl) 
+$CLASSNAME::createType(SgTypedefDeclaration *decl) 
    {
 #if 1
   // printf ("Inside of SgTypedefType::createType() \n");
@@ -3413,7 +3413,7 @@ $CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_TypedefDeclaration *decl)
             // SgName dname = decl->get_name();
             // SgTypedefType *tptr= isSgTypedefType((*i).irep());
                ROSE_ASSERT( (*i) != NULL);
-               Sg$GRAMMAR_X_MARKER_TypedefType *tptr= isSg$GRAMMAR_X_MARKER_TypedefType(*i);
+               SgTypedefType *tptr= isSgTypedefType(*i);
                ROSE_ASSERT(tptr != NULL);
                if( (decl->get_name() == tptr->get_name()) && 
                    (decl->get_parent_scope() == tptr->get_parent_scope()) )
@@ -3421,15 +3421,15 @@ $CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_TypedefDeclaration *decl)
                i++;
              }
 
-       // decl->set_type(new Sg$GRAMMAR_X_MARKER_TypedefType(decl, decl->get_parent_scope()));
+       // decl->set_type(new SgTypedefType(decl, decl->get_parent_scope()));
 
        // debugging code
        // decl->get_file_info()->display("declration used in $CLASSNAME::createType()");
 
        // Parent scope is NULL for declarations in global scope
        // ROSE_ASSERT (decl->get_parent_scope() != NULL);
-          Sg$GRAMMAR_X_MARKER_TypedefType* tempType =
-               new Sg$GRAMMAR_X_MARKER_TypedefType(decl, decl->get_parent_scope());
+          SgTypedefType* tempType =
+               new SgTypedefType(decl, decl->get_parent_scope());
           ROSE_ASSERT (tempType != NULL);
           decl->set_type(tempType);
 
@@ -3452,7 +3452,7 @@ $CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_TypedefDeclaration *decl)
 
      return decl->get_type();
 #else
-     printf ("Exiting in Sg$GRAMMAR_X_MARKER_TypedefType::createType() \n");
+     printf ("Exiting in SgTypedefType::createType() \n");
      ROSE_ABORT();
 
      return NULL;
@@ -3612,7 +3612,7 @@ SOURCE_CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE_START
 $CLASSNAME*
-$CLASSNAME::createType ( SgType* base_type, Sg$GRAMMAR_X_MARKER_ClassDefinition *class_definition )
+$CLASSNAME::createType ( SgType* base_type, SgClassDefinition *class_definition )
    {
      $CLASSNAME* returnType = new $CLASSNAME(base_type,class_definition);
      assert(returnType != NULL);
@@ -3717,7 +3717,7 @@ SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_START
 $CLASSNAME*
-$CLASSNAME::createType(Sg$GRAMMAR_X_MARKER_ClassDeclaration * cd)
+$CLASSNAME::createType(SgClassDeclaration * cd)
    {
      ROSE_ASSERT(cd != NULL);
 
@@ -3753,19 +3753,19 @@ $CLASSNAME*
 $CLASSNAME::createType(SgType* base_type)
    {
      assert(base_type != NULL);
-     if (base_type->$GRAMMAR_X_MARKER_p_ptr_to)
+     if (base_type->p_ptr_to)
         {
-          return base_type->$GRAMMAR_X_MARKER_p_ptr_to;
+          return base_type->p_ptr_to;
         }
        else
         {
           $CLASSNAME* newType = new $CLASSNAME(base_type);
           assert(newType != NULL);
 
-          base_type->$GRAMMAR_X_MARKER_p_ptr_to = newType;
-          assert(base_type->$GRAMMAR_X_MARKER_p_ptr_to != NULL);
+          base_type->p_ptr_to = newType;
+          assert(base_type->p_ptr_to != NULL);
 
-          return base_type->$GRAMMAR_X_MARKER_p_ptr_to;
+          return base_type->p_ptr_to;
        // return (base_type->ptr_to = new $CLASSNAME(base_type));
         }
    }
@@ -3778,19 +3778,19 @@ $CLASSNAME*
 $CLASSNAME::createType(SgType* base_type)
    {
      assert(base_type != NULL);
-     if (base_type->$GRAMMAR_X_MARKER_p_ref_to)
+     if (base_type->p_ref_to)
         {
-          return base_type->$GRAMMAR_X_MARKER_p_ref_to;
+          return base_type->p_ref_to;
         }
        else
         {
           $CLASSNAME* newType = new $CLASSNAME(base_type);
           assert(newType != NULL);
 
-          base_type->$GRAMMAR_X_MARKER_p_ref_to = newType;
-          assert(base_type->$GRAMMAR_X_MARKER_p_ref_to != NULL);
+          base_type->p_ref_to = newType;
+          assert(base_type->p_ref_to != NULL);
 
-          return base_type->$GRAMMAR_X_MARKER_p_ref_to;
+          return base_type->p_ref_to;
        // return (base_type->ref_to = new $CLASSNAME(base_type));
         }
    }

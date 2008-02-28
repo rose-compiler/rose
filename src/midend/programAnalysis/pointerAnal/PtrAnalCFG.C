@@ -15,7 +15,7 @@ class PtrAnalBuildCFG
   AstInterface& fa; 
  public:
   PtrAnalBuildCFG(AstInterface& _fa, PtrAnal& _m, const std::string& _fname, PtrAnal::Stmt _d) 
-     : fa(_fa), m(_m),fname(_fname), defn(_d) {}
+     : m(_m), defn(_d), fname(_fname), fa(_fa) {}
 
   void solve_pending() {
      std::cerr << "solving pending \n";

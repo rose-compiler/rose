@@ -17,6 +17,7 @@ class BuildCFGConfig  : public CFGConfig
   virtual Node* CreateNode() = 0;
   virtual void CreateEdge( Node *n1, Node *n2, EdgeType condval) = 0;
   virtual void AddNodeStmt(Node* n, const AstNodePtr& s) = 0;
+  virtual ~BuildCFGConfig() {}
 };
 
 namespace ROSE_Analysis {

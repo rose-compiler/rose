@@ -658,7 +658,7 @@ Code Generation Problems:
    5) How is Rosetta different from the generator in SAGE 2 presently.
       a) Not as many features (though we now more clearly see the value of some of these)
       b) Addresses the problem of generating code that users should not modify
-         1. Places all header and source into two seperate files
+         1. Places all header and source into two separate files
          2. We could shroud source to confuse things (optional)
          3. Full functions are specified (easier to fix bugs, in principle)
       c) Addresses the construction of hierarchies of grammars (MANY grammars working together)

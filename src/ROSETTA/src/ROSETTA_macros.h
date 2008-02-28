@@ -97,7 +97,7 @@ typedef enum
 // Support for debugging a bug in Insure++
 #define INSURE_BUG FALSE
 
-#include <list>
+#include <vector>
 // #ifndef STL_LIST_IS_BROKEN
 // #include STL_LIST_HEADER_FILE
 // #endif
