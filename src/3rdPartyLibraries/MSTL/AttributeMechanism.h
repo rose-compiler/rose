@@ -85,12 +85,17 @@ class AttributeMechanism : protected std::map<Key,Value>
              {
                return std::map<Key,Value>::size();
              }
-      
-
-protected:
-  typedef std::map<Key,Value> MapType;
-  typedef typename MapType::value_type MapValueType;
-  typedef typename MapType::iterator iterator;
+       
+      protected:
+        typedef std::map<Key,Value> MapType;
+        typedef typename MapType::value_type MapValueType;
+      // Liao, 2/26/2008, support iterator
+      public:
+         typedef typename MapType::iterator iterator;
+         iterator begin()
+            {  return std::map<Key,Value>::begin();}
+         iterator end()
+            {  return std::map<Key,Value>::end();}
 
 };
 

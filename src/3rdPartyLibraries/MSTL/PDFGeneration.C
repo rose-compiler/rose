@@ -52,10 +52,10 @@ void PDFGeneration::create_textlink(const char* text, int targetpage, int hitbox
   double textxpos=PDF_get_value(pdfFile,"textx",0.0);
   double textypos=PDF_get_value(pdfFile,"texty",0.0); 
   // add local link rectangle
-  int lowerleftx=textxpos-hitboxextender;
-  int lowerlefty=textypos+fontsize-2+hitboxextender;
-  int upperrightx=textxpos+textlength+hitboxextender;
-  int upperrighty=textypos-2-hitboxextender;
+  int lowerleftx=(int)(textxpos-hitboxextender);
+  int lowerlefty=(int)(textypos+fontsize-2+hitboxextender);
+  int upperrightx=(int)(textxpos+textlength+hitboxextender);
+  int upperrighty=(int)(textypos-2-hitboxextender);
   PDF_add_locallink(pdfFile, lowerleftx, lowerlefty, upperrightx, upperrighty,targetpage,"retain");
   // add text
   //PDF_set_parameter(pdfFile,"underline","true");
