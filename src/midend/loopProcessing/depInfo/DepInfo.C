@@ -434,7 +434,7 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
     case DEPDIR_GE:
          if (align1 > 0)
             notcarry = carry = false;
-    default: assert (!"Bad DEPDIR in CarryLevels");
+    default: break;
     }
     if (carry && minLevel < 0)
        minLevel = i;
