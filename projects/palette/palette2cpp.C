@@ -9,7 +9,11 @@
 #include "prologParser.h"
 #include "prologAst.h"
 
-const std::string PALETTE_INCLUDE_DIR = "/home/willcock2/rosalog/palette2cpp/";
+// We need the paths and functions from here, but not the redefinition of
+// operator<< on vectors
+#include "rose_paths.h"
+class SgProject;
+#include "sageSupport.h"
 
 using namespace std;
 
@@ -348,6 +352,12 @@ void processIs(PrologAst::Node* lhs, PrologAst::Node* rhs,
   }
 }
 
+void addIncludePath(const string& p) {
+  if (std::find(includePaths.begin(), includePaths.end(), p) == includePaths.end()) {
+    includePaths.push_back(p);
+  }
+}
+
 vector<string> parseParameters(const string& argv0, const vector<char*>& args) {
   vector<string> sourceFiles;
   for (unsigned int i = 0; i < args.size(); ++i) {
@@ -355,14 +365,14 @@ vector<string> parseParameters(const string& argv0, const vector<char*>& args) {
     if (arg.size() >= 2 && arg[0] == '-' && arg[1] == 'I') {
       if (arg.size() == 2) {
 	if (i + 1 != args.size()) {
-	  includePaths.push_back(args[i + 1]);
+	  addIncludePath(args[i + 1]);
 	  ++i;
 	} else {
 	  cerr << "Option -I needs argument" << endl;
 	  exit(1);
 	}
       } else {
-	includePaths.push_back(arg.substr(2));
+	addIncludePath(arg.substr(2));
       }
     } else if (arg == "--") {
       sourceFiles.insert(sourceFiles.end(), args.begin() + i + 1, args.end());
@@ -1575,9 +1585,10 @@ int main(int argc, char** argv) {
   PrologParser::initParser();
 
   includePaths.clear();
-  includePaths.push_back(".");
+  addIncludePath(".");
   vector<string> sourceFiles = parseParameters(argv[0], vector<char*>(argv + 1, argv + argc));
-  includePaths.push_back(PALETTE_INCLUDE_DIR);
+  addIncludePath(findRoseSupportPathFromSource("projects/palette/", ROSE_AUTOMAKE_DATADIR));
+  addIncludePath(findRoseSupportPathFromBuild("projects/palette/", ROSE_AUTOMAKE_DATADIR));
 
   vector<PrologAst::Node*> program;
   for (unsigned int i = 0; i < sourceFiles.size(); ++i) {
