@@ -55,5 +55,5 @@ operator()( LoopTransformInterface& la, const AstNodePtr& root)
         fa.BlockPrependStmt(body, n->get_stmt()); 
      }
   }
-  return AST_NULL; // Does not seem to be used
+  return root; // Does not seem to be used, but Qing suggests this as the correct return value
 }
