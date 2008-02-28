@@ -3371,8 +3371,8 @@ HEADER_FILE_INFORMATION_START
           void deregister_node(SgLocatedNode* node) ROSE_DEPRECATED_FUNCTION;
 
        // functions added by Dan Quinlan (suggested by Gary Lee)
-          int   getCurrentLine () const ROSE_DEPRECATED_FUNCTION;
-          std::string getCurrentFilename () const ROSE_DEPRECATED_FUNCTION;
+       // int   getCurrentLine () const ROSE_DEPRECATED_FUNCTION;
+       // std::string getCurrentFilename () const ROSE_DEPRECATED_FUNCTION;
 
        // int   getReferenceCount() ROSE_DEPRECATED_FUNCTION;
        // void  incrementReferenceCount() ROSE_DEPRECATED_FUNCTION;
@@ -7687,11 +7687,11 @@ SOURCE_PRAGMA_END
 
 SOURCE_FILE_INFORMATION_START
 
-int Sg_File_Info::p_cur_line ROSE_DEPRECATED_VARIABLE  = 0;
-std::string Sg_File_Info::p_cur_file  ROSE_DEPRECATED_VARIABLE = "";
+// int Sg_File_Info::p_cur_line ROSE_DEPRECATED_VARIABLE  = 0;
+// std::string Sg_File_Info::p_cur_file  ROSE_DEPRECATED_VARIABLE = "";
 
 // MK (7/22/05) : Added support for file ids. Here we initialize the static file maps, etc
-int Sg_File_Info::p_max_file_id = 0;
+// int Sg_File_Info::p_max_file_id = 0;
 std::map<std::string, int> Sg_File_Info::p_nametofileid_map;
 std::map<int, std::string> Sg_File_Info::p_fileidtoname_map;
 
@@ -8060,10 +8060,10 @@ Sg_File_Info::display_static_data( const std::string label )
 
      printf ("Inside of Sg_File_Info::display_static_data(%s) \n",label.c_str());
 
-     printf ("p_cur_line = %d \n",p_cur_line);
-     printf ("p_cur_file = %s \n",p_cur_file.c_str());
+     // printf ("p_cur_line = %d \n",p_cur_line);
+     // printf ("p_cur_file = %s \n",p_cur_file.c_str());
 
-     printf ("p_max_file_id = %d \n",p_max_file_id);
+     // printf ("p_max_file_id = %d \n",p_max_file_id);
 
      printf ("p_nametofileid_map: \n");
      for (std::map<std::string,int>::iterator i = p_nametofileid_map.begin(); i != p_nametofileid_map.end(); i++)
@@ -8272,7 +8272,7 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
 
      if (p_nametofileid_map.count(filename) == 0)
         {
-          p_file_id = p_max_file_id++;
+          p_file_id = p_nametofileid_map.size();
           p_nametofileid_map[filename]  = p_file_id;
           p_fileidtoname_map[p_file_id] = filename;
         }
@@ -8513,6 +8513,7 @@ Sg_File_Info::set_col( int n )
      ROSE_ASSERT (p_col >= 0);
    }
 
+#if 0
 int
 Sg_File_Info::getCurrentLine () const
    { 
@@ -8528,6 +8529,7 @@ Sg_File_Info::getCurrentFilename () const
      printf ("This is a depricated function: char* Sg_File_Info::getCurrentFilename() const \n");
      return p_cur_file;
    }
+#endif
 
 bool
 Sg_File_Info::hasPositionInSource() const
