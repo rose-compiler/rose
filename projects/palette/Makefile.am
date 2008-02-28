@@ -5,7 +5,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 PALETTEFLAGS = 
 
-BUILT_SOURCES = palette2cpp
+BUILT_SOURCES = palette2cpp rose.P
 
 bin_PROGRAMS = palette2cpp
 palette2cpp_SOURCES = palette2cpp.C prologLexer.C prologParser.C prologParser.h prologAst.h
