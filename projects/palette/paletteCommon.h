@@ -1,0 +1,76 @@
+#ifndef PALETTE_COMMON_H
+#define PALETTE_COMMON_H
+
+#ifdef PALETTE_USE_ROSE
+#include "rose.h"
+#include "compass.h"
+#endif
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <cmath>
+#include <set>
+#include <map>
+#include <vector>
+#include <utility>
+
+namespace Palette {
+
+#ifdef PALETTE_USE_ROSE
+  typedef SgNode* SgNodePtr;
+
+  inline std::string stringify(SgNodePtr n) {std::ostringstream os; os << "node" << uintptr_t(n); return os.str();}
+#endif
+  inline std::string stringify(int x) {std::ostringstream os; os << x; return os.str();}
+  inline std::string stringify(const std::string& s) {return "'" + s + "'";}
+
+#ifdef PALETTE_USE_ROSE
+  // This is based on the ROSE memory pool traversal code, but changed to run the body inline
+#define PALETTE_ITERATE_THROUGH_MEMORY_POOL(type, elt_name) \
+        if (type::Memory_Block_List.empty() == false) \
+          for (unsigned int i=0; i < type::Memory_Block_List.size(); i++) \
+            for (int j=0; j < type::CLASS_ALLOCATION_POOL_SIZE; j++) \
+              if (((type**) (&(type::Memory_Block_List[0])))[i][j].get_freepointer() == AST_FileIO::IS_VALID_POINTER()) \
+                if (type* elt_name = &((type**) &(type::Memory_Block_List[0]))[i][j])
+#endif
+
+  struct Timer {
+    double lastTimeCPU, lastTimeWall;
+    std::string label;
+
+    Timer(const std::string& label): label(label) {
+      rusage ru;
+      timeval tv;
+      getrusage(RUSAGE_SELF, &ru);
+      gettimeofday(&tv, NULL);
+      lastTimeCPU = ru.ru_utime.tv_sec + ru.ru_utime.tv_usec * 1.e-6;
+      lastTimeWall = tv.tv_sec + tv.tv_usec * 1.e-6;
+    }
+
+    ~Timer() {
+      rusage ru;
+      timeval tv;
+      getrusage(RUSAGE_SELF, &ru);
+      gettimeofday(&tv, NULL);
+      double tCPU = ru.ru_utime.tv_sec + ru.ru_utime.tv_usec * 1.e-6;
+      double tWall = tv.tv_sec + tv.tv_usec * 1.e-6;
+      double intervalCPU = tCPU - lastTimeCPU;
+      double intervalWall = tWall - lastTimeWall;
+      std::cerr << label << " took " << intervalCPU << "s CPU time, " << intervalWall << "s wall time" << std::endl;
+    }
+  };
+
+#ifdef PALETTE_USE_ROSE
+  class CheckerOutput: public Compass::OutputViolationBase {
+    public:
+      CheckerOutput(SgNode* node, const std::string& checkerName,
+		    const std::string& str):
+	Compass::OutputViolationBase(node, checkerName, str) {}
+  };
+#endif
+
+}
+
+#endif // PALETTE_COMMON_H

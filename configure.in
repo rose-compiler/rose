@@ -860,6 +860,7 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
 projects/MPICodeMotion/Makefile
 projects/javaport/Makefile
+projects/palette/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

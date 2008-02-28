@@ -1,0 +1,26 @@
+:- prim(print, 1,
+        [rule([+(double)],
+              [do("std::cout << $0")]),
+	 rule([+(int)],
+              [do("std::cout << $0")]),
+	 rule([+('std::string')],
+              [do("std::cout << $0")])]).
+
+:- prim(printnl, 1,
+        [rule([+(double)],
+              [do("std::cout << $0 << std::endl")]),
+	 rule([+(int)],
+              [do("std::cout << $0 << std::endl")]),
+	 rule([+('std::string')],
+              [do("std::cout << $0 << std::endl")])]).
+
+:- prim(getc, 1,
+	[rule([-(int)],
+	      [let(char, $1, 0),
+	       do("std::cin >> $1"),
+	       let(int, $0, $1)])]).
+
+:- prim(eof, 0,
+	[rule([], [cond("std::cin.eof()")])]).
+
+:- prim(newline, 0, [rule([], [do("std::cout << std::endl")])]).

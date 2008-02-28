@@ -1,0 +1,31 @@
+// vim: syn=cpp:
+
+#define PALETTE_USE_ROSE
+#include <rose.h>
+#include "paletteCommon.h"
+
+namespace CompassAnalyses {
+  namespace PaletteGenerated {
+    class Traversal: public Compass::TraversalBase {
+      Compass::Parameters inputParameters;
+@@@@@
+
+      public:
+      virtual void run(SgNode*) {
+        Palette::Timer t("Query");
+        paletteMain();
+      }
+
+      Traversal(Compass::Parameters inputParameters,
+          Compass::OutputObject* output)
+        : Compass::TraversalBase(output, "Palette-compiled code", "", ""),
+        inputParameters(inputParameters)
+        {}
+    };
+  }
+}
+
+typedef CompassAnalyses::PaletteGenerated::Traversal Checker;
+
+#include "compass.C"
+#include "compassTestMain.C"
