@@ -17,7 +17,7 @@ copyFunctionDefinitions_SOURCES = copyFunctionDefinitions.C
 copyFunctionDefinitions_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # DQ (1/8/2008):
 # These need to be specified outside of the conditionals so that
@@ -864,7 +864,7 @@ testCopyFunctionDefinitions: copyFunctionDefinitions
 # copyExample_SOURCES = copyExample.C
 # copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # TESTCODES_REQUIRED_TO_PASS = copyExampleInput.C
 

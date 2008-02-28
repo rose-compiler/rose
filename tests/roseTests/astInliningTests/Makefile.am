@@ -14,7 +14,7 @@ inlineEverything_SOURCES = inlineEverything.C
 inlineEverything_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TESTCODES = \
    pass16.C pass1.C pass2.C pass3.C pass4.C pass5.C pass6.C pass7.C pass8.C pass9.C pass10.C \

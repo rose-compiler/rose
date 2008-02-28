@@ -7,7 +7,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # bin_PROGRAMS = copyExample
 # copyExample_SOURCES = copyExample.C
 # copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
 

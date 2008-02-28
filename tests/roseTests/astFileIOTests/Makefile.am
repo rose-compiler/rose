@@ -13,15 +13,15 @@ bin_PROGRAMS  = astFileIO astFileRead astCompressionTest
 
 astFileIO_SOURCES = astFileIO.C 
 astFileIO_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 astCompressionTest_SOURCES = astCompressionTest.C 
 astCompressionTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-astCompressionTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+astCompressionTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 astFileRead_SOURCES = astFileRead.C
 astFileRead_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-astFileRead_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+astFileRead_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

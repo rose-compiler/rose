@@ -11,7 +11,7 @@ bin_PROGRAMS  = astTraversalTest
 
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)
-ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPERATE_LIBS)
+ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)

@@ -12,7 +12,7 @@ bin_PROGRAMS  = \
 
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)
-ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPERATE_LIBS)
+ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 # ROSE_DEVELOPMENT_LIBS = $(ROSE_LIBS)
 
 testQuery_SOURCES = testQuery.C

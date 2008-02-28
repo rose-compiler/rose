@@ -16,7 +16,7 @@ bin_PROGRAMS = \
 
 # DQ (3/14/2006): Switch to using multiple libs (since it is faster)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 preTest_SOURCES = preTest.C
 preTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)

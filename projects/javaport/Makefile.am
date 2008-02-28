@@ -51,14 +51,14 @@ dummydir=$(datadir)/java
 noinst_PROGRAMS = testlink
 testlink_SOURCES = testlink.cc
 testlink_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libsage3_wrap.la
-testlink_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS) libsage3_wrap.la
+testlink_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) libsage3_wrap.la
 
 # testlink.o: libsage3_wrap.la
 
 bin_PROGRAMS = frontendAndDump
 frontendAndDump_SOURCES = frontendAndDump.cc
 frontendAndDump_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-frontendAndDump_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+frontendAndDump_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 javalib_DATA	= sage3.jar
 javalibdir	= $(datadir)/java

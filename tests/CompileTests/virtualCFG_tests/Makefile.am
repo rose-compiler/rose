@@ -7,7 +7,7 @@ bin_PROGRAMS = testVirtualCFG
 testVirtualCFG_SOURCES = testVirtualCFG.C
 testVirtualCFG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # Import list of C++ test cases that should pass:
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS

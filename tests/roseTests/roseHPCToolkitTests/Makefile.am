@@ -21,7 +21,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_builddir) \
            -I$(ROSEHPCT_SRC_ROOT)/include
 
 # Until we get around to fixing the spelling...
-ROSE_SEPARATE_LIBS = $(ROSE_SEPERATE_LIBS)
+ROSE_SEPARATE_LIBS = $(ROSE_SEPARATE_LIBS)
 
 # Default link flags for executables
 ROSEHPCT_LIBS = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \

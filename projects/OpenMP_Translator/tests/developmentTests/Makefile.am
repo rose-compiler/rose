@@ -7,7 +7,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # bin_PROGRAMS = copyExample
 # copyExample_SOURCES = copyExample.C
 # copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 #inputBug320.c , this is not directly related to OpenMP, removed, Liao 11/14/2007
 #inputNomain.c: assume all tests are selfcontained. so skip this one

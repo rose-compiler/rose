@@ -9,7 +9,7 @@ unparseToString_Type_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 unparseToString_All_SOURCES = unparseToString_All.C
 unparseToString_All_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = unparseToString_Type-Input.C
 

@@ -55,7 +55,7 @@ testTranslator2004_01_DEPENDENCIES              = $(exampleDEPENDENCIES)
 
 # DQ (10/18/2004): Switch to using multiple libs (since it is faster)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPERATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 testCommentInsertion_LDADD               = $(LDADD)
 testIncludeDirectiveInsertion_LDADD      = $(LDADD)
