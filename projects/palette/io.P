@@ -4,7 +4,9 @@
 	 rule([+(int)],
               [do("std::cout << $0")]),
 	 rule([+('std::string')],
-              [do("std::cout << $0")])]).
+              [do("std::cout << $0")]),
+         rule([+('SgNode*')],
+              [do("std::cout << $0->unparseToString()")])]).
 
 :- prim(printnl, 1,
         [rule([+(double)],
@@ -12,7 +14,9 @@
 	 rule([+(int)],
               [do("std::cout << $0 << std::endl")]),
 	 rule([+('std::string')],
-              [do("std::cout << $0 << std::endl")])]).
+              [do("std::cout << $0 << std::endl")]),
+         rule([+('SgNode*')],
+              [do("std::cout << $0->unparseToString() << std::endl")])]).
 
 :- prim(getc, 1,
 	[rule([-(int)],

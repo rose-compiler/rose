@@ -16,7 +16,7 @@ dist_noinst_DATA = palette-talk.ppt
 dist_data_DATA = rose.P arith.P io.P basic.tmpl compass.tmpl \
 		 __eq___pp.itmpl iterateChildren_pm.itmpl cond_p.itmpl \
 		 iterMemoryPools_mp.itmpl let_mp.itmpl do_p.itmpl \
-		 iterCfgEdges_pppm.itmpl
+		 iterCfgEdges_pppm.itmpl iterateAttributes_pm.itmpl
 
 include_HEADERS = paletteCommon.h
 

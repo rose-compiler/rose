@@ -168,7 +168,7 @@ namespace PrologParser {
           bool looseInfix = pInfix.first != NOT_AN_OPERATOR;
           bool loosePostfix = pPostfix.first != NOT_AN_OPERATOR;
           bool looseNonoperator = lastTag == INFIX || lastTag == PREFIX;
-#if 0
+#if 1
           std::cerr << "Cannot resolve operator definition" << std::endl;
 	  std::cerr << "Last tag is " << lastTag << std::endl;
           std::cerr << "For prefix" << (pPrefix.first != NOT_AN_OPERATOR ? "" : " (not defined)") << ": " << lastPrecedence << " " << pPrefix.second << " " << prefixInfixNextPrecedence << std::endl;
