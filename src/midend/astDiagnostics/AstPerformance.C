@@ -274,7 +274,7 @@ AstPerformance::~AstPerformance()
    }
 
 ProcessingPhase::ProcessingPhase ()
-   : name("default name"), performance(-1.0), resolution(-1.0), internalMemoryUsageData(0), memoryUsage()
+   : name("default name"), performance(-1.0), resolution(-1.0), memoryUsage(), internalMemoryUsageData(0)
    {
    }
 
@@ -282,7 +282,7 @@ ProcessingPhase::ProcessingPhase ()
 // extern int RAMUST::getMem(int);
 
 ProcessingPhase::ProcessingPhase ( const std::string & s, double p, ProcessingPhase *parent )
-   : name(s), performance(p), resolution(-1.0), internalMemoryUsageData(0), memoryUsage()
+   : name(s), performance(p), resolution(-1.0), memoryUsage(), internalMemoryUsageData(0)
    {
 #if 0
   // DQ (12/8/2006): Use Linux memory usage mechanism

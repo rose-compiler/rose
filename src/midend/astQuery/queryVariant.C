@@ -613,7 +613,7 @@ querySolverGrammarElementFromVariantVector (
        // case V_SgModifierType:
           case V_SgPartialFunctionModifierType:
        // case V_SgTypeEllipse:
-          case V_SgUnknownMemberFunctionType:
+       // case V_SgUnknownMemberFunctionType:
              {
                printf ("Error: Type case not implemented! (astNode = %s) \n",astNode->sage_class_name());
                ROSE_ASSERT (false);

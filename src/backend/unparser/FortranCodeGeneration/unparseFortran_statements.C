@@ -64,7 +64,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
             // A label exists in the source code
                string numeric_label_string = StringUtility::numberToString(numeric_label);
 
-            // append an extra blank to seperate the lable from other code (if fixedFormat == true 
+            // append an extra blank to separate the lable from other code (if fixedFormat == true 
             // then this puts a blank into column 6 as required for this to be a code statement).
                numeric_label_string += " ";
 
@@ -444,7 +444,7 @@ FortranCodeGeneration_locatedNode::unparseFormatItemList (SgFormatItemList* form
                   }
                  else
                   {
-                 // This is the case of "format (10/)" which processes "10" and "/" seperately (I think this is a bug, see test2007_241.f).
+                 // This is the case of "format (10/)" which processes "10" and "/" separately (I think this is a bug, see test2007_241.f).
 
                     printf ("Error: both get_data() and get_format_item_list() are NULL \n");
                  // ROSE_ASSERT(false);

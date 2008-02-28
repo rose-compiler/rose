@@ -14,9 +14,9 @@ template <class VarVec, class CoeffVec>
 SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la, 
             const SymbolicVal& exp, const VarVec& vars, CoeffVec& vec, int size)
   {
-    AstInterface& fa = la;
+    // AstInterface& fa = la;
     SymbolicVal val = exp;
-    int coeff;
+    // int coeff;
     for (int i = 0; i < size; ++i) {
        SymbolicVar ivar = vars[i];
        SymbolicBound ivarbound;
@@ -76,6 +76,7 @@ bool SplitEquation( LoopTransformInterface& la, CoeffVec& cur,
                  left = left + cur[j] * bounds[j].lb; break;
               case REL_GE:
                  left = left + cur[j] * bounds[j].ub; break;
+              default: break;
              }
         }
         if (j == dim && (left == 0 || (CompareVal(left,cut) & REL_LT)))  {

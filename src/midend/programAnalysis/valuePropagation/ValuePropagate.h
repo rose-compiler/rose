@@ -44,7 +44,7 @@ class HasValueMapReplace
   SymbolicVal operator() ( const SymbolicVal& v);
  public:
   HasValueMapReplace ( AstInterface& _fa, HasValueMap& _m, bool _usedefault) 
-     : fa(_fa), valmap(_m), usedefault(_usedefault) {}
+     : valmap(_m), fa(_fa), usedefault(_usedefault) {}
 };
 
 class HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>

@@ -15,7 +15,7 @@
 
 //-----------------------------------------------------------------------------
 // we need a virtual desctructor
-// FIXME - create seperate C file for this function ?
+// FIXME - create separate C file for this function ?
 TableRowdataInterface::~TableRowdataInterface()
 {
 	// nothing to do here

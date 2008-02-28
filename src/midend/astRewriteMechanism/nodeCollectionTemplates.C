@@ -559,7 +559,7 @@ AbstractInterfaceNodeCollection<T>::processCommentsAndDirectives ( SgStatementPt
 
             // Since the parent scope contains lists of different types we have to process 
             // two different cases (I would like to avoid conversion of list types since it is unsafe)!
-            // Actually I don't like that we have to have two seperate cases here!
+            // Actually I don't like that we have to have two separate cases here!
                if (parentScope->containsOnlyDeclarations() == true)
                   {
                  // handle case of declaration is global scope

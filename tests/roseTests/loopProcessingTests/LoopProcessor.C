@@ -42,8 +42,6 @@ bool GenerateObj()
 int
 main ( int argc,  char * argv[] )
 {
-	int i;
-
 	std::stringstream buffer;
 	buffer << argv[argc-1] << std::endl;
 	

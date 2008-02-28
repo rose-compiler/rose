@@ -56,9 +56,9 @@ class GraphSelect
       public:
         GraphSelectNodeIterator(const GraphSelect<Graph>* _graphsel,
                                 const typename Graph::NodeIterator& _impl)
-              : graphsel(_graphsel),
-                IteratorImplTemplate<typename Graph::Node*,
-                                     typename Graph::NodeIterator>(_impl) 
+              : IteratorImplTemplate<typename Graph::Node*,
+                                     typename Graph::NodeIterator>(_impl), 
+                graphsel(_graphsel)
              { SetIterator(); }
         virtual ~GraphSelectNodeIterator() {} 
         void Advance() { BaseClass::impl.Advance(); SetIterator(); } 
@@ -83,9 +83,9 @@ class GraphSelect
       public:
         GraphSelectEdgeIterator(const GraphSelect<Graph>* _graphsel,
                                 const typename Graph::EdgeIterator& _impl)
-              : graphsel(_graphsel),
-                IteratorImplTemplate<typename Graph::Edge*,
-                                     typename Graph::EdgeIterator>(_impl) 
+              : IteratorImplTemplate<typename Graph::Edge*,
+                                     typename Graph::EdgeIterator>(_impl), 
+                graphsel(_graphsel)
              { SetIterator(); }
         virtual ~GraphSelectEdgeIterator() {} 
         void Advance() { BaseClass::impl.Advance(); SetIterator(); } 

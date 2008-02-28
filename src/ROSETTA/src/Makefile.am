@@ -6,8 +6,7 @@ INCLUDES = \
    -I$(top_srcdir)/src/3rdPartyLibraries/PDFLibrary
 
 EXTRA_DIST = \
-   ROSETTA_macros.h  grammar.h constraint.h constraintList.h grammarString.h \
-   grammarTreeNode.h nonterminal.h terminal.h terminalList.h
+   ROSETTA_macros.h  grammar.h grammarString.h terminal.h
 
 # Define the template repository path used in the autoconf
 # subsitution for various C++ template control variables.
@@ -97,10 +96,10 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 	mv Cxx_GrammarTreeTraversalAccessEnums.h $(CXX_GRAMMAR_DIR)/Cxx_GrammarTreeTraversalAccessEnums.h
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarVariantEnumNames.C
 	mv Cxx_GrammarVariantEnumNames.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarVariantEnumNames.C
-	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarCocoSymbolsMapping.C
-	mv Cxx_GrammarCocoSymbolsMapping.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarCocoSymbolsMapping.C
-	rm -f $(CXX_GRAMMAR_DIR)/generated_abstractcppgrammar.atg
-	mv generated_abstractcppgrammar.atg $(CXX_GRAMMAR_DIR)/generated_abstractcppgrammar.atg
+#	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarCocoSymbolsMapping.C
+#	mv Cxx_GrammarCocoSymbolsMapping.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarCocoSymbolsMapping.C
+# rm -f $(CXX_GRAMMAR_DIR)/generated_abstractcppgrammar.atg
+# mv generated_abstractcppgrammar.atg $(CXX_GRAMMAR_DIR)/generated_abstractcppgrammar.atg
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarNewAndDeleteOperators.C
 	mv Cxx_GrammarNewAndDeleteOperators.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarNewAndDeleteOperators.C
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarCopyMemberFunctions.C
@@ -148,12 +147,6 @@ CxxGrammarMetaProgram_SOURCES = \
    grammar.C \
    grammarString.C \
    terminal.C \
-   nonterminal.C \
-   grammarTreeNode.C \
-   constraint.C \
-   constraintList.C \
-   terminalList.C \
-   nonTerminalList.C \
    type.C \
    symbol.C \
    expression.C \
@@ -180,7 +173,7 @@ CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD)
 
 # Force recompilation of source files if any of the header files 
 # are changed (does not work if *.o files are not present).
-$(librosetta_a_OBJECTS): ROSETTA_macros.h grammar.h constraint.h constraintList.h grammarString.h grammarTreeNode.h nonterminal.h terminal.h terminalList.h
+$(librosetta_a_OBJECTS): ROSETTA_macros.h grammar.h grammarString.h terminal.h
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files cxx_templates Cxx_Grammar* grammar.dot translationSupport.code

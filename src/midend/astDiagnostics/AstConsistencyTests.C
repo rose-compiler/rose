@@ -276,7 +276,7 @@ AstTests::runAllTests(SgProject* sageProject)
           cout << "Compiler Generated Node Test finished." << endl;
 
 #if 1
-  // DQ (10/22/2007): The unparse to string functionality is now tested seperately.
+  // DQ (10/22/2007): The unparse to string functionality is now tested separately.
   // DQ (10/11/2006): Debugging name qualification, so skip these tests which call the unparser!
   // printf ("WARNING: In AstConsistencyTests.C, while debugging code generation, attribute testing (which includes tests of unparseToString() mechanism) is skipped \n");
 #else
@@ -2246,7 +2246,7 @@ TestAstSymbolTables::visit ( SgNode* node )
           SgSymbolTable::BaseHashType* internalTable = symbolTable->get_table();
           ROSE_ASSERT(internalTable != NULL);
 
-       // Iterate over each symbol in the table and test it seperately!
+       // Iterate over each symbol in the table and test it separately!
           SgSymbolTable::hash_iterator i = internalTable->begin();
           while (i != internalTable->end())
              {
@@ -2380,7 +2380,7 @@ TestAstSymbolTables::visit ( SgNode* node )
             // DQ (12/16/2007): Added test
                ROSE_ASSERT(symbol != NULL);
 
-            // We have to look at each type of symbol seperately!  This is because there is no virtual function,
+            // We have to look at each type of symbol separately!  This is because there is no virtual function,
             // the reason for this is that each get_declaration() function returns a different type!
             // ROSE_ASSERT ( symbol->get_declaration() != NULL );
                switch(symbol->variantT())

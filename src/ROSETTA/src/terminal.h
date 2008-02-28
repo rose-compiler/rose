@@ -1,27 +1,45 @@
 #ifndef __TERMINAL_H__
 #define __TERMINAL_H__
 
-#include "constraintList.h"
-
 #include "ROSETTA_macros.h"
 
 #include <string>
 #include "string_functions.h"
 
-// #include <list.h>
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-class GrammarTreeNode;
 class Grammar;
-class ConstraintListType;
 class GrammarString;
+class Terminal;
 
+class SubclassListBuilder {
+  std::vector<Terminal*> children;
 
-// #ifdef __GNUG__
-// typedef bool Boolean;
-// #endif
+  public:
+  SubclassListBuilder() {}
+  SubclassListBuilder(const Terminal& t)
+      : children(1, const_cast<Terminal*>(&t)) {
+    ROSE_ASSERT (&t);
+  }
+  SubclassListBuilder& operator|=(const Terminal& t) {
+    ROSE_ASSERT (&t);
+    children.push_back(const_cast<Terminal*>(&t));
+    return *this;
+  }
+  SubclassListBuilder operator|(const Terminal& t) {
+    SubclassListBuilder result(*this);
+    result |= t;
+    return result;
+  }
+
+  const std::vector<Terminal*>& getList() const {
+    return children;
+  }
+};
+
+inline SubclassListBuilder operator|(const Terminal& t1, const Terminal& t2) {
+  ROSE_ASSERT (&t1);
+  ROSE_ASSERT (&t2);
+  return SubclassListBuilder(t1) | t2;
+}
 
 class Terminal
 {
@@ -31,18 +49,21 @@ class Terminal
   // This class represents a terminal (the NonTerminal class is derived from the Terminal class)
 
  public:
-
-                 // ????? (we don't use ths any more!)
-                 // We have multiple variants depending on if the tokenString
-                 // is a valid pointer or if the sageToken is a valid pointer.
-                 // int variant;
-
-                 // String representing the lexeam
   std::string   name;    // The name we assign to the token (e.g. "BinaryOperatorEquals")
 
   // where the name of the terminal is saved unmodified (with no grammar suffix)
   std::string baseName;
+
+  // Terminal/nonterminal for the base class of this terminal (set in the
+  // NonTerminal constructor)
+  Terminal* baseClass;
 		   
+  // Subclasses of this AST node type
+  std::vector<Terminal *>    subclasses;
+
+  // Can there be objects of this type (as opposed to just subclasses)?
+  bool canHaveInstances;
+
   // The lexeme is used to build up the character string as the different operators 
   // are evaluated.  The when the operator| is called the lexeme is placed into the 
   // name (effectively naming the nonterminal).
@@ -51,16 +72,12 @@ class Terminal
   // Tag used within enum declaration (to that each terminal can be assigned an ID
   std::string   tag;
 
-  // Link back to the tree representing the grammar (or a subTree within that grammar)
-  GrammarTreeNode* grammarSubTree;
-
   // Relationship in lower level grammar (value == NULL only if a part of the C++ grammar)
   // This needs to be recorded into the classes that are build as well (I think)
   // We want to automatically set these (not sure if we can!)
   Terminal* lowerLevelGramaticalElement;
 
   bool buildDefaultConstructor;
-  bool includeInitializerInDataStrings;
 
   // When a class is declared to implement the Terminal object we must 
   // provide a mechanism for the declaration of class forwards (pre-declaration) 
@@ -79,38 +96,16 @@ class Terminal
   // Record the grammar that this terminal is associated with!
   Grammar* associatedGrammar;
 
-  // Later this will be a list of contraints
-  ConstraintListType constraintList;
-
-  // list of child terminals build from this terminal and constrained
-  // through the specification of some user defined contraint.
-  std::list<Terminal*> childListOfConstrainedTerminals;
-
-                 // pointer from child to originating terminal (generally and unconstrained terminal)
-  Terminal* parentTerminal;
-
-  void setParentTerminal( Terminal* Xptr );
-  Terminal* getParentTerminal() const;
-  void addChild ( Terminal* Xptr );
-
-                 // The results of expressions are temporaries and need to be designated as such
-                 // because they have special settings (often NULL) for there data.  This allows
-                 // the error checking to be more aggressive.
-  bool temporary;
-  bool isTemporary() const;
-  void setTemporary( bool input );
-
-
   // Header file class definition function prototypes (local and subtree definitions)
   // Use an array of lists since every string has a local node/subtree 
   // representation and a local node/subtree exclude list
-  std::list<GrammarString *> memberFunctionPrototypeList[2][2];
+  std::vector<GrammarString *> memberFunctionPrototypeList[2][2];
 
   // Header file class definition data declarations (local and subtree definitions)
-  std::list<GrammarString *> memberDataPrototypeList[2][2];
+  std::vector<GrammarString *> memberDataPrototypeList[2][2];
 
   // Source code string lists (local and subtree definitions)
-  std::list<GrammarString *> memberFunctionSourceList[2][2];
+  std::vector<GrammarString *> memberFunctionSourceList[2][2];
 
   enum locationInTree
   {
@@ -127,33 +122,33 @@ class Terminal
   // Access function for list objects
 
                  // Test use of non-const access function
-  std::list<GrammarString *> & getMemberFunctionPrototypeList ( int i, int j ) const;
-  // std::list<GrammarString *> & getMemberFunctionPrototypeList ( int i, int j );
+  std::vector<GrammarString *> & getMemberFunctionPrototypeList ( int i, int j ) const;
+  // std::vector<GrammarString *> & getMemberFunctionPrototypeList ( int i, int j );
 
-  std::list<GrammarString *> & getMemberDataPrototypeList( int i, int j ) const;
-  std::list<GrammarString *> & getMemberFunctionSourceList( int i, int j ) const;
+  std::vector<GrammarString *> & getMemberDataPrototypeList( int i, int j ) const;
+  std::vector<GrammarString *> & getMemberFunctionSourceList( int i, int j ) const;
 
                  // Mechanisms for adding elements to the lists (provides error checking)
 
                  // testing work around for Insure++ (removing const to avoid copy generated by copy constructor)
 #if INSURE_BUG
-  static void addElementToList ( std::list<GrammarString *> & list,
+  static void addElementToList ( std::vector<GrammarString *> & list,
 				 GrammarString & element );
 #else
-  static void addElementToList ( std::list<GrammarString *> & list,
+  static void addElementToList ( std::vector<GrammarString *> & list,
 				 const GrammarString & element );
 #endif
 
   // Member function for checking lists of GrammarStrings occuring during the
   // class generation phase
-  void checkListOfGrammarStrings(std::list<GrammarString *>& list);
+  void checkListOfGrammarStrings(std::vector<GrammarString *>& list);
 
                  // Storage of editing strings used for substitution of final output strings
-  std::list<GrammarString *> editSubstituteTargetList[2][2];
-  std::list<GrammarString *> editSubstituteSourceList[2][2];
+  std::vector<GrammarString *> editSubstituteTargetList[2][2];
+  std::vector<GrammarString *> editSubstituteSourceList[2][2];
 
-  std::list<GrammarString *> & getEditSubstituteTargetList( int i, int j ) const;
-  std::list<GrammarString *> & getEditSubstituteSourceList( int i, int j ) const;
+  std::vector<GrammarString *> & getEditSubstituteTargetList( int i, int j ) const;
+  std::vector<GrammarString *> & getEditSubstituteSourceList( int i, int j ) const;
 
                  // void addElementToExcludeList ( std::list<GrammarString *> & list,
                  //                                const GrammarString & element );
@@ -205,35 +200,18 @@ class Terminal
 				     BuildAccessEnum  buildAccessFunctions,
 				     bool  toBeTraversedDuringTreeTraversal,
 				     bool delete_flag,
-                 CopyConfigEnum   toBeCopied = COPY_DATA);
+                                     CopyConfigEnum   toBeCopied = COPY_DATA);
 
-  // Trigger inclusion of initializers in the strings forming the source code referencing data
-  // void setIncludeInitializerInDataStrings ( bool X );
-  // bool getIncludeInitializerInDataStrings ();
-
-                 // void initialize ( int variant = 0, char* label = NULL, 
-                 //                   char* lexemeString = NULL, char* tagString = NULL );
-
-  void initialize ();
-  void initialize ( const std::string& label, const std::string& lexemeString, const std::string& tagString );
-
-  ~Terminal ();
+  virtual ~Terminal ();
+ protected:
   Terminal ();
-  Terminal & operator= ( const Terminal & X );
-  /* Terminal ( const Terminal & X ); -- JJW 10-16-2007 compiler-generated constructor is fine */
-  Terminal ( const std::string& stringVar );
-  Terminal ( const std::string& lexeme, Grammar & X, const std::string& stringVar = "", const std::string& tagString = "" );
-  // Terminal ( const SageNode* token ) { sageToken = token; };
+ public:
+  Terminal ( const std::string& lexeme, Grammar & X, const std::string& stringVar, const std::string& tagString, bool canHaveInstances = true, const SubclassListBuilder & childList = SubclassListBuilder() );
 
-  // Part of BNF notation (syntax for BNF)
-  //                  NonTerminal operator[] ( const NonTerminal & X );
-  //                  NonTerminal operator++ ( int );
-
-                 // Access functions
+  // Access functions
   void setConnectionToLowerLevelGrammar ( Terminal & X );
   Terminal & getConnectionToLowerLevelGrammar ();
 
-  void  setParentTreeNode ( const GrammarTreeNode & inputParent );
   void  setLexeme ( const std::string& label = "defaultLexeme" );
   const std::string& getLexeme () const;
   void  setName   ( const std::string& label = "defaultName", const std::string& tagName = "" );
@@ -245,8 +223,11 @@ class Terminal
   void setGrammar ( Grammar* grammarPointer );
   Grammar* getGrammar () const;
 
-                 // builds child terminals from parent terminals
-  Terminal & copy ( const std::string& lexeme, const std::string& tagString );
+  void setBaseClass ( Terminal* baseClassPointer );
+  Terminal* getBaseClass () const;
+
+  void setCanHaveInstances (bool canHaveInstances);
+  bool getCanHaveInstances() const;
 
   void addGrammarPrefixToName();
 
@@ -254,10 +235,6 @@ class Terminal
   bool    getBuildDefaultConstructor () const;
 
   std::string   buildDataAccessFunctions ( const GrammarString & inputMemberData);
-
-  bool isType() const;
-  bool isExpression() const;
-  bool isStatement() const;
 
   std::string buildConstructorBody( bool withInitializers, ConstructParamEnum config );
 
@@ -324,60 +301,16 @@ class Terminal
   std::string buildChildIndex ();
   std::string buildListIteratorStringForChildIndex(std::string typeName, std::string variableName, std::string classNameString);
 
-   void show() const;
-
-                 // Interface to contraint mechanism
-                 // void constrainName ( char* nameString );
-  void addConstraint ( const std::string& terminalName, const std::string& constraintString );
+  virtual void show(size_t indent = 0) const;
 
   void consistencyCheck() const;
   void display ( const std::string& label = "" ) const;
-
-  // A terminal is a child if it is the result of a copy from an existing terminal
-  bool isChild() const;
-
-  void copyTerminalData ( Terminal* childTerminal );
-
-                 // Used for assignment of expressions to terminals (operator= is 
-                 // usually used but we want to have specialized functions so that
-                 // the operator= can be reserved for more traditional use)
-  void setExpression ( const Terminal & X );
 
 /* JH (21/01/20005): Since in every method for building the source code for the StorageClases
    we need to build specific code for the data members of IRNode classes, we list all cases that
    we have to separate. Some of them can be removed, when ROSE does not longer contain pointers
    to stl vectors or lists. They are marked below, but may cause no trouble if they remain.
 */
-#if 0
-// DQ (4/6/2006): Old enum from Jochen's original work.
-  enum TypeEvaluation {
-                       CHAR_POINTER,
-                       CONST_CHAR_POINTER,
-                       ATTACHEDPREPROCESSINGINFOTYPE,
-                       ROSE_HASH_MULTIMAP,
-                       SGCLASS_POINTER,
-                       ROSEATTRUBUTESLISTCONTAINER,
-                       SGCLASS_POINTER_LIST,
-                       SGCLASS_POINTER_VECTOR,
-                       SGCLASS_POINTER_VECTOR_NAMED_LIST,
-                       STL_CONTAINER,
-                       STL_SET,
-                       STL_MAP,
-                       STRING,
-                       SGNAME,
-                       BIT_VECTOR,
-                       DECLARATIONMODIFIERCLASS,
-                       MODIFIERCLASS,
-                       ASTATTRIBUTEMECHANISM,
-                       TO_HANDLE,
-                       OSTREAM,
-                       ENUM_TYPE,
-                       BASIC_DATA_TYPE,
-                       SKIP_TYPE,
-                    // should be no longer necessary after the implementation is changed to STL lists instead of pointers to lists
-                       SGCLASS_POINTER_LIST_POINTER
-                      };
-#endif
 // DQ (4/6/2006): New enum from Jochen's muilt file support.
   enum TypeEvaluation {
                        CHAR_POINTER,
@@ -410,7 +343,6 @@ class Terminal
    TypeEvaluation type
 */
 // DQ (4/6/2006): Modified the function paramter as per Jochen's version
-//TypeEvaluation evaluateType (const std::string& varTypeString);
   TypeEvaluation evaluateType (std::string& varTypeString);
 
 
@@ -428,11 +360,8 @@ class Terminal
   std::string buildSourceForStoringStaticMembers ();
   std::string buildInitializationForStaticMembers ();
   std::string buildStaticDataConstructorSource();
-//std::string buildSourceForRebuildingStaticMembers();
   std::string buildStorageClassWriteStaticDataToFileSource () ;
   std::string buildStorageClassReadStaticDataFromFileSource ();
-//std::string buildWriteStaticDataToFileSource () ;
-//std::string buildReadStaticDataFromFileSource ();
   bool hasMembersThatAreStoredInEasyStorageClass();
   bool hasStaticMembers ();
 

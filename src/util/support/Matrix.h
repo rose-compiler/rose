@@ -3,6 +3,7 @@
 #define MATRIX_TMPL_H
 
 #include <assert.h>
+#include <unistd.h>
 
 template <class Mat, class T>
 class SubMatrix {
@@ -60,7 +61,7 @@ class Matrix
        vec = 0;
     else {
        vec = new T[num];
-       for (int i = 0; i < num; ++i)
+       for (size_t i = 0; i < num; ++i)
           vec[i] = that.vec[i];
     }
   }
@@ -111,7 +112,7 @@ class Matrix
   }
 
   void Initialize(const T &init)
-   { for (int i = 0; i < num; i++)
+   { for (size_t i = 0; i < num; i++)
        vec[i] = init;
    }
 

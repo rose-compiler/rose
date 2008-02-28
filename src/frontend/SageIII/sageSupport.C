@@ -4785,7 +4785,7 @@ SgFile::callFrontEnd ()
   //    1) EDG ignores comments and so we collect the whole token stream in this phase.
   //    2) OFP ignores comments similarly to EDG and so we collect the whole token stream. 
   //    3) Binary disassemblily ignores the binary format so we collect this information
-  //       about the structure of the ELF binary seperately.
+  //       about the structure of the ELF binary separately.
   // For source code (C,C++,Fortran) we collect the whole token stream, for example:
   //    1) Comments
   //    2) Preprocessors directives

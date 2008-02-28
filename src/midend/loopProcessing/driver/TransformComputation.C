@@ -160,7 +160,7 @@ class AstTreeOptimizable : public ProcessAstTree
  public:
    AstTreeOptimizable( LoopTransformInterface& _la, 
                         LoopTransformOptions::OptType t ) 
-     : la(_la), optType(t), loop(AST_NULL), succ(0) { }
+     : la(_la), loop(AST_NULL), succ(0), optType(t) { }
    bool operator()( LoopTransformInterface &fa, const AstNodePtr& head)
     {  
        loop = AST_NULL; succ = 0;

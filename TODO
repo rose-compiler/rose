@@ -210,7 +210,7 @@ DONE (see below) * Need a way to display the AST (currently we can print out the
 
 
 
-* Markus Kowarschik is maintaining a seperate todo file in this directory: TODO_MK
+* Markus Kowarschik is maintaining a separate todo file in this directory: TODO_MK
   It contains a list of bugs (with detailed descriptions) to be fixed.
 
 

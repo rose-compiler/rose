@@ -8,7 +8,7 @@ float SliceNestingLevel( const CompSlice *slice)
 {
   int level = 0, num = 0;
   CompSlice::ConstLoopIterator iter=slice->GetConstLoopIterator();
-  for ( LoopTreeNode *n; n = iter.Current(); iter++) {
+  for ( LoopTreeNode *n; (n = iter.Current()); iter++) {
     level += n->LoopLevel();
     num++;
   }
@@ -21,11 +21,11 @@ RearrangeSliceNest( CompSliceNest &g, float *weightvec)
   int num = g.NumberOfEntries();
   assert( num < MAXDEPTH);
   for ( int j = 0; j < num; ++j) {
-     const CompSlice *slice = g[j];
+     // const CompSlice *slice = g[j];
      float w = weightvec[j];
      int index = j;
      for ( int k = j; k < num ; ++k) {
-        const CompSlice *slice1 = g[k];
+        // const CompSlice *slice1 = g[k];
         float w1 = weightvec[k];
         if ( w1 < w) {
            index = k;

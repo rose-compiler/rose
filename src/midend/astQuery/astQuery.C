@@ -312,8 +312,8 @@ VariantVector::VariantVector ( const VariantT & X )
 	}
 #else
 
-	 int stopIndex =0;
-	 int i         =0;
+	 // int stopIndex =0;
+	 size_t i         =0;
 
 	 this->push_back(X);
 

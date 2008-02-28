@@ -411,7 +411,7 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
 {
   minLevel = -1;
   maxLevel = -1;
-  int nr = rows(), nc = cols();
+  // int nr = rows(), nc = cols();
   int num = CommonLevel();
   for (int i = 0; i < num; i++) {
     DepRel r = Entry(i,i);
@@ -434,6 +434,7 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
     case DEPDIR_GE:
          if (align1 > 0)
             notcarry = carry = false;
+    default: assert (!"Bad DEPDIR in CarryLevels");
     }
     if (carry && minLevel < 0)
        minLevel = i;
@@ -510,6 +511,7 @@ bool IsValidDep(  const DepInfo &d, int num)
     case DEPDIR_GE:
     case DEPDIR_ALL:
          return false;
+    default: break;
     }
   }
   return true;

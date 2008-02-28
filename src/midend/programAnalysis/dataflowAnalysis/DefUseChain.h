@@ -11,7 +11,7 @@ class DefUseChainNode : public MultiGraphElem
  public:
   DefUseChainNode( MultiGraphCreate* c, const AstNodePtr& _ref, 
 		   const AstNodePtr& _stmt, bool def)
-    : MultiGraphElem(c), ref(_ref), stmt(_stmt), isdef(def) {}
+    : MultiGraphElem(c), isdef(def), ref(_ref), stmt(_stmt) {}
   bool is_definition() const { return isdef; }
   AstNodePtr get_ref() const { return ref; }
   AstNodePtr get_stmt() const { return stmt; }
@@ -65,6 +65,7 @@ class UpdateDefUseChainNode {
   virtual bool update_use_node( Node* use, const Node* def,
                                 CollectObject<Node*>& newnodes) = 0;
   
+  virtual ~UpdateDefUseChainNode() {}
 };
 
 class DefaultDUchain : public DefUseChain<DefUseChainNode>

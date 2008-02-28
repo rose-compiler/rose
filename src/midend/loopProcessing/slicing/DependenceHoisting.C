@@ -20,7 +20,7 @@ struct SliceInfo
 
   SliceInfo(LoopTreeNode *s = 0, LoopTreeNode *l=0, int level=-1, 
                 bool r=false, int mina=1, int maxa = -1)
-    : stmt(s), loop(l), looplevel(level), reversible(r), alignInfo(mina,maxa) {}
+    : loop(l), stmt(s), looplevel(level), reversible(r), alignInfo(mina,maxa) {}
   void SetLoop(LoopTreeNode *l, int level) { loop=l; looplevel=level; }
   operator bool() { return alignInfo; }
   void write(std::ostream& out) const 
@@ -59,7 +59,7 @@ class TransSlicingAnal
       return i1 * maxsize / 2 + i2 -1; 
    }
 
-  TransSlicingAnal() : size(0), maxsize(0), sliceLoops(0), fuseInfo(0) {}
+  TransSlicingAnal() : sliceLoops(0), fuseInfo(0), size(0), maxsize(0) {}
   ~TransSlicingAnal() { Reset(); }
   TransSlicingAnal& operator = (const TransSlicingAnal& that) 
    {
@@ -187,7 +187,7 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
   for (int sliceindex = 0; sliceindex < size; ++sliceindex) {
     TransSlicingAnal &anal = tmpSlices[sliceindex];
     stmtIter.Current() = anal.LastSliceStmt();
-    for ( stmtIter++; stmt= stmtIter.Current(); stmtIter++) {
+    for ( stmtIter++; (stmt= stmtIter.Current()); stmtIter++) {
       SliceInfo curloop(stmt);
       index = stmt->LoopLevel()-1;
       LoopTreeNode *loop = GetEnclosingLoop(stmt, interface);
@@ -207,7 +207,7 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
       }
       anal.CommitSliceInfo(curloop, buf1);
     }
-    if (anal.NumberOfSliceStmts() == slicesize) {
+    if (int(anal.NumberOfSliceStmts()) == slicesize) {
       CompSlice *slice = CreateCompSlice(rootlevel);
       for (int i = 0; i < slicesize; ++i) {
         SliceInfo& info = anal.SliceLoop(i);
@@ -248,7 +248,7 @@ Analyze( LoopTreeDepComp &comp, CompSliceNest& result)
      CompSlice *slice = CreateCompSlice( rootlevel );
      bool r = LoopReversible()(dg, index);
      LoopTreeTraverseSelectStmt stmtIter(n);
-     for (LoopTreeNode *s; s = stmtIter.Current(); stmtIter++) 
+     for (LoopTreeNode *s; (s = stmtIter.Current()); stmtIter++) 
        slice->SetSliceLoop( s, n, r, 0);
      result.Append(slice);   
   }
@@ -266,7 +266,7 @@ Transform ( LoopTransformInterface &fa, LoopTreeDepComp &comp,
   LoopTreeTransform().InsertLoop(h2, h1, -1);
 
   CompSlice::ConstStmtIterator stmtIter=slice->GetConstStmtIterator();
-  for (LoopTreeNode *stmt; stmt = stmtIter.Current(); stmtIter++) {
+  for (LoopTreeNode *stmt; (stmt = stmtIter.Current()); stmtIter++) {
       CompSlice::SliceStmtInfo info = stmtIter.CurrentInfo();
       LoopTreeMergeStmtLoop()( h2, info.loop, stmt, info.align);
   }
@@ -274,15 +274,15 @@ Transform ( LoopTransformInterface &fa, LoopTreeDepComp &comp,
   CompSlice::UpdateLoopIterator loopIter=
     slice->GetUpdateLoopIterator();
   LoopTreeNode* loop; 
-  while (loop = loopIter.Current()) {
+  while ((loop = loopIter.Current())) {
      loopIter++;
      DepCompDistributeLoop()(comp,loop);
   }
-  for (loopIter.Reset(); loop = loopIter.Current(); loopIter++) {
+  for (loopIter.Reset(); (loop = loopIter.Current()); loopIter++) {
     if (loopIter.CurrentInfo().stmtcount < CountEnclosedStmts(loop)){
       CompSlice::SliceLoopInfo info = loopIter.CurrentInfo();
       LoopTreeTraverseSelectStmt inStmts(loop);
-      for (LoopTreeNode *s; s = inStmts.Current(); ) {
+      for (LoopTreeNode *s; (s = inStmts.Current()); ) {
 	inStmts.Advance();
 	CompSlice::SliceStmtInfo info1(slice->QuerySliceStmtInfo(s));
 	if (info1.loop != loop)  {

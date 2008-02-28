@@ -30,7 +30,7 @@ void commandLineProcessing (int & argc, char** & argv, bool & skipFrontendSpecif
 
   // Adding a new command line parameter (for mechanisms in ROSE that take command lines)
 
-     printf ("l.size() = %ld \n",l.size());
+     printf ("l.size() = %zu \n",(size_t)l.size());
      printf ("Preprocessor (after): argv = \n%s \n",StringUtility::listToString(l).c_str());
    }
 

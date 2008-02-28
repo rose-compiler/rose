@@ -20,7 +20,7 @@ set<SgNode*> getAllNodes() {
 
 void graphNodesAfterCopy(const set<SgNode*>& oldNodes, string filename) {
   // This is a hack, but it works for now
-  cerr << "Do not run this code in an untrusted directory -- it makes temporary files with constant names" << endl;
+  // cerr << "Do not run this code in an untrusted directory -- it makes temporary files with constant names" << endl;
   string temp_filename      = filename + "_temp";
   string old_nodes_filename = filename + "_old_nodes";
 // generateWholeGraphOfAST("temp");
@@ -34,7 +34,7 @@ void graphNodesAfterCopy(const set<SgNode*>& oldNodes, string filename) {
     }
     fs << endl;
   }
-  system(("tclsh make_copy_graph.tcl " + old_nodes_filename + " " + temp_filename + ".dot " + filename + ".dot").c_str());
+  system(("tclsh " ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/tests/CompileTests/copyAST_tests/make_copy_graph.tcl " + old_nodes_filename + " " + temp_filename + ".dot " + filename + ".dot").c_str());
   // system("rm temp.dot");
   // system("rm old_nodes");
 }

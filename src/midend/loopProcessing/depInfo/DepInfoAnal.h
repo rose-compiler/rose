@@ -85,6 +85,7 @@ class DependenceTesting{
  public:
   virtual DepInfo ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype) =0;
+  virtual ~DependenceTesting() {}
 };
 
 class AdhocDependenceTesting : public DependenceTesting {
@@ -106,7 +107,7 @@ class SetDepEntry
  public:
   SetDepEntry(DomainCond& _d1, DomainCond& _d2, DepInfo* _d, 
              int _l1, bool& _succ)
-    : domain1(_d1), domain2(_d2), dep(_d), l1(_l1),l2(-1), succ(_succ) {}
+    : dep(_d), domain1(_d1), domain2(_d2), l1(_l1),l2(-1), succ(_succ) {}
   SetDepEntry& operator[](int i)
   { l2 = i; assert( l1 < l2); return *this; }
   void operator = (const DepRel& e)
@@ -248,8 +249,8 @@ class MakeUniqueVarGetBound
   }
  public:
    MakeUniqueVarGetBound( ReverseRecMap& r1, LoopTransformInterface& ai, DepInfoAnal& a) 
-     : reverse(r1), 
-     SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>(DepInfoAnalInterface(a, ai),AST_NULL,AST_NULL) {} 
+     : SymbolicConstBoundAnalysis<AstNodePtr, DepInfoAnalInterface>(DepInfoAnalInterface(a, ai),AST_NULL,AST_NULL),
+       reverse(r1) {} 
   SymbolicBound GetBound(const SymbolicVar& var)
    {
       ReverseRec& entry = reverse[var.GetVarName()];

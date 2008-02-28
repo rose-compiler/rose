@@ -5,14 +5,37 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
+
+// JJW helper macros
+#define DO_ON_CHILDREN(NODE, FUNCTION) \
+  do { \
+    vector<Terminal *>::const_iterator treeNodeIterator; \
+    for(treeNodeIterator = (NODE).subclasses.begin(); \
+        treeNodeIterator != (NODE).subclasses.end(); \
+        treeNodeIterator++ ) \
+    { \
+      ROSE_ASSERT ((*treeNodeIterator) != NULL); \
+      ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL); \
+      FUNCTION(**treeNodeIterator,outputFile); \
+    } \
+  } while (0)
+
+#define DO_ON_CHILDREN_TO_STRING(NODE, RESULT, FUNCTION) \
+  do { \
+    vector<Terminal *>::const_iterator treeNodeIterator; \
+    for(treeNodeIterator = (NODE).subclasses.begin(); \
+        treeNodeIterator != (NODE).subclasses.end(); \
+        treeNodeIterator++ ) \
+    { \
+      ROSE_ASSERT ((*treeNodeIterator) != NULL); \
+      ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL); \
+      RESULT += FUNCTION(**treeNodeIterator); \
+    } \
+  } while (0)
 
 // ################################################################
 // #                   Grammar Member Functions                   #
@@ -34,9 +57,8 @@ using namespace std;
  *   * readEasyStorageDataFromFile: reads back the data od the EasyStroage classes from file
  */
 string
-Grammar::buildStringForStorageClassSource ( GrammarTreeNode & node )
+Grammar::buildStringForStorageClassSource ( Terminal & node )
    {
-     ROSE_ASSERT (node.token != NULL);
 
      std::string pickOutIRNodeData ;
      std::string arrangeStaticDataInOneBlock;
@@ -47,34 +69,34 @@ Grammar::buildStringForStorageClassSource ( GrammarTreeNode & node )
      pickOutIRNodeData  = "\nvoid\n" ;
      pickOutIRNodeData += "$CLASSNAMEStorageClass::pickOutIRNodeData ( $CLASSNAME* pointer ) \n" ;
      pickOutIRNodeData += "   { \n" ;
-     pickOutIRNodeData += node.getToken().buildStorageClassPickOutIRNodeDataSource();
+     pickOutIRNodeData += node.buildStorageClassPickOutIRNodeDataSource();
      pickOutIRNodeData += "   }\n" ;
   // string declaration for the EasyStorage members in the StorageClasses
-     if ( node.getToken().hasMembersThatAreStoredInEasyStorageClass() == true )
+     if ( node.hasMembersThatAreStoredInEasyStorageClass() == true )
         {
        // building the source code of the static member function arrangeStaticDataInOneBlock
           arrangeStaticDataInOneBlock  = "\nvoid\n" ;
           arrangeStaticDataInOneBlock += "$CLASSNAMEStorageClass::arrangeStaticDataOfEasyStorageClassesInOneBlock ( )\n" ;
           arrangeStaticDataInOneBlock += "   { \n" ;
-          arrangeStaticDataInOneBlock +=  node.getToken().buildStorageClassArrangeStaticDataInOneBlockSource();
+          arrangeStaticDataInOneBlock +=  node.buildStorageClassArrangeStaticDataInOneBlockSource();
           arrangeStaticDataInOneBlock += "   }\n" ;
        // building the source code of the static member function deleteStaticData
           deleteStaticData  = "\nvoid\n" ;
           deleteStaticData += "$CLASSNAMEStorageClass::deleteStaticDataOfEasyStorageClasses ( ) \n" ;
           deleteStaticData += "   { \n" ;
-          deleteStaticData += node.getToken().buildStorageClassDeleteStaticDataSource();
+          deleteStaticData += node.buildStorageClassDeleteStaticDataSource();
           deleteStaticData += "   }\n" ;
        // building the source code of the static member function writeEasyStorageDataToFile
           writeEasyStorageData  = "\nvoid\n" ;
           writeEasyStorageData += "$CLASSNAMEStorageClass::writeEasyStorageDataToFile (std::ostream& out)\n" ;
           writeEasyStorageData += "   {\n" ;
-          writeEasyStorageData += node.getToken().buildStorageClassWriteStaticDataToFileSource();
+          writeEasyStorageData += node.buildStorageClassWriteStaticDataToFileSource();
           writeEasyStorageData += "   }\n\n" ;
        // building the source code of the static member function writeEasyStorageDataToFile
           readEasyStorageData  = "\nvoid\n" ;
           readEasyStorageData += "$CLASSNAMEStorageClass::readEasyStorageDataFromFile (std::istream& in)\n   " ;
           readEasyStorageData += "   { \n" ;
-          readEasyStorageData += node.getToken().buildStorageClassReadStaticDataFromFileSource();
+          readEasyStorageData += node.buildStorageClassReadStaticDataFromFileSource();
           readEasyStorageData += "   }\n\n" ;
         }
   // computing the length of the resulting string
@@ -87,7 +109,7 @@ Grammar::buildStringForStorageClassSource ( GrammarTreeNode & node )
  * calling the method above and replacing all the $CLASSNAME, etc. 
  */
 void
-Grammar::buildStorageClassSourceFiles( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStorageClassSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string sourceFileInsertionSeparator = "MEMBER_FUNCTION_DEFINITIONS";
      string fileName = "../Grammar/grammarStorageClassDefinitionMacros.macro";
@@ -102,23 +124,15 @@ Grammar::buildStorageClassSourceFiles( GrammarTreeNode & node, StringUtility::Fi
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
      outputFile += editedSourceFileString;
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-          treeNodeIterator != node.nodeList.end();
-          treeNodeIterator++ )
-       {
-         ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-         ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
-         buildStorageClassSourceFiles(**treeNodeIterator,outputFile);
-        }
+     DO_ON_CHILDREN(node, buildStorageClassSourceFiles);
    }
       
+
 //#########################################################################################################
 /* JH (11/07/2005): build the source IR node constructors that take its corresponding StorageClass type
 */
 void
-Grammar::buildIRNodeConstructorOfStorageClassSource( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildIRNodeConstructorOfStorageClassSource( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string sourceFileInsertionSeparator = "CONSTRUCTOR_SOURCE";
      string fileName = "../Grammar/grammarSourceOfIRNodesAstFileIOSupport.macro";
@@ -128,17 +142,17 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( GrammarTreeNode & node, Str
      StringUtility::FileWithLineNumbers sourceAfterInsertion = buildHeaderStringAfterMarker(sourceFileInsertionSeparator, fileName);
 
   // Edit the $CLASSNAME
-     StringUtility::FileWithLineNumbers editedStringMiddle(1, StringUtility::StringWithLineNumber(node.getToken().buildSourceForIRNodeStorageClassConstructor(), "" /* "<buildSourceForIRNodeStorageClassConstructor " + node.getToken().getName() + ">" */, 1));
+     StringUtility::FileWithLineNumbers editedStringMiddle(1, StringUtility::StringWithLineNumber(node.buildSourceForIRNodeStorageClassConstructor(), "" /* "<buildSourceForIRNodeStorageClassConstructor " + node.getToken().getName() + ">" */, 1));
      StringUtility::FileWithLineNumbers editedSourceFileString = sourceBeforeInsertion + editedStringMiddle + sourceAfterInsertion;
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
   // JH Add the parent in position   
-     Terminal *term = &(node.getToken());
+     Terminal *term = &node;
      ROSE_ASSERT( term  != NULL );
      std::string parent = " ";
-     if ( term->grammarSubTree->hasParent() == true )
+     if ( term->getBaseClass() != NULL )
         {
-          term = (&term->grammarSubTree->getParent().getToken());
+          term = term->getBaseClass();
           parent = " : ";
           parent += term->name;
           parent += " (storageSource)";
@@ -146,17 +160,7 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( GrammarTreeNode & node, Str
      editedSourceFileString = GrammarString::copyEdit (editedSourceFileString,"$PARENT_CLASSNAME",parent.c_str());
 
      outputFile += editedSourceFileString;
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-          treeNodeIterator != node.nodeList.end();
-          treeNodeIterator++ )
-       {
-         ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-         ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
-
-         buildIRNodeConstructorOfStorageClassSource(**treeNodeIterator,outputFile);
-        }
+     DO_ON_CHILDREN(node, buildIRNodeConstructorOfStorageClassSource);
    }
 
 //#########################################################################################################
@@ -164,22 +168,13 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( GrammarTreeNode & node, Str
  * takes the root of an AST. 
  */
 std::string
-Grammar::buildStaticDataMemberListClassConstructor(GrammarTreeNode & node)
+Grammar::buildStaticDataMemberListClassConstructor(Terminal & node)
    {
-     std::string classMembers = node.getToken().buildStaticDataMemberListConstructor();
+     std::string classMembers = node.buildStaticDataMemberListConstructor();
      string temp = classMembers;
-     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         classMembers += buildStaticDataMemberListClassConstructor(**treeListIterator);
-        }
-      return classMembers;
+     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, classMembers, buildStaticDataMemberListClassConstructor);
+     return classMembers;
    }
 
 //#########################################################################################################
@@ -187,22 +182,13 @@ Grammar::buildStaticDataMemberListClassConstructor(GrammarTreeNode & node)
  * classes from a AstSpecificDataManagingClass object.
  */
 std::string
-Grammar::buildStaticDataMemberListSetStaticDataSource(GrammarTreeNode & node)
+Grammar::buildStaticDataMemberListSetStaticDataSource(Terminal & node)
    {
-     std::string classMembers = node.getToken().buildStaticDataMemberListSetStaticData();
+     std::string classMembers = node.buildStaticDataMemberListSetStaticData();
      string temp = classMembers;
-     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         classMembers += buildStaticDataMemberListSetStaticDataSource(**treeListIterator);
-        }
-      return classMembers;
+     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, classMembers, buildStaticDataMemberListSetStaticDataSource);
+     return classMembers;
    }
 
 //#########################################################################################################
@@ -210,22 +196,14 @@ Grammar::buildStaticDataMemberListSetStaticDataSource(GrammarTreeNode & node)
  * static members of the IR nodes. 
  */
 std::string
-Grammar::buildStaticDataMemberListClassEntries(GrammarTreeNode & node)
+Grammar::buildStaticDataMemberListClassEntries(Terminal & node)
    {
-     std::string classMembers = node.getToken().buildStaticDataMemberList();
+     std::string classMembers = node.buildStaticDataMemberList();
      string temp = classMembers;
-     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         classMembers += buildStaticDataMemberListClassEntries(**treeListIterator);
-        }
-      return classMembers;
+     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     vector<Terminal *>::const_iterator treeListIterator;
+     DO_ON_CHILDREN_TO_STRING(node, classMembers, buildStaticDataMemberListClassEntries);
+     return classMembers;
    }
 
 //#########################################################################################################
@@ -233,22 +211,13 @@ Grammar::buildStaticDataMemberListClassEntries(GrammarTreeNode & node)
  * AstSpecificDataMangingClass, i.e. AstSpecificDataMangingClassStorageClass.  
  */
 std::string
-Grammar::buildDataMemberStorageClass(GrammarTreeNode & node)
+Grammar::buildDataMemberStorageClass(Terminal & node)
    {
-     std::string classMembers = node.getToken().buildStaticDataMemberListOfStorageClass();
+     std::string classMembers = node.buildStaticDataMemberListOfStorageClass();
      string temp = classMembers;
-     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         classMembers += buildDataMemberStorageClass(**treeListIterator);
-        }
-      return classMembers;
+     classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, classMembers, buildDataMemberStorageClass);
+     return classMembers;
    }
 
 //#########################################################################################################
@@ -256,22 +225,13 @@ Grammar::buildDataMemberStorageClass(GrammarTreeNode & node)
  * in the AstSpecificDataManagingClass.
  */
 std::string
-Grammar::buildAccessFunctionSources(GrammarTreeNode & node)
+Grammar::buildAccessFunctionSources(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildAccessFunctionsForStaticDataMemberSource();
+     std::string functionSource = node.buildAccessFunctionsForStaticDataMemberSource();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += buildAccessFunctionSources(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, buildAccessFunctionSources);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -279,22 +239,13 @@ Grammar::buildAccessFunctionSources(GrammarTreeNode & node)
  * that takes its corresponding StorageClass (AstSpecificDataManagingClassStorageClass)
  */
 std::string
-Grammar::generateStaticDataConstructorSource(GrammarTreeNode & node)
+Grammar::generateStaticDataConstructorSource(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildStaticDataConstructorSource();
+     std::string functionSource = node.buildStaticDataConstructorSource();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += Grammar::generateStaticDataConstructorSource(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, generateStaticDataConstructorSource);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -302,22 +253,13 @@ Grammar::generateStaticDataConstructorSource(GrammarTreeNode & node)
  * writeEasyStorageDataToFile of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataWriteEasyStorageDataToFileSource(GrammarTreeNode & node)
+Grammar::generateStaticDataWriteEasyStorageDataToFileSource(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildStaticDataWriteEasyStorageDataToFileSource();
+     std::string functionSource = node.buildStaticDataWriteEasyStorageDataToFileSource();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += Grammar::generateStaticDataWriteEasyStorageDataToFileSource(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, Grammar::generateStaticDataWriteEasyStorageDataToFileSource);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -325,22 +267,13 @@ Grammar::generateStaticDataWriteEasyStorageDataToFileSource(GrammarTreeNode & no
  * readEasyStorageDataFromFile of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataReadEasyStorageDataFromFileSource(GrammarTreeNode & node)
+Grammar::generateStaticDataReadEasyStorageDataFromFileSource(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildStaticDataReadEasyStorageDataFromFileSource();
+     std::string functionSource = node.buildStaticDataReadEasyStorageDataFromFileSource();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += Grammar::generateStaticDataReadEasyStorageDataFromFileSource(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, Grammar::generateStaticDataReadEasyStorageDataFromFileSource);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -348,22 +281,13 @@ Grammar::generateStaticDataReadEasyStorageDataFromFileSource(GrammarTreeNode & n
  * arrangeStaticDataOfEasyStorageClassesInOneBlock of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(GrammarTreeNode & node)
+Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildStaticDataArrangeEasyStorageInOnePoolSource();
+     std::string functionSource = node.buildStaticDataArrangeEasyStorageInOnePoolSource();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -371,23 +295,13 @@ Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(GrammarTreeNode & n
  * deleteStaticDataOfEasyStorageClasses of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(GrammarTreeNode & node)
+Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildStaticDataDeleteEasyStorageMemoryPoolSource();
+     std::string functionSource = node.buildStaticDataDeleteEasyStorageMemoryPoolSource();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -395,23 +309,13 @@ Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(GrammarTreeNode & n
  * AstSpecificDataManagingClassStorageClass that takes the data out of a AstSpecificDataManaging object
  */
 std::string
-Grammar::buildStaticStorageClassPickOutSource(GrammarTreeNode & node)
+Grammar::buildStaticStorageClassPickOutSource(Terminal & node)
    {
-     std::string functionSource = node.getToken().buildSourceForStoringStaticMembers();
+     std::string functionSource = node.buildSourceForStoringStaticMembers();
      string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         functionSource += buildStaticStorageClassPickOutSource(**treeListIterator);
-        }
-      return functionSource;
+     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, functionSource, buildStaticStorageClassPickOutSource);
+     return functionSource;
    }
 
 //#########################################################################################################
@@ -419,29 +323,19 @@ Grammar::buildStaticStorageClassPickOutSource(GrammarTreeNode & node)
  * functions of the data members contained in AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::buildAccessFunctionsOfClassEntries(GrammarTreeNode & node)
+Grammar::buildAccessFunctionsOfClassEntries(Terminal & node)
    {
-     std::string accessFunctions = node.getToken().buildAccessFunctionsForStaticDataMember();
+     std::string accessFunctions = node.buildAccessFunctionsForStaticDataMember();
      string temp = accessFunctions;
-     accessFunctions = GrammarString::copyEdit(temp, "$CLASSNAME",  node.getToken().name);
-
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         accessFunctions += buildAccessFunctionsOfClassEntries(**treeListIterator);
-        }
-      return accessFunctions;
+     accessFunctions = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+     DO_ON_CHILDREN_TO_STRING(node, accessFunctions, buildAccessFunctionsOfClassEntries);
+     return accessFunctions;
    }
 
 //#########################################################################################################
 //JH (11/24/2005): Method that generates the code of the headers of the IR nodes StorageClasses
 void
-Grammar::buildStorageClassHeaderFiles( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStorageClassHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string marker   = "DATA_MEMBER_DECLARATIONS";
      string fileName = "../Grammar/grammarStorageClassDeclatationMacros.macro";
@@ -453,12 +347,12 @@ Grammar::buildStorageClassHeaderFiles( GrammarTreeNode & node, StringUtility::Fi
      editStringStart = headerBeforeInsertion;
 #if 1
   // JH Add the parent in position
-     Terminal *term = &(node.getToken());
+     Terminal *term = &(node);
      ROSE_ASSERT( term  != NULL );
      std::string parent = " ";
-     if ( term->grammarSubTree->hasParent() == true )
+     if ( term->getBaseClass() != NULL )
         {
-          term = (&term->grammarSubTree->getParent().getToken());
+          term = term->getBaseClass();
           parent = " : public "; 
           parent += term->name;
           parent += "StorageClass"; 
@@ -472,22 +366,13 @@ Grammar::buildStorageClassHeaderFiles( GrammarTreeNode & node, StringUtility::Fi
      editStringStart = GrammarString::copyEdit (editStringStart,"$CLASSNAME",className);
      editStringEnd   = GrammarString::copyEdit (editStringEnd,"$CLASSNAME",className);
 #endif
-     StringUtility::FileWithLineNumbers storageClassMembers(1, StringUtility::StringWithLineNumber(node.getToken().buildStorageClassHeader(), "" /* "<buildStorageClassHeader " + node.getToken().getName() + ">" */, 1));
+     StringUtility::FileWithLineNumbers storageClassMembers(1, StringUtility::StringWithLineNumber(node.buildStorageClassHeader(), "" /* "<buildStorageClassHeader " + node.getName() + ">" */, 1));
      StringUtility::FileWithLineNumbers editedHeaderFileStringTemp = editStringStart + storageClassMembers + editStringEnd;
      StringUtility::FileWithLineNumbers editedHeaderFileString = editSubstitution (node,editedHeaderFileStringTemp);
 #if 1
      outputFile += editedHeaderFileString;
 #endif
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-          treeListIterator != node.nodeList.end();
-          treeListIterator++ )
-       {
-         ROSE_ASSERT ((*treeListIterator)->token != NULL);
-         ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-         ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);
-         buildStorageClassHeaderFiles(**treeListIterator,outputFile);
-        }
+     DO_ON_CHILDREN(node, buildStorageClassHeaderFiles);
    }
 
 //#########################################################################################################
@@ -867,8 +752,8 @@ Terminal::evaluateType(std::string& varTypeString)
 */
 std::string Terminal::buildStorageClassHeader ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string s;
      string classNameString = this-> name;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
@@ -950,8 +835,8 @@ std::string Terminal::buildStorageClassHeader ()
  */
 string Terminal::buildStorageClassPickOutIRNodeDataSource ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s ;
   // Maybe, this could be handled nicer by using a macro implementation ... however, I put it here!
@@ -961,7 +846,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
      s += "     assert ( source->p_freepointer != NULL) ; \n";
      s += "#endif \n" ;
 
-     for (Terminal *t = this; t != NULL; t = t->grammarSubTree->hasParent() ?  &t->grammarSubTree->getParent().getToken() : NULL)
+     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1097,12 +982,12 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
 */
 string Terminal::buildStorageClassDeleteStaticDataSource ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s  ;
      std::string addString ;
-     for (Terminal *t = this; t != NULL; t = t->grammarSubTree->hasParent() ? &t->grammarSubTree->getParent().getToken() : NULL)
+     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1168,12 +1053,12 @@ string Terminal::buildStorageClassDeleteStaticDataSource ()
 */
 string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s;
      std::string addString;
-     for (Terminal *t = this; t != NULL; t = t->grammarSubTree->hasParent() ? &t->grammarSubTree->getParent().getToken() : NULL)
+     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1241,8 +1126,8 @@ string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
 */
 string Terminal::buildSourceForIRNodeStorageClassConstructor ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
 
      string classNameString = this-> name;
      string s  ;
@@ -1350,12 +1235,12 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 */
 string Terminal::buildStorageClassWriteStaticDataToFileSource ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s;
      std::string addString;
-     for (Terminal *t = this; t != NULL; t = t->grammarSubTree->hasParent() ?  &t->grammarSubTree->getParent().getToken() : NULL)
+     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1421,12 +1306,12 @@ string Terminal::buildStorageClassWriteStaticDataToFileSource ()
 */
 string Terminal::buildStorageClassReadStaticDataFromFileSource()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      std::string s;
      std::string addString;
-     for (Terminal *t = this; t != NULL; t = t->grammarSubTree->hasParent() ?  &t->grammarSubTree->getParent().getToken() : NULL)
+     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1494,9 +1379,9 @@ string Terminal::buildStorageClassReadStaticDataFromFileSource()
 bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
    {
      bool hasMembersThatWillBeStoredInEasyStorage = false;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
-     for (Terminal *t = this; t != NULL; t = t->grammarSubTree->hasParent() ?  &t->grammarSubTree->getParent().getToken() : NULL)
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
+     for (Terminal *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
           for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1550,8 +1435,8 @@ bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
 bool Terminal::hasStaticMembers()
    {
      bool hasStaticDataMembers = false;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -1577,8 +1462,8 @@ std::string Terminal::buildStaticDataMemberList()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -1602,8 +1487,8 @@ std::string Terminal::buildStaticDataMemberListConstructor()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -1627,8 +1512,8 @@ std::string Terminal::buildStaticDataMemberListSetStaticData()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
       
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1664,8 +1549,8 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
       
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
@@ -1738,8 +1623,8 @@ std::string Terminal::buildAccessFunctionsForStaticDataMember()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -1763,8 +1648,8 @@ std::string Terminal::buildAccessFunctionsForStaticDataMemberSource()
    {
      std::string s;
      std::string classNameString = this->name;
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -1789,8 +1674,8 @@ std::string Terminal::buildAccessFunctionsForStaticDataMemberSource()
  */
 string Terminal::buildSourceForStoringStaticMembers ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
@@ -1861,8 +1746,8 @@ string Terminal::buildSourceForStoringStaticMembers ()
  */
 string Terminal::buildStaticDataConstructorSource ()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
 
      string classNameString = this-> name;
      string s  ;
@@ -1922,8 +1807,8 @@ string Terminal::buildStaticDataConstructorSource ()
  */
 string Terminal::buildStaticDataWriteEasyStorageDataToFileSource()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s  ;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
@@ -1980,8 +1865,8 @@ string Terminal::buildStaticDataWriteEasyStorageDataToFileSource()
  
 string Terminal::buildStaticDataReadEasyStorageDataFromFileSource()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
 
      string classNameString = this-> name;
      string s  ( "" );
@@ -2038,8 +1923,8 @@ string Terminal::buildStaticDataReadEasyStorageDataFromFileSource()
 */
 string Terminal::buildStaticDataArrangeEasyStorageInOnePoolSource()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
@@ -2093,8 +1978,8 @@ string Terminal::buildStaticDataArrangeEasyStorageInOnePoolSource()
 */
 string Terminal::buildStaticDataDeleteEasyStorageMemoryPoolSource()
    {
-     list<GrammarString *> copyList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> copyList;
+     vector<GrammarString *>::const_iterator stringListIterator;
      string classNameString = this-> name;
      string s;
      copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);

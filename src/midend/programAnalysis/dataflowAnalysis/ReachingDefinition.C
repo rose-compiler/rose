@@ -41,7 +41,7 @@ class ConstructReachingDefinitionBase
   }
 public:
   ConstructReachingDefinitionBase( AstInterface& _fa, ReachingDefinitionBase& b)
-    : fa(_fa), base(b) {}
+    : base(b), fa(_fa) {}
 };
 
 void ReachingDefinitionBase:: 

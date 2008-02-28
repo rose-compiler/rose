@@ -29,7 +29,7 @@ void Intersection(
 
 );
 
-// Functions are treated seperately, because they are not elements of the symbol-table in ROSE
+// Functions are treated separately, because they are not elements of the symbol-table in ROSE
 void Intersection_with_FunctionDeclaration(
 
     std::vector<ScopeStackEntry>* p_VSHM,

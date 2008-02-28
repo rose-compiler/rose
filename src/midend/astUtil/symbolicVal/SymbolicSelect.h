@@ -13,7 +13,7 @@ class SymbolicSelect : public SymbolicExpr
  public:
   SymbolicSelect(int t) : opt(t) {}
   SymbolicSelect( const SymbolicSelect& that) 
-     : opt(that.opt), SymbolicExpr(that) {}
+     : SymbolicExpr(that), opt(that.opt) {}
 
   SymbolicExpr* CloneExpr() const { return new SymbolicSelect(*this);  }
 
@@ -67,6 +67,7 @@ class SelectApplicator : public OPApplicator
    }
  public:
   SelectApplicator( int t) : opt(t) {}
+  virtual ~SelectApplicator() {}
   virtual SymOpType GetOpType() { return (opt < 0)? SYMOP_MIN : SYMOP_MAX; }
   SymbolicExpr* CreateExpr() { return  new SymbolicSelect(opt); }
   bool MergeConstInt( int vu1, int vd1, int vu2, int vd2, int& r1, int& r2)

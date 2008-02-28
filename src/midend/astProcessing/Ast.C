@@ -29,7 +29,7 @@ Ast::iterator::findNextNode(SgNode* p) {
     ROSE_ASSERT(p!=old_p);
     // check if we have returned to start node
     if(p==startNode)
-      p==0;
+      p=0;
   }
   if(p!=0)
     p=nextRightSibling(p);

@@ -12,7 +12,7 @@ class DepGraphEdgeCreate : public CollectObject<DepInfo>
  public:
    DepGraphEdgeCreate(AstTreeDepGraphBuildImpl* g, 
                       GraphAccessInterface::Node *_n1, GraphAccessInterface::Node* _n2)
-     :  n1(_n1), n2(_n2), graph(g) {}
+     :  graph(g), n1(_n1), n2(_n2) {}
    bool operator()(const DepInfo& d) 
    { if (!d.IsTop()) {
         graph->CreateEdgeImpl( n1,n2,d);
@@ -55,7 +55,7 @@ ComputeCtrlDep( LoopTransformInterface &fa,const StmtNodeInfo& nc,
                 const StmtNodeInfo& ns, DepType t )
 {
    AstNodePtr c = nc.start, s = ns.start;
-   bool equal  = (c == s);
+   // bool equal  = (c == s);
    DepGraphEdgeCreate deps1(graph,nc.node, ns.node), deps2(graph, ns.node, nc.node);
    impl.ComputeCtrlDep( fa, c, s, deps1, deps2, t);
 }

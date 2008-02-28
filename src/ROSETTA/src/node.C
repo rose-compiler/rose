@@ -2,7 +2,6 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -39,33 +38,33 @@ Grammar::setUpNodes ()
 
   // printf ("Exiting after test in Grammar::setUpNodes()! \n");
 
-     NonTerminal & Expression = nonTerminalList["Expression"];
-     NonTerminal & Statement  = nonTerminalList["Statement"];
+     Terminal & Expression = *lookupTerminal(terminalList, "Expression");
+     Terminal & Statement  = *lookupTerminal(terminalList, "Statement");
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
   // NEW_NONTERMINAL_MACRO (LocatedNode, Expression | Statement, "LocatedNode", "LocatedNodeTag" );
      NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
-     NEW_NONTERMINAL_MACRO (LocatedNode, Expression | Statement | Token, "LocatedNode", "LocatedNodeTag" );
+     NEW_NONTERMINAL_MACRO (LocatedNode, Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
 
-     NonTerminal & Type    = nonTerminalList["Type"];
-     NonTerminal & Symbol  = nonTerminalList["Symbol"];
-     NonTerminal & Support = nonTerminalList["Support"];
+     Terminal & Type    = *lookupTerminal(terminalList, "Type");
+     Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
+     Terminal & Support = *lookupTerminal(terminalList, "Support");
 
 // DQ (10/21/2007): Modified to make binary support in ROSE optional
 // Support for binaries must be turned on via the configure command line.
 #ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
   // DQ (3/14/2007): Added IR support for binaries
-     NonTerminal & AsmNode = nonTerminalList["AsmNode"];
+     Terminal & AsmNode = *lookupTerminal(terminalList, "AsmNode");
 
   // printf ("nonTerminalList.size() = %zu \n",nonTerminalList.size());
 
   // DQ (3/14/2007): Added IR support for binaries
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
-     NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support | AsmNode, "Node", "NodeTag" );
+     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
 #else
-     NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
+     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol , "Node", "NodeTag", false );
 #endif
 
   // ***********************************************************************

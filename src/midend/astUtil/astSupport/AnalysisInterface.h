@@ -12,6 +12,7 @@ class FunctionSideEffectInterface
 
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0;
+  virtual ~FunctionSideEffectInterface() {}
 };
 
 class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
@@ -23,6 +24,7 @@ class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) 
    { return false; }
+  virtual ~NoFunctionSideEffectAnalysis() {}
 };
 
 class SideEffectAnalysisInterface 
@@ -34,6 +36,7 @@ class SideEffectAnalysisInterface
                     CollectObject< std::pair<AstNodePtr, AstNodePtr> >* mod,
                     CollectObject< std::pair<AstNodePtr, AstNodePtr> >* read= 0,
                     CollectObject< std::pair<AstNodePtr, AstNodePtr> >* kill = 0) = 0;
+  virtual ~SideEffectAnalysisInterface() {}
 };
 
 class FunctionAliasInterface
@@ -46,6 +49,7 @@ class FunctionAliasInterface
   virtual bool
      allow_alias(AstInterface& fa, const AstNodePtr& fc, 
                CollectObject< std::pair<AstNodePtr, int> >& collectalias) = 0;
+  virtual ~FunctionAliasInterface() {}
 };
 
 class NoFunctionAliasAnalysis : public FunctionAliasInterface
@@ -55,6 +59,7 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
     may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
 	      CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
    { return false; }
+  virtual ~NoFunctionAliasAnalysis() {}
 };
 
 class AliasAnalysisInterface
@@ -62,6 +67,7 @@ class AliasAnalysisInterface
  public:
   virtual bool
      may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) = 0;
+  virtual ~AliasAnalysisInterface() {}
 };
 
 class AssumeNoAlias : public AliasAnalysisInterface

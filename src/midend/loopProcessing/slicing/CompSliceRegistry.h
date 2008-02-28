@@ -43,7 +43,7 @@ class CompSliceRegistry
     }
  public:
   CompSliceRegistry( Analysis& _anal, BaseGraphCreate *b = 0) 
-      : anal(_anal), VirtualGraphCreateTemplate<SliceNode,SliceEdge>(b) {}
+      : VirtualGraphCreateTemplate<SliceNode,SliceEdge>(b), anal(_anal) {}
   ~CompSliceRegistry() 
    {
       for (typename PtrMapWrap<CompSlice, SliceNode>::Iterator p = nodeMap.GetIterator();

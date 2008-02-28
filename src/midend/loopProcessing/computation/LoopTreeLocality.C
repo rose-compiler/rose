@@ -19,8 +19,8 @@ bool DebugRefGraph()
 
 LoopTreeLocalityAnal :: 
  LoopTreeLocalityAnal( LoopTransformInterface& _fa, LoopTreeDepCompCreate& c)
-    : fa(_fa), comp(c), anal(comp.GetDepAnal()),
-      inputCreate(c.GetTreeNodeMap()) 
+    : comp(c), anal(comp.GetDepAnal()),
+      inputCreate(c.GetTreeNodeMap()), fa(_fa)
 {
   comp.GetLoopTreeCreate()->AttachObserver(inputCreate);
   LoopTreeNode* root = comp.GetLoopTreeRoot();
@@ -76,9 +76,9 @@ void LoopTreeLocalityAnal ::
 ComputeInputDep( LoopTreeDepGraph::NodeIterator srcIter,
                  LoopTreeDepGraph::NodeIterator snkIter, DepCompAstRefAnal& stmtorder)
 {
-  for ( LoopTreeDepGraphNode *n; n = srcIter.Current(); srcIter.Advance()) {
+  for ( LoopTreeDepGraphNode *n; (n = srcIter.Current()); srcIter.Advance()) {
      snkIter.Reset();
-     for (LoopTreeDepGraphNode *n1; n1 = snkIter.Current(); snkIter++) {
+     for (LoopTreeDepGraphNode *n1; (n1 = snkIter.Current()); snkIter++) {
          ComputeInputDep( n, n1, stmtorder);
      }
   }
@@ -94,7 +94,7 @@ class AccumulateSpatialReuse : public CollectObject<AstNodePtr>
   bool operator()(const AstNodePtr& cur)
   { res +=  SelfSpatialReuse( la, cur, ivarname, linesize); return true;}
   AccumulateSpatialReuse( LoopTransformInterface& _la, const std::string& _ivarname, int _linesize)
-    : la(_la), ivarname(_ivarname), linesize(_linesize), res(0) {}
+    : res(0), la(_la), ivarname(_ivarname), linesize(_linesize) {}
   float get_result() const { return res; }
 };
 

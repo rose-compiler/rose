@@ -121,13 +121,13 @@ LoopTreeLoopNode( SymbolicVar _ivar,SymbolicVal _lb, SymbolicVal _ub,
 
 LoopTreeLoopNode::  
 LoopTreeLoopNode( LoopTransformInterface &fa, const AstNodePtr& l)
-    : LoopTreeNode(), info(fa, l), orig(l) 
+    : LoopTreeNode(), orig(l), info(fa, l) 
 {
   AttachObserver(*this);
 }
 
 LoopTreeLoopNode::LoopTreeLoopNode( const LoopTreeLoopNode& that) 
-        : LoopTreeNode(that), info(that.info), orig(that.orig) 
+        : LoopTreeNode(that), orig(that.orig), info(that.info) 
 {
   AttachObserver(*this);
 }

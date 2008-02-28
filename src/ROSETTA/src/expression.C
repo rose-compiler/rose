@@ -2,7 +2,6 @@
 #include "grammar.h"
 #include "ROSETTA_macros.h"
 #include "terminal.h"
-#include "nonterminal.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -165,12 +164,12 @@ Grammar::setUpExpressions ()
 
      NEW_NONTERMINAL_MACRO (Initializer,
                             AggregateInitializer | ConstructorInitializer | AssignInitializer,
-                            "Initializer","EXPR_INIT");
+                            "Initializer","EXPR_INIT", false);
 
      NEW_NONTERMINAL_MACRO (UnaryOp,
                             ExpressionRoot | MinusOp      | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp | PlusPlusOp | BitComplementOp | CastExp | ThrowOp,
-                            "UnaryOp","UNARY_EXPRESSION");
+                            "UnaryOp","UNARY_EXPRESSION", false);
 
 #if USE_FORTRAN_IR_NODES
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
@@ -181,7 +180,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp | ExponentiationOp | ConcatenationOp,"BinaryOp","BINARY_EXPRESSION");
+          RshiftAssignOp | ExponentiationOp | ConcatenationOp,"BinaryOp","BINARY_EXPRESSION", false);
 #else
 #error "DEAD CODE!"
 
@@ -192,14 +191,14 @@ Grammar::setUpExpressions ()
           BitXorOp      | BitAndOp     | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
           PntrArrRefExp | ScopeOp      | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp   | MultAssignOp | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp,"BinaryOp","BINARY_EXPRESSION");
+          RshiftAssignOp,"BinaryOp","BINARY_EXPRESSION", false);
 #endif
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal       | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal     | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal      | LongDoubleVal    | ComplexVal ,"ValueExp","ValueExpTag");
+          DoubleVal      | LongDoubleVal    | ComplexVal ,"ValueExp","ValueExpTag", false);
 
 #if USE_FORTRAN_IR_NODES
      NEW_NONTERMINAL_MACRO (Expression,
@@ -211,7 +210,7 @@ Grammar::setUpExpressions ()
           ColonShapeExp       | AsteriskShapeExp        | UseOnlyExpression   | ImpliedDo           | IOItemExpression         |
           UseRenameExpression | StatementExpression     | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference,
-          "Expression","ExpressionTag");
+          "Expression","ExpressionTag", false);
 #else
 #error "DEAD CODE!"
 
@@ -221,7 +220,7 @@ Grammar::setUpExpressions ()
           TypeIdOp       | ConditionalExp          | NewExp         | DeleteExp         | ThisExp             |
           RefExp         | Initializer             | VarArgStartOp  | VarArgOp          | VarArgEndOp         |
           VarArgCopyOp   | VarArgStartOneOperandOp | NullExpression | VariantExpression | StatementExpression |
-          AsmOp,"Expression","ExpressionTag");
+          AsmOp,"Expression","ExpressionTag", false);
 #endif
 
   // ***********************************************************************
@@ -328,8 +327,6 @@ Grammar::setUpExpressions ()
      ValueExp.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      RefExp.excludeFunctionPrototype          ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      Initializer.excludeFunctionPrototype     ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
-
-     TerminalList leafClasses;  // am running out of sensible names!!
 
   // This is the easiest solution, then where any post_construction_initialization() function
   // was ment to call the base class post_construction_initialization() function, we just do 

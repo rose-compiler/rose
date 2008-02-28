@@ -148,7 +148,7 @@ void CompSlice :: IncreaseAlign( int a)
 bool CompSlice :: SliceCommonLoop( CompSlice *slice2) const
 {
   ConstLoopIterator iter = GetConstLoopIterator();
-  for (LoopTreeNode *l; l = iter.Current(); iter++) {
+  for (LoopTreeNode *l; (l = iter.Current()); iter++) {
     if (slice2->QuerySliceLoop(l)) {
        return true;
     }
@@ -159,7 +159,7 @@ bool CompSlice :: SliceCommonLoop( CompSlice *slice2) const
 bool CompSlice :: SliceCommonStmt( CompSlice *slice2) const
 {
   ConstStmtIterator iter = GetConstStmtIterator();
-  for (LoopTreeNode *n1; n1 = iter.Current(); iter.Advance()) {
+  for (LoopTreeNode *n1; (n1 = iter.Current()); iter.Advance()) {
     if (slice2->QuerySliceStmt(n1))
        return true;
   }
@@ -169,7 +169,7 @@ bool CompSlice :: SliceCommonStmt( CompSlice *slice2) const
 bool CompSlice :: SliceCodeSegment( LoopTreeNode *root) const
 {
   LoopTreeTraverseSelectStmt iter( root);
-  for (LoopTreeNode *s; s = iter.Current(); iter.Advance()) {
+  for (LoopTreeNode *s; (s = iter.Current()); iter.Advance()) {
     if (!QuerySliceStmt(s))
        return false;
   }
@@ -217,7 +217,7 @@ CompSliceNest ::  ~CompSliceNest()
   Notify(info);
 
   delete impl;
-  for (int i = 0; i < size; ++i) {
+  for (size_t i = 0; i < size; ++i) {
     CompSlice* tmp =  sliceVec[i];
     delete tmp;
   }
@@ -246,7 +246,7 @@ void CompSliceNest :: DeleteEntry( int index)
   CompSliceNestDeleteEntryInfo info(*this, index);
   Notify(info);
   delete sliceVec[index];
-  for (int i = index; i < size-1; ++i)
+  for (size_t i = index; i + 1 < size; ++i)
     sliceVec[i] = sliceVec[i+1]; 
   --size;
 }
@@ -289,7 +289,7 @@ SymbolicBound SliceLoopRange(const CompSlice *slice, LoopTreeNode *root)
   SymbolicBound result;
   LoopTreeGetVarBound bf(root->Parent());
   CompSlice::ConstStmtIterator stmtIter = slice->GetConstStmtIterator();
-  for (LoopTreeNode* stmt; stmt = stmtIter.Current(); stmtIter++) {
+  for (LoopTreeNode* stmt; (stmt = stmtIter.Current()); stmtIter++) {
     CompSlice::SliceStmtInfo info = stmtIter.CurrentInfo();
     LoopInfo *l  = info.loop->GetLoopInfo();
     SymbolicBound b = LoopTreeGetVarConstBound(info.loop, root->Parent()).GetConstBound(l->GetVar());
@@ -305,7 +305,7 @@ LoopStepInfo SliceLoopStep(const CompSlice *slice)
   LoopTreeNode *loop = iter.Current();
   SymbolicVal step = loop->GetLoopInfo()->GetStep();
   bool reversible = iter.CurrentLoopReversible();
-  for ( iter.Advance(); loop = iter.Current(); iter.Advance()) {
+  for ( iter.Advance(); (loop = iter.Current()); iter.Advance()) {
     SymbolicVal step1 = loop->GetLoopInfo()->GetStep();
     bool r = iter.CurrentLoopReversible();
     if (step !=step1) {
@@ -325,11 +325,11 @@ SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
   nameset sliceVars, usedVars;
   CompSlice::ConstLoopIterator loopIter = slice->GetConstLoopIterator();
   LoopTreeInterface interface;
-  for (LoopTreeNode *loop; loop = loopIter.Current(); loopIter.Advance()) {
+  for (LoopTreeNode *loop; (loop = loopIter.Current()); loopIter.Advance()) {
     std::string name = loop->GetLoopInfo()->GetVar().GetVarName();
     sliceVars.insert( name);
     CompSlice::ConstStmtIterator stmtIter=loopIter.GetConstStmtIterator();
-    for (LoopTreeNode *stmt; stmt=stmtIter.Current(); stmtIter.Advance()) {
+    for (LoopTreeNode *stmt; (stmt=stmtIter.Current()); stmtIter.Advance()) {
        for (LoopTreeNode *l = GetEnclosingLoop(stmt,interface);
             l != 0; l = GetEnclosingLoop(l, interface) ) {
           if (l == loop) continue;

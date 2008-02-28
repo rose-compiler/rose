@@ -1055,7 +1055,7 @@ ROSEAttributesList::get_rawTokenStream()
 void
 ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const string & filename )
    {
-  // This function does not work for fixed-format, which is processed seperately.
+  // This function does not work for fixed-format, which is processed separately.
   // This function reads the token stream and extracts out the comments for inclusion into the attributeList.
 
      ROSE_ASSERT (this != NULL);
@@ -1110,7 +1110,7 @@ void
 ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( const string & filename )
    {
   // The lex pass for fixed-format Fortran ignores comments and does not get CPP directives correct.
-  // So maybe we should just extract them seperately in an other pass over the file.  Fixed format
+  // So maybe we should just extract them separately in an other pass over the file.  Fixed format
   // comments in Fortran are supposed to be easy to extract.
 
      ROSE_ASSERT (filename.empty() == false);
@@ -1158,7 +1158,7 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
                          isComment = true;
                        }
 #else
-                 // DQ (1/22/2008): Seperate from the F77 standard, no compiler is this restrictive!
+                 // DQ (1/22/2008): Separate from the F77 standard, no compiler is this restrictive!
                  // The Fortran 77 standard says: comments must have a C or * in the first column (check for case)
                     if (firstCharacter == 'C' || firstCharacter == 'c' || firstCharacter == '*')
                        {

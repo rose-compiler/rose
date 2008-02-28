@@ -34,7 +34,7 @@ class DynamicCompSliceImpl : public CompSliceImpl
    {  
       CondSliceStmt *that = (_that == 0 || _that->GetClassName() != "CondSliceStmt")? 0 
                             :  static_cast<CondSliceStmt*>(_that);
-      int gi = (that == 0)? groupIndex : groupIndex + that->GetSliceGroupIndex();
+      size_t gi = (that == 0)? groupIndex : groupIndex + that->GetSliceGroupIndex();
       if (gi > groupNum)
           groupNum = gi;
       return new CondSliceStmt( n, this, 0, gi ); 

@@ -47,7 +47,8 @@ class SliceGraphTypedFusionImpl : public TypedFusionOperator
  public:
   SliceGraphTypedFusionImpl( CompSliceLocalityRegistry *r, CompSliceDepGraphCreate &c, 
                             const LoopNestFusion &f) 
-     : reg(r), ct(c), fuse(f) {}
+     : fuse(f), reg(r), ct(c) {}
+  virtual ~SliceGraphTypedFusionImpl() {}
   void FuseNodes()
   {
     for ( FuseVecType2::Iterator p2(fuseVec); !p2.ReachEnd(); p2.Advance()) {

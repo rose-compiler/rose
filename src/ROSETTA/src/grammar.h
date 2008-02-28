@@ -40,39 +40,11 @@
 // We will trun this on later once more of the implementation is in place.
 #define USE_FORTRAN_IR_NODES 1
 
-#include <list>
+#include <vector>
 
 // using namespace std;
-
-// DQ (1/15/2007): Removed since we only use modern C++ compilers now!
-#if 0
-#if 0
-// Use list.h with the SUN 4.2 C++ compiler
-// use the STL list classes
-// include STL_LIST_HEADER_FILE
-#include <list.h>
-#else
-// The SUN CC 5.0 and 6.0 compiler expects to see list instead of list.h
-// also need to declare "using namespace std;"
-// include <list>
-// using namespace std;
-#include <list>
-// #ifndef STL_LIST_IS_BROKEN
-// // #include <list>
-// #include STL_LIST_HEADER_FILE
-// #endif
-using namespace std;
-// using namespace std;
-// #ifndef NAMESPACE_IS_BROKEN
-// using namespace std;
-// #endif
-#endif
-#endif
 
 class SgProject;
-
-
-#include "terminalList.h"
 
 // Things to add:
 //   1) not operator for nodes within a subtree
@@ -106,7 +78,6 @@ class SgProject;
        BASE_CLASS_CONSTRUCTOR_PARAMETER
 
  */
-
 
 class grammarFile
    {
@@ -161,9 +132,10 @@ class grammarFile
     };
 
 class Terminal;
-class NonTerminal;
-class GrammarTreeNode;
+class SubclassListBuilder;
 class GrammarString;
+
+Terminal* lookupTerminal(const std::vector<Terminal*>& tl, const std::string& name);
 
 class Grammar
    {
@@ -174,7 +146,7 @@ class Grammar
 
        // Pointer to member function
        // typedef List<GrammarString> & (Terminal::*FunctionPointerType)(int i,int j) const;
-          typedef std::list<GrammarString *> & (Terminal::* FunctionPointerType)(int i,int j) const;
+          typedef std::vector<GrammarString *> & (Terminal::* FunctionPointerType)(int i,int j) const;
 
        // Pointer to member function
           typedef std::string (GrammarString::* StringGeneratorFunctionPointerType)() const;
@@ -184,23 +156,12 @@ class Grammar
 
 
      public:
-          TerminalList    terminalList;
-          NonTerminalList nonTerminalList;
+          std::vector<Terminal*>        terminalList;
           std::map<std::string, size_t> astNodeToVariantMap;
           std::map<size_t, std::string> astVariantToNodeMap;
-          std::map<size_t, Terminal*> astVariantToTerminalMap;
+          std::map<size_t, Terminal*>   astVariantToTerminalMap;
 
-          GrammarTreeNode* rootNode;
-          TerminalList leafNodeList;
-          TerminalList allNodeList;
-
-#if 0
-       // Not clear if this is worthwhile (not specific enough to map between grammars)
-          List<Terminal> elementsMappingToType;
-          List<Terminal> elementsMappingToExpression;
-          List<Terminal> elementsMappingToStatement;
-          List<Terminal> elementsMappingToSymbol;
-#endif
+          Terminal* rootNode;
 
        // This is a pointer to the lower level grammar (every grammar has a lower level grammar except the C++ grammar)
           const Grammar* parentGrammar;
@@ -215,56 +176,48 @@ class Grammar
           static std::string staticContructorPrototypeString;
 
        // List processing mechanisms
-          void generateStringListsFromSubtreeLists ( GrammarTreeNode & node,
-						     std::list<GrammarString *> & ,
-						     std::list<GrammarString *> & excludeList,
+          void generateStringListsFromSubtreeLists ( Terminal & node,
+						     std::vector<GrammarString *> & ,
+						     std::vector<GrammarString *> & excludeList,
 						     FunctionPointerType listFunction );
 
-          void generateStringListsFromLocalLists ( GrammarTreeNode & node,
-						   std::list<GrammarString *> & ,
-						   std::list<GrammarString *> & excludeList,
+          void generateStringListsFromLocalLists ( Terminal & node,
+						   std::vector<GrammarString *> & ,
+						   std::vector<GrammarString *> & excludeList,
 						   FunctionPointerType listFunction );
 
-          void generateStringListsFromAllLists ( GrammarTreeNode & node,
-						 std::list<GrammarString *> & includeList,
-						 std::list<GrammarString *> & excludeList,
+          void generateStringListsFromAllLists ( Terminal & node,
+						 std::vector<GrammarString *> & includeList,
+						 std::vector<GrammarString *> & excludeList,
 						 FunctionPointerType listFunction );
 
-          static void editStringList ( std::list<GrammarString *> & , 
-                                       std::list<GrammarString *> & excludeList );
+          static void editStringList ( std::vector<GrammarString *>& origList, 
+                                       const std::vector<GrammarString *> & excludeList );
 
-	  std::string buildStringFromLists ( GrammarTreeNode & node,
+	  std::string buildStringFromLists ( Terminal & node,
                                        FunctionPointerType listFunction,
                                        StringGeneratorFunctionPointerType stringGeneratorFunction );
 
-	  std::list<GrammarString *> buildListFromLists ( GrammarTreeNode & node,
+	  std::vector<GrammarString *> buildListFromLists ( Terminal & node,
 								      FunctionPointerType listFunction );
 
-          void setRootOfGrammar ( GrammarTreeNode* RootNodeForGrammar );
-          GrammarTreeNode & getRootOfGrammar ();
-          NonTerminal & getRootToken ();
-
-          TerminalList & getLeafNodeList() { return leafNodeList; };
-          void setupLeafNodeList ();
-          void traverseTreeToSetupLeafNodeList ( GrammarTreeNode & node );
+          void setRootOfGrammar ( Terminal* RootNodeForGrammar );
+          Terminal* getRootOfGrammar ();
 
          ~Grammar ();
+     private:
           Grammar ();
+     public:
           Grammar ( const Grammar & X );
 
-       // Associative terminal/nonterminal access function (cute but does
-       // can not be overloaded to return terminals and nonterminals!
-       // Terminal & operator[] ( char* name ) const;
+       // Associative terminal/nonterminal access function
           Terminal    & getTerminal    ( const std::string& name ) const;
-          NonTerminal & getNonTerminal ( const std::string& name ) const;
 
           void consistencyCheck() const;
 
        // builds the header files and source code
           void buildCode ();
 
-       // char* getFilenameForSupportClasses ();
-       // void  setFilenameForSupportClasses ( char* filename );
 	  std::string getFilenameForGlobalDeclarations ();
           void  setFilenameForGlobalDeclarations ( const std::string& filename );
 
@@ -290,13 +243,9 @@ class Grammar
           void buildGrammarClassDeclaration ( StringUtility::FileWithLineNumbers & outputFile );
 
           void addGrammarElement    ( Terminal    & X );
-          void addGrammarElement    ( NonTerminal & X );
-          void deleteGrammarElement ( Terminal    & X );
-          void deleteGrammarElement ( NonTerminal & X );
 
        // Check if the terminal or nonterminal (identified by a string) is a terminal or nonterminal
           bool isTerminal    ( const std::string& terminalName ) const;
-          bool isNonTerminal ( const std::string& nonTerminalName ) const;
 
        // This is the mechanism for adding new types to an existing grammar. This function
        // will more generally show how new terminals are added to an existing grammar.  It 
@@ -308,30 +257,10 @@ class Grammar
        // case where this this is a class, member functions of the class will define
        // additional terminals to be added to the grammar.
           void addNewTerminal   ( SgProject & project, Terminal    & X );
-          void addNewNonTerminal( SgProject & project, NonTerminal & X );
-
-       // This is the mechanism for restricting a grammars through the
-       // removal of new terminals and non-terminals added as a result of
-       // their addition using the addNewTerminal member function (which adds
-       // many expression terminals for any added new type terminal and adds
-       // many new statement terminals if an expression terminal is added).
-          void removeNewTerminal   ( Terminal    & X );
-          void removeNewNonTerminal( NonTerminal & X );
-
-       // Add a new terminal to the existing grammar.  This function automatically
-       // locates the terminal/nonterminal within the grammar's heirarchy
-       // void addTerminal    ( SgProject & project, Terminal    & X );
-       // void addNonTerminal ( SgProject & project, NonTerminal & X );
-
-          Terminal* copy ( const std::string& terminalName );
-
-       // Removes a terminal (which we look up from the string) from the grammar
-          void remove ( const std::string& terminalName );
 
        // Get the variant for a node name
           size_t getVariantForNode(const std::string& name) const;
           size_t getVariantForTerminal(const Terminal& name) const;
-          size_t getVariantForNonterminal(const NonTerminal& name) const;
        // Get the node name for a variant, asserting if not found
           std::string getNodeForVariant(size_t var) const;
           Terminal& getTerminalForVariant(size_t var);
@@ -343,35 +272,18 @@ class Grammar
      public:
           void removeReferenceFromLists ( Terminal & X );
 
-       // Removes header and source files specific to this grammar
-       // void  clearGeneratedFiles ();
-
-#if 0   // BP: 10/10/2001, moving to GrammarString class
-          static char* copyEdit ( char* inputString, const char* oldToken, const char* newToken );
-          static int isSameName ( const char* s1, const char* s2 );
-          static bool isContainedIn ( const char* longString, const char* shortString );
-          static char* stringDuplicate ( const char* tempString );
-#endif
-
-          void buildTree ();
           void removeExclusionsFromTree();
 
           void traverseTreeToSetupAllNodeList ();
-          void traverseTreeToSetupAllNodeList ( GrammarTreeNode & node );
+          void traverseTreeToSetupAllNodeList ( Terminal & node );
 
-	  std::string getDerivedClassDeclaration ( GrammarTreeNode & node );
+	  std::string getDerivedClassDeclaration ( Terminal & node );
 
 	  StringUtility::FileWithLineNumbers buildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
 	  StringUtility::FileWithLineNumbers buildHeaderStringBeforeMarker ( const std::string& marker, const std::string& fileName );
 
-#if 0   // BP : 10/10/2001, moved to GrammarString class
-
-       // A smarter string concatination function (corrects for space in the target automatically)
-          static char* stringConcatinate ( const char* target, const char* endingString );
-#endif
 	  std::string sourceCodeDirectoryName ();
 
-          // static std::string readFile ( const std::string& inputFileName );
           static StringUtility::FileWithLineNumbers readFileWithPos ( const std::string& inputFileName );
           static void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
                                   const std::string& className, const std::string& fileExtension );
@@ -381,7 +293,7 @@ class Grammar
 							std::string successorContainerName,
 							std::string successorContainerAccessOperator);
       // GB (8/1/2007)
-	  std::string generateNumberOfSuccessorsComputation(std::list<GrammarString*>& traverseDataMemberList,
+	  std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList,
                                std::string successorContainerName);
 	  std::string generateTraverseSuccessor(GrammarString* gs, std::string successorContainerName);
 	  std::string generateTraverseSuccessorNamesForLoopSource(std::string typeString, 
@@ -391,7 +303,7 @@ class Grammar
 	  std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
 
 	  std::string generateRTICode(GrammarString* gs, std::string successorContainerName);
-	  void buildRTIFile(GrammarTreeNode* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
+	  void buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
 	  StringUtility::FileWithLineNumbers buildVariants ();
 	  StringUtility::FileWithLineNumbers buildForwardDeclarations ();
 
@@ -399,92 +311,92 @@ class Grammar
           void buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & outputFile );
           void buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outputFile );
 
-          void buildHeaderFiles ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildHeaderFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
-	  std::string buildStringForPrototypes( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildStringForDataDeclaration                     ( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildStringForDataAccessFunctionDeclaration      ( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildStringForSource                              ( GrammarTreeNode & node );
+	  std::string buildStringForPrototypes( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildStringForDataDeclaration                     ( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildStringForDataAccessFunctionDeclaration      ( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildStringForSource                              ( Terminal & node );
 
        // Builds the "CLASSNAME::variant()" member function
-	  StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( Terminal & node );
 
        // Builds the "CLASSNAME::isCLASSNAME()" friend function
-	  StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( GrammarTreeNode & node, const StringUtility::FileWithLineNumbers& accumulationString );
-	  StringUtility::FileWithLineNumbers buildStringForIsClassNameFunctionSource           ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( Terminal & node, const StringUtility::FileWithLineNumbers& accumulationString );
+	  StringUtility::FileWithLineNumbers buildStringForIsClassNameFunctionSource           ( Terminal & node );
 
        // DQ (9/21/2005): Added support for memory pools
-	  StringUtility::FileWithLineNumbers buildStringForNewAndDeleteOperatorSource          ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForNewAndDeleteOperatorSource          ( Terminal & node );
 
        // DQ (12/24/2005): Support for memory pool traversal
-	  StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( Terminal & node );
 
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
-	  StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( Terminal & node );
 
        // AS (2/14/06): Added support for building code to return data member pointers to IR nodes
-	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberReferenceToPointersSource ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberReferenceToPointersSource ( Terminal & node );
 
        // DQ (3/7/2007): support for getChildIndex member function
-	  StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( Terminal & node );
 
 
-          bool buildConstructorParameterList ( GrammarTreeNode & node, 
-                                               std::list<GrammarString *> & constructorParameterList,
+          bool buildConstructorParameterList ( Terminal & node, 
+                                               std::vector<GrammarString *> & constructorParameterList,
                                                ConstructParamEnum config );
-	  std::string buildConstructorParameterListString ( GrammarTreeNode & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
+	  std::string buildConstructorParameterListString ( Terminal & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
 
 
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
-          void markNodeForConstructorWithoutSourcePositionInformation ( GrammarTreeNode & node );
-          void markNodeForConstructorWithoutSourcePositionInformationSupport( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation       ( GrammarTreeNode & node );
-          void buildConstructorWithoutSourcePositionInformationSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void markNodeForConstructorWithoutSourcePositionInformation ( Terminal & node );
+          void markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation       ( Terminal & node );
+          void buildConstructorWithoutSourcePositionInformationSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (11/7/2006): Get a specific node from the tree.
-          GrammarTreeNode* getNamedNode ( GrammarTreeNode & node, const std::string & name );
-          GrammarString* getNamedDataMember ( GrammarTreeNode & node, const std::string & name );
+          Terminal* getNamedNode ( Terminal & node, const std::string & name );
+          GrammarString* getNamedDataMember ( Terminal & node, const std::string & name );
 
        // DQ (3/24/2006): Separated these functions so that we could position the data member 
        // variable declaration at the base of the class and the generated access functions at 
        // the top.  This permist us to present the documentation better using Doxygen.
        // string buildDataPrototypesAndAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( GrammarTreeNode & node );
-	  StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildConstructor ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildConstructor ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( GrammarTreeNode & node );
+	  StringUtility::FileWithLineNumbers buildCopyMemberFunctionSource ( Terminal & node );
 
-          void buildSourceFiles ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildSourceFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (12/23/2005): Added to support moving the new and elete operators to a 
        // different file (mostly for clarity to support users who read the source code).
-          void buildNewAndDeleteOperators( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (12/24/2005): Support for memory pool traversal
-          void buildTraverseMemoryPoolSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildTraverseMemoryPoolSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
-          void buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // AS(2/14/2006): Added support for building code to return pointers to IR nodes
-          void buildStringForReturnDataMemberPointersSupport ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForReturnDataMemberPointersSupport ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (4/30/2006): Support for buildStringForReturnDataMemberReferenceToPointersSource
-          void buildStringForReturnDataMemberReferenceToPointersSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForReturnDataMemberReferenceToPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
-       // DQ (12/23/2005): Relocated copy function to a seperate file to imrove readability of source code
-          void buildCopyMemberFunctions( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+       // DQ (12/23/2005): Relocated copy function to a separate file to imrove readability of source code
+          void buildCopyMemberFunctions( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (3/7/2007): support for getChildIndex member function
-          void buildStringForGetChildIndexSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
+          void buildStringForGetChildIndexSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // Uses list of targets and sources stored within each node to drive substitutions
-	  StringUtility::FileWithLineNumbers editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWithLineNumbers& editString );
+	  StringUtility::FileWithLineNumbers editSubstitution ( Terminal & node, const StringUtility::FileWithLineNumbers& editString );
 
        // This calls the functions to build the parsers (one for each child of the root node)
           void buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outputFile );
@@ -492,20 +404,19 @@ class Grammar
           static StringUtility::FileWithLineNumbers extractStringFromFile ( const std::string& startMarker, const std::string& endMarker,
                                                      const std::string& filename, const std::string& directory );
 
-          void printTreeNodeNames ( const GrammarTreeNode & node ) const;
+          void printTreeNodeNames ( const Terminal & node ) const;
        // void setUpParentNames ();
-       // void setUpParentNames ( GrammarTreeNode & X );
+       // void setUpParentNames ( Terminal & X );
 
        // MK: The following member function is no longer needed:
-       // void traverseTree ( GrammarTreeNode & X );
+       // void traverseTree ( Terminal & X );
 
        // These functions build terminal and nonterminal objects to be associated with this grammar
        // Using a member function to construct these serves several purposes:
        // 1) organizes terminals and nonterminals with there respective grammar (without ambiguity)
        // 2) avoids or deferes the implementation of the envelop/letter interface mechanism so
        //    that the letter will have a scope longer than the envelope
-          NonTerminal & nonTerminalConstructor ( const Terminal & token );
-          NonTerminal & nonTerminalConstructor ( const NonTerminal & X );
+          Terminal & nonTerminalConstructor ( const std::string& lexeme, Grammar& X, const std::string& stringVar, const std::string& tagString, const SubclassListBuilder & builder, bool canHaveInstances = false );
           Terminal    & terminalConstructor ( const std::string& lexeme, Grammar & X, const std::string& stringVar = "", const std::string& tagString = "" );
 
        // These functions build the C++ grammar
@@ -527,8 +438,8 @@ class Grammar
           bool isRootGrammar ();
 
        // functions for building the parsers for translation between grammars
-	  std::string buildParserPrototype ( GrammarTreeNode & node ); 
-	  std::string buildParserSource    ( GrammarTreeNode & node ); 
+	  std::string buildParserPrototype ( Terminal & node ); 
+	  std::string buildParserSource    ( Terminal & node ); 
 
        // a more general way to traverse the Grammar and build strings for source code generation
 
@@ -536,7 +447,7 @@ class Grammar
           class GrammarSynthesizedAttribute
              {
                public:
-                    GrammarTreeNode* grammarnode;
+                    Terminal* grammarnode;
 		    std::string text;
 		    std::string nodetext;
 		    std::string nonterminalsbunch;
@@ -544,23 +455,24 @@ class Grammar
 		    std::string problematicnodes;
              };
 
-	  typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(GrammarTreeNode&, std::string);
-	  std::string naiveTraverseGrammar(GrammarTreeNode&, evaluateStringAttributeFunctionType);
-	  typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(GrammarTreeNode*, 
+	  typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(Terminal&, std::string);
+	  std::string naiveTraverseGrammar(Terminal&, evaluateStringAttributeFunctionType);
+	  typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(Terminal*, 
 											 std::vector<GrammarSynthesizedAttribute>);
 	  // MS: type hierarchy traversal
-	  GrammarSynthesizedAttribute BottomUpProcessing(GrammarTreeNode* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
+	  GrammarSynthesizedAttribute BottomUpProcessing(Terminal* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
 	  // MS: build a Latex output that shows the abstract Cpp grammar
-	  GrammarSynthesizedAttribute CreateGrammarDotString(GrammarTreeNode* grammarnode,
+	  GrammarSynthesizedAttribute CreateGrammarDotString(Terminal* grammarnode,
 							       std::vector<GrammarSynthesizedAttribute> v);
-	  GrammarSynthesizedAttribute CreateGrammarLatexString(GrammarTreeNode* grammarnode,
+	  GrammarSynthesizedAttribute CreateGrammarLatexString(Terminal* grammarnode,
 							       std::vector<GrammarSynthesizedAttribute> v);
-	  void buildGrammarDotFile(GrammarTreeNode* rootNode, std::ostream& GrammarDotFile);
-	  void buildGrammarLatexFile(GrammarTreeNode* rootNode, std::ostream& GrammarLatexFile);
+	  void buildGrammarDotFile(Terminal* rootNode, std::ostream& GrammarDotFile);
+	  void buildGrammarLatexFile(Terminal* rootNode, std::ostream& GrammarLatexFile);
 
 	  // MS: generate source for implementation of the RTI interface
-	  GrammarSynthesizedAttribute generateRTIImplementation(GrammarTreeNode* grammarnode,
+	  GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
 								 std::vector<GrammarSynthesizedAttribute> v);
+
 	  // MS: auxiliary function
 	  std::string typeStringOfGrammarString(GrammarString* gs);
 
@@ -574,14 +486,14 @@ class Grammar
 
 	  // MS: auxiliary function to make tests on GrammarNodes more compact. (should be made a set of member
 	  //     functions of GrammarNode at some point (requires many other functions to be moved as well)
-     GrammarNodeInfo getGrammarNodeInfo(GrammarTreeNode* grammarnode);
+     GrammarNodeInfo getGrammarNodeInfo(Terminal* grammarnode);
 
      // MS: generates the code to implement the creation of the treeTraversalSuccessorContainer in Sage
-     void buildTreeTraversalFunctions(GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile);
+     void buildTreeTraversalFunctions(Terminal & node, StringUtility::FileWithLineNumbers & outputFile);
 
      // MS: create source code for enums used in traversal functions to access synthesized attribute values
-     void buildEnumForNode(GrammarTreeNode& node, std::string& enumString);
-     std::string EnumStringForNode(GrammarTreeNode& node,std::string s);
+     void buildEnumForNode(Terminal& node, std::string& enumString);
+     std::string EnumStringForNode(Terminal& node,std::string s);
 
      // MS: build Variants for use in tree traversal (access with getVariantT())
      std::string buildVariantEnums();
@@ -599,12 +511,12 @@ class Grammar
      std::string buildTransformationSupport();
 
      // MS: creates Include list (used by buildImplementationForTerminal and travMemberAccessEnums)
-     std::list<GrammarString*> classMemberIncludeList(GrammarTreeNode& node);
+     std::vector<GrammarString*> classMemberIncludeList(Terminal& node);
 
      // MK: This member function is used by the member function buildTreeTraversalFunctions()
      // (see above) in order to determine if the current node of the grammar corresponds
      // to a grammar class whose objects may actually occur in an AST.
-     bool isAstObject(GrammarTreeNode& node);
+     bool isAstObject(Terminal& node);
 
      // MK: We need this function to determine if the object is a pointer to an STL container
      bool isSTLContainerPtr(const std::string& typeString);
@@ -612,11 +524,8 @@ class Grammar
      // MK: We need this function to determine if the object itself is an STL container
      bool isSTLContainer(const std::string& typeString);
 
-     // MK: Method to build the iterator declaration for traversing an STL container
+  // MK: Method to build the iterator declaration for traversing an STL container
      std::string getIteratorString(const std::string& typeString);
-
-     // MS
-     std::string getContainerElementTypeString(const std::string& typeString);
 
   // DQ (5/24/2005): Added support to output sizes of IR nodes 
      std::string buildMemoryStorageEvaluationSupport();
@@ -629,12 +538,11 @@ class Grammar
      std::string buildMemoryPoolBasedTraversalSupport();
 
      private:
-       // char* computeNodeMemberFunctionString ( GrammarTreeNode & node, const List<GrammarString> & list );
        // file cache for reading files
        static std::vector<grammarFile*> fileList;
-       std::string restrictedTypeStringOfGrammarString(GrammarString* gs, GrammarTreeNode* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
+       std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
        std::set<std::string> traversedTerminals;
-       GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(GrammarTreeNode* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
+       GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
        bool isAbstractGrammarSymbol(std::string);
        std::string cocoScannerDefineName(std::string s);
        std::string cocoScannerDefines();
@@ -645,39 +553,33 @@ class Grammar
    //StorageClasses, after generation of the code located in SageIII/astFileIO/StorageClasses.C
        std::string myBuildHeaderStringAfterMarker  ( const std::string& marker, const std::string& fileName );
 
-   // DQ (4/6/2006): Removed from Jochen's new version
-   // void buildParentStorageClassHeaderFiles (ostream & outputFile );
-
-      void buildStorageClassSourceFiles ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
-      void buildStorageClassHeaderFiles ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
-      void buildIRNodeConstructorOfStorageClassSource ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile );
-      std::string buildStringForStorageClassSource ( GrammarTreeNode & node );
+      void buildStorageClassSourceFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+      void buildStorageClassHeaderFiles ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+      void buildIRNodeConstructorOfStorageClassSource ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+      std::string buildStringForStorageClassSource ( Terminal & node );
       std::string buildStorageClassDeclarations ( );
 
    // DQ (4/6/2006): Added in Jochen's new version
-      std::string buildStaticDataMemberListClassEntries( GrammarTreeNode & node);
-      std::string buildAccessFunctionsOfClassEntries( GrammarTreeNode & node);
-      std::string buildAccessFunctionSources( GrammarTreeNode & node);
-      std::string buildDataMemberStorageClass( GrammarTreeNode & node);
-      std::string buildStaticStorageClassPickOutSource( GrammarTreeNode & node);
-      std::string generateStaticDataConstructorSource(GrammarTreeNode & node);
-      std::string generateStaticDataWriteEasyStorageDataToFileSource(GrammarTreeNode & node);
-      std::string generateStaticDataReadEasyStorageDataFromFileSource(GrammarTreeNode & node);
-      std::string generateStaticDataArrangeEasyStorageInOnePoolSource(GrammarTreeNode & node);
-      std::string generateStaticDataDeleteEasyStorageMemoryPoolSource(GrammarTreeNode & node);
-      std::string buildStaticDataMemberListSetStaticDataSource(GrammarTreeNode & node);
-      std::string buildStaticDataMemberListDeleteStaticDataSource(GrammarTreeNode & node);
-      std::string buildStaticDataMemberListClassConstructor(GrammarTreeNode & node);
+      std::string buildStaticDataMemberListClassEntries( Terminal & node);
+      std::string buildAccessFunctionsOfClassEntries( Terminal & node);
+      std::string buildAccessFunctionSources( Terminal & node);
+      std::string buildDataMemberStorageClass( Terminal & node);
+      std::string buildStaticStorageClassPickOutSource( Terminal & node);
+      std::string generateStaticDataConstructorSource(Terminal & node);
+      std::string generateStaticDataWriteEasyStorageDataToFileSource(Terminal & node);
+      std::string generateStaticDataReadEasyStorageDataFromFileSource(Terminal & node);
+      std::string generateStaticDataArrangeEasyStorageInOnePoolSource(Terminal & node);
+      std::string generateStaticDataDeleteEasyStorageMemoryPoolSource(Terminal & node);
+      std::string buildStaticDataMemberListSetStaticDataSource(Terminal & node);
+      std::string buildStaticDataMemberListDeleteStaticDataSource(Terminal & node);
+      std::string buildStaticDataMemberListClassConstructor(Terminal & node);
 
       void  generateAST_FILE_IOFiles ( );
       void  generateStorageClassesFiles ( );
-      std::list<std::string>& getListOfBuiltinTypes();
+      std::vector<std::string>& getListOfBuiltinTypes();
 
    // DQ (4/6/2006): Added in Jochen's new version
-      std::list<std::string>& getListOfAbstractClasses();
-
-   // DQ (4/6/2006): Removed from Jochen's new version
-   // unsigned int getNumberOfWorkingPointers();
+      std::vector<std::string>& getListOfAbstractClasses();
 
    // JH(10/25/2005): declaration of the grammar functions that build the header and the source of the
    // AstFileIO class, loacated after the generation in SageIII/astFileIO/AstFileIO.(hC)
@@ -685,17 +587,16 @@ class Grammar
      std::string build_source_AST_FILE_IO_CLASS();
 
   // DQ (5/18/2007): support for documentation to handle mapping to KDM
-  // std::string outputClassesAndFields ( GrammarTreeNode & node, std::ostream & outputFile );
-     std::string outputClassesAndFields ( GrammarTreeNode & node );
+     std::string outputClassesAndFields ( Terminal & node );
    };
 
 // We need a defintion of an arbitrary identifier
 // This is defined and initialized in the grammar.C file
-extern Terminal identifier;
+// extern Terminal identifier;
 
 // We need to have all the strdup use the C++ new/delete
 // mechanism instead of the C malloc/free mechanism
-#define strdup Grammar::stringDuplicate
+// #define strdup Grammar::stringDuplicate
 
 // Macro used to define terminals we want to object to be built on the heap so that
 // it will not go out of scope, but we want a reference to the object instead of
@@ -703,72 +604,14 @@ extern Terminal identifier;
 #define NEW_TERMINAL_MACRO(TERMINAL_NAME,TERMINAL_NAME_STRING,TAG_NAME_STRING)                \
      Terminal & TERMINAL_NAME = terminalConstructor (TERMINAL_NAME_STRING, *this,             \
                                                      TERMINAL_NAME_STRING, TAG_NAME_STRING ); \
-     ROSE_ASSERT (TERMINAL_NAME.parentTerminal == NULL); \
      ROSE_ASSERT (TERMINAL_NAME.associatedGrammar != NULL);
 
 
 // A new nonterminal should not be born a parent of any child
-#define NEW_NONTERMINAL_MACRO(NONTERMINAL_NAME, NONTERMINAL_EXPRESSION, NONTERMINAL_NAME_STRING,NONTERMINAL_TAG_STRING) \
-     NonTerminal & NONTERMINAL_NAME = nonTerminalConstructor ( NONTERMINAL_EXPRESSION ); \
-     ROSE_ASSERT (NONTERMINAL_NAME.parentTerminal == NULL); \
-     NONTERMINAL_NAME.setGrammar (this);  \
-     NONTERMINAL_NAME.setName(NONTERMINAL_NAME_STRING,NONTERMINAL_TAG_STRING); \
-     ROSE_ASSERT (NONTERMINAL_NAME.associatedGrammar != NULL); \
-     addGrammarElement(NONTERMINAL_NAME); \
-     /*printf ("%s ---> ",NONTERMINAL_NAME_STRING);*/ NONTERMINAL_NAME.show(); //printf ("\n"); //MS
-
-// NONTERMINAL_NAME.display("In MACRO NEW_NONTERMINAL MACRO");
-
-// Macro used in Grammar::NonTerminal::operator |= ( const Terminal & Y )
-// The use of macros here is only temporary!
-// Notes:
-//    1) The copy function builds a new terminal and sets up the parent child relationship
-//    2) The automate generation of the parse functions are suppressed for these child 
-//       terminals/nonterminals.
-
-#define BUILD_CHILD_TERMINAL_MACRO(TERMINAL_NAME,ORIGINAL_TERMINAL_NAME_STRING,NEW_TERMINAL_NAME_STRING,NEW_TERMINAL_TAG_STRING) \
-     Terminal & TERMINAL_NAME = getTerminal(ORIGINAL_TERMINAL_NAME_STRING) \
-                                     .copy(NEW_TERMINAL_NAME_STRING,NEW_TERMINAL_TAG_STRING); \
-     TERMINAL_NAME.excludeFunctionPrototype ( "HEADER_PARSER", "Grammar/Node.code"); \
-     TERMINAL_NAME.excludeFunctionSource ( "SOURCE_PARSER", "Grammar/parserSourceCode.macro" ); \
-     ROSE_ASSERT(TERMINAL_NAME.associatedGrammar != NULL); \
-     ROSE_ASSERT(TERMINAL_NAME.isChild() == TRUE); \
-     ROSE_ASSERT(TERMINAL_NAME.associatedGrammar->isTerminal(NEW_TERMINAL_NAME_STRING) == TRUE);
-
-//   TERMINAL_NAME.excludeSubTreeFunctionPrototype ( "HEADER_PARSER", "Grammar/Node.code");
-
-// TERMINAL_NAME.associatedGrammar->addGrammarElement(TERMINAL_NAME);
-// orTokenPointerArray.addElement (TERMINAL_NAME);
-
-// Note that the assignment of the expression forces the parentTerminal to NULL so it is reset
-#define BUILD_CHILD_NONTERMINAL_MACRO(NON_TERMINAL_NAME,NONTERMINAL_EXPRESSION,ORIGINAL_NON_TERMINAL_NAME_STRING,NEW_NON_TERMINAL_NAME_STRING,NEW_NON_TERMINAL_TAG_STRING) \
-     NonTerminal & NON_TERMINAL_NAME = getNonTerminal(GrammarString::stringDuplicate(ORIGINAL_NON_TERMINAL_NAME_STRING)) \
-               .copy(GrammarString::stringDuplicate(NEW_NON_TERMINAL_NAME_STRING),GrammarString::stringDuplicate(NEW_NON_TERMINAL_TAG_STRING));  \
-     ROSE_ASSERT(NON_TERMINAL_NAME.isChild() == TRUE);                             \
-     ROSE_ASSERT(NON_TERMINAL_NAME.automaticGenerationOfDestructor          ==     \
-                 NON_TERMINAL_NAME.getParentTerminal()->automaticGenerationOfDestructor);  \
-     ROSE_ASSERT(NON_TERMINAL_NAME.associatedGrammar != NULL);                     \
-     NON_TERMINAL_NAME.setExpression ( NONTERMINAL_EXPRESSION );                   \
-     NON_TERMINAL_NAME.setParentTerminal(&(getNonTerminal(GrammarString::stringDuplicate(ORIGINAL_NON_TERMINAL_NAME_STRING)))); \
-     ROSE_ASSERT(NON_TERMINAL_NAME.isTemporary() == FALSE);                        \
-     ROSE_ASSERT(NON_TERMINAL_NAME.isChild() == TRUE);                             \
-     NON_TERMINAL_NAME.setName(GrammarString::stringDuplicate(NEW_NON_TERMINAL_NAME_STRING));              \
-     NON_TERMINAL_NAME.setLexeme(GrammarString::stringDuplicate(NEW_NON_TERMINAL_NAME_STRING));            \
-     NON_TERMINAL_NAME.setTagName(GrammarString::stringDuplicate(NEW_NON_TERMINAL_TAG_STRING));            \
-     NON_TERMINAL_NAME.excludeFunctionPrototype ( "HEADER_PARSER", "Grammar/Node.code");       \
-     NON_TERMINAL_NAME.excludeFunctionSource    ( "SOURCE_PARSER", "Grammar/parserSourceCode.macro" ); \
-     ROSE_ASSERT(NON_TERMINAL_NAME.associatedGrammar != NULL);                     \
-     ROSE_ASSERT(NON_TERMINAL_NAME.automaticGenerationOfConstructor         ==     \
-                 NON_TERMINAL_NAME.getParentTerminal()->automaticGenerationOfConstructor); \
-     ROSE_ASSERT(NON_TERMINAL_NAME.automaticGenerationOfDestructor          ==     \
-                 NON_TERMINAL_NAME.getParentTerminal()->automaticGenerationOfDestructor);  \
-     ROSE_ASSERT(NON_TERMINAL_NAME.automaticGenerationOfDataAccessFunctions ==     \
-                 NON_TERMINAL_NAME.getParentTerminal()->automaticGenerationOfDataAccessFunctions); \
-     ROSE_ASSERT(NON_TERMINAL_NAME.automaticGenerationOfCopyFunction        ==             \
-                 NON_TERMINAL_NAME.getParentTerminal()->automaticGenerationOfCopyFunction);        \
-     ROSE_ASSERT(NON_TERMINAL_NAME.isChild() == TRUE);                                     \
-     ROSE_ASSERT((NEW_NON_TERMINAL_NAME_STRING) == (NON_TERMINAL_NAME.name)); \
-     ROSE_ASSERT(NON_TERMINAL_NAME.associatedGrammar->isNonTerminal(GrammarString::stringDuplicate(NEW_NON_TERMINAL_NAME_STRING)) == TRUE);
+#define NEW_NONTERMINAL_MACRO(NONTERMINAL_NAME, NONTERMINAL_EXPRESSION, NONTERMINAL_NAME_STRING,NONTERMINAL_TAG_STRING, NONTERMINAL_CAN_HAVE_INSTANCES) \
+     Terminal & NONTERMINAL_NAME = nonTerminalConstructor ( NONTERMINAL_NAME_STRING, *this, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, (SubclassListBuilder)(NONTERMINAL_EXPRESSION), NONTERMINAL_CAN_HAVE_INSTANCES ); \
+     ROSE_ASSERT (NONTERMINAL_NAME.associatedGrammar != NULL);
+     // /*printf ("%s ---> ",NONTERMINAL_NAME_STRING);*/ NONTERMINAL_NAME.show(); //printf ("\n"); //MS
 
 #endif // endif for ROSETTA_GRAMMAR_H
 

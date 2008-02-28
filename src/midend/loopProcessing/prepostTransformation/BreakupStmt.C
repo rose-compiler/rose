@@ -19,7 +19,7 @@ bool BreakupStatement:: cmdline_configure()
             return false;
         ++config;
         assert (config != CmdOptions::GetInstance()->opts.end());
-        sscanf( (*config).c_str(), "%d", &breaksize);
+        sscanf( (*config).c_str(), "%zu", &breaksize);
         if (breaksize <= 0) {
            std::cerr << "invalid breaking size. Use default (12)\n";
            breaksize = 12;

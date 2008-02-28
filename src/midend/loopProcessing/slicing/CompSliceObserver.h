@@ -15,6 +15,7 @@ class CompSliceObserver
    virtual void UpdateFusion( const CompSliceFuseInfo &info) {}
    virtual void UpdateAlign( const CompSliceAlignInfo &info) {}
    virtual void Dump() const {}
+   virtual ~CompSliceObserver() {}
 };
 
 class CompSliceObserveInfo  : public ObserveInfo<CompSliceObserver>
@@ -72,6 +73,7 @@ class CompSliceNestObserver
   virtual void UpdateSwap( const CompSliceNestSwapInfo&) {}
   virtual void UpdateFusion( const CompSliceNestFusionInfo&) {}
   virtual void Dump() const {}
+  virtual ~CompSliceNestObserver() {}
 };
 
 class CompSliceNestObserveInfo  : public ObserveInfo<CompSliceNestObserver>

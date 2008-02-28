@@ -24,7 +24,7 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
       sliceNode = CreateNode(scope, op, tc);
     }
     LoopTreeTraverseSelectStmt stmts(n);
-    for (LoopTreeNode *s; s = stmts.Current(); stmts.Advance()) 
+    for (LoopTreeNode *s; (s = stmts.Current()); stmts.Advance()) 
         treeMap.InsertMapping(s, sliceNode);
   }
   LoopTreeDepGraph* depGraph = comp.GetDepGraph();
@@ -138,7 +138,7 @@ UpdateAlignEntry( const CompSliceNestAlignEntryInfo &info)
 void CompSliceDepGraphCreate:: MoveEdgeEndPoint(DepInfoEdge *e, EdgeDirection dir,
                         CompSliceDepGraphNode *n)
      {
-       CompSliceDepGraphNode *n1 = GetEdgeEndPoint(e, dir);
+       // CompSliceDepGraphNode *n1 = GetEdgeEndPoint(e, dir);
        CompSliceDepGraphNode *n2 = GetEdgeEndPoint(e, GraphAccess::Reverse(dir));
        if (n == n2) {
           DeleteEdge(e);

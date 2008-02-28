@@ -1,5 +1,7 @@
 ## Process this file with automake to create Makefile.in
 
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
 ## Add bugs to this line as they are fixed so that they can be used as test problems
 ## At least we should not reintroduce these fixed bugs again later.
 TESTCODES = test2001_11.C

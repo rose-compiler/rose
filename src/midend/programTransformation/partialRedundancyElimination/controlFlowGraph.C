@@ -26,7 +26,7 @@ class CfgConfig: public BuildCFGConfig<int> {
   virtual void CreateEdge(PRE::Vertex* src, PRE::Vertex* tgt,
 			        CFGConfig::EdgeType condval) {
     // cerr << "Creating edge between " << *src << " and " << *tgt << endl;
-    PRE::Edge edge = graph.graph.add_edge(*src, *tgt);
+    /* PRE::Edge edge = */ graph.graph.add_edge(*src, *tgt);
     graph.edge_type.push_back(condval);
     graph.edge_insertion_point.push_back(make_pair((SgNode*)0, false));
   }

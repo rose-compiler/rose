@@ -59,7 +59,7 @@ class StmtSideEffectCollect
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc);
  public:
   StmtSideEffectCollect( FunctionSideEffectInterface* a=0) 
-     : funcanal(a), modunknown(false), readunknown(false),modcollect(0), 
+     : modunknown(false), readunknown(false),funcanal(a), modcollect(0), 
        readcollect(0), killcollect(0) {}
   bool get_side_effect(AstInterface& fa, const AstNodePtr& h,
 		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectmod,
@@ -177,7 +177,7 @@ class ModifyVariableMap
   public:
    ModifyVariableMap(AstInterface& _ai, Select _sel,
                      FunctionSideEffectInterface* a=0) 
-     : ai(_ai), StmtSideEffectCollect(a), sel(_sel) {}
+     : StmtSideEffectCollect(a), ai(_ai), sel(_sel) {}
    void Collect(const AstNodePtr& root)
      {
       StmtSideEffectCollect::get_side_effect(ai, root, this);

@@ -194,7 +194,7 @@ class SwapNodeInfo : public LoopTreeObserveInfo
   public:
      SwapNodeInfo( LoopTreeNode *o, LoopTreeNode *other, int dir, 
                    const VarInfo& v)
-       : LoopTreeObserveInfo( o ), othernode(other), direction(dir),
+       : LoopTreeObserveInfo( o ), direction(dir), othernode(other),
          varinfo(v)  {}
      virtual ~SwapNodeInfo() {}
      int GetDirection() const { return direction; }
@@ -212,7 +212,7 @@ class SplitStmtInfo : public LoopTreeObserveInfo
  public:
   SplitStmtInfo( LoopTreeNode *stmt, LoopTreeNode *n,  
                  int l1, int l2, const DepRel& r)
-     : LoopTreeObserveInfo(stmt),splitstmt(n),rel(r),loop1(l1),loop2(l2) {}
+     : LoopTreeObserveInfo(stmt),splitstmt(n),loop1(l1),loop2(l2),rel(r) {}
   virtual ~SplitStmtInfo() {}
  
   LoopTreeNode * GetSplitStmt() const { return splitstmt; }

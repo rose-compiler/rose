@@ -354,7 +354,7 @@ CallgraphTraversal::evaluateInheritedAttribute (
 			}
 
 			// handle virtual function calls, this is much more complicated than a standard call, 
-			// so it is handled seperately
+			// so it is handled separately
 			SgArrowExp *funcArrowExp = isSgArrowExp( funcExp );
 			if(funcArrowExp) {
 				cerr << " arrow " ; // debug

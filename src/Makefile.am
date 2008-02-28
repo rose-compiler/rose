@@ -296,7 +296,7 @@ libroseLibraries = \
 # libannotationLanguageParser.so 
 
 # Define in the common ROSE makefile (in ROSE/config)
-MULTI_ROSE_LIBS = $(ROSE_SEPERATE_LIBS)
+MULTI_ROSE_LIBS = $(ROSE_SEPARATE_LIBS)
 
 # DQ (4/23/2005): If ROSE is configured with out "--with-edg_source_code=true"
 # then the following are an error.  We detect the lack of each library and

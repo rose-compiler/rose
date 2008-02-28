@@ -14,7 +14,7 @@ void foo()
   // Allocate some memory to test the memory useage
      for (int i=0; i < 1000; i++)
         {
-          int* pointer = new int[250000];
+          /* int* pointer = */ new int[250000];
         }
 
      printf ("After memory allocation ... \n");
@@ -37,7 +37,7 @@ int main()
   // Allocate some memory to test the memory useage
      for (int i=0; i < 1000; i++)
         {
-          int* pointer = new int[250000];
+          /* int* pointer = */ new int[250000];
         }
 
      printf ("After memory allocation ... \n");

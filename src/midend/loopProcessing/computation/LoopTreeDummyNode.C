@@ -10,7 +10,7 @@
 
 LoopTreeRestrLoopRange::  LoopTreeRestrLoopRange(  LoopTreeNode *l, int align,
                           SymbolicVal _lb, SymbolicVal _ub )
-    : LoopTreeNode(), loop(l, align, this), b(_lb,_ub) 
+    : LoopTreeNode(), b(_lb,_ub), loop(l, align, this) 
 {
   AttachObserver(*this);
 }

@@ -87,7 +87,7 @@ class SymbolicExpr : public SymbolicValImpl,
  protected:
   SymbolicExpr() {}
   SymbolicExpr( const SymbolicExpr& that)
-    : CountRefHandle<SymbolicOperands>(that), SymbolicValImpl(that) {}
+    : SymbolicValImpl(that), CountRefHandle<SymbolicOperands>(that) {}
 
   virtual SymOpType GetTermOP() const = 0;
  public:
@@ -170,6 +170,7 @@ class ValTermVisitor : public SymbolicVisitor
 class OPApplicator 
 {
  public:
+  virtual ~OPApplicator() {}
   virtual SymOpType GetOpType() = 0;
 
   virtual SymbolicExpr *CreateExpr() = 0;

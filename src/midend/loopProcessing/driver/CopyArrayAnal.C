@@ -205,7 +205,7 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
           collect.AddCopyArray() = DepCompCopyArrayCollect::CopyArrayUnit(left,collect.ComputeCommonRoot(left));
           unit.refs = cuts;
           curdim = EnforceCopyDimension(unit, refDep, copydim); 
-          assert(curdim <= copydim);
+          assert(curdim <= (int)copydim);
        }    
        if (origroot != 0 && unit.root != origroot) {
            int reuselevel = OutmostReuseLevel( unit, refDep);

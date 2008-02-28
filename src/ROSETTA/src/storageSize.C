@@ -5,11 +5,7 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
@@ -50,16 +46,10 @@ Grammar::buildMemoryStorageEvaluationSupport()
   // string name = "AstAttributeMechanism";
      s += localOutputSupport("AstAttributeMechanism");
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += localOutputSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += localOutputSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += localOutputSupport(name);
         }
 
      s += "   }\n";

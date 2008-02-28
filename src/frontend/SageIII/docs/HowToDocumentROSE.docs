@@ -23,7 +23,7 @@ documenting ROSE.
 //// Documentation for class SgInitializedName data members     \n
 ///////////////////////////////////////////////////////////////////////////////// \n
   - Example Codes \n
-    Seperate codes should be provided which show the use of a large enough cross section
+    Separate codes should be provided which show the use of a large enough cross section
 of ROSE classes.  These codes should be specified with the doxygen \examples command.
 Anchors should be provided separate files which document the example codes.  These anchors
 are to be references in the documentation for each class in ROSE to show both the 

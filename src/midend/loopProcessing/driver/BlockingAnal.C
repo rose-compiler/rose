@@ -3,7 +3,7 @@
 static int SliceNestReuseLevel(CompSliceLocalityRegistry *anal, CompSliceNest& n)
      { 
        unsigned num = n.NumberOfEntries();
-       int reuseLevel = 0;
+       size_t reuseLevel = 0;
        for (; reuseLevel < num; ++reuseLevel) {
           if (anal->TemporaryReuses(n[reuseLevel]) > 0 || anal->SpatialReuses(n[reuseLevel]) > 0)
              break;
@@ -51,7 +51,7 @@ SetBlocking( AstInterface& fa, CompSliceLocalityRegistry *anal, CompSliceNest& n
          int reuseLevel = SliceNestReuseLevel(anal, n); 
 	 for (int i = 0; i < reuseLevel; ++i)
              blocksize.push_back(1);
-         int index;
+         size_t index;
          for ( index = reuseLevel; index < num-spill; ++index)  {
              blocksize.push_back(GetDefaultBlockSize(fa, n[index]));
          }
@@ -65,9 +65,8 @@ SetBlocking( AstInterface& fa, CompSliceLocalityRegistry *anal, CompSliceNest& n
          blocksize.clear();
          unsigned num = n.NumberOfEntries();
          int reuseLevel = SliceNestReuseLevel(anal, n); 
-	 for (int i = 0; i <= reuseLevel; ++i)
-             blocksize.push_back(1);
-         for ( int index = reuseLevel+1; index < num; ++index) 
+         blocksize.resize(reuseLevel + 1, 1);
+         for ( size_t index = reuseLevel+1; index < num; ++index) 
              blocksize.push_back(GetDefaultBlockSize(fa,n[index]));
 }
 
@@ -83,7 +82,7 @@ SetBlocking( AstInterface& fa,CompSliceLocalityRegistry *anal, CompSliceNest& n)
          int reuseLevel = SliceNestReuseLevel(anal, n); 
 	 for (int i = 0; i < reuseLevel; ++i)
              blocksize.push_back(1);
-         for ( int index = reuseLevel; index < num; ++index) 
+         for ( size_t index = reuseLevel; index < num; ++index) 
              blocksize.push_back(GetDefaultBlockSize(fa,n[index]));
    }
 

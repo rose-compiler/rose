@@ -1761,7 +1761,7 @@ MidLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, b
                             }
 
                       // DQ (1/11/2006): Added extra case
-                      // Note: SgTemplateInstantiationDecl should be handled as seperate case
+                      // Note: SgTemplateInstantiationDecl should be handled as separate case
                       // so that we can generate a SgTemplatateInstantiationDefn object.
                          case V_SgClassDeclaration:
                             {

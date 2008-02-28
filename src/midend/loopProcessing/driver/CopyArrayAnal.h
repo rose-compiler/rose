@@ -25,6 +25,7 @@ public:
 
   virtual LoopTransformOptions::OptType GetOptimizationType()  = 0;
   virtual void operator()(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root);
+  virtual ~CopyArrayOperator() {}
 };
 
 class NoCopyArrayOperator : public CopyArrayOperator

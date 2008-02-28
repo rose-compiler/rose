@@ -204,7 +204,7 @@ overlly sensative to transformations that would add, remove, or move declaration
    Currently the lex pass saves all "extern \"C\" {" declarations and treats them as
 CPP directive (along with comments), they are then woven back into the AST as 
 a separate pass.
-\deprecated This is now redundant with the seperate preprocessing phase.
+\deprecated This is now redundant with the separate preprocessing phase.
 \internal Not sure that we need or want this mechanism (or this implementation of it).
 Not that the mechanism that we have is better and based on the scanning for extern "X"
 in the source code directly (where "X" is either "C", "C++", or "fortran".

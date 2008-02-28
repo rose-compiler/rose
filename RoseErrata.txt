@@ -48,7 +48,7 @@ Version 0.8.6a:
           It is unclear at the moment how we should handle this, but as a result of it
           "make check" will fail for some tests (e.g. ROSE/tests/roseTests/loopProcessing).
 
-       3) The usual ROSE rules apply, you should build a compile tree seperately from the 
+       3) The usual ROSE rules apply, you should build a compile tree separately from the 
           source tree.   We may at some point work on fixing this up better, but while it 
           can often be made to work this is not a tested configuration for ROSE and is 
           problematic in several ways (for example, make distclean will remove

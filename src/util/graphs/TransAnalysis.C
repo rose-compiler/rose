@@ -140,7 +140,7 @@ class TransInfoCreate : public ShadowGraphCreate, public TransInfoGraph<T>
   };
 
   TransInfoCreate( TransInfoOP<T>* op, BaseGraphCreate *_impl=0)
-    : analOp(op), ShadowGraphCreate(_impl) {}
+    : ShadowGraphCreate(_impl), analOp(op) {}
   ~TransInfoCreate() {}
   bool TransInfoComputed(const GraphAccessInterface::Node *src, const GraphAccessInterface::Node *snk)
    { return ContainNode(src) && ContainNode(snk) && 

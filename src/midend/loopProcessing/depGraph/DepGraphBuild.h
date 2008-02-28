@@ -16,6 +16,7 @@ class AstTreeDepGraphBuildImpl
           GetDepInfoIteratorImpl( GraphAccessInterface::Edge* e, DepType t) = 0;
   virtual AstNodePtr GetNodeAst(GraphAccessInterface::Node *n) = 0;
   virtual const GraphAccessInterface* Access() const = 0;
+  virtual ~AstTreeDepGraphBuildImpl() {}
 };
 
 class  AstTreeDepGraphAnal

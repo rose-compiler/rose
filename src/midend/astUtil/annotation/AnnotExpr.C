@@ -321,7 +321,7 @@ bool ExtendibleParamDescriptor :: get_extension( int& l, int& u) const
 void SymbolicParamListDescriptor::
 replace_var( const string& varname, const SymbolicVal& repl)
 {
-  for (int i = 0; i < size(); ++i) {
+  for (size_t i = 0; i < size(); ++i) {
     ExtendibleParamDescriptor& cur = operator[](i);
     cur.replace_var( varname, repl);
   }
@@ -369,7 +369,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
       orig = cur;
       orig.Visit(this);
     }
-    for (int i = cur; i < result.size(); ++i) {
+    for (size_t i = cur; i < result.size(); ++i) {
       r->ApplyOpd( result[i]);
     }
 
@@ -424,7 +424,7 @@ class ReplaceExtendibleParam : public SymbolicVisitor
 	  orig.Visit(this);
 	}
         SymbolicFunction::Arguments args;
-        for (int i = cur; i < result.size(); ++i) {
+        for (size_t i = cur; i < result.size(); ++i) {
           args.push_back(result[i]);
         }
 	SymbolicVal val = u.cloneFunction( args);
@@ -475,7 +475,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 
   int j = 0;
   r = second;
-  for (int i = 0; i < first.size(); ++i) {
+  for (size_t i = 0; i < first.size(); ++i) {
     const ExtendibleParamDescriptor& cur = first[i];
     const SymbolicValDescriptor& cur1 = cur.get_param();
     SymbolicValType curtype = cur1.get_val().GetValType();
@@ -493,7 +493,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
       }
       else {
         int lb = 0, ub = 0;
-        if (!cur.get_extension(lb, ub) || ub-lb >= parList.size() - j) {
+        if (!cur.get_extension(lb, ub) || ub-lb >= (int)parList.size() - j) {
            cerr << "lb = " << lb << "; ub = " << ub << "; parList.size = " << parList.size() << "; j = " << j << endl; 
            assert(false);
         }
@@ -503,7 +503,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
       }
     }
   }
-  if ( j < parList.size()) {
+  if ( (size_t)j < parList.size()) {
     cerr << "Error: given more than needed arguments *********" << j << "<" << parList.size() << endl;
     assert(false);
   }

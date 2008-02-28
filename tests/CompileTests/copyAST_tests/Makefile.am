@@ -807,15 +807,10 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 EXTRA_TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.o}
 
-make_copy_graph : $(srcdir)/make_copy_graph.tcl
-	cp $(srcdir)/make_copy_graph.tcl .
-
-# $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C) make_copy_graph
-# $(TEST_Objects): copyExample make_copy_graph
+# $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
+# $(TEST_Objects): copyExample
 $(TEST_Objects): copyExample 
 	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
-#	DQ (1/4/2008): Skip copying this since it is a problem for make distcheck in the readonly directory.
-#	cp -f $(srcdir)/make_copy_graph.tcl .
 	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) 
 
 # Use tests from the Cxx_tests directory
@@ -902,8 +897,8 @@ testCopyFunctionDefinitions: copyFunctionDefinitions
 # Include makefile rules specific to QMTest
 # include $(top_srcdir)/config/QMTest_makefile.inc
 
-# EXTRA_DIST = $(ALL_TESTCODES) copyGraph.C copyGraph.h make_copy_graph.tcl
-EXTRA_DIST = $(LONG_LIST_ALL_FILES) copyGraph.C copyGraph.h make_copy_graph.tcl  
+# EXTRA_DIST = $(ALL_TESTCODES) copyGraph.C copyGraph.h
+EXTRA_DIST = $(LONG_LIST_ALL_FILES) copyGraph.C copyGraph.h
 
 check-local:
 	@echo "Tests for AST Copy."
@@ -913,7 +908,7 @@ check-local:
 	@echo "***************************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC] make_copy_graph.tcl
+	rm -f *.o rose_*.[cC]
 	rm -rf QMTest
 
 distclean-local:

@@ -5,11 +5,7 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
@@ -17,25 +13,24 @@ using namespace std;
 
 string
 // Grammar::outputClassesAndFields ( GrammarTreeNode & node, fstream & outputFile )
-Grammar::outputClassesAndFields ( GrammarTreeNode & node )
+Grammar::outputClassesAndFields ( Terminal & node )
    {
      string className = node.getName();
 
-     string dataFields = node.getToken().outputClassesAndFields();
+     string dataFields = node.outputClassesAndFields();
 
      string returnString = className + "\n" + dataFields;
   // printf ("returnString = \n%s\n",returnString.c_str());
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
        // outputClassesAndFields(**treeNodeIterator,outputFile);
           returnString += outputClassesAndFields(**treeNodeIterator);
@@ -60,9 +55,9 @@ string
 Terminal::outputClassesAndFields ()
    {
      string returnString;
-     list<GrammarString *> localList;
-     list<GrammarString *> localExcludeList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> localList;
+     vector<GrammarString *> localExcludeList;
+     vector<GrammarString *>::iterator stringListIterator;
 
   // Initialize with local node data
      localList        = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);

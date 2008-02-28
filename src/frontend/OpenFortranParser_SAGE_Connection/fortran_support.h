@@ -80,7 +80,7 @@ extern std::list<SgDeclarationStatement*> astDeclarationStatementStack;
 // Global stack of SgType IR nodes
 extern std::list<SgType*> astTypeStack;
 
-// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type seperately from the
+// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type separately from the
 // the constructed types build from the base type.  This is designed to handle the case of 
 // "integer i(5),j" and "character*100 k,l" (see test2007_148.f)
 extern std::list<SgType*> astBaseTypeStack;

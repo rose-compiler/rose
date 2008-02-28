@@ -149,6 +149,7 @@ class DependenceHoisting
                    CompSliceNest& result);
   virtual LoopTreeNode* Transform( LoopTransformInterface &_fa, LoopTreeDepComp& c,
                                    const CompSlice *slice, LoopTreeNode *root);
+  virtual ~DependenceHoisting() {}
 };
 
 class CompSliceNestObserver;

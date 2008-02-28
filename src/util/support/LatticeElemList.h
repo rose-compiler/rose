@@ -11,6 +11,7 @@ class LatticeElemMerge
  public:
 virtual bool MergeElem(const T &e1, const T &e2, T& result)=0;
 virtual bool IsTop(const T& e) = 0;
+virtual ~LatticeElemMerge() {}
 };
 
 template <class T> 

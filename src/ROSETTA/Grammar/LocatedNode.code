@@ -104,7 +104,7 @@ HEADER_START
           void unsetOutputInCodeGeneration();
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called seperately (see documentation)
+       // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;

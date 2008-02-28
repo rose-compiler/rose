@@ -55,28 +55,28 @@ main( int argc, char * argv[] )
         }
      ROSE_ASSERT(returnList.size() == validValue);
      NodeQuerySynthesizedAttributeType returnListQueryList = NodeQuery::queryNodeList(returnList, V_SgFunctionDeclaration);
-     if (returnList.size() != validValue)
+     if (returnListQueryList.size() != validValue)
         {
-          printf ("Number of SgFunctionDeclaration IR nodes = %zu \n",returnList.size());
+          printf ("Number of SgFunctionDeclaration IR nodes = %zu \n",returnListQueryList.size());
         }
      ROSE_ASSERT(returnListQueryList.size() == validValue);
      NameQuerySynthesizedAttributeType returnListNames = NameQuery::querySubTree(project, NameQuery::FunctionDeclarationNames);
   // printNodeList(returnListNames);
-     if (returnList.size() != validValue)
+     if (returnListNames.size() != validValue)
         {
-          printf ("Number of FunctionDeclarationNames IR nodes = %zu \n",returnList.size());
+          printf ("Number of FunctionDeclarationNames IR nodes = %zu \n",returnListNames.size());
         }
      ROSE_ASSERT(returnListNames.size() == validValue);
      NameQuerySynthesizedAttributeType returnListNamesNodeList = NameQuery::queryNodeList(returnList,NameQuery::FunctionDeclarationNames);
-     if (returnList.size() != validValue)
+     if (returnListNamesNodeList.size() != validValue)
         {
-          printf ("Number of FunctionDeclarationNames IR nodes = %zu \n",returnList.size());
+          printf ("Number of FunctionDeclarationNames IR nodes = %zu \n",returnListNamesNodeList.size());
         }
      ROSE_ASSERT(returnListNamesNodeList.size() == validValue);
      NumberQuerySynthesizedAttributeType returnListNumber = NumberQuery::querySubTree(project,NumberQuery::NumberOfArgsInConstructor);
-     if (returnList.size() != 1)
+     if (returnListNumber.size() != 1)
         {
-          printf ("Number of NumberOfArgsInConstructor IR nodes = %zu \n",returnList.size());
+          printf ("Number of NumberOfArgsInConstructor IR nodes = %zu \n",returnListNumber.size());
         }
      ROSE_ASSERT(returnListNumber.size() == 1);
      

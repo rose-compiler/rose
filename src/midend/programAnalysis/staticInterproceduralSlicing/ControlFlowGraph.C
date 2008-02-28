@@ -24,7 +24,7 @@ ControlFlowGraph::ControlFlowGraph(SgNode * head) :
 
 void ControlFlowGraph::createNode(CFGNodeImpl * node) {
 
-  ControlNode * toInsert;
+  // ControlNode * toInsert;
 
   //If the node is empty, put it in _cfgnodemap, otherwise put its statements in _sgnodemap
   list<AstNodePtr> stmtList = node->GetStmts();

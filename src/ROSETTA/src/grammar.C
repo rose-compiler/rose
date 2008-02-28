@@ -5,11 +5,7 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 #include <fstream>
 #include <map>
@@ -23,13 +19,6 @@ static string RTIreturnType    = "RTIReturnType"; // typedef in Grammar/Common.c
 // Support for output of constructors as part of generated documentation
 string Grammar::staticContructorPrototypeString;
 
-// ###############################################################
-// # MK: These constants are needed during the generation phase  #
-// # of the tree traversal functions                             #
-// ###############################################################
-
-#define MAX_ITERATOR_TYPE_STRING_LENGTH 200
-
 // ################################################################
 // #                 Grammar Static Data Members                  #
 // ################################################################
@@ -41,7 +30,6 @@ vector<grammarFile*> Grammar::fileList;
 // ################################################################
 
 #define WRITE_SEPARATE_FILES_FOR_EACH_CLASS FALSE
-#define ALWAYS_BUILD_CLASS_FOR_GRAMMAR TRUE
 
 string replaceString(string patternInInput, string replacePattern, string input) {
   string::size_type posIter = input.find(patternInInput);
@@ -52,22 +40,6 @@ string replaceString(string patternInInput, string replacePattern, string input)
 
 Grammar::~Grammar ()
    {
-     
-     //cout << "Deleting fileList:\n";
-     // BP : 10/23/2001, fix mem.leak
-     // MS : 04/25/2002, unfix fix because it breaks
-     /*
-     list<grammarFile*>::iterator it;
-     cout << "Length of fileList: " << fileList.size() << endl;
-     for(it=fileList.begin(); it != fileList.end(); it++) {
-       cout << "deleting: " << *it << endl;
-       delete (*it);
-     }
-     cout << "done.\n";
-     cout << "Clearing file list:\n";
-     fileList.clear();
-     cout << "done.\n";
-     */
 }
 
 Grammar::Grammar ()
@@ -133,15 +105,15 @@ Grammar::Grammar ( const string& inputGrammarName,
      }
      ROSE_ASSERT (this->astNodeToVariantMap.size() >= 10); // A reasonable count
 
-  // DQ (3/15/2007): Added support for binaries
-     setUpBinaryInstructions();
-
   // Build up the terminals and nonTerminals defined within the default C++ grammar (using SAGE)
      setUpSupport();
      setUpTypes();
-     setUpExpressions();
      setUpStatements();
+     setUpExpressions();
      setUpSymbols();
+
+  // DQ (3/15/2007): Added support for binaries
+     setUpBinaryInstructions();
 
   // Setup of Node requires previous definition of types, 
   // expressions, statements, symbols within the grammar
@@ -153,7 +125,7 @@ Grammar::Grammar ( const string& inputGrammarName,
   // We want to skip the construction of parse member function for the C++ grammar
      if ( skipConstructionOfParseFunctions == TRUE)
         {
-          NonTerminal & Node = nonTerminalList["Node"];
+          Terminal & Node = *lookupTerminal(terminalList, "Node");
           Node.excludeSubTreeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code");
           Node.excludeSubTreeFunctionPrototype ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro");
         }
@@ -165,28 +137,10 @@ Grammar::Grammar ( const string& inputGrammarName,
 void
 Grammar::consistencyCheck() const
    {
-#if 0
-     int i = 0;
-
-  // check the terminal list for valid objects
-     for (i=0; i < terminalList.size(); i++)
-        {
-       // printf ("terminalList[%d].getName() = %s \n",i,terminalList[i].getName());
-          terminalList[i].consistencyCheck();
-        }
-
-  // check the terminal list for valid objects
-     for (i=0; i < nonTerminalList.size(); i++)
-        {
-       // printf ("nonTerminalList[%d].getName() = %s \n",i,nonTerminalList[i].getName());
-          nonTerminalList[i].consistencyCheck();
-        }
-#else
   // Call the consistencyCheck function on the list object
-     terminalList.consistencyCheck();
-     nonTerminalList.consistencyCheck();
-#endif
-
+     for (size_t i = 0; i < terminalList.size(); ++i) {
+       terminalList[i]->consistencyCheck();
+     }
    }
 
 
@@ -214,24 +168,15 @@ Grammar::isRootGrammar ()
    }
 
 void
-Grammar::setRootOfGrammar ( GrammarTreeNode* RootNodeForGrammar )
+Grammar::setRootOfGrammar ( Terminal* RootNodeForGrammar )
    {
      rootNode = RootNodeForGrammar;
    }
 
-GrammarTreeNode &
+Terminal*
 Grammar::getRootOfGrammar ()
    {
-     ROSE_ASSERT (rootNode != NULL);
-     return *rootNode;
-   }
-
-NonTerminal &
-Grammar::getRootToken ()
-   {
-     ROSE_ASSERT (rootNode != NULL);
-     ROSE_ASSERT (rootNode->token != NULL);
-     return *( (NonTerminal*) rootNode->token );
+     return rootNode;
    }
 
 void
@@ -245,37 +190,8 @@ Grammar::addGrammarElement ( Terminal & X )
      const Terminal *const &Y = &X;
      terminalList.push_back ( (Terminal *const &) Y );
   // terminalList.display("END of Grammar::addGrammarElement(Terminal)");
-     terminalList.consistencyCheck();
+  // terminalList.consistencyCheck();
      astVariantToTerminalMap[this->getVariantForTerminal(X)] = &X;
-   }
-
-void
-Grammar::addGrammarElement ( NonTerminal & X )
-   {
-     ROSE_ASSERT (this != NULL);
-  // nonTerminalList.display("START of Grammar::addGrammarElement(NonTerminal)");
-     X.setGrammar(this);
-     // commented by BP 10112001
-     //     nonTerminalList.push_back ( (Terminal *const &)  X );
-     const Terminal *const &Y = (const Terminal *) &X;
-     nonTerminalList.push_back ((Terminal *const &) Y );
-  // nonTerminalList.display("END of Grammar::addGrammarElement(NonTerminal)");
-     nonTerminalList.consistencyCheck();
-     astVariantToTerminalMap[this->getVariantForTerminal(X)] = &X;
-   }
-
-void
-Grammar::deleteGrammarElement ( Terminal & X )
-   {
-     const Terminal *const &termRef = &X;
-     terminalList.remove ( (Terminal *const &) termRef );
-   }
-
-void
-Grammar::deleteGrammarElement ( NonTerminal & X )
-   {
-     const Terminal *const &termRef = (const Terminal *)&X;
-     nonTerminalList.remove ( (Terminal *const &) termRef );
    }
 
 const std::string&
@@ -326,264 +242,6 @@ Grammar::getGrammarTagName()
  * Terminal/Nonterminal functions *
  **********************************/
 
-bool
-Grammar::isTerminal ( const string& terminalName ) const
-   {
-  // return terminalList.containedInList(terminalName);
-
-     bool returnValue = terminalList.containedInList(terminalName);
-
-#if 0
-     if (returnValue == FALSE)
-        {
-       // print out the names in the terminalList
-          terminalList.display("Called from Grammar::isTerminal()");
-        }
-#endif
-
-     return returnValue;
-   }
-
-bool
-Grammar::isNonTerminal ( const string& nonTerminalName ) const
-   {
-     return nonTerminalList.containedInList(nonTerminalName);
-   }
-
-#if 0
-// This function could only get a terminal (not a nonterminal, 
-// since functions can't be overloaded on return type)
-Terminal &
-Grammar::operator[] ( char* name ) const
-   {
-  // get a handle to reference to name of the terminal/nonterminal
-     Terminal* terminalPtr = NULL;
-
-     ROSE_ASSERT( (isTerminal(name) == TRUE) || ( isNonTerminal(name) == TRUE) );
-     if (isTerminal(name) == TRUE)
-        {
-          terminalPtr = &(terminalList[name]);
-        }
-       else
-        {
-          terminalPtr = &(nonTerminalList[name]);
-        }
-
-     ROSE_ASSERT(terminalPtr != NULL);
-
-     return *terminalPtr;
-   }
-#endif
-
-Terminal &
-Grammar::getTerminal    ( const string& name ) const
-   {
-  // get a handle to reference to name of the terminal
-     Terminal* terminalPtr = NULL;
-
-  // error checking
-     if (isTerminal(name) == FALSE)
-        {
-       // print out the names in the terminalList
-	printf ("ERROR: isTerminal(name) == FALSE: name = %s not found in terminalList \n",name.c_str());
-          terminalList.display("Called from Grammar::isTerminal()");
-        }
-
-     ROSE_ASSERT (isTerminal(name) == TRUE);
-
-     if (isTerminal(name) == TRUE)
-        {
-          terminalPtr = &(terminalList[name]);
-        }
-
-     ROSE_ASSERT(terminalPtr != NULL);
-     ROSE_ASSERT(terminalPtr->associatedGrammar != NULL);
-
-     return *terminalPtr;
-   }
-
-NonTerminal &
-Grammar::getNonTerminal ( const string& name ) const
-   {
-  // get a handle to reference to name of the nonterminal
-     NonTerminal* nonTerminalPtr = NULL;
-
-  // ROSE_ASSERT (isNonTerminal(name) == TRUE);
-     if (isNonTerminal(name) == TRUE)
-        {
-          nonTerminalPtr = &(nonTerminalList[name]);
-        }
-       else
-        {
-          printf ("Error: In Grammar::getNonTerminal ( char* name ) can't find name = %s in nonterminal list \n", name.c_str());
-          ROSE_ABORT();
-        }
-
-     ROSE_ASSERT(nonTerminalPtr != NULL);
-     ROSE_ASSERT(nonTerminalPtr->associatedGrammar != NULL);
-
-     return *nonTerminalPtr;
-   }
-
-void
-Grammar::remove ( const string& terminalName )
-   {
-  // This function removes all references of the name matching terminalName
-  // from the terminal or nonTerminal lists within the grammar and
-  // within the orTerminal or orNonTrminal lists on the nonterminal
-  // (if terminalName is a nonTerminal).
-
-     ROSE_ASSERT( (isTerminal(terminalName) == TRUE) || ( isNonTerminal(terminalName) == TRUE) );
-     internalRemove(terminalName);
-
-     // Now remove associated terminals and nonterminals (case-by-case)
-     /*
-     // Example construction
-     if (GrammarString::isSameName(terminalName,"") || GrammarString::isSameName(terminalName,""))
-        {
-          internalRemove("");
-          internalRemove("");
-        }
-     */
-
-     if (terminalName == "TypeBool" || terminalName == "BoolValExp")
-        {
-          internalRemove("TypeBool");
-          internalRemove("BoolValExp");
-        }
-
-     if (terminalName == "TypeVoid" || terminalName == "DeleteExp")
-        {
-          internalRemove("TypeVoid");
-          internalRemove("DeleteExp");
-        }
-
-     if (terminalName == "FunctionType" || terminalName == "FunctionDeclaration")
-        {
-          internalRemove("FunctionType");
-          internalRemove("FunctionDeclaration");
-        }
-
-     if (terminalName == "EnumType" || terminalName == "EnumDeclaration")
-        {
-          internalRemove("EnumType");
-          internalRemove("EnumDeclaration");
-        }
-   }
-
-void
-Grammar::internalRemove ( const string& terminalName )
-   {
-  // This function removes all references of the name matching terminalName
-  // from the terminal or nonTerminal lists within the grammar and
-  // within the orTerminal or orNonTerminal lists on the nonterminal
-  // (if terminalName is a nonTerminal).
-
-  // We might have already removed this terminal/nonterminal from the grammar and
-  // so for this function interface this is not an error
-  // ROSE_ASSERT( (isTerminal(terminalName) == TRUE) || ( isNonTerminal(terminalName) == TRUE) );
-
-     if ( (isTerminal(terminalName) == TRUE) && (isNonTerminal(terminalName) == TRUE) )
-        {
-          if (isTerminal(terminalName) == TRUE)
-             {
-               Terminal & X = terminalList[terminalName];
-
-               printf ("In Grammar::remove(): remove %s from terminalList \n",X.getName().c_str());
-               Terminal *const &termRef = &X;
-            // It is sufficient to just remove the terminal from the list
-               terminalList.remove(termRef);
-
-            // Check to make sure that this termnal name is no longer a part of this grammar
-               ROSE_ASSERT(isTerminal(terminalName) == FALSE);
-             }
-            else
-             {
-               ROSE_ASSERT(isNonTerminal(terminalName) == TRUE);
-
-               NonTerminal & X = nonTerminalList[terminalName];
-	       
-               printf ("In Grammar::remove(): remove %s from nonTerminalList \n",X.getName().c_str());
-
-               removeReferenceFromLists(X);
-               Terminal * const &termRef = (Terminal *)&X;
-               nonTerminalList.remove( termRef );
-
-               ROSE_ASSERT(isNonTerminal(terminalName) == FALSE);
-             }
-        }
-   }
-
-void
-Grammar::removeReferenceFromLists ( Terminal & X )
-{
-  // Terminals and nonterminals are referenced within some nonterminals through their
-  // and/or lists (list built through the execution of & and | operators between 
-  // terminals and nonterminals).
-  
-  printf ("In Grammar::removeReferenceFromLists(): remove %s from all internal lists \n",X.getName().c_str());
-  
-  list<Terminal *>::const_iterator it;
-  
-  for( it = nonTerminalList.begin(); it != nonTerminalList.end(); it++ )
-    {
-      assert( *it != NULL );
-      NonTerminal *temp = (NonTerminal *)*it;
-      
-      list<Terminal *>::const_iterator jt;
-      for( jt = temp->andTokenPointerArray.begin(); jt != temp->andTokenPointerArray.end(); jt++ )
-	{
-	  Terminal *andTemp = (*jt);
-
-	  if (andTemp == &X)
-	    {
-	      printf ("remove %s from (%s).andTokenPointerArray list \n",X.getName().c_str(),temp->getName().c_str());
-	      Terminal *const &tmpRef = andTemp;
-	      temp->andTokenPointerArray.remove( tmpRef );
-	    }
-	}
-
-      list<NonTerminal *>::iterator nonTerminalIterator;
-      for( nonTerminalIterator = temp->andNonTerminalPointerArray.begin(); 
-	   nonTerminalIterator != temp->andNonTerminalPointerArray.end(); 
-	   nonTerminalIterator++ )
-	{
-	  NonTerminal  *andTemp = *nonTerminalIterator;
-	  if (andTemp == &X)
-	    {
-	      printf ("remove %s from (%s).andNonTerminalPointerArray list \n",X.getName().c_str(),temp->getName().c_str());
-	      NonTerminal *const &tmpRef = andTemp;
-	      temp->andNonTerminalPointerArray.remove(tmpRef);
-	    }
-	}
-      
-      for( jt = temp->orTokenPointerArray.begin(); jt != temp->orTokenPointerArray.end(); jt++ )
-	{
-	  Terminal  *orTemp = *jt;
-	  if (orTemp == &X)
-	    {
-	      printf ("remove %s from (%s).orTokenPointerArray list \n",X.getName().c_str(),temp->getName().c_str());
-	      Terminal *const &tmpRef = orTemp;
-	      temp->orTokenPointerArray.remove(tmpRef);
-	    }
-	}
-      
-      for( nonTerminalIterator = temp->orNonTerminalPointerArray.begin();
-	   nonTerminalIterator != temp->orNonTerminalPointerArray.end();
-	   nonTerminalIterator++ )
-	{
-	  NonTerminal  *orTemp = *nonTerminalIterator;
-	  if (orTemp == &X)
-	    {
-	      printf ("remove %s from (%s).orNonTerminalPointerArray list \n",X.getName().c_str(),temp->getName().c_str());
-	      NonTerminal *const &tmpRef = orTemp;
-	      temp->orNonTerminalPointerArray.remove( tmpRef );
-	    }
-	}
-      
-    }
-}
-
 Terminal & 
 Grammar::terminalConstructor ( const string& lexeme, Grammar & X, const string& stringVar, const string& tagString )
    {
@@ -593,11 +251,13 @@ Grammar::terminalConstructor ( const string& lexeme, Grammar & X, const string& 
   // 2) avoids or deferes the implementation of the envelop/letter interface mechanism so
   //    that the letter will have a scope longer than the envelope
 
-     return *(new Terminal ( lexeme, X, stringVar, tagString ));
+     Terminal* t = new Terminal ( lexeme, X, stringVar, tagString, true );
+     ROSE_ASSERT (t);
+     return *(t);
    }
 
-NonTerminal &
-Grammar::nonTerminalConstructor ( const NonTerminal & X )
+Terminal &
+Grammar::nonTerminalConstructor ( const string& lexeme, Grammar& X, const string& stringVar, const string& tagString, const SubclassListBuilder & builder, bool canHaveInstances )
    {
   // These functions build terminal and nonterminal objects to be associated with this grammar
   // Using a member function to construct these serves several purposes:
@@ -605,390 +265,12 @@ Grammar::nonTerminalConstructor ( const NonTerminal & X )
   // 2) avoids or deferes the implementation of the envelop/letter interface mechanism so
   //    that the letter will have a scope longer than the envelope
 
-     return *(new NonTerminal ( X ));
+     Terminal* nt = new Terminal ( lexeme, X, stringVar, tagString, canHaveInstances, builder );
+     ROSE_ASSERT (nt);
+     return *(nt);
    }
-
-NonTerminal &
-Grammar::nonTerminalConstructor ( const Terminal & X )
-   {
-  // These functions build terminal and nonterminal objects to be associated with this grammar
-  // Using a member function to construct these serves several purposes:
-  // 1) organizes terminals and nonterminals with there respective grammar (without ambiguity)
-  // 2) avoids or deferes the implementation of the envelop/letter interface mechanism so
-  //    that the letter will have a scope longer than the envelope.
-
-  // bool originalSetting = X.isTemporary();
-
-  // Warning: casing away const here!!
-     // NonTerminal XAsNonterminal = X;
-     // XAsNonterminal.setTemporary(TRUE);
-     ROSE_ASSERT (X.getParentTerminal() == NULL);
-
-     NonTerminal* newNonTerminal = new NonTerminal ( X );
-     ROSE_ASSERT(newNonTerminal != NULL);
-     // XAsNonterminal.setTemporary(originalSetting);
-
-     ROSE_ASSERT (newNonTerminal->parentTerminal == NULL);
-
-     return *newNonTerminal;
-   }
-
-//////////////////////////////////////////////////////////////////////////////////////
-// CREATE DATA STRUCTURE REPRESENTING THE TYPE HIERARCHY OF THE AST (GRAMMAR NODES) //
-//////////////////////////////////////////////////////////////////////////////////////
-void
-Grammar::buildTree()
-   {
-  // Define the root of the tree as rootOfGrammar  (we will attach all subtrees that
-  // we have left to this root at the end).
-
-  // Each nonterminal with more then 1 element in its OR list will generate a GrammarTreeNode
-  // and will use each element in the OR list to define children of that GrammarTreeNode.
-  // This list of parent Grammar Tree Nodes is put into a list (to be searched).  As each element
-  // is put into child GrammarTreeNode, the list of parent grammar tree nodes is searched to see if
-  // it is already represented.
-
-     list<GrammarTreeNode *> grammarTreeList;
-     list<Terminal *>::const_iterator  it;
-     list<GrammarTreeNode *>::const_iterator grammarTreeIterator;
-
-     unsigned int i=0;
-
-#if 1
-  // printf ("Process all the Terminals first \n");
-  // If we comment out the leafs the tree representing the grammar's implementation is
-  // smaller and easier to debug!
-     
-     for (i=0; i < terminalList.size(); i++)
-        {
-          ROSE_ASSERT (terminalList[i].getMemberFunctionPrototypeList
-               (Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size() == 0);
-
-       // Bugfix (7/7/2001) Use the existing GrammarTreeNode if it has already been built for this NonTerminal
-       // GrammarTreeNode* temp = new GrammarTreeNode (terminalList[i]);
-          GrammarTreeNode* temp = (terminalList[i].grammarSubTree != NULL) ? 
-                                  terminalList[i].grammarSubTree : 
-                                  new GrammarTreeNode (terminalList[i]);
-
-          ROSE_ASSERT (terminalList[i].getGrammar() != NULL);
-          terminalList[i].addGrammarPrefixToName();
-          grammarTreeList.push_back(temp);
-
-       // printf ("temp->getName() = %s \n",temp->getName());
-	  //	  terminalList[i].display("Terminals in TerminalList in buildTree");
-        }
-#else
-     printf ("WARNING: ####### LEAVES OF GRAMMAR COMMENTED OUT!!! ####### \n");
-#endif
-
-  // printf ("Process all the NonTerminals second \n");
-  // Build all the tree nodes up front and then connect them together to form the tree
-
-     for( it = nonTerminalList.begin(); it != nonTerminalList.end(); it++)
-        {
-
-	  assert( (*it) != NULL );
-	  NonTerminal &currentNonTerminal = (NonTerminal &)**it;
-	  //	  currentNonTerminal.show();
-	  //	  printf ("Build all the tree nodes up front: i = %d \n",i);
-	  // nonTerminalList[i].show();
-
-       // ROSE_ASSERT (nonTerminalList[i].subTreeMemberFunctionList.size() == 0);
-	  //	  printf ("nonTerminalList[%d] = %s \n",i,nonTerminalList[i].getName());
-
-       // Bugfix (7/7/2001) Use the existing GrammarTreeNode if it has already been built for this NonTerminal
-       // GrammarTreeNode* temp = new GrammarTreeNode (nonTerminalList[i]);
-          GrammarTreeNode* temp = (currentNonTerminal.grammarSubTree != NULL) ? 
-                                  currentNonTerminal.grammarSubTree : 
- 	                          new GrammarTreeNode (currentNonTerminal); // bugfix MS:2002
-          currentNonTerminal.addGrammarPrefixToName();
-          ROSE_ASSERT (temp != NULL);
-
-          grammarTreeList.push_back(temp);
-          ROSE_ASSERT (temp->token != NULL);
-       // ROSE_ASSERT (temp->token->subTreeMemberFunctionList.size() == 0);
-       // ROSE_ASSERT (nonTerminalList[i].subTreeMemberFunctionList.size() == 0);
-
-#if 0  // I think this code does nothing BP : 10/12/2001
-	  list<Terminal *>::const_iterator jt;
-	  for( jt = currentNonTerminal.orTokenPointerArray.begin(); 
-	       jt != currentNonTerminal.orTokenPointerArray.end(); jt++)
-             {
-               ROSE_ASSERT ((*jt)->name != NULL);
-               char* nameInProductionRule = (*jt)->name;
-	       printf ("nameInProductionRule = %s \n",nameInProductionRule);
-               ROSE_ASSERT (nameInProductionRule != NULL);
-
-#if 0
-            // Error checking associated with tracing down Insure++ penpointed error
-            // printf ("Checking nonTerminalList[i].orTokenPointerArray[j].grammarSubTree = %p \n",
-            //      nonTerminalList[i].orTokenPointerArray[j].grammarSubTree);
-               if ((*jt)->grammarSubTree != NULL)
-                    printf ("nonTerminalList[%d].orTokenPointerArray[%d].grammarSubTree != NULL name = %s \n",i,j,(*jt)->grammarSubTree->getName());
-#endif
-
-            // ROSE_ASSERT (nonTerminalList[i].orTokenPointerArray[j].grammarSubTree == NULL);
-
-            // Bugfix (7/7/2001) Use the existing GrammarTreeNode if it has already been built for this NonTerminal
-            // GrammarTreeNode* lowerLevelTreeNode = new GrammarTreeNode (nonTerminalList[i].orTokenPointerArray[j]);
-               GrammarTreeNode* lowerLevelTreeNode = ((*jt)->grammarSubTree != NULL) ? 
-                                                     (*jt)->grammarSubTree :
-                                                     new GrammarTreeNode (**jt);
-               ROSE_ASSERT (lowerLevelTreeNode != NULL);
-               char* lowerLevelName = lowerLevelTreeNode->getName();
-               ROSE_ASSERT (lowerLevelName != NULL);
-	     }
-#endif
-	  //	  currentNonTerminal.display("NonTerminals in nonTerminalList in buildTree");
-        }
-
-  // Now connect the tree nodes together to form the tree
-     for( it = nonTerminalList.begin(); it != nonTerminalList.end(); it++)
-        {
-	  list<GrammarTreeNode *> treeNodesToDelete;
-	  ROSE_ASSERT(treeNodesToDelete.size()==0);
-	  assert( (*it) != NULL );
-	  NonTerminal &currentNonTerminal = (NonTerminal &)**it;
-          GrammarTreeNode* newNonTerminalTreeNode = currentNonTerminal.grammarSubTree;
-          ROSE_ASSERT (newNonTerminalTreeNode != NULL);
-	  
-#if 0
-          printf ("(newNonTerminalTreeNode) nonTerminalList[%d].name = %s (# of Tokens = %d # of Production rules = %d # of subTreeMemberFunctions = %d) \n",
-		  i,currentNonTerminal.name,
-		  currentNonTerminal.orTokenPointerArray.size(),
-		  currentNonTerminal.orNonTerminalPointerArray.size(),
-		  currentNonTerminal.subTreeMemberFunctionList.size());
-#endif
-	  
-          ROSE_ASSERT (currentNonTerminal.getMemberFunctionPrototypeList
-                       (Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size() ==
-                       newNonTerminalTreeNode->token->getMemberFunctionPrototypeList
-                       (Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size());
-	  
-       // Search through the tokens to find the grammar elements in the grammarTreeList
-	  list<Terminal *>::const_iterator jt;
-	  for( jt = currentNonTerminal.orTokenPointerArray.begin(); 
-	       jt != currentNonTerminal.orTokenPointerArray.end(); jt++)
-             {
-               string nameInProductionRule = (*jt)->name;
-            // printf ("nameInProductionRule = %s \n",nameInProductionRule);
-
-            // GrammarTreeNode* lowerLevelTreeNode = new GrammarTreeNode (currentNonTerminal.orTokenPointerArray[j]);
-               GrammarTreeNode* lowerLevelTreeNode = (*jt)->grammarSubTree;
-               ROSE_ASSERT (lowerLevelTreeNode != NULL);
-               string lowerLevelName = lowerLevelTreeNode->getName();
-
-            // Now check to see if it is in the list of unconnected subtrees
-	       bool foundMatchingString = FALSE;
-	       for( grammarTreeIterator = grammarTreeList.begin();
-		    grammarTreeIterator != grammarTreeList.end(); grammarTreeIterator++ )
-		 {
-		   ROSE_ASSERT((*grammarTreeIterator)!=NULL);
-                    string grammarTreeListname = (*grammarTreeIterator)->getName();
-                    if ( lowerLevelName == grammarTreeListname )
-                       {
-#if 0
-                         printf ("Found Matching Name! name = %s list length = %d \n",
-                              grammarTreeListname,grammarTreeList.size());
-#endif
-			 ROSE_ASSERT (foundMatchingString == FALSE);
-
-                      // newNonTerminalTreeNode->nodeList.addElement(lowerLevelNode);
-                         newNonTerminalTreeNode->nodeList.push_back(*grammarTreeIterator);
-                      // Remove the lowerLevelNode from the list 
-                      // grammarTreeList.remove(lowerLevelNode);
-
-                      // Connect the tree node to its parent in the tree and the token to the tree
-                      // This permits us to traverse back through the tree to the root from any node
-                      // in the tree.
-			 ROSE_ASSERT ((*grammarTreeIterator)->token != NULL);
-                      // grammarTreeList[k].token->grammarSubTree = &(grammarTreeList[k]);
-                         (*grammarTreeIterator)->parentTreeNode = newNonTerminalTreeNode;
-
-                      // We need to add this to a list of Tree nodes to delete 
-                      // and delete them after this loop (or use a while loop!)
-			 treeNodesToDelete.push_back(*grammarTreeIterator);
-                       }
-                  }
-
-	       list<GrammarTreeNode *>::iterator treeNodeIterator;
-	       for( treeNodeIterator=treeNodesToDelete.begin();
-		    treeNodeIterator!=treeNodesToDelete.end(); treeNodeIterator++)
-		 {
-		   grammarTreeList.remove(*treeNodeIterator);
-		 }
-
-	       treeNodesToDelete.clear();
-	       assert(treeNodesToDelete.size()==0);
-            // If we didn't find a match then this is a leaf in the 
-            // tree representing the organization of the grammar
-            // printf ("Exiting after processing of first nonTerminal in the nonTerminalList! \n");
-            // ROSE_ABORT();
-             }
-
-          ROSE_ASSERT (currentNonTerminal.getMemberFunctionPrototypeList
-                       (Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size() ==
-                       newNonTerminalTreeNode->token->getMemberFunctionPrototypeList
-                       (Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size());
-
-          // Search through the nonterminals to find the grammar elements in the grammarTreeList
-	  list<NonTerminal *>::const_iterator nonTerminalIterator;
-	  for( nonTerminalIterator = currentNonTerminal.orNonTerminalPointerArray.begin(); 
-	       nonTerminalIterator != currentNonTerminal.orNonTerminalPointerArray.end(); 
-	       nonTerminalIterator++)
-	    {
-	       ROSE_ASSERT( *nonTerminalIterator != NULL );
-       // char* nameInProductionRule = (*nonTerminalIterator)->name;
-
-          GrammarTreeNode* lowerLevelTreeNode = (*nonTerminalIterator)->grammarSubTree;
-          ROSE_ASSERT (lowerLevelTreeNode != NULL);
-          ROSE_ASSERT (lowerLevelTreeNode->token != NULL);
-          string lowerLevelName = lowerLevelTreeNode->getName();
-
-       // Now check to see if it is in the list of unconnected subtrees
-	       bool foundMatchingString = FALSE;
-	       for( grammarTreeIterator = grammarTreeList.begin();
-		    grammarTreeIterator != grammarTreeList.end();
-		    grammarTreeIterator++ )
-		 {
-		   string grammarTreeListname = (*grammarTreeIterator)->getName();
-		   
-		   if ( lowerLevelName == grammarTreeListname )
-		     {
-#if 0
-		       printf ("Found Matching Name! name = %s list length = %d \n",
-			       grammarTreeListname,grammarTreeList.size());
-#endif
-		       newNonTerminalTreeNode->nodeList.push_back(*grammarTreeIterator);
-		       
-		       // Connect the tree node to its parent in the tree and the token to the tree
-		       // This permits us to traverse back through the tree to the root from any node
-		       // in the tree.
-		       ROSE_ASSERT ((*grammarTreeIterator)->token != NULL);
-		       (*grammarTreeIterator)->parentTreeNode = newNonTerminalTreeNode;
-		       
-		       // We need to add this to a list of Tree nodes to delete 
-		       // and delete them after this loop (or use a while loop!)
-		       // Instead we now just delete the element directly!
-		       treeNodesToDelete.push_back(*grammarTreeIterator);
-		       foundMatchingString = TRUE;
-		     }
-
-		 }
-
-	       list<GrammarTreeNode *>::iterator treeNodeIterator;
-	       for( treeNodeIterator=treeNodesToDelete.begin();
-		    treeNodeIterator!=treeNodesToDelete.end(); treeNodeIterator++)
-		 {
-		   grammarTreeList.remove(*treeNodeIterator);
-		 }
-
-	       treeNodesToDelete.clear();
-	       assert(treeNodesToDelete.size()==0);
-	    }
-        }
-
-     printf ("Remaining disconnected subtrees in our grammar: \n");
-     //     printf ("The size of the grammarTreeList is %zu", grammarTreeList.size());
-
-     for( grammarTreeIterator = grammarTreeList.begin();
-	  grammarTreeIterator != grammarTreeList.end();
-	  grammarTreeIterator++ )
-       {
-	 string name = (*grammarTreeIterator)->getName();
-	 printf ("          %s \n",name.c_str());
-       }
-
-  // If we don't need to build a new node in the grammar tree to 
-  // represent the root then let's skip doing so and let the
-  // single node left after collapsing the tree be the root node.
-     GrammarTreeNode* rootNodeForGrammar = NULL;
-     if (grammarTreeList.size() > 1)
-        {
-       // All the grammars we build should have a single root,
-       // so it is an error for grammarTreeList.size() > 1
-
-          printf ("Error: too many terminals/nonterminals remaining outside of grammar! \n");
-          ROSE_ABORT();
-        }
-       else
-        {
-       // Use the single existing node!
-          rootNodeForGrammar = *grammarTreeList.begin();
-        }
-
-     ROSE_ASSERT (rootNodeForGrammar != NULL);
-
-  // Call member function of Grammar class
-     setRootOfGrammar (rootNodeForGrammar);
-     ROSE_ASSERT (rootNode != NULL);
-
-  // Setup list of leaves of the grammar tree
-     setupLeafNodeList();
-
-  // Setup list of all nodes in the grammar tree
-  // traverseTreeToSetupAllNodeList();
-   }
-
-// define MAX_NUMBER_OF_LEVELS 10
-#define MAX_BUFFER_SIZE 350000
-
-#define GENERATED_CODE_DIRECTORY "generatedCode.headers"
 
 #define OUTPUT_TO_FILE TRUE
-
-#define DEBUG_COPY_EDIT FALSE
-
-#if 0
-string
-Grammar::readFile ( const string& inputFileName )
-   {
-     return StringUtility::readFile(inputFileName);
-#if 0
-  // Reads entire text file and places contents into a single string
-  // We implemennt a file cache to improve the performance of this file access
-
-// [DT] 5/10/2000 -- NOTE: Uncommented the following line.
-// [DT] 5/11/2000 -- NOTE: Re-commented the following line.
-//   printf ("Looking for filename = %s (number of files in cache = %zu) \n",fileName,fileList.size());
-
-     list<grammarFile*>::iterator i;
-     for (i = fileList.begin(); i != fileList.end(); i++)
-        {
-	  //	  printf ("fileList element filename = %s  target filename = %s \n",(*i)->getFilename(), fileName);
-          if ( (*i)->getFilename() == inputFileName )
-             {
-	       return (*i)->getBuffer();
-             }
-        }
-
-	  //	  printf ("File not found in cache (build it) filename = %s \n",fileName);
-
-     ifstream grammarInputFile(inputFileName.c_str(), ios::binary);
-     string result;
-     char buffer[1 << 20];
-          if (grammarInputFile.good() != TRUE)
-             {
-          fprintf (stderr, "ERROR: File not found -- %s \n",inputFileName.c_str());
-               ROSE_ABORT();
-             }
-     while (grammarInputFile && !grammarInputFile.eof()) {
-       grammarInputFile.read(buffer, 1 << 20);
-       result.insert(result.end(), buffer, buffer + grammarInputFile.gcount());
-             }
-     ROSE_ASSERT (grammarInputFile || grammarInputFile.eof());
-
-   //Now add the file to the list (cache)
-     //	  cout << "Did not find file in fileList, reading in grammarFile" << endl;
-     //	  cout << "The current length of the file list is " << fileList.size() << endl;
-     grammarFile *file = new grammarFile(inputFileName,result);
-     ROSE_ASSERT (file != NULL);
-
-     fileList.push_front(file);
-     return result;
-#endif
-   }
-#endif
 
 StringUtility::FileWithLineNumbers
 Grammar::readFileWithPos ( const string& inputFileName )
@@ -996,30 +278,19 @@ Grammar::readFileWithPos ( const string& inputFileName )
   // Reads entire text file and places contents into a single string
   // We implemennt a file cache to improve the performance of this file access
 
-// [DT] 5/10/2000 -- NOTE: Uncommented the following line.
-// [DT] 5/11/2000 -- NOTE: Re-commented the following line.
-  // printf ("Looking for filename = %s (number of files in cache = %zu) \n",inputFileName.c_str(),fileList.size());
-
      vector<grammarFile*>::iterator i;
      for (i = fileList.begin(); i != fileList.end(); i++)
         {
-	    // printf ("fileList element filename = %s  target filename = %s \n",(*i)->getFilename().c_str(), inputFileName.c_str());
           if ( (*i)->getFilename() == inputFileName )
              {
 	       return (*i)->getBuffer();
              }
              }
 
-      //	  printf ("File not found in cache (build it) filename = %s \n",fileName);
-
-   //Now add the file to the list (cache)
-	  //	  cout << "Did not find file in fileList, reading in grammarFile" << endl;
-	  //	  cout << "The current length of the file list is " << fileList.size() << endl;
      StringUtility::FileWithLineNumbers result = StringUtility::readFileWithPos(inputFileName);
-  // printf("result.size() = %zu\n", result.size());
 
      grammarFile *file = new grammarFile(inputFileName,result);
-          ROSE_ASSERT (file != NULL);
+     ROSE_ASSERT (file != NULL);
 
      fileList.push_back(file);
      return result;
@@ -1059,9 +330,9 @@ Grammar::sourceCodeDirectoryName ()
 
 
 void 
-Grammar::generateStringListsFromSubtreeLists ( GrammarTreeNode & node,
-					       list<GrammarString *> & includeList,
-					       list<GrammarString *> & excludeList,
+Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
+					       vector<GrammarString *> & includeList,
+					       vector<GrammarString *> & excludeList,
 					       FunctionPointerType listFunction )
 {
   // This function traverses back through the grammar tree to collect the elements in the
@@ -1069,9 +340,9 @@ Grammar::generateStringListsFromSubtreeLists ( GrammarTreeNode & node,
   // Since we want the parent node list elements listed first we
   // perform a postorder traversal.
   
-  list<GrammarString *>::const_iterator grammarStringIterator;
-  list<GrammarString *> &listOfIncludes = (node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
-  list<GrammarString *> &listOfExcludes = (node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
+  vector<GrammarString *>::const_iterator grammarStringIterator;
+  vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
+  vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
 
 #define PREORDER_TRAVERSAL FALSE
 
@@ -1094,27 +365,11 @@ Grammar::generateStringListsFromSubtreeLists ( GrammarTreeNode & node,
 
 #endif
   
-  if (node.parentTreeNode != NULL) {
+  if (node.getBaseClass() != NULL) {
     // Recursive function call
-    generateStringListsFromSubtreeLists (*(node.parentTreeNode), includeList, excludeList, listFunction );
+    generateStringListsFromSubtreeLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
   }
   else {
-#if 0
-    // Debugging code
-    int i = 0;
-    for (i=0; i < (node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size(); i++)
-      printf ("In Grammar::generateStringListsFromSubtreeLists - node = %s: includeList[%d] = %s ",
-	      node.getName(),
-	      i,
-	      ((node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST)[i]).
-	      getRawString() );
-    for (i=0; i < (node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST).size(); i++)
-      printf ("In Grammar::generateStringListsFromSubtreeLists - node = %s: excludeList[%d] = %s ",
-	      node.getName(),
-	      i,
-	      ((node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST)[i]).
-	      getRawString() );
-#endif
   }
   
 #if CHECK_LISTS
@@ -1144,9 +399,9 @@ Grammar::generateStringListsFromSubtreeLists ( GrammarTreeNode & node,
 
 
 void 
-Grammar::generateStringListsFromLocalLists ( GrammarTreeNode & node,
-					     list<GrammarString *> & includeList,
-					     list<GrammarString *> & excludeList,
+Grammar::generateStringListsFromLocalLists ( Terminal & node,
+					     vector<GrammarString *> & includeList,
+					     vector<GrammarString *> & excludeList,
 					     FunctionPointerType listFunction )
 {
   // This function traverses back through the grammar tree to collect the elements in the
@@ -1154,9 +409,9 @@ Grammar::generateStringListsFromLocalLists ( GrammarTreeNode & node,
   // Since we want the parent node list elements listed first we
   // perform a postorder traversal.
 
-  list<GrammarString *>::const_iterator grammarStringIterator;
-  list<GrammarString *> &listOfIncludes = (node.token->*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-  list<GrammarString *> &listOfExcludes = (node.token->*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+  vector<GrammarString *>::const_iterator grammarStringIterator;
+  vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+  vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
   
 #define PREORDER_TRAVERSAL FALSE
 
@@ -1179,27 +434,11 @@ Grammar::generateStringListsFromLocalLists ( GrammarTreeNode & node,
 
 #endif
   
-  if (node.parentTreeNode != NULL) {
+  if (node.getBaseClass() != NULL) {
     // Recursive function call
-    generateStringListsFromLocalLists (*(node.parentTreeNode), includeList, excludeList, listFunction );
+    generateStringListsFromLocalLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
   }
   else {
-#if 0
-    // Debugging code
-    int i = 0;
-    for (i=0; i < (node.token->*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size(); i++)
-      printf ("In Grammar::generateStringListsFromSubtreeLists - node = %s: includeList[%d] = %s ",
-	      node.getName(),
-	      i,
-	      ((node.token->*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST)[i]).
-	      getRawString() );
-    for (i=0; i < (node.token->*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST).size(); i++)
-      printf ("In Grammar::generateStringListsFromSubtreeLists - node = %s: excludeList[%d] = %s ",
-	      node.getName(),
-	      i,
-	      ((node.token->*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST)[i]).
-	      getRawString() );
-#endif
   }
   
 #if CHECK_LISTS
@@ -1229,31 +468,31 @@ Grammar::generateStringListsFromLocalLists ( GrammarTreeNode & node,
 
 
 void 
-Grammar::generateStringListsFromAllLists ( GrammarTreeNode & node,
-					   list<GrammarString *> & includeList,
-					   list<GrammarString *> & excludeList,
+Grammar::generateStringListsFromAllLists ( Terminal & node,
+					   vector<GrammarString *> & includeList,
+					   vector<GrammarString *> & excludeList,
 					   FunctionPointerType listFunction )
 {
   // This function traverses back through the grammar tree to collect the elements in the
   // SUBTREE_LISTs and in the LOCAL_LISTs (including the lists of the current node).
   // Since we want the parent node list elements listed first we perform a postorder traversal.
 
-  list<GrammarString *>::const_iterator grammarStringIterator;
+  vector<GrammarString *>::const_iterator grammarStringIterator;
 
-  list<GrammarString *> &listOfSubTreeIncludes = (node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
-  list<GrammarString *> &listOfSubTreeExcludes = (node.token->*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
-  list<GrammarString *> &listOfLocalIncludes = (node.token->*listFunction)(Terminal::LOCAL_LIST,  Terminal::INCLUDE_LIST);
-  list<GrammarString *> &listOfLocalExcludes = (node.token->*listFunction)(Terminal::LOCAL_LIST,  Terminal::EXCLUDE_LIST);
+  vector<GrammarString *> &listOfSubTreeIncludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
+  vector<GrammarString *> &listOfSubTreeExcludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
+  vector<GrammarString *> &listOfLocalIncludes = (node.*listFunction)(Terminal::LOCAL_LIST,  Terminal::INCLUDE_LIST);
+  vector<GrammarString *> &listOfLocalExcludes = (node.*listFunction)(Terminal::LOCAL_LIST,  Terminal::EXCLUDE_LIST);
   
 #if CHECK_LISTS
   checkListOfGrammarStrings(includeList);
   checkListOfGrammarStrings(excludeList);
 #endif
 
-  if (node.parentTreeNode != NULL)
+  if (node.getBaseClass() != NULL)
     {
       // Recursive function call
-      generateStringListsFromAllLists (*(node.parentTreeNode), includeList, excludeList, listFunction );
+      generateStringListsFromAllLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
     }
   
 #if CHECK_LISTS
@@ -1289,70 +528,27 @@ Grammar::generateStringListsFromAllLists ( GrammarTreeNode & node,
 
 }
 
-void Grammar::editStringList ( list<GrammarString *> & targetList, list<GrammarString *> & excludeList )
+void Grammar::editStringList ( vector<GrammarString *> & targetList, const vector<GrammarString *> & excludeList )
 {
   // Remove the elements in the excludeList from the elements in targetList
   // The match is determined by the use of the operator= on the elements!
   // list is modified!
-  list<GrammarString *> deleteList;
-  list<GrammarString *>::iterator it;
-  list<GrammarString *>::iterator jt;
-
-  // BP 10/22/2001, in the earlier version of this code Dan chose to 
-  // abort() if the list contained duplicate entries. This seems to have
-  // been related to some internal errors in the old list class. Since
-  // we now use STL I use the unique function to remove any duplicate entries
-
-  // targetList.sort();
-  // targetList.unique();
-
-#if 1
-  // we can also have the case where two different objects contain the same data
-  // BP 10/15/2001
-  for( it = targetList.begin(); it != targetList.end(); it++) 
-    for( jt = it; jt != targetList.end(); jt++) 
-      {
-	if((*it != *jt)&&( **it==**jt))
-	  deleteList.push_back(*jt);
-      }
-
-  for( it = deleteList.begin(); it != deleteList.end(); it++) 
-    targetList.remove(*it);
-
-  deleteList.clear();
-#endif
-
-  // printf ("In Grammar::editStringList: look for exclude strings \n");
-
-  for( it = targetList.begin(); it != targetList.end(); it++) 
-    for( jt = excludeList.begin(); jt != excludeList.end(); jt++) 
-      {
-	if( **jt == **it )  // if both strings contain the same thing
-	  {
-	    // printf ("Found a string to exclude string = %s ",excludeList[j].getRawString());
-	    deleteList.push_back(*it);
-	  }
-      }
-
-  deleteList.unique(); // really not necessary, but anyway ...
-
-#if 0
-     printf ("Number of elements in deleteList = %zu \n",deleteList.size());
-     printf ("BEFORE: Number of elements in list = %zu \n",targetList.size());
-#endif
-
-  for( it = deleteList.begin(); it != deleteList.end(); it++) 
-    targetList.remove( *it );
-
-#if 0
-     printf ("AFTER: Number of elements in list = %zu \n",targetList.size());
-#endif
-
-  // printf ("At bottom of Grammar::editStringList \n");
+  vector<GrammarString*> newList;
+  for (vector<GrammarString*>::const_iterator i = targetList.begin(); i != targetList.end(); ++i) {
+    for (vector<GrammarString*>::const_iterator j = i + 1; j != targetList.end(); ++j) {
+      if (**i == **j) goto skipThisElement;
+    }
+    for (vector<GrammarString*>::const_iterator j = excludeList.begin(); j != excludeList.end(); ++j) {
+      if (**i == **j) goto skipThisElement;
+    }
+    newList.push_back(*i);
+skipThisElement: continue;
+  }
+  targetList.swap(newList);
 }
 
 string
-Grammar::buildStringFromLists ( GrammarTreeNode & node,
+Grammar::buildStringFromLists ( Terminal & node,
                                 FunctionPointerType listFunction,
                                 StringGeneratorFunctionPointerType stringGeneratorFunction )
 {
@@ -1362,10 +558,10 @@ Grammar::buildStringFromLists ( GrammarTreeNode & node,
 
   // We use the method defined below which basically corresponds to the
   // code above (which is commented out)
-  list<GrammarString *> sourceList= buildListFromLists(node, listFunction);
-  list<GrammarString *>::iterator sourceListIterator;
+  vector<GrammarString *> sourceList= buildListFromLists(node, listFunction);
+  vector<GrammarString *>::iterator sourceListIterator;
 
-  ROSE_ASSERT (node.token != NULL);
+  // ROSE_ASSERT (node.token != NULL);
 
   string editStringMiddle;
 
@@ -1382,25 +578,25 @@ Grammar::buildStringFromLists ( GrammarTreeNode & node,
 }
 
 
-list<GrammarString *>
-Grammar::buildListFromLists ( GrammarTreeNode & node,
+vector<GrammarString *>
+Grammar::buildListFromLists ( Terminal & node,
 			      FunctionPointerType listFunction )
   // This method builds a list from the local lists of the current node,
   // from all of its parents' subtree lists, and from its own subtree lists
 {
-  list<GrammarString *> includeList;
-  list<GrammarString *> excludeList;
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
   ROSE_ASSERT (includeList.size() == 0);
   ROSE_ASSERT (excludeList.size() == 0);
 
   // Initialize with local node data
-  includeList = (node.getToken().*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-  excludeList = (node.getToken().*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+  includeList = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+  excludeList = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
   
   // Now generate the additions to the lists from the parent node subtree lists
   // and the subtree lists of the current node
-  if (node.parentTreeNode)
-    generateStringListsFromSubtreeLists ( *(node.parentTreeNode), includeList, excludeList, listFunction );
+  if (node.getBaseClass())
+    generateStringListsFromSubtreeLists ( *(node.getBaseClass()), includeList, excludeList, listFunction );
   
   // Now edit the list to remove elements appearing within the exclude list
   editStringList ( includeList, excludeList );
@@ -1410,12 +606,12 @@ Grammar::buildListFromLists ( GrammarTreeNode & node,
 
 
 string
-Grammar::buildStringForPrototypes ( GrammarTreeNode & node )
+Grammar::buildStringForPrototypes ( Terminal & node )
    {
   // This function adds in the source code specific to a node in the
   // tree that represents the hierachy of the grammer's implementation.
 
-     ROSE_ASSERT (node.token != NULL);
+     // ROSE_ASSERT (node.token != NULL);
      // BP : 10/09/2001 modified to provide addresses
      return buildStringFromLists ( node,
                                    &Terminal::getMemberFunctionPrototypeList,
@@ -1424,7 +620,7 @@ Grammar::buildStringForPrototypes ( GrammarTreeNode & node )
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForVariantFunctionSource         ( GrammarTreeNode & node )
+Grammar::buildStringForVariantFunctionSource         ( Terminal & node )
    {
   // Every node in the grammar has a function that identifies it with a numerical value 
   // (e.g. SCOPE_STMT).
@@ -1432,13 +628,13 @@ Grammar::buildStringForVariantFunctionSource         ( GrammarTreeNode & node )
      string variantFunctionTemplateFileName   = "../Grammar/grammarVariantFunctionDefinitionMacros.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (variantFunctionTemplateFileName);
 
-     returnString = GrammarString::copyEdit (returnString,"$MARKER",node.getToken().getTagName());
+     returnString = GrammarString::copyEdit (returnString,"$MARKER",node.getTagName());
 
      return returnString;
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::supportForBuildStringForIsClassNameFunctionSource     ( GrammarTreeNode & node, const StringUtility::FileWithLineNumbers& accumulationStringOrig )
+Grammar::supportForBuildStringForIsClassNameFunctionSource     ( Terminal & node, const StringUtility::FileWithLineNumbers& accumulationStringOrig )
    {
   // This function forms support for the Grammar::buildStringForIsClassNameFunctionSource function.
   // If a node is a part of the subtree represented by this grammar then is is by definition
@@ -1448,35 +644,28 @@ Grammar::supportForBuildStringForIsClassNameFunctionSource     ( GrammarTreeNode
 
      string tempString = "               case ";
 
-     tempString += node.getToken().getTagName();
+     tempString += node.getTagName();
      tempString += ":\n";
      accumulationString.push_back(StringUtility::StringWithLineNumber(tempString, "" /* "<supportForBuildStringForIsClassNameFunctionSource on " + node.getToken().getTagName() + ">" */, 1));
 
-     list<GrammarTreeNode *>::iterator nodeListIterator;
+     vector<Terminal *>::iterator nodeListIterator;
      // Loop through the children 
-     for( nodeListIterator = node.nodeList.begin();
-	  nodeListIterator != node.nodeList.end();
+     for( nodeListIterator = node.subclasses.begin();
+	  nodeListIterator != node.subclasses.end();
 	  nodeListIterator++)
         {
-          ROSE_ASSERT ((*nodeListIterator)->token != NULL);
-          ROSE_ASSERT ((*nodeListIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*nodeListIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*nodeListIterator) != NULL);
+          ROSE_ASSERT ((*nodeListIterator)->getBaseClass() == &node);
 
           accumulationString = 
-               supportForBuildStringForIsClassNameFunctionSource( (GrammarTreeNode &) **nodeListIterator, accumulationString);
+               supportForBuildStringForIsClassNameFunctionSource( **nodeListIterator, accumulationString);
         }
-
-#if 0
-     if (node.nodeList.size() > 0)
-          printf ("In support looking for multiple cases (%s): accumulationString = %s \n",
-               node.getName(),accumulationString);
-#endif
 
      return accumulationString;
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForIsClassNameFunctionSource     ( GrammarTreeNode & node )
+Grammar::buildStringForIsClassNameFunctionSource     ( Terminal & node )
    {
   // This function builds the source code for a friend function, each class has
   // a member function that casts a pointer to any derived class to type represented by
@@ -1488,13 +677,13 @@ Grammar::buildStringForIsClassNameFunctionSource     ( GrammarTreeNode & node )
   // printf ("returnString = %s \n",returnString);
 
      StringUtility::FileWithLineNumbers accumulationString = supportForBuildStringForIsClassNameFunctionSource(node,StringUtility::FileWithLineNumbers());
-     returnString = GrammarString::copyEdit(returnString,"$ROOT_NODE_OF_GRAMMAR",getRootOfGrammar().getName());
+     returnString = GrammarString::copyEdit(returnString,"$ROOT_NODE_OF_GRAMMAR",getRootOfGrammar()->getName());
      returnString = GrammarString::copyEdit(returnString,"$ACCUMULATION_STRING",accumulationString);
      return returnString;
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForNewAndDeleteOperatorSource ( GrammarTreeNode & node )
+Grammar::buildStringForNewAndDeleteOperatorSource ( Terminal & node )
    {
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarNewDeleteOperatorMacros.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
@@ -1508,7 +697,7 @@ Grammar::buildStringForNewAndDeleteOperatorSource ( GrammarTreeNode & node )
    }
 
 void
-Grammar::buildNewAndDeleteOperators( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
   // printf ("At TOP of Grammar::buildNewAndDeleteOperators() \n");
 
@@ -1525,14 +714,13 @@ Grammar::buildNewAndDeleteOperators( GrammarTreeNode & node, StringUtility::File
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildNewAndDeleteOperators(**treeNodeIterator,outputFile);
         }
@@ -1540,7 +728,7 @@ Grammar::buildNewAndDeleteOperators( GrammarTreeNode & node, StringUtility::File
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForTraverseMemoryPoolSource ( GrammarTreeNode & node )
+Grammar::buildStringForTraverseMemoryPoolSource ( Terminal & node )
    {
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarTraverseMemoryPool.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
@@ -1554,33 +742,6 @@ Grammar::buildStringForTraverseMemoryPoolSource ( GrammarTreeNode & node )
      string classSpecificMemoryUsageString;
 
      string className = node.getName();
-#if 0
-  // DQ (1/31/2006): commented out how that we have all the IR nodes in the memory pools.
-     if (className == "SgTypeUnknown"          || className == "SgTypeChar"        || className == "SgTypeSignedChar"   || 
-         className == "SgTypeUnsignedChar"     || className == "SgTypeShort"       || className == "SgTypeSignedShort"  || 
-         className == "SgTypeUnsignedShort"    || className == "SgTypeSignedInt"   || className == "SgTypeUnsignedInt"  || 
-         className == "SgTypeLong"             || className == "SgTypeSignedLong"  || className == "SgTypeUnsignedLong" ||
-         className == "SgTypeVoid"             || className == "SgTypeGlobalVoid"  || className == "SgTypeWchar"        || 
-         className == "SgTypeFloat"            || className == "SgTypeDouble"      || className == "SgTypeLongLong"     || 
-         className == "SgTypeUnsignedLongLong" || className == "SgTypeLongDouble"  || className == "SgTypeString"       || 
-         className == "SgTypeBool"             || className == "SgComplex"         || className == "SgTypeDefault"      || 
-         className == "SgTypeEllipse"          || className == "SgUnknownMemberFunctionType" || 
-         className == "SgPartialFunctionModifierType" || className == "SgNamedType")
-        {
-          classSpecificString               = "ROSE_ASSERT(builtin_type != NULL);\n         traversal.visit(builtin_type);";
-          classSpecificVisitorPatternString = "ROSE_ASSERT(builtin_type != NULL);\n         builtin_type->executeVisitorMemberFunction(visitor);";
-          classSpecificMemoryUsageString    = "count++;";
-        }
-       else
-        {
-          if (className == "SgTypeInt")
-             {
-               classSpecificString               = "for (int i=0; i < SgTypeInt::maxBitLength; i++)\n        {\n          ROSE_ASSERT(builtin_type[i] != NULL);\n          traversal.visit(builtin_type[i]);\n        }\n";
-               classSpecificVisitorPatternString = "for (int i=0; i < SgTypeInt::maxBitLength; i++)\n        {\n          ROSE_ASSERT(builtin_type[i] != NULL);\n          builtin_type[i]->executeVisitorMemberFunction(visitor);\n        }\n";
-               classSpecificMemoryUsageString    = "count += SgTypeInt::maxBitLength;";
-             }
-        }
-#endif
 
   // printf ("node.getName() = %s classSpecificString = %s \n",node.getName(),classSpecificString.c_str());
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_USING_ROSE_VISIT",classSpecificString);
@@ -1591,7 +752,7 @@ Grammar::buildStringForTraverseMemoryPoolSource ( GrammarTreeNode & node )
    }
 
 void
-Grammar::buildTraverseMemoryPoolSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildTraverseMemoryPoolSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
   // printf ("At TOP of Grammar::buildNewAndDeleteOperators() \n");
 
@@ -1608,14 +769,13 @@ Grammar::buildTraverseMemoryPoolSupport( GrammarTreeNode & node, StringUtility::
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildTraverseMemoryPoolSupport(**treeNodeIterator,outputFile);
         }
@@ -1624,7 +784,7 @@ Grammar::buildTraverseMemoryPoolSupport( GrammarTreeNode & node, StringUtility::
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( GrammarTreeNode & node )
+Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( Terminal & node )
    {
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarTestPointerForContainmentInMemoryPool.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
@@ -1637,37 +797,6 @@ Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( GrammarTreeN
      string classSpecificMemoryUsageString;
 
      string className = node.getName();
-#if 0
-  // DQ (1/31/2006): commented out how that we have all the IR nodes in the memory pools.
-     if (className == "SgTypeUnknown"          || className == "SgTypeChar"        || className == "SgTypeSignedChar"   || 
-         className == "SgTypeUnsignedChar"     || className == "SgTypeShort"       || className == "SgTypeSignedShort"  || 
-         className == "SgTypeUnsignedShort"    || className == "SgTypeSignedInt"   || className == "SgTypeUnsignedInt"  || 
-         className == "SgTypeLong"             || className == "SgTypeSignedLong"  || className == "SgTypeUnsignedLong" ||
-         className == "SgTypeVoid"             || className == "SgTypeGlobalVoid"  || className == "SgTypeWchar"        || 
-         className == "SgTypeFloat"            || className == "SgTypeDouble"      || className == "SgTypeLongLong"     || 
-         className == "SgTypeUnsignedLongLong" || className == "SgTypeLongDouble"  || className == "SgTypeString"       || 
-         className == "SgTypeBool"             || className == "SgComplex"         || className == "SgTypeDefault"      || 
-         className == "SgTypeEllipse"          || className == "SgUnknownMemberFunctionType" || 
-         className == "SgPartialFunctionModifierType" || className == "SgNamedType")
-        {
-          classSpecificMemoryUsageString  = "     if (found == false) \n";
-          classSpecificMemoryUsageString += "        {\n";
-          classSpecificMemoryUsageString += "          found = (this == builtin_type);\n";
-          classSpecificMemoryUsageString += "        }\n\n";
-        }
-       else
-        {
-          if (className == "SgTypeInt")
-             {
-               classSpecificMemoryUsageString  = "     if (found == false) \n";
-               classSpecificMemoryUsageString += "        {\n";
-               classSpecificMemoryUsageString += "          int i=0;\n";
-               classSpecificMemoryUsageString += "          while (found == false && i < SgTypeInt::maxBitLength)\n";
-               classSpecificMemoryUsageString += "               found = (this == builtin_type[i++]);\n";
-               classSpecificMemoryUsageString += "        }\n\n";
-             }
-        }
-#endif
 
   // printf ("node.getName() = %s classSpecificString = %s \n",node.getName(),classSpecificString.c_str());
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED",classSpecificMemoryUsageString);
@@ -1676,7 +805,7 @@ Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( GrammarTreeN
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( GrammarTreeNode & node )
+Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( Terminal & node )
    {
   // DQ & JH (1/17/2006): Added support for testing data members pointers if they point to IR nodes
 
@@ -1684,8 +813,7 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( GrammarTreeN
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
   // printf ("returnString = %s \n",returnString);
 
-     ROSE_ASSERT(node.token != NULL);
-     string dataMemberSpecificString = node.token->buildPointerInMemoryPoolCheck();
+     string dataMemberSpecificString = node.buildPointerInMemoryPoolCheck();
 
      returnString = GrammarString::copyEdit(returnString,"$CODE_STRING",dataMemberSpecificString.c_str());
 
@@ -1701,7 +829,7 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( GrammarTreeN
    }
 
 void
-Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForCheckingIfDataMembersAreInMemoryPoolSource(node);
 
@@ -1711,14 +839,13 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( GrammarTreeN
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(**treeNodeIterator,outputFile);
         }
@@ -1727,7 +854,7 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( GrammarTreeN
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForReturnDataMemberPointersSource ( GrammarTreeNode & node )
+Grammar::buildStringForReturnDataMemberPointersSource ( Terminal & node )
    {
   // DQ & JH (1/17/2006): Added support for testing data members pointers if they point to IR nodes
 
@@ -1737,8 +864,7 @@ Grammar::buildStringForReturnDataMemberPointersSource ( GrammarTreeNode & node )
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
   // printf ("returnString = %s \n",returnString);
 
-     ROSE_ASSERT(node.token != NULL);
-     string dataMemberSpecificString = node.token->buildReturnDataMemberPointers();
+     string dataMemberSpecificString = node.buildReturnDataMemberPointers();
 
      returnString = GrammarString::copyEdit(returnString,"$CODE_STRING",dataMemberSpecificString.c_str());
 
@@ -1755,7 +881,7 @@ Grammar::buildStringForReturnDataMemberPointersSource ( GrammarTreeNode & node )
    }
 
 void
-Grammar::buildStringForReturnDataMemberPointersSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStringForReturnDataMemberPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForReturnDataMemberPointersSource(node);
 
@@ -1765,14 +891,13 @@ Grammar::buildStringForReturnDataMemberPointersSupport( GrammarTreeNode & node, 
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildStringForReturnDataMemberPointersSupport(**treeNodeIterator,outputFile);
         }
@@ -1781,7 +906,7 @@ Grammar::buildStringForReturnDataMemberPointersSupport( GrammarTreeNode & node, 
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForReturnDataMemberReferenceToPointersSource ( GrammarTreeNode & node )
+Grammar::buildStringForReturnDataMemberReferenceToPointersSource ( Terminal & node )
    {
   // DQ & JH (1/17/2006): Added support for testing data members pointers if they point to IR nodes
 
@@ -1791,8 +916,7 @@ Grammar::buildStringForReturnDataMemberReferenceToPointersSource ( GrammarTreeNo
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
   // printf ("returnString = %s \n",returnString);
 
-     ROSE_ASSERT(node.token != NULL);
-     string dataMemberSpecificString = node.token->buildReturnDataMemberReferenceToPointers();
+     string dataMemberSpecificString = node.buildReturnDataMemberReferenceToPointers();
 
      returnString = GrammarString::copyEdit(returnString,"$CODE_STRING",dataMemberSpecificString.c_str());
 
@@ -1809,7 +933,7 @@ Grammar::buildStringForReturnDataMemberReferenceToPointersSource ( GrammarTreeNo
    }
 
 void
-Grammar::buildStringForReturnDataMemberReferenceToPointersSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStringForReturnDataMemberReferenceToPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForReturnDataMemberReferenceToPointersSource(node);
 
@@ -1819,14 +943,13 @@ Grammar::buildStringForReturnDataMemberReferenceToPointersSupport( GrammarTreeNo
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildStringForReturnDataMemberReferenceToPointersSupport(**treeNodeIterator,outputFile);
         }
@@ -1835,7 +958,7 @@ Grammar::buildStringForReturnDataMemberReferenceToPointersSupport( GrammarTreeNo
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForGetChildIndexSource ( GrammarTreeNode & node )
+Grammar::buildStringForGetChildIndexSource ( Terminal & node )
    {
   // DQ (3/7/2007): Added support for getting the index position associated with the list of IR nodes children in any IR node.
 
@@ -1843,8 +966,7 @@ Grammar::buildStringForGetChildIndexSource ( GrammarTreeNode & node )
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
   // printf ("returnString = %s \n",returnString);
 
-     ROSE_ASSERT(node.token != NULL);
-     string dataMemberSpecificString = node.token->buildChildIndex();
+     string dataMemberSpecificString = node.buildChildIndex();
 
      returnString = GrammarString::copyEdit(returnString,"$CODE_STRING",dataMemberSpecificString.c_str());
 
@@ -1856,7 +978,7 @@ Grammar::buildStringForGetChildIndexSource ( GrammarTreeNode & node )
    }
 
 void
-Grammar::buildStringForGetChildIndexSupport( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStringForGetChildIndexSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForGetChildIndexSource(node);
 
@@ -1866,14 +988,13 @@ Grammar::buildStringForGetChildIndexSupport( GrammarTreeNode & node, StringUtili
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildStringForGetChildIndexSupport(**treeNodeIterator,outputFile);
         }
@@ -1882,12 +1003,10 @@ Grammar::buildStringForGetChildIndexSupport( GrammarTreeNode & node, StringUtili
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForSource ( GrammarTreeNode & node )
+Grammar::buildStringForSource ( Terminal & node )
    {
   // This function adds in the source code specific to a node in the
   // tree that represents the hierachy of the grammer's implementation.
-
-     ROSE_ASSERT (node.token != NULL);
 
   // BP : 10/09/2001, modified to provide addresses
      string beginString = buildStringFromLists ( node, 
@@ -1897,21 +1016,12 @@ Grammar::buildStringForSource ( GrammarTreeNode & node )
      StringUtility::FileWithLineNumbers variantFunctionDefinition     = buildStringForVariantFunctionSource      (node);
      StringUtility::FileWithLineNumbers isClassnameFunctionDefinition = buildStringForIsClassNameFunctionSource  (node);
 
-  // DQ (12/23/2005): Move this generated code to seperate source file
+  // DQ (12/23/2005): Move this generated code to separate source file
   // char* copyMemberFunction            = buildCopyMemberFunctionSource            (node);
 
-  // DQ (12/23/2005): Move this generated code to seperate source file
+  // DQ (12/23/2005): Move this generated code to separate source file
   // DQ (9/21/2005): Added support for new and delete operators 
   // char* newAndDeleteOperatorSource    = buildStringForNewAndDeleteOperatorSource (node);
-
-#if 0
-     if (copyMemberFunction == 0)
-        {
-       // Build trivial length C string and place a null terminator at the end
-          copyMemberFunction = new char[1];
-          *copyMemberFunction = '\0';
-        }
-#endif
 
      StringUtility::FileWithLineNumbers returnString = StringUtility::FileWithLineNumbers(1, StringUtility::StringWithLineNumber(beginString, "" /* "<buildStringForSource " + node.getToken().getName() + ">" */, 1)) + variantFunctionDefinition + isClassnameFunctionDefinition;
 
@@ -1922,11 +1032,10 @@ Grammar::buildStringForSource ( GrammarTreeNode & node )
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForDataDeclaration ( GrammarTreeNode & node )
+Grammar::buildStringForDataDeclaration ( Terminal & node )
 {
   // This function builds the string representing the declaration 
   // of data variables (all of them) in a class.
-  ROSE_ASSERT (node.token != NULL);
   // BP : 10/09/2001, modified to provide addresses
   string returnString = buildStringFromLists ( node, 
 					      &Terminal::getMemberDataPrototypeList, 
@@ -1936,10 +1045,9 @@ Grammar::buildStringForDataDeclaration ( GrammarTreeNode & node )
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForDataAccessFunctionDeclaration ( GrammarTreeNode & node )
+Grammar::buildStringForDataAccessFunctionDeclaration ( Terminal & node )
    {
   // This function builds the strings representing the data access function prototypes
-     ROSE_ASSERT (node.token != NULL);
 
   // Save the original setting
   // bool originalSetting = node.getIncludeInitializerInDataStrings();
@@ -1950,10 +1058,10 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( GrammarTreeNode & node )
   // node.setIncludeInitializerInDataStrings (includeInitializer);
 
   // BP : 10/09/2001, modified to provide adddress
-     list<GrammarString *> dataMemberList = buildListFromLists ( node, &Terminal::getMemberDataPrototypeList );
+     vector<GrammarString *> dataMemberList = buildListFromLists ( node, &Terminal::getMemberDataPrototypeList );
 
      StringUtility::FileWithLineNumbers returnString;
-     list<GrammarString *>::iterator dataMemberIterator;
+     vector<GrammarString *>::iterator dataMemberIterator;
 
      for( dataMemberIterator = dataMemberList.begin();
           dataMemberIterator != dataMemberList.end();
@@ -1969,7 +1077,7 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( GrammarTreeNode & node )
 
 
 bool
-Grammar::buildConstructorParameterList ( GrammarTreeNode & node, list<GrammarString *> & constructorParameterList, ConstructParamEnum config )
+Grammar::buildConstructorParameterList ( Terminal & node, vector<GrammarString *> & constructorParameterList, ConstructParamEnum config )
    {
   // This function is called by the buildConstructorParameterListString(node) function
   // and builds the list of parameters that are used by a constructor.
@@ -1983,8 +1091,8 @@ Grammar::buildConstructorParameterList ( GrammarTreeNode & node, list<GrammarStr
   // Use an exclusion mechanism to exclude data before being used within the 
   // constructor parameter list (use flag in GrammarString).
   
-     list<GrammarString *> includeList;
-     list<GrammarString *> excludeList;
+     vector<GrammarString *> includeList;
+     vector<GrammarString *> excludeList;
 
   // now generate the additions to the lists from the parent node subtree lists
   // BP : 10/09/2001, modified to provide address
@@ -1993,7 +1101,7 @@ Grammar::buildConstructorParameterList ( GrammarTreeNode & node, list<GrammarStr
   // Now edit the list to remove elements appearing within the exclude list
      editStringList ( includeList, excludeList );
   
-     list<GrammarString *>::iterator gIt;
+     vector<GrammarString *>::iterator gIt;
 
      bool complete = true;
 
@@ -2002,34 +1110,24 @@ Grammar::buildConstructorParameterList ( GrammarTreeNode & node, list<GrammarStr
        // BP : 10/26/2001, tried running with Sun CC and gave the correct results ie generated source correctly
           GrammarString *memberFunctionCopy= *gIt;
           ROSE_ASSERT (memberFunctionCopy != NULL);
-#if 0
-       // QY 11/9/04 add to constructor parameter list only if matches
-       // if(memberFunctionCopy->getIsInConstructorParameterList() == TRUE)
-          ConstructParamEnum cur = memberFunctionCopy->getIsInConstructorParameterList();
-           if (cur & config )
-                constructorParameterList.push_back(memberFunctionCopy);
-           else if (cur > config)
-                complete = false;
-#else
        // DQ (11/7/2006): Rewritten to remove wrap logic (overly complex)
        // if (memberFunctionCopy->getIsInConstructorParameterList() == TRUE)
           if (memberFunctionCopy->getIsInConstructorParameterList() == CONSTRUCTOR_PARAMETER)
              {
                 constructorParameterList.push_back(memberFunctionCopy);
              }
-#endif
         }
 
      return complete;
    }
 
 string
-Grammar::buildConstructorParameterListString ( GrammarTreeNode & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
+Grammar::buildConstructorParameterListString ( Terminal & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
    {
   // This function returns the string used to build the parameters within the constructor.  
      int i = 0;
-     list<GrammarString *> constructorParameterList;
-     list<GrammarString *>::iterator stringListIterator;
+     vector<GrammarString *> constructorParameterList;
+     vector<GrammarString *>::iterator stringListIterator;
 
      bool r = buildConstructorParameterList (node,constructorParameterList, config);
      if (complete != 0)
@@ -2089,7 +1187,7 @@ Grammar::buildConstructorParameterListString ( GrammarTreeNode & node, bool with
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildDataMemberVariableDeclarations ( GrammarTreeNode & node )
+Grammar::buildDataMemberVariableDeclarations ( Terminal & node )
    {
   // This function builds a single string containing:
   //    1) Data prototype  (e.g. "int data; $Data* someSageData;")
@@ -2104,7 +1202,7 @@ Grammar::buildDataMemberVariableDeclarations ( GrammarTreeNode & node )
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTreeNode & node )
+Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & node )
    {
   // This function builds a single string containing:
   //    1) Data Access function prototypes (e.g. "void set_data( int data ); int get_data(void); ..." )
@@ -2119,11 +1217,11 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTree
   // Build the constructor prototype and then edit the names!
      string destructorPrototype  = "\n     public: \n         virtual ~" + string(className) +  "();\n";
 
-     if (node.getToken().generateDestructor() == TRUE)
+     if (node.generateDestructor() == TRUE)
          dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(destructorPrototype, "" /* "<destructor>" */, 1));
 
      // Now build the constructor and put in the constructorParameterString
-     if (node.getToken().generateConstructor() == TRUE)
+     if (node.generateConstructor() == TRUE)
         {
           bool complete = false;
           ConstructParamEnum cur = (ConstructParamEnum)1;
@@ -2136,19 +1234,9 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTree
           bool withInitializers = false;
 #endif
           bool withTypes        = TRUE;
-#if 0
-          while (!complete && (cur < CONSTRUCTOR_PARAMETER)) {
-             string constructorParameterString = 
-                buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
-             constructorPrototype = constructorPrototype + "         " + 
-                string(className) + "(" + constructorParameterString + "); \n";
-             cur = (ConstructParamEnum)(cur << 1);
-             withInitializers = false;
-          }
-#else
        // Get the SgLocatedNode so that we can set the data member as not being a constructor 
        // parameter so that we can reuse the same code generation source code.
-          GrammarTreeNode* parentNode = getNamedNode ( node, "SgLocatedNode" );
+          Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
           if (parentNode != NULL)
              {
                GrammarString* returnValue = getNamedDataMember ( *parentNode, "startOfConstruct" );
@@ -2180,71 +1268,14 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTree
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString + "); \n";
                withInitializers = false;
              }
-#endif
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
         }
 
      return dataAccessFunctionPrototypeString;
    }
 
-#if 0
-string
-Grammar::buildDataPrototypesAndAccessFunctionPrototypesAndConstuctorPrototype ( GrammarTreeNode & node )
-   {
-  // This function builds a single string containing:
-  //    1) Data prototype  (e.g. "int data; $Data* someSageData;")
-  //    2) Data Access function prototypes (e.g. "void set_data( int data ); int get_data(void); ..." )
-  //    3) Constructor prototype (e.g. "$CLASSNAME ( data = 0, $Data* someSageData = NULL );" )
-
-  // This builds the data declaration (the easy part) e.g. "int dataField; \n char* charField; \n"
-  // Spaces and CR's have been added to simplify the final formatting
-     string privateDeclarationString = "\n     protected: \n          ";
-     string dataDeclarationString = buildStringForDataDeclaration (node);
-     dataDeclarationString = privateDeclarationString + dataDeclarationString + "\n";
-
-  // printf ("dataDeclarationString = \n%s\n",dataDeclarationString.c_str());
-
-     string dataAccessFunctionPrototypeString = buildStringForDataAccessFunctionDeclaration(node);
-
-  // DQ (3/24/2006): Swap the order of these os that the data members are at the top and the 
-  // member functions are at the bottom.
-  // dataDeclarationString = dataAccessFunctionPrototypeString + dataDeclarationString + "\n";
-     dataDeclarationString = dataDeclarationString + "$OPEN_COMMENT_GROUP\n" + dataAccessFunctionPrototypeString + "\n";
-
-  // printf ("dataAccessFunctionPrototypeString = \n%s\n",dataAccessFunctionPrototypeString.c_str());
-
-     char* className = node.getName();
-
-  // Build the constructor prototype and then edit the names!
-     string destructorPrototype  = "\n     public: \n         virtual ~" + string(className) +  "();\n";
-
-     if (node.getToken().generateDestructor() == TRUE)
-         dataDeclarationString = dataDeclarationString + destructorPrototype;
-
-     // Now build the constructor and put in the constructorParameterString
-     if (node.getToken().generateConstructor() == TRUE) {
-         bool complete = false;
-         ConstructParamEnum cur = (ConstructParamEnum)1;
-         string constructorPrototype = "\n     public: \n"; 
-         bool withInitializers = TRUE;
-         bool withTypes        = TRUE;
-         while (!complete && (cur < CONSTRUCTOR_PARAMETER)) {
-            string constructorParameterString = 
-               buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
-            constructorPrototype = constructorPrototype + "         " + 
-               string(className) + "(" + constructorParameterString + "); \n";
-            cur = (ConstructParamEnum)(cur << 1);
-            withInitializers = false;
-         }
-         dataDeclarationString = dataDeclarationString + constructorPrototype;
-      }
-
-     return dataDeclarationString;
-   }
-#endif
-
 StringUtility::FileWithLineNumbers
-Grammar::buildConstructor ( GrammarTreeNode & node )
+Grammar::buildConstructor ( Terminal & node )
    {
   // Build the constructors for each class
   // Example:
@@ -2265,7 +1296,7 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
 
      StringUtility::FileWithLineNumbers returnString;
 
-     if (node.getToken().generateDestructor() == TRUE)
+     if (node.generateDestructor() == TRUE)
         {
        // Build the string representing the constructor text (with macro variables)
 	  string destructorTemplateFileName  = "../Grammar/grammarDestructorDefinitionMacros.macro";
@@ -2274,14 +1305,10 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
        // edit the string to customize it for this node in the grammar!
 	  StringUtility::FileWithLineNumbers destructorSource = GrammarString::copyEdit (destructorSourceCodeTemplate,"$CLASSNAME",className);
 
-       // char* constructorFunctionBody = GrammarString::stringDuplicate(node.getToken().buildConstructorBody(withInitializers, config).c_str());
-       // constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
-       // delete [] constructorFunctionBody;
-	 
        // For now make the descructor function body empty
        // AJ (10/27/2004) - Added the destructor body generation
        // char* destructorFunctionBody = "";
-          string destructorFunctionBody = node.getToken().buildDestructorBody();
+          string destructorFunctionBody = node.buildDestructorBody();
           destructorSource = GrammarString::copyEdit (destructorSource,"$DESTRUCTOR_BODY",destructorFunctionBody);
 
        // printf ("destructorSource = \n%s\n",destructorSource);
@@ -2289,7 +1316,7 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
           returnString.insert(returnString.end(), destructorSource.begin(), destructorSource.end());
         }
 
-     if (node.getToken().generateConstructor() == TRUE)
+     if (node.generateConstructor() == TRUE)
         {
           string constructorTemplateFileName = "../Grammar/grammarConstructorDefinitionMacros.macro";
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
@@ -2297,7 +1324,7 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
           bool complete  = false;
           ConstructParamEnum config = (ConstructParamEnum)1;
           int i = 1;
-          if  (node.getToken().getBuildDefaultConstructor())
+          if  (node.getBuildDefaultConstructor())
              {
                config = NO_CONSTRUCTOR_PARAMETER;
                i = 0;
@@ -2307,19 +1334,16 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
           for ( ; !complete && config < CONSTRUCTOR_PARAMETER; config = (ConstructParamEnum)(1 << i++))
              {
 	       StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-               if (node.hasParent() == TRUE)
+               if (node.getBaseClass() != NULL)
                   {
-                    string parentClassName = node.getParentName();
+                    string parentClassName = node.getBaseClass()->getName();
                  // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
                  // printf ("Calling base class default constructor (should call paramtererized version) \n");
 
                     string baseClassParameterString;
-                    if (node.hasParent() == TRUE)
-                       {
-                         bool withInitializers = FALSE;
-                         bool withTypes        = FALSE;
-                         baseClassParameterString = buildConstructorParameterListString (node.getParent(),withInitializers,withTypes, config);
-                       }
+                    bool withInitializers = FALSE;
+                    bool withTypes        = FALSE;
+                    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
                     string preInitializationString = parentClassName + "($BASECLASS_PARAMETERS)";
                     preInitializationString = ": " + preInitializationString;
                     preInitializationString = GrammarString::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
@@ -2342,7 +1366,7 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
                   }
                  else
                   {
-                    string constructorFunctionBody = node.getToken().buildConstructorBody(withInitializers, config);
+                    string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
                     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
                   }
 
@@ -2354,20 +1378,19 @@ Grammar::buildConstructor ( GrammarTreeNode & node )
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::buildCopyMemberFunctionSource ( GrammarTreeNode & node )
+Grammar::buildCopyMemberFunctionSource ( Terminal & node )
    {
   // This function builds the copy function within each class defined by the grammar
   // return node.getToken().buildCopyMemberFunctionSource();
 
   // char* returnString = node.getToken().buildCopyMemberFunctionSource().c_str();
   // char* returnString = GrammarString::stringDuplicate(node.getToken().buildCopyMemberFunctionSource().c_str());
-     StringUtility::FileWithLineNumbers returnString = node.getToken().buildCopyMemberFunctionSource();
+     StringUtility::FileWithLineNumbers returnString = node.buildCopyMemberFunctionSource();
 
   // printf ("In Grammar::buildCopyMemberFunctionSource(): returnCppString length = %ld \n",returnCppString.length());
 
      returnString = GrammarString::copyEdit(returnString,"$CLASSNAME",node.getName());
      returnString = GrammarString::copyEdit(returnString,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-     returnString = GrammarString::copyEdit(returnString,"$GRAMMAR_X_MARKER_","");
 
   // printf ("In Grammar::buildCopyMemberFunctionSource(node): returnString = \n%s \n",returnString);
 
@@ -2375,7 +1398,7 @@ Grammar::buildCopyMemberFunctionSource ( GrammarTreeNode & node )
    }
 
 void
-Grammar::buildCopyMemberFunctions ( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildCopyMemberFunctions ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
   // printf ("At TOP of Grammar::buildCopyMemberFunctions() \n");
   // printf ("At TOP of Grammar::buildCopyMemberFunctions(): node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName(),node.nodeList.size());
@@ -2388,45 +1411,17 @@ Grammar::buildCopyMemberFunctions ( GrammarTreeNode & node, StringUtility::FileW
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildCopyMemberFunctions(**treeNodeIterator,outputFile);
         }
 #endif
-   }
-
-void
-Grammar::buildGrammarClassDeclaration ( StringUtility::FileWithLineNumbers & outputFile )
-   {
-  // Each grammar has a class declaration (separate from the elements 
-  // of the grammar). This function builds that C++ class declaration which
-  // represents the grammar's implementation.  The basis for the declaration is
-  // found in the "../Grammar/grammarMainClassDeclatationMacros.macro" file.
-
-     printf ("Dead code never called ... \n");
-     ROSE_ASSERT(false);
-
-     string marker    = "MEMBER_FUNCTION_DECLARATIONS";
-     string fileName  = "../Grammar/grammarMainClassDeclatationMacros.macro";
-
-     StringUtility::FileWithLineNumbers headerBeforeInsertion = buildHeaderStringBeforeMarker(marker,fileName);
-     StringUtility::FileWithLineNumbers headerAfterInsertion  = buildHeaderStringAfterMarker (marker,fileName);
-
-     StringUtility::FileWithLineNumbers finalOutputString = headerBeforeInsertion + headerAfterInsertion;
-
-  // The name of the class representing the grammar should be the name of the grammar (not the prefix)!
-     finalOutputString = GrammarString::copyEdit (finalOutputString,"$CLASSNAME",getGrammarName());
-     finalOutputString = GrammarString::copyEdit (finalOutputString,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-     finalOutputString = GrammarString::copyEdit (finalOutputString,"$GRAMMAR_BASECLASS",grammarNameBaseClass);
-
-     outputFile += finalOutputString;
    }
 
 void
@@ -2443,78 +1438,26 @@ Grammar::buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outp
      StringUtility::FileWithLineNumbers sourceCodeTemplate = readFileWithPos (fileName);
      StringUtility::FileWithLineNumbers parseFunctionSourceCodeTemplate = readFileWithPos (parseFunctionFileName);
 
-#if 0
-     char* finalOutputString = new char[1];
-     finalOutputString[0] = '\0';
-
-     // BP : 10/24/2001, keep track of memory to free
-     char *tmpPtr = finalOutputString;
-     finalOutputString = GrammarString::stringConcatenate (finalOutputString,sourceCodeTemplate);
-     delete [] tmpPtr;
-  // Only include the parse function source code if we are building a non-root grammar (C++ is the root grammar)
-     if (!isRootGrammar() == TRUE)
-       {
-	 tmpPtr = finalOutputString;
-	 finalOutputString = GrammarString::stringConcatenate (finalOutputString,parseFunctionSourceCodeTemplate);
-	 delete [] tmpPtr;
-       }
-#else
      // BP : 10/25/2001, rewrote to do only one alloc
      StringUtility::FileWithLineNumbers finalOutputString = sourceCodeTemplate;
      if(!isRootGrammar()==TRUE)
        finalOutputString.insert(finalOutputString.end(), parseFunctionSourceCodeTemplate.begin(), parseFunctionSourceCodeTemplate.end());
-#endif
 
      finalOutputString = GrammarString::copyEdit (finalOutputString,"$CLASSNAME",getGrammarName());
      finalOutputString = GrammarString::copyEdit (finalOutputString,"$GRAMMAR_BASECLASS",grammarNameBaseClass);
      finalOutputString = GrammarString::copyEdit (finalOutputString,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
 
-#if 0
-     printf ("finalOutputString = %s \n",finalOutputString);
-     ROSE_ABORT();
-#else
      outputFile += finalOutputString;
-#endif
    }
-
-#if 0  // BP : 10/10/2001, moved to GrammarString class
-char*
-Grammar::GrammarString::stringConcatenate ( const char* target, const char* endingString )
-   {
-     ROSE_ASSERT (target != NULL);
-     ROSE_ASSERT (endingString != NULL);
-
-  // int returnStringLength = strlen(target) + strlen(endingString);
-     int targetStringLength = (target       != NULL) ? strlen(target)       : 0;
-     int endingStringLength = (endingString != NULL) ? strlen(endingString) : 0;
-     int returnStringLength = targetStringLength + endingStringLength;
-
-     char* returnString = new char [returnStringLength + 1];
-     ROSE_ASSERT (returnString != NULL);
-
-     returnString[0] = '\0';
-
-  // Call the standard C string concat function
-     strcat(returnString,target);
-     strcat(returnString,endingString);
-
-#if 0
-     delete target;
-     target = NULL;
-#endif
-
-     return returnString;
-   }
-#endif
 
 string
-Grammar::getDerivedClassDeclaration ( GrammarTreeNode & node )
+Grammar::getDerivedClassDeclaration ( Terminal & node )
    {
      string derivedClassString;
 
   // printf ("EDIT className (%s) during copy \n",className);
-     if (node.parentTreeNode != NULL)
-       derivedClassString = string(": public ") + node.parentTreeNode->getName();
+     if (node.getBaseClass() != NULL)
+       derivedClassString = string(": public ") + node.getBaseClass()->getName();
      
   // printf ("EDIT parentClassName (%s) durring copy \n",parentClassName);
 
@@ -2564,7 +1507,7 @@ Grammar::buildHeaderStringAfterMarker( const string& marker, const string& fileN
    }
 
 void
-Grammar::buildHeaderFiles( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string marker   = "MEMBER_FUNCTION_DECLARATIONS";
      string fileName = "../Grammar/grammarClassDeclatationMacros.macro";
@@ -2576,25 +1519,13 @@ Grammar::buildHeaderFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
   // DQ (3/24/2006): Have this be generated from the CommonCode.code file
   // so that we can better control how the documentation is done.
   // Here is where the virtual copy function is added to the header file!
-     StringUtility::FileWithLineNumbers copyString = node.getToken().buildCopyMemberFunctionHeader();
+     StringUtility::FileWithLineNumbers copyString = node.buildCopyMemberFunctionHeader();
 
   // printf ("TEMP String Value: copyString = \n%s\n",copyString);
   // ROSE_ASSERT(false);
 
      headerBeforeInsertion += copyString;
 #endif
-
-     list<Constraint *>::const_iterator it;
-     int i = 0;
-     for ( it = node.getToken().constraintList.begin(); it != node.getToken().constraintList.end(); it++ )
-        {
-          printf ("node.getName() = %s \n",node.getName().c_str());
-          printf ("     node.getToken().constraintList[%d].name = %s \n",
-               i, (*it)->getName().c_str());
-          printf ("     getConstraintString() = '%s' \n",
-               (*it)->getConstraintString().c_str());
-          i++;
-        }
 
   // Edit the $CLASSNAME
      string className = node.getName();
@@ -2642,11 +1573,6 @@ Grammar::buildHeaderFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
      StringUtility::FileWithLineNumbers editStringMiddleNodeData = buildDataMemberVariableDeclarations(node);
      editedStringMiddle += editStringMiddleNodeData;
 
-#if 0
-     printf ("TEMP String Value: editedStringMiddle = \n%s\n",editedStringMiddle);
-     ROSE_ASSERT(false);
-#endif
-
   // printf ("editStringMiddleNodeMemberFunctions = %s \n",editStringMiddleNodeMemberFunctions);
   // char* editStringForParserPrototype = buildParserPrototype (node);
   // ROSE_ASSERT (editStringForParserPrototype != NULL);
@@ -2663,19 +1589,14 @@ Grammar::buildHeaderFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
   // (this issue comes up in SAGE where the Name class must have the postdeclaration string
   // "extern Name defaultName;" so that other classes which follow it can provide default
   // initialization of function parameters).
-     StringUtility::FileWithLineNumbers predeclarationString(1, StringUtility::StringWithLineNumber(node.getToken().getPredeclarationString (), "" /* "<getPredeclarationString " + node.getToken().getName() + ">" */, 1));
+     StringUtility::FileWithLineNumbers predeclarationString(1, StringUtility::StringWithLineNumber(node.getPredeclarationString (), "" /* "<getPredeclarationString " + node.getToken().getName() + ">" */, 1));
 
      StringUtility::FileWithLineNumbers editedHeaderFileString = GrammarString::copyEdit (editedHeaderFileStringTemp,"$PREDECLARATIONS" ,predeclarationString);
 
-     StringUtility::FileWithLineNumbers postdeclarationString(1, StringUtility::StringWithLineNumber(node.getToken().getPostdeclarationString(), "" /* "<getPostdeclarationString " + node.getToken().getName() + ">" */, 1));
+     StringUtility::FileWithLineNumbers postdeclarationString(1, StringUtility::StringWithLineNumber(node.getPostdeclarationString(), "" /* "<getPostdeclarationString " + node.getToken().getName() + ">" */, 1));
      editedHeaderFileString = GrammarString::copyEdit (editedHeaderFileString,"$POSTDECLARATIONS",postdeclarationString);     
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
-
-#if 0
-     printf ("FINAL String Value: editedHeaderFileString = %s \n",editedHeaderFileString);
-     ROSE_ASSERT(false);
-#endif
 
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file (each class in its own file)!
@@ -2687,30 +1608,25 @@ Grammar::buildHeaderFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
   // Also output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
 
-  // Call this function recursively
-  // printf ("In Grammar::buildHeaderFiles(): node.name = %s  (# of subtrees/leaves = %d) \n",
-  //      node.getName(),node.nodeList.size());
-
-     list<GrammarTreeNode *>::iterator treeListIterator;
-     for( treeListIterator = node.nodeList.begin();
-	  treeListIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeListIterator;
+     for( treeListIterator = node.subclasses.begin();
+	  treeListIterator != node.subclasses.end();
 	  treeListIterator++ )
         {
-          ROSE_ASSERT ((*treeListIterator)->token != NULL);
-          ROSE_ASSERT ((*treeListIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeListIterator)->parentTreeNode != NULL);	 
+          ROSE_ASSERT ((*treeListIterator) != NULL);
+          ROSE_ASSERT ((*treeListIterator)->getBaseClass() != NULL);	 
           buildHeaderFiles(**treeListIterator,outputFile);
         }
    }
 
 StringUtility::FileWithLineNumbers
-Grammar::editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWithLineNumbers& editStringOrig )
+Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNumbers& editStringOrig )
    {
   // Setup default edit variables (locate them here to centralize the process)
      string className          = node.getName();
      string derivedClassString = getDerivedClassDeclaration(node);
-     string parentClassName    = (node.parentTreeNode != NULL) ? 
-                                 node.parentTreeNode->getName() :
+     string parentClassName    = (node.getBaseClass() != NULL) ? 
+                                 node.getBaseClass()->getName() :
 				   "//"; //"NO PARENT AVAILABLE";
      string baseClassConstructorParameterString = "";
      string constructorParameterListString      = "";
@@ -2728,19 +1644,19 @@ Grammar::editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWit
      editString = GrammarString::copyEdit (editString,"$BASE_CLASS_CONSTRUCTOR_PARAMETER",baseClassConstructorParameterString);
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterListString);
      editString = GrammarString::copyEdit (editString,"$CONSTRUCTOR_BODY",constructorBodyString);
-     editString = GrammarString::copyEdit (editString,"$CLASSTAG",node.getToken().getTagName());
+     editString = GrammarString::copyEdit (editString,"$CLASSTAG",node.getTagName());
 
   // edit the suffix of the $CLASSNAME (separate from the $GRAMMAR_PREFIX_)
   // printf ("node.getToken().getName() = %s \n",node.getToken().getBaseName());
   // printf ("node.getToken().getName() = %s (%s) \n",node.getToken().getName(),node.getToken().getBaseName());
 
-     editString = GrammarString::copyEdit (editString,"$CLASS_BASE_NAME",node.getToken().getBaseName());
+     editString = GrammarString::copyEdit (editString,"$CLASS_BASE_NAME",node.getBaseName());
 
   // Fixup the declaration of pure virtual functions (so that they are defined properly at the leaves)
      std::string emptyString       = "";
      std::string pureVirtualMarker = " = 0";
 
-     if (node.isLeafNode() == TRUE)
+     if (isAstObject(node))
         {
           editString = GrammarString::copyEdit (editString,"$PURE_VIRTUAL_MARKER",emptyString);
         }
@@ -2750,27 +1666,27 @@ Grammar::editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWit
         }
 
   // Now do final editing/substitution as specified by the user
-     ROSE_ASSERT (node.token->getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size() ==
-                  node.token->getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size());
-     ROSE_ASSERT (node.token->getEditSubstituteTargetList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size() ==
-                  node.token->getEditSubstituteSourceList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size());
-     ROSE_ASSERT (node.token->getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST).size() ==
-                  node.token->getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST).size());
-     ROSE_ASSERT (node.token->getEditSubstituteTargetList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST).size() ==
-                  node.token->getEditSubstituteSourceList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST).size());
+     ROSE_ASSERT (node.getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size() ==
+                  node.getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST).size());
+     ROSE_ASSERT (node.getEditSubstituteTargetList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size() ==
+                  node.getEditSubstituteSourceList(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST).size());
+     ROSE_ASSERT (node.getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST).size() ==
+                  node.getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST).size());
+     ROSE_ASSERT (node.getEditSubstituteTargetList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST).size() ==
+                  node.getEditSubstituteSourceList(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST).size());
 
   // Local lists that we will accumulate elements into
   // (traversing up through the parents in the grammar tree)
-     list<GrammarString *> targetList;
-     list<GrammarString *> targetExcludeList;
-     list<GrammarString *> sourceList;
-     list<GrammarString *> sourceExcludeList;
+     vector<GrammarString *> targetList;
+     vector<GrammarString *> targetExcludeList;
+     vector<GrammarString *> sourceList;
+     vector<GrammarString *> sourceExcludeList;
 
   // Initialize with local node data
-     targetList        = node.token->getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-     targetExcludeList = node.token->getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
-     sourceList        = node.token->getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-     sourceExcludeList = node.token->getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+     targetList        = node.getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     targetExcludeList = node.getEditSubstituteTargetList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+     sourceList        = node.getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+     sourceExcludeList = node.getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
 
   // now generate the additions to the lists from the parent node subtree lists
      // BP : 10/09/2001, modified next two lines to provide addresses
@@ -2782,7 +1698,7 @@ Grammar::editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWit
      ROSE_ASSERT (sourceExcludeList.size() == targetExcludeList.size());
 
   // printf ("listLength = %d \n",listLength);
-     list<GrammarString *>::iterator sourceListIterator, targetListIterator;
+     vector<GrammarString *>::iterator sourceListIterator, targetListIterator;
      for ( sourceListIterator = sourceList.begin(), targetListIterator = targetList.begin(); 
            sourceListIterator != sourceList.end(), targetListIterator != targetList.end(); 
            sourceListIterator++, targetListIterator++ )
@@ -2800,21 +1716,21 @@ Grammar::editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWit
 
   // Finally, Edit into place the name of the grammar
   // printf ("In editSubstitution node name = %s \n",node.getName());
-     editString = GrammarString::copyEdit (editString,"$GRAMMAR_PREFIX_",node.getToken().getGrammar()->getGrammarPrefixName());
-     editString = GrammarString::copyEdit (editString,"$GRAMMAR_TAG_PREFIX_",node.getToken().getGrammar()->getGrammarTagName());
+     editString = GrammarString::copyEdit (editString,"$GRAMMAR_PREFIX_",node.getGrammar()->getGrammarPrefixName());
+     editString = GrammarString::copyEdit (editString,"$GRAMMAR_TAG_PREFIX_",node.getGrammar()->getGrammarTagName());
 
      string parentGrammarPrefix = "";
      if (isRootGrammar() == TRUE)
         {
        // In the case of a root grammar there is no parent
-          parentGrammarPrefix = node.getToken().getGrammar()->getGrammarPrefixName();
+          parentGrammarPrefix = node.getGrammar()->getGrammarPrefixName();
         }
        else
         {
        // Some subsitutions are dependent upon the prefix of the lower level grammar
-          ROSE_ASSERT(node.getToken().getGrammar() != NULL);
-          ROSE_ASSERT(node.getToken().getGrammar()->getParentGrammar() != NULL);
-          parentGrammarPrefix = node.getToken().getGrammar()->getParentGrammar()->getGrammarPrefixName();
+          ROSE_ASSERT(node.getGrammar() != NULL);
+          ROSE_ASSERT(node.getGrammar()->getParentGrammar() != NULL);
+          parentGrammarPrefix = node.getGrammar()->getParentGrammar()->getGrammarPrefixName();
         }
 
      editString = GrammarString::copyEdit (editString,"$PARENT_GRAMMARS_PREFIX_",parentGrammarPrefix);
@@ -2822,18 +1738,7 @@ Grammar::editSubstitution ( GrammarTreeNode & node, const StringUtility::FileWit
 
   // We need to be able to substitute the "X" into some variable names etc. 
   // So the following helps to support this feature
-     string X_Marker            = "";
-     if (node.getToken().isChild() == TRUE)
-        {
-       // The "X" only appears in child node of the Grammar
-          X_Marker = "X_";
-        }
-       else
-        {
-          X_Marker = "";
-        }
 
-     editString = GrammarString::copyEdit (editString,"$GRAMMAR_X_MARKER_",X_Marker);
      editString = GrammarString::copyEdit (editString,"$CLASSNAME",className);
 
      return editString;
@@ -2845,39 +1750,23 @@ Grammar::buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & out
   // DQ (10/26/2007): Add the protytype for the Cxx_GrammarTerminalNames
   // This has been changed to use the newer V_SgNode form of the IR node names.
 
-#if 0
-     string startString = "extern struct \n" \
-                         "   { \n" \
-                         "     VariantT variant; \n" \
-                         "     std::string name; \n" \
-                         "   } $MARKERTerminalNames[$LIST_LENGTH]; \n";
-#else
      string startString = "typedef struct \n" \
                          "   { \n" \
                          "     VariantT variant; \n" \
                          "     std::string name; \n" \
                          "   } TerminalNamesType; \n\n" \
                          "extern TerminalNamesType $MARKERTerminalNames[$LIST_LENGTH]; \n\n";
-#endif
-#if 1
+
   // Set the type name using the grammarName variable contained within the grammar
   // startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarPrefixName());
      startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarName());
 
      size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
 
-  // char* listLengthString = strtoul(nonTerminalList.size());
-     char* listLengthString = new char [10];
-
-  // Build a string representing the number of elements (add 1 for the LAST_TAG)
-     sprintf (listLengthString,"%zu",maxVariant + 2);
+     string listLengthString = StringUtility::numberToString(maxVariant + 2);
 
   // COPY the length into the string at "LIST_LENGTH"
      startString = GrammarString::copyEdit (startString,"$LIST_LENGTH",listLengthString);
-
-  // BP : 10/24/2001,free mem.
-     delete [] listLengthString;
-#endif
 
      string finalString = startString;
 
@@ -2888,24 +1777,7 @@ Grammar::buildVariantsStringPrototype ( StringUtility::FileWithLineNumbers & out
 void
 Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outputFile )
    {
-#if 0
-     string startString = "static struct \n" \
-                         "   { \n" \
-                         "     $MARKERVariants variant; \n" \
-                         "     $MARKERVariants variant; \n" \
-                          "     std::string name; \n" \
-                         "   } $MARKERTerminalNames[$LIST_LENGTH] = {  \n";
-#else
-#if 0
-     string startString = "struct \n" \
-                         "   { \n" \
-                         "     VariantT variant; \n" \
-                          "    std::string name; \n" \
-                         "   } $MARKERTerminalNames[$LIST_LENGTH] = {  \n";
-#else
      string startString = "TerminalNamesType $MARKERTerminalNames[$LIST_LENGTH] = {  \n";
-#endif
-#endif
 
   // Set the type name using the grammarName variable contained within the grammar
   // startString = GrammarString::copyEdit (startString,"$MARKER",getGrammarPrefixName());
@@ -2913,24 +1785,17 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
 
      size_t maxVariant = this->astVariantToNodeMap.rbegin()->first;
 
-  // char* listLengthString = strtoul(nonTerminalList.size());
-     char* listLengthString = new char [10];
-
-  // Build a string representing the number of elements (add 1 for the LAST_TAG)
-     sprintf (listLengthString,"%zu",(size_t)(maxVariant+2U));
+     string listLengthString = StringUtility::numberToString(maxVariant + 2U);
 
   // COPY the length into the string at "LIST_LENGTH"
      startString = GrammarString::copyEdit (startString,"$LIST_LENGTH",listLengthString);
 
-     // BP : 10/24/2001,free mem.
-     delete [] listLengthString;
-
      // BP : 10/25/2001, this new version of the code only performs one new memory allocation,
      // uses list iterators instead of the operator[], and should be a lot faster
      string openString      = "          {";
-     string seperatorString = ", \"";
+     string separatorString = ", \"";
      string closeString     = "\"}, \n";
-     list<Terminal *>::const_iterator  it;
+     vector<Terminal *>::const_iterator  it;
 
      string middleString;
 
@@ -2943,7 +1808,7 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
      }
      bool first = true;
      for (size_t i=0; i < variantNames.size(); i++) {
-       middleString += openString + "(VariantT)" + StringUtility::numberToString(i) + seperatorString + variantNames[i] + closeString;
+       middleString += openString + "(VariantT)" + StringUtility::numberToString(i) + separatorString + variantNames[i] + closeString;
        first = false;
      }
 
@@ -2959,7 +1824,7 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
 
 
 void
-Grammar::buildSourceFiles( GrammarTreeNode & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
   // printf ("At TOP of Grammar::buildSourceFiles() \n");
   // printf ("Exiting at TOP of Grammar::buildSourceFiles() \n");
@@ -2971,9 +1836,6 @@ Grammar::buildSourceFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
 
   // place this string into a separate locations (isolate it from side effects)
      // BP : 10/25/2001, no need to duplicate here
-#if 0
-     sourceFileTemplate = GrammarString::stringDuplicate (sourceFileTemplate);
-#endif
 
      StringUtility::FileWithLineNumbers sourceBeforeInsertion = buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
      StringUtility::FileWithLineNumbers sourceAfterInsertion = buildHeaderStringAfterMarker(sourceFileInsertionSeparator, fileName);
@@ -3015,10 +1877,6 @@ Grammar::buildSourceFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
-#if 0
-     printf ("AFTER GrammarString::copyEdit: editedSourceFileString = %s \n",editedSourceFileString);
-#endif
-
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file!
      string fileExtension = ".C";
@@ -3035,14 +1893,13 @@ Grammar::buildSourceFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
 
 #if 1
   // Call this function recursively on the children of this node in the tree
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+	  treeNodeIterator != node.subclasses.end();
 	  treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator)->token != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->token->grammarSubTree != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->parentTreeNode != NULL);
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
           buildSourceFiles(**treeNodeIterator,outputFile);
         }
@@ -3050,28 +1907,28 @@ Grammar::buildSourceFiles( GrammarTreeNode & node, StringUtility::FileWithLineNu
    }
 
 void
-Grammar::printTreeNodeNames ( const GrammarTreeNode & node ) const
+Grammar::printTreeNodeNames ( const Terminal & node ) const
 {
-  list<GrammarTreeNode *>::const_iterator treeNodeIterator;
+  vector<Terminal *>::const_iterator treeNodeIterator;
   int i=0;
-  if (node.nodeList.size() > 0)
+  if (node.subclasses.size() > 0)
     {
       printf ("\n");
-      printf ("node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName().c_str(),(size_t) node.nodeList.size());
-      for( treeNodeIterator = node.nodeList.begin();
-	   treeNodeIterator != node.nodeList.end();
+      printf ("node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName().c_str(),(size_t) node.subclasses.size());
+      for( treeNodeIterator = node.subclasses.begin();
+	   treeNodeIterator != node.subclasses.end();
 	   treeNodeIterator++ )
 	{
-	  printf ("     node.nodeList[%d] = %s (%s) \n",
+	  printf ("     node.subclasses[%d] = %s (%s) \n",
 		  i, (*treeNodeIterator)->getName().c_str(),
-		  ((*treeNodeIterator)->nodeList.size() == 0) ? "IS A LEAF" : "IS NOT A LEAF");
+		  ((*treeNodeIterator)->subclasses.size() == 0) ? "IS A LEAF" : "IS NOT A LEAF");
 	  i++;
 	}
 
       printf ("\n");
       
-      for( treeNodeIterator = node.nodeList.begin();
-	   treeNodeIterator != node.nodeList.end();
+      for( treeNodeIterator = node.subclasses.begin();
+	   treeNodeIterator != node.subclasses.end();
 	   treeNodeIterator++ )
 	{
 	  printTreeNodeNames(**treeNodeIterator);
@@ -3093,10 +1950,6 @@ size_t Grammar::getVariantForNode(const std::string& name) const {
 }
 
 size_t Grammar::getVariantForTerminal(const Terminal& t) const {
-  return this->getVariantForNode(t.getName());
-}
-
-size_t Grammar::getVariantForNonterminal(const NonTerminal& t) const {
   return this->getVariantForNode(t.getName());
 }
 
@@ -3128,7 +1981,7 @@ Grammar::buildVariants ()
                           "     $MARKER_LAST_TAG \n" \
                           "   }; \n";
      
-     string seperatorString = "     ";
+     string separatorString = "     ";
      string newlineString   = ",\n";
 
      unsigned int i=0;
@@ -3139,14 +1992,9 @@ Grammar::buildVariants ()
      StringUtility::FileWithLineNumbers returnString;
      returnString.push_back(StringUtility::StringWithLineNumber(header, "" /* "<buildVariants header>" */, 1));
 
-     for (i=0; i < nonTerminalList.size(); i++)
-       {
-	 returnString.push_back(StringUtility::StringWithLineNumber(seperatorString + nonTerminalList[i].getTagName() + " = " + StringUtility::numberToString(this->getVariantForNonterminal(nonTerminalList[i])) + ", ", "" /* "<variant for nonterminal " + nonTerminalList[i].getTagName() + ">" */, 1));
-       }
-
      for (i=0; i < terminalList.size(); i++)
        {
-	 returnString.push_back(StringUtility::StringWithLineNumber(seperatorString + terminalList[i].getTagName() + " = " + StringUtility::numberToString(this->getVariantForTerminal(terminalList[i])) + ", ", "" /* "<variant for terminal " + terminalList[i].getTagName() + ">" */, 1));
+	 returnString.push_back(StringUtility::StringWithLineNumber(separatorString + terminalList[i]->getTagName() + " = " + StringUtility::numberToString(this->getVariantForTerminal(*terminalList[i])) + ", ", "" /* "<variant for node type " + terminalList[i].getTagName() + ">" */, 1));
        }
 
      returnString.push_back(StringUtility::StringWithLineNumber(footer, "" /* "<buildVariants footer>" */, 1));
@@ -3158,85 +2006,6 @@ Grammar::buildVariants ()
 StringUtility::FileWithLineNumbers
 Grammar::buildForwardDeclarations ()
    {
-#if 0
-#if 0
-     char* returnString = new char [10000];
-     ROSE_ASSERT (returnString != NULL);
-     returnString[0] = '\0';
-
-     char* header = "\n\n\n//! Forward Declarations used to represent the grammar used in ROSE \n";
-     char* footer = "\n\n\n";
-
-     strcat (returnString,GrammarString::stringDuplicate(header));
-
-  // Build all the tree nodes up frount and then connect them together to form the tree
-     int i=0;
-     for (i=0; i < nonTerminalList.size(); i++)
-        {
-          strcat (returnString,GrammarString::stringDuplicate("class "));
-	  strcat (returnString,GrammarString::stringDuplicate(nonTerminalList[i].name));
-          strcat (returnString,GrammarString::stringDuplicate(";\n"));
-        }
-
-     for (i=0; i < terminalList.size(); i++)
-        {
-          strcat (returnString,GrammarString::stringDuplicate("class "));
-	  strcat (returnString,GrammarString::stringDuplicate(terminalList[i].name));
-          strcat (returnString,GrammarString::stringDuplicate(";\n"));
-        }
-
-     strcat (returnString,GrammarString::stringDuplicate(footer));
-#else
-     // I'm rewriting this code to just allocate the correct amount of memory instead
-     // of these very large blocks
-     // BP : 10/23/2001
-     int stringLength = 0;
-     const char* header = "\n\n\n//! Forward Declarations used to represent the grammar used in ROSE \n";
-     const char* footer = "\n\n\n";
-     const char *classKeyWord = "class ";
-     const char *classDeclTerminator = ";\n";
-     const int commonStrLen = strlen(classKeyWord)+strlen(classDeclTerminator);
-
-     stringLength = strlen(header)+strlen(footer);
-     //     cout << "The current string length is " << stringLength << endl;
-
-     unsigned int i=0;
-     for (i=0; i < nonTerminalList.size(); i++)
-       stringLength += commonStrLen+strlen(nonTerminalList[i].name);
-     for (i=0; i < terminalList.size(); i++)
-       stringLength += commonStrLen+strlen(terminalList[i].name);
-
-     stringLength++;  // to account for the terminating \0
-     //     cout << "The current string length is " << stringLength << endl;
-
-     // now allocate the necessary memory
-     char* returnString = new char[stringLength];
-     ROSE_ASSERT( returnString != NULL );
-
-     returnString[0] = '\0';
-     strcat (returnString, header);
-
-     for (i=0; i < nonTerminalList.size(); i++)
-        {
-          strcat (returnString, classKeyWord);
-	  strcat (returnString, nonTerminalList[i].name);
-          strcat (returnString, classDeclTerminator );
-        }
-
-     for (i=0; i < terminalList.size(); i++)
-        {
-          strcat (returnString, classKeyWord);
-	  strcat (returnString, terminalList[i].name);
-          strcat (returnString, classDeclTerminator );
-        }
-
-     strcat (returnString, footer);
-     //     printf ("In Grammar::buildForwardDeclarations (): returnString = \n%s\n",returnString);
-
-     ROSE_ASSERT (returnString != NULL);
-     return returnString;
-#endif
-#else
   // DQ (4/23/2006): Need to add forward declarations of "Sg[CLASSNAME]* isSg[CLASSNAME](SgNode*)" friend functions
 
      string header = "\n\n\n//! Forward Declarations used to represent the grammar used in ROSE \n";
@@ -3244,29 +2013,17 @@ Grammar::buildForwardDeclarations ()
      StringUtility::FileWithLineNumbers returnString;
      returnString.push_back(StringUtility::StringWithLineNumber(header, "" /* "<buildForwardDeclarations header>" */, 1));
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-	  returnString.push_back(StringUtility::StringWithLineNumber("class " + nonTerminalList[i].name + ";", "" /* "<forward decl for " + nonTerminalList[i].name + ">" */, 1));
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-	  returnString.push_back(StringUtility::StringWithLineNumber("class " + terminalList[i].name + ";", "" /* "<forward decl for " + terminalList[i].name + ">" */, 1));
+	  returnString.push_back(StringUtility::StringWithLineNumber("class " + terminalList[i]->name + ";", "" /* "<forward decl for " + terminalList[i].name + ">" */, 1));
         }
 
      returnString.push_back(StringUtility::StringWithLineNumber("\n\n// Forward declaration of \"<classname> is<classname> (SgNode* n)\" friend functions.\n", "" /* "<unknown>" */, 1));
      returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string className = nonTerminalList[i].name;
-	  returnString.push_back(StringUtility::StringWithLineNumber(className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
-	  returnString.push_back(StringUtility::StringWithLineNumber("const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string className = terminalList[i].name;
+          string className = terminalList[i]->name;
 	  returnString.push_back(StringUtility::StringWithLineNumber(className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
 	  returnString.push_back(StringUtility::StringWithLineNumber("const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
         }
@@ -3275,7 +2032,6 @@ Grammar::buildForwardDeclarations ()
   // ROSE_ASSERT(false);
 
      return returnString;
-#endif
    }
 
 string
@@ -3288,13 +2044,12 @@ Grammar::buildTransformationSupport()
 
   // Goal is to generate: "pair<string,string> array[2] = { pair<string,string>("a1","a2"), pair<string,string>("b1","b2") };"
 
-  // int arrayOfStringsSize = nonTerminalList.size() + terminalList.size();
      const string header = "Text to be use in the development of automated translation of interfaces. \n" \
                            "string arrayOfStrings[] \n" \
                            "   { \n";
      const string footer = "   }; \n";
 
-     const string seperatorString = "          pair<string,string>(";
+     const string separatorString = "          pair<string,string>(";
      const string newlineString   = "),\n";
 
      unsigned int i=0;
@@ -3302,29 +2057,15 @@ Grammar::buildTransformationSupport()
   // now allocate the necessary memory
      string returnString = header;
 
-     for (i=0; i < nonTerminalList.size(); i++)
-        {
-          returnString += seperatorString;
-          returnString += string("\"") + nonTerminalList[i].getTagName() + string("\"");
-          returnString += string(", \"V_") + nonTerminalList[i].name + string("\"");
-          returnString += newlineString;
-       }
-
      for (i=0; i < terminalList.size(); i++)
         {
-          returnString += seperatorString;
-          returnString += string("\"") + terminalList[i].getTagName() + string("\"");
-          returnString += string(", \"V_") + terminalList[i].name + string("\"");
+          returnString += separatorString;
+          returnString += string("\"") + terminalList[i]->getTagName() + string("\"");
+          returnString += string(", \"V_") + terminalList[i]->name + string("\"");
           returnString += newlineString;
         }
 
      returnString += footer;
-
-#if 0
-  // printf ("In Grammar::buildTransformationSupport(): returnString = \n%s\n",returnString.c_str());
-     printf ("Exiting after construction of transformation support string \n");
-     ROSE_ASSERT(false);
-#endif
 
      return returnString;
    }
@@ -3378,31 +2119,6 @@ Grammar::extractStringFromFile (
    }
 
 
-void
-Grammar::setupLeafNodeList ()
-   {
-     traverseTreeToSetupLeafNodeList(getRootOfGrammar());
-   }
-
-void
-Grammar::traverseTreeToSetupLeafNodeList ( GrammarTreeNode & node )
-   {
-  // printf ("node.name = %s  (# of subtrees/leaves = %zu) \n",node.getName(),node.nodeList.size());
-     if (node.isLeafNode() == TRUE)
-        {
-          ROSE_ASSERT (node.token != NULL);
-          leafNodeList.push_back( node.token);
-        }
-
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin();
-	  treeNodeIterator != node.nodeList.end();
-	   treeNodeIterator++ )
-       {
-	 traverseTreeToSetupLeafNodeList(**treeNodeIterator);
-       }
-   }
-
 string
 Grammar::getFilenameForGlobalDeclarations()
    {
@@ -3437,6 +2153,7 @@ Grammar::buildMiscSupportDeclarations()
      return returnString;
    }
 
+#if 0
 // MS: the Coco scanner requires Scanner Symbols built such
 // 1) an underscore in the name is replaced with the string "Underscore"
 // 2) the string is truncated to 28 characters.
@@ -3464,8 +2181,8 @@ Grammar::cocoScannerDefines() {
 
   unsigned int nextCode=1;
   for (unsigned int i=0; i < terminalList.size(); i++) {
-    os << prefix << "V_" << terminalList[i].name << " : code = "
-       << cocoScannerDefineName(terminalList[i].name) << "; "
+    os << prefix << "V_" << terminalList[i]->name << " : code = "
+       << cocoScannerDefineName(terminalList[i]->name) << "; "
        << postfix;
   }
   nextCode+=terminalList.size();
@@ -3478,6 +2195,7 @@ os << prefix << "LparenSym" << nextCode++ << " /* \"(\" */"+postfix;
 
   return os.str(); // returns string
 }
+#endif
 
 
 // MS: new automatically generated variant. Replaces variant().
@@ -3487,21 +2205,13 @@ Grammar::buildVariantEnums() {
   string s=string("enum VariantT {\n");
   unsigned int i;
   bool notFirst=false;
-  for (i=0; i < nonTerminalList.size(); i++) {
-    if(notFirst) {
-      s+=string(",\n");
-    }
-    notFirst=true;
-    size_t varNum = this->getVariantForNode(nonTerminalList[i].name);
-    s+=(string("V_")+nonTerminalList[i].name+" = "+StringUtility::numberToString(varNum));
-  }
   for (i=0; i < terminalList.size(); i++) {
     if(notFirst) {
       s+=string(",\n");
     }
     notFirst=true;
-    size_t varNum = this->getVariantForNode(terminalList[i].name);
-    s+=(string("V_")+terminalList[i].name+" = "+StringUtility::numberToString(varNum));
+    size_t varNum = this->getVariantForNode(terminalList[i]->name);
+    s+=(string("V_")+terminalList[i]->name+" = "+StringUtility::numberToString(varNum));
   }
   // add an ENUM to get the number of enums declared.
   s+=string(", V_SgNumVariants = ")+StringUtility::numberToString(this->astNodeToVariantMap.size() + 1);
@@ -3522,14 +2232,13 @@ Grammar::buildClassHierarchySubTreeFunction() {
   //s+=string("std::vector<VariantT> subTreeVariants;\n");
   s+="switch(v){\n ";
   unsigned int i;
-  for (i=0; i < nonTerminalList.size(); i++) {
-    s+="case " + string("V_")+string(nonTerminalList[i].name)+":\n";
+  for (i=0; i < terminalList.size(); i++) {
+    s+="case " + string("V_")+string(terminalList[i]->name)+":\n";
 
 	s+="{\n";
 
-	GrammarTreeNode* grammarSubTree = nonTerminalList[i].grammarSubTree;
-	for(list<GrammarTreeNode*>::iterator iItr = grammarSubTree->nodeList.begin();
-		iItr != grammarSubTree->nodeList.end(); ++iItr)
+	for(vector<Terminal*>::iterator iItr = terminalList[i]->subclasses.begin();
+            iItr != terminalList[i]->subclasses.end(); ++iItr)
 	{
      	s+= "subTreeVariants.push_back(V_"+ string((*iItr)->getName()) + ");\n"; 
  
@@ -3574,28 +2283,20 @@ Grammar::buildMemoryPoolBasedVariantVectorTraversalSupport() {
    s+="switch(*it){\n ";
 
   unsigned int i;
-  for (i=0; i < nonTerminalList.size(); i++) {
-    s+="case " + string("V_")+string(nonTerminalList[i].name)+":\n";
-	s+="{\n";
-    s+=nonTerminalList[i].name+"::traverseMemoryPoolNodes(astQuery);\n";
-	s+="break;\n";
-	s+="}\n";
-  }
 
   for (i=0; i < terminalList.size(); i++) {
-    s+="case " + string("V_")+terminalList[i].name+":\n";
-	s+="{\n";
-    s+=terminalList[i].name+"::traverseMemoryPoolNodes(astQuery);\n";
-	s+="break;\n";
-	s+="}\n";
+    s+="case " + string("V_")+terminalList[i]->name+": {\n";
+    s+="  " + terminalList[i]->name+"::traverseMemoryPoolNodes(astQuery);\n";
+    s+="  break;\n";
+    s+="}\n";
   }
 
   //Add default case
   s+="default:\n{\n";
-  s+="// This is a common error after adding a new IR node (because this function should have been automatically generated).\n";
-  s+="std::cout << \"Case not implemented in queryMemoryPool(..). Exiting.\" << std::endl;\n";
-  s+="ROSE_ASSERT(false);\n";
-  s+="break;\n";
+  s+="  // This is a common error after adding a new IR node (because this function should have been automatically generated).\n";
+  s+="  std::cout << \"Case not implemented in queryMemoryPool(..). Exiting.\" << std::endl;\n";
+  s+="  ROSE_ASSERT(false);\n";
+  s+="  break;\n";
   s+="}\n";
   s+="}\n";
   s+="}\n\n";
@@ -3627,9 +2328,20 @@ void
 Grammar::buildCode ()
    {
   // Build tree representing the type hierarchy
-     buildTree();
+     // buildTree();
+     // Get the root node (the only one without a parent)
+     // Also, add the grammar prefix to each node
+     this->setRootOfGrammar(NULL);
+     for (vector<Terminal*>::const_iterator i = terminalList.begin(); i != terminalList.end(); ++i) {
+       (*i)->addGrammarPrefixToName();
+       if ((*i)->getBaseClass() == NULL) {
+         this->setRootOfGrammar(*i);
+         break;
+       }
+     }
+     ROSE_ASSERT (this->getRootOfGrammar());
      ROSE_ASSERT (rootNode != NULL);
-     ROSE_ASSERT (rootNode->parentTreeNode == NULL);
+     // ROSE_ASSERT (rootNode->parentTreeNode == NULL);
   // printTreeNodeNames(*rootNode);
 
   // HEADER FILES GENERATION
@@ -3722,20 +2434,6 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
      buildHeaderFiles(*rootNode,ROSE_ArrayGrammarHeaderFile);
 
-#if 0
-  // Now declare the class representing the grammar (not the elements of the grammar)
-#if ALWAYS_BUILD_CLASS_FOR_GRAMMAR
-     buildGrammarClassDeclaration(ROSE_ArrayGrammarHeaderFile);
-#else
-  // if ( !(GrammarString::isSameName(grammarNameBaseClass,"")) )
-     if ( !isRootGrammar() )
-        {
-       // The lowest level grammar does not have a grammar base class (I think)
-          buildGrammarClassDeclaration(ROSE_ArrayGrammarHeaderFile);
-        }
-#endif
-#endif
-
   // DQ (11/26/2005): Support for visitor pattern.     
      string visitorSupport = buildVisitorBaseClass();
      ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(visitorSupport, "", 1));
@@ -3789,17 +2487,6 @@ Grammar::buildCode ()
      string memoryPoolTraversalSupport = buildMemoryPoolBasedTraversalSupport();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(memoryPoolTraversalSupport, "", 1));
 
-#if 0
- // We are not ready to worry about building the source for the grammar class itself!
-#if ALWAYS_BUILD_CLASS_FOR_GRAMMAR
-     buildGrammarClassSourceCode (ROSE_ArrayGrammarSourceFile);
-#else
-     if ( !isRootGrammar() )
-        {
-          buildGrammarClassSourceCode (ROSE_ArrayGrammarSourceFile);
-	}
-#endif
-#endif
      Grammar::writeFile(ROSE_ArrayGrammarSourceFile, ".", getGrammarName(), ".C");
 
 #endif
@@ -3962,28 +2649,6 @@ Grammar::buildCode ()
      Grammar::writeFile(ROSE_GetChildIndexSourceFile, ".", getGrammarName() + "GetChildIndex", ".C");
 #endif
 
-#if 0
-   //--------------------------------------------
-   // generate code for the file I/O support
-   //--------------------------------------------
-     string traverseMemoryPoolSourceFileName = string(getGrammarName()) + "TraverseMemoryPool.C";
-     ofstream ROSE_TraverseMemoryPoolSourceFile(traverseMemoryPoolSourceFileName.c_str());
-     ROSE_ASSERT (ROSE_TraverseMemoryPoolSourceFile.good() == true);
-
-     ROSE_TraverseMemoryPoolSourceFile << includeHeaderString;
-  // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
-
-     buildTraverseMemoryPoolSupport(*rootNode,ROSE_TraverseMemoryPoolSourceFile);
-     cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
-     ROSE_TraverseMemoryPoolSourceFile.close();
-
-  // printf ("Exiting after building traverse memory pool functions \n");
-  // ROSE_ASSERT(false);
-#endif
-
-
-
 #if 1
   // --------------------------------------------
   // generate code for the copy member functions
@@ -4039,27 +2704,9 @@ Grammar::buildCode ()
      ROSE_ASSERT(variantEnumNamesFile.good() == TRUE);     
      string  variantEnumNames=buildVariantEnumNames();
 
-#if 0
-  // DQ (4/8/2004): Changes this to make it a global variable instead of a member variable 
-  //                of a templated class which limits it's use elsewhere (since it is a 
-  //                generally useful mechanism to translate variants to strings in debugging).
-     variantEnumNamesFile << "\n template<class InheritedAttributeType, class SynthesizedAttributeType>\n"
-			  << "const char* " << getGrammarPrefixName() << "TreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::\n"
-			  << "variant_name[]={ " << variantEnumNames << "};\n\n";
-#else
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
      variantEnumNamesFile << "\n const char* roseGlobalVariantNameList[] = { \n" << variantEnumNames << "\n};\n\n";
-#endif
 
-  // MS: 2002: Generate the grammar that defines the set of all ASTs as dot and latex file
-     ofstream GrammarDotFile("grammar.dot");
-     ROSE_ASSERT (GrammarDotFile.good() == TRUE);
-     buildGrammarDotFile(rootNode, GrammarDotFile);
-     cout << "DONE: buildGrammarDotFile" << endl;
-     ofstream GrammarLatexFile("generated_abstractcppgrammar.atg");
-     ROSE_ASSERT (GrammarLatexFile.good() == TRUE);
-     buildGrammarLatexFile(rootNode, GrammarLatexFile);
-     cout << "DONE: buildGrammarLatexFile" << endl;
      string rtiFunctionsSourceFileName = string(getGrammarName())+"RTI.C";
      StringUtility::FileWithLineNumbers rtiFile;
      rtiFile << includeHeaderString;
@@ -4112,25 +2759,6 @@ Grammar::buildCode ()
      rtiFile
        << "std::ostream& operator<<(std::ostream& os, std::map<std::string, int>& s) \n   {\n "
        << "     for (std::map<std::string, int>::iterator i = s.begin(); i != s.end(); i++) os << i->first;\n"
-       << "     return os;\n   }\n";
-#endif
-#if 0
-  // DQ (4/13/2004): Added output function for SgTypeModifier objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgTypeModifier& tm) \n   {\n "
-       << "     os << tm.get_modifiers(); \n"
-       << "     return os;\n   }\n";
-
-  // DQ (4/13/2004): Added output function for SgStorageModifier objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgStorageModifier& sm) \n   {\n "
-       << "     os << sm.get_modifier(); \n"
-       << "     return os;\n   }\n";
-
-  // DQ (4/13/2004): Added output function for SgAccessModifier objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgAccessModifier& am) \n   {\n "
-       << "     os << am.get_modifier(); \n"
        << "     return os;\n   }\n";
 #endif
 #if 1
@@ -4187,8 +2815,9 @@ Grammar::buildCode ()
      cout << "DONE: buildRTIFile" << endl;
      Grammar::writeFile(rtiFile, ".", getGrammarName() + "RTI", ".C");
 
+#if 0
      ofstream CocoScannerSymbolsFile((string(getGrammarName())+"CocoSymbolsMapping.C").c_str());
-     ROSE_ASSERT (GrammarDotFile.good() == TRUE);
+     ROSE_ASSERT (CocoScannerSymbolsFile.good() == TRUE);
      CocoScannerSymbolsFile << cocoScannerDefines();
 
   // DQ (11/27/2005): Support for renaming transformations for ROSE project 
@@ -4199,6 +2828,7 @@ Grammar::buildCode ()
      string transformationSupportString = buildTransformationSupport();
      ROSE_TransformationSupportFile << transformationSupportString;
      ROSE_TransformationSupportFile.close();
+#endif
 
 #if 1
    // JH (01/18/2006)
@@ -4272,295 +2902,21 @@ Grammar::buildCode ()
      return;
    }
 
-//////////////////////////////////
-// GRAMMAR OUTPUT/VISUALIZATION //
-//////////////////////////////////
-// MS: 2002
-Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateGrammarDotString(GrammarTreeNode* grammarnode,
-				  vector<GrammarSynthesizedAttribute> v) {
-  GrammarSynthesizedAttribute saDot;
-  string s;
-
-  if(grammarnode->isNonTerminal()) {
-    // (traversed) data member information for current grammar node
-    list<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
-    for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
-      stringListIterator != includeList.end();
-	stringListIterator++) {
-      if ((*stringListIterator)->getToBeTraversed()) {
-	string type = (*stringListIterator)->getTypeNameString();
-	type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-	type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
-	type=GrammarString::copyEdit (type,"*","");
-	s+=string(grammarnode->getName())+" -> "+type
-	  +" [label="+(*stringListIterator)->getVariableNameString()+"];\n";
-      }
-    }
-    // approximation: if the node has at least one successor that is a non-terminal then
-    //                create successor information
-    // unfortunately GrammarString does not contain this information
-    bool createSuccessorInfo=false;
-    for(list<GrammarTreeNode *>::iterator succiter=grammarnode->nodeList.begin();
-	succiter!=grammarnode->nodeList.end();
-	succiter++) {
-      if((*succiter)->isNonTerminal())
-	createSuccessorInfo=true;
-    }
-
-    // inheritance hierarchy information
-    // create data for current node (edges to subtree nodes) (only edges for inner nodes)
-    if(createSuccessorInfo) {
-      for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-	s+=string(grammarnode->getName())+" -> "+(*viter).grammarnode->getName()+" [color=\"blue\"];\n";
-      }
-    }
-  }
-  // union data of subtree nodes
-  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    s+=(*viter).text;
-  }
-  saDot.grammarnode=grammarnode;
-  saDot.text=s;
-  return saDot;
-}
-
-
-bool 
-Grammar::isAbstractGrammarSymbol(string s) {
-  //set<string>::iterator posIter = traversedTerminals.find(s);
-  //if (posIter != traversedTerminals.end())
-  //  return true;
-  //compute all basetypes of the above set and you are done!
-
-  // hack: exclude symbols explicitely which are not traversed but are included in the type hierarchy
-  //"SgFunctionType","SgNamedType","SgUnparse_Info"};
-  list<string> excl;
-  excl.push_back("SgType");
-  excl.push_back("SgFunctionType");
-  excl.push_back("SgNamedType");
-  excl.push_back("SgMemberFunctionType");
-  excl.push_back("SgClassType");
-  excl.push_back("SgPointerType");
-  excl.push_back("SgUnparse_Info");
-  excl.push_back("Sg_File_Info");
-  for(list<string>::iterator i=excl.begin();i!=excl.end();i++) {
-    string::size_type posIter = s.find(*i);
-    if (posIter != string::npos)
-      return false;
-  }
-  return true;
-}
-
-
-// MS: 2003
-// MS: We compute the set of traversed terminals to restrict the abstract grammar to traversed nodes only.
-Grammar::GrammarSynthesizedAttribute
-Grammar::CreateMinimalTraversedGrammarSymbolsSet(GrammarTreeNode* grammarnode,
-				     vector<Grammar::GrammarSynthesizedAttribute> v) {
-  if(grammarnode->isTerminal()) {
-    list<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
-    for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
-	stringListIterator != includeList.end(); // ", " only between the elements of the list
-	stringListIterator++) {
-      if ( (*stringListIterator)->getToBeTraversed()) {
-	traversedTerminals.insert(restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode,"",""));
-  
-      }
-    }  
-  }
-  GrammarSynthesizedAttribute dummy;
-  return dummy;
-}
-
-// MS: 2003
-string
-Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, GrammarTreeNode* grammarnode, string grammarSymListOpPrefix, string grammarSymListOpPostfix) {
-  string type=typeStringOfGrammarString(gs);
-  string::size_type posIter = type.find("*");
-  if (posIter != string::npos)
-    type.replace(posIter, 1, "");
-  GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
-  if(gInfo.numContainerMembers>0) { // there can be only one container member!
-    //cout << "ContainerMembers>0: " << type << endl;
-    type = replaceString("PtrList","",type);
-    type = replaceString("List","",type); // only SgInitializedNameList as of 05/20/03, MS
-    type = grammarSymListOpPrefix+type+grammarSymListOpPostfix; // EBNF notation for lists
-  } else {
-    type = replaceString("PtrListPtr","",type);
-    //cout << "ContainerMembers<=0: " << type << endl;
-  }
-  return type;
-}
-
-
-// MS: 2002,2003
-Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateGrammarLatexString(GrammarTreeNode* grammarnode,
-				  vector<GrammarSynthesizedAttribute> v) {
-  //cout << "Creating grammar latex string:" << endl;
-  GrammarSynthesizedAttribute saLatex;
-  string s;
-
-  // EBNF generated Grammar symbols (this can be parameterized in future)
-  // tree grammar
-  string grammarSymTreeLB=" \"(\" ";
-  string grammarSymTreeRB=" \")\" ";
-  string GrammarSymTreeElSep=""; // "\",\" "; comma no longer necessary
-  // kontext free grammar
-  string grammarSymArrow=" = ";
-  string grammarSymOr     ="    | ";
-  string grammarSymEndRule="    .\n";
-  string grammarSymListOpPrefix=" { ";
-  string grammarSymListOpPostfix=" } ";
-
-    if(grammarnode->isTerminal()) {
-      string rhsTerminalSuccessors;
-      /*
-	bool containermembers=0; // (non-pointer)
-	bool singledatamembers=0;      // (pointer or non-pointer)
-    */
-      list<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
-      for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
-	  stringListIterator != includeList.end(); // ", " only between the elements of the list
-	  stringListIterator++) {
-	if ( (*stringListIterator)->getToBeTraversed()) {
-	  if(rhsTerminalSuccessors!="") // before each element but not the first one
-	    rhsTerminalSuccessors+=GrammarSymTreeElSep;
-	  /*
-	    char* type =new char[300];type[0]='\0';
-	    (void) strcat( type, (*stringListIterator)->getTypeNameString());
-	    type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-	    type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
-	    //type=GrammarString::copyEdit (type,"*","");
-	    */
-	  string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
-	  rhsTerminalSuccessors+=type+string(" "); // MS: NO VARNAME: +string((*stringListIterator)->getVariableNameString());
-	  
-	  // based on the type*name* used it is infered whether it is a
-	  // a container or a single data member (single pointer or single obj)
-	  // this is just a "heuristic" test. Changing the typenames invalidates
-	  // it
-	  //string stype=string(type);
-	  /*
-	    if( (stype.find("*") == string::npos) // not found, not a pointer
-	    && (stype.find("List") == stype.size()-4) ) // postfix
-	    containermembers++;
-	    else 
-	    singledatamembers++;
-	  */
-	}
-      }
-      // assert: s2=="" means that no members are traversed of this terminal 'grammarnode'
-      /*
-	for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
-	stringListIterator != includeList.end(); // ", " only between the elements of the list
-	stringListIterator++) {
-	if ( !(*stringListIterator)->getToBeTraversed()) {
-	if(s3!="") // before each element but not the first one
-	s3+=",\n";
-	char* type =new char[300];type[0]='\0';
-	(void) strcat( type, (*stringListIterator)->getTypeNameString());
-	type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-	type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
-	type=GrammarString::copyEdit (type,"*","");
-	s3+=string("          ")+type+string(" "); //MS: NO VARNAME: +string((*stringListIterator)->getVariableNameString());
-	}
-	}
-	
-	if(false) {
-	saLatex.nodetext=string(grammarnode->getName())+grammarSymTreeLB+s2+grammarSymTreeRB//+"\n"
-	//+"{\n" s3 + "\n}\n"
-	;
-	}
-	else {
-      */
-      if(isAbstractGrammarSymbol(string(grammarnode->getName())) )
-	saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
-      else {
-// DQ (5/24/2005): debugging code (not generally required)
-// cout << "Terminal " << grammarnode->getName() << " excluded." << endl;
-	saLatex.nodetext="";
-      }
-    } // end of terminal handling
-    else {
-      if(isAbstractGrammarSymbol(string(grammarnode->getName())) )
-	saLatex.nodetext=grammarnode->getName();
-      else
-	saLatex.nodetext="";
-    }
-  // create BNF grammar rule for current grammar node and its successors
-  string grammarRule;
-  bool first=true;
-  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    if((*viter).nodetext!="" && isAbstractGrammarSymbol(string(grammarnode->getName())) ) {
-      if(first) {
-	grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
-	first=false;
-      } else {
-	grammarRule+=grammarSymOr + (*viter).nodetext+"\n";
-      }
-    }
-  }
-  if(v.size()>0 && isAbstractGrammarSymbol(string(grammarnode->getName())) )
-    grammarRule+=grammarSymEndRule;
-
-  // union data of subtree nodes
-  saLatex.grammarnode=grammarnode;
-  saLatex.text=grammarRule;
-  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    saLatex.text+=(*viter).text;
-  }
-  
-  // create problematic node info
-  GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
-  if(gInfo.numSingleDataMembers>0 && gInfo.numContainerMembers>0) 
-    saLatex.problematicnodes+=string(grammarnode->getName())+"\n";
-
-  // ------------------------------------------------------------
-  // create terminal and nonterminal (and problematic node) lists 
-  // ------------------------------------------------------------
-
-  // create terminal or non-terminal entry
-  if(grammarnode->isTerminal()) {
-    saLatex.terminalsbunch+=string(grammarnode->getName())+"\n";
-  } else {
-    saLatex.nonterminalsbunch+=string(grammarnode->getName())+"\n";
-  }
-  // union non-terminal, terminal, and problematic nodes data of subtree nodes
-  for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    // union subtrees
-    saLatex.nonterminalsbunch+=(*viter).nonterminalsbunch;
-    saLatex.terminalsbunch+=(*viter).terminalsbunch;
-    saLatex.problematicnodes+=(*viter).problematicnodes;
-  }
-  return saLatex;
-}
-
-void Grammar::buildGrammarDotFile(GrammarTreeNode* rootNode, ostream& GrammarDotFile) {
-  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateGrammarDotString);
-  GrammarDotFile << "digraph G {\n";
-  GrammarDotFile << a.text;
-  GrammarDotFile << "\n}" << endl;
-}
-
 // MS:2002 (should be member function of GrammarString)
 string Grammar::typeStringOfGrammarString(GrammarString* gs)
    {
      string type = gs->getTypeNameString();
 
      type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-     type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
-
      return type;
    }
 
 // MS: this function should be a member function of GrammarNode (but this requires several
 // other functions to be moved there as well. If we need more functions this will be done.
-Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(GrammarTreeNode* grammarnode) {
+Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   GrammarNodeInfo info;
-  list<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
-  for(list<GrammarString*>::iterator stringListIterator = includeList.begin();
+  vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
+  for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
       stringListIterator != includeList.end();
       stringListIterator++) {
     if ( (*stringListIterator)->getToBeTraversed()) {
@@ -4597,41 +2953,11 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(GrammarTreeNode* grammarnod
   return info;
 }
 
-// MS:2002
-void Grammar::buildGrammarLatexFile(GrammarTreeNode* rootNode, ostream& GrammarLatexFile) {
-  GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
-#if 0
-// DQ (5/24/2005): debugging code (not required generally)
-  for(set<string>::iterator i=traversedTerminals.begin();i!=traversedTerminals.end();i++)
-     {
-       cout << "traversed Terminal: " << *i << endl;
-     }
-#endif
-  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateGrammarLatexString);
-  /*
-  GrammarLatexFile << "Grammar G=<NonTerminals, Terminals, Rules, SgNode>\n\n";
-  GrammarLatexFile << "NonTerminals:\n" << a.nonterminalsbunch;
-  GrammarLatexFile << "\nTerminals:\n" << a.terminalsbunch;
-  GrammarLatexFile << "\nRules:\n" << a.text;
-  GrammarLatexFile << "\nProblematic Nodes:\n" << a.problematicnodes;
-  GrammarLatexFile << endl;
-  */
-  //GrammarLatexFile << "$CX /* Generate main module */ \n";
-  GrammarLatexFile << "/* Abstract C++ Attribute Grammar */\n";
-  GrammarLatexFile << "$CX /* Generate C++ code */\n";
-  GrammarLatexFile << "COMPILER SgNode\n #include \"slangs.hpp\"\n\n";
-  GrammarLatexFile << "\nTOKENS\n\n" << a.terminalsbunch;
-  GrammarLatexFile << "\nPRODUCTIONS\n\n" << a.text;
-  GrammarLatexFile << "\nEND SgNode.\n";
-  GrammarLatexFile << endl;
-  
-}
-
 /////////////////////////
 // RTI CODE GENERATION //
 /////////////////////////
 //MS: 2002
-void Grammar::buildRTIFile(GrammarTreeNode* rootNode, StringUtility::FileWithLineNumbers& rtiFile) {
+void Grammar::buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumbers& rtiFile) {
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::generateRTIImplementation);
   string result;
   result += "// generated file\n";
@@ -4642,7 +2968,7 @@ void Grammar::buildRTIFile(GrammarTreeNode* rootNode, StringUtility::FileWithLin
 }
 
 Grammar::GrammarSynthesizedAttribute
-Grammar::generateRTIImplementation(GrammarTreeNode* grammarnode, vector<GrammarSynthesizedAttribute> v)
+Grammar::generateRTIImplementation(Terminal* grammarnode, vector<GrammarSynthesizedAttribute> v)
    {
      GrammarSynthesizedAttribute sa;
 
@@ -4656,8 +2982,8 @@ Grammar::generateRTIImplementation(GrammarTreeNode* grammarnode, vector<GrammarS
      ss << RTIContainerName << ".clear();" << endl;
   // if(grammarnode->isNonTerminal()) {
   // (traversed) data member information for current grammar node
-     list<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
-     for(list<GrammarString*>::iterator stringListIterator = includeList.begin(); stringListIterator != includeList.end(); stringListIterator++)
+     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
+     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin(); stringListIterator != includeList.end(); stringListIterator++)
         {
        // QY 11/9/04 skip indirect members
           if ((*stringListIterator)->automaticGenerationOfDataAccessFunctions == BUILD_INDIRECT_ACCESS_FUNCTIONS)
@@ -4665,7 +2991,6 @@ Grammar::generateRTIImplementation(GrammarTreeNode* grammarnode, vector<GrammarS
        // do it for all data members
           string type = (*stringListIterator)->getTypeNameString();
           type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
-          type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
           type=GrammarString::copyEdit (type,"*","");
        // s += string(grammarnode->getName())+" -> "+type
        //   +" [label="+(*stringListIterator)->getVariableNameString()+"];\n";
@@ -4698,21 +3023,10 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
   {
     // REPLACE $GRAMMAR_PREFIX_ in typeString by getGrammarPrefixName() (returns char* const)
     StringUtility::copyEdit(typeString, "$GRAMMAR_PREFIX_", getGrammarPrefixName());
-    StringUtility::copyEdit(typeString, "$GRAMMAR_X_MARKER_", "");
   }
   ostringstream ss;
   
   ss << "{ostringstream _ss; ";
-#if 0
-  if(isSTLContainer(const_cast<char*>(&(typeString.c_str()[string(getGrammarPrefixName()).length()])))
-     || ( string(typeString)=="SgSymbolTable" )
-     //|| ( string(typeString)=="SgName" )
-     || ( string(typeString)=="SgSymbolHashBase::iterator" )
-     )
-    ss << "_ss << \"<no output operator defined for this type>\";";
-  else
-    ss << "_ss << p_" << memberVariableName << ";";
-#else
 // JW (inserted by DQ) (7/23/2004): Allows STL containers to be output and permits 
 // more information to be generated for variables.
    if (isSTLContainer(const_cast<char*>(&(typeString.c_str()[string(getGrammarPrefixName()).length()])))) 
@@ -4727,21 +3041,17 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
           {
             ss << "_ss << p_" << memberVariableName << ";\n";
             ss << "if (p_" << memberVariableName << ")\n";
-         // DQ (1/20/2006): This fails for 64 bit machines (removed the cast of pointer to int)
-         // ss << "  _ss << \": varsym \" << p_" << memberVariableName << "->get_name().str() << \" declared at 0x\" << std::hex << (int)(p_" << memberVariableName << "->get_declaration());\n";
             ss << "  _ss << \": varsym \" << p_" << memberVariableName << "->get_name().str() << \" declared at 0x\" << std::hex << (p_" << memberVariableName << "->get_declaration());\n";
           }
          else 
           { 
             if(( string(typeString)=="SgSymbolTable" )
-            // || ( string(typeString)=="SgName" )
                || ( string(typeString)=="SgSymbolHashBase::iterator" ))
                ss << "_ss << \"<no output operator defined for this type>\";";
             else
                ss << "_ss << p_" << memberVariableName << ";";
           }
      }
-#endif
      ss << dataMemberContainerName << ".push_back(new RTIMemberData(" 
      << "\"" << typeString << "\"" << ", "
      << "\"p_" << memberVariableName << "\"" << ", "
@@ -4762,16 +3072,16 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
 // introducing data members. Consequently this function only calls
 // generateStringListsFromLocalLists() since this is enough.
 void
-Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileWithLineNumbers& outputFile)
+Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLineNumbers& outputFile)
    {
      string successorContainerName="traversalSuccessorContainer";
 
      if (isAstObject(node))
         {
        // Determine the data members to be investigated (starting at the root of the grammar)
-          list<GrammarString *> includeList;
-          list<GrammarString *> excludeList;
-          list<GrammarString *>::iterator stringListIterator;
+          vector<GrammarString *> includeList;
+          vector<GrammarString *> excludeList;
+          vector<GrammarString *>::iterator stringListIterator;
 
           ROSE_ASSERT(includeList.size() == 0);
           ROSE_ASSERT(excludeList.size() == 0);
@@ -4783,7 +3093,7 @@ Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileW
           editStringList(includeList,excludeList);
 
        // MS: generate the reduced list of traversed data members
-          list<GrammarString*> traverseDataMemberList;
+          vector<GrammarString*> traverseDataMemberList;
           for(stringListIterator = includeList.begin(); stringListIterator != includeList.end(); stringListIterator++)
              {
                if ((*stringListIterator)->getToBeTraversed())
@@ -4803,7 +3113,7 @@ Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileW
                           << generateNumberOfSuccessorsComputation(traverseDataMemberList, successorContainerName)
                           << ");\n";
              }
-          for(list<GrammarString*>::iterator iter=traverseDataMemberList.begin(); iter!=traverseDataMemberList.end(); iter++)
+          for(vector<GrammarString*>::iterator iter=traverseDataMemberList.begin(); iter!=traverseDataMemberList.end(); iter++)
              {
             // GB (8/13/2007): When generating traversal successors, the right thing is almost always a call to
             // generateTraverseSuccessor(), but there are a few cases where we need extra logic. At the moment
@@ -4847,7 +3157,7 @@ Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileW
              {
                outputFile << "int i = " << StringUtility::numberToString(info.numSingleDataMembers) << ";\n";
              }
-          for(list<GrammarString*>::iterator iter=traverseDataMemberList.begin(); iter!=traverseDataMemberList.end(); iter++)
+          for(vector<GrammarString*>::iterator iter=traverseDataMemberList.begin(); iter!=traverseDataMemberList.end(); iter++)
              {
                outputFile << generateTraverseSuccessorNames(*iter, successorContainerName);
              }
@@ -4902,7 +3212,7 @@ Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileW
                   {
                  // Fixed members, generate a switch.
                     outputFile << "switch (idx) {\n";
-                    list<GrammarString*>::iterator iter;
+                    vector<GrammarString*>::iterator iter;
                     size_t counter = 0;
                     for (iter = traverseDataMemberList.begin(); iter != traverseDataMemberList.end(); ++iter)
                        {
@@ -4984,7 +3294,7 @@ Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileW
                else
                   {
                  // Fixed members, generate an if-else ladder.
-                    list<GrammarString*>::iterator iter;
+                    vector<GrammarString*>::iterator iter;
                     size_t counter = 0;
                     for (iter = traverseDataMemberList.begin(); iter != traverseDataMemberList.end(); ++iter)
                        {
@@ -5068,12 +3378,11 @@ Grammar::buildTreeTraversalFunctions(GrammarTreeNode& node, StringUtility::FileW
 
   // Traverse all nodes of the grammar recursively and build the tree traversal function
   // for each of them
-     list<GrammarTreeNode *>::iterator treeNodeIterator;
-     for( treeNodeIterator = node.nodeList.begin(); treeNodeIterator != node.nodeList.end(); treeNodeIterator++ )
+     vector<Terminal *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
-          ROSE_ASSERT((*treeNodeIterator)->token!=NULL);
-          ROSE_ASSERT((*treeNodeIterator)->token->grammarSubTree!=NULL);
-          ROSE_ASSERT((*treeNodeIterator)->parentTreeNode!=NULL);
+          ROSE_ASSERT((*treeNodeIterator)!=NULL);
+          ROSE_ASSERT((*treeNodeIterator)->getBaseClass()!=NULL);
           buildTreeTraversalFunctions(**treeNodeIterator, outputFile);
         }
 
@@ -5117,12 +3426,12 @@ string Grammar::generateTraverseSuccessorForLoopSource(string typeString,
 // is the sum of the number of single members and the size of the optional
 // container member.
 string Grammar::generateNumberOfSuccessorsComputation(
-        list<GrammarString*>& traverseDataMemberList, string successorContainerName)
+        vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
 {
     stringstream travSuccSource;
     if (!traverseDataMemberList.empty())
     {
-        list<GrammarString *>::iterator iter;
+        vector<GrammarString *>::iterator iter;
         int singleSuccessors = 0, containerSuccessors = 0;
         for (iter = traverseDataMemberList.begin(); iter != traverseDataMemberList.end(); ++iter)
         {
@@ -5290,7 +3599,7 @@ string Grammar::generateTraverseSuccessorNames(GrammarString* gs, string success
 }
 
 void 
-Grammar::buildEnumForNode(GrammarTreeNode& node, string& allEnumsString) {
+Grammar::buildEnumForNode(Terminal& node, string& allEnumsString) {
   GrammarNodeInfo info=getGrammarNodeInfo(&node);
 // GB (8/16/2007): The distinction between container and non-container nodes
 // has been dropped, and so has this code. Instead, we now generate enums
@@ -5299,19 +3608,12 @@ Grammar::buildEnumForNode(GrammarTreeNode& node, string& allEnumsString) {
 // It also means that we can only allow at most one container per node,
 // since the enums for further containers would not correspond to their
 // first elements.
-#if 0
-  if(info.numContainerMembers>0) {
-    // do not generate enum for a container node
-    strcat(allEnumsString,"// ");
-    assert(info.numSingleDataMembers==0); // must hold, or the node is not correct
-  }
-#endif
   if (info.numContainerMembers > 1) {
     cout << "Error: grammar node " << node.getName() << " has more than one container member" << endl;
     ROSE_ASSERT(info.numContainerMembers <= 1);
   }
-  list<GrammarString*> includeList=classMemberIncludeList(node);
-  list<GrammarString*>::iterator stringListIterator;
+  vector<GrammarString*> includeList=classMemberIncludeList(node);
+  vector<GrammarString*>::iterator stringListIterator;
   if (!includeList.empty()) {
     bool isFirst=true;
     for(stringListIterator = includeList.begin();
@@ -5333,7 +3635,7 @@ Grammar::buildEnumForNode(GrammarTreeNode& node, string& allEnumsString) {
   }
 }
 
-string Grammar::EnumStringForNode(GrammarTreeNode& node, string s) {
+string Grammar::EnumStringForNode(Terminal& node, string s) {
   // let's reuse the old function for now
   string source;
   buildEnumForNode(node,source);
@@ -5350,18 +3652,17 @@ string Grammar::EnumStringForNode(GrammarTreeNode& node, string s) {
 // (can be replaced by MSTL/DSProcessing.C (when finished))
 //////////////////////////////////////////////////////////////////////////////////////////
 Grammar::GrammarSynthesizedAttribute
-Grammar::BottomUpProcessing(GrammarTreeNode* node, 
-			      evaluateGAttributeFunctionType evaluateGAttributeFunction) {
+Grammar::BottomUpProcessing(Terminal* node, 
+			    evaluateGAttributeFunctionType evaluateGAttributeFunction) {
   // Traverse all nodes of the grammar recursively and build the synthesized attribute
   // for each of them
-  list<GrammarTreeNode *>::iterator treeNodeIterator;
+  vector<Terminal *>::iterator treeNodeIterator;
   vector<GrammarSynthesizedAttribute> v;
-  for( treeNodeIterator = node->nodeList.begin();
-       treeNodeIterator != node->nodeList.end();
+  for( treeNodeIterator = node->subclasses.begin();
+       treeNodeIterator != node->subclasses.end();
        treeNodeIterator++ ) {
-    ROSE_ASSERT((*treeNodeIterator)->token!=NULL);
-    ROSE_ASSERT((*treeNodeIterator)->token->grammarSubTree!=NULL);
-    ROSE_ASSERT((*treeNodeIterator)->parentTreeNode!=NULL);
+    ROSE_ASSERT((*treeNodeIterator)!=NULL);
+    ROSE_ASSERT((*treeNodeIterator)->getBaseClass()!=NULL);
     v.push_back(BottomUpProcessing(*treeNodeIterator, evaluateGAttributeFunction));
   }
   return (this->*evaluateGAttributeFunction)(node, v);
@@ -5373,18 +3674,17 @@ Grammar::BottomUpProcessing(GrammarTreeNode* node,
 //            2. a function like evaluateSynthesizedAttribute,
 //               with string being the synthesized attribute type
 string
-Grammar::naiveTraverseGrammar(GrammarTreeNode &node, 
+Grammar::naiveTraverseGrammar(Terminal &node, 
 			      evaluateStringAttributeFunctionType evaluateStringAttributeFunction) {
   // Traverse all nodes of the grammar recursively and build the synthesized string attribute
   // for each of them
-  list<GrammarTreeNode *>::iterator treeNodeIterator;
+  vector<Terminal *>::iterator treeNodeIterator;
   string s;
-  for( treeNodeIterator = node.nodeList.begin();
-       treeNodeIterator != node.nodeList.end();
+  for( treeNodeIterator = node.subclasses.begin();
+       treeNodeIterator != node.subclasses.end();
        treeNodeIterator++ ) {
-    ROSE_ASSERT((*treeNodeIterator)->token!=NULL);
-    ROSE_ASSERT((*treeNodeIterator)->token->grammarSubTree!=NULL);
-    ROSE_ASSERT((*treeNodeIterator)->parentTreeNode!=NULL);
+    ROSE_ASSERT((*treeNodeIterator)!=NULL);
+    ROSE_ASSERT((*treeNodeIterator)->getBaseClass()!=NULL);
     s+=naiveTraverseGrammar(**treeNodeIterator, evaluateStringAttributeFunction);
   }
   return (this->*evaluateStringAttributeFunction)(node, s);
@@ -5393,11 +3693,11 @@ Grammar::naiveTraverseGrammar(GrammarTreeNode &node,
 /////////////////////////////////
 // GRAMMAR AUXILIARY FUNCTIONS //
 /////////////////////////////////
-list<GrammarString*> 
-Grammar::classMemberIncludeList(GrammarTreeNode& node) {
+vector<GrammarString*> 
+Grammar::classMemberIncludeList(Terminal& node) {
   // Determine the data members to be investigated (starting at the root of the grammar)
-  list<GrammarString *> includeList;
-  list<GrammarString *> excludeList;
+  vector<GrammarString *> includeList;
+  vector<GrammarString *> excludeList;
 
   ROSE_ASSERT(includeList.size() == 0);
   ROSE_ASSERT(excludeList.size() == 0);
@@ -5418,25 +3718,9 @@ Grammar::classMemberIncludeList(GrammarTreeNode& node) {
 // these would exactly be the terminal objects. For the moment we have to be a little
 // more careful and treat several classes as special cases ...
 bool
-Grammar::isAstObject(GrammarTreeNode& node)
+Grammar::isAstObject(Terminal& node)
 {
-  string name = node.getName();
-  return (isTerminal(node.getName()) ||
-	  node.getName().find("AsmInstruction") != string::npos ||
-	  node.getName().find("Asmx86Instruction") != string::npos ||
-	  node.getName().find("AsmArmInstruction") != string::npos ||
-	  node.getName().find("ClassDeclaration") != string::npos ||
-	  node.getName().find("FunctionDeclaration") != string::npos ||
-	  node.getName().find("BasicBlock") != string::npos ||
-	  node.getName().find("ClassDefinition") != string::npos ||
-	  node.getName().find("ForStatement") != string::npos ||
-  // DQ (11/16/2007): Added special case of FortranDo being an IR node to be traversed.
-	  node.getName().find("FortranDo") != string::npos ||
-	  node.getName().find("ClassSymbol") != string::npos ||
-	  node.getName().find("FunctionSymbol") != string::npos ||
-	  node.getName().find("FunctionType") != string::npos || // This includes MemberFunctionType!
-	  node.getName().find("ClassType") != string::npos ||
-	  node.getName().find("PointerType") != string::npos);
+  return node.getCanHaveInstances();
 }
 
 // MK: We need this function to determine if the object
@@ -5444,25 +3728,9 @@ Grammar::isAstObject(GrammarTreeNode& node)
 bool
 Grammar::isSTLContainerPtr(const string& typeString)
 {
-  if (typeString.find("InitializedNamePtrListPtr") != string::npos ||
-      typeString.find("StatementPtrListPtr") != string::npos ||
-   // DQ (6/21/2005): Fixup SgBaseClassList to be a list of pointers to SgBaseClass (like everything else)
-   // typeString.find("BaseClassListPtr") != string::npos ||
-      typeString.find("BaseClassPtrListPtr") != string::npos ||
-      typeString.find("NodePtrListPtr") != string::npos ||
-      typeString.find("TypePtrListPtr") != string::npos ||
-      typeString.find("ExpressionPtrListPtr") != string::npos ||
-      typeString.find("AttributePtrListPtr") != string::npos ||
-      typeString.find("FilePtrListPtr") != string::npos ||
-      typeString.find("DirectoryPtrListPtr") != string::npos ||
-   // DQ (11/19/2007): Support for Fortran namelist
-      typeString.find("NameGroupPtrListPtr") != string::npos ||
-   // DQ (11/20/2007): Support for Fortran data statement
-      typeString.find("DataStatementGroupPtrListPtr") != string::npos ||
-      typeString.find("ModifierTypePtrVectorPtr") != string::npos)
-    return TRUE;
-  else
-    return FALSE;
+  return typeString.size() >= 3 &&
+         typeString.substr(typeString.size() - 3) == "Ptr" &&
+         isSTLContainer(typeString.substr(0, typeString.size() - 3));
 }
 
 // MK: We need this function to determine if the object
@@ -5470,153 +3738,29 @@ Grammar::isSTLContainerPtr(const string& typeString)
 bool
 Grammar::isSTLContainer(const string& typeString)
 {
-  if ((typeString.find("InitializedNamePtrList") != string::npos ||
-       typeString.find("StatementPtrList") != string::npos ||
-    // DQ (3/28/2007): Added to support binary handling (from Jeremiah's patch)
-       typeString.find("AsmStatementPtrList") != string::npos ||
-    // DQ (3/30/2007): Added to support binary handling
-       typeString.find("AsmExpressionPtrList") != string::npos ||
-    // DQ (6/21/2005): Fixup SgBaseClassList to be a list of pointers to SgBaseClass (like everything else)
-    // typeString.find("BaseClassList") != string::npos ||
-       typeString.find("BaseClassPtrList") != string::npos ||
-       typeString.find("NodePtrList") != string::npos ||
-       typeString.find("TypePtrList") != string::npos ||
-       typeString.find("ExpressionPtrList") != string::npos ||
-       typeString.find("AttributePtrList") != string::npos ||
-       typeString.find("FilePtrList") != string::npos ||
-       typeString.find("DirectoryPtrList") != string::npos ||
-    // DQ (4/2/2007): Added to list as IR node (this is an STL list as a data member)
-       typeString.find("TemplateArgumentPtrList") != string::npos ||
-       typeString.find("TemplateParameterPtrList") != string::npos ||
-       typeString.find("QualifiedNamePtrList") != string::npos ||
-   // DQ (11/19/2007): Support for Fortran namelist
-       typeString.find("NameGroupPtrList") != string::npos ||
-   // DQ (11/20/2007): Support for Fortran data statement
-       typeString.find("DataStatementGroupPtrList") != string::npos ||
-       typeString.find("ModifierTypePtrVector") != string::npos) &&
-      typeString.find("ListPtr") == string::npos)
-    return TRUE;
-  else
-    return FALSE;
+  if (typeString.size() >= 4 && typeString.substr(typeString.size() - 4) == "List") return true;
+  if (typeString.size() >= 9 && typeString.substr(typeString.size() - 9) == "BitVector") return false;
+  if (typeString.size() >= 6 && typeString.substr(typeString.size() - 6) == "Vector") return true;
+  return false;
 }
 
 string
 Grammar::getIteratorString(const string& typeString)
    {
-     string iteratorTypeString;
-
-     if (typeString.find("DeclarationStatementPtr") != string::npos)
-        {
-          return "Rose_STL_Container<" + getGrammarPrefixName() + "DeclarationStatement*>::iterator";
-        }
-
-  // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
-  // if (strstr(typeString,"InitializedName"))
-  //      (void) sprintf(iteratorTypeString,"list<%sInitializedName*>::iterator",getGrammarPrefixName());
-     if (typeString.find("InitializedNamePtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "InitializedName*>::iterator";
-
-     if (typeString.find("StatementPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "Statement*>::iterator";
-
-     if (typeString.find("AsmStatementPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "AsmStatement*>::iterator";
-
-     if (typeString.find("BaseClass") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "BaseClass*>::iterator";
-
-     if (typeString.find("NodePtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "Node*>::iterator";
-
-     if (typeString.find("TypePtrList") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "Type*>::iterator";
-
-     if (typeString.find("ExpressionPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "Expression*>::iterator";
-
-  // DQ (3/30/2007): Added to support binary handling (this must appear after the test for ExpressionPtr)
-     if (typeString.find("AsmExpressionPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "AsmExpression*>::iterator";
-
-     if (typeString.find("AttributePtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "Attribute*>::iterator";
-
-     if (typeString.find("FilePtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "File*>::iterator";
-
-     if (typeString.find("DirectoryPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "Directory*>::iterator";
-
-     if (typeString.find("QualifiedNamePtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "QualifiedName*>::iterator";
-
-     if (typeString.find("TypePtrVector") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "ModifierType*>::iterator";
-
-  // DQ (4/2/2007): Added support for template argument list being an IR node
-     if (typeString.find("TemplateArgumentPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "TemplateArgument*>::iterator";
-
-  // DQ (4/2/2007): Added support for template parameter list being an IR node
-     if (typeString.find("TemplateParameterPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "TemplateParameter*>::iterator";
-
-  // DQ (11/20/2007): Support for Fortran data statement
-     if (typeString.find("DataStatementGroupPtr") != string::npos)
-          iteratorTypeString = "Rose_STL_Container<" + getGrammarPrefixName() + "DataStatementGroup*>::iterator";
-
-     if (iteratorTypeString.empty() == true)
-        {
-          printf ("Error: unsupported typeString = %s \n",typeString.c_str());
-        }
-  // ROSE_ASSERT(!iteratorTypeString.empty());
-     ROSE_ASSERT( iteratorTypeString.empty() == false );
-
-     return iteratorTypeString;
+     string ts = typeString;
+     if (ts.size() >= 3 && ts.substr(ts.size() - 3) == "Ptr") {
+       ts = ts.substr(0, ts.size() - 3);
+     }
+     return ts + "::iterator";
    }
 
-
-// MS: that's a more compact version to represent all the naming details in one single data structure
-//     but it's not used yet
-string
-Grammar::getContainerElementTypeString(const string& typeString)
-   {
-     string containerTypes_elementType[14][3] = {
-     // type of Container, type of pointer to container, type of container element
-     //                    2. and 3. used in getIteratorString
-        {"$$NOTYPE$$","DeclarationStatementPtr","DeclarationStatement*"},
-     // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
-     // {"InitializedNameList","InitializedName","InitializedName"},
-        {"InitializedNamePtrList","InitializedNamePtr","InitializedName*"},
-     // DQ (3/28/2007): Added to support binary handling (part of patch from Jeremiah and Thomas)
-        {"AsmStatementPtrList","AsmStatementPtr","AsmStatement*"},
-     // DQ (3/30/2007): Added to support binary handling
-        {"AsmExpressionPtrList","AsmExpressionPtr","AsmExpression*"},
-        {"StatementPtrList","StatementPtr","Statement*"},
-     // DQ (6/21/2005): Fixup SgBaseClassList to be a list of pointers to SgBaseClass (like everything else)
-     // {"BaseClassList","BaseClass","BaseClass"},
-        {"BaseClassPtrList","BaseClassPtr","BaseClass*"},
-        {"NodePtrList","NodePtr","Node*"},
-        {"TypePtrList","TypePtrList","Type*"},
-        {"ExpressionPtrList","ExpressionPtr","Expression*"},
-        {"AttributePtrList","AttributePtr","Attribute*"},
-        {"FilePtrList","FilePtr","File*"},
-        {"DirectoryPtrList","DirectoryPtr","Directory*"},
-        {"QualifiedNamePtrList","QualifiedNamePtr","QualifiedName*"},
-        {"ModifierTypePtrVector","TypePtrVector","ModifierType*"}
-     };
-
-  // DQ (3/27/2007): Changed 10 to 13 to reflect correct length of containerTypes_elementType (above)
-  // MS replace this with a map
-  // for(int i = 0; i < 10; i++)
-     for(unsigned int i = 0; i < sizeof(containerTypes_elementType) / sizeof(string[3]); i++)
-        {
-          if (typeString.find(containerTypes_elementType[i][0]) != string::npos ||
-	      typeString.find(containerTypes_elementType[i][1]) != string::npos)
-             {
-	       return containerTypes_elementType[i][2];
-             }
-        }
-
-     return "";
-   }
+Terminal* lookupTerminal(const vector<Terminal*>& tl, const std::string& name) {
+  for (vector<Terminal*>::const_iterator it = tl.begin();
+       it != tl.end(); ++it) {
+    if ((*it)->getName() == name) {
+      return *it;
+    }
+  }
+  cerr << "Reached end of terminal list in search for '" << name << "'" << endl;
+  ROSE_ASSERT (false);
+}

@@ -167,11 +167,11 @@ class CompSliceImpl : public LoopTreeShadowCreate
   virtual void Append( const CompSliceImpl& that)
    {
      LoopTreeTraverseSelectLoop loopIter(that.GetTreeRoot());
-     for (LoopTreeNode *n; n=loopIter.Current(); loopIter++) {
+     for (LoopTreeNode *n; (n=loopIter.Current()); loopIter++) {
        CompSliceLoop *l = static_cast<CompSliceLoop*>(n);
        CompSliceLoop *myl = CreateSliceLoop(l->GetSliceLoop(), l);
        LoopTreeTraverseSelectStmt stmtIter(l);
-       for (LoopTreeNode *n1; n1 = stmtIter.Current(); stmtIter++)  {
+       for (LoopTreeNode *n1; (n1 = stmtIter.Current()); stmtIter++)  {
           CompSliceStmt *s = static_cast <CompSliceStmt*>(n1);
           CompSliceStmt *mys = CreateSliceStmt(s->GetSliceStmt(), s);
           mys->SetSliceLoop( myl, s->GetSliceAlign() );

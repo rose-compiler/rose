@@ -5,11 +5,7 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
@@ -106,32 +102,20 @@ Grammar::buildMemoryPoolBasedTraversalSupport()
 
      string s = string("\n\nvoid traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor )\n   {\n");
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += localPoolBasedTraversalVisitorPatternSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += localPoolBasedTraversalVisitorPatternSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += localPoolBasedTraversalVisitorPatternSupport(name);
         }
 
      s += "   }\n\n";
 
      s += string("\n\nvoid traverseMemoryPoolNodes ( ROSE_VisitTraversal & visit )\n   {\n");
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += localPoolNodesBasedTraversalSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += localPoolNodesBasedTraversalSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += localPoolNodesBasedTraversalSupport(name);
         }
 
      s += "   }\n\n";
@@ -141,16 +125,10 @@ Grammar::buildMemoryPoolBasedTraversalSupport()
   // (or any global function).  We don't traverse all the instances of the IR nodes.
      s += string("\n\nvoid traverseRepresentativeNodes ( ROSE_VisitTraversal & visit )\n   {\n");
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += traverseRepresentativeNodeSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += traverseRepresentativeNodeSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += traverseRepresentativeNodeSupport(name);
         }
 
      s += "   }\n\n";
@@ -158,16 +136,10 @@ Grammar::buildMemoryPoolBasedTraversalSupport()
      s += string("\n\nint memoryUsage ()\n   {\n");
      s += "     int count = 0; \n\n";
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += memoryUsageSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += memoryUsageSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += memoryUsageSupport(name);
         }
 
      s += "\n\n";
@@ -177,42 +149,15 @@ Grammar::buildMemoryPoolBasedTraversalSupport()
      s += string("\n\nint numberOfNodes ()\n   {\n");
      s += "     int count = 0; \n\n";
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += numberOfNodesSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += numberOfNodesSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += numberOfNodesSupport(name);
         }
 
      s += "\n\n";
      s += "     return count;\n";
      s += "   }\n";
-
-#if 0
-  // This is best done more generally using a traversal over the
-  // collection of IR nodes (so that we can call static members).
-     s += string("\n\nvoid memoryUsageStatistics ()\n   {\n");
-     s += "     int totalNumberOfNodes = numberOfNodes(); \n\n";
-
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += memoryUsageStatisticsSupport(nonTerminalList[i].name);
-        }
-
-     for (unsigned int i=0; i < terminalList.size(); i++)
-        {
-          string name = terminalList[i].name;
-          s += memoryUsageStatisticsSupport(terminalList[i].name);
-        }
-
-     s += "   }\n";
-#endif
 
      return s;
    }

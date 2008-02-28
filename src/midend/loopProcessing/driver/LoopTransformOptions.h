@@ -26,6 +26,7 @@ class LoopTransformOptions
           OptRegistryType( const std::string &s1, const std::string &s2) : name(s1), expl(s2) {}
           std::string GetName() const { return name; }
           std::string GetExpl() const { return expl; }
+          virtual ~OptRegistryType() {}
          };
  private:
   static LoopTransformOptions *inst;

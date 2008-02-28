@@ -18,6 +18,7 @@ class ArrayAbstractionInterface {
                                  int dim, int &lb, int &ub) = 0;
   virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
                                 AstInterface::AstNodeList& index) = 0;
+  virtual ~ArrayAbstractionInterface() {}
 };
 
 class ArrayUseAccessFunction 
@@ -58,8 +59,8 @@ class LoopTransformInterface
   LoopTransformInterface( AstInterface& _fa, AliasAnalysisInterface& alias,
                           FunctionSideEffectInterface* func = 0,
                           ArrayAbstractionInterface* array = 0) 
-    : fa(_fa), aliasInfo(alias), funcInfo(func), arrayInfo(array) {} 
-  ~LoopTransformInterface() {}
+    : aliasInfo(alias), funcInfo(func), arrayInfo(array), fa(_fa) {} 
+  virtual ~LoopTransformInterface() {}
 
   operator AstInterface&() { return fa; }
   AstInterface& getAstInterface() { return fa;}

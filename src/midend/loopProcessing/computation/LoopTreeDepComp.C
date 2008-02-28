@@ -166,7 +166,7 @@ UpdateInsertLoop( const InsertLoopInfo &info)
   PtrSetWrap<LoopTreeDepGraphNode> nodes;
   LoopTreeNode* l = info.GetObserveNode();
   LoopTreeTraverseSelectStmt iter(l);
-  for (LoopTreeNode *s; s = iter.Current(); iter.Advance()) {
+  for (LoopTreeNode *s; (s = iter.Current()); iter.Advance()) {
      LoopTreeDepGraphNode* n = map.GetDepNode(s);
      nodes.insert(n);
   }
@@ -264,7 +264,7 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
   LoopTreeTraverse iter;
  public:
   BuildLoopDepGraphCreate( LoopTreeNode* root, LoopTreeDepGraphCreate &c)
-    : iter(root, LoopTreeTraverse::PreOrder), BuildLoopDepGraphEdges(c) {}
+    : BuildLoopDepGraphEdges(c), iter(root, LoopTreeTraverse::PreOrder) {}
 };
 
 void LoopTreeDepCompCreate :: BuildDepGraph( LoopTransformInterface &la)
@@ -311,7 +311,7 @@ LoopTreeDepCompCreate :: ~LoopTreeDepCompCreate()
 LoopTreeDepCompCreate :: 
 LoopTreeDepCompCreate( LoopTransformInterface &la, const AstNodePtr& _top,
                        bool builddep)
-  : depCreate(0), top(_top), anal(la)
+  : anal(la), depCreate(0), top(_top)
 {
   AstInterface& fa = la;
   assert(fa.GetRoot() != 0);

@@ -36,7 +36,7 @@ class BuildDefUseChain
       known &= in;
       unknown &= in;
     }
-    for (int i = 0; i < defvec.size(); ++i) {
+    for (size_t i = 0; i < defvec.size(); ++i) {
         Node* def = defvec[i];
         assert (def != 0);
         if (known.has_member(i) ||
@@ -171,7 +171,7 @@ public:
 template<class Node>
 void DumpDefSet( const std::vector<Node*>& defvec, const ReachingDefinitions& in)
 {
-        for (int i = 0; i < defvec.size(); ++i) {
+        for (size_t i = 0; i < defvec.size(); ++i) {
           if (in.has_member(i)) {
              Node* def = defvec[i];
              assert (def != 0);
@@ -301,7 +301,7 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
           }
       }
       else {
-        Node* def = *defp;
+        // Node* def = *defp;
         if (!defp.ReachEnd()) {
            Node* def = *defp;
            ++defp;

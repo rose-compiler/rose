@@ -6,7 +6,7 @@
 \class SgCatchOptionStmt
 \brief This class represents the concept of a catch within a try-catch construct used in
     C++ exception handling.
-\internal try and catch, though linked semanticaly, are seperate statements in the IR.
+\internal try and catch, though linked semanticaly, are separate statements in the IR.
 */
 /*
 \sa

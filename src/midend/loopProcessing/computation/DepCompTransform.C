@@ -424,7 +424,7 @@ CollectCopyArray( LoopTransformInterface& la, DepCompCopyArrayCollect& collect,
   DepCompAstRefDAG refDag(stmtorder, &refDep);
   fuseop(&refDag);
 
-  AstInterface& ai = la;
+  // AstInterface& ai = la;
   for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
        arrays != collect.end(); ++arrays) {
     DepCompCopyArrayCollect::CopyArrayUnit& curunit = *arrays; 

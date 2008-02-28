@@ -929,7 +929,7 @@ void Intersection (
                                                                         //        int B;
 
 
-                                                                        // Robert Preissl, May 30 2007, don't need to ask about FunctionSymbol because this is seperately treated!!!
+                                                                        // Robert Preissl, May 30 2007, don't need to ask about FunctionSymbol because this is separately treated!!!
 
 
                                                                         // Robert Preissl, May 30 2007: should also a typdef be allowed to hide classes or enums???

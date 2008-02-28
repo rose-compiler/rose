@@ -24,6 +24,7 @@ class SymbolicVisitor
   virtual void VisitFunction( const SymbolicFunction &v) { Default(); }
   virtual void VisitAstWrap( const SymbolicAstWrap& v) { Default(); }
   virtual void VisitExpr( const SymbolicExpr& exp) { Default(); }
+  virtual ~SymbolicVisitor() {}
 };
 
 typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4, 
@@ -64,7 +65,7 @@ class SymbolicConst : public SymbolicValImpl
   SymbolicConst( int _val, int _dval = 1) ;
   SymbolicConst( std:: string _val, std:: string type);
   SymbolicConst( const SymbolicConst& that) 
-       : val(that.val), dval(that.dval), type(that.type), intval(that.intval) {}
+       : val(that.val), type(that.type), intval(that.intval), dval(that.dval) {}
   ~SymbolicConst() {}
 
   bool operator == (const SymbolicConst& that) const 
@@ -151,6 +152,7 @@ class SymbolicVal : public CountRefHandle <SymbolicValImpl>
    : CountRefHandle <SymbolicValImpl>(that) {}
   SymbolicVal& operator = (const SymbolicVal& that)
    { CountRefHandle <SymbolicValImpl>:: operator = (that); return *this; }
+  virtual ~SymbolicVal() {}
 
   bool IsNIL() const { return ConstPtr() == 0; }
   bool IsSame( const SymbolicVal& that) const
@@ -220,17 +222,17 @@ class SymbolicFunction : public SymbolicValImpl
   typedef std:: vector<SymbolicVal>::const_iterator const_iterator;
   SymbolicFunction( AstInterface::OperatorEnum _t, const std::string& _op, 
                     const Arguments& v)
-    : t(_t), op(_op), args(v) {} 
+    : op(_op), args(v), t(_t) {} 
   SymbolicFunction( AstInterface::OperatorEnum _t, const std::string& _op, 
                     const SymbolicVal& v1, const SymbolicVal& v2)
-    : t(_t), op(_op) { args.push_back(v1); args.push_back(v2); }
+    : op(_op), t(_t) { args.push_back(v1); args.push_back(v2); }
   SymbolicFunction( AstInterface::OperatorEnum _t, const std::string& _op, 
                     const SymbolicVal& v)
-    : t(_t), op(_op) { args.push_back(v); }
+    : op(_op), t(_t) { args.push_back(v); }
   SymbolicFunction( const SymbolicFunction& that)
     : op(that.op), args(that.args), t(that.t) {}
 
-  ~SymbolicFunction() {}
+  virtual ~SymbolicFunction() {}
   virtual std:: string toString() const;
   SymbolicValType GetValType() const { return VAL_FUNCTION; }
   AstNodePtr CodeGen( AstInterface &fa) const;
@@ -246,7 +248,7 @@ class SymbolicFunction : public SymbolicValImpl
   virtual SymbolicVal GetUnknownOpds() const 
       { return SymbolicVal(); }
   virtual bool GetConstOpd(int &val1, int &val2) const { return false; }
-  SymbolicValImpl* Clone() const { new SymbolicFunction(*this); }
+  SymbolicValImpl* Clone() const { return new SymbolicFunction(*this); }
   virtual SymbolicFunction* cloneFunction(const Arguments& args) const
      { return  new SymbolicFunction(t, op,args); }
 };
@@ -277,9 +279,9 @@ class SymbolicPow : public SymbolicFunction
   virtual SymbolicVal GetUnknownOpds() const { return first_arg(); }
   virtual bool GetConstOpd(int &val1, int &val2) const 
             { return last_arg().isConstInt(val1, val2); }
-  SymbolicValImpl* Clone() const { new SymbolicPow(*this); }
+  SymbolicValImpl* Clone() const { return new SymbolicPow(*this); }
   virtual SymbolicFunction* cloneFunction(const Arguments& args) 
-     { SymbolicFunction* r =  new SymbolicPow(args); }
+     { SymbolicFunction* r =  new SymbolicPow(args); return r; }
 };
 
 class SymbolicValGenerator
@@ -309,9 +311,9 @@ class SymbolicCond
   SymbolicCond() { t = REL_UNKNOWN; }
   SymbolicCond( const CompareRel _t, const SymbolicVal &_val1,
                 const SymbolicVal &_val2)
-      : t(_t), val1(_val1), val2(_val2) {}
+      : val1(_val1), val2(_val2), t(_t) {}
   SymbolicCond( const SymbolicCond& that)
-    : t(that.t), val1(that.val1), val2(that.val2) {}
+    : val1(that.val1), val2(that.val2), t(that.t) {}
   SymbolicCond& operator = (const SymbolicCond& that)
     { t = that.t; val1 = that.val1; val2 = that.val2;  return *this; }
   ~SymbolicCond() {}

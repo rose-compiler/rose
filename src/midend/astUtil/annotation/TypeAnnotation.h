@@ -17,6 +17,7 @@ class  AnnotCollectionBase {
   virtual void read_descriptor( const TargetInfo& target,
 				const std::string& annotName, 
 				std::istream& in) = 0;
+  virtual ~AnnotCollectionBase() {}
 };
 
 template <class TargetInfo, char targetsep, char descriptorsep, char annotend>

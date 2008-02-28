@@ -33,7 +33,7 @@ AstNameListType astNameStack;
 // Global stack of SgType IR nodes
 std::list<SgType*> astTypeStack;
 
-// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type seperately from the
+// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type separately from the
 // the constructed types build from the base type.  This is designed to handle the case of 
 // "integer i(5),j" and "character*100 k,l" (see test2007_148.f)
 std::list<SgType*> astBaseTypeStack;
@@ -2077,7 +2077,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In buildVariableDeclaration(): initializedName = %p = %s initializer = %p \n",initializedName,initializedName->get_name().str(),initializedName->get_initializer());
 
-       // DQ (11/29/2007): This is an odd API in ROSE, the initializer (already a part of the SgInitializedName, must be provide seperately to the append_variable() member function).
+       // DQ (11/29/2007): This is an odd API in ROSE, the initializer (already a part of the SgInitializedName, must be provide separately to the append_variable() member function).
        // variableDeclaration->append_variable(initializedName,initializedName->get_initializer());
           variableDeclaration->prepend_variable(initializedName,initializedName->get_initializer());
 

@@ -5,11 +5,11 @@
 
 class BreakupStatement : public PrePostTransformation
 {
-  int breaksize;
+  size_t breaksize;
   virtual bool operator()( AstInterface& fa, const AstNodePtr& n,
                            AstNodePtr& result);
  public:
-  BreakupStatement(int bs = 0) : breaksize(bs) {}
+  BreakupStatement(size_t bs = 0) : breaksize(bs) {}
   AstNodePtr operator()( LoopTransformInterface& _la, const AstNodePtr& root) 
   {
      SetLoopTransformInterface(&_la);

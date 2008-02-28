@@ -63,14 +63,14 @@ bool AnalyzeStmtRefs(LoopTransformInterface &la, const AstNodePtr& n,
 std::string toString( std::vector<SymbolicVal> & analvec)
 {
   std::stringstream out;
-          for (int j = 0; j < analvec.size(); ++j)
+          for (size_t j = 0; j < analvec.size(); ++j)
              out << analvec[j].toString();
   return out.str();
 }
 std::string toString( std::vector< std::vector<SymbolicVal> > & analMatrix)
 {
    std::string result;
-      for (int i = 0; i < analMatrix.size(); ++i) {
+      for (size_t i = 0; i < analMatrix.size(); ++i) {
          result = result + toString(analMatrix[i]) + "\n";
       }
   return result;
@@ -225,7 +225,7 @@ PlatoOmegaInterface::PlatoOmegaDepTesting PlatoTest;
 #endif
 
 DepInfoAnal :: DepInfoAnal(LoopTransformInterface& la)
-  : varmodInfo(la, SelectLoop(),la.getSideEffectInterface()), handle(AdhocTest)
+  : handle(AdhocTest), varmodInfo(la, SelectLoop(),la.getSideEffectInterface())
 {
 
 #ifdef OMEGA
@@ -250,7 +250,7 @@ DepInfoAnal :: DepInfoAnal(LoopTransformInterface& la)
 }
 
 DepInfoAnal :: DepInfoAnal(LoopTransformInterface& la, DependenceTesting& h)
-  : varmodInfo(la, SelectLoop(), la.getSideEffectInterface()), handle(h)
+  : handle(h), varmodInfo(la, SelectLoop(), la.getSideEffectInterface())
 {
   AstInterface& ai  = la;
   AstNodePtr root = ai.GetRoot();
@@ -398,11 +398,11 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
 
   const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(fa,ref.r1.stmt);
   const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(fa,ref.r2.stmt);
-  int dim1 = info1.domain.NumOfLoops(), dim2 = info2.domain.NumOfLoops();
-  int dim = dim1+dim2, i;
-  int lineNo1, lineNo2;
+  size_t dim1 = info1.domain.NumOfLoops(), dim2 = info2.domain.NumOfLoops();
+  size_t dim = dim1+dim2, i;
+  // int lineNo1, lineNo2;
   std::string filename;
-  double t0, adhocTime;
+  // double t0, adhocTime;
   std::stringstream buffer;
   
   std::vector<SymbolicBound> bounds;
@@ -458,12 +458,12 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
     if (DebugDep()) {
        assert(dim+1 == cur.size());
        std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
-       for (int i = 0; i < dim; ++i) 
+       for (size_t i = 0; i < dim; ++i) 
          std::cerr << cur[i].toString() << bounds[i].toString() << " " ;
        std::cerr << cur[dim].toString() << std::endl;
     }
 
-    for ( int i = 0; i < dim; ++i) {
+    for ( size_t i = 0; i < dim; ++i) {
         SymbolicVal cut = cur[i];
         if (cut == 1 || cut == 0 || cut == -1)
              continue;
@@ -488,8 +488,8 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
       std::cerr << "after normalization, relation matrix = \n" << toString(analMatrix) << std::endl;
    DepInfo result=DepInfoGenerator::GetDepInfo(dim1, dim2, deptype, ref.r1.ref, ref.r2.ref, false, ref.commLevel);
   SetDep setdep( info1.domain, info2.domain, &result);
-  for (int k = 0; setdep && k < analMatrix.size(); ++k) {
-       int j = 0;
+  for (size_t k = 0; setdep && k < analMatrix.size(); ++k) {
+       size_t j = 0;
        for (; j < dim+1; ++j) {
           if (analMatrix[k][j] != 0)
               break;
@@ -630,7 +630,7 @@ void RemoveIvars( AstInterface& ai, DoublyLinkedListWrap<AstNodePtr>& refs,
      AstNodePtr scope;
      if (cur != AST_NULL && ai.IsVarRef(cur, 0,&name, &scope)) {
          SymbolicVar curvar(name, scope);
-         for (int i = 0; i < ignore.size(); ++i) 
+         for (size_t i = 0; i < ignore.size(); ++i) 
              if (ignore[i] == curvar) {
                 refs.Delete(p1);
                 break;

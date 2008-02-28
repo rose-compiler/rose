@@ -9,10 +9,10 @@ SpatialReuses(const CompSlice *slice)
 {
   float reuse = 0;
   CompSlice::ConstLoopIterator sliceIter = slice->GetConstLoopIterator();
-  for (LoopTreeNode *n; n = sliceIter.Current(); sliceIter++) {
+  for (LoopTreeNode *n; (n = sliceIter.Current()); sliceIter++) {
      int level = n->LoopLevel();
      CompSlice::ConstStmtIterator iter1 = sliceIter.GetConstStmtIterator();
-     for (LoopTreeNode *s; s = iter1.Current(); iter1++) {
+     for (LoopTreeNode *s; (s = iter1.Current()); iter1++) {
           reuse += anal.SelfSpatialReuses( s, level, linesize);
      }
    }
@@ -23,11 +23,11 @@ int CompSliceLocalityAnal::
 TemporaryReuses( const CompSlice *slice1, const CompSlice *slice2, AstNodeSet &refSet)
 {
   CompSlice::ConstStmtIterator stmtIter2 = slice2->GetConstStmtIterator();
-  for (LoopTreeNode *n2; n2 = stmtIter2.Current(); stmtIter2++) {
+  for (LoopTreeNode *n2; (n2 = stmtIter2.Current()); stmtIter2++) {
      LoopTreeNode *l2 = stmtIter2.CurrentInfo().loop;
      int level2 = l2->LoopLevel();
      CompSlice::ConstStmtIterator stmtIter1 = slice1->GetConstStmtIterator();
-     for (LoopTreeNode *n1; n1 = stmtIter1.Current(); stmtIter1++) {
+     for (LoopTreeNode *n1; (n1 = stmtIter1.Current()); stmtIter1++) {
         LoopTreeNode *l1 = stmtIter1.CurrentInfo().loop;
         int level1 = l1->LoopLevel();
         anal.TemporaryReuseRefs(n1,level1,n2,level2,refSet, reuseDist);
@@ -89,13 +89,13 @@ SpatialReuses( const CompSlice *slice1, const CompSlice *slice2,
   CompSlice::ConstStmtIterator stmtIter1 = slice1->GetConstStmtIterator();
   LoopTransformInterface& fa = anal.GetLoopTransformInterface();
   CollectArrayNames op(fa, arrnames);
-  for (LoopTreeNode *n1; n1 = stmtIter1.Current(); stmtIter1++) {
+  for (LoopTreeNode *n1; (n1 = stmtIter1.Current()); stmtIter1++) {
       AstNodePtr s1 = stmtIter1.Current()->GetOrigStmt();
       ArrayReferences( fa, s1, op);
   }
   CollectRegisteredArrayRefs op2(fa, arrnames,refSet);
   CompSlice::ConstStmtIterator stmtIter2 = slice2->GetConstStmtIterator();
-  for (LoopTreeNode *n2; n2 = stmtIter2.Current(); stmtIter2++) {
+  for (LoopTreeNode *n2; (n2 = stmtIter2.Current()); stmtIter2++) {
       AstNodePtr s2 = stmtIter2.Current()->GetOrigStmt();
       ArrayReferences( fa, s2, op2);
   }

@@ -12,6 +12,7 @@ class TypedFusionOperator
     virtual bool PreventFusion( GraphAccessInterface::Node *src, 
                                    GraphAccessInterface::Node *snk, 
                                    GraphAccessInterface::Edge *e) = 0;
+    virtual ~TypedFusionOperator() {}
 };
  
 class TypedFusion

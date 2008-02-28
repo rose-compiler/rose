@@ -179,7 +179,7 @@ class LoopTreeCreate
   LoopTreeNode* CloneTree( LoopTreeNode *n);
 
   LoopTreeCreate( int _level = 0);
-  ~LoopTreeCreate();
+  virtual ~LoopTreeCreate();
 
   LoopTreeNode* GetTreeRoot() const { return root; }
   int LoopLevel() const { return root->LoopLevel(); }

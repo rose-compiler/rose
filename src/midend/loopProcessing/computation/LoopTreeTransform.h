@@ -70,7 +70,7 @@ class SelectArray
     SymbolicVal incr, size;
     int dim;
     ArrayDim( int d, const SymbolicVal& in, const SymbolicVal& _size)
-     : dim(d), incr(in), size(_size) {}
+     : incr(in), size(_size), dim(d) {}
   };
   std::vector<SymbolicVal> selstart;
   std::list<ArrayDim> selinfo;

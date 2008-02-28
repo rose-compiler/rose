@@ -106,7 +106,7 @@ class AppendValueNode : public Collect2Object< AstNodePtr, HasValueDescriptor >
  public:
   AppendValueNode( const std::map<AstNodePtr, ValuePropagateNode*>& m,
                    HasValueMap& v)
-   : nodemap(m), nodeCollect(0), valmap(v) {} 
+   : nodemap(m), valmap(v), nodeCollect(0) {} 
 
   HasValueMap& get_val_map() { return valmap; }
   void set_node_collect( CollectObject< ValuePropagateNode*>& n) 
@@ -195,7 +195,7 @@ public:
   UpdateValuePropagateNode( AstInterface& _fa, const AstNodePtr& h,
                             HasValueMap& vm, HasValueCodeGen& cg, 
                             const std::map<AstNodePtr, ValuePropagateNode*>& m) 
-    : fa(_fa), head(h), valmap(vm), astcodegen(cg), valappend(m, valmap) {}
+    : valmap(vm), astcodegen(cg), valappend(m, valmap), fa(_fa), head(h) {}
   void init(CollectObject<ValuePropagateNode*>& append ) 
   {
      valappend.set_node_collect(append);

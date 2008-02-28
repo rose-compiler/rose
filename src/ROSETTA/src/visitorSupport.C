@@ -5,11 +5,7 @@
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
-#include "nonterminal.h"
 #include "grammarString.h"
-#include "grammarTreeNode.h"
-#include "constraintList.h"
-#include "constraint.h"
 #include <sstream>
 
 using namespace std;
@@ -42,16 +38,10 @@ Grammar::buildVisitorBaseClass()
    {
      string s = string("class ROSE_VisitorPattern\n   {\n     public:\n virtual ~ROSE_VisitorPattern() {};\n");
 
-     for (unsigned int i=0; i < nonTerminalList.size(); i++)
-        {
-          string name = nonTerminalList[i].name;
-          s += localOutputVisitorSupport(nonTerminalList[i].name);
-        }
-
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
-          string name = terminalList[i].name;
-          s += localOutputVisitorSupport(terminalList[i].name);
+          string name = terminalList[i]->name;
+          s += localOutputVisitorSupport(name);
         }
 
      s += "   };\n";

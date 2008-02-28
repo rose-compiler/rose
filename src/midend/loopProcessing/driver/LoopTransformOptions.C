@@ -189,7 +189,7 @@ class ReuseDistOpt : public LoopTransformOptions::OptRegistryType
 };
                                                                                                                                                                                                      
 LoopTransformOptions:: LoopTransformOptions()
-       : cacheline(16), splitlimit(20), reuseDist(8), cpOp(0), bkOp(0)
+       : bkOp(0), cpOp(0), cacheline(16), reuseDist(8), splitlimit(20)
 {
    icOp =  new ArrangeOrigNestingOrder() ;
    fsOp = new SameLevelFusion( new OrigLoopFusionAnal() );

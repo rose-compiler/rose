@@ -14,7 +14,7 @@ ROSE_INCLUDES =	-I$(ROSE_ROOT)/include
 
 LIBS_WITH_RPATH     =  -L$(ROSE_ROOT)/lib -Wl,-rpath $(ROSE_ROOT)/lib
 
-ROSE_SEPERATE_LIBS = -lRoseCommandlineUtil -lsupport -lgraphs -lroseutil -lcr -lmstl -lpdf -lsage3 -ledgutil -ledg33 -ledgSage -lastinlining -lastInterface -lastSupport -lsymbolicVal -lannotation -lOAWrap -lCFG  -ldataflowAnalysis -lvaluePropagation  -ldepInfo -ldepGraph -lcomputation -lslicing -ldriver -lprepostloop -lLoopProcessing -lunparse -lroseSupport -lquery -lastDiagnostics -lastprocessing $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) $(MYSQL_DATABASE_LIBS) $(LEXLIB) $(LIB_QT) -lrt
+ROSE_SEPARATE_LIBS = -lRoseCommandlineUtil -lsupport -lgraphs -lroseutil -lcr -lmstl -lpdf -lsage3 -ledgutil -ledg33 -ledgSage -lastinlining -lastInterface -lastSupport -lsymbolicVal -lannotation -lOAWrap -lCFG  -ldataflowAnalysis -lvaluePropagation  -ldepInfo -ldepGraph -lcomputation -lslicing -ldriver -lprepostloop -lLoopProcessing -lunparse -lroseSupport -lquery -lastDiagnostics -lastprocessing $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) $(MYSQL_DATABASE_LIBS) $(LEXLIB) $(LIB_QT) -lrt
 
 # LEXLIB              = -lfl
 

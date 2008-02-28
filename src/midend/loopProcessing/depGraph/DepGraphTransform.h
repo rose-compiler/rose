@@ -22,7 +22,7 @@ class UpdateDepEdgeInfo {
   DepInfoUpdate T;
   Graph *graph;
  public:
-  UpdateDepEdgeInfo( Graph* g, const DepInfoUpdate& _T) : graph(g), T(_T) {}
+  UpdateDepEdgeInfo( Graph* g, const DepInfoUpdate& _T) : T(_T), graph(g) {}
   void operator() ( typename Graph::Edge *e, GraphAccess::EdgeDirection dir)
    {  if (! UpdateDepInfo<DepInfoUpdate>(T)( e->GetInfo(), EdgeDir2DepDir(dir)) )
           graph->DeleteEdge(e); 

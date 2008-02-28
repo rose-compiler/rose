@@ -336,7 +336,7 @@ Steps for setting up the Fortran support are:
           the build tree when it is not specified explicitly.
        8) The -fPIC options are only suggested for 64-bit machines and may not be required.
 
-    Follow the rest of the directions to build ROSE (don't forget to use a seperate
+    Follow the rest of the directions to build ROSE (don't forget to use a separate
     compile tree!).
 
 

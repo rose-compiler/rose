@@ -207,7 +207,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTemplateType:
           case V_SgPartialFunctionType:
           case V_SgPartialFunctionModifierType:
-          case V_SgUnknownMemberFunctionType:
+          // case V_SgUnknownMemberFunctionType:
              {
             // Trap these cases ...
                printf ("Unimplemented case reached for type = %p = %s \n",type,type->class_name().c_str());
@@ -1827,7 +1827,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgTypedefType:
           case V_SgPartialFunctionModifierType:
           case V_SgTypeEllipse:
-          case V_SgUnknownMemberFunctionType:
+          // case V_SgUnknownMemberFunctionType:
           case V_SgQualifiedNameType:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
