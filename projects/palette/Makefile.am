@@ -3,6 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../compass/compassSupport
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+PALETTEFLAGS = -I$(srcdir)
+
 BUILT_SOURCES = palette2cpp
 
 bin_PROGRAMS = palette2cpp
