@@ -725,8 +725,12 @@ LINK = $(CXXLINK)
 
 lib_LTLIBRARIES = librose.la
 
+if ROSE_USE_OPEN_FORTRAN_PARSER
+JAVA_JVM_FLAGS = -L$(JAVA_JVM_PATH) -ljvm
+endif
+
 librose_la_SOURCES =
-librose_la_LIBADD = $(libroseLibraries)
+librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm -lrt
 librose_la_LDFLAGS = -no-undefined
 
 # DQ: Skip this to speed up development
