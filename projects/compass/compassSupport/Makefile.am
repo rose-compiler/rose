@@ -10,6 +10,8 @@ endif
 
 bin_PROGRAMS = compassEmptyMain
 
+include_HEADERS = compass.h
+
 libCompass_la_SOURCES = compass.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) libCompass.la

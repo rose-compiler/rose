@@ -1,10 +1,8 @@
 #ifndef PALETTE_COMMON_H
 #define PALETTE_COMMON_H
 
-#ifdef PALETTE_USE_ROSE
 #include "rose.h"
 #include "compass.h"
-#endif
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -16,17 +14,6 @@
 #include <vector>
 #include <utility>
 
-namespace Palette {
-
-#ifdef PALETTE_USE_ROSE
-  typedef SgNode* SgNodePtr;
-
-  inline std::string stringify(SgNodePtr n) {std::ostringstream os; os << "node" << uintptr_t(n); return os.str();}
-#endif
-  inline std::string stringify(int x) {std::ostringstream os; os << x; return os.str();}
-  inline std::string stringify(const std::string& s) {return "'" + s + "'";}
-
-#ifdef PALETTE_USE_ROSE
   // This is based on the ROSE memory pool traversal code, but changed to run the body inline
 #define PALETTE_ITERATE_THROUGH_MEMORY_POOL(type, elt_name) \
         if (type::Memory_Block_List.empty() == false) \
@@ -34,7 +21,8 @@ namespace Palette {
             for (int j=0; j < type::CLASS_ALLOCATION_POOL_SIZE; j++) \
               if (((type**) (&(type::Memory_Block_List[0])))[i][j].get_freepointer() == AST_FileIO::IS_VALID_POINTER()) \
                 if (type* elt_name = &((type**) &(type::Memory_Block_List[0]))[i][j])
-#endif
+
+namespace Palette {
 
   struct Timer {
     double lastTimeCPU, lastTimeWall;
@@ -62,15 +50,12 @@ namespace Palette {
     }
   };
 
-#ifdef PALETTE_USE_ROSE
   class CheckerOutput: public Compass::OutputViolationBase {
     public:
       CheckerOutput(SgNode* node, const std::string& checkerName,
 		    const std::string& str):
 	Compass::OutputViolationBase(node, checkerName, str) {}
   };
-#endif
-
 }
 
 #endif // PALETTE_COMMON_H
