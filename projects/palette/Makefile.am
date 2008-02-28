@@ -8,26 +8,30 @@ PALETTEFLAGS =
 BUILT_SOURCES = palette2cpp rose.P
 
 bin_PROGRAMS = palette2cpp
+
 palette2cpp_SOURCES = palette2cpp.C prologLexer.C prologParser.C prologParser.h prologAst.h
 
 dist_noinst_DATA = palette-talk.ppt
 
-dist_data_DATA = rose.P arith.P io.P basic.tmpl compass.tmpl
+dist_data_DATA = rose.P arith.P io.P basic.tmpl compass.tmpl \
+		 __eq___pp.itmpl iterateChildren_pm.itmpl cond_p.itmpl \
+		 iterMemoryPools_mp.itmpl let_mp.itmpl do_p.itmpl \
+		 iterCfgEdges_pppm.itmpl
 
 include_HEADERS = paletteCommon.h
 
 noinst_PROGRAMS = qsolve simple_example null_deref switch_without_default
 qsolve_SOURCES = qsolve.P
-qsolve_DEPENDENCIES = arith.P io.P basic.tmpl
+qsolve_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 simple_example_SOURCES = simple_example.P
-simple_example_DEPENDENCIES = io.P basic.tmpl
+simple_example_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 null_deref_SOURCES = null_deref.P
-null_deref_DEPENDENCIES = rose.P compass.tmpl
+null_deref_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 switch_without_default_SOURCES = switch_without_default.P
-switch_without_default_DEPENDENCIES = rose.P compass.tmpl
+switch_without_default_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 
 .P.C: palette2cpp
-	./palette2cpp $(PALETTEFLAGS) $< > $@
+	./palette2cpp $(PALETTEFLAGS) -- $< > $@ || (rm -f $@ && exit 1)
 
 SUFFIXES = .P
 
@@ -47,7 +51,8 @@ check-local: switch_without_default null_deref qsolve simple_example
 	@echo '*****' >> current_answers
 	@./simple_example 2>/dev/null >> current_answers
 	@sed -i -e'/^Query took/d' -e's^/.*/projects/DatalogAnalysis/tests/^^g' current_answers
-	@diff -q $(srcdir)/check_correct_answers current_answers
+	@diff -U1000 $(srcdir)/check_correct_answers current_answers
 	@rm compass_parameters current_answers
+	@echo "Test passed"
 
 EXTRA_DIST = check_correct_answers gen_rose_tables.tcl

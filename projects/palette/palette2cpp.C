@@ -14,12 +14,14 @@
 #include "rose_paths.h"
 class SgProject;
 #include "sageSupport.h"
+#include "string_functions.h"
 
 using namespace std;
 
 typedef pair<string, unsigned int> TableMapKey;
 
 string getPrologString(PrologAst::Node* n);
+string getPrologAtomString(PrologAst::Node* n);
 
 vector<PrologAst::Node*> splitCommasToList(PrologAst::Node* n) {
   PrologAst::Term* t = NULL;
@@ -384,12 +386,18 @@ vector<string> parseParameters(const string& argv0, const vector<char*>& args) {
   return sourceFiles;
 }
 
-string findIncludeFile(const string& baseName) {
+string findIncludeFileMaybe(const string& baseName) {
   for (unsigned int i = 0; i < includePaths.size(); ++i) {
     string fileName = includePaths[i] + "/" + baseName;
     ifstream f(fileName.c_str());
     if (f) return fileName;
   }
+  return "";
+}
+
+string findIncludeFile(const string& baseName) {
+  string name = findIncludeFileMaybe(baseName);
+  if (!name.empty()) return name;
   cerr << "Include file \"" << baseName << "\" not found in path " << includePaths << endl;
   exit(1);
 }
@@ -850,6 +858,14 @@ string generateVariableSuffix() {
 typedef map<string /* var name */, pair<Mode, string /* var type */> >
   variableModeMap;
 
+vector<Mode> getModesFromTableRef(const TableReference& ref) {
+  vector<Mode> modes(ref.args.size());
+  for (unsigned int i = 0; i < ref.args.size(); ++i) {
+    modes[i] = ref.args[i].mode;
+  }
+  return modes;
+}
+
 // Assign modes and fix up built-in table refs for a single subgoal
 void assignModesOne(TriggerCondition* tc,
                     TriggerCondition*& newTriggerConditions,
@@ -1012,45 +1028,17 @@ void assignModesOne(TriggerCondition* tc,
                   break;
                 default: break; // Wildcard, so do nothing
               }
-            } else if ((actKind == "cond" || actKind == "do") &&
-                       newAct.args.size() == 1) {
-              assert (newAct.args[0].mode == GROUND);
-              newAct.tableName = "<" + newAct.tableName + ">";
-	      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(newAct));
-            } else if (actKind == "iterMemoryPools" &&
-                       newAct.args.size() == 2) {
-              assert (newAct.args[0].mode == UNBOUND);
-              assert (newAct.args[1].mode == GROUND);
+            } else if (actKind == "makeGround" && newAct.args.size() == 2) {
+              assert (newAct.args[0].mode == UNBOUND); // Variable
+              assert (newAct.args[1].mode == GROUND); // Type
               PrologAst::Variable* var = dynamic_cast<PrologAst::Variable*>(newAct.args[0].arg);
               assert (var);
-              variableModes[var->getName()] = make_pair(GROUND, "SgNode*");
-              newAct.args[0].type = "SgNode*";
-              newAct.tableName = "<iterMemoryPools>";
-	      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(newAct));
-            } else if (actKind == "iterateChildren" &&
-                       newAct.args.size() == 2) {
-              assert (newAct.args[0].mode == GROUND);
-              assert (newAct.args[1].mode == UNBOUND);
-              PrologAst::Variable* var = dynamic_cast<PrologAst::Variable*>(newAct.args[1].arg);
-              assert (var);
-              variableModes[var->getName()] = make_pair(GROUND, "SgNode*");
-              newAct.args[1].type = "SgNode*";
-              newAct.tableName = "<iterateChildren>";
-	      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(newAct));
-            } else if (actKind == "iterCfgEdges" && newAct.args.size() == 4) {
-              PrologAst::Variable* var = dynamic_cast<PrologAst::Variable*>(newAct.args[3].arg);
-              assert (var);
-              variableModes[var->getName()] = make_pair(GROUND, "VirtualCFG::CFGNode");
-              newAct.args[3].type = "VirtualCFG::CFGNode";
-              assert (newAct.args[0].mode == GROUND);
-              assert (newAct.args[1].mode == GROUND);
-              assert (newAct.args[2].mode == GROUND);
-              assert (newAct.args[3].mode == UNBOUND);
-              newAct.tableName = "<iterCfgEdges>";
-	      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(newAct));
+              string type = getPrologAtomString(newAct.args[1].arg);
+              variableModes[var->getName()] = make_pair(GROUND, type);
+              newAct.args[0].type = type;
             } else {
-              cerr << "Bad action kind in " << newAct << endl;
-              exit(1);
+              newAct.tableName = "<" + actKind + ">";
+	      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(newAct));
             }
 #if 0
             cerr << "After working on action " << newAct << " from ref " << ref << endl;
@@ -1068,10 +1056,7 @@ void assignModesOne(TriggerCondition* tc,
         exit(1);
       }
     } else {
-      vector<Mode> modes(ref.args.size());
-      for (unsigned int i = 0; i < ref.args.size(); ++i) {
-        modes[i] = ref.args[i].mode;
-      }
+      vector<Mode> modes = getModesFromTableRef(ref);
       tableInfo.implementationsRequired.insert(modes);
       for (unsigned int i = 0; i < ref.args.size(); ++i) {
         PrologAst::Variable* var = dynamic_cast<PrologAst::Variable*>(ref.args[i].arg);
@@ -1280,18 +1265,27 @@ string implementationTableType(const vector<string>& fieldTypes,
   }
 }
 
-string implementationTableName(const TableMapKey& tableName,
+char modeToChar(Mode m) {
+  switch (m) {
+    case GROUND: return 'p';
+    case UNBOUND: return 'm';
+    case WILDCARD: return 'u';
+    default: assert (false);
+  }
+}
+
+string mangleTableNameAndModes(const string& tableName,
                                const vector<Mode>& modes) {
-  string result = "implementationTable_" + mangle(tableName) + "_";
+  string result = (tableName == "=" ? "__eq__" : tableName) + "_";
   for (unsigned int i = 0; i < modes.size(); ++i) {
-    switch (modes[i]) {
-      case GROUND: result += 'p'; break;
-      case UNBOUND: result += 'm'; break;
-      case WILDCARD: result += 'u'; break;
-      default: assert (false);
-    }
+    result += modeToChar(modes[i]);
   }
   return result;
+}
+
+string implementationTableName(const TableMapKey& tableName,
+                               const vector<Mode>& modes) {
+  return "implementationTable_" + mangleTableNameAndModes(tableName.first, modes);
 }
 
 string astNodeToCpp(PrologAst::Node* n) {
@@ -1346,6 +1340,90 @@ string getPrologString(PrologAst::Node* n) {
   }
 }
 
+string getPrologAtomString(PrologAst::Node* n) {
+  PrologAst::Term* t = dynamic_cast<PrologAst::Term*>(n);
+  if (t && t->getArity() == 0) {
+    return t->getFunctor();
+  } else {
+    cerr << "Expected a nullary functor, found " << n << endl;
+    exit (1);
+  }
+}
+
+string plugInForIterationDefinition(
+    const string& defn,
+    const string& nameSuffix,
+    const TableReference& ref,
+    const string& body) {
+  string result;
+  // Codes in defn:
+  // # expands to nameSuffix
+  // $0..$9 is AST node (as C++) for ref.args[0].arg .. ref.args[9].arg
+  // $s0..$s9 is raw string for ref.args[0].arg .. ref.args[9].arg
+  // $t0..$t9 is type for ref.args[0] .. ref.args[9]
+  // $r0..$r9 is raw streamed output for ref.args[0].arg .. ref.args[9].arg
+  // @ expands to body
+  // Everything else is passed on literally
+  for (size_t i = 0; i < defn.size(); ++i) {
+    switch (defn[i]) {
+      case '#': {
+        result += nameSuffix;
+        break;
+      }
+      case '$': {
+        assert (i + 1 < defn.size());
+        switch (defn[i + 1]) {
+          case 's': {
+            assert (i + 2 < defn.size());
+            assert (defn[i + 2] >= '0' && defn[i + 2] <= '9');
+            size_t idx = defn[i + 2] - '0';
+            result += getPrologString(ref.args[idx].arg);
+            ++i;
+            break;
+          }
+          case 't': {
+            assert (i + 2 < defn.size());
+            assert (defn[i + 2] >= '0' && defn[i + 2] <= '9');
+            size_t idx = defn[i + 2] - '0';
+            ostringstream os;
+            os << ref.args[idx].type;
+            result += os.str();
+            ++i;
+            break;
+          }
+          case 'r': {
+            assert (i + 2 < defn.size());
+            assert (defn[i + 2] >= '0' && defn[i + 2] <= '9');
+            size_t idx = defn[i + 2] - '0';
+            ostringstream os;
+            os << ref.args[idx].arg;
+            result += os.str();
+            ++i;
+            break;
+          }
+          default: {
+            assert (defn[i + 1] >= '0' && defn[i + 1] <= '9');
+            size_t idx = defn[i + 1] - '0';
+            result += astNodeToCpp(ref.args[idx].arg);
+            break;
+          }
+        }
+        ++i;
+        break;
+      }
+      case '@': {
+        result += body;
+        break;
+      }
+      default: {
+        result += defn[i];
+        break;
+      }
+    }
+  }
+  return result;
+}
+
 string generateStatement(TriggerCondition* tc,
                          const string& body = "") {
   ostringstream resultStream;
@@ -1370,54 +1448,31 @@ string generateStatement(TriggerCondition* tc,
     const TableMapKey& tableName = ref.getKey();
     bool isBuiltin = !tableName.first.empty() && tableName.first[0] == '<';
     if (isBuiltin) {
+      assert (tableName.first.size() >= 2);
+      assert (tableName.first[tableName.first.size() - 1] == '>');
+      unsigned int nameSuffix = ++variableInstantiationCounter;
       resultStream << "// " << ref << endl;
-      if (tableName == TableMapKey("<let>", 2)) {
-        resultStream << "{" << endl;
-        resultStream << ref.args[0].type << " const& " << ref.args[0].arg << " = " << getPrologString(ref.args[1].arg) << ";" << endl;
-        resultStream << body;
-        resultStream << "}" << endl;
-      } else if (tableName == TableMapKey("<=>", 2)) {
-        resultStream << "if ((" << getPrologString(ref.args[0].arg) << ") == (" << getPrologString(ref.args[1].arg) << ")) {" << endl;
-        resultStream << body;
-        resultStream << "}" << endl;
-      } else if (tableName == TableMapKey("<cond>", 1)) {
-        resultStream << "if (" << getPrologString(ref.args[0].arg) << ") {" << endl;
-        resultStream << body;
-        resultStream << "}" << endl;
-      } else if (tableName == TableMapKey("<do>", 1)) {
-        resultStream << getPrologString(ref.args[0].arg) << ";" << endl;
-        resultStream << body;
-      } else if (tableName == TableMapKey("<iterMemoryPools>", 2)) {
+      if (tableName == TableMapKey("<iterMemoryPools>", 2)) {
         vector<PrologAst::Node*> pools = prologListToVector(ref.args[1].arg);
         string var = getPrologString(ref.args[0].arg);
+        string filename = findIncludeFile(mangleTableNameAndModes(tableName.first.substr(1, tableName.first.size() - 2), getModesFromTableRef(ref)) + ".itmpl");
+        const string defn = PrologLexer::readFile(filename);
         for (unsigned int i = 0; i < pools.size(); ++i) {
           PrologAst::Term* t = dynamic_cast<PrologAst::Term*>(pools[i]);
           assert (t && t->getArity() == 0);
-          resultStream << "PALETTE_ITERATE_THROUGH_MEMORY_POOL(" << t->getFunctor() << ", " << var << ") {" << endl;
-          resultStream << body;
-          resultStream << "}" << endl;
+          TableReference ref2 = ref;
+          ref2.args[1].arg = t;
+          resultStream << plugInForIterationDefinition(defn, StringUtility::numberToString(nameSuffix), ref2, body);
         }
-      } else if (tableName == TableMapKey("<iterateChildren>", 2)) {
-        unsigned int nameSuffix = ++variableInstantiationCounter;
-        resultStream << "{" << endl;
-        resultStream << "std::vector<SgNode*> paletteChildren" << nameSuffix << " = (" << astNodeToCpp(ref.args[0].arg) << ")->get_traversalSuccessorContainer();" << endl;
-        resultStream << "for (std::vector<SgNode*>::const_iterator paletteChildIterator" << nameSuffix << " = paletteChildren" << nameSuffix << ".begin(); paletteChildIterator" << nameSuffix << " != paletteChildren" << nameSuffix << ".end(); ++paletteChildIterator" << nameSuffix << ") {" << endl;
-        resultStream << "SgNode* " << getPrologString(ref.args[1].arg) << " = *paletteChildIterator" << nameSuffix << ";" << endl;
-        resultStream << body;
-        resultStream << "}" << endl; // Close for loop
-        resultStream << "}" << endl; // Close scope of paletteChildren(n)
-      } else if (tableName == TableMapKey("<iterCfgEdges>", 4)) {
-        unsigned int nameSuffix = ++variableInstantiationCounter;
-        resultStream << "{" << endl;
-        resultStream << "std::vector<VirtualCFG::CFGEdge> paletteEdges" << nameSuffix << " = (" << astNodeToCpp(ref.args[0].arg) << ")." << getPrologString(ref.args[1].arg) << "();" << endl;
-        resultStream << "for (std::vector<VirtualCFG::CFGEdge>::const_iterator paletteEdgeIterator" << nameSuffix << " = paletteEdges" << nameSuffix << ".begin(); paletteEdgeIterator" << nameSuffix << " != paletteEdges" << nameSuffix << ".end(); ++paletteEdgeIterator" << nameSuffix << ") {" << endl;
-        resultStream << "VirtualCFG::CFGNode " << getPrologString(ref.args[3].arg) << " = paletteEdgeIterator" << nameSuffix << "->" << getPrologString(ref.args[2].arg) << "();" << endl;
-        resultStream << body;
-        resultStream << "}" << endl; // Close for loop
-        resultStream << "}" << endl; // Close scope of paletteEdges(n)
       } else {
-        cerr << "Bad built-in table name " << tableName.first << "/" << tableName.second << endl;
-        exit(1);
+        string filename = findIncludeFileMaybe(mangleTableNameAndModes(tableName.first.substr(1, tableName.first.size() - 2), getModesFromTableRef(ref)) + ".itmpl");
+        if (!filename.empty()) {
+          const string defn = PrologLexer::readFile(filename);
+          resultStream << plugInForIterationDefinition(defn, StringUtility::numberToString(nameSuffix), ref, body);
+        } else {
+          cerr << "Bad built-in table name " << tableName.first << "/" << tableName.second << endl;
+          exit(1);
+        }
       }
     } else {
       vector<Mode> modes(ref.args.size());

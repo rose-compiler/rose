@@ -45,7 +45,7 @@ proc iterateMemoryPools {fields pools} {
   foreach f $fields {
     lappend modeStr "-('$f')"
   }
-  return "rule(\[[join $modeStr ,\ ]\], \[iterMemoryPools(\$0, \[[join $quotedPools ,]\]), rescan\])"
+  return "rule(\[[join $modeStr ,\ ]\], \[iterMemoryPools(\$0, \[[join $quotedPools ,]\]), makeGround(\$0, 'SgNode*'), rescan\])"
 }
 
 proc treeNode {tableName sageName fieldTypesAndNames} {
@@ -154,7 +154,7 @@ proc listNode {tableName sageName otherFields args} {
   foreach {ourName roseName roseType} $listFields {
     puts ":- prim(${tableName}${ourName}, 3,"
     puts "        \[rule(\[+('SgNode*'), +('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0) && \$1 >= 0 && \$1 < is${sageName}(\$0)->get_${roseName}().size()\"), let('${roseType}::const_iterator', \$100, \"is${sageName}(\$0)->get_${roseName}().begin()\"), do(\"std::advance(\$100, \$1)\"), let('SgNode*', \$2, \"*(\$100)\")\]),"
-    puts "         rule(\[+('SgNode*'), -('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0)\"), iterRange(\$1, 0, \"is${sageName}(\$0)->get_${roseName}().size()\"), rescan\]),"
+    puts "         rule(\[+('SgNode*'), -('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0)\"), iterRange(\$1, 0, \"is${sageName}(\$0)->get_${roseName}().size()\"), makeGround(\$1, 'int'), rescan\]),"
     puts "         [iterateMemoryPools {int SgNode*} $sageName]\])."
   }
 }
@@ -254,9 +254,11 @@ puts {
 	      [let('VirtualCFG::CFGNode', $0, "VirtualCFG::CFGNode($1, $2)")])]).
 :- prim(cfgNext, 2,
         [rule([+('VirtualCFG::CFGNode'), -('VirtualCFG::CFGNode')],
-	      [iterCfgEdges($0, "outEdges", "target", $1)]),
+	      [iterCfgEdges($0, "outEdges", "target", $1),
+               makeGround($1, 'VirtualCFG::CFGNode')]),
          rule([-('VirtualCFG::CFGNode'), +('VirtualCFG::CFGNode')],
-	      [iterCfgEdges($1, "inEdges", "source", $0)])]).
+	      [iterCfgEdges($1, "inEdges", "source", $0),
+               makeGround($0, 'VirtualCFG::CFGNode')])]).
 }
 
 # Assorted
@@ -271,7 +273,7 @@ puts {
          rule([+('SgNode*'), '_'('SgNode*')],
               [cond("$0 && !$0->get_traversalSuccessorContainer.empty()")]),
          rule([+('SgNode*'), -('SgNode*')],
-	      [cond("$0"), iterateChildren($0, $1)])]).
+	      [cond("$0"), iterateChildren($0, $1), makeGround($1, 'SgNode*')])]).
 }
 
 # Compass
