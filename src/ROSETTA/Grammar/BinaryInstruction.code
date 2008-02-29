@@ -720,23 +720,37 @@ SOURCE_BINARY_FUNCTION_DECLARATION_START
 int 
 SgAsmFunctionDeclaration::nrOfValidInstructions(  ) {
   std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
-  std::vector<SgNode*>::iterator j = succs.end();
+  std::vector<SgNode*>::reverse_iterator j = succs.rbegin();
   int instructions = succs.size();
   bool foundRet=false;
+  bool nodeOtherThanNopAfterRetExists=false;	
+/*
   if (j!=succs.begin())
     j--;
   else
     return 0;
-  for (;j!=succs.begin(); j--) {
+*/
+  for (;j!=succs.rend(); j++) {
      SgNode* n = *j;
-     if (isSgAsmx86Ret(n)) {
+     if (isSgAsmx86Ret(n) || isSgAsmx86Hlt(n)) {
           foundRet=true;
           break;
-    } else 
+    } else {
+       if (isSgAsmx86Nop(n)==NULL) {
+          nodeOtherThanNopAfterRetExists= true;
+       }
        instructions--;
+    }
   }
   if (!foundRet)
      instructions = succs.size();
+  // if we find a return and there are NOPs following it somewhere,
+  // we cut off the CFG at the NOP but we keep valid instructions
+  // after the RET
+  if (foundRet)
+    if (nodeOtherThanNopAfterRetExists)
+      return succs.size();
+   
   return instructions;
 }
 
@@ -944,12 +958,10 @@ SgAsmx86ControlTransferInstruction::cfgBinOutEdges() {
 
   vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
   int max = succs.size()-1;
-  //cerr << " found Control transfer ... " << endl;
-
 
 // this code is correct, but it rather should be part of the binary AST build.
-
-  if (isSgAsmx86Ret(this)) {
+  if (isSgAsmx86Ret(this) || isSgAsmx86Hlt(this)) {
+    if (isSgAsmx86Ret(this)) {
        // if we reach the end of a function, make sure we draw the edges to the caller
 	std::vector <SgAsmStatement*> dest_list = isSgAsmx86Ret(this)->get_dest();
 //	cerr << " ret cfg ... destinations = " << dest_list.size() << endl;
@@ -963,9 +975,20 @@ SgAsmx86ControlTransferInstruction::cfgBinOutEdges() {
 	     //cerr << " no dest found " << endl;
 	   }
 	}
+      }
+    if (idx < max) {
+      // look ahead, if all instructions that follow are NOP, that the current is the last one
+      bool nodeOtherThanNopExists=false;
+      for (int j=(idx+1);j<=max; j++) {
+          if (isSgAsmx86Nop(succs[j])==NULL)
+	     nodeOtherThanNopExists=true;          
+      }
+      if (nodeOtherThanNopExists)
+         makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
+
+    }
     return result;
   }
-
 
   if (idx == max) {
 	SgAsmInstruction* dest = this->get_destination();

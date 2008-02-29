@@ -90,7 +90,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
       initFunctionList(globalBin);
       //process_jumps();
       if (!db) {
-	resolveFunctions(globalBin);
+      	resolveFunctions(globalBin);
       }
       process_jumps();
       initialized = true;

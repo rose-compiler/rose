@@ -44,12 +44,13 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     if (func) {
+      int validInstructions = func->nrOfValidInstructions();
       funcMap[func]=counter;
       nodesMap[func]=count;
       string name = func->get_name();
       string text = "node [\n   id " + RoseBin_support::ToString(counter) + "\n  id_ " + 
 	RoseBin_support::ToString(counter) + "\n  label \"" + name + "\"\n  ";
-      text +="   nrinstr_ "+RoseBin_support::ToString(func->nrOfValidInstructions())+" \n";
+      text +="   nrinstr_ "+RoseBin_support::ToString(validInstructions)+" \n";
       text+= " isGroup 1\n isGroup_ 1\n ]\n";
 
       if (name=="frame_dummy") {
@@ -63,7 +64,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
 	  cerr << " Node contained at pos:"<<ii<<"  - " << n->class_name() << endl;
 	  ii++;
 	}
-      cerr << " number of validInstructions: " << func->nrOfValidInstructions() << endl;
+      cerr << " number of validInstructions: " << validInstructions << endl;
       }
 
 
@@ -165,13 +166,6 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
 	cerr << " GMLGraph parent == 0 " << endl;
 
       text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n" + name ;
-
-      SgAsmInstruction* pre = bin_inst->cfgBinFlowInEdge();
-      if (pre==NULL) {
-	// first node
-	text +="   first_ 1 \n";
-      }
-
       int instrnr = funcDecl_parent->get_childIndex(bin_inst);
       text +="   instrnr_ "+RoseBin_support::ToString(instrnr)+" \n";
       text +="   gid_ "+RoseBin_support::ToString(parent)+" \n";
@@ -263,7 +257,9 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   SgAsmx86Ret* ret = isSgAsmx86Ret(control);
 
   string add = "";
+  string typeNode = "";
   if (call || ret) {
+    typeNode += " Type_ \"[ 67108864 FUNCTION_NODE ]\" \n";
     if (nodest_call)
       add = " FF9900 ";
     else if (error)
@@ -271,19 +267,21 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
     else
       add = " FFCCFF ";
   } else if (jmp) {
+    typeNode += " Type_ \"[  67108864 FILE_NODE ]\" \n";
     if (nodest_jmp)
       add = " FF0000 ";
     else
       add = " 00FF00 ";
   } else
     if (control) {
+      typeNode += " Type_ \"[  67108864 CLASS_NODE ]\" \n";
       if (isSgAsmx86Int(control))
 	add = " 0000FF ";
       else
 	add = " 008800 ";
-    } else
+    } else {
       add = " FFFF66 ";
-
+    }
   if (checked)
     add = " 777777 ";
 
@@ -299,11 +297,26 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   regs+=eval;
   // cant get the extra register info printed in gml format
   // because multiline is not supported? (tps 10/18/07)
-  name = name+/*" " +regs +*/ "  " +dfa_variable+" "+"vis:"+visitedCounter;
-  nodeStr= "   label \"" + name+"\"\n ";
+  name = name/*+" " +regs + "  " +dfa_variable+" "+"vis:"+visitedCounter */;
+  nodeStr= "   label \"" + name+"\"\n "+typeNode;
   int length = name.length();
+
+
+  SgAsmInstruction* pre = bin_inst->cfgBinFlowInEdge();
+  if (pre==NULL) {
+    // first node
+    nodeStr +="   first_ 1 \n";
+  } else {
+    if (isSgAsmx86Ret(pre) || isSgAsmx86Hlt(pre)) {
+      // this instruction must be suspicious
+      add =" 0000FF ";	  
+    } 
+  }
   nodeStr += "  Node_Color_ " + add + "  \n";
   nodeStr += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"rectangle\" fill \"#" + add +  "\"  ]\n";
+
+
+
   return nodeStr;
 }
 
@@ -447,21 +460,34 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	add = "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#000000\" ]  ]\n";
       }
 
+      // skip the function declaration edges for now
+      bool blankOutput=false;
+      if (skipFunctions)
+	if (isSgAsmFunctionDeclaration(binStat_s))
+	  blankOutput=true;
+      if (skipInternalEdges) {
+	SgAsmx86ControlTransferInstruction* contrl = isSgAsmx86ControlTransferInstruction(source->get_SgNode());
+	SgAsmx86Ret* ret = isSgAsmx86Ret(contrl);
+	if (contrl && ret==NULL) {
+	  SgAsmx86Call* call = isSgAsmx86Call(contrl);
+	  SgAsmx86Jmp* jmp = isSgAsmx86Jmp(contrl);
+	  if (call)
+	    output += "  Edge_Color_ FF0000  \n  Type_ \"[ 33554432 CALL_EDGE ]\" \n";
+	  else if (jmp)
+	    output += "  Edge_Color_ 00FF00  \n  Type_ \"[ 33554432 FILECALL_EDGE ]\" \n";
+	  else
+	    output += "  Edge_Color_ 0000FF  \n   ";
+	}
+	else
+	  blankOutput=true;
+      }
+
       if (add=="")
 	output += "   graphics [ type \"line\" arrow \"last\" fill \"#000000\" ]  ]\n";
       else output +=add;
 
-      // skip the function declaration edges for now
-      if (skipFunctions)
-	if (isSgAsmFunctionDeclaration(binStat_s))
-	  output="";
-      if (skipInternalEdges) {
-	SgAsmx86ControlTransferInstruction* contrl = isSgAsmx86ControlTransferInstruction(source->get_SgNode());
-	SgAsmx86Ret* ret = isSgAsmx86Ret(contrl);
-	if (contrl && ret==NULL) {} 
-	else
-	  output="";
-      }
+      if (blankOutput)
+	output="";
 
       myfile << output;
     }

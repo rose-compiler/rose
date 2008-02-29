@@ -94,9 +94,17 @@ void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers,
 
 int main(int argc, char** argv) {
 
+  if (!containsArgument(argc, argv, "-check") && 
+      !containsArgument(argc, argv, "-printTree") &&
+      !containsArgument(argc, argv, "-callgraph") &&
+      !containsArgument(argc, argv, "-cfa") &&
+      !containsArgument(argc, argv, "-dfa") 
+      ) {argc = 1;}
+
   if (argc < 2) {
     fprintf(stderr, "Usage: %s executableName [OPTIONS]\n", argv[0]);
     cout << "\nOPTIONS: " <<endl;
+    cout << "-check                - run all checkers on binary. " << endl; 
     cout << "-printTree            - create dot file of AST. " << endl; 
     cout << "-callgraph            - perform callgraph analysis and print callgraph.dot file. " << endl; 
     cout << "-cfa                  - perform control flow analysis and print cfg.dot file. " << endl; 
@@ -110,7 +118,6 @@ int main(int argc, char** argv) {
   }
   string execName = argv[1];
 
-  
   bool interprocedural = false;
   if (containsArgument(argc, argv, "-inter")) {
     interprocedural = true;
@@ -192,6 +199,7 @@ int main(int argc, char** argv) {
   RoseBin_unparse_visitor* visitor = up.getVisitor();
   ROSE_ASSERT(visitor);
 
+  if (containsArgument(argc, argv, "-check")) {
   // get a list of all checkers and traverse
   vector <BC_AnalysisInterface*> checkers;
   vector <BC_GraphAnalysisInterface*> graph_checkers;
@@ -232,7 +240,7 @@ int main(int argc, char** argv) {
     cout << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  endl;
     dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
   }  
-  
+    }  
 
   return 0;
 }

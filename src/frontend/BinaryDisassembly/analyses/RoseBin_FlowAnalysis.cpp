@@ -597,6 +597,10 @@ void RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	ostringstream addrhex_t;
 	addrhex_t << hex << setw(8) << trg_address ;
 
+		if (RoseBin_support::DEBUG_MODE()) 
+	 cout << "     OUTEDGES TO: vec[" << i << "/" << vec.size() << "]  :" <<
+	   addrhex_t.str() << "  " << trg_mnemonic << endl; 
+
 	string hexStr = addrhex_t.str();
 	SgDirectedGraphNode* trg=NULL;
 	if (analysisName=="callgraph") 
