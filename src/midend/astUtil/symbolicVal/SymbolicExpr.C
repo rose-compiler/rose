@@ -74,7 +74,7 @@ void SymbolicExpr:: AddOpd( const SymbolicTerm& v, OPApplicator *op)
     }
 
 void SymbolicExpr:: AddOpd( const SymbolicVal& v, OPApplicator* op)
-     { int tmp;
+     {
        if (v.IsNIL());
        AddOpd(Val2Term(v), op);
      }
@@ -360,7 +360,7 @@ class DistributeVisitor : private OPHelpVisitor
       }
  public:
   DistributeVisitor( const SymbolicVal& v, const SymbolicExpr& _exp, 
-                     OPApplicator& _op) : exp(_exp), OPHelpVisitor(_op, v) {}
+                     OPApplicator& _op) : OPHelpVisitor(_op, v), exp(_exp) {}
   SymbolicVal ApplyOP( const SymbolicVal &_v2)
    { v2 = _v2; return OPHelpVisitor::ApplyOP(_v2); }
 };

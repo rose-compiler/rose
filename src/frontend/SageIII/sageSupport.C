@@ -63,7 +63,7 @@ FILE* popenReadFromVector(const vector<string>& argv) {
 
 int pcloseFromVector(FILE* f) { // Assumes there is only one child process
   int status;
-  pid_t err = wait(&status);
+  /* pid_t err = */ wait(&status);
   fclose(f);
   return status;
 }
@@ -4579,7 +4579,7 @@ SgFile::callFrontEnd ()
                     bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
 
                  // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
-                    for (int i = 0; i < includeList.size(); i++)
+                    for (size_t i = 0; i < includeList.size(); i++)
                        {
                          frontEndCommandLine.push_back(includeList[i]);
 

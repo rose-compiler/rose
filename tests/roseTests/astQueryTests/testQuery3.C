@@ -39,7 +39,7 @@ main( int argc, char * argv[] )
 
   // DQ (1/19/2007): I think this value changed as a result of a bug fix in ROSE (variant handling fix in sage_gen_be.C)
   // const int validValue = 55;
-     const unsigned int validValue = 53;
+  // const unsigned int validValue = 53;
 	 //Functional to find nodes which is in the VariantVector
 	 NodesInVector nodeRecognized;
 

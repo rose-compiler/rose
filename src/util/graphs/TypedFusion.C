@@ -116,7 +116,7 @@ operator() ( GraphAccessInterface *dg, TypedFusionOperator &fuseOp, int fusetype
       }
     }
   }
-  for (int i = 0; i < size; ++i)
+  for (size_t i = 0; i < size; ++i)
     delete infoVec[i];
   delete [] infoVec;
 }

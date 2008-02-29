@@ -90,7 +90,7 @@ float SelfSpatialReuse( LoopTransformInterface& la, const AstNodePtr& r,
                         unsigned defaultArrayBound)
 {
         int size = AstRefGetAccessStride()(la, r, ivarname, defaultArrayBound );
-        if (size > 0 && size < linesize) 
+        if (size > 0 && size < (int)linesize) 
           return 1 - size * 1.0 /linesize ;
         else
           return 0;
@@ -147,7 +147,7 @@ class CollectArrayRef : public CollectObject<AstNodePtr>
     }
    CollectArrayRef( LoopTransformInterface& _la, 
                     CollectObject<AstNodePtr>& _collect) 
-      : la(_la), collect(_collect) {}
+      : collect(_collect), la(_la) {}
 };
 
 void ArrayReferences( LoopTransformInterface& la, const AstNodePtr& s, 

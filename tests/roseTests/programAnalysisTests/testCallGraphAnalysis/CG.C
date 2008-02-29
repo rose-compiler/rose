@@ -48,7 +48,7 @@ void sortedCallGraphDump(string fileName, CallGraphCreate * cg)
 		if (!(cg->GetNodeEdgeIterator(*nodeItr,GraphAccess::EdgeIn)).ReachEnd() || !(cg->GetNodeEdgeIterator(*nodeItr,GraphAccess::EdgeOut)).ReachEnd())
 		{
 			// add that node to the list
-			cgNodes.push_back(*nodeItr);
+			cgNodes.push_back(currentNode);
 		}
 		nodeItr++;
 	}

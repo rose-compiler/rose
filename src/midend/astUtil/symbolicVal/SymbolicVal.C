@@ -23,7 +23,7 @@ SymbolicVal ::SymbolicVal (int val)
 
 
 SymbolicConst::  SymbolicConst( int _val, int _d)
-        : val (""), intval( _val), dval(_d), type(_d == 1? "int" : "fraction")
+        : val (""), type(_d == 1? "int" : "fraction"), intval( _val), dval(_d)
      { 
         char buf[40];
         if (_d == 1)
