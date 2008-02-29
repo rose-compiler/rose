@@ -197,6 +197,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Test , "Asmx86Test",  "Asmx86TestTag" );
 
      // Control Transfer Instructions
+     NEW_TERMINAL_MACRO ( Asmx86Hlt ,      "Asmx86Hlt",     "Asmx86HltTag" );
      NEW_TERMINAL_MACRO ( Asmx86Ret ,       "Asmx86Ret",      "Asmx86RetTag" );
      NEW_TERMINAL_MACRO ( Asmx86Leave ,     "Asmx86Leave",    "Asmx86LeaveTag" );
      NEW_TERMINAL_MACRO ( Asmx86Call ,      "Asmx86Call",     "Asmx86CallTag" );
@@ -285,7 +286,6 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Esc ,      "Asmx86Esc",     "Asmx86EscTag" );
      NEW_TERMINAL_MACRO ( Asmx86Lock ,     "Asmx86Lock",    "Asmx86LockTag" );
      NEW_TERMINAL_MACRO ( Asmx86Wait ,     "Asmx86Wait",    "Asmx86WaitTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Hlt ,      "Asmx86Hlt",     "Asmx86HltTag" );
      NEW_TERMINAL_MACRO ( Asmx86Data16 ,   "Asmx86Data16",  "Asmx86Data16Tag" );
      NEW_TERMINAL_MACRO ( Asmx86Arpl ,     "Asmx86Arpl",    "Asmx86ArplTag" );
 
@@ -434,7 +434,7 @@ Grammar::setUpBinaryInstructions ()
 			     , "Asmx86LogicalInstruction", "Asmx86LogicalInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86MiscInstruction, 
-			     Asmx86Lea | Asmx86Nop | Asmx86Ud2 | Asmx86Xlat | Asmx86Cpuid | Asmx86Rdtsc | Asmx86Esc | Asmx86Lock | Asmx86Wait | Asmx86Hlt | 
+			     Asmx86Lea | Asmx86Nop | Asmx86Ud2 | Asmx86Xlat | Asmx86Cpuid | Asmx86Rdtsc | Asmx86Esc | Asmx86Lock | Asmx86Wait |  
 			     Asmx86Data16 | Asmx86Pause | Asmx86Arpl | Asmx86Emms
 			     , "Asmx86MiscInstruction", "Asmx86MiscInstructionTag", false );
 
@@ -464,7 +464,7 @@ Grammar::setUpBinaryInstructions ()
 			     Asmx86Loop   , "Asmx86ConditionalControlTransferInstruction", "Asmx86ConditionalControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86UnConditionalControlTransferInstruction, 
-			     Asmx86Call | Asmx86Jmp | Asmx86Ret | Asmx86IRet | Asmx86Int | Asmx86Enter | Asmx86Leave 
+			     Asmx86Call | Asmx86Jmp | Asmx86Ret | Asmx86IRet | Asmx86Int | Asmx86Enter | Asmx86Leave | Asmx86Hlt 
 			     , "Asmx86UnConditionalControlTransferInstruction", "Asmx86UnConditionalControlTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ControlTransferInstruction, 
