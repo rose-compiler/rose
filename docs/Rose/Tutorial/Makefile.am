@@ -91,13 +91,13 @@ generatedCodeExamples = \
 $(generatedCodeExamples):
 	cd $(top_builddir)/tutorial; $(MAKE) docs
 
-latex-docs-tutorial: $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz
+latex-docs-tutorial: $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
 
 # Development rule to force build of latex documentation
 # force-tutorial-docs: tutorial.tex $(latexFiles) $(generatedCodeExamples)
 force: force-tutorial-docs
 force-tutorial-docs: tutorial.tex gettingStarted.tex link_LaTeX_files logo
-	echo "Building tutorial documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz ... ";
+	echo "Building tutorial documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf ... ";
 	$(LATEX) tutorial.tex;
 	$(LATEX) tutorial.tex;
 #	$(LATEX) tutorial.tex;
@@ -119,33 +119,31 @@ force-tutorial-docs: tutorial.tex gettingStarted.tex link_LaTeX_files logo
 #	echo "Make the source directory writable (automake generated test directories are not)"
 #	chmod +w $(srcdir)
 #	cp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.ps.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.ps.gz;
-	rm -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz
-	gzip $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf;
-	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz;
+	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf;
 
 logo:
 	mkdir -p ../ROSE_WebPages;
 	cp -f @top_srcdir@/docs/Rose/compass_rose.gif ../ROSE_WebPages
 
-$(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz: tutorial.tex gettingStarted.tex link_LaTeX_files logo
+$(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf: tutorial.tex gettingStarted.tex link_LaTeX_files logo
 	@echo "Building Latex documentation for Rose Project (tutorial) ... "
 #	@echo "Calling \"$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.ps.gz\" make rule in ROSE/docs/Rose/Makefile ... (MAKE = $(MAKE) AM_MAKEFLAGS = $(AM_MAKEFLAGS))"
 #	@echo "PWD = $(PWD) top_pwd = $(top_pwd) top_srcdir = $(top_srcdir)"
 #	Need to make this conditional so that the make distcheck will work (and not rebuild the documentation)
 #  Also copy a version to the ROSE_WebPages/ROSE_Tutorial directory 
 #  to support relative links to postscript version from html (then run gzip to bild a compressed version)
-	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz); then \
+	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf); then \
         echo "***********************************************************************************"; \
-        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz has been found and is"; \
+        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf has been found and is"; \
         echo "already provided in source directory for your convience."; \
         echo "User's cannot build documentation from a ROSE distribution."; \
         echo "Only ROSE developers can build the Web and LaTeX documentation (access to CVS version is required) "; \
         echo "If this is a development version and your are building ROSE in the source tree"; \
-        echo "then remove $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz"; \
+        echo "then remove $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf"; \
         echo "before rebuilding documentation (retry \"make docs\")"; \
         echo "***********************************************************************************"; \
       else \
-	     echo "Building tutorial documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz ... "; \
+	     echo "Building tutorial documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf ... "; \
 	     echo "Build the files that the tutorial documentation requires ..."; \
 	     cd $(top_builddir)/tutorial; \
 	     $(MAKE) docs; \
@@ -158,9 +156,7 @@ $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz $(PACKAGE_NAME)-$(P
         mkdir -p ../ROSE_WebPages/ROSE_Tutorial; \
 	     echo "Copy the tutorial documentation to the source tree so it can be saved (running gzip) ... "; \
 	     cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf ../ROSE_WebPages/ROSE_Tutorial/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf; \
-        rm -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz; \
-	     gzip $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf; \
-	     cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz; \
+	     cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf; \
       fi
 
 #       latex2html -dir ../ROSE_WebPages/ROSE_Tutorial -split 2 -noinfo -local_icons tutorial.tex;
@@ -175,19 +171,19 @@ $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz $(PACKAGE_NAME)-$(P
 docs:
 #	@echo "Calling \"docs\" make rule in ROSE/docs/Rose/Makefile ... (MAKE = $(MAKE) AM_MAKEFLAGS = $(AM_MAKEFLAGS))"
 #	@echo "PWD = $(PWD) top_pwd = $(top_pwd) top_srcdir = $(top_srcdir)"
-	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz); then \
+	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf); then \
         echo "***********************************************************************************"; \
-        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz"; \
+        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf"; \
         echo "is already provided in source directory for your convience."; \
         echo "User's cannot build documentation from a ROSE distribution.";\
         echo "Only ROSE developers can build the Web and LaTeX documentation (access to CVS version is required) "; \
         echo "If this is a development version and your are building ROSE in the source tree,"; \
-        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz"; \
+        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf"; \
         echo "before rebuilding documentation (retry \"make docs\")"; \
         echo "***********************************************************************************"; \
       else \
-        echo "Building documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz not found) ... "; \
-        $(MAKE) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz; \
+        echo "Building documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf not found) ... "; \
+        $(MAKE) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf; \
       fi
 	@echo ""
 	@echo ""
@@ -198,10 +194,10 @@ docs:
 
 #  $(MAKE) latex-docs-tutorial;
 
-EXTRA_DIST = $(latexFiles) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz 
+EXTRA_DIST = $(latexFiles) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf 
 
 cleanSource: clean
-	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf.gz
+	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
 
 clean-local:
 #	Note that when the compile tree and the source tree are the same this will whip out the documentation!
