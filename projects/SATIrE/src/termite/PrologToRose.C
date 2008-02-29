@@ -75,7 +75,8 @@ PrologToRose::toRose(PrologTerm* t) {
   if ((node == NULL) && (t->getRepresentation() != "null")
       && (t->getName() != "file")) {
     cerr << "**WARNING: could not translate the term '" 
-	 << t->getRepresentation() << "'" << endl;
+	 << t->getRepresentation() << "'" 
+         << "of arity " << t->getArity() << "." << endl;
   }
 
   // Set the CompilerGenerated Flag
@@ -120,41 +121,41 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
   /* depending on the node type: create it*/
   if(isValueExp(tname)) {
     s = createValueExp(fi,child1,t);
-  }else if(isUnaryOp(tname)) {
+  } else if(isUnaryOp(tname)) {
     s = createUnaryOp(fi,child1,t);
-  }else if(tname == SG_PREFIX "file") {
+  } else if(tname == SG_PREFIX "file") {
     s = createFile(fi,child1,t);
-  }else if(tname == SG_PREFIX "return_stmt") {
+  } else if(tname == SG_PREFIX "return_stmt") {
     s = createReturnStmt(fi,child1,t);
-  }else if(tname == SG_PREFIX "function_definition") {
+  } else if(tname == SG_PREFIX "function_definition") {
     s = createFunctionDefinition(fi,child1,t);
-  }else if(tname == SG_PREFIX "initialized_name") {
+  } else if(tname == SG_PREFIX "initialized_name") {
     s = createInitializedName(fi,child1,t);
-  }else if(tname == SG_PREFIX "assign_initializer") {
+  } else if(tname == SG_PREFIX "assign_initializer") {
     s = createAssignInitializer(fi,child1,t);
-  }else if(tname == SG_PREFIX "expr_statement") {
+  } else if(tname == SG_PREFIX "expr_statement") {
     s = createExprStatement(fi,child1,t);
-  }else if(tname == SG_PREFIX "default_option_stmt") {
+  } else if(tname == SG_PREFIX "default_option_stmt") {
     s = createDefaultOptionStmt(fi,child1,t);
-  }else if(tname == SG_PREFIX "class_declaration") {
+  } else if(tname == SG_PREFIX "class_declaration") {
     s = createClassDeclaration(fi,child1,t);
-  }else if(tname == SG_PREFIX "delete_exp") {
+  } else if(tname == SG_PREFIX "delete_exp") {
     s = createDeleteExp(fi,child1,t);
-  }else if(tname == SG_PREFIX "var_arg_op") {
+  } else if(tname == SG_PREFIX "var_arg_op") {
     s = createVarArgOp(fi,child1,t);
-  }else if(tname == SG_PREFIX "var_arg_end_op") {
+  } else if(tname == SG_PREFIX "var_arg_end_op") {
     s = createVarArgEndOp(fi,child1,t);
-  }else if(tname == SG_PREFIX "var_arg_start_one_operand_op") {
+  } else if(tname == SG_PREFIX "var_arg_start_one_operand_op") {
     s = createVarArgStartOneOperandOp(fi,child1,t);
-  }else if(tname == SG_PREFIX "aggregate_initializer") {
+  } else if(tname == SG_PREFIX "aggregate_initializer") {
     s = createAggregateInitializer(fi,child1,t);
-  }else if(tname == SG_PREFIX "namespace_declaration_statement") {
+  } else if(tname == SG_PREFIX "namespace_declaration_statement") {
     s = createNamespaceDeclarationStatement(fi,child1,t);
-  }else if(tname == SG_PREFIX "size_of_op") {
+  } else if(tname == SG_PREFIX "size_of_op") {
     s = createSizeOfOp(fi,child1,t);
-  }else if(tname == SG_PREFIX "constructor_initializer") {
+  } else if(tname == SG_PREFIX "constructor_initializer") {
     s = createConstructorInitializer(fi,child1,t);
-  }else if(tname == SG_PREFIX "pragma_declaration") {
+  } else if(tname == SG_PREFIX "pragma_declaration") {
     s = createPragmaDeclaration(fi,child1,t);
   } else if (tname == SG_PREFIX "typedef_declaration") {
     s = createTypedefDeclaration(fi,t);
@@ -201,15 +202,15 @@ PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
     s = createDoWhileStmt(fi,child1,child2,t);
   } else if (tname == SG_PREFIX "while_stmt") {
     s = createWhileStmt(fi,child1,child2,t);
-  }else if(tname == SG_PREFIX "var_arg_copy_op") {
+  } else if(tname == SG_PREFIX "var_arg_copy_op") {
     s = createVarArgCopyOp(fi,child1,child2,t);
-  }else if(tname == SG_PREFIX "var_arg_start_op") {
+  } else if(tname == SG_PREFIX "var_arg_start_op") {
     s = createVarArgStartOp(fi,child1,child2,t);	
-  }else if(tname == SG_PREFIX "function_call_exp") {
+  } else if(tname == SG_PREFIX "function_call_exp") {
     s = createFunctionCallExp(fi,child1,child2,t);	
-  }else if(tname == SG_PREFIX "try_stmt") {
+  } else if(tname == SG_PREFIX "try_stmt") {
     s = createTryStmt(fi,child1,child2,t);	
-  }else if(tname == SG_PREFIX "catch_option_stmt") {
+  } else if(tname == SG_PREFIX "catch_option_stmt") {
     s = createCatchOptionStmt(fi,child1,child2,t);	
   }
 
@@ -335,6 +336,8 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
   SgNode* s = NULL;
   if(tname == SG_PREFIX "global") {
     s = createGlobal(fi,succs);
+  } else if (tname == SG_PREFIX "project") {
+    s = createProject(fi,succs);
   } else if (tname == SG_PREFIX "function_parameter_list") {
     s = createFunctionParameterList(fi,succs);
   } else if (tname == SG_PREFIX "basic_block") {
@@ -873,7 +876,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     ve = valnode;
 
     /* floating point types*/
-  }else if (vtype == SG_PREFIX "float_val") {
+  } else if (vtype == SG_PREFIX "float_val") {
     debug("unparsing float");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
@@ -883,7 +886,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     i >> f;
     ve = new SgFloatVal(fi,f);
     ROSE_ASSERT(ve != NULL);
-  }else if (vtype == SG_PREFIX "double_val") {
+  } else if (vtype == SG_PREFIX "double_val") {
     debug("unparsing double");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
@@ -893,7 +896,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     i >> f;
     ve = new SgDoubleVal(fi,f);
     ROSE_ASSERT(ve != NULL);
-  }else if (vtype == SG_PREFIX "long_double_val") {
+  } else if (vtype == SG_PREFIX "long_double_val") {
     debug("unparsing long double");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
@@ -905,7 +908,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     ROSE_ASSERT(ve != NULL);
 	
     /* characters */
-  }else if (vtype == SG_PREFIX "char_val") {
+  } else if (vtype == SG_PREFIX "char_val") {
     //char
     debug("unparsing char");
     PrologCompTerm* annot = retrieveAnnotation(t);
@@ -921,7 +924,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     }		
     SgCharVal* valnode = new SgCharVal(fi,number);
     ve = valnode;
-  }else if (vtype == SG_PREFIX "unsigned_char_val") {
+  } else if (vtype == SG_PREFIX "unsigned_char_val") {
     //unsigned char
     debug("unparsing unsigned char");
     PrologCompTerm* annot = retrieveAnnotation(t);
@@ -939,7 +942,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     }
     SgUnsignedCharVal* valnode = new SgUnsignedCharVal(fi,number);
     ve = valnode;
-  }else if (vtype == SG_PREFIX "wchar_val") {
+  } else if (vtype == SG_PREFIX "wchar_val") {
     //wchar
     debug("unparsing wchar");
     PrologCompTerm* annot = retrieveAnnotation(t);
@@ -1084,19 +1087,37 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   return (SgUnaryOp*) 0;	
 }
 
+
+
+
+/**
+ * create SgProject
+ */
+SgProject*
+PrologToRose::createProject(Sg_File_Info* fi,vector<SgNode*>* succs) {
+  SgProject* project = new SgProject();
+  //SgFile* file = dynamic_cast<SgFile*>child1;
+  //vector<SgNode*>::iterator it = succs->begin();
+  //while (it != succs->end()) {
+  //project->set_file(*it);
+  //  it++;
+  // }
+  return project;
+}
+
+
 /**
  * create SgFile
  */
 SgFile*
 PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
-  /*        SgFile* file = new SgFile();
-	    file->set_file_info(fi);
-	    SgGlobal* glob = isSgGlobal(child1);
-	    ROSE_ASSERT(glob);
-	    file->set_root(glob);
-	    return file;*/
-
-  return NULL;
+  SgFile* file = new SgFile();
+  file->set_file_info(fi);
+  /*
+    SgGlobal* glob = isSgGlobal(child1);
+    ROSE_ASSERT(glob);
+    file->set_root(glob);*/
+  return file;
 }
 
 /**

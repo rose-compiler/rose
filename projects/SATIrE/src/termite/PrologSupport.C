@@ -439,7 +439,7 @@ PrologSupport::getTypeSpecific(SgType* stype) {
 	       cn == "SgTypeUnsignedChar"  ||
 	       cn == "SgTypeUnsignedInt"  ||
 	       cn == "SgTypeUnsignedLong"  ||
-	       cn == "SgTypeUnsignedLongLong`"  ||
+	       cn == "SgTypeUnsignedLongLong"  ||
 	       cn == "SgTypeUnsignedShort"  ||
 	       cn == "SgTypeVoid"  ||
 	       cn == "SgTypeWchar"
