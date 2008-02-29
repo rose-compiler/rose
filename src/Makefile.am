@@ -732,6 +732,7 @@ endif
 librose_la_SOURCES =
 librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm -lrt
 librose_la_LDFLAGS = -no-undefined
+librose_la_DEPENDENCIES = $(libroseLibraries)
 
 # DQ: Skip this to speed up development
 # testStaticRoseLib 
