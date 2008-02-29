@@ -4567,84 +4567,67 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
   // unparseExpression(asm_stmt->get_expr(), info);
 
   // printf ("unparsing asm statement = %ld \n",asm_stmt->get_operands().size());
-     SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin();
+  // Process the asm template (always the first operand)
+     string asmTemplate = asm_stmt->get_assemblyCode();
+     curprint("\"" + escapeString(asmTemplate) + "\"");
+     unparseExpression(asmTemplate, info);
 
-     if (i == asm_stmt->get_operands().end())
-        {
-       // There are no operands: error, I think!
-          ROSE_ASSERT(false);
-        }
-       else
-        {
-       // Process the asm template (always the first operand)
-          SgExpression* asmTemplate = *i;
-          ROSE_ASSERT( asmTemplate != NULL );
-          if ( asmTemplate != NULL )
-             {
-               unparseExpression(asmTemplate, info);
-               i++;
-             }
-
-       // DQ (7/15/2007): See test2007_98.C for a case where there are no remaining operands.
-       // We should have some operands after the template!
-       // ROSE_ASSERT( i != asm_stmt->get_operands().end() );
-          if ( i != asm_stmt->get_operands().end() )
-             {
-            // Look for the output operand (if it exists then output it, if not then output ": :"
-               SgAsmOp* asmOutputOp = isSgAsmOp(*i);
-               if ( asmOutputOp != NULL && (asmOutputOp->get_modifiers() & SgAsmOp::e_output) )
-                  {
-                    curprint(" : "); // template and output operand separator
-                 // unparseExpression(asmOutputOp, info);
-                    unparseExpression(asmOutputOp, info);
-                    i++;
-                  }
-             }
-
-       // If there are more operands then they must be input operands (output the ":" to separate the output operands from the input operands)
-          if (i != asm_stmt->get_operands().end())
-             {
-               curprint ( string(" : ")); // template and output operand separator
-             }
-
-          while (i != asm_stmt->get_operands().end())
-             {
-            // printf ("unparsing each asm input operand \n");
-               SgAsmOp* asmInputOp = isSgAsmOp(*i);
-               ROSE_ASSERT(asmInputOp != NULL);
-               unparseExpression(asmInputOp, info);
-               i++;
-
-            // I am not sure if this is correct, we have to handle the constraints and the modifiers as well!
-               if (i != asm_stmt->get_operands().end())
-                  {
-                    curprint ( string(" , ")); // input operand separator
-                  }
-             }
-
-       // Now handle the clobber specification (this appears to be dropped by EDG, I can't find it).
-       // curprint ( string(" : \"cc\" "; // for example
-          SgAsmStmt::AsmRegisterNameList::const_iterator j = asm_stmt->get_clobberRegisterList().begin();
-          if (j != asm_stmt->get_clobberRegisterList().end())
-             {
-               curprint ( string(" : "));
-             }
-          while (j != asm_stmt->get_clobberRegisterList().end())
-             {
-            // printf ("unparsing each asm input operand \n");
-               SgInitializedName::asm_register_name_enum asmRegisterName = *j;
-               curprint ( string("\""));
-               curprint ( unparse_register_name(asmRegisterName));
-               curprint ( string("\""));
-               j++;
-
-            // I am not sure if this is correct, we have to handle the constraints and the modifiers as well!
-               if (j != asm_stmt->get_clobberRegisterList().end())
-                  {
-                    curprint ( string(" , ")); // clobber list register name separator
-                  }
-             }
-        }
+     if (asm_stmt->get_useGnuExtendedFormat()) {
+       size_t numOutputOperands = 0, numInputOperands = 0;
+       for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
+         SgAsmOp* asmOp = isSgAsmOp(*i);
+         ROSE_ASSERT (asmOp);
+         if (asmOutputOp->get_modifiers() & SgAsmOp::e_output) {
+           ++numOutputOperands;
+         } else {
+           ++numInputOperands;
+         }
+       }
+       size_t numClobbers = asm_stmt->get_clobberRegisterList().size();
+       bool first;
+       if (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0) {
+         goto donePrintingConstraints;
+       }
+       curprint(" : "); // Start of output operands
+       first = true;
+       for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
+         SgAsmOp* asmOp = isSgAsmOp(*i);
+         ROSE_ASSERT (asmOp);
+         if (asmOutputOp->get_modifiers() & SgAsmOp::e_output) {
+           if (!first) curprint(", ");
+           first = false;
+           unparseExpression(asmOp, info);
+         }
+       }
+       if (numInputOperands == 0 && numClobbers == 0) {
+         goto donePrintingConstraints;
+       }
+       curprint(" : "); // Start of input operands
+       first = true;
+       for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
+         SgAsmOp* asmOp = isSgAsmOp(*i);
+         ROSE_ASSERT (asmOp);
+         if (!(asmOutputOp->get_modifiers() & SgAsmOp::e_output)) {
+           if (!first) curprint(", ");
+           first = false;
+           unparseExpression(asmOp, info);
+         }
+       }
+       if (numClobbers == 0) goto donePrintingConstraints;
+       curprint(" : "); // Start of clobbers
+       first = true;
+       for (SgAsmStmt::AsmRegisterNameList::const_iterator i = asm_stmt->get_clobberRegisterList().begin(); i != asm_stmt->get_clobberRegisterList().end(); ++i) {
+         SgAsmOp* asmOp = isSgAsmOp(*i);
+         ROSE_ASSERT (asmOp);
+         if (!(asmOutputOp->get_modifiers() & SgAsmOp::e_output)) {
+           if (!first) curprint(", ");
+           first = false;
+           curprint("\"" + unparse_register_name(*i) + "\"");
+           unparseExpression(asmOp, info);
+         }
+       }
+donePrintingConstraints: {}
+     }
 
      curprint ( string(")"));
 
