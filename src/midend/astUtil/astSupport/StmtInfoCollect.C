@@ -187,7 +187,7 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
   CollectReadRefWrap( AstInterface& _fa, FunctionSideEffectInterface* f, 
                       const AstNodePtr& _stmt, 
                       CollectObject< std::pair< AstNodePtr, AstNodePtr> >* c)
-    : fa(_fa), func(f), stmt(_stmt), collect(c) {}
+    : collect(c), func(f), stmt(_stmt), fa(_fa) {}
   bool operator() ( const AstNodePtr& ref)
    {
       AstInterface::AstNodeList args;
@@ -288,7 +288,7 @@ class ModifyAliasMap : public CollectObject< std::pair<AstNodePtr, int> >
   int index;
 public:
   ModifyAliasMap(AstInterface& _fa, StmtVarAliasCollect::VarAliasMap& m) 
-    : fa(_fa), aliasmap(m), index(-1), repr(0) {}
+    : fa(_fa), aliasmap(m), repr(0), index(-1) {}
 
   void reset() 
   { 

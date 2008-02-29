@@ -283,12 +283,13 @@ string StripParameterType( const string& name)
 {
   char *const_start = strstr( name.c_str(), "const");
   string r = (const_start == 0 || const_start - name.c_str() != 5)? name : string(const_start + 5);
-  int end = r.size()-1;
+  ROSE_ASSERT (!r.empty());
+  size_t end = r.size()-1;
   if (r[end] == '&') {
        r[end] = ' ';
   }
   string result = "";
-  for (unsigned i = 0; i < r.size(); ++i) {
+  for (size_t i = 0; i < r.size(); ++i) {
     if (r[i] != ' ')
       result.push_back(r[i]);
   }
@@ -709,7 +710,7 @@ NewFunc( const string& name, SgType*  rtype, const list<SgInitializedName*>& arg
 SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
 {
     string classname = "";
-    for ( int size = 0 ; size < val.size(); ++size) { 
+    for ( size_t size = 0 ; size < val.size(); ++size) { 
       if (val[size] == ' ' || val[size] == '&' || val[size] == ':')
            break;
       classname.push_back(val[size]);
@@ -802,7 +803,7 @@ AstTreeIdentical( const AstNodePtr& n1, const AstNodePtr& n2)
    vector<SgNode*> childvec2 = n2->get_traversalSuccessorContainer();
    if (childvec1.size() != childvec2.size())
        return false;
-   for (int i = 0; i < childvec1.size(); ++i) {
+   for (size_t i = 0; i < childvec1.size(); ++i) {
       AstNodePtr c1 = childvec1[i];
       AstNodePtr c2 = childvec2[i];
       if (AstNodeIdentical(c1, c2))
@@ -833,7 +834,7 @@ void NotifyTreeCopy ( AstInterfaceImpl& fa, const AstNodePtr& _orig, const AstNo
   vector<SgNode*> childvec = orig->get_traversalSuccessorContainer();
   vector<SgNode*> childvec1 = n->get_traversalSuccessorContainer();
   assert( childvec.size() == childvec1.size());
-  for (int i = 0; i < childvec.size(); ++i) {
+  for (size_t i = 0; i < childvec.size(); ++i) {
       AstNodePtrImpl c = childvec[i], c1 = childvec1[i];
       if (c != c1)
          NotifyTreeCopy( fa, c, c1);
@@ -874,7 +875,7 @@ AstInterface::AstNodeList AstInterface :: GetChildrenList( const AstNodePtr &_n)
   AstNodePtrImpl n(_n);
    vector<SgNode*> childvec = n->get_traversalSuccessorContainer();
    AstNodeList childlist;
-   for (int i = 0; i < childvec.size(); ++i) {
+   for (size_t i = 0; i < childvec.size(); ++i) {
       AstNodePtrImpl c = childvec[i]; 
       childlist.push_back(c);
    }
@@ -942,7 +943,7 @@ AstNodePtr AstInterface::GetPrevStmt( const AstNodePtr& s)
    SgNode *p = n->get_parent();
    assert(p != 0);
    vector<SgNode*> childvec = p->get_traversalSuccessorContainer();
-   int i = 0;
+   size_t i = 0;
    for (; i < childvec.size(); ++i) 
        if (childvec[i] == n)
            break;
@@ -960,7 +961,7 @@ AstNodePtr AstInterface::GetNextStmt( const AstNodePtr& s)
    SgNode *p = n->get_parent();
    assert(p != 0);
    vector<SgNode*> childvec = p->get_traversalSuccessorContainer();
-   int i = 0;
+   size_t i = 0;
    for (; i < childvec.size(); ++i)
        if (childvec[i] == n)
            break;
@@ -1595,8 +1596,8 @@ NewVar( const AstNodeType& _type, const string& name, bool makeunique,
 void AstInterfaceImpl::
 AddNewVarDecls(SgScopeStatement* nblock, SgScopeStatement* oldblock)
     {
-      for ( int i = newVarList.size()-1; i >= 0; --i) {
-            std::pair<SgScopeStatement*, SgStatement*> cur = newVarList[i];
+      for ( size_t i = newVarList.size(); i > 0; --i) {
+            std::pair<SgScopeStatement*, SgStatement*> cur = newVarList[i - 1];
             if (cur.first == oldblock)
                nblock->insertStatementInScope(cur.second, true);
       } 
@@ -1613,8 +1614,8 @@ AddNewVarDecls(const AstNodePtr& _nblock, const AstNodePtr& _oldblock)
 
 void AstInterfaceImpl:: AddNewVarDecls()
    {
-      for ( int i = newVarList.size()-1; i >= 0; --i) {
-            std::pair<SgScopeStatement*, SgStatement*> cur = newVarList[i];
+      for ( size_t i = newVarList.size(); i > 0; --i) {
+            std::pair<SgScopeStatement*, SgStatement*> cur = newVarList[i - 1];
             cur.first->insertStatementInScope(cur.second, true);
       } 
       newVarList.clear();
@@ -2049,8 +2050,7 @@ GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
 
   string r1 = StripGlobalQualifier(typeName);
   string result = "";
-  int i = 0;
-  for ( i = 0; i < r1.size(); ++i) {
+  for (size_t i = 0; i < r1.size(); ++i) {
     if (r1[i] != ' ')
       result.push_back(r1[i]);
     else if (i + 2 < r1.size() && r1[i+1]==':' && r1[i+2]==':') {
@@ -2927,6 +2927,7 @@ bool AstInterface::RemoveStmt( const AstNodePtr& _n)
    assert( p != 0);
    p->remove_statement(s);
    s->set_parent(GetNullScope());
+   return true;
 }
 
 bool AstInterfaceImpl::
@@ -3007,7 +3008,7 @@ class SageProcessAstNode : public AstTopDownBottomUpProcessing<BoolAttribute,Boo
            return inheritedValue; 
         if (! inheritedValue)
             return false;
-        for (int i = 0; i < l.size(); ++i) 
+        for (size_t i = 0; i < l.size(); ++i) 
            if (!l[i])
               return false;
         return op.Traverse( *fa, AstNodePtrImpl(astNode), AstInterface::PostVisit); 
@@ -3069,7 +3070,7 @@ class PerformPreTransformationTraversal
 
   public:
     PerformPreTransformationTraversal( AstInterface& _fa, Transform& _op)
-       : fa(_fa), op(_op), result(0), orig(0), succ(false) {}
+       : result(0), orig(0), succ(false), op(_op), fa(_fa) {}
     AstNodePtrImpl operator() ( SgNode* n)
           {
              succ = false;

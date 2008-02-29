@@ -323,14 +323,14 @@ namespace VirtualCFG {
         return eckForallIndicesInRange;
       } else if (tgtIndex == 7) {
         return eckForallIndicesNotInRange;
-      }
+      } else ROSE_ASSERT (!"Bad successor in forall loop");
     } else if (isSgForAllStatement(srcNode) && srcIndex == 3) {
       if (forallMaskExpression(isSgForAllStatement(srcNode))) {
         if (tgtIndex == 4) {
           return eckTrue;
         } else if (tgtIndex == 6) {
           return eckFalse;
-        }
+        } else ROSE_ASSERT (!"Bad successor in forall loop");
       } else {
         return eckUnconditional;
       }
@@ -845,7 +845,7 @@ namespace VirtualCFG {
       return 2;
     } else if (tgt == me->get_body()) {
       return 4;
-    }
+    } else ROSE_ASSERT (!"Bad child in doForallCfgFindChildIndex");
   }
 
   unsigned int doForallCfgFindNextChildIndex(SgForAllStatement* me, SgNode* tgt) {

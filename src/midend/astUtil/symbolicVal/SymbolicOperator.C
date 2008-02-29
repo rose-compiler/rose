@@ -339,8 +339,8 @@ void ExprTermCompare( const SymbolicExpr &e1, const SymbolicExpr &e2,
 unsigned CountSrcRel( Matrix<CompareRel> r, int (*Count)(CompareRel r))
    {
       unsigned c1 = 0;
-      for (int i1 = 0; i1 < r.rows(); ++i1)  {
-         for ( int i2 = 0; i2 < r.cols(); ++i2) {
+      for (size_t i1 = 0; i1 < r.rows(); ++i1)  {
+         for ( size_t i2 = 0; i2 < r.cols(); ++i2) {
             if ( Count( r(i1,i2) ) ) {
                ++c1;
                break;
@@ -353,8 +353,8 @@ unsigned CountSrcRel( Matrix<CompareRel> r, int (*Count)(CompareRel r))
 unsigned CountSinkRel( Matrix<CompareRel> r, int (*Count)(CompareRel r))
    {
       unsigned c1 = 0;
-      for (int i1 = 0; i1 < r.cols(); ++i1)  {
-         for ( int i2 = 0; i2 < r.rows(); ++i2) {
+      for (size_t i1 = 0; i1 < r.cols(); ++i1)  {
+         for ( size_t i2 = 0; i2 < r.rows(); ++i2) {
             if ( Count( r(i2, i1) )) {
                ++c1;
                break;
@@ -376,7 +376,7 @@ class SelectCompare  : public CompareOperator
       MatchCompare(rel,1);
        
    }
-  void MatchCompare(Matrix<CompareRel> &rel, int c2)
+  void MatchCompare(Matrix<CompareRel> &rel, size_t c2)
   {
           SymOpType t1 = e1.GetOpType();
                   if ( t1 == SYMOP_MAX) { 
@@ -417,7 +417,7 @@ class SelectCompare  : public CompareOperator
                   MatchCompare(rel,c2);
               }
               else if (t1 == SYMOP_MIN && t2 == SYMOP_MAX) {
-                 int le = 0, lt = 0, ge = 0, gt = 0;
+                 size_t le = 0, lt = 0, ge = 0, gt = 0;
                  SymbolicExpr::OpdIterator p2 = e2.GetOpdIterator();
                  for ( ; !p2.ReachEnd(); ++p2) {
                      CompareRel r = CompareValHelp(v1, e2.Term2Val(p2.Current()),GetFunc());
@@ -448,7 +448,7 @@ class SelectCompare  : public CompareOperator
  public:
   SelectCompare( const SymbolicVal& _v1, const SymbolicExpr& _e1, 
                  MapObject<SymbolicVal,SymbolicBound>* _func = 0)
-     : v1(_v1), e1(_e1), CompareOperator(_func) {}
+     : CompareOperator(_func), v1(_v1), e1(_e1) {}
   CompareRel operator() ( const SymbolicVal &_v2) 
   { result = REL_UNKNOWN; v2 = _v2;
     v2.Visit(this); return result; }
