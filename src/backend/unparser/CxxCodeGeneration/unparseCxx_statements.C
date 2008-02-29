@@ -4570,14 +4570,13 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
   // Process the asm template (always the first operand)
      string asmTemplate = asm_stmt->get_assemblyCode();
      curprint("\"" + escapeString(asmTemplate) + "\"");
-     unparseExpression(asmTemplate, info);
 
      if (asm_stmt->get_useGnuExtendedFormat()) {
        size_t numOutputOperands = 0, numInputOperands = 0;
        for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
          SgAsmOp* asmOp = isSgAsmOp(*i);
          ROSE_ASSERT (asmOp);
-         if (asmOutputOp->get_modifiers() & SgAsmOp::e_output) {
+         if (asmOp->get_modifiers() & SgAsmOp::e_output) {
            ++numOutputOperands;
          } else {
            ++numInputOperands;
@@ -4593,7 +4592,7 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
        for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
          SgAsmOp* asmOp = isSgAsmOp(*i);
          ROSE_ASSERT (asmOp);
-         if (asmOutputOp->get_modifiers() & SgAsmOp::e_output) {
+         if (asmOp->get_modifiers() & SgAsmOp::e_output) {
            if (!first) curprint(", ");
            first = false;
            unparseExpression(asmOp, info);
@@ -4607,7 +4606,7 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
        for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
          SgAsmOp* asmOp = isSgAsmOp(*i);
          ROSE_ASSERT (asmOp);
-         if (!(asmOutputOp->get_modifiers() & SgAsmOp::e_output)) {
+         if (!(asmOp->get_modifiers() & SgAsmOp::e_output)) {
            if (!first) curprint(", ");
            first = false;
            unparseExpression(asmOp, info);
@@ -4617,14 +4616,9 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
        curprint(" : "); // Start of clobbers
        first = true;
        for (SgAsmStmt::AsmRegisterNameList::const_iterator i = asm_stmt->get_clobberRegisterList().begin(); i != asm_stmt->get_clobberRegisterList().end(); ++i) {
-         SgAsmOp* asmOp = isSgAsmOp(*i);
-         ROSE_ASSERT (asmOp);
-         if (!(asmOutputOp->get_modifiers() & SgAsmOp::e_output)) {
-           if (!first) curprint(", ");
-           first = false;
-           curprint("\"" + unparse_register_name(*i) + "\"");
-           unparseExpression(asmOp, info);
-         }
+         if (!first) curprint(", ");
+         first = false;
+         curprint("\"" + unparse_register_name(*i) + "\"");
        }
 donePrintingConstraints: {}
      }

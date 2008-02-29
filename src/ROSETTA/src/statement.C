@@ -1675,11 +1675,15 @@ Grammar::setUpStatements ()
                               DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 #else
+     AsmStmt.setDataPrototype ( "std::string", "assemblyCode", "",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (7/22/2006): This is a list of operands (SgAsmOp IR nodes) (see test2006_93.C)
   // Note that the asm template is the first entry in the operand list!
   // AsmStmt.setDataPrototype ( "SgExpressionPtrList", "operands", "",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
   // DQ (8/13/2006): This variable should not be deleted (since it is a value instead of a pointer).
+     AsmStmt.setDataPrototype ( "bool", "useGnuExtendedFormat", "",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmStmt.setDataPrototype ( "SgExpressionPtrList", "operands", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
