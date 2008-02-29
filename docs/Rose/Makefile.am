@@ -103,7 +103,7 @@ $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATI
         echo "User's cannot build documentation from a ROSE distribution.";\
         echo "Only ROSE developers can build the Web and LaTeX documentation (access to CVS version is required) "; \
         echo "If this is a development version and your are building ROSE in the source tree,"; \
-        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz"; \
+        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf"; \
         echo "before rebuilding documentation (retry \"make docs\")"; \
         echo "***********************************************************************************"; \
       else \
@@ -252,7 +252,7 @@ copyWebPages: logo
 #	cd ROSE_WebPages; rsync -avz * quinlan1@cmg-1:/green_dev/www/casc/rose
 	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
-$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz html
+$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf html
 	@echo "Building Tutorial documentation (calling make in docs/Rose/Tutorial directory) ... "
 	cd Tutorial; $(MAKE) docs
 	@echo "Building HTML documentation from LaTeX files ... "
@@ -268,7 +268,7 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACK
         echo "User's cannot build documentation from a ROSE distribution.";\
         echo "Only ROSE developers can build the Web and LaTeX documentation (access to CVS version is required) "; \
         echo "If this is a development version and your are building ROSE in the source tree,"; \
-        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz"; \
+        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf"; \
         echo "before rebuilding documentation (retry \"make docs\")"; \
         echo "***********************************************************************************"; \
       else \
@@ -284,7 +284,7 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACK
 # Simpler rule
 latex-docs: latex-docs-manual
 
-latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz
+latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
 # Make a simple rule to remember
 force: force-latex-docs
@@ -294,7 +294,7 @@ force-latex-docs: force-user-manual-docs
 
 # Development rule to force build of latex documentation
 force-user-manual-docs: logo
-	rm -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz
+	rm -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	$(MAKE) latex-docs
 	$(MAKE) latex-docs
 #	dvips -Pcmz -o $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf manual.dvi;
@@ -307,7 +307,7 @@ force-user-manual-docs: logo
 
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in
-$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz: manual.tex logo gettingStarted.tex $(latexFiles) $(latexDependences)
+$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex logo gettingStarted.tex $(latexFiles) $(latexDependences)
 	@echo "Building Latex documentation for Rose Project (user manual) ... "
 #	@echo "Calling \"$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf\" make rule in ROSE/docs/Rose/Makefile ... (MAKE = $(MAKE) AM_MAKEFLAGS = $(AM_MAKEFLAGS))"
 #	@echo "PWD = $(PWD) top_pwd = $(top_pwd) top_srcdir = $(top_srcdir)"
@@ -349,14 +349,14 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz: manual.tex logo gettingSta
 	test -f qmTestScript.tex || ln -s $(top_srcdir)/docs/Rose/qmTestScript.tex qmTestScript.tex
 	test -f astMerge.tex || ln -s $(top_srcdir)/docs/Rose/astMerge.tex astMerge.tex
 #	Need to make this conditional so that the make distcheck will work (and not rebuild the documentation)
-	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz); then \
+	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf); then \
         echo "***********************************************************************************"; \
-        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz has been found and is"; \
+        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf has been found and is"; \
         echo "already provided in source directory for your convience."; \
         echo "User's cannot build documentation from a ROSE distribution."; \
         echo "Only ROSE developers can build the Web and LaTeX documentation (access to CVS version is required) "; \
         echo "If this is a development version and your are building ROSE in the source tree"; \
-        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz"; \
+        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf"; \
         echo "before rebuilding documentation (retry \"make docs\")"; \
         echo "***********************************************************************************"; \
       else \
@@ -368,9 +368,7 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz: manual.tex logo gettingSta
         mkdir -p ROSE_WebPages/ROSE_UserManual; \
         cp -f $(srcdir)/WEB_DOCS_README ROSE_WebPages; \
 	     cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_WebPages/ROSE_UserManual/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf; \
-        rm -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz; \
-	     gzip $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf; \
-	     cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz; \
+	     cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf; \
       fi
 
 # cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual_uncompressed.pdf;
@@ -381,7 +379,7 @@ docs:
 	@echo "Calling \"docs\" make rule in ROSE/docs/Rose/Makefile ... (MAKE = $(MAKE) AM_MAKEFLAGS = $(AM_MAKEFLAGS))"
 	@echo "PWD = $(PWD) top_pwd = $(top_pwd) top_srcdir = $(top_srcdir)"
 #	Need to make this conditional so that the make distcheck will work (and not rebuild the documentation)
-#	Just test for $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and not $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz
+#	Just test for $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz and not $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz); then \
         echo "***********************************************************************************"; \
         echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz"; \
@@ -396,18 +394,18 @@ docs:
         echo "Building documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz not found) ... "; \
         $(MAKE) html-docs; \
       fi
-	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz); then \
+	@if (test -f $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf); then \
         echo "***********************************************************************************"; \
-        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz"; \
+        echo "$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf"; \
         echo "is already provided in source directory for your convience."; \
         echo "User's cannot build documentation from a ROSE distribution.";\
         echo "Only ROSE developers can build the Web and LaTeX documentation (access to CVS version is required) "; \
         echo "If this is a development version and your are building ROSE in the source tree,"; \
-        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz"; \
+        echo "then remove $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf"; \
         echo "before rebuilding documentation (retry \"make docs\")"; \
         echo "***********************************************************************************"; \
       else \
-        echo "Building documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz not found) ... "; \
+        echo "Building documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf not found) ... "; \
         $(MAKE) latex-docs-manual; \
       fi
 #	By this time we have likely already built the tutorial
@@ -422,7 +420,7 @@ docs:
 # DQ (9/8/2006): Added roseExecutionOutput.txt and roseHelpOutput.txt so that it will not be built 
 EXTRA_DIST = \
    WEB_DOCS_README AvailableDocumentation.docs.in \
-   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz \
+   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf \
    fixme.sty  listings.sty  lstlang1.sty lstlang2.sty  lstmisc.sty  multirow.sty acknowledgments.tex \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
@@ -449,7 +447,7 @@ cleanSourceTutorial:
 	cd Tutorial; $(MAKE) cleanSource
 
 cleanSource: cleanSourceTutorial clean
-	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf.gz
+	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	rm -rf ROSE_WebPages
 
 clean-local:
