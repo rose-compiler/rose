@@ -1,3 +1,4 @@
+% vim: syn=prolog
 :- prim(print, 1,
         [rule([+(double)],
               [do("std::cout << $0")]),

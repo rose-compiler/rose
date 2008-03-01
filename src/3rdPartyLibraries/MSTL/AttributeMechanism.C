@@ -101,7 +101,7 @@ AttributeMechanism<Key,Value>::operator[](Key name) {
     return MapType::operator[](name);
   } else {
     std::cerr << "Error: access [" << name << "] failed. Attribute: " << name 
-	 << "does not exist." << std::endl;
+	 << " does not exist. Please check if it exists before getting it." << std::endl;
     assert(false);
   }
 }

@@ -1303,7 +1303,7 @@ string astNodeToCpp(PrologAst::Node* n) {
     os << std::showpoint << f->getValue();
     return os.str();
   } else if (PrologAst::String* s = dynamic_cast<PrologAst::String*>(n)) {
-    return "\"" + PrologAst::escapeString(s->getValue()) + "\"";
+    return "std::string(\"" + PrologAst::escapeString(s->getValue()) + "\")";
   } else if (PrologAst::Term* t = dynamic_cast<PrologAst::Term*>(n)) {
     string result = t->getFunctor();
     if (t->getArity() != 0) {
