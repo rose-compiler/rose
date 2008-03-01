@@ -91,6 +91,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86CMove ,  "Asmx86CMove",   "Asmx86CMoveTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMovne , "Asmx86CMovne",  "Asmx86CMovneTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMova ,  "Asmx86CMova",   "Asmx86CMovaTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Movaps , "Asmx86Movaps",  "Asmx86MovapsTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMovae , "Asmx86CMovae",  "Asmx86CMovaeTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMovb ,  "Asmx86CMovb",   "Asmx86CMovbTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMovbe , "Asmx86CMovbe",  "Asmx86CMovbeTag" );
@@ -420,7 +421,7 @@ Grammar::setUpBinaryInstructions ()
 			     Asmx86Daa | Asmx86Das | Asmx86Aaa | 
 			     Asmx86Aas | Asmx86Aam | Asmx86Aad  , "Asmx86ArithmeticInstruction", "Asmx86ArithmeticInstructionTag", false );
 
-     NEW_NONTERMINAL_MACRO ( Asmx86DataTransferInstruction, Asmx86Push | Asmx86Mov | Asmx86Pop | 
+     NEW_NONTERMINAL_MACRO ( Asmx86DataTransferInstruction, Asmx86Push | Asmx86Mov | Asmx86Pop | Asmx86Movaps | 
 			     Asmx86ConditionalDataTransferInstruction | Asmx86ConditionalFlagDataTransferInstruction | 
 			     Asmx86ArithmeticInstruction | 
 			     Asmx86Xchg | Asmx86Bswap | Asmx86Xadd | Asmx86Movntq | Asmx86Movdqu |
@@ -546,6 +547,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmTypeQuadWord    , "AsmTypeQuadWord",    "AsmTypeQuadWordTag" );
      NEW_TERMINAL_MACRO ( AsmTypeSingleFloat , "AsmTypeSingleFloat", "AsmTypeSingleFloatTag" );
      NEW_TERMINAL_MACRO ( AsmTypeDoubleFloat , "AsmTypeDoubleFloat", "AsmTypeDoubleFloatTag" );
+     NEW_TERMINAL_MACRO ( AsmType80bitFloat ,  "AsmType80bitFloat",  "AsmType80bitFloatTag" );
+     NEW_TERMINAL_MACRO ( AsmType128bitFloat , "AsmType128bitFloat", "AsmType128bitFloatTag" );
      NEW_TERMINAL_MACRO ( AsmTypeVector      , "AsmTypeVector",      "AsmTypeVectorTag" );
      AsmTypeByte.setDataPrototype                    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeWord.setDataPrototype                    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -554,8 +557,10 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeSingleFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeDoubleFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeVector.setDataPrototype                  ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmType80bitFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmType128bitFloat.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | 
+     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | AsmType80bitFloat | AsmType128bitFloat |
                              AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector, "AsmType", "AsmTypeTag", false );
 
      NEW_TERMINAL_MACRO ( AsmFile                     , "AsmFile",                     "AsmFileTag" );
@@ -867,6 +872,8 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeQuadWord.setFunctionPrototype    ( "HEADER_BINARY_TYPE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeSingleFloat.setFunctionPrototype ( "HEADER_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeDoubleFloat.setFunctionPrototype ( "HEADER_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
+     AsmType80bitFloat.setFunctionPrototype  ( "HEADER_BINARY_TYPE_80bit_FLOAT", "../Grammar/BinaryInstruction.code");
+     AsmType128bitFloat.setFunctionPrototype ( "HEADER_BINARY_TYPE_128bit_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeVector.setFunctionPrototype      ( "HEADER_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
 
 
@@ -912,6 +919,8 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeSingleFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeDoubleFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeVector.setFunctionSource      ( "SOURCE_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
+     AsmType80bitFloat.setFunctionSource  ( "SOURCE_BINARY_TYPE_80bit_FLOAT", "../Grammar/BinaryInstruction.code");
+     AsmType128bitFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_128bit_FLOAT", "../Grammar/BinaryInstruction.code");
 
      AsmExpression.setFunctionSource               ( "SOURCE_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
@@ -924,6 +933,7 @@ Grammar::setUpBinaryInstructions ()
      AsmSingleFloatValueExpression.setFunctionSource( "SOURCE_BINARY_SINGLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmVectorValueExpression.setFunctionSource( "SOURCE_BINARY_VECTOR_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmWordValueExpression.setFunctionSource( "SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+
 
      AsmSectionHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmProgramHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");

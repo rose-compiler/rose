@@ -669,3 +669,6 @@ SgAsmx86FloatingPointInstruction
 SgFortranIncludeLine
 SgAsmx86Stmxcsr
 SgAsmx86Ldmxcsr
+SgAsmx86Movaps
+SgAsmType80bitFloat
+SgAsmType128bitFloat
