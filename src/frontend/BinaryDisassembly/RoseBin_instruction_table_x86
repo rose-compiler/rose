@@ -228,3 +228,4 @@ arpl -> Arpl
 emms -> Emms
 stmxcsr -> Stmxcsr
 ldmxcsr -> Ldmxcsr
+movaps -> Movaps

@@ -165,11 +165,19 @@ RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
       if (parent==0)
 	cerr << " GMLGraph parent == 0 " << endl;
 
-      text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n" + name ;
-      int instrnr = funcDecl_parent->get_childIndex(bin_inst);
-      text +="   instrnr_ "+RoseBin_support::ToString(instrnr)+" \n";
-      text +="   gid_ "+RoseBin_support::ToString(parent)+" \n";
-      text +="   gid "+RoseBin_support::ToString(parent)+" ]\n";
+      if (onlyControlStructure && isSgAsmx86ControlTransferInstruction(bin_inst)) {
+	text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n" + name ;
+	int instrnr = funcDecl_parent->get_childIndex(bin_inst);
+	text +="   instrnr_ "+RoseBin_support::ToString(instrnr)+" \n";
+	text +="   gid_ "+RoseBin_support::ToString(parent)+" \n";
+	text +="   gid "+RoseBin_support::ToString(parent)+" ]\n";
+      } else {
+	text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n" + name ;
+	int instrnr = funcDecl_parent->get_childIndex(bin_inst);
+	text +="   instrnr_ "+RoseBin_support::ToString(instrnr)+" \n";
+	text +="   gid_ "+RoseBin_support::ToString(parent)+" \n";
+	text +="   gid "+RoseBin_support::ToString(parent)+" ]\n";
+      }
     }
     
     myfile << text;
@@ -292,8 +300,8 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   if (dfa_unresolved_func)
     add = " FF0000 ";
 
-
   string nodeStr = "";
+
   regs+=eval;
   // cant get the extra register info printed in gml format
   // because multiline is not supported? (tps 10/18/07)

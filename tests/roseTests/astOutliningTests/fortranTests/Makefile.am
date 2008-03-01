@@ -141,7 +141,8 @@ check-local:
 
 else
 
-# Fortran support not available in ROSE unless specified on the configure command line. check-local:
+# Fortran support not available in ROSE unless specified on the configure command line.
+check-local:
 	@echo "***********************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests: FORTRAN NOT CONFIGURED IN ROSE ******"
 	@echo "***********************************************************************************"

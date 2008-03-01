@@ -2924,6 +2924,17 @@ switch (mnemonic.size()) {
         if (mnemonic[1] == 'o') { // 'mo'
           if (mnemonic[2] == 'v') { // 'mov'
             switch (mnemonic[3]) {
+              case 'a': { // 'mova'
+                if (mnemonic[4] == 'p') { // 'movap'
+                  if (mnemonic[5] == 's') { // 'movaps'
+                    {instruction = new SgAsmx86Movaps(address,  mnemonic, ""); goto done;}
+                  } else {
+                    instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              }
               case 'd': { // 'movd'
                 if (mnemonic[4] == 'q') { // 'movdq'
                   if (mnemonic[5] == 'u') { // 'movdqu'

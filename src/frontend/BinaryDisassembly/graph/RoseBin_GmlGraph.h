@@ -25,12 +25,14 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
 
   bool skipFunctions;
   bool skipInternalEdges;
+  bool onlyControlStructure;
 
  public:
   RoseBin_GMLGraph() {
     //added this for vizz3d visualization
     skipFunctions=true;
     skipInternalEdges=true;
+    onlyControlStructure=true;
   }
   virtual ~RoseBin_GMLGraph() {}
 
