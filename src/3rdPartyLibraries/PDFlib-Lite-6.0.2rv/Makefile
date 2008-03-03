@@ -15,7 +15,7 @@ check:
 	:
 
 # --------------------------- install ---------------------------------
-install:: .dummy
+install:: all .dummy
 	mkdir -p $(bindir)
 	-$(INSTALL) pdflib-config $(bindir)
 
