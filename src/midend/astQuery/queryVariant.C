@@ -1516,6 +1516,7 @@ querySolverGrammarElementFromVariantVector (
           case V_SgLabelRefExp:
           case V_SgActualArgumentExpression:
           case V_SgAsteriskShapeExp:
+          case V_SgDesignatedInitializer:
              {
 //             printf ("Error unimplemented case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
             // ROSE_ASSERT(false);

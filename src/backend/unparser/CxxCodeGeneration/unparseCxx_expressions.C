@@ -147,6 +147,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case NULL_EXPR:               { unparseNullExpression(expr, info); break; }
           case STMT_EXPR:               { unparseStatementExpression(expr, info); break; }
           case ASM_OP:                  { unparseAsmOp (expr, info); break; }
+          case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
 
           default:
              {
@@ -4295,4 +4296,24 @@ Unparse_ExprStmt::unparseVarArgCopyOp(SgExpression* expr, SgUnparse_Info& info)
      curprint ( ")" );
    }
 
+void
+Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgDesignatedInitializer* di = isSgDesignatedInitializer(expr);
+     const SgExpressionPtrList& designators = di->get_designatorList()->get_expressions();
+     for (size_t i = 0; i < designators.size(); ++i) {
+       SgExpression* designator = designators[i];
+       if (isSgVarRefExp(designator)) {
+         // A struct field
+         curprint ( "." );
+         unparseVarRef(designator, info);
+       } else if (isSgValueExp(designator)) {
+         curprint ( "[" );
+         unparseValue(designator, info);
+         curprint ( "]" );
+       }
+     }
+     curprint ( " = " );
+     unparseExpression(di->get_memberInit(), info);
+   }
 

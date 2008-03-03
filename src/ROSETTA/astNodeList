@@ -672,3 +672,4 @@ SgAsmx86Ldmxcsr
 SgAsmx86Movaps
 SgAsmType80bitFloat
 SgAsmType128bitFloat
+SgDesignatedInitializer
