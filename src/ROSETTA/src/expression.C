@@ -162,8 +162,12 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (ActualArgumentExpression, "ActualArgumentExpression", "ACTUAL_ARGUMENT_EXPRESSION");
 #endif
 
+  // An expression with a designator, used for designated initialization in
+  // SgAggregateInitializer
+     NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
+
      NEW_NONTERMINAL_MACRO (Initializer,
-                            AggregateInitializer | ConstructorInitializer | AssignInitializer,
+                            AggregateInitializer | ConstructorInitializer | AssignInitializer | DesignatedInitializer,
                             "Initializer","EXPR_INIT", false);
 
      NEW_NONTERMINAL_MACRO (UnaryOp,
@@ -1304,6 +1308,11 @@ Grammar::setUpExpressions ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+     DesignatedInitializer.setFunctionPrototype ( "HEADER_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
+  // Each of these fields is either a SgValueExp for an array index or an SgVarRefExp for a struct field name -- they are chained to form the actual designator
+     DesignatedInitializer.setDataPrototype("SgExprListExp*", "designatorList", "", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      // ***********************************************************************
      // ***********************************************************************
      //                       Source Code Declaration
@@ -1484,6 +1493,7 @@ Grammar::setUpExpressions ()
      UnknownArrayOrFunctionReference.setFunctionSource ( "SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE", "../Grammar/Expression.code" );
 
      ActualArgumentExpression.setFunctionSource ( "SOURCE_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );
+     DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
 
      // ***************************************
      //      get_type() member function

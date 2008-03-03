@@ -406,6 +406,15 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_174.f03 \
      test2007_176.f03
 
+C99_TESTCODES_REQUIRED_TO_PASS = \
+     bool.c \
+     complex_01.c \
+     complex_03.c \
+     constants.c \
+     test2005_186.c \
+     test2006_127.c \
+     test2006_143.c \
+     test2008_01.c
 
 
 # Configure-time automake conditional
@@ -441,6 +450,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
 C_FILES   = ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C=.C-o}
+C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
 F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
 F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
 F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
@@ -451,7 +461,11 @@ $(CXX_FILES): testVirtualCFG
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
 $(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
 	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.o=.c) && touch $@
+	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.c) && touch $@
+
+$(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
+	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.c)
+	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.c) && touch $@
 
 $(F90_FILES): ./testVirtualCFG
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
@@ -480,12 +494,13 @@ EXTRA_DIST =
 
 check-cxx: $(CXX_FILES)
 check-c: $(C_FILES)
+check-c99: $(C99_FILES)
 check-f90: $(F90_FILES)
 check-f77: $(F77_FILES)
 check-f03: $(F03_FILES)
 check-fortran: check-f90 check-f77 check-f03
 
-check-local: check-cxx check-c check-fortran
+check-local: check-cxx check-c check-c99 check-fortran
 # check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/virtualCFG_tests: make check rule complete (terminated normally) ******"

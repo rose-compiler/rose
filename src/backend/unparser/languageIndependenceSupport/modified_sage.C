@@ -769,7 +769,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
   // ROSE_ASSERT(parentExpr != NULL);
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
-#if DEBUG_PARENTHESIS_PLACEMENT && 0
+#if DEBUG_PARENTHESIS_PLACEMENT && 1
      printf ("\n\n***** In PrintStartParen() \n");
      printf ("In PrintStartParen(): expr = %s need_paren = %s \n",expr->sage_class_name(),expr->get_need_paren() ? "true" : "false");
      printf ("isOverloadedArrowOperator(expr) = %s \n",(isOverloadedArrowOperator(expr) == true) ? "true" : "false");
@@ -803,10 +803,10 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
         }
 
      if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || 
-          expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer)
+          expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
-          printf ("     Special case of parentExpr == NULL || SgExpressionRoot || SgExprListExp || SgConstructorInitializer (return false) \n");
+          printf ("     Special case of parentExpr == NULL || SgExpressionRoot || SgExprListExp || SgConstructorInitializer || SgDesignatedInitializer (return false) \n");
 #endif
           return false;
         }
