@@ -48,7 +48,6 @@ readFile( std::string filename){
 				  }
 
      std::string current_word;
-     bool is_first_word = true;
   //read file
      char dummyString[2000];
 
@@ -76,7 +75,7 @@ readFile( std::string filename){
 //Replaces all whitespaces with a char in a string
 void
 replaceWhitespace(std::string& inStr, char replaceWith ){
-    for ( int i = 0; i < inStr.size(); ++i)
+    for ( size_t i = 0; i < inStr.size(); ++i)
          if(inStr[i] == ' ')
           inStr[i] = replaceWith;
 
@@ -96,8 +95,8 @@ replaceWhitespace(std::string& inStr, char replaceWith ){
 
 CompassAnalyses::TypeTypedef::
 CheckerOutput::CheckerOutput (SgType* to, std::string isN, std::string shouldBeN, SgInitializedName* node)
-        : toType(to),  IRnode(node), is(isN), shouldBe(shouldBeN),
-          OutputViolationBase(node,checkerName,shortDescription)
+        : OutputViolationBase(node,checkerName,shortDescription),
+          toType(to),  IRnode(node), is(isN), shouldBe(shouldBeN)
    {}
 
 CompassAnalyses::TypeTypedef::Traversal::

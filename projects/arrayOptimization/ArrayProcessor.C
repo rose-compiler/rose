@@ -28,7 +28,7 @@ extern bool DebugAnnot();
 
 bool ToArrayOnly( const vector<string>& argv )
 {
-  for (int i = 1; i < argv.size(); ++i) {
+  for (size_t i = 1; i < argv.size(); ++i) {
     if ( argv[i] == "-toarrayonly")
         return true;
   }

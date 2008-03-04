@@ -117,7 +117,6 @@ get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& 
   if (!ArrayAnnotation::get_inst()->has_array_opt( fa, array, &desc))
     return false;
   
-  int dim;
   for (ArrayOptDescriptor::InitVarIterator p = desc.init_var_begin();
        p != desc.init_var_end(); ++p) {
     DefineVariableDescriptor& cur = *p;

@@ -14,6 +14,7 @@ class NodesInVector :  public std::binary_function<SgNode*, std::pair< VariantVe
 			  if( std::find(accumulatedList.first->begin(), accumulatedList.first->end(), node->variantT() ) 
 				  != accumulatedList.first->end() )
 				(*accumulatedList.second)++;
+                          return NULL;
 			};
 };
 
@@ -24,8 +25,9 @@ class NodesInSubTree :  public std::binary_function<SgNode*,  std::pair<int*,int
 
                 if( isSgStatement(node) != NULL )
 				  (*numberOfNodes.first)++;
-				if( isSgExpression(node) != NULL )
+                if( isSgExpression(node) != NULL )
 				  (*numberOfNodes.second)++;
+                return NULL;
 			};
 };
 

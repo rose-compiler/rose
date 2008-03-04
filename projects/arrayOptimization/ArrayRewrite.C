@@ -38,7 +38,7 @@ class RewriteModArrayAccess : public CreateTmpArray, public TransformAstTree
 {
   // rewrite reads of modified array by creating explicit temperaries
   AstNodePtr stmt, lhs, modarray;
-  int size;
+  size_t size;
   LoopTransformInterface la;
   DepInfoAnal depAnal;
   ArrayInterface& anal;
@@ -47,10 +47,10 @@ public:
                          const AstNodePtr& _stmt, const AstNodePtr& _lhs,
                          std::map<std::string, AstNodePtr>& _varmap,
                          std::list<AstNodePtr>& _newstmts)
-    : la( ai, a, ArrayAnnotation::get_inst(), &a),
-      depAnal(la),
-      anal(a), stmt(_stmt), lhs(_lhs), 
-      CreateTmpArray(_varmap, _newstmts) 
+    : CreateTmpArray(_varmap, _newstmts),
+      stmt(_stmt), lhs(_lhs),
+      la( ai, a, ArrayAnnotation::get_inst(), &a),
+      depAnal(la), anal(a)
      { 
         AstInterface::AstNodeList subs;
         if (!ArrayAnnotation::get_inst()->is_access_array_elem( ai, lhs, &modarray, &subs))

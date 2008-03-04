@@ -11,7 +11,7 @@ class CreateTmpArray
   AstNodePtr model;
  public:
   CreateTmpArray( std::map<std::string, AstNodePtr>& _varmap, std::list<AstNodePtr>& _newstmts) 
-     :  newStmts(_newstmts), varmap(_varmap), model() {} 
+     :  varmap(_varmap), newStmts(_newstmts), model() {} 
   AstNodePtr create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const std::string name);
   void set_model_array( const AstNodePtr& mod) { model = mod; }
 };
@@ -27,7 +27,7 @@ public:
   RewriteConstructArrayAccess( CPPAstInterface& _fa, ArrayInterface& a,
                                std::map<std::string, AstNodePtr>& _varmap,
                                std::list<AstNodePtr>& _newstmts)
-      : fa(_fa), anal(a), CreateTmpArray(_varmap, _newstmts) {}
+      : CreateTmpArray(_varmap, _newstmts), anal(a), fa(_fa) {}
   bool rewritable( const SymbolicVal& head);
   SymbolicVal operator()( const SymbolicVal& orig);
 };
