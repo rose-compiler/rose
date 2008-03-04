@@ -258,7 +258,7 @@ ProcessExpression( AstInterface& fa, const std::string& _modname, const AstNodeP
          case AstInterface::BOP_LE: opt = LE; break;
          case AstInterface::BOP_GE: opt = GE; break;
          case AstInterface::BOP_NE: opt = NE; break;
-         default: assert (!"Default reached in ProcessExpression");
+         default: break;
          }
          stmt_last = x_eq_op_y( opt, modname, opds);
          stmts_pushback(stmts,stmt_last);
