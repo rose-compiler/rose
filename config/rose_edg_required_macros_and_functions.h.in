@@ -527,15 +527,3 @@ was just float or double for complex<float> or complex<double>.
 /* DQ (6/19/2007): I think we can comment this out now, since it is better defined above!
    DQ (1/31/2007): GNU modifier required to handle code using the offsetof macro in C++ g++ 3.4 and greater */
 /* #define __offsetof__ */
-
-/* DQ (7/15/2007): This is a bad idea, but we do it as a test to debug test2007_95.C! 
-   We define away the __SOCKADDR_ARG macro and to make it work we also define away the
-   variable used in a related function to be "...".  I will provide a better solution
-   later.
-*/
-#define __SOCKADDR_ARG
-#if __cplusplus
-  #define __addr ...
-#else
-  #define __addr
-#endif
