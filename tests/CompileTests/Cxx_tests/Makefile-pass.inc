@@ -615,7 +615,6 @@ test2007_84.C \
 test2007_85.C \
 test2007_90.C \
 test2007_94.C \
-test2007_95.C \
 test2007_98.C \
 test2007_102.C \
 test2007_103.C \
@@ -666,6 +665,7 @@ test2004_116.C
 # DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
 # test2005_188.C 
 # test2005_205.C
+# test2007_95.C -- JJW 3-3-2008 gcc doesn't accept this code, and the stuff in ROSE to allow it broke Naim
 
 # DQ (1/8/2008): This does not pass the tests in: tests/roseTests/astOutliningTests
 # test2007_169.C 
