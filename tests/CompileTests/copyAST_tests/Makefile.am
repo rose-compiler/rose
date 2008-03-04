@@ -691,7 +691,6 @@ test2007_83.C \
 test2007_84.C \
 test2007_85.C \
 test2007_94.C \
-test2007_95.C \
 test2007_98.C \
 test2007_102.C \
 test2007_103.C \
@@ -726,6 +725,7 @@ X.C
 # test2004_83.C
 # test2005_172.C
 # test2007_56.C
+# test2007_95.C -- broken test case
 
 
 # Configure-time automake conditional
