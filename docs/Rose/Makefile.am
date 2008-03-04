@@ -174,7 +174,7 @@ roseExecutionOutput.txt:
 	if (test -r $(libdir)/librose.so && test -x $(top_builddir)/src/testSharedRoseLib); then \
       echo "Building a simple program to run with testSharedRoseLib"; \
       echo "int main() { int x=0; return x; }" > roseTestProgram.C; \
-      $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
+      env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
    else \
       echo "Execution output is not available (build ROSE, then rebuild documentation)." > roseExecutionOutput.txt; \
    fi;
