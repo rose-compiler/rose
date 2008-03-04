@@ -1,0 +1,45 @@
+#!/bin/bash
+# This script does a fresh checkout of ROSE and conducts series tests
+# Please modify the following before using it:
+# 1. The path to the source and build directories of ROSE
+# 2. the configuration options
+# usage: 
+#	put this script at the same directory as where your working copy of ROSE resides
+#	then ./roseFreshTest
+# Liao, 2/7/2008
+#------------------------------------------------------
+set -e
+# the right version of subversion is essential!!
+SVN=/nfs/apps/subversion/1.4.5/bin/svn
+ROSE_SRC_DIR=/home/liao6/download/subROSE_test
+ROSE_BUILD_DIR=/home/liao6/download/buildsubrose_test
+
+#------------------------------------------------------
+# check out a fresh copy for testing
+rm -rf $ROSE_SRC_DIR
+$SVN co file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE $ROSE_SRC_DIR
+#------------------------------------------------------
+# rebuild the Makefile in the source tree
+echo "Build configuration and Makefile.in in the source tree...."
+cd $ROSE_SRC_DIR
+./build
+cd ..
+
+#------------------------------------------------------
+# prepare a fresh build tree
+echo "Making a temporary build directory:... "
+mkdir -p $ROSE_BUILD_DIR
+chmod -R +w $ROSE_BUILD_DIR
+touch $ROSE_BUILD_DIR/tmp_file
+rm -rf $ROSE_BUILD_DIR/*
+
+#------------------------------------------------------
+# configure ROSE
+cd $ROSE_BUILD_DIR
+$ROSE_SRC_DIR/configure --without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/liao6/download/fortran-parser --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=/home/liao6/opt/roseLatest_test 
+
+#------------------------------------------------------
+# make and check
+# stops when any of the commands fails
+gmake && gmake docs && gmake check &&gmake install && gmake installcheck && gmake dist && gmake distcheck
+
