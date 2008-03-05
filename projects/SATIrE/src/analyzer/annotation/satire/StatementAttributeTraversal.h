@@ -1,6 +1,6 @@
 // -*- C++ -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.3 2008-01-10 16:04:37 adrian Exp $
+// $Id: StatementAttributeTraversal.h,v 1.4 2008-03-05 17:03:29 gergo Exp $
 
 #ifndef STATEMENTATTRIBUTETRAVERSAL_H
 #define STATEMENTATTRIBUTETRAVERSAL_H
@@ -8,6 +8,9 @@
 #include <config.h>
 #include "CFGTraversal.h"
 #include "ProcTraversal.h"
+// GB (2008-03-03): Changed all unparseToString calls to Ir::fragmentToString.
+// This function is declared in IrCreation.h.
+#include "IrCreation.h"
 
 template<typename DFI_STORE_TYPE>
 class StatementAttributeTraversal : public AstSimpleProcessing
@@ -86,7 +89,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.3 2008-01-10 16:04:37 adrian Exp $
+// $Id: StatementAttributeTraversal.h,v 1.4 2008-03-05 17:03:29 gergo Exp $
 
 /* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
 
@@ -213,8 +216,8 @@ template<typename DFI_STORE_TYPE>
 void DfiTextPrinter<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
   
   //std::cout << "Unparsing:" << std::endl;
-
-  std::string stmt_str = stmt->unparseToString(0);
+// std::string stmt_str = stmt->unparseToString(0);
+  std::string stmt_str = Ir::fragmentToString(stmt);
   //std::cout << "done. Printing info now ... " << std::endl;
   std::cout << DfiTextPrinter<DFI_STORE_TYPE>::currentFunction() << ": " << "// pre info : " << preInfo << std::endl;
   std::cout << DfiTextPrinter<DFI_STORE_TYPE>::currentFunction() << ": " << stmt_str << std::endl;
@@ -270,7 +273,8 @@ void DfiDotGenerator<DFI_STORE_TYPE>::visitBasicBlock(SgBasicBlock* stmt) {
       std::string prevPostInfo=DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(prev);
       std::string currentPreInfo=DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(current);
       if(prevPostInfo!=currentPreInfo) {
-	std::cout << "\"" << prevPostInfo << "\" -> " << "\"" << currentPreInfo << "\"" << addEdgeLabel(prev->unparseToString()) << ";" << std::endl;
+ // std::cout << "\"" << prevPostInfo << "\" -> " << "\"" << currentPreInfo << "\"" << addEdgeLabel(prev->unparseToString()) << ";" << std::endl;
+	std::cout << "\"" << prevPostInfo << "\" -> " << "\"" << currentPreInfo << "\"" << addEdgeLabel(Ir::fragmentToString(prev)) << ";" << std::endl;
       }
     }
     break;
@@ -288,22 +292,26 @@ void DfiDotGenerator<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::strin
     SgBasicBlock* trueBranch=ifstmt->get_true_body();
     SgStatementPtrList& trueBranchStmtList=trueBranch->get_statements();
     SgStatement* trueBranchFirstStmt=*(trueBranchStmtList.begin());
-    std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(ifstmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(trueBranchFirstStmt) << "\" " << addEdgeLabel(ifstmt->get_conditional()->unparseToString()+":T") << ";" << std::endl;
+ // std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(ifstmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(trueBranchFirstStmt) << "\" " << addEdgeLabel(ifstmt->get_conditional()->unparseToString()+":T") << ";" << std::endl;
+    std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(ifstmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(trueBranchFirstStmt) << "\" " << addEdgeLabel(Ir::fragmentToString(ifstmt->get_conditional())+":T") << ";" << std::endl;
 
     SgBasicBlock* falseBranch=ifstmt->get_false_body();
     SgStatementPtrList& falseBranchStmtList=falseBranch->get_statements();
     SgStatement* falseBranchFirstStmt=*(falseBranchStmtList.begin());
-    std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(ifstmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(falseBranchFirstStmt) << "\" " << addEdgeLabel(ifstmt->get_conditional()->unparseToString()+":F") << ";" << std::endl;
+ // std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(ifstmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(falseBranchFirstStmt) << "\" " << addEdgeLabel(ifstmt->get_conditional()->unparseToString()+":F") << ";" << std::endl;
+    std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(ifstmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(falseBranchFirstStmt) << "\" " << addEdgeLabel(Ir::fragmentToString(ifstmt->get_conditional())+":F") << ";" << std::endl;
 
     /* find last statement of true and false branch and connect its postinfo with if's postinfo */
     SgStatement* trueBranchLastStmt=lastStmtofStmtList(trueBranchStmtList);
     std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(trueBranchLastStmt) << "\"" 
 	      << " -> "
-	      << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(ifstmt) << "\" " << addEdgeLabel(trueBranchLastStmt->unparseToString()) << ";" << std::endl;
+	   // << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(ifstmt) << "\" " << addEdgeLabel(trueBranchLastStmt->unparseToString()) << ";" << std::endl;
+	      << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(ifstmt) << "\" " << addEdgeLabel(Ir::fragmentToString(trueBranchLastStmt)) << ";" << std::endl;
     SgStatement* falseBranchLastStmt=lastStmtofStmtList(falseBranchStmtList);
     std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(lastStmtofStmtList(falseBranchStmtList)) << "\"" 
 	      << " -> "
-	      << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(ifstmt) << "\"" << addEdgeLabel(falseBranchLastStmt->unparseToString()) << ";" << std::endl;
+	   // << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(ifstmt) << "\"" << addEdgeLabel(falseBranchLastStmt->unparseToString()) << ";" << std::endl;
+	      << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(ifstmt) << "\"" << addEdgeLabel(Ir::fragmentToString(falseBranchLastStmt)) << ";" << std::endl;
     break;
   }
 
@@ -312,14 +320,16 @@ void DfiDotGenerator<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::strin
     SgBasicBlock* trueBranch=whlstmt->get_body();
     SgStatementPtrList& trueBranchStmtList=trueBranch->get_statements();
     SgStatement* trueBranchFirstStmt=*(trueBranchStmtList.begin());
-    std::string whlCondString=whlstmt->get_condition()->unparseToString();
+ // std::string whlCondString=whlstmt->get_condition()->unparseToString();
+    std::string whlCondString=Ir::fragmentToString(whlstmt->get_condition());
     std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(stmt) << "\" -> \"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(trueBranchFirstStmt) << "\"" << addEdgeLabel(whlCondString+":T") << ";" << std::endl;
 
     /* loop back edge */
     SgStatement* lastStmt=lastStmtofStmtList(trueBranchStmtList);
     std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(lastStmt) << "\"" 
 	      << " -> "
-	      << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(whlstmt) << "\"" << addEdgeLabel(lastStmt->unparseToString()) << ";" << std::endl;
+	   // << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(whlstmt) << "\"" << addEdgeLabel(lastStmt->unparseToString()) << ";" << std::endl;
+	      << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(whlstmt) << "\"" << addEdgeLabel(Ir::fragmentToString(lastStmt)) << ";" << std::endl;
        
     /* finding next statement on false-branch is non-trivial; we use while-stmt post info instead  */
     std::cout << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPreInfo(whlstmt) << "\" -> " << "\"" << DfiDotGenerator<DFI_STORE_TYPE>::getPostInfo(whlstmt) << "\"" << addEdgeLabel(whlCondString+":F") << ";" << std::endl;
