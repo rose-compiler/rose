@@ -71,7 +71,7 @@ void
 CompassAnalyses::MallocReturnValueUsedInIfStmt::Traversal::
 elErase( std::string & s, char c )
 {
-  int position = s.find(c);
+  size_t position = s.find(c);
 
   while( position != std::string::npos )
   {
@@ -126,7 +126,6 @@ void
 CompassAnalyses::MallocReturnValueUsedInIfStmt::Traversal::
 visit(SgNode* node)
    { 
-     int depth = 0;
      bool foundIf = false;
 
      std::string context;

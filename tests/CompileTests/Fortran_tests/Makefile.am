@@ -267,8 +267,10 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2007_257.f90 \
      test2007_LANL.f90 \
      test2007_example.f90 \
-     test2008_02.f \
      triangle.f90
+
+# JJW -- this can't be in the f90 file list because it does not have the .f90 extension
+#    test2008_02.f
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2007_85.f \
