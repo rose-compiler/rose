@@ -1158,7 +1158,7 @@ PrologSupport::getMemberFunctionDeclarationSpecific(SgMemberFunctionDeclaration*
     /* add the nodes name*/
     t->addSubterm(new PrologString(decl->get_name().getString()));
     /* add scope */
-    SgClassDefinition* def = decl->get_class_scope();	
+    SgClassDefinition* def = decl->get_class_scope();
     /* we add the complete class scope name here */
     t->addSubterm(getClassScopeName(def));
     /* add declaration modifier specific*/
@@ -1226,11 +1226,20 @@ PrologSupport::getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol* sym) {
     bool orig_decl_has_def = (orig_decl->get_definition() == NULL);
     /* clone node (deep copy) */
     // ROSE 0.8.8a SgMemberFunctionDeclaration* cop_decl = isSgMemberFunctionDeclaration(orig_decl->copy(SgTreeCopy()));
+ // GB (2008-03-05): This copy statement produces interesting warnings like:
+ // WARNING: Scopes do NOT match! variable = 0x2aaaadaa2760 = n (could this
+ // be a static variable, or has the symbol table been setup before the
+ // scopes have been set?) 
+ // Error: Symbol not found for initializedName_copy = 0x2aaaadaa2760 = n
     SgMemberFunctionDeclaration* cop_decl = isSgMemberFunctionDeclaration(orig_decl->copy(*new SgTreeCopy()));
     ROSE_ASSERT(cop_decl != NULL);
     /* make sure we didn't change the orginal node*/
     ROSE_ASSERT(orig_decl_has_def == (orig_decl->get_definition() == NULL));
     cop_decl->set_definition(NULL);
+ // GB (2008-03-05): For some reason, cop_decl has a null parent. This
+ // causes problems within the nested traversal. Therefore: Copy the parent
+ // pointer manually. (It took me two days to find this bug, BTW.)
+    cop_decl->set_parent(orig_decl->get_parent());
     t->addSubterm(traverseSingleNode(cop_decl));
     /* add scope*/
     SgClassDefinition* cdef = orig_decl->get_class_scope();

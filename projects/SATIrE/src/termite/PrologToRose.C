@@ -1439,7 +1439,7 @@ PrologToRose::createMemberFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list
 
   /*set declaration modifier*/
   setDeclarationModifier(annot->at(3),&func_decl->get_declarationModifier());
-	
+
   return func_decl;
 }
 
