@@ -29,6 +29,9 @@ public:
   static SgDoWhileStmt* createDoWhileStmt(SgExprStatement* expStmt);
   static SgSwitchStatement* createSwitchStatement(SgExprStatement* expStmt);
   static SgClassType* createClassType();
+  static SgThisExp* createThisExp(SgClassSymbol *class_symbol);
+  static SgIntVal* createIntVal(int value);
+  static SgCastExp* createNullPointerExp(SgType *type);
   // ICFG specific nodes that inherit from ROSE SgStatement and implement unparseToString
   static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent);
   static FunctionEntry* createFunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent);

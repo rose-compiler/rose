@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.2 2008-01-25 16:09:17 adrian Exp $
+// $Id: ExprTransformer.h,v 1.3 2008-03-05 17:09:36 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -42,9 +42,9 @@ private:
     CallBlock *find_entry(SgFunctionCallExp *);
     const std::vector<CallBlock *> *find_entries(SgFunctionCallExp *);
     const std::vector<CallBlock *> *find_destructor_entries(SgClassType *);
-    std::vector<SgVariableSymbol *> *evaluate_arguments(SgName,
+    std::vector<SgVariableSymbol *> *evaluate_arguments(std::string,
             SgExpressionPtrList &, BasicBlock *, bool);
-    void assign_retval(SgName, SgFunctionCallExp *, BasicBlock *);
+    void assign_retval(std::string, SgFunctionCallExp *, BasicBlock *);
     std::vector<std::string> *find_destructor_names(SgClassType *);
     std::vector<std::string> *find_destructor_this_names(SgClassType *);
 };

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.6 2008-02-05 21:37:47 markus Exp $
+// $Id: cfg_support.h,v 1.7 2008-03-05 17:09:36 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -312,7 +312,7 @@ class LogicalIf : public IcfgStmt
 public:
     LogicalIf(SgExpression *e) : expr(e)
     {
-        expr->set_parent(NULL);
+     // expr->set_parent(NULL);
     }
     SgExpression *get_condition() const { return expr; }
     std::string unparseToString() const;
@@ -369,9 +369,41 @@ void add_link(BasicBlock *from, BasicBlock *to, KFG_EDGE_TYPE type);
 SgFunctionRefExp *find_called_func(SgExpression *);
 SgMemberFunctionRefExp *find_called_memberfunc(SgExpression *);
 SgExpression *calling_object_address(SgExpression *);
-SgName find_func_name(SgFunctionCallExp *);
+std::string *find_func_name(SgFunctionCallExp *);
 BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
         int procnum, BasicBlock *after, int *node_id);
 bool subtype_of(SgClassDefinition *, SgClassDefinition *);
+void dumpTreeFragment(SgNode *, std::ostream &);
+std::string dumpTreeFragmentToString(SgNode *);
+
+// Helper for printing sub-ASTs in a format like:
+// SgAddOp( SgIntVal( ) SgVarRefExp( ) )
+class TreeFragmentDumper: private AstPrePostProcessing
+{
+public:
+    TreeFragmentDumper(std::ostream &stream)
+      : stream(stream)
+    {
+    }
+
+    void run(SgNode *n)
+    {
+        traverse(n);
+    }
+
+protected:
+    void preOrderVisit(SgNode *n)
+    {
+        stream << n->class_name() << "( ";
+    }
+
+    void postOrderVisit(SgNode *n)
+    {
+        stream << ") ";
+    }
+
+private:
+    std::ostream &stream;
+};
 
 #endif
