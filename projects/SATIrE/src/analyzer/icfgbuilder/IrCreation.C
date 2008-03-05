@@ -273,8 +273,6 @@ SgExprListExp* Ir::createExprListExp() {
 
 SgConstructorInitializer*
 Ir::createConstructorInitializer(SgMemberFunctionDeclaration * mfd,SgType* type) {
-    std::cout << "* createConstructorInitializer: mfd = "
-        << (void *) mfd << std::endl;
   SgExprListExp* eList;
   eList=createExprListExp();
   SgConstructorInitializer* n=new SgConstructorInitializer(createFileInfo(),
@@ -294,8 +292,6 @@ SgMemberFunctionDeclaration*
 Ir::createMemberFunctionDeclaration(std::string name) {
    SgMemberFunctionDeclaration* n = new SgMemberFunctionDeclaration(createFileInfo(), name);
    configLocatedNode(n);   
-   std::cout << "* " << __FILE__ << ": createMemberFunctionDeclaration: "
-       << "returning node " << (void *) n << std::endl;
    return n;
 }
 
