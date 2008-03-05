@@ -67,8 +67,8 @@ lib_LTLIBRARIES	= libsage3_wrap.la
 nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 #libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
-libsage3_wrap_la_LIBADD		= -lrt -lrose -lCompass -lCompassCheckers
-libsage3_wrap_la_LDFLAGS	= -L.. -L../compass -L../compass/compassSupport
+libsage3_wrap_la_LIBADD		= -lrose -lrt -lCompass -lCompassCheckers
+libsage3_wrap_la_LDFLAGS	= -L../../src -L../compass -L../compass/compassSupport
 
 sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
