@@ -16,6 +16,10 @@ std::string Ir::fragmentToString(const SgNode* node) {
   if(dynamic_cast<const SgFunctionDefinition*>(node)) {
     return "not unparsed: FRAGMENT function definition";
   }
+// GB (2008-03-03): This can't hurt.
+  if (node == NULL) {
+      return "not unparsed: NULL FRAGMENT";
+  }
 
   SgUnparse_Info* unparseInfo = new SgUnparse_Info();
   unparseInfo->set_SkipComments();    // do not generate comments
@@ -28,7 +32,22 @@ std::string Ir::fragmentToString(const SgNode* node) {
     delete unparseInfo;
     return s;
   }
- 
+
+  if (const SgLabelStatement *l = isSgLabelStatement(node)) {
+   // GB (2008-03-03): Calling unparseToString on self-made
+   // SgLabelStatements doesn't work well because of a bunch of sanity
+   // checks in the unparser. Let's build the string semi-manually.
+      s = l->get_name().str();
+      s += ":";
+   // Unparse the associated statement, if any.
+      if (l->get_statement() != NULL) {
+          s += ' ';
+          s += fragmentToString(l->get_statement());
+      }
+      delete unparseInfo;
+      return s;
+  }
+
   /* create a temporary AST root with SgFile and SgGlobal to allow ROSE function unparseToString to trace back */
   SgFile* file = new SgFile();
   file->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
@@ -254,6 +273,8 @@ SgExprListExp* Ir::createExprListExp() {
 
 SgConstructorInitializer*
 Ir::createConstructorInitializer(SgMemberFunctionDeclaration * mfd,SgType* type) {
+    std::cout << "* createConstructorInitializer: mfd = "
+        << (void *) mfd << std::endl;
   SgExprListExp* eList;
   eList=createExprListExp();
   SgConstructorInitializer* n=new SgConstructorInitializer(createFileInfo(),
@@ -273,6 +294,8 @@ SgMemberFunctionDeclaration*
 Ir::createMemberFunctionDeclaration(std::string name) {
    SgMemberFunctionDeclaration* n = new SgMemberFunctionDeclaration(createFileInfo(), name);
    configLocatedNode(n);   
+   std::cout << "* " << __FILE__ << ": createMemberFunctionDeclaration: "
+       << "returning node " << (void *) n << std::endl;
    return n;
 }
 
@@ -425,6 +448,33 @@ Ir::createClassType() {
   SgClassType* n=new SgClassType();
   configTypeNode(n);
   return n;
+}
+
+SgThisExp *
+Ir::createThisExp(SgClassSymbol *class_symbol) {
+  SgThisExp* t = new SgThisExp(createFileInfo(), class_symbol);
+  configLocatedNode(t);
+  return t;
+}
+
+SgIntVal *
+Ir::createIntVal(int value) {
+  SgIntVal *i = new SgIntVal(createFileInfo(), value);
+  configLocatedNode(i);
+  return i;
+}
+
+// GB (2008-03-05): This function creates a null pointer expression of the
+// given type by creating a cast of the integer constant 0 to the given
+// type. The type should be a pointer type, of course, but this is not
+// enforced.
+SgCastExp *
+Ir::createNullPointerExp(SgType *type) {
+  SgIntVal *zero = Ir::createIntVal(0);
+  SgCastExp *c = new SgCastExp(createFileInfo(), zero, type,
+                               SgCastExp::e_C_style_cast);
+  configLocatedNode(c, zero);
+  return c;
 }
 
 char*

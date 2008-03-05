@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.9 2008-02-05 21:37:47 markus Exp $
+// $Id: cfg_support.C,v 1.10 2008-03-05 17:08:26 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -189,33 +189,45 @@ calling_object_address(SgExpression *call_expr)
 {
   SgDotExp *dot_exp = isSgDotExp(call_expr);
   SgArrowExp *arrow_exp = isSgArrowExp(call_expr);
+  SgMemberFunctionRefExp *mfun_ref = isSgMemberFunctionRefExp(call_expr);
   
   if (dot_exp)
+  {
     if (isSgMemberFunctionRefExp(dot_exp->get_rhs_operand()))
       return Ir::createAddressOfOp(dot_exp->get_lhs_operand(), dot_exp->get_type());
     else
       return calling_object_address(dot_exp->get_rhs_operand());
+  }
   else if (arrow_exp)
+  {
     if (isSgMemberFunctionRefExp(arrow_exp->get_rhs_operand()))
       return arrow_exp->get_lhs_operand();
     else
       return calling_object_address(arrow_exp->get_rhs_operand());
+  }
+  else if (mfun_ref)
+  {
+    return Ir::createNullPointerExp(
+            new SgPointerType(mfun_ref->get_symbol()
+                ->get_declaration()->get_associatedClassDeclaration()
+                ->get_type()));
+  }
   else
     return NULL;
 }
 
-SgName 
+std::string *
 find_func_name(SgFunctionCallExp *call)
 {
   SgFunctionRefExp *fr = find_called_func(call->get_function());
   SgMemberFunctionRefExp *mfr = find_called_memberfunc(call->get_function());
   
   if (fr)
-    return fr->get_symbol_i()->get_name();
+    return new std::string(fr->get_symbol_i()->get_name().str());
   else if (mfr)
-    return SgName(mfr->get_symbol_i()->get_name().str());
+    return new std::string(mfr->get_symbol_i()->get_name().str());
   else
-    return SgName("unknown_func");
+    return NULL;
 }
 
 std::string
@@ -262,7 +274,7 @@ void ArgumentAssignment::init(SgExpression *l, SgExpression *r)
     rhs = r;
   }
   if (rhs != NULL) {
-    rhs->set_parent(NULL);
+ // rhs->set_parent(NULL);
   }
 }
 
@@ -411,6 +423,8 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
 
 bool subtype_of(SgClassDefinition *a, SgClassDefinition *b)
 {
+  if (a == NULL || b == NULL)
+      return false;
   const SgBaseClassPtrList &base_classes = a->get_inheritances();
   SgBaseClassPtrList::const_iterator i;
   for (i = base_classes.begin(); i != base_classes.end(); ++i) {
@@ -420,4 +434,17 @@ bool subtype_of(SgClassDefinition *a, SgClassDefinition *b)
     }
   }
   return false;
+}
+
+void dumpTreeFragment(SgNode *node, std::ostream &stream)
+{
+    TreeFragmentDumper tfd(stream);
+    tfd.run(node);
+}
+
+std::string dumpTreeFragmentToString(SgNode *node)
+{
+    std::stringstream ss;
+    dumpTreeFragment(node, ss);
+    return ss.str();
 }

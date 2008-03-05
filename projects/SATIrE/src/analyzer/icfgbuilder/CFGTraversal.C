@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.12 2008-02-14 11:22:09 gergo Exp $
+// $Id: CFGTraversal.C,v 1.13 2008-03-05 17:08:26 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -44,12 +44,6 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
 	if (aa && isSgConstructorInitializer(aa->get_rhs())) {
 	  SgTreeCopy treecopy;
 	  SgExpression* new_expr= isSgExpression(aa->get_rhs()->copy(treecopy));
-	  if (isSgVarRefExp(aa->get_lhs())) {
-	    new_expr->set_parent(isSgVarRefExp(aa->get_lhs())->get_symbol()->get_declaration());
-	  } else {
-	    new_expr->set_parent(NULL); 
-	    //std::cout << "WARNING: CFGTraversal: setting parent = NULL!" << std::endl;
-	  }
 	  ExprLabeler el(expnum);
 	  el.traverse(new_expr, preorder);
 	  expnum = el.get_expnum();
@@ -120,8 +114,13 @@ CFGTraversal::getCFG() {
   cfgcheck.checkExpressions(cfg);
 #endif
 
-  perform_goto_backpatching();
-  number_exprs();
+// GB (2008-03-05): Execute these functions exactly once, when getCFG is
+// first called. This is the case when real_cfg == NULL.
+  if (real_cfg == NULL)
+  {
+      perform_goto_backpatching();
+      number_exprs();
+  }
   
   /*
     std::cout << cfg->numbers_types.size() << " types" << std::endl;
@@ -538,7 +537,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 					    init_block_after);
 	    SgExpression* new_expr
 	      = isSgExpression(init_expr->get_expression()->copy(treecopy));
-	    new_expr->set_parent(NULL);
 	    ExprLabeler el(expnum);
 	    el.traverse(new_expr, preorder);
 	    expnum = el.get_expnum();
@@ -723,7 +721,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  = isSgExprStatement(whiles->get_condition());
 	SgExpression* new_expr
 		  = isSgExpression(cond->get_expression()->copy(treecopy));
-	new_expr->set_parent(NULL);
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -776,7 +773,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  = isSgExprStatement(dowhiles->get_condition());
 	SgExpression *new_expr
 	  = isSgExpression(cond->get_expression()->copy(treecopy));
-	new_expr->set_parent(NULL);
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -884,7 +880,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 		    << std::endl;
 	  new_expr = NULL;
 	}
-	new_expr->set_parent(NULL);
 
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
@@ -989,7 +984,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	}
 	SgExpression *new_expr 
 	  = isSgExpression(returns->get_expression()->copy(treecopy));
-	new_expr->set_parent(NULL);
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1055,7 +1049,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
           new_expr = isSgExpression(initializer->copy(treecopy));
 
 	  if (new_expr) {
-          new_expr->set_parent(NULL);
 
           ExprLabeler el(expnum);
           el.traverse(new_expr, preorder);
@@ -1082,7 +1075,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
      // not entirely, identical to the other cases. Could we merge these?
      // TODO: investigate!
 	    new_expr = isSgExpression(constr_init->copy(treecopy));
-	    new_expr->set_parent(*j);
 
 	    ExprLabeler el(expnum);
 	    el.traverse(new_expr, preorder);
@@ -1202,7 +1194,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  SgTreeCopy treecopy;
 	  SgExpression *new_expr
 	    = isSgExpression(exprs->get_expression()->copy(treecopy));
-	  new_expr->set_parent(NULL);
 	  
 	  ExprLabeler el(expnum);
 	  el.traverse(new_expr, preorder);
