@@ -162,7 +162,7 @@ Sg_Options& Sg_options()
 }
 
 #include "rose.h"
-#include "AstFixParentTraversal.h"
+// #include "AstFixParentTraversal.h"
 #include "compass.h"
 
 void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
@@ -238,14 +238,15 @@ namespace __gnu_cxx {}
 %include sage3.h
 %include utility_functions.h
 %include Cxx_Grammar.i
+%include AstProcessing.h
+%include AstSimpleProcessing.h
 %include AstConsistencyTests.h
 %include unparser.h
 %include rose_attributes_list.h
 %include AstProcessing.h
-%template(AstTDP_ParentAttr) AstTopDownProcessing<ParentAttribute>;
+// %template(AstTDP_ParentAttr) AstTopDownProcessing<ParentAttribute>;
 // %include AstFixParentTraversal.h
 %include AST_FILE_IO.h
-%include AstProcessing.h
 %include astQueryInheritedAttribute.h
 %include astQuery.h
 %include nodeQuery.h
