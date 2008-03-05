@@ -41,7 +41,7 @@ public:
 # ifdef PAG_VERSION
       :pagDfiTextPrinter(analysis_result)
 # endif
-  { withPagAnalysisResults = (analysis_result != 0); };
+  { withPagAnalysisResults = (analysis_result != 0); }
 
   /** return the term*/
   PrologTerm* getTerm() {return mTerm;};
