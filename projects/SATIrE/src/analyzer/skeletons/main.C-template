@@ -70,7 +70,6 @@ int main(int argc, char **argv)
 
       if (outputAll) tp.traverse(ast_root);
       else tp.traverseInputFiles(ast_root);
-      std::cout << "tp completed" << std::endl;
 
       ofstream termfile;
       string filename = opt->getOutputTermFileName();
