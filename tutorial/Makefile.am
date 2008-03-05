@@ -307,6 +307,9 @@ wholeGraphFilterOnPersistantAttributes_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 graphGenerationOfSubtree_SOURCES = graphGenerationOfSubtree.C
 graphGenerationOfSubtree_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
+virtualCFG_SOURCES = virtualCFG.C
+virtualCFG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
 virtualFunctionIdentification_SOURCES = virtualFunctionIdentification.C
 virtualFunctionIdentification_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
