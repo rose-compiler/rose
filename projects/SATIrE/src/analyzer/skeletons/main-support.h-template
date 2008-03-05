@@ -62,4 +62,6 @@ public:
   }
 };
 
+void satireResetParentPointers(SgNode *ast_root, SgNode *parent);
+
 #endif

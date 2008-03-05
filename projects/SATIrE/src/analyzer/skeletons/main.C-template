@@ -34,6 +34,10 @@ int main(int argc, char **argv)
    * the analysis information on each statement */
   DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
 
+  /* During construction of the ICFG, we sometimes modify the AST
+   * although we shouldn't. This function corrects parent pointers. */
+  satireResetParentPointers(ast_root, NULL);
+
   /* Handle command line option --textoutput */
   if(opt->outputText()) {
     PagDfiTextPrinter<DFI_STORE> p(analysis_info);
@@ -66,6 +70,7 @@ int main(int argc, char **argv)
 
       if (outputAll) tp.traverse(ast_root);
       else tp.traverseInputFiles(ast_root);
+      std::cout << "tp completed" << std::endl;
 
       ofstream termfile;
       string filename = opt->getOutputTermFileName();

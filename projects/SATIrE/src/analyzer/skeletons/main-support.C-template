@@ -113,3 +113,20 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
 
     return results;
 }
+
+// GB (2008-03-05): Simple top-down traversal to set parent pointers correctly.
+class ParentPointerResetter: public AstTopDownProcessing<SgNode *>
+{
+protected:
+    SgNode *evaluateInheritedAttribute(SgNode *node, SgNode *parent)
+    {
+        node->set_parent(parent);
+        return node;
+    }
+};
+
+void satireResetParentPointers(SgNode *root, SgNode *parent)
+{
+    ParentPointerResetter ppr;
+    ppr.traverse(root, parent);
+}

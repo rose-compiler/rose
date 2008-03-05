@@ -30,7 +30,7 @@ addIfImplemented () {
     done
 }
 
-helptext=`$ANALYSIS --help`
+helptext=`./$ANALYSIS --help`
 addIfImplemented "MODES"   "$CUSTOM_MODES"   "$helptext"
 addIfImplemented "OPTIONS" "$CUSTOM_OPTIONS" "$helptext"
 
