@@ -564,7 +564,10 @@ COMPASS_CHECKER_TEX_FILES = \
 	variableNameEqualsDatabaseNameDocs.tex \
 	voidStarDocs.tex
 
-docs: compass.tex
+# Liao, 3/5/2008, added to generate compassCheckerDocs.tex
+compassCheckerDocs.tex:
+	$(MAKE) regenerate_skip_compass_makefile_inc
+docs: compass.tex compassCheckerDocs.tex
 	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty
 	test -f acknowledgments.tex || ln -s $(srcdir)/acknowledgments.tex acknowledgments.tex
 	test -f introduction.tex || ln -s $(srcdir)/introduction.tex introduction.tex
