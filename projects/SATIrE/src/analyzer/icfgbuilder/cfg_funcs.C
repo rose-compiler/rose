@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.8 2008-02-05 19:42:12 markus Exp $
+// $Id: cfg_funcs.C,v 1.9 2008-03-05 19:22:27 markus Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -179,16 +179,13 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
                     + Ir::fragmentToString(dowhiles->get_condition()) + ")";
             }
             break;
-            /*
         case V_SgSwitchStatement:
             {
-                SgSwitchStatement *switchs = isSgSwitchStatement(stmt);
-                fprintf(file, "switch (%s)",
-                        switchs->get_item_selector_root()->get_operand_i()
-                            ->unparseToString().c_str());
+	      SgSwitchStatement *switchs = isSgSwitchStatement(stmt);
+	      result + std::string("switch (")
+                    + Ir::fragmentToString(switchs->get_item_selector ()) + ")";
             }
             break;
-            */
         case V_SgCaseOptionStmt:
             {
                 SgCaseOptionStmt *cases = isSgCaseOptionStmt(stmt);

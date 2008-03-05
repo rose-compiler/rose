@@ -4,7 +4,7 @@ if [ x$1 = x ]
 then
     echo "Usage: $0 <INSTALL_PREFIX>"
     echo "  autoreconf, configure, test and install SATIrE to <INSTALL_PREFIX>"
-    echo "  Paths are hardcoded for g0.complang.tuwien.ac.at"
+    echo "  Paths are hardcoded for c8.complang.tuwien.ac.at"
     exit 1
 fi
 
