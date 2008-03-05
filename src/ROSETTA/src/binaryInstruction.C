@@ -88,6 +88,7 @@ Grammar::setUpBinaryInstructions ()
   // the instructions are grouped by their purpose
      // data transfer instructions
      NEW_TERMINAL_MACRO ( Asmx86Mov ,    "Asmx86Mov",     "Asmx86MovTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Movlpd , "Asmx86Movlpd",  "Asmx86MovlpdTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMove ,  "Asmx86CMove",   "Asmx86CMoveTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMovne , "Asmx86CMovne",  "Asmx86CMovneTag" );
      NEW_TERMINAL_MACRO ( Asmx86CMova ,  "Asmx86CMova",   "Asmx86CMovaTag" );
@@ -137,6 +138,9 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Dec , "Asmx86Dec", "Asmx86DecTag" );
      NEW_TERMINAL_MACRO ( Asmx86Neg , "Asmx86Neg", "Asmx86NegTag" );
      NEW_TERMINAL_MACRO ( Asmx86Cmp , "Asmx86Cmp", "Asmx86CmpTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Paddus , "Asmx86Paddus", "Asmx86PaddusTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Pcmpeq , "Asmx86Pcmpeq", "Asmx86PcmpeqTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Psubus , "Asmx86Psubus", "Asmx86PsubusTag" );
 
      NEW_TERMINAL_MACRO ( Asmx86Psub , "Asmx86Psub", "Asmx86PsubTag" );
      NEW_TERMINAL_MACRO ( Asmx86Padd , "Asmx86Padd", "Asmx86PaddTag" );
@@ -157,7 +161,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Not ,  "Asmx86Not",  "Asmx86NotTag" );
      NEW_TERMINAL_MACRO ( Asmx86Pand , "Asmx86Pand", "Asmx86PandTag" )
      NEW_TERMINAL_MACRO ( Asmx86Pandn , "Asmx86Pandn", "Asmx86PandnTag" )
-
+     NEW_TERMINAL_MACRO ( Asmx86Andpd , "Asmx86Andpd", "Asmx86AndpdTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Andnpd , "Asmx86Andnpd", "Asmx86AndnpdTag" );
 
      // Shift and Rotate Instructions
      NEW_TERMINAL_MACRO ( Asmx86Shl , "Asmx86Shl", "Asmx86ShlTag" );
@@ -296,17 +301,27 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86Fadd ,     "Asmx86Fadd",    "Asmx86FaddTag" );
      NEW_TERMINAL_MACRO ( Asmx86Faddp ,    "Asmx86Faddp",   "Asmx86FaddpTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fchs ,     "Asmx86Fchs",    "Asmx86Fchs" );
+     NEW_TERMINAL_MACRO ( Asmx86Addsd ,    "Asmx86Addsd",   "Asmx86AddsdTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Divsd ,    "Asmx86Divsd",   "Asmx86DivsdTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Subsd ,    "Asmx86Subsd",   "Asmx86SubsdTag" );
+
+     NEW_TERMINAL_MACRO ( Asmx86Addss ,    "Asmx86Addss",   "Asmx86AddssTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Movss ,    "Asmx86Movss",   "Asmx86MovssTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Subss ,    "Asmx86Subss",   "Asmx86SubssTag" );
 
      NEW_TERMINAL_MACRO ( Asmx86Fcom ,     "Asmx86Fcom",    "Asmx86FcomTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fcomp ,    "Asmx86Fcomp",   "Asmx86FcompTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fcompp ,   "Asmx86Fcompp",  "Asmx86FcomppTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fcos ,     "Asmx86Fcos",    "Asmx86FcosTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fdiv ,     "Asmx86Fdiv",    "Asmx86FdivTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Ucomisd ,  "Asmx86Ucomisd", "Asmx86UcomisdTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Ucomiss ,  "Asmx86Ucomiss", "Asmx86UcomissTag" );
 
      NEW_TERMINAL_MACRO ( Asmx86Fdivp ,    "Asmx86Fdivp",    "Asmx86FdivpTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fdivr ,    "Asmx86Fdivr",    "Asmx86FdivrTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fdivrp ,   "Asmx86Fdivrp",   "Asmx86FdivrpTag" );
      NEW_TERMINAL_MACRO ( Asmx86Ffree ,    "Asmx86Ffree",    "Asmx86FfreeTag" );
+     NEW_TERMINAL_MACRO ( Asmx86Ffreep ,   "Asmx86Ffreep",    "Asmx86FfreepTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fiadd ,    "Asmx86Fiadd",    "Asmx86FiaddTag" );
      NEW_TERMINAL_MACRO ( Asmx86Fidiv ,    "Asmx86Fidiv",    "Asmx86FidivTag" );
 
@@ -370,13 +385,15 @@ Grammar::setUpBinaryInstructions ()
 			     Asmx86Fdivp | Asmx86Fdivr | Asmx86Fdivrp | Asmx86Ffree | Asmx86Fiadd | 
 			     Asmx86Fidiv | Asmx86Fild | Asmx86Fimul | Asmx86Fist | Asmx86Fistp |
 			     Asmx86Fld | Asmx86Fld1 | Asmx86Fldcw | Asmx86Fldl2e | Asmx86Fldl2t |
-			     Asmx86Fldlg2 | Asmx86Fldpi | Asmx86Fldln2 | Asmx86Fldz | 
+			     Asmx86Fldlg2 | Asmx86Fldpi | Asmx86Fldln2 | Asmx86Fldz | Asmx86Ffreep |
 			     Asmx86Fmul | Asmx86Fmulp | Asmx86Fnstcw | Asmx86Fnstsw | Asmx86Fnop |
 			     Asmx86Fpatan | Asmx86Fprem | Asmx86Fptan | Asmx86Fsave | Asmx86Fscale |
 			     Asmx86Fsin | Asmx86Fsqrt | Asmx86Fst | Asmx86Fstp | Asmx86Fsub |
 			     Asmx86Fsubp | Asmx86Fsubr | Asmx86Fsubrp | Asmx86Ftst | Asmx86Fucom |
 			     Asmx86Fucomp | Asmx86Fucompp | Asmx86Fwait | Asmx86Fxch | Asmx86Fxsave |
-			     Asmx86Fyl2x | Asmx86Xorps | Asmx86Xorpd
+			     Asmx86Fyl2x | Asmx86Xorps | Asmx86Xorpd | Asmx86Addsd | Asmx86Divsd | 
+			     Asmx86Subsd | Asmx86Ucomisd | Asmx86Subss | Asmx86Addss | Asmx86Movss |
+			     Asmx86Ucomiss
 			     , "Asmx86FloatingPointInstruction", "Asmx86FloatingPointInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagStringInstruction, 
@@ -415,15 +432,15 @@ Grammar::setUpBinaryInstructions ()
 			     , "Asmx86ConditionalDataTransferInstruction", "Asmx86ConditionalDataTransferInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86ArithmeticInstruction, 
-                             Asmx86Sub | Asmx86Add | Asmx86Inc |
+                             Asmx86Sub | Asmx86Add | Asmx86Inc | Asmx86Paddus | Asmx86Psubus |
 			     Asmx86Adc | Asmx86Sbb | Asmx86Mul | Asmx86IMul | Asmx86Div | Asmx86IDiv | 
 			     Asmx86Dec | Asmx86Neg | Asmx86Cmp | Asmx86Psub | Asmx86Padd | 
-			     Asmx86Daa | Asmx86Das | Asmx86Aaa | 
+			     Asmx86Daa | Asmx86Das | Asmx86Aaa | Asmx86Pcmpeq | 
 			     Asmx86Aas | Asmx86Aam | Asmx86Aad  , "Asmx86ArithmeticInstruction", "Asmx86ArithmeticInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86DataTransferInstruction, Asmx86Push | Asmx86Mov | Asmx86Pop | Asmx86Movaps | 
 			     Asmx86ConditionalDataTransferInstruction | Asmx86ConditionalFlagDataTransferInstruction | 
-			     Asmx86ArithmeticInstruction | 
+			     Asmx86ArithmeticInstruction | Asmx86Movlpd |
 			     Asmx86Xchg | Asmx86Bswap | Asmx86Xadd | Asmx86Movntq | Asmx86Movdqu |
 			     Asmx86Pusha | Asmx86Popa | Asmx86Cwd | Asmx86Cbw | Asmx86Movsx | Asmx86Movzx 
 			     , "Asmx86DataTransferInstruction", "Asmx86DataTransferInstructionTag", false );
@@ -431,7 +448,7 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_NONTERMINAL_MACRO ( Asmx86LogicalInstruction, 
 			     Asmx86And | Asmx86Or | Asmx86Xor | Asmx86Not | Asmx86Pxor | Asmx86Pand |
-			     Asmx86Pandn
+			     Asmx86Pandn | Asmx86Andpd | Asmx86Andnpd
 			     , "Asmx86LogicalInstruction", "Asmx86LogicalInstructionTag", false );
 
      NEW_NONTERMINAL_MACRO ( Asmx86MiscInstruction, 

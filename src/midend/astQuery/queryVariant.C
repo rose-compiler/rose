@@ -1472,6 +1472,13 @@ querySolverGrammarElementFromVariantVector (
           case V_SgAsmx86Shl:
           case V_SgAsmx86Inc:
           case V_SgAsmx86Cmp:
+          case V_SgAsmx86And:
+          case V_SgAsmx86Jle:
+          case V_SgAsmBinaryMultiply:
+          case V_SgAsmx86Sar:
+          case V_SgAsmx86Jb:
+          case V_SgAsmx86Jae:
+          case V_SgAsmx86Dec:
           case V_SgAsmx86Lea:
 #endif
 
