@@ -11,14 +11,16 @@
 #include <iostream>
 #include <dlfcn.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
 using namespace std;
 
 bool containsArgument(int argc, char** argv, char* pattern) {
-for (int i = 2; i < argc ; i++) {
-  if (!strcmp(argv[i], pattern)) {
-    return true;
+  for (int i = 2; i < argc ; i++) {
+    if (!strcmp(argv[i], pattern)) {
+      return true;
+    }
   }
- }
   return false;
 }
 
@@ -68,7 +70,7 @@ void loadAnalysisFiles(vector <BC_AnalysisInterface*>& checkers,
 }
 
 void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers, 
-		       RoseBin_unparse_visitor* visitor) {  
+			    RoseBin_unparse_visitor* visitor) {  
   string dir = string("graphanalyses");
   vector<string> files = vector<string>();
   getdir(dir,files);
@@ -94,7 +96,8 @@ void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers,
 
 int main(int argc, char** argv) {
 
-  if (!containsArgument(argc, argv, "-check") && 
+  if (!containsArgument(argc, argv, "-checkAST") && 
+      !containsArgument(argc, argv, "-checkGraph") &&
       !containsArgument(argc, argv, "-printTree") &&
       !containsArgument(argc, argv, "-callgraph") &&
       !containsArgument(argc, argv, "-cfa") &&
@@ -104,7 +107,8 @@ int main(int argc, char** argv) {
   if (argc < 2) {
     fprintf(stderr, "Usage: %s executableName [OPTIONS]\n", argv[0]);
     cout << "\nOPTIONS: " <<endl;
-    cout << "-check                - run all checkers on binary. " << endl; 
+    cout << "-checkAST             - run all checkers on binary AST. " << endl; 
+    cout << "-checkGraph           - run all checkers on dataflow graph. " << endl; 
     cout << "-printTree            - create dot file of AST. " << endl; 
     cout << "-callgraph            - perform callgraph analysis and print callgraph.dot file. " << endl; 
     cout << "-cfa                  - perform control flow analysis and print cfg.dot file. " << endl; 
@@ -117,6 +121,13 @@ int main(int argc, char** argv) {
     return 1;
   }
   string execName = argv[1];
+
+  // create out folder
+  string filenameDir="out";
+  mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+  mkdir(filenameDir.c_str(), mode);
+
+  std::ofstream myfile;
 
   bool interprocedural = false;
   if (containsArgument(argc, argv, "-inter")) {
@@ -159,23 +170,23 @@ int main(int argc, char** argv) {
   if (containsArgument(argc, argv, "-callgraph")) {
     cerr << " creating call graph ... " << endl;
     graph= new RoseBin_DotGraph();
-     char* callFileName = "callgraph.dot";
+    char* callFileName = "callgraph.dot";
     if (dot==false) {
       callFileName = "callgraph.gml";
       graph= new RoseBin_GMLGraph();
     }
     RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), NULL);
-      callanalysis->run(graph, callFileName, !mergedEdges);
+    callanalysis->run(graph, callFileName, !mergedEdges);
   }
 
   // control flow analysis  *******************************************************
   if (containsArgument(argc, argv, "-cfa")) {
     char* cfgFileName = "cfg.dot";
-   graph= new RoseBin_DotGraph();
-   if (dot==false) {
+    graph= new RoseBin_DotGraph();
+    if (dot==false) {
       cfgFileName = "cfg.gml";
       graph= new RoseBin_GMLGraph();
-   }
+    }
     RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, NULL, edges);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
   }
@@ -195,52 +206,72 @@ int main(int argc, char** argv) {
 
   RoseBin_unparse up;
   up.init(file->get_global_block(), "unparsed.s");
-  up.unparse();
   RoseBin_unparse_visitor* visitor = up.getVisitor();
   ROSE_ASSERT(visitor);
 
-  if (containsArgument(argc, argv, "-check")) {
-  // get a list of all checkers and traverse
-  vector <BC_AnalysisInterface*> checkers;
-  vector <BC_GraphAnalysisInterface*> graph_checkers;
+  if (containsArgument(argc, argv, "-checkAST") || 
+      containsArgument(argc, argv, "-checkGraph")) {
+    // get a list of all checkers and traverse
+    vector <BC_AnalysisInterface*> checkers;
+    vector <BC_GraphAnalysisInterface*> graph_checkers;
 
-  loadAnalysisFiles(checkers, visitor);
-  loadGraphAnalysisFiles(graph_checkers, visitor);
+    loadAnalysisFiles(checkers, visitor);
+    // put here to resolve functions instead of blocks
+    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, NULL, edges);
 
-  vector <BC_AnalysisInterface*>::const_iterator it = checkers.begin();
-  for (;it!=checkers.end();it++) {
-    BC_AnalysisInterface* asmf = *it;
-    cout << "\nRunning Binary Checker --- " << asmf->get_name() << endl;
-    asmf->traverse(file->get_global_block(), preorder);
-  }  
-
-  cout << "\n ---------------- preparing to run DataFlowAnalysis " << endl;
-  string dfgFileName = "dfg.dot";
-  graph= new RoseBin_DotGraph();
-  if (dot==false) {
-    dfgFileName = "dfg.gml";
-    graph= new RoseBin_GMLGraph();
-  }
-  //  graph->graph   = new SgDirectedGraph(dfgFileName,dfgFileName);
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, NULL, edges);
-  cfganalysis->run(graph, dfgFileName, mergedEdges);
-  cout << "Graph : " << graph->nodes.size() << endl;
-
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, NULL);
-  dfanalysis->init(interprocedural, edges,graph);
-  vector<SgDirectedGraphNode*> rootNodes;
-  dfanalysis->getRootNodes(rootNodes);
-  vector <BC_GraphAnalysisInterface*>::const_iterator it2 = graph_checkers.begin();
-  cout << "\n ---------------- running graph checkers : " << graph_checkers.size() << 
-    "   rootNodes size : " << rootNodes.size() << endl;
-  cout << "Graph : " << graph->nodes.size() << endl;
-  for (;it2!=graph_checkers.end();it2++) {
-    BC_GraphAnalysisInterface* asmf = *it2;
-    ROSE_ASSERT(asmf);
-    cout << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  endl;
-    dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
-  }  
+    vector <BC_AnalysisInterface*>::const_iterator it = checkers.begin();
+    for (;it!=checkers.end();it++) {
+      BC_AnalysisInterface* asmf = *it;
+      cout << "\nRunning Binary Checker --- " << asmf->get_name() << endl;
+      string filename = execName+"."+asmf->get_name();
+      unsigned int pos = filename.find_last_of("/");
+      if (filename.find_last_of("/")!=string::npos && (pos+1)<filename.length()) 
+	filename = filename.substr(pos+1, filename.length());
+      filename = "out/"+filename+".out";
+      cerr << "Writing file : " << filename << endl;
+      myfile.open(filename.c_str());
+      asmf->init(file->get_global_block());
+      asmf->traverse(file->get_global_block(), preorder);
+      asmf->finish(file->get_global_block());
+      string output = asmf->get_output();
+      myfile << output << "\n";
+      myfile.close();
     }  
+
+    if (containsArgument(argc, argv, "-checkGraph")) {
+      loadGraphAnalysisFiles(graph_checkers, visitor);
+
+      cout << "\n ---------------- preparing to run DataFlowAnalysis " << endl;
+      string dfgFileName = "dfg.dot";
+      graph= new RoseBin_DotGraph();
+      if (dot==false) {
+	dfgFileName = "dfg.gml";
+	graph= new RoseBin_GMLGraph();
+      }
+      //      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, NULL, edges);
+      cfganalysis->run(graph, dfgFileName, mergedEdges);
+      cout << "Graph : " << graph->nodes.size() << endl;
+
+      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, NULL);
+      dfanalysis->init(interprocedural, edges,graph);
+      vector<SgDirectedGraphNode*> rootNodes;
+      dfanalysis->getRootNodes(rootNodes);
+      vector <BC_GraphAnalysisInterface*>::const_iterator it2 = graph_checkers.begin();
+      cout << "\n ---------------- running graph checkers : " << graph_checkers.size() << 
+	"   rootNodes size : " << rootNodes.size() << endl;
+      cout << "Graph : " << graph->nodes.size() << endl;
+      for (;it2!=graph_checkers.end();it2++) {
+	BC_GraphAnalysisInterface* asmf = *it2;
+	ROSE_ASSERT(asmf);
+	cout << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  endl;
+	dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
+      }  
+    }
+  }  
+
+
+  up.unparse();
+
 
   return 0;
 }

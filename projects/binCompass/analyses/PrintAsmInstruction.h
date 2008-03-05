@@ -8,11 +8,19 @@
 
 class PrintAsmInstruction: public BC_AnalysisInterface {
 
+  __gnu_cxx::hash_map<std::string, int> instMap;
+
+
+
  public:
-  PrintAsmInstruction() {}
+  PrintAsmInstruction() {
+    instMap.clear();
+  }
   ~PrintAsmInstruction() {}
 
   void visit(SgNode* node);
+  void init(SgNode* node);
+  void finish(SgNode* node);
 
 };
 

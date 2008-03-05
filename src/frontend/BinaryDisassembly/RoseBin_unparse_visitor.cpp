@@ -159,9 +159,102 @@ string RoseBin_unparse_visitor::resolveRegister(SgAsmRegisterReferenceExpression
   case SgAsmRegisterReferenceExpression::STnumbered+7: {
     return "st(7)";
   }
+  case SgAsmRegisterReferenceExpression::rFLAGS: {
+    return "rFLAGS(0)";
+  }
+  case SgAsmRegisterReferenceExpression::rFLAGS+1: {
+    return "rFLAGS(1)";
+  }
+  case SgAsmRegisterReferenceExpression::rFLAGS+2: {
+    return "rFLAGS(2)";
+  }
+  case SgAsmRegisterReferenceExpression::rFLAGS+3: {
+    return "rFLAGS(3)";
+  }
+  case SgAsmRegisterReferenceExpression::rFLAGS+4: {
+    return "rFLAGS(4)";
+  }
+  case SgAsmRegisterReferenceExpression::rFLAGS+5: {
+    return "rFLAGS(5)";
+  }
+  case SgAsmRegisterReferenceExpression::rFLAGS+6: {
+    return "rFLAGS(6)";
+  }
+  case SgAsmRegisterReferenceExpression::MM: {
+    return "MM(0)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+1: {
+    return "MM(1)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+2: {
+    return "MM(2)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+3: {
+    return "MM(3)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+4: {
+    return "MM(4)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+5: {
+    return "MM(5)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+6: {
+    return "MM(6)";
+  }
+  case SgAsmRegisterReferenceExpression::MM+7: {
+    return "MM(7)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM: {
+    return "XMM(0)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+1: {
+    return "XMM(1)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+2: {
+    return "XMM(2)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+3: {
+    return "XMM(3)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+4: {
+    return "XMM(4)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+5: {
+    return "XMM(5)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+6: {
+    return "XMM(6)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+7: {
+    return "XMM(7)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+8: {
+    return "XMM(8)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+9: {
+    return "XMM(9)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+10: {
+    return "XMM(10)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+11: {
+    return "XMM(11)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+12: {
+    return "XMM(12)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+13: {
+    return "XMM(13)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+14: {
+    return "XMM(14)";
+  }
+  case SgAsmRegisterReferenceExpression::XMM+15: {
+    return "XMM(15)";
+  }
 
   default:
-    std::cerr << " Undefined Register " << std::endl;
+    std::cerr << " Undefined Register - code : " << code  << std::endl;
     abort();
     res = "undefined";
     break;

@@ -229,3 +229,17 @@ emms -> Emms
 stmxcsr -> Stmxcsr
 ldmxcsr -> Ldmxcsr
 movaps -> Movaps
+addsd -> Addsd
+divsd -> Divsd
+subsd -> Subsd
+movlpd -> Movlpd
+ucomisd -> Ucomisd
+subss -> Subss
+movss -> Movss
+addss -> Addss
+ucomiss -> Ucomiss
+andpd -> Andpd
+paddusb paddusw -> Paddus
+pcmpeqb pcmpeqw pcmpeqd -> Pcmpeq
+andnpd andnps -> Andnpd
+psubusb psubusw -> Psubus

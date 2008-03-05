@@ -379,6 +379,7 @@ namespace ObjdumpToRoseBinaryAst {
       ROSE_ASSERT (insns.find(address) == insns.end());
       insns[address] = instruction;
       nextAddress[address] = next_addr;
+      if (!st.empty()) {printStack(stderr, st);}
       ROSE_ASSERT (st.empty());
       // fprintf(stderr, "Got insn 0x%08lX = '%s'\n", (unsigned long)address, fullCode.c_str());
     } else if (cmd == "basic_block_start") {
@@ -459,6 +460,7 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* 
         abort();
       }
     }
+    if (!st.empty()) {printStack(stderr, st);}
     ROSE_ASSERT (st.empty());
     pcloseFromVector(f);
 

@@ -5,6 +5,10 @@
 
 using namespace std;
 
+void
+PrintAsmFunctions::init(SgNode* n) {
+  output="";
+}
 
 void
 PrintAsmFunctions::visit(SgNode* n) {
@@ -13,10 +17,10 @@ PrintAsmFunctions::visit(SgNode* n) {
   SgAsmBlock* block = isSgAsmBlock(n);
   if (funcDecl) {
     string name = funcDecl->get_name();
-    cout << " ******** function : " << name << " ********** " << endl;
+    output +=  " ******** function : " + name + " ********** \n" ;
   }
   if (block) {
-    cout << " ******** block  ********** " << endl;
+    output += " ******** block  ********** \n" ;
   }
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);
@@ -42,7 +46,13 @@ PrintAsmFunctions::visit(SgNode* n) {
   addrhex << hex << setw(8) << address ;
   string address_str = addrhex.str();
   // print the instruction
-  cout << address_str << "  " << size << "   " << hexcode << "\n";
+  output += ""+address_str + "  " + RoseBin_support::ToString(size) + "   " + hexcode;
+  if (size==0) output += "\t\t\t\t";
+  if (size>0 && size<=3) output +=  "\t\t\t";
+  if (size>3 && size<=5) output += "\t\t";
+  if (size>5 ) output += "\t";
+
+  output +=  unparser->unparseInstruction(binInst) +"\n";
 }
 
 extern "C" BC_AnalysisInterface* create() {

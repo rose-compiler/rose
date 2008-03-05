@@ -13,6 +13,8 @@ class PrintAsmFunctions: public BC_AnalysisInterface {
   ~PrintAsmFunctions() {}
 
   void visit(SgNode* node);
+  void init(SgNode* node);
+  void finish(SgNode* node) {};
 
 };
 

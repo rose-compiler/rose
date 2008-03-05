@@ -137,9 +137,9 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* inst, bool hasStopCondit
     if (it2!=rememberInstructions.end()) {
       // found the next instruction
       nextFlow = isSgAsmInstruction(it2->second);
-      if (RoseBin_support::DEBUG_MODE())
-	cout << " function resolution: resolving next : " << nextFlow->class_name() << "    this : "   
-	     << unparser->unparseInstruction(inst) << endl;
+      //if (RoseBin_support::DEBUG_MODE())
+      //	cout << " function resolution: resolving next : " << nextFlow->class_name() << "    this : "   
+      //	     << unparser->unparseInstruction(inst) << endl;
     }
   }
 
@@ -148,8 +148,8 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* inst, bool hasStopCondit
     // in this case we want to connect to the destination
     SgAsmx86Jmp* jmp = isSgAsmx86Jmp(inst);
     nextFlow = jmp->get_destination();
-    if (RoseBin_support::DEBUG_MODE())
-      cerr << " function resolution: resolving jump " << nextFlow << "  this : " << inst->class_name() << endl;
+    //if (RoseBin_support::DEBUG_MODE())
+    // cerr << " function resolution: resolving jump " << nextFlow << "  this : " << inst->class_name() << endl;
   } else {
     if (RoseBin_support::DEBUG_MODE())
       if (!(isSgAsmx86Nop(inst) || isSgAsmx86Ret(inst)))
@@ -240,14 +240,13 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86ControlTransferInstructio
 	  }
 	  return target;
 	} else {
-	  if (RoseBin_support::DEBUG_MODE())
-	    cerr << "    >>>>>>>>>>>>>>> !!! OPS :: Target not found ...  \n" << endl;
+	  //if (RoseBin_support::DEBUG_MODE())
+	  //  cerr << "    >>>>>>>>>>>>>>> !!! OPS :: Target not found ...  \n" << endl;
 	}
       }
       else{
-	std::cerr << "FlowAnalysis ::  from_string failed .. " << std::endl;
-	cerr << "         OUTPUT :: found in process_jump .... :: " << regRef->class_name() << 
-	  //" found offset .... :: " << exprOff->class_name() << 
+	//	std::cerr << "FlowAnalysis ::  from_string failed .. " << std::endl;
+	cerr << " WARNING: Cant convert string to long - in process_jump  :: " << regRef->class_name() << 
 	  " inst :: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << " target : " << valStr << endl;
       }
     }
@@ -314,12 +313,12 @@ void RoseBin_FlowAnalysis::process_jumps() {
 	  }
 	  
 	} else {
-	  cerr << "   ERROR :: process_jumps: target has no parent ... i.e. no FunctionDeclaration to it " <<
+	  cerr << "   WARNING :: process_jumps: target has no parent ... i.e. no FunctionDeclaration to it " <<
 	    target->class_name() << endl;
 	}
       } else {
 	if (inst)
-	  cerr << "    ERROR :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address()) 
+	  cerr << "    WARNING :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address()) 
 	       << "   " << inst->get_mnemonic() << endl;
       }
     } else {
@@ -335,7 +334,7 @@ void RoseBin_FlowAnalysis::process_jumps() {
   }
   //cerr << "\n >>>>>>>>> processing jumps ... done. " << endl;
 
-  cerr << "\n >>>>>>>>> resolving RET jumps ... " << endl;
+  //  cerr << "\n >>>>>>>>> resolving RET jumps ... " << endl;
   hash_map <uint64_t, SgAsmInstruction* >::iterator it2;      
   for (it2=rememberInstructions.begin();it2!=rememberInstructions.end();++it2) {
     //int id = it2->first;

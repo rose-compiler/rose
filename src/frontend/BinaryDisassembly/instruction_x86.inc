@@ -1351,6 +1351,45 @@ switch (mnemonic.size()) {
     }
   case 5:
     switch (mnemonic[0]) {
+      case 'a': { // 'a'
+        switch (mnemonic[1]) {
+          case 'd': { // 'ad'
+            if (mnemonic[2] == 'd') { // 'add'
+              if (mnemonic[3] == 's') { // 'adds'
+                switch (mnemonic[4]) {
+                  case 'd': { // 'addsd'
+                    {instruction = new SgAsmx86Addsd(address,  mnemonic, ""); goto done;}
+                  }
+                  case 's': { // 'addss'
+                    {instruction = new SgAsmx86Addss(address,  mnemonic, ""); goto done;}
+                  }
+                  default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
+          case 'n': { // 'an'
+            if (mnemonic[2] == 'd') { // 'and'
+              if (mnemonic[3] == 'p') { // 'andp'
+                if (mnemonic[4] == 'd') { // 'andpd'
+                  {instruction = new SgAsmx86Andpd(address,  mnemonic, ""); goto done;}
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
+          default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+        }
+      }
       case 'b': { // 'b'
         switch (mnemonic[1]) {
           case 'o': { // 'bo'
@@ -1469,6 +1508,25 @@ switch (mnemonic.size()) {
             }
           }
           default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+        }
+      }
+      case 'd': { // 'd'
+        if (mnemonic[1] == 'i') { // 'di'
+          if (mnemonic[2] == 'v') { // 'div'
+            if (mnemonic[3] == 's') { // 'divs'
+              if (mnemonic[4] == 'd') { // 'divsd'
+                {instruction = new SgAsmx86Divsd(address,  mnemonic, ""); goto done;}
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          } else {
+            instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          }
+        } else {
+          instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
         }
       }
       case 'e': { // 'e'
@@ -1981,6 +2039,9 @@ switch (mnemonic.size()) {
                   case 'q': { // 'movsq'
                     {instruction = new SgAsmx86Movs(address,  mnemonic, ""); goto done;}
                   }
+                  case 's': { // 'movss'
+                    {instruction = new SgAsmx86Movss(address,  mnemonic, ""); goto done;}
+                  }
                   case 'w': { // 'movsw'
                     {instruction = new SgAsmx86Movs(address,  mnemonic, ""); goto done;}
                   }
@@ -2382,6 +2443,25 @@ switch (mnemonic.size()) {
               instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
             }
           }
+          case 'u': { // 'su'
+            if (mnemonic[2] == 'b') { // 'sub'
+              if (mnemonic[3] == 's') { // 'subs'
+                switch (mnemonic[4]) {
+                  case 'd': { // 'subsd'
+                    {instruction = new SgAsmx86Subsd(address,  mnemonic, ""); goto done;}
+                  }
+                  case 's': { // 'subss'
+                    {instruction = new SgAsmx86Subss(address,  mnemonic, ""); goto done;}
+                  }
+                  default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
           default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
         }
       }
@@ -2443,6 +2523,33 @@ switch (mnemonic.size()) {
     }
   case 6:
     switch (mnemonic[0]) {
+      case 'a': { // 'a'
+        if (mnemonic[1] == 'n') { // 'an'
+          if (mnemonic[2] == 'd') { // 'and'
+            if (mnemonic[3] == 'n') { // 'andn'
+              if (mnemonic[4] == 'p') { // 'andnp'
+                switch (mnemonic[5]) {
+                  case 'd': { // 'andnpd'
+                    {instruction = new SgAsmx86Andnpd(address,  mnemonic, ""); goto done;}
+                  }
+                  case 's': { // 'andnps'
+                    {instruction = new SgAsmx86Andnpd(address,  mnemonic, ""); goto done;}
+                  }
+                  default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          } else {
+            instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          }
+        } else {
+          instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+        }
+      }
       case 'b': { // 'b'
         if (mnemonic[1] == 'o') { // 'bo'
           if (mnemonic[2] == 'u') { // 'bou'
@@ -2946,6 +3053,17 @@ switch (mnemonic.size()) {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
                 }
               }
+              case 'l': { // 'movl'
+                if (mnemonic[4] == 'p') { // 'movlp'
+                  if (mnemonic[5] == 'd') { // 'movlpd'
+                    {instruction = new SgAsmx86Movlpd(address,  mnemonic, ""); goto done;}
+                  } else {
+                    instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              }
               case 'n': { // 'movn'
                 if (mnemonic[4] == 't') { // 'movnt'
                   if (mnemonic[5] == 'q') { // 'movntq'
@@ -3166,6 +3284,68 @@ switch (mnemonic.size()) {
           instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
         }
       }
+      case 'p': { // 'p'
+        switch (mnemonic[1]) {
+          case 'a': { // 'pa'
+            if (mnemonic[2] == 'd') { // 'pad'
+              if (mnemonic[3] == 'd') { // 'padd'
+                if (mnemonic[4] == 'u') { // 'paddu'
+                  if (mnemonic[5] == 's') { // 'paddus'
+                    switch (mnemonic[6]) {
+                      case 'b': { // 'paddusb'
+                        {instruction = new SgAsmx86Paddus(address,  mnemonic, ""); goto done;}
+                      }
+                      case 'w': { // 'paddusw'
+                        {instruction = new SgAsmx86Paddus(address,  mnemonic, ""); goto done;}
+                      }
+                      default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+                    }
+                  } else {
+                    instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
+          case 'c': { // 'pc'
+            if (mnemonic[2] == 'm') { // 'pcm'
+              if (mnemonic[3] == 'p') { // 'pcmp'
+                if (mnemonic[4] == 'e') { // 'pcmpe'
+                  if (mnemonic[5] == 'q') { // 'pcmpeq'
+                    switch (mnemonic[6]) {
+                      case 'b': { // 'pcmpeqb'
+                        {instruction = new SgAsmx86Pcmpeq(address,  mnemonic, ""); goto done;}
+                      }
+                      case 'd': { // 'pcmpeqd'
+                        {instruction = new SgAsmx86Pcmpeq(address,  mnemonic, ""); goto done;}
+                      }
+                      case 'w': { // 'pcmpeqw'
+                        {instruction = new SgAsmx86Pcmpeq(address,  mnemonic, ""); goto done;}
+                      }
+                      default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+                    }
+                  } else {
+                    instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          }
+          default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
+        }
+      }
       case 's': { // 's'
         if (mnemonic[1] == 't') { // 'st'
           if (mnemonic[2] == 'm') { // 'stm'
@@ -3176,6 +3356,37 @@ switch (mnemonic.size()) {
                     {instruction = new SgAsmx86Stmxcsr(address,  mnemonic, ""); goto done;}
                   } else {
                     instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                  }
+                } else {
+                  instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+                }
+              } else {
+                instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+              }
+            } else {
+              instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+            }
+          } else {
+            instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+          }
+        } else {
+          instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
+        }
+      }
+      case 'u': { // 'u'
+        if (mnemonic[1] == 'c') { // 'uc'
+          if (mnemonic[2] == 'o') { // 'uco'
+            if (mnemonic[3] == 'm') { // 'ucom'
+              if (mnemonic[4] == 'i') { // 'ucomi'
+                if (mnemonic[5] == 's') { // 'ucomis'
+                  switch (mnemonic[6]) {
+                    case 'd': { // 'ucomisd'
+                      {instruction = new SgAsmx86Ucomisd(address,  mnemonic, ""); goto done;}
+                    }
+                    case 's': { // 'ucomiss'
+                      {instruction = new SgAsmx86Ucomiss(address,  mnemonic, ""); goto done;}
+                    }
+                    default: {std::cerr << "ERROR ::: Found bad instruction name '" << mnemonic << "'\n"; /*abort();*/}
                   }
                 } else {
                   instruction = new SgAsmx86Instruction(address,  mnemonic, ""); goto done;
