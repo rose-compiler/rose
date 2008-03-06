@@ -39,6 +39,8 @@ export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 export PATH="/home/willcock2/swig-install/bin:$PATH"
 export PATH="/home/willcock2/tcl8.5-install/bin:$PATH"
 export LD_LIBRARY_PATH="/home/willcock2/tcl8.5-install/lib:$LD_LIBRARY_PATH"
+export PATH="/home/willcock2/binutils-install/bin/:$PATH"
+export LD_LIBRARY_PATH="/home/willcock2/binutils-install/lib/:$LD_LIBRARY_PATH"
 
 set -e
 

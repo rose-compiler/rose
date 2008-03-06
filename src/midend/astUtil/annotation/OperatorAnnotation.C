@@ -122,6 +122,7 @@ template class OperatorAnnotCollection<OperatorInlineDescriptor>;
 
 #include <AnnotDescriptors.C>
 template class WriteContainer<set<NameDescriptor>, ',', '(', ')'>;
+template class WriteContainer<vector<NameDescriptor>, ',', '(', ')'>;
 template class ReadContainer<SetDescriptor<NameDescriptor, ',', '{', '}'>, 
                              NameDescriptor, ',','{','}'>;
 #if 0
