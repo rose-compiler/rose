@@ -125,6 +125,8 @@ void CloseDescriptor<Descriptor, left, right> ::write(ostream& out) const
       out << right;
   }
 
+template class CloseDescriptor< SymbolicValDescriptor, '{', '}'>;
+
 #ifndef TEMPLATE_ONLY
 
 bool TypeDescriptor:: read(istream& in)
