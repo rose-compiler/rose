@@ -5,6 +5,8 @@
 
 using namespace std;
 
+template class CloseDescriptor< SymbolicValDescriptor, '{', '}'>;
+
 void SymbolicValDescriptor :: set_val( const SymbolicVal& v) 
 {
   if (v.IsNIL() || FindVal(v, get_top()) )
