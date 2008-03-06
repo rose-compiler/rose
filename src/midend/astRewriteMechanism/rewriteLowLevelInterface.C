@@ -174,7 +174,7 @@ insertAtTopOfScope (
      printf ("Number of final statements in scope after insert = %d \n",finalNumberOfStatements);
 #endif
 
-     ROSE_ASSERT (numberOfExpectedStatements = finalNumberOfStatements);
+     ROSE_ASSERT (numberOfExpectedStatements == finalNumberOfStatements);
 
 #if 0
      printf ("Print out all the statements \n");
