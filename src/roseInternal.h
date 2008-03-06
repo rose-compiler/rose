@@ -7,8 +7,8 @@
 // #define TRUE  1
 // #define FALSE 0
 
-#define ROSE_ASSERT assert
-#define ROSE_ABORT  abort
+// #define ROSE_ASSERT assert
+// #define ROSE_ABORT  abort
 
 #define ROSE_INTERNAL_DEBUG FALSE
 
