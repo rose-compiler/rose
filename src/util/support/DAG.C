@@ -21,8 +21,11 @@ DAGNode<Node,Edge> :: GetGraph()  const
 
 template <class Node, class Edge>
 unsigned DAGNode<Node,Edge> :: TopoOrderIndex() const
-{ DAG<Node,Edge>* dag = GetGraph();
+{ 
+#ifndef NDEBUG
+  DAG<Node,Edge>* dag = GetGraph();
   assert(dag->ordered);
+#endif
    return ordNo;
 }
 
@@ -49,8 +52,10 @@ MoveEndPoint(Node *n, EdgeDirection dir)
 template <class Node, class Edge>
 bool DAGEdge<Node,Edge>:: IsBackEdge() const
 {
+#ifndef NDEBUG
    DAG<Node,Edge>* dag = EndPoint( DirectedEdgeInterface::EdgeOut)->GetGraph();
    assert(dag->ordered);
+#endif
    return isBackEdge;
 }
 

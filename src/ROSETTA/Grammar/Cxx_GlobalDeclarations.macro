@@ -17,9 +17,11 @@
 #ifndef ROSE_PREVENT_CONSTRUCTION_ON_STACK
 #define ROSE_PREVENT_CONSTRUCTION_ON_STACK
 inline void preventConstructionOnStack(SgNode* n) {
+#ifndef NDEBUG
   void* frameaddr = __builtin_frame_address(0);
   signed long dist = (char*)n - (char*)frameaddr;
   assert (dist < -10000 || dist > 10000);
+#endif
 }
 #endif // ROSE_PREVENT_CONSTRUCTION_ON_STACK
 
