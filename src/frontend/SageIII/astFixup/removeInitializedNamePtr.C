@@ -147,8 +147,10 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
 
             // printf ("typedefType->get_name() = %s \n",typedefType->get_name().str());
 
+#ifndef NDEBUG
                SgDeclarationStatement* declaration = typedefType->get_declaration();
                ROSE_ASSERT (declaration != NULL);
+#endif
             // printf ("declaration->sage_class_name() = %s \n",declaration->sage_class_name());
 
                SgType* type = typedefDeclaration->get_base_type();

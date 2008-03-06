@@ -503,10 +503,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                  // DQ (2/7/2007): Add the functionSymbol to the list
                     nodeList.insert(functionSymbol);
 
+#ifndef NDEBUG
                     SgSymbolTable* scopeSymbolTable = scopeStatement->get_symbol_table();
 
                     ROSE_ASSERT(scopeSymbolTable != NULL);
                     ROSE_ASSERT(scopeSymbolTable->get_table() != NULL);
+#endif
 #if 0
                     printf ("scopeStatement = %p scopeSymbolTable = %p \n",scopeStatement,scopeSymbolTable);
 #endif
