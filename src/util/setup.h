@@ -8,12 +8,7 @@
 
 #include <exception>
 
-// DQ (1/15/2007): These are depricated and well eventually be removed!
-// #define FALSE 0
-// #define TRUE  1
-
-// #define ROSE_ASSERT assert
-// #define ROSE_ABORT abort
+#include "roseInternal.h"
 
 // DQ (1/15/2007): Modern C++ compilers can handle these directly
 #include <list>
