@@ -11,24 +11,17 @@
 // it might be better to change this to "true" and "false" instead, but until then
 // we have to define these (early in the compilation).
 #ifndef TRUE
-// #warning "TRUE not defined, defining to be 1"
-   #define TRUE 1
+   #define TRUE true
 #endif
 #ifndef FALSE
-// #warning "FALSE not defined, defining to be 0"
-   #define FALSE 0
-#endif
-
-#if 0
-// DQ (10/19/2007): include valgrind support for more complex debugging.
-#include "valgrind/memcheck.h"
+   #define FALSE false
 #endif
 
 // DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
 // We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
 // This is placed here in sage3.h instead of in rose.h because it needs to always be seen even 
 // by internal ROSE files that only include sage3.h.
-#include<rose_config.h>
+#include <rose_config.h>
 
 // DQ (11/10/2007): Added support for ROSE specific paths to be available. These are 
 // useful for tools built using ROSE, they are not presently being used within ROSE.
@@ -51,12 +44,10 @@
 #endif
 
 // This is a problem with the SUN CC version 6.0 compiler
-//#include <strstream.h>
 #include <sstream>  // This (sstream) should eventually replace calls to strstream.h (Kyle)
 
 // DQ (12/7/2003): g++ 3.x prefers to see <fstream> and use of <fstream> 
 //                 or <fstream.h> is setup in config.h so use it here.
-// #include FSTREAM_HEADER_FILE
 #include <fstream>
 #include <assert.h>
 #include <stdio.h>
@@ -164,57 +155,6 @@ using __gnu_cxx::hash;
 #include <vector>
 #include <string>
 
-#if 0
-  // DQ (3/29/2006): This may be historical, and should be removed sometime.
-  #ifdef BOOL_IS_BROKEN
-  // If BOOL_IS_BROKEN then we can assume that there is no definition for "true" and "false"
-    #define false 0
-    #define true  1
-    typedef int bool;
-    #error "No C++ bool functionality"
-  #endif
-#endif
-
-#if 0
-  // DQ (3/29/2006): This may be historical, and should be removed sometime.
-  /* BP : 11/16/2001 */
-  #ifndef STL_LIST_IS_BROKEN
-    #include STL_LIST_HEADER_FILE
-  #else
-    #error "No std::list functionality"
-  #endif
-#endif
-
-#if 0
-  // DQ (3/29/2006): This may be historical, and should be removed sometime.
-  #ifndef STL_STACK_IS_BROKEN
-    #include STL_STACK_HEADER_FILE
-  #else
-    #error "No std::stack functionality"
-  #endif
-#endif
-
-#if 0
-  // DQ (3/29/2006): This may be historical, and should be removed sometime.
-  /* BP : 11/16/2001 */
-  #ifndef STL_VECTOR_IS_BROKEN
-    #include STL_VECTOR_HEADER_FILE
-  #else
-    #error "No std::vector functionality"
-  #endif
-#endif
-
-#if 0
-  // DQ (3/29/2006): This may be historical, and should be removed sometime.
-  /* BP : 11/16/2001 */
-  #ifndef STL_STRING_IS_BROKEN
-    #include STL_STRING_HEADER_FILE
-  #else
-    #error "No std::string functionality"
-  #endif
-#endif
-
-
 // Include ROSE common utility function library
 #include <string_functions.h>
 
@@ -222,7 +162,11 @@ using __gnu_cxx::hash;
 #include "sla.h"
 
 // These are supported this way so that they can be redefined as required
+#ifndef NDEBUG
 #define ROSE_ASSERT assert
+#else // We use assert(false) equivalents so often for "should not get here", but we don't want nontrivial side effects in asserts to be run when assert is disabled
+#define ROSE_ASSERT(x) (__builtin_constant_p(x) ? (x ? 0 : abort()) : 0)
+#endif
 #define ROSE_ABORT  abort
 
 // DQ (3/29/2006): I sure would like to remove this since it 
