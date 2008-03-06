@@ -26,7 +26,13 @@ V0.8.0 (IN PROGRESS)
 	testsuite/failure
 	testsuite/dontrun
   - examples/testsuite.sh will be called by 'make installcheck'
-	
+
+* Bug fixes [GB]
+  - corrected various issues that caused ROSE assertions to fail
+
+* upgrade to PAG 7.7.3.14 [GB] (IN PROGRESS)
+  - removed version numbers from (TUV-local) PAG and ROSE paths
+
 V0.7.9 2008-02-08 MS,GB,AP
 
 * upgrade to PAG 7.3.8.55 [MS]
