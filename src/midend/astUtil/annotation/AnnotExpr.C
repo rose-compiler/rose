@@ -565,5 +565,6 @@ void DefineVariableDescriptor::Dump() const
 #define TEMPLATE_ONLY
 #include <AnnotDescriptors.C>
 template class WriteContainer<list<SymbolicFunctionDeclaration>, ',', '(', ')'>;
+template class WriteContainer<vector<SymbolicFunctionDeclaration>, ',', '(', ')'>;
 template class pair<SymbolicValDescriptor, SymbolicValDescriptor>;
 #endif
