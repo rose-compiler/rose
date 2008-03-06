@@ -423,6 +423,7 @@ PrologSupport::getTypeSpecific(SgType* stype) {
 	       cn == "SgTypeChar"  ||
 	       cn == "SgTypeDefault"  ||
 	       cn == "SgTypeDouble"  ||
+	       cn == "SgTypeEllipse"  ||
 	       cn == "SgTypeFloat"  ||
 	       cn == "SgTypeGlobalVoid"  ||
 	       cn == "SgTypeInt"  ||

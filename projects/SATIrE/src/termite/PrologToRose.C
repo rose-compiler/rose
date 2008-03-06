@@ -627,6 +627,7 @@ PrologToRose::createType(PrologTerm* t) {
     else if (tname==SG_PREFIX "type_double") return new  SgTypeDouble();
     else if (tname==SG_PREFIX "type_float") return new  SgTypeFloat();
     else if (tname==SG_PREFIX "type_global_void") return new  SgTypeGlobalVoid(); 
+    else if (tname==SG_PREFIX "type_ellipse") {return new  SgTypeEllipse();}
     else if (tname==SG_PREFIX "type_int") {return new  SgTypeInt();}
     else if (tname==SG_PREFIX "type_long") return new  SgTypeLong();
     else if (tname==SG_PREFIX "type_long_double") return new  SgTypeLongDouble();

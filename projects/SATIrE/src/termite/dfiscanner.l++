@@ -50,7 +50,7 @@ undef \<undefined\ dfi\>
 	  return(TOKEN); }
 \,\}    { //cerr<<"my }"<< endl;
           return '}'; /* don't want to deal with this ugliness in the parser*/}
-.       { //cerr<<"ID "<<yytext<<endl;    
+.       { //cerr<<"ID "<<yytext<<endl;
           return(dfitext[0]); }
 
 %%

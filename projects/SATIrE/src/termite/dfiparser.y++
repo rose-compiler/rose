@@ -121,6 +121,7 @@ void dfierror(char* msg)
 {
   cerr << std::string(msg) 
        << " near token """ << dfitext << """" 
+       << "(" << (int)dfitext[0] << ")" 
        << " before """ << dfi_input << """" << endl;
   cerr << "in DFI string """ << dfi_input_start << """." << endl;
   dfiterm = new PrologCompTerm(dfi_name);
