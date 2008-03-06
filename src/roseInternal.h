@@ -4,11 +4,24 @@
 #define ROSE_INTERNAL_H
 
 // Removed support for this, since C++ has "true" and "false" values already
-// #define TRUE  1
-// #define FALSE 0
+#ifndef TRUE
+#define TRUE true
+#endif
+#ifndef FALSE
+#define FALSE false
+#endif
 
-// #define ROSE_ASSERT assert
-// #define ROSE_ABORT  abort
+// These are supported this way so that they can be redefined as required
+#ifndef ROSE_ASSERT
+#ifndef NDEBUG
+#define ROSE_ASSERT assert
+#else // We use assert(false) equivalents so often for "should not get here", but we don't want nontrivial side effects in asserts to be run when assert is disabled
+#define ROSE_ASSERT(x) (__builtin_constant_p(x) ? (x ? (void)0 : (abort())) : (void)0)
+#endif
+#endif
+#ifndef ROSE_ABORT
+#define ROSE_ABORT  abort
+#endif
 
 #define ROSE_INTERNAL_DEBUG FALSE
 
