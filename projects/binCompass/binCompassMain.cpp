@@ -234,7 +234,7 @@ int main(int argc, char** argv) {
       asmf->traverse(file->get_global_block(), preorder);
       asmf->finish(file->get_global_block());
       string output = asmf->get_output();
-      myfile << output << "\n";
+      myfile << output << " \n";
       myfile.close();
     }  
 

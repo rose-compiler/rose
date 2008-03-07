@@ -394,7 +394,7 @@ proc convert_insn {next_addr insn} {
             append result " $sizeFloat"
           }
 	}
-	append result "$result $opcount insn"
+	append result " $opcount insn"
       }
 
       f* {
@@ -404,7 +404,7 @@ proc convert_insn {next_addr insn} {
 	for {incr i -1} {$i >= 0} {incr i -1} {
 	  append result " [set op$i] $sizeFloat"
 	}
-	append result "$result $opcount insn"
+	append result " $opcount insn"
       }
 
       default {
@@ -414,7 +414,7 @@ proc convert_insn {next_addr insn} {
 	for {incr i -1} {$i >= 0} {incr i -1} {
 	  append result " [set op$i] $sizeInt"
 	}
-	append result "$result $opcount insn"
+	append result " $opcount insn"
       }
     }
   } else {

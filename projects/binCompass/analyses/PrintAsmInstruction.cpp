@@ -23,7 +23,7 @@ PrintAsmInstruction::finish(SgNode* n) {
   for (;it2!=s.rend();it2++) {
     string instType = it2->second;
     int nr = it2->first;
-    output += instType + " : " + RoseBin_support::ToString(nr) + "\n";
+    output += instType + ":" + RoseBin_support::ToString(nr) + ": \n";
   }
 }
 
