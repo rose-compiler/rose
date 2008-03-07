@@ -32,7 +32,7 @@ class RoseBin_IDAPRO_buildTree : public RoseBin_buildTree  {
   /****************************************************
    * return the replacement text for an expression
    ****************************************************/
-  std::string getReplacementText(__gnu_cxx::hash_map< int, exprSubstitutionType> *rememberSubstitution, 
+  std::string getReplacementText(hash_map< int, exprSubstitutionType> *rememberSubstitution, 
                             int operand_id, 
                             int expr_id_root,
                             int address);
@@ -40,7 +40,7 @@ class RoseBin_IDAPRO_buildTree : public RoseBin_buildTree  {
   /****************************************************
    * return the comment for an expression (address)
    ****************************************************/
-  std::string getComment(int address, __gnu_cxx::hash_map< int, std::string> *rememberComments);
+  std::string getComment(int address, hash_map< int, std::string> *rememberComments);
 
  public:
   RoseBin_IDAPRO_buildTree() {previousExp=NULL; };
@@ -58,8 +58,8 @@ class RoseBin_IDAPRO_buildTree : public RoseBin_buildTree  {
                                                    const std::string& typeOfOperand,
                                                    std::vector < exprTreeType > *rememberExpressionTree,
                                                    int operand_id,
-                                                   __gnu_cxx::hash_map <int, exprSubstitutionType> *rememberSubstitution,
-                                                   __gnu_cxx::hash_map <int, std::string> *rememberComments);
+                                                   hash_map <int, exprSubstitutionType> *rememberSubstitution,
+                                                   hash_map <int, std::string> *rememberComments);
 
 
 };

@@ -9,8 +9,6 @@
 #include "CFGVisitor.hh"
 #include "ChildVisitor.hh"
 
-using namespace __gnu_cxx;
-
 DBFactory *db;
 Domain *nodes;
 Domain *numbers;

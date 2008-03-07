@@ -10,7 +10,6 @@
 #include <mysql/mysql.h>
 
 using namespace std;
-using namespace __gnu_cxx;
 
 /****************************************************
  * resolve the control flow of the blocks

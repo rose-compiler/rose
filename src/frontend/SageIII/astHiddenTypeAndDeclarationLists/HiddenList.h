@@ -80,7 +80,7 @@ struct HashFunction_String
 
                 int operator()(const std::string & in) const
                 {
-                        return __gnu_cxx::hash<char*>()((char*)in.c_str());
+                        return hash<char*>()((char*)in.c_str());
 
                 }
 
@@ -233,7 +233,7 @@ struct HashFunction_SymbolHashMap {
                 int operator()(SgSymbol* S) const
                 {
                         // calculate hashfunction-value based on address of SgSymbol
-                        return __gnu_cxx::hash<int>()((long int)S);
+                        return hash<int>()((long int)S);
                 }
 
 };
@@ -413,7 +413,7 @@ struct HashFunction_SgUsingDirectiveStatement {
                 int operator()(SgUsingDirectiveStatement* using_dir) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDirectiveStatement
-                        return __gnu_cxx::hash<int>()((long int)using_dir);
+                        return hash<int>()((long int)using_dir);
                 }
 
 };
@@ -430,7 +430,7 @@ struct HashFunction_SgUsingDeclarationStatement {
                 int operator()(SgUsingDeclarationStatement* using_decl) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDeclarationStatement
-                        return __gnu_cxx::hash<int>()((long int)using_decl);
+                        return hash<int>()((long int)using_decl);
                 }
 
 };

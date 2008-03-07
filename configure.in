@@ -910,8 +910,6 @@ tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
-tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
-tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
@@ -1129,6 +1127,10 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 # src/midend/programAnalysis/sideEffectAnalysis/Makefile
 # tests/roseTests/programAnalysisTests/Makefile
 # tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
+
+# JJW 3-7-2008 -- these are not listed as SUBDIRS in programAnalysisTests
+# tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
+# tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 
 
 # Relocated to ROSE/src/roseExtensions/databaseConnection

@@ -9,7 +9,6 @@
 // #include "DEBUG_HiddenList.h"
 
 using namespace std;
-using namespace __gnu_cxx;
 
 namespace Hidden_List_Computation {
 

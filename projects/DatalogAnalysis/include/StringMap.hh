@@ -8,7 +8,7 @@
 struct HashString {
     size_t operator()( const string &s ) const
     {
-        __gnu_cxx::hash<const char*> o;
+        hash<const char*> o;
         return o( s.c_str() );
     }
 };
@@ -18,12 +18,12 @@ struct HashString {
  */
 template <class Data>
 struct StringMap {
-    typedef __gnu_cxx::hash_map< string, Data, HashString  > Type;
+    typedef hash_map< string, Data, HashString  > Type;
 };
 
 template <class Data>
 struct StringMultiMap {
-    typedef __gnu_cxx::hash_multimap< string, Data, HashString  > Type;
+    typedef hash_multimap< string, Data, HashString  > Type;
 };
 
 #endif

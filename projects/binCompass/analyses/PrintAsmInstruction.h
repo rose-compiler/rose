@@ -8,7 +8,7 @@
 
 class PrintAsmInstruction: public BC_AnalysisInterface {
 
-  __gnu_cxx::hash_map<std::string, int> instMap;
+  hash_map<std::string, int> instMap;
 
 
 

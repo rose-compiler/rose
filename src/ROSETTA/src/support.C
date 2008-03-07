@@ -1014,12 +1014,12 @@ Grammar::setUpSupport ()
      Graph.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     IncidenceUndirectedGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*>","edges","= \"\"",
+     IncidenceUndirectedGraph.setDataPrototype(" hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*>","edges","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     IncidenceDirectedGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
+     IncidenceDirectedGraph.setDataPrototype(" hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     BidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
+     BidirectionalGraph.setDataPrototype(" hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      //KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
@@ -1027,10 +1027,10 @@ Grammar::setUpSupport ()
      //KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
      //                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     StringKeyedBidirectionalGraph.setDataPrototype("__gnu_cxx::hash_map < std::string, SgGraphNode*>","nodesMap","= \"\"",
+     StringKeyedBidirectionalGraph.setDataPrototype("hash_map < std::string, SgGraphNode*>","nodesMap","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     IntKeyedBidirectionalGraph.setDataPrototype("__gnu_cxx::hash_map < int, SgGraphNode*>","nodesMap","= \"\"",
+     IntKeyedBidirectionalGraph.setDataPrototype("hash_map < int, SgGraphNode*>","nodesMap","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 

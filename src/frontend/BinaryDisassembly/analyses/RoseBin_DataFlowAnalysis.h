@@ -26,14 +26,14 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   bool interprocedural;
 
 
-  __gnu_cxx::hash_set < SgDirectedGraphNode*> visited;
+  hash_set < SgDirectedGraphNode*> visited;
 
   std::map < SgDirectedGraphNode*,int> visitedCounter;
 
-  __gnu_cxx::hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*> nodeBeforeMap;
+  hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*> nodeBeforeMap;
 
-  typedef __gnu_cxx::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-  typedef __gnu_cxx::hash_map < std::string, SgDirectedGraphEdge*> edgeType;
+  typedef hash_map <std::string, SgDirectedGraphNode*> nodeType;
+  typedef hash_map < std::string, SgDirectedGraphEdge*> edgeType;
 
   void traverseEdges(RoseBin_DataFlowAbstract* analysis);
 
@@ -43,7 +43,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   bool existsPath(SgDirectedGraphNode* start, SgDirectedGraphNode* end);
 
 
-  bool containsHash( __gnu_cxx::hash_set < SgDirectedGraphNode*>& vec, 
+  bool containsHash( hash_set < SgDirectedGraphNode*>& vec, 
 		     SgDirectedGraphNode* node);
 
 

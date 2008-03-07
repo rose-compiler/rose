@@ -12,7 +12,7 @@ PrintAsmInstruction::init(SgNode* n) {
 
 void
 PrintAsmInstruction::finish(SgNode* n) {
-  __gnu_cxx::hash_map<std::string, int>::const_iterator it = instMap.begin();
+  hash_map<std::string, int>::const_iterator it = instMap.begin();
   multimap<int, string> s;
   for (;it!=instMap.end();it++) {
     string instType = it->first;
@@ -36,7 +36,7 @@ PrintAsmInstruction::visit(SgNode* n) {
 
   string className = binInst->class_name();
   int nr = 1;
-  __gnu_cxx::hash_map<std::string, int>::const_iterator it = instMap.find(className);
+  hash_map<std::string, int>::const_iterator it = instMap.find(className);
   if (it!=instMap.end()) {
     nr = it->second;
     nr++;

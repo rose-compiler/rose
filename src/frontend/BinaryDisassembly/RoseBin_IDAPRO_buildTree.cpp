@@ -328,7 +328,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
  * return the replacement text for an expression
  ****************************************************/
 string RoseBin_IDAPRO_buildTree::getReplacementText(
-						    __gnu_cxx::hash_map< int, exprSubstitutionType> *rememberSubstitution, 
+						    hash_map< int, exprSubstitutionType> *rememberSubstitution, 
 						    int operand_id, 
 						    int expr_id_root,
 						    int address) {
@@ -355,7 +355,7 @@ string RoseBin_IDAPRO_buildTree::getReplacementText(
  * return the comment for an expression (address)
  ****************************************************/
 std::string RoseBin_IDAPRO_buildTree::getComment(int address, 
-                                                 __gnu_cxx::hash_map< int, std::string> *rememberComments) {
+                                                 hash_map< int, std::string> *rememberComments) {
   string text = "";
 
   hash_map< int, string>::iterator it =  rememberComments->find(address);
@@ -377,8 +377,8 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
 									const string& typeOfOperand,
 									std::vector < exprTreeType > *rememberExpressionTree,
 									int operand_id,
-									__gnu_cxx::hash_map <int, exprSubstitutionType> *rememberSubstitution,
-									__gnu_cxx::hash_map <int, string> *rememberComments) {
+									hash_map <int, exprSubstitutionType> *rememberSubstitution,
+									hash_map <int, string> *rememberComments) {
   SgAsmExpression* binExp=NULL;
   if (RoseBin_support::DEBUG_MODE())
     cout << "\n>>>> resolving type of expr_id_root " << expr_id_root << endl;

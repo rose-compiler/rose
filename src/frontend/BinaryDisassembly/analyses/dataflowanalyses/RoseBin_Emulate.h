@@ -13,7 +13,7 @@
 class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
  private:
 
-  __gnu_cxx::hash_map <uint64_t, uint64_t> memory;
+  hash_map <uint64_t, uint64_t> memory;
 
   uint64_t  rax;
   uint64_t  rbx;
