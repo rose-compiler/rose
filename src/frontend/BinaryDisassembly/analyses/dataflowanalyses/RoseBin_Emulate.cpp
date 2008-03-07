@@ -349,7 +349,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmInstruction* binInst, string& operand
     getRegister_val(SgAsmRegisterReferenceExpression::rAX, SgAsmRegisterReferenceExpression::qword, rax);
     // should get the values from memory!
     string values = "";
-    hash_map <uint64_t, uint64_t>::iterator it = memory.begin();                                      
+    rose_hash::hash_map <uint64_t, uint64_t>::iterator it = memory.begin();                                      
     for (;it!=memory.end();++it) {
       uint64_t loc = it->first;
       uint64_t val = it->second;
@@ -640,7 +640,7 @@ RoseBin_Emulate::assignMemory(uint64_t position, uint64_t value) {
 
 uint64_t 
 RoseBin_Emulate::getMemory(uint64_t position) {
-  hash_map <uint64_t, uint64_t>::iterator it = memory.find(position);
+  rose_hash::hash_map <uint64_t, uint64_t>::iterator it = memory.find(position);
   uint64_t value = 0xFFFFFFFF;
   if (it!=memory.end())
     value = it->second;

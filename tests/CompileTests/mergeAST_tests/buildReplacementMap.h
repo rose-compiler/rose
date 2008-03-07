@@ -1,6 +1,6 @@
 struct hash_nodeptr
    {
-     hash<char*> hasher;
+     rose_hash::hash<char*> hasher;
 
      public:
           size_t operator()(SgNode* node) const
@@ -31,7 +31,7 @@ class ReplacementMapTraversal : public ROSE_VisitTraversal
        // DQ (2/19/2007): Move to a hash map (the move from multi-map to map didn't make much difference (nothing noticable).
        // typedef std::multimap<SgNode*,SgNode*>          ReplacementMapType;
        // typedef std::map<SgNode*,SgNode*>               ReplacementMapType;
-          typedef hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
+          typedef rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
 
        // Simple STL container types for internal use
           typedef std::list< std::pair<SgNode*,SgNode*> > ODR_ViolationType;

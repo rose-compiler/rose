@@ -328,13 +328,13 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
  * return the replacement text for an expression
  ****************************************************/
 string RoseBin_IDAPRO_buildTree::getReplacementText(
-						    hash_map< int, exprSubstitutionType> *rememberSubstitution, 
+						    rose_hash::hash_map< int, exprSubstitutionType> *rememberSubstitution, 
 						    int operand_id, 
 						    int expr_id_root,
 						    int address) {
   string text = "";
 
-  hash_map< int, exprSubstitutionType>::iterator it =  rememberSubstitution->find(address);
+  rose_hash::hash_map< int, exprSubstitutionType>::iterator it =  rememberSubstitution->find(address);
   if (it != rememberSubstitution->end()) {
     // for (it; it!=rememberSubstitution->end();++it) {
     const exprSubstitutionType& subst = it->second;
@@ -355,10 +355,10 @@ string RoseBin_IDAPRO_buildTree::getReplacementText(
  * return the comment for an expression (address)
  ****************************************************/
 std::string RoseBin_IDAPRO_buildTree::getComment(int address, 
-                                                 hash_map< int, std::string> *rememberComments) {
+                                                 rose_hash::hash_map< int, std::string> *rememberComments) {
   string text = "";
 
-  hash_map< int, string>::iterator it =  rememberComments->find(address);
+  rose_hash::hash_map< int, string>::iterator it =  rememberComments->find(address);
   if (it != rememberComments->end()) {
     // for (it; it!=rememberComments->end();++it) {
     text = it->second;
@@ -377,8 +377,8 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
 									const string& typeOfOperand,
 									std::vector < exprTreeType > *rememberExpressionTree,
 									int operand_id,
-									hash_map <int, exprSubstitutionType> *rememberSubstitution,
-									hash_map <int, string> *rememberComments) {
+									rose_hash::hash_map <int, exprSubstitutionType> *rememberSubstitution,
+									rose_hash::hash_map <int, string> *rememberComments) {
   SgAsmExpression* binExp=NULL;
   if (RoseBin_support::DEBUG_MODE())
     cout << "\n>>>> resolving type of expr_id_root " << expr_id_root << endl;

@@ -729,6 +729,7 @@ src/frontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/ObjdumpDisassembler/Makefile
+src/frontend/X86Disassembler/Makefile
 src/midend/Makefile
 src/midend/astInlining/Makefile
 src/midend/astOutlining/Makefile

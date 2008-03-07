@@ -69,9 +69,9 @@ protected:
 	if (isSgScopeStatement(node)) {
 	   SgSymbolTable *symTable = ((SgScopeStatement *) node)->get_symbol_table();
 	   ROSE_ASSERT(symTable);
-	   const hash_multimap<const SgName,SgSymbol*,hash_Name,eqstr> *symbols = symTable->get_table();
+	   const hash_multimap<SgName,SgSymbol*,hash_Name,eqstr> *symbols = symTable->get_table();
 	   if (symbols) {
-  	      for (hash_multimap<const SgName,SgSymbol*,hash_Name,eqstr>::const_iterator iter = symbols->begin();
+  	      for (hash_multimap<SgName,SgSymbol*,hash_Name,eqstr>::const_iterator iter = symbols->begin();
 	           iter != symbols->end(); iter++)
 	      {
 	         SgSymbol *symbol = iter->second;

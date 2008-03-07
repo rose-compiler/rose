@@ -22,9 +22,9 @@
 
 class RoseBin_FlowAnalysis : public AstSimpleProcessing {
  protected:
-  hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
+   rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
 
-  typedef hash_map< uint64_t, SgDirectedGraphNode*> tabletype_inv;
+  typedef rose_hash::hash_map< uint64_t, SgDirectedGraphNode*> tabletype_inv;
 
   //tabletype_inv usetable_instr;
   tabletype_inv deftable_instr;
@@ -51,7 +51,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   // worklist to build the CFG graph
   std::stack <SgAsmInstruction*> worklist_forthisfunction;
   // visited map for the CFG graph
-  hash_map <std::string, SgAsmInstruction*> local_visited;
+  rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
 
   typedef std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs_type;
   bin_funcs_type bin_funcs;
@@ -60,7 +60,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   RoseBin_unparse_visitor* unparser;
 
   // vector of graphs
-  hash_map <std::string, SgDirectedGraph*> graphs;
+  rose_hash::hash_map <std::string, SgDirectedGraph*> graphs;
 
   static bool initialized;
 

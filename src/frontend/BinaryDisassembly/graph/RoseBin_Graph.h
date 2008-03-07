@@ -78,14 +78,14 @@ class RoseBin_Graph {
 
  public:
 
-  typedef hash_map <std::string, SgDirectedGraphNode*> nodeType;
+  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
   nodeType nodes;
 
-  typedef hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeType;
+  typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeType;
   edgeType edges;
   edgeType edgesR;
 
-  typedef hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeTypeUnique;
+  typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeTypeUnique;
   edgeTypeUnique unique_edges;
 
   void createUniqueEdges();

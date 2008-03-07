@@ -66,9 +66,9 @@ RoseBin_DataFlowAnalysis::getRootNodes(vector <SgDirectedGraphNode*>& rootNodes)
 
 
 bool 
-RoseBin_DataFlowAnalysis::containsHash( hash_set < SgDirectedGraphNode*>& vec, 
+RoseBin_DataFlowAnalysis::containsHash( rose_hash::hash_set < SgDirectedGraphNode*>& vec, 
 					SgDirectedGraphNode* node) {
-  hash_set < SgDirectedGraphNode*>:: iterator it = vec.find(node);
+  rose_hash::hash_set < SgDirectedGraphNode*>:: iterator it = vec.find(node);
   if (it!=vec.end())
     return true;
   return false;
@@ -87,7 +87,7 @@ void
 RoseBin_DataFlowAnalysis::traverseEdges(RoseBin_DataFlowAbstract* analysis) {
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " >> Traversing over all edges and adding label ... " << endl;
-  typedef hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgesM;
+  typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgesM;
   const edgesM& edges = vizzGraph->edges;
   edgesM::const_iterator it = edges.begin();
   for (;it!=edges.end();++it) {
@@ -185,7 +185,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
   // stores the nodes that still needs to be visited
   //  vector<SgDirectedGraphNode*> worklist;
   deque<SgDirectedGraphNode*> worklist;
-  hash_set < SgDirectedGraphNode*> worklist_hash;
+  rose_hash::hash_set < SgDirectedGraphNode*> worklist_hash;
   // a vector of successors of the current node
   vector<SgDirectedGraphNode*> successors;
   // ---------------------------------------------------------------------
@@ -257,7 +257,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
       // do something with the current node
       // e.g. checkVariables(name, node);
       SgDirectedGraphNode* nodeBefore= NULL;
-      hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*>::iterator it = 
+      rose_hash::hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*>::iterator it = 
 	nodeBeforeMap.find(node);
       if (it!=nodeBeforeMap.end())
 	nodeBefore = it->second;

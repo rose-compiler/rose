@@ -520,7 +520,7 @@ void RoseBin_DB_IDAPRO::process_instruction_query(MYSQL* conn, MYSQL_RES* res_se
       // if it is in the callgraph, one wants to create a BinaryCall instead
 
       // append the instruction to its function
-      hash_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
+      rose_hash::hash_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
       SgAsmFunctionDeclaration* func = NULL;
       // for (func_it; func_it!=rememberFunctions.end(); ++func_it) {
       if (func_it != rememberFunctions.end()) {
@@ -978,7 +978,7 @@ void RoseBin_DB_IDAPRO::process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res
     // get basic_block and append this instruction
     if (RoseBin_support::DEBUG_MODE())
       cout << "\n\n> appending operandList to instruction.  " << endl;
-    hash_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
+    rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
     int count = 0;
     cerr << "Instruction count: " << rememberInstructions.size() << endl;
     for (blockIt=rememberInstructions.begin();blockIt!=rememberInstructions.end();++blockIt) {

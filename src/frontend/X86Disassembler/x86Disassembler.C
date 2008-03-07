@@ -4,16 +4,26 @@
 
 using namespace std;
 
+#if 0
+
 namespace X86Disassembler {
 
   enum Size {size16, size32, size64};
   enum SegmentOverride {soNone, soCS, soDS, soES, soFS, soGS, soSS};
   enum RepeatPrefix {rpNone, rpRepne, rpRepe};
 
-  struct State {
-    // Stuff that is not changed during the course of the instruction
+  struct Parameters {
     uint64_t ip;
     Size insnSize;
+  };
+
+  struct SingleInstructionDisassembler {
+    // Stuff that is not changed during the course of the instruction
+    Parameters p;
+
+    // The instruction
+    const vector<uint8_t> insn;
+    size_t positionInVector;
 
     // Temporary flags set by the instruction
     SegmentOverride segOverride;
@@ -22,43 +32,46 @@ namespace X86Disassembler {
     bool lock;
     RepeatPrefix repeatPrefix;
 
-    void resetForNewInstruction() {
-      segOverride = soNone;
-      rexPresent = false;
-      rexW = false;
-      rexR = false;
-      rexX = false;
-      rexB = false;
-      addressSizeOverride = false;
-      operandSizeOverride = false;
-      lock = false;
-      repeatPrefix = rpNone;
-    }
+    SingleInstructionDisassembler(const Parameters& p, const vector<uint8_t>& insn, size_t positionInVector):
+      p(p),
+      insn(insn),
+      positionInVector(positionInVector),
+      segOverride(soNone),
+      rexPresent(false),
+      rexW(false),
+      rexR(false),
+      rexX(false),
+      rexB(false),
+      addressSizeOverride(false),
+      operandSizeOverride(false),
+      lock(false),
+      repeatPrefix(rpNone)
+    {}
 
     Size effectiveAddressSize() const {
       if (addressSizeOverride) {
-        switch (insnSize) {
+        switch (p.insnSize) {
           case size16: return size32;
           case size32: return size16;
           case size64: return size32;
           default: ROSE_ASSERT (false);
         }
       } else {
-        return insnSize;
+        return p.insnSize;
       }
     }
 
     Size effectiveOperandSize() const {
       if (operandSizeOverride) {
-        switch (insnSize) {
+        switch (p.insnSize) {
           case size16: return size32;
           case size32: return size16;
           case size64: return size16;
           default: ROSE_ASSERT (false);
         }
       } else {
-        Size s = insnSize;
-        if (insnSize == size64 && !rexW) s = size32;
+        Size s = p.insnSize;
+        if (p.insnSize == size64 && !rexW) s = size32;
         return s;
         // This doesn't handle all of the special cases
       }
@@ -68,7 +81,14 @@ namespace X86Disassembler {
 
   struct BadInstruction {};
 
-#define GET_BYTE(var) do {if (positionInVector >= insn.size()) throw BadInstruction(); var = insn[++positionInVector]; if (positionInVector >= 15) throw BadInstruction();} while (0)
+  void getByte(uint8_t& var) {
+    if (positionInVector >= insn.size())
+      throw BadInstruction();
+    var = insn[++positionInVector];
+    if (positionInVector >= 15)
+      throw BadInstruction();
+  }
+
 #define GET_WORD(var) do {uint8_t high, low; GET_BYTE(low); GET_BYTE(high); var = (uint16_t(high) << 8) | uint16_t(low);} while (0)
 #define GET_DWORD(var) do {uint16_t high, low; GET_WORD(low); GET_WORD(high); var = (uint32_t(high) << 16) | uint32_t(low);} while (0)
 #define GET_QWORD(var) do {uint32_t high, low; GET_DWORD(low); GET_DWORD(high); var = (uint64_t(high) << 32) | uint64_t(low);} while (0)
@@ -201,7 +221,7 @@ namespace X86Disassembler {
   }
 
   SgAsmRegisterReferenceExpression* makeOperandRegisterFull(const State& s, bool rexExtension, uint8_t registerNumber) {
-    SgAsmRegisterReferenceExpression* ref = makeRegister((rexExtension ? 8 : 0) + registerNumber, sizeToMode(s.insnSize));
+    SgAsmRegisterReferenceExpression* ref = makeRegister((rexExtension ? 8 : 0) + registerNumber, sizeToMode(s.p.insnSize));
     return ref;
   }
 
@@ -232,8 +252,8 @@ namespace X86Disassembler {
   SgAsmRegisterReferenceExpression* makeIP(const State& s) {
     SgAsmRegisterReferenceExpression* r = new SgAsmRegisterReferenceExpression();
     r->set_x86_register_code(SgAsmRegisterReferenceExpression::rIP);
-    r->set_x86_position_in_register_code(sizeToPos(s.insnSize));
-    r->set_type(sizeToType(s.insnSize));
+    r->set_x86_position_in_register_code(sizeToPos(s.p.insnSize));
+    r->set_type(sizeToType(s.p.insnSize));
     return r;
   }
 
@@ -270,7 +290,7 @@ namespace X86Disassembler {
         uint32_t offset;
         GET_DWORD(offset);
         addressExpr = makeDWordValue(offset);
-        if (s.insnSize == size64) {
+        if (s.p.insnSize == size64) {
           addressExpr = new SgAsmBinaryAdd(makeIP(s), addressExpr);
         }
       } else {
@@ -285,8 +305,8 @@ namespace X86Disassembler {
           if (sibBaseField == 5) {
             switch (high2bits) {
               case 0: {uint32_t offset; GET_DWORD(offset); sibBase = makeDWordValue(offset); break;}
-              case 1: {uint8_t offset; GET_BYTE(offset); sibBase = new SgAsmBinaryAdd(makeRegister((s.rexB ? 13 : 5), sizeToMode(s.insnSize)), makeByteValue(offset)); break;}
-              case 2: {uint32_t offset; GET_DWORD(offset); sibBase = new SgAsmBinaryAdd(makeRegister((s.rexB ? 13 : 5), sizeToMode(s.insnSize)), makeDWordValue(offset)); break;}
+              case 1: {uint8_t offset; GET_BYTE(offset); sibBase = new SgAsmBinaryAdd(makeRegister((s.rexB ? 13 : 5), sizeToMode(s.p.insnSize)), makeByteValue(offset)); break;}
+              case 2: {uint32_t offset; GET_DWORD(offset); sibBase = new SgAsmBinaryAdd(makeRegister((s.rexB ? 13 : 5), sizeToMode(s.p.insnSize)), makeDWordValue(offset)); break;}
               default: ROSE_ASSERT (false);
             }
           } else {
@@ -472,14 +492,14 @@ namespace X86Disassembler {
   SgAsmx86Instruction* disassemble(State s /* Copied on purpose */, const vector<uint8_t>& insn /* Should be at least 15 bytes (max insn length) if possible */) {
     s.resetForNewInstruction();
     size_t positionInVector = 0;
-#define REX(val) if (s.insnSize == size64) {s.rexPresent = true; s.rexW = (val & 8) != 0; s.rexR = (val & 4) != 0; s.rexX = (val & 2) != 0; s.rexB = (val & 1) != 0;}
+#define REX(val) if (s.p.insnSize == size64) {s.rexPresent = true; s.rexW = (val & 8) != 0; s.rexR = (val & 4) != 0; s.rexX = (val & 2) != 0; s.rexB = (val & 1) != 0;}
 #define GET_MODRM_FOR_BYTE uint8_t modregrm; SgAsmExpression* modrm = NULL; SgAsmExpression* reg = NULL; GET_BYTE(modregrm); getModrmFullForByte(s, insn, positionInVector, modregrm, modrm, reg); ROSE_ASSERT (reg); ROSE_ASSERT (modrm);
 #define GET_MODRM_FOR_XWORD uint8_t modregrm; SgAsmExpression* modrm = NULL; SgAsmExpression* reg = NULL; GET_BYTE(modregrm); getModrmFullForXword(s, insn, positionInVector, modregrm, modrm, reg); ROSE_ASSERT (reg); ROSE_ASSERT (modrm);
 #define GET_MODRM_FOR_WORD_SEGREG uint8_t modregrm; SgAsmExpression* modrm = NULL; SgAsmExpression* segreg = NULL; GET_BYTE(modregrm); getModrmFullForWordSegreg(s, insn, positionInVector, modregrm, modrm, segreg); ROSE_ASSERT (segreg); ROSE_ASSERT (modrm);
 #define GET_MODRM_OPCODE_FOR_BYTE  uint8_t modregrm; SgAsmExpression* modrm = NULL; uint8_t reg = 0; GET_BYTE(modregrm); getModrmOpcodeForByte(s, insn, positionInVector, modregrm, modrm, reg); ROSE_ASSERT (modrm);
 #define GET_MODRM_OPCODE_FOR_XWORD uint8_t modregrm; SgAsmExpression* modrm = NULL; uint8_t reg = 0; GET_BYTE(modregrm); getModrmOpcodeForXword(s, insn, positionInVector, modregrm, modrm, reg); ROSE_ASSERT (modrm);
 #define GET_MODRM_OPCODE_FOR_FLOAT uint8_t modregrm; SgAsmExpression* modrm = NULL; uint8_t reg = 0; GET_BYTE(modregrm); getModrmOpcodeForFloat(s, insn, positionInVector, modregrm, modrm, reg); ROSE_ASSERT (modrm);
-#define NOT_64 do {if (s.insnSize == size64) throw BadInstruction();} while (0)
+#define NOT_64 do {if (s.p.insnSize == size64) throw BadInstruction();} while (0)
 #define GET_IMM_BYTE SgAsmExpression* imm = NULL; {uint8_t val; GET_BYTE(val); imm = makeByteValue(val); ROSE_ASSERT (imm);}
 #define GET_IMM_WORD SgAsmExpression* imm = NULL; {uint16_t val; GET_WORD(val); imm = makeWordValue(val); ROSE_ASSERT (imm);}
 #define GET_IMM_DWORD SgAsmExpression* imm = NULL; {uint32_t val; GET_DWORD(val); imm = makeDWordValue(val); ROSE_ASSERT (imm);}
@@ -594,7 +614,7 @@ decodeOpcodeNormal:
       case 0x60: {NOT_64; return MAKE_INSN0(Pusha, pusha);}
       case 0x61: {NOT_64; return MAKE_INSN0(Popa, popa);}
       case 0x62: {NOT_64; GET_MODRM_FOR_XWORD; REQUIRE_MEMORY(modrm); return MAKE_INSN2(Bound, bound, reg, modrm);}
-      case 0x63: ROSE_ASSERT (!"Not handled by ROSE"); // {GET_MODRM_FOR_XWORD; if (s.insnSize == size64) {return MAKE_INSN2(Movsxd, movsxd, reg, modrm);} else {return MAKE_INSN2(Arpl, arpl, modrm, reg);}}
+      case 0x63: ROSE_ASSERT (!"Not handled by ROSE"); // {GET_MODRM_FOR_XWORD; if (s.p.insnSize == size64) {return MAKE_INSN2(Movsxd, movsxd, reg, modrm);} else {return MAKE_INSN2(Arpl, arpl, modrm, reg);}}
       case 0x64: {s.segOverride = soFS; goto decodeOpcodeNormal;}
       case 0x65: {s.segOverride = soGS; goto decodeOpcodeNormal;}
       case 0x66: {s.operandSizeOverride = true; goto decodeOpcodeNormal;}
@@ -1281,28 +1301,28 @@ decodeOpcodeNormal:
       case (0x90 >> 3): {
         GET_MODRM_FOR_BYTE;
         switch (low3bits) {
-          case 0: return MAKE_INSN2(Seto,  seto, modrm);
-          case 1: return MAKE_INSN2(Setno, setno, modrm);
-          case 2: return MAKE_INSN2(Setb,  setb, modrm);
-          case 3: return MAKE_INSN2(Setae, setae, modrm);
-          case 4: return MAKE_INSN2(Sete,  sete, modrm);
-          case 5: return MAKE_INSN2(Setne, setne, modrm);
-          case 6: return MAKE_INSN2(Setbe, setbe, modrm);
-          case 7: return MAKE_INSN2(Seta,  seta, modrm);
+          case 0: return MAKE_INSN1(Seto,  seto, modrm);
+          case 1: return MAKE_INSN1(Setno, setno, modrm);
+          case 2: return MAKE_INSN1(Setb,  setb, modrm);
+          case 3: return MAKE_INSN1(Setae, setae, modrm);
+          case 4: return MAKE_INSN1(Sete,  sete, modrm);
+          case 5: return MAKE_INSN1(Setne, setne, modrm);
+          case 6: return MAKE_INSN1(Setbe, setbe, modrm);
+          case 7: return MAKE_INSN1(Seta,  seta, modrm);
           default: ROSE_ASSERT (false);
         }
       }
       case (0x98 >> 3): {
         GET_MODRM_FOR_BYTE;
         switch (low3bits) {
-          case 0: return MAKE_INSN2(Sets,  sets, modrm);
-          case 1: return MAKE_INSN2(Setns, setns, modrm);
-          case 2: return MAKE_INSN2(Setpe, setpe, modrm);
-          case 3: return MAKE_INSN2(Setpo, setpo, modrm);
-          case 4: return MAKE_INSN2(Setl,  setl, modrm);
-          case 5: return MAKE_INSN2(Setge, setge, modrm);
-          case 6: return MAKE_INSN2(Setle, setle, modrm);
-          case 7: return MAKE_INSN2(Setg,  setg, modrm);
+          case 0: return MAKE_INSN1(Sets,  sets, modrm);
+          case 1: return MAKE_INSN1(Setns, setns, modrm);
+          case 2: return MAKE_INSN1(Setpe, setpe, modrm);
+          case 3: return MAKE_INSN1(Setpo, setpo, modrm);
+          case 4: return MAKE_INSN1(Setl,  setl, modrm);
+          case 5: return MAKE_INSN1(Setge, setge, modrm);
+          case 6: return MAKE_INSN1(Setle, setle, modrm);
+          case 7: return MAKE_INSN1(Setg,  setg, modrm);
           default: ROSE_ASSERT (false);
         }
       }
@@ -1322,3 +1342,4 @@ decodeOpcodeNormal:
     }
   }
 }
+#endif

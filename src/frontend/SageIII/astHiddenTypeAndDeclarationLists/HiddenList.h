@@ -10,7 +10,6 @@
  #include <set>
  #include <algorithm>
  #include <string>
- #include <ext/hash_map>
  #include <vector>
  #include <deque>
 
@@ -80,7 +79,7 @@ struct HashFunction_String
 
                 int operator()(const std::string & in) const
                 {
-                        return hash<char*>()((char*)in.c_str());
+                        return rose_hash::hash<char*>()((char*)in.c_str());
 
                 }
 
@@ -233,7 +232,7 @@ struct HashFunction_SymbolHashMap {
                 int operator()(SgSymbol* S) const
                 {
                         // calculate hashfunction-value based on address of SgSymbol
-                        return hash<int>()((long int)S);
+                        return rose_hash::hash<int>()((long int)S);
                 }
 
 };
@@ -312,16 +311,16 @@ typedef std::deque<SymbolInformation*> Vector_Of_SymbolInformation;
 // this hash_map contains:
 //  Key: pointer to SgSymbol
 //  Value: struct of booleans for getting class, namespace & validity information
-typedef hash_map<SgSymbol*, SymbolHashMapValue*, HashFunction_SymbolHashMap /*equal_symbol*/> SymbolHashMap;
+typedef rose_hash::hash_map<SgSymbol*, SymbolHashMapValue*, HashFunction_SymbolHashMap /*equal_symbol*/> SymbolHashMap;
 // this hash_map contains:
 //  Key: symbol-name from the SymbolTable
 //  Value: HashMap of Pointers & boolean if scope can be named of this symbols
-typedef hash_map<std::string, SymbolHashMap, HashFunction_String, cmp_string> ScopeStackEntry;
+typedef rose_hash::hash_map<std::string, SymbolHashMap, HashFunction_String, cmp_string> ScopeStackEntry;
 
 // ad using directives: used for storing namespaces
 //  Key: (qualified) Name of namespace
 //  Value: std::vector of struct symbol table
-typedef hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String, eqstr3> StringVectorHashMap;
+typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String, eqstr3> StringVectorHashMap;
 
 
 // calculating the valid scope; make only an intersection of the entries of StringVectorHashMap(VScopeStack) that match with ValidScope
@@ -365,7 +364,7 @@ struct NamespaceInformation {
 };
 
 typedef std::vector<NamespaceInformation> VectorOfNamespaceInformation;
-typedef hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String, eqstr3> String_VectorOfNamespaceInformation_HashMap;
+typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String, eqstr3> String_VectorOfNamespaceInformation_HashMap;
 
 
 typedef std::vector<NamespaceInformation>::iterator it_VectorOfNamespaceInformation;
@@ -377,7 +376,7 @@ struct it_VectorOfNamespaceInformation_boolean {
 
 };
 
-typedef hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String, eqstr3> String_it_VectorOfNamespaceInformation_boolean;
+typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String, eqstr3> String_it_VectorOfNamespaceInformation_boolean;
 
 
 // Robert Preissl, June 20 2007: in addition to the SetSgUsingDirectiveStatementsWithSgScopeStatement (and also for using decl.) we keep a special data structure that keeps
@@ -413,14 +412,14 @@ struct HashFunction_SgUsingDirectiveStatement {
                 int operator()(SgUsingDirectiveStatement* using_dir) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDirectiveStatement
-                        return hash<int>()((long int)using_dir);
+                        return rose_hash::hash<int>()((long int)using_dir);
                 }
 
 };
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: LinkedListStackSetSgDeclarationStatements
-typedef hash_map<SgUsingDirectiveStatement*, LinkedListStackSetSgDeclarationStatements, HashFunction_SgUsingDirectiveStatement> UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
+typedef rose_hash::hash_map<SgUsingDirectiveStatement*, LinkedListStackSetSgDeclarationStatements, HashFunction_SgUsingDirectiveStatement> UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
 
 
 // HashFunction for UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap
@@ -430,23 +429,23 @@ struct HashFunction_SgUsingDeclarationStatement {
                 int operator()(SgUsingDeclarationStatement* using_decl) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDeclarationStatement
-                        return hash<int>()((long int)using_decl);
+                        return rose_hash::hash<int>()((long int)using_decl);
                 }
 
 };
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: LinkedListStackSetSgDeclarationStatements
-typedef hash_map<SgUsingDeclarationStatement*, LinkedListStackSetSgDeclarationStatements, HashFunction_SgUsingDeclarationStatement> UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
+typedef rose_hash::hash_map<SgUsingDeclarationStatement*, LinkedListStackSetSgDeclarationStatements, HashFunction_SgUsingDeclarationStatement> UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
 
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: SetSgDeclarationStatements
-typedef hash_map<SgUsingDirectiveStatement*, SetSgDeclarationStatements, HashFunction_SgUsingDirectiveStatement> UsingDirectiveStatement_SetSgDeclarationStatements_HashMap;
+typedef rose_hash::hash_map<SgUsingDirectiveStatement*, SetSgDeclarationStatements, HashFunction_SgUsingDirectiveStatement> UsingDirectiveStatement_SetSgDeclarationStatements_HashMap;
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: SetSgDeclarationStatements
-typedef hash_map<SgUsingDeclarationStatement*, SetSgDeclarationStatements, HashFunction_SgUsingDeclarationStatement> UsingDeclarationStatement_SetSgDeclarationStatements_HashMap;
+typedef rose_hash::hash_map<SgUsingDeclarationStatement*, SetSgDeclarationStatements, HashFunction_SgUsingDeclarationStatement> UsingDeclarationStatement_SetSgDeclarationStatements_HashMap;
 
 
 /*

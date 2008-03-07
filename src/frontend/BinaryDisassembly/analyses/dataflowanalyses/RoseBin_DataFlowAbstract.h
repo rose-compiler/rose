@@ -61,10 +61,10 @@ class RoseBin_Variable  {
 
 class RoseBin_DataFlowAbstract {
  protected:
-  hash_map <uint64_t, RoseBin_Variable*> variables;
-  hash_map <std::string, uint64_t> variablesReverse;
+   rose_hash::hash_map <uint64_t, RoseBin_Variable*> variables;
+   rose_hash::hash_map <std::string, uint64_t> variablesReverse;
 
-  hash_map <uint64_t, RoseBin_Variable*> memory;
+   rose_hash::hash_map <uint64_t, RoseBin_Variable*> memory;
 
   RoseBin_Graph* vizzGraph;
   RoseBin_unparse_visitor* unparser;
@@ -74,7 +74,7 @@ class RoseBin_DataFlowAbstract {
   typedef std::multimap< SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> multitype;
   //typedef std::map< SgDirectedGraphNode*, multitype> tabletype;
   //typedef __gnu_cxx::hash_multimap< SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> multitype;
-  typedef hash_map< SgDirectedGraphNode*, multitype> tabletype;
+  typedef rose_hash::hash_map< SgDirectedGraphNode*, multitype> tabletype;
 
 
   // statistics

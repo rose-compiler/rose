@@ -2466,7 +2466,7 @@ struct eqstr
  */
 struct hash_Name
    {
-     hash<const char*> hasher;
+     rose_hash::hash<const char*> hasher;
 
      public:
           size_t operator()(const SgName & name) const
@@ -2485,7 +2485,7 @@ struct hash_Name
     when Ken Kennedy visited LLNL.
 
  */
-class rose_hash_multimap : public hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
      protected:
           SgNode * parent;
@@ -2493,13 +2493,13 @@ class rose_hash_multimap : public hash_multimap<SgName, SgSymbol*, hash_Name, eq
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-             : hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
              {}
           rose_hash_multimap(int sz) 
-             : hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
              {}
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-             : hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -4591,12 +4591,12 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
      if (isSgFunctionTypeSymbol(sp) == NULL)
         {
        // set<SgNode*> existingSymbolBasisDeclarations;
-          map<SgNode*, hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator > existingSymbolBasisDeclarations;
+          map<SgNode*, rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator > existingSymbolBasisDeclarations;
 
           SgNode* sp_associatedDeclaration = sp->get_symbol_basis();
           ROSE_ASSERT(sp_associatedDeclaration != NULL);
 
-          hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
           while (i != get_table()->end())
              {
             // test if symbol is in set
@@ -4730,8 +4730,8 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      ROSE_ASSERT (p_table != NULL);
 
-     list<hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
-     hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
+     list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
      while (it != get_table()->end() && (*it).first == name)
         {
           ROSE_ASSERT(it->second->variantT() == V_SgFunctionTypeSymbol);
@@ -4741,7 +4741,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"
@@ -4935,8 +4935,8 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
 #endif
-     hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator elementToDelete = get_table()->end();
-     hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
+     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator elementToDelete = get_table()->end();
+     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
      while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
         {
        // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -4959,7 +4959,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
        // make sure that the complexity is not linear in the size of the symbol table!
           ROSE_ASSERT(false);
 
-          hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
           while ( (i != get_table()->end()) && (elementToDelete == get_table()->end()) )
              {
             // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -5037,7 +5037,7 @@ SgSymbolTable::remove_function( const SgName & name )
    {
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5049,7 +5049,7 @@ SgSymbolTable::remove_function( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -5068,7 +5068,7 @@ SgSymbolTable::remove_class( const SgName & name )
    {
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5080,7 +5080,7 @@ SgSymbolTable::remove_class( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(i->second);"
@@ -5102,7 +5102,7 @@ SgSymbolTable::remove_enum( const SgName & name )
    {
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5114,7 +5114,7 @@ SgSymbolTable::remove_enum( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -5136,7 +5136,7 @@ SgSymbolTable::remove_label( const SgName & name )
 
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5148,7 +5148,7 @@ SgSymbolTable::remove_label( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -5170,7 +5170,7 @@ SgSymbolTable::remove_var( const SgName & name )
 
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5182,7 +5182,7 @@ SgSymbolTable::remove_var( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -5204,7 +5204,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5216,7 +5216,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -5238,7 +5238,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
 
      ROSE_ASSERT(p_table != NULL);
 
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
@@ -5250,7 +5250,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
-     list<hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+     list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
      while (i != deleteList.end())
         {
           get_table()->erase(*i);
@@ -6517,7 +6517,7 @@ SgSymbolTable::get_symbols() const
      set<SgNode*> returnSet;
 
      ROSE_ASSERT(p_table != NULL);
-     hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
      while (i != p_table->end())
         {
           ROSE_ASSERT(i->second != NULL);

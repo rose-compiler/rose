@@ -132,7 +132,7 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* inst, bool hasStopCondit
     uint64_t addrInst = inst->get_address();
     uint64_t size = (inst->get_raw_bytes()).size();
     uint64_t nextAddr = addrInst+size;
-    hash_map <uint64_t, SgAsmInstruction* >::const_iterator it2 =
+    rose_hash::hash_map <uint64_t, SgAsmInstruction* >::const_iterator it2 =
       rememberInstructions.find(nextAddr);
     if (it2!=rememberInstructions.end()) {
       // found the next instruction
@@ -213,7 +213,7 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86ControlTransferInstructio
 	//if (RoseBin_support::DEBUG_MODE())
 	//cerr << "    looking for value ("<<valStr << " ) in InstrSet: " 
 	// << val << "  " << addrhex2.str() << endl;
-	hash_map <uint64_t, SgAsmInstruction* >::const_iterator itc = 
+        rose_hash::hash_map <uint64_t, SgAsmInstruction* >::const_iterator itc = 
 	  rememberInstructions.find(val);
 	if (itc!=rememberInstructions.end()) {
 	  SgAsmInstruction* target = itc->second;
@@ -270,7 +270,7 @@ void RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
 void RoseBin_FlowAnalysis::process_jumps() {
   
   cerr << "\n >>>>>>>>> processing jumps ... " << endl;
-  hash_map <uint64_t, SgAsmInstruction* >::iterator it;      
+  rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator it;      
   for (it=rememberInstructions.begin();it!=rememberInstructions.end();++it) {
     SgAsmx86ControlTransferInstruction* inst = isSgAsmx86ControlTransferInstruction(it->second);
     if (isSgAsmx86Call(inst)) {
@@ -335,7 +335,7 @@ void RoseBin_FlowAnalysis::process_jumps() {
   //cerr << "\n >>>>>>>>> processing jumps ... done. " << endl;
 
   //  cerr << "\n >>>>>>>>> resolving RET jumps ... " << endl;
-  hash_map <uint64_t, SgAsmInstruction* >::iterator it2;      
+  rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator it2;      
   for (it2=rememberInstructions.begin();it2!=rememberInstructions.end();++it2) {
     //int id = it2->first;
     SgAsmx86Ret* ret = isSgAsmx86Ret(it2->second);
@@ -379,7 +379,7 @@ RoseBin_FlowAnalysis::getAddressForNode(SgDirectedGraphNode* node) {
 void 
 RoseBin_FlowAnalysis::createInstToNodeTable() {
   //  tabletype::const_iterator it = deftable.begin();
-  typedef hash_map <std::string, SgDirectedGraphNode*> nodeType;
+  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
   nodeType nodes = vizzGraph->nodes;
   nodeType::iterator it = nodes.begin();
   for (;it!=nodes.end();++it) {
@@ -608,7 +608,7 @@ void RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	  trg = vizzGraph->checkIfGraphNodeExists(hexStr);
       
 	bool target_visited = false;
-	hash_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+        rose_hash::hash_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
 	if (vis!=local_visited.end())
 	  target_visited=true;
       

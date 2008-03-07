@@ -1448,7 +1448,7 @@ Terminal::buildPointerInMemoryPoolCheck ()
                        {
                          s += "     if ( p_" + varNameString + " != NULL )\n" ;
                          s += "        { \n" ;
-                         s += "          hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                         s += "          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
                          s += "          for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n" ;
                          s += "             {\n";
                          s += "               if ( it->second != NULL )\n" ;

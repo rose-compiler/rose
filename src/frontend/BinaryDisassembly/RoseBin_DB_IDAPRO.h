@@ -28,13 +28,13 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
   //Sg_File_Info* this_file;
 
   // remember a map of comments
-  hash_map <int, std::string > rememberComments; // Instruction addr -> comment
+  rose_hash::hash_map <int, std::string > rememberComments; // Instruction addr -> comment
   // remember the map of functions
-  hash_map <int, SgAsmFunctionDeclaration* > rememberFunctions; // Start of function -> decl
+  rose_hash::hash_map <int, SgAsmFunctionDeclaration* > rememberFunctions; // Start of function -> decl
   // remember a map of blocks
   //std::map <int, SgAsmBlock* > rememberBlocks;
   // remember a map of instructions
-  hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
+  rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
   //typedef __gnu_debug::hash_map <uint64_t, SgAsmInstruction* > remInstType;
   //remInstType rememberInstructions; // Insn address -> ROSE insn
   // remember a map of all operand strings
@@ -52,9 +52,9 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
   // std::map <int, std::multimap<int,int> > rememberExpressionTree_ParentChild;
   std::vector < std::multimap<int,int> > rememberExpressionTree_ParentChild;
   // map of substitutions
-  hash_map <int, exprSubstitutionType > rememberSubstitution;
+  rose_hash::hash_map <int, exprSubstitutionType > rememberSubstitution;
   // map of callgraph info , <address, callgraphType>
-  hash_map <int, CallGraphType > rememberCallGraph;
+  rose_hash::hash_map <int, CallGraphType > rememberCallGraph;
   // map of branchgraph info , <address of src_blockid, callgraphType>
   //  std::multimap <int, BranchGraphType > rememberBranchGraph;
 

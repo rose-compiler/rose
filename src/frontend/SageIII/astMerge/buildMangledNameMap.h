@@ -13,7 +13,7 @@ struct eqstr_string
 
 struct hash_string
    {
-     hash<char*> hasher;
+     rose_hash::hash<char*> hasher;
 
      public:
           size_t operator()(const std::string & name) const
@@ -21,8 +21,6 @@ struct hash_string
                return hasher(name.c_str());
              }
    };
-
-#include <ext/hash_map>
 
 // This class builds a map of unique names and associated IR nodes.
 // It uses the memory pool traversal so that ALL IR nodes will be visited.
@@ -33,7 +31,7 @@ class MangledNameMapTraversal : public ROSE_VisitTraversal
        // Would it make a different to make the first template argument a "const std::string" instead of a "std::string"?
        // typedef std::map<std::string,SgNode*> MangledNameMapType;
        // typedef hash_multimap<const std::string, SgNode*, hash_string, eqstr_string> MangledNameMapType;
-          typedef hash_map<std::string, SgNode*, hash_string, eqstr_string> MangledNameMapType;
+          typedef rose_hash::hash_map<std::string, SgNode*, hash_string, eqstr_string> MangledNameMapType;
 
        // The delete list is just a set
           typedef std::set<SgNode*> SetOfNodesType;
