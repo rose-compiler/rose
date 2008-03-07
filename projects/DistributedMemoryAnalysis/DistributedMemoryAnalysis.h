@@ -5,6 +5,7 @@
 #ifndef DISTRIBUTED_MEMORY_ANALYSIS_H
 #define DISTRIBUTED_MEMORY_ANALYSIS_H
 
+#include <mpi.h>
 #include <rose.h>
 #include <utility>
 

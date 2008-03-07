@@ -1,8 +1,8 @@
 // This is a small example of how to use the distributed memory traversal mechanism. It computes a list of function
 // definitions in a program and outputs their names, their depth in the AST, and the ID of the process that found it.
 
-#include <rose.h>
 #include "DistributedMemoryAnalysis.h"
+#include <rose.h>
 
 // The pre-traversal runs before the distributed part of the analysis and is used to propagate context information down
 // to the individual function definitions in the AST. Here, it just computes the depth of nodes in the AST.

@@ -1,12 +1,12 @@
 # Makefile used by Gergo on Zeus
 
-ROSEDIR = $(HOME)/sep28/ROSE_build
+ROSEDIR = /home/panas2/development/ROSE-64bit/install-gcc4-svn
 
 INCLUDES = -I$(ROSEDIR)/include/ -I.
 LPATH = -L$(ROSEDIR)/lib/ -Wl,-rpath $(ROSEDIR)/lib/
 LIBS = -lrose -lrt -lfl
 
-CXX = mpiCC
+CXX = mpicxx
 CXXFLAGS = -Wall $(INCLUDES)
 
 OBJS = coloredAST.o DistributedMemoryAnalysis.o
@@ -28,10 +28,12 @@ functionNames.o: functionNames.C DistributedMemoryAnalysis.h DistributedMemoryAn
 check: coloredASTcheck functionNamesCheck
 
 coloredASTcheck:
-	srun -N4 -ppdebug coloredAST -edg:w exampleInputs/*
+#	srun -N4 -ppdebug coloredAST -edg:w exampleInputs/*
+	mpirun -np 4 coloredAST -edg:w exampleInputs/*
 
 functionNamesCheck:
-	srun -N4 -ppdebug functionNames -edg:w exampleInputs/*
+#	srun -N4 -ppdebug functionNames -edg:w exampleInputs/*
+	mpirun -np 4 coloredAST -edg:w exampleInputs/*
 
 clean:
 	rm -f *.o coloredAST functionNames *.dot *~ gmon.out *.core
