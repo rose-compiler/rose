@@ -2,6 +2,7 @@
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
+#include "sage3.h"
 
 class mutex
    {
