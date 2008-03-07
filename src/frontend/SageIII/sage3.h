@@ -139,6 +139,7 @@
 namespace rose_hash {
 #ifdef _GLIBCXX_DEBUG
 using namespace __gnu_debug_def;
+using __gnu_cxx::hash;
 #else
 using namespace __gnu_cxx;
 #endif
