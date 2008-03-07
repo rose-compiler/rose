@@ -5,6 +5,8 @@
 #include <CommandOptions.h>
 #include <PtrAnal.h>
 
+using namespace std;
+
 extern bool DebugAliasAnal ();
 
 inline void stmts_pushback(std::vector<PtrAnal::Stmt>& stmts, PtrAnal::Stmt s)

@@ -868,7 +868,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                               }
                            break;
                          case ROSE_HASH_MULTIMAP:
-                           s += "     hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                           s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgSymbol** tempList" + varNameString + " = new SgSymbol* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + "->begin(); it != source->p_" + varNameString + "->end(); ++it)\n" ;
@@ -1165,7 +1165,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       break;
                     case ROSE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+                      s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgSymbol*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";

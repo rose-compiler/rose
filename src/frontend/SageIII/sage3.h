@@ -136,14 +136,13 @@
 
 // See above the <ext/hash_map> section.
 // using namespace __gnu_cxx;
+namespace rose_hash {
 #ifdef _GLIBCXX_DEBUG
-using __gnu_debug_def::hash_map;
-using __gnu_debug_def::hash_multimap;
+using namespace __gnu_debug_def;
 #else
-using __gnu_cxx::hash_map;
-using __gnu_cxx::hash_multimap;
+using namespace __gnu_cxx;
 #endif
-using __gnu_cxx::hash;
+}
 
 // Support for preprocessors declarations and comments
 #include "rose_attributes_list.h"
