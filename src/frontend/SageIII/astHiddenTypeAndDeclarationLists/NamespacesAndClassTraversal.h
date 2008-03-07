@@ -72,7 +72,7 @@ struct HashFunction_String
         public:
                 int operator()(std::string in) const
                 {
-                        return __gnu_cxx::hash<char*>()((char*)in.c_str());
+                        return hash<char*>()((char*)in.c_str());
                 }
 
 };
@@ -123,7 +123,7 @@ struct HashFunction_SymbolHashMap {
                 int operator()(SgSymbol* S) const
                 {
                         // calculate hashfunction-value based on address of SgSymbol
-                        return __gnu_cxx::hash<int>()((long int)S);
+                        return hash<int>()((long int)S);
 
                 }
 

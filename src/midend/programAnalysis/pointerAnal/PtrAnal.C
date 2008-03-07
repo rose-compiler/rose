@@ -6,7 +6,6 @@
 #include <PtrAnal.h>
 
 extern bool DebugAliasAnal ();
-using namespace  __gnu_cxx;
 
 inline void stmts_pushback(std::vector<PtrAnal::Stmt>& stmts, PtrAnal::Stmt s)
 {
