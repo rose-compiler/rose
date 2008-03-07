@@ -137,12 +137,13 @@
 // See above the <ext/hash_map> section.
 // using namespace __gnu_cxx;
 namespace rose_hash {
-#ifdef _GLIBCXX_DEBUG
-using namespace __gnu_debug_def;
-using __gnu_cxx::hash;
-#else
+  // The condition here is not needed for GCC 4.2, but is needed (and does not completely work) for earlier versions
+// #ifdef _GLIBCXX_DEBUG
+// using namespace __gnu_debug;
+// using __gnu_cxx::hash;
+// #else
 using namespace __gnu_cxx;
-#endif
+// #endif
 }
 
 // Support for preprocessors declarations and comments
