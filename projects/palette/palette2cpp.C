@@ -1270,7 +1270,7 @@ char modeToChar(Mode m) {
     case GROUND: return 'p';
     case UNBOUND: return 'm';
     case WILDCARD: return 'u';
-    default: assert (false);
+    default: abort();
   }
 }
 
@@ -1317,7 +1317,7 @@ string astNodeToCpp(PrologAst::Node* n) {
     return result;
   } else {
     cerr << "Bad AST node to unparse: " << n << endl;
-    assert (false);
+    abort();
   }
 }
 
