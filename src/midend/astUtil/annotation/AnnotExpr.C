@@ -7,7 +7,6 @@ using namespace std;
 
 template class CloseDescriptor< SymbolicValDescriptor, '{', '}'>;
 template bool CloseDescriptor< SymbolicValDescriptor, '{', '}'>::read(istream&);
-template void CloseDescriptor< SymbolicValDescriptor, '{', '}'>::write(ostream&);
 
 void SymbolicValDescriptor :: set_val( const SymbolicVal& v) 
 {
