@@ -1480,6 +1480,7 @@ querySolverGrammarElementFromVariantVector (
           case V_SgAsmx86Jae:
           case V_SgAsmx86Dec:
           case V_SgAsmx86Lea:
+          case V_SgAsmx86Data16:
 #endif
 
        // Liao, 12/13/2007, new fortran nodes, put in ignoring list temporarily
