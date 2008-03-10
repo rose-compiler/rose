@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.13 2008-03-05 17:08:26 gergo Exp $
+// $Id: CFGTraversal.C,v 1.14 2008-03-10 10:24:36 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -441,70 +441,66 @@ CFGTraversal::transform_block(SgBasicBlock *block,
       
       switch ((*i)->variantT()) {
       case V_SgIfStmt: {
-	block_stmt_map[node_id] = current_statement;
-	BasicBlock *join_block
-	  = new BasicBlock(node_id++, INNER, proc->procnum);
-	cfg->nodes.push_back(join_block);
-	join_block->statements.push_back(Ir::createIfJoin());
-	add_link(join_block, after, TRUE_EDGE);
-	after = join_block;
+        block_stmt_map[node_id] = current_statement;
+        BasicBlock *join_block
+          = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(join_block);
+        join_block->statements.push_back(Ir::createIfJoin());
+        add_link(join_block, after, TRUE_EDGE);
+        after = join_block;
 
-	SgIfStmt *ifs = isSgIfStmt(*i);
-	block_stmt_map[node_id] = current_statement;
-	BasicBlock *if_block
-	  = new BasicBlock(node_id++, INNER, proc->procnum);
-	cfg->nodes.push_back(if_block);
-                
-	SgExprStatement* cond
-	  = isSgExprStatement(ifs->get_conditional());
-	SgExpression* new_expr
-	  = isSgExpression(cond->get_expression()->copy(treecopy));
-	ExprLabeler el(expnum);
-	el.traverse(new_expr, preorder);
-	expnum = el.get_expnum();
-	ExprTransformer et(node_id, proc->procnum, expnum,
-			   cfg, if_block);
-	et.traverse(new_expr, preorder);
-	for (int z = node_id; z < et.get_node_id(); ++z)
-	  block_stmt_map[z] = current_statement;
-	node_id = et.get_node_id();
-	expnum = et.get_expnum();
-	
-	if (et.get_root_var() != NULL) {
-	  new_expr = Ir::createVarRefExp(et.get_root_var());
-	}
-                
-	if_block->statements.push_front(Ir::createIfStmt(Ir::createExprStatement(new_expr)));
-                
-	BasicBlock *t = transform_block(ifs->get_true_body(),
-					after, 
-					break_target, 
-					continue_target);
-	add_link(if_block, t, TRUE_EDGE);
-	SgBasicBlock *false_body = ifs->get_false_body();
-	if (false_body != NULL
-	    && false_body->get_statements().size() > 0) {
-	  BasicBlock *f
-	    = transform_block(ifs->get_false_body(), after,
-			      break_target, continue_target);
-	  add_link(if_block, f, FALSE_EDGE);
-	} else {
-	  add_link(if_block, after, FALSE_EDGE);
-	}
-                
-	/* incoming analysis information is at the incoming
-	 * edge of the code produced by et */
-	stmt_start = new StatementAttribute(et.get_after(), POS_PRE);
-	/* outgoing analysis information is at the incoming
-	 * edge of the after block, where true and false
-	 * paths run together again */
-	stmt_end = new StatementAttribute(after, POS_PRE);
-                
-	new_block = NULL;
-	after = et.get_after();
-	
-	(*i)->addNewAttribute("PAG statement head",
-			      new StatementAttribute(if_block, POS_POST));
+        SgIfStmt *ifs = isSgIfStmt(*i);
+        block_stmt_map[node_id] = current_statement;
+        BasicBlock *if_block
+          = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(if_block);
+ 
+        SgExprStatement* cond
+            = isSgExprStatement(ifs->get_conditional());
+        SgExpression* new_expr
+            = isSgExpression(cond->get_expression()->copy(treecopy));
+        ExprLabeler el(expnum);
+        el.traverse(new_expr, preorder);
+        expnum = el.get_expnum();
+        ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block);
+        et.traverse(new_expr, preorder);
+        for (int z = node_id; z < et.get_node_id(); ++z)
+            block_stmt_map[z] = current_statement;
+        node_id = et.get_node_id();
+        expnum = et.get_expnum();
+
+        if (et.get_root_var() != NULL) {
+            new_expr = Ir::createVarRefExp(et.get_root_var());
+        }
+
+        if_block->statements.push_front(
+                Ir::createIfStmt(Ir::createExprStatement(new_expr)));
+
+	    BasicBlock *t = transform_block(ifs->get_true_body(),
+                after, break_target, continue_target);
+        add_link(if_block, t, TRUE_EDGE);
+        SgBasicBlock *false_body = ifs->get_false_body();
+        if (false_body != NULL && false_body->get_statements().size() > 0) {
+            BasicBlock *f = transform_block(ifs->get_false_body(),
+                    after, break_target, continue_target);
+            add_link(if_block, f, FALSE_EDGE);
+        } else {
+            add_link(if_block, after, FALSE_EDGE);
+        }
+
+        /* incoming analysis information is at the incoming
+         * edge of the code produced by et */
+        stmt_start = new StatementAttribute(et.get_after(), POS_PRE);
+        /* outgoing analysis information is at the incoming
+         * edge of the after block, where true and false
+         * paths run together again */
+        stmt_end = new StatementAttribute(after, POS_PRE);
+
+        new_block = NULL;
+        after = et.get_after();
+
+        (*i)->addNewAttribute("PAG statement head",
+                new StatementAttribute(if_block, POS_POST));
       }
 	break;
 

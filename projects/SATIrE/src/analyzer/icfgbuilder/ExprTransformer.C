@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.7 2008-03-05 17:08:26 gergo Exp $
+// $Id: ExprTransformer.C,v 1.8 2008-03-10 10:24:36 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -56,10 +56,12 @@ void ExprTransformer::visit(SgNode *node)
      * short-circuit operators &&, ||, and ?: (the comma operator
      * should also be implemented some day).
      */
+ // GB (2008-03-10): Replaced all calls to replaceChild by
+ // satireReplaceChild. This function handles SgValueExps correctly.
     if (SgThisExp* thisExp=isSgThisExp(node))
     {
       SgVarRefExp* varRefExp=Ir::createVarRefExp("this",thisExp->get_type());
-      replaceChild(node->get_parent(), node, varRefExp);
+      satireReplaceChild(node->get_parent(), node, varRefExp);
     }
     else if (isSgFunctionCallExp(node))
     {
@@ -317,7 +319,7 @@ void ExprTransformer::visit(SgNode *node)
     
         if (isSgExpression(newExp0->get_parent())) {
           SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
-          replaceChild(newExp0->get_parent(),newExp0,varRefExp);
+          satireReplaceChild(newExp0->get_parent(),newExp0,varRefExp);
           } else if (root_var == NULL) {
             root_var = var;
           }
@@ -617,7 +619,7 @@ void ExprTransformer::visit(SgNode *node)
       after = if_block;
       
       if (isSgExpression(logical_op->get_parent())) {
-    replaceChild(logical_op->get_parent(), logical_op,Ir::createVarRefExp(var));
+    satireReplaceChild(logical_op->get_parent(), logical_op,Ir::createVarRefExp(var));
       }
       else if (root_var == NULL) {
     root_var = var;
@@ -647,7 +649,7 @@ void ExprTransformer::visit(SgNode *node)
       after = if_block;
       
       if (isSgExpression(cond->get_parent())) {
-    replaceChild(cond->get_parent(), cond, Ir::createVarRefExp(var));
+    satireReplaceChild(cond->get_parent(), cond, Ir::createVarRefExp(var));
       }
       else if (root_var == NULL) {
     root_var = var;
@@ -827,7 +829,7 @@ void ExprTransformer::assign_retval(std::string name, SgFunctionCallExp *call, B
   SgVariableSymbol *retvar = Ir::createVariableSymbol(retname.str(),call->get_type());
   block->statements.push_front(Ir::createReturnAssignment(var, retvar));
   if (isSgExpression(call->get_parent())) {
-    replaceChild(call->get_parent(), call, Ir::createVarRefExp(var));
+    satireReplaceChild(call->get_parent(), call, Ir::createVarRefExp(var));
   } else if (root_var == NULL) {
     root_var = var;
   }
@@ -943,4 +945,16 @@ ExprTransformer::find_destructor_this_names(SgClassType *ct) {
     }
 
     return names;
+}
+
+// GB (2008-03-10): See comment in header file satire/ExprTransformer.h
+void satireReplaceChild(SgNode *parent, SgNode *from, SgNode *to)
+{
+    if (isSgValueExp(parent))
+    {
+     // Do nothing on value exps.
+        return;
+    }
+    else
+        replaceChild(parent, from, to);
 }

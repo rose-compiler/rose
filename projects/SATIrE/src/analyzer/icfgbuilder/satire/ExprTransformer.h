@@ -1,5 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.3 2008-03-05 17:09:36 gergo Exp $
+// Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
+// $Id: ExprTransformer.h,v 1.4 2008-03-10 10:24:40 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -48,5 +48,12 @@ private:
     std::vector<std::string> *find_destructor_names(SgClassType *);
     std::vector<std::string> *find_destructor_this_names(SgClassType *);
 };
+
+// GB (2008-03-10): Added this function as wrapper around ROSE's
+// replaceChild. The problem with that function is that it tries to replace
+// the originalExpressionTrees in SgValueExps, but that action is not
+// implemented in those classes. This wrapper does nothing in such cases and
+// simply calls replaceChild otherwise.
+void satireReplaceChild(SgNode *parent, SgNode *from, SgNode *to);
 
 #endif
