@@ -1,15 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: iface.h,v 1.3 2008-03-10 09:31:51 adrian Exp $
+// $Id: iface.h,v 1.4 2008-03-10 09:36:27 adrian Exp $
 
 #ifndef H_IFACE
 #define H_IFACE
 
 #include <stdio.h>
-
-#define snum_shiftleft  Ill_1l__
-#define snum_shiftright IlI_1l__
-#define unum_shiftleft	Il_l1l__
-#define unum_shiftright Il1l1l__
 
 #define ANIM
 
