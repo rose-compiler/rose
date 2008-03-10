@@ -83,6 +83,18 @@ installcheck-local:
 	@echo "PAG tests"
 	@echo "========================================================================"
 
+	@echo
+	@echo "Testsuite..."
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/constprop $(testdir)
+	chmod u+rwx -R $(testdir)/constprop
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
+	cp -ur $(top_srcdir)/testsuite $(testdir)
+	$(MAKE) -C $(testdir)/constprop
+	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
+
+
+
 	@echo 
 	@echo "Testing sl1rd"
 	@echo "====================="
@@ -114,15 +126,5 @@ installcheck-local:
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
 	$(MAKE) check -C $(testdir)/srw98_shape
-
-	@echo
-	@echo "Testsuite..."
-	@echo "====================="
-	cp -ur $(top_srcdir)/examples/constprop $(testdir)
-	chmod u+rwx -R $(testdir)/constprop
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	cp -ur $(top_srcdir)/testsuite $(testdir)
-	$(MAKE) -C $(testdir)/constprop
-	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
 
 #	rm -rf $(testdir)

@@ -159,8 +159,8 @@ binary(left, right, exp, state) =
                     DivideOp(_, _)          => (lift(l / r), ls);
                     IntegerDivideOp(_, _)   => (lift(l / r), ls);
                     ModOp(_, _)             => (lift(l % r), ls);
-                    LshiftOp(_, _)          => (lift(shiftleft(l,r)), ls);
-		    RshiftOp(_, _)          => (lift(shiftright(l,r)), ls);
+                    LshiftOp(_, _)          => (lift(snum(unum(l)<<unum(r))), ls);
+		    RshiftOp(_, _)          => (lift(snum(unum(l)>>unum(r))), ls);
 		    BitAndOp(_, _)          => (lift((l & r)), ls);
 		    BitOrOp(_, _)           => (lift((l | r)), ls);
 		    AndOp(_, _)             => (lift(bool_int(l != 0 && r != 0)), ls);
