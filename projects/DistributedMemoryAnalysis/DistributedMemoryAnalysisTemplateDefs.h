@@ -13,39 +13,70 @@
 // (In case this doesn't work, complain to gergo@llnl.gov.)
 
 
-#ifndef DISTRIBUTED_MEMORY_ANALYSIS_TEMPLATE_DEFS_C
-#define DISTRIBUTED_MEMORY_ANALYSIS_TEMPLATE_DEFS_C
+#ifndef DISTRIBUTED_MEMORY_ANALYSIS_IMPLEMENTATION_H
+#define DISTRIBUTED_MEMORY_ANALYSIS_IMPLEMENTATION_H
 
 #include <mpi.h>
-#include "DistributedMemoryAnalysis.h"
 
 #define DEBUG_OUTPUT true
 
+// --------- Implementor Line - Do Not Cross ---------
+// There is nothing for users to see here, move along.
+
+template <class InheritedAttributeType>
+class DistributedMemoryAnalysisPreTraversal
+  : public AstTopDownProcessing<InheritedAttributeType>
+{
+public:
+ DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *)
+   : preTraversal(preTraversal), inFunc(false), nodeCount(0) {}
+
+  std::vector<SgFunctionDeclaration *> &get_funcDecls() {return funcDecls;}
+  std::vector<InheritedAttributeType> &get_initialInheritedValues() {return initialInheritedValues;}
+  std::vector<size_t> &get_nodeCounts() {return nodeCounts;}
+
+protected:
+    InheritedAttributeType evaluateInheritedAttribute(SgNode *, InheritedAttributeType);
+    void destroyInheritedValue(SgNode *, InheritedAttributeType);
+
+private:
+    AstTopDownProcessing<InheritedAttributeType> *preTraversal;
+    bool inFunc;
+    size_t nodeCount;
+    std::vector<SgFunctionDeclaration *> funcDecls;
+    std::vector<InheritedAttributeType> initialInheritedValues;
+    std::vector<size_t> nodeCounts;
+};
+
+namespace DistributedMemoryAnalysisNamespace {
+  bool postTraversalEvaluateInheritedAttribute(SgNode* node, bool inFunction);
+}
+
+template <class SynthesizedAttributeType>
+class DistributedMemoryAnalysisPostTraversal
+  : public AstTopDownBottomUpProcessing<bool, SynthesizedAttributeType>
+{
+public:
+    DistributedMemoryAnalysisPostTraversal(AstBottomUpProcessing<SynthesizedAttributeType> *postTraversal,
+                                           const std::vector<SynthesizedAttributeType> &functionResults)
+      : postTraversal(postTraversal), functionResults(functionResults), functionCounter(0) {}
+
+    typedef typename AstTopDownBottomUpProcessing<bool, SynthesizedAttributeType>::SynthesizedAttributesList SynthesizedAttributesList;
+
+protected:
+    bool evaluateInheritedAttribute(SgNode *node, bool inFunction) {
+      return DistributedMemoryAnalysisNamespace::postTraversalEvaluateInheritedAttribute(node, inFunction);
+    }
+    SynthesizedAttributeType evaluateSynthesizedAttribute(SgNode *, bool, SynthesizedAttributesList);
+    SynthesizedAttributeType defaultSynthesizedAttribute(bool) {return postTraversal->defaultSynthesizedAttribute();}
+
+private:
+    AstBottomUpProcessing<SynthesizedAttributeType> *postTraversal;
+    const std::vector<SynthesizedAttributeType> &functionResults;
+    int functionCounter;
+};
+
 // class DistributedMemoryAnalysisBase
-
-template <class InheritedAttributeType>
-bool
-DistributedMemoryAnalysisBase<InheritedAttributeType>::
-isRootProcess() const
-{
-    return (my_rank == root_process);
-}
-
-template <class InheritedAttributeType>
-int
-DistributedMemoryAnalysisBase<InheritedAttributeType>::
-myID() const
-{
-    return my_rank;
-}
-
-template <class InheritedAttributeType>
-int
-DistributedMemoryAnalysisBase<InheritedAttributeType>::
-numberOfProcesses() const
-{
-    return processes;
-}
 
 template <class InheritedAttributeType>
 std::pair<int, int>
@@ -128,20 +159,6 @@ computeFunctionIndices(
     }
 
     return std::make_pair(my_lo, my_hi);
-}
-
-template <class InheritedAttributeType>
-DistributedMemoryAnalysisBase<InheritedAttributeType>::
-DistributedMemoryAnalysisBase()
-{
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &processes);
-}
-
-template <class InheritedAttributeType>
-DistributedMemoryAnalysisBase<InheritedAttributeType>::
-~DistributedMemoryAnalysisBase()
-{
 }
 
 // class DistributedMemoryTraversal
@@ -254,42 +271,7 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
     delete[] recvbuf;
 }
 
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-DistributedMemoryTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-DistributedMemoryTraversal()
-{
-}
-
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-DistributedMemoryTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-~DistributedMemoryTraversal()
-{
-}
-
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-SynthesizedAttributeType
-DistributedMemoryTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-getFinalResults()
-{
-    return finalResults;
-}
-
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-void
-DistributedMemoryTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-deleteSerializedAttribute(std::pair<int, void *>) const
-{
- // default implementation does nothing
-}
-
 // class DistributedMemoryAnalysisPreTraversal
-
-template <class InheritedAttributeType>
-DistributedMemoryAnalysisPreTraversal<InheritedAttributeType>::
-DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *preTraversal)
-    : preTraversal(preTraversal), inFunc(false), nodeCount(0)
-{
-}
 
 template <class InheritedAttributeType>
 InheritedAttributeType
@@ -366,59 +348,7 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
     }
 }
 
-template <class InheritedAttributeType>
-std::vector<SgFunctionDeclaration *> &
-DistributedMemoryAnalysisPreTraversal<InheritedAttributeType>::
-get_funcDecls()
-{
-    return funcDecls;
-}
-
-template <class InheritedAttributeType>
-std::vector<InheritedAttributeType> &
-DistributedMemoryAnalysisPreTraversal<InheritedAttributeType>::
-get_initialInheritedValues()
-{
-    return initialInheritedValues;
-}
-
-template <class InheritedAttributeType>
-std::vector<size_t> &
-DistributedMemoryAnalysisPreTraversal<InheritedAttributeType>::
-get_nodeCounts()
-{
-    return nodeCounts;
-}
-
 // class DistributedMemoryAnalysisPostTraversal
-
-template <class SynthesizedAttributeType>
-DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType>::
-DistributedMemoryAnalysisPostTraversal(AstBottomUpProcessing<SynthesizedAttributeType> *postTraversal,
-                                       const std::vector<SynthesizedAttributeType> &functionResults)
-  : postTraversal(postTraversal), functionResults(functionResults), functionCounter(0)
-{
-}
-
-template <class SynthesizedAttributeType>
-bool
-DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType>::
-evaluateInheritedAttribute(SgNode *node, bool inFunction)
-{
- // Determine from the inherited attribute and the AST node whether this node is inside a defining function declaration.
-    if (inFunction)
-        return true;
-
- // DQ (9/28/2007):
- // This is where the load balancing grainularity is defined and it must match that of the
- // other implementation in the DistributedMemoryAnalysisPreTraversal
-
-    SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node);
-    if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl)
-        return true;
-
-    return false;
-}
 
 template <class SynthesizedAttributeType>
 SynthesizedAttributeType
@@ -444,115 +374,5 @@ evaluateSynthesizedAttribute(SgNode *node, bool inFunction,
 
     return postTraversal->evaluateSynthesizedAttribute(node, synAttrs);
 }
-
-template <class SynthesizedAttributeType>
-SynthesizedAttributeType
-DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType>::
-defaultSynthesizedAttribute(bool)
-{
-    return postTraversal->defaultSynthesizedAttribute();
-}
-
-#if 0
-// DQ (9/28/2007): Commented out to avoid use, this is the old interface.
-
-// GB (09/28/2007):
-// The DistributedMemoryAnalysis class was the first attempt at doing this. It worked well, but there is no real reason
-// to use it, and I do not intend to keep it up to date. If you are a user, please use the DistributedMemoryTraversal
-// class instead of this one; if you are a developer who got here because this class fails to compile or whatever, just
-// comment it out. (And maybe you could let me know that you did that.)
-
-// class DistributedMemoryAnalysis -- DEPRECATED
-
-template <class InheritedAttributeType>
-void
-DistributedMemoryAnalysis<InheritedAttributeType>::
-performAnalysis(
-        SgNode *root,
-        InheritedAttributeType rootInheritedAttribute,
-        AstTopDownProcessing<InheritedAttributeType> *preTraversal)
-{
-    /* see what functions to run our analysis on */
-    std::pair<int, int> my_limits = computeFunctionIndices(root, rootInheritedAttribute, preTraversal);
-
-    /* run the analysis on the defining function declarations found above */
-    for (int i = my_limits.first; i < my_limits.second; i++)
-    {
-        analyzeSubtree(DistributedMemoryAnalysisBase<InheritedAttributeType>::funcDecls[i],
-                       DistributedMemoryAnalysisBase<InheritedAttributeType>::initialInheritedValues[i]);
-    }
-
-    /* serialize the analyzer state */
-    std::pair<int, void *> state = serialize();
-
-    /* communicate results: first, gather the sizes of the respective states
-     * into an array */
-    int *stateSizes = new int[DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses()];
-    MPI_Allgather(&state.first, 1, MPI_INT,
-                  stateSizes, 1, MPI_INT,
-                  MPI_COMM_WORLD);
-
-    /* from the state sizes communicated above, compute the total buffer size
-     * for all concatenated states, and the indices where each part starts */
-    int totalSize = 0;
-    int *displacements = new int[DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses()];
-    for (int i = 0; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
-    {
-        displacements[i] = totalSize;
-        totalSize += stateSizes[i];
-    }
-
-    /* communicate results: gather the actual state information, concatenating
-     * it into recvbuf on the root process (the other processes don't get it) */
-    unsigned char *recvbuf = new unsigned char[totalSize];
-    MPI_Gatherv(state.second, state.first, MPI_UNSIGNED_CHAR,
-                recvbuf, stateSizes, displacements, MPI_UNSIGNED_CHAR,
-                DistributedMemoryAnalysisBase<InheritedAttributeType>::root_process, MPI_COMM_WORLD);
-
-    /* on the root process, fold up all results by applying
-     * addSerializedState() to the states received above */
-    if (DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == DistributedMemoryAnalysisBase<InheritedAttributeType>::root_process)
-    {
-        for (int i = 0; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
-        {
-            if (i != DistributedMemoryAnalysisBase<InheritedAttributeType>::root_process)
-            {
-                /* recvbuf contains the concatenated results from all
-                 * processes; the state for process i has size stateSizes[i]
-                 * and starts displacements[i] bytes from the beginning of the
-                 * buffer */
-                std::pair<int, void *> serializedState_i = std::make_pair(stateSizes[i], recvbuf + displacements[i]);
-                addSerializedState(serializedState_i);
-            }
-        }
-    }
-
-    /* clean up */
-    cleanupSerializedState(state);
-    delete[] stateSizes;
-    delete[] displacements;
-    delete[] recvbuf;
-}
-
-template <class InheritedAttributeType>
-DistributedMemoryAnalysis<InheritedAttributeType>::
-DistributedMemoryAnalysis()
-  : DistributedMemoryAnalysisBase<InheritedAttributeType>()
-{
-}
-
-template <class InheritedAttributeType>
-DistributedMemoryAnalysis<InheritedAttributeType>::
-~DistributedMemoryAnalysis()
-{
-}
-
-template <class InheritedAttributeType>
-void
-DistributedMemoryAnalysis<InheritedAttributeType>::
-cleanupSerializedState(std::pair<int, void *>)
-{
-}
-#endif
 
 #endif
