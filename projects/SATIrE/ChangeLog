@@ -20,7 +20,7 @@ V0.8.0 (IN PROGRESS)
   - *all* initializer expressions are now wrapped inside appropriate initializer nodes
     rather than representing them as simple assignments as before
 
-* Test of installation" [AP]
+* Test of installation [AP]
   - new directories:
 	testsuite/success
 	testsuite/failure
@@ -29,8 +29,10 @@ V0.8.0 (IN PROGRESS)
 
 * Bug fixes [GB]
   - corrected various issues that caused ROSE assertions to fail
+  - removed ICFG nodes that were unreachable due to explicit returns in the
+    middle of functions
 
-* upgrade to PAG 7.7.3.14 [GB] (IN PROGRESS)
+* upgrade to PAG 7.7.5.50 [GB]
   - removed version numbers from (TUV-local) PAG and ROSE paths
 
 V0.7.9 2008-02-08 MS,GB,AP
