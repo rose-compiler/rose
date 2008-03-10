@@ -35,7 +35,7 @@ protected:
                                                InheritedAttributeType rootInheritedValue,
                                                AstTopDownProcessing<InheritedAttributeType> *preTraversal);
 
-private:
+    //private:
     int my_rank;
     int processes;
 };

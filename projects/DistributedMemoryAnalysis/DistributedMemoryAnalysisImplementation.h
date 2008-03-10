@@ -28,7 +28,7 @@ class DistributedMemoryAnalysisPreTraversal
   : public AstTopDownProcessing<InheritedAttributeType>
 {
 public:
- DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *)
+ DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *preTraversal)
    : preTraversal(preTraversal), inFunc(false), nodeCount(0) {}
 
   std::vector<SgFunctionDeclaration *> &get_funcDecls() {return funcDecls;}
@@ -75,6 +75,16 @@ private:
     const std::vector<SynthesizedAttributeType> &functionResults;
     int functionCounter;
 };
+
+
+
+
+
+
+
+
+
+
 
 // class DistributedMemoryAnalysisBase
 
@@ -240,8 +250,11 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
                    recvbuf, totalStateSizes, displacements, MPI_UNSIGNED_CHAR,
                    MPI_COMM_WORLD);
 
+ 
     /* unpack the serialized states and store them away for the post traversal to use */
+    //   if (DistributedMemoryAnalysisBase<InheritedAttributeType>::my_rank==0) {
     functionResults.clear();
+
     j = 0;
     for (int i = 0; i < DistributedMemoryAnalysisBase<InheritedAttributeType>::numberOfProcesses(); i++)
     {
@@ -255,12 +268,15 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
             functionResults.push_back(attribute);
             sizeSoFar += stateSizes[j];
             j++;
+	    std::cerr << " getting results " << std::endl;
         }
-    }
+	}
+
 
     /* perform the post traversal */
     DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType> postT(postTraversal, functionResults);
     finalResults = postT.traverse(root, false);
+    //}
 
     /* clean up */
     delete[] myStateSizes;

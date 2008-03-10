@@ -7,7 +7,7 @@ LPATH = -L$(ROSEDIR)/lib/ -Wl,-rpath $(ROSEDIR)/lib/
 LIBS = -lrose -lrt -lfl
 
 CXX = mpicxx
-CXXFLAGS = -Wall $(INCLUDES)
+CXXFLAGS = -Wall -g $(INCLUDES)
 
 OBJS = coloredAST.o DistributedMemoryAnalysis.o
 
