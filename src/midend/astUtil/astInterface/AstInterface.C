@@ -4,6 +4,12 @@
 #include <rose.h>
 #include "AstInterface_ROSE.h"
 #include <stdlib.h>
+#include <iostream>
+#include <string.h>
+#include <CommandOptions.h>
+
+#include "AstTraversal.h"
+#include "astPostProcessing.h"
 
 #define NEW_EXPR_STMT(stmt,exp)  \
           stmt = new SgExprStatement(GetFileInfo(), exp); \
@@ -80,14 +86,14 @@ void AstInterface :: DetachObserver( AstObserver* ob)
   impl->DetachObserver(ob);
 }
 
-#include <iostream>
-#include <string.h>
-#include <CommandOptions.h>
-
-#include "AstTraversal.h"
-#include "astPostProcessing.h"
-
-#include <AstInterface_common.i>
+AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string* name)
+{
+  AstNodePtr r=n;
+  while (r != AST_NULL && !IsFunctionDefinition(r, name)) {
+     r = GetParent(r);
+  }
+  return r;
+}
 
 std::string get_type_name( SgType* t);
 using namespace std;
