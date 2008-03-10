@@ -13,8 +13,8 @@
 // operator<< on vectors
 #include "rose_paths.h"
 class SgProject;
-#include "sageSupport.h"
 #include "string_functions.h"
+#include "commandline_processing.h"
 
 using namespace std;
 

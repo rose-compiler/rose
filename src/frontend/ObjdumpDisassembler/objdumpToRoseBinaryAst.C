@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <stdint.h>
 #include <errno.h>
-#include "sageSupport.h"
 
 #include "RoseBin_support.h"
 
@@ -209,7 +208,7 @@ namespace ObjdumpToRoseBinaryAst {
     } else if (cmd == "sizeDouble") {
       return SgAsmTypeDoubleFloat::createType();
     } else if (cmd == "sizeLongDouble") {
-      return SgAsmTypeDoubleFloat::createType(); // FIXME -- needs a separate type
+      return SgAsmType80bitFloat::createType();
     } else {
       return NULL;
     }
@@ -347,7 +346,7 @@ namespace ObjdumpToRoseBinaryAst {
         operandList.insert(operandList.begin(), e); // Reverse order because we are getting the values from a stack
         e->set_parent(operands);
       }
-      operands->set_operands(operandList);
+      operands->get_operands() = operandList;
       string mnemonic = st.top().asString();
       st.pop();
       string hexCodes = st.top().asString();
