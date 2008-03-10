@@ -16,13 +16,13 @@ all: coloredAST functionNames
 coloredAST: coloredAST.o DistributedMemoryAnalysis.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LPATH) $(LIBS)
 
-coloredAST.o: coloredAST.C DistributedMemoryAnalysis.h DistributedMemoryAnalysisTemplateDefs.C
+coloredAST.o: coloredAST.C DistributedMemoryAnalysis.h DistributedMemoryAnalysisImplementation.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 functionNames: functionNames.o DistributedMemoryAnalysis.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LPATH) $(LIBS)
 
-functionNames.o: functionNames.C DistributedMemoryAnalysis.h DistributedMemoryAnalysisTemplateDefs.C
+functionNames.o: functionNames.C DistributedMemoryAnalysis.h DistributedMemoryAnalysisImplementation.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 check: coloredASTcheck functionNamesCheck
