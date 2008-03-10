@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
+// $Id: CFGTraversal.h,v 1.2 2008-03-10 14:27:26 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -36,6 +36,7 @@ private:
     SgStatement *rewrite_statement(const SgStatement *,
             std::vector<SgVariableSymbol *> *);
     void perform_goto_backpatching();
+    void kill_unreachable_nodes();
     void number_exprs();
     bool is_destructor_decl(SgFunctionDeclaration *) const;
     BasicBlock *call_base_destructors(Procedure *, BasicBlock *);

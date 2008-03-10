@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.7 2008-03-05 17:09:36 gergo Exp $
+// $Id: cfg_support.h,v 1.8 2008-03-10 14:27:26 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -85,7 +85,7 @@ class BasicBlock
 {
 public:
     BasicBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_)
-        : id(id_), node_type(type_), procnum(procnum_)
+        : id(id_), node_type(type_), procnum(procnum_), reachable(true)
     {
     }
 
@@ -95,6 +95,8 @@ public:
     std::deque<SgStatement *> statements;
     std::vector<Edge> successors;
     std::vector<Edge> predecessors;
+ // GB (2008-03-10): Reachability flag, used for cleaning up the CFG.
+    bool reachable;
 };
 
 class CallStmt;

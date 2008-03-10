@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.14 2008-03-10 10:24:36 gergo Exp $
+// $Id: CFGTraversal.C,v 1.15 2008-03-10 14:27:23 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -119,6 +119,11 @@ CFGTraversal::getCFG() {
   if (real_cfg == NULL)
   {
       perform_goto_backpatching();
+   // GB (2008-03-10): This new function removes unreachable nodes from the
+   // CFG. It does not remove unreachable cycles because it is meant to be
+   // somewhat efficient, and because we don't seem to have a problem with
+   // unreachable cycles.
+      kill_unreachable_nodes();
       number_exprs();
   }
   
@@ -163,6 +168,77 @@ CFGTraversal::perform_goto_backpatching() {
       ++gotos;
     }
   }
+}
+
+void
+CFGTraversal::kill_unreachable_nodes() {
+ // GB (2008-03-10): Eliminate unreachable nodes from the CFG. We do not do
+ // a complete reachability test, but rather check for nodes without
+ // predecessors and remove those and possibly their successors. This means
+ // that unreachable cycles are not found, but these don't appear to be a
+ // pressing problem at the moment.
+    BlockList worklist;
+    BlockList::iterator n;
+ // Copy old node list to a temporary.
+    BlockList old_nodes = cfg->nodes;
+ // Add all inner nodes (i.e. not function entry, exit, call, return)
+ // without predecessors to the worklist. These are definitely unreachable.
+    for (n = old_nodes.begin(); n != old_nodes.end(); ++n) {
+#if 0
+        std::cout << "examining node " << (*n)->id << std::endl;
+        std::cout << "node has " << (*n)->predecessors.size() << " preds"
+            << std::endl;
+        std::cout << "inner node? "
+            << ((*n)->node_type == INNER ? "yes" : "no")
+            << std::endl;
+#endif
+        if ((*n)->predecessors.empty() && (*n)->node_type == INNER) {
+            worklist.push_back(*n);
+#if 0
+            std::cout << "added node " << (*n)->id << " to initial worklist"
+                << std::endl;
+#endif
+        }
+        std::cout << std::endl;
+    }
+ // Process the worklist, adding unreachable successors of unreachable
+ // nodes.
+    while (!worklist.empty()) {
+        BasicBlock *b = worklist.front();
+        worklist.pop_front();
+        b->reachable = false;
+        std::vector<Edge>::iterator e;
+        for (e = b->successors.begin(); e != b->successors.end(); ++e) {
+         // If the successor has only one predecessor, that predecessor must
+         // be the unreachable block b. Thus, the successor is itself
+         // unreachable.
+            BasicBlock *succ = e->first;
+            KFG_EDGE_TYPE etype = e->second;
+            if (succ->predecessors.size() == 1)
+                worklist.push_back(succ);
+         // In any case, remove the reverse edge from the successor to b.
+         // The edge from b to the successor will be removed when b is
+         // destroyed. We remove by finding the edge to b (of the
+         // appropriate type) and calling the erase method.
+            std::vector<Edge>::iterator pos;
+            pos = std::find(succ->predecessors.begin(),
+                    succ->predecessors.end(), std::make_pair(b, etype));
+            if (pos != succ->predecessors.end())
+                succ->predecessors.erase(pos);
+        }
+    }
+ // Clear original node list; we will refill it right away, but only with
+ // reachable nodes.
+    cfg->nodes.clear();
+    KFG_NODE_ID id = 0;
+ // Iterate over copied node list and copy back those that are not marked
+ // unreachable. Renumber nodes using id.
+    for (n = old_nodes.begin(); n != old_nodes.end(); ++n) {
+        if ((*n)->reachable) {
+            (*n)->id = id++;
+            cfg->nodes.push_back(*n);
+        }
+    }
 }
 
 typedef std::set<SgExpression*, ExprPtrComparator> expression_set;
