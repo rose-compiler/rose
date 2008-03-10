@@ -54,20 +54,13 @@ GENERATED_SOURCE  = \
 
 #  Cxx_GrammarCocoSymbolsMapping.C 
 
-GENERATED_OBJECTS = \
-   Cxx_Grammar.o \
-   Cxx_GrammarReturnClassHierarchySubTree.o \
-   Cxx_GrammarTreeTraversalSuccessorContainer.o \
-   Cxx_GrammarRTI.o \
-   Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.o \
-   Cxx_GrammarReturnDataMemberPointers.o \
-   Cxx_GrammarGetChildIndex.o
+haveRosettaGeneratedSource:
+	$(MAKE) -C $(top_builddir)/src/ROSETTA/src
+	touch haveRosettaGeneratedSource
 
-$(GENERATED_SOURCE):
-	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
+$(GENERATED_SOURCE): haveRosettaGeneratedSource
 
 libsage3Sources = \
-   $(GENERATED_SOURCE) \
    rose_attributes_list.C \
    attach_all_info.C \
    attachPreprocessingInfo.C \
@@ -77,6 +70,7 @@ libsage3Sources = \
    fixupCopy_scopes.C \
    fixupCopy_symbols.C \
    fixupCopy_references.C
+# $(GENERATED_SOURCE) is handled separately
 
 # DQ (5/27/2007): Files moved or removed
 #   generateAST.C
@@ -92,7 +86,8 @@ else
 noinst_LTLIBRARIES = libsage3.la
 endif
 
-libsage3_la_SOURCES = $(libsage3Sources) preproc.C $(top_builddir)/rose_config.h $(top_builddir)/rose_paths.h
+libsage3_la_SOURCES = $(libsage3Sources) preproc.C
+nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h $(top_builddir)/rose_paths.h
 
 if ROSE_USE_BOOST_WAVE
 libsage3_la_LIBADD  = \
@@ -127,12 +122,16 @@ rose_attributes_list.lo : rose_attributes_list.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
 include_HEADERS = \
    sage3.h rose_attributes_list.h \
-   attachPreprocessingInfo.h Cxx_Grammar.h \
-   Cxx_GrammarTreeTraversalAccessEnums.h \
+   attachPreprocessingInfo.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \
-   AST_FILE_IO.h StorageClasses.h \
-   AstQueryMemoryPool.h	fixupCopy.h \
+   fixupCopy.h \
    general_token_defs.h
+
+nodist_include_HEADERS = \
+   Cxx_Grammar.h \
+   Cxx_GrammarTreeTraversalAccessEnums.h \
+   AST_FILE_IO.h StorageClasses.h \
+   AstQueryMemoryPool.h
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 

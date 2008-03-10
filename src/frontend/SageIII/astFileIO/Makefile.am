@@ -16,7 +16,10 @@ endif
 StorageClasses.lo: StorageClassMemoryManagement.h StorageClassMemoryManagement.C
 
 include_HEADERS = \
-     StorageClassMemoryManagement.h \
+     StorageClassMemoryManagement.h
+
+# This file is generated
+nodist_include_HEADERS = \
      AstSpecificDataManagingClass.h
 
 #    AST_FILE_IO.h
