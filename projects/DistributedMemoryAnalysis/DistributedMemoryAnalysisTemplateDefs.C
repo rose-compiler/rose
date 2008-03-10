@@ -19,7 +19,7 @@
 #include <mpi.h>
 #include "DistributedMemoryAnalysis.h"
 
-#define DEBUG_OUTPUT false
+#define DEBUG_OUTPUT true
 
 // class DistributedMemoryAnalysisBase
 
