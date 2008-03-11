@@ -28,6 +28,15 @@ std::string Ir::fragmentToString(const SgNode* node) {
 
   // SgType does not allow to set the parent pointer (as we need to do), an ASSERT fails, but unparsing is ok
   if(const SgType* n=isSgType(node)) {
+    if (isSgTypeBool(node)) {
+     // GB (2008-03-11): Implemented the case for bool manually. Otherwise,
+     // if the input is a C89 file, the unparser complains like this:
+     // "Warning: SgTypeBool used for C application (reserved for use in C99
+     // and C++)". This is because we use type bool for temporary logical
+     // variables.
+        delete unparseInfo;
+        return "bool";
+    }
     s=n->unparseToString(unparseInfo);
     delete unparseInfo;
     return s;
