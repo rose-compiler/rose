@@ -56,9 +56,10 @@ SATIrE 0.8.0 was tested with
     Example for viewing shape analysis results:
       cd executable-examples
       cd srw98_shape
-      srw98_shape --aliassourceoutput tests/srw98_listreverse.C [further options: --help]
+      srw98_shape --output-gdl=srw98_shape_result.gdl --output-source=annot_srw98_listreverse.C 
+                  --aliassourceoutput tests/srw98_listreverse.C
       aisee srw98_shape_result.gdl        [view shape graphs with aisee]
-      cat rose_srw98_listreverse.C        [view source file annotated with computed alias pairs]
+      cat annot_srw98_listreverse.C       [view source file annotated with computed alias pairs]
 
  c) If you want to perform each step on your own, here is an example for sl1rd:
     [let's assume that you unpacked SATIrE-0.8.0.tgz in your home directory]
@@ -67,10 +68,13 @@ SATIrE 0.8.0 was tested with
     newanalysis                           [generate and configure all required files]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
     sl1rd --help                          [prints an overview of the available options]
-    sl1rd tests/rdtest1.C                 [run the analyzer on the test file 'rdtest1.C']
+    sl1rd --output-gdl=sl1rd_result.gdl tests/rdtest1.C
+                                          [run the analyzer on the test file 'rdtest1.C']
     aisee sl1rd_result.gdl                [view the analysis result with aisee]
-    sl1rd --sourceoutput tests/rdtest1.C  [generate an annotated source file tests/rose_rdtest1.C]
-    sl1rd --termoutput tests/rdtest1.C    [generate a term representation in tests/rdtest1.C.pl]
+    sl1rd --output-source=tests/annot_rdtest1.C tests/rdtest1.C  
+                                          [generate an annotated source file tests/annot_rdtest1.C]
+    sl1rd --output-term=tests/rdtest1.pl tests/rdtest1.C
+                                          [generate a term representation in tests/rdtest1.C.pl]
 
  d) If you are starting with a shape analysis (srw98_shape or nnh99_shape) you must use
     newanalysis -u
