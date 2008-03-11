@@ -91,7 +91,7 @@ void replaceChild(SgNode* parent, SgNode* from, SgNode* to) {
     return;
   }
   cout << parent->sage_class_name() << " " << from->sage_class_name() << " " << to->sage_class_name() << endl;
-  assert (!"replaceChild FIXME");
+  ROSE_ASSERT (!"replaceChild FIXME");
 }
 
 bool PatternActionRule::doRewrite(SgNode*& n) const {
@@ -137,7 +137,7 @@ class UnaryPattern: public Pattern {
 
   virtual SgNode* subst(PatternVariables& vars) const {
     SgNode* new_rhs = rhs->subst(vars);
-    assert (isSgExpression(new_rhs));
+    ROSE_ASSERT (isSgExpression(new_rhs));
     SgExpression* op = new Operator(SgNULL_FILE, isSgExpression(new_rhs));
     op->set_endOfConstruct(SgNULL_FILE);
     new_rhs->set_parent(op);
@@ -165,8 +165,8 @@ class BinaryPattern: public Pattern {
   virtual SgNode* subst(PatternVariables& vars) const {
     SgNode* new_lhs = lhs->subst(vars);
     SgNode* new_rhs = rhs->subst(vars);
-    assert (isSgExpression(new_lhs));
-    assert (isSgExpression(new_rhs));
+    ROSE_ASSERT (isSgExpression(new_lhs));
+    ROSE_ASSERT (isSgExpression(new_rhs));
     SgExpression* op = new Operator(SgNULL_FILE, isSgExpression(new_lhs), 
 						 isSgExpression(new_rhs));
     op->set_endOfConstruct(SgNULL_FILE);
@@ -198,7 +198,7 @@ class VariablePattern: public Pattern {
 
   virtual SgNode* subst(PatternVariables& vars) const {
     SgNode* binding = vars[name];
-    assert (binding);
+    ROSE_ASSERT (binding);
     return binding;
   }
 };
@@ -209,7 +209,7 @@ class NullPattern: public Pattern {
   }
 
   virtual SgNode* subst(PatternVariables& vars) const {
-    assert (!"Should not use NullPattern in substitutions");
+    ROSE_ASSERT (!"Should not use NullPattern in substitutions");
   }
 };
 
@@ -272,13 +272,13 @@ class AddIntsPattern: public Pattern {
   AddIntsPattern(string a, string b): a(a), b(b) {}
 
   virtual bool match(SgNode* top, PatternVariables& vars) const {
-    assert (false);
+    ROSE_ASSERT (false);
   }
 
   virtual SgNode* subst(PatternVariables& vars) const {
     SgIntVal* av = isSgIntVal(vars[a]);
     SgIntVal* bv = isSgIntVal(vars[b]);
-    assert (av && bv);
+    ROSE_ASSERT (av && bv);
     SgIntVal* iv = new SgIntVal(SgNULL_FILE, av->get_value() + bv->get_value());
     iv->set_endOfConstruct(SgNULL_FILE);
     return iv;
