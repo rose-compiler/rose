@@ -64,7 +64,7 @@ libtool --version | sed '2,$d' >> mailtext1 # head -1 crashes
 latex --version | head -1 >> mailtext1
 latex2html -v | grep -w LaTeX2HTML >> mailtext1
 swig -version | grep -w SWIG >> mailtext1
-) || true
+) || echo "Command version check failed"
 
 /usr/sbin/sendmail -i $MAILADDRS < mailtext1
 
