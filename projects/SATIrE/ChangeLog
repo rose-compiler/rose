@@ -27,6 +27,10 @@ V0.8.0 (IN PROGRESS)
 	testsuite/dontrun
   - examples/testsuite.sh will be called by 'make installcheck'
 
+* Termite [AP]
+  - support for SgEllipse
+  - bug fixes in DFIparser
+
 * Bug fixes [GB]
   - corrected various issues that caused ROSE assertions to fail
   - removed ICFG nodes that were unreachable due to explicit returns in the
