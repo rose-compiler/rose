@@ -6,5 +6,6 @@
 ./sl2rd --callstringlength=1 tests/rdtest4.C || exit 1
 ./sl2rd --output-text tests/rdtest1.C || exit 1
 ./sl2rd tests/rdtest10all.C || exit 1
+./sl2rd --output-sourceprefix=tests/annottest_ tests/rdtest10p1.C tests/rdtest10p2.C tests/rdtest10p3.C || exit 1
 ./sl2rd --output-source=tests/rdtest1.annotated.C tests/rdtest1.C || exit 1
 cat tests/rdtest1.annotated.C || exit 1

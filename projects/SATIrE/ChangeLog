@@ -1,4 +1,4 @@
-V0.8.0 (IN PROGRESS)
+V0.8.0 2008-03-11 MS,GB,AP
 
 * required user changes:
   - change analysis specifications to support AssignInitializer/AggregateInitializer nodes
@@ -7,12 +7,12 @@ V0.8.0 (IN PROGRESS)
 
 * Changed and added command line options [MS]
   - names of output files for source,term,gdl can now be specified
-  - options for specifying naming conventions for multiple output files (IN PROGRESS)
+  - options for specifying naming conventions for multiple output files
 
-* Added support for multiple input and multiple output files [MS] (IN PROGRESS)
+* Added support for multiple input and multiple output files [MS]
   - multiple input files are represented in one single AST
   - analysis is performed on one single ICFG
-  - multiple output file generation (source code annotation, and terms)
+  - multiple output file generation (source code annotation, see --output-sourceprefix)
   - one single GDL file is generated (for single as well as for multiple input files)
 	
 * ICFG: added better support for initializers [GB]
@@ -38,9 +38,7 @@ V0.8.0 (IN PROGRESS)
   - added detailed log of bugs reported and fixed (file BugLog)
   - ICFG visualization: function exit nodes now have a correct list of
     variables to undeclare
-
-* upgrade to PAG 7.7.5.50 [GB]
-  - removed version numbers from (TUV-local) PAG and ROSE paths
+  - see file BugLog for further details
 
 V0.7.9 2008-02-08 MS,GB,AP
 

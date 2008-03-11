@@ -55,9 +55,9 @@ int main(int argc, char **argv)
   }
 
   /* check how many input files we have */
-  if(ast_root->numberOfFiles()==1 && opt->getOutputSourceFileName().size()>0) {
+  if(ast_root->numberOfFiles()==1) {
     SgFile& file = ast_root->get_file(0);
-    if(opt->outputSource()) {
+    if(opt->outputSource() && opt->getOutputSourceFileName().size()>0) {
       file.set_unparse_output_filename(opt->getOutputSourceFileName());
       unparseFile(&file,0,0);
     }
