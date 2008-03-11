@@ -97,7 +97,10 @@ CPreproc::IfDirectiveExtractor::newIf (PreprocessingInfo* info,
   // Create the new '#if' representation.
   If* new_if = new If;
   ROSE_ASSERT (new_if);
-  ROSE_ASSERT (new_if->appendCase (info, node));
+  // Liao, 3/11/2008. eliminate the side effect of assertion, fix a bug caused by NDEBUG
+  //ROSE_ASSERT (new_if->appendCase (info, node));
+  If::Case* result = new_if->appendCase (info, node);
+  ROSE_ASSERT(result);
   
   // If there is an '#if' at the top of the stack, make the new
   // '#if' a child of the top's last case.
