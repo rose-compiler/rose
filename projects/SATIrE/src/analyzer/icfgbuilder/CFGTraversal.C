@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.17 2008-03-11 11:03:44 gergo Exp $
+// $Id: CFGTraversal.C,v 1.18 2008-03-11 15:02:29 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -1102,6 +1102,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	    = Ir::createVariableSymbol((*j)->get_name(),
 				       (*j)->get_type());
 	  proc->exit->paramlist->push_back(declared_var);
+      proc->exit->stmt->update_infolabel();
 	  SgAssignInitializer *initializer
 	    = isSgAssignInitializer((*j)->get_initptr());
 	  SgAggregateInitializer *agg_init
@@ -1111,7 +1112,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 
    // GB (2008-02-14): Unified the "normal" and "aggregate" initializer
    // cases. Even "normal" initializers are now wrapped in a
-   // SgAssignInitializer node! Analysis specification must be aware.
+   // SgAssignInitializer node! Analysis specifications must be aware.
       SgTreeCopy treecopy;
       SgExpression *new_expr = NULL;
       if (agg_init)
