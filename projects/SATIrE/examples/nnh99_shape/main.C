@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	}
 
 	/* check how many input files we have */
-	if(ast_root->numberOfFiles()==1) {
+	if(ast_root->numberOfFiles()==1 && opt->getOutputSourceFileName().size()>0) {
 	  SgFile& file = ast_root->get_file(0);
 	  if(opt->outputSource()) {
 	    file.set_unparse_output_filename(opt->getOutputSourceFileName());
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 	}
 	
 	/* handle multiple input files */
-	if(ast_root->numberOfFiles()>1) {
+	if(ast_root->numberOfFiles()>=1 && (opt->getOutputFilePrefix()).size()>0) {
 	  /* Iterate over all input files (and its included files) */
 	  for (int i=0; i < ast_root->numberOfFiles(); ++i) {
 	    SgFile& file = ast_root->get_file(i);

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CommandLineParser.h,v 1.3 2008-02-14 22:31:47 markus Exp $
+// $Id: CommandLineParser.h,v 1.4 2008-03-11 03:22:11 markus Exp $
 
 #ifndef COMMANDLINEPARSER_H
 #define COMMANDLINEPARSER_H
@@ -21,6 +21,8 @@ protected:
   void failed(AnalyzerOptions *opt);
   bool optionMatch(char* s1, char* s2);
   bool optionMatchPrefix(char* s, char* prefix);
+private:
+  int prefixLength;
 };
 
 

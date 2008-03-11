@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.13 2008-02-21 17:00:24 markus Exp $
+// $Id: CommandLineParser.C,v 1.14 2008-03-11 03:22:11 markus Exp $
 
 #include <config.h>
 
@@ -47,92 +47,87 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
 
   int old_i = i;
 
-  if (!strcmp(argv[i], "--cfgordering")) {
-    cl->setCfgOrdering(atoi(argv[++i]));
-  } else if (optionMatch(argv[i], "--pag-gc-lowperc")) {
-    cl->setGcLow(atoi(argv[++i]));
-  } else if (optionMatch(argv[i], "--pag-gc-highperc")) {
-    cl->setGcHigh(atoi(argv[++i]));
-  } else if (optionMatch(argv[i], "--statistics=yes")) {
+  if (optionMatchPrefix(argv[i], "--cfgordering=")) {
+    cl->setCfgOrdering(atoi(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--pag-gc-lowperc=")) {
+    cl->setGcLow(atoi(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--pag-gc-highperc=")) {
+    cl->setGcHigh(atoi(argv[i]+prefixLength));
+  } else if (optionMatch(argv[i], "--statistics")) {
     cl->statisticsOn();
-  } else if (optionMatch(argv[i], "--statistics=no")) {
+  } else if (optionMatch(argv[i], "--no-statistics")) {
     cl->statisticsOff();
-  } else if (optionMatch(argv[i], "--no_result")) {
+  } else if (optionMatch(argv[i], "--no-result")) {
     cl->resultGenerationOff();
   } else if (optionMatch(argv[i], "--no_anim")) {
     std::cout << "SATIrE commandline option: --no_anim is deprecated (has no effect)." << std::endl;
     //cl->outputGdlAnimOff();
-  } else if (optionMatch(argv[i], "--callstringlength")) {
-    if(i+1>=argc) { failed(cl); }
-    cl->setCallStringLength(atoi(argv[++i]));
+  } else if (optionMatchPrefix(argv[i], "--callstringlength=")) {
+    cl->setCallStringLength(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--callstringinfinite")) {
     cl->setCallStringLength(-1);
-  } else if (optionMatch(argv[i], "--verbose=yes")) {
+  } else if (optionMatch(argv[i], "--verbose")) {
     cl->verboseOn();
     cl->quietOff();
-  } else if (optionMatch(argv[i], "--verbose=no")) {
+  } else if (optionMatch(argv[i], "--no-verbose")) {
     cl->verboseOff();
     cl->quietOn();
   } else if (optionMatch(argv[i], "--pag-startbank")) {
-    cl->setStartBank(atoi(argv[++i]));
+    cl->setStartBank(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--pag-sharemin")) {
-    cl->setShareMin(atoi(argv[++i]));
+    cl->setShareMin(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--pag-sharenum")) {
-    cl->setShareNum(atoi(argv[++i]));
-  } else if (optionMatch(argv[i], "--gdl-preinfo=yes")) {
+    cl->setShareNum(atoi(argv[i]+prefixLength));
+  } else if (optionMatch(argv[i], "--gdl-preinfo")) {
     cl->preInfoOn();
-  } else if (optionMatch(argv[i], "--gdl-preinfo=no")) {
+  } else if (optionMatch(argv[i], "--no-gdl-preinfo")) {
     cl->preInfoOff();
-  } else if (optionMatch(argv[i], "--gdl-postinfo=yes")) {
+  } else if (optionMatch(argv[i], "--gdl-postinfo")) {
     cl->postInfoOn();
-  } else if (optionMatch(argv[i], "--gdl-postinfo=no")) {
+  } else if (optionMatch(argv[i], "--no-gdl-postinfo")) {
     cl->postInfoOff();
-  } else if (optionMatch(argv[i], "--gdl-proceduresubgraphs=yes")) {
+  } else if (optionMatch(argv[i], "--gdl-proceduresubgraphs")) {
     cl->gdlProcedureSubgraphsOn();
-  } else if (optionMatch(argv[i], "--gdl-proceduresubgraphs=no")) {
+  } else if (optionMatch(argv[i], "--no-gdl-proceduresubgraphs")) {
     cl->gdlProcedureSubgraphsOff();
   } else if (optionMatch(argv[i], "--analysis-files=all")) {
     cl->analysisWholeProgramOn();
   } else if (optionMatch(argv[i], "--analysis-files=cl")) {
     cl->analysisWholeProgramOff();
-  } else if (optionMatch(argv[i], "--analysis-annotation=yes")) {
+  } else if (optionMatch(argv[i], "--analysis-annotation")) {
     cl->analysisAnnotationOn();
-  } else if (optionMatch(argv[i], "--analysis-annotation=no")) {
+  } else if (optionMatch(argv[i], "--no-analysis-annotation")) {
     cl->analysisAnnotationOff();
-  } else if (optionMatch(argv[i], "--output-collectedfuncs=yes")) {
+  } else if (optionMatch(argv[i], "--output-collectedfuncs")) {
     cl->printCollectedFunctionNamesOn();
-  } else if (optionMatch(argv[i], "--output-collectedfuncs=no")) {
+  } else if (optionMatch(argv[i], "--no-output-collectedfuncs")) {
     cl->printCollectedFunctionNamesOff();
-  } else if (optionMatch(argv[i], "--output-text=yes")) {
+  } else if (optionMatch(argv[i], "--output-text")) {
     cl->outputTextOn();
-  } else if (optionMatch(argv[i], "--output-text=no")) {
+  } else if (optionMatch(argv[i], "--no-output-text")) {
     cl->outputTextOff();
-  } else if (optionMatch(argv[i], "--check-ast=yes")) {
+  } else if (optionMatch(argv[i], "--check-ast")) {
     cl->checkRoseAstOn();
-  } else if (optionMatch(argv[i], "--check-ast=no")) {
+  } else if (optionMatch(argv[i], "--no-check-ast")) {
     cl->checkRoseAstOff();
-  } else if (optionMatch(argv[i], "--output-source=yes")) {
+  } else if (optionMatchPrefix(argv[i], "--output-source=")) {
     cl->outputSourceOn();
-  } else if (optionMatch(argv[i], "--output-source=no")) {
-    cl->outputSourceOff();
-  } else if (optionMatch(argv[i], "--output-sourcefile")) {
-    cl->outputSourceOn();
-    cl->setOutputSourceFileName(strdup(argv[++i]));
-  } else if (optionMatch(argv[i], "--output-icfgfile")) {
+    cl->setOutputSourceFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-icfg=")) {
     cl->outputIcfgOn();
-    cl->setOutputIcfgFileName(strdup(argv[++i]));
-  } else if (optionMatch(argv[i], "--output-fileprefix")) {
+    cl->setOutputIcfgFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-sourceprefix=")) {
     cl->outputSourceOn();
-    cl->setOutputFilePrefix(strdup(argv[++i]));
-  } else if (optionMatch(argv[i], "--output-termfile")) {
+    cl->setOutputFilePrefix(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-term=")) {
     cl->outputTermOn();
-    cl->setOutputTermFileName(strdup(argv[++i]));
-  } else if (optionMatch(argv[i], "--output-gdlfile")) {
+    cl->setOutputTermFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-gdl=")) {
     cl->outputGdlOn();
-    cl->setOutputGdlFileName(strdup(argv[++i]));
-  } else if (optionMatch(argv[i], "--output-gdlanimdir")) {
+    cl->setOutputGdlFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-gdlanim=")) {
     cl->outputGdlAnimOn();
-    cl->setOutputGdlAnimDirName(strdup(argv[++i]));
+    cl->setOutputGdlAnimDirName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--gnu:")) {
     /* process gnu options: pass through without '--gnu:' */
     cl->appendCommandLine(std::string(argv[i]+6));
@@ -150,37 +145,27 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->appendCommandLine(std::string(argv[i]+1));
   } else if (optionMatch(argv[i], "--help-rose")) {
     cl->appendCommandLine("--help");
-  } else if (optionMatch(argv[i], "--frontend-warnings=yes")) {
+  } else if (optionMatch(argv[i], "--frontend-warnings")) {
     cl->frontendWarningsOn();
-  } else if (optionMatch(argv[i], "--frontend-warnings=no")) {
+  } else if (optionMatch(argv[i], "--no-frontend-warnings")) {
     cl->frontendWarningsOff();
   } else if (optionMatch(argv[i], "--pag-vivu")) {
     cl->vivuOn();
-  } else if (optionMatch(argv[i], "--pag-vivuLoopUnrolling")) {
-    if(i+1>=argc) { failed(cl); }
-    cl->setVivuLoopUnrolling(atoi(argv[++i]));
-  } else if (optionMatch(argv[i], "--pag-vivu4MaxUnrolling")) {
-    if(i+1>=argc) { failed(cl); }
-    cl->setVivu4MaxUnrolling(atoi(argv[++i]));
+  } else if (optionMatchPrefix(argv[i], "--pag-vivuLoopUnrolling=")) {
+    cl->setVivuLoopUnrolling(atoi(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--pag-vivu4MaxUnrolling=")) {
+    cl->setVivu4MaxUnrolling(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--help")) {
     cl->helpMessageRequestedOn();
   } else if (!strncmp(argv[i], "-I",2)) {
     /* include path option is passed to ROSE as is */
     cl->appendCommandLine(std::string(argv[i]));
-  } else if (optionMatch(argv[i], "--language")) {
-    //check for language
-    if(optionMatch(argv[i+1], "c++")) {
-      cl->setLanguage(AnalyzerOptions::Language_CPP);
-    } else if (optionMatch(argv[i+1], "c89")) {
-      std::cout << "c89 option recognized\n";
-      cl->setLanguage(AnalyzerOptions::Language_C89);
-    } else if (optionMatch(argv[i+1], "c99")) {
-      std::cout << "c99 option recognized\n";
-      cl->setLanguage(AnalyzerOptions::Language_C99);
-    } else {
-      failed(cl);
-    }
-    i++;
+  } else if (optionMatch(argv[i], "--language=c++")) {
+    cl->setLanguage(AnalyzerOptions::Language_CPP);
+  } else if (optionMatch(argv[i], "--language=c89")) {
+    cl->setLanguage(AnalyzerOptions::Language_C89);
+  } else if (optionMatch(argv[i], "--language=c99")) {
+    cl->setLanguage(AnalyzerOptions::Language_C99);
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     std::cout << "Found Input filename." << std::endl;
@@ -221,5 +206,6 @@ bool CommandLineParser::optionMatch(char* s1, char* s2) {
 }
 
 bool CommandLineParser::optionMatchPrefix(char* s, char* prefix) {
-  return !strncmp(s, prefix,strlen(prefix));
+  prefixLength=strlen(prefix);
+  return !strncmp(s, prefix,prefixLength);
 }

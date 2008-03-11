@@ -6,8 +6,8 @@
 FILES=`find tests -name \*.[cC] 2>/dev/null` `find tests -name \*.c[px][px] 2>/dev/null`
 CURRENTDIR=`pwd`
 ANALYSIS=`basename $CURRENTDIR`
-MODES="--output-text=yes"
-OPTIONS="--analysis-files=all --output-gdlfile test.gdl --gdl-preinfo=yes --gdl-postinfo=yes --output-termfile test.pl"
+MODES="--output-text"
+OPTIONS="--analysis-files=all --output-gdl=test.gdl --gdl-preinfo --gdl-postinfo --output-term=test.pl"
 
 CUSTOM_MODES="--aliastextoutput --aliassourceoutput"   # not available in all analyses, checked against --help text of $(ANALYSIS)
 CUSTOM_OPTIONS="--foldgraphs --summarygraph --individualgraphs"
@@ -52,7 +52,7 @@ generatePermutations () {
 if [ "$GENERATE_PERMUTATIONS" = "yes" ]; then
     generatePermutations
 else
-    ARGUMENTS="--statistics=yes$ARGSEP${MODES// /$ARGSEP}$ARGSEP${OPTIONS// /$ARGSEP}"
+    ARGUMENTS="--statistics$ARGSEP${MODES// /$ARGSEP}$ARGSEP${OPTIONS// /$ARGSEP}"
 fi
 
 TMPFILE=/tmp/runtests.pag.$RANDOM
