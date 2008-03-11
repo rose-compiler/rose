@@ -139,5 +139,5 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
 	    isSgVarRefExp(b)->get_symbol()->get_declaration());
   }
   cerr << a->sage_class_name() << endl;
-  assert (!"FIXME");
+  ROSE_ASSERT (!"FIXME");
 }
