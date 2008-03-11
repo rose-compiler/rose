@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.16 2008-03-11 03:22:11 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.17 2008-03-11 21:31:37 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -76,7 +76,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --help-rose              print the ROSE help message on stdout\n"
     "\n"
     " Multiple input/output files options:\n"
-    "   --output-prefix <PREFIX> generate for each input file one output file\n"
+    "   --output-sourceprefix <PREFIX> generate for each input file one output file\n"
     "                            with prefixed name\n"
     "\n"
     " GDL output options:\n"
@@ -84,8 +84,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --no-gdl-preinfo         do not output analysis info before cfg nodes\n"
     "   --gdl-postinfo           output analysis info after cfg nodes\n"
     "   --no-gdl-postinfo        do not output analysis info after cfg nodes\n"
-    "   --output-gdl=<filename>  output program as gdl graph\n"
-    "   --output-gdlanim=<dirname> output animation gdl files in \n"
+    "   --output-gdl=<FILENAME>  output program as gdl graph\n"
+    "   --output-gdlanim=<DIRNAME> output animation gdl files in \n"
     "                            directory <dirname>\n"
     "\n"
     " Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo\n"
