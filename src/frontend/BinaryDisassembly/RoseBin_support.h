@@ -212,7 +212,8 @@ class RoseBin_support {
 		 uint8_t &b_val,
 		 uint16_t &w_val,
 		 uint32_t &dw_val,
-		 uint64_t &qw_val);
+		 uint64_t &qw_val,
+                 bool unparseSignedConstants = false);
 
 
   static bool bigEndian() {

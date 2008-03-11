@@ -28,7 +28,7 @@ class RoseBin_unparse_visitor : public AstSimpleProcessing { //ROSE_VisitorPatte
 
  public:
 
-  std::string unparseInstruction(SgAsmInstruction* binInst);
+  static std::string unparseInstruction(SgAsmInstruction* binInst);
 
   RoseBin_unparse_visitor(){
     previous_block=-1; 
@@ -56,29 +56,29 @@ class RoseBin_unparse_visitor : public AstSimpleProcessing { //ROSE_VisitorPatte
   /****************************************************
    * resolve binary expression, plus, minus, etc 
    ****************************************************/
-  std::string resolveBinaryBinaryExpression(SgAsmBinaryExpression* expr);
+  static std::string resolveBinaryBinaryExpression(SgAsmBinaryExpression* expr);
 
   /****************************************************
    * resolve Operand
    ****************************************************/
-  std::string resolveOperand(SgAsmExpression* expr, std::string *replace);
-  std::string resolveOperand(SgAsmExpression* expr, RoseBin_DataFlowAbstract* dfa);
+  static std::string resolveOperand(SgAsmExpression* expr, std::string *replace, bool unparseSignedConstants = false);
+  std::string resolveOperand(SgAsmExpression* expr, RoseBin_DataFlowAbstract* dfa, bool unparseSignedConstants = false);
 
   /****************************************************
    * resolve expression
    ****************************************************/
-  std::string resolveRegister(SgAsmRegisterReferenceExpression::x86_register_enum code,
+  static std::string resolveRegister(SgAsmRegisterReferenceExpression::x86_register_enum code,
 						  SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos);
   /****************************************************
    * resolve expression
    ****************************************************/
-  std::string resolveRegister(SgAsmRegisterReferenceExpression::arm_register_enum code,
+  static std::string resolveRegister(SgAsmRegisterReferenceExpression::arm_register_enum code,
 						  SgAsmRegisterReferenceExpression::arm_position_in_register_enum pos);
 
   /****************************************************
    * resolve mnemonic
    ****************************************************/
-  std::string get_mnemonic_from_instruction(SgAsmExpression* expr);
+  static std::string get_mnemonic_from_instruction(SgAsmExpression* expr);
 
 };
 

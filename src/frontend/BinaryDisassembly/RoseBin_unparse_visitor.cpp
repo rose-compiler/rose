@@ -409,12 +409,13 @@ string RoseBin_unparse_visitor::get_mnemonic_from_instruction(SgAsmExpression* e
 }
 
 string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
-					       RoseBin_DataFlowAbstract* dfa) {
+					       RoseBin_DataFlowAbstract* dfa,
+                                               bool unparseSignedConstants) {
   encode=true;
   analysis = dfa;
   ROSE_ASSERT(analysis);
   string replace = "";
-  string val = resolveOperand(expr, &replace);
+  string val = resolveOperand(expr, &replace, unparseSignedConstants);
   //cerr << " found val and type " << val << " " << *type << endl;
   analysis=NULL;
   encode=false;
@@ -429,8 +430,8 @@ string getPointerTypeName(SgAsmType* ty) {
     case V_SgAsmTypeQuadWord: return "QWORD";
     case V_SgAsmTypeSingleFloat: return "DWORD";
     case V_SgAsmTypeDoubleFloat: return "QWORD";
-    // case V_SgAsmTypeLongDoubleFloat: return "TENBYTES";
-    default: {std::cerr << "getPointerTypeName: Bad class " << ty->class_name() << std::endl; ROSE_ABORT();}
+    case V_SgAsmType80bitFloat: return "TENBYTES";
+    default: {std::cerr << "getPointerTypeName: Bad class " << ty->class_name() << std::endl; ROSE_ASSERT(false);}
   }
 }
 
@@ -438,7 +439,8 @@ string getPointerTypeName(SgAsmType* ty) {
  * resolve expression
  ****************************************************/
 string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
-					       string *replace) {
+					       string *replace,
+                                               bool unparseSignedConstants) {
   string res="...";
   ROSE_ASSERT(expr);
   ROSE_ASSERT(replace);
@@ -519,7 +521,8 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 				      byte_val,
 				      word_val,
 				      double_word_val,
-				      quad_word_val);
+				      quad_word_val,
+                                      unparseSignedConstants);
 
 	//*replace="<" + RoseBin_support::ToString(valExp) + ">"+" rep= " + valExp->get_replacement();
 	*replace = valExp->get_replacement();
@@ -535,8 +538,29 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 	  SgAsmExpression* right = binExp->get_rhs();
 
 	  if (left && right) {
-	    string resLeft = resolveOperand(left,replace);
-	    string resRight = resolveOperand(right,replace);
+            bool lhsIsRip = isSgAsmRegisterReferenceExpression(left) &&
+                            isSgAsmRegisterReferenceExpression(left)->get_x86_register_code() == SgAsmRegisterReferenceExpression::rIP;
+            if (isSgAsmBinaryAdd(binExp) && isSgAsmValueExpression(right) && !lhsIsRip) {
+              // Special case for non-rIP-relative memory references
+              int64_t rhsConstant = 0;
+              switch (right->variantT()) {
+                case V_SgAsmByteValueExpression: rhsConstant = (int64_t)(int8_t)(isSgAsmByteValueExpression(right)->get_value()); break;
+                case V_SgAsmWordValueExpression: rhsConstant = (int64_t)(int16_t)(isSgAsmWordValueExpression(right)->get_value()); break;
+                case V_SgAsmDoubleWordValueExpression: rhsConstant = (int64_t)(int32_t)(isSgAsmDoubleWordValueExpression(right)->get_value()); break;
+                case V_SgAsmQuadWordValueExpression: rhsConstant = (int64_t)(isSgAsmQuadWordValueExpression(right)->get_value()); break;
+                default: ROSE_ASSERT (false);
+              }
+              ostringstream os;
+              if (rhsConstant < 0) {
+                os << resolveOperand(left, replace) << "-" << -rhsConstant;
+              } else {
+                os << resolveOperand(left, replace) << "+" << rhsConstant;
+              }
+              res = os.str();
+            } else {
+              string resLeft = resolveOperand(left,replace);
+              string resRight = resolveOperand(right,replace);
+#if 0
 	    uint64_t l =0;
 	    uint64_t r =0;
 	    if (encode) {
@@ -576,7 +600,9 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 	      res = RoseBin_support::HexToString(res_h);
 
 	    } else
+#endif
 	      res = resLeft + res + resRight;
+            }
 	  }
 
 
@@ -617,10 +643,12 @@ RoseBin_unparse_visitor::unparseInstruction(SgAsmInstruction* binInst) {
   string address_str = addrhex.str();
   SgAsmNode* parent_block = dynamic_cast<SgAsmNode*>( binInst->get_parent());
   //ROSE_ASSERT(parent_block);
+#if 0
   if (parent_block==NULL) {
     cerr << " ERROR : Unparser - Node has no parent : " << address_str << " - " << 
       binInst->class_name() << endl;
   }
+#endif
   /*
   SgAsmBlock* block = isSgAsmBlock(parent_block);
   ROSE_ASSERT(block);
@@ -656,9 +684,9 @@ RoseBin_unparse_visitor::unparseInstruction(SgAsmInstruction* binInst) {
     // resolve each operand
     string replace="";
     string result = resolveOperand(expr,&replace);
-    operands = result + operands;
-    if (counter < (int) (ptrList.size()-1))
-      operands = ", " + operands;
+    if (counter != 0)
+      operands += ", ";
+    operands += result;
     counter++;
   }
 

@@ -113,7 +113,8 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
 					  uint8_t &byte_val,
 					  uint16_t &word_val,
 					  uint32_t &double_word_val,
-					  uint64_t &quad_word_val) {
+					  uint64_t &quad_word_val,
+                                          bool unparseSignedConstants) {
   string res="...";
   ostringstream os; 
   if (isSgAsmByteValueExpression(expr)) {
@@ -122,6 +123,8 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
     //res = "(byte)" + RoseBin_support::ToString(val);
     if (is_mnemonic_call)
       os << hex << (unsigned int)byte_val; 
+    else if (unparseSignedConstants)
+      os << dec << (int8_t)byte_val;
     else
       os << "0x" << hex << (unsigned int)byte_val; 
     res = os.str();
@@ -142,7 +145,9 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
 	// res = "(dword)" + RoseBin_support::ToString(int_val);
 	if (is_mnemonic_call)
 	  os << hex << double_word_val; 
-	else
+	else if (unparseSignedConstants)
+          os << dec << (int32_t)double_word_val;
+        else
 	  os << "0x" << hex << double_word_val; 
 	res = os.str();
       } else
@@ -158,7 +163,10 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
 	  if (isSgAsmQuadWordValueExpression(expr)) {
 	    SgAsmQuadWordValueExpression* valExp = isSgAsmQuadWordValueExpression(expr);
 	    quad_word_val = valExp->get_value(); 
-	    os << "0x" << hex << quad_word_val;
+            if (unparseSignedConstants)
+              os << dec << (int64_t)quad_word_val;
+            else
+              os << "0x" << hex << quad_word_val;
 	    res = os.str();
 	    //res = "(qword)" + RoseBin_support::ToString(val);
 	  } else
@@ -172,7 +180,10 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
 	      if (isSgAsmWordValueExpression(expr)) {
 		SgAsmWordValueExpression* valExp = isSgAsmWordValueExpression(expr);
 		word_val = valExp->get_value(); 
-		os << "0x" << hex << word_val;
+                if (unparseSignedConstants)
+                  os << dec << (int16_t)word_val;
+                else
+                  os << "0x" << hex << word_val;
 		res = os.str();
 		//		res = "(word)" + RoseBin_support::ToString(val);
 	      } 
