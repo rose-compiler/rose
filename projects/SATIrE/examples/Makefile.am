@@ -125,4 +125,5 @@ installcheck-local:
 	$(MAKE) -C $(testdir)/constprop
 	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
 
-#	rm -rf $(testdir)
+	chmod -R u+w $(testdir)
+	rm -rf $(testdir)
