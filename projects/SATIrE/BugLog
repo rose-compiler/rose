@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.2 2008-03-11 13:15:01 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.3 2008-03-11 15:02:07 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -138,8 +138,12 @@ Fix:
     undeclare nodes for returns, or simply add all of a function's variables
     to the undeclaration list in the end node. The latter seems simpler to
     get right, especially in the presence of gotos and the like.
+    Later the same day: It turns out that the second of these fixes has been
+    implemented for some time, it's just that the variables were not visible
+    in the GDL visualization. They have always been present in the ICFG, and
+    analyses processed them correctly.
 Status:
-    BROKEN as of 2008-03-11
+    Resolved 2008-03-11, GB
 
 
 Logged:

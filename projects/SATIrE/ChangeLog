@@ -32,6 +32,8 @@ V0.8.0 (IN PROGRESS)
   - removed ICFG nodes that were unreachable due to explicit returns in the
     middle of functions
   - added detailed log of bugs reported and fixed (file BugLog)
+  - ICFG visualization: function exit nodes now have a correct list of
+    variables to undeclare
 
 * upgrade to PAG 7.7.5.50 [GB]
   - removed version numbers from (TUV-local) PAG and ROSE paths
