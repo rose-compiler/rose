@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.15 2008-03-10 14:27:23 gergo Exp $
+// $Id: CFGTraversal.C,v 1.16 2008-03-11 09:55:33 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -199,7 +199,6 @@ CFGTraversal::kill_unreachable_nodes() {
                 << std::endl;
 #endif
         }
-        std::cout << std::endl;
     }
  // Process the worklist, adding unreachable successors of unreachable
  // nodes.
@@ -214,7 +213,7 @@ CFGTraversal::kill_unreachable_nodes() {
          // unreachable.
             BasicBlock *succ = e->first;
             KFG_EDGE_TYPE etype = e->second;
-            if (succ->predecessors.size() == 1)
+            if (succ->predecessors.size() == 1 && (*n)->node_type == INNER)
                 worklist.push_back(succ);
          // In any case, remove the reverse edge from the successor to b.
          // The edge from b to the successor will be removed when b is
