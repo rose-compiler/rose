@@ -31,6 +31,7 @@ V0.8.0 (IN PROGRESS)
   - corrected various issues that caused ROSE assertions to fail
   - removed ICFG nodes that were unreachable due to explicit returns in the
     middle of functions
+  - added detailed log of bugs reported and fixed (file BugLog)
 
 * upgrade to PAG 7.7.5.50 [GB]
   - removed version numbers from (TUV-local) PAG and ROSE paths
