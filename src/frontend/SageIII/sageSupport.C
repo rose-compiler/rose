@@ -5,6 +5,7 @@
 #ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 #include "objdumpToRoseBinaryAst.h"
 #include "RoseBin_unparse.h"
+#define USE_NEW_X86_DISASSEMBLER
 #endif
 
 using namespace std;
@@ -2174,6 +2175,8 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
      ROSE_ASSERT(asmFile != NULL);
 
      ROSE_ASSERT(isBinaryExecutableFile(sourceFilename) == true);
+
+     asmFile->set_name(sourceFilename);
 
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "r");
@@ -4693,7 +4696,11 @@ SgFile::callFrontEnd ()
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());
                          ROSE_ASSERT(project != NULL);
+#ifdef USE_NEW_X86_DISASSEMBLER
+                         X86Disassembler::disassembleFile(asmFile);
+#else
                          objdumpToRoseBinaryAst(executableFileName,asmFile,project);
+#endif
 
                       // Attach the SgAsmFile to the SgFile
                          this->set_binaryFile(asmFile);

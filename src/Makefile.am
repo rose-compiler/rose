@@ -68,11 +68,13 @@ ROSE_BINARY_DISASSEMBLER_OBJS = \
    $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_VariableAnalysis.o \
    $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_Emulate.o \
    $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DataFlowAbstract.o \
-   $(top_builddir)/src/frontend/ObjdumpDisassembler/*.o
+   $(top_builddir)/src/frontend/ObjdumpDisassembler/*.o \
+   $(top_builddir)/src/frontend/X86Disassembler/*.o
 
 libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-   $(top_builddir)/src/frontend/ObjdumpDisassembler/libroseObjdumpDisassembler.la 
+   $(top_builddir)/src/frontend/ObjdumpDisassembler/libroseObjdumpDisassembler.la \
+   $(top_builddir)/src/frontend/X86Disassembler/libroseX86Disassembler.la 
 
 endif
 

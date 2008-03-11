@@ -98,8 +98,8 @@ namespace ObjdumpToRoseBinaryAst {
   } while (0);
 
   static void getX86RegisterInfo(const string& regName,
-                                 SgAsmRegisterReferenceExpression::x86_register_enum& reg,
-                                 SgAsmRegisterReferenceExpression::x86_position_in_register_enum& pos) {
+      SgAsmRegisterReferenceExpression::x86_register_enum& reg,
+      SgAsmRegisterReferenceExpression::x86_position_in_register_enum& pos) {
     HANDLEREG("rax", rAX, qword);
     HANDLEREG("rbx", rBX, qword);
     HANDLEREG("rcx", rCX, qword);
@@ -215,8 +215,8 @@ namespace ObjdumpToRoseBinaryAst {
   }
 
   static void dispatchCommand(const string& cmd, stack<StackEntry>& st,
-                              map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, SgAsmBlock*>& basicBlocks,
-                              map<uint64_t, uint64_t>& nextAddress) {
+      map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, SgAsmBlock*>& basicBlocks,
+      map<uint64_t, uint64_t>& nextAddress) {
     // fprintf(stderr, "dispatchCommand '%s' ", cmd.c_str());
     // printStack(stderr, st);
     if (cmd == "reg") {
@@ -357,7 +357,7 @@ namespace ObjdumpToRoseBinaryAst {
       st.pop();
       uint64_t address = st.top().asInt();
       st.pop();
-   // fprintf(stderr, "Got insn at address 0x%08lX\n", (unsigned long)address);
+      // fprintf(stderr, "Got insn at address 0x%08lX\n", (unsigned long)address);
       SgAsmInstruction* instruction = 0;
       {
 #include "instruction_x86.inc"
@@ -396,19 +396,18 @@ namespace ObjdumpToRoseBinaryAst {
     }
   }
 
-// DQ (1/22/2008): Changed inteface for this function
-// SgAsmFile* objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
-// JJW 1/30/2008 Added project so we have access to path information
-void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* proj)
-{
+  // DQ (1/22/2008): Changed inteface for this function
+  // SgAsmFile* objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file)
+  // JJW 1/30/2008 Added project so we have access to path information
+  void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* proj) {
     ROSE_ASSERT(file != NULL);
     ROSE_ASSERT(proj != NULL);
 
     map<uint64_t, SgAsmBlock*> basicBlocks;
     map<uint64_t, SgAsmInstruction*> insns;
     map<uint64_t, uint64_t> nextAddress;
- // FILE* f = popen(("./asmToRoseAst.tcl " + fileName).c_str(), "r");
- // FILE* f = popen(( "/home/panas2/development/ROSE-64bit/NEW_ROSE/src/frontend/ObjdumpDisassembler/asmToRoseAst.tcl " + fileName).c_str(), "r");
+    // FILE* f = popen(("./asmToRoseAst.tcl " + fileName).c_str(), "r");
+    // FILE* f = popen(( "/home/panas2/development/ROSE-64bit/NEW_ROSE/src/frontend/ObjdumpDisassembler/asmToRoseAst.tcl " + fileName).c_str(), "r");
     string dirOfScript = findRoseSupportPathFromSource("src/frontend/ObjdumpDisassembler", ROSE_AUTOMAKE_LIBEXECDIR);
     string pathToScript = dirOfScript + "/asmToRoseAst.tcl";
     vector<string> args(2);
@@ -463,11 +462,20 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* 
     ROSE_ASSERT (st.empty());
     pcloseFromVector(f);
 
-    // Put each instruction into the proper block, and link the blocks together
- // SgAsmFile* file = new SgAsmFile();
-    SgAsmBlock* mainBlock = new SgAsmBlock();
+    SgAsmBlock* mainBlock = putInstructionsIntoBasicBlocks(basicBlocks, insns);
     mainBlock->set_parent(file);
     file->set_global_block(mainBlock);
+
+    // fprintf(stderr, "Done getting instructions\n");
+    // return file;
+  }
+
+  SgAsmBlock* putInstructionsIntoBasicBlocks(
+      const std::map<uint64_t, SgAsmBlock*>& basicBlocks,
+      const std::map<uint64_t, SgAsmInstruction*>& insns) {
+    // Put each instruction into the proper block, and link the blocks together
+    // SgAsmFile* file = new SgAsmFile();
+    SgAsmBlock* mainBlock = new SgAsmBlock();
 
     map<uint64_t, SgAsmBlock*> insnToBlock;
 
@@ -491,16 +499,14 @@ void objdumpToRoseBinaryAst(const string& fileName, SgAsmFile* file, SgProject* 
       insn->set_parent(theBlock);
       theBlock->get_statementList().push_back(insn);
       // fprintf(stderr, "Put insn 0x%08X into block %p\n", addr, theBlock);
-      ROSE_ASSERT (nextAddress.find(addr) != nextAddress.end());
-      uint64_t next_addr = nextAddress[addr];
+      // ROSE_ASSERT (nextAddress.find(addr) != nextAddress.end());
+      uint64_t next_addr = addr + insn->get_raw_bytes().size();
       if (next_addr != 0 && insnToBlock.find(next_addr) == insnToBlock.end()) {
         // Set the value for the next instruction if it does not start its own basic block
         insnToBlock[next_addr] = theBlock;
       }
     }
-
-    // fprintf(stderr, "Done getting instructions\n");
- // return file;
+    return mainBlock;
   }
 
 }

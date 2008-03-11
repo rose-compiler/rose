@@ -147,6 +147,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses \
      -I$(top_srcdir)/src/frontend/ObjdumpDisassembler \
+     -I$(top_srcdir)/src/frontend/X86Disassembler \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \

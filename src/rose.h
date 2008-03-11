@@ -94,6 +94,10 @@
 
 // Files in src/frontend/ObjdumpDisassembler
   #include "objdumpToRoseBinaryAst.h"
+
+// Files in src/frontend/X86Disassembler
+  #include "x86Disassembler.h"
+
 #endif
 
 
