@@ -542,9 +542,9 @@ generateMakefile()
     lib=${USUBDIRS[$((count))]}
 
     if(( count < subbound )); then
-      echo -e "\t\$(srcdir)/${dir}/${dir}.C \\" >> ${makefile_am}
+      echo -e "\t${dir}/${dir}.C \\" >> ${makefile_am}
     else
-      echo -e "\t\$(srcdir)/${dir}/${dir}.C" >> ${makefile_am}
+      echo -e "\t${dir}/${dir}.C" >> ${makefile_am}
     fi
 
     ((count++))
@@ -556,9 +556,9 @@ generateMakefile()
   for dir in ${SUBDIRS[@]}
   do
     if(( count < subbound )); then
-      echo -e "\t \$(srcdir)/${dir}/${dir}Test1.C \\" >> ${makefile_am}
+      echo -e "\t ${dir}/${dir}Test1.C \\" >> ${makefile_am}
     else
-      echo -e "\t \$(srcdir)/${dir}/${dir}Test1.C" >> ${makefile_am}
+      echo -e "\t ${dir}/${dir}Test1.C" >> ${makefile_am}
     fi
     ((count++))
   done
