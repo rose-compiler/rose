@@ -29,7 +29,7 @@ check-local:
 	@echo "*** ROSE/projects/compassSupport: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
 
-EXTRA_DIST = compass.h  compass_parameters compassDocs.tex
+EXTRA_DIST = compass.h  compass_parameters compassDocs.tex compassTestMain.C
 
 clean-local:
 	rm -f compass.* *.sty compass_parameters *.ti a.out *.tex

@@ -27,7 +27,8 @@ distclean-local:
 
 include_HEADERS = \
    AnnotCollect.h      AnnotExpr.h  AnnotStmt.h           OperatorDescriptors.h \
-   AnnotDescriptors.h  AnnotIO.h    OperatorAnnotation.h  TypeAnnotation.h
+   AnnotDescriptors.h  AnnotIO.h    OperatorAnnotation.h  TypeAnnotation.h \
+   CPPAnnotation.h CPPAnnotation.C
 
 
 
