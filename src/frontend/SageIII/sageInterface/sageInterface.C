@@ -4905,7 +4905,10 @@ namespace SageInterface {
     // ROSE_ASSERT (scope); -- scope may not be set because the function declaration may not have been inserted anywhere
     initName->set_scope(scope);
     SgVariableSymbol* sym = new SgVariableSymbol(initName);
-    if (scope) scope->insert_symbol(initName->get_name(), sym);
+    if (scope) {
+      scope->insert_symbol(initName->get_name(), sym);
+      sym->set_parent(scope->get_symbol_table());
+    }
     return sym;
   }
 
