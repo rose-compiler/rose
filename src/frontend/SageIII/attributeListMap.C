@@ -1,5 +1,4 @@
-// DQ (11/10/2007): This is not required here.
-// #include "rose_config.h"
+#include "rose_config.h"
 
 #ifdef USE_ROSE_BOOST_WAVE_SUPPORT
 
