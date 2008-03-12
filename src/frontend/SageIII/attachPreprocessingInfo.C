@@ -1193,11 +1193,11 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
   // DQ (4/7/2006): Not sure we want to do this, if we did want to do so then it should 
   // be in the list of EDG as well and in which case, what order should it be placed?
 
-     string internalIncludePaths          = CXX_INCLUDE_STRING;
+     string internalIncludePaths[]          = CXX_INCLUDE_STRING;
      if(SgProject::get_verbose() >= 1)
            std::cout << "INTERNAL INCLUDE PATHS " << CXX_INCLUDE_STRING << std::endl;
 
-     vector<string> internalIncludePathList = CommandlineProcessing::generateArgListFromString(internalIncludePaths);
+     vector<string> internalIncludePathList(internalIncludePaths, internalIncludePaths + sizeof(internalIncludePaths)/sizeof(string));
   //internalIncludePathList.push_back("-I"+string(CurrentPath)+"/");
 
      for (vector<string>::iterator i = internalIncludePathList.begin(); i != internalIncludePathList.end(); i++)
