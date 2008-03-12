@@ -920,6 +920,16 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
   return func_ref;
 }
 
+// lookup function symbol to create a reference to it
+SgFunctionRefExp *
+SageBuilder::buildFunctionRefExp(SgFunctionSymbol* sym)
+{
+  SgFunctionRefExp* func_ref = new SgFunctionRefExp(sym, NULL);
+  setOneSourcePositionForTransformation(func_ref);
+  ROSE_ASSERT(func_ref);
+  return func_ref;
+}
+
 // no actual usage of scope argument, but put it here for consistence
 SgExprStatement*
 SageBuilder::buildExprStatement(SgExpression*  exp)
@@ -944,6 +954,18 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
   SgFunctionParameterTypeList * typeList= buildFunctionParameterTypeList(parameters); 
   SgFunctionType * func_type = buildFunctionType(return_type,typeList); 
   SgFunctionRefExp* func_ref = buildFunctionRefExp(name,func_type,scope);
+  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  parameters->set_parent(func_call_expr);
+  setOneSourcePositionForTransformation(func_call_expr);
+  ROSE_ASSERT(func_call_expr);
+  return func_call_expr;  
+}
+
+SgFunctionCallExp* 
+SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
+                                  SgExprListExp* parameters)
+{
+  SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
   parameters->set_parent(func_call_expr);
   setOneSourcePositionForTransformation(func_call_expr);

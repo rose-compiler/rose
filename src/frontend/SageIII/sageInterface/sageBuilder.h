@@ -293,6 +293,14 @@ buildFunctionRefExp(const SgName& name, const SgType* func_type, SgScopeStatemen
 //SgFunctionRefExp *
 // buildFunctionRefExp(const SgName& name,SgScopeStatement* scope=NULL);
 
+// build SgFunctionRefExp based on a function's symbol.
+SgFunctionRefExp *
+buildFunctionRefExp(SgFunctionSymbol* sym);
+
+//! build a function call expression
+SgFunctionCallExp* 
+buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters);
+
 //! build a function call expression,it will automatically search for function symbols internally to build a right function reference etc.
 SgFunctionCallExp* 
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
