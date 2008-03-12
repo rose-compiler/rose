@@ -122,6 +122,32 @@ void reverseOneStatement(SgStatement* stmt, SgBasicBlock* forwardBlockToAppendTo
       prependStatement(popVariable, backwardBlockToPrependTo);
       break;
     }
+    case V_SgWhileStmt: {
+      // Assumption: test does not have any side effects
+      SgWhileStmt* ws = isSgWhileStmt(stmt);
+      SgBasicBlock* bodyForward = buildBasicBlock();
+      SgBasicBlock* bodyBackward = buildBasicBlock();
+      reverseOneStatement(ws->get_body(), bodyForward, forwardSaveStack, bodyBackward, backwardSaveStack);
+      {
+        static int tripCountCounter = 0;
+        SgVariableDeclaration* tripCount = buildVariableDeclaration("tripCount__" + StringUtility::numberToString(++tripCountCounter), SgTypeInt::createType(), buildAssignInitializer(buildIntVal(0)), forwardBlockToAppendTo);
+        SgVariableSymbol* tripCountSymbol = getFirstVarSym(tripCount);
+        appendStatement(tripCount, forwardBlockToAppendTo);
+        appendStatement(buildExprStatement(buildPlusPlusOp(buildVarRefExp(tripCountSymbol), SgUnaryOp::prefix)), bodyForward);
+        appendStatement(buildWhileStmt(deepCopy(ws->get_condition()), bodyForward), forwardBlockToAppendTo);
+        appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildVarRefExp(tripCountSymbol))), forwardBlockToAppendTo);
+      }
+      {
+        static int tripCountCounter = 0;
+        SgVariableDeclaration* tripCount = buildVariableDeclaration("tripCount__" + StringUtility::numberToString(++tripCountCounter), SgTypeInt::createType(), NULL, forwardBlockToAppendTo);
+        SgVariableSymbol* tripCountSymbol = getFirstVarSym(tripCount);
+        prependStatement(buildWhileStmt(buildGreaterThanOp(buildVarRefExp(tripCountSymbol), buildIntVal(0)), bodyBackward), backwardBlockToPrependTo);
+        prependStatement(buildExprStatement(makeStatePop(backwardSaveStack, buildVarRefExp(tripCountSymbol))), backwardBlockToPrependTo);
+        prependStatement(tripCount, backwardBlockToPrependTo);
+        appendStatement(buildExprStatement(buildMinusMinusOp(buildVarRefExp(tripCountSymbol), SgUnaryOp::prefix)), bodyBackward);
+      }
+      break;
+    }
     default: {
       cerr << "Don't know how to reverse statement of type " << stmt->class_name() << endl;
       ROSE_ASSERT (false);

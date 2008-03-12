@@ -14,12 +14,44 @@ void fact(int n, int& result) {
   }
 }
 
-void processEvent(int x, int y, int z) {
+void fact2(int n, int& result) {
+  result = 1;
+  while (n > 0) {
+    result = result * n;
+    --n;
+  }
+}
+
+#if 0
+void even(int& x, bool& result);
+void odd(int& x, bool& result) {
+  if (x == 0) {
+    result = false;
+  } else {
+    --x;
+    even(x, result);
+    ++x;
+  }
+}
+void even(int& x, bool& result) {
+  if (x == 0) {
+    result = true;
+  } else {
+    --x;
+    odd(x, result);
+    ++x;
+  }
+}
+#endif
+
+void processEvent(int x, int y, int z, bool evenResult) {
   ++x;
   sendMessage(x, 3);
   x = x * 5;
   frob(x);
   fact(7, z);
+  fact2(8, z);
+  // even(z, evenResult);
   --x;
   --y;
 }
