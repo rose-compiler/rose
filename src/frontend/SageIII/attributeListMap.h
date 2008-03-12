@@ -728,7 +728,7 @@ class AttributeListMap {
 
 
        template<typename IteratorT>
-	       void attach_line_to_macro_call(vector<IteratorT*> vec){
+	 void attach_line_to_macro_call(std::vector<IteratorT*> vec){
 	       }
 
        template <typename StringT, typename IteratorT>
