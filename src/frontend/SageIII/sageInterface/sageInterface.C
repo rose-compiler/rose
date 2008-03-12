@@ -3935,7 +3935,7 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
 }
 
 
-SgNode * SageInterface::deepCopy (const SgNode* n)
+SgNode * SageInterface::deepCopyNode (const SgNode* n)
 {
   SgTreeCopy g_treeCopy; // should use a copy object each time of usage!
   return n ? n->copy (g_treeCopy) : 0;
@@ -4854,8 +4854,7 @@ namespace SageInterface {
 
   SgExpression* copyExpression(SgExpression* e) 
   {
-    ROSE_ASSERT (e);
-    return isSgExpression(deepCopy(e));
+    return deepCopy(e);
   }
 
   //----------------- add into AST tree --------------------
@@ -4884,7 +4883,7 @@ namespace SageInterface {
   }
 
 
-  void appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
+  SgVariableSymbol* appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
   {
     ROSE_ASSERT(paraList);
     ROSE_ASSERT(initName);
@@ -4892,19 +4891,22 @@ namespace SageInterface {
     initName->set_parent(paraList);
 
     SgFunctionDeclaration* func_decl= isSgFunctionDeclaration(paraList->get_parent());
+    SgScopeStatement* scope = NULL;
     if (func_decl)
     {
       if ((func_decl->get_definingDeclaration()) == func_decl )
       { //defining function declaration, set scope and symbol table
 	SgFunctionDefinition* func_def = func_decl->get_definition();
 	ROSE_ASSERT(func_def);
-	initName->set_scope(func_def);
-	func_def->insert_symbol(initName->get_name(), new SgVariableSymbol(initName) );
+        scope = func_def;
       } // nondefining declaration, set scope only, currently set to decl's scope, TODO
-       else  initName->set_scope(func_decl->get_scope());
+       else  scope = func_decl->get_scope();
     } //end if func_decl is available
-    //TODO how about function type and function symbol?
-
+    // ROSE_ASSERT (scope); -- scope may not be set because the function declaration may not have been inserted anywhere
+    initName->set_scope(scope);
+    SgVariableSymbol* sym = new SgVariableSymbol(initName);
+    if (scope) scope->insert_symbol(initName->get_name(), sym);
+    return sym;
   }
 
 

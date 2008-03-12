@@ -306,11 +306,16 @@ extern int gensym_counter;
     std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy,
 					     SgCopyHelp * help = NULL);
 
+   SgNode* deepCopyNode (const SgNode* subtree); // private function
+
 //! deep copy a subtree
-   SgNode* deepCopy (const SgNode* subtree);
+   template <typename NodeType>
+   NodeType* deepCopy (const NodeType* subtree) {
+     return dynamic_cast<NodeType*>(deepCopyNode(subtree));
+   }
 
 //! deep copy an expression
-   SgExpression* copyExpression(SgExpression* e) ;
+   SgExpression* copyExpression(SgExpression* e);
 
 // from VarSym.cc in src/midend/astOutlining/src/ASTtools
 //! Get the variable symbol for the first initialized name of a declaration stmt.
@@ -650,7 +655,7 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
  However, it is still allowed to append new arguments for existing function declarations.
  \todo function type , function symbol also need attention.
 */
-void appendArg(SgFunctionParameterList *, SgInitializedName*);
+SgVariableSymbol* appendArg(SgFunctionParameterList *, SgInitializedName*);
 
 //! append an expression to a SgExprListExp, set the parent pointer also
 void appendExpression(SgExprListExp *, SgExpression*);
