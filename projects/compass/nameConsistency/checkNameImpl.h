@@ -1,4 +1,9 @@
+#ifndef COMPASS_CHECKNAMEIMPL_H
+#define COMPASS_CHECKNAMEIMPL_H
+
+
 #include "rose.h"
+
 
 #if USE_ROSE_BOOST_WAVE_SUPPORT //GMY 12/26/2007 added #if...#endif to pass compass make verify
 #include <boost/wave.hpp>
@@ -156,3 +161,4 @@ class SynthesizedAttribute
           void display() const;
    };
 
+#endif
