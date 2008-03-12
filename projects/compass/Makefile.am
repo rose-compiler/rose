@@ -4,7 +4,7 @@ include $(srcdir)/compass_makefile.inc
 
 SUBDIRS = compassSupport util compassVerifier tests
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I$(builddir)
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I.
 
 bin_PROGRAMS = compassMain
 
