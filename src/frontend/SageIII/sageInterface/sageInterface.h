@@ -451,6 +451,9 @@ bool isConstType(SgType* t);
 //! Is this a scalar type?
 bool isScalarType(SgType* t);
 
+//! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
+SgType* lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope=NULL);
+
 //@}
 
 //------------------------------------------------------------------------

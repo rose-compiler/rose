@@ -6,7 +6,7 @@
 using namespace std;
 
 
-// copied from src/midend/astInlining/typeTraits.C
+// originally from src/midend/astInlining/typeTraits.C
 // src/midend/astUtil/astInterface/AstInterface.C
 namespace SageInterface
 {
