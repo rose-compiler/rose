@@ -37,6 +37,56 @@ SgExpression* makeStatePop(SgVariableSymbol* st, SgExpression* resultRef) {
 
 void reverseOneFunction(SgFunctionDeclaration* decl, SgFunctionSymbol*& forward, SgFunctionSymbol*& backward);
 
+void reverseExprStatement(SgExpression* expr, SgBasicBlock* forwardBlockToAppendTo, SgVariableSymbol* forwardSaveStack, SgBasicBlock* backwardBlockToPrependTo, SgVariableSymbol* backwardSaveStack) {
+  // Assumption: the only mutating operation is at the top level of the expr
+  SgExpression* forwardExpr = NULL;
+  SgExpression* backwardExpr = NULL;
+  switch (expr->variantT()) {
+    case V_SgFunctionCallExp: {
+      SgFunctionCallExp* fc = isSgFunctionCallExp(expr);
+      ROSE_ASSERT (fc);
+      SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+      ROSE_ASSERT (fr);
+      SgFunctionDeclaration* decl = fr->get_symbol()->get_declaration();
+      ROSE_ASSERT (decl);
+      SgFunctionSymbol* forwardSym = NULL;
+      SgFunctionSymbol* backwardSym = NULL;
+      reverseOneFunction(decl, forwardSym, backwardSym);
+      ROSE_ASSERT (forwardSym && backwardSym);
+      SgExprListExp* argsForward = deepCopy(fc->get_args());
+      appendExpression(argsForward, buildVarRefExp(forwardSaveStack));
+      SgExprListExp* argsBackward = deepCopy(fc->get_args());
+      appendExpression(argsBackward, buildVarRefExp(backwardSaveStack));
+      forwardExpr = buildFunctionCallExp(forwardSym, argsForward);
+      backwardExpr = buildFunctionCallExp(backwardSym, argsBackward);
+      break;
+    }
+    case V_SgPlusPlusOp: {
+      forwardExpr = copyExpression(expr);
+      backwardExpr = buildMinusMinusOp(copyExpression(isSgUnaryOp(expr)->get_operand()), invertOpMode(isSgUnaryOp(expr)->get_mode()));
+      break;
+    }
+    case V_SgMinusMinusOp: {
+      forwardExpr = copyExpression(expr);
+      backwardExpr = buildPlusPlusOp(copyExpression(isSgUnaryOp(expr)->get_operand()), invertOpMode(isSgUnaryOp(expr)->get_mode()));
+      break;
+    }
+    case V_SgAssignOp: {
+      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, copyExpression(isSgAssignOp(expr)->get_lhs_operand()))), forwardBlockToAppendTo);
+      forwardExpr = copyExpression(expr);
+      backwardExpr = makeStatePop(backwardSaveStack, copyExpression(isSgAssignOp(expr)->get_lhs_operand()));
+      break;
+    }
+    default: {
+      cerr << "Can't reverse mutating expression " << expr->class_name() << endl;
+      ROSE_ASSERT (false);
+    }
+  }
+  ROSE_ASSERT (forwardExpr && backwardExpr);
+  appendStatement(buildExprStatement(forwardExpr), forwardBlockToAppendTo);
+  prependStatement(buildExprStatement(backwardExpr), backwardBlockToPrependTo);
+}
+
 void reverseOneStatement(SgStatement* stmt, SgBasicBlock* forwardBlockToAppendTo, SgVariableSymbol* forwardSaveStack, SgBasicBlock* backwardBlockToPrependTo, SgVariableSymbol* backwardSaveStack) {
   switch (stmt->variantT()) {
     case V_SgBasicBlock: {
@@ -48,53 +98,28 @@ void reverseOneStatement(SgStatement* stmt, SgBasicBlock* forwardBlockToAppendTo
     }
     case V_SgExprStatement: {
       SgExpression* expr = isSgExprStatement(stmt)->get_expression();
-      // Assumption: the only mutating operation is at the top level of the expr
-      SgExpression* forwardExpr = NULL;
-      SgExpression* backwardExpr = NULL;
-      switch (expr->variantT()) {
-        case V_SgFunctionCallExp: {
-          SgFunctionCallExp* fc = isSgFunctionCallExp(expr);
-          ROSE_ASSERT (fc);
-          SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
-          ROSE_ASSERT (fr);
-          SgFunctionDeclaration* decl = fr->get_symbol()->get_declaration();
-          ROSE_ASSERT (decl);
-          SgFunctionSymbol* forwardSym = NULL;
-          SgFunctionSymbol* backwardSym = NULL;
-          reverseOneFunction(decl, forwardSym, backwardSym);
-          ROSE_ASSERT (forwardSym && backwardSym);
-          SgExprListExp* argsForward = deepCopy(fc->get_args());
-          appendExpression(argsForward, buildVarRefExp(forwardSaveStack));
-          SgExprListExp* argsBackward = deepCopy(fc->get_args());
-          appendExpression(argsBackward, buildVarRefExp(backwardSaveStack));
-          forwardExpr = buildFunctionCallExp(forwardSym, argsForward);
-          backwardExpr = buildFunctionCallExp(backwardSym, argsBackward);
-          break;
-        }
-        case V_SgPlusPlusOp: {
-          forwardExpr = copyExpression(expr);
-          backwardExpr = buildMinusMinusOp(copyExpression(isSgUnaryOp(expr)->get_operand()), invertOpMode(isSgUnaryOp(expr)->get_mode()));
-          break;
-        }
-        case V_SgMinusMinusOp: {
-          forwardExpr = copyExpression(expr);
-          backwardExpr = buildPlusPlusOp(copyExpression(isSgUnaryOp(expr)->get_operand()), invertOpMode(isSgUnaryOp(expr)->get_mode()));
-          break;
-        }
-        case V_SgAssignOp: {
-          appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, copyExpression(isSgAssignOp(expr)->get_lhs_operand()))), forwardBlockToAppendTo);
-          forwardExpr = copyExpression(expr);
-          backwardExpr = makeStatePop(backwardSaveStack, copyExpression(isSgAssignOp(expr)->get_lhs_operand()));
-          break;
-        }
-        default: {
-          cerr << "Can't reverse mutating expression " << expr->class_name() << endl;
-          ROSE_ASSERT (false);
-        }
-      }
-      ROSE_ASSERT (forwardExpr && backwardExpr);
-      appendStatement(buildExprStatement(forwardExpr), forwardBlockToAppendTo);
-      prependStatement(buildExprStatement(backwardExpr), backwardBlockToPrependTo);
+      reverseExprStatement(expr, forwardBlockToAppendTo, forwardSaveStack, backwardBlockToPrependTo, backwardSaveStack);
+      break;
+    }
+    case V_SgIfStmt: {
+      // Assumption: test does not have any side effects
+      SgIfStmt* ifs = isSgIfStmt(stmt);
+      SgBasicBlock* trueBodyForward = buildBasicBlock();
+      SgBasicBlock* trueBodyBackward = buildBasicBlock();
+      SgBasicBlock* falseBodyForward = buildBasicBlock();
+      SgBasicBlock* falseBodyBackward = buildBasicBlock();
+      reverseOneStatement(ifs->get_true_body(), trueBodyForward, forwardSaveStack, trueBodyBackward, backwardSaveStack);
+      reverseOneStatement(ifs->get_false_body(), falseBodyForward, forwardSaveStack, falseBodyBackward, backwardSaveStack);
+      SgIfStmt* ifsForward = buildIfStmt(deepCopy(ifs->get_conditional()), trueBodyForward, falseBodyForward);
+      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildBoolValExp(true))), ifsForward->get_true_body());
+      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildBoolValExp(false))), ifsForward->get_false_body());
+      appendStatement(ifsForward, forwardBlockToAppendTo);
+      static int popVariableCounter = 0;
+      SgVariableDeclaration* popVariable = buildVariableDeclaration("popResult__" + StringUtility::numberToString(++popVariableCounter), getBoolType(ifs), NULL, backwardBlockToPrependTo);
+      SgVariableSymbol* popVariableSymbol = getFirstVarSym(popVariable);
+      prependStatement(buildIfStmt(buildVarRefExp(popVariableSymbol), trueBodyBackward, falseBodyBackward), backwardBlockToPrependTo);
+      prependStatement(buildExprStatement(makeStatePop(backwardSaveStack, buildVarRefExp(popVariableSymbol))), backwardBlockToPrependTo);
+      prependStatement(popVariable, backwardBlockToPrependTo);
       break;
     }
     default: {
