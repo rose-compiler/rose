@@ -181,10 +181,12 @@ void reverseOneFunction(SgFunctionDeclaration* decl, SgFunctionSymbol*& forward,
   ROSE_ASSERT (forwardDefn);
   forwardDefn->insert_symbol(forwardSaveStack->get_name(), forwardSaveStack);
   forwardSaveStack->get_declaration()->set_scope(forwardDefn);
+  forwardSaveStack->set_parent(forwardDefn->get_symbol_table());
   SgFunctionDefinition* backwardDefn = backwardDecl->get_definition();
   ROSE_ASSERT (backwardDefn);
   backwardDefn->insert_symbol(backwardSaveStack->get_name(), backwardSaveStack);
   backwardSaveStack->get_declaration()->set_scope(backwardDefn);
+  backwardSaveStack->set_parent(backwardDefn->get_symbol_table());
   decl = isSgFunctionDeclaration(decl->get_definingDeclaration());
   ROSE_ASSERT (decl);
   SgFunctionDefinition* defn = decl->get_definition();
