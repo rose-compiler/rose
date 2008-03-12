@@ -3700,6 +3700,15 @@ SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, S
      return functionSymbol;
         }
 
+SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope/*=NULL*/)
+{
+  if (scope== NULL)
+          scope= SageBuilder::topScopeStack();
+  SgSymbol* symbol = lookupSymbolInParentScopes (type_name,scope);
+  if (symbol==NULL) return NULL;
+  else return symbol->get_type();
+}
+
 SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgName &functionName,
                                                         const SgType* t,
                                                         SgScopeStatement *currentScope)
