@@ -1065,9 +1065,10 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
  
                                  
      if(SgProject::get_verbose() >= 1){
-	     printf ("include paths are: %s \n",CommandlineProcessing::generateStringFromArgList(includeSpecifierlist).c_str());
-	     printf ("macros are: %s \n",CommandlineProcessing::generateStringFromArgList(macroList).c_str());
-	     printf ("preinclude headers are: %s \n",CommandlineProcessing::generateStringFromArgList(preincludeList).c_str());
+       // tps (Mar 12, 2008) : commented this out since the arguments are not valid anymore
+       //printf ("include paths are: %s \n",CommandlineProcessing::generateStringFromArgList(includeSpecifierlist).c_str());
+       //     printf ("macros are: %s \n",CommandlineProcessing::generateStringFromArgList(macroList).c_str());
+       //    printf ("preinclude headers are: %s \n",CommandlineProcessing::generateStringFromArgList(preincludeList).c_str());
      }
 
      std::vector<SgNode*> accessFunctionsList;
@@ -1194,8 +1195,8 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
   // be in the list of EDG as well and in which case, what order should it be placed?
 
      string internalIncludePaths[]          = CXX_INCLUDE_STRING;
-     if(SgProject::get_verbose() >= 1)
-           std::cout << "INTERNAL INCLUDE PATHS " << CXX_INCLUDE_STRING << std::endl;
+     //if(SgProject::get_verbose() >= 1)
+     //      std::cout << "INTERNAL INCLUDE PATHS " << CXX_INCLUDE_STRING << std::endl;
 
      vector<string> internalIncludePathList(internalIncludePaths, internalIncludePaths + sizeof(internalIncludePaths)/sizeof(string));
   //internalIncludePathList.push_back("-I"+string(CurrentPath)+"/");
