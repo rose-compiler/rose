@@ -27,9 +27,10 @@ SgExpression* makeStatePush(SgVariableSymbol* st, SgExpression* expr) {
   return f;
 }
 
-SgExpression* makeStatePop(SgVariableSymbol* st) {
+SgExpression* makeStatePop(SgVariableSymbol* st, SgExpression* resultRef) {
   SgExprListExp* args = buildExprListExp();
   appendExpression(args, buildVarRefExp(st));
+  appendExpression(args, resultRef);
   SgExpression* f = buildFunctionCallExp(getFunction("statePop"), args);
   return f;
 }
@@ -83,7 +84,7 @@ void reverseOneStatement(SgStatement* stmt, SgBasicBlock* forwardBlockToAppendTo
         case V_SgAssignOp: {
           appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, copyExpression(isSgAssignOp(expr)->get_lhs_operand()))), forwardBlockToAppendTo);
           forwardExpr = copyExpression(expr);
-          backwardExpr = buildAssignOp(copyExpression(isSgAssignOp(expr)->get_lhs_operand()), makeStatePop(backwardSaveStack));
+          backwardExpr = makeStatePop(backwardSaveStack, copyExpression(isSgAssignOp(expr)->get_lhs_operand()));
           break;
         }
         default: {
@@ -120,8 +121,8 @@ void reverseOneFunction(SgFunctionDeclaration* decl, SgFunctionSymbol*& forward,
   ROSE_ASSERT (forwardDecl);
   SgFunctionDeclaration* backwardDecl = buildDefiningFunctionDeclaration(name + "__backward", SgTypeVoid::createType(), paramList2, globalScope);
   ROSE_ASSERT (backwardDecl);
-  appendStatement(forwardDecl, globalScope);
-  appendStatement(backwardDecl, globalScope);
+  insertStatement(decl, forwardDecl, false);
+  insertStatement(forwardDecl, backwardDecl, false);
   forward = getFunction(name + "__forward");
   backward = getFunction(name + "__backward");
   ROSE_ASSERT (forward && backward);

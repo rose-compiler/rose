@@ -6,8 +6,9 @@
 void sendMessage(int dest, int val);
 void sendAntimessage(int dest, int val);
 
-void statePush(char* stateSave, int x);
-int statePop(char* stateSave);
+void statePush(char* stateSave, const int& x);
+
+void statePop(char* stateSave, int&);
 
 inline void sendMessage__forward(int dest, int val, char* stateSave) {
   sendMessage(dest, val);

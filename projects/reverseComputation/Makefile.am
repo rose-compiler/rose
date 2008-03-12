@@ -7,8 +7,10 @@ bin_PROGRAMS = simpleComputationReverser
 
 simpleComputationReverser_SOURCES = simpleComputationReverser.C
 
+EXTRA_DIST = test1.C eventSimulation.h
+
 include_HEADERS =
 
-check-local: simpleComputationReverser test1.c
-	./simpleComputationReverser -c $(srcdir)/test1.c
+check-local: simpleComputationReverser test1.C
+	./simpleComputationReverser -c $(srcdir)/test1.C
 	@echo "Test passed"
