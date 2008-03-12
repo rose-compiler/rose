@@ -5,7 +5,7 @@ INCLUDES =  $(ROSE_INCLUDES) -I../CFG -I$(top_srcdir)/src/util/support -I$(top_s
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-EXTRA_DIST = steensgaard.h PtrAnal.h
+EXTRA_DIST = steensgaard.h PtrAnal.h SteensgaardPtrAnal.h
 
 if DEV_LIBS
 lib_LTLIBRARIES = libpointerAnal.la
