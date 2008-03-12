@@ -970,11 +970,11 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 #ifdef USE_ROSE_BOOST_WAVE_SUPPORT
   // Build the AST used by ROSE
   // SgProject* project = frontend(argc,argv);
-     std::list<std::string>  includeSpecifierlist;
-  //     std::list<std::string>  includesFromProject = sageFilePtr->get_project()->get_includeDirectorySpecifierList();
-  //     std::list<std::string>  includesFromProject = sageFilePtr->get_includeDirectorySpecifierList();
+     std::vector<std::string>  includeSpecifierlist;
+  //     std::vector<std::string>  includesFromProject = sageFilePtr->get_project()->get_includeDirectorySpecifierList();
+  //     std::vector<std::string>  includesFromProject = sageFilePtr->get_includeDirectorySpecifierList();
 
-  // const std::list<std::string>  sourceFileNameList   = project->get_sourceFileNameList();
+  // const std::vector<std::string>  sourceFileNameList   = project->get_sourceFileNameList();
   // ROSE_ASSERT(project != NULL);
 
   // These are defined in "rose_config.h", and automatically generated header file (by autoheader)
@@ -984,18 +984,18 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
   // define CXX_SPEC_DEF " -D__GNUG__=3 -D__GNUC__=3 -D__GNUC_MINOR__=3 -D__GNUC_PATCHLEVEL__=2 -D_GNU_SOURCE --preinclude rose_edg_macros_and_functions_required_for_gnu.h "
 
   // Build the list that we will hand off to boost-wave
-  //std::list<std::string> includeSpecifierlist;
-     std::list<std::string> macroList;
-     std::list<std::string> preincludeList;
+  //std::vector<std::string> includeSpecifierlist;
+     std::vector<std::string> macroList;
+     std::vector<std::string> preincludeList;
 
      string predefinedMacros          = CXX_SPEC_DEF;
     
      if(SgProject::get_verbose() >= 1)
          std::cout << "XXXXXXXXXXXX: " << CXX_SPEC_DEF << std::endl;
 
-     list<string> predefinedMacroList = CommandlineProcessing::generateArgListFromString(predefinedMacros);
-  // for (list<string>::iterator i = predefinedMacroList.begin(); i != predefinedMacroList.end(); i++)
-     list<string>::iterator i = predefinedMacroList.begin();
+     vector<string> predefinedMacroList = CommandlineProcessing::generateArgListFromString(predefinedMacros);
+  // for (vector<string>::iterator i = predefinedMacroList.begin(); i != predefinedMacroList.end(); i++)
+     vector<string>::iterator i = predefinedMacroList.begin();
      while (i != predefinedMacroList.end())
         {
           if (i->substr(0,2) == "-D")
@@ -1033,8 +1033,8 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      if(SgProject::get_verbose() >= 1)
         std::cout << "INCLUDES FROM COMMANDLInE" << std::endl;
 
-     std::list<std::string> commandLine = sageFilePtr->get_originalCommandLineArgumentList();
-     for (list<string>::iterator i = commandLine.begin(); i != commandLine.end(); i++)
+     std::vector<std::string> commandLine = sageFilePtr->get_originalCommandLineArgumentList();
+     for (vector<string>::iterator i = commandLine.begin(); i != commandLine.end(); i++)
         {
           ROSE_ASSERT((*i)[0] != ' ');
        // printf ("Command line argument: *i = %s \n",i->c_str());
@@ -1070,11 +1070,11 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 	     printf ("preinclude headers are: %s \n",CommandlineProcessing::generateStringFromArgList(preincludeList).c_str());
      }
 
-     std::list<SgNode*> accessFunctionsList;
+     std::vector<SgNode*> accessFunctionsList;
 
   // Build list of value expressions
-  // std::list<SgNode*> valueExp = NodeQuery::querySubTree (project,&queryFloatDoubleValExp);
-     std::list<SgNode*> valueExp = NodeQuery::querySubTree (sageFilePtr,&queryFloatDoubleValExp);
+  // std::vector<SgNode*> valueExp = NodeQuery::querySubTree (project,&queryFloatDoubleValExp);
+     std::vector<SgNode*> valueExp = NodeQuery::querySubTree (sageFilePtr,&queryFloatDoubleValExp);
 
   // Open and read in the specified input file.
   // std::string sourceFileName = *(sourceFileNameList.begin());
@@ -1168,7 +1168,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      if(SgProject::get_verbose() >= 1)
          std::cout << "MIDDLE OF ADDING PREDEFINES" << std::endl;
 
-     for(std::list<std::string>::iterator it_beg = macroList.begin();
+     for(std::vector<std::string>::iterator it_beg = macroList.begin();
             it_beg != macroList.end(); ++it_beg){
 	          
 	     if(SgProject::get_verbose() >= 1)			  
@@ -1183,8 +1183,8 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 
 
   // Add include paths specified on commandline to the context object 
-     std::list<string>::const_iterator firstInclude = includeSpecifierlist.begin();
-     std::list<std::string>::const_iterator lastInclude = includeSpecifierlist.end();
+     std::vector<string>::const_iterator firstInclude = includeSpecifierlist.begin();
+     std::vector<std::string>::const_iterator lastInclude = includeSpecifierlist.end();
 
                                  
      if(SgProject::get_verbose() >= 1)
@@ -1197,10 +1197,10 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      if(SgProject::get_verbose() >= 1)
            std::cout << "INTERNAL INCLUDE PATHS " << CXX_INCLUDE_STRING << std::endl;
 
-     list<string> internalIncludePathList = CommandlineProcessing::generateArgListFromString(internalIncludePaths);
+     vector<string> internalIncludePathList = CommandlineProcessing::generateArgListFromString(internalIncludePaths);
   //internalIncludePathList.push_back("-I"+string(CurrentPath)+"/");
 
-     for (list<string>::iterator i = internalIncludePathList.begin(); i != internalIncludePathList.end(); i++)
+     for (vector<string>::iterator i = internalIncludePathList.begin(); i != internalIncludePathList.end(); i++)
         {
           if (i->substr(0,2) == "-I")
              {
@@ -1262,9 +1262,9 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
          printf ("Adding the preinclude file \n");
 
      ROSE_ASSERT(preincludeList.size() == 1);
-     for (list<string>::reverse_iterator i = preincludeList.rbegin(); i != preincludeList.rend(); i++)
+     for (vector<string>::reverse_iterator i = preincludeList.rbegin(); i != preincludeList.rend(); i++)
         {
-          list<string>::reverse_iterator copyOf_i = i;
+          vector<string>::reverse_iterator copyOf_i = i;
           copyOf_i++;
 
           if(SgProject::get_verbose() >= 1)
@@ -1347,11 +1347,11 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 
 #if 0
   // Get all SgFile nodes in the AST so that the attributes can be attached to them
-  // std::list<SgNode*> sgFileList =     NodeQuery::querySubTree(project,&findNodes);
-     std::list<SgNode*> sgFileList =     NodeQuery::querySubTree(sageFilePtr,&findNodes);
+  // std::vector<SgNode*> sgFileList =     NodeQuery::querySubTree(project,&findNodes);
+     std::vector<SgNode*> sgFileList =     NodeQuery::querySubTree(sageFilePtr,&findNodes);
 
   // Attache the map of attributes belonging to the current file to the AST
-     for(std::list<SgNode*>::iterator it = sgFileList.begin(); it != sgFileList.end(); ++it)
+     for(std::vector<SgNode*>::iterator it = sgFileList.begin(); it != sgFileList.end(); ++it)
         {
           SgFile* sgFile = isSgFile(*it);
           attachPreprocessingInfo(sgFile,&attributeListMap.currentMapOfAttributes);

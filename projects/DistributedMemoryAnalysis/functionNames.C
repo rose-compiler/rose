@@ -4,16 +4,30 @@
 #include "DistributedMemoryAnalysis.h"
 #include <rose.h>
 
+#define DEBUG_OUTPUT true
+
+// ----------------------------------------------------
+// preTraversal
+// ----------------------------------------------------
+
 // The pre-traversal runs before the distributed part of the analysis and is used to propagate context information down
 // to the individual function definitions in the AST. Here, it just computes the depth of nodes in the AST.
 class FunctionNamesPreTraversal: public AstTopDownProcessing<int>
 {
 protected:
-    int evaluateInheritedAttribute(SgNode *, int depth)
+    int evaluateInheritedAttribute(SgNode *node, int depth)
     {
+#if DEBUG_OUTPUT
+      std::cout << " eval inherited: node: " << node->class_name() << "  depth:" << depth << std::endl;
+#endif
         return depth + 1;
     }
 };
+
+
+// ----------------------------------------------------
+// postTraversal
+// ----------------------------------------------------
 
 // The post-traversal runs after the distributed part of the analysis and is used to collect the information it
 // computed. Here, the synthesized attributes computed by the distributed analysis are strings representing information
@@ -32,6 +46,9 @@ protected:
             if (str.size() > 0 && str[str.size()-1] != '\n')
                 result += "\n";
         }
+#if DEBUG_OUTPUT
+	std::cout << " eval synthesized: node: " << node->class_name() << "  result:" << result << " ..............\n" <<std::endl;
+#endif
         return result;
     }
 
@@ -40,6 +57,11 @@ protected:
         return "";
     }
 };
+
+
+// ----------------------------------------------------
+// FunctionNames
+// ----------------------------------------------------
 
 // This is the distributed part of the analysis. The DistributedMemoryTraversal base class is a template taking an
 // inherited and a synthesized attribute type as template parameters; these are the same types used by the pre- and
@@ -55,6 +77,10 @@ protected:
         std::string funcName = funcDecl->get_name().str();
         std::stringstream s;
         s << "process " << myID() << ": at depth " << depth << ": function " << funcName;
+#if DEBUG_OUTPUT
+	std::cout << " analyzeSubtree of funcDecl: " << funcName << "  id:" << myID()  <<  
+	  "       result:  " << s.str() << std::endl;
+#endif
         return s.str();
     }
 

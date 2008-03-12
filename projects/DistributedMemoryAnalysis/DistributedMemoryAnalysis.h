@@ -35,10 +35,13 @@ protected:
                                                InheritedAttributeType rootInheritedValue,
                                                AstTopDownProcessing<InheritedAttributeType> *preTraversal);
 
-    //private:
+    private:
     int my_rank;
     int processes;
 };
+
+
+
 
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 class DistributedMemoryTraversal: public DistributedMemoryAnalysisBase<InheritedAttributeType>
@@ -65,6 +68,91 @@ private:
     DistributedMemoryTraversal(const DistributedMemoryTraversal &);
     const DistributedMemoryTraversal &operator=(const DistributedMemoryTraversal &);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+// --------- Implementor Line - Do Not Cross ---------
+// There is nothing for users to see here, move along.
+
+template <class InheritedAttributeType>
+class DistributedMemoryAnalysisPreTraversal
+  : public AstTopDownProcessing<InheritedAttributeType>
+{
+public:
+ DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *preTraversal)
+   : preTraversal(preTraversal), inFunc(false), nodeCount(0), stdFunc(false) {}
+
+  std::vector<SgFunctionDeclaration *> &get_funcDecls() {return funcDecls;}
+  std::vector<InheritedAttributeType> &get_initialInheritedValues() {return initialInheritedValues;}
+  std::vector<size_t> &get_nodeCounts() {return nodeCounts;}
+
+protected:
+    InheritedAttributeType evaluateInheritedAttribute(SgNode *, InheritedAttributeType);
+    void destroyInheritedValue(SgNode *, InheritedAttributeType);
+
+private:
+    AstTopDownProcessing<InheritedAttributeType> *preTraversal;
+    bool inFunc;
+    size_t nodeCount;
+    bool stdFunc;
+
+    std::vector<SgFunctionDeclaration *> funcDecls;
+    std::vector<InheritedAttributeType> initialInheritedValues;
+    std::vector<size_t> nodeCounts;
+};
+
+
+
+
+//namespace DistributedMemoryAnalysisNamespace {
+//  bool postTraversalEvaluateInheritedAttribute(SgNode* node, bool inFunction);
+//}
+
+template <class SynthesizedAttributeType>
+class DistributedMemoryAnalysisPostTraversal
+  : public AstTopDownBottomUpProcessing<bool, SynthesizedAttributeType>
+{
+public:
+    DistributedMemoryAnalysisPostTraversal(AstBottomUpProcessing<SynthesizedAttributeType> *postTraversal,
+                                           const std::vector<SynthesizedAttributeType> &functionResults)
+      : postTraversal(postTraversal), functionResults(functionResults), functionCounter(0), stdFunc(false) {}
+
+    typedef typename AstTopDownBottomUpProcessing<bool, SynthesizedAttributeType>::SynthesizedAttributesList SynthesizedAttributesList;
+
+protected:
+    bool evaluateInheritedAttribute(SgNode *node, bool inFunction);
+    // {
+    //  return DistributedMemoryAnalysisNamespace::postTraversalEvaluateInheritedAttribute(node, inFunction);
+    //}
+    SynthesizedAttributeType evaluateSynthesizedAttribute(SgNode *, bool, SynthesizedAttributesList);
+    SynthesizedAttributeType defaultSynthesizedAttribute(bool) {return postTraversal->defaultSynthesizedAttribute();}
+
+private:
+    AstBottomUpProcessing<SynthesizedAttributeType> *postTraversal;
+    const std::vector<SynthesizedAttributeType> &functionResults;
+    int functionCounter;
+    bool stdFunc;
+};
+
+
+
+
+
+
+
+
+
+
+
 
 #include "DistributedMemoryAnalysisImplementation.h"
 

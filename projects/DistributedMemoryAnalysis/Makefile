@@ -29,11 +29,11 @@ check: coloredASTcheck functionNamesCheck
 
 coloredASTcheck:
 #	srun -N4 -ppdebug coloredAST -edg:w exampleInputs/*
-	mpirun -np 4 coloredAST -edg:w exampleInputs/*
+	mpirun -l -np 4 ./coloredAST -edg:w exampleInputs/*
 
 functionNamesCheck:
 #	srun -N4 -ppdebug functionNames -edg:w exampleInputs/*
-	mpirun -np 4 coloredAST -edg:w exampleInputs/*
+	mpirun -l -np 4 ./coloredAST -edg:w exampleInputs/*
 
 clean:
 	rm -f *.o coloredAST functionNames *.dot *~ gmon.out *.core

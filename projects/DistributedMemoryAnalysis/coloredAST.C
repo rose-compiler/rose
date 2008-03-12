@@ -10,6 +10,10 @@ static const char *colors[] = {
     "red2", "green2", "blue2", "yellow2", "red1", "green1", "blue1", "yellow1"
 };
 
+// --------------------------------------------------------
+// ColoredDotGraphTraversal
+// --------------------------------------------------------
+
 class ColoredDotGraphTraversal: public AstTopDownProcessing<SgNode *> {
 public:
     ColoredDotGraphTraversal(std::string color): myColor(color) {
@@ -81,6 +85,12 @@ private:
     std::string myColor;
 };
 
+
+
+// --------------------------------------------------------
+// DotGraphPostTraversal
+// --------------------------------------------------------
+
 class DotGraphPostTraversal: public AstBottomUpProcessing<std::string> {
 protected:
     std::string evaluateSynthesizedAttribute(SgNode *, SynthesizedAttributesList synAttrs) {
@@ -95,6 +105,12 @@ protected:
         return "";
     }
 };
+
+
+
+// --------------------------------------------------------
+// DistributedDotGraph
+// --------------------------------------------------------
 
 class DistributedDotGraph: public DistributedMemoryTraversal<SgNode *, std::string> {
 public:
@@ -131,6 +147,9 @@ protected:
         std::free(attribute.second);
     }
 };
+
+
+
 
 int main(int argc, char **argv) {
     /* read the AST */
