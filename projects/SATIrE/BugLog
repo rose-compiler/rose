@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.3 2008-03-11 15:02:07 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.4 2008-03-13 14:58:17 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -156,11 +156,12 @@ Symptoms:
     __null || nestedQualification == true' failed." when testing constprop
     on testsuite/success/classes3.C
 Reason:
-    unknown
+    Error in ROSE 0.9.0b, not in our code. Can be observed by simply calling
+    the ROSE identityTranslator on the file.
 Fix:
-    unknown
+    TODO: Send file to Dan.
 Status:
-    BROKEN as of 2008-03-11
+    BROKEN as of 2008-03-12
 
 
 Logged:
@@ -174,3 +175,82 @@ Fix:
     unknown
 Status:
     BROKEN as of 2008-03-11
+
+
+Logged:
+    2008-03-12, GB
+Symptoms:
+    Argument assignments (at least for some constructor calls on non-pointer
+    objects) and return nodes (at least for some constructor calls) contain
+    wrong variables.
+Reason:
+    Argument assignments were broken partly because of a typo, and mainly
+    because once more a deep copy statement did not copy a parent pointer.
+    If such problems recur, we should consider wrapping the ROSE copy
+    mechanism. Return nodes were broken because a few lines to update the
+    list of variables were missing in the code that handles constructor
+    calls.
+Fix:
+    Copy parent pointer, update variable list for return nodes.
+Status:
+    Resolved 2008-03-12, GB
+
+
+Logged:
+    2008-03-12, GB
+Symptoms:
+    C++ code of the form:
+        a = new A();
+    produces an ICFG like:
+        ArgumentAssignment($A$this, new A());
+        Call(A, [$A$this]);
+        Return(A, [$A$this]);
+        a = $A$this;
+    This is not good because, unlike in all other cases, the ReturnStmt is
+    *not* allowed to kill the variable $A$this in its param list because it
+    is needed in the subsequent statement.
+Reason:
+    This point was not given enough thought when this part of the ICFG
+    builder was written.
+Fix:
+    Change the ICFG builder to construct a structure preserving the property
+    that the variables in a ReturnStmt may safely be killed. This is done by
+    removing the 'this' pointer from the ReturnStmt's list iff the
+    constructor call resulted from the application of the 'new' operator. In
+    this case, the occurrence of $A$this in the subsequent statement is the
+    only occurrence, it can therefore be killed at that point.
+Status:
+    Resolved 2008-03-13
+
+
+Logged:
+    2008-03-13, GB
+Symptoms:
+    Error message "error during ICFG construction: constructor has more
+    arguments than parameters!"
+Reason:
+    The ICFG builder does not correctly resolve overloaded member
+    function/constructor calls, thus the numbers of arguments and parameters
+    may indeed differ. Overloaded member functions weren't always resolved
+    correctly, either.
+Fix:
+    Correct comparison of names/mangled names and parameter types.
+Status:
+    Resolved 2008-03-13, GB
+
+
+Logged:
+    2008-03-13, GB
+Symptoms:
+    No direct ones. When using aisee to view the ICFG of a program
+    containing overloaded functions, aisee complains that there are nodes
+    (the functions' CFGs) with identical names: "Double defined node A::A".
+Reason:
+    The internal names of the functions are the same.
+Fix:
+    None really necessary since a) aisee is not our product, and b) names
+    don't matter, the graph is correct. Still, when the ICFG builder is
+    rewritten, this can be kept in mind. We could disambiguate function
+    names by listing their parameters along with the name.
+Status:
+    Present but irrelevant as of 2008-03-13

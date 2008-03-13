@@ -1,3 +1,10 @@
+V0.8.1 (in progress)
+
+* Bug fixes [GB]
+  - correct handling of $Foo$this pointer for constructors
+  - resolution of overloaded constructor and overloaded member function calls
+  - see file BugLog for details
+
 V0.8.0 2008-03-11 MS,GB,AP
 
 * required user changes:
