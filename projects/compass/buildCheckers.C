@@ -5,6 +5,40 @@
 #include "compass.h"
 #include "checkers.h"
 
+//AS(1/18/08) Read in the selecting of rules
+std::map<std::string, bool > 
+readFile( std::string filename){
+  std::map<std::string, bool > checkersToUse;
+  std::ifstream* file_op = Compass::openFile( filename );
+
+  std::string current_word;
+  bool is_first_word = true;
+  //read file
+  char dummyString[2000];
+
+  while((*file_op) >> current_word){
+	//First word denotes what the regular expression should operate
+	//upon. Second word denotes the regular expression
+
+	if(  current_word.substr(0,1) == std::string("#") ){
+	  //Skip rest of the line if a "#" character is found. This denotes a 
+	  //comment
+	  file_op->getline(dummyString,2000);
+
+	}else{
+	  if(current_word.substr(0,2) == "+:" ){
+		checkersToUse[current_word.substr(2)] = true;
+	  }else if(current_word.substr(0,2) == "-:" ){
+		checkersToUse[current_word.substr(2)] = false;
+	  }
+	}
+  }
+
+  return checkersToUse;
+}
+
+
+
 void
 buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, Compass::OutputObject &output )
 {

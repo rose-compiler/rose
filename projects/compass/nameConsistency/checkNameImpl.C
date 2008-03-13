@@ -93,8 +93,8 @@ NameEnforcer::NameEnforcer() : filterPathMap(), namespacesToFilter(), namespaces
   ******************************************************************************/
 void NameEnforcer::readFile( std::string filename){
 
-     std::ifstream file_op(filename.c_str());
-     if (file_op.fail()) {
+     std::ifstream* file_op = Compass::openFile(filename);
+     if (file_op->fail()) {
 	  std::cout << "error: could not find file \"" << filename 
 	           << "\" which is meant to include the styles to enforce with " 
 		   << "the name checker." << std::endl;
@@ -107,14 +107,14 @@ void NameEnforcer::readFile( std::string filename){
 
      char dummyString[2000];
   //read file
-     while(file_op >> current_word){
+     while( (*file_op) >> current_word){
        //First word denotes what the regular expression should operate
        //upon. Second word denotes the regular expression
 
 	 if(  current_word.substr(0,1) == std::string("#") ){
 	      //Skip rest of the line if a "#" character is found. This denotes a 
 	      //comment
-	      file_op.getline(dummyString,2000);
+	      file_op->getline(dummyString,2000);
 	      
 	  }else if(is_first_word == true){
 	       is_first_word=false;
@@ -150,7 +150,7 @@ void NameEnforcer::readFile( std::string filename){
 
 	  }
      }
-
+   delete file_op;
 }
 
 

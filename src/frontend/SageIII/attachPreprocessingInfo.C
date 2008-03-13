@@ -998,6 +998,8 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      vector<string>::iterator i = predefinedMacroList.begin();
      while (i != predefinedMacroList.end())
         {
+ 
+           //AS(03/12/08) CXX_SPEC_DEF has been changed to only contain macro defs
           if (i->substr(0,2) == "-D")
              {
                string macro = i->substr(2);
@@ -1019,12 +1021,12 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 		    if(SgProject::get_verbose() >= 1)
                          std::cout << "Predefined macro: " << *i << std::endl;
                   }
+               else if(i->empty()){}
                else
                   {
                     printf ("Found a non -D macro definition  (and non preinclude file) in the predefined macro list substring = %s *i = %s \n",i->substr(0,2).c_str(),i->c_str());
                   }
              }
-
           i++;
         }
 
@@ -1201,33 +1203,16 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      vector<string> internalIncludePathList(internalIncludePaths, internalIncludePaths + sizeof(internalIncludePaths)/sizeof(string));
   //internalIncludePathList.push_back("-I"+string(CurrentPath)+"/");
 
-     for (vector<string>::iterator i = internalIncludePathList.begin(); i != internalIncludePathList.end(); i++)
-        {
-          if (i->substr(0,2) == "-I")
-             {
-               ctx.add_sysinclude_path((*i).substr(2,(*i).length()).c_str()); 
-             }
-          if (i->substr(0,13) == "--sys_include")
-             {
-               if ( ( (i++) != internalIncludePathList.end() )
-                    && ( (i->substr(0,8) != "--sys_include") ||  (i->substr(0,2) == "-I") )
-                  )
-                     ctx.add_sysinclude_path(i->c_str()); 
-               
-             }
-          else if( (i->substr(0,3) == "g++") || (i->substr(0,4) == "/usr"))
-          {
-           //AS(03/12/08) FIXME: Somebody removed the --sys_include in front of the g++ header include directories
-           //this patch fixes that for now.
-            ctx.add_sysinclude_path(i->c_str()); 
 
-          }
-          else
-             {
-               
-               printf ("Found a non include path in the internal include path list substring = %s *i = %s \n",i->substr(0,2).c_str(),i->c_str());
-             }
+     string includeBase = findRoseSupportPathFromBuild("include-staging", ROSE_AUTOMAKE_INCLUDEDIR);
+     for (vector<string>::iterator i = internalIncludePathList.begin(); i != internalIncludePathList.end(); i++)
+       {
+           ROSE_ASSERT (!i->empty());
+           string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+           
+           ctx.add_sysinclude_path(fullPath.c_str()); 
         }
+
      std::string sys_include = "/usr/include/";
      ctx.add_sysinclude_path(sys_include.c_str());
 

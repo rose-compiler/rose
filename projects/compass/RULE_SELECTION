@@ -50,7 +50,7 @@
 +:MallocReturnValueUsedInIfStmt
 +:MultiplePublicInheritance
 +:NameAllParameters
-+:NameConsistency
+-:NameConsistency
 +:NewDelete
 +:NoExceptions
 +:NoExitInMpiCode
