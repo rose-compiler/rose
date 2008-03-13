@@ -82,7 +82,7 @@
 // File in src/frontend/BinaryDisassembly
   #include "RoseBin_support.h"
   #include "RoseBin_unparse.h"
-#ifdef ROSE_USE_DATABASE
+#ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif 
 
