@@ -38,23 +38,23 @@ for file in $FILES; do
       result=$?
       # Expected FAIL
       if echo $file | grep -q ^$SUITE/failure; then
-	  expected_fails=$(( $expected_fails + 1 ))
-	  if [ $result != 0 ]; then
-	      fails_ok=$(( $fails_ok + 1 ))
-	  else
-	      echo "** ERROR: Expected failure succeeded $analysis $OPTIONS $file"
-	      fail_errors="$fail_errors $analysis:$file"
-	  fi
+        expected_fails=$(( $expected_fails + 1 ))
+        if [ $result != 0 ]; then
+          fails_ok=$(( $fails_ok + 1 ))
+        else
+          echo "** ERROR: Expected failure succeeded $analysis $OPTIONS $file"
+          fail_errors="$fail_errors $analysis:$file"
+        fi
       fi
       # Expected SUCCESS
       if echo $file | grep -q ^$SUITE/success; then    
-	  expected_succs=$(( $expected_succs + 1 ))
-	  if [ $result == 0 ]; then
-	      succs_ok=$(( $succs_ok + 1 ))
-	  else
-	      echo "** ERROR: Expected success failed $analysis $OPTIONS $file"
-	      succ_errors="$succ_errors $analysis:$file"
-	  fi
+        expected_succs=$(( $expected_succs + 1 ))
+        if [ $result == 0 ]; then
+          succs_ok=$(( $succs_ok + 1 ))
+        else
+          echo "** ERROR: Expected success failed $analysis $OPTIONS $file"
+          succ_errors="$succ_errors $analysis:$file"
+        fi
       fi
     fi
   done 
@@ -71,13 +71,13 @@ echo "[$fails_ok/$expected_fails] expected failures"
 if [ "x$fail_errors" != "x" ]; then
     echo "** ERROR: Expected failures succeeded"
     for i in $fail_errors; do 
-	echo "  $i"
+    echo "  $i"
     done
 fi
 if [ "x$succ_errors" != "x" ]; then
     echo "** ERROR: Expected successes failed"
     for i in $succ_errors; do
-	echo "  $i"
+    echo "  $i"
     done
 fi
 if [ "x$fail_errors$succ_errors" != "x" ]; then
