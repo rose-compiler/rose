@@ -16,9 +16,11 @@ noinst_LTLIBRARIES = libbinaryFrontend.la libbinarydisassembly.la
 lib_LTLIBRARIES = libbinaryDatabase.la 
 endif
 
+if ROSE_USE_DATABASE
 # Isolated part of library that depends on the mysql database
 libbinaryDatabase_la_DEPENDENCIES =
 libbinaryDatabase_la_SOURCES = RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp RoseBin_IDAPRO_buildTree.cpp
+endif 
 
 # Isolated part of library that is independent of the mysql database
 libbinaryFrontend_la_DEPENDENCIES =
@@ -50,6 +52,7 @@ libbinarydisassembly_la_SOURCES = \
 endif
 
 # Make sure these SAGE specific header files are placed into a distribution
+if ROSE_USE_DATABASE
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_buildTree.h  RoseBin_DB.h  RoseBin_DB_IDAPRO.h \
    RoseBin.h  RoseBin_IDAPRO_branchGraph.h  RoseBin_IDAPRO_buildTree.h \
@@ -62,7 +65,19 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
    analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h
-
+else
+BINARY_DISASSEMBLY_HEADER_FILES = \
+   RoseBin_IDAPRO_branchGraph.h \
+   RoseBin_IDAPRO_callGraph.h  RoseBin_IDAPRO_exprTree.h  RoseBin_IDAPRO_substTree.h \
+   RoseBin_support.h  RoseBin_unparse.h  RoseBin_unparse_visitor.h MyAstAttribute.h \
+   analyses/RoseBin_CompareAnalysis.h analyses/RoseBin_ControlFlowAnalysis.h analyses/RoseBin_printInstructions.h \
+   analyses/RoseBin_DataFlowAnalysis.h graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
+   graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
+   analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
+   analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
+   analyses/dataflowanalyses/RoseBin_Emulate.h \
+   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h
+endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available
 # colorTraversal.h  
 
