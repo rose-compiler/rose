@@ -98,7 +98,7 @@ int main(int argc, char** argv)
                   }
                catch (const std::exception& e)
                   {
-                    std::cerr << "error running checker " << (*itr)->getName() << ": " << e.what() << std::endl;
+                    std::cerr << "error running checker : " << (*itr)->getName() << " - reason: " << e.what() << std::endl;
                     errors.push_back(std::make_pair((*itr)->getName(), e.what()));
                   }
              } // if( (*itr) != NULL )

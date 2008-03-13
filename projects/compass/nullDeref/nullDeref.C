@@ -191,16 +191,19 @@ switchForAssignment(std::vector<tps_node> &vec, tps_node n, tps_node oldN, SgExp
       std::cout << " @@*** SgFunctionCallExp" << std::endl;
     SgFunctionCallExp* fc = isSgFunctionCallExp(rhs);
     SgFunctionRefExp* refExp = isSgFunctionRefExp(fc->get_function());
-    if ( refExp->get_symbol()->get_declaration()->get_name().str()==std::string("malloc")) {
-      if (debug) std::cout << "  found malloc" << std::endl;
-      string error = "Warning: Malloc may return NULL";
-      string trace = print_tps_error(error, n, oldN);
-      output->addOutput(new CheckerOutput(error+"\n"+trace, n.first.getNode()));
-
-      //vec.clear();
+    if (refExp) {
+      ROSE_ASSERT(refExp->get_symbol());
+      ROSE_ASSERT(refExp->get_symbol()->get_declaration());
+      if ( refExp->get_symbol()->get_declaration()->get_name().str()==std::string("malloc")) {
+        if (debug) std::cout << "  found malloc" << std::endl;
+        string error = "Warning: Malloc may return NULL";
+        string trace = print_tps_error(error, n, oldN);
+        output->addOutput(new CheckerOutput(error+"\n"+trace, n.first.getNode()));
+        
+        //vec.clear();
       //  return vec;
-    }
-    
+      }
+    }    
   }
     break;
   case V_SgAddOp:
