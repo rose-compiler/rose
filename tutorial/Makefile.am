@@ -328,7 +328,7 @@ sprintf_to_snprintf_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
 
 # #####################################
 # Tests for debugging tutorial examples
