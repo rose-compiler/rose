@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.18 2008-03-11 15:02:29 gergo Exp $
+// $Id: CFGTraversal.C,v 1.19 2008-03-13 15:00:23 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -42,8 +42,7 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
 	ArgumentAssignment* aa
 	  = dynamic_cast<ArgumentAssignment *>(*j);
 	if (aa && isSgConstructorInitializer(aa->get_rhs())) {
-	  SgTreeCopy treecopy;
-	  SgExpression* new_expr= isSgExpression(aa->get_rhs()->copy(treecopy));
+	  SgExpression* new_expr= isSgExpression(Ir::deepCopy(aa->get_rhs()));
 	  ExprLabeler el(expnum);
 	  el.traverse(new_expr, preorder);
 	  expnum = el.get_expnum();
@@ -446,7 +445,6 @@ CFGTraversal::transform_block(SgBasicBlock *block,
    * The first block is linked from before, *all* new blocks
    * without successors, and the last block, are linked to after.
    */
-  SgTreeCopy treecopy;
   BasicBlock *new_block = NULL, *last_block_of_this_block = NULL;
   SgStatementPtrList stmts = block->get_statements();
 
@@ -533,7 +531,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
         SgExprStatement* cond
             = isSgExprStatement(ifs->get_conditional());
         SgExpression* new_expr
-            = isSgExpression(cond->get_expression()->copy(treecopy));
+            = isSgExpression(Ir::deepCopy(cond->get_expression()));
         ExprLabeler el(expnum);
         el.traverse(new_expr, preorder);
         expnum = el.get_expnum();
@@ -607,7 +605,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	    init_block = allocate_new_block(init_block,
 					    init_block_after);
 	    SgExpression* new_expr
-	      = isSgExpression(init_expr->get_expression()->copy(treecopy));
+	      = isSgExpression(Ir::deepCopy(init_expr->get_expression()));
 	    ExprLabeler el(expnum);
 	    el.traverse(new_expr, preorder);
 	    expnum = el.get_expnum();
@@ -637,7 +635,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 		break;
 	      }
 	      SgExpression* new_expr
-		= isSgExpression(init->copy(treecopy));
+		= isSgExpression(Ir::deepCopy(init));
 	      ExprLabeler el(expnum);
 	      el.traverse(new_expr, preorder);
 	      expnum = el.get_expnum();
@@ -685,7 +683,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	SgExprStatement* cond
 	  = isSgExprStatement(fors->get_test());
 	SgExpression* new_expr
-	  = isSgExpression(cond->get_expression()->copy(treecopy));
+	  = isSgExpression(Ir::deepCopy(cond->get_expression()));
 
 	assert(new_expr);
 	ExprLabeler el(expnum);
@@ -726,7 +724,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	cfg->nodes.push_back(incr_block);
 
 	SgExpression *new_expr_inc
-	  = isSgExpression(fors->get_increment()->copy(treecopy));
+	  = isSgExpression(Ir::deepCopy(fors->get_increment()));
 	ExprLabeler el_inc(expnum);
 	el_inc.traverse(new_expr_inc, preorder);
 	expnum = el_inc.get_expnum();
@@ -791,7 +789,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	SgExprStatement* cond
 	  = isSgExprStatement(whiles->get_condition());
 	SgExpression* new_expr
-		  = isSgExpression(cond->get_expression()->copy(treecopy));
+		  = isSgExpression(Ir::deepCopy(cond->get_expression()));
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -843,7 +841,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	SgExprStatement *cond
 	  = isSgExprStatement(dowhiles->get_condition());
 	SgExpression *new_expr
-	  = isSgExpression(cond->get_expression()->copy(treecopy));
+	  = isSgExpression(Ir::deepCopy(cond->get_expression()));
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1054,7 +1052,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  break;
 	}
 	SgExpression *new_expr 
-	  = isSgExpression(returns->get_expression()->copy(treecopy));
+	  = isSgExpression(Ir::deepCopy(returns->get_expression()));
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1113,12 +1111,11 @@ CFGTraversal::transform_block(SgBasicBlock *block,
    // GB (2008-02-14): Unified the "normal" and "aggregate" initializer
    // cases. Even "normal" initializers are now wrapped in a
    // SgAssignInitializer node! Analysis specifications must be aware.
-      SgTreeCopy treecopy;
       SgExpression *new_expr = NULL;
       if (agg_init)
-          new_expr = isSgExpression(agg_init->copy(treecopy));
+          new_expr = isSgExpression(Ir::deepCopy(agg_init));
       else if (initializer)
-          new_expr = isSgExpression(initializer->copy(treecopy));
+          new_expr = isSgExpression(Ir::deepCopy(initializer));
 
 	  if (new_expr) {
 
@@ -1146,7 +1143,10 @@ CFGTraversal::transform_block(SgBasicBlock *block,
      // GB (2008-02-14): It's not clear to me why this case is almost, but
      // not entirely, identical to the other cases. Could we merge these?
      // TODO: investigate!
-	    new_expr = isSgExpression(constr_init->copy(treecopy));
+	    new_expr = isSgExpression(Ir::deepCopy(constr_init));
+     // GB (2008-03-12): Parent pointer must be set manually.
+     // GB (2008-03-13): Parent pointer is now set by Ir::deepCopy.
+     // new_expr->set_parent(constr_init->get_parent());
 
 	    ExprLabeler el(expnum);
 	    el.traverse(new_expr, preorder);
@@ -1263,9 +1263,8 @@ CFGTraversal::transform_block(SgBasicBlock *block,
       case V_SgExprStatement:
 	SgExprStatement *exprs = isSgExprStatement(*i);
 	if (exprs != NULL) {
-	  SgTreeCopy treecopy;
 	  SgExpression *new_expr
-	    = isSgExpression(exprs->get_expression()->copy(treecopy));
+	    = isSgExpression(Ir::deepCopy(exprs->get_expression()));
 	  
 	  ExprLabeler el(expnum);
 	  el.traverse(new_expr, preorder);

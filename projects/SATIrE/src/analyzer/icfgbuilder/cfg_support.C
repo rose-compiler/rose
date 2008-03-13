@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.10 2008-03-05 17:08:26 gergo Exp $
+// $Id: cfg_support.C,v 1.11 2008-03-13 15:00:24 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -318,7 +318,7 @@ std::string ParamAssignment::unparseToString() const
   std::string buf = "ParamAssignment("
     + Ir::getStrippedName(lhs->get_declaration()) 
     + ", "
-    + Ir::getStrippedName(rhs->get_declaration());
+    + Ir::getStrippedName(rhs->get_declaration())
     + ")";
   return buf;
 } 

@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.8 2008-03-10 10:24:36 gergo Exp $
+// $Id: ExprTransformer.C,v 1.9 2008-03-13 15:00:23 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -271,17 +271,53 @@ void ExprTransformer::visit(SgNode *node)
                        ? ci->get_class_decl()->get_definition() : NULL);
       std::vector<CallBlock *> blocks(0);
       SgName name = "";
+      SgName mangled_name = "";
       if (ci->get_declaration() != NULL) {
         name = ci->get_declaration()->get_name();
+        mangled_name = ci->get_declaration()->get_mangled_name();
         /* find constructor implementations */
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
-        for (i = cfg->procedures->begin(); i != cfg->procedures->end();
-             ++i) {
-          if (strcmp(Ir::getConstCharPtr(name), (*i)->name) == 0) {
-            blocks.push_back((*cfg->procedures)[num]->entry);
-          }
-          num++;
+     // GB (2008-03-13): Default constructors can be called without
+     // parentheses, in which case the mangled name of the call is different
+     // from the mangled name of the constructor that is called. We thus
+     // make a distinction between default and non-default constructors. For
+     // non-default constructors, comparing the mangled name is fine; for
+     // default constructors, we look at the non-mangled name and the number
+     // of args.
+     // All of this should be handled by some much smarter logic based an
+     // defining declarations or something.
+        if (ci->get_declaration()->get_args().empty()) {
+            for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
+              if (strcmp(Ir::getConstCharPtr(name), (*i)->name) == 0
+                  && (*i)->decl->get_args().empty()) {
+                blocks.push_back((*cfg->procedures)[num]->entry);
+              }
+              num++;
+            }
+        } else {
+            for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
+              if (strcmp(Ir::getConstCharPtr(mangled_name),
+                         (*i)->mangled_name) == 0) {
+                blocks.push_back((*cfg->procedures)[num]->entry);
+              }
+              num++;
+            }
+        }
+     // GB (2008-03-13): Overloading must be uniquely resolvable.
+        if (blocks.size() > 1) {
+            std::cout << __FILE__ << ":" << __LINE__
+                << ": error during ICFG construction: ";
+            std::cout << "found more than one "
+                << "constructor implementation for initializer '"
+                << Ir::fragmentToString(ci) << "'" << std::endl;
+            std::cout << "procedures:";
+            std::vector<CallBlock *>::iterator block;
+            for (block = blocks.begin(); block != blocks.end(); ++block) {
+                std::cout << " " << (*block)->procnum;
+            }
+            std::cout << std::endl;
+            std::exit(EXIT_FAILURE);
         }
       }
     
@@ -328,8 +364,41 @@ void ExprTransformer::visit(SgNode *node)
         SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
         elist.push_back(Ir::createAddressOfOp(ref, Ir::createPointerType(ref->get_type())));
       }
-      if (params.size() < alist.size())
-       // std::cout << "*** more args than params!" << std::endl;
+      if (!blocks.empty() && params.size() < alist.size()) {
+          std::cout << __FILE__ << ":" << __LINE__
+              << ": error during ICFG construction: "
+              << "constructor has more arguments than parameters!"
+              << std::endl;
+#if 0
+          std::cout
+              << "function call: "
+              << Ir::fragmentToString(ci->get_parent()) << std::endl
+              << "               "
+              << dumpTreeFragmentToString(ci->get_parent()) << std::endl;
+          std::cout
+              << "candicate function: "
+              << (void *) (p) << std::endl
+           // << " "<< Ir::fragmentToString(p->decl) << std::endl
+              ;
+          std::cout << "params: [";
+          SgInitializedNamePtrList::iterator pi;
+          for (pi = params.begin(); pi != params.end(); ++pi) {
+              std::cout << Ir::fragmentToString(*pi);
+              if (pi + 1 != params.end())
+                  std::cout << ", ";
+          }
+          std::cout << "]" << std::endl;
+          std::cout << "alist:  [";
+          SgExpressionPtrList::iterator ai;
+          for (ai = alist.begin(); ai != alist.end(); ++ai) {
+              std::cout << Ir::fragmentToString(*ai);
+              if (ai + 1 != alist.end())
+                  std::cout << ", ";
+          }
+          std::cout << "]" << std::endl;
+#endif
+          exit(EXIT_FAILURE);
+      }
       for (ei = alist.begin(); ei != alist.end(); ++ei) {
         elist.push_back(*ei);
         if (!blocks.empty() && ni != params.end())
@@ -342,12 +411,17 @@ void ExprTransformer::visit(SgNode *node)
               if (isSgAssignInitializer(*ni))
                   elist.push_back(isSgAssignInitializer((*ni)->get_initptr())
                       ->get_operand_i());
+#if 0
+           // GB (2008-03-12): This cannot be right. It adds the parameter
+           // name (i.e. the name of a variable internal to the called
+           // function) to the list of function call arguments.
               else if (isSgInitializedName(*ni))
                   elist.push_back(Ir::createVarRefExp(isSgInitializedName(*ni)));
+#endif
               else
               {
                   std::cout
-                      << __FILE__ << ":" << __LINE__ << ": "
+                      << __FILE__ << ":" << __LINE__ << ": error:"
                       << "*ni of type: " << (*ni)->class_name() << std::endl;
                   exit(EXIT_FAILURE);
               }
@@ -436,6 +510,24 @@ void ExprTransformer::visit(SgNode *node)
           call_block->paramlist = params;
           call_block->stmt->update_infolabel();
         }
+     // GB (2008-03-12): We had forgotten to update the list of variables in
+     // the return block.
+        if (return_block != NULL) {
+       // GB (2008-03-13): If this is a constructor call that resulted from
+       // application of the 'new' operator, we need to remove the $A$this
+       // pointer from the list of variables in the ReturnStmt. The reason
+       // is that this pointer is used one more time in the subsequent
+       // statement; two occurrences break the general rule of exactly one
+       // use of temporary variables.
+          if (isSgNewExp(ci->get_parent())) {
+              return_block->paramlist
+                  = new std::vector<SgVariableSymbol *>(
+                          params->begin() + 1, params->end());
+          } else {
+              return_block->paramlist = params;
+          }
+          return_block->stmt->update_infolabel();
+        }
       }
       /* replace call by its result */
       // if (retval_block != NULL)
@@ -491,6 +583,7 @@ void ExprTransformer::visit(SgNode *node)
             call_block->paramlist = new std::vector<SgVariableSymbol *>();
             call_block->paramlist->push_back(this_var_sym);
             return_block->paramlist = call_block->paramlist;
+
             /* set links */
             add_link(this_block, call_block, NORMAL_EDGE);
 
@@ -725,8 +818,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
-        for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i)
-    {
+        for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
         //std::cout<<"B: "<< (char*)((*i)->mangled_name) << std::endl;
         //std::cout<<"A: "<< name <<std::endl;
 
@@ -761,8 +853,37 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
             if (strcmp(name, (*i)->name) == 0 && (*i)->class_type != NULL
                     && (class_type == (*i)->class_type
                         || (decl->get_functionModifier().isVirtual()
-                        && subtype_of((*i)->class_type, class_type))))
-                blocks->push_back((*cfg->procedures)[num]->entry);
+                        && subtype_of((*i)->class_type, class_type)))) {
+             // GB (2008-03-13): OK, so the functions have the same name and
+             // are on the same class, or the call is virtual and there is
+             // an appropriate subtype relation. But to be sure that this is
+             // the right function to call, we still have to check the
+             // parameter types; the member function might be overloaded.
+                bool candidate = true;
+             // call_decl_args is the argument list of the declaration found
+             // from the call, proc_decl_args is the argument list of the
+             // declaration found from our procedure entry in the CFG.
+                SgInitializedNamePtrList &call_decl_args = decl->get_args();
+                SgInitializedNamePtrList &proc_decl_args = (*i)->decl->get_args();
+                if (call_decl_args.size() == proc_decl_args.size()) {
+                    SgInitializedNamePtrList::iterator c = call_decl_args.begin(),
+                                                       p = proc_decl_args.begin();
+                    while (c != call_decl_args.end() && p != proc_decl_args.end()) {
+                     // Comparing types by comparing pointers, this is
+                     // supposedly correct for ROSE as types are shared.
+                        if ((*c++)->get_type() != (*p++)->get_type()) {
+                            candidate = false;
+                            break;
+                        }
+                    }
+                } else 
+                    candidate = false;
+                if (candidate) {
+                 // Yippie! Looks like this function can be the target of
+                 // this function call.
+                    blocks->push_back((*cfg->procedures)[num]->entry);
+                }
+            }
             num++;
         }
         return blocks;
@@ -807,7 +928,6 @@ ExprTransformer::evaluate_arguments(std::string name,
     if (varnameattr != NULL) {
       new_expr = Ir::createVarRefExp(varnameattr->get_str(),(*i)->get_type());
     }
-        
     SgVariableSymbol *varsym=Ir::createVariableSymbol(varname.str(), (*i)->get_type());
     params->push_back(varsym);
     block->statements.push_back(Ir::createArgumentAssignment(varsym, new_expr));

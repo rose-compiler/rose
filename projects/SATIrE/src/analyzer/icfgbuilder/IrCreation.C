@@ -518,3 +518,18 @@ Ir::getStrippedName(SgInitializedName* in) {
   std::string s;
   return s;
 }
+
+// GB (2008-03-13): Added this function to wrap deep copying of AST
+// fragments including the parent pointer. ROSE doesn't seem to be copying
+// the parent pointer. I'm not sure if it ever did copy the parent pointer,
+// but in any case it has started to become annoying that it isn't copied.
+// Plus, declaring all those instances of SgTreeCopy should become
+// unnecessary now.
+SgNode *
+Ir::deepCopy(SgNode *n, bool copyParentPointer /* = true */) {
+    SgTreeCopy treeCopy;
+    SgNode *result = n->copy(treeCopy);
+    if (copyParentPointer)
+        result->set_parent(n->get_parent());
+    return result;
+}
