@@ -30,6 +30,9 @@
 /* Include path for backend C compiler. */
 #undef C_INCLUDE_STRING
 
+/* Controls use of ROSE support for Binary SQL. */
+#undef HASH_ROSE_USE_BINARYSQL
+
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 

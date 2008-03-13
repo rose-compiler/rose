@@ -16,7 +16,8 @@ noinst_LTLIBRARIES = libbinaryFrontend.la libbinarydisassembly.la
 lib_LTLIBRARIES = libbinaryDatabase.la 
 endif
 
-if ROSE_USE_DATABASE
+if ROSE_USE_BINARY_SQL
+ROSE_USE_BINARY_SQL
 # Isolated part of library that depends on the mysql database
 libbinaryDatabase_la_DEPENDENCIES =
 libbinaryDatabase_la_SOURCES = RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp RoseBin_IDAPRO_buildTree.cpp
@@ -52,7 +53,7 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp  RoseBin_unparse.cpp \
 endif
 
 # Make sure these SAGE specific header files are placed into a distribution
-if ROSE_USE_DATABASE
+if ROSE_USE_BINARY_SQL
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_buildTree.h  RoseBin_DB.h  RoseBin_DB_IDAPRO.h \
    RoseBin.h  RoseBin_IDAPRO_branchGraph.h  RoseBin_IDAPRO_buildTree.h \

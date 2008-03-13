@@ -199,6 +199,7 @@ ROSE_SUPPORT_XML
 # Make the use of libxml2 explicitly controled.
 AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
 
+
 AC_PROG_SWIG
 #AS (10/23/07): introduced conditional use of javaport
 AC_ARG_WITH(javaport,
@@ -248,6 +249,13 @@ ROSE_SUPPORT_YICES
 
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
+
+
+#TPS (03/13/08) introduced optional DB support for binary work
+HASH_ROSE_BINARY_SQL
+
+AM_CONDITIONAL(ROSE_USE_BINARY_SQL,test ! "$with_binarysql" = no)
+
 
 # Call supporting macro for Binary Analysis
 ROSE_SUPPORT_BINARY_ANALYSIS
