@@ -10,6 +10,7 @@
 #include "RoseBin_DataFlowAnalysis.h"
 #include <iomanip>
 
+using namespace RoseBin_Def;
 using namespace std;
 
 string getNameForPartialRegister(const string& fullRegName, SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos) {

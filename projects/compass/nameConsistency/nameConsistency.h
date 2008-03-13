@@ -4,10 +4,9 @@
 
 #include "compass.h"
 
+
 #if USE_ROSE_BOOST_WAVE_SUPPORT 
-
 #include "checkNameImpl.h"
-
 #endif
 
 #ifndef COMPASS_NAME_CONSISTENCY_H
@@ -67,6 +66,8 @@ namespace CompassAnalyses
              };
         }
    }
+
+
 
 // COMPASS_NAME_CONSISTENCY_H
 #endif 

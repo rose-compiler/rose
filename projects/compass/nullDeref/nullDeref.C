@@ -442,7 +442,7 @@ void CompassAnalyses::NullDeref::Traversal::checkNullDeref(string analysisname, 
           SgExprListExp* args = f_expr->get_args();
           SgExpressionPtrList& ptrList = args->get_expressions();
           SgExpressionPtrList::iterator it = ptrList.begin();
-          for (it; it!=ptrList.end(); ++it) {
+          for (; it!=ptrList.end(); ++it) {
             expr = *it;
             if (debug) 
               std::cout << "     **** free : " << expr->class_name() << std::endl;
@@ -564,8 +564,8 @@ visit(SgNode* sgNode)
     //fileName = getFileName(fileName);
     // query for delete expressions
     //  SgArrowExp, SgArrowStarOp
-    std::list<SgNode*> exprList = NodeQuery:: querySubTree (sgNode, V_SgArrowExp);
-    for (std::list<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
+    std::vector<SgNode*> exprList = NodeQuery:: querySubTree (sgNode, V_SgArrowExp);
+    for (std::vector<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
       SgNode* expr = *it;
       addressOp=false;
       SgArrowExp* delExpr = isSgArrowExp(expr);
@@ -574,7 +574,7 @@ visit(SgNode* sgNode)
       }
     }
     exprList = NodeQuery:: querySubTree (sgNode, V_SgPointerDerefExp);
-    for (std::list<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
+    for (std::vector<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
       SgNode* expr = *it;
       addressOp=false;
       SgPointerDerefExp* delExpr = isSgPointerDerefExp(expr);
@@ -584,7 +584,7 @@ visit(SgNode* sgNode)
     }
 
     exprList = NodeQuery:: querySubTree (sgNode, V_SgAssignInitializer);
-    for (std::list<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
+    for (std::vector<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
       SgNode* expr = *it;
       addressOp=false;
       SgAssignInitializer* delExpr = isSgAssignInitializer(expr);
@@ -594,7 +594,7 @@ visit(SgNode* sgNode)
     }
 
     exprList = NodeQuery:: querySubTree (sgNode, V_SgFunctionCallExp );
-    for (std::list<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
+    for (std::vector<SgNode*>::iterator it = exprList.begin(); it!=exprList.end(); ++it) {
       SgNode* expr = *it;
       addressOp=false;
       SgFunctionCallExp* delExpr = isSgFunctionCallExp(expr);

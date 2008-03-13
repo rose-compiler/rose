@@ -112,7 +112,7 @@ AC_SUBST(wave_includes)
 AC_SUBST(WAVE_INCLUDES)
 AC_SUBST(WAVE_LDFLAGS)
 
-LIB_WAVE="-lboost_wave-$BOOST_LIB_SUFFIX -lboost_filesystem-$BOOST_LIB_SUFFIX"
+LIB_WAVE="-lboost_wave-$BOOST_LIB_SUFFIX -lboost_filesystem-$BOOST_LIB_SUFFIX -lboost_regex-$BOOST_LIB_SUFFIX"
 
 #if test ${VAR_GCC} = 1
 #then

@@ -294,8 +294,8 @@ visit(SgNode* sgNode)
     string name = sgNode->class_name();
     //fileName = getFileName(fileName);
     // query for delete expressions
-    std::list<SgNode*> deleteExprList = NodeQuery:: querySubTree (sgNode, V_SgDeleteExp);
-    for (std::list<SgNode*>::iterator it = deleteExprList.begin(); it!=deleteExprList.end(); ++it) {
+    std::vector<SgNode*> deleteExprList = NodeQuery:: querySubTree (sgNode, V_SgDeleteExp);
+    for (std::vector<SgNode*>::iterator it = deleteExprList.begin(); it!=deleteExprList.end(); ++it) {
       SgNode* expr = *it;
       SgDeleteExp* delExpr = isSgDeleteExp(expr);
       if (delExpr!=NULL) {

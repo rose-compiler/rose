@@ -1,10 +1,19 @@
+#ifndef COMPASS_CHECKNAMEIMPL_H
+#define COMPASS_CHECKNAMEIMPL_H
+
+
+
 #include "rose.h"
 
+
+#if USE_ROSE_BOOST_WAVE_SUPPORT //GMY 12/26/2007 added #if...#endif to pass compass make verify
 #include <boost/wave.hpp>
 
 #include <boost/regex.hpp>
+#endif //GMY 12/26/2007 END
 #include <functional>
 #include <fstream>
+
 
 enum name_types {
 
@@ -83,8 +92,13 @@ typedef std::vector<SgNode*> SgNodePtrVector;
 class NameEnforcer{
 
      public:
-	  void enforceRules(SgProject* project);
+	  void enforceRules(SgNode*, std::list< std::pair<name_types,SgNode*> >& violations,
+                               std::list< std::pair<name_types,PreprocessingInfo*> >& macroViolations  );
 	  void readFile( std::string filename);
+          std::string get_enumName(name_types name );
+
+          std::string get_reg(name_types enum_elem);
+
 
 	  NameEnforcer();	  
      private:
@@ -104,14 +118,14 @@ class NameEnforcer{
 	  
 	  bool def_reg( name_types enum_elem  );
 	  std::pair<std::string,name_types> defaultVariableDeclaration(SgType* varType, bool isStaticVariable);
-	  std::list< std::pair<name_types,SgNode*> > checkVariableDeclaration();
-	  std::list< std::pair<name_types,SgNode*> > checkFunctionDeclaration();
-	  std::list< std::pair<name_types,SgNode*> > checkClassDeclaration();
-	  std::list< std::pair<name_types,PreprocessingInfo*> > checkMacroNames(SgProject* project);
-          std::list< std::pair<name_types,SgEnumDeclaration*> >  checkEnumDeclaration();
-          std::list< std::pair<name_types,SgInitializedName*> > checkEnumLabels();
+	  void checkVariableDeclaration(SgVariableDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
+	  void checkFunctionDeclaration(SgFunctionDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
+	  void checkClassDeclaration(SgClassDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
+	  void checkMacroNames(PreprocessingInfo*, std::list< std::pair<name_types,PreprocessingInfo*> >&);
+          void checkEnumDeclaration(SgEnumDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
+          void checkEnumLabels(SgEnumDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
 
-          std::list< std::pair<SgNode*,std::string> > findUses(SgLocatedNode* locNode);
+          std::vector< std::pair<SgNode*,std::string> > findUses(SgLocatedNode* locNode);
 
 
 };
@@ -149,3 +163,5 @@ class SynthesizedAttribute
           void display() const;
    };
 
+
+#endif

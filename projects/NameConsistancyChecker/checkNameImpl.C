@@ -1,4 +1,12 @@
+
+
+#if USE_ROSE_BOOST_WAVE_SUPPORT //GMY 12/26/2007 added to pass compass make verify
+
+
+
 #include "checkNameImpl.h"
+
+
 
 //The edge goes from 'node'->'x'
 filterOnPaths::result_type
@@ -81,7 +89,7 @@ NameEnforcer::NameEnforcer() : filterPathMap(), namespacesToFilter(), namespaces
   ******************************************************************************/
 void NameEnforcer::readFile( std::string filename){
 
-     std::fstream file_op(filename.c_str());
+     std::ifstream file_op(filename.c_str());
      if (file_op.fail()) {
 	  std::cout << "error: could not find file \"" << filename 
 	           << "\" which is meant to include the styles to enforce with " 
@@ -140,6 +148,20 @@ void NameEnforcer::readFile( std::string filename){
      }
 
 }
+
+
+std::string NameEnforcer::get_enumName(name_types name ){
+   std::string nameStr = "";
+   for(std::map<std::string, name_types>::iterator iItr = s_mapStringValues.begin();
+       iItr != s_mapStringValues.end(); ++iItr ){
+        if(iItr->second == name){
+           nameStr = iItr->first;
+           break;
+        }
+   }  
+   ROSE_ASSERT(nameStr != "");
+   return nameStr;
+};
 
 
 /*********************************************************************************************
@@ -235,6 +257,27 @@ bool NameEnforcer::def_reg( name_types enum_elem  )
 
 
    }
+
+
+
+/********************************************************************************
+  *
+  * The function 
+  *     NameEnforcer::get_reg(name_types)
+  * is a helper function which checks to see if the current style file defined a
+  * regular expression for the associated key name provided as an arguemnt. If so
+  * it will return that regular expression as a string and if not it will end in
+  * error.
+  ******************************************************************************/
+std::string NameEnforcer::get_reg( name_types enum_elem  )
+   {
+     std::map<name_types, std::string>::iterator mapElem = s_definedRegularExpressions.find(enum_elem);
+  
+     ROSE_ASSERT( mapElem != s_definedRegularExpressions.end());
+
+     return mapElem->second;
+   }
+
 
 /***********************************************************************************
   *
@@ -428,242 +471,220 @@ NameEnforcer::defaultVariableDeclaration(SgType* varType, bool isStaticVariable)
   *        NameEnforcer::checkVariableDeclaration()
   * will apply the rules on variable declarations.
   ************************************************************************************/
-std::list< std::pair<name_types,SgNode*> > 
-NameEnforcer::checkVariableDeclaration(){
-     VariantVector varVec;
-     varVec.push_back(V_SgVariableDeclaration); 
-     std::list<SgNode*> varDeclLst = NodeQuery::queryMemoryPool(varVec); 
-     varDeclLst = removeElements(varDeclLst);
+void 
+NameEnforcer::checkVariableDeclaration(SgVariableDeclaration* variableDeclaration,
+std::list< std::pair<name_types,SgNode*> >& violations
 
-     
-     std::list<std::pair<name_types,SgNode*> > returnType;
+){
 
-     for(std::list<SgNode*>::iterator it = varDeclLst.begin(); it != varDeclLst.end(); ++it)
-	{
-	  SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*it);
-	  SgScopeStatement* scope = variableDeclaration->get_scope();
+  ROSE_ASSERT(variableDeclaration != NULL);
 
-	  SgInitializedNamePtrList variables = variableDeclaration->get_variables();
-	  bool isStaticVariable = variableDeclaration->get_declarationModifier().get_storageModifier().isStatic();
-	  for(SgInitializedNamePtrList::iterator name_it = variables.begin(); name_it != variables.end();
-			  ++name_it)
-	     {
-	       SgInitializedName* initName = isSgInitializedName(*name_it);
+  SgScopeStatement* scope = variableDeclaration->get_scope();
 
-	       SgType*           varType = isSgInitializedName(initName)->get_type();
-	       if( isSgTypedefType(varType) != NULL )
-		    varType = isSgTypedefType(varType)->get_base_type();
+  SgInitializedNamePtrList variables = variableDeclaration->get_variables();
+  bool isStaticVariable = variableDeclaration->get_declarationModifier().get_storageModifier().isStatic();
+  for(SgInitializedNamePtrList::iterator name_it = variables.begin(); name_it != variables.end();
+		  ++name_it)
+     {
+       SgInitializedName* initName = isSgInitializedName(*name_it);
 
-	       std::string variable_name = initName->get_name().str();
-	       std::string error_message;
-	       std::string regular_expression;
-	       name_types unmatched_name_type = LAST_ELEMENT_TYPE;
+       SgType*           varType = isSgInitializedName(initName)->get_type();
+       if( isSgTypedefType(varType) != NULL )
+	    varType = isSgTypedefType(varType)->get_base_type();
 
-	       //Handle vaariable declarations of bool type specifically
-	       if( (isSgTypeBool(varType) != NULL) && ( def_reg(bool_type_variable) == true ) ){
-		    boost::regex re;
-		    boost::smatch what;
+       std::string variable_name = initName->get_name().str();
+       std::string error_message;
+       std::string regular_expression;
+       name_types unmatched_name_type = LAST_ELEMENT_TYPE;
 
-           	    regular_expression = s_definedRegularExpressions.find(bool_type_variable)->second;
-		    re.assign(regular_expression, boost::regex_constants::perl);
+       //Handle vaariable declarations of bool type specifically
+       if( (isSgTypeBool(varType) != NULL) && ( def_reg(bool_type_variable) == true ) ){
+	    boost::regex re;
+	    boost::smatch what;
 
-		    if(  boost::regex_match(variable_name, what, re) == false ){
-			 error_message = " variable declaration of bool type ";
-			 std::cout << "Warning:" << error_message << "\"" << variable_name 
-				 << "\" did not match regexp \"" << regular_expression << "\"" << std::endl;
-			 Sg_File_Info* fileInfo = initName->get_file_info();
-			 std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
-				 << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-			 returnType.push_back(std::pair<name_types,SgInitializedName*>(bool_type_variable,initName) );
-			
-			 findUses(variableDeclaration);
-			 error_message = "";
+            regular_expression = s_definedRegularExpressions.find(bool_type_variable)->second;
+	    re.assign(regular_expression, boost::regex_constants::perl);
 
-		    }
+	    if(  boost::regex_match(variable_name, what, re) == false ){
+		 error_message = " variable declaration of bool type ";
+		 std::cout << "Warning:" << error_message << "\"" << variable_name 
+			 << "\" did not match regexp \"" << regular_expression << "\"" << std::endl;
+		 Sg_File_Info* fileInfo = initName->get_file_info();
+		 std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
+			 << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
+		 violations.push_back(std::pair<name_types,SgInitializedName*>(bool_type_variable,initName) );
+		
+		 //findUses(variableDeclaration);
+		 error_message = "";
+
+	    }
     
 
-	       }
+        }
 
 	       
-	    //Handle variables on the stack. 
-	       if ( (isSgClassDefinition(scope) == NULL) &&
-			       (isSgNamespaceDefinitionStatement(scope) == NULL) &&
-			       (isSgGlobal(scope) == NULL)
-		  )
-		  {
-		    //nstd::cout << "Looking on stack" << std::endl;
-		    if( (isSgPointerType(varType) != NULL) &&
-				    ( (def_reg(ptr_stack_variable) == true) |
-				      (def_reg(static_ptr_global_variable) == true) 
-				    )
-		      ){
+   //Handle variables on the stack. 
+       if ( (isSgClassDefinition(scope) == NULL) &&
+		       (isSgNamespaceDefinitionStatement(scope) == NULL) &&
+		       (isSgGlobal(scope) == NULL)
+	  )
+	  {
+	    //nstd::cout << "Looking on stack" << std::endl;
+	    if( (isSgPointerType(varType) != NULL) &&
+			    ( (def_reg(ptr_stack_variable) == true) |
+			      (def_reg(static_ptr_global_variable) == true) 
+			    )
+	      ){
+		 if( isStaticVariable &&
+				 (def_reg(static_ptr_stack_variable) == true)){
+		      error_message = " a static stack pointer variable ";
+		      unmatched_name_type = static_ptr_stack_variable;
+		 }else if(def_reg(ptr_stack_variable) == true){
+		      error_message = " a stack pointer variable ";
+		      unmatched_name_type = ptr_stack_variable;
+		 }
+	    }else if( (isSgReferenceType(varType) != NULL ) &&
+			    ( (def_reg(ref_stack_variable) == true) |
+			      (def_reg(static_ref_stack_variable) == true)
+			    )
+		    ) {
+		 if( isStaticVariable &&
+				 (def_reg(static_ref_stack_variable) == true)){
+		      error_message = " a static stack reference variable ";
+		      unmatched_name_type = static_ref_stack_variable;
+		 }else if(def_reg(ref_stack_variable) == true){
+		      error_message = " a stack reference variable ";
+		      unmatched_name_type = ref_stack_variable;
+		 }
+	    }else if( isStaticVariable &&
+			    (def_reg(static_stack_variable) == true)){
+		 error_message = " a static stack variable ";
+		 unmatched_name_type = static_stack_variable;
+	    }else if( def_reg(stack_variable) == true ){
+		 error_message = " a stack variable ";
+		 unmatched_name_type = stack_variable;
+	    }
+	  }
 
-			 if( isStaticVariable &&
-					 (def_reg(static_ptr_stack_variable) == true)){
-			      error_message = " a static stack pointer variable ";
-			      unmatched_name_type = static_ptr_stack_variable;
-			 }else if(def_reg(ptr_stack_variable) == true){
-			      error_message = " a stack pointer variable ";
-			      unmatched_name_type = ptr_stack_variable;
-			 }
 
-		    }else if( (isSgReferenceType(varType) != NULL ) &&
-				    ( (def_reg(ref_stack_variable) == true) |
-				      (def_reg(static_ref_stack_variable) == true)
-				    )
-			    ) {
+    //Handle if a variable is in global scope. If the regular expressions are not defined
+    //default behavior if they are defined
+       if (isSgGlobal(scope) != NULL)
+	  {
+	    if( (isSgPointerType(varType) != NULL) &&
+			    ( (def_reg(ptr_global_variable) == true) |
+			      (def_reg(static_ptr_global_variable) == true) 
+			    )
+	      ){
+		 if( isStaticVariable &&
+				 (def_reg(static_ptr_global_variable) == true)){
+		      error_message = " a static global pointer variable ";
+		      unmatched_name_type = static_ptr_global_variable;
+		 }else if(def_reg(ptr_global_variable) == true){
+		      error_message = " a global pointer variable ";
+		      unmatched_name_type = ptr_global_variable;
+		 }
+	    }else if( (isSgReferenceType(varType) != NULL ) &&
+			    ( (def_reg(ref_global_variable) == true) |
+			      (def_reg(static_ref_global_variable) == true)
+			    )
+		    ) {
+		 if( isStaticVariable &&
+				 (def_reg(static_ref_global_variable) == true)){
+		      error_message = " a static global reference variable ";
+		      unmatched_name_type = static_ref_global_variable;
+		 }else if(def_reg(ref_global_variable) == true){
+		      error_message = " a global reference variable ";
+		      unmatched_name_type = ref_global_variable;
+		 }
+	    }else if( isStaticVariable &&
+			    (def_reg(static_global_variable) == true)){
+		 error_message = " a static global variable ";
+		 unmatched_name_type = static_global_variable;
+	    }else if( def_reg(global_variable) == true ){
+		 error_message = " a global variable ";
+		 unmatched_name_type = global_variable;
+	    }
+	  }
+    //Handle if a variable a class fieldd. If the regular expressions are not defined
+    //default behavior if they are defined
 
-			 if( isStaticVariable &&
-					 (def_reg(static_ref_stack_variable) == true)){
-			      error_message = " a static stack reference variable ";
-			      unmatched_name_type = static_ref_stack_variable;
-			 }else if(def_reg(ref_stack_variable) == true){
-			      error_message = " a stack reference variable ";
-			      unmatched_name_type = ref_stack_variable;
-			 }
-		    }else if( isStaticVariable &&
-				    (def_reg(static_stack_variable) == true)){
-			 error_message = " a static stack variable ";
-			 unmatched_name_type = static_stack_variable;
-		    }else if( def_reg(stack_variable) == true ){
-			 error_message = " a stack variable ";
-			 unmatched_name_type = stack_variable;
+       if (isSgClassDefinition(scope) != NULL)
+	  {
+	    //std::cout << "class def" << std::endl;
+	    if( (isSgPointerType(varType) != NULL) &&
+			    ( (def_reg(ptr_class_field) == true) |
+			      ( def_reg(static_ptr_class_field)==true ) 
+			    )
+	      ){
+		 if( isStaticVariable &&
+				 (def_reg(static_ptr_class_field) == true)){
+		      error_message = " a static class field pointer variable ";
+		      unmatched_name_type = static_ptr_class_field;
+		 }else if(def_reg(ptr_class_field) == true){
+		      error_message = " a pointer class field ";
+		      unmatched_name_type = ptr_class_field;
+		 }
+	    }else if( (isSgReferenceType(varType) != NULL ) &&
+			    ( (def_reg(ref_class_field) == true) |
+			      (def_reg(static_ref_class_field) == true)
+			    )
+		    ) {
+		 //std::cout << "a reference " << std::endl;
+		 if( isStaticVariable &&
+				 (def_reg(static_ref_class_field) == true)){
+		      //std::cout << " a static class field reference" << std::endl;
+		      error_message = " a static class field reference variable ";
+		      unmatched_name_type = static_ref_class_field;
+		 }else  if(def_reg(ref_class_field) == true){
+		      error_message = " a reference class field ";
+		      unmatched_name_type = ref_class_field;
+		 }
+	    }else if( isStaticVariable &&
+			    (def_reg(static_class_field) == true)){
+		 error_message = " a static class field variable ";
+		 unmatched_name_type = static_class_field;
+	    }else if( def_reg(class_field) == true ){
+		 error_message = " a class field ";
+		 unmatched_name_type = class_field;
 		    }
-		  }
+	  }
 
 
-	    //Handle if a variable is in global scope. If the regular expressions are not defined
-	    //default behavior if they are defined
-	       if (isSgGlobal(scope) != NULL)
-		  {
-		    if( (isSgPointerType(varType) != NULL) &&
-				    ( (def_reg(ptr_global_variable) == true) |
-				      (def_reg(static_ptr_global_variable) == true) 
-				    )
-		      ){
+       if(unmatched_name_type == LAST_ELEMENT_TYPE){
+	    //std::cout << "Went into default" << std::endl;
+	    std::pair<std::string, name_types> ret = defaultVariableDeclaration(varType,isStaticVariable);
+	    error_message = ret.first;
+	    unmatched_name_type = ret.second;
+       }
+       //if(unmatched_name_type == LAST_ELEMENT_TYPE)
+	//    std::cout << "THAT WAS A LAST ELEMENT" << std::endl;
+       if( s_definedRegularExpressions.find(unmatched_name_type) != s_definedRegularExpressions.end()  )
+	  {
+	    regular_expression = s_definedRegularExpressions.find(unmatched_name_type)->second;
+	  }else
+	  {
+	   // std::cout << "Did not find " << unmatched_name_type << std::endl;
+	  }
+       //std::cout << "Checking: " << regular_expression << " " << variable_name << std::endl;
 
-			 if( isStaticVariable &&
-					 (def_reg(static_ptr_global_variable) == true)){
-			      error_message = " a static global pointer variable ";
-			      unmatched_name_type = static_ptr_global_variable;
-			 }else if(def_reg(ptr_global_variable) == true){
-			      error_message = " a global pointer variable ";
-			      unmatched_name_type = ptr_global_variable;
-			 }
+       if((unmatched_name_type != LAST_ELEMENT_TYPE ) && ( variable_name!="") && (def_reg(unmatched_name_type) == true) ){
+	    boost::regex re;
+	    boost::smatch what;
+	    re.assign(regular_expression, boost::regex_constants::perl);
 
-		    }else if( (isSgReferenceType(varType) != NULL ) &&
-				    ( (def_reg(ref_global_variable) == true) |
-				      (def_reg(static_ref_global_variable) == true)
-				    )
-			    ) {
+	    if(  boost::regex_match(variable_name, what, re) == false ){
+		 std::cout << "Warning:" << error_message << "\"" << variable_name 
+			 << "\" did not match regexp \"" << regular_expression << "\"" << std::endl;
+		 Sg_File_Info* fileInfo = initName->get_file_info();
+		 std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
+			 << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
+		 violations.push_back(std::pair<name_types,SgInitializedName*>(unmatched_name_type,initName) );
+		 //findUses(variableDeclaration);
+	    }
+       }
 
-			 if( isStaticVariable &&
-					 (def_reg(static_ref_global_variable) == true)){
-			      error_message = " a static global reference variable ";
-			      unmatched_name_type = static_ref_global_variable;
-			 }else if(def_reg(ref_global_variable) == true){
-			      error_message = " a global reference variable ";
-			      unmatched_name_type = ref_global_variable;
-			 }
-		    }else if( isStaticVariable &&
-				    (def_reg(static_global_variable) == true)){
-			 error_message = " a static global variable ";
-			 unmatched_name_type = static_global_variable;
-		    }else if( def_reg(global_variable) == true ){
-			 error_message = " a global variable ";
-			 unmatched_name_type = global_variable;
-		    }
-		  }
-
-	    //Handle if a variable a class fieldd. If the regular expressions are not defined
-	    //default behavior if they are defined
-
-	       if (isSgClassDefinition(scope) != NULL)
-		  {
-		    //std::cout << "class def" << std::endl;
-		    if( (isSgPointerType(varType) != NULL) &&
-				    ( (def_reg(ptr_class_field) == true) |
-				      ( def_reg(static_ptr_class_field)==true ) 
-				    )
-		      ){
-			 if( isStaticVariable &&
-					 (def_reg(static_ptr_class_field) == true)){
-			      error_message = " a static class field pointer variable ";
-			      unmatched_name_type = static_ptr_class_field;
-			 }else if(def_reg(ptr_class_field) == true){
-			      error_message = " a pointer class field ";
-			      unmatched_name_type = ptr_class_field;
-			 }
-		    }else if( (isSgReferenceType(varType) != NULL ) &&
-				    ( (def_reg(ref_class_field) == true) |
-				      (def_reg(static_ref_class_field) == true)
-				    )
-			    ) {
-			 //std::cout << "a reference " << std::endl;
-			 if( isStaticVariable &&
-					 (def_reg(static_ref_class_field) == true)){
-			      //std::cout << " a static class field reference" << std::endl;
-			      error_message = " a static class field reference variable ";
-			      unmatched_name_type = static_ref_class_field;
-			 }else  if(def_reg(ref_class_field) == true){
-			      error_message = " a reference class field ";
-			      unmatched_name_type = ref_class_field;
-			 }
-		    }else if( isStaticVariable &&
-				    (def_reg(static_class_field) == true)){
-			 error_message = " a static class field variable ";
-			 unmatched_name_type = static_class_field;
-		    }else if( def_reg(class_field) == true ){
-			 error_message = " a class field ";
-			 unmatched_name_type = class_field;
-
-		    }
-		  }
-
-
-	       if(unmatched_name_type == LAST_ELEMENT_TYPE){
-		    //std::cout << "Went into default" << std::endl;
-		    std::pair<std::string, name_types> ret = defaultVariableDeclaration(varType,isStaticVariable);
-		    error_message = ret.first;
-		    unmatched_name_type = ret.second;
-	       }
-
-	       //if(unmatched_name_type == LAST_ELEMENT_TYPE)
-		//    std::cout << "THAT WAS A LAST ELEMENT" << std::endl;
-
-	       if( s_definedRegularExpressions.find(unmatched_name_type) != s_definedRegularExpressions.end()  )
-		  {
-		    regular_expression = s_definedRegularExpressions.find(unmatched_name_type)->second;
-
-		  }else
-		  {
-		   // std::cout << "Did not find " << unmatched_name_type << std::endl;
-		  }
-	       //std::cout << "Checking: " << regular_expression << " " << variable_name << std::endl;
-
-	       if((unmatched_name_type != LAST_ELEMENT_TYPE ) && ( variable_name!="") && (def_reg(unmatched_name_type) == true) ){
-		    boost::regex re;
-		    boost::smatch what;
-
-		    re.assign(regular_expression, boost::regex_constants::perl);
-
-		    if(  boost::regex_match(variable_name, what, re) == false ){
-			 std::cout << "Warning:" << error_message << "\"" << variable_name 
-				 << "\" did not match regexp \"" << regular_expression << "\"" << std::endl;
-			 Sg_File_Info* fileInfo = initName->get_file_info();
-			 std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
-				 << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-			 returnType.push_back(std::pair<name_types,SgInitializedName*>(unmatched_name_type,initName) );
-
-			 findUses(variableDeclaration);
-
-		    }
-	       }
-
-	     }//End of iteration over names
-	};//End of iteration over SgVariableDeclaration list
-
-     return returnType;
+     }//End of iteration over names
 
 }
 
@@ -673,17 +694,11 @@ NameEnforcer::checkVariableDeclaration(){
  *        NameEnforcer::checkFunctionDeclaration()
  * will apply the rules on function declarations.
  ************************************************************************************/
-std::list< std::pair<name_types,SgNode*> > 
-NameEnforcer::checkFunctionDeclaration(){
-     std::list<std::pair<name_types,SgNode*> > returnType;
-     VariantVector methodVec(V_SgFunctionDeclaration); 
-     std::list<SgNode*> functionDeclLst = NodeQuery::queryMemoryPool(methodVec); 
-     functionDeclLst = removeElements(functionDeclLst);
+void
+NameEnforcer::checkFunctionDeclaration(SgFunctionDeclaration* functionDeclaration,
+   std::list< std::pair<name_types,SgNode*> >& violations
+){
 
-
-     for(std::list<SgNode*>::iterator it = functionDeclLst.begin(); it != functionDeclLst.end(); ++it)
-	{
-	  SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*it);
 	  ROSE_ASSERT(functionDeclaration != NULL);
 	  std::string functionName = functionDeclaration->get_name().str();
 
@@ -735,16 +750,13 @@ NameEnforcer::checkFunctionDeclaration(){
 		    Sg_File_Info* fileInfo = functionDeclaration->get_file_info();
 		    std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
 			    << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-		    returnType.push_back(std::pair<name_types,SgNode*>(unmatched_name_type,functionDeclaration) );
+		    violations.push_back(std::pair<name_types,SgNode*>(unmatched_name_type,functionDeclaration) );
 
-		    findUses(functionDeclaration);
+		    //findUses(functionDeclaration);
 	       }
 	  }
 
 
-	}	
-
-     return returnType;
 }
 
 /*************************************************************************************
@@ -753,43 +765,36 @@ NameEnforcer::checkFunctionDeclaration(){
  *        NameEnforcer::checkClassDeclaration()
  * will apply the rules on class declarations.
  ************************************************************************************/
-std::list< std::pair<name_types,SgNode*> > 
-NameEnforcer::checkClassDeclaration(){
-     std::list<std::pair<name_types,SgNode*> > returnType;
-     VariantVector classVec(V_SgClassDeclaration); 
-     std::list<SgNode*> classDeclLst = NodeQuery::queryMemoryPool(classVec); 
-     classDeclLst = removeElements(classDeclLst);
-
-     for(std::list<SgNode*>::iterator it = classDeclLst.begin(); it != classDeclLst.end(); ++it)
-	{
-	  SgClassDeclaration* classDeclaration = isSgClassDeclaration(*it);
-	  std::string className = classDeclaration->get_name().str();
-
-	  std::string error_message;
-
-	  if( ( className!="") && (def_reg(class_name) == true) ){
-	       boost::regex re;
-	       boost::smatch what;
-	       std::string regular_expression = s_definedRegularExpressions[class_name];
-
-	       re.assign(regular_expression, boost::regex_constants::perl);
-
-	       if(  boost::regex_match(className, what, re) == false ){
-		    std::cout << "Warning:" << error_message << "\"" << className
-			    << "\" did not match regexp \"" << regular_expression << "\"" << std::endl;
-		    Sg_File_Info* fileInfo = classDeclaration->get_file_info();
-		    std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
-			    << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-		    returnType.push_back(std::pair<name_types,SgNode*>(class_name,classDeclaration) );
-
-		    findUses(classDeclaration);
-	       }
-	  }
+void 
+NameEnforcer::checkClassDeclaration(SgClassDeclaration* classDeclaration,
+std::list< std::pair<name_types,SgNode*> >& violations
+){
+  ROSE_ASSERT(classDeclaration != NULL);
 
 
-	}	
+  std::string className = classDeclaration->get_name().str();
 
-     return returnType;
+  std::string error_message;
+
+  if( ( className!="") && (def_reg(class_name) == true) ){
+       boost::regex re;
+       boost::smatch what;
+       std::string regular_expression = s_definedRegularExpressions[class_name];
+
+       re.assign(regular_expression, boost::regex_constants::perl);
+
+       if(  boost::regex_match(className, what, re) == false ){
+	    std::cout << "Warning:" << error_message << "\"" << className
+		    << "\" did not match regexp \"" << regular_expression << "\"" << std::endl;
+	    Sg_File_Info* fileInfo = classDeclaration->get_file_info();
+	    std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
+		    << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
+	    violations.push_back(std::pair<name_types,SgNode*>(class_name,classDeclaration) );
+
+	    //findUses(classDeclaration);
+       }
+  }
+
 }
 
 
@@ -875,21 +880,15 @@ visitorTraversal::evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttribute
  * will apply the rules on macro names.
  ************************************************************************************/
 
-	std::list< std::pair<name_types,PreprocessingInfo*> >
-NameEnforcer::checkMacroNames(SgProject* project)
+void
+NameEnforcer::checkMacroNames(PreprocessingInfo* currentInfo,
+std::list< std::pair<name_types,PreprocessingInfo*> >& violations
+)
    {
 
-  // Build the traversal object and call "traverse" member function
-     visitorTraversal exampleTraversal;
-     SynthesizedAttribute results = exampleTraversal.traverse(project);
+     ROSE_ASSERT(currentInfo != NULL);
 
-     std::list<PreprocessingInfo*> macroDefines = results.accumulatedList;
-     std::list<std::pair<name_types,PreprocessingInfo*> > returnMacroList;
-
-     for(std::list<PreprocessingInfo*>::iterator it = macroDefines.begin(); 
-		     it != macroDefines.end(); ++it){
-	  PreprocessingInfo* currentInfo = (*it);
-	  PreprocessingInfo::r_macro_def* macro_def = currentInfo->get_macro_def();
+    	  PreprocessingInfo::r_macro_def* macro_def = currentInfo->get_macro_def();
 
 	  std::string macroName = macro_def->macro_name.get_value().c_str();
 
@@ -906,17 +905,10 @@ NameEnforcer::checkMacroNames(SgProject* project)
 		    Sg_File_Info* fileInfo = currentInfo->get_file_info();
 		    std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
 			    << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-		    returnMacroList.push_back(std::pair<name_types,PreprocessingInfo*>(macro_name,currentInfo));
+		    violations.push_back(std::pair<name_types,PreprocessingInfo*>(macro_name,currentInfo));
 
 	       }
 	  }
-
-
-
-
-     }
-
-     return returnMacroList;
    }
 
 
@@ -926,17 +918,10 @@ NameEnforcer::checkMacroNames(SgProject* project)
  *        NameEnforcer::checkEnumDeclaration()
  * will apply the rules on enum declarations names.
  ************************************************************************************/
-std::list< std::pair<name_types,SgEnumDeclaration*> > 
-NameEnforcer::checkEnumDeclaration(){
-     std::list<std::pair<name_types,SgEnumDeclaration*> > returnType;
-     VariantVector classVec;
-     classVec.push_back(V_SgEnumDeclaration); 
-     std::list<SgNode*> classDeclLst = NodeQuery::queryMemoryPool(classVec); 
-     classDeclLst = removeElements(classDeclLst);
-
-     for(std::list<SgNode*>::iterator it = classDeclLst.begin(); it != classDeclLst.end(); ++it)
-	{
-	  SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(*it);
+void
+NameEnforcer::checkEnumDeclaration(SgEnumDeclaration* enumDeclaration, std::list< std::pair<name_types,SgNode*> >& 
+violations){
+     ROSE_ASSERT(enumDeclaration != NULL);
 	  std::string enumName = enumDeclaration->get_name().str();
 
 	  std::string error_message = " an enum declaration ";
@@ -954,15 +939,11 @@ NameEnforcer::checkEnumDeclaration(){
 		    Sg_File_Info* fileInfo = enumDeclaration->get_file_info();
 		    std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
 			    << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-		    returnType.push_back(std::pair<name_types,SgEnumDeclaration*>(enum_name,enumDeclaration) );
+		    violations.push_back(std::pair<name_types,SgNode*>(enum_name,enumDeclaration) );
 
 	       }
 	  }
 
-
-	}	
-
-     return returnType;
 }
 
 
@@ -972,17 +953,12 @@ NameEnforcer::checkEnumDeclaration(){
  *        NameEnforcer::checkEnumLabels()
  * will apply the rules on enum labels.
  ************************************************************************************/
-std::list< std::pair<name_types,SgInitializedName*> > 
-NameEnforcer::checkEnumLabels(){
-     std::list<std::pair<name_types,SgInitializedName*> > returnType;
-     VariantVector classVec;
-     classVec.push_back(V_SgEnumDeclaration); 
-     std::list<SgNode*> classDeclLst = NodeQuery::queryMemoryPool(classVec); 
-     classDeclLst = removeElements(classDeclLst);
+void 
+NameEnforcer::checkEnumLabels(SgEnumDeclaration* enumDeclaration,
+std::list< std::pair<name_types,SgNode*> >& violations
+){
+     ROSE_ASSERT(enumDeclaration != NULL);
 
-     for(std::list<SgNode*>::iterator it = classDeclLst.begin(); it != classDeclLst.end(); ++it)
-	{
-	  SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(*it);
 	  std::string enumName = enumDeclaration->get_name().str();
 
 	  std::string error_message = " an enum declaration ";
@@ -1012,24 +988,21 @@ NameEnforcer::checkEnumLabels(){
 			 Sg_File_Info* fileInfo = initName->get_file_info();
 			 std::cout << "        file: " << fileInfo->get_filenameString() << " line " 
 				 << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-			 returnType.push_back(std::pair<name_types,SgInitializedName*>(enum_label,initName) );
+			 violations.push_back(std::pair<name_types,SgInitializedName*>(enum_label,initName) );
 
 		    }
 	       }
 
 	     }
-	}	
-
-     return returnType;
 }
 
 template<typename CurrentType>
-std::list<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
+std::vector<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
 
 
      CurrentType curr_node = dynamic_cast<CurrentType>(curr_node_before);
      ROSE_ASSERT(curr_node != NULL);
-     std::list<SgNode*> returnType;
+     std::vector<SgNode*> returnType;
 
 
      bool addNode = false;
@@ -1051,7 +1024,6 @@ std::list<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
 				  
 
 		 ){
-//if(dataMemb == locNode){
 		    addNode = true;
 		    std::cout << "The token is:" << (*dataMemb_it).second << std::endl;
 		    break;
@@ -1062,7 +1034,7 @@ std::list<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
 
 	  if(addNode == true){
 		    Sg_File_Info* fileInfo = curr_node->get_file_info();
-		    std::cout << "Use in file: " << fileInfo->get_filenameString() << " line " 
+		    std::cout << "Use in file: " << fileInfo->get_filenameString() << " line " << fileInfo->get_file_info()->get_filenameString()
 			    << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
 
 		    returnType.push_back( curr_node );
@@ -1075,9 +1047,9 @@ std::list<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
 }
 
 
-std::list< std::pair<SgNode*,std::string> > 
+std::vector< std::pair<SgNode*,std::string> > 
 NameEnforcer::findUses(SgLocatedNode* locNode){
-     std::list<std::pair<SgNode*,std::string> > returnType;
+     std::vector<std::pair<SgNode*,std::string> > returnType;
 
 
 
@@ -1087,79 +1059,6 @@ NameEnforcer::findUses(SgLocatedNode* locNode){
 
 
 
-#if 0
-
-     VariantVector varVec2(V_SgInitializer);
-
-     std::list<SgNode*> nodesInAST2 = NodeQuery::queryMemoryPool(varVec2);
-
-     for(std::list<SgNode*>::iterator ast_it = nodesInAST2.begin();
-		     ast_it != nodesInAST2.end(); ++ast_it){
-
-	  SgNode* curr_node = *ast_it;
-
-	  switch(curr_node->variantT()){
-	       case V_SgConstructorInitializer:
-		  SgConstructorInitializer* constInit =
-			  isSgConstructorInitializer(curr_node);
-		  if(constInit->get_class_decl() == locNode)
-		     {
-
-		     }
-	       case V_SgAssignInitializer:
-	       case V_SgAggregateInitializer:
-
-		  break;
-
-	       default:
-		  break;
-
-
-	  }
-
-
-
-     }
-
-     VariantVector varVec(V_SgNode);
-
-     std::list<SgNode*> nodesInAST = NodeQuery::queryMemoryPool(varVec);
-
-
-
-
-     for(std::list<SgNode*>::iterator ast_it = nodesInAST.begin();
-		     ast_it != nodesInAST.end(); ++ast_it){
-
-	  SgNode* curr_node = *ast_it;
-
-	  if( (curr_node != locNode) && (curr_node->get_file_info()->isCompilerGenerated() == false) )  {
-	       std::vector< std::pair<SgNode *, std::string > >
-		       dataMemberPointer = curr_node->returnDataMemberPointers();
-	       for( std::vector< std::pair<SgNode *, std::string > >::iterator dataMemb_it =
-			       dataMemberPointer.begin();
-			       dataMemb_it != dataMemberPointer.end(); ++dataMemb_it){
-
-		    SgNode* dataMemb = (*dataMemb_it).first;
-
-		    if(  (dataMemb == locNode)  && (dataMemb->get_file_info()->isCompilerGenerated() == false) 
-				    && ( (*dataMemb_it).second != std::string("parent") )
-				    && ( (*dataMemb_it).second != std::string("definingDeclaration") )
-
-		      ){
-			 Sg_File_Info* fileInfo = curr_node->get_file_info();
-			 std::cout << "Use in file: " << (*dataMemb_it).second << " "<< fileInfo->get_filenameString() << " line " 
-				 << fileInfo->get_line() << " col " << fileInfo->get_col() << std::endl;
-
-			 returnType.push_back( std::make_pair( curr_node, (*dataMemb_it).second ) );
-			 break;
-		    }
-	       }
-	  }
-
-
-     }
-#endif
 
      return returnType;
 
@@ -1169,15 +1068,47 @@ NameEnforcer::findUses(SgLocatedNode* locNode){
 /***************************************************
  * INITIATE checking of all rules specified in the styles
  *****************************************************/
-void NameEnforcer::enforceRules(SgProject* project){
+void NameEnforcer::enforceRules(SgNode* node, std::list< std::pair<name_types,SgNode*> >& violations,
+                               std::list< std::pair<name_types,PreprocessingInfo*> >& macroViolations ){
+     if( SgClassDeclaration* classDecl = isSgClassDeclaration(node) )
+          checkClassDeclaration(classDecl, violations);
 
+     if( SgVariableDeclaration* varDecl = isSgVariableDeclaration(node) )
+          checkVariableDeclaration(varDecl, violations);
+     if( SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node) )
+          checkFunctionDeclaration( funcDecl, violations );
+    
+     //checkMacroNames(project);
+     if( SgEnumDeclaration* enumDecl = isSgEnumDeclaration(node) ){
+         checkEnumDeclaration( enumDecl, violations );
+         checkEnumLabels( enumDecl,violations );
+     }
+  // Add in the information from the current node
+     if (SgLocatedNode* locatedNode = isSgLocatedNode(node))
+	{
+	  AttachedPreprocessingInfoType* commentsAndDirectives = locatedNode->getAttachedPreprocessingInfo();
 
+	  if (commentsAndDirectives != NULL)
+	     {
+	    // printf ("Found attached comments (to IR node at %p of type: %s): \n",locatedNode,locatedNode->class_name().c_str());
+	    // int counter = 0;
 
-     checkClassDeclaration();
-     checkVariableDeclaration();
-     checkFunctionDeclaration();
-     checkMacroNames(project);
-     checkEnumDeclaration();
-     checkEnumLabels();
+	    // Use a reverse iterator so that we preserve the order when using push_front to add each directive to the accumulatedList
+	       AttachedPreprocessingInfoType::reverse_iterator i;
+	       for (i = commentsAndDirectives->rbegin(); i != commentsAndDirectives->rend(); i++)
+		  {
+		 // The different classifications of comments and directives are in ROSE/src/frontend/SageIII/rose_attributes_list.h
+		    if ((*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration)
+		       {
+                         checkMacroNames(*i, macroViolations);
+		       }
+		  }
+	     }
+	}
+
 };
 
+
+
+
+#endif //12/26/2007 END

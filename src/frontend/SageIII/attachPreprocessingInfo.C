@@ -1215,8 +1215,16 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
                      ctx.add_sysinclude_path(i->c_str()); 
                
              }
+          else if( (i->substr(0,3) == "g++") || (i->substr(0,4) == "/usr"))
+          {
+           //AS(03/12/08) FIXME: Somebody removed the --sys_include in front of the g++ header include directories
+           //this patch fixes that for now.
+            ctx.add_sysinclude_path(i->c_str()); 
+
+          }
           else
              {
+               
                printf ("Found a non include path in the internal include path list substring = %s *i = %s \n",i->substr(0,2).c_str(),i->c_str());
              }
         }

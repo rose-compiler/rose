@@ -40,14 +40,14 @@ namespace CompassAnalyses
 	  std::string getFileName(SgFile* src);
 	  bool isNULL(SgExpression* rightSide) const;
 	  bool isLegitimateNullPointerCheck(SgExpression* expr, SgInitializedName* pointerVar, bool invertCheck) const;
-	  void checkNullDeref(string analysisname, SgFunctionDeclaration* funcDecl, SgExpression* theExp, string name, int now, int max);
+	  void checkNullDeref(std::string analysisname, SgFunctionDeclaration* funcDecl, SgExpression* theExp, std::string name, int now, int max);
 
 	  bool switchForAssignment(std::vector<BOOSTGraphInterface::tps_node> &vec, 
 					  BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN, SgExpression* rhs) const;
 	  std::vector <BOOSTGraphInterface::tps_node> tps_out_edges(BOOSTGraphInterface::tps_node node) const;
 
-	  static std::string printTrace(const vector<BOOSTGraphInterface::tps_node>& trace);
-	  static std::string print_tps_error(string error, BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN);
+	  static std::string printTrace(const std::vector<BOOSTGraphInterface::tps_node>& trace);
+	  static std::string print_tps_error(std::string error, BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN);
 
 	  static std::string trimIfNeeded(const std::string& s);
 	  static SgStatement* getStatement(SgNode* n);
@@ -78,7 +78,7 @@ namespace CompassAnalyses
 	  void run(SgNode* n){ 
 	    counter=0;
 	    debug=false;
-	    std::list<SgNode*> exprList = NodeQuery:: querySubTree (n, V_SgFunctionDeclaration);
+	    std::vector<SgNode*> exprList = NodeQuery:: querySubTree (n, V_SgFunctionDeclaration);
 	    max = exprList.size();
 	    this->traverse(n, preorder); 
 	  };

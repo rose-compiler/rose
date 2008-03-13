@@ -1,7 +1,7 @@
 #include "rose.h"
 
 using namespace std;
-
+using namespace RoseBin_Def;
 
 bool RoseBin_support::DEBUG_M=false;
 bool RoseBin_support::DEBUG_M_MIN=false;

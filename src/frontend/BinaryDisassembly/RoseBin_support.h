@@ -134,7 +134,7 @@ namespace __gnu_cxx {
 #endif
 
 
-using namespace RoseBin_Def;
+
 
 class RoseBin_unparse_visitor;
 
@@ -142,7 +142,7 @@ class RoseBin_support {
  private:
    static bool DEBUG_M;
    static bool DEBUG_M_MIN;
-   static RoseLanguage assemblyLanguage;
+   static RoseBin_Def::RoseLanguage assemblyLanguage;
    static bool db;
    static RoseBin_unparse_visitor* unparser;
 
@@ -243,7 +243,7 @@ class RoseBin_support {
   static bool 
     isConditionalInstruction(SgAsmInstruction*inst) {
     bool condInst = false;
-    if (RoseBin_Def::RoseAssemblyLanguage==x86) {
+    if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
       if (isSgAsmx86ConditionalDataTransferInstruction(inst) ||
 	  isSgAsmx86ConditionalControlTransferInstruction(inst))
 	condInst = true;
@@ -254,7 +254,7 @@ class RoseBin_support {
   static bool 
     isConditionalFlagInstruction(SgAsmInstruction*inst) {
     bool condInst = false;
-    if (RoseBin_Def::RoseAssemblyLanguage==x86) {
+    if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
       if (isSgAsmx86ConditionalFlagDataTransferInstruction(inst) ||
 	  isSgAsmx86ConditionalFlagBitAndByteInstruction(inst) ||
 	  isSgAsmx86ConditionalFlagControlTransferInstruction(inst) ||
@@ -265,11 +265,11 @@ class RoseBin_support {
   }
   
 
-  static RoseLanguage getAssemblyLanguage() {
+  static RoseBin_Def::RoseLanguage getAssemblyLanguage() {
     return assemblyLanguage;
   }
 
-  static void setAssemblyLanguage(RoseLanguage lang) {
+  static void setAssemblyLanguage(RoseBin_Def::RoseLanguage lang) {
     assemblyLanguage = lang;
   }
 

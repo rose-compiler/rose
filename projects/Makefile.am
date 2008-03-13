@@ -16,12 +16,14 @@ SUBDIRS = \
      dataStructureGraphing \
      checkPointExample \
      simpleCallGraphAnalysis \
-     NameConsistancyChecker \
      C_to_Promela \
      MPICodeMotion \
      javaport \
      palette \
      reverseComputation
+
+#AS(3/12/2008) the  NameConsistancyChecker is now part of compass
+#     NameConsistancyChecker 
 
 # DQ (1/18/2008): This is removed because it has dependence on xml libraries 
 # that may not be available for users.

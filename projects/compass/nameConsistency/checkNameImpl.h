@@ -2,6 +2,7 @@
 #define COMPASS_CHECKNAMEIMPL_H
 
 
+
 #include "rose.h"
 
 
@@ -12,6 +13,12 @@
 #endif //GMY 12/26/2007 END
 #include <functional>
 #include <fstream>
+
+namespace CompassAnalyses
+   {
+     namespace NameConsistency
+        {
+
 
 enum name_types {
 
@@ -123,7 +130,7 @@ class NameEnforcer{
           void checkEnumDeclaration(SgEnumDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
           void checkEnumLabels(SgEnumDeclaration*, std::list< std::pair<name_types,SgNode*> >&);
 
-          std::list< std::pair<SgNode*,std::string> > findUses(SgLocatedNode* locNode);
+          std::vector< std::pair<SgNode*,std::string> > findUses(SgLocatedNode* locNode);
 
 
 };
@@ -160,5 +167,8 @@ class SynthesizedAttribute
 
           void display() const;
    };
+
+ }; //End namespace NameConsistency
+}; //end namespace CompassAnalyses
 
 #endif

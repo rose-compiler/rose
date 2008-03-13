@@ -843,7 +843,6 @@ projects/DatalogAnalysis/src/DBFactories/Makefile
 projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DocumentationGenerator/Makefile
-projects/NameConsistancyChecker/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/tests/Makefile
@@ -995,6 +994,9 @@ developersScratchSpace/Dan/ObjdumpDisassembler_tests/Makefile
 developersScratchSpace/Dan/Yices_tests/Makefile
 developersScratchSpace/Dan/Compass_tests/Makefile
 ])
+
+#AS(03/12/2008) NameConsistancyChecker is now part of compass
+#projects/NameConsistancyChecker/Makefile
 
 # DQ (1/24/2008): Removed these directories and consolidated the files.
 # src/midend/astOutlining/src/Makefile

@@ -15,6 +15,7 @@ static const char* OPTION_VALUE_SEPARATOR = "$^";
 
 
 //! Wrapper around the SLA string option processing routine.
+#if 0
 static	int
 getRoseOptionValues (int* p_argc, char** argv, const char* opt_name,
 		std::vector<std::string>& values)
@@ -35,17 +36,41 @@ getRoseOptionValues (int* p_argc, char** argv, const char* opt_name,
 	}
      return num_matches;
    }
+#endif
+
+static	int
+getRoseOptionValues (std::vector<std::string>& argv, const std::string& opt_name,
+		std::vector<std::string>& values)
+   {
+     int num_matches = sla_str (argv,
+		     OPTION_PREFIX_ROSE,
+		     OPTION_VALUE_SEPARATOR,
+		     opt_name,
+		     (std::string*)NULL);
+     if (num_matches > 0)
+	{
+	  std::vector<std::string> raw_values(num_matches);
+	  sla_str (argv,
+OPTION_PREFIX_ROSE, OPTION_VALUE_SEPARATOR, opt_name,
+			  &raw_values[0]);
+	  values.insert(values.end(), raw_values.begin(), raw_values.end());
+	}
+     return num_matches;
+   }
+
 
 
 int main( int argc, char * argv[] ) 
    {
      //std::cout << "GETTING PATHS" << std::endl;
      //getFilterPathMap(&argc,argv);
-     
+     std::vector<std::string> argvList(argv, argv + argc);
+    
      //get file-names with input from commandline
      //The option is: -rose:name:file filename
      std::vector<std::string> raw_eqpaths;
-     getRoseOptionValues (&argc, argv, OPTION_NAMESTYLEFILE, raw_eqpaths);
+     //getRoseOptionValues (&argc, argv, OPTION_NAMESTYLEFILE, raw_eqpaths);
+     getRoseOptionValues (argvList, OPTION_NAMESTYLEFILE, raw_eqpaths);
 
 
   // #endifBuild the AST used by ROSE

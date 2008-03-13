@@ -5,6 +5,9 @@
 // Author: Andreas Saebjoernsen
 // Date: 23-July-2007
 
+
+
+
 #include "compass.h"
 #include "nameConsistency.h"
 
@@ -124,7 +127,6 @@ CompassAnalyses::NameConsistency::Traversal::
 visit(SgNode* node)
    { 
    } //End of the visit function.
-
 
 
 

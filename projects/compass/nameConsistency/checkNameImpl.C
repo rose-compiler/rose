@@ -1,6 +1,16 @@
+
+
 #if USE_ROSE_BOOST_WAVE_SUPPORT //GMY 12/26/2007 added to pass compass make verify
 
+
+
 #include "checkNameImpl.h"
+
+namespace CompassAnalyses
+   {
+     namespace NameConsistency
+        {
+
 
 //The edge goes from 'node'->'x'
 filterOnPaths::result_type
@@ -991,12 +1001,12 @@ std::list< std::pair<name_types,SgNode*> >& violations
 }
 
 template<typename CurrentType>
-std::list<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
+std::vector<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
 
 
      CurrentType curr_node = dynamic_cast<CurrentType>(curr_node_before);
      ROSE_ASSERT(curr_node != NULL);
-     std::list<SgNode*> returnType;
+     std::vector<SgNode*> returnType;
 
 
      bool addNode = false;
@@ -1041,9 +1051,9 @@ std::list<SgNode*> findingNodes2(SgNode* curr_node_before,SgNode* locNode){
 }
 
 
-std::list< std::pair<SgNode*,std::string> > 
+std::vector< std::pair<SgNode*,std::string> > 
 NameEnforcer::findUses(SgLocatedNode* locNode){
-     std::list<std::pair<SgNode*,std::string> > returnType;
+     std::vector<std::pair<SgNode*,std::string> > returnType;
 
 
 
@@ -1101,5 +1111,10 @@ void NameEnforcer::enforceRules(SgNode* node, std::list< std::pair<name_types,Sg
 	}
 
 };
+
+ }; //End namespace NameConsistency
+}; //end namespace CompassAnalyses
+
+
 
 #endif //12/26/2007 END
