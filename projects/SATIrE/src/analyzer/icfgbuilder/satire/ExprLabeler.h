@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
+// $Id: ExprLabeler.h,v 1.2 2008-03-13 15:00:53 gergo Exp $
 
 #ifndef H_EXPRLABELER
 #define H_EXPRLABELER
@@ -8,6 +8,7 @@
 #include <rose.h>
 
 #include "cfg_support.h"
+#include "IrCreation.h"
 
 // preorder -- but it doesn't really matter
 class ExprLabeler : public AstSimpleProcessing

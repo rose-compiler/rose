@@ -1,5 +1,8 @@
 // Author: Markus Schordan, 2007
 
+#ifndef H_IRCREATION
+#define H_IRCREATION
+
 #include <rose.h>
 #include <string>
 #include "cfg_support.h"
@@ -55,6 +58,7 @@ public:
   static std::string getStrippedName(SgInitializedName* in);
   // for creating a string representation of IR fragments
   static std::string fragmentToString(const SgNode* node);
+  static SgNode *deepCopy(SgNode *n, bool copyParentPointer = true);
 
 private:
   static void configLocatedNode(SgLocatedNode* ln, SgNode* s1, SgNode* s2);
@@ -68,3 +72,5 @@ private:
   static void configSymbolNode(SgSymbol* ln);
   static Sg_File_Info* createFileInfo();
 };
+
+#endif
