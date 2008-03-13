@@ -18,8 +18,17 @@ VALGRIND =
 
 TEST_Objects = ${TESTCODES:.C=.o}
 
-$(TEST_Objects): ../compassMain
+$(TEST_Objects): ../compassMain compass_parameters
 	$(VALGRIND) ../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) $(INCLUDES) -rose:includeFile $(@:.o=) -c $(srcdir)/$(@:.o=.C)
+
+compass_parameters: ../compass_parameters
+	cp ../compass_parameters .
+
+../compass_parameters:
+	$(MAKE) -C .. compass_parameters
+
+../compassMain:
+	$(MAKE) -C .. compassMain
 
 check-local:
 	@echo "Tests Compass (and its checkers) using a cross-section of the ROSE C++ test codes..."
@@ -34,4 +43,4 @@ distclean-local:
 clean-local:
 	rm -rf *.o 
 
-
+CLEANFILES = compass_parameters

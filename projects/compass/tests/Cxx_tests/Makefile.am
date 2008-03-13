@@ -608,11 +608,20 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): ../../compassMain
+$(TEST_Objects): ../../compassMain compass_parameters
 #	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 	echo "Copy the file to the local build tree so that the we can process it with compass (not required by compass) ..."
 	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
 	$(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(@:.o=.C)
+
+compass_parameters: ../../compass_parameters
+	cp ../../compass_parameters .
+
+../../compass_parameters:
+	$(MAKE) -C ../.. compass_parameters
+
+../../compassMain:
+	$(MAKE) -C ../.. compassMain
 
 check-local:
 	@echo "Tests Compass (and its checkers) using a cross-section of the ROSE C++ test codes..."
@@ -627,4 +636,4 @@ distclean-local:
 clean-local:
 	rm -rf *.o *.ps *.dot *.C
 
-
+CLEANFILES = compass_parameters

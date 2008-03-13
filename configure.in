@@ -657,6 +657,13 @@ AC_SUBST(top_pwd)
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
 
+# This is silly, but it is done to hide an include command (in
+# projects/compass/Makefile.am, including compass-makefile.inc in the build
+# tree) from Automake because the needed include file does not exist when
+# automake is run
+INCLUDE_COMPASS_MAKEFILE_INC="include compass_makefile.inc"
+AC_SUBST(INCLUDE_COMPASS_MAKEFILE_INC)
+
 # ROSE-HPCT module
 ACROSE_ENABLE_ROSEHPCT
 
