@@ -404,10 +404,46 @@ buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters
 
 for dir in ${USUBDIRS[@]}
 do
-  echo -e "  retVal.push_back( new CompassAnalyses::${dir}::Traversal(params, &output) );\n" >> $source
+  echo -e "
+    try {
+        CompassAnalyses::${dir}::Traversal *traversal;
+        traversal = new CompassAnalyses::${dir}::Traversal(params, &output);
+        retVal.push_back(traversal);
+    } catch (const std::exception &e) {
+        std::cerr << \"error initializing checker ${dir}: \" << e.what() << std::endl;
+    }" >> $source
 done
 
 echo -e '
+
+  //AS(1/18/2008) Remove the rules that has been deselected from the retVal
+  std::string ruleFile = Compass::parseString(params["Compass.RuleSelection"]);
+
+  std::map<std::string, bool > ruleSelection = readFile(ruleFile);
+
+  std::vector<Compass::TraversalBase*> ruleDeselected;
+  for( std::vector<Compass::TraversalBase*>::reverse_iterator iItr = retVal.rbegin();
+	  iItr != retVal.rend(); iItr++ )
+  {
+	std::map<std::string, bool >::iterator isRuleSelected = ruleSelection.find((*iItr)->getName() );   
+      
+	if( isRuleSelected == ruleSelection.end() ){
+         std::cerr << "Error: It has not been selected if " + (*iItr)->getName() + " should be run." 
+		           << std::endl;
+		 exit(1);
+	}
+	if( isRuleSelected->second == false  )
+	  ruleDeselected.push_back(*iItr);
+  }
+
+   for( std::vector<Compass::TraversalBase*>::iterator iItr = ruleDeselected.begin();
+	  iItr != ruleDeselected.end(); iItr++ )
+  {
+	retVal.erase(std::find(retVal.begin(),retVal.end(),*iItr));
+  }
+
+
+
   return;
 } //buildCheckers()
 ' >> $source
