@@ -20,7 +20,6 @@ endif
 endif
 
 if ROSE_USE_BINARY_SQL
-ROSE_USE_BINARY_SQL
 # Isolated part of library that depends on the mysql database
 libbinaryDatabase_la_DEPENDENCIES =
 libbinaryDatabase_la_SOURCES = RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp RoseBin_IDAPRO_buildTree.cpp
