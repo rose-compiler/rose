@@ -164,10 +164,14 @@ void reverseOneFunction(SgFunctionDeclaration* decl, SgFunctionSymbol*& forward,
   ROSE_ASSERT (!forward && !backward); // Should not have just one of the two
   SgFunctionParameterList* paramList1 = deepCopy(decl->get_parameterList());
   ROSE_ASSERT (paramList1);
-  SgVariableSymbol* forwardSaveStack = appendArg(paramList1, buildInitializedName("__reversalSaveStack", buildPointerType(buildCharType())));
+  SgInitializedName* forwardSaveStackIn = buildInitializedName("__reversalSaveStack", buildPointerType(buildCharType()));
+  appendArg(paramList1, forwardSaveStackIn);
+  SgVariableSymbol* forwardSaveStack = new SgVariableSymbol(forwardSaveStackIn);
   SgFunctionParameterList* paramList2 = deepCopy(decl->get_parameterList());
   ROSE_ASSERT (paramList2);
-  SgVariableSymbol* backwardSaveStack = appendArg(paramList2, buildInitializedName("__reversalSaveStack", buildPointerType(buildCharType())));
+  SgInitializedName* backwardSaveStackIn = buildInitializedName("__reversalSaveStack", buildPointerType(buildCharType()));
+  appendArg(paramList2, backwardSaveStackIn);
+  SgVariableSymbol* backwardSaveStack = new SgVariableSymbol(backwardSaveStackIn);
   SgFunctionDeclaration* forwardDecl = buildDefiningFunctionDeclaration(name + "__forward", SgTypeVoid::createType(), paramList1, globalScope);
   ROSE_ASSERT (forwardDecl);
   SgFunctionDeclaration* backwardDecl = buildDefiningFunctionDeclaration(name + "__backward", SgTypeVoid::createType(), paramList2, globalScope);
