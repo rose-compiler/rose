@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/projects/compass/compass_makefile.inc
+# include $(top_srcdir)/projects/compass/compass_makefile.inc
 
 #							-*- Makefile -*-
 
