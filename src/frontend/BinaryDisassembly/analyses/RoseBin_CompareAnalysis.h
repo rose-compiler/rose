@@ -9,7 +9,7 @@
 #ifndef __RoseBin_CompareAnalysis__
 #define __RoseBin_CompareAnalysis__
 
-#include <mysql/mysql.h>
+//#include <mysql/mysql.h>
 #include <stdio.h>
 #include <iostream>
 #include "rose.h"

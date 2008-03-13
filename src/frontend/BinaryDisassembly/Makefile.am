@@ -36,18 +36,18 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp  RoseBin_unparse.cpp \
 
 
 # Original combined library (as originally defined by Thomas)
-libbinarydisassembly_la_DEPENDENCIES =
-libbinarydisassembly_la_SOURCES = \
-     RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp \
-     RoseBin_IDAPRO_buildTree.cpp  RoseBin_support.cpp  RoseBin_unparse.cpp \
-     RoseBin_unparse_visitor.cpp analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
-     analyses/RoseBin_printInstructions.cpp analyses/RoseBin_DataFlowAnalysis.cpp \
-     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
-     analyses/RoseBin_CallGraphAnalysis.cpp analyses/RoseBin_FlowAnalysis.cpp \
-     analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
-     analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
-     analyses/dataflowanalyses/RoseBin_Emulate.cpp \
-     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
+#libbinarydisassembly_la_DEPENDENCIES =
+#libbinarydisassembly_la_SOURCES = \
+#     RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp \
+#     RoseBin_IDAPRO_buildTree.cpp  RoseBin_support.cpp  RoseBin_unparse.cpp \
+#     RoseBin_unparse_visitor.cpp analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
+#     analyses/RoseBin_printInstructions.cpp analyses/RoseBin_DataFlowAnalysis.cpp \
+#     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
+#     analyses/RoseBin_CallGraphAnalysis.cpp analyses/RoseBin_FlowAnalysis.cpp \
+#     analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
+#     analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
+#     analyses/dataflowanalyses/RoseBin_Emulate.cpp \
+#     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
 
 endif
 
