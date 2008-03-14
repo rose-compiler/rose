@@ -44,10 +44,11 @@
             <!-- <p class="style3"><a href="ROSE_Tutorial/tutorial.html">Tutorial (generated from Latex, work in progress)</p> -->
             <p class="style3"><a href="ROSE_HTML_Reference/index.html">Programmer's Reference</p>
             <p class="style3"><a href="ROSE_HTML_Reference/ProjectPublications.html">Publications</p>
-            <p class="style3"><a href="ROSE_HTML_Reference/Gallery.html">Download Software</p>
-            <p class="style3"><a href="ROSE_HTML_Reference/ProjectDownLoadPage.html">Download Software</p>
+            <!-- <p class="style3"><a href="ROSE_HTML_Reference/Gallery.html">Download Software</p> -->
+            <!-- <p class="style3"><a href="ROSE_HTML_Reference/ProjectDownLoadPage.html">Download Software</p> -->
+            <p class="style3"><a href="https://outreach.scidac.gov/projects/rose/">Download Software</p>
             <!-- <p class="style3"><a href="ROSE_HTML_Reference/ProjectRelatedWorkPage.html">Related Work</p> -->
-          <p>&nbsp;</p></td>
+          </td>
         </tr>
         <tr>
           <td height="46"></td>
@@ -76,8 +77,8 @@
         Texas A&M), it is also related to work under several other names: semantic
         inlining, semantic extension of languages.  ROSE research is language independent 
         but develops tools for specifically addressing the languages used for large-scale 
-        applications within scientific computing: C, C++, and Fortran90 (F90 work is being 
-        done in collaboration with Rice University).</p>
+        applications within scientific computing: C, C++, and Fortran 2003 (F2003 work is being 
+        done in collaboration with Los Alamos National Laboratory).</p>
       </td>
       </tr>
     </table></td>
@@ -91,7 +92,7 @@
             Last modified:
     <!-- #BeginDate format:Am1 -->@configure_date@<!-- #EndDate -->
               <br>
-          <a href="mailto:webmaster-casc@llnl.gov">CASC Webmaster</a>          </p></td>
+          <a href="mailto:liao6@llnl.gov">Webmaster</a>          </p></td>
 
         <td width="579" valign="top"><hr>          <div align="center"><br>
             For further information, please contact Dan Quinlan, <a href="mailto:dquinlan at llnl dot gov">dquinlan at llnl dot gov</a><br>

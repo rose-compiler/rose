@@ -13,7 +13,6 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-static  SgTreeCopy treeCopy;
 int main (int argc, char *argv[])
 {
   // grab the scope in which AST will be added

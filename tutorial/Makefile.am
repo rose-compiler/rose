@@ -20,6 +20,7 @@ noinst_PROGRAMS = \
    addFunctionDeclaration \
    addStruct \
    addVariableDeclaration \
+   addVariableDeclaration2 \
    AST_PDF_Generator \
    astFileIO_GenerateBinaryFile \
    astFileIO_ReadMultipleASTs \
@@ -174,6 +175,9 @@ instrumentationExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addVariableDeclaration_SOURCES = addVariableDeclaration.C
 addVariableDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+addVariableDeclaration2_SOURCES = addVariableDeclaration2.C
+addVariableDeclaration2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionDeclaration_SOURCES = addFunctionDeclaration.C
 addFunctionDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -375,8 +379,10 @@ testInstrumentationExample: instrumentationExample
 
 # turn off the warning for input code with unused variable declarations
 testAddVariableDeclaration: addVariableDeclaration
-#	./addVariableDeclaration -c $(srcdir)/inputCode_1.C
 	./addVariableDeclaration --edg:no_warnings -c $(srcdir)/inputCode_AddVariableDeclaration.C
+
+testAddVariableDeclaration2: addVariableDeclaration2
+	./addVariableDeclaration2 --edg:no_warnings -c $(srcdir)/inputCode_AddVariableDeclaration2.C
 
 testAddFunctionDeclaration: addFunctionDeclaration
 #	./addFunctionDeclaration -c $(srcdir)/inputCode_1.C
@@ -832,6 +838,10 @@ rose_inputCode_AddFunctionDeclaration.C: addFunctionDeclaration
 rose_inputCode_AddVariableDeclaration.C: addVariableDeclaration
 	@echo "Generate executable from compilation of input code (addVariableDeclaration) ..."
 	./addVariableDeclaration $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddVariableDeclaration.C
+
+rose_inputCode_AddVariableDeclaration2.C: addVariableDeclaration2
+	@echo "Generate executable from compilation of input code (addVariableDeclaration2) ..."
+	./addVariableDeclaration2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddVariableDeclaration2.C
 
 rose_inputCode_InstrumentationTranslator.C: instrumentationExample
 	@echo "Generate executable from compilation of input code ..."
