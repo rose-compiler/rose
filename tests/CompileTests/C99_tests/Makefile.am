@@ -7,6 +7,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TESTCODES_REQUIRED_TO_PASS = \
      test2005_186.c \
      test2006_127.c \
+     test2006_143.c \
      test2008_01.c \
      complex_01.c \
      complex_03.c \
