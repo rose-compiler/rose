@@ -618,10 +618,10 @@ compass_parameters: ../../compass_parameters
 	cp ../../compass_parameters .
 
 ../../compass_parameters:
-	$(MAKE) -C ../.. compass_parameters
+	cd ../..; $(MAKE) compass_parameters
 
 ../../compassMain:
-	$(MAKE) -C ../.. compassMain
+	cd ../..; $(MAKE) compassMain
 
 check-local:
 	@echo "Tests Compass (and its checkers) using a cross-section of the ROSE C++ test codes..."
