@@ -55,12 +55,13 @@ AM_CXXFLAGS = -D__LOCALSTL_H
 FORCE_TEST_CODES_TO_RUN:
 	$(srcdir)/TestDriver $(srcdir)
 
+# .out is a special suffix for make
 EXTRA_DIST = TestDriver testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.ref \
              testfile2.c testfile2.c.cfg testfile2.c.du testfile2.c.ref \
              testfile3.c testfile3.c.cfg testfile3.c.du testfile3.c.ref \
              testfile4.c testfile4.c.du  testPtr1.C testPtr2.C \
-             PtrAnalTest.out1  steensgaardTest1.out   steensgaardTest2.out2 \
-             PtrAnalTest.out2  steensgaardTest2.out1  testfile1.c.out
+             PtrAnalTest.out1  steensgaardTest1.outx   steensgaardTest2.out2 \
+             PtrAnalTest.out2  steensgaardTest2.out1
              #trustedAnnotationOutput annotationLanguageParserInputFile.ann
 
 # to deactivate tests comment out check-local

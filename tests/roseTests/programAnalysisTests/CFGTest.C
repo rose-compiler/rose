@@ -116,9 +116,9 @@ main ( int argc,  char * argv[] )
    for (int i = 0; i < filenum; ++i) {
      SgFile &sageFile = sageProject.get_file(i);
       TestCFGWrap::AnalysisDomain t = UseOA(argc, argv)? TestCFGWrap::OA : TestCFGWrap::ROSE;
-      //string txtname = string(strrchr(sageFile.getFileName(),'/')+1) + ".out";
+      //string txtname = string(strrchr(sageFile.getFileName(),'/')+1) + ".outx";
       string filename = sageFile.getFileName();
-      string txtname = filename.substr(filename.rfind('/')+1) + ".out"; 
+      string txtname = filename.substr(filename.rfind('/')+1) + ".outx"; 
       TestCFGWrap_Text txtop(t,txtname);
       //string dotname = string(strrchr(sageFile.getFileName(),'/')+1) + ".dot";
       string dotname = filename.substr(filename.rfind('/')+1) + ".dot";

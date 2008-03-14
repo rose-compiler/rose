@@ -112,7 +112,7 @@ main ( int argc,  char * argv[] )
              op(fa, defn, name);
           }
           else {
-             string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".out";
+             string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".outx";
              TestDUWrap_Text op(alias,name);
              op(fa, defn);
           }

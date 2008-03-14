@@ -81,7 +81,7 @@ main ( int argc,  char * argv[] )
    for (int i = 0; i < filenum; ++i) {
      SgFile &sageFile = sageProject.get_file(i);
      SgGlobal *root = sageFile.get_root();
-     string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".out";
+     string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".outx";
      TestStmtModRef op(name);
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
