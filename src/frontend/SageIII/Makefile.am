@@ -55,7 +55,7 @@ GENERATED_SOURCE  = \
 #  Cxx_GrammarCocoSymbolsMapping.C 
 
 haveRosettaGeneratedSource:
-	$(MAKE) -C $(top_builddir)/src/ROSETTA/src
+	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 	touch haveRosettaGeneratedSource
 
 $(GENERATED_SOURCE): haveRosettaGeneratedSource
