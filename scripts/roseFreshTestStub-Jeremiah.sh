@@ -15,12 +15,12 @@ export PATH="/home/willcock2/swig-install/bin:$PATH"
 # export PATH="/home/willcock2/binutils-install/bin/:$PATH"
 # export LD_LIBRARY_PATH="/home/willcock2/binutils-install/lib/:$LD_LIBRARY_PATH"
 
-CONFIGURE_FLAGS=" --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=`pwd`/../install $@"
+ROSE_TOP="${HOME}/svn-test-rose/$$/"
+
+CONFIGURE_FLAGS=" --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install $@"
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="willcock2@llnl.gov"
-
-ROSE_TOP="${HOME}/svn-test-rose/$$/"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
