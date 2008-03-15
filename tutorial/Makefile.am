@@ -1151,7 +1151,8 @@ EXTRA_DIST = \
    TAU_INCLUDE_DIR \
    default_error_graph.dot \
    inputCode_addStruct.C \
-   rose_bin_example_backup.s
+   rose_bin_example_backup.s \
+   buffer2.bin
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
 CLEANFILES =
