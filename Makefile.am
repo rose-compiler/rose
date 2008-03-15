@@ -74,7 +74,7 @@ install-exec-local:
 	@echo '*****************************************************************'
 
 install-data-local:
-	-$(CHMOD) u+w $(includedir)/
+	chmod u+w $(includedir)/
 	-rm -rf $(includedir)/*_HEADERS
 	cp -R $(top_builddir)/include-staging/* $(includedir)/
 	@echo '*****************************************************************'
