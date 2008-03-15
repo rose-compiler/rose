@@ -1694,7 +1694,9 @@ done:
           return sections[i];
         }
       }
-      cerr << "Address " << addr << " not found in file" << endl;
+      if (addr != 0) {
+        cerr << "Address " << addr << " not found in file" << endl;
+      }
       return 0;
     }
 
