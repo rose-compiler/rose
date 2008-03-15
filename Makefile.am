@@ -64,17 +64,22 @@ nodist_include_HEADERS = rose_config.h rose_paths.h
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
 check-local:
-	@echo "************************************************************"
-	@echo "****** make check rule complete (terminated normally) ******"
-	@echo "************************************************************"
+	@echo '************************************************************'
+	@echo '****** make check rule complete (terminated normally) ******'
+	@echo '************************************************************'
 
 install-exec-local:
+	@echo '*****************************************************************'
+	@echo '***** make install-exec rule complete (terminated normally) *****'
+	@echo '*****************************************************************'
+
 install-data-local:
+	-$(CHMOD) u+w $(includedir)/
 	-rm -rf $(includedir)/*_HEADERS
-	cp -dpR $(top_builddir)/include-staging/* $(includedir)/
-	@echo "************************************************************"
-	@echo "***** make install rule complete (terminated normally) *****"
-	@echo "************************************************************"
+	cp -R $(top_builddir)/include-staging/* $(includedir)/
+	@echo '*****************************************************************'
+	@echo '***** make install-data rule complete (terminated normally) *****'
+	@echo '*****************************************************************'
 
 # DQ (7/22/2004): Need to be able to remove the REQUIRED_LIBS also!
 # Note that uninstall-hook does not work, but uninstall-local does.
