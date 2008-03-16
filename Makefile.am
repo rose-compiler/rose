@@ -48,7 +48,7 @@ clean-local:
 
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
-	rm -rf *_HEADERS $(includedir)/*_HEADERS $(bindir)/pdflib-config
+	rm -rf $(DESTDIR)$(includedir)/*_HEADERS $(DESTDIR)$(bindir)/pdflib-config
 
 clean-stl:
 	@echo "This fixes a common stl problem when the ROSE grammars are rebuilt \"false is not defined\""
@@ -74,9 +74,8 @@ install-exec-local:
 	@echo '*****************************************************************'
 
 install-data-local:
-	chmod u+w $(includedir)/
-	-rm -rf $(includedir)/*_HEADERS
-	cp -R $(top_builddir)/include-staging/* $(includedir)/
+	-rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'
 	@echo '*****************************************************************'

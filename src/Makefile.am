@@ -660,7 +660,7 @@ testEdgSourceRule:
 EXTRA_DIST = extra.docs
 
 dist-hook:
-	echo "dist-hook required for symetry with binary case ..."
+	echo "dist-hook required for symmetry with binary case ..."
 
 else
 
@@ -793,10 +793,10 @@ cleanTest:
 # DQ (7/22/2004): Need to be able to remove the REQUIRED_LIBS also!
 # Note that uninstall-hook does not work, but uninstall-local does.
 uninstall-local:
-#	rm -f $(DESTDIR)$(libdir)/libedg.so
-#	rm -f $(DESTDIR)$(libdir)/librose.so
-	rm -f $(libdir)/libedg.so
-	rm -f $(libdir)/librose.so
+	rm -f $(DESTDIR)$(libdir)/libedg.so
+	rm -f $(DESTDIR)$(libdir)/librose.so
+#	rm -f $(libdir)/libedg.so
+#	rm -f $(libdir)/librose.so
 	@echo "************************************************************"
 	@echo "**** make uninstall rule complete (terminated normally) ****"
 	@echo "************************************************************"
