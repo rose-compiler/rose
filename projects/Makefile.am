@@ -20,7 +20,8 @@ SUBDIRS = \
      MPICodeMotion \
      javaport \
      palette \
-     reverseComputation
+     reverseComputation \
+     DistributedMemoryAnalysisCompass
 
 #AS(3/12/2008) the  NameConsistancyChecker is now part of compass
 #     NameConsistancyChecker 

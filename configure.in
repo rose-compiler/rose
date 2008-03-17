@@ -680,6 +680,14 @@ ACROSE_ENABLE_ROSEHPCT
 # which syntax is best for the specification of these paths.
 AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$top_pwd",[Location of ROSE Compile Tree.])
 
+# JJW and TP (3-17-2008) -- added MPI support
+AC_ARG_WITH(mpi,
+[--with-mpi                    Configure option to have MPI-based tools built.],
+[ echo "Setting up optional MPI-based tools"
+])
+AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
+AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
+
 #AC_DEFINE_UNQUOTED([ROSE_PREFIX_DIR],"$prefix",[Location of ROSE prefix (install tree).])
 #AC_DEFINE_UNQUOTED([ROSE_BUILD_DIR],"$top_builddir",[Location of ROSE Compile Tree.])
 #AC_DEFINE_UNQUOTED([ROSE_SRC_DIR],"@srcdir@",[Location of ROSE Source Tree.])
@@ -857,6 +865,7 @@ projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/src/DBFactories/Makefile
 projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
 projects/DatalogAnalysis/tests/Makefile
+projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
