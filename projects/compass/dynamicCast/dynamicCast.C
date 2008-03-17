@@ -160,8 +160,8 @@ namespace CompassAnalyses{
 CompassAnalyses::DynamicCast::
 CheckerOutput::CheckerOutput (SgType* to, SgType* from,
                               SgCastExp* node)
-   : toType(to), fromType(from), IRnode(node),
-     OutputViolationBase(node,checkerName,shortDescription)
+   : OutputViolationBase(node,checkerName,shortDescription),
+     toType(to), fromType(from), IRnode(node)
    {}
 
 
