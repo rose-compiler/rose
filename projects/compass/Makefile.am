@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # is out of date)
 @INCLUDE_COMPASS_MAKEFILE_INC@
 
-SUBDIRS = compassSupport util compassVerifier tests
+SUBDIRS = compassSupport util compassVerifier tests compassRepository
 
 BUILT_SOURCES = buildCheckers.C checkers.h
 
