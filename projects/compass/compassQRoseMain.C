@@ -813,7 +813,7 @@ main(int argc, char** argv)
      compassFactoryArray.push_back(new CompassAnalyses::StaticConstructorInitializationDetectorNamespace::StaticConstructorInitializationDetectorFactory());
 #endif
 
-     Compass::Parameters params("compass_parameters");
+     Compass::Parameters params(Compass::findParameterFile());
 
      for (vector<Compass::FactoryBase*>::iterator i = compassFactoryArray.begin(); i != compassFactoryArray.end(); i++)
         {
@@ -842,7 +842,7 @@ main(int argc, char** argv)
 #endif
 #else
   // New way to build the checkers
-     Compass::Parameters params("compass_parameters");
+     Compass::Parameters params(Compass::findParameterFile());
      QRoseOutputObject* output = new QRoseOutputObject();
 
   // Need to make this a function to setup all the checkers.

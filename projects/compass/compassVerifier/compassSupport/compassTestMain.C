@@ -14,7 +14,7 @@
 int main(int argc, char** argv) {
   SgProject* sageProject = frontend(argc,argv);
 // Factory factory;
-  Compass::Parameters params("compass_parameters");
+  Compass::Parameters params(Compass::findParameterFile());
   Compass::PrintingOutputObject output(std::cerr);
 // Compass::TraversalBase* trav = factory.create(params, &output);
   Compass::TraversalBase* trav = new Checker(params, &output);

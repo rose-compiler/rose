@@ -51,6 +51,15 @@ std::string Compass::Parameters::operator[](const std::string& name) const
   }
 }
 
+std::string Compass::findParameterFile() {
+  if (getenv("COMPASS_PARAMETERS")) {
+    return getenv("COMPASS_PARAMETERS");
+  } else {
+    std::cerr << "Must set environment variable COMPASS_PARAMETERS to path to parameter file" << std::endl;
+    abort();
+  }
+}
+
 int Compass::parseInteger(const std::string& str) {
   std::istringstream is(str);
   int i;

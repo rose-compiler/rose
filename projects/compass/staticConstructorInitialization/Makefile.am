@@ -18,8 +18,7 @@ staticConstructorInitializationMain_SOURCES = libStaticConstructorInitialization
 staticConstructorInitializationMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libStaticConstructorInitialization.la
 
 test: libStaticConstructorInitialization.la staticConstructorInitializationMain 
-	cp -f $(srcdir)/compass_parameters compass_parameters
-	./staticConstructorInitializationMain $(srcdir)/../tests/staticConstructorInitializationTest.C
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./staticConstructorInitializationMain $(srcdir)/../tests/staticConstructorInitializationTest.C
 
 check-local:
 	@$(MAKE) test
@@ -30,5 +29,5 @@ check-local:
 EXTRA_DIST = compass_parameters staticConstructorInitialization.h 
 
 clean-local:
-	rm -f compass_parameters *.ti staticConstructorInitializationTest
+	rm -f *.ti staticConstructorInitializationTest
 

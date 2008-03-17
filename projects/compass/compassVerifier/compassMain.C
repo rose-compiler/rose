@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   SgProject* sageProject = frontend(argc,argv);
   std::vector<Compass::TraversalBase*> traversals;
 
-  Compass::Parameters params("compass_parameters");
+  Compass::Parameters params(Compass::findParameterFile());
   Compass::PrintingOutputObject output(std::cerr);
 
   buildCheckers(traversals,params,output);

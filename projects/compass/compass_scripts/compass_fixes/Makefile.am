@@ -19,12 +19,10 @@ compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $
 
 
 test: compassMain
-	cp -f $(srcdir)/compass_parameters compass_parameters
-	./compassMain $(srcdir)/tests/exampleTest_1.C
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassMain $(srcdir)/tests/exampleTest_1.C
 
 testAllInputsTogether:
-	cp -f $(srcdir)/compass_parameters compass_parameters
-	./compassMain $(COMPASS_CHECKER_TESTS)
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassMain $(COMPASS_CHECKER_TESTS)
 
 check-local:
 	@$(MAKE) test
@@ -35,6 +33,6 @@ check-local:
 EXTRA_DIST = compass.h  compass_parameters tests
 
 clean-local:
-	rm -f compass.* *.sty compass_parameters *.ti a.out *.tex *.lo *.la
+	rm -f compass.* *.sty *.ti a.out *.tex *.lo *.la
 	rm -f CHECKER_LIST $(COMPASS_CHECKER_TEX_FILES)
 

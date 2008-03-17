@@ -10,7 +10,7 @@ main(int argc, char** argv)
    {
      /* SgProject* sageProject = */ frontend(argc,argv);
 
-     Compass::Parameters params("compass_parameters");
+     Compass::Parameters params(Compass::findParameterFile());
      Compass::PrintingOutputObject output(std::cerr);
 
      return 0;

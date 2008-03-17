@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   // Read the Compass parameter file (contains input data for all checkers)
   // This has been moved ahead of the parsing of the AST so that it is more 
   // obvious when it is a problem.
-     Compass::Parameters params("compass_parameters");
+     Compass::Parameters params(Compass::findParameterFile());
 
   // Use a modified commandline that inserts specific additional options
   // to the ROSE frontend to make use with Compass more appropriate.

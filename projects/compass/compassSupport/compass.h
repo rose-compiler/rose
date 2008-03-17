@@ -78,6 +78,8 @@ namespace Compass {
       throw (ParameterNotFoundException);
   };
 
+  std::string findParameterFile();
+
   /// Parse an integer from the given string
   int parseInteger(const std::string& str);
   /// Parse a double from the given string

@@ -120,6 +120,14 @@ std::string Compass::Parameters::operator[](const std::string& name) const
   }
 }
 
+std::string Compass::findParameterFile() {
+  std::string filename = "compass_parameters";
+  if (getenv("COMPASS_PARAMETERS")) {
+    filename = getenv("COMPASS_PARAMETERS");
+  }
+  return filename;
+}
+
 int Compass::parseInteger(const std::string& str) {
   std::istringstream is(str);
   int i;

@@ -25,7 +25,7 @@ buildMe:
 param:
 	cp -f $(srcdir)/compass_parameters compass_parameters
 
-oneBigVerify: buildMe compassVerifier param
+oneBigVerify: buildMe compassVerifier $(srcdir)/compass_parameters
 	rm -f catChecker.C catCheckerIncludes.txt catChecker.ti
 	@echo "Concatenating all checker sources"
 	@sh -c '\
@@ -35,8 +35,8 @@ oneBigVerify: buildMe compassVerifier param
 		echo "-I$(srcdir)/../$${file}" >> catCheckerIncludes.txt ;\
 	done ;\
 	export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
-	echo "./compassVerifier -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C" ;\
-	./compassVerifier -rose:verbose 2 -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
+	echo "env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassVerifier -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C" ;\
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassVerifier -rose:verbose 2 -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
 	'
 
 verify: buildMe compassVerifier param
@@ -77,8 +77,7 @@ verify: buildMe compassVerifier param
 	$(MAKE) -f verify.makefile -$${MAKEFLAGS}
 
 test: compassVerifier
-	cp -f $(srcdir)/compass_parameters compass_parameters
-	./compassVerifier $(srcdir)/tests/exampleTest_1.C
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassVerifier $(srcdir)/tests/exampleTest_1.C
 
 check-local:
 	@$(MAKE) test

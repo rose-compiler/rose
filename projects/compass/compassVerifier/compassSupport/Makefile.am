@@ -18,8 +18,7 @@ compassEmptyMain_SOURCES = compassEmptyMain.C
 compassEmptyMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libCompass.la
 
 test: compassEmptyMain 
-	cp -f $(srcdir)/compass_parameters compass_parameters
-	./compassEmptyMain $(srcdir)/../tests/exampleTest_1.C
+	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassEmptyMain $(srcdir)/../tests/exampleTest_1.C
 
 check-local:
 	@$(MAKE) test
@@ -30,5 +29,5 @@ check-local:
 EXTRA_DIST = compass.h  compass_parameters
 
 clean-local:
-	rm -f compass.* *.sty compass_parameters *.ti a.out *.tex
+	rm -f compass.* *.sty *.ti a.out *.tex
 
