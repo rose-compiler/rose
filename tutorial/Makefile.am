@@ -1155,7 +1155,8 @@ EXTRA_DIST = \
    buffer2.bin
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
-CLEANFILES =
+
+CLEANFILES = rose_bin_example.s callgraph.gml
 
 docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 	@echo ""

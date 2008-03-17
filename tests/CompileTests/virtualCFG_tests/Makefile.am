@@ -507,6 +507,6 @@ check-local: check-cxx check-c check-c99 check-fortran
 	@echo "******************************************************************************************************"
 
 clean-local:
-	rm -f *.o *.c *-o
+	rm -f *.o *.c *-o *.mod
 	rm -rf QMTest
 

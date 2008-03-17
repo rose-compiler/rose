@@ -9,6 +9,8 @@ simpleComputationReverser_SOURCES = simpleComputationReverser.C
 
 EXTRA_DIST = test1.C eventSimulation.h
 
+CLEANFILES = rose_test1.C
+
 include_HEADERS =
 
 check-local: simpleComputationReverser test1.C

@@ -21,6 +21,8 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 VALGRIND = valgrind $(VALGRIND_OPTIONS)
 
+# This file is an object file created by the misinterpretation of a -opt flag
+CLEANFILES = pt
 
 # This rule generates a dependency that forces the "make check" 
 # test to always compile the test code
