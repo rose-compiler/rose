@@ -848,6 +848,9 @@ projects/compass/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c
 projects/compass/tests/Makefile
 projects/compass/tests/C_tests/Makefile
 projects/compass/tests/Cxx_tests/Makefile
+projects/compass/compassRepository/Makefile
+projects/compass/compassRepository/bin/Makefile
+projects/compass/compassRepository/bin/compass_template_generator/Makefile
 projects/highLevelGrammars/Makefile
 projects/BabelPreprocessor/Makefile
 projects/checkPointExample/Makefile
