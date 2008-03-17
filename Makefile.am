@@ -120,6 +120,10 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
+DISTCLEAN_FILES = rose_paths.h
+
+distclean-local:
+	-rm -rf $(top_builddir)/include-staging/
 
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is

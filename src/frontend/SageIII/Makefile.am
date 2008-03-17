@@ -31,7 +31,7 @@ preproc.o : $(srcdir)/preproc.C
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
 EXTRA_DIST = preproc.lex preproc.C docs
-CLEANFILES = preproc.o
+CLEANFILES = preproc.o haveRosettaGeneratedSource
 
 
 # DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
