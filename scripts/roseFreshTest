@@ -69,6 +69,10 @@ buildstatus=0
   echo "Making a temporary build directory:... "
   mkdir build
 
+# Prevent writing to the install tree
+  mkdir install
+  chmod 000 install
+
 #------------------------------------------------------
 # configure ROSE
   cd build
@@ -80,6 +84,7 @@ buildstatus=0
   make && \
   make docs && \
   make check && \
+  rmdir install && \
   make install && \
   make installcheck && \
   make dist && \
