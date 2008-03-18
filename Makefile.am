@@ -56,7 +56,7 @@ clean-stl:
 	@cd ROSETTA/src; $(MAKE) clean;
 
 distclean-local:
-	rm -rf *_HEADERS
+	-rm -rf $(top_builddir)/include-staging/
 
 # DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
 nodist_include_HEADERS = rose_config.h rose_paths.h
@@ -121,9 +121,6 @@ distcheck-after:
 	@$(MAKE) rename_distribution
 
 DISTCLEAN_FILES = rose_paths.h
-
-distclean-local:
-	-rm -rf $(top_builddir)/include-staging/
 
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is
