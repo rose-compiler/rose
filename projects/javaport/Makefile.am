@@ -73,35 +73,41 @@ libsage3_wrap_la_LDFLAGS	= -L../../src -L../compass -L../compass/compassSupport
 sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
 	mkdir -p gov/llnl/casc/rose
-	test $(srcdir) = . || ln -sf $(srcdir)/sage3.i .
-	$(SWIG) $(INCLUDES) -c++ -java -Wall -v -I$(srcdir)			\
-	  -package gov.llnl.casc.rose -outdir gov/llnl/casc/rose	\
-	  sage3.i
+	$(SWIG) $(INCLUDES) -c++ -java -Wall -v -I$(srcdir) \
+	  -package gov.llnl.casc.rose -outdir gov/llnl/casc/rose \
+	  -o sage3_wrap.cxx \
+	  $(srcdir)/sage3.i
 
 casts.i: generate_casts.sh
 	$<
 
-gov/llnl/casc/rose/GenericVector.java: GenericVector.java
-	mkdir -p gov/llnl/casc/rose
-	ln -sf ../../../../$< $@
+# gov/llnl/casc/rose/GenericVector.java: GenericVector.java
+# 	mkdir -p gov/llnl/casc/rose
+# 	ln -sf ../../../../$< $@
+# 
+# gov/llnl/casc/rose/Ptr.java: Ptr.java
+# 	cp $< $@
+# 
+# gov/llnl/casc/rose/Log.java: Log.java
+# 	cp $< $@
+# 
+# gov/llnl/casc/rose/MakeSgNode.java: MakeSgNode.java
+# 	cp $< $@
 
-gov/llnl/casc/rose/Ptr.java: Ptr.java
-	cp $< $@
-
-gov/llnl/casc/rose/Log.java: Log.java
-	cp $< $@
-
-gov/llnl/casc/rose/MakeSgNode.java: MakeSgNode.java
-	cp $< $@
-
-compile_java_files: sage3_wrap.cxx gov/llnl/casc/rose/GenericVector.java \
-		    gov/llnl/casc/rose/Ptr.java \
-		    gov/llnl/casc/rose/Log.java \
-		    gov/llnl/casc/rose/MakeSgNode.java
+compile_java_files: sage3_wrap.cxx \
+                    GenericVector.java \
+                    Ptr.java \
+                    Log.java \
+                    MakeSgNode.java
 	mkdir -p class/gov/llnl/casc/rose
 	rm -f class/gov/llnl/casc/rose/*.class
-	$(CLASSPATH_ENV) $(JAVAC) $(AM_JAVACFLAGS) $(JAVACFLAGS)	\
-	  gov/llnl/casc/rose/*.java -d class
+	$(CLASSPATH_ENV) $(JAVAC) $(AM_JAVACFLAGS) $(JAVACFLAGS) \
+	  gov/llnl/casc/rose/*.java \
+	  $(srcdir)/GenericVector.java \
+	  $(srcdir)/Log.java \
+	  $(srcdir)/MakeSgNode.java \
+	  $(srcdir)/Ptr.java \
+	  -d class
 	touch compile_java_files
 
 sage3.jar: compile_java_files
@@ -154,14 +160,11 @@ Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	sed 's/ class / struct /g' | \
 	cat >> Cxx_Grammar.i
 
-CLEANFILES	= sage3_wrap.cxx compile_java_files sage3.jar		\
-		  rose_input.cc casts.i
+CLEANFILES = sage3_wrap.cxx sage3_wrap.h compile_java_files sage3.jar \
+	     rose_input.cc casts.i Cxx_Grammar.i
 
-clean: clean-am clean-hook
-
-clean-hook:
+clean-local:
 	rm -rf gov class
-	test $(srcdir) = . || rm -f sage3.i
 
 else
 
