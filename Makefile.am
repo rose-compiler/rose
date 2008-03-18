@@ -120,7 +120,7 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
-DISTCLEAN_FILES = rose_paths.h
+DISTCLEANFILES = rose_paths.h
 
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is
