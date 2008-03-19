@@ -23,6 +23,8 @@ class BuildCFGConfig  : public CFGConfig
 namespace ROSE_Analysis {
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
+template <class Node>
+void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
 };
 
 
