@@ -84,7 +84,7 @@ buildstatus=0
   make && \
   make docs && \
   make check && \
-  rmdir install && \
+  rmdir ../install && \
   make install && \
   make installcheck && \
   make dist && \
