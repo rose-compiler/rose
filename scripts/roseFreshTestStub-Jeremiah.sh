@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Stub file to include settings for roseFreshTest-common
 
 source /usr/apps/graphviz/2.6/setup.sh
@@ -17,7 +19,7 @@ export PATH="/home/willcock2/swig-install/bin:$PATH"
 
 ROSE_TOP="${HOME}/svn-test-rose/$$/"
 
-CONFIGURE_FLAGS=" --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install $@"
+CONFIGURE_FLAGS=(--with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov"

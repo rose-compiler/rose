@@ -14,6 +14,8 @@ user_config_file="$1"
 shift
 . $user_config_file
 
+for i in "${CONFIGURE_FLAGS[@]}"; do echo $i; done
+
 set -e
 rm -rf ${ROSE_TOP}
 mkdir -p ${ROSE_TOP}
@@ -25,7 +27,7 @@ set -e
 echo "Subject: Starting ROSE test $$" > mailtext1
 echo "" >> mailtext1
 echo ">>> See build log in ${ROSE_TOP}/buildlog for status" >> mailtext1
-echo "Configure flags = $CONFIGURE_FLAGS" >> mailtext1
+echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext1
 echo "" >> mailtext1
 echo "> Command versions" >> mailtext1
 (automake --version | head -1 || echo "automake not found") >> mailtext1
@@ -77,7 +79,7 @@ buildstatus=0
 # configure ROSE
   cd build
 # ROSE_CONFIG_FLAGS="--without-binary_analysis --enable-rosehpct --with-openFortranParser=/home/liao6/download/fortran-parser --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server"
-  ../sourcetree/configure $CONFIGURE_FLAGS
+  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}"
 
 #------------------------------------------------------
 # make and check
@@ -94,7 +96,7 @@ buildstatus=0
 if [ $buildstatus == 0 ]; then
   echo "Subject: ROSE test $$ results (pass)" > mailtext
   echo "" >> mailtext
-  echo "Configure flags = $CONFIGURE_FLAGS" >> mailtext
+  echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
@@ -102,7 +104,7 @@ if [ $buildstatus == 0 ]; then
 else
   echo "Subject: ROSE test $$ results (fail)" > mailtext
   echo "" >> mailtext
-  echo "Configure flags = $CONFIGURE_FLAGS" >> mailtext
+  echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
