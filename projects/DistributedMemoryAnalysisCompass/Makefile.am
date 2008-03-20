@@ -20,7 +20,7 @@ parallel_compass$(EXEEXT): $(parallel_compass_OBJECTS) $(parallel_compass_DEPEND
 
 bin_PROGRAMS = parallel_compass
 
-parallel_compass_SOURCES = parallel_compass.C LoadSaveAST.h
+parallel_compass_SOURCES = parallel_compass.C 
 
 nodist_noinst_DATA = compass_parameters
 
