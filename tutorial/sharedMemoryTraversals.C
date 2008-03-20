@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     SgProject *project = frontend(argc, argv);
 
     std::cout << "combined execution of traversals" << std::endl;
-    AstSharedMemoryParallelSimpleProcessing parallelTraversal;
+    AstSharedMemoryParallelSimpleProcessing parallelTraversal(5);
     parallelTraversal.addTraversal(new NodeTypeTraversal(V_SgForStatement, "for loop"));
     parallelTraversal.addTraversal(new NodeTypeTraversal(V_SgIntVal, "int constant"));
     parallelTraversal.addTraversal(new NodeTypeTraversal(V_SgVariableDeclaration, "variable declaration"));

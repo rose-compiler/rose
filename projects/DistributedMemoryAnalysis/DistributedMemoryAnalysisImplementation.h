@@ -17,6 +17,7 @@
 #define DISTRIBUTED_MEMORY_ANALYSIS_IMPLEMENTATION_H
 
 #include <mpi.h>
+#include <limits.h>
 
 #define DIS_DEBUG_OUTPUT false
 #define RUN_STD true
@@ -211,8 +212,8 @@ computeFunctionIndicesPerNode(
     for (int rank = 0; rank < processes; rank++) 
       processorWeight[rank] = 0;
     for (unsigned int i=0; i< funcDecls.size(); i++) {
-      int currentWeight = funcWeights[i];
-      int min =99999;
+      int currentWeight = funcWeights[i]*nodeCounts[i];
+      int min =INT_MAX;
       int min_rank=0;
       // find the minimum weight processor
       for (int rank = 0; rank < processes; rank++) {

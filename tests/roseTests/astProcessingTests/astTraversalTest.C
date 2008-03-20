@@ -437,7 +437,7 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
     std::cout << "simple parallel" << std::endl;
     std::vector<NodeCountSimple *> *simpleList = buildTraversalList<NodeCountSimple>();
     std::vector<NodeCountSimple *>::iterator s;
-    AstSharedMemoryParallelSimpleProcessing parallelSimple;
+    AstSharedMemoryParallelSimpleProcessing parallelSimple(5);
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
         parallelSimple.addTraversal(*s);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
@@ -459,7 +459,7 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
     std::cout << "pre-post parallel" << std::endl;
     std::vector<NodeCountPrePost *> *prePostList = buildTraversalList<NodeCountPrePost>();
     std::vector<NodeCountPrePost *>::iterator p;
-    AstSharedMemoryParallelPrePostProcessing parallelPrePost;
+    AstSharedMemoryParallelPrePostProcessing parallelPrePost(5);
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
         parallelPrePost.addTraversal(*p);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
