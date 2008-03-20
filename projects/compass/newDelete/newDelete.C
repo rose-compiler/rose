@@ -168,8 +168,8 @@ switchForAssignment(std::vector<tps_node> &vec,
     break;
   }
   default:
-    cout << rhs->class_name() << endl;
-    ROSE_ASSERT (!"Unhandled assignment RHS kind");
+    cout << "Unhandled assignment RHS kind : " << rhs->class_name() << endl;
+    // ROSE_ASSERT (!"Unhandled assignment RHS kind");
   }
 
 }
