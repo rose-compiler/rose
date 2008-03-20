@@ -333,7 +333,7 @@ int main(int argc, char **argv)
 #define RUN_ON_FILES 0
 #define CALL_RUN_FOR_CHECKERS 1
 #define RUN_COMBINED_CHECKERS 0
-
+#define GERGO_ALGO 0
 
   /* traverse the files */
   gettime(begin);
@@ -370,19 +370,36 @@ int main(int argc, char **argv)
  #endif
     }
 
-#else // run on files
+#else // run on functions
   FunctionNamesPreTraversal preTraversal;
   MyAnalysis myanalysis;
   int initialDepth=0;
-  std::cout << "\n>>> Running on functions ... " << std::endl;
-  //  std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
 
+  std::cout << "\n>>> Running on functions ... " << std::endl;
  #if CALL_RUN_FOR_CHECKERS
+  #if GERGO_ALGO
+  std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
+  for (int i = bounds.first; i < bounds.second; i++)
+    {
+      std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " 
+		<< (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
+	"   Weight : " << myanalysis.myFuncWeights[i] << std::endl;
+
+      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	if (DEBUG_OUTPUT_MORE)
+	std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
+		  <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
+	  "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
+	(*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+      }
+    }
+#else // my own algo (tps)
   std::vector<int> bounds;
   myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
   for (int i = 0; i<(int)bounds.size();i++) {
     if (bounds[i]== my_rank) {
-      std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  == " << bounds[i] << std::endl;
+      std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
+									     myanalysis.myFuncWeights[i]) << std::endl;
       for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	if (DEBUG_OUTPUT_MORE) 
 	  std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
@@ -394,6 +411,7 @@ int main(int argc, char **argv)
       }
     }
   }
+#endif // own algo
  #elif RUN_COMBINED_CHECKERS
       std::cout << "\n>>> Running combined ... " << std::endl;
       AstCombinedSimpleProcessing combined(traversals);

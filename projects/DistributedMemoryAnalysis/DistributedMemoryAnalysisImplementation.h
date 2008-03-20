@@ -17,7 +17,7 @@
 #define DISTRIBUTED_MEMORY_ANALYSIS_IMPLEMENTATION_H
 
 #include <mpi.h>
-#include <limits.h>
+#include <math.h>
 
 #define DIS_DEBUG_OUTPUT false
 #define RUN_STD true
@@ -148,6 +148,52 @@ computeFunctionIndices(
     return std::make_pair(my_lo, my_hi);
 }
 
+//compare function for std sort
+struct SortDescending : public std::binary_function<std::pair<double, size_t>,std::pair<double, size_t>,bool> 
+{
+  bool operator()(const std::pair<double, size_t>& s1, const std::pair<double, size_t>& s2) const 
+  {
+    return (s1.first > s2.first);
+  }
+};
+
+template <class InheritedAttributeType>
+void
+DistributedMemoryAnalysisBase<InheritedAttributeType>::
+sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inheritedValues,
+	      std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights)
+{
+
+  std::vector<SgFunctionDeclaration*> funcDecls_temp(funcDecls.size());
+  std::vector<InheritedAttributeType> inheritedValues_temp(funcDecls.size());
+  std::vector<size_t> nodeCounts_temp(funcDecls.size());
+  std::vector<size_t> funcWeights_temp(funcDecls.size());
+
+  std::cout << "Sorting all functions according to weight..." << std::endl;
+  // sort all the vectors
+  std::vector<std::pair<double, size_t> > weights(funcDecls.size());
+  for (int i=0; i< (int) funcDecls.size(); i++) {
+    double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size());
+    weights[i].first = currentWeight;
+    weights[i].second = i;
+  }
+  std::sort(weights.begin(), weights.end(), SortDescending());
+  for (int i=0; i< (int) funcDecls.size(); i++) {
+    funcDecls_temp[i]=funcDecls[weights[i].second];
+    inheritedValues_temp[i]=inheritedValues[weights[i].second];
+    nodeCounts_temp[i]=nodeCounts[weights[i].second];
+    funcWeights_temp[i]=funcWeights[weights[i].second];
+    if (my_rank==0)
+      std::cout << "    function : " << funcDecls_temp[i]->get_qualified_name().str() << 
+	"  weight_mul : " << (weights[i].first) << "   nodes: " << nodeCounts_temp[i] <<
+	"  weight : " << funcWeights_temp[i] << std::endl;
+  }
+  funcDecls.swap(funcDecls_temp);
+  inheritedValues.swap(inheritedValues_temp);
+  nodeCounts.swap(nodeCounts_temp);
+  funcWeights.swap(funcWeights_temp);
+}
+
 // --------------------------------------------------------------------------
 // class DistributedMemoryAnalysisBase
 // --------------------------------------------------------------------------
@@ -177,6 +223,8 @@ computeFunctionIndicesPerNode(
     ROSE_ASSERT(funcDecls.size() == nodeCounts.size());
     ROSE_ASSERT(funcDecls.size() == funcWeights.size());
 
+    sortFunctions(funcDecls, initialInheritedValues, nodeCounts, funcWeights);
+
 #if DIS_DEBUG_OUTPUT
     std::cout << " >>>  nr of funcs: " << funcDecls.size() << "  inheritedValues:" << initialInheritedValues.size() 
 	      << "   nodeCounts: " << nodeCounts.size() << std::endl;
@@ -186,13 +234,14 @@ computeFunctionIndicesPerNode(
       std::cout << " >>> >>>>>>>>>>>>> done traversal of nodeCounter (preTraversal) \n\n\n" << std::endl;
 #endif
 
-    std::vector<size_t>::const_iterator itr;
+      std::vector<size_t>::const_iterator itr, itr2;
     size_t totalNodes = 0;
-    size_t totalWeight = 0;
-    for (itr = nodeCounts.begin(); itr != nodeCounts.end(); ++itr) 
+    double totalWeight = 0;
+    for (itr = nodeCounts.begin(), itr2 = funcWeights.begin(); itr != nodeCounts.end(); ++itr, ++itr2) {
         totalNodes += *itr;
-    for (itr = funcWeights.begin(); itr != funcWeights.end(); ++itr) 
-        totalWeight += *itr;
+	double currentWeight = (((double)(*itr)*(*itr2))/(double)funcDecls.size());
+        totalWeight += currentWeight;
+    }
     myNodeCounts = nodeCounts;
     myFuncWeights = funcWeights;
     
@@ -208,12 +257,15 @@ computeFunctionIndicesPerNode(
 
 
     //    std::vector<int> functionToProcessor;
-    int processorWeight[processes];
-    for (int rank = 0; rank < processes; rank++) 
+    double processorWeight[processes];
+    int nrOfFunctions[processes];
+    for (int rank = 0; rank < processes; rank++) {
       processorWeight[rank] = 0;
+      nrOfFunctions[rank]=0;
+    }
     for (unsigned int i=0; i< funcDecls.size(); i++) {
-      int currentWeight = funcWeights[i]*nodeCounts[i];
-      int min =INT_MAX;
+      double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size());
+      double min =INFINITY;
       int min_rank=0;
       // find the minimum weight processor
       for (int rank = 0; rank < processes; rank++) {
@@ -224,12 +276,18 @@ computeFunctionIndicesPerNode(
       }
       processorWeight[min_rank]+=currentWeight;
       functionToProcessor.push_back(min_rank);
+      nrOfFunctions[min_rank]+=1;
       if (my_rank ==0 ) {
-	std::cout << " Function : " << funcDecls[i]->get_name().str() << "  weight : " <<
+	std::cout << " Function per Processor : " << funcDecls[i]->get_name().str() << "  weight : " <<
 	  currentWeight << "/" << totalWeight << "  on proc: " << min_rank << std::endl;
       }
     }
-
+    for (int rank = 0; rank < processes; rank++) {
+      if (my_rank ==0 ) {
+	std::cout << " Processor : " << rank << "  has " << nrOfFunctions[rank] <<
+	  " functions. Processor weight: " << processorWeight[rank] << std::endl;
+      }
+    }
 
 }
 
@@ -506,6 +564,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     {
         inFunc = true;
         nodeCount = 0;
+	weight = 1;
         funcDecls.push_back(funcDecl);
         initialInheritedValues.push_back(inheritedValue);
 	std::string funcname = funcDecl->get_name().str();

@@ -42,6 +42,8 @@ public:
     void computeFunctionIndicesPerNode(SgNode *root, std::vector<int>& functionToProcessor,  
                                                InheritedAttributeType rootInheritedValue,
                                                AstTopDownProcessing<InheritedAttributeType> *preTraversal);
+    void sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inhertiedValues,
+		       std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights);
 
     private:
     int my_rank;
