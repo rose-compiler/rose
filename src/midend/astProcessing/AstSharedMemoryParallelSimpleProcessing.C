@@ -166,13 +166,13 @@ void *parallelSimpleProcessingThread(void *p)
     return NULL;
 }
 
-AstSharedMemoryParallelSimpleProcessing::AstSharedMemoryParallelSimpleProcessing()
-    : AstCombinedSimpleProcessing(), numberOfThreads(2), synchronizationWindowSize(100000)
+AstSharedMemoryParallelSimpleProcessing::AstSharedMemoryParallelSimpleProcessing(int threads)
+    : AstCombinedSimpleProcessing(), numberOfThreads(threads), synchronizationWindowSize(100000)
 {
 }
 
-AstSharedMemoryParallelSimpleProcessing::AstSharedMemoryParallelSimpleProcessing(const AstSharedMemoryParallelSimpleProcessing::TraversalPtrList &t)
-    : AstCombinedSimpleProcessing(t), numberOfThreads(2), synchronizationWindowSize(100000)
+AstSharedMemoryParallelSimpleProcessing::AstSharedMemoryParallelSimpleProcessing(const AstSharedMemoryParallelSimpleProcessing::TraversalPtrList &t,int threads)
+    : AstCombinedSimpleProcessing(t), numberOfThreads(threads), synchronizationWindowSize(100000)
 {
 }
 
@@ -302,13 +302,13 @@ void *parallelPrePostProcessingThread(void *p)
     return NULL;
 }
 
-AstSharedMemoryParallelPrePostProcessing::AstSharedMemoryParallelPrePostProcessing()
-    : AstCombinedPrePostProcessing(), numberOfThreads(2), synchronizationWindowSize(100000)
+AstSharedMemoryParallelPrePostProcessing::AstSharedMemoryParallelPrePostProcessing(int threads)
+    : AstCombinedPrePostProcessing(), numberOfThreads(threads), synchronizationWindowSize(100000)
 {
 }
 
-AstSharedMemoryParallelPrePostProcessing::AstSharedMemoryParallelPrePostProcessing(const AstSharedMemoryParallelPrePostProcessing::TraversalPtrList &t)
-    : AstCombinedPrePostProcessing(t), numberOfThreads(2), synchronizationWindowSize(100000)
+AstSharedMemoryParallelPrePostProcessing::AstSharedMemoryParallelPrePostProcessing(const AstSharedMemoryParallelPrePostProcessing::TraversalPtrList &t,int threads)
+    : AstCombinedPrePostProcessing(t), numberOfThreads(threads), synchronizationWindowSize(100000)
 {
 }
 
