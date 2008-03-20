@@ -23,6 +23,7 @@ namespace CompassAnalyses
 
 #ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
     static std::map<tps_node, tps_node> pred_map_data;
+    static std::map<tps_node, int> color_map_data;
     static bool isCFGArrayDelete = false;
     static string functionName="";
     static string fileName="";
@@ -274,7 +275,6 @@ void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgFunctionDec
     // predecessor_recorder<predMapType, on_tree_edge> vis(pred_map);
 
 
-    std::map<tps_node, int> color_map_data;
     breadth_first_visit(tps_graph(this), node, color_map(colorMapType(color_map_data)).visitor(make_bfs_visitor(record_predecessors(pred_map, on_tree_edge()))));
 
 

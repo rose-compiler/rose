@@ -73,8 +73,8 @@ namespace CompassAnalyses
 	  void run(SgNode* n){ 
 #ifndef  USE_ROSE_BOOST_WAVE_SUPPORT
 
-       if (Compass::verboseSetting >= 0)
-	         std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
+	  if (Compass::verboseSetting >= 0)
+	    std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
 #endif	    
 	    this->traverse(n, preorder); };
 

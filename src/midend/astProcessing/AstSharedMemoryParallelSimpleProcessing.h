@@ -57,8 +57,8 @@ public:
     typedef AstSharedMemoryParallelizableSimpleProcessing *ParallelizableTraversalPtr;
     typedef std::vector<ParallelizableTraversalPtr> ParallelizableTraversalPtrList;
 
-    AstSharedMemoryParallelSimpleProcessing();
-    AstSharedMemoryParallelSimpleProcessing(const TraversalPtrList &);
+    AstSharedMemoryParallelSimpleProcessing(int threads);
+    AstSharedMemoryParallelSimpleProcessing(const TraversalPtrList &, int threads);
 
     void traverseInParallel(SgNode *basenode, t_traverseOrder treeTraverseOrder);
 
@@ -114,8 +114,8 @@ public:
     typedef AstSharedMemoryParallelizablePrePostProcessing *ParallelizableTraversalPtr;
     typedef std::vector<ParallelizableTraversalPtr> ParallelizableTraversalPtrList;
 
-    AstSharedMemoryParallelPrePostProcessing();
-    AstSharedMemoryParallelPrePostProcessing(const TraversalPtrList &);
+    AstSharedMemoryParallelPrePostProcessing(int threads);
+    AstSharedMemoryParallelPrePostProcessing(const TraversalPtrList &,int threads);
 
     void traverseInParallel(SgNode *basenode);
 

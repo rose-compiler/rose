@@ -84,8 +84,8 @@ namespace CompassAnalyses
 	  };
 #else
 	  void run(SgNode* n){
-       if (Compass::verboseSetting >= 0)   
-            std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
+	    if (Compass::verboseSetting >= 0)   
+	     std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
 	    this->traverse(n, preorder); };
 
 #endif

@@ -20,18 +20,26 @@ public:
   DistributedMemoryAnalysisBase() {
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &processes);
+    nrOfNodes=0;
   }
   virtual ~DistributedMemoryAnalysisBase() {}
 
-protected:
+public:
   int myID() const { return my_rank; }
   int numberOfProcesses() const { return processes; }
+
+  int nrOfNodes;
+  std::vector<size_t> myNodeCounts;
+  std::vector<size_t> myFuncWeights;
 
     std::vector<SgFunctionDeclaration *> funcDecls;
     std::vector<InheritedAttributeType> initialInheritedValues;
     std::vector<int> functionsPerProcess;
     static const int root_process = 0;
     std::pair<int, int> computeFunctionIndices(SgNode *root,
+                                               InheritedAttributeType rootInheritedValue,
+                                               AstTopDownProcessing<InheritedAttributeType> *preTraversal);
+    void computeFunctionIndicesPerNode(SgNode *root, std::vector<int>& functionToProcessor,  
                                                InheritedAttributeType rootInheritedValue,
                                                AstTopDownProcessing<InheritedAttributeType> *preTraversal);
 
@@ -89,11 +97,12 @@ class DistributedMemoryAnalysisPreTraversal
 {
 public:
  DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *preTraversal)
-   : preTraversal(preTraversal), inFunc(false), nodeCount(0), stdFunc(false) {}
+   : preTraversal(preTraversal), inFunc(false), nodeCount(0), stdFunc(false), weight(1) {}
 
   std::vector<SgFunctionDeclaration *> &get_funcDecls() {return funcDecls;}
   std::vector<InheritedAttributeType> &get_initialInheritedValues() {return initialInheritedValues;}
   std::vector<size_t> &get_nodeCounts() {return nodeCounts;}
+  std::vector<size_t> &get_funcWeights() {return funcWeights;}
 
 protected:
     InheritedAttributeType evaluateInheritedAttribute(SgNode *, InheritedAttributeType);
@@ -104,10 +113,12 @@ private:
     bool inFunc;
     size_t nodeCount;
     bool stdFunc;
+    size_t weight;
 
     std::vector<SgFunctionDeclaration *> funcDecls;
     std::vector<InheritedAttributeType> initialInheritedValues;
     std::vector<size_t> nodeCounts;
+    std::vector<size_t> funcWeights;
 };
 
 

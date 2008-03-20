@@ -18,8 +18,9 @@
 
 #include <mpi.h>
 
-#define DEBUG_OUTPUT true
-#define RUN_STD false
+#define DIS_DEBUG_OUTPUT false
+#define RUN_STD true
+#define RUN_DECLARATION false
 #define ALLGATHER_MPI false
 
 // --------------------------------------------------------------------------
@@ -38,7 +39,7 @@ computeFunctionIndices(
  // assigned to processors on the basis SgFunctionDeclaration (if it is a defining declaration).
 
     DistributedMemoryAnalysisPreTraversal<InheritedAttributeType> nodeCounter(preTraversal);
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> starting traversal of nodeCounter (preTraversal)" << std::endl;
 #endif
     nodeCounter.traverse(root, rootInheritedValue);
@@ -46,10 +47,12 @@ computeFunctionIndices(
     funcDecls = nodeCounter.get_funcDecls();
     initialInheritedValues = nodeCounter.get_initialInheritedValues();
     std::vector<size_t> &nodeCounts = nodeCounter.get_nodeCounts();
+    std::vector<size_t> &funcWeights = nodeCounter.get_funcWeights();
     ROSE_ASSERT(funcDecls.size() == initialInheritedValues.size());
     ROSE_ASSERT(funcDecls.size() == nodeCounts.size());
+    ROSE_ASSERT(funcDecls.size() == funcWeights.size());
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
     std::cout << " >>>  nr of funcs: " << funcDecls.size() << "  inheritedValues:" << initialInheritedValues.size() 
 	      << "   nodeCounts: " << nodeCounts.size() << std::endl;
     if (funcDecls.size()>0) 
@@ -60,15 +63,26 @@ computeFunctionIndices(
 
     std::vector<size_t>::const_iterator itr;
     size_t totalNodes = 0;
-    for (itr = nodeCounts.begin(); itr != nodeCounts.end(); ++itr)
+    size_t totalWeight = 0;
+    for (itr = nodeCounts.begin(); itr != nodeCounts.end(); ++itr) 
         totalNodes += *itr;
+    for (itr = funcWeights.begin(); itr != funcWeights.end(); ++itr) 
+        totalWeight += *itr;
+    myNodeCounts = nodeCounts;
+    myFuncWeights = funcWeights;
+    
     if (DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0)
     {
-#if DEBUG_OUTPUT
-        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes << std::endl;
-#endif
+    nrOfNodes = totalNodes;
+
+    //#if DIS_DEBUG_OUTPUT
+        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes << 
+	  "   totalWeight: " << totalWeight << std::endl;
+	//#endif
     }
 
+
+    // load balance!!
     size_t lo, hi = 0;
     size_t nodesSoFar = 0, nodesOfPredecessors = 0;
     size_t my_lo, my_hi;
@@ -80,24 +94,24 @@ computeFunctionIndices(
         lo = hi;
         nodesOfPredecessors = nodesSoFar;
         size_t myNodes = nodesOfPredecessors + nodeCounts[hi];
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
         std::cout << "SPLITTING - rank : " << rank << " myNodesHigh " << myNodesHigh << "  myNodes: " << myNodes << 
 	  "  lo: " << lo << "  hi: " << hi << std::endl;
 #endif
         // find upper limit
         for (hi = lo + 1; hi < funcDecls.size(); hi++)
         {
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
         std::cout << "  SPLITTING - func-hi : " << hi << " myNodes: "  << myNodes << std::endl;
         std::cout << "  SPLITTING - mynodes > mynodesHigh : " << myNodes << " > "  << myNodesHigh << std::endl;
-        std::cout << "  SPLITTING - mynodesHigh - myNodes < nodeCounts[hi]/2 : " << (myNodesHigh-myNodes)
+        std::cout << "  SPLITTING - mynodesHigh - myNodes < nodeCounts["<<hi<<"]/2 : " << (myNodesHigh-myNodes)
 		  << " < "  << (nodeCounts[hi]/2) << std::endl;
 #endif
             if (myNodes > myNodesHigh)
                 break;
             else if (myNodesHigh - myNodes < nodeCounts[hi] / 2)
                 break;
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	    std::cout << "  hi++" << std::endl;
 #endif
             myNodes += nodeCounts[hi];
@@ -121,7 +135,7 @@ computeFunctionIndices(
         {
             my_lo = lo;
             my_hi = hi;
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
             std::cout << "process " << rank << ": functions [" << lo << "," << hi
                 << "[ for a total of "
                 << myNodes - nodesOfPredecessors
@@ -133,6 +147,90 @@ computeFunctionIndices(
     return std::make_pair(my_lo, my_hi);
 }
 
+// --------------------------------------------------------------------------
+// class DistributedMemoryAnalysisBase
+// --------------------------------------------------------------------------
+
+template <class InheritedAttributeType>
+void
+DistributedMemoryAnalysisBase<InheritedAttributeType>::
+computeFunctionIndicesPerNode(
+			      SgNode *root, std::vector<int>& functionToProcessor,
+        InheritedAttributeType rootInheritedValue,
+        AstTopDownProcessing<InheritedAttributeType> *preTraversal)
+{
+ // This function load balances the work assigned to processors.  Work is currently
+ // assigned to processors on the basis SgFunctionDeclaration (if it is a defining declaration).
+
+    DistributedMemoryAnalysisPreTraversal<InheritedAttributeType> nodeCounter(preTraversal);
+#if DIS_DEBUG_OUTPUT
+      std::cout << " >>> >>>>>>>>>>>>> starting traversal of nodeCounter (preTraversal)" << std::endl;
+#endif
+    nodeCounter.traverse(root, rootInheritedValue);
+
+    funcDecls = nodeCounter.get_funcDecls();
+    initialInheritedValues = nodeCounter.get_initialInheritedValues();
+    std::vector<size_t> &nodeCounts = nodeCounter.get_nodeCounts();
+    std::vector<size_t> &funcWeights = nodeCounter.get_funcWeights();
+    ROSE_ASSERT(funcDecls.size() == initialInheritedValues.size());
+    ROSE_ASSERT(funcDecls.size() == nodeCounts.size());
+    ROSE_ASSERT(funcDecls.size() == funcWeights.size());
+
+#if DIS_DEBUG_OUTPUT
+    std::cout << " >>>  nr of funcs: " << funcDecls.size() << "  inheritedValues:" << initialInheritedValues.size() 
+	      << "   nodeCounts: " << nodeCounts.size() << std::endl;
+    if (funcDecls.size()>0) 
+      std::cout << " >>>  example entry 0: funcs[0] " << funcDecls.back() << "  inheritedValues[0]:" 
+		<< initialInheritedValues.back() << "   nodeCounts[0]: " << nodeCounts.back() << std::endl;
+      std::cout << " >>> >>>>>>>>>>>>> done traversal of nodeCounter (preTraversal) \n\n\n" << std::endl;
+#endif
+
+    std::vector<size_t>::const_iterator itr;
+    size_t totalNodes = 0;
+    size_t totalWeight = 0;
+    for (itr = nodeCounts.begin(); itr != nodeCounts.end(); ++itr) 
+        totalNodes += *itr;
+    for (itr = funcWeights.begin(); itr != funcWeights.end(); ++itr) 
+        totalWeight += *itr;
+    myNodeCounts = nodeCounts;
+    myFuncWeights = funcWeights;
+    
+    if (DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0)
+    {
+    nrOfNodes = totalNodes;
+
+    //#if DIS_DEBUG_OUTPUT
+        std::cout << "ROOT - splitting functions: " << funcDecls.size() << ", total nodes: " << totalNodes << 
+	  "   totalWeight: " << totalWeight << std::endl;
+	//#endif
+    }
+
+
+    //    std::vector<int> functionToProcessor;
+    int processorWeight[processes];
+    for (int rank = 0; rank < processes; rank++) 
+      processorWeight[rank] = 0;
+    for (unsigned int i=0; i< funcDecls.size(); i++) {
+      int currentWeight = funcWeights[i];
+      int min =99999;
+      int min_rank=0;
+      // find the minimum weight processor
+      for (int rank = 0; rank < processes; rank++) {
+	if (processorWeight[rank]<min) {
+	  min = processorWeight[rank];
+	  min_rank = rank;
+	}
+      }
+      processorWeight[min_rank]+=currentWeight;
+      functionToProcessor.push_back(min_rank);
+      if (my_rank ==0 ) {
+	std::cout << " Function : " << funcDecls[i]->get_name().str() << "  weight : " <<
+	  currentWeight << "/" << totalWeight << "  on proc: " << min_rank << std::endl;
+      }
+    }
+
+
+}
 
 
 
@@ -148,16 +246,16 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
                 AstTopDownProcessing<InheritedAttributeType> *preTraversal,
                 AstBottomUpProcessing<SynthesizedAttributeType> *postTraversal)
 {
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> start computeFunctionIndeces" << std::endl;
 #endif
     /* see what functions to run our analysis on */
     std::pair<int, int> my_limits = computeFunctionIndices(root, rootInheritedValue, preTraversal);
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> done computeFunctionIndeces\n\n\n" << std::endl;
 #endif
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> start serialize results" << std::endl;
 #endif
     /* run the analysis on the defining function declarations found above and store the serialized results */
@@ -170,13 +268,13 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
         serializedResults.push_back(serializeAttribute(result));
     }
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> done serialize results\n" << std::endl;
 #endif
 
 
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       // in the following we only handle certain functions!!
       std::cout << " >>> >>>>>>>>>>>>> start creating buffer" << std::endl;
 #endif
@@ -193,7 +291,7 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
         myTotalSize += myStateSizes[i];
     }
     unsigned char *myBuffer = new unsigned char[myTotalSize];
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
     // buffer contains inherited values, i.e. the nodeCount per function
       std::cout << " total buffer size = " << myTotalSize << "   FunctionsPerProcess: " << myFunctionsPerProcess << std::endl;
 #endif
@@ -203,20 +301,20 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
         std::memcpy(myBuffer + sizeSoFar, serializedResults[i].second, serializedResults[i].first);
         sizeSoFar += serializedResults[i].first;
      // now that we have made a copy of the serialized attribute, we can free the user-allocated memory
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " buffer ["<<i<<"]  = " << ((char*)serializedResults[i].second)  << 
 	  "   myStateSizes["<<i<<"]  = " << myStateSizes[i] << std::endl;
 #endif
 
         deleteSerializedAttribute(serializedResults[i]);
     }
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> end creating buffer\n" << std::endl;
 #endif
 
 
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> start communication" << std::endl;
 #endif
     /* communicate results: first, gather the sizes of the respective states into an array */
@@ -229,7 +327,7 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
 	  {
 	    // Displacements are in units of data elements, not bytes
 	    displacements[i] = displacements[i-1] + DistributedMemoryAnalysisBase<InheritedAttributeType>::functionsPerProcess[i-1];
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	    std::cout << " displacements["<<i<<"] = " << displacements[i] << "    == functionsPerProcess[i] " << std::endl;
 #endif
 	  }
@@ -246,7 +344,7 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
 		  displacements, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       if (ALLGATHER_MPI || DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0) {
 	std::cout << " MPI_Allgatherv: " << functions << std::endl;
 	for (unsigned int k=0; k<functions;k++) {
@@ -287,12 +385,12 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
 		0, MPI_COMM_WORLD);
 #endif
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> end communication\n\n" << std::endl;
 #endif
 
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << " >>> >>>>>>>>>>>>> start deserialize" << std::endl;
 #endif 
       if (ALLGATHER_MPI || DistributedMemoryAnalysisBase<InheritedAttributeType>::myID() == 0) {
@@ -316,11 +414,11 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
 	      }
 	  }
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " >>> >>>>>>>>>>>>> end deserialize\n" << std::endl;
 #endif 
 	
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " >>> >>>>>>>>>>>>> start postTraversal" << std::endl;
 #endif 
 
@@ -328,7 +426,7 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
 	DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType> postT(postTraversal, functionResults);
 	finalResults = postT.traverse(root, false);
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " >>> >>>>>>>>>>>>> end postTraversal\n" << std::endl;
 #endif 
 	
@@ -379,7 +477,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
 #if RUN_STD
     if (funcDecl) {
       std::string funcname = funcDecl->get_name().str();
-  #if DEBUG_OUTPUT
+  #if DIS_DEBUG_OUTPUT
         std::cout << " >>>>   found function :  " << funcname << std::endl;
   #endif
     }
@@ -390,7 +488,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
 	stdFunc=true;
       } else {
 	stdFunc=false;
-  #if DEBUG_OUTPUT
+  #if DIS_DEBUG_OUTPUT
         std::cout << " >>>>   found function :  " << funcname << std::endl;
   #endif
       }
@@ -399,14 +497,18 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
 	return inheritedValue;
 #endif
 
+#if RUN_DECLARATION
+    if (funcDecl)
+#else
     if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl)
+#endif
     {
         inFunc = true;
         nodeCount = 0;
         funcDecls.push_back(funcDecl);
         initialInheritedValues.push_back(inheritedValue);
 	std::string funcname = funcDecl->get_name().str();
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " >>>>   found defining function declaration:  " << funcname << 
 	  "   inheritedValue: " << inheritedValue << std::endl;
 #endif
@@ -418,7 +520,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     // this subtree).
     if (!inFunc)
     {
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << "  . outside function : " << node->class_name() << std::endl;
 #endif
         if (preTraversal != NULL)
@@ -428,11 +530,16 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     }
     else
     {
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
       std::cout << "     inside function: " << node->class_name() << "  nodeCount =" << nodeCount << 
-	"   depth=" << inheritedValue << std::endl;
+	"   depth=" << inheritedValue << "  weight = " << weight << std::endl;
 #endif
         nodeCount++;
+	// calculate the weight of the function
+	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
+	    isSgAssignInitializer(node) || isSgFunctionCallExp(node) || isSgAssignOp(node)) {
+	  weight++;
+	}  
         return inheritedValue;
     }
 }
@@ -455,7 +562,11 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
 
     // If we are leaving a function, save its number of nodes.
     SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node);
+#if RUN_DECLARATION
+    if (funcDecl)
+#else
     if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl)
+#endif
     {
    // A better implementation would address that the funcDecl should be
    // checked against the funcDecls list.  This implementation will 
@@ -463,8 +574,9 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
    // and synthesised attributes are a likely problem.
 
         nodeCounts.push_back(nodeCount);
+	funcWeights.push_back(weight);
         inFunc = false;
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " destroying - save nodes  " << nodeCount << std::endl;
 #endif
     }
@@ -500,12 +612,12 @@ evaluateInheritedAttribute(SgNode *node, bool inFunction)
     }  
     if (stdFunc)
 	return false;
-  #if DEBUG_OUTPUT
+  #if DIS_DEBUG_OUTPUT
     if (funcDecl)
       std::cout << " >>> postTraversal - inheritedAttribute: found function:  " << funcname << std::endl;
   #endif
 #endif
-  #if DEBUG_OUTPUT
+  #if DIS_DEBUG_OUTPUT
     std::cout << " postTraversal - inheritedAttribute on node:  " << node->class_name() << 
       "   parentEval (inFunction?): " << inFunction << std::endl;
   #endif
@@ -518,7 +630,11 @@ evaluateInheritedAttribute(SgNode *node, bool inFunction)
  // This is where the load balancing grainularity is defined and it must match that of the
  // other implementation in the DistributedMemoryAnalysisPreTraversal
 
+#if RUN_DECLARATION
+    if (funcDecl)
+#else
     if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl)
+#endif
         return true;
 
     return false;
@@ -547,7 +663,7 @@ evaluateSynthesizedAttribute(SgNode *node, bool inFunction,
 	stdFunc=true;
       } else {
 	stdFunc=false;
-  #if DEBUG_OUTPUT
+  #if DIS_DEBUG_OUTPUT
       std::cout << " .. post synthesizedAttribute function: " << funcname << "   id-nr:" << functionCounter << std::endl;
   #endif
       }
@@ -557,11 +673,16 @@ evaluateSynthesizedAttribute(SgNode *node, bool inFunction,
     } 
 #endif
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
     std::cout << "   post in (NODE): >>    " << node->class_name() << "  currentNode (inFunction?) " << inFunction << std::endl;
 #endif
 
-    if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl) {
+#if RUN_DECLARATION
+    if (funcDecl)
+#else
+    if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl)
+#endif
+      {
         return functionResults[functionCounter++];
     }
 
@@ -575,7 +696,7 @@ evaluateSynthesizedAttribute(SgNode *node, bool inFunction,
       }
     }
 
-#if DEBUG_OUTPUT
+#if DIS_DEBUG_OUTPUT
 	std::cout << " ... EVALUATE synthesized Attribute "  << std::endl;
 #endif
     return postTraversal->evaluateSynthesizedAttribute(node, synAttrs);
