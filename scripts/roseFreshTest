@@ -14,8 +14,6 @@ user_config_file="$1"
 shift
 . $user_config_file
 
-for i in "${CONFIGURE_FLAGS[@]}"; do echo $i; done
-
 set -e
 rm -rf ${ROSE_TOP}
 mkdir -p ${ROSE_TOP}
