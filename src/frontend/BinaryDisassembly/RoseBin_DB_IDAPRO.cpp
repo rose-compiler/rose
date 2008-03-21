@@ -442,9 +442,9 @@ SgAsmInstruction* RoseBin_DB_IDAPRO::createInstruction(int address, SgAsmFunctio
   // *************************************************************
   
   if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
-#include "instruction_x86.inc"
+    return createx86Instruction(address, mnemonic);
   } else  if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::arm) {
-#include "instruction_arm.inc"
+    return createArmInstruction(address, mnemonic);
   } else {
     cerr << " no assembly language selected! " << endl;
     exit(0); 

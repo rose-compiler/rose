@@ -42,8 +42,7 @@ namespace X86Disassembler {
   }
 
   SgAsmx86Instruction* makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic) {
-    SgAsmx86Instruction* instruction = NULL;
-#include "instruction_x86.inc"
+    SgAsmx86Instruction* instruction = createx86Instruction(address, mnemonic);
     ROSE_ASSERT (instruction);
     return instruction;
   }
@@ -1653,11 +1652,6 @@ done:
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeGroupP() {
     ROSE_ASSERT (!"Group P not supported");
-  }
-
-  static void addInstruction(SgAsmBlock* b, SgAsmInstruction* insn) {
-    b->get_statementList().push_back(insn);
-    insn->set_parent(b);
   }
 
   struct AsmFileWithData {

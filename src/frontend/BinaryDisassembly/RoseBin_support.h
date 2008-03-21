@@ -306,6 +306,13 @@ class RoseBin_support {
   
 };
 
+// From instructionDispatch.cpp (generated but checked into SVN)
+SgAsmArmInstruction* createArmInstruction(uint64_t address,
+                                          const std::string& mnemonic);
+
+SgAsmx86Instruction* createx86Instruction(uint64_t address,
+                                          const std::string& mnemonic);
+
 #endif
 
 

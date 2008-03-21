@@ -28,6 +28,7 @@ endif
 # Isolated part of library that is independent of the mysql database
 libbinaryFrontend_la_DEPENDENCIES =
 libbinaryFrontend_la_SOURCES = RoseBin_support.cpp  RoseBin_unparse.cpp \
+     instructionDispatch.cpp \
      RoseBin_unparse_visitor.cpp analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
      analyses/RoseBin_printInstructions.cpp analyses/RoseBin_DataFlowAnalysis.cpp \
      graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
@@ -86,8 +87,11 @@ endif
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
-EXTRA_DIST = mysql_include instruction_x86.inc instruction_arm.inc
+EXTRA_DIST = mysql_include
 
+# Rule for maintainers (requires Tcl interpreter)
+$(srcdir)/instructionDispatch.cpp: make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
+	cd $(srcdir); $(top_srcdir)/config/missing --run tclsh ./make-decision-tree.tcl x86 Arm
 
 
 clean-local:

@@ -358,10 +358,7 @@ namespace ObjdumpToRoseBinaryAst {
       uint64_t address = st.top().asInt();
       st.pop();
       // fprintf(stderr, "Got insn at address 0x%08lX\n", (unsigned long)address);
-      SgAsmInstruction* instruction = 0;
-      {
-#include "instruction_x86.inc"
-      }
+      SgAsmInstruction* instruction = createx86Instruction(address, mnemonic);
       ROSE_ASSERT (instruction);
       operands->set_parent(instruction);
       instruction->set_operandList(operands);
