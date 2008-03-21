@@ -194,11 +194,16 @@ AM_CONDITIONAL(ROSE_USE_LONG_MAKE_CHECK_RULE,test "$with_ROSE_LONG_MAKE_CHECK_RU
 # The libxml2 library is availabe in /usr/lib on most Linux systems, however this is not
 # enough when using the Intel compilers.  So we need to turn it on explicitly when we
 # expect it to work with a specific platform/compiler combination.
+
+# JJW -- use standard version in /usr/share/aclocal, and configure XML only
+# once for roseHPCT and BinaryContextLookup
+with_xml="no"
+AM_PATH_XML2(2.0.0, [with_xml="yes"])
+
 ROSE_SUPPORT_XML
 
 # Make the use of libxml2 explicitly controled.
 AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
-
 
 AC_PROG_SWIG
 #AS (10/23/07): introduced conditional use of javaport
@@ -268,11 +273,6 @@ ROSE_SUPPORT_WINDOWS_BINARY_ANALYSIS
 
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_WINDOWS_BINARY_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
-
-ROSE_SUPPORT_XML
-
-# Setup Automake conditional in ROSE/projects/BinaryContextLookup/Makefile.am
-AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
 
 # Control use of debugging support to convert most unions in EDG to structs.
 ROSE_SUPPORT_EDG_DEBUGGING
@@ -672,7 +672,8 @@ AC_SUBST(absolute_path_srcdir)
 INCLUDE_COMPASS_MAKEFILE_INC="include compass_makefile.inc"
 AC_SUBST(INCLUDE_COMPASS_MAKEFILE_INC)
 
-# ROSE-HPCT module
+# ROSE-HPCT module -- note that this needs the XML check to have already
+# happened
 ACROSE_ENABLE_ROSEHPCT
 
 # DQ (11/10/2007): Add paths defined by automake to the generated rose.h.in and rose.h
@@ -889,6 +890,7 @@ projects/MPICodeMotion/Makefile
 projects/javaport/Makefile
 projects/palette/Makefile
 projects/reverseComputation/Makefile
+projects/BinaryContextLookup/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -1031,9 +1033,6 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 # src/midend/astOutlining/src/CPreproc/Makefile
 # src/midend/astOutlining/src/Preprocess/Makefile
 # src/midend/astOutlining/src/Transform/Makefile
-
-# DQ (1/18/2008): Removed because it has xml dependences that may not be availalbe for users.
-# projects/BinaryContextLookup/Makefile
 
 # DQ (1/18/2008): I have removed this since it is old code superseded by zgrviewer.
 # (zgrviewer is a dot file viewer available on the web, SourceForge).

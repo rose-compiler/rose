@@ -10,7 +10,7 @@ rm -rf autom4te.cache src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/autom4te.cache
 # RV 9/14/2005 -- Upgrade of PDF library
 (cd src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv ; ./bootstrap)
 
-aclocal -I ./config -I ./acmacros || : exit 1
+aclocal -I ./config -I ./acmacros -I /usr/share/aclocal || : exit 1
 
 # autoheader --warnings=obsolete,all || : exit 1
 autoheader || : exit 1

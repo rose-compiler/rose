@@ -15,7 +15,7 @@ int main (int argc, char **argv){
 	ROSE_ASSERT (project != NULL);
 	char stringBuffer[1024];
 	// !get all Function declarations
-	list<SgNode*> functionDefList = NodeQuery::querySubTree(project,V_SgFunctionDefinition);
+	vector<SgNode*> functionDefList = NodeQuery::querySubTree(project,V_SgFunctionDefinition);
 	// map for matching file name to xml-tree nodes
 	map<string,xmlNodePtr> fileNameNodeMap;
 	
@@ -49,7 +49,7 @@ int main (int argc, char **argv){
 	fileListNode=xmlNewChild(rootNode,NULL,BAD_CAST"FILE_LIST",NULL);
 	
 	// iterate over all function-definitions and associate them with their file-name node
-	for (list<SgNode*>::iterator i = functionDefList.begin();i!=functionDefList.end();i++)
+	for (vector<SgNode*>::iterator i = functionDefList.begin();i!=functionDefList.end();i++)
 	{
 		SgFunctionDefinition * def = isSgFunctionDefinition(*i);
 

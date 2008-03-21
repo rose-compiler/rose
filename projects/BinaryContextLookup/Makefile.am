@@ -1,16 +1,15 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) $(shell xml2-config --cflags)
-
 # Use --with-libxml2 on configure command-line for ROSE to activate this
 if ROSE_USE_XML
 
-SAMPLE_INPUT_DIR =$(shell pwd)
-#/home/iwainsky1/dev_root/include/libxml2
+INCLUDES = $(ROSE_INCLUDES) $(XML_CPPFLAGS)
+
+SAMPLE_INPUT_DIR = $(srcdir)
 
 bin_PROGRAMS = bcl_writer bcl_reader
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lxml2
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(XML_LIBS)
 
 bcl_writer_SOURCES = bcl_writer.C
 bcl_writer_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)

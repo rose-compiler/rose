@@ -21,14 +21,11 @@ SUBDIRS = \
      javaport \
      palette \
      reverseComputation \
-     DistributedMemoryAnalysisCompass
+     DistributedMemoryAnalysisCompass \
+     BinaryContextLookup
 
 #AS(3/12/2008) the  NameConsistancyChecker is now part of compass
 #     NameConsistancyChecker 
-
-# DQ (1/18/2008): This is removed because it has dependence on xml libraries 
-# that may not be available for users.
-#     BinaryContextLookup
 
 # DQ (1/2/2007): Removed because it is a dated example (using Coco, circa 2004).
 # Also the file names are too long and this would have to be fixed before 
