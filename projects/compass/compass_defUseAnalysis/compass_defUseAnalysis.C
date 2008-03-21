@@ -6,7 +6,7 @@
 // Date: 23-July-2007
 
 #include "compass.h"
-#include "locPerFunction.h"
+#include "compass_defUseAnalysis.h"
 
 
 namespace CompassAnalyses
