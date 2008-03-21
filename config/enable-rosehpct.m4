@@ -45,13 +45,8 @@ AC_DEFUN([ACROSE_CHECK_ROSEHPCT], [
 AC_LANG_PUSH([C++])
 
 AC_MSG_NOTICE([checking for ROSE-HPCT build-prerequisites])
-ROSEHPCT_DEP_INCLUDES=""
-ROSEHPCT_DEP_LIBS=""
 
-ACX_LIBXML2([ROSEHPCT_DEP_LIBS="${ROSEHPCT_DEP_LIBS} ${acx_libxml2_libs}"
-  ROSEHPCT_DEP_INCLUDES="${ROSEHPCT_DEP_INCLUDES} ${acx_libxml2_includes}"])
-
-if test x"${acx_libxml2_ok}" = xyes ; then
+if test x"${with_xml}" = xyes ; then
   AC_MSG_NOTICE([all known ROSE-HPCT build-prerequisites satisfied])
   $1
 else  # At least one prerequisite failed
@@ -59,6 +54,9 @@ else  # At least one prerequisite failed
   AC_MSG_NOTICE([one or more ROSE-HPCT build-prerequisites not satisfied])
   $2
 fi
+
+ROSEHPCT_DEP_INCLUDES="${XML_CPPFLAGS}"
+ROSEHPCT_DEP_LIBS="${XML_LIBS}"
 
 AC_SUBST([ROSEHPCT_DEP_INCLUDES])
 AC_SUBST([ROSEHPCT_DEP_LIBS])

@@ -20,7 +20,7 @@ GZIP_ENV = --fast
 # am__tar = ${AMTAR} -chf - "$$tardir"
 am__tar = ${AMTAR} @ROSE_TAR_OPTIONS@ - "$$tardir"
 
-ACLOCAL = @ACLOCAL@ -I ./config -I ./acmacros
+ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I /usr/share/aclocal
 
 # Force rose.docs to be make by default 
 # (if rose.docs.in is modified)
