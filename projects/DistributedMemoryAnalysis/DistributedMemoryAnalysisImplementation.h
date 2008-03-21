@@ -169,7 +169,7 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
   std::vector<size_t> nodeCounts_temp(funcDecls.size());
   std::vector<size_t> funcWeights_temp(funcDecls.size());
 
-  std::cout << "Sorting all functions according to weight..." << std::endl;
+  //  std::cout << "Sorting all functions according to weight..." << std::endl;
   // sort all the vectors
   std::vector<std::pair<double, size_t> > weights(funcDecls.size());
   for (int i=0; i< (int) funcDecls.size(); i++) {
@@ -184,6 +184,7 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
     nodeCounts_temp[i]=nodeCounts[weights[i].second];
     funcWeights_temp[i]=funcWeights[weights[i].second];
     if (my_rank==0)
+	if (DIS_DEBUG_OUTPUT)
       std::cout << "    function : " << funcDecls_temp[i]->get_qualified_name().str() << 
 	"  weight_mul : " << (weights[i].first) << "   nodes: " << nodeCounts_temp[i] <<
 	"  weight : " << funcWeights_temp[i] << std::endl;
@@ -278,6 +279,7 @@ computeFunctionIndicesPerNode(
       functionToProcessor.push_back(min_rank);
       nrOfFunctions[min_rank]+=1;
       if (my_rank ==0 ) {
+	if (DIS_DEBUG_OUTPUT)
 	std::cout << " Function per Processor : " << funcDecls[i]->get_name().str() << "  weight : " <<
 	  currentWeight << "/" << totalWeight << "  on proc: " << min_rank << std::endl;
       }
@@ -564,7 +566,8 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     {
         inFunc = true;
         nodeCount = 0;
-	weight = 1;
+	weightNullDeref = 1;
+	weightAssignOp = 1;
         funcDecls.push_back(funcDecl);
         initialInheritedValues.push_back(inheritedValue);
 	std::string funcname = funcDecl->get_name().str();
@@ -597,9 +600,11 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
         nodeCount++;
 	// calculate the weight of the function
 	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
-	    isSgAssignInitializer(node) || isSgFunctionCallExp(node) || isSgAssignOp(node)) {
-	  weight++;
-	}  
+	    isSgAssignInitializer(node) || isSgFunctionCallExp(node)) { 
+	  weightNullDeref++;
+	}  else if (isSgAssignOp(node)) {
+	  weightAssignOp++;
+	}
         return inheritedValue;
     }
 }
@@ -634,7 +639,7 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
    // and synthesised attributes are a likely problem.
 
         nodeCounts.push_back(nodeCount);
-	funcWeights.push_back(weight);
+	funcWeights.push_back(weightAssignOp*weightNullDeref);
         inFunc = false;
 #if DIS_DEBUG_OUTPUT
 	std::cout << " destroying - save nodes  " << nodeCount << std::endl;

@@ -340,6 +340,7 @@ int main(int argc, char **argv)
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
 #if CALL_RUN_FOR_CHECKERS
+  if (my_rank==0)
   std::cout << "\n>>> Running in sequence ... " << std::endl;
 #endif
 
@@ -375,7 +376,8 @@ int main(int argc, char **argv)
   MyAnalysis myanalysis;
   int initialDepth=0;
 
-  std::cout << "\n>>> Running on functions ... " << std::endl;
+  if (my_rank==0)
+    std::cout << "\n>>> Running on functions ... " << std::endl;
  #if CALL_RUN_FOR_CHECKERS
   #if GERGO_ALGO
   std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
@@ -398,8 +400,8 @@ int main(int argc, char **argv)
   myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
   for (int i = 0; i<(int)bounds.size();i++) {
     if (bounds[i]== my_rank) {
-      std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
-									     myanalysis.myFuncWeights[i]) << std::endl;
+      //std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
+      //									     myanalysis.myFuncWeights[i]) << std::endl;
       for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	if (DEBUG_OUTPUT_MORE) 
 	  std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
@@ -511,63 +513,3 @@ int main(int argc, char **argv)
 }
 
 
-
-
-
-
-
-
-
-
-
-/* OLD
-# if 0
-  for (int i = bounds.first; i < bounds.second; i++)
-    {
-      std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " 
-#if !RUN_ON_FILES
-		<< (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
-	"   Weight : " << myanalysis.myFuncWeights[i] 
-#endif
-<< std::endl;
-#if CALL_RUN_FOR_CHECKERS
-      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-  #if RUN_ON_FILES
-    #if DEBUG_OUTPUT
-	std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-		  <<"[) : " << (*b_itr)->getName() << " \t on " << (root->get_file(i).getFileName()) << std::endl; 
-    #endif
-		(*b_itr)->run(&root->get_file(i));
-  #else
-    #if DEBUG_OUTPUT
-	std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-		  <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
-	  "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
-    #endif
-	(*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
-  #endif
-      }
-
-#elif RUN_COMBINED_CHECKERS
-      std::cout << "\n>>> Running combined ... " << std::endl;
-      AstCombinedSimpleProcessing combined(traversals);
-  #if RUN_ON_FILES
-      combined.traverse(&root->get_file(i), preorder);
-  #else
-      combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
-  #endif
-
-#else
-  int nrOfThreads = 5;
-  std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
-      AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-  #if RUN_ON_FILES
-      parallel.traverseInParallel(&root->get_file(i), preorder);
-  #else
-      parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
-  #endif
-#endif
-      // output_results(outputs);
-    }
-#endif
-*/

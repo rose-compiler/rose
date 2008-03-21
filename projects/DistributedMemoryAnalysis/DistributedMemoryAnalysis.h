@@ -99,7 +99,8 @@ class DistributedMemoryAnalysisPreTraversal
 {
 public:
  DistributedMemoryAnalysisPreTraversal(AstTopDownProcessing<InheritedAttributeType> *preTraversal)
-   : preTraversal(preTraversal), inFunc(false), nodeCount(0), stdFunc(false), weight(1) {}
+   : preTraversal(preTraversal), inFunc(false), nodeCount(0), stdFunc(false), weightNullDeref(1),
+    weightAssignOp(1) {}
 
   std::vector<SgFunctionDeclaration *> &get_funcDecls() {return funcDecls;}
   std::vector<InheritedAttributeType> &get_initialInheritedValues() {return initialInheritedValues;}
@@ -115,7 +116,8 @@ private:
     bool inFunc;
     size_t nodeCount;
     bool stdFunc;
-    size_t weight;
+    size_t weightNullDeref;
+    size_t weightAssignOp;
 
     std::vector<SgFunctionDeclaration *> funcDecls;
     std::vector<InheritedAttributeType> initialInheritedValues;
