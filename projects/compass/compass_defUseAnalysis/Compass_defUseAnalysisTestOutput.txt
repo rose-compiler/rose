@@ -1,0 +1,1 @@
+LocPerFunction: locPerFunctionTest1.C:10.1-11: SgFunctionDefinition: This function has too many lines of code :: LOC = 12 > 10
