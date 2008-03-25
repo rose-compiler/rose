@@ -1,10 +1,10 @@
 
-computationalFunctions.maxIntOps=5
-computationalFunctions.maxFloatOps=5
-CyclomaticComplexity.maxComplexity=2
+computationalFunctions.maxIntOps=25
+computationalFunctions.maxFloatOps=25
+CyclomaticComplexity.maxComplexity=25
 
 
 DeepNestingChecker.maximumNestedScopes= 4
 InternalDataSharing.operatorsExcepted=1
-LocPerFunction.Size=2
+LocPerFunction.Size=50
 

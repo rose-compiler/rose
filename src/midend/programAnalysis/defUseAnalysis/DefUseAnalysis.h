@@ -64,6 +64,8 @@ class DefUseAnalysis : public DFAnalysis, Support {
   std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);
   bool isNodeGlobalVariable(SgInitializedName* node);
   std::vector <SgInitializedName*> getGlobalVariables();
+  // the following one is used for parallel traversal
+  int start_traversal_of_one_function(SgFunctionDefinition* proc);
 
   // helpers -----------------------------
   bool searchMap(SgNode* node);

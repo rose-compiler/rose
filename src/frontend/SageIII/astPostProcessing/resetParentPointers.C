@@ -1907,7 +1907,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                        }
 
                  // DQ (6/20/2006): Commented out temporarily for debugging use of STL!
-                    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+		    ROSE_ASSERT(locatedNode->get_parent() != NULL);
                     break;
                   }
 #if 0

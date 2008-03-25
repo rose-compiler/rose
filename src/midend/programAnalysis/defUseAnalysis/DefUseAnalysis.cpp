@@ -451,6 +451,22 @@ void  DefUseAnalysis::start_traversal_of_functions() {
 }
 
 /******************************************
+ * Traversal over one function
+ *****************************************/
+int  
+DefUseAnalysis::start_traversal_of_one_function(SgFunctionDefinition* proc) {
+
+  nrOfNodesVisited = 0;
+
+  DefUseAnalysisPF*  defuse_perfunc = new DefUseAnalysisPF(false, this);
+  FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc);
+  nrOfNodesVisited = defuse_perfunc->getNumberOfNodesVisited();
+  //cout << " nodes visited: " << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 
+  
+  return nrOfNodesVisited;
+}
+
+/******************************************
  * Delegation to run
  ******************************************/
 int DefUseAnalysis::run(bool debug) {

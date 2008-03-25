@@ -173,7 +173,7 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
   // sort all the vectors
   std::vector<std::pair<double, size_t> > weights(funcDecls.size());
   for (int i=0; i< (int) funcDecls.size(); i++) {
-    double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size());
+    double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size()/100);
     weights[i].first = currentWeight;
     weights[i].second = i;
   }
@@ -240,7 +240,7 @@ computeFunctionIndicesPerNode(
     double totalWeight = 0;
     for (itr = nodeCounts.begin(), itr2 = funcWeights.begin(); itr != nodeCounts.end(); ++itr, ++itr2) {
         totalNodes += *itr;
-	double currentWeight = (((double)(*itr)*(*itr2))/(double)funcDecls.size());
+	double currentWeight = (((double)(*itr)*(*itr2))/(double)funcDecls.size()/100);
         totalWeight += currentWeight;
     }
     myNodeCounts = nodeCounts;
@@ -265,7 +265,7 @@ computeFunctionIndicesPerNode(
       nrOfFunctions[rank]=0;
     }
     for (unsigned int i=0; i< funcDecls.size(); i++) {
-      double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size());
+      double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size()/100);
       double min =INFINITY;
       int min_rank=0;
       // find the minimum weight processor
@@ -599,12 +599,19 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
 #endif
         nodeCount++;
 	// calculate the weight of the function
+	// this weight is mostly used for the def-use checker
+	if (isSgNode(node) ) {
+	  weightNullDeref++;
+	}
+	// the following weight should be used if null-deref is checked for
+	/*
 	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
 	    isSgAssignInitializer(node) || isSgFunctionCallExp(node)) { 
 	  weightNullDeref++;
-	}  else if (isSgAssignOp(node)) {
+	  } else if (isSgAssignOp(node)) {
 	  weightAssignOp++;
 	}
+	*/
         return inheritedValue;
     }
 }

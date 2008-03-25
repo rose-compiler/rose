@@ -1,6 +1,5 @@
-locPerFunction
 cyclomaticComplexity
-functionDocumentation
+locPerFunction
 newDelete
 nullDeref
-voidStar
+compass_defUseAnalysis

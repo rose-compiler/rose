@@ -131,6 +131,8 @@ void RoseBin_DB_IDAPRO::process_callgraph_query(MYSQL* conn, MYSQL_RES* res_set)
     //int expr_id=-1;
     
     CallGraphType callGraph;
+
+    //vector<struct>* vector = andreas->getVector("Callgraph"); 
     while ((row = mysql_fetch_row(res_set))!=NULL) {
       for (unsigned int i=0; i<mysql_num_fields(res_set);i++) {
 	char* ret=(char*)"";

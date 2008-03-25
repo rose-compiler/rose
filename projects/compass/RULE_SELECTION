@@ -9,6 +9,7 @@
 +:CharStarForString
 +:CommaOperator
 +:ComputationalFunctions
+-:Compass_defUseAnalysis
 +:ConstCast
 +:ConstructorDestructorCallsVirtualFunction
 +:ConstStringLiterals
