@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 
 # Basic test script
 # (C) 2007 Adrian Prantl, Viktor Pavlu
@@ -6,53 +6,24 @@
 FILES=`find tests -name \*.[cC] 2>/dev/null` `find tests -name \*.c[px][px] 2>/dev/null`
 CURRENTDIR=`pwd`
 ANALYSIS=`basename $CURRENTDIR`
-MODES="--output-text"
-OPTIONS="--analysis-files=all --output-gdl=test.gdl --gdl-preinfo --gdl-postinfo --output-term=test.pl"
 
-CUSTOM_MODES="--aliastextoutput --aliassourceoutput"   # not available in all analyses, checked against --help text of $(ANALYSIS)
-CUSTOM_OPTIONS="--foldgraphs --summarygraph --individualgraphs"
-# FIXME take alternativenes of options into consideration
-# CUSTOM_OPTIONS="--foldgraphs| --summarygraph|--no_summarygraph| --individualgraphs|--no_individualgraphs|"
+# this is included in front of each command-line
+CMDLINE_PREFIX="--output-gdl=test.gdl --output-term=test.pl --analysis-files=all --output-text --gdl-preinfo --gdl-postinfo"
+# command-line options with arity 1
+UNARY_OPTIONS=""
+# command-line options that come in pairs
+BINARY_OPTIONS=""
 
-ARGSEP=:
-
-# add all CUSTOM_MODES that are implemented in
-# this analysis to the variable MODES
-addIfImplemented () {
-    target_var=$1
-    custom_options=$2
-    helptext=$3
-    for opt in $custom_options; do
-        r=`echo $helptext | grep -c "${opt//-/\\-}"`
-        if [ "$r" != "0" ]; then
-            eval "$target_var=\"\$$target_var $opt\""
-        fi
-    done
-}
-
-helptext=`./$ANALYSIS --help`
-addIfImplemented "MODES"   "$CUSTOM_MODES"   "$helptext"
-addIfImplemented "OPTIONS" "$CUSTOM_OPTIONS" "$helptext"
-
-
-# generate "permutations" of options
-generatePermutations () {
-    perms="$ARGSEP"
-    for opt in $OPTIONS; do
-        newperms=
-        for p in $perms; do
-            newperms="$newperms $p"
-            newperms="$newperms $p$ARGSEP$opt"
-        done
-        perms="$newperms"
-    done
-    ARGUMENTS=$perms
-}
-
-if [ "$GENERATE_PERMUTATIONS" = "yes" ]; then
-    generatePermutations
-else
-    ARGUMENTS="--statistics$ARGSEP${MODES// /$ARGSEP}$ARGSEP${OPTIONS// /$ARGSEP}"
+# include custom options, if any
+if [ -f runtests.custom ]
+then
+    tmp_prefix=$CMDLINE_PREFIX
+    tmp_unary=$UNARY_OPTIONS
+    tmp_binary=$BINARY_OPTIONS
+    source runtests.custom
+	CMDLINE_PREFIX="$tmp_prefix $CMDLINE_PREFIX"
+    UNARY_OPTIONS="$tmp_unary $UNARY_OPTIONS"
+    BINARY_OPTIONS="$tmp_binary $BINARY_OPTIONS"
 fi
 
 TMPFILE=/tmp/runtests.pag.$RANDOM
@@ -61,61 +32,78 @@ CMDFILE=/tmp/runtests.cmd.$RANDOM
 rm -f $TMPFILE
 rm -f $CMDFILE
 
-i=0
+# glue BINARY_OPTIONS pairwise together
+ARGS="$UNARY_OPTIONS"
+prev=""
+for tok in $BINARY_OPTIONS; do
+    if [ "$prev" == "" ]; then
+        prev=$tok
+    else
+        ARGS="$ARGS $prev:$tok"
+        prev=""
+    fi
+done
+
+# FIXME compute subsets of UNARY_OPTIONS and BINARY_OPTIONS
+
+runAnalysis() {
+    opts=$1
+	cmd="./$ANALYSIS $file --statistics $CMDLINE_PREFIX ${opts//:/ }" # split binary options again
+
+	printf "$cmd..."
+	# execute and time with 'time'
+	/usr/bin/time --format="%S %U %e" $cmd 1>/dev/null 2>$TMPFILE
+
+	rc=$?
+
+	time_sys=` cat $TMPFILE | awk 'END {print $1}'`
+	time_user=`cat $TMPFILE | awk 'END {print $2}'`
+	time_wall=`cat $TMPFILE | awk 'END {print $3}'`
+
+	echo " done in $time_wall secs."
+
+	if [ $rc -eq 127 ]; then
+		cat $TMPFILE
+		exit 127
+	fi
+	if [ $rc -eq 0 ]; then
+		time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
+		time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
+		time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
+		time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'` 
+		mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
+	else
+		time_pag_run=0
+		time_pag_init=0
+		time_pag_iter=0
+		time_pag_gc=0
+		mem_allocd=0
+	fi
+
+	# verbose output for script development (will also be displayed in statistics at end)
+	# echo " pag_run = $time_pag_run"
+	# echo "pag_init = $time_pag_init"
+	# echo "pag_iter = $time_pag_iter"
+	# echo "  pag_gc = $time_pag_gc"
+	# echo "     mem = $mem_allocd"
+	# echo "     sys = $time_sys"
+	# echo "    user = $time_user"
+	# echo "    wall = $time_wall"
+	
+	# append to report file
+	printf "$rc\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$cmd\n" >> $CMDFILE
+}
 
 for file in $FILES; do
-
-    echo "--- testing $ANALYSIS on file $file ---"
-
-    # for each option (even no options)
-    for argset in $ARGUMENTS; do
-        i=$(($i + 1))
-
-        cmd="./$ANALYSIS$ARGSEP$file$ARGSEP$argset"
-        readable_cmd=${cmd//$ARGSEP/ }
-
-        printf "$readable_cmd ..." $i
-        /usr/bin/time --format="%S %U %e" $readable_cmd 1>/dev/null 2>$TMPFILE
-
-        rc=$?
-
-        time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
-        time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
-        time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
-        time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'` 
-        mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
-
-        time_sys=` cat $TMPFILE | awk 'END {print $1}'`
-        time_user=`cat $TMPFILE | awk 'END {print $2}'`
-        time_wall=`cat $TMPFILE | awk 'END {print $3}'`
-
-        #echo " pag_run = $time_pag_run"
-        #echo "pag_init = $time_pag_init"
-        #echo "pag_iter = $time_pag_iter"
-        #echo "  pag_gc = $time_pag_gc"
-        #echo "     mem = $mem_allocd"
-
-        #echo "     sys = $time_sys"
-        #echo "    user = $time_user"
-        #echo "    wall = $time_wall"
-
-        echo " done in $time_wall secs."
-        
-        if [ $rc -eq 127 ]; then
-            cat $TMPFILE
-            exit 127
-        fi 
-
-        # bug the user with output (but remove --statistics)
-        cat $TMPFILE | grep -v 'analyzer done in .* sec' | grep -v '.*sec initalizing .*sec iterating' \
-        | grep -v '.* steps, .* nodes, .* average worklistlength' | grep -v '=> .* sec per step' \
-        | grep -v 'garbage collection (.* of iterating)' | grep -v '.*MB (.* rgc) allocated' \
-        | grep -v '.* Memory used total' | head -n -1
-
-        # append to report file
-        line="$rc $time_sys $time_user $time_wall $time_pag_run $time_pag_init $time_pag_iter $time_pag_gc $mem_allocd $cmd\n"
-        printf ${line// /\\t} >> $CMDFILE
+    # echo "--- testing $ANALYSIS on file $file ---"
+    # for each option
+    for argset in $ARGS; do
+	    runAnalysis $argset
     done 
+	# even no options (only the prefix)
+	if [ "$ARGS" == "" ]; then
+	    runAnalysis ""
+	fi
 done
 
 # create report  script
@@ -159,15 +147,17 @@ END {
         min_mem_allocd = max_mem_allocd = mem_allocd = 0;
         i = 1;
     }
-    printf "%s t_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
-    printf "%s t_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
-    printf "%s t_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
-    printf "%s alloc'd  min avg max = %f %f %f secs\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
+    printf "%st_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
+    printf "%st_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
+    printf "%st_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
+    printf "%salloc'd  min avg max = %f %f %f secs\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
 }
 EndOfAWK
 
-OUTPUT_COLUMNS="\$4,\$3,\$5,\$9,cmd"
-OUTPUT_HEADERS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
+OUTPUT_COLUMNS_SUCCESS="\$4,\$3,\$5,\$9,\$10"
+OUTPUT_HEADERS_SUCCESS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
+OUTPUT_COLUMNS_FAILURE="\$10"
+OUTPUT_HEADERS_FAILURE="commandline"
 
 echo "########################################################################"
 echo "# SATIrE automagic test report, `date`"
@@ -182,19 +172,19 @@ BAD_PERC=`echo scale=2\; $BAD*100/$TOTAL|bc`
 
 echo "--- [$GOOD/$TOTAL] succeeded ($GOOD_PERC%) ---"
 if [ "$GOOD" != "0" ]; then
-    printf "$OUTPUT_HEADERS\n"
-    awk "BEGIN{OFS=\"\\t\"}(\$1==0){cmd=\$10;gsub(\"$ARGSEP\",\" \",cmd);print $OUTPUT_COLUMNS}" $CMDFILE
+    printf "$OUTPUT_HEADERS_SUCCESS\n"
+    awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1==0){print $OUTPUT_COLUMNS_SUCCESS}" $CMDFILE
 fi
 
 echo "--- [$BAD/$TOTAL] failed ($BAD_PERC%) ---"
 if [ "$BAD" != "0" ]; then
-    printf "ERROR:$OUTPUT_HEADERS\n"
-    awk "BEGIN{OFS=\"\\t\"}(\$1!=0){cmd=\$10;gsub(\"$ARGSEP\",\" \",cmd);print $OUTPUT_COLUMNS}" $CMDFILE
+    printf "$OUTPUT_HEADERS_FAILURE\n"
+    awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1!=0){print $OUTPUT_COLUMNS_FAILURE}" $CMDFILE
 fi
 
 echo "--- $ANALYSIS runtests statistics ---" 
-awk '($1==0){print $0}' $CMDFILE | awk -v prefix="success" -f $AWKFILE
-awk '($1!=0){print $0}' $CMDFILE | awk -v prefix="failed" -f $AWKFILE
+awk '($1==0){print $0}' $CMDFILE | awk -v prefix="" -f $AWKFILE
+# awk '($1!=0){print $0}' $CMDFILE | awk -v prefix="failed " -f $AWKFILE
 awk '{s+=$4}END{printf "total t_wall: %s secs",s}' $CMDFILE
 
 rm -f $TMPFILE
