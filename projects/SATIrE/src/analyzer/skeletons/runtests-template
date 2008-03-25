@@ -150,7 +150,7 @@ END {
     printf "%st_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
     printf "%st_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
     printf "%st_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
-    printf "%salloc'd  min avg max = %f %f %f secs\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
+    printf "%salloc'd  min avg max = %f %f %f MB\n",   prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
 }
 EndOfAWK
 
