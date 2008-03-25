@@ -120,4 +120,4 @@ fi
 # echo "-------------------- Full log      --------------------" >> mailtext
 # cat buildlog >> mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
-# rm -rf "${ROSE_TOP}"
+rm -rf "${ROSE_TOP}"
