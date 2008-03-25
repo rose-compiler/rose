@@ -40,12 +40,12 @@ public:
     virtual std::string getOptionsInfo() {
       return AnalyzerOptions::getOptionsInfo() + 
         " Custom options:\n" 
-        "   --aliastextoutput             output the alias pairs for each statement on stdout\n"
-        "   --aliassourceoutput           generate source file with annotated alias pairs for each statement\n"
+        "   --output-alias                output the alias pairs for each statement on stdout\n"
+        "   --output-alias-annotation     add alias pairs to each statement in generated source file\n"
         "   --individualgraphs            output all individual graphs in gdl\n"
-        "   --no_individualgraphs         do not output all individual graphs in gdl [default]\n"
+        "   --no-individualgraphs         do not output all individual graphs in gdl [default]\n"
         "   --summarygraph                output summary graph in gdl [default]\n"
-        "   --no_summarygraph             do not output summary graph in gdl\n"
+        "   --no-summarygraph             do not output summary graph in gdl\n"
         "   --foldgraphs                  fold all gdl graphs initially\n";
     }
 
@@ -65,17 +65,17 @@ public:
 
       ShapeAnalyzerOptions *scl = dynamic_cast<ShapeAnalyzerOptions*>(cl);
 
-      if (!strcmp(argv[i], "--aliastextoutput")) {
+      if (!strcmp(argv[i], "--output-alias")) {
         scl->aliasTextOutputOn();
-      } else if (!strcmp(argv[i], "--aliassourceoutput")) {
+      } else if (!strcmp(argv[i], "--output-alias-annotation")) {
         scl->aliasSourceOutputOn();
       } else if (!strcmp(argv[i], "--individualgraphs")) {
         scl->gdlShowIndividualGraphsOn();
-      } else if (!strcmp(argv[i], "--no_individualgraphs")) {
+      } else if (!strcmp(argv[i], "--no-individualgraphs")) {
         scl->gdlShowIndividualGraphsOff();
       } else if (!strcmp(argv[i], "--summarygraph")) {
         scl->gdlShowSummaryGraphOn();
-      } else if (!strcmp(argv[i], "--no_summarygraph")) {
+      } else if (!strcmp(argv[i], "--no-summarygraph")) {
         scl->gdlShowSummaryGraphOff();
       } else if (!strcmp(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
