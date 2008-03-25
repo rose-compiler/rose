@@ -28,6 +28,17 @@ SimpleInstrumentation::visit ( SgNode* astNode )
           SgFunctionDefinition *  func_def    = new SgFunctionDefinition(TRANSFORMATION_FILE_INFO, func);
           SgBasicBlock         * func_body    = new SgBasicBlock(TRANSFORMATION_FILE_INFO);
 
+       // set the end source position as transformation generated   
+       // since the constructors only set the beginning source position by default
+	  func->set_endOfConstruct(TRANSFORMATION_FILE_INFO);                        
+	  func->get_endOfConstruct()->set_parent(func);
+
+	  func_def->set_endOfConstruct(TRANSFORMATION_FILE_INFO);                        
+	  func_def->get_endOfConstruct()->set_parent(func_def);
+
+	  func_body->set_endOfConstruct(TRANSFORMATION_FILE_INFO);                        
+	  func_body->get_endOfConstruct()->set_parent(func_body);
+
        // Sets the body into the definition
           func_def->set_body(func_body);
        // Sets the defintion's parent to the declaration
@@ -89,12 +100,19 @@ SimpleInstrumentation::visit ( SgNode* astNode )
        // create a VarRefExp
        // SgVariableSymbol *var_symbol = new SgVariableSymbol(var1_init_name);
           SgVarRefExp *var_ref = new SgVarRefExp(TRANSFORMATION_FILE_INFO,var_symbol);
+          var_ref->set_endOfConstruct(TRANSFORMATION_FILE_INFO);
+          var_ref->get_endOfConstruct()->set_parent(var_ref);
 
        // create a ++ expression, 0 for prefix ++
           SgPlusPlusOp *pp_expression = new SgPlusPlusOp(TRANSFORMATION_FILE_INFO,var_ref,0);
+          pp_expression->set_endOfConstruct(TRANSFORMATION_FILE_INFO);
+          pp_expression->get_endOfConstruct()->set_parent(pp_expression);
 
        // create an expression statement
           SgExprStatement* new_stmt = new SgExprStatement(TRANSFORMATION_FILE_INFO,pp_expression);
+          new_stmt->set_endOfConstruct(TRANSFORMATION_FILE_INFO);
+          new_stmt->get_endOfConstruct()->set_parent(new_stmt);
+			   
 #if 0
        // DQ (9/8/2007): This is no longer required, SgExpressionRoot is not longer used in the ROSE IR.
        // create an expression type
@@ -141,6 +159,7 @@ main ( int argc, char * argv[] )
      SimpleInstrumentation treeTraversal;
      treeTraversal.traverseInputFiles ( project, preorder );
 
+     AstTests::runAllTests(project);
      return backend(project);
    }
 
