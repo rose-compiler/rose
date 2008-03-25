@@ -8,7 +8,7 @@ CURRENTDIR=`pwd`
 ANALYSIS=`basename $CURRENTDIR`
 
 # this is included in front of each command-line
-CMDLINE_PREFIX="--output-gdl=test.gdl --output-term=test.pl --analysis-files=all --output-text --gdl-preinfo --gdl-postinfo"
+CMDLINE_PREFIX="--output-gdlfile test.gdl --output-termfile test.pl --analysis-files=all --output-text --gdl-preinfo --gdl-postinfo"
 # command-line options with arity 1
 UNARY_OPTIONS=""
 # command-line options that come in pairs
@@ -48,9 +48,9 @@ done
 
 runAnalysis() {
     opts=$1
-	cmd="./$ANALYSIS $file --statistics $CMDLINE_PREFIX ${opts//:/ }" # split binary options again
+	cmd="./$ANALYSIS $file --statistics=yes $CMDLINE_PREFIX ${opts//:/ }" # split binary options again
 
-	printf "$cmd..."
+	printf "$cmd ..."
 	# execute and time with 'time'
 	/usr/bin/time --format="%S %U %e" $cmd 1>/dev/null 2>$TMPFILE
 
@@ -62,11 +62,11 @@ runAnalysis() {
 
 	echo " done in $time_wall secs."
 
-	if [ $rc -eq 127 ]; then
+	if [ $rc -eq 127]; then
 		cat $TMPFILE
 		exit 127
 	fi
-	if [ $rc -eq 0 ]; then
+	if [ $rc -eq 0]; then
 		time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
 		time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
 		time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
@@ -81,21 +81,21 @@ runAnalysis() {
 	fi
 
 	# verbose output for script development (will also be displayed in statistics at end)
-	# echo " pag_run = $time_pag_run"
-	# echo "pag_init = $time_pag_init"
-	# echo "pag_iter = $time_pag_iter"
-	# echo "  pag_gc = $time_pag_gc"
-	# echo "     mem = $mem_allocd"
-	# echo "     sys = $time_sys"
-	# echo "    user = $time_user"
-	# echo "    wall = $time_wall"
+	echo " pag_run = $time_pag_run"
+	echo "pag_init = $time_pag_init"
+	echo "pag_iter = $time_pag_iter"
+	echo "  pag_gc = $time_pag_gc"
+	echo "     mem = $mem_allocd"
+	echo "     sys = $time_sys"
+	echo "    user = $time_user"
+	echo "    wall = $time_wall"
 	
 	# append to report file
 	printf "$rc\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$cmd\n" >> $CMDFILE
 }
 
 for file in $FILES; do
-    # echo "--- testing $ANALYSIS on file $file ---"
+    echo "--- testing $ANALYSIS on file $file ---"
     # for each option
     for argset in $ARGS; do
 	    runAnalysis $argset
@@ -147,17 +147,15 @@ END {
         min_mem_allocd = max_mem_allocd = mem_allocd = 0;
         i = 1;
     }
-    printf "%st_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
-    printf "%st_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
-    printf "%st_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
-    printf "%salloc'd  min avg max = %f %f %f MB\n",   prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
+    printf "%s t_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
+    printf "%s t_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
+    printf "%s t_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
+    printf "%s alloc'd  min avg max = %f %f %f secs\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
 }
 EndOfAWK
 
-OUTPUT_COLUMNS_SUCCESS="\$4,\$3,\$5,\$9,\$10"
-OUTPUT_HEADERS_SUCCESS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
-OUTPUT_COLUMNS_FAILURE="\$10"
-OUTPUT_HEADERS_FAILURE="commandline"
+OUTPUT_COLUMNS="\$4,\$3,\$5,\$9,\$10"
+OUTPUT_HEADERS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
 
 echo "########################################################################"
 echo "# SATIrE automagic test report, `date`"
@@ -172,19 +170,19 @@ BAD_PERC=`echo scale=2\; $BAD*100/$TOTAL|bc`
 
 echo "--- [$GOOD/$TOTAL] succeeded ($GOOD_PERC%) ---"
 if [ "$GOOD" != "0" ]; then
-    printf "$OUTPUT_HEADERS_SUCCESS\n"
-    awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1==0){print $OUTPUT_COLUMNS_SUCCESS}" $CMDFILE
+    printf "$OUTPUT_HEADERS\n"
+    awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1==0){print $OUTPUT_COLUMNS}" $CMDFILE
 fi
 
 echo "--- [$BAD/$TOTAL] failed ($BAD_PERC%) ---"
 if [ "$BAD" != "0" ]; then
-    printf "$OUTPUT_HEADERS_FAILURE\n"
-    awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1!=0){print $OUTPUT_COLUMNS_FAILURE}" $CMDFILE
+    printf "ERROR:$OUTPUT_HEADERS\n"
+    awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1!=0){print $OUTPUT_COLUMNS}" $CMDFILE
 fi
 
 echo "--- $ANALYSIS runtests statistics ---" 
-awk '($1==0){print $0}' $CMDFILE | awk -v prefix="" -f $AWKFILE
-# awk '($1!=0){print $0}' $CMDFILE | awk -v prefix="failed " -f $AWKFILE
+awk '($1==0){print $0}' $CMDFILE | awk -v prefix="success" -f $AWKFILE
+# awk '($1!=0){print $0}' $CMDFILE | awk -v prefix="failed" -f $AWKFILE
 awk '{s+=$4}END{printf "total t_wall: %s secs",s}' $CMDFILE
 
 rm -f $TMPFILE
