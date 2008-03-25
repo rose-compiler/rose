@@ -87,7 +87,7 @@ endif
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
-EXTRA_DIST = mysql_include
+EXTRA_DIST = mysql_include make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
 
 # Rule for maintainers (requires Tcl interpreter)
 $(srcdir)/instructionDispatch.cpp: make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
