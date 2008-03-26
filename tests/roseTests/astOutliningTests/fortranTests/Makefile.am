@@ -151,7 +151,9 @@ endif
 listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) 
 	egrep -n "*"  $(srcdir)/$(?)
 
-EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_F90_TESTCODES) \
+             $(ALL_F77_TESTCODES) \
+             $(ALL_F03_TESTCODES)
 
 
 clean-local:
