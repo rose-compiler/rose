@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.C,v 1.3 2008-03-05 17:08:26 gergo Exp $
+// $Id: ExprLabeler.C,v 1.4 2008-03-26 14:57:53 gergo Exp $
 
 #include "ExprLabeler.h"
 
@@ -35,10 +35,22 @@ void ExprLabeler::visit(SgNode *node)
         if (isSgNewExp(node->get_parent()))
         {
             SgNewExp *n = isSgNewExp(node->get_parent());
+            SgType *type = n->get_type();
+         // GB (2008-03-17): Strip pointers, this might include several
+         // layers. I know there is a ROSE method for this, but I don't
+         // trust it. The more interesting question is whether the variable
+         // name can be considered correct if there is more than one layer
+         // of pointers. TODO: Investigate this.
+            while (isSgPointerType(type))
+                type = isSgPointerType(type)->get_base_type();
+#if 0
             SgName name = isSgNamedType(isSgPointerType(n->get_type())
                     ->get_base_type())->get_name();
+#endif
+         // SgName name = isSgNamedType(type)->get_name();
+            std::string name = isSgNamedType(type)->get_name().str();
             std::stringstream varname;
-            varname << "$" << name.str() << "$this";
+            varname << "$" << name << "$this";
             RetvalAttribute *retval = new RetvalAttribute(varname.str());
             node->addNewAttribute("return variable", retval);
         }

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.19 2008-03-13 15:00:23 gergo Exp $
+// $Id: CFGTraversal.C,v 1.20 2008-03-26 14:57:53 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -37,62 +37,62 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
       std::deque<SgStatement *>::const_iterator j;
       BasicBlock *b, *prev = NULL, *first = NULL;
       for (j = (*i)->arg_block->statements.begin();
-	   j != (*i)->arg_block->statements.end(); ++j) {
-	/* deal with constructor initializers */
-	ArgumentAssignment* aa
-	  = dynamic_cast<ArgumentAssignment *>(*j);
-	if (aa && isSgConstructorInitializer(aa->get_rhs())) {
-	  SgExpression* new_expr= isSgExpression(Ir::deepCopy(aa->get_rhs()));
-	  ExprLabeler el(expnum);
-	  el.traverse(new_expr, preorder);
-	  expnum = el.get_expnum();
-	  ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL);
-	  et.traverse(new_expr, preorder);
-	  for (int z = node_id; z < et.get_node_id(); ++z) {
-	    block_stmt_map[z] = current_statement;
-	  }
-	  node_id = et.get_node_id();
-	  expnum = et.get_expnum();
-	  if (first == NULL)
-	    first = et.get_after();
-	  if (prev != NULL)
-	    add_link(prev, et.get_after(), NORMAL_EDGE);
-	  b = prev = et.get_last();
-	  /* first is a block containing an
-	   * ArgumentAssignment($A$this, &$anonymous_var)
-	   * if this is an initialization of a superclass,
-	   * change into ArgumentAssignment($A$this, this)
-	   */
-	  if (isSgClassType(aa->get_lhs()->get_type())) {
-	    Procedure* p = (*cfg->procedures)[(*i)->procnum];
-	    SgClassDefinition* ca
-	      = isSgClassDeclaration(isSgClassType(aa->get_lhs()->get_type())
-				     ->get_declaration())->get_definition();
-	    SgClassDefinition *cc = p->class_type;
-	    if (subtype_of(cc, ca)) {
-	      BasicBlock *f = first->successors[0].first;
-	      ArgumentAssignment *a
-		= dynamic_cast<ArgumentAssignment *>(f->statements[0]);
-	      if (a == NULL)
-		break;
-	      SgPointerType* ptrType= Ir::createPointerType(p->class_type
-							    ->get_declaration()
-							    ->get_type());
-	      SgVarRefExp* thisVarRefExp =Ir::createVarRefExp("this",ptrType);
-	      f->statements[0] = Ir::createArgumentAssignment(a->get_lhs(),thisVarRefExp);
-	    }
-	  }
-	} else {
-	  /* empty block for argument assignments */
-	  b = new BasicBlock(node_id++, INNER, (*i)->procnum);
-	  cfg->nodes.push_back(b);
-	  b->statements.push_back(*j);
-	  if (first == NULL)
-	    first = b;
-	  if (prev != NULL)
-	    add_link(prev, b, NORMAL_EDGE);
-	  prev = b;
-	}
+           j != (*i)->arg_block->statements.end(); ++j) {
+        /* deal with constructor initializers */
+        ArgumentAssignment* aa
+          = dynamic_cast<ArgumentAssignment *>(*j);
+        if (aa && isSgConstructorInitializer(aa->get_rhs())) {
+          SgExpression* new_expr= isSgExpression(Ir::deepCopy(aa->get_rhs()));
+          ExprLabeler el(expnum);
+          el.traverse(new_expr, preorder);
+          expnum = el.get_expnum();
+          ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL);
+          et.traverse(new_expr, preorder);
+          for (int z = node_id; z < et.get_node_id(); ++z) {
+            block_stmt_map[z] = current_statement;
+          }
+          node_id = et.get_node_id();
+          expnum = et.get_expnum();
+          if (first == NULL)
+            first = et.get_after();
+          if (prev != NULL)
+            add_link(prev, et.get_after(), NORMAL_EDGE);
+          b = prev = et.get_last();
+          /* first is a block containing an
+           * ArgumentAssignment($A$this, &$anonymous_var)
+           * if this is an initialization of a superclass,
+           * change into ArgumentAssignment($A$this, this)
+           */
+          if (isSgClassType(aa->get_lhs()->get_type())) {
+            Procedure* p = (*cfg->procedures)[(*i)->procnum];
+            SgClassDefinition* ca
+              = isSgClassDeclaration(isSgClassType(aa->get_lhs()->get_type())
+                      ->get_declaration())->get_definition();
+            SgClassDefinition *cc = p->class_type;
+            if (subtype_of(cc, ca)) {
+              BasicBlock *f = first->successors[0].first;
+              ArgumentAssignment *a
+                  = dynamic_cast<ArgumentAssignment *>(f->statements[0]);
+              if (a == NULL)
+                  break;
+              SgPointerType* ptrType= Ir::createPointerType(p->class_type
+                      ->get_declaration()->get_type());
+              SgVarRefExp* thisVarRefExp =Ir::createVarRefExp("this",ptrType);
+              f->statements[0] = Ir::createArgumentAssignment(a->get_lhs(),
+                                                              thisVarRefExp);
+            }
+          }
+        } else {
+          /* empty block for argument assignments */
+          b = new BasicBlock(node_id++, INNER, (*i)->procnum);
+          cfg->nodes.push_back(b);
+          b->statements.push_back(*j);
+          if (first == NULL)
+            first = b;
+          if (prev != NULL)
+            add_link(prev, b, NORMAL_EDGE);
+          prev = b;
+        }
       }
       (*i)->first_arg_block = first;
       (*i)->last_arg_block = b;
@@ -142,7 +142,7 @@ CFGTraversal::getCFG() {
     std::map<SgExpression *, int, ExprPtrComparator>::const_iterator en;
     for (en = cfg->exprs_numbers.begin(); en != cfg->exprs_numbers.end(); ++en)
       std::cout << "'" << expr_to_string((*en).first) << "'\t"
-		<< (*en).second << std::endl;
+        << (*en).second << std::endl;
     */
 
   return real_cfg = global_cfg = cfg;
@@ -159,10 +159,10 @@ CFGTraversal::perform_goto_backpatching() {
       std::string label = (*gotos).first;
       maptype::iterator target = (*pi)->goto_targets.find(label);
       if (target != (*pi)->goto_targets.end()) {
-	add_link((*gotos).second, (*target).second, NORMAL_EDGE);
+        add_link((*gotos).second, (*target).second, NORMAL_EDGE);
       } else {
-	std::cout << "warning: goto statement with unknown label!"
-		  << std::endl;
+        std::cout << "warning: goto statement with unknown label!"
+                  << std::endl;
       }
       ++gotos;
     }
@@ -244,17 +244,17 @@ typedef std::set<SgExpression*, ExprPtrComparator> expression_set;
 class ExprSetTraversal : public AstSimpleProcessing {
 public:
   ExprSetTraversal(std::set<SgExpression *, ExprPtrComparator> *expr_set_,
-		   std::set<SgType *, TypePtrComparator> *type_set_)
+                   std::set<SgType *, TypePtrComparator> *type_set_)
     : expr_set(expr_set_), type_set(type_set_) {}
   
 protected:
   void visit(SgNode *node) {
     if (isSgExpression(node) && !isSgExpressionRoot(node)
-	&& (!isSgConstructorInitializer(node)
-	    || !isSgConstructorInitializer(node)->get_args()->empty())
-	&& (!isSgExprListExp(node)
-	    || !isSgExprListExp(node)->empty())
-	) {
+        && (!isSgConstructorInitializer(node)
+            || !isSgConstructorInitializer(node)->get_args()->empty())
+        && (!isSgExprListExp(node)
+            || !isSgExprListExp(node)->empty())
+        ) {
       expr_set->insert(isSgExpression(node));
       type_set->insert(isSgExpression(node)->get_type());
     }
@@ -283,9 +283,9 @@ make_nonredundant (const expression_set &exprs) {
     for (np = no_parens->begin(); np != no_parens->end(); ++np) {
       const char *npstr = expr_to_string(*np);
       if (strlen(pstr) == strlen(npstr) + 2
-	  && strncmp(pstr+1, npstr, strlen(npstr)) == 0) {
-	duplicate = true;
-	break;
+          && strncmp(pstr+1, npstr, strlen(npstr)) == 0) {
+        duplicate = true;
+        break;
       }
     }
     if (!duplicate) {
@@ -318,32 +318,28 @@ CFGTraversal::number_exprs() {
 // collect all expressions from the program blocks
   for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block) {
     for (stmt = (*block)->statements.begin();
-	 stmt != (*block)->statements.end(); ++stmt) {
+         stmt != (*block)->statements.end(); ++stmt) {
       ExprSetTraversal est(&expr_set, &type_set);
       if (isSgCaseOptionStmt(*stmt) 
-	  || isSgExprStatement(*stmt)
-	  || isSgScopeStatement(*stmt)) {
-	est.traverse(*stmt, preorder);
-      } else if (dynamic_cast<ArgumentAssignment *>(*stmt)) {
-	est.traverse(dynamic_cast<ArgumentAssignment *>(*stmt)->get_lhs(),
-		     preorder);
-	  est.traverse(dynamic_cast<ArgumentAssignment *>(*stmt)->get_rhs(),
-		       preorder);
-      } else if (dynamic_cast<ReturnAssignment *>(*stmt)) {
-	est.traverse(Ir::createVarRefExp(dynamic_cast<ReturnAssignment *>(*stmt)->get_lhs()),
-		     preorder);
-	est.traverse(Ir::createVarRefExp(dynamic_cast<ReturnAssignment *>(*stmt)->get_lhs()),
-		     preorder);
-      } else if (dynamic_cast<ParamAssignment *>(*stmt)) {
-	est.traverse(Ir::createVarRefExp(dynamic_cast<ParamAssignment *>(*stmt)->get_lhs()),
-		     preorder);
-	est.traverse(Ir::createVarRefExp(dynamic_cast<ParamAssignment *>(*stmt)->get_lhs()),
-		     preorder);
-      } else if (dynamic_cast<LogicalIf *>(*stmt)) {
-	est.traverse(dynamic_cast<LogicalIf *>(*stmt)->get_condition(),
-		     preorder);
-      } else if (dynamic_cast<DeclareStmt *>(*stmt)) {
-          type_set.insert(dynamic_cast<DeclareStmt *>(*stmt)->get_type());
+          || isSgExprStatement(*stmt)
+          || isSgScopeStatement(*stmt)) {
+        est.traverse(*stmt, preorder);
+      } else if (ArgumentAssignment *aa =
+              dynamic_cast<ArgumentAssignment *>(*stmt)) {
+        est.traverse(aa->get_lhs(), preorder);
+        est.traverse(aa->get_rhs(), preorder);
+      } else if (ReturnAssignment *ra =
+              dynamic_cast<ReturnAssignment *>(*stmt)) {
+        est.traverse(Ir::createVarRefExp(ra->get_lhs()), preorder);
+        est.traverse(Ir::createVarRefExp(ra->get_rhs()), preorder);
+      } else if (ParamAssignment *pa =
+              dynamic_cast<ParamAssignment *>(*stmt)) {
+        est.traverse(Ir::createVarRefExp(pa->get_lhs()), preorder);
+        est.traverse(Ir::createVarRefExp(pa->get_rhs()), preorder);
+      } else if (LogicalIf *li = dynamic_cast<LogicalIf *>(*stmt)) {
+        est.traverse(li->get_condition(), preorder);
+      } else if (DeclareStmt *ds = dynamic_cast<DeclareStmt *>(*stmt)) {
+        type_set.insert(ds->get_type());
       }
     }
   }
@@ -578,198 +574,191 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	break;
 
       case V_SgForStatement: {
-	SgForStatement *fors = isSgForStatement(*i);
-	/* create a block containing the initialization
-	 * statement */
-	block_stmt_map[node_id] = current_statement;
-	BasicBlock *init_block
-	  = new BasicBlock(node_id++, INNER, proc->procnum);
-	cfg->nodes.push_back(init_block);
-	/* create a block for the "real" head of the for
-	 * statement (where the condition is tested) */
-	block_stmt_map[node_id] = current_statement;
-	BasicBlock *for_block
-	  = new BasicBlock(node_id++, INNER, proc->procnum);
-	cfg->nodes.push_back(for_block);
-	BasicBlock *init_block_after = for_block;
-                
-	SgStatementPtrList init_list
-	  = fors->get_for_init_stmt()->get_init_stmt();
-	SgStatementPtrList::reverse_iterator it;
-	for (it = init_list.rbegin(); it != init_list.rend(); ++it) {
-	  SgExprStatement *init_expr
-	    = isSgExprStatement(*it);
-	  SgVariableDeclaration *init_decl
-	    = isSgVariableDeclaration(*it);
-	  if (init_expr) {
-	    init_block = allocate_new_block(init_block,
-					    init_block_after);
-	    SgExpression* new_expr
-	      = isSgExpression(Ir::deepCopy(init_expr->get_expression()));
-	    ExprLabeler el(expnum);
-	    el.traverse(new_expr, preorder);
-	    expnum = el.get_expnum();
-	    ExprTransformer et(node_id, proc->procnum, expnum,
-			       cfg, init_block);
-	    et.traverse(new_expr, preorder);
-	    for (int z = node_id; z < et.get_node_id(); ++z)
-	      block_stmt_map[z] = current_statement;
-	    node_id = et.get_node_id();
-	    expnum = et.get_expnum();
-	    
-	    init_block->statements.push_front(Ir::createExprStatement(new_expr));
-	    init_block_after = et.get_after();
-	    init_block = NULL;
-	  } else if (init_decl) {
-	    init_block = allocate_new_block(init_block,
-					    init_block_after);
-	    SgInitializedNamePtrList vars
-	      = init_decl->get_variables();
-	    SgInitializedNamePtrList::reverse_iterator it;
-	    for (it = vars.rbegin(); it != vars.rend(); ++it) {
-	      SgAssignInitializer *init
-		= isSgAssignInitializer((*it)->get_initializer());
-	      if (!init) {
-		std::cout << "unsupported initializer "
-			  << "in for loop" << std::endl;
-		break;
-	      }
-	      SgExpression* new_expr
-		= isSgExpression(Ir::deepCopy(init));
-	      ExprLabeler el(expnum);
-	      el.traverse(new_expr, preorder);
-	      expnum = el.get_expnum();
-	      ExprTransformer et(node_id, 
-				 proc->procnum, 
-				 expnum,
-				 cfg, (init_block_after != NULL
-				       ? init_block_after 
-				       : init_block));
-	      et.traverse(new_expr, preorder);
-	      for (int z = node_id; z < et.get_node_id(); ++z) {
-		block_stmt_map[z] = current_statement;
-	      }
-	      node_id = et.get_node_id();
-	      expnum = et.get_expnum();
+        SgForStatement *fors = isSgForStatement(*i);
+        /* create a block containing the initialization
+         * statement */
+        block_stmt_map[node_id] = current_statement;
+        BasicBlock *init_block
+          = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(init_block);
+        /* create a block for the "real" head of the for
+         * statement (where the condition is tested) */
+        block_stmt_map[node_id] = current_statement;
+        BasicBlock *for_block
+          = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(for_block);
+        BasicBlock *init_block_after = for_block;
 
-	      if (et.get_root_var() != NULL) {
-		new_expr = Ir::createVarRefExp(et.get_root_var());
-	      }
+        SgStatementPtrList init_list
+          = fors->get_for_init_stmt()->get_init_stmt();
+        SgStatementPtrList::reverse_iterator it;
+        for (it = init_list.rbegin(); it != init_list.rend(); ++it) {
+          SgExprStatement *init_expr = isSgExprStatement(*it);
+          SgVariableDeclaration *init_decl = isSgVariableDeclaration(*it);
+          if (init_expr) {
+            init_block = allocate_new_block(init_block, init_block_after);
+            SgExpression* new_expr
+              = isSgExpression(Ir::deepCopy(init_expr->get_expression()));
+            ExprLabeler el(expnum);
+            el.traverse(new_expr, preorder);
+            expnum = el.get_expnum();
+            ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block);
+            et.traverse(new_expr, preorder);
+            for (int z = node_id; z < et.get_node_id(); ++z)
+              block_stmt_map[z] = current_statement;
+            node_id = et.get_node_id();
+            expnum = et.get_expnum();
 
-	      SgVarRefExp *var = Ir::createVarRefExp(*it);
-	      SgExprStatement* exprStatement
-		= Ir::createExprStatement(Ir::createAssignOp(var, new_expr));
-	      init_block->statements.push_front(exprStatement);
+            init_block->statements.push_front(Ir::createExprStatement(new_expr));
+            init_block_after = et.get_after();
+            init_block = NULL;
+          } else if (init_decl) {
+         // GB (2008-03-26): The block we generate here cannot be linked to
+         // a successor yet; we do not know the successor block until after
+         // the condition is evaluated below! In fact, I don't see why we
+         // would need to allocate a new init_block here at all.
+         // init_block = allocate_new_block(init_block, init_block_after);
+            SgInitializedNamePtrList vars = init_decl->get_variables();
+            SgInitializedNamePtrList::reverse_iterator it;
+            for (it = vars.rbegin(); it != vars.rend(); ++it) {
+              SgAssignInitializer *init
+                  = isSgAssignInitializer((*it)->get_initializer());
+              if (!init) {
+                  std::cout << "unsupported initializer "
+                      << "in for loop" << std::endl;
+                  break;
+              }
+              SgExpression* new_expr = isSgExpression(Ir::deepCopy(init));
+              ExprLabeler el(expnum);
+              el.traverse(new_expr, preorder);
+              expnum = el.get_expnum();
+              ExprTransformer et(node_id, proc->procnum, expnum, cfg,
+                      init_block);
+                   // GB (2008-03-26): Not sure what is going on here, but
+                   // links were wrong. Intuitively, init_block_after should
+                   // never be NULL; but also, init_block should always be
+                   // the node to jump to from the transformed expression.
+                   // (init_block_after != NULL ? init_block_after : init_block));
+              et.traverse(new_expr, preorder);
+              for (int z = node_id; z < et.get_node_id(); ++z) {
+                  block_stmt_map[z] = current_statement;
+              }
+              node_id = et.get_node_id();
+              expnum = et.get_expnum();
 
-	      init_block_after = et.get_after();
-	      /* Don't try to understand this, because
-	       * It Works By Magic(tm). But feel free
-	       * to rewrite it cleanly. */
-	      init_block = allocate_new_block(NULL, init_block);
-	      init_block->statements.push_front(Ir::createDeclareStmt(Ir::createVariableSymbol(*it),
-								(*it)->get_type()));
-	      init_block_after = init_block;
-	      init_block = NULL;
-	    }
-	  } else {
-	    std::cout << "TODO: for init stmt with "
-		      << (*it)->sage_class_name()
-		      << std::endl;
-	    init_block->statements.push_front(*it);
-	  }
-	}
-	
-	// MS: 2007: in ROSE 0.8.10 the for-test is a statement (not an expression anymore)
-	SgExprStatement* cond
-	  = isSgExprStatement(fors->get_test());
-	SgExpression* new_expr
-	  = isSgExpression(Ir::deepCopy(cond->get_expression()));
+              if (et.get_root_var() != NULL) {
+                  new_expr = Ir::createVarRefExp(et.get_root_var());
+              }
 
-	assert(new_expr);
-	ExprLabeler el(expnum);
-	el.traverse(new_expr, preorder);
-	expnum = el.get_expnum();
-	ExprTransformer et(node_id, 
-			   proc->procnum, 
-			   expnum,
-			   cfg, 
-			   for_block);
-	et.traverse(new_expr, preorder);
-	for (int z = node_id; z < et.get_node_id(); ++z) {
-	  block_stmt_map[z] = current_statement;
-	}
-	node_id = et.get_node_id();
-	expnum = et.get_expnum();
+              SgVarRefExp *var = Ir::createVarRefExp(*it);
+              SgExprStatement* exprStatement
+                  = Ir::createExprStatement(Ir::createAssignOp(var, new_expr));
+              init_block->statements.push_front(exprStatement);
 
-	if (et.get_root_var() != NULL) {
-	  new_expr = Ir::createVarRefExp(et.get_root_var());
-	}
-                    
+              /* Don't try to understand this, because
+               * It Works By Magic(tm). But feel free
+               * to rewrite it cleanly. */
+           // GB (2008-03-26): All the Magic(tm) was used up, so I fixed
+           // this code. It is now simpler and maybe even correct.
+              init_block_after = allocate_new_block(NULL, et.get_after());
+              init_block_after->statements.push_front(
+                      Ir::createDeclareStmt(Ir::createVariableSymbol(*it),
+                                            (*it)->get_type()));
+            }
+          } else {
+            std::cout << "TODO: for init stmt with "
+                << (*it)->sage_class_name()
+                << std::endl;
+            init_block->statements.push_front(*it);
+          }
+        }
+
+        // MS: 2007: in ROSE 0.8.10 the for-test is a statement (not an expression anymore)
+        SgExprStatement* cond
+          = isSgExprStatement(fors->get_test());
+        SgExpression* new_expr
+          = isSgExpression(Ir::deepCopy(cond->get_expression()));
+
+        assert(new_expr);
+        ExprLabeler el(expnum);
+        el.traverse(new_expr, preorder);
+        expnum = el.get_expnum();
+        ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block);
+        et.traverse(new_expr, preorder);
+        for (int z = node_id; z < et.get_node_id(); ++z) {
+          block_stmt_map[z] = current_statement;
+        }
+        node_id = et.get_node_id();
+        expnum = et.get_expnum();
+
+        if (et.get_root_var() != NULL) {
+          new_expr = Ir::createVarRefExp(et.get_root_var());
+        }
+
 #ifdef REPLACE_FOR_BY_WHILE
-	SgWhileStmt* whileStmt
-	  = Ir::createWhileStmt(Ir::createExprStatement(new_expr));
-	for_block->statements.push_front(whileStmt);
+        SgWhileStmt* whileStmt
+          = Ir::createWhileStmt(Ir::createExprStatement(new_expr));
+        for_block->statements.push_front(whileStmt);
 
 #else
-	for_block->statements.push_front(
-					 new SgForStatement(info,
-							    new SgExprStatement(info, new_expr),
-							    (SgExpression *) NULL, NULL));
+        for_block->statements.push_front(
+                new SgForStatement(info,
+                                   new SgExprStatement(info, new_expr),
+                                   (SgExpression *) NULL, NULL));
 #endif
-	BasicBlock *for_block_after = et.get_after();
-	/* create a block for the increment statement */
-	block_stmt_map[node_id] = current_statement;
-	BasicBlock *incr_block
-	  = new BasicBlock(node_id++, INNER, proc->procnum);
-	cfg->nodes.push_back(incr_block);
+        BasicBlock *for_block_after = et.get_after();
+        /* create a block for the increment statement */
+        block_stmt_map[node_id] = current_statement;
+        BasicBlock *incr_block
+          = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(incr_block);
 
-	SgExpression *new_expr_inc
-	  = isSgExpression(Ir::deepCopy(fors->get_increment()));
-	ExprLabeler el_inc(expnum);
-	el_inc.traverse(new_expr_inc, preorder);
-	expnum = el_inc.get_expnum();
-	ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block);
-	et_inc.traverse(new_expr_inc, preorder);
-	for (int z = node_id; z < et_inc.get_node_id(); ++z) {
-	  block_stmt_map[z] = current_statement;
-	}
-	node_id = et_inc.get_node_id();
-	expnum = et_inc.get_expnum();
+        SgExpression *new_expr_inc
+          = isSgExpression(Ir::deepCopy(fors->get_increment()));
+        ExprLabeler el_inc(expnum);
+        el_inc.traverse(new_expr_inc, preorder);
+        expnum = el_inc.get_expnum();
+        ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block);
+        et_inc.traverse(new_expr_inc, preorder);
+        for (int z = node_id; z < et_inc.get_node_id(); ++z) {
+          block_stmt_map[z] = current_statement;
+        }
+        node_id = et_inc.get_node_id();
+        expnum = et_inc.get_expnum();
 
-	if (et_inc.get_root_var() != NULL) {
-	  new_expr_inc = Ir::createVarRefExp(et_inc.get_root_var());
-	}
-	incr_block->statements.push_front(Ir::createExprStatement(new_expr_inc));
-	BasicBlock *incr_block_after = et_inc.get_after();
-	/* unfold the body */
-	BasicBlock *body = transform_block(fors->get_loop_body(), 
-					   incr_block_after,
-					   after, 
-					   incr_block_after);
-	/* link everything together */
-	add_link(init_block, for_block_after, NORMAL_EDGE);
-	add_link(for_block, body, TRUE_EDGE);
-	add_link(for_block, after, FALSE_EDGE);
-	add_link(incr_block, for_block_after, NORMAL_EDGE);
-                
-	/* incoming information is at the incoming edge of
-	 * the init block */
-	stmt_start = new StatementAttribute(init_block_after, POS_PRE);
-	/* Outgoing information is at the incoming edge of
-	 * the after block, *not* at the false edge of the
-	 * condition block. This is because a break inside
-	 * the body might jump directly to after. If there
-	 * is no break (or goto or some other jump), the two
-	 * edges are the same anyway. */
-	stmt_end = new StatementAttribute(after, POS_PRE);
-	
-	new_block = NULL;
-	after = init_block_after;
-	
-	(*i)->addNewAttribute("PAG statement head",
-			      new StatementAttribute(for_block, POS_POST));
+        if (et_inc.get_root_var() != NULL) {
+          new_expr_inc = Ir::createVarRefExp(et_inc.get_root_var());
+        }
+        incr_block->statements.push_front(Ir::createExprStatement(new_expr_inc));
+        BasicBlock *incr_block_after = et_inc.get_after();
+        /* unfold the body */
+        BasicBlock *body = transform_block(fors->get_loop_body(),
+                                           incr_block_after,
+                                           after, incr_block_after);
+        /* link everything together */
+        add_link(init_block, for_block_after, NORMAL_EDGE);
+        add_link(for_block, body, TRUE_EDGE);
+        add_link(for_block, after, FALSE_EDGE);
+        add_link(incr_block, for_block_after, NORMAL_EDGE);
+
+        /* incoming information is at the incoming edge of
+         * the init block */
+        stmt_start = new StatementAttribute(init_block_after, POS_PRE);
+        /* Outgoing information is at the incoming edge of
+         * the after block, *not* at the false edge of the
+         * condition block. This is because a break inside
+         * the body might jump directly to after. If there
+         * is no break (or goto or some other jump), the two
+         * edges are the same anyway. */
+        stmt_end = new StatementAttribute(after, POS_PRE);
+
+        new_block = NULL;
+        after = init_block_after;
+
+        (*i)->addNewAttribute("PAG statement head",
+                              new StatementAttribute(for_block, POS_POST));
       }
-	break;
+      break;
 
       case V_SgWhileStmt: {
 	block_stmt_map[node_id] = current_statement;
@@ -785,7 +774,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	BasicBlock* while_block
 	  = new BasicBlock(node_id++, INNER, proc->procnum);
 	cfg->nodes.push_back(while_block);
-                
+
 	SgExprStatement* cond
 	  = isSgExprStatement(whiles->get_condition());
 	SgExpression* new_expr
@@ -804,11 +793,10 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 
 	if (et.get_root_var() != NULL)
 	  new_expr = Ir::createVarRefExp(et.get_root_var());
-                
 	
 	SgWhileStmt* whileStatement=Ir::createWhileStmt(Ir::createExprStatement(new_expr));
 	while_block->statements.push_front(whileStatement);
-                
+
 	BasicBlock *body = transform_block(whiles->get_body(), et.get_after(),
 					   after, et.get_after());
 
@@ -1235,6 +1223,9 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	break;
 
       case V_SgPragmaDeclaration: /* Adrian: Ignore Pragma Decls */
+   // GB (2008-03-26): Ignore function declarations and typedefs as well.
+      case V_SgFunctionDeclaration:
+      case V_SgTypedefDeclaration:
       case V_SgNullStatement: {
 	/*
 	  new_block = allocate_new_block(new_block, after);
@@ -1247,7 +1238,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	 * as this statement does nothing and is not even
 	 * modeled in the CFG. Thus we use the pre
 	 * information of the after block. */
-	stmt_start = stmt_end = new StatementAttribute(after, POS_PRE);
+        stmt_start = stmt_end = new StatementAttribute(after, POS_PRE);
       }
 	break;
 
@@ -1256,8 +1247,15 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	 * way. Print its class name and then fall through to
 	 * treat it as a "normal" (non-branching, non-special)
 	 * statement. */
-	std::cout << "TODO: not supported -> " <<
-	  (*i)->sage_class_name() << std::endl;
+	std::cout << "ICFG builder: warning: "
+        << "unsupported statement type within a function: "
+        << (*i)->sage_class_name() << std::endl;
+    std::cout << "at: "
+        << (*i)->get_startOfConstruct()->get_filenameString()
+        << ":" << (*i)->get_startOfConstruct()->get_line()
+        << ":" << (*i)->get_startOfConstruct()->get_col()
+        << ": " << Ir::fragmentToString(*i)
+        << std::endl;
 	/* fall through */
 
       case V_SgExprStatement:

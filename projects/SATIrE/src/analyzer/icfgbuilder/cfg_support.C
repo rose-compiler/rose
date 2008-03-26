@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.11 2008-03-13 15:00:24 gergo Exp $
+// $Id: cfg_support.C,v 1.12 2008-03-26 14:57:53 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -423,16 +423,53 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
 
 bool subtype_of(SgClassDefinition *a, SgClassDefinition *b)
 {
+#if 0
+  std::cout << "subtype_of(" << (void *) a;
+  if (a != NULL)
+      std::cout << " " << a->get_qualified_name().str();
+  std::cout << ", " << (void *) b;
+  if (b != NULL)
+      std::cout << " " << b->get_qualified_name().str();
+  std::cout << ")" << std::endl;
+#endif
+
   if (a == NULL || b == NULL)
       return false;
+  if (a == b)
+      return true;
+  if (a->get_declaration()->get_firstNondefiningDeclaration()
+          == b->get_declaration()->get_firstNondefiningDeclaration())
+      return true;
+
+  std::string aname = a->get_declaration()->get_qualified_name().str();
+  std::string bname = b->get_declaration()->get_qualified_name().str();
+  if (aname == bname)
+  {
+   // std::cout << "names match: " << aname << " == " << bname << std::endl;
+      return true;
+  }
+
   const SgBaseClassPtrList &base_classes = a->get_inheritances();
   SgBaseClassPtrList::const_iterator i;
   for (i = base_classes.begin(); i != base_classes.end(); ++i) {
     SgClassDefinition *base = (*i)->get_base_class()->get_definition();
+ // GB (2008-03-18): For some reason, get_definition on the base class
+ // sometimes returns NULL even if there is a definition of the class in the
+ // program. Thus we also try this alternative way of looking for the base
+ // class.
+    if (base == NULL) {
+        SgDeclarationStatement *dd = (*i)->get_base_class()->get_definingDeclaration();
+        if (isSgClassDeclaration(dd)) {
+            SgClassDefinition *cd = isSgClassDeclaration(dd)->get_definition();
+            if (cd != NULL)
+                base = cd;
+        }
+    }
     if (base == b || subtype_of(base, b)) {
       return true;
     }
   }
+
   return false;
 }
 

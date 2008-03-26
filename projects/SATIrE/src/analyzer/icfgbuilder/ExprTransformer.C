@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.9 2008-03-13 15:00:23 gergo Exp $
+// $Id: ExprTransformer.C,v 1.10 2008-03-26 14:57:53 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -124,34 +124,34 @@ void ExprTransformer::visit(SgNode *node)
           for (ei = alist.begin(); ei != alist.end(); ++ei)
             elist.push_back(*ei);
         }
-            /*
-             * create:
-             * 1. blocks for argument assignments
-             * 2. a call block
-             * 3. a return block
-             * 4. a block for return value assignment
-             */
-            BasicBlock *first_arg_block = NULL, *last_arg_block = NULL;
-            if (!elist.empty())
+        /*
+         * create:
+         * 1. blocks for argument assignments
+         * 2. a call block
+         * 3. a return block
+         * 4. a block for return value assignment
+         */
+        BasicBlock *first_arg_block = NULL, *last_arg_block = NULL;
+        if (!elist.empty())
+        {
+            int i;
+            BasicBlock *prev = NULL;
+            for (i = 0; i < elist.size(); i++)
             {
-                int i;
-                BasicBlock *prev = NULL;
-                for (i = 0; i < elist.size(); i++)
-                {
-                    BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
-                    cfg->nodes.push_back(b);
-                    if (first_arg_block == NULL)
-                        first_arg_block = b;
-                    if (prev != NULL)
-                        add_link(prev, b, NORMAL_EDGE);
-                    prev = b;
-                }
-                last_arg_block = prev;
+                BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
+                cfg->nodes.push_back(b);
+                if (first_arg_block == NULL)
+                    first_arg_block = b;
+                if (prev != NULL)
+                    add_link(prev, b, NORMAL_EDGE);
+                prev = b;
             }
-            BasicBlock *retval_block;
-            /* FIXME: if no retval_block is set, links are wrong */
-            if (true || !isSgTypeVoid(call->get_type()))
-            {
+            last_arg_block = prev;
+        }
+        BasicBlock *retval_block;
+        /* FIXME: if no retval_block is set, links are wrong */
+        if (true || !isSgTypeVoid(call->get_type()))
+        {
             retval_block = new BasicBlock(node_id++, INNER, procnum);
             cfg->nodes.push_back(retval_block);
         }
@@ -237,9 +237,13 @@ void ExprTransformer::visit(SgNode *node)
         /* fill blocks */
         if (first_arg_block != NULL)
         {
+         // GB (2008-03-26): Generate the "$this" parameter of the function
+         // only if this is a non-external member function call.
+            bool generateThisParam
+                = !external_call && find_called_memberfunc(call->get_function());
             std::vector<SgVariableSymbol *> *params =
                 evaluate_arguments(*name, elist, first_arg_block,
-                    find_called_memberfunc(call->get_function()));
+                    generateThisParam);
          // Set the parameter list for whatever kind of CFG nodes we
          // computed above.
             if (call_block != NULL)
@@ -319,6 +323,12 @@ void ExprTransformer::visit(SgNode *node)
             std::cout << std::endl;
             std::exit(EXIT_FAILURE);
         }
+      }
+   // GB (2008-03-25): Oops, we missed setting the type for implicit
+   // constructor calls (copy constructors).
+      if (name == "" && isSgNamedType(ci->get_type())) {
+          SgNamedType *t = isSgNamedType(ci->get_type());
+          name = t->get_name();
       }
     
       /* setup argument expressions */
@@ -538,11 +548,17 @@ void ExprTransformer::visit(SgNode *node)
     }
     else if (isSgDeleteExp(node)) {
       SgDeleteExp *de = isSgDeleteExp(node);
-      if (!de->get_is_array()) {
+      SgPointerType *type = isSgPointerType(de->get_variable()->get_type());
+   // GB (2008-03-17): Added a check for more than one layer of pointers.
+   // We shouldn't generate destructor calls for those.
+      if (!de->get_is_array() && type && !isSgPointerType(type->get_base_type())) {
+#if 0
         SgType *delete_type = isSgPointerType(de->get_variable()
                           ->get_type())->get_base_type();
         while (isSgTypedefType(delete_type))
           delete_type = isSgTypedefType(delete_type)->get_base_type();
+#endif
+        SgType *delete_type = type->findBaseType();
         SgClassType *ct = isSgClassType(delete_type);
         std::string class_name(ct->get_name().str());
         // std::string destructor_name = class_name + "::~" + class_name;
@@ -712,20 +728,23 @@ void ExprTransformer::visit(SgNode *node)
       after = if_block;
       
       if (isSgExpression(logical_op->get_parent())) {
-    satireReplaceChild(logical_op->get_parent(), logical_op,Ir::createVarRefExp(var));
+        satireReplaceChild(logical_op->get_parent(), logical_op,
+                           Ir::createVarRefExp(var));
       }
       else if (root_var == NULL) {
-    root_var = var;
+        root_var = var;
       }
       expnum++;
     } else if (isSgConditionalExp(node)) {
       SgConditionalExp* cond = isSgConditionalExp(node);
       RetvalAttribute* varnameattr
-    = (RetvalAttribute *) cond->getAttribute("logical variable");
-      SgVariableSymbol* var = Ir::createVariableSymbol(varnameattr->get_str(), cond->get_type());
+        = (RetvalAttribute *) cond->getAttribute("logical variable");
+      SgVariableSymbol* var = Ir::createVariableSymbol(varnameattr->get_str(),
+                                                       cond->get_type());
       BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(if_block);
-      if_block->statements.push_front(Ir::createLogicalIf(cond->get_conditional_exp()));
+      if_block->statements.push_front(Ir::createLogicalIf(
+                  cond->get_conditional_exp()));
       BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(t_block);
       t_block->statements.push_front(Ir::createExprStatement(
@@ -742,10 +761,10 @@ void ExprTransformer::visit(SgNode *node)
       after = if_block;
       
       if (isSgExpression(cond->get_parent())) {
-    satireReplaceChild(cond->get_parent(), cond, Ir::createVarRefExp(var));
+        satireReplaceChild(cond->get_parent(), cond, Ir::createVarRefExp(var));
       }
       else if (root_var == NULL) {
-    root_var = var;
+        root_var = var;
       }
       expnum++;
     }
@@ -869,9 +888,24 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
                     SgInitializedNamePtrList::iterator c = call_decl_args.begin(),
                                                        p = proc_decl_args.begin();
                     while (c != call_decl_args.end() && p != proc_decl_args.end()) {
+#if 0
                      // Comparing types by comparing pointers, this is
                      // supposedly correct for ROSE as types are shared.
                         if ((*c++)->get_type() != (*p++)->get_type()) {
+                            candidate = false;
+                            break;
+                        }
+#endif
+                     // GB (2008-03-18): It looks like, at least in ROSE
+                     // 0.9.1a, class types are NOT always shared. I had
+                     // this problem when running the ICFG builder on
+                     // grato/GBackEnd.C and grato/GCocoBackEnd.C at once. I
+                     // think this should be solved using Mihai Ghete's AST
+                     // matcher (TODO). For now, we use the good old ugly
+                     // string comparison technique.
+                        if ((*c++)->get_type()->unparseToString()
+                                != (*p++)->get_type()->unparseToString())
+                        {
                             candidate = false;
                             break;
                         }
