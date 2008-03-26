@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.4 2008-03-13 14:58:17 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.5 2008-03-26 14:57:09 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -159,7 +159,7 @@ Reason:
     Error in ROSE 0.9.0b, not in our code. Can be observed by simply calling
     the ROSE identityTranslator on the file.
 Fix:
-    TODO: Send file to Dan.
+    Sent file to Dan.
 Status:
     BROKEN as of 2008-03-12
 
@@ -253,4 +253,111 @@ Fix:
     rewritten, this can be kept in mind. We could disambiguate function
     names by listing their parameters along with the name.
 Status:
-    Present but irrelevant as of 2008-03-13
+    Present but irrelevant as of 2008-03-13 (GB)
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    Virtual method calls that cross source file boundaries are not resolved
+    correctly in the ICFG.
+Reason:
+    The ROSE AST does not share definitions of the same class when it is
+    present in several source files, for instance by inclusion from the same
+    header file. The ICFG builder's "subtype of" function uses simple
+    pointer comparisons, which fail because of the lack of sharing.
+Fix:
+    Compare class names. Soon this will be done elegantly by the AST
+    matching mechanism.
+Status:
+    Resolved 2008-03-18, GB
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    Iterator operations in loop heads such as:
+        for (std::vector<int>::iterator i = v.begin(); i != v.end(); ++i)
+    are not represented correctly in the ICFG. The call to begin() is
+    missing, and the != operator is not evaluated before the first loop
+    iteration.
+Reason:
+    Edges were set incorrectly by the ICFG builder. In the case of the call
+    to begin, this led to unreachable code which was subsequently removed.
+Fix:
+    Set edges correctly.
+Status:
+    Resolved 2008-03-26, GB
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    In the ICFG, member function call arguments are assigned to the $this
+    parameter instead of one of the "real" parameter variables.
+Reason:
+    The ICFG builder always generated a $this parameter for member function
+    calls; however, it only generates an ArgumentAssignment to $this if the
+    function call is not external. The evaluate_arguments function assigned
+    the first argument expression to the $this parameter as it was the first
+    in the list of parameters.
+Fix:
+    Tell evaluate_arguments to generate a $this parameter only for
+    non-external member function calls.
+Status:
+    Resolved 2008-03-26, GB
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    Copy constructor calls for anonymous variables (where a function
+    argument is copied, for instance) are somewhat strange in the ICFG.
+    Copying a string will generate ICFG nodes like:
+        ArgumentAssignment($string$this, &$anonymous_var_59);
+        ArgumentAssignment($string$arg_0, some_string);
+        ConstructorCall(string)
+        ... exactly one use of $anonymous_var_59 ...
+    The anonymous variable has no explicit declaration, and arguably two
+    uses. One might say that the first occurrence, which is always in an
+    ArgumentAssignment that assigns its address to a $this pointer, is a
+    sort of implicit declaration, and the second occurrence is the one use.
+    But this is not satisfactory.
+Reason:
+    This was a broken design, and we never came up with a better one.
+Fix:
+    unknown
+Status:
+    BROKEN as of 2008-03-26
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    Variables declared in a for loop's head are never undeclared in the
+    ICFG.
+Reason:
+    This case was forgotten when undeclare statements were introduced.
+    Presumably the issue also exists in while loops.
+Fix:
+    TODO: undeclare the variable; in both C++ and C99, the scope ends at the
+    end of the loop (apparently this was not the case in pre-ISO C++)
+Status:
+    BROKEN as of 2008-03-26
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    ICFG builder emits warning message "TODO: not supported -> <something>".
+    This message is not clear.
+Reason:
+    The ICFG builder encountered a statement it doesn't know how to handle;
+    this can occur when a function is declared within another function, and
+    when a try statement is encountered. The function declaration case is
+    harmless and needs no warning, but we do not support exception handling.
+Fix:
+    Better error message; we will not handle exceptions (sorry). Also, no
+    message is emitted for function declarations.
+Status:
+    Resolved 2008-03-26, GB
