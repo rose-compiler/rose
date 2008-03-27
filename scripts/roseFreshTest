@@ -1,13 +1,24 @@
 #!/bin/bash
-
 # This script does a fresh checkout of ROSE and conducts series tests
-# Please modify the following before using it:
-# 1. The path to the source and build directories of ROSE
-# 2. the configuration options
-# usage: 
-#	put this script at the same directory as where your working copy of ROSE resides
-#	then ./roseFreshTest
-# Liao, 2/7/2008
+# Please provide your customized configurations in a .sh file before using this script:
+#
+# example .sh file: rose/scripts/roseFreshTestStub-Jeremiah-asmAsEnum.sh, which sets 
+#
+# 1. Environment variables,
+# 2. The path to the source and build directories of ROSE
+# 3. The configuration options for building ROSE
+# 4. Email notification recipients, etc.  
+#
+# Usage ------------------
+# manual run it:
+#      ./roseFreshTest yourConfiguration.sh 
+#
+# automatically run it as a daily cron job running at 2:30AM
+#   $ crontab -e
+#   30 2 * * * /home/liao6/rose/scripts/roseFreshTestLeo /path/to/yourconfig.sh
+#
+# Liao, Jeremiah, 2/7/2008
+# Last modified 3/27/2008
 #------------------------------------------------------
 
 user_config_file="$1"
