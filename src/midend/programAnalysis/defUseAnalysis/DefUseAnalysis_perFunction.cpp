@@ -361,7 +361,8 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
          << "  AssignInitializer - l_expr : " << l_expr->class_name() << "  file : " << l_expr->get_file_info()->get_filenameString() << 
 	"  line : " << l_expr->get_file_info()->get_line() << endl;
       cout << " unparse : " << l_expr->unparseToCompleteString() << endl;
-      exit(0);
+      return false;
+      //      exit(0);
     }
   }  
   

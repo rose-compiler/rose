@@ -256,6 +256,7 @@ computeFunctionIndicesPerNode(
 	//#endif
     }
 
+    int start_rank=1;
 
     //    std::vector<int> functionToProcessor;
     double processorWeight[processes];
@@ -267,9 +268,9 @@ computeFunctionIndicesPerNode(
     for (unsigned int i=0; i< funcDecls.size(); i++) {
       double currentWeight = (((double)nodeCounts[i]*funcWeights[i])/(double)funcDecls.size()/100);
       double min =INFINITY;
-      int min_rank=0;
+      int min_rank=start_rank;
       // find the minimum weight processor
-      for (int rank = 0; rank < processes; rank++) {
+      for (int rank = start_rank; rank < processes; rank++) {
 	if (processorWeight[rank]<min) {
 	  min = processorWeight[rank];
 	  min_rank = rank;
@@ -600,13 +601,31 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
         nodeCount++;
 	// calculate the weight of the function
 	// this weight is mostly used for the def-use checker
-	if (isSgNode(node) ) {
+	if (isSgNode(node))
+	  weightAssignOp++;
+#if 0
+	if (
+	    isSgIfStmt(node) || isSgWhileStmt(node) || isSgSwitchStatement(node)) {
+	  SgNode* temp = node;
+	  while (temp!=NULL) {
+	    if (isSgFunctionDefinition(temp))
+	      break;
+	    temp=temp->get_parent();
+	    weightAssignOp++;
+	  }
+	    
+
+	} else if (isSgBinaryOp(node) || isSgUnaryOp(node) || isSgAssignInitializer(node) || isSgAssignOp(node)) {
 	  weightNullDeref++;
+	} else if (isSgStringVal(node)) {
+	  if (weightNullDeref > 2)
+	    weightNullDeref--;
 	}
+#endif
 	// the following weight should be used if null-deref is checked for
 	/*
 	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
-	    isSgAssignInitializer(node) || isSgFunctionCallExp(node)) { 
+	    isSgAssignInitializer(node) || isSgFunctionCallExp(node) ) { 
 	  weightNullDeref++;
 	  } else if (isSgAssignOp(node)) {
 	  weightAssignOp++;
@@ -646,7 +665,11 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
    // and synthesised attributes are a likely problem.
 
         nodeCounts.push_back(nodeCount);
+	//	double result = (double)weightAssignOp*(double)1/log((double)weightNullDeref+1);
+	//	funcWeights.push_back((int)result);
 	funcWeights.push_back(weightAssignOp*weightNullDeref);
+	//	std::cout << " pushing back func : " << funcDecl->get_name().str() << "   weightAssignOp : " << weightAssignOp << "  weightNullDeref : " << weightNullDeref <<
+	//  "  1/log(weightNullDeref) : " << (1/(log(weightNullDeref))) << "   result = " << result << std::endl;
         inFunc = false;
 #if DIS_DEBUG_OUTPUT
 	std::cout << " destroying - save nodes  " << nodeCount << std::endl;

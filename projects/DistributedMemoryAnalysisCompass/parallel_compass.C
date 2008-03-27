@@ -396,6 +396,10 @@ int main(int argc, char **argv)
       }
     }
 #else // my own algo (tps)
+  int* dynamicFunctionsPerProcessor = new int[processes];
+  for (int k=0;k<processes;k++)
+    dynamicFunctionsPerProcessor[k]=0;
+  if (processes==1) {
   std::vector<int> bounds;
   myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
   for (int i = 0; i<(int)bounds.size();i++) {
@@ -413,6 +417,68 @@ int main(int argc, char **argv)
       }
     }
   }
+  } else {
+  // apply run-time load balancing
+  std::vector<int> bounds;
+  myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
+    // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
+  int currentJob = -1;
+  MPI_Status Stat;
+  int *res = new int[2];
+  res[0]=5;
+  res[1]=5;
+  bool done = false;
+  int jobsDone = 0;
+  int scale = 1;
+  while (!done) {
+    // we are ready, make sure to notify 0
+    if (my_rank != 0) {
+      //std::cout << " process : " << my_rank << " sending. " << std::endl;
+      MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
+      MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
+      int min = res[0];
+      int max = res[1];
+      std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[" << std::endl;
+      if (res[0]==-1) 
+	break;
+      for (int i=min; i<max;i++) {
+	//if (i>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size()) {
+	  //std::cout << "............ early breakup " << std::endl;
+	  //break;
+	//}
+	// ready contains the next number to be processed
+	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	  //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
+	  // (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
+	  // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
+	  //	    << std::endl; 
+	  (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+	}
+      }
+    }
+    if (my_rank == 0) {
+      //std::cout << " process : " << my_rank << " receiving. " << std::endl;
+      MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
+      currentJob+=scale;
+      if ((currentJob % 20)==19) scale++;
+      if (currentJob>=(int)bounds.size()) {
+	res[0] = -1;
+	jobsDone++;
+      }      else {
+	res[0] = currentJob;
+	res[1] = currentJob+scale;
+	if (res[1]>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size())
+	  res[1] = (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size();
+	dynamicFunctionsPerProcessor[Stat.MPI_SOURCE] += scale;
+      }
+      //      std::cout << " processes done : " << jobsDone << "/" << (processes-1) << std::endl;
+      //std::cout << " process : " << my_rank << " sending rank : " << res[0] << std::endl;
+      MPI_Send(res, 2, MPI_INT, Stat.MPI_SOURCE, 1, MPI_COMM_WORLD);      
+      if (jobsDone==(processes-1))
+	break;
+    }
+  }
+  } // if not processes==1
 #endif // own algo
  #elif RUN_COMBINED_CHECKERS
       std::cout << "\n>>> Running combined ... " << std::endl;
@@ -469,7 +535,8 @@ int main(int argc, char **argv)
     int slowest_func=0;
     int fastest_func=0;
     for (size_t i = 0; i < (size_t) processes; i++) {
-      std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << std::endl;
+      std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
+	"  real # functions: " << dynamicFunctionsPerProcessor[i] << std::endl;
 	total_time += times[i];
 	total_memory += memory[i];
 	if (min_time > times[i]) {

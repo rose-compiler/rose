@@ -22,7 +22,7 @@ endif
 if ROSE_USE_BINARY_SQL
 # Isolated part of library that depends on the mysql database
 libbinaryDatabase_la_DEPENDENCIES =
-libbinaryDatabase_la_SOURCES = RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp RoseBin_IDAPRO_buildTree.cpp
+libbinaryDatabase_la_SOURCES = RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp 
 endif 
 
 # Isolated part of library that is independent of the mysql database
@@ -36,7 +36,8 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp  RoseBin_unparse.cpp \
      analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_Emulate.cpp \
-     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
+     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp readTicl.C RoseBin_file.cpp RoseFile.cpp \
+     RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp
 
 
 # Original combined library (as originally defined by Thomas)
@@ -68,7 +69,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h
+   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_IDAPRO_branchGraph.h \
@@ -80,7 +81,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h
+   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h
 endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available
 # colorTraversal.h  

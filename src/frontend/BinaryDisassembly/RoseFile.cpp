@@ -15,97 +15,14 @@ using namespace std;
  * Decription : Interface to user
  ****************************************************/
 
-//#ifndef __RoseBin__
-//#define __RoseBin__
-#include <mysql/mysql.h>
-
 #include <stdio.h>
 #include <iostream>
 #include "rose.h"
-#include "RoseBin.h"
-#include "RoseBin_DB_IDAPRO.h"
+#include "RoseFile.h"
+#include "RoseBin_file.h"
 #include "RoseBin_support.h"
 #include "RoseBin_unparse.h"
 
-/*
-class RoseBin : public AstSimpleProcessing {
- private:
-  MYSQL_RES *res_set;
-  // the DB connection
-  RoseBin_DB_IDAPRO* idaDB; 
-  MYSQL* conn;
-  RoseBin_unparse* unparser;
-  SgAsmNode* globalNode;
-  std::list<std::string> functionNames;
-
-
-
-  int trav_inst;
-  int trav_blocks;
-  int trav_funcs;
-  int nodes;
-
-  int num_func;
-  int num_inst;
-
-
-  void loadAST(std::string filename);
-  void saveAST(std::string filename);
-
-
- public:
-
-  RoseBin(char* host, 
-	  char* user, 
-	  char* passw, 
-	  char* dbase) {
-    //RoseBin_support::setDebugMode(true);    
-    RoseBin_support::setDebugMode(false);    
-    idaDB = new RoseBin_DB_IDAPRO(host, user, passw, dbase);
-    unparser = new RoseBin_unparse();
-    RoseBin_support::setUnparseVisitor(unparser->getVisitor());
-    res_set = 0;
-    conn = 0;
-    globalNode = 0;
-    functionNames.clear();
-    num_inst=0;
-    num_func=0;
-    RoseBin_support::setAssemblyLanguage(RoseBin_Def::none);
-  }
-  
-  ~RoseBin() {
-    delete idaDB;
-    delete unparser;
-
-    idaDB = NULL;
-    unparser = NULL;
-
-    if (globalNode)
-      delete globalNode;
-  }
-
-
-  // allow filtering of functions
-  void setFunctionFilter(std::list<std::string> functionName);
-
-  void visit(SgNode* node);
-
-  // connect to the DB
-  void connect_DB(const char* socket);
-
-  // query the DB to retrieve all data
-  SgAsmNode* retrieve_DB_IDAPRO();
-
-  // close the DB
-  void close_DB();
-
-  // unparse the AST to assembly
-  void unparse(char* fileName);
-
-  void test();
-};
-*/
-//#endif
 
 
 
@@ -126,7 +43,7 @@ public:
 /* ******************************************************
  * load the AST from file
  * ******************************************************/
-void RoseBin::loadAST(std::string filename){
+void RoseFile::loadAST(std::string filename){
   /*
   std::cout << "ROSE: AST LOAD." << std::endl;
   double memusage = ROSE_MemoryUsage::getMemoryUsageMegabytes();
@@ -147,7 +64,7 @@ void RoseBin::loadAST(std::string filename){
 /* ******************************************************
  * save AST to file
  * ******************************************************/
-void RoseBin::saveAST(std::string filename) {
+void RoseFile::saveAST(std::string filename) {
   /*
   std::cout << "ROSE: AST SAVE .. project file: " << filename << std::endl;
   double memusage = ROSE_MemoryUsage::getMemoryUsageMegabytes();
@@ -165,18 +82,12 @@ void RoseBin::saveAST(std::string filename) {
 }
 
 
-/****************************************************
- * connect to the DB
- ****************************************************/
-void RoseBin::connect_DB(const char* socket) {
-  conn = idaDB->connect_DB(socket);
-}
 
 /****************************************************
  * allow functions from DB to be filtered to a certain set
  * e.g. to the set of source AST functions
  ****************************************************/
-void RoseBin::setFunctionFilter(list<string> functionName) {
+void RoseFile::setFunctionFilter(list<string> functionName) {
   functionNames = functionName;
 }
 
@@ -191,7 +102,7 @@ inline double getTime() {
  * retrieve and store all data in local data structures
  * and build the binary AST
  ****************************************************/
-SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
+SgAsmNode* RoseFile::retrieve_DB() {
   // -----------------------------------------------------------------------
   double start = getTime();
   double ends = getTime();
@@ -206,18 +117,18 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage =  ROSE_MemoryUsage().getMemoryUsageMegabytes();
     cerr << ">> processing comments.   " ;
-  idaDB->process_comments_query(conn,res_set);
+  idaDB->process_comments_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   //    cerr << ">> processing callgraph." << endl;
-  //idaDB->process_callgraph_query(conn,res_set);
+  //idaDB->process_callgraph_query( );
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
     cerr << ">> processing functions.  " ;
-  idaDB->process_functions_query(conn,res_set,globalBlock, functionNames);
+  idaDB->process_functions_query( globalBlock, functionNames);
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -228,12 +139,12 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   // the order is important. First build blocks
   // then the branchgraph, since the branchgraph needs info
   // from blocks
-  //  idaDB->process_basicblock_query(conn,res_set, globalBlock);
-  //idaDB->process_branchgraph_query(conn,res_set);
+  //  idaDB->process_basicblock_query( globalBlock);
+  //idaDB->process_branchgraph_query( );
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
     cerr << ">> processing instructions.  " ;
-  idaDB->process_instruction_query(conn,res_set);
+  idaDB->process_instruction_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -245,7 +156,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   cerr << ">> processing op_strings.  " ;
-  idaDB->process_operand_strings_query(conn,res_set);
+  idaDB->process_operand_strings_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -254,7 +165,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
     cerr << ">> processing expr_tree.  ";
-  idaDB->process_expression_tree_query(conn,res_set);
+  idaDB->process_expression_tree_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -263,7 +174,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   cerr << ">> processing op_expr.  " ;
-  idaDB->process_operand_expressions_query(conn,res_set);
+  idaDB->process_operand_expressions_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -272,7 +183,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   cerr << ">> processing substitution.  ";
-  idaDB->process_substitutions_query(conn,res_set);
+  idaDB->process_substitutions_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -282,7 +193,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   cerr << ">> processing op_root.  ";
-  idaDB->process_operand_root_query(conn,res_set);
+  idaDB->process_operand_root_query( );
   // resolve the expressions
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
@@ -293,7 +204,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   cerr << ">> processing op_tuples.  ";
-  idaDB->process_operand_tuples_query(conn,res_set);
+  idaDB->process_operand_tuples_query( );
   ends = getTime();
   cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -316,7 +227,7 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   return globalBlock;
 }
 
-void RoseBin::test() {
+void RoseFile::test() {
  // run the consistency test -----------------------------------------------------
   trav_funcs=0;
   trav_inst=0;
@@ -346,7 +257,7 @@ void RoseBin::test() {
 /****************************************************
  * traverse the binary AST to test if all nodes are there
  ****************************************************/
-void RoseBin::visit(SgNode* node) {
+void RoseFile::visit(SgNode* node) {
   SgAsmFunctionDeclaration* funcDecl= isSgAsmFunctionDeclaration(node);
   SgAsmInstruction* instr= isSgAsmInstruction(node);
   //SgAsmBlock* block= isSgAsmBlock(node);
@@ -405,20 +316,12 @@ void RoseBin::visit(SgNode* node) {
 }
 
 
-/****************************************************
- * close the DB
- ****************************************************/
-void RoseBin::close_DB() {
-  //mysql_free_result(res_set);
-  ROSE_ASSERT(conn);
-  mysql_close(conn);
-}
 
 
 /****************************************************
  * unparse AST to assembly
  ****************************************************/
-void RoseBin::unparse(char* fileName) { 
+void RoseFile::unparse(char* fileName) { 
 
   //Language language = RoseBin_support::getAssemblyLanguage();
   if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::none) {
