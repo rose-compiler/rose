@@ -120,7 +120,7 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-XTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_TESTCODES)
 
 clean-local:
 	rm -f *.o rose_*.[cC] runme test.log *.out
