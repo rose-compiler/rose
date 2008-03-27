@@ -223,7 +223,7 @@ $(TEST_Objects): ../../compassMain ../../compass_parameters
 #	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 	echo "Copy the file to the local build tree so that the we can process it with compass (not required by compass) ..."
 	cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.c)
-	env COMPASS_PARAMETERS=../../compass_parameters $(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(@:.o=.c)
+	env COMPASS_PARAMETERS=compass_parameters $(VALGRIND) ../../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -rose:includeFile $(@:.o=)  -c $(@:.o=.c)
 
 ../../compass_parameters:
 	cd ../..; $(MAKE) compass_parameters
