@@ -253,7 +253,9 @@ string RoseBin_unparse_visitor::resolveRegister(SgAsmRegisterReferenceExpression
   case SgAsmRegisterReferenceExpression::XMM+15: {
     return "XMM(15)";
   }
-
+  case SgAsmRegisterReferenceExpression::undefined_general_register: {
+    return "undefined";
+  }
   default:
     std::cerr << " Undefined Register - code : " << code  << std::endl;
     abort();
