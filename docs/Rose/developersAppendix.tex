@@ -400,7 +400,7 @@ To build a distribution without EDG source code:
 
     There comes a time when even the best ideas don't last
 into a new version of the source code.  This section covers how to
-depricated specific functionality so that it can be removed in
+deprecated specific functionality so that it can be removed in
 later releases (typically after a couple of releases, or before
 our first external release).  When using GNU compilers these mechanisms
 will trigger the use of GNU attribute mechanism to permit use of such
@@ -424,7 +424,7 @@ for each case:
         Use the macro {\tt ROSE\_DEPRECATED\_VARIABLE} to specify that a data members 
     or variables is to be deprecated.  This is difficult to do because data members of 
     the IR are all automatically generated and thus can't be edited in this way.  Where 
-    a data member of the IR is to be depricated, it should be specificed explicitly in
+    a data member of the IR is to be deprecated, it should be specified explicitly in
     the documentation for that specific class (in the {\tt ROSE/docs/testDoxygen} directory,
     which is the staging area for all IR documentation, definitely {\em not} in the 
     {\tt ROSE/src/frontend/SageIII/docs} directory, which is frequently overwritten).  See
@@ -451,7 +451,7 @@ we have to maintain your code after you leave, so there are a few rules:
          directory (or subdirectories of {\tt ROSE/tests/roseTests}).
    \item Use assertions liberally, use boolean values arguments to 
          {\tt ROSE\_ASSERT(<expression>)}. Use of {\tt ROSE\_ASSERT(true/false)} for
-         error branches is prefered.
+         error branches is preferred.
    \item Put your code into source files (*.C) and as little as possible into header files.
    \item If you use templates, put the code into a *.C file and include that *.C file
          at the bottom of your header file.
@@ -516,7 +516,7 @@ can leave out list if you are sending to casc-rose-request@lists.llnl.gov.
        configured so that you can only subscribe yourself; ie. you can't specify an 
        address other than your own.
 
-   \item unsubscribe list address \\
+   \item Unsubscribe list address \\
     Unsubscribe yourself (or address if specified) from the named list. "unsubscribe *" 
     will remove you (or address) from all lists; This may not work if you have subscribed 
     using multiple addresses. The list may be configured so that you can only unsubscribe 
@@ -524,15 +524,15 @@ can leave out list if you are sending to casc-rose-request@lists.llnl.gov.
 
    \item which address \\
     Find out which lists you (or address if specified) are on. Only lists enabled to
-    supply this information will be returned to the requestor.
+    supply this information will be returned to the requester.
 
    \item who list \\
     Find out who is on the named list. Only lists enabled to supply this information 
-    will be returned to the requestor.
+    will be returned to the requester.
 
    \item info list \\
     Retrieve the general introductory information for the named list. Only lists enabled
-    to supply this information will be returned to the requestor.
+    to supply this information will be returned to the requester.
 
    \item intro list \\
     Retrieve the introductory message sent to new users. Non-subscribers may not be able

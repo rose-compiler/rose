@@ -15,7 +15,7 @@ unique name generation mechanism.  This tool is intended as an example of how to
 generate unique names using ROSE. Not all IR nodes can be used to generate a unique
 name. The generated names are unique under the following rules:
 \begin{enumerate}
-   \item Any two generated names are the same iff the declarations are the same. \\
+   \item Any two generated names are the same if the declarations are the same. \\
    Declaration can be the same across files or within the same file.  Declarations that
    are the same can have different location in the same file (be represented multiple
    times) or be in different files. Language constructs that are the same must follow 
@@ -73,7 +73,7 @@ This unique name generation mechanism is only applicable to specific IR nodes, s
    \end{itemize}
 \end{itemize}
 Other language constructs can generate unique names as well, but their
-name could be invalid after certains transformation that move it 
+name could be invalid after certain transformation that move it 
 structurally within the generated source code.
 
 

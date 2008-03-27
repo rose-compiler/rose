@@ -236,6 +236,7 @@ logo: copyPublications rose.html
 #	cp $(srcdir)/compass_rose.gif ROSE_WebPages/ROSE_HTML_Reference
 	cp -f $(srcdir)/compass_rose.gif ROSE_WebPages
 	cp -f rose.html ROSE_WebPages
+	cp -f rose.html ROSE_WebPages/index.html
 
 # Copy the ROSE research publication in the distribution into the web pages so that
 # the web pages can reference them with relative paths and the documentation can be
@@ -455,7 +456,7 @@ clean-local:
           AstProcessing AstRewrite *.sty *.ps *.pdf *.gz manual* a.out \
           rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
           roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
-          $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz rose.html AvailableDocumentation.docs \
+          $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz rose.html index.html AvailableDocumentation.docs \
           compass_rose.gif
 #	This is a significant problem when the ROSE_WebPages don't exist
 #	Change the permissions on the ROSE_WebPages, and files in it, so that we can remove it during "make distcheck"

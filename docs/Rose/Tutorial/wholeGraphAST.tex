@@ -7,10 +7,10 @@ This example shows a maximally complete representation of the AST
 
 Where chapter~\ref{Tutorial:chapterASTGraphGenerator}
 presented a ROSE-based translator which presented the AST as a tree, this chapter
-presents the more general represention of the graph in which the AST is embedded.
-The AST may be thought of as a subest of a more general graph or equivalently as
+presents the more general representation of the graph in which the AST is embedded.
+The AST may be thought of as a subset of a more general graph or equivalently as
 an AST (a tree in a formal sense) with annotations (extra edges and information),
-sometimes refered to as a `{\em decorated} AST.
+sometimes referred to as a `{\em decorated} AST.
 
 We present tools for seeing all the IR nodes in the graph containing the AST, including all types 
 (SgType nodes), symbols (SgSymbol nodes), compiler generated IR nodes, and 
@@ -18,7 +18,7 @@ supporting IR nodes. In general
 it is a specific filtering of this larger graph which is more useful to communicating
 how the AST is designed and internally connected.  We use these graphs for internal 
 debugging (typically on small problems where the graphs are reasonable in size).
-The graphs presented using these graph mechanism present all backedges, and
+The graphs presented using these graph mechanism present all back-edges, and
 demonstrate what IR nodes are shared internally (typically SgType IR nodes).
 
 First a few names, we will call the AST those nodes in the IR that are 
@@ -84,7 +84,7 @@ IR nodes to form the AST.
 
 The program in figure~\ref{Tutorial:exampleWholeGraphAST} calls 
 an internal ROSE function that traverses the AST and generates 
-an ASCI file in {\tt dot} format.
+an ASCII file in {\tt dot} format.
 Figure~\ref{Tutorial:exampleInputCode_WholeGraphAST} shows an input
 code which is processed to generate a graph of the AST, generating a 
 {\tt dot} file.   The {\tt dot} file is then processed
