@@ -46,7 +46,7 @@ Visionary part not to be included in documentation yet!
 
     Things to do:
         1) Add unparse whole AST to SgFile.
-        2) Unparse whole AST and genrate new header files with include statements in the
+        2) Unparse whole AST and generate new header files with include statements in the
            source file.
 
 }
@@ -141,8 +141,8 @@ and {\tt remove()}.
 
 \subsection{SAGE III Rewrite Interface}
    This lowest possible level of interface is implemented as member functions on the
-SgNode objects. It is used interanlly to implement the higher level interfaces (including
-the Low Level Rewrite Interface.  Uniformally,
+SgNode objects. It is used internally to implement the higher level interfaces (including
+the Low Level Rewrite Interface.  Uniformly,
 operations of {\tt insert()}, {\tt replace()}, and {\tt remove()} apply only to SAGE III 
 objects representing containers (SAGE III objects that have containers internally, 
 such as SgGlobal, SgBasicBlock, etc.).  Strings cannot be specified at this level of
@@ -243,7 +243,7 @@ Operations using this interface have the following properties:
    \item Requires traversal for operation on the AST.
    \item Operations are delayed and occur durring the required traversal, all operations
     are completed by the end of the traversal.
-   \item Operations occure on AST nodes along a path defined by the chain from the current
+   \item Operations occur on AST nodes along a path defined by the chain from the current
     input node to the operator to the root node of the AST (SgProject).
 \end{itemize}
 
@@ -289,7 +289,7 @@ from SAGE II.
     Providing operators to {\tt insert()}, {\tt replace()}, {\tt remove()}
 solves only part of the problem of simplifying transformations.  The other part 
 of the problem is generating the input to the transformation operators.  Both 
-{\tt insert()} and {\tt replace()} require input, either as an AST fragement or
+{\tt insert()} and {\tt replace()} require input, either as an AST fragment or
 as a string containing source code.  This section presents the pros and cons of the
 specification of transformations as strings.
 
@@ -313,7 +313,7 @@ the AST.  This alternative to the use of strings is more complex and is only
 briefly referenced in this section.
 
    The constructors for each of the SAGE III objects form the user interface required to
-build up the ASTfragments.  The documentation for these appear in the reference chapter
+build up the AST fragments.  The documentation for these appear in the reference chapter
 of this manual.
 
 A few notes:
@@ -325,7 +325,7 @@ that they should be output within code generation (unparsing).
 \end{enumerate}
 
 
-\section{AST Rewrite Traversal of the High-Level Inteface}
+\section{AST Rewrite Traversal of the High-Level Interface}
 
     The AST Rewrite Mechanism uses a traversal of the AST, similar to the
 design of a traversal using the AST Processing 
@@ -554,7 +554,7 @@ of the AST) using either:
      \item Local Scope (default)
      \item Parent Scope \\
            The specification of an optional parameter permits backing up the tree though
-           multiple nestings (parent of parent scope, applied recursively upto the 
+           multiple nestings (parent of parent scope, applied recursively up to the 
            Global Scope).
      \item Global Scope
 \end{enumerate}

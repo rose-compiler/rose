@@ -42,7 +42,7 @@ piece but not at all enough by itself for our work on optimization of high-level
 abstractions.  I expect that ROSE will be useful to anyone who would otherwise use 
 EDG directly, but certainly it is not required, many people use EDG by itself.
 We, like the rest of the world, of course has the deepest respect for EDG.
-For our purposes we need something like EDG'd front-end to support our own research work
+For our purposes we need something like EDG's front-end to support our own research work
 on program optimization. I don't know of any alternatives to using EDG given that 
 we have to process complex laboratory C++ applications.
 
@@ -124,10 +124,10 @@ the form of a tar'd compressed directory with an embedded version number
 to distinguish source code versions (all source code to ROSE including the source code 
 to the EDG front-end used in parts of ROSE) from binary versions (all source code to ROSE
 but a binary of any EDG specific parts or parts of ROSE which use the EDG header files).
-This currently constitutes three small libraires in ROSE.  The source to to as much of
+This currently constitutes three small libraries in ROSE.  The source to to as much of
 ROSE as possible is freely distributed under BSD license.
 
-   A binary distribution of ROSE refers to the a distribution or ROSE that uses a binary
+   A binary distribution of ROSE refers to the distribution of ROSE that uses a binary
 version of the EDG work used by ROSE.  We protect the source code of EDG by saving only 
 the binary libraries that we build from the EDG work (the EDG source code and any parts 
 of ROSE that use the EDG header files).  
@@ -136,10 +136,10 @@ The configure option {\tt --with-edg_source_code=true} builds a version of ROSE 
 that the EDG source code is present. It is required to use this option to compile ROSE 
 when it is checked out from CVS (since we store the sorce code for all fo ROSE including
 EDG in the CVS repository.  Without this option (the default case; no specifying 
-{\tt --with-edg_source_code=true} or directly specifing {\tt --with-edg_source_code=false}) the 
+{\tt --with-edg_source_code=true} or directly specifying {\tt --with-edg_source_code=false}) the 
 configure script will look for existing binary libraries (in either the build tree or the
 source tree), if it finds the required library (only searches for libedg33.la) then
-is will continue to build the Makefile files so that the {\tt make dist} rule will packadge up
+is will continue to build the Makefile files so that the {\tt make dist} rule will package up
 a distribution and execute the makefile's {\it dist-hook} rules to copy the binary from the 
 compile tree to the distribution.  At this point the distribution is a binary distribution
 (and contains non of the protected source code for EDG).
@@ -163,7 +163,7 @@ Summary of build steps (to build a binary distribution):
    \item  {\tt make dist} \\
           Builds a source code distribution of ROSE (distributable to those with EDG source license)
    \item {\tt configure} \\
-          Builds a version of ROSE that will use the prebuilt EDG libraries.
+          Builds a version of ROSE that will use the pre-built EDG libraries.
    \item {\tt make dist} \\
           Builds a distribution with copies of the required EDG based libraries
           (this is the binary form of ROSE and can be distributed to anyone).

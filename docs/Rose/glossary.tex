@@ -22,13 +22,13 @@
    \item {\bf Attribute} User defined information (objects) associated with IR nodes.
     Forms of attributes include: accumulator, inherited, persistent, and synthesized.
     Both inherited and synthesized attributes are managed automatically on the stack within a
-    traversal.  Accumulator attributes are typically something sematically equivalent to a
+    traversal.  Accumulator attributes are typically something semantically equivalent to a
     global variable (often a static data member of a class).  Persistent attributes 
     are explicitly added to the AST and are managed directly by the user.  As a result,
     they can persist across multiple traversals of the AST.  Persistent attributes are
     also saved in the binary file I/O, but only if the user provides the attribute
     specific {\tt pack()} and {\tt unpack()} virtual member functions.  See the ROSE
-    User Manual for more inforamtion, and the ROSE Tutorial for examples.
+    User Manual for more information, and the ROSE Tutorial for examples.
 
    \item {\bf CFG} As used in ROSE, this is the Control Flow Graph, not Context Free
     Grammar or anything else.

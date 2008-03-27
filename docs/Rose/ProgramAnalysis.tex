@@ -66,7 +66,7 @@ are discussed in subsequent subsections.
 
 See chapter on {\em Getting Started} \ref{gettingStarted:Database}
 for details of SQLite installation and configuration.  Previous work
-supported mySQL, but this was overly complex.
+supported MySQL, but this was overly complex.
 
 \commentout{
 % Older instructions written by Nils to describe installation and use of SQL Data Base
@@ -79,7 +79,7 @@ running at your workplace, you can skip the installation instructions. Only make
 sure the connection parameters like hostname and login are correct.
 For the persistent storage of global information over multiple preprocessor runs
 , the MySQL database, and
-it's C++ interface \emph{MySQL++} should be installed before installig
+it's C++ interface \emph{MySQL++} should be installed before installing
 ROSE. Simply download the current production release of MySQL and
 the latest version of the MySQL++ API from the download section
 of http://www.mysql.org , then configure and install first MySQL then
@@ -87,7 +87,7 @@ MySQL++. Under Unix, both can easlily installed locally into a home directory
 without requiring root access. Once everything is in place, make sure the MySQL 
 daemon is running, by e.g. executing ''{\tt ~/local/share/mysql/mysql.server start}''
 if MySQL was installed into {\tt ~/local}.
-\fixme{this isnt really a tutorial...?}
+\fixme{this isn't really a tutorial...?}
 \fixme{How to configure ROSE parameters for database?}
 } % commented out
 
@@ -95,7 +95,7 @@ if MySQL was installed into {\tt ~/local}.
 Commands required to install MySQL and set it up for use:
 \begin{verbatim}
 
-% MySQL DataBase must be used with 3.2.2 (not 3.3.2 until the correct patches are available).
+% MySQL database must be used with 3.2.2 (not 3.3.2 until the correct patches are available).
 
 % Type:
 % patch -p 1 < ../mysql++-gcc-3.0.patch.gz

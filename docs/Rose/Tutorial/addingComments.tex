@@ -8,7 +8,7 @@ or for more complex transformations using other tools
 designed to read the generated comments.
 
    This chapter deals with comments and preprocessor directives.
-These are often droppped from compiler infrstructures and ignored
+These are often dropped from compiler infrastructures and ignored
 by make tools.  ROSE takes great care to preserve all comments and
 preprocessor directives.  Where they exist in the input code we 
 save them (note that EDG drops them from their AST) and weave them
@@ -23,7 +23,7 @@ C and C++ grammar, thus represented explicitly in the AST (see SgPragmaDeclarati
 saved as special preprocessor attributes to IR nodes within the AST.
 Not all IR nodes can have these specific type of attributes, only 
 SgLocatedNodes can be associated with such preprocessor attributes.
-The more general {\it persistant attribute mechanism} within ROSE is separate from this
+The more general {\it persistent attribute mechanism} within ROSE is separate from this
 preprocessor attribute mechanism and is available on a wider selection of IR nodes.
 
 \subsection{Source Code Showing How to Access Comments and Preprocessor Directives}
@@ -158,7 +158,7 @@ source file and all headers (with -rose:collectAllCommentsAndDirectives).
 \section{Collecting \#define C Preprocessor Directives}
 
    This example shows how to collect the \#define directives as
-a list for lateer processing.
+a list for later processing.
 
 \subsection{Source Code Showing How to Collect \#define Directives}
 
@@ -281,7 +281,7 @@ between the generated source and the original source.  The patch could
 be easily inspected and applied to the original source code to place
 the documentation templates into the original source.  The skeleton
 of the documentation in the source code could been be filled in by
-the use.  the template would have all relevant information obtained by analysis
+the use.  The template would have all relevant information obtained by analysis
 (function parameters, system functions used, security information, side-effects,
 anything that could come from an analysis of the source code using ROSE).
 

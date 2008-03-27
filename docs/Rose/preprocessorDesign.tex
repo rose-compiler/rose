@@ -254,14 +254,14 @@ specific to ROSE as well as some limited command line processing specific to EDG
    The user can use the same mechanism that we use internally in ROSE to handle command
 line processing.  Specifically we use the SLA command line processing, built by Brian 
 Gunney (now at LLNL).  Specific documentation for SLA is available, likely from Brian 
-directly or from the ROSE team, but it is simple enough that we hope a few comments and
-and example will be sufficient.
+directly or from the ROSE team, but it is simple enough that we hope that a few comments and
+an example will be sufficient.
 
    The example below shows the command line processing associated with a simple
 help option.  Either {\tt --h} or {\tt --help} are sufficient as command line options.
 The first two options are {\tt argc} and {\tt argv}; standard inputs to 
 {\tt main(int argc, char* argv[])}.  The third option is the prefix string to the option.
-The fourth parameter is the something; I don't remenber :-).
+The fourth parameter is the something; I don't remember :-).
 The fifth parameter is the suffix string to the option parameter.
 The final option is either 1 or 0: 1 removes the option from the command line and 0 leaves
 the option in place within the command line.
