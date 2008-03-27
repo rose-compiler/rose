@@ -141,13 +141,13 @@ sufficient steps are:
 
   3) THIS IS NOW OPTIONAL: ROSE previously had the requirement that you have "." in your 
      path. On csh run "setenv ${PATH}:." to add "." to your path.  We think that we have 
-     fixed this, but since we often configure our enviroment to have "." in our path we 
+     fixed this, but since we often configure our environment to have "." in our path we 
      don't always notice where it is required.  At least one user has reported this 
      problem.
 
   4) After being checked out (or updated) from CVS:
      Run the "build" script in the top level ROSE directory to build all configure scripts
-     and Makefile.in files (using automake).  This is the difference between the deveopment
+     and Makefile.in files (using automake).  This is the difference between the development
      environment and the distribution.
 
   5) Build a compile directory (for the compile tree):
@@ -228,7 +228,7 @@ BUILDING ROSE TO USE BINARIES OF EDG AND RELATED SOURCE
 
 For the ROSE developer:
    From the development version EDG can be compiled to generate distributions that
-include binaries for the EDg and related source code.  To do this:
+include binaries for the EDG and related source code.  To do this:
    1) Compile ROSE using make, from the top level directory.
    2) rerun configure changing only the option "--with-edg_source_code=false"
    3) Run "make dist"
@@ -244,8 +244,8 @@ no option is required (the default is to use the binary version of the EDG libra
 BUILDING ROSE ON OTHER ARCHITECTURES
 ****************************************************************************************
 
-   ROSE shuold now work on OSX and Cygwin as a result of a move to use libtool.
-The configure script will detect the details.  This si however not well tests and
+   ROSE should now work on OSX and Cygwin as a result of a move to use libtool.
+The configure script will detect the details.  This is however not well tests and
 a new option as a result of work late 2006 (released first in version 0.8.10a).
 
 ****************************************************************************************
@@ -293,7 +293,7 @@ the 32-bit version. Details are at:
 Basically the solutions are:
     1) Upgrade to libtool (2.0 or greater, but only 1.9f is in a development release as of
        May 2007).
-    2) Use LDFLAGS="-L/usr/gcc/lib64" in the environmwnt before running configure.
+    2) Use LDFLAGS="-L/usr/gcc/lib64" in the environment before running configure.
 
 
 
