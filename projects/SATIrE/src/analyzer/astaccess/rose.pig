@@ -49,13 +49,13 @@ get:body(NODE, _, "ExternalCall", _, "params", _, _)
 get:body(NODE, _, "ConstructorCall" | "DestructorCall", _, "name", _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
-    return strdup(stmt->get_##FIELD());
+    return strdup(stmt->get_##FIELD().c_str());
 %}
 
 get:body(NODE, _, "FunctionEntry" | "FunctionExit" | "FunctionCall" | "FunctionReturn", _, "funcname", _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
-    return strdup(stmt->get_##FIELD());
+    return strdup(stmt->get_##FIELD().c_str());
 %}
 
 get:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, FIELD, _, _)
