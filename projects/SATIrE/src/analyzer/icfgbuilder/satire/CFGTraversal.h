@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.2 2008-03-10 14:27:26 gergo Exp $
+// $Id: CFGTraversal.h,v 1.3 2008-03-28 10:36:28 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -23,6 +23,8 @@ public:
 
 protected:
     void visit(SgNode *);
+    void atTraversalStart();
+    void atTraversalEnd();
 
 private:
     CFGTraversal();
@@ -48,6 +50,7 @@ private:
     int lognum;
     int expnum;
     SgStatement *current_statement;
+    TimingPerformance *traversalTimer;
 };
 
 #endif

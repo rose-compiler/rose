@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.10 2008-03-26 14:57:53 gergo Exp $
+// $Id: ExprTransformer.C,v 1.11 2008-03-28 10:36:25 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -274,11 +274,11 @@ void ExprTransformer::visit(SgNode *node)
       SgClassDefinition* class_type = (ci->get_class_decl()
                        ? ci->get_class_decl()->get_definition() : NULL);
       std::vector<CallBlock *> blocks(0);
-      SgName name = "";
-      SgName mangled_name = "";
+      std::string name = "";
+      std::string mangled_name = "";
       if (ci->get_declaration() != NULL) {
-        name = ci->get_declaration()->get_name();
-        mangled_name = ci->get_declaration()->get_mangled_name();
+        name = ci->get_declaration()->get_name().str();
+        mangled_name = ci->get_declaration()->get_mangled_name().str();
         /* find constructor implementations */
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
@@ -291,18 +291,37 @@ void ExprTransformer::visit(SgNode *node)
      // of args.
      // All of this should be handled by some much smarter logic based an
      // defining declarations or something.
-        if (ci->get_declaration()->get_args().empty()) {
+        if (ci->get_declaration()->get_args().empty() && ci->get_args()->get_expressions().size() == 1) {
+         // GB (2008-03-27): This is a fun case: The constructor
+         // initializer's declaration has no arguments, but the call has one
+         // argument. This appears to be the case for default copy
+         // constructors. Since the copy constructor is default, we don't
+         // have a definition, so we want the call to be external. Thus we
+         // simply do: Nothing! The blocks list will remain empty, and an
+         // external constructor call will be generated below.
+
+#if 0
+            std::cout << " ***" << std::endl;
+            std::cout << " *** arg numbers do not match! ***" << std::endl;
+            std::cout << " *** constructor: " << name << "/" << mangled_name << std::endl;
+            std::cout << " *** params: " << ci->get_declaration()->get_parameterList()->get_args().size() << std::endl;
+            std::cout << " *** arg: " << Ir::fragmentToString(ci->get_args()->get_expressions().front()) << std::endl;
+            std::cout << " ***" << std::endl;
+#endif
+        } else if (ci->get_declaration()->get_args().empty()) {
+         // default constructor
             for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
-              if (strcmp(Ir::getConstCharPtr(name), (*i)->name) == 0
-                  && (*i)->decl->get_args().empty()) {
+              std::string i_name = (*i)->name;
+              if (name == i_name && (*i)->decl->get_args().empty()) {
                 blocks.push_back((*cfg->procedures)[num]->entry);
               }
               num++;
             }
         } else {
+         // non-default constructor
             for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
-              if (strcmp(Ir::getConstCharPtr(mangled_name),
-                         (*i)->mangled_name) == 0) {
+              std::string i_mangled_name = (*i)->mangled_name;
+              if (mangled_name == i_mangled_name) {
                 blocks.push_back((*cfg->procedures)[num]->entry);
               }
               num++;
@@ -310,6 +329,15 @@ void ExprTransformer::visit(SgNode *node)
         }
      // GB (2008-03-13): Overloading must be uniquely resolvable.
         if (blocks.size() > 1) {
+         // GB (2008-03-27): We cannot make this an error (yet?). Some STL
+         // headers define constructors and maybe even functions; if such
+         // headers are included several times, we get this error, although
+         // the implementations are the same. This is yet another instance
+         // of the problem that identical sub-ASTs are not shared. So we
+         // let this go for now. Maybe in the future the ProcTraversal could
+         // be made to only traverse unique function definitions from the
+         // AST matcher's hash table...
+#if 0
             std::cout << __FILE__ << ":" << __LINE__
                 << ": error during ICFG construction: ";
             std::cout << "found more than one "
@@ -322,13 +350,14 @@ void ExprTransformer::visit(SgNode *node)
             }
             std::cout << std::endl;
             std::exit(EXIT_FAILURE);
+#endif
         }
       }
    // GB (2008-03-25): Oops, we missed setting the type for implicit
    // constructor calls (copy constructors).
       if (name == "" && isSgNamedType(ci->get_type())) {
           SgNamedType *t = isSgNamedType(ci->get_type());
-          name = t->get_name();
+          name = t->get_name().str();
       }
     
       /* setup argument expressions */
@@ -387,9 +416,9 @@ void ExprTransformer::visit(SgNode *node)
               << dumpTreeFragmentToString(ci->get_parent()) << std::endl;
           std::cout
               << "candicate function: "
-              << (void *) (p) << std::endl
-           // << " "<< Ir::fragmentToString(p->decl) << std::endl
-              ;
+              << (void *) p
+              << " " << p->name << " (" << p->mangled_name << ")"
+              << std::endl;
           std::cout << "params: [";
           SgInitializedNamePtrList::iterator pi;
           for (pi = params.begin(); pi != params.end(); ++pi) {
@@ -459,9 +488,9 @@ void ExprTransformer::visit(SgNode *node)
       CallBlock *call_block = NULL, *return_block = NULL;
       if (!blocks.empty()) {
         call_block = new CallBlock(node_id++, CALL, procnum,
-                   blocks.front()->paramlist, name.str());
+                   blocks.front()->paramlist, strdup(name.c_str()));
         return_block = new CallBlock(node_id++, RETURN,
-                     procnum, blocks.front()->paramlist, name.str());
+                     procnum, blocks.front()->paramlist, strdup(name.c_str()));
         cfg->nodes.push_back(call_block);
         cfg->calls.push_back(call_block);
         cfg->nodes.push_back(return_block);
@@ -496,7 +525,9 @@ void ExprTransformer::visit(SgNode *node)
         BasicBlock *call_block
           = new BasicBlock(node_id++, INNER, procnum);
         cfg->nodes.push_back(call_block);
-        call_block->statements.push_front(Ir::createConstructorCall(name.str(), ci->get_type()));
+     // strdup needed because name will go out of scope and take its c_str
+     // with it
+        call_block->statements.push_front(Ir::createConstructorCall(strdup(name.c_str()), ci->get_type()));
 
         /* set links */
         if (last_arg_block != NULL)

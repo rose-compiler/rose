@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.7 2008-03-26 14:57:53 gergo Exp $
+// $Id: ProcTraversal.C,v 1.8 2008-03-28 10:36:25 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -14,7 +14,8 @@ ProcTraversal::ProcTraversal()
     node_id(0), 
     procnum(0), 
     original_ast_nodes(0), 
-    original_ast_statements(0) {
+    original_ast_statements(0),
+    timer(NULL) {
   setPrintCollectedFunctionNames(false);
 }
 
@@ -31,6 +32,18 @@ ProcTraversal::setPrintCollectedFunctionNames(bool pcf) {
 bool 
 ProcTraversal::getPrintCollectedFunctionNames() {
   return _printCollectedFunctionNames;
+}
+
+void
+ProcTraversal::atTraversalStart() {
+    timer = new TimingPerformance("Collection of procedures:");
+}
+
+void
+ProcTraversal::atTraversalEnd() {
+    if (timer != NULL)
+        delete timer;
+    timer = NULL;
 }
 
 void 

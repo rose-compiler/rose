@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.20 2008-03-26 14:57:53 gergo Exp $
+// $Id: CFGTraversal.C,v 1.21 2008-03-28 10:36:25 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -16,8 +16,9 @@
 
 CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
     : node_id(0), procnum(0), cfg(new CFG()), real_cfg(NULL), proc(NULL),
-      call_num(0), lognum(0), expnum(0) 
+      call_num(0), lognum(0), expnum(0), traversalTimer(NULL)
 {
+  TimingPerformance timer("Initial setup of ICFG (entry, exit, argument nodes):");
   cfg->procedures = procs;
   std::deque<Procedure *>::const_iterator i;
   for (i = procs->begin(); i != procs->end(); ++i) {
@@ -102,6 +103,35 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
 
 extern CFG *global_cfg;
 
+void
+CFGTraversal::atTraversalStart() {
+    traversalTimer = new TimingPerformance("Traversal to construct ICFG:");
+}
+          
+void
+CFGTraversal::atTraversalEnd() {
+    if (traversalTimer != NULL)
+        delete traversalTimer;
+    traversalTimer = NULL;
+
+ // GB (2008-03-27): Moved this section of code from getCFG(). Logically,
+ // this is where it belongs. (The comment is preserved for historical
+ // reasons.)
+ // GB (2008-03-05): Execute these functions exactly once, when getCFG is
+ // first called. This is the case when real_cfg == NULL.
+    if (real_cfg == NULL)
+    {
+        TimingPerformance timer("Final touches on the ICFG:");
+        perform_goto_backpatching();
+     // GB (2008-03-10): This new function removes unreachable nodes from the
+     // CFG. It does not remove unreachable cycles because it is meant to be
+     // somewhat efficient, and because we don't seem to have a problem with
+     // unreachable cycles.
+        kill_unreachable_nodes();
+        number_exprs();
+    }
+}
+
 CFG*
 CFGTraversal::getCFG() {
 #if 0
@@ -113,19 +143,6 @@ CFGTraversal::getCFG() {
   cfgcheck.checkExpressions(cfg);
 #endif
 
-// GB (2008-03-05): Execute these functions exactly once, when getCFG is
-// first called. This is the case when real_cfg == NULL.
-  if (real_cfg == NULL)
-  {
-      perform_goto_backpatching();
-   // GB (2008-03-10): This new function removes unreachable nodes from the
-   // CFG. It does not remove unreachable cycles because it is meant to be
-   // somewhat efficient, and because we don't seem to have a problem with
-   // unreachable cycles.
-      kill_unreachable_nodes();
-      number_exprs();
-  }
-  
   /*
     std::cout << cfg->numbers_types.size() << " types" << std::endl;
     std::map<int, SgType *>::const_iterator ne;
@@ -150,6 +167,7 @@ CFGTraversal::getCFG() {
 
 void 
 CFGTraversal::perform_goto_backpatching() {
+  TimingPerformance timer("goto backpatching:");
   std::deque<Procedure *>::iterator pi;
   for (pi = cfg->procedures->begin(); pi != cfg->procedures->end(); ++pi) {
     typedef std::multimap<std::string, BasicBlock *> maptype;
@@ -171,6 +189,7 @@ CFGTraversal::perform_goto_backpatching() {
 
 void
 CFGTraversal::kill_unreachable_nodes() {
+    TimingPerformance timer("Elimination of unreachable nodes:");
  // GB (2008-03-10): Eliminate unreachable nodes from the CFG. We do not do
  // a complete reachability test, but rather check for nodes without
  // predecessors and remove those and possibly their successors. This means
@@ -267,11 +286,18 @@ private:
 
 expression_set*
 make_nonredundant (const expression_set &exprs) {
+  TimingPerformance timer("Making expression and type containers nonredundant:");
   expression_set parens, *no_parens = new expression_set();
   expression_set::const_iterator e;
   for (e = exprs.begin(); e != exprs.end(); ++e) {
+#if 0
     const char *str = expr_to_string(*e);
     if (strlen(str) >= 2 && str[0] == '(' && str[strlen(str)-1] == ')')
+#else
+    const std::string &str = Ir::fragmentToString(*e);
+    std::string::size_type len = str.length();
+    if (len >= 2 && str[0] == ')' && str[len-1] == ')')
+#endif
       parens.insert(*e);
     else
       no_parens->insert(*e);
@@ -279,11 +305,19 @@ make_nonredundant (const expression_set &exprs) {
   expression_set::iterator p, np;
   for (p = parens.begin(); p != parens.end(); ++p) {
     bool duplicate = false;
-    const char *pstr = expr_to_string(*p);
+ // const char *pstr = expr_to_string(*p);
+    const std::string &pstr = Ir::fragmentToString(*p);
+    std::string::size_type plen = pstr.length();
     for (np = no_parens->begin(); np != no_parens->end(); ++np) {
+#if 0
       const char *npstr = expr_to_string(*np);
       if (strlen(pstr) == strlen(npstr) + 2
           && strncmp(pstr+1, npstr, strlen(npstr)) == 0) {
+#else
+      const std::string &npstr = Ir::fragmentToString(*np);
+      std::string::size_type nplen = npstr.length();
+      if (plen == nplen + 2 && pstr.find(npstr) == 1) {
+#endif
         duplicate = true;
         break;
       }
@@ -297,6 +331,7 @@ make_nonredundant (const expression_set &exprs) {
 
 void 
 CFGTraversal::number_exprs() {
+  TimingPerformance timer("Numbering of expressions and types:");
   std::deque<BasicBlock *>::const_iterator block;
   std::deque<SgStatement *>::const_iterator stmt;
   std::set<SgExpression *, ExprPtrComparator> expr_set;
@@ -304,6 +339,8 @@ CFGTraversal::number_exprs() {
 
 // add all global initializer expressions and the types of all global
 // variables
+  TimingPerformance *nestedTimer
+      = new TimingPerformance("Traversing ICFG to number expressions and types:");
   ExprSetTraversal global_est(&expr_set, &type_set);
   std::map<SgVariableSymbol *, SgExpression *>::iterator itr;
   for (itr = cfg->globals_initializers.begin();
@@ -316,10 +353,10 @@ CFGTraversal::number_exprs() {
       type_set.insert((*g_itr)->get_type());
   
 // collect all expressions from the program blocks
+  ExprSetTraversal est(&expr_set, &type_set);
   for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block) {
     for (stmt = (*block)->statements.begin();
          stmt != (*block)->statements.end(); ++stmt) {
-      ExprSetTraversal est(&expr_set, &type_set);
       if (isSgCaseOptionStmt(*stmt) 
           || isSgExprStatement(*stmt)
           || isSgScopeStatement(*stmt)) {
@@ -328,6 +365,7 @@ CFGTraversal::number_exprs() {
               dynamic_cast<ArgumentAssignment *>(*stmt)) {
         est.traverse(aa->get_lhs(), preorder);
         est.traverse(aa->get_rhs(), preorder);
+#if 0
       } else if (ReturnAssignment *ra =
               dynamic_cast<ReturnAssignment *>(*stmt)) {
         est.traverse(Ir::createVarRefExp(ra->get_lhs()), preorder);
@@ -336,6 +374,11 @@ CFGTraversal::number_exprs() {
               dynamic_cast<ParamAssignment *>(*stmt)) {
         est.traverse(Ir::createVarRefExp(pa->get_lhs()), preorder);
         est.traverse(Ir::createVarRefExp(pa->get_rhs()), preorder);
+#else
+      } else if (MyAssignment *ma = dynamic_cast<MyAssignment *>(*stmt)) {
+        est.traverse(ma->get_lhsVarRefExp(), preorder);
+        est.traverse(ma->get_rhsVarRefExp(), preorder);
+#endif
       } else if (LogicalIf *li = dynamic_cast<LogicalIf *>(*stmt)) {
         est.traverse(li->get_condition(), preorder);
       } else if (DeclareStmt *ds = dynamic_cast<DeclareStmt *>(*stmt)) {
@@ -343,9 +386,11 @@ CFGTraversal::number_exprs() {
       }
     }
   }
+  delete nestedTimer;
   unsigned int i = 0;
   std::set<SgExpression *, ExprPtrComparator> *exprs_nonred;
   exprs_nonred = make_nonredundant(expr_set);
+  nestedTimer = new TimingPerformance("Filling containers:");
   std::set<SgExpression *, ExprPtrComparator>::const_iterator expr;
   for (expr = exprs_nonred->begin(); expr != exprs_nonred->end(); ++expr) {
     cfg->numbers_exprs[i] = *expr;
@@ -359,6 +404,7 @@ CFGTraversal::number_exprs() {
     cfg->types_numbers[*type] = j;
     j++;
   }
+  delete nestedTimer;
 }
 
 void 

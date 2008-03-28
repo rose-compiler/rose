@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.h,v 1.2 2008-02-19 19:08:00 markus Exp $
+// $Id: ProcTraversal.h,v 1.3 2008-03-28 10:36:28 gergo Exp $
 
 #ifndef H_PROCTRAVERSAL
 #define H_PROCTRAVERSAL
@@ -21,12 +21,15 @@ public:
   
 protected:
   void visit(SgNode *);
+  void atTraversalStart();
+  void atTraversalEnd();
 
 private:
   std::deque<Procedure *> *procedures;
   int node_id;
   int procnum;
   bool _printCollectedFunctionNames;
+  TimingPerformance *timer;
 };
 
 /* find default constructor method in a given class declaration

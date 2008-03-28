@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.8 2008-03-10 14:27:26 gergo Exp $
+// $Id: cfg_support.h,v 1.9 2008-03-28 10:36:28 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -283,10 +283,14 @@ public:
   SgVariableSymbol *get_lhs() const;
   SgVariableSymbol *get_rhs() const;
   MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r);
+  SgVarRefExp *get_lhsVarRefExp() const;
+  SgVarRefExp *get_rhsVarRefExp() const;
   
 protected:
   SgVariableSymbol *lhs;
   SgVariableSymbol *rhs;
+  SgVarRefExp *lhsVarRefExp;
+  SgVarRefExp *rhsVarRefExp;
 };
 
 class ReturnAssignment : public MyAssignment

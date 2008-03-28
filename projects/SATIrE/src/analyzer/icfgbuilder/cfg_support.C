@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.12 2008-03-26 14:57:53 gergo Exp $
+// $Id: cfg_support.C,v 1.13 2008-03-28 10:36:25 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -140,22 +140,130 @@ expr_to_string(const SgExpression *expr)
 bool ExprPtrComparator::operator()(const SgExpression *a,
 				   const SgExpression *b) const 
 {
-  const char *sa = expr_to_string(a), *sb = expr_to_string(b);
-  return strcmp(sa, sb) < 0;
+  if (a == b)
+      return false;
+// GB (2008-03-26): This was really horribly slow with all the string
+// operations. Looking at the variants first should help...
+  VariantT va = a->variantT();
+  VariantT vb = b->variantT();
+  if (va < vb)
+      return true;
+  if (va > vb)
+      return false;
+
+// Simple "profiling" showed that SgVarRefExp is by far the most frequent
+// expression type in our ICFG. At least in the test program. Be that as it
+// may, optimize that case aggressively.
+  if (const SgVarRefExp *ra = isSgVarRefExp(a))
+  {
+      if (const SgVarRefExp *rb = isSgVarRefExp(b))
+      {
+       // SgSymbols are supposedly always shared in the AST. But that's not
+       // something that should be trusted.
+          SgSymbol *syma = ra->get_symbol();
+          SgSymbol *symb = rb->get_symbol();
+          if (syma == symb)
+              return false;
+       // SgNames are supposedly also shared...
+          SgName na = syma->get_name();
+          SgName nb = symb->get_name();
+          const char *nastr = na.str();
+          const char *nbstr = nb.str();
+          if (nastr == nbstr)
+              return false;
+       // strcmp here should be faster than constructing a std::string and
+       // comparing using <
+          return std::strcmp(nastr, nbstr) < 0;
+      }
+  }
+
+// SgAssignOp, SgCastExp are also very frequent. As are other binary and
+// unary operators, or so I would think. Recall that we *know* that a and b
+// are the same operator because the variants matched above!
+  if (const SgBinaryOp *ba = isSgBinaryOp(a))
+  {
+      if (const SgBinaryOp *bb = isSgBinaryOp(b))
+      {
+       // The root of the two expressions is the same. Thus:
+       // if a->left < b->left then a < b;
+       // if b->left < a->left then a !< b.
+          SgExpression *bal = ba->get_lhs_operand();
+          SgExpression *bbl = bb->get_lhs_operand();
+          if (operator()(bal, bbl))
+              return true;
+          if (operator()(bbl, bal))
+              return false;
+       // If we got here, neither a->left < b->left nor b->left < a->left.
+       // Thus a->left == b->left. So we look at the right operands like we
+       // did above.
+          SgExpression *bar = ba->get_rhs_operand();
+          SgExpression *bbr = bb->get_rhs_operand();
+          if (operator()(bar, bbr))
+              return true;
+          if (operator()(bbr, bar))
+              return false;
+      }
+  }
+  if (const SgUnaryOp *ua = isSgUnaryOp(a))
+  {
+      if (const SgUnaryOp *ub = isSgUnaryOp(b))
+      {
+          return operator()(ua->get_operand(), ub->get_operand());
+      }
+  }
+
+// GB (2008-03-26): Started stuffing the most obvious memory leaks. This
+// should also be a little faster than with strdup.
+  bool result = Ir::fragmentToString(a) < Ir::fragmentToString(b);
+  return result;
 }
 
 bool TypePtrComparator::operator()(SgType *a, SgType *b) const 
 {
+  if (a == b)
+      return false;
   while (isSgTypedefType(a)) {
     a = isSgTypedefType(a)->get_base_type();
   }
   while (isSgTypedefType(b)) {
     b = isSgTypedefType(b)->get_base_type();
   }
-  const char *sa = strdup(Ir::fragmentToString(a).c_str());
-  const char *sb = strdup(Ir::fragmentToString(b).c_str());
-  
-  return strcmp(sa, sb) < 0;
+  if (a == b)
+      return false;
+
+// GB (2008-03-26): This was really horribly slow with all the string
+// operations. Looking at the variants first should help...
+  VariantT va = a->variantT();
+  VariantT vb = b->variantT();
+  if (va < vb)
+      return true;
+  if (va > vb)
+      return false;
+
+// SgPointerType appears to be the most frequent type of type in our ICFGs.
+  if (SgPointerType *pa = isSgPointerType(a))
+  {
+      if (SgPointerType *pb = isSgPointerType(b))
+      {
+          SgType *ba = pa->stripType(SgType::STRIP_POINTER_TYPE);
+          SgType *bb = pb->stripType(SgType::STRIP_POINTER_TYPE);
+          return operator()(ba, bb);
+      }
+  }
+
+// SgClassType is also very frequent.
+  if (const SgNamedType *na = isSgNamedType(a))
+  {
+      if (const SgNamedType *nb = isSgNamedType(b))
+      {
+          std::string qa = na->get_qualified_name().str();
+          std::string qb = nb->get_qualified_name().str();
+          return qa < qb;
+      }
+  }
+
+  bool result = Ir::fragmentToString(a) < Ir::fragmentToString(b);
+  return result;
 }
 
 SgFunctionRefExp*
@@ -356,7 +464,20 @@ SgVariableSymbol * MyAssignment::get_rhs() const {
   return rhs;
 }
 
-MyAssignment::MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r) : lhs(l), rhs(r) {
+MyAssignment::MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r)
+  : lhs(l), rhs(r),
+    lhsVarRefExp(Ir::createVarRefExp(lhs)),
+    rhsVarRefExp(Ir::createVarRefExp(rhs)) {
+}
+
+SgVarRefExp *
+MyAssignment::get_lhsVarRefExp() const {
+    return lhsVarRefExp;
+}
+
+SgVarRefExp *
+MyAssignment::get_rhsVarRefExp() const {
+    return rhsVarRefExp;
 }
 
 BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
