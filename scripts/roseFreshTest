@@ -18,7 +18,7 @@
 #   30 2 * * * /home/liao6/rose/scripts/roseFreshTestLeo /path/to/yourconfig.sh
 #
 # Liao, Jeremiah, 2/7/2008
-# Last modified 3/27/2008
+# Last modified 3/28/2008
 #------------------------------------------------------
 
 user_config_file="$1"
@@ -36,7 +36,9 @@ set -e
 echo "Subject: Starting ROSE test $$" > mailtext1
 echo "" >> mailtext1
 echo ">>> See build log in ${ROSE_TOP}/buildlog for status" >> mailtext1
+echo "SVN root = ${ROSE_SVNROOT}" >> mailtext1
 echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext1
+echo "Make flags = ${MAKEFLAGS}" >> mailtext1
 echo "" >> mailtext1
 echo "> Command versions" >> mailtext1
 (automake --version | head -1 || echo "automake not found") >> mailtext1
@@ -92,20 +94,22 @@ buildstatus=0
 
 #------------------------------------------------------
 # make and check
-  make && \
-  make docs && \
-  make check && \
+  make $MAKEFLAGS && \
+  make $MAKEFLAGS docs && \
+  make $MAKEFLAGS check && \
   rmdir ../install && \
-  make install && \
-  make installcheck && \
-  make dist && \
-  make distcheck
+  make $MAKEFLAGS install && \
+  make $MAKEFLAGS installcheck && \
+  make $MAKEFLAGS dist && \
+  make $MAKEFLAGS distcheck
 ) >buildlog 2>&1 || buildstatus=1
 
 if [ $buildstatus == 0 ]; then
   echo "Subject: ROSE test $$ results (pass)" > mailtext
   echo "" >> mailtext
+  echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
+  echo "Make flags = ${MAKEFLAGS}" >> mailtext
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
@@ -113,7 +117,9 @@ if [ $buildstatus == 0 ]; then
 else
   echo "Subject: ROSE test $$ results (fail)" > mailtext
   echo "" >> mailtext
+  echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
+  echo "Make flags = ${MAKEFLAGS}" >> mailtext
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
@@ -125,4 +131,4 @@ fi
 # echo "-------------------- Full log      --------------------" >> mailtext
 # cat buildlog >> mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
-# rm -rf "${ROSE_TOP}"
+if [ $buildstatus == 0]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed

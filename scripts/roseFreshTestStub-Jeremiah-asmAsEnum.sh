@@ -27,5 +27,7 @@ MAILADDRS="willcock2@llnl.gov"
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 
+MAKEFLAGS=""
+
 set -e
 set -o pipefail
