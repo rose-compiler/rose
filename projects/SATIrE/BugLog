@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.5 2008-03-26 14:57:09 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.6 2008-03-28 10:35:46 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -361,3 +361,37 @@ Fix:
     message is emitted for function declarations.
 Status:
     Resolved 2008-03-26, GB
+
+
+Logged:
+    2008-03-26, GB
+Symptoms:
+    Error message:
+        ExprTransformer.C:313: error during ICFG construction: found more
+        than one constructor implementation for initializer ''
+Reason:
+    Some headers define constructors; if such a header is included multiple
+    times, the constructor definition will appear in the AST multiple times.
+    Thus we cannot assert that there is just one such definition.
+Fix:
+    Remove error message because this condition is not really an error.
+Status:
+    Resolved 2008-03-27, GB
+
+
+Logged:
+    2008-03-27, GB
+Symptoms:
+    Error message:
+        error during ICFG construction: constructor has more arguments than
+        parameters!
+Reason:
+    In the ROSE AST, declarations of default copy constructors have zero
+    parameters, although calls correctly have one argument. Thus the normal
+    code for resolving overloaded constructor calls fails.
+Fix:
+    Handle this special case in a special way; an external constructor call
+    is emitted.
+    TODO: Consider sending a bug report or a patch to Dan.
+Status:
+    Resolved 2008-03-27, GB
