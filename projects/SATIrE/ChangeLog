@@ -16,6 +16,9 @@ V0.8.1 (in progress)
     statements in functions
   - see file BugLog for details
 
+* Termite [AP]
+  - removed wrong successor check in SgReturnStmt
+
 V0.8.0 2008-03-11 MS,GB,AP
 
 * required user changes:

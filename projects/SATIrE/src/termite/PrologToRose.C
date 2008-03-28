@@ -1149,11 +1149,12 @@ SgReturnStmt*
 PrologToRose::createReturnStmt(Sg_File_Info* fi, SgNode* succ,PrologCompTerm* t) {
   /* get expression*/
   SgExpression* exp = dynamic_cast<SgExpression*>(succ);
-  ROSE_ASSERT(exp != NULL);
-  debug(exp->get_type()->class_name());
-  ROSE_ASSERT(exp != NULL);
   SgReturnStmt* s  = new SgReturnStmt(fi,exp);
-  exp->set_parent(s);
+  if (exp != NULL) {
+    ROSE_ASSERT(exp != NULL);
+    debug(exp->get_type()->class_name());
+    exp->set_parent(s);
+  }
   return s;
 }
 
