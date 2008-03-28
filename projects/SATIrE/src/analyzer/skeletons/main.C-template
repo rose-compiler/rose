@@ -5,6 +5,8 @@
 
 int main(int argc, char **argv)
 {
+  TimingPerformance *timer = new TimingPerformance("Complete run of SATIrE analysis:");
+
   /* parse the command line and extract analyzer options */
   AnalyzerOptions* opt= new AnalyzerOptions();
   CommandLineParser clp;
@@ -37,6 +39,7 @@ int main(int argc, char **argv)
 
   /* Handle command line option --textoutput */
   if(opt->outputText()) {
+    TimingPerformance timer("Generate text output:");
     PagDfiTextPrinter<DFI_STORE> p(analysis_info);
 
     if (outputAll) p.traverse(ast_root, preorder);
@@ -48,6 +51,7 @@ int main(int argc, char **argv)
    * the analysis results and by calling the backend, and an annotated C/C++
    * file is generated (is specified on command line) */
   if(opt->analysisResultsAnnotation()) {
+    TimingPerformance timer("Annotate source code with comments:");
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
     if (outputAll) ca.traverse(ast_root, preorder);
@@ -58,11 +62,13 @@ int main(int argc, char **argv)
   if(ast_root->numberOfFiles()==1) {
     SgFile& file = ast_root->get_file(0);
     if(opt->outputSource() && opt->getOutputSourceFileName().size()>0) {
+      TimingPerformance timer("Output (single) source file:");
       file.set_unparse_output_filename(opt->getOutputSourceFileName());
       unparseFile(&file,0,0);
     }
     /* Handle command line option --termoutput */
     if(opt->outputTerm()) {
+      TimingPerformance timer("Output Prolog term:");
       TermPrinter<DFI_STORE> tp(analysis_info);
 
       if (outputAll) tp.traverse(ast_root);
@@ -79,21 +85,28 @@ int main(int argc, char **argv)
 
   /* handle multiple input files */
   if(ast_root->numberOfFiles()>=1 && (opt->getOutputFilePrefix()).size()>0) {
+    TimingPerformance timer("Output all source files:");
     /* Iterate over all input files (and its included files) */
     for (int i=0; i < ast_root->numberOfFiles(); ++i) {
       SgFile& file = ast_root->get_file(i);
       
       if(opt->outputSource()) {
-	std::string filename=file.get_sourceFileNameWithoutPath();
-	file.set_unparse_output_filename(opt->getOutputFilePrefix()+filename);
-	unparseFile(&file,0,0);
+        std::string filename=file.get_sourceFileNameWithoutPath();
+        file.set_unparse_output_filename(opt->getOutputFilePrefix()+filename);
+        unparseFile(&file,0,0);
       }
     }
   }
 
   /* Free all memory allocated by the PAG garbage collection */
   GC_finish();
+  bool statistics = opt->statistics();
   delete opt;
+
+  delete timer;
+  if (statistics) {
+    TimingPerformance::generateReport();
+  }
 
   return 0;
 }

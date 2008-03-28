@@ -16,16 +16,12 @@ extern "C" void gdl_create(char *, int);
 
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt) {
   return (carrier_printfunc(CARRIER_TYPE)(
-					  (carrier_type_o(CARRIER_TYPE))
-					  get_statement_pre_info(store, stmt)
-					  ));
+              (carrier_type_o(CARRIER_TYPE)) get_statement_pre_info(store, stmt)));
 }
 
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt) {
   return (carrier_printfunc(CARRIER_TYPE)(
-					  (carrier_type_o(CARRIER_TYPE))
-					  get_statement_post_info(store, stmt)
-					  ));
+              (carrier_type_o(CARRIER_TYPE)) get_statement_post_info(store, stmt)));
 }
 
 carrier_type_o(CARRIER_TYPE) 
@@ -56,9 +52,13 @@ get_statement_post_info(DFI_STORE store, SgStatement *stmt)
 
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
 {
-  bool verbose=opt->verbose();
+    TimingPerformance timer("PAG analysis and visualization part:");
+    TimingPerformance *nestedTimer;
+
+    bool verbose=opt->verbose();
   
     if (verbose) std::cout << "collecting functions ... ";
+    nestedTimer = new TimingPerformance("SATIrE ICFG construction:");
     ProcTraversal s;
     s.setPrintCollectedFunctionNames(opt->printCollectedFunctionNames());
     s.traverse(root, preorder);
@@ -67,22 +67,26 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
     if (verbose) std::cout << "generating cfg ... ";
     CFGTraversal t(s.get_procedures());
     t.traverse(root, preorder);
+    delete nestedTimer;
     if (verbose) std::cout << "done" << std::endl;
 
     if (verbose) std::cout << "testing cfg ... ";
+    nestedTimer = new TimingPerformance("CFG consistency check:");
     int test_result = kfg_testit(t.getCFG(), 1 /* quiet */);
+    delete nestedTimer;
     if (verbose) {
       if (test_result == 0) {
-	std::cout << "failed." << std::endl;
-	std::cerr << std::endl
-		  << "Warning: PAG reports: there are problems in the ICFG."
-		  << std::endl;
+        std::cout << "failed." << std::endl;
+        std::cerr << std::endl
+          << "Warning: PAG reports: there are problems in the ICFG."
+          << std::endl;
       } else {
-	std::cout << "done" << std::endl;
+        std::cout << "done" << std::endl;
       }
     }
     
     if(opt->outputIcfg()) {
+      TimingPerformance timer("ICFG visualization:");
       if(verbose) std::cout << "generating icfg visualization " << opt->getOutputIcfgFileName() << " ... ";
       outputIcfg(t.getCFG(),const_cast<char*>(opt->getOutputIcfgFileName().c_str()));
       if (verbose) std::cout << "done" << std::endl;
@@ -90,7 +94,9 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
 
     if (verbose) std::cout << "performing analysis " stringize(ANALYSIS) " ... ";
     std::cout.flush();
+    nestedTimer = new TimingPerformance("Actual data-flow analysis:");
     DFI_STORE results = doit(ANALYSIS)(t.getCFG());
+    delete nestedTimer;
     if (verbose) std::cout << "done" << std::endl;
     
     /* we must run gdl_create for both single file and animation */
@@ -99,9 +105,10 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
       outputgdlfile=opt->getOutputGdlFileName();
     else
       if(opt->outputGdlAnim())
-	outputgdlfile=opt->getOutputGdlAnimDirName() + "/result.gdl"; // we cannot create an animation, but not create a gdl file
+        outputgdlfile=opt->getOutputGdlAnimDirName() + "/result.gdl"; // we cannot create an animation, but not create a gdl file
 
     if(opt->outputGdl() || opt->outputGdlAnim()) {
+      TimingPerformance timer("Generate GDL visualization of analysis results:");
       if(verbose) std::cout << "generating ";
       if(verbose && opt->outputGdl()) std::cout << "visualization " << outputgdlfile << " ";
       if(verbose && opt->outputGdl() && opt->outputGdlAnim()) std::cout << "and ";
@@ -127,6 +134,7 @@ protected:
 
 void satireResetParentPointers(SgNode *root, SgNode *parent)
 {
+    TimingPerformance timer("SATIrE fixup of parent pointers in original AST:");
     ParentPointerResetter ppr;
     ppr.traverse(root, parent);
 }
