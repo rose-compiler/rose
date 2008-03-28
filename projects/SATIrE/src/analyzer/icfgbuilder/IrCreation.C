@@ -344,14 +344,14 @@ Ir::createSwitchStatement(SgExprStatement* expStmt) {
 // ICFG specific nodes that inherit from ROSE SgStatement
 // have unparseToString
 CallStmt*
-Ir::createCallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent){
+Ir::createCallStmt(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent){
   CallStmt* n=new CallStmt(node_type,name,parent);
   configLocatedNode(n);
   return n;
 }
 
 FunctionEntry*
-Ir::createFunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent){
+Ir::createFunctionEntry(KFG_NODE_TYPE type, std::string func, CallBlock *parent){
   FunctionEntry* n=new FunctionEntry(type,func,parent);
   configLocatedNode(n);
   return n;
@@ -379,14 +379,14 @@ Ir::createExternalCall(SgExpression *function, std::vector<SgVariableSymbol *> *
 }
 
 ConstructorCall*
-Ir::createConstructorCall(const char *name_, SgType *type_){
+Ir::createConstructorCall(std::string name_, SgType *type_){
   ConstructorCall* n=new ConstructorCall(name_,type_);
   configLocatedNode(n);
   return n;
 }
 
 DestructorCall*
-Ir::createDestructorCall(const char *name_, SgType *type_){
+Ir::createDestructorCall(std::string name_, SgType *type_){
   DestructorCall* n=new DestructorCall(name_,type_);
   configLocatedNode(n);
   return n;
@@ -442,7 +442,7 @@ Ir::createWhileJoin(){
 }
 
 FunctionExit*
-Ir::createFunctionExit(KFG_NODE_TYPE type, const char *func, CallBlock *parent){
+Ir::createFunctionExit(KFG_NODE_TYPE type, std::string func, CallBlock *parent){
   FunctionExit* n=new FunctionExit(type,func,parent);
   configLocatedNode(n);
   return n;

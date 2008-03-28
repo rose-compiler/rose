@@ -1,12 +1,12 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.13 2008-03-28 10:36:25 gergo Exp $
+// $Id: cfg_support.C,v 1.14 2008-03-28 15:55:32 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
 #include "IrCreation.h"
 
 CallBlock::CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
-		     std::vector<SgVariableSymbol *> *paramlist_, const char *name_)
+		     std::vector<SgVariableSymbol *> *paramlist_, std::string name_)
   : BasicBlock(id_, type_, procnum_), paramlist(paramlist_), name(name_)
 {
   switch (node_type) {
@@ -55,7 +55,7 @@ std::string UndeclareStmt::unparseToString() const
 std::string ExternalCall::unparseToString() const
 {
     std::stringstream label;
-    label << "ExternalCall(" << expr_to_string(function) << ", [";
+    label << "ExternalCall(" << Ir::fragmentToString(function) << ", [";
     assert(params != NULL);
     std::vector<SgVariableSymbol *>::const_iterator i = params->begin();
     if (i != params->end())
@@ -88,7 +88,7 @@ std::string CallBlock::print_paramlist() const
   }
 }
 
-CallStmt::CallStmt(KFG_NODE_TYPE type_, const char *name_, CallBlock *parent_)
+CallStmt::CallStmt(KFG_NODE_TYPE type_, std::string name_, CallBlock *parent_)
   : type(type_), name(name_), parent(parent_) 
 {
   update_infolabel();
@@ -344,7 +344,7 @@ CallStmt::unparseToString() const
   return infolabel;
 }
 
-const char*
+std::string
 CallStmt::get_funcname() const
 {
   return name;
@@ -404,9 +404,9 @@ void ArgumentAssignment::set_rhs(SgExpression *r)
 std::string ArgumentAssignment::unparseToString() const
 {
   std::string buf = "ArgumentAssignment(";
-  buf += expr_to_string(lhs);
+  buf += Ir::fragmentToString(lhs);
   buf += ", ";
-  buf += expr_to_string(rhs);
+  buf += Ir::fragmentToString(rhs);
   buf += ")";
   return buf;
 }
@@ -490,16 +490,16 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
   std::deque<Procedure *>::const_iterator i;
   for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
     /* we want member functions */
-    if ((*i)->memberf_name == NULL)
+    if ((*i)->memberf_name == "")
       break;
     if (destructor_name == (*i)->memberf_name) {
       SgVariableSymbol* this_var_sym = Ir::createVariableSymbol(this_var_name, in->get_type());
 
       CallBlock *entry = (*i)->entry;
       CallBlock *call_block = new CallBlock((*node_id)++, CALL,
-					    procnum, NULL, strdup(destructor_name.c_str()));
+					    procnum, NULL, destructor_name);
       CallBlock *return_block = new CallBlock((*node_id)++, RETURN,
-					      procnum, NULL, strdup(destructor_name.c_str()));
+					      procnum, NULL, destructor_name);
       cfg->nodes.push_back(call_block);
       cfg->calls.push_back(call_block);
       cfg->nodes.push_back(return_block);
@@ -535,7 +535,7 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
   if (i == cfg->procedures->end()) {
     BasicBlock *b = new BasicBlock((*node_id)++, INNER, procnum);
     cfg->nodes.push_back(b);
-    b->statements.push_back(Ir::createDestructorCall(strdup(class_name.c_str()), ct));
+    b->statements.push_back(Ir::createDestructorCall(class_name, ct));
     add_link(b, after, NORMAL_EDGE);
     after = b;
   }
@@ -605,4 +605,12 @@ std::string dumpTreeFragmentToString(SgNode *node)
     std::stringstream ss;
     dumpTreeFragment(node, ss);
     return ss.str();
+}
+
+Procedure::Procedure()
+  : class_type(NULL), entry(NULL), exit(NULL),
+    arg_block(NULL), first_arg_block(NULL), last_arg_block(NULL),
+    this_assignment(NULL), returnvar(NULL),
+    params(NULL), decl(NULL)
+{
 }

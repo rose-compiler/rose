@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.11 2008-03-28 10:36:25 gergo Exp $
+// $Id: ExprTransformer.C,v 1.12 2008-03-28 15:55:32 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -163,11 +163,11 @@ void ExprTransformer::visit(SgNode *node)
         {
             call_block = new CallBlock(node_id++, CALL, procnum,
                     new std::vector<SgVariableSymbol *>()
-                    /*entries->front()->paramlist*/, name->c_str());
+                    /*entries->front()->paramlist*/, *name);
             return_block = new CallBlock(node_id++, RETURN,
                     procnum, new std::vector<SgVariableSymbol *>()
                     /*entries->front()->paramlist*/,
-                    name->c_str());
+                    *name);
             cfg->nodes.push_back(call_block);
             cfg->calls.push_back(call_block);
             cfg->nodes.push_back(return_block);
@@ -187,6 +187,7 @@ void ExprTransformer::visit(SgNode *node)
             add_link(call_block, return_block, LOCAL);
             for (i = exits->begin(); i != exits->end(); ++i)
                 add_link(*i, return_block, RETURN_EDGE);
+            delete exits;
             if (retval_block != NULL)
             {
                 add_link(return_block, retval_block, NORMAL_EDGE);
@@ -267,6 +268,9 @@ void ExprTransformer::visit(SgNode *node)
         if (first_arg_block != NULL)
             after = first_arg_block;
         expnum++;
+
+        delete entries;
+        delete name;
     }
     else if (isSgConstructorInitializer(node)) {
       SgConstructorInitializer* ci = isSgConstructorInitializer(node);
@@ -488,9 +492,9 @@ void ExprTransformer::visit(SgNode *node)
       CallBlock *call_block = NULL, *return_block = NULL;
       if (!blocks.empty()) {
         call_block = new CallBlock(node_id++, CALL, procnum,
-                   blocks.front()->paramlist, strdup(name.c_str()));
+                   blocks.front()->paramlist, name);
         return_block = new CallBlock(node_id++, RETURN,
-                     procnum, blocks.front()->paramlist, strdup(name.c_str()));
+                     procnum, blocks.front()->paramlist, name);
         cfg->nodes.push_back(call_block);
         cfg->calls.push_back(call_block);
         cfg->nodes.push_back(return_block);
@@ -510,6 +514,7 @@ void ExprTransformer::visit(SgNode *node)
         add_link(call_block, return_block, LOCAL);
         for (i = exits->begin(); i != exits->end(); ++i)
           add_link(*i, return_block, RETURN_EDGE);
+        delete exits;
         if (retval_block != NULL) {
           add_link(return_block, retval_block, NORMAL_EDGE);
           add_link(retval_block, after, NORMAL_EDGE);
@@ -525,9 +530,8 @@ void ExprTransformer::visit(SgNode *node)
         BasicBlock *call_block
           = new BasicBlock(node_id++, INNER, procnum);
         cfg->nodes.push_back(call_block);
-     // strdup needed because name will go out of scope and take its c_str
-     // with it
-        call_block->statements.push_front(Ir::createConstructorCall(strdup(name.c_str()), ci->get_type()));
+        call_block->statements.push_front(
+                Ir::createConstructorCall(name, ci->get_type()));
 
         /* set links */
         if (last_arg_block != NULL)
@@ -613,9 +617,9 @@ void ExprTransformer::visit(SgNode *node)
 
             std::string destructor_name = *destr_name++;
             CallBlock *call_block = new CallBlock(node_id++, CALL,
-                          procnum, NULL, strdup(destructor_name.c_str()));
+                          procnum, NULL, destructor_name);
             CallBlock *return_block = new CallBlock(node_id++, RETURN,
-                            procnum, NULL, strdup(destructor_name.c_str()));
+                            procnum, NULL, destructor_name);
             cfg->nodes.push_back(call_block);
             cfg->calls.push_back(call_block);
             cfg->nodes.push_back(return_block);
@@ -680,7 +684,7 @@ void ExprTransformer::visit(SgNode *node)
            * is not accessible to us). */
           BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
           cfg->nodes.push_back(b);
-          b->statements.push_front(Ir::createDestructorCall(strdup(class_name.c_str()), ct));
+          b->statements.push_front(Ir::createDestructorCall(class_name, ct));
           add_link(b, after, NORMAL_EDGE);
           after = b;
           last = b;
@@ -801,7 +805,7 @@ void ExprTransformer::visit(SgNode *node)
     }
 }
 
-SgName 
+std::string
 ExprTransformer::find_mangled_func_name(SgFunctionRefExp *fr) const {
   // fr->get_symbol()->get_declaration()->get_mangled_name();  
   SgDeclarationStatement* declaration= fr->get_symbol()->get_declaration();
@@ -813,7 +817,7 @@ ExprTransformer::find_mangled_func_name(SgFunctionRefExp *fr) const {
   //  = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
   SgName mname=functionDeclaration->get_mangled_name();
   //std::cerr<<mname.str()<<std::endl;
-  return mname;
+  return std::string(mname.str());
 }
 
 //SgName 
@@ -836,13 +840,13 @@ ExprTransformer::find_entry(SgFunctionCallExp *call)
     if (func_ref)
     {
         std::string *sgname = find_func_name(call);
-        const char *name = (sgname != NULL ? sgname->c_str() : "unknown_func");
+        std::string name = (sgname != NULL ? *sgname : "unknown_func");
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
         for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i)
         {
-            if (strcmp(name, (*i)->name) == 0)
+            if (name == (*i)->name)
                 return (*cfg->procedures)[num]->entry;
             num++;
         }
@@ -862,9 +866,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
 
     if (func_ref)
     {
-      // MS: changed for upgrading to ROSE 0.8.10e
-      // (auto conversion of SgName to const char* is broken, name must be determined explicitely)
-    char *name = const_cast<char*>(find_mangled_func_name(func_ref).getString().c_str()); // the string remains in the AST, c_str should be fine 
+        std::string name = find_mangled_func_name(func_ref);
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
@@ -872,7 +874,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
         //std::cout<<"B: "<< (char*)((*i)->mangled_name) << std::endl;
         //std::cout<<"A: "<< name <<std::endl;
 
-            if (strcmp(name, (*i)->mangled_name) == 0)
+            if (name == (*i)->mangled_name)
                 blocks->push_back((*cfg->procedures)[num]->entry);
             num++;
         }
@@ -892,15 +894,13 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
         SgClassDefinition *class_type
             = isSgClassDefinition(member_func_ref
                 ->get_symbol_i()->get_declaration()->get_scope());
-    // MS: changed following line for upgrading to ROSE 0.8.10e 
-        // (auto conversion of SgName to const char* is broken, name must be determined explicitely)
-        const char *name = member_func_ref->get_symbol()->get_name().getString().c_str(); // the string remains in the AST, c_str should be fine
+        std::string name = member_func_ref->get_symbol()->get_name().str();
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
 
         for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i)
         {
-            if (strcmp(name, (*i)->name) == 0 && (*i)->class_type != NULL
+            if (name == (*i)->name && (*i)->class_type != NULL
                     && (class_type == (*i)->class_type
                         || (decl->get_functionModifier().isVirtual()
                         && subtype_of((*i)->class_type, class_type)))) {
@@ -968,7 +968,7 @@ ExprTransformer::evaluate_arguments(std::string name,
     std::string varname = std::string("$") + name + "$this";
     SgExpression *new_expr = *i;
     SgVariableSymbol *varsym = 
-      Ir::createVariableSymbol(varname.c_str(), (*i)->get_type());
+      Ir::createVariableSymbol(varname, (*i)->get_type());
     params->push_back(varsym);
     block->statements.push_back(Ir::createArgumentAssignment(varsym, new_expr));
     ++i;
@@ -1061,7 +1061,8 @@ ExprTransformer::find_destructor_entries(SgClassType *ct) {
     && (cd == (*p)->class_type
         || (virtual_destructor
         && subtype_of((*p)->class_type, cd)))
-    && strchr((*p)->memberf_name, '~') != NULL)
+ // && strchr((*p)->memberf_name, '~') != NULL)
+    && (*p)->memberf_name.find('~') != std::string::npos)
       blocks->push_back((*p)->entry);
   }
   return blocks;
@@ -1087,7 +1088,8 @@ ExprTransformer::find_destructor_names(SgClassType *ct) {
                 && (cd == (*p)->class_type
                     || (virtual_destructor
                         && subtype_of((*p)->class_type, cd)))
-                && strchr((*p)->memberf_name, '~') != NULL)
+             // && strchr((*p)->memberf_name, '~') != NULL)
+                && (*p)->memberf_name.find('~') != std::string::npos)
         {
             std::string class_name((*p)->class_type->get_declaration()
                     ->get_name().str());
@@ -1119,7 +1121,8 @@ ExprTransformer::find_destructor_this_names(SgClassType *ct) {
                 && (cd == (*p)->class_type
                     || (virtual_destructor
                         && subtype_of((*p)->class_type, cd)))
-                && strchr((*p)->memberf_name, '~') != NULL)
+             // && strchr((*p)->memberf_name, '~') != NULL)
+                && (*p)->memberf_name.find('~') != std::string::npos)
         {
             std::string class_name((*p)->class_type->get_declaration()
                     ->get_name().str());

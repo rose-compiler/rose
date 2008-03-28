@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.8 2008-03-28 10:36:25 gergo Exp $
+// $Id: ProcTraversal.C,v 1.9 2008-03-28 15:55:32 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -70,15 +70,15 @@ ProcTraversal::visit(SgNode *node) {
         name += "::"; name += decl->get_name().str();
         std::string mname = proc->class_type->get_mangled_name().str();
         mname += "::"; mname += decl->get_mangled_name().str();
-        proc->memberf_name = strdup(name.c_str());
-        proc->mangled_memberf_name = strdup(mname.c_str());
-        proc->name = strdup(decl->get_name().str());
-        proc->mangled_name = strdup(decl->get_mangled_name().str());
+        proc->memberf_name = name;
+        proc->mangled_memberf_name = mname;
+        proc->name = decl->get_name().str();
+        proc->mangled_name = decl->get_mangled_name().str();
       } else {
-        proc->name = strdup(decl->get_name().str());
-        proc->mangled_name = strdup(decl->get_mangled_name().str());
+        proc->name = decl->get_name().str();
+        proc->mangled_name = decl->get_mangled_name().str();
         proc->class_type = NULL;
-        proc->memberf_name = proc->mangled_memberf_name = NULL;
+        proc->memberf_name = proc->mangled_memberf_name = "";
       }
       std::vector<SgVariableSymbol* >* arglist
         = new std::vector<SgVariableSymbol* >();
@@ -99,7 +99,7 @@ ProcTraversal::visit(SgNode *node) {
             = Ir::createParamAssignment(this_var, this_temp_var);
           proc->arg_block->statements.push_back(paramAssignment);
           arglist->push_back(this_var);
-          if (strchr(proc->name, '~') != NULL) {
+          if (proc->name.find('~') != std::string::npos) {
             arglist->push_back(this_temp_var);
           }
         }
@@ -207,11 +207,26 @@ ProcTraversal::visit(SgNode *node) {
               if (a && isSgConstructorInitializer(a->get_rhs())) {
                 SgConstructorInitializer* c
                   = isSgConstructorInitializer(a->get_rhs());
-                if (c->get_class_decl()->get_name() == cd->get_name()) {
+                std::string c_decl_name = c->get_class_decl()->get_name().str();
+                std::string cd_name = cd->get_name().str();
+             // if (c->get_class_decl()->get_name() == cd->get_name()) {
+                if (c_decl_name == cd_name) {
+#if 0
                   // erase the following assignment
                   // of the this pointer as well
                   this_a = *proc->arg_block->statements.erase(i+1);
                   proc->arg_block->statements.erase(i);
+#endif
+               // GB (2008-03-28): That's an interesting piece of code, but
+               // it might be very mean to iterators. At least it is hard to
+               // see whether it is correct. So let's try it like this:
+               // erase i; we get an iterator back, which refers to the next
+               // element. Save that element as this_a, and then erase.
+                  std::deque<SgStatement *>::iterator this_pos;
+                  this_pos = proc->arg_block->statements.erase(i);
+                  this_a = *this_pos;
+                  proc->arg_block->statements.erase(this_pos);
+               // Good. Looks like this fixed a very obscure bug.
                   break;
                 }
               }
@@ -225,12 +240,14 @@ ProcTraversal::visit(SgNode *node) {
       }
       proc->entry = new CallBlock(node_id++, START, proc->procnum,
                                   arglist,
-                                  strdup(proc->memberf_name
-                                         ? proc->memberf_name : proc->name));
+                                  (proc->memberf_name != ""
+                                    ? proc->memberf_name
+                                    : proc->name));
       proc->exit = new CallBlock(node_id++, END, proc->procnum,
                                  arglist,
-                                 strdup(proc->memberf_name
-                                        ? proc->memberf_name : proc->name));
+                                  (proc->memberf_name != ""
+                                    ? proc->memberf_name
+                                    : proc->name));
       proc->entry->partner = proc->exit;
       proc->exit->partner = proc->entry;
       /* In constructors, insert an assignment $A$this = this
@@ -255,7 +272,9 @@ ProcTraversal::visit(SgNode *node) {
                                                  decl->get_type()->get_return_type());
       procedures->push_back(proc);
       if(getPrintCollectedFunctionNames()) {
-        std::cout << (proc->memberf_name ? proc->memberf_name : proc->name)
+        std::cout << (proc->memberf_name != ""
+                        ? proc->memberf_name
+                        : proc->name)
                   << " " /*<< proc->decl << std::endl*/;
       }
     }

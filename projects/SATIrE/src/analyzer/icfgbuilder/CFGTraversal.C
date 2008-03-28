@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.21 2008-03-28 10:36:25 gergo Exp $
+// $Id: CFGTraversal.C,v 1.22 2008-03-28 15:55:32 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -404,6 +404,7 @@ CFGTraversal::number_exprs() {
     cfg->types_numbers[*type] = j;
     j++;
   }
+  delete exprs_nonred;
   delete nestedTimer;
 }
 
@@ -458,10 +459,10 @@ CFGTraversal::visit(SgNode *node) {
 	= transform_block(decl->get_definition()->get_body(),
 			  last_node, NULL, NULL);
       if (proc->arg_block != NULL) {
-	add_link(proc->entry, proc->first_arg_block, NORMAL_EDGE);
-	add_link(proc->last_arg_block, begin, NORMAL_EDGE);
+        add_link(proc->entry, proc->first_arg_block, NORMAL_EDGE);
+        add_link(proc->last_arg_block, begin, NORMAL_EDGE);
       } else {
-	add_link(proc->entry, begin, NORMAL_EDGE);
+        add_link(proc->entry, begin, NORMAL_EDGE);
       }
     }
   }
@@ -1465,13 +1466,13 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
 }
 
 int 
-CFGTraversal::find_procnum(const char *name) const
+CFGTraversal::find_procnum(std::string name) const
 {
   int num = 0;
   std::deque<Procedure *>::const_iterator i;
   
   for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
-    if (strcmp(name, (*i)->name) == 0) {
+    if (name == (*i)->name) {
       return num;
     }
     num++;
@@ -1540,7 +1541,9 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
   }
   std::vector<CallBlock *>::iterator bi;
   for (bi = blocks.begin(); bi != blocks.end(); ++bi) {
-    std::string class_name((*cfg->procedures)[(*bi)->procnum]->name + 1);
+ // std::string class_name((*cfg->procedures)[(*bi)->procnum]->name + 1);
+    std::string procname = (*cfg->procedures)[(*bi)->procnum]->name;
+    std::string class_name = procname.substr(1);
     std::string destructor_name = class_name + "::~" + class_name;
     std::string this_var_name = std::string() + "$~" + class_name + "$this";
 
@@ -1552,9 +1555,9 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
       = Ir::createVariableSymbol("this", ptrType);
 
     CallBlock *call_block = new CallBlock(node_id++, CALL,
-					  p->procnum, NULL, strdup(destructor_name.c_str()));
+					  p->procnum, NULL, destructor_name);
     CallBlock *return_block = new CallBlock(node_id++, RETURN,
-					    p->procnum, NULL, strdup(destructor_name.c_str()));
+					    p->procnum, NULL, destructor_name);
     cfg->nodes.push_back(call_block);
     cfg->calls.push_back(call_block);
     cfg->nodes.push_back(return_block);

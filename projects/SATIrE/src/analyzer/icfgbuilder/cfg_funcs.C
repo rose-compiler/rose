@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.9 2008-03-05 19:22:27 markus Exp $
+// $Id: cfg_funcs.C,v 1.10 2008-03-28 15:55:32 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -422,10 +422,10 @@ extern "C" char *kfg_proc_name(KFG kfg, int n)
      * Returns static pointer to the name of a procedure.
      */
     CFG *cfg = (CFG *) kfg;
-    if ((*cfg->procedures)[n]->memberf_name != NULL)
-        return (char *) (*cfg->procedures)[n]->memberf_name;
+    if ((*cfg->procedures)[n]->memberf_name != "")
+        return strdup((*cfg->procedures)[n]->memberf_name.c_str());
     else
-        return (char *) (*cfg->procedures)[n]->name;
+        return strdup((*cfg->procedures)[n]->name.c_str());
 }
 
 extern "C" KFG_NODE kfg_numproc(KFG cfg, int n)

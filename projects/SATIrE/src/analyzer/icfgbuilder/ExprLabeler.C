@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.C,v 1.4 2008-03-26 14:57:53 gergo Exp $
+// $Id: ExprLabeler.C,v 1.5 2008-03-28 15:55:32 gergo Exp $
 
 #include "ExprLabeler.h"
 
@@ -25,8 +25,9 @@ void ExprLabeler::visit(SgNode *node)
         SgFunctionCallExp *call = isSgFunctionCallExp(node);
         std::string *name = find_func_name(call);
         std::stringstream varname;
-        varname << "$" << (name != NULL ? name->c_str() : "unknown_func")
+        varname << "$" << (name != NULL ? *name : "unknown_func")
             << "$return_" << expnum++;
+        delete name;
         RetvalAttribute *retval = new RetvalAttribute(varname.str());
         node->addNewAttribute("return variable", retval);
     }
