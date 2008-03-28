@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.4 2008-03-10 10:24:40 gergo Exp $
+// $Id: ExprTransformer.h,v 1.5 2008-03-28 15:55:39 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -37,7 +37,7 @@ private:
     BasicBlock *retval;
     SgVariableSymbol *root_var;
 
-    SgName find_mangled_func_name(SgFunctionRefExp *) const;
+    std::string find_mangled_func_name(SgFunctionRefExp *) const;
   //SgName find_mangled_memberf_name(SgMemberFunctionRefExp *) const;
     CallBlock *find_entry(SgFunctionCallExp *);
     const std::vector<CallBlock *> *find_entries(SgFunctionCallExp *);

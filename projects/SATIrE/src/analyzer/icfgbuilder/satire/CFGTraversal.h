@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.3 2008-03-28 10:36:28 gergo Exp $
+// $Id: CFGTraversal.h,v 1.4 2008-03-28 15:55:39 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -32,7 +32,7 @@ private:
             BasicBlock *break_target, BasicBlock *continue_target);
     BlockList *do_switch_body(SgBasicBlock *block, BasicBlock *after,
             BasicBlock *continue_target);
-    int find_procnum(const char *) const;
+    int find_procnum(std::string funcname) const;
     BasicBlock *allocate_new_block(BasicBlock *, BasicBlock *);
     BasicBlock *allocate_block_without_successor(BasicBlock *);
     SgStatement *rewrite_statement(const SgStatement *,

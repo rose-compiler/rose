@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.9 2008-03-28 10:36:28 gergo Exp $
+// $Id: cfg_support.h,v 1.10 2008-03-28 15:55:39 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -105,14 +105,14 @@ class CallBlock : public BasicBlock
 {
 public:
     CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
-            std::vector<SgVariableSymbol *> *paramlist_, const char *name_);
+            std::vector<SgVariableSymbol *> *paramlist_, std::string name_);
     CallBlock *partner;
     std::string print_paramlist() const;
     std::vector<SgVariableSymbol *> *paramlist;
     CallStmt *stmt;
 
 protected:
-    const char *name;
+    std::string name;
 };
 
 class IcfgStmt : public SgStatement
@@ -126,13 +126,13 @@ public:
 class CallStmt : public IcfgStmt
 {
 public:
-    CallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent);
+    CallStmt(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent);
 
     std::string unparseToString() const;
-    const char *get_funcname() const;
+    std::string get_funcname() const;
 
     KFG_NODE_TYPE type;
-    const char *name;
+    std::string name;
     CallBlock *parent;
     void update_infolabel();
 
@@ -145,7 +145,7 @@ typedef CallStmt FunctionCall, FunctionReturn;
 class FunctionEntry : public CallStmt
 {
 public:
-    FunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent)
+    FunctionEntry(KFG_NODE_TYPE type, std::string func, CallBlock *parent)
         : CallStmt(type, func, parent)
     {
     }
@@ -153,7 +153,7 @@ public:
     // const char *get_funcname() const { return funcname; }
 
 private:
-    const char *funcname;
+    std::string funcname;
 };
 
 class DeclareStmt : public IcfgStmt
@@ -229,9 +229,9 @@ private:
 class ConstructorCall : public IcfgStmt
 {
 public:
-    const char *get_name() const { return name; }
+    std::string get_name() const { return name; }
     SgType *get_type() const { return type; }
-    ConstructorCall(const char *name_, SgType *type_)
+    ConstructorCall(std::string name_, SgType *type_)
         : name(name_), type(type_)
     {
     }
@@ -239,16 +239,16 @@ public:
 
 private:
     ConstructorCall();
-    const char *name;
+    std::string name;
     SgType *type;
 };
 
 class DestructorCall : public IcfgStmt
 {
 public:
-    const char *get_name() const { return name; }
+    std::string get_name() const { return name; }
     SgType *get_type() const { return type; }
-    DestructorCall(const char *name_, SgType *type_)
+    DestructorCall(std::string name_, SgType *type_)
         : name(name_), type(type_)
     {
     }
@@ -256,7 +256,7 @@ public:
 
 private:
     DestructorCall();
-    const char *name;
+    std::string name;
     SgType *type;
 };
 
@@ -331,20 +331,20 @@ class IfJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
-    const char *get_funcname() const { return "<none>"; }
+    std::string get_funcname() const { return "<none>"; }
 };
 
 class WhileJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
-    const char *get_funcname() const { return "<none>"; }
+    std::string get_funcname() const { return "<none>"; }
 };
 
 class FunctionExit : public CallStmt
 {
 public:
-    FunctionExit(KFG_NODE_TYPE type, const char *func, CallBlock *parent)
+    FunctionExit(KFG_NODE_TYPE type, std::string func, CallBlock *parent)
         : CallStmt(type, func, parent)
     {
     }
@@ -352,14 +352,16 @@ public:
     // const char *get_funcname() const { return funcname; }
 
 private:
-    const char *funcname;
+    std::string funcname;
 };
 
 class Procedure
 {
 public:
+    Procedure();
+
     int procnum;
-    const char *name, *mangled_name, *memberf_name, *mangled_memberf_name;
+    std::string name, mangled_name, memberf_name, mangled_memberf_name;
     SgClassDefinition *class_type;
     CallBlock *entry;
     CallBlock *exit;

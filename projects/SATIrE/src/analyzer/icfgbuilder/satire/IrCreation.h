@@ -36,14 +36,14 @@ public:
   static SgIntVal* createIntVal(int value);
   static SgCastExp* createNullPointerExp(SgType *type);
   // ICFG specific nodes that inherit from ROSE SgStatement and implement unparseToString
-  static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, const char *name, CallBlock *parent);
-  static FunctionEntry* createFunctionEntry(KFG_NODE_TYPE type, const char *func, CallBlock *parent);
-  static FunctionExit* createFunctionExit(KFG_NODE_TYPE type, const char *func, CallBlock *parent);
+  static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent);
+  static FunctionEntry* createFunctionEntry(KFG_NODE_TYPE type, std::string func, CallBlock *parent);
+  static FunctionExit* createFunctionExit(KFG_NODE_TYPE type, std::string func, CallBlock *parent);
   static DeclareStmt* createDeclareStmt(SgVariableSymbol *v, SgType *t);
   static UndeclareStmt* createUndeclareStmt(std::vector<SgVariableSymbol *> *v);
   static ExternalCall* createExternalCall(SgExpression *function, std::vector<SgVariableSymbol *> *params, SgType *type_);
-  static ConstructorCall* createConstructorCall(const char *name_, SgType *type_);
-  static DestructorCall* createDestructorCall(const char *name_, SgType *type_);
+  static ConstructorCall* createConstructorCall(std::string name_, SgType *type_);
+  static DestructorCall* createDestructorCall(std::string name_, SgType *type_);
   static ArgumentAssignment* createArgumentAssignment(SgVariableSymbol *l, SgExpression *r);
   static ArgumentAssignment* createArgumentAssignment(SgExpression *l, SgExpression *r);
   static ReturnAssignment* createReturnAssignment(SgVariableSymbol *l, SgVariableSymbol *r);
