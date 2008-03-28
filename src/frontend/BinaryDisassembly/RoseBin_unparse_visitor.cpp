@@ -450,6 +450,7 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
   if (isSgAsmRegisterReferenceExpression(expr)) {
     // 1. its a RegisterReferenceExpression -------------------------
     //SgAsmExpression* offset = NULL;
+    res="unknown";
     SgAsmRegisterReferenceExpression* refExpr = isSgAsmRegisterReferenceExpression(expr);
     if (RoseAssemblyLanguage==x86) {
       SgAsmRegisterReferenceExpression::x86_register_enum code = refExpr->get_x86_register_code();
