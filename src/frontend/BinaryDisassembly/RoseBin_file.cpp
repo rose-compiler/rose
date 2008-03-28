@@ -479,7 +479,7 @@ void RoseBin_FILE::process_operand_expressions_query( ) {
       // rememberOperandExpressions.insert(make_pair(operand_id, expr_id));      
 #endif
 
-      cout << ">> expr_id : " << expr_id << " -  rememberExpressionTree.size():" << rememberExpressionTree.size() << endl;      
+      //cout << ">> expr_id : " << expr_id << " -  rememberExpressionTree.size():" << rememberExpressionTree.size() << endl;      
       ROSE_ASSERT (expr_id < (int)rememberExpressionTree.size());
       exprTreeType exprTree = rememberExpressionTree[expr_id];
       if (operand_id >= (int)rememberExpressionTree_ParentChild.size())

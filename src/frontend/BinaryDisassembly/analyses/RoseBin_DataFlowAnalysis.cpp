@@ -478,7 +478,9 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     cerr << " Nr of Nodes Visited during DFA : " << nrOfNodesVisited << endl;
     cerr << " Nr of Functions : " << nrOfFunc << endl;
     cerr << " Nr of Instructions : " << nrOfInst << endl;
-    double res = nrOfInst / nrOfFunc;
+    double res = 0;
+    if (nrOfFunc>0)
+      res = nrOfInst / nrOfFunc;
     cerr << " Average Nr of Inst per Function : " << RoseBin_support::ToString(res) << endl;
     cerr << " Nr of Memory writes : " << dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfMemoryWrites() << endl;
     cerr << " Nr of Register writes : " << dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfRegisterWrites() << endl;
