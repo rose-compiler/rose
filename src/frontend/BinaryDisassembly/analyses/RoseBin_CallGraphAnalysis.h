@@ -11,6 +11,7 @@
 #include "RoseBin_FlowAnalysis.h"
 
 class RoseBin;
+class RoseFile;
 
 class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
 
@@ -19,10 +20,14 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
   RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin* ):RoseBin_FlowAnalysis(global) {
     typeNode="function";
     typeEdge="CG-E";  
-
     analysisName="callgraph";
-    //roseBin = r;
-    //    globalBin = global;
+    forward_analysis=true;
+  }
+
+  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseFile* ):RoseBin_FlowAnalysis(global) {
+    typeNode="function";
+    typeEdge="CG-E";  
+    analysisName="callgraph";
     forward_analysis=true;
   }
 

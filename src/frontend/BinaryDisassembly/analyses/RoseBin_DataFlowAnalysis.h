@@ -18,6 +18,7 @@
 #include "RoseBin_DataFlowAbstract.h"
 
 class RoseBin;
+class RoseFile;
 
 class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  private:
@@ -59,12 +60,18 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin* ):RoseBin_FlowAnalysis(global) {
     typeNode="DFG";
     typeEdge="DFG-E";  
-
     interprocedural = false;
     printEdges = false;
     analysisName = "dfa";
-    //    roseBin = r;
-    //    globalBin = global;
+    forward_analysis=forward;
+    defuse = new RoseBin_DefUseAnalysis();
+  }
+  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* ):RoseBin_FlowAnalysis(global) {
+    typeNode="DFG";
+    typeEdge="DFG-E";  
+    interprocedural = false;
+    printEdges = false;
+    analysisName = "dfa";
     forward_analysis=forward;
     defuse = new RoseBin_DefUseAnalysis();
   }

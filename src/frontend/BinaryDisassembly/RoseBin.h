@@ -10,7 +10,7 @@
 
 
 //#include <mysql.h>
-
+#include "RoseBin_abstract.h"
 #include <stdio.h>
 #include <iostream>
 // #include "rose.h"
@@ -19,30 +19,18 @@
 // #include "RoseBin_unparse.h"
 
 
-class RoseBin : public AstSimpleProcessing {
+class RoseBin : public RoseBin_abstract {
  private:
   MYSQL_RES *res_set;
   // the DB connection
   RoseBin_DB_IDAPRO* idaDB; 
   MYSQL* conn;
-  RoseBin_unparse* unparser;
-  SgAsmNode* globalNode;
-  std::list<std::string> functionNames;
-
-
-
-  int trav_inst;
-  int trav_blocks;
-  int trav_funcs;
-  int nodes;
-
-  int num_func;
-  int num_inst;
-
+  //  RoseBin_unparse* unparser;
+  //SgAsmNode* globalNode;
+  //std::list<std::string> functionNames;
 
   void loadAST(std::string filename);
   void saveAST(std::string filename);
-
 
 
  public:
@@ -55,31 +43,29 @@ class RoseBin : public AstSimpleProcessing {
         RoseBin_support::setDebugMode(false);    
         RoseBin_support::setDataBaseSupport(true);    
     idaDB = new RoseBin_DB_IDAPRO(host, user, passw, dbase);
-    unparser = new RoseBin_unparse();
-    RoseBin_support::setUnparseVisitor(unparser->getVisitor());
+    //unparser = new RoseBin_unparse();
+    //RoseBin_support::setUnparseVisitor(unparser->getVisitor());
     res_set = 0;
     conn = 0;
-    globalNode = 0;
-    functionNames.clear();
-    num_inst=0;
-    num_func=0;
-    RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
-    //RoseBin_support::setAssemblyLanguage(RoseBin::none);
+    //    globalNode = 0;
+    //functionNames.clear();
+    //num_inst=0;
+    //num_func=0;
+    //RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
+    
   }
   
   ~RoseBin() {
     delete idaDB;
-    delete unparser;
+    //delete unparser;
 
     idaDB = NULL;
-    unparser = NULL;
+    //unparser = NULL;
 
-    if (globalNode)
-      delete globalNode;
+    //if (globalNode)
+    //  delete globalNode;
   }
 
-  int getNumberOfFunctions() {return (num_func-1);}
-  int getNumberOfInstructions() {return (num_inst-1);}
 
   // allow filtering of functions
   void setFunctionFilter(std::list<std::string> functionName);

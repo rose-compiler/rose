@@ -11,6 +11,7 @@
 #include "RoseBin_FlowAnalysis.h"
 
 class RoseBin;
+class RoseFile;
 
 class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
 
@@ -20,11 +21,17 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
 			      bool printedges):RoseBin_FlowAnalysis(global) {
     typeNode="CFG";
     typeEdge="CFG-E";  
-
     analysisName="cfa";
-    //    roseBin = r;
     printEdges = printedges;
+    forward_analysis=forward;
+  }
 
+  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* , 
+			      bool printedges):RoseBin_FlowAnalysis(global) {
+    typeNode="CFG";
+    typeEdge="CFG-E";  
+    analysisName="cfa";
+    printEdges = printedges;
     forward_analysis=forward;
   }
 

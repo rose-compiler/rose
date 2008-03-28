@@ -85,6 +85,7 @@
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif 
+  #include "RoseFile.h"
 
   #include "RoseBin_DotGraph.h"
   #include "RoseBin_GmlGraph.h"

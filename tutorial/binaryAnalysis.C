@@ -34,7 +34,7 @@ int main(int argc, char** argv)
   RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph();
   RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph();
   char* cfgFileName = "cfg.dot";
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, NULL, edges);
+  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseFile(""), edges);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
 
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   cout << " creating call graph ... " << endl;
   char* callFileName = "callgraph.gml";
   forward = true;
-  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), NULL);
+  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseFile(""));
 
   // Building a GML file for the call graph
      callanalysis->run(gmlGraph, callFileName, !mergedEdges);
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
   forward = true;
   bool printEdges = true;
   bool interprocedural = true;
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, NULL);
+  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseFile(""));
   dfanalysis->init(interprocedural, printEdges);
 
   // Building a DOT file for the data-flow graph
