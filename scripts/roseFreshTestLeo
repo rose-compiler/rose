@@ -66,7 +66,7 @@ buildstatus=0
   set -x
 #------------------------------------------------------
 # check out a fresh copy for testing
-  $SVN -q ${ROSE_SVNROOT} sourcetree
+  $SVN co -q ${ROSE_SVNROOT} sourcetree
 #  $SVN export -q ${ROSE_SVNROOT} sourcetree
 
 #------------------------------------------------------
