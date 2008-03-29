@@ -544,7 +544,7 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
 	  if (left && right) {
             bool lhsIsRip = isSgAsmRegisterReferenceExpression(left) &&
                             isSgAsmRegisterReferenceExpression(left)->get_x86_register_code() == SgAsmRegisterReferenceExpression::rIP;
-            if (isSgAsmBinaryAdd(binExp) && isSgAsmValueExpression(right) && !lhsIsRip) {
+            if ( /* isSgAsmBinaryAdd(binExp) && isSgAsmValueExpression(right) && !lhsIsRip */ false ) {
               // Special case for non-rIP-relative memory references
               int64_t rhsConstant = 0;
               switch (right->variantT()) {

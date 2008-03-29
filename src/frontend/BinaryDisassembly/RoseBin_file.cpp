@@ -48,6 +48,15 @@ RoseBin_FILE::getName(string name) {
   return name;
 }
 
+//compare function for std sort
+struct SortAscending_functions_1 : public std::binary_function<functions_1, functions_1,bool>
+{
+  bool operator()(const functions_1& s1, const functions_1& s2) const
+  {
+    return (atoi(s1.address.c_str()) < atoi(s2.address.c_str()));
+  }
+};
+
 
 
 /****************************************************
@@ -61,13 +70,16 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
 
   vector<functions_1> vec_functions_1;
   get_functions_1(filename, vec_functions_1);
+
+  std::stable_sort(vec_functions_1.begin(), vec_functions_1.end(), SortAscending_functions_1());
+
   //  char* q = (char*)"SELECT * FROM functions_1";
 
   for (unsigned int i=0; i<vec_functions_1.size(); i++) {
     long address=0;
-    string name = (char*)"";
+    string name =  "";
     int type=-1;
-    string name_md5 =(char*)"";
+    string name_md5 = "";
     
     address = atoi(vec_functions_1[i].address.c_str());
     name = vec_functions_1[i].name;
@@ -86,13 +98,13 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
       //      cerr << "converting name : " << name <<  "   status: " << status <<endl;
 
       if (status==0) {
-	name =(char*)"";
+	name = "";
 	bool found_bracket=false;
-	for (unsigned int i=0; i<length;i++) {
-	  if (newName[i]=='(')
+	for (unsigned int j=0; j<length;j++) {
+	  if (newName[j]=='(')
 	    found_bracket=true;
 	  if (found_bracket==false)
-	    name += newName[i];
+	    name += newName[j];
 	}
 	if (RoseBin_support::DEBUG_MODE())
 	  cout << " demangling name to " << name << endl;
@@ -138,7 +150,7 @@ void RoseBin_FILE::process_comments_query( ) {
   get_address_comments_1(filename, vec_address_comments_1);
   //  char* q = (char*)"SELECT * FROM address_address_comments_1";
     long address=0;
-    string comment=(char*)"";
+    string comment= "";
 
   for (unsigned int i=0; i<vec_address_comments_1.size(); i++) {
     address = atoi(vec_address_comments_1[i].address.c_str());
@@ -184,6 +196,15 @@ SgAsmInstruction* RoseBin_FILE::createInstruction(int address, SgAsmFunctionDecl
   return instruction; 
 }
 
+//compare function for std sort
+struct SortAscending_instructions_1 : public std::binary_function<instructions_1, instructions_1,bool>
+{
+  bool operator()(const instructions_1& s1, const instructions_1& s2) const
+  {
+    return (atoi(s1.address.c_str()) < atoi(s2.address.c_str()));
+  }
+};
+
 
 /****************************************************
  * process all instructions in the DB
@@ -201,47 +222,13 @@ void RoseBin_FILE::process_instruction_query( ) {
   vector<instructions_1> vec_instructions_1;
   get_instructions_1(filename, vec_instructions_1);
 
-  // Get first address in each basic block
-  /*
-  declare first_insn_address as map from id to address
-    for each (id, parent_function, address) in basic_blocks_1 {
-	if (address >= parent_function &&
-	    (first_insn_address[id] does not exist ||
-	     address < first_insn_address[id])) {
-	  first_insn_address[id] = address;
-	}
-      }
-  */
-  map<int , uint64_t> first_insn_address;
-  for (int i=0; i<(int)vec_basic_blocks_1.size(); i++) {
-    int id  = atoi(vec_basic_blocks_1[i].id.c_str());
-    uint64_t address  = atoi(vec_basic_blocks_1[i].address.c_str());
-    int parent_function = atoi(vec_basic_blocks_1[i].parent_function.c_str());
-    if (address >= parent_function && first_insn_address.find(id) == first_insn_address.end()
-	|| address < first_insn_address[id]) {
-      first_insn_address[id] = address;
-    } 
-  }
+  std::stable_sort(vec_instructions_1.begin(), vec_instructions_1.end(), SortAscending_instructions_1());
 
-  
-  // Get the parent function for the first instruction in each basic block
-  /*
-  declare get_parent_function as map from address to parent_function
-    for each (address, basic_block_id, parent_function) in basic_blocks_1 {
-	if (first_insn_address[basic_block_id] exists &&
-	    address == first_insn_address[basic_block_id]) {
-	  get_parent_function[address] = parent_function;
-	}
-      }
-  */
-  map<uint64_t, int> get_parent_function;
-  for (int i=0; i<(int)vec_basic_blocks_1.size(); i++) {
-    int id  = atoi(vec_basic_blocks_1[i].id.c_str());
-    uint64_t address  = atoi(vec_basic_blocks_1[i].address.c_str());
-    int parent_function = atoi(vec_basic_blocks_1[i].parent_function.c_str());
-    if (first_insn_address.find(id) != first_insn_address.end() && address==first_insn_address[id]) {
-      get_parent_function[address] = parent_function;
-    } 
+  map<uint64_t, uint64_t> function_of_basic_block;
+  for (size_t i = 0; i < vec_basic_blocks_1.size(); ++i) {
+    uint64_t id = atoll(vec_basic_blocks_1[i].id.c_str());
+    uint64_t parent_function = atoll(vec_basic_blocks_1[i].parent_function.c_str());
+    function_of_basic_block[id] = parent_function;
   }
 
 
@@ -252,11 +239,11 @@ void RoseBin_FILE::process_instruction_query( ) {
   // (select min(i.address - parent_function) from basic_blocks_1 where id = i.basic_block_id       
   // and (i.address - parent_function) >= 0)     ) as i_f from instructions_1 i"; 
 
-    string mnemonic=(char*)"";
+    string mnemonic="";
     uint64_t address=0;
     int basic_block=-1;
     int sequence =-1;
-    string data=(char*)"";
+    string data= "";
     int i_func;
 
     for (unsigned int i=0; i<vec_instructions_1.size(); i++) {
@@ -265,11 +252,13 @@ void RoseBin_FILE::process_instruction_query( ) {
        mnemonic = vec_instructions_1[i].mnemonic;
        sequence = atoi(vec_instructions_1[i].sequence.c_str());
        data = vec_instructions_1[i].data;
-       i_func = get_parent_function[address];
+       if (function_of_basic_block.find(basic_block) == function_of_basic_block.end())
+	 ROSE_ASSERT (!"Basic block is not in a function");
+       i_func = function_of_basic_block[basic_block];
 
       // patched to adjust to objdump , Apr 26 2007
-      if (mnemonic ==(char*)"retn")
-	mnemonic = (char*)"ret";
+      if (mnemonic =="retn")
+	mnemonic = "ret";
       
       if (RoseBin_support::DEBUG_MODE()) {
 	ostringstream addrhex;
@@ -355,7 +344,7 @@ void RoseBin_FILE::process_operand_strings_query( ) {
 
   //  char* q = (char*)"SELECT * FROM operand_strings_1";
     int id=-1;
-    string str=(char*)"";
+    string str="";
 
   for (unsigned int i=0; i<vec_operand_strings_1.size(); i++) {
     id = atoi(vec_operand_strings_1[i].id.c_str());
@@ -380,13 +369,39 @@ void RoseBin_FILE::process_operand_root_query( ) {
   vector<operand_expressions_1> vec_operand_expressions_1;
   get_operand_expressions_1(filename, vec_operand_expressions_1);
 
+
+  vector<expression_tree_1> vec_expression_tree_1;
+  get_expression_tree_1(filename, vec_expression_tree_1);
+  map<int, expression_tree_1*> expression_tree_by_id;
+  for (size_t i = 0; i < vec_expression_tree_1.size(); ++i) {
+    string id_str = vec_expression_tree_1[i].id;
+    int id = atoi(id_str.c_str());
+    expression_tree_by_id[id] = &vec_expression_tree_1[i];
+  }
+
+  map<int, operand_expressions_1> get_root;
+  for (int i=0; i<(int)vec_operand_expressions_1.size(); i++) {
+    string operand_id_str = vec_operand_expressions_1[i].operand_id;
+    int operand_id = atoi(operand_id_str.c_str());
+    string expr_id_str = vec_operand_expressions_1[i].expr_id;
+    int expr_id = atoi(expr_id_str.c_str());
+    expression_tree_1* treePtr = expression_tree_by_id[expr_id];
+    if (!treePtr) continue;
+    string parent_id = treePtr->parent_id;
+    if (parent_id == "null") {
+      get_root[operand_id] = vec_operand_expressions_1[i];
+    }
+  } 
+
+
   //char* q = (char*)"select operand_id, expr_id from operand_expressions_1 as oe, expression_tree_1 as t where oe.expr_id = t.id and t.parent_id is NULL";
     int operand_id=-1;
     int expr_id=-1;
 
-    for (unsigned int i=0; i<vec_operand_expressions_1.size(); i++) {
-      operand_id = atoi(vec_operand_expressions_1[i].operand_id.c_str());
-      expr_id = atoi(vec_operand_expressions_1[i].expr_id.c_str());
+    map<int, operand_expressions_1>::iterator it = get_root.begin();
+    for (;it != get_root.end(); it++) {
+      operand_id = atoi(it->second.operand_id.c_str());//atoi(vec_operand_expressions_1[i].operand_id.c_str());
+      expr_id = atoi(it->second.expr_id.c_str());//atoi(vec_operand_expressions_1[i].expr_id.c_str());
 
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> creating operand_roots : " << operand_id << " - " << expr_id << endl;
@@ -444,7 +459,7 @@ struct SortDescending_operand_expression_1 : public std::binary_function<operand
 {
   bool operator()(const operand_expressions_1& s1, const operand_expressions_1& s2) const
   {
-    return (s1.operand_id > s2.operand_id);
+    return (atoi(s1.operand_id.c_str()) > atoi(s2.operand_id.c_str()));
   }
 };
 
@@ -460,7 +475,7 @@ void RoseBin_FILE::process_operand_expressions_query( ) {
   vector<operand_expressions_1> vec_operand_expressions_1;
   get_operand_expressions_1(filename, vec_operand_expressions_1);
 
-  std::sort(vec_operand_expressions_1.begin(), vec_operand_expressions_1.end(), SortDescending_operand_expression_1());
+  std::stable_sort(vec_operand_expressions_1.begin(), vec_operand_expressions_1.end(), SortDescending_operand_expression_1());
 
   //  char* q = (char*)"SELECT * FROM operand_expressions_1 order by operand_id desc";
   int operand_id=-1;
@@ -484,7 +499,7 @@ void RoseBin_FILE::process_operand_expressions_query( ) {
       exprTreeType exprTree = rememberExpressionTree[expr_id];
       if (operand_id >= (int)rememberExpressionTree_ParentChild.size())
 	rememberExpressionTree_ParentChild.resize(operand_id + 1);
-      rememberExpressionTree_ParentChild[operand_id].insert(make_pair(exprTree.parent_id, exprTree.id));
+      rememberExpressionTree_ParentChild[operand_id][exprTree.parent_id].insert(rememberExpressionTree_ParentChild[operand_id][exprTree.parent_id].begin(), exprTree.id);
       if (RoseBin_support::DEBUG_MODE())
 	cout << " building operand expression_tree -- (operand_id, (parent_id, id))  :  (" << operand_id << ",(" << exprTree.parent_id << "," << exprTree.id << "))" << endl; 
       
@@ -522,21 +537,21 @@ void RoseBin_FILE::process_substitutions_query( ) {
  * check the type of each operand
  ****************************************************/
 string RoseBin_FILE::resolveType(exprTreeType* expt) {
-  string type=(char*)"";
-  if (expt->symbol==(char*)"b8") {
+  string type="";
+  if (expt->symbol=="b8") {
     return "QWORD";
   } else  
-    if (expt->symbol==(char*)"b6") {
+    if (expt->symbol=="b6") {
       // FIXME: dont know what this is, but lets return dword for now
       return "DWORD";
     } else  
-      if (expt->symbol==(char*)"b4") {
+      if (expt->symbol=="b4") {
 	return "DWORD";
       } else  
-	if (expt->symbol==(char*)"b2") {
+	if (expt->symbol=="b2") {
 	  return "WORD";
 	} else
-	  if (expt->symbol==(char*)"b1") {
+	  if (expt->symbol=="b1") {
 	    return "BYTE";
 	  } else {
 	    //    exprTreeType parentExp = rememberExpressionTree_Root[expt.parent_id];
@@ -552,7 +567,7 @@ struct SortDescending_operand_tuples_1 : public std::binary_function<operand_tup
 {
   bool operator()(const operand_tuples_1& s1, const operand_tuples_1& s2) const
   {
-    return (s1.operand_id > s2.operand_id);
+    return (atoi(s1.operand_id.c_str()) > atoi(s2.operand_id.c_str()));
   }
 };
 
@@ -567,7 +582,7 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
   vector<operand_tuples_1> vec_operand_tuples_1;
   get_operand_tuples_1(filename, vec_operand_tuples_1);
 
-  std::sort(vec_operand_tuples_1.begin(), vec_operand_tuples_1.end(), SortDescending_operand_tuples_1());
+  std::stable_sort(vec_operand_tuples_1.begin(), vec_operand_tuples_1.end(), SortDescending_operand_tuples_1());
 
   //char* q = (char*)"SELECT * FROM operand_tuples_1 order by operand_id desc";
     map < int, vector < SgAsmExpression* > > tmp_instruction_map;
@@ -601,11 +616,11 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
       if (operand_id>=0) {
 	// operand_str = rememberOperandStrings.find(operand_id) != rememberOperandStrings.end() ? rememberOperandStrings[operand_id] : "";
 	//if (RoseBin_support::DEBUG_MODE())
-	//cout << ">>>> operand_str: " << operand_str <<  endl;
+	//cout << ">>>> operand_str: " << operand_id <<  " ROOT size : " << rememberExpressionTree_ROOT.size() << endl;
 	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ROOT.size());
 	int expr_id_root = rememberExpressionTree_ROOT[operand_id];
 	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ParentChild.size());
-	multimap <int,int>  subTree = rememberExpressionTree_ParentChild[operand_id];
+	map <int, vector<int> >  subTree = rememberExpressionTree_ParentChild[operand_id];
 
 	rememberExpressionTree_ROOT.resize(operand_id + 1);
 	rememberExpressionTree_ParentChild.resize(operand_id + 1);
@@ -614,15 +629,18 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 	exprTreeType exprTree = rememberExpressionTree[expr_id_root];
 	string typeOfOperand = resolveType(&exprTree);
 
+#if 0
 	// print multimapsolveRe
 	if (RoseBin_support::DEBUG_MODE()) {
-	  multimap<int,int>::iterator it = subTree.begin();
+	  map<int, vector<int> >::iterator it = subTree.begin();
 	  for (; it!=subTree.end();++it) {
 	    int f=it->first;
 	    int s=it->second;
 	    cout << " mm : " << f << "," << s << endl;
 	  }
 	}
+#endif
+	cerr << "resolveRecursivelyExpression " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
 	binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
 							 subTree, 
 							 typeOfOperand,

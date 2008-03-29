@@ -54,7 +54,7 @@ class RoseBin_IDAPRO_buildTree : public RoseBin_buildTree  {
    ****************************************************/
   SgAsmExpression* resolveRecursivelyExpression(int address,
                                                    int expr_id_root, 
-                                                   const std::multimap <int,int>& subTree, 
+                                                   const std::map <int, std::vector<int> >& subTree, 
                                                    const std::string& typeOfOperand,
                                                    std::vector < exprTreeType > *rememberExpressionTree,
                                                    int operand_id,

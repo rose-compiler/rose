@@ -185,7 +185,7 @@ void RoseBin_DB_IDAPRO::process_functions_query(MYSQL* conn, MYSQL_RES* res_set,
   rememberFunctions.clear();
   //int counter=0;
 
-  char* q = (char*)"SELECT * FROM functions_1";
+  char* q = (char*)"SELECT * FROM functions_1 order by address";
   if (RoseBin_support::DEBUG_MODE())
     cout << "\n>> QUERY:: " << q << "\n" << endl;
   res_set = process_query(conn,q);
@@ -470,7 +470,7 @@ void RoseBin_DB_IDAPRO::process_instruction_query(MYSQL* conn, MYSQL_RES* res_se
   rememberInstructions.clear();
   // get the functions
   //  char* q = (char*)"SELECT * FROM instructions_1";
-  char *q = (char*)"select *,     (select parent_function from basic_blocks_1 where id = i.basic_block_id      and (i.address - parent_function) >= 0     and (i.address - parent_function) =     (select min(i.address - parent_function) from basic_blocks_1 where id = i.basic_block_id       and (i.address - parent_function) >= 0)     ) as i_f from instructions_1 i"; 
+  char *q = (char*)"select *,     (select parent_function from basic_blocks_1 where id = i.basic_block_id      and (i.address - parent_function) >= 0     and (i.address - parent_function) =     (select min(i.address - parent_function) from basic_blocks_1 where id = i.basic_block_id       and (i.address - parent_function) >= 0)     ) as i_f from instructions_1 i order by i.address"; 
 
   if (RoseBin_support::DEBUG_MODE())
     cout << "\n>> QUERY:: " << q << "\n" << endl;
@@ -775,7 +775,7 @@ void RoseBin_DB_IDAPRO::process_operand_expressions_query(MYSQL* conn, MYSQL_RES
       exprTreeType exprTree = rememberExpressionTree[expr_id];
       if (operand_id >= (int)rememberExpressionTree_ParentChild.size())
 	rememberExpressionTree_ParentChild.resize(operand_id + 1);
-      rememberExpressionTree_ParentChild[operand_id].insert(make_pair(exprTree.parent_id, exprTree.id));
+      rememberExpressionTree_ParentChild[operand_id][exprTree.parent_id].push_back(exprTree.id);
       if (RoseBin_support::DEBUG_MODE())
 	cout << " building operand expression_tree -- (operand_id, (parent_id, id))  :  (" << operand_id << ",(" << exprTree.parent_id << "," << exprTree.id << "))" << endl; 
       
@@ -834,20 +834,20 @@ void RoseBin_DB_IDAPRO::process_substitutions_query(MYSQL* conn, MYSQL_RES* res_
  ****************************************************/
 string RoseBin_DB_IDAPRO::resolveType(exprTreeType* expt) {
   string type=(char*)"";
-  if (expt->symbol==(char*)"b8") {
+  if (expt->symbol=="b8") {
     return "QWORD";
   } else  
-    if (expt->symbol==(char*)"b6") {
+    if (expt->symbol=="b6") {
       // FIXME: dont know what this is, but lets return dword for now
       return "DWORD";
     } else  
-      if (expt->symbol==(char*)"b4") {
+      if (expt->symbol=="b4") {
       return "DWORD";
       } else  
-	if (expt->symbol==(char*)"b2") {
+	if (expt->symbol=="b2") {
 	  return "WORD";
 	} else
-	  if (expt->symbol==(char*)"b1") {
+	  if (expt->symbol=="b1") {
 	  return "BYTE";
 	  } else {
 	    //    exprTreeType parentExp = rememberExpressionTree_Root[expt.parent_id];
@@ -919,7 +919,7 @@ void RoseBin_DB_IDAPRO::process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res
 	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ROOT.size());
 	int expr_id_root = rememberExpressionTree_ROOT[operand_id];
 	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ParentChild.size());
-	multimap <int,int>  subTree = rememberExpressionTree_ParentChild[operand_id];
+	map <int, vector<int> > subTree = rememberExpressionTree_ParentChild[operand_id];
 
 	rememberExpressionTree_ROOT.resize(operand_id + 1);
 	rememberExpressionTree_ParentChild.resize(operand_id + 1);
@@ -928,6 +928,7 @@ void RoseBin_DB_IDAPRO::process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res
 	exprTreeType exprTree = rememberExpressionTree[expr_id_root];
 	string typeOfOperand = resolveType(&exprTree);
 
+#if 0
 	// print multimapsolveRe
 	if (RoseBin_support::DEBUG_MODE()) {
 	  multimap<int,int>::iterator it = subTree.begin();
@@ -937,6 +938,7 @@ void RoseBin_DB_IDAPRO::process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res
 	    cout << " mm : " << f << "," << s << endl;
 	  }
 	}
+#endif
 	binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
 							 subTree, 
 							 typeOfOperand,

@@ -50,7 +50,7 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
   // std::multimap <int, int > rememberOperandExpressions; // Operand ID -> expr ID
   // std::vector < std::vector < int > > rememberOperandExpressions; // Operand ID -> set of expr ID
   // std::map <int, std::multimap<int,int> > rememberExpressionTree_ParentChild;
-  std::vector < std::multimap<int,int> > rememberExpressionTree_ParentChild;
+  std::vector < std::map<int, std::vector<int> > > rememberExpressionTree_ParentChild;
   // map of substitutions
   rose_hash::hash_map <int, exprSubstitutionType > rememberSubstitution;
   // map of callgraph info , <address, callgraphType>

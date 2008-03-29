@@ -85,6 +85,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
 	binNode=child;
 
       } else {
+        binNode = child;
 	// do nothing
 	// if we have a jump case, we have a value only and no RegRef
       }
@@ -128,10 +129,11 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
       if (children->size()==1) {
 	// the add has only one child
 	SgAsmExpression* child = *(children->begin());
-	if (child && previousExp && child!=previousExp) {
-	  child->set_parent(previousExp);
-	  if (isSgAsmMemoryReferenceExpression(previousExp)) 
-	    isSgAsmMemoryReferenceExpression(previousExp)->set_address(child);
+	if (child) {
+          binNode = child;
+	  // child->set_parent(previousExp);
+	  // if (isSgAsmMemoryReferenceExpression(previousExp)) 
+	  //   isSgAsmMemoryReferenceExpression(previousExp)->set_address(child);
 	  // changed on 16Jan08
 	  //if (isSgAsmRegisterReferenceExpression(previousExp))
 	  //  isSgAsmRegisterReferenceExpression(previousExp)->set_offset(child);
@@ -336,6 +338,7 @@ string RoseBin_IDAPRO_buildTree::getReplacementText(
 
   rose_hash::hash_map< int, exprSubstitutionType>::iterator it =  rememberSubstitution->find(address);
   if (it != rememberSubstitution->end()) {
+    cerr << "Found substitution " << address << endl;
     // for (it; it!=rememberSubstitution->end();++it) {
     const exprSubstitutionType& subst = it->second;
     int op_id = subst.operand_id;
@@ -343,9 +346,14 @@ string RoseBin_IDAPRO_buildTree::getReplacementText(
 
 
     if (op_id==operand_id && ex_id==expr_id_root) {
+      cerr << "Replacing with " << subst.replacement << endl;
       text=subst.replacement;
       // break;
+    } else {
+      cerr << "(Operand,expr) in substition (" << op_id << "," << ex_id << ") does not match tested (" << operand_id << "," << expr_id_root << ")" << endl;
     }
+  } else {
+    cerr << "Did not find substitution " << address << endl;
   }
   return text;
 }
@@ -373,12 +381,13 @@ std::string RoseBin_IDAPRO_buildTree::getComment(int address,
  ****************************************************/
 SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int address,
 									int expr_id_root, 
-									const multimap <int,int>& subTree, 
+									const map <int, vector<int> >& subTree, 
 									const string& typeOfOperand,
 									std::vector < exprTreeType > *rememberExpressionTree,
 									int operand_id,
 									rose_hash::hash_map <int, exprSubstitutionType> *rememberSubstitution,
 									rose_hash::hash_map <int, string> *rememberComments) {
+  cerr << "resolveRecursivelyExpression inside " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
   SgAsmExpression* binExp=NULL;
   if (RoseBin_support::DEBUG_MODE())
     cout << "\n>>>> resolving type of expr_id_root " << expr_id_root << endl;
@@ -386,26 +395,28 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
   int nrOfChildren=0;
 
   // collect an array of children
-  multimap<int,int>::const_iterator childIt  = subTree.lower_bound(expr_id_root);  
-  for (; childIt!=subTree.upper_bound(expr_id_root)  ; ++childIt) {
-    // iterate though children of root node
-    int child_id = childIt->second;
-    int par_id = childIt->first;
-    // if (par_id==expr_id_root) {
-    if (RoseBin_support::DEBUG_MODE())
-      cout << " expr_id: " << expr_id_root << "  child_id: " << child_id << "  itChild : " << nrOfChildren 
-	   << " parent_id: " << par_id <<endl;
-    ROSE_ASSERT (child_id < (int)rememberExpressionTree->size());
-    exprTreeType exprTree = (*rememberExpressionTree)[child_id];
-    binExp = resolveRecursivelyExpression(address, child_id, subTree, 
-					  typeOfOperand,
-					  rememberExpressionTree,
-					  operand_id,
-					  rememberSubstitution,
-					  rememberComments);
-    children.push_back(binExp);
-    debugHelpMap[binExp] = exprTree; 
-    nrOfChildren++;
+  map<int, vector<int> >::const_iterator i = subTree.find(expr_id_root);
+  if (i != subTree.end()) {
+    for (vector<int>::const_iterator childIt = i->second.begin(); childIt!=i->second.end(); ++childIt) {
+      // iterate though children of root node
+      int child_id = *childIt;
+      int par_id = expr_id_root;
+      // if (par_id==expr_id_root) {}
+      if (RoseBin_support::DEBUG_MODE())
+        cout << " expr_id: " << expr_id_root << "  child_id: " << child_id << "  itChild : " << nrOfChildren 
+             << " parent_id: " << par_id <<endl;
+      ROSE_ASSERT (child_id < (int)rememberExpressionTree->size());
+      exprTreeType exprTree = (*rememberExpressionTree)[child_id];
+      binExp = resolveRecursivelyExpression(address, child_id, subTree, 
+                                            typeOfOperand,
+                                            rememberExpressionTree,
+                                            operand_id,
+                                            rememberSubstitution,
+                                            rememberComments);
+      children.push_back(binExp);
+      debugHelpMap[binExp] = exprTree; 
+      nrOfChildren++;
+    }
   }
   if (RoseBin_support::DEBUG_MODE()) {
     cout << "\n>>>> type resolved of expr_id_root " << expr_id_root ;
@@ -414,14 +425,18 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
 
   ROSE_ASSERT (expr_id_root < (int)rememberExpressionTree->size());
   exprTreeType exprTree = (*rememberExpressionTree)[expr_id_root];
+  cerr << "Working on " << exprTree.expr_type << " symbol " << exprTree.symbol << " children " << children.size() << endl;
   binExp = convertBinaryNode(&exprTree, &children, typeOfOperand);
   // the following makes sure that if a node should be skipped
   // e.g. a SgAsmAdd because it has only one child, then
   // we attach to the previous node
+  ROSE_ASSERT (binExp);
+#if 0
   if (binExp!=NULL)
     previousExp = binExp;
   else
     binExp = previousExp;
+#endif
 
   // in addition to having the right expression, we 
   // want to add information about the substitution replacement text
@@ -432,8 +447,11 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
   }
   if (binExp!=NULL) {
     string tt = binExp->get_replacement();
-    if (tt!="") text = tt;
+    if (tt!="") {text = tt; cerr << "Found other replacement text " << tt << endl;} else {cerr << "Setting replacement text" << endl;}
+    cerr << "Doing actual replacement with " << text << endl;
     binExp->set_replacement(text);
+  } else {
+    cerr << "binExp is NULL" << endl;
   }
 
   if (RoseBin_support::DEBUG_MODE())
