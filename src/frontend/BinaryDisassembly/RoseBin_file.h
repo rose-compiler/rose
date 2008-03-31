@@ -14,14 +14,14 @@
 // #include "RoseBin_support.h"
 #include "RoseBin_IDAPRO_substTree.h"
 #include "RoseBin_IDAPRO_exprTree.h"
-#include "RoseBin_DB.h"
+//#include "RoseBin_DB.h"
 #include "RoseBin_IDAPRO_buildTree.h"
 #include "RoseBin_IDAPRO_callGraph.h"
 #include "RoseBin_IDAPRO_branchGraph.h"
 
 #include <cxxabi.h>
 
-class RoseBin_FILE : public RoseBin_DB {
+class RoseBin_FILE  {
  private:
   RoseBin_IDAPRO_buildTree* buildROSE;
   //Sg_File_Info* this_file;

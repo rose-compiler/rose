@@ -82,7 +82,8 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h
+   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h \
+   RoseBin_abstract.h
 endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available
 # colorTraversal.h  
