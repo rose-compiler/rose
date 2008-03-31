@@ -1,8 +1,8 @@
 \chapter{Adding a Variable Declaration}
 \paragraph{What To Learn} Two examples are given to show how to construct a SAGE III 
 AST subtree for a variable declaration and its insertion into the existing AST tree.
-
-Example 1. Building a variable declaration using high level AST construction and 
+\begin{itemize}
+\item Example 1. Building a variable declaration using the high level AST construction and 
 manipulation interfaces defined in namespace SageBuilder and SageInterface. 
 
 Figure~\ref{Tutorial:exampleAddVariableDeclaration2} shows the high level
@@ -30,13 +30,14 @@ and so on are handled transparently.
 }
 % End of scope in indentation
 }
-\caption{AST construction and insertion for a variable using high level interfaces}
+\caption{AST construction and insertion for a variable using the high level interfaces}
 \label{Tutorial:exampleAddVariableDeclaration2}
 \end{figure}
 
 %------------------- end figure---------------------
 
 %\newpage
+\item
 Example 2. Building the variable declaration using low level member functions of SAGE III node classes.
 
 Figure~\ref{Tutorial:exampleAddVariableDeclaration} shows the low level
@@ -45,8 +46,7 @@ into the AST at the top of each block. SgNode constructors and their member func
 Side effects for scope, parent pointers and symbol tables have to be handled by programmers explicitly.
 
 %Note that the code does not handle symbol table issues.
-\fixme{The input code should use the LowLevelRewrite classes instead of the 
-       still lower level AST nodes member functions directly.}
+%\fixme{The input code should use the LowLevelRewrite classes instead of the still lower level AST nodes member functions directly.}
 
 \fixme{Both this section and the next section (adding a function declaration)
        and the section(s) specific to the string based rewrite mechanism
@@ -73,12 +73,14 @@ Side effects for scope, parent pointers and symbol tables have to be handled by 
          declaration at the top of each block.}
 \label{Tutorial:exampleAddVariableDeclaration}
 \end{figure}
+\end{itemize}
 
 
 Figure~\ref{Tutorial:exampleInputCode_AddVariableDeclaration} shows the
 input code used to test the translator. 
 Figure~\ref{Tutorial:exampleOutput_AddVariableDeclaration} shows the resulting output.
 
+%-----------------------input code-------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -102,10 +104,10 @@ Figure~\ref{Tutorial:exampleOutput_AddVariableDeclaration} shows the resulting o
 \label{Tutorial:exampleInputCode_AddVariableDeclaration}
 \end{figure}
 
+%-----------------------output code-------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
