@@ -190,9 +190,6 @@ SgNotOp* buildNotOp(SgExpression* operand = NULL);
 //! build ++x or x++ , specify prefix or postfix using either SgUnaryOp::prefix or SgUnaryOp::postfix
 SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i = NULL, SgUnaryOp::Sgop_mode  a_mode = SgUnaryOp::prefix);
 
-//! build --x or x--. Remember to call SgUnaryOp::set_mode(SgUnaryOp::Sgop_mode  mode ) explicitly after calling this builder.
-SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i = NULL);
-
 //! SgPointerDerefExp
 SgPointerDerefExp* buildPointerDerefExp(SgExpression* operand_i =NULL);
 
