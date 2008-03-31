@@ -1,6 +1,8 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // Specifically it shows the design of a transformation to instrument source code, placing source code
-// at the top and bottome of each basic block.
+// at the top and bottom of each basic block.
+// Member functions of SAGE III AST node classes are directly used.
+// So all details for Sg_File_Info, scope, parent, symbol tables have to be explicitly handled.
 
 #include "rose.h"
 

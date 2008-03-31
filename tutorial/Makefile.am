@@ -18,6 +18,8 @@ noinst_PROGRAMS = \
    accumulatorAttributeTraversal \
    addComments \
    addFunctionDeclaration \
+   addFunctionDeclaration2 \
+   addFunctionDeclaration3 \
    addStruct \
    addVariableDeclaration \
    addVariableDeclaration2 \
@@ -181,6 +183,13 @@ addVariableDeclaration2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionDeclaration_SOURCES = addFunctionDeclaration.C
 addFunctionDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+addFunctionDeclaration2_SOURCES = addFunctionDeclaration2.C
+addFunctionDeclaration2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+addFunctionDeclaration3_SOURCES = addFunctionDeclaration3.C
+addFunctionDeclaration3_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
 
 loopOptimization_SOURCES = loopOptimization.C
 loopOptimization_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -385,8 +394,13 @@ testAddVariableDeclaration2: addVariableDeclaration2
 	./addVariableDeclaration2 --edg:no_warnings -c $(srcdir)/inputCode_AddVariableDeclaration2.C
 
 testAddFunctionDeclaration: addFunctionDeclaration
-#	./addFunctionDeclaration -c $(srcdir)/inputCode_1.C
 	./addFunctionDeclaration --edg:no_warnings -c $(srcdir)/inputCode_AddFunctionDeclaration.C
+
+testAddFunctionDeclaration2: addFunctionDeclaration2
+	./addFunctionDeclaration2 --edg:no_warnings -c $(srcdir)/inputCode_AddFunctionDeclaration2.C
+testAddFunctionDeclaration3: addFunctionDeclaration3
+	./addFunctionDeclaration3 --edg:no_warnings -c $(srcdir)/inputCode_AddFunctionDeclaration3.C
+
 
 testLoopOptimization: loopOptimization
 	$(VALGRIND) ./loopOptimization -c $(srcdir)/inputCode_LoopOptimization.C
@@ -636,6 +650,8 @@ generatedCodeExamples = \
    nestedQuery.out \
    $(traversalOutput) \
    rose_inputCode_AddFunctionDeclaration.C \
+   rose_inputCode_AddFunctionDeclaration2.C \
+   rose_inputCode_AddFunctionDeclaration3.C \
    rose_inputCode_AddVariableDeclaration.C \
    rose_inputCode_InstrumentationTranslator.C \
    loopRecognition.out \
@@ -834,6 +850,14 @@ traverseIRnodeTypes.out: traverseIRnodeTypes
 rose_inputCode_AddFunctionDeclaration.C: addFunctionDeclaration
 	@echo "Generate executable from compilation of input code (addFunctionDeclaration) ..."
 	./addFunctionDeclaration $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddFunctionDeclaration.C
+
+rose_inputCode_AddFunctionDeclaration2.C: addFunctionDeclaration2
+	@echo "Generate executable from compilation of input code (addFunctionDeclaration2) ..."
+	./addFunctionDeclaration2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddFunctionDeclaration2.C
+
+rose_inputCode_AddFunctionDeclaration3.C: addFunctionDeclaration3
+	@echo "Generate executable from compilation of input code (addFunctionDeclaration3) ..."
+	./addFunctionDeclaration3 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddFunctionDeclaration3.C
 
 rose_inputCode_AddVariableDeclaration.C: addVariableDeclaration
 	@echo "Generate executable from compilation of input code (addVariableDeclaration) ..."
@@ -1081,6 +1105,7 @@ EXTRA_DIST = \
    inputCode_wholeAST_2.C \
    inputCode_QueryLibrary.C \
    inputCode_AddFunctionDeclaration.C \
+   inputCode_AddFunctionDeclaration2.C \
    inputCode_ExampleDebugging.C \
    inputCode_LoopOptimization.C \
    inputCode_ResolvingOverloadedFunctions.C \

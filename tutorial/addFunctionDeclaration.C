@@ -1,6 +1,6 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // Specifically it shows the design of a transformation to instrument source code, placing source code
-// at the top and bottome of each basic block.
+// at the top of the source file.
 
 #include "rose.h"
 
