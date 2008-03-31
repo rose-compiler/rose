@@ -2,7 +2,7 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "libxml/encoding.h"
+#include <libxml/encoding.h>
 #include <libxml/tree.h>
 #include <libxml/xmlreader.h>
 
@@ -43,23 +43,23 @@ int main (int argc, char **argv)
 	}
 	// read the XML-File
 	// since in version 2.5.x, which is currently installed in the lab does not have a filtered xmlReadFile function parseFile is used an the resulting xmlTree is filterd for "blank"-nodes
-	#if LIBXML_VERSION> 20600
+#if LIBXML_VERSION> 20600
 	doc = xmlReadFile(argv[1],NULL,XML_PARSE_NOBLANKS);
-	#else
+#else
 	doc = xmlParseFile(argv[1]);
-	#endif
+#endif
 	if (doc == NULL)
 	{
 		cerr << "critical error while reading XML-File \""<<argv[1]<<"\""<<endl;
 	}
   // get the root node
 	current=rootElement = xmlDocGetRootElement(doc);
-	#if LIBXML_VERSION >20600
-	#else
+#if LIBXML_VERSION >20600
+#else
 	current=rootElement=filterTreeForBlankNodes(rootElement);
 	//make shure that the doc is correct
 	xmlDocSetRootElement(doc,rootElement);
-	#endif
+#endif
 	// search for the roseFLE-Node
 	while(current)
 	{
@@ -186,7 +186,7 @@ int main (int argc, char **argv)
 			else
 			{
 				// if there was not a match in filename ... output this
-				cout << "Filename is not in the databasen." << endl;
+				cout << "Filename is not in the database." << endl;
 				continue;
 			}
 		}
@@ -253,9 +253,9 @@ void readFileList(xmlNodePtr fileListRootNode)
 	xmlAttrPtr fileCountAttr=xmlHasProp(fileListRootNode,BAD_CAST "fileCount");
 	if (fileCountAttr!=NULL)
 	{
-		#ifdef DEBUG
+#ifdef DEBUG
 		cerr << "WARNING: expecting " << fileCountAttr->children->content <<endl;
-		#endif
+#endif
 	}
 	else
 	{
@@ -284,9 +284,9 @@ void readFileList(xmlNodePtr fileListRootNode)
 					xmlAttrPtr fileNumberAttr=xmlHasProp(currentFileCandidate,BAD_CAST "fileNumber");
 					if (fileNumberAttr!=NULL)
 					{
-						#ifdef DEBUG
+#ifdef DEBUG
 						cerr << "MSG: according to prop this should be file number >" << fileNumberAttr->children->content << "< and is >" << fileCounter << "<\n";
-						#endif
+#endif
 					}
 					else
 					{
@@ -318,17 +318,17 @@ void readFileList(xmlNodePtr fileListRootNode)
 					}				
 				}
 			break;
-			#ifdef DEBUG
+#ifdef DEBUG
 			case XML_TEXT_NODE:
 				cout<< currentFileCandidate->content << endl;			
 			default:
 			cerr << "WARNING: Unintercepted elementType: " << currentFileCandidate->type<<endl;
 			cerr << "\t\t"<<currentFileCandidate->name << endl;
 			break;
-			#else
+#else
 			default:
 			break;
-			#endif
+#endif
 		}
 
 		// now all sub-nodes of the current file have bee read, check for conformity

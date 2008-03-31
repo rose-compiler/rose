@@ -21,34 +21,34 @@ bcl_reader_DEPENDENCIES =
 # If $(srcdir) is a relative path then we need this version
 # becuae filenames in Sg_File_Info are absolute paths in ROSE.
 old_mkSearch:
-	g++ -O3 -g `pwd`/$(srcdir)/example1.C -o example1.bin
+	g++ -O3 -g $(srcdir)/example1.C -o example1.bin
 	objdump -ld example1.bin | grep '^/' > example1.in
-	cd $(srcdir) && echo "`pwd`/example1.C:4000" >>$(SAMPLE_INPUT_DIR)/example1.in
+	echo "$(srcdir)/example1.C:4000" >> example1.in
 	echo "/not_a_file.goo:1" >> example1.in
-	g++ -O3 -g `pwd`/$(srcdir)/example2.C -o example2.bin
+	g++ -O3 -g $(srcdir)/example2.C -o example2.bin
 	objdump -ld example2.bin | grep '^/' > example2.in
-	echo "`pwd`/$(srcdir)/example2.C:4000" >>example2.in
-	cd $(srcdir) && echo "`pwd`/example2.C:4000" >>$(SAMPLE_INPUT_DIR)/example2.in
+	echo "$(srcdir)/example2.C:4000" >>example2.in
+	echo "$(srcdir)/example2.C:4000" >> example2.in
 	echo "/not_a_file.goo:1" >> example2.in
-	g++ -O3 -g `pwd`/$(srcdir)/example3.1.C `pwd`/$(srcdir)/example3.2.C -o example3.bin
+	g++ -O3 -g $(srcdir)/example3.1.C $(srcdir)/example3.2.C -o example3.bin
 	objdump -ld example3.bin | grep '^/' > example3.in
-	cd $(srcdir) && echo "`pwd`/example3.1.C:4000" >>$(SAMPLE_INPUT_DIR)/example3.in
+	echo "$(srcdir)/example3.1.C:4000" >> example3.in
 	echo "/not_a_file.goo:1" >> example3.in
 
 # Use this version if  $(srcdir) is an absolute path
 mkSearch:
 	g++ -O3 -g $(srcdir)/example1.C -o example1.bin;
 	objdump -ld example1.bin | grep "example1.C" > example1.in;
-	cd $(srcdir) && echo "`pwd`/example1.C:4000" >>$(SAMPLE_INPUT_DIR)/example1.in;
+	echo "$(srcdir)/example1.C:4000" >> example1.in;
 	echo "/not_a_file.goo:1" >> example1.in;
 	g++ -O3 -g $(srcdir)/example2.C -o example2.bin;
 	objdump -ld example2.bin | grep "example2.C" > example2.in;
 	echo "$(srcdir)/example2.C:4000" >>example2.in;
-	cd $(srcdir) && echo "`pwd`/example2.C:4000" >>$(SAMPLE_INPUT_DIR)/example2.in;
+	echo "$(srcdir)/example2.C:4000" >> example2.in;
 	echo "/not_a_file.goo:1" >> example2.in;
 	g++ -O3 -g $(srcdir)/example3.1.C $(srcdir)/example3.2.C -o example3.bin;
 	objdump -ld example3.bin | grep -E "example3\..\.C" > example3.in;
-	cd $(srcdir) && echo "`pwd`/example3.1.C:4000" >>$(SAMPLE_INPUT_DIR)/example3.in;
+	echo "$(srcdir)/example3.1.C:4000" >> example3.in;
 	echo "/not_a_file.goo:1" >> example3.in;
 
 check-local: bcl_writer bcl_reader mkSearch
@@ -59,7 +59,7 @@ check-local: bcl_writer bcl_reader mkSearch
 	./bcl_writer $(srcdir)/example3.1.C $(srcdir)/example3.2.C -o example3.xml
 	./bcl_reader example3.xml < example3.in
 
-EXTRA_DIST = README example1.C example2.C example3.1.C example3.2.C example3.in example.g++.param example.objdump.param 
+EXTRA_DIST = README example1.C example2.C example3.1.C example3.2.C example.g++.param example.objdump.param 
 
 else
 # DQ (1/15/2007): The Intel compiler does not have a version of libxml2 usable by default 
@@ -71,7 +71,7 @@ check-local:
 	@echo "**********************************************************************************************************"
 
 # Add the source files so that they will always be distributed
-EXTRA_DIST = bcl_writer.C bcl_reader.C README example1.C example2.C example3.1.C example3.2.C example3.in example.g++.param example.objdump.param 
+EXTRA_DIST = bcl_writer.C bcl_reader.C README example1.C example2.C example3.1.C example3.2.C example.g++.param example.objdump.param 
 
 endif
 
