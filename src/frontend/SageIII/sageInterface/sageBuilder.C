@@ -615,11 +615,6 @@ SgPlusPlusOp* SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::S
   setOneSourcePositionForTransformation(result);   return result;
 }
 
-SgPlusPlusOp *SageBuilder::buildPlusPlusOp(SgExpression* operand_i)
-{
-  return buildUnaryExpression<SgPlusPlusOp>(operand_i); 
-}
-
 SgPointerDerefExp* SageBuilder::buildPointerDerefExp(SgExpression* operand)
 {
   return buildUnaryExpression<SgPointerDerefExp> (operand);
