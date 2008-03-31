@@ -131,4 +131,4 @@ fi
 # echo "-------------------- Full log      --------------------" >> mailtext
 # cat buildlog >> mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
-if [ $buildstatus == 0]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed
+if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed
