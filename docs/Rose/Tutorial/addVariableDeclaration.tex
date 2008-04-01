@@ -1,4 +1,19 @@
-\chapter{Adding a Variable Declaration}
+\clearpage
+\chapter{AST Construction}
+AST construction is a fundamental operation needed for building ROSE
+source-to-source translators. Several levels of interfaces are available in
+ROSE for users to build AST from scratch. 
+High level interfaces are recommended to use whenever possible for their
+simplicity. Low level interfaces can give users the maximum freedom to
+manipulate some details in AST trees.
+
+
+This chapter demonstrates how to create AST fragments for common language
+constructs (such as variable declarations, functions, function calls, etc.)
+  and how to insert them into an existing AST tree.
+
+\section{Variable Declarations}
+
 \paragraph{What To Learn} Two examples are given to show how to construct a SAGE III 
 AST subtree for a variable declaration and its insertion into the existing AST tree.
 \begin{itemize}
@@ -48,9 +63,9 @@ Side effects for scope, parent pointers and symbol tables have to be handled by 
 %Note that the code does not handle symbol table issues.
 %\fixme{The input code should use the LowLevelRewrite classes instead of the still lower level AST nodes member functions directly.}
 
-\fixme{Both this section and the next section (adding a function declaration)
-       and the section(s) specific to the string based rewrite mechanism
-       could be subsections of a section on AST Rewrite Mechanisms.}
+%\fixme{Both this section and the next section (adding a function declaration)
+%       and the section(s) specific to the string based rewrite mechanism
+%       could be subsections of a section on AST Rewrite Mechanisms.}
 
 \begin{figure}[!hbp]
 {\indent

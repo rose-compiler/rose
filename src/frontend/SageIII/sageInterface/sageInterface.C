@@ -4948,32 +4948,57 @@ namespace SageInterface {
     //TODO put it into a function, and consider insert in the middle later on
     if(isSgFunctionDeclaration(stmt))
     {
-      ROSE_ASSERT(scope->containsOnlyDeclarations());
       SgFunctionDeclaration * func = isSgFunctionDeclaration(stmt);
 
-	//SgStatementPtrList stmtList = scope->getStatementList();
-	SgDeclarationStatementPtrList declList = scope->getDeclarationList();
-	SgDeclarationStatementPtrList::iterator i;
-	SgFunctionType* func_type = func->get_type();
-	for (i=declList.begin();i!=declList.end();i++)
-	{
-	  SgFunctionDeclaration* prevDecl = isSgFunctionDeclaration(*i);
-	  if ((prevDecl) &&(prevDecl->get_type() == func_type)) {
-	    if(func->get_definingDeclaration()==func)
-	    { // case 1: defining declaration
-    //std::cout<<"debug highLevelInterface.C:445.....decl with definition!"<<std::endl;
-	      if(prevDecl->get_definingDeclaration()==NULL)
-		prevDecl->set_definingDeclaration(func);
-	     }
-	     else // case 2: nonefining declaration
-	     {  // multiple nondefining declaration may exist
-    //std::cout<<"debug highLevelInterface.C:450.....decl without definition!"<<std::endl;
-	      if(prevDecl->get_firstNondefiningDeclaration()==NULL)
-		  prevDecl->set_firstNondefiningDeclaration(func);
-	     }
-	  } // end if prevDecl is a function dec. with the same type
-	} // end for
-      } // end if functionDec
+      if (scope->containsOnlyDeclarations()) {
+          SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+          SgDeclarationStatementPtrList::iterator i;
+          SgFunctionType* func_type = func->get_type();
+          for (i=declList.begin();i!=declList.end();i++)
+          {
+            SgFunctionDeclaration* prevDecl = isSgFunctionDeclaration(*i);
+            if ((prevDecl) &&(prevDecl->get_type() == func_type)) {
+              if(func->get_definingDeclaration()==func)
+              { // case 1: defining declaration
+      //std::cout<<"debug highLevelInterface.C:445.....decl with definition!"<<std::endl;
+                if(prevDecl->get_definingDeclaration()==NULL)
+                  prevDecl->set_definingDeclaration(func);
+               }
+               else // case 2: nonefining declaration
+               {  // multiple nondefining declaration may exist
+      //std::cout<<"debug highLevelInterface.C:450.....decl without definition!"<<std::endl;
+                if(prevDecl->get_firstNondefiningDeclaration()==NULL)
+                    prevDecl->set_firstNondefiningDeclaration(func);
+               }
+            } // end if prevDecl is a function dec. with the same type
+          } // end for
+         }
+       // It is legal to have a function declarations inside the code as a forward declaration
+       else
+        {
+          SgStatementPtrList declList = scope->getStatementList();
+          SgStatementPtrList::iterator i;
+          SgFunctionType* func_type = func->get_type();
+          for (i=declList.begin();i!=declList.end();i++)
+          {
+            SgFunctionDeclaration* prevDecl = isSgFunctionDeclaration(*i);
+            if ((prevDecl) &&(prevDecl->get_type() == func_type)) {
+              if(func->get_definingDeclaration()==func)
+              { // case 1: defining declaration
+                if(prevDecl->get_definingDeclaration()==NULL)
+                  prevDecl->set_definingDeclaration(func);
+               }
+               else // case 2: nonefining declaration
+               {  // multiple nondefining declaration may exist
+                if(prevDecl->get_firstNondefiningDeclaration()==NULL)
+                    prevDecl->set_firstNondefiningDeclaration(func);
+               }
+            } // end if prevDecl is a function dec. with the same type
+          } // end for
+
+        }
+
+      } // end if functionDecl
       //-----------------------
 
     #if 0

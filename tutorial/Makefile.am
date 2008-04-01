@@ -16,7 +16,10 @@ noinst_HEADERS = \
 #varSubstCopy , disabled this one Liao, and sorted the list
 noinst_PROGRAMS = \
    accumulatorAttributeTraversal \
+   addAssignmentStmt \
    addComments \
+   addExpression \
+   addFunctionCalls \
    addFunctionDeclaration \
    addFunctionDeclaration2 \
    addFunctionDeclaration3 \
@@ -180,6 +183,15 @@ addVariableDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addVariableDeclaration2_SOURCES = addVariableDeclaration2.C
 addVariableDeclaration2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+addAssignmentStmt_SOURCES = addAssignmentStmt.C
+addAssignmentStmt_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+addExpression_SOURCES = addExpression.C
+addExpression_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+addFunctionCalls_SOURCES = addFunctionCalls.C
+addFunctionCalls_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionDeclaration_SOURCES = addFunctionDeclaration.C
 addFunctionDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -401,6 +413,14 @@ testAddFunctionDeclaration2: addFunctionDeclaration2
 testAddFunctionDeclaration3: addFunctionDeclaration3
 	./addFunctionDeclaration3 --edg:no_warnings -c $(srcdir)/inputCode_AddFunctionDeclaration3.C
 
+testAddAssignmentStmt: addAssignmentStmt
+	./addAssignmentStmt --edg:no_warnings -c $(srcdir)/inputCode_AddAssignmentStmt.C
+
+testAddExpression: addExpression
+	./addExpression --edg:no_warnings -c $(srcdir)/inputCode_AddExpression.C
+
+testAddFunctionCalls: addFunctionCalls
+	./addFunctionCalls --edg:no_warnings -c $(srcdir)/inputCode_AddFunctionCalls.C
 
 testLoopOptimization: loopOptimization
 	$(VALGRIND) ./loopOptimization -c $(srcdir)/inputCode_LoopOptimization.C
@@ -653,6 +673,9 @@ generatedCodeExamples = \
    rose_inputCode_AddFunctionDeclaration2.C \
    rose_inputCode_AddFunctionDeclaration3.C \
    rose_inputCode_AddVariableDeclaration.C \
+   rose_inputCode_AddAssignmentStmt.C \
+   rose_inputCode_AddExpression.C \
+   rose_inputCode_AddFunctionCalls.C \
    rose_inputCode_InstrumentationTranslator.C \
    loopRecognition.out \
    typeInfoFromFunctionParameters.out \
@@ -866,6 +889,18 @@ rose_inputCode_AddVariableDeclaration.C: addVariableDeclaration
 rose_inputCode_AddVariableDeclaration2.C: addVariableDeclaration2
 	@echo "Generate executable from compilation of input code (addVariableDeclaration2) ..."
 	./addVariableDeclaration2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddVariableDeclaration2.C
+
+rose_inputCode_AddAssignmentStmt.C: addAssignmentStmt
+	@echo "Generate executable from compilation of input code (addAssignmentStmt) ..."
+	./addAssignmentStmt $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddAssignmentStmt.C
+
+rose_inputCode_AddExpression.C: addExpression
+	@echo "Generate executable from compilation of input code (addExpression) ..."
+	./addExpression $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddExpression.C
+
+rose_inputCode_AddFunctionCalls.C: addFunctionCalls
+	@echo "Generate executable from compilation of input code (addFunctionCalls) ..."
+	./addFunctionCalls $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddFunctionCalls.C
 
 rose_inputCode_InstrumentationTranslator.C: instrumentationExample
 	@echo "Generate executable from compilation of input code ..."
@@ -1106,6 +1141,10 @@ EXTRA_DIST = \
    inputCode_QueryLibrary.C \
    inputCode_AddFunctionDeclaration.C \
    inputCode_AddFunctionDeclaration2.C \
+   inputCode_AddFunctionDeclaration3.C \
+   inputCode_AddExpression.C \
+   inputCode_AddAssignmentStmt.C \
+   inputCode_AddFunctionCalls.C \
    inputCode_ExampleDebugging.C \
    inputCode_LoopOptimization.C \
    inputCode_ResolvingOverloadedFunctions.C \

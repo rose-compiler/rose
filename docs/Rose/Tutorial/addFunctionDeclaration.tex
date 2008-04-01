@@ -1,4 +1,5 @@
-\chapter{Adding a Function}
+\clearpage
+\section{Functions}
 This section shows how to add a function at the top of a global scope in a
 file. Again, examples for both high level and low level constructions of AST are given.
 \begin{itemize}
@@ -6,24 +7,6 @@ file. Again, examples for both high level and low level constructions of AST are
 level construction of a defining function (a function  with a function
     body). Scope information is passed to builder functions explicitly when
 it is needed.
-\item Figure~\ref{Tutorial:exampleAddFunctionDeclaration3} shows almost the
-same high level construction of the defining function, but with an
-additional scope stack. 
- Scope information is passed to builder functions implicitly when
-it is needed.
-
-\item  The low level construction of the AST fragment of the same function 
-declaration and its insertion 
-is separated into two portions and shown in two figures 
-(Figure~\ref{Tutorial:exampleAddFunctionDeclarationA} and
-Figure~\ref{Tutorial:exampleAddFunctionDeclarationB} ).
-
-\end{itemize}
-
-Figure~\ref{Tutorial:exampleInputCode_AddFunctionDeclaration} and 
-Figure~\ref{Tutorial:exampleOutput_AddFunctionDeclaration} 
-give the input code and output result for the
-translators above.
 %---------------------example 2. ----------------------
 \begin{figure}[!h]
 {\indent
@@ -46,6 +29,12 @@ translators above.
 \label{Tutorial:exampleAddFunctionDeclaration2}
 \end{figure}
 
+
+\item Figure~\ref{Tutorial:exampleAddFunctionDeclaration3} shows almost the
+same high level construction of the defining function, but with an
+additional scope stack. 
+ Scope information is passed to builder functions implicitly when
+it is needed.
 %---------------------example 3. ----------------------
 \begin{figure}[!h]
 {\indent
@@ -70,6 +59,11 @@ translators above.
 \end{figure}
 
 
+\item  The low level construction of the AST fragment of the same function 
+declaration and its insertion 
+is separated into two portions and shown in two figures 
+(Figure~\ref{Tutorial:exampleAddFunctionDeclarationA} and
+Figure~\ref{Tutorial:exampleAddFunctionDeclarationB} ).
 %---------------------example 1. part 1----------------------
 \begin{figure}[!h]
 {\indent
@@ -115,6 +109,14 @@ translators above.
 \caption{Example source code shows addition of function to global scope (part 2).}
 \label{Tutorial:exampleAddFunctionDeclarationB}
 \end{figure}
+
+
+\end{itemize}
+
+Figure~\ref{Tutorial:exampleInputCode_AddFunctionDeclaration} and 
+Figure~\ref{Tutorial:exampleOutput_AddFunctionDeclaration} 
+give the input code and output result for the
+translators above.
 
 %---------------------- input code--------------------------
 \begin{figure}[!h]

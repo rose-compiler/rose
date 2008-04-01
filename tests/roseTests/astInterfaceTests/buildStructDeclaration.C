@@ -1,8 +1,8 @@
 // Liao, 2/13/2008
-// Demostrate how to build a struct declaration
+// Demonstrate how to build a struct declaration
 //
 // SageBuilder contains the AST nodes/subtrees builders
-// SageInterface contains any other AST utitily tools 
+// SageInterface contains any other AST utility tools 
 //-------------------------------------------------------------------
 #include "rose.h"
 
@@ -12,7 +12,7 @@ using namespace SageInterface;
 int main (int argc, char *argv[])
 {
   // build a struct without any scope information
-  // cannot do it here, since frontend() will traverse memery pool and find the dangling decl.
+  // cannot do it here, since frontend() will traverse memory pool and find the dangling decl.
   //SgClassDeclaration * decl2 = buildStructDeclaration("bar");
 
   // grab the scope in which AST will be added
@@ -33,7 +33,7 @@ int main (int argc, char *argv[])
 
   SgVariableDeclaration *varDecl = buildVariableDeclaration(SgName ("i"), buildIntType());
 
- // Insert the  memeber variable
+ // Insert the  member variable
   appendStatement (varDecl);
 
    // build a member function of the construct
