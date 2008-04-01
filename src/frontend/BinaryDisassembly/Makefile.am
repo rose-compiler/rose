@@ -73,7 +73,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_abstract.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
-   RoseBin_IDAPRO_branchGraph.h \
+   RoseBin_IDAPRO_branchGraph.h RoseBin_buildTree.h RoseBin_IDAPRO_buildTree.h \
    RoseBin_IDAPRO_callGraph.h  RoseBin_IDAPRO_exprTree.h  RoseBin_IDAPRO_substTree.h \
    RoseBin_support.h  RoseBin_unparse.h  RoseBin_unparse_visitor.h MyAstAttribute.h \
    analyses/RoseBin_CompareAnalysis.h analyses/RoseBin_ControlFlowAnalysis.h analyses/RoseBin_printInstructions.h \
