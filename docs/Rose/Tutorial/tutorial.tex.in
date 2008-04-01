@@ -223,8 +223,14 @@
 % \input{Tutorial/tutorial}
 
 \mainmatter
-
+%-----------------------------------------------------------
+%            Introduction
+%-----------------------------------------------------------
 \input{introduction}
+
+%-----------------------------------------------------------
+%           Stable Parts 
+%-----------------------------------------------------------
 
 % \part[Mature Parts of ROSE]{ Mature Parts of ROSE \\
 \part[Stable Parts of ROSE]{  Stable Parts of ROSE \\
@@ -245,6 +251,9 @@
 \input{queryLibraryExample}
 
 \input{traversal}
+%-----------------------------------------------------------
+%           Testing Parts 
+%-----------------------------------------------------------
 
 %\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
 \part[Testing Parts of ROSE]{ Testing Parts of ROSE \\
@@ -265,15 +274,21 @@ our own use on large scale applications.}
 \input{templateParameter}
 
 \input{templateSupport}
-
-\input{instrumentationExample}
-
+% chapter for AST construction
 \input{addVariableDeclaration}
+
+\input{addExpression}
+
+\input {addAssignmentStmt}
 
 \input{addFunctionDeclaration}
 
+\input{instrumentationExample}
+%-------end of chapter for AST construction
 \input{loopOptimization}
-
+%-----------------------------------------------------------
+%           Experimental Parts 
+%-----------------------------------------------------------
 %\part[Bleeding-Edge Parts of ROSE]{ Bleeding-Edge Parts of ROSE \\
 \part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
 \vspace{1.0in}

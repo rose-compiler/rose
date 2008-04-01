@@ -10,6 +10,7 @@ latexFiles = \
    identityTranslator.tex queryLibraryExample.tex \
    traversal.tex loopRecognition.tex typeInfoFromFunctionParameters.tex resolveOverloadedFunction.tex \
    templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
+   addAssignmentStmt.tex addExpression.tex\
    addFunctionDeclaration.tex buildCFG.tex defuseAnalysis.tex binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
    parser-docs.tex codeCoverage.tex globalVariableHandling.tex scopeInformation.tex sideeffect-docs.tex \
    tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
@@ -41,6 +42,8 @@ link_LaTeX_files:
 	test -f templateSupport.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/templateSupport.tex templateSupport.tex
 	test -f instrumentationExample.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/instrumentationExample.tex instrumentationExample.tex
 	test -f addVariableDeclaration.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/addVariableDeclaration.tex addVariableDeclaration.tex
+	test -f addAssignmentStmt.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/addAssignmentStmt.tex addAssignmentStmt.tex
+	test -f addExpression.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/addExpression.tex addExpression.tex
 	test -f addFunctionDeclaration.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/addFunctionDeclaration.tex addFunctionDeclaration.tex
 	test -f codeCoverage.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/codeCoverage.tex codeCoverage.tex
 	test -f globalVariableHandling.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/globalVariableHandling.tex globalVariableHandling.tex
@@ -80,8 +83,11 @@ link_LaTeX_files:
 generatedCodeExamples = \
    $(top_builddir)/tutorial/inputCode_ASTGraphGenerator.ps \
    $(top_builddir)/tutorial/rose_inputCode_AddFunctionDeclaration.C \
+   $(top_builddir)/tutorial/rose_inputCode_AddFunctionDeclaration2.C \
+   $(top_builddir)/tutorial/rose_inputCode_AddFunctionDeclaration3.C \
    $(top_builddir)/tutorial/rose_inputCode_IdentityTranslator.C \
    $(top_builddir)/tutorial/rose_inputCode_AddVariableDeclaration.C \
+   $(top_builddir)/tutorial/rose_inputCode_AddVariableDeclaration2.C \
    $(top_builddir)/tutorial/rose_transformation_inputCode_InstrumentationTranslator1.C \
    $(top_builddir)/tutorial/rose_inputCode_ExampleDebugging.C \
    $(top_builddir)/tutorial/codeCoverage.out \
