@@ -1,4 +1,5 @@
 #include "readTicl.h"
+#include <string.h>
 
 using namespace ticl;
 
