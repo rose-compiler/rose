@@ -16,6 +16,7 @@
 #include <rose.h>
 
 #include "pignodelist.h"
+#include "IrCreation.h"
 %}
 
 %%
@@ -49,13 +50,13 @@ get:body(NODE, _, "ExternalCall", _, "params", _, _)
 get:body(NODE, _, "ConstructorCall" | "DestructorCall", _, "name", _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
-    return strdup(stmt->get_##FIELD().c_str());
+    return Ir::getCharPtr(stmt->get_##FIELD());
 %}
 
 get:body(NODE, _, "FunctionEntry" | "FunctionExit" | "FunctionCall" | "FunctionReturn", _, "funcname", _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
-    return strdup(stmt->get_##FIELD().c_str());
+    return Ir::getCharPtr(stmt->get_##FIELD());
 %}
 
 get:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, FIELD, _, _)
@@ -66,8 +67,8 @@ get:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, FIEL
 
 get:body(NODE, _, "FunctionExit"|"FunctionCall"|"FunctionReturn", _, "params", _, _)
 %{
-    if (((CallStmt *) NODE)->parent->paramlist != NULL)
-        return new PigNodeList(*((CallStmt *) NODE)->parent->paramlist);
+    if (((CallStmt *) NODE)->parent->get_##FIELD() != NULL)
+        return new PigNodeList(*((CallStmt *) NODE)->parent->get_##FIELD());
     else
         return NULL;
 %}
@@ -96,13 +97,12 @@ get:body(NODE, _, "VarRefExp" | "InitializedName", _, "name", _, _)
         in = isSgVarRefExp((SgNode *) NODE)->get_symbol()->get_declaration();
     if (in != NULL) {
          /* FIXME: check for global scope '::' and use non-qualified name for global scope
-          *        find a better way to deal with qualified names 
-	  *        we should use strdup(Ir::getStrippedName(in)); in future */
+          *        find a better way to deal with qualified names */
          if ((in->get_scope() != NULL) && (in->get_scope()->get_qualified_name()!="::")) {
-            return strdup(in->get_qualified_name().str());
+            return Ir::getCharPtr(Ir::getStrippedName(in));
          } else {
             /* don't print the global namespace (::) */
-            return strdup(in->get_name().str());
+            return Ir::getCharPtr(in->get_name());
          }
     } else
         return NULL;
@@ -112,13 +112,12 @@ get:body(NODE, _, "VariableSymbol", _, "name", _, _)
 %{
     SgVariableSymbol *var = isSgVariableSymbol((SgNode *) NODE);
     /* FIXME: check for global scope '::' and use non-qualified name for global scope
-     *        find a better way to deal with qualified names [MS08]
-     *        we should use strdup(Ir::getStrippedName(in)); in future */
+     *        find a better way to deal with qualified names [MS08] */
     if ((var->get_declaration()->get_scope() != NULL) && (var->get_declaration()->get_scope()->get_qualified_name() != "::") )
-        return strdup(var->get_declaration()->get_qualified_name().str());
+        return Ir::getCharPtr(var->get_declaration()->get_qualified_name());
     else
         /* don't print the global namespace (::) */
-        return strdup(var->get_declaration()->get_name().str());
+        return Ir::getCharPtr(var->get_declaration()->get_name());
 %}
 
 get:body(NODE, _, "BasicType", _, "typename", _, _)
@@ -129,7 +128,7 @@ get:body(NODE, _, "BasicType", _, "typename", _, _)
 get:body(NODE, _, "NamedType", _, "name", _, _)
 %{
     SgNamedType *type = isSgNamedType((SgNode *) NODE);
-    return strdup(type->get_name().str());
+    return Ir::getCharPtr(type->get_name());
 %}
 
 /* lists */
@@ -183,7 +182,7 @@ get:body(NODE, _, "AsmStmt", _, "operands", _, FTYPE)
 
 get:body(NODE, _, "StringVal", _, "value", _, _)
 %{
-    return strdup(isSg##CONSTR((SgNode *) NODE)->get_value().c_str());
+    return Ir::getCharPtr(isSg##CONSTR((SgNode *) NODE)->get_value());
 %}
 
 get:body(NODE, _, CONSTR, _, "value", _, _)
