@@ -23,7 +23,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  CFG.h CFGImpl.h CFG_ROSE.h
+include_HEADERS =  CFG.h CFGImpl.h
 
 
 
