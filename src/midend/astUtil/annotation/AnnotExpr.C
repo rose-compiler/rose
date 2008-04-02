@@ -2,6 +2,7 @@
 #include "SymbolicSelect.h"
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
+#include <string.h>
 
 using namespace std;
 
