@@ -8,6 +8,7 @@ V0.8.1 (in progress)
   - tuned computation of expression and type sets; the ICFG builder is now
     roughly 5 to 10 times faster
   - replaced most const char * strings by std::string
+  - removed memory leaks
 
 * Bug fixes [GB]
   - correct handling of $Foo$this pointer in all contexts
