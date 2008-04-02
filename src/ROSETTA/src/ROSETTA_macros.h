@@ -13,38 +13,77 @@
 
 //QY 11/9/04 added capabilities for building multiple constructors for statements including
 //ExpressionRoot (and others) as data members
-typedef enum { NO_CONSTRUCTOR_PARAMETER       = 0, 
-               INDIRECT_CONSTRUCTOR_PARAMETER = 1,  // member wrapped inside ExpressionRoot
-               WRAP_CONSTRUCTOR_PARAMETER     = 2,  // the wrapper member with type SgExpressionRoot
-               CONSTRUCTOR_PARAMETER          = 3} 
-ConstructParamEnum;
+typedef enum { TAG_NO_CONSTRUCTOR_PARAMETER       = 0, 
+               TAG_INDIRECT_CONSTRUCTOR_PARAMETER = 1,  // member wrapped inside ExpressionRoot
+               TAG_WRAP_CONSTRUCTOR_PARAMETER     = 2,  // the wrapper member with type SgExpressionRoot
+               TAG_CONSTRUCTOR_PARAMETER          = 3} 
+ConstructParamEnumX;
 
-typedef enum { NO_ACCESS_FUNCTIONS, BUILD_ACCESS_FUNCTIONS, BUILD_LIST_ACCESS_FUNCTIONS,
-               BUILD_INDIRECT_ACCESS_FUNCTIONS, BUILD_WRAP_ACCESS_FUNCTIONS}
- BuildAccessEnum;
+class ConstructParamEnum { // Wrapper for extra argument type checking
+  ConstructParamEnumX value;
+  public:
+  explicit ConstructParamEnum(ConstructParamEnumX value): value(value) {}
+  ConstructParamEnumX getValue() const {return value;}
+  bool operator==(const ConstructParamEnum& o) const {return value == o.value;}
+  bool operator!=(const ConstructParamEnum& o) const {return value != o.value;}
+};
 
+typedef enum { TAG_NO_ACCESS_FUNCTIONS,
+               TAG_BUILD_ACCESS_FUNCTIONS,
+               TAG_BUILD_LIST_ACCESS_FUNCTIONS,
+               TAG_BUILD_INDIRECT_ACCESS_FUNCTIONS,
+               TAG_BUILD_WRAP_ACCESS_FUNCTIONS}
+ BuildAccessEnumX;
+
+class BuildAccessEnum { // Wrapper for extra argument type checking
+  BuildAccessEnumX value;
+  public:
+  explicit BuildAccessEnum(BuildAccessEnumX value): value(value) {}
+  BuildAccessEnumX getValue() const {return value;}
+  bool operator==(const BuildAccessEnum& o) const {return value == o.value;}
+  bool operator!=(const BuildAccessEnum& o) const {return value != o.value;}
+};
 
 typedef enum
    {
   // Note that CLONE_TREE is the default is nothing is specified in the setDataPrototype() member function.
-     NO_COPY_DATA, // This skips the generation of any code to copy the 
-                   // pointer (deep or shallow)
-     COPY_DATA,    // This copies the data (if a pointer this copies the 
-                   // pointer, else calls the operator= for any object)
-     CLONE_PTR,    // This copies the data by building a new object using 
-                   // the copy constructor
-     CLONE_TREE    // This builds a new object dependent on the use of the 
-                   // SgCopyHelp input object (deep or shallow) using the object's copy member function
-   } CopyConfigEnum; 
+     TAG_NO_COPY_DATA, // This skips the generation of any code to copy the 
+                       // pointer (deep or shallow)
+     TAG_COPY_DATA,    // This copies the data (if a pointer this copies the 
+                       // pointer, else calls the operator= for any object)
+     TAG_CLONE_PTR,    // This copies the data by building a new object using 
+                       // the copy constructor
+     TAG_CLONE_TREE    // This builds a new object dependent on the use of the 
+                       // SgCopyHelp input object (deep or shallow) using the object's copy member function
+   } CopyConfigEnumX; 
 
-#define DEF_TRAVERSAL TRUE // default traversal
-#define NO_TRAVERSAL FALSE // no traversal
+class CopyConfigEnum { // Wrapper for extra argument type checking
+  CopyConfigEnumX value;
+  public:
+  explicit CopyConfigEnum(CopyConfigEnumX value): value(value) {}
+  CopyConfigEnumX getValue() const {return value;}
+  bool operator==(const CopyConfigEnum& o) const {return value == o.value;}
+  bool operator!=(const CopyConfigEnum& o) const {return value != o.value;}
+};
 
-// AJ (10/26/2004)
-#define NO_DELETE FALSE
-// DQ (12/3/2004): Avoid calling delete
-#define DEF_DELETE TRUE
-// #define DEF_DELETE FALSE
+class TraversalFlag { // Wrapper for extra argument type checking
+  bool value;
+  public:
+  explicit TraversalFlag(bool value): value(value) {}
+  bool getValue() const {return value;}
+  bool operator==(const TraversalFlag& o) const {return value == o.value;}
+  bool operator!=(const TraversalFlag& o) const {return value != o.value;}
+  TraversalFlag operator||(const TraversalFlag& o) const {return TraversalFlag(value || o.value);} // For TYPE_TRAVERSAL
+};
+
+class DeleteFlag { // Wrapper for extra argument type checking
+  bool value;
+  public:
+  explicit DeleteFlag(bool value): value(value) {}
+  bool getValue() const {return value;}
+  bool operator==(const DeleteFlag& o) const {return value == o.value;}
+  bool operator!=(const DeleteFlag& o) const {return value != o.value;}
+};
 
 // DQ (7/18/2004): Comment out so that we can link when it is 
 // turned on to the definition of DEF2TYPE_TRAVERSAL
@@ -53,13 +92,13 @@ typedef enum
 #if 1
 // DQ (7/18/2004): Turn this on by default so that nested traversals 
 // on types are possible this does not change the default behavior.
-#define TYPE_TRAVERSAL TRUE // traversal within types
+#define TYPE_TRAVERSAL DEF_TRAVERSAL // traversal within types
 
 // DEF2TYPE_TRAVERSAL must be defined as FALSE in any release of ROSE!
 
 // This is the usual setting (traversal excludes types).  Users cannot apply transformations
 // to SgType objects since these objects are shared within the AST.
-   #define DEF2TYPE_TRAVERSAL FALSE // traversal (paths) from default traversal to type traversal
+#define DEF2TYPE_TRAVERSAL NO_TRAVERSAL // traversal (paths) from default traversal to type traversal
 #else
 // Debugging setting (helpful under specialized circumstances, but sometimes problematic).
 // This is a setting that permits us to traverse the types, but it can cause problems
@@ -67,10 +106,10 @@ typedef enum
 // at the correct location if the types are traversed (not clear if this is important to debug).
 // This setting is reserved for internal debugging only, misleading resuts can occure in the generation
 // of PDF output of the AST.
-   #define DEF2TYPE_TRAVERSAL TRUE // traversal (paths) from default traversal to type traversal
+#define DEF2TYPE_TRAVERSAL DEF_TRAVERSAL; // traversal (paths) from default traversal to type traversal
 
 // DQ (7/18/2004): link this definition to that of DEF2TYPE_TRAVERSAL
-   #define TYPE_TRAVERSAL FALSE // traversal within types
+#define TYPE_TRAVERSAL NO_TRAVERSAL // traversal within types
 #endif
 
 // ifndef USE_ROSE
@@ -103,5 +142,30 @@ typedef enum
 // #endif
 
 // using namespace std;
+
+extern const ConstructParamEnum NO_CONSTRUCTOR_PARAMETER;
+extern const ConstructParamEnum INDIRECT_CONSTRUCTOR_PARAMETER;
+extern const ConstructParamEnum WRAP_CONSTRUCTOR_PARAMETER;
+extern const ConstructParamEnum CONSTRUCTOR_PARAMETER;
+
+extern const BuildAccessEnum NO_ACCESS_FUNCTIONS;
+extern const BuildAccessEnum BUILD_ACCESS_FUNCTIONS;
+extern const BuildAccessEnum BUILD_LIST_ACCESS_FUNCTIONS;
+extern const BuildAccessEnum BUILD_INDIRECT_ACCESS_FUNCTIONS;
+extern const BuildAccessEnum BUILD_WRAP_ACCESS_FUNCTIONS;
+
+extern const CopyConfigEnum NO_COPY_DATA;
+extern const CopyConfigEnum COPY_DATA;
+extern const CopyConfigEnum CLONE_PTR;
+extern const CopyConfigEnum CLONE_TREE;
+
+extern const TraversalFlag DEF_TRAVERSAL; // default traversal
+extern const TraversalFlag NO_TRAVERSAL; // no traversal
+
+// AJ (10/26/2004)
+extern const DeleteFlag NO_DELETE;
+// DQ (12/3/2004): Avoid calling delete
+extern const DeleteFlag DEF_DELETE;
+// DeleteFlag DEF_DELETE(false);
 
 #endif

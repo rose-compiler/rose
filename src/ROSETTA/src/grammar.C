@@ -1224,7 +1224,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
      if (node.generateConstructor() == TRUE)
         {
           bool complete = false;
-          ConstructParamEnum cur = (ConstructParamEnum)1;
+          ConstructParamEnum cur = INDIRECT_CONSTRUCTOR_PARAMETER;
           string constructorPrototype = "\n     public: \n"; 
 #if 1
           bool withInitializers = TRUE;
@@ -1274,6 +1274,47 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
      return dataAccessFunctionPrototypeString;
    }
 
+void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, Terminal& node, StringUtility::FileWithLineNumbers& returnString) {
+  StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
+  if (node.getBaseClass() != NULL)
+  {
+    string parentClassName = node.getBaseClass()->getName();
+    // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
+    // printf ("Calling base class default constructor (should call paramtererized version) \n");
+
+    string baseClassParameterString;
+    bool withInitializers = FALSE;
+    bool withTypes        = FALSE;
+    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
+    string preInitializationString = parentClassName + "($BASECLASS_PARAMETERS)";
+    preInitializationString = ": " + preInitializationString;
+    preInitializationString = GrammarString::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
+    constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
+  }
+  else
+  {
+    constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
+  }
+
+  bool withInitializers         = FALSE;
+  bool withTypes                = TRUE;
+  string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
+  constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
+  constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",node.getName());
+
+  if (config == NO_CONSTRUCTOR_PARAMETER)
+  {
+    constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
+  }
+  else
+  {
+    string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
+    constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
+  }
+
+  returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
+}
+
 StringUtility::FileWithLineNumbers
 Grammar::buildConstructor ( Terminal & node )
    {
@@ -1322,56 +1363,25 @@ Grammar::buildConstructor ( Terminal & node )
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
 
           bool complete  = false;
-          ConstructParamEnum config = (ConstructParamEnum)1;
+          ConstructParamEnum config = INDIRECT_CONSTRUCTOR_PARAMETER; // 1
           int i = 1;
           if  (node.getBuildDefaultConstructor())
              {
-               config = NO_CONSTRUCTOR_PARAMETER;
+               config = NO_CONSTRUCTOR_PARAMETER; // 0
                i = 0;
              }
 
        // DQ (5/22/2006): Why do we have such a complex for loop?
-          for ( ; !complete && config < CONSTRUCTOR_PARAMETER; config = (ConstructParamEnum)(1 << i++))
-             {
-	       StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-               if (node.getBaseClass() != NULL)
-                  {
-                    string parentClassName = node.getBaseClass()->getName();
-                 // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
-                 // printf ("Calling base class default constructor (should call paramtererized version) \n");
-
-                    string baseClassParameterString;
-                    bool withInitializers = FALSE;
-                    bool withTypes        = FALSE;
-                    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
-                    string preInitializationString = parentClassName + "($BASECLASS_PARAMETERS)";
-                    preInitializationString = ": " + preInitializationString;
-                    preInitializationString = GrammarString::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
-                    constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
-                  }
-                 else
-                  {
-                    constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
-                  }
-
-               bool withInitializers         = FALSE;
-               bool withTypes                = TRUE;
-               string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
-               constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
-               constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",className);
-
-               if (config == NO_CONSTRUCTOR_PARAMETER)
-                  {
-                    constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
-                  }
-                 else
-                  {
-                    string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
-                    constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
-                  }
-
-               returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
-             }
+       // JJW 4-2-2008 Simplified loop
+          if (config == NO_CONSTRUCTOR_PARAMETER) {
+            constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+          }
+          if (!complete) {
+            constructorLoopBody(INDIRECT_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+          }
+          if (!complete) {
+            constructorLoopBody(WRAP_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+          }
         }
 
      return returnString;
@@ -2919,7 +2929,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
       stringListIterator != includeList.end();
       stringListIterator++) {
-    if ( (*stringListIterator)->getToBeTraversed()) {
+    if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
       string stype=typeStringOfGrammarString(*stringListIterator);
    // GB (8/16/2007): Fixed this condition. It did not count SgProject::p_fileList, which is a pointer to a container, and
    // possibly other pointers to containers.
@@ -3096,7 +3106,7 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
           vector<GrammarString*> traverseDataMemberList;
           for(stringListIterator = includeList.begin(); stringListIterator != includeList.end(); stringListIterator++)
              {
-               if ((*stringListIterator)->getToBeTraversed())
+               if ((*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL)
                   {
                     traverseDataMemberList.push_back(*stringListIterator);
                   }
@@ -3619,7 +3629,7 @@ Grammar::buildEnumForNode(Terminal& node, string& allEnumsString) {
     for(stringListIterator = includeList.begin();
 	stringListIterator != includeList.end();
 	stringListIterator++) {
-      if ( (*stringListIterator)->getToBeTraversed()) {
+      if ( (*stringListIterator)->getToBeTraversed() == DEF_TRAVERSAL) {
 	if (isFirst) {
 	  allEnumsString += string("enum E_") + node.getName() + " {";
 	} else {

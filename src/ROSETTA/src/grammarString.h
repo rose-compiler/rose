@@ -47,11 +47,11 @@ class GrammarString
   std::string defaultInitializerString;
   ConstructParamEnum isInConstructorParameterList;
 
-  int toBeCopied; // used to guide cloning of AST nodes
+  CopyConfigEnum toBeCopied; // used to guide cloning of AST nodes
 
   // We introduce a new data member which determines if a data member to
   // be defined is to be traversed in the course of a tree traversal
-  bool toBeTraversed;
+  TraversalFlag toBeTraversed;
 
   // The sum of the ascii characters in functionNameString
   // (provides fast string comparision features)
@@ -60,7 +60,7 @@ class GrammarString
   BuildAccessEnum automaticGenerationOfDataAccessFunctions;
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-  bool toBeDeleted;
+  DeleteFlag toBeDeleted;
 
   // functions
   virtual ~GrammarString();
@@ -70,11 +70,11 @@ class GrammarString
   GrammarString( const std::string& inputTypeNameString,
 		 const std::string& inputVariableNameString, 
 		 const std::string& defaultInitializer, 
-		 ConstructParamEnum isConstructorParameter,
-		 BuildAccessEnum buildAccessFunctions,
-		 bool toBeTraversedDuringTreeTraversal,
-       bool delete_flag,
-       CopyConfigEnum toBeCopied);
+		 const ConstructParamEnum& isConstructorParameter,
+		 const BuildAccessEnum& buildAccessFunctions,
+		 const TraversalFlag& toBeTraversedDuringTreeTraversal,
+                 const DeleteFlag& delete_flag,
+                 const CopyConfigEnum& toBeCopied);
   GrammarString( const GrammarString & X );
   GrammarString & operator= ( const GrammarString & X );
 
@@ -96,7 +96,7 @@ class GrammarString
   int getKey() const;
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-  bool getToBeDeleted() const;
+  DeleteFlag getToBeDeleted() const;
 
   friend bool operator!= ( const GrammarString & X, const GrammarString & Y );
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
@@ -114,13 +114,13 @@ class GrammarString
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;
 
-  void setToBeTraversed(bool X);
-  bool getToBeTraversed() const;
+  void setToBeTraversed(const TraversalFlag& X);
+  TraversalFlag getToBeTraversed() const;
 
-  void setToBeCopied(int X) { toBeCopied = X; }
-  int getToBeCopied() const { return toBeCopied; }
+  void setToBeCopied(const CopyConfigEnum& X) { toBeCopied = X; }
+  CopyConfigEnum getToBeCopied() const { return toBeCopied; }
 
-  void setAutomaticGenerationOfDataAccessFunctions ( BuildAccessEnum X );
+  void setAutomaticGenerationOfDataAccessFunctions ( const BuildAccessEnum& X );
   BuildAccessEnum generateDataAccessFunctions() const;
 
   // DQ (9/24/2005): Build the copy mechanism source code

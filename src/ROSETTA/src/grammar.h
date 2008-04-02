@@ -355,6 +355,7 @@ class Grammar
           void markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal & node );
 	  StringUtility::FileWithLineNumbers buildConstructorWithoutSourcePositionInformation       ( Terminal & node );
           void buildConstructorWithoutSourcePositionInformationSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+          void constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, Terminal& node, StringUtility::FileWithLineNumbers& returnString);
 
        // DQ (11/7/2006): Get a specific node from the tree.
           Terminal* getNamedNode ( Terminal & node, const std::string & name );
