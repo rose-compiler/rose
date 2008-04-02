@@ -115,7 +115,7 @@ sage3.jar: compile_java_files
 
 # TESTS=testjava.sh
 
-check: test
+check-local: test
 
 test: test.class sage3.jar .libs/libsage3_wrap.so input.cc
 	env LD_LIBRARY_PATH="../.libs:.libs:${LD_LIBRARY_PATH}" \

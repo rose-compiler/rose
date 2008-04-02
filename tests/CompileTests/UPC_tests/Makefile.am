@@ -26,6 +26,9 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 # Make rule to build the QMTest database files

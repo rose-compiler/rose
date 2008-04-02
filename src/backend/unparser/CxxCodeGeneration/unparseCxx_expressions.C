@@ -3398,8 +3398,19 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
   /* code inserted from specification */
 
    curprint ( "typeid(");
-  if(typeid_op->get_operand_expr()) unparseExpression(typeid_op->get_operand_expr(), info);
-  else unp->u_type->unparseType(typeid_op->get_operand_type(), info);
+   if (typeid_op->get_operand_expr() != NULL)
+      {
+        ROSE_ASSERT(typeid_op->get_operand_expr() != NULL);
+        unparseExpression(typeid_op->get_operand_expr(), info);
+      }
+     else
+      {
+        ROSE_ASSERT(typeid_op->get_operand_type() != NULL);
+        SgUnparse_Info info2(info);
+        info2.unset_SkipBaseType();
+        info2.set_SkipClassDefinition();
+        unp->u_type->unparseType(typeid_op->get_operand_type(), info2);
+      }
    curprint ( ")");
 }
 

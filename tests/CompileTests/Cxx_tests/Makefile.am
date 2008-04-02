@@ -56,6 +56,9 @@ $(TEST_Objects): ../../testTranslator
 test2005_56.o: ../../testTranslator
 	../../testTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
 
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 

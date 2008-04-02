@@ -91,7 +91,7 @@ Terminal::buildDestructorBody ()
           stringListIterator != localList.end();
           stringListIterator++ )
         {
-          if (!((*stringListIterator)->getToBeDeleted()))
+          if (!((*stringListIterator)->getToBeDeleted() == DEF_DELETE))
              continue;
 
        // string tempString        = "\n     delete p_$DATA;\n     p_$DATA = NULL;\n";
@@ -176,9 +176,9 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
         {
        // QY 11/9/04  added additional types of constructor parameters 
           string variableNameString = (*stringListIterator)->getVariableNameString();
-          switch ( (*stringListIterator)->getIsInConstructorParameterList() )
+          switch ( (*stringListIterator)->getIsInConstructorParameterList().getValue() )
              {
-               case NO_CONSTRUCTOR_PARAMETER:
+               case TAG_NO_CONSTRUCTOR_PARAMETER:
                  // DQ (11/20/2004): This test does not appear to work to skip cases where the initializer is empty
                  // the reason is that getDefaultInitializerString() returns a char* and the wrong operator!= is being used!
                  // if ((*stringListIterator)->getDefaultInitializerString() != "")
@@ -189,13 +189,13 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
                        }
                     break;
 
-               case CONSTRUCTOR_PARAMETER:
+               case TAG_CONSTRUCTOR_PARAMETER:
                     returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
                     break;
-               case INDIRECT_CONSTRUCTOR_PARAMETER:
+               case TAG_INDIRECT_CONSTRUCTOR_PARAMETER:
                     prevParam = variableNameString;
                     break;
-               case WRAP_CONSTRUCTOR_PARAMETER:
+               case TAG_WRAP_CONSTRUCTOR_PARAMETER:
                     assert(prevParam != "");
                     if (config == INDIRECT_CONSTRUCTOR_PARAMETER)
                        {
@@ -298,7 +298,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                     string varNameString = string(data->getVariableNameString()) + "_copy";
                     string varDecl = "     " + string(data->getTypeNameString()) + " " + varNameString + "; \n";
 
-                    if (!emptyConstructorArg && data->getIsInConstructorParameterList())
+                    if (!emptyConstructorArg && data->getIsInConstructorParameterList() != NO_CONSTRUCTOR_PARAMETER)
                        {
                       // DQ (9/24/2005): Added comments to generated code!
                          string comment = string("  // Copy constructor parameter data member: ") + varNameString + string("\n");
@@ -323,9 +323,9 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                       // for more examples).
                          bool buildConstructorArgument = false;
 
-                         switch (data->automaticGenerationOfDataAccessFunctions)
+                         switch (data->automaticGenerationOfDataAccessFunctions.getValue())
                             {
-                              case NO_ACCESS_FUNCTIONS:
+                              case TAG_NO_ACCESS_FUNCTIONS:
                                  {
                                    string localVarNameString = "result->p_" + string(data->getVariableNameString());
                                    varNameString = localVarNameString;
@@ -344,7 +344,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                                    break;
                                  }
 
-                              case BUILD_LIST_ACCESS_FUNCTIONS:
+                              case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
                                  {
                                    string localVarNameString = "result->get_" + string(data->getVariableNameString()) + "()";
                                    varNameString = localVarNameString;
@@ -362,7 +362,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                                    break;
                                  }
 
-                              case BUILD_ACCESS_FUNCTIONS:
+                              case TAG_BUILD_ACCESS_FUNCTIONS:
                                  {
 
                                 // DQ (9/24/2005): Added comments to generated code!
@@ -772,16 +772,16 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
         {
           return "\n";
         }
-     switch (config)
+     switch (config.getValue())
         {
-          case BUILD_ACCESS_FUNCTIONS:
-          case BUILD_WRAP_ACCESS_FUNCTIONS:
+          case TAG_BUILD_ACCESS_FUNCTIONS:
+          case TAG_BUILD_WRAP_ACCESS_FUNCTIONS:
                filename = "../Grammar/dataMemberAccessFunctions.macro";
                break;
-          case BUILD_LIST_ACCESS_FUNCTIONS:
+          case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
                filename = "../Grammar/listMemberAccessFunctions.macro";
                break;
-          case BUILD_INDIRECT_ACCESS_FUNCTIONS:
+          case TAG_BUILD_INDIRECT_ACCESS_FUNCTIONS:
                filename = "../Grammar/dataWrapAccessFunctions.macro";
                break;
           default:
@@ -854,11 +854,11 @@ Terminal::setDataPrototype (
      const string& inputTypeNameString,
      const string& inputVariableNameString,
      const string& inputDefaultInitializer,
-     ConstructParamEnum  constructorParameter,
-     BuildAccessEnum  buildAccessDataFunctions,
-     bool  toBeTraversedDuringTreeTraversal,
-     bool delete_flag,
-     CopyConfigEnum   toBeCopied)
+     const ConstructParamEnum& constructorParameter,
+     const BuildAccessEnum& buildAccessDataFunctions,
+     const TraversalFlag& toBeTraversedDuringTreeTraversal,
+     const DeleteFlag& delete_flag,
+     const CopyConfigEnum& toBeCopied)
    {
      GrammarString *temp = 
           new GrammarString (inputTypeNameString,

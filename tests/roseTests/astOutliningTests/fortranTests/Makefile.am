@@ -116,6 +116,9 @@ $(TEST_F90_Objects): ../outlineSelection $(ALL_TESTCODES)
 $(TEST_F03_Objects): ../outlineSelection $(ALL_TESTCODES)
 	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f03)
 
+../outlineSelection:
+	cd ..; $(MAKE) outlineSelection
+
 PASSING_TEST_Objects = \
 $(TEST_F77_Objects) \
 $(TEST_F90_Objects) \
@@ -126,7 +129,7 @@ QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd` $(QMTEST_Objects): ../outlineSelection $(srcdir)/$(@:.qmt=.c)
 	@echo "Calling QMTEST_Objects rule: "
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../outlineSelection NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
+	$(top_srcdir)/scripts/qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../outlineSelection NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc

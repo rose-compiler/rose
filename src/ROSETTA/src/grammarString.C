@@ -37,7 +37,7 @@ GrammarString::getIsInConstructorParameterList() const
      return isInConstructorParameterList;
    }
 
-bool
+TraversalFlag
 GrammarString::getToBeTraversed() const
    {
      return toBeTraversed;
@@ -224,7 +224,7 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
         }
 
   // check if the member is accessed in tree traversal
-     if ( toBeTraversed || toBeCopied == CLONE_TREE)
+     if ( toBeTraversed == DEF_TRAVERSAL || toBeCopied == CLONE_TREE)
         {
        // Control variables for code generation
           bool typeIsPointerToListOfPointers    = typeName.find("PtrListPtr") != string::npos;
@@ -414,7 +414,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
       bool typeIsSgNode = typeName.find('*') != string::npos;
 
   // check if the member is accessed in tree traversal
-     if ( toBeTraversed || toBeCopied == CLONE_TREE)
+     if ( toBeTraversed == DEF_TRAVERSAL || toBeCopied == CLONE_TREE)
         {
        // Control variables for code generation
           bool typeIsPointerToListOfPointers    = typeName.find("PtrListPtr") != string::npos;
@@ -691,18 +691,18 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      string variableNameStringTmp = string(variableNameString);
 
      string returnString;
-     switch (automaticGenerationOfDataAccessFunctions) {
-     case NO_ACCESS_FUNCTIONS:
+     switch (automaticGenerationOfDataAccessFunctions.getValue()) {
+     case TAG_NO_ACCESS_FUNCTIONS:
            break;
-     case BUILD_ACCESS_FUNCTIONS:
-     case BUILD_WRAP_ACCESS_FUNCTIONS:
-     case BUILD_INDIRECT_ACCESS_FUNCTIONS:
+     case TAG_BUILD_ACCESS_FUNCTIONS:
+     case TAG_BUILD_WRAP_ACCESS_FUNCTIONS:
+     case TAG_BUILD_INDIRECT_ACCESS_FUNCTIONS:
 	  returnString = "     public: \n         " + typeNameStringTmp + " get_" +
 	                 variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
                          variableNameStringTmp + ");\n";
           break;
-     case BUILD_LIST_ACCESS_FUNCTIONS:
+     case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
           returnString = "     public: \n         const " + typeNameStringTmp + 
                          "& " + " get_" + variableNameStringTmp + "() const;\n         " + 
                          typeNameStringTmp + "& " + "get_" + variableNameStringTmp
@@ -828,11 +828,11 @@ GrammarString::GrammarString()
 // DQ & AJ (12/3/2004): Added support for deleation of data members
 GrammarString::GrammarString( 
    const string& inputTypeNameString, const string& inputVariableNameString, const string& inputDefaultInitializerString,
-   ConstructParamEnum isConstructorParameter, 
-   BuildAccessEnum inputAutomaticGenerationOfDataAccessFunctions,
-   bool toBeTraversedDuringTreeTraversal, 
-   bool delete_flag,
-   CopyConfigEnum _toBeCopied)
+   const ConstructParamEnum& isConstructorParameter, 
+   const BuildAccessEnum& inputAutomaticGenerationOfDataAccessFunctions,
+   const TraversalFlag& toBeTraversedDuringTreeTraversal, 
+   const DeleteFlag& delete_flag,
+   const CopyConfigEnum& _toBeCopied)
   // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(inputTypeNameString), variableNameString(inputVariableNameString), 
@@ -972,7 +972,7 @@ operator== ( const GrammarString & X, const GrammarString & Y )
    }
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-bool
+DeleteFlag
 GrammarString::getToBeDeleted() const
    {
      return toBeDeleted;
@@ -1008,7 +1008,7 @@ int GrammarString::computeKey()
    }
 
 void
-GrammarString::setAutomaticGenerationOfDataAccessFunctions ( BuildAccessEnum X )
+GrammarString::setAutomaticGenerationOfDataAccessFunctions ( const BuildAccessEnum& X )
    {
      automaticGenerationOfDataAccessFunctions = X;
    }
@@ -1020,7 +1020,7 @@ GrammarString::setIsInConstructorParameterList(ConstructParamEnum X)
 }
 
 void
-GrammarString::setToBeTraversed(bool X)
+GrammarString::setToBeTraversed(const TraversalFlag& X)
 {
   toBeTraversed= X;
 }

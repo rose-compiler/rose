@@ -771,7 +771,7 @@ Grammar::setUpStatements ()
 
   // In this case we want the Xness of the data member to match that of the outer terminal
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL | DEF2TYPE_TRAVERSAL, NO_DELETE);
+					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (4/18/2005): Removed this data member since it is redundent with the firstNondefiningDeclaration in the base class (SgDeclarationStatement)
   // QY: need forward definition so that we can set definition pointer as NULL for forward decls 

@@ -149,7 +149,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = Grammar::readFileWithPos (constructorTemplateFileName);
 
           bool complete  = false;
-          ConstructParamEnum config = (ConstructParamEnum)1;
+          ConstructParamEnum config = INDIRECT_CONSTRUCTOR_PARAMETER;
           int i = 1;
           if  (node.getBuildDefaultConstructor())
              {
@@ -158,7 +158,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
              }
 
        // DQ (5/22/2006): Why do we have such a complex for loop?
-          for ( ; !complete && config < CONSTRUCTOR_PARAMETER; config = (ConstructParamEnum)(1 << i++))
+          for ( ; !complete && config.getValue() < CONSTRUCTOR_PARAMETER.getValue(); config = (ConstructParamEnum)(ConstructParamEnumX)(1 << i++))
              {
 	       StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
                if (node.getBaseClass() != NULL)

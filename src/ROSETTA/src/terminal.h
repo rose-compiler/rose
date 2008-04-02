@@ -196,11 +196,11 @@ class Terminal
   void setDataPrototype            ( const std::string& inputTypeNameString, 
 				     const std::string& inputVariableNameString, 
 				     const std::string& defaultInitializer,
-				     ConstructParamEnum  constructorParameter,
-				     BuildAccessEnum  buildAccessFunctions,
-				     bool  toBeTraversedDuringTreeTraversal,
-				     bool delete_flag,
-                                     CopyConfigEnum   toBeCopied = COPY_DATA);
+				     const ConstructParamEnum& constructorParameter,
+				     const BuildAccessEnum& buildAccessFunctions,
+				     const TraversalFlag& toBeTraversedDuringTreeTraversal,
+				     const DeleteFlag& delete_flag,
+                                     const CopyConfigEnum& toBeCopied = COPY_DATA);
 
   virtual ~Terminal ();
  protected:

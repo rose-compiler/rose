@@ -66,6 +66,9 @@ $(TEST_Objects): ../../testTranslator
 test2005_168.o: $(srcdir)/test2005_168.c
 	../../testTranslator $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
 
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
 
 # Make rule to build the QMTest database files

@@ -261,6 +261,9 @@ test2005_56.o: ../../testTranslator
 	../../testTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(@:.o=.c)
 	rm -f $(@:.o=.c)
 
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
