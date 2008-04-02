@@ -1,4 +1,5 @@
 #include "OperatorDescriptors.h"
+#include <string.h>
 
 using namespace std;
 
