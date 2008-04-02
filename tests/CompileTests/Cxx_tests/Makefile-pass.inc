@@ -647,6 +647,7 @@ test2007_170.C \
 test2007_171.C \
 test2007_172.C \
 test2007_173.C \
+test2008_04.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
