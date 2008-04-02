@@ -1,9 +1,26 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.14 2008-03-28 15:55:32 gergo Exp $
+// $Id: cfg_support.C,v 1.15 2008-04-02 09:28:55 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
 #include "IrCreation.h"
+
+CFG::~CFG()
+{
+    std::deque<Procedure *>::iterator p;
+    for (p = procedures->begin(); p != procedures->end(); ++p)
+        delete *p;
+    delete procedures;
+    BlockList::iterator b;
+    for (b = nodes.begin(); b != nodes.end(); ++b)
+        delete *b;
+    std::vector<BlockListIterator *>::iterator i;
+    for (i = iteratorsToDelete.begin(); i != iteratorsToDelete.end(); ++i)
+        delete *i;
+    std::vector<char *>::iterator s;
+    for (s = cStringsToDelete.begin(); s != cStringsToDelete.end(); ++s)
+        free(*s);
+}
 
 CallBlock::CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
 		     std::vector<SgVariableSymbol *> *paramlist_, std::string name_)
@@ -19,6 +36,26 @@ CallBlock::CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
   default:
     statements.push_back(stmt = Ir::createCallStmt(node_type, name, this));
     }
+}
+
+std::vector<SgVariableSymbol *> *
+CallBlock::get_params()
+{
+    return paramlist;
+}
+
+void
+CallBlock::set_params(std::vector<SgVariableSymbol *> *params)
+{
+    if (paramlist != NULL)
+        delete paramlist;
+    paramlist = params;
+}
+
+CallBlock::~CallBlock()
+{
+    if (paramlist != NULL)
+        delete paramlist;
 }
 
 std::string DeclareStmt::unparseToString() const 
@@ -49,6 +86,11 @@ std::string UndeclareStmt::unparseToString() const
   return label;
 }
 
+UndeclareStmt::~UndeclareStmt()
+{
+    delete vars;
+}
+
 // GB (2007-10-23): Added this function to unparse the new members of the
 // ExternalCall node (the function expression and the list of parameter
 // variables).
@@ -66,6 +108,25 @@ std::string ExternalCall::unparseToString() const
     }
     label << "])";
     return label.str();
+}
+
+ExternalCall::ExternalCall(SgExpression *function_,
+        std::vector<SgVariableSymbol *> *params_, SgType *type_)
+  : function(function_), params(params_), type(type_)
+{
+}
+
+void ExternalCall::set_params(std::vector<SgVariableSymbol *> *params_)
+{
+    if (params != NULL)
+        delete params;
+    params = params_;
+}
+
+ExternalCall::~ExternalCall()
+{
+    if (params != NULL)
+        delete params;
 }
 
 std::string CallBlock::print_paramlist() const 
@@ -613,4 +674,93 @@ Procedure::Procedure()
     this_assignment(NULL), returnvar(NULL),
     params(NULL), decl(NULL)
 {
+}
+
+Procedure::~Procedure()
+{
+    if (arg_block != NULL)
+        delete arg_block;
+}
+
+BasicBlock::~BasicBlock()
+{
+#if 0
+    std::cout << "*** destructing basic block " << id
+        << " " << (void *) this << " "
+        << Ir::fragmentToString(statements.front()) << " ";
+    if (statements.front() != NULL && !dynamic_cast<IcfgStmt *>(statements.front()))
+        std::cout << statements.front()->class_name();
+    std::cout << std::endl;
+#endif
+    std::deque<SgStatement *>::iterator s;
+    for (s = statements.begin(); s != statements.end(); ++s)
+    {
+     // Delete SATIrE-specific statements. ROSE nodes are (hopefully)
+     // collected by ROSE.
+        if (dynamic_cast<IcfgStmt *>(*s))
+            delete *s;
+    }
+}
+
+void
+CFG::add_iteratorToDelete(BlockListIterator *i)
+{
+    iteratorsToDelete.push_back(i);
+}
+
+char *
+CFG::dupstr(const char *str)
+{
+    char *s = strdup(str);
+    cStringsToDelete.push_back(s);
+    return s;
+}
+
+BlockListIterator::BlockListIterator(CFG *cfg, BlockList *blocks,
+                                     DeletionFlag deletionFlag)
+  : cfg(cfg), blocks(blocks), pos(blocks->begin()), deletionFlag(deletionFlag)
+{
+}
+
+BlockListIterator::BlockListIterator(CFG *cfg, BlockList *blocks,
+                                     BlockList::iterator pos,
+                                     DeletionFlag deletionFlag)
+  : cfg(cfg), blocks(blocks), pos(pos), deletionFlag(deletionFlag)
+{
+}
+
+BlockListIterator::~BlockListIterator()
+{
+    if (deletionFlag == DELETE_LIST)
+        delete blocks;
+}
+
+BasicBlock *
+BlockListIterator::head() const
+{
+    return *pos;
+}
+
+BlockListIterator *
+BlockListIterator::tail() const
+{
+    BlockListIterator *t = new BlockListIterator(cfg, blocks, pos+1);
+    cfg->add_iteratorToDelete(t);
+    return t;
+}
+
+bool
+BlockListIterator::empty() const
+{
+    return (pos == blocks->end());
+}
+
+int
+BlockListIterator::size() const
+{
+    BlockList::iterator i;
+    int size = 0;
+    for (i = pos; i != blocks->end(); ++i)
+        size++;
+    return size;
 }

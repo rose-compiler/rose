@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.22 2008-03-28 15:55:32 gergo Exp $
+// $Id: CFGTraversal.C,v 1.23 2008-04-02 09:28:55 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -81,6 +81,10 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
               SgVarRefExp* thisVarRefExp =Ir::createVarRefExp("this",ptrType);
               f->statements[0] = Ir::createArgumentAssignment(a->get_lhs(),
                                                               thisVarRefExp);
+           // GB (2008-04-02): Now that we have created a new argument
+           // assignment, the old ones are no longer needed.
+              delete aa;
+              delete a;
             }
           }
         } else {
@@ -95,6 +99,12 @@ CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
           prev = b;
         }
       }
+   // GB (2008-04-02): We can empty the arg_block now; it was only temporary
+   // storage for some statements. Those statements have now either been
+   // freed, or copied somewhere else where another component will be
+   // responsible for deleting them at the appropriate time.
+      (*i)->arg_block->statements.clear();
+
       (*i)->first_arg_block = first;
       (*i)->last_arg_block = b;
     }
@@ -239,7 +249,8 @@ CFGTraversal::kill_unreachable_nodes() {
          // appropriate type) and calling the erase method.
             std::vector<Edge>::iterator pos;
             pos = std::find(succ->predecessors.begin(),
-                    succ->predecessors.end(), std::make_pair(b, etype));
+                            succ->predecessors.end(),
+                            std::make_pair(b, etype));
             if (pos != succ->predecessors.end())
                 succ->predecessors.erase(pos);
         }
@@ -252,10 +263,39 @@ CFGTraversal::kill_unreachable_nodes() {
  // unreachable. Renumber nodes using id.
     for (n = old_nodes.begin(); n != old_nodes.end(); ++n) {
         if ((*n)->reachable) {
+#if 0
+            std::cout << "renumbering old node "
+                << (void *) *n << " " << (*n)->id
+                << " " << Ir::fragmentToString((*n)->statements.front())
+                << "   to: " << id << std::endl;
+#endif
             (*n)->id = id++;
             cfg->nodes.push_back(*n);
         }
+        else
+        {
+#if 0
+            std::cout << "*** collecting garbage node " << (*n)->id
+                << std::endl;
+            std::cout << "*** stmt: "
+                << Ir::fragmentToString((*n)->statements.front())
+                << std::endl;
+#endif
+            delete *n;
+        }
     }
+#if 0
+ // dump new ICFG
+    for (n = cfg->nodes.begin(); n != cfg->nodes.end(); ++n)
+    {
+        std::cout << "id: " << (*n)->id
+            << " " << (void *) *n
+            << " " << Ir::fragmentToString((*n)->statements.front())
+            << " (" << (*n)->statements.front()->class_name()
+            << ")" << std::endl;
+     // might be interesting to see the successors as well
+    }
+#endif
 }
 
 typedef std::set<SgExpression*, ExprPtrComparator> expression_set;
@@ -449,15 +489,15 @@ CFGTraversal::visit(SgNode *node) {
       proc = (*cfg->procedures)[procnum++];
 
       BasicBlock *last_node = (proc->this_assignment 
-			       ? proc->this_assignment 
-			       : proc->exit);
+                               ? proc->this_assignment 
+                               : proc->exit);
 
       if (is_destructor_decl(decl))
-	last_node = call_base_destructors(proc, last_node);
+        last_node = call_base_destructors(proc, last_node);
 
       BasicBlock *begin
-	= transform_block(decl->get_definition()->get_body(),
-			  last_node, NULL, NULL);
+        = transform_block(decl->get_definition()->get_body(),
+                          last_node, NULL, NULL);
       if (proc->arg_block != NULL) {
         add_link(proc->entry, proc->first_arg_block, NORMAL_EDGE);
         add_link(proc->last_arg_block, begin, NORMAL_EDGE);
@@ -477,9 +517,9 @@ add_link(BasicBlock *from, BasicBlock *to, KFG_EDGE_TYPE type) {
 }
 
 BasicBlock*
-CFGTraversal::transform_block(SgBasicBlock *block,
-					  BasicBlock *after, BasicBlock *break_target,
-					  BasicBlock *continue_target)
+CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
+                              BasicBlock *break_target,
+                              BasicBlock *continue_target)
 {
   /*
    * The basic block is split into several new ones: One block per
@@ -503,17 +543,17 @@ CFGTraversal::transform_block(SgBasicBlock *block,
     for (s = stmts.begin(); s != stmts.end(); ++s) {
       // MS: transformation of variable declarations
       if (isSgVariableDeclaration(*s)) {
-	SgVariableDeclaration *decl = isSgVariableDeclaration(*s);
-	SgInitializedNamePtrList::iterator n;
-	for (n = decl->get_variables().begin();
-	     n != decl->get_variables().end(); ++n) {
-	  /* TODO: do something about storage specifiers? */
-	  if (isSgClassType((*n)->get_type()))
-	    local_classvar_decls.push_back(*n);
-	  // n is a InitializedName, but those names are of form '::name'
-	  SgVariableSymbol *varsym = Ir::createVariableSymbol(*n);
-	  local_var_decls->push_back(varsym);
-	}
+          SgVariableDeclaration *decl = isSgVariableDeclaration(*s);
+          SgInitializedNamePtrList::iterator n;
+          for (n = decl->get_variables().begin();
+                  n != decl->get_variables().end(); ++n) {
+              /* TODO: do something about storage specifiers? */
+              if (isSgClassType((*n)->get_type()))
+                  local_classvar_decls.push_back(*n);
+              // n is a InitializedName, but those names are of form '::name'
+              // SgVariableSymbol *varsym = Ir::createVariableSymbol(*n);
+              // local_var_decls->push_back(varsym);
+          }
       }
     }
     /* Create an undeclare statement for these variables. */
@@ -523,19 +563,21 @@ CFGTraversal::transform_block(SgBasicBlock *block,
        * undeclare. (Additionally, we must collect the variables
        * of all enclosing blocks for undeclaration. This is a TODO.) */
       if (isSgReturnStmt(block->get_statements().back())) {
-	current_statement = NULL;
-	new_block = allocate_new_block(new_block, proc->exit);
-	new_block->statements.push_back(Ir::createUndeclareStmt(local_var_decls));
-	last_block_of_this_block = new_block;
+        current_statement = NULL;
+        new_block = allocate_new_block(new_block, proc->exit);
+        new_block->statements.push_back(Ir::createUndeclareStmt(local_var_decls));
+        last_block_of_this_block = new_block;
       } else {
-	/* No return: Just produce a normal block. */
-	current_statement = NULL;
-	new_block = allocate_new_block(new_block, after);
-	new_block->statements.push_back(Ir::createUndeclareStmt(local_var_decls));
+        /* No return: Just produce a normal block. */
+        current_statement = NULL;
+        new_block = allocate_new_block(new_block, after);
+        new_block->statements.push_back(Ir::createUndeclareStmt(local_var_decls));
       }
       after = new_block;
       new_block = NULL;
     }
+    else
+        delete local_var_decls;
     /* Now call the destructors. These calls are non-virtual. */
     SgInitializedNamePtrList::iterator n;
     for (n = local_classvar_decls.begin(); 
@@ -610,6 +652,57 @@ CFGTraversal::transform_block(SgBasicBlock *block,
         /* outgoing analysis information is at the incoming
          * edge of the after block, where true and false
          * paths run together again */
+     // GB (2008-04-02): Outgoing analysis information is not necessarily at
+     // the current after block, because the after block might be an IfJoin
+     // that is never reached due to early returns. Thus we try to find a
+     // better after node if the after block does not have any predecessors.
+        if (after->predecessors.empty())
+        {
+         // Loop while we are in the unreachable section of code; the first
+         // unreachable node has no predecessors, its unreachable successors
+         // have one each.
+            while (after->predecessors.size() <= 1)
+            {
+             // Wow, this is really complicated, partly due to gotos that
+             // can do almost anything. Anyway, even if the current block
+             // appears to be unreachable, we will accept it if it is a
+             // SgLabelStatement or a FunctionExit; there are probably some
+             // other interesting cases.
+                SgStatement *stmt = after->statements.front();
+                if (isSgLabelStatement(stmt)
+                        || dynamic_cast<FunctionExit *>(stmt))
+                    break;
+
+                if (after->successors.size() != 1)
+                {
+                 // This "can't happen", which means that it probably will
+                 // some day under some very weird circumstances.
+                    std::cout << __FILE__ << ":" << __LINE__ << ": "
+                        << "ICFG builder: error: found unexpected number of "
+                        << "successors of unreachable IfJoin node"
+                        << std::endl;
+#if 0
+                    std::cout << "node: " << after->id << "/"
+                        << Ir::fragmentToString(after->statements.front())
+                        << std::endl;
+                    std::cout << "successors:";
+                    std::vector<Edge>::iterator e;
+                    for (e = after->successors.begin();
+                         e != after->successors.end(); ++e)
+                    {
+                        std::cout << " "
+                            << e->first->id << "/"
+                            << Ir::fragmentToString(
+                                    e->first->statements.front());
+                    }
+                    std::cout << std::endl;
+#endif
+                    std::exit(EXIT_FAILURE);
+                }
+                Edge succ = after->successors.front();
+                after = succ.first;
+            }
+        }
         stmt_end = new StatementAttribute(after, POS_PRE);
 
         new_block = NULL;
@@ -778,15 +871,19 @@ CFGTraversal::transform_block(SgBasicBlock *block,
         }
         incr_block->statements.push_front(Ir::createExprStatement(new_expr_inc));
         BasicBlock *incr_block_after = et_inc.get_after();
+        /* link everything together */
+     // GB (2008-04-02): Set these links BEFORE traversing the body. This
+     // aids in identifying unreachable code generated by statements within
+     // the body; return statements within ifs within the loop, to be exact.
+        add_link(init_block, for_block_after, NORMAL_EDGE);
+        add_link(for_block, after, FALSE_EDGE);
+        add_link(incr_block, for_block_after, NORMAL_EDGE);
         /* unfold the body */
         BasicBlock *body = transform_block(fors->get_loop_body(),
                                            incr_block_after,
                                            after, incr_block_after);
-        /* link everything together */
-        add_link(init_block, for_block_after, NORMAL_EDGE);
+     // Now add the final link to the body.
         add_link(for_block, body, TRUE_EDGE);
-        add_link(for_block, after, FALSE_EDGE);
-        add_link(incr_block, for_block_after, NORMAL_EDGE);
 
         /* incoming information is at the incoming edge of
          * the init block */
@@ -844,11 +941,10 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	SgWhileStmt* whileStatement=Ir::createWhileStmt(Ir::createExprStatement(new_expr));
 	while_block->statements.push_front(whileStatement);
 
+	add_link(while_block, after, FALSE_EDGE);
 	BasicBlock *body = transform_block(whiles->get_body(), et.get_after(),
 					   after, et.get_after());
-
 	add_link(while_block, body, TRUE_EDGE);
-	add_link(while_block, after, FALSE_EDGE);
 
 	/* incoming information is at the incoming edge of
 	 * the code produced by et */
@@ -897,11 +993,11 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  = Ir::createDoWhileStmt(Ir::createExprStatement(new_expr));
 	dowhile_block->statements.push_front(doWhileStmt);
 	
+	add_link(dowhile_block, after, FALSE_EDGE);
 	BasicBlock* body
 	  = transform_block(dowhiles->get_body(), et.get_after(),
                             after, et.get_after());
 	add_link(dowhile_block, body, TRUE_EDGE);
-	add_link(dowhile_block, after, FALSE_EDGE);
 	
 	/* incoming analysis information is at the beginning
 	 * of the body */
@@ -1134,7 +1230,7 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 	  SgVariableSymbol* declared_var 
 	    = Ir::createVariableSymbol((*j)->get_name(),
 				       (*j)->get_type());
-	  proc->exit->paramlist->push_back(declared_var);
+	  proc->exit->get_params()->push_back(declared_var);
       proc->exit->stmt->update_infolabel();
 	  SgAssignInitializer *initializer
 	    = isSgAssignInitializer((*j)->get_initptr());
@@ -1373,8 +1469,8 @@ CFGTraversal::transform_block(SgBasicBlock *block,
 
 BlockList* 
 CFGTraversal::do_switch_body(SgBasicBlock *block,
-			     BasicBlock *after, 
-			     BasicBlock *continue_target) {
+                             BasicBlock *after, 
+                             BasicBlock *continue_target) {
   BlockList *blocks = new BlockList();
   SgStatementPtrList stmts = block->get_statements();
   SgBasicBlock *spare_block = NULL;
@@ -1385,18 +1481,18 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
     switch ((*i)->variantT()) {
     case V_SgCaseOptionStmt: {
       if (spare_block != NULL) {
-	previous = transform_block(spare_block, previous,
-				   after, continue_target);
-	delete spare_block;
-	spare_block = NULL;
+        previous = transform_block(spare_block, previous,
+                                   after, continue_target);
+        delete spare_block;
+        spare_block = NULL;
       }
       SgCaseOptionStmt *cases = isSgCaseOptionStmt(*i);
       /* transform this block */
       previous = transform_block(cases->get_body(),
-				 previous, after, continue_target);
+                                 previous, after, continue_target);
       /*
-	previous->statements.push_front(cases);
-	blocks->push_front(previous);
+        previous->statements.push_front(cases);
+        blocks->push_front(previous);
       */
       BasicBlock *case_block = allocate_new_block(NULL, previous);
       case_block->statements.push_front(cases);
@@ -1405,48 +1501,48 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       /* pre info is the pre info of the first block in
        * the case body */
       StatementAttribute *stmt_start =
-	new StatementAttribute(previous, POS_PRE);
+        new StatementAttribute(previous, POS_PRE);
       cases->addNewAttribute("PAG statement start", stmt_start);
       /* post info is the post info of the last statement
        * in the case body; if the body is empty, it is the
        * pre info */
       if (!cases->get_body()->get_statements().empty()) {
-	AstAttribute* stmt_end =
-	  cases->get_body()->get_statements().back()->getAttribute("PAG statement end");
-	cases->addNewAttribute("PAG statement end", stmt_end);
+        AstAttribute* stmt_end =
+          cases->get_body()->get_statements().back()->getAttribute("PAG statement end");
+        cases->addNewAttribute("PAG statement end", stmt_end);
       } else {
-	cases->addNewAttribute("PAG statement end", stmt_start);
+        cases->addNewAttribute("PAG statement end", stmt_start);
       }
     }
       break;
 
     case V_SgDefaultOptionStmt: {
       if (spare_block != NULL) {
-	previous = transform_block(spare_block, previous,
-				   after, continue_target);
-	delete spare_block;
-	spare_block = NULL;
+        previous = transform_block(spare_block, previous,
+                                   after, continue_target);
+        delete spare_block;
+        spare_block = NULL;
       }
                 
       SgDefaultOptionStmt *defaults = isSgDefaultOptionStmt(*i);
       /* post info is before the following block */
       StatementAttribute *stmt_end =
-	new StatementAttribute(previous, POS_PRE);
+        new StatementAttribute(previous, POS_PRE);
       defaults->addNewAttribute("PAG statement end", stmt_end);
       defaults->get_body()->addNewAttribute("PAG statement end", stmt_end);
       /* transform this block */
       previous = transform_block(defaults->get_body(),
-				 previous, after, continue_target);
+                                 previous, after, continue_target);
       /* pre info is the pre info of the first block in
        * the case body */
       StatementAttribute *stmt_start =
-	new StatementAttribute(previous, POS_PRE);
+        new StatementAttribute(previous, POS_PRE);
       defaults->addNewAttribute("PAG statement start", stmt_start);
       defaults->get_body()
-	->addNewAttribute("PAG statement start", stmt_start);
+        ->addNewAttribute("PAG statement start", stmt_start);
       /*
-	previous->statements.push_front(defaults);
-	blocks->push_front(previous);
+        previous->statements.push_front(defaults);
+        blocks->push_front(previous);
       */
       BasicBlock *case_block = allocate_new_block(NULL, previous);
       case_block->statements.push_front(defaults);
@@ -1455,9 +1551,9 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       break;
     default:
       if (spare_block == NULL) {
-	spare_block = new SgBasicBlock(NULL, *i);
+        spare_block = new SgBasicBlock(NULL, *i);
       } else {
-	spare_block->prepend_statement(*i);
+        spare_block->prepend_statement(*i);
       }
       break;
     }
@@ -1483,7 +1579,7 @@ CFGTraversal::find_procnum(std::string name) const
 
 BasicBlock*
 CFGTraversal::allocate_new_block(BasicBlock *new_block,
-				 BasicBlock *after)
+                                 BasicBlock *after)
 {
     /* if (new_block == NULL)
     {
@@ -1532,10 +1628,10 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
      * collect their entry points in list blocks */
     for (pi = cfg->procedures->begin(); pi != cfg->procedures->end(); ++pi) {
       if ((*pi)->name[0] == '~'
-	  && (*pi)->class_type
-	  == (*base)->get_base_class()->get_definition()) {
-	blocks.push_back((*pi)->entry);
-	break;
+          && (*pi)->class_type
+          == (*base)->get_base_class()->get_definition()) {
+        blocks.push_back((*pi)->entry);
+        break;
       }
     }
   }
@@ -1555,9 +1651,9 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
       = Ir::createVariableSymbol("this", ptrType);
 
     CallBlock *call_block = new CallBlock(node_id++, CALL,
-					  p->procnum, NULL, destructor_name);
+                                          p->procnum, NULL, destructor_name);
     CallBlock *return_block = new CallBlock(node_id++, RETURN,
-					    p->procnum, NULL, destructor_name);
+                                            p->procnum, NULL, destructor_name);
     cfg->nodes.push_back(call_block);
     cfg->calls.push_back(call_block);
     cfg->nodes.push_back(return_block);
@@ -1568,7 +1664,7 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
       = new BasicBlock(node_id++, INNER, p->procnum);
     cfg->nodes.push_back(this_block);
     this_block->statements.push_back(new ArgumentAssignment(Ir::createVarRefExp(this_var_sym),
-							    Ir::createVarRefExp(this_sym)));
+                                                            Ir::createVarRefExp(this_sym)));
     /* set links */
     add_link(this_block, call_block, NORMAL_EDGE);
     add_link(call_block, *bi, CALL_EDGE);
@@ -1584,7 +1680,7 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
     BasicBlock *b = new BasicBlock(node_id++, INNER, p->procnum);
     cfg->nodes.push_back(b);
     b->statements.push_back(new DestructorCall(p->class_type->get_declaration()->get_name().str(),
-					       p->class_type->get_declaration()->get_type()));
+                                               p->class_type->get_declaration()->get_type()));
     add_link(b, after, NORMAL_EDGE);
     after = b;
   }
@@ -1597,7 +1693,7 @@ CFGTraversal::print_map() const {
   std::map<int, SgStatement *>::const_iterator i;
   for (i = block_stmt_map.begin(); i != block_stmt_map.end(); ++i) {
     std::cout << "block " << std::setw(4) << i->first
-	      << " stmt " << i->second << ": "
-	      << Ir::fragmentToString((i->second)) << std::endl;
+              << " stmt " << i->second << ": "
+              << Ir::fragmentToString((i->second)) << std::endl;
   }
 }

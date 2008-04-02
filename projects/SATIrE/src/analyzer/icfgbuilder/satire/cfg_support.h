@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.10 2008-03-28 15:55:39 gergo Exp $
+// $Id: cfg_support.h,v 1.11 2008-04-02 09:28:58 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -45,10 +45,39 @@ enum
 
 class BasicBlock;
 class Procedure;
+class CFG;
 
 typedef std::pair<BasicBlock *, KFG_EDGE_TYPE> Edge;
 typedef std::deque<BasicBlock *> BlockList;
-typedef std::pair<BlockList *, BlockList::iterator> BlockListIterator;
+
+// GB (2008-04-01): Replaced the typedef by a more complex class. The idea
+// is to ease garbage collection by registering pointers to all instances of
+// BlockListIterator in the corresponding CFG, and freeing them when the CFG
+// is destructed.
+// typedef std::pair<BlockList *, BlockList::iterator> BlockListIterator;
+class BlockListIterator
+{
+public:
+    enum DeletionFlag { DELETE_LIST, NO_DELETE_LIST };
+
+    BlockListIterator(CFG *cfg, BlockList *blocks,
+                      DeletionFlag deletionFlag = NO_DELETE_LIST);
+    ~BlockListIterator();
+
+    BasicBlock *head() const;
+    BlockListIterator *tail() const;
+    bool empty() const;
+    int size() const;
+
+private:
+    CFG *cfg;
+    BlockList *blocks;
+    BlockList::iterator pos;
+    DeletionFlag deletionFlag;
+    BlockListIterator(CFG *cfg, BlockList *blocks,
+                      BlockList::iterator pos,
+                      DeletionFlag deletionFlag = NO_DELETE_LIST);
+};
 
 const char *expr_to_string(const SgExpression *);
 
@@ -79,6 +108,19 @@ public:
     std::map<std::string, SgExpression *> names_initializers;
     std::vector<SgVariableSymbol *> globals;
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
+
+    ~CFG();
+
+ // This method is used to register all dynamically allocated
+ // BlockListIterators. They can be freed when the CFG is destructed.
+    void add_iteratorToDelete(BlockListIterator *i);
+ // This method duplicates a C string. It keeps the allocated memory blocks
+ // in a list and frees them when the CFG itself is destructed.
+    char *dupstr(const char *str);
+
+private:
+    std::vector<BlockListIterator *> iteratorsToDelete;
+    std::vector<char *> cStringsToDelete;
 };
 
 class BasicBlock
@@ -97,6 +139,8 @@ public:
     std::vector<Edge> predecessors;
  // GB (2008-03-10): Reachability flag, used for cleaning up the CFG.
     bool reachable;
+
+    virtual ~BasicBlock();
 };
 
 class CallStmt;
@@ -108,11 +152,16 @@ public:
             std::vector<SgVariableSymbol *> *paramlist_, std::string name_);
     CallBlock *partner;
     std::string print_paramlist() const;
-    std::vector<SgVariableSymbol *> *paramlist;
     CallStmt *stmt;
+
+    std::vector<SgVariableSymbol *> *get_params();
+    void set_params(std::vector<SgVariableSymbol *> *params);
+
+    virtual ~CallBlock();
 
 protected:
     std::string name;
+    std::vector<SgVariableSymbol *> *paramlist;
 };
 
 class IcfgStmt : public SgStatement
@@ -183,6 +232,7 @@ public:
 
     std::string unparseToString() const;
     std::vector<SgVariableSymbol *> *get_vars() const { return vars; }
+    virtual ~UndeclareStmt();
 
 protected:
     std::vector<SgVariableSymbol *> *vars;
@@ -213,11 +263,12 @@ public:
     std::vector<SgVariableSymbol *> *get_params() const { return params; }
     SgType *get_type() const { return type; }
 
-    ExternalCall(SgExpression *function_, std::vector<SgVariableSymbol *> *params_, SgType *type_)
-      : function(function_), params(params_), type(type_) {}
+    ExternalCall(SgExpression *function_, std::vector<SgVariableSymbol *> *params_, SgType *type_);
 
-    void set_params(std::vector<SgVariableSymbol *> *params_) { params = params_; }
+    void set_params(std::vector<SgVariableSymbol *> *params_);
     std::string unparseToString() const;
+
+    ~ExternalCall();
     
 private:
     ExternalCall();
@@ -371,6 +422,8 @@ public:
     std::multimap<std::string, BasicBlock *> goto_blocks;
     SgFunctionParameterList *params;
     SgFunctionDeclaration *decl;
+
+    ~Procedure();
 };
 
 void add_link(BasicBlock *from, BasicBlock *to, KFG_EDGE_TYPE type);

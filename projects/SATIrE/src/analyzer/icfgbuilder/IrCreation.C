@@ -3,6 +3,9 @@
 #include <iostream>
 #include "IrCreation.h"
 
+// GB (2008-04-01): This is the definition of the global garbage bin.
+Ir::GarbageBin Ir::garbageBin;
+
 // creates a source string representation of an AST fragment. This function creates
 // a dummy node to allow the ROSE unparseToString function to always succeed
 std::string Ir::fragmentToString(const SgNode* node) {
@@ -60,6 +63,9 @@ std::string Ir::fragmentToString(const SgNode* node) {
   /* create a temporary AST root with SgFile and SgGlobal to allow ROSE function unparseToString to trace back */
   SgFile* file = new SgFile();
   file->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+// GB (2008-03-31): It looks like ROSE 0.9.1a does not free this SgGlobal's
+// File_Info when the AST is destructed. This is not our problem (and it's a
+// very minor memory leak).
   SgGlobal* glob = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
   glob->set_parent(file);
   file->set_root(glob); // do we need this one?
@@ -488,7 +494,16 @@ Ir::getCharPtr(SgName& n) {
   // it depends whether the string remains in memeory or not whether we need to duplicate the string
   // however, we (should) free the data structures that take the string in the end anyways
   char* nonconstname=strdup(constname);
+  garbageBin.add_cString(nonconstname);
   return nonconstname;
+}
+
+char *
+Ir::getCharPtr(const std::string &s) {
+    const char *conststr = s.c_str();
+    char *nonconststr = strdup(conststr);
+    garbageBin.add_cString(nonconststr);
+    return nonconststr;
 }
 
 const char*
@@ -532,4 +547,24 @@ Ir::deepCopy(SgNode *n, bool copyParentPointer /* = true */) {
     if (copyParentPointer)
         result->set_parent(n->get_parent());
     return result;
+}
+
+void
+Ir::GarbageBin::add_cString(char *str)
+{
+    cStrings.push_back(str);
+}
+
+void
+Ir::GarbageBin::clear()
+{
+    std::vector<char *>::iterator s;
+    for (s = cStrings.begin(); s != cStrings.end(); ++s)
+        free(*s);
+    cStrings.clear();
+}
+
+Ir::GarbageBin::~GarbageBin()
+{
+    clear();
 }

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.9 2008-03-28 15:55:32 gergo Exp $
+// $Id: ProcTraversal.C,v 1.10 2008-04-02 09:28:55 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -239,12 +239,12 @@ ProcTraversal::visit(SgNode *node) {
         }
       }
       proc->entry = new CallBlock(node_id++, START, proc->procnum,
-                                  arglist,
+                                  new std::vector<SgVariableSymbol *>(*arglist),
                                   (proc->memberf_name != ""
                                     ? proc->memberf_name
                                     : proc->name));
       proc->exit = new CallBlock(node_id++, END, proc->procnum,
-                                 arglist,
+                                 new std::vector<SgVariableSymbol *>(*arglist),
                                   (proc->memberf_name != ""
                                     ? proc->memberf_name
                                     : proc->name));
@@ -277,6 +277,7 @@ ProcTraversal::visit(SgNode *node) {
                         : proc->name)
                   << " " /*<< proc->decl << std::endl*/;
       }
+      delete arglist;
     }
   }
 }

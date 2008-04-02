@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.12 2008-03-28 15:55:32 gergo Exp $
+// $Id: ExprTransformer.C,v 1.13 2008-04-02 09:28:55 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -242,25 +242,36 @@ void ExprTransformer::visit(SgNode *node)
          // only if this is a non-external member function call.
             bool generateThisParam
                 = !external_call && find_called_memberfunc(call->get_function());
-            std::vector<SgVariableSymbol *> *params =
+            std::vector<SgVariableSymbol *> *call_params =
                 evaluate_arguments(*name, elist, first_arg_block,
                     generateThisParam);
+            std::vector<SgVariableSymbol *> *ret_params =
+                new std::vector<SgVariableSymbol *>(*call_params);
+            std::vector<SgVariableSymbol *> *ext_params =
+                new std::vector<SgVariableSymbol *>(*call_params);
          // Set the parameter list for whatever kind of CFG nodes we
          // computed above.
             if (call_block != NULL)
             {
-                call_block->paramlist = params;
+                call_block->set_params(call_params);
                 call_block->stmt->update_infolabel();
             }
+            else
+                delete call_params;
             if (return_block != NULL)
             {
-                return_block->paramlist = params;
+                return_block->set_params(ret_params);
                 return_block->stmt->update_infolabel();
             }
+            else
+                delete ret_params;
             if (external_call != NULL)
             {
-                external_call->set_params(params);
+                external_call->set_params(ext_params);
             }
+            else
+                delete ext_params;
+
         }
         /* replace call by its result */
         if (retval_block != NULL)
@@ -492,9 +503,13 @@ void ExprTransformer::visit(SgNode *node)
       CallBlock *call_block = NULL, *return_block = NULL;
       if (!blocks.empty()) {
         call_block = new CallBlock(node_id++, CALL, procnum,
-                   blocks.front()->paramlist, name);
-        return_block = new CallBlock(node_id++, RETURN,
-                     procnum, blocks.front()->paramlist, name);
+                new std::vector<SgVariableSymbol *>(
+                    *blocks.front()->get_params()),
+                name);
+        return_block = new CallBlock(node_id++, RETURN, procnum,
+                new std::vector<SgVariableSymbol *>(
+                    *blocks.front()->get_params()),
+                name);
         cfg->nodes.push_back(call_block);
         cfg->calls.push_back(call_block);
         cfg->nodes.push_back(return_block);
@@ -549,12 +564,16 @@ void ExprTransformer::visit(SgNode *node)
       }
       /* fill blocks */
       if (first_arg_block != NULL) {
-        std::vector<SgVariableSymbol *> *params =
+        std::vector<SgVariableSymbol *> *call_params =
           evaluate_arguments(name, elist, first_arg_block, true);
+        std::vector<SgVariableSymbol *> *ret_params =
+            new std::vector<SgVariableSymbol *>(*call_params);
         if (call_block != NULL) {
-          call_block->paramlist = params;
+          call_block->set_params(call_params);
           call_block->stmt->update_infolabel();
         }
+        else
+            delete call_params;
      // GB (2008-03-12): We had forgotten to update the list of variables in
      // the return block.
         if (return_block != NULL) {
@@ -565,14 +584,18 @@ void ExprTransformer::visit(SgNode *node)
        // statement; two occurrences break the general rule of exactly one
        // use of temporary variables.
           if (isSgNewExp(ci->get_parent())) {
-              return_block->paramlist
-                  = new std::vector<SgVariableSymbol *>(
-                          params->begin() + 1, params->end());
+              std::vector<SgVariableSymbol *> *pop_params =
+                  new std::vector<SgVariableSymbol *>(
+                          ret_params->begin()+1, ret_params->end());
+              return_block->set_params(pop_params);
+              delete ret_params;
           } else {
-              return_block->paramlist = params;
+              return_block->set_params(ret_params);
           }
           return_block->stmt->update_infolabel();
         }
+        else
+            delete ret_params;
       }
       /* replace call by its result */
       // if (retval_block != NULL)
@@ -631,9 +654,10 @@ void ExprTransformer::visit(SgNode *node)
             cfg->nodes.push_back(this_block);
             this_block->statements.push_back(Ir::createArgumentAssignment(Ir::createVarRefExp(this_var_sym),
                                     de->get_variable()));
-            call_block->paramlist = new std::vector<SgVariableSymbol *>();
-            call_block->paramlist->push_back(this_var_sym);
-            return_block->paramlist = call_block->paramlist;
+            call_block->set_params(new std::vector<SgVariableSymbol *>());
+            call_block->get_params()->push_back(this_var_sym);
+            return_block->set_params(new std::vector<SgVariableSymbol *>(
+                        *call_block->get_params()));
 
             /* set links */
             add_link(this_block, call_block, NORMAL_EDGE);
@@ -953,6 +977,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
         }
         return blocks;
     }
+    delete blocks;
     return NULL;
 }
 

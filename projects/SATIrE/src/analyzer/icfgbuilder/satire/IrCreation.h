@@ -54,11 +54,31 @@ public:
   // support functions
   static const char* getConstCharPtr(SgName& n);
   static char* getCharPtr(SgName& n);
+  static char* getCharPtr(const std::string &s);
   static std::string getString(SgName& n);
   static std::string getStrippedName(SgInitializedName* in);
   // for creating a string representation of IR fragments
   static std::string fragmentToString(const SgNode* node);
   static SgNode *deepCopy(SgNode *n, bool copyParentPointer = true);
+
+// GB (2008-04-01): This class is used to collect various things that may be
+// dynamically allocated and where we don't know how long they live. Such
+// things can be freed when the garbage bin dies or when it is told to clear
+// itself.
+  class GarbageBin
+  {
+  public:
+      void add_cString(char *str);
+      void clear();
+      ~GarbageBin();
+
+  private:
+      std::vector<char *> cStrings;
+  };
+
+// This garbage bin lives over the whole time the program is executed. It is
+// emptied at program termination (at the latest).
+  static GarbageBin garbageBin;
 
 private:
   static void configLocatedNode(SgLocatedNode* ln, SgNode* s1, SgNode* s2);

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.10 2008-03-28 15:55:32 gergo Exp $
+// $Id: cfg_funcs.C,v 1.11 2008-04-02 09:28:55 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -228,30 +228,38 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
     fprintf(file, "%s", result.c_str());
 }
 
-extern "C" KFG_NODE_LIST kfg_predecessors(KFG, KFG_NODE node)
+extern "C" KFG_NODE_LIST kfg_predecessors(KFG kfg, KFG_NODE node)
 {
     /*
      * Returns the list of predecessors of the node.
      */
+    CFG *cfg = (CFG *) kfg;
     BasicBlock *block = (BasicBlock *) node;
     BlockList *preds = new BlockList();
     std::vector<Edge>::const_iterator i;
     for (i = block->predecessors.begin(); i != block->predecessors.end(); ++i)
         preds->push_back(i->first);
-    return new BlockListIterator(preds, preds->begin());
+    BlockListIterator *blockList
+        = new BlockListIterator(cfg, preds, BlockListIterator::DELETE_LIST);
+    cfg->add_iteratorToDelete(blockList);
+    return blockList;
 }
 
-extern "C" KFG_NODE_LIST kfg_successors(KFG, KFG_NODE node)
+extern "C" KFG_NODE_LIST kfg_successors(KFG kfg, KFG_NODE node)
 {
     /*
      * Returns the list of successors of the node.
      */
+    CFG *cfg = (CFG *) kfg;
     BasicBlock *block = (BasicBlock *) node;
     BlockList *succs = new BlockList();
     std::vector<Edge>::const_iterator i;
     for (i = block->successors.begin(); i != block->successors.end(); ++i)
         succs->push_back(i->first);
-    return new BlockListIterator(succs, succs->begin());
+    BlockListIterator *blockList
+        = new BlockListIterator(cfg, succs, BlockListIterator::DELETE_LIST);
+    cfg->add_iteratorToDelete(blockList);
+    return blockList;
 }
 
 extern "C" KFG_NODE kfg_get_call(KFG, KFG_NODE node)
@@ -311,44 +319,40 @@ extern "C" int kfg_replace_beginnings(KFG, int const *)
     return 0;
 }
 
-extern "C" KFG_NODE kfg_node_list_head(KFG_NODE_LIST list)
+extern "C" KFG_NODE kfg_node_list_head(KFG_NODE_LIST l)
 {
     /*
      * Returns head of list.
      */
-    BlockListIterator *i = (BlockListIterator *) list;
-    return *(i->second);
+    BlockListIterator *list = (BlockListIterator *) l;
+    return list->head();
 }
 
-extern "C" KFG_NODE_LIST kfg_node_list_tail(KFG_NODE_LIST list)
+extern "C" KFG_NODE_LIST kfg_node_list_tail(KFG_NODE_LIST l)
 {
     /*
      * Returns list without the first element.
      */
-    BlockListIterator *i = (BlockListIterator *) list;
-    return new BlockListIterator(i->first, i->second + 1);
+    BlockListIterator *list = (BlockListIterator *) l;
+    return list->tail();
 }
 
-extern "C" int kfg_node_list_is_empty(KFG_NODE_LIST list)
+extern "C" int kfg_node_list_is_empty(KFG_NODE_LIST l)
 {
     /*
      * Returns 1 if the list is empty, 0 otherwise.
      */
-    BlockListIterator *i = (BlockListIterator *) list;
-    return (i->first->end() == i->second);
+    BlockListIterator *list = (BlockListIterator *) l;
+    return list->empty();
 }
 
-extern "C" int kfg_node_list_length(KFG_NODE_LIST list)
+extern "C" int kfg_node_list_length(KFG_NODE_LIST l)
 {
     /*
      * Returns length of node list.
      */
-    BlockListIterator *i = (BlockListIterator *) list;
-    BlockList::const_iterator j;
-    int len = 0;
-    for (j = i->second; j != i->first->end(); ++j)
-        len++;
-    return len;
+    BlockListIterator *list = (BlockListIterator *) l;
+    return list->size();
 }
 
 extern "C" unsigned int kfg_edge_type_max(KFG)
@@ -423,9 +427,9 @@ extern "C" char *kfg_proc_name(KFG kfg, int n)
      */
     CFG *cfg = (CFG *) kfg;
     if ((*cfg->procedures)[n]->memberf_name != "")
-        return strdup((*cfg->procedures)[n]->memberf_name.c_str());
+        return cfg->dupstr((*cfg->procedures)[n]->memberf_name.c_str());
     else
-        return strdup((*cfg->procedures)[n]->name.c_str());
+        return cfg->dupstr((*cfg->procedures)[n]->name.c_str());
 }
 
 extern "C" KFG_NODE kfg_numproc(KFG cfg, int n)
@@ -459,7 +463,9 @@ extern "C" KFG_NODE_LIST kfg_all_nodes(KFG kfg)
      * Returns list of all nodes.
      */
     CFG *cfg = (CFG *) kfg;
-    return new BlockListIterator(&cfg->nodes, cfg->nodes.begin());
+    BlockListIterator *i = new BlockListIterator(cfg, &cfg->nodes);
+    cfg->add_iteratorToDelete(i);
+    return i;
 }
 
 extern "C" KFG_NODE_LIST kfg_entrys(KFG kfg)
@@ -468,7 +474,9 @@ extern "C" KFG_NODE_LIST kfg_entrys(KFG kfg)
      * Returns list of all entry nodes.
      */
     CFG *cfg = (CFG *) kfg;
-    return new BlockListIterator(&cfg->entries, cfg->entries.begin());
+    BlockListIterator *i = new BlockListIterator(cfg, &cfg->entries);
+    cfg->add_iteratorToDelete(i);
+    return i;
 }
 
 extern "C" KFG_NODE_LIST kfg_calls(KFG kfg)
@@ -477,7 +485,9 @@ extern "C" KFG_NODE_LIST kfg_calls(KFG kfg)
      * Returns list of all call nodes.
      */
     CFG *cfg = (CFG *) kfg;
-    return new BlockListIterator(&cfg->calls, cfg->calls.begin());
+    BlockListIterator *i = new BlockListIterator(cfg, &cfg->calls);
+    cfg->add_iteratorToDelete(i);
+    return i;
 }
 
 extern "C" KFG_NODE_LIST kfg_returns(KFG kfg)
@@ -486,7 +496,9 @@ extern "C" KFG_NODE_LIST kfg_returns(KFG kfg)
      * Returns list of all return nodes.
      */
     CFG *cfg = (CFG *) kfg;
-    return new BlockListIterator(&cfg->returns, cfg->returns.begin());
+    BlockListIterator *i = new BlockListIterator(cfg, &cfg->returns);
+    cfg->add_iteratorToDelete(i);
+    return i;
 }
 
 extern "C" KFG_NODE_LIST kfg_exits(KFG kfg)
@@ -495,5 +507,7 @@ extern "C" KFG_NODE_LIST kfg_exits(KFG kfg)
      * Returns list of all exit nodes.
      */
     CFG *cfg = (CFG *) kfg;
-    return new BlockListIterator(&cfg->exits, cfg->exits.begin());
+    BlockListIterator *i = new BlockListIterator(cfg, &cfg->exits);
+    cfg->add_iteratorToDelete(i);
+    return i;
 }
