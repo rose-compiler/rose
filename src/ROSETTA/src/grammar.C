@@ -1987,7 +1987,7 @@ Grammar::buildVariants ()
                           "enum $MARKERVariants \n" \
                           "   { \n";
 
-     string footer = "     $MARKER_UNKNOWN_GRAMMAR,\n" \
+     string footer = "     $MARKER_UNKNOWN_GRAMMAR = " + StringUtility::numberToString(this->astNodeToVariantMap.size() + 1) + ",\n" \
                           "     $MARKER_LAST_TAG \n" \
                           "   }; \n";
      
