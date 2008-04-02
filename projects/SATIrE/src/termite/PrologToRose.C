@@ -1768,19 +1768,24 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,vector<SgNode*>* succs,
   debug("created variable declaration");
   /* add initialized names*/
   vector<SgNode*>::iterator it = succs->begin();
-  SgInitializedName* ini_name = NULL;
-  SgInitializer* ini_initializer = NULL;
   ROSE_ASSERT(it != succs->end());
+
+  SgInitializer* ini_initializer;
+
   while(it != succs->end()) {
-    ini_name = NULL;
-    ini_initializer = NULL;
-    /* try to cast successors to SgInitializedName*/
-    ini_name = dynamic_cast<SgInitializedName*>(*it);
-    ROSE_ASSERT(ini_name != NULL);
-    debug("added variable");
-    ini_name->set_declptr(dec);
-    ini_initializer = ini_name->get_initializer();
-    dec->append_variable(ini_name,ini_initializer);
+    if (SgInitializedName* ini_name = dynamic_cast<SgInitializedName*>(*it)) {
+      debug("added variable");
+      ini_name->set_declptr(dec);
+      ini_initializer = ini_name->get_initializer();
+      dec->append_variable(ini_name,ini_initializer);
+    } else if (SgClassDeclaration* class_decl = dynamic_cast<SgClassDeclaration*>(*it)) {
+      debug("added class");
+      fakeParentScope(class_decl);
+      cerr<<"**WARNING: don't know how to handle " << t->getRepresentation() << endl;
+    } else {
+      cerr << (*it)->class_name() << "???" << endl; 
+      ROSE_ASSERT(false);
+    }
     it++;
   }
   /* set declaration modifier*/

@@ -310,6 +310,11 @@ PrologSupport::getTypedefTypeSpecific(SgType* mtype) {
     /* create term and add name*/
     PrologCompTerm* t = new PrologCompTerm("typedef_type");
     t->addSubterm(new PrologString(tp->get_name().getString()));
+
+    /* add base type */
+    if (tp->get_base_type() != NULL)
+	t->addSubterm(getTypeSpecific(tp->get_base_type()));
+    else t->addSubterm(new PrologAtom("null"));
     return t;
 }
 
@@ -676,8 +681,8 @@ PrologSupport::getVarRefExpSpecific(SgVarRefExp* vr) {
     } else {
 	annot->addSubterm(new PrologInt(0));
     }
-    /* named scope or irrelevant?*/
     if (vdec != NULL) {
+	/* named scope or irrelevant?*/
 	if(SgNamespaceDefinitionStatement* scn = isSgNamespaceDefinitionStatement(vdec->get_parent())) {
 	    annot->addSubterm(getNamespaceScopeName(scn));
 	} else if (SgClassDefinition* scn = isSgClassDefinition(vdec->get_parent())) {
@@ -688,6 +693,7 @@ PrologSupport::getVarRefExpSpecific(SgVarRefExp* vr) {
     } else {
 	annot->addSubterm(new PrologAtom("null"));
     }
+
     return annot;
 }
 

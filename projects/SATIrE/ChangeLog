@@ -20,6 +20,7 @@ V0.8.1 (in progress)
 
 * Termite [AP]
   - removed wrong successor check in SgReturnStmt
+  - added base type to typedef_type!2
 
 V0.8.0 2008-03-11 MS,GB,AP
 
