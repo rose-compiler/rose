@@ -3364,7 +3364,7 @@ void Unparse_ExprStmt::unparseBitXOrOp(SgExpression* expr, SgUnparse_Info& info)
 void Unparse_ExprStmt::unparseBitAndOp(SgExpression* expr, SgUnparse_Info& info) {unparseBinaryOperator(expr, "&", info); }
 void Unparse_ExprStmt::unparseBitOrOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "|", info); }
 void Unparse_ExprStmt::unparseCommaOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ",", info); }
-void Unparse_ExprStmt::unparseLShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "+", info); }
+void Unparse_ExprStmt::unparseLShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<", info); }
 void Unparse_ExprStmt::unparseRShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>", info); }
 void Unparse_ExprStmt::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
 void Unparse_ExprStmt::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
@@ -3384,7 +3384,10 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
        else
         {
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
-          unp->u_type->unparseType(sizeof_op->get_operand_type(), info);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
         }
      curprint ( ")");
    }
@@ -3817,8 +3820,6 @@ void Unparse_ExprStmt::unparseDivAssnOp(SgExpression* expr, SgUnparse_Info& info
 void Unparse_ExprStmt::unparseModAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "%=",  info); }
 void Unparse_ExprStmt::unparseXorAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "^=",  info); }
 
-// DQ (1/12/2008): SgLshiftOp should not unparse to "+=", I thnk this was a typo!
-// void Unparse_ExprStmt::unparseLShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "+=",  info); }
 void Unparse_ExprStmt::unparseLShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<=",  info); }
 void Unparse_ExprStmt::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>=", info); }
 
