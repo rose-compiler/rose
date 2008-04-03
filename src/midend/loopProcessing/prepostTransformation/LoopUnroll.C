@@ -1,4 +1,6 @@
 #include <vector>
+#include <string>
+#include <algorithm>
 
 #include <LoopUnroll.h>
 #include <LoopInfoInterface.h>
