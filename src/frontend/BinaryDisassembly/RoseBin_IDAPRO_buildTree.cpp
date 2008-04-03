@@ -350,10 +350,10 @@ string RoseBin_IDAPRO_buildTree::getReplacementText(
       text=subst.replacement;
       // break;
     } else {
-      cerr << "(Operand,expr) in substition (" << op_id << "," << ex_id << ") does not match tested (" << operand_id << "," << expr_id_root << ")" << endl;
+      //cerr << "(Operand,expr) in substition (" << op_id << "," << ex_id << ") does not match tested (" << operand_id << "," << expr_id_root << ")" << endl;
     }
   } else {
-    cerr << "Did not find substitution " << address << endl;
+    //cerr << "Did not find substitution " << address << endl;
   }
   return text;
 }
