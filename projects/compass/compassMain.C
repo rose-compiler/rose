@@ -92,6 +92,8 @@ int main(int argc, char** argv)
                     int spaceAvailable = 40;
                     std::string name = (*itr)->getName() + ":";
                     int n = spaceAvailable - name.length();
+                    //Liao, 4/3/2008, bug 82, negative value
+                    if (n<0) n=0;
                     std::string spaces(n,' ');
                     TimingPerformance timer (name + spaces + " time (sec) = ",false);
                     (*itr)->run( project );

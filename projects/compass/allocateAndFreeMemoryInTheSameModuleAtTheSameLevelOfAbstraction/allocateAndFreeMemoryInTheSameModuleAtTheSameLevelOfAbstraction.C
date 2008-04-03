@@ -16,7 +16,7 @@ namespace CompassAnalyses
 
        // Descriptions should not include the newline character "\n".
           const std::string shortDescription = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.";
-          const std::string longDescription  = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.\nTo avoid these situations, it is recommended that memory be allocated and freed at the same level of abstraction, and ideally in the same code module.\nThe affects of not following this recommendation are best demonstrated by an actual vulnerability. Freeing memory in different modules resulted in a vulnerability in MIT Kerberos 5 MITKRB5-SA-2004-002 . The problem was that the MIT Kerberos 5 code contained error-handling logic, which freed memory allocated by the ASN.1 decoders if pointers to the allocated memory were non-NULL. However, if a detectable error occured, the ASN.1 decoders freed the memory that they had allocated. When some library functions received errors from the ASN.1 decoders, they also attempted to free, causing a double-free vulnerability.";
+          const std::string longDescription  = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.To avoid these situations, it is recommended that memory be allocated and freed at the same level of abstraction, and ideally in the same code module.The affects of not following this recommendation are best demonstrated by an actual vulnerability. Freeing memory in different modules resulted in a vulnerability in MIT Kerberos 5 MITKRB5-SA-2004-002 . The problem was that the MIT Kerberos 5 code contained error-handling logic, which freed memory allocated by the ASN.1 decoders if pointers to the allocated memory were non-NULL. However, if a detectable error occured, the ASN.1 decoders freed the memory that they had allocated. When some library functions received errors from the ASN.1 decoders, they also attempted to free, causing a double-free vulnerability.";
         } //End of namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.
    } //End of namespace CompassAnalyses.
 
@@ -29,10 +29,8 @@ CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
    : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
    {
-  // Initalize checker specific parameters here, for example: 
+  // Initialize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.YourParameter"]);
-
-
    }
 
 void
