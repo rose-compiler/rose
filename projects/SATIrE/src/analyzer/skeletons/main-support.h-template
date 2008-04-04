@@ -31,6 +31,21 @@
 #define carrier_printfunc(type) xcarrier_printfunc(type)
 #define xcarrier_printfunc(type) o_##type##_print
 
+#if PREFIX_SET
+    #define prefixed_DFI_STORE(P) p2_DFI_STORE(P)
+    #define prefixed_dfi_get_pre_info(P) p2_dfi_get_pre_info(P)
+    #define prefixed_dfi_get_post_info_all(P) p2_dfi_get_post_info_all(P)
+
+    #define p2_DFI_STORE(P) o_##P##DFI_STORE
+    #define p2_dfi_get_pre_info(P) o_##P##dfi_get_pre_info
+    #define p2_dfi_get_post_info_all(P) o_##P##dfi_get_post_info_all
+
+    #define DFI_STORE prefixed_DFI_STORE(PREFIX)
+    #define dfi_get_pre_info prefixed_dfi_get_pre_info(PREFIX)
+    #define dfi_get_post_info_all prefixed_dfi_get_post_info_all(PREFIX)
+#endif
+
+
 DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject* root,AnalyzerOptions* opt);
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt);
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt);
@@ -63,5 +78,6 @@ public:
 };
 
 void satireResetParentPointers(SgNode *ast_root, SgNode *parent);
+void runOtherAnalyses(void *cfg);
 
 #endif

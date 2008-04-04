@@ -7,16 +7,23 @@ SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
 
-PAG = $(PAGDIR)/bin/pag
-CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(ANALYSIS)-out/src/ -I$(SATIRE_INCLUDE)
-LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
-LIBS = $(ANALYSIS).a -lsatire -lsyntree -ltermite -lrose -lrt -lpag -lfl
-
-# variable CUSTOM_CFLAGS can be in separate file
+# variable CUSTOM_CFLAGS can be in separate file; so can options from
+# newcombined analysis
 custommakefile = $(wildcard Makefile*)
 ifneq '$(custommakefile)' 'Makefile'
 include Makefile.custom
 endif
+
+# OTHERANALYSES is set by newcombinedanalysis
+OTHERANALYSISLIBS = ${OTHERANALYSES:%=otheranalyses/%.a}
+
+PAG = $(PAGDIR)/bin/pag
+CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(ANALYSIS)-out/src/ -I$(SATIRE_INCLUDE)
+LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
+LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lrose -lrt -lpag -lfl
+
+# common macro definitions passed on the command line
+D_FLAGS = -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DPREFIX=$(PREFIX) -DPREFIX_SET=$(PREFIX_SET)
 
 .PHONY: all clean check update newanalysis
 
@@ -25,6 +32,7 @@ all: $(ANALYSIS)
 $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	mkdir -p anim-out
 	mkdir -p $(ANALYSIS)-out/src
+	mkdir -p otheranalyses
 	if $(PAG) $(SATIRE_INCLUDE)/ iterate1.t $(ANALYSIS) $(ANALYSIS)-out --prefix=$(PAGDIR) 2> pag-out; then cat pag-out; else cat pag-out; false; fi
 	ar x $(SATIRE_LIB)/libsyntree.a syntree.o
 	mv syntree.o $(ANALYSIS)-out/src/
@@ -32,17 +40,21 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) $(CUSTOM_CFLAGS) -c main.C
+	g++ $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main.C
 
 main-support.o: main-support.C
-	g++ $(CXXFLAGS) -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) $(CUSTOM_CFLAGS) -c main-support.C
+	g++ $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main-support.C
 
-$(ANALYSIS): $(ANALYSIS).a main.o main-support.o
-	g++ $(CXXFLAGS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DANALYSIS=$(ANALYSIS) $(CUSTOM_CFLAGS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
+$(ANALYSIS): $(ANALYSIS).a main.o main-support.o $(OTHERANALYSISLIBS)
+	g++ $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out
 	@echo "nothing, because it wasn't run (the analysis specification has not changed)" > pag-out
+
+otheranalyses/%.a:
+	$(MAKE) CFLAGS="$(CUSTOM_CFLAGS)" $*.a -C $*
+	cp $*/$*.a otheranalyses/
 
 clean:
 	rm -f *~ *.o *.a pig_temp* syntree* $(ANALYSIS) *.gdl pag-out
@@ -50,6 +62,8 @@ clean:
 	rm -rf anim-out
 	rm -f a.out
 	rm -f rose_*
+	for analysis in $(OTHERANALYSES); do $(MAKE) clean -C $$analysis; done
+	rm -rf otheranalyses/
 
 check:  $(ANALYSIS)
 	sh runtests

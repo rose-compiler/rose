@@ -1,9 +1,9 @@
 EXTRA_DIST = main.C-template  main.h-template  main-support.C-template  main-support.h-template  \
-             Makefile-template.in newanalysis.in undonewanalysis runtests-template
+             Makefile-template.in newanalysis.in undonewanalysis runtests-template newcombinedanalysis
 
 dist_pkgdata_DATA = main.C-template  main.h-template  main-support.C-template  main-support.h-template  Makefile-template runtests-template
 
-bin_SCRIPTS= newanalysis  undonewanalysis 
+bin_SCRIPTS= newanalysis  undonewanalysis newcombinedanalysis
 CLEANFILES = newanalysis Makefile-template
 
 # necessary to get the right path for the skeletons..
