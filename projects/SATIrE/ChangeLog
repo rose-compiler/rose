@@ -1,5 +1,10 @@
 V0.8.1 (in progress)
 
+* Combined PAG analyses [GB]
+  - added experimental script 'newcombinedanalysis' to generate directories
+    and support files for combining PAG analyses
+  - modified 'newanalysis' and skeleton files to support combined analyses
+
 * Analyzer statistics [GB]
   - added support for the ROSE performance timer to SATIrE; use --statistics
     option to print timing information for your analyzer
