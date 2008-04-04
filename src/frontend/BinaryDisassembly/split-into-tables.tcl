@@ -9,7 +9,8 @@ proc getSqlFields {text} {
     if {[regexp {^ *([^',]+)(?:,(.*))?$} $text _ firstField rest]} {
       lappend result $firstField
       set text $rest
-    } elseif {[regexp {^ *'([^']*)'(?:,(.*))?$} $text _ firstField rest]} {
+    } elseif {[regexp {^ *'((?:[^']|'')*)'(?:,(.*))?$} $text _ firstField rest]} {
+      regsub -all "''" $firstField "'" firstField
       lappend result $firstField
       set text $rest
     } else {
