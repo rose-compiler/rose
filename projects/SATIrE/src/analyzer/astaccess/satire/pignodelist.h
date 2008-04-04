@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pignodelist.h,v 1.3 2008-01-25 16:09:17 adrian Exp $
+// $Id: pignodelist.h,v 1.4 2008-04-04 10:07:28 gergo Exp $
 
 #ifndef H_PIGNODELIST
 #define H_PIGNODELIST
@@ -21,12 +21,6 @@ public:
             newlist->push_back(*i);
         first = newlist;
         second = newlist->begin();
-    }
-    template <class T, class T2> PigNodeList(
-            std::vector<T, T2> *l, typename std::vector<T, T2>::const_iterator i)
-    {
-        first = l;
-        second = i;
     }
     PigNodeList(const SgExprListExp *e)
     {
@@ -52,7 +46,12 @@ public:
     }
 
 private:
-    PigNodeList();
+    template <class T, class T2> PigNodeList(
+            std::vector<T, T2> *l, typename std::vector<T, T2>::const_iterator i)
+    {
+        first = l;
+        second = i;
+    }
 };
 
 #endif
