@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
       callFileName = "callgraph.gml";
       graph= new RoseBin_GMLGraph();
     }
-    RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseFile(""));
+    RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj());
     callanalysis->run(graph, callFileName, !mergedEdges);
   }
 
@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
       cfgFileName = "cfg.gml";
       graph= new RoseBin_GMLGraph();
     }
-    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseFile(""), edges);
+    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
   }
 
@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
       dfgFileName = "dfg.gml";
       graph= new RoseBin_GMLGraph();
     }
-    RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseFile(""));
+    RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
     dfanalysis->init(interprocedural, edges);
     dfanalysis->run(graph, dfgFileName, mergedEdges);
   }
@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
 
     loadAnalysisFiles(checkers, visitor);
     // put here to resolve functions instead of blocks
-    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseFile(""), edges);
+    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
 
     vector <BC_AnalysisInterface*>::const_iterator it = checkers.begin();
     for (;it!=checkers.end();it++) {
@@ -252,7 +252,7 @@ int main(int argc, char** argv) {
       cfganalysis->run(graph, dfgFileName, mergedEdges);
       cout << "Graph : " << graph->nodes.size() << endl;
 
-      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseFile(""));
+      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
       dfanalysis->init(interprocedural, edges,graph);
       vector<SgDirectedGraphNode*> rootNodes;
       dfanalysis->getRootNodes(rootNodes);
