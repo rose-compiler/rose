@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <stdlib.h>
 
 namespace PrologLexer {
   // This is based on the stuff at

@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <string.h>
 #include <libxml/encoding.h>
 #include <libxml/tree.h>
 #include <libxml/xmlreader.h>
