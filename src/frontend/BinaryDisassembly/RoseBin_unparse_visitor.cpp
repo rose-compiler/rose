@@ -464,7 +464,7 @@ string RoseBin_unparse_visitor::resolveOperand(SgAsmExpression* expr,
       //offset = refExpr->get_offset();
     // if offset==null, then we have no children, must be a plain register
       res = resolveRegister(code, pos);
-    } 
+    } else {ROSE_ASSERT(!"Bad assembly language setting");}
     //if (offset!=NULL) {
       // Segment register -- remove for now FIXME
       //res = "";

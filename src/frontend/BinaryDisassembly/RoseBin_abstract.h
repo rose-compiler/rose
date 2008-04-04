@@ -36,7 +36,7 @@ class RoseBin_abstract : public AstSimpleProcessing {
     functionNames.clear();
     num_inst=0;
     num_func=0;
-    RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
+    //    RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
   }
   
   ~RoseBin_abstract() {
