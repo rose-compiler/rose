@@ -57,7 +57,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
  public:
 
-  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin* ):RoseBin_FlowAnalysis(global) {
+  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* ):RoseBin_FlowAnalysis(global) {
     typeNode="DFG";
     typeEdge="DFG-E";  
     interprocedural = false;
@@ -66,6 +66,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     forward_analysis=forward;
     defuse = new RoseBin_DefUseAnalysis();
   }
+  /*
   RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* ):RoseBin_FlowAnalysis(global) {
     typeNode="DFG";
     typeEdge="DFG-E";  
@@ -75,7 +76,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     forward_analysis=forward;
     defuse = new RoseBin_DefUseAnalysis();
   }
-
+  */
   ~RoseBin_DataFlowAnalysis() {
     delete globalBin;
     //delete roseBin;

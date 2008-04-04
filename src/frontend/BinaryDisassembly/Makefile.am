@@ -37,22 +37,8 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp  RoseBin_unparse.cpp \
      analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_Emulate.cpp \
      analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp readTicl.C RoseBin_file.cpp RoseFile.cpp \
-     RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp
+     RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp 
 
-
-# Original combined library (as originally defined by Thomas)
-#libbinarydisassembly_la_DEPENDENCIES =
-#libbinarydisassembly_la_SOURCES = \
-#     RoseBin_buildTree.cpp  RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp \
-#     RoseBin_IDAPRO_buildTree.cpp  RoseBin_support.cpp  RoseBin_unparse.cpp \
-#     RoseBin_unparse_visitor.cpp analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
-#     analyses/RoseBin_printInstructions.cpp analyses/RoseBin_DataFlowAnalysis.cpp \
-#     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
-#     analyses/RoseBin_CallGraphAnalysis.cpp analyses/RoseBin_FlowAnalysis.cpp \
-#     analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
-#     analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
-#     analyses/dataflowanalyses/RoseBin_Emulate.cpp \
-#     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
 
 endif
 
@@ -70,7 +56,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
    analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h \
-   RoseBin_abstract.h
+   RoseBin_abstract.h RoseObj.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_IDAPRO_branchGraph.h RoseBin_buildTree.h RoseBin_IDAPRO_buildTree.h \
@@ -83,7 +69,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
    analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h \
-   RoseBin_abstract.h
+   RoseBin_abstract.h RoseObj.h
 endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available
 # colorTraversal.h  

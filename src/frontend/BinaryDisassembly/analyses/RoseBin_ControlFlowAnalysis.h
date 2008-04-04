@@ -17,7 +17,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
 
  public:
 
-  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseBin* , 
+  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* , 
 			      bool printedges):RoseBin_FlowAnalysis(global) {
     typeNode="CFG";
     typeEdge="CFG-E";  
@@ -25,7 +25,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
     printEdges = printedges;
     forward_analysis=forward;
   }
-
+  /*
   RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* , 
 			      bool printedges):RoseBin_FlowAnalysis(global) {
     typeNode="CFG";
@@ -34,7 +34,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
     printEdges = printedges;
     forward_analysis=forward;
   }
-
+  */
   ~RoseBin_ControlFlowAnalysis() {
     delete globalBin;
     //delete roseBin;

@@ -17,20 +17,21 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
 
  public:
 
-  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin* ):RoseBin_FlowAnalysis(global) {
+  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract* ):RoseBin_FlowAnalysis(global) {
     typeNode="function";
     typeEdge="CG-E";  
     analysisName="callgraph";
     forward_analysis=true;
   }
 
+  /*
   RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseFile* ):RoseBin_FlowAnalysis(global) {
     typeNode="function";
     typeEdge="CG-E";  
     analysisName="callgraph";
     forward_analysis=true;
   }
-
+  */
   ~RoseBin_CallGraphAnalysis() {
     delete globalBin;
     //delete roseBin;

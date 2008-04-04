@@ -87,6 +87,7 @@
 #endif 
   #include "RoseBin_abstract.h"
   #include "RoseFile.h"
+  #include "RoseObj.h"
 
   #include "RoseBin_DotGraph.h"
   #include "RoseBin_GmlGraph.h"
