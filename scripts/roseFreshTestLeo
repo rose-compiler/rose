@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 #
 # This script does a fresh checkout of ROSE and conducts a series tests.
 #
@@ -9,12 +9,17 @@
 # 3. Others in the configuration section
 #
 # Liao, 2/7/2008
+# Last Modified: 4/4/2008
 #------------------------------------------------------
 # Configuration Section
 #------------------------------------------------------
 MAILADDRS="liaoch@llnl.gov"
-# $$ is the current process Id
-ROSE_TOP="${HOME}/daily-test-rose/$$/"
+
+ROSE_TOP=/home/liao6/daily-test-rose/
+ROSE_SRC="${ROSE_TOP}/sourcetree_$$"
+ROSE_BUILD="${ROSE_TOP}/build_$$"
+ROSE_INSTALL="${ROSE_TOP}/install_$$"
+ROSE_LOG="${ROSE_TOP}/buildlog_$$"
 
 # the right version of subversion is required!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
@@ -22,7 +27,7 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 
 # store configuration options into an array ()
 # $@ means the optional parameters provided with the command line running current script 
-CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix="`pwd`/../install" "$@")
+CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=${ROSE_INSTALL} "$@")
 
 # make using multiple processes
 MAKEFLAGS="-j2"
@@ -31,8 +36,10 @@ MAKEFLAGS="-j2"
 #------------------------------------------------------
 set -o pipefail
 set -e
-rm -rf ${ROSE_TOP}
+touch ${ROSE_LOG}
 mkdir -p ${ROSE_TOP}
+# need a fresh check out
+rm -rf ${ROSE_SRC}
 cd ${ROSE_TOP}
 
 set +e
@@ -57,8 +64,10 @@ set -e
 (
   echo "Subject: Starting ROSE test $$" > mailtext1
   echo "" >> mailtext1
-  echo "See build log in ${ROSE_TOP}/buildlog for status" >> mailtext1
+  echo "See build log in ${ROSE_LOG} for status" >> mailtext1
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext1
+  echo "" >> mailtext1
+  echo "Make flags = ${MAKEFLAGS}" >> mailtext1
   echo "" >> mailtext1
   echo "> Command versions" >> mailtext1
   automake --version | head -1 >> mailtext1
@@ -85,32 +94,33 @@ buildstatus=0
   set -e
   set -x
 # check out a fresh copy for testing
-  $SVN co -q ${ROSE_SVNROOT} sourcetree
-#  $SVN export -q ${ROSE_SVNROOT} sourcetree
+  $SVN co -q ${ROSE_SVNROOT} ${ROSE_SRC}
+# $SVN export -q ${ROSE_SVNROOT} sourcetree
 
 # rebuild the Makefile in the source tree
   echo "Build configuration and Makefile.in in the source tree...."
-  cd sourcetree
+  cd ${ROSE_SRC}
   ./build
   cd ..
 
 # prepare a fresh build tree
+# $$ is the current process Id
   echo "Making a temporary build directory:... "
-  mkdir build
+  mkdir ${ROSE_BUILD}
 
 # configure ROSE
-  cd build
-  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}"
+  cd ${ROSE_BUILD}
+  ${ROSE_SRC}/configure "${CONFIGURE_FLAGS[@]}"
 
 # make and check
-  make $MAKEFLAGS 
-  make $MAKEFLAGS docs 
-  make $MAKEFLAGS check 
-  make $MAKEFLAGS install 
-  make $MAKEFLAGS installcheck 
-  make $MAKEFLAGS dist 
+  make $MAKEFLAGS && \
+  make $MAKEFLAGS docs && \
+  make $MAKEFLAGS check && \
+  make $MAKEFLAGS install && \
+  make $MAKEFLAGS installcheck && \
+  make $MAKEFLAGS dist && \
   make $MAKEFLAGS distcheck
-) >buildlog 2>&1 || buildstatus=1
+) >${ROSE_LOG} 2>&1 || buildstatus=1
 
 #------------------------------------------------------
 # Report Section
@@ -127,7 +137,7 @@ else
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "Make flags = ${MAKEFLAGS}" >> mailtext
   echo "" >> mailtext
-  tail -100 buildlog >> mailtext
+  tail -100 ${ROSE_LOG} >> mailtext
   echo "" >> mailtext
 fi
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
