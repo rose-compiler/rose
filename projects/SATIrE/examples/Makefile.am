@@ -78,7 +78,6 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST2.c  TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose TEST3.pl TEST4.c
 
-
 	@echo "========================================================================"
 	@echo "PAG tests"
 	@echo "========================================================================"

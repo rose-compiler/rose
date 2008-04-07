@@ -23,9 +23,11 @@ succs_ok=0
 fail_errors=""
 succ_errors=""
 
-STATSFILE=/tmp/runtests.stats.$RANDOM
-TMPFILE=/tmp/runtests.tmp.$RANDOM
+STATSFILE=runtests.stats
+TMPFILE=runtests.tmp
+DATFILE=runtests.dat
 
+printf "outfile\ttime_rose_frontend\tresult\ttime_sys\ttime_user\ttime_wall\ttime_pag_run\ttime_pag_init\ttime_pag_iter\ttime_pag_gc\tmem_allocd\tanalysis\toptions\tfile\n" > $DATFILE
 for file in $FILES; do
 
   for analysis in $ANALYSIS; do
@@ -36,7 +38,8 @@ for file in $FILES; do
       outfile=`basename $file`
       options="--statistics --no-verbose --analysis-files=all --output-text --output-term=$outfile.pl --output-source=$outfile.dfi"
       # execute and time with 'time'
-      /usr/bin/time --format="%S %U %e" $analysis $options $file 1>/dev/null 2>$TMPFILE
+      #/usr/bin/time --format="%S %U %e" $analysis $options $file 1>/dev/null 2>$TMPFILE
+      /usr/bin/time --format="%S %U %e" $analysis $options $file &> $TMPFILE
       result=$?
 
       # Expected FAIL
@@ -65,6 +68,8 @@ for file in $FILES; do
           time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
           time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'`
           mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
+	  # grep ROSE runtime stats
+          time_rose_frontend=` cat $TMPFILE | awk '/ROSE frontend... time = .* .sec/ {print $5;exit}'`
 
           # verbose output for script development (will also be displayed in statistics at end)
           # echo " pag_run = $time_pag_run"
@@ -76,7 +81,8 @@ for file in $FILES; do
           # echo "    user = $time_user"
           # echo "    wall = $time_wall"
 
-          printf "$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis $options $file\n" >> $STATSFILE
+          printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
+          printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $DATFILE
         else
           echo "** ERROR: Expected success failed $analysis $options $file"
           succ_errors="$succ_errors $analysis:$file"
@@ -96,26 +102,28 @@ BEGIN {
     min_mem_allocd = 9999
 }
 {
-    time_sys      += \$2
-    time_user     += \$3
-    time_wall     += \$4
-    time_pag_run  += \$5
-    time_pag_init += \$6
-    time_pag_iter += \$7
-    time_pag_gc   += \$8
-    mem_allocd    += \$9
+    time_frontend += \$2
 
-    min_time_user = min_time_user < \$3 ? min_time_user : \$3
-    max_time_user = max_time_user > \$3 ? max_time_user : \$3
+    time_sys      += \$4
+    time_user     += \$5
+    time_wall     += \$6
+    time_pag_run  += \$7
+    time_pag_init += \$8
+    time_pag_iter += \$9
+    time_pag_gc   += \$10
+    mem_allocd    += \$11
 
-    min_time_wall = min_time_wall < \$4 ? min_time_wall : \$4
-    max_time_wall = max_time_wall > \$4 ? max_time_wall : \$4
+    min_time_user = min_time_user < \$5 ? min_time_user : \$5
+    max_time_user = max_time_user > \$5 ? max_time_user : \$5
 
-    min_time_pag  = min_time_pag < \$5 ? min_time_pag : \$5
-    max_time_pag  = max_time_pag > \$5 ? max_time_pag : \$5
+    min_time_wall = min_time_wall < \$6 ? min_time_wall : \$6
+    max_time_wall = max_time_wall > \$6 ? max_time_wall : \$6
 
-    min_mem_allocd  = min_mem_allocd < \$9 ? min_mem_allocd : \$9
-    max_mem_allocd  = max_mem_allocd > \$9 ? max_mem_allocd : \$9
+    min_time_pag  = min_time_pag < \$7 ? min_time_pag : \$7
+    max_time_pag  = max_time_pag > \$7 ? max_time_pag : \$7
+
+    min_mem_allocd  = min_mem_allocd < \$11 ? min_mem_allocd : \$11
+    max_mem_allocd  = max_mem_allocd > \$11 ? max_mem_allocd : \$11
 
     i++
 }
@@ -139,7 +147,7 @@ echo "# SATIrE automagic test report, `date`"
 echo "########################################################################"
 echo
 
-OUTPUT_COLUMNS="\$4,\$3,\$5,\$9,\$10"
+OUTPUT_COLUMNS="\$6,\$5,\$7,\$11,\$12,\$13,\$14"
 OUTPUT_HEADERS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
 
 echo "[$succs_ok/$expected_succs] expected successes"
@@ -169,6 +177,6 @@ echo "########################################################################"
 
 rm -f $AWKFILE
 rm -f $TMPFILE
-rm -f $STATSFILE
+#rm -f $STATSFILE
 
 # vim: ts=2 sts=2 sw=2:
