@@ -27,7 +27,8 @@ STATSFILE=runtests.stats
 TMPFILE=runtests.tmp
 DATFILE=runtests.dat
 
-printf "outfile\ttime_rose_frontend\tresult\ttime_sys\ttime_user\ttime_wall\ttime_pag_run\ttime_pag_init\ttime_pag_iter\ttime_pag_gc\tmem_allocd\tanalysis\toptions\tfile\n" > $DATFILE
+printf "outfile\ttime\\_rose\\_frontend\tresult\ttime\\_sys\ttime\\_user\ttime\\_wall\ttime\\_pag\\_run\ttime\\_pag\\_init\ttime\\_pag\\_iter\ttime\\_pag\\_gc\tmem\\_allocd\tanalysis\toptions\tfile\n" \
+    > $DATFILE
 for file in $FILES; do
 
   for analysis in $ANALYSIS; do
@@ -82,7 +83,8 @@ for file in $FILES; do
           # echo "    wall = $time_wall"
 
           printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
-          printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $DATFILE
+          printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" \
+	      | sed 's/\_/\\\_/g' >> $DATFILE
         else
           echo "** ERROR: Expected success failed $analysis $options $file"
           succ_errors="$succ_errors $analysis:$file"
@@ -141,6 +143,69 @@ END {
     printf "%salloc'd  min avg max = %f %f %f MB\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
 }
 EndOfAWK
+
+###################################################################
+# Create statistics plot
+###################################################################
+TODAY=`date +%y-%m-%d`
+HISTOGRAM=statistics-$TODAY.eps
+
+# check for GNUplot version >= 4.2
+if [ x`gnuplot --version | awk '{ if ($2 >= 4.2) print "yes" }'` = xyes ]
+then
+    echo "Plotting statistics histogram."
+    gnuplot <<EOF
+# GNUplot script to generate the timing histogram
+# 
+
+# Output:
+# Show an X11 window ...
+#set terminal x11 persist
+# ... or generate an .eps file
+set terminal postscript eps enhanced font "CMTI10, 10" color
+set output '$HISTOGRAM'
+
+# Description
+set key autotitle columnheader reverse 
+
+# Style
+set boxwidth 0.7 absolute
+set style fill solid 1.00 border -1
+set datafile missing ''
+set style data histogram # Histogram style
+set style histogram rowstacked
+set grid y # use a grid
+
+set title "Time spent per stage"  offset character 0, 0, 0 font "" norotate
+set ylabel "Seconds"
+set xlabel "Benchmark"
+set xtics nomirror rotate by -45 # Style of the x axis labels
+set auto x
+set auto y
+set yrange [0 : 1] # limit y range
+
+# Plot the data:
+# "using 2" means "use column 2 from $DATFILE"
+plot newhistogram "" lc 2, '$DATFILE' \
+        using 2:xtic(1), \
+     '' using 7, \
+     '' using 8, \
+     '' using 9, \
+     '' using 10
+
+EOF
+
+#        using 2:xtic(1) ti col lt rgb "#FD8238", \
+#     '' using 3 ti col lt rgb "#00B06D", \
+#     '' using 4 ti col lt rgb "#0097D6", \
+#     '' using 5 ti col lt rgb "#E43887", \
+#     '' using 6 ti col lt rgb "#FAE017"
+
+else
+    echo "**WARNING: GNUplot version >= 4.2 was NOT found."
+    echo "           Statistics plot will not be generated."
+fi 
+
 
 echo "########################################################################"
 echo "# SATIrE automagic test report, `date`"
