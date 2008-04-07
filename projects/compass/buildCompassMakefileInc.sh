@@ -28,8 +28,6 @@ echo ""
 echo "COMPASS_CHECKER_TEX_FILES = \\"
 cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	&Docs.tex \\,'
 echo ""
-echo "compassCheckerDocs.tex:"
-echo "	gmake regenerate_skip_compass_makefile_inc"
 echo "docs: compass.tex compassCheckerDocs.tex"
 echo '	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty'
 for i in acknowledgments.tex introduction.tex usingCompass.tex emacs_screenshot.jpg CompassScreenshot.pdf ToolGear_gui_compass_01.pdf appendix.tex; do echo "	test -f $i || ln -s \$(srcdir)/$i $i" ; done
