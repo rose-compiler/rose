@@ -133,7 +133,7 @@ regenerate_skip_compass_makefile_inc:
 # EXTRA_DIST = compass_parameters tests compassRepository instructions.txt $(COMPASS_CHECKER_TEX_FILES) $(COMPASS_HEADERS) $(COMPASS_CHECKER_TESTS) CHECKER_LIST acknowledgments.tex addYourOwnDetector.tex 
 # EXTRA_DIST = compass_parameters tests checkers.h compassRepository $(COMPASS_CHECKER_DIRECTORIES) CHECKER_LIST acknowledgments.tex addYourOwnDetector.tex instructions.txt 
 # EXTRA_DIST = compass_parameters tests checkers.h compassRepository CHECKER_LIST acknowledgments.tex emacs.tex new_checkers.tex addYourOwnDetector.tex instructions.txt RULE_SELECTION
-EXTRA_DIST = CHECKER_LIST introduction.tex acknowledgments.tex usingCompass.tex appendix.tex instructions.txt RULE_SELECTION emacs_screenshot.jpg emacs_compass_config.el CompassScreenshot.pdf ToolGear_gui_compass_01.pdf compassQRoseMain.C QRose.txt buildCompassMakefileInc.sh buildCompassCheckerDocs.sh archiveMakefile.in testMakefile.in buildCheckers.C.in
+EXTRA_DIST = CHECKER_LIST introduction.tex acknowledgments.tex usingCompass.tex appendix.tex instructions.txt RULE_SELECTION emacs_screenshot.jpg compass_vim7.jpg emacs_compass_config.el CompassScreenshot.pdf ToolGear_gui_compass_01.pdf compassQRoseMain.C QRose.txt buildCompassMakefileInc.sh buildCompassCheckerDocs.sh archiveMakefile.in testMakefile.in buildCheckers.C.in
 
 # We have to copy all the header files, latex files, test codes, etc. This can't be put 
 # on the EXTRA_DIST line because it make the line too long and that causes problems.
@@ -151,7 +151,7 @@ distclean-local:
 	rm -rf Templates.DB ale3d-typedefs.sn *.sn 
 
 clean-local:
-	rm -f compass.* *.sty *.ti a.out *.tex *.lo *.la emacs_screenshot.jpg
+	rm -f compass.* *.sty *.ti a.out *.tex *.lo *.la emacs_screenshot.jpg compass_vim7.jpg
 	rm -f CHECKER_LIST $(COMPASS_CHECKER_TEX_FILES)
 
 CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_makefile.inc compass_parameters buildCheckers.C checkers.h compassCheckerDocs.tex

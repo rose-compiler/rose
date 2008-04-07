@@ -27,10 +27,13 @@ interface to Compass.  Mechanisms available include:
 \begin{itemize}
    \item Emacs: \\
          Detecting errors while you type \ref{compassEmacs} and \ref{Compass_Emacs_Screenshot}.
+   \item Vim 7: \\
+         Compass can work with Vim 7's QuickFix commands to
+         highlight source lines with error messages \ref{Compass_VIM7_Screenshot}. 
 
    \item CompassGUI: \\
          There is also a Compass GUI for reviewing Compass output and interactively
-         reruning compass and sifting thorugh the output while relatiting them to the source
+         reruning compass and sifting through the output while relating them to the source
          code \ref{Compass_GUI}. This work uses the QRose library produced at Imperial College
          London by Gabriel Coutinho, as part of their development of FPGA tools using ROSE.
          QRose is based on the Qt library and provides a wide number of ROSE aware components
@@ -227,9 +230,84 @@ Figure \ref{beforeProjectCheckRule} shows an example makefile that compiles a fi
 "one.C" using g++. If "one.C" is edited using emacs the addition of the "check-syntax"
 rule is needed, as shown in figure \ref{projectCheckRule}.
 
+\subsection {Using Compass With Vim}
+%--------------------------------------------
+Compass can be used with Vim 7's QuickFix commands to display warning
+messages and highlight the source lines in question. A compass compiler
+plugin (compass.vim as shown in Figure \ref{compassVim7})  has
+been provided for Vim to parse the warning messages outputted by Compass.
 
+Steps to make Compass work with Vim 7
+\begin{itemize}
+\item Save compass.vim into ~.vim/compiler.  Create the target directory if it
+does not exist.
+\item Download errormarker.vim from
+http://www.vim.org/scripts/script.php?script\_id=1861 and save it
+into .vim/plugin . Again, create the target directory first when it does not
+exist.
+\item Change your Makefile to use an installed compassMain as the compiler
+to compile your code.
+\item Use quickfix features of Vim 7 as documented at
+http://vimdoc.sourceforge.net/htmldoc/quickfix.html. Some frequently used
+commands are:
+  \begin{itemize}
+   \item Specifying the compass plugin to use by typing a command :compiler compass
+   \item Open your source code using gvim and set the compiler to Compass by
+   \item Compile you code using compassMain, type :make
+   \item Display current message, type :cc
+   \item Display all messages, type :clist
+   \item Jump to next message, type :cnext
+  \end{itemize}
+\end{itemize}
+%-------------------------------
+\begin{figure}[!htp]
+{\scriptsize
+\begin{verbatim}
+" Vim compiler file
+" Compiler:     ROSE Compass 0.9.2a
+" Maintainer:   Chunhua Liao <liao6@llnl.gov>
+" Last Change:  2008 Apr. 3
+"
+if exists("current_compiler")
+  finish
+endif
+let current_compiler = "compass"
 
+if exists(":CompilerSet") != 2          " older Vim always used :setlocal
+  command -nargs=* CompilerSet setlocal <args>
+endif
 
+" single line warning
+" multiple line warning, %W, %C continue line %Z end of multiple line
+CompilerSet errorformat=%s:\ %f:%l%.%c:\ %m,
+         \%s:\ %f:%l%.%c-%*\\d:\ %m,
+         \%s:\ %f:%l%.%c-%*\\d%.%*\\d:\ %m,
+         \\\"%f\"\\,\ line\ %l%*\\D%c%*[^\ ]\ %m
+"some notes about the error/warning message format
+"Official guide: http://vimdoc.sourceforge.net/htmldoc/quickfix.html#error-file-format
+" Each new rule start with a leading \ unless it is the first rule in the
+" first line
+"  %f: filename %l: line number %c: column number, only one is permitted %m
+" actual error/warning message \ :matching a space
+"  %*\\d: matching any number
+
+\end{verbatim}
+}
+\caption{A compiler plugin for Vim 7 compass.vim}
+\label{compassVim7}
+\end{figure}
+%-------------------------------
+Figure ~\ref{Compass_VIM7_Screenshot} shows an example of Compass error
+messages integrated into Vim 7.
+\begin{figure}[!htp]
+\centering
+\includegraphics[width=0.7\textwidth]{compass_vim7.jpg}
+\caption{Compass error messages integrated into Vim 7}
+\label{Compass_VIM7_Screenshot}
+\end{figure}
+
+%-------------------------------
+\clearpage
 \section{How To Write A New Checker}
 
 \subsection{Creating A Skeleton}

@@ -15,7 +15,7 @@ namespace CompassAnalyses
           const std::string checkerName      = "DefaultConstructor";
 
        // Descriptions should not include the newline character "\n".
-          const std::string shortDescription = "This checker checks that every class has a non-generated default constructor.";
+          const std::string shortDescription = "Class does not have a user-declared default constructor.";
           const std::string longDescription  = "Declare a default constructor for every class you create. Although some compilers may generate a more efficient implementation in some instances you should choose a default constructor because it is more clear.";
         } //End of namespace DefaultConstructor.
    } //End of namespace CompassAnalyses.
