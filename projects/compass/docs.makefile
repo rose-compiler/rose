@@ -207,6 +207,7 @@ docs: compass.tex highlight
 	test -f compassDocs.tex || ln -s $(srcdir)/compassSupport/compassDocs.tex compassDocs.tex
 	test -f emacs_screenshot.jpg || ln -s $(srcdir)/emacs_screenshot.jpg emacs_screenshot.jpg
 	pdflatex compass.tex
+	pdflatex compass.tex
 
 clean:
 	find . -maxdepth 1 -type l -exec rm {} \;
