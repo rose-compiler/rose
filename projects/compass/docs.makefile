@@ -197,9 +197,8 @@ highlight: $(COMPASS_CHECKER_TESTS)
 	mv -f /home/dquinlan/tmp/cvs/tmp.OviQY19218 voidStarDocs.tex
 	highlight -Sc -Ll -f $(srcdir)/voidStar/voidStarTest1.C -o voidStarTest1.tex
 
-docs: compass.tex highlight
+docs: compass.tex compassCheckerDocs.tex highlight
 	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty
-	test -f compassCheckerDocs.tex || ln -s $(srcdir)/compassCheckerDocs.tex compassCheckerDocs.tex
 	test -f acknowledgments.tex || ln -s $(srcdir)/acknowledgments.tex acknowledgments.tex
 	test -f introduction.tex || ln -s $(srcdir)/introduction.tex introduction.tex
 	test -f usingCompass.tex || ln -s $(srcdir)/usingCompass.tex usingCompass.tex

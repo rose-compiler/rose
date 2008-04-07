@@ -11,6 +11,6 @@ cut -f 1 -d \  | \
 while read checkerName; do
   echo '\begin{NOINDENT}'
   echo '\newpage'
-  echo "\\input{${checkerName}Docs.new}"
+  echo "\\input{${checkerName}Docs.new.tex}"
   echo '\end{NOINDENT}'
 done
