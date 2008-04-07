@@ -38,8 +38,8 @@ CHECKER_LIST_WITHOUT_COMMENTS: $(srcdir)/CHECKER_LIST
 compass_makefile.inc: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/buildCompassMakefileInc.sh
 	$(srcdir)/buildCompassMakefileInc.sh $(srcdir) > compass_makefile.inc
 
-compassCheckerDocs.tex: CHECKER_LIST_WITHOUT_COMMENTS
-	$(srcdir)/buildCompassCheckerDocs.sh < CHECKER_LIST_WITHOUT_COMMENTS > compassCheckerDocs.tex
+compassCheckerDocs.tex: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/compassRepository/bin/compass_submission_setup_docsonly.sh
+	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | $(srcdir)/compassRepository/bin/compass_submission_setup_docsonly.sh $(srcdir) > compassCheckerDocs.tex
 
 buildCheckers.C: CHECKER_LIST_WITHOUT_COMMENTS
 	sed -n '1,/@@@/p' < $(srcdir)/buildCheckers.C.in > buildCheckers.C

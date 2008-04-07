@@ -31,7 +31,6 @@ echo ""
 echo "docs: compass.tex compassCheckerDocs.tex"
 echo '	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty'
 for i in acknowledgments.tex introduction.tex usingCompass.tex emacs_screenshot.jpg compass_vim7.jpg CompassScreenshot.pdf ToolGear_gui_compass_01.pdf appendix.tex; do echo "	test -f $i || ln -s \$(srcdir)/$i $i" ; done
-cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	test -f &Docs.new.tex || ln -s $(srcdir)/&/&Docs.new.tex &Docs.new.tex,'
 echo '	test -f compassDocs.tex || ln -s $(srcdir)/compassSupport/compassDocs.tex compassDocs.tex'
 echo '	pdflatex compass.tex'
 echo '	pdflatex compass.tex'
