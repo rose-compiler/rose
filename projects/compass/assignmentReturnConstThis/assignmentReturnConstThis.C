@@ -50,7 +50,6 @@ visit(SgNode* node)
 	std::string inputVar;
         std::string op = "operator=";
 	std::string typeName;
-	int stmtCount = 0;
 	 SgMemberFunctionDeclaration *mfn =  isSgMemberFunctionDeclaration(node);
 	 if (!mfn) return;
 	 
@@ -136,7 +135,6 @@ visit(SgNode* node)
 		 if (!is_ret_this)
 		   {
 		     errString +="returns something not *this or has no explicit returns"; 
-		     Sg_File_Info* start = mfn->get_startOfConstruct();
 		     output->addOutput(new CheckerOutput(node));
 		   }
 	       }
@@ -144,7 +142,6 @@ visit(SgNode* node)
 	       {
 		 errString +=  "does not have return type const ";
 		 errString +=  className.substr(8) + "&";
-		 Sg_File_Info* start = mfn->get_startOfConstruct();
 		 output->addOutput(new CheckerOutput(node));
 		 //cout << "Failing class of " << className.substr(8) << endl;
 	       }
