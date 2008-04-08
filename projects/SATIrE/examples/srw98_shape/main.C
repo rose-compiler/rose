@@ -13,6 +13,8 @@ ShapeAnalyzerOptions *opt;
 
 int main(int argc, char **argv)
 {
+        TimingPerformance *timer = new TimingPerformance("Complete run of SATIrE analysis:");
+
 	/* parse the command line and extract analyzer options */
 	opt = new ShapeAnalyzerOptions();
 	ShapeCommandLineParser clp;
@@ -39,6 +41,11 @@ int main(int argc, char **argv)
 	 * the analysis information on each statement */
 
 	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
+
+	/* During construction of the ICFG, we sometimes modify the AST
+	 * although we shouldn't. This function corrects parent pointers. */
+	satireResetParentPointers(ast_root, NULL);
+
 	/* Extract all Pairs of Expressions from the Program so that they
 	 * can be compared for aliasing. */
 	ExpressionCollector ec;
@@ -50,17 +57,20 @@ int main(int argc, char **argv)
 
 	/* Handle command line option --textoutput */
 	if(opt->outputText()) {
-		PagDfiTextPrinter<DFI_STORE> p(analysis_info);
+	  TimingPerformance timer("Generate text output:");
+	  PagDfiTextPrinter<DFI_STORE> p(analysis_info);
 
-		if (outputAll) p.traverse(ast_root, preorder);
-		else p.traverseInputFiles(ast_root, preorder);    
+	  if (outputAll) p.traverse(ast_root, preorder);
+	  else p.traverseInputFiles(ast_root, preorder);    
 	}
 	if(opt->aliasTextOutput()) {
-		AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
-		p.traverseInputFiles(ast_root, preorder);
+	  TimingPerformance timer("Annotate text with alias comments:");
+	  AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
+	  p.traverseInputFiles(ast_root, preorder);
 	}
  
 	if(opt->analysisResultsAnnotation()) {
+	  TimingPerformance timer("Annotate text with comments:");
 	  PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 	  
 	  if (outputAll) ca.traverse(ast_root, preorder);
@@ -69,9 +79,10 @@ int main(int argc, char **argv)
 
 	/* handle command line option --aliassourceoutput */
 	if(opt->aliasSourceOutput()) {
-		AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
-		ca.traverseInputFiles(ast_root, preorder);
-		ast_root->unparse();
+	  TimingPerformance timer("Annotate source code with alias comments:");
+	  AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
+	  ca.traverseInputFiles(ast_root, preorder);
+	  ast_root->unparse();
 	}
 
 	/* check how many input files we have */
@@ -99,6 +110,7 @@ int main(int argc, char **argv)
 	
 	/* handle multiple input files */
 	if(ast_root->numberOfFiles()>=1 && (opt->getOutputFilePrefix()).size()>0) {
+	  TimingPerformance timer("Output all source files:");
 	  /* Iterate over all input files (and its included files) */
 	  for (int i=0; i < ast_root->numberOfFiles(); ++i) {
 	    SgFile& file = ast_root->get_file(i);
