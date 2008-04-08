@@ -70,7 +70,7 @@ class AttributeListMap {
 
           AttributeListMap(SgFile* sageFilePtr);
 
-          template <typename TokenT> void found_include_directive(TokenT directive, std::string relname, std::string absname );
+          template <typename TokenT> bool found_include_directive(TokenT directive, std::string relname, std::string absname );
       
 
 
@@ -81,7 +81,7 @@ class AttributeListMap {
     //  
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        template <typename TokenT, typename ContainerT>
-	       void
+	       bool
 	       found_directive(TokenT const& directive, ContainerT const& expression, bool expression_value)
 		  {
 		 //Map between the wave preprocessorid to the ROSE preprocessorid
@@ -141,7 +141,7 @@ class AttributeListMap {
 			    break;
 			 case T_PP_PRAGMA:    //#pragma
 			    // Part of the AST in ROSE. Do not handle it this way 
-			    return;
+			    return false;
 			    break; 
 
 			 default:
@@ -169,7 +169,7 @@ class AttributeListMap {
 			    currentMapOfAttributes[filename] = new ROSEAttributesList();
 		    currentMapOfAttributes.find(filename)->second->addElement(*(new PreprocessingInfo(directive,tokListCont,expression_value,rose_typeid,PreprocessingInfo::before)));
 
-
+                 return false;
 		  }
 
        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -376,7 +376,7 @@ class AttributeListMap {
        //   takes an expansion of a function like macro as paramater and convert it into a PreprocessingInfo::rose_macro_call object for the AST
        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        template<typename TokenT, typename ContainerT> 
-	       void expanding_function_like_macro(TokenT const &macrodef, std::vector<TokenT> const &formal_args,
+	       bool expanding_function_like_macro(TokenT const &macrodef, std::vector<TokenT> const &formal_args,
 			       ContainerT const &definition, TokenT const &macrocall, std::vector<ContainerT> const &arguments){
 		       if(skippedTokenStream != NULL)
 			       skipped_token(macrodef,true);
@@ -478,6 +478,7 @@ class AttributeListMap {
 			       ++it2;
 		       }
 #endif
+               return false;        
 
 	       };
 
@@ -494,7 +495,7 @@ class AttributeListMap {
        //
        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        template<typename TokenT, typename ContainerT> 
-	       void expanding_object_like_macro(TokenT const &macro, ContainerT const &definition, TokenT const &macrocall){
+	       bool expanding_object_like_macro(TokenT const &macro, ContainerT const &definition, TokenT const &macrocall){
 		       if(skippedTokenStream != NULL)
 			       skipped_token(macro,true);
 
@@ -552,7 +553,7 @@ class AttributeListMap {
 		       }
 
 		       ++rescan_macro_status;
-
+                return false;
 	       };
 
        ///////////////////////////////////////////////////////////////////////////
@@ -746,7 +747,7 @@ class AttributeListMap {
 
 
 template <typename TokenT>
-void AttributeListMap::found_include_directive(TokenT directive, std::string relname, std::string absname )
+bool AttributeListMap::found_include_directive(TokenT directive, std::string relname, std::string absname )
    {
      boost::wave::token_id wave_typeid = boost::wave::token_id(directive);
 
@@ -767,6 +768,7 @@ void AttributeListMap::found_include_directive(TokenT directive, std::string rel
                currentMapOfAttributes.find(filename)->second->addElement(*(new PreprocessingInfo(inclDir, PreprocessingInfo::before ) ));
                break;					  
         }
+        return false;
    }
 
 #endif
