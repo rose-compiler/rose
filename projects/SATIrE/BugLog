@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.6 2008-03-28 10:35:46 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.7 2008-04-08 09:49:41 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -395,3 +395,38 @@ Fix:
     TODO: Consider sending a bug report or a patch to Dan.
 Status:
     Resolved 2008-03-27, GB
+
+
+Logged:
+    2008-04-07, GB
+Symptoms:
+    ICFG builder causes an assertion to fail:
+        SgExpression* SgAssignInitializer::get_operand_i() const: Assertion
+        `this != __null' failed.
+    This happens while trying to create function call nodes for functions
+    with variadic arguments.
+    (Submitted by Stefan Stattelmann of AbsInt.)
+Reason:
+    If a function call in the AST has fewer arguments than the function's
+    declaration has parameters, the ICFG builder used to assume that the
+    remaining parameters have default values, and tried to access the
+    default value through a SgAssignInitializer. There is no default value
+    for a variadic argument list, however.
+Fix:
+    Don't try to find a default value for a variadic argument list.
+Status:
+    Resolved 2008-04-08, GB
+
+
+Logged:
+    2008-04-08, GB
+Symptoms:
+    The variable argument operations are not handled correctly in the ICFG.
+Reason:
+    This was never implemented. Note that it is quite nontrivial: It is not
+    clear how information about a list of arguments could be used
+    productively by a PAG analyzer.
+Fix:
+    Unknown (mainly a design issue, implementation should not be too hard).
+Status:
+    BROKEN as of 2008-04-08
