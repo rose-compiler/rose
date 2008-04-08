@@ -60,6 +60,17 @@ std::string Ir::fragmentToString(const SgNode* node) {
       return s;
   }
 
+  if (const SgMemberFunctionRefExp *mf = isSgMemberFunctionRefExp(node)) {
+   // GB (2008-04-07): ROSE is picky about unparsing member function
+   // reference expressions; the parent must be an expression, and it must
+   // have a SgExprStatement predecessor. Faking of scopes is therefore
+   // hard. We take the easy route and simply return the member function's
+   // name.
+      s = mf->get_symbol_i()->get_name().str();
+      delete unparseInfo;
+      return s;
+  }
+
   /* create a temporary AST root with SgFile and SgGlobal to allow ROSE function unparseToString to trace back */
   SgFile* file = new SgFile();
   file->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
@@ -349,9 +360,29 @@ Ir::createSwitchStatement(SgExprStatement* expStmt) {
 
 // ICFG specific nodes that inherit from ROSE SgStatement
 // have unparseToString
+#if 0
+// GB (2008-04-07): Do not use this function, use one of the functions for
+// creating one of the specific derived classes instead. UNLESS you
+// implement a switch on the node_type, like in the constructor of
+// CallBlock.
 CallStmt*
 Ir::createCallStmt(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent){
   CallStmt* n=new CallStmt(node_type,name,parent);
+  configLocatedNode(n);
+  return n;
+}
+#endif
+
+FunctionCall*
+Ir::createFunctionCall(KFG_NODE_TYPE type, std::string func, CallBlock *parent){
+  FunctionCall* n=new FunctionCall(type,func,parent);
+  configLocatedNode(n);
+  return n;
+}
+
+FunctionReturn*
+Ir::createFunctionReturn(KFG_NODE_TYPE type, std::string func, CallBlock *parent){
+  FunctionReturn* n=new FunctionReturn(type,func,parent);
   configLocatedNode(n);
   return n;
 }

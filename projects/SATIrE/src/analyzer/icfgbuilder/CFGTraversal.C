@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.23 2008-04-02 09:28:55 gergo Exp $
+// $Id: CFGTraversal.C,v 1.24 2008-04-08 09:50:00 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -336,7 +336,7 @@ make_nonredundant (const expression_set &exprs) {
 #else
     const std::string &str = Ir::fragmentToString(*e);
     std::string::size_type len = str.length();
-    if (len >= 2 && str[0] == ')' && str[len-1] == ')')
+    if (len >= 2 && str[0] == '(' && str[len-1] == ')')
 #endif
       parens.insert(*e);
     else
@@ -369,6 +369,9 @@ make_nonredundant (const expression_set &exprs) {
   return no_parens;
 }
 
+#if 0
+// GB (2008-04-08): This is the old version that implements a manual
+// traversal of the ICFG. The new version below is much neater.
 void 
 CFGTraversal::number_exprs() {
   TimingPerformance timer("Numbering of expressions and types:");
@@ -391,7 +394,7 @@ CFGTraversal::number_exprs() {
   std::vector<SgVariableSymbol *>::iterator g_itr;
   for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
       type_set.insert((*g_itr)->get_type());
-  
+
 // collect all expressions from the program blocks
   ExprSetTraversal est(&expr_set, &type_set);
   for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block) {
@@ -446,6 +449,76 @@ CFGTraversal::number_exprs() {
   }
   delete exprs_nonred;
   delete nestedTimer;
+}
+#endif
+
+class IcfgExprSetTraversal: public IcfgTraversal
+{
+public:
+    IcfgExprSetTraversal(std::set<SgExpression *, ExprPtrComparator> *expr_set,
+                         std::set<SgType *, TypePtrComparator> *type_set)
+      : expr_set(expr_set), type_set(type_set), est(expr_set, type_set)
+    {
+    }
+
+protected:
+    void visit(SgNode *node)
+    {
+     // No more special cases, just invoke the AST traversal on this node.
+        est.traverse(node, preorder);
+
+     // OK, so there is still this one special case.
+        if (DeclareStmt *decl = isDeclareStmt(node))
+            type_set->insert(decl->get_type());
+    }
+
+private:
+    std::set<SgExpression *, ExprPtrComparator> *expr_set;
+    std::set<SgType *, TypePtrComparator> *type_set;
+    ExprSetTraversal est;
+};
+
+void
+CFGTraversal::number_exprs()
+{
+    TimingPerformance timer("Numbering of expressions and types:");
+    std::set<SgExpression *, ExprPtrComparator> expr_set;
+    std::set<SgType *, TypePtrComparator> type_set;
+
+    TimingPerformance *nestedTimer
+        = new TimingPerformance("Traversing ICFG to number expressions and types:");
+ // add the types of global variables
+    std::vector<SgVariableSymbol *>::iterator g_itr;
+    for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
+        type_set.insert((*g_itr)->get_type());
+ // traverse everything else
+    IcfgExprSetTraversal iest(&expr_set, &type_set);
+    iest.traverse(cfg);
+    delete nestedTimer;
+
+    std::set<SgExpression *, ExprPtrComparator> *exprs_nonred;
+    exprs_nonred = make_nonredundant(expr_set);
+
+    nestedTimer = new TimingPerformance("Filling containers:");
+    unsigned int i = 0;
+    std::set<SgExpression *, ExprPtrComparator>::const_iterator expr;
+    for (expr = exprs_nonred->begin(); expr != exprs_nonred->end(); ++expr)
+    {
+        cfg->numbers_exprs[i] = *expr;
+        cfg->exprs_numbers[*expr] = i;
+        i++;
+    }
+    delete exprs_nonred;
+
+    unsigned int j = 0;
+    std::set<SgType *, TypePtrComparator>::const_iterator type;
+    for (type = type_set.begin(); type != type_set.end(); ++type)
+    {
+        cfg->numbers_types[j] = *type;
+        cfg->types_numbers[*type] = j;
+        j++;
+    }
+    delete nestedTimer;
 }
 
 void 
@@ -1696,4 +1769,96 @@ CFGTraversal::print_map() const {
               << " stmt " << i->second << ": "
               << Ir::fragmentToString((i->second)) << std::endl;
   }
+}
+
+void
+IcfgTraversal::traverse(CFG *cfg)
+{
+    icfg = cfg;
+ // We are not traversing statements yet.
+    icfg_statement = false;
+ // Call start hook.
+    atTraversalStart();
+
+ // First, we traverse expressions, not statements.
+    icfg_statement = false;
+    std::map<SgVariableSymbol *, SgExpression *>::iterator itr;
+    for (itr = cfg->globals_initializers.begin();
+         itr != cfg->globals_initializers.end(); ++itr)
+    {
+        visit(itr->second);
+    }
+
+ // From now on, we traverse statements.
+    icfg_statement = true;
+    std::deque<BasicBlock *>::const_iterator block;
+    std::deque<SgStatement *>::const_iterator stmt;
+    for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block)
+    {
+        node_id = (*block)->id;
+        node_type = (*block)->node_type;
+        node_procnum = (*block)->procnum;
+        statement_index = 0;
+        for (stmt = (*block)->statements.begin();
+             stmt != (*block)->statements.end(); ++stmt)
+        {
+            visit(*stmt);
+            statement_index++;
+        }
+    }
+
+ // We are not traversing statements anymore.
+    icfg_statement = false;
+ // Call end hook.
+    atTraversalEnd();
+}
+
+void
+IcfgTraversal::atTraversalStart()
+{
+}
+
+void
+IcfgTraversal::atTraversalEnd()
+{
+}
+
+CFG *
+IcfgTraversal::get_icfg() const
+{
+    return icfg;
+}
+
+bool
+IcfgTraversal::is_icfg_statement() const
+{
+    return icfg_statement;
+}
+
+int
+IcfgTraversal::get_node_id() const
+{
+    return node_id;
+}
+
+KFG_NODE_TYPE
+IcfgTraversal::get_node_type() const
+{
+    return node_type;
+}
+
+int
+IcfgTraversal::get_node_procnum() const
+{
+    return node_procnum;
+}
+
+int
+IcfgTraversal::get_statement_index() const
+{
+    return statement_index;
+}
+
+IcfgTraversal::~IcfgTraversal()
+{
 }

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.4 2008-03-28 15:55:39 gergo Exp $
+// $Id: CFGTraversal.h,v 1.5 2008-04-08 09:50:03 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -51,6 +51,68 @@ private:
     int expnum;
     SgStatement *current_statement;
     TimingPerformance *traversalTimer;
+};
+
+// GB (2008-04-04): This class can be used to traverse the SATIrE ICFG. The
+// design is similar to the ROSE AST traversals: You subclass this class and
+// override the visit method; if you wish, you can also override
+// atTraversalStart and atTraversalEnd. The traversal is started using the
+// traverse method. There is no support for passing attributes.
+// Right now, this traversal proceeds as follows:
+//  - visit each initializer expression for global variables in no
+//    particular order
+//  - visit each statement in the ICFG in no particular order
+// The traversal does NOT DESCEND into expressions or statements. If that is
+// what you want, you will need to implement an additional traversal that
+// you start at appropriate times.
+// Variable symbols are not visited; this is because the ROSE traversal
+// doesn't seem to visit them either.
+class IcfgTraversal
+{
+public:
+ // Start the traversal.
+    void traverse(CFG *icfg);
+
+    virtual ~IcfgTraversal();
+
+protected:
+ // This mirrors the ROSE AST traversal interface.
+    virtual void atTraversalStart();
+    virtual void visit(SgNode *node) = 0;
+    virtual void atTraversalEnd();
+
+ // This method can be called from within the traversal to get a pointer to
+ // the ICFG being traversed.
+    CFG *get_icfg() const;
+ // These methods can be called from within the traversal to find out where
+ // it is at the moment. is_icfg_statement returns true iff the node that is
+ // being visited is a statement in the ICFG (as opposed to an initializer
+ // expression, for instance).
+    bool is_icfg_statement() const;
+ // The following methods may only be called when is_icfg_statement returned
+ // true. They return the current basic block's number, its type, the number
+ // of the procedure that contains it, and the index of the statent in the
+ // basic block, respectively. Since we currently use single-statement basic
+ // blocks, the index will always be 0.
+ // One might argue that all of this information should be passed as
+ // arguments to the visit function. But: I don't know whether we will
+ // add more such information, and I don't know who will need what. Which
+ // leads us to Epigram 11: "If you have a procedure with 10 parameters, you
+ // probably missed some." (Perlis, A. J. 1982. Special Feature: Epigrams on
+ // programming. SIGPLAN Not. 17, 9 (Sep. 1982), 7-13. DOI=
+ // http://doi.acm.org/10.1145/947955.1083808)
+    int get_node_id() const;
+    KFG_NODE_TYPE get_node_type() const;
+    int get_node_procnum() const;
+    int get_statement_index() const;
+
+private:
+    CFG *icfg;
+    bool icfg_statement;
+    int node_id;
+    KFG_NODE_TYPE node_type;
+    int node_procnum;
+    int statement_index;
 };
 
 #endif

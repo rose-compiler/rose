@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.11 2008-04-02 09:28:58 gergo Exp $
+// $Id: cfg_support.h,v 1.12 2008-04-08 09:50:03 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -170,7 +170,19 @@ public:
   // MS: we make this function virtual (although it is not virtual in ROSE)
   virtual std::string unparseToString() const;
   IcfgStmt() {}
+// GB (2008-04-07): Implementing traversal interface.
+  std::vector<SgNode *> get_traversalSuccessorContainer();
+  size_t get_numberOfTraversalSuccessors();
+  SgNode *get_traversalSuccessorByIndex(size_t idx);
+  std::vector<std::string> get_traversalSuccessorNamesContainer();
+// GB (2008-04-07): Implementing is... type tests.
+  friend IcfgStmt *isIcfgStmt(SgNode *);
+  friend const IcfgStmt *isIcfgStmt(const SgNode *);
+  std::string class_name() const;
 };
+
+IcfgStmt *isIcfgStmt(SgNode *);
+const IcfgStmt *isIcfgStmt(const SgNode *);
 
 class CallStmt : public IcfgStmt
 {
@@ -185,11 +197,63 @@ public:
     CallBlock *parent;
     void update_infolabel();
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend CallStmt *isCallStmt(SgNode *);
+    friend const CallStmt *isCallStmt(const SgNode *);
+    std::string class_name() const;
+
 protected:
     std::string infolabel;
 };
 
-typedef CallStmt FunctionCall, FunctionReturn;
+CallStmt *isCallStmt(SgNode *);
+const CallStmt *isCallStmt(const SgNode *);
+
+// typedef CallStmt FunctionCall, FunctionReturn;
+// GB (2008-04-07): Replaced the typedefs by a full-fledged implementation.
+// This is cleaner when it comes to the traversal and type test stuff.
+class FunctionCall: public CallStmt
+{
+public:
+    FunctionCall(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent);
+
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend FunctionCall *isFunctionCall(SgNode *);
+    friend const FunctionCall *isFunctionCall(const SgNode *);
+    std::string class_name() const;
+};
+
+FunctionCall *isFunctionCall(SgNode *);
+const FunctionCall *isFunctionCall(const SgNode *);
+
+class FunctionReturn: public CallStmt
+{
+public:
+    FunctionReturn(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent);
+
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend FunctionReturn *isFunctionReturn(SgNode *);
+    friend const FunctionReturn *isFunctionReturn(const SgNode *);
+    std::string class_name() const;
+};
+
+FunctionReturn *isFunctionReturn(SgNode *);
+const FunctionReturn *isFunctionReturn(const SgNode *);
 
 class FunctionEntry : public CallStmt
 {
@@ -201,9 +265,22 @@ public:
 
     // const char *get_funcname() const { return funcname; }
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend FunctionEntry *isFunctionEntry(SgNode *);
+    friend const FunctionEntry *isFunctionEntry(const SgNode *);
+    std::string class_name() const;
+
 private:
     std::string funcname;
 };
+
+FunctionEntry *isFunctionEntry(SgNode *);
+const FunctionEntry *isFunctionEntry(const SgNode *);
 
 class DeclareStmt : public IcfgStmt
 {
@@ -217,10 +294,23 @@ public:
     SgVariableSymbol *get_var() const { return var; }
     SgType *get_type() const { return type; }
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend DeclareStmt *isDeclareStmt(SgNode *);
+    friend const DeclareStmt *isDeclareStmt(const SgNode *);
+    std::string class_name() const;
+
 protected:
     SgVariableSymbol *var;
     SgType *type;
 };
+
+DeclareStmt *isDeclareStmt(SgNode *);
+const DeclareStmt *isDeclareStmt(const SgNode *);
 
 class UndeclareStmt : public IcfgStmt
 {
@@ -234,9 +324,22 @@ public:
     std::vector<SgVariableSymbol *> *get_vars() const { return vars; }
     virtual ~UndeclareStmt();
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend UndeclareStmt *isUndeclareStmt(SgNode *);
+    friend const UndeclareStmt *isUndeclareStmt(const SgNode *);
+    std::string class_name() const;
+
 protected:
     std::vector<SgVariableSymbol *> *vars;
 };
+
+UndeclareStmt *isUndeclareStmt(SgNode *);
+const UndeclareStmt *isUndeclareStmt(const SgNode *);
 
 class RetvalAttribute : public AstAttribute
 {
@@ -254,7 +357,7 @@ private:
     std::string str;
 };
 
-// GB (2007-20-23): Added members for the expression that refers to the
+// GB (2007-10-23): Added members for the expression that refers to the
 // external function and for its parameter list.
 class ExternalCall : public IcfgStmt
 {
@@ -270,12 +373,25 @@ public:
 
     ~ExternalCall();
     
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend ExternalCall *isExternalCall(SgNode *);
+    friend const ExternalCall *isExternalCall(const SgNode *);
+    std::string class_name() const;
+
 private:
     ExternalCall();
-    SgExpression *function;
+    SgExpression *function; // TRAVERSED
     std::vector<SgVariableSymbol *> *params;
     SgType *type;
 };
+
+ExternalCall *isExternalCall(SgNode *);
+const ExternalCall *isExternalCall(const SgNode *);
 
 class ConstructorCall : public IcfgStmt
 {
@@ -288,11 +404,24 @@ public:
     }
     std::string unparseToString() const;
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend ConstructorCall *isConstructorCall(SgNode *);
+    friend const ConstructorCall *isConstructorCall(const SgNode *);
+    std::string class_name() const;
+
 private:
     ConstructorCall();
     std::string name;
     SgType *type;
 };
+
+ConstructorCall *isConstructorCall(SgNode *);
+const ConstructorCall *isConstructorCall(const SgNode *);
 
 class DestructorCall : public IcfgStmt
 {
@@ -305,11 +434,24 @@ public:
     }
     std::string unparseToString() const;
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend DestructorCall *isDestructorCall(SgNode *);
+    friend const DestructorCall *isDestructorCall(const SgNode *);
+    std::string class_name() const;
+
 private:
     DestructorCall();
     std::string name;
     SgType *type;
 };
+
+DestructorCall *isDestructorCall(SgNode *);
+const DestructorCall *isDestructorCall(const SgNode *);
 
 class ArgumentAssignment : public IcfgStmt
 {
@@ -321,12 +463,25 @@ public:
     void set_rhs(SgExpression *r);
     std::string unparseToString() const;
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend ArgumentAssignment *isArgumentAssignment(SgNode *);
+    friend const ArgumentAssignment *isArgumentAssignment(const SgNode *);
+    std::string class_name() const;
+
 private:
     void init(SgExpression *l, SgExpression *r);
-    SgExpression *lhs;
-    SgExpression *rhs;
+    SgExpression *lhs; // TRAVERSED
+    SgExpression *rhs; // TRAVERSED
   //ArgumentAssignment();
 };
+
+ArgumentAssignment *isArgumentAssignment(SgNode *);
+const ArgumentAssignment *isArgumentAssignment(const SgNode *);
 
 class MyAssignment : public IcfgStmt
 {
@@ -336,13 +491,25 @@ public:
   MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r);
   SgVarRefExp *get_lhsVarRefExp() const;
   SgVarRefExp *get_rhsVarRefExp() const;
+// GB (2008-04-07): Implementing traversal interface.
+  std::vector<SgNode *> get_traversalSuccessorContainer();
+  size_t get_numberOfTraversalSuccessors();
+  SgNode *get_traversalSuccessorByIndex(size_t idx);
+  std::vector<std::string> get_traversalSuccessorNamesContainer();
+// GB (2008-04-07): Implementing is... type tests.
+  friend MyAssignment *isMyAssignment(SgNode *);
+  friend const MyAssignment *isMyAssignment(const SgNode *);
+  std::string class_name() const;
   
 protected:
   SgVariableSymbol *lhs;
   SgVariableSymbol *rhs;
-  SgVarRefExp *lhsVarRefExp;
-  SgVarRefExp *rhsVarRefExp;
+  SgVarRefExp *lhsVarRefExp; // TRAVERSED
+  SgVarRefExp *rhsVarRefExp; // TRAVERSED
 };
+
+MyAssignment *isMyAssignment(SgNode *);
+const MyAssignment *isMyAssignment(const SgNode *);
 
 class ReturnAssignment : public MyAssignment
 {
@@ -352,7 +519,20 @@ public:
     {
     }
     std::string unparseToString() const;
+
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend ReturnAssignment *isReturnAssignment(SgNode *);
+    friend const ReturnAssignment *isReturnAssignment(const SgNode *);
+    std::string class_name() const;
 };
+
+ReturnAssignment *isReturnAssignment(SgNode *);
+const ReturnAssignment *isReturnAssignment(const SgNode *);
 
 class ParamAssignment : public MyAssignment
 {
@@ -362,7 +542,20 @@ public:
     {
     }
     std::string unparseToString() const;
+
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend ParamAssignment *isParamAssignment(SgNode *);
+    friend const ParamAssignment *isParamAssignment(const SgNode *);
+    std::string class_name() const;
 };
+
+ParamAssignment *isParamAssignment(SgNode *);
+const ParamAssignment *isParamAssignment(const SgNode *);
 
 class LogicalIf : public IcfgStmt
 {
@@ -374,23 +567,62 @@ public:
     SgExpression *get_condition() const { return expr; }
     std::string unparseToString() const;
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend LogicalIf *isLogicalIf(SgNode *);
+    friend const LogicalIf *isLogicalIf(const SgNode *);
+    std::string class_name() const;
+
 private:
-    SgExpression *expr;
+    SgExpression *expr; // TRAVERSED
 };
+
+LogicalIf *isLogicalIf(SgNode *);
+const LogicalIf *isLogicalIf(const SgNode *);
 
 class IfJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
     std::string get_funcname() const { return "<none>"; }
+
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend IfJoin *isIfJoin(SgNode *);
+    friend const IfJoin *isIfJoin(const SgNode *);
+    std::string class_name() const;
 };
+
+IfJoin *isIfJoin(SgNode *);
+const IfJoin *isIfJoin(const SgNode *);
 
 class WhileJoin : public IcfgStmt
 {
 public:
     std::string unparseToString() const;
     std::string get_funcname() const { return "<none>"; }
+
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend WhileJoin *isWhileJoin(SgNode *);
+    friend const WhileJoin *isWhileJoin(const SgNode *);
+    std::string class_name() const;
 };
+
+WhileJoin *isWhileJoin(SgNode *);
+const WhileJoin *isWhileJoin(const SgNode *);
 
 class FunctionExit : public CallStmt
 {
@@ -402,9 +634,22 @@ public:
 
     // const char *get_funcname() const { return funcname; }
 
+ // GB (2008-04-07): Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // GB (2008-04-07): Implementing is... type tests.
+    friend FunctionExit *isFunctionExit(SgNode *);
+    friend const FunctionExit *isFunctionExit(const SgNode *);
+    std::string class_name() const;
+
 private:
     std::string funcname;
 };
+
+FunctionExit *isFunctionExit(SgNode *);
+const FunctionExit *isFunctionExit(const SgNode *);
 
 class Procedure
 {

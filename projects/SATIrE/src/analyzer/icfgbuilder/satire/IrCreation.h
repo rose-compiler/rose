@@ -36,7 +36,9 @@ public:
   static SgIntVal* createIntVal(int value);
   static SgCastExp* createNullPointerExp(SgType *type);
   // ICFG specific nodes that inherit from ROSE SgStatement and implement unparseToString
-  static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent);
+// static CallStmt* createCallStmt(KFG_NODE_TYPE node_type, std::string name, CallBlock *parent);
+  static FunctionCall* createFunctionCall(KFG_NODE_TYPE type, std::string func, CallBlock *parent);
+  static FunctionReturn* createFunctionReturn(KFG_NODE_TYPE type, std::string func, CallBlock *parent);
   static FunctionEntry* createFunctionEntry(KFG_NODE_TYPE type, std::string func, CallBlock *parent);
   static FunctionExit* createFunctionExit(KFG_NODE_TYPE type, std::string func, CallBlock *parent);
   static DeclareStmt* createDeclareStmt(SgVariableSymbol *v, SgType *t);

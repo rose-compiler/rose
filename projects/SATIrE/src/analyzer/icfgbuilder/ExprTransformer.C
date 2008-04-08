@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.13 2008-04-02 09:28:55 gergo Exp $
+// $Id: ExprTransformer.C,v 1.14 2008-04-08 09:50:00 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -102,17 +102,37 @@ void ExprTransformer::visit(SgNode *node)
               exit(EXIT_FAILURE);
             }
           }
+       // Add the argument expressions to the list.
           for (ei = alist.begin() ; ei != alist.end(); ++ei) {
             elist.push_back(*ei);
             if (ni != params.end())
                 ++ni;
           }
+       // If ni is not at the end of params, the function has variadic
+       // arguments or default arguments. If the function is variadic, we
+       // don't need to do anything else, just ignore the ellipse parameter.
+       // If the function has default arguments, add their initializers as
+       // explicit arguments to the call.
           while (ni != params.end()) {
             if (*ni != NULL)
             {
                 SgInitializedName *initname = *ni;
-                elist.push_back(isSgAssignInitializer(initname->get_initptr())
-                    ->get_operand_i());
+                if (isSgAssignInitializer(initname->get_initptr()))
+                {
+                    elist.push_back(
+                            isSgAssignInitializer(initname->get_initptr())
+                            ->get_operand_i());
+                }
+             // GB (2008-04-08): Implemented the ellipse case.
+                else if (!isSgTypeEllipse(initname->get_type()))
+                {
+                    std::cerr << "ICFG builder error: "
+                        << __FILE__ << ":" << __LINE__
+                        << ": not enough parameters in function call: "
+                        << Ir::fragmentToString(call)
+                        << std::endl;
+                    abort();
+                }
             }
             ++ni;
           }
