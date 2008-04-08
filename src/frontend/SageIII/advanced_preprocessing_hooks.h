@@ -112,7 +112,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename ContextT, typename TokenT, typename ContainerT, typename IteratorT>
-    void expanding_function_like_macro(ContextT const& ctx,
+    bool expanding_function_like_macro(ContextT const& ctx,
         TokenT const& macrodef, std::vector<TokenT> const& formal_args, 
         ContainerT const& definition,
         TokenT const& macrocall, std::vector<ContainerT> const& arguments,
@@ -129,7 +129,7 @@ public:
 
        attributeListMap->expanding_function_like_macro(macrodef, formal_args, definition, macrocall, arguments);
 
-    
+      return false; 
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -147,11 +147,11 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename ContextT, typename TokenT, typename ContainerT>
-    void expanding_object_like_macro(ContextT const& ctx, TokenT const& macro, 
+    bool expanding_object_like_macro(ContextT const& ctx, TokenT const& macro, 
         ContainerT const& definition, TokenT const& macrocall)
     {
         attributeListMap->expanding_object_like_macro(macro, definition, macrocall);
-
+        return false;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename ContextT>
-    void 
+    bool
     found_include_directive(ContextT const& ctx, std::string const& filename, 
         bool include_next) 
     {
@@ -212,7 +212,7 @@ public:
            std::cout << "Found include directive: " << filename << std::endl;
 	 
        includeDirective = filename;
-
+       return false;
     }
     
     ///////////////////////////////////////////////////////////////////////////
@@ -350,7 +350,7 @@ public:
     //
     ///////////////////////////////////////////////////////////////////////////
     template <typename ContextT, typename TokenT>
-    void
+    bool 
     found_directive(ContextT const& ctx, TokenT const& directive)
     {
 
@@ -387,6 +387,7 @@ public:
 		     attributeListMap->found_directive(directive);
 		break;
 	}
+      return false;  
     }
 
  ///////////////////////////////////////////////////////////////////////////
