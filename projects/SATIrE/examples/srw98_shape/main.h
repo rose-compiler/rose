@@ -14,6 +14,7 @@ public:
       gdlFoldGraphsOff();
       gdlShowIndividualGraphsOff();
       gdlShowSummaryGraphOn();
+	  setGraphStatisticsFile(NULL);
     }
     virtual ~ShapeAnalyzerOptions() {}
 
@@ -37,6 +38,9 @@ public:
     void gdlShowIndividualGraphsOff() { _gdlShowIndividualGraphs = false; }
     bool gdlShowIndividualGraphs()    { return _gdlShowIndividualGraphs;  }
 
+    char *graphStatisticsFile() { return _graphStatisticsFile; }
+    void setGraphStatisticsFile(char *fn) { _graphStatisticsFile = fn; }
+
     virtual std::string getOptionsInfo() {
       return AnalyzerOptions::getOptionsInfo() + 
         " Custom options:\n" 
@@ -46,7 +50,9 @@ public:
         "   --no-individualgraphs         do not output all individual graphs in gdl [default]\n"
         "   --summarygraph                output summary graph in gdl [default]\n"
         "   --no-summarygraph             do not output summary graph in gdl\n"
-        "   --foldgraphs                  fold all gdl graphs initially\n";
+        "   --foldgraphs                  fold all gdl graphs initially\n"
+		"\n"
+		"   --output-graph-statistics=<FILENAME>  write graph statistics to <FILENAME>\n";
     }
 
 protected:
@@ -55,6 +61,7 @@ protected:
     bool _gdlFoldGraphs;
     bool _gdlShowSummaryGraph;
     bool _gdlShowIndividualGraphs;
+	char *_graphStatisticsFile;
 };
 
 class ShapeCommandLineParser : public CommandLineParser {
@@ -65,20 +72,22 @@ public:
 
       ShapeAnalyzerOptions *scl = dynamic_cast<ShapeAnalyzerOptions*>(cl);
 
-      if (!strcmp(argv[i], "--output-alias")) {
+      if (optionMatch(argv[i], "--output-alias")) {
         scl->aliasTextOutputOn();
-      } else if (!strcmp(argv[i], "--output-alias-annotation")) {
+      } else if (optionMatch(argv[i], "--output-alias-annotation")) {
         scl->aliasSourceOutputOn();
-      } else if (!strcmp(argv[i], "--individualgraphs")) {
+      } else if (optionMatch(argv[i], "--individualgraphs")) {
         scl->gdlShowIndividualGraphsOn();
-      } else if (!strcmp(argv[i], "--no-individualgraphs")) {
+      } else if (optionMatch(argv[i], "--no-individualgraphs")) {
         scl->gdlShowIndividualGraphsOff();
-      } else if (!strcmp(argv[i], "--summarygraph")) {
+      } else if (optionMatch(argv[i], "--summarygraph")) {
         scl->gdlShowSummaryGraphOn();
-      } else if (!strcmp(argv[i], "--no-summarygraph")) {
+      } else if (optionMatch(argv[i], "--no-summarygraph")) {
         scl->gdlShowSummaryGraphOff();
-      } else if (!strcmp(argv[i], "--foldgraphs")) {
+      } else if (optionMatch(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
+	  } else if (optionMatchPrefix(argv[i],"--output-graph-statistics=")) {
+	    scl->setGraphStatisticsFile(strdup(argv[i]+26)); // FIXME prefixlength should be protected
       } else {
         return CommandLineParser::handleOption(cl,i,argc,argv);
       }

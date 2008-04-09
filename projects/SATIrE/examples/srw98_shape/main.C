@@ -11,122 +11,144 @@ PAG_BOOL get_universal_attribute__kill_norm_temps()
 
 ShapeAnalyzerOptions *opt;
 
+//#include "GraphStatistics.h"
+//GraphStatistics *gstats;
+
 int main(int argc, char **argv)
 {
-        TimingPerformance *timer = new TimingPerformance("Complete run of SATIrE analysis:");
+  TimingPerformance *timer = new TimingPerformance("Complete run of SATIrE analysis:");
 
-	/* parse the command line and extract analyzer options */
-	opt = new ShapeAnalyzerOptions();
-	ShapeCommandLineParser clp;
-	clp.parse(opt,argc,argv);
-	bool outputAll = opt->analysisWholeProgram();
+  /* parse the command line and extract analyzer options */
+  opt = new ShapeAnalyzerOptions();
+  ShapeCommandLineParser clp;
+  clp.parse(opt,argc,argv);
+  bool outputAll = opt->analysisWholeProgram();
 
-	/* set the PAG options as specified on the command line */
-	setPagOptions(*opt);
-	
-	/* Run the frontend to construct an abstract syntax tree from
-	 * the files specified on the command line (which has been processed
-	 * and commands only relevant to the analyzer have been removed). */
-	SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
-	
-	/* Make sure everything is OK... */
-	if(opt->checkRoseAst()) {
-	  AstTests::runAllTests(ast_root);
+  //gstats = new GraphStatistics(opt->graphStatisticsFile());
+
+  /* set the PAG options as specified on the command line */
+  setPagOptions(*opt);
+  
+  /* Run the frontend to construct an abstract syntax tree from
+   * the files specified on the command line (which has been processed
+   * and commands only relevant to the analyzer have been removed). */
+  SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
+  
+  /* Make sure everything is OK... */
+  if(opt->checkRoseAst()) {
+	AstTests::runAllTests(ast_root);
+  }
+
+  /* Construct a control-flow graph from the AST, make sure it has
+   * the structrure expected by PAG, and run the analysis on it,
+   * attributing the statements of the AST with analysis
+   * information. Use the StatementAttributeTraversal class for accessing
+   * the analysis information on each statement */
+
+  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
+
+  /* Extract all Pairs of Expressions from the Program so that they
+   * can be compared for aliasing. */
+  ExpressionCollector ec;
+  ExpressionPairSet *pairs = ec.getExpressionPairs(ast_root);
+
+  /* Add Alias Pairs to AST */
+  AliasPairsAnnotator<DFI_STORE> annotator(analysis_info, pairs);
+  annotator.traverseInputFiles(ast_root, preorder);
+
+  /* During construction of the ICFG, we sometimes modify the AST
+   * although we shouldn't. This function corrects parent pointers. */
+  satireResetParentPointers(ast_root, NULL);
+
+  /* Handle command line option --textoutput */
+  if(opt->outputText()) {
+	TimingPerformance timer("Generate text output:");
+	PagDfiTextPrinter<DFI_STORE> p(analysis_info);
+
+	if (outputAll) p.traverse(ast_root, preorder);
+	else p.traverseInputFiles(ast_root, preorder);
+  }
+
+  if(opt->aliasTextOutput()) {
+	TimingPerformance timer("Generate alias-pair text output:");
+	AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
+
+	if (outputAll) p.traverse(ast_root, preorder);
+	else p.traverseInputFiles(ast_root, preorder);
+  }
+
+  /* Handle command line option --output-XXX
+   * The source code (i.e. the AST) is annotated with comments showing
+   * the analysis results and by calling the backend, and an annotated C/C++
+   * file is generated (is specified on command line) */
+  if(opt->analysisResultsAnnotation()) {
+	TimingPerformance timer("Annotate source code with comments:");
+	PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
+
+	if (outputAll) ca.traverse(ast_root, preorder);
+	else ca.traverseInputFiles(ast_root, preorder);
+  }
+
+  if(opt->aliasSourceOutput()) {
+	TimingPerformance timer("Annotate source code with alias-pair comments:");
+	AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
+
+	if (outputAll) ca.traverse(ast_root, preorder);
+	else ca.traverseInputFiles(ast_root, preorder);
+  }
+
+  /* check how many input files we have */
+  if(ast_root->numberOfFiles()==1) {
+	SgFile& file = ast_root->get_file(0);
+	if(opt->outputSource() && opt->getOutputSourceFileName().size()>0) {
+	  TimingPerformance timer("Output (single) source file:");
+	  file.set_unparse_output_filename(opt->getOutputSourceFileName());
+	  unparseFile(&file,0,0);
 	}
+	/* Handle command line option --termoutput */
+	if(opt->outputTerm()) {
+	  TimingPerformance timer("Output Prolog term:");
+	  TermPrinter<DFI_STORE> tp(analysis_info);
 
-	/* Construct a control-flow graph from the AST, make sure it has
-	 * the structrure expected by PAG, and run the analysis on it,
-	 * attributing the statements of the AST with analysis
-	 * information. Use the StatementAttributeTraversal class for accessing
-	 * the analysis information on each statement */
+	  if (outputAll) tp.traverse(ast_root);
+	  else tp.traverseInputFiles(ast_root);
 
-	DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
-
-	/* During construction of the ICFG, we sometimes modify the AST
-	 * although we shouldn't. This function corrects parent pointers. */
-	satireResetParentPointers(ast_root, NULL);
-
-	/* Extract all Pairs of Expressions from the Program so that they
-	 * can be compared for aliasing. */
-	ExpressionCollector ec;
-	ExpressionPairSet *pairs = ec.getExpressionPairs(ast_root);
-
-	/* Add Alias Pairs to AST */
-	AliasPairsAnnotator<DFI_STORE> annotator(analysis_info, pairs);
-	annotator.traverseInputFiles(ast_root, preorder);
-
-	/* Handle command line option --textoutput */
-	if(opt->outputText()) {
-	  TimingPerformance timer("Generate text output:");
-	  PagDfiTextPrinter<DFI_STORE> p(analysis_info);
-
-	  if (outputAll) p.traverse(ast_root, preorder);
-	  else p.traverseInputFiles(ast_root, preorder);    
+	  ofstream termfile;
+	  string filename = opt->getOutputTermFileName();
+	  termfile.open(filename.c_str());
+	  termfile << "% Termite term representation" << endl;
+	  termfile << tp.getTerm()->getRepresentation() << "." << endl;
+	  termfile.close();
 	}
-	if(opt->aliasTextOutput()) {
-	  TimingPerformance timer("Annotate text with alias comments:");
-	  AliasPairsTextPrinter<DFI_STORE> p(analysis_info, pairs);
-	  p.traverseInputFiles(ast_root, preorder);
-	}
- 
-	if(opt->analysisResultsAnnotation()) {
-	  TimingPerformance timer("Annotate text with comments:");
-	  PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
-	  
-	  if (outputAll) ca.traverse(ast_root, preorder);
-	  else ca.traverseInputFiles(ast_root, preorder);
-	}
+  }
 
-	/* handle command line option --aliassourceoutput */
-	if(opt->aliasSourceOutput()) {
-	  TimingPerformance timer("Annotate source code with alias comments:");
-	  AliasPairsCommentAnnotator<DFI_STORE> ca(analysis_info, pairs);
-	  ca.traverseInputFiles(ast_root, preorder);
-	  ast_root->unparse();
-	}
+  /* handle multiple input files */
+  if(ast_root->numberOfFiles()>=1 && (opt->getOutputFilePrefix()).size()>0) {
+	TimingPerformance timer("Output all source files:");
+	/* Iterate over all input files (and its included files) */
+	for (int i=0; i < ast_root->numberOfFiles(); ++i) {
+	  SgFile& file = ast_root->get_file(i);
 
-	/* check how many input files we have */
-	if(ast_root->numberOfFiles()==1 && opt->getOutputSourceFileName().size()>0) {
-	  SgFile& file = ast_root->get_file(0);
 	  if(opt->outputSource()) {
-	    file.set_unparse_output_filename(opt->getOutputSourceFileName());
-	    unparseFile(&file,0,0);
-	  }
-	  /* Handle command line option --termoutput */
-	  if(opt->outputTerm()) {
-	    TermPrinter<DFI_STORE> tp(analysis_info);
-	    
-	    if (outputAll) tp.traverse(ast_root);
-	    else tp.traverseInputFiles(ast_root);
-
-	    ofstream termfile;
-	    string filename = opt->getOutputTermFileName();
-	    termfile.open(filename.c_str());
-	    termfile << "% Termite term representation" << endl;
-	    termfile << tp.getTerm()->getRepresentation() << "." << endl;
-	    termfile.close();
+		std::string filename=file.get_sourceFileNameWithoutPath();
+		file.set_unparse_output_filename(opt->getOutputFilePrefix()+filename);
+		unparseFile(&file,0,0);
 	  }
 	}
-	
-	/* handle multiple input files */
-	if(ast_root->numberOfFiles()>=1 && (opt->getOutputFilePrefix()).size()>0) {
-	  TimingPerformance timer("Output all source files:");
-	  /* Iterate over all input files (and its included files) */
-	  for (int i=0; i < ast_root->numberOfFiles(); ++i) {
-	    SgFile& file = ast_root->get_file(i);
-	    
-	    if(opt->outputSource()) {
-	      std::string filename=file.get_sourceFileNameWithoutPath();
-	      file.set_unparse_output_filename(opt->getOutputFilePrefix()+filename);
-	      unparseFile(&file,0,0);
-	    }
-	  }
-	}
+  }
 
   /* Free all memory allocated by the PAG garbage collection */
   GC_finish();
+  bool statistics = opt->statistics();
   delete opt;
-}
+
+  delete timer;
+  if (statistics) {
+	TimingPerformance::generateReport();
+  }
+
+  return 0;
+}    
 
 // -- custom visualisation --
 
@@ -297,7 +319,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	fprintf(fp, "  ignore_singles : no\n");
 	fprintf(fp, "  xspace: 50\n");
 	fprintf(fp, "  %s\n", attrib);
-	
+
     int n_nodes = 0;
 	if (!o_dfi_istop(info) && !o_dfi_isbottom(info))
 	{
@@ -315,6 +337,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 
 		if (opt->gdlShowIndividualGraphs()) {
 			o_ShapeGraphList graphs = o_SrwNielsonPair_select_2(gpair);
+			int old_n_graphs = n_graphs;
 			while (!o_ShapeGraphList_is_empty(graphs)) 
 			{
 				o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
@@ -326,7 +349,10 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 				n_graphs++;
 				n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, sg);
 			}
+			//gstats->addGraphs(n_graphs - old_n_graphs);
 		}
+	} else {
+	  //gstats->addTopBot();
 	}
 
 	if (!n_nodes) {
