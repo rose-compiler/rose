@@ -124,17 +124,17 @@ installcheck-local:
 	$(MAKE) -C $(testdir)/constprop
 	cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/constprop/constprop .
 
-	#cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-	#chmod u+rwx -R $(testdir)/srw98_shape
-	#cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	#$(MAKE) -C $(testdir)/srw98_shape
-	#cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/srw98_shape/srw98_shape .
+	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+	chmod u+rwx -R $(testdir)/srw98_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+	$(MAKE) -C $(testdir)/srw98_shape
+	cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/srw98_shape/srw98_shape .
 
-	#cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
-	#chmod u+rwx -R $(testdir)/nnh99_shape
-	#cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	#$(MAKE) -C $(testdir)/nnh99_shape
-	#cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/nnh99_shape/nnh99_shape .
+	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
+	chmod u+rwx -R $(testdir)/nnh99_shape
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
+	$(MAKE) -C $(testdir)/nnh99_shape
+	cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/nnh99_shape/nnh99_shape .
 
 	chmod -R u+w $(testdir)
 	rm -rf $(testdir)
