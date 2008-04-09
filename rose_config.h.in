@@ -42,8 +42,14 @@
 /* define if the Boost::Filesystem library is available */
 #undef HAVE_BOOST_FILESYSTEM
 
+/* define if the Boost::PROGRAM_OPTIONS library is available */
+#undef HAVE_BOOST_PROGRAM_OPTIONS
+
 /* define if the Boost::Regex library is available */
 #undef HAVE_BOOST_REGEX
+
+/* define if the Boost::Serialization library is available */
+#undef HAVE_BOOST_SERIALIZATION
 
 /* define if the Boost::System library is available */
 #undef HAVE_BOOST_SYSTEM
