@@ -135,7 +135,7 @@ AC_SUBST(ROSE_HOME)
 ROSE_SUPPORT_QROSE
 
 # AS (01/2005) Support for Andreas's Wave work
-ROSE_SUPPORT_LIBWAVE
+#ROSE_SUPPORT_LIBWAVE
 
 AX_BOOST_BASE([1.35.0])
 #AX_BOOST_SYSTEM
@@ -151,7 +151,6 @@ AX_BOOST_FILESYSTEM
 AX_LIB_SQLITE3([3.0.0])
 AX_BOOST_WAVE
 
-AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_boost_wave" = yes)
 # AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
 
 # Test this macro here at the start to avoid long processing times (before it fails)

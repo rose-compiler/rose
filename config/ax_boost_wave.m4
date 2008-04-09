@@ -1,4 +1,4 @@
-##### http://autoconf-archive.cryp.to/ax_boost_regex.html
+ http://autoconf-archive.cryp.to/ax_boost_regex.html
 #
 # SYNOPSIS
 #
@@ -48,8 +48,9 @@ AC_DEFUN([AX_BOOST_WAVE],
         	ax_boost_user_wave_lib="$withval"
 		fi
         ],
-        [want_boost="yes"]
+        [want_boost="no"]
 	)
+    AM_CONDITIONAL(ROSE_USE_BOOST_WAVE, test "x$want_boost" = "xyes"  )
 
 	if test "x$want_boost" = "xyes"; then
         AC_REQUIRE([AC_PROG_CC])
@@ -112,6 +113,9 @@ AC_DEFUN([AX_BOOST_WAVE],
 			fi
             # DQ (4/7/2006): build a macro to use in source code to know when WAVE is to be used.
             AC_DEFINE([USE_ROSE_BOOST_WAVE_SUPPORT],1,[Controls use of BOOST WAVE support in ROSE.])
+       
+		else
+            AC_DEFINE([USE_ROSE_BOOST_WAVE_SUPPORT],0,[Controls use of BOOST WAVE support in ROSE.])
 
 		fi
 
