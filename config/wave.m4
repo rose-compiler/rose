@@ -19,7 +19,7 @@ AC_ARG_WITH(wave, [  --with_boost-wave=yes Specify if wave is to be used (to use
 if (test "$with_boost_wave" = yes); then
    VAR_GCC=1
  # echo "Calling wave macro ..."
-   AC_PATH_WAVE
+   AX_BOOST_WAVE
 
  # DQ (4/7/2006): build a macro to use in source code to know when WAVE is to be used.
    AC_DEFINE([USE_ROSE_BOOST_WAVE_SUPPORT],1,[Controls use of BOOST WAVE support in ROSE.])
