@@ -117,12 +117,24 @@ installcheck-local:
 	@echo
 	@echo "Testsuite..."
 	@echo "====================="
+
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	cp -ur $(top_srcdir)/testsuite $(testdir)
 	$(MAKE) -C $(testdir)/constprop
-	cd $(testdir) ; sh testsuite/testsuite.sh testsuite
+	cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/constprop/constprop .
+
+	#cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+	#chmod u+rwx -R $(testdir)/srw98_shape
+	#cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+	#$(MAKE) -C $(testdir)/srw98_shape
+	#cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/srw98_shape/srw98_shape .
+
+	#cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
+	#chmod u+rwx -R $(testdir)/nnh99_shape
+	#cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
+	#$(MAKE) -C $(testdir)/nnh99_shape
+	#cd $(top_srcdir)/testsuite/ ; ./testsuite.sh ../examples/$(testdir)/nnh99_shape/nnh99_shape .
 
 	chmod -R u+w $(testdir)
 	rm -rf $(testdir)
