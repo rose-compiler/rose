@@ -6,7 +6,7 @@
 */
 #undef __VERSION__
 
-$REPLACE_ME_WITH_MACRO_DEFINITIONS
+// $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
 /* Turn on use of restrict in EDG front-end using --edg:restrict */
 #ifdef __GNUC__

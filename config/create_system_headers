@@ -392,52 +392,26 @@ else
     # Support for compiling ROSE with KAI KCC compiler (KAI has been bought by Intel and discontinued)
       KCC) compilerHeadersDir=`"$1" -v 2>&1 | awk '{for(i=1; i<=NF; i++) {if ($i ~ /-I[^ ]*\/include/) { print substr($i, 3); break } } }'`;;
     # Support for compiling ROSE with GNU g++ compiler
-      g++|gcc)
-         # credit for helping me figure this out goes to Peter Kurpis, pkurpis@keck.hawaii.edu
-         # compilerHeadersDir=`echo "int main(int argc, char **argv){return 0;}" | "$1" -v -E - 2>&1 | \
-         # awk '/^End/{headers=0} headers==1{print $1} /^#include </{headers=1}' | grep "gcc"`;;__GNUC_PATCHLEVEL__
-         # tmpFile="/tmp/tmp`uname -n`$$.C"
-
-           # If this is a test of gcc then build a C file instead of a C++ source filename
-           if [ "$compilerName" = "gcc" ]
+      g++|gcc|icpc|icc)
+           if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" ]
            then
-              tmpFile="/tmp/tmp`uname -n`$$.c"
               is_C_compiler="yes"
+			  language="c"
            else
-              tmpFile="/tmp/tmp`uname -n`$$.C"
+			  language="c++"
            fi
 
-           echo "Build a C file instead of a C++ source filename: tmpFile = $tmpFile"
-
-           echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
-           compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1 | \
-           sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d'`
-
-         # echo "compilerHeadersDir = $compilerHeadersDir"
-
-         # AS moved the copying fo rose_edg_macros_and_functions_required_for_gnu.h here because icc requires a different file
-         # DQ (4/11/2005): Copy the header file that is to be read first (within EDG processing) into the compile tree.
-         # echo "Copying $roseHome/config/rose_edg_macros_and_functions_required_for_gnu.h to $target_parent_dir"
-         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" |\
-         #         grep -v "__cplusplus" | grep -v "__EXCEPTIONS" | grep -v "__SIZE_TYPE__" | grep -v "__PTRDIFF_TYPE__" \
-         #       | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" | grep -v "__GNUG__"  \
-         #       | grep -v "__VERSION__" | grep -v "__i386" | grep -v "__linux__" | grep -v "__unix__" | grep -v "__STDC_HOSTED__"`
-         # DQ (6/29/2006): Disabled predefined macros from EDG so that we can define everything required from the preinclude file.
-         # DQ (7/13/2006): There are some macros that need to be defined via the commandline, e.g "__cplusplus", which is set 
-         # depending of the use of commandline options to specific C++ or C language rules for compilation of each file.
-         # DQ (12/23/2006): Modified to use EDG's version of __SIZE_TYPE__  and __PTRDIFF_TYPE__ (though for 64 bit systems we 
-         # reset it explicitly).  So this modification filters them out.
-         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
-         #      | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" `
-         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
-         #      | grep -v "__SIZE_TYPE__" | grep -v "__PTRDIFF_TYPE__" | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" `
-         # PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
-         #       | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" `
+           compilerHeadersDir=`"$1" -v -E -x $language /dev/null 2>&1 | \
+               sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d'`
 
          # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
-           PREPROCESSOR_DEFS=`"$1" -v -E -dD "$tmpFile" | grep "#define" \
-                | grep -v "__cplusplus" | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" | grep -v "__STDC_HOSTED__" | grep -v "__GXX_WEAK__"`
-           cat $roseHome/config/rose_edg_required_macros_and_functions.h.in | perl -pe "s/\\\$REPLACE_ME_WITH_MACRO_DEFINITIONS/$PREPROCESSOR_DEFS/" > $mainTargetDir/rose_edg_required_macros_and_functions.h
+           tmpFile="`mktemp`"
+           "$1" -E -dM -x $language /dev/null \
+                | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" \
+                | grep -v "__cplusplus" | grep -v "__DATE__" | grep -v "__TIME__" | grep -v "__EDG__" | grep -v "__GXX_WEAK__" \
+                | grep -v "__EDG_VERSION__" | grep -v "_WCHAR_T " | grep -v "__NO_STRING_INLINES" | grep -v "__STDC_HOSTED__" > "$tmpFile"
+           sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < $roseHome/config/rose_edg_required_macros_and_functions.h.in > $mainTargetDir/rose_edg_required_macros_and_functions.h
+		   rm $tmpFile
 
          # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
            echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
@@ -451,73 +425,6 @@ else
            rm -f "$tmpFile" 2>/dev/null
            compilerHeadersDir=`dirname "$hdrFileName"`
            [ -d "$compilerHeadersDir" ] || echo "ERROR: unable to find C++ header files for CC"
-           ;;
-
-    # Support for compiling ROSE with Intel icc compiler (and using the Intel compiler as a backend)
-      icpc|icc) # AS Added extra lines to find icc header files
-           #idea: if icpc/icc is called with the commandline paramaters '-v -E' and
-           #an **illegal filename** it will print a diagnostic which contains the
-           #include paths used by icc/icpc. I know of no direct way to get the include paths.
-           tmpFileSed="\/tmp\/tmpRoseICCsupport`uname -n`$$.C"
-           tmpFile="/tmp/tmpRoseICCsupport`uname -n`$$.C"
-
-           # If this is a test of gcc then build a C file instead of a C++ source filename
-           if [ "$compilerName" = "icc" ]
-           then
-              tmpFile="/tmp/tmp`uname -n`$$.c"
-              is_C_compiler="yes"
-           else
-              tmpFile="/tmp/tmp`uname -n`$$.C"
-           fi
-
-           echo "Build a C file instead of a C++ source filename: tmpFile = $tmpFile"
-
-           echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
-         # compilerPathIntelWithFile=`which "$1"`
-         # compilerPathIntel=`dirname ${compilerPathIntelWithFile}`
-         # compilerHeadersDir="${compilerPathIntel}/../include ${compilerPathIntel}/../include/c++" 
-         # compilerHeadersDir="${compilerHeadersDir1} /usr/apps/gcc/3.3.2/lib/gcc-lib/i686-pc-linux-gnu/3.3.2/include"
-         # compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'`
-         # compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1  | \
-         #    sed -n "/$tmpFileSed/,/Catastrophic/p" | sed "/$tmpFileSed/d; /substitute_headers/d; /^End/d; /\/usr\/include$/d"`
-
-         # DQ (8/10/2006): We run the Intel compiler with a special option to dump out information and the eliminate the directories that we know to be empty
-           compilerHeadersDir=`"$1" -v -E "$tmpFile" 2>&1  | \
-              grep -v "#include" | grep -v "Version " | grep -v "/mcpcom" | grep -v "rm " | grep -v "int main" | grep -v "# 1" | grep -v "substitute_headers" | sed '/\/usr\/include$/d'`
-           echo "COMPILE HEADERS DIR: ${compilerHeadersDir}"
-
-         # AS create file containing all relevant predefined macros in ICC to be preincluded by EDG
-         # PREPROCESSOR_DEFS=`"$1" -v -E -dM "$tmpFile" | grep "#define" |\
-         #        grep -v "__cplusplus" | grep -v "__EXCEPTIONS" | grep -v "__SIZE_TYPE__" | grep -v "__PTRDIFF_TYPE__" \
-         #        | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" | grep -v "__GNUG__"  \
-         #        | grep -v "__NO_STRING_INLINES" | grep -v "__EDG_VERSION__" | grep -v "__EDG_RUNTIME_USES_NAMESPACES" \
-         #        | grep -v "__PLACEMENT_DELETE" | grep -v "__RTTI" | grep -v "__ARRAY_OPERATORS" | grep -v "_BOOL" \
-         #        | grep -v "_WCHAR_T" | grep -v "__STDC__" | grep -v "__TIME__" | grep -v "__DATE__" | grep -v "__EDG__" \
-         #        | grep -v "__VERSION__" | grep -v "__i386" | grep -v "__linux__" | grep -v "__unix__" | grep -v "__STDC_HOSTED__"`
-         # DQ (6/29/2006): Disabled predefined macros from EDG so that we can define everything required from the preinclude file.
-         # DQ (12/23/2006): Modified to use EDG's version of __SIZE_TYPE__  and __PTRDIFF_TYPE__ (though for 64 bit systems we 
-         # reset it explicitly).  So this modification filters them out.
-         # PREPROCESSOR_DEFS=`"$1" -v -E -dM "$tmpFile" | grep "#define" \
-         #     | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" \
-         #     | grep -v "__cplusplus" | grep -v "__DATE__" | grep -v "__TIME__" | grep -v "__EDG__" \
-         #     | grep -v "__EDG_VERSION__" | grep -v "_WCHAR_T " | grep -v "__NO_STRING_INLINES" `
-           PREPROCESSOR_DEFS=`"$1" -v -E -dM "$tmpFile" | grep "#define" \
-                | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" \
-                | grep -v "__cplusplus" | grep -v "__DATE__" | grep -v "__TIME__" | grep -v "__EDG__" \
-                | grep -v "__EDG_VERSION__" | grep -v "_WCHAR_T " | grep -v "__NO_STRING_INLINES" | grep -v "__STDC_HOSTED__"`
-
-#          PREPROCESSOR_DEFS=`icpc -# "$tmpFile" 2>&1 | grep "\-D" | sed "s/\-D/\#define /" | sed "s/=/ /" | sed "s/\"//g" | \
-#                     grep -v 'i386' | grep -v 'linux' | grep -v 'unix' | grep -v 'GXX' | grep -v 'NO_STRING_INLINES' | \
-#                     grep -v "INLINE" | grep -v "ELF" | grep -v "__extension" | grep -v '__USER_LABEL_PREFIX__' | \
-#                     grep -v 'REGISTER_PREFIX'| grep -v "OPTIMIZE" | grep -v '__EXCEPTIONS' | grep -v "__SIZE_TYPE__" |\
-#                     grep -v "__PTRDIFF_TYPE__" | grep -v "__GNUC_MINOR__" \
-#                     | sed "s/.$//"`
-           cat $roseHome/config/rose_edg_required_macros_and_functions.h.in | perl -pe "s/\\\$REPLACE_ME_WITH_MACRO_DEFINITIONS/$PREPROCESSOR_DEFS/" > $mainTargetDir/rose_edg_required_macros_and_functions.h 
-           echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
-
-#            cp $roseHome/config/rose_edg_macros_and_functions_required_for_icc.h $mainTargetDir/.
-
-
            ;;
 
     # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
@@ -541,7 +448,7 @@ iDir=0
 for dirName in $compilerHeadersDir
    do
          iDir=`expr "$iDir" + 1 `
-        echo "proccessing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
+        echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
 
       # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines).
         process_headers "$1" "$dirName" "$mainTargetDir/hdrs${iDir}" "$roseHome" &
