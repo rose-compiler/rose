@@ -54,6 +54,7 @@ dot -V >> mailtext1 2>&1 || echo "dot not found" >> mailtext1
 (latex --version | head -1 || echo "latex not found") >> mailtext1
 (latex2html -v | grep -w LaTeX2HTML || echo "latex2html not found") >> mailtext1
 (swig -version | grep -w SWIG || echo "swig not found") >> mailtext1
+(grep '#define *BOOST_LIB_VERSION' ${BOOST_ROOT}/include/*/boost/version.hpp | cut -f 3 -d ' ' | tr -d '"' | tr _ . | sed 's/^/Boost version: /' || echo "Boost not found") >> mailtext1
 echo "" >> mailtext1
 echo "> Environment:" >> mailtext1
 printenv >> mailtext1
@@ -90,10 +91,7 @@ buildstatus=0
 # configure ROSE
   cd build
 # ROSE_CONFIG_FLAGS="--without-binary_analysis --enable-rosehpct --with-openFortranParser=/home/liao6/download/fortran-parser --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server"
-  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}"
-
-#------------------------------------------------------
-# make and check
+  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" && \
   make $MAKEFLAGS && \
   make $MAKEFLAGS docs && \
   make $MAKEFLAGS check && \

@@ -12,6 +12,8 @@ export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$
 source /usr/apps/gcc/4.2.2/setup.sh
 export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 export PATH="/home/willcock2/swig-install/bin:$PATH"
+export BOOST_ROOT="/home/willcock2/boost-1.35-install/"
+export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 # export PATH="/home/willcock2/tcl8.5-install/bin:$PATH"
 # export LD_LIBRARY_PATH="/home/willcock2/tcl8.5-install/lib:$LD_LIBRARY_PATH"
 # export PATH="/home/willcock2/binutils-install/bin/:$PATH"
@@ -19,7 +21,7 @@ export PATH="/home/willcock2/swig-install/bin:$PATH"
 
 ROSE_TOP="/export/0/tmp.willcock2/svn-test-rose/$$/"
 
-CONFIGURE_FLAGS=(--with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install "$@")
+CONFIGURE_FLAGS=(--with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost-includes=${BOOST_ROOT}/include/* --with-boost-libraries=${BOOST_ROOT}/lib --with-boost=${BOOST_ROOT} "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov dquinlan@llnl.gov"
