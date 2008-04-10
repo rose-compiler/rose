@@ -91,7 +91,7 @@ install-data-local:
 
 # DQ (4/22/2005): Set this so that make distcheck will use the same 
 # --with-edg_source_code=true/false option as were used at configure.
-DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code)
+DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code) --with-boost
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final gnerated distribution.

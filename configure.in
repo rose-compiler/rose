@@ -134,7 +134,7 @@ AC_SUBST(ROSE_HOME)
 # Support for Gabriel's QRose GUI Library
 ROSE_SUPPORT_QROSE
 
-AX_BOOST_BASE([1.35.0])
+AX_BOOST_BASE([1.35.0], [], [echo "Boost 1.35.0 or above is required for ROSE" 1>&2; exit 1])
 AX_BOOST_THREAD
 AX_BOOST_DATE_TIME
 AX_BOOST_REGEX
