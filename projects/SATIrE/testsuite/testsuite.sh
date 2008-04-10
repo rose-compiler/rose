@@ -41,7 +41,7 @@ for file in $FILES; do
 
 		echo "--- testing $ANALYSIS on file $file ---"
 		outfile=`basename $file`
-		options="--statistics --no-verbose --analysis-files=all --output-source=$outfile.dfi"
+		options="--no-number-expressions --statistics --no-verbose --analysis-files=all --output-source=$outfile.dfi"
 		# execute and time with 'time'
 		#/usr/bin/time --format="%S %U %e" $analysis $options $file 1>/dev/null 2>$TMPFILE
 		/usr/bin/time --format="%S %U %e" $analysis $options $file &> $TMPFILE
