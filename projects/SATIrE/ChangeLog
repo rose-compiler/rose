@@ -15,6 +15,8 @@ V0.8.1 (in progress)
 * ICFG builder improvements [GB]
   - tuned computation of expression and type sets; the ICFG builder is now
     roughly 5 to 10 times faster
+  - added analyzer command line flag --no-number-expressions to turn off
+    expression numbering for analyses that don't need it
   - replaced most const char * strings by std::string
   - removed memory leaks
   - implemented IcfgTraversal class for simple traversal of the ICFG (see
