@@ -212,6 +212,8 @@ protected:
   }
 
   ExpressionPairSet *computeMustAliasPairs(carrier_type_o(CARRIER_TYPE) sg) { 
+    if (sg == NULL)
+      return NULL;
     ExpressionPairSet *aliases = new ExpressionPairSet();
     ExpressionPairSet::iterator i;
     std::pair<SgNode*,SgNode*> *pair;
@@ -225,6 +227,8 @@ protected:
   }
   
   ExpressionPairSet *computeMayAliasPairs(carrier_type_o(CARRIER_TYPE) sg) {
+    if (sg == NULL)
+      return NULL;
     ExpressionPairSet *aliases = new ExpressionPairSet();
     ExpressionPairSet::iterator i;
     std::pair<SgNode*,SgNode*> *pair;

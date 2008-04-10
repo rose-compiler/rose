@@ -1,6 +1,6 @@
 // -*- C++ -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.4 2008-03-05 17:03:29 gergo Exp $
+// $Id: StatementAttributeTraversal.h,v 1.5 2008-04-10 07:57:08 gergo Exp $
 
 #ifndef STATEMENTATTRIBUTETRAVERSAL_H
 #define STATEMENTATTRIBUTETRAVERSAL_H
@@ -89,7 +89,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.4 2008-03-05 17:03:29 gergo Exp $
+// $Id: StatementAttributeTraversal.h,v 1.5 2008-04-10 07:57:08 gergo Exp $
 
 /* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
 
@@ -141,17 +141,21 @@ template<typename DFI_STORE_TYPE>
 std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPreInfo(SgStatement* stmt) {
   std::stringstream ss1;
 
-  StatementAttribute *start = (StatementAttribute *) stmt->getAttribute("PAG statement start");
+  if (stmt->attributeExists("PAG statement start")) {
+    StatementAttribute *start = (StatementAttribute *) stmt->getAttribute("PAG statement start");
 
-  BasicBlock *startb = start->get_bb();
-  if (startb != NULL) {
-    //ss1 << (carrier_printfunc(CARRIER_TYPE)(
-    //				   (carrier_type_o(CARRIER_TYPE))
-    //					   get_statement_pre_info(store, stmt)
-    //					   ));
-    ss1 << statementPreInfoString(store,stmt);
+    BasicBlock *startb = start->get_bb();
+    if (startb != NULL) {
+      //ss1 << (carrier_printfunc(CARRIER_TYPE)(
+      //				   (carrier_type_o(CARRIER_TYPE))
+      //					   get_statement_pre_info(store, stmt)
+      //					   ));
+      ss1 << statementPreInfoString(store,stmt);
+    } else
+      ss1 << "<undefined dfi>";
   } else
     ss1 << "<undefined dfi>";
+
   return ss1.str();
 }
 
@@ -159,13 +163,17 @@ template<typename DFI_STORE_TYPE>
 std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPostInfo(SgStatement* stmt) {
   std::stringstream ss2;
 
-  StatementAttribute* end= (StatementAttribute *) stmt->getAttribute("PAG statement end");
+  if (stmt->attributeExists("PAG statement end")) {
+    StatementAttribute* end= (StatementAttribute *) stmt->getAttribute("PAG statement end");
 
-  BasicBlock *endb = end->get_bb();
-  if (endb != NULL) {
-    ss2 << statementPostInfoString(store,stmt);
+    BasicBlock *endb = end->get_bb();
+    if (endb != NULL) {
+      ss2 << statementPostInfoString(store,stmt);
+    } else
+      ss2 << "<undefined dfi>";
   } else
     ss2 << "<undefined dfi>";
+
   return ss2.str();
 }
 

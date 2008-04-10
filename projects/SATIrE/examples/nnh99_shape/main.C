@@ -173,8 +173,10 @@ ExpressionPairSet *get_statement_alias_pairs(SgStatement *stmt, std::string pos,
 }
 
 std::string format_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type) {
-	std::stringstream str;
 	ExpressionPairSet *pairs = get_statement_alias_pairs(stmt, pos, alias_type);
+    if (pairs == NULL)
+      return "<undefined dfi>";
+	std::stringstream str;
 	ExpressionPairSet::iterator i;
 	std::pair<SgNode*,SgNode*> *pair;
 	for (i=pairs->begin(); i!=pairs->end(); i++) {
