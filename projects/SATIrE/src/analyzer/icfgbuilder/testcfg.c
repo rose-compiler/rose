@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: testcfg.c,v 1.3 2008-02-19 19:08:00 markus Exp $
+// $Id: testcfg.c,v 1.4 2008-04-10 07:58:23 gergo Exp $
 
 /*
  * TestCFG: consistency test for a cfg and its PAG-interface
@@ -1721,6 +1721,9 @@ static void writegdl (char *name)
 
   /* write footer */
   (void)fprintf (file, "}\n");
+
+  /* close the file */
+  fclose(file);
 } 
 
 

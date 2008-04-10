@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.24 2008-04-08 09:50:00 gergo Exp $
+// $Id: CFGTraversal.C,v 1.25 2008-04-10 07:58:23 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -16,7 +16,8 @@
 
 CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
     : node_id(0), procnum(0), cfg(new CFG()), real_cfg(NULL), proc(NULL),
-      call_num(0), lognum(0), expnum(0), traversalTimer(NULL)
+      call_num(0), lognum(0), expnum(0), traversalTimer(NULL),
+      flag_numberExpressions(true)
 {
   TimingPerformance timer("Initial setup of ICFG (entry, exit, argument nodes):");
   cfg->procedures = procs;
@@ -138,7 +139,10 @@ CFGTraversal::atTraversalEnd() {
      // somewhat efficient, and because we don't seem to have a problem with
      // unreachable cycles.
         kill_unreachable_nodes();
-        number_exprs();
+     // GB (2008-04-08): Made numbering of expressions optional, but
+     // default.
+        if (flag_numberExpressions)
+            number_exprs();
     }
 }
 
@@ -189,7 +193,7 @@ CFGTraversal::perform_goto_backpatching() {
       if (target != (*pi)->goto_targets.end()) {
         add_link((*gotos).second, (*target).second, NORMAL_EDGE);
       } else {
-        std::cout << "warning: goto statement with unknown label!"
+        std::cerr << "warning: goto statement with unknown label!"
                   << std::endl;
       }
       ++gotos;
@@ -277,13 +281,61 @@ CFGTraversal::kill_unreachable_nodes() {
 #if 0
             std::cout << "*** collecting garbage node " << (*n)->id
                 << std::endl;
-            std::cout << "*** stmt: "
-                << Ir::fragmentToString((*n)->statements.front())
-                << std::endl;
+            if ((*n)->statements.size() != 1)
+            {
+                std::cout << "weird! block contains "
+                    << (*n)->statements.size() << " statements"
+                    << std::endl;
+                delete *n;
+                continue;
+            }
+            else
+            {
+                SgStatement *stmt = (*n)->statements.front();
+                std::cout << "*** stmt: "
+                    << (void *) stmt << " "
+                    << Ir::fragmentToString(stmt)
+                    << std::endl;
+            }
 #endif
+         // GB (2008-04-09): Remove attributes from unreachable statements.
+         // SgStatement *stmt = (*n)->statements.front();
+            SgStatement *stmt;
+         // The statement in question might be transformed, so see if we can
+         // get the original statement through the block_stmt_map.
+            if (block_stmt_map[(*n)->id] != NULL)
+                stmt = block_stmt_map[(*n)->id];
+            else
+                stmt = (*n)->statements.front();
+
+         // In each of these cases, we should delete a, but it might be
+         // shared, so let's not do it.
+            if (stmt->attributeExists("PAG statement start"))
+            {
+                AstAttribute *a = stmt->getAttribute("PAG statement start");
+                stmt->removeAttribute("PAG statement start");
+            }
+            if (stmt->attributeExists("PAG statement end"))
+            {
+                AstAttribute *a = stmt->getAttribute("PAG statement end");
+                stmt->removeAttribute("PAG statement end");
+            }
+            if (stmt->attributeExists("PAG statement head"))
+            {
+                AstAttribute *a = stmt->getAttribute("PAG statement head");
+                stmt->removeAttribute("PAG statement head");
+            }
+
+         // Negate node id; this might make it easier to recognize in debug
+         // output.
+            (*n)->id = -(*n)->id;
+
             delete *n;
         }
     }
+ // Note that the block_stmt_map is broken after renumbering! Sorry about
+ // that.
+
 #if 0
  // dump new ICFG
     for (n = cfg->nodes.begin(); n != cfg->nodes.end(); ++n)
@@ -293,7 +345,13 @@ CFGTraversal::kill_unreachable_nodes() {
             << " " << Ir::fragmentToString((*n)->statements.front())
             << " (" << (*n)->statements.front()->class_name()
             << ")" << std::endl;
-     // might be interesting to see the successors as well
+        std::vector<Edge>::iterator edge;
+        for (edge = (*n)->successors.begin(); edge != (*n)->successors.end(); ++edge)
+        {
+            std::cout << "    "
+                << "-> " << edge->first->id << " (type " << edge->second << ")"
+                << std::endl;
+        }
     }
 #endif
 }
@@ -729,7 +787,35 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
      // the current after block, because the after block might be an IfJoin
      // that is never reached due to early returns. Thus we try to find a
      // better after node if the after block does not have any predecessors.
+     // GB (2008-04-09): OK, so there might be cases where the IfJoin's
+     // predecessor list is not empty because it has an unreachable IfJoin
+     // as its predecessor... So, let's handle this more complicated case.
+     // This will probably still cause some interesting problem some day.
+        bool after_unreachable = false;
         if (after->predecessors.empty())
+        {
+            after_unreachable = true;
+        }
+        else if (after->predecessors.size() == 1)
+        {
+            Edge pedge = after->predecessors.front();
+            BasicBlock *pred = pedge.first;
+         // We might have to deal with a chain of unreachable IfJoins, who
+         // knows?
+            while (pred->predecessors.size() == 1
+                && isIfJoin(pred->statements.front()))
+            {
+                pedge = pred->predecessors.front();
+                pred = pedge.first;
+            }
+            if (pred->predecessors.size() == 0
+                    && isIfJoin(pred->statements.front()))
+            {
+                after_unreachable = true;
+            }
+        }
+     // if (after->predecessors.empty())
+        if (after_unreachable)
         {
          // Loop while we are in the unreachable section of code; the first
          // unreachable node has no predecessors, its unreachable successors
@@ -750,7 +836,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
                 {
                  // This "can't happen", which means that it probably will
                  // some day under some very weird circumstances.
-                    std::cout << __FILE__ << ":" << __LINE__ << ": "
+                    std::cerr << __FILE__ << ":" << __LINE__ << ": "
                         << "ICFG builder: error: found unexpected number of "
                         << "successors of unreachable IfJoin node"
                         << std::endl;
@@ -775,7 +861,42 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
                 Edge succ = after->successors.front();
                 after = succ.first;
             }
+#if 0
+            std::cout << "node " << after->id << " "
+                << Ir::fragmentToString(after->statements.front())
+                << " has " << after->predecessors.size() << " preds:";
+            std::vector<Edge>::iterator p;
+            for (p = after->predecessors.begin();
+                 p != after->predecessors.end(); ++p)
+            {
+                std::cout << " " << p->first->id << ":"
+                    << Ir::fragmentToString(p->first->statements.front());
+            }
+            std::cout << std::endl;
+#endif
         }
+#if 0
+        else
+        {
+            std::cout << "after node " << after->id << " "
+                << Ir::fragmentToString(after->statements.front())
+                << " has " << after->predecessors.size() << " preds:";
+            std::vector<Edge>::iterator p;
+            for (p = after->predecessors.begin();
+                 p != after->predecessors.end(); ++p)
+            {
+                std::cout << " " << p->first->id << ":"
+                    << Ir::fragmentToString(p->first->statements.front());
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "post info for "
+            << "if (" << Ir::fragmentToString(cond) << ") "
+            << " at the beginning of: "
+            << Ir::fragmentToString(after->statements.front())
+            << " (node " << after->id << ")"
+            << std::endl;
+#endif
         stmt_end = new StatementAttribute(after, POS_PRE);
 
         new_block = NULL;
@@ -788,12 +909,6 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 
       case V_SgForStatement: {
         SgForStatement *fors = isSgForStatement(*i);
-        /* create a block containing the initialization
-         * statement */
-        block_stmt_map[node_id] = current_statement;
-        BasicBlock *init_block
-          = new BasicBlock(node_id++, INNER, proc->procnum);
-        cfg->nodes.push_back(init_block);
         /* create a block for the "real" head of the for
          * statement (where the condition is tested) */
         block_stmt_map[node_id] = current_statement;
@@ -801,15 +916,21 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
           = new BasicBlock(node_id++, INNER, proc->procnum);
         cfg->nodes.push_back(for_block);
         BasicBlock *init_block_after = for_block;
+        /* create a block containing the initialization
+         * statement */
+        BasicBlock *init_block = NULL;
 
         SgStatementPtrList init_list
           = fors->get_for_init_stmt()->get_init_stmt();
         SgStatementPtrList::reverse_iterator it;
         for (it = init_list.rbegin(); it != init_list.rend(); ++it) {
+       // GB (2008-04-09): Moved allocation of the init_block(s) here.
+          init_block = allocate_new_block(init_block, init_block_after);
+
           SgExprStatement *init_expr = isSgExprStatement(*it);
           SgVariableDeclaration *init_decl = isSgVariableDeclaration(*it);
           if (init_expr) {
-            init_block = allocate_new_block(init_block, init_block_after);
+         // init_block = allocate_new_block(init_block, init_block_after);
             SgExpression* new_expr
               = isSgExpression(Ir::deepCopy(init_expr->get_expression()));
             ExprLabeler el(expnum);
@@ -834,11 +955,15 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
             SgInitializedNamePtrList vars = init_decl->get_variables();
             SgInitializedNamePtrList::reverse_iterator it;
             for (it = vars.rbegin(); it != vars.rend(); ++it) {
+           // init_block = allocate_new_block(init_block, init_block_after);
+              init_block = allocate_block_without_successor(init_block);
               SgAssignInitializer *init
                   = isSgAssignInitializer((*it)->get_initializer());
               if (!init) {
-                  std::cout << "unsupported initializer "
-                      << "in for loop" << std::endl;
+                  std::cerr << "unsupported initializer "
+                      << Ir::fragmentToString((*it)->get_initializer())
+                      << " (" << (*it)->get_initializer()->class_name()
+                      << ") in for loop" << std::endl;
                   break;
               }
               SgExpression* new_expr = isSgExpression(Ir::deepCopy(init));
@@ -867,6 +992,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
               SgExprStatement* exprStatement
                   = Ir::createExprStatement(Ir::createAssignOp(var, new_expr));
               init_block->statements.push_front(exprStatement);
+              init_block = NULL;
 
               /* Don't try to understand this, because
                * It Works By Magic(tm). But feel free
@@ -879,7 +1005,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
                                             (*it)->get_type()));
             }
           } else {
-            std::cout << "TODO: for init stmt with "
+            std::cerr << "TODO: for init stmt with "
                 << (*it)->sage_class_name()
                 << std::endl;
             init_block->statements.push_front(*it);
@@ -1149,7 +1275,8 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	if (isSgExprStatement(item_sel)) {
 	  new_expr = isSgExprStatement(item_sel)->get_expression();
 	} else {
-	  std::cout << "TODO: unsupported statement type in switch"
+	  std::cerr << "TODO: unsupported statement type in switch"
+          << " (" << item_sel->class_name() << ")"
 		    << std::endl;
 	  new_expr = NULL;
 	}
@@ -1223,8 +1350,14 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	 * also, if the block is empty, it is a no-op, so we
 	 * use the pre-info as post-info */
 	if (!block->get_statements().empty()) {
-	  stmt_end = dynamic_cast<StatementAttribute *>(block->get_statements().back()
-							->getAttribute("PAG statement end"));
+      SgStatement *stmt = block->get_statements().back();
+      if (stmt->attributeExists("PAG statement end"))
+      {
+          stmt_end = dynamic_cast<StatementAttribute *>(
+                  stmt->getAttribute("PAG statement end"));
+      }
+      else
+          stmt_end = stmt_start;
 	} else {
 	  stmt_end = stmt_start;
 	}
@@ -1463,10 +1596,10 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	 * way. Print its class name and then fall through to
 	 * treat it as a "normal" (non-branching, non-special)
 	 * statement. */
-	std::cout << "ICFG builder: warning: "
+	std::cerr << "ICFG builder: warning: "
         << "unsupported statement type within a function: "
         << (*i)->sage_class_name() << std::endl;
-    std::cout << "at: "
+    std::cerr << "at: "
         << (*i)->get_startOfConstruct()->get_filenameString()
         << ":" << (*i)->get_startOfConstruct()->get_line()
         << ":" << (*i)->get_startOfConstruct()->get_col()
@@ -1530,10 +1663,10 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
        * above, insert dummies (because attributes may not be
        * null) */
       if (stmt_start == NULL)
-	stmt_start = new StatementAttribute(NULL, POS_PRE);
+          stmt_start = new StatementAttribute(NULL, POS_PRE);
       (*i)->addNewAttribute("PAG statement start", stmt_start);
       if (stmt_end == NULL)
-	stmt_end = new StatementAttribute(NULL, POS_PRE);
+          stmt_end = new StatementAttribute(NULL, POS_PRE);
       (*i)->addNewAttribute("PAG statement end", stmt_end);
     }
     
@@ -1579,13 +1712,32 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       /* post info is the post info of the last statement
        * in the case body; if the body is empty, it is the
        * pre info */
+   // GB (2008-04-09): Additional complication: The post info is the post
+   // info of the last statement in the case body THAT HAS A POST INFO. The
+   // final part of the body may be unreachable as in test5.C.
+      AstAttribute *stmt_end = NULL;
       if (!cases->get_body()->get_statements().empty()) {
-        AstAttribute* stmt_end =
-          cases->get_body()->get_statements().back()->getAttribute("PAG statement end");
-        cases->addNewAttribute("PAG statement end", stmt_end);
-      } else {
-        cases->addNewAttribute("PAG statement end", stmt_start);
+     // AstAttribute* stmt_end =
+     //   cases->get_body()->get_statements().back()->getAttribute("PAG statement end");
+        std::vector<SgStatement *> &stmts
+            = cases->get_body()->get_statements();
+        std::vector<SgStatement *>::reverse_iterator stmt;
+        stmt = stmts.rbegin();
+        while (stmt != stmts.rend()
+                && !(*stmt)->attributeExists("PAG statement end"))
+        {
+            ++stmt;
+        }
+        if (stmt != stmts.rend()
+                && (*stmt)->attributeExists("PAG statement end"))
+        {
+            stmt_end = (*stmt)->getAttribute("PAG statement end");
+        }
       }
+      if (stmt_end != NULL)
+        cases->addNewAttribute("PAG statement end", stmt_end);
+      else
+        cases->addNewAttribute("PAG statement end", stmt_start);
     }
       break;
 
@@ -1769,6 +1921,12 @@ CFGTraversal::print_map() const {
               << " stmt " << i->second << ": "
               << Ir::fragmentToString((i->second)) << std::endl;
   }
+}
+
+void
+CFGTraversal::numberExpressions(bool flag)
+{
+    flag_numberExpressions = flag;
 }
 
 void

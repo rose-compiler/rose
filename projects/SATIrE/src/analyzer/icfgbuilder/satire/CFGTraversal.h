@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.5 2008-04-08 09:50:03 gergo Exp $
+// $Id: CFGTraversal.h,v 1.6 2008-04-10 07:58:25 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -20,6 +20,12 @@ public:
 
     void print_map() const;
     std::map<int, SgStatement *> block_stmt_map;
+
+ // Can be called before the traversal to choose whether the expressions and
+ // types in the program should be numbered. Default is yes. If the
+ // expressions are not numbered, but an analysis tries to access them, no
+ // attempt is made to fail gracefully (i.e., you will get a segfault).
+    void numberExpressions(bool flag);
 
 protected:
     void visit(SgNode *);
@@ -51,6 +57,8 @@ private:
     int expnum;
     SgStatement *current_statement;
     TimingPerformance *traversalTimer;
+
+    bool flag_numberExpressions;
 };
 
 // GB (2008-04-04): This class can be used to traverse the SATIrE ICFG. The

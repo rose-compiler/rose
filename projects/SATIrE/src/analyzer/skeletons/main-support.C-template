@@ -15,25 +15,36 @@ extern "C" DFI_STORE doit(ANALYSIS)(void *);
 extern "C" void gdl_create(char *, int);
 
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt) {
-  return (carrier_printfunc(CARRIER_TYPE)(
-              (carrier_type_o(CARRIER_TYPE)) get_statement_pre_info(store, stmt)));
+  carrier_type_o(CARRIER_TYPE) info
+      = (carrier_type_o(CARRIER_TYPE)) get_statement_pre_info(store, stmt);
+  if (info != NULL)
+      return (carrier_printfunc(CARRIER_TYPE)(info));
+  else
+      return "<undefined dfi>";
 }
 
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt) {
-  return (carrier_printfunc(CARRIER_TYPE)(
-              (carrier_type_o(CARRIER_TYPE)) get_statement_post_info(store, stmt)));
+  carrier_type_o(CARRIER_TYPE) info
+      = (carrier_type_o(CARRIER_TYPE)) get_statement_post_info(store, stmt);
+  if (info != NULL)
+      return (carrier_printfunc(CARRIER_TYPE)(info));
+  else
+      return "<undefined dfi>";
 }
 
 carrier_type_o(CARRIER_TYPE) 
 select_info(DFI_STORE store, SgStatement *stmt, std::string attrName) {
-  StatementAttribute* stmtAttr = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));
-  BasicBlock* block=stmtAttr->get_bb();
-  int pos=stmtAttr->get_pos();
-  switch (pos) {
-  case POS_PRE:
-    return dfi_get_pre_info(store, block->id);
-  case POS_POST:
-    return dfi_get_post_info_all(store, block->id);
+  if (stmt->attributeExists(attrName)) {
+    StatementAttribute* stmtAttr
+        = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));
+    BasicBlock* block=stmtAttr->get_bb();
+    int pos=stmtAttr->get_pos();
+    switch (pos) {
+    case POS_PRE:
+      return dfi_get_pre_info(store, block->id);
+    case POS_POST:
+      return dfi_get_post_info_all(store, block->id);
+    }
   }
   return NULL;
 }
@@ -66,6 +77,9 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
 
     if (verbose) std::cout << "generating cfg ... ";
     CFGTraversal t(s.get_procedures());
+    if (!opt->numberExpressions()) {
+      t.numberExpressions(false);
+    }
     t.traverse(root, preorder);
     delete nestedTimer;
     if (verbose) std::cout << "done" << std::endl;
