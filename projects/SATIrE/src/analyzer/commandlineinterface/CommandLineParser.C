@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.14 2008-03-11 03:22:11 markus Exp $
+// $Id: CommandLineParser.C,v 1.15 2008-04-10 07:57:22 gergo Exp $
 
 #include <config.h>
 
@@ -98,6 +98,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->analysisAnnotationOn();
   } else if (optionMatch(argv[i], "--no-analysis-annotation")) {
     cl->analysisAnnotationOff();
+  } else if (optionMatch(argv[i], "--number-expressions")) {
+    cl->numberExpressionsOn();
+  } else if (optionMatch(argv[i], "--no-number-expressions")) {
+    cl->numberExpressionsOff();
   } else if (optionMatch(argv[i], "--output-collectedfuncs")) {
     cl->printCollectedFunctionNamesOn();
   } else if (optionMatch(argv[i], "--no-output-collectedfuncs")) {
