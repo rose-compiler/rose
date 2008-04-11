@@ -36,6 +36,7 @@ EXTRA_DIST= \
 	nnh99_shape/nnh99_shape.set      nnh99_shape/nnh99_shape.optla \
 	nnh99_shape/main.C               nnh99_shape/main.h \
 	nnh99_shape/Makefile.custom \
+	nnh99_shape/GraphStats.h \
 	nnh99_shape/tests/nnh_xsely.C \
 	nnh99_shape/tests/srw98_listreverse.C \
 	nnh99_shape/tests/nnh_xysel3.C \
@@ -50,6 +51,7 @@ EXTRA_DIST= \
 	srw98_shape/srw98_shape.set               srw98_shape/srw98_shape.optla \
 	srw98_shape/main.C                        srw98_shape/main.h \
 	srw98_shape/Makefile.custom \
+	srw98_shape/GraphStats.h \
 	srw98_shape/tests/nnh_xsely.C \
 	srw98_shape/tests/srw98_listreverse.C \
 	srw98_shape/tests/nnh_xysel3.C \
@@ -127,17 +129,17 @@ installcheck-local:
 	$(MAKE) -C $(testdir)/constprop
 	cd $(testdir) ; sh testsuite/testsuite.sh constprop/constprop testsuite
 
-	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-	chmod u+rwx -R $(testdir)/srw98_shape
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) -C $(testdir)/srw98_shape
-	cd $(testdir) ; sh testsuite/testsuite.sh srw98_shape/srw98_shape testsuite
+	##cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
+	##chmod u+rwx -R $(testdir)/srw98_shape
+	##cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
+	##$(MAKE) -C $(testdir)/srw98_shape
+	##cd $(testdir) ; sh testsuite/testsuite.sh srw98_shape/srw98_shape testsuite
 
-	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
-	chmod u+rwx -R $(testdir)/nnh99_shape
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	$(MAKE) -C $(testdir)/nnh99_shape
-	cd $(testdir) ; sh testsuite/testsuite.sh nnh99_shape/nnh99_shape testsuite 
+	##cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
+	##chmod u+rwx -R $(testdir)/nnh99_shape
+	##cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
+	##$(MAKE) -C $(testdir)/nnh99_shape
+	##cd $(testdir) ; sh testsuite/testsuite.sh nnh99_shape/nnh99_shape testsuite 
 
 	chmod -R u+w $(testdir)
 	rm -rf $(testdir)

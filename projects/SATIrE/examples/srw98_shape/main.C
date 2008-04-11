@@ -11,8 +11,24 @@ PAG_BOOL get_universal_attribute__kill_norm_temps()
 
 ShapeAnalyzerOptions *opt;
 
-//#include "GraphStatistics.h"
-//GraphStatistics *gstats;
+#include "GraphStats.h"
+GraphStats gstats;
+/* AliasPairsCounter 
+ * counts may alias pairs using GraphStats interface */
+int count_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type);
+template <typename DFI_STORE_TYPE>
+class AliasPairsCounter : public DfiCommentAnnotator<DFI_STORE_TYPE> {
+private:
+    ExpressionPairSet *pairs;
+public:
+    AliasPairsCounter(DFI_STORE_TYPE store, ExpressionPairSet *_pairs) : DfiCommentAnnotator<DFI_STORE>(store) {
+        pairs = _pairs;
+    }
+protected:
+    virtual void handleStmtDfi(SgStatement* stmt, std::string _unused1, std::string _unused2) {
+	    gstats.addMayAliasCount(count_alias_pairs(stmt, "post", "may"));
+	}
+};
 
 int main(int argc, char **argv)
 {
@@ -23,8 +39,6 @@ int main(int argc, char **argv)
   ShapeCommandLineParser clp;
   clp.parse(opt,argc,argv);
   bool outputAll = opt->analysisWholeProgram();
-
-  //gstats = new GraphStatistics(opt->graphStatisticsFile());
 
   /* set the PAG options as specified on the command line */
   setPagOptions(*opt);
@@ -97,6 +111,14 @@ int main(int argc, char **argv)
 	else ca.traverseInputFiles(ast_root, preorder);
   }
 
+  if (opt->graphStatisticsFile() != NULL) {
+	AliasPairsCounter<DFI_STORE> ca(analysis_info, pairs);
+
+	if (outputAll) ca.traverse(ast_root, preorder);
+	else ca.traverseInputFiles(ast_root, preorder);
+  }
+
+
   /* check how many input files we have */
   if(ast_root->numberOfFiles()==1) {
 	SgFile& file = ast_root->get_file(0);
@@ -146,6 +168,9 @@ int main(int argc, char **argv)
   if (statistics) {
 	TimingPerformance::generateReport();
   }
+  if (opt->graphStatisticsFile() != NULL) {
+    gstats.writeFile(opt->graphStatisticsFile());
+  }
 
   return 0;
 }    
@@ -169,10 +194,18 @@ std::string format_alias_pairs(SgStatement *stmt, std::string pos, std::string a
 	std::pair<SgNode*,SgNode*> *pair;
 	for (i=pairs->begin(); i!=pairs->end(); i++) {
 		pair = *i;
-		str << "(" << pair->first->unparseToString() << "," << pair->second->unparseToString() << "), ";
+		str << "(" << Ir::fragmentToString(pair->first) << "," << Ir::fragmentToString(pair->second) << "), ";
 	}
 	return str.str();
 }
+
+int count_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type) {
+	ExpressionPairSet *pairs = get_statement_alias_pairs(stmt, pos, alias_type);
+    if (pairs == NULL)
+	  return 0;
+	return pairs->size();
+}
+
 
 
 
@@ -203,6 +236,7 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 	while (!o_NodeList_is_empty(nodes)) {
 		o_VarSet node = o_NodeList_head(nodes);
 		nodes = o_NodeList_tail(nodes);
+		gstats.addHeapNode();
 		n_nodes++;
 		
 		fprintf(fp, "    node: { /*heap node*/ \n");
@@ -229,6 +263,7 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 	// all var nodes
 	while (!o_StrList_is_empty(vars)) {
 		str node = o_StrList_head(vars);
+		gstats.addStackNode();
 
 		vars = o_StrList_tail(vars);
 		fprintf(fp, "    node: { /*var node*/ \n");
@@ -323,13 +358,13 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	fprintf(fp, "  %s\n", attrib);
 
     int n_nodes = 0;
-	if (!o_dfi_istop(info) && !o_dfi_isbottom(info))
-	{
+	if (!o_dfi_istop(info) && !o_dfi_isbottom(info)) {
 		int n_graphs = 0;
 		
 		o_SrwNielsonPair gpair = o_srw_extract_graphs(o_dfi_drop(info));
 		
 		if (opt->gdlShowSummaryGraph()) {
+			gstats.addGraphs(1);
 			fprintf(fp, "  graph: { /*summary graph*/\n");
 			fprintf(fp, "    color: lightgrey\n");
 			fprintf(fp, "    label: \"\"\n");
@@ -339,7 +374,6 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 
 		if (opt->gdlShowIndividualGraphs()) {
 			o_ShapeGraphList graphs = o_SrwNielsonPair_select_2(gpair);
-			int old_n_graphs = n_graphs;
 			while (!o_ShapeGraphList_is_empty(graphs)) 
 			{
 				o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
@@ -351,10 +385,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 				n_graphs++;
 				n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, sg);
 			}
-			//gstats->addGraphs(n_graphs - old_n_graphs);
 		}
-	} else {
-	  //gstats->addTopBot();
 	}
 
 	if (!n_nodes) {

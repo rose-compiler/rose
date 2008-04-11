@@ -87,7 +87,7 @@ public:
       } else if (optionMatch(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
 	  } else if (optionMatchPrefix(argv[i],"--output-graph-statistics=")) {
-	    scl->setGraphStatisticsFile(strdup(argv[i]+26)); // FIXME prefixlength should be protected
+	    scl->setGraphStatisticsFile(strdup(argv[i]+26)); // FIXME prefixlength should be protected to remove constant 26
       } else {
         return CommandLineParser::handleOption(cl,i,argc,argv);
       }
@@ -113,7 +113,7 @@ public:
 
 struct ltexpr {
     bool operator()(SgNode* a, SgNode* b) const {
-        return a->unparseToString() < b->unparseToString();
+        return Ir::fragmentToString(a) < Ir::fragmentToString(b);
     }
 };
 
@@ -161,7 +161,7 @@ public:
                 SgNode *a,*b,*tmp;
                 a = *i;
                 b = *j;
-                if (a->unparseToString().length() < b->unparseToString().length()) {
+                if (Ir::fragmentToString(a).length() < Ir::fragmentToString(b).length()) {
                     // make sure that the longer expression is on the left (to avoid duplicates)
                     tmp = a;
                     a = b;
@@ -261,7 +261,7 @@ protected:
     virtual void handleStmtDfi(SgStatement* stmt, std::string _unused1, std::string _unused2) {
         std::string preInfo =  AliasPairsTextPrinter<DFI_STORE_TYPE>::getPreInfo(stmt);
         std::string postInfo = AliasPairsTextPrinter<DFI_STORE_TYPE>::getPostInfo(stmt);
-        std::string stmt_str = stmt->unparseToString();
+        std::string stmt_str = Ir::fragmentToString(stmt);
         
         std::cout << this->currentFunction() << ": " << "// pre must-aliases : " << 
           format_alias_pairs(stmt, "pre", "must") << std::endl;

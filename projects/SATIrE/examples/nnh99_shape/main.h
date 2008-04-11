@@ -37,6 +37,9 @@ public:
     void gdlShowIndividualGraphsOff() { _gdlShowIndividualGraphs = false; }
     bool gdlShowIndividualGraphs()    { return _gdlShowIndividualGraphs;  }
 
+    char *graphStatisticsFile() { return _graphStatisticsFile; }
+    void setGraphStatisticsFile(char *fn) { _graphStatisticsFile = fn; }
+
     virtual std::string getOptionsInfo() {
       return AnalyzerOptions::getOptionsInfo() + 
         " Custom options:\n" 
@@ -46,7 +49,9 @@ public:
         "   --no-individualgraphs         do not output all individual graphs in gdl\n"
         "   --summarygraph                output summary graph in gdl\n"
         "   --no-summarygraph             do not output summary graph in gdl [default]\n"
-        "   --foldgraphs                  fold all gdl graphs initially\n";
+        "   --foldgraphs                  fold all gdl graphs initially\n"
+		"\n"
+		"   --output-graph-statistics=<FILENAME>  write graph statistics to <FILENAME>\n";
     }
 
 protected:
@@ -55,6 +60,7 @@ protected:
     bool _gdlFoldGraphs;
     bool _gdlShowSummaryGraph;
     bool _gdlShowIndividualGraphs;
+    char *_graphStatisticsFile;
 };
 
 class ShapeCommandLineParser : public CommandLineParser {
@@ -79,6 +85,8 @@ public:
         scl->gdlShowSummaryGraphOff();
       } else if (!strcmp(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
+	  } else if (optionMatchPrefix(argv[i],"--output-graph-statistics=")) {
+	    scl->setGraphStatisticsFile(strdup(argv[i]+26)); // FIXME prefixlength should be protected to remove constant 26
       } else {
         return CommandLineParser::handleOption(cl,i,argc,argv);
       }
