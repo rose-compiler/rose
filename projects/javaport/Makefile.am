@@ -73,7 +73,9 @@ libsage3_wrap_la_LDFLAGS	= -L../../src -L../compass -L../compass/compassSupport
 sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 
 	mkdir -p gov/llnl/casc/rose
-	$(SWIG) $(INCLUDES) -c++ -java -Wall -v -I$(srcdir) \
+	for i in $(INCLUDES); do echo $$i; done | \
+	$(SWIG) `echo $(INCLUDES) | sed 's/ -pthread / /g'` \
+	  -c++ -java -Wall -v -I$(srcdir) \
 	  -package gov.llnl.casc.rose -outdir gov/llnl/casc/rose \
 	  -o sage3_wrap.cxx \
 	  $(srcdir)/sage3.i
