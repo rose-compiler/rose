@@ -1,12 +1,12 @@
 EXTRA_DIST= \
 	build-examples.sh \
 	sl1rd/sl1rd.set sl1rd/sl1rd.optla sl1rd/runtests \
-	sl1rd/tests/rderrtest1.C  sl1rd/tests/rdtest1.C  \
+	sl1rd/tests/rdtest1.C  \
 	sl1rd/tests/rdtest2.C     sl1rd/tests/rdtest3.C  \
 	sl2rd/tests/error1.c      sl2rd/tests/rdtest10.C \
         sl2rd/tests/rdtest2.C     sl2rd/tests/rdtest5.C  \
         sl2rd/tests/rdtest8a.C    sl2rd/tests/rdtest9a_c89.c \
-	sl2rd/tests/rderrtest1.C  sl2rd/tests/rdtest11.C \
+	sl2rd/tests/rdtest11.C \
         sl2rd/tests/rdtest3.C     sl2rd/tests/rdtest6.C  \
 	sl2rd/tests/rdtest8b.C    sl2rd/tests/rdtest0.C  \
         sl2rd/tests/rdtest12.C    sl2rd/tests/rdtest4.C  \
