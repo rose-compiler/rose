@@ -21,7 +21,7 @@ EXTRA_DIST= \
 	constprop/tests/demo2.C       constprop/tests/intval.c \
 	constprop/tests/namespaces.C  constprop/tests/small.c \
 	constprop/tests/typedefs.C    constprop/tests/ab.c \
-        constprop/tests/classes.C     constprop/tests/deepreturn.c 
+        constprop/tests/classes.C     constprop/tests/deepreturn.c \
         constprop/tests/jump.c \
 	constprop/tests/nested.c      constprop/tests/test1.C \
 	constprop/tests/verysmall.c   constprop/tests/bigger.c \
