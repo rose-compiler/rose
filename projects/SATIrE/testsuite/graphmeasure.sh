@@ -32,7 +32,7 @@ for file in $FILES; do
 	# nnh: graph counting is ok
 	# srw: graphs and nodes are ok
 
-	cmd="${EXECPATH}srw98_shape/srw98_shape --output-gdl=outfile.gdl --analysis-files=all --no-number-expressions --output-graph-statistics=outfile.stats --no-individualgraphs --summarygraph $file"
+	cmd="${EXECPATH}srw98_shape/srw98_shape --output-gdl=$outfile.gdl --analysis-files=all --no-number-expressions --output-graph-statistics=outfile.stats --no-individualgraphs --summarygraph $file"
 	$cmd &> $TMPFILE
 
 	if [ $? == 0 ]; then
@@ -46,7 +46,7 @@ for file in $FILES; do
 		exit 1
   fi
 
-	cmd="${EXECPATH}nnh99_shape/nnh99_shape --output-gdl=outfile.gdl --analysis-files=all --no-number-expressions --output-graph-statistics=outfile.stats --no-individualgraphs --summarygraph $file"
+	cmd="${EXECPATH}nnh99_shape/nnh99_shape --output-gdl=$outfile.gdl --analysis-files=all --no-number-expressions --output-graph-statistics=outfile.stats --no-individualgraphs --summarygraph $file"
 	$cmd &> $TMPFILE
 
 	if [ $? == 0 ]; then
@@ -58,7 +58,7 @@ for file in $FILES; do
 		exit 1
   fi
 
-  cmd="${EXECPATH}nnh99_shape/nnh99_shape --output-gdl=outfile.gdl --analysis-files=all --no-number-expressions --output-graph-statistics=outfile.stats --individualgraphs --no-summarygraph $file"
+  cmd="${EXECPATH}nnh99_shape/nnh99_shape --output-gdl=$outfile.gdl --analysis-files=all --no-number-expressions --output-graph-statistics=outfile.stats --individualgraphs --no-summarygraph $file"
 	$cmd &> $TMPFILE
 
 	if [ $? == 0 ]; then
@@ -71,7 +71,7 @@ for file in $FILES; do
 		exit 1
   fi
 
-	rm outfile.gdl outfile.stats
+	#rm outfile.gdl outfile.stats
 
 	printf "$outfile\t$srw_nodes\t$nnh_nodes\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.nodes
 	printf "$outfile\t$srw_graphs\t$nnh_graphs\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.graphs
