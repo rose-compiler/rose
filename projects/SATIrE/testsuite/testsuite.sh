@@ -33,67 +33,73 @@ STATSFILE=runtests.stats
 TMPFILE=runtests.tmp
 DATFILE=runtests.dat
 
-printf "outfile\ttime_rose_frontend\tresult\ttime_sys\ttime_user\ttime_wall\ttime_pag_run\ttime_pag_init\ttime_pag_iter\ttime_pag_gc\tmem_allocd\tanalysis\toptions\tfile\n" \
-	  | sed 's/\_/\\\\\_/g' > $DATFILE
+printf "outfile\ttime\_rose\_frontend\tAST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tmem\_allocd\tanalysis\toptions\tfile\n" \
+    > $DATFILE
 for file in $FILES; do
 
   for analysis in $ANALYSIS; do
 
-		echo "--- testing $ANALYSIS on file $file ---"
-		outfile=`basename $file`
-		options="--no-number-expressions --statistics --no-verbose --analysis-files=all --output-source=$outfile.dfi"
-		# execute and time with 'time'
-		#/usr/bin/time --format="%S %U %e" $analysis $options $file 1>/dev/null 2>$TMPFILE
-		/usr/bin/time --format="%S %U %e" $analysis $options $file &> $TMPFILE
-		result=$?
+    echo "--- testing $ANALYSIS on file $file ---"
+    outfile=`basename $file`
+    options="--no-number-expressions --statistics --no-verbose --analysis-files=all --output-source=$outfile.dfi"
+    # execute and time with 'time'
+    /usr/bin/time --format="%S %U %e" $analysis $options $file &> $TMPFILE
+    result=$?
 
-		# Expected FAIL
-		if echo $file | grep -q ^$SUITE/failure; then
-			expected_fails=$(( $expected_fails + 1 ))
-			if [ $result != 0 ]; then
-				fails_ok=$(( $fails_ok + 1 ))
-			else
-				echo "** ERROR: Expected failure succeeded $analysis $options $file"
-				fail_errors="$fail_errors $analysis:$file"
-			fi
-		fi
-		# Expected SUCCESS
-		if echo $file | grep -q ^$SUITE/success; then    
-			expected_succs=$(( $expected_succs + 1 ))
-			if [ $result == 0 ]; then
-				succs_ok=$(( $succs_ok + 1 ))
+    # Expected FAIL
+    if echo $file | grep -q ^$SUITE/failure; then
+	expected_fails=$(( $expected_fails + 1 ))
+	if [ $result != 0 ]; then
+	    fails_ok=$(( $fails_ok + 1 ))
+	else
+	    echo "** ERROR: Expected failure succeeded $analysis $options $file"
+	    fail_errors="$fail_errors $analysis:$file"
+	fi
+    fi
+    # Expected SUCCESS
+    if echo $file | grep -q ^$SUITE/success; then    
+	expected_succs=$(( $expected_succs + 1 ))
+	if [ $result == 0 ]; then
+	    succs_ok=$(( $succs_ok + 1 ))
+	    
+	    # grep runtime statistics for succ/succ cases
+	    time_sys=` cat $TMPFILE | awk 'END {print $1}'`
+	    time_user=`cat $TMPFILE | awk 'END {print $2}'`
+	    time_wall=`cat $TMPFILE | awk 'END {print $3}'`
 
-				# grep runtime statistics for succ/succ cases
-				time_sys=` cat $TMPFILE | awk 'END {print $1}'`
-				time_user=`cat $TMPFILE | awk 'END {print $2}'`
-				time_wall=`cat $TMPFILE | awk 'END {print $3}'`
+	    time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
+	    time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
+	    time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
+	    time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'`
+	    mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
+ 	    # grep ROSE runtime stats
+	    time_rose_frontend=` cat $TMPFILE | awk '/ROSE frontend... time = .* .sec/ {print $5;exit}'`
+	    time_ast_construction=` cat $TMPFILE | awk '/AST construction .*: time = .* .sec/ {print $9;exit}'`
+	    time_ast_postprocess=` cat $TMPFILE | awk '/AST post-processing: time = .* .sec/ {print $5;exit}'`
+	    time_ast_comment=` cat $TMPFILE | awk '/AST Comment.*: time = .* .sec/ {print $10;exit}'`
 
-				time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
-				time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
-				time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
-				time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'`
-				mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
-	# grep ROSE runtime stats
-				time_rose_frontend=` cat $TMPFILE | awk '/ROSE frontend... time = .* .sec/ {print $5;exit}'`
+	    time_icfg=` cat $TMPFILE | awk '/ICFG construction: time = .* .sec/ {print $6;exit}'`
+	    time_icfg_check=` cat $TMPFILE | awk '/CFG consistency check: time = .* .sec/ {print $6;exit}'`
+	    time_analysis=` cat $TMPFILE | awk '/Actual data-flow.*: time = .* .sec/ {print $7;exit}'`
 
-				# verbose output for script development (will also be displayed in statistics at end)
-				# echo " pag_run = $time_pag_run"
-				# echo "pag_init = $time_pag_init"
-				# echo "pag_iter = $time_pag_iter"
-				# echo "  pag_gc = $time_pag_gc"
-				# echo "     mem = $mem_allocd"
-				# echo "     sys = $time_sys"
-				# echo "    user = $time_user"
-				# echo "    wall = $time_wall"
+            # verbose output for script development (will also be displayed in statistics at end)
+	    # echo " pag_run = $time_pag_run"
+            # echo "pag_init = $time_pag_init"
+            # echo "pag_iter = $time_pag_iter"
+            # echo "  pag_gc = $time_pag_gc"
+            # echo "     mem = $mem_allocd"
+            # echo "     sys = $time_sys"
+            # echo "    user = $time_user"
+            # echo "    wall = $time_wall"
 
-				printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
-				printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" \
-			| sed 's/\_/\\\\\_/g' >> $DATFILE
-			else
-				echo "** ERROR: Expected success failed $analysis $options $file"
-			  cat $TMPFILE
-				succ_errors="$succ_errors $analysis:$file"
-			fi
+	    printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
+	    printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" \
+		| sed 's/\_/\\\\\_/g' >> $DATFILE
+	else
+	    echo "** ERROR: Expected success failed $analysis $options $file"
+	    cat $TMPFILE
+	    succ_errors="$succ_errors $analysis:$file"
+	fi
     fi
   done 
 done
@@ -186,17 +192,17 @@ set xlabel "Benchmark"
 set xtics nomirror rotate by -45 # Style of the x axis labels
 set auto x
 set auto y
-#set yrange [0 : 1] # limit y range
+set yrange [0 : 0.5] # limit y range
 
 # Plot the data:
 # "using 2" means "use column 2 from $DATFILE"
 plot newhistogram "" lc 2, '$DATFILE' \
-        using 2:xtic(1), \
+        using 3:xtic(1), \
+     '' using 4, \
+     '' using 5, \
+     '' using 6, \
      '' using 7, \
-     '' using 8, \
-     '' using 9, \
-     '' using 10
-
+     '' using 8
 EOF
 
 #        using 2:xtic(1) ti col lt rgb "#FD8238", \
