@@ -123,6 +123,13 @@ int main(int argc, char **argv)
 	else ca.traverseInputFiles(ast_root, preorder);
   }
 
+  if (opt->graphStatisticsFile() != NULL) {
+	AliasPairsCounter<DFI_STORE> ca(analysis_info, pairs);
+
+	if (outputAll) ca.traverse(ast_root, preorder);
+	else ca.traverseInputFiles(ast_root, preorder);
+  }
+
   /* check how many input files we have */
   if(ast_root->numberOfFiles()==1) {
 	SgFile& file = ast_root->get_file(0);
@@ -202,6 +209,13 @@ std::string format_alias_pairs(SgStatement *stmt, std::string pos, std::string a
 		str << "(" << pair->first->unparseToString() << "," << pair->second->unparseToString() << "), ";
 	}
 	return str.str();
+}
+
+int count_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type) {
+	ExpressionPairSet *pairs = get_statement_alias_pairs(stmt, pos, alias_type);
+    if (pairs == NULL)
+	  return 0;
+	return pairs->size();
 }
 
 
