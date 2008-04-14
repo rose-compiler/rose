@@ -290,7 +290,7 @@ buildFunctionRefExp(const SgName& name, const SgType* func_type, SgScopeStatemen
 //SgFunctionRefExp *
 // buildFunctionRefExp(const SgName& name,SgScopeStatement* scope=NULL);
 
-// build SgFunctionRefExp based on a function's symbol.
+//! build SgFunctionRefExp based on a function's symbol.
 SgFunctionRefExp *
 buildFunctionRefExp(SgFunctionSymbol* sym);
 
@@ -441,6 +441,18 @@ SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
 SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
+
+//@}
+
+//--------------------------------------------------------------
+//@{
+/*! @name Builders for others
+  \brief AST high level builders for others 
+
+*/
+//! build a SgFile node, handle  SgGlobal and SgFunctionTypeTable transparently. name is absolute file name.
+SgFile* buildFile(const std::string& name,SgProject* project=NULL);
+
 
 //@}
 

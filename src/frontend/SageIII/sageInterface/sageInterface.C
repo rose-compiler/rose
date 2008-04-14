@@ -3799,15 +3799,19 @@ void SageInterface::setOneSourcePositionForTransformation(SgNode *node)
     SgExpression*    expression    = isSgExpression(node);
     SgInitializedName *initName = isSgInitializedName(node);
     SgPragma * pragma = isSgPragma(node); // missed this one!! Liao, 1/30/2008
+    SgGlobal *global = isSgGlobal(node); //SgGlobal should have NULL endOfConstruct()
 
     if ((locatedNode) &&(locatedNode->get_startOfConstruct()   == NULL))
     //if ((locatedNode) &&(locatedNode->get_endOfConstruct()   == NULL))
     {
       locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-      locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-
       locatedNode->get_startOfConstruct()->set_parent(locatedNode);
-      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode); 
+
+      if (global==NULL)
+      {  
+        locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+        locatedNode->get_endOfConstruct  ()->set_parent(locatedNode); 
+      }
       if (expression!=NULL)
       {
         expression->set_operatorPosition(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
