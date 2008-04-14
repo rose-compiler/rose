@@ -13,7 +13,7 @@ noinst_PROGRAMS = \
     findMain buildVariableDeclaration buildAssignmentStmt \
     buildFunctionCalls buildPragmaDeclaration attachComment \
     insertHeader buildExpression buildStructDeclaration \
-    lookupNamedType
+    lookupNamedType buildFile
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -28,6 +28,7 @@ insertHeader_SOURCES             = insertHeader.C
 buildExpression_SOURCES          = buildExpression.C
 buildStructDeclaration_SOURCES   = buildStructDeclaration.C
 lookupNamedType_SOURCES          = lookupNamedType.C           
+buildFile_SOURCES                = buildFile.C           
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -48,7 +49,8 @@ generatedCodeExamples = \
   rose_inputInsertHeader.C \
   rose_inputbuildExpression.C \
   rose_inputbuildStructDeclaration.C \
-  rose_inputLookupNamedType.C
+  rose_inputLookupNamedType.C \
+  rose_inputbuildFile.C 
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -64,6 +66,8 @@ rose_inputbuildVariableDeclaration.C:buildVariableDeclaration
 rose_inputbuildAssignmentStmt.C:buildAssignmentStmt
 	./buildAssignmentStmt$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAssignmentStmt.C	
 
+rose_inputbuildFile.C:buildFile
+	./buildFile$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFile.C	
 rose_inputbuildFunctionCalls.C:buildFunctionCalls
 	./buildFunctionCalls$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFunctionCalls.C	
 rose_inputbuildPragmaDeclaration.c:buildPragmaDeclaration
@@ -83,7 +87,8 @@ rose_inputLookupNamedType.C:lookupNamedType
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
        inputbuildPragmaDeclaration.c inputAttachComment.C inputInsertHeader.C \
-       inputbuildExpression.C inputbuildStructDeclaration.C inputLookupNamedType.C
+       inputbuildExpression.C inputbuildStructDeclaration.C inputLookupNamedType.C \
+       inputbuildFile.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
