@@ -40,7 +40,8 @@ CompassAnalyses::FunctionDocumentation::Traversal::
 visit(SgNode* sgNode)
 { 
   // Implement your traversal here.  
-  if (isSgFunctionDeclaration(sgNode)) {
+  if (isSgFunctionDeclaration(sgNode)) 
+  {
     SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sgNode);
     bool skip = funcDecl->get_file_info()->isCompilerGenerated();
     if (skip)

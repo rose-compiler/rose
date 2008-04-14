@@ -110,13 +110,18 @@
          Livermore, CA  94550 \\
          925-423-2668 (office)  925-422-6278 (fax) \\
          {dquinlan}@llnl.gov \\
-         Project Web Page: www.llnl.gov/casc/rose \\
+         Project Web Page: http://www.rosecompiler.org \\
+         %Project Web Page: www.llnl.gov/casc/rose \\
          UCRL Number for ROSE User Manual: UCRL-SM-210137-DRAFT \\
          UCRL Number for ROSE Tutorial: UCRL-SM-210032-DRAFT \\
          UCRL Number for ROSE Source Code: UCRL-CODE-155962 \\ \\
-         \htmladdnormallink{ROSE User Manual (pdf)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf} \\
-         \htmladdnormallink{ROSE Tutorial (pdf)}{../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf} \\
-         \htmladdnormallink{ROSE HTML Reference (html only)}{../ROSE_HTML_Reference/index.html}
+         %\htmladdnormallink{ROSE User Manual (pdf)}{../ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf} \\
+         \htmladdnormallink{ROSE User Manual
+         (pdf)}{http://www.rosecompiler.org/ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf} \\
+         \htmladdnormallink{ROSE Tutorial
+         (pdf)}{http://www.rosecompiler.org/ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf} \\
+         \htmladdnormallink{ROSE HTML Reference (html
+         only)}{http://www.rosecompiler.org/ROSE_HTML_Reference/index.html}
        }
 
 % \textcolor{blue}{Compiler infrastructure for tools is a bit} \\

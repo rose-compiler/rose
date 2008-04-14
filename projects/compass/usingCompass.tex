@@ -42,8 +42,8 @@ interface to Compass.  Mechanisms available include:
          available from Imperial).
 
    \item ToolGear post-processing: \\
-         Output in XML permits the use of ToolGear (LLNL tool availalbe on the web) for
-         viewing Compass generated output.  this mechanism is particularly useful for reviewing
+         Output in XML permits the use of ToolGear (LLNL tool available on the web) for
+         viewing Compass generated output.  This mechanism is particularly useful for reviewing
          the results of nightly builds (and associated runs of large projects using
          Compass). See figure \ref{Compass_ToolGear_Screenshot}
 
@@ -102,7 +102,7 @@ Compass as a checker is most useful when the user is notified as early as possib
 when he violates a desired software property. Although for many purposes it is
 sufficient to run Compass separately  it is possible to use compass
 seamlessly when developing in emacs. By using an emacs extension called {\em flymake} together
-with Compass erroneus lines can be highlighted while programming, and the relevant error messages displayed 
+with Compass erroneous lines can be highlighted while programming, and the relevant error messages displayed 
 in a dialog. Syntax errors from ROSE will be displayed as well, see figure \ref{Compass_Emacs_Screenshot}.
 
 Much thanks for David Svoboda at CERT at CMU for first configuring Flymake to work with
@@ -453,7 +453,7 @@ In order to integrate a checker into Compass the user must:
 If a user or developer intends to integrate a new checker into the Compass source
 tree refer to section \ref{howToIntegrateNewCheckers}.
 
-Usually the CHECKER\_LIST is only modified when a user or delevoper wants to 
+Usually the CHECKER\_LIST is only modified when a user or developer wants to 
 add a new checker or select a subset of trusted checkers.  Checkers can be
 commented out using a {\tt \#}, no space is allowed between the {tt \#} and the 
 checker name.
@@ -464,10 +464,10 @@ checker name.
    This section describes how to execute a subset of the checkers provided in the build
 process (see section \ref{CompassBuildProcess}). This process is significantly more
 interactive than defining what checkers to include in the Compass build process.
-Since it is not unhead of that rules implemented by different checkers can be  
+Since it is not unheard of that rules implemented by different checkers can be  
 mutually exclusive or even contradicting this mechanism is essential for selecting the
 subset of checkers that are interesting for a specific program that is checked.
-Seperate projects of developers could easily have their own RULE\_SELECTION file
+Separate projects of developers could easily have their own RULE\_SELECTION file
 to permit high levels of customization in the use of a Compass tool containing
 a large number of checkers (e.g. for different languages).
 
@@ -497,24 +497,25 @@ the RULE\_SELECTION.
     Compass permits paths and filenames to be specified for inclusion/exclusion
 in reporting checker rule violations.  Run {\tt compassMain --help} to see
 the commandline options.  Numerous other commandline options provided for all
-tools build using ROSE may also be relavant.
+tools build using ROSE may also be relevant.
 
 
 
 \section{Checking Security Properties of Checkers}
 
-    Compass is designed for extensability while providing the security for
+    Compass is designed for extensibility while providing the security for
 the codes being checked.  To support this Compass provides a simple
-mechanism for verifiying specific properties of the checkers used in Compass.
+mechanism for verifying specific properties of the checkers used in Compass.
 Compass implements a specific small number of checkers that are used for checking
 the checkers in Compass.  The directory compassVerity contains the implementation
 of this subset of Compass that is used on itself.  These checkers may not
 be modified and in the future MD-5 checksums will be provided to ensure the
-integrity of this ubset of Compass.  To verify the compass checkers run:
+integrity of this subset of Compass.  To verify the compass checkers run:
 \begin{itemize}
    \item {\tt make verify} \\
         This makefile rule runs the compassVerify/compassMain on all the source files in
-    all the checkers directies in Compass.  Because it runs compass on so many seperate
+    all the checkers directories in Compass.  Because it runs compass on so
+    many separate
     files this step can take a long time.
    \item Or {\tt make oneBigVerify} \\
         The makefile rule runs the compassVerify/compassMain on a single generated file
