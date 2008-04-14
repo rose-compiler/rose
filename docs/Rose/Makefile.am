@@ -251,7 +251,8 @@ copyPublications:
 # final web pages (after R&R) should be copied to cmg-1:/green_rev/www/casc/rose
 copyWebPages: logo
 #	cd ROSE_WebPages; rsync -avz * quinlan1@cmg-1:/green_dev/www/casc/rose
-	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
+	cd ROSE_WebPages; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
+#	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf html
 	@echo "Building Tutorial documentation (calling make in docs/Rose/Tutorial directory) ... "

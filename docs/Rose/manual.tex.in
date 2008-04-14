@@ -7,7 +7,7 @@
 %\usepackage{html,color,makeidx}
 
 %\usepackage{amsmath}
-%\usepackage{verbatim}
+\usepackage{verbatim}
 %\usepackage{moreverb}
 %\usepackage{graphics}    
 % \usepackage{epsfig}    
