@@ -450,8 +450,8 @@ SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* 
   \brief AST high level builders for others 
 
 */
-//! build a SgFile node, handle  SgGlobal and SgFunctionTypeTable transparently. name is absolute file name.
-SgFile* buildFile(const std::string& name,SgProject* project=NULL);
+//! Build a SgFile node, handle  SgGlobal and SgFunctionTypeTable transparently. A SgProject will be generated internally if it is not provided. Using SgFile->get_project() to retrieve it in this case.
+SgFile* buildFile(const std::string& fileName,SgProject* project=NULL);
 
 
 //@}
