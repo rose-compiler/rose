@@ -258,7 +258,7 @@ SgConditionalExp * buildConditionalExp(SgExpression* test =NULL, SgExpression* a
 SgExprListExp * buildExprListExp();
 
 
-//! build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unqiue so type can be inferred (double check this).
+//! build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
 /*! 
 It is possible to build a reference to a variable with known name before the variable is declration, especially during bottomup construction of AST. In this case, SgTypeUnknown is used to indicate the variable reference needing postprocessing fix using fixVariableReferences() once the AST is complete and all variable declarations exist. But the side effect is some get_type() operation may not recognize the unknown type before the fix. So far, I extended SgPointerDerefExp::get_type() and SgPntrArrRefExp::get_type() for SgTypeUnknown. There may be others needing the same extension. 
@@ -453,8 +453,10 @@ SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* 
   \brief AST high level builders for others 
 
 */
-//! Build a SgFile node, handle  SgGlobal and SgFunctionTypeTable transparently. A SgProject will be generated internally if it is not provided. Using SgFile->get_project() to retrieve it in this case.
-SgFile* buildFile(const std::string& fileName,SgProject* project=NULL);
+//! Build a SgFile node and attach it to SgProject 
+/*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
+ */
+SgFile* buildFile(const std::string& fileName,const std::string& outputFileName, SgProject* project=NULL);
 
 
 //@}

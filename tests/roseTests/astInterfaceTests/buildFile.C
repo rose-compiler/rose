@@ -1,5 +1,5 @@
 // Liao, 4/8/2008
-// Demonstrate how to build a SgFile using the interface
+// Demonstrate how to build a SgFile
 //
 // SageBuilder contains the AST nodes/subtrees builders
 // SageInterface contains any other AST utility tools 
@@ -11,34 +11,64 @@ using namespace SageInterface;
 
 int main (int argc, char *argv[])
 {
-  //absolute filename
+  //absolute filename should also works
  // std::string fileName="/home/liao6/buildrose/tests/roseTests/astInterfaceTests/testfile525.cpp";
   std::string fileName="testfile525.cpp";
   std::string fileName2="testfile626.cpp";
+  std::string fileName3="rose_rose_testfile626.cpp";
+  std::string fileName4="rose_rose_testfile525.cpp";
 
-//case 1. Calling it with project available 
   SgProject *project = frontend (argc, argv);
 
-  SgFile *sgfile = buildFile(fileName,project);
+#if 1
+//case 1. Calling it with project available, but input file does not exist 
+  SgFile *sgfile = buildFile(fileName,fileName,project);
 
   // try to add something into the new file
   SgGlobal* global = sgfile->get_globalScope();
-  SgVariableDeclaration *varDecl = buildVariableDeclaration("j", buildIntType());
+  SgVariableDeclaration *varDecl = buildVariableDeclaration("i", buildIntType());
   appendStatement (varDecl,isSgScopeStatement(global));
+#endif
 
-  AstTests::runAllTests(project);
-  project->unparse();
-// case 2. Calling it without the project parameter  
-  SgFile *sgfile2 = buildFile(fileName2);
+#if 1
+// case 2. Calling it without the project parameter and without input file 
+  SgFile *sgfile2 = buildFile(fileName2,fileName2);
 
   // try to add something into the new file
   SgGlobal* global2 = sgfile2->get_globalScope();
-  SgVariableDeclaration *varDecl2 = buildVariableDeclaration("x", buildIntType());
+  SgVariableDeclaration *varDecl2 = buildVariableDeclaration("j", buildIntType());
   appendStatement (varDecl2,isSgScopeStatement(global2));
 
   SgProject * project2= sgfile2->get_project();
   AstTests::runAllTests(project2);
   project2->unparse();
+#endif 
+
+#if 1
+//case 1. Calling it with project available, but input file does not exist 
+// case 3. Input File already exists, load it and do some transformation, project exists  
+  SgFile * sgfile3 = buildFile(fileName2,fileName3,project);   
+  SgGlobal* global3 = sgfile3->get_globalScope();
+  SgVariableDeclaration *varDecl3 = buildVariableDeclaration("y", buildIntType());
+  appendStatement (varDecl3,isSgScopeStatement(global3));
+
+  AstTests::runAllTests(project);
+  project->unparse();
+#endif 
+
+#if 1
+// case 4. Input File already exists, but project does not.  
+   SgFile *sgfile4 = buildFile(fileName,fileName4);
+
+  // try to add something into the new file
+  SgGlobal* global4 = sgfile4->get_globalScope();
+  SgVariableDeclaration *varDecl4 = buildVariableDeclaration("z", buildIntType());
+  appendStatement (varDecl4,isSgScopeStatement(global4));
+
+  SgProject * project4= sgfile4->get_project();
+  AstTests::runAllTests(project4);
+  project4->unparse();
+#endif  
 
   return 0;
 }

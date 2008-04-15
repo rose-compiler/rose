@@ -1398,38 +1398,15 @@ namespace SageBuilder{
     return buildStructDeclaration(myname, scope);
   }
 
-  //! build a SgFile node, handle SgGlobal and SgFunctionTypeTable transparently. name is absolute file name.
-  // TODO what if the file already exist?  
-  SgFile* buildFile(const std::string& name,SgProject* project/*=NULL*/)
+  //! Build a SgFile node
+  SgFile* buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
   {
-     ROSE_ASSERT(name.size()!=0);// empty file name is not allowed.
-     string sourceFilename = name, fullname;
+     ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
+     string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
-    // create a temporary file if the file does not exist.
-    // have to do this first, otherwise StringUtility::getAbsolutePathFromRelativePath() complains
-    // which is called by result->setupSourceFilename(arglist);
-     ifstream testfile(name.c_str());
-     if (!testfile.is_open()) 
-     {
-       ofstream outputfile(name.c_str(),ios::out); 
-       outputfile<<"// test file "<<endl;
-       outputfile.close();
-     }
-     else
-     {
-       //TODO 
-     }  
-     testfile.close();
+    int nextErrorCode = 0;
 
-      SgFile * result = new SgFile(); 
-      ROSE_ASSERT(result);
-      // build SgGlobal since it is not built in the default constructor
-      SgGlobal* global = new SgGlobal(); //remember set SgFileInfo later
-      ROSE_ASSERT(global);
-      result->set_root(global);
-      global->set_parent(result);
-
-      if (project==NULL)
+     if (project==NULL)
       // SgProject is created on the fly
       // Make up an arglist in order to reuse the code inside SgFile::setupSourceFilename()
       { 
@@ -1444,10 +1421,56 @@ namespace SageBuilder{
         project->set_originalCommandLineArgumentList (arglist);
       } 
 
+     ifstream testfile(inputFileName.c_str());
+     if (!testfile.is_open()) 
+    {
+      // create a temporary file if the file does not exist.
+      // have to do this, otherwise StringUtility::getAbsolutePathFromRelativePath() complains
+      // which is called by result->setupSourceFilename(arglist);
+       testfile.close();
+       ofstream outputfile(inputFileName.c_str(),ios::out); 
+       //outputfile<<"// test file "<<endl;
+       outputfile.close();
+     }
+     else // file already exists , load and parse it
+     { // should not reparse all files in case their ASTs have unsaved changes, 
+      // just parse the newly loaded file only.
+      // use argv here, change non-existing input file later on
+      // TODO add error code handling 
+     }  
+      testfile.close();
+      arglist = project->get_originalCommandLineArgumentList ();
+      arglist.push_back(sourceFilename);
+      arglist.push_back("-rose:o");
+      arglist.push_back(outputFileName);
+
+      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist);
+      CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
+      SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
+      ROSE_ASSERT(result!=NULL);
+      result->set_parent(project);
+      project->set_file(*result); 
+      project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
+      // Not sure why a warning shows up from astPostProcessing.C
+      // SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache)
+      if (result->get_globalMangledNameMap().size() != 0) 
+        result->clearGlobalMangledNameMap();
+      return result;
+#if 0      
+      // manually generate SgFile, SgGlobal, etc, Works but not elegant
+      SgFile * result = new SgFile(); 
+      ROSE_ASSERT(result);
+      // build SgGlobal since it is not built in the default constructor
+      SgGlobal* global = new SgGlobal(); //remember set SgFileInfo later
+      ROSE_ASSERT(global);
+      result->set_root(global);
+      global->set_parent(result);
+
       result->set_parent(project);
       //SgFilePtrListPtr filelist = project->get_fileList();
       //filelist->push_back(result);
       project->set_file(*result); // the same as the two stmts above
+
       arglist = project->get_originalCommandLineArgumentList ();
 //     cout<<"1. size="<<arglist.size()<<":"<< StringUtility::listToString(arglist,true)<<endl; 
       arglist.push_back(sourceFilename);
@@ -1458,7 +1481,8 @@ namespace SageBuilder{
       //arglist.push_back("-rose:o");
      // arglist.push_back(sourceFilename);
       //set the output file of unparser explicitly, somehow the patched -rose:o has no effect.
-      result->set_unparse_output_filename(sourceFilename);
+      result->set_unparse_output_filename(outputFileName);
+      //result->set_unparse_output_filename(sourceFilename);
 
 //    cout<<"sageBuilder:1438. size="<<arglist.size()<<":"<< StringUtility::listToString(arglist,true)<<endl; 
       // each SgFile has to have a arglist, otherwise the unparser will complain.
@@ -1478,10 +1502,10 @@ namespace SageBuilder{
      result->get_file_info()->set_filenameString(fullname);
 
     //  SgFunctionTypeTable ?
-    SgFunctionTypeTable * typetable = SgNode::get_globalFunctionTypeTable();   
-   typetable->set_parent(result);
-
+     SgFunctionTypeTable * typetable = SgNode::get_globalFunctionTypeTable();   
+     typetable->set_parent(result);
     return result;
+#endif
   }// end SgFile* buildFile()
 
 } // end of namespace 
