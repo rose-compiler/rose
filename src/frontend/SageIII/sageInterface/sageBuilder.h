@@ -171,6 +171,9 @@ template <class T> T* buildUnaryExpression(SgExpression* operand = NULL);
 //! build &X, 
 SgAddressOfOp* buildAddressOfOp (SgExpression* operand = NULL);
 
+//! build ~X, 
+SgBitComplementOp* buildBitComplementOp (SgExpression* operand = NULL);
+
 //! build a type casting expression
 SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
 		SgType * expression_type = NULL,
