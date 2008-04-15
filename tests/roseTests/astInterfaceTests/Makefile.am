@@ -67,7 +67,7 @@ rose_inputbuildAssignmentStmt.C:buildAssignmentStmt
 	./buildAssignmentStmt$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAssignmentStmt.C	
 
 rose_inputbuildFile.C:buildFile
-	./buildFile$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFile.C	
+	./buildFile$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFile.C 
 rose_inputbuildFunctionCalls.C:buildFunctionCalls
 	./buildFunctionCalls$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFunctionCalls.C	
 rose_inputbuildPragmaDeclaration.c:buildPragmaDeclaration
@@ -98,5 +98,5 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C *.C.pdf *.c.pdf
+	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp 
 
