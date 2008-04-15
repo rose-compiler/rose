@@ -560,6 +560,12 @@ SageBuilder::buildAddressOfOp (SgExpression* operand)
   return buildUnaryExpression<SgAddressOfOp>(operand);
 }
 
+SgBitComplementOp* 
+SageBuilder::buildBitComplementOp (SgExpression* operand)
+{
+  return buildUnaryExpression<SgBitComplementOp>(operand);
+}
+
 SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
                 SgType * expression_type,
                 SgCastExp::cast_type_enum cast_type)
