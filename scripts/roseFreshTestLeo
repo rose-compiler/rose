@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #
 # This script does a fresh checkout of ROSE and conducts a series tests.
 #
@@ -6,7 +6,7 @@
 #
 # 1. The path to the source and build directories of ROSE
 # 2. The configuration options
-# 3. Others in the configuration section
+# 3. Others in the Configuration section and Preparation section
 #
 # Liao, 2/7/2008
 # Last Modified: 4/4/2008
@@ -15,11 +15,12 @@
 #------------------------------------------------------
 MAILADDRS="liaoch@llnl.gov"
 
-ROSE_TOP=/home/liao6/daily-test-rose/
+ROSE_TOP=/home/liao6/daily-test-rose
 ROSE_SRC="${ROSE_TOP}/sourcetree_$$"
 ROSE_BUILD="${ROSE_TOP}/build_$$"
 ROSE_INSTALL="${ROSE_TOP}/install_$$"
 ROSE_LOG="${ROSE_TOP}/buildlog_$$"
+BOOST_INSTALL=/home/liao6/opt/boost_1_35_0
 
 # the right version of subversion is required!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
@@ -27,7 +28,7 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 
 # store configuration options into an array ()
 # $@ means the optional parameters provided with the command line running current script 
-CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=${ROSE_INSTALL} "$@")
+CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-boost=${BOOST_INSTALL} --with-boost-wave=yes --prefix=${ROSE_INSTALL} "$@")
 
 # make using multiple processes
 MAKEFLAGS="-j2"
@@ -47,10 +48,11 @@ source /usr/apps/graphviz/2.6/setup.sh
 source /usr/apps/python/2.5/setup.sh
 source /usr/apps/gcc/4.2.2/setup.sh
 
+export BOOST_ROOT=${BOOST_INSTALL}
 export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 
-export LD_LIBRARY_PATH="/usr/apps/java/jdk1.5.0_11/lib:/usr/apps/java/jdk1.5.0_11/jre/lib/i386/client:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:/usr/apps/java/jdk1.5.0_11/lib:/usr/apps/java/jdk1.5.0_11/jre/lib/i386/client:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$LD_LIBRARY_PATH"
 
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
