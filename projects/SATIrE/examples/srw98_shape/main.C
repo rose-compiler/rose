@@ -27,6 +27,7 @@ public:
 protected:
     virtual void handleStmtDfi(SgStatement* stmt, std::string _unused1, std::string _unused2) {
 	    gstats.addMayAliasCount(count_alias_pairs(stmt, "post", "may"));
+	    gstats.addMustAliasCount(count_alias_pairs(stmt, "post", "must"));
 	}
 };
 

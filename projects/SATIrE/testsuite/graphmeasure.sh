@@ -21,7 +21,8 @@ DATFILE=statistics
 
 printf "outfile\tsrw_nodes\tnnh_nodes\n" | sed 's/\_/\\\\\_/g' > $DATFILE.nodes
 printf "outfile\tsrw_graphs\tnnh_graphs\n" | sed 's/\_/\\\\\_/g' > $DATFILE.graphs
-printf "outfile\tsrw_aliases\tnnh_aliases\n" | sed 's/\_/\\\\\_/g' > $DATFILE.aliases
+printf "outfile\tsrw_may_aliases\tnnh_may_aliases\n" | sed 's/\_/\\\\\_/g' > $DATFILE.mayaliases
+printf "outfile\tsrw_must_aliases\tnnh_must_aliases\n" | sed 's/\_/\\\\\_/g' > $DATFILE.mustaliases
 
 run_analysis() {
   # $1 := "srw98" | "nnh99"
@@ -47,10 +48,12 @@ for file in $FILES; do
 	#  - nunmber of graphs (1 for each statement)
 	#  - number of nodes
 	#  - number of may-aliases
+	#  - number of must-aliases
 	run_analysis "srw98" "--summarygraph --no-individualgraphs"
 	srw_graphs=`cat outfile.stats | awk '/n_graphs: / {print $2;exit}'`
 	srw_nodes=`cat outfile.stats | awk '/n_nodes: / {print $2;exit}'`
-	srw_aliases=`cat outfile.stats | awk '/n_may-aliases: / {print $2;exit}'`
+	srw_may_aliases=`cat outfile.stats | awk '/n_may-aliases: / {print $2;exit}'`
+	srw_must_aliases=`cat outfile.stats | awk '/n_must-aliases: / {print $2;exit}'`
 
   # nnh
 	#  - join individualgraphs into one summarygraph, then count the nodes
@@ -60,13 +63,16 @@ for file in $FILES; do
   # nnh
 	#  - nunmber of graphs (at least one per statement)
 	#  - number of may-aliases
+	#  - number of must-aliases
 	run_analysis "nnh99" "--no-summarygraph --individualgraphs"
 	nnh_graphs=`cat outfile.stats | awk '/n_graphs: / {print $2;exit}'`
-	nnh_aliases=`cat outfile.stats | awk '/n_may-aliases: / {print $2;exit}'`
+	nnh_may_aliases=`cat outfile.stats | awk '/n_may-aliases: / {print $2;exit}'`
+	nnh_must_aliases=`cat outfile.stats | awk '/n_must-aliases: / {print $2;exit}'`
 
 	printf "$outfile\t$srw_nodes\t$nnh_nodes\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.nodes
 	printf "$outfile\t$srw_graphs\t$nnh_graphs\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.graphs
-	printf "$outfile\t$srw_aliases\t$nnh_aliases\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.aliases
+	printf "$outfile\t$srw_may_aliases\t$nnh_may_aliases\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.mayaliases
+	printf "$outfile\t$srw_must_aliases\t$nnh_must_aliases\n" | sed 's/\_/\\\\\_/g' >> $DATFILE.mustaliases
 
 	rm -f outfile.stats
 done
@@ -112,7 +118,8 @@ set output '$HISTOGRAM.eps'
 plot \
   newhistogram "Number of Nodes", '$DATFILE.nodes' using 2:xtic(1), '' using 3, \
   newhistogram "Number of Graphs", '$DATFILE.graphs' using 2:xtic(1), '' using 3, \
-  newhistogram "Number of Aliases", '$DATFILE.aliases' using 2:xtic(1), '' using 3
+  newhistogram "Number of May-Aliases", '$DATFILE.mayaliases' using 2:xtic(1), '' using 3, \
+  newhistogram "Number of Must-Aliases", '$DATFILE.mustaliases' using 2:xtic(1), '' using 3
 
 set output '$HISTOGRAM-nodes.eps'
 plot newhistogram "Number of Nodes", '$DATFILE.nodes' using 2:xtic(1), '' using 3
@@ -120,8 +127,11 @@ plot newhistogram "Number of Nodes", '$DATFILE.nodes' using 2:xtic(1), '' using 
 set output '$HISTOGRAM-graphs.eps'
 plot newhistogram "Number of Graphs", '$DATFILE.graphs' using 2:xtic(1), '' using 3
 
-set output '$HISTOGRAM-aliases.eps'
-plot newhistogram "Number of Aliases", '$DATFILE.aliases' using 2:xtic(1), '' using 3
+set output '$HISTOGRAM-mayaliases.eps'
+plot newhistogram "Number of May-Aliases", '$DATFILE.mayaliases' using 2:xtic(1), '' using 3
+
+set output '$HISTOGRAM-mustaliases.eps'
+plot newhistogram "Number of Must-Aliases", '$DATFILE.mustaliases' using 2:xtic(1), '' using 3
 EOF
 echo done.
 else
