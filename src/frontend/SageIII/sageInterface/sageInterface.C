@@ -4440,7 +4440,7 @@ SgNode * SageInterface::getEnclosingNode(const SgNode* astNode, const VariantT n
   return parent;
 }
 
-SgFile * getEnclosingFileNode(SgNode* astNode)
+SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 {
     ROSE_ASSERT (astNode != NULL);
 
