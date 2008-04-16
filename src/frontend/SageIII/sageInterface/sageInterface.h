@@ -567,7 +567,7 @@ SgScopeStatement* getScope(const SgNode* astNode);
 
    //roseSupport/utility_functions.h
   //! get the SgFile node from current node
-  SgFile* getEnclosingFileNode ( const SgNode* astNode );
+  SgFile* getEnclosingFileNode (SgNode* astNode );
 
   //! Get the initializer containing an expression if it is within an initializer.
   SgInitializer* getInitializerOfExpression(SgExpression* n);
