@@ -874,6 +874,10 @@ HEADER_ASM_OP_START
                e_last
              };
 
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
 HEADER_ASM_OP_END
 
 
@@ -5223,6 +5227,30 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
 
      return returnType;
+   }
+
+unsigned int
+SgAsmOp::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgAsmOp::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
+
+std::vector<VirtualCFG::CFGEdge>
+SgAsmOp::cfgInEdges(unsigned int idx)
+   {
+     std::vector<VirtualCFG::CFGEdge> result;
+     ROSE_ASSERT (idx == 0);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
    }
 
 SOURCE_ASM_OP_END
