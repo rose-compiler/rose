@@ -13,6 +13,7 @@
 #include "LiaOutliner.hh"
 #include "Preprocess.hh"
 #include "Transform.hh"
+#include "commandline_processing.h"
 
 // =====================================================================
 
@@ -62,9 +63,32 @@ LiaOutliner::outline (SgStatement* s)
 LiaOutliner::Result
 LiaOutliner::outline (SgStatement* s, const std::string& func_name)
 {
+  static bool preproc_only_ = false; 
   SgBasicBlock* s_post = preprocess (s);
   ROSE_ASSERT (s_post);
-  return Transform::outlineBlock (s_post, func_name);
+  //Liao, enable -rose:outline:preproc-only, 
+  // then any translator can accept it even if their drivers do not handle it individually
+  // Internal usage only for debugging
+  SgFile * file= SageInterface::getEnclosingFileNode(s);
+  SgStringList argvList = file->get_originalCommandLineArgumentList ();	
+
+
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:",
+                                     "preproc-only",true))
+  {
+    cout << "==> Running the outliner's preprocessing phase only." << endl;
+    preproc_only_ = true;
+  // Avoid passing the option to the backend compiler 
+    file->set_originalCommandLineArgumentList(argvList);
+  }  
+
+  if (preproc_only_)
+  {
+    LiaOutliner::Result fake;
+    return fake;
+  }  
+  else
+    return Transform::outlineBlock (s_post, func_name);
 }
 
 SgBasicBlock *

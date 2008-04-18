@@ -31,6 +31,8 @@ namespace CPreproc
   //! Output '#if' directive structure (for debugging).
   void dump (Ifs_t::const_iterator b, Ifs_t::const_iterator e,
              size_t level = 0);
+  //! Output a list of directives
+  void dump (const Ifs_t ifs);
 
   // ======================================================================
 
@@ -77,6 +79,7 @@ namespace CPreproc
       Case (PreprocessingInfo *, SgLocatedNode *, If * = 0);
       Case (const Case &);
       
+      void dump(size_t level = 0);
       //! Returns 'true' if this case is a '#if'.
       bool isIf (void) const;
       

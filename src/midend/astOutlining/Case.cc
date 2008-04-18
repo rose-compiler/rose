@@ -9,6 +9,7 @@
 #include <string>
 #include <rose.h>
 #include "If.hh"
+#include "ASTtools.hh"
 
 //! Returns the prefix of a string up to the first matching tag.
 static std::string upTo (const std::string& s, const std::string& tag);
@@ -201,6 +202,33 @@ CPreproc::If::Case::rend (void) const
   return kids_.rend ();
 }
 
+//! Returns an indentation string for a given indent level.
+// not elegant since it is copied from ExtractIfs.cc
+static
+string
+indent (size_t level)
+{
+  if (level > 1)
+    return indent (level-1) + string ("  ");
+  else if (level == 1)
+    return string ("  ");
+
+  // Default: empty string
+  return string ("");
+}
+
+
+void CPreproc::If::Case::dump(size_t level /*=0*/)
+{
+  const SgLocatedNode* n = getNode();
+  cerr << indent (level)
+     << getDirective ()
+     << " : "
+     << "'" << getCondition () << "'"
+     << ' ' << ASTtools::toStringFileLoc (n)
+     << endl;
+  CPreproc::dump (begin (), end (), level+1);
+}
 // ========================================================================
 
 void

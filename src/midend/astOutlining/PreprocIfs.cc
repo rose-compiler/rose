@@ -59,6 +59,11 @@ LiaOutliner::Preprocess::transformPreprocIfs (SgBasicBlock* b)
   CPreproc::If::Case* bottom = 0;
   CPreproc::findIfDirectiveContext (b, ifs, top, bottom);
 
+  //debugging
+  //  CPreproc::dump(ifs);
+  // if(top) top->dump();
+  // if(bottom) bottom->dump();
+
   if (!top && !bottom) // Not guarded by any '#if'.
     return b;
 

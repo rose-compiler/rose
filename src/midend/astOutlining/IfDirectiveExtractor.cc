@@ -69,8 +69,18 @@ CPreproc::IfDirectiveExtractor::visit (SgNode* n, bool isTopDown)
         {
           AttachedPreprocessingInfoType::const_iterator i;
           for (i = info_list->begin (); i != info_list->end (); ++i)
+          {  
             if (ASTtools::isPositionBefore (*i) == isTopDown)
               handleCase (*i, s);
+      // only handle before position by default
+      // warning if wrongfully attached to a relative position of after or middle.
+            else  
+            {
+      cout<<"Warning: Unhandled preprocessingInfo in after or inside position in CPreproc::IfDirectiveExtractor::visit()"<<endl;
+      cout<<"Location: " <<(*i)->get_file_info ()->get_filenameString ().c_str () << endl;
+      cout<<"Type:"<< PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()) <<endl;
+            }
+          }    
         }
     }
 }

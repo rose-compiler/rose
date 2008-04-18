@@ -88,5 +88,13 @@ CPreproc::dump (CPreproc::Ifs_t::const_iterator b,
         }
     }
 }
+void 
+CPreproc::dump (const Ifs_t ifs)
+{
+   CPreproc::Ifs_t::const_iterator b,e;
+   b=ifs.begin();
+   e=ifs.end();
+   dump(b,e);
+}
 
 // eof
