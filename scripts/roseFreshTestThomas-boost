@@ -50,7 +50,7 @@ echo "Subject: Starting ROSE test $$" > mailtext1
 echo "" >> mailtext1
 echo "See build log in ${ROSE_TOP}/buildlog for status" >> mailtext1
 echo "Configure flags = $@" >> mailtext1
-echo "../sourcetree/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --enable-edg_union_struct_debugging --with-CXX_DEBUG=-g --with-boost-wave=yes --with-boost-libraries=/home/panas2/development/boost-install-gcc4-64bit/lib/ --with-boost-includes=/home/panas2/development/boost-install-gcc4-64bit/include/boost-1_35/ --prefix="`pwd`/../install" "$@"" >> mailtext1
+echo "../sourcetree/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --enable-edg_union_struct_debugging --with-CXX_DEBUG=-g --with-boost-wave=yes --with-boost=/home/panas2/development/boost-install-gcc4-64bit/ --with-mpi --prefix="`pwd`/../install" "$@"" >> mailtext1
 echo "" >> mailtext1
 echo "> Command versions" >> mailtext1
 automake --version | head -1 >> mailtext1
@@ -94,7 +94,7 @@ buildstatus=0
 # configure ROSE
   cd build
 # ROSE_CONFIG_FLAGS="--without-binary_analysis --enable-rosehpct --with-openFortranParser=/home/liao6/download/fortran-parser --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server"
-  ../sourcetree/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --enable-edg_union_struct_debugging --with-CXX_DEBUG=-g --with-boost-wave=yes --with-boost-libraries=/home/panas2/development/boost-install-gcc4-64bit/lib/ --with-boost-includes=/home/panas2/development/boost-install-gcc4-64bit/include/boost-1_35/ --prefix="`pwd`/../install" "$@"
+../sourcetree/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --enable-edg_union_struct_debugging --with-CXX_DEBUG=-g --with-boost-wave=yes --with-boost=/home/panas2/development/boost-install-gcc4-64bit/ --with-mpi --prefix="`pwd`/../install" "$@"
   
 #------------------------------------------------------
 # make and check
