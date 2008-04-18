@@ -7,9 +7,7 @@
 #ifndef COMPASS_NULL_DEREF_H
 #define COMPASS_NULL_DEREF_H
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 #include "BoostGraphInterface.hxx"
-#endif
 
 namespace CompassAnalyses
 { 
@@ -31,7 +29,6 @@ namespace CompassAnalyses
 
       // Specification of Checker Traversal Implementation
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
       class Traversal
 	: public AstSimpleProcessing, public Compass::TraversalBase,  BOOSTGraphInterface::tps_graph_interface
 	{
@@ -63,17 +60,10 @@ namespace CompassAnalyses
 	  int max;
 	  static bool addressOp;
 	  static bool debug;
-#else
-      class Traversal
-	: public AstSimpleProcessing, public Compass::TraversalBase
-	{
-
-#endif
 
 	public:
 	  Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 	  // The implementation of the run function has to match the traversal being called.
 	  void run(SgNode* n){ 
 	    counter=0;
@@ -82,13 +72,6 @@ namespace CompassAnalyses
 	    max = exprList.size();
 	    this->traverse(n, preorder); 
 	  };
-#else
-	  void run(SgNode* n){
-	    if (Compass::verboseSetting >= 0)   
-	     std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
-	    this->traverse(n, preorder); };
-
-#endif
 
 	  void visit(SgNode* n);
 	};

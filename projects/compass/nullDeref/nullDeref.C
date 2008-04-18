@@ -10,25 +10,21 @@
 
 using namespace std;
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 using namespace boost;
 using namespace BOOSTGraphInterface;
 
 bool CompassAnalyses::NullDeref::Traversal::debug;
 bool CompassAnalyses::NullDeref::Traversal::addressOp;
-#endif
 
 namespace CompassAnalyses
 { 
   namespace NullDeref
   { 
     
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
     static std::map<tps_node, tps_node> pred_map_data;
     static std::map<tps_node, int> color_map_data;
     static string functionName="";
     static string fileName="";
-#endif
 
     const std::string checkerName      = "NullDeref";
 
@@ -53,7 +49,6 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
 
 }
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 
 string CompassAnalyses::NullDeref::Traversal::printTrace(const vector<tps_node>& trace) {
   string trac = "";
@@ -543,7 +538,6 @@ void CompassAnalyses::NullDeref::Traversal::checkNullDeref(string analysisname, 
 
   }
 }
-#endif
 
 
 void
@@ -553,7 +547,6 @@ visit(SgNode* sgNode)
   // Implement your traversal here.  
   //  int max=200; // amount of nodes?
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 
 
   std::string name = sgNode->class_name();
@@ -609,7 +602,6 @@ visit(SgNode* sgNode)
 
   }
 
-#endif
 
 } //End of the visit function.
    
