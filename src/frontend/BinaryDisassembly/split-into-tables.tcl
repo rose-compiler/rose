@@ -136,7 +136,7 @@ if {[llength $argv] == 0} {
 }
 foreach filename $argv {
   puts $filename
-  set root [file rootname $filename]
+  set root [file tail [ file rootname $filename] ]
   set rootdir [ file dirname $filename]
   set newdir "${rootdir}/expanded-${root}"
   file mkdir $newdir
