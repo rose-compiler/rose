@@ -137,7 +137,8 @@ if {[llength $argv] == 0} {
 foreach filename $argv {
   puts $filename
   set root [file rootname $filename]
-  set newdir "./expanded-${root}"
+  set rootdir [ file dirname $filename]
+  set newdir "${rootdir}/expanded-${root}"
   file mkdir $newdir
   set f [open $filename r]
   fconfigure $f -translation binary
@@ -146,7 +147,7 @@ foreach filename $argv {
   while {1} {
     set nextIdx1 [string first {INSERT INTO } $data 1]
     set nextIdx2 [string first {CREATE TABLE} $data 1]
-    set nextIdx [expr {$nextIdx1 == -1 ? $nextIdx2 : $nextIdx2 == -1 ? $nextIdx1 : min($nextIdx1, $nextIdx2)}]
+    set nextIdx [expr {$nextIdx1 == -1 ? $nextIdx2 : $nextIdx2 == -1 ? $nextIdx1 :  ($nextIdx1 < $nextIdx2) ? $nextIdx1 : $nextIdx2 }]
     if {$nextIdx == -1} {
       if {[eof $f]} {
         if {$data == ""} {
