@@ -5,9 +5,7 @@
 #include "compass.h"
 
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT 
 #include "checkNameImpl.h"
-#endif
 
 #ifndef COMPASS_NAME_CONSISTENCY_H
 #define COMPASS_NAME_CONSISTENCY_H
@@ -22,7 +20,6 @@ namespace CompassAnalyses
           extern const std::string shortDescription;
           extern const std::string longDescription;
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT 
 
        // Specification of Checker Output Implementation
           class CheckerOutput: public Compass::OutputViolationBase
@@ -42,19 +39,16 @@ namespace CompassAnalyses
                     virtual std::string getString() const;
 
              };
-#endif
        // Specification of Checker Traversal Implementation
 
           class Traversal
              : public AstSimpleProcessing, public Compass::TraversalBase
              {
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT
             // Checker specific parameters should be allocated here.
                     std::string ruleFile;
 
                     NameEnforcer nm;
-#endif
 
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);

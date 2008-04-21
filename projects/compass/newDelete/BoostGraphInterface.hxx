@@ -1,7 +1,6 @@
 #ifndef BOOSTGRAPHINTERFACE_HXX_
 #define BOOSTGRAPHINTERFACE_HXX_
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 
 #include <boost/config.hpp>
 #include <boost/graph/transpose_graph.hpp>
@@ -98,7 +97,6 @@ inline int out_degree (tps_node node, tps_graph  g) {
 
 };
 
-#endif
 
 #endif /*BOOSTGRAPHINTERFACE_HXX_*/
 

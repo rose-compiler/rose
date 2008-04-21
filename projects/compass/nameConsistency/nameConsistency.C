@@ -26,7 +26,6 @@ namespace CompassAnalyses
    } //End of namespace CompassAnalyses.
 
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT 
 
 #include "checkNameImpl.C"
 
@@ -113,21 +112,4 @@ visit(SgNode* node)
           }
    } //End of the visit function.
 
-#else
 
-
-CompassAnalyses::NameConsistency::Traversal::
-Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
-   {
-   }
-
-void
-CompassAnalyses::NameConsistency::Traversal::
-visit(SgNode* node)
-   { 
-   } //End of the visit function.
-
-
-
-#endif   

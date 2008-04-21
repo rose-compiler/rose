@@ -10,10 +10,8 @@
 
 using namespace std;
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 using namespace boost;
 using namespace BOOSTGraphInterface;
-#endif
 
 namespace CompassAnalyses
 { 
@@ -21,13 +19,11 @@ namespace CompassAnalyses
   { 
 
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
     static std::map<tps_node, tps_node> pred_map_data;
     static std::map<tps_node, int> color_map_data;
     static bool isCFGArrayDelete = false;
     static string functionName="";
     static string fileName="";
-#endif
 
     const std::string checkerName      = "NewDelete";
 
@@ -52,7 +48,6 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
 
 }
 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
 
 string CompassAnalyses::NewDelete::Traversal::printTrace(const vector<tps_node>& trace) {
   string trac = "";
@@ -280,7 +275,6 @@ void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgFunctionDec
 
   }
 }
-#endif
 
 
 
@@ -288,7 +282,6 @@ void
 CompassAnalyses::NewDelete::Traversal::
 visit(SgNode* sgNode)
 { 
-#ifdef  USE_ROSE_BOOST_WAVE_SUPPORT
   if (isSgFunctionDeclaration(sgNode)) {
     string fileName = isSgFunctionDeclaration(sgNode)->get_file_info()->get_filenameString();
     string name = sgNode->class_name();
@@ -303,6 +296,5 @@ visit(SgNode* sgNode)
       }
     }
   }
-#endif
 } //End of the visit function.
    
