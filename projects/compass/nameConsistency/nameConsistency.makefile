@@ -13,7 +13,7 @@ all: nameConsistencyTest
 libcompass.so: $(COMPASS_SUPPORT)/compass.h $(COMPASS_SUPPORT)/compass.C
 	g++ -fPIC -Wall -shared -o $@ $(COMPASS_SUPPORT)/compass.C -I$(ROSE_INSTALL)/include -I$(COMPASS_SUPPORT)
 
-nameConsistencyTest: nameConsistency.C nameConsistencyMain.C libcompass.so $(COMPASS_SUPPORT)/compassTestMain.C
+nameConsistencyTest: nameConsistency.C nameConsistencyMain.C checkNameImpl.C libcompass.so $(COMPASS_SUPPORT)/compassTestMain.C
 	g++ -fPIC -Wall -o $@ nameConsistency.C nameConsistencyMain.C -I$(COMPASS_SUPPORT) -I$(ROSE_INSTALL)/include $(LINKER_FLAGS)
 
 test: nameConsistencyTest nameConsistencyTest1.C
