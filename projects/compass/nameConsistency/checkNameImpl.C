@@ -1,6 +1,5 @@
 
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT //GMY 12/26/2007 added to pass compass make verify
 
 
 
@@ -1117,4 +1116,3 @@ void NameEnforcer::enforceRules(SgNode* node, std::list< std::pair<name_types,Sg
 
 
 
-#endif //12/26/2007 END
