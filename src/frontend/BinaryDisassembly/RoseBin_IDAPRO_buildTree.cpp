@@ -346,7 +346,7 @@ string RoseBin_IDAPRO_buildTree::getReplacementText(
 
 
     if (op_id==operand_id && ex_id==expr_id_root) {
-      //cerr << "Replacing with " << subst.replacement << endl;
+      cout << "Replacing with " << subst.replacement << endl;
       text=subst.replacement;
       // break;
     } else {
@@ -445,10 +445,10 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
   if (comment!="") {
     text = text + " <"+comment+">";
   }
-  if (binExp!=NULL) {
+  if (binExp!=NULL && text!="") {
     string tt = binExp->get_replacement();
     //if (tt!="") {text = tt; cerr << "Found other replacement text " << tt << endl;} else {cerr << "Setting replacement text" << endl;}
-    //cerr << "Doing actual replacement with " << text << endl;
+    cout << "Setting replacement with " << text << endl;
     binExp->set_replacement(text);
   } else {
     cerr << "binExp is NULL" << endl;

@@ -39,8 +39,8 @@ class RoseBin : public RoseBin_abstract {
 	  char* user, 
 	  char* passw, 
 	  char* dbase) {
-    //RoseBin_support::setDebugMode(true);    
-        RoseBin_support::setDebugMode(false);    
+    RoseBin_support::setDebugMode(true);    
+    //    RoseBin_support::setDebugMode(false);    
         RoseBin_support::setDataBaseSupport(true);    
     idaDB = new RoseBin_DB_IDAPRO(host, user, passw, dbase);
     //unparser = new RoseBin_unparse();
