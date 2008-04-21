@@ -890,7 +890,7 @@ std::list< std::pair<name_types,PreprocessingInfo*> >& violations
    {
 
      ROSE_ASSERT(currentInfo != NULL);
-
+#ifdef USE_ROSE_BOOST_WAVE_SUPPORT 
     	  PreprocessingInfo::r_macro_def* macro_def = currentInfo->get_macro_def();
 
 	  std::string macroName = macro_def->macro_name.get_value().c_str();
@@ -912,6 +912,7 @@ std::list< std::pair<name_types,PreprocessingInfo*> >& violations
 
 	       }
 	  }
+#endif
    }
 
 
