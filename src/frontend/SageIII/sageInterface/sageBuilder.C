@@ -1328,6 +1328,50 @@ SgTypeFloat * SageBuilder::buildFloatType()
 // It is easy to forget the namespace qualifier, so use this lazy method
 //----------------------------------------------------------------------
 namespace SageBuilder{
+
+
+  //! Build a constant type.
+  SgType* buildConstType(SgType* base_type)
+ {
+   ROSE_ASSERT(base_type!=NULL);
+
+   SgModifierType *result = new SgModifierType(base_type);
+   ROSE_ASSERT(result!=NULL);
+
+   result->get_typeModifier().get_constVolatileModifier().setConst();
+   return result;
+ }
+
+  //! Build a volatile type.
+  SgType* buildVolatileType(SgType* base_type)
+ {
+   ROSE_ASSERT(base_type!=NULL);
+
+   SgModifierType *result = new SgModifierType(base_type);
+   ROSE_ASSERT(result!=NULL);
+
+   result->get_typeModifier().get_constVolatileModifier().setVolatile();
+   return result;
+
+ }
+  //! Build a restrict type.
+  SgType* buildRestrictType(SgType* base_type)
+ {
+   ROSE_ASSERT(base_type!=NULL);
+   bool isPointer = isSgPointerType(base_type);
+   if (!isPointer)
+   {  
+     printf("Base type of restrict type must be a pointer type.\n");
+     ROSE_ASSERT(false);
+   }
+   SgModifierType *result = new SgModifierType(base_type);
+   ROSE_ASSERT(result!=NULL);
+
+   result->get_typeModifier().setRestrict();
+   return result;
+
+ }
+
   SgClassDefinition* buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
   {
     SgClassDefinition* result = NULL;
@@ -1507,5 +1551,13 @@ namespace SageBuilder{
     return result;
 #endif
   }// end SgFile* buildFile()
+
+PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,
+               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,
+   PreprocessingInfo::DirectiveType dtype
+     /* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
+{
+  return SageInterface::attachComment(target,content, position, dtype);  
+}
 
 } // end of namespace 

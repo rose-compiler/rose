@@ -5454,5 +5454,5 @@ PreprocessingInfo* attachComment(
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
 
-  } // end namespace SageInterface
+} // end namespace SageInterface
 

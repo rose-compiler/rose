@@ -27,7 +27,6 @@ namespace SageBuilder{
 
   // build sth in languages, but not in SAGE AST
   // how to specify position info?  then
-  PreprocessingInfo* buildComment(style, std::string& content);
 
   SgClassDeclaration* buildClassDeclaration(...,class_type);
   // or
@@ -105,20 +104,29 @@ SgTypeUnsignedLong*    buildUnsignedLongType();
 SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 SgTypeUnsignedShort*    buildUnsignedShortType();
 
-//! build a pointer type
+//! Build a pointer type
 SgPointerType* buildPointerType(SgType *base_type = NULL);
 
-//! build a reference type
+//! Build a reference type
 SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 
-//! build ArrayType
+//! Build a const type.
+SgType* buildConstType(SgType* base_type);
+
+//! Build a volatile type.
+SgType* buildVolatileType(SgType* base_type);
+
+//! Build a restrict type.
+SgType* buildRestrictType(SgType* base_type);
+
+//! Build ArrayType
 SgArrayType* buildArrayType(SgType* base_type=NULL, SgExpression* index=NULL);
 
-//! build function type from return type and parameter type list
+//! Build function type from return type and parameter type list
 SgFunctionType * 
 buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=NULL);
 
-//! build function type from return type and parameter list
+//! Build function type from return type and parameter list
 SgFunctionType * 
 buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
 
@@ -458,6 +466,10 @@ SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* 
  */
 SgFile* buildFile(const std::string& fileName,const std::string& outputFileName, SgProject* project=NULL);
 
+//! Build and attach a comment, comment style is inferred from the language type of the target node if not provided. It is indeed a wrapper of SageInterface::attachComment().
+PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
+               PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
 //@}
 

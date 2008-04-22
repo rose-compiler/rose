@@ -19,8 +19,18 @@ int main (int argc, char *argv[])
   SgProject *project = frontend (argc, argv);
   SgGlobal *globalScope = getFirstGlobalScope (project);
 
-  // bottom up for int j; no previous knowledge of target scope
-  SgVariableDeclaration *varDecl0 = buildVariableDeclaration("j", buildIntType());
+  // bottom up for volatile int j; no previous knowledge of target scope
+  SgVariableDeclaration *varDecl0 = buildVariableDeclaration("j", 
+    buildVolatileType(buildIntType()));
+
+  //const int jc = 0;
+  SgVariableDeclaration *varDecl0c = buildVariableDeclaration("jc", 
+    buildConstType(buildIntType()), buildAssignInitializer(buildIntVal(0)));
+
+  // int * restrict p;
+  SgVariableDeclaration *varDecl0p = buildVariableDeclaration("jp", 
+//    buildRestrictType(buildIntType())); 
+    buildRestrictType(buildPointerType(buildIntType()))); 
 
   // top down for others; set implicit target scope info. in scope stack.
   pushScopeStack (isSgScopeStatement (globalScope));
@@ -43,7 +53,8 @@ int main (int argc, char *argv[])
 
   appendStatement (varDecl2);
   insertStatementAfter(varDecl2,varDecl0);
-  //prependStatement(varDecl0);
+  prependStatement(varDecl0c);
+  prependStatement(varDecl0p);
 
   popScopeStack ();
 
