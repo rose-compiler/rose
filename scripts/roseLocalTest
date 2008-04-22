@@ -1,8 +1,8 @@
-#!/bin/bash 
+#!/bin/bash -x
 #!/bin/bash -x 
 #
-# A script to do tests on a local working copy of ROSE.
-# It is used before committing local changes to the SVN repository.
+# A script to do tests on a local working copy of ROSE
+#  used before committing local changes to the SVN repository.
 #
 # Set up the following before using:
 #
@@ -21,13 +21,15 @@ MAILADDRS="liaoch@llnl.gov"
 ROSE_TOP=/home/liao6
 ROSE_SRC=${ROSE_TOP}/rose
 # $$ is the current process Id
-ROSE_BUILD="${ROSE_TOP}/buildrose_$$"
-ROSE_INSTALL="${ROSE_TOP}/opt/roseLatest_$$"
-BUILD_LOG="${ROSE_TOP}/buildlog_$$"
+ROSE_BUILD="${ROSE_TOP}/buildrose"
+ROSE_INSTALL="${ROSE_TOP}/opt/roseLatest"
+BUILD_LOG="${ROSE_BUILD}/buildlog"
+BOOST_INSTALL=/home/liao6/opt/boost_1_35_0
+
 
 # store configuration options into an array ()
 # $@ means the optional parameters provided with the command line running current script 
-CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix="${ROSE_INSTALL}" "$@")
+CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-boost=${BOOST_INSTALL} --prefix="${ROSE_INSTALL}" "$@")
 
 # make using multiple processes
 MAKEFLAGS="-j2"
@@ -48,8 +50,9 @@ source /usr/apps/gcc/4.2.2/setup.sh
 
 export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
+export BOOST_ROOT=${BOOST_INSTALL}
 
-export LD_LIBRARY_PATH="/usr/apps/java/jdk1.5.0_11/lib:/usr/apps/java/jdk1.5.0_11/jre/lib/i386/client:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:/usr/apps/java/jdk1.5.0_11/lib:/usr/apps/java/jdk1.5.0_11/jre/lib/i386/client:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$LD_LIBRARY_PATH"
 
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
