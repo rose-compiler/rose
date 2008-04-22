@@ -14,7 +14,7 @@ HEADER_START
        // (e.g. where the scope is stored explicitly) Effected declarations:
        //     class declarations (and derived classes (e.g. template instantiation declarations)
        //     template declarations (which covers all forms of template declarations for classes, functions, and member functions)
-       //     function declarations (includinging member functions, template functions and template member functions)
+       //     function declarations (including member functions, template functions and template member functions)
        //     variable declarations
           virtual SgScopeStatement *get_scope(void) const;
 
@@ -33,7 +33,7 @@ HEADER_START
           \brief Support for mutation of the AST.
 
           This is the lowest level of support for the mutation of the AST.  From these 
-          primatives we have built more sophisticated mechansims which are simpler to 
+          primitives we have built more sophisticated mechanisms which are simpler to 
           use and which automate many details (not handled within these functions):
              -# Preservation of attached comments
              -# Marking new IR nodes with correct file info position objects
@@ -101,7 +101,7 @@ HEADER_START
 
              This function handles the removal of the target statement from the AST.
              Any comments or C preprocessor directives associated with the statement
-             are also removed.  This is a low level primative for higher level functions
+             are also removed.  This is a low level primitive for higher level functions
              (in the higher level interfaces) which take care to preserve such attributes.
 
              \param target - location of the statement to be removed.
@@ -125,7 +125,7 @@ HEADER_START
                               the new statement is inserted after the target statement (default = true).
              \return Function returns void.
 
-             \deprecated This function is used only in Qing's code and not clearly a part of the prefered interface.
+             \deprecated This function is used only in Qing's code and not clearly a part of the preferred interface.
           */
           void insert_statement_from_basicBlock(SgStatement* target, SgStatement* newstmt, bool inFront = true);
 
@@ -142,7 +142,7 @@ HEADER_START
              \param newstmt - New statement to be placed into the AST.
              \return Function returns void.
 
-             \deprecated This function is used only in Qing's code and not clearly a part of the prefered interface.
+             \deprecated This function is used only in Qing's code and not clearly a part of the preferred interface.
           */
           void replace_statement_from_basicBlock(SgStatement* target, SgStatement* newstmt);
 
@@ -156,7 +156,7 @@ HEADER_START
        /* */
 
       // DQ (12/5/2004): Support for setting explicit scopes (where stored explicitly).
-      //! Support for setting scopes (only menaingful on IR statements that store the scope explicitly).
+      //! Support for setting scopes (only meaningful on IR statements that store the scope explicitly).
           virtual void set_scope ( SgScopeStatement* newScope );
 
       //! Support for where the scope is explicitly required
@@ -200,11 +200,11 @@ HEADER_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
-       // DQ (12/16/2007): Added virtual function so that we could set the end_numeric_label on all relavant Fortran constructs
+       // DQ (12/16/2007): Added virtual function so that we could set the end_numeric_label on all relevant Fortran constructs
        // virtual void set_end_numeric_label(SgLabelSymbol* end_numeric_label);
           virtual void set_end_numeric_label(SgLabelRefExp* end_numeric_label);
 
-       // Report if a constrcut has a concept of end_numeric_label
+       // Report if a construct has a concept of end_numeric_label
           virtual bool has_end_numeric_label() const;
 
 HEADER_END
@@ -224,7 +224,7 @@ HEADER_SCOPE_STATEMENT_START
 
      public:
 
-       // Since we supress the generation of the constructors we have to declare them explicitly
+       // Since we suppress the generation of the constructors we have to declare them explicitly
        // SgScopeStatement ();
           $CLASSNAME ( Sg_File_Info* file_info = NULL );
 
@@ -235,7 +235,7 @@ HEADER_SCOPE_STATEMENT_START
        // mangled names for declarations could have better support!
           virtual SgName get_mangled_name() const;
 
-       // DQ (2/10/2007): Added member fucntion.
+       // DQ (2/10/2007): Added member function.
       //! return number of entries in symbol table for the specified name
       //! (note that it is sometime OK for there to be more than 1).
           size_t count_symbol(const SgName& n);
@@ -243,12 +243,12 @@ HEADER_SCOPE_STATEMENT_START
        // Single interface for inserting symbol into symbol table
           void insert_symbol(const SgName& n, SgSymbol* s);
 
-       // DQ (2/10/2007): I would like to depricate this since it returns and integer and is not named well for such a return type!
+       // DQ (2/10/2007): I would like to deprecate this since it returns and integer and is not named well for such a return type!
        // see if this is in symbol table already
           int lookup_symbol( const SgName& n, SgSymbol* s) const ROSE_DEPRECATED_FUNCTION;
 
        // DQ (2/10/2007): Do we want an interface like this?
-       // Note that these are relatively expensive functions since they do an exhustive search of the symbol tabel.
+       // Note that these are relatively expensive functions since they do an exhaustive search of the symbol table.
           bool symbol_exists ( const SgName &, SgSymbol *sp ) const;
           bool symbol_exists ( const SgName & name ) const;
           bool symbol_exists ( const SgSymbol *sp ) const;
@@ -313,7 +313,7 @@ HEADER_SCOPE_STATEMENT_START
        // Should we have a member function like this!
        // SgFunctionSymbol*  next_function_symbol  (const SgType* t) const;
 
-       /* additional symbol table insertion utitily routines */
+       /* additional symbol table insertion utility routines */
           void print_symboltable(const std::string& str, std::ostream& os = std::cout);
 
 #if 0
@@ -367,7 +367,7 @@ HEADER_SCOPE_STATEMENT_START
        // DQ (10/18/2006): Not all scopes permit function declarations.
        /*! \brief Reports if scope can support defining function declarations.
        // Not all scopes permit function declarations. Any function prototype in a 
-       // scope appropriate for a function definition triggers requirements for name qualifiaction.
+       // scope appropriate for a function definition triggers requirements for name qualification.
        // This function returns true if the scope is appropriate for the definition of a function
        // or member function (i.e. is a SgGlobal, SgClassDefinition, or SgNamespaceDefinitionStatement).
        */
@@ -447,7 +447,7 @@ HEADER_DECLARATION_STATEMENT_START
        // DQ (5/9/2005): Added support for template specialization!
        /*! \brief Template Specialization Support
 
-           different forms of template specialiation for - classes, functions, and variable declarations
+           different forms of template specialization for - classes, functions, and variable declarations
         */
           enum template_specialization_enum
              {
@@ -458,9 +458,9 @@ HEADER_DECLARATION_STATEMENT_START
                e_template_specialization_last = 4  /*!< last value (unused) */
              };
 
-      /*! \brief GNU extension for visability modifier (only one value can be specified)
+      /*! \brief GNU extension for visibility modifier (only one value can be specified)
 
-          Visability modifier information about (unspecified, hidden, protected, internal).
+          Visibility modifier information about (unspecified, hidden, protected, internal).
 
           \internal Only one value can be specified.
        */
@@ -469,10 +469,10 @@ HEADER_DECLARATION_STATEMENT_START
             // Bit values can support multiple values in a single enum type
                e_gnu_attribute_visability_unknown     = 0, /*!< Unknown value (error) */
                e_gnu_attribute_visability_unspecified = 1, /*!< Default value */
-               e_gnu_attribute_visability_hidden      = 2, /*!< hidden visability attribute */
-               e_gnu_attribute_visability_protected   = 3, /*!< protected visability attribute */
-               e_gnu_attribute_visability_internal    = 4, /*!< internal visability attribute */
-               e_last_gnu_visability_attribute   /*!< last visability attribute value (upper bound on range of values, used in error checking) */
+               e_gnu_attribute_visability_hidden      = 2, /*!< hidden visibility attribute */
+               e_gnu_attribute_visability_protected   = 3, /*!< protected visibility attribute */
+               e_gnu_attribute_visability_internal    = 4, /*!< internal visibility attribute */
+               e_last_gnu_visability_attribute   /*!< last visibility attribute value (upper bound on range of values, used in error checking) */
              };
 
        // DQ (4/25/2004): Part of new interface to declaration modifiers (refactoring).
@@ -480,7 +480,7 @@ HEADER_DECLARATION_STATEMENT_START
        // in the language. They act like modifiers to the unparser and to the 
        // representation of the original source structure within the AST.
 
-       // this is to distingush a forward declaration (class or function)
+       // this is to distinguish a forward declaration (class or function)
        // class X;
        // class X { };
           int  isForward() const;
@@ -558,11 +558,11 @@ HEADER_DECLARATION_STATEMENT_START
        // DQ (2/11/2007): Added to support the virtual function in derived classes
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
-       // DQ (7/4/2007): Gethte declaration for which get_symbol_from_symbol_table() returns a valid pointer.
+       // DQ (7/4/2007): Get the declaration for which get_symbol_from_symbol_table() returns a valid pointer.
           SgDeclarationStatement* get_declaration_associated_with_symbol() const;
 
        // DQ (7/4/2007): Search for a symbol from either the first non-defining 
-       // declaration or the definind declaration (this should always return a valid symbol). 
+       // declaration or the defining declaration (this should always return a valid symbol). 
           SgSymbol* search_for_symbol_from_symbol_table() const;
 
        // DQ (7/26/2007): report which declarations can be expected to have an associated symbol, 
@@ -606,9 +606,9 @@ HEADER_GLOBAL_START
 
        // DQ (2/22/2007): Added support for mangled name of SgGlobal to better support generation of 
        // mangled names which include the scope! Previously the mangled name of some declarations used
-       // the qualified name of the scope which put "::" substings into the mangled names!  This is
+       // the qualified name of the scope which put "::" substrings into the mangled names!  This is
        // inappropriate because the mangled names have to be able to be variable names and must follow 
-       // C/C++ standards for constuction of variable names.
+       // C/C++ standards for construction of variable names.
           virtual SgName get_mangled_name() const;
 
        // DQ (10/6/2006): Support for mangle name caching (for better performance)
@@ -862,7 +862,7 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/20/2004): This function should be different from those that are automatically generated 
        // via ROSETTA.  In the case of a constructor or destructor the class name should be used.  This 
        // is particularly important in the case of constructors and destructors of templated classes since 
-       // the mangled form or the templae class should not be used since it will not allow the generated 
+       // the mangled form or the template class should not be used since it will not allow the generated 
        // code to compile.  Instead of names of the form "ABC____L8" we want names of the form "ABC<int>".
        // These functions are now implemented explicitly instead of being automatically generated via ROSETTA.
           SgName get_name() const;
@@ -871,7 +871,7 @@ HEADER_LIST_DECLARATIONS
 
           void hasEllipses();
 
-       // DQ (5/3/2005): Added get_qualified_name() function for interface symetry (and because 
+       // DQ (5/3/2005): Added get_qualified_name() function for interface symmetry (and because 
        // it makes sense given that the same function can exist in two different namespaces and 
        // that only the qualified name would distinguish them).
           virtual SgName get_qualified_name() const;
@@ -983,7 +983,7 @@ HEADER_LIST_DECLARATIONS
      public:
 
        // DQ (11/16/2004): Added local get_class_scope function to support version of get_scope which would 
-       // return a SgClassDefinition rather than a SgScopeStatement.  This version is more consistant with 
+       // return a SgClassDefinition rather than a SgScopeStatement.  This version is more consistent with 
        // the former get_scope() function which is not defined in the base class and must return a 
        // SgScopeStatement to be sufficiently general.
        /* \brief This function returns the scope if it exists (is defined in the current translation unit).
@@ -1000,7 +1000,7 @@ HEADER_LIST_DECLARATIONS
           to a class declaration even if the get_class_scope() function returns a NULL pointer. This is the 
           case for a pointer to a member function (see test2007_116.C).
 
-          \implementation This is much more than a simble access function for the p_associatedClassDeclaration data member.
+          \implementation This is much more than a simple access function for the p_associatedClassDeclaration data member.
         */
           SgClassDeclaration* get_associatedClassDeclaration () const;
 
@@ -1056,7 +1056,7 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           $CLASSNAME ( Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer = NULL );
           $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 
-       // DQ (11/10/2006): This function is called by the custom written constructors (refactored code to simplify their implimentation).
+       // DQ (11/10/2006): This function is called by the custom written constructors (refactored code to simplify their implementation).
           void initializeData(Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer);
 
           void setDeclarationOnly() ROSE_DEPRECATED_FUNCTION;
@@ -1085,7 +1085,7 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
        // SgType *get_type();
 
        // DQ (7/19/2005): SgVariableDeclaration should have a structural definition of its scope (based on position in 
-       // source code) while the variables declared should (and do) have a posible different scope (via name qualification).
+       // source code) while the variables declared should (and do) have a possibly different scope (via name qualification).
        // DQ (7/4/2005): implement get_scope to query the initialized names in the initialized name list (SgInitializedNamePtrList)
        // without this function we evaluate the scope using a traversal of the parents!
        // SgScopeStatement* get_scope(void) const;
@@ -1443,8 +1443,8 @@ HEADER_EXPRESSION_STATEMENT_END
 
 HEADER_LABEL_STATEMENT_START
        // DQ (10/20/2004): This is not part of a uniform interface for all statements 
-       // so it is not a particularly useful interface within a mimimalist design.
-       // Thus I have depricated this function, users should use the get_label() 
+       // so it is not a particularly useful interface within a minimalist design.
+       // Thus I have deprecated this function, users should use the get_label() 
        // function instead.
           SgName get_name() const ROSE_DEPRECATED_FUNCTION;
 
@@ -1452,7 +1452,7 @@ HEADER_LABEL_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
-       // DQ (2/10/2007): Marked as virtual to be consistant
+       // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
@@ -1741,6 +1741,7 @@ HEADER_GOTO_STATEMENT_END
 HEADER_ASM_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
@@ -1803,7 +1804,7 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
       //! Support for where the scope is explicitly required
           virtual bool hasExplicitScope() const;
 
-       // DQ (2/10/2007): Marked as virtual to be consistant
+       // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
       //! Returns the defining declaration if get_typedefBaseTypeContainsDefiningDeclaration() is true, otherwise NULL. Also same as get_declaration().
@@ -1855,7 +1856,7 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_START
       //! Support for where the scope is explicitly required
           virtual bool hasExplicitScope() const;
 
-       // DQ (2/10/2007): Marked as virtual to be consistant
+       // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 #if ALT_FIXUP_COPY
@@ -1907,8 +1908,8 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           virtual SgName get_mangled_name (void) const;
 
        // DQ (9/23/2004): Added function to hide base class interface so that we would only set the 
-       // definition for a template instatiation declaration using a template instationation definition.
-       // At a later point the template instatiation definition will contain more information specific 
+       // definition for a template instantiation declaration using a template instantiation definition.
+       // At a later point the template instantiation definition will contain more information specific 
        // to it being a part of a template.
           void set_definition( SgTemplateInstantiationDefn* definition );
 
@@ -2066,7 +2067,7 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
           virtual bool hasExplicitScope() const;
 #endif
 
-       // DQ (2/10/2007): Marked as virtual to be consistant
+       // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
        // DQ (6/5/2007): Since namespaces are re-entrant we define a simple function to test if two namespaces 
@@ -2168,7 +2169,7 @@ HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_END
 
 HEADER_PROGRAM_HEADER_STATEMENT_START
   /* HEADER_LIST_DECLARATIONS */
-  // DQ (3/20/2007): These are automatically generated access functions fro p_name (also added as a data member)
+  // DQ (3/20/2007): These are automatically generated access functions from p_name (also added as a data member)
   // SgName get_name() const;
   // void set_name(SgName);
 
@@ -2694,7 +2695,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
              {
                if (removeCurrent)
                   {
-                 // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformaly in ROSE.
+                 // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
 
                     parent->set_isModified(true);
@@ -2717,7 +2718,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // DQ (10/17/2004): We MUST set the parent here, the string based AST rewrite mechanism 
                       // requires this semantics. Previously it was removed as part of the movement toward an 
                       // initialization of the parent pointers within a post processing phase.  This post-processing
-                      // phase was a result of an attempt (sucessful) to remove side-effects from the set_xxx 
+                      // phase was a result of an attempt (successful) to remove side-effects from the set_xxx 
                       // access functions generated by ROSETTA.  At some point parents will be be initialized within 
                       // the EDG/Sage interface, but we will be more careful how it is done and not reintroduce the 
                       // previous side-effects back into the access functions.
@@ -2735,7 +2736,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // ("n->set_scope(parentScope);" was already commented out so this is unused code).
 
                       // DQ (12/5/2004): If the scope is stored explicitly then we must also set the scope of the new 
-                      // statement.  But we will not know the scope, so for now derive it structureally (using the parent).
+                      // statement.  But we will not know the scope, so for now derive it structurally (using the parent).
                       // But not all statements have a set_scope function, so see if this one does.
                          SgScopeStatement* parentScope = isSgScopeStatement(parent);
 
@@ -2870,7 +2871,7 @@ SgStatement::post_construction_initialization()
    {
    }
 
-// DQ (12/5/2004): Support for setting scopes (only menaingful on IR statements that store the scope explicitly)
+// DQ (12/5/2004): Support for setting scopes (only meaningful on IR statements that store the scope explicitly)
 void
 SgStatement::set_scope ( SgScopeStatement* newScope )
    {
@@ -2891,7 +2892,7 @@ void
 SgStatement::setExtern()
    {
      ROSE_ASSERT(this != NULL);
-     printf ("Error: SgStatment::setExtern() is deprecated (it is now an error to call this) \n");
+     printf ("Error: SgStatement::setExtern() is deprecated (it is now an error to call this) \n");
      ROSE_ASSERT(false);
    }
 
@@ -2899,7 +2900,7 @@ void
 SgStatement::setStatic()
    {
      ROSE_ASSERT(this != NULL);
-     printf ("Error: SgStatment::setStatic() is deprecated (it is now an error to call this) \n");
+     printf ("Error: SgStatement::setStatic() is deprecated (it is now an error to call this) \n");
      ROSE_ASSERT(false);
    }
 
@@ -2937,7 +2938,7 @@ SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFron
 
 
 // DQ (12/6/2006): We need this sort of function now that we have removed the expression root node!
-// The requirement of not being able to do operations uniformally on expressions may be the disadvantage
+// The requirement of not being able to do operations uniformly on expressions may be the disadvantage
 // of not having used the SgExpressionRoot IR node as a concept.
 int
 SgStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
@@ -2956,7 +2957,7 @@ SgStatement::get_scope(void) const
   // EDG/SAGE interface and is only called after the SAGE AST has been built and the parent
   // pointers set within a separate phase.
 
-  // Imprtant exception: The SgFunctionParameterList should have as it's scope the
+  // Important exception: The SgFunctionParameterList should have as it's scope the
   // SgFunctionDefinition, but it is a sibling of the SgFunctionDefinition (both the
   // SgFunctionParameterList and the SgFunctionDefinition have the SgFunctionDeclaration
   // as a parent.  Thus the scope of the SgFunctionParameterList is computed to be the 
@@ -3024,8 +3025,8 @@ SgStatement::get_scope(void) const
                     returnScope = functionDeclaration->get_scope();
                   }
 #else
-            // DQ (2/12/2006): provide a consistant definition of the scope for SgFunctionParameterList
-            // instead of a definition that dependes on if it is a defining or non-defining declaration.
+            // DQ (2/12/2006): provide a consistent definition of the scope for SgFunctionParameterList
+            // instead of a definition that depends on if it is a defining or non-defining declaration.
                returnScope = functionDeclaration->get_scope();
 #endif
                ROSE_ASSERT (returnScope != NULL);
@@ -3124,10 +3125,10 @@ SgStatement::get_scope(void) const
                     ROSE_ASSERT (stmtTemp);
                     stmt = isSgStatement(stmtTemp);
 
-                 // DQ (11/3/2007): Here is the fix for the case of calling the get_scope from the a class definition.
+                 // DQ (11/3/2007): Here is the fix for the case of calling the get_scope from a class definition.
                  // Because the definition of a class could be in an alternative location (structurally) from its 
                  // initial declaration, we have to be careful if the parent of the initial input node to this function 
-                 // is a declaration which has an explicitly strored scope (since we will just use the parents and not 
+                 // is a declaration which has an explicitly stored scope (since we will just use the parents and not 
                  // the explicitly stored scope in the code below.  The fix is to check if the value of "stmt" is a 
                  // declaration with an explicitly stored scope (and if so use that value). Note that we can only
                  // return the explicitly stored scope, else we have to use parents to track backwards up the tree.
@@ -3173,7 +3174,7 @@ SgStatement::get_scope(void) const
                       // DQ (12/16/2007): Added error handling (reporting)
                          if (isSgStatement(stmt->get_parent()) == NULL)
                             {
-                              printf ("Error: isSgStatement(stmt ->get_parent()) == NULL (statment = %p = %s) (numeric_label = %p) \n",stmt,stmt->class_name().c_str(),stmt->get_numeric_label());
+                              printf ("Error: isSgStatement(stmt ->get_parent()) == NULL (statement = %p = %s) (numeric_label = %p) \n",stmt,stmt->class_name().c_str(),stmt->get_numeric_label());
                             }
                          ROSE_ASSERT(stmt->get_parent() != NULL);
                          stmt = isSgStatement(stmt->get_parent());
@@ -3272,7 +3273,7 @@ SgStatement::cfgInEdges(unsigned int) {
     return std::vector<VirtualCFG::CFGEdge>();
   }
 
-// DQ (12/16/2007): Added virtual function so that we could set the end_numeric_label on all relavant Fortran constructs
+// DQ (12/16/2007): Added virtual function so that we could set the end_numeric_label on all relevant Fortran constructs
 // void SgStatement::set_end_numeric_label(SgLabelSymbol* end_numeric_label)
 void
 SgStatement::set_end_numeric_label(SgLabelRefExp* end_numeric_label)
@@ -3282,7 +3283,7 @@ SgStatement::set_end_numeric_label(SgLabelRefExp* end_numeric_label)
    }
 
 
-// Report if a constrcut has a concept of end_numeric_label
+// Report if a construct has a concept of end_numeric_label
 bool
 SgStatement::has_end_numeric_label() const
    {
@@ -3474,7 +3475,7 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l )
 SgScopeStatement::SgScopeStatement ( Sg_File_Info* file_info )
    : $BASECLASS(file_info)
    {
-  // Make the global scope hash multimap larger since it typically supports more synbols.
+  // Make the global scope hash multimap larger since it typically supports more symbols.
   // Use a prime number (better!)
      if (variantT() == V_SgGlobal || variantT() == V_SgNamespaceDefinitionStatement)
         {
@@ -3660,7 +3661,7 @@ SgScopeStatement::lookup_enum_field_symbol(const SgName& n) const
 SgVariableSymbol*
 SgScopeStatement::lookup_var_symbol(const SgName& n) const
    {
-  // DQ (2/4/2007): This function is part of an older interface which is depricated.
+  // DQ (2/4/2007): This function is part of an older interface which is deprecated.
      return lookup_variable_symbol(n);
    }
 SgVariableSymbol*
@@ -3767,7 +3768,7 @@ SgScopeStatement::first_function_symbol() const
      return p_symbol_table->find_function();
    }
 
-// DQ (2/1/2007): Added to ROSE to make the interface consistant.
+// DQ (2/1/2007): Added to ROSE to make the interface consistent.
 SgTypedefSymbol*
 SgScopeStatement::first_typedef_symbol() const
    {
@@ -3775,7 +3776,7 @@ SgScopeStatement::first_typedef_symbol() const
      return p_symbol_table->find_typedef();
    }
 
-// DQ (2/1/2007): Added to ROSE to make the interface consistant.
+// DQ (2/1/2007): Added to ROSE to make the interface consistent.
 SgEnumSymbol*
 SgScopeStatement::first_enum_symbol() const
    {
@@ -3783,7 +3784,7 @@ SgScopeStatement::first_enum_symbol() const
      return p_symbol_table->find_enum();
    }
 
-// DQ (2/1/2007): Added to ROSE to make the interface consistant.
+// DQ (2/1/2007): Added to ROSE to make the interface consistent.
 SgEnumFieldSymbol*
 SgScopeStatement::first_enum_field_symbol() const
    {
@@ -3791,7 +3792,7 @@ SgScopeStatement::first_enum_field_symbol() const
      return p_symbol_table->find_enum_field();
    }
 
-// DQ (2/1/2007): Added to ROSE to make the interface consistant.
+// DQ (2/1/2007): Added to ROSE to make the interface consistent.
 SgLabelSymbol*
 SgScopeStatement::first_label_symbol() const
    {
@@ -3799,7 +3800,7 @@ SgScopeStatement::first_label_symbol() const
      return p_symbol_table->find_label();
    }
 
-// DQ (2/1/2007): Added to ROSE to make the interface consistant.
+// DQ (2/1/2007): Added to ROSE to make the interface consistent.
 SgNamespaceSymbol*
 SgScopeStatement::first_namespace_symbol() const
    {
@@ -3807,7 +3808,7 @@ SgScopeStatement::first_namespace_symbol() const
      return p_symbol_table->find_namespace();
    }
 
-// DQ (2/4/2007): Added to ROSE to make the interface consistant.
+// DQ (2/4/2007): Added to ROSE to make the interface consistent.
 SgTemplateSymbol*
 SgScopeStatement::first_template_symbol() const
    {
@@ -3955,12 +3956,12 @@ bool
 SgScopeStatement::containsOnlyDeclarations() const
    {
   // All but two of the derived classes contain one or more list of SgStatements while two of them
-  // contain a list of SgDeclarationStmt which complicates the design of a simple implmentation of
+  // contain a list of SgDeclarationStmt which complicates the design of a simple implementation of
   // functions that operate on scopes generally.
      bool returnValue = false;
      switch ( variantT() )
         {
-       // DQ (11/30/2007): Added more fortran support.
+       // DQ (11/30/2007): Added more Fortran support.
           case V_SgAssociateStatement:
 
           case V_SgBasicBlock:
@@ -3998,7 +3999,7 @@ bool
 SgScopeStatement::supportsDefiningFunctionDeclaration()
    {
   // DQ (10/18/2006): Not all scopes permit function declarations. Any function prototype in a 
-  // scope appropriate for a function definition triggers requirements for name qualifiaction.
+  // scope appropriate for a function definition triggers requirements for name qualification.
   // This function returns true if the scope is appropriate for the definition of a function
   // or member function (i.e. is a SgGlobal, SgClassDefinition, or SgNamespaceDefinitionStatement).
 
@@ -4294,8 +4295,8 @@ SgStatementPtrList
 SgScopeStatement::generateStatementList()
    {
   // This function permits access to the statements or declarations as a list of statements
-  // since declaations are derivved from statements.  This function gnerates a copy of the
-  // list in both cases (symetricly for both types).
+  // since declarations are derived from statements.  This function generates a copy of the
+  // list in both cases (symmetrically for both types).
 
 #if 0
      printf ("In $CLASSNAME::generateStatementList() containsOnlyDeclarations() = %s \n",
@@ -4455,7 +4456,7 @@ SgScopeStatement::getStatementList ()
                currentStatementList->merge(ifStatement->false_body()->getStatementList());
 #endif
 
-               printf ("getStatementList() return value not defined for SgIfStatement containing true and false bodies (use generateStatementList() to form copy of merges lists) \n");
+               printf ("getStatementList() return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() to form copy of merges lists) \n");
                ROSE_ABORT();
                break;
              }
@@ -4615,7 +4616,7 @@ SgScopeStatement::getStatementList () const
                currentStatementList->merge(ifStatement->false_body()->getStatementList());
 #endif
 
-               printf ("getStatementList() const return value not defined for SgIfStatement containing true and false bodies (use generateStatementList() const to form copy of merges lists) \n");
+               printf ("getStatementList() const return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() const to form copy of merges lists) \n");
                ROSE_ABORT();
                break;
              }
@@ -4700,8 +4701,8 @@ const SgStatementPtrList
 SgScopeStatement::generateStatementList() const
    {
   // This function permits access to the statements or declarations as a list of statements
-  // since declaations are derivved from statements.  This function gnerates a copy of the
-  // list in both cases (symetricly for both types).
+  // since declarations are derived from statements.  This function generates a copy of the
+  // list in both cases (symmetrically for both types).
 
 #if 0
      printf ("In $CLASSNAME::generateStatementList() containsOnlyDeclarations() = %s \n",
@@ -4756,7 +4757,7 @@ SgScopeStatement::generateStatementList() const
 unsigned int
 SgScopeStatement::generateUniqueStatementNumberForScope( SgStatement* statement )
    {
-  // DQ (2/20/2007): This function supports the AST merge mechansim, but is general 
+  // DQ (2/20/2007): This function supports the AST merge mechanism, but is general 
   // and may be useful for the mangled name generation in the future.
 
   // This function generates a unique number for each statement in the scope by returning
@@ -4765,8 +4766,8 @@ SgScopeStatement::generateUniqueStatementNumberForScope( SgStatement* statement 
   // un-named enums and class declarations and template declarations of overloaded 
   // functions in a templated class (since at the point of instantiation of the outer class
   // the names of any overloaded functions are all the same).  The value of returned 
-  // by this function should only be relyied upon to be unique for the given scope (nothing more).
-  // This function may be useful for naming un-named scopes such as though in loop constructs.
+  // by this function should only be relied upon to be unique for the given scope (nothing more).
+  // This function may be useful for naming unnamed scopes such as though in loop constructs.
 
 #if 1
      printf ("In SgScopeStatement::generateUniqueStatementNumberForScope() containsOnlyDeclarations() = %s \n",
@@ -4856,8 +4857,8 @@ SOURCE_FUNCTION_TYPE_TABLE_STATEMENT_START
 /* \brief Hash table of function types (table is stored on global scope).
 
    Hash table of function types (table is stored on global scope and includes data
-   from all scopes). Function types are placed into and retrived from this data 
-   base (simgle hash table) of function types.
+   from all scopes). Function types are placed into and retrieved from this data 
+   base (simple hash table) of function types.
  */
 // DQ (1/31/2006): Modified to build all types in the memory pools
 // SgFunctionTypeTable Sgfunc_type_table;
@@ -5129,7 +5130,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_Global* Xptr )
 
   // Specifics of this function:
   // We could bury the reference to the project into this function since their is only one global scope
-  // Or we could pass the poject as a parameter to this function (since it is the root of all program trees?)
+  // Or we could pass the project as a parameter to this function (since it is the root of all program trees?)
 
      printf ("Inside of $CLASSNAME friend function Sgparse($PARENT_GRAMMARS_PREFIX_Global*) \n");
 
@@ -5281,7 +5282,7 @@ SgDeclarationStatement::unsetSkipElaborateType()
 void
 SgDeclarationStatement::testForBadGenerateTemplateName( const std::string & name ) 
    {
-  // DQ (2/20/2005): Error checking on existance of substrings that can be common
+  // DQ (2/20/2005): Error checking on existence of substrings that can be common
   // in building template name and which are a source of errors in generated code.
      if ( (name.find("<<") != string::npos) || (name.find(">>") != string::npos) )
         {
@@ -5314,7 +5315,7 @@ SgDeclarationStatement::skipEmptyTemplateArgumentListTest ( SgFunctionDeclaratio
    {
   // DQ (4/13/2005): Avoid output of empty lists of template arguments in function names
   // as in "endl<>" (which is a bug in g++ version 3.4, see test2005_55.C).  This
-  // should only apply to function and member functions since they alown can skip the output of "<>".
+  // should only apply to function and member functions since they alone can skip the output of "<>".
   // What we do below is skip the "<" and ">" when the list of template arguments would be empty.
   // It would be empty when either there are no arguments or non were explicitly specified in the 
   // source code.
@@ -5330,7 +5331,7 @@ SgDeclarationStatement::skipEmptyTemplateArgumentListTest ( SgFunctionDeclaratio
      string functionName;
      SgTemplateArgumentPtrListPtr templateArgListPtr = NULL;
 
-  // One or the other of these are valie pointers, but not both!
+  // One or the other of these are valid pointers, but not both!
      SgTemplateInstantiationFunctionDecl       *templateInstantiationFunctionDeclaration       = 
           isSgTemplateInstantiationFunctionDecl(functionDeclaration);
      SgTemplateInstantiationMemberFunctionDecl *templateInstantiationMemberFunctionDeclaration = 
@@ -5391,7 +5392,7 @@ void
 resetTemplateNamesInScope ( SgScopeStatement* scope )
    {
   // DQ (8/11/2005): This function loops over all parent scopes to reset
-  // any possibly unset names in instantiatied templated classes.
+  // any possibly unset names in instantiated templated classes.
 
   // DQ (2/10/2007): I hope we can assert this!
      ROSE_ASSERT(scope != NULL);
@@ -5546,7 +5547,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     returnName         = node->get_templateName().str();
                     templateArgListPtr = node->get_templateArguments();
 
-                 // DQ (2/21/2005): Error checking on existance of substrings that can be common
+                 // DQ (2/21/2005): Error checking on existence of substrings that can be common
                  // in building template name and which are a source of errors in generated code.
                     testForBadGenerateTemplateName(returnName);
                     break;
@@ -5577,7 +5578,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                  // DQ (4/13/2005): Avoid output of empty template lists where not required (e.g. "std::endl<>" ).
                     skipEmptyTemplateArgumentList = skipEmptyTemplateArgumentListTest(node);
 
-                 // DQ (2/21/2005): Error checking on existance of substrings that can be common
+                 // DQ (2/21/2005): Error checking on existence of substrings that can be common
                  // in building template name and which are a source of errors in generated code.
                     testForBadGenerateTemplateName(returnName);
                     break;
@@ -5609,7 +5610,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                  // DQ (4/13/2005): Avoid output of empty template lists where not required (e.g. "std::endl<>" ).
                     skipEmptyTemplateArgumentList = skipEmptyTemplateArgumentListTest(node);
 
-                 // DQ (2/21/2005): Error checking on existance of substrings that can be common
+                 // DQ (2/21/2005): Error checking on existence of substrings that can be common
                  // in building template name and which are a source of errors in generated code.
                     testForBadGenerateTemplateName(returnName);
                     break;
@@ -5623,9 +5624,9 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
 
           ROSE_ASSERT(templateArgListPtr != NULL);
 
-       // DQ (4/13/2005): Sometimes template parameters are present but were not specificed in the source code and if so we 
+       // DQ (4/13/2005): Sometimes template parameters are present but were not specified in the source code and if so we 
        // should also not output "<>".  This is a stronger test than that implemented previously (fixes output of "std::endl<>" as well).
-       // DQ (2/17/2005): We want to avoid "<>" appearing where template arguments are ment to be used (e.g. in function names)
+       // DQ (2/17/2005): We want to avoid "<>" appearing where template arguments are meant to be used (e.g. in function names)
        // if (templateArgListPtr != NULL)
        // if ( (appendTemplateArguments == true) && (templateArgListPtr->size() > 0) )
           if ( ( (appendTemplateArguments == true) && (templateArgListPtr->size() > 0) ) && (skipEmptyTemplateArgumentList == false) )
@@ -5823,7 +5824,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                                     // SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(typedefType->get_declaration());
                                                        SgScopeStatement* typedefScope = typedefDeclaration->get_scope();
                                                        ROSE_ASSERT(typedefScope != NULL);
-                                                    // printf ("In resetTemplateName: traversing through parent scopes to resent any instnatiated template names \n");
+                                                    // printf ("In resetTemplateName: traversing through parent scopes to resent any instantiated template names \n");
                                                        resetTemplateNamesInScope(typedefScope);
                                                      }
 
@@ -5875,7 +5876,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                         case V_SgTypeInt:
                                         case V_SgEnumType:
                                            {
-                                          // Nothing to do here with these primative types (listed explicitly to avoid compiler warnings)
+                                          // Nothing to do here with these primitive types (listed explicitly to avoid compiler warnings)
                                              break;
                                            }
 
@@ -5918,7 +5919,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                  }
                             }
 
-                      // DQ (2/21/2005): Error checking on existance of substrings that can be common
+                      // DQ (2/21/2005): Error checking on existence of substrings that can be common
                       // in building template name and which are a source of errors in generated code.
                          testForBadGenerateTemplateName(returnName);
 
@@ -5930,7 +5931,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                          unparseInfo.set_SkipDefinition();
                          ROSE_ASSERT (unparseInfo.SkipDefinition() == true);
 
-                      // DQ (2/28/2005): Set these to be consistant with unparseToString
+                      // DQ (2/28/2005): Set these to be consistent with unparseToString
                       // Skip all comments in unparsing
                          unparseInfo.set_SkipComments();
                          ROSE_ASSERT (unparseInfo.SkipComments() == true);
@@ -5959,7 +5960,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                          returnName += globalUnparseToString(*i,&unparseInfo);
                       // printf ("After globalUnparseToString: returnName = %s \n",returnName.c_str());
 
-                      // DQ (2/21/2005): Error checking on existance of substrings that can be common
+                      // DQ (2/21/2005): Error checking on existence of substrings that can be common
                       // in building template name and which are a source of errors in generated code.
                          testForBadGenerateTemplateName(returnName);
                        }
@@ -5986,7 +5987,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                returnName += " > ";
 
 #if 0
-            // DQ (2/20/2005): Error checking on existance of substrings that can be common
+            // DQ (2/20/2005): Error checking on existence of substrings that can be common
             // in building template name and which are a source of errors in generated code.
                if ( (returnName.find("<<") != string::npos) || (returnName.find(">>") != string::npos) )
                   {
@@ -6104,11 +6105,11 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
              }
        // DQ (2/15/2005): Modified to reference input parameters
        // DQ (10/11/2004): Removed call to unparser since it often requires that the parents
-       // be set.  Now we have to mark this template as no long contining a mangled name
+       // be set.  Now we have to mark this template as no longer containing a mangled name
        // set_nameResetFromMangledForm(true);
           nameResetFromMangledForm = true;
 
-       // DQ (2/20/2005): Error checking on existance of substrings that can be common
+       // DQ (2/20/2005): Error checking on existence of substrings that can be common
        // in building template name and which are a source of errors in generated code.
           testForBadGenerateTemplateName(returnName);
         }
@@ -6128,7 +6129,7 @@ stringSupport ( string & sourceString, const string & targetString, const string
 static SgName fixupTemplateNameForMangledNameSupport( const SgName & name)
    {
   // Where template names are reset to the form "foo < int >" we can look for just
-  // the " < " and " > " substrings which are qarenteed to exist by construction!
+  // the " < " and " > " substrings which are guaranteed to exist by construction!
      string s = name.str();
 
   // printf ("In fixupTemplateNameForMangledNameSupport(): Before filtering s = %s \n",s.c_str());
@@ -6314,10 +6315,10 @@ SgDeclarationStatement::generate_alternative_name_for_unnamed_declaration_in_sco
 
           default:
              {
-               printf ("Default reached in un-named declaration within parent = %p = %s \n",scope,scope->class_name().c_str());
-               get_file_info()->display("Error: location of problem un-named SgClassDeclaration");
+               printf ("Default reached in unnamed declaration within parent = %p = %s \n",scope,scope->class_name().c_str());
+               get_file_info()->display("Error: location of problem unnamed SgClassDeclaration");
                ROSE_ASSERT(scope->get_file_info() != NULL);
-               scope->get_file_info()->display("Error: location of problem un-named SgClassDeclaration");
+               scope->get_file_info()->display("Error: location of problem unnamed SgClassDeclaration");
                ROSE_ASSERT(false);
              }
 
@@ -6531,7 +6532,7 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
             // If this is NULL then we should have found the symbol  using the firstNondefiningDeclaration
                if (declarationAssociatedWithSymbol == NULL)
                   {
-                 // DQ (6/30/2007): Test if the this pointer has an associqated symbol.
+                 // DQ (6/30/2007): Test if the this pointer has an associated symbol.
                     printf ("Error: problem this = %p = %s = %s \n",
                          this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
                     ROSE_ASSERT(this->get_symbol_from_symbol_table() == NULL);
@@ -6677,7 +6678,7 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
 SgBasicBlock::SgBasicBlock(Sg_File_Info* info, SgStatement* stmt)
 :$BASECLASS(info)
    {
-  /* now a call to the user defined intialization function */
+  /* now a call to the user defined initialization function */
      post_construction_initialization();
      if (stmt != NULL)
         {
@@ -6691,7 +6692,7 @@ SgBasicBlock::SgBasicBlock(Sg_File_Info* info, SgStatement* stmt)
 SgBasicBlock::SgBasicBlock( SgStatement* stmt )
 :$BASECLASS()
    {
-  /* now a call to the user defined intialization function */
+  /* now a call to the user defined initialization function */
      post_construction_initialization();
      if (stmt != NULL)
         {
@@ -6838,7 +6839,7 @@ unsigned int
 SgIfStmt::cfgFindChildIndex(SgNode* n)
    {
   // DQ (8/24/2006): Could be rewritten as:
-  // Make sure that this is either the conditional, true body, or the fals body
+  // Make sure that this is either the conditional, true body, or the false body
   // ROSE_ASSERT (n == this->get_conditional() || n == this->get_true_body() || n == this->get_false_body() );
   // return (n == this->get_conditional()) ? 0 : 1;
 
@@ -7213,7 +7214,7 @@ SgForStatement::get_init_stmt()
 const SgStatementPtrList &
 SgForStatement::get_init_stmt() const
    {
-  // DQ (6/24/2006): When we later simplify the append, prepend, inster functions this will be important.
+  // DQ (6/24/2006): When we later simplify the append, prepend, insert functions this will be important.
      ROSE_ASSERT(p_for_init_stmt != NULL);
 
      return get_for_init_stmt()->get_init_stmt();
@@ -7293,7 +7294,7 @@ SgForStatement::replace_child(SgStatement *target,SgStatement *newstmt,
 
 // DQ (11/25/2005): preserve the previous interface so that
 // the most common case of where a test is an expression can
-// be handled as before.  We can depricate this function later.
+// be handled as before.  We can deprecate this function later.
 // Currently the test has been modified to allow it to be a SgStatement
 // and in the case of an expression, it is just a SgExprStatement.
 // This is required for C and C++ which allows declarations to be
@@ -7445,7 +7446,7 @@ SgForStatement::set_test_expr_root (SgExpressionRoot* expressionRoot )
 #endif
 
 // DQ (12/6/2006): We need this sort of function now that we have removed the expression root node!
-// The requirement of not being able to do operations uniformally on expressions may be the disadvantage
+// The requirement of not being able to do operations uniformly on expressions may be the disadvantage
 // of not having used the SgExpressionRoot IR node as a concept.
 int
 SgForStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
@@ -7544,12 +7545,12 @@ SgFunctionDeclaration::post_construction_initialization()
   // ROSE_ASSERT (thisFileInfo != NULL);
 
   // DQ (10/25/2004): Force generation of new file info object (all such objects should be unique)
-  // initialize the FunctionParameterList as an object that is refered to from FunctionDeclaration
+  // initialize the FunctionParameterList as an object that is referred to from FunctionDeclaration
   // Sg_File_Info* fileInfo = new Sg_File_Info(*thisFileInfo);
   // ROSE_ASSERT (fileInfo != NULL);
 
   // DQ (11/12/2006): Modified to permit being called by constructor without Sg_File_Info objects.
-  // DQ (7/19/2005): set parameter list on a single location (and independently of existance of function parameters)
+  // DQ (7/19/2005): set parameter list on a single location (and independently of existence of function parameters)
   // p_args = new SgFunctionParameterList(fileInfo);
      SgFunctionParameterList* args = NULL;
      if (get_startOfConstruct() != NULL)
@@ -7569,7 +7570,7 @@ SgFunctionDeclaration::post_construction_initialization()
      get_parameterList()->set_parent(this);
 
   // DQ (3/6/2007): Set the firstNondefiningDeclaration of args to itself (this is now required 
-  // for the AST consistancy tests after the AST merge).  Likely because one where a member fucntion 
+  // for the AST consistency tests after the AST merge).  Likely because one where a member function 
   // is referenced before being declared in a class the member function was not previously visited by 
   // the AST traversal and so one of its defining or non-defining declarations was not set and after 
   // the merge this declaration is used (shared) and thus accessed where before it had been hidden.
@@ -7582,7 +7583,7 @@ SgFunctionDeclaration::post_construction_initialization()
      args->set_firstNondefiningDeclaration(args);
 
   // DQ (10/25/2004): Add a ending file info object for completeness (though this is not yet 
-  // initialized to the correct possition, yet).  Initially let's get them in place then we can
+  // initialized to the correct position, yet).  Initially let's get them in place then we can
   // work on the accuracy afterward!
   // Sg_File_Info* endingPosition = new Sg_File_Info(*thisFileInfo);
   // ROSE_ASSERT (endingPosition != NULL);
@@ -8095,7 +8096,7 @@ get_suppress_atomic ($CLASSNAME *node)
 // DQ (10/20/2004): This function should be different from those that are automatically generated 
 // via ROSETTA.  In the case of a constructor or destructor the class name should be used.  This 
 // is particularly important in the case of constructors and destructors of templated classes since 
-// the mangled form or the templae class should not be used since it will not allow the generated 
+// the mangled form or the template class should not be used since it will not allow the generated 
 // code to compile.  Instead of names of the form "ABC____L8" we want names of the form "ABC<int>".
 // These functions are now implemented explicitly instead of being automatically generated via ROSETTA.
 // SgName get_name() const
@@ -8367,7 +8368,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDeclaration* Xptr )
 
   // Specifics of this function:
   // We could bury the reference to the project into this function since their is only one global scope
-  // Or we could pass the poject as a parameter to this function (since it is the root of all program trees?)
+  // Or we could pass the project as a parameter to this function (since it is the root of all program trees?)
 
      printf ("Inside of INCOMPLETE $CLASSNAME friend function Sgparse($PARENT_GRAMMARS_PREFIX_Global*) \n");
 
@@ -8444,7 +8445,7 @@ unsigned int
 SgFunctionDefinition::cfgFindChildIndex(SgNode* n)
    {
   // DQ (8/24/2006): Could be rewritten as:
-  // Make sure that this is either the conditional, true body, or the fals body
+  // Make sure that this is either the conditional, true body, or the false body
   // ROSE_ASSERT (n == this->get_declaration()->get_parameterList() || n == this->get_body() );
   // return (n == this->get_declaration()->get_parameterList()) ? 0 : 1;
 
@@ -8663,7 +8664,7 @@ std::ostream & operator<< ( std::ostream & os, std::map<SgNode*,int> & x )
 // DQ (1/8/2007): Added to support qualified name generation (this forces 
 // function parameters to have the correct qualified name, same as local
 // variables declared in the scope of the function more directly (which
-// is handled by having a special implementation of "SgBasicblock::get_qualified_name() const"
+// is handled by having a special implementation of "SgBasicBlock::get_qualified_name() const"
 SgName
 SgFunctionDefinition::get_qualified_name() const
    {
@@ -8699,7 +8700,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDefinition* Xptr )
 
   // Specifics of this function:
   // We could bury the reference to the project into this function since their is only one global scope
-  // Or we could pass the poject as a parameter to this function (since it is the root of all program trees?)
+  // Or we could pass the project as a parameter to this function (since it is the root of all program trees?)
 
      printf ("Inside of $CLASSNAME friend function Sgparse($PARENT_GRAMMARS_PREFIX_Global*) \n");
 
@@ -8765,7 +8766,7 @@ SgMemberFunctionDeclaration::post_construction_initialization()
    {
   // DQ (9/15/2005): Remove side-effect from get_ctors() member function.
   // This was a problem for the AST tests where the post processing saw a 
-  // NULL pointer and then the unparers was called in the rewrite mechanism 
+  // NULL pointer and then the unparser was called in the rewrite mechanism 
   // and then the AST tests failed because the pointer was non-NULL (and 
   // also the SgCtorInitializerList had not been properly setup).
   // p_CtorInitializerList = new SgCtorInitializerList(New_File_Info(this));
@@ -8790,7 +8791,7 @@ SgMemberFunctionDeclaration::post_construction_initialization()
      p_CtorInitializerList->set_firstNondefiningDeclaration(p_CtorInitializerList);
 
   // DQ (9/21/2005): Added warning since this is an issue worth review! 
-  // printf ("Warning: Set p_CtorInitializerList = %p firstNondefiingDeclaration to self, unclear if this is correct \n",p_CtorInitializerList);
+  // printf ("Warning: Set p_CtorInitializerList = %p firstNondefiningDeclaration to self, unclear if this is correct \n",p_CtorInitializerList);
 
   // DQ (9/21/2005): set the parent so that the scope will be computed correctly
   // (scope is not stored explicitly on the SgCtorInitializerList IR node).
@@ -8835,7 +8836,7 @@ SgMemberFunctionDeclaration::get_ctors() const
 SgName
 SgMemberFunctionDeclaration::get_qualified_name() const
    {
-  // DQ (8/28/2005): Modified to make this function consistant other get_qualified_name functions
+  // DQ (8/28/2005): Modified to make this function consistent other get_qualified_name functions
   // It previously only returned the name of the class to which is was a member function!
   // printf ("In $CLASSNAME::get_qualified_name() name = %s \n",get_name().str());
 
@@ -8955,11 +8956,11 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
    {
   // DQ (10/12/2007): It is OK for this to be NULL! If it is NULL, then the get_associatedClassDeclaration() has the class declaration!
 
-  // DQ (12/5/2004): The scope is explicit and should be a vailid pointer (if not it is an error!)
+  // DQ (12/5/2004): The scope is explicit and should be a valid pointer (if not it is an error!)
   // ROSE_ASSERT(p_scope != NULL);
 
   // DQ (11/17/2004): Note that get_scope returns a SgScopeStatement, but member functions are always part 
-  // of a SgClassDefinition and we want to reflect this and be as consistatn as possible with the former 
+  // of a SgClassDefinition and we want to reflect this and be as consistent as possible with the former 
   // get_scope() function which was only defined on the SgMemberFunctionDeclaration but is now defined on 
   // many different IR nodes (as a result of a major bug fix specific to scopes vs. parents handling).
   // SgClassDefinition *parentScope = isSgClassDefinition(get_scope());
@@ -9003,7 +9004,7 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
              {
             // DQ (12/5/2004): Note that new member function declarations added from the rewrite system 
             // allow there scope to be derived from the parent node.  This results in incorrect information 
-            // which is later discoved in the unparser!  Need to do a better job of setting the scoep of
+            // which is later discovered in the unparser!  Need to do a better job of setting the scope of
             // all statements when introduced from the rewrite mechanism.
 
                ROSE_ASSERT(get_name().is_null() == false);
@@ -9225,7 +9226,7 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
 
 #if 1
   // PC (7/14/2006): Set initializer's parent, as expected by inliner
-  // DQ (7/20/2006): this would be betterhandled by the code calling this 
+  // DQ (7/20/2006): this would be better handled by the code calling this 
   // constructor since this is now a side-effect on "initializer".
      if (initializer != NULL)
         {
@@ -9243,7 +9244,7 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
        // DQ (12/18/2006): Added to set all parents of Sg_File_Info objects.
           copyOfFileInfo->set_parent(c_item);
 
-       // DQ (1/18/2006): Changed name to be consistant with SgNode::get_file_info()
+       // DQ (1/18/2006): Changed name to be consistent with SgNode::get_file_info()
        // c_item->set_fileInfo(copyOfFileInfo);
        // c_item->set_file_info(copyOfFileInfo);
           c_item->set_startOfConstruct(copyOfFileInfo);
@@ -9277,7 +9278,7 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
 void
 SgVariableDeclaration::post_construction_initialization()
    {
-  // DQ (11/18/2007): Added support for fortran declaration attributes
+  // DQ (11/18/2007): Added support for Fortran declaration attributes
   // p_fortran_attribute_spec = SgBitVector(SgAttributeSpecificationStatement::e_last_attribute_spec,false);
    }
 
@@ -9730,7 +9731,7 @@ SgVariableDeclaration::get_next(int & n) const
         {
           n++;
        // special case if type of variable declaration pt to a tag Reference which
-       // maybe a statment of some sort
+       // maybe a statement of some sort
        // only need to worry about first variable's decl
           SgInitializedNamePtrList::const_iterator p = get_variables().begin();
 
@@ -9818,7 +9819,7 @@ SgVariableDeclaration::get_mangled_name(void) const
 SgDeclarationStatement *
 SgVariableDeclaration::compute_baseTypeDefiningDeclaration() const
    {
-  // DQ (10/17/2007): It is likely that this function could be relaced with just:
+  // DQ (10/17/2007): It is likely that this function could be replaced with just:
   // return p_baseTypeDefiningDeclaration;
   // in the future.
 
@@ -9833,7 +9834,7 @@ SgVariableDeclaration::compute_baseTypeDefiningDeclaration() const
           return baseType->get_declaration()->get_definingDeclaration();
 #else
        // DQ (10/17/2007): Modified to permit the declaration to be stored and accessed so that the AST COPY mechanism 
-       // would not have to lookup the declaration through the type (which is a problem becasue types are shared and 
+       // would not have to lookup the declaration through the type (which is a problem because types are shared and 
        // so the declaration in the original AST is returned instead of the declaration form the copy of the AST).
           ROSE_ASSERT(p_baseTypeDefiningDeclaration != NULL);
           return p_baseTypeDefiningDeclaration;
@@ -9899,7 +9900,7 @@ SgVariableDefinition(Sg_File_Info *info, SgInitializedName *decl_item, SgInitial
    : $BASECLASS(info),
   // DQ (11/20/2004): Reordered pre-initialization list to avoid compiler warnings.
   // p_initializer_expr_root(new SgExpressionRoot(initializer == 0?New_File_Info(this) : new Sg_File_Info(*initializer->get_file_info()), initializer)),
-  // QY:11/2/04 remove redundant coupled SgInitialized nodes. 
+  // QY:11/2/04 remove redundant coupled SgInitializedName nodes. 
   // p_vardefn ( new SgInitializedName(decl_item->get_name(),NULL,initializer,this,NULL,NULL))
      p_vardefn(decl_item),
      p_bitfield(0)
@@ -9922,7 +9923,7 @@ SgVariableDefinition(Sg_File_Info *info, SgInitializedName *decl_item, SgInitial
      Sg_File_Info* copyOfFileInfo = new Sg_File_Info(*info);
      ROSE_ASSERT (copyOfFileInfo != NULL);
 
-  // DQ (1/18/2006): Changed name to be consistant with SgNode::get_file_info()
+  // DQ (1/18/2006): Changed name to be consistent with SgNode::get_file_info()
   // get_vardefn()->set_fileInfo(copyOfFileInfo);
      get_vardefn()->set_file_info(copyOfFileInfo);
 
@@ -9932,7 +9933,7 @@ SgVariableDefinition(Sg_File_Info *info, SgInitializedName *decl_item, SgInitial
   // printf ("In SgVariableDefinition constructor: defn_item = %p \n",defn_item);
 #endif
 
-  // QY:11/2/04    do not create a new  SgInitialized name. set p_vardefn = decl_item, then set the initializer in decl_item instead
+  // QY:11/2/04    do not create a new  SgInitializedName. set p_vardefn = decl_item, then set the initializer in decl_item instead
   // This resets the itemptr pointer in the declaration to the SgInitializedName object
   //   decl_item->set_named_item(get_vardefn());
       set_parent(decl_item);
@@ -9951,7 +9952,7 @@ SgVariableDefinition( SgInitializedName *decl_item, SgInitializer *initializer)
    : p_vardefn(decl_item),
      p_bitfield(0)
    {
-  // DQ (11/10/2006): This is a version of the constructor that is separated from the source position initalization.
+  // DQ (11/10/2006): This is a version of the constructor that is separated from the source position initialization.
      ROSE_ASSERT(decl_item != NULL);
 
      set_parent(decl_item);
@@ -10059,7 +10060,7 @@ SgClassDeclaration::get_qualified_name() const
      SgName returnName;
 
 #if 1
-  // DQ (6/3/2006): I think we should handle unions uniformally with structs and classes.
+  // DQ (6/3/2006): I think we should handle unions uniformly with structs and classes.
      SgScopeStatement* scope = get_scope();
      ROSE_ASSERT(scope != NULL);
      returnName = SgName::assembleQualifiedName(scope->get_qualified_name(),get_name());
@@ -10147,7 +10148,7 @@ SgClassDeclaration::get_mangled_name (void) const
 SgName
 SgClassDeclaration::get_mangled_qualified_name ( int & cnt )
    {
-  // This function is called durring the construction of the SAGE AST.  As a result 
+  // This function is called during the construction of the SAGE AST.  As a result 
   // it currently represents a dependence of the parent pointer.
 
   // Make sure that parents have been set already
@@ -10290,7 +10291,7 @@ SgTemplateInstantiationDecl::get_qualified_name() const
      if (get_nameResetFromMangledForm() == false)
         {
        // DQ (6/26/2005): It is OK for the EDG/Sage III translation to reference the qualified names 
-       // even before the names are properly set! As long as we consistantly return EDG uniquely generated 
+       // even before the names are properly set! As long as we consistently return EDG uniquely generated 
        // names.  This will allow the symbols to be built and shared, but afterward the symbols will have 
        // be in the wrong position in the hash table since the names used to place them will have changed.
 
@@ -10860,7 +10861,7 @@ SgEnumDeclaration::get_mangled_name (void) const
      bool specialCaseNameHandling = (name.getString().find("__rose_generated_enum_tag_name_") != std::string::npos);
 
   // DQ (3/10/2007): If the enum is un-named in a typedef (as the base type) then it should not be given another name by ROSE.
-  // This is because the declaration can only be refered to once (handling multiple references is why we sometimes have to
+  // This is because the declaration can only be referred to once (handling multiple references is why we sometimes have to
   // provide a generated name (e.g. a variable declaration which has multiple variables).
   // Now that we reset empty name this should be true (unless fixup had not been called)
   // ROSE_ASSERT (name.is_null() == false);
@@ -10985,7 +10986,7 @@ SgEnumDeclaration::get_symbol_from_symbol_table() const
      if (returnSymbol == NULL)
         {
        // The symbol appears to be typically associated with the defining declaration (perhaps because forward enums are non-standard).  
-       // Though it might be that we should treat enums uniformally with other declarations now that we have recently added forward 
+       // Though it might be that we should treat enums uniformly with other declarations now that we have recently added forward 
        // enum declarations as a supported non-standard feature (because most frontends do (except for GNU curiously enough)).
           if (this->get_definingDeclaration() != NULL)
              {
@@ -11007,7 +11008,7 @@ SgEnumDeclaration::get_symbol_from_symbol_table() const
 
      return returnSymbol;
 #else
-  // DQ (5/31/2007): This is the version that we want, it is consistant with the implementation elsewhere
+  // DQ (5/31/2007): This is the version that we want, it is consistent with the implementation elsewhere
   // and the correct fix was to handle the case where this is NULL (in src/frontend/SageIII/astMerge/collectAssocitateNodes.C).
      return get_scope()->get_symbol_table()->find(this);
 #endif
@@ -11061,7 +11062,7 @@ SgExprStatement::post_construction_initialization()
    }
 
 // DQ (12/6/2006): We need this sort of function now that we have removed the expression root node!
-// The requirement of not being able to do operations uniformally on expressions may be the disadvantage
+// The requirement of not being able to do operations uniformly on expressions may be the disadvantage
 // of not having used the SgExpressionRoot IR node as a concept.
 int
 SgExprStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
@@ -11173,7 +11174,7 @@ SgLabelStatement::get_symbol_from_symbol_table() const
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(tempScope);
      if (functionDefinition == NULL)
         {
-          printf ("Labels are stored in the SgFunctionDefinition (function scope), could not locate assoiciated function scope \n");
+          printf ("Labels are stored in the SgFunctionDefinition (function scope), could not locate associated function scope \n");
         }
      ROSE_ASSERT(functionDefinition != NULL);
      return functionDefinition->get_symbol_table()->find(this);
@@ -11472,7 +11473,7 @@ SgSwitchStatement::post_construction_initialization()
                     if (variableSymbol != NULL)
                        {
                       // Reset the scope in the variable (only do this if variableSymbol != NULL so that it is not 
-                      // set prematurely in the AST copy mechanism (else the pointer ot the SgVariableDefinition 
+                      // set prematurely in the AST copy mechanism (else the pointer to the SgVariableDefinition 
                       // will not be copied properly).
                          variable->set_scope(this);
 
@@ -12144,7 +12145,7 @@ SgReturnStmt::post_construction_initialization()
    }
 
 // DQ (12/15/2006): We need this sort of function now that we have removed the expression root node!
-// The requirement of not being able to do operations uniformally on expressions may be the disadvantage
+// The requirement of not being able to do operations uniformly on expressions may be the disadvantage
 // of not having used the SgExpressionRoot IR node as a concept.
 int
 SgReturnStmt::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
@@ -12237,6 +12238,13 @@ SgAsmStmt::cfgIndexForEnd() const {
   return 0;
 }
 
+// Work around the fact that this node has children that we don't use in the
+// CFG, but might still be reached (using outEdges()) from
+unsigned int
+SgAsmStmt::cfgFindChildIndex(SgNode* n) {
+  return 0;
+}
+
 std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
   ROSE_ASSERT (idx == 0);
   std::vector<VirtualCFG::CFGEdge> result;
@@ -12297,7 +12305,7 @@ SgAsmStmt::get_mangled_name(void) const
           SgName mangledName;
 
        // This is a poor way to handle the generation of unique strings (it also 
-       // connects the unparser to the fronend handling which is not a great idea).
+       // connects the unparser to the frontend handling which is not a great idea).
        // returnName = get_expr_root()->unparseToString();
 
        // DQ (7/22/2006): This IR node has been changed to have a list of SgAsmOp IR nodes
@@ -12601,7 +12609,7 @@ SgTemplateDeclaration::post_construction_initialization()
 SgName
 SgTemplateDeclaration::get_qualified_name() const
    {
-  // DQ (8/28/2005): Modified to make this function consistant other get_qualified_name functions
+  // DQ (8/28/2005): Modified to make this function consistent other get_qualified_name functions
   // It previously only returned the name of the scope.
 #if 0
   // printf ("In $CLASSNAME::get_qualified_name() name = %s \n",get_name().str());
@@ -14957,7 +14965,7 @@ SgAttributeSpecificationStatement::search_for_symbol_from_symbol_table() const
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(tempScope);
      if (functionDefinition == NULL)
         {
-          printf ("Labels are stored in the SgFunctionDefinition (function scope), could not locate assoiciated function scope \n");
+          printf ("Labels are stored in the SgFunctionDefinition (function scope), could not locate associated function scope \n");
         }
      ROSE_ASSERT(functionDefinition != NULL);
      return functionDefinition->get_symbol_table()->find(this);
