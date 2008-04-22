@@ -334,11 +334,11 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
 //------------------------------------------------------------------------
 //@{
 /*! @name AST properties
-  \brief version, language properties of currentAST
+  \brief version, language properties of current AST.  
 */
 
 //  std::string version();  // utility_functions.h, version number
-  /*! brief These traverse the memory pool of SgFile IR nodes and determine what laguages are in use!
+  /*! brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
   bool is_C_language ();
   bool is_C99_language ();
@@ -349,9 +349,8 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
   bool is_mixed_Fortran_and_C_language ();
   bool is_mixed_Fortran_and_Cxx_language ();
   bool is_mixed_Fortran_and_C_and_Cxx_language ();
-
+  
 //@}
-
 
 //------------------------------------------------------------------------
 //@{
@@ -736,6 +735,7 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 //@}
 
 
+
 #if 0
 
 //------------------------AST dump, stringify-----------------------------
@@ -1001,7 +1001,7 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
   bool  isExtern()
   void  clearExtern()
 
-   // similarly for other declararations and other properties
+   // similarly for other declarations and other properties
   void setExtern (SgVariableDeclaration*)
   void setPublic()
   void setPrivate()
