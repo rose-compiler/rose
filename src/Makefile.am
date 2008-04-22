@@ -737,8 +737,8 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm -lrt \
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-		    $(BOOST_WAVE_LIB) \
-		    $(ROSEHPCT_DEP_LIBS)
+		    $(BOOST_WAVE_LIB) 
+#		    $(ROSEHPCT_DEP_LIBS)
 librose_la_LDFLAGS = -no-undefined
 librose_la_DEPENDENCIES = $(libroseLibraries)
 

@@ -106,6 +106,23 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     vizzGraph = g;
   }
 
+  int nrOfMemoryWrites() {
+    return dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfMemoryWrites();
+  }
+
+  int nrOfRegisterWrites() {
+    return dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfRegisterWrites() ;
+  }
+
+  int nrOfDefinitions() {
+    return defuse->getDefinitionSize();
+  }
+
+  int nrOfUses() {
+    return defuse->getUsageSize();
+  }
+
+
   RoseBin_DefUseAnalysis* getDefUseAnalysis() { return defuse;}
 
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;

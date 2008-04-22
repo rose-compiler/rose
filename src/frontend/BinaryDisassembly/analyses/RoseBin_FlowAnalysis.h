@@ -73,10 +73,16 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   bool db;
 
+  int nrNodes;
+  int nrEdges;
+
  public:
   //  RoseBin* roseBin;
 
+
   RoseBin_FlowAnalysis(SgAsmNode* global) {
+    nrNodes=0;
+    nrEdges=0;
     unparser = RoseBin_support::getUnparseVisitor();
     db = RoseBin_support::getDataBaseSupport();
     RoseBin_support::setDebugMode(true);    
@@ -130,6 +136,13 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
       return !(iss >> f >> t).fail();
     }
 
+  int nodesVisited() {
+    return nrNodes;
+  }
+
+  int edgesVisited() {
+    return nrEdges;
+  }
 
 
 };
