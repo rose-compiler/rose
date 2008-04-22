@@ -2,7 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = astSymbolTableTests astRewriteTests loopProcessingTests astQueryTests \
           utilTests astInliningTests roseHPCToolkitTests astOutliningTests programAnalysisTests \
-          programTransformationTests astMergeTests astPerformanceTests astFileIOTests astProcessingTests astInterfaceTests
+          programTransformationTests astMergeTests astPerformanceTests astFileIOTests astProcessingTests \
+          astInterfaceTests binaryTests
 
 # DQ (2/21/2006): this fails
 # astRewriteTests 

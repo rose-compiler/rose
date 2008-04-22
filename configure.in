@@ -942,6 +942,7 @@ tests/roseTests/utilTests/Makefile
 tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile
+tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/astMergeTests/Makefile
@@ -961,6 +962,7 @@ tests/roseTests/roseHPCToolkitTests/data/03/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/astInterfaceTests/Makefile
+tests/roseTests/binaryTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/database/Makefile
@@ -1162,8 +1164,9 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 # tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 
 # JJW 3-7-2008 -- these are not listed as SUBDIRS in programAnalysisTests
-# tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 # tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
+# TP 4-22-2008 This is actually a valid and important test of the defUse work
+# tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 
 
 # Relocated to ROSE/src/roseExtensions/databaseConnection
