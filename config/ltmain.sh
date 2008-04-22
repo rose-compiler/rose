@@ -1,9 +1,9 @@
-# Generated from ltmain.m4sh; do not edit by hand
+# Generated from ltmain.m4sh.
 
-# ltmain.sh (GNU libtool 1.2444 2007/04/10 19:09:26) 2.1a
+# ltmain.sh (GNU libtool) 2.2.2
 # Written by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2007 2008 Free Software Foundation, Inc.
 # This is free software; see the source for copying conditions.  There is NO
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -65,7 +65,7 @@
 #       compiler:		$LTCC
 #       compiler flags:		$LTCFLAGS
 #       linker:		$LD (gnu? $with_gnu_ld)
-#       $progname:		(GNU libtool 1.2444 2007/04/10 19:09:26) 2.1a
+#       $progname:		(GNU libtool) 2.2.2
 #       automake:		$automake_version
 #       autoconf:		$autoconf_version
 #
@@ -73,9 +73,9 @@
 
 PROGRAM=ltmain.sh
 PACKAGE=libtool
-VERSION=2.1a
-TIMESTAMP=" 1.2444 2007/04/10 19:09:26"
-package_revision=1.2444
+VERSION=2.2.2
+TIMESTAMP=""
+package_revision=1.2627
 
 # Be Bourne compatible
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
@@ -95,12 +95,16 @@ DUALCASE=1; export DUALCASE # for MKS sh
 # Only set LANG and LC_ALL to C if already set.
 # These must not be set unconditionally because not all systems understand
 # e.g. LANG=C (notably SCO).
-for lt_var in LANG LC_ALL LC_CTYPE LC_COLLATE LC_MESSAGES
+lt_user_locale=
+lt_safe_locale=
+for lt_var in LANG LANGUAGE LC_ALL LC_CTYPE LC_COLLATE LC_MESSAGES
 do
   eval "if test \"\${$lt_var+set}\" = set; then
           save_$lt_var=\$$lt_var
           $lt_var=C
 	  export $lt_var
+	  lt_user_locale=\"$lt_var=\\\$save_\$lt_var; \$lt_user_locale\"
+	  lt_safe_locale=\"$lt_var=C; \$lt_safe_locale\"
 	fi"
 done
 
@@ -112,15 +116,15 @@ $lt_unset CDPATH
 
 : ${CP="cp -f"}
 : ${ECHO="echo"}
-: ${EGREP="egrep"}
-: ${FGREP="fgrep"}
-: ${GREP="grep"}
+: ${EGREP="/usr/bin/grep -E"}
+: ${FGREP="/usr/bin/grep -F"}
+: ${GREP="/usr/bin/grep"}
 : ${LN_S="ln -s"}
 : ${MAKE="make"}
 : ${MKDIR="mkdir"}
 : ${MV="mv -f"}
 : ${RM="rm -f"}
-: ${SED="sed"}
+: ${SED="/opt/local/bin/gsed"}
 : ${SHELL="${CONFIG_SHELL-/bin/sh}"}
 : ${Xsed="$SED -e 1s/^X//"}
 
@@ -208,7 +212,7 @@ opt_verbose=false
 # name if it has been set yet.
 func_echo ()
 {
-    $ECHO "$progname${mode+: }$mode: "${1+"$@"}
+    $ECHO "$progname${mode+: }$mode: $*"
 }
 
 # func_verbose arg...
@@ -425,6 +429,32 @@ func_show_eval ()
 }
 
 
+# func_show_eval_locale cmd [fail_exp]
+# Unless opt_silent is true, then output CMD.  Then, if opt_dryrun is
+# not true, evaluate CMD.  If the evaluation of CMD fails, and FAIL_EXP
+# is given, then evaluate it.  Use the saved locale for evaluation.
+func_show_eval_locale ()
+{
+    my_cmd="$1"
+    my_fail_exp="${2-:}"
+
+    ${opt_silent-false} || {
+      func_quote_for_expand "$my_cmd"
+      eval "func_echo $func_quote_for_expand_result"
+    }
+
+    if ${opt_dry_run-false}; then :; else
+      eval "$lt_user_locale
+	    $my_cmd"
+      my_status=$?
+      eval "$lt_safe_locale"
+      if test "$my_status" -eq 0; then :; else
+	eval "(exit $my_status); $my_fail_exp"
+      fi
+    fi
+}
+
+
 
 
 
@@ -517,7 +547,7 @@ EOF
 fi
 
 magic="%%%MAGIC variable%%%"
-
+magic_exe="%%%MAGIC EXE variable%%%"
 
 # Global variables.
 # $mode is unset
@@ -848,11 +878,11 @@ Otherwise, only FILE itself is deleted using RM."
     shift
 
     case $opt in
-      --config)		func_config 					;;
+      --config)		func_config					;;
 
       --debug)		preserve_args="$preserve_args $opt"
-	    		func_echo "enabling shell trace mode"
-	    		opt_debug='set -x'
+			func_echo "enabling shell trace mode"
+			opt_debug='set -x'
 			$opt_debug
 			;;
 
@@ -866,7 +896,7 @@ Otherwise, only FILE itself is deleted using RM."
       --finish)		mode="finish"					;;
 
       --mode)		test "$#" -eq 0 && func_missing_arg "$opt" && break
-	    		case $1 in
+			case $1 in
 			  # Valid mode arguments:
 			  clean)	;;
 			  compile)	;;
@@ -884,19 +914,19 @@ Otherwise, only FILE itself is deleted using RM."
 			     ;;
 		        esac
 
-	    		mode="$1"
+			mode="$1"
 			shift
 			;;
 
       --preserve-dup-deps)
-      			opt_duplicate_deps=:				;;
+			opt_duplicate_deps=:				;;
 
       --quiet|--silent)	preserve_args="$preserve_args $opt"
-	    		opt_silent=:
+			opt_silent=:
 			;;
 
       --verbose| -v)	preserve_args="$preserve_args $opt"
-	    		opt_silent=false
+			opt_silent=false
 			;;
 
       --tag)		test "$#" -eq 0 && func_missing_arg "$opt" && break
@@ -919,7 +949,7 @@ Otherwise, only FILE itself is deleted using RM."
       -*)		func_fatal_help "unrecognized option \`$opt'"	;;
 
       *)		nonopt="$opt"
-      			break
+			break
 			;;
     esac
   done
@@ -1030,7 +1060,7 @@ func_lalib_p ()
 func_lalib_unsafe_p ()
 {
     lalib_p=no
-    if test -r "$1" && exec 5<&1 <"$1"; then
+    if test -r "$1" && exec 5<&0 <"$1"; then
 	for lalib_p_l in 1 2 3 4
 	do
 	    read lalib_p_line
@@ -1038,18 +1068,55 @@ func_lalib_unsafe_p ()
 		\#\ Generated\ by\ *$PACKAGE* ) lalib_p=yes; break;;
 	    esac
 	done
-	exec 1<&5 5<&-
+	exec 0<&5 5<&-
     fi
     test "$lalib_p" = yes
 }
 
+# func_ltwrapper_script_p file
+# True iff FILE is a libtool wrapper script
+# This function is only a basic sanity check; it will hardly flush out
+# determined imposters.
+func_ltwrapper_script_p ()
+{
+    func_lalib_p "$1"
+}
+
+# func_ltwrapper_executable_p file
+# True iff FILE is a libtool wrapper executable
+# This function is only a basic sanity check; it will hardly flush out
+# determined imposters.
+func_ltwrapper_executable_p ()
+{
+    func_ltwrapper_exec_suffix=
+    case $1 in
+    *.exe) ;;
+    *) func_ltwrapper_exec_suffix=.exe ;;
+    esac
+    $GREP "$magic_exe" "$1$func_ltwrapper_exec_suffix" >/dev/null 2>&1
+}
+
+# func_ltwrapper_scriptname file
+# Assumes file is an ltwrapper_executable
+# uses $file to determine the appropriate filename for a
+# temporary ltwrapper_script.
+func_ltwrapper_scriptname ()
+{
+    func_ltwrapper_scriptname_result=""
+    if func_ltwrapper_executable_p "$1"; then
+	func_dirname_and_basename "$1" "" "."
+	func_stripname '' '.exe' "$func_basename_result"
+	func_ltwrapper_scriptname_result="$func_dirname_result/$objdir/${func_stripname_result}_ltshwrapper"
+    fi
+}
+
 # func_ltwrapper_p file
-# True iff FILE is a libtool wrapper script.
+# True iff FILE is a libtool wrapper script or wrapper executable
 # This function is only a basic sanity check; it will hardly flush out
 # determined imposters.
 func_ltwrapper_p ()
 {
-    func_lalib_p "$1"
+    func_ltwrapper_script_p "$1" || func_ltwrapper_executable_p "$1"
 }
 
 
@@ -1224,7 +1291,7 @@ func_generate_dlsyms ()
 	func_show_eval "$RM $nlist ${nlist}S ${nlist}T"
 
 	# Parse the name list into a source file.
-	func_echo "creating $output_objdir/$my_dlsyms"
+	func_verbose "creating $output_objdir/$my_dlsyms"
 
 	$opt_dry_run || $ECHO > "$output_objdir/$my_dlsyms" "\
 /* $my_dlsyms - symbol resolution table for \`$my_outputname' dlsym emulation. */
@@ -1238,14 +1305,14 @@ extern \"C\" {
 "
 
 	if test "$dlself" = yes; then
-	  func_echo "generating symbol list for \`$output'"
+	  func_verbose "generating symbol list for \`$output'"
 
 	  $opt_dry_run || echo ': @PROGRAM@ ' > "$nlist"
 
 	  # Add our own program objects to the symbol list.
 	  progfiles=`$ECHO "X$objs$old_deplibs" | $SP2NL | $Xsed -e "$lo2o" | $NL2SP`
 	  for progfile in $progfiles; do
-	    func_echo "extracting global C symbols from \`$progfile'"
+	    func_verbose "extracting global C symbols from \`$progfile'"
 	    $opt_dry_run || eval "$NM $progfile | $global_symbol_pipe >> '$nlist'"
 	  done
 
@@ -1292,7 +1359,7 @@ extern \"C\" {
 	fi
 
 	for dlprefile in $dlprefiles; do
-	  func_echo "extracting global C symbols from \`$dlprefile'"
+	  func_verbose "extracting global C symbols from \`$dlprefile'"
 	  func_basename "$dlprefile"
 	  name="$func_basename_result"
 	  $opt_dry_run || {
@@ -1360,8 +1427,14 @@ lt_${my_prefix}_LTX_preloaded_symbols[] =
 {\
   { \"$my_originator\", (void *) 0 },"
 
-	  eval "$global_symbol_to_c_name_address" < "$nlist" >> "$output_objdir/$my_dlsyms"
-
+	  case $need_lib_prefix in
+	  no)
+	    eval "$global_symbol_to_c_name_address" < "$nlist" >> "$output_objdir/$my_dlsyms"
+	    ;;
+	  *)
+	    eval "$global_symbol_to_c_name_address_lib_prefix" < "$nlist" >> "$output_objdir/$my_dlsyms"
+	    ;;
+	  esac
 	  $ECHO >> "$output_objdir/$my_dlsyms" "\
   {0, (void *) 0}
 };
@@ -1379,7 +1452,7 @@ static const void *lt_preloaded_setup() {
 "
 	} # !$opt_dry_run
 
-  	pic_flag_for_symtable=
+	pic_flag_for_symtable=
 	case "$compile_command " in
 	*" -static "*) ;;
 	*)
@@ -1454,7 +1527,7 @@ func_extract_an_archive ()
     $opt_debug
     f_ex_an_ar_dir="$1"; shift
     f_ex_an_ar_oldlib="$1"
-    func_show_eval "(cd \$f_ex_an_ar_dir && $AR x \$f_ex_an_ar_oldlib)" 'exit $?'
+    func_show_eval "(cd \$f_ex_an_ar_dir && $AR x \"\$f_ex_an_ar_oldlib\")" 'exit $?'
     if ($AR t "$f_ex_an_ar_oldlib" | sort | sort -uc >/dev/null 2>&1); then
      :
     else
@@ -1498,19 +1571,19 @@ func_extract_archives ()
 
       case $host in
       *-darwin*)
-	func_echo "Extracting $my_xabs"
+	func_verbose "Extracting $my_xabs"
 	# Do not bother doing anything if just a dry run
 	$opt_dry_run || {
 	  darwin_orig_dir=`pwd`
 	  cd $my_xdir || exit $?
 	  darwin_archive=$my_xabs
 	  darwin_curdir=`pwd`
-	  darwin_base_archive=`basename $darwin_archive`
+	  darwin_base_archive=`basename "$darwin_archive"`
 	  darwin_arches=`lipo -info "$darwin_archive" 2>/dev/null | $GREP Architectures 2>/dev/null || true`
 	  if test -n "$darwin_arches"; then
 	    darwin_arches=`$ECHO "$darwin_arches" | $SED -e 's/.*are://'`
 	    darwin_arch=
-	    func_echo "$darwin_base_archive has multiple architectures $darwin_arches"
+	    func_verbose "$darwin_base_archive has multiple architectures $darwin_arches"
 	    for darwin_arch in  $darwin_arches ; do
 	      func_mkdir_p "unfat-$$/${darwin_base_archive}-${darwin_arch}"
 	      lipo -thin $darwin_arch -output "unfat-$$/${darwin_base_archive}-${darwin_arch}/${darwin_base_archive}" "${darwin_archive}"
@@ -1712,6 +1785,7 @@ func_mode_compile ()
     *.for) xform=for ;;
     *.java) xform=java ;;
     *.obj) xform=obj ;;
+    *.sx) xform=sx ;;
     esac
 
     libobj=`$ECHO "X$libobj" | $Xsed -e "s/\.$xform$/.lo/"`
@@ -1754,11 +1828,10 @@ func_mode_compile ()
 
     func_quote_for_eval "$libobj"
     test "X$libobj" != "X$func_quote_for_eval_result" \
-      && $ECHO "X$libobj" | $GREP '[]~#^*{};<>?"'"'"' 	&()|`$[]' \
+      && $ECHO "X$libobj" | $GREP '[]~#^*{};<>?"'"'"'	 &()|`$[]' \
       && func_warning "libobj name \`$libobj' may not contain shell special characters."
-    func_basename "$obj"
+    func_dirname_and_basename "$obj" "/" ""
     objname="$func_basename_result"
-    func_dirname "$obj" "/" ""
     xdir="$func_dirname_result"
     lobj=${xdir}$objdir/$objname
 
@@ -1854,7 +1927,7 @@ compiler."
 
       $opt_dry_run || $RM "$lobj" "$output_obj"
 
-      func_show_eval "$command"	\
+      func_show_eval_locale "$command"	\
           'test -n "$output_obj" && $RM $removelist; exit $EXIT_FAILURE'
 
       if test "$need_locks" = warn &&
@@ -1904,7 +1977,7 @@ compiler."
       # Suppress compiler output if we already did a PIC compilation.
       command="$command$suppress_output"
       $opt_dry_run || $RM "$obj" "$output_obj"
-      func_show_eval "$command" \
+      func_show_eval_locale "$command" \
         '$opt_dry_run || $RM $removelist; exit $EXIT_FAILURE'
 
       if test "$need_locks" = warn &&
@@ -2031,9 +2104,13 @@ func_mode_execute ()
       -*) ;;
       *)
 	# Do a test to see if this is really a libtool program.
-	if func_ltwrapper_p "$file"; then
+	if func_ltwrapper_script_p "$file"; then
 	  func_source "$file"
-
+	  # Transform arg to wrapped name.
+	  file="$progdir/$program"
+	elif func_ltwrapper_executable_p "$file"; then
+	  func_ltwrapper_scriptname "$file"
+	  func_source "$func_ltwrapper_scriptname_result"
 	  # Transform arg to wrapped name.
 	  file="$progdir/$program"
 	fi
@@ -2051,7 +2128,7 @@ func_mode_execute ()
       fi
 
       # Restore saved environment variables
-      for lt_var in LANG LC_ALL LC_CTYPE LC_COLLATE LC_MESSAGES
+      for lt_var in LANG LANGUAGE LC_ALL LC_CTYPE LC_COLLATE LC_MESSAGES
       do
 	eval "if test \"\${save_$lt_var+set}\" = set; then
                 $lt_var=\$save_$lt_var; export $lt_var
@@ -2199,7 +2276,7 @@ func_mode_install ()
       case $arg in
       -d) isdir=yes ;;
       -f)
-      	case " $install_prog " in
+	case " $install_prog " in
 	*[\\\ /]cp\ *) ;;
 	*) prev=$arg ;;
 	esac
@@ -2253,9 +2330,8 @@ func_mode_install ()
       destdir="$dest"
       destname=
     else
-      func_dirname "$dest" "" "."
+      func_dirname_and_basename "$dest" "" "."
       destdir="$func_dirname_result"
-      func_basename "$dest"
       destname="$func_basename_result"
 
       # Not a directory, so check to see that there is only one file specified.
@@ -2467,14 +2543,19 @@ func_mode_install ()
 	# Do a test to see if this is really a libtool program.
 	case $host in
 	*cygwin*|*mingw*)
-	    func_stripname '' '.exe' "$file"
-	    wrapper=$func_stripname_result
+	    if func_ltwrapper_executable_p "$file"; then
+	      func_ltwrapper_scriptname "$file"
+	      wrapper=$func_ltwrapper_scriptname_result
+	    else
+	      func_stripname '' '.exe' "$file"
+	      wrapper=$func_stripname_result
+	    fi
 	    ;;
 	*)
 	    wrapper=$file
 	    ;;
 	esac
-	if func_ltwrapper_p "$wrapper"; then
+	if func_ltwrapper_script_p "$wrapper"; then
 	  notinst_deplibs=
 	  relink_command=
 
@@ -2590,6 +2671,821 @@ func_mode_install ()
 
 test "$mode" = install && func_mode_install ${1+"$@"}
 
+
+# func_emit_wrapper arg
+#
+# emit a libtool wrapper script on stdout
+# don't directly open a file because we may want to
+# incorporate the script contents within a cygwin/mingw
+# wrapper executable.  Must ONLY be called from within
+# func_mode_link because it depends on a number of variable
+# set therein.
+#
+# arg is the value that the WRAPPER_SCRIPT_BELONGS_IN_OBJDIR
+# variable will take.  If 'yes', then the emitted script
+# will assume that the directory in which it is stored is
+# the '.lib' directory.  This is a cygwin/mingw-specific
+# behavior.
+func_emit_wrapper ()
+{
+	func_emit_wrapper_arg1=no
+	if test -n "$1" ; then
+	  func_emit_wrapper_arg1=$1
+	fi
+
+	$ECHO "\
+#! $SHELL
+
+# $output - temporary wrapper script for $objdir/$outputname
+# Generated by $PROGRAM (GNU $PACKAGE$TIMESTAMP) $VERSION
+#
+# The $output program cannot be directly executed until all the libtool
+# libraries that it depends on are installed.
+#
+# This wrapper script should never be moved out of the build directory.
+# If it is, it will not operate correctly.
+
+# Sed substitution that helps us do robust quoting.  It backslashifies
+# metacharacters that are still active within double-quoted strings.
+Xsed='${SED} -e 1s/^X//'
+sed_quote_subst='$sed_quote_subst'
+
+# Be Bourne compatible
+if test -n \"\${ZSH_VERSION+set}\" && (emulate sh) >/dev/null 2>&1; then
+  emulate sh
+  NULLCMD=:
+  # Zsh 3.x and 4.x performs word splitting on \${1+\"\$@\"}, which
+  # is contrary to our usage.  Disable this feature.
+  alias -g '\${1+\"\$@\"}'='\"\$@\"'
+  setopt NO_GLOB_SUBST
+else
+  case \`(set -o) 2>/dev/null\` in *posix*) set -o posix;; esac
+fi
+BIN_SH=xpg4; export BIN_SH # for Tru64
+DUALCASE=1; export DUALCASE # for MKS sh
+
+# The HP-UX ksh and POSIX shell print the target directory to stdout
+# if CDPATH is set.
+(unset CDPATH) >/dev/null 2>&1 && unset CDPATH
+
+relink_command=\"$relink_command\"
+
+# This environment variable determines our operation mode.
+if test \"\$libtool_install_magic\" = \"$magic\"; then
+  # install mode needs the following variables:
+  generated_by_libtool_version='$macro_version'
+  notinst_deplibs='$notinst_deplibs'
+else
+  # When we are sourced in execute mode, \$file and \$ECHO are already set.
+  if test \"\$libtool_execute_magic\" != \"$magic\"; then
+    ECHO=\"$qecho\"
+    file=\"\$0\"
+    # Make sure echo works.
+    if test \"X\$1\" = X--no-reexec; then
+      # Discard the --no-reexec flag, and continue.
+      shift
+    elif test \"X\`{ \$ECHO '\t'; } 2>/dev/null\`\" = 'X\t'; then
+      # Yippee, \$ECHO works!
+      :
+    else
+      # Restart under the correct shell, and then maybe \$ECHO will work.
+      exec $SHELL \"\$0\" --no-reexec \${1+\"\$@\"}
+    fi
+  fi\
+"
+	$ECHO "\
+
+  # Find the directory that this script lives in.
+  thisdir=\`\$ECHO \"X\$file\" | \$Xsed -e 's%/[^/]*$%%'\`
+  test \"x\$thisdir\" = \"x\$file\" && thisdir=.
+
+  # Follow symbolic links until we get to the real thisdir.
+  file=\`ls -ld \"\$file\" | ${SED} -n 's/.*-> //p'\`
+  while test -n \"\$file\"; do
+    destdir=\`\$ECHO \"X\$file\" | \$Xsed -e 's%/[^/]*\$%%'\`
+
+    # If there was a directory component, then change thisdir.
+    if test \"x\$destdir\" != \"x\$file\"; then
+      case \"\$destdir\" in
+      [\\\\/]* | [A-Za-z]:[\\\\/]*) thisdir=\"\$destdir\" ;;
+      *) thisdir=\"\$thisdir/\$destdir\" ;;
+      esac
+    fi
+
+    file=\`\$ECHO \"X\$file\" | \$Xsed -e 's%^.*/%%'\`
+    file=\`ls -ld \"\$thisdir/\$file\" | ${SED} -n 's/.*-> //p'\`
+  done
+
+  # Usually 'no', except on cygwin/mingw when embedded into
+  # the cwrapper.
+  WRAPPER_SCRIPT_BELONGS_IN_OBJDIR=$func_emit_wrapper_arg1
+  if test \"\$WRAPPER_SCRIPT_BELONGS_IN_OBJDIR\" = \"yes\"; then
+    # special case for '.'
+    if test \"\$thisdir\" = \".\"; then
+      thisdir=\`pwd\`
+    fi
+    # remove .libs from thisdir
+    case \"\$thisdir\" in
+    *[\\\\/]$objdir ) thisdir=\`\$ECHO \"X\$thisdir\" | \$Xsed -e 's%[\\\\/][^\\\\/]*$%%'\` ;;
+    $objdir )   thisdir=. ;;
+    esac
+  fi
+
+  # Try to get the absolute directory name.
+  absdir=\`cd \"\$thisdir\" && pwd\`
+  test -n \"\$absdir\" && thisdir=\"\$absdir\"
+"
+
+	if test "$fast_install" = yes; then
+	  $ECHO "\
+  program=lt-'$outputname'$exeext
+  progdir=\"\$thisdir/$objdir\"
+
+  if test ! -f \"\$progdir/\$program\" ||
+     { file=\`ls -1dt \"\$progdir/\$program\" \"\$progdir/../\$program\" 2>/dev/null | ${SED} 1q\`; \\
+       test \"X\$file\" != \"X\$progdir/\$program\"; }; then
+
+    file=\"\$\$-\$program\"
+
+    if test ! -d \"\$progdir\"; then
+      $MKDIR \"\$progdir\"
+    else
+      $RM \"\$progdir/\$file\"
+    fi"
+
+	  $ECHO "\
+
+    # relink executable if necessary
+    if test -n \"\$relink_command\"; then
+      if relink_command_output=\`eval \$relink_command 2>&1\`; then :
+      else
+	$ECHO \"\$relink_command_output\" >&2
+	$RM \"\$progdir/\$file\"
+	exit 1
+      fi
+    fi
+
+    $MV \"\$progdir/\$file\" \"\$progdir/\$program\" 2>/dev/null ||
+    { $RM \"\$progdir/\$program\";
+      $MV \"\$progdir/\$file\" \"\$progdir/\$program\"; }
+    $RM \"\$progdir/\$file\"
+  fi"
+	else
+	  $ECHO "\
+  program='$outputname'
+  progdir=\"\$thisdir/$objdir\"
+"
+	fi
+
+	$ECHO "\
+
+  if test -f \"\$progdir/\$program\"; then"
+
+	# Export our shlibpath_var if we have one.
+	if test "$shlibpath_overrides_runpath" = yes && test -n "$shlibpath_var" && test -n "$temp_rpath"; then
+	  $ECHO "\
+    # Add our own library path to $shlibpath_var
+    $shlibpath_var=\"$temp_rpath\$$shlibpath_var\"
+
+    # Some systems cannot cope with colon-terminated $shlibpath_var
+    # The second colon is a workaround for a bug in BeOS R4 sed
+    $shlibpath_var=\`\$ECHO \"X\$$shlibpath_var\" | \$Xsed -e 's/::*\$//'\`
+
+    export $shlibpath_var
+"
+	fi
+
+	# fixup the dll searchpath if we need to.
+	if test -n "$dllsearchpath"; then
+	  $ECHO "\
+    # Add the dll search path components to the executable PATH
+    PATH=$dllsearchpath:\$PATH
+"
+	fi
+
+	$ECHO "\
+    if test \"\$libtool_execute_magic\" != \"$magic\"; then
+      # Run the actual program with our arguments.
+"
+	case $host in
+	# Backslashes separate directories on plain windows
+	*-*-mingw | *-*-os2*)
+	  $ECHO "\
+      exec \"\$progdir\\\\\$program\" \${1+\"\$@\"}
+"
+	  ;;
+
+	*)
+	  $ECHO "\
+      exec \"\$progdir/\$program\" \${1+\"\$@\"}
+"
+	  ;;
+	esac
+	$ECHO "\
+      \$ECHO \"\$0: cannot exec \$program \$*\" 1>&2
+      exit 1
+    fi
+  else
+    # The program doesn't exist.
+    \$ECHO \"\$0: error: \\\`\$progdir/\$program' does not exist\" 1>&2
+    \$ECHO \"This script is just a wrapper for \$program.\" 1>&2
+    $ECHO \"See the $PACKAGE documentation for more information.\" 1>&2
+    exit 1
+  fi
+fi\
+"
+}
+# end: func_emit_wrapper
+
+# func_emit_cwrapperexe_src
+# emit the source code for a wrapper executable on stdout
+# Must ONLY be called from within func_mode_link because
+# it depends on a number of variable set therein.
+func_emit_cwrapperexe_src ()
+{
+	cat <<EOF
+
+/* $cwrappersource - temporary wrapper executable for $objdir/$outputname
+   Generated by $PROGRAM (GNU $PACKAGE$TIMESTAMP) $VERSION
+
+   The $output program cannot be directly executed until all the libtool
+   libraries that it depends on are installed.
+
+   This wrapper executable should never be moved out of the build directory.
+   If it is, it will not operate correctly.
+
+   Currently, it simply execs the wrapper *script* "$SHELL $output",
+   but could eventually absorb all of the scripts functionality and
+   exec $objdir/$outputname directly.
+*/
+EOF
+	    cat <<"EOF"
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef _MSC_VER
+# include <direct.h>
+# include <process.h>
+# include <io.h>
+#else
+# include <unistd.h>
+# include <stdint.h>
+#endif
+#include <malloc.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#if defined(PATH_MAX)
+# define LT_PATHMAX PATH_MAX
+#elif defined(MAXPATHLEN)
+# define LT_PATHMAX MAXPATHLEN
+#else
+# define LT_PATHMAX 1024
+#endif
+
+#ifndef S_IXOTH
+# define S_IXOTH 0
+#endif
+#ifndef S_IXGRP
+# define S_IXGRP 0
+#endif
+
+#ifdef _MSC_VER
+# define S_IXUSR _S_IEXEC
+# define stat _stat
+# ifndef _INTPTR_T_DEFINED
+#  define intptr_t int
+# endif
+#endif
+
+#ifndef DIR_SEPARATOR
+# define DIR_SEPARATOR '/'
+# define PATH_SEPARATOR ':'
+#endif
+
+#if defined (_WIN32) || defined (__MSDOS__) || defined (__DJGPP__) || \
+  defined (__OS2__)
+# define HAVE_DOS_BASED_FILE_SYSTEM
+# define FOPEN_WB "wb"
+# ifndef DIR_SEPARATOR_2
+#  define DIR_SEPARATOR_2 '\\'
+# endif
+# ifndef PATH_SEPARATOR_2
+#  define PATH_SEPARATOR_2 ';'
+# endif
+#endif
+
+#ifndef DIR_SEPARATOR_2
+# define IS_DIR_SEPARATOR(ch) ((ch) == DIR_SEPARATOR)
+#else /* DIR_SEPARATOR_2 */
+# define IS_DIR_SEPARATOR(ch) \
+	(((ch) == DIR_SEPARATOR) || ((ch) == DIR_SEPARATOR_2))
+#endif /* DIR_SEPARATOR_2 */
+
+#ifndef PATH_SEPARATOR_2
+# define IS_PATH_SEPARATOR(ch) ((ch) == PATH_SEPARATOR)
+#else /* PATH_SEPARATOR_2 */
+# define IS_PATH_SEPARATOR(ch) ((ch) == PATH_SEPARATOR_2)
+#endif /* PATH_SEPARATOR_2 */
+
+#ifdef __CYGWIN__
+# define FOPEN_WB "wb"
+#endif
+
+#ifndef FOPEN_WB
+# define FOPEN_WB "w"
+#endif
+#ifndef _O_BINARY
+# define _O_BINARY 0
+#endif
+
+#define XMALLOC(type, num)      ((type *) xmalloc ((num) * sizeof(type)))
+#define XFREE(stale) do { \
+  if (stale) { free ((void *) stale); stale = 0; } \
+} while (0)
+
+#undef LTWRAPPER_DEBUGPRINTF
+#if defined DEBUGWRAPPER
+# define LTWRAPPER_DEBUGPRINTF(args) ltwrapper_debugprintf args
+static void
+ltwrapper_debugprintf (const char *fmt, ...)
+{
+    va_list args;
+    va_start (args, fmt);
+    (void) vfprintf (stderr, fmt, args);
+    va_end (args);
+}
+#else
+# define LTWRAPPER_DEBUGPRINTF(args)
+#endif
+
+const char *program_name = NULL;
+
+void *xmalloc (size_t num);
+char *xstrdup (const char *string);
+const char *base_name (const char *name);
+char *find_executable (const char *wrapper);
+char *chase_symlinks (const char *pathspec);
+int make_executable (const char *path);
+int check_executable (const char *path);
+char *strendzap (char *str, const char *pat);
+void lt_fatal (const char *message, ...);
+
+static const char *script_text =
+EOF
+
+	    func_emit_wrapper yes |
+	        $SED -e 's/\([\\"]\)/\\\1/g' \
+	             -e 's/^/  "/' -e 's/$/\\n"/'
+	    echo ";"
+
+	    cat <<EOF
+const char * MAGIC_EXE = "$magic_exe";
+
+int
+main (int argc, char *argv[])
+{
+  char **newargz;
+  char *tmp_pathspec;
+  char *actual_cwrapper_path;
+  char *shwrapper_name;
+  intptr_t rval = 127;
+  FILE *shwrapper;
+
+  const char *dumpscript_opt = "--lt-dump-script";
+  int i;
+
+  program_name = (char *) xstrdup (base_name (argv[0]));
+  LTWRAPPER_DEBUGPRINTF (("(main) argv[0]      : %s\n", argv[0]));
+  LTWRAPPER_DEBUGPRINTF (("(main) program_name : %s\n", program_name));
+
+  /* very simple arg parsing; don't want to rely on getopt */
+  for (i = 1; i < argc; i++)
+    {
+      if (strcmp (argv[i], dumpscript_opt) == 0)
+	{
+EOF
+	    case "$host" in
+	      *mingw* | *cygwin* )
+		# make stdout use "unix" line endings
+		echo "          _setmode(1,_O_BINARY);"
+		;;
+	      esac
+
+	    cat <<EOF
+	  printf ("%s", script_text);
+	  return 0;
+	}
+    }
+
+  newargz = XMALLOC (char *, argc + 2);
+EOF
+
+	    if test -n "$TARGETSHELL" ; then
+	      # no path translation at all
+	      lt_newargv0=$TARGETSHELL
+	    else
+	      case "$host" in
+		*mingw* )
+		  # awkward: cmd appends spaces to result
+		  lt_sed_strip_trailing_spaces="s/[ ]*\$//"
+		  lt_newargv0=`( cmd //c echo $SHELL | $SED -e "$lt_sed_strip_trailing_spaces" ) 2>/dev/null || echo $SHELL`
+		  case $lt_newargv0 in
+		    *.exe | *.EXE) ;;
+		    *) lt_newargv0=$lt_newargv0.exe ;;
+		  esac
+		  ;;
+		* ) lt_newargv0=$SHELL ;;
+	      esac
+	    fi
+
+		cat <<EOF
+  newargz[0] = (char *) xstrdup ("$lt_newargv0");
+EOF
+
+	    cat <<"EOF"
+  tmp_pathspec = find_executable (argv[0]);
+  if (tmp_pathspec == NULL)
+    lt_fatal ("Couldn't find %s", argv[0]);
+  LTWRAPPER_DEBUGPRINTF (("(main) found exe (before symlink chase) at : %s\n",
+			  tmp_pathspec));
+
+  actual_cwrapper_path = chase_symlinks (tmp_pathspec);
+  LTWRAPPER_DEBUGPRINTF (("(main) found exe (after symlink chase) at : %s\n",
+			  actual_cwrapper_path));
+  XFREE (tmp_pathspec);
+
+  shwrapper_name = (char *) xstrdup (base_name (actual_cwrapper_path));
+  strendzap (actual_cwrapper_path, shwrapper_name);
+
+  /* shwrapper_name transforms */
+  strendzap (shwrapper_name, ".exe");
+  tmp_pathspec = XMALLOC (char, (strlen (shwrapper_name) +
+				 strlen ("_ltshwrapperTMP") + 1));
+  strcpy (tmp_pathspec, shwrapper_name);
+  strcat (tmp_pathspec, "_ltshwrapperTMP");
+  XFREE (shwrapper_name);
+  shwrapper_name = tmp_pathspec;
+  tmp_pathspec = 0;
+  LTWRAPPER_DEBUGPRINTF (("(main) libtool shell wrapper name: %s\n",
+			  shwrapper_name));
+EOF
+
+	    cat <<EOF
+  newargz[1] =
+    XMALLOC (char, (strlen (actual_cwrapper_path) +
+		    strlen ("$objdir") + 1 + strlen (shwrapper_name) + 1));
+  strcpy (newargz[1], actual_cwrapper_path);
+  strcat (newargz[1], "$objdir");
+  strcat (newargz[1], "/");
+  strcat (newargz[1], shwrapper_name);
+EOF
+
+
+	    case $host_os in
+	      mingw*)
+	    cat <<"EOF"
+  {
+    char* p;
+    while ((p = strchr (newargz[1], '\\')) != NULL)
+      {
+	*p = '/';
+      }
+  }
+EOF
+	    ;;
+	    esac
+
+	    cat <<"EOF"
+  XFREE (shwrapper_name);
+  XFREE (actual_cwrapper_path);
+
+  /* always write in binary mode */
+  if ((shwrapper = fopen (newargz[1], FOPEN_WB)) == 0)
+    {
+      lt_fatal ("Could not open %s for writing", newargz[1]);
+    }
+  fprintf (shwrapper, "%s", script_text);
+  fclose (shwrapper);
+
+  make_executable (newargz[1]);
+
+  for (i = 1; i < argc; i++)
+    newargz[i + 1] = xstrdup (argv[i]);
+  newargz[argc + 1] = NULL;
+
+  for (i = 0; i < argc + 1; i++)
+    {
+      LTWRAPPER_DEBUGPRINTF (("(main) newargz[%d]   : %s\n", i, newargz[i]));
+    }
+
+EOF
+
+	    case $host_os in
+	      mingw*)
+		cat <<EOF
+  /* execv doesn't actually work on mingw as expected on unix */
+  rval = _spawnv (_P_WAIT, "$lt_newargv0", (const char * const *) newargz);
+  if (rval == -1)
+    {
+      /* failed to start process */
+      LTWRAPPER_DEBUGPRINTF (("(main) failed to launch target \"$lt_newargv0\": errno = %d\n", errno));
+      return 127;
+    }
+  return rval;
+}
+EOF
+		;;
+	      *)
+		cat <<EOF
+  execv ("$lt_newargv0", newargz);
+  return rval; /* =127, but avoids unused variable warning */
+}
+EOF
+		;;
+	    esac
+
+	    cat <<"EOF"
+
+void *
+xmalloc (size_t num)
+{
+  void *p = (void *) malloc (num);
+  if (!p)
+    lt_fatal ("Memory exhausted");
+
+  return p;
+}
+
+char *
+xstrdup (const char *string)
+{
+  return string ? strcpy ((char *) xmalloc (strlen (string) + 1),
+			  string) : NULL;
+}
+
+const char *
+base_name (const char *name)
+{
+  const char *base;
+
+#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
+  /* Skip over the disk name in MSDOS pathnames. */
+  if (isalpha ((unsigned char) name[0]) && name[1] == ':')
+    name += 2;
+#endif
+
+  for (base = name; *name; name++)
+    if (IS_DIR_SEPARATOR (*name))
+      base = name + 1;
+  return base;
+}
+
+int
+check_executable (const char *path)
+{
+  struct stat st;
+
+  LTWRAPPER_DEBUGPRINTF (("(check_executable)  : %s\n",
+			  path ? (*path ? path : "EMPTY!") : "NULL!"));
+  if ((!path) || (!*path))
+    return 0;
+
+  if ((stat (path, &st) >= 0)
+      && (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)))
+    return 1;
+  else
+    return 0;
+}
+
+int
+make_executable (const char *path)
+{
+  int rval = 0;
+  struct stat st;
+
+  LTWRAPPER_DEBUGPRINTF (("(make_executable)   : %s\n",
+			  path ? (*path ? path : "EMPTY!") : "NULL!"));
+  if ((!path) || (!*path))
+    return 0;
+
+  if (stat (path, &st) >= 0)
+    {
+      rval = chmod (path, st.st_mode | S_IXOTH | S_IXGRP | S_IXUSR);
+    }
+  return rval;
+}
+
+/* Searches for the full path of the wrapper.  Returns
+   newly allocated full path name if found, NULL otherwise
+   Does not chase symlinks, even on platforms that support them.
+*/
+char *
+find_executable (const char *wrapper)
+{
+  int has_slash = 0;
+  const char *p;
+  const char *p_next;
+  /* static buffer for getcwd */
+  char tmp[LT_PATHMAX + 1];
+  int tmp_len;
+  char *concat_name;
+
+  LTWRAPPER_DEBUGPRINTF (("(find_executable)   : %s\n",
+			  wrapper ? (*wrapper ? wrapper : "EMPTY!") : "NULL!"));
+
+  if ((wrapper == NULL) || (*wrapper == '\0'))
+    return NULL;
+
+  /* Absolute path? */
+#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
+  if (isalpha ((unsigned char) wrapper[0]) && wrapper[1] == ':')
+    {
+      concat_name = xstrdup (wrapper);
+      if (check_executable (concat_name))
+	return concat_name;
+      XFREE (concat_name);
+    }
+  else
+    {
+#endif
+      if (IS_DIR_SEPARATOR (wrapper[0]))
+	{
+	  concat_name = xstrdup (wrapper);
+	  if (check_executable (concat_name))
+	    return concat_name;
+	  XFREE (concat_name);
+	}
+#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
+    }
+#endif
+
+  for (p = wrapper; *p; p++)
+    if (*p == '/')
+      {
+	has_slash = 1;
+	break;
+      }
+  if (!has_slash)
+    {
+      /* no slashes; search PATH */
+      const char *path = getenv ("PATH");
+      if (path != NULL)
+	{
+	  for (p = path; *p; p = p_next)
+	    {
+	      const char *q;
+	      size_t p_len;
+	      for (q = p; *q; q++)
+		if (IS_PATH_SEPARATOR (*q))
+		  break;
+	      p_len = q - p;
+	      p_next = (*q == '\0' ? q : q + 1);
+	      if (p_len == 0)
+		{
+		  /* empty path: current directory */
+		  if (getcwd (tmp, LT_PATHMAX) == NULL)
+		    lt_fatal ("getcwd failed");
+		  tmp_len = strlen (tmp);
+		  concat_name =
+		    XMALLOC (char, tmp_len + 1 + strlen (wrapper) + 1);
+		  memcpy (concat_name, tmp, tmp_len);
+		  concat_name[tmp_len] = '/';
+		  strcpy (concat_name + tmp_len + 1, wrapper);
+		}
+	      else
+		{
+		  concat_name =
+		    XMALLOC (char, p_len + 1 + strlen (wrapper) + 1);
+		  memcpy (concat_name, p, p_len);
+		  concat_name[p_len] = '/';
+		  strcpy (concat_name + p_len + 1, wrapper);
+		}
+	      if (check_executable (concat_name))
+		return concat_name;
+	      XFREE (concat_name);
+	    }
+	}
+      /* not found in PATH; assume curdir */
+    }
+  /* Relative path | not found in path: prepend cwd */
+  if (getcwd (tmp, LT_PATHMAX) == NULL)
+    lt_fatal ("getcwd failed");
+  tmp_len = strlen (tmp);
+  concat_name = XMALLOC (char, tmp_len + 1 + strlen (wrapper) + 1);
+  memcpy (concat_name, tmp, tmp_len);
+  concat_name[tmp_len] = '/';
+  strcpy (concat_name + tmp_len + 1, wrapper);
+
+  if (check_executable (concat_name))
+    return concat_name;
+  XFREE (concat_name);
+  return NULL;
+}
+
+char *
+chase_symlinks (const char *pathspec)
+{
+#ifndef S_ISLNK
+  return xstrdup (pathspec);
+#else
+  char buf[LT_PATHMAX];
+  struct stat s;
+  char *tmp_pathspec = xstrdup (pathspec);
+  char *p;
+  int has_symlinks = 0;
+  while (strlen (tmp_pathspec) && !has_symlinks)
+    {
+      LTWRAPPER_DEBUGPRINTF (("checking path component for symlinks: %s\n",
+			      tmp_pathspec));
+      if (lstat (tmp_pathspec, &s) == 0)
+	{
+	  if (S_ISLNK (s.st_mode) != 0)
+	    {
+	      has_symlinks = 1;
+	      break;
+	    }
+
+	  /* search backwards for last DIR_SEPARATOR */
+	  p = tmp_pathspec + strlen (tmp_pathspec) - 1;
+	  while ((p > tmp_pathspec) && (!IS_DIR_SEPARATOR (*p)))
+	    p--;
+	  if ((p == tmp_pathspec) && (!IS_DIR_SEPARATOR (*p)))
+	    {
+	      /* no more DIR_SEPARATORS left */
+	      break;
+	    }
+	  *p = '\0';
+	}
+      else
+	{
+	  char *errstr = strerror (errno);
+	  lt_fatal ("Error accessing file %s (%s)", tmp_pathspec, errstr);
+	}
+    }
+  XFREE (tmp_pathspec);
+
+  if (!has_symlinks)
+    {
+      return xstrdup (pathspec);
+    }
+
+  tmp_pathspec = realpath (pathspec, buf);
+  if (tmp_pathspec == 0)
+    {
+      lt_fatal ("Could not follow symlinks for %s", pathspec);
+    }
+  return xstrdup (tmp_pathspec);
+#endif
+}
+
+char *
+strendzap (char *str, const char *pat)
+{
+  size_t len, patlen;
+
+  assert (str != NULL);
+  assert (pat != NULL);
+
+  len = strlen (str);
+  patlen = strlen (pat);
+
+  if (patlen <= len)
+    {
+      str += len - patlen;
+      if (strcmp (str, pat) == 0)
+	*str = '\0';
+    }
+  return str;
+}
+
+static void
+lt_error_core (int exit_status, const char *mode,
+	       const char *message, va_list ap)
+{
+  fprintf (stderr, "%s: %s: ", program_name, mode);
+  vfprintf (stderr, message, ap);
+  fprintf (stderr, ".\n");
+
+  if (exit_status >= 0)
+    exit (exit_status);
+}
+
+void
+lt_fatal (const char *message, ...)
+{
+  va_list ap;
+  va_start (ap, message);
+  lt_error_core (EXIT_FAILURE, "FATAL", message, ap);
+  va_end (ap);
+}
+EOF
+}
+# end: func_emit_cwrapperexe_src
 
 # func_mode_link arg...
 func_mode_link ()
@@ -2791,7 +3687,7 @@ func_mode_link ()
 		   ;;
 	      esac
 	      ;;
-   	  esac
+	  esac
 	  prev=
 	  continue
 	  ;;
@@ -2929,7 +3825,7 @@ func_mode_link ()
 	  continue
 	  ;;
 	shrext)
-  	  shrext_cmds="$arg"
+	  shrext_cmds="$arg"
 	  prev=
 	  continue
 	  ;;
@@ -3301,6 +4197,12 @@ func_mode_link ()
 	continue
 	;;
 
+      # -msg_* for osf cc
+      -msg_*)
+	func_quote_for_eval "$arg"
+	arg="$func_quote_for_eval_result"
+	;;
+
       # -64, -mips[0-9] enable 64-bit mode on the SGI compiler
       # -r[0-9][0-9]* specifies the processor on the SGI compiler
       # -xarch=*, -xtarget=* enable 64-bit mode on the Sun compiler
@@ -3636,7 +4538,12 @@ func_mode_link ()
 	  fi
 	  func_stripname '-l' '' "$deplib"
 	  name=$func_stripname_result
-	  for searchdir in $newlib_search_path $lib_search_path $sys_lib_search_path $shlib_search_path; do
+	  if test "$linkmode" = lib; then
+	    searchdirs="$newlib_search_path $lib_search_path $compiler_lib_search_dirs $sys_lib_search_path $shlib_search_path"
+	  else
+	    searchdirs="$newlib_search_path $lib_search_path $sys_lib_search_path $shlib_search_path"
+	  fi
+	  for searchdir in $searchdirs; do
 	    for search_ext in .la $std_shrext .so .a; do
 	      # Search the libtool library
 	      lib="$searchdir/lib${name}${search_ext}"
@@ -3869,12 +4776,6 @@ func_mode_link ()
 	  done
 	fi
 	dependency_libs=`$ECHO "X $dependency_libs" | $Xsed -e 's% \([^ $]*\).ltframework% -framework \1%g'`
-	if test "$linkmode,$pass" = "prog,link"; then
-	  compile_deplibs="$new_inherited_linker_flags $compile_deplibs"
-	  finalize_deplibs="$new_inherited_linker_flags $finalize_deplibs"
-	else
-	  compiler_flags="$compiler_flags $inherited_linker_flags"
-	fi
 	if test "$linkmode,$pass" = "lib,link" ||
 	   test "$linkmode,$pass" = "prog,scan" ||
 	   { test "$linkmode" != prog && test "$linkmode" != lib; }; then
@@ -4194,13 +5095,13 @@ func_mode_link ()
 	    # If the library has no export list, then create one now
 	    if test -f "$output_objdir/$soname-def"; then :
 	    else
-	      func_echo "extracting exported symbol list from \`$soname'"
+	      func_verbose "extracting exported symbol list from \`$soname'"
 	      func_execute_cmds "$extract_expsyms_cmds" 'exit $?'
 	    fi
 
 	    # Create $newlib
 	    if test -f "$output_objdir/$newlib"; then :; else
-	      func_echo "generating import library for \`$soname'"
+	      func_verbose "generating import library for \`$soname'"
 	      func_execute_cmds "$old_archive_from_expsyms_cmds" 'exit $?'
 	    fi
 	    # make sure the library variables are pointing to the new library
@@ -4502,6 +5403,14 @@ func_mode_link ()
 	  fi # link_all_deplibs != no
 	fi # linkmode = lib
       done # for deplib in $libs
+      if test "$pass" = link; then
+	if test "$linkmode" = "prog"; then
+	  compile_deplibs="$new_inherited_linker_flags $compile_deplibs"
+	  finalize_deplibs="$new_inherited_linker_flags $finalize_deplibs"
+	else
+	  compiler_flags="$compiler_flags "`$ECHO "X $new_inherited_linker_flags" | $Xsed -e 's% \([^ $]*\).ltframework% -framework \1%g'`
+	fi
+      fi
       dependency_libs="$newdependency_libs"
       if test "$pass" = dlpreopen; then
 	# Link the dlpreopened libraries before other libraries
@@ -4611,9 +5520,10 @@ func_mode_link ()
 	func_warning "\`-dlopen' is ignored for archives"
       fi
 
-      test -n "$deplibs" && \
-	func_warning "\`-l' and \`-L' are ignored for archives"
-
+      case " $deplibs" in
+      *\ -l* | *\ -L*)
+	func_warning "\`-l' and \`-L' are ignored for archives" ;;
+      esac
 
       test -n "$rpath" && \
 	func_warning "\`-rpath' is ignored for archives"
@@ -4739,9 +5649,10 @@ func_mode_link ()
 	    age="0"
 	    ;;
 	  irix|nonstopux)
-	    current=`expr $number_major + $number_minor - 1`
+	    current=`expr $number_major + $number_minor`
 	    age="$number_minor"
 	    revision="$number_minor"
+	    lt_irix_increment=no
 	    ;;
 	  esac
 	  ;;
@@ -4796,7 +5707,8 @@ func_mode_link ()
 	  versuffix="$major.$age.$revision"
 	  # Darwin ld doesn't like 0 for these options...
 	  minor_current=`expr $current + 1`
-	  verstring="${wl}-compatibility_version ${wl}$minor_current ${wl}-current_version ${wl}$minor_current.$revision"
+	  xlcverstring="${wl}-compatibility_version ${wl}$minor_current ${wl}-current_version ${wl}$minor_current.$revision"
+	  verstring="-compatibility_version $minor_current -current_version $minor_current.$revision"
 	  ;;
 
 	freebsd-aout)
@@ -4810,7 +5722,11 @@ func_mode_link ()
 	  ;;
 
 	irix | nonstopux)
-	  major=`expr $current - $age + 1`
+	  if test "X$lt_irix_increment" = "Xno"; then
+	    major=`expr $current - $age`
+	  else
+	    major=`expr $current - $age + 1`
+	  fi
 
 	  case $version_type in
 	    nonstopux) verstring_prefix=nonstopux ;;
@@ -5016,8 +5932,8 @@ func_mode_link ()
 	    ;;
 	  *-*-sysv4.2uw2* | *-*-sysv5* | *-*-unixware* | *-*-OpenUNIX*)
 	    # Compiler inserts libc in the correct place for threads to work
- 	    ;;
- 	  *)
+	    ;;
+	  *)
 	    # Add libc to deplibs on all other systems if necessary.
 	    if test "$build_libtool_need_lc" = "yes"; then
 	      deplibs="$deplibs -lc"
@@ -5275,7 +6191,7 @@ EOF
 	      tmp_deplibs=`$ECHO "X $tmp_deplibs" | $Xsed -e "s,$i,,"`
 	    done
 	  fi
-	  if $ECHO "X $tmp_deplibs" | $Xsed -e 's/[ 	]//g' |
+	  if $ECHO "X $tmp_deplibs" | $Xsed -e 's/[	 ]//g' |
 	     $GREP . >/dev/null; then
 	    $ECHO
 	    if test "X$deplibs_check_method" = "Xnone"; then
@@ -5506,7 +6422,7 @@ EOF
 	# Prepare the list of exported symbols
 	if test -z "$export_symbols"; then
 	  if test "$always_export_symbols" = yes || test -n "$export_symbols_regex"; then
-	    func_echo "generating symbol list for \`$libname.la'"
+	    func_verbose "generating symbol list for \`$libname.la'"
 	    export_symbols="$output_objdir/$libname.exp"
 	    $opt_dry_run || $RM $export_symbols
 	    cmds=$export_symbols_cmds
@@ -5520,7 +6436,7 @@ EOF
 		skipped_export=false
 	      else
 		# The command line is too long to execute in one step.
-		func_echo "using reloadable object file for export list..."
+		func_verbose "using reloadable object file for export list..."
 		skipped_export=:
 		# Break out early, otherwise skipped_export may be
 		# set to false by a later but shorter cmd.
@@ -5543,7 +6459,7 @@ EOF
 
 	if test "X$skipped_export" != "X:" && test -n "$orig_export_symbols"; then
 	  # The given exports_symbols file has to be filtered, so filter it.
-	  func_echo "filter symbol list for \`$libname.la' to tag DATA exports"
+	  func_verbose "filter symbol list for \`$libname.la' to tag DATA exports"
 	  # FIXME: $output_objdir/$libname.filter potentially contains lots of
 	  # 's' commands which not all seds can handle. GNU sed should be fine
 	  # though. Also, the filter scales superlinearly with the number of
@@ -5650,7 +6566,7 @@ EOF
 
 	  if test -n "$save_libobjs" && test "X$skipped_export" != "X:" && test "$with_gnu_ld" = yes; then
 	    output=${output_objdir}/${output_la}.lnkscript
-	    func_echo "creating GNU ld script: $output"
+	    func_verbose "creating GNU ld script: $output"
 	    $ECHO 'INPUT (' > $output
 	    for obj in $save_libobjs
 	    do
@@ -5660,7 +6576,7 @@ EOF
 	    delfiles="$delfiles $output"
 	  elif test -n "$save_libobjs" && test "X$skipped_export" != "X:" && test "X$file_list_spec" != X; then
 	    output=${output_objdir}/${output_la}.lnk
-	    func_echo "creating linker input file list: $output"
+	    func_verbose "creating linker input file list: $output"
 	    : > $output
 	    set x $save_libobjs
 	    shift
@@ -5677,7 +6593,7 @@ EOF
 	    output=$firstobj\"$file_list_spec$output\"
 	  else
 	    if test -n "$save_libobjs"; then
-	      func_echo "creating reloadable object files..."
+	      func_verbose "creating reloadable object files..."
 	      output=$output_objdir/$output_la-${k}.$objext
 	      # Loop over the list of objects to be linked.
 	      for obj in $save_libobjs
@@ -5696,7 +6612,7 @@ EOF
 		  else
 		    # All subsequent reloadable object files will link in
 		    # the last one created.
-		    eval concat_cmds=\"\$concat_cmds~$reload_cmds $objlist $last_robj\"
+		    eval concat_cmds=\"\$concat_cmds~$reload_cmds $objlist $last_robj~\$RM $last_robj\"
 		  fi
 		  last_robj=$output_objdir/$output_la-${k}.$objext
 		  k=`expr $k + 1`
@@ -5710,31 +6626,30 @@ EOF
 	      # files will link in the last one created.
 	      test -z "$concat_cmds" || concat_cmds=$concat_cmds~
 	      eval concat_cmds=\"\${concat_cmds}$reload_cmds $objlist $last_robj\"
+	      if test -n "$last_robj"; then
+	        eval concat_cmds=\"\${concat_cmds}~\$RM $last_robj\"
+	      fi
+	      delfiles="$delfiles $output"
 
-	      # Set up a command to remove the reloadable object files
-	      # after they are used.
-	      i=0
-	      while test "$i" -lt "$k"
-	      do
-		i=`expr $i + 1`
-		delfiles="$delfiles $output_objdir/$output_la-${i}.$objext"
-	      done
 	    else
 	      output=
 	    fi
 
 	    if ${skipped_export-false}; then
-	      func_echo "generating symbol list for \`$libname.la'"
+	      func_verbose "generating symbol list for \`$libname.la'"
 	      export_symbols="$output_objdir/$libname.exp"
 	      $opt_dry_run || $RM $export_symbols
 	      libobjs=$output
 	      # Append the command to create the export file.
 	      test -z "$concat_cmds" || concat_cmds=$concat_cmds~
 	      eval concat_cmds=\"\$concat_cmds$export_symbols_cmds\"
+	      if test -n "$last_robj"; then
+		eval concat_cmds=\"\$concat_cmds~\$RM $last_robj\"
+	      fi
 	    fi
 
 	    test -n "$save_libobjs" &&
-	      func_echo "creating a temporary reloadable object file: $output"
+	      func_verbose "creating a temporary reloadable object file: $output"
 
 	    # Loop through the commands generated above and execute them.
 	    save_ifs="$IFS"; IFS='~'
@@ -5774,7 +6689,7 @@ EOF
 
 	    if test -n "$orig_export_symbols"; then
 	      # The given exports_symbols file has to be filtered, so filter it.
-	      func_echo "filter symbol list for \`$libname.la' to tag DATA exports"
+	      func_verbose "filter symbol list for \`$libname.la' to tag DATA exports"
 	      # FIXME: $output_objdir/$libname.filter potentially contains lots of
 	      # 's' commands which not all seds can handle. GNU sed should be fine
 	      # though. Also, the filter scales superlinearly with the number of
@@ -5885,8 +6800,10 @@ EOF
 	func_warning "\`-dlopen' is ignored for objects"
       fi
 
-      test -n "$deplibs" && \
-	func_warning "\`-l' and \`-L' are ignored for objects"
+      case " $deplibs" in
+      *\ -l* | *\ -L*)
+	func_warning "\`-l' and \`-L' are ignored for objects" ;;
+      esac
 
       test -n "$rpath" && \
 	func_warning "\`-rpath' is ignored for objects"
@@ -6269,7 +7186,7 @@ EOF
       func_show_eval "$link_command" 'exit $?'
 
       # Now create the wrapper script.
-      func_echo "creating $output"
+      func_verbose "creating $output"
 
       # Quote the relink command for shipping.
       if test -n "$relink_command"; then
@@ -6317,553 +7234,47 @@ EOF
 	esac
 	case $host in
 	  *cygwin* | *mingw* )
-	    output_name=`basename $output`
-	    output_path=`dirname $output`
+	    func_dirname_and_basename "$output" "" "."
+	    output_name=$func_basename_result
+	    output_path=$func_dirname_result
 	    cwrappersource="$output_path/$objdir/lt-$output_name.c"
 	    cwrapper="$output_path/$output_name.exe"
 	    $RM $cwrappersource $cwrapper
 	    trap "$RM $cwrappersource $cwrapper; exit $EXIT_FAILURE" 1 2 15
 
-	    cat > $cwrappersource <<EOF
+	    func_emit_cwrapperexe_src > $cwrappersource
 
-/* $cwrappersource - temporary wrapper executable for $objdir/$outputname
-   Generated by $PROGRAM (GNU $PACKAGE$TIMESTAMP) $VERSION
+	    # we should really use a build-platform specific compiler
+	    # here, but OTOH, the wrappers (shell script and this C one)
+	    # are only useful if you want to execute the "real" binary.
+	    # Since the "real" binary is built for $host, then this
+	    # wrapper might as well be built for $host, too.
+	    $opt_dry_run || {
+	      $LTCC $LTCFLAGS -o $cwrapper $cwrappersource
+	      $STRIP $cwrapper
+	    }
 
-   The $output program cannot be directly executed until all the libtool
-   libraries that it depends on are installed.
+	    # Now, create the wrapper script for func_source use:
+	    func_ltwrapper_scriptname $cwrapper
+	    $RM $func_ltwrapper_scriptname_result
+	    trap "$RM $func_ltwrapper_scriptname_result; exit $EXIT_FAILURE" 1 2 15
+	    $opt_dry_run || {
+	      # note: this script will not be executed, so do not chmod.
+	      if test "x$build" = "x$host" ; then
+		$cwrapper --lt-dump-script > $func_ltwrapper_scriptname_result
+	      else
+		func_emit_wrapper no > $func_ltwrapper_scriptname_result
+	      fi
+	    }
+	  ;;
+	  * )
+	    $RM $output
+	    trap "$RM $output; exit $EXIT_FAILURE" 1 2 15
 
-   This wrapper executable should never be moved out of the build directory.
-   If it is, it will not operate correctly.
-
-   Currently, it simply execs the wrapper *script* "/bin/sh $output",
-   but could eventually absorb all of the scripts functionality and
-   exec $objdir/$outputname directly.
-*/
-EOF
-	    cat >> $cwrappersource<<"EOF"
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <malloc.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/stat.h>
-
-#if defined(PATH_MAX)
-# define LT_PATHMAX PATH_MAX
-#elif defined(MAXPATHLEN)
-# define LT_PATHMAX MAXPATHLEN
-#else
-# define LT_PATHMAX 1024
-#endif
-
-#ifndef DIR_SEPARATOR
-# define DIR_SEPARATOR '/'
-# define PATH_SEPARATOR ':'
-#endif
-
-#if defined (_WIN32) || defined (__MSDOS__) || defined (__DJGPP__) || \
-  defined (__OS2__)
-# define HAVE_DOS_BASED_FILE_SYSTEM
-# ifndef DIR_SEPARATOR_2
-#  define DIR_SEPARATOR_2 '\\'
-# endif
-# ifndef PATH_SEPARATOR_2
-#  define PATH_SEPARATOR_2 ';'
-# endif
-#endif
-
-#ifndef DIR_SEPARATOR_2
-# define IS_DIR_SEPARATOR(ch) ((ch) == DIR_SEPARATOR)
-#else /* DIR_SEPARATOR_2 */
-# define IS_DIR_SEPARATOR(ch) \
-	(((ch) == DIR_SEPARATOR) || ((ch) == DIR_SEPARATOR_2))
-#endif /* DIR_SEPARATOR_2 */
-
-#ifndef PATH_SEPARATOR_2
-# define IS_PATH_SEPARATOR(ch) ((ch) == PATH_SEPARATOR)
-#else /* PATH_SEPARATOR_2 */
-# define IS_PATH_SEPARATOR(ch) ((ch) == PATH_SEPARATOR_2)
-#endif /* PATH_SEPARATOR_2 */
-
-#define XMALLOC(type, num)      ((type *) xmalloc ((num) * sizeof(type)))
-#define XFREE(stale) do { \
-  if (stale) { free ((void *) stale); stale = 0; } \
-} while (0)
-
-/* -DDEBUG is fairly common in CFLAGS.  */
-#undef DEBUG
-#if defined DEBUGWRAPPER
-# define DEBUG(format, ...) fprintf(stderr, format, __VA_ARGS__)
-#else
-# define DEBUG(format, ...)
-#endif
-
-const char *program_name = NULL;
-
-void * xmalloc (size_t num);
-char * xstrdup (const char *string);
-const char * base_name (const char *name);
-char * find_executable(const char *wrapper);
-int    check_executable(const char *path);
-char * strendzap(char *str, const char *pat);
-void lt_fatal (const char *message, ...);
-
-int
-main (int argc, char *argv[])
-{
-  char **newargz;
-  int i;
-
-  program_name = (char *) xstrdup (base_name (argv[0]));
-  DEBUG("(main) argv[0]      : %s\n",argv[0]);
-  DEBUG("(main) program_name : %s\n",program_name);
-  newargz = XMALLOC(char *, argc+2);
-EOF
-
-	    cat >> $cwrappersource <<EOF
-  newargz[0] = (char *) xstrdup("$SHELL");
-EOF
-
-	    cat >> $cwrappersource <<"EOF"
-  newargz[1] = find_executable(argv[0]);
-  if (newargz[1] == NULL)
-    lt_fatal("Couldn't find %s", argv[0]);
-  DEBUG("(main) found exe at : %s\n",newargz[1]);
-  /* we know the script has the same name, without the .exe */
-  /* so make sure newargz[1] doesn't end in .exe */
-  strendzap(newargz[1],".exe");
-  for (i = 1; i < argc; i++)
-    newargz[i+1] = xstrdup(argv[i]);
-  newargz[argc+1] = NULL;
-
-  for (i=0; i<argc+1; i++)
-  {
-    DEBUG("(main) newargz[%d]   : %s\n",i,newargz[i]);
-    ;
-  }
-
-EOF
-
-	    case $host_os in
-	      mingw*)
-		cat >> $cwrappersource <<EOF
-  execv("$SHELL",(char const **)newargz);
-EOF
-	      ;;
-	      *)
-		cat >> $cwrappersource <<EOF
-  execv("$SHELL",newargz);
-EOF
-	      ;;
-	    esac
-
-	    cat >> $cwrappersource <<"EOF"
-  return 127;
-}
-
-void *
-xmalloc (size_t num)
-{
-  void * p = (void *) malloc (num);
-  if (!p)
-    lt_fatal ("Memory exhausted");
-
-  return p;
-}
-
-char *
-xstrdup (const char *string)
-{
-  return string ? strcpy ((char *) xmalloc (strlen (string) + 1), string) : NULL
-;
-}
-
-const char *
-base_name (const char *name)
-{
-  const char *base;
-
-#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
-  /* Skip over the disk name in MSDOS pathnames. */
-  if (isalpha ((unsigned char)name[0]) && name[1] == ':')
-    name += 2;
-#endif
-
-  for (base = name; *name; name++)
-    if (IS_DIR_SEPARATOR (*name))
-      base = name + 1;
-  return base;
-}
-
-int
-check_executable(const char * path)
-{
-  struct stat st;
-
-  DEBUG("(check_executable)  : %s\n", path ? (*path ? path : "EMPTY!") : "NULL!");
-  if ((!path) || (!*path))
-    return 0;
-
-  if ((stat (path, &st) >= 0) &&
-      (
-	/* MinGW & native WIN32 do not support S_IXOTH or S_IXGRP */
-#if defined (S_IXOTH)
-       ((st.st_mode & S_IXOTH) == S_IXOTH) ||
-#endif
-#if defined (S_IXGRP)
-       ((st.st_mode & S_IXGRP) == S_IXGRP) ||
-#endif
-       ((st.st_mode & S_IXUSR) == S_IXUSR))
-      )
-    return 1;
-  else
-    return 0;
-}
-
-/* Searches for the full path of the wrapper.  Returns
-   newly allocated full path name if found, NULL otherwise */
-char *
-find_executable (const char* wrapper)
-{
-  int has_slash = 0;
-  const char* p;
-  const char* p_next;
-  /* static buffer for getcwd */
-  char tmp[LT_PATHMAX + 1];
-  int tmp_len;
-  char* concat_name;
-
-  DEBUG("(find_executable)  : %s\n", wrapper ? (*wrapper ? wrapper : "EMPTY!") : "NULL!");
-
-  if ((wrapper == NULL) || (*wrapper == '\0'))
-    return NULL;
-
-  /* Absolute path? */
-#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
-  if (isalpha ((unsigned char)wrapper[0]) && wrapper[1] == ':')
-  {
-    concat_name = xstrdup (wrapper);
-    if (check_executable(concat_name))
-      return concat_name;
-    XFREE(concat_name);
-  }
-  else
-  {
-#endif
-    if (IS_DIR_SEPARATOR (wrapper[0]))
-    {
-      concat_name = xstrdup (wrapper);
-      if (check_executable(concat_name))
-	return concat_name;
-      XFREE(concat_name);
-    }
-#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
-  }
-#endif
-
-  for (p = wrapper; *p; p++)
-    if (*p == '/')
-    {
-      has_slash = 1;
-      break;
-    }
-  if (!has_slash)
-  {
-    /* no slashes; search PATH */
-    const char* path = getenv ("PATH");
-    if (path != NULL)
-    {
-      for (p = path; *p; p = p_next)
-      {
-	const char* q;
-	size_t p_len;
-	for (q = p; *q; q++)
-	  if (IS_PATH_SEPARATOR(*q))
-	    break;
-	p_len = q - p;
-	p_next = (*q == '\0' ? q : q + 1);
-	if (p_len == 0)
-	{
-	  /* empty path: current directory */
-	  if (getcwd (tmp, LT_PATHMAX) == NULL)
-	    lt_fatal ("getcwd failed");
-	  tmp_len = strlen(tmp);
-	  concat_name = XMALLOC(char, tmp_len + 1 + strlen(wrapper) + 1);
-	  memcpy (concat_name, tmp, tmp_len);
-	  concat_name[tmp_len] = '/';
-	  strcpy (concat_name + tmp_len + 1, wrapper);
-	}
-	else
-	{
-	  concat_name = XMALLOC(char, p_len + 1 + strlen(wrapper) + 1);
-	  memcpy (concat_name, p, p_len);
-	  concat_name[p_len] = '/';
-	  strcpy (concat_name + p_len + 1, wrapper);
-	}
-	if (check_executable(concat_name))
-	  return concat_name;
-	XFREE(concat_name);
-      }
-    }
-    /* not found in PATH; assume curdir */
-  }
-  /* Relative path | not found in path: prepend cwd */
-  if (getcwd (tmp, LT_PATHMAX) == NULL)
-    lt_fatal ("getcwd failed");
-  tmp_len = strlen(tmp);
-  concat_name = XMALLOC(char, tmp_len + 1 + strlen(wrapper) + 1);
-  memcpy (concat_name, tmp, tmp_len);
-  concat_name[tmp_len] = '/';
-  strcpy (concat_name + tmp_len + 1, wrapper);
-
-  if (check_executable(concat_name))
-    return concat_name;
-  XFREE(concat_name);
-  return NULL;
-}
-
-char *
-strendzap(char *str, const char *pat)
-{
-  size_t len, patlen;
-
-  assert(str != NULL);
-  assert(pat != NULL);
-
-  len = strlen(str);
-  patlen = strlen(pat);
-
-  if (patlen <= len)
-  {
-    str += len - patlen;
-    if (strcmp(str, pat) == 0)
-      *str = '\0';
-  }
-  return str;
-}
-
-static void
-lt_error_core (int exit_status, const char * mode,
-	  const char * message, va_list ap)
-{
-  fprintf (stderr, "%s: %s: ", program_name, mode);
-  vfprintf (stderr, message, ap);
-  fprintf (stderr, ".\n");
-
-  if (exit_status >= 0)
-    exit (exit_status);
-}
-
-void
-lt_fatal (const char *message, ...)
-{
-  va_list ap;
-  va_start (ap, message);
-  lt_error_core (EXIT_FAILURE, "FATAL", message, ap);
-  va_end (ap);
-}
-EOF
-	  # we should really use a build-platform specific compiler
-	  # here, but OTOH, the wrappers (shell script and this C one)
-	  # are only useful if you want to execute the "real" binary.
-	  # Since the "real" binary is built for $host, then this
-	  # wrapper might as well be built for $host, too.
-	  $opt_dry_run || $LTCC $LTCFLAGS -s -o $cwrapper $cwrappersource
+	    func_emit_wrapper no > $output
+	    chmod +x $output
 	  ;;
 	esac
-	$RM $output
-	trap "$RM $output; exit $EXIT_FAILURE" 1 2 15
-
-	$ECHO > $output "\
-#! $SHELL
-
-# $output - temporary wrapper script for $objdir/$outputname
-# Generated by $PROGRAM (GNU $PACKAGE$TIMESTAMP) $VERSION
-#
-# The $output program cannot be directly executed until all the libtool
-# libraries that it depends on are installed.
-#
-# This wrapper script should never be moved out of the build directory.
-# If it is, it will not operate correctly.
-
-# Sed substitution that helps us do robust quoting.  It backslashifies
-# metacharacters that are still active within double-quoted strings.
-Xsed='${SED} -e 1s/^X//'
-sed_quote_subst='$sed_quote_subst'
-
-# Be Bourne compatible
-if test -n \"\${ZSH_VERSION+set}\" && (emulate sh) >/dev/null 2>&1; then
-  emulate sh
-  NULLCMD=:
-  # Zsh 3.x and 4.x performs word splitting on \${1+\"\$@\"}, which
-  # is contrary to our usage.  Disable this feature.
-  alias -g '\${1+\"\$@\"}'='\"\$@\"'
-  setopt NO_GLOB_SUBST
-else
-  case \`(set -o) 2>/dev/null\` in *posix*) set -o posix;; esac
-fi
-BIN_SH=xpg4; export BIN_SH # for Tru64
-DUALCASE=1; export DUALCASE # for MKS sh
-
-# The HP-UX ksh and POSIX shell print the target directory to stdout
-# if CDPATH is set.
-(unset CDPATH) >/dev/null 2>&1 && unset CDPATH
-
-relink_command=\"$relink_command\"
-
-# This environment variable determines our operation mode.
-if test \"\$libtool_install_magic\" = \"$magic\"; then
-  # install mode needs the following variables:
-  generated_by_libtool_version='$macro_version'
-  notinst_deplibs='$notinst_deplibs'
-else
-  # When we are sourced in execute mode, \$file and \$ECHO are already set.
-  if test \"\$libtool_execute_magic\" != \"$magic\"; then
-    ECHO=\"$qecho\"
-    file=\"\$0\"
-    # Make sure echo works.
-    if test \"X\$1\" = X--no-reexec; then
-      # Discard the --no-reexec flag, and continue.
-      shift
-    elif test \"X\`{ \$ECHO '\t'; } 2>/dev/null\`\" = 'X\t'; then
-      # Yippee, \$ECHO works!
-      :
-    else
-      # Restart under the correct shell, and then maybe \$ECHO will work.
-      exec $SHELL \"\$0\" --no-reexec \${1+\"\$@\"}
-    fi
-  fi\
-"
-	$ECHO >> $output "\
-
-  # Find the directory that this script lives in.
-  thisdir=\`\$ECHO \"X\$file\" | \$Xsed -e 's%/[^/]*$%%'\`
-  test \"x\$thisdir\" = \"x\$file\" && thisdir=.
-
-  # Follow symbolic links until we get to the real thisdir.
-  file=\`ls -ld \"\$file\" | ${SED} -n 's/.*-> //p'\`
-  while test -n \"\$file\"; do
-    destdir=\`\$ECHO \"X\$file\" | \$Xsed -e 's%/[^/]*\$%%'\`
-
-    # If there was a directory component, then change thisdir.
-    if test \"x\$destdir\" != \"x\$file\"; then
-      case \"\$destdir\" in
-      [\\\\/]* | [A-Za-z]:[\\\\/]*) thisdir=\"\$destdir\" ;;
-      *) thisdir=\"\$thisdir/\$destdir\" ;;
-      esac
-    fi
-
-    file=\`\$ECHO \"X\$file\" | \$Xsed -e 's%^.*/%%'\`
-    file=\`ls -ld \"\$thisdir/\$file\" | ${SED} -n 's/.*-> //p'\`
-  done
-
-  # Try to get the absolute directory name.
-  absdir=\`cd \"\$thisdir\" && pwd\`
-  test -n \"\$absdir\" && thisdir=\"\$absdir\"
-"
-
-	if test "$fast_install" = yes; then
-	  $ECHO >> $output "\
-  program=lt-'$outputname'$exeext
-  progdir=\"\$thisdir/$objdir\"
-
-  if test ! -f \"\$progdir/\$program\" ||
-     { file=\`ls -1dt \"\$progdir/\$program\" \"\$progdir/../\$program\" 2>/dev/null | ${SED} 1q\`; \\
-       test \"X\$file\" != \"X\$progdir/\$program\"; }; then
-
-    file=\"\$\$-\$program\"
-
-    if test ! -d \"\$progdir\"; then
-      $MKDIR \"\$progdir\"
-    else
-      $RM \"\$progdir/\$file\"
-    fi"
-
-	  $ECHO >> $output "\
-
-    # relink executable if necessary
-    if test -n \"\$relink_command\"; then
-      if relink_command_output=\`eval \$relink_command 2>&1\`; then :
-      else
-	$ECHO \"\$relink_command_output\" >&2
-	$RM \"\$progdir/\$file\"
-	exit 1
-      fi
-    fi
-
-    $MV \"\$progdir/\$file\" \"\$progdir/\$program\" 2>/dev/null ||
-    { $RM \"\$progdir/\$program\";
-      $MV \"\$progdir/\$file\" \"\$progdir/\$program\"; }
-    $RM \"\$progdir/\$file\"
-  fi"
-	else
-	  $ECHO >> $output "\
-  program='$outputname'
-  progdir=\"\$thisdir/$objdir\"
-"
-	fi
-
-	$ECHO >> $output "\
-
-  if test -f \"\$progdir/\$program\"; then"
-
-	# Export our shlibpath_var if we have one.
-	if test "$shlibpath_overrides_runpath" = yes && test -n "$shlibpath_var" && test -n "$temp_rpath"; then
-	  $ECHO >> $output "\
-    # Add our own library path to $shlibpath_var
-    $shlibpath_var=\"$temp_rpath\$$shlibpath_var\"
-
-    # Some systems cannot cope with colon-terminated $shlibpath_var
-    # The second colon is a workaround for a bug in BeOS R4 sed
-    $shlibpath_var=\`\$ECHO \"X\$$shlibpath_var\" | \$Xsed -e 's/::*\$//'\`
-
-    export $shlibpath_var
-"
-	fi
-
-	# fixup the dll searchpath if we need to.
-	if test -n "$dllsearchpath"; then
-	  $ECHO >> $output "\
-    # Add the dll search path components to the executable PATH
-    PATH=$dllsearchpath:\$PATH
-"
-	fi
-
-	$ECHO >> $output "\
-    if test \"\$libtool_execute_magic\" != \"$magic\"; then
-      # Run the actual program with our arguments.
-"
-	case $host in
-	# Backslashes separate directories on plain windows
-	*-*-mingw | *-*-os2*)
-	  $ECHO >> $output "\
-      exec \"\$progdir\\\\\$program\" \${1+\"\$@\"}
-"
-	  ;;
-
-	*)
-	  $ECHO >> $output "\
-      exec \"\$progdir/\$program\" \${1+\"\$@\"}
-"
-	  ;;
-	esac
-	$ECHO >> $output "\
-      \$ECHO \"\$0: cannot exec \$program \$*\"
-      exit 1
-    fi
-  else
-    # The program doesn't exist.
-    \$ECHO \"\$0: error: \\\`\$progdir/\$program' does not exist\" 1>&2
-    \$ECHO \"This script is just a wrapper for \$program.\" 1>&2
-    $ECHO \"See the $PACKAGE documentation for more information.\" 1>&2
-    exit 1
-  fi
-fi\
-"
-	chmod +x $output
       }
       exit $EXIT_SUCCESS
       ;;
@@ -6962,7 +7373,7 @@ fi\
 	  cmds=$old_archive_cmds
 	else
 	  # the command line is too long to link in one step, link in parts
-	  func_echo "using piecewise archive linking..."
+	  func_verbose "using piecewise archive linking..."
 	  save_RANLIB=$RANLIB
 	  RANLIB=:
 	  objlist=
@@ -7012,7 +7423,7 @@ fi\
     *.la)
       old_library=
       test "$build_old_libs" = yes && old_library="$libname.$libext"
-      func_echo "creating $output"
+      func_verbose "creating $output"
 
       # Preserve any variables that may affect compiler behavior
       for var in $variables_saved_for_relink; do
@@ -7313,8 +7724,15 @@ func_mode_uninstall ()
 	  esac
 	  # Do a test to see if this is a libtool program.
 	  if func_ltwrapper_p "$file"; then
-	    relink_command=
-	    func_source $dir/$noexename
+	    if func_ltwrapper_executable_p "$file"; then
+	      func_ltwrapper_scriptname "$file"
+	      relink_command=
+	      func_source $func_ltwrapper_scriptname_result
+	      rmfiles="$rmfiles $func_ltwrapper_scriptname_result"
+	    else
+	      relink_command=
+	      func_source $dir/$noexename
+	    fi
 
 	    # note $name still contains .exe if it was in $file originally
 	    # as does the version of $file that was added into $rmfiles
@@ -7387,5 +7805,4 @@ build_old_libs=`case $build_libtool_libs in yes) echo no;; *) echo yes;; esac`
 # sh-indentation:2
 # End:
 # vi:sw=2
-
 
