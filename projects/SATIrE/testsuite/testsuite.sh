@@ -5,6 +5,10 @@
 
 #set -x
 
+# set this to 42 to get a lot of debug output, something else otherwise
+# debug=42
+debug=0
+
 if [ $# = 2 ]; then
   ANALYSIS=$1
 	SUITE=$2
@@ -48,42 +52,57 @@ for file in $FILES; do
 
     # Expected FAIL
     if echo $file | grep -q ^$SUITE/failure; then
-	expected_fails=$(( $expected_fails + 1 ))
-	if [ $result != 0 ]; then
-	    fails_ok=$(( $fails_ok + 1 ))
-	else
-	    echo "** ERROR: Expected failure succeeded $analysis $options $file"
-	    fail_errors="$fail_errors $analysis:$file"
-	fi
+      expected_fails=$(( $expected_fails + 1 ))
+      if [ $result != 0 ]; then
+        fails_ok=$(( $fails_ok + 1 ))
+      else
+        echo "** ERROR: Expected failure succeeded $analysis $options $file"
+        fail_errors="$fail_errors $analysis:$file"
+      fi
     fi
     # Expected SUCCESS
     if echo $file | grep -q ^$SUITE/success; then    
-	expected_succs=$(( $expected_succs + 1 ))
-	if [ $result == 0 ]; then
-	    succs_ok=$(( $succs_ok + 1 ))
-	    
-	    # grep runtime statistics for succ/succ cases
-	    time_sys=` cat $TMPFILE | awk 'END {print $1}'`
-	    time_user=`cat $TMPFILE | awk 'END {print $2}'`
-	    time_wall=`cat $TMPFILE | awk 'END {print $3}'`
+      expected_succs=$(( $expected_succs + 1 ))
+      if [ $result == 0 ]; then
+        result='success'  # to get more readable statistics
+        succs_ok=$(( $succs_ok + 1 ))
+    
+        # grep runtime statistics for succ/succ cases
+        time_sys=` cat $TMPFILE | awk 'END {print $1}'`
+        time_user=`cat $TMPFILE | awk 'END {print $2}'`
+        time_wall=`cat $TMPFILE | awk 'END {print $3}'`
 
-	    time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
-	    time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
-	    time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
-	    time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'`
-	    mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
- 	    # grep ROSE runtime stats
-	    time_rose_frontend=` cat $TMPFILE | awk '/ROSE frontend... time = .* .sec/ {print $5;exit}'`
-	    time_ast_construction=` cat $TMPFILE | awk '/AST construction .*: time = .* .sec/ {print $9;exit}'`
-	    time_ast_postprocess=` cat $TMPFILE | awk '/AST post-processing: time = .* .sec/ {print $5;exit}'`
-	    time_ast_comment=` cat $TMPFILE | awk '/AST Comment.*: time = .* .sec/ {print $10;exit}'`
+        time_pag_run=` cat $TMPFILE | awk '/analyzer done in .* sec/ {print $5;exit}'`
+        if [ $debug == 42 ]; then echo "time_pag_run = $time_pag_run because: \"`grep 'analyzer done in .* sec' $TMPFILE`\""; fi
+        time_pag_init=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $1; exit}'`  # initalizing(!)
+        if [ $debug == 42 ]; then echo "time_pag_init = $time_pag_init because: \"`grep 'initalizing' $TMPFILE`\""; fi
+        time_pag_iter=`cat $TMPFILE | awk '/initalizing/ {gsub("sec",""); print $3; exit}'`  # initalizing(!)
+        if [ $debug == 42 ]; then echo "time_pag_iter = $time_pag_iter because: \"`grep 'initalizing' $TMPFILE`\""; fi
+        time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'`
+        if [ $debug == 42 ]; then echo "time_pag_gc = $time_pag_gc because: \"`grep 'garbage collection' $TMPFILE`\""; fi
+        mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
+        if [ $debug == 42 ]; then echo "mem_allocd = $mem_allocd because: \"`grep 'allocated' $TMPFILE`\""; fi
 
-	    time_icfg=` cat $TMPFILE | awk '/ICFG construction: time = .* .sec/ {print $6;exit}'`
-	    time_icfg_check=` cat $TMPFILE | awk '/CFG consistency check: time = .* .sec/ {print $6;exit}'`
-	    time_analysis=` cat $TMPFILE | awk '/Actual data-flow.*: time = .* .sec/ {print $7;exit}'`
+        # grep ROSE runtime stats
+        time_rose_frontend=` cat $TMPFILE | awk '/ROSE frontend... time = .* .sec/ {print $5;exit}'`
+        if [ $debug == 42 ]; then echo "time_rose_frontend = $time_rose_frontend because: \"`grep 'ROSE frontend' $TMPFILE`\""; fi
+        time_ast_construction=` cat $TMPFILE | awk '/AST Constrution .*: time = .* .sec/ {print $9;exit}'`
+        if [ $debug == 42 ]; then echo "time_ast_construction = $time_ast_construction because: \"`grep 'AST Constrution' $TMPFILE`\""; fi
+        time_ast_postprocess=` cat $TMPFILE | awk '/AST post-processing: time = .* .sec/ {print $5;exit}'`
+        if [ $debug == 42 ]; then echo "time_ast_postprocess = $time_ast_postprocess because: \"`grep 'AST post-processing' $TMPFILE`\""; fi
+        time_ast_comment=` cat $TMPFILE | awk '/AST Comment.*: time = .* .sec/ {print $10;exit}'`
+        if [ $debug == 42 ]; then echo "time_ast_comment = $time_ast_comment because: \"`grep 'AST Comment' $TMPFILE`\""; fi
+
+        # grep ICFG builder stats
+        time_icfg=` cat $TMPFILE | awk '/ICFG construction: time = .* .sec/ {print $6;exit}'`
+        if [ $debug == 42 ]; then echo "time_icfg = $time_icfg because \"`grep 'ICFG construction' $TMPFILE`\""; fi
+        time_icfg_check=` cat $TMPFILE | awk '/CFG consistency check: time = .* .sec/ {print $6;exit}'`
+        if [ $debug == 42 ]; then echo "time_icfg_check = $time_icfg_check because \"`grep 'CFG consistency check' $TMPFILE`\""; fi
+        time_analysis=` cat $TMPFILE | awk '/Actual data-flow.*: time = .* .sec/ {print $7;exit}'`
+        if [ $debug == 42 ]; then echo "time_analysis = $time_analysis because \"`grep 'Actual data-flow' $TMPFILE`\""; fi
 
             # verbose output for script development (will also be displayed in statistics at end)
-	    # echo " pag_run = $time_pag_run"
+        # echo " pag_run = $time_pag_run"
             # echo "pag_init = $time_pag_init"
             # echo "pag_iter = $time_pag_iter"
             # echo "  pag_gc = $time_pag_gc"
@@ -92,14 +111,14 @@ for file in $FILES; do
             # echo "    user = $time_user"
             # echo "    wall = $time_wall"
 
-	    printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
-	    printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" \
-		| sed 's/\_/\\\\\_/g' >> $DATFILE
-	else
-	    echo "** ERROR: Expected success failed $analysis $options $file"
-	    cat $TMPFILE
-	    succ_errors="$succ_errors $analysis:$file"
-	fi
+        printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
+        printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" \
+          | sed 's/\_/\\\\\_/g' >> $DATFILE
+      else
+        echo "** ERROR: Expected success failed $analysis $options $file"
+        cat $TMPFILE
+        succ_errors="$succ_errors $analysis:$file"
+      fi
     fi
   done 
 done
@@ -157,7 +176,7 @@ EndOfAWK
 ###################################################################
 # Create statistics plot
 ###################################################################
-TODAY=`date +%y-%m-%d`
+TODAY=`date +%Y-%m-%d`
 HISTOGRAM=statistics-$TODAY.eps
 
 # check for GNUplot version >= 4.2
