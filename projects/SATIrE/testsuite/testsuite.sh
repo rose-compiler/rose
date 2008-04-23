@@ -37,7 +37,7 @@ STATSFILE=runtests.stats
 TMPFILE=runtests.tmp
 DATFILE=runtests.dat
 
-printf "outfile\ttime\_rose\_frontend\tAST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tmem\_allocd\tanalysis\toptions\tfile\n" \
+printf "outfile\ttime\_rose\_frontend\tAST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tPAG-analysis\tSATIrE-ICFG\tROSE-AST\ttotal_memory\tanalysis\toptions\tfile\n" \
     > $DATFILE
 for file in $FILES; do
 
@@ -80,8 +80,8 @@ for file in $FILES; do
         if [ $debug == 42 ]; then echo "time_pag_iter = $time_pag_iter because: \"`grep 'initalizing' $TMPFILE`\""; fi
         time_pag_gc=`  cat $TMPFILE | awk '/garbage collection/ {gsub("s garbage",""); print $1; exit}'`
         if [ $debug == 42 ]; then echo "time_pag_gc = $time_pag_gc because: \"`grep 'garbage collection' $TMPFILE`\""; fi
-        mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
-        if [ $debug == 42 ]; then echo "mem_allocd = $mem_allocd because: \"`grep 'allocated' $TMPFILE`\""; fi
+        pag_mem_allocd=`   cat $TMPFILE | awk '/allocated/ {gsub("MB",""); print $1; exit}'`
+        if [ $debug == 42 ]; then echo "pag_mem_allocd = $pag_mem_allocd because: \"`grep 'allocated' $TMPFILE`\""; fi
 
         # grep ROSE runtime stats
         time_rose_frontend=` cat $TMPFILE | awk '/ROSE frontend... time = .* .sec/ {print $5;exit}'`
@@ -97,9 +97,21 @@ for file in $FILES; do
         time_icfg=` cat $TMPFILE | awk '/ICFG construction: time = .* .sec/ {print $6;exit}'`
         if [ $debug == 42 ]; then echo "time_icfg = $time_icfg because \"`grep 'ICFG construction' $TMPFILE`\""; fi
         time_icfg_check=` cat $TMPFILE | awk '/CFG consistency check: time = .* .sec/ {print $6;exit}'`
+        if [ x$time_icfg_check == x ]; then time_icfg_check=0; fi
         if [ $debug == 42 ]; then echo "time_icfg_check = $time_icfg_check because \"`grep 'CFG consistency check' $TMPFILE`\""; fi
         time_analysis=` cat $TMPFILE | awk '/Actual data-flow.*: time = .* .sec/ {print $7;exit}'`
         if [ $debug == 42 ]; then echo "time_analysis = $time_analysis because \"`grep 'Actual data-flow' $TMPFILE`\""; fi
+
+        # grep memory usage stats
+        ast_memory=`cat $TMPFILE | awk '/memory used .* memory pool/ {print $21 / 1000; exit}'` # value is in KB, we want it in MB
+        if [ $debug == 42 ]; then echo "ast_memory = $ast_memory because \"`grep 'memory used' $TMPFILE`\""; fi
+        total_memory=`cat $TMPFILE | awk '/^ +time .* memory usage/ {print $7; exit}'`
+        if [ $debug == 42 ]; then echo "total_memory = $total_memory because \"`grep -e '^ \+time .* memory usage' $TMPFILE`\""; fi
+        # This is not really only ICFG memory, but it's the best
+        # approximation we have. We abuse AWK as our calculator because the
+        # shell's built-in calculator doesn't seem to like floats.
+        icfg_memory=`echo "" | awk "{print $total_memory - ($ast_memory + $pag_mem_allocd)}"`
+        if [ $debug == 42 ]; then echo "icfg_memory = $icfg_memory = $total_memory - ($ast_memory + $pag_mem_allocd)"; fi
 
             # verbose output for script development (will also be displayed in statistics at end)
         # echo " pag_run = $time_pag_run"
@@ -111,8 +123,8 @@ for file in $FILES; do
             # echo "    user = $time_user"
             # echo "    wall = $time_wall"
 
-        printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
-        printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$mem_allocd\t$analysis\t$options\t$file\n" \
+        printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
+        printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$icfg_memory\t$ast_memory\t$total_memory\t$analysis\t$options\t$file\n" \
           | sed 's/\_/\\\\\_/g' >> $DATFILE
       else
         echo "** ERROR: Expected success failed $analysis $options $file"
@@ -142,7 +154,7 @@ BEGIN {
     time_pag_init += \$8
     time_pag_iter += \$9
     time_pag_gc   += \$10
-    mem_allocd    += \$11
+    pag_mem_allocd    += \$11
 
     min_time_user = min_time_user < \$5 ? min_time_user : \$5
     max_time_user = max_time_user > \$5 ? max_time_user : \$5
@@ -163,13 +175,13 @@ END {
         min_time_wall  = max_time_wall  = time_wall = 0;
         min_time_user  = max_time_user  = time_user = 0;
         min_time_pag   = max_time_pag   = time_pag_run = 0;
-        min_mem_allocd = max_mem_allocd = mem_allocd = 0;
+        min_mem_allocd = max_mem_allocd = pag_mem_allocd = 0;
         i = 1;
     }
     printf "%st_wall   min avg max = %f %f %f secs\n", prefix, min_time_wall,  time_wall    / i, max_time_wall
     printf "%st_user   min avg max = %f %f %f secs\n", prefix, min_time_user,  time_user    / i, max_time_user
     printf "%st_pag    min avg max = %f %f %f secs\n", prefix, min_time_pag,   time_pag_run / i, max_time_pag
-    printf "%salloc'd  min avg max = %f %f %f MB\n", prefix, min_mem_allocd, mem_allocd   / i, max_mem_allocd
+    printf "%salloc'd  min avg max = %f %f %f MB\n", prefix, min_mem_allocd, pag_mem_allocd   / i, max_mem_allocd
 }
 EndOfAWK
 
@@ -177,13 +189,19 @@ EndOfAWK
 # Create statistics plot
 ###################################################################
 TODAY=`date +%Y-%m-%d`
+GPLOT_SCRIPT=statistics-$TODAY.gnuplot
 HISTOGRAM=statistics-$TODAY.eps
+M_GPLOT_SCRIPT=memory-statistics-$TODAY.gnuplot
+M_HISTOGRAM=memory-statistics-$TODAY.eps
 
 # check for GNUplot version >= 4.2
 if [ x`gnuplot --version | awk '{ if ($2 >= 4.2) print "yes" }'` = xyes ]
 then
     echo "Plotting statistics histogram."
-    gnuplot <<EOF
+
+    # Setup gnuplot input scripts; these stay around and can be edited by
+    # the user, which is quite convenient!
+    cat > $GPLOT_SCRIPT <<EOF
 # GNUplot script to generate the timing histogram
 # 
 
@@ -211,7 +229,7 @@ set xlabel "Benchmark"
 set xtics nomirror rotate by -45 # Style of the x axis labels
 set auto x
 set auto y
-set yrange [0 : 0.5] # limit y range
+#set yrange [0 : 0.5] # limit y range
 
 # Plot the data:
 # "using 2" means "use column 2 from $DATFILE"
@@ -220,8 +238,48 @@ plot newhistogram "" lc 2, '$DATFILE' \
      '' using 4, \
      '' using 5, \
      '' using 6, \
-     '' using 7, \
      '' using 8
+EOF
+
+# GB (2008-04-23): Removed "using 7" because the ICFG tests are now not run by
+# default.
+
+    cat > $M_GPLOT_SCRIPT <<EOF
+# GNUplot script to generate the memory histogram
+# 
+
+# Output:
+# Show an X11 window ...
+#set terminal x11 persist
+# ... or generate an .eps file
+set terminal postscript eps enhanced font "CMTI10, 10" color
+set output '$M_HISTOGRAM'
+
+# Description
+set key autotitle columnheader reverse 
+
+# Style
+set boxwidth 0.7 absolute
+set style fill solid 1.00 border -1
+set datafile missing ''
+set style data histogram # Histogram style
+set style histogram rowstacked
+set grid y # use a grid
+
+set title "Memory used per component"  offset character 0, 0, 0 font "" norotate
+set ylabel "Megabytes"
+set xlabel "Benchmark"
+set xtics nomirror rotate by -45 # Style of the x axis labels
+set auto x
+set auto y
+#set yrange [0 : 0.5] # limit y range
+    
+# Plot the data:
+# "using 2" means "use column 2 from $DATFILE"
+plot newhistogram "" lc 2, '$DATFILE' \
+        using 19:xtic(1), \
+     '' using 18, \
+     '' using 17
 EOF
 
 #        using 2:xtic(1) ti col lt rgb "#FD8238", \
@@ -229,6 +287,11 @@ EOF
 #     '' using 4 ti col lt rgb "#0097D6", \
 #     '' using 5 ti col lt rgb "#E43887", \
 #     '' using 6 ti col lt rgb "#FAE017"
+
+    # here now are the actual calls to gnuplot: feed the scripts generated
+    # before into the gnuplot program
+    gnuplot < $GPLOT_SCRIPT
+    gnuplot < $M_GPLOT_SCRIPT
 
 else
     echo "**WARNING: GNUplot version >= 4.2 was NOT found."
