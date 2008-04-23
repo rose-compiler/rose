@@ -41,7 +41,7 @@ get:body(NODE, _, "DeclareStmt" | "UndeclareStmt", _, FIELD, _, _)
     return (void *) stmt->get_##FIELD();
 %}
 
-get:body(NODE, _, "ExternalCall", _, "params", _, _)
+get:body(NODE, _, "ExternalCall" | "ExternalReturn", _, "params", _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
     return new PigNodeList(*stmt->get_##FIELD());
@@ -59,7 +59,7 @@ get:body(NODE, _, "FunctionEntry" | "FunctionExit" | "FunctionCall" | "FunctionR
     return Ir::getCharPtr(stmt->get_##FIELD());
 %}
 
-get:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, FIELD, _, _)
+get:body(NODE, _, "ExternalCall" | "ExternalReturn" | "ConstructorCall" | "DestructorCall", _, FIELD, _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
     return stmt->get_##FIELD();
@@ -211,7 +211,7 @@ is:body(NODE, _, "ExpressionRootNT", _, _, _, _)
     return isSgExpressionRoot((SgNode *) NODE) != NULL;
 %}
 
-is:body(NODE, _, "ExternalCall" | "ConstructorCall" | "DestructorCall", _, _, _, _)
+is:body(NODE, _, "ExternalCall" | "ExternalReturn" | "ConstructorCall" | "DestructorCall", _, _, _, _)
 %{
     CONSTR *e = dynamic_cast<CONSTR *>(isSgStatement((SgNode *) NODE));
     return e != NULL;

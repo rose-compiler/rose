@@ -44,6 +44,7 @@ public:
   static DeclareStmt* createDeclareStmt(SgVariableSymbol *v, SgType *t);
   static UndeclareStmt* createUndeclareStmt(std::vector<SgVariableSymbol *> *v);
   static ExternalCall* createExternalCall(SgExpression *function, std::vector<SgVariableSymbol *> *params, SgType *type_);
+  static ExternalReturn* createExternalReturn(SgExpression *function, std::vector<SgVariableSymbol *> *params, SgType *type_);
   static ConstructorCall* createConstructorCall(std::string name_, SgType *type_);
   static DestructorCall* createDestructorCall(std::string name_, SgType *type_);
   static ArgumentAssignment* createArgumentAssignment(SgVariableSymbol *l, SgExpression *r);

@@ -415,6 +415,13 @@ Ir::createExternalCall(SgExpression *function, std::vector<SgVariableSymbol *> *
   return n;
 }
 
+ExternalReturn*
+Ir::createExternalReturn(SgExpression *function, std::vector<SgVariableSymbol *> *params, SgType *type_){
+  ExternalReturn* n=new ExternalReturn(function, params, type_);
+  configLocatedNode(n);
+  return n;
+}
+
 ConstructorCall*
 Ir::createConstructorCall(std::string name_, SgType *type_){
   ConstructorCall* n=new ConstructorCall(name_,type_);

@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.14 2008-04-08 09:50:00 gergo Exp $
+// $Id: ExprTransformer.C,v 1.15 2008-04-23 14:41:25 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -179,6 +179,7 @@ void ExprTransformer::visit(SgNode *node)
             retval_block = NULL;
         CallBlock *call_block = NULL, *return_block = NULL;
         ExternalCall *external_call = NULL;
+        ExternalReturn *external_return = NULL;
         if (entries != NULL && !entries->empty())
         {
             call_block = new CallBlock(node_id++, CALL, procnum,
@@ -238,18 +239,31 @@ void ExprTransformer::visit(SgNode *node)
                                            call->get_type());
             call_block->statements.push_front(external_call);
 
+         // GB (2008-04-23): Added external return blocks.
+            BasicBlock *return_block
+                = new BasicBlock(node_id++, INNER, procnum);
+            cfg->nodes.push_back(return_block);
+            external_return =
+                    Ir::createExternalReturn(call->get_function(),
+                                             new std::vector<SgVariableSymbol *>,
+                                             call->get_type());
+            return_block->statements.push_front(external_return);
+
             /* set links */
+            add_link(call_block, return_block, LOCAL);
             if (last_arg_block != NULL)
                 add_link(last_arg_block, call_block, NORMAL_EDGE);
             if (retval_block != NULL)
             {
-                add_link(call_block, retval_block, NORMAL_EDGE);
+             // add_link(call_block, retval_block, NORMAL_EDGE);
+                add_link(return_block, retval_block, NORMAL_EDGE);
                 add_link(retval_block, after, NORMAL_EDGE);
                 retval = retval_block;
             }
             else
             {
-                add_link(call_block, after, NORMAL_EDGE);
+             // add_link(call_block, after, NORMAL_EDGE);
+                add_link(return_block, after, NORMAL_EDGE);
                 retval = call_block;
             }
             after = call_block;
@@ -288,6 +302,8 @@ void ExprTransformer::visit(SgNode *node)
             if (external_call != NULL)
             {
                 external_call->set_params(ext_params);
+             // external_call != NULL iff external_return != NULL
+                external_return->set_params(new std::vector<SgVariableSymbol *>(*ext_params));
             }
             else
                 delete ext_params;
@@ -430,9 +446,9 @@ void ExprTransformer::visit(SgNode *node)
         if (isSgExpression(newExp0->get_parent())) {
           SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
           satireReplaceChild(newExp0->get_parent(),newExp0,varRefExp);
-          } else if (root_var == NULL) {
+        } else if (root_var == NULL) {
             root_var = var;
-          }
+        }
       } else {
         RetvalAttribute* ra = (RetvalAttribute *) ci->getAttribute("anonymous variable");
         SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
@@ -743,16 +759,15 @@ void ExprTransformer::visit(SgNode *node)
       
       BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(if_block);
-      if (logical_op->get_lhs_operand_i()->attributeExists("logical variable"))
-        {
-      RetvalAttribute* vna = (RetvalAttribute *) logical_op->get_lhs_operand_i()->getAttribute("logical variable");
-      SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),logical_op->get_lhs_operand_i()->get_type());
-      LogicalIf* logicalIf=Ir::createLogicalIf(varexp);
-      if_block->statements.push_front(logicalIf);
-        } else {
-      LogicalIf* logicalIf= Ir::createLogicalIf(logical_op->get_lhs_operand_i());
-      if_block->statements.push_front(logicalIf);
-    }
+      if (logical_op->get_lhs_operand_i()->attributeExists("logical variable")) {
+          RetvalAttribute* vna = (RetvalAttribute *) logical_op->get_lhs_operand_i()->getAttribute("logical variable");
+          SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),logical_op->get_lhs_operand_i()->get_type());
+          LogicalIf* logicalIf=Ir::createLogicalIf(varexp);
+          if_block->statements.push_front(logicalIf);
+      } else {
+          LogicalIf* logicalIf= Ir::createLogicalIf(logical_op->get_lhs_operand_i());
+          if_block->statements.push_front(logicalIf);
+      }
 
       BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(t_block);
@@ -776,7 +791,7 @@ void ExprTransformer::visit(SgNode *node)
       SgExpression *rhs_operand = logical_op->get_rhs_operand_i();
       if (rhs_operand->attributeExists("logical variable"))
       {
-      RetvalAttribute* vna = (RetvalAttribute *) rhs_operand->getAttribute("logical variable");
+          RetvalAttribute* vna = (RetvalAttribute *) rhs_operand->getAttribute("logical variable");
           rhs_operand = Ir::createVarRefExp(vna->get_str(), rhs_operand->get_type());
       }
       
@@ -785,19 +800,19 @@ void ExprTransformer::visit(SgNode *node)
         add_link(t_block, nested_t_block, TRUE_EDGE);
         add_link(t_block, nested_f_block, FALSE_EDGE);
         
-    SgAssignOp* assignOp2=Ir::createAssignOp(Ir::createVarRefExp(var),Ir::createBoolValExp(false));
-    f_block->statements.push_front(Ir::createExprStatement(assignOp2));
+        SgAssignOp* assignOp2=Ir::createAssignOp(Ir::createVarRefExp(var),Ir::createBoolValExp(false));
+        f_block->statements.push_front(Ir::createExprStatement(assignOp2));
         add_link(f_block, after, NORMAL_EDGE);
       } else if(isSgOrOp(logical_op)) {
-    t_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
-                                          Ir::createBoolValExp(true))));
+        t_block->statements.push_front(Ir::createExprStatement(Ir::createAssignOp(Ir::createVarRefExp(var),
+                                                                                  Ir::createBoolValExp(true))));
         add_link(t_block, after, NORMAL_EDGE);
 
         f_block->statements.push_front(Ir::createLogicalIf(rhs_operand));
         add_link(f_block, nested_t_block, TRUE_EDGE);
         add_link(f_block, nested_f_block, FALSE_EDGE);
       } else {
-    assert(false); // impossible if outer 'if' remains unchanged
+        assert(false); // impossible if outer 'if' remains unchanged
       }
       
       add_link(if_block, t_block, TRUE_EDGE);

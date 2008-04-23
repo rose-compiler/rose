@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.12 2008-04-08 09:50:03 gergo Exp $
+// $Id: cfg_support.h,v 1.13 2008-04-23 14:41:27 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -359,6 +359,7 @@ private:
 
 // GB (2007-10-23): Added members for the expression that refers to the
 // external function and for its parameter list.
+// GB (2008-04-23): Added the ExternalReturn class.
 class ExternalCall : public IcfgStmt
 {
 public:
@@ -384,7 +385,6 @@ public:
     std::string class_name() const;
 
 private:
-    ExternalCall();
     SgExpression *function; // TRAVERSED
     std::vector<SgVariableSymbol *> *params;
     SgType *type;
@@ -392,6 +392,39 @@ private:
 
 ExternalCall *isExternalCall(SgNode *);
 const ExternalCall *isExternalCall(const SgNode *);
+
+class ExternalReturn : public IcfgStmt
+{
+public:
+    SgExpression *get_function() const { return function; }
+    std::vector<SgVariableSymbol *> *get_params() const { return params; }
+    SgType *get_type() const { return type; }
+
+    ExternalReturn(SgExpression *function_, std::vector<SgVariableSymbol *> *params_, SgType *type_);
+
+    void set_params(std::vector<SgVariableSymbol *> *params_);
+    std::string unparseToString() const;
+
+    ~ExternalReturn();
+    
+ // Implementing traversal interface.
+    std::vector<SgNode *> get_traversalSuccessorContainer();
+    size_t get_numberOfTraversalSuccessors();
+    SgNode *get_traversalSuccessorByIndex(size_t idx);
+    std::vector<std::string> get_traversalSuccessorNamesContainer();
+ // Implementing is... type tests.
+    friend ExternalReturn *isExternalReturn(SgNode *);
+    friend const ExternalReturn *isExternalReturn(const SgNode *);
+    std::string class_name() const;
+
+private:
+    SgExpression *function; // TRAVERSED
+    std::vector<SgVariableSymbol *> *params;
+    SgType *type;
+};
+
+ExternalReturn *isExternalReturn(SgNode *);
+const ExternalReturn *isExternalReturn(const SgNode *);
 
 class ConstructorCall : public IcfgStmt
 {

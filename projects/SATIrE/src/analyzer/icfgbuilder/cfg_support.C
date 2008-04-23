@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.16 2008-04-08 09:50:00 gergo Exp $
+// $Id: cfg_support.C,v 1.17 2008-04-23 14:41:25 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -139,6 +139,41 @@ void ExternalCall::set_params(std::vector<SgVariableSymbol *> *params_)
 }
 
 ExternalCall::~ExternalCall()
+{
+    if (params != NULL)
+        delete params;
+}
+
+std::string ExternalReturn::unparseToString() const
+{
+    std::stringstream label;
+    label << "ExternalReturn(" << Ir::fragmentToString(function) << ", [";
+    assert(params != NULL);
+    std::vector<SgVariableSymbol *>::const_iterator i = params->begin();
+    if (i != params->end())
+    {
+        label << (*i)->get_name().str();
+        for (++i; i != params->end(); ++i)
+            label << ", " << (*i)->get_name().str();
+    }
+    label << "])";
+    return label.str();
+}
+
+ExternalReturn::ExternalReturn(SgExpression *function_,
+        std::vector<SgVariableSymbol *> *params_, SgType *type_)
+  : function(function_), params(params_), type(type_)
+{
+}
+
+void ExternalReturn::set_params(std::vector<SgVariableSymbol *> *params_)
+{
+    if (params != NULL)
+        delete params;
+    params = params_;
+}
+
+ExternalReturn::~ExternalReturn()
 {
     if (params != NULL)
         delete params;
@@ -805,7 +840,7 @@ BlockListIterator::size() const
 # occurrence of "$CLASSNAME" in the template is replaced by a class name.
 
 # The classes to instantiate the code with.
-CLASSNAMES="IcfgStmt CallStmt FunctionCall FunctionReturn FunctionEntry DeclareStmt UndeclareStmt ExternalCall ConstructorCall DestructorCall ArgumentAssignment MyAssignment ReturnAssignment ParamAssignment LogicalIf IfJoin WhileJoin FunctionExit"
+CLASSNAMES="IcfgStmt CallStmt FunctionCall FunctionReturn FunctionEntry DeclareStmt UndeclareStmt ExternalCall ExternalReturn ConstructorCall DestructorCall ArgumentAssignment MyAssignment ReturnAssignment ParamAssignment LogicalIf IfJoin WhileJoin FunctionExit"
 
 for c in $CLASSNAMES
 do
@@ -1304,6 +1339,7 @@ ExternalCall::get_traversalSuccessorByIndex(size_t idx)
 std::vector<std::string>
 ExternalCall::get_traversalSuccessorNamesContainer()
 {
+ // GB: Added traversal successors.
     std::vector<std::string> successorNames;
     successorNames.push_back("function");
     return successorNames;
@@ -1327,6 +1363,69 @@ ExternalCall::class_name() const
     return "ExternalCall";
 }
 // END code for ExternalCall
+
+// BEGIN code for ExternalReturn
+std::vector<SgNode *>
+ExternalReturn::get_traversalSuccessorContainer()
+{
+ // GB: Added traversal successors.
+    std::vector<SgNode *> successors;
+    successors.push_back(function);
+    return successors;
+}
+
+size_t
+ExternalReturn::get_numberOfTraversalSuccessors()
+{
+ // GB: Added traversal successors.
+    return 1;
+}
+
+SgNode *
+ExternalReturn::get_traversalSuccessorByIndex(size_t idx)
+{
+ // GB: Added traversal successors.
+    switch (idx)
+    {
+    case 0:
+        return function;
+    default:
+        std::cerr
+            << "error in ExternalReturn::get_traversalSuccessorByIndex: "
+            << " invalid index " << idx << ", outside of expected range "
+            << "[0, " << get_numberOfTraversalSuccessors() << ")"
+            << std::endl;
+        abort();
+    }
+}
+
+std::vector<std::string>
+ExternalReturn::get_traversalSuccessorNamesContainer()
+{
+ // GB: Added traversal successors.
+    std::vector<std::string> successorNames;
+    successorNames.push_back("function");
+    return successorNames;
+}
+
+ExternalReturn *
+isExternalReturn(SgNode *node)
+{
+    return dynamic_cast<ExternalReturn *>(node);
+}
+
+const ExternalReturn *
+isExternalReturn(const SgNode *node)
+{
+    return dynamic_cast<const ExternalReturn *>(node);
+}
+
+std::string
+ExternalReturn::class_name() const
+{
+    return "ExternalReturn";
+}
+// END code for ExternalReturn
 
 // BEGIN code for ConstructorCall
 std::vector<SgNode *>
@@ -1479,6 +1578,7 @@ ArgumentAssignment::get_traversalSuccessorByIndex(size_t idx)
 std::vector<std::string>
 ArgumentAssignment::get_traversalSuccessorNamesContainer()
 {
+ // GB: Added traversal successors.
     std::vector<std::string> successorNames;
     successorNames.push_back("lhs");
     successorNames.push_back("rhs");
@@ -1545,6 +1645,7 @@ MyAssignment::get_traversalSuccessorByIndex(size_t idx)
 std::vector<std::string>
 MyAssignment::get_traversalSuccessorNamesContainer()
 {
+ // GB: Added traversal successors.
     std::vector<std::string> successorNames;
     successorNames.push_back("lhsVarRefExp");
     successorNames.push_back("rhsVarRefExp");
@@ -1611,6 +1712,7 @@ ReturnAssignment::get_traversalSuccessorByIndex(size_t idx)
 std::vector<std::string>
 ReturnAssignment::get_traversalSuccessorNamesContainer()
 {
+ // GB: Added traversal successors.
     std::vector<std::string> successorNames;
     successorNames.push_back("lhsVarRefExp");
     successorNames.push_back("rhsVarRefExp");
@@ -1677,6 +1779,7 @@ ParamAssignment::get_traversalSuccessorByIndex(size_t idx)
 std::vector<std::string>
 ParamAssignment::get_traversalSuccessorNamesContainer()
 {
+ // GB: Added traversal successors.
     std::vector<std::string> successorNames;
     successorNames.push_back("lhsVarRefExp");
     successorNames.push_back("rhsVarRefExp");
@@ -1740,6 +1843,7 @@ LogicalIf::get_traversalSuccessorByIndex(size_t idx)
 std::vector<std::string>
 LogicalIf::get_traversalSuccessorNamesContainer()
 {
+ // GB: Added traversal successors.
     std::vector<std::string> successorNames;
     successorNames.push_back("expr");
     return successorNames;
