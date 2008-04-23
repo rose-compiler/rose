@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_USE_BINARY_ANALYSIS_SUPPORT
+
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -47,3 +49,4 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB 
 
+endif
