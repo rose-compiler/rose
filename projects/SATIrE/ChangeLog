@@ -1,4 +1,20 @@
-V0.8.1 2008-11-04 GB,AP,VP,MS
+V0.8.2 (in progress)
+
+* required user changes:
+  - change analysis specifications to take the new ExternalReturn statement
+    into account
+
+* Command line flag to control ICFG consistency checks [GB]
+  - these expensive checks must now be enabled explicitly using --check-icfg
+
+* ICFG builder improvements [GB]
+  - replaced single ExternalCall node by ExternalCall/ExternalReturn pair
+
+* Testsuite improvements [GB]
+  - separate histograms are generated for execution time and memory usage
+  - GNUplot input files remain on disk and can be tweaked by the user
+
+V0.8.1 2008-04-11 GB,AP,VP,MS
 
 * Combined PAG analyses [GB]
   - added experimental script 'newcombinedanalysis' to generate directories
