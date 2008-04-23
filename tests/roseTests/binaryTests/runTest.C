@@ -3,6 +3,53 @@
 
 using namespace std;
 
+/*******************************************
+ * print Error
+ *******************************************/
+void printSet(std::set<uint64_t> res) {
+  std::set<uint64_t>::iterator it = res.begin();
+  int i=0;
+  for (;it!=res.end();++it) {
+    i++;
+    uint64_t nr  = *it;
+    cerr << "    Set " << RoseBin_support::ToString(i) << " = " << RoseBin_support::HexToString(nr) << " (" <<RoseBin_support::ToString(nr) << ")"<<endl;
+  }
+}
+
+/*******************************************
+ * check if definition of a node is correct (dataflow test)
+ *******************************************/
+void checkNode(RoseBin_DataFlowAnalysis* dfanalysis,
+	       uint64_t address, 
+	       set<uint64_t>& result, 
+	       SgAsmRegisterReferenceExpression::x86_register_enum reg) {
+  RoseBin_unparse_visitor* unparser = RoseBin_support::getUnparseVisitor(); 
+  string registerName = unparser->resolveRegister(reg,
+						  SgAsmRegisterReferenceExpression::qword);
+  SgDirectedGraphNode* node = dfanalysis->getNodeFor(address);
+  SgAsmInstruction* inst = NULL;
+  string unparsed ="";
+  if (node) {
+    inst = isSgAsmInstruction(node->get_SgNode());
+    unparsed = unparser->unparseInstruction(inst);
+  }
+  set<uint64_t> def_nodes = dfanalysis->getDefForInst(address,reg);
+  cerr << " testing address : " << RoseBin_support::HexToString(address) << " ("<<RoseBin_support::ToString(address)<<")" << 
+    "  reg: " << registerName << "   .. " << unparsed << endl;
+
+  if (def_nodes!=result) {
+    cerr << " ERROR :: Test failed on " << RoseBin_support::HexToString(address) << endl;
+    cerr << " Problem at : " << unparsed << endl;
+    cerr << " Def Nodes : " << endl;
+    printSet(def_nodes);
+    cerr << " Result Nodes : " << endl;
+    printSet(result);
+  }
+  ROSE_ASSERT(def_nodes == result);
+  result.clear();
+}
+
+
 int main(int argc, char** argv) {
   if (argc != 2) {
     fprintf(stderr, "Usage: %s executableName\n", argv[0]);
@@ -78,6 +125,43 @@ int main(int argc, char** argv) {
   ROSE_ASSERT(dfanalysis->nrOfUses()==26);
 
 
+  // detailed dfa test
+  set<uint64_t> result;
+  result.insert(RoseBin_support::HexToDec("8048364"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048364"), result, SgAsmRegisterReferenceExpression::rCX);
+  result.insert(RoseBin_support::HexToDec("8048364"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804836e"), result, SgAsmRegisterReferenceExpression::rCX);
+  result.insert(RoseBin_support::HexToDec("804836e"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804836e"), result, SgAsmRegisterReferenceExpression::rSP);
+
+  result.insert(RoseBin_support::HexToDec("80482c3"));
+  result.insert(RoseBin_support::HexToDec("8048364"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, SgAsmRegisterReferenceExpression::rCX);
+  result.insert(RoseBin_support::HexToDec("8048290"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, SgAsmRegisterReferenceExpression::rSP);
+  result.insert(RoseBin_support::HexToDec("80482dc"));
+  result.insert(RoseBin_support::HexToDec("804837c"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, SgAsmRegisterReferenceExpression::rBP);
+
+  result.insert(RoseBin_support::HexToDec("80483b2"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("80483bc"), result, SgAsmRegisterReferenceExpression::rAX);
+  result.insert(RoseBin_support::HexToDec("80483bc"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("80483bc"), result, SgAsmRegisterReferenceExpression::rSP);
+
+  result.insert(RoseBin_support::HexToDec("8048346"));
+  result.insert(RoseBin_support::HexToDec("804834f"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048361"), result, SgAsmRegisterReferenceExpression::rAX);
+  result.insert(RoseBin_support::HexToDec("8048361"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048361"), result, SgAsmRegisterReferenceExpression::rSP);
+
+  result.insert(RoseBin_support::HexToDec("804846c"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rAX);
+  result.insert(RoseBin_support::HexToDec("8048464"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rBX);
+  result.insert(RoseBin_support::HexToDec("804828d"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rSP);
+  result.insert(RoseBin_support::HexToDec("804828d"));
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rBP);
 
   RoseBin_unparse up;
   up.init(file->get_global_block(), "unparsed.s");
