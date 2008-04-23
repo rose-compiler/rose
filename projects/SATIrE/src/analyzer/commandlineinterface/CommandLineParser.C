@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.15 2008-04-10 07:57:22 gergo Exp $
+// $Id: CommandLineParser.C,v 1.16 2008-04-23 14:41:10 gergo Exp $
 
 #include <config.h>
 
@@ -114,6 +114,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->checkRoseAstOn();
   } else if (optionMatch(argv[i], "--no-check-ast")) {
     cl->checkRoseAstOff();
+  } else if (optionMatch(argv[i], "--check-icfg")) {
+    cl->checkIcfgOn();
+  } else if (optionMatch(argv[i], "--no-check-icfg")) {
+    cl->checkIcfgOff();
   } else if (optionMatchPrefix(argv[i], "--output-source=")) {
     cl->outputSourceOn();
     cl->setOutputSourceFileName(strdup(argv[i]+prefixLength));

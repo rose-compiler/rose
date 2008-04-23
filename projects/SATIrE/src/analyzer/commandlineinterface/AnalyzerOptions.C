@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.18 2008-04-10 07:57:22 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.19 2008-04-23 14:41:10 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -54,6 +54,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --check-ast              run all ROSE tests for checking\n"
     "                            whether ROSE-AST is correct\n"
     "   --no-check-ast           do not run ROSE AST tests\n"
+    "   --check-icfg             run PAG's ICFG consistency checks\n"
+    "   --no-check-icfg          do not run ICFG checks\n"
     "   --analysis-files=all|cl  analyse all source files or only those\n"
     "                            specified on the command line (cl)\n"
     "   --analysis-annotation    annotate analysis results in AST and output\n"
@@ -92,9 +94,10 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "\n"
     " Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo\n"
     "                            --callstringlength=0 --cfg-ordering=1\n"
-    "                            --no-check-ast --number-expressions\n"
-    "                            --no-statistics --analysis-files=all\n"
-    "                            --analyis-annotation --verbose\n"
+    "                            --no-check-ast --no-check-icfg\n"
+    "                            --number-expressions --no-statistics\n"
+    "                            --analysis-files=all --analyis-annotation\n"
+    "                            --verbose\n"
     /*
     " PAG garbage collection options:\n"
     "   --pag-gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
