@@ -68,14 +68,14 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
 
     bool verbose=opt->verbose();
   
-    if (verbose) std::cout << "collecting functions ... ";
+    if (verbose) std::cout << "collecting functions ... " << std::flush;
     nestedTimer = new TimingPerformance("SATIrE ICFG construction:");
     ProcTraversal s;
     s.setPrintCollectedFunctionNames(opt->printCollectedFunctionNames());
     s.traverse(root, preorder);
     if (verbose) std::cout << "done" << std::endl;
 
-    if (verbose) std::cout << "generating cfg ... ";
+    if (verbose) std::cout << "generating cfg ... " << std::flush;
     CFGTraversal t(s.get_procedures());
     if (!opt->numberExpressions()) {
       t.numberExpressions(false);
@@ -84,24 +84,26 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
     delete nestedTimer;
     if (verbose) std::cout << "done" << std::endl;
 
-    if (verbose) std::cout << "testing cfg ... ";
-    nestedTimer = new TimingPerformance("CFG consistency check:");
-    int test_result = kfg_testit(t.getCFG(), 1 /* quiet */);
-    delete nestedTimer;
-    if (verbose) {
-      if (test_result == 0) {
-        std::cout << "failed." << std::endl;
-        std::cerr << std::endl
-          << "Warning: PAG reports: there are problems in the ICFG."
-          << std::endl;
-      } else {
-        std::cout << "done" << std::endl;
+    if (opt->checkIcfg()) {
+      if (verbose) std::cout << "testing cfg ... " << std::flush;
+      nestedTimer = new TimingPerformance("CFG consistency check:");
+      int test_result = kfg_testit(t.getCFG(), 1 /* quiet */);
+      delete nestedTimer;
+      if (verbose) {
+        if (test_result == 0) {
+          std::cout << "failed." << std::endl;
+          std::cerr << std::endl
+            << "Warning: PAG reports: there are problems in the ICFG."
+            << std::endl;
+        } else {
+          std::cout << "done" << std::endl;
+        }
       }
     }
     
     if(opt->outputIcfg()) {
       TimingPerformance timer("ICFG visualization:");
-      if(verbose) std::cout << "generating icfg visualization " << opt->getOutputIcfgFileName() << " ... ";
+      if(verbose) std::cout << "generating icfg visualization " << opt->getOutputIcfgFileName() << " ... " << std::flush;
       outputIcfg(t.getCFG(),const_cast<char*>(opt->getOutputIcfgFileName().c_str()));
       if (verbose) std::cout << "done" << std::endl;
     }
@@ -109,7 +111,7 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
  // Run the analyses this one depends on.
     runOtherAnalyses(t.getCFG());
 
-    if (verbose) std::cout << "performing analysis " stringize(ANALYSIS) " ... ";
+    if (verbose) std::cout << "performing analysis " stringize(ANALYSIS) " ... " << std::flush;
     std::cout.flush();
     nestedTimer = new TimingPerformance("Actual data-flow analysis " stringize(ANALYSIS) ":");
     DFI_STORE results = doit(ANALYSIS)(t.getCFG());
@@ -130,7 +132,7 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
       if(verbose && opt->outputGdl()) std::cout << "visualization " << outputgdlfile << " ";
       if(verbose && opt->outputGdl() && opt->outputGdlAnim()) std::cout << "and ";
       if(verbose && opt->outputGdlAnim()) std::cout << "animation in directory " << opt->getOutputGdlAnimDirName() << " ";
-      if(verbose) std::cout << "... ";
+      if(verbose) std::cout << "... " << std::flush;
       gdl_create(const_cast<char*>(outputgdlfile.c_str()), 0);
       if (verbose) std::cout << "done" << std::endl;
     }
