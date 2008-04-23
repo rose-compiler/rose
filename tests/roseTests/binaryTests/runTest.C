@@ -163,6 +163,15 @@ int main(int argc, char** argv) {
   result.insert(RoseBin_support::HexToDec("804828d"));
   checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rBP);
 
+  // buffer overflow analysis
+  RoseBin_DataFlowAbstract* variableA =  dfanalysis->getVariableAnalysis();
+  RoseBin_Variable* var = variableA->getVariable(RoseBin_support::HexToDec("8048381"));
+  ROSE_ASSERT(var);
+  cerr << "malloc variable found : '" << var->getName() << "'  length: " << 
+    RoseBin_support::ToString(var->getLength()) << " ... toString:: " << var->toString() << endl;
+  ROSE_ASSERT(var->getLength()==40);
+  ROSE_ASSERT(var->getName()==" 804837c:_malloc");
+
   RoseBin_unparse up;
   up.init(file->get_global_block(), "unparsed.s");
   up.unparse();
