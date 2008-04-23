@@ -10,7 +10,7 @@
 # 3. Others in the Configuration section and Preparation section
 #
 # Liao, 2/7/2008
-# Last Modified: 4/16/2008
+# Last Modified: 4/22/2008
 #------------------------------------------------------
 # Configuration Section
 #------------------------------------------------------
@@ -18,11 +18,12 @@ MAILADDRS="liaoch@llnl.gov"
 
 # using a time stamp to avoid overwriting previous tests
 TIMESTAMP=$(date +%Y%m%d_%H%M%S) 
-ROSE_TOP=/home/liao6/daily-test-rose
-ROSE_SRC="${ROSE_TOP}/sourcetree_${TIMESTAMP}"
-ROSE_BUILD="${ROSE_TOP}/build_${TIMESTAMP}"
-ROSE_INSTALL="${ROSE_TOP}/install_${TIMESTAMP}"
-ROSE_LOG="${ROSE_TOP}/buildlog_${TIMESTAMP}"
+ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
+ROSE_SRC=${ROSE_TOP}/sourcetree
+ROSE_BUILD=${ROSE_TOP}/build
+ROSE_INSTALL=${ROSE_TOP}/install
+ROSE_LOG=${ROSE_TOP}/buildlog
+
 BOOST_INSTALL=/home/liao6/opt/boost_1_35_0
 
 # the right version of subversion is required!!
@@ -31,7 +32,7 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 
 # store configuration options into an array ()
 # $@ means the optional parameters provided with the command line running current script 
-CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-boost=${BOOST_INSTALL} --prefix=${ROSE_INSTALL} "$@")
+CONFIGURE_FLAGS=(--with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-boost=${BOOST_INSTALL} --prefix=${ROSE_INSTALL} "$@")
 
 # enable wave
 #CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-boost=${BOOST_INSTALL} --with-boost-wave=yes --prefix=${ROSE_INSTALL} "$@")
@@ -43,8 +44,8 @@ MAKEFLAGS="-j2"
 #------------------------------------------------------
 set -o pipefail
 set -e
-touch ${ROSE_LOG}
 mkdir -p ${ROSE_TOP}
+touch ${ROSE_LOG}
 # need a fresh check out
 rm -rf ${ROSE_SRC}
 cd ${ROSE_TOP}
@@ -102,7 +103,8 @@ buildstatus=0
   set -e
   set -x
 # check out a fresh copy for testing
-  $SVN co -q ${ROSE_SVNROOT} ${ROSE_SRC}
+  $SVN co -r -q ${ROSE_SVNROOT} ${ROSE_SRC}
+#  $SVN co -r {2008-04-22} -q ${ROSE_SVNROOT} ${ROSE_SRC}
 # $SVN export -q ${ROSE_SVNROOT} sourcetree
 
 # rebuild the Makefile in the source tree
@@ -148,7 +150,6 @@ else
   echo "" >> mailtext
 fi
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
-# rm -rf "${ROSE_TOP}"
 # Delete test directories if the test passed
-if [ $buildstatus == 0 ]; then rm -rf "${ROSE_SRC}" "${ROSE_BUILD}" "${ROSE_INSTALL}" "${ROSE_LOG}"  ; fi 
+#if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}" ; fi 
 
