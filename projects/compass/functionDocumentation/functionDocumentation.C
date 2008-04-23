@@ -40,29 +40,42 @@ CompassAnalyses::FunctionDocumentation::Traversal::
 visit(SgNode* sgNode)
 { 
   // Implement your traversal here.  
+  AttachedPreprocessingInfoType* comments=NULL;
   if (isSgFunctionDeclaration(sgNode)) 
   {
     SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sgNode);
     bool skip = funcDecl->get_file_info()->isCompilerGenerated();
     if (skip)
       return;
-    //                      SgFunctionDefinition* funcDef = funcDecl->get_definition();
-    AttachedPreprocessingInfoType* comments = funcDecl->getAttachedPreprocessingInfo();
-    bool isComment = false;
-    if (comments!=NULL) {
-      AttachedPreprocessingInfoType::iterator i;
-      for (i=comments->begin(); i!= comments->end(); i++) {
-        std::string commentStr = (*i)->getString().c_str() ;
+    comments = funcDecl->getAttachedPreprocessingInfo();
+  }
+  if (isSgMemberFunctionDeclaration(sgNode)) 
+  {
+    SgFunctionDeclaration* funcDecl = isSgMemberFunctionDeclaration(sgNode);
+    bool skip = funcDecl->get_file_info()->isCompilerGenerated();
+    if (skip)
+      return;
+    comments = funcDecl->getAttachedPreprocessingInfo();
+  }
+
+
+
+  bool isComment = false;
+  if (comments!=NULL) {
+    AttachedPreprocessingInfoType::iterator i;
+    for (i=comments->begin(); i!= comments->end(); i++) {
+      std::string commentStr = (*i)->getString().c_str() ;
         if (commentStr.find("//")!=std::string::npos ||
             commentStr.find("/*")!=std::string::npos ) {
           isComment=true;
         }
-      }
-    }
-    if (!isComment) {
-      std::string funcName = funcDecl->get_qualified_name();
-      output->addOutput(new CheckerOutput(funcDecl, funcName));
     }
   }
+  if (!isComment) {
+    SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sgNode);
+      std::string funcName = funcDecl->get_qualified_name();
+      output->addOutput(new CheckerOutput(funcDecl, funcName));
+  }
+
 } //End of the visit function.
    
