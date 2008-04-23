@@ -33,7 +33,7 @@ TESTCODE_INCLUDES =
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
 
-#EXTRA_DIST = $(TESTCODES) buffer2.bin
+EXTRA_DIST = buffer2.bin
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runTest 
