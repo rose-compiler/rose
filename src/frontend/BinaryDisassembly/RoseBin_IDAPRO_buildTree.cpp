@@ -451,7 +451,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
     cout << "Setting replacement with " << text << endl;
     binExp->set_replacement(text);
   } else {
-    cerr << "binExp is NULL" << endl;
+    //    cerr << "binExp is NULL" << endl;
   }
 
   if (RoseBin_support::DEBUG_MODE())
