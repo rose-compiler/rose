@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.7 2008-04-08 09:49:41 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.8 2008-04-24 13:58:04 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -430,3 +430,18 @@ Fix:
     Unknown (mainly a design issue, implementation should not be too hard).
 Status:
     BROKEN as of 2008-04-08
+
+
+Logged:
+    2008-04-23, GB
+Symptoms:
+    Segfaults during annotation of the program with analysis results.
+Reason:
+    If the program contains unreachable ICFG nodes and we attempt to remove
+    them, sometimes we fail to find a good spot to put an annotation.
+Fix:
+    Do not remove unreachable ICFG nodes. Analyses should be aware that they
+    might encounter unreachable nodes, and accordingly, the initial data
+    flow value should mean "unreachable".
+Status:
+    Resolved 2008-04-23, GB
