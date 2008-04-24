@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.25 2008-04-10 07:58:23 gergo Exp $
+// $Id: CFGTraversal.C,v 1.26 2008-04-24 13:58:26 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -138,7 +138,10 @@ CFGTraversal::atTraversalEnd() {
      // CFG. It does not remove unreachable cycles because it is meant to be
      // somewhat efficient, and because we don't seem to have a problem with
      // unreachable cycles.
-        kill_unreachable_nodes();
+     // GB (2008-04-23): After lots of trouble, removed the removal of
+     // unreachable nodes.
+     // kill_unreachable_nodes();
+
      // GB (2008-04-08): Made numbering of expressions optional, but
      // default.
         if (flag_numberExpressions)
@@ -791,6 +794,10 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
      // predecessor list is not empty because it has an unreachable IfJoin
      // as its predecessor... So, let's handle this more complicated case.
      // This will probably still cause some interesting problem some day.
+     // GB (2008-04-23): I tried hard to be smart here, but failed. This
+     // unreachable stuff is difficult, and it looks like it's best if we
+     // simply allow unreachable nodes.
+#if 0
         bool after_unreachable = false;
         if (after->predecessors.empty())
         {
@@ -896,6 +903,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
             << Ir::fragmentToString(after->statements.front())
             << " (node " << after->id << ")"
             << std::endl;
+#endif
 #endif
         stmt_end = new StatementAttribute(after, POS_PRE);
 
