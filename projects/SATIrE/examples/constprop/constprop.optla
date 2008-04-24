@@ -104,18 +104,20 @@ eval(exp, state) =
             BoolValExp(value) => (lift(val-astint(value)), state);
             EnumVal(value)    => (lift(val-astint(value)), state);
             IntVal(value)     => (lift(val-astint(value)), state);
-	    ShortVal(value)   => (lift(val-astshort(value)), state);
+            ShortVal(value)   => (lift(val-astshort(value)), state);
             LongIntVal(value) => (lift(val-astlong(value)), state);
-	    FloatVal(value)  => (top, state);
-	    DoubleVal(value)  => (top, state);
+            FloatVal(value)  => (top, state);
+            DoubleVal(value)  => (top, state);
             _                 => print("unsupported value exp: ")
-                                 print(exp) print("\n") (top, [-> top]);
+                                 print(exp) print("\n")
+                                 (top, [-> top]);
         endcase
     else case exp of
         VarRefExp(name)             => (state{!val-aststring(name)!}, state);
         NewExp(_,_,_)               => (bot, state);
         _                           => print("unknown exp: ")
-                                       print(exp) print("\n") (top, [-> top]);
+                                       print(exp) print("\n")
+                                       (top, [-> top]);
     endcase endif endif endif;
 
 binary :: Expression, Expression, Expression, State -> ConstStatePair;
@@ -156,22 +158,23 @@ binary(left, right, exp, state) =
                     AddOp(_, _)             => (lift(l + r), ls);
                     SubtractOp(_, _)        => (lift(l - r), ls);
                     MultiplyOp(_, _)        => (lift(l * r), ls);
-                    DivideOp(_, _)          => (lift(l / r), ls);
-                    IntegerDivideOp(_, _)   => (lift(l / r), ls);
-                    ModOp(_, _)             => (lift(l % r), ls);
+                    DivideOp(_, _)          => (if r != 0 then lift(l / r) else top, ls);
+                    IntegerDivideOp(_, _)   => (if r != 0 then lift(l / r) else top, ls);
+                    ModOp(_, _)             => (if r != 0 then lift(l % r) else top, ls);
                     LshiftOp(_, _)          => (lift(snum(unum(l)<<unum(r))), ls);
-		    RshiftOp(_, _)          => (lift(snum(unum(l)>>unum(r))), ls);
-		    BitAndOp(_, _)          => (lift((l & r)), ls);
-		    BitOrOp(_, _)           => (lift((l | r)), ls);
-		    AndOp(_, _)             => (lift(bool_int(l != 0 && r != 0)), ls);
+                    RshiftOp(_, _)          => (lift(snum(unum(l)>>unum(r))), ls);
+                    BitAndOp(_, _)          => (lift((l & r)), ls);
+                    BitOrOp(_, _)           => (lift((l | r)), ls);
+                    AndOp(_, _)             => (lift(bool_int(l != 0 && r != 0)), ls);
                     OrOp(_, _)              => (lift(bool_int(l != 0 || r != 0)), ls);
                     ScopeOp(_, _)       => (lift(r), ls);
                     PlusAssignOp(_, _)  => updatestate(ls, left, lift(l + r));
                     MinusAssignOp(_, _) => updatestate(ls, left, lift(l - r));
                     MultAssignOp(_, _)  => updatestate(ls, left, lift(l * r));
-                    DivAssignOp(_, _)   => updatestate(ls, left, lift(l / r));
+                    DivAssignOp(_, _)   => updatestate(ls, left, if r != 0 then lift(l / r) else top);
                     ModAssignOp(_, _)   => updatestate(ls, left, lift(l % r));
-                    _ => print("unsupported binary: ") print(exp) (top, [-> top]);
+                    _                   => print("unsupported binary: ") print(exp)
+                                           (top, [-> top]);
                 endcase
             endif endif;
     endcase;
@@ -190,7 +193,8 @@ unary(child, exp, state) =
          // the following are only correct for prefix -- and ++
             MinusMinusOp(_) => updatestate(es, child, lift(e - 1));
             PlusPlusOp(_)   => updatestate(es, child, lift(e + 1));
-            _ => print("unsupported unary: ") print(exp) (top, [-> top]);
+            _               => print("unsupported unary: ") print(exp)
+                               (top, [-> top]);
         endcase
     endif;
 
@@ -202,7 +206,6 @@ int_bool :: snum -> bool;
 int_bool(i) =
     if i != 0 then true else false endif;
  
-								      
 updatestate :: State, Expression, Const -> ConstStatePair;
 // Update state state by assigning the value value to the variable
 // referenced by expression exp (if any). Yields a pair of the value
@@ -249,7 +252,6 @@ shiftleft(a, b) = shiftleft(a*2, b-1);
 shiftright :: snum, snum -> snum;
 shiftright(a, 0) = a;
 shiftright(a, b) = shiftright(a/2, b-1);
-								      
 
 comb(a, b) =
  // print("comb a: ") print(a) print("\n")
