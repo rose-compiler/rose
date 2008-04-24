@@ -93,6 +93,7 @@ void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers,
   }
 }
 
+bool test;
 
 int main(int argc, char** argv) {
 
@@ -121,7 +122,13 @@ int main(int argc, char** argv) {
     return 1;
   }
   string execName = argv[1];
-
+  
+  // this is our test case input, we will assert on the data from this file
+  test = false;
+  if (execName=="buffer2.bin") {
+    cerr << "running test case on buffer2.bin !! " << endl << endl; 
+    test = true;
+  }
   // create out folder
   string filenameDir="out";
   mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
@@ -161,6 +168,11 @@ int main(int argc, char** argv) {
     string filename="_binary_tree.dot";
     AST_BIN_Traversal* trav = new AST_BIN_Traversal();
     trav->run(file->get_global_block(), filename);
+    if (test) {
+      int instrnr = trav->getNrOfInstructions();
+      cerr << " Instructions written to file: " << instrnr << endl;
+      ROSE_ASSERT(instrnr==861);
+    }
   }
 
   RoseBin_Graph* graph;
@@ -177,6 +189,12 @@ int main(int argc, char** argv) {
     }
     RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj());
     callanalysis->run(graph, callFileName, !mergedEdges);
+    if (test) {
+      cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
+      ROSE_ASSERT(callanalysis->nodesVisited()==10);
+      cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
+      ROSE_ASSERT(callanalysis->edgesVisited()==9);
+    }
   }
 
   // control flow analysis  *******************************************************
@@ -189,6 +207,12 @@ int main(int argc, char** argv) {
     }
     RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
+    if (test) {
+      cout << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
+      cout << " cfa -- Number of edges == " << cfganalysis->edgesVisited() << endl;
+      ROSE_ASSERT(cfganalysis->nodesVisited()==210);
+      ROSE_ASSERT(cfganalysis->edgesVisited()==234);
+    }
   }
 
   if (containsArgument(argc, argv, "-dfa")) {
@@ -202,6 +226,29 @@ int main(int argc, char** argv) {
     RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
     dfanalysis->init(interprocedural, edges);
     dfanalysis->run(graph, dfgFileName, mergedEdges);
+    if (test) {
+      cout << " dfa -- Number of nodes == " << dfanalysis->nodesVisited() << endl;
+      cout << " dfa -- Number of edges == " << dfanalysis->edgesVisited() << endl;
+      cout << " dfa -- Number of memWrites == " << dfanalysis->nrOfMemoryWrites() << endl;
+      cout << " dfa -- Number of regWrites == " << dfanalysis->nrOfRegisterWrites() << endl;
+      cout << " dfa -- Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
+      cout << " dfa -- Number of uses == " << dfanalysis->nrOfUses() << endl;
+      if (interprocedural) {
+	ROSE_ASSERT(dfanalysis->nodesVisited()==210);
+	ROSE_ASSERT(dfanalysis->edgesVisited()==254);
+	ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==17);
+	ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==45);
+	ROSE_ASSERT(dfanalysis->nrOfDefinitions()==155);
+	ROSE_ASSERT(dfanalysis->nrOfUses()==23);
+      } else {
+	ROSE_ASSERT(dfanalysis->nodesVisited()==210);
+	ROSE_ASSERT(dfanalysis->edgesVisited()==248);
+	ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
+	ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==33);
+	ROSE_ASSERT(dfanalysis->nrOfDefinitions()==104);
+	ROSE_ASSERT(dfanalysis->nrOfUses()==17);
+      }
+    }
   }
 
   RoseBin_unparse up;
@@ -216,8 +263,6 @@ int main(int argc, char** argv) {
     vector <BC_GraphAnalysisInterface*> graph_checkers;
 
     loadAnalysisFiles(checkers, visitor);
-    // put here to resolve functions instead of blocks
-    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
 
     vector <BC_AnalysisInterface*>::const_iterator it = checkers.begin();
     for (;it!=checkers.end();it++) {
@@ -248,23 +293,34 @@ int main(int argc, char** argv) {
 	dfgFileName = "dfg.gml";
 	graph= new RoseBin_GMLGraph();
       }
-      //      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, NULL, edges);
+      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
       cfganalysis->run(graph, dfgFileName, mergedEdges);
-      cout << "Graph : " << graph->nodes.size() << endl;
+      if (test) {
+	cerr << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
+	cerr << " cfa -- Number of edges == " << cfganalysis->edgesVisited() << endl;
+	ROSE_ASSERT(cfganalysis->nodesVisited()==210);
+	ROSE_ASSERT(cfganalysis->edgesVisited()==234);
+      }
+
+      cout << "CFG finished ----- Graph nr of nodes : " << graph->nodes.size() << endl;
+      ROSE_ASSERT(graph->nodes.size()>0);
 
       RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
-      dfanalysis->init(interprocedural, edges,graph);
+      //dfanalysis->init(interprocedural, edges,graph);
+      dfanalysis->init(interprocedural, edges);
+      dfanalysis->run(graph, dfgFileName, mergedEdges);
       vector<SgDirectedGraphNode*> rootNodes;
       dfanalysis->getRootNodes(rootNodes);
       vector <BC_GraphAnalysisInterface*>::const_iterator it2 = graph_checkers.begin();
-      cout << "\n ---------------- running graph checkers : " << graph_checkers.size() << 
+      cerr << "\n ---------------- running graph checkers : " << graph_checkers.size() << 
 	"   rootNodes size : " << rootNodes.size() << endl;
-      cout << "Graph : " << graph->nodes.size() << endl;
+      cerr << "Graph : " << graph->nodes.size() << endl;
       for (;it2!=graph_checkers.end();it2++) {
 	BC_GraphAnalysisInterface* asmf = *it2;
 	ROSE_ASSERT(asmf);
-	cout << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  endl;
-	dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
+	cerr << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  endl;
+	// tps 04/23/08 -- fixme: this code was broken when I added the testcase -- needs to be fixed
+	//dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
       }  
     }
   }  

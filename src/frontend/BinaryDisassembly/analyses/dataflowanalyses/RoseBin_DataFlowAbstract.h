@@ -40,6 +40,7 @@ class RoseBin_Variable  {
   }
 
   int getLength() { return length;}
+  std::string getName() { return name;}
 
   std::string toString() {
     std::string values="";

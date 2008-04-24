@@ -25,7 +25,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   int nrOfFunctions;
   int nrOfNodesVisited;
   bool interprocedural;
-
+  RoseBin_DataFlowAbstract* variableAnalysis;
 
   rose_hash::hash_set < SgDirectedGraphNode*> visited;
 
@@ -66,17 +66,6 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     forward_analysis=forward;
     defuse = new RoseBin_DefUseAnalysis();
   }
-  /*
-  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* ):RoseBin_FlowAnalysis(global) {
-    typeNode="DFG";
-    typeEdge="DFG-E";  
-    interprocedural = false;
-    printEdges = false;
-    analysisName = "dfa";
-    forward_analysis=forward;
-    defuse = new RoseBin_DefUseAnalysis();
-  }
-  */
   ~RoseBin_DataFlowAnalysis() {
     delete globalBin;
     //delete roseBin;
@@ -104,6 +93,9 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     interprocedural = interp;
     printEdges = pedges;
     vizzGraph = g;
+    //    createInstToNodeTable();
+    //defuse->init(vizzGraph, unparser);
+    //init();
   }
 
   int nrOfMemoryWrites() {
@@ -135,6 +127,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   std::set < uint64_t > 
     getDefForInst( uint64_t inst, SgAsmRegisterReferenceExpression::x86_register_enum initName);
 
+  RoseBin_DataFlowAbstract* getVariableAnalysis() {return variableAnalysis;}
 };
 
 #endif

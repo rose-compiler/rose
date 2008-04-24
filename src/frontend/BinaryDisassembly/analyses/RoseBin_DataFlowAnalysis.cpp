@@ -178,7 +178,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 					RoseBin_DataFlowAbstract* analysis,
 					bool interprocedural){
   if (RoseBin_support::DEBUG_MODE())
-    cout << " Interprocedural is " << RoseBin_support::resBool(interprocedural) << endl;
+    cerr << " Interprocedural is " << RoseBin_support::resBool(interprocedural) << endl;
   // Number of functions traversed
   int funcNr =0;
   // ---------------------------------------------------------------------
@@ -369,6 +369,8 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   fileName=fileN;
   double start=0;
   double ends=0;
+  vizzGraph->nodes.clear();
+  vizzGraph->edges.clear();
 
   func_nr=0;
   //  ROSE_ASSERT(roseBin);
@@ -442,7 +444,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   cerr << " defuse defsize " << defuse->getDefinitionSize() << endl;
 
   // variable analysis --------------------------------------------------
-  RoseBin_DataFlowAbstract* variableAnalysis = new RoseBin_VariableAnalysis(defuse);
+  variableAnalysis = new RoseBin_VariableAnalysis(defuse);
   cerr << " variableAnalysis defsize " << variableAnalysis->getDefinitionSize() << endl;
   variableAnalysis->init(vizzGraph, unparser);
   init();
@@ -502,11 +504,11 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   start = RoseBin_support::getTime();
   vizzGraph->printNodes(true, this, myfile,functionName);
   nrNodes=vizzGraph->nodes.size();
-  vizzGraph->nodes.clear();
+  //  vizzGraph->nodes.clear();
 
   vizzGraph->printEdges(this,myfile, multiedge);
   nrEdges=vizzGraph->edges.size();
-  vizzGraph->edges.clear();
+  //vizzGraph->edges.clear();
 
   ends = RoseBin_support::getTime();
   if (RoseBin_support::DEBUG_MODE_MIN())

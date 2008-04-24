@@ -18,7 +18,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
   ROSE_ASSERT(unparser);
   ROSE_ASSERT(node);
 
-  cerr << " bufferoverflow->run " << endl;
+  cerr << " bufferoverflow->run " << node->get_name() << endl;
   SgAsmInstruction* asmNode = isSgAsmInstruction(node->get_SgNode());
   if (asmNode) {
 

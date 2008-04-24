@@ -8,12 +8,15 @@ class AST_BIN_Traversal
   // Checker specific parameters should be allocated here.
     std::ofstream myfile;
     RoseBin_unparse_visitor* unparser;
+    int nrOfInstructions;
 public:
+    int getNrOfInstructions() {return nrOfInstructions;}
     AST_BIN_Traversal() {}
     ~AST_BIN_Traversal() {}
   // The implementation of the run function has to match the traversal being called.
   void run(SgNode* n, std::string file){ 
   // create file
+    nrOfInstructions=0;
     unparser = RoseBin_support::getUnparseVisitor();
     myfile.open(file.c_str());
     myfile << "digraph \"" << file << "\" {\n" << std::endl;
@@ -23,6 +26,7 @@ public:
   };
   void visit(SgNode* n) {
     if (n) {
+      nrOfInstructions++;
       std::string name = "";
       if (isSgAsmInstruction(n))
 	name = unparser->unparseInstruction(isSgAsmInstruction(n));

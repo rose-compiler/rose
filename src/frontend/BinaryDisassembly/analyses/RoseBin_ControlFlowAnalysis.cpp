@@ -19,6 +19,8 @@ using namespace std;
 void RoseBin_ControlFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
   vizzGraph = vg;
   fileName = fileN;
+  vizzGraph->nodes.clear();
+  vizzGraph->edges.clear();
 
   double start=0;
   double ends=0;
@@ -72,12 +74,12 @@ void RoseBin_ControlFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool mult
   start = RoseBin_support::getTime();
   vizzGraph->printNodes(false,this, myfile,funcName);
   nrNodes=vizzGraph->nodes.size();
-  vizzGraph->nodes.clear();
+  //vizzGraph->nodes.clear();
 
   if (printEdges) 
     vizzGraph->printEdges(this,myfile, multiedge);
   nrEdges=vizzGraph->edges.size();
-  vizzGraph->edges.clear();
+  //vizzGraph->edges.clear();
 
   ends = RoseBin_support::getTime();
   if (RoseBin_support::DEBUG_MODE_MIN()) 

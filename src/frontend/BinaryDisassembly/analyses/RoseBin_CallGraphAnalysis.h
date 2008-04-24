@@ -24,14 +24,6 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
     forward_analysis=true;
   }
 
-  /*
-  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseFile* ):RoseBin_FlowAnalysis(global) {
-    typeNode="function";
-    typeEdge="CG-E";  
-    analysisName="callgraph";
-    forward_analysis=true;
-  }
-  */
   ~RoseBin_CallGraphAnalysis() {
     delete globalBin;
     //delete roseBin;
@@ -44,11 +36,6 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
     }
   }
 
-  //void checkControlFlow(SgAsmInstruction* binInst, int functionSize, int countDown,
-  //			std::string& nameOfFunction, int func_nr);
-
-  // visit the binary AST
-  //void visit(SgNode* node) ;
 
   // run this analysis
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;

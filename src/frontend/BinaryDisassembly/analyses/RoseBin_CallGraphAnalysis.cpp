@@ -19,6 +19,8 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   fileName = fileN;
   double start=0;
   double ends=0;
+  vizzGraph->nodes.clear();
+  vizzGraph->edges.clear();
 
   func_nr=0;
   //  ROSE_ASSERT(roseBin);
@@ -68,11 +70,11 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   start = RoseBin_support::getTime();
   vizzGraph->printNodes(false,this, myfile,funcName);
   nrNodes=vizzGraph->nodes.size();
-  vizzGraph->nodes.clear();
+  //vizzGraph->nodes.clear();
 
   vizzGraph->printEdges(this,myfile, multiedge);
   nrEdges=vizzGraph->edges.size();
-  vizzGraph->edges.clear();
+  //  vizzGraph->edges.clear();
 
   ends = RoseBin_support::getTime();
   if (RoseBin_support::DEBUG_MODE_MIN()) 
