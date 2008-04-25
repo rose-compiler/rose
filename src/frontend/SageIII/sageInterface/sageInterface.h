@@ -390,19 +390,31 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
 			   SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
 //@}
+//------------------------------------------------------------------------
+//@{
+/*! @name Preprocessing Information
+  \brief #if-#else-#end, comments, #include, etc
+*/
+
+//! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope.
+PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
+
+//! Move preprocessing information of stmt_src to stmt_dst
+void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src);
+
+//@}
+
 
 //------------------------------------------------------------------------
 //@{
-/*! @name Source file position infomation
+/*! @name Source File Position
   \brief set Sg_File_Info for a SgNode
 */
-//! build and attach comment, comment style is inferred from the language type of the target node if not provided
+//! Build and attach comment, comment style is inferred from the language type of the target node if not provided
 PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
-//! insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope.
-PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
   // Liao, 1/8/2007, set file info. for a whole subtree as transformation generated
 //! set current node's source position as transformation generated
@@ -945,10 +957,6 @@ void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
   //! Pastes preprocessing information at the back of a statement.
   void pastePreprocInfoBack (AttachedPreprocessingInfoType& save_buf,
                              SgStatement* s);
-
-  //! Moves preprocessingInfo of stmt_old to stmt_new.
-  //  useful before inserting stmt_new before stmt_old
-  void moveUpPreprocInfo (SgStatement* stmt_new, SgStatement* stmt_old);
 
   /*!
    *  \brief Moves 'before' preprocessing information.

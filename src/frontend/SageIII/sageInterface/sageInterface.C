@@ -5464,5 +5464,43 @@ PreprocessingInfo* attachComment(
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
 
+
+  void moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src)
+  {
+    ROSE_ASSERT(stmt_src != NULL);
+    ROSE_ASSERT(stmt_dst != NULL);
+    AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
+    AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
+    
+    if (infoList == NULL) return;
+    for (Rose_STL_Container<PreprocessingInfo*>::iterator i= (*infoList).begin(); 
+             i!=(*infoList).end();i++)
+    {
+      PreprocessingInfo * info=dynamic_cast<PreprocessingInfo *> (*i);
+      ROSE_ASSERT(info != NULL);
+      
+     if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
+          (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
+          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
+        )
+      { 
+        stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+       (*infoToRemoveList).push_back(*i);
+      } // end if 
+     }// end for
+
+  // Remove the element from the list of comments at the current astNode
+    AttachedPreprocessingInfoType::iterator j;
+    for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
+      infoList->erase( find(infoList->begin(),infoList->end(),*j) );
+  } 
+
 } // end namespace SageInterface
 
