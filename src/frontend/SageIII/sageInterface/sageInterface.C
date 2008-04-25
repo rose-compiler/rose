@@ -3760,6 +3760,16 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
   return symbol;
 }
 
+SgVariableSymbol * 
+SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
+                                                        SgScopeStatement *cscope)
+{
+  SgVariableSymbol* result = NULL; 
+  SgSymbol* symbol=lookupSymbolInParentScopes(name,cscope);
+  if (symbol!=NULL) 
+    result = isSgVariableSymbol(symbol);
+  return result;  
+}
 
 void
 SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
