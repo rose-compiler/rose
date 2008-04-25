@@ -67,7 +67,10 @@ extern int gensym_counter;
 /*! @name Symbol tables
   \brief  utility functions for symbol tables
 */
-  // Liao 1/22/2008, used for get symobls for generating variable reference nodes
+  // Liao 1/22/2008, used for get symbols for generating variable reference nodes
+  // ! Find a variable symbol in current and ancestor scopes for a given name
+  SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName &	name,
+							SgScopeStatement *currentScope=NULL);
   //! find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
   SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
 							SgScopeStatement *currentScope=NULL);
