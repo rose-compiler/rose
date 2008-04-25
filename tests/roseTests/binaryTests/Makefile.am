@@ -6,7 +6,7 @@ if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
-CXX_TEMPLATE_REPOSITORY_PATH = .
+#CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runTest
