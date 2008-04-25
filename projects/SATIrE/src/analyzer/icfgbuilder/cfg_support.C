@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.17 2008-04-23 14:41:25 gergo Exp $
+// $Id: cfg_support.C,v 1.18 2008-04-25 10:09:22 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -24,33 +24,37 @@ CFG::~CFG()
 
 CallBlock::CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
                      std::vector<SgVariableSymbol *> *paramlist_,
-                     std::string name_)
+                     std::string name_, bool add_call_stmt)
   : BasicBlock(id_, type_, procnum_), paramlist(paramlist_), name(name_)
 {
-  switch (node_type) {
-  case X_FunctionCall:
-    statements.push_back(
-            stmt = Ir::createFunctionCall(node_type, name, this));
-    break;
-  case X_FunctionReturn:
-    statements.push_back(
-            stmt = Ir::createFunctionReturn(node_type, name, this));
-    break;
-  case X_FunctionEntry:
-    statements.push_back(
-            stmt = Ir::createFunctionEntry(node_type, name, this));
-    break;
-  case X_FunctionExit:
-    statements.push_back(
-            stmt = Ir::createFunctionExit(node_type, name, this));
-    break;
-  default:
- // statements.push_back(stmt = Ir::createCallStmt(node_type, name, this));
-    std::cerr
-        << "ICFG builder error: " << __FILE__ << ":" << __LINE__
-        << ": reached default case in switch" << std::endl;
-    abort();
+  if (add_call_stmt) {
+    switch (node_type) {
+    case X_FunctionCall:
+      statements.push_back(
+              stmt = Ir::createFunctionCall(node_type, name, this));
+      break;
+    case X_FunctionReturn:
+      statements.push_back(
+              stmt = Ir::createFunctionReturn(node_type, name, this));
+      break;
+    case X_FunctionEntry:
+      statements.push_back(
+              stmt = Ir::createFunctionEntry(node_type, name, this));
+      break;
+    case X_FunctionExit:
+      statements.push_back(
+              stmt = Ir::createFunctionExit(node_type, name, this));
+      break;
+    default:
+   // statements.push_back(stmt = Ir::createCallStmt(node_type, name, this));
+      std::cerr
+          << "ICFG builder error: " << __FILE__ << ":" << __LINE__
+          << ": reached default case in switch" << std::endl;
+      abort();
+    }
   }
+  else
+    stmt = NULL;
 }
 
 std::vector<SgVariableSymbol *> *
@@ -208,6 +212,11 @@ CallStmt::CallStmt(KFG_NODE_TYPE type_, std::string name_, CallBlock *parent_)
 void 
 CallStmt::update_infolabel() 
 {
+  if (this == NULL)
+  {
+      infolabel = "<none>";
+      return;
+  }
   std::string s;
   switch (type) {
   case X_FunctionCall:

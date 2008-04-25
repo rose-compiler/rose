@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.15 2008-04-23 14:41:25 gergo Exp $
+// $Id: ExprTransformer.C,v 1.16 2008-04-25 10:09:22 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -178,6 +178,7 @@ void ExprTransformer::visit(SgNode *node)
         else
             retval_block = NULL;
         CallBlock *call_block = NULL, *return_block = NULL;
+        CallBlock *ext_call_block = NULL, *ext_return_block = NULL;
         ExternalCall *external_call = NULL;
         ExternalReturn *external_return = NULL;
         if (entries != NULL && !entries->empty())
@@ -226,9 +227,12 @@ void ExprTransformer::visit(SgNode *node)
         else
         {
       /* external call */
-            BasicBlock *call_block
-                = new BasicBlock(node_id++, INNER, procnum);
-            cfg->nodes.push_back(call_block);
+            ext_call_block
+                = new CallBlock(node_id++, CALL, procnum,
+                        new std::vector<SgVariableSymbol *>(), "<unknown function>",
+                        /* add call stmt = */ false);
+            cfg->nodes.push_back(ext_call_block);
+            cfg->calls.push_back(ext_call_block);
          // GB (2007-10-23): This now records the expression referring to
          // the called function and the parameter list. Because the
          // parameter list has not been computed yet, pass an empty dummy
@@ -237,36 +241,42 @@ void ExprTransformer::visit(SgNode *node)
                     Ir::createExternalCall(call->get_function(),
                                            new std::vector<SgVariableSymbol *>,
                                            call->get_type());
-            call_block->statements.push_front(external_call);
+            ext_call_block->statements.push_front(external_call);
 
          // GB (2008-04-23): Added external return blocks.
-            BasicBlock *return_block
-                = new BasicBlock(node_id++, INNER, procnum);
-            cfg->nodes.push_back(return_block);
+            ext_return_block
+                = new CallBlock(node_id++, RETURN, procnum,
+                        new std::vector<SgVariableSymbol *>(), "<unknown function>",
+                        /* add call stmt = */ false);
+            cfg->nodes.push_back(ext_return_block);
+            cfg->returns.push_back(ext_return_block);
             external_return =
                     Ir::createExternalReturn(call->get_function(),
                                              new std::vector<SgVariableSymbol *>,
                                              call->get_type());
-            return_block->statements.push_front(external_return);
+            ext_return_block->statements.push_front(external_return);
+
+            ext_call_block->partner = ext_return_block;
+            ext_return_block->partner = ext_call_block;
 
             /* set links */
-            add_link(call_block, return_block, LOCAL);
+            add_link(ext_call_block, ext_return_block, LOCAL);
             if (last_arg_block != NULL)
-                add_link(last_arg_block, call_block, NORMAL_EDGE);
+                add_link(last_arg_block, ext_call_block, NORMAL_EDGE);
             if (retval_block != NULL)
             {
              // add_link(call_block, retval_block, NORMAL_EDGE);
-                add_link(return_block, retval_block, NORMAL_EDGE);
+                add_link(ext_return_block, retval_block, NORMAL_EDGE);
                 add_link(retval_block, after, NORMAL_EDGE);
                 retval = retval_block;
             }
             else
             {
              // add_link(call_block, after, NORMAL_EDGE);
-                add_link(return_block, after, NORMAL_EDGE);
-                retval = call_block;
+                add_link(ext_return_block, after, NORMAL_EDGE);
+                retval = ext_call_block;
             }
-            after = call_block;
+            after = ext_call_block;
             last = retval;
         }
         /* fill blocks */
@@ -304,6 +314,11 @@ void ExprTransformer::visit(SgNode *node)
                 external_call->set_params(ext_params);
              // external_call != NULL iff external_return != NULL
                 external_return->set_params(new std::vector<SgVariableSymbol *>(*ext_params));
+             // ... iff ext_call_block != NULL iff ext_return_block != NULL
+                ext_call_block->set_params(new std::vector<SgVariableSymbol *>(*ext_params));
+             // ext_call_block->stmt->update_infolabel();
+                ext_return_block->set_params(new std::vector<SgVariableSymbol *>(*ext_params));
+             // ext_return_block->stmt->update_infolabel();
             }
             else
                 delete ext_params;

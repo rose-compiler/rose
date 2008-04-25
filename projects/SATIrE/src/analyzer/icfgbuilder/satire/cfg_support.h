@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.13 2008-04-23 14:41:27 gergo Exp $
+// $Id: cfg_support.h,v 1.14 2008-04-25 10:09:24 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -149,7 +149,8 @@ class CallBlock : public BasicBlock
 {
 public:
     CallBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_,
-            std::vector<SgVariableSymbol *> *paramlist_, std::string name_);
+            std::vector<SgVariableSymbol *> *paramlist_, std::string name_,
+            bool add_call_stmt = true);
     CallBlock *partner;
     std::string print_paramlist() const;
     CallStmt *stmt;
