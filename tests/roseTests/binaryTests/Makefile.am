@@ -35,6 +35,8 @@ TESTCODE_INCLUDES =
 
 EXTRA_DIST = buffer2.bin
 
+CLEANFILES = unparsed.s buffer2.bin callgraph.gml output
+
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runTest 
 	cp $(srcdir)/buffer2.bin .

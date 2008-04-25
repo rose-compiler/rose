@@ -133,7 +133,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
     funcName=funcName.substr(0,pos);
 
       RoseBin_support::checkText(name);
-
+ 
       myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n"; 
       myfile << "\"" << hex_address << "\"[label=\"" << hex_address << ":" 
 	     << name << "\\n type = " << type << "\\n \"" << add <<"];\n"; 
