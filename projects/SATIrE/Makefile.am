@@ -2,43 +2,43 @@
 
 SUBDIRS= src tools examples
 DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag
-EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS \
+EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
         docs/satire_cfgconstruction.pdf \
 	docs/satire_overview.pdf \
         docs/ \
 	docs/satire_attributes_auxiliary_functions \
 	\
 	testsuite/testsuite.sh \
-	testsuite/success/ab.c \
-	testsuite/success/bigger.c \
-	testsuite/success/blocks.c \
-	testsuite/success/cconstants.c \
-	testsuite/success/classes.C \
-	testsuite/success/classes2.C \
-	testsuite/success/classes3.C \
-	testsuite/success/classes_and_returns.C \
-	testsuite/success/deepreturn.c \
-	testsuite/success/default_args.C \
-	testsuite/success/demo1.C \
-	testsuite/success/demo2.C \
-	testsuite/success/destructor.C \
-	testsuite/success/destructor2.C \
-	testsuite/success/destructor_simple.C \
-	testsuite/success/for_return1.c \
-	testsuite/success/forinit.c \
-	testsuite/success/intval.c \
-	testsuite/success/jump.c \
-	testsuite/success/logical.c \
-	testsuite/success/manyargs.c \
-	testsuite/success/namespaces.C \
-	testsuite/success/nested.c \
-	testsuite/success/overload.C \
-	testsuite/success/simpleif.c \
-	testsuite/success/small.c \
-	testsuite/success/test1.C \
-	testsuite/success/test5.C \
-	testsuite/success/test6.C \
-	testsuite/success/typedefs.C \
-	testsuite/success/verysmall.c \
-	testsuite/success/virtual.C \
-	testsuite/success/while_call1.c 
+	testsuite/base/success/ab.c \
+	testsuite/base/success/bigger.c \
+	testsuite/base/success/blocks.c \
+	testsuite/base/success/cconstants.c \
+	testsuite/base/success/classes.C \
+	testsuite/base/success/classes2.C \
+	testsuite/base/success/classes3.C \
+	testsuite/base/success/classes_and_returns.C \
+	testsuite/base/success/deepreturn.c \
+	testsuite/base/success/default_args.C \
+	testsuite/base/success/demo1.C \
+	testsuite/base/success/demo2.C \
+	testsuite/base/success/destructor.C \
+	testsuite/base/success/destructor2.C \
+	testsuite/base/success/destructor_simple.C \
+	testsuite/base/success/forinit.c \
+	testsuite/base/success/for_return1.c \
+	testsuite/base/success/intval.c \
+	testsuite/base/success/jump.c \
+	testsuite/base/success/logical.c \
+	testsuite/base/success/manyargs.c \
+	testsuite/base/success/namespaces.C \
+	testsuite/base/success/nested.c \
+	testsuite/base/success/overload.C \
+	testsuite/base/success/simpleif.c \
+	testsuite/base/success/small.c \
+	testsuite/base/success/test1.C \
+	testsuite/base/success/test5.C \
+	testsuite/base/success/test6.C \
+	testsuite/base/success/typedefs.C \
+	testsuite/base/success/verysmall.c \
+	testsuite/base/success/virtual.C \
+	testsuite/base/success/while_call1.c 
