@@ -216,9 +216,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/libroseutil.la
 
 
-# DQ (1/24/2008): moved files to consolidate this directory (too many small subdirectories).
-#   $(top_builddir)/src/midend/astOutlining/src/libliaOutliner.la 
-
 # DQ (5/3/2007): Removed older work
 #   $(top_builddir)/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/libdominance.la 
 
