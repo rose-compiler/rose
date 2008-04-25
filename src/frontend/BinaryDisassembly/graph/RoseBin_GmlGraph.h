@@ -36,7 +36,7 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
   }
   virtual ~RoseBin_GMLGraph() {}
 
-  void printNodes( bool dfg,  bool forward_analysis, 
+  void printNodes( bool dfg, RoseBin_FlowAnalysis* flow,  bool forward_analysis, 
 		     std::ofstream &myfile, std::string& recursiveFunctionName);
 
   void printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges);

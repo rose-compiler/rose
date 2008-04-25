@@ -18,6 +18,8 @@
 
 //#include "RoseBin.h"
 
+class RoseBin_FlowAnalysis;
+
 namespace RoseBin_Def {
 
   enum GraphProperties {
@@ -105,7 +107,7 @@ class RoseBin_Graph {
   void setGrouping(bool val) {grouping = val;}
 
   virtual void printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
-  virtual void printNodes( bool dfg,  bool forward_analysis, 
+  virtual void printNodes( bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,  
 			   std::ofstream &myfile, std::string& recursiveFunctionName) =0;
 
 

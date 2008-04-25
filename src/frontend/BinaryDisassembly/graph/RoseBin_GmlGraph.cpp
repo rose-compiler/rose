@@ -24,7 +24,7 @@ RoseBin_GMLGraph::printEpilog(  std::ofstream& myfile) {
 }
 
 void 
-RoseBin_GMLGraph::printNodes(    bool dfg, bool forward_analysis,
+RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forward_analysis,
 				 std::ofstream& myfile, string& recursiveFunctionName) {
   //bool firstFunc = true;
   // traverse nodes and visualize results of graph

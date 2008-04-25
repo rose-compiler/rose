@@ -64,15 +64,7 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
     //itV++;
     ROSE_ASSERT(funcD);
     // make sure we dont visit a function twice
-    /*
-    bool visited = false;
-    vector<SgAsmFunctionDeclaration*>::const_iterator fit = visitedFunctions.begin();
-    for (;fit!=visitedFunctions.end();++fit) {
-      SgAsmFunctionDeclaration* f = *fit;
-      if (f==funcD) visited=true;
-    }
-    if (visited) continue;
-    */
+
 
     vector <SgNode*> funcVec =funcD->get_traversalSuccessorContainer();
     int last = funcVec.size()-1;

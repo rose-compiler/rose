@@ -24,12 +24,160 @@ RoseBin_DotGraph::printEpilog(  std::ofstream& myfile) {
 }
 
 void 
-RoseBin_DotGraph::printNodes(    bool dfg, bool forward_analysis,
+RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
+  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  forward analysis : " << endl;
+
+  int counter=nodes.size();
+  rose_hash::hash_set <std::string> funcNames;
+  nodeType resultSet;
+
+  typedef std::multimap < std::string, 
+    std::pair <std::string, SgDirectedGraphNode*> > callNodeType;
+  callNodeType callMap;
+  callMap.clear();
+
+  nodeType::iterator itn2 = nodes.begin();
+  for (; itn2!=nodes.end();++itn2) {
+    counter--;
+    pair<string, SgDirectedGraphNode*> nt = *itn2;
+    string hex_address = itn2->first;
+    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn2->second);
+    SgNode* internal = node->get_SgNode();
+    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    string funcName = func->get_name();
+    int pos = funcName.find("+");
+    if (pos<=0) pos=funcName.find("-");
+    if (pos<=0) pos=funcName.length();
+    funcName=funcName.substr(0,pos);
+    bool found = true;
+    rose_hash::hash_set <std::string>::iterator funcNames_it=funcNames.find(funcName);
+    if (funcNames_it==funcNames.end()) {
+      funcNames.insert(funcName);
+      found =false;
+    }
+
+    if (RoseBin_support::DEBUG_MODE())
+      if ((counter % 10000)==0)
+	cout << " preparing function " << counter << endl;
+    if (!found)
+      resultSet[itn2->first]=itn2->second;
+    else
+      callMap.insert(make_pair ( funcName, nt )) ;
+  }
+
+  cerr << " Number of nodes in inverseMap : " << callMap.size() << endl;
+
+
+  cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
+  int funcNr=0;
+  nodeType::iterator itn = resultSet.begin();
+  for (; itn!=resultSet.end();++itn) {
+    string hex_address = itn->first;
+    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
+    SgNode* internal = node->get_SgNode();
+    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    ROSE_ASSERT(node);
+    // specifies that this node has no destination address
+    nodest_jmp = false;
+    // specifies that there is a node that has a call error (calling itself)
+    error =false;
+    // specifies a call to a unknown location
+    nodest_call = false;
+    // specifies where its an int instruction
+    interrupt = false;
+    if (func) {
+      map < int , string> node_p = node->get_properties();
+      map < int , string>::iterator prop = node_p.begin();
+      string name = "noname";
+      string type = node->get_type();
+      for (; prop!=node_p.end(); ++prop) {
+	int addr = prop->first;
+	// cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
+	if (addr==RoseBin_Def::nodest_jmp)
+	  nodest_jmp = true;
+	else if (addr==RoseBin_Def::itself_call)
+	  error = true;
+	else if (addr==RoseBin_Def::nodest_call)
+	  nodest_call = true;
+	else if (addr==RoseBin_Def::interrupt)
+	  interrupt = true;
+	else if (addr==RoseBin_Def::name)
+	  name = prop->second;
+     }
+      
+
+      funcNr++;
+      if (RoseBin_support::DEBUG_MODE())
+	cout << " Unparser Function : " << funcNr  << endl;
+
+      string add ="";
+      //if (grouping) {
+      //	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+      //} else {
+	if (nodest_jmp)
+	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+	else if (nodest_call)
+	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
+	else if (interrupt)
+	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+	else if (error)
+	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+	else
+	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
+	//}
+
+    string funcName = func->get_name();
+    int pos = funcName.find("+");
+    if (pos<=0) pos=funcName.find("-");
+    if (pos<=0) pos=funcName.length();
+    funcName=funcName.substr(0,pos);
+
+      RoseBin_support::checkText(name);
+
+      myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n"; 
+      myfile << "\"" << hex_address << "\"[label=\"" << hex_address << ":" 
+	     << name << "\\n type = " << type << "\\n \"" << add <<"];\n"; 
+
+      callNodeType::iterator inv = callMap.lower_bound(funcName);
+      for (;inv!=callMap.upper_bound(funcName);++inv) {
+	pair <std::string, SgDirectedGraphNode*>  itn = inv->second;
+	string hex_address_n = itn.first;
+	SgDirectedGraphNode* node = isSgDirectedGraphNode(itn.second);
+	string type_n = node->get_type();
+	string name_n="noname";
+	map < int , string> node_p = node->get_properties();
+	map < int , string>::iterator prop = node_p.begin();
+
+	for (; prop!=node_p.end(); ++prop) {
+	  int addr = prop->first;
+	  // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
+	  if (addr==RoseBin_Def::name)
+	    name_n = prop->second;
+	}
+	myfile << "\"" << hex_address_n << "\"[label=\"" << hex_address_n << ":" 
+	       << name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n"; 
+	
+      }
+
+
+	myfile << "} \n"; 
+    } 
+  }
+
+}
+
+void 
+RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
 				 std::ofstream& myfile, string& recursiveFunctionName) {
   //ROSE_ASSERT(unparser);
   //bool firstFunc = true;
   // traverse nodes and visualize results of graph
-  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
+  if ((dynamic_cast<RoseBin_CallGraphAnalysis*>(flow))!=NULL) {
+    cerr << " >>>> its a callgraph " << endl;
+    printNodesCallGraph(myfile);
+    return;
+  }
+  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  forward analysis : " << forward_analysis << endl;
   int counter=nodes.size();
   inverse_nodesMap.clear();
   nodeType::iterator itn2 = nodes.begin();

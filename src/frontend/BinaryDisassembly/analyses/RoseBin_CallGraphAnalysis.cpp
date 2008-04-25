@@ -68,7 +68,7 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
 
   string funcName="";
   start = RoseBin_support::getTime();
-  vizzGraph->printNodes(false,this, myfile,funcName);
+  vizzGraph->printNodes(false,this, forward_analysis, myfile,funcName);
   nrNodes=vizzGraph->nodes.size();
   //vizzGraph->nodes.clear();
 

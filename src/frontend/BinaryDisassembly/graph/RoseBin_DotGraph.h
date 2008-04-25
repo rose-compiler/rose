@@ -29,8 +29,9 @@ class RoseBin_DotGraph : public RoseBin_Graph {
   RoseBin_DotGraph() {}
   ~RoseBin_DotGraph() {}
 
-  void printNodes( bool dfg,  bool forward_analysis, 
+  void printNodes( bool dfg,  RoseBin_FlowAnalysis* flow, bool forward_analysis, 
 		     std::ofstream &myfile, std::string& recursiveFunctionName);
+  void printNodesCallGraph(std::ofstream& myfile);
 
   void printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
 
