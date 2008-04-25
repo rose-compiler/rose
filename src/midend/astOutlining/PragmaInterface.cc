@@ -12,7 +12,7 @@
 #include <string>
 #include <rose.h>
 
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 
@@ -57,8 +57,8 @@ processPragma (SgPragmaDeclaration* decl)
  *  an outline directive (pragma).
  */
 
-LiaOutliner::Result
-LiaOutliner::outline (SgPragmaDeclaration* decl)
+Outliner::Result
+Outliner::outline (SgPragmaDeclaration* decl)
 {
   SgStatement* s = processPragma (decl);
   if (!s)
@@ -77,7 +77,7 @@ LiaOutliner::outline (SgPragmaDeclaration* decl)
 }
 
 SgBasicBlock *
-LiaOutliner::preprocess (SgPragmaDeclaration* decl)
+Outliner::preprocess (SgPragmaDeclaration* decl)
 {
   SgStatement* s = processPragma (decl);
   if (s)
@@ -149,7 +149,7 @@ collectPragmas (SgProject* proj, PragmaList_t& pragmas)
 }
 
 size_t
-LiaOutliner::outlineAll (SgProject* project)
+Outliner::outlineAll (SgProject* project)
 {
   size_t num_outlined = 0;
   PragmaList_t pragmas;
@@ -164,7 +164,7 @@ LiaOutliner::outlineAll (SgProject* project)
 }
 
 size_t
-LiaOutliner::preprocessAll (SgProject* proj)
+Outliner::preprocessAll (SgProject* proj)
 {
   size_t count = 0;
   PragmaList_t pragmas;

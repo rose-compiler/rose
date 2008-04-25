@@ -1,13 +1,9 @@
-# Import definitions common to LiaOutliner submodules.
+# Import definitions common to Outliner submodules.
 #include ../Make.inc
 SUBDIRS = fortranTests
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-#place to install binary, header, and libraries
-#liaOutlinerbindir = $(bindir)/liaOutliner
-#liaOutlinerincdir = $(includedir)/liaOutliner
-#liaOutlinerlibdir = $(libdir)
 
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
@@ -17,10 +13,7 @@ INCLUDES = $(ROSE_INCLUDES)
 #       -I$(top_srcdir)/src/midend/astOutlining/src
 
 # Default link flags for executables
-LIAOUTLINER_LIBS = $(ROSE_LIBS)
-
-# DQ (!/24/2008): This library is no longer required (everything is in librose.la)
-# $(top_builddir)/src/midend/astOutlining/src/libliaOutliner.la
+OUTLINER_LIBS = $(ROSE_LIBS)
 
 # Useful definitions for testing
 #   TEST_DIR = Location of ROSE's basic C++ tests.
@@ -33,28 +26,27 @@ TEST_INCLUDES = \
 
 # INCLUDES += -I.
 
-# liaOutlinerbin_PROGRAMS =
 noinst_PROGRAMS = \
-        liaoutline \
+        outline \
         injectOutlinePragmas \
         outlineRandom \
         outlineSelection
 
-liaoutline_SOURCES = liaoutline.cc
-liaoutline_LDFLAGS = $(LIAOUTLINER_LIBS)
+outline_SOURCES = outline.cc
+outline_LDFLAGS = $(OUTLINER_LIBS)
 
 injectOutlinePragmas_SOURCES = \
         RandomStmtSelector.cc \
         injectOutlinePragmas.cc
-injectOutlinePragmas_LDFLAGS = $(LIAOUTLINER_LIBS)
+injectOutlinePragmas_LDFLAGS = $(OUTLINER_LIBS)
 
 outlineRandom_SOURCES = \
         RandomStmtSelector.cc \
         outlineRandom.cc
-outlineRandom_LDFLAGS = $(LIAOUTLINER_LIBS)
+outlineRandom_LDFLAGS = $(OUTLINER_LIBS)
 
 outlineSelection_SOURCES = outlineSelection.cc
-outlineSelection_LDFLAGS = $(LIAOUTLINER_LIBS)
+outlineSelection_LDFLAGS = $(OUTLINER_LIBS)
 
 
 # Import a list of C++ test codes expected to pass.

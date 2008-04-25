@@ -1,8 +1,8 @@
-// outlinePreproc.cc: Shows the outliner's preprocessor-only phase.
+// outline.cc: Demonstrates the pragma-interface of the Outliner.
 
 #include <iostream>
 #include <rose.h>
-#include <LiaOutliner.hh>
+#include <Outliner.hh>
 
 using namespace std;
 
@@ -13,8 +13,8 @@ main (int argc, char* argv[])
   ROSE_ASSERT (proj);
 
 #if 1
-  cerr << "[Running outliner's preprocessing phase only...]" << endl;
-  size_t count = LiaOutliner::preprocessAll (proj);
+  cerr << "[Outlining...]" << endl;
+  size_t count = Outliner::outlineAll (proj);
   cerr << "  [Processed " << count << " outline directives.]" << endl;
 #else
   printf ("Skipping outlining due to recent move from std::list to std::vector in ROSE \n");

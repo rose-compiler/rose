@@ -1,0 +1,103 @@
+/**
+ *  \file Outliner.hh
+ *
+ *  \brief An outlining implementation.
+ *
+ *  \author Chunhua Liao <liaoch@cs.uh.edu>, Richard Vuduc
+ *  <richie@llnl.gov>
+ *
+ *  This implementation is based largely on the code by Liao for the
+ *  ROSE OpenMP_Translator project. Vuduc extended the code to handle
+ *  additional cases and use an alternative calling convention for
+ *  functions.
+ *
+ *  \todo Outline: arbitrary lists of statements taken from a single
+ *  SgBasicBlock.
+ */
+
+#if !defined(INC_LIAOUTLINER_HH)
+#define INC_LIAOUTLINER_HH
+
+#include <cstdlib>
+
+//! \name Forward declarations to relevant Sage classes.
+//@{
+class SgProject;
+class SgFunctionDeclaration;
+class SgStatement;
+class SgPragmaDeclaration;
+//@}
+
+namespace Outliner
+{
+  //! Returns true iff the statement is "outlineable."
+  bool isOutlineable (const SgStatement* s, bool verbose = false);
+
+  //! Stores the main results of an outlining transformation.
+  struct Result
+  {
+    //! The outlined function's declaration and definition.
+    SgFunctionDeclaration* decl_;
+
+    //! A statement to invoke the outlined function.
+    SgStatement* call_;
+
+    Result (void); //! Sets all fields to 0
+    Result (SgFunctionDeclaration *, SgStatement *);
+    Result (const Result&); //! Copy constructor.
+    ~Result (void) {}; //! Shallow; does not delete fields.
+    bool isValid (void) const; //! Returns true iff result is usable
+  };
+
+  /*!
+   *  \brief Create a unique outlined-function name for the specified
+   *  statement.
+   *
+   *  The generated name will be "unique" within the current
+   *  translation unit, and is likely (but not guaranteed) to be
+   *  unique across a project.
+   */
+  std::string generateFuncName (const SgStatement* stmt);
+
+  //! Outlines the given statement.
+  /*!
+   *  This function outlines the specified statement, s. It creates a
+   *  new outlined function definition, f, inserts f into the first
+   *  scope surrounding s that may contain a function (or member
+   *  function) definition, replaces s with a call to f, and finally
+   *  returns f.
+   */
+  Result outline (SgStatement* s);
+
+  //! Outline to a new function with the specified name.
+  Result outline (SgStatement* s, const std::string& func_name);
+
+  //! If 's' is an outline pragma, this function "executes" it.
+  /*!
+   *  \post The outlined statement and the pragma are removed from the
+   *  AST.
+   */
+  Result outline (SgPragmaDeclaration* s);
+
+  //! Outlines all regions marked by outlining pragmas.
+  /*!
+   *  \returns The number of outline directives processed.
+   */
+  size_t outlineAll (SgProject *);
+
+  /**
+   * \name The following routines, intended for debugging, mirror the
+   * core outlining routines above, but only run the outlining
+   * preprocessing phase, returning the outlineable statement if
+   * present.
+   */
+  //@{
+  SgBasicBlock* preprocess (SgStatement* s);
+  SgBasicBlock* preprocess (SgPragmaDeclaration* s);
+  size_t preprocessAll (SgProject *);
+  //@}
+};
+
+#endif // !defined(INC_LIAOUTLINER_HH)
+
+// eof

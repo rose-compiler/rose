@@ -54,7 +54,7 @@ appendArgs (const ASTtools::VarSymSet_t& syms, SgExprListExp* e_list)
 // =====================================================================
 
 SgStatement *
-LiaOutliner::Transform::generateCall (SgFunctionDeclaration* out_func,
+Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
                                       const ASTtools::VarSymSet_t& syms)
 {
   // Create a reference to the function.

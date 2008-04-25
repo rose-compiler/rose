@@ -381,7 +381,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
 // =====================================================================
 
 void
-LiaOutliner::Transform::insert (SgFunctionDeclaration* func,
+Outliner::Transform::insert (SgFunctionDeclaration* func,
                                 SgGlobal* scope,
                                 SgFunctionDeclaration* target_func)
 {

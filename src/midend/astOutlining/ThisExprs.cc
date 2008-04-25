@@ -212,7 +212,7 @@ replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
 // =====================================================================
 
 SgBasicBlock *
-LiaOutliner::Preprocess::transformThisExprs (SgBasicBlock* b)
+Outliner::Preprocess::transformThisExprs (SgBasicBlock* b)
 {
   // Find all 'this' expressions.
   ASTtools::ThisExprSet_t this_exprs;

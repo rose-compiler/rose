@@ -20,8 +20,8 @@ using namespace std;
 
 // =====================================================================
 
-LiaOutliner::Result
-LiaOutliner::Transform::outlineBlock (SgBasicBlock* s,
+Outliner::Result
+Outliner::Transform::outlineBlock (SgBasicBlock* s,
                                       const string& func_name_str)
 {
   // Save some preprocessing information.
@@ -34,7 +34,7 @@ LiaOutliner::Transform::outlineBlock (SgBasicBlock* s,
   collectVars (s, syms);
 
   // Generate outlined function.
-  printf ("In LiaOutliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
+  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
   SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms);
   ROSE_ASSERT (func != NULL);
 

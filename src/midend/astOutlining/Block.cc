@@ -121,7 +121,7 @@ appendAssignment (const SgInitializedName* name, const SgScopeStatement* scope,
 }
 
 SgBasicBlock *
-LiaOutliner::Preprocess::normalizeVarDecl (SgVariableDeclaration* s)
+Outliner::Preprocess::normalizeVarDecl (SgVariableDeclaration* s)
 {
   if (!s) return 0;
 
@@ -154,7 +154,7 @@ LiaOutliner::Preprocess::normalizeVarDecl (SgVariableDeclaration* s)
  *  This normalization simplifies outlining of single statements.
  */
 SgBasicBlock *
-LiaOutliner::Preprocess::createBlock (SgStatement* s)
+Outliner::Preprocess::createBlock (SgStatement* s)
 {
   SgStatement* s_outline = s;
   if (!isSgBasicBlock (s))

@@ -72,6 +72,7 @@ CPreproc::IfDirectiveExtractor::visit (SgNode* n, bool isTopDown)
           {  
             if (ASTtools::isPositionBefore (*i) == isTopDown)
               handleCase (*i, s);
+#if 0
       // only handle before position by default
       // warning if wrongfully attached to a relative position of after or middle.
             else  
@@ -80,6 +81,7 @@ CPreproc::IfDirectiveExtractor::visit (SgNode* n, bool isTopDown)
       cout<<"Location: " <<(*i)->get_file_info ()->get_filenameString ().c_str () << endl;
       cout<<"Type:"<< PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()) <<endl;
             }
+#endif            
           }    
         }
     }

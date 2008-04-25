@@ -21,7 +21,7 @@ using namespace std;
 // =====================================================================
 
 SgBasicBlock *
-LiaOutliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
+Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
 {
   // Step 1: Make sure we outline an SgBasicBlock.
   SgBasicBlock* s_post = 0;

@@ -60,7 +60,7 @@ copyNonLocalFuncDecls (SgBasicBlock* b)
 // =====================================================================
 
 void
-LiaOutliner::Preprocess::gatherNonLocalDecls (SgBasicBlock* b)
+Outliner::Preprocess::gatherNonLocalDecls (SgBasicBlock* b)
 {
   copyNonLocalFuncDecls (b);
 }

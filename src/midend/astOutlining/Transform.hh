@@ -9,12 +9,12 @@
 
 #include <string>
 
-#include <LiaOutliner.hh>
+#include <Outliner.hh>
 #include <VarSym.hh>
 
 class SgGlobalScope;
 
-namespace LiaOutliner
+namespace Outliner
 {
   namespace Transform
   {
@@ -46,9 +46,9 @@ namespace LiaOutliner
      *  This function is an "inner" outlining routine which does not
      *  properly handle non-local control flow. To outline statements
      *  containing non-local flow, a caller should instead call \ref
-     *  LiaOutliner::outline(), which preprocesses non-local control
+     *  Outliner::outline(), which preprocesses non-local control
      *  flow appropriately. See \ref
-     *  LiaOutliner::transformNonLocalControlFlow() for more details.
+     *  Outliner::transformNonLocalControlFlow() for more details.
      *
      *  \pre The statement does not contain non-local control flow.
      */
@@ -78,7 +78,7 @@ namespace LiaOutliner
     SgStatement* generateCall (SgFunctionDeclaration* out_func,
                                const ASTtools::VarSymSet_t& syms);
   } /* namespace Transform */
-} /* namespace LiaOutliner */
+} /* namespace Outliner */
 
 #endif
 

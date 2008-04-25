@@ -28,7 +28,7 @@ dump (const ASTtools::VarSymSet_t& V, const std::string& tag)
 }
 
 void
-LiaOutliner::Transform::collectVars (const SgStatement* s,
+Outliner::Transform::collectVars (const SgStatement* s,
                                      ASTtools::VarSymSet_t& syms)
 {
   // Determine the function definition surrounding 's'.

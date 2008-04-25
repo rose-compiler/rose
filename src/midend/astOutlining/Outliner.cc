@@ -1,5 +1,5 @@
 /**
- *  \file LiaOutliner.cc
+ *  \file Outliner.cc
  *  \brief An outlining implementation.
  */
 
@@ -10,7 +10,7 @@
 #include <rose.h>
 
 #include "NameGenerator.hh"
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 #include "Preprocess.hh"
 #include "Transform.hh"
 #include "commandline_processing.h"
@@ -36,7 +36,7 @@ hashStringToULong (const string& s)
 }
 
 string
-LiaOutliner::generateFuncName (const SgStatement* stmt)
+Outliner::generateFuncName (const SgStatement* stmt)
 {
   // Generate a prefix.
   stringstream s;
@@ -53,15 +53,15 @@ LiaOutliner::generateFuncName (const SgStatement* stmt)
 
 // =====================================================================
 
-LiaOutliner::Result
-LiaOutliner::outline (SgStatement* s)
+Outliner::Result
+Outliner::outline (SgStatement* s)
 {
   string func_name = generateFuncName (s);
   return outline (s, func_name);
 }
 
-LiaOutliner::Result
-LiaOutliner::outline (SgStatement* s, const std::string& func_name)
+Outliner::Result
+Outliner::outline (SgStatement* s, const std::string& func_name)
 {
   static bool preproc_only_ = false; 
   SgBasicBlock* s_post = preprocess (s);
@@ -84,7 +84,7 @@ LiaOutliner::outline (SgStatement* s, const std::string& func_name)
 
   if (preproc_only_)
   {
-    LiaOutliner::Result fake;
+    Outliner::Result fake;
     return fake;
   }  
   else
@@ -92,7 +92,7 @@ LiaOutliner::outline (SgStatement* s, const std::string& func_name)
 }
 
 SgBasicBlock *
-LiaOutliner::preprocess (SgStatement* s)
+Outliner::preprocess (SgStatement* s)
 {
   ROSE_ASSERT (isOutlineable (s, SgProject::get_verbose () >= 1));
   SgBasicBlock* s_post = Preprocess::preprocessOutlineTarget (s);
@@ -104,24 +104,24 @@ LiaOutliner::preprocess (SgStatement* s)
  *  Container to store the results of one outlining transformation.
  */
 
-LiaOutliner::Result::Result (void)
+Outliner::Result::Result (void)
   : decl_ (0), call_ (0)
 {
 }
 
-LiaOutliner::Result::Result (SgFunctionDeclaration* decl,
+Outliner::Result::Result (SgFunctionDeclaration* decl,
                              SgStatement* call)
   : decl_ (decl), call_ (call)
 {
 }
 
-LiaOutliner::Result::Result (const Result& b)
+Outliner::Result::Result (const Result& b)
   : decl_ (b.decl_), call_ (b.call_)
 {
 }
 
 bool
-LiaOutliner::Result::isValid (void) const
+Outliner::Result::isValid (void) const
 {
   return decl_ && call_;
 }

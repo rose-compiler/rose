@@ -10,7 +10,7 @@ endif
 
 libastOutliner_la_SOURCES = \
 	Check.cc \
-	LiaOutliner.cc \
+	Outliner.cc \
 	NameGenerator.cc \
 	PragmaInterface.cc \
 	ASTtools.cc \
@@ -39,7 +39,7 @@ libastOutliner_la_SOURCES = \
 	Transform.cc
 
 include_HEADERS = \
-	LiaOutliner.hh \
+	Outliner.hh \
 	NameGenerator.hh \
 	ASTtools.hh \
 	Copy.hh \

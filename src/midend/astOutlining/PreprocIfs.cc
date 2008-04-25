@@ -49,7 +49,7 @@ using namespace std;
 // =====================================================================
 
 SgBasicBlock *
-LiaOutliner::Preprocess::transformPreprocIfs (SgBasicBlock* b)
+Outliner::Preprocess::transformPreprocIfs (SgBasicBlock* b)
 {
   ROSE_ASSERT (b && b->get_parent ());
 

@@ -13,7 +13,7 @@
 #include <rose.h>
 
 #include <ASTtools.hh>
-#include <LiaOutliner.hh>
+#include <Outliner.hh>
 #include "RandomStmtSelector.hh"
 
 // ========================================================================
@@ -87,7 +87,7 @@ collectOutlineableStatements (SgBasicBlock* b, StmtVec_t& S)
     virtual void visit (SgNode* n)
     {
       SgStatement* s = isSgStatement (n);
-      if (LiaOutliner::isOutlineable (s))
+      if (Outliner::isOutlineable (s))
         {
           if (SgProject::get_verbose () >= 3)
             cerr << '<' << s->class_name () << '>'

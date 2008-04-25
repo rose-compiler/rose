@@ -967,7 +967,7 @@ tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/database/Makefile
 tutorial/roseHPCT/Makefile
-tutorial/liaOutliner/Makefile
+tutorial/outliner/Makefile
 exampleTranslators/Makefile
 exampleTranslators/AstCopyReplTester/Makefile
 exampleTranslators/DOTGenerator/Makefile

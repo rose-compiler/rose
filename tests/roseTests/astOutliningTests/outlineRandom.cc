@@ -27,7 +27,7 @@
 
 #include <ASTtools.hh>
 #include <PreprocessingInfo.hh>
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 #include "RandomStmtSelector.hh"
 
 using namespace std;
@@ -359,7 +359,7 @@ preprocess (SgStatement* s, bool emit = false)
 {
   static size_t count = 0;
   cerr << "=== PREPROCESSING: " << toString (s, ++count) << " ===" << endl;
-  SgBasicBlock* b = LiaOutliner::preprocess (s);
+  SgBasicBlock* b = Outliner::preprocess (s);
   ROSE_ASSERT (b);
   ASTtools::attachComment (toString (s, count), b);
 
@@ -387,7 +387,7 @@ outline (SgStatement* s, bool emit = false)
 {
   static size_t count = 0;
   cerr << "=== OUTLINING: " << toString (s, ++count) << " ===" << endl;
-  LiaOutliner::Result r = LiaOutliner::outline (s);
+  Outliner::Result r = Outliner::outline (s);
   ROSE_ASSERT (r.isValid ());
   ASTtools::attachComment (toString (s, count), r.decl_);
 

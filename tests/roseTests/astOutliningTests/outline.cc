@@ -1,7 +1,7 @@
 /*!
  *  \file liaoutliner.cc
  *
- *  \brief Demonstrates the pragma-interface of the LiaOutliner.
+ *  \brief Demonstrates the pragma-interface of the Outliner.
  *
  *  \author Richard Vuduc <richie@llnl.gov>
  *
@@ -18,7 +18,7 @@
 #include <rose.h>
 #include <commandline_processing.h>
 
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 
 //! Generates a PDF into the specified file.
 static void makePDF (const SgProject* proj,
@@ -56,12 +56,12 @@ main (int argc, char* argv[])
       if (preproc_only)
         {
           cerr << "[Running outliner's preprocessing phase only...]" << endl;
-          count = LiaOutliner::preprocessAll (proj);
+          count = Outliner::preprocessAll (proj);
         }
       else
         {
           cerr << "[Outlining...]" << endl;
-          count = LiaOutliner::outlineAll (proj);
+          count = Outliner::outlineAll (proj);
         }
       cerr << "  [Processed " << count << " outline directives.]" << endl;
 

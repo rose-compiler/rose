@@ -54,7 +54,7 @@
 
 #include <ASTtools.hh>
 #include <PreprocessingInfo.hh>
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 
 using namespace std;
 
@@ -203,7 +203,7 @@ public:
   virtual void visit (SgNode* n)
   {
     SgStatement* s = isSgStatement (n);
-    if (s && LiaOutliner::isOutlineable (s) && !collected (s) && matches (s))
+    if (s && Outliner::isOutlineable (s) && !collected (s) && matches (s))
       collect (s);
   }
   
@@ -217,7 +217,7 @@ protected:
   //! Returns 'true' if the given outlineable statement should be collected.
   /*!
    *  \pre The given statement, 's', is non-NULL and outlineable,
-   *  according to LiaOutliner::isOutlineable ().
+   *  according to Outliner::isOutlineable ().
    */
   virtual bool matches (const SgStatement* s) const = 0;
 
@@ -642,7 +642,7 @@ preprocess (SgStatement* s, bool emit = false)
 {
   static size_t count = 0;
   cerr << "=== PREPROCESSING: " << toString (s, ++count) << " ===" << endl;
-  SgBasicBlock* b = LiaOutliner::preprocess (s);
+  SgBasicBlock* b = Outliner::preprocess (s);
   ROSE_ASSERT (b);
 #if 0 
 //bug 151
@@ -659,7 +659,7 @@ outline (SgStatement* s, bool emit = false)
 {
   static size_t count = 0;
   cerr << "=== OUTLINING: " << toString (s, ++count) << " ===" << endl;
-  LiaOutliner::Result r = LiaOutliner::outline (s);
+  Outliner::Result r = Outliner::outline (s);
   ROSE_ASSERT (r.isValid ());
 #if 0 
 //bug 151

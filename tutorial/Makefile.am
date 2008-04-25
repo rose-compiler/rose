@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = database roseHPCT liaOutliner
+SUBDIRS = database roseHPCT outliner
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -1225,7 +1225,7 @@ CLEANFILES = rose_bin_example.s callgraph.gml
 docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 	@echo ""
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
-	cd liaOutliner; $(MAKE) docs
+	cd outliner; $(MAKE) docs
 	cd roseHPCT; $(MAKE) docs
 	@echo "******************************************************************"
 	@echo "Generated required documentation for tutorial (make docs rule) ..."
@@ -1236,7 +1236,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 # The *.binary are the binary form of the ASTs.
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
-#	cd liaOutliner; $(MAKE) cleanDocs
+#	cd outliner; $(MAKE) cleanDocs
 	rm -f *.C *.out *.a? *.dot *.pdf *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary
 
 clean-local: cleanDocs

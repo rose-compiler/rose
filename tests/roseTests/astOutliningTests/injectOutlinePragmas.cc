@@ -1,7 +1,7 @@
 /**
  *  \file injectOutlinePragmas.cc
  *
- *  \brief Demonstrate the LiaOutliner by outlining random statements
+ *  \brief Demonstrate the Outliner by outlining random statements
  *  in a source file.
  *
  *  \author Rich Vuduc <richie@llnl.gov>
@@ -20,7 +20,7 @@
 #include <rose.h>
 #include <commandline_processing.h>
 
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 #include "RandomStmtSelector.hh"

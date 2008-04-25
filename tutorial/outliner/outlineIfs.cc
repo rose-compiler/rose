@@ -1,10 +1,10 @@
-// outlineIfs.cc: Calls LiaOutliner directly to outline if statements.
+// outlineIfs.cc: Calls Outliner directly to outline if statements.
 
 #include <iostream>
 #include <set>
 #include <list>
 #include <rose.h>
-#include <LiaOutliner.hh>
+#include <Outliner.hh>
 
 using namespace std;
 
@@ -25,7 +25,7 @@ public:
   virtual void visit (SgNode* n)
   {
     SgIfStmt* s = isSgIfStmt (n);
-    if (LiaOutliner::isOutlineable (s))
+    if (Outliner::isOutlineable (s))
       final_targets_.push_back (s);
   }
 
@@ -48,7 +48,7 @@ int main (int argc, char* argv[])
   // Outline them all.
   for (CollectOutlineableIfs::IfList_t::iterator i = ifs.begin ();
        i != ifs.end (); ++i)
-    LiaOutliner::outline (*i);
+    Outliner::outline (*i);
 #else
   printf ("Skipping outlining due to recent move from std::list to std::vector in ROSE \n");
 #endif

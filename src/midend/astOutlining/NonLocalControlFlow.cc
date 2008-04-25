@@ -235,7 +235,7 @@ convertJumpsToGotos (SgVariableSymbol* jump_var,
 // =====================================================================
 
 SgBasicBlock *
-LiaOutliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
+Outliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
 {
   // Determine if any non-local jumps exist.
   ASTtools::JumpMap_t jumps; // non-goto jumps

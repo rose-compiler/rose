@@ -9,7 +9,7 @@
 #include <string>
 #include <rose.h>
 
-#include "LiaOutliner.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 
 // =====================================================================
@@ -201,11 +201,11 @@ isForInit (const SgStatement* s)
  *  conditions of an outlineable statement.
  */
 bool
-LiaOutliner::isOutlineable (const SgStatement* s, bool verbose)
+Outliner::isOutlineable (const SgStatement* s, bool verbose)
 {
   if (verbose)
     {
-      cerr << "=== Checking LiaOutliner preconditions for "
+      cerr << "=== Checking Outliner preconditions for "
            << (const void *)s;
       if (s)
         {

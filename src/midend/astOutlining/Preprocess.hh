@@ -14,7 +14,7 @@ class SgBasicBlock;
 class SgVariableDeclaration;
 class SgStatement;
 
-namespace LiaOutliner
+namespace Outliner
 {
   namespace Preprocess
   {
@@ -236,7 +236,7 @@ namespace LiaOutliner
     void gatherNonLocalDecls (SgBasicBlock* b);
 
   } /* namespace Preprocess */
-} /* namespace LiaOutliner */
+} /* namespace Outliner */
 
 #endif
 

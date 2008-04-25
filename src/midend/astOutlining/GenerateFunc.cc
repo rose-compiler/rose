@@ -537,7 +537,7 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, SgBasicBlock* b)
 // =====================================================================
 
 SgFunctionDeclaration *
-LiaOutliner::Transform::generateFunction (const SgBasicBlock* s,
+Outliner::Transform::generateFunction (const SgBasicBlock* s,
                                           const string& func_name_str,
                                           const ASTtools::VarSymSet_t& syms)
 {
