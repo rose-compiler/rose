@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.6 2008-01-31 00:01:53 markus Exp $
+// $Id: pag_support.C,v 1.7 2008-04-25 10:08:30 gergo Exp $
 
 #include <iostream>
 
@@ -222,6 +222,11 @@ extern "C" snum kfg_get_global_attribute__numtypes(KFG cfg)
 extern "C" snum kfg_get_global_attribute__numexprs(KFG cfg)
 {
     return int_to_snum(((CFG *) cfg)->exprs_numbers.size());
+}
+/* number of the current procedure */
+extern "C" snum kfg_get_routine_attribute__procnum(KFG, int procnum)
+{
+    return int_to_snum(procnum);
 }
 /* statement labels */
 extern "C" snum kfg_get_bblock_attribute__label(KFG cfg, KFG_NODE bb)
