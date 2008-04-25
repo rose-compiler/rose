@@ -33,7 +33,7 @@ int main (int argc, char *argv[])
   pushScopeStack(body);
 
   // void foo(int p_sum)
-  SgType* return_type = SgTypeVoid::createType();
+  SgType* return_type = buildVoidType();
   SgVarRefExp* arg1 = buildVarRefExp(SgName("p_sum"));//type is inferred from symbol table
   SgExprListExp* arg_list = buildExprListExp();
   appendExpression(arg_list,arg1);

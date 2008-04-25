@@ -55,7 +55,8 @@ single.c \
 single_copyprivate.c \
 single_nowait.c \
 single_private.c \
-main.c
+main.c 
+# Must let ROSE OpenMP translator process main.c to add necessary variables and code supporting OpenMP
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -108,22 +109,26 @@ run_qm_gui:
 
 OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
 
+if ROSE_USE_OPENMP
+# enable make check to build and run the final executable, Liao 1/31/2008
+INCLUDES= -I$(srcdir)/../../includes 
+LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
+main_SOURCES=$(TESTCODES)
+check_PROGRAMS = main
+TESTS = $(check_PROGRAMS)
+
+else
+#check-local:$(PASSING_TEST_Objects)
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-if ROSE_USE_OPENMP
-# enable make check to build and run the final executable, Liao 1/31/2008
-LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
-main:$(PASSING_TEST_Objects)
-check_PROGRAMS = main
-TESTS = $(check_PROGRAMS)
-
-endif
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/cvalidationsuite: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
+endif
+
 # else
 # check-local:
 #	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"

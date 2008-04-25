@@ -5,7 +5,7 @@ August, 2006
 ======================================================
 
 This is an OpenMP translator using the ROSE compiler framework.
-It takes OpenMP code as input and generates multithreaded code
+It takes OpenMP code as input and generates multi-threaded code
 with runtime library calls to the Omni OpenMP runtime library.
 
 -------------------------------------------------------
@@ -25,6 +25,7 @@ Implemented OpenMP 2.5 constructs:
   omp master,
   omp critical(no name),
   omp barrier
+  omp flush
 
 C++ OpenMP features:
    'omp parallel' within member functions
@@ -111,7 +112,7 @@ Omni RTL supports tracing by using a tracing library. We can disable it to avoid
  #undef USE_LOG
  #endif
 
-configure –prefix=/yourOmniInstallationPath, 
+Configure –prefix=/yourOmniInstallationPath, 
 build and install Omni compiler as instructed by its manual.
  
 The Omni OpenMP RTL is /yourOmniInstallationPath/omni/lib/openmp/lib/libompc.a
@@ -155,12 +156,12 @@ cppmakefile in the package is a good example about how to set and use the flags.
 
 * examine the translated code
 
-For any input c/C++ file(foo.c or foo.C), the translator will keep a translated file as rose_foo.c or rose_foo.C. You can look into the translated code to check if the translation is correct or just for cuirosity.
+For any input c/C++ file(foo.c or foo.C), the translator will keep a translated file as rose_foo.c or rose_foo.C. You can look into the translated code to check if the translation is correct or just for curiosity.
 
 -------------------------------------------------------
 Limitations & known issues
 -------------------------------------------------------
-* The translator works in C++ mode by default. So some OpenMP c code needs to be slightly changed to pass the compilation if the default C++ is preferred. The C mode of this translator has not yet been thoroughly tested yet. 
+* The translator works in C++ mode by default. So some OpenMP C code needs to be slightly changed to pass the compilation if the default C++ is preferred. The C mode of this translator has not yet been thoroughly tested yet. 
 
 * Only + operation of reduction has been implemented so far due to time limit.
 

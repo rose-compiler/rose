@@ -259,10 +259,10 @@ enum	omp_construct_enum {
 
 //------------------------------------------------------------------
 //------------------------------------------------------------------
-// the information about an OpenMP variable: mostly scope info.
-// Most a pair of (SgInitializedName, omp_construct_enum)
-// It is highly possible that a variable having more than one scope info.
-//   for example, a variable is both firstprivate and lastprivate.
+// The information about a variable appearing in OpenMP pragmas
+// Mostly a pair of (SgInitializedName, omp_construct_enum)
+// It is highly possible that a variable having more than one OpenMP properties.
+// For example, a variable can be both firstprivate and lastprivate.
 //------------------------------------------------------------------
 //------------------------------------------------------------------
 class OmpSymbol
@@ -305,6 +305,7 @@ private:
 	isOrphaned = false;
         sched_type = e_sched_none;
         chunk_size = NULL;
+        wrapperCount=0;
     }
 
  public:
@@ -429,6 +430,7 @@ public:
   static int transSingle(SgPragmaDeclaration * decl);
   static int transMaster(SgPragmaDeclaration * decl);
   static int transBarrier(SgPragmaDeclaration * decl);
+  static int transFlush(SgPragmaDeclaration * decl);
   static int insertRTLinitAndCleanCode(SgProject*, OmpFrontend *);
 private:
   // variable handling routines
@@ -544,7 +546,7 @@ char * OmpFrontend::trim_leading_trailing_spaces(char* input)
 
  }
 //----------------------------
-//given the clause type,  get arguments or options from the OpenMP pragma string
+//Given the clause type,  get arguments or options from the OpenMP pragma string
 // for example  parsePragma(e_private, "#pragma omp parallel private(x,y,z)") will
 //              return a pointer to a list of strings: "x","y","z".
 // for schedule clause, return the kind and chunk_size; 
@@ -578,13 +580,14 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
      else if (omptype==e_copyin) strcpy(matchchars,"copyin");
      else if (omptype==e_sched_none) strcpy(matchchars,"schedule");
      else if (omptype==e_threadprivate) strcpy(matchchars,"threadprivate");
+     else if (omptype==e_flush) strcpy(matchchars,"flush");
      else
         {
           cout<<"OmpFrontend::parsePragmaString reaches unknown clause:"<<omptype<<endl;
           ROSE_ASSERT(false);
         }
 
-  // printf ("In OmpFrontend::parsePragmaString(): input = %s matchchars = %s \n",input,matchchars); 
+//   printf ("In OmpFrontend::parsePragmaString(): input = %s matchchars = %s \n",input,matchchars); 
 
      offset = strstr(input,matchchars); 
      if (offset == NULL)
@@ -597,22 +600,26 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
           return rtstrings;
         }
 
-     while (*offset!='(')
+
+     while ((*offset!='(')&&(*offset!='\0'))
           offset ++;
+
+     if (*offset == '\0')
+        {
+       // printf ("Inside of OmpFrontend::parsePragmaString (premature return) \n");
+
+       // DQ (1/3/2007): Added assertion that list is non-empty before defererence of first element.
+        // flush 's variable list is optional, Liao 4/24/2008
+         if (omptype != e_flush)
+            ROSE_ASSERT(rtstrings->empty() == false);
+       //   printf("Debug: L617: found omp flush without a variable list.\n");
+          return rtstrings;
+        }
 
      if (omptype == e_reduction_plus)
           while (*offset!=':') 
                offset ++;
 
-     if (offset == NULL)
-        {
-       // printf ("Inside of OmpFrontend::parsePragmaString (premature return) \n");
-
-       // DQ (1/3/2007): Added assertion that list is non-empty before defererence of first element.
-          ROSE_ASSERT(rtstrings->empty() == false);
-
-          return rtstrings;
-        }
 
      do {
           offset++;
@@ -631,8 +638,9 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
         }
      while((*offset!=')') &&(*offset!='\0'));
 
-  // DQ (1/3/2007): Added assertion that list is non-empty before defererence of first element.
-     ROSE_ASSERT(rtstrings->empty() == false);
+  // DQ (1/3/2007): Added assertion that list is non-empty before derefererence of first element.
+    if (omptype == e_flush) // flush 's variable list is optional, Liao 4/24/2008
+      ROSE_ASSERT(rtstrings->empty() == false);
 
   // printf ("Returning a valid list! (rtstrings->empty() == false) \n");
 
@@ -674,7 +682,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
        // dynamic_cast<OmpAttribute*> (ompattribute)->print();
 
       // 0. assume top down processing, using the static parentPragma to store the most recent
-      //    'omp parallel', which should be the parent parellel region for 'omp for' etc.
+      //    'omp parallel', which should be the parent parallel region for 'omp for' etc.
       //    TODO a more robust way to set parent pragma
           if ((recognizePragma(pragDecl)==e_parallel)|| (recognizePragma(pragDecl)==e_parallel_for))
              {
@@ -702,7 +710,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                dynamic_cast<OmpAttribute*> (ompattribute)->nowait = true;
           ROSE_ASSERT(ompattribute !=NULL );
 
-       // 1. find all reference variables of interest from outer or same scope
+       // 1. Find all reference variables of interest from outer or same scope
           Rose_STL_Container<SgNode*> all_var_list; //unique declaration list for referenced variables
           Rose_STL_Container<SgNode*> used_variables = NodeQuery::querySubTree(ASTtools::getNextStatement(pragDecl),V_SgVarRefExp);
        // cout<<"debug: used variable size is: "<<used_variables.size()<<endl;
@@ -717,7 +725,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                     all_var_list.push_back(initname);
              } //end for
 
-       // 2. get all variables from private(x,y,z..), reduction(), firstprivate(), lastprivate()
+       // 2. Get all variables from private(x,y,z..), reduction(), firstprivate(), lastprivate()
           Rose_STL_Container<string>* private_name_listptr;
           Rose_STL_Container<string>* firstprivate_name_listptr;
           Rose_STL_Container<string>* lastprivate_name_listptr;
@@ -732,7 +740,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
           lastprivate_name_listptr    = parsePragmaString(e_lastprivate, pragmachars);
           reduction_plus_name_listptr = parsePragmaString(e_reduction_plus, pragmachars);
 
-    // 3. get scheduling kind and chunksize
+      // 3. Get scheduling kind and chunksize
           if ((dynamic_cast<OmpAttribute*> (ompattribute)->omp_type == e_parallel_for)|| (dynamic_cast<OmpAttribute*> (ompattribute)->omp_type == e_for) )
              {
             // printf ("Calling parsePragmaString which appear to be a problem! e_sched_none = %d pragmachars = %s \n",e_sched_none,pragmachars);
@@ -835,7 +843,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                   } // end if list_size==2
              } // end of 3. schedule clause handling
 
-        // insert variable list into OmpAttribute with the correct scope info.
+    //4.  Insert variable list into OmpAttribute with the correct scope info.
         // also set the counter for shared variables needing wrapping. 
         // TODO consider all possible combination cases: 
 
@@ -958,7 +966,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
       new_end = std::unique (all_var_list.begin(), all_var_list.end());
       all_var_list.erase(new_end, all_var_list.end());
 
-       //2. get all variables from private(x,y,z..), etc
+       //2. Get all variables from private(x,y,z..), etc
        Rose_STL_Container<string>* private_name_listptr;
        Rose_STL_Container<string>* firstprivate_name_listptr;
        // TODO std::list<string>* copyprivate_name_listptr;
@@ -988,7 +996,40 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
         node->addNewAttribute("OmpAttribute",ompattribute);
 	
    } // end if single
-//  cout<<"---------L703 debug "<<endl;
+   
+   // Handle omp flush(x,y,z,...)
+  if (recognizePragma(pragDecl)==e_flush)
+  {
+    ompattribute = new OmpAttribute(recognizePragma(pragDecl));
+    ROSE_ASSERT(ompattribute !=NULL );
+
+    dynamic_cast<OmpAttribute*> (ompattribute)->pragma = pragDecl;
+    dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma = parentPragma;
+    dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount = 0;
+
+    //parse the optional variable list associated with omp flush
+    const char *pragmachars=pragDecl->get_pragma()->get_pragma().c_str();
+    Rose_STL_Container<string>* flush_name_listptr;
+    flush_name_listptr= parsePragmaString(e_flush, pragmachars);
+
+     // insert variable list into OmpAttribute
+    for (Rose_STL_Container<string>::iterator i=flush_name_listptr->begin();
+                      i!=flush_name_listptr->end();i++)
+     {
+       SgName name1(*i);
+       SgVariableSymbol* symbol = isSgVariableSymbol(SageInterface::lookupSymbolInParentScopes
+                      (name1,pragDecl->get_scope()));
+       ROSE_ASSERT(symbol);
+       SgInitializedName* initName= symbol->get_declaration();
+
+        // insert flush variables
+       OmpSymbol* ompsymbol=new OmpSymbol(initName,e_flush);
+       dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+    }//end for
+    node->addNewAttribute("OmpAttribute",ompattribute);
+  }
+
+//  cout<<"---------L1029 debug "<<endl;
 //  if (ompattribute != NULL ) dynamic_cast<OmpAttribute*>(ompattribute)->print();
   return 0;
 }
@@ -1064,6 +1105,8 @@ omp_construct_enum OmpFrontend::recognizePragma(SgPragmaDeclaration* pragmaDecl)
 	return e_for;
     if (pragmaString.find("omp threadprivate")!=string::npos)
 	return e_threadprivate;
+    if (pragmaString.find("omp flush")!=string::npos)
+	return e_flush;
      return e_not_omp; 
 }
 
@@ -1984,7 +2027,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
         ASTtools::replaceVarRefExp (isSgExpression(*i), buildVarRefExp(name2,varscope));
         // isSgVarRefExp(*i) =  buildgVarRefExp(name2,varscope);
        }
-	// 3. replace threadprivate variables with (type)(*_ppthd_X)
+	// 3. Replace threadprivate variables with (type)(*_ppthd_X)
         if(ompattribute->isInClause(initname,e_threadprivate))
 	{
           // inner most scope containing the variable reference
@@ -2182,13 +2225,13 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttribute *ompatt
 }
 
 //----------------------------
-// add statements into outlined function defintion if the parallel region access
+// add statements into outlined function definition if the parallel region access
 // threadprivate variables (m,mm)
 //	auto double *_ppthd_mm;
 //	auto int *_ppthd_m;
 //	(_ppthd_mm) = (((double *) (_ompc_get_thdprv (&_thdprv_mm, 8, &mm))));
 //	(_ppthd_m) = (((int *) (_ompc_get_thdprv (&_thdprv_m, 4, &m))));
-// It also hanldes copyin() clause by adding one more runtime call
+// It also handles copyin() clause by adding one more runtime call
 //       _ompc_copyin_thdprv (_ppthd_mm, &mm, 4);
 
 int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
@@ -2239,10 +2282,6 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
 	SgName varname("_thdprv_"+myname);
 // 	SgPointerType * vartype= new SgPointerType( SgTypeVoid::createType());
 //bug 346
-
-//	SgInitializedName *varinitname = new SgInitializedName(varname,vartype,NULL,NULL,NULL);
-//      varinitname->set_file_info(TRANS_FILE);
-//      varinitname->set_scope(isSgInitializedName((*i)->origVar)->get_scope());
 
         SgVariableSymbol *varSymbol1=isSgVariableSymbol(globalscope->lookup_variable_symbol(varname));
         ROSE_ASSERT(varSymbol1);
@@ -2744,16 +2783,16 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
 
 
 //----------------------------
-// bottomup processing AST tree to translate all OpenMP constructs
+// Bottom-up processing AST tree to translate all OpenMP constructs
 // the major interface of OmpMidend
 //----------------------------
 int OmpMidend::bottomupProcessing(SgProject *project)
 { 
-//use bottom-up traversal from ASTSimpleProcessing(?) to do the transformation
+//Use bottom-up traversal from ASTSimpleProcessing(?) to do the transformation
 /*
   OmpProcessor myprocessor;
   myprocessor.traverse(project, postorder); // not working for both pre or post order
-          //the outmost parallel region is always translated first in both cases 
+          //the outermost parallel region is always translated first in both cases 
 
 For example:
 
@@ -2772,8 +2811,10 @@ SgPragma1  SgBasicBlock2
              /      \
          SgPragma2  SgStatement1
 
-for preorder, the order of visit would be: (bb1, pragma1, bb2, pragma2, stmt1)
-for postorder, it is (pragma1, pragma2, stmt1,bb2, bb1) 
+For preorder, the order of visit would be: 
+     (bb1, pragma1, bb2, pragma2, stmt1)
+for postorder, it is:
+     (pragma1, pragma2, stmt1,bb2, bb1) 
 pragma1 is always visited before pragma2, not desired
 
 Alternative way: use the default preorder in AST query and reverse it:
@@ -2838,6 +2879,11 @@ We get what we want then:
         case e_barrier:
                 {
                 OmpMidend::transBarrier(decl);
+                break;
+                }
+        case e_flush:
+                {
+                OmpMidend::transFlush(decl);
                 break;
                 }
         case e_threadprivate: // the translation does not happen near the pragma
@@ -3455,9 +3501,89 @@ int OmpMidend::transBarrier(SgPragmaDeclaration * decl)
 // replace with the two new statements
   SgStatement *parentBB = isSgStatement(decl->get_parent());
   ROSE_ASSERT(parentBB != NULL);
-                                                                                             ASTtools::moveUpPreprocessingInfo(expStmt2,decl);   
+  ASTtools::moveUpPreprocessingInfo(expStmt2,decl);   
   insertStatement (decl, expStmt2, true);
   LowLevelRewrite::remove(decl);
+  return 0;
+}
+
+//--------------------------------------------------
+// Translation for omp flush [list]
+// Two major cases:
+// a. If it is followed by an empty variable list,
+//    replace the pragma statement with 
+//        _ompc_flush(0,0)
+// b. It has a variable list with n variables
+//    replace the pragma statement with n 
+//       _ompc_flush(n2,size1)
+//       _ompc_flush(n2,size2)
+// Special concern: 
+//   preserve preprocessing information attached to pragma statement.
+//   4/24/2008
+int OmpMidend::transFlush(SgPragmaDeclaration * decl)
+{
+  ROSE_ASSERT(decl!=NULL);
+  SgScopeStatement * scope = SageInterface::getScope(decl);
+  ROSE_ASSERT(scope!=NULL);
+  pushScopeStack(scope);
+  int move_counter=0; // only move preprocessing Info. once
+  SgStatement* last_statement=decl;
+
+  // retrieve the var_list after omp flush
+  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
+  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute); 
+  int var_count = ompattribute->var_list.size();
+
+  SgType* return_type = buildVoidType(); 
+
+  // case a first
+  if (var_count==0)
+  {
+      // argument list (0,0)
+    SgIntVal * arg1 = buildIntVal(0); // NULL address for C
+    SgIntVal * arg2 = buildIntVal(0); 
+    SgExprListExp* arg_list = buildExprListExp();
+    appendExpression(arg_list,arg1);
+    appendExpression(arg_list,arg2);
+
+    SgExprStatement * call_stmt = buildFunctionCallStmt(
+      SgName("_ompc_flush"),return_type,arg_list);
+    
+    ASTtools::moveUpPreprocessingInfo(call_stmt,decl);
+    insertStatementAfter(decl,call_stmt);
+  } else
+  //case b: 1 or multiple variables
+  {
+    for (Rose_STL_Container<OmpSymbol* >::iterator i= ompattribute->var_list.begin();\
+        i!=ompattribute->var_list.end();i++ )
+    {
+      SgInitializedName *initname = isSgInitializedName((*i)->origVar);
+      //arg1: addressOf(var)
+      SgAddressOfOp* arg_1= buildAddressOfOp(buildVarRefExp(initname->get_name(),scope));
+
+      //arg2: sizeof(var)
+      SgVarRefExp* arg_2_1 = buildVarRefExp(initname->get_name(),scope);
+      SgExprListExp * arg_2_exp = buildExprListExp();
+      appendExpression(arg_2_exp,arg_2_1);
+      SgFunctionCallExp * arg_2 = buildFunctionCallExp(SgName("sizeof"),
+                buildIntType(),arg_2_exp);
+
+      SgExprListExp* arg_list = buildExprListExp();
+      appendExpression(arg_list,arg_1);
+      appendExpression(arg_list,arg_2);
+
+      SgExprStatement * call_stmt = buildFunctionCallStmt(
+         SgName("_ompc_flush"),return_type,arg_list);
+      if (move_counter ==0) // only move preprocessing info. once
+         ASTtools::moveUpPreprocessingInfo(call_stmt,last_statement);
+      insertStatementAfter(last_statement,call_stmt);
+      move_counter++;  
+      last_statement=call_stmt; 
+    }
+  } //end of if-else. case 2
+
+  popScopeStack();
+  LowLevelRewrite::remove(decl);  
   return 0;
 }
 

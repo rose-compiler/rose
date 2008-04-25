@@ -20,6 +20,7 @@ inputBug330-1.c \
 inputBug330.c \
 inputBug333.c \
 inputBug342.c \
+inputFlush.c \
 inputHello.c \
 inputJacobi.c \
 inputMaster.c \

@@ -19,6 +19,7 @@ extern void _ompc_reduction(void *in_p,void *out_p,int type, int op);
 extern void _ompc_barrier();
 extern int _ompc_do_single();
 extern int _ompc_is_master();
+extern void _ompc_flush(char *dst, int nbyte);
 
 //extern void * __ompc_lock_critical;
 extern void _ompc_enter_critical(void **);
