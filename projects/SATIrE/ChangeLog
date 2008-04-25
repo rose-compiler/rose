@@ -21,6 +21,8 @@ V0.8.2 (in progress)
   - separate histograms are generated for execution time and memory usage
   - GNUplot input files remain on disk and can be tweaked by the user
 
+* Reorganized Testsuite [AP]
+
 V0.8.1 2008-04-11 GB,AP,VP,MS
 
 * Combined PAG analyses [GB]
