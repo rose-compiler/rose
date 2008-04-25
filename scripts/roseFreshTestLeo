@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 #####  !/bin/bash -x
 #
 # This script does a fresh checkout of ROSE and conducts a series tests.
@@ -103,7 +103,7 @@ buildstatus=0
   set -e
   set -x
 # check out a fresh copy for testing
-  $SVN co -r -q ${ROSE_SVNROOT} ${ROSE_SRC}
+  $SVN co -q ${ROSE_SVNROOT} ${ROSE_SRC}
 #  $SVN co -r {2008-04-22} -q ${ROSE_SVNROOT} ${ROSE_SRC}
 # $SVN export -q ${ROSE_SVNROOT} sourcetree
 
