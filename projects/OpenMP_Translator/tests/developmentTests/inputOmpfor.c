@@ -25,6 +25,7 @@ main ()
   double x, pi, sum = 0.0;
   int i;
   step = 1.0 / (double) num_steps;
+  int chunksize=100;
 
 #pragma omp parallel private (x)
   {
@@ -33,7 +34,7 @@ main ()
 
 //#pragma omp for reduction(+:sum)
 //#pragma omp for reduction(+:sum) schedule(runtime)
-#pragma omp for reduction(+:sum) schedule(static,100)
+#pragma omp for reduction(+:sum) schedule(static,chunksize)
     for (i = 1; i <= num_steps; i++)
       {
 	k_3++;

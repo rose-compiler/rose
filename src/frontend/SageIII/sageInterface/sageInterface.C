@@ -3925,7 +3925,7 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope)
   return stmt; 
 
 }
-// originallly from ompTranslator.C
+// Originally from ompTranslator.C
 // DQ (1/6/2007): The correct qualified name for "main" is "::main", at least in C++.
 // however for C is should be "main".  Our name qualification is not language specific,
 // however, for C is makes no sense to as for the qualified name, so the name we
@@ -3934,8 +3934,8 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope)
 // and in namespaces (as more meaningfully qualified names).  Because of this C++
 // would have to qualify the global main function as "::main", I think. 
 
-//by Jeremiah
-// add check if scope is global: Liao
+// Revised by Jeremiah,
+// Added check to see if the scope is global: Liao
 
 //TODO: language specific implementation
 SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
@@ -4435,6 +4435,18 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
       return NULL;
   }
 
+  SgClassDefinition* 
+  SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
+  {
+    SgNode* temp = getEnclosingNode(astNode,V_SgClassDefinition,includingSelf);
+    if (temp)
+      return isSgClassDefinition(temp);
+    else 
+      return NULL;
+ }
+
+
+
 //! a generic function to bottom-up search for a node of VariantT type
 SgNode * SageInterface::getEnclosingNode(const SgNode* astNode, const VariantT nodeType, bool includingSelf)
 {
@@ -4471,6 +4483,10 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 }
 
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
+// Motivation: It involves the parent node to replace a VarRefExp with a new node
+// Used to replace shared variables with the dereference expression of their addresses
+// e.g. to replace shared1 with (*__pp_shared1)
+
 void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp)
 //void replaceExpression(SgExpression* oldExp, SgExpression newExp, bool keepOldExp=false)
 {
@@ -5464,6 +5480,22 @@ PreprocessingInfo* attachComment(
        return (decl->get_class_type() == SgClassDeclaration::e_struct)? true:false;
   }
 
+//----------------------------
+// the preprocessing info attached to the first declaration has to be
+// moved 'up' if another declaration is inserted at the top of the scope
+// This is a workaround for the broken LowLevelRewrite::insert() and the private
+// LowLevelRewrite::reassociatePreprocessorDeclarations()
+//
+// input: 
+//     *stmt_dst: the new inserted 1st declaration 
+//     *stmt_src: the previous 1st declaration
+// tasks:
+//     judge if stmt_src has propressingInfo with headers, ifdef, etc..
+//     add them into stmt_dst
+//     delete them from stmt_dst   
+// More general usage: move preprocessingInfo of stmt_src to stmt_dst, should used before any
+//           LoweLevel::remove(stmt_src)
+// TODO deprecate this if LowLevelRewrite::insert/remove/replace is really complete!
 
   void moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src)
   {

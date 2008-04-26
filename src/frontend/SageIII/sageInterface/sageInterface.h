@@ -586,6 +586,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
   //! Get the initializer containing an expression if it is within an initializer.
   SgInitializer* getInitializerOfExpression(SgExpression* n);
 
+  //! Get the closest class definition enclosing the specified AST node, 
+  SgClassDefinition* getEnclosingClassDefinition(SgNode* astnode, const bool includingSelf=false); 
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);

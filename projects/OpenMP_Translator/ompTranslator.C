@@ -3,12 +3,12 @@ Goal:
 
 OpenMP translator
 * input: OpenMP source code
-* output: multithreaded code with calls to Omni's runtime library
+* output: multi-threaded code with calls to Omni's runtime library
 
 Major classes:
-* ASTtools:    generic AST manipulate toolset
+* ASTtools:    generic AST manipulate toolkit
 
-* OmpAttribute: persistant attribute for OpenMP pragma node
+* OmpAttribute: persistent attribute for OpenMP pragma node
 
 * OmpFrontend: recognize/process pragma strings, make variables and their scope explicit
                top down traversal to build up OmpAttribute
@@ -33,6 +33,7 @@ Implemented OpenMP constructs:
   omp master, 
   omp critical(no name), 
   omp barrier
+  omp flush
 
 Not yet handled constructs:
   ordered, 
@@ -59,120 +60,32 @@ By Chunhua(Leo) Liao,  (University of Houston) , @ LLNL
    contact info: liaoch@cs.uh.edu
 
 Date: June 15, 2006
-Last modified: Jan, 2008
+Last modified: Apr, 2008
 *************************************************************************/
 #include "rose.h"
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include "sageBuilder.h"
 using namespace std;
 using namespace SageInterface; 
 using namespace SageBuilder;
 
 //------------------------------------------------------------------
-//----------------------------------------------------------------------
-// find the reach definition (initialized name in AST)
-//  given a variable's name, 
-//	  the reached statement(targetnode) and its scope
-// used to find the reach definition of x in threadprivate(x),schedule(kind,x) etc.
-// A workaround since the access to the variable in OpenMP pragma is not visible in
-// ROSE AST yet.
-//------------------------------------------------------------------
-//------------------------------------------------------------------
-class reachDefinitionFinder: public AstSimpleProcessing
-{
-public:
-  //SgNode *startnode;
-  SgNode *endnode;
-
-  SgInitializedName * result;
-  string * varname;
-  SgScopeStatement * targetscope;
-  bool stop;//set to true if reaches the end node
-  //default constructor
-  reachDefinitionFinder() 
-  { 
-    endnode = NULL;
-    varname = NULL;
-    targetscope = NULL;
-    result = NULL;
-    stop = false; 
-  }
-  //real useful constructor
-  reachDefinitionFinder(SgNode* targetnode,string* inputname);
-
-protected:
-  void virtual visit (SgNode* astNode);
-};
-
-//------------------------------------------------------------------
-//----------------------------------------------------------------------
 // generic AST manipulation operations 
-//------------------------------------------------------------------
 //------------------------------------------------------------------
 class ASTtools
 {
 public:
-  static int insertHeaders(SgProject*); // put it into OmpMidend is better now 
-  static int moveUpPreprocessingInfo(SgStatement * , SgStatement * ); 
-
-//  static SgNode* get_globalscope(SgNode* astNode); // moved to SageInterface
   static SgNode* get_scope(SgNode* astNode); //get the closest scope statement
   static int get_scope_level(SgNode* astNode);
-  static SgStatement* getNextStatement(SgPragmaDeclaration *);
-  static SgNode * getEnclosingFunctionDeclaration(SgNode* astNode);
-
-  static SgFunctionDefinition * findFunctionDefbyName(SgNode*, string*);
   static int deepCopy(SgStatement* srcstmt, SgBasicBlock * targetbb);
-  static int replaceVarRefExp(SgExpression *oldExp, SgExpression *newExp);
-  static SgFunctionCallExp* generateFunctionCallExp(SgType *returnType, SgName name,\
-		SgExprListExp* parameters, SgScopeStatement* scope);
-  static SgExprStatement* generateFunctionCall(SgType *returnType, SgName name,\
-		SgExprListExp* parameters, SgScopeStatement* scope);
+  // loop handling
   static SgExpression* getForLoopTripleValues(int valuetype,SgForStatement* forstmt );
   static int setForLoopTripleValues(int valuetype,SgForStatement* forstmt, SgExpression* exp);
   static SgInitializedName * getLoopIndexVar(SgForStatement* forstmt);
-  //similar to finding the reach definition of a variable, we need reach initialized name
-  static SgInitializedName * findReachInitializedName(SgNode* targetnode, string* name);
   static bool isLoopIndexVarRef(SgForStatement* forstmt, SgVarRefExp *varref);
-  // handle C++ cases
-  static SgClassDefinition* getEnclosingClassDefinition(SgNode* astnode); 
-
-  // experiments for ROSE new high level IR interface
-  // Liao, 10/17/2007
-  static SgVariableDeclaration* buildSgVariableDeclaration (SgType* varType,\
-	 SgName &varName, SgInitializer * varInit, SgScopeStatement* myScope); 
-  static SgInitializedName * buildSgInitializedName(SgName &name, SgType* typeptr,\
-        SgDeclarationStatement * declptr, SgScopeStatement* scope, SgInitializer * iptr);
-  static SgSymbol* searchClosestSymbol(SgScopeStatement* cscope, const SgName& );
 };
-
-//---------------------------------
-// starting from current scope, search outwards for a symbol with name SgName.
-// Used to find a declaration outside of current scope and build a reference to it
-// 10/31/2007
-SgSymbol * ASTtools::searchClosestSymbol(SgScopeStatement* cscope, const SgName& name )
-{
-  return lookupSymbolInParentScopes(name,cscope);
-}
-
-SgVariableDeclaration * ASTtools::buildSgVariableDeclaration(SgType* varType,\
-    SgName & varName, SgInitializer *varInit=0, SgScopeStatement* myScope=0)
-{
-  return buildVariableDeclaration(varName,varType,varInit,myScope);
-}
-
-// Mostly used to build function parameter variables
-//
-// For regular variable declaration statement, use buildSgVariableDeclaration() instead.
-// (SgInitializedName will be created transparently in this case)
-SgInitializedName * ASTtools::buildSgInitializedName(SgName &name, SgType* typeptr,\
-	SgDeclarationStatement * declptr, SgScopeStatement* scope, SgInitializer * iptr=0)
-{
-  return buildInitializedName (name, typeptr);
-} 
 
 //--------------------------------------------------------------
 // OpenMP construct name list
@@ -400,9 +313,9 @@ protected:
   void virtual visit (SgNode*);
 private:
 
-}  ;
-SgPragmaDeclaration * OmpFrontend::parentPragma= NULL;
+} ;
 
+SgPragmaDeclaration * OmpFrontend::parentPragma= NULL;
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -419,6 +332,7 @@ public:
   static int counter; //unique number for outlined functions 
   static int labelCounter; //for labels 
 
+  static int insertHeaders(SgProject*); // put it into OmpMidend is better now 
   static int bottomupProcessing(SgProject *);
   static int transParallelRegion(SgPragmaDeclaration * decl);
   static int transOmpFor(SgPragmaDeclaration *decl);
@@ -638,8 +552,9 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
         }
      while((*offset!=')') &&(*offset!='\0'));
 
-  // DQ (1/3/2007): Added assertion that list is non-empty before derefererence of first element.
-    if (omptype == e_flush) // flush 's variable list is optional, Liao 4/24/2008
+  // DQ (1/3/2007): Added assertion that list is non-empty before refrerence of first element.
+  // flush 's variable list is optional, Liao 4/24/2008
+   if (omptype != e_flush)
       ROSE_ASSERT(rtstrings->empty() == false);
 
   // printf ("Returning a valid list! (rtstrings->empty() == false) \n");
@@ -698,7 +613,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                if (parentPragma == NULL) 
                     dynamic_cast<OmpAttribute*>(ompattribute)->isOrphaned = true;// no parentPragma, must be orphaned
                  else
-                    if ((ASTtools::getEnclosingFunctionDeclaration(parentPragma) == ASTtools::getEnclosingFunctionDeclaration(node))&& (recognizePragma(parentPragma)==e_parallel))
+                    if ((getEnclosingFunctionDeclaration(parentPragma) == getEnclosingFunctionDeclaration(node))&& (recognizePragma(parentPragma)==e_parallel))
                          dynamic_cast<OmpAttribute*>(ompattribute)->isOrphaned = false; // has parent omp parallel in the same scope
                       else 
                          dynamic_cast<OmpAttribute*>(ompattribute)->isOrphaned = true; // must be orphaned otherwise
@@ -712,10 +627,10 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 
        // 1. Find all reference variables of interest from outer or same scope
           Rose_STL_Container<SgNode*> all_var_list; //unique declaration list for referenced variables
-          Rose_STL_Container<SgNode*> used_variables = NodeQuery::querySubTree(ASTtools::getNextStatement(pragDecl),V_SgVarRefExp);
+          Rose_STL_Container<SgNode*> used_variables = NodeQuery::querySubTree(getNextStatement(pragDecl),V_SgVarRefExp);
        // cout<<"debug: used variable size is: "<<used_variables.size()<<endl;
 
-          SgScopeStatement* currentscope= isSgFunctionDeclaration( ASTtools::getEnclosingFunctionDeclaration(node))->get_definition()->get_body();
+          SgScopeStatement* currentscope= isSgFunctionDeclaration( getEnclosingFunctionDeclaration(node))->get_definition()->get_body();
           for (Rose_STL_Container<SgNode*>::iterator i=used_variables.begin();i!=used_variables.end();i++)
              {
             // only care the used variables from the same scope and outer scope
@@ -804,7 +719,10 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                     if ((iss>>std::dec>>ichunksize).fail())
                        {
                       // single variable
-                         SgInitializedName* initname = ASTtools::findReachInitializedName(node,&chunksize);
+                         SgVariableSymbol *symbol = lookupVariableSymbolInParentScopes(
+                          chunksize,pragDecl->get_scope()); 
+                         ROSE_ASSERT(symbol!= NULL);
+                         SgInitializedName* initname = symbol->get_declaration();
                          ROSE_ASSERT(initname != NULL);
                       // fatal error if not found or it is an expression
                          dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = initname;
@@ -944,9 +862,9 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
      //1. find all reference variables of interest from outer or same scope
       Rose_STL_Container<SgNode*> all_var_list; //unique declaration list for referenced variables
       Rose_STL_Container<SgNode*> used_variables =\
-            NodeQuery::querySubTree(ASTtools::getNextStatement(pragDecl),V_SgVarRefExp);
+            NodeQuery::querySubTree(getNextStatement(pragDecl),V_SgVarRefExp);
       SgScopeStatement* currentscope= isSgFunctionDeclaration(\
-                   ASTtools::getEnclosingFunctionDeclaration(node))\
+                   getEnclosingFunctionDeclaration(node))\
                    ->get_definition()->get_body();
       for (Rose_STL_Container<SgNode*>::iterator i=used_variables.begin();i!=used_variables.end();i++)
       {
@@ -1054,11 +972,20 @@ void OmpFrontend::visit(SgNode * node)
                 pragDecl->get_pragma()->get_pragma().c_str()); 
     
      for (Rose_STL_Container<string>::iterator i= resultlist.begin(); i!=resultlist.end();i++) 
-     { // find reached definitions and store them 
+     { 
+#if 0       
+     // find reached definitions and store them 
        reachDefinitionFinder * finder = new reachDefinitionFinder (node,&(*i));
        finder->traverse(SageInterface::getGlobalScope(node),preorder);
        ROSE_ASSERT(finder->result != NULL);
        threadprivateinitnamelist.push_back(finder->result);
+#else
+      SgVariableSymbol * symbol=lookupVariableSymbolInParentScopes(SgName(*i),
+             pragDecl->get_scope());
+      ROSE_ASSERT(symbol);
+      SgInitializedName * init_name = symbol->get_declaration();
+      threadprivateinitnamelist.push_back(init_name);
+#endif       
      } // end for
 
       threadprivatelist.insert(threadprivatelist.end(),resultlist.begin(),resultlist.end());// merge operation will empty resultlist!!
@@ -1108,70 +1035,6 @@ omp_construct_enum OmpFrontend::recognizePragma(SgPragmaDeclaration* pragmaDecl)
     if (pragmaString.find("omp flush")!=string::npos)
 	return e_flush;
      return e_not_omp; 
-}
-
-//----------------------------
-// Similar to find the reach definition of a variable at a statement
-// we need the closet above initializedname for a variable's name
-// used as a workaround to parse the chunk_size of schedule(kind, chunk_size)
-//
-// TODO  There may be a bug because the order of nodes is not what I expected, e.g. 
-// the search won't stop when it is supposed to do so, thus the variables after
-// the targetnode in the source code will be found sometimes. Maybe using traversal
-// is better than using simple query for the enforced node order
-// 
-// low priority since this is only used as the workaround for parsing chunk_size variable
-SgInitializedName * ASTtools::findReachInitializedName(SgNode* targetnode, string* name)
-{
-//  SgNode * root = get_globalscope(targetnode);
-   // 1 search local area first
-  SgNode * root = getEnclosingFunctionDeclaration(targetnode);
-  ROSE_ASSERT(root!= NULL);
-  SgInitializedName * initname = NULL;
-  Rose_STL_Container<SgNode*> testList = NodeQuery::querySubTree(root, V_SgNode);
-
-  for (Rose_STL_Container<SgNode*>::iterator i=testList.begin(); i!= testList.end(); i++)
-  {
-    if ((*i)==targetnode)
-    { 
-//    cout<<"----829 : found match!"<<endl;
-      break;
-    }
-    SgInitializedName* srcinitname = isSgInitializedName(*i);
-    if (srcinitname != NULL)
-     {
-       string srcname = (srcinitname->get_name()).getString();
-//      cout<<"836, srname is:"<<srcname<<"--address is:"<<srcinitname<<endl;
-      if (srcname == *name)
-	 initname = srcinitname;
-     }
-  }
- if (initname != NULL) return initname;
-
-   // 2. global search then TODO more specified search area
-  root = SageInterface::getGlobalScope(targetnode);
-  ROSE_ASSERT(root!= NULL);
-  initname = NULL;
-  testList = NodeQuery::querySubTree(root, V_SgNode);
-
-  for (Rose_STL_Container<SgNode*>::iterator i=testList.begin(); i!= testList.end(); i++)
-  {
-    if ((*i)==targetnode)
-    { 
-//    cout<<"826 : found match!"<<endl;
-      break;
-    }
-    SgInitializedName* srcinitname = isSgInitializedName(*i);
-    if (srcinitname != NULL)
-     {
-       string srcname = (srcinitname->get_name()).getString();
-//      cout<<"----830, srname is:"<<srcname<<"--address is:"<<srcinitname<<endl;
-      if (srcname == *name)
-	 initname = srcinitname;
-     }
-  }
-
-  return initname;
 }
 
 //----------------------------
@@ -1548,168 +1411,7 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
   return NULL;
 
 }
-//----------------------------
-// generated a function call expression
-// Liao, 10/17/2007, revised it as symbol tables exist
-// only consider simplest C function case right now, no name mangling etc
-// only used for OpenMP runtime library call generation, so nondefining declaration only
-//  int foo (parameters);
-//
-// Moved it to buildFunctionCallExp()
-SgFunctionCallExp* ASTtools::generateFunctionCallExp(SgType *returnType, SgName name,\
-		SgExprListExp* parameters, SgScopeStatement* scope)
-{
-  ROSE_ASSERT(scope);
-  return buildFunctionCallExp(name,returnType, parameters,scope);
-}
 
-//----------------------------
-// generated a function call statement
-// moved to High level builder
-SgExprStatement* ASTtools::generateFunctionCall(SgType *returnType, SgName name,\
-		SgExprListExp* parameters, SgScopeStatement* scope)
-{
-  return buildFunctionCallStmt(name, returnType,parameters,scope);
-}
-
-//----------------------------
-// Motivation: It involves the parent node to replace a VarRefExp with a new node
-// Used to replace shared variables with the dereference expression of their addresses
-// e.g. to replace shared1 with (*__pp_shared1)
-// moved to sage interface
-int ASTtools::replaceVarRefExp(SgExpression *oldExp, SgExpression *newExp)
-{
-  replaceExpression(oldExp,newExp);
-  return 0;
-}
-//----------------------------
-// the preprocessing info attached to the first declaration has to be
-// moved 'up' if another declaration is inserted at the top of the scope
-// This is a workaround for the broken LowLevelRewrite::insert() and the private
-// LowLevelRewrite::reassociatePreprocessorDeclarations()
-//
-// input: 
-//     *stmt1: the new inserted 1st declaration 
-//     *stmt2: the previous 1st declaration
-// tasks:
-//     judge if stmt2 has propressingInfo with headers, ifdef, etc..
-//     add them into stmt1
-//     delete them from stmt2   
-// More general usage: move preprocessingInfo of stmt2 to stmt1, should used before any
-//           LoweLevel::remove(stmt2)
-// TODO deprecate this if LowLevelRewrite::insert/remove/replace is really complete!
-int ASTtools::moveUpPreprocessingInfo(SgStatement * stmt1, SgStatement * stmt2)
-{
-  ROSE_ASSERT(stmt1 != NULL);
-  ROSE_ASSERT(stmt2 != NULL);
-  AttachedPreprocessingInfoType* infoList=stmt2->getAttachedPreprocessingInfo();
-  AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
-  
-  if (infoList == NULL) return 0;
-
-//  cout<<"debug"<< "found a preprocessing list of size "<<(*infoList).size()<<endl;
-  for (Rose_STL_Container<PreprocessingInfo*>::iterator i= (*infoList).begin(); i!=(*infoList).end();i++)
-  {
-    PreprocessingInfo * info=dynamic_cast<PreprocessingInfo *> (*i);
-    ROSE_ASSERT(info != NULL);
-    
-     // we have compiler-generated header here, so get_file_info() does not apply
-//   if (!(info->get_file_info()->isSameFile(global->get_file_info()) )) break;
-   if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
-      )
-    { 
- //    PreprocessingInfo copyInfo=*info;
-//   cout<<"L1610, debug: "<<endl;
-//   info->display("::");
-     //info->setRelativePosition(PreprocessingInfo::after);
-     stmt1->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-     (*infoToRemoveList).push_back(*i);
-    } // end if 
-   }// end for
-
-  // Remove the element from the list of comments at the current astNode
-    AttachedPreprocessingInfoType::iterator j;
-    for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
-    {
-   // DQ (9/26/2007): Not supported by std::vector
-   // (*infoList).remove(*j);
-      infoList->erase( find(infoList->begin(),infoList->end(),*j) );
-   }
-
-  return 0;
-}
-
-//------------------------------
-// search using qualified name to ensure unique input
-// 	return the found definition or NULL
-SgFunctionDefinition * ASTtools::findFunctionDefbyName ( SgNode* node, string* qualifiedName )
-   {
-     Rose_STL_Container<SgNode*> testList = NodeQuery::querySubTree(node, V_SgFunctionDefinition);
-     string itemName;
-     SgFunctionDefinition * returnFuncDef=NULL;
-     for (Rose_STL_Container<SgNode*>::iterator i=testList.begin(); i!= testList.end(); i++)
-        {
-          itemName = (isSgFunctionDefinition(*i)->get_declaration()->get_qualified_name()).getString();
-       // printf ("qualifiedName = %s itemName = %s \n",qualifiedName->c_str(),itemName.c_str());
-          if (itemName == *qualifiedName)
-               returnFuncDef = isSgFunctionDefinition(*i);
-        }
-
-     return returnFuncDef;
-   }
-
-//------------------------------
-// a simple workaround since ROSE::getNextStatement is not implemented.
-//  ROSE/src/roseSupport/utility_functions.h
-// only consider the OpenMP pragmas here, which only exist under some SgBasicBlock
-// to my current understanding
-// the next statement of an OpenMP pragma should be a single statement or a basic block
-SgStatement* ASTtools::getNextStatement(SgPragmaDeclaration *pragDecl)
-{
-  return SageInterface::getNextStatement (pragDecl);
-}
-
-
-//-------------
-// get the class definition if curren node belongs to a class
-SgClassDefinition * ASTtools::getEnclosingClassDefinition(SgNode * astNode)
-{
-//SgClassDefinition * classdef;
-  SgMemberFunctionDeclaration* funcdec;
-  ROSE_ASSERT(astNode!=NULL);
-  
-  funcdec = isSgMemberFunctionDeclaration (\
-		getEnclosingFunctionDeclaration(astNode));
-  if (funcdec == NULL) return NULL;
-  else return funcdec->get_class_scope(); 
-
-  ROSE_ASSERT(false);
-  return NULL;
-}
-
-//-------------
-// get the closest enclosing function declaration for current node
-SgNode * ASTtools::getEnclosingFunctionDeclaration(SgNode* astNode)
-{
-    SgNode * astnode=astNode;
-    ROSE_ASSERT(astNode!=NULL);
-    do
-      {
-        astnode=astnode->get_parent();
-      }
-    while((astnode!=NULL)&&
-          (isSgFunctionDeclaration(astnode)==NULL)&&
-          (isSgMemberFunctionDeclaration(astnode) == NULL) );
-    return astnode;
-}
 //-------------
 // what if the current node is already the outmost scope??
 SgNode* ASTtools::get_scope(SgNode* astNode)
@@ -1743,13 +1445,13 @@ int ASTtools::get_scope_level(SgNode* astNode)
   }
 
 //------------------------------------
-// add include "ompcLib.h" into source files, right before the first statement from users
-// lazy approach: assume all files will contain OpenMP runtime library calls
+// Add include "ompcLib.h" into source files, right before the first statement from users
+// Lazy approach: assume all files will contain OpenMP runtime library calls
 // TODO: (low priority) a better way is to only insert Headers when OpenMP is used.
 // 2/1/2008, try to use MiddleLevelRewrite to parse the content of the header, which
 //  should generate function symbols used for runtime function calls 
 //  But it is not stable!
-int ASTtools::insertHeaders(SgProject* project)
+int OmpMidend::insertHeaders(SgProject* project)
 {
   Rose_STL_Container<SgNode*> globalScopeList = NodeQuery::querySubTree (project,V_SgGlobal);
   for (Rose_STL_Container<SgNode*>::iterator i = globalScopeList.begin(); i != globalScopeList.end(); i++)
@@ -1915,7 +1617,7 @@ inline int OmpMidend::getSectionCount(SgPragmaDeclaration * decl)
   int counter=0;
 
   ROSE_ASSERT(OmpFrontend::recognizePragma(decl)==e_sections);
-  SgBasicBlock *bb = isSgBasicBlock(ASTtools::getNextStatement(decl));
+  SgBasicBlock *bb = isSgBasicBlock(getNextStatement(decl));
   ROSE_ASSERT(bb != NULL); 
 
   SgStatementPtrList & ptrlist = bb -> get_statements();
@@ -1969,7 +1671,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
 //cout<<"------1559, "<<"OmpMidend::variableSubstituting"<<endl; 
 //  SgScopeStatement* currentscope=isSgScopeStatement(ASTtools::get_scope(decl));
   SgScopeStatement* currentscope = isSgFunctionDeclaration(\
-		ASTtools::getEnclosingFunctionDeclaration(decl))\
+		getEnclosingFunctionDeclaration(decl))\
                 ->get_definition()->get_body();
   ROSE_ASSERT(currentscope != NULL);
 
@@ -2009,7 +1711,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
             SgPointerDerefExp *derefexp= buildPointerDerefExp(buildVarRefExp(ppname,varscope));
             derefexp->set_need_paren(true);
 
-           ASTtools::replaceVarRefExp(isSgExpression(*i),isSgExpression(derefexp));
+           replaceExpression(isSgExpression(*i),isSgExpression(derefexp));
         }
 	//2. replace variables with _p_XX for private, firstprivate, lastprivate and reduction
 	 //all private variables need to compare the scope to currentscope
@@ -2024,7 +1726,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
        { 
         //cout<<"debug:private:"<<(initname->get_name()).getString()<<endl;
         SgName name2("_p_"+myname.getString());
-        ASTtools::replaceVarRefExp (isSgExpression(*i), buildVarRefExp(name2,varscope));
+        replaceExpression (isSgExpression(*i), buildVarRefExp(name2,varscope));
         // isSgVarRefExp(*i) =  buildgVarRefExp(name2,varscope);
        }
 	// 3. Replace threadprivate variables with (type)(*_ppthd_X)
@@ -2035,14 +1737,14 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
           ROSE_ASSERT(cscope);
      
           SgName name3("_ppthd_"+myname.getString());
-          SgVariableSymbol *symbol3=isSgVariableSymbol(ASTtools::searchClosestSymbol(cscope,name3));
+          SgVariableSymbol *symbol3=lookupVariableSymbolInParentScopes(name3,cscope);
           if(symbol3){  // this function is called at several levels in a bottom up order, the symbol
 			// may not yet generated in the innermost level, 
 			// so, we can defer it until a higher level is processed when the symbol has
 			// generated already.
           SgPointerDerefExp *derefexp= buildPointerDerefExp(
                            buildVarRefExp(symbol3->get_declaration(),getScope(bBlock2)));
-          ASTtools::replaceVarRefExp(isSgExpression(*i),isSgExpression(derefexp));
+          replaceExpression(isSgExpression(*i),isSgExpression(derefexp));
         }
         }
      } //end for
@@ -2069,14 +1771,15 @@ int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttribute *ompa
   ROSE_ASSERT(ompattribute != NULL);
   ROSE_ASSERT(bBlock1 != NULL);
   SgScopeStatement* currentscope;
-  currentscope = isSgFunctionDeclaration(ASTtools::getEnclosingFunctionDeclaration(decl))\
+  currentscope = isSgFunctionDeclaration(getEnclosingFunctionDeclaration(decl))\
 		->get_definition()->get_body();
 
   // 1. conditional expression
   SgExprListExp * exp_list_exp1 = buildExprListExp();
                                                                                                 
-  SgExprStatement * conditionStmt1= ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-         SgName("_ompc_is_last"),exp_list_exp1, getScope(decl));
+  SgExprStatement * conditionStmt1= buildFunctionCallStmt( 
+          SgName("_ompc_is_last"), SgTypeInt::createType(),
+         exp_list_exp1, getScope(decl));
 
   // 2. true body: 
   SgBasicBlock * trueBody1= NULL;
@@ -2166,7 +1869,7 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttribute *ompatt
 // Since the outlined function is the same scope of the enclosing function!!
  // currentscope is the function body containing the pragma.
  // varscope is the scope of the original variable in the reduction list
-  currentscope = isSgFunctionDeclaration(ASTtools::getEnclosingFunctionDeclaration(decl))\
+  currentscope = isSgFunctionDeclaration(getEnclosingFunctionDeclaration(decl))\
 		->get_definition()->get_body();
 
   for (Rose_STL_Container<OmpSymbol* >::iterator i= ompattribute->var_list.begin();\
@@ -2215,7 +1918,8 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttribute *ompatt
                 //arg 4
       appendExpression(exp_list_exp, buildIntVal(OMPC_REDUCTION_PLUS));
           //build call exp
-      SgExprStatement * callstmt= ASTtools::generateFunctionCall(voidtype, SgName("_ompc_reduction"),exp_list_exp,getScope(decl)); //bBlock is not attached into AST yet
+      SgExprStatement * callstmt= buildFunctionCallStmt(SgName("_ompc_reduction"),
+        voidtype, exp_list_exp,getScope(decl)); //bBlock is not attached into AST yet
        appendStatement(callstmt,bBlock1);
     }// end if
   } // end for
@@ -2242,7 +1946,7 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
   ROSE_ASSERT(ompattribute != NULL);
                                                                                               
 //SgScopeStatement* currentscope = isSgFunctionDeclaration(
-//              ASTtools::getEnclosingFunctionDeclaration(decl))
+//              getEnclosingFunctionDeclaration(decl))
 //              ->get_definition()->get_body();
                                                                                               
   SgScopeStatement * globalscope = isSgScopeStatement(SageInterface::getGlobalScope(decl));
@@ -2265,7 +1969,6 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
         SgType* pointertype = new SgPointerType(mytype);
         SgName varName("_ppthd_"+myname.getString());
                                                                                               
-        //sharedvar = ASTtools::buildSgVariableDeclaration(pointertype,varName,NULL,bBlock1);
         sharedvar = buildVariableDeclaration(varName, pointertype,NULL,bBlock1);
         SgInitializedName * name1 = sharedvar->get_decl_item(varName); 
 //        SgVariableSymbol * symbol1 = isSgVariableSymbol(name1->get_symbol_from_symbol_table());
@@ -2290,8 +1993,8 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
  	appendExpression(exp_list_exp1,buildAddressOfOp(varglobal));
 			//arg 2: size of mytype
  	appendExpression(exp_list_exp1,
-		ASTtools::generateFunctionCallExp(\
-			 SgTypeInt::createType(),SgName("sizeof"),exp_list_exp3,bBlock1));
+		buildFunctionCallExp(SgName("sizeof"), \
+			 SgTypeInt::createType(), exp_list_exp3,bBlock1));
 			//arg 3: &m, but m if mytype is array
         SgVarRefExp* arg3  = buildVarRefExp(initname,bBlock1);
         if(mytype->variantT() != V_SgArrayType)
@@ -2303,7 +2006,8 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
        SgType *return_type = new SgPointerType( SgTypeVoid::createType() );
        SgName funcName("_ompc_get_thdprv");
       
-        SgFunctionCallExp * func_call_expr = ASTtools::generateFunctionCallExp(return_type,funcName,exp_list_exp1,bBlock1);
+        SgFunctionCallExp * func_call_expr = buildFunctionCallExp
+           (funcName,return_type, exp_list_exp1,bBlock1);
        
         SgCastExp *rhs = buildCastExp(func_call_expr, \
 		pointertype, SgCastExp::e_C_style_cast); 
@@ -2329,10 +2033,10 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
     	  appendExpression(exp_list_exp2,isSgExpression(SageInterface::deepCopy(arg3)));
 
           appendExpression(exp_list_exp2,
-		ASTtools::generateFunctionCallExp(\
-			 SgTypeInt::createType(),SgName("sizeof"),exp_list_exp3,bBlock1));
-    	  SgExprStatement * expStmt2 = ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-		SgName("_ompc_copyin_thdprv"),exp_list_exp2, bBlock1);
+               buildFunctionCallExp(SgName("sizeof"),
+			 SgTypeInt::createType(), exp_list_exp3,bBlock1));
+    	  SgExprStatement * expStmt2 = buildFunctionCallStmt( 
+		SgName("_ompc_copyin_thdprv"),buildVoidType(), exp_list_exp2, bBlock1);
           appendStatement(expStmt2,bBlock1);
 	}// end if copyin
 
@@ -2359,7 +2063,7 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
 //   SgScopeStatement* currentscope=isSgScopeStatement(ASTtools::get_scope(decl));
 // currentscope is the original scope of the pragma declaration
  SgScopeStatement* currentscope = isSgFunctionDeclaration(\
-		ASTtools::getEnclosingFunctionDeclaration(decl))\
+		getEnclosingFunctionDeclaration(decl))\
                 ->get_definition()->get_body();
 
    int counter=0;
@@ -2495,7 +2199,7 @@ int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
   ROSE_ASSERT(ompattribute != NULL);
  
  SgScopeStatement* currentscope = isSgFunctionDeclaration(\
-                ASTtools::getEnclosingFunctionDeclaration(decl))\
+                getEnclosingFunctionDeclaration(decl))\
                 ->get_definition()->get_body();
   Rose_STL_Container<SgNode*> decl_list; 
 	// record all variables declared, avoid duplicated declaration
@@ -2752,7 +2456,7 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
   setPragma(decl, new SgPragma((char*)(strnew->c_str()),TRANS_FILE));
   SgBasicBlock * bb = buildBasicBlock();
 
-  SgStatement * nextstmt = ASTtools::getNextStatement(decl);
+  SgStatement * nextstmt = getNextStatement(decl);
 // cout<<"L2081, before split:"<<nextstmt->unparseToString()<<endl;
 
   //the next statement of #pragma omp parallel for is the ' for loop'
@@ -2957,8 +2661,8 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
   SgExprListExp * exp_list_exp1 = buildExprListExp();
   appendExpression(exp_list_exp1, buildIntVal(OmpMidend::getSectionCount(decl)));
 
-  SgExprStatement *stmt1= ASTtools::generateFunctionCall(SgTypeVoid::createType(),\
-         SgName("_ompc_section_init"),exp_list_exp1, getScope(decl));
+  SgExprStatement *stmt1= buildFunctionCallStmt(
+         SgName("_ompc_section_init"),buildVoidType(),exp_list_exp1, getScope(decl));
   appendStatement(stmt1,bb1);
   // L_0:;  label statement is special since its symbol is stored in functionDef, not nearest scope statement such as basic block
   stringstream ss;
@@ -2972,11 +2676,11 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
    // switch ()
   //int _ompc_section_id();
   SgExprListExp * exp_list_exp2 = buildExprListExp();
-  SgExprStatement *item_selector= ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-         SgName("_ompc_section_id"),exp_list_exp2, globalscope);
+  SgExprStatement *item_selector= buildFunctionCallStmt( 
+         SgName("_ompc_section_id"),buildIntType(),exp_list_exp2, globalscope);
   // SgCaseOptionStmt in switch stmt body
   SgBasicBlock * switchbody=  buildBasicBlock();
-  SgBasicBlock *declbody = isSgBasicBlock(ASTtools::getNextStatement(decl));
+  SgBasicBlock *declbody = isSgBasicBlock(getNextStatement(decl));
   ROSE_ASSERT(declbody != NULL);
   SgStatementPtrList & ptrlist = declbody -> get_statements();
  // find all structured code blocks for 'omp section'
@@ -2992,7 +2696,7 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
       SgBasicBlock* copiedbody = buildBasicBlock();
 
       // deep copy works with dangling target BB ?
-      ASTtools::deepCopy(ASTtools::getNextStatement(isSgPragmaDeclaration(*i)),copiedbody);
+      ASTtools::deepCopy(getNextStatement(isSgPragmaDeclaration(*i)),copiedbody);
       // variable substituting
       variableSubstituting(decl, ompattribute, copiedbody);
       appendStatement(copiedbody,casebody);
@@ -3023,8 +2727,8 @@ int OmpMidend::transSections(SgPragmaDeclaration *decl)
   {
 
     SgExprListExp * exp_list_exp3 = buildExprListExp();
-    SgExprStatement * expStmt3= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-        SgName("_ompc_barrier"),exp_list_exp3,globalscope);
+    SgExprStatement * expStmt3= buildFunctionCallStmt( 
+        SgName("_ompc_barrier"),buildVoidType(), exp_list_exp3,globalscope);
     appendStatement(expStmt3,bb1);
   }
 
@@ -3075,7 +2779,7 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   pushScopeStack(bb1);
   ROSE_ASSERT(bb1 != NULL);
 
-  SgStatement* forstmt = ASTtools::getNextStatement(decl);
+  SgStatement* forstmt = getNextStatement(decl);
   ROSE_ASSERT(isSgForStatement(forstmt) != NULL);
   AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
   OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
@@ -3196,44 +2900,48 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
  
   if (ompattribute->sched_type == e_sched_none)
   {
-     callstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-	SgName("_ompc_default_sched"),parameters, bb1);
+     callstmt= buildFunctionCallStmt( 
+	SgName("_ompc_default_sched"),buildVoidType(), parameters, bb1);
   }  
     else if (ompattribute->sched_type == e_sched_static && ompattribute->chunk_size==NULL)
   {
-     callstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-	SgName("_ompc_static_bsched"),parameters, bb1);
+     callstmt= buildFunctionCallStmt( 
+	SgName("_ompc_static_bsched"),buildVoidType(), parameters, bb1);
   }
    else if (ompattribute->sched_type == e_sched_static && ompattribute->chunk_size!=NULL)
    {
      appendExpression(parameters2,chunkexp);
-    callstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-     SgName("_ompc_static_sched_init"),parameters2, bb1);
-    condcall=ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-	SgName("_ompc_static_sched_next"),parameters3,bb1);
+    callstmt= buildFunctionCallStmt( 
+     SgName("_ompc_static_sched_init"),buildVoidType(), parameters2, bb1);
+
+    condcall=buildFunctionCallStmt( 
+	SgName("_ompc_static_sched_next"),buildIntType(), parameters3,bb1);
    } 
    else if (ompattribute->sched_type == e_sched_dynamic)
    {
      appendExpression(parameters2,chunkexp);
-    callstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-     SgName("_ompc_dynamic_sched_init"),parameters2, bb1);
-    condcall=ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-	SgName("_ompc_dynamic_sched_next"),parameters3,bb1);
+    callstmt= buildFunctionCallStmt( 
+     SgName("_ompc_dynamic_sched_init"),buildVoidType(),parameters2, bb1);
+
+    condcall=buildFunctionCallStmt( 
+	SgName("_ompc_dynamic_sched_next"),buildIntType(), parameters3,bb1);
    } 
    else if (ompattribute->sched_type == e_sched_guided)
    {
      appendExpression(parameters2,chunkexp);
-    callstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-     SgName("_ompc_guided_sched_init"),parameters2, bb1);
-    condcall=ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-	SgName("_ompc_guided_sched_next"),parameters3,bb1);
+    callstmt= buildFunctionCallStmt( 
+     SgName("_ompc_guided_sched_init"),buildVoidType(),parameters2, bb1);
+
+    condcall=buildFunctionCallStmt( 
+	SgName("_ompc_guided_sched_next"),buildIntType(),parameters3,bb1);
    } 
    else if (ompattribute->sched_type == e_sched_runtime)
    {
-    callstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-     SgName("_ompc_runtime_sched_init"),parameters2, bb1);
-    condcall=ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-	SgName("_ompc_runtime_sched_next"),parameters3,bb1);
+    callstmt= buildFunctionCallStmt( 
+     SgName("_ompc_runtime_sched_init"),buildVoidType(),parameters2, bb1);
+
+    condcall=buildFunctionCallStmt( 
+	SgName("_ompc_runtime_sched_next"),buildIntType(),parameters3,bb1);
    } else 
    {
      cout<<"Fatal error in transOmpFor! unkown sched_type"<<endl;
@@ -3326,8 +3034,8 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
   // add barrier TODO consider nowait
   if (!ompattribute->nowait) {
     SgExprListExp * parameters2 = buildExprListExp();
-    SgExprStatement * barriercallstmt= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-        SgName("_ompc_barrier"),parameters2, bb1);
+    SgExprStatement * barriercallstmt= buildFunctionCallStmt( 
+        SgName("_ompc_barrier"),buildVoidType(),parameters2, bb1);
     appendStatement(barriercallstmt,bb1);
   }
 
@@ -3352,7 +3060,7 @@ int OmpMidend::transParallelSections(SgPragmaDeclaration *decl)
   splitCombinedParallelForSections(decl);
 
   ROSE_ASSERT(OmpFrontend::recognizePragma(decl)==e_parallel);
-  SgBasicBlock *bb = isSgBasicBlock(ASTtools::getNextStatement(decl)); 
+  SgBasicBlock *bb = isSgBasicBlock(getNextStatement(decl)); 
   ROSE_ASSERT(bb != NULL);
 
   SgStatementPtrList &stmtptrlist = bb ->get_statements();
@@ -3380,7 +3088,7 @@ int OmpMidend::transParallelFor(SgPragmaDeclaration *decl)
   splitCombinedParallelForSections(decl);
 
   ROSE_ASSERT(OmpFrontend::recognizePragma(decl)==e_parallel);
-  SgBasicBlock *bb = isSgBasicBlock(ASTtools::getNextStatement(decl)); 
+  SgBasicBlock *bb = isSgBasicBlock(getNextStatement(decl)); 
   ROSE_ASSERT(bb != NULL);
   SgStatementPtrList &stmtptrlist = bb ->get_statements();
   SgPragmaDeclaration * fordecl= isSgPragmaDeclaration(*(stmtptrlist.begin()));
@@ -3410,13 +3118,13 @@ int OmpMidend::transMaster(SgPragmaDeclaration * decl)
   SgExprListExp * exp_list_exp1 = buildExprListExp();
 
   SgName varName("_ompc_is_master"); 
-  SgExprStatement * expStmt1= ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-	varName, exp_list_exp1, globalscope); 
+  SgExprStatement * expStmt1= buildFunctionCallStmt( 
+	varName, buildIntType(), exp_list_exp1, globalscope); 
 // true _body, deep copy of the original 
   SgBasicBlock *truebody1 =  buildBasicBlock();
   SgBasicBlock *falsebody1 = buildBasicBlock(); 
 
-  SgStatement* nextstmt = ASTtools::getNextStatement(decl);
+  SgStatement* nextstmt = getNextStatement(decl);
   ASTtools::deepCopy(nextstmt,truebody1);
 
 // if statement, must set falsebody1 here, passing NULL instead will cause runtime error!!
@@ -3426,10 +3134,10 @@ int OmpMidend::transMaster(SgPragmaDeclaration * decl)
   SgStatement *parentBB = isSgStatement(decl->get_parent());
   ROSE_ASSERT(parentBB != NULL);
 
-  ASTtools::moveUpPreprocessingInfo(decl,nextstmt);
+  moveUpPreprocessingInfo(decl,nextstmt);
   LowLevelRewrite::remove(nextstmt);
   insertStatement (decl, ifstmt, true);
-  ASTtools::moveUpPreprocessingInfo(ifstmt,decl);
+  moveUpPreprocessingInfo(ifstmt,decl);
   LowLevelRewrite::remove(decl);
   return 0;
 }
@@ -3454,13 +3162,13 @@ int OmpMidend::transSingle(SgPragmaDeclaration * decl)
   SgScopeStatement * globalscope = isSgScopeStatement(SageInterface::getGlobalScope(decl));
   SgExprListExp * exp_list_exp1 = buildExprListExp();
 
-  SgExprStatement * expStmt1= ASTtools::generateFunctionCall( SgTypeInt::createType(),\
-	SgName("_ompc_do_single"),exp_list_exp1, globalscope); 
+  SgExprStatement * expStmt1= buildFunctionCallStmt( 
+	SgName("_ompc_do_single"),buildIntType(),exp_list_exp1, globalscope); 
 // true _body, deep copy of the original 
   SgBasicBlock *truebody1 =  buildBasicBlock();
   SgBasicBlock *falsebody1 =  buildBasicBlock();
 
-  SgStatement* nextstmt = ASTtools::getNextStatement(decl);
+  SgStatement* nextstmt = getNextStatement(decl);
 	// add declarations for private/firstprivate variables
   addPrivateVarDeclarations(decl,ompattribute,truebody1);
   
@@ -3477,12 +3185,12 @@ int OmpMidend::transSingle(SgPragmaDeclaration * decl)
                                                                                                 
   LowLevelRewrite::remove(nextstmt);
   insertStatement (decl, ifstmt, true);
-  ASTtools::moveUpPreprocessingInfo(ifstmt,decl);
+  moveUpPreprocessingInfo(ifstmt,decl);
   // _ompc_barrier() only if there is no nowait clause
   if(!ompattribute->nowait)
   {
-    SgExprStatement * expStmt2= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-	SgName("_ompc_barrier"),exp_list_exp1,globalscope);
+    SgExprStatement * expStmt2= buildFunctionCallStmt( 
+	SgName("_ompc_barrier"),buildVoidType(),exp_list_exp1,globalscope);
     insertStatement (decl, expStmt2, true);
   }
   LowLevelRewrite::remove(decl);
@@ -3496,12 +3204,12 @@ int OmpMidend::transBarrier(SgPragmaDeclaration * decl)
 // _ompc_barrier()
   SgScopeStatement * globalscope = isSgScopeStatement(SageInterface::getGlobalScope(decl));
   SgExprListExp * exp_list_exp1 = buildExprListExp();
-  SgExprStatement * expStmt2= ASTtools::generateFunctionCall( SgTypeVoid::createType(),\
-	SgName("_ompc_barrier"),exp_list_exp1,globalscope);
+  SgExprStatement * expStmt2= buildFunctionCallStmt(
+	SgName("_ompc_barrier"),buildVoidType(), exp_list_exp1,globalscope);
 // replace with the two new statements
   SgStatement *parentBB = isSgStatement(decl->get_parent());
   ROSE_ASSERT(parentBB != NULL);
-  ASTtools::moveUpPreprocessingInfo(expStmt2,decl);   
+  moveUpPreprocessingInfo(expStmt2,decl);   
   insertStatement (decl, expStmt2, true);
   LowLevelRewrite::remove(decl);
   return 0;
@@ -3549,7 +3257,7 @@ int OmpMidend::transFlush(SgPragmaDeclaration * decl)
     SgExprStatement * call_stmt = buildFunctionCallStmt(
       SgName("_ompc_flush"),return_type,arg_list);
     
-    ASTtools::moveUpPreprocessingInfo(call_stmt,decl);
+    moveUpPreprocessingInfo(call_stmt,decl);
     insertStatementAfter(decl,call_stmt);
   } else
   //case b: 1 or multiple variables
@@ -3575,7 +3283,7 @@ int OmpMidend::transFlush(SgPragmaDeclaration * decl)
       SgExprStatement * call_stmt = buildFunctionCallStmt(
          SgName("_ompc_flush"),return_type,arg_list);
       if (move_counter ==0) // only move preprocessing info. once
-         ASTtools::moveUpPreprocessingInfo(call_stmt,last_statement);
+         moveUpPreprocessingInfo(call_stmt,last_statement);
       insertStatementAfter(last_statement,call_stmt);
       move_counter++;  
       last_statement=call_stmt; 
@@ -3607,14 +3315,14 @@ int OmpMidend::transCritical(SgPragmaDeclaration *pragDecl)
   SgExprListExp * exp_list_exp = buildExprListExp();
   appendExpression(exp_list_exp,address1);
 
-  SgExprStatement * expStmt = ASTtools::generateFunctionCall( SgTypeVoid::createType(), \
-		SgName("_ompc_enter_critical"), exp_list_exp, scope);
+  SgExprStatement * expStmt = buildFunctionCallStmt( 
+		SgName("_ompc_enter_critical"), buildVoidType(),exp_list_exp, scope);
 
-  SgExprStatement * expStmt2= ASTtools::generateFunctionCall( SgTypeVoid::createType(), \
-		SgName("_ompc_exit_critical"), exp_list_exp, scope);
+  SgExprStatement * expStmt2= buildFunctionCallStmt( 
+		SgName("_ompc_exit_critical"), buildVoidType(),exp_list_exp, scope);
 
 // enclose the critical region using two calls and remove the pragma statement
-  SgStatement *targetStmt = ASTtools::getNextStatement(pragDecl);
+  SgStatement *targetStmt = getNextStatement(pragDecl);
 
   insertStatement (targetStmt, expStmt, true);
   insertStatement (targetStmt, expStmt2, false);
@@ -3650,13 +3358,14 @@ int OmpMidend::transAtomic(SgPragmaDeclaration *pragDecl)
   //SgExprListExp, 1 parameter ()
   SgExprListExp * exp_list_exp = buildExprListExp();
 
-  SgExprStatement * expStmt = ASTtools::generateFunctionCall( SgTypeVoid::createType(), \
-		SgName("_ompc_atomic_lock"), exp_list_exp, scope);
-  SgExprStatement * expStmt2= ASTtools::generateFunctionCall( SgTypeVoid::createType(), \
-		SgName("_ompc_atomic_unlock"), exp_list_exp, scope);
+  SgExprStatement * expStmt = buildFunctionCallStmt( 
+		SgName("_ompc_atomic_lock"), buildVoidType(), exp_list_exp, scope);
+
+  SgExprStatement * expStmt2= buildFunctionCallStmt( 
+		SgName("_ompc_atomic_unlock"), buildVoidType(), exp_list_exp, scope);
 
 // enclose the critical region using two calls and remove the pragma statement
-  SgStatement *targetStmt = ASTtools::getNextStatement(pragDecl);
+  SgStatement *targetStmt = getNextStatement(pragDecl);
 
   SgStatement *parentBB = isSgStatement(pragDecl->get_parent());
   ROSE_ASSERT(parentBB != NULL);
@@ -3680,7 +3389,7 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
 {
   bool hasMain= false;
 //find the main entry
-  SgFunctionDefinition* mainDef;
+  SgFunctionDefinition* mainDef=NULL;
 
 // DQ (1/6/2007): The correct qualified name for "main" is "::main", at least in C++.
 // however for C is should be "main".  Our name qualification is not language specific,
@@ -3700,14 +3409,14 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
   {
     SgFile* sgfile = isSgFile(*i);
     ROSE_ASSERT(sgfile != NULL);
- // SgGlobal* sgglobal= sgfile->get_root();
 
-  mainDef = ASTtools::findFunctionDefbyName(sgfile, &mainName);
-  if (mainDef != NULL)
-     {
+  SgFunctionDeclaration * mainDecl=findMain(sgfile);
+  if (mainDecl!= NULL)
+   {
     // printf ("Found main function setting hasMain == true \n");
-       hasMain = true;
-     }
+     mainDef = mainDecl->get_definition();
+     hasMain = true;
+   }
 
   // declare pointers for threadprivate variables and global lock
   addGlobalOmpDeclarations(ompfrontend, sgfile->get_root(), hasMain );
@@ -3769,8 +3478,8 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
   appendExpression(exp_list_exp,var1);
   appendExpression(exp_list_exp,var2);
 
-  SgExprStatement * expStmt=  ASTtools::generateFunctionCall (voidtype,SgName("_ompc_init"),exp_list_exp,currentscope);
-  //SgExprStatement * expStmt=  buildFunctionCallStmt(SgName("_ompc_init"),voidtype,exp_list_exp,currentscope);
+  SgExprStatement * expStmt=  buildFunctionCallStmt (SgName("_ompc_init"),
+           buildVoidType(), exp_list_exp,currentscope);
 
 //  cout<<"debug:"<<expStmt->unparseToString()<<endl;
   //prepend to main body
@@ -3792,8 +3501,8 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
   appendExpression(exp_list_exp2,var3);
                                                                                                                
   //build call exp stmt
-   //SgExprStatement * expStmt2= buildFunctionCallStmt(SgName("_ompc_terminate"),voidtype, exp_list_exp2,mainDef->get_body());
-   SgExprStatement * expStmt2= ASTtools::generateFunctionCall (voidtype,SgName("_ompc_terminate"), exp_list_exp2,mainDef->get_body());
+   SgExprStatement * expStmt2= buildFunctionCallStmt (SgName("_ompc_terminate"), 
+      buildVoidType(),exp_list_exp2,mainDef->get_body());
 
   // find return statement, insert before it
   Rose_STL_Container<SgNode*> rtList = NodeQuery::querySubTree(mainDef, V_SgReturnStmt);
@@ -3852,7 +3561,7 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
     mytype =buildArrayType(pointertype, buildUnsignedLongVal(ompattribute->wrapperCount));
 
     SgName argName("__ompc_argv");
-  SgVariableDeclaration* ompc_argv=ASTtools::buildSgVariableDeclaration(mytype,argName,NULL,bb1);
+  SgVariableDeclaration* ompc_argv=buildVariableDeclaration(argName, mytype,NULL,bb1);
     name_ompc_argv = ompc_argv->get_decl_item(argName);
     ROSE_ASSERT(name_ompc_argv);
   //cout<<"debug:"<<ompc_argv->unparseToString()<<endl;
@@ -3860,7 +3569,7 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
   }
     //2.   *(__ompc_argv+0)=(void*)(&share1);
   SgScopeStatement* currentscope= isSgFunctionDeclaration(\
-		ASTtools::getEnclosingFunctionDeclaration(pragDecl))\
+		getEnclosingFunctionDeclaration(pragDecl))\
                 ->get_definition()->get_body();
   int counter=0;
   for (Rose_STL_Container<OmpSymbol* >::iterator i= ompattribute->var_list.begin();i!=ompattribute->var_list.end();i++ )
@@ -3895,7 +3604,7 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
   // Only do this for outlined member function
   // _pp_globalobject= (void *) this;
   SgClassDefinition * classdef;
-  classdef = ASTtools::getEnclosingClassDefinition(isSgNode(pragDecl));
+  classdef = getEnclosingClassDefinition(isSgNode(pragDecl));
   if (classdef != NULL)
   {
     SgPointerType * vartype= new SgPointerType( SgTypeVoid::createType());
@@ -3967,7 +3676,8 @@ SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, 
   else
     appendExpression(exp_list_exp, buildIntVal(0));
   
-  SgExprStatement * expStmt= ASTtools::generateFunctionCall(myFuncType,SgName("_ompc_do_parallel"),exp_list_exp,currentscope); // same reason for not using bb1 as scope
+  SgExprStatement * expStmt= buildFunctionCallStmt(SgName("_ompc_do_parallel"),
+   myFuncType, exp_list_exp,currentscope); // same reason for not using bb1 as scope
   
   appendStatement(expStmt,bb1);
   popScopeStack();
@@ -3981,7 +3691,7 @@ void OmpMidend::insertOutlinedFunction(SgPragmaDeclaration* decl, \
 			SgFunctionDeclaration *outlinedFunc)
 {
   SgFunctionDeclaration *targetDecl=isSgFunctionDeclaration\
-	(ASTtools::getEnclosingFunctionDeclaration(decl));
+	(getEnclosingFunctionDeclaration(decl));
   ROSE_ASSERT(targetDecl !=NULL);
   
   SgMemberFunctionDeclaration* memdecl = \
@@ -3989,7 +3699,7 @@ void OmpMidend::insertOutlinedFunction(SgPragmaDeclaration* decl, \
   if (memdecl == NULL) { // regular function, add to global scope
     SgGlobal *globalScope= SageInterface::getGlobalScope(decl);
     ROSE_ASSERT(globalScope != NULL);
-    ASTtools::moveUpPreprocessingInfo(isSgStatement(outlinedFunc), \
+    moveUpPreprocessingInfo(isSgStatement(outlinedFunc), \
 				isSgStatement(targetDecl));
 
 //	isSgStatement(outlinedFunc), true);
@@ -4015,14 +3725,14 @@ void OmpMidend::replacePragmaBlock(SgPragmaDeclaration* pragDecl, SgBasicBlock *
   SgStatement *targetBB = isSgStatement(pragDecl->get_parent());
   ROSE_ASSERT(targetBB !=NULL);
  
-  SgStatement * oldblock= ASTtools::getNextStatement(pragDecl); 
+  SgStatement * oldblock= getNextStatement(pragDecl); 
 /*  LowLevelRewrite::remove(oldblock);
-  ASTtools::moveUpPreprocessingInfo(bb1,pragDecl);
+  moveUpPreprocessingInfo(bb1,pragDecl);
   LowLevelRewrite::remove(pragDecl);
 */
    insertStatement(oldblock,bb1,true);
-//   ASTtools::moveUpPreprocessingInfo(bb1,oldblock);// not correct, should copy it to the outlined function, not the original place!!
-   ASTtools::moveUpPreprocessingInfo(bb1,pragDecl);
+//   moveUpPreprocessingInfo(bb1,oldblock);// not correct, should copy it to the outlined function, not the original place!!
+   moveUpPreprocessingInfo(bb1,pragDecl);
    LowLevelRewrite::remove(oldblock);
    LowLevelRewrite::remove(pragDecl);
 }
@@ -4069,11 +3779,11 @@ void OmpMidend::generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
 
    appendStatement(bBlock2,bBlock1);
 //   bBlock2->set_parent(bBlock1);// bug 192 
-   SgStatement* nextStatement = ASTtools::getNextStatement(decl);
+   SgStatement* nextStatement = getNextStatement(decl);
 
 // debug only!
    ASTtools::deepCopy(nextStatement,bBlock2);
-   ASTtools::moveUpPreprocessingInfo(bBlock2,nextStatement); 
+   moveUpPreprocessingInfo(bBlock2,nextStatement); 
   // 3. variable substitute for shared, private, and reduction variables
 //cout<<"-------------L3077"<<nextStatement->unparseToString()<<endl;
 //cout<<"ompattribute:is:"<<endl;
@@ -4098,7 +3808,7 @@ SgFunctionDeclaration* OmpMidend::generateOutlinedFunction(SgPragmaDeclaration* 
   OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
   ROSE_ASSERT(ompattribute != NULL);
 
-  classdef = ASTtools::getEnclosingClassDefinition(isSgNode(decl));
+  classdef = getEnclosingClassDefinition(isSgNode(decl));
 
 // return type
   SgType* func_return_type =  SgTypeVoid::createType();
@@ -4141,7 +3851,6 @@ SgFunctionDeclaration* OmpMidend::generateOutlinedFunction(SgPragmaDeclaration* 
 
     func_def->set_parent(mfunc); //necessary or not?
    SgInitializedName * var1_init_name = new SgInitializedName(var1_name, pType2,var1_initializer,NULL);
-//   SgInitializedName * var1_init_name = ASTtools::buildSgInitializedName(var1_name, pType2,var1_initializer,NULL);
    var1_init_name->set_file_info(TRANS_FILE);
    parameterList->append_arg(var1_init_name);
     mfunc->set_parameterList(parameterList);
@@ -4224,46 +3933,9 @@ void OmpProcessor::visit(SgNode * node)
   }
 }
 
-//---------------------------------
-reachDefinitionFinder::reachDefinitionFinder(SgNode* targetnode,string* inputname)\
-	:endnode(targetnode),varname(inputname)
-  {
-    ROSE_ASSERT(targetnode != NULL);
-    ROSE_ASSERT(inputname != NULL);
-    ROSE_ASSERT(inputname->size() != 0);
-
-    targetscope = isSgScopeStatement( ASTtools::get_scope(targetnode) );
-    ROSE_ASSERT(targetscope != NULL);
-    reachDefinitionFinder(); 
-  }
- 
-//---------------------------------
-// consider the scope (currentscope <= pattern's scope )also
-// otherwise maybe shadowed by previous definition from lower scope
-void reachDefinitionFinder::visit(SgNode* astNode)
-{
-  if (astNode == endnode) 
-  {
-   //cout<<"L3629, RD visit stops!"<<endl;
-    stop =true;// not useful since we use return now.
-    return; // must return here!
-  }
-  if (isSgInitializedName(astNode)!=NULL )
-  {
-    SgInitializedName *currentnode = isSgInitializedName(astNode);
-    SgScopeStatement * currentscope = isSgScopeStatement(ASTtools::get_scope(astNode));
-    ROSE_ASSERT(currentscope != NULL);
-   // cout<<"----L3624, init name: "<<(currentnode->get_name()).getString()<<endl;
-    if ( ((currentnode->get_name()).getString()==*varname)&&\
-	 currentscope <= targetscope)
-      result = currentnode; // only store the last match 
-  } 
-}
 /************************************************************************/
 int main(int argc, char* argv[])
 {
-
-
   OmpFrontend ompfrontend;
   SgProject* project = frontend(argc, argv);
   ROSE_ASSERT(project !=NULL);
@@ -4276,7 +3948,7 @@ int main(int argc, char* argv[])
   //ompfrontend.print();
 
   //insert #include "ompcLib.h", the interface of runtime library to the compiler
-  ASTtools::insertHeaders(project);  
+  OmpMidend::insertHeaders(project);  
 
   //add runtime init and cleanup code into main() function
   OmpMidend::insertRTLinitAndCleanCode(project, &ompfrontend);
@@ -4285,11 +3957,8 @@ int main(int argc, char* argv[])
   OmpMidend::bottomupProcessing(project);
 
   // post processing tasks
-	  // bottomup translation causes variable references before variable declarations,
-	  // fix them here
+  // bottomup translation generates variable references before variable declarations,
   fixVariableReferences(project);
-	// new requirements for endOfConstruct pointers
-    // setSourcePositionForTransformation_memoryPool (); 
 //  AstPostProcessing(project);
 
   AstTests::runAllTests(project);
