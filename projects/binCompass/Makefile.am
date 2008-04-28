@@ -42,7 +42,7 @@ check-local: binCompassMain
 
 EXTRA_DIST = buffer2.bin
 
-CLEANFILES = dfg.dot cfg.dot unparsed.s buffer2.bin dfg.gml buffer2.bin.PrintAsmInstruction.out buffer2.bin.PrintAsmFunctions.out output
+CLEANFILES = dfg.dot cfg.dot unparsed.s buffer2.bin dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*
 
 binCompassMain.o: binCompassMain.cpp
 
