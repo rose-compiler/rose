@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+EXTRA_DIST = buffer2.bin
+
 if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 
 # To keep compile commands tidy, please ONLY put required include flags here.
@@ -32,8 +34,6 @@ TESTCODE_INCLUDES =
 #$(TEST_Objects): runTest $(TESTCODES) 
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
-
-EXTRA_DIST = buffer2.bin
 
 CLEANFILES = unparsed.s buffer2.bin callgraph.gml output
 
