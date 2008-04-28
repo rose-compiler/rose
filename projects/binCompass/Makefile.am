@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+EXTRA_DIST = buffer2.bin
+
 if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 
 SUBDIRS = analyses graphanalyses
@@ -39,8 +41,6 @@ check-local: binCompassMain
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
-
-EXTRA_DIST = buffer2.bin
 
 CLEANFILES = dfg.dot cfg.dot unparsed.s buffer2.bin dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*
 
