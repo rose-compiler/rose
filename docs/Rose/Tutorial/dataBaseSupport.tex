@@ -1,8 +1,8 @@
-\chapter{Data-Base Support}
+\chapter{Database Support}
 
     This chapter is specific to support in ROSE for persistent storage.
 ROSE uses the SQLite database and makes it simple to store data in the
-data base for retrieval in later phases of processing large multiple file projects.
+database for retrieval in later phases of processing large multiple file projects.
 
 \fixme{Need more information here.}
 
@@ -10,8 +10,14 @@ data base for retrieval in later phases of processing large multiple file projec
 
    This section presents figure~\ref{Tutorial:exampleDataBase1}, a simple 
 C++ source code using a template. It is used as a basis for showing how 
-template instantiations are handled within ROSE.
+template instantiations are handled within ROSE. An example translator
+using a database connection to store function information is shown in 
+Fig.\ref{Tutorial:exampleDataBaseTranslator1} 
+and Fig.\ref{Tutorial:exampleDataBaseTranslator2}. The output by the
+translator operating on the C++ source code is shown in Fig. \ref{Tutorial:exampleTemplate1Output}. 
 
+
+%---------------------------------------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -31,10 +37,11 @@ template instantiations are handled within ROSE.
 }
 % End of scope in indentation
 }
-\caption{Example translator (part 1) using data base connection to store function names.}
-\label{Tutorial:exampleDataBaseTranslator}
+\caption{Example translator (part 1) using database connection to store function names.}
+\label{Tutorial:exampleDataBaseTranslator1}
 \end{figure}
 
+%---------------------------------------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -54,10 +61,11 @@ template instantiations are handled within ROSE.
 }
 % End of scope in indentation
 }
-\caption{Example translator (part 2) using data base connection to store function names.}
-\label{Tutorial:exampleDataBaseTranslator}
+\caption{Example translator (part 2) using database connection to store function names.}
+\label{Tutorial:exampleDataBaseTranslator2}
 \end{figure}
 
+%---------------------------------------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -77,10 +85,11 @@ template instantiations are handled within ROSE.
 }
 % End of scope in indentation
 }
-\caption{Example source code used as input to data base example.}
+\caption{Example source code used as input to database example.}
 \label{Tutorial:exampleDataBase1}
 \end{figure}
 
+%---------------------------------------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -100,14 +109,14 @@ template instantiations are handled within ROSE.
 }
 % End of scope in indentation
 }
-\caption{Output from processing input code through data base example dataBaseTranslator\ref{Tutorial:exampleDataBaseTranslator}.}
-\label{Tutorial:exampleTemplate1}
+\caption{Output from processing input code through database example dataBaseTranslator\ref{Tutorial:exampleDataBaseTranslator}.}
+\label{Tutorial:exampleTemplate1Output}
 \end{figure}
 
 
 \section{Call Graph for Multi-file Application}
 
-   This section shows an example of the use of the ROSE Data-Base mechanism
+   This section shows an example of the use of the ROSE Database mechanism
 where information is stored after processing each file as part of generating the
 call graph for a project consisting of multiple files.  The separate files
 are show in figures~\ref{Tutorial:exampleDataBase1} and ~\ref{Tutorial:exampleDataBase2}.
@@ -128,6 +137,7 @@ figure~\ref{Tutorial:exampleDataBase2}. {\em This example is incomplete.}
 \fixme{This example is still incomplete.}
 
 \commentout{
+%---------------------------------------------------------
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize

@@ -44,7 +44,7 @@ ROSE distributions:
        plus ROSE related research papers, and related Web sites, etc.
    \item ROSE Web Page \\
        The ROSE Web pages are at
-           \htmladdnormallink{www.rosecompiler.org}{www.rosecompiler.org}.
+           \htmladdnormallink{www.rosecompiler.org}{http://www.rosecompiler.org}.
    \item ROSE/ROSE\_RESEARCH\_PAPERS.tar.gz \\
        These are the current ROSE related research papers.
 \end{itemize}
