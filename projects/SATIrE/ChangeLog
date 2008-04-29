@@ -16,6 +16,8 @@ V0.8.2 (in progress)
     correct annotation of the program
   - added attribute  ROUTINE procnum: snum #  to access the number of the
     current procedure from PAG analyses
+  - replaced slow expression numbering mechanism by Mihai Ghete's faster AST
+    hashing
 
 * Testsuite improvements [GB]
   - separate histograms are generated for execution time and memory usage
