@@ -37,7 +37,7 @@ STATSFILE=runtests.stats
 TMPFILE=runtests.tmp
 DATFILE=runtests.dat
 
-printf "outfile\ttime\_rose\_frontend\tAST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tPAG-analysis\tSATIrE-ICFG\tROSE-AST\ttotal_memory\tanalysis\toptions\tfile\n" \
+printf "outfile\ttime\_rose\_frontend\tAST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tExpr-numbering\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tPAG-analysis\tSATIrE-ICFG\tROSE-AST\ttotal_memory\tanalysis\toptions\tfile\n" \
     > $DATFILE
 for file in $FILES; do
 
@@ -51,7 +51,7 @@ for file in $FILES; do
     result=$?
 
     # Expected FAIL
-    if echo $file | grep -q ^$SUITE/failure; then
+    if echo $file | grep -q "^$SUITE.*failure/"; then
       expected_fails=$(( $expected_fails + 1 ))
       if [ $result != 0 ]; then
         fails_ok=$(( $fails_ok + 1 ))
@@ -59,9 +59,8 @@ for file in $FILES; do
         echo "** ERROR: Expected failure succeeded $analysis $options $file"
         fail_errors="$fail_errors $analysis:$file"
       fi
-    fi
     # Expected SUCCESS
-    if echo $file | grep -q ^$SUITE/success; then    
+    elif echo $file | grep -q "^$SUITE.*success/"; then    
       expected_succs=$(( $expected_succs + 1 ))
       if [ $result == 0 ]; then
         result='success'  # to get more readable statistics
@@ -94,8 +93,11 @@ for file in $FILES; do
         if [ $debug == 42 ]; then echo "time_ast_comment = $time_ast_comment because: \"`grep 'AST Comment' $TMPFILE`\""; fi
 
         # grep ICFG builder stats
-        time_icfg=` cat $TMPFILE | awk '/ICFG construction: time = .* .sec/ {print $6;exit}'`
-        if [ $debug == 42 ]; then echo "time_icfg = $time_icfg because \"`grep 'ICFG construction' $TMPFILE`\""; fi
+        time_icfg=` cat $TMPFILE | awk '/Traversal to construct/ {print $7;exit}'`
+        if [ $debug == 42 ]; then echo "time_icfg = $time_icfg because \"`grep 'Traversal to construct' $TMPFILE`\""; fi
+        time_expr_numbering=`cat $TMPFILE | awk '/Numbering of expressions and types/ {print $8; exit}'`
+        if [ x$time_expr_numbering == x ]; then time_expr_numbering=0; fi
+        if [ $debug == 42 ]; then echo "time_expr_numbering = $time_expr_numbering because \"`grep 'Numbering of expressions and types' $TMPFILE`\""; fi
         time_icfg_check=` cat $TMPFILE | awk '/CFG consistency check: time = .* .sec/ {print $6;exit}'`
         if [ x$time_icfg_check == x ]; then time_icfg_check=0; fi
         if [ $debug == 42 ]; then echo "time_icfg_check = $time_icfg_check because \"`grep 'CFG consistency check' $TMPFILE`\""; fi
@@ -124,13 +126,19 @@ for file in $FILES; do
             # echo "    wall = $time_wall"
 
         printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
-        printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$icfg_memory\t$ast_memory\t$total_memory\t$analysis\t$options\t$file\n" \
+        printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_expr_numbering\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$icfg_memory\t$ast_memory\t$total_memory\t$analysis\t$options\t$file\n" \
           | sed 's/\_/\\\\\_/g' >> $DATFILE
       else
         echo "** ERROR: Expected success failed $analysis $options $file"
         cat $TMPFILE
         succ_errors="$succ_errors $analysis:$file"
       fi
+    else
+    # This should never be executed, since either the success or the failure
+    # path should be taken for every file. Sometimes the grep commands are
+    # wrong, and neither of them matches...
+      echo "** ERROR: file $file classified as neither success nor failure (internal error)"
+      exit 1
     fi
   done 
 done
@@ -238,7 +246,7 @@ plot newhistogram "" lc 2, '$DATFILE' \
      '' using 4, \
      '' using 5, \
      '' using 6, \
-     '' using 8
+     '' using 9
 EOF
 
 # GB (2008-04-23): Removed "using 7" because the ICFG tests are now not run by
@@ -277,9 +285,9 @@ set auto y
 # Plot the data:
 # "using 2" means "use column 2 from $DATFILE"
 plot newhistogram "" lc 2, '$DATFILE' \
-        using 19:xtic(1), \
-     '' using 18, \
-     '' using 17
+        using 20:xtic(1), \
+     '' using 19, \
+     '' using 18
 EOF
 
 #        using 2:xtic(1) ti col lt rgb "#FD8238", \
