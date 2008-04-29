@@ -190,6 +190,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programTransformation/functionCallNormalization \
      -I$(top_srcdir)/src/midend/programTransformation/constantFolding \
      -I$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration \
+     -I$(top_srcdir)/src/midend/programTransformation/runtimeTransformation \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
 \

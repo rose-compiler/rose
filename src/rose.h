@@ -105,6 +105,8 @@
 
 #endif
 
+// added .h file for error check transformations
+#include "RuntimeInstrumentation.h"
 
 // ifndef ROSE_H
 #endif
