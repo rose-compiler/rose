@@ -656,19 +656,38 @@ SgScopeStatement* getScope(const SgNode* astNode);
   scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
 */
 
-//! append a statement in the end of current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
+//! append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
+//! append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
+void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
+
+//! prepend a statement to the beginning of the current scope, handling side
+//! effects as appropriate
 void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
-//! insert a statement before or after the targt statement within the target's scope
+//! prepend a list of statements to the beginning of the current scope,
+//! handling side effects as appropriate
+void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
+
+//! insert a statement before or after the target statement within the target's scope
 void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);
 
-//! insert a statement before a target statment
+//! insert a list of statements before or after the target statement within the
+//target's scope
+void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore= true);
+
+//! insert a statement before a target statement
 void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt);
 
-//! insert a statement After a target statment
+//! insert a list of statements before a target statement
+void insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts);
+
+//! insert a statement after a target statement
 void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
+
+//! insert a list of statements after a target statement
+void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
 
 //! append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! we recommend to build SgFunctionParameterList before building a function delcaration
