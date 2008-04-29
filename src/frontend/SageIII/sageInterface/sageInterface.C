@@ -5079,6 +5079,12 @@ namespace SageInterface {
     stmt->set_parent(scope); // needed?
   }
 
+  void appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
+    for (size_t i = 0; i < stmts.size(); ++i) {
+      appendStatement(stmts[i], scope);
+    }
+  }
+
   void prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
    if (scope == NULL)
@@ -5097,6 +5103,12 @@ namespace SageInterface {
 
    scope->insertStatementInScope(stmt,true);
 
+  }
+
+  void prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
+    for (size_t i = stmts.size(); i > 0; --i) {
+      prependStatement(stmts[i - 1], scope);
+    }
   }
 
   //TODO handle side effect like SageBuilder::append_statement() does
@@ -5135,14 +5147,37 @@ namespace SageInterface {
   #endif
 
   }
+
+  void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
+    if (insertBefore) {
+      for (size_t i = 0; i < newStmts.size(); ++i) {
+        insertStatementBefore(targetStmt, newStmts[i]);
+      }
+    } else {
+      for (size_t i = newStmts.size(); i > 0; --i) {
+        insertStatementAfter(targetStmt, newStmts[i - 1]);
+      }
+    }
+  }
+
   void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt)
   {
     insertStatement(targetStmt,newStmt,false);
   }
 
+  void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
+  {
+    insertStatementList(targetStmt,newStmts,false);
+  }
+
   void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt)
   {
     insertStatement(targetStmt,newStmt,true);
+  }
+
+  void insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
+  {
+    insertStatementList(targetStmt,newStmts,true);
   }
 
   //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
