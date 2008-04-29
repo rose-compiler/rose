@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.14 2008-04-25 10:09:24 gergo Exp $
+// $Id: cfg_support.h,v 1.15 2008-04-29 09:56:25 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -11,6 +11,7 @@
 #include "AttributeMechanism.h"
 
 #include "iface.h"
+#include "EqualityTraversal.h"
 
 enum edgetypes
 {
@@ -99,8 +100,10 @@ public:
     BlockList nodes;
     BlockList calls, entries, exits, returns;
     std::deque<Procedure *> *procedures;
-    std::map<int, SgExpression *> numbers_exprs;
-    std::map<SgExpression *, int, ExprPtrComparator> exprs_numbers;
+ // std::map<int, SgExpression *> numbers_exprs;
+    std::vector<SgExpression *> numbers_exprs;
+ // std::map<SgExpression *, int, ExprPtrComparator> exprs_numbers;
+    std::map<SgExpression *, int> exprs_numbers;
     std::map<int, SgType *> numbers_types;
     std::map<SgType *, int, TypePtrComparator> types_numbers;
 
@@ -108,6 +111,8 @@ public:
     std::map<std::string, SgExpression *> names_initializers;
     std::vector<SgVariableSymbol *> globals;
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
+
+    EqualityTraversal equalityTraversal;
 
     ~CFG();
 

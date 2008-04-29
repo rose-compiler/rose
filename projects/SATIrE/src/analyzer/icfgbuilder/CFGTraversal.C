@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.26 2008-04-24 13:58:26 gergo Exp $
+// $Id: CFGTraversal.C,v 1.27 2008-04-29 09:56:19 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -11,6 +11,7 @@
 #include "ExprTransformer.h"
 #include "analysis_info.h"
 #include "IrCreation.h"
+#include "EqualityTraversal.h"
 
 #define REPLACE_FOR_BY_WHILE
 
@@ -539,6 +540,7 @@ private:
     ExprSetTraversal est;
 };
 
+#if 0
 void
 CFGTraversal::number_exprs()
 {
@@ -565,7 +567,8 @@ CFGTraversal::number_exprs()
     std::set<SgExpression *, ExprPtrComparator>::const_iterator expr;
     for (expr = exprs_nonred->begin(); expr != exprs_nonred->end(); ++expr)
     {
-        cfg->numbers_exprs[i] = *expr;
+     // cfg->numbers_exprs[i] = *expr;
+        cfg->numbers_exprs.push_back(*expr);
         cfg->exprs_numbers[*expr] = i;
         i++;
     }
@@ -581,6 +584,144 @@ CFGTraversal::number_exprs()
     }
     delete nestedTimer;
 }
+#else
+
+class TypeSetTraversal: public AstSimpleProcessing
+{
+public:
+    TypeSetTraversal(std::set<SgType *, TypePtrComparator> &type_set)
+      : type_set(type_set)
+    {
+    }
+
+protected:
+    void visit(SgNode *node)
+    {
+        if (SgExpression *expr = isSgExpression(node))
+            type_set.insert(expr->get_type());
+    }
+ 
+private:
+    std::set<SgType *, TypePtrComparator> &type_set;
+};
+
+class IcfgHashingTraversal: public IcfgTraversal
+{
+public:
+    IcfgHashingTraversal(EqualityTraversal &eTraversal,
+            std::set<SgType *, TypePtrComparator> &type_set)
+      : eTraversal(eTraversal), type_set(type_set), tTraversal(type_set)
+    {
+    }
+
+protected:
+    void visit(SgNode *node)
+    {
+     // No more special cases, just invoke the AST traversal on this node.
+        eTraversal.traverse(node);
+
+     // Types need special handling at the moment.
+        tTraversal.traverse(node, preorder);
+     // OK, so there is still this one special case.
+        if (DeclareStmt *decl = isDeclareStmt(node))
+            type_set.insert(decl->get_type());
+    }
+
+private:
+    EqualityTraversal &eTraversal;
+    std::set<SgType *, TypePtrComparator> &type_set;
+    TypeSetTraversal tTraversal;
+};
+
+void
+CFGTraversal::number_exprs()
+{
+    TimingPerformance timer("Numbering of expressions and types:");
+ // std::set<SgExpression *, ExprPtrComparator> expr_set;
+    std::set<SgType *, TypePtrComparator> type_set;
+
+    TimingPerformance *nestedTimer
+        = new TimingPerformance("Traversing ICFG to number expressions and types:");
+ // add the types of global variables
+    std::vector<SgVariableSymbol *>::iterator g_itr;
+    for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
+        type_set.insert((*g_itr)->get_type());
+ // traverse everything else
+#if 0
+    IcfgExprSetTraversal iest(&expr_set, &type_set);
+    iest.traverse(cfg);
+#else
+    IcfgHashingTraversal iht(cfg->equalityTraversal, type_set);
+    iht.traverse(cfg);
+#endif
+    delete nestedTimer;
+
+ // std::set<SgExpression *, ExprPtrComparator> *exprs_nonred;
+ // exprs_nonred = make_nonredundant(expr_set);
+
+    nestedTimer = new TimingPerformance("Filling containers:");
+#if 0
+    unsigned int i = 0;
+    std::set<SgExpression *, ExprPtrComparator>::const_iterator expr;
+    for (expr = exprs_nonred->begin(); expr != exprs_nonred->end(); ++expr)
+    {
+        cfg->numbers_exprs[i] = *expr;
+        cfg->exprs_numbers[*expr] = i;
+        i++;
+    }
+    delete exprs_nonred;
+#else
+    std::vector<EqualityId> ids;
+    cfg->equalityTraversal.get_all_exprs(ids);
+    unsigned int i = 0;
+    std::vector<SgNode *>::const_iterator expr;
+    std::vector<EqualityId>::const_iterator id;
+    cfg->numbers_exprs.reserve(ids.size());
+    for (id = ids.begin(); id != ids.end(); ++id)
+    {
+        const std::vector<SgNode *> &exprs
+            = cfg->equalityTraversal.get_nodes_for_id(*id);
+        for (expr = exprs.begin(); expr != exprs.end(); ++expr)
+        {
+            const SgExpression *e = isSgExpression(*expr);
+            if (e != NULL)
+                cfg->exprs_numbers[const_cast<SgExpression *>(e)] = i;
+#if 0
+            std::cout << "setting " << (void *) e << " -> " << i << std::endl;
+#endif
+        }
+        if (exprs.empty())
+        {
+            std::cerr << __FILE__ << ":" << __LINE__
+                << ":number_exprs: empty list of expressions for id "
+                << *id << std::endl;
+            abort();
+        }
+        const SgExpression *e = isSgExpression(exprs.front());
+     // cfg->numbers_exprs[i] = const_cast<SgExpression *>(e);
+        cfg->numbers_exprs.push_back(const_cast<SgExpression *>(e));
+#if 0
+        std::cout << "setting " << i << " -> " << (void *) e
+            << " " << e->class_name();
+        if (const SgIntVal *i = isSgIntVal(e))
+            std::cout << " value: " << i->get_value();
+        std::cout << std::endl;
+#endif
+        i++;
+    }
+#endif
+
+    unsigned int j = 0;
+    std::set<SgType *, TypePtrComparator>::const_iterator type;
+    for (type = type_set.begin(); type != type_set.end(); ++type)
+    {
+        cfg->numbers_types[j] = *type;
+        cfg->types_numbers[*type] = j;
+        j++;
+    }
+    delete nestedTimer;
+}
+#endif
 
 void 
 CFGTraversal::visit(SgNode *node) {
