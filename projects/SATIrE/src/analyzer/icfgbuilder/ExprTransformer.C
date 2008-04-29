@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.16 2008-04-25 10:09:22 gergo Exp $
+// $Id: ExprTransformer.C,v 1.17 2008-04-29 14:17:32 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -342,318 +342,361 @@ void ExprTransformer::visit(SgNode *node)
       std::vector<CallBlock *> blocks(0);
       std::string name = "";
       std::string mangled_name = "";
-      if (ci->get_declaration() != NULL) {
-        name = ci->get_declaration()->get_name().str();
-        mangled_name = ci->get_declaration()->get_mangled_name().str();
-        /* find constructor implementations */
-        int num = 0;
-        std::deque<Procedure *>::const_iterator i;
-     // GB (2008-03-13): Default constructors can be called without
-     // parentheses, in which case the mangled name of the call is different
-     // from the mangled name of the constructor that is called. We thus
-     // make a distinction between default and non-default constructors. For
-     // non-default constructors, comparing the mangled name is fine; for
-     // default constructors, we look at the non-mangled name and the number
-     // of args.
-     // All of this should be handled by some much smarter logic based an
-     // defining declarations or something.
-        if (ci->get_declaration()->get_args().empty() && ci->get_args()->get_expressions().size() == 1) {
-         // GB (2008-03-27): This is a fun case: The constructor
-         // initializer's declaration has no arguments, but the call has one
-         // argument. This appears to be the case for default copy
-         // constructors. Since the copy constructor is default, we don't
-         // have a definition, so we want the call to be external. Thus we
-         // simply do: Nothing! The blocks list will remain empty, and an
-         // external constructor call will be generated below.
-
-#if 0
-            std::cout << " ***" << std::endl;
-            std::cout << " *** arg numbers do not match! ***" << std::endl;
-            std::cout << " *** constructor: " << name << "/" << mangled_name << std::endl;
-            std::cout << " *** params: " << ci->get_declaration()->get_parameterList()->get_args().size() << std::endl;
-            std::cout << " *** arg: " << Ir::fragmentToString(ci->get_args()->get_expressions().front()) << std::endl;
-            std::cout << " ***" << std::endl;
-#endif
-        } else if (ci->get_declaration()->get_args().empty()) {
-         // default constructor
-            for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
-              std::string i_name = (*i)->name;
-              if (name == i_name && (*i)->decl->get_args().empty()) {
-                blocks.push_back((*cfg->procedures)[num]->entry);
-              }
-              num++;
-            }
-        } else {
-         // non-default constructor
-            for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
-              std::string i_mangled_name = (*i)->mangled_name;
-              if (mangled_name == i_mangled_name) {
-                blocks.push_back((*cfg->procedures)[num]->entry);
-              }
-              num++;
-            }
-        }
-     // GB (2008-03-13): Overloading must be uniquely resolvable.
-        if (blocks.size() > 1) {
-         // GB (2008-03-27): We cannot make this an error (yet?). Some STL
-         // headers define constructors and maybe even functions; if such
-         // headers are included several times, we get this error, although
-         // the implementations are the same. This is yet another instance
-         // of the problem that identical sub-ASTs are not shared. So we
-         // let this go for now. Maybe in the future the ProcTraversal could
-         // be made to only traverse unique function definitions from the
-         // AST matcher's hash table...
-#if 0
-            std::cout << __FILE__ << ":" << __LINE__
-                << ": error during ICFG construction: ";
-            std::cout << "found more than one "
-                << "constructor implementation for initializer '"
-                << Ir::fragmentToString(ci) << "'" << std::endl;
-            std::cout << "procedures:";
-            std::vector<CallBlock *>::iterator block;
-            for (block = blocks.begin(); block != blocks.end(); ++block) {
-                std::cout << " " << (*block)->procnum;
-            }
-            std::cout << std::endl;
-            std::exit(EXIT_FAILURE);
-#endif
-        }
-      }
-   // GB (2008-03-25): Oops, we missed setting the type for implicit
-   // constructor calls (copy constructors).
-      if (name == "" && isSgNamedType(ci->get_type())) {
-          SgNamedType *t = isSgNamedType(ci->get_type());
-          name = t->get_name().str();
-      }
-    
-      /* setup argument expressions */
-      SgExpressionPtrList elist;
-      Procedure *p = NULL;
-      SgInitializedNamePtrList params;
-      SgExpressionPtrList& alist = ci->get_args()->get_expressions();
-      SgInitializedNamePtrList::const_iterator ni;
-      SgExpressionPtrList::const_iterator ei;
-      if (!blocks.empty()) {
-        p = (*cfg->procedures)[blocks.front()->procnum];
-        params = p->params->get_args();
-        ni = params.begin();
-      }
-      if (SgInitializedName* initializedName=isSgInitializedName(ci->get_parent())) {
-        /* some member is initialized, pass the address
-         * of the object as this pointer */
-        //initializedName->set_file_info(FILEINFO);
-        SgVarRefExp *ref = Ir::createVarRefExp(initializedName);
-        SgAddressOfOp* a = Ir::createAddressOfOp(ref,Ir::createPointerType(ref->get_type()));
-        elist.push_back(a);
-      } else if (SgNewExp* newExp0=isSgNewExp(ci->get_parent())) {
-        SgType *t = newExp0->get_type();
-        if (isSgPointerType(t))
-          t = isSgPointerType(t)->get_base_type();
-        if (isSgNamedType(t))
-          name = isSgNamedType(t)->get_name();
-    
-        elist.push_back(newExp0);
-      
-        RetvalAttribute *ra = (RetvalAttribute *) ci->getAttribute("return variable");
-    
-        SgVariableSymbol *var = Ir::createVariableSymbol(ra->get_str(),newExp0->get_type());
-    
-        if (isSgExpression(newExp0->get_parent())) {
-          SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
-          satireReplaceChild(newExp0->get_parent(),newExp0,varRefExp);
-        } else if (root_var == NULL) {
-            root_var = var;
-        }
-      } else {
-        RetvalAttribute* ra = (RetvalAttribute *) ci->getAttribute("anonymous variable");
-        SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
-        elist.push_back(Ir::createAddressOfOp(ref, Ir::createPointerType(ref->get_type())));
-      }
-      if (!blocks.empty() && params.size() < alist.size()) {
-          std::cout << __FILE__ << ":" << __LINE__
-              << ": error during ICFG construction: "
-              << "constructor has more arguments than parameters!"
-              << std::endl;
-#if 0
-          std::cout
-              << "function call: "
-              << Ir::fragmentToString(ci->get_parent()) << std::endl
-              << "               "
-              << dumpTreeFragmentToString(ci->get_parent()) << std::endl;
-          std::cout
-              << "candicate function: "
-              << (void *) p
-              << " " << p->name << " (" << p->mangled_name << ")"
-              << std::endl;
-          std::cout << "params: [";
-          SgInitializedNamePtrList::iterator pi;
-          for (pi = params.begin(); pi != params.end(); ++pi) {
-              std::cout << Ir::fragmentToString(*pi);
-              if (pi + 1 != params.end())
-                  std::cout << ", ";
-          }
-          std::cout << "]" << std::endl;
-          std::cout << "alist:  [";
-          SgExpressionPtrList::iterator ai;
-          for (ai = alist.begin(); ai != alist.end(); ++ai) {
-              std::cout << Ir::fragmentToString(*ai);
-              if (ai + 1 != alist.end())
-                  std::cout << ", ";
-          }
-          std::cout << "]" << std::endl;
-#endif
-          exit(EXIT_FAILURE);
-      }
-      for (ei = alist.begin(); ei != alist.end(); ++ei) {
-        elist.push_back(*ei);
-        if (!blocks.empty() && ni != params.end())
-          ++ni;
-      }
-      if (!blocks.empty()) {
-        while (ni != params.end()) {
-          if (*ni != NULL)
+   // GB (2008-04-29): ROSE generates SgConstructorInitializer nodes for new
+   // expressions that allocate (arrays of) basic types. But in these cases,
+   // we don't want to generate a constructor call, because basic types are
+   // not constructed on allocation. Thus, we "bail out", i.e., bypass the
+   // whole call generation stuff.
+      bool bailOut = false;
+      if (SgNewExp *ne = isSgNewExp(ci->get_parent()))
+      {
+          SgType *t = ne->get_type()->findBaseType();
+          if (!isSgNamedType(t))
           {
-              if (isSgAssignInitializer(*ni))
-                  elist.push_back(isSgAssignInitializer((*ni)->get_initptr())
-                      ->get_operand_i());
 #if 0
-           // GB (2008-03-12): This cannot be right. It adds the parameter
-           // name (i.e. the name of a variable internal to the called
-           // function) to the list of function call arguments.
-              else if (isSgInitializedName(*ni))
-                  elist.push_back(Ir::createVarRefExp(isSgInitializedName(*ni)));
+              std::cout << "not generating constructor call for type "
+                  << t->class_name() << " (" << Ir::fragmentToString(t) << ")"
+                  << std::endl;
 #endif
-              else
-              {
-                  std::cout
-                      << __FILE__ << ":" << __LINE__ << ": error:"
-                      << "*ni of type: " << (*ni)->class_name() << std::endl;
-                  exit(EXIT_FAILURE);
+              bailOut = true;
+          }
+      }
+      if (!bailOut) {
+        if (ci->get_declaration() != NULL) {
+          name = ci->get_declaration()->get_name().str();
+          mangled_name = ci->get_declaration()->get_mangled_name().str();
+          /* find constructor implementations */
+          int num = 0;
+          std::deque<Procedure *>::const_iterator i;
+       // GB (2008-03-13): Default constructors can be called without
+       // parentheses, in which case the mangled name of the call is different
+       // from the mangled name of the constructor that is called. We thus
+       // make a distinction between default and non-default constructors. For
+       // non-default constructors, comparing the mangled name is fine; for
+       // default constructors, we look at the non-mangled name and the number
+       // of args.
+       // All of this should be handled by some much smarter logic based an
+       // defining declarations or something.
+          if (ci->get_declaration()->get_args().empty() && ci->get_args()->get_expressions().size() == 1) {
+           // GB (2008-03-27): This is a fun case: The constructor
+           // initializer's declaration has no arguments, but the call has one
+           // argument. This appears to be the case for default copy
+           // constructors. Since the copy constructor is default, we don't
+           // have a definition, so we want the call to be external. Thus we
+           // simply do: Nothing! The blocks list will remain empty, and an
+           // external constructor call will be generated below.
+
+#if 0
+              std::cout << " ***" << std::endl;
+              std::cout << " *** arg numbers do not match! ***" << std::endl;
+              std::cout << " *** constructor: " << name << "/" << mangled_name << std::endl;
+              std::cout << " *** params: " << ci->get_declaration()->get_parameterList()->get_args().size() << std::endl;
+              std::cout << " *** arg: " << Ir::fragmentToString(ci->get_args()->get_expressions().front()) << std::endl;
+              std::cout << " ***" << std::endl;
+#endif
+          } else if (ci->get_declaration()->get_args().empty()) {
+           // default constructor
+              for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
+                std::string i_name = (*i)->name;
+                if (name == i_name && (*i)->decl->get_args().empty()) {
+                  blocks.push_back((*cfg->procedures)[num]->entry);
+                }
+                num++;
+              }
+          } else {
+           // non-default constructor
+              for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
+                std::string i_mangled_name = (*i)->mangled_name;
+                if (mangled_name == i_mangled_name) {
+                  blocks.push_back((*cfg->procedures)[num]->entry);
+                }
+                num++;
               }
           }
-          ++ni;
-        }
-      }
-      BasicBlock *first_arg_block = NULL, *last_arg_block = NULL;
-      if (!elist.empty()) {
-        int i;
-        BasicBlock *prev = NULL;
-        for (i = 0; i < elist.size(); i++) {
-          BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
-          cfg->nodes.push_back(b);
-          if (first_arg_block == NULL)
-            first_arg_block = b;
-          if (prev != NULL)
-            add_link(prev, b, NORMAL_EDGE);
-          prev = b;
-        }
-        last_arg_block = prev;
-      }
-      /* FIXME: is this correct? */
-      BasicBlock *retval_block = NULL;
-      CallBlock *call_block = NULL, *return_block = NULL;
-      if (!blocks.empty()) {
-        call_block = new CallBlock(node_id++, CALL, procnum,
-                new std::vector<SgVariableSymbol *>(
-                    *blocks.front()->get_params()),
-                name);
-        return_block = new CallBlock(node_id++, RETURN, procnum,
-                new std::vector<SgVariableSymbol *>(
-                    *blocks.front()->get_params()),
-                name);
-        cfg->nodes.push_back(call_block);
-        cfg->calls.push_back(call_block);
-        cfg->nodes.push_back(return_block);
-        cfg->returns.push_back(return_block);
-        call_block->partner = return_block;
-        return_block->partner = call_block;
-
-        /* set links */
-        std::vector<CallBlock *> *exits = new std::vector<CallBlock *>();
-        std::vector<CallBlock *>::const_iterator i;
-        for (i = blocks.begin(); i != blocks.end(); ++i)
-          exits->push_back((*i)->partner);
-        if (last_arg_block != NULL)
-          add_link(last_arg_block, call_block, NORMAL_EDGE);
-        for (i = blocks.begin(); i != blocks.end(); ++i)
-          add_link(call_block, *i, CALL_EDGE);
-        add_link(call_block, return_block, LOCAL);
-        for (i = exits->begin(); i != exits->end(); ++i)
-          add_link(*i, return_block, RETURN_EDGE);
-        delete exits;
-        if (retval_block != NULL) {
-          add_link(return_block, retval_block, NORMAL_EDGE);
-          add_link(retval_block, after, NORMAL_EDGE);
-          retval = retval_block;
-        } else {
-          add_link(return_block, after, NORMAL_EDGE);
-          retval = return_block;
-        }
-        after = call_block;
-        last = retval;
-      } else {
-        /* call to external constructor */
-        BasicBlock *call_block
-          = new BasicBlock(node_id++, INNER, procnum);
-        cfg->nodes.push_back(call_block);
-        call_block->statements.push_front(
-                Ir::createConstructorCall(name, ci->get_type()));
-
-        /* set links */
-        if (last_arg_block != NULL)
-          add_link(last_arg_block, call_block, NORMAL_EDGE);
-        if (retval_block != NULL) {
-          add_link(call_block, retval_block, NORMAL_EDGE);
-          add_link(retval_block, after, NORMAL_EDGE);
-          retval = retval_block;
-        } else {
-          add_link(call_block, after, NORMAL_EDGE);
-          retval = call_block;
-        }
-        after = call_block;
-        last = retval;
-      }
-      /* fill blocks */
-      if (first_arg_block != NULL) {
-        std::vector<SgVariableSymbol *> *call_params =
-          evaluate_arguments(name, elist, first_arg_block, true);
-        std::vector<SgVariableSymbol *> *ret_params =
-            new std::vector<SgVariableSymbol *>(*call_params);
-        if (call_block != NULL) {
-          call_block->set_params(call_params);
-          call_block->stmt->update_infolabel();
-        }
-        else
-            delete call_params;
-     // GB (2008-03-12): We had forgotten to update the list of variables in
-     // the return block.
-        if (return_block != NULL) {
-       // GB (2008-03-13): If this is a constructor call that resulted from
-       // application of the 'new' operator, we need to remove the $A$this
-       // pointer from the list of variables in the ReturnStmt. The reason
-       // is that this pointer is used one more time in the subsequent
-       // statement; two occurrences break the general rule of exactly one
-       // use of temporary variables.
-          if (isSgNewExp(ci->get_parent())) {
-              std::vector<SgVariableSymbol *> *pop_params =
-                  new std::vector<SgVariableSymbol *>(
-                          ret_params->begin()+1, ret_params->end());
-              return_block->set_params(pop_params);
-              delete ret_params;
-          } else {
-              return_block->set_params(ret_params);
+       // GB (2008-03-13): Overloading must be uniquely resolvable.
+          if (blocks.size() > 1) {
+           // GB (2008-03-27): We cannot make this an error (yet?). Some STL
+           // headers define constructors and maybe even functions; if such
+           // headers are included several times, we get this error, although
+           // the implementations are the same. This is yet another instance
+           // of the problem that identical sub-ASTs are not shared. So we
+           // let this go for now. Maybe in the future the ProcTraversal could
+           // be made to only traverse unique function definitions from the
+           // AST matcher's hash table...
+#if 0
+              std::cout << __FILE__ << ":" << __LINE__
+                  << ": error during ICFG construction: ";
+              std::cout << "found more than one "
+                  << "constructor implementation for initializer '"
+                  << Ir::fragmentToString(ci) << "'" << std::endl;
+              std::cout << "procedures:";
+              std::vector<CallBlock *>::iterator block;
+              for (block = blocks.begin(); block != blocks.end(); ++block) {
+                  std::cout << " " << (*block)->procnum;
+              }
+              std::cout << std::endl;
+              std::exit(EXIT_FAILURE);
+#endif
           }
-          return_block->stmt->update_infolabel();
         }
-        else
-            delete ret_params;
+     // GB (2008-03-25): Oops, we missed setting the type for implicit
+     // constructor calls (copy constructors).
+        if (name == "" && isSgNamedType(ci->get_type())) {
+            SgNamedType *t = isSgNamedType(ci->get_type());
+            name = t->get_name().str();
+        }
+
+        /* setup argument expressions */
+        SgExpressionPtrList elist;
+        Procedure *p = NULL;
+        SgInitializedNamePtrList params;
+        SgExpressionPtrList& alist = ci->get_args()->get_expressions();
+        SgInitializedNamePtrList::const_iterator ni;
+        SgExpressionPtrList::const_iterator ei;
+        if (!blocks.empty()) {
+          p = (*cfg->procedures)[blocks.front()->procnum];
+          params = p->params->get_args();
+          ni = params.begin();
+        }
+        if (SgInitializedName* initializedName=isSgInitializedName(ci->get_parent())) {
+          /* some member is initialized, pass the address
+           * of the object as this pointer */
+          //initializedName->set_file_info(FILEINFO);
+          SgVarRefExp *ref = Ir::createVarRefExp(initializedName);
+          SgAddressOfOp* a = Ir::createAddressOfOp(ref,Ir::createPointerType(ref->get_type()));
+          elist.push_back(a);
+        } else if (SgNewExp* newExp0=isSgNewExp(ci->get_parent())) {
+          SgType *t = newExp0->get_type();
+          if (isSgPointerType(t))
+            t = isSgPointerType(t)->get_base_type();
+          if (isSgNamedType(t))
+            name = isSgNamedType(t)->get_name();
+
+          elist.push_back(newExp0);
+
+          RetvalAttribute *ra = (RetvalAttribute *) ci->getAttribute("return variable");
+
+          SgVariableSymbol *var = Ir::createVariableSymbol(ra->get_str(),newExp0->get_type());
+
+          if (isSgExpression(newExp0->get_parent())) {
+            SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
+            satireReplaceChild(newExp0->get_parent(),newExp0,varRefExp);
+          } else if (root_var == NULL) {
+              root_var = var;
+          }
+        } else {
+          RetvalAttribute* ra = (RetvalAttribute *) ci->getAttribute("anonymous variable");
+          SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
+          elist.push_back(Ir::createAddressOfOp(ref, Ir::createPointerType(ref->get_type())));
+        }
+        if (!blocks.empty() && params.size() < alist.size()) {
+            std::cout << __FILE__ << ":" << __LINE__
+                << ": error during ICFG construction: "
+                << "constructor has more arguments than parameters!"
+                << std::endl;
+#if 0
+            std::cout
+                << "function call: "
+                << Ir::fragmentToString(ci->get_parent()) << std::endl
+                << "               "
+                << dumpTreeFragmentToString(ci->get_parent()) << std::endl;
+            std::cout
+                << "candicate function: "
+                << (void *) p
+                << " " << p->name << " (" << p->mangled_name << ")"
+                << std::endl;
+            std::cout << "params: [";
+            SgInitializedNamePtrList::iterator pi;
+            for (pi = params.begin(); pi != params.end(); ++pi) {
+                std::cout << Ir::fragmentToString(*pi);
+                if (pi + 1 != params.end())
+                    std::cout << ", ";
+            }
+            std::cout << "]" << std::endl;
+            std::cout << "alist:  [";
+            SgExpressionPtrList::iterator ai;
+            for (ai = alist.begin(); ai != alist.end(); ++ai) {
+                std::cout << Ir::fragmentToString(*ai);
+                if (ai + 1 != alist.end())
+                    std::cout << ", ";
+            }
+            std::cout << "]" << std::endl;
+#endif
+            exit(EXIT_FAILURE);
+        }
+        for (ei = alist.begin(); ei != alist.end(); ++ei) {
+          elist.push_back(*ei);
+          if (!blocks.empty() && ni != params.end())
+            ++ni;
+        }
+        if (!blocks.empty()) {
+          while (ni != params.end()) {
+            if (*ni != NULL)
+            {
+             // GB (2008-04-29): This used to cast the initialized name itself
+             // to an initializer, which did not make sense at all... also,
+             // cleaned up the error messages.
+                SgInitializedName *initname = *ni;
+                SgInitializer *initializer = initname->get_initptr();
+                if (isSgAssignInitializer(initializer))
+                {
+                    elist.push_back(isSgAssignInitializer(initializer)
+                      ->get_operand_i());
+                }
+#if 0
+             // GB (2008-03-12): This cannot be right. It adds the parameter
+             // name (i.e. the name of a variable internal to the called
+             // function) to the list of function call arguments.
+                else if (isSgInitializedName(*ni))
+                    elist.push_back(Ir::createVarRefExp(isSgInitializedName(*ni)));
+#endif
+                else if (initializer != NULL)
+                {
+                    std::cerr
+                        << __FILE__ << ":" << __LINE__ << ": error: "
+                        << "found initializer of type: " << initializer->class_name()
+                        << " in constructor call with default arguments (?)"
+                        << ", this is not handled yet" << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+                else
+                {
+                    std::cerr
+                        << __FILE__ << ":" << __LINE__ << ": error: "
+                        << "found NULL initializer in constructor call: ";
+                    Sg_File_Info *where = ci->get_file_info();
+                    std::cerr
+                        << where->get_filenameString() << ":"
+                        << where->get_line() << ":" << where->get_col() << ": "
+                        << Ir::fragmentToString(ci->get_parent()) << std::endl
+                        << "Giving up, sorry." << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+            }
+            ++ni;
+          }
+        }
+        BasicBlock *first_arg_block = NULL, *last_arg_block = NULL;
+        if (!elist.empty()) {
+          int i;
+          BasicBlock *prev = NULL;
+          for (i = 0; i < elist.size(); i++) {
+            BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
+            cfg->nodes.push_back(b);
+            if (first_arg_block == NULL)
+              first_arg_block = b;
+            if (prev != NULL)
+              add_link(prev, b, NORMAL_EDGE);
+            prev = b;
+          }
+          last_arg_block = prev;
+        }
+        /* FIXME: is this correct? */
+        BasicBlock *retval_block = NULL;
+        CallBlock *call_block = NULL, *return_block = NULL;
+        if (!blocks.empty()) {
+          call_block = new CallBlock(node_id++, CALL, procnum,
+                  new std::vector<SgVariableSymbol *>(
+                      *blocks.front()->get_params()),
+                  name);
+          return_block = new CallBlock(node_id++, RETURN, procnum,
+                  new std::vector<SgVariableSymbol *>(
+                      *blocks.front()->get_params()),
+                  name);
+          cfg->nodes.push_back(call_block);
+          cfg->calls.push_back(call_block);
+          cfg->nodes.push_back(return_block);
+          cfg->returns.push_back(return_block);
+          call_block->partner = return_block;
+          return_block->partner = call_block;
+
+          /* set links */
+          std::vector<CallBlock *> *exits = new std::vector<CallBlock *>();
+          std::vector<CallBlock *>::const_iterator i;
+          for (i = blocks.begin(); i != blocks.end(); ++i)
+            exits->push_back((*i)->partner);
+          if (last_arg_block != NULL)
+            add_link(last_arg_block, call_block, NORMAL_EDGE);
+          for (i = blocks.begin(); i != blocks.end(); ++i)
+            add_link(call_block, *i, CALL_EDGE);
+          add_link(call_block, return_block, LOCAL);
+          for (i = exits->begin(); i != exits->end(); ++i)
+            add_link(*i, return_block, RETURN_EDGE);
+          delete exits;
+          if (retval_block != NULL) {
+            add_link(return_block, retval_block, NORMAL_EDGE);
+            add_link(retval_block, after, NORMAL_EDGE);
+            retval = retval_block;
+          } else {
+            add_link(return_block, after, NORMAL_EDGE);
+            retval = return_block;
+          }
+          after = call_block;
+          last = retval;
+        } else {
+          /* call to external constructor */
+          BasicBlock *call_block
+            = new BasicBlock(node_id++, INNER, procnum);
+          cfg->nodes.push_back(call_block);
+          call_block->statements.push_front(
+                  Ir::createConstructorCall(name, ci->get_type()));
+
+          /* set links */
+          if (last_arg_block != NULL)
+            add_link(last_arg_block, call_block, NORMAL_EDGE);
+          if (retval_block != NULL) {
+            add_link(call_block, retval_block, NORMAL_EDGE);
+            add_link(retval_block, after, NORMAL_EDGE);
+            retval = retval_block;
+          } else {
+            add_link(call_block, after, NORMAL_EDGE);
+            retval = call_block;
+          }
+          after = call_block;
+          last = retval;
+        }
+        /* fill blocks */
+        if (first_arg_block != NULL) {
+          std::vector<SgVariableSymbol *> *call_params =
+            evaluate_arguments(name, elist, first_arg_block, true);
+          std::vector<SgVariableSymbol *> *ret_params =
+              new std::vector<SgVariableSymbol *>(*call_params);
+          if (call_block != NULL) {
+            call_block->set_params(call_params);
+            call_block->stmt->update_infolabel();
+          }
+          else
+              delete call_params;
+       // GB (2008-03-12): We had forgotten to update the list of variables in
+       // the return block.
+          if (return_block != NULL) {
+         // GB (2008-03-13): If this is a constructor call that resulted from
+         // application of the 'new' operator, we need to remove the $A$this
+         // pointer from the list of variables in the ReturnStmt. The reason
+         // is that this pointer is used one more time in the subsequent
+         // statement; two occurrences break the general rule of exactly one
+         // use of temporary variables.
+            if (isSgNewExp(ci->get_parent())) {
+                std::vector<SgVariableSymbol *> *pop_params =
+                    new std::vector<SgVariableSymbol *>(
+                            ret_params->begin()+1, ret_params->end());
+                return_block->set_params(pop_params);
+                delete ret_params;
+            } else {
+                return_block->set_params(ret_params);
+            }
+            return_block->stmt->update_infolabel();
+          }
+          else
+              delete ret_params;
+        }
+        /* replace call by its result */
+        // if (retval_block != NULL)
+        //     assign_retval(name, call, retval_block);
+        if (first_arg_block != NULL)
+          after = first_arg_block;
+        expnum++;
       }
-      /* replace call by its result */
-      // if (retval_block != NULL)
-      //     assign_retval(name, call, retval_block);
-      if (first_arg_block != NULL)
-        after = first_arg_block;
-      expnum++;
     }
     else if (isSgDeleteExp(node)) {
       SgDeleteExp *de = isSgDeleteExp(node);

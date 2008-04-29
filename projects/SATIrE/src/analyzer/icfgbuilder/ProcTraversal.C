@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.10 2008-04-02 09:28:55 gergo Exp $
+// $Id: ProcTraversal.C,v 1.11 2008-04-29 14:17:32 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -62,6 +62,58 @@ ProcTraversal::visit(SgNode *node) {
       proc->procnum = procnum++;
       proc->params = decl->get_parameterList();
       proc->decl = decl;
+   // GB (2008-04-29): This block compares the parameter list at the
+   // function definition (which is where we are right now) with the
+   // parameter list in the "first nondefining declaration". The idea is to
+   // find the parameter list where default argument values may be defined.
+      SgDeclarationStatement *fndstmt = decl->get_firstNondefiningDeclaration();
+      SgFunctionDeclaration *fnd = isSgFunctionDeclaration(fndstmt);
+      if (fnd != NULL && fnd != decl)
+      {
+          SgInitializedNamePtrList &dargs = proc->params->get_args();
+          SgInitializedNamePtrList &fargs = fnd->get_parameterList()->get_args();
+       // GB (2008-04-29): In general, the first nondefining declaration's
+       // list is the one to use. However, some weird STL constructors (of
+       // std::vector) appear to have no params at their FND, but some at
+       // the point of definition. This might be a bug, who knows. In any
+       // case, only use the FND's params if they are at least as many as
+       // the definition's params.
+          if (fargs.size() >= dargs.size())
+              proc->params = fnd->get_parameterList();
+       // GB (2008-04-29): This code can be uncommented for debugging.
+#if 0
+          SgInitializedNamePtrList::const_iterator i;
+          int dinits = 0, finits = 0;
+          for (i = dargs.begin(); i != dargs.end(); ++i)
+          {
+              if ((*i)->get_initptr() != NULL)
+                  dinits++;
+          }
+          for (i = fargs.begin(); i != fargs.end(); ++i)
+          {
+              if ((*i)->get_initptr() != NULL)
+                  finits++;
+          }
+          if (finits > dinits)
+          {
+              std::cout << "in definition of function "
+                  << decl->get_qualified_name().str() << ": "
+                  << finits << " default arguments at first nondefining declaration, "
+                  << dinits << " at site of definition" << std::endl
+                  << "looks like it would pay off to use the fnd's params list!"
+                  << std::endl;
+              proc->params = fnd->get_parameterList();
+          }
+          else if (dargs.size() != fargs.size() || finits < dinits)
+          {
+              std::cout << "weird function def: "
+                  << decl->get_qualified_name().str() << ": "
+                  << finits << " of " << fargs.size() << " at fnd, "
+                  << dinits << " of " << dargs.size() << " at def"
+                  << std::endl;
+          }
+#endif
+      }
       SgMemberFunctionDeclaration *mdecl
         = isSgMemberFunctionDeclaration(decl);
       if (mdecl) {
@@ -104,7 +156,7 @@ ProcTraversal::visit(SgNode *node) {
           }
         }
         SgInitializedNamePtrList params
-          = decl->get_parameterList()->get_args();
+          = proc->params->get_args();
         SgInitializedNamePtrList::const_iterator i;
         int parnum = 0;
         for (i = params.begin(); i != params.end(); ++i) {

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.C,v 1.5 2008-03-28 15:55:32 gergo Exp $
+// $Id: ExprLabeler.C,v 1.6 2008-04-29 14:17:32 gergo Exp $
 
 #include "ExprLabeler.h"
 
@@ -42,18 +42,52 @@ void ExprLabeler::visit(SgNode *node)
          // trust it. The more interesting question is whether the variable
          // name can be considered correct if there is more than one layer
          // of pointers. TODO: Investigate this.
-            while (isSgPointerType(type))
+         // while (isSgPointerType(type))
+         //     type = isSgPointerType(type)->get_base_type();
+         // GB (2008-04-29): We really only want to peel off one layer of
+         // arrays and after that possibly one layer of pointers. So if we
+         // have:
+         // - array of class: generate constructor call
+         // - array of pointer to whatever: do not generate constructor call
+         // - pointer to class: generate constructor call
+         // - pointer to something else: do not generate constructor call
+         // I hope that's correct.
+            if (isSgArrayType(type))
+                type = isSgArrayType(type)->get_base_type();
+            if (isSgPointerType(type))
                 type = isSgPointerType(type)->get_base_type();
 #if 0
             SgName name = isSgNamedType(isSgPointerType(n->get_type())
                     ->get_base_type())->get_name();
 #endif
          // SgName name = isSgNamedType(type)->get_name();
-            std::string name = isSgNamedType(type)->get_name().str();
-            std::stringstream varname;
-            varname << "$" << name << "$this";
-            RetvalAttribute *retval = new RetvalAttribute(varname.str());
-            node->addNewAttribute("return variable", retval);
+            SgNamedType *namedType = isSgNamedType(type);
+            if (!namedType)
+            {
+#if 0
+             // This is not really an error, regardless of what the message
+             // says. ROSE generates constructor initializer nodes for basic
+             // types, but we do not want to generate constructor calls for
+             // them.
+                std::cerr << __FILE__ << ":" << __LINE__ << ": "
+                    << "error in 'new' expression: expected a named type, but got "
+                    << type->class_name() << " (" << Ir::fragmentToString(type)
+                    << ") instead!" << std::endl;
+                Sg_File_Info *where = n->get_file_info();
+                std::cerr << "offending expression: "
+                    << where->get_filenameString() << ":" << where->get_line()
+                    << ":" << where->get_col() << ": " << Ir::fragmentToString(n)
+                    << std::endl;
+#endif
+            }
+            else
+            {
+                std::string name = namedType->get_name().str();
+                std::stringstream varname;
+                varname << "$" << name << "$this";
+                RetvalAttribute *retval = new RetvalAttribute(varname.str());
+                node->addNewAttribute("return variable", retval);
+            }
         }
         else if (!isSgInitializedName(node->get_parent()))
         {
