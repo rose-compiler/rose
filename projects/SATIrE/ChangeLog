@@ -18,6 +18,7 @@ V0.8.2 (in progress)
     current procedure from PAG analyses
   - replaced slow expression numbering mechanism by Mihai Ghete's faster AST
     hashing
+  - fixed ICFG builder failures related to default constructor arguments
 
 * Testsuite improvements [GB]
   - separate histograms are generated for execution time and memory usage
