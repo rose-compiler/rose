@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(BOOST_INCLUDE_DIR) -I$(top_srcdir)/src/satire -I$(top_srcdir)/src/analyzer/astnumbering -I$(top_srcdir)/src/analyzer/astnumbering/satire -I$(top_srcdir)/src/analyzer/commandlineinterface/satire
+INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(top_srcdir)/src/analyzer/astnumbering -I$(top_srcdir)/src/analyzer/astnumbering/satire
 
 noinst_LIBRARIES = libAstNumbering.a
 nobase_include_HEADERS = satire/EqualityTraversal.h
@@ -16,7 +16,7 @@ libAstNumbering_a_SOURCES = EqualityTraversal.C
 #%_cfg.o: $(PAG_PATH)/share/pag/cfg/%.c
 #	$(COMPILE) -Wno-unused -c $< -o $@
 
-EXTRA_DIST = ValueEqualityCases ValueHashCases ValueStringCases
+
 
 
 

@@ -1,16 +1,7 @@
 #ifndef EQUALITY_TRAVERSAL_H
 #define EQUALITY_TRAVERSAL_H
 
-// GB (2008-05-19): Rudimentary include guard. If we are compiling SATIrE,
-// we want to include our wrapper <satire_rose.h> instead of the ROSE header
-// file. For now, check this by testing for definition of the PACKAGE macro,
-// although that's not very exact.
-#ifdef PACKAGE
-#include <satire_rose.h>
-#else
 #include <rose.h>
-#endif
-
 #include <map>
 #include <ext/hash_map>
 
@@ -21,31 +12,11 @@ typedef std::pair<SgNode*, std::vector<EqualityId> > NodeInfo;
 // hashmap support functions
 class NodeHash {
 public:
-  size_t operator()(const NodeInfo& node) const;
-
-private:
-// GB: Supporting hash functions.
-  static size_t hashString(const std::string &str);
-  static size_t hashInt(int val);
-  static size_t hashChildren(SgNode *node);
-  template <class C> static size_t hashMangledName(C *c);
-  static size_t hashInitializedNamePtrList(SgInitializedNamePtrList &args);
-  static size_t hashValueExp(SgValueExp *value);
-  static size_t hashVarious(const NodeInfo &node);
-  static size_t hashDeclarationStatement(SgDeclarationStatement *decl);
+  size_t operator()(NodeInfo node) const;
 };
 class NodeEqual {
 public:
-  bool operator()(const NodeInfo& s1, const NodeInfo& s2) const;
-
-private:
-// GB: Supporting equality functions.
-  static bool variantsEqual(const NodeInfo& s1, const NodeInfo& s2);
-  static bool childrenEqual(const NodeInfo& s1, const NodeInfo& s2);
-  template <class C> static bool compareNamedThings(C *i1, C *i2);
-  static bool compareInitializedNamePtrList(SgInitializedNamePtrList &a1,
-                                            SgInitializedNamePtrList &a2);
-  static bool compareVarious(const NodeInfo& s1, const NodeInfo& s2);
+  bool operator()(NodeInfo s1, NodeInfo s2) const;
 };
 
 class NodeAddressHash {
@@ -81,16 +52,12 @@ public:
   void get_all_exprs(std::vector<EqualityId>& ids);
   void get_all_types(std::vector<EqualityId>& ids);
 
-// GB (2008-05-20): Made this public because occasionally we want to call it
-// directly on type nodes.
+protected:
   EqualityId
   evaluateSynthesizedAttribute(SgNode* astNode,
 			       SynthesizedAttributesList synList);
-
-protected:
   EqualityId
   defaultSynthesizedAttribute();
-  void atTraversalEnd();
 
 private:
   SimpleNodeMap node_map;
@@ -108,7 +75,6 @@ private:
   // map id -> children
   __gnu_cxx::hash_map<EqualityId, std::vector<EqualityId> > id_child_map;
 
-  EqualityId idForNode(const NodeInfo& node);
 };
 
 
