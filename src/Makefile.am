@@ -78,6 +78,9 @@ libroseBinaryLibraries = \
 
 endif
 
+libroseRuntimeTransformation = \
+   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.la 
+
 # Note: ROSE/src/*.o are not included since they are only
 # related to the test program that is compiled to test the
 # ROSE libraries (librose.a librose.so)
@@ -181,6 +184,7 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
+   $(libroseRuntimeTransformation) \
    $(top_builddir)/src/midend/astInlining/libastinlining.la \
    $(top_builddir)/src/midend/astOutlining/libastOutliner.la \
    $(top_builddir)/src/midend/astUtil/astInterface/libastInterface.la \
