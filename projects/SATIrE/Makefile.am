@@ -15,13 +15,11 @@ EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
 	testsuite/base/success/cconstants.c \
 	testsuite/base/success/classes.C \
 	testsuite/base/success/classes2.C \
-	testsuite/base/success/classes3.C \
 	testsuite/base/success/classes_and_returns.C \
 	testsuite/base/success/deepreturn.c \
 	testsuite/base/success/default_args.C \
 	testsuite/base/success/demo1.C \
 	testsuite/base/success/demo2.C \
-	testsuite/base/success/destructor.C \
 	testsuite/base/success/destructor2.C \
 	testsuite/base/success/destructor_simple.C \
 	testsuite/base/success/forinit.c \
@@ -41,4 +39,7 @@ EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
 	testsuite/base/success/typedefs.C \
 	testsuite/base/success/verysmall.c \
 	testsuite/base/success/virtual.C \
-	testsuite/base/success/while_call1.c 
+	testsuite/base/success/while_call1.c \
+	\
+	src/analyzer/astnumbering/ValueEqualityCases \
+	src/analyzer/astnumbering/ValueStringCases

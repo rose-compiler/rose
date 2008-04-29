@@ -85,6 +85,7 @@ Makefile
 src/termite/Makefile
 src/analyzer/annotation/Makefile
 src/analyzer/astaccess/Makefile
+src/analyzer/astnumbering/Makefile
 src/analyzer/commandlineinterface/Makefile
 src/analyzer/icfgbuilder/Makefile
 src/analyzer/skeletons/Makefile
