@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.17 2008-04-29 14:17:32 gergo Exp $
+// $Id: ExprTransformer.C,v 1.18 2008-04-30 09:53:15 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -350,12 +350,17 @@ void ExprTransformer::visit(SgNode *node)
       bool bailOut = false;
       if (SgNewExp *ne = isSgNewExp(ci->get_parent()))
       {
-          SgType *t = ne->get_type()->findBaseType();
-          if (!isSgNamedType(t))
+          SgType *type = ne->get_type();
+       // These lines are copied from ExprLabeler.h. Keep them consistent!
+          if (isSgArrayType(type))
+              type = isSgArrayType(type)->get_base_type();
+          if (isSgPointerType(type))
+              type = isSgPointerType(type)->get_base_type();
+          if (!isSgNamedType(type))
           {
 #if 0
               std::cout << "not generating constructor call for type "
-                  << t->class_name() << " (" << Ir::fragmentToString(t) << ")"
+                  << type->class_name() << " (" << Ir::fragmentToString(type) << ")"
                   << std::endl;
 #endif
               bailOut = true;
@@ -474,6 +479,16 @@ void ExprTransformer::visit(SgNode *node)
 
           elist.push_back(newExp0);
 
+          if (!ci->attributeExists("return variable"))
+          {
+              std::cerr << __FILE__ << ":" << __LINE__
+                  << ": new expression " << Ir::fragmentToString(newExp0)
+                  << " has no return var attribute; bailOut = " << bailOut
+                  << std::endl;
+              std::cerr << "type: " << newExp0->get_type()->class_name()
+                  << std::endl;
+           // If we got into this mess, the following getAttribute call will abort.
+          }
           RetvalAttribute *ra = (RetvalAttribute *) ci->getAttribute("return variable");
 
           SgVariableSymbol *var = Ir::createVariableSymbol(ra->get_str(),newExp0->get_type());
