@@ -34,12 +34,14 @@ $(TEST_Objects): runtimeCheck $(TESTCODES)
 
 EXTRA_DIST = example.C
 
-CLEANFILES = *.out example.C
+CLEANFILES = *.out example.C *.ti *.pdf *.C
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runtimeCheck $(TESTCODES)
 	cp $(srcdir)/$(TESTCODES) .
 	./runtimeCheck $(TESTCODES) 
+#	g++ -o test rose_$(TESTCODES)
+#	./rose_$(TESTCODES)
 #	@echo "*********************************************************************************************************************"
 #	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 #	@echo "*********************************************************************************************************************"

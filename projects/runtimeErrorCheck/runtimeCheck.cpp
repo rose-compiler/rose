@@ -71,6 +71,8 @@ int main(int argc, char** argv) {
   RuntimeInstrumentation* runtime = new RuntimeInstrumentation();
   runtime->run(project);
 
+  project->unparse();
+
   return 0;
 }
 
