@@ -21,3 +21,8 @@ rose_paths.h: Makefile
 	@@echo "" >> rose_paths.h
 	@@echo "/* Define the location of the Compass tool within ROSE */" >> rose_paths.h
 	@@echo "#define COMPASS_SOURCE_DIRECTORY \"@absolute_path_srcdir@/projects/compass\"" >> rose_paths.h
+	@@echo "" >> rose_paths.h
+	@@echo "/* Numeric form of ROSE version -- assuming ROSE version x.y.zL (where */" >> rose_paths.h
+	@@echo "/* x, y, and z are numbers, and L is a single lowercase letter from a to j), */" >> rose_paths.h
+	@@echo "/* the numeric value is x * 1000000 + y * 10000 + z * 100 + (L - 'a') */" >> rose_paths.h
+	@@echo "@PACKAGE_VERSION@" | sed 's/\([0-9]\)\([a-z]\)/\1_\2/g' | tr .a-j _0-9 | awk -F_ '{printf "%02d%02d%02d%02d\n", $$1, $$2, $$3, $$4}' | sed 's/^0*//' | sed 's/.*/#define ROSE_NUMERIC_VERSION \0/' >> rose_paths.h
