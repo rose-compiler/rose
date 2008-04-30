@@ -1,7 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: GSequenceVisitor.h,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: GSequenceVisitor.h,v 1.3 2008-04-30 09:53:21 gergo Exp $
 
 // Author: Markus Schordan
+
+#ifndef H_GSEQUENCEVISITOR
+#define H_GSEQUENCEVISITOR
 
 #include "GrammarIr.h"
 
@@ -39,3 +42,5 @@ public:
   list<GEnhancedToken*> enhancedTokenStream;
   string toString();
 };
+
+#endif
