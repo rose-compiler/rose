@@ -3745,6 +3745,8 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
   while ((cscope!=NULL)&&(symbol==NULL))
   {
     symbol = cscope->lookup_symbol(name);
+    //debug
+   // cscope->print_symboltable("debug sageInterface.C L3749...");
    if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
     cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
     else 
@@ -3905,22 +3907,71 @@ SgStatement* SageInterface::getLastStatement(SgScopeStatement *scope)
   return stmt; 
 }
 
-SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope)
+SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool includingCompilerGenerated/*=false*/)
 {
   ROSE_ASSERT(scope);
   SgStatement* stmt=NULL;
 
   if (scope->containsOnlyDeclarations())
     {
-    SgDeclarationStatementPtrList declList = scope->getDeclarationList();
-    if (declList.size()>0)
-       stmt = isSgStatement(declList.front());
+      SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+      if (includingCompilerGenerated)
+      {  
+          if (declList.size()>0)
+             stmt = isSgStatement(declList.front());
+      } else
+      { //skip compiler-generated declarations
+        SgDeclarationStatementPtrList::iterator i=declList.begin();
+        while (i!=declList.end())
+        {  //isCompilerGenerated(),isOutputInCodeGeneration(),etc. are not good enough, 
+           //some content from headers included are not marked as compiler-generated
+           //
+           // cout<<(*i)->unparseToString()<<endl;
+           // ((*i)->get_file_info())->display("debug.......");
+           Sg_File_Info * fileInfo = (*i)->get_file_info();
+          // include transformation-generated  statements
+            if ((fileInfo->isSameFile(scope->get_file_info()))||(fileInfo->isTransformation()))
+            {  
+              stmt=*i;
+              break;
+            } else
+            {
+              i++;
+              continue;
+            }
+        }
+      }
     }
   else
   {
     SgStatementPtrList stmtList = scope->getStatementList();
-    if (stmtList.size()>0)
+   if (includingCompilerGenerated)
+    {
+      if (stmtList.size()>0)
       stmt = stmtList.front();
+    } else
+    { //skip compiler-generated declarations
+      SgStatementPtrList::iterator i=stmtList.begin();
+      while (i!=stmtList.end())
+      {  //isCompilerGenerated(),isOutputInCodeGeneration(),etc. are not good enough, 
+         //some content from headers included are not marked as compiler-generated
+         //
+         // cout<<(*i)->unparseToString()<<endl;
+         // ((*i)->get_file_info())->display("debug.......");
+         Sg_File_Info * fileInfo = (*i)->get_file_info();
+        // include transformation-generated  statements
+          if ((fileInfo->isSameFile(scope->get_file_info()))||(fileInfo->isTransformation()))
+          {  
+            stmt=*i;
+            break;
+          } else
+          {
+            i++;
+            continue;
+          }
+      }
+    }
+
   }
   return stmt; 
 
