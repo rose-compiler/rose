@@ -625,8 +625,8 @@ SgScopeStatement* getScope(const SgNode* astNode);
   */
   SgStatement* getLastStatement(SgScopeStatement *scope);
 
-  //! get the first statement within a scope, return NULL if it does not exist
-  SgStatement* getFirstStatement(SgScopeStatement *scope);
+  //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default
+  SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
 
 //! get next statement within the same scope of current statement 
   SgStatement* getNextStatement(SgStatement * currentStmt);

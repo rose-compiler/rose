@@ -2815,7 +2815,7 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                printf ("sourceFilename encountered an error in filename\n");
 
        // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro 
-       // is we detect we are processing a source file using the a C++ filename extension.
+       // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
        // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).

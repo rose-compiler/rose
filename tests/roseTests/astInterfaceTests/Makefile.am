@@ -13,7 +13,7 @@ noinst_PROGRAMS = \
     findMain buildVariableDeclaration buildAssignmentStmt \
     buildFunctionCalls buildPragmaDeclaration attachComment \
     insertHeader buildExpression buildStructDeclaration \
-    lookupNamedType buildFile
+    lookupNamedType buildFile movePreprocessingInfo
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -29,6 +29,7 @@ buildExpression_SOURCES          = buildExpression.C
 buildStructDeclaration_SOURCES   = buildStructDeclaration.C
 lookupNamedType_SOURCES          = lookupNamedType.C           
 buildFile_SOURCES                = buildFile.C           
+movePreprocessingInfo_SOURCES    = movePreprocessingInfo.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -50,7 +51,8 @@ generatedCodeExamples = \
   rose_inputbuildExpression.C \
   rose_inputbuildStructDeclaration.C \
   rose_inputLookupNamedType.C \
-  rose_inputbuildFile.C 
+  rose_inputbuildFile.C \
+  rose_inputMovePreprocessingInfo.C
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -82,13 +84,15 @@ rose_inputbuildStructDeclaration.C:buildStructDeclaration
 	./buildStructDeclaration$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildStructDeclaration.C
 rose_inputLookupNamedType.C:lookupNamedType
 	./lookupNamedType$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputLookupNamedType.C
+rose_inputMovePreprocessingInfo.C:movePreprocessingInfo
+	./movePreprocessingInfo$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputMovePreprocessingInfo.C
 
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
        inputbuildPragmaDeclaration.c inputAttachComment.C inputInsertHeader.C \
        inputbuildExpression.C inputbuildStructDeclaration.C inputLookupNamedType.C \
-       inputbuildFile.C
+       inputbuildFile.C inputMovePreprocessingInfo.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."

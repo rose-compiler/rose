@@ -464,7 +464,7 @@ SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* 
 //! Build a SgFile node and attach it to SgProject 
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
-SgFile* buildFile(const std::string& fileName,const std::string& outputFileName, SgProject* project=NULL);
+SgFile* buildFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project=NULL);
 
 //! Build and attach a comment, comment style is inferred from the language type of the target node if not provided. It is indeed a wrapper of SageInterface::attachComment().
 PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,

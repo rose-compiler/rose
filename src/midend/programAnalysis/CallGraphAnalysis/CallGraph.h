@@ -187,7 +187,7 @@ class FunctionData
 	  FunctionProperties *properties;
 	  bool hasDefinition;
 
-	  // Relavant data for call graph
+	  // Relevant data for call graph
           //SgFunctionDeclaration* functionDeclaration;
           Rose_STL_Container<FunctionProperties *> functionList;
 #else
@@ -196,7 +196,7 @@ class FunctionData
 			 SgProject *project, ClassHierarchyWrapper * );
           bool isDefined (); 
 	  
-	  // Relavant data for call graph
+	  // Relevant data for call graph
           SgFunctionDeclaration* functionDeclaration;
           Rose_STL_Container<SgFunctionDeclaration*> functionList;
 	  Rose_STL_Container<SgMemberFunctionDeclaration*> *findPointsToVirtualFunctions ( SgMemberFunctionDeclaration * );
