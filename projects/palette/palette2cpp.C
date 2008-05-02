@@ -1562,6 +1562,7 @@ string generateStatement(TriggerCondition* tc,
               resultStream << "std::sort(" << containerName << ".begin(), " << containerName << ".end(), Palette::PaletteGreater());" << endl;
               break;
             }
+            case UNSORTED_TABLE_REFERENCE: break;
             default: {
               cerr << "Bad sorting type " << ref.sortInfo << endl;
               abort();
@@ -1598,6 +1599,7 @@ string generateStatement(TriggerCondition* tc,
             resultStream << "std::sort(paletteContainerRef" << nameSuffix << ".begin(), paletteContainerRef" << nameSuffix << ".end(), Palette::PaletteGreater());" << endl;
             break;
           }
+          case UNSORTED_TABLE_REFERENCE: break;
           default: {
             cerr << "Bad sorting type " << ref.sortInfo << endl;
             abort();
