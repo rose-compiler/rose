@@ -23,7 +23,7 @@ else
 fi
 
 # only include the files in success/ and failure/ directories
-FILES=`find -L $SUITE -wholename \*success/\*.[cC]\* -or -wholename \*failure/\*.[cC]\* 2>/dev/null`
+FILES=`find -L $SUITE -wholename \*success/\*.[cC] -or -wholename \*failure/\*.[cC] 2>/dev/null`
 
 expected_fails=0
 fails_ok=0
