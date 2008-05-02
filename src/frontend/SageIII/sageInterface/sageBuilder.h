@@ -62,8 +62,9 @@ Scope stack is provided as an alternative to manually passing scope parameters t
 */
 extern std::list<SgScopeStatement*> ScopeStack;
 
-//! public interfaces of the scope stack, should be stable
+//! Public interfaces of the scope stack, should be stable
 void pushScopeStack (SgScopeStatement* stmt);
+void pushScopeStack (SgNode* node);
 void popScopeStack();
 SgScopeStatement* topScopeStack() ;
 bool emptyScopeStack();
@@ -328,14 +329,15 @@ SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL);
 
 /*!e.g the scope of arguments of functions are different for defining and nondefining functions.
 */ 
-SgInitializedName* 
-buildInitializedName(const SgName & name, SgType* type);
+SgInitializedName* buildInitializedName(const SgName & name, SgType* type);
+SgInitializedName* buildInitializedName(const std::string &name, SgType* type);
+SgInitializedName* buildInitializedName(const char* name, SgType* type);
 
-//! build SgFunctionParameterTypeList from SgFunctionParameterList
+//! Build SgFunctionParameterTypeList from SgFunctionParameterList
 SgFunctionParameterTypeList * 
 buildFunctionParameterTypeList(SgFunctionParameterList * paralist);
 
-//! build SgFunctionParameterTypeList from an expression list, useful when building a function call
+//! Build SgFunctionParameterTypeList from an expression list, useful when building a function call
 SgFunctionParameterTypeList *
 buildFunctionParameterTypeList(SgExprListExp * expList);
 
@@ -383,9 +385,15 @@ template <class actualFunction>
 SgFunctionDeclaration *
 buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
 
-//! build a function declaration with a function body
+//! Build a function declaration with a function body
 SgFunctionDeclaration *
 buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
+
+SgFunctionDeclaration *
+buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
+
+SgFunctionDeclaration *
+buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
 
 //! build a function call statement
 SgExprStatement*

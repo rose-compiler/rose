@@ -13,7 +13,7 @@ noinst_PROGRAMS = \
     findMain buildVariableDeclaration buildAssignmentStmt \
     buildFunctionCalls buildPragmaDeclaration attachComment \
     insertHeader buildExpression buildStructDeclaration \
-    lookupNamedType buildFile movePreprocessingInfo
+    lookupNamedType buildFile movePreprocessingInfo buildIfStmt
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -30,6 +30,7 @@ buildStructDeclaration_SOURCES   = buildStructDeclaration.C
 lookupNamedType_SOURCES          = lookupNamedType.C           
 buildFile_SOURCES                = buildFile.C           
 movePreprocessingInfo_SOURCES    = movePreprocessingInfo.C
+buildIfStmt_SOURCES              = buildIfStmt.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -52,7 +53,8 @@ generatedCodeExamples = \
   rose_inputbuildStructDeclaration.C \
   rose_inputLookupNamedType.C \
   rose_inputbuildFile.C \
-  rose_inputMovePreprocessingInfo.C
+  rose_inputMovePreprocessingInfo.C \
+  rose_inputbuildIfStmt.C
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -67,7 +69,8 @@ rose_inputbuildVariableDeclaration.C:buildVariableDeclaration
 	./buildVariableDeclaration$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildVariableDeclaration.C
 rose_inputbuildAssignmentStmt.C:buildAssignmentStmt
 	./buildAssignmentStmt$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAssignmentStmt.C	
-
+rose_inputbuildIfStmt.C:buildIfStmt
+	./buildIfStmt$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildIfStmt.C 
 rose_inputbuildFile.C:buildFile
 	./buildFile$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFile.C 
 rose_inputbuildFunctionCalls.C:buildFunctionCalls
@@ -92,7 +95,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
        inputbuildPragmaDeclaration.c inputAttachComment.C inputInsertHeader.C \
        inputbuildExpression.C inputbuildStructDeclaration.C inputLookupNamedType.C \
-       inputbuildFile.C inputMovePreprocessingInfo.C
+       inputbuildFile.C inputMovePreprocessingInfo.C inputbuildIfStmt.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
@@ -102,5 +105,5 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp 
+	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp  
 

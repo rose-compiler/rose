@@ -1,0 +1,55 @@
+// Liao, 5/1/2008
+// Demonstrate how to build a if statement 
+// The code was originally from Thomas.
+#include "rose.h"
+
+using namespace SageBuilder;
+using namespace SageInterface;
+
+int main (int argc, char *argv[])
+{
+
+  SgProject *project = frontend (argc, argv);
+  SgGlobal* global = getFirstGlobalScope(project);
+  pushScopeStack(global);
+
+  SgInitializedName* arg1 = buildInitializedName("n",buildPointerType(buildVoidType()));
+  SgInitializedName* arg2 = buildInitializedName("desc",buildStringType());
+  SgFunctionParameterList * paraList = buildFunctionParameterList();
+  appendArg(paraList, arg1);
+  appendArg(paraList, arg2);
+
+  // build defining function declaration
+  SgFunctionDeclaration * func_def = buildDefiningFunctionDeclaration \
+    ("check_var",SgTypeVoid::createType(),paraList);
+
+   // Build a corresponding prototype
+  // Must not share a parameter list for different function declarations!
+    SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
+  SgFunctionDeclaration * func_decl = buildNondefiningFunctionDeclaration 
+  (SgName("check_var"),SgTypeVoid::createType(),paraList2); 
+
+  // build a statement inside the function body
+  SgBasicBlock *func_body = func_def->get_definition ()->get_body ();
+  ROSE_ASSERT (func_body);
+  pushScopeStack (func_body);
+
+  SgBasicBlock* true_body = buildBasicBlock();
+  SgBasicBlock* false_body = buildBasicBlock();
+  SgVarRefExp* op1 = buildVarRefExp("n",isSgScopeStatement (func_body));
+  SgExprStatement* conditional = buildExprStatement(buildEqualityOp(op1,buildIntVal(0)));
+  SgIfStmt *ifstmt = buildIfStmt (conditional, true_body, false_body);
+  appendStatement (ifstmt);
+
+  popScopeStack ();
+  // insert the defining and declaring function
+  appendStatement (func_def);
+  prependStatement (func_decl);
+
+  popScopeStack ();
+  AstTests::runAllTests(project);
+  project->unparse();
+
+  return 0;
+}
+

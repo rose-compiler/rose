@@ -4962,7 +4962,15 @@ namespace SageInterface {
   {
     ROSE_ASSERT(func);
     ROSE_ASSERT(paralist);
-
+  // Warning users if a paralist is being shared   
+  if (paralist->get_parent() !=NULL) 
+  {  
+    cerr<<"Waring! Setting a used SgFunctionParameterList to function: "
+    << (func->get_name()).getString()<<endl
+    << " Sharing parameter lists can corrupt symbol tables!"<<endl
+    << " Please use deepCopy() to get an exclusive parameter list for each function declaration!"<<endl;
+//    ROSE_ASSERT(false);
+  } 
   // Liao,2/5/2008  constructor of SgFunctionDeclaration will automatically generate SgFunctionParameterList, so be cautious when set new paralist!!
     if (func->get_parameterList() != NULL)
       if (func->get_parameterList() != paralist)
