@@ -42,7 +42,7 @@ rose.P: $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_G
 
 CLEANFILES = rose.P
 
-check-local: switch_without_default null_deref qsolve simple_example
+check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@if [ -e compass_parameters ]; then echo "Please remove compass_parameters before running \"make check\"" 1>&2; exit 1; fi
 	@touch compass_parameters
 	@./switch_without_default -edg:w $(top_srcdir)/projects/DatalogAnalysis/tests/test.cc 2>current_answers
