@@ -110,15 +110,33 @@ ostream& operator<<(ostream& os, const TableReferenceArg& arg) {
   return os;
 }
 
+enum TableReferenceSortInformation {
+  UNSORTED_TABLE_REFERENCE,
+  ASCENDING_TABLE_REFERENCE,
+  DESCENDING_TABLE_REFERENCE
+};
+
+ostream& operator<<(ostream& os, TableReferenceSortInformation si) {
+  switch (si) {
+    case UNSORTED_TABLE_REFERENCE: os << "unsorted"; break;
+    case ASCENDING_TABLE_REFERENCE: os << "ascending"; break;
+    case DESCENDING_TABLE_REFERENCE: os << "descending"; break;
+    default: os << "???unknown_sort???"; break;
+  }
+  return os;
+}
+
 struct TableReference {
   string tableName;
   vector<TableReferenceArg> args;
   bool negative;
+  TableReferenceSortInformation sortInfo;
 
   TableReference(const string& tableName,
                  const vector<TableReferenceArg>& args,
-                 bool negative)
-    : tableName(tableName), args(args), negative(negative) {
+                 bool negative,
+                 TableReferenceSortInformation sortInfo)
+    : tableName(tableName), args(args), negative(negative), sortInfo(sortInfo) {
     computeModes();
   }
 
@@ -158,13 +176,17 @@ struct TableReference {
   }
 
   explicit TableReference(const string& tableName) // Mostly for null outputs
-    : tableName(tableName), negative(false) {}
+    : tableName(tableName), negative(false),
+      sortInfo(UNSORTED_TABLE_REFERENCE) {}
 
   explicit TableReference(PrologAst::Node* ref, bool checkForValidity = true);
+
+  private: TableReference() {}
 };
 
 ostream& operator<<(ostream& os, const TableReference& tr) {
-  os << (tr.negative ? "\\+ " : "") << tr.tableName << "(";
+  os << (tr.negative ? "\\+ " : "") << tr.sortInfo << " ";
+  os << tr.tableName << "(";
   for (unsigned int i = 0; i < tr.args.size(); ++i) {
     if (i != 0) os << ", ";
     os << tr.args[i];
@@ -299,7 +321,8 @@ vector<vector<TableReference> > queries;
 string templateName;
 
 TableReference::TableReference(PrologAst::Node* ref, bool checkForValidity)
-                                : negative(false) {
+                                : negative(false),
+                                  sortInfo(UNSORTED_TABLE_REFERENCE) {
 top:
   PrologAst::Term* t = dynamic_cast<PrologAst::Term*>(ref);
   if (!t) {
@@ -308,6 +331,16 @@ top:
   }
   if (t->getFunctor() == "\\+" && t->getArity() == 1) {
     negative = true;
+    ref = t->getArgs()[0];
+    goto top;
+  }
+  if (t->getFunctor() == "ascending" && t->getArity() == 1) {
+    sortInfo = ASCENDING_TABLE_REFERENCE;
+    ref = t->getArgs()[0];
+    goto top;
+  }
+  if (t->getFunctor() == "descending" && t->getArity() == 1) {
+    sortInfo = DESCENDING_TABLE_REFERENCE;
     ref = t->getArgs()[0];
     goto top;
   }
@@ -345,12 +378,12 @@ void processIs(PrologAst::Node* lhs, PrologAst::Node* rhs,
       newArgs.push_back(TableReferenceArg(thisArg));
     }
     newArgs.push_back(TableReferenceArg(lhs));
-    subgoalRefs.push_back(TableReference(t->getFunctor(), newArgs, false));
+    subgoalRefs.push_back(TableReference(t->getFunctor(), newArgs, false, UNSORTED_TABLE_REFERENCE));
   } else {
     vector<TableReferenceArg> args;
     args.push_back(TableReferenceArg(lhs));
     args.push_back(TableReferenceArg(rhs));
-    subgoalRefs.push_back(TableReference("=", args, false));
+    subgoalRefs.push_back(TableReference("=", args, false, UNSORTED_TABLE_REFERENCE));
   }
 }
 
@@ -737,8 +770,9 @@ struct NotTriggerCondition: public TriggerCondition {
 struct TableRefTriggerCondition: public TriggerCondition {
   TableReference tableRef;
 
-  TableRefTriggerCondition(const TableReference& tableRef)
-    : tableRef(tableRef) {assert (!tableRef.negative);}
+  TableRefTriggerCondition(const TableReference& tableRef): tableRef(tableRef) {
+    assert (!tableRef.negative);
+  }
   virtual void unparse(ostream& os) const {
     os << "tableRef(" << tableRef << ")";
   }
@@ -750,6 +784,7 @@ TriggerCondition* tableRefToTriggerCondition(const TableReference& tr) {
     tr2.negative = false;
     return new NotTriggerCondition(new TableRefTriggerCondition(tr2));
   } else {
+    // Sorted tables are allowed here
     return new TableRefTriggerCondition(tr);
   }
 }
@@ -923,7 +958,7 @@ void assignModesOne(TriggerCondition* tc,
       }
       ostringstream conditionStream;
       conditionStream << "(" << ref.args[0].arg << ") == (" << ref.args[1].arg << ")";
-      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(TableReference("<cond>", vector<TableReferenceArg>(1, TableReferenceArg(new PrologAst::String(conditionStream.str()), GROUND, "string")), ref.negative)));
+      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(TableReference("<cond>", vector<TableReferenceArg>(1, TableReferenceArg(new PrologAst::String(conditionStream.str()), GROUND, "string")), ref.negative, UNSORTED_TABLE_REFERENCE)));
     } else if (ref.args[0].mode == GROUND && ref.args[1].mode == UNBOUND) {
       PrologAst::Variable* var = 
         dynamic_cast<PrologAst::Variable*>(ref.args[1].arg);
@@ -934,7 +969,7 @@ void assignModesOne(TriggerCondition* tc,
       ref.args[1].type = type;
       args[0] = ref.args[1];
       args[1] = ref.args[0];
-      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(TableReference("<let>", args, false)));
+      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(TableReference("<let>", args, false, UNSORTED_TABLE_REFERENCE)));
     } else if (ref.args[0].mode == UNBOUND && ref.args[1].mode == GROUND) {
       PrologAst::Variable* var = 
         dynamic_cast<PrologAst::Variable*>(ref.args[0].arg);
@@ -945,7 +980,7 @@ void assignModesOne(TriggerCondition* tc,
       ref.args[0].type = type;
       args[0] = ref.args[0];
       args[1] = ref.args[1];
-      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(TableReference("<let>", args, false)));
+      newTriggerConditions = new AndTriggerCondition(newTriggerConditions, tableRefToTriggerCondition(TableReference("<let>", args, false, UNSORTED_TABLE_REFERENCE)));
     } else {
       cerr << "Bad modes for = operator: " << ref.args << endl;
       exit(1);
@@ -955,6 +990,7 @@ void assignModesOne(TriggerCondition* tc,
     TableInfo& tableInfo = tableInfoIter->second;
     if (tableInfo.isPrimitive) {
       assert (!ref.negative); // FIXME: handle negation
+      assert (ref.sortInfo == UNSORTED_TABLE_REFERENCE); // FIXME: handle sorting
       const vector<PrimitiveRule>& primRules = tableInfo.primitiveRules;
       // Scan through the rules, taking the first one which matches the current
       // modes and sign; use this to assign variable types
@@ -1102,7 +1138,11 @@ void assignModes(const TableMapKey& triggeredByTable, Trigger& tr) {
   }
   assignModesOne(tr.first, newTriggerConditions, variableModes);
   if (tr.second.negative) {
-    cerr << "Insertion result should not be negative" << endl;
+    cerr << "Insertion result should not be negative: " << tr.second << endl;
+    exit(1);
+  }
+  if (tr.second.sortInfo != UNSORTED_TABLE_REFERENCE) {
+    cerr << "Insertion result should not be sorted: " << tr.second << endl;
     exit(1);
   }
   tables.insert(make_pair(TableMapKey("", 0), TableInfo(vector<string>())));
@@ -1509,9 +1549,28 @@ string generateStatement(TriggerCondition* tc,
         assert (!ref.negative);
         unsigned int nameSuffix = ++variableInstantiationCounter;
         resultStream << "const unsigned int paletteContainerSize" << nameSuffix << " = " << name << ".size();" << endl; // Size may be changed during the iteration, but new elements will be handled separately
+        string containerName = name;
+        if (ref.sortInfo != UNSORTED_TABLE_REFERENCE) {
+          resultStream << "std::vector< " << makeTupleType(outputTypes) << " > paletteContainerTemp" << nameSuffix << "(" << name << ");" << endl;
+          containerName = "paletteContainerTemp" + StringUtility::numberToString(nameSuffix);
+          switch (ref.sortInfo) {
+            case ASCENDING_TABLE_REFERENCE: {
+              resultStream << "std::sort(" << containerName << ".begin(), " << containerName << ".end());" << endl;
+              break;
+            }
+            case DESCENDING_TABLE_REFERENCE: {
+              resultStream << "std::sort(" << containerName << ".begin(), " << containerName << ".end(), Palette::PaletteGreater());" << endl;
+              break;
+            }
+            default: {
+              cerr << "Bad sorting type " << ref.sortInfo << endl;
+              abort();
+            }
+          }
+        }
         resultStream << "for (unsigned int paletteIterator" << nameSuffix << " = 0; paletteIterator" << nameSuffix << " != paletteContainerSize" << nameSuffix << "; ++paletteIterator" << nameSuffix << ") {" << endl;
         ostringstream iteratorDerefStream;
-        iteratorDerefStream << name << "[paletteIterator" << nameSuffix << "]";
+        iteratorDerefStream << containerName << "[paletteIterator" << nameSuffix << "]";
         for (unsigned int i = 0; i < outputNames.size(); ++i) {
           if (dynamic_cast<PrologAst::Variable*>(outputNames[i])) { // Skip wildcards
             resultStream << outputTypes[i] << " const& " << astNodeToCpp(outputNames[i]) << " = " << makeTupleElementRef(outputTypes, iteratorDerefStream.str(), i) << ";" << endl;
@@ -1525,7 +1584,25 @@ string generateStatement(TriggerCondition* tc,
         resultStream << "{" << endl;
         resultStream << "std::map< " << makeTupleType(inputTypes) << " , std::vector< " << makeTupleType(outputTypes) << " > >::const_iterator paletteContainerIterator" << nameSuffix << " = " << name << ".find(" << makeTuple(inputTypes, inputValues) << ");" << endl;
         resultStream << "if (paletteContainerIterator" << nameSuffix << " != " << name << ".end()) {" << endl;
-        resultStream << "const std::vector< " << makeTupleType(outputTypes) << " >& paletteContainerRef" << nameSuffix << " = paletteContainerIterator" << nameSuffix << "->second;" << endl;
+        if (ref.sortInfo != UNSORTED_TABLE_REFERENCE) {
+          resultStream << "std::vector< " << makeTupleType(outputTypes) << " > paletteContainerRef" << nameSuffix << " = paletteContainerIterator" << nameSuffix << "->second;" << endl; // Non-const copy
+        } else {
+          resultStream << "const std::vector< " << makeTupleType(outputTypes) << " >& paletteContainerRef" << nameSuffix << " = paletteContainerIterator" << nameSuffix << "->second;" << endl; // Const reference
+        }
+        switch (ref.sortInfo) {
+          case ASCENDING_TABLE_REFERENCE: {
+            resultStream << "std::sort(paletteContainerRef" << nameSuffix << ".begin(), paletteContainerRef" << nameSuffix << ".end());" << endl;
+            break;
+          }
+          case DESCENDING_TABLE_REFERENCE: {
+            resultStream << "std::sort(paletteContainerRef" << nameSuffix << ".begin(), paletteContainerRef" << nameSuffix << ".end(), Palette::PaletteGreater());" << endl;
+            break;
+          }
+          default: {
+            cerr << "Bad sorting type " << ref.sortInfo << endl;
+            abort();
+          }
+        }
         resultStream << "const unsigned int paletteContainerSize" << nameSuffix << " = paletteContainerRef" << nameSuffix << ".size();" << endl; // Size may be changed during the iteration, but new elements will be handled separately
         resultStream << "for (unsigned int paletteIterator" << nameSuffix << " = 0; paletteIterator" << nameSuffix << " != paletteContainerSize" << nameSuffix << "; ++paletteIterator" << nameSuffix << ") {" << endl;
         ostringstream iteratorDerefStream;
@@ -1549,7 +1626,9 @@ string generateStatement(TriggerCondition* tc,
 }
 
 string generateInsertFunctionCall(const TableReference& ref) {
-  assert (ref.tableName != "" && !ref.negative);
+  assert (ref.tableName != "" &&
+          !ref.negative &&
+          ref.sortInfo == UNSORTED_TABLE_REFERENCE);
   string result = insertFunctionName(ref.getKey()) + "(";
   for (unsigned int i = 0; i < ref.args.size(); ++i) {
     if (i != 0) result += ", ";
@@ -1695,6 +1774,10 @@ int main(int argc, char** argv) {
             cerr << "Bad negation of call within same SCC (not stratified)" << endl;
             exit(1);
           }
+          if (goal.sortInfo != UNSORTED_TABLE_REFERENCE) {
+            cerr << "Bad sorting of call within same SCC (not stratified)" << endl;
+            exit(1);
+          }
           anyRecursionsInThisRule = true;
           Trigger trig(makeTriggerCondFromListOfTableRefs(r.rhsMinusOneGoal(goalIndex)), r.lhs);
           for (unsigned int i = goal.args.size(); i > 0; --i) {
@@ -1703,7 +1786,7 @@ int main(int argc, char** argv) {
             varNameStream << "Palette_Param" << i - 1;
             args[0] = TableReferenceArg(new PrologAst::Variable(varNameStream.str()), GROUND, found->second.fieldTypes[i - 1]);
             args[1] = goal.args[i - 1];
-            TableReference tr("=", args, false);
+            TableReference tr("=", args, false, UNSORTED_TABLE_REFERENCE);
             tr.args[0].mode = GROUND; // So it won't be assigned later
             trig.first = new AndTriggerCondition(tableRefToTriggerCondition(tr), trig.first);
           }
@@ -1739,9 +1822,10 @@ int main(int argc, char** argv) {
        i != triggers.end(); ++i) {
     cerr << "Triggers for " << i->first.first << "/" << i->first.second << ":" << endl;
     for (unsigned int j = 0; j < i->second.size(); ++j) {
-      vector<TableReference> joinElts = i->second[j].first;
+      TriggerCondition* tc = i->second[j].first;
+      // vector<TableReference> joinElts = i->second[j].first;
       TableReference lhs = i->second[j].second;
-      cerr << "  " << joinElts << " -> " << lhs << endl;
+      cerr << "  "; tc->unparse(cerr); cerr << " -> " << lhs << endl;
     }
   }
 #endif

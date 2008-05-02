@@ -20,7 +20,7 @@ dist_data_DATA = rose.P arith.P io.P basic.tmpl compass.tmpl \
 
 include_HEADERS = paletteCommon.h
 
-noinst_PROGRAMS = qsolve simple_example null_deref switch_without_default
+noinst_PROGRAMS = qsolve simple_example null_deref switch_without_default sortTest
 qsolve_SOURCES = qsolve.P
 qsolve_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 simple_example_SOURCES = simple_example.P
@@ -29,6 +29,8 @@ null_deref_SOURCES = null_deref.P
 null_deref_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 switch_without_default_SOURCES = switch_without_default.P
 switch_without_default_DEPENDENCIES = $(dist_data_DATA) palette2cpp
+sortTest_SOURCES = sortTest.P
+sortTest_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 
 .P.C: palette2cpp
 	./palette2cpp $(PALETTEFLAGS) -- $< > $@ || (rm -f $@ && exit 1)
@@ -50,6 +52,8 @@ check-local: switch_without_default null_deref qsolve simple_example
 	@./qsolve 2>/dev/null >> current_answers
 	@echo '*****' >> current_answers
 	@./simple_example 2>/dev/null >> current_answers
+	@echo '*****' >> current_answers
+	@./sortTest 2>/dev/null >> current_answers
 	@sed -i -e'/^Query took/d' -e's^/.*/projects/DatalogAnalysis/tests/^^g' current_answers
 	@diff -U1000 $(srcdir)/check_correct_answers current_answers
 	@rm compass_parameters current_answers

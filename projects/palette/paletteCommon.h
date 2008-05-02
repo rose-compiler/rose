@@ -56,6 +56,14 @@ namespace Palette {
 		    const std::string& str):
 	Compass::OutputViolationBase(node, checkerName, str) {}
   };
+
+  struct PaletteGreater { // With a templated operator() and only requiring < from its operand
+    template <typename T>
+    bool operator()(const T& x, const T& y) const {
+      return y < x;
+    }
+  };
+
 }
 
 #endif // PALETTE_COMMON_H

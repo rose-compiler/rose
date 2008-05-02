@@ -35,6 +35,8 @@ namespace PrologParser {
     prefixOperators.insert(make_pair("include", make_pair(FX, 1150)));
     prefixOperators.insert(make_pair("template", make_pair(FX, 1150)));
     prefixOperators.insert(make_pair("\\+", make_pair(FY, 900)));
+    prefixOperators.insert(make_pair("ascending", make_pair(FY, 850)));
+    prefixOperators.insert(make_pair("descending", make_pair(FY, 850)));
   }
 
   pair<Associativity, int> getInfixDefinition(const std::string& str) {
