@@ -20,6 +20,13 @@ void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
   ScopeStack.push_back(stmt); 
 }
 
+void SageBuilder::pushScopeStack (SgNode* node)
+{
+  SgScopeStatement* stmt = isSgScopeStatement(node);
+  pushScopeStack(stmt);
+}
+
+
 void SageBuilder::popScopeStack()
 {
 // we want to warning users  double freeing happens
@@ -75,6 +82,20 @@ SageBuilder::buildInitializedName ( const SgName & name, SgType* type)
 #endif 
     setSourcePositionForTransformation(initializedName);
     return initializedName;
+}
+
+SgInitializedName *
+SageBuilder::buildInitializedName ( const std::string & name, SgType* type)
+{
+  SgName var_name(name);  
+  return buildInitializedName(var_name,type);
+}
+
+SgInitializedName *
+SageBuilder::buildInitializedName ( const char* name, SgType* type)
+{
+  SgName var_name(name);  
+  return buildInitializedName(var_name,type);
 }
 
 //-----------------------------------------------
@@ -264,7 +285,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T \
 
   // search before using the function type to create the function declaration 
   // TODO only search current scope or all ancestor scope??
-   //We dont't have lookup_member_function_symbol  yet
+   //We don't have lookup_member_function_symbol  yet
   SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
 
   if (func_symbol ==NULL)
@@ -441,6 +462,23 @@ SageBuilder::buildDefiningFunctionDeclaration \
  (name,return_type,paralist,scope);
   return func;
 }
+
+SgFunctionDeclaration *
+SageBuilder::buildDefiningFunctionDeclaration \
+(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+{
+  SgName sg_name(name);
+  return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
+}
+
+SgFunctionDeclaration *
+SageBuilder::buildDefiningFunctionDeclaration \
+(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+{
+  SgName sg_name(name);
+  return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
+}
+
 
 //------------------build value expressions -------------------
 //-------------------------------------------------------------
