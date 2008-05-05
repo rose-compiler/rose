@@ -24,7 +24,7 @@ int main (int argc, char *argv[])
 
   pushScopeStack (isSgScopeStatement (globalScope));
 
-  // build struct declaration 
+  // build a struct declaration with implicit scope information from the scope stack
   SgClassDeclaration * decl = buildStructDeclaration("foo");
 
   // build member variables inside the structure
@@ -36,7 +36,7 @@ int main (int argc, char *argv[])
  // Insert the  member variable
   appendStatement (varDecl);
 
-   // build a member function of the construct
+   // build a member function prototype of the construct
   SgInitializedName* arg1 = buildInitializedName(SgName("x"), buildIntType());
   SgFunctionParameterList * paraList = buildFunctionParameterList();
   appendArg(paraList,arg1);
@@ -44,10 +44,18 @@ int main (int argc, char *argv[])
   SgMemberFunctionDeclaration * funcdecl = buildNondefiningMemberFunctionDeclaration
                                           ("bar",buildVoidType(), paraList);
   appendStatement(funcdecl); 
+
+  // build a defining member function 
+  SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList)); 
+  ROSE_ASSERT(paraList2);
+  SgMemberFunctionDeclaration* funcdecl_2 = buildDefiningMemberFunctionDeclaration
+                           ("bar2",buildVoidType(),paraList2);
+  appendStatement(funcdecl_2);                         
+
   popScopeStack ();
   // insert the struct declaration
   appendStatement (decl);
-    // This is a bottom up way for decl2
+    // This is a bottom up way for building decl2
   insertStatementBefore (decl, decl2);
 
   // pop the final scope after all AST insertion

@@ -359,30 +359,34 @@ buildVariableDeclaration(const std::string & name, SgType *type, SgInitializer *
 SgVariableDeclaration* 
 buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
-//! build an empty SgFunctionParameterList
+//! Build an empty SgFunctionParameterList
 SgFunctionParameterList * buildFunctionParameterList();
 
-//! build an SgFunctionParameterList from SgFunctionParameterTypeList, like (int, float,...), used for parameter list of prototype functions when function type( including parameter type list) is known.
+//! Build an SgFunctionParameterList from SgFunctionParameterTypeList, like (int, float,...), used for parameter list of prototype functions when function type( including parameter type list) is known.
 SgFunctionParameterList*
 buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList);
 
-//! a template function for function prototype declaration builders
+//! A template function for function prototype declaration builders
 template <class actualFunction>
 actualFunction*
 buildNondefiningFunctionDeclaration_T \
 (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope=NULL);
 
-//! build a prototype for a function, handle function type, symbol etc transparently
+//! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *
 buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
 
-//! build a prototype member function declaration
+//! Build a prototype member function declaration
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
 
-//! a template function for function declaration builders
+//! Build a defining ( non-prototype) member function declaration
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+
+//! A template function for function declaration builders
 template <class actualFunction>
-SgFunctionDeclaration *
+actualFunction *
 buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
 
 //! Build a function declaration with a function body
@@ -395,12 +399,12 @@ buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type,
 SgFunctionDeclaration *
 buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
 
-//! build a function call statement
+//! Build a function call statement
 SgExprStatement*
 buildFunctionCallStmt(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters, SgScopeStatement* scope=NULL);
 
-//! build a label statement, handling label symbol and scope internally.
+//! Build a label statement, handling label symbol and scope internally.
 
 //! Note that the scope of a label statement is special. It is SgFunctionDefinition,
 //! not the closest scope statement such as SgBasicBlock. 

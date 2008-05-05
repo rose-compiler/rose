@@ -368,12 +368,26 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   ctor->set_firstNondefiningDeclaration(ctor);
   return result;
 }
+
+SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+{
+  SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
+  // set definingdecl for SgCtorInitializerList
+  SgCtorInitializerList * ctor= result-> get_CtorInitializerList ();
+  ROSE_ASSERT(ctor);
+  //required ty AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
+  ctor->set_definingDeclaration(ctor);
+  ctor->set_firstNondefiningDeclaration(ctor);
+  return result;
+}
+
+
 //----------------- defining function declaration------------
 // a template builder for all kinds of defining SgFunctionDeclaration
 // handle common chores for function type, symbol, paramter etc.
 
 template <class actualFunction>
-SgFunctionDeclaration *
+actualFunction *
 SageBuilder::buildDefiningFunctionDeclaration_T \
 (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 //	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
@@ -385,11 +399,11 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
   ROSE_ASSERT(name.is_null() == false);
   ROSE_ASSERT(return_type != NULL);
 
-  // build function type, manage funtion type symbol internally
+  // build function type, manage function type symbol internally
   SgFunctionType * func_type = buildFunctionType(return_type,paralist);
-  SgFunctionDeclaration * func;
+  actualFunction * func;
 
- //  symbol table and nondefining 
+ //  symbol table and non-defining 
   SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
   if (func_symbol ==NULL)
   {
