@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.18 2008-04-30 09:53:15 gergo Exp $
+// $Id: ExprTransformer.C,v 1.19 2008-05-05 10:18:45 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -400,7 +400,7 @@ void ExprTransformer::visit(SgNode *node)
               std::cout << " ***" << std::endl;
 #endif
           } else if (ci->get_declaration()->get_args().empty()) {
-           // default constructor
+#if 0
               for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
                 std::string i_name = (*i)->name;
                 if (name == i_name && (*i)->decl->get_args().empty()) {
@@ -408,8 +408,19 @@ void ExprTransformer::visit(SgNode *node)
                 }
                 num++;
               }
+#else
+              std::multimap<std::string, Procedure *>::iterator first = cfg->proc_map.lower_bound(name);
+              std::multimap<std::string, Procedure *>::iterator last = cfg->proc_map.upper_bound(name);
+              std::multimap<std::string, Procedure *>::iterator i;
+              for (i = first; i != last; ++i)
+              {
+                  Procedure *p = i->second;
+                  if (p->decl->get_args().empty())
+                      blocks.push_back(p->entry);
+              }
+#endif
           } else {
-           // non-default constructor
+#if 0
               for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
                 std::string i_mangled_name = (*i)->mangled_name;
                 if (mangled_name == i_mangled_name) {
@@ -417,6 +428,16 @@ void ExprTransformer::visit(SgNode *node)
                 }
                 num++;
               }
+#else
+              std::multimap<std::string, Procedure *>::iterator first = cfg->mangled_proc_map.lower_bound(mangled_name);
+              std::multimap<std::string, Procedure *>::iterator last = cfg->mangled_proc_map.upper_bound(mangled_name);
+              std::multimap<std::string, Procedure *>::iterator i;
+              for (i = first; i != last; ++i)
+              {
+                  Procedure *p = i->second;
+                  blocks.push_back(p->entry);
+              }
+#endif
           }
        // GB (2008-03-13): Overloading must be uniquely resolvable.
           if (blocks.size() > 1) {
@@ -999,10 +1020,11 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
     if (func_ref)
     {
         std::string name = find_mangled_func_name(func_ref);
+#if 0
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
-
-        for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
+        std::deque<Procedure *>::const_iterator procedures_end = cfg->procedures->end();
+        for (i = cfg->procedures->begin(); i != procedures_end; ++i) {
         //std::cout<<"B: "<< (char*)((*i)->mangled_name) << std::endl;
         //std::cout<<"A: "<< name <<std::endl;
 
@@ -1010,6 +1032,16 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
                 blocks->push_back((*cfg->procedures)[num]->entry);
             num++;
         }
+#else
+        std::multimap<std::string, Procedure *>::iterator first = cfg->mangled_proc_map.lower_bound(name);
+        std::multimap<std::string, Procedure *>::iterator last = cfg->mangled_proc_map.upper_bound(name);
+        std::multimap<std::string, Procedure *>::iterator i;
+        for (i = first; i != last; ++i)
+        {
+            Procedure *p = i->second;
+            blocks->push_back(p->entry);
+        }
+#endif
         return blocks;
     }
     else if (member_func_ref)
@@ -1017,7 +1049,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
         SgMemberFunctionDeclaration *decl
             = isSgMemberFunctionDeclaration(
                     member_func_ref->get_symbol()->get_declaration());
-    assert(decl);
+        assert(decl);
         SgMemberFunctionDeclaration *fnddecl
             = isSgMemberFunctionDeclaration(decl
                     ->get_firstNondefiningDeclaration());
@@ -1027,15 +1059,30 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
             = isSgClassDefinition(member_func_ref
                 ->get_symbol_i()->get_declaration()->get_scope());
         std::string name = member_func_ref->get_symbol()->get_name().str();
+#if 0
         int num = 0;
         std::deque<Procedure *>::const_iterator i;
-
-        for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i)
+        std::deque<Procedure *>::const_iterator procedures_end = cfg->procedures->end();
+        for (i = cfg->procedures->begin(); i != procedures_end; ++i)
+#else
+        std::multimap<std::string, Procedure *>::iterator first = cfg->proc_map.lower_bound(name);
+        std::multimap<std::string, Procedure *>::iterator last = cfg->proc_map.upper_bound(name);
+        std::multimap<std::string, Procedure *>::iterator i;
+        for (i = first; i != last; ++i)
+#endif
         {
+            Procedure *p = i->second;
+#if 0
             if (name == (*i)->name && (*i)->class_type != NULL
                     && (class_type == (*i)->class_type
                         || (decl->get_functionModifier().isVirtual()
                         && subtype_of((*i)->class_type, class_type)))) {
+#else
+            if (name == p->name && p->class_type != NULL
+                    && (class_type == p->class_type
+                        || (decl->get_functionModifier().isVirtual()
+                        && subtype_of(p->class_type, class_type)))) {
+#endif
              // GB (2008-03-13): OK, so the functions have the same name and
              // are on the same class, or the call is virtual and there is
              // an appropriate subtype relation. But to be sure that this is
@@ -1046,7 +1093,8 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
              // from the call, proc_decl_args is the argument list of the
              // declaration found from our procedure entry in the CFG.
                 SgInitializedNamePtrList &call_decl_args = decl->get_args();
-                SgInitializedNamePtrList &proc_decl_args = (*i)->decl->get_args();
+             // SgInitializedNamePtrList &proc_decl_args = (*i)->decl->get_args();
+                SgInitializedNamePtrList &proc_decl_args = p->decl->get_args();
                 if (call_decl_args.size() == proc_decl_args.size()) {
                     SgInitializedNamePtrList::iterator c = call_decl_args.begin(),
                                                        p = proc_decl_args.begin();
@@ -1078,10 +1126,14 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
                 if (candidate) {
                  // Yippie! Looks like this function can be the target of
                  // this function call.
+#if 0
                     blocks->push_back((*cfg->procedures)[num]->entry);
+#else
+                    blocks->push_back(p->entry);
+#endif
                 }
             }
-            num++;
+         // num++;
         }
         return blocks;
     }

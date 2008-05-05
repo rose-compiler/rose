@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.27 2008-04-29 09:56:19 gergo Exp $
+// $Id: CFGTraversal.C,v 1.28 2008-05-05 10:18:45 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -15,13 +15,16 @@
 
 #define REPLACE_FOR_BY_WHILE
 
-CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
+// CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
+CFGTraversal::CFGTraversal(ProcTraversal &p)
     : node_id(0), procnum(0), cfg(new CFG()), real_cfg(NULL), proc(NULL),
       call_num(0), lognum(0), expnum(0), traversalTimer(NULL),
       flag_numberExpressions(true)
 {
   TimingPerformance timer("Initial setup of ICFG (entry, exit, argument nodes):");
-  cfg->procedures = procs;
+  std::deque<Procedure *> *procs = cfg->procedures = p.get_procedures();
+  cfg->proc_map = p.proc_map;
+  cfg->mangled_proc_map = p.mangled_proc_map;
   std::deque<Procedure *>::const_iterator i;
   for (i = procs->begin(); i != procs->end(); ++i) {
     cfg->nodes.push_back((*i)->entry);
@@ -726,25 +729,32 @@ CFGTraversal::number_exprs()
 void 
 CFGTraversal::visit(SgNode *node) {
   // collect all global variables into a list
-  if (SgGlobal *global = isSgGlobal(node->get_parent()))
+//if (SgGlobal *global = isSgGlobal(node->get_parent()))
+// GB (2008-04-30): Why in the world did this use node->get_parent() instead
+// of node?
+  if (SgGlobal *global = isSgGlobal(node))
   {
-      SgDeclarationStatementPtrList::iterator itr;
-      for (itr = global->getDeclarationList().begin();
-           itr != global->getDeclarationList().end();
-           ++itr)
+      std::map<std::string, SgVariableSymbol *>::iterator
+          cfg_names_globals_end = cfg->names_globals.end();
+      std::map<std::string, SgExpression *>::iterator
+          cfg_names_initializers_end = cfg->names_initializers.end();
+      SgDeclarationStatementPtrList::const_iterator itr;
+      SgDeclarationStatementPtrList::const_iterator decls_end = global->getDeclarationList().end();
+      for (itr = global->getDeclarationList().begin(); itr != decls_end; ++itr)
       {
-          if (SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
+          if (const SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
           {
               SgInitializedName *initname = vardecl->get_variables().front();
               SgVariableSymbol *varsym
-                  = global->lookup_var_symbol(initname->get_name());
+                  = global->lookup_variable_symbol(initname->get_name());
               std::string name = initname->get_name().str();
-              if (cfg->names_globals.find(name) == cfg->names_globals.end())
+              if (cfg->names_globals.find(name) == cfg_names_globals_end)
               {
                   cfg->names_globals[name] = varsym;
                   cfg->globals.push_back(varsym);
+                  cfg_names_globals_end = cfg->names_globals.end();
               }
-              if (cfg->names_initializers.find(name) == cfg->names_initializers.end())
+              if (cfg->names_initializers.find(name) == cfg_names_initializers_end)
               {
                // GB (2008-02-14): Added support for aggregate initializers.
                   if (isSgAssignInitializer(initname->get_initializer())
@@ -752,6 +762,7 @@ CFGTraversal::visit(SgNode *node) {
                   {
                       cfg->names_initializers[name] = initname->get_initializer();
                       cfg->globals_initializers[varsym] = cfg->names_initializers[name];
+                      cfg_names_initializers_end = cfg->names_initializers.end();
                   }
               }
           }

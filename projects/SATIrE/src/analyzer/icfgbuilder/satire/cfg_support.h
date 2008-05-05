@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.15 2008-04-29 09:56:25 gergo Exp $
+// $Id: cfg_support.h,v 1.16 2008-05-05 10:18:47 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -100,6 +100,8 @@ public:
     BlockList nodes;
     BlockList calls, entries, exits, returns;
     std::deque<Procedure *> *procedures;
+    std::multimap<std::string, Procedure *> proc_map;
+    std::multimap<std::string, Procedure *> mangled_proc_map;
  // std::map<int, SgExpression *> numbers_exprs;
     std::vector<SgExpression *> numbers_exprs;
  // std::map<SgExpression *, int, ExprPtrComparator> exprs_numbers;

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.11 2008-04-29 14:17:32 gergo Exp $
+// $Id: ProcTraversal.C,v 1.12 2008-05-05 10:18:45 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -132,6 +132,8 @@ ProcTraversal::visit(SgNode *node) {
         proc->class_type = NULL;
         proc->memberf_name = proc->mangled_memberf_name = "";
       }
+      proc_map.insert(std::make_pair(proc->name, proc));
+      mangled_proc_map.insert(std::make_pair(proc->mangled_name, proc));
       std::vector<SgVariableSymbol* >* arglist
         = new std::vector<SgVariableSymbol* >();
       SgVariableSymbol *this_var = NULL, *this_temp_var = NULL;
