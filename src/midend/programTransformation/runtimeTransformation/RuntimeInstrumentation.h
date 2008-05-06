@@ -20,6 +20,7 @@ class RuntimeInstrumentation : public AstSimpleProcessing {
   void insertCheck(SgVarRefExp* n,std::string desc);
   bool isRightHandSide(SgNode* n);
 
+  SgGlobal* globalScope;
 
   template <class T>
     inline std::string to_string (const T& t)

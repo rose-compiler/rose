@@ -44,16 +44,22 @@ void RuntimeInstrumentation::insertCheck(SgVarRefExp* n, std::string desc) {
   ROSE_ASSERT(isSgVarRefExp(n));
   SgStatement* stmt = getSurroundingStatement(n);
   if (isSgStatement(stmt)) {
-    SgName roseAssert("ROSE_ASSERT");
+    SgName roseAssert("check_var");
     SgScopeStatement* scope = stmt->get_scope();
+    cerr << " stmt : " << stmt->class_name() << "  desc : " << desc << endl;
     ROSE_ASSERT(scope);
-    SgVarRefExp* arg = buildVarRefExp(n->get_symbol()->get_name(),scope);
-    SgExprListExp* arg_list = buildExprListExp();
-    appendExpression(arg_list,arg);
-
-    cerr << " Scope of stmt = " << scope->class_name() << endl;
-    SgStatement* callStmt_1 = buildFunctionCallStmt(roseAssert,buildVoidType(),arg_list,scope);
-    insertStatementBefore(isSgStatement(stmt),callStmt_1) ;
+    if (isSgBasicBlock(scope)) {
+      SgVarRefExp* arg = buildVarRefExp(n->get_symbol()->get_name(),scope);
+      SgStringVal* arg2 = buildStringVal(desc); //buildVarRefExp(desc,scope);
+      ROSE_ASSERT(arg2);
+      SgExprListExp* arg_list = buildExprListExp();
+      appendExpression(arg_list,arg);
+      // currently not working
+      appendExpression(arg_list,arg2);
+      
+      SgStatement* callStmt_1 = buildFunctionCallStmt(roseAssert,buildVoidType(),arg_list,scope);
+      insertStatementBefore(isSgStatement(stmt),callStmt_1) ;
+    }
 
   } else { 
     cerr << "RuntimeInstrumentation :: Surrounding Statement could not be found! " <<endl;
@@ -62,6 +68,72 @@ void RuntimeInstrumentation::insertCheck(SgVarRefExp* n, std::string desc) {
 }
 
 void RuntimeInstrumentation::run(SgNode* project) {
+  ROSE_ASSERT(isSgProject(project));
+  globalScope = getFirstGlobalScope(isSgProject(project));
+
+
+    pushScopeStack (isSgScopeStatement (globalScope));
+
+    // insert rose header
+    //insertHeader("rose.h",true,globalScope);
+
+    // defining  void chec_var(SgNode*, string desc)
+    // build parameter list first
+    SgInitializedName* arg1 = buildInitializedName(SgName("n"),buildPointerType(buildVoidType()));
+    SgInitializedName* arg2 = buildInitializedName(SgName("desc"),buildStringType());
+    SgFunctionParameterList * paraList = buildFunctionParameterList();
+    appendArg(paraList, arg1);
+    appendArg(paraList, arg2);
+
+    SgInitializedName* arg12 = buildInitializedName(SgName("n"),buildPointerType(buildVoidType()));
+    SgInitializedName* arg22 = buildInitializedName(SgName("desc"),buildStringType());
+    SgFunctionParameterList * paraList2 = buildFunctionParameterList();
+    appendArg(paraList2, arg12);
+    appendArg(paraList2, arg22);
+    
+    // build defining function declaration
+    SgFunctionDeclaration * func_def = buildDefiningFunctionDeclaration	\
+    (SgName("check_var"),SgTypeVoid::createType(),paraList);
+
+    SgFunctionDeclaration * func_decl = buildNondefiningFunctionDeclaration \
+    (SgName("check_var"),SgTypeVoid::createType(),paraList2);
+    
+    // build a statement inside the function body
+    SgBasicBlock *func_body = func_def->get_definition ()->get_body ();
+    ROSE_ASSERT (func_body);
+    pushScopeStack (isSgScopeStatement (func_body));
+
+
+    // create : if (n==NULL) { cerr << "Error at runtime at : " << desc << endl;
+    //SgStatement* stmt_if_true = buildLabelStatement("a");
+    SgBasicBlock* true_body = buildBasicBlock();
+
+    //SgStatement* stmt_if_false = buildLabelStatement("b");
+    SgBasicBlock* false_body = buildBasicBlock();
+    SgVarRefExp* op1 = buildVarRefExp("n",isSgScopeStatement (func_body));
+    SgExprStatement* conditional = buildExprStatement(buildEqualityOp(op1,buildIntVal(0)));
+
+    SgIfStmt *ifstmt = buildIfStmt (conditional, true_body, false_body);
+    // Insert the statement
+        appendStatement (ifstmt);
+
+
+    popScopeStack ();
+    // insert the defining and declaring function
+    appendStatement (func_def);
+    SgStatement * oldFirstStmt = getFirstStatement(globalScope);
+    prependStatement (func_decl);
+
+  fixVariableReferences(func_decl);
+
+    // mov up the preprocessor information
+    if (oldFirstStmt)
+      moveUpPreprocessingInfo(func_decl, oldFirstStmt);
+
+    // pop the final scope after all AST insertion
+    popScopeStack ();
+
+
   traverse(project, preorder);
 
   cerr << " Number of Elements in VarRefList  : " << varRefList.size() << endl;
@@ -72,6 +144,9 @@ void RuntimeInstrumentation::run(SgNode* project) {
     string str = p.second;
     insertCheck(var,str);
   }
+
+
+
 }
 
 /****************************************************

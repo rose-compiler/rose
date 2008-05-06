@@ -47,7 +47,9 @@ AstPDFGeneration::generateWithinFile(const string& pdffilename, SgFile* node) {
 // cout << "generating PDF file: " << pdffilename << " ... ";
   pdf_setup(pdffilename + ".pdf");
   PDFInheritedAttribute pdfIA;
-  traverse/*WithinFile*/(node,pdfIA);
+  //traverse/*WithinFile*/(node,pdfIA);
+  // tps (01/05/08) changed this call from traverse to traverseWithinFile
+  traverseWithinFile(node,pdfIA);
   pdf_finalize();
 // cout << "done." << endl;
 }

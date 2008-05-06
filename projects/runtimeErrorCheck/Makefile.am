@@ -14,7 +14,7 @@ runtimeCheck_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 
-TESTCODES = example.C
+TESTCODES = example.C 
 
 runtimeCheck.o: runtimeCheck.cpp
 
@@ -32,14 +32,15 @@ $(TEST_Objects): runtimeCheck $(TESTCODES)
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
 
-EXTRA_DIST = example.C
+EXTRA_DIST = example.C example2.C
 
 CLEANFILES = *.out example.C *.ti *.pdf *.C
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runtimeCheck $(TESTCODES)
-	cp $(srcdir)/$(TESTCODES) .
-	./runtimeCheck $(TESTCODES) 
+	cp $(srcdir)/example.C .
+	cp $(srcdir)/example2.C .
+	./runtimeCheck $(TESTCODES) -run
 #	g++ -o test rose_$(TESTCODES)
 #	./rose_$(TESTCODES)
 #	@echo "*********************************************************************************************************************"
