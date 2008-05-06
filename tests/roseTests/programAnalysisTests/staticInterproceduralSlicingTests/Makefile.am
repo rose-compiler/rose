@@ -7,7 +7,8 @@ INCLUDES = $(ROSE_INCLUDES)
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = multiPassTest generateSDG generateCDG generateDDG generateSFBDT  generateSFCFG  generateSFDF  generateSFDT #generateSlicedSDG testSlicing slice 
+bin_PROGRAMS  = multiPassTest generateSDG generateCDG generateDDG \
+                generateSFBDT generateSFCFG generateSFDF generateSFDT #generateSlicedSDG testSlicing slice 
 
 # generateSFBDT.C  generateSFCFG.C  generateSFDF.C  generateSFDT.C  
 
@@ -59,7 +60,7 @@ generateSFDT_SOURCES = generateSFDT.C
 generateSFDT_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 generateSFDT_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-TESTCODES = test1.C test2.C
+TESTCODES = test1.C test2.C test3.C
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
@@ -94,7 +95,7 @@ EXTRA_DIST = $(TESTCODES)
 check-local:
 	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
 clean-local:
