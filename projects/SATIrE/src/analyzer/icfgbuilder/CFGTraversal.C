@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.28 2008-05-05 10:18:45 gergo Exp $
+// $Id: CFGTraversal.C,v 1.29 2008-05-06 08:34:56 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -22,22 +22,23 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
       flag_numberExpressions(true)
 {
   TimingPerformance timer("Initial setup of ICFG (entry, exit, argument nodes):");
-  std::deque<Procedure *> *procs = cfg->procedures = p.get_procedures();
+  cfg->procedures = p.get_procedures();
   cfg->proc_map = p.proc_map;
   cfg->mangled_proc_map = p.mangled_proc_map;
+// GB (2008-05-05): Refactored.
+  setProcedureEndNodes();
+  processProcedureArgBlocks();
+}
+
+// This method creates the ICFG nodes for assigning global parameter
+// variables to each function's parameters. The necessary information about
+// function parameters is stored in each procedure's arg_block which was set
+// by the ProcTraversal.
+void
+CFGTraversal::processProcedureArgBlocks()
+{
+  std::deque<Procedure *> *procs = cfg->procedures;
   std::deque<Procedure *>::const_iterator i;
-  for (i = procs->begin(); i != procs->end(); ++i) {
-    cfg->nodes.push_back((*i)->entry);
-    node_id++;
-    cfg->entries.push_back((*i)->entry);
-    cfg->nodes.push_back((*i)->exit);
-    node_id++;
-    cfg->exits.push_back((*i)->exit);
-    if ((*i)->this_assignment != NULL) {
-      cfg->nodes.push_back((*i)->this_assignment);
-      node_id++;
-    }
-  }
   for (i = procs->begin(); i != procs->end(); ++i) {
     if ((*i)->arg_block != NULL) {
       std::deque<SgStatement *>::const_iterator j;
@@ -49,6 +50,7 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
           = dynamic_cast<ArgumentAssignment *>(*j);
         if (aa && isSgConstructorInitializer(aa->get_rhs())) {
           SgExpression* new_expr= isSgExpression(Ir::deepCopy(aa->get_rhs()));
+#if 0
           ExprLabeler el(expnum);
           el.traverse(new_expr, preorder);
           expnum = el.get_expnum();
@@ -57,6 +59,11 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
           for (int z = node_id; z < et.get_node_id(); ++z) {
             block_stmt_map[z] = current_statement;
           }
+#else
+          ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL,
+                  block_stmt_map, current_statement);
+          et.labelAndTransformExpression(new_expr);
+#endif
           node_id = et.get_node_id();
           expnum = et.get_expnum();
           if (first == NULL)
@@ -112,6 +119,28 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
 
       (*i)->first_arg_block = first;
       (*i)->last_arg_block = b;
+    }
+  }
+}
+
+// This methods inserts the entry and exit nodes for each procedure into the
+// ICFG. These nodes were computed by the ProcTraversal and are accessible
+// via cfg->procedures.
+void
+CFGTraversal::setProcedureEndNodes()
+{
+  std::deque<Procedure *> *procs = cfg->procedures;
+  std::deque<Procedure *>::const_iterator i;
+  for (i = procs->begin(); i != procs->end(); ++i) {
+    cfg->nodes.push_back((*i)->entry);
+    node_id++;
+    cfg->entries.push_back((*i)->entry);
+    cfg->nodes.push_back((*i)->exit);
+    node_id++;
+    cfg->exits.push_back((*i)->exit);
+    if ((*i)->this_assignment != NULL) {
+      cfg->nodes.push_back((*i)->this_assignment);
+      node_id++;
     }
   }
 }
@@ -726,72 +755,83 @@ CFGTraversal::number_exprs()
 }
 #endif
 
+void
+CFGTraversal::processGlobalVariableDeclarations(SgGlobal *global)
+{
+  std::map<std::string, SgVariableSymbol *>::iterator
+      cfg_names_globals_end = cfg->names_globals.end();
+  std::map<std::string, SgExpression *>::iterator
+      cfg_names_initializers_end = cfg->names_initializers.end();
+  SgDeclarationStatementPtrList::const_iterator itr;
+  SgDeclarationStatementPtrList::const_iterator decls_end = global->getDeclarationList().end();
+  for (itr = global->getDeclarationList().begin(); itr != decls_end; ++itr)
+  {
+      if (const SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
+      {
+          SgInitializedName *initname = vardecl->get_variables().front();
+          SgVariableSymbol *varsym
+              = global->lookup_variable_symbol(initname->get_name());
+          std::string name = initname->get_name().str();
+          if (cfg->names_globals.find(name) == cfg_names_globals_end)
+          {
+              cfg->names_globals[name] = varsym;
+              cfg->globals.push_back(varsym);
+              cfg_names_globals_end = cfg->names_globals.end();
+          }
+          if (cfg->names_initializers.find(name) == cfg_names_initializers_end)
+          {
+           // GB (2008-02-14): Added support for aggregate initializers.
+              if (isSgAssignInitializer(initname->get_initializer())
+                      || isSgAggregateInitializer(initname->get_initializer()))
+              {
+                  cfg->names_initializers[name] = initname->get_initializer();
+                  cfg->globals_initializers[varsym] = cfg->names_initializers[name];
+                  cfg_names_initializers_end = cfg->names_initializers.end();
+              }
+          }
+      }
+  }
+}
+
+void
+CFGTraversal::processFunctionDeclarations(SgFunctionDeclaration *decl)
+{
+  if (decl->get_definition() != NULL) {
+    proc = (*cfg->procedures)[procnum++];
+
+    BasicBlock *last_node = (proc->this_assignment 
+                             ? proc->this_assignment 
+                             : proc->exit);
+
+    if (is_destructor_decl(decl))
+      last_node = call_base_destructors(proc, last_node);
+
+    BasicBlock *begin
+      = transform_block(decl->get_definition()->get_body(),
+                        last_node, NULL, NULL);
+    if (proc->arg_block != NULL) {
+      add_link(proc->entry, proc->first_arg_block, NORMAL_EDGE);
+      add_link(proc->last_arg_block, begin, NORMAL_EDGE);
+    } else {
+      add_link(proc->entry, begin, NORMAL_EDGE);
+    }
+  }
+}
+
 void 
 CFGTraversal::visit(SgNode *node) {
   // collect all global variables into a list
 //if (SgGlobal *global = isSgGlobal(node->get_parent()))
 // GB (2008-04-30): Why in the world did this use node->get_parent() instead
 // of node?
+// GB (2008-05-05): Refactored.
   if (SgGlobal *global = isSgGlobal(node))
-  {
-      std::map<std::string, SgVariableSymbol *>::iterator
-          cfg_names_globals_end = cfg->names_globals.end();
-      std::map<std::string, SgExpression *>::iterator
-          cfg_names_initializers_end = cfg->names_initializers.end();
-      SgDeclarationStatementPtrList::const_iterator itr;
-      SgDeclarationStatementPtrList::const_iterator decls_end = global->getDeclarationList().end();
-      for (itr = global->getDeclarationList().begin(); itr != decls_end; ++itr)
-      {
-          if (const SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
-          {
-              SgInitializedName *initname = vardecl->get_variables().front();
-              SgVariableSymbol *varsym
-                  = global->lookup_variable_symbol(initname->get_name());
-              std::string name = initname->get_name().str();
-              if (cfg->names_globals.find(name) == cfg_names_globals_end)
-              {
-                  cfg->names_globals[name] = varsym;
-                  cfg->globals.push_back(varsym);
-                  cfg_names_globals_end = cfg->names_globals.end();
-              }
-              if (cfg->names_initializers.find(name) == cfg_names_initializers_end)
-              {
-               // GB (2008-02-14): Added support for aggregate initializers.
-                  if (isSgAssignInitializer(initname->get_initializer())
-                          || isSgAggregateInitializer(initname->get_initializer()))
-                  {
-                      cfg->names_initializers[name] = initname->get_initializer();
-                      cfg->globals_initializers[varsym] = cfg->names_initializers[name];
-                      cfg_names_initializers_end = cfg->names_initializers.end();
-                  }
-              }
-          }
-      }
-  }
+      processGlobalVariableDeclarations(global);
+
   // visit all function definitions
-  if (isSgFunctionDeclaration(node)) {
-    SgFunctionDeclaration *decl = isSgFunctionDeclaration(node);
-    if (decl->get_definition() != NULL) {
-      proc = (*cfg->procedures)[procnum++];
-
-      BasicBlock *last_node = (proc->this_assignment 
-                               ? proc->this_assignment 
-                               : proc->exit);
-
-      if (is_destructor_decl(decl))
-        last_node = call_base_destructors(proc, last_node);
-
-      BasicBlock *begin
-        = transform_block(decl->get_definition()->get_body(),
-                          last_node, NULL, NULL);
-      if (proc->arg_block != NULL) {
-        add_link(proc->entry, proc->first_arg_block, NORMAL_EDGE);
-        add_link(proc->last_arg_block, begin, NORMAL_EDGE);
-      } else {
-        add_link(proc->entry, begin, NORMAL_EDGE);
-      }
-    }
-  }
+  // GB (2008-05-05): Refactored.
+  if (SgFunctionDeclaration *decl = isSgFunctionDeclaration(node))
+      processFunctionDeclarations(decl);
 }
 
 void 
@@ -802,21 +842,12 @@ add_link(BasicBlock *from, BasicBlock *to, KFG_EDGE_TYPE type) {
   }
 }
 
-BasicBlock*
-CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
-                              BasicBlock *break_target,
-                              BasicBlock *continue_target)
+std::pair<BasicBlock *, BasicBlock *>
+CFGTraversal::introduceUndeclareStatements(SgBasicBlock *block,
+        BasicBlock *after)
 {
-  /*
-   * The basic block is split into several new ones: One block per
-   * statement. Consecutive blocks are connected via normal edges,
-   * loops and ifs by true and false edges to their successors.
-   * The first block is linked from before, *all* new blocks
-   * without successors, and the last block, are linked to after.
-   */
-  BasicBlock *new_block = NULL, *last_block_of_this_block = NULL;
-  SgStatementPtrList stmts = block->get_statements();
-
+    BasicBlock *new_block = NULL, *last_block_of_this_block = NULL;
+    SgStatementPtrList stmts = block->get_statements();
     /* Find all declarations of all variables in this block (but not
      * in blocks contained in this one). We need to undeclare them
      * and, in case of class objects, call their destructors at the
@@ -874,6 +905,30 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
       // std::cout << "destroyed " << (*n)->unparseToString() << std::endl;
       last_block_of_this_block = after;
     }
+    return std::make_pair(after, last_block_of_this_block);
+}
+
+BasicBlock*
+CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
+                              BasicBlock *break_target,
+                              BasicBlock *continue_target)
+{
+    /*
+     * The basic block is split into several new ones: One block per
+     * statement. Consecutive blocks are connected via normal edges,
+     * loops and ifs by true and false edges to their successors.
+     * The first block is linked from before, *all* new blocks
+     * without successors, and the last block, are linked to after.
+     */
+    BasicBlock *new_block = NULL, *last_block_of_this_block = NULL;
+    SgStatementPtrList stmts = block->get_statements();
+
+ // GB (2008-05-05): Refactored.
+    std::pair<BasicBlock *, BasicBlock* > after_lastblock
+        = introduceUndeclareStatements(block, after);
+    after = after_lastblock.first;
+    last_block_of_this_block = after_lastblock.second;
+
     /* Iterate over statements backwards: We need to know the blocks
      * that come later on to be able to set links. This is similar
      * to a continuation-style semantics definition. */
@@ -903,6 +958,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
             = isSgExprStatement(ifs->get_conditional());
         SgExpression* new_expr
             = isSgExpression(Ir::deepCopy(cond->get_expression()));
+#if 0
         ExprLabeler el(expnum);
         el.traverse(new_expr, preorder);
         expnum = el.get_expnum();
@@ -910,6 +966,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
         et.traverse(new_expr, preorder);
         for (int z = node_id; z < et.get_node_id(); ++z)
             block_stmt_map[z] = current_statement;
+#else
+        ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block,
+                block_stmt_map, current_statement);
+        et.labelAndTransformExpression(new_expr);
+#endif
         node_id = et.get_node_id();
         expnum = et.get_expnum();
 
@@ -1093,6 +1154,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
          // init_block = allocate_new_block(init_block, init_block_after);
             SgExpression* new_expr
               = isSgExpression(Ir::deepCopy(init_expr->get_expression()));
+#if 0
             ExprLabeler el(expnum);
             el.traverse(new_expr, preorder);
             expnum = el.get_expnum();
@@ -1100,6 +1162,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
             et.traverse(new_expr, preorder);
             for (int z = node_id; z < et.get_node_id(); ++z)
               block_stmt_map[z] = current_statement;
+#else
+            ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block,
+                    block_stmt_map, current_statement);
+            et.labelAndTransformExpression(new_expr);
+#endif
             node_id = et.get_node_id();
             expnum = et.get_expnum();
 
@@ -1127,6 +1194,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
                   break;
               }
               SgExpression* new_expr = isSgExpression(Ir::deepCopy(init));
+#if 0
               ExprLabeler el(expnum);
               el.traverse(new_expr, preorder);
               expnum = el.get_expnum();
@@ -1141,6 +1209,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
               for (int z = node_id; z < et.get_node_id(); ++z) {
                   block_stmt_map[z] = current_statement;
               }
+#else
+              ExprTransformer et(node_id, proc->procnum, expnum, cfg,
+                      init_block, block_stmt_map, current_statement);
+              et.labelAndTransformExpression(new_expr);
+#endif
               node_id = et.get_node_id();
               expnum = et.get_expnum();
 
@@ -1179,6 +1252,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
           = isSgExpression(Ir::deepCopy(cond->get_expression()));
 
         assert(new_expr);
+#if 0
         ExprLabeler el(expnum);
         el.traverse(new_expr, preorder);
         expnum = el.get_expnum();
@@ -1187,6 +1261,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
         for (int z = node_id; z < et.get_node_id(); ++z) {
           block_stmt_map[z] = current_statement;
         }
+#else
+        ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block,
+                block_stmt_map, current_statement);
+        et.labelAndTransformExpression(new_expr);
+#endif
         node_id = et.get_node_id();
         expnum = et.get_expnum();
 
@@ -1214,6 +1293,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 
         SgExpression *new_expr_inc
           = isSgExpression(Ir::deepCopy(fors->get_increment()));
+#if 0
         ExprLabeler el_inc(expnum);
         el_inc.traverse(new_expr_inc, preorder);
         expnum = el_inc.get_expnum();
@@ -1222,6 +1302,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
         for (int z = node_id; z < et_inc.get_node_id(); ++z) {
           block_stmt_map[z] = current_statement;
         }
+#else
+        ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block,
+                block_stmt_map, current_statement);
+        et_inc.labelAndTransformExpression(new_expr_inc);
+#endif
         node_id = et_inc.get_node_id();
         expnum = et_inc.get_expnum();
 
@@ -1282,6 +1367,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	  = isSgExprStatement(whiles->get_condition());
 	SgExpression* new_expr
 		  = isSgExpression(Ir::deepCopy(cond->get_expression()));
+#if 0
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1291,6 +1377,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	for (int z = node_id; z < et.get_node_id(); ++z) {
 	  block_stmt_map[z] = current_statement;
 	}
+#else
+    ExprTransformer et(node_id, proc->procnum, expnum, cfg, while_block,
+            block_stmt_map, current_statement);
+    et.labelAndTransformExpression(new_expr);
+#endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
@@ -1332,6 +1423,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	  = isSgExprStatement(dowhiles->get_condition());
 	SgExpression *new_expr
 	  = isSgExpression(Ir::deepCopy(cond->get_expression()));
+#if 0
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1341,6 +1433,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	for (int z = node_id; z < et.get_node_id(); ++z) {
                     block_stmt_map[z] = current_statement;
 	}
+#else
+    ExprTransformer et(node_id, proc->procnum, expnum, cfg, dowhile_block,
+            block_stmt_map, current_statement);
+    et.labelAndTransformExpression(new_expr);
+#endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
@@ -1441,6 +1538,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	  new_expr = NULL;
 	}
 
+#if 0
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1450,6 +1548,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	for (int z = node_id; z < et.get_node_id(); ++z) {
 	  block_stmt_map[z] = current_statement;
 	}
+#else
+    ExprTransformer et(node_id, proc->procnum, expnum, cfg, switch_block,
+            block_stmt_map, current_statement);
+    et.labelAndTransformExpression(new_expr);
+#endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
@@ -1550,6 +1653,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	}
 	SgExpression *new_expr 
 	  = isSgExpression(Ir::deepCopy(returns->get_expression()));
+#if 0
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
 	expnum = el.get_expnum();
@@ -1559,6 +1663,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	for (int z = node_id; z < et.get_node_id(); ++z) {
 	  block_stmt_map[z] = current_statement;
 	}
+#else
+    ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+            block_stmt_map, current_statement);
+    et.labelAndTransformExpression(new_expr);
+#endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
@@ -1616,14 +1725,20 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 
 	  if (new_expr) {
 
+          new_block = allocate_new_block(new_block, after);
+#if 0
           ExprLabeler el(expnum);
           el.traverse(new_expr, preorder);
           expnum = el.get_expnum();
-          new_block = allocate_new_block(new_block, after);
           ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block);
           et.traverse(new_expr, preorder);
           for (int z = node_id; z < et.get_node_id(); ++z)
               block_stmt_map[z] = current_statement;
+#else
+          ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+                  block_stmt_map, current_statement);
+          et.labelAndTransformExpression(new_expr);
+#endif
           node_id = et.get_node_id();
           expnum = et.get_expnum();
           after = et.get_after();
@@ -1645,6 +1760,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
      // GB (2008-03-13): Parent pointer is now set by Ir::deepCopy.
      // new_expr->set_parent(constr_init->get_parent());
 
+#if 0
 	    ExprLabeler el(expnum);
 	    el.traverse(new_expr, preorder);
 	    expnum = el.get_expnum();
@@ -1655,6 +1771,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	    for (int z = node_id; z < et.get_node_id(); ++z) {
 	      block_stmt_map[z] = current_statement;
 	    }
+#else
+        ExprTransformer et(node_id, proc->procnum, expnum, cfg, after,
+                block_stmt_map, current_statement);
+        et.labelAndTransformExpression(new_expr);
+#endif
 	    node_id = et.get_node_id();
 	    expnum = et.get_expnum();
 	    /* incoming information at the incoming edge
@@ -1772,17 +1893,23 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	if (exprs != NULL) {
 	  SgExpression *new_expr
 	    = isSgExpression(Ir::deepCopy(exprs->get_expression()));
-	  
+
+	  new_block = allocate_new_block(new_block, after);
+#if 0
 	  ExprLabeler el(expnum);
 	  el.traverse(new_expr, preorder);
 	  expnum = el.get_expnum();
-	  new_block = allocate_new_block(new_block, after);
 	  ExprTransformer et(node_id, proc->procnum, expnum,
 			     cfg, new_block);
 	  et.traverse(new_expr, preorder);
 	  for (int z = node_id; z < et.get_node_id(); ++z) {
                     block_stmt_map[z] = current_statement;
 	  }
+#else
+      ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+              block_stmt_map, current_statement);
+      et.labelAndTransformExpression(new_expr);
+#endif
 	  node_id = et.get_node_id();
 	  expnum = et.get_expnum();
                 

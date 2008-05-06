@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.7 2008-05-05 10:18:47 gergo Exp $
+// $Id: CFGTraversal.h,v 1.8 2008-05-06 08:34:58 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -50,6 +50,12 @@ private:
     void number_exprs();
     bool is_destructor_decl(SgFunctionDeclaration *) const;
     BasicBlock *call_base_destructors(Procedure *, BasicBlock *);
+    void setProcedureEndNodes();
+    void processProcedureArgBlocks();
+    void processGlobalVariableDeclarations(SgGlobal*);
+    void processFunctionDeclarations(SgFunctionDeclaration *decl);
+    std::pair<BasicBlock *, BasicBlock *>
+        introduceUndeclareStatements(SgBasicBlock *block, BasicBlock *after);
     int node_id;
     int procnum;
     CFG *cfg, *real_cfg;

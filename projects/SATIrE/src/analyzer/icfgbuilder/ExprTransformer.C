@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.19 2008-05-05 10:18:45 gergo Exp $
+// $Id: ExprTransformer.C,v 1.20 2008-05-06 08:34:56 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -8,11 +8,41 @@
 #include "ExprTransformer.h"
 #include "IrCreation.h"
 
+#if 0
 ExprTransformer::ExprTransformer(int node_id_, int procnum_, int expnum_,
                  CFG *cfg_, BasicBlock *after_)
   : node_id(node_id_), procnum(procnum_), expnum(expnum_), cfg(cfg_),
     after(after_), retval(after_), root_var(NULL)
 {
+ // GB (2008-05-05): Refactoring has made this constructor deprecated. It
+ // should be removed soon.
+    std::cerr << "*** warning: called deprecated constructor of class "
+        << "ExprTransformer" << std::endl;
+}
+#endif
+
+ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
+        CFG *cfg, BasicBlock *after,
+        std::map<int, SgStatement *> &block_stmt_map, SgStatement *stmt)
+  : node_id(node_id), procnum(procnum), expnum(expnum), cfg(cfg),
+    after(after), retval(after), root_var(NULL),
+    block_stmt_map(block_stmt_map), stmt(stmt), el(expnum)
+{
+}
+
+void
+ExprTransformer::labelAndTransformExpression(SgExpression *expr)
+{
+    int original_node_id = node_id;
+ // Label expression
+    el.traverse(expr, preorder);
+ // Transform expression
+    traverse(expr, preorder);
+ // Remember what statement this expression comes from
+    for (int z = original_node_id; z < node_id; ++z)
+        block_stmt_map[z] = stmt;
+ // Set the new expnum computed by the ExprLabeler
+    expnum = el.get_expnum();
 }
 
 int 
@@ -329,7 +359,9 @@ void ExprTransformer::visit(SgNode *node)
             assign_retval(*name, call, retval_block);
         if (first_arg_block != NULL)
             after = first_arg_block;
-        expnum++;
+     // GB (2008-05-05): ExprTransformer should never modify expnum; it
+     // doesn't even use it! Everything is done via attributes.
+     // expnum++;
 
         delete entries;
         delete name;
@@ -731,7 +763,9 @@ void ExprTransformer::visit(SgNode *node)
         //     assign_retval(name, call, retval_block);
         if (first_arg_block != NULL)
           after = first_arg_block;
-        expnum++;
+     // GB (2008-05-05): ExprTransformer should never modify expnum; it
+     // doesn't even use it! Everything is done via attributes.
+     // expnum++;
       }
     }
     else if (isSgDeleteExp(node)) {
@@ -922,7 +956,9 @@ void ExprTransformer::visit(SgNode *node)
       else if (root_var == NULL) {
         root_var = var;
       }
-      expnum++;
+   // GB (2008-05-05): ExprTransformer should never modify expnum; it
+   // doesn't even use it! Everything is done via attributes.
+   // expnum++;
     } else if (isSgConditionalExp(node)) {
       SgConditionalExp* cond = isSgConditionalExp(node);
       RetvalAttribute* varnameattr
@@ -954,7 +990,9 @@ void ExprTransformer::visit(SgNode *node)
       else if (root_var == NULL) {
         root_var = var;
       }
-      expnum++;
+   // GB (2008-05-05): ExprTransformer should never modify expnum; it
+   // doesn't even use it! Everything is done via attributes.
+   // expnum++;
     }
 }
 
@@ -1008,6 +1046,39 @@ ExprTransformer::find_entry(SgFunctionCallExp *call)
 
     return NULL;
 } 
+
+bool
+ExprTransformer::definitelyNotTheSameType(SgType *a, SgType *b) const
+{
+    if (a == b)
+        return false;
+
+    if (a->variantT() != b->variantT())
+        return true;
+
+    a = a->findBaseType();
+    b = b->findBaseType();
+
+    if (a == b)
+        return false;
+
+    if (a->variantT() != b->variantT())
+        return true;
+
+    if (SgNamedType *na = isSgNamedType(a))
+    {
+        SgNamedType *nb = isSgNamedType(b);
+        const char *sa = na->get_qualified_name().str();
+        const char *sb = nb->get_qualified_name().str();
+        if (sa == sb || std::strcmp(sa, sb) == 0)
+            return false;
+        else
+            return true;
+    }
+ // I don't think we can ever reach this point. Still, if we do, we do not
+ // *definitely* know that the types are different unless we unparse them.
+    return Ir::fragmentToString(a) != Ir::fragmentToString(b);
+}
 
 const std::vector<CallBlock *>*
 ExprTransformer::find_entries(SgFunctionCallExp *call)
@@ -1114,8 +1185,17 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
                      // think this should be solved using Mihai Ghete's AST
                      // matcher (TODO). For now, we use the good old ugly
                      // string comparison technique.
-                        if ((*c++)->get_type()->unparseToString()
-                                != (*p++)->get_type()->unparseToString())
+                     // GB (2008-05-05): Trying to avoid the string stuff if
+                     // at all possible...
+                        SgType *ctype = (*c++)->get_type();
+                        SgType *ptype = (*p++)->get_type();
+#if 0
+                        if (ctype != ptype
+                                && (ctype->variantT() != ptype->variantT()
+                                    || ctype->unparseToString() != ptype->unparseToString()))
+#else
+                        if (definitelyNotTheSameType(ctype, ptype))
+#endif
                         {
                             candidate = false;
                             break;
@@ -1190,8 +1270,11 @@ ExprTransformer::evaluate_arguments(std::string name,
 }
 
 void ExprTransformer::assign_retval(std::string name, SgFunctionCallExp *call, BasicBlock *block) {
+#if 0
+// GB (2008-05-05): Removed this dead code.
   std::stringstream varname;
   varname << "$" << name << "$return_" << expnum;
+#endif
   std::stringstream retname;
   retname << "$" << name << "$return";
   RetvalAttribute *varnameattr = (RetvalAttribute *) call->getAttribute("return variable");

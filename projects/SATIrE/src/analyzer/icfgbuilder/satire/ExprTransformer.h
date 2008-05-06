@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.5 2008-03-28 15:55:39 gergo Exp $
+// $Id: ExprTransformer.h,v 1.6 2008-05-06 08:34:58 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -10,25 +10,33 @@
 #include <list>
 
 #include "cfg_support.h"
+#include "ExprLabeler.h"
 
 // this must be used postorder
 class ExprTransformer : public AstSimpleProcessing
 {
 public:
+#if 0
     ExprTransformer(int node_id_, int procnum_, int expnum_, CFG *cfg_,
             BasicBlock *after);
+#endif
     int get_node_id() const;
     int get_expnum() const;
     BasicBlock *get_after() const;
     BasicBlock *get_last() const;
     BasicBlock *get_retval() const;
     SgVariableSymbol *get_root_var() const;
+ // GB (2008-05-05): New interface to roll expression labeling and numbering
+ // into one operation.
+    ExprTransformer(int node_id, int procnum, int expnum, CFG *cfg,
+            BasicBlock *after, std::map<int, SgStatement *> &block_stmt_map,
+            SgStatement *stmt);
+    void labelAndTransformExpression(SgExpression *expr);
 
 protected:
     void visit(SgNode *);
 
 private:
-    ExprTransformer();
     int node_id;
     int procnum;
     int expnum;
@@ -36,6 +44,9 @@ private:
     BasicBlock *after, *last;
     BasicBlock *retval;
     SgVariableSymbol *root_var;
+    std::map<int, SgStatement *> &block_stmt_map;
+    SgStatement *stmt;
+    ExprLabeler el;
 
     std::string find_mangled_func_name(SgFunctionRefExp *) const;
   //SgName find_mangled_memberf_name(SgMemberFunctionRefExp *) const;
@@ -47,6 +58,7 @@ private:
     void assign_retval(std::string, SgFunctionCallExp *, BasicBlock *);
     std::vector<std::string> *find_destructor_names(SgClassType *);
     std::vector<std::string> *find_destructor_this_names(SgClassType *);
+    bool definitelyNotTheSameType(SgType*, SgType*) const;
 };
 
 // GB (2008-03-10): Added this function as wrapper around ROSE's
