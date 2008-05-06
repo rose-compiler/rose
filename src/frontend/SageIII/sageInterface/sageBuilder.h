@@ -146,10 +146,10 @@ Expressions are usually built using bottomup approach, i.e. buiding operands fir
   SgValueExp, SgEnumVal,
   SgThrowOp,
 */
-//! build a null expression
+//! Build a null expression
 SgNullExpression* buildNullExpression();
 
-//! build a bool value expression, the name convention of SgBoolValExp is little different from others for some unknown reason
+//! Build a bool value expression, the name convention of SgBoolValExp is little different from others for some unknown reason
 SgBoolValExp* buildBoolValExp(int value = 0);
 SgBoolValExp* buildBoolValExp(bool value = 0);
 
@@ -157,12 +157,12 @@ SgCharVal* buildCharVal(char value = 0);
 
 SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
 
-//! build a double value expression
+//! Build a double value expression
 SgDoubleVal* buildDoubleVal(double value = 0.0);
 
 SgFloatVal* buildFloatVal(float value = 0.0);
 
-//! build an integer value expression
+//! Build an integer value expression
 SgIntVal* buildIntVal(int value = 0);
 
 SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
@@ -171,7 +171,7 @@ SgShortVal* buildShortVal(short value = 0);
 
 SgStringVal* buildStringVal(std::string value="");
 
-//! build a unsigned long integer
+//! Build a unsigned long integer
 SgUnsignedLongVal* buildUnsignedLongVal(unsigned long v = 0);
 
 //!  template function to build a unary expression of type T
