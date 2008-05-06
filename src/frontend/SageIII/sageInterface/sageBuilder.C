@@ -561,7 +561,7 @@ SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 
 SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 {
-  SgStringVal* result = SageBuilder::buildStringVal(value);
+  SgStringVal* result = new SgStringVal(value);
   ROSE_ASSERT(result);   
   setOneSourcePositionForTransformation(result);
   return result;
