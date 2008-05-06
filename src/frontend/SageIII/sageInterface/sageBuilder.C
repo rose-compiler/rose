@@ -511,7 +511,7 @@ SgBoolValExp* SageBuilder::buildBoolValExp(bool value /*=0*/)
 
 SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)
 {
-  SgCharVal* result = new SgCharVal(value);
+  SgCharVal* result = new SgCharVal(value,"");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
@@ -536,7 +536,7 @@ SgDoubleVal* SageBuilder::buildDoubleVal(double t)
 
 SgFloatVal* SageBuilder::buildFloatVal(float value /*= 0.0*/)
 {
-  SgFloatVal* result = new SgFloatVal(value);
+  SgFloatVal* result = new SgFloatVal(value,"");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
@@ -553,7 +553,7 @@ SgIntVal* SageBuilder::buildIntVal(int value)
 
 SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 {
-  SgLongDoubleVal* result = new SgLongDoubleVal(value);
+  SgLongDoubleVal* result = new SgLongDoubleVal(value,"");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
