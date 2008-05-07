@@ -60,7 +60,7 @@ generateSFDT_SOURCES = generateSFDT.C
 generateSFDT_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 generateSFDT_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-TESTCODES = test1.C test2.C test3.C
+TESTCODES = test1.C test2.C test3.C test4.C
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
