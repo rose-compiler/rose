@@ -78,9 +78,6 @@ libroseBinaryLibraries = \
 
 endif
 
-libroseRuntimeTransformation = \
-   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.la 
-
 # Note: ROSE/src/*.o are not included since they are only
 # related to the test program that is compiled to test the
 # ROSE libraries (librose.a librose.so)
@@ -120,6 +117,7 @@ libroseObjects = \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/*.o \
    $(top_builddir)/src/midend/programTransformation/functionCallNormalization/*.o \
    $(top_builddir)/src/midend/programTransformation/constantFolding/*.o \
+   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/*.o \
    $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/*.o \
    $(top_builddir)/src/midend/astQuery/*.o \
    $(top_builddir)/src/midend/astDiagnostics/*.o \
@@ -207,6 +205,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
    $(top_builddir)/src/midend/programTransformation/functionCallNormalization/libfunctionCallNormalization.la \
    $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
+   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.la \
    $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/libimplicitCodeGeneration.la \
    $(top_builddir)/src/midend/loopProcessing/prepostTransformation/libprepostloop.la \
    $(top_builddir)/src/midend/loopProcessing/depInfo/libdepInfo.la \
@@ -426,6 +425,12 @@ $(libdir)/libconstantFolding.so: $(top_builddir)/src/midend/programTransformatio
 #	test -f $(libdir)/libconstantFolding.so     || ln -s $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.so $(libdir)/libconstantFolding.so
 #	test -f $(libdir)/libconstantFolding.so     || cp $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.so $(libdir)/libconstantFolding.so
 	cp $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.so $(libdir)/libconstantFolding.so
+
+$(libdir)/libruntimeTransformation.so: $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.so
+	@echo "Adding links to separate dynamic libraries to simplify development ..."
+#	test -f $(libdir)/libruntimeTransformation.so || ln -s $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.so $(libdir)/libruntimeTransformation.so
+#	test -f $(libdir)/libruntimeTransformation.so || cp $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.so $(libdir)/libruntimeTransformation.so
+	cp $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.so $(libdir)/libruntimeTransformation.so
 
 $(libdir)/libimplicitCodeGeneration.so: $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/libimplicitCodeGeneration.so
 	@echo "Adding links to separate dynamic libraries to simplify development ..."
