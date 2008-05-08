@@ -12,11 +12,30 @@ typedef std::pair<SgNode*, std::vector<EqualityId> > NodeInfo;
 // hashmap support functions
 class NodeHash {
 public:
-  size_t operator()(NodeInfo node) const;
+  size_t operator()(const NodeInfo& node) const;
+
+private:
+// GB: Supporting hash functions.
+  static size_t hashString(const std::string &str);
+  static size_t hashChildren(SgNode *node);
+  template <class C> static size_t hashMangledName(C *c);
+  static size_t hashInitializedNamePtrList(SgInitializedNamePtrList &args);
+  static size_t hashValueExp(SgValueExp *value);
+  static size_t hashVarious(const NodeInfo &node);
+  static size_t hashDeclarationStatement(SgDeclarationStatement *decl);
 };
 class NodeEqual {
 public:
-  bool operator()(NodeInfo s1, NodeInfo s2) const;
+  bool operator()(const NodeInfo& s1, const NodeInfo& s2) const;
+
+private:
+// GB: Supporting equality functions.
+  static bool variantsEqual(const NodeInfo& s1, const NodeInfo& s2);
+  static bool childrenEqual(const NodeInfo& s1, const NodeInfo& s2);
+  template <class C> static bool compareNamedThings(C *i1, C *i2);
+  static bool compareInitializedNamePtrList(SgInitializedNamePtrList &a1,
+                                            SgInitializedNamePtrList &a2);
+  static bool compareVarious(const NodeInfo& s1, const NodeInfo& s2);
 };
 
 class NodeAddressHash {
@@ -58,6 +77,7 @@ protected:
 			       SynthesizedAttributesList synList);
   EqualityId
   defaultSynthesizedAttribute();
+  void atTraversalEnd();
 
 private:
   SimpleNodeMap node_map;
@@ -75,6 +95,7 @@ private:
   // map id -> children
   __gnu_cxx::hash_map<EqualityId, std::vector<EqualityId> > id_child_map;
 
+  EqualityId idForNode(const NodeInfo& node);
 };
 
 
