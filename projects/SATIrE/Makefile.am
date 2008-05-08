@@ -20,6 +20,7 @@ EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
 	testsuite/base/success/default_args.C \
 	testsuite/base/success/demo1.C \
 	testsuite/base/success/demo2.C \
+	testsuite/base/success/destructor.C \
 	testsuite/base/success/destructor2.C \
 	testsuite/base/success/destructor_simple.C \
 	testsuite/base/success/forinit.c \

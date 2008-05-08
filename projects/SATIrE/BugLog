@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.8 2008-04-24 13:58:04 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.9 2008-05-08 14:08:27 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -170,11 +170,18 @@ Symptoms:
     make installcheck segfaults when testing constprop on
     testsuite/success/destructor.C
 Reason:
-    unknown, possibly out of memory
+    This was an issue with the visualization of the analysis results; PAG
+    allocated buffers that were too small for some of our long variable
+    names. The reason was that PAG's magic syntax_init function was never
+    called, and this meant that the magic e_syntaxtype variable was not
+    initialized correctly, and therefore PAG's allocator was confused about
+    the sizes of some things.
 Fix:
-    unknown
+    Set the global syntaxtype and e_syntaxtype variables to -1; then PAG
+    calls syntax_init, and all is well. This is not documented anywhere, of
+    course, but reading obfuscated code is fun!
 Status:
-    BROKEN as of 2008-03-11
+    Resolved 2008-05-08, GB
 
 
 Logged:
