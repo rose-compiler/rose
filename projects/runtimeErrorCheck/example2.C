@@ -1,7 +1,17 @@
-#include <iostream>
+//#include <iostream>
 
-void thomas(void* n, std::string desc) {
-  if (n==NULL) {
-    std::cerr << " Error " << desc << std::endl;
-  }
+using namespace std;
+
+class Thomas {
+public:
+  int x;
+};
+
+int main(int argc, char** argv) {
+
+  Thomas* thomas = new Thomas();
+  thomas->x=5;
+
+  Thomas tom;
+  tom.x=6;
 }

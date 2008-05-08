@@ -46,15 +46,15 @@ void RuntimeInstrumentation::insertCheck(SgVarRefExp* n, std::string desc) {
   if (isSgStatement(stmt)) {
     SgName roseAssert("check_var");
     SgScopeStatement* scope = stmt->get_scope();
-    cerr << " stmt : " << stmt->class_name() << "  desc : " << desc << endl;
+    //cerr << " stmt : " << stmt->class_name() << "  desc : " << desc << endl;
     ROSE_ASSERT(scope);
     if (isSgBasicBlock(scope)) {
       SgVarRefExp* arg = buildVarRefExp(n->get_symbol()->get_name(),scope);
+      SgCastExp* cas = buildCastExp(arg, buildPointerType(buildVoidType()));
       SgStringVal* arg2 = buildStringVal(desc); //buildVarRefExp(desc,scope);
       ROSE_ASSERT(arg2);
       SgExprListExp* arg_list = buildExprListExp();
-      appendExpression(arg_list,arg);
-      // currently not working
+      appendExpression(arg_list,cas);
       appendExpression(arg_list,arg2);
       
       SgStatement* callStmt_1 = buildFunctionCallStmt(roseAssert,buildVoidType(),arg_list,scope);
@@ -75,7 +75,7 @@ void RuntimeInstrumentation::run(SgNode* project) {
     pushScopeStack (isSgScopeStatement (globalScope));
 
     // insert rose header
-    //insertHeader("rose.h",true,globalScope);
+    insertHeader("iostream",true,globalScope);
 
     // defining  void chec_var(SgNode*, string desc)
     // build parameter list first
@@ -105,8 +105,29 @@ void RuntimeInstrumentation::run(SgNode* project) {
 
 
     // create : if (n==NULL) { cerr << "Error at runtime at : " << desc << endl;
-    //SgStatement* stmt_if_true = buildLabelStatement("a");
-    SgBasicBlock* true_body = buildBasicBlock();
+    SgName myprintf("printf");
+    SgStringVal* pf_arg = buildStringVal("\\n\\nERROR detected: %s \\n");
+    SgVarRefExp* pf_arg2 = buildVarRefExp("desc");
+    ROSE_ASSERT(pf_arg2);
+    SgExprListExp* pf_arg_list = buildExprListExp();
+    appendExpression(pf_arg_list,pf_arg);
+    appendExpression(pf_arg_list,pf_arg2);
+    SgStatement* stmt_if_true = buildFunctionCallStmt(myprintf,buildVoidType(),pf_arg_list);
+
+    SgStringVal* abort_arg = buildStringVal("Aborting this program. Goodbye. \\n");
+    SgExprListExp* abort_arg_list = buildExprListExp();
+    appendExpression(abort_arg_list,abort_arg);
+    SgStatement* abort_stmt = buildFunctionCallStmt(myprintf,buildVoidType(),abort_arg_list);
+
+    SgName myexit("exit");
+    SgIntVal* exit_arg = buildIntVal(0);
+    SgExprListExp* exit_arg_list = buildExprListExp();
+    appendExpression(exit_arg_list,exit_arg);
+    SgStatement* exit_stmt = buildFunctionCallStmt(myexit,buildVoidType(),exit_arg_list);
+
+    SgBasicBlock* true_body = buildBasicBlock(stmt_if_true);
+    appendStatement(abort_stmt,true_body);
+    appendStatement(exit_stmt,true_body);
 
     //SgStatement* stmt_if_false = buildLabelStatement("b");
     SgBasicBlock* false_body = buildBasicBlock();
@@ -124,7 +145,10 @@ void RuntimeInstrumentation::run(SgNode* project) {
     SgStatement * oldFirstStmt = getFirstStatement(globalScope);
     prependStatement (func_decl);
 
-  fixVariableReferences(func_decl);
+    //    SgImport * iostr = buildImport (SgName("<iostream>"),SgTypeVoid::createType(),paraList2);
+    //prependStatement (iostr);
+
+    fixVariableReferences(func_decl);
 
     // mov up the preprocessor information
     if (oldFirstStmt)
@@ -165,13 +189,13 @@ void RuntimeInstrumentation::visit(SgNode* n) {
       Sg_File_Info* file = varRef->get_file_info();
       int line = file->get_line();
       static_name = varRef->get_symbol()->get_name().str();
-      static_name.append(" on line: ");
+      static_name.append("==NULL on line: ");
       static_name.append(to_string(line));
       static_name.append("  in File : ");
       static_name.append(file->get_filenameString()); 
     }
     ROSE_ASSERT(varRef);
-    cerr << varRef << " the varRef is " << static_name << endl;
+    //cerr << varRef << " the varRef is " << static_name << endl;
     if (rightHandSide) 
             varRefList[n]=static_name;
 

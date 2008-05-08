@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "RuntimeInstrumentation.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -56,26 +55,16 @@ int main(int argc, char** argv) {
   ROSE_ASSERT (project != NULL);
   std::string filename = argv[1];
 
-  if (printPDF) {
-    SgGlobal* globalScope = getFirstGlobalScope(isSgProject(project));
-    AstPDFGeneration pdf;
-    getEnclosingFileNode(globalScope)->display("generating : ");
-    //  cerr << " generating : " << getEnclosingFileNode(globalScope)->display("").str() << endl;
-    //pdf.generateWithinFile(getEnclosingFileNode(globalScope));
-    pdf.generateInputFiles(project);
-  }
 
   fprintf(stderr, "Starting runtimeCheck ...\n");
 
-  //generatePDF(*project);
 
   RuntimeInstrumentation* runtime = new RuntimeInstrumentation();
   runtime->run(project);
 
-  //  project->unparse();
-  return backend(project);
+  project->unparse();
 
-  //  return 0;
+  return 0;
 }
 
 
