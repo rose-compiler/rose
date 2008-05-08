@@ -42,4 +42,5 @@ EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
 	testsuite/base/success/while_call1.c \
 	\
 	src/analyzer/astnumbering/ValueEqualityCases \
+	src/analyzer/astnumbering/ValueHashCases \
 	src/analyzer/astnumbering/ValueStringCases
