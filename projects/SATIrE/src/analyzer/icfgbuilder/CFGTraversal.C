@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.29 2008-05-06 08:34:56 gergo Exp $
+// $Id: CFGTraversal.C,v 1.30 2008-05-08 14:09:00 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -719,7 +719,11 @@ CFGTraversal::number_exprs()
             if (e != NULL)
                 cfg->exprs_numbers[const_cast<SgExpression *>(e)] = i;
 #if 0
-            std::cout << "setting " << (void *) e << " -> " << i << std::endl;
+            std::cout
+                << "setting " << (void *) e << " "
+                << e->class_name() << " '"
+                << Ir::fragmentToString(e)
+                << "' -> " << i << std::endl;
 #endif
         }
         if (exprs.empty())
