@@ -17,7 +17,7 @@ class RuntimeInstrumentation : public AstSimpleProcessing {
   //  typedef rose_hash::hash_map <SgVarRefExp*,std::string> varRefList_Type;
   typedef std::map <SgNode*,std::string> varRefList_Type;
   varRefList_Type varRefList;
-  void insertCheck(SgVarRefExp* n,std::string desc);
+  void insertCheck(SgNode* n,std::string desc);
   bool isRightHandSide(SgNode* n);
 
   SgGlobal* globalScope;
@@ -31,11 +31,20 @@ class RuntimeInstrumentation : public AstSimpleProcessing {
     }
 
   SgStatement* getSurroundingStatement(SgNode* n);
+  SgNode* isParentDotExp(SgExpression* n, bool& left);
+  SgNode* isPointerDerefExp(SgVarRefExp* n);
+  SgNode* isArrowExp(SgExpression* n, bool& left);
+
+
+  SgVarRefExp* getVarRef(SgNode* n);
 
  public:
   
   RuntimeInstrumentation(){
     varRefList.clear();
+  };
+
+  ~RuntimeInstrumentation(){
   };
 
 

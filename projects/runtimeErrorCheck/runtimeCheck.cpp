@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
   RuntimeInstrumentation* runtime = new RuntimeInstrumentation();
   runtime->run(project);
 
+  fprintf(stderr, "Starting backend ...\n");
   //  project->unparse();
   return backend(project);
 

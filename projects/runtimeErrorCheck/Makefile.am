@@ -18,6 +18,8 @@ runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TESTCODES = example.C 
 TESTCODES2 = example2.C
 TESTCODES3 = example3.C
+TESTCODES4 = example4.C
+TESTCODES5 = example5.C
 
 runtimeCheck.o: runtimeCheck.cpp
 
@@ -35,7 +37,7 @@ $(TEST_Objects): runtimeCheck $(TESTCODES)
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
 
-EXTRA_DIST = example.C example2.C example3.C
+EXTRA_DIST = example.C example2.C example4.C example5.C example3.C
 
 CLEANFILES = *.out example.C *.ti *.pdf *.C
 
@@ -44,19 +46,23 @@ check-local: runtimeCheck $(TESTCODES)
 	cp $(srcdir)/example.C .
 	cp $(srcdir)/example2.C .
 	cp $(srcdir)/example3.C .
-	echo $(ROSE_LIBS_WITH_PATH)
-	echo $(LIBS_WITH_RPATH)
-	echo $(LIBS_WITH_RPATH)
+	cp $(srcdir)/example4.C .
+	cp $(srcdir)/example5.C .
 	./runtimeCheck $(TESTCODES) -run -o test_bin
-#	$(CXX) -o test_bin rose_$(TESTCODES)
+	./runtimeCheck $(TESTCODES) -pdf -o test_bin
 	./test_bin 
 	./runtimeCheck $(TESTCODES2) -run -o test_bin2
-#	$(CXX) -o test_bin2 rose_$(TESTCODES2)
+	./runtimeCheck $(TESTCODES2) -pdf -o test_bin2
 	./test_bin2 
-	./runtimeCheck $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
-	libtool --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
-#	$(CXX) -o test_bin3 rose_$(TESTCODES3) $(INCLUDES2) $(LDADD)
-	./test_bin3 example.C -run
+	./runtimeCheck $(TESTCODES4) -run -o test_bin4
+	./runtimeCheck $(TESTCODES4) -pdf -o test_bin4
+	./test_bin4 
+	./runtimeCheck $(TESTCODES5) -run -o test_bin5
+	./runtimeCheck $(TESTCODES5) -pdf -o test_bin5
+	./test_bin5 
+#	./runtimeCheck $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
+#	libtool --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
+#	./test_bin3 example.C -run
 #	@echo "*********************************************************************************************************************"
 #	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 #	@echo "*********************************************************************************************************************"

@@ -14,4 +14,10 @@ int main(int argc, char** argv) {
 
   Thomas tom;
   tom.x=6;
+
+  Thomas** hans = &thomas;
+  int x = (*hans)->x;
+  thomas=0;
+  x = (*hans)->x;
+  x = thomas->x;
 }

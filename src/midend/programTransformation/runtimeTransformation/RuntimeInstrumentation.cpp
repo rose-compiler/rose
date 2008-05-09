@@ -38,10 +38,53 @@ SgStatement* RuntimeInstrumentation::getSurroundingStatement(SgNode* n) {
     return isSgStatement(stat);
 }
 
-void RuntimeInstrumentation::insertCheck(SgVarRefExp* n, std::string desc) {
-  cerr <<  " Need to Assert that >" << n << "< >"<<desc << "< is not NULL before it is accessed. " << endl;
+SgNode* RuntimeInstrumentation::isParentDotExp(SgExpression* n, bool& left ) {
+    SgNode* stat = n;
+    SgNode* last =n;
+    left=false;
+    while (!isSgDotExp(stat) && !isSgProject(stat)) {
+      last=stat;
+      ROSE_ASSERT(stat);
+      ROSE_ASSERT(stat->get_parent());
+      stat=stat->get_parent();
+    }
+    if (isSgDotExp(stat)) {
+      SgNode* leftop = isSgDotExp(stat)->get_lhs_operand();
+      if (leftop==last) left=true; 
+    }
+  return stat;
+}
+
+SgNode* RuntimeInstrumentation::isPointerDerefExp(SgVarRefExp* n) {
+    SgNode* stat = n;
+    while (!isSgPointerDerefExp(stat) && !isSgProject(stat)) {
+      ROSE_ASSERT(stat->get_parent());
+      stat=stat->get_parent();
+    }
+  return stat;
+}
+
+SgNode* RuntimeInstrumentation::isArrowExp(SgExpression* n, bool& left ) {
+    SgNode* stat = n;
+    SgNode* last =n;
+    left=false;
+    while (!isSgArrowExp(stat) && !isSgProject(stat)) {
+      last=stat;
+      ROSE_ASSERT(stat);
+      ROSE_ASSERT(stat->get_parent());
+      stat=stat->get_parent();
+    }
+    if (isSgArrowExp(stat)) {
+      SgNode* leftop = isSgArrowExp(stat)->get_lhs_operand();
+      if (leftop==last) left=true; 
+    }
+  return stat;
+}
+
+
+void RuntimeInstrumentation::insertCheck(SgNode* n, std::string desc) {
+  cerr <<  " Need to Assert that >" << n->class_name() << "< >"<<desc << "< is not NULL before it is accessed. " << endl;
   ROSE_ASSERT(n);
-  ROSE_ASSERT(isSgVarRefExp(n));
   SgStatement* stmt = getSurroundingStatement(n);
   if (isSgStatement(stmt)) {
     SgName roseAssert("check_var");
@@ -49,8 +92,90 @@ void RuntimeInstrumentation::insertCheck(SgVarRefExp* n, std::string desc) {
     //cerr << " stmt : " << stmt->class_name() << "  desc : " << desc << endl;
     ROSE_ASSERT(scope);
     if (isSgBasicBlock(scope)) {
-      SgVarRefExp* arg = buildVarRefExp(n->get_symbol()->get_name(),scope);
-      SgCastExp* cas = buildCastExp(arg, buildPointerType(buildVoidType()));
+      SgCastExp* cas=NULL;
+
+      if (isSgPointerDerefExp(n)) {
+	SgExpression* deref = isSgPointerDerefExp(n);
+	SgExpression* deref_loop = deref;
+	while (!isSgVarRefExp(deref_loop)) {
+	  cerr << " found : " << deref_loop->class_name() << endl;
+	  //	  ROSE_ASSERT(isSgPointerDerefExp(deref_loop)->get_operand());
+	  if (!isSgUnaryOp(deref_loop)) {
+	    // this could be because the current expression is of type ArrowExp or DotExp
+	    // skip those for now.
+	    cerr << "skipped this test... " << endl;
+	    return;
+	  }
+	  deref_loop=isSgUnaryOp(deref_loop)->get_operand();
+	}
+	SgExpression* varRef =isSgVarRefExp(deref_loop);
+	ROSE_ASSERT(varRef);
+	SgExpression* arg = buildVarRefExp(isSgVarRefExp(varRef)->get_symbol()->get_name(),scope);
+
+	if (isSgPointerDerefExp(varRef->get_parent())) {
+	  // perfect
+	} else if (isSgPlusPlusOp(varRef->get_parent())) {
+	  arg = buildPlusPlusOp(arg);
+	  ROSE_ASSERT(isSgExpression(varRef->get_parent()));
+	  varRef=isSgExpression(varRef->get_parent());
+	} else if (isSgMinusMinusOp(varRef->get_parent())) {
+	  arg = buildMinusMinusOp(arg,SgUnaryOp::prefix);
+	  ROSE_ASSERT(isSgExpression(varRef->get_parent()));
+	  varRef=isSgExpression(varRef->get_parent());
+	} else if (isSgAddressOfOp(varRef->get_parent())) {
+	  arg = buildAddressOfOp(arg);
+	  ROSE_ASSERT(isSgExpression(varRef->get_parent()));
+	  varRef=isSgExpression(varRef->get_parent());
+	} else {
+	  cerr <<" cant handle this case yet : " << varRef->get_parent()->class_name() << endl;
+	  exit(0);
+	}
+
+	if (isSgCastExp(varRef->get_parent()))
+	  return;
+	//	while (isSgCastExp(varRef->get_parent()))
+	//  varRef=isSgExpression(varRef->get_parent());
+
+	cerr << " current node : " << varRef->get_parent()->class_name() << endl;
+	ROSE_ASSERT(isSgPointerDerefExp(varRef->get_parent()));
+	SgNode* deref_up = isSgPointerDerefExp(varRef->get_parent());
+	SgPointerDerefExp* last_b = buildPointerDerefExp(arg);
+	while (deref_up!=deref && isSgPointerDerefExp(deref_up)) { 
+	    ROSE_ASSERT(isSgPointerDerefExp(deref_up));
+	    cerr <<" deref = " <<deref_up<< " "<< deref_up->class_name() <<  " parent " << deref_up->get_parent() <<"  last_b=" << last_b << endl;
+	    deref_up=deref_up->get_parent();
+	    ROSE_ASSERT(deref_up);
+	    last_b = buildPointerDerefExp(last_b);
+	}
+
+	//is parent is pointer or not?
+	bool onLeftSide = false;
+	SgNode* parentIsDotExp = isParentDotExp(varRef,onLeftSide);
+	if (isSgDotExp(parentIsDotExp))
+	    cas =  buildCastExp(buildAddressOfOp(last_b), buildPointerType(buildVoidType()));
+	else
+	    cas =  buildCastExp(last_b, buildPointerType(buildVoidType()));
+      } 
+
+      else if (isSgVarRefExp(n)) {
+	SgVarRefExp* varRef = isSgVarRefExp(n);
+	SgVarRefExp* arg = buildVarRefExp(varRef->get_symbol()->get_name(),scope);
+	//is parent is pointer or not?
+	bool onLeftSide = false;
+	SgNode* parentIsDotExp = isParentDotExp(varRef,onLeftSide);
+	if (isSgDotExp(parentIsDotExp))
+	    cas =  buildCastExp(buildAddressOfOp(arg), buildPointerType(buildVoidType()));
+	else
+	    cas =  buildCastExp(arg, buildPointerType(buildVoidType()));
+      } else if (isSgPntrArrRefExp(n)) {
+	SgPntrArrRefExp* varRef = isSgPntrArrRefExp(n);
+	SgPntrArrRefExp* arg = buildPntrArrRefExp(varRef->get_lhs_operand(),varRef->get_rhs_operand());
+	cas =  buildCastExp(arg, buildPointerType(buildVoidType()));
+      } else {
+	cerr <<" RuntimeInstruction: Unhandled case : " << n->class_name() << endl;
+	exit(0);
+      }
+      ROSE_ASSERT(cas);
       SgStringVal* arg2 = buildStringVal(desc); //buildVarRefExp(desc,scope);
       ROSE_ASSERT(arg2);
       SgExprListExp* arg_list = buildExprListExp();
@@ -160,18 +285,24 @@ void RuntimeInstrumentation::run(SgNode* project) {
 
   traverse(project, preorder);
 
-  cerr << " Number of Elements in VarRefList  : " << varRefList.size() << endl;
+  cerr << "\n Number of Elements in VarRefList  : " << varRefList.size() << endl;
   varRefList_Type::iterator it=varRefList.begin();
   for (;it!=varRefList.end();it++) {
     std::pair <SgNode*,std::string > p = *it;
     SgVarRefExp* var= isSgVarRefExp(p.first);
+    SgPntrArrRefExp* var2= isSgPntrArrRefExp(p.first);
+    SgPointerDerefExp* deref = isSgPointerDerefExp(p.first);
+
     string str = p.second;
-    insertCheck(var,str);
+    if (var) insertCheck(var,str);
+    else if (var2) insertCheck(var2,str);
+    else if (deref) insertCheck(deref,str);
+    else {
+      cerr << " UNKNOWN CHECK : " << p.first->class_name();
+    }
   }
-
-
-
 }
+
 
 /****************************************************
  * visit each node
@@ -183,23 +314,75 @@ void RuntimeInstrumentation::visit(SgNode* n) {
   if (isSgVarRefExp(n)) {
     SgVarRefExp* varRef = isSgVarRefExp(n);
     bool rightHandSide = isRightHandSide(n);
-    string static_name = "varRef is NULL!";
+    string static_name = "NULL!!!";
+    // check if it is NULL
+    if ((varRef->get_parent()!=NULL && isSgPntrArrRefExp(varRef->get_parent()))) {
+      // skip if this varRefExp is part of an array
+      return;
+    }
+    Sg_File_Info* file = varRef->get_file_info();
+    int line = file->get_line();
+    static_name = varRef->unparseToString();
+    static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+    ROSE_ASSERT(varRef);
+    
+    bool isOnLeftSideDOT = false;
+    bool isOnLeftSideARROW = false;
+    SgNode* parentIsDotExp = isParentDotExp(varRef, isOnLeftSideDOT);
+    SgNode* arrow = isArrowExp(varRef, isOnLeftSideARROW);
+
+    // is parent SgDotExp
+    if (isSgDotExp(parentIsDotExp)) {
+      if (isOnLeftSideDOT) {
+	static_name = parentIsDotExp->unparseToString();
+	static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+	  varRefList[varRef]=static_name;
+	cerr << "DotExp:: Checking (left): " << parentIsDotExp->unparseToString() << endl;
+      } else cerr << "DotExp::  NOT Checking (right): " << parentIsDotExp->unparseToString() << endl;
+    }
+    // is paretn SgArrowExp
+    else if (isSgArrowExp(arrow) ) {
+      if (isOnLeftSideARROW) {
+	static_name = arrow->unparseToString();
+	static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+	  varRefList[varRef]=static_name;
+	cerr << "ArrowExp:: Checking (left): " << arrow->unparseToString() << endl;
+      } else cerr << "ArrowExp:: NOT Checking (right): " << arrow->unparseToString() << endl;
+    } else {
+      // it is a simple varRefExp
+      if (rightHandSide) {
+	cerr << "VarRef:: Checking (right-assignment) " << static_name << endl;
+	varRefList[n]=static_name;
+      } 
+    }
+  }
+
+  else if (isSgPointerDerefExp(n)) {
+    SgPointerDerefExp* deref = isSgPointerDerefExp(n);
+    Sg_File_Info* file = deref->get_file_info();
+    int line = file->get_line();
+    string static_name = deref->unparseToString();
+    static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+    varRefList[deref]=static_name;
+      cerr << "DerefExp:: Checking: " << deref->unparseToString() << endl;
+
+  } else if (isSgPntrArrRefExp(n)) {
+    // if array
+    SgPntrArrRefExp* varRef = isSgPntrArrRefExp(n);
+    bool rightHandSide = isRightHandSide(n);
+    string static_name = "NULL!!!";
     // check if it is NULL
     if (varRef!=NULL) {
       Sg_File_Info* file = varRef->get_file_info();
       int line = file->get_line();
-      static_name = varRef->get_symbol()->get_name().str();
-      static_name.append("==NULL on line: ");
-      static_name.append(to_string(line));
-      static_name.append("  in File : ");
-      static_name.append(file->get_filenameString()); 
+      static_name = varRef->unparseToString();
+      static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
     }
     ROSE_ASSERT(varRef);
-    //cerr << varRef << " the varRef is " << static_name << endl;
+    cerr << varRef << " the pntrArrRefExp is " << static_name << endl;
     if (rightHandSide) 
-            varRefList[n]=static_name;
-
+      varRefList[n]=static_name;
   }
-
+  
 
 }
