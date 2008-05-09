@@ -4,8 +4,16 @@ V0.8.2 (in progress)
   - change analysis specifications to take the new ExternalReturn statement
     into account
   - change analysis specifications to take unreachable ICFG nodes into
-	account: by default, the initial data flow value of the analysis should
-	mean "unreachable"
+    account: by default, the initial data flow value of the analysis should
+    mean "unreachable"
+  - change analysis specifications to take into account that the numexprs
+    and numtypes attributes are now of type unum instead of snum; all
+    support functions related to expression and type numbers now take unum
+    rather than snum; also, there is a new support function variable_id (see
+    file docs/satire_attributes_auxiliary_functions)
+  - for existing analyses, call newanalysis or manually change
+    main-support.C (according to the template) to reflect a change in the
+    interface of the CFGTraversal class
 
 * Command line flag to control ICFG consistency checks [GB]
   - these expensive checks must now be enabled explicitly using --check-icfg
@@ -20,6 +28,7 @@ V0.8.2 (in progress)
     hashing
   - fixed ICFG builder failures related to default constructor arguments
   - some refactoring and dramatic improvements in method lookup
+  - reintroduced UndeclareStmts which had somehow gone missing
 
 * Testsuite improvements [GB]
   - separate histograms are generated for execution time and memory usage
