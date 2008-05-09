@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.12 2008-05-05 10:18:45 gergo Exp $
+// $Id: ProcTraversal.C,v 1.13 2008-05-09 13:56:53 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -217,8 +217,7 @@ ProcTraversal::visit(SgNode *node) {
           proc->arg_block = new BasicBlock(node_id, INNER, proc->procnum);
         }
         for (i = cis.begin(); i != cis.end(); ++i) {
-          SgVariableSymbol* lhs 
-            = Ir::createVariableSymbol(*i);
+          SgVariableSymbol* lhs = Ir::createVariableSymbol(*i);
           SgAssignInitializer *ai
             = isSgAssignInitializer((*i)->get_initializer());
           SgConstructorInitializer *ci

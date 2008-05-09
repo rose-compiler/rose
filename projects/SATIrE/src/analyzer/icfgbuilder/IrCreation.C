@@ -258,11 +258,19 @@ SgVarRefExp* Ir::createVarRefExp(SgInitializedName* initializedName) {
   return n;
 }
 
+// GB (2008-05-09): This function should only allocate a new variable symbol
+// if the initialized name doesn't already have one. Symbols are supposed to
+// be shared!
 SgVariableSymbol* Ir::createVariableSymbol(SgInitializedName* initializedName) {
   configInitializedName(initializedName);
-  SgVariableSymbol* n=new SgVariableSymbol(initializedName);
-  configSymbolNode(n,initializedName);
-  return n;
+  SgVariableSymbol *s
+      = isSgVariableSymbol(initializedName->get_symbol_from_symbol_table());
+  if (s == NULL)
+  {
+      s = new SgVariableSymbol(initializedName);
+      configSymbolNode(s,initializedName);
+  }
+  return s;
 }
 
 SgVariableSymbol* Ir::createVariableSymbol(std::string name,SgType* type) {

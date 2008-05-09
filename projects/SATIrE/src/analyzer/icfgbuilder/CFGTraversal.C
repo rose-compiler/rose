@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.30 2008-05-08 14:09:00 gergo Exp $
+// $Id: CFGTraversal.C,v 1.31 2008-05-09 13:56:53 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -703,6 +703,7 @@ CFGTraversal::number_exprs()
     }
     delete exprs_nonred;
 #else
+ // Now get all expressions from the traversal and put them into our maps.
     std::vector<EqualityId> ids;
     cfg->equalityTraversal.get_all_exprs(ids);
     unsigned int i = 0;
@@ -715,9 +716,13 @@ CFGTraversal::number_exprs()
             = cfg->equalityTraversal.get_nodes_for_id(*id);
         for (expr = exprs.begin(); expr != exprs.end(); ++expr)
         {
-            const SgExpression *e = isSgExpression(*expr);
+         // The reference returned by get_nodes_for_id is const so that we
+         // don't muck around with the contents of the hash bucket. We won't
+         // muck around, we promise! But const is just too awkward for some
+         // of this stuff, so we cast it away.
+            SgExpression *e = const_cast<SgExpression *>(isSgExpression(*expr));
             if (e != NULL)
-                cfg->exprs_numbers[const_cast<SgExpression *>(e)] = i;
+                cfg->exprs_numbers[e] = i;
 #if 0
             std::cout
                 << "setting " << (void *) e << " "
@@ -725,6 +730,26 @@ CFGTraversal::number_exprs()
                 << Ir::fragmentToString(e)
                 << "' -> " << i << std::endl;
 #endif
+         // For variable references, we need to fill the map connecting
+         // VarRefs with their symbols. Symbols are used for
+         // declaration-related stuff; filling this map allows analyzers to
+         // use the same ID for a variable's uses and declarations. Here we
+         // fill the map for all variables that actually have VarRefs
+         // referring to them.
+            if (SgVarRefExp *varRef = isSgVarRefExp(e))
+            {
+                cfg->varsyms_ids[varRef->get_symbol()] = i;
+#if 0
+                SgVariableSymbol *sym = varRef->get_symbol();
+                std::cout
+                    << "visiting varref "
+                    << (void *) varRef << " "
+                    << sym->get_name().str() << "/"
+                    << sym->get_declaration()->get_mangled_name().str()
+                    << "; added it with ID " << i
+                    << std::endl;
+#endif
+            }
         }
         if (exprs.empty())
         {
@@ -735,7 +760,11 @@ CFGTraversal::number_exprs()
         }
         const SgExpression *e = isSgExpression(exprs.front());
      // cfg->numbers_exprs[i] = const_cast<SgExpression *>(e);
+     // Use the first element of the expression list as the representative
+     // of this equivalence class; that is, this is the pointer that will be
+     // returned for this expression ID.
         cfg->numbers_exprs.push_back(const_cast<SgExpression *>(e));
+
 #if 0
         std::cout << "setting " << i << " -> " << (void *) e
             << " " << e->class_name();
@@ -746,6 +775,59 @@ CFGTraversal::number_exprs()
         i++;
     }
 #endif
+ // Now there still might be some variable symbols not associated with a
+ // variable ID because they have no uses (as SgVarRefExp) in the ICFG. This
+ // might be because they are declared but never used, or because they are
+ // special function parameters that we only ever pass around via
+ // VariableSymbol. For numbering, we simply use i from above. This ensures
+ // that IDs for symbols without SgVarRefExps are >= the maximal expression
+ // number, which is a neat property because it makes clear that these
+ // numbers do not refer to expressions in the program.
+ // We try to get the variable symbols from the memory pool.
+    std::vector<SgVariableSymbol *> varsyms;
+    class VarSymCollector: public ROSE_VisitTraversal
+    {
+    public:
+        VarSymCollector(std::vector<SgVariableSymbol *> &varsyms)
+          : varsyms(varsyms)
+        {
+        }
+
+        void visit(SgNode *node)
+        {
+            if (SgVariableSymbol *sym = isSgVariableSymbol(node))
+                varsyms.push_back(sym);
+        }
+
+    private:
+        std::vector<SgVariableSymbol *> &varsyms;
+    };
+    VarSymCollector varSymCollector(varsyms);
+    SgVariableSymbol::traverseMemoryPoolNodes(varSymCollector);
+ // std::cout << "got " << varsyms.size() << " varsyms total" << std::endl;
+    std::vector<SgVariableSymbol *>::iterator varsym;
+    std::map<SgVariableSymbol *, unsigned int>::iterator pos;
+    for (varsym = varsyms.begin(); varsym != varsyms.end(); ++varsym)
+    {
+        SgVariableSymbol *sym = *varsym;
+#if 0
+        std::cout << "visiting varsym "
+            << (void *) sym << " "
+            << sym->get_name().str()
+            << "/" << sym->get_declaration()->get_mangled_name().str();
+#endif
+        pos = cfg->varsyms_ids.find(sym);
+        if (pos == cfg->varsyms_ids.end())
+        {
+         // Add new ID.
+            cfg->varsyms_ids[sym] = i++;
+         // std::cout << "; added it with ID " << (i-1) << std::endl;
+        }
+        else
+        {
+         // std::cout << "; present with ID " << pos->second << std::endl;
+        }
+    }
 
     unsigned int j = 0;
     std::set<SgType *, TypePtrComparator>::const_iterator type;
@@ -874,6 +956,23 @@ CFGTraversal::introduceUndeclareStatements(SgBasicBlock *block,
               // n is a InitializedName, but those names are of form '::name'
               // SgVariableSymbol *varsym = Ir::createVariableSymbol(*n);
               // local_var_decls->push_back(varsym);
+              else
+              {
+               // GB (2008-05-09): Why was the code above commented out? We
+               // never created undeclare statements, as far as I can see!
+               // Well, this version is better (hopefully).
+                  SgVariableSymbol *sym = Ir::createVariableSymbol(*n);
+                  if (sym != NULL)
+                      local_var_decls->push_back(sym);
+                  else
+                  {
+                      std::cerr
+                          << "ICFG builder error: "
+                          << "no symbol for var "
+                          << (*n)->get_name().str() << std::endl;
+                      std::abort();
+                  }
+              }
           }
       }
     }
@@ -1236,10 +1335,10 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
                * to rewrite it cleanly. */
            // GB (2008-03-26): All the Magic(tm) was used up, so I fixed
            // this code. It is now simpler and maybe even correct.
+              SgVariableSymbol *varsym = Ir::createVariableSymbol(*it);
               init_block_after = allocate_new_block(NULL, et.get_after());
               init_block_after->statements.push_front(
-                      Ir::createDeclareStmt(Ir::createVariableSymbol(*it),
-                                            (*it)->get_type()));
+                      Ir::createDeclareStmt(varsym, (*it)->get_type()));
             }
           } else {
             std::cerr << "TODO: for init stmt with "
@@ -1706,9 +1805,12 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	SgInitializedNamePtrList list = vardecl->get_variables();
 	SgInitializedNamePtrList::const_iterator j;
 	for (j = list.begin(); j != list.end(); ++j) {
-	  SgVariableSymbol* declared_var 
+	  SgVariableSymbol* declared_var
+          = Ir::createVariableSymbol(*j);
+#if 0
 	    = Ir::createVariableSymbol((*j)->get_name(),
 				       (*j)->get_type());
+#endif
 	  proc->exit->get_params()->push_back(declared_var);
       proc->exit->stmt->update_infolabel();
 	  SgAssignInitializer *initializer

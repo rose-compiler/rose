@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.18 2008-04-25 10:09:22 gergo Exp $
+// $Id: cfg_support.C,v 1.19 2008-05-09 13:56:53 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -627,9 +627,9 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
 
       CallBlock *entry = (*i)->entry;
       CallBlock *call_block = new CallBlock((*node_id)++, CALL,
-					    procnum, NULL, destructor_name);
+                                            procnum, NULL, destructor_name);
       CallBlock *return_block = new CallBlock((*node_id)++, RETURN,
-					      procnum, NULL, destructor_name);
+                                              procnum, NULL, destructor_name);
       cfg->nodes.push_back(call_block);
       cfg->calls.push_back(call_block);
       cfg->nodes.push_back(return_block);
@@ -637,14 +637,15 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
       call_block->partner = return_block;
       return_block->partner = call_block;
       BasicBlock *this_block
-	= new BasicBlock((*node_id)++, INNER, procnum);
+        = new BasicBlock((*node_id)++, INNER, procnum);
       cfg->nodes.push_back(this_block);
 
+      SgVariableSymbol *varsym = Ir::createVariableSymbol(in);
       SgAddressOfOp* addressOfOp
-	= Ir::createAddressOfOp(Ir::createVarRefExp(Ir::createVariableSymbol(in)),
-				Ir::createPointerType(in->get_type()));
+          = Ir::createAddressOfOp(Ir::createVarRefExp(varsym),
+                                  Ir::createPointerType(in->get_type()));
       ArgumentAssignment* argumentAssignment
-	= new ArgumentAssignment(Ir::createVarRefExp(this_var_sym),addressOfOp);
+          = new ArgumentAssignment(Ir::createVarRefExp(this_var_sym),addressOfOp);
       this_block->statements.push_back(argumentAssignment);
 
       /* set links */
