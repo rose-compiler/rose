@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.9 2008-05-08 14:08:44 gergo Exp $
+// $Id: pag_support.C,v 1.10 2008-05-09 13:56:02 gergo Exp $
 
 #include <iostream>
 
@@ -213,19 +213,20 @@ char const *kfg_get_instruction_attribute_by_name(KFG, KFG_NODE, int, char *)
 //#define HAVE_MEMMOVE
 #include "pagheader.h"
 #include "snum.h"
+#include "unum.h"
 /* list of global variables */
 extern "C" void *kfg_get_global_attribute__globals(KFG cfg)
 {
     return new PigNodeList(((CFG *) cfg)->globals);
 }
 /* numbers of types and expressions */
-extern "C" snum kfg_get_global_attribute__numtypes(KFG cfg)
+extern "C" unum kfg_get_global_attribute__numtypes(KFG cfg)
 {
-    return int_to_snum(((CFG *) cfg)->types_numbers.size());
+    return int_to_unum(((CFG *) cfg)->types_numbers.size());
 }
-extern "C" snum kfg_get_global_attribute__numexprs(KFG cfg)
+extern "C" unum kfg_get_global_attribute__numexprs(KFG cfg)
 {
-    return int_to_snum(((CFG *) cfg)->numbers_exprs.size());
+    return int_to_unum(((CFG *) cfg)->numbers_exprs.size());
 }
 /* number of the current procedure */
 extern "C" snum kfg_get_routine_attribute__procnum(KFG, int procnum)
@@ -282,34 +283,34 @@ static CFG *get_global_cfg()
     return global_cfg;
 }
 
-extern "C" void *o_typenum_to_type(snum n)
+extern "C" void *o_typenum_to_type(unum n)
 {
-    return get_global_cfg()->numbers_types[snum_to_int(n)];
+    return get_global_cfg()->numbers_types[unum_to_unsigned(n)];
 }
 
-extern "C" snum o_type_to_typenum(void *type)
+extern "C" unum o_type_to_typenum(void *type)
 {
-    return get_global_cfg()->types_numbers[isSgType((SgNode *) type)];
+    return int_to_unum(get_global_cfg()->types_numbers[isSgType((SgNode *) type)]);
 }
 
 #include "str.h"
 
-extern "C" str o_typenum_to_str(snum n)
+extern "C" str o_typenum_to_str(unum n)
 {
     return strdup(Ir::fragmentToString(isSgType((SgNode *)o_typenum_to_type(n))).c_str());
 }
 
-extern "C" void *o_exprnum_to_expr(snum n)
+extern "C" void *o_exprnum_to_expr(unum n)
 {
-    return get_global_cfg()->numbers_exprs[snum_to_int(n)];
+    return get_global_cfg()->numbers_exprs[unum_to_unsigned(n)];
 }
 
-extern "C" snum o_expr_to_exprnum(void *expr)
+extern "C" unum o_expr_to_exprnum(void *expr)
 {
-    return get_global_cfg()->exprs_numbers[isSgExpression((SgNode *) expr)];
+    return int_to_unum(get_global_cfg()->exprs_numbers[isSgExpression((SgNode *) expr)]);
 }
 
-extern "C" str o_exprnum_to_str(snum n)
+extern "C" str o_exprnum_to_str(unum n)
 {
     return expr_to_string((SgExpression *) o_exprnum_to_expr(n));
 }
@@ -319,7 +320,7 @@ extern "C" void *o_expr_type(void *expr)
     return isSgExpression((SgNode *) expr)->get_type();
 }
 
-extern "C" snum o_exprnum_typenum(snum n)
+extern "C" unum o_exprnum_typenum(unum n)
 {
     return o_type_to_typenum(o_expr_type(o_exprnum_to_expr(n)));
 }
@@ -348,7 +349,7 @@ extern "C" bool o_is_subtype_of(void *a, void *b)
     return false;
 }
 
-extern "C" bool o_is_subtypenum_of(snum a, snum b)
+extern "C" bool o_is_subtypenum_of(unum a, unum b)
 {
     return o_is_subtype_of(o_typenum_to_type(a), o_typenum_to_type(b));
 }
@@ -375,6 +376,17 @@ extern "C" void *o_global_get_initializer(void *symbol)
 {
     SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
     return get_global_cfg()->globals_initializers[varsym];
+}
+
+// GB (2008-05-09): This function returns a variable symbol's "ID", which is
+// just the expression number that we also assign to uses of the same
+// variable. These IDs are computed by the ICFG builder after having
+// numbered all expressions.
+extern "C" unum o_variable_id(void *symbol)
+{
+    SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
+    unsigned int id = get_global_cfg()->varsyms_ids[varsym];
+    return int_to_unum(id);
 }
 
 extern "C" str o_exp_root_str(void *exp)
@@ -482,32 +494,32 @@ void syntax_init(void)
 // GB (2007-10-31): These are not marked extern "C" because they are not
 // called directly from the PAG code; PAG calls the functions with the o_
 // prefixes.
-SgType *typenum_to_type(int n)
+SgType *typenum_to_type(unsigned int n)
 {
     return get_global_cfg()->numbers_types[n];
 }
 
-int type_to_typenum(SgType *type)
+unsigned int type_to_typenum(SgType *type)
 {
     return get_global_cfg()->types_numbers[type];
 }
 
-std::string typenum_to_str(int n)
+std::string typenum_to_str(unsigned int n)
 {
     return Ir::fragmentToString(typenum_to_type(n));
 }
 
-SgExpression *exprnum_to_expr(int n)
+SgExpression *exprnum_to_expr(unsigned int n)
 {
     return get_global_cfg()->numbers_exprs[n];
 }
 
-int expr_to_exprnum(SgExpression *expr)
+unsigned int expr_to_exprnum(SgExpression *expr)
 {
     return get_global_cfg()->exprs_numbers[expr];
 }
 
-std::string exprnum_to_str(int n)
+std::string exprnum_to_str(unsigned int n)
 {
     return expr_to_string(exprnum_to_expr(n));
 }
@@ -517,7 +529,7 @@ SgType *expr_type(SgExpression *expr)
     return expr->get_type();
 }
 
-int exprnum_typenum(int n)
+unsigned int exprnum_typenum(unsigned int n)
 {
     return type_to_typenum(expr_type(exprnum_to_expr(n)));
 }
@@ -527,7 +539,7 @@ bool is_subtype_of(SgClassType *a, SgClassType *b)
     return o_is_subtype_of(a, b);
 }
 
-bool is_subtypenum_of(int a, int b)
+bool is_subtypenum_of(unsigned int a, unsigned int b)
 {
     SgClassType *ta = isSgClassType(typenum_to_type(a));
     SgClassType *tb = isSgClassType(typenum_to_type(b));
