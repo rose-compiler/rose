@@ -1,6 +1,6 @@
 GLOBAL
-  numtypes: snum#
-  numexprs: snum#
+  numtypes: unum#
+  numexprs: unum#
 
 BLOCK
 label     : snum#
