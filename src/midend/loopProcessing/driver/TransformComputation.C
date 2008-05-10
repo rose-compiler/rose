@@ -243,6 +243,7 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
   bool debugloop = DebugLoop(), debugdep = DebugDep();
 
   if (debugloop) {
+    std::cerr <<"----------------------------------------------"<<endl;
     std::cerr << "try applying loop transformation to \n";
     std::cerr << AstToString(head) << std::endl;
   }
@@ -250,10 +251,12 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
   LoopTreeDepCompCreate comp(la, head);
   ReportTime(reportPhaseTimings, "Finish constructing dependence graph." );
   if (debugloop) {
+     std::cerr <<"----------------------------------------------"<<endl;
     std::cerr << "original LoopTree : \n";
      comp.DumpTree();
   }
   if (debugdep) {
+     std::cerr <<"----------------------------------------------"<<endl;
      std::cerr << "LoopTree dependence graph: \n";
      comp.DumpDep();
   }
@@ -262,7 +265,10 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
       LoopTreeLocalityAnal loopAnal(la, comp);
       CopyArrayOperator *cp = LoopTransformOptions::GetInstance()->GetCopyArraySel();
       if (debugdep) 
+      {
+          std::cerr <<"----------------------------------------------"<<endl;
           std::cerr << "LoopTree input dep graph: \n" << GraphToString(*loopAnal.GetInputGraph()) << std::endl;
+      }    
       if (lopt->DoDynamicTuning()) {
            DynamicSlicing op;
            LoopTransformation( la, comp, op, loopAnal, OptLevel(), cp);
@@ -274,10 +280,12 @@ bool LoopTransformation( LoopTransformInterface &la, const AstNodePtr& head, Ast
       if (debugloop) {
             std::cerr << "\n final LoopTree : \n";
             comp.DumpTree();
+        std::cerr <<"----------------------------------------------"<<endl;
       }
      if (debugdep) {
         std::cerr << "final dependence graph: \n";
         comp.DumpDep();
+        std::cerr <<"=============================================="<<endl;
      }
   }
      

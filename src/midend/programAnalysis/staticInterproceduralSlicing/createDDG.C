@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	std::string filename;
 
     SgProject *project = frontend(argc, argv);
-		#ifdef NEWDU
+#ifdef NEWDU
     EDefUse *edu=new EDefUse(project);
 		// Create the global def-use analysis
 		if (edu->run(false)==0)
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 #else
             ddg = new DataDependenceGraph(fD->get_definition());
 #endif
-						//printf("DDG for %s:\n", fD->get_name().str());
+	//printf("DDG for %s:\n", fD->get_name().str());
 						
             filename = (fD->get_definition()->get_file_info()->get_filenameString ()) + "." +
                 (fD->get_name().getString()) + ".ddg.dot";

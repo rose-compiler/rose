@@ -1,9 +1,9 @@
 /*
- * Another example to see if loop-carried data(true) dependence
+ * Another example to see if loop-carried dependence
  * for array references can be detected by ROSE
  *
- * Conclusion: current data dependence analysis treats an array as a whole, not 
- * individual array elements. So a[i]=a[i]+1 is wrongfully declared to have 
+ * Current data dependence analysis treats an array as a whole, not 
+ * individual array elements. So a[i]=a[i-50]+i is wrongfully declared to have 
  * loop-carried data dependence.
  *
  * Liao, 5/7/2008
@@ -19,9 +19,9 @@ int main(void)
     a[i]=i;
   }   
 #else
-  for(i=0;i< 100;i++) 
+  for(i=50;i< 100;i++) 
   {  
-    a[i]=a[i]+i;
+    a[i]=a[i-50]+i;
   }   
 #endif
 //  printf("sum=%d\n",sum);

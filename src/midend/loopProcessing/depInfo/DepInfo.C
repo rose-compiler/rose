@@ -97,17 +97,17 @@ std::string DepType2String(DepType t)
 std::string DepInfo :: toString() const
 {
   std::stringstream out;
-  out << rows() << "*" << cols();
+  out << rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
 
   if (is_precise()) 
-      out << " +precise ";
-  out << AstToString(SrcRef()) << AstToString(SnkRef());
+      out << " Is precise ";
+  out << AstToString(SrcRef())<<"->" << AstToString(SnkRef())<<" ";
   for (int i = 0; i < rows(); i++) {
     for (int j = 0; j < cols(); j++) {
        out << Entry( i, j).toString() << ";";
     } 
-    out << ":";
+    out << "||";
   }
   out << "::";
   return out.str();

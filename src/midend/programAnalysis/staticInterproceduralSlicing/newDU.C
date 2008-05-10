@@ -240,8 +240,8 @@ int main(int argc, char *argv[])
         }
         else
         {
-					cout <<"--------------------------------------------------------------"<<endl;
-					analyseFunction(fD->get_definition(),defUseAnalysis);
+           cout <<"--------------------------------------------------------------"<<endl;
+           analyseFunction(fD->get_definition(),defUseAnalysis);
 
         }   
     }
