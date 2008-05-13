@@ -60,9 +60,9 @@ check-local: runtimeCheck $(TESTCODES)
 	./runtimeCheck $(TESTCODES5) -run -o test_bin5
 	./runtimeCheck $(TESTCODES5) -pdf -o test_bin5
 	./test_bin5 
-#	./runtimeCheck $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
-#	libtool --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
-#	./test_bin3 example.C -run
+	./runtimeCheck $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
+	libtool --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
+	./test_bin3 example.C -run
 #	@echo "*********************************************************************************************************************"
 #	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 #	@echo "*********************************************************************************************************************"

@@ -34,9 +34,6 @@ int main(int argc, char** argv) {
 
   if (argc < 2) {
     fprintf(stderr, "Usage: %s executableName [OPTIONS]\n", argv[0]);
-    cout << "\nOPTIONS: " <<endl;
-    cout << "-run             - plain run. " << endl; 
-    cout << "-pdf             - print pdfAST. " << endl; 
     return 1;
   }
 
