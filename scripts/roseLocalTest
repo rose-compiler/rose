@@ -113,12 +113,12 @@ buildstatus=0
   ${ROSE_SRC}/configure "${CONFIGURE_FLAGS[@]}"
 
 # make and check
-  make $MAKEFLAGS  
-  make $MAKEFLAGS docs
-  make $MAKEFLAGS check
-  make $MAKEFLAGS install
-  make $MAKEFLAGS installcheck 
-  make $MAKEFLAGS dist 
+  make $MAKEFLAGS && \ 
+  make $MAKEFLAGS docs &&\
+  make $MAKEFLAGS check &&\
+  make $MAKEFLAGS install &&\
+  make $MAKEFLAGS installcheck &&\
+  make $MAKEFLAGS dist  &&\
   make $MAKEFLAGS distcheck
 ) >${BUILD_LOG} 2>&1 || buildstatus=1
 
