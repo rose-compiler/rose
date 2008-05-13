@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.10 2008-05-09 13:56:02 gergo Exp $
+// $Id: pag_support.C,v 1.11 2008-05-13 10:17:55 gergo Exp $
 
 #include <iostream>
 
@@ -24,7 +24,7 @@ int e_syntaxtype = -1;
     { if (s == NULL) return "<null>"; return (char *) s; }
 #else
 #define get_value_macro(T) char *T##_get_value(T x) \
-{ std::stringstream s; s << x; return strdup(s.str().c_str()); }
+{ std::stringstream s; s << x; return Ir::getCharPtr(s.str()); }
 #endif
 
 PIG_EXTERN_C get_value_macro(astint)
@@ -217,7 +217,8 @@ char const *kfg_get_instruction_attribute_by_name(KFG, KFG_NODE, int, char *)
 /* list of global variables */
 extern "C" void *kfg_get_global_attribute__globals(KFG cfg)
 {
-    return new PigNodeList(((CFG *) cfg)->globals);
+    return Ir::createNodeList(((CFG *) cfg)->globals);
+ // return new PigNodeList(((CFG *) cfg)->globals);
 }
 /* numbers of types and expressions */
 extern "C" unum kfg_get_global_attribute__numtypes(KFG cfg)
@@ -297,7 +298,7 @@ extern "C" unum o_type_to_typenum(void *type)
 
 extern "C" str o_typenum_to_str(unum n)
 {
-    return strdup(Ir::fragmentToString(isSgType((SgNode *)o_typenum_to_type(n))).c_str());
+    return Ir::getCharPtr(Ir::fragmentToString(isSgType((SgNode *)o_typenum_to_type(n))));
 }
 
 extern "C" void *o_exprnum_to_expr(unum n)
@@ -422,13 +423,13 @@ extern "C" str o_exp_root_str(void *exp)
         {
             SgVarRefExp *v = isSgVarRefExp(expr);
             std::string name = v->get_symbol()->get_name().str();
-            return strdup(name.c_str());
+            return Ir::getCharPtr(name);
         }
     case V_SgIntVal:
         {
             std::stringstream value;
             value << isSgIntVal((SgNode *) expr)->get_value();
-            return strdup(value.str().c_str());
+            return Ir::getCharPtr(value.str());
         }
     default:
         {
@@ -436,7 +437,7 @@ extern "C" str o_exp_root_str(void *exp)
             if (ve != NULL)
                 return expr_to_string(ve);
             std::string class_name = expr->class_name();
-            return strdup(class_name.c_str());
+            return Ir::getCharPtr(class_name);
         }
     }
 }
@@ -476,9 +477,9 @@ void syntax_init(void)
     bool calledBefore = false;
     if (!calledBefore)
     {
-     // GB (2008-05-08): This code is required by PAG and was documented in
-     // an old version of the manual, but I can't find it in the current
-     // one. Oh well.
+     // GB (2008-05-08): This code is required by PAG; in the manual I have,
+     // it is in Section 9.4 "Additional Requirements" of Chapter 9
+     // "Frontend Interface Reference".
         syntaxtype = GC_registertype(48, syntaxdummy, syntax_mcopy,
             syntax_eq, synttype_hash, 0);
         e_syntaxtype = GC_registertype(1024, syntaxdummy, syntax_mcopy,

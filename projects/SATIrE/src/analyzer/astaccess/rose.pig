@@ -33,7 +33,7 @@ get:body(NODE, "ExpressionRootNT", _, _, FIELD, _, _)
 
 get:body(NODE, _, "UndeclareStmt", _, "vars", _, _)
 %{
-    return new PigNodeList(*((UndeclareStmt *) NODE)->get_vars());
+    return Ir::createNodeList(*((UndeclareStmt *) NODE)->get_vars());
 %}
 get:body(NODE, _, "DeclareStmt" | "UndeclareStmt", _, FIELD, _, _)
 %{
@@ -44,7 +44,7 @@ get:body(NODE, _, "DeclareStmt" | "UndeclareStmt", _, FIELD, _, _)
 get:body(NODE, _, "ExternalCall" | "ExternalReturn", _, "params", _, _)
 %{
     CONSTR *stmt = dynamic_cast<CONSTR *>((SgNode *) NODE);
-    return new PigNodeList(*stmt->get_##FIELD());
+    return Ir::createNodeList(*stmt->get_##FIELD());
 %}
 
 get:body(NODE, _, "ConstructorCall" | "DestructorCall", _, "name", _, _)
@@ -68,7 +68,7 @@ get:body(NODE, _, "ExternalCall" | "ExternalReturn" | "ConstructorCall" | "Destr
 get:body(NODE, _, "FunctionExit"|"FunctionCall"|"FunctionReturn", _, "params", _, _)
 %{
     if (((CallStmt *) NODE)->parent->get_##FIELD() != NULL)
-        return new PigNodeList(*((CallStmt *) NODE)->parent->get_##FIELD());
+        return Ir::createNodeList(*((CallStmt *) NODE)->parent->get_##FIELD());
     else
         return NULL;
 %}
@@ -134,49 +134,49 @@ get:body(NODE, _, "NamedType", _, "name", _, _)
 /* lists */
 get:body(NODE, _, _, _, "declarations", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, _, _, "args", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, _, _, "arguments", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, _, _, "ctors", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, "ForInitStatement", _, "init_stmt", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, "VariableDeclaration", _, "variables", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, "ExprListExp", _, "expressions", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
 get:body(NODE, _, "AsmStmt", _, "operands", _, FTYPE)
 %{
-    return (void *) new PigNodeList(
+    return Ir::createNodeList(
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
@@ -242,34 +242,34 @@ is:body(NODE, _, CONSTR, _, _, _, _)
 %%
 extern_c list empty:head(NODE, _, _, _, _, _, FTYPE)
 %{
-int LIST_##FTYPE##_empty(void *NODE)
+int LIST_##FTYPE##_empty(void **NODE)
 %}
 
 empty:body(NODE, _, _, _, _, _, _)
 %{
-    return ((PigNodeList *) NODE)->empty();
+    return *NODE == NULL;
 %}
 
 %%
 extern_c list hd:head(NODE, _, _, _, _, _, FTYPE)
 %{
-void *LIST_##FTYPE##_hd(void *NODE)
+void *LIST_##FTYPE##_hd(void **NODE)
 %}
 
 hd:body(NODE, _, _, _, _, _, _)
 %{
-    return ((PigNodeList *) NODE)->head();
+    return *NODE;
 %}
 
 %%
 extern_c list tl:head(NODE, _, _, _, _, _, FTYPE)
 %{
-void *LIST_##FTYPE##_tl(void *NODE)
+void *LIST_##FTYPE##_tl(void **NODE)
 %}
 
 tl:body(NODE, _, _, _, _, _, _)
 %{
-    return ((PigNodeList *) NODE)->tail();
+    return NODE + 1;
 %}
 
 

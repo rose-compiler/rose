@@ -1,5 +1,0 @@
-LIST_is_empty      : 1
-LIST_hd            : 1
-LIST_tl            : 1
-LIST_cursor        : 0
-LIST_cursor_destroy: 0
