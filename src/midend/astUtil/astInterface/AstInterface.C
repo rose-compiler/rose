@@ -769,6 +769,8 @@ NewMemberFunc( SgClassSymbol* c, const string& name, SgType*  rtype,
   return AddMemberFunc( classDefn, d);
 }
 
+//! Sage_class_name:unparseToString()@line:col
+//   e.g: SgPntrArrRefExp:a[i]@66:21
 string AstToString( const AstNodePtr& _s)
         {
           SgNode* s = AstNodePtrImpl(_s).get_ptr();
@@ -796,6 +798,12 @@ string AstToString( const AstNodePtr& _s)
                r = r + s->unparseToString();
               }
           }
+          // Add line:column info.
+          Sg_File_Info * fileInfo = s->get_file_info();
+          stringstream sline, scol;
+          sline<<fileInfo->get_line();
+          scol<<fileInfo->get_col();
+          r = r+"@"+sline.str()+":"+scol.str();
           return r;
         }
 

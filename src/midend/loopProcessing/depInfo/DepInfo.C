@@ -99,7 +99,7 @@ std::string DepInfo :: toString() const
   std::stringstream out;
   out << rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
-
+  out << "CarryLevel = "<<CarryLevel()<< " ";
   if (is_precise()) 
       out << " Is precise ";
   out << AstToString(SrcRef())<<"->" << AstToString(SnkRef())<<" ";
