@@ -620,7 +620,7 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
                     SgInitializedName* alt_initializedName = initializedName->get_prev_decl_item();
                     if (alt_initializedName == NULL)
                        {
-                         printf ("Error: initializedName->get_symbol_from_symbol_table() returned NULL, no symbol for variable found in the variables explicitly stored scope \n");
+                         printf ("Error: initializedName->get_symbol_from_symbol_table() returned NULL, no symbol for variable found in the variables explicitly stored scope -- name: %s \n",initializedName->get_name().str());
                        }
                     ROSE_ASSERT(alt_initializedName != NULL);
 
