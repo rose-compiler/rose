@@ -63,6 +63,9 @@ public:
   // for creating a string representation of IR fragments
   static std::string fragmentToString(const SgNode* node);
   static SgNode *deepCopy(SgNode *n, bool copyParentPointer = true);
+  // for creating node lists for PAG to iterate over
+  template <class T> static void **createNodeList(std::vector<T> &vec);
+  static void **createNodeList(SgExprListExp *e);
 
 // GB (2008-04-01): This class is used to collect various things that may be
 // dynamically allocated and where we don't know how long they live. Such
@@ -72,11 +75,15 @@ public:
   {
   public:
       void add_cString(char *str);
+      void **findNodeList(void *address);
+      void addNodeList(void *address, void **array);
+
       void clear();
       ~GarbageBin();
 
   private:
       std::vector<char *> cStrings;
+      std::map<void *, void **> nodeLists;
   };
 
 // This garbage bin lives over the whole time the program is executed. It is
@@ -95,5 +102,36 @@ private:
   static void configSymbolNode(SgSymbol* ln);
   static Sg_File_Info* createFileInfo();
 };
+
+// GB (2008-05-13): This template function must be defined in the header.
+// This stuff is meant to solve the problem of memory leaks with list
+// iterators. Following a suggestion from Florian Martin, store AST lists
+// that PAG is supposed to iterate over as NULL-terminated arrays of
+// pointers; the iterator can then be a simple pointer. Thus we only need to
+// allocate memory for the array, and do that only once if we keep a map
+// from the lists in the AST to any already allocated lists. The map is kept
+// in the garbage bin and automatically emptied at some point.
+template <class T>
+void **
+Ir::createNodeList(std::vector<T> &vec)
+{
+    void *address = (void *) &vec;
+    void **array = garbageBin.findNodeList(address);
+    if (array == NULL)
+    {
+     // allocate, fill, and null-terminate the array, put it in the map, and
+     // finally return it
+        array = new void *[vec.size() + 1];
+     // Can't use the STL copy algorithm here because we need to cast to
+     // (void *).
+        typename std::vector<T>::iterator i;
+        void **p = array;
+        for (i = vec.begin(); i != vec.end(); ++i)
+            *p++ = (void *) *i;
+        *p = NULL;
+        garbageBin.addNodeList(address, array);
+    }
+    return array;
+}
 
 #endif
