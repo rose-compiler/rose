@@ -1,11 +1,15 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pignodelist.h,v 1.4 2008-04-04 10:07:28 gergo Exp $
+// $Id: pignodelist.h,v 1.5 2008-05-13 10:18:32 gergo Exp $
 
 #ifndef H_PIGNODELIST
 #define H_PIGNODELIST
 
 #include "cfg_support.h"
 
+// GB (2008-05-13): This class was removed in favor of the new
+// Ir::createNodeList interface. That is less clumsy and makes memory
+// management easier.
+#if 0
 typedef std::vector<void *> nodelist;
 
 class PigNodeList
@@ -53,5 +57,6 @@ private:
         second = i;
     }
 };
+#endif
 
 #endif
