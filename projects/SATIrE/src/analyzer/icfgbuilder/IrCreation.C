@@ -595,10 +595,34 @@ Ir::deepCopy(SgNode *n, bool copyParentPointer /* = true */) {
     return result;
 }
 
+void **
+Ir::createNodeList(SgExprListExp *e)
+{
+    return createNodeList(e->get_expressions());
+}
+
+// Implementation of the garbage bin follows.
 void
 Ir::GarbageBin::add_cString(char *str)
 {
     cStrings.push_back(str);
+}
+
+void **
+Ir::GarbageBin::findNodeList(void *address)
+{
+    std::map<void *, void **>::iterator pos;
+    pos = nodeLists.find(address);
+    if (pos != nodeLists.end())
+        return pos->second;
+    else
+        return NULL;
+}
+
+void
+Ir::GarbageBin::addNodeList(void *address, void **array)
+{
+    nodeLists[address] = array;
 }
 
 void
@@ -608,6 +632,11 @@ Ir::GarbageBin::clear()
     for (s = cStrings.begin(); s != cStrings.end(); ++s)
         free(*s);
     cStrings.clear();
+
+    std::map<void *, void **>::iterator m;
+    for (m = nodeLists.begin(); m != nodeLists.end(); ++m)
+        delete[] m->second;
+    nodeLists.clear();
 }
 
 Ir::GarbageBin::~GarbageBin()

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.19 2008-05-09 13:56:53 gergo Exp $
+// $Id: cfg_support.C,v 1.20 2008-05-13 10:19:28 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -263,7 +263,7 @@ expr_to_string(const SgExpression *expr)
   //new_expr->set_parent(NULL);
   // const char* retval = strdup(Ir::fragmentToString(new_expr).c_str());
 
-  const char* retval = strdup(Ir::fragmentToString(expr).c_str());
+  const char* retval = Ir::getCharPtr(Ir::fragmentToString(expr));
   return retval;
 }
 
