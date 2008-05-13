@@ -29,6 +29,11 @@ set -e
 rm -rf ${ROSE_TOP}
 mkdir -p ${ROSE_TOP}
 cd ${ROSE_TOP}
+# This is required so that the DESTDIR part of "make distcheck" doesn't fail by
+# running out of space on /tmp on tux270
+mkdir tmp
+TMPDIR=${ROSE_TOP}/tmp/
+export TMPDIR
 
 set -e
 
