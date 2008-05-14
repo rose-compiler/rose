@@ -1,4 +1,4 @@
-$Id: satire_attributes_auxiliary_functions,v 1.3 2008-05-09 13:55:43 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.4 2008-05-14 13:11:43 gergo Exp $
 
 This file lists all CFG attributes and auxiliary functions accessible from
 PAG analysis specifications when using the SATIrE system.
@@ -118,7 +118,18 @@ global_has_initializer :: VariableSymbolNT -> bool;
 global_get_initializer :: VariableSymbolNT -> Expression;
     get the initializer expression of the global variable
 
-variable_id :: VariableSymbolNT -> unum;
+variable_varnum :: VariableSymbolNT -> unum;
     a unique integer identifier for this variable guaranteed to be the same
     as the exprnum for any use (VarRefExp) of this variable; if there are
     no VarRefExps for this variable, the identifier is >= numexprs
+
+varnum_id :: unum -> VariableID;
+    EXPERIMENTAL: maps the variable identifier to an opaque VariableID
+    object that can be used almost like built-in PAG data types, i.e. it can
+    appear in data flow information etc; VariableID needs a dummy
+    declaration, we recommend a declaration like
+        VariableID = set(VariableID)
+    or
+        VariableID = VariableID -> VariableID
+    in the SET section of the .set file (any definition that applies a type
+    constructor to something should be fine)
