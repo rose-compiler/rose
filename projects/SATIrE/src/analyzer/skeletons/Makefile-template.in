@@ -33,9 +33,15 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	mkdir -p anim-out
 	mkdir -p $(ANALYSIS)-out/src
 	mkdir -p otheranalyses
+	# call PAG to (try to) generate an analyzer
 	if $(PAG) $(SATIRE_INCLUDE)/ iterate1.t $(ANALYSIS) $(ANALYSIS)-out --prefix=$(PAGDIR) 2> pag-out; then cat pag-out; else cat pag-out; false; fi
+	# override syntree.o in the generated directory
 	ar x $(SATIRE_LIB)/libsyntree.a syntree.o
 	mv syntree.o $(ANALYSIS)-out/src/
+	# override definitions for PAG data types provided by SATIrE
+	ar x $(SATIRE_LIB)/libpagdatatypes.a
+	mv `ar t $(SATIRE_LIB)/libpagdatatypes.a` $(ANALYSIS)-out/src/
+	# make the analyzer library
 	$(MAKE) CFLAGS="$(CUSTOM_CFLAGS)" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
