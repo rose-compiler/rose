@@ -134,9 +134,4 @@ Ir::createNodeList(std::vector<T> &vec)
     return array;
 }
 
-// GB (2008-05-14): This function is used in some places where we need to
-// access data specific to the current ICFG, but where the ICFG is not
-// passed in as a parameter (namely, in PAG support functions).
-CFG *get_global_cfg();
-
 #endif

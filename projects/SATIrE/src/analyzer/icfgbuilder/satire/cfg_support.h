@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.18 2008-05-14 13:14:10 gergo Exp $
+// $Id: cfg_support.h,v 1.19 2008-05-14 13:16:36 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -757,5 +757,10 @@ protected:
 private:
     std::ostream &stream;
 };
+
+// GB (2008-05-14): This function is used in some places where we need to
+// access data specific to the current ICFG, but where the ICFG is not
+// passed in as a parameter (namely, in PAG support functions).
+CFG *get_global_cfg();
 
 #endif
