@@ -18,12 +18,18 @@ V0.8.2 (in progress)
 * Command line flag to control ICFG consistency checks [GB]
   - these expensive checks must now be enabled explicitly using --check-icfg
 
-* ICFG builder improvements [GB]
+* New PAG analysis specification features [GB]
   - replaced single ExternalCall node by ExternalCall/ExternalReturn pair
-  - no longer removing unreachable ICFG nodes because that may hinder
-    correct annotation of the program
   - added attribute  ROUTINE procnum: snum #  to access the number of the
     current procedure from PAG analyses
+  - introduced experimental VariableID type that can be used in analysis
+    specifications, see docs/satire_attributes_auxiliary_functions; using
+    integral identifiers for variables/expressions/types is expected to be
+    deprecated at some point
+
+* ICFG builder improvements [GB]
+  - no longer removing unreachable ICFG nodes because that may hinder
+    correct annotation of the program
   - replaced slow expression numbering mechanism by Mihai Ghete's faster AST
     hashing
   - fixed ICFG builder failures related to default constructor arguments

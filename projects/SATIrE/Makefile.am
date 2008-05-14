@@ -40,8 +40,4 @@ EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
 	testsuite/base/success/typedefs.C \
 	testsuite/base/success/verysmall.c \
 	testsuite/base/success/virtual.C \
-	testsuite/base/success/while_call1.c \
-	\
-	src/analyzer/astnumbering/ValueEqualityCases \
-	src/analyzer/astnumbering/ValueHashCases \
-	src/analyzer/astnumbering/ValueStringCases
+	testsuite/base/success/while_call1.c
