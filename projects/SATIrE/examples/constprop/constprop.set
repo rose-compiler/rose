@@ -1,4 +1,8 @@
+SET
+ // dummy declaration, the implementation of the type is provided by SATIrE
+    VariableID = set(VariableID)
+
 DOMAIN
     Const = flat(snum)
-    State = str -> Const
+    State = VariableID -> Const
     ConstStatePair = Const * State
