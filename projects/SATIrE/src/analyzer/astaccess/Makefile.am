@@ -2,8 +2,9 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/p
 
 noinst_LIBRARIES = libAstAccess.a
 nobase_include_HEADERS = satire/ast_support_funcs.h \
-	                 satire/iface.h \
+                         satire/iface.h \
                          satire/other.h \
+                         satire/o_VariableID.h \
                          satire/pag_support.h \
                          satire/pignodelist.h \
                          satire/syn_typedefs.h \

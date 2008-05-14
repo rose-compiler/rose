@@ -12,26 +12,20 @@
 #include "gc_mem.h"
 #include "unum.h"
 
-#include "IrCreation.h"
+#include "cfg_support.h"
 
-CFG *get_global_cfg();
-
-class VariableID
-{
-public:
- // PAG type id, a handle returned by GC_registertype
-    static int type_id;
- // identifier of the variable
-    unsigned long id;
-};
+#include "o_VariableID.h"
 
 // an auxiliary container needed to support PAG's abstract cursors
-std::vector<unsigned int> globalVariableIDPool;
+static std::vector<unsigned int> globalVariableIDPool;
 
+// initial value, changed by VariableID_init
+int VariableID::type_id = -1;
 
-#define VariableID_mark_self(x)    ((x) == NULL ? (void) 0 : GC_mark((void **) &(x)))
-#define VariableID_mcopy_self(x)   ((x) == NULL ? (x) : (VariableID *) (GC_share_copy((void *) (x))))
+// initial value, can be changed by VariableID::setPrintFormat
+VariableID::PrintFormat VariableID::printFormat = VariableID::F_IDAndName;
 
+// PAG functions follow
 extern "C" void o_VariableID_mark(void *)
 {
  // dummy: VariableID does not contain any pointers, so there is nothing to
@@ -75,9 +69,6 @@ extern "C" unsigned int o_VariableID_hash(void *p)
     return v->id;
 }
 
-// initial value, changed by VariableID_init
-int VariableID::type_id = -1;
-
 extern "C" void o_VariableID_init(void)
 {
     if (VariableID::type_id == -1)
@@ -114,8 +105,9 @@ extern "C" void *o_VariableID_duplicate(void *src)
 
 extern "C" void o_VariableID_find_obj(void)
 {
- // dummy: we have to global instances of VariableID. Or should the list of
- // global variables really be a list of global VariableIDs? Maybe...
+ // dummy: We have no global instances of VariableID. Or should the
+ // globalVariableIDPool really be a list of global VariableIDs in the
+ // garbage-collected PAG heap? Probably not.
 }
 
 extern "C" void o_VariableID_copy_obj(void)
@@ -145,17 +137,20 @@ extern "C" char *o_VariableID_print(void *p)
 {
  // print a label for the variable into a buffer allocated using gc_tmp
     VariableID *v = (VariableID *) p;
-    std::stringstream label;
-    std::string name = get_global_cfg()->ids_varsyms[v->id]->get_name().str();
-    label << v->id << "(" << name << ")";
-    const char *s = label.str().c_str();
+    std::string label = v->print();
+    const char *s = label.c_str();
     char *result = (char *) gc_tmp(std::strlen(s) + 1);
     std::strcpy(result, s);
     return result;
 }
 
-// not defined for now, although we will probably have to at some point
-extern "C" void o_VariableID_print_fp(FILE *, void *p);
+extern "C" void o_VariableID_print_fp(FILE *f, void *p)
+{
+    VariableID *v = (VariableID *) p;
+    std::string label = v->print();
+    const char *s = label.c_str();
+    std::fputs(s, f);
+}
 
 extern "C" char *o_VariableID_to_charp(void *p)
 {
@@ -195,4 +190,36 @@ extern "C" void *o_VariableID_acur_get(unsigned int *p)
 extern "C" FLO_BOOL o_VariableID_acur_is_empty(unsigned int *p)
 {
     return (*p >= globalVariableIDPool.size() ? FLO_TRUE : FLO_FALSE);
+}
+
+// implementation of VariableID member functions
+std::string VariableID::print() const
+{
+    std::stringstream result;
+
+    switch (printFormat)
+    {
+    case F_ID:
+        result << id;
+        break;
+
+    case F_Name:
+        result << get_global_cfg()->ids_varsyms[id]->get_name().str();
+        break;
+
+    case F_IDAndName:
+        result
+            << id
+            << "("
+            << get_global_cfg()->ids_varsyms[id]->get_name().str()
+            << ")";
+        break;
+    }
+
+    return result.str();
+}
+
+void VariableID::setPrintFormat(PrintFormat format)
+{
+    printFormat = format;
 }
