@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.11 2008-05-13 10:17:55 gergo Exp $
+// $Id: pag_support.C,v 1.12 2008-05-14 13:12:42 gergo Exp $
 
 #include <iostream>
 
@@ -279,7 +279,7 @@ extern "C" void *o_binary_get_right_child(void *expr)
 
 CFG *global_cfg = NULL;
 
-static CFG *get_global_cfg()
+CFG *get_global_cfg()
 {
     return global_cfg;
 }
@@ -383,7 +383,9 @@ extern "C" void *o_global_get_initializer(void *symbol)
 // just the expression number that we also assign to uses of the same
 // variable. These IDs are computed by the ICFG builder after having
 // numbered all expressions.
-extern "C" unum o_variable_id(void *symbol)
+// GB (2008-05-13): (Temporarily?) renamed "ID" to varnum because the
+// VariableID class was introduced.
+extern "C" unum o_variable_varnum(void *symbol)
 {
     SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
     unsigned int id = get_global_cfg()->varsyms_ids[varsym];
@@ -547,6 +549,8 @@ bool is_subtypenum_of(unsigned int a, unsigned int b)
     return (ta != NULL && tb != NULL && is_subtype_of(ta, tb));
 }
 
+
+// Two support functions that PAG suddenly started to require at some point.
 int kfg_routine_is_loop (KFG cfg, KFG_ROUTINE routine)
 {
     return 0;

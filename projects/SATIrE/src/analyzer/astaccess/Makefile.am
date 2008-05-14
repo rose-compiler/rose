@@ -19,8 +19,9 @@ CLEANFILES =    satire/syntree.h  satire/syntree.c \
 
 PIG = ../../pig/pig
 
-lib_LIBRARIES = satire/libsyntree.a
+lib_LIBRARIES = satire/libsyntree.a libpagdatatypes.a
 satire_libsyntree_a_SOURCES = satire/syntree.c
+libpagdatatypes_a_SOURCES = o_VariableID.C
 
 # Does PAG expect those really to be in the same directory as the
 # the includes, our could we put them into $(prefix)/share/ ?
