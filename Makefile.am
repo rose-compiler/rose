@@ -94,7 +94,7 @@ install-data-local:
 # JJW (5/14/2008): Add the Boost flag the same way, using an internal
 # variable from AX_BOOST_* to find the argument to --with-boost when
 # this copy of ROSE was originally configured.
-DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code) --with-boost=@ac_boost_path@
+DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code) --with-boost=$(ac_boost_path)
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final gnerated distribution.
