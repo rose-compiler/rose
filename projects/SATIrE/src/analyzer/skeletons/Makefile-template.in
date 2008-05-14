@@ -18,7 +18,7 @@ endif
 OTHERANALYSISLIBS = ${OTHERANALYSES:%=otheranalyses/%.a}
 
 PAG = $(PAGDIR)/bin/pag
-CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(ANALYSIS)-out/src/ -I$(SATIRE_INCLUDE)
+CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(SATIRE_INCLUDE) -I$(ANALYSIS)-out/src/
 LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
 LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lrose -lrt -lpag -lfl
 
