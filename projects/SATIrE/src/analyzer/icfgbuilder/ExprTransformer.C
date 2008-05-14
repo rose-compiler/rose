@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.20 2008-05-06 08:34:56 gergo Exp $
+// $Id: ExprTransformer.C,v 1.21 2008-05-14 13:13:30 gergo Exp $
 
 #include "rose.h"
 #include "patternRewrite.h"
@@ -104,10 +104,11 @@ void ExprTransformer::visit(SgNode *node)
 
         if (entries != NULL && !entries->empty()) {
           Procedure *p = (*cfg->procedures)[entries->front()->procnum];
-          SgInitializedNamePtrList params = p->params->get_args();
+       // SgInitializedNamePtrList params = p->params->get_args();
+          SgInitializedNamePtrList default_params = p->default_params->get_args();
           SgExpressionPtrList &alist
             = call->get_args()->get_expressions();
-          SgInitializedNamePtrList::const_iterator ni = params.begin();
+          SgInitializedNamePtrList::const_iterator ni = default_params.begin();
           SgExpressionPtrList::const_iterator ei;
           /* if this is a member function, put the this pointer as
            * first argument; this does not appear explicitly
@@ -135,7 +136,7 @@ void ExprTransformer::visit(SgNode *node)
        // Add the argument expressions to the list.
           for (ei = alist.begin() ; ei != alist.end(); ++ei) {
             elist.push_back(*ei);
-            if (ni != params.end())
+            if (ni != default_params.end())
                 ++ni;
           }
        // If ni is not at the end of params, the function has variadic
@@ -143,9 +144,11 @@ void ExprTransformer::visit(SgNode *node)
        // don't need to do anything else, just ignore the ellipse parameter.
        // If the function has default arguments, add their initializers as
        // explicit arguments to the call.
-          while (ni != params.end()) {
+          while (ni != default_params.end()) {
             if (*ni != NULL)
             {
+             // GB (2008-05-14): The default arguments come from the
+             // default_params list, not from params anymore.
                 SgInitializedName *initname = *ni;
                 if (isSgAssignInitializer(initname->get_initptr()))
                 {
@@ -507,14 +510,16 @@ void ExprTransformer::visit(SgNode *node)
         /* setup argument expressions */
         SgExpressionPtrList elist;
         Procedure *p = NULL;
-        SgInitializedNamePtrList params;
+     // SgInitializedNamePtrList params;
+        SgInitializedNamePtrList default_params;
         SgExpressionPtrList& alist = ci->get_args()->get_expressions();
         SgInitializedNamePtrList::const_iterator ni;
         SgExpressionPtrList::const_iterator ei;
         if (!blocks.empty()) {
           p = (*cfg->procedures)[blocks.front()->procnum];
-          params = p->params->get_args();
-          ni = params.begin();
+       // params = p->params->get_args();
+          default_params = p->default_params->get_args();
+          ni = default_params.begin();
         }
         if (SgInitializedName* initializedName=isSgInitializedName(ci->get_parent())) {
           /* some member is initialized, pass the address
@@ -557,7 +562,7 @@ void ExprTransformer::visit(SgNode *node)
           SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
           elist.push_back(Ir::createAddressOfOp(ref, Ir::createPointerType(ref->get_type())));
         }
-        if (!blocks.empty() && params.size() < alist.size()) {
+        if (!blocks.empty() && default_params.size() < alist.size()) {
             std::cout << __FILE__ << ":" << __LINE__
                 << ": error during ICFG construction: "
                 << "constructor has more arguments than parameters!"
@@ -594,11 +599,11 @@ void ExprTransformer::visit(SgNode *node)
         }
         for (ei = alist.begin(); ei != alist.end(); ++ei) {
           elist.push_back(*ei);
-          if (!blocks.empty() && ni != params.end())
+          if (!blocks.empty() && ni != default_params.end())
             ++ni;
         }
         if (!blocks.empty()) {
-          while (ni != params.end()) {
+          while (ni != default_params.end()) {
             if (*ni != NULL)
             {
              // GB (2008-04-29): This used to cast the initialized name itself
@@ -663,14 +668,16 @@ void ExprTransformer::visit(SgNode *node)
         BasicBlock *retval_block = NULL;
         CallBlock *call_block = NULL, *return_block = NULL;
         if (!blocks.empty()) {
-          call_block = new CallBlock(node_id++, CALL, procnum,
-                  new std::vector<SgVariableSymbol *>(
-                      *blocks.front()->get_params()),
-                  name);
-          return_block = new CallBlock(node_id++, RETURN, procnum,
-                  new std::vector<SgVariableSymbol *>(
-                      *blocks.front()->get_params()),
-                  name);
+          call_block
+              = new CallBlock(node_id++, CALL, procnum,
+                              new std::vector<SgVariableSymbol *>(
+                                  *blocks.front()->get_params()),
+                              name);
+          return_block
+              = new CallBlock(node_id++, RETURN, procnum,
+                              new std::vector<SgVariableSymbol *>(
+                                  *blocks.front()->get_params()),
+                              name);
           cfg->nodes.push_back(call_block);
           cfg->calls.push_back(call_block);
           cfg->nodes.push_back(return_block);

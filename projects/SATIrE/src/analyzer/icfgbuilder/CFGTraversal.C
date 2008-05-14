@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.31 2008-05-09 13:56:53 gergo Exp $
+// $Id: CFGTraversal.C,v 1.32 2008-05-14 13:13:30 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -738,9 +738,10 @@ CFGTraversal::number_exprs()
          // referring to them.
             if (SgVarRefExp *varRef = isSgVarRefExp(e))
             {
-                cfg->varsyms_ids[varRef->get_symbol()] = i;
-#if 0
                 SgVariableSymbol *sym = varRef->get_symbol();
+                cfg->varsyms_ids[sym] = i;
+                cfg->ids_varsyms[i] = sym;
+#if 0
                 std::cout
                     << "visiting varref "
                     << (void *) varRef << " "
@@ -820,7 +821,9 @@ CFGTraversal::number_exprs()
         if (pos == cfg->varsyms_ids.end())
         {
          // Add new ID.
-            cfg->varsyms_ids[sym] = i++;
+            cfg->varsyms_ids[sym] = i;
+            cfg->ids_varsyms[i] = sym;
+            i++;
          // std::cout << "; added it with ID " << (i-1) << std::endl;
         }
         else
