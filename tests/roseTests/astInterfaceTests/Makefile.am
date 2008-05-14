@@ -72,6 +72,7 @@ rose_inputbuildAssignmentStmt.C:buildAssignmentStmt
 rose_inputbuildIfStmt.C:buildIfStmt
 	./buildIfStmt$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildIfStmt.C 
 rose_inputbuildFile.C:buildFile
+	rm -rf testfile626.cpp
 	./buildFile$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFile.C 
 rose_inputbuildFunctionCalls.C:buildFunctionCalls
 	./buildFunctionCalls$(EXEEXT) $(TEST_CXXFLAGS) -I$(srcdir) -c $(srcdir)/inputbuildFunctionCalls.C	

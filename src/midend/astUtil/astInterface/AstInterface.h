@@ -43,6 +43,7 @@ class AstNodeType {
 };
 
 std::string AstToString( const AstNodePtr& s);
+std::string getAstLocation( const AstNodePtr& s);
 
 class AstObserver {
   public:

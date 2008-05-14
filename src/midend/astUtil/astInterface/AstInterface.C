@@ -769,8 +769,10 @@ NewMemberFunc( SgClassSymbol* c, const string& name, SgType*  rtype,
   return AddMemberFunc( classDefn, d);
 }
 
-//! Sage_class_name:unparseToString()@line:col
-//   e.g: SgPntrArrRefExp:a[i]@66:21
+//! Sage_class_name:unparseToString()
+//   e.g: SgPntrArrRefExp:a[i]
+//   Don't change the output format since the returned string will be compared to pre-built results 
+//   when running tests/roseTests/programAnalysisTests/PtrAnalTest
 string AstToString( const AstNodePtr& _s)
         {
           SgNode* s = AstNodePtrImpl(_s).get_ptr();
@@ -798,14 +800,26 @@ string AstToString( const AstNodePtr& _s)
                r = r + s->unparseToString();
               }
           }
-          // Add line:column info.
-          Sg_File_Info * fileInfo = s->get_file_info();
-          stringstream sline, scol;
-          sline<<fileInfo->get_line();
-          scol<<fileInfo->get_col();
-          r = r+"@"+sline.str()+":"+scol.str();
           return r;
         }
+
+// Return "@line_number:column_number" for an AST node  
+// Used for debugging or pretty-printing an node
+std::string getAstLocation(const AstNodePtr& _s)
+{
+   SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  if (s == 0) 
+     return "";
+  string r = "";
+
+  // Add line:column info.
+  Sg_File_Info * fileInfo = s->get_file_info();
+  stringstream sline, scol;
+  sline<<fileInfo->get_line();
+  scol<<fileInfo->get_col();
+  r = r+"@"+sline.str()+":"+scol.str();
+  return r;
+}
 
 /*
 bool AstInterface::
