@@ -420,9 +420,11 @@ docs:
 	@echo ""
 
 # DQ (9/8/2006): Added roseExecutionOutput.txt and roseHelpOutput.txt so that it will not be built 
+# Liao (5/14/2008) Exclude web pages from the distribution in order to have a much smaller distro size. We have rosecompiler.org for this purpose now.
+#   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf 
 EXTRA_DIST = \
    WEB_DOCS_README AvailableDocumentation.docs.in \
-   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf \
+   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf \
    fixme.sty  listings.sty  lstlang1.sty lstlang2.sty  lstmisc.sty  multirow.sty acknowledgments.tex \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
