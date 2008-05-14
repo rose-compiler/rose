@@ -16,7 +16,7 @@ libAstNumbering_a_SOURCES = EqualityTraversal.C
 #%_cfg.o: $(PAG_PATH)/share/pag/cfg/%.c
 #	$(COMPILE) -Wno-unused -c $< -o $@
 
-
+EXTRA_DIST = ValueEqualityCases ValueHashCases ValueStringCases
 
 
 
