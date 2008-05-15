@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.12 2008-05-14 13:12:42 gergo Exp $
+// $Id: pag_support.C,v 1.13 2008-05-15 07:30:39 gergo Exp $
 
 #include <iostream>
 
@@ -388,7 +388,7 @@ extern "C" void *o_global_get_initializer(void *symbol)
 extern "C" unum o_variable_varnum(void *symbol)
 {
     SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
-    unsigned int id = get_global_cfg()->varsyms_ids[varsym];
+    unsigned long id = get_global_cfg()->varsyms_ids[varsym];
     return int_to_unum(id);
 }
 
@@ -497,32 +497,32 @@ void syntax_init(void)
 // GB (2007-10-31): These are not marked extern "C" because they are not
 // called directly from the PAG code; PAG calls the functions with the o_
 // prefixes.
-SgType *typenum_to_type(unsigned int n)
+SgType *typenum_to_type(unsigned long n)
 {
     return get_global_cfg()->numbers_types[n];
 }
 
-unsigned int type_to_typenum(SgType *type)
+unsigned long type_to_typenum(SgType *type)
 {
     return get_global_cfg()->types_numbers[type];
 }
 
-std::string typenum_to_str(unsigned int n)
+std::string typenum_to_str(unsigned long n)
 {
     return Ir::fragmentToString(typenum_to_type(n));
 }
 
-SgExpression *exprnum_to_expr(unsigned int n)
+SgExpression *exprnum_to_expr(unsigned long n)
 {
     return get_global_cfg()->numbers_exprs[n];
 }
 
-unsigned int expr_to_exprnum(SgExpression *expr)
+unsigned long expr_to_exprnum(SgExpression *expr)
 {
     return get_global_cfg()->exprs_numbers[expr];
 }
 
-std::string exprnum_to_str(unsigned int n)
+std::string exprnum_to_str(unsigned long n)
 {
     return expr_to_string(exprnum_to_expr(n));
 }
@@ -532,7 +532,7 @@ SgType *expr_type(SgExpression *expr)
     return expr->get_type();
 }
 
-unsigned int exprnum_typenum(unsigned int n)
+unsigned long exprnum_typenum(unsigned long n)
 {
     return type_to_typenum(expr_type(exprnum_to_expr(n)));
 }
@@ -542,7 +542,7 @@ bool is_subtype_of(SgClassType *a, SgClassType *b)
     return o_is_subtype_of(a, b);
 }
 
-bool is_subtypenum_of(unsigned int a, unsigned int b)
+bool is_subtypenum_of(unsigned long a, unsigned long b)
 {
     SgClassType *ta = isSgClassType(typenum_to_type(a));
     SgClassType *tb = isSgClassType(typenum_to_type(b));

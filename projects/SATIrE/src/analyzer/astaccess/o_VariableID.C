@@ -17,7 +17,7 @@
 #include "o_VariableID.h"
 
 // an auxiliary container needed to support PAG's abstract cursors
-static std::vector<unsigned int> globalVariableIDPool;
+static std::vector<unsigned long> globalVariableIDPool;
 
 // initial value, changed by VariableID_init
 int VariableID::type_id = -1;
@@ -83,13 +83,13 @@ extern "C" void o_VariableID_init(void)
 
      // This must be called after the ICFG has been built, and expressions
      // have been numbered.
-        std::map<unsigned int, SgVariableSymbol *> &varsyms
+        std::map<unsigned long, SgVariableSymbol *> &varsyms
             = get_global_cfg()->ids_varsyms;
         o_VariableID_power = varsyms.size();
      // Fill the global pool with pointers to all the IDs we have, and
      // NULL-terminate it.
         globalVariableIDPool.clear();
-        std::map<unsigned int, SgVariableSymbol *>::iterator id;
+        std::map<unsigned long, SgVariableSymbol *>::iterator id;
         for (id = varsyms.begin(); id != varsyms.end(); ++id)
             globalVariableIDPool.push_back(id->first);
     }
@@ -132,7 +132,6 @@ extern "C" void *o_varnum_id(unum i)
 
 // We also need to implement some support stuff:
 // 10.2 Common Functions
-
 extern "C" char *o_VariableID_print(void *p)
 {
  // print a label for the variable into a buffer allocated using gc_tmp
@@ -166,20 +165,17 @@ extern "C" char *o_VariableID_gdlprint(void *p)
 
 // 10.2.1.2 Abstract Cursors
 // The cursor is simply an index into the globalVariableIDPool.
-typedef unsigned int _o_VariableID_acur;
-typedef unsigned int *o_VariableID_acur;
-
-extern "C" void o_VariableID_acur_reset(unsigned int *p)
+extern "C" void o_VariableID_acur_reset(unsigned long *p)
 {
     *p = 0;
 }
 
-extern "C" void o_VariableID_acur_next(unsigned int *p)
+extern "C" void o_VariableID_acur_next(unsigned long *p)
 {
     ++*p;
 }
 
-extern "C" void *o_VariableID_acur_get(unsigned int *p)
+extern "C" void *o_VariableID_acur_get(unsigned long *p)
 {
     void *n = GC_alloc(VariableID::type_id);
     VariableID *v = (VariableID *) n;
@@ -187,7 +183,7 @@ extern "C" void *o_VariableID_acur_get(unsigned int *p)
     return n;
 }
 
-extern "C" FLO_BOOL o_VariableID_acur_is_empty(unsigned int *p)
+extern "C" FLO_BOOL o_VariableID_acur_is_empty(unsigned long *p)
 {
     return (*p >= globalVariableIDPool.size() ? FLO_TRUE : FLO_FALSE);
 }
