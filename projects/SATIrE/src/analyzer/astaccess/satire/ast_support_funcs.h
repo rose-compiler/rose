@@ -1,20 +1,20 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ast_support_funcs.h,v 1.2 2008-05-09 14:01:09 gergo Exp $
+// $Id: ast_support_funcs.h,v 1.3 2008-05-15 07:30:49 gergo Exp $
 
 #ifndef H_AST_SUPPORT_FUNCS
 #define H_AST_SUPPORT_FUNCS
 
 #include <rose.h>
 
-SgType *typenum_to_type(unsigned int n);
-unsigned int type_to_typenum(SgType *type);
-std::string typenum_to_str(unsigned int n);
-SgExpression *exprnum_to_expr(unsigned int n);
-unsigned int expr_to_exprnum(SgExpression *expr);
-std::string exprnum_to_str(unsigned int n);
+SgType *typenum_to_type(unsigned long n);
+unsigned long type_to_typenum(SgType *type);
+std::string typenum_to_str(unsigned long n);
+SgExpression *exprnum_to_expr(unsigned long n);
+unsigned long expr_to_exprnum(SgExpression *expr);
+std::string exprnum_to_str(unsigned long n);
 SgType *expr_type(SgExpression *expr);
-unsigned int exprnum_typenum(unsigned int n);
+unsigned long exprnum_typenum(unsigned long n);
 bool is_subtype_of(SgClassType *a, SgClassType *b);
-bool is_subtypenum_of(unsigned int a, unsigned int b);
+bool is_subtypenum_of(unsigned long a, unsigned long b);
 
 #endif
