@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.19 2008-05-14 13:16:36 gergo Exp $
+// $Id: cfg_support.h,v 1.20 2008-05-15 07:31:00 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -104,15 +104,15 @@ public:
     std::multimap<std::string, Procedure *> mangled_proc_map;
  // mappings from numbers to expressions and back
     std::vector<SgExpression *> numbers_exprs;
-    std::map<SgExpression *, unsigned int> exprs_numbers;
+    std::map<SgExpression *, unsigned long> exprs_numbers;
  // mappings from numbers to types and back; numbers_types should be a
  // vector as numbers are consecutive and start from 0
-    std::map<unsigned int, SgType *> numbers_types;
-    std::map<SgType *, unsigned int, TypePtrComparator> types_numbers;
+    std::map<unsigned long, SgType *> numbers_types;
+    std::map<SgType *, unsigned long, TypePtrComparator> types_numbers;
  // mappings from numbers to variables and back; note that ids_varsyms
  // cannot be a vector because the ids are not consecutive
-    std::map<SgVariableSymbol *, unsigned int> varsyms_ids;
-    std::map<unsigned int, SgVariableSymbol *> ids_varsyms;
+    std::map<SgVariableSymbol *, unsigned long> varsyms_ids;
+    std::map<unsigned long, SgVariableSymbol *> ids_varsyms;
 
     std::map<std::string, SgVariableSymbol *> names_globals;
     std::map<std::string, SgExpression *> names_initializers;

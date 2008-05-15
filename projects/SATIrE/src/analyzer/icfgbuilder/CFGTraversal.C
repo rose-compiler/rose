@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.32 2008-05-14 13:13:30 gergo Exp $
+// $Id: CFGTraversal.C,v 1.33 2008-05-15 07:30:57 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -706,7 +706,7 @@ CFGTraversal::number_exprs()
  // Now get all expressions from the traversal and put them into our maps.
     std::vector<EqualityId> ids;
     cfg->equalityTraversal.get_all_exprs(ids);
-    unsigned int i = 0;
+    unsigned long i = 0;
     std::vector<SgNode *>::const_iterator expr;
     std::vector<EqualityId>::const_iterator id;
     cfg->numbers_exprs.reserve(ids.size());
@@ -807,7 +807,7 @@ CFGTraversal::number_exprs()
     SgVariableSymbol::traverseMemoryPoolNodes(varSymCollector);
  // std::cout << "got " << varsyms.size() << " varsyms total" << std::endl;
     std::vector<SgVariableSymbol *>::iterator varsym;
-    std::map<SgVariableSymbol *, unsigned int>::iterator pos;
+    std::map<SgVariableSymbol *, unsigned long>::iterator pos;
     for (varsym = varsyms.begin(); varsym != varsyms.end(); ++varsym)
     {
         SgVariableSymbol *sym = *varsym;
@@ -832,7 +832,7 @@ CFGTraversal::number_exprs()
         }
     }
 
-    unsigned int j = 0;
+    unsigned long j = 0;
     std::set<SgType *, TypePtrComparator>::const_iterator type;
     for (type = type_set.begin(); type != type_set.end(); ++type)
     {
