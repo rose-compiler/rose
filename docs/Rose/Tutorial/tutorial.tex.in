@@ -299,6 +299,8 @@ our own use on large scale applications.}
 
 \input{buildCFG}
 
+\input{runtimeErrorCheck}
+
 \input{defuseAnalysis}
 
 \input{binaryAnalysis}

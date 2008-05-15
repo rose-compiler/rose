@@ -372,7 +372,7 @@ void RuntimeInstrumentation::visit(SgNode* n) {
     Sg_File_Info* file = varRef->get_file_info();
     int line = file->get_line();
     static_name = varRef->unparseToString();
-    static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+    static_name.append("==NULL on line: "+to_string(line)+"\\\n  in File : "+file->get_filenameString());
     ROSE_ASSERT(varRef);
     
     bool isOnLeftSideDOT = false;
@@ -384,7 +384,7 @@ void RuntimeInstrumentation::visit(SgNode* n) {
     if (isSgDotExp(parentIsDotExp)) {
       if (isOnLeftSideDOT) {
 	static_name = parentIsDotExp->unparseToString();
-	static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+	static_name.append("==NULL on line: "+to_string(line)+"\\\n  in File : "+file->get_filenameString());
 	varRefList[varRef]=static_name;
 	cerr << "DotExp:: Checking (left): " << parentIsDotExp->unparseToString() << endl;
       } else cerr << "DotExp::  NOT Checking (right): " << parentIsDotExp->unparseToString() << endl;
@@ -393,7 +393,7 @@ void RuntimeInstrumentation::visit(SgNode* n) {
     else if (isSgArrowExp(arrow) ) {
       if (isOnLeftSideARROW) {
 	static_name = arrow->unparseToString();
-	static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+	static_name.append("==NULL on line: "+to_string(line)+"\\\n  in File : "+file->get_filenameString());
 	varRefList[varRef]=static_name;
 	cerr << "ArrowExp:: Checking (left): " << arrow->unparseToString() << endl;
       } else cerr << "ArrowExp:: NOT Checking (right): " << arrow->unparseToString() << endl;
@@ -411,7 +411,7 @@ void RuntimeInstrumentation::visit(SgNode* n) {
     Sg_File_Info* file = deref->get_file_info();
     int line = file->get_line();
     string static_name = deref->unparseToString();
-    static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+    static_name.append("==NULL on line: "+to_string(line)+"\\\n  in File : "+file->get_filenameString());
     varRefList[deref]=static_name;
     cerr << "DerefExp:: Checking: " << deref->unparseToString() << endl;
 
@@ -425,7 +425,7 @@ void RuntimeInstrumentation::visit(SgNode* n) {
       Sg_File_Info* file = varRef->get_file_info();
       int line = file->get_line();
       static_name = varRef->unparseToString();
-      static_name.append("==NULL on line: "+to_string(line)+"  in File : "+file->get_filenameString());
+      static_name.append("==NULL on line: "+to_string(line)+"\\\n  in File : "+file->get_filenameString());
     }
     ROSE_ASSERT(varRef);
     cerr << varRef << " the pntrArrRefExp is " << static_name << endl;

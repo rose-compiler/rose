@@ -56,6 +56,7 @@ noinst_PROGRAMS = \
    debuggingIRnodeToString \
    debuggingSourceCodePositionInformation \
    defuseAnalysis \
+   runtimeCheck \
    generatingUniqueNamesFromDeclaration \
    graphGenerationOfSubtree \
    graphTraversal \
@@ -214,6 +215,9 @@ buildCFG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
 defuseAnalysis_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+runtimeCheck_SOURCES = runtimeCheck.cpp
+runtimeCheck_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 binaryAnalysis_SOURCES = binaryAnalysis.C
 binaryAnalysis_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -718,7 +722,8 @@ generatedCodeExamples = \
    collectCommentsAcrossHeaderFiles.out \
    collectDefineDirectives.out \
    defuseAnalysis_pic1.pdf \
-   binaryAnalysis_pic1.pdf
+   binaryAnalysis_pic1.pdf \
+   rose_input_runtimeErrorCheck.C
 
 # DQ (9/8/2007): These currently fail due to more agressive internal symbol table testing
 #   rose_inputCode_inlineTransformations.C
@@ -964,6 +969,16 @@ defuseAnalysis_pic1.pdf: defuseAnalysis
 	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C
 	@echo "DefUseAnalysis: Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
+
+rose_input_runtimeErrorCheck.C: runtimeCheck
+	@echo "Building an example runtimeCheck ..."
+	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck.C -run -c -o rose_input_runtimeErrorCheck.o $(ROSE_FLAGS)
+	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck2.C -run -c -o rose_input_runtimeErrorCheck2.o $(ROSE_FLAGS)
+	@echo "running example runtimeCheck ..."
+	libtool --mode=link $(CXX) -o test_runtimeCheck rose_input_runtimeErrorCheck.o $(LDADD)
+	./test_runtimeCheck > output_runtimeCheck.C
+	libtool --mode=link $(CXX) -o test_runtimeCheck2 rose_input_runtimeErrorCheck2.o $(LDADD)
+	./test_runtimeCheck2 > output_runtimeCheck2.C
 
 if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 binaryAnalysis_pic1.pdf: binaryAnalysis
