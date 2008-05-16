@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.33 2008-05-15 07:30:57 gergo Exp $
+// $Id: CFGTraversal.C,v 1.34 2008-05-16 13:01:46 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -858,9 +858,11 @@ CFGTraversal::processGlobalVariableDeclarations(SgGlobal *global)
       if (const SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
       {
           SgInitializedName *initname = vardecl->get_variables().front();
+          std::string name = initname->get_name().str();
           SgVariableSymbol *varsym
               = global->lookup_variable_symbol(initname->get_name());
-          std::string name = initname->get_name().str();
+          if (varsym == NULL)
+              varsym = Ir::createVariableSymbol(initname);
           if (cfg->names_globals.find(name) == cfg_names_globals_end)
           {
               cfg->names_globals[name] = varsym;

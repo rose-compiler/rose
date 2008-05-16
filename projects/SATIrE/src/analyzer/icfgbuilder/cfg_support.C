@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.20 2008-05-13 10:19:28 gergo Exp $
+// $Id: cfg_support.C,v 1.21 2008-05-16 13:01:46 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -352,6 +352,17 @@ bool TypePtrComparator::operator()(SgType *a, SgType *b) const
 {
   if (a == b)
       return false;
+#if 1
+// This way of comparing types is much much faster! Still, we should move to
+// a hash table approach soon.
+// grato: 12 sec
+  std::string ma = a->get_mangled().str();
+  std::string mb = b->get_mangled().str();
+  return ma < mb;
+#endif
+
+#if 0
+// 166 sec
   while (isSgTypedefType(a)) {
     a = isSgTypedefType(a)->get_base_type();
   }
@@ -394,6 +405,7 @@ bool TypePtrComparator::operator()(SgType *a, SgType *b) const
 
   bool result = Ir::fragmentToString(a) < Ir::fragmentToString(b);
   return result;
+#endif
 }
 
 SgFunctionRefExp*
