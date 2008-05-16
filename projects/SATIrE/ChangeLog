@@ -44,6 +44,11 @@ V0.8.2 (in progress)
 
 * Reorganized Testsuite [AP]
 
+* Example analyses [GB]
+  - added experimental avalable expressions analysis
+  - changed constprop to use variable IDs; expression numbering must be
+    enabled!
+
 V0.8.1 2008-04-11 GB,AP,VP,MS
 
 * Combined PAG analyses [GB]
