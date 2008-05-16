@@ -1,4 +1,4 @@
-$Id: satire_attributes_auxiliary_functions,v 1.5 2008-05-15 07:29:50 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.6 2008-05-16 13:00:18 gergo Exp $
 
 This file lists all CFG attributes and auxiliary functions accessible from
 PAG analysis specifications when using the SATIrE system.
@@ -134,6 +134,17 @@ varnum_id :: unum -> VariableID;
     in the SET section of the .set file (any definition that applies a type
     constructor to something should be fine)
 
+variable_id :: VariableSymbolNT -> VariableID;
+    EXPERIMENTAL: maps a variable symbol to its VariableID
+
+varref_id :: Expression -> VariableID;
+    EXPERIMENTAL: maps a VarRefExp to its VariableID; it is an error to call
+    this with any other subtype of Expression!
+
 expr_id :: Expression -> ExpressionID;
     EXPERIMENTAL: maps the expression to an opaque ExpressionID object that
     can be used like built-in PAG data types, like VariableID
+
+id_to_expr :: ExpressionID -> Expression;
+    EXPERIMENTAL: maps the expression ID to the actual expression it
+    represents
