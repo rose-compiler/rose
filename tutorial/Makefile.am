@@ -723,7 +723,8 @@ generatedCodeExamples = \
    collectDefineDirectives.out \
    defuseAnalysis_pic1.pdf \
    binaryAnalysis_pic1.pdf \
-   rose_input_runtimeErrorCheck.C
+   rose_input_runtimeErrorCheck.C \
+   rose_input_runtimeErrorCheck2.C
 
 # DQ (9/8/2007): These currently fail due to more agressive internal symbol table testing
 #   rose_inputCode_inlineTransformations.C
@@ -971,7 +972,7 @@ defuseAnalysis_pic1.pdf: defuseAnalysis
 	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
 
 rose_input_runtimeErrorCheck.C: runtimeCheck
-	@echo "Building an example runtimeCheck ..."
+	@echo "Building an example runtimeCheck ... curdir= `pwd`  srcdir= " $(srcdir)
 	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck.C -run -c -o rose_input_runtimeErrorCheck.o $(ROSE_FLAGS)
 	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck2.C -run -c -o rose_input_runtimeErrorCheck2.o $(ROSE_FLAGS)
 	@echo "running example runtimeCheck ..."
@@ -1226,6 +1227,8 @@ EXTRA_DIST = \
    inputCode_collectComments.C \
    inputCode_ClassHierarchyGraph.C \
    input_defuseAnalysis.C \
+   input_runtimeErrorCheck.C \
+   input_runtimeErrorCheck2.C \
    attributeCopyExamples.C \
    TAU_INCLUDE_DIR \
    default_error_graph.dot \
