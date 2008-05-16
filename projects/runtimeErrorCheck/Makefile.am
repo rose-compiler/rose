@@ -39,7 +39,7 @@ $(TEST_Objects): runtimeCheck $(TESTCODES)
 
 EXTRA_DIST = example.C example2.C example4.C example5.C example3.C
 
-CLEANFILES = *.out example.C *.ti *.pdf *.C
+CLEANFILES = *.out example.C *.ti *.pdf *.C test_runtime*
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runtimeCheck $(TESTCODES)
