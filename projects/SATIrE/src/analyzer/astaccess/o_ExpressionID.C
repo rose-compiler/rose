@@ -124,6 +124,14 @@ extern "C" void *o_expr_id(void *p)
     return n;
 }
 
+// map ExpressionID to its expression
+extern "C" void *o_id_to_expr(void *p)
+{
+    ExpressionID *id = (ExpressionID *) p;
+    SgExpression *exp = get_global_cfg()->numbers_exprs[id->id];
+    return exp;
+}
+
 // We also need to implement some support stuff:
 // 10.2 Common Functions
 extern "C" char *o_ExpressionID_print(void *p)

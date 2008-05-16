@@ -98,7 +98,7 @@ extern "C" void o_VariableID_init(void)
 extern "C" void *o_VariableID_duplicate(void *src)
 {
     VariableID *s = (VariableID *) src;
-    VariableID *dst = (VariableID *) GC_alloc(VariableID::type_id);
+    VariableID *dst = VariableID::allocateGC();
     dst->id = s->id;
     return dst;
 }
@@ -124,10 +124,29 @@ extern "C" void o_VariableID_clear_flag(void)
 // on the PAG heap
 extern "C" void *o_varnum_id(unum i)
 {
-    void *n = GC_alloc(VariableID::type_id);
-    VariableID *v = (VariableID *) n;
+    VariableID *v = VariableID::allocateGC();
     v->id = unum_to_unsigned(i);
-    return n;
+    return v;
+}
+
+// map variable symbol to VariableID object
+extern "C" void *o_variable_id(void *p)
+{
+    SgVariableSymbol *symbol = (SgVariableSymbol *) p;
+    unsigned long id = get_global_cfg()->varsyms_ids[symbol];
+    VariableID *v = VariableID::allocateGC();
+    v->id = id;
+    return v;
+}
+
+// map variable reference to VariableID
+extern "C" void *o_varref_id(void *p)
+{
+    SgVarRefExp *expr = (SgVarRefExp *) p;
+    unsigned long id = get_global_cfg()->exprs_numbers[expr];
+    VariableID *v = VariableID::allocateGC();
+    v->id = id;
+    return v;
 }
 
 // We also need to implement some support stuff:
@@ -177,10 +196,9 @@ extern "C" void o_VariableID_acur_next(unsigned long *p)
 
 extern "C" void *o_VariableID_acur_get(unsigned long *p)
 {
-    void *n = GC_alloc(VariableID::type_id);
-    VariableID *v = (VariableID *) n;
+    VariableID *v = VariableID::allocateGC();
     v->id = globalVariableIDPool[*p];
-    return n;
+    return v;
 }
 
 extern "C" FLO_BOOL o_VariableID_acur_is_empty(unsigned long *p)
@@ -218,4 +236,9 @@ std::string VariableID::print() const
 void VariableID::setPrintFormat(PrintFormat format)
 {
     printFormat = format;
+}
+
+VariableID *VariableID::allocateGC()
+{
+    return (VariableID *) GC_alloc(VariableID::type_id);
 }
