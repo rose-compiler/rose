@@ -45,7 +45,7 @@ for file in $FILES; do
 
     echo "--- testing $ANALYSIS on file $file ---"
     outfile=`basename $file`
-    options="--no-number-expressions --statistics --no-verbose --analysis-files=all --output-source=$outfile.dfi"
+    options="--statistics --no-verbose --analysis-files=all --output-source=$outfile.dfi"
     # execute and time with 'time'
     /usr/bin/time --format="%S %U %e" $analysis $options $file &> $TMPFILE
     result=$?
@@ -246,6 +246,7 @@ plot newhistogram "" lc 2, '$DATFILE' \
      '' using 4, \
      '' using 5, \
      '' using 6, \
+     '' using 7, \
      '' using 9
 EOF
 
