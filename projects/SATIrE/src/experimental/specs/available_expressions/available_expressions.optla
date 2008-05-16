@@ -115,18 +115,18 @@ killAllVariables :: *VariableSymbolNT, Expressions -> Expressions;
 killAllVariables([!], expressions) =
     expressions;
 killAllVariables(v::vs, expressions) =
-    killAllVariables(vs, killVariable(varsym_varid(v), expressions));
+    killAllVariables(vs, killVariable(variable_id(v), expressions));
 
-// Kill a single variable identified by its Id.
-killVariable :: VariableId, Expressions -> Expressions;
+// Kill a single variable identified by its ID.
+killVariable :: VariableID, Expressions -> Expressions;
 killVariable(v, expressions) =
     let exps <= expressions;
     in  lift({e !! e <-- exps, if !(v ? variables(e))});
 
-// Kill a complex expression identified by its Id. It is not quite clear to
+// Kill a complex expression identified by its ID. It is not quite clear to
 // me what killing an expression should mean; certainly it means removing
 // the expression itself, but I'm not clear about subexpressions.
-killExpression :: ExpressionId, Expressions -> Expressions;
+killExpression :: ExpressionID, Expressions -> Expressions;
 killExpression(e, expressions) =
     let exps <= expressions;
     in  lift(exps # e);
@@ -135,16 +135,16 @@ killExpression(e, expressions) =
 // lhs and generate all subexpressions of the rhs.
 expressionAssignment :: Expression, Expression, Expressions -> Expressions;
 expressionAssignment(VarRefExp(_) as lhs, rhs, expressions) =
-    makeAvailable(rhs, killVariable(varref_varid(lhs), expressions));
+    makeAvailable(rhs, killVariable(varref_id(lhs), expressions));
 expressionAssignment(lhs, rhs, expressions) =
-    makeAvailable(rhs, killExpression(expr_exprid(lhs), expressions));
+    makeAvailable(rhs, killExpression(expr_id(lhs), expressions));
 
 // Assignment from a variable symbol to a variable symbol: Simply kill the
 // lhs variable, there is nothing to generate for the rhs.
 variableSymbolAssignment :: VariableSymbolNT, VariableSymbolNT, Expressions
                          -> Expressions;
 variableSymbolAssignment(lhs, _, expressions) =
-    killVariable(varsym_varid(lhs), expressions);
+    killVariable(variable_id(lhs), expressions);
 
 // Make the expression available, i.e. add all of its nontrivial
 // subexpressions to the data flow information.
@@ -155,11 +155,11 @@ makeAvailable(e, expressions) =
 
 // *** Other auxiliary functions.
 
-// Find all variables inside the expression identified by its Id; this is
+// Find all variables inside the expression identified by its ID; this is
 // just a wrapper around expressionVariables.
-variables :: ExpressionId -> VariableSet;
+variables :: ExpressionID -> VariableSet;
 variables(id) =
-    expressionVariables(exprid_expr(id));
+    expressionVariables(id_to_expr(id));
 
 // Find all variables inside the expression.
 expressionVariables :: Expression -> VariableSet;
@@ -172,15 +172,15 @@ expressionVariables(exp) =
         union(expressionVariables(binary_get_left_child(exp)),
               expressionVariables(binary_get_right_child(exp)))
     else case exp of
-        VarRefExp(_) => {varref_varid(exp)};
+        VarRefExp(_) => {varref_id(exp)};
         _            => {};
     endcase endif endif endif;
 
 // Find all nontrivial subexpressions of the expression identified by its
-// Id; this is just a wrapper around expressionSubexpressions.
-subexpressions :: ExpressionId -> ExpressionSet;
+// ID; this is just a wrapper around expressionSubexpressions.
+subexpressions :: ExpressionID -> ExpressionSet;
 subexpressions(id) =
-    expressionSubexpressions(exprid_expr(id));
+    expressionSubexpressions(id_to_expr(id));
 
 // Find all nontrivial subexpressions of the expression.
 expressionSubexpressions :: Expression -> ExpressionSet;
@@ -190,12 +190,11 @@ expressionSubexpressions(exp) =
          // Do not include the cast node in the expression set.
             CastExp(c, _) => expressionSubexpressions(c);
             _             => expressionSubexpressions(unary_get_child(exp))
-                             ~ expr_exprid(exp);
+                             ~ expr_id(exp);
         endcase
     else if is_binary(exp) then
         union(expressionSubexpressions(binary_get_left_child(exp)),
-              expressionSubexpressions(binary_get_right_child(exp)))
-        ~ expr_exprid(exp)
+              expressionSubexpressions(binary_get_right_child(exp))) ~ expr_id(exp)
     else case exp of
      // Compute subexpressions of the initializer, which is the "real"
      // expression, but do not include the initializer wrapper node.
@@ -206,10 +205,10 @@ expressionSubexpressions(exp) =
 
 
 // *** External support functions provided by SATIrE.
-varref_varid :: Expression -> VariableId;
-varsym_varid :: VariableSymbolNT -> VariableId;
-expr_exprid :: Expression -> ExpressionId;
-exprid_expr :: ExpressionId -> Expression;
+varref_id :: Expression -> VariableID;
+variable_id :: VariableSymbolNT -> VariableID;
+expr_id :: Expression -> ExpressionID;
+id_to_expr :: ExpressionID -> Expression;
 is_unary :: Expression -> bool;
 is_binary :: Expression -> bool;
 is_value :: Expression -> bool;
