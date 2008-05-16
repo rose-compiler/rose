@@ -29,6 +29,8 @@ public:
     enum PrintFormat { F_ID, F_Name, F_IDAndName };
     static void setPrintFormat(PrintFormat format);
     static PrintFormat printFormat;
+ // Allocate a new garbage-collected instance.
+    static VariableID *allocateGC();
 };
 
 typedef unsigned long _o_VariableID_acur;
