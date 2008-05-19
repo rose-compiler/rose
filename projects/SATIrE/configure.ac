@@ -53,7 +53,7 @@ AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"],
               echo "Please consider using one of the --with-pag* options."
               exit -1 ],
               [-L${PAG_LIB_DIR}])
-AC_CHECK_LIB([rose], [PDF_close], [echo "Found ROSE!"], 
+AC_CHECK_LIB([rose], [ROSE_DEBUG], [echo "Found ROSE!"], 
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
 	      echo "Please consider using one of the --with-rose* options."
 	      exit -1 ], 
