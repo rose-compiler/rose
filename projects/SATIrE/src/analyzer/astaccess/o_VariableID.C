@@ -144,6 +144,15 @@ extern "C" void *o_varref_id(void *p)
     return v;
 }
 
+// determine whether the variable is a temporary
+extern "C" FLO_BOOL o_is_temp_var(void *p)
+{
+    VariableID *v = (VariableID *) p;
+    SgVariableSymbol *symbol = get_global_cfg()->ids_varsyms[v->id];
+    const char *str = symbol->get_name().str();
+    return (*str == '$' ? FLO_TRUE : FLO_FALSE);
+}
+
 // We also need to implement some support stuff:
 // 10.2 Common Functions
 extern "C" char *o_VariableID_print(void *p)
