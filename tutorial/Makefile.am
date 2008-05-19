@@ -1255,10 +1255,10 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f *.C *.out *.a? *.dot *.pdf *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary
+	rm -f *.C *.out *.a? *.dot *.pdf *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck*
 
 clean-local: cleanDocs
-	rm -rf Templates.DB ii_files ti_files *.ti *.svg
+	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck*
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
 
