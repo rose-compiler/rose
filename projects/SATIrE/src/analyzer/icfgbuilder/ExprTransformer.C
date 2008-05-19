@@ -1,9 +1,9 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.21 2008-05-14 13:13:30 gergo Exp $
+// $Id: ExprTransformer.C,v 1.22 2008-05-19 12:38:18 gergo Exp $
 
-#include "rose.h"
-#include "patternRewrite.h"
+#include <satire_rose.h>
+#include <patternRewrite.h>
 
 #include "ExprTransformer.h"
 #include "IrCreation.h"

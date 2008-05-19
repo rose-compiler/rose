@@ -1,9 +1,10 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.34 2008-05-16 13:01:46 gergo Exp $
+// $Id: CFGTraversal.C,v 1.35 2008-05-19 12:38:18 gergo Exp $
 
 #include <iostream>
 #include <string.h>
 
+#include <satire_rose.h>
 #include "patternRewrite.h"
 
 #include "CFGTraversal.h"
