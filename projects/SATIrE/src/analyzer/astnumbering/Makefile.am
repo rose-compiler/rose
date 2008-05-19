@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(top_srcdir)/src/analyzer/astnumbering -I$(top_srcdir)/src/analyzer/astnumbering/satire
+INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(top_srcdir)/src/satire -I$(top_srcdir)/src/analyzer/astnumbering -I$(top_srcdir)/src/analyzer/astnumbering/satire
 
 noinst_LIBRARIES = libAstNumbering.a
 nobase_include_HEADERS = satire/EqualityTraversal.h
