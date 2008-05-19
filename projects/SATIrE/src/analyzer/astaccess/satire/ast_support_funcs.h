@@ -1,10 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ast_support_funcs.h,v 1.3 2008-05-15 07:30:49 gergo Exp $
+// $Id: ast_support_funcs.h,v 1.4 2008-05-19 12:37:09 gergo Exp $
 
 #ifndef H_AST_SUPPORT_FUNCS
 #define H_AST_SUPPORT_FUNCS
 
-#include <rose.h>
+#include <satire_rose.h>
 
 SgType *typenum_to_type(unsigned long n);
 unsigned long type_to_typenum(SgType *type);
