@@ -1,7 +1,16 @@
 #ifndef EQUALITY_TRAVERSAL_H
 #define EQUALITY_TRAVERSAL_H
 
+// GB (2008-05-19): Rudimentary include guard. If we are compiling SATIrE,
+// we want to include our wrapper <satire_rose.h> instead of the ROSE header
+// file. For now, check this by testing for definition of the PACKAGE macro,
+// although that's not very exact.
+#ifdef PACKAGE
+#include <satire_rose.h>
+#else
 #include <rose.h>
+#endif
+
 #include <map>
 #include <ext/hash_map>
 
