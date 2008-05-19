@@ -41,8 +41,9 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	# override definitions for PAG data types provided by SATIrE
 	ar x $(SATIRE_LIB)/libpagdatatypes.a
 	mv `ar t $(SATIRE_LIB)/libpagdatatypes.a` $(ANALYSIS)-out/src/
-	# make the analyzer library
-	$(MAKE) CFLAGS="$(CUSTOM_CFLAGS)" -C $(ANALYSIS)-out/src/
+	cp $(SATIRE_INCLUDE)/o_*.h $(ANALYSIS)-out/src/
+	# make the analyzer library; suppress stupid PAG warnings with -w
+	$(MAKE) CFLAGS="$(CUSTOM_CFLAGS) -w" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
