@@ -1,11 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.8 2008-05-06 08:34:58 gergo Exp $
+// $Id: CFGTraversal.h,v 1.9 2008-05-19 12:38:26 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
 
-#include <config.h>
-#include <rose.h>
+#include <satire_rose.h>
 
 #include <map>
 

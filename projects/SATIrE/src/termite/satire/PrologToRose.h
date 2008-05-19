@@ -4,7 +4,7 @@ see LICENSE in the root folder of this project
 */
 #ifndef PROLOGTOROSE_H_
 #define PROLOGTOROSE_H_
-#include "rose.h"
+#include <satire_rose.h>
 #include "TermRep.h"
 #include <vector>
 #include <iostream>

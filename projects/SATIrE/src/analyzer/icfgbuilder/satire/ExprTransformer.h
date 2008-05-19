@@ -1,11 +1,10 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.6 2008-05-06 08:34:58 gergo Exp $
+// $Id: ExprTransformer.h,v 1.7 2008-05-19 12:38:26 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
 
-#include <config.h>
-#include <rose.h>
+#include <satire_rose.h>
 
 #include <list>
 

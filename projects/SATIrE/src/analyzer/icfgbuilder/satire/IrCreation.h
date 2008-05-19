@@ -3,7 +3,7 @@
 #ifndef H_IRCREATION
 #define H_IRCREATION
 
-#include <rose.h>
+#include <satire_rose.h>
 #include <string>
 #include "cfg_support.h"
 

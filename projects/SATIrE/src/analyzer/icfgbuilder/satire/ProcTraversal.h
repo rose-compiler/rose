@@ -1,11 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.h,v 1.4 2008-05-05 10:18:47 gergo Exp $
+// $Id: ProcTraversal.h,v 1.5 2008-05-19 12:38:26 gergo Exp $
 
 #ifndef H_PROCTRAVERSAL
 #define H_PROCTRAVERSAL
 
-#include <config.h>
-#include <rose.h>
+#include <satire_rose.h>
 
 #include "cfg_support.h"
 

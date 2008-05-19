@@ -1,6 +1,7 @@
 ## Process this file with automake to create Makefile.in.
 
-INCLUDES = -I$(top_srcdir)/src/termite/satire \
+INCLUDES = -I$(top_srcdir)/src/satire \
+	   -I$(top_srcdir)/src/termite/satire \
 	   -I$(top_srcdir)/src/analyzer/annotation/satire \
 	   -I$(top_srcdir)/src/analyzer/icfgbuilder/satire \
 	   -I$(top_srcdir)/src/analyzer/astaccess/satire \

@@ -11,7 +11,7 @@ see LICENSE in the root folder of this project
 
 #include <iostream>
 #include <fstream>
-#include "rose.h"
+#include <satire_rose.h>
 #include "TermPrinter.h"
 #include "PrologTerm.h"
 

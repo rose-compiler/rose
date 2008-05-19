@@ -3,7 +3,7 @@
   2007 Adrian Prantl
   see LICENSE in the root folder of this project
 */
-#include "rose.h"
+#include <satire_rose.h>
 #include "TermRep.h"
 #include "PrologToRose.h"
 #include <vector>

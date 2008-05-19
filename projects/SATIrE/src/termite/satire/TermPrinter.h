@@ -10,8 +10,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <cstdio>
-#include <rose_config.h>
-#include "rose.h"
+#include <satire_rose.h>
 #include "PrologTerm.h"
 #include "PrologCompTerm.h"
 #include "PrologAtom.h"

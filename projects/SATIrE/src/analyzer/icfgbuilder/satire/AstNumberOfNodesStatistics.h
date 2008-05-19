@@ -1,10 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: AstNumberOfNodesStatistics.h,v 1.1 2007-09-20 09:25:32 adrian Exp $
+// $Id: AstNumberOfNodesStatistics.h,v 1.2 2008-05-19 12:38:26 gergo Exp $
 
 #ifndef H_ASTNUMBEROFNODESSTATISTICS
 #define H_ASTNUMBEROFNODESSTATISTICS
 
-#include "rose.h"
+#include <satire_rose.h>
 
 class AstNumberOfNodesStatistics : public SgSimpleProcessing
 {

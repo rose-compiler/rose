@@ -4,7 +4,7 @@
   2007 Adrian Prantl (adrian@complang.tuwien.ac.at)
   see LICENSE in the root folder of this project
 */
-#include "rose.h"
+#include <satire_rose.h>
 #include <string>
 #include <list>
 #include "TermPrinter.h"

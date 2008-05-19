@@ -10,7 +10,7 @@ see LICENSE in the root folder of this project
 
 
 #include <iostream>
-#include "rose.h"
+#include <satire_rose.h>
 
 int main ( int argc, char ** argv ) {
 	//frontend processing

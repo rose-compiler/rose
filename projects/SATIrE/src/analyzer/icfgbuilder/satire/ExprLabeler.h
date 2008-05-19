@@ -1,11 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.h,v 1.2 2008-03-13 15:00:53 gergo Exp $
+// $Id: ExprLabeler.h,v 1.3 2008-05-19 12:38:26 gergo Exp $
 
 #ifndef H_EXPRLABELER
 #define H_EXPRLABELER
 
-#include <config.h>
-#include <rose.h>
+#include <satire_rose.h>
 
 #include "cfg_support.h"
 #include "IrCreation.h"

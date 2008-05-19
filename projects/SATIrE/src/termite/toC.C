@@ -5,7 +5,7 @@ see LICENSE in the root folder of this project
 #include "TermRep.h"
 #include <iostream>
 #include <stdio.h>
-#include "rose.h"
+#include <satire_rose.h>
 #include "PrologToRose.h"
 #include "termparser.tab.h++"
 
