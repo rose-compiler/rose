@@ -110,15 +110,15 @@ eval(exp, state) =
             LongIntVal(value) => (lift(val-astlong(value)), state);
             FloatVal(value)   => (top, state);
             DoubleVal(value)  => (top, state);
-            _                 => print("unsupported value exp: ")
-                                 print(exp) print("\n")
+            _                 => // print("unsupported value exp: ")
+                                 // print(exp) print("\n")
                                  (top, [-> top]);
         endcase
     else case exp of
         VarRefExp(_)          => (state{!varref_id(exp)!}, state);
         NewExp(_,_,_)         => (bot, state);
-        _                     => print("unknown exp: ")
-                                 print(exp) print("\n")
+        _                     => // print("unknown exp: ")
+                                 // print(exp) print("\n")
                                  (top, [-> top]);
     endcase endif endif endif;
 
@@ -175,7 +175,7 @@ binary(left, right, exp, state) =
                     MultAssignOp(_, _)  => updatestate(ls, left, lift(l * r));
                     DivAssignOp(_, _)   => updatestate(ls, left, if r != 0 then lift(l / r) else top);
                     ModAssignOp(_, _)   => updatestate(ls, left, lift(l % r));
-                    _                   => print("unsupported binary: ") print(exp)
+                    _                   => // print("unsupported binary: ") print(exp)
                                            (top, [-> top]);
                 endcase
             endif endif;
@@ -195,7 +195,7 @@ unary(child, exp, state) =
          // the following are only correct for prefix -- and ++
             MinusMinusOp(_) => updatestate(es, child, lift(e - 1));
             PlusPlusOp(_)   => updatestate(es, child, lift(e + 1));
-            _               => print("unsupported unary: ") print(exp)
+            _               => // print("unsupported unary: ") print(exp)
                                (top, [-> top]);
         endcase
     endif;
