@@ -23,7 +23,7 @@ static std::vector<unsigned long> globalVariableIDPool;
 int VariableID::type_id = -1;
 
 // initial value, can be changed by VariableID::setPrintFormat
-VariableID::PrintFormat VariableID::printFormat = VariableID::F_IDAndName;
+VariableID::PrintFormat VariableID::printFormat = VariableID::F_Name;
 
 // PAG functions follow
 extern "C" void o_VariableID_mark(void *)
@@ -86,8 +86,7 @@ extern "C" void o_VariableID_init(void)
         std::map<unsigned long, SgVariableSymbol *> &varsyms
             = get_global_cfg()->ids_varsyms;
         o_VariableID_power = varsyms.size();
-     // Fill the global pool with pointers to all the IDs we have, and
-     // NULL-terminate it.
+     // Fill the global pool with pointers to all the IDs we have.
         globalVariableIDPool.clear();
         std::map<unsigned long, SgVariableSymbol *>::iterator id;
         for (id = varsyms.begin(); id != varsyms.end(); ++id)
@@ -98,8 +97,7 @@ extern "C" void o_VariableID_init(void)
 extern "C" void *o_VariableID_duplicate(void *src)
 {
     VariableID *s = (VariableID *) src;
-    VariableID *dst = VariableID::allocateGC();
-    dst->id = s->id;
+    VariableID *dst = VariableID::allocateGC(s->id);
     return dst;
 }
 
@@ -124,8 +122,7 @@ extern "C" void o_VariableID_clear_flag(void)
 // on the PAG heap
 extern "C" void *o_varnum_id(unum i)
 {
-    VariableID *v = VariableID::allocateGC();
-    v->id = unum_to_unsigned(i);
+    VariableID *v = VariableID::allocateGC(unum_to_unsigned(i));
     return v;
 }
 
@@ -134,8 +131,7 @@ extern "C" void *o_variable_id(void *p)
 {
     SgVariableSymbol *symbol = (SgVariableSymbol *) p;
     unsigned long id = get_global_cfg()->varsyms_ids[symbol];
-    VariableID *v = VariableID::allocateGC();
-    v->id = id;
+    VariableID *v = VariableID::allocateGC(id);
     return v;
 }
 
@@ -144,8 +140,7 @@ extern "C" void *o_varref_id(void *p)
 {
     SgVarRefExp *expr = (SgVarRefExp *) p;
     unsigned long id = get_global_cfg()->exprs_numbers[expr];
-    VariableID *v = VariableID::allocateGC();
-    v->id = id;
+    VariableID *v = VariableID::allocateGC(id);
     return v;
 }
 
@@ -196,8 +191,7 @@ extern "C" void o_VariableID_acur_next(unsigned long *p)
 
 extern "C" void *o_VariableID_acur_get(unsigned long *p)
 {
-    VariableID *v = VariableID::allocateGC();
-    v->id = globalVariableIDPool[*p];
+    VariableID *v = VariableID::allocateGC(globalVariableIDPool[*p]);
     return v;
 }
 
@@ -238,7 +232,9 @@ void VariableID::setPrintFormat(PrintFormat format)
     printFormat = format;
 }
 
-VariableID *VariableID::allocateGC()
+VariableID *VariableID::allocateGC(unsigned long id)
 {
-    return (VariableID *) GC_alloc(VariableID::type_id);
+    VariableID *v = (VariableID *) GC_alloc(VariableID::type_id);
+    v->id = id;
+    return v;
 }

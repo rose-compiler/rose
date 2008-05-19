@@ -1,11 +1,10 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.13 2008-05-15 07:30:39 gergo Exp $
+// $Id: pag_support.C,v 1.14 2008-05-19 12:36:34 gergo Exp $
 
 #include <iostream>
 
-#include "config.h"
-#include "rose.h"
+#include <satire_rose.h>
 
 #include "syntree.h"
 #include "pignodelist.h"
