@@ -2,8 +2,8 @@ SET
  // ExpressionID is a type provided by SATIrE; however, PAG needs a dummy
  // definition to know that it exists. This definition will do. Note that we
  // never try to use ExpressionID as a function! It is irrelevant which type
- // constructor is used here, -> is an arbitrary choice.
-    ExpressionID = ExpressionID -> ExpressionID
+ // constructor is used here, a triple is an arbitrary choice.
+    ExpressionID = ExpressionID * ExpressionID * ExpressionID
 
  // VariableID is another type provided by SATIrE and needs a dummy
  // declaration as well.
