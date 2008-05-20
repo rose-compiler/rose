@@ -586,15 +586,17 @@ PrologSupport::getValueExpSpecific(SgValueExp* astNode) {
 	//t->addSubterm(new PrologString(s));
 	t->addSubterm(new PrologInt(n->get_value()));
     } else if (SgLongLongIntVal* n = dynamic_cast<SgLongLongIntVal*>(astNode)) {
-	ostringstream o;
-	o << n->get_value();
-	string s = o.str();
-	t->addSubterm(new PrologString(s));
+	//ostringstream o;
+	//o << n->get_value();
+	//string s = o.str();
+	//t->addSubterm(new PrologString(s));
+	t->addSubterm(new PrologInt(n->get_value()));
     } else if (SgUnsignedLongLongIntVal* n = dynamic_cast<SgUnsignedLongLongIntVal*>(astNode)) {
-	ostringstream o;
-	o << n->get_value();
-	string s = o.str();
-	t->addSubterm(new PrologString(s));
+	//ostringstream o;
+	//o << n->get_value();
+	//string s = o.str();
+	//t->addSubterm(new PrologString(s));
+	t->addSubterm(new PrologInt(n->get_value()));
     } else if(SgEnumVal* n = dynamic_cast<SgEnumVal*>(astNode)) { /*FIXME*/
 	/* value*/
 	t->addSubterm(new PrologInt(n->get_value())); 
