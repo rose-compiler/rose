@@ -26,6 +26,7 @@ public:
 private:
 // GB: Supporting hash functions.
   static size_t hashString(const std::string &str);
+  static size_t hashInt(int val);
   static size_t hashChildren(SgNode *node);
   template <class C> static size_t hashMangledName(C *c);
   static size_t hashInitializedNamePtrList(SgInitializedNamePtrList &args);
@@ -80,10 +81,13 @@ public:
   void get_all_exprs(std::vector<EqualityId>& ids);
   void get_all_types(std::vector<EqualityId>& ids);
 
-protected:
+// GB (2008-05-20): Made this public because occasionally we want to call it
+// directly on type nodes.
   EqualityId
   evaluateSynthesizedAttribute(SgNode* astNode,
 			       SynthesizedAttributesList synList);
+
+protected:
   EqualityId
   defaultSynthesizedAttribute();
   void atTraversalEnd();
