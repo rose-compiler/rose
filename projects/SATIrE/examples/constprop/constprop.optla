@@ -30,7 +30,7 @@ ExprStatement(exp), _:
 
 ArgumentAssignment(VarRefExp(_) as var, exp), _:
     if @ != bot then
-        @\[varref_id(var) -> eval(exp, @)!1!2]
+        @\[varref_varid(var) -> eval(exp, @)!1!2]
     else
         bot
     endif;
@@ -38,9 +38,9 @@ ArgumentAssignment(VarRefExp(_) as var, exp), _:
 ParamAssignment(lhs, rhs), _:
     if @ != bot then
      // assign var
-        @\[variable_id(lhs) -> @{!variable_id(rhs)!}]
+        @\[varsym_varid(lhs) -> @{!varsym_varid(rhs)!}]
      // kill rhs
-        \[variable_id(rhs) -> top]
+        \[varsym_varid(rhs) -> top]
     else
         bot
     endif;
@@ -48,9 +48,9 @@ ParamAssignment(lhs, rhs), _:
 ReturnAssignment(lhs, rhs), _:
     if @ != bot then
      // assign var
-        @\[variable_id(lhs) -> @{!variable_id(rhs)!}]
+        @\[varsym_varid(lhs) -> @{!varsym_varid(rhs)!}]
      // kill rhs
-        \[variable_id(rhs) -> top]
+        \[varsym_varid(rhs) -> top]
     else
         bot
     endif;
@@ -115,7 +115,7 @@ eval(exp, state) =
                                  (top, [-> top]);
         endcase
     else case exp of
-        VarRefExp(_)          => (state{!varref_id(exp)!}, state);
+        VarRefExp(_)          => (state{!varref_varid(exp)!}, state);
         NewExp(_,_,_)         => (bot, state);
         _                     => // print("unknown exp: ")
                                  // print(exp) print("\n")
@@ -215,7 +215,7 @@ updatestate :: State, Expression, Const -> ConstStatePair;
 updatestate(state, exp, value) =
     let newstate =
         case exp of
-            VarRefExp(_) => state\[varref_id(exp) -> value];
+            VarRefExp(_) => state\[varref_varid(exp) -> value];
             _ => state;
         endcase;
     in (value, newstate);
@@ -238,7 +238,7 @@ kill_vars :: State, *VariableSymbolNT -> State;
 kill_vars(s, [!]) =
     s;
 kill_vars(s, v::vars) =
-    kill_vars(s\[variable_id(v) -> top], vars);
+    kill_vars(s\[varsym_varid(v) -> top], vars);
 
 is_unary :: Expression -> bool;
 is_binary :: Expression -> bool;
@@ -266,11 +266,9 @@ wide(a, b) = comb(a, b);
 eq(a, b)   = (a = b);
 
 // Mapping functions from VarRefExps (don't call this for other kinds of
-// expression!) and VariableSymbols to the new VariableID type.
-varref_id :: Expression -> VariableID;
-
-variable_id :: VariableSymbolNT -> VariableID;
+// expression!) and VariableSymbols to the new VariableId type.
+varref_varid :: Expression -> VariableId;
+varsym_varid :: VariableSymbolNT -> VariableId;
 
 expr_to_exprnum :: Expression -> unum;
 variable_varnum :: VariableSymbolNT -> unum;
-varnum_id :: unum -> VariableID;

@@ -12,7 +12,6 @@
 #include "gc_mem.h"
 #include "unum.h"
 #include "str.h"
-#include <cstring>
 
 #include "cfg_support.h"
 
@@ -120,34 +119,6 @@ extern "C" void o_VariableId_clear_flag(void)
  // dummy iff VariableId_find_obj is a dummy
 }
 
-EXTERN_C FLO_BOOL o_VariableId_le(void *a, void *b)
-{
-    VariableId *v = (VariableId *) a;
-    VariableId *w = (VariableId *) b;
-    return (v->id < w->id ? FLO_TRUE : FLO_FALSE);
-}
-
-EXTERN_C FLO_BOOL o_VariableId_leq(void *a, void *b)
-{
-    VariableId *v = (VariableId *) a;
-    VariableId *w = (VariableId *) b;
-    return (v->id <= w->id ? FLO_TRUE : FLO_FALSE);
-}
-
-EXTERN_C FLO_BOOL o_VariableId_ge(void *a, void *b)
-{
-    VariableId *v = (VariableId *) a;
-    VariableId *w = (VariableId *) b;
-    return (v->id > w->id ? FLO_TRUE : FLO_FALSE);
-}
-
-EXTERN_C FLO_BOOL o_VariableId_geq(void *a, void *b)
-{
-    VariableId *v = (VariableId *) a;
-    VariableId *w = (VariableId *) b;
-    return (v->id >= w->id ? FLO_TRUE : FLO_FALSE);
-}
-
 
 // *** Analyzer support functions
 // map variable symbol to VariableId object
@@ -189,6 +160,12 @@ extern "C" str o_varid_str(void *p)
     return s;
 }
 
+#if 0
+// This causes a linker error if the analysis does not also use
+// ExpressionId, so leave it out for tonight.
+// varid_exprid :: VariableId -> ExpressionId;
+//     maps a variable identifier to an expression identifier which denotes a
+//     VarRefExp for that variable
 #include <o_ExpressionId.h>
 // return expression identifier corresponding to this variable
 extern "C" void *o_varid_exprid(void *p)
@@ -198,39 +175,7 @@ extern "C" void *o_varid_exprid(void *p)
     e->id = v->id;
     return e;
 }
-
-#include <o_TypeId.h>
-#include <IrCreation.h>
-// add new, unique temporary variable
-extern "C" void *o_add_tmpvarid(void *p_type)
-{
-    static unsigned long add_tmpvarid_counter = 0;
-
-    TypeId *t = (TypeId *) p_type;
-    SgType *type = get_global_cfg()->numbers_types[t->id];
-    std::stringstream varname;
-    varname << "$tmpvar$" << add_tmpvarid_counter++;
-
- // Determine the new id value.
-    unsigned long i = get_global_cfg()->numbers_exprs.size();
-
- // Add the value to the variable symbol and expression maps, and to the
- // list of variable ids.
-    SgVariableSymbol *sym = Ir::createVariableSymbol(varname.str(), type);
-    get_global_cfg()->varsyms_ids[sym] = i;
-    get_global_cfg()->ids_varsyms[i] = sym;
-
-    SgVarRefExp *exp = Ir::createVarRefExp(sym);
-    get_global_cfg()->exprs_numbers[exp] = i;
-    get_global_cfg()->numbers_exprs.push_back(exp);
-
-    globalVariableIdPool.push_back(i);
-
-    VariableId *v = (VariableId *) GC_alloc(VariableId::type_id);
-    v->id = i;
-
-    return v;
-}
+#endif
 
 
 // *** Some more PAG support stuff
@@ -306,13 +251,11 @@ std::string VariableId::print() const
 
     case F_IdAndName:
         result
-            << "("
             << id
-	    << ","
+            << "("
             << get_global_cfg()->ids_varsyms[id]->get_name().str()
             << ")";
         break;
-    default: std::cerr << "Wrong format mode or print mode for nodes (Variable:print) in gdl file"; std::abort();
     }
 
     return result.str();

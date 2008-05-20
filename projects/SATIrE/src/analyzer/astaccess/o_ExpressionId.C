@@ -8,7 +8,6 @@
 #include "gc_mem.h"
 #include "unum.h"
 #include "str.h"
-#include <cstring>
 
 #include "cfg_support.h"
 #include "IrCreation.h"
@@ -113,34 +112,6 @@ extern "C" void o_ExpressionId_copy_obj(void)
 extern "C" void o_ExpressionId_clear_flag(void)
 {
  // dummy iff ExpressionId_find_obj is a dummy
-}
-
-EXTERN_C FLO_BOOL o_ExpressionId_le(void *a, void *b)
-{
-    ExpressionId *v = (ExpressionId *) a;
-    ExpressionId *w = (ExpressionId *) b;
-    return (v->id < w->id ? FLO_TRUE : FLO_FALSE);
-}
-
-EXTERN_C FLO_BOOL o_ExpressionId_leq(void *a, void *b)
-{
-    ExpressionId *v = (ExpressionId *) a;
-    ExpressionId *w = (ExpressionId *) b;
-    return (v->id <= w->id ? FLO_TRUE : FLO_FALSE);
-}
-
-EXTERN_C FLO_BOOL o_ExpressionId_ge(void *a, void *b)
-{
-    ExpressionId *v = (ExpressionId *) a;
-    ExpressionId *w = (ExpressionId *) b;
-    return (v->id > w->id ? FLO_TRUE : FLO_FALSE);
-}
-
-EXTERN_C FLO_BOOL o_ExpressionId_geq(void *a, void *b)
-{
-    ExpressionId *v = (ExpressionId *) a;
-    ExpressionId *w = (ExpressionId *) b;
-    return (v->id >= w->id ? FLO_TRUE : FLO_FALSE);
 }
 
 
@@ -254,13 +225,11 @@ std::string ExpressionId::print() const
 
     case F_IdAndExpression:
         result
-            << "("
             << id
-	    << ","
+            << "("
             << Ir::fragmentToString(get_global_cfg()->numbers_exprs[id])
             << ")";
         break;
-    default: std::cerr << "Wrong format mode or print mode for nodes (Expression:print) in gdl file"; std::abort();
     }
 
     return result.str();

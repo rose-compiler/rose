@@ -6,6 +6,8 @@ V0.8.2 (in progress)
   - change analysis specifications to take unreachable ICFG nodes into
     account: by default, the initial data flow value of the analysis should
     mean "unreachable"
+  - change analysis specifications to use the new ExpressionId and
+    VariableId types
   - change analysis specifications to take into account that the numexprs
     and numtypes attributes are now of type unum instead of snum; all
     support functions related to expression and type numbers now take unum
@@ -22,7 +24,7 @@ V0.8.2 (in progress)
   - replaced single ExternalCall node by ExternalCall/ExternalReturn pair
   - added attribute  ROUTINE procnum: snum #  to access the number of the
     current procedure from PAG analyses
-  - introduced experimental VariableID type that can be used in analysis
+  - introduced experimental VariableId type that can be used in analysis
     specifications, see docs/satire_attributes_auxiliary_functions; using
     integral identifiers for variables/expressions/types is expected to be
     deprecated at some point

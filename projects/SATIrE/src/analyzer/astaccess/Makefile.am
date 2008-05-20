@@ -4,8 +4,8 @@ noinst_LIBRARIES = libAstAccess.a
 nobase_include_HEADERS = satire/ast_support_funcs.h \
                          satire/iface.h \
                          satire/other.h \
-                         satire/o_ExpressionID.h \
-                         satire/o_VariableID.h \
+                         satire/o_ExpressionId.h \
+                         satire/o_VariableId.h \
                          satire/pag_support.h \
                          satire/pignodelist.h \
                          satire/syn_typedefs.h \
@@ -23,7 +23,7 @@ PIG = ../../pig/pig
 
 lib_LIBRARIES = satire/libsyntree.a libpagdatatypes.a
 satire_libsyntree_a_SOURCES = satire/syntree.c
-libpagdatatypes_a_SOURCES = o_ExpressionID.C o_VariableID.C
+libpagdatatypes_a_SOURCES = o_ExpressionId.C o_VariableId.C
 
 # Does PAG expect those really to be in the same directory as the
 # the includes, our could we put them into $(prefix)/share/ ?
