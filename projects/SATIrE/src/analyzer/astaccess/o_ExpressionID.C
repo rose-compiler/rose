@@ -7,6 +7,7 @@
 
 #include "gc_mem.h"
 #include "unum.h"
+#include "str.h"
 
 #include "cfg_support.h"
 #include "IrCreation.h"
@@ -113,6 +114,8 @@ extern "C" void o_ExpressionID_clear_flag(void)
  // dummy iff ExpressionID_find_obj is a dummy
 }
 
+
+// *** Analyzer support functions
 // map expression to ExpressionID object, i.e. construct a new instance
 // on the PAG heap
 extern "C" void *o_expr_id(void *p)
@@ -132,7 +135,20 @@ extern "C" void *o_id_to_expr(void *p)
     return exp;
 }
 
-// We also need to implement some support stuff:
+// return a PAG string with the expression's representation
+extern "C" str o_expr_str(void *p)
+{
+    ExpressionID *id = (ExpressionID *) p;
+    SgExpression *exp = get_global_cfg()->numbers_exprs[id->id];
+    std::string representation = Ir::fragmentToString(exp);
+ // This PAG function shifts the burden of memory management to PAG. It
+ // seems to allocate memory that lives as long as the memory manager does.
+    str s = str_create(representation.c_str());
+    return s;
+}
+
+
+// *** Other PAG support functions
 // 10.2 Common Functions
 extern "C" char *o_ExpressionID_print(void *p)
 {

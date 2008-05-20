@@ -11,6 +11,7 @@
 
 #include "gc_mem.h"
 #include "unum.h"
+#include "str.h"
 
 #include "cfg_support.h"
 
@@ -118,6 +119,8 @@ extern "C" void o_VariableID_clear_flag(void)
  // dummy iff VariableID_find_obj is a dummy
 }
 
+
+// *** Analyzer support functions
 // map variable number to VariableID object, i.e. construct a new instance
 // on the PAG heap
 extern "C" void *o_varnum_id(unum i)
@@ -153,7 +156,20 @@ extern "C" FLO_BOOL o_is_temp_var(void *p)
     return (*str == '$' ? FLO_TRUE : FLO_FALSE);
 }
 
-// We also need to implement some support stuff:
+// return a PAG string with the variable's name
+extern "C" str o_variable_name(void *p)
+{
+    VariableID *v = (VariableID *) p;
+    SgVariableSymbol *symbol = get_global_cfg()->ids_varsyms[v->id];
+    const char *name = symbol->get_name().str();
+ // This PAG function shifts the burden of memory management to PAG. It
+ // seems to allocate memory that lives as long as the memory manager does.
+    str s = str_create(name);
+    return s;
+}
+
+
+// *** Some more PAG support stuff
 // 10.2 Common Functions
 extern "C" char *o_VariableID_print(void *p)
 {
