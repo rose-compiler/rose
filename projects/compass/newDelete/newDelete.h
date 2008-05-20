@@ -64,8 +64,8 @@ namespace CompassAnalyses
 	  // The implementation of the run function has to match the traversal being called.
 	  void run(SgNode* n){ 
 
-	  if (Compass::verboseSetting >= 0)
-	    std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
+	    //if (Compass::verboseSetting >= 0)
+	    //std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
 	    this->traverse(n, preorder); };
 
 	  void visit(SgNode* n);

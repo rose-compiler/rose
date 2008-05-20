@@ -12,6 +12,9 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la
         $(AM_CXXFLAGS) $(CXXFLAGS) $< -c -o $@
 
 parallel_compass$(EXEEXT): $(parallel_compass_OBJECTS) $(parallel_compass_DEPENDENCIES)
+	@echo copying parse files
+	cp $(srcdir)/*.parse .
+	cp $(srcdir)/*.run .
 	@rm -f parallel_compass$(EXEEXT)
 	libtool --mode=link --tag=CXX $(MPICXX) $(AM_CXXFLAGS) \
         $(CXXFLAGS) \
@@ -24,7 +27,7 @@ parallel_compass_SOURCES = parallel_compass.C
 
 nodist_noinst_DATA = compass_parameters
 
-CLEANFILES = gmon.out
+CLEANFILES = gmon.out *.parse *.run
 
 check-local: parallel_compass $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C compass_parameters
 	mpirun -l -np 1 ./parallel_compass$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
