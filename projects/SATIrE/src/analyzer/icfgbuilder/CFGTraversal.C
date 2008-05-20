@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.35 2008-05-19 12:38:18 gergo Exp $
+// $Id: CFGTraversal.C,v 1.36 2008-05-20 17:19:28 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -653,17 +653,27 @@ protected:
      // No more special cases, just invoke the AST traversal on this node.
         eTraversal.traverse(node);
 
+#if 0
      // Types need special handling at the moment.
         tTraversal.traverse(node, preorder);
      // OK, so there is still this one special case.
         if (DeclareStmt *decl = isDeclareStmt(node))
             type_set.insert(decl->get_type());
+#else
+     // GB (2008-05-20): The equality traversal now also collects the types
+     // of expressions automagically. We only need to call it for the types
+     // in declarations.
+        if (DeclareStmt *decl = isDeclareStmt(node))
+            eTraversal.evaluateSynthesizedAttribute(decl->get_type(),
+                                                    emptySynAttributes);
+#endif
     }
 
 private:
     EqualityTraversal &eTraversal;
     std::set<SgType *, TypePtrComparator> &type_set;
     TypeSetTraversal tTraversal;
+    EqualityTraversal::SynthesizedAttributesList emptySynAttributes;
 };
 
 void
@@ -677,8 +687,17 @@ CFGTraversal::number_exprs()
         = new TimingPerformance("Traversing ICFG to number expressions and types:");
  // add the types of global variables
     std::vector<SgVariableSymbol *>::iterator g_itr;
+#if 0
     for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
         type_set.insert((*g_itr)->get_type());
+#else
+ // GB (2008-05-20): Types of globals are now collected by calling the
+ // equality traversal.
+    EqualityTraversal::SynthesizedAttributesList emptySynAttributes;
+    for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
+        cfg->equalityTraversal.evaluateSynthesizedAttribute((*g_itr)->get_type(),
+                                                            emptySynAttributes);
+#endif
  // traverse everything else
 #if 0
     IcfgExprSetTraversal iest(&expr_set, &type_set);
@@ -781,10 +800,7 @@ CFGTraversal::number_exprs()
  // variable ID because they have no uses (as SgVarRefExp) in the ICFG. This
  // might be because they are declared but never used, or because they are
  // special function parameters that we only ever pass around via
- // VariableSymbol. For numbering, we simply use i from above. This ensures
- // that IDs for symbols without SgVarRefExps are >= the maximal expression
- // number, which is a neat property because it makes clear that these
- // numbers do not refer to expressions in the program.
+ // VariableSymbol. For numbering, we simply use i from above.
  // We try to get the variable symbols from the memory pool.
     std::vector<SgVariableSymbol *> varsyms;
     class VarSymCollector: public ROSE_VisitTraversal
@@ -824,6 +840,13 @@ CFGTraversal::number_exprs()
          // Add new ID.
             cfg->varsyms_ids[sym] = i;
             cfg->ids_varsyms[i] = sym;
+         // GB (2008-05-20): Markus and I decided to generate VarRefExps
+         // even for those variables that don't have any. This makes the set
+         // of VariableIds a subset of the ExpressionIds, which might be
+         // neat for some applications.
+            SgExpression *varref = Ir::createVarRefExp(sym);
+            cfg->exprs_numbers[varref] = i;
+            cfg->numbers_exprs.push_back(varref);
             i++;
          // std::cout << "; added it with ID " << (i-1) << std::endl;
         }
@@ -833,7 +856,7 @@ CFGTraversal::number_exprs()
         }
     }
 
-    unsigned long j = 0;
+#if 0
     std::set<SgType *, TypePtrComparator>::const_iterator type;
     for (type = type_set.begin(); type != type_set.end(); ++type)
     {
@@ -841,6 +864,27 @@ CFGTraversal::number_exprs()
         cfg->types_numbers[*type] = j;
         j++;
     }
+#else
+ // GB (2008-05-20): Finally switched to using the AST hashing mechanism for
+ // types as well.
+    ids.clear();
+    cfg->equalityTraversal.get_all_types(ids);
+    std::vector<SgNode *>::const_iterator type;
+    cfg->numbers_types.reserve(ids.size());
+    unsigned long j = 0;
+    for (id = ids.begin(); id != ids.end(); ++id)
+    {
+        const std::vector<SgNode *> &types
+            = cfg->equalityTraversal.get_nodes_for_id(*id);
+        for (type = types.begin(); type != types.end(); ++type)
+        {
+            SgType *t = const_cast<SgType *>(isSgType(*type));
+            cfg->numbers_types[j] = t;
+            cfg->types_numbers[t] = j;
+        }
+        j++;
+    }
+#endif
     delete nestedTimer;
 }
 #endif
