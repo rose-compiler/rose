@@ -27,7 +27,7 @@ parallel_compass_SOURCES = parallel_compass.C
 
 nodist_noinst_DATA = compass_parameters
 
-CLEANFILES = gmon.out *.parse *.run
+CLEANFILES = gmon.out *.parse *.run *.ast *.ti
 
 check-local: parallel_compass $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C compass_parameters
 	mpirun -l -np 1 ./parallel_compass$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
