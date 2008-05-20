@@ -558,7 +558,7 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	else 
 	  if (forward_analysis && 
 	      (isSgAsmx86Call(contrl) || isSgAsmx86Jmp(contrl))) {
-	    add = ",color=\"Yellow\",  style=\"line\"";
+	    add = ",color=\"Yellow\",  style=\"solid\"";
 	    type="";
 	    output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type  + "\\n"+ edgeLabel+"\""  + add +  "];\n"; 
 	  }
