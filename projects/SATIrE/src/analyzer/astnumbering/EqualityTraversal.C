@@ -57,6 +57,27 @@ size_t NodeHash::hashString(const std::string &str)
     return hash & 0xFFFF;
 }
 
+#if DEBUG_EQUALITY_TRAVERSAL
+unsigned int intHashes[0xFFFF];
+#endif
+
+// GB (2008-05-19): Added this function as int constants are also a little
+// problematic, in particular ones with lots of zero low-order bits.
+size_t NodeHash::hashInt(int val)
+{
+ // unsigned integer types are better for bit-fiddling
+    unsigned int uval = val;
+    size_t lowerOrderBits = uval & 0xFFFF;
+    // Hash the zero value to something that probably won't cause many
+    // collisions.
+    if (val == 0)
+        lowerOrderBits = 0xABCD;
+#if DEBUG_EQUALITY_TRAVERSAL
+    intHashes[lowerOrderBits & 0xFFFF]++;
+#endif
+    return lowerOrderBits;
+}
+
 // Compute a 16-bit hash of the node's children's variants.
 size_t NodeHash::hashChildren(SgNode *node)
 {
@@ -246,6 +267,9 @@ size_t NodeHash::operator()(const NodeInfo& node) const {
   // Value expressions are also important.
   else if (SgValueExp *value = isSgValueExp(node.first))
       lowerOrderBits = hashValueExp(value);
+  // Handle all types uniformly.
+  else if (SgType *type = isSgType(node.first))
+      lowerOrderBits = hashString(type->get_mangled().str());
   // In the otherwise, try the switch on various types.
   else
       lowerOrderBits = hashVarious(node);
@@ -571,6 +595,18 @@ bool EqualityTraversal::equal_child_ids(SgNode* n, SgNode* m) {
 
 EqualityId EqualityTraversal::idForNode(const NodeInfo& node)
 {
+  // GB (2008-05-19): There are two implementations for this function, the
+  // "old safe" one (the first one) and the "new fast" one. The new
+  // implementation takes advantage of the fact that the hash map's []
+  // operator returns a reference to a newly-added object if it can't find
+  // the key. Thus if the reference we get from [] is 0, we know we are
+  // adding a new object, otherwise we got an existing one. We don't need to
+  // do two lookups if the object is not in the hash map.
+  // This works IFF the plain old data type unsigned long (EqualityID) is
+  // initialized to 0 by the hash map. It looks like it does that, but I'm
+  // reserving some skepticism.
+
+#if 0
   // return the id if it already exists in the hashtable
   SimpleNodeMap::iterator id = node_map.find(node);
   EqualityId ret;
@@ -586,6 +622,23 @@ EqualityId EqualityTraversal::idForNode(const NodeInfo& node)
     ret = i;
   }
   return ret;
+
+#else
+
+  // return the id if it already exists in the hashtable
+  EqualityId& ref = node_map[node];
+
+  if (!ref) {
+    // or generate a new entry in the hashtable
+
+    // start at 1 (because 0 is the "invalid id")
+    EqualityId i = node_map.size(); 
+    ref = i;
+
+    id_child_map[i] = node.second;
+  }
+  return ref;
+#endif
 }
 
 #if DEBUG_EQUALITY_TRAVERSAL
@@ -639,6 +692,22 @@ void printMostFrequentVariants()
                 << std::endl;
         }
     }
+
+    std::cout << "more frequent int hash values:" << std::endl;
+    for (int i = 0; i < 0xFFFF; i++)
+    {
+        if (intHashes[i] > 25)
+        {
+            std::cout.setf(std::ios::showbase);
+            std::cout
+                << std::setw(10)
+                << std::hex
+                << i << " occurred "
+                << std::dec
+                << intHashes[i] << " times"
+                << std::endl;
+        }
+    }
 }
 
 unsigned long nodenum = 0;
@@ -684,6 +753,16 @@ EqualityId EqualityTraversal::evaluateSynthesizedAttribute
 #endif
 #endif
 
+  // GB (2008-05-20): We need to get the types as well. As those are not
+  // traversed automatically, we need to sort of fake a traversal by calling
+  // evaluateSynthesizedAttribute on a type node (but not recursively!).
+  // Do this for every expression, and eventually for every declaration that
+  // has a type as well.
+  if (SgExpression *exp = isSgExpression(astNode)) {
+    SynthesizedAttributesList emptySynthesizedAttributes;
+    evaluateSynthesizedAttribute(exp->get_type(), emptySynthesizedAttributes);
+  }
+
   // pass-through constant propagation nodes
   // since constant propagation nodes only have one
   // child, we can return the child's id directly
@@ -706,6 +785,7 @@ EqualityId EqualityTraversal::evaluateSynthesizedAttribute
       node.second.push_back(*i);
   }
 
+  // GB: Factored out the lookup code for better profiling.
   EqualityId ret = idForNode(node);
 
   // add the node to the node list map
@@ -725,7 +805,7 @@ EqualityId EqualityTraversal::defaultSynthesizedAttribute () {
 void EqualityTraversal::output_tables() {
   // <id>(<children>) = <nodes>
 
-  for (int id = 1; id <= node_list_map.size(); id++) {
+  for (size_t id = 1; id <= node_list_map.size(); id++) {
     std::cout << id << "( ";
     std::vector<EqualityId> *children = &id_child_map[id];
     std::vector<SgNode*> *nodes = &node_list_map[id];
