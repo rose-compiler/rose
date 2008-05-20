@@ -974,10 +974,14 @@ defuseAnalysis_pic1.pdf: defuseAnalysis
 rose_input_runtimeErrorCheck.C: runtimeCheck
 	@echo "Building an example runtimeCheck ... curdir= `pwd`  srcdir= " $(srcdir)
 	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck.C -run -c -o rose_input_runtimeErrorCheck.o $(ROSE_FLAGS)
-	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck2.C -run -c -o rose_input_runtimeErrorCheck2.o $(ROSE_FLAGS)
 	@echo "running example runtimeCheck ..."
 	libtool --mode=link $(CXX) -o test_runtimeCheck rose_input_runtimeErrorCheck.o $(LDADD)
 	./test_runtimeCheck > output_runtimeCheck.C
+
+rose_input_runtimeErrorCheck2.C: runtimeCheck
+	@echo "Building an example runtimeCheck2 ... curdir= `pwd`  srcdir= " $(srcdir)
+	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck2.C -run -c -o rose_input_runtimeErrorCheck2.o $(ROSE_FLAGS)
+	@echo "running example runtimeCheck2 ..."
 	libtool --mode=link $(CXX) -o test_runtimeCheck2 rose_input_runtimeErrorCheck2.o $(LDADD)
 	./test_runtimeCheck2 > output_runtimeCheck2.C
 
