@@ -1100,12 +1100,16 @@ rose_inputCode_tauInstrumenter.C: tauInstrumenter
 rose_inputCode_inlineTransformations.C: inlineTransformations
 	./inlineTransformations $(ROSE_FLAGS) -c $(srcdir)/inputCode_inlineTransformations.C
 
-customGraph.pdf customGraphWithFiltering.pdf graphTraversal.pdf: customGraphGeneration
+customGraph.pdf: customGraphGeneration
 	./customGraphGeneration 
 	@echo "Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraph.dot customGraph.pdf
+
+customGraphWithFiltering.pdf: customGraphGenerationWithFiltering
 	./customGraphGenerationWithFiltering
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraphWithFiltering.dot customGraphWithFiltering.pdf
+
+graphTraversal.pdf: graphTraversal
 	./graphTraversal
 	$(top_srcdir)/scripts/dotgenLetterPDF graphTraversal.dot graphTraversal.pdf
 
