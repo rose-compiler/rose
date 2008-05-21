@@ -76,7 +76,7 @@ EXTRA_DIST = \
    CylinderMapping.h            ListOfDoubleDistributedArray.h          OVFortranDefine.h                      depend \
    DPtr.H                       ListOfDoubleGenericGridFunction.h       OVFortranDefine.h.in                   \
    DataBaseAccessFunctions.h    ListOfDoubleGridCollectionFunction.h    OffsetShell.h                          derivativeDefinitions.h \
-   DataBaseBuffer.h             ListOfDoubleMappedGridFunction.h        Ogen.h                                 display.h \
+   DataBaseBuffer.h             ListOfDoubleMappedGridFunction.h        Ogen.h                                 displayLowercase.h \
    DataFormats.h                ListOfDoubleSerialArray.h               Oges.h                                 doubleCompositeGridFunction.h \
    DataPointMapping.h           ListOfFloatArray.h                      OgesEnums.h                    doubleGenericGridCollectionFunction.h \
    DepthMapping.h               ListOfFloatCompositeGridFunction.h      OgesParameters.h                       doubleGenericGridFunction.h \
@@ -102,7 +102,7 @@ EXTRA_DIST = \
    FourierOperators.h           ListOfIntegerArray.h                    Pointers.H                             plyFileInterface.h \
    Fraction.h                   ListOfListOfDoubleArray.h               PriorityQueue.h                        testUtils.h \
    GCMath.h                     ListOfListOfFloatArray.h                Projection.h                           tlist.h \
-   GL_GraphicsInterface.h       ListOfListOfIntArray.h                  QuadTree.h                             triangle.h \
+   GL_GraphicsInterface.h       ListOfListOfIntArray.h                  QuadTree.h                             triangleLowercase.h \
    GUIState.h                   ListOfListOfRealArray.h                 QuadraticMapping.h                     wdhdefs.h \
    GenericCollectionOperators.h    ListOfMappedGrid.h                   REAL.H                                 xD.h \
    GenericCompositeGridOperators.h ListOfMappedGridOperators.h          ReductionMapping.h                     xDC.h \

@@ -21,7 +21,7 @@ inputBug330.c \
 inputBug333.c \
 inputBug342.c \
 inputFlush.c \
-inputHello.c \
+inputHello_c.c \
 inputJacobi.c \
 inputMaster.c \
 inputOmpfor.c \

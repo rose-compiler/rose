@@ -4,7 +4,7 @@
 #include "Overture.h"
 #include "Oges.h"
 #include "CompositeGridOperators.h"
-#include "display.h"
+#include "displayLowercase.h"
 #include "PlotStuff.h"
 #include "OgmgParameters.h"
 

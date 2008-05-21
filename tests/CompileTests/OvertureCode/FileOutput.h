@@ -2,7 +2,7 @@
 #define FILE_OUTPUT_H
 
 #include "PlotStuff.h"
-#include "display.h"
+#include "displayLowercase.h"
 
 // This class is used for outputing Overture data in ascii format to a file.
 
