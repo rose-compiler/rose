@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.36 2008-05-20 17:19:28 gergo Exp $
+// $Id: CFGTraversal.C,v 1.37 2008-05-21 12:19:44 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -650,6 +650,12 @@ public:
 protected:
     void visit(SgNode *node)
     {
+        if (isIcfgStmt(node))
+        {
+            handleIcfgStmt(node);
+            return;
+        }
+
      // No more special cases, just invoke the AST traversal on this node.
         eTraversal.traverse(node);
 
@@ -663,13 +669,58 @@ protected:
      // GB (2008-05-20): The equality traversal now also collects the types
      // of expressions automagically. We only need to call it for the types
      // in declarations.
+#if 0
+     // Moved to handleIcfgStmt below.
         if (DeclareStmt *decl = isDeclareStmt(node))
             eTraversal.evaluateSynthesizedAttribute(decl->get_type(),
                                                     emptySynAttributes);
 #endif
+#endif
     }
 
 private:
+    void handleIcfgStmt(SgNode *node)
+    {
+     // GB (2008-05-21): Our own IcfgStmts cannot be handled by the
+     // EqualityTraversal since it's only written for ROSE. However, we
+     // don't really need it to hash our statements themselves (yet?), only
+     // the expressions and types contained therein.
+     // Two possible solutions:
+     //  - manually traverse the few special cases (implemented here)
+     //  - add  virtual bool isNodeToTraverse(SgNode *)  method to
+     //    EqualityTraversal and make it ignore nodes where this is false;
+     //    then implement a derived class and use that
+        if (ExternalCall *ec = isExternalCall(node))
+        {
+            eTraversal.traverse(ec->get_function());
+        }
+        else if (ExternalReturn *er = isExternalReturn(node))
+        {
+            eTraversal.traverse(er->get_function());
+        }
+        else if (ArgumentAssignment *aa = isArgumentAssignment(node))
+        {
+            eTraversal.traverse(aa->get_lhs());
+            eTraversal.traverse(aa->get_rhs());
+        }
+        else if (LogicalIf *li = isLogicalIf(node))
+        {
+            eTraversal.traverse(li->get_condition());
+        }
+        else if (DeclareStmt *decl = isDeclareStmt(node))
+        {
+            eTraversal.evaluateSynthesizedAttribute(decl->get_type(),
+                                                    emptySynAttributes);
+        }
+        else if (ConstructorCall *cc = isConstructorCall(node))
+        {
+            eTraversal.evaluateSynthesizedAttribute(cc->get_type(),
+                                                    emptySynAttributes);
+        }
+     // Don't need to handle the MyAssignment statements that only contain
+     // SgVariableSymbols as SgVariableSymbols are not traversed anyway.
+    }
+
     EqualityTraversal &eTraversal;
     std::set<SgType *, TypePtrComparator> &type_set;
     TypeSetTraversal tTraversal;

@@ -523,6 +523,7 @@ unsigned long frequentVariants[V_SgNumVariants];
 
 bool NodeEqual::operator()(const NodeInfo& s1, const NodeInfo& s2) const {
 
+  if (s1.first == s2.first) return true;
   if (!variantsEqual(s1, s2)) return false;
   if (!childrenEqual(s1, s2)) return false;
 
