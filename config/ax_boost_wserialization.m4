@@ -79,7 +79,7 @@ AC_DEFUN([AX_BOOST_WSERIALIZATION],
 			AC_DEFINE(HAVE_BOOST_WSERIALIZATION,,[define if the Boost::WSerialization library is available])
             BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/@<:@^\/@:>@*//'`
             if test "x$ax_boost_user_wserialization_lib" = "x"; then
-                for libextension in `ls $BOOSTLIBDIR/libboost_wserialization*.{so,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_wserialization.*\)\.so.*$;\1;' -e 's;^lib\(boost_wserialization.*\)\.a*$;\1;'` ; do
+                for libextension in `ls $BOOSTLIBDIR/libboost_wserialization*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_wserialization.*\)\.so.*$;\1;' -e 's;^lib\(boost_wserialization.*\)\.a*$;\1;' -e 's;^lib\(boost_wserialization.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
 				    AC_CHECK_LIB($ax_lib, exit,
                                  [BOOST_WSERIALIZATION_LIB="-l$ax_lib"; AC_SUBST(BOOST_WSERIALIZATION_LIB) link_wserialization="yes"; break],

@@ -14,6 +14,8 @@
 
 using namespace std;
 
+AstPerformance::time_type AstPerformance::timer; // FIXME -- should this be static?
+
 // DQ (8/29/2007): Part of initial support for more portable timers (suggested by Matt Sottile at LANL)
 #if _POSIX_TIMERS < 1
 /* drop something with the same API in to replace the POSIX functions */
@@ -23,7 +25,7 @@ using namespace std;
 
 // We should consider defining something using the clock() function, since I think it ia portable.
 // Need to test this on a OSX platform were the __timespec_defined will be false.
-#ifndef __timespec_defined
+#if !defined(__timespec_defined) && !defined(_TIMESPEC)
 // This data structure is copied from time.h on a system that included the timespec data structure
 struct timespec
   {
@@ -33,7 +35,10 @@ struct timespec
 
 // Now claim that it is defined
 #define __timespec_defined
+#define _TIMESPEC
 #endif
+
+typedef int clockid_t;
 
 // Only these two functions are used in ROSE to collect performance data
 int clock_getres(clockid_t clock_id, struct timespec *res) { return 0; }
@@ -307,7 +312,7 @@ ProcessingPhase::ProcessingPhase ( const std::string & s, double p, ProcessingPh
 
 void
 ProcessingPhase::stopTiming(
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
           timespec & timer
 #else
           long & timer
@@ -315,7 +320,7 @@ ProcessingPhase::stopTiming(
 )
    {
   // Use the Linux timer to provide nanosecond resolution
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      long startTimeSec     = timer.tv_sec;
      long startTimeNanoSec = timer.tv_nsec;
 
@@ -326,7 +331,7 @@ ProcessingPhase::stopTiming(
      long   endTimeNanoSec = timer.tv_nsec - startTimeNanoSec;
      double performance  = ((double) endTimeSec) + ((double)endTimeNanoSec) / 1000000000.0;
 #else
-     long   endTimeSec     = clock() - timer;
+     long   endTimeSec     = (clock() - timer) / CLOCKS_PER_SEC;
      long   endTimeNanoSec = 0;
      double performance = (double) endTimeSec;
 #endif
@@ -710,7 +715,7 @@ TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
 // Save the label explaining what the performance number means
    : AstPerformance(s,outputReport)
    {
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      clockid_t clockId = 0;
      clock_gettime(clockId,&timer);
 #else
@@ -718,7 +723,7 @@ TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
 #endif
 
 #if 0
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      long  startTimeSec    = timer.tv_sec;
      long startTimeNanoSec = timer.tv_nsec;
 #else
@@ -738,7 +743,7 @@ TimingPerformance::~TimingPerformance()
      assert(localData != NULL);
      localData->stopTiming(timer);
 #else
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      long startTimeSec     = timer.tv_sec;
      long startTimeNanoSec = timer.tv_nsec;
 
@@ -775,7 +780,7 @@ TimingPerformance::performanceResolution()
 
      double resolution = 0.0;
 
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      timespec timerQuery;
      clockid_t clockId = 0;  // not sure what this is
      clock_getres(clockId,&timerQuery);
@@ -800,11 +805,11 @@ AstPerformance::reportAccumulatedTime ( const string & s, const double & accumul
 void
 AstPerformance::startTimer ( time_type & time )
    {
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      clockid_t clockId = 0;
      clock_gettime(clockId,&time);
 #else
-     long   endTimeSec     = clock() - timer;
+     long   endTimeSec     = (clock() - timer) / CLOCKS_PER_SEC;
      long   endTimeNanoSec = 0;
      double performance = (double) endTimeSec;
 #endif
@@ -813,7 +818,7 @@ AstPerformance::startTimer ( time_type & time )
 void
 AstPerformance::accumulateTime ( time_type & startTime, double & accumulatedTime, double & numberFunctionCalls )
    {
-#ifdef __timespec_defined
+#if _POSIX_TIMERS >= 1
      long startTimeSec     = startTime.tv_sec;
      long startTimeNanoSec = startTime.tv_nsec;
 
@@ -826,7 +831,7 @@ AstPerformance::accumulateTime ( time_type & startTime, double & accumulatedTime
      long   endTimeNanoSec = endTime.tv_nsec - startTimeNanoSec;
      double performance  = ((double) endTimeSec) + ((double)endTimeNanoSec) / 1000000000.0;
 #else
-     long   endTimeSec     = clock() - timer;
+     long   endTimeSec     = (clock() - timer) / CLOCKS_PER_SEC;
      long   endTimeNanoSec = 0;
      double performance = (double) endTimeSec;
 #endif

@@ -67,13 +67,12 @@ AC_DEFUN([AX_BOOST_THREAD],
         [AC_LANG_PUSH([C++])
 			 CXXFLAGS_SAVE=$CXXFLAGS
 
-			 if test "x$build_os" = "xsolaris" ; then
-  				 CXXFLAGS="-pthreads $CXXFLAGS"
-			 elif test "x$build_os" = "xming32" ; then
-				 CXXFLAGS="-mthreads $CXXFLAGS"
-			 else
-				CXXFLAGS="-pthread $CXXFLAGS"
-			 fi
+			 case "$build_os" in
+			   solaris ) CXXFLAGS="-pthreads $CXXFLAGS" ;;
+			   ming32 ) CXXFLAGS="-mthreads $CXXFLAGS" ;;
+			   darwin* ) CXXFLAGS="$CXXFLAGS" ;;
+			   * ) CXXFLAGS="-pthread $CXXFLAGS" ;;
+			 esac
 			 AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[@%:@include <boost/thread/thread.hpp>]],
                                    [[boost::thread_group thrds;
                                    return 0;]]),
@@ -82,13 +81,12 @@ AC_DEFUN([AX_BOOST_THREAD],
              AC_LANG_POP([C++])
 		])
 		if test "x$ax_cv_boost_thread" = "xyes"; then
-           if test "x$build_os" = "xsolaris" ; then
-			  BOOST_CPPFLAGS="-pthreads $BOOST_CPPFLAGS"
-		   elif test "x$build_os" = "xming32" ; then
-			  BOOST_CPPFLAGS="-mthreads $BOOST_CPPFLAGS"
-		   else
-			  BOOST_CPPFLAGS="-pthread $BOOST_CPPFLAGS"
-		   fi
+			case "$build_os" in
+			  solaris ) BOOST_CPPFLAGS="-pthreads $BOOST_CPPFLAGS" ;;
+			  ming32 ) BOOST_CPPFLAGS="-mthreads $BOOST_CPPFLAGS" ;;
+			  darwin* ) BOOST_CPPFLAGS="$BOOST_CPPFLAGS" ;;
+			  * ) BOOST_CPPFLAGS="-pthread $BOOST_CPPFLAGS" ;;
+			esac
 
 			AC_SUBST(BOOST_CPPFLAGS)
 
@@ -103,7 +101,7 @@ AC_DEFUN([AX_BOOST_THREAD],
                           ;;
                         esac
             if test "x$ax_boost_user_thread_lib" = "x"; then
-                for libextension in `ls $BOOSTLIBDIR/libboost_thread*.{so,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_thread.*\)\.so.*$;\1;' -e 's;^lib\(boost_thread.*\)\.a*$;\1;'` ; do
+                for libextension in `ls $BOOSTLIBDIR/libboost_thread*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_thread.*\)\.so.*$;\1;' -e 's;^lib\(boost_thread.*\)\.a*$;\1;' -e 's;^lib\(boost_thread.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
 				    AC_CHECK_LIB($ax_lib, exit,
                                  [BOOST_THREAD_LIB="-l$ax_lib"; AC_SUBST(BOOST_THREAD_LIB) link_thread="yes"; break],

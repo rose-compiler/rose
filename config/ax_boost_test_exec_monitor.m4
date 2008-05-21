@@ -77,9 +77,9 @@ AC_DEFUN([AX_BOOST_TEST_EXEC_MONITOR],
             if test "x$ax_boost_user_test_exec_monitor_lib" = "x"; then
          		saved_ldflags="${LDFLAGS}"
 
-                for monitor_library in `ls $BOOSTLIBDIR/libboost_test_exec_monitor*.{so,a}* 2>/dev/null` ; do
+                for monitor_library in `ls $BOOSTLIBDIR/libboost_test_exec_monitor*.{so,dylib,a}* 2>/dev/null` ; do
                     if test -r $monitor_library ; then
-                       libextension=`echo $monitor_library | sed 's,.*/,,' | sed -e 's;^lib\(boost_test_exec_monitor.*\)\.so.*$;\1;' -e 's;^lib\(boost_test_exec_monitor.*\)\.a*$;\1;'`
+                       libextension=`echo $monitor_library | sed 's,.*/,,' | sed -e 's;^lib\(boost_test_exec_monitor.*\)\.so.*$;\1;' -e 's;^lib\(boost_test_exec_monitor.*\)\.a*$;\1;' -e 's;^lib\(boost_test_exec_monitor.*\)\.dylib$;\1;'`
                        ax_lib=${libextension}
                        link_test_exec_monitor="yes"
                     else
@@ -108,9 +108,9 @@ AC_DEFUN([AX_BOOST_TEST_EXEC_MONITOR],
                    if test "x$link_test_exec_monitor" = "xyes"; then
                       break;
                    fi
-                   for monitor_library in `ls $BOOSTLIBDIR/lib${ax_lib}.{so,a}* 2>/dev/null` ; do
+                   for monitor_library in `ls $BOOSTLIBDIR/lib${ax_lib}.{so,dylib,a}* 2>/dev/null` ; do
                    if test -r $monitor_library ; then
-                       libextension=`echo $monitor_library | sed 's,.*/,,' | sed -e 's;^lib\(boost_test_exec_monitor.*\)\.so.*$;\1;' -e 's;^lib\(boost_test_exec_monitor.*\)\.a*$;\1;'`
+                       libextension=`echo $monitor_library | sed 's,.*/,,' | sed -e 's;^lib\(boost_test_exec_monitor.*\)\.so.*$;\1;' -e 's;^lib\(boost_test_exec_monitor.*\)\.a*$;\1;' -e 's;^lib\(boost_test_exec_monitor.*\)\.dylib$;\1;'`
                        ax_lib=${libextension}
                        link_test_exec_monitor="yes"
                     else

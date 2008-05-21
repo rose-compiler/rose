@@ -20,6 +20,7 @@ libroseObjdumpDisassembler_la_SOURCES = objdumpToRoseBinaryAst.C
 
 else
 # DQ (10/21/2007): build an empty lib file so that ROSE/src/Makefile.am need not be conditional on Binary Analysis.
+libroseObjdumpDisassembler_la_SOURCES = dummy_objdumpToRoseBinaryAst.C 
 noinst_LTLIBRARIES = libroseObjdumpDisassembler.la
 endif
 

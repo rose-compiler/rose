@@ -18,6 +18,7 @@ dist_include_HEADERS = x86Disassembler.h
 
 else
 # DQ (10/21/2007): build an empty lib file so that ROSE/src/Makefile.am need not be conditional on Binary Analysis.
+libroseX86Disassembler_la_SOURCES = dummy_x86Disassembler.C
 noinst_LTLIBRARIES = libroseX86Disassembler.la
 endif
 
