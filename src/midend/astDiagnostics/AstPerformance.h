@@ -130,7 +130,7 @@ class ProcessingPhase
           void outputReportHeaderToFile ( std::ofstream & datafile );
 
           void stopTiming(
-#ifdef __timespec_defined
+#if !defined(__timespec_defined) && !defined(_TIMESPEC)
           timespec & timer
 #else
           long & timer
@@ -169,13 +169,13 @@ class AstPerformance
 
        // DQ (9/1/2006): Moved to the base class.
        // Use the Linux timer to provide nanosecond resolution
-#ifdef __timespec_defined
+#if !defined(__timespec_defined) && !defined(_TIMESPEC)
           typedef timespec time_type;
 #else
           typedef long time_type;
 #endif
 
-          time_type timer;
+          static time_type timer;
 
           std::string label;
           static SgProject* project;

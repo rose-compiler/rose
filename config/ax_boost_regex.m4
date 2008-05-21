@@ -76,7 +76,7 @@ AC_DEFUN([AX_BOOST_REGEX],
             if test "x$ax_boost_user_regex_lib" = "x"; then
                echo "Using second if"
 
-                for libextension in `ls $BOOSTLIBDIR/libboost_regex*.{so,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_regex.*\)\.so.*$;\1;' -e 's;^lib\(boost_regex.*\)\.a*$;\1;'` ; do
+                for libextension in `ls $BOOSTLIBDIR/libboost_regex*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_regex.*\)\.so.*$;\1;' -e 's;^lib\(boost_regex.*\)\.a*$;\1;' -e 's;^lib\(boost_regex.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
                     echo "ax_lib"
 				    AC_CHECK_LIB($ax_lib, exit,

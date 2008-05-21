@@ -79,7 +79,7 @@ AC_DEFUN([AX_BOOST_WAVE],
             BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/@<:@^\/@:>@*//'`
             if test "x$ax_boost_user_wave_lib" = "x"; then
                 echo "c"
-                for libextension in `ls $BOOSTLIBDIR/libboost_wave*.{so,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_wave.*\)\.so.*$;\1;' -e 's;^lib\(boost_wave.*\)\.a*$;\1;'` ; do
+                for libextension in `ls $BOOSTLIBDIR/libboost_wave*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_wave.*\)\.so.*$;\1;' -e 's;^lib\(boost_wave.*\)\.a*$;\1;' -e 's;^lib\(boost_wave.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
                     echo "ax_lib"
                     echo $ax_lib
