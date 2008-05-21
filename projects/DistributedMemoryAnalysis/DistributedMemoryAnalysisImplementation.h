@@ -25,7 +25,7 @@
 #define ALLGATHER_MPI false
 
 // --------------------------------------------------------------------------
-// class DistributedMemoryAnalysisBase
+// class DistributedMemoryAnalysisBase -- version by Gergo (based on nodes weight)
 // --------------------------------------------------------------------------
 
 template <class InheritedAttributeType>
@@ -195,8 +195,10 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
   funcWeights.swap(funcWeights_temp);
 }
 
+
+
 // --------------------------------------------------------------------------
-// class DistributedMemoryAnalysisBase
+// class DistributedMemoryAnalysisBase -- version by tps (based on computation weight)
 // --------------------------------------------------------------------------
 
 template <class InheritedAttributeType>
@@ -257,7 +259,11 @@ computeFunctionIndicesPerNode(
     }
 
     int start_rank=1;
-
+    //    std::cerr << " *********** processes : " << processes << std::endl;
+    // if only one processor is defined then processor 0 does NOT have to do communication
+    // and can hence perform the analysis
+    if (processes==1)
+      start_rank=0;
     //    std::vector<int> functionToProcessor;
     double processorWeight[processes];
     int nrOfFunctions[processes];
@@ -596,7 +602,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     {
 #if DIS_DEBUG_OUTPUT
       std::cout << "     inside function: " << node->class_name() << "  nodeCount =" << nodeCount << 
-	"   depth=" << inheritedValue << "  weight = " << weight << std::endl;
+	"   depth=" << inheritedValue << std::endl;
 #endif
         nodeCount++;
 	// calculate the weight of the function

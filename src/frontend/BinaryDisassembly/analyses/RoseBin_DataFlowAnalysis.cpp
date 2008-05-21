@@ -502,6 +502,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
 
   string functionName="";
   start = RoseBin_support::getTime();
+  vizzGraph->setGrouping(true);
   vizzGraph->printNodes(true, this, forward_analysis, myfile,functionName);
   nrNodes=vizzGraph->nodes.size();
   //  vizzGraph->nodes.clear();

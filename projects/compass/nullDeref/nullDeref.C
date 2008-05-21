@@ -421,7 +421,8 @@ std::vector <tps_node> CompassAnalyses::NullDeref::Traversal::tps_out_edges(tps_
   return vec;
 }
 
-void CompassAnalyses::NullDeref::Traversal::checkNullDeref(string analysisname, SgFunctionDeclaration* funcDecl, SgExpression* theExp, string name, int now, int max) {
+void CompassAnalyses::NullDeref::Traversal::
+checkNullDeref(string analysisname, SgExpression* theExp, string name) {
   std::string lineNrDelete=ToString(theExp->get_file_info()->get_line());
   functionName = name;
 
@@ -445,7 +446,7 @@ void CompassAnalyses::NullDeref::Traversal::checkNullDeref(string analysisname, 
             expr = *it;
             if (debug) 
               std::cout << "     **** free : " << expr->class_name() << std::endl;
-            checkNullDeref(analysisname, funcDecl, expr, name, now, max);
+            checkNullDeref(analysisname,  expr, name);
           }
           return;
         }
@@ -544,10 +545,38 @@ void
 CompassAnalyses::NullDeref::Traversal::
 visit(SgNode* sgNode)
 { 
-  // Implement your traversal here.  
-  //  int max=200; // amount of nodes?
+#if 1
+  std::string name = sgNode->class_name();
+  addressOp=false;
 
+  if (isSgArrowExp(sgNode)) {
+    SgArrowExp* delExpr = isSgArrowExp(sgNode);
+    if (delExpr!=NULL) {
+      checkNullDeref("SgArrowExp", delExpr, name);
+    }
+  } 
+  else if (isSgPointerDerefExp(sgNode)) {
+    SgPointerDerefExp* delExpr = isSgPointerDerefExp(sgNode);
+    if (delExpr!=NULL) {
+      checkNullDeref("SgPointerDerefExp",  delExpr, name);
+    }
+  }
+  else if (isSgAssignInitializer(sgNode)) {
+    SgAssignInitializer* delExpr = isSgAssignInitializer(sgNode);
+    if (delExpr!=NULL) {
+      checkNullDeref("SgAssignInitializer", delExpr, name);
+    }
+  }
+  else if (isSgFunctionCallExp(sgNode)) {
+    SgFunctionCallExp* delExpr = isSgFunctionCallExp(sgNode);
+    if (delExpr!=NULL) {
+      checkNullDeref("SgFunctionCallExpr",  delExpr, name);
+    }
+  }
+#endif
 
+#if 0
+  // this code works for function granularity only
 
   std::string name = sgNode->class_name();
   if (isSgFunctionDeclaration(sgNode)) {
@@ -557,7 +586,6 @@ visit(SgNode* sgNode)
     //  " ---------------------------------------- " << std::endl;
 
     fileName = isSgFunctionDeclaration(sgNode)->get_file_info()->get_filenameString();
-    //fileName = getFileName(fileName);
     // query for delete expressions
     //  SgArrowExp, SgArrowStarOp
     std::vector<SgNode*> exprList = NodeQuery:: querySubTree (sgNode, V_SgArrowExp);
@@ -566,7 +594,7 @@ visit(SgNode* sgNode)
       addressOp=false;
       SgArrowExp* delExpr = isSgArrowExp(expr);
       if (delExpr!=NULL) {
-        checkNullDeref("SgArrowExp",isSgFunctionDeclaration(sgNode), delExpr, name, counter, max);
+        checkNullDeref("SgArrowExp", delExpr, name);
       }
     }
     exprList = NodeQuery:: querySubTree (sgNode, V_SgPointerDerefExp);
@@ -575,7 +603,7 @@ visit(SgNode* sgNode)
       addressOp=false;
       SgPointerDerefExp* delExpr = isSgPointerDerefExp(expr);
       if (delExpr!=NULL) {
-        checkNullDeref("SgPointerDerefExp", isSgFunctionDeclaration(sgNode), delExpr, name, counter, max);
+        checkNullDeref("SgPointerDerefExp",  delExpr, name);
       }
     }
 
@@ -585,7 +613,7 @@ visit(SgNode* sgNode)
       addressOp=false;
       SgAssignInitializer* delExpr = isSgAssignInitializer(expr);
       if (delExpr!=NULL) {
-        checkNullDeref("SgAssignInitializer", isSgFunctionDeclaration(sgNode), delExpr, name, counter, max);
+        checkNullDeref("SgAssignInitializer", delExpr, name);
       }
     }
 
@@ -595,13 +623,14 @@ visit(SgNode* sgNode)
       addressOp=false;
       SgFunctionCallExp* delExpr = isSgFunctionCallExp(expr);
       if (delExpr!=NULL) {
-        checkNullDeref("SgFunctionCallExpr", isSgFunctionDeclaration(sgNode), delExpr, name, counter, max);
+        checkNullDeref("SgFunctionCallExpr",  delExpr, name);
       }
     }
 
 
   }
 
+#endif
 
 } //End of the visit function.
    

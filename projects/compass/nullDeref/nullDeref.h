@@ -37,7 +37,7 @@ namespace CompassAnalyses
 	  std::string getFileName(SgFile* src);
 	  bool isNULL(SgExpression* rightSide) const;
 	  bool isLegitimateNullPointerCheck(SgExpression* expr, SgInitializedName* pointerVar, bool invertCheck) const;
-	  void checkNullDeref(std::string analysisname, SgFunctionDeclaration* funcDecl, SgExpression* theExp, std::string name, int now, int max);
+	  void checkNullDeref(std::string analysisname, SgExpression* theExp, std::string name);
 
 	  bool switchForAssignment(std::vector<BOOSTGraphInterface::tps_node> &vec, 
 					  BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN, SgExpression* rhs) const;

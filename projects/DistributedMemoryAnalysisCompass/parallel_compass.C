@@ -6,7 +6,8 @@
 #include "LoadSaveAST.h"
 #include "../DistributedMemoryAnalysis/DistributedMemoryAnalysis.h"
 
-#define DEBUG_OUTPUT false
+using namespace std;
+#define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
 
 // The pre-traversal runs before the distributed part of the analysis and is used to propagate context information down
@@ -95,41 +96,38 @@ void output_results(std::vector<CountingOutputObject *> &outputs) {
 
 
 // ************************************************************
-// NodeCounter to determine on how to split the nodes
+// NodeFileCounter to determine on how to split the nodes
 // ************************************************************
-class NodeCounter: public AstSimpleProcessing
+class NodeFileCounter: public AstSimpleProcessing
 {
 public:
   size_t totalNodes;
   size_t totalFunctions;
   size_t *fileNodes;
-
-  NodeCounter(int numberOfFiles)
+  NodeFileCounter(int numberOfFiles)
     : totalNodes(0), totalFunctions(0), 
       fileNodes(new size_t[numberOfFiles+1]), fileptr(fileNodes) {
     *fileptr = 0;
   }
-
 protected:
   // increase the number of nodes and nodes in files
   virtual void visit(SgNode *node) {
     totalNodes++;
     ++*fileptr;
-
+    //std::cerr << " fileptr = " << fileptr << "  : " << *fileptr << endl;
     // must be run postorder!
     if (isSgFile(node)) {
       fileptr++;
       *fileptr = fileptr[-1];
     }
-
     SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node);
     if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl) {
       totalFunctions++;
     }
   };
-
   size_t *fileptr;
 };
+
 
 
 // ************************************************************
@@ -138,7 +136,7 @@ protected:
 std::pair<int, int> computeFileIndices(SgProject *project, int my_rank, int processes)
 {
   // count the amount of nodes in all files
-  NodeCounter nc(project->numberOfFiles());
+  NodeFileCounter nc(project->numberOfFiles());
   nc.traverse(project, postorder);
   ROSE_ASSERT(nc.fileNodes[project->numberOfFiles() - 1] == nc.totalNodes - 1);
 
@@ -180,6 +178,119 @@ std::pair<int, int> computeFileIndices(SgProject *project, int my_rank, int proc
 
   return std::make_pair(my_lo, my_hi);
 }
+
+
+
+
+
+// ************************************************************
+// NodeCounter to determine on how to split the nodes
+// ************************************************************
+class NodeNullDerefCounter: public AstSimpleProcessing
+{
+public:
+  size_t totalNodes;
+  size_t totalFunctions;
+  size_t *nullDerefNodes;
+  SgNode* *nodes;
+  bool count;
+  size_t interestingNodes;
+  NodeNullDerefCounter(bool c) { interestingNodes=0; totalNodes=0; count=true;}
+  NodeNullDerefCounter(int numberOfNodes)
+    : totalNodes(0), totalFunctions(0), 
+      nullDerefNodes(new size_t[numberOfNodes+1]), fileptr(nullDerefNodes) {
+    *fileptr = 0;
+    interestingNodes=0; 
+    count=false;
+    nodes = new SgNode*[numberOfNodes+1];
+  }
+protected:
+  // increase the number of nodes and nodes in files
+  virtual void visit(SgNode *node) {
+    totalNodes++;
+    if (!count)
+      ROSE_ASSERT(fileptr);
+    if (!count) { 
+      ++*fileptr;
+      //      std::cerr << " fileptr = " << fileptr << "    *fileptr: " << *fileptr << "    totalNodes:  " << totalNodes << endl;
+    }
+    // must be run postorder!
+    if (isSgArrowExp(node) || isSgPointerDerefExp(node)
+	|| isSgAssignInitializer(node) || isSgFunctionCallExp(node)) {
+      if (!count) {
+	fileptr++;
+	*fileptr = fileptr[-1];
+	nodes[interestingNodes]=node;
+	if (DEBUG_OUTPUT_MORE) 
+	cerr << " [ " << interestingNodes << " ] adding node " << node->class_name() << endl;
+      }
+      interestingNodes++;
+      //if (!count)
+	//std::cout << " ........... fileptr[-1] = " << fileptr[-1] << std::endl;
+    }
+    SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node);
+    if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl) {
+      totalFunctions++;
+    }
+  };
+  size_t *fileptr;
+};
+
+
+
+// ************************************************************
+// algorithm that splits the files to processors
+// ************************************************************
+std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int processes, NodeNullDerefCounter nullderefCounter)
+{
+  nullderefCounter.traverse(project, postorder);
+  int nrOfInterestingNodes = nullderefCounter.interestingNodes;
+  // count the amount of nodes in all files
+  //cerr << " number of interesting : " << nrOfInterestingNodes << endl;
+  //  cerr << " nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] == nullderefCounter.totalNodes  : " <<
+  //  nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] << " == " << nullderefCounter.totalNodes  << endl;
+  ROSE_ASSERT(nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] == nullderefCounter.totalNodes );
+
+  if (my_rank == 0) {
+    std::cout <<  "File: The total amount of nullderefNodes is : " << nrOfInterestingNodes << std::endl;
+    std::cout <<  "File: The total amount of functions is : " << nullderefCounter.totalFunctions << std::endl;
+    std::cout <<  "File: The total amount of nodes is : " << nullderefCounter.totalNodes << std::endl;
+  }
+
+  // split algorithm
+  int lo, hi = 0;
+  int my_lo, my_hi;
+  for (int rank = 0; rank < processes; rank++) {
+    const size_t my_nodes_high = (nullderefCounter.totalNodes / processes + 1) * (rank + 1);
+    // set lower limit
+    lo = hi;
+    // find upper limit
+    for (hi = lo + 1; hi < nrOfInterestingNodes; hi++) {
+      if (nullderefCounter.nullDerefNodes[hi] > my_nodes_high)
+	break;
+    }
+
+    // make sure all files have been assigned to some process
+    if (rank == processes - 1)
+      ROSE_ASSERT(hi == nrOfInterestingNodes);
+
+    if (rank == my_rank)  {
+      my_lo = lo;
+      my_hi = hi;
+#if 1
+      std::cout << "process " << rank << ": files [" << lo << "," << hi
+		<< "[ for a total of "
+		<< (lo != 0 ? nullderefCounter.nullDerefNodes[hi-1] - nullderefCounter.nullDerefNodes[lo-1] : nullderefCounter.nullDerefNodes[hi-1])
+		<< " nodes" << std::endl;
+#endif
+      break;
+    }
+  }
+
+  return std::make_pair(my_lo, my_hi);
+}
+
+
 
 
 
@@ -335,23 +446,56 @@ int main(int argc, char **argv)
 #define RUN_COMBINED_CHECKERS 0
 #define GERGO_ALGO 0
 
+#define RUN_ON_DEFUSE 1
+
   /* traverse the files */
   gettime(begin);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
 #if CALL_RUN_FOR_CHECKERS
   if (my_rank==0)
-  std::cout << "\n>>> Running in sequence ... " << std::endl;
+    std::cout << "\n>>> Running in sequence ... " << std::endl;
 #endif
 
 #if RUN_ON_FILES
+
+#if RUN_ON_DEFUSE
+  std::cout << "\n>>> Running on files ... " << std::endl;
+  NodeNullDerefCounter nc(true);
+  nc.traverse(root, postorder);
+  int nrOfInterestingNodes = nc.interestingNodes;
+  NodeNullDerefCounter nullderefCounter(nrOfInterestingNodes);
+
+  if (processes==1) {
+  /* figure out which files to process on this process */
+  std::pair<int, int> bounds = computeNullDerefIndices(root, my_rank, processes, nullderefCounter);
+  for (int i = bounds.first; i < bounds.second; i++)
+    {
+	if (DEBUG_OUTPUT_MORE) 
+	  std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " << std::endl;
+      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
+	ROSE_ASSERT(mynode);
+	if (DEBUG_OUTPUT_MORE) 
+	  std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
+		    <<"[) : " << (*b_itr)->getName()  << "   on node: " << 
+	    mynode->class_name() << std::endl; 
+	(*b_itr)->run(mynode);
+      }
+    }
+  } else {
+    // apply runtime algorithm to def_use
+    cerr << " Dynamic scheduling not implemented yet for single nodes (null deref)" << endl;
+  }
+#else
+
   std::cout << "\n>>> Running on files ... " << std::endl;
   /* figure out which files to process on this process */
   std::pair<int, int> bounds = computeFileIndices(root, my_rank, processes);
   for (int i = bounds.first; i < bounds.second; i++)
     {
       std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " << std::endl;
- #if CALL_RUN_FOR_CHECKERS
+#if CALL_RUN_FOR_CHECKERS
       for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	if (DEBUG_OUTPUT_MORE) 
 	  std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
@@ -359,17 +503,18 @@ int main(int argc, char **argv)
 	(*b_itr)->run(&root->get_file(i));
       }
 
- #elif RUN_COMBINED_CHECKERS
+  #elif RUN_COMBINED_CHECKERS
       std::cout << "\n>>> Running combined ... " << std::endl;
       AstCombinedSimpleProcessing combined(traversals);
       combined.traverse(&root->get_file(i), preorder);
- #else
-  int nrOfThreads = 5;
-  std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
+  #else
+      int nrOfThreads = 5;
+      std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
       AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
       parallel.traverseInParallel(&root->get_file(i), preorder);
- #endif
+#endif
     }
+#endif
 
 #else // run on functions
   FunctionNamesPreTraversal preTraversal;
@@ -378,8 +523,8 @@ int main(int argc, char **argv)
 
   if (my_rank==0)
     std::cout << "\n>>> Running on functions ... " << std::endl;
- #if CALL_RUN_FOR_CHECKERS
-  #if GERGO_ALGO
+#if CALL_RUN_FOR_CHECKERS
+#if GERGO_ALGO
   std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
   for (int i = bounds.first; i < bounds.second; i++)
     {
@@ -389,9 +534,9 @@ int main(int argc, char **argv)
 
       for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	if (DEBUG_OUTPUT_MORE)
-	std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-		  <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
-	  "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
+	  std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
+		    <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
+	    "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
 	(*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
       }
     }
@@ -399,96 +544,103 @@ int main(int argc, char **argv)
   int* dynamicFunctionsPerProcessor = new int[processes];
   for (int k=0;k<processes;k++)
     dynamicFunctionsPerProcessor[k]=0;
+  if (DEBUG_OUTPUT_MORE) 
+    cout << "Processes = " << processes << endl;
   if (processes==1) {
-  std::vector<int> bounds;
-  myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
-  for (int i = 0; i<(int)bounds.size();i++) {
-    if (bounds[i]== my_rank) {
-      //std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
-      //									     myanalysis.myFuncWeights[i]) << std::endl;
-      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	if (DEBUG_OUTPUT_MORE) 
-	  std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
-	    (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
-	    "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
-		    << std::endl; 
-
-	(*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
-      }
-    }
-  }
-  } else {
-  // apply run-time load balancing
-  std::vector<int> bounds;
-  myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
-    // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
-  int currentJob = -1;
-  MPI_Status Stat;
-  int *res = new int[2];
-  res[0]=5;
-  res[1]=5;
-  bool done = false;
-  int jobsDone = 0;
-  int scale = 1;
-  while (!done) {
-    // we are ready, make sure to notify 0
-    if (my_rank != 0) {
-      //std::cout << " process : " << my_rank << " sending. " << std::endl;
-      MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
-      MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
-      int min = res[0];
-      int max = res[1];
-      std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[" << std::endl;
-      if (res[0]==-1) 
-	break;
-      for (int i=min; i<max;i++) {
-	//if (i>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size()) {
-	  //std::cout << "............ early breakup " << std::endl;
-	  //break;
-	//}
-	// ready contains the next number to be processed
+    std::vector<int> bounds;
+    myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
+    if (DEBUG_OUTPUT_MORE) 
+      cout << "bounds size = " << bounds.size() << endl;
+    for (int i = 0; i<(int)bounds.size();i++) {
+      //if (DEBUG_OUTPUT_MORE) 
+      // cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
+      if (bounds[i]== my_rank) {
+	//if (DEBUG_OUTPUT_MORE) 
+	// std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
+	//								myanalysis.myFuncWeights[i]) << std::endl;
 	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	  //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
-	  // (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
-	  // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
-	  //	    << std::endl; 
+	  //if (DEBUG_OUTPUT_MORE) 
+	    //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
+	    //  (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
+	    //  "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
+	    //      << std::endl; 
+
 	  (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
 	}
       }
     }
-    if (my_rank == 0) {
-      //std::cout << " process : " << my_rank << " receiving. " << std::endl;
-      MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
-      currentJob+=scale;
-      if ((currentJob % 20)==19) scale++;
-      if (currentJob>=(int)bounds.size()) {
-	res[0] = -1;
-	jobsDone++;
-      }      else {
-	res[0] = currentJob;
-	res[1] = currentJob+scale;
-	if (res[1]>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size())
-	  res[1] = (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size();
-	dynamicFunctionsPerProcessor[Stat.MPI_SOURCE] += scale;
+  } else {
+    // apply run-time load balancing
+    std::vector<int> bounds;
+    myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
+    // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
+    int currentJob = -1;
+    MPI_Status Stat;
+    int *res = new int[2];
+    res[0]=5;
+    res[1]=5;
+    bool done = false;
+    int jobsDone = 0;
+    int scale = 1;
+    while (!done) {
+      // we are ready, make sure to notify 0
+      if (my_rank != 0) {
+	//std::cout << " process : " << my_rank << " sending. " << std::endl;
+	MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
+	MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
+	int min = res[0];
+	int max = res[1];
+	std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[" << std::endl;
+	if (res[0]==-1) 
+	  break;
+	for (int i=min; i<max;i++) {
+	  //if (i>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size()) {
+	  //std::cout << "............ early breakup " << std::endl;
+	  //break;
+	  //}
+	  // ready contains the next number to be processed
+	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	    //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
+	    // (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
+	    // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
+	    //	    << std::endl; 
+	    (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+	  }
+	}
       }
-      //      std::cout << " processes done : " << jobsDone << "/" << (processes-1) << std::endl;
-      //std::cout << " process : " << my_rank << " sending rank : " << res[0] << std::endl;
-      MPI_Send(res, 2, MPI_INT, Stat.MPI_SOURCE, 1, MPI_COMM_WORLD);      
-      if (jobsDone==(processes-1))
-	break;
+      if (my_rank == 0) {
+	//std::cout << " process : " << my_rank << " receiving. " << std::endl;
+	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
+	currentJob+=scale;
+	if ((currentJob % 20)==19) scale++;
+	if (currentJob>=(int)bounds.size()) {
+	  res[0] = -1;
+	  jobsDone++;
+	}      else {
+	  res[0] = currentJob;
+	  res[1] = currentJob+scale;
+	  if (res[1]>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size())
+	    res[1] = (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size();
+	  dynamicFunctionsPerProcessor[Stat.MPI_SOURCE] += scale;
+	}
+	//      std::cout << " processes done : " << jobsDone << "/" << (processes-1) << std::endl;
+	//std::cout << " process : " << my_rank << " sending rank : " << res[0] << std::endl;
+	MPI_Send(res, 2, MPI_INT, Stat.MPI_SOURCE, 1, MPI_COMM_WORLD);      
+	if (jobsDone==(processes-1))
+	  break;
+      }
     }
-  }
   } // if not processes==1
 #endif // own algo
- #elif RUN_COMBINED_CHECKERS
-      std::cout << "\n>>> Running combined ... " << std::endl;
-      AstCombinedSimpleProcessing combined(traversals);
-      combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
- #else
+#elif RUN_COMBINED_CHECKERS
+  std::cout << "\n>>> Running combined ... " << std::endl;
+  AstCombinedSimpleProcessing combined(traversals);
+  combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
+#else
   int nrOfThreads = 5;
   std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
-      AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-      parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
+  AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
+  parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
 #endif // run for checkers
 
 
@@ -535,25 +687,33 @@ int main(int argc, char **argv)
     int slowest_func=0;
     int fastest_func=0;
     for (size_t i = 0; i < (size_t) processes; i++) {
+#if RUN_ON_FILES
+      std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
+	"  real # functions: none." << std::endl;
+#else
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
 	"  real # functions: " << dynamicFunctionsPerProcessor[i] << std::endl;
-	total_time += times[i];
-	total_memory += memory[i];
-	if (min_time > times[i]) {
-	  min_time = times[i];
-	  fastest_func = i;
-	}
-	if (max_time < times[i]) {
-	  max_time = times[i];
-	  slowest_func = i;
-	}
+#endif
+      total_time += times[i];
+      total_memory += memory[i];
+      if (min_time > times[i]) {
+	min_time = times[i];
+	fastest_func = i;
       }
+      if (max_time < times[i]) {
+	max_time = times[i];
+	slowest_func = i;
+      }
+    }
     std::cout << std::endl;
 
     std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
 #if RUN_ON_FILES
+#if RUN_ON_DEFUSE
+#else
 	      << "\n    fastest process: " << min_time << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
 	      << "\n    slowest process: " << max_time << " slowest   in file: " << root->get_file(slowest_func).getFileName()
+#endif
 #else
 	      << "\n    fastest process: " << min_time << " fastest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_name().str())
               << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_file_info()->get_filename())

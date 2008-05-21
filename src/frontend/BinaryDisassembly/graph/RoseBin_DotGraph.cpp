@@ -171,6 +171,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 				 std::ofstream& myfile, string& recursiveFunctionName) {
   //ROSE_ASSERT(unparser);
   //bool firstFunc = true;
+  cerr << " grouping : " << grouping << endl;
   // traverse nodes and visualize results of graph
   if ((dynamic_cast<RoseBin_CallGraphAnalysis*>(flow))!=NULL) {
     cerr << " >>>> its a callgraph " << endl;

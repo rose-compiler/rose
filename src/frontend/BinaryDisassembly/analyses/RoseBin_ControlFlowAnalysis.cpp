@@ -72,6 +72,7 @@ void RoseBin_ControlFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool mult
 
   string funcName="";
   start = RoseBin_support::getTime();
+  vizzGraph->setGrouping(true);
   vizzGraph->printNodes(false,this, forward_analysis, myfile,funcName);
   nrNodes=vizzGraph->nodes.size();
   //vizzGraph->nodes.clear();
