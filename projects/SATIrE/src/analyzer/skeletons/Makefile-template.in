@@ -20,7 +20,7 @@ OTHERANALYSISLIBS = ${OTHERANALYSES:%=otheranalyses/%.a}
 PAG = $(PAGDIR)/bin/pag
 CXXFLAGS = -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(SATIRE_INCLUDE) -I$(ANALYSIS)-out/src/
 LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
-LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lrose -lrt -lpag -lfl
+LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lpagdatatypes -lrose -lrt -lpag -lfl
 
 # common macro definitions passed on the command line
 D_FLAGS = -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DPREFIX=$(PREFIX) -DPREFIX_SET=$(PREFIX_SET)
