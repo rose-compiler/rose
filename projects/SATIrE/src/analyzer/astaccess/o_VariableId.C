@@ -160,12 +160,6 @@ extern "C" str o_varid_str(void *p)
     return s;
 }
 
-#if 0
-// This causes a linker error if the analysis does not also use
-// ExpressionId, so leave it out for tonight.
-// varid_exprid :: VariableId -> ExpressionId;
-//     maps a variable identifier to an expression identifier which denotes a
-//     VarRefExp for that variable
 #include <o_ExpressionId.h>
 // return expression identifier corresponding to this variable
 extern "C" void *o_varid_exprid(void *p)
@@ -175,7 +169,6 @@ extern "C" void *o_varid_exprid(void *p)
     e->id = v->id;
     return e;
 }
-#endif
 
 
 // *** Some more PAG support stuff
