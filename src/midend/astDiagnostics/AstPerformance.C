@@ -20,7 +20,7 @@ using namespace std;
 bool ROSE_MemoryUsage::getStatmInfo() {
   FILE *file = fopen("/proc/self/statm", "r");;
   if (!file) {
-    printf("Unable to access system file /proc/self/statm to get memory usage data\n");
+    // printf("Unable to access system file /proc/self/statm to get memory usage data\n");
     return false;
   }
   int numEntries = fscanf(file, "%d %d %d %d %d %d %d",
