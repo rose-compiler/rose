@@ -52,4 +52,4 @@ cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do sed "s,@CHECKER@,$
 echo "archiveCheckers: \$(COMPASS_CHECKER_ARCHIVES)"
 echo ""
 echo "# Compass checker object file build rules"
-cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,&.lo: $(srcdir)/&/&.C\n	$(LTCXXCOMPILE) -c -o &.lo $(srcdir)/&/&.C\n,'
+cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,&.lo: $(srcdir)/&/&.C@	$(LTCXXCOMPILE) -c -o &.lo $(srcdir)/&/&.C@,' | tr '@' '\n'

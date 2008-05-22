@@ -737,7 +737,7 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 JAVA_JVM_FLAGS = -L$(JAVA_JVM_PATH) -ljvm
 endif
 
-librose_la_SOURCES =
+librose_la_SOURCES = dummyCppFileForLibrose.C
 librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIBS) \
                     $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
