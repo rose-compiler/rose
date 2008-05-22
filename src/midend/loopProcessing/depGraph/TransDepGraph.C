@@ -5,3 +5,4 @@
 
 template class TransInfoGraph<DepInfoSet>;
 template class std::vector <TransAnalSCCGraphNode<DepInfoSet>::TwinNode>;
+template class GraphTransAnalysis<DepInfoSet>;
