@@ -14,42 +14,8 @@
 
 using namespace std;
 
-AstPerformance::time_type AstPerformance::timer; // FIXME -- should this be static?
-
 // DQ (8/29/2007): Part of initial support for more portable timers (suggested by Matt Sottile at LANL)
-#if _POSIX_TIMERS < 1
-/* drop something with the same API in to replace the POSIX functions */
-
-// ROSE timers will not be properly defined (clock_gettime() function is not available)
-// so we can define the functions directly, though they don't have meaningful implementations.
-
-// We should consider defining something using the clock() function, since I think it ia portable.
-// Need to test this on a OSX platform were the __timespec_defined will be false.
-#if !defined(__timespec_defined) && !defined(_TIMESPEC)
-// This data structure is copied from time.h on a system that included the timespec data structure
-struct timespec
-  {
-    __time_t tv_sec;		/* Seconds.  */
-    long int tv_nsec;	/* Nanoseconds.  */
-  };
-
-// Now claim that it is defined
-#define __timespec_defined
-#define _TIMESPEC
-#endif
-
-typedef int clockid_t;
-
-// Only these two functions are used in ROSE to collect performance data
-int clock_getres(clockid_t clock_id, struct timespec *res) { return 0; }
-int clock_gettime(clockid_t clock_id, struct timespec *tp) { return 0; }
-
-#else
-// OK to use ROSE timers (this is the typical case for ROSE development under Linux)
-#endif
-
-
-#define MAX_PATH_LEN     4096
+// JJW (5/21/2008): Changed back to clock() for portability
 
 bool ROSE_MemoryUsage::getStatmInfo() {
   FILE *file = fopen("/proc/self/statm", "r");;
@@ -310,31 +276,14 @@ ProcessingPhase::ProcessingPhase ( const std::string & s, double p, ProcessingPh
           parent->childList.push_back(this);
    }
 
+double
+ProcessingPhase::getCurrentDelta(const RoseTimeType& timer) {
+  return double(clock() - timer) / CLOCKS_PER_SEC;
+}
+
 void
-ProcessingPhase::stopTiming(
-#if _POSIX_TIMERS >= 1
-          timespec & timer
-#else
-          long & timer
-#endif
-)
-   {
-  // Use the Linux timer to provide nanosecond resolution
-#if _POSIX_TIMERS >= 1
-     long startTimeSec     = timer.tv_sec;
-     long startTimeNanoSec = timer.tv_nsec;
-
-     clockid_t clockId = 0;
-     clock_gettime(clockId,&timer);
-
-     long   endTimeSec     = timer.tv_sec  - startTimeSec;
-     long   endTimeNanoSec = timer.tv_nsec - startTimeNanoSec;
-     double performance  = ((double) endTimeSec) + ((double)endTimeNanoSec) / 1000000000.0;
-#else
-     long   endTimeSec     = (clock() - timer) / CLOCKS_PER_SEC;
-     long   endTimeNanoSec = 0;
-     double performance = (double) endTimeSec;
-#endif
+ProcessingPhase::stopTiming(const RoseTimeType& timer) {
+     double performance = getCurrentDelta(timer);
 
 #if 0
   // DQ (12/8/2006): Use Linux memory usage mechanism
@@ -715,57 +664,17 @@ TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
 // Save the label explaining what the performance number means
    : AstPerformance(s,outputReport)
    {
-#if _POSIX_TIMERS >= 1
-     clockid_t clockId = 0;
-     clock_gettime(clockId,&timer);
-#else
-     long timer = clock();
-#endif
-
-#if 0
-#if _POSIX_TIMERS >= 1
-     long  startTimeSec    = timer.tv_sec;
-     long startTimeNanoSec = timer.tv_nsec;
-#else
-     long  startTimeSec    = timer;
-     long startTimeNanoSec = 0.0;
-#endif
-     printf ("TimingPerformance constructor: startTimeSec = %ld startTimeNanoSec = %ld \n",
-          startTimeSec,startTimeNanoSec);
-#endif
+     // timer = clock();
    }
 
 TimingPerformance::~TimingPerformance()
    {
-#if 1
   // DQ (9/1/2006): Refactor the code to stop the timing so that we can call it in the 
   // destructor and the report generation (both trigger the stopping of all timers).
      assert(localData != NULL);
-     localData->stopTiming(timer);
-#else
-#if _POSIX_TIMERS >= 1
-     long startTimeSec     = timer.tv_sec;
-     long startTimeNanoSec = timer.tv_nsec;
-
-     clockid_t clockId = 0;
-     clock_gettime(clockId,&timer);
-
-     long   endTimeSec    = timer.tv_sec  - startTimeSec;
-     long   endTimeNanoSec = timer.tv_nsec - startTimeNanoSec;
-     double performance  = ((double) endTimeSec) + ((double)endTimeNanoSec) / 1000000000.0;
-#else
-     long   endTimeSec     = clock() - timer;
-     long   endTimeNanoSec = 0;
-     double performance = (double) endTimeSec;
-#endif
-
+     localData->set_performance(ProcessingPhase::getCurrentDelta(timer));
+     localData->set_resolution(performanceResolution());
 #if 0
-     printf ("TimingPerformance destructor: label = %s endTimeSec = %ld endTimeNanoSec = %ld performance = %f \n",
-          label.c_str(),endTimeSec,endTimeNanoSec,performance);
-#endif
-     assert(localData != NULL);
-     localData->set_performance(performance);
-
   // reset the resolution (since it seems that the base class virtual function was called)
      double resolution = performanceResolution();
   // printf ("resolution = %f \n",resolution);
@@ -777,22 +686,8 @@ double
 TimingPerformance::performanceResolution()
    {
   // printf ("Inside of TimingPerformance::performanceResolution() \n");
-
-     double resolution = 0.0;
-
-#if _POSIX_TIMERS >= 1
-     timespec timerQuery;
-     clockid_t clockId = 0;  // not sure what this is
-     clock_getres(clockId,&timerQuery);
-
-     long   resolutionTimeSec     = timerQuery.tv_sec;
-     long   resolutionTimeNanoSec = timerQuery.tv_nsec;
-     resolution = ((double) resolutionTimeSec) + ((double)resolutionTimeNanoSec) / 1000000000.0;
-#else
   // This may not be the correct resolution of the clock
-     resolution = 1.0 / (double) CLOCKS_PER_SEC;
-#endif
-
+     double resolution = 1.0 / (double) CLOCKS_PER_SEC;
      return resolution;
    }
 
@@ -803,39 +698,15 @@ AstPerformance::reportAccumulatedTime ( const string & s, const double & accumul
    }
 
 void
-AstPerformance::startTimer ( time_type & time )
+AstPerformance::startTimer ( RoseTimeType & time )
    {
-#if _POSIX_TIMERS >= 1
-     clockid_t clockId = 0;
-     clock_gettime(clockId,&time);
-#else
-     long   endTimeSec     = (clock() - timer) / CLOCKS_PER_SEC;
-     long   endTimeNanoSec = 0;
-     double performance = (double) endTimeSec;
-#endif
+     time = clock();
    }
 
 void
-AstPerformance::accumulateTime ( time_type & startTime, double & accumulatedTime, double & numberFunctionCalls )
+AstPerformance::accumulateTime ( RoseTimeType & startTime, double & accumulatedTime, double & numberFunctionCalls )
    {
-#if _POSIX_TIMERS >= 1
-     long startTimeSec     = startTime.tv_sec;
-     long startTimeNanoSec = startTime.tv_nsec;
-
-     time_type endTime;
-
-     clockid_t clockId = 0;
-     clock_gettime(clockId,&endTime);
-
-     long   endTimeSec     = endTime.tv_sec  - startTimeSec;
-     long   endTimeNanoSec = endTime.tv_nsec - startTimeNanoSec;
-     double performance  = ((double) endTimeSec) + ((double)endTimeNanoSec) / 1000000000.0;
-#else
-     long   endTimeSec     = (clock() - timer) / CLOCKS_PER_SEC;
-     long   endTimeNanoSec = 0;
-     double performance = (double) endTimeSec;
-#endif
-     accumulatedTime += performance;
+     accumulatedTime += ProcessingPhase::getCurrentDelta(startTime);
      numberFunctionCalls += 1.0;
    }
 

@@ -23,5 +23,5 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  DepGraphBuild.h  DepGraph.h  DepGraphTransform.h  LoopAnalysis.h  TransDepGraph.h
+include_HEADERS =  DepGraphBuild.h  DepGraph.h  DepGraphTransform.h  LoopAnalysis.h  TransDepGraph.h TransDepGraphImpl.h
 

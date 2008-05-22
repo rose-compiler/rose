@@ -36,7 +36,7 @@ libedgObjects = \
    $(top_builddir)/src/frontend/EDG/EDG_3.3/src/*.lo \
    $(top_builddir)/src/frontend/EDG_SAGE_Connection/*.lo
 
-#   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_decode.o 
+#   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_decode.lo 
 
 endif
 
@@ -44,32 +44,32 @@ endif
 if ROSE_USE_QROSE
 # ROSE GUI objects
 ROSE_GUI_OBJS = \
-   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRGui/*.o \
-   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/*.o \
-   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRTree/*.o \
-   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/*.o
+   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRGui/*.lo \
+   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/*.lo \
+   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRTree/*.lo \
+   $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/*.lo
 endif
 
 if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 ROSE_BINARY_DISASSEMBLER_OBJS = \
-   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_support.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse_visitor.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CompareAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_ControlFlowAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_printInstructions.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_DataFlowAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_DotGraph.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_Graph.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_GmlGraph.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CallGraphAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_FlowAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DefUseAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_VariableAnalysis.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_Emulate.o \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DataFlowAbstract.o \
-   $(top_builddir)/src/frontend/ObjdumpDisassembler/*.o \
-   $(top_builddir)/src/frontend/X86Disassembler/*.o
+   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_support.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse_visitor.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CompareAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_ControlFlowAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_printInstructions.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_DataFlowAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_DotGraph.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_Graph.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_GmlGraph.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CallGraphAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_FlowAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DefUseAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_VariableAnalysis.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_Emulate.lo \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DataFlowAbstract.lo \
+   $(top_builddir)/src/frontend/ObjdumpDisassembler/*.lo \
+   $(top_builddir)/src/frontend/X86Disassembler/*.lo
 
 libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
@@ -78,73 +78,73 @@ libroseBinaryLibraries = \
 
 endif
 
-# Note: ROSE/src/*.o are not included since they are only
+# Note: ROSE/src/*.lo are not included since they are only
 # related to the test program that is compiled to test the
 # ROSE libraries (librose.a librose.so)
 #
 # RV (8/11/2005): Removed reference to PDFLibrary
-#   $(top_builddir)/src/3rdPartyLibraries/PDFLibrary/*.o
+#   $(top_builddir)/src/3rdPartyLibraries/PDFLibrary/*.lo
 #
 libroseObjects = \
-   $(top_builddir)/src/util/support/*.o \
-   $(top_builddir)/src/util/graphs/*.o \
-   $(top_builddir)/src/util/stringSupport/*.o \
-   $(top_builddir)/src/util/commandlineProcessing/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/coco/cplus2/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/MSTL/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdflib/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdcore/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/png/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/tiff/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/flate/*.o \
-   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/jpeg/*.o \
-   $(top_builddir)/src/frontend/SageIII/*.o \
-   $(top_builddir)/src/frontend/SageIII/astFixup/*.o \
-   $(top_builddir)/src/frontend/SageIII/astPostProcessing/*.o \
-   $(top_builddir)/src/frontend/SageIII/astMerge/*.o \
-   $(top_builddir)/src/frontend/SageIII/astFileIO/*.o \
-   $(top_builddir)/src/frontend/SageIII/sageInterface/*.o \
-   $(top_builddir)/src/frontend/SageIII/virtualCFG/*.o \
-   $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/*.o \
+   $(top_builddir)/src/util/support/*.lo \
+   $(top_builddir)/src/util/graphs/*.lo \
+   $(top_builddir)/src/util/stringSupport/*.lo \
+   $(top_builddir)/src/util/commandlineProcessing/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/coco/cplus2/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/MSTL/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdflib/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdcore/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/png/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/tiff/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/flate/*.lo \
+   $(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/jpeg/*.lo \
+   $(top_builddir)/src/frontend/SageIII/*.lo \
+   $(top_builddir)/src/frontend/SageIII/astFixup/*.lo \
+   $(top_builddir)/src/frontend/SageIII/astPostProcessing/*.lo \
+   $(top_builddir)/src/frontend/SageIII/astMerge/*.lo \
+   $(top_builddir)/src/frontend/SageIII/astFileIO/*.lo \
+   $(top_builddir)/src/frontend/SageIII/sageInterface/*.lo \
+   $(top_builddir)/src/frontend/SageIII/virtualCFG/*.lo \
+   $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/*.lo \
    $(ROSE_BINARY_DISASSEMBLER_OBJS) \
-   $(top_builddir)/src/midend/astUtil/astInterface/*.o \
-   $(top_builddir)/src/midend/astUtil/astSupport/*.o \
-   $(top_builddir)/src/midend/astUtil/symbolicVal/*.o \
-   $(top_builddir)/src/midend/astUtil/annotation/*.o \
-   $(top_builddir)/src/midend/astInlining/*.o \
-   $(top_builddir)/src/midend/astOutlining/*.o \
-   $(top_builddir)/src/midend/programTransformation/partialRedundancyElimination/*.o \
-   $(top_builddir)/src/midend/programTransformation/finiteDifferencing/*.o \
-   $(top_builddir)/src/midend/programTransformation/functionCallNormalization/*.o \
-   $(top_builddir)/src/midend/programTransformation/constantFolding/*.o \
-   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/*.o \
-   $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/*.o \
-   $(top_builddir)/src/midend/astQuery/*.o \
-   $(top_builddir)/src/midend/astDiagnostics/*.o \
-   $(top_builddir)/src/midend/astProcessing/*.o \
-   $(top_builddir)/src/midend/astRewriteMechanism/*.o \
-   $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/*.o \
-   $(top_builddir)/src/midend/programAnalysis/OAWrap/*.o \
-   $(top_builddir)/src/midend/programAnalysis/CFG/*.o \
-   $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/*.o \
-   $(top_builddir)/src/midend/programAnalysis/pointerAnal/*.o \
-   $(top_builddir)/src/midend/programAnalysis/valuePropagation/*.o \
-   $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/*.o \
-   $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/*.o \
+   $(top_builddir)/src/midend/astUtil/astInterface/*.lo \
+   $(top_builddir)/src/midend/astUtil/astSupport/*.lo \
+   $(top_builddir)/src/midend/astUtil/symbolicVal/*.lo \
+   $(top_builddir)/src/midend/astUtil/annotation/*.lo \
+   $(top_builddir)/src/midend/astInlining/*.lo \
+   $(top_builddir)/src/midend/astOutlining/*.lo \
+   $(top_builddir)/src/midend/programTransformation/partialRedundancyElimination/*.lo \
+   $(top_builddir)/src/midend/programTransformation/finiteDifferencing/*.lo \
+   $(top_builddir)/src/midend/programTransformation/functionCallNormalization/*.lo \
+   $(top_builddir)/src/midend/programTransformation/constantFolding/*.lo \
+   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/*.lo \
+   $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/*.lo \
+   $(top_builddir)/src/midend/astQuery/*.lo \
+   $(top_builddir)/src/midend/astDiagnostics/*.lo \
+   $(top_builddir)/src/midend/astProcessing/*.lo \
+   $(top_builddir)/src/midend/astRewriteMechanism/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/OAWrap/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/CFG/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/dataflowAnalysis/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/pointerAnal/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/valuePropagation/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/*.lo \
+   $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/*.lo \
    $(ROSE_SIDEEFFECTS_OBJS) \
-   $(top_builddir)/src/midend/loopProcessing/depInfo/*.o \
-   $(top_builddir)/src/midend/loopProcessing/depGraph/*.o \
-   $(top_builddir)/src/midend/loopProcessing/computation/*.o \
-   $(top_builddir)/src/midend/loopProcessing/slicing/*.o \
-   $(top_builddir)/src/midend/loopProcessing/prepostTransformation/*.o \
-   $(top_builddir)/src/midend/loopProcessing/driver/*.o \
-   $(top_builddir)/src/midend/loopProcessing/*.o \
-   $(top_builddir)/src/backend/unparser/*.o \
-   $(top_builddir)/src/backend/unparser/languageIndependenceSupport/*.o \
-   $(top_builddir)/src/backend/unparser/CxxCodeGeneration/*.o \
-   $(top_builddir)/src/backend/unparser/FortranCodeGeneration/*.o \
-   $(top_builddir)/src/backend/unparser/formatSupport/*.o \
-   $(top_builddir)/src/roseSupport/*.o \
+   $(top_builddir)/src/midend/loopProcessing/depInfo/*.lo \
+   $(top_builddir)/src/midend/loopProcessing/depGraph/*.lo \
+   $(top_builddir)/src/midend/loopProcessing/computation/*.lo \
+   $(top_builddir)/src/midend/loopProcessing/slicing/*.lo \
+   $(top_builddir)/src/midend/loopProcessing/prepostTransformation/*.lo \
+   $(top_builddir)/src/midend/loopProcessing/driver/*.lo \
+   $(top_builddir)/src/midend/loopProcessing/*.lo \
+   $(top_builddir)/src/backend/unparser/*.lo \
+   $(top_builddir)/src/backend/unparser/languageIndependenceSupport/*.lo \
+   $(top_builddir)/src/backend/unparser/CxxCodeGeneration/*.lo \
+   $(top_builddir)/src/backend/unparser/FortranCodeGeneration/*.lo \
+   $(top_builddir)/src/backend/unparser/formatSupport/*.lo \
+   $(top_builddir)/src/roseSupport/*.lo \
    $(ROSE_DATABASE_OBJS) \
    $(ROSE_SQLITE_DATABASE_OBJS) \
    $(ROSE_GUI_OBJS)
@@ -223,9 +223,9 @@ libroseLibraries = \
 #   $(top_builddir)/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/libdominance.la 
 
 #  QY: removed astOutlining temporarity because it doesnt compile. Alin will fix it later
-#   $(top_builddir)/src/midend/astOutlining/*.o \
+#   $(top_builddir)/src/midend/astOutlining/*.lo \
 # DQ (10/22/2004): Removed since I could not make it work easily with "make distcheck" rule
-# $(top_builddir)/src/midend/programAnalysis/annotationLanguageParser/*.o
+# $(top_builddir)/src/midend/programAnalysis/annotationLanguageParser/*.lo
 
 # This should be in ROSE/src before we include it into ROSE/src/librose.so
 #  $(ROSE_DATABASE_OBJS)
@@ -784,7 +784,7 @@ distclean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB
 
 cleanTest:
-	rm -rf *.o testSharedRoseLib testMultiRoseLib
+	rm -rf *.lo testSharedRoseLib testMultiRoseLib
 
 # DQ (9/7/2006): The libraries are now copied directly into $(libdir) without 
 # ever being present in the current build directory.
@@ -815,9 +815,9 @@ uninstall-local:
 
 
 rebuildPrelinker:
-	rm -f frontend/EDG/EDG_3.3/util/edg_prelink.o
-	rm -f frontend/SageIII/Cxx_Grammar.o
-	rm -f roseSupport/templateSupport.o
+	rm -f frontend/EDG/EDG_3.3/util/edg_prelink.lo
+	rm -f frontend/SageIII/Cxx_Grammar.lo
+	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
 
 

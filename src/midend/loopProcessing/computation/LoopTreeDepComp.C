@@ -354,7 +354,7 @@ LoopTreeDepCompSubtree( LoopTreeDepComp &comp, LoopTreeNode *t)
 #ifndef NO_TEMPLATE_INSTANTIATION
 #define TEMPLATE_ONLY
 
-#include <TransDepGraph.C>
+#include "TransDepGraphImpl.h"
 template class DepInfoSetGraphCreate<LoopTreeDepGraphNode>;
 template class TransDepGraphCreate<LoopTreeDepGraphNode>;
 template class SelectPtrSet<const LoopTreeDepGraphNode>;

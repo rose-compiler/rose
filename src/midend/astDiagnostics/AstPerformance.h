@@ -38,6 +38,8 @@
 
 // using namespace std;
 
+typedef clock_t RoseTimeType;
+
 class ROSE_MemoryUsage
    {
  //! Function that I got from Bill Henshaw (originally from PetSc), for computing current memory in use.
@@ -129,13 +131,8 @@ class ProcessingPhase
           void outputReportToFile ( std::ofstream & datafile );
           void outputReportHeaderToFile ( std::ofstream & datafile );
 
-          void stopTiming(
-#if !defined(__timespec_defined) && !defined(_TIMESPEC)
-          timespec & timer
-#else
-          long & timer
-#endif
-);
+          void stopTiming(const RoseTimeType& timer);
+          static double getCurrentDelta(const RoseTimeType& timer);
 
        // DQ (9/1/2006): These are defined in the class because 
        // timer functions should have the lowest possible overhead.
@@ -169,13 +166,7 @@ class AstPerformance
 
        // DQ (9/1/2006): Moved to the base class.
        // Use the Linux timer to provide nanosecond resolution
-#if !defined(__timespec_defined) && !defined(_TIMESPEC)
-          typedef timespec time_type;
-#else
-          typedef long time_type;
-#endif
-
-          static time_type timer;
+       // JJW (5/21/2008): Changed back to clock(3) for portability
 
           std::string label;
           static SgProject* project;
@@ -200,8 +191,8 @@ class AstPerformance
        // Timer function support
           static void reportAccumulatedTime ( const std::string & s, const double & accumulatedTime, const double & numberFunctionCalls );
    
-          static void startTimer ( time_type & time );
-          static void accumulateTime ( time_type & startTime, double & accumulatedTime, double & numberFunctionCalls );
+          static void startTimer ( RoseTimeType & time );
+          static void accumulateTime ( RoseTimeType & startTime, double & accumulatedTime, double & numberFunctionCalls );
 
      protected:
        // Storage of all performance information about 
@@ -216,6 +207,8 @@ class AstPerformance
 
 class TimingPerformance : public AstPerformance
    {
+          RoseTimeType timer;
+
   // Used for timing compilation within ROSE
      public:
           TimingPerformance ( std::string s , bool outputReport = false );
