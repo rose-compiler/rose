@@ -118,8 +118,11 @@ process_file()
    if [ $2 = "c++config.h" ]
    then
       echo "Processing c++config header file (removing use of visibility attribute) at $3/$2"
-      sed -i 's/# *define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 1/#define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 0/' $3/$2
-      sed -i 's/# *define _GLIBCXX_ATOMIC_BUILTINS/#undef _GLIBCXX_ATOMIC_BUILTINS/' $3/$2
+      # Avoid sed -i which doesn't have the same behavior on BSD
+      cat $3/$2 | \
+        sed 's/# *define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 1/#define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 0/' | \
+        sed 's/# *define _GLIBCXX_ATOMIC_BUILTINS/#undef _GLIBCXX_ATOMIC_BUILTINS/' > "$3/tempfile"
+      cp "$3/tempfile" "$3/$2"
    fi
 
 # DQ (4/9/2005): These are not longer required since we have turned on EDG's GNU Extensions
@@ -402,10 +405,10 @@ else
            fi
 
            compilerHeadersDir=`"$1" -v -E -x $language /dev/null 2>&1 | \
-               sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d'`
+               sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'`
 
          # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
-           tmpFile="`mktemp`"
+           tmpFile="`mktemp -t roseconfigtemp`"
            "$1" -E -dM -x $language /dev/null \
                 | grep -v "__GNUG__" | grep -v "__GNUC__" | grep -v "__GNUC_MINOR__" | grep -v "__GNUC_PATCHLEVEL__" \
                 | grep -v "__cplusplus" | grep -v "__DATE__" | grep -v "__TIME__" | grep -v "__EDG__" | grep -v "__GXX_WEAK__" \

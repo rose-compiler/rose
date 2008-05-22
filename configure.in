@@ -534,19 +534,20 @@ export with_PERFORMANCE_TESTS;
 #   AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
 # fi
 
-# PC (8/16/2006): Now we test for GCJ since MOPS uses it
-AC_ARG_WITH(gcj,
-[  --with-gcj .................. Specify use of Java (gcj must be in path, required for use with ROSE/projects/FiniteStateModelChecker which uses MOPS internally)], [
-   AM_PROG_GCJ
-   echo "GCJ = '$GCJ'"
-   if test "x$GCJ" == "x" ; then
-     echo "gcj not found in path; please add gcj to path or omit --with-gcj option"
-     exit 1
-   fi
-   with_gcj=yes
-],[
-   _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
-]) 
+dnl # PC (8/16/2006): Now we test for GCJ since MOPS uses it
+dnl AC_ARG_WITH([gcj],
+dnl [  --with-gcj .................. Specify use of Java (gcj must be in path, required for use with ROSE/projects/FiniteStateModelChecker which uses MOPS internally)], [
+dnl    AM_PROG_GCJ
+dnl    echo "GCJ = '$GCJ'"
+dnl    if test "x$GCJ" == "x" ; then
+dnl      echo "gcj not found in path; please add gcj to path or omit --with-gcj option"
+dnl      exit 1
+dnl    fi
+dnl    with_gcj=yes
+dnl ],[
+dnl    _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
+dnl ]) 
+with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
 AC_SEARCH_LIBS(clock_gettime, [rt], [
@@ -867,8 +868,6 @@ projects/arrayOptimization/test/Makefile
 projects/dataStructureGraphing/Makefile
 projects/programModeling/Makefile
 projects/FiniteStateModelChecker/Makefile
-projects/FiniteStateModelChecker/MopsForROSE/Makefile
-projects/FiniteStateModelChecker/src/Makefile
 projects/DatalogAnalysis/Makefile
 projects/DatalogAnalysis/src/Makefile
 projects/DatalogAnalysis/src/DBFactories/Makefile
@@ -1049,6 +1048,10 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 
 # DQ (1/18/2008): I have removed this since it is old code superseded by a newer design.
 # src/roseIndependentSupport/graphics/Makefile
+
+# JJW 5-22-2008 ROSE can't be compiled (even without --with-gcj) without gcj when these are included
+# projects/FiniteStateModelChecker/MopsForROSE/Makefile
+# projects/FiniteStateModelChecker/src/Makefile
 
 # DQ (1/7/2008): I would like to have compassVerify not use a util directory.
 # At least I would like to not reproduce the MPI stuff which is not required.
