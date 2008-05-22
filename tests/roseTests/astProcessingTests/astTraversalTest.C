@@ -4,6 +4,8 @@
 // Tests of the AST traversal mechanism.
 
 #include <rose.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "AstSharedMemoryParallelProcessing.h"
 
@@ -139,9 +141,15 @@ protected:
     VariantT variant;
 };
 
-double timeDifference(struct timespec end, struct timespec begin)
+double timeDifference(const struct timeval& end, const struct timeval& begin)
 {
-    return (end.tv_sec + end.tv_nsec / 1.0e9) - (begin.tv_sec + begin.tv_nsec / 1.0e9);
+    return (end.tv_sec + end.tv_usec / 1.0e6) - (begin.tv_sec + begin.tv_usec / 1.0e6);
+}
+
+static inline timeval getCPUTime() {
+  rusage ru;
+  getrusage(RUSAGE_SELF, &ru);
+  return ru.ru_utime;
 }
 
 template <class T>
@@ -157,7 +165,7 @@ std::vector<T *> *buildTraversalList()
 
 void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceResults)
 {
-    struct timespec beginTime, endTime;
+    struct timeval beginTime, endTime;
     size_t i;
     std::cout << "starting sequential tests" << std::endl;
 
@@ -165,13 +173,13 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::vector<NodeCountSimple *> *simpleList = buildTraversalList<NodeCountSimple>();
     std::cout << simpleList->size() << " traversals" << std::endl;
     std::vector<NodeCountSimple *>::iterator s;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
     {
         (*s)->set_useDefaultIndexBasedTraversal(false);
         (*s)->traverse(root, preorder);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
     {
 #if OUTPUT_RESULTS
@@ -188,12 +196,12 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << "simple sequential using NEW index based access mechanism" << std::endl;
     std::vector<NodeCountSimple *> *simpleList2 = buildTraversalList<NodeCountSimple>();
     std::vector<NodeCountSimple *>::iterator s2;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     for (s2 = simpleList2->begin(); s2 != simpleList->end(); ++s2)
     {
         (*s2)->traverse(root, preorder);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (s2 = simpleList->begin(); s2 != simpleList->end(); ++s2)
     {
@@ -211,12 +219,12 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << "pre-post sequential" << std::endl;
     std::vector<NodeCountPrePost *> *prePostList = buildTraversalList<NodeCountPrePost>();
     std::vector<NodeCountPrePost *>::iterator p;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
     {
         (*p)->traverse(root);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
     {
@@ -234,12 +242,12 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << "bottom-up sequential" << std::endl;
     std::vector<NodeCountBottomUp *> *bottomUpList = buildTraversalList<NodeCountBottomUp>();
     std::vector<NodeCountBottomUp *>::iterator b;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     for (b = bottomUpList->begin(); b != bottomUpList->end(); ++b)
     {
         (*b)->variantCount = *(*b)->traverse(root);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (b = bottomUpList->begin(); b != bottomUpList->end(); ++b)
     {
@@ -257,12 +265,12 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << "top-down sequential" << std::endl;
     std::vector<NodeCountTopDown *> *topDownList = buildTraversalList<NodeCountTopDown>();
     std::vector<NodeCountTopDown *>::iterator t;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     for (t = topDownList->begin(); t != topDownList->end(); ++t)
     {
         (*t)->traverse(root, &(*t)->variantCount);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (t = topDownList->begin(); t != topDownList->end(); ++t)
     {
@@ -280,12 +288,12 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
     std::cout << "top-down bottom-up sequential" << std::endl;
     std::vector<NodeCountTopDownBottomUp *> *topDownBottomUpList = buildTraversalList<NodeCountTopDownBottomUp>();
     std::vector<NodeCountTopDownBottomUp *>::iterator tb;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     for (tb = topDownBottomUpList->begin(); tb != topDownBottomUpList->end(); ++tb)
     {
         (*tb)->variantCount = *(*tb)->traverse(root, &(*tb)->variantCount);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (tb = topDownBottomUpList->begin(); tb != topDownBottomUpList->end(); ++tb)
     {
@@ -303,7 +311,7 @@ void runSequentialTests(SgProject *root, std::vector<unsigned long> *referenceRe
 
 void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResults)
 {
-    struct timespec beginTime, endTime;
+    struct timeval beginTime, endTime;
     size_t i;
     std::cout << "starting combined tests" << std::endl;
 
@@ -313,9 +321,9 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
     AstCombinedSimpleProcessing combinedSimple;
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
         combinedSimple.addTraversal(*s);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     combinedSimple.traverse(root, postorder);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
     {
@@ -335,9 +343,9 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
     AstCombinedPrePostProcessing combinedPrePost;
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
         combinedPrePost.addTraversal(*p);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     combinedPrePost.traverse(root);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
     {
@@ -357,9 +365,9 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
     AstCombinedBottomUpProcessing<unsigned long *> combinedBottomUp;
     for (b = bottomUpList->begin(); b != bottomUpList->end(); ++b)
         combinedBottomUp.addTraversal(*b);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     std::vector<unsigned long *> *bottomUpResults = combinedBottomUp.traverse(root);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     std::vector<unsigned long *>::const_iterator br;
     i = 0;
     for (br = bottomUpResults->begin(); br != bottomUpResults->end(); ++br)
@@ -384,9 +392,9 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
         combinedTopDown.addTraversal(*t);
         variantCountPtrList.push_back(&(*t)->variantCount);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     combinedTopDown.traverse(root, &variantCountPtrList);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (t = topDownList->begin(); t != topDownList->end(); ++t)
     {
@@ -410,9 +418,9 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
         combinedTopDownBottomUp.addTraversal(*tb);
         variantCountPtrList2.push_back(&(*tb)->variantCount);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     std::vector<unsigned long *> *topDownBottomUpResults = combinedTopDownBottomUp.traverse(root, &variantCountPtrList2);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     std::vector<unsigned long *>::const_iterator tbr;
     i = 0;
     for (tbr = topDownBottomUpResults->begin(); tbr != topDownBottomUpResults->end(); ++tbr)
@@ -430,7 +438,7 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
 
 void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResults)
 {
-    struct timespec beginTime, endTime;
+    struct timeval beginTime, endTime;
     size_t i;
     std::cout << "starting shared memory parallel tests" << std::endl;
 
@@ -440,9 +448,9 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
     AstSharedMemoryParallelSimpleProcessing parallelSimple(5);
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
         parallelSimple.addTraversal(*s);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     parallelSimple.traverseInParallel(root, postorder);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (s = simpleList->begin(); s != simpleList->end(); ++s)
     {
@@ -462,9 +470,9 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
     AstSharedMemoryParallelPrePostProcessing parallelPrePost(5);
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
         parallelPrePost.addTraversal(*p);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     parallelPrePost.traverseInParallel(root);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (p = prePostList->begin(); p != prePostList->end(); ++p)
     {
@@ -484,9 +492,9 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
     AstSharedMemoryParallelBottomUpProcessing<unsigned long *> parallelBottomUp;
     for (b = bottomUpList->begin(); b != bottomUpList->end(); ++b)
         parallelBottomUp.addTraversal(*b);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     std::vector<unsigned long *> *bottomUpResults = parallelBottomUp.traverseInParallel(root);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     std::vector<unsigned long *>::const_iterator br;
     i = 0;
     for (br = bottomUpResults->begin(); br != bottomUpResults->end(); ++br)
@@ -511,9 +519,9 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
         parallelTopDown.addTraversal(*t);
         variantCountPtrList.push_back(&(*t)->variantCount);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     parallelTopDown.traverseInParallel(root, &variantCountPtrList);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     i = 0;
     for (t = topDownList->begin(); t != topDownList->end(); ++t)
     {
@@ -537,9 +545,9 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
         parallelTopDownBottomUp.addTraversal(*tb);
         variantCountPtrList2.push_back(&(*tb)->variantCount);
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     std::vector<unsigned long *> *topDownBottomUpResults = parallelTopDownBottomUp.traverseInParallel(root, &variantCountPtrList2);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     std::vector<unsigned long *>::const_iterator tbr;
     i = 0;
     for (tbr = topDownBottomUpResults->begin(); tbr != topDownBottomUpResults->end(); ++tbr)
@@ -567,12 +575,12 @@ protected:
 
 int main(int argc, char **argv)
 {
-    struct timespec beginTime, endTime;
+    struct timeval beginTime, endTime;
 
     std::cout << "starting frontend" << std::endl;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &beginTime);
+    beginTime = getCPUTime();
     SgProject *root = frontend(argc, argv);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    endTime = getCPUTime();
     std::cout << "frontend ran for about " << timeDifference(endTime, beginTime) << " seconds on "
               << root->numberOfFiles() << " files" << std::endl;
 
