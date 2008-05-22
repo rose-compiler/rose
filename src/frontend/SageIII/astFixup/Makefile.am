@@ -13,7 +13,7 @@ libastFixup_la_SOURCES      = \
      fixupforGnuBackendCompiler.C \
      fixupInClassDataInitialization.C \
      removeInitializedNamePtr.C \
-     fixupDeclarations.C \
+     fixupDeclarations2.C \
      fixupFunctionDefinitions.C \
      fixupStorageAccessOfForwardTemplateDeclarations.C \
      fixupSourcePositionInformation.C \
