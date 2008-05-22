@@ -216,6 +216,8 @@ class TimingPerformance : public AstPerformance
 
        // virtual double performanceResolution();
           static double performanceResolution();
+
+	  typedef RoseTimeType time_type; // For compatibility
    };
 
 // comment out use of namespace
