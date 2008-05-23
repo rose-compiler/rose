@@ -1,7 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Use --with-libxml2 on configure command-line for ROSE to activate this
-if ROSE_USE_XML
+
+if ROSE_USE_BINARYCONTEXTLOOKUP
 
 INCLUDES = $(ROSE_INCLUDES) $(XML_CPPFLAGS)
 

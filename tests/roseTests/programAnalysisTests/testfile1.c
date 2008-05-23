@@ -1,5 +1,7 @@
+// Definitions in here vary across platforms
+// #include <stdio.h>
 
-#include <stdio.h>
+void printf(const char*);
 
 void testCFG()
 {

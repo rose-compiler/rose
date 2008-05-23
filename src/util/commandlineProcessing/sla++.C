@@ -188,7 +188,7 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef __cplusplus
     std::cout << buf << std::endl;
 #endif
-    return(0); /* report error */
+    abort(); /* report error */
   }
 
   /* form pname_exp one piece at a time */
@@ -206,7 +206,7 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef __cplusplus
     std::cout << buf << std::endl;
 #endif
-    return(0); /* report error */
+    abort(); /* report error */
   }
 
   /* form assop_exp one piece at a time */
@@ -228,7 +228,7 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef __cplusplus
     std::cout << buf << std::endl;
 #endif
-    return(0); /* report error */
+    abort(); /* report error */
   }
 
   /* form sup_assop_exp one piece at a time */
@@ -250,7 +250,7 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef __cplusplus
     std::cout << buf << std::endl;
 #endif
-    return(0); /* report error */
+    abort(); /* report error */
   }
 
 

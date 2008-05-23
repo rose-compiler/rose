@@ -35,7 +35,7 @@ int N( int *argc \
 
 /*** For allocating and deleting memory ***/
 #ifndef __cplusplus
-#include <malloc.h>
+#include <stdlib.h>
 #endif
 
 

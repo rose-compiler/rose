@@ -19,7 +19,7 @@ void foo()
 
 
 
-#include <malloc.h>
+#include <stdlib.h>
 
 void N( int *argc \
      , char **argv \

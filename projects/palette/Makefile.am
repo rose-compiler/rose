@@ -54,7 +54,8 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@./simple_example 2>/dev/null >> current_answers
 	@echo '*****' >> current_answers
 	@./sortTest 2>/dev/null >> current_answers
-	@sed -i -e'/^Query took/d' -e's^/.*/projects/DatalogAnalysis/tests/^^g' current_answers
+	@mv current_answers current_answers.temp
+	@sed -e'/^Query took/d' -e's^/.*/projects/DatalogAnalysis/tests/^^g' current_answers.temp > current_answers
 	@diff -U1000 $(srcdir)/check_correct_answers current_answers
 	@rm compass_parameters current_answers
 	@echo "Test passed"

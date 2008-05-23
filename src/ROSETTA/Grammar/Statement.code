@@ -615,6 +615,9 @@ HEADER_GLOBAL_START
        // std::map<SgNode*,std::string> & get_mangledNameCache();
        // std::map<std::string, int> & get_shortMangledNameCache();
 
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
 HEADER_LIST_DECLARATIONS
 
      protected:
@@ -5106,6 +5109,14 @@ std::ostream & operator<< ( std::ostream & os, std::map<SgNode*,std::string> & x
      os << "output operator for std::map<SgNode*,std::string> not implemented";
      return os;
    }
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
+  return std::vector<VirtualCFG::CFGEdge>();
+}
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
+  return std::vector<VirtualCFG::CFGEdge>();
+}
 
 SOURCE_GLOBAL_STATEMENT_END
 

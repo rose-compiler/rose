@@ -3175,7 +3175,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
              }
             else
              {
-               if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
+               if ( CommandlineProcessing::isOption(argv,"-","nostdinc\\+\\+",false) == true ) // Option name is a RE
                   {
                     initString += roseHeaderDirCPP;
                     initString += makeSysIncludeList(C_ConfigIncludeDirs);

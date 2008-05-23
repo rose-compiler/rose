@@ -16,7 +16,7 @@ parallel_compass$(EXEEXT): $(parallel_compass_OBJECTS) $(parallel_compass_DEPEND
 	cp $(srcdir)/*.parse .
 	cp $(srcdir)/*.run .
 	@rm -f parallel_compass$(EXEEXT)
-	libtool --mode=link --tag=CXX $(MPICXX) $(AM_CXXFLAGS) \
+	$(LIBTOOL) --mode=link --tag=CXX $(MPICXX) $(AM_CXXFLAGS) \
         $(CXXFLAGS) \
 	$(parallel_compass_LDFLAGS) $(parallel_compass_OBJECTS) $(parallel_compass_LDADD) $(LIBS) \
 	-o parallel_compass$(EXEEXT)

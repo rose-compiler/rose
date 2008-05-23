@@ -212,7 +212,14 @@ with_xml="no"
 AM_PATH_XML2(2.0.0, [with_xml="yes"])
 
 # Make the use of libxml2 explicitly controled.
-AM_CONDITIONAL(ROSE_USE_XML,test ! "$with_xml" = no)
+AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
+
+# Check for objdump for BinaryContextLookup since it doesn't normally exist on
+# Mac
+AC_CANONICAL_HOST
+AC_CHECK_TOOL(ROSE_OBJDUMP_PATH, [objdump], [no])
+AM_CONDITIONAL(ROSE_USE_OBJDUMP, [test "$ROSE_OBJDUMP_PATH" != "no"])
+AM_CONDITIONAL(ROSE_USE_BINARYCONTEXTLOOKUP, [test "$with_xml" != "no" -a "$ROSE_OBJDUMP_PATH" != "no"])
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
