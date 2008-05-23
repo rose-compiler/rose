@@ -57,7 +57,7 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@mv current_answers current_answers.temp
 	@sed -e'/^Query took/d' -e's^/.*/projects/DatalogAnalysis/tests/^^g' current_answers.temp > current_answers
 	@diff -U1000 $(srcdir)/check_correct_answers current_answers
-	@rm compass_parameters current_answers
+	@rm compass_parameters current_answers current_answers.temp
 	@echo "Test passed"
 
 EXTRA_DIST = check_correct_answers gen_rose_tables.tcl
