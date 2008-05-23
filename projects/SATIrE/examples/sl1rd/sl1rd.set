@@ -1,6 +1,7 @@
 SET
-  VarSet      = set(str)
-  VarLabPair  = str * snum
+  VariableId = set(unum) /* SATIrE predefined type */
+  VarSet      = set(VariableId)
+  VarLabPair  = VariableId * snum
 
 DOMAIN
   VarLabPairSet = set(VarLabPair)

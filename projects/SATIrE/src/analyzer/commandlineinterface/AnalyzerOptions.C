@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.19 2008-04-23 14:41:10 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.20 2008-05-23 00:52:08 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -80,7 +80,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --help-rose              print the ROSE help message on stdout\n"
     "\n"
     " Multiple input/output files options:\n"
-    "   --output-sourceprefix <PREFIX> generate for each input file one output file\n"
+    "   --output-sourceprefix=<PREFIX> generate for each input file one output file\n"
     "                            with prefixed name\n"
     "\n"
     " GDL output options:\n"

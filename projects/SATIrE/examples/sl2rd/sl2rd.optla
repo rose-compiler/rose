@@ -12,9 +12,6 @@
 *  assumed that the front end only passes SL2 programs to the analyzer then all  *
 *  those tests can be removed.                                                   *
 *                                                                                *
-*  For the exercises it can be assumed that only SL2 programs are passed to the  *
-*  analyzer.                                                                     *
-*                                                                                *
 *  Author: Markus Schordan, 2006.                                                *
 *                                                                                *
 \********************************************************************************/
@@ -41,15 +38,15 @@ ExprStatement(exprstmt), _:
    case exprstmt of
       /* For a call of a void function a node is created in the ICFG with a use of the 
        * auxiliary return variable - this permits removing the auxiliary variable */
-      VarRefExp(var) => kill_temporary_variable(val-aststring(var),@);
+      VarRefExp(var) as varRef => kill_temporary_variable(varref_varid(varRef),@);
       /* otherwise it must be an SL1 assignment */
       _ => sl1_assignment(exprstmt,label,@);
    endcase;
 
 /* declaration of a variable */
-DeclareStmt(VariableSymbol(var),_), _:
+DeclareStmt(VariableSymbol(var) as varSym,_), _:
     let info <= @; in
-    let nonInitValSet = rdgen(val-aststring(var),-1); in
+    let nonInitValSet = rdgen(varsym_varid(varSym),-1); in
     lift(union(info,nonInitValSet));
 
 /* the list of declared variables that go out of scope */
@@ -79,9 +76,9 @@ ReturnStmt(exp), _:
 /* In the remaining transfer-section we specify transfer functions for inter-procedural analysis 
  * of SL2 programs */
 
-ReturnAssignment(VariableSymbol(var), VariableSymbol(retvar)), _:
-    let x=val-aststring(var); in
-    let y=val-aststring(retvar); in
+ReturnAssignment(VariableSymbol(var) as varSym, VariableSymbol(retvar) as retvarSym), _:
+    let x=varsym_varid(varSym); in
+    let y=varsym_varid(retvarSym); in
     let info <= @; in
     lift(update_info(x,label,rdkill(y,info)));
 
@@ -96,16 +93,16 @@ FunctionExit(_, vars), _:
 FunctionReturn (funcname,actualParams),_: @;
 
 
-ArgumentAssignment(VarRefExp(var), exp), _:
-    let x=val-aststring(var); in
+ArgumentAssignment(VarRefExp(var) as varRef, exp), _:
+    let x=varref_varid(varRef); in
     let info <= @; in
     lift(update_info(x,label,info));
 
 /* The rhs auxiliary variable of the parameter assignment can be removed from the 
  * analysis information because the auxiliary variable cannot be used or redefined */
-ParamAssignment(VariableSymbol(var), VariableSymbol(param)), _:
-    let x=val-aststring(var); in
-    let y=val-aststring(param); in
+ParamAssignment(VariableSymbol(var) as varSym, VariableSymbol(param) as paramSym), _:
+    let x=varsym_varid(varSym); in
+    let y=varsym_varid(paramSym); in
     let info <= @; in
     lift(update_info(x,label,rdkill(y,info)));
 
@@ -155,10 +152,10 @@ sl1_assignment(exp,lab,infoLifted) =
 let info <= infoLifted; in
 case exp of
 /* one variable on each side of assignment */
-AssignOp(VarRefExp(cvarname1),VarRefExp(cvarname2)) 
+AssignOp(VarRefExp(cvarname1) as varRef1,VarRefExp(cvarname2) as varRef2) 
    =>
-      let x = val-aststring(cvarname1); in
-      let y = val-aststring(cvarname2); in
+      let x = varref_varid(varRef1); in
+      let y = varref_varid(varRef2); in
       if is_temp_var(y) then
          lift(update_info(x,lab,rdkill(y,info))) /* temporary variable */
       else
@@ -166,10 +163,10 @@ AssignOp(VarRefExp(cvarname1),VarRefExp(cvarname2))
       endif;
 
 /* arbitrary expression on rhs (but not a variable) */
-AssignOp(VarRefExp(cvarname),rhsexp) 
+AssignOp(VarRefExp(cvarname) as varRef,rhsexp) 
    =>
-       /* we convert the c-string to the pag string type 'str' and bind it with x */
-       let x = val-aststring(cvarname); in
+       /* we obtain the variable-id of the VarRefExp node and bind it with x */
+       let x = varref_varid(varRef); in
 
        /* we ensure that the rhs expression is an sl1 expression, otherwise an error is reported */
        if is_sl1_expression(rhsexp) then
@@ -213,7 +210,7 @@ case exp of
   /* int value; use val-int(value) for converting value to snum */
   IntVal(value)           => true;     
 
-  /* use of a variable; use val-aststring(varname) for converting varname to str */
+  /* match a variable ref node */
   VarRefExp(varname)      => true;  
 
   /* boolean value (represented as int 0,1); use val-int(value) for converting to snum */
@@ -232,38 +229,40 @@ case exp of
 endcase;
 
 /* update the analysis information with kill and gen functions */
-update_info::str,snum,VarLabPairSet -> VarLabPairSet;
+update_info::VariableId,snum,VarLabPairSet -> VarLabPairSet;
 update_info(x,lab,info) = union(rdkill(x,info),rdgen(x,lab));
 
 /* kill-set for reaching definitions */
-rdkill::str,VarLabPairSet -> VarLabPairSet;
+rdkill::VariableId,VarLabPairSet -> VarLabPairSet;
 rdkill(var,varset) = {(var1,lab1) !! (var1,lab1) <-- varset, if !(var1=var) };
 
 /* gen-set for reaching definitions */
-rdgen::str,snum -> VarLabPairSet;
+rdgen::VariableId,snum -> VarLabPairSet;
 rdgen(var,lab) = {(var,lab)};
 
 /* kill a set of variables (used for removing variables that go out of scope) */
 kill_vars :: VarLabPairSet, *VariableSymbolNT -> VarLabPairSet;
 kill_vars(s, [!]) =
   s;
-kill_vars(s, VariableSymbol(v)::vars) =
-  kill_vars(rdkill(val-aststring(v),s), vars);
+kill_vars(s, v::vars) = /* v is a VariableSymbol */
+  kill_vars(rdkill(varsym_varid(v),s), vars);
 
-is_temp_var :: str -> bool;
-is_temp_var(s) = substr(s, 0, 0) = "$";
+is_temp_var :: VariableId -> bool;
+is_temp_var(varId) = 
+  is_tmpvarid(varId);
+	/* substr(s, 0, 0) = "$"; */
 
 kill_if_temporary_variable_exp :: Expression, VarLabPairSetLifted -> VarLabPairSetLifted;
 kill_if_temporary_variable_exp(exp,infoLifted) =
   let info <= infoLifted; in
   case exp of
-  VarRefExp(var) => 
-    let x=val-aststring(var); in
+  VarRefExp(var) as varRef => 
+    let x=varref_varid(varRef); in
     kill_temporary_variable(x,infoLifted);
   _ => infoLifted;
   endcase;
 
-kill_temporary_variable :: str, VarLabPairSetLifted -> VarLabPairSetLifted;
+kill_temporary_variable :: VariableId, VarLabPairSetLifted -> VarLabPairSetLifted;
 kill_temporary_variable(var,infoLifted) =
   let info <= infoLifted; in
   if is_temp_var(var) then
@@ -272,3 +271,8 @@ kill_temporary_variable(var,infoLifted) =
     print("Variable used where only a generated auxiliary variable is expected.")
     error("This is not an SL2 program.")
   endif;
+
+/* Predefined SATIrE Support Functions */
+varsym_varid :: VariableSymbolNT -> VariableId;
+varref_varid :: Expression -> VariableId;
+is_tmpvarid :: VariableId -> bool;

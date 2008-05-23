@@ -8,9 +8,6 @@
 *  assumed that the front end only passes SL1 programs to the analyzer then all  *
 *  those tests can be removed.                                                   *
 *                                                                                *
-*  For the exercises it can be assumed that only SL1 programs are passed to the  *
-*  analyzer.                                                                     *
-*                                                                                *
 *  Author: Markus Schordan, 2006.                                                *
 *                                                                                *
 \********************************************************************************/
@@ -39,9 +36,9 @@ ExprStatement(stmt), _:
     sl1_assignment(stmt,label,@);
 
 /* declaration of a variable */
-DeclareStmt(VariableSymbol(var),_), _:
+DeclareStmt(VariableSymbol(var) as varSym,_), _:
     let info <= @; in
-    let nonInitValSet = rdgen(val-aststring(var),-1); in
+    let nonInitValSet = rdgen(varsym_varid(varSym),-1); in	
     lift(union(info,nonInitValSet));
 
 /* the list of declared variables that go out of scope */
@@ -114,10 +111,10 @@ sl1_assignment(exp,lab,top)        = top;
 sl1_assignment(exp,lab,infoLifted) =
 let info <= infoLifted; in
 case exp of
-AssignOp(VarRefExp(cvarname),rhsexp) 
+AssignOp(VarRefExp(cvarname) as varRef,rhsexp) 
    =>
-       /* we convert the c-string to the pag string type 'str' and bind it with x */
-       let x = val-aststring(cvarname); in
+       /* we map the varref to a varid and bind it with x */
+       let x = varref_varid(varRef); in
 
        /* we ensure that the rhs expression is an sl1 expression, otherwise an error is reported */
        if is_sl1_expression(rhsexp) then
@@ -161,7 +158,7 @@ case exp of
   /* int value; use val-int(value) for converting value to snum */
   IntVal(value)           => true;     
 
-  /* use of a variable; use val-aststring(varname) for converting varname to str */
+  /* use of a variable; use VarRefExp as vr ... varref_varid(vr) for converting varref to VariableId */
   VarRefExp(varname)      => true;  
 
   /* boolean value (represented as int 0,1); use val-int(value) for converting to snum */
@@ -180,20 +177,24 @@ case exp of
 endcase;
 
 /* update the analysis information with kill and gen functions */
-update_info::str,snum,VarLabPairSet -> VarLabPairSet;
+update_info::VariableId,snum,VarLabPairSet -> VarLabPairSet;
 update_info(x,lab,info) = union(rdkill(x,info),rdgen(x,lab));
 
 /* kill-set for reaching definitions */
-rdkill::str,VarLabPairSet -> VarLabPairSet;
+rdkill::VariableId,VarLabPairSet -> VarLabPairSet;
 rdkill(var,varset) = {(var1,lab1) !! (var1,lab1) <-- varset, if !(var1=var) };
 
 /* gen-set for reaching definitions */
-rdgen::str,snum -> VarLabPairSet;
+rdgen::VariableId,snum -> VarLabPairSet;
 rdgen(var,lab) = {(var,lab)};
 
 /* kill a set of variables (used for removing variables that go out of scope) */
 kill_vars :: VarLabPairSet, *VariableSymbolNT -> VarLabPairSet;
 kill_vars(s, [!]) =
   s;
-kill_vars(s, VariableSymbol(v)::vars) =
-  kill_vars(rdkill(val-aststring(v),s), vars);
+kill_vars(s, v::vars) = /* v is a VariableSymbol */
+  kill_vars(rdkill(varsym_varid(v),s), vars);
+
+/* Predefined SATIrE Support Functions */
+varsym_varid :: VariableSymbolNT -> VariableId;
+varref_varid :: Expression -> VariableId;
