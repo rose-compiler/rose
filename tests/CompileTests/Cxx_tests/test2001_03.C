@@ -14,6 +14,8 @@
 
 int main()
    {
+     __PRETTY_FUNCTION__;
+     __func__;
      assert (1 == 1);
      // printf ("Program Terminated Normally! \n");
      return 0;
