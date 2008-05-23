@@ -553,7 +553,7 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
 
   // DQ (6/9/2007): Make an exception for compiler generated variables (e.g."__PRETTY_FUNCTION__")
   // if (initializedName->get_startOfConstruct()->isCompilerGenerated() == true)
-     if ( (initializedName->get_startOfConstruct()->isCompilerGenerated() == true) && (initializedName->get_name() == "__PRETTY_FUNCTION__") )
+     if ( (initializedName->get_startOfConstruct()->isCompilerGenerated() == true) && (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__") )
         {
 #if 0
           printf ("initializedName = %p = %s is compiler generated so it should not be qualified \n",initializedName,initializedName->get_name().str());
