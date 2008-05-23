@@ -110,7 +110,6 @@ test2006_16.C \
 test2006_23.C \
 test2006_34.C \
 test2006_40.C \
-test2006_44.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
@@ -224,6 +223,9 @@ test2006_160.C \
 test2006_165.C
 
 # test2004_151.C was modified to now be a C++ code and removed.
+
+# JJW 5-22-2008 This file is not portable to Mac OS X
+# test2006_44.C
 
 # DQ: I think that we are only interested in the C codes that fail (but we can decide that later)
 TESTCODE_CURRENTLY_FAILING = \

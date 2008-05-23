@@ -1,3 +1,5 @@
+#if 0 /* JJW 5-22-2008 commented out because this is not portable to Mac */
+
 // define __flexarr
 
 #include <features.h>
@@ -142,3 +144,5 @@ typedef union
     struct __gconv_step_data __data;
   } __combined;
 } _G_iconv_t;
+
+#endif

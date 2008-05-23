@@ -120,7 +120,6 @@ test2006_16.C \
 test2006_23.C \
 test2006_34.C \
 test2006_40.C \
-test2006_44.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
@@ -168,6 +167,9 @@ test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
 X.C
+
+# JJW 5-22-2008 This test is not portable to Mac OS X
+# test2006_44.C
 
 ###########################################################################
 # These are Fortran testcodes targeting aspects F66, F77, F90, F95, F2003 #

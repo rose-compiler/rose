@@ -34,9 +34,10 @@ int main()
 
   // Additional example asm declarations (how to use the 68881's fsinx instruction):
 #ifndef __INTEL_COMPILER
-     register double angle  asm ("cx") = 0;
-     register double result asm ("bx") = 0;
-     asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
+     register short angle  asm ("cx") = 0;
+     register short result asm ("bx") = 0;
+     // JJW fixed this to use a real x86 instruction
+     asm ("leaw (%1),%0" : "=S" (result) : "D" (angle));
 #endif
    }
 

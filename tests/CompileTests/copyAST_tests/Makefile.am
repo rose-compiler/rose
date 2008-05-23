@@ -532,7 +532,6 @@ test2006_38.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
-test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -727,6 +726,8 @@ X.C
 # test2007_56.C
 # test2007_95.C -- broken test case
 
+# JJW 5-22-2008 This test is not portable to Mac OS X
+# test2006_44.C
 
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE

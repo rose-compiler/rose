@@ -461,7 +461,6 @@ test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
-test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -587,6 +586,9 @@ endif
 # This used to pass.
 # test2005_188.C 
 # test2005_205.C
+
+# JJW 5-22-2008 This test is not portable to Mac OS X
+# test2006_44.C
 
 
 # DQ (8/28/2006): Verified non-working code

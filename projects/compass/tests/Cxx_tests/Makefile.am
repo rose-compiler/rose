@@ -461,7 +461,6 @@ test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
-test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -584,6 +583,8 @@ test2001_03.C
 
 endif
 
+# JJW 5-22-2008 This test is not portable to Mac OS X
+# test2006_44.C
 
 TESTCODE_CURRENTLY_FAILING = 
 

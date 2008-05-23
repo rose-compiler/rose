@@ -457,7 +457,6 @@ test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
-test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -670,3 +669,6 @@ test2004_116.C
 
 # DQ (1/8/2008): This does not pass the tests in: tests/roseTests/astOutliningTests
 # test2007_169.C 
+
+# JJW 5-22-2008 This is not portable to Mac OS X
+# test2006_44.C

@@ -34,9 +34,9 @@ int N( int *argc \
      )
 
 /*** For allocating and deleting memory ***/
-#ifndef __cplusplus
-#include <malloc.h>
-#endif
+// #ifndef __cplusplus
+// #include <malloc.h>
+// #endif
 
 
 /*** Sla for type T (automatically uses function M to modify). ***/
