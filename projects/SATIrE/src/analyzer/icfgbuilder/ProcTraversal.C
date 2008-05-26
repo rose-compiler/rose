@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.15 2008-05-26 09:00:17 gergo Exp $
+// $Id: ProcTraversal.C,v 1.16 2008-05-26 11:27:59 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -159,7 +159,7 @@ ProcTraversal::visit(SgNode *node) {
              ++base) {
           SgClassDeclaration* baseclass = (*base)->get_base_class();
           SgVariableSymbol *lhs
-            = Ir::createVariableSymbol(baseclass->get_name(),
+            = Ir::createVariableSymbol("$" + baseclass->get_name(),
                                        baseclass->get_type());
           SgMemberFunctionDeclaration* fd=get_default_constructor(baseclass);
           assert(fd);

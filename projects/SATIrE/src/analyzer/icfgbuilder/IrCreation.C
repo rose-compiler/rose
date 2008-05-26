@@ -279,7 +279,22 @@ SgVariableSymbol* Ir::createVariableSymbol(SgInitializedName* initializedName) {
   return s;
 }
 
+// GB (2008-05-26): This function should only be called for variables
+// introduced by our code (ones containing the $ symbol or named 'this').
+// All the other variables in the ROSE AST already have symbols, so use
+// those. Our data structures rely on correctly shared symbol nodes! The
+// $/this rule is therefore enforced here.
 SgVariableSymbol* Ir::createVariableSymbol(std::string name,SgType* type) {
+  if (name.find('$') == std::string::npos && name != "this")
+  {
+      std::cerr
+          << __FILE__ << ":" << __LINE__ << ": "
+          << "*** internal error in IR creation: "
+          << "trying to create a temporary variable with invalid name"
+          << " '" << name << "'"
+          << std::endl;
+      std::abort();
+  }
   SgInitializedName* initializedName=createInitializedName(name,type);
   SgVariableSymbol* variableSymbol=createVariableSymbol(initializedName);
   assert(initializedName->get_parent()==variableSymbol);

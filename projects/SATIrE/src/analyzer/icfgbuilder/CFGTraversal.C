@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.38 2008-05-26 09:00:17 gergo Exp $
+// $Id: CFGTraversal.C,v 1.39 2008-05-26 11:27:59 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -2376,10 +2376,10 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
  //   = Ir::createVariableSymbol("this", ptrType);
     SgVariableSymbol* this_sym = p->this_sym;
 
-    CallBlock *call_block = new CallBlock(node_id++, CALL,
-                                          p->procnum, NULL, destructor_name);
-    CallBlock *return_block = new CallBlock(node_id++, RETURN,
-                                            p->procnum, NULL, destructor_name);
+    CallBlock *call_block = new CallBlock(node_id++, CALL, p->procnum,
+            new std::vector<SgVariableSymbol *>(), destructor_name);
+    CallBlock *return_block = new CallBlock(node_id++, RETURN, p->procnum,
+            new std::vector<SgVariableSymbol *>(), destructor_name);
     cfg->nodes.push_back(call_block);
     cfg->calls.push_back(call_block);
     cfg->nodes.push_back(return_block);

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.21 2008-05-16 13:01:46 gergo Exp $
+// $Id: cfg_support.C,v 1.22 2008-05-26 11:27:59 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -638,10 +638,10 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
       SgVariableSymbol* this_var_sym = Ir::createVariableSymbol(this_var_name, in->get_type());
 
       CallBlock *entry = (*i)->entry;
-      CallBlock *call_block = new CallBlock((*node_id)++, CALL,
-                                            procnum, NULL, destructor_name);
-      CallBlock *return_block = new CallBlock((*node_id)++, RETURN,
-                                              procnum, NULL, destructor_name);
+      CallBlock *call_block = new CallBlock((*node_id)++, CALL, procnum,
+              new std::vector<SgVariableSymbol *>(), destructor_name);
+      CallBlock *return_block = new CallBlock((*node_id)++, RETURN, procnum,
+              new std::vector<SgVariableSymbol *>(), destructor_name);
       cfg->nodes.push_back(call_block);
       cfg->calls.push_back(call_block);
       cfg->nodes.push_back(return_block);
