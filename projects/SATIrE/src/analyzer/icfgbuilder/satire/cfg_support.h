@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.21 2008-05-20 17:19:53 gergo Exp $
+// $Id: cfg_support.h,v 1.22 2008-05-26 09:00:33 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -712,6 +712,11 @@ public:
     std::multimap<std::string, BasicBlock *> goto_blocks;
     SgFunctionParameterList *params, *default_params;
     SgFunctionDeclaration *decl;
+ // GB (2008-05-26): Type, symbol and representative expression for the this
+ // pointer.
+    SgType *this_type;
+    SgVariableSymbol *this_sym;
+    SgVarRefExp *this_exp;
 
     ~Procedure();
 };
