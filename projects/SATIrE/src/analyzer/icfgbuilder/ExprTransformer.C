@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.22 2008-05-19 12:38:18 gergo Exp $
+// $Id: ExprTransformer.C,v 1.23 2008-05-26 09:00:17 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -90,7 +90,9 @@ void ExprTransformer::visit(SgNode *node)
  // satireReplaceChild. This function handles SgValueExps correctly.
     if (SgThisExp* thisExp=isSgThisExp(node))
     {
-      SgVarRefExp* varRefExp=Ir::createVarRefExp("this",thisExp->get_type());
+   // GB (2008-05-26): The this pointer is now stored in the procedure.
+   // SgVarRefExp* varRefExp=Ir::createVarRefExp("this",thisExp->get_type());
+      SgVarRefExp* varRefExp = (*cfg->procedures)[procnum]->this_exp;
       satireReplaceChild(node->get_parent(), node, varRefExp);
     }
     else if (isSgFunctionCallExp(node))

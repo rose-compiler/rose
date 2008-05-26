@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.37 2008-05-21 12:19:44 gergo Exp $
+// $Id: CFGTraversal.C,v 1.38 2008-05-26 09:00:17 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -91,7 +91,12 @@ CFGTraversal::processProcedureArgBlocks()
                   break;
               SgPointerType* ptrType= Ir::createPointerType(p->class_type
                       ->get_declaration()->get_type());
-              SgVarRefExp* thisVarRefExp =Ir::createVarRefExp("this",ptrType);
+           // GB (2008-05-26): To ensure that symbol pointers are unique,
+           // and to avoid creating the same expression over and over again,
+           // the this pointer symbol and expression are now stored in the
+           // procedure.
+           // SgVarRefExp* thisVarRefExp =Ir::createVarRefExp("this",ptrType);
+              SgVarRefExp* thisVarRefExp = p->this_exp;
               f->statements[0] = Ir::createArgumentAssignment(a->get_lhs(),
                                                               thisVarRefExp);
            // GB (2008-04-02): Now that we have created a new argument
@@ -2366,8 +2371,10 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
       = Ir::createPointerType(p->class_type->get_declaration()->get_type());
     SgVariableSymbol* this_var_sym
       = Ir::createVariableSymbol(this_var_name,ptrType);
-    SgVariableSymbol* this_sym 
-      = Ir::createVariableSymbol("this", ptrType);
+ // GB (2008-05-26): The this symbol is now stored with the procedure.
+ // SgVariableSymbol* this_sym 
+ //   = Ir::createVariableSymbol("this", ptrType);
+    SgVariableSymbol* this_sym = p->this_sym;
 
     CallBlock *call_block = new CallBlock(node_id++, CALL,
                                           p->procnum, NULL, destructor_name);

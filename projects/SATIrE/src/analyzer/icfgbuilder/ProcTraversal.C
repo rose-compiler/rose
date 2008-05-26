@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.14 2008-05-14 13:13:30 gergo Exp $
+// $Id: ProcTraversal.C,v 1.15 2008-05-26 09:00:17 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -86,11 +86,23 @@ ProcTraversal::visit(SgNode *node) {
         proc->mangled_memberf_name = mname;
         proc->name = decl->get_name().str();
         proc->mangled_name = decl->get_mangled_name().str();
+     // GB (2008-05-26): Computing a single this symbol for each
+     // procedure. Thus, this symbol can also be compared by pointer
+     // equality (as is the case for all other symbols). While we're at it,
+     // we also build a VarRefExp for this which can be used everywhere the
+     // this pointer occurs.
+        proc->this_type = Ir::createPointerType(
+                proc->class_type->get_declaration()->get_type());
+        proc->this_sym = Ir::createVariableSymbol("this", proc->this_type);
+        proc->this_exp = Ir::createVarRefExp(proc->this_sym);
       } else {
         proc->name = decl->get_name().str();
         proc->mangled_name = decl->get_mangled_name().str();
         proc->class_type = NULL;
         proc->memberf_name = proc->mangled_memberf_name = "";
+        proc->this_type = NULL;
+        proc->this_sym = NULL;
+        proc->this_exp = NULL;
       }
       proc_map.insert(std::make_pair(proc->name, proc));
       mangled_proc_map.insert(std::make_pair(proc->mangled_name, proc));
@@ -103,12 +115,13 @@ ProcTraversal::visit(SgNode *node) {
         proc->arg_block
           = new BasicBlock(node_id, INNER, proc->procnum);
         if (mdecl) {
-          SgType* this_type 
-            = Ir::createPointerType(proc->class_type->get_declaration()->get_type());
-          this_var = Ir::createVariableSymbol("this", this_type);
+       // GB (2008-05-26): We now compute the this pointer right at the
+       // beginning of building the procedure.
+       // this_var = Ir::createVariableSymbol("this", this_type);
+          this_var = proc->this_sym;
           std::string varname
             = std::string("$") + proc->name + "$this";
-          this_temp_var = Ir::createVariableSymbol(varname, this_type);
+          this_temp_var = Ir::createVariableSymbol(varname, proc->this_type);
           ParamAssignment* paramAssignment
             = Ir::createParamAssignment(this_var, this_temp_var);
           proc->arg_block->statements.push_back(paramAssignment);
@@ -186,9 +199,12 @@ ProcTraversal::visit(SgNode *node) {
           if (ai) {
             SgClassDeclaration *class_decl
               = proc->class_type->get_declaration();
-            SgVarRefExp* this_ref 
-              = Ir::createVarRefExp("this",
-                                    Ir::createPointerType(class_decl->get_type()));
+         // GB (2008-05-26): We now compute the this pointer right at the
+         // beginning of building the procedure.
+         // SgVarRefExp* this_ref 
+         //   = Ir::createVarRefExp("this",
+         //                         Ir::createPointerType(class_decl->get_type()));
+            SgVarRefExp* this_ref = proc->this_exp;
             SgArrowExp* arrowExp
               = Ir::createArrowExp(this_ref,Ir::createVarRefExp(lhs));
          // GB (2008-03-17): We need to handle function calls in

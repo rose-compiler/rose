@@ -154,9 +154,15 @@ void Ir::configInitializedName(SgInitializedName* n) {
   n->set_startOfConstruct(createFileInfo());
   //n->set_endOfConstruct(createFileInfo());
   // GB (2008-01-25): faking parent scope
-  Sg_File_Info* fi2 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-  SgGlobal *global = new SgGlobal(fi2);
-  n->set_scope(global);
+  // GB (2008-05-26): Can't always fake parent scope: If there is an
+  // existing scope, we must use that. If we break existing scopes, symbol
+  // table lookups break!
+  if (n->get_scope() == NULL)
+  {
+      Sg_File_Info* fi2 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+      SgGlobal *global = new SgGlobal(fi2);
+      n->set_scope(global);
+  }
 }
 
 void Ir::configSupportNode(SgSupport* n, SgNode* s1) {
