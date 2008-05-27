@@ -6,6 +6,7 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 	   -I$(top_srcdir)/src/analyzer/icfgbuilder/satire \
 	   -I$(top_srcdir)/src/analyzer/astaccess/satire \
 	   -I$(top_srcdir)/src/analyzer/astnumbering/satire \
+	   -I$(top_srcdir)/src/analyzer/commandlineinterface/satire \
 	   -I$(ROSE_INCLUDE_DIR) \
 	   -I$(PAG_INCLUDE_DIR)/pag \
            -I$(PAG_INCLUDE_DIR)/pag/analyzer
