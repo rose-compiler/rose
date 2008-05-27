@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.39 2008-05-26 11:27:59 gergo Exp $
+// $Id: CFGTraversal.C,v 1.40 2008-05-27 14:13:31 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -26,6 +26,7 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
   cfg->procedures = p.get_procedures();
   cfg->proc_map = p.proc_map;
   cfg->mangled_proc_map = p.mangled_proc_map;
+  cfg->analyzerOptions = NULL;
 // GB (2008-05-05): Refactored.
   setProcedureEndNodes();
   processProcedureArgBlocks();

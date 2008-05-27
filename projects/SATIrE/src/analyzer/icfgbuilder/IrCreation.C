@@ -601,6 +601,210 @@ Ir::getStrippedName(SgInitializedName* in) {
   return s;
 }
 
+class FragmentToTree: public AstBottomUpProcessing<std::string> {
+protected:
+    std::string evaluateSynthesizedAttribute(SgNode *node,
+                                             SynthesizedAttributesList syn) {
+        std::stringstream result;
+     // Compute the class name: This is usually just the node's dynamic
+     // class name without the "Sg" prefix, but there are exceptions. For
+     // SgScopeStatements, we must produce stuff like
+     // "ScopeStatement(IfStmt(...))".
+        std::string class_name = node->class_name();
+        if (class_name.substr(0, 2) == "Sg")
+            class_name.erase(0, 2);
+        if (isSgScopeStatement(node))
+            class_name = "ScopeStatement(" + class_name;
+        result << class_name << "(";
+
+     // Now do the children. In most cases, this is the list of synthesized
+     // strings interleaved with ", "; but again, there are special cases,
+     // in particular for stuff that is not traversed (like names).
+        if (DeclareStmt *ds = isDeclareStmt(node))
+            result << variableSymbolToTree(ds->get_var()) << ", "
+                   << typeToTree(ds->get_type());
+
+        else if (UndeclareStmt *us = isUndeclareStmt(node))
+            result << variableSymbolListToTree(us->get_vars());
+
+        else if (ExternalCall *ec = isExternalCall(node))
+            result << syn[0] << ", " // function
+                   << variableSymbolListToTree(ec->get_params()) << ", "
+                   << typeToTree(ec->get_type());
+
+        else if (ExternalReturn *er = isExternalReturn(node))
+            result << syn[0] << ", " // function
+                   << variableSymbolListToTree(er->get_params()) << ", "
+                   << typeToTree(er->get_type());
+
+        else if (ConstructorCall *cc = isConstructorCall(node))
+            result << stringToTree(cc->get_name()) << ", "
+                   << typeToTree(cc->get_type());
+
+        else if (DestructorCall *dc = isDestructorCall(node))
+            result << stringToTree(dc->get_name()) << ", "
+                   << typeToTree(dc->get_type());
+
+        else if (ReturnAssignment *ra = isReturnAssignment(node))
+            result << variableSymbolToTree(ra->get_lhs()) << ", "
+                   << variableSymbolToTree(ra->get_rhs());
+
+        else if (ParamAssignment *pa = isParamAssignment(node))
+            result << variableSymbolToTree(pa->get_lhs()) << ", "
+                   << variableSymbolToTree(pa->get_rhs());
+
+        else if (FunctionEntry *fe = isFunctionEntry(node))
+            result << stringToTree(fe->get_funcname());
+
+        else if (FunctionExit *fex = isFunctionExit(node))
+            result << stringToTree(fex->get_funcname()) << ", "
+                   << variableSymbolListToTree(fex->parent->get_params());
+
+        else if (FunctionCall *fc = isFunctionCall(node))
+            result << stringToTree(fc->get_funcname()) << ", "
+                   << variableSymbolListToTree(fc->parent->get_params());
+
+        else if (FunctionReturn *fr = isFunctionReturn(node))
+            result << stringToTree(fr->get_funcname()) << ", "
+                   << variableSymbolListToTree(fr->parent->get_params());
+
+        else if (SgIfStmt *ifs = isSgIfStmt(node))
+            result << syn[0];
+
+        else if (SgWhileStmt *whiles = isSgWhileStmt(node))
+            result << syn[0];
+
+        else if (SgDoWhileStmt *dowhiles = isSgDoWhileStmt(node))
+            result << syn[0];
+
+        else if (SgSwitchStatement *sw = isSgSwitchStatement(node))
+            result << syn[0];
+
+        else if (SgVarRefExp *varref = isSgVarRefExp(node))
+            result << stringToTree(varref->get_symbol()->get_name().str());
+
+        else if (SgStringVal *stringval = isSgStringVal(node))
+            result << '"' << stringval->get_value() << '"';
+
+        else if (SgValueExp *value = isSgValueExp(node))
+            result << Ir::fragmentToString(value);
+
+        else {
+         // ArgumentAssignment and LogicalIf handled by this default
+         // mechanism. The children are simply interleaved with ", ".
+         // We also abuse this general case for something special: Add
+         // square brackets if this is an expression list.
+            if (isSgExprListExp(node))
+                result << "[";
+            SynthesizedAttributesList::iterator s = syn.begin();
+            SynthesizedAttributesList::iterator end = syn.end();
+            if (s != end)
+            {
+                result << *s++;
+                while (s != end)
+                    result << ", " << *s++;
+            }
+            if (isSgExprListExp(node))
+                result << "]";
+        }
+
+        result << ")";
+        if (isSgScopeStatement(node))
+            result << ")";
+
+        return result.str();
+    }
+
+private:
+ // Some helper functions.
+    static std::string variableSymbolToTree(SgVariableSymbol *sym)
+    {
+        std::stringstream result;
+        result << "VariableSymbol(\"" << sym->get_name().str() << "\")";
+        return result.str();
+    }
+
+    static std::string typeToTree(SgType *type)
+    {
+     // Recursively compute the type's string representation. This is always
+     // a tree, and the recursion terminates, because class members are not
+     // contained in our representation, so no cyclic types are possible.
+        std::stringstream result;
+        if (SgArrayType *at = isSgArrayType(type))
+            result << "ArrayType("
+                   << typeToTree(at->get_base_type()) << ")";
+
+        else if (SgFunctionType *ft = isSgFunctionType(type))
+            result << "FunctionType("
+                   << typeToTree(ft->get_return_type()) << ", "
+                   << typeListToTree(ft->get_arguments()) << ")";
+
+        else if (SgNamedType *nt = isSgNamedType(type))
+            result << "NamedType("
+                   << stringToTree(nt->get_name().str()) << ")";
+
+        else if (SgPointerType *pt = isSgPointerType(type))
+            result << "PointerType("
+                   << typeToTree(pt->get_base_type()) << ")";
+
+        else if (SgReferenceType *rt = isSgReferenceType(type))
+            result << "ReferenceType("
+                   << typeToTree(rt->get_base_type()) << ")";
+
+        else
+            result << "BasicType("
+                   << '"' << Ir::fragmentToString(type) << '"' << ")";
+
+        return result.str();
+    }
+
+    static std::string typeListToTree(std::vector<SgType *> &types)
+    {
+        std::stringstream result;
+        result << "[";
+        std::vector<SgType *>::iterator t = types.begin();
+        std::vector<SgType *>::iterator end = types.end();
+        if (t != end)
+        {
+            result << typeToTree(*t++);
+            while (t != end)
+                result << ", " << typeToTree(*t++);
+        }
+        result << "]";
+        return result.str();
+    }
+
+    static std::string variableSymbolListToTree(
+            std::vector<SgVariableSymbol *> *syms)
+    {
+        std::stringstream result;
+        result << "[";
+        std::vector<SgVariableSymbol *>::iterator s = syms->begin();
+        std::vector<SgVariableSymbol *>::iterator end = syms->end();
+        if (s != end)
+        {
+            result << variableSymbolToTree(*s++);
+            while (s != end)
+                result << ", " << variableSymbolToTree(*s++);
+        }
+        result << "]";
+        return result.str();
+    }
+
+    static std::string stringToTree(std::string s)
+    {
+     // Simply put " around the string.
+        return '"' + s + '"';
+    }
+};
+
+std::string
+Ir::fragmentToTreeRepresentation(SgNode *node) {
+    FragmentToTree fragmentToTree;
+    return fragmentToTree.traverse(node);
+}
+
+
 // GB (2008-03-13): Added this function to wrap deep copying of AST
 // fragments including the parent pointer. ROSE doesn't seem to be copying
 // the parent pointer. I'm not sure if it ever did copy the parent pointer,

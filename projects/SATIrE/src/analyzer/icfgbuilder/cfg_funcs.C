@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.13 2008-05-27 09:19:43 gergo Exp $
+// $Id: cfg_funcs.C,v 1.14 2008-05-27 14:13:31 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -82,6 +82,20 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
         return;
     }
 
+ // This option controls whether statements in the GDL file are represented
+ // as unparsed strings or in a tree notation that shows the statement's
+ // structure in a syntax very similar to FULA patterns (except for their
+ // interesting notation for syntactic lists).
+    enum PrintOption { P_Unparsed, P_Tree };
+    int printOption = P_Unparsed;
+
+    CFG *cfg = (CFG *) kfg;
+    AnalyzerOptions *opt = cfg->analyzerOptions;
+ // If requested on the command line, dump trees instead of unparsed
+ // statements.
+    if (opt != NULL && opt->showStatementTrees())
+        printOption = P_Tree;
+
     std::string result;
     
 #if 0
@@ -131,7 +145,10 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
         result = Ir::fragmentToString(while_join);
     else
 #endif 
+    switch (printOption)
     {
+    case P_Unparsed:
+     // TODO: Move this code to some auxiliary function.
         switch (stmt->variantT())
         {
 	case V_SgPragmaDeclaration: 
@@ -203,6 +220,11 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
             result = Ir::fragmentToString(stmt);
             break;
         }
+        break;
+
+    case P_Tree:
+        result = Ir::fragmentToTreeRepresentation(stmt);
+        break;
     }
 
     // for proper representation of all strings in GDL files we escape '\'

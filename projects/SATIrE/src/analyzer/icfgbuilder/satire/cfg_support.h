@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.23 2008-05-27 09:19:45 gergo Exp $
+// $Id: cfg_support.h,v 1.24 2008-05-27 14:13:37 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -12,6 +12,7 @@
 
 #include "iface.h"
 #include "EqualityTraversal.h"
+#include "AnalyzerOptions.h"
 
 enum edgetypes
 {
@@ -119,6 +120,8 @@ public:
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
 
     EqualityTraversal equalityTraversal;
+
+    AnalyzerOptions *analyzerOptions;
 
     ~CFG();
 

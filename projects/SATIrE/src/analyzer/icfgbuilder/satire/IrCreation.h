@@ -62,6 +62,8 @@ public:
   static std::string getStrippedName(SgInitializedName* in);
   // for creating a string representation of IR fragments
   static std::string fragmentToString(const SgNode* node);
+  // create a string with a tree representation of the IR fragment
+  static std::string fragmentToTreeRepresentation(SgNode *node);
   static SgNode *deepCopy(SgNode *n, bool copyParentPointer = true);
   // for creating node lists for PAG to iterate over
   template <class T> static void **createNodeList(std::vector<T> &vec);
