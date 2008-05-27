@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.20 2008-05-23 00:52:08 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.21 2008-05-27 20:09:32 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -88,8 +88,16 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --no-gdl-preinfo         do not output analysis info before cfg nodes\n"
     "   --gdl-postinfo           output analysis info after cfg nodes\n"
     "   --no-gdl-postinfo        do not output analysis info after cfg nodes\n"
+    "   --gdl-nodeformat=FORMAT  where FORMAT=varid|varname|exprid|exprsource\n"
+    "                                        |asttext|no-varid|no-varname\n"
+    "                                        |no-exprid|no-exprsource|no-asttext\n"
+    "                            the format can be specified multiple times to\n"
+    "                            have different formats printed at the same node\n"
+    "                            The output is only effected if VariableId\n" 
+    "                            and/or ExpressionId is used in the carrier type\n"
     "   --output-gdl=<FILENAME>  output program as gdl graph\n"
     "   --output-gdlanim=<DIRNAME> output animation gdl files in \n"
+    "   --output-gdl=<FILENAME>  output program as gdl graph\n"
     "                            directory <dirname>\n"
     "\n"
     " Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo\n"
@@ -97,7 +105,9 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "                            --no-check-ast --no-check-icfg\n"
     "                            --number-expressions --no-statistics\n"
     "                            --analysis-files=all --analyis-annotation\n"
-    "                            --verbose\n"
+    "                            --verbose --nodeFormat=no-asttext\n"
+    "                            --nodeFormat=no-varid --nodeFormat=varname\n"
+    "                            --nodeFormat=no-exprid --nodeFormat=exprsource\n"
     /*
     " PAG garbage collection options:\n"
     "   --pag-gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"

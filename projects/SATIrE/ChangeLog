@@ -6,8 +6,6 @@ V0.8.2 (in progress)
   - change analysis specifications to take unreachable ICFG nodes into
     account: by default, the initial data flow value of the analysis should
     mean "unreachable"
-  - change analysis specifications to use the new ExpressionId and
-    VariableId types
   - change analysis specifications to take into account that the numexprs
     and numtypes attributes are now of type unum instead of snum; all
     support functions related to expression and type numbers now take unum
@@ -17,8 +15,17 @@ V0.8.2 (in progress)
     main-support.C (according to the template) to reflect a change in the
     interface of the CFGTraversal class
 
-* Command line flag to control ICFG consistency checks [GB]
-  - these expensive checks must now be enabled explicitly using --check-icfg
+* optional user changes:
+  - change analysis specifications to use the new ExpressionId and
+    VariableId instead of str
+	
+* new command line options [GB,MS]
+  --check-icfg: Command line flag to control ICFG consistency checks
+  --gdl-nodeformat=FORMAT: allows to specify how node information should be
+	                   displayed in a gdl file.
+	           FORMAT=varid|varname|exprid|exprsource
+                         |asttext|no-varid|no-varname
+                         |no-exprid|no-exprsource|no-asttext
 
 * New PAG analysis specification features [GB]
   - replaced single ExternalCall node by ExternalCall/ExternalReturn pair

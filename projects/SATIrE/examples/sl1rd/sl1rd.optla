@@ -95,8 +95,25 @@ eq(a,b)   = (a = b);
 */
 sl1_expression::Expression,snum,VarLabPairSetLifted -> VarLabPairSetLifted;
 sl1_expression(exp,lab,info) =
+
   if is_sl1_expression(exp) then
-    info
+  case exp of
+  VarRefExp(cvarname) as varRef
+    =>
+       /* if boolean expression are used in conditional a single use of a
+          temporary variable must be handled by the analysis. It is guaranteed
+          that a temporary variable is used exactly once, therefore it can be
+          removed from the analysis information because it is leaving its scope.
+       */       
+       let x = varref_varid(varRef); in
+       if is_tmpvarid(x) then
+         lift(rdkill(x,drop(info)))
+       else
+         info
+       endif;
+  _ =>
+    info;
+  endcase
   else
     print("Unknown expression at Node ") print(lab) print(": ") print(exp)
     error("This is not an SL1 program.")
@@ -198,3 +215,4 @@ kill_vars(s, v::vars) = /* v is a VariableSymbol */
 /* Predefined SATIrE Support Functions */
 varsym_varid :: VariableSymbolNT -> VariableId;
 varref_varid :: Expression -> VariableId;
+is_tmpvarid :: VariableId -> bool;

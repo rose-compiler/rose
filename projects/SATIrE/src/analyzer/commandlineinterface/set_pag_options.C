@@ -1,9 +1,11 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.4 2008-02-14 22:31:47 markus Exp $
+// $Id: set_pag_options.C,v 1.5 2008-05-27 20:09:32 markus Exp $
 
-// Author: Markus Schordan, 2006
+// Author: Markus Schordan, 2006+
 
 #include "set_pag_options.h"
+#include "o_VariableId.h"
+#include "o_ExpressionId.h"
 
 extern char* animation;
 extern int cfg_ordering;
@@ -50,6 +52,45 @@ void setPagOptions(AnalyzerOptions opt) {
   //start_bank=opt.getStartBank();
   //share_min=opt.getShareMin();
   //share_num=opt.getShareNum();
+
+  int formatMode=0;
+  {
+    VariableId::PrintFormat printMode;
+
+    if(opt.nodeFormatVarId()) {
+      formatMode+=1;
+    }
+    if(opt.nodeFormatVarName()) {
+      formatMode+=2;
+    }
+    switch(formatMode) {
+    case 0: printMode=VariableId::F_Id;break;
+    case 1: printMode=VariableId::F_Name;break;
+    case 2: printMode=VariableId::F_IdAndName;break;
+    }
+    VariableId::setPrintFormat(printMode);
+  }
+  formatMode=0;
+  {
+    ExpressionId::PrintFormat printMode;
+
+    if(opt.nodeFormatExprId()) {
+      formatMode+=1;
+    }
+    if(opt.nodeFormatExprSource()) {
+      formatMode+=2;
+    }
+    switch(formatMode) {
+    case 0: printMode=ExpressionId::F_Id;break;
+    case 1: printMode=ExpressionId::F_Expression;break;
+    case 2: printMode=ExpressionId::F_IdAndExpression;break;
+    }
+    ExpressionId::setPrintFormat(printMode);
+  }
+  if(opt.nodeFormatAstText()) {
+    /* TODO */
+  }
+
 
   if(opt.vivu()) {
     mapping_data.map_l = opt.getVivuLoopUnrolling(); // [default 2]

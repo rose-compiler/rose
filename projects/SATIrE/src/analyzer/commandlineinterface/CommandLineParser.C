@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.16 2008-04-23 14:41:10 gergo Exp $
+// $Id: CommandLineParser.C,v 1.17 2008-05-27 20:09:32 markus Exp $
 
 #include <config.h>
 
@@ -90,6 +90,26 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->gdlProcedureSubgraphsOn();
   } else if (optionMatch(argv[i], "--no-gdl-proceduresubgraphs")) {
     cl->gdlProcedureSubgraphsOff();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=varid")) {
+    cl->nodeFormatVarIdOn();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=no-varid")) {
+    cl->nodeFormatVarIdOff();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=varname")) {
+    cl->nodeFormatVarNameOn();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=no-varname")) {
+    cl->nodeFormatVarNameOff();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=exprid")) {
+    cl->nodeFormatExprIdOn();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=no-exprid")) {
+    cl->nodeFormatExprIdOff();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=exprsource")) {
+    cl->nodeFormatExprSourceOn();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=no-exprsource")) {
+    cl->nodeFormatExprSourceOff();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=asttext")) {
+    cl->nodeFormatAstTextOn();
+  } else if (optionMatch(argv[i], "--gdl-nodeformat=no-asttext")) {
+    cl->nodeFormatAstTextOff();
   } else if (optionMatch(argv[i], "--analysis-files=all")) {
     cl->analysisWholeProgramOn();
   } else if (optionMatch(argv[i], "--analysis-files=cl")) {
