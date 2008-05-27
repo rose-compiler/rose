@@ -10,7 +10,8 @@ EXTRA_DIST	= sage3.i sgname.i wchart.i test.java input.cc	\
 if ENABLE_JAVAPORT
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport
+JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport $(JAVA_INCLUDES)
 
 #INCLUDES	=						\
 #	-I.							\
