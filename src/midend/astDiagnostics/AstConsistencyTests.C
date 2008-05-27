@@ -723,11 +723,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
   // Test all traversed nodes to make sure that they have a valid file info object
   // Note that SgFile and SgProject nodes don't have file info objects (so skip them)
   // if ( !isSgFile(node) && !isSgProject(node) )
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
      if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
-#else
-     if ( !isSgFile(node) && !isSgProject(node) )
-#endif
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )

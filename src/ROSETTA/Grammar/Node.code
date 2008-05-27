@@ -66,7 +66,6 @@ class SgDeclarationStatement;
 typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrList;
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 // tps (8/20/2007): Added support for binaries.
 typedef std::list<SgAsmBlock*>              SgAsmBlockPtrList;
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
@@ -76,7 +75,6 @@ typedef SgAsmSectionHeaderPtrList*              SgAsmSectionHeaderPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmProgramHeader*> SgAsmProgramHeaderPtrList;
 typedef SgAsmProgramHeaderPtrList*              SgAsmProgramHeaderPtrListPtr;
-#endif
 
 class SgStatement;
 typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
@@ -190,7 +188,6 @@ typedef SgBasicBlock*                       SgBasicBlockPtr;
 typedef std::vector<SgBasicBlockPtr>        SgBasicBlockPtrList;
 typedef SgBasicBlockPtrList*                SgBasicBlockPtrListPtr;
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmStatement*> SgAsmStatementPtrList;
 typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
@@ -202,7 +199,11 @@ typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmDeclaration*> SgAsmDeclarationPtrList;
 typedef SgAsmDeclarationPtrList*              SgAsmDeclarationPtrListPtr;
-#endif
+
+// JJW (3/19/2008): Added support for containers of x86 instructions
+typedef Rose_STL_Container<SgAsmx86Instruction*> SgAsmx86InstructionPtrList;
+// JJW (3/21/2008): Added support for containers of Arm instructions
+typedef Rose_STL_Container<SgAsmArmInstruction*> SgAsmArmInstructionPtrList;
 
 // DQ (11/19/2007): Added support for Fortran namelist statement.
 typedef Rose_STL_Container<SgNameGroup*>           SgNameGroupPtrList;
@@ -526,10 +527,8 @@ namespace VirtualCFG
    }
 #endif
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 // DQ (3/15/2007): Added support for binaries
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<SgAsmStatement*> & l );
-#endif
 
 // DQ (5/8/2007): Added support for type elaboration lists, hidden type lists, and hidden declaration lists.
 std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );

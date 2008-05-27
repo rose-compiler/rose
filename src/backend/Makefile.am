@@ -1,3 +1,3 @@
 include ../../config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = unparser
+SUBDIRS = unparser asmUnparser

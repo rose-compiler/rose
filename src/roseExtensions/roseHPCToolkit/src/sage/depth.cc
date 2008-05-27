@@ -21,7 +21,7 @@ DepthAttr::DepthAttr (size_t d)
 string
 DepthAttr::toString (void)
 {
-  return ::toString (depth);
+  return GenUtil::toString (depth);
 }
 
 const string TreeDepthCalculator::ATTR_NAME ("tree_depth");

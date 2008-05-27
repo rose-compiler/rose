@@ -7,500 +7,34 @@ void
 Grammar::setUpBinaryInstructions ()
    {
 
-// Support for binaries must be turned on via the configure command line.
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-
   // DQ (3/14/2007): Added support in IR for binaries.
   // This function sets up the IR nodes to support the representation of a binary file (or machine instructions).
   // It can be either platform specific or non-platform specific.
 
   // tps (09/21/07): example code to handle ARM binaries
 
-     // data transfer instructions
-     NEW_TERMINAL_MACRO ( AsmArmMov ,    "AsmArmMov",     "AsmArmMovTag" );
-     NEW_TERMINAL_MACRO ( AsmArmMvn ,    "AsmArmMvn",     "AsmArmMvnTag" );
-     NEW_TERMINAL_MACRO ( AsmArmMrs ,    "AsmArmMrs",     "AsmArmMrsTag" );
-     NEW_TERMINAL_MACRO ( AsmArmMsr ,    "AsmArmMsr",     "AsmArmMsrTag" );
-
-     NEW_TERMINAL_MACRO ( AsmArmLdr ,    "AsmArmLdr",     "AsmArmLdrTag" );
-     NEW_TERMINAL_MACRO ( AsmArmLdm ,    "AsmArmLdm",     "AsmArmLdmTag" );
-     NEW_TERMINAL_MACRO ( AsmArmStr ,    "AsmArmStr",     "AsmArmStrTag" );
-     NEW_TERMINAL_MACRO ( AsmArmStm ,    "AsmArmStm",     "AsmArmStmTag" );
-
-     // Asm Arithmetic
-     NEW_TERMINAL_MACRO ( AsmArmAdd ,    "AsmArmAdd",     "AsmArmAddTag" );
-     NEW_TERMINAL_MACRO ( AsmArmAdc ,    "AsmArmAdc",     "AsmArmAdcTag" );
-     NEW_TERMINAL_MACRO ( AsmArmSub ,    "AsmArmSub",     "AsmArmSubTag" );
-     NEW_TERMINAL_MACRO ( AsmArmSbc ,    "AsmArmSbc",     "AsmArmSbcTag" );
-     NEW_TERMINAL_MACRO ( AsmArmRsb ,    "AsmArmRsb",     "AsmArmRsbTag" );
-     NEW_TERMINAL_MACRO ( AsmArmRsc ,    "AsmArmRsc",     "AsmArmRscTag" );
-     NEW_TERMINAL_MACRO ( AsmArmMul ,    "AsmArmMul",     "AsmArmMulTag" );
-     NEW_TERMINAL_MACRO ( AsmArmMla ,    "AsmArmMla",     "AsmArmMlaTag" );
-     NEW_TERMINAL_MACRO ( AsmArmUmull ,    "AsmArmUmull",     "AsmArmUmullTag" );
-     NEW_TERMINAL_MACRO ( AsmArmUmlal ,    "AsmArmUmlal",     "AsmArmUmlalTag" );
-     NEW_TERMINAL_MACRO ( AsmArmSmull ,    "AsmArmSmull",     "AsmArmSmullTag" );
-     NEW_TERMINAL_MACRO ( AsmArmSmlal ,    "AsmArmSmlal",     "AsmArmSmlalTag" );
-     NEW_TERMINAL_MACRO ( AsmArmCmp ,    "AsmArmCmp",     "AsmArmCmpTag" );
-     NEW_TERMINAL_MACRO ( AsmArmCmn ,    "AsmArmCmn",     "AsmArmCmnTag" );
-
-     // Logical Instructions
-     NEW_TERMINAL_MACRO ( AsmArmTst , "AsmArmTst", "AsmArmTstTag" );
-     NEW_TERMINAL_MACRO ( AsmArmTeq , "AsmArmTeq", "AsmArmTeqTag" );
-     NEW_TERMINAL_MACRO ( AsmArmAnd , "AsmArmAnd", "AsmArmAndTag" );
-     NEW_TERMINAL_MACRO ( AsmArmEor , "AsmArmEor", "AsmArmEorTag" );
-     NEW_TERMINAL_MACRO ( AsmArmOrr , "AsmArmOrr", "AsmArmOrrTag" );
-     NEW_TERMINAL_MACRO ( AsmArmBic , "AsmArmBic", "AsmArmBicTag" );
-
-     // Control Transfer Instructions
-     NEW_TERMINAL_MACRO ( AsmArmB ,      "AsmArmB",      "AsmArmBTag" );
-     NEW_TERMINAL_MACRO ( AsmArmBl ,     "AsmArmBl",    "AsmArmBlTag" );
-     NEW_TERMINAL_MACRO ( AsmArmBx ,     "AsmArmBx",     "AsmArmBxTag" );
-
-     // Misc Instructions
-     NEW_TERMINAL_MACRO ( AsmArmSwp ,      "AsmArmSwp",     "AsmArmSwpTag" );
-     NEW_TERMINAL_MACRO ( AsmArmSwi ,      "AsmArmSwi",     "AsmArmSwiTag" );
-
-     NEW_NONTERMINAL_MACRO ( AsmArmArithmeticInstruction, 
-                             AsmArmSub | AsmArmAdd | AsmArmAdc | AsmArmSbc | AsmArmRsb | AsmArmRsc |
-			     AsmArmMul | AsmArmMla | AsmArmUmull | AsmArmUmlal | AsmArmSmull | AsmArmSmlal |
-			     AsmArmCmp | AsmArmCmn
-			     , "AsmArmArithmeticInstruction", "AsmArmArithmeticInstructionTag", false );
-     
-     NEW_NONTERMINAL_MACRO ( AsmArmDataTransferInstruction, AsmArmMov | AsmArmMvn | AsmArmMrs | AsmArmMsr 
-			      | AsmArmLdr | AsmArmLdm | AsmArmStr | AsmArmStm | AsmArmArithmeticInstruction
-			     , "AsmArmDataTransferInstruction", "AsmArmDataTransferInstructionTag", false );
-     
-
-     NEW_NONTERMINAL_MACRO ( AsmArmControlTransferInstruction, 
-			     AsmArmB | AsmArmBl | AsmArmBx
-			     , "AsmArmControlTransferInstruction", "AsmArmControlTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( AsmArmMiscInstruction, 
-			     AsmArmSwp | AsmArmSwi
-			     , "AsmArmMiscInstruction", "AsmArmMiscInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( AsmArmLogicalInstruction, 
-			     AsmArmTst | AsmArmTeq | AsmArmAnd | AsmArmEor | AsmArmOrr | AsmArmBic
-			     , "AsmArmLogicalInstruction", "AsmArmLogicalInstructionTag", false );
-
-
-  // tps (08/08/07): added most of the 80086 instructions (except 80087)
-  // the instructions are grouped by their purpose
-     // data transfer instructions
-     NEW_TERMINAL_MACRO ( Asmx86Mov ,    "Asmx86Mov",     "Asmx86MovTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movlpd , "Asmx86Movlpd",  "Asmx86MovlpdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMove ,  "Asmx86CMove",   "Asmx86CMoveTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovne , "Asmx86CMovne",  "Asmx86CMovneTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMova ,  "Asmx86CMova",   "Asmx86CMovaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movaps , "Asmx86Movaps",  "Asmx86MovapsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovae , "Asmx86CMovae",  "Asmx86CMovaeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovb ,  "Asmx86CMovb",   "Asmx86CMovbTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovbe , "Asmx86CMovbe",  "Asmx86CMovbeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovg ,  "Asmx86CMovg",   "Asmx86CMovgTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovge , "Asmx86CMovge",  "Asmx86CMovgeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovl ,  "Asmx86CMovl",   "Asmx86CMovlTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovle , "Asmx86CMovle",  "Asmx86CMovleTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovc ,  "Asmx86CMovc",   "Asmx86CMovcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovnc , "Asmx86CMovnc",  "Asmx86CMovncTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovo ,  "Asmx86CMovo",   "Asmx86CMovoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovno , "Asmx86CMovno",  "Asmx86CMovnoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovs ,  "Asmx86CMovs",   "Asmx86CMovsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovns , "Asmx86CMovns",  "Asmx86CMovnsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovp ,  "Asmx86CMovp",   "Asmx86CMovpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86CMovnp , "Asmx86CMovnp",  "Asmx86CMovnpTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Push ,  "Asmx86Push",  "Asmx86PushTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pop ,   "Asmx86Pop",   "Asmx86PopTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Xchg ,  "Asmx86Xchg",  "Asmx86XchgTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Bswap , "Asmx86Bswap", "Asmx86BswapTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Xadd ,  "Asmx86Xadd",  "Asmx86XaddTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cmpxchg ,   "Asmx86Cmpxchg", "Asmx86CmpxchgTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cmpxchg8b , "Asmx86Cmpxchg8b", "Asmx86Cmpxchg8bTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pusha , "Asmx86Pusha", "Asmx86PushaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Popa ,  "Asmx86Popa",  "Asmx86PopaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cwd ,   "Asmx86Cwd",   "Asmx86CwdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cbw ,   "Asmx86Cbw",   "Asmx86CbwTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movsx , "Asmx86Movsx", "Asmx86MovsxTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movzx , "Asmx86Movzx", "Asmx86MovzxTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movntq , "Asmx86Movntq", "Asmx86MovntqTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movdqu , "Asmx86Movdqu", "Asmx86MovdquTag" );
-
-     // Asmx86 Arithmetic
-     NEW_TERMINAL_MACRO ( Asmx86Sub , "Asmx86Sub", "Asmx86SubTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Add , "Asmx86Add", "Asmx86AddTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Adc , "Asmx86Adc", "Asmx86AdcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sbb , "Asmx86Sbb", "Asmx86SbbTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Mul , "Asmx86Mul", "Asmx86MulTag" );
-     NEW_TERMINAL_MACRO ( Asmx86IMul ,"Asmx86IMul","Asmx86IMulTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Div , "Asmx86Div", "Asmx86DivTag" );
-     NEW_TERMINAL_MACRO ( Asmx86IDiv ,"Asmx86IDiv","Asmx86IDivTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Inc , "Asmx86Inc", "Asmx86IncTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Dec , "Asmx86Dec", "Asmx86DecTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Neg , "Asmx86Neg", "Asmx86NegTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cmp , "Asmx86Cmp", "Asmx86CmpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Paddus , "Asmx86Paddus", "Asmx86PaddusTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pcmpeq , "Asmx86Pcmpeq", "Asmx86PcmpeqTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Psubus , "Asmx86Psubus", "Asmx86PsubusTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Psub , "Asmx86Psub", "Asmx86PsubTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Padd , "Asmx86Padd", "Asmx86PaddTag" );
-
-     // decimal arithmetic instructions
-     NEW_TERMINAL_MACRO ( Asmx86Daa , "Asmx86Daa", "Asmx86DaaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Das , "Asmx86Das", "Asmx86DasTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Aaa , "Asmx86Aaa", "Asmx86AaaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Aas , "Asmx86Aas", "Asmx86AasTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Aam , "Asmx86Aam", "Asmx86AamTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Aad , "Asmx86Aad", "Asmx86AadTag" );
-
-     // Logical Instructions
-     NEW_TERMINAL_MACRO ( Asmx86And , "Asmx86And", "Asmx86AndTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Or ,  "Asmx86Or",  "Asmx86OrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Xor , "Asmx86Xor", "Asmx86XorTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pxor , "Asmx86Pxor", "Asmx86PxorTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Not ,  "Asmx86Not",  "Asmx86NotTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pand , "Asmx86Pand", "Asmx86PandTag" )
-     NEW_TERMINAL_MACRO ( Asmx86Pandn , "Asmx86Pandn", "Asmx86PandnTag" )
-     NEW_TERMINAL_MACRO ( Asmx86Andpd , "Asmx86Andpd", "Asmx86AndpdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Andnpd , "Asmx86Andnpd", "Asmx86AndnpdTag" );
-
-     // Shift and Rotate Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Shl , "Asmx86Shl", "Asmx86ShlTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Shr , "Asmx86Shr", "Asmx86ShrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sar , "Asmx86Sar", "Asmx86SarTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Shrd ,"Asmx86Shrd","Asmx86ShrdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Shld ,"Asmx86Shld","Asmx86ShldTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ror , "Asmx86Ror", "Asmx86RorTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Rol , "Asmx86Rol", "Asmx86RolTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Rcr , "Asmx86Rcr", "Asmx86RcrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Rcl , "Asmx86Rcl", "Asmx86RclTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Psrl ,"Asmx86Psrl", "Asmx86PsrlTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Psll ,"Asmx86Psll", "Asmx86PsllTag" );
-
-     // Bit and Byte Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Bt ,   "Asmx86Bt",    "Asmx86BtTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Bts ,  "Asmx86Bts",   "Asmx86BtsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Btr ,  "Asmx86Btr",   "Asmx86BtrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Btc ,  "Asmx86Btc",   "Asmx86BtcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Bsf ,  "Asmx86Bsf",   "Asmx86BsfTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Bsr ,  "Asmx86Bsr",   "Asmx86BsrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sete , "Asmx86Sete",  "Asmx86SeteTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setne, "Asmx86Setne", "Asmx86SetneTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Seta , "Asmx86Seta",  "Asmx86SetaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setae, "Asmx86Setae", "Asmx86SetaeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setb , "Asmx86Setb",  "Asmx86SetbTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setbe, "Asmx86Setbe", "Asmx86SetbeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setg , "Asmx86Setg",  "Asmx86SetgTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setge, "Asmx86Setge", "Asmx86SetgeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setl , "Asmx86Setl",  "Asmx86SetlTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setle, "Asmx86Setle", "Asmx86SetleTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sets , "Asmx86Sets",  "Asmx86SetsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setns, "Asmx86Setns", "Asmx86SetnsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Seto , "Asmx86Seto",  "Asmx86SetoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setno, "Asmx86Setno", "Asmx86SetnoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setpe, "Asmx86Setpe", "Asmx86SetpeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Setpo, "Asmx86Setpo", "Asmx86SetpoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Test , "Asmx86Test",  "Asmx86TestTag" );
-
-     // Control Transfer Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Hlt ,      "Asmx86Hlt",     "Asmx86HltTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ret ,       "Asmx86Ret",      "Asmx86RetTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Leave ,     "Asmx86Leave",    "Asmx86LeaveTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Call ,      "Asmx86Call",     "Asmx86CallTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jmp ,       "Asmx86Jmp",      "Asmx86JmpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Je ,        "Asmx86Je",       "Asmx86JeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jne ,       "Asmx86Jne",      "Asmx86JneTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ja ,        "Asmx86Ja",       "Asmx86JaTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Jae ,       "Asmx86Jae",      "Asmx86JaeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jb ,        "Asmx86Jb",       "Asmx86JbTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jbe ,       "Asmx86Jbe",      "Asmx86JbeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jg ,        "Asmx86Jg",       "Asmx86JgTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jge ,       "Asmx86Jge",      "Asmx86JgeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jl ,        "Asmx86Jl",       "Asmx86JlTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jle ,       "Asmx86Jle",      "Asmx86JleTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jc ,        "Asmx86Jc",       "Asmx86JcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jnc ,       "Asmx86Jnc",      "Asmx86JncTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jo ,        "Asmx86Jo",       "Asmx86JoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jno ,       "Asmx86Jno",      "Asmx86JnoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Js ,        "Asmx86Js",       "Asmx86JsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jns ,       "Asmx86Jns",      "Asmx86JnsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jpo ,       "Asmx86Jpo",      "Asmx86JpoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jpe ,       "Asmx86Jpe",      "Asmx86JpeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Jcxz ,      "Asmx86Jcxz",     "Asmx86JcxzTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Loop ,      "Asmx86Loop",     "Asmx86LoopTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Loopz ,     "Asmx86Loopz",    "Asmx86LoopzTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Loopnz ,    "Asmx86Loopnz",   "Asmx86LoopnzTag" );
-     NEW_TERMINAL_MACRO ( Asmx86IRet ,      "Asmx86IRet",     "Asmx86IRetTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Int ,       "Asmx86Int",      "Asmx86IntTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Into ,      "Asmx86Into",     "Asmx86IntoTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Bound ,     "Asmx86Bound",    "Asmx86BoundTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Enter ,     "Asmx86Enter",    "Asmx86EnterTag" );
-
-     // Asmx86 String Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Movs ,     "Asmx86Movs",    "Asmx86MovsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cmps ,     "Asmx86Cmps",    "Asmx86CmpsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Scas ,     "Asmx86Scas",    "Asmx86ScasTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Lods ,     "Asmx86Lods",    "Asmx86LodsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Stos ,     "Asmx86Stos",    "Asmx86StosTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Rep ,      "Asmx86Rep",     "Asmx86RepTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Repe ,     "Asmx86Repe",    "Asmx86RepeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Repne ,    "Asmx86Repne",   "Asmx86RepneTag" );
-
-     // I/O Instructions
-     NEW_TERMINAL_MACRO ( Asmx86In ,       "Asmx86In",      "Asmx86InTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Out ,      "Asmx86Out",     "Asmx86OutTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ins ,      "Asmx86Ins",     "Asmx86InsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Outs ,     "Asmx86Outs",    "Asmx86OutsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Verr ,     "Asmx86Verr",     "Asmx86VerrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Verw ,     "Asmx86Verw",     "Asmx86VerwTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sldt ,     "Asmx86Sldt",     "Asmx86SldtTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Stmxcsr ,  "Asmx86Stmxcsr",  "Asmx86StmxcsrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ldmxcsr ,  "Asmx86Ldmxcsr",  "Asmx86LdmxcsrTag" );
-
-     // Misc Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Lea ,      "Asmx86Lea",     "Asmx86LeaTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Nop ,      "Asmx86Nop",     "Asmx86NopTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ud2 ,      "Asmx86Ud2",     "Asmx86Ud2Tag" );
-     NEW_TERMINAL_MACRO ( Asmx86Xlat ,     "Asmx86Xlat",    "Asmx86XlatTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cpuid ,    "Asmx86Cpuid",   "Asmx86CpuidTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Rdtsc ,    "Asmx86Rdtsc",   "Asmx86RdtscTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pause ,    "Asmx86Pause",   "Asmx86PauseTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Emms ,    "Asmx86Emms",   "Asmx86EmmsTag" );
-
-     // Flag Control Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Stc ,      "Asmx86Stc",     "Asmx86StcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Clc ,      "Asmx86Clc",     "Asmx86ClcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cmc ,      "Asmx86Cmc",     "Asmx86CmcTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cld ,      "Asmx86Cld",     "Asmx86CldTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Std ,      "Asmx86Std",     "Asmx86StdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Lahf ,     "Asmx86Lahf",    "Asmx86LahfTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sahf ,     "Asmx86Sahf",    "Asmx86SahfTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Pushf ,    "Asmx86Pushf",   "Asmx86PushfTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Popf ,     "Asmx86Popf",    "Asmx86PopfTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Sti ,      "Asmx86Sti",     "Asmx86StiTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Cli ,      "Asmx86Cli",     "Asmx86CliTag" );
-
-     // Segment Register Instructions
-     NEW_TERMINAL_MACRO ( Asmx86Lds ,      "Asmx86Lds",     "Asmx86LdsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Les ,      "Asmx86Les",     "Asmx86LesTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Lfs ,      "Asmx86Lfs",     "Asmx86LfsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Lgs  ,     "Asmx86Lgs",     "Asmx86LgsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Lss ,      "Asmx86Lss",     "Asmx86LssTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Esc ,      "Asmx86Esc",     "Asmx86EscTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Lock ,     "Asmx86Lock",    "Asmx86LockTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Wait ,     "Asmx86Wait",    "Asmx86WaitTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Data16 ,   "Asmx86Data16",  "Asmx86Data16Tag" );
-     NEW_TERMINAL_MACRO ( Asmx86Arpl ,     "Asmx86Arpl",    "Asmx86ArplTag" );
-
-     // Floating Point Instructions
-     NEW_TERMINAL_MACRO ( Asmx86F2xm1 ,    "Asmx86F2xm1",   "Asmx86F2xm1Tag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fabs ,     "Asmx86Fabs",    "Asmx86FabsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fadd ,     "Asmx86Fadd",    "Asmx86FaddTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Faddp ,    "Asmx86Faddp",   "Asmx86FaddpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fchs ,     "Asmx86Fchs",    "Asmx86Fchs" );
-     NEW_TERMINAL_MACRO ( Asmx86Addsd ,    "Asmx86Addsd",   "Asmx86AddsdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Divsd ,    "Asmx86Divsd",   "Asmx86DivsdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Subsd ,    "Asmx86Subsd",   "Asmx86SubsdTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Addss ,    "Asmx86Addss",   "Asmx86AddssTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Movss ,    "Asmx86Movss",   "Asmx86MovssTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Subss ,    "Asmx86Subss",   "Asmx86SubssTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fcom ,     "Asmx86Fcom",    "Asmx86FcomTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fcomp ,    "Asmx86Fcomp",   "Asmx86FcompTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fcompp ,   "Asmx86Fcompp",  "Asmx86FcomppTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fcos ,     "Asmx86Fcos",    "Asmx86FcosTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fdiv ,     "Asmx86Fdiv",    "Asmx86FdivTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ucomisd ,  "Asmx86Ucomisd", "Asmx86UcomisdTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ucomiss ,  "Asmx86Ucomiss", "Asmx86UcomissTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fdivp ,    "Asmx86Fdivp",    "Asmx86FdivpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fdivr ,    "Asmx86Fdivr",    "Asmx86FdivrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fdivrp ,   "Asmx86Fdivrp",   "Asmx86FdivrpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ffree ,    "Asmx86Ffree",    "Asmx86FfreeTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Ffreep ,   "Asmx86Ffreep",    "Asmx86FfreepTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fiadd ,    "Asmx86Fiadd",    "Asmx86FiaddTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fidiv ,    "Asmx86Fidiv",    "Asmx86FidivTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fild ,     "Asmx86Fild",    "Asmx86FildTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fimul ,    "Asmx86Fimul",   "Asmx86FimulTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fist ,     "Asmx86Fist",    "Asmx86FistTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fistp ,    "Asmx86Fistp",   "Asmx86FistpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fld ,      "Asmx86Fld",     "Asmx86FldTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fld1 ,     "Asmx86Fld1",    "Asmx86Fld1Tag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fldcw ,    "Asmx86Fldcw",   "Asmx86FldcwTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fldl2e ,   "Asmx86Fldl2e",  "Asmx86Fldl2eTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fldl2t ,   "Asmx86Fldl2t",  "Asmx86Fldl2tTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fldlg2 ,   "Asmx86Fldlg2",  "Asmx86Fldlg2Tag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fldpi ,    "Asmx86Fldpi",    "Asmx86FldpiTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fldln2 ,   "Asmx86Fldln2",   "Asmx86Fldln2Tag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fldz ,     "Asmx86Fldz",     "Asmx86FldzTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fmul ,     "Asmx86Fmul",     "Asmx86FmulTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fmulp ,    "Asmx86Fmulp",    "Asmx86FmulpTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fnstcw ,   "Asmx86Fnstcw",   "Asmx86FnstcwTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fnstsw ,   "Asmx86Fnstsw",   "Asmx86FnstswTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fnop ,     "Asmx86Fnop",     "Asmx86FnopTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fpatan ,   "Asmx86Fpatan",   "Asmx86FpatanTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fprem ,    "Asmx86Fprem",    "Asmx86FpremTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fptan ,    "Asmx86Fptan",    "Asmx86FptanTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsave ,    "Asmx86Fsave",    "Asmx86FsaveTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fscale ,   "Asmx86Fscale",   "Asmx86FscaleTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsin ,     "Asmx86Fsin",     "Asmx86FsinTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsqrt ,    "Asmx86Fsqrt",    "Asmx86FsqrtTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fst ,      "Asmx86Fst",      "Asmx86FstTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fstp ,     "Asmx86Fstp",     "Asmx86FstpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsub ,     "Asmx86Fsub",     "Asmx86FsubTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsubp ,    "Asmx86Fsubp",    "Asmx86FsubpTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsubr ,    "Asmx86Fsubr",    "Asmx86FsubrTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fsubrp ,   "Asmx86Fsubrp",   "Asmx86FsubrpTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Ftst ,     "Asmx86Ftst",     "Asmx86FtstTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fucom ,    "Asmx86Fucom",    "Asmx86FucomTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fucomp ,   "Asmx86Fucomp",   "Asmx86FucompTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fucompp ,  "Asmx86Fucompp",  "Asmx86FucomppTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fwait ,    "Asmx86Fwait",    "Asmx86FwaitTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fxch ,     "Asmx86Fxch",     "Asmx86FxchTag" );
-
-     NEW_TERMINAL_MACRO ( Asmx86Fxsave ,   "Asmx86Fxsave",   "Asmx86FxsaveTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Fyl2x ,    "Asmx86Fyl2x",    "Asmx86Fyl2xTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Xorps ,    "Asmx86Xorps",    "Asmx86XoprsTag" );
-     NEW_TERMINAL_MACRO ( Asmx86Xorpd ,    "Asmx86Xorpd",    "Asmx86XorpdTag" );
-
-
      NEW_TERMINAL_MACRO ( AsmBlock        , "AsmBlock",        "AsmBlockTag" );
      NEW_TERMINAL_MACRO ( AsmOperandList  , "AsmOperandList",  "AsmOperandListTag" );
 
 
-     NEW_NONTERMINAL_MACRO ( Asmx86FloatingPointInstructions, 
-			     Asmx86F2xm1 | Asmx86Fabs | Asmx86Fadd | Asmx86Fchs | Asmx86Faddp |
-			     Asmx86Fcom | Asmx86Fcomp | Asmx86Fcompp | Asmx86Fcos | Asmx86Fdiv |
-			     Asmx86Fdivp | Asmx86Fdivr | Asmx86Fdivrp | Asmx86Ffree | Asmx86Fiadd | 
-			     Asmx86Fidiv | Asmx86Fild | Asmx86Fimul | Asmx86Fist | Asmx86Fistp |
-			     Asmx86Fld | Asmx86Fld1 | Asmx86Fldcw | Asmx86Fldl2e | Asmx86Fldl2t |
-			     Asmx86Fldlg2 | Asmx86Fldpi | Asmx86Fldln2 | Asmx86Fldz | Asmx86Ffreep |
-			     Asmx86Fmul | Asmx86Fmulp | Asmx86Fnstcw | Asmx86Fnstsw | Asmx86Fnop |
-			     Asmx86Fpatan | Asmx86Fprem | Asmx86Fptan | Asmx86Fsave | Asmx86Fscale |
-			     Asmx86Fsin | Asmx86Fsqrt | Asmx86Fst | Asmx86Fstp | Asmx86Fsub |
-			     Asmx86Fsubp | Asmx86Fsubr | Asmx86Fsubrp | Asmx86Ftst | Asmx86Fucom |
-			     Asmx86Fucomp | Asmx86Fucompp | Asmx86Fwait | Asmx86Fxch | Asmx86Fxsave |
-			     Asmx86Fyl2x | Asmx86Xorps | Asmx86Xorpd | Asmx86Addsd | Asmx86Divsd | 
-			     Asmx86Subsd | Asmx86Ucomisd | Asmx86Subss | Asmx86Addss | Asmx86Movss |
-			     Asmx86Ucomiss
-			     , "Asmx86FloatingPointInstruction", "Asmx86FloatingPointInstructionTag", false );
+     NEW_TERMINAL_MACRO ( AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag" );
+     // AsmArmInstruction.setFunctionPrototype           ( "HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     AsmArmInstruction.setDataPrototype                    ("ArmInstructionKind","kind","= arm_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setDataPrototype                    ("ArmInstructionCondition","condition","= arm_cond_unknown",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setDataPrototype                    ("int","positionOfConditionInMnemonic","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setPredeclarationString     ("HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
-     NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagStringInstruction, 
-			     Asmx86Repe | Asmx86Repne | Asmx86Rep
-			     , "Asmx86ConditionalFlagStringInstruction", "Asmx86ConditionalFlagStringInstructionTag", false );
+     NEW_TERMINAL_MACRO ( Asmx86Instruction, "Asmx86Instruction", "Asmx86InstructionTag" );
+     Asmx86Instruction.setFunctionPrototype           ( "HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     Asmx86Instruction.setDataPrototype                    ("X86InstructionKind","kind","= x86_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype                    ("X86InstructionSize","baseSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype                    ("X86InstructionSize","operandSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype                    ("X86InstructionSize","addressSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype                    ("bool","lockPrefix","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype                    ("X86BranchPrediction","branchPrediction","= x86_branch_prediction_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype                    ("X86SegmentRegister","segmentOverride","= x86_segreg_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setPredeclarationString     ("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
-
-     NEW_NONTERMINAL_MACRO ( Asmx86StringInstruction, Asmx86ConditionalFlagStringInstruction |
-			     Asmx86Movs | Asmx86Cmps | Asmx86Scas | Asmx86Lods |
-			     Asmx86Stos
-			     , "Asmx86StringInstruction", "Asmx86StringInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86FlagControlInstruction, 
-			     Asmx86Stc | Asmx86Clc | Asmx86Cmc | Asmx86Cld | Asmx86Std |
-			     Asmx86Lahf | Asmx86Sahf | Asmx86Pushf | Asmx86Popf | 
-			     Asmx86Sti | Asmx86Cli
-			     , "Asmx86FlagControlInstruction", "Asmx86FlagControlInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86SegmentRegisterInstruction,
-			     Asmx86Lds | Asmx86Les | Asmx86Lfs | Asmx86Lgs | Asmx86Lss
-			     , "Asmx86SegmentRegisterInstruction", "Asmx86SegmentRegisterInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86IOInstruction, 
-			     Asmx86In | Asmx86Out | Asmx86Ins | Asmx86Outs | Asmx86Verr | Asmx86Verw |
-			     Asmx86Sldt | Asmx86Stmxcsr | Asmx86Ldmxcsr
-			     , "Asmx86IOInstruction", "Asmx86IOInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagDataTransferInstruction, 
-                             Asmx86CMovc | Asmx86CMovnc | Asmx86CMovo | Asmx86CMovno | 
-                             Asmx86CMovs | Asmx86CMovns | Asmx86CMovp | Asmx86CMovnp |
-                             Asmx86CMove | Asmx86CMovne | Asmx86CMova | Asmx86CMovae | Asmx86CMovb | Asmx86CMovbe | Asmx86CMovg | 
-                             Asmx86CMovge | Asmx86CMovl | Asmx86CMovle 
-			     , "Asmx86ConditionalFlagDataTransferInstruction", "Asmx86ConditionalFlagDataTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ConditionalDataTransferInstruction,  Asmx86Cmpxchg | Asmx86Cmpxchg8b 
-			     , "Asmx86ConditionalDataTransferInstruction", "Asmx86ConditionalDataTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ArithmeticInstruction, 
-                             Asmx86Sub | Asmx86Add | Asmx86Inc | Asmx86Paddus | Asmx86Psubus |
-			     Asmx86Adc | Asmx86Sbb | Asmx86Mul | Asmx86IMul | Asmx86Div | Asmx86IDiv | 
-			     Asmx86Dec | Asmx86Neg | Asmx86Cmp | Asmx86Psub | Asmx86Padd | 
-			     Asmx86Daa | Asmx86Das | Asmx86Aaa | Asmx86Pcmpeq | 
-			     Asmx86Aas | Asmx86Aam | Asmx86Aad  , "Asmx86ArithmeticInstruction", "Asmx86ArithmeticInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86DataTransferInstruction, Asmx86Push | Asmx86Mov | Asmx86Pop | Asmx86Movaps | 
-			     Asmx86ConditionalDataTransferInstruction | Asmx86ConditionalFlagDataTransferInstruction | 
-			     Asmx86ArithmeticInstruction | Asmx86Movlpd |
-			     Asmx86Xchg | Asmx86Bswap | Asmx86Xadd | Asmx86Movntq | Asmx86Movdqu |
-			     Asmx86Pusha | Asmx86Popa | Asmx86Cwd | Asmx86Cbw | Asmx86Movsx | Asmx86Movzx 
-			     , "Asmx86DataTransferInstruction", "Asmx86DataTransferInstructionTag", false );
-
-
-     NEW_NONTERMINAL_MACRO ( Asmx86LogicalInstruction, 
-			     Asmx86And | Asmx86Or | Asmx86Xor | Asmx86Not | Asmx86Pxor | Asmx86Pand |
-			     Asmx86Pandn | Asmx86Andpd | Asmx86Andnpd
-			     , "Asmx86LogicalInstruction", "Asmx86LogicalInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86MiscInstruction, 
-			     Asmx86Lea | Asmx86Nop | Asmx86Ud2 | Asmx86Xlat | Asmx86Cpuid | Asmx86Rdtsc | Asmx86Esc | Asmx86Lock | Asmx86Wait |  
-			     Asmx86Data16 | Asmx86Pause | Asmx86Arpl | Asmx86Emms
-			     , "Asmx86MiscInstruction", "Asmx86MiscInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ShiftAndRotateInstruction, 
-                             Asmx86Shl | Asmx86Shr | Asmx86Psrl | Asmx86Psll |
-			     Asmx86Sar | Asmx86Shrd | Asmx86Shld | Asmx86Ror | Asmx86Rol | Asmx86Rcr |
-			     Asmx86Rcl , "Asmx86ShiftAndRotateInstruction", "Asmx86ShiftAndRotateInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagBitAndByteInstruction, 
-			     Asmx86Sete | Asmx86Setne | Asmx86Seta | Asmx86Setae | Asmx86Setb | Asmx86Setbe |
-			     Asmx86Setg | Asmx86Setge | Asmx86Setl | Asmx86Setle | Asmx86Sets | Asmx86Setns |
-			     Asmx86Seto | Asmx86Setno | Asmx86Setpe | Asmx86Setpo | Asmx86Test , "Asmx86ConditionalFlagBitAndByteInstruction", "Asmx86ConditionalFlagBitAndByteInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86BitAndByteInstruction, Asmx86ConditionalFlagBitAndByteInstruction | 
-			     Asmx86Bt | Asmx86Bts | Asmx86Btr | Asmx86Btc | Asmx86Bsf | Asmx86Bsr 
-			     , "Asmx86BitAndByteInstruction", "Asmx86BitAndByteInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ConditionalFlagControlTransferInstruction, 
-			     Asmx86Je | Asmx86Jne | Asmx86Ja | Asmx86Jae |
-			     Asmx86Jb | Asmx86Jbe | Asmx86Jg | Asmx86Jge | Asmx86Jl |
-			     Asmx86Jle | Asmx86Jc | Asmx86Jnc | Asmx86Jo | Asmx86Jno |
-			     Asmx86Js | Asmx86Jns | Asmx86Jpo | Asmx86Jpe | Asmx86Jcxz |
-			     Asmx86Loopz | Asmx86Loopnz |  Asmx86Into | Asmx86Bound 
-			     , "Asmx86ConditionalFlagControlTransferInstruction", "Asmx86ConditionalFlagControlTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ConditionalControlTransferInstruction, 
-			     Asmx86Loop   , "Asmx86ConditionalControlTransferInstruction", "Asmx86ConditionalControlTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86UnConditionalControlTransferInstruction, 
-			     Asmx86Call | Asmx86Jmp | Asmx86Ret | Asmx86IRet | Asmx86Int | Asmx86Enter | Asmx86Leave | Asmx86Hlt 
-			     , "Asmx86UnConditionalControlTransferInstruction", "Asmx86UnConditionalControlTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86ControlTransferInstruction, 
-			     Asmx86ConditionalFlagControlTransferInstruction | Asmx86ConditionalControlTransferInstruction | 
-			     Asmx86UnConditionalControlTransferInstruction 
-			      , "Asmx86ControlTransferInstruction", "Asmx86ControlTransferInstructionTag", false );
-
-     NEW_NONTERMINAL_MACRO ( AsmArmInstruction, AsmArmControlTransferInstruction //| AsmArmArithmeticInstruction  
-			     | AsmArmDataTransferInstruction 
-			     | AsmArmLogicalInstruction | AsmArmMiscInstruction
-			     , "AsmArmInstruction", "AsmArmInstructionTag", true );
-
-     NEW_NONTERMINAL_MACRO ( Asmx86Instruction, Asmx86ControlTransferInstruction | //Asmx86ArithmeticInstruction | 
-			     Asmx86DataTransferInstruction | 
-			     Asmx86LogicalInstruction | Asmx86ShiftAndRotateInstruction | Asmx86BitAndByteInstruction |
-			     Asmx86StringInstruction | Asmx86IOInstruction | Asmx86MiscInstruction |
-			     Asmx86FlagControlInstruction | Asmx86SegmentRegisterInstruction | Asmx86FloatingPointInstructions  
-			     , "Asmx86Instruction", "Asmx86InstructionTag", true );
 
   // This is currently a AsmFunctionCall plus other unspecified uses of Asmx86Instruction, it may be refied later.
      NEW_NONTERMINAL_MACRO ( AsmInstruction, Asmx86Instruction | AsmArmInstruction
@@ -523,18 +57,33 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmBinaryDivide,   "AsmBinaryDivide", "AsmBinaryDivideTag" );
      NEW_TERMINAL_MACRO ( AsmBinaryMod,      "AsmBinaryMod", "AsmBinaryModTag" );
 
+  // ARM addressing mode operations
+     NEW_TERMINAL_MACRO ( AsmBinaryAddPreupdate    ,  "AsmBinaryAddPreupdate",  "AsmBinaryAddPreupdateTag" );
+     NEW_TERMINAL_MACRO ( AsmBinarySubtractPreupdate, "AsmBinarySubtractPreupdate", "AsmBinarySubtractPreupdateTag" );
+     NEW_TERMINAL_MACRO ( AsmBinaryAddPostupdate    ,  "AsmBinaryAddPostupdate",  "AsmBinaryAddPostupdateTag" );
+     NEW_TERMINAL_MACRO ( AsmBinarySubtractPostupdate, "AsmBinarySubtractPostupdate", "AsmBinarySubtractPostupdateTag" );
+
+     NEW_TERMINAL_MACRO ( AsmBinaryLsl, "AsmBinaryLsl", "AsmBinaryLslTag" );
+     NEW_TERMINAL_MACRO ( AsmBinaryLsr, "AsmBinaryLsr", "AsmBinaryLsrTag" );
+     NEW_TERMINAL_MACRO ( AsmBinaryAsr, "AsmBinaryAsr", "AsmBinaryAsrTag" );
+     NEW_TERMINAL_MACRO ( AsmBinaryRor, "AsmBinaryRor", "AsmBinaryRorTag" );
+
      NEW_NONTERMINAL_MACRO ( AsmBinaryExpression, AsmBinaryAdd | AsmBinarySubtract | AsmBinaryMultiply | 
-                             AsmBinaryDivide | AsmBinaryMod, "AsmBinaryExpression", "AsmBinaryExpressionTag", false );
+                             AsmBinaryDivide | AsmBinaryMod | AsmBinaryAddPreupdate | AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate | AsmBinaryLsl | AsmBinaryLsr | AsmBinaryAsr | AsmBinaryRor, "AsmBinaryExpression", "AsmBinaryExpressionTag", false );
 
      NEW_TERMINAL_MACRO ( AsmUnaryPlus , "AsmUnaryPlus",  "AsmUnaryPlusTag" );
      NEW_TERMINAL_MACRO ( AsmUnaryMinus, "AsmUnaryMinus", "AsmUnaryMinusTag" );
+     NEW_TERMINAL_MACRO ( AsmUnaryRrx, "AsmUnaryRrx", "AsmUnaryRrxTag" );
+     NEW_TERMINAL_MACRO ( AsmUnaryArmSpecialRegisterList, "AsmUnaryArmSpecialRegisterList", "AsmUnaryArmSpecialRegisterListTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmUnaryExpression, AsmUnaryPlus | AsmUnaryMinus, "AsmUnaryExpression", "AsmUnaryExpressionTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmUnaryExpression, AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryArmSpecialRegisterList, "AsmUnaryExpression", "AsmUnaryExpressionTag", false );
 
      NEW_TERMINAL_MACRO ( AsmMemoryReferenceExpression   , "AsmMemoryReferenceExpression",   "AsmMemoryReferenceExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmControlFlagsExpression      , "AsmControlFlagsExpression",      "AsmControlFlagsExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmCommonSubExpression         , "AsmCommonSubExpression",         "AsmCommonSubExpressionTag" );
-     NEW_TERMINAL_MACRO ( AsmRegisterReferenceExpression , "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" );
+     NEW_TERMINAL_MACRO ( Asmx86RegisterReferenceExpression , "Asmx86RegisterReferenceExpression", "Asmx86RegisterReferenceExpressionTag" );
+     NEW_TERMINAL_MACRO ( AsmArmRegisterReferenceExpression , "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag" );
+     NEW_NONTERMINAL_MACRO ( AsmRegisterReferenceExpression , Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression, "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
 
      //     NEW_TERMINAL_MACRO ( AsmArmRegisterReferenceExpression , "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag" );
 
@@ -551,9 +100,14 @@ Grammar::setUpBinaryInstructions ()
                              AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression | 
                              AsmVectorValueExpression, "AsmValueExpression", "AsmValueExpressionTag", false );
 
+     NEW_TERMINAL_MACRO (AsmExprListExp,            "AsmExprListExp",            "AsmExprListExpTag" );
+     AsmExprListExp.setDataPrototype("SgAsmExpressionPtrList", "expressions", "",
+				     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
      NEW_NONTERMINAL_MACRO ( AsmExpression, AsmValueExpression | AsmBinaryExpression | AsmUnaryExpression | 
                              AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression | 
-                             AsmCommonSubExpression 
+                             AsmCommonSubExpression | AsmExprListExp
 			     //| AsmArmRegisterReferenceExpression
 			     , "AsmExpression", "AsmExpressionTag", false );
 
@@ -562,6 +116,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmTypeWord        , "AsmTypeWord",        "AsmTypeWordTag" );
      NEW_TERMINAL_MACRO ( AsmTypeDoubleWord  , "AsmTypeDoubleWord",  "AsmTypeDoubleWordTag" );
      NEW_TERMINAL_MACRO ( AsmTypeQuadWord    , "AsmTypeQuadWord",    "AsmTypeQuadWordTag" );
+     NEW_TERMINAL_MACRO ( AsmTypeDoubleQuadWord, "AsmTypeDoubleQuadWord",    "AsmTypeDoubleQuadWordTag" );
      NEW_TERMINAL_MACRO ( AsmTypeSingleFloat , "AsmTypeSingleFloat", "AsmTypeSingleFloatTag" );
      NEW_TERMINAL_MACRO ( AsmTypeDoubleFloat , "AsmTypeDoubleFloat", "AsmTypeDoubleFloatTag" );
      NEW_TERMINAL_MACRO ( AsmType80bitFloat ,  "AsmType80bitFloat",  "AsmType80bitFloatTag" );
@@ -571,13 +126,15 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeWord.setDataPrototype                    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeDoubleWord.setDataPrototype              ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeQuadWord.setDataPrototype                ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeDoubleQuadWord.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeSingleFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmTypeDoubleFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     AsmTypeVector.setDataPrototype                  ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmTypeVector.setDataPrototype                  ("int","elementCount","",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmTypeVector.setDataPrototype                  ("SgAsmType*","elementType","",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmType80bitFloat.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmType128bitFloat.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | AsmType80bitFloat | AsmType128bitFloat |
+     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | AsmTypeDoubleQuadWord | AsmType80bitFloat | AsmType128bitFloat |
                              AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector, "AsmType", "AsmTypeTag", false );
 
      NEW_TERMINAL_MACRO ( AsmFile                     , "AsmFile",                     "AsmFileTag" );
@@ -593,7 +150,6 @@ Grammar::setUpBinaryInstructions ()
 
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmOperandList | AsmType, "AsmNode","AsmNodeTag");
      NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType, "AsmNode","AsmNodeTag", false);
-
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
   // AsmInstructionBase.setFunctionPrototype        ( "HEADER", "../Grammar/Common.code");
@@ -623,22 +179,6 @@ Grammar::setUpBinaryInstructions ()
      AsmInstruction.setDataPrototype("SgAsmStatementPtrList","sources","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     Asmx86ControlTransferInstruction.setFunctionPrototype  ( "HEADER_BINARY_CONTROLTRANSFER_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     Asmx86ControlTransferInstruction.setDataPrototype("SgAsmInstruction*","destination","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-
-     Asmx86Ret.setFunctionPrototype  ( "HEADER_BINARY_RET", "../Grammar/BinaryInstruction.code");
-     Asmx86Ret.setDataPrototype("SgAsmStatementPtrList","dest","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Representation of function call
-     Asmx86Call.setFunctionPrototype       ( "HEADER_BINARY_FUNCTION_CALL", "../Grammar/BinaryInstruction.code");
-  // added by tps on 4Apr07
-     Asmx86Call.setDataPrototype("unsigned int","destinationAddress","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-
-
-
   // Block of instructions (helps define depth to the AST)
      AsmBlock.setFunctionPrototype              ( "HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
      // added by tps, 05Apr07 ... need this for the control_flow_graph
@@ -655,6 +195,9 @@ Grammar::setUpBinaryInstructions ()
 
      AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AsmBlock.setDataPrototype("bool","externallyVisible"," = true", // Can this block be called into from random code?
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmFile.setFunctionPrototype ( "HEADER_BINARY_FILE", "../Grammar/BinaryInstruction.code");
      AsmFile.setDataPrototype("std::string","name","",
@@ -854,16 +397,19 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-     AsmRegisterReferenceExpression.setDataPrototype("SgAsmRegisterReferenceExpression::x86_register_enum","x86_register_code","= SgAsmRegisterReferenceExpression::undefined_general_register",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Asmx86RegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmArmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+
+     Asmx86RegisterReferenceExpression.setDataPrototype("X86RegisterClass","register_class","",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Asmx86RegisterReferenceExpression.setDataPrototype("int","register_number","",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Asmx86RegisterReferenceExpression.setDataPrototype("X86PositionInRegister","position_in_register","= x86_regpos_unknown",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
-     AsmRegisterReferenceExpression.setDataPrototype("SgAsmRegisterReferenceExpression::arm_register_enum","arm_register_code","= SgAsmRegisterReferenceExpression::undefined_arm_register",
-                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum","arm_register_code","= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
+                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
-     AsmRegisterReferenceExpression.setDataPrototype("SgAsmRegisterReferenceExpression::x86_position_in_register_enum","x86_position_in_register_code","= SgAsmRegisterReferenceExpression::undefined_position_in_register",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmRegisterReferenceExpression.setDataPrototype("SgAsmRegisterReferenceExpression::arm_position_in_register_enum","arm_position_in_register_code","= SgAsmRegisterReferenceExpression::undefined_arm_position_in_register",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // added by tps on 3Apr07 and removed on 16Jan08
      //     AsmRegisterReferenceExpression.setDataPrototype("SgAsmExpression*","offset","= NULL",
      //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -887,6 +433,7 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeWord.setFunctionPrototype        ( "HEADER_BINARY_TYPE_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeDoubleWord.setFunctionPrototype  ( "HEADER_BINARY_TYPE_DOUBLE_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeQuadWord.setFunctionPrototype    ( "HEADER_BINARY_TYPE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
+     AsmTypeDoubleQuadWord.setFunctionPrototype( "HEADER_BINARY_TYPE_DOUBLE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeSingleFloat.setFunctionPrototype ( "HEADER_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeDoubleFloat.setFunctionPrototype ( "HEADER_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmType80bitFloat.setFunctionPrototype  ( "HEADER_BINARY_TYPE_80bit_FLOAT", "../Grammar/BinaryInstruction.code");
@@ -925,14 +472,15 @@ Grammar::setUpBinaryInstructions ()
      AsmInstruction.setFunctionSource              ( "SOURCE_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
      AsmFunctionDeclaration.setFunctionSource      ( "SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource                     ( "SOURCE_BINARY_NODE", "../Grammar/BinaryInstruction.code");
-     Asmx86ControlTransferInstruction.setFunctionSource  ( "SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     Asmx86Ret.setFunctionSource                   ( "SOURCE_BINARY_RET", "../Grammar/BinaryInstruction.code");
+     Asmx86Instruction.setFunctionSource           ( "SOURCE_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     // AsmArmInstruction.setFunctionSource           ( "SOURCE_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
 
      AsmType.setFunctionSource            ( "SOURCE_BINARY_TYPE", "../Grammar/BinaryInstruction.code");
      AsmTypeByte.setFunctionSource        ( "SOURCE_BINARY_TYPE_BYTE", "../Grammar/BinaryInstruction.code");
      AsmTypeWord.setFunctionSource        ( "SOURCE_BINARY_TYPE_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeDoubleWord.setFunctionSource  ( "SOURCE_BINARY_TYPE_DOUBLE_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeQuadWord.setFunctionSource    ( "SOURCE_BINARY_TYPE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
+     AsmTypeDoubleQuadWord.setFunctionSource( "SOURCE_BINARY_TYPE_DOUBLE_QUAD_WORD", "../Grammar/BinaryInstruction.code");
      AsmTypeSingleFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_SINGLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeDoubleFloat.setFunctionSource ( "SOURCE_BINARY_TYPE_DOUBLE_FLOAT", "../Grammar/BinaryInstruction.code");
      AsmTypeVector.setFunctionSource      ( "SOURCE_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
@@ -941,6 +489,8 @@ Grammar::setUpBinaryInstructions ()
 
      AsmExpression.setFunctionSource               ( "SOURCE_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     Asmx86RegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmArmRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmMemoryReferenceExpression.setFunctionSource ( "SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
      AsmByteValueExpression.setFunctionSource( "SOURCE_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
@@ -954,8 +504,5 @@ Grammar::setUpBinaryInstructions ()
 
      AsmSectionHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmProgramHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");
-
-// endif for USE_ROSE_BINARY_ANALYSIS_SUPPORT
-#endif
 
    }

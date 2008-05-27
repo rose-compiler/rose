@@ -2414,8 +2414,6 @@ Grammar::buildCode ()
   // DQ (10/6/2006): Added output function for STL map objects
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, std::map<SgNode*,std::string>&);\n\n";
 
-// Support for binaries must be turned on via the configure command line.
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
   // DQ (3/31/2007): Modified to be a list instead of a set (and added case for list of SgAsmExpression),
   //                 though I am not certain these are even required to be specified.
   // DQ (3/15/2007): Added output function for STL list objects
@@ -2423,7 +2421,6 @@ Grammar::buildCode ()
 
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgAsmStatement*>&);\n\n";
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgAsmExpression*>&);\n\n";
-#endif
 
   // DQ (11/20/2007): Part of support for the Fortran data statement
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, Rose_STL_Container<SgDataStatementObject*>&);\n\n";
@@ -2810,14 +2807,12 @@ Grammar::buildCode ()
 #if 1
   // DQ (11/21/2007): Added output function for SgAsmSectionHeader objects
      rtiFile 
-       << "#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT \n "
        << "std::ostream& operator<<(std::ostream& os, SgAsmSectionHeaderPtrList& bv) \n   {\n "
        << "     return os;\n   }\n";
   // DQ (11/21/2007): Added output function for SgAsmProgramHeader objects
      rtiFile 
        << "std::ostream& operator<<(std::ostream& os, SgAsmProgramHeaderPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n"
-       << "#endif \n";
+       << "     return os;\n   }\n";
 #endif
 
 

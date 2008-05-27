@@ -4533,6 +4533,11 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 
 }
 
+SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
+  while (n && !isSgStatement(n)) n = n->get_parent();
+  return isSgStatement(n);
+}
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses
@@ -4603,7 +4608,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     ROSE_ASSERT (worked);
   }
  else{
-  cout<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->variantT()<<endl;
+  cout<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
   ROSE_ASSERT(false);
   }
 

@@ -78,10 +78,8 @@
 #include "cfgToDot.h"
 
 // DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
 // File in src/frontend/BinaryDisassembly
   #include "RoseBin_support.h"
-  #include "RoseBin_unparse.h"
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif 
@@ -97,13 +95,24 @@
 
   #include "AST_BIN_Traversal.h"
 
-// Files in src/frontend/ObjdumpDisassembler
-  #include "objdumpToRoseBinaryAst.h"
+  #include "x86InstructionEnum.h"
+  #include "x86InstructionProperties.h"
 
-// Files in src/frontend/X86Disassembler
-  #include "x86Disassembler.h"
+  #include "armInstructionEnum.h"
 
-#endif
+// Files in src/frontend/Disassemblers
+  #include "disassemblers.h"
+
+// Files in src/backend/asmUnparser
+  #include "unparseAsm.h"
+
+// Endian access wrappers in src/frontend/SageIII/sageInterface
+  #include "endianWrappers.h"
+
+// Files in src/frontend/ExecFormats
+  #include "ExecGeneric.h"
+  #include "ExecELF.h"
+  #include "ExecPE.h"
 
 // added .h file for error check transformations
 #include "RuntimeInstrumentation.h"

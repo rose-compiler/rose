@@ -236,6 +236,7 @@ using namespace __gnu_cxx;
 
 //Liao, 2/8/2008. SAGE III node building interface
 #include "sageBuilder.h"
+#include "sageBuilderAsm.h"
 
 // DQ (5/27/2007): Removed all entries in this file (only had AST Merge API and 
 // these were moved to merge.h).  One less header file make everything a little simpler!

@@ -27,23 +27,6 @@ SgFunctionDefinition* PRE::getFunctionDefinition(SgNode* n) {
   return 0; // Should not happen
 }
 
-class GetSymbolsUsedInExpressionVisitor: public AstSimpleProcessing {
-  public:
-  vector<SgVariableSymbol*> symbols;
-
-  virtual void visit(SgNode* n) {
-    if (isSgVarRefExp(n))
-      symbols.push_back(isSgVarRefExp(n)->get_symbol());
-  }
-};
-
-// Get all symbols used in a given expression
-vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr) {
-  GetSymbolsUsedInExpressionVisitor vis;
-  vis.traverse(expr, preorder);
-  return vis.symbols;
-}
-
 // Are any variables in syms modified anywhere within n, or is n a declaration
 // of one of them?
 // FIXME: move to inliner
@@ -205,7 +188,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
      ROSE_ASSERT(expr != NULL);
      ROSE_ASSERT(root != NULL);
 
-     vector<SgVariableSymbol*> symbols_in_expression = getSymbolsUsedInExpression(expr);
+     vector<SgVariableSymbol*> symbols_in_expression = SageInterface::getSymbolsUsedInExpression(expr);
 
      if (anyOfListPotentiallyModifiedIn(symbols_in_expression, expr))
         {

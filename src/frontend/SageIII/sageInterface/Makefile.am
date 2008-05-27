@@ -11,7 +11,8 @@ libsageInterface_la_SOURCES      = \
      sageInterface.C \
      sageInterface_type.C \
      generateUniqueName.C \
-     sageBuilder.C
+     sageBuilder.C \
+     sageBuilderAsm.C
 #     highLevelInterface.C
 
 #     buildSetOfFrontendSpecificNodes.C
@@ -21,7 +22,9 @@ libsageInterface_la_DEPENDENCIES =
 
 include_HEADERS = \
      sageInterface.h \
-     sageBuilder.h
+     sageBuilder.h \
+     sageBuilderAsm.h \
+     endianWrappers.h
 #     highLevelInterface.h
 #     loopHelpers.h 
 

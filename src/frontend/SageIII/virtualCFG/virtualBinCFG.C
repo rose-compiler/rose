@@ -10,11 +10,6 @@
 
 using namespace std;
 
-#define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
-
-// DQ (10/21/2007): Added support for optional use of binary support in ROSE.
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-
 namespace VirtualBinCFG {
 
   string CFGNode::toString() const {
@@ -81,45 +76,6 @@ namespace VirtualBinCFG {
     return s.str();
   }
 
-
-
-
-  inline CFGNode findParentNode(SgNode* n) {
-    // Find the CFG node of which n is a child (subtree descended into)
-    // This is mostly just doing lookups in the children of n's parent to find
-    // out which index n is at
-
-    SgAsmNode* parent = isSgAsmNode(n->get_parent());
-    ROSE_ASSERT (parent);
-    /*
-    if (isSgAsmFunctionDeclaration(n)) return CFGNode(0, 0); // Should not be used
-    return CFGNode(parent, parent->cfgBinFindChildIndex(n));
-*/
-      return CFGNode(parent);
-  }
-
-  CFGNode getNodeJustAfterInContainer(SgNode* n) {
-    // Only handles next-statement control flow
-    SgAsmNode* parent = isSgAsmNode(n->get_parent()); 
-    return CFGNode(parent) ; // todo //CFGNode(parent, parent->cfgBinFindNextChildIndex(n));
-  }
-
-  CFGNode getNodeJustBeforeInContainer(SgNode* n) {
-    // Only handles previous-statement control flow
-    return findParentNode(n);
-  }
-
-  SgNode* leastCommonAncestor(SgNode* a, SgNode* b) {
-    // Find the closest node which is an ancestor of both a and b
-    vector<SgNode*> ancestorsOfA;
-    for (SgNode* p = a; p; p = isSgNode(p->get_parent())) ancestorsOfA.push_back(p);
-    while (b) {
-      vector<SgNode*>::const_iterator i = std::find(ancestorsOfA.begin(), ancestorsOfA.end(), b);
-      if (i != ancestorsOfA.end()) return *i;
-      b = isSgNode(b->get_parent());
-    }
-    return NULL;
-  }
 
   EdgeConditionKind CFGEdge::condition() const {
     //SgAsmNode* srcNode = src.getNode();
@@ -195,7 +151,7 @@ namespace VirtualBinCFG {
 
 
 
-  void makeEdge(CFGNode from, CFGNode to, vector<CFGEdge>& result) {
+  void makeEdge(SgAsmInstruction* from, SgAsmInstruction* to, const AuxiliaryInformation* info, vector<CFGEdge>& result) {
     // Makes a CFG edge, adding appropriate labels
     //SgAsmNode* fromNode = from.getNode();
     //unsigned int fromIndex = from.getIndex();
@@ -215,21 +171,88 @@ namespace VirtualBinCFG {
 	isSgSwitchStatement(fromNode)->get_body() == toNode) return;
     */
     // Create the edge
-    result.push_back(CFGEdge(from, to));
+    result.push_back(CFGEdge(CFGNode(from, info), CFGNode(to, info), info));
   }
 
   vector<CFGEdge> CFGNode::outEdges() const {
     ROSE_ASSERT (node);
-    return node->cfgBinOutEdges();
+    return node->cfgBinOutEdges(info);
   }
 
   vector<CFGEdge> CFGNode::inEdges() const {
     ROSE_ASSERT (node);
-    return node->cfgBinInEdges();
+    return node->cfgBinInEdges(info);
   }
 
+  const std::set<uint64_t>& AuxiliaryInformation::getPossibleSuccessors(SgAsmInstruction* insn) const {
+    static const std::set<uint64_t> emptySet;
+    std::map<SgAsmInstruction*, std::set<uint64_t> >::const_iterator succsIter = indirectJumpTargets.find(insn);
+    if (isSgAsmx86Instruction(insn) && isSgAsmx86Instruction(insn)->get_kind() == x86_ret) {
+      SgNode* f = insn;
+      while (f && !isSgAsmBlock(f) && !isSgAsmFunctionDeclaration(f)) f = f->get_parent();
+      std::map<SgAsmStatement*, std::set<uint64_t> >::const_iterator retIter = returnTargets.find(isSgAsmStatement(f));
+      if (retIter == returnTargets.end()) {
+        return emptySet;
+      } else {
+        return retIter->second;
+      }
+    } else if (succsIter == indirectJumpTargets.end()) {
+      return emptySet;
+    } else {
+      return succsIter->second;
+    }
+  }
+
+  AuxiliaryInformation::AuxiliaryInformation(SgNode* top): addressToInstructionMap(), indirectJumpTargets(), returnTargets(), incomingEdges() {
+    struct AuxInfoTraversal: public AstSimpleProcessing {
+      AuxiliaryInformation* info;
+      AuxInfoTraversal(AuxiliaryInformation* info): info(info) {}
+      virtual void visit(SgNode* n) {
+        SgAsmInstruction* insn = isSgAsmInstruction(n);
+        if (!insn) return;
+        info->addressToInstructionMap[insn->get_address()] = insn;
+      }
+    };
+    struct AuxInfoTraversal2: public AstSimpleProcessing {
+      AuxiliaryInformation* info;
+      AuxInfoTraversal2(AuxiliaryInformation* info): info(info) {}
+      virtual void visit(SgNode* n) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(n);
+        if (!insn) return;
+        if (insn->get_kind() != x86_call) return;
+        //cerr << "Found call xxx at " << hex << insn->get_address() << endl;
+        uint64_t tgtAddr;
+        if (!x86GetKnownBranchTarget(insn, tgtAddr)) return;
+        //cerr << "Found call at " << hex << insn->get_address() << " with known target " << hex << tgtAddr << endl;
+        SgAsmInstruction* tgt = info->getInstructionAtAddress(tgtAddr);
+        if (!tgt) return;
+        //cerr << "Found target insn" << endl;
+        SgNode* f = tgt;
+        while (f && !isSgAsmBlock(f) && !isSgAsmFunctionDeclaration(f)) f = f->get_parent();
+        if (!f) return;
+        //cerr << "Found function of target" << endl;
+        uint64_t next = insn->get_address() + insn->get_raw_bytes().size();
+        info->returnTargets[isSgAsmStatement(f)].insert(next);
+      }
+    };
+    struct AuxInfoTraversal3: public AstSimpleProcessing {
+      AuxiliaryInformation* info;
+      AuxInfoTraversal3(AuxiliaryInformation* info): info(info) {}
+      virtual void visit(SgNode* n) {
+        SgAsmInstruction* insn = isSgAsmInstruction(n);
+        if (!insn) return;
+        vector<CFGEdge> outEdgesSoFar = insn->cfgBinOutEdges(info);
+        for (size_t i = 0; i < outEdgesSoFar.size(); ++i) {
+          info->incomingEdges[outEdgesSoFar[i].target().getNode()].insert(insn->get_address());
+        }
+      }
+    };
+    AuxInfoTraversal trav(this);
+    trav.traverse(top, preorder);
+    AuxInfoTraversal2 trav2(this);
+    trav2.traverse(top, preorder);
+    AuxInfoTraversal3 trav3(this);
+    trav3.traverse(top, preorder);
+  }
 
 }
-
-// endif matching ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-#endif

@@ -50,33 +50,32 @@ ROSE_GUI_OBJS = \
    $(top_builddir)/src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/*.lo
 endif
 
-if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 ROSE_BINARY_DISASSEMBLER_OBJS = \
-   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_support.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse_visitor.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CompareAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_ControlFlowAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_printInstructions.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_DataFlowAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_DotGraph.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_Graph.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_GmlGraph.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CallGraphAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_FlowAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DefUseAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_VariableAnalysis.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_Emulate.lo \
-   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DataFlowAbstract.lo \
-   $(top_builddir)/src/frontend/ObjdumpDisassembler/*.lo \
-   $(top_builddir)/src/frontend/X86Disassembler/*.lo
+   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_support.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/RoseBin_unparse_visitor.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CompareAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_ControlFlowAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_printInstructions.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_DataFlowAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_DotGraph.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_Graph.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/graph/RoseBin_GmlGraph.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_CallGraphAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/RoseBin_FlowAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DefUseAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_VariableAnalysis.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_Emulate.o \
+   $(top_builddir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses/RoseBin_DataFlowAbstract.o \
+   $(top_builddir)/src/frontend/Disassemblers/*.o \
+   $(top_builddir)/src/frontend/ExecFormats/*.o \
+   $(top_builddir)/src/backend/asmUnparser/*.o
 
 libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
-   $(top_builddir)/src/frontend/ObjdumpDisassembler/libroseObjdumpDisassembler.la \
-   $(top_builddir)/src/frontend/X86Disassembler/libroseX86Disassembler.la 
-
-endif
+   $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
+   $(top_builddir)/src/frontend/ExecFormats/libroseExecFormats.la \
+   $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la 
 
 # Note: ROSE/src/*.lo are not included since they are only
 # related to the test program that is compiled to test the

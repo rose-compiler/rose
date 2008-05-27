@@ -163,7 +163,7 @@ SageBuilder::buildVariableDeclaration \
 //-----------------------------------------------
 // Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null' 
 SgFunctionParameterList * 
-SageBuilder::buildFunctionParameterList()
+SageBuilder::buildFunctionParameterList(SgInitializedName* in1, SgInitializedName* in2, SgInitializedName* in3, SgInitializedName* in4, SgInitializedName* in5, SgInitializedName* in6, SgInitializedName* in7, SgInitializedName* in8, SgInitializedName* in9, SgInitializedName* in10)
 {
   SgFunctionParameterList *parameterList = new SgFunctionParameterList();
   ROSE_ASSERT (parameterList);
@@ -172,6 +172,18 @@ SageBuilder::buildFunctionParameterList()
   parameterList->set_firstNondefiningDeclaration (parameterList);
 
   setOneSourcePositionForTransformation(parameterList);
+
+  if (in1) appendArg(parameterList, in1);
+  if (in2) appendArg(parameterList, in2);
+  if (in3) appendArg(parameterList, in3);
+  if (in4) appendArg(parameterList, in4);
+  if (in5) appendArg(parameterList, in5);
+  if (in6) appendArg(parameterList, in6);
+  if (in7) appendArg(parameterList, in7);
+  if (in8) appendArg(parameterList, in8);
+  if (in9) appendArg(parameterList, in9);
+  if (in10) appendArg(parameterList, in10);
+
   return parameterList;
 }
 
@@ -511,7 +523,7 @@ SgBoolValExp* SageBuilder::buildBoolValExp(bool value /*=0*/)
 
 SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)
 {
-  SgCharVal* result = new SgCharVal(value,"");
+  SgCharVal* result = new SgCharVal(value, "");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
   return result;
@@ -544,8 +556,15 @@ SgFloatVal* SageBuilder::buildFloatVal(float value /*= 0.0*/)
 
 SgIntVal* SageBuilder::buildIntVal(int value)
 {
-  //TODO does valueString matter here?
   SgIntVal* intValue= new SgIntVal(value,"");
+  ROSE_ASSERT(intValue);
+  setOneSourcePositionForTransformation(intValue);
+  return intValue;
+}
+
+SgIntVal* SageBuilder::buildIntValHex(int value)
+{
+  SgIntVal* intValue= new SgIntVal(value, (value >= 0 ? StringUtility::intToHex((unsigned int)value) : "-" + StringUtility::intToHex((unsigned int)(-value))));
   ROSE_ASSERT(intValue);
   setOneSourcePositionForTransformation(intValue);
   return intValue;
@@ -567,14 +586,102 @@ SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
   return result;
 }
 
+SgUnsignedCharVal* SageBuilder::buildUnsignedCharVal(unsigned char v)
+{
+  SgUnsignedCharVal* result = new SgUnsignedCharVal(v,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedCharVal* SageBuilder::buildUnsignedCharValHex(unsigned char v)
+{
+  SgUnsignedCharVal* result = new SgUnsignedCharVal(v,StringUtility::intToHex(v));
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgShortVal* SageBuilder::buildShortVal(short v)
+{
+  SgShortVal* result = new SgShortVal(v,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgShortVal* SageBuilder::buildShortValHex(short v)
+{
+  SgShortVal* result = new SgShortVal(v, (v >= 0 ? StringUtility::intToHex((unsigned int)v) : "-" + StringUtility::intToHex((unsigned int)(-v))));
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedShortVal* SageBuilder::buildUnsignedShortVal(unsigned short v)
+{
+  SgUnsignedShortVal* result = new SgUnsignedShortVal(v,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedShortVal* SageBuilder::buildUnsignedShortValHex(unsigned short v)
+{
+  SgUnsignedShortVal* result = new SgUnsignedShortVal(v,StringUtility::intToHex(v));
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedIntVal* SageBuilder::buildUnsignedIntVal(unsigned int v)
+{
+  SgUnsignedIntVal* result = new SgUnsignedIntVal(v,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedIntVal* SageBuilder::buildUnsignedIntValHex(unsigned int v)
+{
+  SgUnsignedIntVal* result = new SgUnsignedIntVal(v,StringUtility::intToHex(v) + "U");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgUnsignedLongVal* SageBuilder::buildUnsignedLongVal(unsigned long v)
 {
   SgUnsignedLongVal* result = new SgUnsignedLongVal(v,"");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-
   return result;
 }
+
+SgUnsignedLongVal* SageBuilder::buildUnsignedLongValHex(unsigned long v)
+{
+  SgUnsignedLongVal* result = new SgUnsignedLongVal(v,StringUtility::intToHex(v) + "UL");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal(unsigned long long v)
+{
+  SgUnsignedLongLongIntVal* result = new SgUnsignedLongLongIntVal(v,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntValHex(unsigned long long v)
+{
+  SgUnsignedLongLongIntVal* result = new SgUnsignedLongLongIntVal(v,StringUtility::intToHex(v) + "ULL");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 //----------------------build unary expressions----------------------
 template <class T>
 T* SageBuilder::buildUnaryExpression(SgExpression* operand)
@@ -822,11 +929,21 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand
 
 
 
-SgExprListExp * SageBuilder::buildExprListExp()
+SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
   SgExprListExp* expList = new SgExprListExp();
   ROSE_ASSERT(expList);
   setOneSourcePositionForTransformation(expList);
+  if (expr1) appendExpression(expList, expr1);
+  if (expr2) appendExpression(expList, expr2);
+  if (expr3) appendExpression(expList, expr3);
+  if (expr4) appendExpression(expList, expr4);
+  if (expr5) appendExpression(expList, expr5);
+  if (expr6) appendExpression(expList, expr6);
+  if (expr7) appendExpression(expList, expr7);
+  if (expr8) appendExpression(expList, expr8);
+  if (expr9) appendExpression(expList, expr9);
+  if (expr10) appendExpression(expList, expr10);
   return expList;
 }
 
@@ -1076,6 +1193,7 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
    // should including current scope when searching for the function definition
    // since users can only pass FunctionDefinition when the function body is not yet attached
   SgFunctionDefinition * label_scope = getEnclosingFunctionDefinition(scope,true);
+  ROSE_ASSERT (label_scope);
   SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
   ROSE_ASSERT(labelstmt);
   setOneSourcePositionForTransformation(labelstmt);
@@ -1155,12 +1273,21 @@ SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, Sg
   return result;
 }
 
-SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt)
+SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* stmt2, SgStatement* stmt3, SgStatement* stmt4, SgStatement* stmt5, SgStatement* stmt6, SgStatement* stmt7, SgStatement* stmt8, SgStatement* stmt9, SgStatement* stmt10)
 {
-  SgBasicBlock* result = new SgBasicBlock(stmt);
+  SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  if (stmt) stmt->set_parent(result);
+  if (stmt1) SageInterface::appendStatement(stmt1, result);
+  if (stmt2) SageInterface::appendStatement(stmt2, result);
+  if (stmt3) SageInterface::appendStatement(stmt3, result);
+  if (stmt4) SageInterface::appendStatement(stmt4, result);
+  if (stmt5) SageInterface::appendStatement(stmt5, result);
+  if (stmt6) SageInterface::appendStatement(stmt6, result);
+  if (stmt7) SageInterface::appendStatement(stmt7, result);
+  if (stmt8) SageInterface::appendStatement(stmt8, result);
+  if (stmt9) SageInterface::appendStatement(stmt9, result);
+  if (stmt10) SageInterface::appendStatement(stmt10, result);
   return result;
 }
 
@@ -1175,20 +1302,23 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label,SgScopeStatement* scop
   return result;
 }
 
-SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgBasicBlock *body, SgScopeStatement* scope)
+SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgBasicBlock *body)
 {
   SgCaseOptionStmt* result = new SgCaseOptionStmt(key,body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  key->set_parent(result);
+  body->set_parent(result);
 
   return result;
 }
 
-SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgBasicBlock *body, SgScopeStatement* scope)
+SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgBasicBlock *body)
 {
   SgDefaultOptionStmt* result = new SgDefaultOptionStmt(body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  body->set_parent(result);
 
   return result;
 }
@@ -1198,6 +1328,8 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  item_selector->set_parent(result);
+  body->set_parent(result);
 
   return result;
 }

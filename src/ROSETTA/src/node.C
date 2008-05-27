@@ -51,9 +51,6 @@ Grammar::setUpNodes ()
      Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
      Terminal & Support = *lookupTerminal(terminalList, "Support");
 
-// DQ (10/21/2007): Modified to make binary support in ROSE optional
-// Support for binaries must be turned on via the configure command line.
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
   // DQ (3/14/2007): Added IR support for binaries
      Terminal & AsmNode = *lookupTerminal(terminalList, "AsmNode");
 
@@ -63,9 +60,6 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
   // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
-#else
-     NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol , "Node", "NodeTag", false );
-#endif
 
   // ***********************************************************************
   // ***********************************************************************

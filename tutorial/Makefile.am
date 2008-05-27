@@ -985,7 +985,6 @@ rose_input_runtimeErrorCheck2.C: runtimeCheck
 	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck2 rose_input_runtimeErrorCheck2.o $(LDADD)
 	./test_runtimeCheck2 > output_runtimeCheck2.C
 
-if ROSE_USE_BINARY_ANALYSIS_SUPPORT
 binaryAnalysis_pic1.pdf: binaryAnalysis
 	@echo "Building an example BinaryAnalysis ..."
 # This does currently not work because we don't support 64bit binaries
@@ -998,16 +997,6 @@ binaryAnalysis_pic1.pdf: binaryAnalysis
 	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF cfg.dot binaryAnalysis_pic1.pdf
 	$(top_srcdir)/scripts/dotgenLetterPDF dfg.dot binaryAnalysis_pic2.pdf
-else
-# Make sure that the same files are built so that the Tutorial can be built.
-binaryAnalysis_pic1.pdf: binaryAnalysis
-	@echo "Binary Analysis Support not configured in ROSE ..."
-	split -42 $(srcdir)/rose_bin_example_backup.s rose_bin_example.s.
-	cp $(srcdir)/default_error_graph.dot cfg.dot
-	cp $(srcdir)/default_error_graph.dot dfg.dot
-	$(top_srcdir)/scripts/dotgenLetterPDF cfg.dot binaryAnalysis_pic1.pdf
-	$(top_srcdir)/scripts/dotgenLetterPDF dfg.dot binaryAnalysis_pic2.pdf
-endif
 
 # rose_bin_example.s.aa: binaryAnalysis_pic1.pdf
 

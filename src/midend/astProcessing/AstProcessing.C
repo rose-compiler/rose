@@ -101,11 +101,7 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::inFileToTrave
        //      printf ("What node is this: node = %p = %s \n",node,node->class_name().c_str()); // SageInterface::get_name(node).c_str());
        // ROSE_ASSERT(isSgProject(node) != NULL);
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
           ROSE_ASSERT(isSgProject(node) != NULL || isSgAsmNode(node) != NULL);
-#else
-          ROSE_ASSERT(isSgProject(node) != NULL);
-#endif
           return true;
         }
 

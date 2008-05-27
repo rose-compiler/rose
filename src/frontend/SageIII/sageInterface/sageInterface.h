@@ -571,6 +571,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
 
   SgFunctionDefinition* getEnclosingFunctionDefinition(SgNode* astNode, const bool includingSelf=false);
 
+  //! Find the closest enclosing statement, including the given node
+  SgStatement* getEnclosingStatement(SgNode* n);
+
   //! Find the closest switch outside a given statement (normally used for case and default statements)
   SgSwitchStatement* findEnclosingSwitch(SgStatement* s);
 
