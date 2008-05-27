@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.12 2008-04-10 07:58:23 gergo Exp $
+// $Id: cfg_funcs.C,v 1.13 2008-05-27 09:19:43 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -363,6 +363,24 @@ extern "C" unsigned int kfg_edge_type_max(KFG)
     return EDGE_TYPE_MAX;
 }
 
+// GB (2008-05-26): The kfg_edge_type(n1, n2) function looks up the type of
+// the edge from node n1 to node n2. The way our data structures are
+// organized, this would result in a linear search of the successors of n1
+// (or the predecessors of n2). Iterating over all incoming/outgoing edges
+// is therefore quadratic. For nodes with large branching factors (virtual
+// calls or returns in large programs), this quadratic behavior is
+// unacceptable.
+// To make this lookup amortized constant under the assumption that PAG
+// traverses all successors or predecessors of a node systematically, we
+// cache some state of the last lookup.
+struct KFG_edge_lookup_state
+{
+ // Pointers to successors and predecessors lists, respectively.
+    std::vector<Edge> *slist, *plist;
+ // Positions in successors and predecessors lists, respectively.
+    std::vector<Edge>::const_iterator spos, ppos;
+};
+
 extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
 {
     /*
@@ -372,14 +390,73 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
     BasicBlock *pred = (BasicBlock *) n1;
     BasicBlock *succ = (BasicBlock *) n2;
 
+    static KFG_edge_lookup_state state = { NULL, NULL };
+
+ // See if the current state saves the correct position in the correct list.
+    if (state.slist == &pred->successors)
+    {
+        if (state.spos != pred->successors.end() && state.spos->first == succ)
+        {
+         // Cache hit: Return the type, bump the position.
+            KFG_EDGE_TYPE type = state.spos->second;
+            state.spos++;
+            return type;
+        }
+        else
+        {
+         // Hit the correct successor list, but not the correct position;
+         // try a linear search.
+            std::vector<Edge>::const_iterator i;
+            std::vector<Edge>::const_iterator end = state.slist->end();
+            for (i = state.slist->begin(); i != end; ++i)
+            {
+                if (i->first == succ)
+                {
+                    state.slist = &pred->successors;
+                    state.spos = i + 1;
+                    return i->second;
+                }
+            }
+        }
+    }
+    else if (state.plist == &succ->predecessors)
+    {
+        if (state.ppos != succ->predecessors.end() && state.ppos->first == pred)
+        {
+         // Cache hit: Return the type, bump the position.
+            KFG_EDGE_TYPE type = state.ppos->second;
+            state.ppos++;
+            return type;
+        }
+    }
+
+ // If we got here, the cached position was wrong in some way.
     std::vector<Edge>::const_iterator i;
-    for (i = pred->successors.begin(); i != pred->successors.end(); ++i)
-        if (i->first == succ)
+    std::vector<Edge>::const_iterator end = succ->predecessors.end();
+    for (i = succ->predecessors.begin(); i != end; ++i)
+    {
+        if (i->first == pred)
+        {
+            state.plist = &succ->predecessors;
+            state.ppos = i + 1;
+
+         // Save a pointer to the successor list, even without determining
+         // the correct position; hopefully, we won't have to search this
+         // list too many times.
+            if (state.slist != &pred->successors)
+            {
+                state.slist = &pred->successors;
+                state.spos = state.slist->begin();
+            }
+
             return i->second;
+        }
+    }
 
     /* no match found, "runtime error" */
     std::cerr << "ERROR: there is no edge from node " << n1
         << " to node " << n2 << std::endl;
+    std::abort();
     return 42;
 }
 
@@ -391,10 +468,16 @@ extern "C" int kfg_which_in_edges(KFG_NODE node)
      */
     BasicBlock *block = (BasicBlock *) node;
 
+ // GB (2008-05-26): Once this bitmask has been computed, cache the result
+ // inside the node.
+    if (block->in_edge_mask != -1)
+        return block->in_edge_mask;
+
     int mask = 0;
     std::vector<Edge>::const_iterator i;
     for (i = block->predecessors.begin(); i != block->predecessors.end(); ++i)
         mask |= (1U << i->second);
+    block->in_edge_mask = mask;
     return mask;
 }
 
@@ -405,10 +488,16 @@ extern "C" int kfg_which_out_edges(KFG_NODE node)
      */
     BasicBlock *block = (BasicBlock *) node;
 
+ // GB (2008-05-26): Once this bitmask has been computed, cache the result
+ // inside the node.
+    if (block->out_edge_mask != -1)
+        return block->out_edge_mask;
+
     int mask = 0;
     std::vector<Edge>::const_iterator i;
     for (i = block->successors.begin(); i != block->successors.end(); ++i)
         mask |= (1U << i->second);
+    block->out_edge_mask = mask;
     return mask;
 }
 

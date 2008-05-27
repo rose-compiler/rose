@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.22 2008-05-26 09:00:33 gergo Exp $
+// $Id: cfg_support.h,v 1.23 2008-05-27 09:19:45 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -138,7 +138,8 @@ class BasicBlock
 {
 public:
     BasicBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_)
-        : id(id_), node_type(type_), procnum(procnum_), reachable(true)
+        : id(id_), node_type(type_), procnum(procnum_), reachable(true),
+          in_edge_mask(-1), out_edge_mask(-1)
     {
     }
 
@@ -150,6 +151,8 @@ public:
     std::vector<Edge> predecessors;
  // GB (2008-03-10): Reachability flag, used for cleaning up the CFG.
     bool reachable;
+ // GB (2008-05-26): Store neighbor masks once computed.
+    int in_edge_mask, out_edge_mask;
 
     virtual ~BasicBlock();
 };
