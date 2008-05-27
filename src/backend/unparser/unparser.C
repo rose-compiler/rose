@@ -8,11 +8,6 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-#include "objdumpToRoseBinaryAst.h"
-#include "RoseBin_unparse.h"
-#endif
-
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -279,8 +274,6 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
              {
                if (file->get_binary_only() == true) 
                   {
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-
                  // file->display("file: binary unparse");
 
                  // string outputFileName = "unparse.s";
@@ -289,13 +282,7 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                     SgAsmFile* astFile = file->get_binaryFile();
                     ROSE_ASSERT(astFile != NULL);
 
-                    RoseBin_unparse unparser; // = RoseBin_support::getUnparseVisitor();
-                    unparser.init ( astFile->get_global_block(), const_cast<char*>(outputFileName.c_str()) );
-                    unparser.unparse();
-#else
-                    printf ("Error: ROSE not configured to handle binaries: see configure options! \n");
-                    ROSE_ASSERT(false);
-#endif
+                    unparseAsmStatementToFile(outputFileName, astFile->get_global_block());
                   }
                  else
                   {

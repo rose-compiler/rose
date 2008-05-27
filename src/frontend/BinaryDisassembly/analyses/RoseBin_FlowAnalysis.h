@@ -56,17 +56,16 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   typedef std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs_type;
   bin_funcs_type bin_funcs;
 
-  // link to the unparser
-  RoseBin_unparse_visitor* unparser;
-
   // vector of graphs
   rose_hash::hash_map <std::string, SgDirectedGraph*> graphs;
 
   static bool initialized;
 
+  VirtualBinCFG::AuxiliaryInformation* info;
+
   void initFunctionList(SgAsmNode* global);
   void process_jumps();
-  SgAsmInstruction* process_jumps_get_target(SgAsmx86ControlTransferInstruction* inst);
+  SgAsmInstruction* process_jumps_get_target(SgAsmx86Instruction* inst);
   void resolveFunctions(SgAsmNode* global);
   SgAsmInstruction* resolveFunction(SgAsmInstruction* inst, bool hasStopCondition);
   void convertBlocksToFunctions(SgAsmNode* globalNode);
@@ -79,11 +78,10 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
  public:
   //  RoseBin* roseBin;
 
-
-  RoseBin_FlowAnalysis(SgAsmNode* global) {
+  RoseBin_FlowAnalysis(SgAsmNode* global, VirtualBinCFG::AuxiliaryInformation* cfgInfo) {
+    info = cfgInfo;
     nrNodes=0;
     nrEdges=0;
-    unparser = RoseBin_support::getUnparseVisitor();
     db = RoseBin_support::getDataBaseSupport();
     RoseBin_support::setDebugMode(true);    
     RoseBin_support::setDebugModeMin(true);    
@@ -103,7 +101,6 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     }
     //    deftable_instr.clear();
     //usetable_instr.clear();
-
   }
   virtual ~RoseBin_FlowAnalysis() {}
 

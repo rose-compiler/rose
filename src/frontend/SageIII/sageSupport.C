@@ -2,12 +2,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-#include "objdumpToRoseBinaryAst.h"
-#include "RoseBin_unparse.h"
-#define USE_NEW_X86_DISASSEMBLER
-#endif
-
 using namespace std;
 
 // This needs to be moved somewhere else
@@ -776,7 +770,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( CommandlineProcessing::isOption(argv,"-rose:","(binary|binary_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf ("Fortran only mode ON \n");
+               printf ("Binary only mode ON \n");
           set_binary_only(true);
           if (get_sourceFileUsesBinaryFileExtension() == false)
              {
@@ -1521,10 +1515,9 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
         }
    }
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
        // Detect if this is a binary (executable) file!
 
-#include "elf.h"
+#include "freebsd_elf_combined.h"
 
 // DQ (2/11/2008): Added support for reading binaries.
 // Note that there is a redundant use of the SelectObject name so I have placed the Wine header files into a namespace.
@@ -2332,6 +2325,7 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
      ROSE_ASSERT(isA32bitElfHeader == false || isA64bitElfHeader == false);
 
      ROSE_ASSERT(EI_DATA == 5);
+     bool isBigEndian = false; // For reading header fields
      switch (magic_number_array[EI_DATA])
         {
           case ELFDATANONE:
@@ -2344,12 +2338,14 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
             // little endian 
             // printf ("Data encoding is LITTLE endian \n");
                asmFile->set_data_encoding(SgAsmFile::e_data_encoding_least_significant_byte);
+               isBigEndian = false;
                break;
 
           case ELFDATA2MSB:
             // big endian 
             // printf ("Data encoding is BIG endian \n");
                asmFile->set_data_encoding(SgAsmFile::e_data_encoding_most_significant_byte);
+               isBigEndian = true;
                break;
 
           default:
@@ -2382,17 +2378,8 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
 
   // Now set the object file type
      SgAsmFile::elf_object_file_type_enum object_file_kind = SgAsmFile::e_file_type_error;
-     int object_file_type = 0;
-     if (isA32bitElfHeader == true)
-        {
-          ROSE_ASSERT(isA64bitElfHeader == false);
-          object_file_type = elf_32_bit_header.e_type;
-        }
-       else
-        {
-          ROSE_ASSERT(isA64bitElfHeader == true);
-          object_file_type = elf_64_bit_header.e_type;
-        }
+     // This field is the same for 32 vs. 64 bits
+     int object_file_type = getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_type);
 
      switch (object_file_type)
         {
@@ -2424,19 +2411,9 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
 
      asmFile->set_object_file_type(object_file_kind);
 
-  // Now set the machine architecture type
+  // Now set the machine architecture type -- same for 32 vs. 64 bit
      SgAsmFile::elf_machine_architecture_enum machine_architecture_kind = SgAsmFile::e_machine_architecture_error;
-     int machine_architecture_type = 0;
-     if (isA32bitElfHeader == true)
-        {
-          ROSE_ASSERT(isA64bitElfHeader == false);
-          machine_architecture_type = elf_32_bit_header.e_machine;
-        }
-       else
-        {
-          ROSE_ASSERT(isA64bitElfHeader == true);
-          machine_architecture_type = elf_64_bit_header.e_machine;
-        }
+     int machine_architecture_type = getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_machine);
 
      switch (machine_architecture_type)
         {
@@ -2531,40 +2508,40 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
         {
           ROSE_ASSERT(isA64bitElfHeader == false);
 
-          asmFile->set_associated_entry_point(elf_32_bit_header.e_entry);
-          asmFile->set_program_header_offset(elf_32_bit_header.e_phoff);
-          asmFile->set_section_header_offset(elf_32_bit_header.e_shoff);
-          asmFile->set_processor_specific_flags(elf_32_bit_header.e_flags);
-          asmFile->set_elf_header_size(elf_32_bit_header.e_ehsize);
-          asmFile->set_program_header_entry_size(elf_32_bit_header.e_phentsize);
-          asmFile->set_number_of_program_headers(elf_32_bit_header.e_phnum);
-          asmFile->set_section_header_entry_size(elf_32_bit_header.e_shentsize);
-          asmFile->set_number_of_section_headers(elf_32_bit_header.e_shnum);
-          asmFile->set_section_header_string_table_index(elf_32_bit_header.e_shstrndx);
+          asmFile->set_associated_entry_point(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_entry));
+          asmFile->set_program_header_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_phoff));
+          asmFile->set_section_header_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_shoff));
+          asmFile->set_processor_specific_flags(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_flags));
+          asmFile->set_elf_header_size(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_ehsize));
+          asmFile->set_program_header_entry_size(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_phentsize));
+          asmFile->set_number_of_program_headers(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_phnum));
+          asmFile->set_section_header_entry_size(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_shentsize));
+          asmFile->set_number_of_section_headers(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_shnum));
+          asmFile->set_section_header_string_table_index(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_shstrndx));
         }
        else
         {
           ROSE_ASSERT(isA64bitElfHeader == true);
 
-          asmFile->set_associated_entry_point(elf_64_bit_header.e_entry);
-          asmFile->set_program_header_offset(elf_64_bit_header.e_phoff);
-          asmFile->set_section_header_offset(elf_64_bit_header.e_shoff);
-          asmFile->set_processor_specific_flags(elf_64_bit_header.e_flags);
-          asmFile->set_elf_header_size(elf_64_bit_header.e_ehsize);
-          asmFile->set_program_header_entry_size(elf_64_bit_header.e_phentsize);
-          asmFile->set_number_of_program_headers(elf_64_bit_header.e_phnum);
-          asmFile->set_section_header_entry_size(elf_64_bit_header.e_shentsize);
-          asmFile->set_number_of_section_headers(elf_64_bit_header.e_shnum);
-          asmFile->set_section_header_string_table_index(elf_64_bit_header.e_shstrndx);
+          asmFile->set_associated_entry_point(getSwitchedEndian64(isBigEndian, elf_64_bit_header.e_entry));
+          asmFile->set_program_header_offset(getSwitchedEndian64(isBigEndian, elf_64_bit_header.e_phoff));
+          asmFile->set_section_header_offset(getSwitchedEndian64(isBigEndian, elf_64_bit_header.e_shoff));
+          asmFile->set_processor_specific_flags(getSwitchedEndian32(isBigEndian, elf_64_bit_header.e_flags));
+          asmFile->set_elf_header_size(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_ehsize));
+          asmFile->set_program_header_entry_size(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_phentsize));
+          asmFile->set_number_of_program_headers(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_phnum));
+          asmFile->set_section_header_entry_size(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_shentsize));
+          asmFile->set_number_of_section_headers(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_shnum));
+          asmFile->set_section_header_string_table_index(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_shstrndx));
         }
 
      if ( SgProject::get_verbose() >= 3 )
         {
-          printf ("asmFile->get_associated_entry_point()            = %lu \n",asmFile->get_associated_entry_point());
-          printf ("asmFile->get_program_header_offset()             = %lu \n",asmFile->get_program_header_offset());
-          printf ("asmFile->get_section_header_offset()             = %lu \n",asmFile->get_section_header_offset());
-          printf ("asmFile->get_processor_specific_flags()          = %lu \n",asmFile->get_processor_specific_flags());
-          printf ("asmFile->get_elf_header_size()                   = %lu \n",asmFile->get_elf_header_size());
+          printf ("asmFile->get_associated_entry_point()            = %lx \n",asmFile->get_associated_entry_point());
+          printf ("asmFile->get_program_header_offset()             = %lx \n",asmFile->get_program_header_offset());
+          printf ("asmFile->get_section_header_offset()             = %lx \n",asmFile->get_section_header_offset());
+          printf ("asmFile->get_processor_specific_flags()          = %lx \n",asmFile->get_processor_specific_flags());
+          printf ("asmFile->get_elf_header_size()                   = %lx \n",asmFile->get_elf_header_size());
           printf ("asmFile->get_program_header_entry_size()         = %lu \n",asmFile->get_program_header_entry_size());
           printf ("asmFile->get_number_of_program_headers()         = %lu \n",asmFile->get_number_of_program_headers());
           printf ("asmFile->get_section_header_entry_size()         = %lu \n",asmFile->get_section_header_entry_size());
@@ -2614,14 +2591,14 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
                     ROSE_ASSERT(false);
                   }
 
-               programHeader->set_type(elf_32_bit_program_header.p_type);
-               programHeader->set_starting_file_offset(elf_32_bit_program_header.p_offset);
-               programHeader->set_starting_virtual_memory_address(elf_32_bit_program_header.p_vaddr);
-               programHeader->set_starting_physical_memory_address(elf_32_bit_program_header.p_paddr);
-               programHeader->set_file_image_size(elf_32_bit_program_header.p_filesz);
-               programHeader->set_memory_image_size(elf_32_bit_program_header.p_memsz);
-               programHeader->set_segment_flags(elf_32_bit_program_header.p_flags);
-               programHeader->set_alignment(elf_32_bit_program_header.p_align);
+               programHeader->set_type(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_type));
+               programHeader->set_starting_file_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_offset));
+               programHeader->set_starting_virtual_memory_address(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_vaddr));
+               programHeader->set_starting_physical_memory_address(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_paddr));
+               programHeader->set_file_image_size(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_filesz));
+               programHeader->set_memory_image_size(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_memsz));
+               programHeader->set_segment_flags(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_flags));
+               programHeader->set_alignment(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_align));
              }
             else
              {
@@ -2634,26 +2611,26 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
                     ROSE_ASSERT(false);
                   }
 
-               programHeader->set_type(elf_64_bit_program_header.p_type);
-               programHeader->set_starting_file_offset(elf_64_bit_program_header.p_offset);
-               programHeader->set_starting_virtual_memory_address(elf_64_bit_program_header.p_vaddr);
-               programHeader->set_starting_physical_memory_address(elf_64_bit_program_header.p_paddr);
-               programHeader->set_file_image_size(elf_64_bit_program_header.p_filesz);
-               programHeader->set_memory_image_size(elf_64_bit_program_header.p_memsz);
-               programHeader->set_segment_flags(elf_64_bit_program_header.p_flags);
-               programHeader->set_alignment(elf_64_bit_program_header.p_align);
+               programHeader->set_type(getSwitchedEndian32(isBigEndian, elf_64_bit_program_header.p_type));
+               programHeader->set_starting_file_offset(getSwitchedEndian32(isBigEndian, elf_64_bit_program_header.p_offset));
+               programHeader->set_starting_virtual_memory_address(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_vaddr));
+               programHeader->set_starting_physical_memory_address(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_paddr));
+               programHeader->set_file_image_size(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_filesz));
+               programHeader->set_memory_image_size(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_memsz));
+               programHeader->set_segment_flags(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_flags));
+               programHeader->set_alignment(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_align));
              }
 
           if ( SgProject::get_verbose() >= 3 )
              {
                printf ("programHeader->get_type() = %lu \n",programHeader->get_type());
-               printf ("programHeader->get_starting_file_offset() = %lu \n",programHeader->get_starting_file_offset());
-               printf ("programHeader->get_starting_virtual_memory_address() = %lu \n",programHeader->get_starting_virtual_memory_address());
-               printf ("programHeader->get_starting_physical_memory_address() = %lu \n",programHeader->get_starting_physical_memory_address());
-               printf ("programHeader->get_file_image_size() = %lu \n",programHeader->get_file_image_size());
-               printf ("programHeader->get_memory_image_size() = %lu \n",programHeader->get_memory_image_size());
+               printf ("programHeader->get_starting_file_offset() = %lx \n",programHeader->get_starting_file_offset());
+               printf ("programHeader->get_starting_virtual_memory_address() = %lx \n",programHeader->get_starting_virtual_memory_address());
+               printf ("programHeader->get_starting_physical_memory_address() = %lx \n",programHeader->get_starting_physical_memory_address());
+               printf ("programHeader->get_file_image_size() = %lx \n",programHeader->get_file_image_size());
+               printf ("programHeader->get_memory_image_size() = %lx \n",programHeader->get_memory_image_size());
                printf ("programHeader->get_segment_flags() = %lu \n",programHeader->get_segment_flags());
-               printf ("programHeader->get_alignment() = %lu \n",programHeader->get_alignment());
+               printf ("programHeader->get_alignment() = %lx \n",programHeader->get_alignment());
              }
         }
 
@@ -2702,16 +2679,16 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
                string name = "not looked-up yet (elf_32_bit_section_header)";
                sectionHeader->set_name(name);
 
-               sectionHeader->set_name_string_index(elf_32_bit_section_header.sh_name);
-               sectionHeader->set_type(elf_32_bit_section_header.sh_type);
-               sectionHeader->set_flags(elf_32_bit_section_header.sh_flags);
-               sectionHeader->set_starting_memory_address(elf_32_bit_section_header.sh_addr);
-               sectionHeader->set_starting_file_offset(elf_32_bit_section_header.sh_offset);
-               sectionHeader->set_size(elf_32_bit_section_header.sh_size);
-               sectionHeader->set_table_index_link(elf_32_bit_section_header.sh_link);
-               sectionHeader->set_info(elf_32_bit_section_header.sh_info);
-               sectionHeader->set_address_alignment(elf_32_bit_section_header.sh_addralign);
-               sectionHeader->set_table_entry_size(elf_32_bit_section_header.sh_entsize);
+               sectionHeader->set_name_string_index(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_name));
+               sectionHeader->set_type(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_type));
+               sectionHeader->set_flags(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_flags));
+               sectionHeader->set_starting_memory_address(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_addr));
+               sectionHeader->set_starting_file_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_offset));
+               sectionHeader->set_size(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_size));
+               sectionHeader->set_table_index_link(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_link));
+               sectionHeader->set_info(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_info));
+               sectionHeader->set_address_alignment(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_addralign));
+               sectionHeader->set_table_entry_size(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_entsize));
              }
             else
              {
@@ -2727,15 +2704,15 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
                string name = "not looked-up yet (elf_64_bit_section_header)";
                sectionHeader->set_name(name);
 
-               sectionHeader->set_type(elf_64_bit_section_header.sh_type);
-               sectionHeader->set_flags(elf_64_bit_section_header.sh_flags);
-               sectionHeader->set_starting_memory_address(elf_64_bit_section_header.sh_addr);
-               sectionHeader->set_starting_file_offset(elf_64_bit_section_header.sh_offset);
-               sectionHeader->set_size(elf_64_bit_section_header.sh_size);
-               sectionHeader->set_table_index_link(elf_64_bit_section_header.sh_link);
-               sectionHeader->set_info(elf_64_bit_section_header.sh_info);
-               sectionHeader->set_address_alignment(elf_64_bit_section_header.sh_addralign);
-               sectionHeader->set_table_entry_size(elf_64_bit_section_header.sh_entsize);
+               sectionHeader->set_type(getSwitchedEndian32(isBigEndian, elf_64_bit_section_header.sh_type));
+               sectionHeader->set_flags(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_flags));
+               sectionHeader->set_starting_memory_address(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_addr));
+               sectionHeader->set_starting_file_offset(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_offset));
+               sectionHeader->set_size(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_size));
+               sectionHeader->set_table_index_link(getSwitchedEndian32(isBigEndian, elf_64_bit_section_header.sh_link));
+               sectionHeader->set_info(getSwitchedEndian32(isBigEndian, elf_64_bit_section_header.sh_info));
+               sectionHeader->set_address_alignment(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_addralign));
+               sectionHeader->set_table_entry_size(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_entsize));
              }
 
           if ( SgProject::get_verbose() >= 3 )
@@ -2744,12 +2721,12 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
                printf ("sectionHeader->get_name_string_index()       = %lu \n",sectionHeader->get_name_string_index());
                printf ("sectionHeader->get_type()                    = %lu \n",sectionHeader->get_type());
                printf ("sectionHeader->get_flags()                   = %lu \n",sectionHeader->get_flags());
-               printf ("sectionHeader->get_starting_memory_address() = %lu \n",sectionHeader->get_starting_memory_address());
-               printf ("sectionHeader->get_starting_file_offset()    = %lu \n",sectionHeader->get_starting_file_offset());
-               printf ("sectionHeader->get_size()                    = %lu \n",sectionHeader->get_size());
+               printf ("sectionHeader->get_starting_memory_address() = %lX \n",sectionHeader->get_starting_memory_address());
+               printf ("sectionHeader->get_starting_file_offset()    = %lX \n",sectionHeader->get_starting_file_offset());
+               printf ("sectionHeader->get_size()                    = %lX \n",sectionHeader->get_size());
                printf ("sectionHeader->get_table_index_link()        = %lu \n",sectionHeader->get_table_index_link());
                printf ("sectionHeader->get_info()                    = %lu \n",sectionHeader->get_info());
-               printf ("sectionHeader->get_address_alignment()       = %lu \n",sectionHeader->get_address_alignment());
+               printf ("sectionHeader->get_address_alignment()       = %lX \n",sectionHeader->get_address_alignment());
                printf ("sectionHeader->get_table_entry_size()        = %lu \n",sectionHeader->get_table_entry_size());
              }
         }
@@ -2769,8 +2746,6 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
   // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
    }
-
-#endif
 
 void
 SgFile::setupSourceFilename ( const vector<string>& argv )
@@ -2924,12 +2899,8 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                        {
                       // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
                       // Detect if this is a binary (executable) file!
                          bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-#else
-                         bool isBinaryExecutable = false;
-#endif
 
                          if (isBinaryExecutable == true)
                             {
@@ -4133,7 +4104,6 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
             // bool foundSourceFile = false;
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
             // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
                if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
                   {
@@ -4142,7 +4112,6 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
                   }
-#endif
             // PC (4/27/2006): Support for custom source file suffixes
             // if ( isSourceFilename(*i) )
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )
@@ -4638,7 +4607,6 @@ SgFile::callFrontEnd ()
                   {
                     if (get_binary_only() == true)
                        {
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
                          string executableFileName = this->get_sourceFileNameWithPath();
 
                          if ( get_verbose() > 0 )
@@ -4687,20 +4655,24 @@ SgFile::callFrontEnd ()
                          ROSE_ASSERT(asmFile->get_binary_class_type()    == SgAsmFile::e_class_32);
 #endif
 
-                      // This is an object required for the unparsing of instructions, we 
-                      // built it now so that it can always be accessed later.
-                         RoseBin_unparse* unparser = new RoseBin_unparse();
-                         ROSE_ASSERT(unparser != NULL);
-                      // RoseBin_support::setUnparseVisitor(unparser->getVisitor());
-
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());
                          ROSE_ASSERT(project != NULL);
-#ifdef USE_NEW_X86_DISASSEMBLER
-                         X86Disassembler::disassembleFile(asmFile);
-#else
-                         objdumpToRoseBinaryAst(executableFileName,asmFile,project);
-#endif
+                         switch (asmFile->get_machine_architecture()) {
+                           case SgAsmFile::e_machine_architecture_Intel_80386:
+                           case SgAsmFile::e_machine_architecture_AMD_x86_64_architecture:
+                             X86Disassembler::disassembleFile(asmFile);
+                             break;
+
+                           case SgAsmFile::e_machine_architecture_ARM:
+                             ArmDisassembler::disassembleFile(asmFile);
+                             break;
+
+                           default: {
+                             cerr << "Cannot handle files with this architecture -- not disassembling" << endl;
+                             asmFile->set_global_block(new SgAsmBlock()); // To prevent crashes
+                           }
+                         }
 
                       // Attach the SgAsmFile to the SgFile
                          this->set_binaryFile(asmFile);
@@ -4709,12 +4681,14 @@ SgFile::callFrontEnd ()
                       // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
                       // addresses are unparsed (see Jeremiah for details).
                       // Skip running gnu assemble on the output since we include text that would make this a problem.
-                         project->skipfinalCompileStep(true);
+                         if (get_verbose() > 1) {
+                           printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
+                         }
+                         this->set_skipfinalCompileStep(true);
 
                       // This is now done below in the Secondary file processing phase.
                       // Generate the ELF executable format structure into the AST
                       // generateBinaryExecutableFileInformation(executableFileName,asmFile);
-#endif
                        }
                       else
                        {
@@ -5038,7 +5012,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
             // printf ("Skipping test for absolute path removing the source filename as it appears in the source file name list file = % \n",i->c_str());
             // argcArgvList.remove(*i);
-               argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+            // The if here is to skip binaries that don't appear on the command line for those cases when a single project has both binaries and source code
+               if (find(argcArgvList.begin(),argcArgvList.end(),*i) != argcArgvList.end()) {
+                 argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+               }
 #endif
              }
         }

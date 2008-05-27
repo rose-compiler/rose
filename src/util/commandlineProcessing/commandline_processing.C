@@ -454,14 +454,12 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
             // bool foundSourceFile = false;
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
                if ( isSourceFilename(*i) == false && isExecutableFilename(*i) == true )
                   {
                  // printf ("This is an executable file: *i = %s \n",(*i).c_str());
                  // executableFileList.push_back(*i);
                     sourceFileList.push_back(*i);
                   }
-#endif
             // PC (4/27/2006): Support for custom source file suffixes
             // if ( isSourceFilename(*i) )
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )

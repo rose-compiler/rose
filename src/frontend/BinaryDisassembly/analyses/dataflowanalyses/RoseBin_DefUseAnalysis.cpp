@@ -13,7 +13,7 @@ using namespace std;
  *  Replace an element in the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::replaceElement(SgDirectedGraphNode* sgNode,
-					    SgAsmRegisterReferenceExpression::x86_register_enum initName) {
+					    std::pair<X86RegisterClass, int> initName) {
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
   deftable[sgNode].erase(deftable[sgNode].lower_bound(initName), deftable[sgNode].upper_bound(initName));
@@ -24,7 +24,7 @@ void RoseBin_DefUseAnalysis::replaceElement(SgDirectedGraphNode* sgNode,
 /**********************************************************
  *  Search for the value for a certain key in the multimap
  *********************************************************/
-bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, SgAsmRegisterReferenceExpression::x86_register_enum initName) {
+bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, std::pair<X86RegisterClass, int> initName) {
   multitype::const_iterator it1, it2;
   pair <multitype::const_iterator, multitype::const_iterator> iter = multi->equal_range(initName);
   it1 = iter.first;
@@ -41,7 +41,7 @@ bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, SgAsmRegisterRe
  *********************************************************/
 bool 
 RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, 
-				    SgAsmRegisterReferenceExpression::x86_register_enum initName,
+				    std::pair<X86RegisterClass, int> initName,
 					 SgDirectedGraphNode* val) {
   multitype::const_iterator it1, it2;
   pair <multitype::const_iterator, multitype::const_iterator> iter = multi->equal_range(initName);
@@ -99,13 +99,13 @@ void RoseBin_DefUseAnalysis::printAnyMap(tabletype* tabl) {
  *********************************************************/
 void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
   for (multitype::const_iterator j = multi->begin(); j != multi->end(); ++j) {
-    SgAsmRegisterReferenceExpression::x86_register_enum sgInitMM = (*j).first;
+    std::pair<X86RegisterClass, int> sgInitMM = (*j).first;
     SgDirectedGraphNode* sgNodeMM = (*j).second;
 
-    string registerName = unparser->resolveRegister(sgInitMM, 
-						    SgAsmRegisterReferenceExpression::qword);
+    string registerName = unparseX86Register(sgInitMM.first, 
+                                             sgInitMM.second,
+                                             x86_regpos_qword);
 
-    ROSE_ASSERT(sgInitMM);
     ROSE_ASSERT(sgNodeMM);
     cout << "  ..  initName:" << registerName << " ( " <<  
       // RoseBin_support::ToString(isSgAsmInstruction(sgInitMM->get_SgNode())->get_address()) << 
@@ -147,7 +147,7 @@ RoseBin_DefUseAnalysis::getOtherInNode(vector <SgDirectedGraphNode*>& otherNodes
 bool RoseBin_DefUseAnalysis::checkElementsForEquality(const multitype* t1, const multitype* t2) {
   // if every element of t2 is contained in t1, then no change
   // occured in the map
-  typedef set<pair<SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> > st;
+  typedef set<pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > st;
   st s1(t1->begin(), t1->end());
   st s2(t2->begin(), t2->end());
   assert (s1.size() == t1->size());
@@ -200,10 +200,10 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* b
 
       const multitype& multiA  = (*tabl)[before];
       const multitype& multiB  = (*tabl)[other];
-      std::set<std::pair<SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> > s_before(multiA.begin(), multiA.end());
+      std::set<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > s_before(multiA.begin(), multiA.end());
       // ROSE_ASSERT (s_before.size() == (*tabl)[before].size());
 #if 0
-      std::set<std::pair<SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> > s_other((*tabl)[other].begin(), (*tabl)[other].end());
+      std::set<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > s_other((*tabl)[other].begin(), (*tabl)[other].end());
       ROSE_ASSERT (s_other.size() == (*tabl)[other].size());
 #endif
       
@@ -215,7 +215,7 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* b
 #if 0
       set_union(multiA.begin(), multiA.end(), multiB.begin(), multiB.end(),
 		inserter(multiC, multiC.end()),
-		std::less<std::pair<SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> >() );
+		std::less<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> >() );
 #endif
       (*tabl)[sgNode].swap(multiC);
       //(*tabl)[sgNode]=multiC;
@@ -229,7 +229,7 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* b
       }
 
 #if 0
-  std::set<std::pair<SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> > s((*tabl)[sgNode].begin(), (*tabl)[sgNode].end());
+  std::set<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > s((*tabl)[sgNode].begin(), (*tabl)[sgNode].end());
   ROSE_ASSERT (s.size() == (*tabl)[sgNode].size());
 #endif
 
@@ -259,7 +259,7 @@ bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgDirectedGraphN
  *  Add an element to the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::addDefElement(SgDirectedGraphNode* sgNode,
-					   SgAsmRegisterReferenceExpression::x86_register_enum initName,
+					   std::pair<X86RegisterClass, int> initName,
 					   SgDirectedGraphNode* defNode) {
   addAnyElement(&deftable, sgNode, initName, defNode);
 }
@@ -268,7 +268,7 @@ void RoseBin_DefUseAnalysis::addDefElement(SgDirectedGraphNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::addUseElement(SgDirectedGraphNode* sgNode,
-					   SgAsmRegisterReferenceExpression::x86_register_enum initName,
+					   std::pair<X86RegisterClass, int> initName,
 					   SgDirectedGraphNode* defNode) {
   addAnyElement( &usetable, sgNode, initName, defNode);
 }
@@ -277,7 +277,7 @@ void RoseBin_DefUseAnalysis::addUseElement(SgDirectedGraphNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void RoseBin_DefUseAnalysis::addAnyElement(tabletype* tabl, SgDirectedGraphNode* sgNode,
-					   SgAsmRegisterReferenceExpression::x86_register_enum initName,
+					   std::pair<X86RegisterClass, int> initName,
 					   SgDirectedGraphNode* defNode) {
   bool contained = searchMulti(&(*tabl)[sgNode], initName, defNode);
   if (!contained)
@@ -295,8 +295,8 @@ RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgDirectedGraphNode*
     mm = getUseMultiMapFor(node);
   multitype::iterator it;
   for (it=mm.begin(); it!=mm.end();++it) {
-    string registerName = unparser->resolveRegister(it->first, 
-						    SgAsmRegisterReferenceExpression::qword);
+    string registerName = unparseX86Register(it->first.first, it->first.second,
+                                             x86_regpos_qword);
     SgDirectedGraphNode* n = it->second;
     ROSE_ASSERT(n);
     SgAsmInstruction* inst = isSgAsmInstruction(n->get_SgNode());
@@ -410,7 +410,6 @@ bool
 RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 			    SgDirectedGraphNode* nodeBefore ) {
   // check known function calls and resolve variables
-  ROSE_ASSERT(unparser);
   ROSE_ASSERT(node);
   bool hasChanged=false;
 
@@ -418,10 +417,10 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
   if (RoseBin_support::DEBUG_MODE()) 
     cout << " .. running DefUseAnalysis on Node : " << name << endl;
-  SgAsmInstruction* asmNode = isSgAsmInstruction(node->get_SgNode());
+  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
   if (asmNode) {
     // find out if instruction is a definition (altering instruction)
-    vector<SgAsmRegisterReferenceExpression::x86_register_enum> codes;
+    vector<std::pair<X86RegisterClass, int> > codes;
     bool alteringManyInstructions = altersMultipleRegisters(codes, asmNode);
     bool alteringInstruction = false;
     bool definition=false;
@@ -429,10 +428,10 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     // check if right hand side has use of register
     bool isMemoryReferenceR = false;
-    SgAsmRegisterReferenceExpression::x86_register_enum codeR = 
+    std::pair<X86RegisterClass, int> codeR = 
       check_isRegister(node, asmNode, true, isMemoryReferenceR); // true == right hand side
     if (!isMemoryReferenceR && 
-	codeR != SgAsmRegisterReferenceExpression::undefined_general_register) {
+	codeR.first != x86_regclass_unknown) {
       use = true;
     }
 
@@ -443,7 +442,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     if (alteringInstruction) {
       bool isMemoryReference = false;
-      SgAsmRegisterReferenceExpression::x86_register_enum code = 
+      std::pair<X86RegisterClass, int> code = 
 	check_isRegister(node, asmNode, false, isMemoryReference); // false == left hand side
       
       // make sure that there is a register on the left hand side
@@ -454,11 +453,11 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	node->append_properties(RoseBin_Def::dfa_unresolved_func,"");
 	nrOfMemoryWrites++;
       } else 
-	if (code != SgAsmRegisterReferenceExpression::undefined_general_register) {
+	if (code.first != x86_regclass_unknown) {
 	  // we have found a write to a register
 	  // find out the registerName
-	  string registerName = unparser->resolveRegister(code, 
-							  SgAsmRegisterReferenceExpression::qword);
+	  string registerName = unparseX86Register(code.first, code.second, 
+						   x86_regpos_qword);
 	  // for visualization add property that this
 	  // node is accessing and changing a register
 	  if (RoseBin_support::DEBUG_MODE()) 
@@ -479,7 +478,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
       // iterator through each register - if more than one is being changed
       while (codes.size()>0) {
-	SgAsmRegisterReferenceExpression::x86_register_enum code = codes.back();
+	std::pair<X86RegisterClass, int> code = codes.back();
 	codes.pop_back();
 
 	bool isRegisterContained = false;
@@ -509,8 +508,8 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	  // otherwise default : replace that element
 	  if (condInst) {
 	    if (RoseBin_support::DEBUG_MODE()) {
-	      string regName = unparser->resolveRegister(code,SgAsmRegisterReferenceExpression::qword);
-	      cout << " conditional isnt : " << unparser->unparseInstruction(asmNode)<<
+	      string regName = unparseX86Register(code.first, code.second, x86_regpos_qword);
+	      cout << " conditional isnt : " << unparseInstruction(asmNode)<<
 		"   regName " << regName << "   exactnode contained : " << RoseBin_support::resBool(isExactNodeContained) << endl;
 	    }
 	    addDefElement(node, code, node);
@@ -529,8 +528,8 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     if (use) {
       // we have a usage of a register
-      string registerNameR = unparser->resolveRegister(codeR, 
-						      SgAsmRegisterReferenceExpression::qword);
+      string registerNameR = unparseX86Register(codeR.first, codeR.second, 
+						x86_regpos_qword);
       if (RoseBin_support::DEBUG_MODE()) 
 	cout << ",,,Found usage of register: " << registerNameR << endl;
 

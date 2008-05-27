@@ -22,7 +22,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_builddir) \
 
 # Default link flags for executables
 ROSEHPCT_LIBS = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
-                $(ROSE_LIBS) -lrt
+                $(ROSE_LIBS) $(RT_LIBS)
 LDADD = $(ROSEHPCT_DEP_LIBS)
 
 if ROSE_BUILD_ROSEHPCT

@@ -324,7 +324,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     //string type = node->get_type();
     for (; prop!=node_p.end(); ++prop) {
       int addr = prop->first;
-      // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
+      //cerr << " dot : property for addr : " << addr << " and node " << hex_address << " is " << prop->second << endl;
       if (addr==RoseBin_Def::name)
 	name = prop->second;
       else if (addr==RoseBin_Def::eval)
@@ -383,31 +383,28 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     if (name_parent!=recursiveFunctionName)
       continue;
 
-    SgAsmx86ControlTransferInstruction* control = isSgAsmx86ControlTransferInstruction(internal);
+    SgAsmx86Instruction* inst = isSgAsmx86Instruction(internal);
 
-    if (bin_inst) {
-      type += " " + bin_inst->class_name();
+    if (inst) {
+      type += " " + toString(inst->get_kind());
     }
-    SgAsmx86Call* call = isSgAsmx86Call(control);
-    SgAsmx86Jmp* jmp = isSgAsmx86Jmp(control);
-    SgAsmx86Ret* ret = isSgAsmx86Ret(control);
 
     string add = "";
-    if (call || ret ) {
+    if (inst->get_kind() == x86_call || inst->get_kind() == x86_ret ) {
       if (nodest_call)
       	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Blue\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (error)
       	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Blue\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else 
 	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
-    } else if (jmp) {
+    } else if (inst->get_kind() == x86_jmp) {
       if (nodest_jmp)
 	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
     } else
-      if (control) {
-	if (isSgAsmx86Int(control))
+      if (x86InstructionIsControlTransfer(inst)) {
+	if (inst->get_kind() == x86_int)
 	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
 	else
 	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -523,30 +520,33 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
     }
 
     string output = "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + edgeLabel  + "\"" + "];\n";  
-    SgAsmx86ControlTransferInstruction* contrl = isSgAsmx86ControlTransferInstruction(source->get_SgNode());
+    SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
     if (contrl) {
-      // the source is a control transfer function
-      SgAsmx86Call* call = isSgAsmx86Call(contrl);
-      SgAsmx86Ret* ret = isSgAsmx86Ret(contrl);
-      SgAsmx86Jmp* jmp = isSgAsmx86Jmp(contrl);
-
       // we use either dest or dest_list
       // dest is used for single destinations during cfg run
       // dest_list is used for a static cfg image
-      SgAsmInstruction* dest = contrl->get_destination();
+      vector<VirtualBinCFG::CFGEdge> outEdges = contrl->cfgBinOutEdges(info);
+      if (contrl->get_kind() == x86_call || isAsmUnconditionalBranch(contrl)) {
+	SgAsmInstruction* next = info->getInstructionAtAddress(contrl->get_address() + contrl->get_raw_bytes().size());
+	if (next) {
+	  //	  outEdges.push_back(VirtualBinCFG::CFGEdge(VirtualBinCFG::CFGNode(contrl, info), VirtualBinCFG::CFGNode(next, info), info));
+	}
+      }
+      SgAsmInstruction* dest = outEdges.empty() ? NULL : outEdges.front().target().getNode();
+      if (!x86InstructionIsControlTransfer(contrl) || contrl->get_kind() == x86_ret) dest = NULL;
       bool dest_list_empty = true;
-      if (ret)
-	dest_list_empty = ret->get_dest().empty();
+      if (contrl->get_kind() == x86_ret)
+	dest_list_empty = outEdges.empty();
 
       SgAsmInstruction* nextNode = isSgAsmInstruction(target->get_SgNode());
       ROSE_ASSERT(nextNode);
       if (dest) {
 	string add = "";
 	string type = "jmp_if";
-	if (call || ret) {
+	if (contrl->get_kind() == x86_call || contrl->get_kind() == x86_ret) {
 	  add= ",color=\"Red\",  style=\"dashed\"";
 	  type = "call";
-	} else if (jmp) {
+	} else if (contrl->get_kind() == x86_jmp) {
 	  add= ",color=\"Red\",  style=\"dashed\"";
 	  type = "jmp";
 	} else 
@@ -558,13 +558,13 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	// the edge
 	else 
 	  if (forward_analysis && 
-	      (isSgAsmx86Call(contrl) || isSgAsmx86Jmp(contrl))) {
+	      (contrl->get_kind() == x86_call || contrl->get_kind() == x86_jmp)) {
 	    add = ",color=\"Yellow\",  style=\"solid\"";
 	    type="";
 	    output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type  + "\\n"+ edgeLabel+"\""  + add +  "];\n"; 
 	  }
       } else 
-	if (ret ) { //&& dest_list_empty) {
+	if (contrl->get_kind() == x86_ret ) { //&& dest_list_empty) {
 	  // in case of a multiple return
 	  string add= ",color=\"Blue\",  style=\"dashed\"";
 	  string type = "ret";
@@ -579,13 +579,13 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
     }
 
     if (!(forward_analysis)) {
-      SgAsmInstruction* thisNode = isSgAsmInstruction(source->get_SgNode());      
-      SgAsmInstruction* nextNode = isSgAsmInstruction(target->get_SgNode());
+      SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(source->get_SgNode());      
+      SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(target->get_SgNode());
       if (thisNode && nextNode) {
 	SgAsmFunctionDeclaration* f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
 	SgAsmFunctionDeclaration* f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
 	if (f_1==f_2)
-	  if (isSgAsmx86Call(nextNode) || isSgAsmx86Jmp(nextNode)) {
+	  if (nextNode->get_kind() == x86_call || nextNode->get_kind() == x86_jmp) {
 	    string add = ",color=\"Green\",  style=\"invis\"";
 	    string type="";
 	    output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type +"\\n"+ edgeLabel + "\""  + add +  "];\n"; 

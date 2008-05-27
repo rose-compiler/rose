@@ -2,8 +2,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST = buffer2.bin
 
-if ROSE_USE_BINARY_ANALYSIS_SUPPORT
-
 SUBDIRS = analyses graphanalyses
 
 INCLUDES = $(ROSE_INCLUDES) -I$(builddir)
@@ -49,5 +47,3 @@ binCompassMain.o: binCompassMain.cpp
 clean:
 	rm -f *.dot *.gml *.lo *.la *.s *.o
 	rm -f analyses/*.la analyses/*.lo analyses/*.o graphanalyses/*.o graphanalyses/*.lo
-
-endif

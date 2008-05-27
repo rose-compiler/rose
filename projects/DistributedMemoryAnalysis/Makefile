@@ -4,7 +4,7 @@ ROSEDIR = /home/panas2/development/ROSE-64bit/install-gcc4-svn
 
 INCLUDES = -I$(ROSEDIR)/include/ -I.
 LPATH = -L$(ROSEDIR)/lib/ -Wl,-rpath $(ROSEDIR)/lib/
-LIBS = -lrose -lrt -lfl
+LIBS = -lrose $(RT_LIBS) 
 
 CXX = mpicxx
 CXXFLAGS = -Wall -g $(INCLUDES)

@@ -906,20 +906,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesBinaryFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-// DQ (10/21/2007): Added support for optional use of binary support in ROSE.
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
   // DQ (10/13/2007): Add the binary file to the SgFile IR node so that we can hold both the source
   // code AST and the binary AST together.  This also permits the binary AST to be handled similarly
   // the the source code AST (for traversals, file I/O, etc.).
      File.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#else
-  // DQ (10/21/2007): Let there be a pointer here so that the initialization code will work, but
-  // we can not reference a SgAsmFile IR node (and I want to avoid forward class declarations 
-  // that have not matching definitions).
-     File.setDataPrototype         ( "SgFile*", "binaryFile", "= NULL",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
 #if OLD_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 

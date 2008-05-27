@@ -399,7 +399,7 @@ compilation using a single include directory and the specification of only two l
 as in:
 % {\footnotesize
 \begin{verbatim}
-     g++ -I{\em\<install dir\>/include} -o executable executable.C -L{\em\<install dir\>/lib} -lrose -ledg -lm -lfl -lrt
+     g++ -I{\em\<install dir\>/include} -o executable executable.C -L{\em\<install dir\>/lib} -lrose -ledg -lm $(RT_LIBS)
 \end{verbatim}
 % }
 See the example makefile in \\

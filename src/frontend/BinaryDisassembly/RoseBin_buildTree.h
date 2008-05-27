@@ -26,12 +26,12 @@ class RoseBin_buildTree  {
    * return information about the register
    ****************************************************/
   void resolveRegister(std::string symbol, 
-		       SgAsmRegisterReferenceExpression::x86_register_enum *registerSg,
-		       SgAsmRegisterReferenceExpression::x86_position_in_register_enum *regSize);
+                       X86RegisterClass* regClass,
+		       int *registerNum,
+		       X86PositionInRegister *regSize);
 
   void resolveRegister(std::string symbol, 
-		       SgAsmRegisterReferenceExpression::arm_register_enum *registerSg,
-		       SgAsmRegisterReferenceExpression::arm_position_in_register_enum *regSize);
+		       SgAsmArmRegisterReferenceExpression::arm_register_enum *registerSg);
 
  public:
   RoseBin_buildTree() {};

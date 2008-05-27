@@ -1,13 +1,13 @@
 #define n 100
-double a[100];
-double b[100];
-double c[100];
-double d[100];
-double e[100];
-double tot[100][100];
-double dux[100][100][100];
-double duy[100][100][100];
-double duz[100][100][100];
+double a[100UL];
+double b[100UL];
+double c[100UL];
+double d[100UL];
+double e[100UL];
+double tot[100UL][100UL];
+double dux[100UL][100UL][100UL];
+double duy[100UL][100UL][100UL];
+double duz[100UL][100UL][100UL];
 
 int main()
 {

@@ -6,21 +6,19 @@ mov -> Mov
 cmove cmovz -> CMove
 cmovne cmovnz -> CMovne
 cmova cmovnbe -> CMova
-cmovae cmovnb -> CMovae
-cmovb cmovnae -> CMovb
+cmovae cmovnb cmovnc -> CMovae
+cmovb cmovnae cmovc -> CMovb
 cmovbe cmovna -> CMovbe
 cmovg cmovnle -> CMovg
 cmovge cmovnl -> CMovge
 cmovl cmovnge -> CMovl
 cmovle cmovng -> CMovle
-cmovc -> CMovc
-cmovnc -> CMovnc
 cmovo -> CMovo
 cmovno -> CMovno
 cmovs -> CMovs
 cmovns -> CMovns
-cmovp cmovpe -> CMovp
-cmovnp cmovpo -> CMovnp
+cmovp cmovpe -> CMovpe
+cmovnp cmovpo -> CMovpo
 xchg -> Xchg
 bswap -> Bswap
 xadd xaddl -> Xadd
@@ -28,10 +26,16 @@ cmpxchg -> Cmpxchg
 cmpxchg8b -> Cmpxchg8b
 push -> Push
 pop -> Pop
-pusha pushad -> Pusha
-popa popad -> Popa
-cwd cdq cqo -> Cwd
-cbw cwde cdqe -> Cbw
+pusha -> Pusha
+pushad -> Pushad
+popa -> Popa
+popad -> Popad
+cwd -> Cwd
+cdq -> Cdq
+cqo -> Cqo
+cbw -> Cbw
+cwde -> Cwde
+cdqe -> Cdqe
 movsx -> Movsx
 movzx -> Movzx
 sub -> Sub
@@ -99,15 +103,17 @@ jg jnle -> Jg
 jge jnl -> Jge
 jl jnge -> Jl
 jle jng -> Jle
-jc -> Jc
-jnc -> Jnc
+jc jb -> Jb
+jnc jae -> Jae
 jo -> Jo
 jno -> Jno
 js -> Js
 jns -> Jns
 jpo jnp -> Jpo
 jpe jp -> Jpe
-jcxz jecxz jrcxz -> Jcxz
+jcxz -> Jcxz
+jecxz -> Jecxz
+jrcxz -> Jrcxz
 loop loopl -> Loop
 loopz loope -> Loopz
 loopnz loopne -> Loopnz
@@ -116,21 +122,37 @@ int -> Int
 into -> Into
 bound boundl -> Bound
 enter enterl -> Enter
-movs movsb movsw movsd movsq -> Movs
-cmps cmpsb cmpsw cmpsd cmpsq -> Cmps
-scas scasb scasw scasd scasq -> Scas
-lods lodsb lodsw lodsd lodsq -> Lods
-stos stosb stosw stosd stosq -> Stos
-rep -> Rep
-repe repz -> Repe
-repne repnz -> Repne
+movsb -> Movsb
+movsd -> Movsd
+movsq -> Movsq
+movsw -> Movsw
+cmpsb -> Cmpsb
+cmpsd -> Cmpsd
+cmpsq -> Cmpsq
+cmpsw -> Cmpsw
+scasb -> Scasb
+scasd -> Scasd
+scasq -> Scasq
+scasw -> Scasw
+lodsb -> Lodsb
+lodsd -> Lodsd
+lodsq -> Lodsq
+lodsw -> Lodsw
+stosb -> Stosb
+stosd -> Stosd
+stosq -> Stosq
+stosw -> Stosw
 in inb ind inw inl -> In
 out -> Out
-ins insb insw insd insq -> Ins
-outs outsb outsw outsd outsq -> Outs
+insb -> Insb
+insd -> Insd
+insw -> Insw
+outsb -> Outsb
+outsd -> Outsd
+outsw -> Outsw
 nop -> Nop
 ud2 -> Ud2
-xlat xlatb -> Xlat
+xlat xlatb -> Xlatb
 cpuid -> Cpuid
 rdtsc -> Rdtsc
 stc -> Stc
@@ -140,8 +162,12 @@ cld -> Cld
 std -> Std
 lahf -> Lahf
 sahf -> Sahf
-pushf pushfd pushfq -> Pushf
-popf popfd popfq -> Popf
+pushf -> Pushf
+pushfd -> Pushfd
+pushfq -> Pushfq
+popf -> Popf
+popfd -> Popfd
+popfq -> Popfq
 sti -> Sti
 cli -> Cli
 lds -> Lds

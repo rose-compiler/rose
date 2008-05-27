@@ -634,7 +634,6 @@ string			\"([^"]|"\\\n")*\"
 %s NORMAL CXX_COMMENT C_COMMENT STRING_LIT MACRO C_COMMENT_INMACRO
 %%
 %{
-#undef Rose_C_Cxx_wrap
 int preproc_line_num = 1;
 	/*bad way to initialize*/
 int preproc_start_line_num = preproc_line_num;
@@ -906,17 +905,6 @@ BEGIN NORMAL;
 				preproc_column_num++; 
 			    }
 %%
-/*
-int yywrap(void) {
-	return 1; 
-}
-*/
-
-int Rose_C_Cxx_wrap(void) {
-	return 1; 
-}
-
-
 
 const int maxstacksize=500;
 int bracestack[maxstacksize];

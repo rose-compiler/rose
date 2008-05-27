@@ -146,13 +146,14 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/graph \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses \
-     -I$(top_srcdir)/src/frontend/ObjdumpDisassembler \
-     -I$(top_srcdir)/src/frontend/X86Disassembler \
+     -I$(top_srcdir)/src/frontend/Disassemblers \
+     -I$(top_srcdir)/src/frontend/ExecFormats \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
      -I$(top_srcdir)/src/backend/unparser/CxxCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
+     -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
      -I$(top_srcdir)/src/util/graphs  \

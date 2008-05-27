@@ -45,8 +45,7 @@ int getdir (string dir, vector<string> &files)
   return 0;
 }
 
-void loadAnalysisFiles(vector <BC_AnalysisInterface*>& checkers, 
-		       RoseBin_unparse_visitor* visitor) {  
+void loadAnalysisFiles(vector <BC_AnalysisInterface*>& checkers) {  
   string dir = string("analyses");
   vector<string> files = vector<string>();
   getdir(dir,files);
@@ -64,13 +63,11 @@ void loadAnalysisFiles(vector <BC_AnalysisInterface*>& checkers,
     BC_AnalysisInterface*(*sym)() = (BC_AnalysisInterface*(*)())symRaw;
     BC_AnalysisInterface* intf = sym();
     intf->set_name(name);
-    intf->set_unparser(visitor);
     checkers.push_back(intf);
   }
 }
 
-void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers, 
-			    RoseBin_unparse_visitor* visitor) {  
+void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers) {  
   string dir = string("graphanalyses");
   vector<string> files = vector<string>();
   getdir(dir,files);
@@ -88,7 +85,6 @@ void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers,
     BC_GraphAnalysisInterface*(*sym)() = (BC_GraphAnalysisInterface*(*)())symRaw;
     BC_GraphAnalysisInterface* intf = sym();
     intf->set_name(name);
-    intf->set_unparser(visitor);
     checkers.push_back(intf);
   }
 }
@@ -177,17 +173,18 @@ int main(int argc, char** argv) {
 
   RoseBin_Graph* graph;
 
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
 
   // call graph analysis  *******************************************************
   if (containsArgument(argc, argv, "-callgraph")) {
     cerr << " creating call graph ... " << endl;
-    graph= new RoseBin_DotGraph();
+    graph= new RoseBin_DotGraph(info);
     char* callFileName = "callgraph.dot";
     if (dot==false) {
       callFileName = "callgraph.gml";
-      graph= new RoseBin_GMLGraph();
+      graph= new RoseBin_GMLGraph(info);
     }
-    RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj());
+    RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
     callanalysis->run(graph, callFileName, !mergedEdges);
     if (test) {
       cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
@@ -200,30 +197,32 @@ int main(int argc, char** argv) {
   // control flow analysis  *******************************************************
   if (containsArgument(argc, argv, "-cfa")) {
     char* cfgFileName = "cfg.dot";
-    graph= new RoseBin_DotGraph();
+    graph= new RoseBin_DotGraph(info);
     if (dot==false) {
       cfgFileName = "cfg.gml";
-      graph= new RoseBin_GMLGraph();
+      graph= new RoseBin_GMLGraph(info);
     }
-    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
+    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
     if (test) {
       cout << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
       cout << " cfa -- Number of edges == " << cfganalysis->edgesVisited() << endl;
-      ROSE_ASSERT(cfganalysis->nodesVisited()==210);
-      ROSE_ASSERT(cfganalysis->edgesVisited()==234);
+      //ROSE_ASSERT(cfganalysis->nodesVisited()==210);
+      //ROSE_ASSERT(cfganalysis->edgesVisited()==234);
+      ROSE_ASSERT(cfganalysis->nodesVisited()==237);
+      ROSE_ASSERT(cfganalysis->edgesVisited()==261);
     }
   }
 
   if (containsArgument(argc, argv, "-dfa")) {
     cerr << " creating dataflow graph ... " << endl;
     string dfgFileName = "dfg.dot";
-    graph= new RoseBin_DotGraph();
+    graph= new RoseBin_DotGraph(info);
     if (dot==false) {
       dfgFileName = "dfg.gml";
-      graph= new RoseBin_GMLGraph();
+      graph= new RoseBin_GMLGraph(info);
     }
-    RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
+    RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
     dfanalysis->init(interprocedural, edges);
     dfanalysis->run(graph, dfgFileName, mergedEdges);
     if (test) {
@@ -234,27 +233,35 @@ int main(int argc, char** argv) {
       cout << " dfa -- Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
       cout << " dfa -- Number of uses == " << dfanalysis->nrOfUses() << endl;
       if (interprocedural) {
-	ROSE_ASSERT(dfanalysis->nodesVisited()==210);
-	ROSE_ASSERT(dfanalysis->edgesVisited()==254);
-	ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==17);
-	ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==45);
-	ROSE_ASSERT(dfanalysis->nrOfDefinitions()==155);
-	ROSE_ASSERT(dfanalysis->nrOfUses()==23);
-      } else {
-	ROSE_ASSERT(dfanalysis->nodesVisited()==210);
-	ROSE_ASSERT(dfanalysis->edgesVisited()==248);
+	//ROSE_ASSERT(dfanalysis->nodesVisited()==210);
+	//ROSE_ASSERT(dfanalysis->edgesVisited()==254);
+	//ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==17);
+	//ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==45);
+	//ROSE_ASSERT(dfanalysis->nrOfDefinitions()==155);
+	//ROSE_ASSERT(dfanalysis->nrOfUses()==23);
+	ROSE_ASSERT(dfanalysis->nodesVisited()==237);
+	ROSE_ASSERT(dfanalysis->edgesVisited()==284);
 	ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
-	ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==33);
-	ROSE_ASSERT(dfanalysis->nrOfDefinitions()==104);
-	ROSE_ASSERT(dfanalysis->nrOfUses()==17);
+	ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==36);
+	ROSE_ASSERT(dfanalysis->nrOfDefinitions()==183);
+	ROSE_ASSERT(dfanalysis->nrOfUses()==25);
+      } else {
+	//ROSE_ASSERT(dfanalysis->nodesVisited()==210);
+	//ROSE_ASSERT(dfanalysis->edgesVisited()==248);
+	//ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
+	//ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==33);
+	//ROSE_ASSERT(dfanalysis->nrOfDefinitions()==104);
+	//ROSE_ASSERT(dfanalysis->nrOfUses()==17);
+	ROSE_ASSERT(dfanalysis->nodesVisited()==237);
+	ROSE_ASSERT(dfanalysis->edgesVisited()==287);
+	ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==18);
+	ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==77);
+	ROSE_ASSERT(dfanalysis->nrOfDefinitions()==216);
+	ROSE_ASSERT(dfanalysis->nrOfUses()==31);
+
       }
     }
   }
-
-  RoseBin_unparse up;
-  up.init(file->get_global_block(), "unparsed.s");
-  RoseBin_unparse_visitor* visitor = up.getVisitor();
-  ROSE_ASSERT(visitor);
 
   if (containsArgument(argc, argv, "-checkAST") || 
       containsArgument(argc, argv, "-checkGraph")) {
@@ -262,7 +269,7 @@ int main(int argc, char** argv) {
     vector <BC_AnalysisInterface*> checkers;
     vector <BC_GraphAnalysisInterface*> graph_checkers;
 
-    loadAnalysisFiles(checkers, visitor);
+    loadAnalysisFiles(checkers);
 
     vector <BC_AnalysisInterface*>::const_iterator it = checkers.begin();
     for (;it!=checkers.end();it++) {
@@ -284,28 +291,30 @@ int main(int argc, char** argv) {
     }  
 
     if (containsArgument(argc, argv, "-checkGraph")) {
-      loadGraphAnalysisFiles(graph_checkers, visitor);
+      loadGraphAnalysisFiles(graph_checkers);
 
       cout << "\n ---------------- preparing to run DataFlowAnalysis " << endl;
       string dfgFileName = "dfg.dot";
-      graph= new RoseBin_DotGraph();
+      graph= new RoseBin_DotGraph(info);
       if (dot==false) {
 	dfgFileName = "dfg.gml";
-	graph= new RoseBin_GMLGraph();
+	graph= new RoseBin_GMLGraph(info);
       }
-      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
+      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
       cfganalysis->run(graph, dfgFileName, mergedEdges);
       if (test) {
 	cerr << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
 	cerr << " cfa -- Number of edges == " << cfganalysis->edgesVisited() << endl;
-	ROSE_ASSERT(cfganalysis->nodesVisited()==210);
-	ROSE_ASSERT(cfganalysis->edgesVisited()==234);
+	//ROSE_ASSERT(cfganalysis->nodesVisited()==210);
+	//ROSE_ASSERT(cfganalysis->edgesVisited()==234);
+	ROSE_ASSERT(cfganalysis->nodesVisited()==237);
+	ROSE_ASSERT(cfganalysis->edgesVisited()==261);
       }
 
       cout << "CFG finished ----- Graph nr of nodes : " << graph->nodes.size() << endl;
       ROSE_ASSERT(graph->nodes.size()>0);
 
-      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
+      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
       //dfanalysis->init(interprocedural, edges,graph);
       dfanalysis->init(interprocedural, edges);
       dfanalysis->run(graph, dfgFileName, mergedEdges);
@@ -325,9 +334,7 @@ int main(int argc, char** argv) {
     }
   }  
 
-
-  up.unparse();
-
+  unparseAsmStatementToFile("unparsed.s", file->get_global_block());
 
   return 0;
 }

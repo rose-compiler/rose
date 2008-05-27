@@ -5,17 +5,17 @@ int min2(int a0,int a1)
 }
 
 #define N 50
-extern void printmatrix(double x[][50]);
-extern void initmatrix(double x[][50],double s);
+extern void printmatrix(double x[][50UL]);
+extern void initmatrix(double x[][50UL],double s);
 
 int main()
 {
   int i;
   int j;
   int k;
-  double a[50][50];
-  double b[50][50];
-  double c[50][50];
+  double a[50UL][50UL];
+  double b[50UL][50UL];
+  double c[50UL][50UL];
   double s;
   int _var_0;
   int _var_1;

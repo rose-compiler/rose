@@ -7,8 +7,6 @@ int main(int argc, char** argv)
      SgProject* project = frontend(argc,argv);
      ROSE_ASSERT (project != NULL);
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
-
      RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
 
 #if 1
@@ -31,10 +29,11 @@ int main(int argc, char** argv)
   bool forward = true;
   bool edges = true;
   bool mergedEdges = false;
-  RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph();
-  RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph();
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(project);
+  RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
+  RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
   char* cfgFileName = "cfg.dot";
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
+  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
 
 
@@ -42,7 +41,7 @@ int main(int argc, char** argv)
   cout << " creating call graph ... " << endl;
   char* callFileName = "callgraph.gml";
   forward = true;
-  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj());
+  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
 
   // Building a GML file for the call graph
      callanalysis->run(gmlGraph, callFileName, !mergedEdges);
@@ -58,16 +57,11 @@ int main(int argc, char** argv)
   forward = true;
   bool printEdges = true;
   bool interprocedural = true;
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
+  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
   dfanalysis->init(interprocedural, printEdges);
 
   // Building a DOT file for the data-flow graph
      dfanalysis->run(dotGraph, dfgFileName, mergedEdges);
-#endif
-
-#else
-  // Output an a message to make it clear that binary support is not available...
-     cerr << "Binary Support in ROSE has not be configured (see configure options)" << endl;
 #endif
 
   // Unparse the output to test the unparser...

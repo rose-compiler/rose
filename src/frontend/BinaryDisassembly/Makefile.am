@@ -1,7 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_BINARY_ANALYSIS_SUPPORT
-
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/analyses -I$(srcdir)/graph #-I$(srcdir)/mysql_include
 
 # binarylibdir = $(libdir)
@@ -12,7 +10,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/analyses -I$(srcdir)/graph #-I$(srcdir)/
 if DEV_LIBS
 lib_LTLIBRARIES = libbinaryDatabase.la libbinaryFrontend.la #libbinarydisassembly.la
 else
-# This will cause the dynamic library to be built (as libroseObjdumpDisassembler.so)
+# This will cause the dynamic library to be built (as libbinaryDatabase.so)
 noinst_LTLIBRARIES = libbinaryFrontend.la #libbinarydisassembly.la
 if ROSE_USE_BINARY_SQL
   lib_LTLIBRARIES = libbinaryDatabase.la 
@@ -23,24 +21,44 @@ if ROSE_USE_BINARY_SQL
 # Isolated part of library that depends on the mysql database
 libbinaryDatabase_la_DEPENDENCIES =
 libbinaryDatabase_la_SOURCES = RoseBin.cpp  RoseBin_DB.cpp  RoseBin_DB_IDAPRO.cpp 
+#libbinaryDatabase_la_LIBADD = $(MYSQL_DATABASE_LIBS) -lmysql
 endif 
 
 # Isolated part of library that is independent of the mysql database
 libbinaryFrontend_la_DEPENDENCIES =
-libbinaryFrontend_la_SOURCES = RoseBin_support.cpp  RoseBin_unparse.cpp \
+libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      instructionDispatch.cpp \
-     RoseBin_unparse_visitor.cpp analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
+     analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
      analyses/RoseBin_printInstructions.cpp analyses/RoseBin_DataFlowAnalysis.cpp \
      graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
      analyses/RoseBin_CallGraphAnalysis.cpp analyses/RoseBin_FlowAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_Emulate.cpp \
-     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp readTicl.C RoseBin_file.cpp RoseFile.cpp \
-     RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp 
+     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
+     x86InstructionEnum.h x86InstructionProperties.h \
+     x86InstructionProperties.C x86InstructionEnumPrinter.C \
+     armInstructionEnum.h armInstructionEnumPrinter.C \
+     readTicl.C RoseBin_file.cpp RoseFile.cpp \
+     RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
+     AST_BIN_Traversal.C
 
 
-endif
+BUILT_SOURCES = x86InstructionEnumPrinter.C armInstructionEnumPrinter.C
+
+CLEANFILES = $(BUILT_SOURCES)
+
+x86InstructionEnumPrinter.C: $(srcdir)/x86InstructionEnum.h Makefile
+	echo '#include "x86InstructionEnum.h"' > x86InstructionEnumPrinter.C
+	echo '#include <string>' >> x86InstructionEnumPrinter.C
+	sed -n '/x86_unknown_instruction/,/x86_last_instruction/p' < $(srcdir)/x86InstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* x86InstructionStrings[] = {'; cat; echo '""};') >> x86InstructionEnumPrinter.C
+	echo 'std::string toString(X86InstructionKind k) {static const int s = sizeof(x86InstructionStrings) / sizeof(*x86InstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return x86InstructionStrings[(int)k];}' >> x86InstructionEnumPrinter.C
+
+armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h Makefile
+	echo '#include "armInstructionEnum.h"' > armInstructionEnumPrinter.C
+	echo '#include <string>' >> armInstructionEnumPrinter.C
+	sed -n '/arm_unknown_instruction/,/arm_last_instruction/p' < $(srcdir)/armInstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* armInstructionStrings[] = {'; cat; echo '""};') >> armInstructionEnumPrinter.C
+	echo 'std::string toString(ArmInstructionKind k) {static const int s = sizeof(armInstructionStrings) / sizeof(*armInstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return armInstructionStrings[(int)k];}' >> armInstructionEnumPrinter.C
 
 # Make sure these SAGE specific header files are placed into a distribution
 if ROSE_USE_BINARY_SQL
@@ -48,28 +66,37 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_buildTree.h  RoseBin_DB.h  RoseBin_DB_IDAPRO.h \
    RoseBin.h  RoseBin_IDAPRO_branchGraph.h  RoseBin_IDAPRO_buildTree.h \
    RoseBin_IDAPRO_callGraph.h  RoseBin_IDAPRO_exprTree.h  RoseBin_IDAPRO_substTree.h \
-   RoseBin_support.h  RoseBin_unparse.h  RoseBin_unparse_visitor.h MyAstAttribute.h \
+   RoseBin_support.h  MyAstAttribute.h \
    analyses/RoseBin_CompareAnalysis.h analyses/RoseBin_ControlFlowAnalysis.h analyses/RoseBin_printInstructions.h \
    analyses/RoseBin_DataFlowAnalysis.h graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
    graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h \
-   RoseBin_abstract.h RoseObj.h
+   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h \
+   readTicl.h RoseBin_file.h RoseFile.h \
+   RoseBin_abstract.h \
+   x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h \
+   freebsd_elf_combined.h \
+   RoseObj.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_IDAPRO_branchGraph.h RoseBin_buildTree.h RoseBin_IDAPRO_buildTree.h \
    RoseBin_IDAPRO_callGraph.h  RoseBin_IDAPRO_exprTree.h  RoseBin_IDAPRO_substTree.h \
-   RoseBin_support.h  RoseBin_unparse.h  RoseBin_unparse_visitor.h MyAstAttribute.h \
+   RoseBin_support.h  MyAstAttribute.h \
    analyses/RoseBin_CompareAnalysis.h analyses/RoseBin_ControlFlowAnalysis.h analyses/RoseBin_printInstructions.h \
    analyses/RoseBin_DataFlowAnalysis.h graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
    graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h readTicl.h RoseBin_file.h RoseFile.h \
-   RoseBin_abstract.h RoseObj.h
+   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h \
+   readTicl.h RoseBin_file.h RoseFile.h \
+   RoseBin_abstract.h \
+   x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h \
+   freebsd_elf_combined.h \
+   readTicl.h RoseBin_file.h RoseFile.h \
+   RoseObj.h
 endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available
 # colorTraversal.h  
@@ -80,7 +107,7 @@ EXTRA_DIST = make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instru
 
 # Rule for maintainers (requires Tcl interpreter)
 $(srcdir)/instructionDispatch.cpp: make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
-	cd $(srcdir); $(top_srcdir)/config/missing --run tclsh ./make-decision-tree.tcl x86 Arm
+	cd $(srcdir) && ../../../config/missing --run tclsh ./make-decision-tree.tcl x86 Arm
 
 
 clean-local:

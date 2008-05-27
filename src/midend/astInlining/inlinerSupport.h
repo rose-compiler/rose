@@ -49,7 +49,7 @@ void rebindVariableAndLabelReferences(SgNode* top);
 void fixReturnStatements(SgNode* n);
 
 //! Remove unused variables in a scope
-void removeUnusedVariables(SgNode* top);
+void removeUnusedVariables(SgNode* top, const std::set<SgFunctionDeclaration*>& safeFunctions = std::set<SgFunctionDeclaration*>());
 
 //! Find all variables referenced in a region
 std::set<SgInitializedName*> findVariablesUsedInRegion(SgNode* e);

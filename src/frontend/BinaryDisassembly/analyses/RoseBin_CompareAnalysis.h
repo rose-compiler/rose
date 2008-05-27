@@ -55,11 +55,11 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 
   bool tookSrcNodeFromStack;
 
-  std::string resolveRegister(SgAsmRegisterReferenceExpression::x86_register_enum reg);
+  std::string resolveRegister(std::pair<X86RegisterClass, int> reg);
 
   SgAsmValueExpression* valExp;     
-  SgAsmRegisterReferenceExpression* refExp_Left; 
-  SgAsmRegisterReferenceExpression* refExp_Right; 
+  SgAsmx86RegisterReferenceExpression* refExp_Left; 
+  SgAsmx86RegisterReferenceExpression* refExp_Right; 
 
   /**********************************************************
    * check if function calls match ----------------------------------------------------------------------------
@@ -151,7 +151,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
 					 bool &isVarDecl1,
 					 bool &isAssign0,
 					 bool &isAssign1,
-					 SgAsmx86Mov* mov
+					 SgAsmx86Instruction* mov
 					 );
 
  public:

@@ -1,0 +1,57 @@
+\section{[No Reference] : Loc Per Function}
+
+This analysis detects for each function the amount of lines of code (LOC) 
+and checks the value against a user defined max value.
+If LOC $>$ max value, then an exception is triggered.
+
+\subsection{Non-Compliant Code Examples}
+\begin{verbatim}
+// if LocPerFunction.Size = 2
+void fail() {
+  int x;
+  x = 5;
+  x = 5;
+  x = 5;
+}
+\end{verbatim}
+
+
+\subsection{Compliant Solution}
+\begin{verbatim}
+// if LocPerFunction.Size = 2
+void pass() {
+  int x;
+  x = 5;
+  x = 5;
+}
+\end{verbatim}
+
+\subsection{Parameter Requirements}
+
+LocPerFunction.Size defines the max value for a permissive LOC.
+
+\subsection{Implementation}
+
+The simple implementation of this checker is defined below:
+
+\begin{verbatim}
+  if (isSgFunctionDeclaration(sgNode)) {
+    SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sgNode);
+    SgFunctionDefinition* funcDef = funcDecl->get_definition();
+    if (funcDef) {
+      Sg_File_Info* start = funcDef->get_body()->get_startOfConstruct();
+      Sg_File_Info* end = funcDef->get_body()->get_endOfConstruct();
+      ROSE_ASSERT(start);
+      ROSE_ASSERT(end);
+      int lineS = start->get_line();
+      int lineE = end->get_line();
+      loc_actual = lineE-lineS;
+      if (loc_actual>loc) {
+        output->addOutput(new CheckerOutput(funcDef));
+      }
+    }
+  }
+\end{verbatim}   
+
+\subsection{References}
+

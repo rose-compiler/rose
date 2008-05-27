@@ -6,6 +6,14 @@
 
 
 
+HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
+#include "x86InstructionEnum.h"
+HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_END
+
+HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_START
+#include "armInstructionEnum.h"
+HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_END
+
 HEADER_BINARY_START
 
  /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
@@ -13,23 +21,16 @@ HEADER_BINARY_START
   */
 
   public:
-   virtual unsigned int cfgBinFindChildIndex();
-   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges();
-   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges();
 
 HEADER_BINARY_END
 
 
 HEADER_BINARY_INSTRUCTION_START
   public:
-   virtual unsigned int cfgBinFindChildIndex();
-   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges();
-   virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges();
+   SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
+   std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
+   std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
    void append_sources( SgAsmInstruction* instruction );	
-   bool isSuccessorControlFlowEdge(SgAsmInstruction* predecessor);
-   bool isPredecessorControlFlowEdge(SgAsmInstruction* successor);
-   SgAsmInstruction* cfgBinFlowOutEdge();
-   SgAsmInstruction* cfgBinFlowInEdge();
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -372,16 +373,10 @@ SgAsmProgramHeaderList::get_program_headers()
 SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
 
-HEADER_BINARY_CONTROLTRANSFER_INSTRUCTION_START
+HEADER_BINARY_X86_INSTRUCTION_START
   public:
-    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges();	
-    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges();
-    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdgesNextIntraproceduralNode();
-    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdgesNextConditionalNodes();
-    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdgesLastIntraproceduralNode();
-    virtual std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdgesLastConditionalNodes();
 
-HEADER_BINARY_CONTROLTRANSFER_INSTRUCTION_END
+HEADER_BINARY_X86_INSTRUCTION_END
 
 
 HEADER_BINARY_DECLARATION_START
@@ -479,6 +474,10 @@ HEADER_BINARY_TYPE_QUAD_WORD_START
           static SgAsmTypeQuadWord* createType();
 HEADER_BINARY_TYPE_QUAD_WORD_END
 
+HEADER_BINARY_TYPE_DOUBLE_QUAD_WORD_START
+          static SgAsmTypeDoubleQuadWord* createType();
+HEADER_BINARY_TYPE_DOUBLE_QUAD_WORD_END
+
 HEADER_BINARY_TYPE_SINGLE_FLOAT_START
           static SgAsmTypeSingleFloat* createType();
 HEADER_BINARY_TYPE_SINGLE_FLOAT_END
@@ -488,7 +487,7 @@ HEADER_BINARY_TYPE_DOUBLE_FLOAT_START
 HEADER_BINARY_TYPE_DOUBLE_FLOAT_END
 
 HEADER_BINARY_TYPE_VECTOR_START
-          static SgAsmTypeVector* createType();
+          static SgAsmTypeVector* createType(int elementCount, SgAsmType* elementType);
 HEADER_BINARY_TYPE_VECTOR_END
 
 HEADER_BINARY_TYPE_80bit_FLOAT_START
@@ -499,103 +498,49 @@ HEADER_BINARY_TYPE_128bit_FLOAT_START
           static SgAsmType128bitFloat* createType();
 HEADER_BINARY_TYPE_128bit_FLOAT_END
 
-
 HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
 
-     /*! \brief X86 specific register set used for representation of binaries.
-          This is the X86 specific register set used for representation of binaries 
-          (it is not the same as that used in the handlingof the C asm statements, 
-          elsewhere in ROSE).  The "r" prefix is used by Intel to be non-specific to
-          32 bit or 64 bit names (e.g. EAX is the 32 bit register name, while RAX 
-          is the 64 bit register name; Intel uses "rAX" as the bit width independent 
-          name). We have combined control registers with general purpose registers
-          so that we can have a single enum for all register codes (used in the 
-          SgAsmRegisterReferenceExpression constructor).
+         // Note that the auto-generated version of this is const
+         virtual SgAsmType* get_type();
 
-          \internal Not clear on when 1st and 2nd bytes of some registers have names, 
-                    is this the case for DI, SI, SP, BP, also what about the numbered 
-                    regesters and segment registers?
+HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_END
 
-          \todo Need to add the floating point register (a stack reference), and control 
-                registers, etc.  The current work is still incomplete.
-      */
-          enum x86_register_enum
-             {
-               undefined_general_register = 0, /*!< unknown (error or unitialized value) */
-               rAX = 1,  /*!< Used for either RAX, EAX, AX, AL, or AH */
-               rBX = 2,  /*!< Used for either RBX, EBX, BX, BL, or BH */
-               rCX = 3,  /*!< Used for either RCX, ECX, CX, CL, or CH */
-               rDX = 4,  /*!< Used for either RDX, EDX, DX, DL, or EH */
-               rDI = 5,  /*!< Used for either RDI, EDI, DI, DIL */
-               rSI = 6,  /*!< Used for either RSI, ESI, SI, SIL */
-               rSP = 7,  /*!< Used for either RSP, ESP, SP, SPL */
-               rBP = 8,  /*!< Used for either RBP, EBP, BP, BPL */
-               r8  = 9,  /*!< numbered registers */
-               r9  = 10, /*!< numbered registers */
-               r10 = 11, /*!< numbered registers */
-               r11 = 12, /*!< numbered registers */
-               r12 = 13, /*!< numbered registers */
-               r13 = 14, /*!< numbered registers */
-               r14 = 15, /*!< numbered registers */
-               r15 = 16, /*!< numbered registers */
-               CS  = 17, /*!< segment register */
-               DS  = 18, /*!< segment register */
-               SS  = 19, /*!< segment register */
-               ES  = 20, /*!< segment register */
-               FS  = 21, /*!< segment register, only ES and FS are used in for 64 bit modes */
-               GS  = 22, /*!< segment register, only ES and FS are used in for 64 bit modes */
-	       ST  = 23, /*Register appears in IDA */
-               STnumbered = 24, /* Explicitly numbered ST registers 0-7 */
-               rIP = 32, /*!< Instruction pointer */
-               rFLAGS = 33, /*< Condition code register */
-               MM = 40, /* MMX registers, aliased with FP registers 0-7 */
-               XMM = 48, /* SSE registers, 8 on 32-bit and 16 on 64-bit */
-               last_register = XMM + 16
-             };
+HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
 
-     /*! \brief This permits the specification of different parts of a register
-          Intel registers contain aliasing where for example register name AX is the lower 16 
-          bits of register EAX, similarly AL are bits 0-7 of AX and AH are bits 8-15 of AX.
-          The position in register allows us to represent AX, AL, and AH as rAX which qualification.
-          The value "all" is the default and refers to the whole of the register (e.g. rAX).
-     */
-          enum x86_position_in_register_enum
-             {
-               undefined_position_in_register = 0, /*!< unknown (error or unitialized value) */
-               low_byte  = 1, /*!< 1st byte of larger register (bits 0-7) */
-               high_byte = 2, /*!< 2nd byte of larger register (bits 8-15) */
-               word  = 3, /*!< 16 bit part of larger register */
-               dword = 4, /*!< lower 32 bit part of larger register (typically the first part of a 64 bit register) */
-               qword = 5, /*!< 64 bit part of 128 bit register (not in common use) */
-               all       = 6, /*!< the full register is used (default value) */
-               last_position_in_register
-             };
+             // Note that the auto-generated version of this is const
+             virtual SgAsmType* get_type();
+
+             //! Get a unique identifier for this particular register
+             std::pair<X86RegisterClass, int> get_identifier() const;
+
+HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
+
+HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
 
           enum arm_register_enum
-             {
+             { // The exact numbers here are important
                undefined_arm_register = 0, /*!< unknown (error or unitialized value) */
-               reg1 = 1,  /*!< Used for either RAX, EAX, AX, AL, or AH */
-               reg2 = 2,  /*!< Used for either RBX, EBX, BX, BL, or BH */
-               reg3 = 3,  /*!< Used for either RCX, ECX, CX, CL, or CH */
-               reg4 = 4,  /*!< Used for either RDX, EDX, DX, DL, or EH */
-               reg5 = 5,  /*!< Used for either RDI, EDI, DI */
-               reg6 = 6,  /*!< Used for either RSI, ESI, SI */
-               reg7 = 7,  /*!< Used for either RSP, ESP, SP */
-               reg8 = 8,  /*!< Used for either RBP, EBP, BP */
-               reg9  = 9,  /*!< numbered registers */
-               reg10 = 10, /*!< numbered registers */
-               reg11 = 11, /*!< numbered registers */
-               reg12 = 12, /*!< numbered registers */
-               reg13 = 13, /*!< numbered registers */
-               reg14 = 14, /*!< numbered registers */
-               reg15 = 15, /*!< numbered registers */
-               SP  = 16, /*!< segment register */
-               PC  = 17, /*!< segment register */
-               LR  = 18, /*!< segment register */
-               SL  = 19, /*!< segment register */
-               IP  = 20, /*!< segment register, only ES and FS are used in for 64 bit modes */
-               FP  = 21, /*!< segment register, only ES and FS are used in for 64 bit modes */
-               last_arm_register
+               reg0 = 1,
+               reg1 = 2,
+               reg2 = 3,
+               reg3 = 4,
+               reg4 = 5,
+               reg5 = 6,
+               reg6 = 7,
+               reg7 = 8,
+               reg8 = 9,
+               reg9  = 10,
+               reg10 = 11,
+               reg11 = 12,
+               reg12 = 13,
+               reg13 = 14,
+               reg14 = 15,
+               reg15 = 16,
+               cpsr = 17,
+               spsr = 18,
+               cpsr_fields = 19, /* 16 values -- add arm_suffix_field_enum */
+               spsr_fields = 35, /* 16 values -- add arm_suffix_field_enum */
+               last_arm_register = spsr_fields + 16
              };
 
           enum arm_position_in_register_enum
@@ -606,41 +551,20 @@ HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_START
                last_arm_position_in_register
              };
 
-          enum arm_condition_field_enum
-             {
-               undefined_position_in_condition = 0, /*!< unknown (error or unitialized value) */
-               C_EQ = 1, // equal
-               C_NE = 2, // not equal
-               C_CS = 3, // unsigned higher or same
-               C_CC = 4, // unsigned lower
-               C_MI = 5, // negative
-               C_PL = 6, // positive or zero
-               C_VS = 7, // overflow
-               C_VC = 8, // no overflow
-               C_HI = 9, // unsigned higher
-               C_LS = 10, // unsigned lower or same
-               C_GE = 11, // greater or equal
-               C_LT = 12, // less than
-               C_GT = 13, // greater than
-               C_LE = 14, // less than or equal
-               C_AL = 15, // always
-               last_position_in_condition
-             };
-
           enum arm_suffix_field_enum
              {
                undefined_position_in_suffix = 0, /*!< unknown (error or unitialized value) */
                c = 1, // control field mask bit
-               f = 2, // flags field mask bit
-               s = 3, // status field mask bit
-               x = 4, // extension field mask bit
+               x = 2, // extension field mask bit
+               s = 4, // status field mask bit
+               f = 8, // flags field mask bit
                last_position_in_suffix
              };
 
              // Note that the auto-generated version of this is const
              virtual SgAsmType* get_type();
 
-HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION_END
+HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_START
 
@@ -739,12 +663,12 @@ SgAsmFunctionDeclaration::nrOfValidInstructions(  ) {
     return 0;
 */
   for (;j!=succs.rend(); j++) {
-     SgNode* n = *j;
-     if (isSgAsmx86Ret(n) || isSgAsmx86Hlt(n)) {
+     SgAsmx86Instruction* n = isSgAsmx86Instruction(*j);
+     if (n && (n->get_kind() == x86_ret || n->get_kind() == x86_hlt)) {
           foundRet=true;
           break;
     } else {
-       if (isSgAsmx86Nop(n)==NULL) {
+       if (n->get_kind() != x86_nop) {
           nodeOtherThanNopAfterRetExists= true;
        }
        instructions--;
@@ -814,369 +738,80 @@ SgAsmInstruction::append_sources( SgAsmInstruction* inst )
      p_sources.push_back(inst);
    }
 
-unsigned int
-SgAsmInstruction::cfgBinFindChildIndex()
-   {
-    SgAsmFunctionDeclaration* block = isSgAsmFunctionDeclaration(this->get_parent());
-    ROSE_ASSERT(block);
-    size_t idx = block->get_childIndex(this);
-    ROSE_ASSERT ((unsigned long)idx != (size_t)(-1));
-    return idx;
-   }
-
+SgAsmInstruction*
+SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info) {
+  if (!isAsmUnconditionalBranch(this)) {
+    SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
+    return next;
+  }
+  return NULL;
+}
 
 std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinOutEdges() {
-  int idx = this->cfgBinFindChildIndex();
-
+SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info) {
+  //cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
   std::vector<VirtualBinCFG::CFGEdge> result;
- // access the parent (functionDecl) and check for all the children
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  int max = succs.size()-1;
-  
-  //cerr << idx << "   " << max << endl; 
-  if (idx == max) {
-	// nothing to do for intraprocedural call
+  uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
 
-  } else if (idx < max) {
-    makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
-	//this->getNextBinCFGNode(idx)), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
+  if (isAsmBranch(this)) {
+    //cout << "Found branch" << endl;
+    uint64_t addr = 0;
+    bool knownTarget = getAsmKnownBranchTarget(this, addr);
+    if (knownTarget) {
+      //cout << "Has known target " << std::hex << addr << endl;
+      SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
+      if (tgt) {
+        makeEdge(this, tgt, info, result);
+      }
+    } else { // Unknown target
+      //cout << "Unknown target" << endl;
+      const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
+      for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i) {
+        //cout << "Found succ address " << std::hex << *i << endl;
+        SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
+        if (tgt) {
+          makeEdge(this, tgt, info, result);
+        }
+      }
+#if 0
+      if (successorAddrs.empty()) {
+	// FIXME: For bug-compatibility with old version
+	SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
+	if (next) makeEdge(this, next, info, result);
+      }
+#endif
+    } // else
+  } // if
+
+  if ((!isSgAsmx86Instruction(this) || isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ ) {
+    //cout << "Next insn is at " << std::hex << nextAddr << endl;
+    SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
+    //ROSE_ASSERT (next);
+    if (next) makeEdge(this, next, info, result);
+  }
+
   return result;
 }
 
 
-bool SgAsmInstruction::isSuccessorControlFlowEdge(SgAsmInstruction* predecessor) {
-ROSE_ASSERT(predecessor);
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
- // access the parent (functionDecl) and check for all the children
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  if (idx == 0) 
-  { }
-  else {
-     SgAsmInstruction* node = isSgAsmInstruction(succs[idx-1]);
-     if (node==predecessor)
-	return true;    
-  }
-  return false;
-}
-
-bool SgAsmInstruction::isPredecessorControlFlowEdge(SgAsmInstruction* successor) {
-ROSE_ASSERT(successor);
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
- // access the parent (functionDecl) and check for all the children
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  int max = succs.size()-1;
-
-  if (idx == max) 
-  { }
-  else {
-     SgAsmInstruction* node = isSgAsmInstruction(succs[idx+1]);
-     if (successor==node)
-	return true;    
-  }
-  return false;
-}
-
 std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinInEdges() {
-  int idx = this->cfgBinFindChildIndex();
-
+SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info) {
   std::vector<VirtualBinCFG::CFGEdge> result;
- // access the parent (functionDecl) and check for all the children
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-
-  if (idx == 0) {
-  // change this to bind to the calling function
-	std::vector <SgAsmStatement*> dest_list = this->get_sources();
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	  ROSE_ASSERT(dest);
-	  //cerr << " jump on end of func :: found destination: " << dest << endl;
-	  makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);	
-	}	
-  } else if (idx > 0) {
-	// this is a jump, the control changes
-	std::vector <SgAsmStatement*> dest_list = this->get_sources();
-	//cerr << " backward cfg ... sources = " << dest_list.size() << endl;
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	 if (dest) {
-           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-           makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);
-	 } else {
-	   //cerr << " no dest found " << endl;
-	 }
-	}
-        makeEdge(VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-
-
+  const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
+  for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i) {
+    SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
+    if (tgt) {
+      makeEdge(this, tgt, info, result);
+    }
+  }
   return result;
-}
-
-SgAsmInstruction*
-SgAsmInstruction::cfgBinFlowOutEdge() {
-  int idx = this->cfgBinFindChildIndex();
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  int max = succs.size()-1;
-  if (idx==max) {
-    return NULL;
-  } else if (idx < max) {
-    SgAsmInstruction* inst = isSgAsmInstruction(succs[idx+1]);
-	if (inst)
-	return inst;
-	else return NULL;
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return NULL;
-}
-
-
-SgAsmInstruction*
-SgAsmInstruction::cfgBinFlowInEdge() {
-  int idx = this->cfgBinFindChildIndex();
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  if (idx == 0) {
-	return NULL;
-  } else if (idx > 0) {
-       SgAsmInstruction* inst = isSgAsmInstruction(succs[idx-1]);
-	if (inst)
-	return inst;
-	else
-	return NULL;
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return NULL;
 }
 
 SOURCE_BINARY_INSTRUCTION_END
 
-SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION_START
+SOURCE_BINARY_X86_INSTRUCTION_START
 
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmx86ControlTransferInstruction::cfgBinOutEdges() {
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  int max = succs.size()-1;
-
-// this code is correct, but it rather should be part of the binary AST build.
-  if (isSgAsmx86Ret(this) || isSgAsmx86Hlt(this)) {
-    if (isSgAsmx86Ret(this)) {
-       // if we reach the end of a function, make sure we draw the edges to the caller
-	std::vector <SgAsmStatement*> dest_list = isSgAsmx86Ret(this)->get_dest();
-//	cerr << " ret cfg ... destinations = " << dest_list.size() << endl;
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	   if (dest) {
-             //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-             makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
-	   } else {
-	     //cerr << " no dest found " << endl;
-	   }
-	}
-      }
-    if (idx < max) {
-      // look ahead, if all instructions that follow are NOP, that the current is the last one
-      bool nodeOtherThanNopExists=false;
-      for (int j=(idx+1);j<=max; j++) {
-          if (isSgAsmx86Nop(succs[j])==NULL)
-	     nodeOtherThanNopExists=true;          
-      }
-      if (nodeOtherThanNopExists)
-         makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
-
-    }
-    return result;
-  }
-
-  if (idx == max) {
-	SgAsmInstruction* dest = this->get_destination();
-	//cerr << " jump on end of func :: found destination: " << dest << endl;
-	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);		
-  } else if (idx < max) {
-	// this is a jump, the control changes
-	SgAsmInstruction* dest = this->get_destination();
-	if (dest) {
-           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-           makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
-	} else {
-	   //cerr << " no dest found " << endl;
-	}
-	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmx86ControlTransferInstruction::cfgBinOutEdgesNextIntraproceduralNode() {
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  int max = succs.size()-1;
-  //cerr << " found Control transfer ... " << endl;
-  if (idx == max) {}
-  else if (idx < max) {
-	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx+1])), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmx86ControlTransferInstruction::cfgBinOutEdgesNextConditionalNodes() {
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  int max = succs.size()-1;
-  //cerr << " found Control transfer ... " << endl;
-
-  if (isSgAsmx86Ret(this)) {
-       // if we reach the end of a function, make sure we draw the edges to the caller
-	std::vector <SgAsmStatement*> dest_list = isSgAsmx86Ret(this)->get_dest();
-//	cerr << " ret cfg ... destinations = " << dest_list.size() << endl;
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	   if (dest) {
-             //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-             makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
-	   } else {
-	     //cerr << " no dest found " << endl;
-	   }
-	}
-    return result;
-  }
-
-  if (idx == max) {
-	SgAsmInstruction* dest = this->get_destination();
-	//cerr << " jump on end of func :: found destination: " << dest << endl;
-	makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);		
-  } else if (idx < max) {
-	// this is a jump, the control changes
-	SgAsmInstruction* dest = this->get_destination();
-	if (dest) {
-           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-           makeEdge(VirtualBinCFG::CFGNode(this), VirtualBinCFG::CFGNode(dest), result);
-	} else {
-	   //cerr << " no dest found " << endl;
-	}
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmx86ControlTransferInstruction::cfgBinInEdges() {
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  //cerr << " found Control transfer ... " << idx << endl;
-
-// uncomment the following if AsmCalls should not be resolved for CFG (inter-procedural)
-/*
-  if (isSgAsmCall(this)) {
-    // skip binary calls for now
-    if (idx!=0)
-      makeEdge( VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this),result);
-    return result;
-  }
-*/
-
-  if (idx == 0) {
-  // change this to bind to the calling function
-	std::vector <SgAsmStatement*> dest_list = this->get_sources();
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	  ROSE_ASSERT(dest);
-	  //cerr << " jump on end of func :: found destination: " << dest << endl;
-	  makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);	
-	}	
-  } else if (idx > 0) {
-	// this is a jump, the control changes
-	std::vector <SgAsmStatement*> dest_list = this->get_sources();
-	//cerr << " backward cfg ... sources = " << dest_list.size() << endl;
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	 if (dest) {
-           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-           makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);
-	 } else {
-	   //cerr << " no dest found " << endl;
-	 }
-	}
-        makeEdge(VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmx86ControlTransferInstruction::cfgBinInEdgesLastIntraproceduralNode() {
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  //cerr << " found Control transfer ... " << idx << endl;
-
-  if (idx == 0) {
-  } else if (idx > 0) {
-        makeEdge(VirtualBinCFG::CFGNode(isSgAsmNode(succs[idx-1])), VirtualBinCFG::CFGNode(this), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmx86ControlTransferInstruction::cfgBinInEdgesLastConditionalNodes() {
-  int idx = this->cfgBinFindChildIndex();
-  std::vector<VirtualBinCFG::CFGEdge> result;
-
-  vector<SgNode*> succs = (isSgAsmFunctionDeclaration(this->get_parent()))->get_traversalSuccessorContainer();
-  //cerr << " found Control transfer ... " << idx << endl;
-
-  if (idx == 0) {
-  // change this to bind to the calling function
-	std::vector <SgAsmStatement*> dest_list = this->get_sources();
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	  ROSE_ASSERT(dest);
-	  //cerr << " jump on end of func :: found destination: " << dest << endl;
-	  makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);	
-	}	
-  } else if (idx > 0) {
-	// this is a jump, the control changes
-	std::vector <SgAsmStatement*> dest_list = this->get_sources();
-	//cerr << " backward cfg ... sources = " << dest_list.size() << endl;
-	std::vector <SgAsmStatement*>::iterator it = dest_list.begin();
-	for (; it!=dest_list.end();++it) {
-	  SgAsmInstruction* dest = isSgAsmInstruction(*it);
-	 if (dest) {
-           //cerr << " found destination: " << dest << "  " << dest->get_mnemonic() << endl;
-           makeEdge(VirtualBinCFG::CFGNode(dest), VirtualBinCFG::CFGNode(this), result);
-	 } else {
-	   //cerr << " no dest found " << endl;
-	 }
-	}
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-
-
-SOURCE_BINARY_CONTROLTRANSFER_INSTRUCTION_END
+SOURCE_BINARY_X86_INSTRUCTION_END
 
 
 SOURCE_BINARY_EXPRESSION_START
@@ -1250,6 +885,21 @@ $CLASSNAME* $CLASSNAME::createType() {
 
 SOURCE_BINARY_TYPE_QUAD_WORD_END
 
+SOURCE_BINARY_TYPE_DOUBLE_QUAD_WORD_START
+
+$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
+
+// This is from the version for non-asm types
+$CLASSNAME* $CLASSNAME::createType() {
+  if (p_builtin_type == NULL) {
+    p_builtin_type = new $CLASSNAME();
+    ROSE_ASSERT(p_builtin_type != NULL);
+  }
+  return p_builtin_type;
+}
+
+SOURCE_BINARY_TYPE_DOUBLE_QUAD_WORD_END
+
 SOURCE_BINARY_TYPE_SINGLE_FLOAT_START
 
 $CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
@@ -1313,45 +963,25 @@ SOURCE_BINARY_TYPE_128bit_FLOAT_END
 
 SOURCE_BINARY_TYPE_VECTOR_START
 
-$CLASSNAME* $CLASSNAME::p_builtin_type = NULL;
-
-// This is from the version for non-asm types
-$CLASSNAME* $CLASSNAME::createType() {
-  if (p_builtin_type == NULL) {
-    p_builtin_type = new $CLASSNAME();
-    ROSE_ASSERT(p_builtin_type != NULL);
+$CLASSNAME* $CLASSNAME::createType(int elementCount, SgAsmType* elementType) {
+  // This does not need to be saved during file I/O, so it doesn't need to be a
+  // class member
+  static std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*> cache;
+  std::pair<int, SgAsmType*> vectorInfo(elementCount, elementType);
+  std::map<std::pair<int, SgAsmType*>, SgAsmTypeVector*>::const_iterator i = cache.find(vectorInfo);
+  if (i != cache.end()) {
+    return i->second;
+  } else {
+    SgAsmTypeVector* tv = new SgAsmTypeVector(elementCount, elementType);
+    cache.insert(std::make_pair(vectorInfo, tv));
+    return tv;
   }
-  return p_builtin_type;
 }
 
 SOURCE_BINARY_TYPE_VECTOR_END
 
 
 SOURCE_BINARY_NODE_START
-
-
-
-unsigned int
-$CLASSNAME::cfgBinFindChildIndex() {
-  ROSE_ASSERT (!"CFG functions works on SgAsmInstruction only");
-  return 0;
-}
-
-
-
-std::vector<VirtualBinCFG::CFGEdge>
-$CLASSNAME::cfgBinOutEdges() {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return std::vector<VirtualBinCFG::CFGEdge>();
-}
-
-
-std::vector<VirtualBinCFG::CFGEdge>
-$CLASSNAME::cfgBinInEdges() {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return std::vector<VirtualBinCFG::CFGEdge>();
-}
-
 
 SOURCE_BINARY_NODE_END
 
@@ -1416,10 +1046,33 @@ SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_START
 
 // Note that the auto-generated version of this is const
 SgAsmType* SgAsmRegisterReferenceExpression::get_type() {
-  return p_type;
+  ROSE_ASSERT (false);
 }
 
 SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END
+
+SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_START
+
+// Note that the auto-generated version of this is const
+SgAsmType* SgAsmx86RegisterReferenceExpression::get_type() {
+  return p_type;
+}
+
+std::pair<X86RegisterClass, int>
+SgAsmx86RegisterReferenceExpression::get_identifier() const {
+  return std::make_pair(this->get_register_class(), this->get_register_number());
+}
+
+SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION_END
+
+SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_START
+
+// Note that the auto-generated version of this is const
+SgAsmType* SgAsmArmRegisterReferenceExpression::get_type() {
+  return p_type;
+}
+
+SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION_END
 
 SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_START
 

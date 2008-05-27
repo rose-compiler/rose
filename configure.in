@@ -216,10 +216,12 @@ AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
 # Check for objdump for BinaryContextLookup since it doesn't normally exist on
 # Mac
-AC_CANONICAL_HOST
 AC_CHECK_TOOL(ROSE_OBJDUMP_PATH, [objdump], [no])
 AM_CONDITIONAL(ROSE_USE_OBJDUMP, [test "$ROSE_OBJDUMP_PATH" != "no"])
 AM_CONDITIONAL(ROSE_USE_BINARYCONTEXTLOOKUP, [test "$with_xml" != "no" -a "$ROSE_OBJDUMP_PATH" != "no"])
+
+AC_C_BIGENDIAN
+AC_CHECK_HEADERS([byteswap.h machine/endian.h])
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
@@ -275,9 +277,6 @@ AM_CONDITIONAL(ROSE_USE_BINARY_SQL,test ! "$with_binarysql" = no)
 
 # Call supporting macro for Binary Analysis
 ROSE_SUPPORT_BINARY_ANALYSIS
-
-# Setup Automake conditional in Projects/programModeling/Makefile.am
-AM_CONDITIONAL(ROSE_USE_BINARY_ANALYSIS_SUPPORT,test ! "$with_binary_analysis" = no)
 
 # Call supporting macro for Binary Analysis
 ROSE_SUPPORT_WINDOWS_BINARY_ANALYSIS
@@ -764,8 +763,8 @@ src/frontend/EDG/EDG_3.3/edgFrontEndWithoutSage/Makefile
 src/frontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/BinaryDisassembly/Makefile
-src/frontend/ObjdumpDisassembler/Makefile
-src/frontend/X86Disassembler/Makefile
+src/frontend/Disassemblers/Makefile
+src/frontend/ExecFormats/Makefile
 src/midend/Makefile
 src/midend/astInlining/Makefile
 src/midend/astOutlining/Makefile
@@ -808,6 +807,7 @@ src/backend/unparser/formatSupport/Makefile
 src/backend/unparser/languageIndependenceSupport/Makefile
 src/backend/unparser/CxxCodeGeneration/Makefile
 src/backend/unparser/FortranCodeGeneration/Makefile
+src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/SQLiteConnection/Makefile
@@ -903,6 +903,7 @@ projects/javaport/Makefile
 projects/palette/Makefile
 projects/reverseComputation/Makefile
 projects/BinaryContextLookup/Makefile
+projects/assemblyToSourceAst/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -1034,7 +1035,7 @@ developersScratchSpace/Dan/tokenStream_tests/Makefile
 developersScratchSpace/Dan/mergeTraversal_tests/Makefile
 developersScratchSpace/Dan/collectAllCommentsAndDirectives_tests/Makefile
 developersScratchSpace/Dan/nameQualificationAndTypeElaboration_tests/Makefile
-developersScratchSpace/Dan/ObjdumpDisassembler_tests/Makefile
+developersScratchSpace/Dan/Disassembler_tests/Makefile
 developersScratchSpace/Dan/Yices_tests/Makefile
 developersScratchSpace/Dan/Compass_tests/Makefile
 ])

@@ -1,10 +1,10 @@
 #!/bin/sh
-svnrepository="file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE"
+svnrepository="`sed -n 5p < .svn/entries`"
 versioninfo="`svn -q -r HEAD log ${svnrepository} | sed -n 2p`"
 version=`echo "${versioninfo}" | cut -f1 -d \ `
 modificationdate=`echo "${versioninfo}" | cut -f5 -d \ `
 
-dirnameBase="rose-svn-`date -d ${modificationdate} +%b%d-%Y`-${version}"
+dirnameBase="`basename $svnrepository`-svn-`date -d ${modificationdate} +%b%d-%Y`-${version}"
 
 if [ -e "${dirnameBase}" ]; then
   echo "File or directory ${dirnameBase} already exists -- please remove it" 1>&2
@@ -17,5 +17,5 @@ fi
 svn export "${svnrepository}" "${dirnameBase}"
 tar zcf "${dirnameBase}.tar.gz" "${dirnameBase}/"
 rm -rf "${dirnameBase}/"
-echo "Built tarball ${dirnameBase}.tar.gz from trunk SVN revision ${version}"
+echo "Built tarball ${dirnameBase}.tar.gz from SVN revision ${version}"
 exit 0

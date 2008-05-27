@@ -13,8 +13,6 @@ RoseBin_Arch::Architecture RoseBin_Arch::arch;
 RoseBin_OS::OSSYSTEM RoseBin_OS::os_sys;
 RoseBin_OS_VER::OS_VERSION RoseBin_OS_VER::os_ver;
 
-RoseBin_unparse_visitor* RoseBin_support::unparser;
-
 bool RoseBin_support::DEBUG_MODE() { return DEBUG_M;};
  void RoseBin_support::setDebugMode(bool mode) {DEBUG_M=mode;}
 bool RoseBin_support::DEBUG_MODE_MIN() { return DEBUG_M_MIN;};
@@ -191,4 +189,26 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
   return res;
 }
 
+bool isAsmUnconditionalBranch(SgAsmInstruction* insn) {
+  switch (insn->variantT()) {
+    case V_SgAsmx86Instruction: return x86InstructionIsUnconditionalBranch(isSgAsmx86Instruction(insn));
+    // case V_SgAsmArmInstruction: return armInstructionIsUnconditionalBranch(isSgAsmArmInstruction(insn));
+    default: ROSE_ASSERT (!"Bad instruction type");
+  }
+}
 
+bool isAsmBranch(SgAsmInstruction* insn) {
+  switch (insn->variantT()) {
+    case V_SgAsmx86Instruction: return x86InstructionIsControlTransfer(isSgAsmx86Instruction(insn));
+    // case V_SgAsmArmInstruction: return armInstructionIsBranch(isSgAsmArmInstruction(insn));
+    default: ROSE_ASSERT (!"Bad instruction type");
+  }
+}
+
+bool getAsmKnownBranchTarget(SgAsmInstruction* insn, uint64_t& addr) {
+  switch (insn->variantT()) {
+    case V_SgAsmx86Instruction: return x86GetKnownBranchTarget(isSgAsmx86Instruction(insn), addr);
+    // case V_SgAsmArmInstruction: return armGetKnownBranchTarget(isSgAsmArmInstruction(insn), addr);
+    default: ROSE_ASSERT (!"Bad instruction type");
+  }
+}

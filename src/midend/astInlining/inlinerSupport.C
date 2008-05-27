@@ -443,17 +443,19 @@ set<SgInitializedName*> findVariablesUsedInRegion(SgNode* e) {
 // Remove unused variable declarations in which the initializer is null, a
 // variable, or a constant.
 class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
-  set<SgInitializedName*>& used_decls;
+  const set<SgInitializedName*>& used_decls;
+  const set<SgFunctionDeclaration*>& safe_functions;
 
   public:
-  RemoveUnusedDeclarationsVisitor(set<SgInitializedName*>& u):
-    used_decls(u) {}
+  RemoveUnusedDeclarationsVisitor(const set<SgInitializedName*>& u,
+                                  const set<SgFunctionDeclaration*>& s):
+    used_decls(u), safe_functions(s) {}
 
-  static bool isSimpleInitializer(SgExpression* e) {
+  bool isSimpleInitializer(SgExpression* e) {
     if (isSgVarRefExp(e)) return true;
     if (isSgValueExp(e)) return true;
     if (isSgUnaryOp(e) && isSimpleInitializer(isSgUnaryOp(e)->get_operand())) {
-      return isSgBitComplementOp(e) || isSgMinusOp(e) || isSgNotOp(e) || isSgUnaryAddOp(e);
+      return isSgBitComplementOp(e) || isSgMinusOp(e) || isSgNotOp(e) || isSgUnaryAddOp(e) || isSgCastExp(e);
     }
     if (isSgBinaryOp(e) && isSimpleInitializer(isSgBinaryOp(e)->get_lhs_operand()) && isSimpleInitializer(isSgBinaryOp(e)->get_rhs_operand())) {
       return isSgAddOp(e) || isSgAndOp(e) || isSgBitAndOp(e) || isSgBitOrOp(e) || isSgBitXorOp(e) || isSgCommaOpExp(e) || isSgDivideOp(e) || isSgEqualityOp(e) || isSgGreaterOrEqualOp(e) || isSgGreaterThanOp(e) || isSgLessOrEqualOp(e) || isSgLessThanOp(e) || isSgLshiftOp(e) || isSgModOp(e) || isSgMultiplyOp(e) || isSgNotEqualOp(e) || isSgOrOp(e) || isSgRshiftOp(e) || isSgSubtractOp(e);
@@ -461,6 +463,19 @@ class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
     if (isSgConditionalExp(e)) {
       SgConditionalExp* c = isSgConditionalExp(e);
       return isSimpleInitializer(c->get_conditional_exp()) && isSimpleInitializer(c->get_true_exp()) && isSimpleInitializer(c->get_false_exp());
+    }
+    if (isSgFunctionCallExp(e)) {
+      SgFunctionRefExp* fr = isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function());
+      if (!fr) return false;
+      SgFunctionDeclaration* decl = fr->get_symbol()->get_declaration();
+      if (safe_functions.find(decl) == safe_functions.end()) {
+        return false;
+      }
+      const SgExpressionPtrList& args = isSgFunctionCallExp(e)->get_args()->get_expressions();
+      for (size_t i = 0; i < args.size(); ++i) {
+        if (!isSimpleInitializer(args[i])) return false;
+      }
+      return true;
     }
     return false;
   }
@@ -522,17 +537,17 @@ void simpleCopyAndConstantPropagation(SgNode* top) {
   FindCopiesVisitor().traverse(top, preorder);
   FindUsedDeclarationsVisitor vis;
   vis.traverse(top, preorder);
-  RemoveUnusedDeclarationsVisitor(vis.used_decls).traverse(top, postorder);
+  RemoveUnusedDeclarationsVisitor(vis.used_decls, set<SgFunctionDeclaration*>()).traverse(top, postorder);
 }
 
 // Remove unused variables in a scope
-void removeUnusedVariables(SgNode* top) {
+void removeUnusedVariables(SgNode* top, const set<SgFunctionDeclaration*>& safeFunctions) {
   set<SgInitializedName*> usedDecls;
   vector<SgNode*> varRefs = NodeQuery::querySubTree(top, V_SgVarRefExp);
   for (size_t i = 0; i < varRefs.size(); ++i) {
     usedDecls.insert(isSgVarRefExp(varRefs[i])->get_symbol()->get_declaration());
   }
-  RemoveUnusedDeclarationsVisitor(usedDecls).traverse(top, postorder);
+  RemoveUnusedDeclarationsVisitor(usedDecls, safeFunctions).traverse(top, postorder);
 }
 
 // Remove the declaration of a given variable.

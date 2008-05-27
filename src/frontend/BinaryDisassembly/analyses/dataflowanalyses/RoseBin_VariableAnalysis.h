@@ -60,8 +60,7 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
     return false;
   }
 
-  void init(RoseBin_Graph* vg, RoseBin_unparse_visitor* unp) {
-    unparser = unp;
+  void init(RoseBin_Graph* vg) {
     vizzGraph = vg;
   }
 
@@ -69,7 +68,7 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
 			     std::vector<uint64_t>& positions,
 			     uint64_t& fpos,
 			     SgDirectedGraphNode* node,
-			     SgAsmRegisterReferenceExpression::x86_register_enum reg );
+			     std::pair<X86RegisterClass, int> reg );
 
 };
 

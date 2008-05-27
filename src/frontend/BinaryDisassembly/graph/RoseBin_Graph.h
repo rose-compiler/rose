@@ -77,6 +77,7 @@ class RoseBin_Graph {
   bool dfa_unresolved_func;
   bool dfa_conditional;
 
+  VirtualBinCFG::AuxiliaryInformation* info;
 
  public:
 
@@ -92,7 +93,7 @@ class RoseBin_Graph {
 
   void createUniqueEdges();
 
-  RoseBin_Graph() {grouping = true;}
+  RoseBin_Graph(VirtualBinCFG::AuxiliaryInformation* info): info(info) {grouping = true;}
   virtual ~RoseBin_Graph() {}
   //RoseBin_unparse_visitor* unparser;
   SgDirectedGraph* graph;

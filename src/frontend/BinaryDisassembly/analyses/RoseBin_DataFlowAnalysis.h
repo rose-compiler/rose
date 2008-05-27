@@ -53,11 +53,11 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   void traverseNodes(RoseBin_DataFlowAbstract* analysis);
 
-  bool exceptionCall(SgAsmx86Call* call);
+  bool exceptionCall(SgAsmx86Instruction* call);
 
  public:
 
-  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* ):RoseBin_FlowAnalysis(global) {
+  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract*, VirtualBinCFG::AuxiliaryInformation* info ):RoseBin_FlowAnalysis(global, info) {
     typeNode="DFG";
     typeEdge="DFG-E";  
     interprocedural = false;
@@ -120,12 +120,12 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
 
   std::set < SgDirectedGraphNode* > 
-    getDefFor(SgDirectedGraphNode* node, SgAsmRegisterReferenceExpression::x86_register_enum initName);
+    getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int> initName);
   std::set < SgDirectedGraphNode* > 
-    getDefFor( uint64_t inst, SgAsmRegisterReferenceExpression::x86_register_enum initName);
+    getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName);
 
   std::set < uint64_t > 
-    getDefForInst( uint64_t inst, SgAsmRegisterReferenceExpression::x86_register_enum initName);
+    getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName);
 
   RoseBin_DataFlowAbstract* getVariableAnalysis() {return variableAnalysis;}
 };

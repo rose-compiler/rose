@@ -25,7 +25,6 @@ using namespace std;
 #include "RoseBin.h"
 #include "RoseBin_DB_IDAPRO.h"
 #include "RoseBin_support.h"
-#include "RoseBin_unparse.h"
 
 /*
 class RoseBin : public AstSimpleProcessing {
@@ -380,7 +379,7 @@ void RoseBin::visit(SgNode* node) {
   */
   if (isSgAsmMemoryReferenceExpression(node)) {
     SgAsmMemoryReferenceExpression* n = isSgAsmMemoryReferenceExpression(node);
-    cerr << "Found a SgAsmMemoryReferenceExpression" << endl;
+    // cerr << "Found a SgAsmMemoryReferenceExpression" << endl;
     ROSE_ASSERT(n->get_type());
   }
   if (instr) {
@@ -429,6 +428,5 @@ void RoseBin::unparse(char* fileName) {
   }
 
   ROSE_ASSERT(globalNode);
-  unparser->init(globalNode, fileName);
-  unparser->unparse();
+  unparseAsmStatementToFile(fileName, globalNode);
 }

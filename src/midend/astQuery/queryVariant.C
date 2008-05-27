@@ -1439,12 +1439,14 @@ querySolverGrammarElementFromVariantVector (
           case V_SgStatementExpression:
           case V_SgAsmOp:
 
-#ifdef USE_ROSE_BINARY_ANALYSIS_SUPPORT
        // DQ (1/9/2008): The binary IR nodes must be handled here as well!
           case V_SgAsmFile:
           case V_SgAsmBlock:
           case V_SgAsmMemoryReferenceExpression:
           case V_SgAsmRegisterReferenceExpression:
+          case V_SgAsmx86RegisterReferenceExpression:
+          case V_SgAsmArmRegisterReferenceExpression:
+          case V_SgAsmWordValueExpression:
           case V_SgAsmDoubleWordValueExpression:
 	  case V_SgAsmQuadWordValueExpression:
 	  case V_SgAsmByteValueExpression:
@@ -1452,36 +1454,11 @@ querySolverGrammarElementFromVariantVector (
           case V_SgAsmx86Instruction:
           case V_SgAsmArmInstruction:
           case V_SgAsmOperandList:
-          case V_SgAsmx86Call:
-          case V_SgAsmx86Mov:
-          case V_SgAsmx86Push:
-          case V_SgAsmx86Pop:
-          case V_SgAsmx86Ret:
           case V_SgAsmBinaryAdd:
           case V_SgAsmFunctionDeclaration:
-          case V_SgAsmx86Jmp:
-          case V_SgAsmx86Leave:
-          case V_SgAsmx86Nop:
-          case V_SgAsmx86Add:
-          case V_SgAsmx86Test:
-          case V_SgAsmx86Sub:
-          case V_SgAsmx86Xor:
-          case V_SgAsmx86Hlt:
-          case V_SgAsmx86Jne:
-          case V_SgAsmx86Je:
-          case V_SgAsmx86Shl:
-          case V_SgAsmx86Inc:
-          case V_SgAsmx86Cmp:
-          case V_SgAsmx86And:
-          case V_SgAsmx86Jle:
           case V_SgAsmBinaryMultiply:
-          case V_SgAsmx86Sar:
-          case V_SgAsmx86Jb:
-          case V_SgAsmx86Jae:
-          case V_SgAsmx86Dec:
-          case V_SgAsmx86Lea:
-          case V_SgAsmx86Data16:
-#endif
+          case V_SgAsmProgramHeaderList:
+          case V_SgAsmSectionHeaderList:
 
        // Liao, 12/13/2007, new fortran nodes, put in ignoring list temporarily
           case V_SgWriteStatement:

@@ -10,16 +10,16 @@ double abs(double x)
 }
 
 #define n 50
-extern void printmatrix(double x[][50]);
-extern void initmatrix(double x[][50],double s);
+extern void printmatrix(double x[][50UL]);
+extern void initmatrix(double x[][50UL],double s);
 
 int main(int argc,char *argv[])
 {
-  int p[50];
+  int p[50UL];
   int i;
   int j;
   int k;
-  double a[50][50];
+  double a[50UL][50UL];
   double mu;
   double t;
   int p_buf0;

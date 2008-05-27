@@ -11,7 +11,6 @@
 class BC_GraphAnalysisInterface   : public RoseBin_DataFlowAbstract {
  protected:
   std::string name;
-  RoseBin_unparse_visitor* unparser;
 
  public:
   BC_GraphAnalysisInterface() {}
@@ -23,7 +22,6 @@ class BC_GraphAnalysisInterface   : public RoseBin_DataFlowAbstract {
 
   std::string get_name() {return name;}
   void set_name(std::string n) {name=n;}
-  void set_unparser(RoseBin_unparse_visitor* up) {unparser=up;}
 };
 
 #endif

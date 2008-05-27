@@ -4,9 +4,6 @@
 
 #include "compass.h"
 
-#include "DefUseAnalysis.h"
-#include "DefUseAnalysis_perFunction.h"
-
 #ifndef COMPASS_DEF_USE_H
 #define COMPASS_DEF_USE_H
 
@@ -16,7 +13,6 @@ namespace CompassAnalyses
         { 
         /*! \brief Loc Per Function: Add your description here 
          */
-
 	  
           extern const std::string checkerName;
           extern std::string shortDescription;
@@ -37,9 +33,6 @@ namespace CompassAnalyses
             // Checker specific parameters should be allocated here.
 	       static int loc;
 	       static int loc_actual;
-	       static DFAnalysis* defuse;
-	       static bool projectSet;
-
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
                  // The implementation of the run function has to match the traversal being called.

@@ -133,7 +133,13 @@ RoseBin_Graph::isDirectCFGEdge(SgDirectedGraphNode* sgNode,
     SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
     SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
     if (f1 && f2) {
-      isDirectedControlFlowEdge = instSgNode->isSuccessorControlFlowEdge(instSgNodeBefore);
+      vector<VirtualBinCFG::CFGEdge> outEdges = instSgNodeBefore->cfgBinOutEdges(info);
+      for (size_t i = 0; i < outEdges.size(); ++i) {
+        if (outEdges[i].target().getNode() == instSgNode) {
+          isDirectedControlFlowEdge = true;
+          break;
+        }
+      }
     }
   }
   return isDirectedControlFlowEdge;
@@ -151,17 +157,47 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
   //  SgAsmx86UnConditionalControlTransferInstruction* instCall_Before_uncond = 
   //isSgAsmx86UnConditionalControlTransferInstruction(sgNodeBefore->get_SgNode());  
 
-  SgAsmx86Call* instCall_Before_uncond = isSgAsmx86Call(sgNodeBefore->get_SgNode());
-  SgAsmx86Ret* instRet_Before_uncond = isSgAsmx86Ret(sgNodeBefore->get_SgNode());
+  SgAsmx86Instruction* inst = isSgAsmx86Instruction(sgNodeBefore->get_SgNode());
 
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());
   if (instSgNode && instSgNodeBefore) {
+    cout << " *** instSgNode && instSgNodeBefore " << endl;
     SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
     SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
     if (f1 && f2) {
-      isDirectedControlFlowEdge = instSgNode->isSuccessorControlFlowEdge(instSgNodeBefore);
-      if ((instCall_Before_uncond || instRet_Before_uncond) && isDirectedControlFlowEdge)
+      // (tps - 05/23/08) : the semantics of the previous implementation is:
+      // check the node before in the instruction set and check if it is the same as the previous node
+      // todo: the following line must be changed... the size of the current node does not give you the last node!
+      cout << " *** f1 && f2 " << endl;
+      SgAsmInstruction* nodeBeforeInSet = NULL;
+      int byte = 1;
+      while (nodeBeforeInSet==NULL && byte<8) {
+	nodeBeforeInSet = info->getInstructionAtAddress(instSgNode->get_address() - byte);
+	byte++;
+      }
+      cout << " *** nodeBeforeInSet = " << nodeBeforeInSet << "  instSgNodeBefore : " << instSgNodeBefore << "   byte : " << byte << endl;
+      if (nodeBeforeInSet == instSgNodeBefore) {
+	//if (!isAsmUnconditionalBranch(nodeBeforeInSet))
+	cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
+	 isDirectedControlFlowEdge = true;
+      }
+#if 0
+      // this is wrong
+      vector<VirtualBinCFG::CFGEdge> outEdges = instSgNodeBefore->cfgBinOutEdges(info);
+      for (size_t i = 0; i < outEdges.size(); ++i) {
+        if (outEdges[i].target().getNode() == instSgNode) {
+	  // they must be in the same function in order to count as an (intraprocedural) DirectedControlFlowEdge
+	  cout << " *** f1 : " << f1 << "   f2 : " << f2 << endl;
+	  if (f1==f2)
+	    isDirectedControlFlowEdge = true;
+          break;
+        }
+      }
+#endif
+      cout << " *** f1 && f2 -- isDirectionalControlFlowEdge: " << isDirectedControlFlowEdge << endl;
+      cout << " inst->get_kind() == x86_call : " << (inst->get_kind() == x86_call) << "     inst->get_kind() == x86_ret : " << (inst->get_kind() == x86_ret) << endl;  
+      if ((inst->get_kind() == x86_call || inst->get_kind() == x86_ret) && isDirectedControlFlowEdge)
 	valid=false;
     }
   }

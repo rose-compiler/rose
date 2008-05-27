@@ -147,7 +147,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       if (skipFunctions)
 	text ="";
     } /*not a func*/ else {
-      SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
+      SgAsmx86Instruction* bin_inst = isSgAsmx86Instruction(internal);
       SgAsmFunctionDeclaration* funcDecl_parent = 
 	isSgAsmFunctionDeclaration(bin_inst->get_parent());
       if (funcDecl_parent==NULL) {
@@ -165,7 +165,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       if (parent==0)
 	cerr << " GMLGraph parent == 0 " << endl;
 
-      if (onlyControlStructure && isSgAsmx86ControlTransferInstruction(bin_inst)) {
+      if (onlyControlStructure && x86InstructionIsControlTransfer(bin_inst)) {
 	text = "node [\n   id " + RoseBin_support::ToString(pos) + "\n" + name ;
 	int instrnr = funcDecl_parent->get_childIndex(bin_inst);
 	text +="   instrnr_ "+RoseBin_support::ToString(instrnr)+" \n";
@@ -193,7 +193,7 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
 				     bool forward_analysis, SgAsmNode* internal) {
   
   SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
-  SgAsmx86ControlTransferInstruction* control = isSgAsmx86ControlTransferInstruction(internal);
+  SgAsmx86Instruction* control = isSgAsmx86Instruction(internal);
   // get the unparser string!
   string eval = "";
   string name="noname";
@@ -260,13 +260,9 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
     type += " " + bin_inst->class_name();
   }
 
-  SgAsmx86Call* call = isSgAsmx86Call(control);
-  SgAsmx86Jmp* jmp = isSgAsmx86Jmp(control);
-  SgAsmx86Ret* ret = isSgAsmx86Ret(control);
-
   string add = "";
   string typeNode = "";
-  if (call || ret) {
+  if (control->get_kind() == x86_call || control->get_kind() == x86_ret) {
     typeNode += " Type_ \"[ 67108864 FUNCTION_NODE ]\" \n";
     if (nodest_call)
       add = " FF9900 ";
@@ -274,16 +270,16 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
       add = " 3399FF ";
     else
       add = " FFCCFF ";
-  } else if (jmp) {
+  } else if (control->get_kind() == x86_jmp) {
     typeNode += " Type_ \"[  67108864 FILE_NODE ]\" \n";
     if (nodest_jmp)
       add = " FF0000 ";
     else
       add = " 00FF00 ";
   } else
-    if (control) {
+    if (x86InstructionIsControlTransfer(control)) {
       typeNode += " Type_ \"[  67108864 CLASS_NODE ]\" \n";
-      if (isSgAsmx86Int(control))
+      if (control->get_kind() == x86_int)
 	add = " 0000FF ";
       else
 	add = " 008800 ";
@@ -310,12 +306,12 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   int length = name.length();
 
 
-  SgAsmInstruction* pre = bin_inst->cfgBinFlowInEdge();
+  SgAsmx86Instruction* pre = NULL; // isSgAsmx86Instruction(bin_inst->cfgBinFlowInEdge());
   if (pre==NULL) {
     // first node
     nodeStr +="   first_ 1 \n";
   } else {
-    if (isSgAsmx86Ret(pre) || isSgAsmx86Hlt(pre)) {
+    if (pre->get_kind() == x86_ret || pre->get_kind() == x86_hlt) {
       // this instruction must be suspicious
       add =" 0000FF ";	  
     } 
@@ -423,21 +419,19 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	"\n   target " + RoseBin_support::ToString(pos_t) + "\n"; 
 
       // ------------------
-      SgAsmx86ControlTransferInstruction* contrl = isSgAsmx86ControlTransferInstruction(source->get_SgNode());
+      SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
       string add = "";
-      if (contrl) {
+      if (contrl && x86InstructionIsControlTransfer(contrl)) {
 	// the source is a control transfer function
-	SgAsmx86Call* call = isSgAsmx86Call(contrl);
-	SgAsmx86Ret* ret = isSgAsmx86Ret(contrl);
-	SgAsmx86Jmp* jmp = isSgAsmx86Jmp(contrl);
 
 	// we use either dest or dest_list
 	// dest is used for single destinations during cfg run
 	// dest_list is used for a static cfg image
-	SgAsmInstruction* dest = contrl->get_destination();
+        vector<VirtualBinCFG::CFGEdge> outEdges = contrl->cfgBinOutEdges(info);
+	SgAsmx86Instruction* dest = isSgAsmx86Instruction(outEdges.empty() ? NULL : outEdges.back().target().getNode());
 	bool dest_list_empty = true;
-	if (ret)
-	  dest_list_empty = ret->get_dest().empty();
+	if (contrl->get_kind() == x86_ret)
+	  dest_list_empty = outEdges.empty();
 
 	SgAsmInstruction* nextNode = isSgAsmInstruction(target->get_SgNode());
 	ROSE_ASSERT(nextNode);
@@ -445,19 +439,19 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	if (dest) {
 	  //string type = "jmp_if";
 	  if (dest==nextNode) {
-	    if (call || ret) {
+	    if (contrl->get_kind() == x86_call || contrl->get_kind() == x86_ret) {
 	      add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#FF0000\" ]  ]\n";
-	    } else if (jmp) {
+	    } else if (contrl->get_kind() == x86_jmp) {
 	      add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#FF0000\" ]  ]\n";
 	    } else 
 	      add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#00FF00\" ]  ]\n";
 	  } else 
 	    if (forward_analysis && 
-		(isSgAsmx86Call(contrl) || isSgAsmx86Jmp(contrl))) {
+		(contrl->get_kind() == x86_call || contrl->get_kind() == x86_jmp)) {
 	      add += "   graphics [ type \"line\" arrow \"last\" fill \"#FFFF00\" ]  ]\n";
 	    }
 	} else 
-	  if (ret ) { //&& dest_list_empty) {
+	  if (contrl->get_kind() == x86_ret ) { //&& dest_list_empty) {
 	    // in case of a multiple return
 	    add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#3399FF\" ]  ]\n";
 	  } 
@@ -474,14 +468,11 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	if (isSgAsmFunctionDeclaration(binStat_s))
 	  blankOutput=true;
       if (skipInternalEdges) {
-	SgAsmx86ControlTransferInstruction* contrl = isSgAsmx86ControlTransferInstruction(source->get_SgNode());
-	SgAsmx86Ret* ret = isSgAsmx86Ret(contrl);
-	if (contrl && ret==NULL) {
-	  SgAsmx86Call* call = isSgAsmx86Call(contrl);
-	  SgAsmx86Jmp* jmp = isSgAsmx86Jmp(contrl);
-	  if (call)
+	SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
+	if (contrl && x86InstructionIsControlTransfer(contrl) && contrl->get_kind() != x86_ret) {
+	  if (contrl->get_kind() == x86_call)
 	    output += "  Edge_Color_ FF0000  \n  Type_ \"[ 33554432 CALL_EDGE ]\" \n";
-	  else if (jmp)
+	  else if (contrl->get_kind() == x86_jmp)
 	    output += "  Edge_Color_ 00FF00  \n  Type_ \"[ 33554432 FILECALL_EDGE ]\" \n";
 	  else
 	    output += "  Edge_Color_ 0000FF  \n   ";

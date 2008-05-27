@@ -52,7 +52,7 @@ PrintAsmFunctions::visit(SgNode* n) {
   if (size>3 && size<=5) output += "\t\t";
   if (size>5 ) output += "\t";
 
-  output +=  unparser->unparseInstruction(binInst) +"\n";
+  output +=  unparseInstruction(binInst) +"\n";
 }
 
 extern "C" BC_AnalysisInterface* create() {

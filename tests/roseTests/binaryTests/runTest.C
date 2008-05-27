@@ -22,18 +22,17 @@ void printSet(std::set<uint64_t> res) {
 void checkNode(RoseBin_DataFlowAnalysis* dfanalysis,
 	       uint64_t address, 
 	       set<uint64_t>& result, 
-	       SgAsmRegisterReferenceExpression::x86_register_enum reg) {
-  RoseBin_unparse_visitor* unparser = RoseBin_support::getUnparseVisitor(); 
-  string registerName = unparser->resolveRegister(reg,
-						  SgAsmRegisterReferenceExpression::qword);
+               X86RegisterClass regclass,
+               int regnum) {
+  string registerName = unparseX86Register(regclass, regnum, x86_regpos_qword);
   SgDirectedGraphNode* node = dfanalysis->getNodeFor(address);
   SgAsmInstruction* inst = NULL;
   string unparsed ="";
   if (node) {
     inst = isSgAsmInstruction(node->get_SgNode());
-    unparsed = unparser->unparseInstruction(inst);
+    unparsed = unparseInstructionWithAddress(inst);
   }
-  set<uint64_t> def_nodes = dfanalysis->getDefForInst(address,reg);
+  set<uint64_t> def_nodes = dfanalysis->getDefForInst(address,std::make_pair(regclass, regnum));
   cerr << " testing address : " << RoseBin_support::HexToString(address) << " ("<<RoseBin_support::ToString(address)<<")" << 
     "  reg: " << registerName << "   .. " << unparsed << endl;
 
@@ -62,7 +61,7 @@ int main(int argc, char** argv) {
   SgAsmFile* file = project->get_file(0).get_binaryFile();
 
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
-  objdumpToRoseBinaryAst(execName, file, project);
+  // objdumpToRoseBinaryAst(execName, file, project);
   ROSE_ASSERT (file);
 
   //RoseBin_unparse* unparser = new RoseBin_unparse();
@@ -81,21 +80,24 @@ int main(int argc, char** argv) {
   bool forward = true;
   bool edges = true;
   bool mergedEdges = false;
-  RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph();
-  RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph();
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(project);
+  RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
+  RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
   char* cfgFileName = "cfg.dot";
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges);
+  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
   cout << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
   cout << " Number of edges == " << cfganalysis->edgesVisited() << endl;
-  ROSE_ASSERT(cfganalysis->nodesVisited()==209);
-  ROSE_ASSERT(cfganalysis->edgesVisited()==232);
+  ROSE_ASSERT(cfganalysis->nodesVisited()==237);
+  //ROSE_ASSERT(cfganalysis->nodesVisited()==209); // -- old implementation
+  ROSE_ASSERT(cfganalysis->edgesVisited()==261);
+  //ROSE_ASSERT(cfganalysis->edgesVisited()==232); // -- old implementation
 
   // call graph analysis  *******************************************************
   cerr << " creating call graph ... " << endl;
   char* callFileName = "callgraph.gml";
   forward = true;
-  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj());
+  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
   callanalysis->run(gmlGraph, callFileName, !mergedEdges);
   cout << " Number of nodes == " << callanalysis->nodesVisited() << endl;
   cout << " Number of edges == " << callanalysis->edgesVisited() << endl;
@@ -108,7 +110,7 @@ int main(int argc, char** argv) {
   forward = true;
   bool printEdges = true;
   bool interprocedural = true;
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj());
+  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
   dfanalysis->init(interprocedural, printEdges);
   dfanalysis->run(dotGraph, dfgFileName, mergedEdges);
   cout << " Number of nodes == " << dfanalysis->nodesVisited() << endl;
@@ -117,52 +119,68 @@ int main(int argc, char** argv) {
   cout << " Number of regWrites == " << dfanalysis->nrOfRegisterWrites() << endl;
   cout << " Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
   cout << " Number of uses == " << dfanalysis->nrOfUses() << endl;
-  ROSE_ASSERT(dfanalysis->nodesVisited()==209);
-  ROSE_ASSERT(dfanalysis->edgesVisited()==255);
-  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==18);
-  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==45);
-  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==176);
-  ROSE_ASSERT(dfanalysis->nrOfUses()==26);
+  // values for old implementation -- using objdump
+  //ROSE_ASSERT(dfanalysis->nodesVisited()==209);
+  //ROSE_ASSERT(dfanalysis->edgesVisited()==255);
+  //ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==18);
+  //ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==45);
+  //ROSE_ASSERT(dfanalysis->nrOfDefinitions()==176);
+  //ROSE_ASSERT(dfanalysis->nrOfUses()==26);
+
+  ROSE_ASSERT(dfanalysis->nodesVisited()==237);
+  ROSE_ASSERT(dfanalysis->edgesVisited()==284);
+  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
+  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==36);
+  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==183);
+  ROSE_ASSERT(dfanalysis->nrOfUses()==25);
 
 
   // detailed dfa test
   set<uint64_t> result;
   result.insert(RoseBin_support::HexToDec("8048364"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("8048364"), result, SgAsmRegisterReferenceExpression::rCX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048364"), result, x86_regclass_gpr, x86_gpr_cx);
   result.insert(RoseBin_support::HexToDec("8048364"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("804836e"), result, SgAsmRegisterReferenceExpression::rCX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804836e"), result, x86_regclass_gpr, x86_gpr_cx);
   result.insert(RoseBin_support::HexToDec("804836e"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("804836e"), result, SgAsmRegisterReferenceExpression::rSP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804836e"), result, x86_regclass_gpr, x86_gpr_sp);
 
   result.insert(RoseBin_support::HexToDec("80482c3"));
   result.insert(RoseBin_support::HexToDec("8048364"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, SgAsmRegisterReferenceExpression::rCX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, x86_regclass_gpr, x86_gpr_cx);
   result.insert(RoseBin_support::HexToDec("8048290"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, SgAsmRegisterReferenceExpression::rSP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, x86_regclass_gpr, x86_gpr_sp);
   result.insert(RoseBin_support::HexToDec("80482dc"));
   result.insert(RoseBin_support::HexToDec("804837c"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, SgAsmRegisterReferenceExpression::rBP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048290"), result, x86_regclass_gpr, x86_gpr_bp);
 
+  // (tps 05/23/08)  these cannot be tested in the new version because malloc analysis wont work until functions have names
+  // comment back in once the symbol information is available for new disassembler
+#define BUFFER_OVERFLOW 0
+#if BUFFER_OVERFLOW
   result.insert(RoseBin_support::HexToDec("80483b2"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("80483bc"), result, SgAsmRegisterReferenceExpression::rAX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("80483bc"), result, x86_regclass_gpr, x86_gpr_ax);
   result.insert(RoseBin_support::HexToDec("80483bc"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("80483bc"), result, SgAsmRegisterReferenceExpression::rSP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("80483bc"), result, x86_regclass_gpr, x86_gpr_sp);
+#endif
 
   result.insert(RoseBin_support::HexToDec("8048346"));
   result.insert(RoseBin_support::HexToDec("804834f"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("8048361"), result, SgAsmRegisterReferenceExpression::rAX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048361"), result, x86_regclass_gpr, x86_gpr_ax);
   result.insert(RoseBin_support::HexToDec("8048361"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("8048361"), result, SgAsmRegisterReferenceExpression::rSP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("8048361"), result, x86_regclass_gpr, x86_gpr_sp);
 
   result.insert(RoseBin_support::HexToDec("804846c"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rAX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, x86_regclass_gpr, x86_gpr_ax);
   result.insert(RoseBin_support::HexToDec("8048464"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rBX);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, x86_regclass_gpr, x86_gpr_bx);
   result.insert(RoseBin_support::HexToDec("804828d"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rSP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, x86_regclass_gpr, x86_gpr_sp);
   result.insert(RoseBin_support::HexToDec("804828d"));
-  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, SgAsmRegisterReferenceExpression::rBP);
+  checkNode(dfanalysis, RoseBin_support::HexToDec("804828d"), result, x86_regclass_gpr, x86_gpr_bp);
 
+  // (tps 05/23/08)  these cannot be tested in the new version because malloc analysis wont work until functions have names
+  // comment back in once the symbol information is available for new disassembler
+#if BUFFER_OVERFLOW
   // buffer overflow analysis
   RoseBin_DataFlowAbstract* variableA =  dfanalysis->getVariableAnalysis();
   RoseBin_Variable* var = variableA->getVariable(RoseBin_support::HexToDec("8048381"));
@@ -171,9 +189,8 @@ int main(int argc, char** argv) {
     RoseBin_support::ToString(var->getLength()) << " ... toString:: " << var->toString() << endl;
   ROSE_ASSERT(var->getLength()==40);
   ROSE_ASSERT(var->getName()==" 804837c:_malloc");
+#endif
 
-  RoseBin_unparse up;
-  up.init(file->get_global_block(), "unparsed.s");
-  up.unparse();
+  unparseAsmStatementToFile("unparsed.s", file->get_global_block());
   return 0;
 }

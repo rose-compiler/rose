@@ -96,7 +96,7 @@ cat >./${SOURCE_DIRECTORY_NAME}/Makefile <<END
 
 CHECKER_NAME = ${FILE_NAME_PREFIX}
 
-LINKER_FLAGS = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose -lrt -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass -lfl
+LINKER_FLAGS = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose \$(RT_LIBS) -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass 
 
 all: ${FILE_NAME_PREFIX}Test
 

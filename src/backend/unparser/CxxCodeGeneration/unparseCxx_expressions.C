@@ -53,20 +53,20 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case UNSIGNED_SHORT_VAL:
           case ENUM_VAL:
           case INT_VAL:
-          case UNSIGNED_INT_VAL:
-          case LONG_INT_VAL:
-          case LONG_LONG_INT_VAL:
-          case UNSIGNED_LONG_LONG_INT_VAL:
-          case UNSIGNED_LONG_INT_VAL:
-          case FLOAT_VAL:
           case DOUBLE_VAL:
-          case LONG_DOUBLE_VAL:
           case COMPLEX_VAL:
              {
                unparseValue(expr, info);
                break;
              }
 #endif
+          case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
+          case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
+          case LONG_LONG_INT_VAL: { unparseLongLongIntVal(expr, info); break; }
+          case UNSIGNED_LONG_LONG_INT_VAL: { unparseULongLongIntVal(expr, info); break; }
+          case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
+          case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
+          case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
           case FUNC_CALL: { unparseFuncCall(expr, info); break; }
           case POINTST_OP: { unparsePointStOp(expr, info); break; }
           case RECORD_REF: { unparseRecRef(expr, info); break; }
@@ -2477,13 +2477,14 @@ Unparse_ExprStmt::unparseIntVal(SgExpression* expr, SgUnparse_Info& info)
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (int_val->get_valueString() == "")
         {
-          curprint ( tostring(int_val->get_value()));
+          curprint ( tostring(int(int_val->get_value())));
         }
        else
         {
           curprint ( int_val->get_valueString());
         }
    }
+#endif
 
 void
 Unparse_ExprStmt::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
@@ -2498,7 +2499,7 @@ Unparse_ExprStmt::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (uint_val->get_valueString() == "")
         {
-          curprint ( tostring(uint_val->get_value()));
+          curprint ( tostring(uint_val->get_value()) + "U");
         }
        else
         {
@@ -2519,7 +2520,7 @@ Unparse_ExprStmt::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (longint_val->get_valueString() == "")
         {
-          curprint ( tostring(longint_val->get_value()));
+          curprint ( tostring(longint_val->get_value()) + "L");
         }
        else
         {
@@ -2540,7 +2541,7 @@ Unparse_ExprStmt::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (longlongint_val->get_valueString() == "")
         {
-          curprint ( tostring(longlongint_val->get_value()));
+          curprint ( tostring(longlongint_val->get_value()) + "LL");
         }
        else
         {
@@ -2561,7 +2562,7 @@ Unparse_ExprStmt::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& inf
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (ulonglongint_val->get_valueString() == "")
         {
-          curprint ( tostring(ulonglongint_val->get_value()));
+          curprint ( tostring(ulonglongint_val->get_value()) + "ULL");
         }
        else
         {
@@ -2582,7 +2583,7 @@ Unparse_ExprStmt::unparseULongIntVal(SgExpression* expr, SgUnparse_Info& info)
   // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (ulongint_val->get_valueString() == "")
         {
-          curprint ( tostring(ulongint_val->get_value()));
+          curprint ( tostring(ulongint_val->get_value()) + "UL");
         }
        else
         {
@@ -2652,7 +2653,7 @@ Unparse_ExprStmt::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
                  // AS (11/08/2005) add support for values as string
                     if (float_val->get_valueString() == "")
                        {
-                         curprint ( tostring(float_val->get_value()));
+                         curprint ( tostring(float_val->get_value()) + "F");
                        }
                       else
                        {
@@ -2675,6 +2676,7 @@ Unparse_ExprStmt::zeroRemainder( long double doubleValue )
    }
 #endif
 
+#if 0
 void
 Unparse_ExprStmt::unparseDoubleVal(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -2737,6 +2739,8 @@ Unparse_ExprStmt::unparseDoubleVal(SgExpression* expr, SgUnparse_Info& info)
              }
         }
    }
+
+#endif
 
 void
 Unparse_ExprStmt::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info& info)
@@ -2857,7 +2861,7 @@ Unparse_ExprStmt::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
    }
 
 // DQ (8/13/2007): Moved to common (language independent) base class
-#endif
+// JJW Added a lot of these back in
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_ExprStmt::unparseFuncCall 
@@ -3363,7 +3367,7 @@ void Unparse_ExprStmt::unparseOrOp(SgExpression* expr, SgUnparse_Info& info) { u
 void Unparse_ExprStmt::unparseBitXOrOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "^", info); }
 void Unparse_ExprStmt::unparseBitAndOp(SgExpression* expr, SgUnparse_Info& info) {unparseBinaryOperator(expr, "&", info); }
 void Unparse_ExprStmt::unparseBitOrOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "|", info); }
-void Unparse_ExprStmt::unparseCommaOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ",", info); }
+void Unparse_ExprStmt::unparseCommaOp(SgExpression* expr, SgUnparse_Info& info) { curprint("("); unparseBinaryOperator(expr, ",", info); curprint(")"); }
 void Unparse_ExprStmt::unparseLShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<", info); }
 void Unparse_ExprStmt::unparseRShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>", info); }
 void Unparse_ExprStmt::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }

@@ -164,15 +164,34 @@ SgFloatVal* buildFloatVal(float value = 0.0);
 
 //! Build an integer value expression
 SgIntVal* buildIntVal(int value = 0);
+SgIntVal* buildIntValHex(int value = 0);
 
 SgLongDoubleVal* buildLongDoubleVal(long double value = 0.0);
 
 SgShortVal* buildShortVal(short value = 0);
+SgShortVal* buildShortValHex(short value = 0);
 
 SgStringVal* buildStringVal(std::string value="");
 
+//! Build an unsigned char
+SgUnsignedCharVal* buildUnsignedCharVal(unsigned char v = 0);
+SgUnsignedCharVal* buildUnsignedCharValHex(unsigned char v = 0);
+
+//! Build an unsigned short integer
+SgUnsignedShortVal* buildUnsignedShortVal(unsigned short v = 0);
+SgUnsignedShortVal* buildUnsignedShortValHex(unsigned short v = 0);
+
+//! Build an unsigned integer
+SgUnsignedIntVal* buildUnsignedIntVal(unsigned int v = 0);
+SgUnsignedIntVal* buildUnsignedIntValHex(unsigned int v = 0);
+
 //! Build a unsigned long integer
 SgUnsignedLongVal* buildUnsignedLongVal(unsigned long v = 0);
+SgUnsignedLongVal* buildUnsignedLongValHex(unsigned long v = 0);
+
+//! Build an unsigned long long integer
+SgUnsignedLongLongIntVal* buildUnsignedLongLongIntVal(unsigned long long v = 0);
+SgUnsignedLongLongIntVal* buildUnsignedLongLongIntValHex(unsigned long long v = 0);
 
 //!  template function to build a unary expression of type T
 template <class T> T* buildUnaryExpression(SgExpression* operand = NULL);
@@ -263,8 +282,8 @@ SgXorAssignOp * buildXorAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NUL
 //! build a conditional expression ?:
 SgConditionalExp * buildConditionalExp(SgExpression* test =NULL, SgExpression* a =NULL, SgExpression* b =NULL);
 
-//! build a SgExpreListExp, used for function call parameter list etc.
-SgExprListExp * buildExprListExp();
+//! build a SgExprListExp, used for function call parameter list etc.
+SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
 
 
 //! build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
@@ -359,8 +378,8 @@ buildVariableDeclaration(const std::string & name, SgType *type, SgInitializer *
 SgVariableDeclaration* 
 buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
-//! Build an empty SgFunctionParameterList
-SgFunctionParameterList * buildFunctionParameterList();
+//! build an empty SgFunctionParameterList, possibly with some initialized names filled in
+SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
 
 //! Build an SgFunctionParameterList from SgFunctionParameterTypeList, like (int, float,...), used for parameter list of prototype functions when function type( including parameter type list) is known.
 SgFunctionParameterList*
@@ -414,10 +433,10 @@ SgLabelStatement * buildLabelStatement(const SgName& name, SgStatement * stmt = 
 SgGotoStatement * buildGotoStatement(SgLabelStatement *  label=NULL,SgScopeStatement* scope=NULL);
 
 //! build a case option statement
-SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgBasicBlock *body = NULL, SgScopeStatement* scope=NULL);
+SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgBasicBlock *body = NULL);
 
 //! build a default option statement
-SgDefaultOptionStmt * buildDefaultOptionStmt( SgBasicBlock *body = NULL, SgScopeStatement* scope=NULL);
+SgDefaultOptionStmt * buildDefaultOptionStmt( SgBasicBlock *body = NULL);
 
 //! build a SgExprStatement, set File_Info automatically 
 SgExprStatement*
@@ -445,7 +464,7 @@ inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgBasicBlock *bod
 SgPragmaDeclaration * buildPragmaDeclaration(const std::string & name, SgScopeStatement* scope=NULL);
 
 //! build a SgBasicBlock, setting file info internally
-SgBasicBlock * buildBasicBlock(SgStatement * stmt = NULL);
+SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatement* stmt2 = NULL, SgStatement* stmt3 = NULL, SgStatement* stmt4 = NULL, SgStatement* stmt5 = NULL, SgStatement* stmt6 = NULL, SgStatement* stmt7 = NULL, SgStatement* stmt8 = NULL, SgStatement* stmt9 = NULL, SgStatement* stmt10 = NULL);
 
 //! build an assignment statement from lefthand operand and right hand operand 
 SgExprStatement* 

@@ -60,7 +60,7 @@ attachMetrics_LDFLAGS = \
 	$(ROSE_ROSEHPCT_LIBS_WITH_PATH) \
 	$(ROSE_LIBS_WITH_PATH) \
 	$(ROSEHPCT_DEP_LIBS) \
-	-lrt
+	$(RT_LIBS)
 INCLUDES = $(ROSE_INCLUDES) $(ROSE_ROSEHPCT_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
 
 # Extra data generated that needs to be cleaned up

@@ -12,19 +12,19 @@ using namespace std;
 #include <cstdlib>
 
 std::set < SgDirectedGraphNode* > 
-RoseBin_DataFlowAnalysis::getDefFor(SgDirectedGraphNode* node, SgAsmRegisterReferenceExpression::x86_register_enum initName) {
+RoseBin_DataFlowAnalysis::getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int> initName) {
   return defuse->getDefFor(node, initName);
 }
 
 std::set < SgDirectedGraphNode* > 
-RoseBin_DataFlowAnalysis::getDefFor( uint64_t inst, SgAsmRegisterReferenceExpression::x86_register_enum initName) {
+RoseBin_DataFlowAnalysis::getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName) {
   SgDirectedGraphNode* node = getNodeFor(inst);
   return defuse->getDefFor(node, initName);
 }
 
 
 std::set < uint64_t > 
-RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, SgAsmRegisterReferenceExpression::x86_register_enum initName) {
+RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName) {
   std::set <uint64_t> hexSet;
   SgDirectedGraphNode* node = getNodeFor(inst);
   if (node==NULL)
@@ -129,16 +129,14 @@ RoseBin_DataFlowAnalysis::existsPath(SgDirectedGraphNode* start, SgDirectedGraph
   bool exists = false;
   ROSE_ASSERT(start);
   ROSE_ASSERT(end);
-  SgAsmInstruction* next = isSgAsmInstruction(start);
-  SgAsmInstruction* endAsm = isSgAsmInstruction(end);
+  SgAsmx86Instruction* next = isSgAsmx86Instruction(start);
+  SgAsmx86Instruction* endAsm = isSgAsmx86Instruction(end);
   if (next && endAsm) {
     while (next!=endAsm) {
-      next = next->cfgBinFlowOutEdge();
+      next = isSgAsmx86Instruction(next->cfgBinFlowOutEdge(info));
       if (next==NULL)
 	break;
-      SgAsmx86Call* call = isSgAsmx86Call(next);
-      SgAsmx86Ret* ret = isSgAsmx86Ret(next);
-      if ((call || ret) && next!=endAsm)
+      if ((next->get_kind() == x86_call || next->get_kind() == x86_ret) && next!=endAsm)
 	break;
     }
     exists = true;
@@ -147,9 +145,17 @@ RoseBin_DataFlowAnalysis::existsPath(SgDirectedGraphNode* start, SgDirectedGraph
 }
 
 bool
-RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Call* call) {
+RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Instruction* call) {
+  // this function returns true, if the function that is being called is the _malloc function
+  // this is good to know, so that the malloc analysis can be performed even if there is no ret 
+
+  // (tps - 05/23/08): Since the new disassembler does not know function names, this analysis 
+  // does not work. 
+  // todo : as long as there are no function names -- the malloc analysis will not work.
   bool exception=false;
   if (call==NULL)
+    return exception;
+  if (call->get_kind() != x86_call)
     return exception;
   SgAsmOperandList* opList = call->get_operandList();
   ROSE_ASSERT(opList);
@@ -157,8 +163,7 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Call* call) {
   // get the first (and only) element 
   if (ptrList.size()!=0) {
     SgAsmExpression* expr = *(ptrList.begin());
-    string replace = "";
-    unparser->resolveOperand(expr, &replace);
+    string replace = expr->get_replacement();
     if (replace=="_malloc" || replace=="malloc@plt")
       exception=true;
   }
@@ -177,8 +182,8 @@ void
 RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes,
 					RoseBin_DataFlowAbstract* analysis,
 					bool interprocedural){
-  if (RoseBin_support::DEBUG_MODE())
-    cerr << " Interprocedural is " << RoseBin_support::resBool(interprocedural) << endl;
+  //if (RoseBin_support::DEBUG_MODE())
+  //  cerr << " Interprocedural is " << RoseBin_support::resBool(interprocedural) << endl;
   // Number of functions traversed
   int funcNr =0;
   // ---------------------------------------------------------------------
@@ -224,7 +229,6 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
     vector <SgDirectedGraphNode*> pre;
     // while there are still graph nodes in the worklist do
 
-
     while (worklist.size()>0) {
       nrOfNodesVisited++;
       // the new node is taken from the back of the worklist
@@ -236,8 +240,11 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
       worklist_hash.erase(node);
       // get the successors of the current node and store in successors vector
       string name = vizzGraph->getProperty(RoseBin_Def::name, node);
-      
 
+      //if (RoseBin_support::DEBUG_MODE_MIN() && node)
+      //	if (node->get_SgNode())
+      //  cerr << node->get_SgNode()->class_name() << "  " << node << "  " << node->get_name() << endl;
+      
       if (RoseBin_support::DEBUG_MODE_MIN() && node) {
 	SgAsmInstruction* instr = isSgAsmInstruction(node->get_SgNode());
 	if (instr) {
@@ -273,20 +280,29 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
       for (;succ!=successors.end();++succ) {
 	// for each successor do...
 	SgDirectedGraphNode* next = *succ;
+        SgAsmx86Instruction* nodeN = isSgAsmx86Instruction(node->get_SgNode());
+        //if (!nodeN) continue;
+        SgAsmx86Instruction* nextN = isSgAsmx86Instruction(next->get_SgNode());
+        //if (!nextN) continue;
+
 	string name_n = vizzGraph->getProperty(RoseBin_Def::name, next);
 
 	bool call = false;
-	bool exceptionCallNext = exceptionCall(isSgAsmx86Call(next->get_SgNode()));
-	bool exceptionCallNode = exceptionCall(isSgAsmx86Call(node->get_SgNode()));
-	if ((isSgAsmx86Call(next->get_SgNode()) && !exceptionCallNext) || 
-	    isSgAsmx86Ret(next->get_SgNode()) )
+	bool exceptionCallNext = false;
+	if (nextN)
+	  exceptionCallNext = exceptionCall(nextN->get_kind() == x86_call ? nextN : 0);
+	bool exceptionCallNode = false;
+	if (nodeN)
+	  exceptionCallNode = exceptionCall(nodeN->get_kind() == x86_call ? nodeN : 0);
+	if ((exceptionCallNode && !exceptionCallNext) || 
+	    nextN->get_kind() == x86_ret )
 	  call = true;
 	//bool sameParent = analysis->sameParents(node, next);
 
 	bool validNode=false;
 	if (vizzGraph->isValidCFGEdge(next, node) || exceptionCallNode)
 	  validNode = true;
-
+	
 	// debug ------------------------
 	if (RoseBin_support::DEBUG_MODE()) {
 	  string nodeBeforeStr="";
@@ -405,7 +421,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
 
   // defuse analysis  ----------------------------------------------
   // clear def and use tables in defuse algo 
-  defuse->init(vizzGraph, unparser);
+  defuse->init(vizzGraph);
   // clear tables in graph-algo (visited, etc.)
   init();
 
@@ -446,7 +462,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   // variable analysis --------------------------------------------------
   variableAnalysis = new RoseBin_VariableAnalysis(defuse);
   cerr << " variableAnalysis defsize " << variableAnalysis->getDefinitionSize() << endl;
-  variableAnalysis->init(vizzGraph, unparser);
+  variableAnalysis->init(vizzGraph);
   init();
   traverseGraph(rootNodes, variableAnalysis, interprocedural);
 
@@ -461,7 +477,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     cerr << " ... Staring Emulation Analysis " << endl;
   // emulation analysis
   RoseBin_DataFlowAbstract* emulate = new RoseBin_Emulate();
-  emulate->init(vizzGraph, unparser);
+  emulate->init(vizzGraph);
   init();
   //  traverseGraph(rootNodes, emulate, interprocedural);
 

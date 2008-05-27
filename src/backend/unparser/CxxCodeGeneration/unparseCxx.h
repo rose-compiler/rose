@@ -151,18 +151,19 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseUShortVal               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseEnumVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseIntVal                  (SgExpression* expr, SgUnparse_Info& info);     
+#else
+          virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
+#endif
+          // JJW -- these need C-specific suffixes
           virtual void unparseUIntVal                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongIntVal              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongLongIntVal          (SgExpression* expr, SgUnparse_Info& info);    
           virtual void unparseULongLongIntVal         (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseULongIntVal             (SgExpression* expr, SgUnparse_Info& info); 
           virtual void unparseFloatVal                (SgExpression* expr, SgUnparse_Info& info); 
-          virtual void unparseDoubleVal               (SgExpression* expr, SgUnparse_Info& info);  
+       // virtual void unparseDoubleVal               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongDoubleVal           (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseComplexVal              (SgExpression* expr, SgUnparse_Info& info);
-#else
-          virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
-#endif
           virtual void unparseFuncCall                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparsePointStOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseRecRef                  (SgExpression* expr, SgUnparse_Info& info);  

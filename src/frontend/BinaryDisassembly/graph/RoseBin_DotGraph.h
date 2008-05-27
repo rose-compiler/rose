@@ -9,7 +9,7 @@
 #define __RoseBin_DotGraph__
 
 #include "RoseBin_Graph.h"
-
+#include "virtualBinCFG.h"
 
 class RoseBin_DotGraph : public RoseBin_Graph {
  private:
@@ -26,7 +26,7 @@ class RoseBin_DotGraph : public RoseBin_Graph {
   void printEdges( bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
 
  public:
-  RoseBin_DotGraph() {}
+  RoseBin_DotGraph(VirtualBinCFG::AuxiliaryInformation* info): RoseBin_Graph(info) {}
   ~RoseBin_DotGraph() {}
 
   void printNodes( bool dfg,  RoseBin_FlowAnalysis* flow, bool forward_analysis, 

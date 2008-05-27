@@ -14,93 +14,73 @@ using namespace std;
  * return information about the register
  ****************************************************/
 void RoseBin_buildTree::resolveRegister(string symbol, 
-		     SgAsmRegisterReferenceExpression::arm_register_enum *registerSg,
-		     SgAsmRegisterReferenceExpression::arm_position_in_register_enum *regSize) {
+		     SgAsmArmRegisterReferenceExpression::arm_register_enum *registerSg) {
   // ARM architecture 
-  if (symbol=="R1") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg1;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+  if (symbol=="R0") {
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg0;
+  } else if (symbol=="R1") {
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg1;
   }
   else if (symbol=="R2") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg2;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg2;
   }
   else if (symbol=="R3") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg3;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg3;
   }
   else if (symbol=="R4") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg4;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg4;
   }
   else if (symbol=="R5") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg5;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg5;
   }
   else if (symbol=="R6") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg6;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg6;
   }
   else if (symbol=="R7") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg7;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg7;
   }
   else if (symbol=="R8") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg8;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg8;
   }
   else if (symbol=="R9") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg9;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg9;
   }
   else if (symbol=="R10") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg10;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg10;
   }
   else if (symbol=="R11") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg11;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg11;
   }
   else if (symbol=="R12") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg12;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg12;
   }
   else if (symbol=="R13") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg13;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg13;
   }
   else if (symbol=="R14") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg14;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg14;
   }
   else if (symbol=="R15") {
-    *registerSg = SgAsmRegisterReferenceExpression::reg15;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg15;
   }
 
   else if (symbol=="SP") {
-    *registerSg = SgAsmRegisterReferenceExpression::SP;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg13;
   }
   else if (symbol=="PC") {
-    *registerSg = SgAsmRegisterReferenceExpression::PC;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg15;
   }
   else if (symbol=="LR") {
-    *registerSg = SgAsmRegisterReferenceExpression::LR;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg14;
   }
   else if (symbol=="SL") {
-    *registerSg = SgAsmRegisterReferenceExpression::SL;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg10;
   }
   else if (symbol=="IP") {
-    *registerSg = SgAsmRegisterReferenceExpression::IP;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg12;
   }
   else if (symbol=="FP") {
-    *registerSg = SgAsmRegisterReferenceExpression::FP;
-    *regSize =    SgAsmRegisterReferenceExpression::arm_dword;
+    *registerSg = SgAsmArmRegisterReferenceExpression::reg11;
   }
 
 
@@ -113,141 +93,151 @@ void RoseBin_buildTree::resolveRegister(string symbol,
  * return information about the register
  ****************************************************/
 void RoseBin_buildTree::resolveRegister(string symbol, 
-		     SgAsmRegisterReferenceExpression::x86_register_enum *registerSg,
-		     SgAsmRegisterReferenceExpression::x86_position_in_register_enum *regSize) {
+		     X86RegisterClass *regClassSg,
+                     int *registerSg,
+		     X86PositionInRegister *regSize) {
   if (symbol=="ST(0)" || symbol=="ST(1)" || symbol=="ST(2)" ||
       symbol=="ST(3)" || symbol=="ST(4)" || symbol=="ST(5)" ||
       symbol=="ST(6)" || symbol=="ST(7)") {
-    *registerSg = SgAsmRegisterReferenceExpression::ST;
-    *regSize =    SgAsmRegisterReferenceExpression::dword;
+    *regClassSg = x86_regclass_st;
+    *registerSg = symbol[4] - '0';
+    *regSize =    x86_regpos_dword;
   } else
 
   if (symbol=="RAX" || symbol=="EAX" || symbol=="AX" || symbol=="AL" || symbol=="AH") {
-    *registerSg = SgAsmRegisterReferenceExpression::rAX;
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_ax;
     if (symbol=="AL") 
-      *regSize =    SgAsmRegisterReferenceExpression::low_byte;
+      *regSize =    x86_regpos_low_byte;
     if (symbol=="AH") 
-      *regSize =    SgAsmRegisterReferenceExpression::high_byte;
+      *regSize =    x86_regpos_high_byte;
     if (symbol=="AX") 
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+      *regSize =    x86_regpos_word;
     if (symbol=="EAX") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RAX") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
   else if (symbol=="RBX" || symbol=="EBX" || symbol=="BX" || symbol=="BL" || symbol=="BH") {
-    *registerSg = SgAsmRegisterReferenceExpression::rBX;
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_bx;
     if (symbol=="BL") 
-      *regSize =    SgAsmRegisterReferenceExpression::low_byte;
+      *regSize =    x86_regpos_low_byte;
     if (symbol=="BH") 
-      *regSize =    SgAsmRegisterReferenceExpression::high_byte;
+      *regSize =    x86_regpos_high_byte;
     if (symbol=="BX") 
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+      *regSize =    x86_regpos_word;
     if (symbol=="EBX") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RBX") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
   else if (symbol=="RCX" || symbol=="ECX" || symbol=="CX" || symbol=="CL" || symbol=="CH") {
-    *registerSg = SgAsmRegisterReferenceExpression::rCX;
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_cx;
     if (symbol=="CL") 
-      *regSize =    SgAsmRegisterReferenceExpression::low_byte;
+      *regSize =    x86_regpos_low_byte;
     if (symbol=="CH") 
-      *regSize =    SgAsmRegisterReferenceExpression::high_byte;
+      *regSize =    x86_regpos_high_byte;
     if (symbol=="CX") 
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+      *regSize =    x86_regpos_word;
     if (symbol=="ECX") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RCX") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
   else if (symbol=="RDX" || symbol=="EDX" || symbol=="DX" || symbol=="DL" || symbol=="DH") {
-    *registerSg = SgAsmRegisterReferenceExpression::rDX;
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_dx;
     if (symbol=="DL") 
-      *regSize =    SgAsmRegisterReferenceExpression::low_byte;
+      *regSize =    x86_regpos_low_byte;
     if (symbol=="DH") 
-      *regSize =    SgAsmRegisterReferenceExpression::high_byte;
+      *regSize =    x86_regpos_high_byte;
     if (symbol=="DX") 
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+      *regSize =    x86_regpos_word;
     if (symbol=="EDX") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RDX") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
   else if (symbol=="DI" || symbol=="EDI" || symbol=="RDI") {
-    *registerSg = SgAsmRegisterReferenceExpression::rDI;
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_di;
     if (symbol=="DI") 
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+      *regSize =    x86_regpos_word;
     if (symbol=="EDI") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RDI") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
   else if (symbol=="SI" || symbol=="ESI" || symbol=="RSI") {
-    *registerSg = SgAsmRegisterReferenceExpression::rSI;
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_si;
     if (symbol=="SI") 
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+      *regSize =    x86_regpos_word;
     if (symbol=="ESI") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RSI") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
-  else if (symbol=="ESP" || symbol=="RSP") {
-    *registerSg = SgAsmRegisterReferenceExpression::rSP;
+  else if (symbol=="SP" || symbol=="ESP" || symbol=="RSP") {
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_sp;
     if (symbol=="ESP") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RSP") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
-  else if (symbol=="EBP" || symbol=="RBP") {
-    *registerSg = SgAsmRegisterReferenceExpression::rBP;
+  else if (symbol=="BP" || symbol=="EBP" || symbol=="RBP") {
+    *regClassSg = x86_regclass_gpr;
+    *registerSg = x86_gpr_bp;
     if (symbol=="EBP") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
+      *regSize =    x86_regpos_dword;
     if (symbol=="RBP") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+      *regSize =    x86_regpos_qword;
   }
 
   else if (symbol=="CS") {
-    *registerSg = SgAsmRegisterReferenceExpression::CS;
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+    *regClassSg = x86_regclass_segment;
+    *registerSg = x86_segreg_cs;
+      *regSize =    x86_regpos_word;
   }
 
   else if (symbol=="DS") {
-    *registerSg = SgAsmRegisterReferenceExpression::DS;
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+    *regClassSg = x86_regclass_segment;
+    *registerSg = x86_segreg_ds;
+      *regSize =    x86_regpos_word;
   }
 
   else if (symbol=="SS") {
-    *registerSg = SgAsmRegisterReferenceExpression::SS;
-      *regSize =    SgAsmRegisterReferenceExpression::word;
+    *regClassSg = x86_regclass_segment;
+    *registerSg = x86_segreg_ss;
+      *regSize =    x86_regpos_word;
   }
 
   else if (symbol=="ES") {
-    *registerSg = SgAsmRegisterReferenceExpression::ES;
-    *regSize =    SgAsmRegisterReferenceExpression::word;
+    *regClassSg = x86_regclass_segment;
+    *registerSg = x86_segreg_es;
+    *regSize =    x86_regpos_word;
   }
 
-  else if (symbol=="FS" || symbol=="RFS") {
-    *registerSg = SgAsmRegisterReferenceExpression::FS;
-    if (symbol=="FS") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
-    if (symbol=="RFS") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+  else if (symbol=="FS") {
+    *regClassSg = x86_regclass_segment;
+    *registerSg = x86_segreg_fs;
+    *regSize =    x86_regpos_word;
   }
 
-  else if (symbol=="GS" || symbol=="RGS") {
-    *registerSg = SgAsmRegisterReferenceExpression::GS;
-    if (symbol=="GS") 
-      *regSize =    SgAsmRegisterReferenceExpression::dword;
-    if (symbol=="GS") 
-      *regSize =    SgAsmRegisterReferenceExpression::qword;
+  else if (symbol=="GS") {
+    *regClassSg = x86_regclass_segment;
+    *registerSg = x86_segreg_gs;
+    *regSize =    x86_regpos_word;
   } 
 
 

@@ -6,7 +6,7 @@ int foo(int n)
   int cache_fd__1;
 {
     int x;
-    for (cache_fd__1 = 0 , x = 0; x < 1000; cache_fd__1 += n , ++x) {
+    for ((cache_fd__1 = 0 , x = 0); x < 1000; (cache_fd__1 += n , ++x)) {
       y = cache_fd__1;
     }
   }

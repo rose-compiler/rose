@@ -1180,7 +1180,7 @@ StringUtility::escapeNewLineCharaters ( const string & X )
      return returnString;
    }
 
-std::string StringUtility::intToHex(uint32_t i) {
+std::string StringUtility::intToHex(uint64_t i) {
   ostringstream os;
   os << "0x" << std::hex << i;
   return os.str();

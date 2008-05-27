@@ -378,7 +378,7 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 						std::vector<uint64_t>& positions,
 						uint64_t& fpos,
 						SgDirectedGraphNode* node,
-						SgAsmRegisterReferenceExpression::x86_register_enum reg ) {
+                                                std::pair<X86RegisterClass, int> reg ) {
   set <SgDirectedGraphNode*> defNodeSet = getDefFor(node, reg);
   if (RoseBin_support::DEBUG_MODE()) 
     cout << "    size of found NodeSet = " << defNodeSet.size() <<endl;
@@ -388,20 +388,20 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
     if (RoseBin_support::DEBUG_MODE() && defNode) 
       cout << "    investigating ... " << defNode->get_name() <<endl;
     ROSE_ASSERT(defNode);
-    SgAsmInstruction* inst = isSgAsmInstruction(defNode->get_SgNode());
+    SgAsmx86Instruction* inst = isSgAsmx86Instruction(defNode->get_SgNode());
     ROSE_ASSERT(inst);
     positions.push_back(inst->get_address());
     // the right hand side of the instruction is either a use or a value
     bool memRef = false;
-    SgAsmRegisterReferenceExpression::x86_register_enum regRight =
+    std::pair<X86RegisterClass, int> regRight =
       check_isRegister(defNode, inst, true, memRef);
 
     if (RoseBin_support::DEBUG_MODE()) {
-      string regName = unparser->resolveRegister(reg,SgAsmRegisterReferenceExpression::qword);
-      string regNameRight = unparser->resolveRegister(regRight,SgAsmRegisterReferenceExpression::qword);
+      string regName = unparseX86Register(reg.first, reg.second, x86_regpos_qword);
+      string regNameRight = unparseX86Register(regRight.first, regRight.second, x86_regpos_qword);
       cout << " VarAnalysis: getValueForDef . " << regName << "  right hand : " << regNameRight <<endl;
     }
-    if (regRight == SgAsmRegisterReferenceExpression::undefined_general_register) {
+    if (regRight.first == x86_regclass_unknown) {
       // it is either a memref or a value
       if (!memRef) {
 	// get value of right hand side instruction
@@ -432,26 +432,25 @@ bool
 InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
 			      SgDirectedGraphNode* previous){
   // check known function calls and resolve variables
-  ROSE_ASSERT(unparser);
   ROSE_ASSERT(node);
   vector<uint64_t> val_rax, val_rbx, val_rcx, val_rdx ;
   std::vector<uint64_t> pos_rax, pos_rbx, pos_rcx, pos_rdx;
   uint64_t fpos_rax, fpos_rbx, fpos_rcx, fpos_rdx=0xffffffff;
 
-  SgAsmInstruction* asmNode = isSgAsmInstruction(node->get_SgNode());
+  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
   if (asmNode) {
     // ANALYSIS 1 : INTERRUPT DETECTION -------------------------------------------
 
     // verify all interrupts and make sure they do what one expects them to do.
-    if (isSgAsmx86Int(asmNode)) {
+    if (asmNode->get_kind() == x86_int) {
       if (RoseBin_support::DEBUG_MODE()) 
 	cout << "    " << name << " : found int call " << endl;
       // need to resolve rax, rbx, rcx, rdx
       // therefore get the definition for each
-      getValueForDefinition(val_rax, pos_rax, fpos_rax, node,SgAsmRegisterReferenceExpression::rAX);
-      getValueForDefinition(val_rbx, pos_rbx, fpos_rbx, node,SgAsmRegisterReferenceExpression::rBX);
-      getValueForDefinition(val_rcx, pos_rcx, fpos_rcx, node,SgAsmRegisterReferenceExpression::rCX);
-      getValueForDefinition(val_rdx, pos_rdx, fpos_rdx, node,SgAsmRegisterReferenceExpression::rDX);
+      getValueForDefinition(val_rax, pos_rax, fpos_rax, node, std::make_pair(x86_regclass_gpr, x86_gpr_ax));
+      getValueForDefinition(val_rbx, pos_rbx, fpos_rbx, node, std::make_pair(x86_regclass_gpr, x86_gpr_bx));
+      getValueForDefinition(val_rcx, pos_rcx, fpos_rcx, node, std::make_pair(x86_regclass_gpr, x86_gpr_cx));
+      getValueForDefinition(val_rdx, pos_rdx, fpos_rdx, node, std::make_pair(x86_regclass_gpr, x86_gpr_dx));
 
       string int_name = "unknown ";
 

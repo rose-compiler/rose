@@ -18,7 +18,7 @@
 
 #include <sys/time.h>
 
-
+#include "x86InstructionProperties.h"
 
 namespace RoseBin_Def {
  enum RoseLanguage {
@@ -114,8 +114,8 @@ namespace __gnu_cxx {
 }
 
 namespace __gnu_cxx { 
-  template <> struct hash <SgAsmRegisterReferenceExpression::x86_register_enum> {
-    size_t operator()(SgAsmRegisterReferenceExpression::x86_register_enum const & n) const {
+  template <> struct hash <X86RegisterClass> {
+    size_t operator()(X86RegisterClass const & n) const {
       return (size_t) n;
     }
   };
@@ -136,22 +136,16 @@ namespace __gnu_cxx {
 
 
 
-class RoseBin_unparse_visitor;
-
 class RoseBin_support {
  private:
    static bool DEBUG_M;
    static bool DEBUG_M_MIN;
    static RoseBin_Def::RoseLanguage assemblyLanguage;
    static bool db;
-   static RoseBin_unparse_visitor* unparser;
 
  public:
    static std::string getTypeName(RoseBin_DataTypes::DataTypes t);
 
-
-   static RoseBin_unparse_visitor* getUnparseVisitor() {return unparser;}
-   static void setUnparseVisitor(RoseBin_unparse_visitor* unp) {unparser=unp;}
 
    static bool DEBUG_MODE();
    static void setDebugMode(bool mode);
@@ -237,9 +231,22 @@ class RoseBin_support {
      db = db_p;
   }
 
-  //bool isConditionalInstruction(SgAsmInstruction*inst);
-  //bool isConditionalFlagInstruction(SgAsmInstruction*inst);
+  static bool isConditionalInstruction(SgAsmx86Instruction*inst) {
+    if (x86InstructionIsConditionalControlTransfer(inst) ||
+	x86InstructionIsConditionalDataTransfer(inst))
+      return true;
+    return false;
+  }
 
+  static bool isConditionalFlagInstruction(SgAsmx86Instruction*inst) {
+    if (x86InstructionIsConditionalFlagControlTransfer(inst) ||
+	x86InstructionIsConditionalFlagDataTransfer(inst) ||
+	x86InstructionIsConditionalFlagBitAndByte(inst))
+      return true;
+    return false;
+  }
+
+#if 0
   static bool 
     isConditionalInstruction(SgAsmInstruction*inst) {
     bool condInst = false;
@@ -263,6 +270,7 @@ class RoseBin_support {
     }
   return condInst;
   }
+#endif
   
 
   static RoseBin_Def::RoseLanguage getAssemblyLanguage() {
@@ -306,12 +314,17 @@ class RoseBin_support {
   
 };
 
-// From instructionDispatch.cpp (generated but checked into SVN)
+// From instructionDispatch.cpp (generated but checked into SVN):
 SgAsmArmInstruction* createArmInstruction(uint64_t address,
                                           const std::string& mnemonic);
 
 SgAsmx86Instruction* createx86Instruction(uint64_t address,
                                           const std::string& mnemonic);
+
+// From RoseBin_support.cpp:
+bool isAsmUnconditionalBranch(SgAsmInstruction*);
+bool isAsmBranch(SgAsmInstruction*);
+bool getAsmKnownBranchTarget(SgAsmInstruction*, uint64_t& addr);
 
 #endif
 

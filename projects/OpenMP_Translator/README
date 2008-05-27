@@ -81,7 +81,7 @@ It will in turn calls the following commands:
 
 g++ -g -I/home/liao6/opt/rose/include -c -o main.o \
      ./main.C
-g++ -g -o roseomp main.o -L/home/liao6/buildrose/src -Wl,-rpath /home/liao6/buildrose/src -lrose -ledg -lfl   -lm -lrt
+g++ -g -o roseomp main.o -L/home/liao6/buildrose/src -Wl,-rpath /home/liao6/buildrose/src -lrose -ledg -lfl   -lm $(RT_LIBS)
 
 'roseomp' is the generated executable translator.
 

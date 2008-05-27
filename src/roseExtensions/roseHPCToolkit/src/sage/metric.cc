@@ -50,7 +50,7 @@ MetricAttr::MetricAttr (const MetricAttr& m)
 string
 MetricAttr::toString (void)
 {
-  string retval = ::toString (value_);
+  string retval = GenUtil::toString (value_);
   if (is_derived_)
     retval += "**";
   return retval;

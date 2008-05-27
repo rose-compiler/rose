@@ -15,9 +15,6 @@
 //! of one of them?
 bool anyOfListPotentiallyModifiedIn(const std::vector<SgVariableSymbol*>& syms, SgNode* n);
 
-//! Get all symbols used in a given expression
-std::vector<SgVariableSymbol*> getSymbolsUsedInExpression(SgExpression* expr);
-
 //! Is the expression expr computed within root?  This test is simple, and does
 //! not account for changes to the variables in expr.
 bool expressionComputedIn(SgExpression* expr, SgNode* root);

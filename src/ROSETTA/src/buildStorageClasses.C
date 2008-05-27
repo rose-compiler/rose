@@ -687,8 +687,6 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
-                 ( varTypeString == "SgAsmRegisterReferenceExpression::x86_register_enum" ) ||
-                 ( varTypeString == "SgAsmRegisterReferenceExpression::x86_position_in_register_enum" ) ||
                  ( varTypeString == "SgAsmRegisterReferenceExpression::arm_register_enum" ) ||
                  ( varTypeString == "SgAsmRegisterReferenceExpression::arm_position_in_register_enum" ) ||
                  ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
@@ -708,7 +706,17 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmFile::elf_object_file_type_enum" ) ||
                  ( varTypeString == "SgAsmFile::elf_data_encoding_enum" ) ||
                  ( varTypeString == "SgAsmFile::elf_version_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_machine_architecture_enum" )
+                 ( varTypeString == "SgAsmFile::elf_machine_architecture_enum" ) ||
+                 ( varTypeString == "X86InstructionKind" ) ||
+                 ( varTypeString == "X86RegisterClass" ) ||
+                 ( varTypeString == "X86SegmentRegister" ) ||
+                 ( varTypeString == "X86BranchPrediction" ) ||
+                 ( varTypeString == "X86PositionInRegister" ) ||
+                 ( varTypeString == "X86InstructionSize" ) ||
+                 ( varTypeString == "ArmInstructionKind" ) ||
+                 ( varTypeString == "ArmInstructionCondition" ) ||
+                 ( varTypeString == "SgAsmArmRegisterReferenceExpression::arm_register_enum" ) ||
+                 false
               )
        {
           returnType = ENUM_TYPE;

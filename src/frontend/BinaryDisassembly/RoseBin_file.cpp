@@ -86,6 +86,7 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
     type= atoi(vec_functions_1[i].function_type.c_str());
     name_md5= vec_functions_1[i].name_md5;
 
+#if 0
       // demangling *****************************************************
       // we need to demangle this function name, so
       // we can correspond it with the source name
@@ -110,6 +111,7 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
 	  cout << " demangling name to " << name << endl;
       }
       name = getName(name);
+#endif
       RoseBin_support::checkText(name);
       //cerr << " checking for function : " << name << endl;
 
@@ -600,11 +602,11 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
       //cerr << " >>>>>>>>>> position : " << position;
       // if this would have to be saved in a map, it would need to be a multimap!!
       //if (RoseBin_support::DEBUG_MODE()) {
-      ostringstream addrhex;
-      addrhex << hex << setw(8) << address ;
 
       //cout<< "\n\n----------------------------------------------------------------" << endl;
       if (operand_id % 5000 == 0) {
+	ostringstream addrhex;
+	addrhex << hex << setw(8) << address ;
 	cout << ">> creating operand_tuple : address: " << addrhex.str() << " " << address << 
 	  " -  operand_id: " << operand_id << " -  position:" << position << endl;
       }
@@ -620,7 +622,7 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ROOT.size());
 	int expr_id_root = rememberExpressionTree_ROOT[operand_id];
 	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ParentChild.size());
-	map <int, vector<int> >  subTree = rememberExpressionTree_ParentChild[operand_id];
+	const map <int, vector<int> >&  subTree = rememberExpressionTree_ParentChild[operand_id];
 
 	rememberExpressionTree_ROOT.resize(operand_id + 1);
 	rememberExpressionTree_ParentChild.resize(operand_id + 1);
@@ -640,7 +642,7 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 	  }
 	}
 #endif
-	cerr << "resolveRecursivelyExpression " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
+	// cerr << "resolveRecursivelyExpression " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
 	binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
 							 subTree, 
 							 typeOfOperand,
@@ -708,12 +710,13 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 	  remInstr->get_operandList()->append_operand(binExp);
 	  binExp->set_parent(remInstr->get_operandList());
 	  
-	  exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
-	  if (RoseBin_support::DEBUG_MODE())
+	  if (RoseBin_support::DEBUG_MODE()) {
+	    exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
 	    cout << ">> append operand (to instruction): binExp: " <<binExp  
 		 << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
+	  }
 	}
-	tmp_instruction_map.erase(it);
+	// tmp_instruction_map.erase(it);
       }
     }
 

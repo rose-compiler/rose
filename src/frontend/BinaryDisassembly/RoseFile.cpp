@@ -21,7 +21,6 @@ using namespace std;
 #include "RoseFile.h"
 #include "RoseBin_file.h"
 #include "RoseBin_support.h"
-#include "RoseBin_unparse.h"
 
 
 
@@ -291,7 +290,7 @@ void RoseFile::visit(SgNode* node) {
   */
   if (isSgAsmMemoryReferenceExpression(node)) {
     SgAsmMemoryReferenceExpression* n = isSgAsmMemoryReferenceExpression(node);
-    cerr << "Found a SgAsmMemoryReferenceExpression" << endl;
+    // cerr << "Found a SgAsmMemoryReferenceExpression" << endl;
     ROSE_ASSERT(n->get_type());
   }
   if (instr) {
@@ -322,16 +321,8 @@ void RoseFile::visit(SgNode* node) {
  * unparse AST to assembly
  ****************************************************/
 void RoseFile::unparse(char* fileName) { 
-
-  //Language language = RoseBin_support::getAssemblyLanguage();
-  if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::none) {
-    std::cerr << " no assembly language specified. " << endl;
-    std::cerr << " use RoseBin_support::setAssemblyLanguage(string) " << endl;
-    std::cerr << " options : arm, x86 " << endl;
-    exit(0);
-  }
-
   ROSE_ASSERT(globalNode);
-  unparser->init(globalNode, fileName);
-  unparser->unparse();
+  {
+    unparseAsmStatementToFile(fileName, globalNode);
+  }
 }

@@ -12,7 +12,6 @@
 #include <iostream>
 #include "RoseBin_Graph.h"
 //#include "RoseBin.h"
-#include "RoseBin_unparse_visitor.h"
 
 class RoseBin_Variable  {
  private:
@@ -68,13 +67,12 @@ class RoseBin_DataFlowAbstract {
    rose_hash::hash_map <uint64_t, RoseBin_Variable*> memory;
 
   RoseBin_Graph* vizzGraph;
-  RoseBin_unparse_visitor* unparser;
 
   // definition of def-use data-structures. 
   // will need those for other analyses
-  typedef std::multimap< SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> multitype;
+  typedef std::multimap< std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> multitype;
   //typedef std::map< SgDirectedGraphNode*, multitype> tabletype;
-  //typedef __gnu_cxx::hash_multimap< SgAsmRegisterReferenceExpression::x86_register_enum, SgDirectedGraphNode*> multitype;
+  //typedef __gnu_cxx::hash_multimap< std::pair<X86RegisterClass, int> , SgDirectedGraphNode*> multitype;
   typedef rose_hash::hash_map< SgDirectedGraphNode*, multitype> tabletype;
 
 
@@ -83,7 +81,7 @@ class RoseBin_DataFlowAbstract {
   int nrOfRegisterWrites;
 
   std::set < SgDirectedGraphNode* > 
-    getAnyFor(const multitype* multi, SgAsmRegisterReferenceExpression::x86_register_enum initName);
+    getAnyFor(const multitype* multi, std::pair<X86RegisterClass, int> initName);
 
  public:
   tabletype deftable;
@@ -95,7 +93,7 @@ class RoseBin_DataFlowAbstract {
 
   virtual bool run(std::string& name, SgDirectedGraphNode* node,SgDirectedGraphNode* before  ) =0;
   virtual bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next)=0;
-  virtual void init(RoseBin_Graph* vg, RoseBin_unparse_visitor* unp)=0;
+  virtual void init(RoseBin_Graph* vg)=0;
 
   SgDirectedGraphNode* getPredecessor(SgDirectedGraphNode* node);
   SgDirectedGraphNode* getSuccessor(SgDirectedGraphNode* node);
@@ -106,63 +104,63 @@ class RoseBin_DataFlowAbstract {
   int getUsageSize() { return usetable.size();}
 
   int64_t check_isRegister(SgDirectedGraphNode* node,
-			   SgAsmInstruction* inst,
-			   SgAsmRegisterReferenceExpression::x86_register_enum codeSearch,
+			   SgAsmx86Instruction* inst,
+			   std::pair<X86RegisterClass, int> codeSearch,
 			   bool rightSide,
-			   std::vector<SgAsmRegisterReferenceExpression::x86_register_enum>& regsOfInterest,
+			   std::vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
 			   bool& cantTrack);
 
 
 
-  int64_t check_isLeftSideRegister(SgAsmInstruction* inst,
-				   SgAsmRegisterReferenceExpression::x86_register_enum codeSearch);
+  int64_t check_isLeftSideRegister(SgAsmx86Instruction* inst,
+				   std::pair<X86RegisterClass, int>  codeSearch);
 
   uint64_t getValueInExpression(SgAsmValueExpression* valExp);
 
 
   // should be removed after the reference from unparse_visitor is solved
-  void getRegister_val(SgAsmRegisterReferenceExpression::x86_register_enum code,
-		   SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos,
+  void getRegister_val(std::pair<X86RegisterClass, int>  code,
+		   X86PositionInRegister pos,
 		       uint64_t &qw_val) {};
 
   int64_t trackValueForRegister(
 				SgDirectedGraphNode* node,
-				SgAsmRegisterReferenceExpression::x86_register_enum codeSearch,
+				std::pair<X86RegisterClass, int>  codeSearch,
 				bool& cantTrack,
-				SgAsmRegisterReferenceExpression* refExpr_rightHand);
+				SgAsmx86RegisterReferenceExpression* refExpr_rightHand);
   
 
-  SgAsmRegisterReferenceExpression::x86_register_enum 
-    check_isRegister(SgDirectedGraphNode* node, SgAsmInstruction* inst, 
+  std::pair<X86RegisterClass, int>  
+    check_isRegister(SgDirectedGraphNode* node, SgAsmx86Instruction* inst, 
 		     bool rightSide, bool& memoryReference );
 
-  SgAsmExpression* getOperand(SgAsmInstruction* inst,
+  SgAsmExpression* getOperand(SgAsmx86Instruction* inst,
 						bool rightSide );
 
   uint64_t getValueInMemoryRefExp(SgAsmExpression* ref);
 
-  bool isInstructionAlteringOneRegister(SgAsmInstruction* inst);
-  bool altersMultipleRegisters(std::vector<SgAsmRegisterReferenceExpression::x86_register_enum>& codes,
-			      SgAsmInstruction* inst);
+  bool isInstructionAlteringOneRegister(SgAsmx86Instruction* inst);
+  bool altersMultipleRegisters(std::vector<std::pair<X86RegisterClass, int> >& codes,
+			      SgAsmx86Instruction* inst);
 
   bool sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
 
   void printDefTableToFile(std::string file);
 
   std::set < SgDirectedGraphNode* > 
-    getDefFor(SgDirectedGraphNode* node, SgAsmRegisterReferenceExpression::x86_register_enum initName) ;
+    getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int>  initName) ;
 
   std::set < SgDirectedGraphNode* > 
-    getUseFor(SgDirectedGraphNode* node, SgAsmRegisterReferenceExpression::x86_register_enum initName);
+    getUseFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int>  initName);
 
 
-    const std::multimap < SgAsmRegisterReferenceExpression::x86_register_enum , SgDirectedGraphNode* >& 
+    const std::multimap < std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* >& 
     getDefMultiMapFor(SgDirectedGraphNode* node);
 
-    const std::multimap< SgAsmRegisterReferenceExpression::x86_register_enum , SgDirectedGraphNode* > &
+    const std::multimap< std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* > &
     getUseMultiMapFor(SgDirectedGraphNode* node);
 
-    uint64_t getValueOfInstr( SgAsmInstruction* inst,  bool rightSide );
+    uint64_t getValueOfInstr( SgAsmx86Instruction* inst,  bool rightSide );
 
 
   RoseBin_Variable* createVariable(uint64_t position,

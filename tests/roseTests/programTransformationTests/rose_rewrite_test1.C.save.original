@@ -1,7 +1,0 @@
-
-void foo()
-{
-  int a;
-  int b = (a * a + 2 * a + -1 * a + -2);
-}
-

@@ -17,7 +17,7 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
 
  public:
 
-  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract* ):RoseBin_FlowAnalysis(global) {
+  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract*, VirtualBinCFG::AuxiliaryInformation* info ):RoseBin_FlowAnalysis(global, info) {
     typeNode="function";
     typeEdge="CG-E";  
     analysisName="callgraph";

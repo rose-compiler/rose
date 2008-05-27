@@ -15,15 +15,14 @@ bool
 BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 			      SgDirectedGraphNode* previous){
   // check known function calls and resolve variables
-  ROSE_ASSERT(unparser);
   ROSE_ASSERT(node);
 
   cerr << " bufferoverflow->run " << node->get_name() << endl;
-  SgAsmInstruction* asmNode = isSgAsmInstruction(node->get_SgNode());
+  SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
   if (asmNode) {
 
     // ANALYSIS 2 : BUFFER OVERFLOW DETECTION -------------------------------------------
-      if (isSgAsmx86Call(asmNode)) {
+      if (asmNode->get_kind() == x86_call) {
 	// DEFINITION OF BUFFER OVERFLOW
 	uint64_t malloc_pos = asmNode->get_address();
 	SgAsmOperandList* opList = asmNode->get_operandList();
@@ -32,8 +31,8 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	// get the first (and only) element 
 	if (ptrList.size()!=0) {
 	SgAsmExpression* expr = *(ptrList.begin());
-	string replace = "";
-	string op = unparser->resolveOperand(expr, &replace);
+	string replace = expr->get_replacement();
+	string op = unparseX86Expression(expr);
 
 	// we can detect malloc with the help of ida.
 	if (replace=="_malloc" || replace=="malloc@plt") {
@@ -46,27 +45,25 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	  uint64_t value=0;
 	  while (foundMov!=true && sameParents(node, pre)) {
 	    pre = getPredecessor(pre);
-	    SgAsmInstruction* asmPre = isSgAsmInstruction(pre->get_SgNode());
-	    SgAsmx86Mov* mov = isSgAsmx86Mov(asmPre);
-	    SgAsmx86Push* push = isSgAsmx86Push(asmPre);
-	    if (mov || push) {
+	    SgAsmx86Instruction* asmPre = isSgAsmx86Instruction(pre->get_SgNode());
+	    if (asmPre->get_kind() == x86_mov || asmPre->get_kind() == x86_push) {
 	      foundMov = true;
-	      if (mov) {
+	      if (asmPre->get_kind() == x86_mov) {
 		// make sure we are moving to the top of the stack, i.e. esp
 		bool memRef = false;
-		SgAsmRegisterReferenceExpression::x86_register_enum code;
-		code = check_isRegister(pre, mov, false, memRef);
-		string codeStr = unparser->resolveRegister(code,SgAsmRegisterReferenceExpression::qword);
+		std::pair<X86RegisterClass, int> code;
+		code = check_isRegister(pre, asmPre, false, memRef);
+		string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
 		if (codeStr=="rsp")
-		  value = getValueOfInstr(mov, true);
+		  value = getValueOfInstr(asmPre, true);
 		else 
 		  cerr << " Error :: foud a mov before a call that does not point to rsp but ::: " << codeStr << endl;
-		if (RoseBin_support::DEBUG_MODE() && mov) 
-		  cerr << "   malloc: found mov size of " << codeStr << " in " << value << " for malloc call : " << unparser->unparseInstruction(mov) <<endl;
-	      } else if (push) {
-		value = getValueOfInstr(push, false);
-		if (RoseBin_support::DEBUG_MODE() && push) 
-		  cerr << "   malloc: found push size " << value << " for malloc call : " << unparser->unparseInstruction(push) <<endl;
+		if (RoseBin_support::DEBUG_MODE() && asmPre->get_kind() == x86_mov) 
+		  cerr << "   malloc: found mov size of " << codeStr << " in " << value << " for malloc call : " << unparseInstruction(asmPre) <<endl;
+	      } else if (asmPre->get_kind() == x86_push) {
+		value = getValueOfInstr(asmPre, false);
+		if (RoseBin_support::DEBUG_MODE() && asmPre->get_kind() == x86_push) 
+		  cerr << "   malloc: found push size " << value << " for malloc call : " << unparseInstruction(asmPre) <<endl;
 	      }
 	    }
 	  }
@@ -78,19 +75,18 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	  SgDirectedGraphNode* aft = node;
 	  while (foundMov!=true && sameParents(node, aft)) {
 	    aft = getSuccessor(aft);
-	    SgAsmInstruction* asmAft = isSgAsmInstruction(aft->get_SgNode());
-	    SgAsmx86Mov* mov = isSgAsmx86Mov(asmAft);
-	    if (mov) {
+	    SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+	    if (asmAft->get_kind() == x86_mov) {
 	      foundMov = true;
 	      uint64_t address_of_var=0;
 		bool memRef = false;
-		SgAsmRegisterReferenceExpression::x86_register_enum code;
-		code = check_isRegister(aft, mov, true, memRef);
-		if (code == SgAsmRegisterReferenceExpression::rAX) {
-		  if (RoseBin_support::DEBUG_MODE() && mov) 
-		    cerr << "    found mov of eax of malloc call : " << unparser->unparseInstruction(mov) <<endl;
+		std::pair<X86RegisterClass, int> code;
+		code = check_isRegister(aft, asmAft, true, memRef);
+		if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+		  if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) 
+		    cerr << "    found mov of eax of malloc call : " << unparseInstruction(asmAft) <<endl;
 		  SgAsmMemoryReferenceExpression* memExpr = 
-		    isSgAsmMemoryReferenceExpression(getOperand(mov,false));
+		    isSgAsmMemoryReferenceExpression(getOperand(asmAft,false));
 		  if (memExpr) {
 		    //SgAsmRegisterReferenceExpression* refLeft = getRegister(memref->get_segment(),false);
 		    
@@ -105,7 +101,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 		    //if (func)
 		    //  functionName = func->get_name();
 		    functionName = RoseBin_support::HexToString(malloc_pos)+":";
-		    uint64_t pos = mov->get_address();
+		    uint64_t pos = asmAft->get_address();
 		    vector<uint64_t> val_v ;
 		    val_v.push_back(address_of_var);
 		    vector<uint64_t> pos_v ;
@@ -127,25 +123,26 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
     // we are looking for the mov instruction, that moves the variable into eax
     // in order to access it.
     //      if (isSgAsmMov(asmNode) ) {
-    if (isSgAsmx86DataTransferInstruction(asmNode) ) {
+    bool isDataTransfer = x86InstructionIsDataTransfer(asmNode);
+    if (isDataTransfer ) {
       // USAGE OF BUFFER OVERFLOW
-	SgAsmx86DataTransferInstruction* mov = isSgAsmx86DataTransferInstruction(asmNode);
-	if (mov) {
+      // Should this be only for mov instructions?
+	if (isDataTransfer) {
 	bool memRef = false;
 	uint64_t address_of_var=0;
-	SgAsmRegisterReferenceExpression::x86_register_enum code;
+	std::pair<X86RegisterClass, int> code;
 	// check if eax register on the left hand side
-	code = check_isRegister(node, mov, false, memRef);
-	if (code == SgAsmRegisterReferenceExpression::rAX) {
+	code = check_isRegister(node, asmNode, false, memRef);
+	if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 	  // right hand side is Register Reg / MemoryRef
 	  //	  SgAsmRegisterReferenceExpression* refRight = getRegister(mov,true);
 	  //if (refRight) {
 	    SgAsmMemoryReferenceExpression* memExpr = 
-	      isSgAsmMemoryReferenceExpression(getOperand(mov,true));
+	      isSgAsmMemoryReferenceExpression(getOperand(asmNode,true));
 	    if (memExpr) {
 	      address_of_var = getValueInMemoryRefExp( memExpr->get_address());
-	    if (RoseBin_support::DEBUG_MODE() && mov) {
-	      cout << "  malloc:  found mov to eax  " << unparser->unparseInstruction(mov) ;
+	    if (RoseBin_support::DEBUG_MODE() && isDataTransfer) {
+	      cout << "  malloc:  found mov to eax  " << unparseInstruction(asmNode) ;
 	      cout << "  malloc address ::  : " << RoseBin_support::HexToString(address_of_var) << endl;
 	    }
 	    RoseBin_Variable* var = getVariable(address_of_var);
@@ -157,7 +154,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 		array = true;
 	      if (RoseBin_support::DEBUG_MODE() ) 
 		cerr << "  malloc:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array) 
-	             << "    instr : " << unparser->unparseInstruction(mov) <<endl;
+	             << "    instr : " << unparseInstruction(asmNode) <<endl;
 	      // now that we have found the usage of an array, we check 
 	      // in a forward analysis, whether we access a value that is greater than
 	      // the length of the array
@@ -168,31 +165,29 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 		SgDirectedGraphNode* aft = node;
 		while (foundMov!=true && sameParents(node, aft)) {
 		  aft = getSuccessor(aft);
-		  SgAsmInstruction* asmAft = isSgAsmInstruction(aft->get_SgNode());
-		  SgAsmx86Add* add = isSgAsmx86Add(asmAft);
-		  if (add) {
+		  SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
+		  if (asmAft->get_kind() == x86_add) {
 		    bool memRef = false;
-		    SgAsmRegisterReferenceExpression::x86_register_enum code;
-		    code = check_isRegister(aft, add, false, memRef);
-		    if (code == SgAsmRegisterReferenceExpression::rAX) {
-		      uint64_t val = getValueOfInstr(add, true);
+		    std::pair<X86RegisterClass, int> code;
+		    code = check_isRegister(aft, asmAft, false, memRef);
+		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+		      uint64_t val = getValueOfInstr(asmAft, true);
 		      arrayLength += val;
 		    }
 		  }		  
-		  SgAsmx86Mov* mov = isSgAsmx86Mov(asmAft);
-		  if (mov) {
+		  if (asmAft->get_kind() == x86_mov) {
 		    foundMov = true;
 		    bool memRef = false;
-		    SgAsmRegisterReferenceExpression::x86_register_enum code;
-		    code = check_isRegister(aft, mov, true, memRef);
-		    if (code == SgAsmRegisterReferenceExpression::rAX) {
-		      if (RoseBin_support::DEBUG_MODE() && mov) {
-			cout << "   malloc - access to eax : " << unparser->unparseInstruction(mov) 
+		    std::pair<X86RegisterClass, int> code;
+		    code = check_isRegister(aft, asmAft, true, memRef);
+		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
+		      if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
+			cout << "   malloc - access to eax : " << unparseInstruction(asmAft) 
 			     << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;
 		      }
 		      if (arrayLength> array) {
-			if (RoseBin_support::DEBUG_MODE() && mov) {
-			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparser->unparseInstruction(mov) 
+			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
+			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft) 
 			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
 			  aft->append_properties(RoseBin_Def::dfa_bufferoverflow,varName);		  
 			}

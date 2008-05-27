@@ -17,15 +17,15 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
 
   void addDefElement(SgDirectedGraphNode* sgNode,
-		     SgAsmRegisterReferenceExpression::x86_register_enum initName,
+		     std::pair<X86RegisterClass, int>  initName,
 		     SgDirectedGraphNode* defNode);
 
   void addUseElement(SgDirectedGraphNode* sgNode,
-		     SgAsmRegisterReferenceExpression::x86_register_enum initName,
+		     std::pair<X86RegisterClass, int>  initName,
 		     SgDirectedGraphNode* defNode);
  
   void addAnyElement(tabletype* tabl, SgDirectedGraphNode* sgNode,
-		     SgAsmRegisterReferenceExpression::x86_register_enum initName,
+		     std::pair<X86RegisterClass, int>  initName,
 		     SgDirectedGraphNode* defNode);
 
 
@@ -54,12 +54,12 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
   void printAnyMap(tabletype* tabl);
   void printMultiMap(const multitype* multi);
 
-  bool searchMulti(const multitype* multi, SgAsmRegisterReferenceExpression::x86_register_enum initName);
-  bool searchMulti(const multitype* multi, SgAsmRegisterReferenceExpression::x86_register_enum initName,
+  bool searchMulti(const multitype* multi, std::pair<X86RegisterClass, int>  initName);
+  bool searchMulti(const multitype* multi, std::pair<X86RegisterClass, int>  initName,
 				    SgDirectedGraphNode* val);
 
   void replaceElement(SgDirectedGraphNode* sgNode,
-		      SgAsmRegisterReferenceExpression::x86_register_enum initName);
+		      std::pair<X86RegisterClass, int>  initName);
   void clearRegisters();
 
   void handleCopy(bool def,SgDirectedGraphNode* sgNode, SgDirectedGraphNode* sgNodeBefore);
@@ -77,8 +77,7 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
   int getNrOfMemoryWrites() {return nrOfMemoryWrites;}
   int getNrOfRegisterWrites() {return nrOfRegisterWrites;}
 
-  void init(RoseBin_Graph* vg, RoseBin_unparse_visitor* unp) {
-    unparser = unp;
+  void init(RoseBin_Graph* vg) {
     vizzGraph = vg;
     nrOfMemoryWrites=0;
     nrOfRegisterWrites=0;

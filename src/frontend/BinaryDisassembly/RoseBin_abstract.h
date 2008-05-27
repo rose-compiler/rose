@@ -9,7 +9,6 @@
 
 class RoseBin_abstract : public AstSimpleProcessing {
  protected: 
-  RoseBin_unparse* unparser;
   SgAsmNode* globalNode;
   std::list<std::string> functionNames;
 
@@ -30,8 +29,6 @@ class RoseBin_abstract : public AstSimpleProcessing {
  public:
 
   RoseBin_abstract() {
-    unparser = new RoseBin_unparse();
-    RoseBin_support::setUnparseVisitor(unparser->getVisitor());
     globalNode = 0;
     functionNames.clear();
     num_inst=0;
@@ -40,10 +37,6 @@ class RoseBin_abstract : public AstSimpleProcessing {
   }
   
   ~RoseBin_abstract() {
-    delete unparser;
-
-    unparser = NULL;
-
     if (globalNode)
       delete globalNode;
   }

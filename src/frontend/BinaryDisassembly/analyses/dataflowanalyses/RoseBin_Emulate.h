@@ -34,41 +34,41 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
 
 
-  void assignRegister(SgAsmRegisterReferenceExpression::x86_register_enum code,
-		      SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos,
+  void assignRegister(std::pair<X86RegisterClass, int>  code,
+		      X86PositionInRegister pos,
 		      uint8_t &b_val,
 		      uint16_t &w_val,
 		      uint32_t &dw_val,
 		      uint64_t &qw_val);
 
-  void assignRegister(SgAsmRegisterReferenceExpression::x86_register_enum code,
+  void assignRegister(std::pair<X86RegisterClass, int>  code,
 		      uint64_t &qw_val);
 
 
   /*
   int64_t trackValueForRegister(SgDirectedGraphNode* node,
-				SgAsmRegisterReferenceExpression::x86_register_enum codeSearch,
+				std::pair<X86RegisterClass, int>  codeSearch,
 				bool& cantTrack,
 				SgAsmRegisterReferenceExpression* refExpr_rightHand);
   */
 
   void clearRegisters();
-  uint64_t getRegister(SgAsmRegisterReferenceExpression::x86_register_enum code);
+  uint64_t getRegister(std::pair<X86RegisterClass, int>  code);
 
   std::string printRegister(std::string text, uint64_t reg);
 
   uint64_t getRandomValue(int val);
 
 
-  void getRegister_val(SgAsmRegisterReferenceExpression::x86_register_enum code,
-		   SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos,
+  void getRegister_val(std::pair<X86RegisterClass, int>  code,
+		   X86PositionInRegister pos,
 		   uint8_t &b_val,
 		   uint16_t &w_val,
 		   uint32_t &dw_val,
 		   uint64_t &qw_val);
 
-  void getRegister_val(SgAsmRegisterReferenceExpression::x86_register_enum code,
-		   SgAsmRegisterReferenceExpression::x86_position_in_register_enum pos,
+  void getRegister_val(std::pair<X86RegisterClass, int>  code,
+		   X86PositionInRegister pos,
 		   uint64_t &qw_val);
 
 
@@ -80,14 +80,13 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
   bool run(std::string& name, SgDirectedGraphNode* node, SgDirectedGraphNode* before);
   std::string evaluateRegisters();
-  bool evaluateInstruction( SgAsmInstruction* inst, std::string& operands) ;
+  bool evaluateInstruction( SgAsmx86Instruction* inst, std::string& operands) ;
 
   bool runEdge( SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
     return false;
   }
 
-  void init(RoseBin_Graph* vg, RoseBin_unparse_visitor* unp) {
-    unparser = unp;
+  void init(RoseBin_Graph* vg) {
     vizzGraph = vg;
     rax = 0xFFFFFFFF;
     rbx = 0xFFFFFFFF;

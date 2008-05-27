@@ -213,7 +213,7 @@ void doFiniteDifferencingOne(SgExpression* e,
         }
      if (i == root_stmts.end())
           return; // Expression is not used within root, so quit
-     vector<SgVariableSymbol*> used_symbols = getSymbolsUsedInExpression(e);
+     vector<SgVariableSymbol*> used_symbols = SageInterface::getSymbolsUsedInExpression(e);
      SgName cachename = "cache_fd__"; cachename << ++gensym_counter;
      SgVariableDeclaration* cachedecl = new SgVariableDeclaration(SgNULL_FILE, cachename, e->get_type(),0 /* new SgAssignInitializer(SgNULL_FILE, e) */);
      SgInitializedName* cachevar = cachedecl->get_variables().back();
