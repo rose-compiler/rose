@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.22 2008-05-28 07:21:56 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.23 2008-05-28 07:31:58 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -105,9 +105,10 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "                            --no-check-ast --no-check-icfg\n"
     "                            --number-expressions --no-statistics\n"
     "                            --analysis-files=all --analyis-annotation\n"
-    "                            --verbose --nodeFormat=no-asttext\n"
-    "                            --nodeFormat=no-varid --nodeFormat=varname\n"
-    "                            --nodeFormat=no-exprid --nodeFormat=exprsource\n"
+    "                            --verbose --gdl-nodeformat=no-asttext\n"
+    "                            --gdl-nodeformat=no-varid --gdl-nodeformat=varname\n"
+    "                            --gdl-nodeformat=no-exprid\n"
+    "                            --gdl-nodeformat=exprsource\n"
     /*
     " PAG garbage collection options:\n"
     "   --pag-gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
