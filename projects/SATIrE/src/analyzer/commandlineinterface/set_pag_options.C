@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.5 2008-05-27 20:09:32 markus Exp $
+// $Id: set_pag_options.C,v 1.6 2008-05-28 07:21:56 gergo Exp $
 
 // Author: Markus Schordan, 2006+
 
@@ -87,10 +87,6 @@ void setPagOptions(AnalyzerOptions opt) {
     }
     ExpressionId::setPrintFormat(printMode);
   }
-  if(opt.nodeFormatAstText()) {
-    /* TODO */
-  }
-
 
   if(opt.vivu()) {
     mapping_data.map_l = opt.getVivuLoopUnrolling(); // [default 2]
