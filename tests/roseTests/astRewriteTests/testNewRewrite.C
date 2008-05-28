@@ -3,15 +3,8 @@
 
 #include "rose.h"
 
-// Extra headers for customizing the rewrite mechanism
-#include "rewriteTreeTraversalImpl.h"
-#include "rewriteSynthesizedAttributeTemplatesImpl.h"
-#include "rewriteMidLevelInterfaceTemplatesImpl.h"
-#include "ASTFragmentCollectorTraversalImpl.h"
-#include "prefixGenerationImpl.h"
-#include "rewriteASTFragementStringTemplatesImpl.h"
-#include "nodeCollectionTemplatesImpl.h"
-#include "rewriteDebuggingSupportTemplatesImpl.h"
+// Extra header for customizing the rewrite mechanism
+#include "rewriteTemplateImpl.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;

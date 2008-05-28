@@ -478,7 +478,6 @@ get_read(AstInterface& _fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* col
 
 #define TEMPLATE_ONLY
 #include <TypeAnnotation.C>
-#include <CPPAnnotation.C>
 #include <OperatorDescriptors.C>
 template class TypeCollection<ArrayModifyDescriptor>;
 template class TypeCollection<ArrayConstructDescriptor>;

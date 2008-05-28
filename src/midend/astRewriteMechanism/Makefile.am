@@ -15,7 +15,8 @@ TemplateFiles = \
      rewriteTreeTraversalImpl.h \
      rewriteASTFragementStringTemplatesImpl.h \
      nodeCollectionTemplatesImpl.h \
-     rewriteDebuggingSupportTemplatesImpl.h
+     rewriteDebuggingSupportTemplatesImpl.h \
+     rewriteTemplateImpl.h
 
 librewriteSources = \
      nodeCollection.C \
