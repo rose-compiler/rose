@@ -4,6 +4,8 @@ INCLUDES = $(ROSE_INCLUDES)
 
 LINK = $(CXXLINK)
 
+LDFLAGS = -module
+
 lib_LTLIBRARIES = libPrintAsmFunctions.la libPrintAsmInstruction.la
 
 libPrintAsmFunctions_la_DEPENDENCIES =

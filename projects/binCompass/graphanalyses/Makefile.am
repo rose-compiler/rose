@@ -4,6 +4,8 @@ INCLUDES = $(ROSE_INCLUDES)
 
 LINK = $(CXXLINK)
 
+LDFLAGS = -module
+
 lib_LTLIBRARIES = libInterruptAnalysis.la libBufferOverflow.la
 
 libInterruptAnalysis_la_DEPENDENCIES =

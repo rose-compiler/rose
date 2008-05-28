@@ -353,6 +353,7 @@ AC_LIBTOOL_WIN32_DLL
 AC_DISABLE_STATIC
 
 # echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
+AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
 echo 'int i;' > conftest.$ac_ext
 AC_TRY_EVAL(ac_compile);
