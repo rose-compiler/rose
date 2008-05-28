@@ -1,4 +1,5 @@
 #include <stdint.h>
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <fcntl.h>
 #include <vector>
