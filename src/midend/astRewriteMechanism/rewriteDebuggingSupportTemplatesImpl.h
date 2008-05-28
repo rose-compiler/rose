@@ -115,7 +115,7 @@ display ( StackOfListsType tempStack, std::string label ) const
    {
   // This function takes a stack by value and distroys it while displaying its elements
 
-     printf ("***** Display for stack of scopes (label = %s) tempStack.size() = %d ***** \n",
+     printf ("***** Display for stack of scopes (label = %s) tempStack.size() = %zu ***** \n",
           label.c_str(),tempStack.size());
 
      int counter = 0;

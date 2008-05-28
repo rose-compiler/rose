@@ -15,7 +15,7 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # changes to the templates in ../src/midend/astRewriteMechanism/rewriteTreeTraversal.C
 # should force several files using those templates to be recompiled.
 # Express this explicitly:
-dotGenerator.o: $(top_builddir)/src/midend/astRewriteMechanism/rewriteTreeTraversal.o
+# dotGenerator.o: $(top_builddir)/src/midend/astRewriteMechanism/rewriteTreeTraversal.o
 
 EXTRA_DIST = $(TESTCODES)
 

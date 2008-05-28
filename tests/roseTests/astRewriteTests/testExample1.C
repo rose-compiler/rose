@@ -5,6 +5,16 @@ using namespace std;
 
 #include "rewrite.h"
 
+// Extra headers for customizing the rewrite mechanism
+#include "rewriteTreeTraversalImpl.h"
+#include "rewriteSynthesizedAttributeTemplatesImpl.h"
+#include "rewriteMidLevelInterfaceTemplatesImpl.h"
+#include "ASTFragmentCollectorTraversalImpl.h"
+#include "prefixGenerationImpl.h"
+#include "rewriteASTFragementStringTemplatesImpl.h"
+#include "nodeCollectionTemplatesImpl.h"
+#include "rewriteDebuggingSupportTemplatesImpl.h"
+
 // Use new rewrite mechanism
 #define USE_REWRITE_MECHANISM 1
 

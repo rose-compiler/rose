@@ -13,9 +13,9 @@ libastprocessingSources = \
    AstPDFGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C \
    AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C \
    AstNodePtrs.C AstSuccessorsSelectors.C \
-   AstReverseProcessing.C AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
-   AstTraversal.C AstCombinedProcessing.C AstCombinedSimpleProcessing.C \
-   StackFrameVector.C AstSharedMemoryParallelProcessing.C AstSharedMemoryParallelSimpleProcessing.C
+   AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
+   AstTraversal.C AstCombinedSimpleProcessing.C \
+   AstSharedMemoryParallelSimpleProcessing.C
 
 # DQ (1/3/2008): I think we can remove this Coco dependent file.
 # sgnodep.cpp AgProcessing.C AgDefaultError.C 
@@ -50,13 +50,13 @@ distclean-local:
 
 include_HEADERS = \
    AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h \
-   AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h AstProcessing.C \
+   AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h \
    AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h AstNodeScanner.h \
-   AstSuccessorsSelectors.h AstReverseProcessing.h AstReverseProcessing.C \
-   AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstRestructure.C AstClearVisitFlags.h \
-   AstTraversal.h AstCombinedProcessing.h AstCombinedProcessing.C \
-   AstCombinedSimpleProcessing.h StackFrameVector.h StackFrameVector.C AstSharedMemoryParallelProcessing.h \
-   AstSharedMemoryParallelProcessing.C AstSharedMemoryParallelSimpleProcessing.h
+   AstSuccessorsSelectors.h AstReverseProcessing.h \
+   AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h \
+   AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h \
+   AstCombinedSimpleProcessing.h StackFrameVector.h AstSharedMemoryParallelProcessing.h \
+   AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h
 
 # Removed AstTests.h AstStatistics.h 
 

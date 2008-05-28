@@ -186,11 +186,11 @@ display ( std::string s ) const
           std::string positionName = ASTNodeCollection::markerStrings[i][0] + "/" + 
                                 ASTNodeCollection::markerStrings[i][1];
           ROSE_ASSERT (positionName.c_str() != NULL);
-          printf ("     treeFragementListArray[%2d:%80s].size() = %d \n",
+          printf ("     treeFragementListArray[%2d:%80s].size() = %zu \n",
                i,positionName.c_str(),treeFragementListArray[i].size());
 
 #if 1
-          std::list<SgStatement*>::const_iterator j;
+          std::vector<SgStatement*>::const_iterator j;
           for (j = treeFragementListArray[i].begin(); j != treeFragementListArray[i].end(); j++)
              {
                listOfTreeFragmentsAttached = true;

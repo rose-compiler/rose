@@ -58,7 +58,7 @@ public:
 };
 
 // #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION 
-   #include "DOTRepresentation.C" 
+   #include "DOTRepresentationImpl.h" 
 // #endif 
 
 #endif

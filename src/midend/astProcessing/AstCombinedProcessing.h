@@ -182,7 +182,7 @@ private:
     typename TraversalPtrList::size_type numberOfTraversals;
 };
 
-#include "AstCombinedProcessing.C"
+#include "AstCombinedProcessingImpl.h"
 
 #include "AstCombinedSimpleProcessing.h"
 

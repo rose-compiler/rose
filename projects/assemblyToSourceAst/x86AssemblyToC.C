@@ -2094,7 +2094,7 @@ SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgAsmFile* f, SgBasicBloc
   for (size_t i = 0; i < asmBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
     const SgAsmStatementPtrList& stmts = bb->get_statementList();
-    ROSE_ASSERT (!stmts.empty());
+    if (stmts.empty()) continue;
     if (isSgAsmBlock(stmts.front())) continue; // This is an enclosing block that doesn't have any instructions
     uint64_t addr = stmts.front()->get_address();
     SgBasicBlock* caseBody = buildBasicBlock();

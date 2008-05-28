@@ -242,9 +242,9 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
 #endif
    }
 
-template <class ASTNodeCollection>
+template <>
 void
-MidLevelRewrite<ASTNodeCollection>::replace ( SgStatement* target, const std::string & transformationString )
+MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace ( SgStatement* target, const std::string & transformationString )
    {
   // Semantics of replace is always insert and remove (but it can't always be implemented that 
   // way e.g. for loop initializer statements).  It is simpler to use the replace option within
@@ -252,7 +252,7 @@ MidLevelRewrite<ASTNodeCollection>::replace ( SgStatement* target, const std::st
   // attached comments/directives are processed properly.
   // insert(target,transformationString);
   // remove(target);
-     insert(target,transformationString,MidLevelInterfaceNodeCollection::ReplaceCurrentPosition);
+     insert(target,transformationString,MidLevelInterfaceNodeCollection::SurroundingScope,MidLevelInterfaceNodeCollection::ReplaceCurrentPosition);
    }
 
 template <class ASTNodeCollection>

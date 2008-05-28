@@ -14,6 +14,5 @@ libastVisualization_la_SOURCES      = astGraph.C AstAttributeDOT.C wholeAST.C
 libastVisualization_la_LIBADD       = 
 libastVisualization_la_DEPENDENCIES = 
 
-# note that the astGraphTemplate.C is included in the astGraph.h header file
-include_HEADERS = AstAttributeDOT.h  astGraph.h astGraphTemplate.C wholeAST.h wholeAST_API.h
+include_HEADERS = AstAttributeDOT.h  astGraph.h astGraphTemplateImpl.h wholeAST.h wholeAST_API.h
 

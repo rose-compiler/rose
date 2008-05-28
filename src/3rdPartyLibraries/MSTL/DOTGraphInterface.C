@@ -1,6 +1,6 @@
 
 #include <assert.h>
 #include <DOTGraphInterface.h>
-#include <DOTSubgraphRepresentation.C>
+#include <DOTSubgraphRepresentationImpl.h>
 
 template class DOTSubgraphRepresentation< string >;

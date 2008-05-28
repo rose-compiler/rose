@@ -7,6 +7,15 @@
 #include "ControlStructure.h"
 #include "GenGeneration.h"
 #include "rose.h"
+// Extra headers for customizing the rewrite mechanism
+#include "rewriteTreeTraversalImpl.h"
+#include "rewriteSynthesizedAttributeTemplatesImpl.h"
+#include "rewriteMidLevelInterfaceTemplatesImpl.h"
+#include "ASTFragmentCollectorTraversalImpl.h"
+#include "prefixGenerationImpl.h"
+#include "rewriteASTFragementStringTemplatesImpl.h"
+#include "nodeCollectionTemplatesImpl.h"
+#include "rewriteDebuggingSupportTemplatesImpl.h"
 
 #include "rewrite.h"
 #include <vector>

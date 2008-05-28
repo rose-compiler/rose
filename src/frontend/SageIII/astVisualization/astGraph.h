@@ -301,6 +301,6 @@ void writeGraphOfAstSubGraphToFile(std::string filename, SgNode* node, AST_Graph
 
 // DQ (2/22/2006): Include the template functions implementing the 
 // generation of graphs of the AST (uses memory pools to see all AST IR nodes).
-#include "astGraphTemplate.C"
+#include "astGraphTemplateImpl.h"
 
 #endif
