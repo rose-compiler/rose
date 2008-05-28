@@ -347,13 +347,18 @@ fi
 AC_PROG_CXXCPP
 dnl AC_PROG_RANLIB
 # echo "In configure.in (before libtool win32 setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
-AC_LIBTOOL_WIN32_DLL
+dnl AC_LIBTOOL_WIN32_DLL -- ROSE is probably not set up for this
 
 # echo "In configure.in (before libtool setup): disabling static libraries by default (use --enable-static or --enable-static= to override)"
 AC_DISABLE_STATIC
 
 # echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
+LT_AC_PROG_SED dnl This seems to not be called, even though it is needed in the other macros
+AC_LIBLTDL_CONVENIENCE([src/3rdPartyLibraries/libltdl])
+AC_SUBST(LTDLINCL)
+AC_SUBST(LIBLTDL)
 AC_LIBTOOL_DLOPEN
+AC_LIB_LTDL
 AC_PROG_LIBTOOL
 echo 'int i;' > conftest.$ac_ext
 AC_TRY_EVAL(ac_compile);
@@ -720,8 +725,7 @@ AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 # RV 8/11/2005
 #   Replaced PDFLibrary with latest version, PDFlib-Lite-6.0.2(rv).
 #src/3rdPartyLibraries/PDFLibrary/Makefile
-AC_CONFIG_SUBDIRS(src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv)
-
+AC_CONFIG_SUBDIRS(src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv src/3rdPartyLibraries/libltdl)
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
 # JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am

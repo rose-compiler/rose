@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <dlfcn.h>
+#include "ltdl.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -54,11 +54,11 @@ void loadAnalysisFiles(vector <BC_AnalysisInterface*>& checkers) {
     cout << "Loading Binary Checker --- " << name << endl;
 
     string filename = "analyses/.libs/lib" + name + ".so";
-    void* dl = dlopen((filename).c_str(), RTLD_LAZY | RTLD_LOCAL);
-    if (!dl) {cerr << "dlopen (" << filename << "): " << dlerror() << endl;}
+    lt_dlhandle dl = lt_dlopenext((filename).c_str());
+    if (!dl) {cerr << "lt_dlopenext (" << filename << "): " << lt_dlerror() << endl;}
     ROSE_ASSERT (dl);
-    void* symRaw = dlsym(dl, "create");
-    if (!symRaw) {cerr << "dlsym (create): " << dlerror() << endl;}
+    void* symRaw = lt_dlsym(dl, "create");
+    if (!symRaw) {cerr << "lt_dlsym (create): " << lt_dlerror() << endl;}
     ROSE_ASSERT (symRaw);
     BC_AnalysisInterface*(*sym)() = (BC_AnalysisInterface*(*)())symRaw;
     BC_AnalysisInterface* intf = sym();
@@ -76,11 +76,11 @@ void loadGraphAnalysisFiles(vector <BC_GraphAnalysisInterface*>& checkers) {
     cout << "Loading Binary Graph Checker --- " << name << endl;
 
     string filename = "graphanalyses/.libs/lib" + name + ".so";
-    void* dl = dlopen((filename).c_str(), RTLD_LAZY | RTLD_LOCAL);
-    if (!dl) {cerr << "dlopen (" << filename << "): " << dlerror() << endl;}
+    lt_dlhandle dl = lt_dlopenext((filename).c_str());
+    if (!dl) {cerr << "lt_dlopenext (" << filename << "): " << lt_dlerror() << endl;}
     ROSE_ASSERT (dl);
-    void* symRaw = dlsym(dl, "create");
-    if (!symRaw) {cerr << "dlsym (create): " << dlerror() << endl;}
+    void* symRaw = lt_dlsym(dl, "create");
+    if (!symRaw) {cerr << "lt_dlsym (create): " << lt_dlerror() << endl;}
     ROSE_ASSERT (symRaw);
     BC_GraphAnalysisInterface*(*sym)() = (BC_GraphAnalysisInterface*(*)())symRaw;
     BC_GraphAnalysisInterface* intf = sym();
@@ -118,6 +118,8 @@ int main(int argc, char** argv) {
     return 1;
   }
   string execName = argv[1];
+
+  lt_dlinit();
   
   // this is our test case input, we will assert on the data from this file
   test = false;
@@ -335,6 +337,8 @@ int main(int argc, char** argv) {
   }  
 
   unparseAsmStatementToFile("unparsed.s", file->get_global_block());
+
+  lt_dlexit();
 
   return 0;
 }
