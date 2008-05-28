@@ -29,7 +29,7 @@ touch stamp-h.in  || : exit 1
 touch stamp-h1.in || : exit 1
 
 # Do the same steps in libltdl
-(cd src/3rdPartyLibraries/libltdl && aclocal && automake && autoconf)
+(cd src/3rdPartyLibraries/libltdl && aclocal && automake --add-missing && autoconf)
 
 echo "***** BUILD TERMINATED NORMALLY *****"
 
