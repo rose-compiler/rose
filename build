@@ -10,7 +10,7 @@ rm -rf autom4te.cache src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/autom4te.cache
 # RV 9/14/2005 -- Upgrade of PDF library
 (cd src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv ; ./bootstrap)
 
-aclocal -I ./config -I ./acmacros -I /usr/share/aclocal || : exit 1
+aclocal -I ./config -I ./acmacros -I ./src/3rdPartyLibraries/libltdl -I /usr/share/aclocal || : exit 1
 
 # autoheader --warnings=obsolete,all || : exit 1
 autoheader || : exit 1
@@ -27,6 +27,9 @@ automake -a -c -i --foreign 2>&1 | grep -v "is not a standard library name" 1>&2
 # Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
 touch stamp-h.in  || : exit 1
 touch stamp-h1.in || : exit 1
+
+# Do the same steps in libltdl
+(cd src/3rdPartyLibraries/libltdl && aclocal && automake && autoconf)
 
 echo "***** BUILD TERMINATED NORMALLY *****"
 

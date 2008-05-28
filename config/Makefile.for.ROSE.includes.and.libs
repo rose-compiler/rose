@@ -201,6 +201,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/tiff \
      -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/jpeg \
      -I$(top_srcdir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/png \
+     -I$(top_srcdir)/src/3rdPartyLibraries/libltdl \
      -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
