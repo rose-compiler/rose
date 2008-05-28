@@ -247,7 +247,7 @@ private:
     size_t synchronizationWindowSize;
 };
 
-#include "AstSharedMemoryParallelProcessing.C"
+#include "AstSharedMemoryParallelProcessingImpl.h"
 
 #include "AstSharedMemoryParallelSimpleProcessing.h"
 

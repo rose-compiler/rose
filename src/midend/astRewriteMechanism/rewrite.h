@@ -675,44 +675,6 @@ class SAGE_Rewrite
 // endif for AST_REWRITE_H
 #endif
 
-#if 1
-
-// Skip inclusion when we are compiling the rewriteTraversal.C file but include it
-// in all other cases since it contains only template functions. This is 
-// "Explicit Template Instantiation"
-#ifndef AST_REWRITE_TREE_TRAVERSAL_C
-#include "rewriteTreeTraversal.C"
-#endif
-
-#ifndef AST_REWRITE_SYNTHESIZED_ATTRIBUTE_TEMPLATES_C
-#include "rewriteSynthesizedAttributeTemplates.C"
-#endif
-
-#ifndef AST_REWRITE_MID_LEVEL_INTERFACE_TEMPLATES_C
-#include "rewriteMidLevelInterfaceTemplates.C"
-#endif
-
-#ifndef AST_REWRITE_FRAGMENT_COLLECTOR_TRAVERSAL_C
-#include "ASTFragmentCollectorTraversal.C"
-#endif
-
-#ifndef AST_REWRITE_PREFIX_GENERATION_C
-#include "prefixGeneration.C"
-#endif
-
-#ifndef AST_REWRITE_AST_FRAGMENT_STRING_TEMPLATES_C
-#include "rewriteASTFragementStringTemplates.C"
-#endif
-
-#ifndef ABSTRACT_INTERFACE_NODE_COLLECTION_TEMPLATES_C
-#include "nodeCollectionTemplates.C"
-#endif
-
-#ifndef AST_REWRITE_DEBUGGING_SUPPORT_TEMPLATES_C
-#include "rewriteDebuggingSupportTemplates.C"
-#endif
-
-#endif
 
 
 

@@ -20,4 +20,4 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = CallGraph.h ClassHierarchyGraph.h CallGraphTemplate.C
+include_HEADERS = CallGraph.h ClassHierarchyGraph.h

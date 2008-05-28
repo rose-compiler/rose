@@ -6,8 +6,7 @@ INCLUDES = $(ROSE_INCLUDES)
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libmstlSources = \
-   PDFGeneration.C AttributeMechanism.C DOTRepresentation.C DOTGeneration.C \
-   DOTSubgraphRepresentation.C DOTGraphInterface.C TreeTraversal.C
+   PDFGeneration.C DOTGraphInterface.C
 
 # lib_LIBRARIES = libmstl.a
 # libmstl_a_SOURCES  = $(libmstlSources)
@@ -29,7 +28,8 @@ distclean-local:
 include_HEADERS = \
    PDFGeneration.h AttributeMechanism.h DOTGeneration.h DOTRepresentation.h \
    Translator.h DOTSubgraphRepresentation.h DOTGraphInterface.h TreeTraversal.h \
-   $(libmstlSources)
+   DOTRepresentationImpl.h DOTGenerationImpl.h \
+   DOTSubgraphRepresentationImpl.h
 
 EXTRA_DIST = MSTL.docs
 

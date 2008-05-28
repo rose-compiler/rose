@@ -77,7 +77,7 @@ class DOTGeneration : public SgTopDownBottomUpProcessing<DOTInheritedAttribute, 
 
 // Since we don't include rose_config.h we can use these
 // #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION 
-   #include "DOTGeneration.C" 
+   #include "DOTGenerationImpl.h" 
 // #endif 
 
 #endif
