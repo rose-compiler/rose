@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.14 2008-05-27 14:13:31 gergo Exp $
+// $Id: cfg_funcs.C,v 1.15 2008-05-28 07:22:34 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -93,7 +93,7 @@ extern "C" void kfg_node_infolabel_print_fp(FILE *file, KFG kfg,
     AnalyzerOptions *opt = cfg->analyzerOptions;
  // If requested on the command line, dump trees instead of unparsed
  // statements.
-    if (opt != NULL && opt->showStatementTrees())
+    if (opt != NULL && opt->nodeFormatAstText())
         printOption = P_Tree;
 
     std::string result;
