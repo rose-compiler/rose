@@ -156,9 +156,9 @@ roseDirectoryMap.pdf: Makefile
 #	Generate output from the --help commandline option for use in documentation
 roseHelpOutput.txt:
 	@echo "Building --help option output file for LaTeX documentation ... "
-	if (test -r $(libdir)/librose.so && test -x $(top_builddir)/src/testSharedRoseLib); then \
+	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
       echo "Running ROSE translator to generate output of --help"; \
-      $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
+      env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
    else \
       echo "--help option output is not available (build ROSE, then rebuild documentation)." > roseHelpOutput.txt; \
    fi;
@@ -171,7 +171,7 @@ roseCommandline.txt:
 # Generate an example of the output from running a test program
 roseExecutionOutput.txt:
 	@echo "Building example execution output files for LaTeX documentation ... "
-	if (test -r $(libdir)/librose.so && test -x $(top_builddir)/src/testSharedRoseLib); then \
+	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
       echo "Building a simple program to run with testSharedRoseLib"; \
       echo "int main() { int x=0; return x; }" > roseTestProgram.C; \
       env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
