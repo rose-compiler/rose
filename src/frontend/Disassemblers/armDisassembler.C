@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <vector>
 #include "rose.h"
@@ -324,7 +325,7 @@ namespace ArmDisassembler {
     }
 
     SgAsmArmInstruction* disassemble() {
-      fprintf(stderr, "Disassembling insn 0x%08X at addr 0x%08lX\n", insn, p.ip);
+      fprintf(stderr, "Disassembling insn 0x%08" PRIu32 " at addr 0x%08" PRIu32 "\n", insn, p.ip);
       uint8_t condField = (insn >> 28) & 0xF;
       bool bit4 = (insn >> 4) & 1;
       bool bit5 = (insn >> 5) & 1;
