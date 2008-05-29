@@ -940,7 +940,7 @@ std::list<SgNode*> findNodes(SgNode* astNode){
 attachPreprocessingInfo(SgFile *sageFilePtr,  std::map<std::string,ROSEAttributesList*>* attrMap)
    {
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST Comment Processing (using wave):");
+     TimingPerformance timer ("AST Comment Processing (using Wave, inner part):");
 
   // Dummy attribute
      AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh;
@@ -964,10 +964,10 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
    {
      ROSE_ASSERT(sageFilePtr != NULL);
 
-  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST Comment and CPP Directive Processing (non-wave):");
-
 #ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST Comment and CPP Directive Processing (using Wave, outer part):");
+
   // Build the AST used by ROSE
   // SgProject* project = frontend(argc,argv);
      std::vector<std::string>  includeSpecifierlist;
@@ -1398,6 +1398,9 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 
   // else for conditional use of Boost-Wave
 #else
+  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST Comment and CPP Directive Processing (not using Wave):");
+
   // DQ (4/7/2006): Older version of code (not using boost-wave)
 
   // Dummy attribute (nothing is done here since this is an empty class)
