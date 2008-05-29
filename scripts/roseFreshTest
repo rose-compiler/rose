@@ -98,14 +98,22 @@ buildstatus=0
   cd build
 # ROSE_CONFIG_FLAGS="--without-binary_analysis --enable-rosehpct --with-openFortranParser=/home/liao6/download/fortran-parser --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server"
   ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" && \
+  echo "############ configure done" && \
   make $MAKEFLAGS && \
+  echo "############ make done" && \
   make $MAKEFLAGS docs && \
+  echo "############ make docs done" && \
   make $MAKEFLAGS check && \
+  echo "############ make check done" && \
   rmdir ../install && \
   make $MAKEFLAGS install && \
+  echo "############ make install done" && \
   make $MAKEFLAGS installcheck && \
+  echo "############ make installcheck done" && \
   make $MAKEFLAGS dist && \
-  make $MAKEFLAGS distcheck
+  echo "############ make dist done" && \
+  make $MAKEFLAGS distcheck && \
+  echo "############ make distcheck done"
 ) >buildlog 2>&1 || buildstatus=1
 
 if [ $buildstatus == 0 ]; then
