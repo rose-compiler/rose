@@ -40,10 +40,11 @@ set -e
 (
 echo "Subject: Starting ROSE test $$" > mailtext1
 echo "" >> mailtext1
-echo ">>> See build log in ${ROSE_TOP}/buildlog for status" >> mailtext1
+echo ">>> See build log in ${ROSE_TOP}/buildlog on `hostname` for status" >> mailtext1
 echo "SVN root = ${ROSE_SVNROOT}" >> mailtext1
 echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext1
 echo "Make flags = ${MAKEFLAGS}" >> mailtext1
+echo "Hostname = `hostname`" >> mailtext1
 echo "" >> mailtext1
 echo "> Command versions" >> mailtext1
 (automake --version | head -1 || echo "automake not found") >> mailtext1
@@ -113,6 +114,7 @@ if [ $buildstatus == 0 ]; then
   echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "Make flags = ${MAKEFLAGS}" >> mailtext
+  echo "Hostname = `hostname`" >> mailtext
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
@@ -123,6 +125,7 @@ else
   echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "Make flags = ${MAKEFLAGS}" >> mailtext
+  echo "Hostname = `hostname`" >> mailtext
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
