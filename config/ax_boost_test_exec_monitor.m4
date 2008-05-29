@@ -95,7 +95,7 @@ AC_DEFUN([AX_BOOST_TEST_EXEC_MONITOR],
                 if test "x$link_test_exec_monitor" != "xyes"; then
                 for libextension in `ls $BOOSTLIBDIR/boost_test_exec_monitor*.{dll,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_test_exec_monitor.*\)\.dll.*$;\1;' -e 's;^\(boost_test_exec_monitor.*\)\.a*$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_TEST_EXEC_MONITOR_LIB="-l$ax_lib"; AC_SUBST(BOOST_TEST_EXEC_MONITOR_LIB) link_test_exec_monitor="yes"; break],
                                  [link_test_exec_monitor="no"])
   				done

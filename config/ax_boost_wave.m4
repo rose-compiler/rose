@@ -83,7 +83,7 @@ AC_DEFUN([AX_BOOST_WAVE],
                      ax_lib=${libextension}
                     echo "ax_lib"
                     echo $ax_lib
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_WAVE_LIB="-l$ax_lib"; AC_SUBST(BOOST_WAVE_LIB) link_wave="yes"; break],
                                  [link_wave="no"])
   				done
@@ -93,7 +93,7 @@ AC_DEFUN([AX_BOOST_WAVE],
                      ax_lib=${libextension}
                     echo "ax_lib"
                     echo $ax_lib
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_WAVE_LIB="-l$ax_lib"; AC_SUBST(BOOST_WAVE_LIB) link_wave="yes"; break],
                                  [link_wave="no"])
   				done
