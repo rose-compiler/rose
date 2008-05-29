@@ -28,7 +28,8 @@ libannotationLanguageParser_la_SOURCES = \
    analyze.cc \
    rule.cc \
    broadway_expr.cc \
-   report.cc
+   report.cc \
+   language.tab.h
 
 libannotationLanguageParser_la_DEPENDENCES = language-lexer.cc language-parser.cc language.tab.h
 # libannotationLanguageParser_la_LIBADD = 
@@ -43,6 +44,8 @@ language-parser.cc: $(srcdir)/language.y
 language-lexer.cc: $(srcdir)/language.l language-parser.cc
 	flex $(srcdir)/language.l
 	mv lex.ann.c language-lexer.cc
+
+language.tab.h: language-parser.cc
 
 clean:
 	rm -f language-lexer.cc lex.ann.c language-parser.cc language.tab.h tempBisonOutput.*
