@@ -38,7 +38,7 @@ export TMPDIR
 set -e
 
 (
-echo "Subject: Starting ROSE test $$" > mailtext1
+echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
 echo "" >> mailtext1
 echo ">>> See build log in ${ROSE_TOP}/buildlog on `hostname` for status" >> mailtext1
 echo "SVN root = ${ROSE_SVNROOT}" >> mailtext1
@@ -109,7 +109,7 @@ buildstatus=0
 ) >buildlog 2>&1 || buildstatus=1
 
 if [ $buildstatus == 0 ]; then
-  echo "Subject: ROSE test $$ results (pass)" > mailtext
+  echo "Subject: ROSE test $$ on `hostname` results (pass)" > mailtext
   echo "" >> mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
@@ -120,7 +120,7 @@ if [ $buildstatus == 0 ]; then
   printenv >> mailtext
   echo "" >> mailtext
 else
-  echo "Subject: ROSE test $$ results (fail)" > mailtext
+  echo "Subject: ROSE test $$ on `hostname` results (fail)" > mailtext
   echo "" >> mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
