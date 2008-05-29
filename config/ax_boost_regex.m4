@@ -79,7 +79,7 @@ AC_DEFUN([AX_BOOST_REGEX],
                 for libextension in `ls $BOOSTLIBDIR/libboost_regex*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_regex.*\)\.so.*$;\1;' -e 's;^lib\(boost_regex.*\)\.a*$;\1;' -e 's;^lib\(boost_regex.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
                     echo "ax_lib"
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_REGEX_LIB="-l$ax_lib"; AC_SUBST(BOOST_REGEX_LIB) link_regex="yes"; break],
                                  [link_regex="no"])
   				done
@@ -88,7 +88,7 @@ AC_DEFUN([AX_BOOST_REGEX],
                      ax_lib=${libextension}
                     echo "ax_lib"
                     echo $ax_lib
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_REGEX_LIB="-l$ax_lib"; AC_SUBST(BOOST_REGEX_LIB) link_regex="yes"; break],
                                  [link_regex="no"])
   				done

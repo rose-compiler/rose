@@ -84,14 +84,14 @@ AC_DEFUN([AX_BOOST_SYSTEM],
             if test "x$ax_boost_user_system_lib" = "x"; then
                 for libextension in `ls $BOOSTLIBDIR/libboost_system*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_system.*\)\.so.*$;\1;' -e 's;^lib\(boost_system.*\)\.a*$;\1;' -e 's;^lib\(boost_system.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_SYSTEM_LIB="-l$ax_lib"; AC_SUBST(BOOST_SYSTEM_LIB) link_system="yes"; break],
                                  [link_system="no"])
   				done
                 if test "x$link_system" != "xyes"; then
                 for libextension in `ls $BOOSTLIBDIR/boost_system*.{dll,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_system.*\)\.dll.*$;\1;' -e 's;^\(boost_system.*\)\.a*$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_SYSTEM_LIB="-l$ax_lib"; AC_SUBST(BOOST_SYSTEM_LIB) link_system="yes"; break],
                                  [link_system="no"])
   				done
@@ -99,7 +99,7 @@ AC_DEFUN([AX_BOOST_SYSTEM],
 
             else
                for ax_lib in $ax_boost_user_system_lib boost_system-$ax_boost_user_system_lib; do
-				      AC_CHECK_LIB($ax_lib, exit,
+				      AC_CHECK_LIB($ax_lib, toupper,
                                    [BOOST_SYSTEM_LIB="-l$ax_lib"; AC_SUBST(BOOST_SYSTEM_LIB) link_system="yes"; break],
                                    [link_system="no"])
                   done
