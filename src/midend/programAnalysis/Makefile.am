@@ -15,8 +15,6 @@ SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
 # no longer compile!  These will be updated later.
 # staticProgramSlicing proceduralSlicing
 
-# DQ (10/21/2004): Take thse out for now since I can't compile them (missing language.tab.h which should be generated)
-
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 

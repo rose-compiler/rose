@@ -34,6 +34,8 @@ libannotationLanguageParser_la_SOURCES = \
 libannotationLanguageParser_la_DEPENDENCES = language-lexer.cc language-parser.cc language.tab.h
 # libannotationLanguageParser_la_LIBADD = 
 
+BUILT_SOURCES = language-lexer.cc language-parser.cc language.tab.h
+
 AM_CXXFLAGS = -D__LOCALSTL_H
 
 language-parser.cc: $(srcdir)/language.y
