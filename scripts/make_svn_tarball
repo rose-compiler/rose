@@ -4,7 +4,14 @@ versioninfo="`svn -q -r HEAD log ${svnrepository} | sed -n 2p`"
 version=`echo "${versioninfo}" | cut -f1 -d \ `
 modificationdate=`echo "${versioninfo}" | cut -f5 -d \ `
 
-dirnameBase="`basename $svnrepository`-svn-`date -d ${modificationdate} +%b%d-%Y`-${version}"
+year=`echo ${modificationdate} | cut -f 1 -d -`
+month=`echo ${modificationdate} | cut -f 2 -d - | sed 's,^0*,,'`
+monthname=`echo Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec | cut -f $month -d \ `
+day=`echo ${modificationdate} | cut -f 3 -d -`
+
+branchname="`basename ${svnrepository}`"
+
+dirnameBase="${branchname}-svn-${monthname}${day}-${year}-${version}"
 
 if [ -e "${dirnameBase}" ]; then
   echo "File or directory ${dirnameBase} already exists -- please remove it" 1>&2
