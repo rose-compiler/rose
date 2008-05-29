@@ -12,6 +12,7 @@
 #include <list>
 #include <set>
 
+using namespace std;
 
 //#define DEBUG_FINDSTATEMENTS
 

@@ -1,5 +1,6 @@
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "rose_config.h"
+//#include "config.h"
 #endif
 
 #include "FindStatements.h"
