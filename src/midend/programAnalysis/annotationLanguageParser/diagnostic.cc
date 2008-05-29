@@ -1,6 +1,8 @@
 
 #include "diagnostic.h"
 
+using namespace std;
+
 #define contain(L,x) (find(L.begin(), L.end(), x)!=L.end())
 
 class Diagnostic::Segment {

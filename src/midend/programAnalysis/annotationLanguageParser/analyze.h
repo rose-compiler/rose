@@ -2,7 +2,7 @@
 #ifndef BDWY_ANALYZE_H
 #define BDWY_ANALYZE_H
 
-typedef map< propertyAnn *, analyzeAnn *> analyze_map;
+typedef std::map< propertyAnn *, analyzeAnn *> analyze_map;
 typedef analyze_map::iterator analyze_map_p;
 typedef analyze_map::const_iterator analyze_map_cp;
 

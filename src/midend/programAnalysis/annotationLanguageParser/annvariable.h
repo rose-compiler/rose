@@ -2,20 +2,26 @@
 #ifndef BDWY_LOCALVARIABLE_H
 #define BDWY_LOCALVARIABLE_H
 
-typedef map< string , annVariable * > var_map;
+#include <map>
+#include <list>
+#include <set>
+#include <string>
+#include <iostream>
+
+typedef std::map< std::string , annVariable * > var_map;
 typedef var_map::iterator var_map_p;
 typedef var_map::const_iterator var_map_cp;
 
-typedef list< annVariable * > var_list;
+typedef std::list< annVariable * > var_list;
 typedef var_list::iterator var_list_p;
 typedef var_list::const_iterator var_list_cp;
 
-typedef set< annVariable * > var_set;
+typedef std::set< annVariable * > var_set;
 typedef var_set::iterator var_set_p;
 typedef var_set::const_iterator var_set_cp;
 
 #ifdef PROCLOCATION
-typedef map< procLocation *, pointerValue > variable_binding_map;
+typedef std::map< procLocation *, pointerValue > variable_binding_map;
 typedef variable_binding_map::iterator variable_binding_map_p;
 #endif
 
@@ -31,7 +37,7 @@ private:
 
   /** @brief the variable name */
 
-  string _name;
+  std::string _name;
 
   /** @brief bindings
    *
@@ -83,8 +89,8 @@ public:
    * synthetic declNode for this variable. For external variables, we'll
    * get the real declNode from the header files. */
 
-  annVariable(string name, 
-	      string procedure_name,
+  annVariable(std::string name, 
+	      std::string procedure_name,
 	      bool is_new,
 	      bool is_global,
 	      bool is_external,
@@ -110,7 +116,7 @@ public:
 
   // Fields access
 
-  string & name() { return _name; }
+  std::string & name() { return _name; }
 
 #ifdef DECLNODE 
   inline declNode * decl() const { return _decl; }
@@ -204,12 +210,12 @@ public:
 
   // --- Output
 
-  friend ostream& operator<<(ostream & o, const annVariable & var) {
+  friend std::ostream& operator<<(std::ostream & o, const annVariable & var) {
     var.print(o);
     return o;
   }
 
-  void print(ostream & o) const;
+  void print(std::ostream & o) const;
 };
 
 #endif /*  */

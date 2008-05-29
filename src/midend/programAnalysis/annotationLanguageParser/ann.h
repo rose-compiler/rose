@@ -37,7 +37,7 @@ class parserID
 {
 private:
 
-  string _name;
+  std::string _name;
   int    _line;
   bool   _is_io;
 
@@ -49,8 +49,8 @@ public:
       _is_io(false)
   {}
 
-  inline string & name() { return _name; }
-  inline const string & name() const { return _name; }
+  inline std::string & name() { return _name; }
+  inline const std::string & name() const { return _name; }
   inline int line() const { return _line; }
 
   inline bool is_io() const { return _is_io; }
@@ -66,7 +66,7 @@ public:
   }
 };
 
-typedef list< parserID > parserid_list;
+typedef std::list< parserID > parserid_list;
 typedef parserid_list::iterator parserid_list_p;
 
 

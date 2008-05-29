@@ -7,7 +7,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
           valuePropagation  defUseAnalysis dominanceAnalysis \
-          staticInterproceduralSlicing pointerAnal
+          staticInterproceduralSlicing pointerAnal \
+	  annotationLanguageParser sideEffectAnalysis
 
 # DQ (9/6/2005): Commented out these directories since they
 # represent code that used the older graph interface and they
@@ -15,7 +16,6 @@ SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
 # staticProgramSlicing proceduralSlicing
 
 # DQ (10/21/2004): Take thse out for now since I can't compile them (missing language.tab.h which should be generated)
-#         annotationLanguageParser sideEffectAnalysis
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .

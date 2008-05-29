@@ -2,10 +2,10 @@
 #ifndef BDWY_EXPR_H
 #define BDWY_EXPR_H
 
-typedef list< idNodeAnn * > idnodeann_list;
+typedef std::list< idNodeAnn * > idnodeann_list;
 typedef idnodeann_list::iterator idnodeann_list_p;
 
-typedef list< exprAnn * > exprann_list;
+typedef std::list< exprAnn * > exprann_list;
 typedef exprann_list::iterator exprann_list_p;
 typedef exprann_list::const_iterator exprann_list_cp;
 
@@ -85,14 +85,14 @@ public:
    * annotations). Write the result out to the given stream. */
 
 #ifdef __PROCLOCATION
-  virtual void report(ostream & out, bool is_error, procLocation * where) =0;
+  virtual void report(std::ostream & out, bool is_error, procLocation * where) =0;
 #endif
 
   /** @brief Print method
    *
    * Display the expression using the annotation syntax. */
 
-  virtual void print(ostream & out) =0;
+  virtual void print(std::ostream & out) =0;
 
 // begin TB new
 
@@ -101,7 +101,7 @@ public:
    * Display the diagnostic trace of a reported error. */
 
 #ifdef __PROCLOCATION
-  virtual void diagnostic(ostream & out,
+  virtual void diagnostic(std::ostream & out,
                           procLocation *where,
                           propertyAnalyzer * property_analyzer) const =0;
 #endif
@@ -147,14 +147,14 @@ public:
 		      Annotations * annotations);
 
 #ifdef __PROCLOCATION
-  virtual void report(ostream & out, bool is_error, procLocation * where);
+  virtual void report(std::ostream & out, bool is_error, procLocation * where);
 #endif
 
-  virtual void print(ostream & out);
+  virtual void print(std::ostream & out);
 
 // begin TB new
 #ifdef __PROCLOCATION
-  virtual void diagnostic(ostream & out,
+  virtual void diagnostic(std::ostream & out,
                           procLocation *where,
                           propertyAnalyzer * property_analyzer) const;
 #endif
@@ -177,7 +177,7 @@ private:
    *
    * The name of the property to test */
 
-  string _property_name;
+  std::string _property_name;
 
   /** @brief Property pointer 
    *
@@ -189,7 +189,7 @@ private:
    *
    * The identifier on the left-hand side */
 
-  string _lhs_name;
+  std::string _lhs_name;
 
   /** @brief Left-hand variable
    *
@@ -207,7 +207,7 @@ private:
    *
    * The identifier on the right-hand side */
 
-  string _rhs_name;
+  std::string _rhs_name;
 
   /** @brief Right-hand is property value
    *
@@ -309,17 +309,17 @@ public:
 		      Annotations * annotations);
 
 #ifdef __PROCLOCATION
-  virtual void report(ostream & out, bool is_error, procLocation * where);
+  virtual void report(std::ostream & out, bool is_error, procLocation * where);
 #endif
 
-  virtual void print(ostream & out);
+  virtual void print(std::ostream & out);
 
   inline bool is_weak() const { return _is_weak; }
   inline void set_weak() { _is_weak = true; }
 
 // begin TB new
 #ifdef __PROCLOCATION
-  virtual void diagnostic(ostream & out,
+  virtual void diagnostic(std::ostream & out,
                           procLocation *where,
                           propertyAnalyzer * property_analyzer) const;
 #endif
@@ -342,7 +342,7 @@ private:
    *
    * The name of the setProperty to test */
 
-  string _property_name;
+  std::string _property_name;
 
   /** @brief Set property pointer 
    *
@@ -354,7 +354,7 @@ private:
    *
    * The identifier on the left-hand side */
 
-  string _lhs_name;
+  std::string _lhs_name;
 
   /** @brief Left-hand variable
    *
@@ -366,7 +366,7 @@ private:
    *
    * The identifier on the right-hand side */
 
-  string _rhs_name;
+  std::string _rhs_name;
 
   /** @brief Right-hand variable
    *
@@ -411,14 +411,14 @@ public:
 		      Annotations * annotations);
 
 #ifdef __PROCLOCATION
-  virtual void report(ostream & out, bool is_error, procLocation * where);
+  virtual void report(std::ostream & out, bool is_error, procLocation * where);
 #endif
 
-  virtual void print(ostream & out);
+  virtual void print(std::ostream & out);
 
 // begin TB new
 #ifdef __PROCLOCATION
-  virtual void diagnostic(ostream & out,
+  virtual void diagnostic(std::ostream & out,
                           procLocation *where,
                           propertyAnalyzer * property_analyzer) const;
 #endif
@@ -451,7 +451,7 @@ private:
 
   /** @brief Left-hand side variable name*/
 
-  string _lhs_name;
+  std::string _lhs_name;
 
   /** @brief Left-hand side variable */
 
@@ -517,14 +517,14 @@ public:
 		      Annotations * annotations);
 
 #ifdef __PROCLOCATION
-  virtual void report(ostream & out, bool is_error, procLocation * where);
+  virtual void report(std::ostream & out, bool is_error, procLocation * where);
 #endif
 
-  virtual void print(ostream & out);
+  virtual void print(std::ostream & out);
 
 // begin TB new
 #ifdef __PROCLOCATION
-  virtual void diagnostic(ostream & out,
+  virtual void diagnostic(std::ostream & out,
                           procLocation *where,
                           propertyAnalyzer * property_analyzer) const {}
 #endif
@@ -542,7 +542,7 @@ private:
 
   /** @brief  */
 
-  string _lhs_name;
+  std::string _lhs_name;
 
   /** @brief  */
 
@@ -550,7 +550,7 @@ private:
 
   /** @brief  */
 
-  string _rhs_name;
+  std::string _rhs_name;
 
   /** @brief  */
 
@@ -578,14 +578,14 @@ public:
 		      Annotations * annotations);
 
 #ifdef __PROCLOCATION
-  virtual void report(ostream & out, bool is_error, procLocation * where);
+  virtual void report(std::ostream & out, bool is_error, procLocation * where);
 #endif
 
-  virtual void print(ostream & out);
+  virtual void print(std::ostream & out);
 
 // begin TB new
 #ifdef __PROCLOCATION
-  virtual void diagnostic(ostream & out,
+  virtual void diagnostic(std::ostream & out,
                           procLocation *where,
                           propertyAnalyzer * property_analyzer) const {}
 #endif

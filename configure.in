@@ -792,6 +792,8 @@ src/midend/programAnalysis/valuePropagation/Makefile
 src/midend/programAnalysis/defUseAnalysis/Makefile
 src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
+src/midend/programAnalysis/annotationLanguageParser/Makefile
+src/midend/programAnalysis/sideEffectAnalysis/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/partialRedundancyElimination/Makefile
 src/midend/programTransformation/finiteDifferencing/Makefile
@@ -960,6 +962,7 @@ tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
+tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/astMergeTests/Makefile
 tests/roseTests/astPerformanceTests/Makefile
@@ -1178,10 +1181,6 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 
 # DQ (10/22/2004): Could not get these to work with "make distcheck" rule (try again later)
 # src/3rdPartyLibraries/checkPointLibrary/Makefile
-# src/midend/programAnalysis/annotationLanguageParser/Makefile
-# src/midend/programAnalysis/sideEffectAnalysis/Makefile
-# tests/roseTests/programAnalysisTests/Makefile
-# tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 
 # JJW 3-7-2008 -- these are not listed as SUBDIRS in programAnalysisTests
 # tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile

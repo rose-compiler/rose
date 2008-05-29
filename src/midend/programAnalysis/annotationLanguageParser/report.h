@@ -2,7 +2,7 @@
 #ifndef BDWY_REPORT_H
 #define BDWY_REPORT_H
 
-typedef list< reportAnn * > report_list;
+typedef std::list< reportAnn * > report_list;
 typedef report_list::iterator report_list_p;
 typedef report_list::const_iterator report_list_cp;
 
@@ -23,7 +23,7 @@ public:
 		      Annotations * annotations) =0;
 
 #ifdef NONEMPTY
-  virtual void report(ostream & out,
+  virtual void report(std::ostream & out,
 		      bool is_error,
 		      Analyzer * analyzer,
 		      procLocation * where) =0;
@@ -40,7 +40,7 @@ class literalReportElementAnn : public reportElementAnn
 {
 private:
 
-  string _literal;
+  std::string _literal;
 
 public:
 
@@ -54,7 +54,7 @@ public:
 		      Annotations * annotations);
 
 #ifdef NONEMPTY
-  virtual void report(ostream & out,
+  virtual void report(std::ostream & out,
 		      bool is_error,
 		      Analyzer * analyzer,
 		      procLocation * where);
@@ -89,7 +89,7 @@ public:
 		      Annotations * annotations);
 
 #ifdef NONEMPTY
-  virtual void report(ostream & out,
+  virtual void report(std::ostream & out,
 		      bool is_error,
 		      Analyzer * analyzer,
 		      procLocation * where);
@@ -110,7 +110,7 @@ public:
 
 private:
 
-  string _kind_name;
+  std::string _kind_name;
 
   ContextKind _kind;
 
@@ -126,7 +126,7 @@ public:
 		      Annotations * annotations);
 
 #ifdef NONEMPTY
-  virtual void report(ostream & out,
+  virtual void report(std::ostream & out,
 		      bool is_error,
 		      Analyzer * analyzer,
 		      procLocation * where);
@@ -147,7 +147,7 @@ private:
 
   /** @brief The name of the variable */
 
-  string _variable_name;
+  std::string _variable_name;
 
   /** @brief Size only
    *
@@ -171,7 +171,7 @@ public:
 		      Annotations * annotations);
 
 #ifdef NONEMPTY
-  virtual void report(ostream & out,
+  virtual void report(std::ostream & out,
 		      bool is_error,
 		      Analyzer * analyzer,
 		      procLocation * where);
@@ -179,7 +179,7 @@ public:
 };
 
 
-typedef list< reportElementAnn * > report_element_list;
+typedef std::list< reportElementAnn * > report_element_list;
 typedef report_element_list::iterator report_element_list_p;
 
 /** @brief Report annotation
@@ -222,7 +222,7 @@ public:
 		      Annotations * annotations);
 
 #ifdef NONEMPTY
-  virtual void report(ostream & out,
+  virtual void report(std::ostream & out,
 		      Analyzer * analyzer,
 		      procLocation * where,
 		      propertyAnalyzer * property_analyzer);

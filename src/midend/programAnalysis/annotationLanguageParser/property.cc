@@ -7,6 +7,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 // ---------------------------------------------------------------------
 //  Property value
 //  Element of the lattice

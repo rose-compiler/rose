@@ -7,9 +7,9 @@ extern int annlineno;
 extern int line_number_offset;
 extern char * anntext;
 
-typedef list< enumValueAnn * > enumvalue_list;
-typedef list< exprAnn * > exprann_list;
-typedef list< ruleAnn * > rule_list;
+typedef std::list< enumValueAnn * > enumvalue_list;
+typedef std::list< exprAnn * > exprann_list;
+typedef std::list< ruleAnn * > rule_list;
 
 // -- Utility functions -- defined in c_breeze/src/main/parser.y
 
@@ -25,8 +25,8 @@ struct _TQ merge_tq(struct _TQ ts1,
 
 void annerror(const char * msg)
 {
-  Annotations::Current->Error(annlineno - line_number_offset, string(msg) + " near \"" +
-			      string(anntext) + "\"");
+  Annotations::Current->Error(annlineno - line_number_offset, std::string(msg) + " near \"" +
+			      std::string(anntext) + "\"");
 }
 
 %}
@@ -39,7 +39,7 @@ void annerror(const char * msg)
   parserid_list *             t_ids;
 
   int                         t_tok;
-  string *                    t_string;
+  std::string *               t_string;
 
   structureTreeAnn *          t_structure;
   structuretree_list *        t_structures;

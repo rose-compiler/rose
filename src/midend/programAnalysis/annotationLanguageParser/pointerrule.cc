@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 pointerRuleAnn::pointerRuleAnn(exprAnn * condition, structuretree_list * effects_tree, int line)
   : Ann(line),
     _condition(condition),

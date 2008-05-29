@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 // Multiple targets constructor
 
 structureTreeAnn::structureTreeAnn( const parserID * id,

@@ -2,14 +2,14 @@
 #ifndef BDWY_SET_PROPERTY_H
 #define BDWY_SET_PROPERTY_H
 
-typedef map< string, setPropertyAnn *> set_property_map;
+typedef std::map< std::string, setPropertyAnn *> set_property_map;
 typedef set_property_map::iterator set_property_map_p;
 typedef set_property_map::const_iterator set_property_map_cp;
 
 // -- NOTE: By choosing 1024 here, we are fixing the maximum size of sets
 // and equivalence classes.
 
-typedef bitset< 1024 > memoryblock_bitset;
+typedef std::bitset< 1024 > memoryblock_bitset;
 
 class setPropertyAnn : public propertyAnn
 {
@@ -22,7 +22,7 @@ public:
   // -- Manage the mapping from memoryblocks to bit positions
 
 #ifdef __FOO
-  typedef map< memoryBlock *, int > memoryblock_position_map;
+  typedef std::map< memoryBlock *, int > memoryblock_position_map;
   typedef memoryblock_position_map::iterator memoryblock_position_map_p;
 
   // -- Store the memoryBlocks in a vector to create the reverse mapping
@@ -32,7 +32,7 @@ public:
 
   // -- Set representation: map from program points to sets of blocks
 
-  typedef map< memoryAccess *, memoryblock_bitset > set_property_map;
+  typedef std::map< memoryAccess *, memoryblock_bitset > set_property_map;
   typedef set_property_map::iterator set_property_map_p;
 
   // -- Equivalence representation: map from program points to lists of
@@ -43,7 +43,7 @@ public:
   typedef memoryblock_bitset_list::iterator memoryblock_bitset_list_p;
   typedef memoryblock_bitset_list::const_iterator memoryblock_bitset_list_cp;
 
-  typedef map< memoryAccess *, memoryblock_bitset_list> equiv_property_map;
+  typedef std::map< memoryAccess *, memoryblock_bitset_list> equiv_property_map;
   typedef equiv_property_map::iterator equiv_property_map_p;
 #endif  
 private:
@@ -367,18 +367,18 @@ public:
    *
    * Just print out the contents of the set or relation. */
 
-  void report(ostream & out);
+  void report(std::ostream & out);
 #endif /* __FOO */
   /** @brief Output operator */
 
-  friend ostream& operator<<(ostream & o, const setPropertyAnn & anns) {
+  friend std::ostream& operator<<(std::ostream & o, const setPropertyAnn & anns) {
     anns.print(o);
     return o;
   }
 
   /** @brief Output method */
 
-  void print(ostream & o) const;
+  void print(std::ostream & o) const;
 
 private:
 
@@ -406,14 +406,14 @@ private:
 
   /** @brief Print out a set or class */
 
-  void print_memoryblock_bitset(const string & label,
+  void print_memoryblock_bitset(const std::string & label,
 				memoryblock_bitset & bits,
-				ostream & out);
+				std::ostream & out);
   /** @brief Print out equivalence classes */
 
-  void print_memoryblock_bitset_list(const string & label,
+  void print_memoryblock_bitset_list(const std::string & label,
 				     memoryblock_bitset_list & bits,
-				     ostream & out);
+				     std::ostream & out);
 #endif /* __FOO */
 };
 

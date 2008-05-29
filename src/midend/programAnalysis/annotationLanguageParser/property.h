@@ -2,6 +2,8 @@
 #ifndef BDWY_PROPERTY_H
 #define BDWY_PROPERTY_H
 
+#include <string>
+
 /** @brief A dataflow analysis property
  *
  * This is a base class for both the enum properties and the set
@@ -17,7 +19,7 @@ protected:
 
   /** @brief Name of the property */
 
-  string _name;
+  std::string _name;
 
   /** @brief ID
    *
@@ -70,8 +72,8 @@ public:
 
   /** @brief Property name */
 
-  inline string & name() { return _name; }
-  inline const string & name() const { return _name; }
+  inline std::string & name() { return _name; }
+  inline const std::string & name() const { return _name; }
 
   /** @brief Is enabled? */
 

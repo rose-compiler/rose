@@ -2,11 +2,17 @@
 #ifndef BDWY_ENUM_PROPERTY_H
 #define BDWY_ENUM_PROPERTY_H
 
-typedef list< enumValueAnn * > enumvalue_list;
+#include <list>
+#include <map>
+#include <string>
+#include <iostream>
+#include <bitset>
+
+typedef std::list< enumValueAnn * > enumvalue_list;
 typedef enumvalue_list::iterator enumvalue_list_p;
 typedef enumvalue_list::const_iterator enumvalue_list_cp;
 
-typedef map< string, enumPropertyAnn *> enum_property_map;
+typedef std::map< std::string, enumPropertyAnn *> enum_property_map;
 typedef enum_property_map::iterator enum_property_map_p;
 typedef enum_property_map::const_iterator enum_property_map_cp;
 
@@ -20,7 +26,7 @@ private:
 
   /** @brief Name of the value */
 
-  string _name;
+  std::string _name;
 
   /** @brief Pointer to the lower lattice element */
 
@@ -53,8 +59,8 @@ public:
 
   // Fields
 
-  inline string & name() { return _name; }
-  inline const string & name() const { return _name; }
+  inline std::string & name() { return _name; }
+  inline const std::string & name() const { return _name; }
 
   inline enumValueAnn * more_general() const { return _more_general; }
 
@@ -83,7 +89,7 @@ public:
 
 #define MAX_ENUMVALUES 32
 
-typedef bitset< MAX_ENUMVALUES > bitset32;
+typedef std::bitset< MAX_ENUMVALUES > bitset32;
 
 class enumvalue_set : public  bitset32
 {
@@ -145,43 +151,43 @@ class enumPropertyAnn : public propertyAnn
 {
 public:
 
-  typedef vector< enumValueAnn *> enumvalue_vec;
+  typedef std::vector< enumValueAnn *> enumvalue_vec;
   typedef enumvalue_vec::iterator enumvalue_vec_p;
   typedef enumvalue_vec::const_iterator enumvalue_vec_cp;
 
 #ifdef __MEMORYACCESS
-  typedef map< memoryAccess *, enumvalue_set> defuse_property_map;
+  typedef std::map< memoryAccess *, enumvalue_set> defuse_property_map;
   typedef defuse_property_map::iterator defuse_property_map_p;
 #endif
 
 #ifdef __MEMORYBLOCK
-  typedef map< memoryBlock *, enumvalue_set > block_propertyset_map;
+  typedef std::map< memoryBlock *, enumvalue_set > block_propertyset_map;
   typedef block_propertyset_map::iterator block_propertyset_map_p;
 #endif
 
 #ifdef __PROCLOCATION
-  typedef pair< int, double > count_accuracy_pair;
+  typedef std::pair< int, double > count_accuracy_pair;
   typedef map< procLocation *, count_accuracy_pair > accuracy_map;
   typedef accuracy_map::iterator accuracy_map_p;
 #endif
 
 #ifdef __MEMORYBLOCK
-  typedef map< Location *, memoryblock_set > tested_objects_map;
+  typedef std::map< Location *, memoryblock_set > tested_objects_map;
   typedef tested_objects_map::iterator tested_objects_map_p;
 #endif
 
 #ifdef __STMTNODE
-  typedef map< stmtNode *, count_accuracy_pair > stmt_accuracy_map;
+  typedef std::map< stmtNode *, count_accuracy_pair > stmt_accuracy_map;
   typedef stmt_accuracy_map::iterator stmt_accuracy_map_p;
 #endif
 
   // TB
 #ifdef __MEMORYBLOCK
-  typedef pair< memoryBlock*, Location* > block_loc_pair;
-  typedef set< block_loc_pair >           block_loc_set;
+  typedef std::pair< memoryBlock*, Location* > block_loc_pair;
+  typedef std::set< block_loc_pair >           block_loc_set;
 
-  typedef pair< memoryBlock*, procNode* > block_proc_pair;
-  typedef set< block_proc_pair >          block_proc_set;
+  typedef std::pair< memoryBlock*, procNode* > block_proc_pair;
+  typedef std::set< block_proc_pair >          block_proc_set;
 #endif
 
 private:
@@ -239,8 +245,8 @@ private:
   // TB_unify
   /** @brief Values of property blocks as input_to to a callee. */
 #ifdef __MEMORYBLOCK
-  typedef pair<procedureInfo*,memoryBlock*> Input_to_pair;
-  map<Input_to_pair,enumvalue_set> _input_to_values;
+  typedef std::pair<procedureInfo*,memoryBlock*> Input_to_pair;
+  std::map<Input_to_pair,enumvalue_set> _input_to_values;
 #endif
 
   /** @brief Objects that need flow-sensitivity
@@ -331,7 +337,7 @@ public:
 
   /** @brief Lookup a value by name */
 
-  enumValueAnn * lookup(const string & name);
+  enumValueAnn * lookup(const std::string & name);
 
   /** @brief Return the bottom element */
 
@@ -399,8 +405,8 @@ public:
 #ifdef __TEST
   bool test(Broadway::Operator op, Broadway::FlowSensitivity flow_sensitivity,
 	    Location * where,
-	    pointerValue & lhs, string & lhs_name,
-	    pointerValue & rhs, string & rhs_name);
+	    pointerValue & lhs, std::string & lhs_name,
+	    pointerValue & rhs, std::string & rhs_name);
 
   /** @brief Test one variable
    *
@@ -409,7 +415,7 @@ public:
 
   bool test(Broadway::Operator op, Broadway::FlowSensitivity flow_sensitivity,
 	    Location * where,
-	    pointerValue & lhs, string & lhs_name,
+	    pointerValue & lhs, std::string & lhs_name,
 	    enumvalue_set rhs_value_set);
 
   /** @brief Property test
@@ -476,7 +482,7 @@ public:
 #ifdef __MEMORYBLOCK
   enumvalue_set construct_now_value(Location * where,
 				    pointerValue & variable,
-				    string & variable_name,
+				    std::string & variable_name,
 				    bool & lost_information,
 				    memoryblock_set & complicit_property_blocks);
 #endif
@@ -499,7 +505,7 @@ public:
    * associated with modifications in the transfer functions (defs at this
    * location). Meet all these values together. */
 
-  enumvalue_set construct_after_value(pointerValue & variable, string & name);
+  enumvalue_set construct_after_value(pointerValue & variable, std::string & name);
 
   /** @brief Construct flow-sensitive "after now" value
    *
@@ -515,7 +521,7 @@ public:
    * For each memoryblock in the pointer value, union the sets of property
    * values together. */
 
-  enumvalue_set construct_ever_value(pointerValue & variable, string & name);
+  enumvalue_set construct_ever_value(pointerValue & variable, std::string & name);
 
   /** @brief Construct weak value
    *
@@ -526,7 +532,7 @@ public:
    * for weakly updated blocks. */
 
   enumvalue_set construct_weak_now_value(Location * where,
-					 pointerValue & variable, string & name);
+					 pointerValue & variable, std::string & name);
 
   //@}
 
@@ -541,7 +547,7 @@ public:
 			     ruleAnn * rule,
 			     exprAnn * expr,
 			     pointerValue & right,
-			     string & right_name,
+			     std::string & right_name,
 			     bool & rhs_lost_information,
 			     memoryblock_set & complicit_property_blocks,
 			     enumvalue_set & save_ever_values);
@@ -560,7 +566,7 @@ public:
 		  ruleAnn * rule,
 		  enumPropertyExprAnn * expr,
 		  pointerValue & left,
-		  string & left_name,
+		  std::string & left_name,
 		  pointerValue & right,
 		  enumvalue_set new_value,
 		  bool rhs_lost_information,
@@ -624,16 +630,16 @@ public:
    * Retrieve the value for the given variable and flow-sensitivity mode,
    * print out the results. */
 
-  void report(ostream & out,
+  void report(std::ostream & out,
 	      bool is_error, 
 	      procLocation * where,
 	      Broadway::FlowSensitivity flow_sensitivity,
-	      pointerValue & lhs, string & lhs_name);
+	      pointerValue & lhs, std::string & lhs_name);
 
 #endif /* __TEST */
   /** @brief Output operator */
 
-  friend ostream& operator<<(ostream & o, const enumPropertyAnn & anns) {
+  friend std::ostream& operator<<(std::ostream & o, const enumPropertyAnn & anns) {
     anns.print(o);
     return o;
   }
@@ -685,7 +691,7 @@ public:
 #endif
   /** @brief Output method */
 
-  void print(ostream & o) const;  
+  void print(std::ostream & o) const;  
 
   /** @brief Merge enumvalue_set
    *
@@ -696,7 +702,7 @@ public:
 
   /** @brief Convert enum values to string */
 
-  string to_string(enumvalue_set value_set);
+  std::string to_string(enumvalue_set value_set);
 
 // begin TB new
   /** @brief Reset error diagnostic.
@@ -714,7 +720,7 @@ public:
    * this value. */
 
 #ifdef __PROCLOCATION
-  void diagnostic(ostream &out, procLocation *where, pointerValue &pv,
+  void diagnostic(std::ostream &out, procLocation *where, pointerValue &pv,
                   enumvalue_set values) const;
 #endif
 // end TB new
@@ -729,7 +735,7 @@ private:
 
   /** @brief Print out this property */
 
-  void print(ostream & o, enumValueAnn * prop, int depth) const;
+  void print(std::ostream & o, enumValueAnn * prop, int depth) const;
 
   /** @brief Number values */
 
@@ -756,7 +762,7 @@ private:
 				     bool & make_chain_flow_sensitive,
 				     bool & make_chain_context_sensitive,
 				     memoryblock_vector & chain,
-				     string & indent);
+				     std::string & indent);
 #endif
   /** @brief Record tested objects
    *
@@ -775,10 +781,10 @@ private:
    * Trace the assignments to a property, generate a report. */
 
 #ifdef __MEMORYBLOCK
-  void trace_object(ostream & out,
+  void trace_object(std::ostream & out,
 		    memoryBlock * property_block,
 		    memoryblock_set & already_seen,
-		    string & indent);
+		    std::string & indent);
 #endif
   /** @brief Evaluate a procedure for context sensitivity
    *
@@ -794,7 +800,7 @@ private:
 				    block_proc_set & eval_cs_seen_destructive,
 				    block_proc_set & eval_cs_seen_complicit,
                                     block_proc_set & evaled_cs,
-				    string & indent);
+				    std::string & indent);
 #endif
   /** @brief Validate context sensitivity for property
    *
@@ -804,7 +810,7 @@ private:
   bool validate_property_cs(memoryBlock * block,
 			    const callsite_objects_map & assignments,
                             procedureInfo *procedure, // TB
-			    string & indent);
+			    std::string & indent);
 #endif
     /** @brief Validate context sensitivity for multiplicity
    *
@@ -814,7 +820,7 @@ private:
   bool validate_multiplicity_cs(memoryBlock * block,
 				const callsite_objects_map & assignments,
                                 procedureInfo *procedure, // TB
-				string & indent);
+				std::string & indent);
 #endif
   /** @brief Validate context sensitivity for regular pointer variable
    *
@@ -824,7 +830,7 @@ private:
   bool validate_pointer_cs(memoryBlock * block,
 			   const callsite_objects_map & assignments,
                            procedureInfo *procedure, // TB
-			   string & indent);
+			   std::string & indent);
 #endif
   /** @brief Validate pointer flow sensitivity
    *
@@ -834,7 +840,7 @@ private:
 #ifdef __MEMORYBLOCK
   bool validate_pointer_fs(memoryBlock * block,
 			   stmtLocation * where,
-			   string & indent);
+			   std::string & indent);
 #endif
   /** @brief Is location reachable?
    *

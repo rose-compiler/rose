@@ -22,6 +22,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+using namespace std;
+
 // ------------------------------------------------------------
 //  Remove empty basic blocks
 // ------------------------------------------------------------

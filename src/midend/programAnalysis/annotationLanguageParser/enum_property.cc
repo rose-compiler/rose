@@ -3,6 +3,9 @@
 #ifdef __FOO
 #include "diagnostic.h"
 #endif
+
+using namespace std;
+
 // ---------------------------------------------------------------------
 //  Property value
 //  Element of the lattice
@@ -2569,7 +2572,7 @@ void enumPropertyAnn::track_destructive_assignments(Analyzer * analyzer,
       }
     }
 #if 0
-/* { // begin debug
+{ // begin debug
 cout << block->name() << "   destructive_assignments: \n";
 const memoryBlock::destructive_assignment_map & destructive = block->destructive_assignments();
 for (memoryBlock::destructive_assignment_map_cp p = destructive.begin();
@@ -2581,7 +2584,7 @@ for (memoryBlock::complicit_assignment_map_cp p = complicit.begin();
      p != complicit.end(); ++p) {
   cout << "      " << * (*p).first << /*" " << p->second <<" "<< p->second->name()
        << * / endl;
-  /* serious: make it CS
+  / * serious: make it CS
   if(! disallow_context_sensitivity) {
     procLocation * procloc = Location::procedure(p->first);
     procNode * proc = procloc->proc();
@@ -2590,7 +2593,8 @@ for (memoryBlock::complicit_assignment_map_cp p = complicit.begin();
                                  procloc, indent);
   } * /
 }
-} // end debug */
+} // end debug
+*/ 
 #endif
 
     make_chain_flow_sensitive = fs;

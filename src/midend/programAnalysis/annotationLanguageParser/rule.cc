@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 ruleAnn::ruleAnn(exprAnn * condition, exprann_list * effects, int line)
   : Ann(line),
     _condition(condition),

@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 /*
 callNode * reportElementAnn::callnode(stmtNode * stmt)
 {

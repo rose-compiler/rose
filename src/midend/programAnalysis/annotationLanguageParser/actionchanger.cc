@@ -2,6 +2,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 actionChanger::actionChanger(Analyzer * analyzer, Annotations * annotations)
   : Changer(Preorder, Subtree, true),
     _analyzer(analyzer->property_analyzer()),

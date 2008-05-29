@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 callingContext::callingContext(procLocation * where,
 			       operandNode * call,
 			       propertyAnalyzer * property_analyzer,
