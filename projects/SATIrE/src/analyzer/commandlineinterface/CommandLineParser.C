@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.17 2008-05-27 20:09:32 markus Exp $
+// $Id: CommandLineParser.C,v 1.18 2008-05-29 08:03:52 gergo Exp $
 
 #include <config.h>
 
@@ -156,6 +156,12 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatchPrefix(argv[i], "--output-gdlanim=")) {
     cl->outputGdlAnimOn();
     cl->setOutputGdlAnimDirName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--input-binary-ast=")) {
+    cl->inputBinaryAstOn();
+    cl->setInputBinaryAstFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-binary-ast=")) {
+    cl->outputBinaryAstOn();
+    cl->setOutputBinaryAstFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--gnu:")) {
     /* process gnu options: pass through without '--gnu:' */
     cl->appendCommandLine(std::string(argv[i]+6));
