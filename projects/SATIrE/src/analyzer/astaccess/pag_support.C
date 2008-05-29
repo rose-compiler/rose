@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.14 2008-05-19 12:36:34 gergo Exp $
+// $Id: pag_support.C,v 1.15 2008-05-29 08:02:53 gergo Exp $
 
 #include <iostream>
 
@@ -241,38 +241,38 @@ extern "C" snum kfg_get_bblock_attribute__label(KFG cfg, KFG_NODE bb)
 
 /* external support functions */
 #include "bool.h"
-extern "C" bool o_is_unary(void *expr)
+extern "C" FLO_BOOL o_is_unary(void *expr)
 {
-    return isSgUnaryOp((SgNode *) expr);
+    return (isSgUnaryOp((SgNode *) expr) ? FLO_TRUE : FLO_FALSE);
 }
 
-extern "C" bool o_is_binary(void *expr)
+extern "C" FLO_BOOL o_is_binary(void *expr)
 {
-    return isSgBinaryOp((SgNode *) expr);
+    return (isSgBinaryOp((SgNode *) expr) ? FLO_TRUE : FLO_FALSE);
 }
 
-extern "C" bool o_is_value(void *expr)
+extern "C" FLO_BOOL o_is_value(void *expr)
 {
-    return isSgValueExp((SgNode *) expr);
+    return (isSgValueExp((SgNode *) expr) ? FLO_TRUE : FLO_FALSE);
 }
 
 #include "assert.h"
 
 extern "C" void *o_unary_get_child(void *expr)
 {
-    assert(is_unary(expr));
+    assert(o_is_unary(expr) == FLO_TRUE);
     return isSgUnaryOp((SgNode *) expr)->get_operand();
 }
 
 extern "C" void *o_binary_get_left_child(void *expr)
 {
-    assert(is_binary(expr));
+    assert(o_is_binary(expr) == FLO_TRUE);
     return isSgBinaryOp((SgNode *) expr)->get_lhs_operand();
 }
 
 extern "C" void *o_binary_get_right_child(void *expr)
 {
-    assert(is_binary(expr));
+    assert(o_is_binary(expr) == FLO_TRUE);
     return isSgBinaryOp((SgNode *) expr)->get_rhs_operand();
 }
 
@@ -325,14 +325,14 @@ extern "C" unum o_exprnum_typenum(unum n)
     return o_type_to_typenum(o_expr_type(o_exprnum_to_expr(n)));
 }
 
-extern "C" bool o_is_subtype_of(void *a, void *b)
+extern "C" FLO_BOOL o_is_subtype_of(void *a, void *b)
 {
     SgClassType *at = isSgClassType((SgType *) a),
                 *bt = isSgClassType((SgType *) b);
     /* a is subtype of b if a inherits from b: look at a's
      * inheritances (base classes) */
-    if (at == NULL) return false;
-    if (bt == NULL) return false;
+    if (at == NULL) return FLO_FALSE;
+    if (bt == NULL) return FLO_FALSE;
     const SgBaseClassPtrList &base_classes = 
         isSgClassDeclaration(at->get_declaration())->get_definition()
             ->get_inheritances();
@@ -344,12 +344,12 @@ extern "C" bool o_is_subtype_of(void *a, void *b)
             = isSgClassDeclaration(bt->get_declaration());
         if (base == bdecl || (base->get_type() != NULL && bdecl != NULL
                     && o_is_subtype_of(base->get_type(), bdecl->get_type())))
-            return true;
+            return FLO_TRUE;
     }
-    return false;
+    return FLO_FALSE;
 }
 
-extern "C" bool o_is_subtypenum_of(unum a, unum b)
+extern "C" FLO_BOOL o_is_subtypenum_of(unum a, unum b)
 {
     return o_is_subtype_of(o_typenum_to_type(a), o_typenum_to_type(b));
 }
@@ -360,16 +360,16 @@ extern "C" void *o_global_get_type(void *symbol)
     return varsym->get_type();
 }
 
-extern "C" bool o_global_has_initializer(void *symbol)
+extern "C" FLO_BOOL o_global_has_initializer(void *symbol)
 {
     SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
     if (get_global_cfg()->globals_initializers.find(varsym)
             != get_global_cfg()->globals_initializers.end())
     {
-        return true;
+        return FLO_TRUE;
     }
     else
-        return false;
+        return FLO_FALSE;
 }
 
 extern "C" void *o_global_get_initializer(void *symbol)
@@ -443,9 +443,9 @@ extern "C" str o_exp_root_str(void *exp)
     }
 }
 
-extern "C" bool o_is_operatorname(str s)
+extern "C" FLO_BOOL o_is_operatorname(str s)
 {
-    return strncmp(s, "op ", 3) == 0;
+    return (strncmp(s, "op ", 3) == 0 ? FLO_TRUE : FLO_FALSE);
 }
 
 #include <string.h>
@@ -538,7 +538,7 @@ unsigned long exprnum_typenum(unsigned long n)
 
 bool is_subtype_of(SgClassType *a, SgClassType *b)
 {
-    return o_is_subtype_of(a, b);
+    return o_is_subtype_of(a, b) == FLO_TRUE;
 }
 
 bool is_subtypenum_of(unsigned long a, unsigned long b)
