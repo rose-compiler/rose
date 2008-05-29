@@ -962,7 +962,6 @@ controlFlowGraph.pdf: buildCFG
 	@echo "Building an example Control Flow Graph (buildCFG) ..."
 	./buildCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C
 	@echo "Building postscript file from main.dot ..."
-	cp $(srcdir)/default_error_graph.dot main.dot
 	$(top_srcdir)/scripts/dotgenLetterPDF main.dot controlFlowGraph.pdf
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
