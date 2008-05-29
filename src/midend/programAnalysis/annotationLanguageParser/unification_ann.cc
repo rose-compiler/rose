@@ -1,6 +1,8 @@
 
 #include "unification_ann.h"
 
+using namespace std;
+
 UnificationBasedPtr_Ann::UnificationBasedPtr_Ann(Linker &l, Annotations *ann)
 : _annotations(ann), UnificationBasedPtr(l) { }
 

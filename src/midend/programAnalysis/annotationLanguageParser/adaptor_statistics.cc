@@ -1,6 +1,8 @@
 
 #include "adaptor_statistics.h"
 
+using namespace std;
+
 void Adaptor_Statistics::make_CS(memoryBlock *block, procedureInfo *proc, 
                                  Location *site,
                                  memoryBlock::DestructiveKind reason) {

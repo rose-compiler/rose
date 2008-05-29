@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 analyzeAnn::analyzeAnn(Annotations * anns,
 		       const parserID * property,
 		       rule_list * rules,

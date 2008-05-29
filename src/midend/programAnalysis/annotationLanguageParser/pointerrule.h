@@ -2,7 +2,7 @@
 #ifndef BDWY_POINTERRULE_H
 #define BDWY_POINTERRULE_H
 
-typedef list< pointerRuleAnn * > pointerrule_list;
+typedef std::list< pointerRuleAnn * > pointerrule_list;
 typedef pointerrule_list::iterator pointerrule_list_p;
 typedef pointerrule_list::const_iterator pointerrule_list_cp;
 

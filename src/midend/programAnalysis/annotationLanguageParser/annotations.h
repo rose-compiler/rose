@@ -8,7 +8,7 @@
 // CLASS: Annotations
 // ------------------------------------------------------------
 
-typedef map< string, procedureAnn * > procedures_map;
+typedef std::map< std::string, procedureAnn * > procedures_map;
 typedef procedures_map::iterator procedures_map_p;
 typedef procedures_map::const_iterator procedures_map_cp;
 
@@ -16,8 +16,8 @@ typedef procedures_map::const_iterator procedures_map_cp;
 //typedef map< error_pair, int > error_report_map;
 //typedef error_report_map::iterator error_report_map_p;
 
-typedef list <string> str_list;
-typedef set <string> str_set;
+typedef std::list <std::string> str_list;
+typedef std::set <std::string> str_set;
 
 class Adaptor_Statistics;
 
@@ -161,7 +161,7 @@ private:
 
   /** @brief Annotation file name */
 
-  string _filename;
+  std::string _filename;
 
   /** @brief Any global state variables */
 
@@ -228,7 +228,7 @@ public:
    * Read in the annotations contained in the given filename, first
    * preprocessing the file with the given cpp flags. */
 
-  Annotations(string & filename, str_list * cpp_flags);
+  Annotations(std::string & filename, str_list * cpp_flags);
 
   /** @brief Delete annotations */
 
@@ -263,7 +263,7 @@ public:
    * handles looking up actual global variables declared in the header
    * file. */
 
-  annVariable * add_one_global(const string & varname, bool is_io);
+  annVariable * add_one_global(const std::string & varname, bool is_io);
 
   /** @brief Add an enum property */
 
@@ -275,29 +275,29 @@ public:
 
   /** @brief Lookup procedure annotation by name */
 
-  procedureAnn * lookup_procedure(const string & name);
+  procedureAnn * lookup_procedure(const std::string & name);
 
   /** @brief Lookup global variable by name */
 
-  annVariable * lookup_global(const string & name);
+  annVariable * lookup_global(const std::string & name);
 
   /** @brief Lookup header declaration by name */
 
 #ifdef __HEADER
-  declNode * lookup_header_decl(const string & name);
+  declNode * lookup_header_decl(const std::string & name);
 #endif
 
   /** @brief Lookup an enum property by name */
 
-  enumPropertyAnn * lookup_enum_property(const string & name);
+  enumPropertyAnn * lookup_enum_property(const std::string & name);
 
   /** @brief Lookup a set property by name */
 
-  setPropertyAnn * lookup_set_property(const string & name);
+  setPropertyAnn * lookup_set_property(const std::string & name);
 
   /** @brief Lookup either kind of property */
 
-  propertyAnn * lookup_property(const string & name);
+  propertyAnn * lookup_property(const std::string & name);
 
   /** @brief Get the special constants property */
 
@@ -331,20 +331,20 @@ public:
 
   // --- Error handling
 
-  void Error(int where, const string & msg);
-  void Warning(int where, const string & msg);
+  void Error(int where, const std::string & msg);
+  void Warning(int where, const std::string & msg);
   int errors() const { return _errors; }
 
   // --- Output
 
-  friend ostream& operator<<(ostream & o, const Annotations & anns) {
+  friend std::ostream& operator<<(std::ostream & o, const Annotations & anns) {
     anns.print(o);
     return o;
   }
 
-  void print(ostream & o) const;
+  void print(std::ostream & o) const;
 
-  string & filename() { return _filename; }
+  std::string & filename() { return _filename; }
 
 private:
 
@@ -355,7 +355,7 @@ private:
    * This method is used by add_one_global to create a new object if one
    * isn't found. */
 
-  annVariable * new_global(const string & varname,
+  annVariable * new_global(const std::string & varname,
 			   bool is_external,
 			   bool is_io);
 

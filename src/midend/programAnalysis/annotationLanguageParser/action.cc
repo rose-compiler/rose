@@ -2,6 +2,8 @@
 #include "broadway.h"
 #include "ref_clone_changer.h"
 
+using namespace std;
+
 actionAnn::actionAnn(exprAnn * condition, int line)
   : Ann(line),
     _kind(Inline),

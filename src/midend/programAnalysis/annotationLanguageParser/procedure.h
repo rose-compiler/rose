@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------
 
 #ifdef __PROCLOCATION
-typedef set< procLocation * > proclocation_set;
+typedef std::set< procLocation * > proclocation_set;
 typedef proclocation_set::iterator proclocation_set_p;
 typedef proclocation_set::const_iterator proclocation_set_cp;
 #endif
@@ -51,17 +51,17 @@ public:
 #endif
 };
 
-typedef map< threeAddrNode *, callsiteEntry * > callsite_map;
+typedef std::map< threeAddrNode *, callsiteEntry * > callsite_map;
 typedef callsite_map::iterator callsite_map_p;
 typedef callsite_map::const_iterator callsite_map_cp;
 
 #endif /* _CALLSITEENTRY */
 
-typedef set< enumPropertyAnn * > enum_property_set;
+typedef std::set< enumPropertyAnn * > enum_property_set;
 typedef enum_property_set::iterator enum_property_set_p;
 typedef enum_property_set::const_iterator enum_property_set_cp;
 
-typedef map< annVariable *, enum_property_set > variable_property_map;
+typedef std::map< annVariable *, enum_property_set > variable_property_map;
 typedef variable_property_map::iterator variable_property_map_p;
 typedef variable_property_map::const_iterator variable_property_map_cp;
 
@@ -80,7 +80,7 @@ private:
 
   /** @brief the name of the procedure */
 
-  string _name;
+  std::string _name;
 
   /** @brief local variables
    *
@@ -260,7 +260,7 @@ public:
    *  Methods to get and set fields in the class. */
   //@{
 
-  inline const string & name() const { return _name; }
+  inline const std::string & name() const { return _name; }
 
   inline const var_map & variables() const { return _variables; }
 
@@ -313,7 +313,7 @@ public:
    *  @param is_new pass true if the object is allocated in the annoation
    */
 
-  annVariable * lookup(const string & variable, bool create, bool is_new = false);
+  annVariable * lookup(const std::string & variable, bool create, bool is_new = false);
 
   // --- Manage uses and defs -----------------------
 
@@ -554,12 +554,12 @@ public:
 
   // --- Output
 
-  friend ostream& operator<<(ostream & o, const procedureAnn & pa) {
+  friend std::ostream& operator<<(std::ostream & o, const procedureAnn & pa) {
     pa.print(o);
     return o;
   }
 
-  void print(ostream & o) const;
+  void print(std::ostream & o) const;
 
 private:
 

@@ -2,6 +2,8 @@
 #include "broadway.h"
 #include "bdwy_liveness.h"
 
+using namespace std;
+
 bdwyLivenessAnalyzer::bdwyLivenessAnalyzer()
   : livenessAnalyzer(),
     _library_stmt(0),

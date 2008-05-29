@@ -9,11 +9,11 @@
 class structureTreeAnn;
 class structureAnn;
 
-typedef list<structureAnn * > structure_list;
+typedef std::list<structureAnn * > structure_list;
 typedef structure_list::iterator structure_list_p;
 typedef structure_list::const_iterator structure_list_cp;
 
-typedef list< structureTreeAnn * > structuretree_list;
+typedef std::list< structureTreeAnn * > structuretree_list;
 typedef structuretree_list::iterator structuretree_list_p;
 
 /** @brief Structure Tree annotation
@@ -36,7 +36,7 @@ public:
 
 private:
 
-  string _name;
+  std::string _name;
   structuretree_list * _targets;
   Operator _operator;
   bool _target_is_new;
@@ -64,7 +64,7 @@ public:
 
   ~structureTreeAnn();
 
-  inline string & name() { return _name; }
+  inline std::string & name() { return _name; }
   inline structuretree_list * targets() { return _targets; }
   inline Operator op() const { return _operator; }
   inline bool is_target_new() const { return _target_is_new; }
@@ -113,28 +113,28 @@ private:
 
   REF annVariable * _source;
   REF annVariable * _target;
-  string _field_name;
+  std::string _field_name;
 
 public:
 
   structureAnn(annVariable * source, annVariable * target,
-	       const string * field_name,
+	       const std::string * field_name,
 	       const int line);
 
   // --- Fields
 
   inline annVariable * source() const { return _source; }
   inline annVariable * target() const { return _target; }
-  inline const string & field_name() const { return _field_name; }
+  inline const std::string & field_name() const { return _field_name; }
 
   // --- Output
 
-  friend ostream& operator<<(ostream & o, const structureAnn & sa) {
+  friend std::ostream& operator<<(std::ostream & o, const structureAnn & sa) {
     sa.print(o);
     return o;
   }
 
-  void print(ostream & o) const;
+  void print(std::ostream & o) const;
 };
 
 #endif /*  */

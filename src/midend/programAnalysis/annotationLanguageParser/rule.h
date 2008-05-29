@@ -2,7 +2,7 @@
 #ifndef BDWY_RULE_H
 #define BDWY_RULE_H
 
-typedef list< ruleAnn * > rule_list;
+typedef std::list< ruleAnn * > rule_list;
 typedef rule_list::iterator rule_list_p;
 typedef rule_list::const_iterator rule_list_cp;
 

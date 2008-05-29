@@ -1,6 +1,8 @@
 
 #include "broadway.h"
 
+using namespace std;
+
 annVariable::annVariable(string name, 
 			 string procedure_name,
 			 bool is_new,
