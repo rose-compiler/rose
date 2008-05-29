@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: iface.h,v 1.4 2008-03-10 09:36:27 adrian Exp $
+// $Id: iface.h,v 1.5 2008-05-29 08:03:22 gergo Exp $
 
 #ifndef H_IFACE
 #define H_IFACE
@@ -173,7 +173,5 @@ KFG_NODE_LIST kfg_returns(KFG);
 extern "C"
 #endif
 KFG_NODE_LIST kfg_exits(KFG);
-
-#define NDEBUG
 
 #endif
