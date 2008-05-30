@@ -8,9 +8,9 @@ Program Analysis Generator (PAG), the C/C++ infrastructure LLNL-ROSE,
 and support for an external format (reading and writing) in Prolog
 term syntax.
 
-SATIrE 0.8.1 was tested with 
+SATIrE 0.8.2 was tested with 
  - ROSE 0.9.1a
- - PAG 7.7.5.50
+ - PAG 8.2.3.34
  - flex 2.5.33
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
@@ -20,14 +20,14 @@ SATIrE 0.8.1 was tested with
 ------------------------------------------------------------
 
  a) Before you can install SATIrE
-    i)  you must install LLNL-ROSE - http://www.llnl.gov/casc/rose/
+    i)  you must install LLNL-ROSE - http://www.rosecompiler.org/
     ii) you must install PAG - http://www.absint.com/pag/
 
  b) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.8.1.tgz
+    tar xvzf SATIrE-0.8.2.tgz
 
  c) Go to the satire directory:
-    cd SATIrE-0.8.1
+    cd SATIrE-0.8.2
 
  d) Configure the sources for your platform and set the path for ROSE and PAG:
 
@@ -49,7 +49,7 @@ SATIrE 0.8.1 was tested with
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
 
  b) compile all examples that come with SATIrE
-    cd SATIrE-0.8.1/examples
+    cd SATIrE-0.8.2/examples
     sh build-examples.sh                  [creates examples in directory executable-examples]
                                           [note that the script uses the *installed* 'newanalysis']
 
@@ -62,8 +62,8 @@ SATIrE 0.8.1 was tested with
       cat annot_srw98_listreverse.C       [view source file annotated with computed alias pairs]
 
  c) If you want to perform each step on your own, here is an example for sl1rd:
-    [let's assume that you unpacked SATIrE-0.8.1.tgz in your home directory]
-    cp -r ~/SATIrE-0.8.1/examples/sl1rd . [copy all files and test files to your directory]
+    [let's assume that you unpacked SATIrE-0.8.2.tgz in your home directory]
+    cp -r ~/SATIrE-0.8.2/examples/sl1rd . [copy all files and test files to your directory]
     cd sl1rd                              [change to the directory]
     newanalysis                           [generate and configure all required files]
     make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]

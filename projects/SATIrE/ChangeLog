@@ -1,11 +1,8 @@
-V0.8.2 (in progress)
+V0.8.2 2008-05-29 GB,MS,AP
 
 * required user changes:
   - change analysis specifications to take the new ExternalReturn statement
     into account
-  - change analysis specifications to take unreachable ICFG nodes into
-    account: by default, the initial data flow value of the analysis should
-    mean "unreachable"
   - change analysis specifications to take into account that the numexprs
     and numtypes attributes are now of type unum instead of snum; all
     support functions related to expression and type numbers now take unum
@@ -15,17 +12,19 @@ V0.8.2 (in progress)
     main-support.C (according to the template) to reflect a change in the
     interface of the CFGTraversal class
 
-* optional user changes:
+* recommended user changes:
   - change analysis specifications to use the new ExpressionId and
-    VariableId instead of str
-	
+    VariableId instead of str. Note that the gdl file generation automatically
+    displays the string representation of the mapped IDs. You can use the
+    new command line options to display the IDs as well.
+        
 * new command line options [GB,MS]
   --check-icfg: Command line flag to control ICFG consistency checks
   --gdl-nodeformat=FORMAT: allows to specify how node information should be
-	                   displayed in a gdl file.
-	           FORMAT=varid|varname|exprid|exprsource
-                         |asttext|no-varid|no-varname
-                         |no-exprid|no-exprsource|no-asttext
+                           displayed in a gdl file.
+                           FORMAT=varid|varname|exprid|exprsource
+                                 |asttext|no-varid|no-varname
+                                 |no-exprid|no-exprsource|no-asttext
 
 * New PAG analysis specification features [GB]
   - replaced single ExternalCall node by ExternalCall/ExternalReturn pair
@@ -52,6 +51,7 @@ V0.8.2 (in progress)
   - GNUplot input files remain on disk and can be tweaked by the user
 
 * Reorganized Testsuite [AP]
+  - added separate directories for different bechnmark suites
 
 * Example analyses [GB,MS]
   - added experimental avalable expressions analysis [not in distribution]
@@ -82,7 +82,7 @@ V0.8.1 2008-04-11 GB,AP,VP,MS
 
 * Extended Shape analyses with statistics [VP]
   - Added statistics about computed graphs and may/must alias information
-	
+        
 * ICFG builder improvements [GB]
   - tuned computation of expression and type sets; the ICFG builder is now
     roughly 5 to 10 times faster
@@ -123,7 +123,7 @@ V0.8.0 2008-03-11 MS,GB,AP
   - analysis is performed on one single ICFG
   - multiple output file generation (source code annotation, see --output-sourceprefix)
   - one single GDL file is generated (for single as well as for multiple input files)
-	
+        
 * ICFG: added better support for initializers [GB]
   - added aggregate initializers for arrays/structs
   - *all* initializer expressions are now wrapped inside appropriate initializer nodes
@@ -131,9 +131,9 @@ V0.8.0 2008-03-11 MS,GB,AP
 
 * Test of installation [AP]
   - new directories:
-	testsuite/success
-	testsuite/failure
-	testsuite/dontrun
+        testsuite/success
+        testsuite/failure
+        testsuite/dontrun
   - examples/testsuite.sh will be called by 'make installcheck'
 
 * Termite [AP]
@@ -155,13 +155,13 @@ V0.7.9 2008-02-08 MS,GB,AP
   - added new functions kfg_routine_is_loop and kfg_routine_is_infeasible
     to file astaccess/pag_support.C (thanks to AbsInt for detailed info on new PAG version)
   - changed type bool to PAG_BOOL in
-	srw98_shape/main.C: PAG_BOOL get_universal_attribute__kill_norm_temps()
-	nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_norm_temps()
-	nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_empty_graph()
-	nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_unreachable_nodes()
+        srw98_shape/main.C: PAG_BOOL get_universal_attribute__kill_norm_temps()
+        nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_norm_temps()
+        nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_empty_graph()
+        nnh99_shape/main.C: PAG_BOOL get_universal_attribute__kill_unreachable_nodes()
   - changed Makefile.in-template to use CUSTOM_CFLAGS for main.C and main-support.C
     allowing to eliminate all redeclaration warnings
-	
+        
 * upgrade to ROSE 0.9.0b [MS,GB,AP]
   - extended IR interface [MS]
     + added fragmentToString function and made it the only function to create
@@ -171,17 +171,17 @@ V0.7.9 2008-02-08 MS,GB,AP
   - upgraded ICFG generation with new type information of ROSE 0.9.0b and adapted use of 
     unparseToString functions [GB]
   - upgraded termite to work with ROSE 0.9.0b: [AP]
-	+ generate symbol table entries for function declarations
-	+ generate symbol table entries for class declarations
-	+ parent scopes for namespace declarations are not necessary any more
-	+ because of some printf statements in the new ROSE code,
-	  term2rose and rose2term no longer read/write from/to stdin/out
-	
+        + generate symbol table entries for function declarations
+        + generate symbol table entries for class declarations
+        + parent scopes for namespace declarations are not necessary any more
+        + because of some printf statements in the new ROSE code,
+          term2rose and rose2term no longer read/write from/to stdin/out
+        
 * Termite: 
  - improved term quoting [AP]
  - new lex/yacc parser for PAG data flow information dfi_[parser|scanner] [AP]
-	
-	
+        
+        
 * Tested with:
  - ROSE 0.9.0b
  - PAG 7.3.8.55
@@ -189,12 +189,12 @@ V0.7.9 2008-02-08 MS,GB,AP
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
-	
+        
 V0.7.8 2008-01-24 AP, GB, VP, MS
 
 * Added Makefile.custom to shape analyses to allow customized
   settings in Makfile [MS,VP]
-	
+        
 * Updated docs/cfgconstruction.ps for DeclareStmt, ExternalCall, 
   FunctionEntry, FunctionExit, FunctionCall, FunctionReturn [MS]
 
@@ -214,7 +214,7 @@ V0.7.8 2008-01-24 AP, GB, VP, MS
       that lead to an unshared summary node, but do share a common
       node on their path.
   [VP]
-	
+        
 * Term Representation: 
   Support for more data types (StringVal, ...) [AP]
   Various bugfixes
@@ -236,7 +236,7 @@ V0.7.8 2008-01-24 AP, GB, VP, MS
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
-	
+        
 V0.7.7 2007-11-12 VP, AP, MS
 
 * added srw98_shape, nnh99_shape [VP,MS]
@@ -251,7 +251,7 @@ V0.7.7 2007-11-12 VP, AP, MS
  - bison 2.3
  - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
-	
+        
 V0.7.6 2007-10-23 GB, MS, AP
 
 * required user changes:
@@ -287,16 +287,16 @@ V0.7.5 2007-10-16 AP
 
 Changes (Adrian)
 * required user changes:
-	configuration: environment must be configured using configure
-	               NO environment variables need to be set
+        configuration: environment must be configured using configure
+                       NO environment variables need to be set
 
         using newanalysis: parameters are now optional
           newanalysis [analysis-directory-name] [carrier-type-name]
-	
+        
 * reworked entire build system to use GNU autotools
 * added Termite: src/termite
 * analysis results are exported to term representation
-* added --termoutput analysis switch	
+* added --termoutput analysis switch    
 
 * Tested with:
  - ROSE 0.8.10e
@@ -349,7 +349,7 @@ V0.7.3 2007-05-22 MS
   - flex 2.5.31
   - bison 1.875d
   - g++ 3.5.5
-	
+        
 
 V0.7.2 2007-05-10 MS,GB
 
@@ -358,14 +358,14 @@ V0.7.2 2007-05-10 MS,GB
 * Added support for syntactic lists in PAG specifications [GB]
 * Changed --prefix=syn to -Psyn in grato/Makefile [MS]
 * Fixed problem with file "other.h" (added to src/analyzer/astaccess) [MS]
-	
+        
 * Tested with:
   - ROSE 0.8.8a (requires g++ 3.3-5.x)
   - PAG 0.9.7.843d
   - flex 2.5.31
   - bison 1.875d
   - g++ 3.5.5
-	
+        
 
 V0.7.1 2007-03-20 MS
 
@@ -373,14 +373,14 @@ V0.7.1 2007-03-20 MS
 
 * Changed main.C-template to not compile generated C/C++ files
 * Changed all example-analyses in directory examples. Now only files *.set,
-	*.optla, and 'runtests' are in the directory and all other files are
-	generated by invoking 'newanalysis' for each analysis example. Each
-	of the example-analysis directories can now be copied verbatim and
-	appear like an user-defined analysis. However, after 'make' in
-	directory examples all required files are generated and after
-	'make clean' all generated files are removed. Thus, the examples
-	can be run within the distribution package or outside after
-	copying one of the directories (with files *.set, *.optla, runtests)
+        *.optla, and 'runtests' are in the directory and all other files are
+        generated by invoking 'newanalysis' for each analysis example. Each
+        of the example-analysis directories can now be copied verbatim and
+        appear like an user-defined analysis. However, after 'make' in
+        directory examples all required files are generated and after
+        'make clean' all generated files are removed. Thus, the examples
+        can be run within the distribution package or outside after
+        copying one of the directories (with files *.set, *.optla, runtests)
 * Fixed src/analyzer/astaccess/Makefile (to set variable PIG)
 * Added ast_support_funcs.h (with new headers for support functions)
         main.h-template was modified to include above file
@@ -391,7 +391,7 @@ V0.7.1 2007-03-20 MS
   - flex 2.5.31
   - bison 1.875d
   - g++ 3.5.5
-	
+        
 
 V0.7.0 2007-03-09 MS,GB
 

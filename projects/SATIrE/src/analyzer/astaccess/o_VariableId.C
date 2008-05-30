@@ -244,11 +244,13 @@ std::string VariableId::print() const
 
     case F_IdAndName:
         result
-            << id
             << "("
+            << id
+	    << ","
             << get_global_cfg()->ids_varsyms[id]->get_name().str()
             << ")";
         break;
+    default: std::cerr << "Wrong format mode or print mode for nodes (Variable:print) in gdl file"; std::abort();
     }
 
     return result.str();

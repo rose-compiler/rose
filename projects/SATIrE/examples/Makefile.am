@@ -142,4 +142,4 @@ installcheck-local:
 	##cd $(testdir) ; sh testsuite/testsuite.sh nnh99_shape/nnh99_shape testsuite 
 
 	chmod -R u+w $(testdir)
-#	rm -rf $(testdir)
+	rm -rf $(testdir)

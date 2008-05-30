@@ -1,11 +1,12 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.6 2008-05-28 07:21:56 gergo Exp $
+// $Id: set_pag_options.C,v 1.7 2008-05-30 13:44:07 markus Exp $
 
 // Author: Markus Schordan, 2006+
 
 #include "set_pag_options.h"
 #include "o_VariableId.h"
 #include "o_ExpressionId.h"
+#include <iostream>
 
 extern char* animation;
 extern int cfg_ordering;
@@ -64,9 +65,10 @@ void setPagOptions(AnalyzerOptions opt) {
       formatMode+=2;
     }
     switch(formatMode) {
-    case 0: printMode=VariableId::F_Id;break;
-    case 1: printMode=VariableId::F_Name;break;
-    case 2: printMode=VariableId::F_IdAndName;break;
+    case 1: printMode=VariableId::F_Id;break;
+    case 2: printMode=VariableId::F_Name;break;
+    case 3: printMode=VariableId::F_IdAndName;break;
+    default: std::cerr << "Wrong format mode or print mode for nodes (Variable) in gdl file"; std::abort();
     }
     VariableId::setPrintFormat(printMode);
   }
@@ -81,9 +83,10 @@ void setPagOptions(AnalyzerOptions opt) {
       formatMode+=2;
     }
     switch(formatMode) {
-    case 0: printMode=ExpressionId::F_Id;break;
-    case 1: printMode=ExpressionId::F_Expression;break;
-    case 2: printMode=ExpressionId::F_IdAndExpression;break;
+    case 1: printMode=ExpressionId::F_Id;break;
+    case 2: printMode=ExpressionId::F_Expression;break;
+    case 3: printMode=ExpressionId::F_IdAndExpression;break;
+    default: std::cerr << "Wrong format mode or print mode for nodes (Expression) in gdl file"; std::abort();    
     }
     ExpressionId::setPrintFormat(printMode);
   }

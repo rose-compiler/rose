@@ -225,11 +225,13 @@ std::string ExpressionId::print() const
 
     case F_IdAndExpression:
         result
-            << id
             << "("
+            << id
+	    << ","
             << Ir::fragmentToString(get_global_cfg()->numbers_exprs[id])
             << ")";
         break;
+    default: std::cerr << "Wrong format mode or print mode for nodes (Expression:print) in gdl file"; std::abort();
     }
 
     return result.str();
