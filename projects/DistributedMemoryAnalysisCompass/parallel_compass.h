@@ -21,6 +21,8 @@ bool saveAST =false;
 SgProject *root = NULL;
 struct timespec begin_time, end_time;
 int my_rank, processes;
+bool sequential=false;
+bool combined=false;
 
 
 // ************************************************************
@@ -55,6 +57,7 @@ void initPCompass(int argc, char **argv) {
 	std::cerr << "   executable filenames_in \t\t\truns on a project given a the specified file"  << std::endl;
 	std::cerr << "   executable -save filename_out filenames_in \truns on the specified file and saves it to ast.ast"  << std::endl;
 	std::cerr << "   executable -load filename_in \t\tloads the specified AST and runs the project"  << std::endl;
+	std::cerr << "   executable [-combined -shared] (sequential is default)"  << std::endl;
 	std::cerr << std::endl;
 	exit(0);
       }
@@ -65,6 +68,17 @@ void initPCompass(int argc, char **argv) {
   } else if (containsArgument(argc, argv, "-save")) {
     saveAST = true;
   } 
+
+  if (containsArgument(argc, argv, "-combined")) {
+    sequential=false;
+    combined=true;
+  } else 
+  if (containsArgument(argc, argv, "-shared")) {
+    sequential=false;
+    combined=false;
+  } else {
+    sequential=true;
+  }
 
   /* read the AST, either from a binary file or from sources */
   if (saveAST) {

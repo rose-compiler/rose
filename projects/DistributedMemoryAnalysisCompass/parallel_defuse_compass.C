@@ -1,38 +1,55 @@
 #include "parallel_compass.h"
 
 
-
 using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
 
 
-
-
 // ************************************************************
-// NodeFileCounter to determine on how to split the nodes
+// NodeCounter to determine on how to split the nodes
 // ************************************************************
-class NodeFileCounter: public AstSimpleProcessing
+class NodeNullDerefCounter: public AstSimpleProcessing
 {
 public:
   size_t totalNodes;
   size_t totalFunctions;
-  size_t *fileNodes;
-  NodeFileCounter(int numberOfFiles)
+  size_t *nullDerefNodes;
+  SgNode* *nodes;
+  bool count;
+  size_t interestingNodes;
+  NodeNullDerefCounter(bool c) { interestingNodes=0; totalNodes=0; count=true;}
+  NodeNullDerefCounter(int numberOfNodes)
     : totalNodes(0), totalFunctions(0), 
-      fileNodes(new size_t[numberOfFiles+1]), fileptr(fileNodes) {
+      nullDerefNodes(new size_t[numberOfNodes+1]), fileptr(nullDerefNodes) {
     *fileptr = 0;
+    interestingNodes=0; 
+    count=false;
+    nodes = new SgNode*[numberOfNodes+1];
   }
 protected:
   // increase the number of nodes and nodes in files
   virtual void visit(SgNode *node) {
     totalNodes++;
-    ++*fileptr;
-    //std::cerr << " fileptr = " << fileptr << "  : " << *fileptr << endl;
+    if (!count)
+      ROSE_ASSERT(fileptr);
+    if (!count) { 
+      ++*fileptr;
+      //      std::cerr << " fileptr = " << fileptr << "    *fileptr: " << *fileptr << "    totalNodes:  " << totalNodes << endl;
+    }
     // must be run postorder!
-    if (isSgFile(node)) {
-      fileptr++;
-      *fileptr = fileptr[-1];
+    if (isSgArrowExp(node) || isSgPointerDerefExp(node)
+	|| isSgAssignInitializer(node) || isSgFunctionCallExp(node)) {
+      if (!count) {
+	fileptr++;
+	*fileptr = fileptr[-1];
+	nodes[interestingNodes]=node;
+	if (DEBUG_OUTPUT_MORE) 
+	cerr << " [ " << interestingNodes << " ] adding node " << node->class_name() << endl;
+      }
+      interestingNodes++;
+      //if (!count)
+	//std::cout << " ........... fileptr[-1] = " << fileptr[-1] << std::endl;
     }
     SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node);
     if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl) {
@@ -47,43 +64,46 @@ protected:
 // ************************************************************
 // algorithm that splits the files to processors
 // ************************************************************
-std::pair<int, int> computeFileIndices(SgProject *project, int my_rank, int processes)
+std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int processes, NodeNullDerefCounter nullderefCounter)
 {
+  nullderefCounter.traverse(project, postorder);
+  int nrOfInterestingNodes = nullderefCounter.interestingNodes;
   // count the amount of nodes in all files
-  NodeFileCounter nc(project->numberOfFiles());
-  nc.traverse(project, postorder);
-  ROSE_ASSERT(nc.fileNodes[project->numberOfFiles() - 1] == nc.totalNodes - 1);
+  //cerr << " number of interesting : " << nrOfInterestingNodes << endl;
+  //  cerr << " nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] == nullderefCounter.totalNodes  : " <<
+  //  nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] << " == " << nullderefCounter.totalNodes  << endl;
+  ROSE_ASSERT(nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] == nullderefCounter.totalNodes );
 
   if (my_rank == 0) {
-    std::cout <<  "File: The total amount of files is : " << project->numberOfFiles() << std::endl;
-    std::cout <<  "File: The total amount of functions is : " << nc.totalFunctions << std::endl;
-    std::cout <<  "File: The total amount of nodes is : " << nc.totalNodes << std::endl;
+    std::cout <<  "File: The total amount of nullderefNodes is : " << nrOfInterestingNodes << std::endl;
+    std::cout <<  "File: The total amount of functions is : " << nullderefCounter.totalFunctions << std::endl;
+    std::cout <<  "File: The total amount of nodes is : " << nullderefCounter.totalNodes << std::endl;
   }
 
   // split algorithm
   int lo, hi = 0;
   int my_lo, my_hi;
   for (int rank = 0; rank < processes; rank++) {
-    const size_t my_nodes_high = (nc.totalNodes / processes + 1) * (rank + 1);
+    const size_t my_nodes_high = (nullderefCounter.totalNodes / processes + 1) * (rank + 1);
     // set lower limit
     lo = hi;
     // find upper limit
-    for (hi = lo + 1; hi < project->numberOfFiles(); hi++) {
-      if (nc.fileNodes[hi] > my_nodes_high)
+    for (hi = lo + 1; hi < nrOfInterestingNodes; hi++) {
+      if (nullderefCounter.nullDerefNodes[hi] > my_nodes_high)
 	break;
     }
 
     // make sure all files have been assigned to some process
     if (rank == processes - 1)
-      ROSE_ASSERT(hi == project->numberOfFiles());
+      ROSE_ASSERT(hi == nrOfInterestingNodes);
 
     if (rank == my_rank)  {
       my_lo = lo;
       my_hi = hi;
-#if 0
+#if 1
       std::cout << "process " << rank << ": files [" << lo << "," << hi
 		<< "[ for a total of "
-		<< (lo != 0 ? nc.fileNodes[hi-1] - nc.fileNodes[lo-1] : nc.fileNodes[hi-1])
+		<< (lo != 0 ? nullderefCounter.nullDerefNodes[hi-1] - nullderefCounter.nullDerefNodes[lo-1] : nullderefCounter.nullDerefNodes[hi-1])
 		<< " nodes" << std::endl;
 #endif
       break;
@@ -92,7 +112,6 @@ std::pair<int, int> computeFileIndices(SgProject *project, int my_rank, int proc
 
   return std::make_pair(my_lo, my_hi);
 }
-
 
 
 
@@ -138,13 +157,10 @@ void printPCResults(std::vector<CountingOutputObject *> &outputs,
 	      << "\n    slowest process: " << max_time << " slowest   in file: " << root->get_file(slowest_func).getFileName()
 	      << std::endl;
     std::cout << std::endl;
-    std::cout <<  "The total amount of files is : " << root->numberOfFiles() << std::endl;
-
+  
   }
 
 }
-
-
 
 
 // ************************************************************
@@ -159,16 +175,14 @@ int main(int argc, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &processes);
 
   initPCompass(argc, argv);
-
   ROSE_ASSERT(root);
+
 
   /* setup checkers */
   std::vector<AstSimpleProcessing *> traversals;
   std::vector<AstSimpleProcessing *>::iterator t_itr;
   std::vector<Compass::TraversalBase *> bases;
   std::vector<Compass::TraversalBase *>::iterator b_itr;
-  //    std::vector<Compass::OutputObject *> outputs;
-  //std::vector<Compass::OutputObject *>::iterator o_itr;
   std::vector<CountingOutputObject *> outputs;
   std::vector<CountingOutputObject *>::iterator o_itr;
 
@@ -176,49 +190,54 @@ int main(int argc, char **argv)
 
   ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
   if (DEBUG_OUTPUT_MORE) 
-    if (my_rank == 0)
-      {
-	std::cout << std::endl << "got " << bases.size() << " checkers:";
-	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
-	  std::cout << ' ' << (*b_itr)->getName();
-	std::cout << std::endl;
-      }
+  if (my_rank == 0)
+    {
+      std::cout << std::endl << "got " << bases.size() << " checkers:";
+      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
+	std::cout << ' ' << (*b_itr)->getName();
+      std::cout << std::endl;
+    }
+
+
 
   /* traverse the files */
   gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
   if (sequential)
-    if (my_rank==0)
-      std::cout << "\n>>> Running in sequence ... " << std::endl;
+  if (my_rank==0)
+    std::cout << "\n>>> Running in sequence ... " << std::endl;
 
 
 
-  std::cout << "\n>>> Running on files ... " << std::endl;
+  std::cout << "\n>>> Running defuse ... " << std::endl;
+  NodeNullDerefCounter nc(true);
+  nc.traverse(root, postorder);
+  int nrOfInterestingNodes = nc.interestingNodes;
+  NodeNullDerefCounter nullderefCounter(nrOfInterestingNodes);
+
+  if (processes==1) {
   /* figure out which files to process on this process */
-  std::pair<int, int> bounds = computeFileIndices(root, my_rank, processes);
+  std::pair<int, int> bounds = computeNullDerefIndices(root, my_rank, processes, nullderefCounter);
   for (int i = bounds.first; i < bounds.second; i++)
     {
-      std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " << std::endl;
-
-      if (sequential) {
-	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	  if (DEBUG_OUTPUT_MORE) 
-	    std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-		      <<"[) : " << (*b_itr)->getName() << " \t on " << (root->get_file(i).getFileName()) << std::endl; 
-	  (*b_itr)->run(&root->get_file(i));
-	}
-      } else if (combined) {
-	std::cout << "\n>>> Running combined ... " << std::endl;
-	AstCombinedSimpleProcessing combined(traversals);
-	combined.traverse(&root->get_file(i), preorder);
-      } else {
-	int nrOfThreads = 2;
-	std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
-	AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-	parallel.traverseInParallel(&root->get_file(i), preorder);
+	if (DEBUG_OUTPUT_MORE) 
+	  std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " << std::endl;
+      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
+	ROSE_ASSERT(mynode);
+	if (DEBUG_OUTPUT_MORE) 
+	  std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
+		    <<"[) : " << (*b_itr)->getName()  << "   on node: " << 
+	    mynode->class_name() << std::endl; 
+	(*b_itr)->run(mynode);
       }
     }
+  } else {
+    // apply runtime algorithm to def_use
+    cerr << " Dynamic scheduling not implemented yet for single nodes (null deref)" << endl;
+  }
+
 
 
   gettime(end_time);
@@ -232,7 +251,9 @@ int main(int argc, char **argv)
   double *memory = new double[processes];
   communicateResult(outputs, times, memory, output_values, my_time, memusage);
 
-  printPCResults(outputs, output_values, times, memory, 1);
+
+  printPCResults(outputs, output_values, times, memory, 0);
+
 
   /* all done */
   MPI_Finalize();
