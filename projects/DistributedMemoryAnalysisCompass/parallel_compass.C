@@ -590,9 +590,10 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
 	int min = res[0];
 	int max = res[1];
-	std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[" << std::endl;
 	if (res[0]==-1) 
 	  break;
+
+	std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[" << std::endl;
 	for (int i=min; i<max;i++) {
 	  //if (i>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size()) {
 	  //std::cout << "............ early breakup " << std::endl;
@@ -651,7 +652,7 @@ int main(int argc, char **argv)
   double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memusage = memusage_e-memusage_b;
   double my_time = timeDifference(end, begin);
-  std::cout << ">>> Process is done. Time: " << my_time << "  Memory: " << memusage << " MB." << std::endl;
+  std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << std::endl;
 
   /* communicate results */
   unsigned int *my_output_values = new unsigned int[outputs.size()];

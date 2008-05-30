@@ -1,69 +1,64 @@
-// -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
-// vim: expandtab:shiftwidth=2:tabstop=2
-
-// Loc Per Function Analysis
+// DefUseAnalysis
 // Author: Thomas Panas
-// Date: 23-July-2007
+// Date: 21March 2008
 
 #include "compass.h"
-#include "compass_defUseAnalysis.h"
 
+#include "DefUseAnalysis.h"
+#include "DefUseAnalysis_perFunction.h"
+
+#ifndef COMPASS_DEF_USE_H
+#define COMPASS_DEF_USE_H
 
 namespace CompassAnalyses
-{ 
-  namespace Compass_defUseAnalysis
-  { 
+   { 
+     namespace Compass_defUseAnalysis
+        { 
+        /*! \brief Loc Per Function: Add your description here 
+         */
 
-    int Traversal::loc = 0;
-    int Traversal::loc_actual = 0;
+	  
+          extern const std::string checkerName;
+          extern std::string shortDescription;
+          extern std::string longDescription;
 
-    const std::string checkerName      = "Compass_defUseAnalysis";
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
 
-    bool Traversal::projectSet = false;
-    DFAnalysis* Traversal::defuse = NULL;
+       // Specification of Checker Traversal Implementation
 
-    // Descriptions should not include the newline character "\n".
-    std::string shortDescription = 
-        "This function has too many lines of code :: LOC = " ;
-    std::string longDescription  = 
-    "This analysis detects functions with lines of code larger than a predefined value. The current value is ";
-  } //End of namespace Compass_defUseAnalysis.
-} //End of namespace CompassAnalyses.
+          class Traversal
+             : public AstSimpleProcessing, public Compass::TraversalBase
+             {
+            // Checker specific parameters should be allocated here.
+	       static int loc;
+	       static int loc_actual;
+	       static DFAnalysis* defuse;
+	       static bool projectSet;
 
-CompassAnalyses::Compass_defUseAnalysis::
-CheckerOutput::CheckerOutput ( SgNode* node )
-  : OutputViolationBase(node,checkerName,shortDescription+
-                        Traversal::getLOC_actual()+" > "+Traversal::getLOC())
-{}
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+		    static std::string getLOC() { 
+		      std::ostringstream myStream; //creates an ostringstream object
+		      myStream << loc << std::flush;
+		      return (myStream.str()); //returns the string form of the stringstream object
+		    }
+		    static std::string getLOC_actual() { 
+		      std::ostringstream myStream; //creates an ostringstream object
+		      myStream << loc_actual << std::flush;
+		      return (myStream.str()); //returns the string form of the stringstream object
+		    }
+                    void visit(SgNode* n);
+             };
+        }
+   }
 
-CompassAnalyses::Compass_defUseAnalysis::Traversal::
-Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
-{
-  // Initalize checker specific parameters here, for example: 
-  // YourParameter = Compass::parseInteger(inputParameters["Compass_defUseAnalysis.YourParameter"]);
+// Compass_DefUseAnalysis
+#endif 
 
-  //  loc = Compass::parseInteger(inputParameters["Compass_defUseAnalysis.Size"]);
-  setShortDescription(shortDescription +  Traversal::getLOC_actual()+" > "+Traversal::getLOC());
-  setLongDescription (longDescription +  Traversal::getLOC_actual()+" > "+Traversal::getLOC());
-}
-
-
-void
-CompassAnalyses::Compass_defUseAnalysis::Traversal::
-visit(SgNode* sgNode)
-{ 
-  if (projectSet==false) {
-    SgProject* project = TransformationSupport::getProject(sgNode);
-    defuse = new DefUseAnalysis(project);
-    projectSet=true;
-  }
-  // Implement your traversal here.  
-  if (isSgFunctionDefinition(sgNode)) {
-    SgFunctionDefinition* funcDef = isSgFunctionDefinition(sgNode);
-    int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
-    output->addOutput(new CheckerOutput(funcDef));
-  }
-
-} //End of the visit function.
-   
