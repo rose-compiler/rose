@@ -32,6 +32,7 @@ all: $(ANALYSIS)
 $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	mkdir -p anim-out
 	mkdir -p $(ANALYSIS)-out/src
+	rm -rf $(ANALYSIS)-out/src/*
 	mkdir -p otheranalyses
 	# call PAG to (try to) generate an analyzer
 	if $(PAG) $(SATIRE_INCLUDE)/ iterate1.t $(ANALYSIS) $(ANALYSIS)-out --prefix=$(PAGDIR) 2> pag-out; then cat pag-out; else cat pag-out; false; fi
@@ -39,6 +40,7 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	ar x $(SATIRE_LIB)/libsyntree.a syntree.o
 	mv syntree.o $(ANALYSIS)-out/src/
 	# override definitions for PAG data types provided by SATIrE
+	@sleep 1
 	ar x $(SATIRE_LIB)/libpagdatatypes.a
 	mv `ar t $(SATIRE_LIB)/libpagdatatypes.a` $(ANALYSIS)-out/src/
 	cp $(SATIRE_INCLUDE)/o_*.h $(ANALYSIS)-out/src/
