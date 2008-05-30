@@ -9,3 +9,8 @@
 ./sl2rd --output-sourceprefix=tests/annottest_ tests/rdtest10p1.C tests/rdtest10p2.C tests/rdtest10p3.C || exit 1
 ./sl2rd --output-source=tests/rdtest1.annotated.C tests/rdtest1.C || exit 1
 cat tests/rdtest1.annotated.C || exit 1
+
+./sl2rd --output-text --gdl-nodeformat=varid --gdl-nodeformat=no-varname --output-source=rdtest1_1.dfi --output-term=rdtest1_1.pl tests/rdtest1.C || exit 1
+./sl2rd --output-text --gdl-nodeformat=varname --output-source=rdtest1_2.dfi --output-term=rdtest1_2.pl tests/rdtest1.C || exit 1
+./sl2rd --output-text --gdl-nodeformat=varid --gdl-nodeformat=varname --output-source=rdtest1_3.dfi --output-term=rdtest1_3.pl tests/rdtest1.C || exit 1
+
