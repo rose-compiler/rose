@@ -40,7 +40,8 @@ ctor-2.C \
 ctor-7.C \
 inputBug298.C \
 inputBug308.C \
-inputHello.C
+inputHello.C \
+vector_dot_product.cpp
 
 TESTCODES_REQUIRED_TO_PASS = \
 $(C_TESTCODES_REQUIRED_TO_PASS)
