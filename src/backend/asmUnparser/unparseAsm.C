@@ -19,6 +19,7 @@ string unparseInstructionWithAddress(SgAsmInstruction* insn) {
 }
 
 string unparseAsmStatement(SgAsmNode* stmt) {
+  ROSE_ASSERT (isSgAsmStatement(stmt));
   switch (stmt->variantT()) {
     case V_SgAsmx86Instruction: return unparseX86InstructionWithAddress(isSgAsmx86Instruction(stmt)) + '\n';
     case V_SgAsmArmInstruction: return unparseArmInstructionWithAddress(isSgAsmArmInstruction(stmt)) + '\n';
@@ -46,6 +47,7 @@ string unparseAsmStatement(SgAsmNode* stmt) {
 }
 
 void unparseAsmStatementToFile(const string& filename, SgAsmNode* stmt) {
+  ROSE_ASSERT (isSgAsmStatement(stmt));
   ofstream of(filename.c_str());
   of << unparseAsmStatement(stmt);
 }
