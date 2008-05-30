@@ -3070,12 +3070,12 @@ done:
     // parameter, or just a constant jump target or fallthrough (when true, it
     // states that an indirect jump may be pointing there)
 
-    void disassembleRecursively(uint64_t addr, Parameters params, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts) const {
+    void disassembleRecursively(uint64_t addr, Parameters params, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, set<uint64_t>& functionStarts) const {
       vector<uint64_t> worklist(1, addr);
-      disassembleRecursively(worklist, params, insns, basicBlockStarts);
+      disassembleRecursively(worklist, params, insns, basicBlockStarts, functionStarts);
     }
 
-    void disassembleRecursively(vector<uint64_t>& worklist, Parameters params, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts) const {
+    void disassembleRecursively(vector<uint64_t>& worklist, Parameters params, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, set<uint64_t>& functionStarts) const {
       while (!worklist.empty()) {
         uint64_t addr = worklist.back();
         worklist.pop_back();
@@ -3089,7 +3089,7 @@ done:
         if (!insn) {cerr << "Bad instruction at 0x" << hex << addr << endl; continue;}
         insns.insert(make_pair(addr, insn));
         for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
-          if (!inCodeSegment(*i)) {cerr << "Found succ outside code segment at 0x" << hex << *i << endl; continue;} // Assume no jumps to data segments
+          if (!inCodeSegment(*i)) { /* cerr << "Found succ outside code segment at 0x" << hex << *i << endl; */ continue;} // Assume no jumps to data segments
           if (knownSuccessors.size() != 1 || *i != addr + insn->get_raw_bytes().size()) {
             basicBlockStarts[*i] |= false; // Ensure it exists, but don't change its value if it was already true
             // basicBlockStarts[*i] = true; // Be more conservative
@@ -3117,8 +3117,11 @@ done:
           if (inCodeSegment(constant) &&
               (!x86InstructionIsControlTransfer(insn) ||
                knownSuccessors.find(constant) == knownSuccessors.end())) {
-            // This is trying to handle if something pushes the address of the
-            // next instruction
+            // The second part of the condition is trying to handle if
+            // something pushes the address of the next instruction
+            if (insn->get_kind() == x86_call) {
+              functionStarts.insert(constant);
+            }
             basicBlockStarts[constant] = true;
             if (insns.find(constant) == insns.end()) {
               worklist.push_back(constant);
@@ -3130,6 +3133,71 @@ done:
 
   };
 
+  static bool is_mov_edi_edi(SgAsmStatement* insnx) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(insnx);
+    if (!insn) return false;
+    if (insn->get_kind() != x86_mov) return false;
+    const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
+    if (operands.size() != 2) return false;
+    SgAsmx86RegisterReferenceExpression* rr0 = isSgAsmx86RegisterReferenceExpression(operands[0]);
+    if (!rr0) return false;
+    SgAsmx86RegisterReferenceExpression* rr1 = isSgAsmx86RegisterReferenceExpression(operands[1]);
+    if (!rr1) return false;
+    if (rr0->get_register_class() != x86_regclass_gpr ||
+        rr0->get_register_number() != x86_gpr_di ||
+        (rr0->get_position_in_register() != x86_regpos_all &&
+         rr0->get_position_in_register() != x86_regpos_dword))
+      return false;
+    if (rr1->get_register_class() != x86_regclass_gpr ||
+        rr1->get_register_number() != x86_gpr_di ||
+        (rr1->get_position_in_register() != x86_regpos_all &&
+         rr1->get_position_in_register() != x86_regpos_dword))
+      return false;
+    return true;
+  }
+
+  static bool is_push_ebp(SgAsmStatement* insnx, bool reg64) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(insnx);
+    if (!insn) return false;
+    if (insn->get_kind() != x86_push) return false;
+    const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
+    if (operands.size() != 1) return false;
+    SgAsmx86RegisterReferenceExpression* rr0 = isSgAsmx86RegisterReferenceExpression(operands[0]);
+    if (!rr0) return false;
+    if (rr0->get_register_class() != x86_regclass_gpr ||
+        rr0->get_register_number() != x86_gpr_bp ||
+        (rr0->get_position_in_register() != x86_regpos_all &&
+         rr0->get_position_in_register() !=
+           (reg64 ? x86_regpos_qword : x86_regpos_dword)))
+      return false;
+    return true;
+  }
+
+  static bool is_mov_ebp_esp(SgAsmStatement* insnx, bool reg64) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(insnx);
+    if (!insn) return false;
+    if (insn->get_kind() != x86_mov) return false;
+    const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
+    if (operands.size() != 2) return false;
+    SgAsmx86RegisterReferenceExpression* rr0 = isSgAsmx86RegisterReferenceExpression(operands[0]);
+    if (!rr0) return false;
+    if (rr0->get_register_class() != x86_regclass_gpr ||
+        rr0->get_register_number() != x86_gpr_bp ||
+        (rr0->get_position_in_register() != x86_regpos_all &&
+         rr0->get_position_in_register() !=
+           (reg64 ? x86_regpos_qword : x86_regpos_dword)))
+      return false;
+    SgAsmx86RegisterReferenceExpression* rr1 = isSgAsmx86RegisterReferenceExpression(operands[1]);
+    if (!rr1) return false;
+    if (rr1->get_register_class() != x86_regclass_gpr ||
+        rr1->get_register_number() != x86_gpr_sp ||
+        (rr1->get_position_in_register() != x86_regpos_all &&
+         rr1->get_position_in_register() !=
+           (reg64 ? x86_regpos_qword : x86_regpos_dword)))
+      return false;
+    return true;
+  }
+
   void disassembleFile(SgAsmFile* f) {
     AsmFileWithData file(f);
     ROSE_ASSERT (f->get_machine_architecture() == SgAsmFile::e_machine_architecture_Intel_80386 || f->get_machine_architecture() == SgAsmFile::e_machine_architecture_AMD_x86_64_architecture);
@@ -3139,8 +3207,10 @@ done:
     }
     map<uint64_t, SgAsmInstruction*> insns;
     map<uint64_t, bool> basicBlockStarts;
+    set<uint64_t> functionStarts;
     basicBlockStarts[f->get_associated_entry_point()] = true;
-    file.disassembleRecursively(f->get_associated_entry_point(), p, insns, basicBlockStarts);
+    functionStarts.insert(f->get_associated_entry_point());
+    file.disassembleRecursively(f->get_associated_entry_point(), p, insns, basicBlockStarts, functionStarts);
     ROSE_ASSERT (f->get_sectionHeaderList());
     const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
     size_t pointerSize = (p.insnSize == x86_insnsize_64 ? 8 : p.insnSize == x86_insnsize_32 ? 4 : 2);
@@ -3160,7 +3230,7 @@ done:
           }
           if (file.inCodeSegment(addr)) {
             basicBlockStarts[addr] = true;
-            file.disassembleRecursively(addr, p, insns, basicBlockStarts);
+            file.disassembleRecursively(addr, p, insns, basicBlockStarts, functionStarts);
           }
         }
       }
@@ -3175,6 +3245,23 @@ done:
       basicBlocks[addr] = b;
     }
     SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
+    // Find the signatures that indicate the beginnings of functions -- they
+    // are only considered if they are at the start of a basic block
+    // Signatures are from http://events.ccc.de/congress/2005/fahrplan/attachments/631-rjohnsonDisassemblerInternalsII.ppt
+    const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
+    for (size_t i = 0; i < computedBasicBlocks.size(); ++i) {
+      SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
+      if (!bb) continue;
+      const SgAsmStatementPtrList& contents = bb->get_statementList();
+      size_t i = 0;
+      while (i < contents.size() && isSgAsmx86Instruction(contents[i]) && isSgAsmx86Instruction(contents[i])->get_kind() == x86_nop) ++i;
+      if (p.insnSize == x86_insnsize_32 && i < contents.size() && is_mov_edi_edi(contents[i])) ++i;
+      if (contents.size() < i + 2) continue;
+      if (!is_push_ebp(contents[i], (p.insnSize == x86_insnsize_64))) continue;
+      if (!is_mov_ebp_esp(contents[i + 1], (p.insnSize == x86_insnsize_64))) continue;
+      functionStarts.insert(bb->get_address());
+    }
+    blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
     f->set_global_block(blk);
     blk->set_parent(f);
     blk->set_externallyVisible(true);

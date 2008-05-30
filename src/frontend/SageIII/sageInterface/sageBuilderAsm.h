@@ -5,6 +5,7 @@ namespace PutInstructionsIntoBasicBlocks { // From src/frontend/Disassemblers/pu
   SgAsmBlock* putInstructionsIntoBasicBlocks(
       const std::map<uint64_t, SgAsmBlock*>& basicBlocks,
       const std::map<uint64_t, SgAsmInstruction*>& insns);
+  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* top, const std::set<uint64_t>& functionStarts);
 }
 
 namespace SageBuilderAsm {

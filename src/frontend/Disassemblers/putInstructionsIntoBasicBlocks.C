@@ -55,4 +55,42 @@ namespace PutInstructionsIntoBasicBlocks {
     return mainBlock;
   }
 
+  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* blk, const set<uint64_t>& functionStarts) {
+    map<uint64_t, SgAsmFunctionDeclaration*> funcs;
+    SgAsmBlock* newBlk = new SgAsmBlock();
+    for (set<uint64_t>::const_iterator i = functionStarts.begin(); i != functionStarts.end(); ++i) {
+      SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
+      f->set_address(*i);
+      funcs.insert(make_pair(*i, f));
+      newBlk->get_statementList().push_back(f);
+      f->set_parent(newBlk);
+    }
+    const SgAsmStatementPtrList& bbs = blk->get_statementList();
+    for (size_t i = 0; i < bbs.size(); ++i) {
+      SgAsmBlock* bb = isSgAsmBlock(bbs[i]);
+      if (!bb) continue;
+      uint64_t addr = bb->get_address();
+      // This is based on the algorithm in putInstructionsIntoBasicBlocks, with
+      // the same restrictions.  This is not quite as good as what IDA does --
+      // I've read that it takes control flow into account so functions can be
+      // non-contiguous in memory.
+      map<uint64_t, SgAsmFunctionDeclaration*>::const_iterator j = funcs.upper_bound(addr);
+      SgAsmFunctionDeclaration* f = NULL;
+      if (j == funcs.begin()) {
+        f = new SgAsmFunctionDeclaration();
+        f->set_address(addr);
+        funcs.insert(make_pair(addr, f));
+        newBlk->get_statementList().push_back(f);
+        f->set_parent(newBlk);
+      } else {
+        --j;
+        f = j->second;
+      }
+      ROSE_ASSERT (f);
+      f->get_statementList().push_back(bb);
+      bb->set_parent(f);
+    }
+    return newBlk;
+  }
+
 }
