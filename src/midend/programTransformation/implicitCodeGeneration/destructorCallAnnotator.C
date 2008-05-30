@@ -483,8 +483,8 @@ class Annotator : public AstSimpleProcessing
 		  {
 		    return;
 		  }
-	       cout << "Node " << node << endl;
-	       cout << "ObjectsAllocated are " << ObjectsAllocated(node) << endl;
+	       // cout << "Node " << node << endl;
+	       // cout << "ObjectsAllocated are " << ObjectsAllocated(node) << endl;
 	     }
    };
 

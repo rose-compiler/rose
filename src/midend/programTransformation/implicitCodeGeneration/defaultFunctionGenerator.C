@@ -1604,6 +1604,25 @@ static void findClassesInvokedViaConstructors(SgNode *subtree, std::set<SgClassD
   
 }
 
+static SgClassSymbol* lookupClassSymbol(SgClassDeclaration* classDecl) {
+  // Does normal get_symbol_from_symbol_table() lookup, then lookup by name
+  SgClassSymbol *classSymbol = isSgClassSymbol(classDecl->get_symbol_from_symbol_table());
+  if (!classSymbol) {
+    cerr << "Warning: getThisExp doing lookup by name on " << classDecl->get_name().getString() << endl;
+    classSymbol = classDecl->get_scope()->get_symbol_table()->find_class(classDecl->get_name());
+    if (!classSymbol) {
+      cerr << "Class symbol not found " << classDecl->get_name().getString() << endl;
+      classDecl->get_scope()->get_symbol_table()->print("debug");
+      cerr << "get_symbol_from_symbol_table(): " << (classDecl->get_symbol_from_symbol_table() ? "Not null" : "Null") << endl;
+      cerr << "find_class on OptionDeclaration: " << (classDecl->get_scope()->get_symbol_table()->find_class("OptionDeclaration") ? "Not null" : "Null") << endl;
+      cerr << "find_class on name: " << (classDecl->get_scope()->get_symbol_table()->find_class(classDecl->get_name()) ? "Not null" : "Null") << endl;
+      cerr << "find_any on OptionDeclaration: " << (classDecl->get_scope()->get_symbol_table()->find_any("OptionDeclaration") ? "Not null" : "Null") << endl;
+    }
+  }
+  ROSE_ASSERT (classSymbol != NULL);
+  return classSymbol;
+}
+
 /** \brief  Return a 'this' expression relevant to the specified class.
  *  \param  classDecl   A SgClassDeclaration.
  *  \returns  A SgThisExp appropriate for classDecl.  User is
@@ -1618,9 +1637,8 @@ static SgThisExp *getThisExp(SgClassDeclaration *classDecl)
 	  isSgClassDeclaration(classDecl->copy(treeCopy));
   SgClassSymbol *classSymbol = new SgClassSymbol(classDeclaration);
 #endif
-	SgClassSymbol *classSymbol = new SgClassSymbol(classDecl);
   SgThisExp *thisExp = new SgThisExp(COMPILERGENERATED_FILE_INFO,
-				     classSymbol,
+				     lookupClassSymbol(classDecl),
 				     0);
   return thisExp;
 }
@@ -1713,26 +1731,15 @@ getVarRefForFormal(SgFunctionDefinition *functionDefinition,
     functionDeclaration->get_parameterList(); 
   ROSE_ASSERT(parameterList != NULL);
 
-  SgInitializedName *specifiedInitName = NULL;
   // Iterate over the formal parameters as represented by
   // SgInitializedNames.  
-  int num = 0;
   const SgInitializedNamePtrList &formalParams = parameterList->get_args(); 
-  for(SgInitializedNamePtrList::const_iterator formalIt = formalParams.begin();
-      formalIt != formalParams.end(); ++formalIt) { 
-      
-    SgInitializedName* formalParam = *formalIt;  
-    ROSE_ASSERT(formalParam != NULL); 
-      
-    if ( num == formalNum )
-      specifiedInitName = formalParam;
-
-    ++num;
-  }
-
+  ROSE_ASSERT (formalNum >= 0 && formalNum < formalParams.size());
+  SgInitializedName *specifiedInitName = formalParams[formalNum];
   ROSE_ASSERT(specifiedInitName != NULL);
 
-  SgVariableSymbol *symbol = new SgVariableSymbol(specifiedInitName);
+  SgVariableSymbol *symbol = isSgVariableSymbol(specifiedInitName->get_symbol_from_symbol_table());
+  ROSE_ASSERT (symbol != NULL);
   SgVarRefExp *varRef = new SgVarRefExp(COMPILERGENERATED_FILE_INFO,
 					symbol);
 
@@ -2022,7 +2029,8 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 	SgClassSymbol * classSymbol1 = NULL;
 	if(enumFunctionType==e_assignment_operator){
 	  // "if (this ==&rhs) return *this;" for operator=
-	  classSymbol1=new SgClassSymbol(classDeclaration);
+	  classSymbol1=lookupClassSymbol(classDeclaration);
+          ROSE_ASSERT (classSymbol1 != NULL);
               //return *this
 	  SgPointerDerefExp * derefExp1=new SgPointerDerefExp(COMPILERGENERATED_FILE_INFO,\
                                      new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0),NULL);
@@ -2036,7 +2044,8 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
 	  SgBasicBlock * falseBody1=new SgBasicBlock(COMPILERGENERATED_FILE_INFO,NULL);
 	  trueBody1->append_statement(myReturn1);
            // this==&rhs	  
-	  SgVariableSymbol * symbolPar1=new SgVariableSymbol(parameter1);
+	  SgVariableSymbol * symbolPar1= isSgVariableSymbol(parameter1->get_symbol_from_symbol_table());
+          ROSE_ASSERT (symbolPar1 != NULL);
 	  SgVarRefExp* varPar1=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,symbolPar1);
 	  SgAddressOfOp * addressOp1=new SgAddressOfOp(COMPILERGENERATED_FILE_INFO,isSgExpression(varPar1), NULL);
           SgEqualityOp * equalityOp1=new SgEqualityOp(COMPILERGENERATED_FILE_INFO,isSgExpression(new SgThisExp(COMPILERGENERATED_FILE_INFO,classSymbol1,0)),\
@@ -2068,8 +2077,10 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
                  SgType* varType= (*listVariable)->get_type();
                  //cout<<"name is "<<varName.str()<<" of type "<<(varType->get_mangled()).str()<<endl;
 
-                SgVariableSymbol* varSymbol1=new SgVariableSymbol(parameter1);
-                SgVariableSymbol* varSymbol2=new SgVariableSymbol(*listVariable);
+                SgVariableSymbol* varSymbol1=isSgVariableSymbol(parameter1->get_symbol_from_symbol_table());
+                SgVariableSymbol* varSymbol2=isSgVariableSymbol((*listVariable)->get_symbol_from_symbol_table());
+                ROSE_ASSERT (varSymbol1 != NULL);
+                ROSE_ASSERT (varSymbol2 != NULL);
                SgVarRefExp* lhsOperator=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol1);
                SgVarRefExp* rhsOperator=new SgVarRefExp(COMPILERGENERATED_FILE_INFO,varSymbol2);
                 SgDotExp* dotExp1=new SgDotExp(COMPILERGENERATED_FILE_INFO,lhsOperator,rhsOperator,varType);
@@ -2250,7 +2261,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
         func_return_type  = new SgReferenceType(base_type1);
 	}
      else
-         func_return_type = new SgTypeVoid();
+         func_return_type = SgTypeVoid::createType();
 
     SgName func_name = generateDefaultFunctionName(enumFunctionType, parentClassDef1);
 
@@ -2319,6 +2330,9 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
 	var1_init_name = new SgInitializedName(var1_name, ref_type,var1_initializer,NULL);
 	var1_init_name->set_scope(func_def);
 	var1_init_name->set_file_info(COMPILERGENERATED_FILE_INFO);
+
+        SgVariableSymbol* sym = new SgVariableSymbol(var1_init_name);
+        func_def->insert_symbol(var1_name, sym);
 
 	ROSE_ASSERT(func->get_parameterList()!=NULL);
 	func->get_parameterList()->append_arg(var1_init_name);
@@ -2411,8 +2425,8 @@ DefaultFunctionGenerator::generateDefaultFunctionCall(SgMemberFunctionDeclaratio
     generateDefaultFunctionType(enumFunctionType, parentClassDef);
 
   // Create SgMemberFunctionSymbol.
-  SgMemberFunctionSymbol *functionSymbol =
-    new SgMemberFunctionSymbol(func);
+  SgMemberFunctionSymbol *functionSymbol = isSgMemberFunctionSymbol(func->get_symbol_from_symbol_table());
+  ROSE_ASSERT (functionSymbol != NULL);
 
   // Create SgMemberFunctionRefExp.
   bool virtual_call = 0;
@@ -3198,7 +3212,7 @@ SgFunctionCallExp *DefaultFunctionGenerator::translateAssignmentToOperatorEqCall
      ROSE_ASSERT(operatorEqDecl != NULL);
 
 //     SgMemberFunctionSymbol *operatorEqSym = isSgMemberFunctionSymbol(clsDef->lookup_function_symbol("operator=")); // XXX: : won't work if the class defines an operator= with parameter of different type.  The same also applies to findDefaultFuncitonDeclaration... needs to be fixed!
-     SgMemberFunctionSymbol *operatorEqSym = new SgMemberFunctionSymbol(operatorEqDecl); // Should really be taken from symbol table.
+     SgMemberFunctionSymbol *operatorEqSym = isSgMemberFunctionSymbol(operatorEqDecl->get_symbol_from_symbol_table());
      ROSE_ASSERT(operatorEqSym != NULL);
      
      SgMemberFunctionRefExp *operatorEqRef = new SgMemberFunctionRefExp(COMPILERGENERATED_FILE_INFO, operatorEqSym);
@@ -3270,7 +3284,7 @@ void DefaultFunctionGenerator::visit (SgNode * astNode)
   	isSgMemberFunctionDeclaration(functionDefinition->get_declaration());
         if ( memberFunctionDeclaration != NULL ) {
   
-  	std::cout << "Visiting memberFunctionDecl: " << memberFunctionDeclaration->unparseToString() << std::endl;
+  	std::cout << "Visiting memberFunctionDecl: " << memberFunctionDeclaration->get_name().getString() << std::endl;
   
   	// In some cases, a method may be implicitly invoked from another.
   	// - A default constructor may be implicitly invoked from
@@ -3505,9 +3519,9 @@ defaultFunctionGenerator(SgProject *prj)
      dfg.traverse(prj, preorder);
      dfg.pass = 2;
      dfg.traverse(prj, preorder);
-     AstPDFGeneration g;
-     g.generate("before", prj);
+     // AstPDFGeneration g;
+     // g.generate("before", prj);
      AstPostProcessing(prj);
-     g.generate("after", prj);
+     // g.generate("after", prj);
      AstTests::runAllTests(prj);
    }
