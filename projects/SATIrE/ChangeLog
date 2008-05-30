@@ -1,4 +1,4 @@
-V0.8.2 2008-05-29 GB,MS,AP
+V0.8.2 2008-05-30 GB,MS,AP
 
 * required user changes:
   - change analysis specifications to take the new ExternalReturn statement
