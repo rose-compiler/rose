@@ -883,9 +883,7 @@ mops::Cfg *MopsBuildProject(SgProject *project) {
 
      };
 
-     DefaultFunctionGenerator dfg;
-     dfg.traverse(project, preorder);
-     AstPostProcessing(project);
+     defaultFunctionGenerator(project);
 
      shortCircuitingTransformation(project);
 

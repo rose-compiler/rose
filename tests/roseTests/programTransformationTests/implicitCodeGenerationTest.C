@@ -23,9 +23,7 @@ int main(int argc, char **argv)
 
      if (doDefaultFunctionGenerator)
 	{
-	  DefaultFunctionGenerator dfg;
-	  dfg.traverse(prj, preorder);
-	  AstPostProcessing(prj);
+	  defaultFunctionGenerator(prj);
 	}
 
      if (doShortCircuitingTransformation)
