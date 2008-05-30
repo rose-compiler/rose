@@ -42,7 +42,7 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	ar x $(SATIRE_LIB)/libpagdatatypes.a
 	mv `ar t $(SATIRE_LIB)/libpagdatatypes.a` $(ANALYSIS)-out/src/
 	cp $(SATIRE_INCLUDE)/o_*.h $(ANALYSIS)-out/src/
-	# make the analyzer library; suppress stupid PAG warnings with -w
+	# make the analyzer library; suppress warnings with -w
 	$(MAKE) CFLAGS="$(CUSTOM_CFLAGS) -w" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
