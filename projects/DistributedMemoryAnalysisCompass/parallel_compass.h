@@ -23,7 +23,7 @@ struct timespec begin_time, end_time;
 int my_rank, processes;
 bool sequential=false;
 bool combined=false;
-
+int nrOfThreads = 2;
 
 // ************************************************************
 // check for the usage parameters

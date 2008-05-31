@@ -12,9 +12,9 @@ using namespace std;
 
 void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> &outputs,
 		    unsigned int* output_values,
-		    double* times, double* memory,
-		    int typeOfPrint
+		    double* times, double* memory
 		    ) {
+
   /* print everything */
   if (my_rank == 0) {
 
@@ -46,14 +46,17 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
     }
     std::cout << std::endl;
 
-    std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
-	      << "\n    fastest process: " << min_time << " fastest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_name().str())
-	      << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_file_info()->get_filename())
-	      << "\n    slowest process: " << max_time << " slowest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_name().str())
-	      << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_file_info()->get_filename())
-	      << std::endl;
-    std::cout << std::endl;
-    
+    if (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() ==0) {
+      cerr << " ERROR: nr of functions : " << myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << endl;
+    } else {
+      std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
+		<< "\n    fastest process: " << min_time << " fastest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_name().str())
+		<< "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_file_info()->get_filename())
+		<< "\n    slowest process: " << max_time << " slowest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_name().str())
+		<< "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_file_info()->get_filename())
+		<< std::endl;
+      std::cout << std::endl;
+    }
     std::cout <<  "The total amount of files is : " << root->numberOfFiles() << std::endl;
     std::cout <<  "The total amount of functions is : " << myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     std::cout <<  "The total amount of nodes is : " << myanalysis.DistributedMemoryAnalysisBase<int>::nrOfNodes << std::endl;
@@ -97,10 +100,6 @@ int main(int argc, char **argv)
 	  std::cout << ' ' << (*b_itr)->getName();
 	std::cout << std::endl;
       }
-
-
-
-#define GERGO_ALGO 0
 
 
 
@@ -213,12 +212,19 @@ int main(int argc, char **argv)
     } // if not processes==1
 
   } else if (combined) {
+    if (processes > 1 ) {
+      cerr << "  Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
+      exit(0);
+    }
     std::cout << "\n>>> Running combined ... " << std::endl;
     AstCombinedSimpleProcessing combined(traversals);
     for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
       combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
   } else {
-    int nrOfThreads = 5;
+    if (processes > 1 ) {
+      cerr << "  Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
+      exit(0);
+    }
     std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
     AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
     for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
@@ -239,7 +245,7 @@ int main(int argc, char **argv)
   communicateResult(outputs, times, memory, output_values, my_time, memusage);
 
 
-  printPCResults(myanalysis, outputs, output_values, times, memory, 0);
+  printPCResults(myanalysis, outputs, output_values, times, memory);
 
 
   /* all done */

@@ -5,16 +5,19 @@
 
 using namespace std;
 #define DEBUG_OUTPUT true
-#define DEBUG_OUTPUT_MORE false
+#define DEBUG_OUTPUT_MORE true
 
 
 
 
 void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> &outputs,
 		    unsigned int* output_values,
-		    double* times, double* memory,
-		    int typeOfPrint
+		    double* times, double* memory
 		    ) {
+  if (processes > 1 ) {
+    cerr << " Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
+    exit(0);
+  }
   /* print everything */
   if (my_rank == 0) {
 
@@ -46,14 +49,27 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
     }
     std::cout << std::endl;
 
-    std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
-	      << "\n    fastest process: " << min_time << " fastest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_name().str())
-	      << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_file_info()->get_filename())
-	      << "\n    slowest process: " << max_time << " slowest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_name().str())
-	      << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_file_info()->get_filename())
-	      << std::endl;
+    std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB " << endl;
+    std::cout << "\nfastest func : " << fastest_func << "  slowest_func : " << slowest_func ;
+    std::cout      << "\n    fastest process: " << min_time << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
+		     << "\n    slowest process: " << max_time << " slowest   in file: " << root->get_file(slowest_func).getFileName()
+		     << std::endl;
     std::cout << std::endl;
-    
+
+    if (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() ==0) {
+      cerr << " ERROR: nr of functions : " << myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << endl;
+    } else {
+      SgFunctionDeclaration* func_fast = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func];
+      ROSE_ASSERT(func_fast);
+      std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
+		<< "\n    fastest process: " << min_time << " fastest func: " << (func_fast->get_name().str());
+      std::cout << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[fastest_func]->get_file_info()->get_filename())
+		<< "\n    slowest process: " << max_time << " slowest func: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_name().str());
+      std::cout << "  in File : " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[slowest_func]->get_file_info()->get_filename())
+		<< std::endl;
+      
+      std::cout << std::endl;
+    }    
     std::cout <<  "The total amount of files is : " << root->numberOfFiles() << std::endl;
     std::cout <<  "The total amount of functions is : " << myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     std::cout <<  "The total amount of nodes is : " << myanalysis.DistributedMemoryAnalysisBase<int>::nrOfNodes << std::endl;
@@ -100,17 +116,9 @@ int main(int argc, char **argv)
 
 
 
-#define GERGO_ALGO 0
-
-
-
   /* traverse the files */
   gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-
-  if (sequential)
-    if (my_rank==0)
-      std::cout << "\n>>> Running in sequence ... " << std::endl;
 
 
   FunctionNamesPreTraversal preTraversal;
@@ -119,10 +127,12 @@ int main(int argc, char **argv)
 
   if (my_rank==0)
     std::cout << "\n>>> Running on functions ... " << std::endl;
+    std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
   if (sequential) {
+    if (my_rank==0)
+      std::cout << "\n>>> Running in sequence ... " << std::endl;
 
     // gergos original algorithm
-    std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
     for (int i = bounds.first; i < bounds.second; i++)
       {
 	std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " 
@@ -138,15 +148,16 @@ int main(int argc, char **argv)
 	}
       }
   } else if (combined) {
-    std::cout << "\n>>> Running combined ... " << std::endl;
+    std::cout << "\n>>> Running combined ...    funcDecls size : " << 
+      myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     AstCombinedSimpleProcessing combined(traversals);
-    for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
+    for (int i = bounds.first; i < bounds.second; i++)
       combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
   } else {
-    int nrOfThreads = 5;
-    std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
+    std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal -- funcDecls size : " << 
+      myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-    for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
+    for (int i = bounds.first; i < bounds.second; i++)
       parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
   }
 
@@ -164,7 +175,7 @@ int main(int argc, char **argv)
   communicateResult(outputs, times, memory, output_values, my_time, memusage);
 
 
-  printPCResults(myanalysis, outputs, output_values, times, memory, 0);
+  printPCResults(myanalysis, outputs, output_values, times, memory);
 
 
   /* all done */

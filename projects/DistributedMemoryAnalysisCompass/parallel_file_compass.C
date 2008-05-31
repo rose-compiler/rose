@@ -213,7 +213,6 @@ int main(int argc, char **argv)
 	AstCombinedSimpleProcessing combined(traversals);
 	combined.traverse(&root->get_file(i), preorder);
       } else {
-	int nrOfThreads = 2;
 	std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
 	AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
 	parallel.traverseInParallel(&root->get_file(i), preorder);

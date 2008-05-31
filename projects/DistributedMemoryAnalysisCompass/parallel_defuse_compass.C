@@ -118,8 +118,7 @@ std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int
 
 void printPCResults(std::vector<CountingOutputObject *> &outputs,
 		    unsigned int* output_values,
-		    double* times, double* memory,
-		    int typeOfPrint
+		    double* times, double* memory
 		    ) {
   /* print everything */
   if (my_rank == 0) {
@@ -252,7 +251,7 @@ int main(int argc, char **argv)
   communicateResult(outputs, times, memory, output_values, my_time, memusage);
 
 
-  printPCResults(outputs, output_values, times, memory, 0);
+  printPCResults(outputs, output_values, times, memory);
 
 
   /* all done */
