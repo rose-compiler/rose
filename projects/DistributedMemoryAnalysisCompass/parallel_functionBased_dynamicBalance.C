@@ -31,7 +31,7 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
     for (size_t i = 0; i < (size_t) processes; i++) {
 
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
-	"  real # functions: none." << std::endl;
+	"  real # functions: " <<(dynamicFunctionsPerProcessor[i]) << std::endl;
 
       total_time += times[i];
       total_memory += memory[i];
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
   if (my_rank==0)
     std::cout << "\n>>> Running on functions ... " << std::endl;
   if (sequential) {
-    int* dynamicFunctionsPerProcessor = new int[processes];
+    dynamicFunctionsPerProcessor = new int[processes];
     for (int k=0;k<processes;k++)
       dynamicFunctionsPerProcessor[k]=0;
     if (DEBUG_OUTPUT_MORE) 

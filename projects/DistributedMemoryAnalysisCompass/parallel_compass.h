@@ -24,6 +24,7 @@ int my_rank, processes;
 bool sequential=false;
 bool combined=false;
 int nrOfThreads = 2;
+int* dynamicFunctionsPerProcessor;
 
 // ************************************************************
 // check for the usage parameters
@@ -57,7 +58,7 @@ void initPCompass(int argc, char **argv) {
 	std::cerr << "   executable filenames_in \t\t\truns on a project given a the specified file"  << std::endl;
 	std::cerr << "   executable -save filename_out filenames_in \truns on the specified file and saves it to ast.ast"  << std::endl;
 	std::cerr << "   executable -load filename_in \t\tloads the specified AST and runs the project"  << std::endl;
-	std::cerr << "   executable [-combined -shared] (sequential is default)"  << std::endl;
+	std::cerr << "   executable [-combined | -shared ] (sequential is default)"  << std::endl;
 	std::cerr << std::endl;
 	exit(0);
       }

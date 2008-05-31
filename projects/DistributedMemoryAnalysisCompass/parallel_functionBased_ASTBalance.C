@@ -14,10 +14,6 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
 		    unsigned int* output_values,
 		    double* times, double* memory
 		    ) {
-  if (processes > 1 ) {
-    cerr << " Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
-    exit(0);
-  }
   /* print everything */
   if (my_rank == 0) {
 
@@ -148,12 +144,20 @@ int main(int argc, char **argv)
 	}
       }
   } else if (combined) {
+    if (processes > 1 ) {
+      cerr << " Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
+      exit(0);
+    }
     std::cout << "\n>>> Running combined ...    funcDecls size : " << 
       myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     AstCombinedSimpleProcessing combined(traversals);
     for (int i = bounds.first; i < bounds.second; i++)
       combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
   } else {
+    if (processes > 1 ) {
+      cerr << " Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
+      exit(0);
+    }
     std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal -- funcDecls size : " << 
       myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
