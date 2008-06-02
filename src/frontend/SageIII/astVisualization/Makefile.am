@@ -1,6 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 INCLUDES = $(ROSE_INCLUDES)
 
 if DEV_LIBS

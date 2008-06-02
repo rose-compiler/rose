@@ -74,7 +74,7 @@ dnl requirements of the free EDG research license.
   # Make this available to the environment
     export with_edg_source_code
 
-  # Now put it into the makefile to be used there when we rename the distributuion
+  # Now put it into the makefile to be used there when we rename the distribution
     AC_SUBST(with_edg_source_code)
 ])
 

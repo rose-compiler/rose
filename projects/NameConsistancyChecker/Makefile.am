@@ -19,7 +19,7 @@ test: nameChecker
 	./nameChecker
 
 test1:
-	./nameChecker -rose:name:file $(srcdir)/example-styles/rose-style.sn -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o grammar_test.o $(ROSE_INCLUDES) -I$(top_builddir) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+	./nameChecker -rose:name:file $(srcdir)/example-styles/rose-style.sn -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o grammar_test.o $(ROSE_INCLUDES) -I$(top_builddir)
 
 test2:
 	./nameChecker -rose:name:file $(srcdir)/example-styles/ale3d-style.sn -c $(srcdir)/example-styles/test-Ale3D.C -o test-Ale3D.o

@@ -38,7 +38,6 @@ RoseDocsDependencies = \
      rose.cfg \
      $(top_builddir)/rose.docs \
      $(top_builddir)/src/frontend/SageIII/sage.docs \
-     $(top_srcdir)/src/frontend/EDG/EDG_3.3/documentation.docs \
      $(top_srcdir)/src/frontend/Open64/documentation.docs \
      $(top_srcdir)/src/frontend/SageIII/sage.docs.in \
      $(top_srcdir)/src/extra.docs \
