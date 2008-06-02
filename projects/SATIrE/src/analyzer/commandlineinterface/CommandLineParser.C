@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.18 2008-05-29 08:03:52 gergo Exp $
+// $Id: CommandLineParser.C,v 1.19 2008-06-02 11:25:38 gergo Exp $
 
 #include <config.h>
 
@@ -21,11 +21,18 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
   // post-processing of parsed values
   if(cl->helpMessageRequested()) {
     std::cout << cl->getOptionsInfo() << std::endl;
-    exit(0);
+    exit(EXIT_SUCCESS);
   }
   if(cl->optionsError()) {
     std::cout << cl->getOptionsErrorMessage() << std::endl;
-    exit(1);
+    exit(EXIT_FAILURE);
+  }
+  if (cl->getNumberOfInputFiles() == 0 && !cl->inputBinaryAst()) {
+    std::cout << "ERROR: no input files to analyze" << std::endl;
+    exit(EXIT_FAILURE);
+  } else if (cl->getNumberOfInputFiles() != 0 && cl->inputBinaryAst()) {
+    std::cout << "ERROR: both source and binary input files specified" << std::endl;
+    exit(EXIT_FAILURE);
   }
 
   /* extend command line with ROSE options for front end language selection */
@@ -157,9 +164,17 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->outputGdlAnimOn();
     cl->setOutputGdlAnimDirName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--input-binary-ast=")) {
+    if (cl->inputBinaryAst()) {
+      cl->setOptionsErrorMessage("ERROR: --input-binary-ast specified more than once");
+      return 1;
+    }
     cl->inputBinaryAstOn();
     cl->setInputBinaryAstFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-binary-ast=")) {
+    if (cl->outputBinaryAst()) {
+      cl->setOptionsErrorMessage("ERROR: --output-binary-ast specified more than once");
+      return 1;
+    }
     cl->outputBinaryAstOn();
     cl->setOutputBinaryAstFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--gnu:")) {
@@ -203,8 +218,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     std::cout << "Found Input filename." << std::endl;
-    cl->setInputFileName(argv[i]);
-    cl->appendCommandLine(argv[i]);
+ // GB (2008-06-02): Using appendInputFile here; this method sets the input
+ // file name, appends the name to the command line, and increments the file
+ // name counter.
+    cl->appendInputFile(argv[i]);
   } else {
     std::stringstream s;
     s << "ERROR: unrecognized option: " << argv[i] << std::endl;

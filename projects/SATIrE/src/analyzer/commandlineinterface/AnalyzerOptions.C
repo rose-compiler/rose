@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.23 2008-05-28 07:31:58 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.24 2008-06-02 11:25:38 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -7,7 +7,7 @@
 #include <iostream>
 
 AnalyzerOptions::~AnalyzerOptions() {}
-AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
+AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_numberOfInputFiles(0) {
   
   // set default values
   setLanguage(Language_CPP);
@@ -35,6 +35,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --no-frontend-warnings   do not show Front End warnings when parsing\n"
     "                            file(s) [default]\n"
     "   -I<path>                 specify path for include files\n"
+    "   --input-binary-ast=<FILENAME> read AST from binary file instead of a source file\n"
     "\n"
     " Analysis options:\n"
     "   --callstringlength=<num> set callstring length to <num> [default=0]\n"
@@ -76,6 +77,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo("") {
     "   --output-term=<FILENAME> generate Prolog term representation of input\n"
     "                            program AST\n"
     "   --output-icfg=<FILENAME> output icfg of input program\n"
+    "   --output-binary-ast=<FILENAME> write AST to binary file\n"
     "   --help                   print this help message on stdout\n"
     "   --help-rose              print the ROSE help message on stdout\n"
     "\n"
@@ -211,6 +213,12 @@ char** AnalyzerOptions::getCommandLineCarray() {
   return argv;
 }
 
+void AnalyzerOptions::appendInputFile(std::string name) {
+    appendCommandLine(name);
+    setInputFileName(name);
+    ++_numberOfInputFiles;
+}
+
 std::string AnalyzerOptions::getCommandLine() { 
   std::string s;
   for(std::vector<std::string>::iterator i=_commandLine.begin(); i!=_commandLine.end(); i++) {
@@ -224,3 +232,5 @@ void AnalyzerOptions::addCommandLineNum(int cl) { _commandLineNum+=cl; }
 int AnalyzerOptions::getCommandLineNum() { return _commandLineNum; }
 
 bool AnalyzerOptions::retFuncUsed() { return true; }
+
+int AnalyzerOptions::getNumberOfInputFiles() { return _numberOfInputFiles; }
