@@ -1,4 +1,4 @@
-V0.8.2 2008-05-30 GB,MS,AP
+V0.8.2 2008-06-02 GB,MS,AP
 
 * required user changes:
   - change analysis specifications to take the new ExternalReturn statement
@@ -25,6 +25,9 @@ V0.8.2 2008-05-30 GB,MS,AP
                            FORMAT=varid|varname|exprid|exprsource
                                  |asttext|no-varid|no-varname
                                  |no-exprid|no-exprsource|no-asttext
+  --input-binary-ast=FILE/--output-binary-ast=FILE: support for ROSE's
+    binary AST I/O mechanism which can be a little faster than building the
+    AST from source code
 
 * New PAG analysis specification features [GB]
   - replaced single ExternalCall node by ExternalCall/ExternalReturn pair
