@@ -111,7 +111,6 @@ int main(int argc, char **argv)
       }
 
 
-
   /* traverse the files */
   gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();

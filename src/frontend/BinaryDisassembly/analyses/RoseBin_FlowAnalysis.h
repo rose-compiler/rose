@@ -69,6 +69,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   void resolveFunctions(SgAsmNode* global);
   SgAsmInstruction* resolveFunction(SgAsmInstruction* inst, bool hasStopCondition);
   void convertBlocksToFunctions(SgAsmNode* globalNode);
+  void flattenBlocks(SgAsmNode* globalNode);
 
   bool db;
 
@@ -89,6 +90,13 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     globalBin = global;
     // todo: optimize later
     if (initialized==false) {
+      // (tps 2Jun08) : Jeremiah implemented functions in his disassembler, 
+      // so we do not need to perform a conversion from block to function anymore.
+      // However, for now we want to pertain the flat hierarchy of function-instruction
+      // instead of function-block-instruction and hence have to convert this.
+      if (!db)
+	flattenBlocks(globalBin);
+
 #if 0
       if (!db)
 	convertBlocksToFunctions(globalBin);

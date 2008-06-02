@@ -14,6 +14,37 @@ bool RoseBin_FlowAnalysis::initialized = false;
 
 //#include "AST_BIN_Traversal.h"
 
+/*
+ * This function removes blocks, so functions contain only instructions
+ */
+void 
+RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
+  vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmBlock);
+  vector<SgNode*>::iterator itV = tree.begin();
+  cerr << " ObjDump-BinRose:: Removing Blocks " << endl; 
+  for (;itV!=tree.end();itV++) {
+    SgAsmBlock* block = isSgAsmBlock(*itV);
+    if (block && block!=globalNode) { 
+      SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
+      if (func) {
+	vector <SgNode*> vec =block->get_traversalSuccessorContainer();
+	for (unsigned int itf = 0; itf < vec.size() ; itf++) {
+	  SgAsmInstruction* finst = isSgAsmInstruction(vec[itf]);
+	  finst->set_parent(func);
+	  func->append_statement(finst);
+	}
+	func->remove_statement(block);
+      }
+
+    }
+  }
+
+
+}
+
+/*
+ * Converts blocks to functions (is not part of Jeremiahs disassembler - and also IDA)
+ */
 void 
 RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmBlock);
@@ -45,6 +76,9 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
 
 }
 
+/*
+ * Detect functions (blocks) that can be merged together.
+ */
 void 
 RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
   cerr << " ObjDump-BinRose:: Detecting and merging Functions" << endl; 
