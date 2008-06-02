@@ -1,10 +1,10 @@
 /* Author: Markus Schordan, Viktor Pavlu
    E-mail: markus@complang.tuwien.ac.at
-   Year  : 2006, 2007
+   Year  : 2006, 2007, 2008
 */
 
 UNIVERSAL
-kill_norm_temps : bool#
+option_kill_normalisation_temps : bool#
 
 BLOCK
 label : snum#
@@ -56,7 +56,7 @@ in
 FunctionCall(_,_),local_edge: bot;
 
 FunctionExit(functionName,params), _:
-    kill_vars(@, params);
+    delete_vars(@, params);
 
 _,_: @;
 
@@ -78,10 +78,10 @@ comb(a,b) =
     endif
     endif;
 
-kill_vars :: dfi, *VariableSymbolNT -> dfi;
-kill_vars(s, [!]) = s;
-kill_vars(s, VariableSymbol(p)::ps) =
-    delete_var(kill_vars(s, ps),val-aststring(p));
+delete_vars :: dfi, *VariableSymbolNT -> dfi;
+delete_vars(s, [!]) = s;
+delete_vars(s, VariableSymbol(p)::ps) =
+    delete_var(delete_vars(s, ps),val-aststring(p));
 
 delete_var::dfi,str->dfi;
 delete_var(g,var) =
@@ -114,16 +114,16 @@ expression(_,_,top) = top;
 expression(e,label,lifted_g) =
     let ops = normalisation_ops(e,label); in
     let result_g = execute(ops, lifted_g); in
-    if kill_norm_temps then
+    if option_kill_normalisation_temps then
         kill_normalisation_temps(ops, result_g)
     else
         result_g
     endif;
 
-/* call tassign_ functions according to the opcodes 
+/* call tassign_ functions according to the opcodes (operation_name*[vars])
  * to alter the shapegraph. while going along, collect
  * all temporary variables.
- * return (modified graph, temp vars)
+ * return (modified graph, introduced normalisation temps)
  */
 execute :: OpCodeList,dfi -> dfi;
 execute( [], lifted_g) = lifted_g;
@@ -138,10 +138,11 @@ execute((op,args):cdr, lifted_g) =
 
         "x_y" =>
             let g1 = tassign_x_y(pick(args,1),pick(args,2),g); in
-            if (!is_temp(pick(args,2))) then
-                g1
-            else
+            if (is_temp(pick(args,2))) then
+			    // delete temps when read from them as they will not occur again
                 drop(delete_var(lift(g1),pick(args,2)))
+            else
+                g1
             endif;
 
         "x_ysel" =>
@@ -152,20 +153,21 @@ execute((op,args):cdr, lifted_g) =
 
         "xsel_y" =>
             let g1 = tassign_xsel_y(pick(args,1),pick(args,2),pick(args,3),g); in
-            if (!is_temp(pick(args,3))) then
-                g1
-            else
+            if (is_temp(pick(args,3))) then
+			    // delete temps when read from them as they will not occur again
                 drop(delete_var(lift(g1),pick(args,3)))
+            else
+                g1
             endif;
 
         _ =>
-            print("unrecognized opcode: ") print(op) print("\n") g;
+            print("fatal: unrecognized opcode ") print(op) print("\n") g;
     endcase; in
     execute(cdr,lift(g1));
 
 pick :: StrList,snum -> str;
 pick(car:cdr,1) = car;
-pick(car:cdr,n) = if n > 1 then pick(cdr, n - 1) else print("pick beyond bounds") "" endif;
+pick(car:cdr,n) = if n > 1 then pick(cdr, n - 1) else print("fatal: pick beyond bounds") "" endif;
 
 // -------------------------------------------------------------------------------------------
 // normalisation of nested pointer expressions (using temporary assignments for decomposition)
@@ -236,13 +238,19 @@ expr_is_complex(e) = case e of
 endcase;
 
 // returns the expression at the given depth, where
-// 0 is the topmost expression that contains the others, and
+// 0 is the topmost expression that contains the others
+// expr_depth() gives the number for the innermost expression
+// expr(6)=(x -> sel)
+// expr(5)=(( *(x -> sel)).sel)
+// expr(4)=(( *(( *(x -> sel)).sel)).sel)
+// expr(3)=(( *(( *(( *(x -> sel)).sel)).sel)).sel)
+// expr(2)=(( *(( *(( *(( *(x -> sel)).sel)).sel)).sel)).sel)
+// expr(1)=(( *(( *(( *(( *(( *(x -> sel)).sel)).sel)).sel)).sel)).sel)
+// expr(0)=(( *(( *(( *(( *(( *(( *(x -> sel)).sel)).sel)).sel)).sel)).sel)).sel)
 expr_at :: Expression,snum -> Expression;
 expr_at(e,nesting_level) =
-    let
-        descending_steps = min(nesting_level, expr_depth(e));
-    in
-        rec_expr_at(e, descending_steps);
+  let descending_steps = min(nesting_level, expr_depth(e)); in
+  rec_expr_at(e, descending_steps);
 
 rec_expr_at :: Expression,snum -> Expression;
 rec_expr_at(e,0) = e;
@@ -260,12 +268,14 @@ normalisation_ops :: Expression,str -> OpCodeList;
 normalisation_ops(e,label) =
     case e of AssignOp(lhs,rhs) =>
         let tmp = gen_normalisation_temp(label); in
-        let lhs_tmp = tmp."l";
-            rhs_tmp = tmp."r";
+        let lhs_tmp_prefix = tmp."_l_";
+            rhs_tmp_prefix = tmp."_r_";
         in
-            rec_normalise(lhs,expr_depth(lhs),lhs_tmp,[]) ++
-            rec_normalise(rhs,expr_depth(rhs),rhs_tmp,[]) ++
-            perform_assign(e,lhs_tmp,rhs_tmp,[]);
+            rec_normalise(lhs,expr_depth(lhs),lhs_tmp_prefix,[]) ++
+            rec_normalise(rhs,expr_depth(rhs),rhs_tmp_prefix,[]) ++
+			// the tempvar naming scheme ensures that the last
+			// temporary variable has the name xhs_tmp_prefix."0"
+            perform_assign(e,lhs_tmp_prefix,rhs_tmp_prefix,[]);
         _ => [];
     endcase;
 
@@ -293,7 +303,7 @@ rec_normalise(lhs, lhs_cursor, tmpvar_prefix, list) =
     rec_normalise(lhs, lhs_cursor - 1, tmpvar_prefix, list ++ new_list);
 
 perform_assign :: Expression,str,str,OpCodeList -> OpCodeList;
-perform_assign(e,lhs_tmp,rhs_tmp,list) =
+perform_assign(e,lhs_tmp_prefix,rhs_tmp_prefix,list) =
     case e of
         // x = new;
         AssignOp(VarRefExp(na_x),NewExp(_,_,_)) =>
@@ -313,7 +323,7 @@ perform_assign(e,lhs_tmp,rhs_tmp,list) =
 
         // ...sel = null;  NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),CastExp(IntVal(n),_)) => 
-            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)])];
+            [("xsel_null", [lhs_tmp_prefix."0", val-aststring(na_sel)])];
 
         // x.sel = y;
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)),VarRefExp(na_y)) =>
@@ -322,8 +332,8 @@ perform_assign(e,lhs_tmp,rhs_tmp,list) =
 
         // ...sel = y; NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_sel)),VarRefExp(na_y)) =>
-            [("xsel_null", [lhs_tmp."0", val-aststring(na_sel)]),
-             ("xsel_y",    [lhs_tmp."0", val-aststring(na_sel), val-aststring(na_y)])];
+            [("xsel_null", [lhs_tmp_prefix."0", val-aststring(na_sel)]),
+             ("xsel_y",    [lhs_tmp_prefix."0", val-aststring(na_sel), val-aststring(na_y)])];
 
         // x = y.sel;
         AssignOp(VarRefExp(na_x),ArrowExp(VarRefExp(na_y),VarRefExp(na_sel))) => 
@@ -331,27 +341,27 @@ perform_assign(e,lhs_tmp,rhs_tmp,list) =
 
         // x = ...sel; NEW
         AssignOp(VarRefExp(na_x),DotExp(PointerDerefExp(_),VarRefExp(na_sel))) => 
-            [("x_ysel", [val-aststring(na_x), rhs_tmp."0", val-aststring(na_sel)])];
+            [("x_ysel", [val-aststring(na_x), rhs_tmp_prefix."0", val-aststring(na_sel)])];
 
         // x.sel = y.sel; NEW
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
-             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
+            [("x_ysel", [rhs_tmp_prefix."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp_prefix."a"])];
             
         // ...sel = y.sel; NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),ArrowExp(VarRefExp(na_y),VarRefExp(na_ysel))) =>
-            [("x_ysel", [rhs_tmp."a", val-aststring(na_y), val-aststring(na_ysel)]),
-             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
+            [("x_ysel", [rhs_tmp_prefix."a", val-aststring(na_y), val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp_prefix."0", val-aststring(na_xsel), rhs_tmp_prefix."a"])];
 
         // x.sel = ...sel; NEW
         AssignOp(ArrowExp(VarRefExp(na_x),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
-             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp."a"])];
+            [("x_ysel", [rhs_tmp_prefix."a", rhs_tmp_prefix."0", val-aststring(na_ysel)]),
+             ("xsel_y", [val-aststring(na_x), val-aststring(na_xsel), rhs_tmp_prefix."a"])];
             
         // ...sel = ...sel; NEW
         AssignOp(DotExp(PointerDerefExp(_),VarRefExp(na_xsel)),DotExp(PointerDerefExp(_),VarRefExp(na_ysel))) =>
-            [("x_ysel", [rhs_tmp."a", rhs_tmp."0", val-aststring(na_ysel)]),
-             ("xsel_y", [lhs_tmp."0", val-aststring(na_xsel), rhs_tmp."a"])];
+            [("x_ysel", [rhs_tmp_prefix."a", rhs_tmp_prefix."0", val-aststring(na_ysel)]),
+             ("xsel_y", [lhs_tmp_prefix."0", val-aststring(na_xsel), rhs_tmp_prefix."a"])];
 
         _ => list;
     endcase;
@@ -379,41 +389,35 @@ tassign_x_y(x,y,G) =
   else
     let G1=assign_x_y("_$",y,G); in
     let G2=assign_x_null(x,G1); in
-
     let G3=assign_x_y(x,"_$",G2); in
-      assign_x_null("_$",G3)
-  endif
-;
-
+    assign_x_null("_$",G3)
+  endif;
 
 tassign_xsel_y::str,str,str,ShapeGraph->ShapeGraph;
 tassign_xsel_y(x,selp,y,G) =
   let G1=assign_x_y("_$",y,G); in
   let G2=assign_xsel_null(x,selp,G1); in
   let G3=assign_xsel_y(x,selp,"_$",G2); in
-    assign_x_null("_$",G3);
-
+  assign_x_null("_$",G3);
 
 tassign_x_ysel::str,str,str,ShapeGraph -> ShapeGraph;
 tassign_x_ysel(x,y,selp,G) =
   let G1=assign_x_ysel("_$",y,selp,G); in
   let G2=assign_x_null(x,G1); in
   let G3=assign_x_y(x,"_$",G2); in
-    assign_x_null("_$",G3);
-
+  assign_x_null("_$",G3);
 
 tassign_x_new::str,ShapeGraph->ShapeGraph;
 tassign_x_new(x,G) =
-    let G1=assign_x_null(x,G); in
-      assign_x_new(x,G1);
-
+  let G1=assign_x_null(x,G); in
+  assign_x_new(x,G1);
 
 tassign_xsel_new::str,str,ShapeGraph->ShapeGraph;
 tassign_xsel_new(x,selp,G) =
-    let G1=assign_xsel_null(x,selp,G); in
-    let G2=assign_x_new("_$",G1); in
-    let G3=assign_xsel_y(x,selp,"_$",G2); in
-      assign_x_null("_$",G3);
+  let G1=assign_xsel_null(x,selp,G); in
+  let G2=assign_x_new("_$",G1); in
+  let G3=assign_xsel_y(x,selp,"_$",G2); in
+  assign_x_null("_$",G3);
 
 // ----------------------------------------------------------------------
 // Low-level functions, without temporaries (do not handle special cases)
@@ -421,39 +425,32 @@ tassign_xsel_new(x,selp,G) =
 
 assign_x_null::str,ShapeGraph -> ShapeGraph;
 assign_x_null(x,((Ev0,Es0),is0)) =
-  let Ev1={(y,rem(x,W))!!(y,W) <-- Ev0, if !(y=x)};
-    Es1={(rem(x,V),sel0,rem(x,W))!!(V,sel0,W) <-- Es0};
-    is1={rem(x,n) !! n <-- is0}; in
+  let Ev1 = {(y,rem(x,W))!!(y,W) <-- Ev0, if !(y=x)};
+      Es1 = {(rem(x,V),sel0,rem(x,W))!!(V,sel0,W) <-- Es0};
+      is1 = {rem(x,n) !! n <-- is0}; in
   ((Ev1,Es1),is1);
-
 
 assign_xsel_null::str,str,ShapeGraph -> ShapeGraph;
 assign_xsel_null(x,selp,((Ev0,Es0),is0)) =
-         let Es1 = edgesetminus(Es0,{(X0,sel0,ANY0) !! (X0,sel0,ANY0) <-- Es0, if x ? X0 && sel0=selp});
-         in
-           let is1 = nodesetminus(is0,{n !! n <-- is0, if (!iis(Es1,n)) && no_outedge_exists(Es1,n)});
-           in ((Ev0,Es1),is1);
-
-
+  let Es1 = edgesetminus(Es0,{(X0,sel0,ANY0) !! (X0,sel0,ANY0) <-- Es0, if x ? X0 && sel0=selp}); in
+  let is1 = nodesetminus(is0,{n !! n <-- is0, if (!iis(Es1,n)) && no_outedge_exists(Es1,n)}); in
+  ((Ev0,Es1),is1);
 
 no_outedge_exists::HeapEdgeSet,VarSet -> bool;
 no_outedge_exists(Es,n)=
   {"1" !! (X0,sel0,Y0) <-- Es, if X0={} && Y0=n} = {};
 
-
 assign_x_new::str,ShapeGraph->ShapeGraph;
 assign_x_new(x,((Ev0,Es0),is0)) =
   ((union(Ev0,{(x,{x})}),Es0),is0);
 
-
 assign_x_y::str,str,ShapeGraph -> ShapeGraph;
 assign_x_y(x,y,((Ev0,Es0),is0)) =
-  let Ev1=union({(za,msgc(x,y,Z))!!(za,Z) <-- Ev0},
-              {(x,msgc(x,y,Z))!!(y1,Z) <-- Ev0, if y1=y});
-    Es1={(msgc(x,y,Z1),sel0,msgc(x,y,Z2))!!(Z1,sel0,Z2) <-- Es0};
-    is1={msgc(x,y,Z)!!Z <-- is0}; in
-    ((Ev1,Es1),is1);
-
+  let Ev1 = union({(za,msgc(x,y,Z))!!(za,Z) <-- Ev0},
+                  {(x,msgc(x,y,Z))!!(y1,Z) <-- Ev0, if y1=y});
+      Es1 = {(msgc(x,y,Z1),sel0,msgc(x,y,Z2))!!(Z1,sel0,Z2) <-- Es0};
+      is1 = {msgc(x,y,Z)!!Z <-- is0}; in
+  ((Ev1,Es1),is1);
 
 assign_xsel_y::str,str,str,ShapeGraph -> ShapeGraph;
 assign_xsel_y(x,selp,y,((Ev0,Es0),is0)) =
@@ -461,32 +458,21 @@ assign_xsel_y(x,selp,y,((Ev0,Es0),is0)) =
                                        if xa=x && ya=y && compatible2(X0,Y0)}
                  ); in
   let is1 = union(is0,{n !! (ya,n) <-- Ev0, if ya=y && iis(Es1,n)}); in
-    ((Ev0,Es1),is1);
-
+  ((Ev0,Es1),is1);
 
 assign_x_ysel::str,str,str,ShapeGraph -> ShapeGraph;
 assign_x_ysel(x,y,selp,((Ev0,Es0),is0)) =
-  let G=((Ev0,Es0),is0); in
-    let Ev1 = union(Ev0,union(
-        {(x,h(x,Z))!!(ya,Y0) <-- Ev0, (Y1,sel0,Z) <-- Es0,
-                 if ya=y && Y0=Y1 && selp=sel0},
-        {(za,h(x,Z))!!(ya,Y0) <-- Ev0, (Y1,sel0,Z1) <-- Es0, (za,Z) <-- Ev0,
-                 if y=ya && Y0=Y1 && selp=sel0 && Z1=Z}));
-
-       temp = {aux_as(x,y,Y0,selp,Z,G) !! (ya,Y0) <-- Ev0, (Y2,sel0,Z) <-- Es0,
-                                    if y=ya && Y0=Y2 && selp=sel0};
-       in
-       let Es1 = union(
-                   (edgesetminus(Es0,{(Y0,sel0,Z)!!(Y0,sel0,Z) <-- Es0, if (y ? Y0) && sel0=selp})),
-                   ssunion(temp));
-       in
-       let is1 = new_is(is0,x);
-
-       in ((Ev1,Es1),is1);
-
-
-
-
+  let G    = ((Ev0,Es0),is0); in
+  let Ev1  = union(Ev0,union(
+              {(x,h(x,Z))!!(ya,Y0) <-- Ev0, (Y1,sel0,Z) <-- Es0,
+                           if ya=y && Y0=Y1 && selp=sel0},
+              {(za,h(x,Z))!!(ya,Y0) <-- Ev0, (Y1,sel0,Z1) <-- Es0, (za,Z) <-- Ev0,
+                           if y=ya && Y0=Y1 && selp=sel0 && Z1=Z}));
+      temp = {aux_as(x,y,Y0,selp,Z,G) !! (ya,Y0) <-- Ev0, (Y2,sel0,Z) <-- Es0,
+                           if y=ya && Y0=Y2 && selp=sel0}; in
+  let Es1  = union((edgesetminus(Es0,{(Y0,sel0,Z)!!(Y0,sel0,Z) <-- Es0, if (y ? Y0) && sel0=selp})), ssunion(temp)); in
+  let is1  = new_is(is0,x); in
+  ((Ev1,Es1),is1);
 
 N::StackEdgeSet,HeapEdgeSet -> NodeSet;
 N(Ev,Es) = union({n!!(x,n)<--Ev},NEs(Es));
@@ -497,8 +483,8 @@ NEs(Es) = union({s!!(s,a,e)<--Es},{e!!(s,a,e)<--Es});
 edgesetminus::HeapEdgeSet,HeapEdgeSet -> HeapEdgeSet;
 edgesetminus(S1,S2) = {x!!x<--S1, if !(x ? S2)};
 
-stackedgesetminus::StackEdgeSet,StackEdgeSet -> StackEdgeSet;
-stackedgesetminus(S1,S2) = {x!!x<--S1, if !(x ? S2)};
+//stackedgesetminus::StackEdgeSet,StackEdgeSet -> StackEdgeSet;
+//stackedgesetminus(S1,S2) = {x!!x<--S1, if !(x ? S2)};
 
 nodesetminus::NodeSet,NodeSet -> NodeSet;
 nodesetminus(S1,S2) = {x!!x<--S1, if !(x ? S2)};
@@ -531,9 +517,6 @@ rem::str,VarSet -> VarSet;
 rem(x,Z) =
   { v !! v <-- Z, if !(x=v) };
 
-
-
-
 h::str,VarSet -> VarSet;
 h(x,Z) = union(Z,{x});
 
@@ -546,43 +529,41 @@ msgc(x,y,Z) =
 iis::HeapEdgeSet,VarSet -> bool;
 iis(Es,Z) =
   let exist = { "1" !! (Z1,sel1,Z31) <-- Es, (Z2,sel2,Z32) <-- Es,
-                if Z31=Z && Z32=Z && compatible3(Z1,Z2,Z)
-                   &&( semneq(Z1,Z2) || !(sel1=sel2))}; in
-      !(exist = {});
-
+                       if Z31=Z && Z32=Z && compatible3(Z1,Z2,Z)
+                         &&( semneq(Z1,Z2) || !(sel1=sel2))}; in
+  !(exist = {});
 
 compat_in::StackEdge,HeapEdge,HeapEdge,ShapeGraph -> bool;
 compat_in((_,Y),(Y2,sel0,Z),(W,sel1,Z3),((Ev0,Es0),is0)) =
-    Y=Y2 && Z=Z3
-    && compatible3(Y,Z,W)
-    && semneq(Z,W)
-    && ((semeq(Y,W) && sel0=sel1) || (Z ? is0));
+  Y=Y2 && Z=Z3
+  && compatible3(Y,Z,W)
+  && semneq(Z,W)
+  && ((semeq(Y,W) && sel0=sel1) || (Z ? is0));
 
 compat_out::StackEdge,HeapEdge,HeapEdge,ShapeGraph -> bool;
 compat_out((_,Y),(Y2,sel0,Z),(W,sel1,Z3),((Ev0,Es0),is0)) =
-    Y=Y2 && Z=Z3
-    && compatible3(Y,Z,W)
-    && semneq(Z,W)
-    && (semneq(Y,Z) || !(sel0=sel1));
+  Y=Y2 && Z=Z3
+  && compatible3(Y,Z,W)
+  && semneq(Z,W)
+  && (semneq(Y,Z) || !(sel0=sel1));
 
 compat_self::StackEdge,HeapEdge,HeapEdge,ShapeGraph -> bool;
 compat_self((_,Y),(Y2,sel0,Z),(Z31,sel1,Z32),((Ev0,Es0),is0)) =
-    Y=Y2 && Z=Z31 && Z=Z32 && Z31=Z32
-      && compatible2(Y,Z)
-      && ((semeq(Y,Z) && sel0=sel1) || (Z ? is0));
+  Y=Y2 && Z=Z31 && Z=Z32 && Z31=Z32
+    && compatible2(Y,Z)
+    && ((semeq(Y,Z) && sel0=sel1) || (Z ? is0));
 
 aux_as::str,str,VarSet,str,VarSet,ShapeGraph -> HeapEdgeSet;
 aux_as(x,yp,Y,selp,Z,((Ev0,Es0),is0)) =
- let newin = {(W,sel1,h(x,Z)) !! (W,sel1,Z3) <-- Es0,
-         if Z=Z3
-         && compat_in((yp,Y),(Y,selp,Z),(W,sel1,Z),((Ev0,Es0),is0))};
+  let newin = {(W,sel1,h(x,Z)) !! (W,sel1,Z3) <-- Es0,
+                if Z=Z3
+                && compat_in((yp,Y),(Y,selp,Z),(W,sel1,Z),((Ev0,Es0),is0))};
     newself = {(h(x,Z),sel1,h(x,Z)) !! (Z31,sel1,Z32) <-- Es0,
-        if Z=Z31 && Z=Z32
-         && compat_self((yp,Y),(Y,selp,Z),(Z,sel1,Z),((Ev0,Es0),is0))};
-    newout = {(h(x,Z),sel1,W) !! (Z3,sel1,W) <-- Es0,
-        if Z=Z3
-         && compat_out((yp,Y),(Y,selp,Z),(Z,sel1,W),((Ev0,Es0),is0))};
-    in
+                if Z=Z31 && Z=Z32
+                && compat_self((yp,Y),(Y,selp,Z),(Z,sel1,Z),((Ev0,Es0),is0))};
+    newout  = {(h(x,Z),sel1,W) !! (Z3,sel1,W) <-- Es0,
+                if Z=Z3
+                && compat_out((yp,Y),(Y,selp,Z),(Z,sel1,W),((Ev0,Es0),is0))}; in
     union(union(newin,newself),newout);
 
 new_is(rest,x) = { ha # x !! ha <-- rest };
@@ -632,7 +613,7 @@ extract_stackedges(((EV,_),_)) = [x !! x <-- EV];
 
 extract_heapnodes::ShapeGraph -> NodeList;
 extract_heapnodes(((EV,ES),_))  =
-   [ x !! x <-- union(union({ a !! (a,_,_) <-- ES},{ c !! (_,_,c) <-- ES}),{b !! (_,b) <-- EV}) ];
+  [ x !! x <-- union(union({ a !! (a,_,_) <-- ES},{ c !! (_,_,c) <-- ES}),{b !! (_,b) <-- EV}) ];
 
 extract_heapedges::ShapeGraph -> HeapEdgeList;
 extract_heapedges(((_,ES),_)) = [x !! x <-- ES];
@@ -671,7 +652,6 @@ nielson_extract_graphs(sg) = (nielsonSG_to_srwSG(sg), sgSet_to_sgList(sg));
 sgSet_to_sgList :: ShapeGraphSet -> ShapeGraphList;
 sgSet_to_sgList(sgs) = [sg !! sg <-- sgs];
 
-
 //srw_extract_summaryGraph :: ShapeGraph -> ShapeGraphList;
 //srw_extract_summaryGraph(sg) = [sg];
 //srw_extract_shapeGraphs :: ShapeGraph -> ShapeGraphList;
@@ -693,39 +673,33 @@ nielsonSG_to_srwSG(graphs) = rec_join_shapegraphs( (({},{}),{}), [x !! x <-- gra
 
 rec_join_shapegraphs :: ShapeGraph,ShapeGraphList -> ShapeGraph;
 rec_join_shapegraphs(sg, []) = sg;
-rec_join_shapegraphs(((S0,H0),is0), car:cdr) =
-    case car of ((S1,H1),is1) =>
-        let 
-            new_S = union(S0,S1);
-            new_H = union(H0,H1);
-        in let
-            new_sharing = nielson_compute_is(((new_S,new_H),union(is0,is1)));
-        in
-            rec_join_shapegraphs(((new_S,new_H),new_sharing), cdr);
-    endcase;
-
+rec_join_shapegraphs(((S0,H0),is0), ((S1,H1),is1):cdr) = 
+  let new_S = union(S0,S1);
+      new_H = union(H0,H1); in
+  let new_sharing = nielson_compute_is(((new_S,new_H),union(is0,is1))); in
+  rec_join_shapegraphs(((new_S,new_H),new_sharing), cdr);
 
 // computes shared nodes 
 //  - Inv4: is = intersect(is, union({n !! ({},_,n)}, nodes_that_are_more_than_once_target_of_an_heapedge()))
 //  - Inv5: i s+= (nodes_that_are_mone_than_once_target_of_an_heapedge() / {})
 nielson_compute_is :: ShapeGraph -> NodeSet;
 nielson_compute_is(((S,H),iss)) =
-    union(
-        // Inv4: if nx is shared, then
-        //  - Inv4a: ({},_,nx) must be one of the heapedges OR
-        //  - Inv4b: nx must be the target of more than one heapedge
-        intersect(
-            iss,
-            union(
-                {x !! x <-  dests_of_heapedges(heapedges_by_src({},H))},   // Inv 4a
-                {y !! y <-- more_than_once(dests_of_heapedges(H))}         //Inv 4b
-            )
-        ),
+  union(
+    // Inv4: if nx is shared, then
+    //  - Inv4a: ({},_,nx) must be one of the heapedges OR
+    //  - Inv4b: nx must be the target of more than one heapedge
+    intersect(
+      iss,
+      union(
+        {x !! x <-  dests_of_heapedges(heapedges_by_src({},H))},   // Inv 4a
+        {y !! y <-- more_than_once(dests_of_heapedges(H))}         //Inv 4b
+      )
+    ),
 
-        // Inv5: nx is shared if two or more heapedges have nx as their
-        // target (if nx != {})
-        nodes_target2plus(((S,H),iss))
-    );
+    // Inv5: nx is shared if two or more heapedges have nx as their
+    // target (if nx != {})
+    nodes_target2plus(((S,H),iss))
+  );
 
 
 // nodes that are target of 2 (or more) heapedges, but not {}
@@ -741,12 +715,13 @@ more_than_once(nodes) = rec_more_than_once(nodes,{},{});
 rec_more_than_once :: NodeList,NodeSet,NodeSet -> NodeSet;
 rec_more_than_once([],         _, result) = result;
 rec_more_than_once(car:cdr, seen, result) = 
-    if car ? seen then 
-        rec_more_than_once(cdr, seen, union(result, {car}))
-    else
-        rec_more_than_once(cdr, union(seen, {car}), result)
-    endif;
-
+  if car ? seen then 
+	 // seen already, so add to result list
+     rec_more_than_once(cdr, seen, union(result, {car}))
+  else
+    // seen for the first time, add to seen list
+    rec_more_than_once(cdr, union(seen, {car}), result)
+  endif;
 
 /*
   convert srw to nielson graph
@@ -756,12 +731,13 @@ rec_more_than_once(car:cdr, seen, result) =
 
 srwSG_to_nielsonSG :: ShapeGraph -> ShapeGraphSet;
 srwSG_to_nielsonSG(((ES,EH),IS)) =
-    {((ESn,EHn),IS) !!
-        ESn <- transform_stackedges(ES),
-        EHn <- transform_heapedges(
-            reachable_heapedges({n !! (_,n) <-- ESn}, EH), // only pass reachable edges
-                                {n !! (_,n) <-- ESn})      // startnodes (reachable via ES)
-        };
+  {((ESn,EHn),IS) !!
+    ESn <- transform_stackedges(ES),
+    EHn <- transform_heapedges(
+      reachable_heapedges({n !! (_,n) <-- ESn}, EH), // only pass reachable edges
+                                {n !! (_,n) <-- ESn}       // startnodes (reachable via ES)
+    )
+  };
 
 // -- transform the stackedges
 transform_stackedges::StackEdgeSet->StackEdgeSetList;
@@ -770,17 +746,14 @@ transform_stackedges(ES) = rec_transform_stackedges(ES, {});
 rec_transform_stackedges :: StackEdgeSet,StackEdgeSet -> StackEdgeSetList;
 rec_transform_stackedges(      {}, res_Graph) = [res_Graph];
 rec_transform_stackedges(in_Graph, res_Graph) =
-    let
-        var   = hd(vars_by_stackedges(in_Graph));  // pick a variable var
-    in let
-        edges = stackedges_by_var(var,in_Graph);  // select all out-edges of var
-    in
-        [rg !! (_,node) as edge <-- edges,
-             rg <- rec_transform_stackedges(
-  //           stackedge_subtract(in_Graph, {edge}), //stackedges_by_vars(node,in_Graph)), //FIXME mit [b]
-               stackedge_subtract(in_Graph, stackedges_by_vars(node,in_Graph)), //FIXME ohne [b]
-               union(res_Graph, stackedges_by_dest(node, in_Graph))
-             )];
+  let var   = hd(vars_by_stackedges(in_Graph)); in  // pick a variable var
+  let edges = stackedges_by_var(var,in_Graph); in  // select all out-edges of var
+  [rg !! (_,node) as edge <-- edges,
+         rg <- rec_transform_stackedges(
+  //     stackedge_subtract(in_Graph, {edge}), //stackedges_by_vars(node,in_Graph)), //FIXME mit [b]
+         stackedge_subtract(in_Graph, stackedges_by_vars(node,in_Graph)), //FIXME ohne [b]
+         union(res_Graph, stackedges_by_dest(node, in_Graph))
+  )];
 
 // -- transform the heapedges
 transform_heapedges::HeapEdgeSet,NodeSet->HeapEdgeSetList;
@@ -789,29 +762,22 @@ transform_heapedges(EH,startnodes) = rec_transform_heapedges(EH,startnodes,{});
 rec_transform_heapedges :: HeapEdgeSet,NodeSet,HeapEdgeSet -> HeapEdgeSetList;
 rec_transform_heapedges(      {},          _, res_Graph) = [res_Graph];
 rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
-    let
-        out_edges         = [e !! e <-- reachable_heapedges(startnodes, in_Graph)];
-    in
-        if out_edges = [] then
-            [res_Graph]
-        else
-            let
-                src_sel_pattern   = hd(out_edges);
-            in let
-                src               = src_of_heapedge(src_sel_pattern);
-                sel               = sel_of_heapedge(src_sel_pattern);
-            in let
-                edges             = heapedges_by_src_sel(src,sel,in_Graph);
-            in
-                [rg !! (_,_,dest) as edge <-- edges,
-                 rg <- rec_transform_heapedges(
+  let out_edges = [e !! e <-- reachable_heapedges(startnodes, in_Graph)]; in
+  if out_edges = [] then
+    [res_Graph]
+  else
+    let src_sel_pattern = hd(out_edges); in
+    let src             = src_of_heapedge(src_sel_pattern);
+        sel             = sel_of_heapedge(src_sel_pattern); in
+    let edges           = heapedges_by_src_sel(src,sel,in_Graph); in
+    [rg !! (_,_,dest) as edge <-- edges,
+           rg <- rec_transform_heapedges(
                    heapedge_subtract(in_Graph, edges),
                    union(startnodes, {dest}),
                    union(res_Graph, {edge})
-                 )]
-        endif;
-
-
+                 )
+	]
+  endif;
 
 // ----------------------------------------
 // Auxiliary functions for graph conversion
@@ -837,7 +803,7 @@ stackedges_by_vars(vars,edges) = {e !! (_,n) as e <-- edges, if !(intersect(vars
 stackedges_by_dest::VarSet,StackEdgeSet->StackEdgeSet;
 stackedges_by_dest(dest,edges) = {e !! (_,d) as e <-- edges, if d = dest};
 
-// all vars of stackedges
+// all vars pointed to by these stackedges
 vars_by_stackedges::StackEdgeSet->StrList;
 vars_by_stackedges(ES) = mk_unique_str_list([v !! (v,n) <-- ES]);
 
@@ -867,14 +833,12 @@ dest_of_heapedge((_,_,dest)) = dest;
 
 reachable_heapedges::NodeSet,HeapEdgeSet -> HeapEdgeSet;
 reachable_heapedges(nodes, es) =
-    flatten_heapedge_set({heapedges_by_src(src, es) !! src <-- reachable_heapnodes(nodes,es)});
+  flatten_heapedge_set({heapedges_by_src(src, es) !! src <-- reachable_heapnodes(nodes,es)});
 
 reachable_heapnodes::NodeSet,HeapEdgeSet -> NodeSet;
 reachable_heapnodes(nodes,es) =
-    let
-        new_nodes = union({dest !! (src,_,dest) <-- es, if src ? nodes}, nodes);
-    in
-        if nodes != new_nodes then reachable_heapnodes(new_nodes,es) else new_nodes endif;
+  let new_nodes = union({dest !! (src,_,dest) <-- es, if src ? nodes}, nodes); in
+  if nodes != new_nodes then reachable_heapnodes(new_nodes,es) else new_nodes endif;
 
 flatten_heapedge_set::HeapEdgeSetSet -> HeapEdgeSet;
 flatten_heapedge_set(sets) = rec_flatten_heapedge_set([s !! s <-- sets],{});
@@ -885,7 +849,7 @@ rec_flatten_heapedge_set(s:sets,set) = rec_flatten_heapedge_set(sets, union(set,
 
 // ----------------------------
 // is_may_alias / is_must_alias
-// -----------------------------
+// ----------------------------
 
 is_no_alias :: Expression,Expression,ShapeGraphSet -> bool;
 is_no_alias(a,b,sgs) = !is_may_alias(a,b,sgs);
@@ -896,55 +860,167 @@ is_may_alias :: Expression,Expression,ShapeGraphSet -> bool;
 is_may_alias(a,b,sgs) = {g !! g <-- sgs, if is_same_node("may",a,b,g)} != {};
 
 // a,b are must aliases
-// if and b refer to the same node in ALL the graphs
+// if there exists no graph in which a and b refer NOT to the same node (ie they do refer in all nodes)
 is_must_alias :: Expression,Expression,ShapeGraphSet -> bool;
 is_must_alias(a,b,sgs) = {g !! g <-- sgs, if !is_same_node("must",a,b,g)} = {};
 
+// returns true if both expressions refer to the same node
 is_same_node :: str,Expression,Expression,ShapeGraph -> bool;
 is_same_node(may_or_must,expr_a,expr_b,(_,is0) as sg) =
-  let 
-      a = get_node(expr_a,sg);
-      b = get_node(expr_b,sg);
-  in
-      if a = {"0$not_in_graph"} || b = {"0$not_in_graph"} || a != b then
-          false
-      else if a != {} then
-          true
-      else
-          // both a and b point to {}
-          // - if {} is unshared, they point to different nodes
-          // - otherwise they MAY point to the same node
-          //   but they don't necessarily do, as a shared {}
-          //   only means that two (or more) nodes point to
-          //   the same unnamed node (but there could be more)
-          if !({} ? is0) then false else if may_or_must = "may" then true else false endif endif
-      endif endif;
+  let a_nodes = nodes_visited_by_expr(expr_a,sg);
+      b_nodes = nodes_visited_by_expr(expr_b,sg);
+	  a_sels  = selectors_visited_by_expr(expr_a);
+	  b_sels  = selectors_visited_by_expr(expr_b); in
+  rec_is_same_node(may_or_must, {} ? is0, a_sels, a_nodes, b_sels, b_nodes);
 
-get_node :: Expression, ShapeGraph -> VarSet;
-get_node(e, sg) = rec_get_node(e, sg);
+rec_is_same_node :: str,bool,StrList,NodeList,StrList,NodeList -> bool;
+rec_is_same_node(_, _, _, [], _,  _) = false;
+rec_is_same_node(_, _, _,  _, _, []) = false;
+rec_is_same_node(may_or_must, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_rest) =
+  if a != b || a = {"0$not_in_graph"} || b = {"0$not_in_graph"} then
+    // different nodes or not in graph at all
+    false 
+  else
+    // both nodes have the same name
+    if a != {} then
+	  // same node and not the summary node, hooray
+      true
+    else
+	  // both paths lead to the summary node
+	  if may_or_must = "may" && summary_is_shared then
+	    // when the summary node is shared, any two paths leading
+		// to the summary node could end at the same summary node
+	    true
+	  else
+	    // a and b can still be aliases if the paths minus the
+		// last selector ended at the same node if the same
+		// selector was used on both paths
+		// (nb: while the selectors are identical on both paths, the elements in the selector- and nodelists can be dropped -- investigate: faster??)
+		if a_sels = [] || b_sels = [] || a_sels != b_sels then
+		  false
+		else
+		  rec_is_same_node(may_or_must, summary_is_shared, tl(a_sels), a_rest, tl(b_sels), b_rest)
+		endif
+	  endif
+	endif
+  endif;
 
-rec_get_node :: Expression, ShapeGraph -> VarSet;
-rec_get_node(VarRefExp(na_x), g) = 
-    let x = val-aststring(na_x); in
-    if var_exists(x,g) then node_by_var(x,g) else {"0$not_in_graph"} endif;
-    
-rec_get_node(e, g) =
-    let srcsel = case e of
-        // <act>.sel
-        DotExp(PointerDerefExp(parent),VarRefExp(na_sel)) =>
-            (rec_get_node(parent, g), val-aststring(na_sel));
 
-        // x.sel
-        ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
-            let x = val-aststring(na_x); in
-            if var_exists(x,g) then (node_by_var(x,g),val-aststring(na_sel)) else ({"0$not_in_graph"},"0") endif;
 
-        _ =>
-            print("can not parse Expr: ") print(e) print("\n")
-            ({"0$not_in_graph"},"0");
-    endcase; in case srcsel of (src,sel) =>
-        if src_sel_exists(src,sel,g) then node_by_src_sel(src,sel,g) else {"0$not_in_graph"} endif;
-    endcase;
+
+
+/*
+nodes_visited_by_expr :: Expression,ShapeGraph -> NodeList;
+nodes_visited_by_expr(e,sg) = rec_nodes_visited_by_expr(e, sg, []);
+
+rec_nodes_visited_by_expr :: Expression,ShapeGraph -> NodeList;
+rec_nodes_visited_by_expr(VarRefExp(na_x), g) = 
+  let x = val-aststring(na_x); in
+  if var_exists(x,g) then [node_by_var(x,g)] else [{"0$not_in_graph"}] endif;
+
+rec_nodes_visited_by_expr(e, g, list) =
+  let srcsel = case e of
+    // <act>.sel
+    DotExp(PointerDerefExp(parent),VarRefExp(na_sel)) =>
+	  let trail = rec_nodes_visited_by_expr(parent, g); in
+	  let src   = hd(reverse(trail)); in
+	  (src, val-aststring(na_sel));
+
+    // x.sel
+    ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+      let x = val-aststring(na_x); in
+      if var_exists(x,g) then (node_by_var(x,g),val-aststring(na_sel)) else ({"0$not_in_graph"},"0") endif;
+
+    _ =>
+      print("fatal: can not parse Expr ") print(e) print("\n")
+	  ({"0$not_in_graph"},"0");
+
+  endcase; in case srcsel of (src,sel) =>
+    if src_sel_exists(src,sel,g) then node_by_src_sel(src,sel,g) else {"0$not_in_graph"} endif;
+  endcase;
+
+selectors_visited_by_expr :: Expression -> StrList;
+selectors_visited_by_expr(e) = print(e) print(" == ") print(rec_selectors_visited_by_expr(e, expr_depth(e), [])) print("\n") [];
+
+rec_selectors_visited_by_expr :: Expression,snum,StrList -> StrList;
+rec_selectors_visited_by_expr(e, e_cursor, list) =
+  let inner_e  = expr_at(e,e_cursor); in
+  let new_list = case inner_e of
+    VarRefExp(x)                              => [val-aststring(x)];
+    ArrowExp(VarRefExp(x),VarRefExp(sel))     => [val-aststring(x),val-aststring(sel)];
+    DotExp(PointerDerefExp(_),VarRefExp(s))   => [val-aststring(s)];
+    _ => print("fatal: unhandled expr(") print(e_cursor) print(")=") print(inner_e) print("\n") [];
+  endcase; in if e_cursor = 0 then
+    list ++ new_list
+  else
+    rec_selectors_visited_by_expr(e, e_cursor - 1, list ++ new_list)
+  endif;
+*/
+
+
+// returns list of names where
+// (*(a->b)).c->d yields
+// ["d","c","b","a"]
+selectors_visited_by_expr :: Expression -> StrList;
+//selectors_visited_by_expr(e) = print(e) print(" == ") print(rec_selectors_visited_by_expr(e, expr_depth(e))) print("\n") [];
+selectors_visited_by_expr(e) = reverse(rec_selectors_visited_by_expr(e, expr_depth(e)));
+
+rec_selectors_visited_by_expr :: Expression,snum -> StrList;
+rec_selectors_visited_by_expr(e, e_cursor) =
+  let inner_e  = expr_at(e,e_cursor); in
+  let new_list = case inner_e of
+    VarRefExp(x)                              => [val-aststring(x)];
+    ArrowExp(VarRefExp(x),VarRefExp(sel))     => [val-aststring(x),val-aststring(sel)];
+    DotExp(PointerDerefExp(_),VarRefExp(s))   => [val-aststring(s)];
+    _ => print("fatal: unhandled expr(") print(e_cursor) print(")=") print(inner_e) print("\n") [];
+  endcase; in if e_cursor = 0 then
+    new_list
+  else
+    new_list ++ rec_selectors_visited_by_expr(e, e_cursor - 1)
+  endif;
+
+// returns list of nodes where
+//   the first element is the node that the expression refers to
+//   the second element is the node before that (last selector ignored)
+//   etc.
+nodes_visited_by_expr :: Expression,ShapeGraph -> NodeList;
+nodes_visited_by_expr(e,g) = rec_nodes_visited_by_expr(e, expr_depth(e),g,[]);
+
+rec_nodes_visited_by_expr :: Expression,snum,ShapeGraph,NodeList -> NodeList;
+rec_nodes_visited_by_expr(e, e_cursor, g, trail) =
+  let inner_e  = expr_at(e,e_cursor); in
+  let new_list = case inner_e of
+
+    VarRefExp(na_x) =>
+	  let x   = val-aststring(na_x); in
+      if var_exists(x,g) then [node_by_var(x,g)] else [{"0$not_in_graph"}] endif;
+
+    ArrowExp(VarRefExp(na_x),VarRefExp(na_sel)) =>
+	  let x   = val-aststring(na_x);
+	      sel = val-aststring(na_sel); in
+	  let nl0 = if var_exists(x,g) then [node_by_var(x,g)] else [{"0$not_in_graph"}] endif; in
+	  let nl1 = if src_sel_exists({x},sel,g) then [node_by_src_sel({x},sel,g)] else [{"0$not_in_graph"}] endif; in
+	  nl1 ++ nl0;
+
+    DotExp(PointerDerefExp(_),VarRefExp(na_sel)) =>
+	  let x   = hd(trail);
+	      sel = val-aststring(na_sel); in
+	  if src_sel_exists(x,sel,g) then [node_by_src_sel(x,sel,g)] else [{"0$not_in_graph"}] endif;
+
+    _ => print("fatal: unhandled expr(") print(e_cursor) print(")=") print(inner_e) print("\n") [];
+  endcase; in
+  //print("p(") print(e_cursor) print("):")
+  //print(e) print("  ") print("[") print(trail) print("]")
+  //print("++")
+  //print("[") print(new_list) print("]") print("  ") print(inner_e)
+  //print("\n")
+  if e_cursor = 0 then
+    //print("\n")
+    new_list
+  else
+    rec_nodes_visited_by_expr(e, e_cursor - 1, g, new_list ++ trail)
+  endif;
+
 
 var_exists :: str,ShapeGraph -> bool;
 var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};

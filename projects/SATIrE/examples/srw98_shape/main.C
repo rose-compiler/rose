@@ -3,7 +3,7 @@
 #include "main-support.h"
 #include "main.h"
 
-PAG_BOOL get_universal_attribute__kill_norm_temps()
+PAG_BOOL get_universal_attribute__option_kill_normalisation_temps()
 {
 	/* remove temporary variables introduced in the normalisation process */
 	return true;
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
    * The source code (i.e. the AST) is annotated with comments showing
    * the analysis results and by calling the backend, and an annotated C/C++
    * file is generated (is specified on command line) */
-  if(opt->analysisAnnotation()) {
+  if(opt->analysisResultsAnnotation()) {
 	TimingPerformance timer("Annotate source code with comments:");
 	PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
