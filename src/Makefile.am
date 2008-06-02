@@ -150,20 +150,18 @@ libroseObjects = \
 
 # DQ (1/16/2007): The binary release of ROSE requires some libraries to be distributed.
 if ROSE_USE_EDG_SOURCE
-# This is a distribution containing the EDG soruce code in the source tree (distribution or 
+# This is a distribution containing the EDG source code in the source tree (distribution or 
 # development version checked out from CVS).  These libraries are available only as binaries 
 # in the binary version of the ROSE distribution (but are in the compile tree since this 
 # distribution includes the EDG source code).
 libroseEDGlibraries = \
    $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.la \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.la \
    $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.la
 else
 # This is a distribution containing binaries in the source tree (distribution).
 # These versions are available only as binaries and stored in the distribution (in this case).
 libroseEDGlibraries = \
    $(top_srcdir)/src/frontend/EDG/EDG_3.3/src/libedg33.la \
-   $(top_srcdir)/src/frontend/EDG/EDG_3.3/util/libedgutil.la \
    $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.la
 endif
 
@@ -381,12 +379,6 @@ $(libdir)/libedg33.so: $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so
 #	test -f $(libdir)/libedg33.so               || ln -s $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
 #	test -f $(libdir)/libedg33.so               || cp $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
 	cp $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
-
-$(libdir)/libedgutil.so: $(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.so
-	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
-#	test -f $(libdir)/libedgutil.so             || ln -s $(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.so $(libdir)/libedgutil.so
-#	test -f $(libdir)/libedgutil.so             || cp $(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.so $(libdir)/libedgutil.so
-	cp $(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.so $(libdir)/libedgutil.so
 
 $(libdir)/libedgSage.so: $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.so
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
