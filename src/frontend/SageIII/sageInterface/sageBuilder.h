@@ -148,12 +148,15 @@ Expressions are usually built using bottomup approach, i.e. buiding operands fir
 */
 //! Build a null expression
 SgNullExpression* buildNullExpression();
+SgNullExpression* buildNullExpressionFi(Sg_File_Info* start, Sg_File_Info* end);
 
 //! Build a bool value expression, the name convention of SgBoolValExp is little different from others for some unknown reason
 SgBoolValExp* buildBoolValExp(int value = 0);
 SgBoolValExp* buildBoolValExp(bool value = 0);
+SgBoolValExp* buildBoolValExpFi(int value, Sg_File_Info* start, Sg_File_Info* end);
 
 SgCharVal* buildCharVal(char value = 0);
+SgCharVal* buildCharValFi(char value, const std::string& str, Sg_File_Info* start, Sg_File_Info* end);
 
 SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
 
@@ -195,89 +198,87 @@ SgUnsignedLongLongIntVal* buildUnsignedLongLongIntValHex(unsigned long long v = 
 
 //!  template function to build a unary expression of type T
 template <class T> T* buildUnaryExpression(SgExpression* operand = NULL);
+template <class T> T* buildUnaryExpressionFi(SgExpression* operand, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
 
-//! build &X, 
-SgAddressOfOp* buildAddressOfOp (SgExpression* operand = NULL);
+#define BUILD_UNARY_PROTO(suffix) \
+Sg##suffix * build##suffix(SgExpression* op =NULL); \
+Sg##suffix * build##suffix##Fi(SgExpression* op, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
 
-//! build ~X, 
-SgBitComplementOp* buildBitComplementOp (SgExpression* operand = NULL);
+BUILD_UNARY_PROTO(AddressOfOp)
+BUILD_UNARY_PROTO(BitComplementOp)
+BUILD_UNARY_PROTO(MinusOp)
+BUILD_UNARY_PROTO(NotOp)
+BUILD_UNARY_PROTO(PointerDerefExp)
+BUILD_UNARY_PROTO(UnaryAddOp)
+BUILD_UNARY_PROTO(MinusMinusOp)
+BUILD_UNARY_PROTO(PlusPlusOp)
 
 //! build a type casting expression
 SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
 		SgType * expression_type = NULL,
 		SgCastExp::cast_type_enum cast_type = SgCastExp::e_C_style_cast);
 //! build -- expression, Sgop_mode is a value of either SgUnaryOp::prefix or SgUnaryOp::postfix
-SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i = NULL, SgUnaryOp::Sgop_mode  a_mode=SgUnaryOp::prefix);
-
-//! build --x or x--. Remember to call SgUnaryOp::set_mode(SgUnaryOp::Sgop_mode  mode ) explicitly after calling this builder.
-SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i = NULL);
-
-//! minus operation expression
-SgMinusOp* buildMinusOp(SgExpression* operand = NULL);
-
-//! not operation expression
-SgNotOp* buildNotOp(SgExpression* operand = NULL);
+SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
 //! build ++x or x++ , specify prefix or postfix using either SgUnaryOp::prefix or SgUnaryOp::postfix
-SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i = NULL, SgUnaryOp::Sgop_mode  a_mode = SgUnaryOp::prefix);
+SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
-//! SgPointerDerefExp
-SgPointerDerefExp* buildPointerDerefExp(SgExpression* operand_i =NULL);
-
-SgUnaryAddOp* buildUnaryAddOp(SgExpression * operand_i = NULL);
+#undef BUILD_UNARY_PROTO
 
 //! template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc.
 template <class T> T* buildBinaryExpression(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+template <class T>
+T* buildBinaryExpressionFi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
 
-//! build an add expression +
-SgAddOp * buildAddOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+#define BUILD_BINARY_PROTO(suffix) \
+Sg##suffix * build##suffix(SgExpression* lhs =NULL, SgExpression* rhs =NULL); \
+Sg##suffix * build##suffix##Fi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
 
-SgAndAssignOp* buildAndAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+BUILD_BINARY_PROTO(AddOp)
+BUILD_BINARY_PROTO(AndAssignOp)
+BUILD_BINARY_PROTO(AndOp)
+BUILD_BINARY_PROTO(ArrowExp)
+BUILD_BINARY_PROTO(ArrowStarOp)
+BUILD_BINARY_PROTO(AssignOp)
+BUILD_BINARY_PROTO(BitAndOp)
+BUILD_BINARY_PROTO(BitOrOp)
+BUILD_BINARY_PROTO(BitXorOp)
 
-SgAndOp* buildAndOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+BUILD_BINARY_PROTO(CommaOpExp)
+BUILD_BINARY_PROTO(ConcatenationOp)
+BUILD_BINARY_PROTO(DivAssignOp)
+BUILD_BINARY_PROTO(DotExp)
+BUILD_BINARY_PROTO(EqualityOp)
 
-SgArrowExp* buildArrowExp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgArrowStarOp* buildArrowStarOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgAssignOp* buildAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgBitAndOp* buildBitAndOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgBitOrOp* buildBitOrOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgBitXorOp* buildBitXorOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgCommaOpExp* buildCommaOpExp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+BUILD_BINARY_PROTO(ExponentiationOp)
+BUILD_BINARY_PROTO(GreaterOrEqualOp)
+BUILD_BINARY_PROTO(GreaterThanOp)
+BUILD_BINARY_PROTO(IntegerDivideOp)
+BUILD_BINARY_PROTO(IorAssignOp)
 
-SgConcatenationOp * buildConcatenationOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgDivAssignOp * buildDivAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgDotExp * buildDotExp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-//! build == expression
-SgEqualityOp * buildEqualityOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgExponentiationOp * buildExponentiationOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgGreaterOrEqualOp * buildGreaterOrEqualOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-//! >= expression
-SgGreaterThanOp* buildGreaterThanOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgIntegerDivideOp* buildIntegerDivideOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgIorAssignOp* buildIorAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgLessOrEqualOp* buildLessOrEqualOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-//! build <= expression
-SgLessThanOp* buildLessThanOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgLshiftAssignOp * buildLshiftAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgLshiftOp* buildLshiftOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgMinusAssignOp* buildMinusAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgModAssignOp* buildModAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgModOp* buildModOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgMultAssignOp* buildMultAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgMultiplyOp* buildMultiplyOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgNotEqualOp* buildNotEqualOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgOrOp* buildOrOp(SgExpression* lhs, SgExpression* rhs =NULL);
-//! build plus assignment expression: +=
-SgPlusAssignOp* buildPlusAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-//!build pointer to array reference expression
-SgPntrArrRefExp* buildPntrArrRefExp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgRshiftAssignOp* buildRshiftAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgRshiftOp* buildRshiftOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgScopeOp* buildScopeOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgSubtractOp* buildSubtractOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-SgXorAssignOp * buildXorAssignOp(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+BUILD_BINARY_PROTO(LessOrEqualOp)
+BUILD_BINARY_PROTO(LessThanOp)
+BUILD_BINARY_PROTO(LshiftAssignOp)
+BUILD_BINARY_PROTO(LshiftOp)
 
+BUILD_BINARY_PROTO(MinusAssignOp)
+BUILD_BINARY_PROTO(ModAssignOp)
+BUILD_BINARY_PROTO(ModOp)
+BUILD_BINARY_PROTO(MultAssignOp)
+BUILD_BINARY_PROTO(MultiplyOp)
 
+BUILD_BINARY_PROTO(NotEqualOp)
+BUILD_BINARY_PROTO(OrOp)
+BUILD_BINARY_PROTO(PlusAssignOp)
+BUILD_BINARY_PROTO(PntrArrRefExp)
+BUILD_BINARY_PROTO(RshiftAssignOp)
+
+BUILD_BINARY_PROTO(RshiftOp)
+BUILD_BINARY_PROTO(ScopeOp)
+BUILD_BINARY_PROTO(SubtractOp)
+BUILD_BINARY_PROTO(XorAssignOp)
+
+#undef BUILD_BINARY_PROTO
 
 //! build a conditional expression ?:
 SgConditionalExp * buildConditionalExp(SgExpression* test =NULL, SgExpression* a =NULL, SgExpression* b =NULL);

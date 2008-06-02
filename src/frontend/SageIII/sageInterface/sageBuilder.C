@@ -508,6 +508,16 @@ SageBuilder::buildDefiningFunctionDeclaration \
 
 //------------------build value expressions -------------------
 //-------------------------------------------------------------
+SgBoolValExp* SageBuilder::buildBoolValExpFi(int value, Sg_File_Info* start, Sg_File_Info* end)
+{
+  //TODO does valueString matter here?
+  SgBoolValExp* boolValue= new SgBoolValExp(value);
+  ROSE_ASSERT(boolValue);
+  boolValue->set_startOfConstruct(start);
+  boolValue->set_startOfConstruct(end);
+  boolValue->set_operatorPosition(deepCopy(start));
+  return boolValue;
+}
 SgBoolValExp* SageBuilder::buildBoolValExp(int value /*=0*/)
 {
   //TODO does valueString matter here?
@@ -521,6 +531,16 @@ SgBoolValExp* SageBuilder::buildBoolValExp(bool value /*=0*/)
   return buildBoolValExp(int(value));
 }
 
+SgCharVal* SageBuilder::buildCharValFi(char value, const string& str, Sg_File_Info* start, Sg_File_Info* end)
+{
+  SgCharVal* result = new SgCharVal(value, "");
+  ROSE_ASSERT(result);
+  result->set_valueString(str);
+  result->set_startOfConstruct(start);
+  result->set_startOfConstruct(end);
+  result->set_operatorPosition(deepCopy(start));
+  return result;
+}
 SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)
 {
   SgCharVal* result = new SgCharVal(value, "");
@@ -713,17 +733,44 @@ T* SageBuilder::buildUnaryExpression(SgExpression* operand)
   return result; 
 }
 
-SgAddressOfOp* 
-SageBuilder::buildAddressOfOp (SgExpression* operand)
-{
-  return buildUnaryExpression<SgAddressOfOp>(operand);
+template <class T>
+T* SageBuilder::buildUnaryExpressionFi(SgExpression* operand, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos) {
+  SgExpression* myoperand=operand;
+  T* result = new T(myoperand, NULL);
+  ROSE_ASSERT(result);   
+  if (myoperand!=NULL) 
+  { 
+    myoperand->set_parent(result);
+  // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  result->set_startOfConstruct(start);
+  result->set_endOfConstruct(end);
+  result->set_operatorPosition(opPos);
+  result->set_need_paren(needParen);
+  return result; 
 }
 
-SgBitComplementOp* 
-SageBuilder::buildBitComplementOp (SgExpression* operand)
-{
-  return buildUnaryExpression<SgBitComplementOp>(operand);
-}
+#define BUILD_UNARY_DEF(suffix) \
+  Sg##suffix* SageBuilder::build##suffix##Fi(SgExpression* op, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos) \
+  { \
+     return buildUnaryExpressionFi<Sg##suffix>(op, needParen, start, end, opPos); \
+  } \
+  Sg##suffix* SageBuilder::build##suffix(SgExpression* op) \
+  { \
+     return buildUnaryExpression<Sg##suffix>(op); \
+  }
+
+BUILD_UNARY_DEF(AddressOfOp)
+BUILD_UNARY_DEF(BitComplementOp)
+BUILD_UNARY_DEF(MinusOp)
+BUILD_UNARY_DEF(NotOp)
+BUILD_UNARY_DEF(PointerDerefExp)
+BUILD_UNARY_DEF(UnaryAddOp)
+BUILD_UNARY_DEF(MinusMinusOp)
+BUILD_UNARY_DEF(PlusPlusOp)
+
+#undef BUILD_UNARY_DEF
 
 SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
                 SgType * expression_type,
@@ -751,22 +798,6 @@ SgMinusMinusOp *SageBuilder::buildMinusMinusOp(SgExpression* operand_i, SgUnaryO
   return result;
 }
 
-SgMinusMinusOp *SageBuilder::buildMinusMinusOp(SgExpression* operand_i)
-{
-  return buildUnaryExpression<SgMinusMinusOp>(operand_i);
-}
-
-SgMinusOp* SageBuilder::buildMinusOp(SgExpression* operand)
-{
-  return buildUnaryExpression<SgMinusOp> (operand);
-}
-
-SgNotOp* SageBuilder::buildNotOp(SgExpression* operand)
-{
-  return buildUnaryExpression<SgNotOp> (operand);
-
-}
-
 SgPlusPlusOp* SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
   SgPlusPlusOp* result = new SgPlusPlusOp(operand_i,a_mode);
@@ -778,16 +809,6 @@ SgPlusPlusOp* SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::S
    markLhsValues(result);
  }
   setOneSourcePositionForTransformation(result);   return result;
-}
-
-SgPointerDerefExp* SageBuilder::buildPointerDerefExp(SgExpression* operand)
-{
-  return buildUnaryExpression<SgPointerDerefExp> (operand);
-}
-
-SgUnaryAddOp* SageBuilder::buildUnaryAddOp(SgExpression * operand_i)
-{
-  return buildUnaryExpression<SgUnaryAddOp> (operand_i);
 }
 
 //---------------------binary expressions-----------------------
@@ -835,6 +856,28 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
   return result;
 
 }
+template <class T>
+T* SageBuilder::buildBinaryExpressionFi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos)
+{
+  SgExpression* mylhs, *myrhs;
+  mylhs = lhs;
+  myrhs = rhs;
+  T* result = new T(mylhs,myrhs, NULL);
+  ROSE_ASSERT(result);
+  if (mylhs!=NULL) 
+  {
+   mylhs->set_parent(result);
+  // set lvalue
+    markLhsValues(result);
+  }
+  if (myrhs!=NULL) myrhs->set_parent(result);
+  result->set_startOfConstruct(start);
+  result->set_endOfConstruct(end);
+  result->set_operatorPosition(opPos);
+  result->set_need_paren(needParen);
+  return result;
+
+}
 #if 0
 SgAddOp * SageBuilder::buildAddOp(SgExpression* lhs, SgExpression* rhs)
 {
@@ -842,6 +885,10 @@ SgAddOp * SageBuilder::buildAddOp(SgExpression* lhs, SgExpression* rhs)
 }
 #endif
 #define BUILD_BINARY_DEF(suffix) \
+  Sg##suffix* SageBuilder::build##suffix##Fi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos) \
+  { \
+     return buildBinaryExpressionFi<Sg##suffix>(lhs, rhs, needParen, start, end, opPos); \
+  } \
   Sg##suffix* SageBuilder::build##suffix(SgExpression* lhs, SgExpression* rhs) \
   { \
      return buildBinaryExpression<Sg##suffix>(lhs, rhs); \
@@ -913,12 +960,19 @@ SgConditionalExp* SageBuilder::buildConditionalExp(SgExpression* test, SgExpress
   return result;
 }
 
-SgNullExpression* SageBuilder::buildNullExpression()
+SgNullExpression* SageBuilder::buildNullExpressionFi(Sg_File_Info* start, Sg_File_Info* end)
 {
   SgNullExpression* ne= new SgNullExpression();
   ROSE_ASSERT(ne);
   setOneSourcePositionForTransformation(ne);
+  ne->set_startOfConstruct(start);
+  ne->set_endOfConstruct(end);
+  ne->set_operatorPosition(deepCopy(start));
   return ne;
+}
+
+SgNullExpression* SageBuilder::buildNullExpression() {
+  return buildNullExpressionFi(Sg_File_Info::generateDefaultFileInfoForTransformationNode(), Sg_File_Info::generateDefaultFileInfoForTransformationNode());
 }
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/)
