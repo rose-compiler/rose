@@ -3261,7 +3261,8 @@ done:
       if (!is_mov_ebp_esp(contents[i + 1], (p.insnSize == x86_insnsize_64))) continue;
       functionStarts.insert(bb->get_address());
     }
-    blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
+    // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
+    // blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
     f->set_global_block(blk);
     blk->set_parent(f);
     blk->set_externallyVisible(true);

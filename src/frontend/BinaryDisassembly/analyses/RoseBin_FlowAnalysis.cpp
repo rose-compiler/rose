@@ -27,6 +27,7 @@ RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
     if (block && block!=globalNode) { 
       SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
       if (func) {
+	info->returnTargets[func].insert(info->returnTargets[block].begin(), info->returnTargets[block].end());
 	vector <SgNode*> vec =block->get_traversalSuccessorContainer();
 	for (unsigned int itf = 0; itf < vec.size() ; itf++) {
 	  SgAsmInstruction* finst = isSgAsmInstruction(vec[itf]);
