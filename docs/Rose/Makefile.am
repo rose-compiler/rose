@@ -365,6 +365,7 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex logo gettingStarte
         echo "Building documentation ($(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz not found) ... "; \
         pdflatex manual.tex; \
         pdflatex manual.tex; \
+        pdflatex manual.tex; \
         cp -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf; \
         echo "Copy the HTML documentation to the source tree so it can be saved (run gzip?) ... "; \
         mkdir -p ROSE_WebPages/ROSE_UserManual; \
