@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.24 2008-06-02 11:25:38 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.25 2008-06-02 12:05:50 markus Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -35,7 +35,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --no-frontend-warnings   do not show Front End warnings when parsing\n"
     "                            file(s) [default]\n"
     "   -I<path>                 specify path for include files\n"
-    "   --input-binary-ast=<FILENAME> read AST from binary file instead of a source file\n"
+    "   --input-binary-ast=<FILENAME> read AST from binary file instead of a\n"
+    "                            source file\n"
     "\n"
     " Analysis options:\n"
     "   --callstringlength=<num> set callstring length to <num> [default=0]\n"
@@ -99,7 +100,6 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                            and/or ExpressionId is used in the carrier type\n"
     "   --output-gdl=<FILENAME>  output program as gdl graph\n"
     "   --output-gdlanim=<DIRNAME> output animation gdl files in \n"
-    "   --output-gdl=<FILENAME>  output program as gdl graph\n"
     "                            directory <dirname>\n"
     "\n"
     " Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo\n"
