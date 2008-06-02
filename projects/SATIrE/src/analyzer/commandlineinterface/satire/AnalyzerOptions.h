@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.h,v 1.6 2008-02-20 21:21:32 markus Exp $
+// $Id: AnalyzerOptions.h,v 1.7 2008-06-02 11:26:01 gergo Exp $
 
 // Author: Markus Schordan, 2006.
 
@@ -54,11 +54,14 @@ public:
 
   void clearCommandLine();
   void appendCommandLine(std::string);
+  void appendInputFile(std::string);
   std::vector<std::string> getCommandLineList();
   std::string getCommandLine();
   char** getCommandLineCarray();
 
   int getCommandLineNum(); // is computed according to appendCommandLine
+
+  int getNumberOfInputFiles();
 
   bool retFuncUsed();
 
@@ -75,6 +78,8 @@ protected:
   std::vector<std::string> _commandLine;
   int _commandLineNum;
   Language _language;
+
+  int _numberOfInputFiles;
 
 #define STRING_ATTR(attrname,defaultval) \
   std::string _##attrname;
