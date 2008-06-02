@@ -18,8 +18,15 @@ int main(int argc, char **argv)
   
   /* Run the frontend to construct an abstract syntax tree from
    * the files specified on the command line (which has been processed
-   * and commands only relevant to the analyzer have been removed). */
-  SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
+   * and commands only relevant to the analyzer have been removed), or
+   * use the binary AST I/O mechanism to read a previously constructed
+   * abstract syntax tree from a binary file. */
+  SgProject* ast_root;
+  if (!opt->inputBinaryAst()) {
+    ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
+  } else {
+    ast_root = AST_FILE_IO::readASTFromFile(opt->getInputBinaryAstFileName());
+  }
   
   /* Make sure everything is OK... */
   if(opt->checkRoseAst()) {
@@ -50,7 +57,7 @@ int main(int argc, char **argv)
    * The source code (i.e. the AST) is annotated with comments showing
    * the analysis results and by calling the backend, and an annotated C/C++
    * file is generated (is specified on command line) */
-  if(opt->analysisResultsAnnotation()) {
+  if(opt->analysisAnnotation()) {
     TimingPerformance timer("Annotate source code with comments:");
     PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
@@ -96,6 +103,12 @@ int main(int argc, char **argv)
         unparseFile(&file,0,0);
       }
     }
+  }
+
+  /* output binary AST if requested */
+  if (opt->outputBinaryAst()) {
+    AST_FILE_IO::startUp(ast_root);
+    AST_FILE_IO::writeASTToFile(opt->getOutputBinaryAstFileName());
   }
 
   /* Free all memory allocated by the PAG garbage collection */
