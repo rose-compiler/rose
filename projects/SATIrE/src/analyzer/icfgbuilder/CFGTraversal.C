@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.40 2008-05-27 14:13:31 gergo Exp $
+// $Id: CFGTraversal.C,v 1.41 2008-06-02 11:27:33 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -186,6 +186,13 @@ CFGTraversal::atTraversalEnd() {
      // default.
         if (flag_numberExpressions)
             number_exprs();
+
+     // GB (2008-05-30): NULL-terminate the CFG's node lists.
+        cfg->nodes.push_back(NULL);
+        cfg->entries.push_back(NULL);
+        cfg->exits.push_back(NULL);
+        cfg->calls.push_back(NULL);
+        cfg->returns.push_back(NULL);
     }
 }
 
@@ -244,6 +251,7 @@ CFGTraversal::perform_goto_backpatching() {
   }
 }
 
+#if 0
 void
 CFGTraversal::kill_unreachable_nodes() {
     TimingPerformance timer("Elimination of unreachable nodes:");
@@ -398,6 +406,7 @@ CFGTraversal::kill_unreachable_nodes() {
     }
 #endif
 }
+#endif
 
 typedef std::set<SgExpression*, ExprPtrComparator> expression_set;
 
@@ -2202,7 +2211,7 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       */
       BasicBlock *case_block = allocate_new_block(NULL, previous);
       case_block->statements.push_front(cases);
-      blocks->push_front(case_block);
+      blocks->push_back(case_block);
       
       /* pre info is the pre info of the first block in
        * the case body */
@@ -2271,7 +2280,7 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       */
       BasicBlock *case_block = allocate_new_block(NULL, previous);
       case_block->statements.push_front(defaults);
-      blocks->push_front(case_block);
+      blocks->push_back(case_block);
     }
       break;
     default:
@@ -2451,7 +2460,7 @@ IcfgTraversal::traverse(CFG *cfg)
 
  // From now on, we traverse statements.
     icfg_statement = true;
-    std::deque<BasicBlock *>::const_iterator block;
+    BlockList::const_iterator block;
     std::deque<SgStatement *>::const_iterator stmt;
     for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block)
     {

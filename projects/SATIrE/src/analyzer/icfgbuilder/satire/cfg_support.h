@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.24 2008-05-27 14:13:37 gergo Exp $
+// $Id: cfg_support.h,v 1.25 2008-06-02 11:27:39 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -50,8 +50,12 @@ class Procedure;
 class CFG;
 
 typedef std::pair<BasicBlock *, KFG_EDGE_TYPE> Edge;
-typedef std::deque<BasicBlock *> BlockList;
+// typedef std::deque<BasicBlock *> BlockList;
+// GB (2008-05-30): BlockList is now a vector; this makes it easier to
+// traverse it using pointers. All BlockLists must be NULL-terminated.
+typedef std::vector<BasicBlock *> BlockList;
 
+#if 0
 // GB (2008-04-01): Replaced the typedef by a more complex class. The idea
 // is to ease garbage collection by registering pointers to all instances of
 // BlockListIterator in the corresponding CFG, and freeing them when the CFG
@@ -80,6 +84,7 @@ private:
                       BlockList::iterator pos,
                       DeletionFlag deletionFlag = NO_DELETE_LIST);
 };
+#endif
 
 const char *expr_to_string(const SgExpression *);
 
@@ -125,15 +130,19 @@ public:
 
     ~CFG();
 
+#if 0
  // This method is used to register all dynamically allocated
  // BlockListIterators. They can be freed when the CFG is destructed.
     void add_iteratorToDelete(BlockListIterator *i);
+#endif
  // This method duplicates a C string. It keeps the allocated memory blocks
  // in a list and frees them when the CFG itself is destructed.
     char *dupstr(const char *str);
 
 private:
+#if 0
     std::vector<BlockListIterator *> iteratorsToDelete;
+#endif
     std::vector<char *> cStringsToDelete;
 };
 
@@ -152,6 +161,10 @@ public:
     std::deque<SgStatement *> statements;
     std::vector<Edge> successors;
     std::vector<Edge> predecessors;
+ // GB (2008-05-30): Starting a move towards keeping successor/predecessor
+ // blocks and the corresponding edges separated. This makes it easier to
+ // iterate over block lists using pointers.
+    BlockList successor_blocks, predecessor_blocks;
  // GB (2008-03-10): Reachability flag, used for cleaning up the CFG.
     bool reachable;
  // GB (2008-05-26): Store neighbor masks once computed.

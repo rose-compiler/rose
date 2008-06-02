@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_funcs.C,v 1.15 2008-05-28 07:22:34 gergo Exp $
+// $Id: cfg_funcs.C,v 1.16 2008-06-02 11:27:33 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "iface.h"
@@ -20,7 +20,9 @@ extern "C" int kfg_num_nodes(KFG cfg)
     /*
      * Returns the number of nodes in the CFG.
      */
-    return ((CFG *) cfg)->nodes.size();
+ // GB (2008-05-30): Subtracting one from the size of the node list because
+ // it is NULL-terminated.
+    return ((CFG *) cfg)->nodes.size() - 1;
 }
 
 extern "C" KFG_NODE_TYPE kfg_node_type(KFG, KFG_NODE node)
@@ -255,6 +257,7 @@ extern "C" KFG_NODE_LIST kfg_predecessors(KFG kfg, KFG_NODE node)
     /*
      * Returns the list of predecessors of the node.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BasicBlock *block = (BasicBlock *) node;
     BlockList *preds = new BlockList();
@@ -265,6 +268,24 @@ extern "C" KFG_NODE_LIST kfg_predecessors(KFG kfg, KFG_NODE node)
         = new BlockListIterator(cfg, preds, BlockListIterator::DELETE_LIST);
     cfg->add_iteratorToDelete(blockList);
     return blockList;
+#else
+    CFG *cfg = (CFG *) kfg;
+    BasicBlock *block = (BasicBlock *) node;
+    if (block->predecessor_blocks.empty())
+    {
+     // On the first call, compute the list of predecessor blocks.
+        block->predecessor_blocks.reserve(block->predecessors.size()+1);
+        const Edge *p = &block->predecessors[0];
+        const Edge *end = p + block->predecessors.size();
+        while (p != end)
+        {
+            block->predecessor_blocks.push_back(p->first);
+            p++;
+        }
+        block->predecessor_blocks.push_back(NULL);
+    }
+    return &block->predecessor_blocks[0];
+#endif
 }
 
 extern "C" KFG_NODE_LIST kfg_successors(KFG kfg, KFG_NODE node)
@@ -272,6 +293,7 @@ extern "C" KFG_NODE_LIST kfg_successors(KFG kfg, KFG_NODE node)
     /*
      * Returns the list of successors of the node.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BasicBlock *block = (BasicBlock *) node;
     BlockList *succs = new BlockList();
@@ -282,6 +304,24 @@ extern "C" KFG_NODE_LIST kfg_successors(KFG kfg, KFG_NODE node)
         = new BlockListIterator(cfg, succs, BlockListIterator::DELETE_LIST);
     cfg->add_iteratorToDelete(blockList);
     return blockList;
+#else
+    CFG *cfg = (CFG *) kfg;
+    BasicBlock *block = (BasicBlock *) node;
+    if (block->successor_blocks.empty())
+    {
+     // On the first call, compute the list of successor blocks.
+        block->successor_blocks.reserve(block->successors.size()+1);
+        const Edge *p = &block->successors[0];
+        const Edge *end = p + block->successors.size();
+        while (p != end)
+        {
+            block->successor_blocks.push_back(p->first);
+            p++;
+        }
+        block->successor_blocks.push_back(NULL);
+    }
+    return &block->successor_blocks[0];
+#endif
 }
 
 extern "C" KFG_NODE kfg_get_call(KFG, KFG_NODE node)
@@ -346,8 +386,13 @@ extern "C" KFG_NODE kfg_node_list_head(KFG_NODE_LIST l)
     /*
      * Returns head of list.
      */
+#if 0
     BlockListIterator *list = (BlockListIterator *) l;
     return list->head();
+#else
+    BasicBlock **list = (BasicBlock **) l;
+    return *list;
+#endif
 }
 
 extern "C" KFG_NODE_LIST kfg_node_list_tail(KFG_NODE_LIST l)
@@ -355,8 +400,13 @@ extern "C" KFG_NODE_LIST kfg_node_list_tail(KFG_NODE_LIST l)
     /*
      * Returns list without the first element.
      */
+#if 0
     BlockListIterator *list = (BlockListIterator *) l;
     return list->tail();
+#else
+    BasicBlock **list = (BasicBlock **) l;
+    return list + 1;
+#endif
 }
 
 extern "C" int kfg_node_list_is_empty(KFG_NODE_LIST l)
@@ -364,8 +414,13 @@ extern "C" int kfg_node_list_is_empty(KFG_NODE_LIST l)
     /*
      * Returns 1 if the list is empty, 0 otherwise.
      */
+#if 0
     BlockListIterator *list = (BlockListIterator *) l;
     return list->empty();
+#else
+    BasicBlock **list = (BasicBlock **) l;
+    return (*list == NULL);
+#endif
 }
 
 extern "C" int kfg_node_list_length(KFG_NODE_LIST l)
@@ -373,8 +428,16 @@ extern "C" int kfg_node_list_length(KFG_NODE_LIST l)
     /*
      * Returns length of node list.
      */
+#if 0
     BlockListIterator *list = (BlockListIterator *) l;
     return list->size();
+#else
+    BasicBlock **list = (BasicBlock **) l;
+    int len = 0;
+    while (*list++ != NULL)
+        len++;
+    return len;
+#endif
 }
 
 extern "C" unsigned int kfg_edge_type_max(KFG)
@@ -400,7 +463,10 @@ struct KFG_edge_lookup_state
  // Pointers to successors and predecessors lists, respectively.
     std::vector<Edge> *slist, *plist;
  // Positions in successors and predecessors lists, respectively.
-    std::vector<Edge>::const_iterator spos, ppos;
+ // std::vector<Edge>::const_iterator spos, ppos;
+    const Edge *spos, *ppos;
+ // End positions of the respective lists.
+    const Edge *send, *pend;
 };
 
 extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
@@ -412,12 +478,13 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
     BasicBlock *pred = (BasicBlock *) n1;
     BasicBlock *succ = (BasicBlock *) n2;
 
-    static KFG_edge_lookup_state state = { NULL, NULL };
+    static KFG_edge_lookup_state state = { NULL, NULL, NULL, NULL, NULL, NULL };
 
  // See if the current state saves the correct position in the correct list.
     if (state.slist == &pred->successors)
     {
-        if (state.spos != pred->successors.end() && state.spos->first == succ)
+     // if (state.spos != pred->successors.end() && state.spos->first == succ)
+        if (state.spos != state.send && state.spos->first == succ)
         {
          // Cache hit: Return the type, bump the position.
             KFG_EDGE_TYPE type = state.spos->second;
@@ -428,22 +495,37 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
         {
          // Hit the correct successor list, but not the correct position;
          // try a linear search.
+#if 0
             std::vector<Edge>::const_iterator i;
             std::vector<Edge>::const_iterator end = state.slist->end();
             for (i = state.slist->begin(); i != end; ++i)
             {
                 if (i->first == succ)
                 {
-                    state.slist = &pred->successors;
-                    state.spos = i + 1;
+                 // state.slist = &pred->successors;
+                    state.spos = &*i + 1;
+                 // state.send = &pred->successors.end();
                     return i->second;
                 }
             }
+#else
+            const Edge *p = &(*state.slist)[0];
+            while (p != state.send)
+            {
+                if (p->first == succ)
+                {
+                    state.spos = p + 1;
+                    return p->second;
+                }
+                p++;
+            }
+#endif
         }
     }
     else if (state.plist == &succ->predecessors)
     {
-        if (state.ppos != succ->predecessors.end() && state.ppos->first == pred)
+     // if (state.ppos != succ->predecessors.end() && state.ppos->first == pred)
+        if (state.ppos != state.pend && state.ppos->first == pred)
         {
          // Cache hit: Return the type, bump the position.
             KFG_EDGE_TYPE type = state.ppos->second;
@@ -453,6 +535,7 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
     }
 
  // If we got here, the cached position was wrong in some way.
+#if 0
     std::vector<Edge>::const_iterator i;
     std::vector<Edge>::const_iterator end = succ->predecessors.end();
     for (i = succ->predecessors.begin(); i != end; ++i)
@@ -460,7 +543,8 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
         if (i->first == pred)
         {
             state.plist = &succ->predecessors;
-            state.ppos = i + 1;
+            state.ppos = &*i + 1;
+            state.pend = &(*state.plist)[0] + state.plist->size();
 
          // Save a pointer to the successor list, even without determining
          // the correct position; hopefully, we won't have to search this
@@ -468,12 +552,38 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
             if (state.slist != &pred->successors)
             {
                 state.slist = &pred->successors;
-                state.spos = state.slist->begin();
+                state.spos = &(*state.slist)[0];
+                state.send = state.spos + state.slist->size();
             }
 
             return i->second;
         }
     }
+#else
+    state.plist = &succ->predecessors;
+    const Edge *p = &succ->predecessors[0];
+    const Edge *end = state.pend = p + succ->predecessors.size();
+    while (p != end)
+    {
+        if (p->first == pred)
+        {
+            state.ppos = p + 1;
+
+         // Save a pointer to the successor list, even without determining
+         // the correct position; hopefully, we won't have to search this
+         // list too many times.
+            if (state.slist != &pred->successors)
+            {
+                state.slist = &pred->successors;
+                state.spos = &(*state.slist)[0];
+                state.send = state.spos + state.slist->size();
+            }
+
+            return p->second;
+        }
+        p++;
+    }
+#endif
 
     /* no match found, "runtime error" */
     std::cerr << "ERROR: there is no edge from node " << n1
@@ -497,7 +607,8 @@ extern "C" int kfg_which_in_edges(KFG_NODE node)
 
     int mask = 0;
     std::vector<Edge>::const_iterator i;
-    for (i = block->predecessors.begin(); i != block->predecessors.end(); ++i)
+    std::vector<Edge>::const_iterator end = block->predecessors.end();
+    for (i = block->predecessors.begin(); i != end; ++i)
         mask |= (1U << i->second);
     block->in_edge_mask = mask;
     return mask;
@@ -517,7 +628,8 @@ extern "C" int kfg_which_out_edges(KFG_NODE node)
 
     int mask = 0;
     std::vector<Edge>::const_iterator i;
-    for (i = block->successors.begin(); i != block->successors.end(); ++i)
+    std::vector<Edge>::const_iterator end = block->successors.end();
+    for (i = block->successors.begin(); i != end; ++i)
         mask |= (1U << i->second);
     block->out_edge_mask = mask;
     return mask;
@@ -573,10 +685,15 @@ extern "C" KFG_NODE_LIST kfg_all_nodes(KFG kfg)
     /*
      * Returns list of all nodes.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BlockListIterator *i = new BlockListIterator(cfg, &cfg->nodes);
     cfg->add_iteratorToDelete(i);
     return i;
+#else
+    CFG *cfg = (CFG *) kfg;
+    return &cfg->nodes[0];
+#endif
 }
 
 extern "C" KFG_NODE_LIST kfg_entrys(KFG kfg)
@@ -584,10 +701,15 @@ extern "C" KFG_NODE_LIST kfg_entrys(KFG kfg)
     /*
      * Returns list of all entry nodes.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BlockListIterator *i = new BlockListIterator(cfg, &cfg->entries);
     cfg->add_iteratorToDelete(i);
     return i;
+#else
+    CFG *cfg = (CFG *) kfg;
+    return &cfg->entries[0];
+#endif
 }
 
 extern "C" KFG_NODE_LIST kfg_calls(KFG kfg)
@@ -595,10 +717,15 @@ extern "C" KFG_NODE_LIST kfg_calls(KFG kfg)
     /*
      * Returns list of all call nodes.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BlockListIterator *i = new BlockListIterator(cfg, &cfg->calls);
     cfg->add_iteratorToDelete(i);
     return i;
+#else
+    CFG *cfg = (CFG *) kfg;
+    return &cfg->calls[0];
+#endif
 }
 
 extern "C" KFG_NODE_LIST kfg_returns(KFG kfg)
@@ -606,10 +733,15 @@ extern "C" KFG_NODE_LIST kfg_returns(KFG kfg)
     /*
      * Returns list of all return nodes.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BlockListIterator *i = new BlockListIterator(cfg, &cfg->returns);
     cfg->add_iteratorToDelete(i);
     return i;
+#else
+    CFG *cfg = (CFG *) kfg;
+    return &cfg->returns[0];
+#endif
 }
 
 extern "C" KFG_NODE_LIST kfg_exits(KFG kfg)
@@ -617,8 +749,13 @@ extern "C" KFG_NODE_LIST kfg_exits(KFG kfg)
     /*
      * Returns list of all exit nodes.
      */
+#if 0
     CFG *cfg = (CFG *) kfg;
     BlockListIterator *i = new BlockListIterator(cfg, &cfg->exits);
     cfg->add_iteratorToDelete(i);
     return i;
+#else
+    CFG *cfg = (CFG *) kfg;
+    return &cfg->exits[0];
+#endif
 }
