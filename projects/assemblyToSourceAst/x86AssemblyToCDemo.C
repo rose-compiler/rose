@@ -1968,8 +1968,9 @@ int main(int argc, char** argv) {
   simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // removeIfConstants(proj); cerr << "X" << endl;
   removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
+  makeMemoryAccessesDistinct(converter.whileBody); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  renumberVariableDefinitions(converter.whileBody, converter); cerr << "X" << endl;
+  // renumberVariableDefinitions(converter.whileBody, converter); cerr << "X" << endl;
   // trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
   // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
   // simplifyAllExpressions(proj, converter); cerr << "X" << endl;

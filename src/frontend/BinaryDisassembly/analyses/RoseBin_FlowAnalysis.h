@@ -89,13 +89,17 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     globalBin = global;
     // todo: optimize later
     if (initialized==false) {
+#if 0
       if (!db)
 	convertBlocksToFunctions(globalBin);
+#endif
       initFunctionList(globalBin);
       //process_jumps();
+#if 0
       if (!db) {
       	resolveFunctions(globalBin);
       }
+#endif
       process_jumps();
       initialized = true;
     }
