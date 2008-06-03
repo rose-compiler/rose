@@ -108,7 +108,7 @@ int main(int argc, char **argv)
    * The source code (i.e. the AST) is annotated with comments showing
    * the analysis results and by calling the backend, and an annotated C/C++
    * file is generated (is specified on command line) */
-  if(opt->analysisResultsAnnotation()) {
+  if(opt->analysisAnnotation()) {
 	TimingPerformance timer("Annotate source code with comments:");
 	PagDfiCommentAnnotator<DFI_STORE> ca(analysis_info);
 
