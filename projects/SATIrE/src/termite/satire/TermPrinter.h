@@ -258,6 +258,7 @@ extern PrologCompTerm* dfiterm;
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
+  // Initialize and call the parser
   dfi_name = name.c_str();
   dfi_input = dfi_input_start = dfi.c_str();
   dfirestart(0);

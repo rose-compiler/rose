@@ -10,7 +10,7 @@ fi
 
 
 autoreconf -i && \
-  ./configure --prefix=$1 --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag CXXFLAGS="-O0 -ggdb -Werror" && \
+  ./configure --prefix=$1 --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag CXXFLAGS="-O2 -ggdb -Werror" && \
   make && \
   make distcheck && \
   make install && \
