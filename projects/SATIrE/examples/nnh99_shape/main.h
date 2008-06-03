@@ -14,6 +14,7 @@ public:
       gdlFoldGraphsOff();
       gdlShowIndividualGraphsOn();
       gdlShowSummaryGraphOff();
+	  setGraphStatisticsFile(NULL);
     }
     virtual ~ShapeAnalyzerOptions() {}
 
@@ -71,19 +72,19 @@ public:
 
       ShapeAnalyzerOptions *scl = dynamic_cast<ShapeAnalyzerOptions*>(cl);
 
-      if (!strcmp(argv[i], "--output-alias")) {
+      if (optionMatch(argv[i], "--output-alias")) {
         scl->aliasTextOutputOn();
-      } else if (!strcmp(argv[i], "--output-alias-annotation")) {
+      } else if (optionMatch(argv[i], "--output-alias-annotation")) {
         scl->aliasSourceOutputOn();
-      } else if (!strcmp(argv[i], "--individualgraphs")) {
+      } else if (optionMatch(argv[i], "--individualgraphs")) {
         scl->gdlShowIndividualGraphsOn();
-      } else if (!strcmp(argv[i], "--no-individualgraphs")) {
+      } else if (optionMatch(argv[i], "--no-individualgraphs")) {
         scl->gdlShowIndividualGraphsOff();
-      } else if (!strcmp(argv[i], "--summarygraph")) {
+      } else if (optionMatch(argv[i], "--summarygraph")) {
         scl->gdlShowSummaryGraphOn();
-      } else if (!strcmp(argv[i], "--no-summarygraph")) {
+      } else if (optionMatch(argv[i], "--no-summarygraph")) {
         scl->gdlShowSummaryGraphOff();
-      } else if (!strcmp(argv[i], "--foldgraphs")) {
+      } else if (optionMatch(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
 	  } else if (optionMatchPrefix(argv[i],"--output-graph-statistics=")) {
 	    scl->setGraphStatisticsFile(strdup(argv[i]+26)); // FIXME prefixlength should be protected to remove constant 26
@@ -93,7 +94,6 @@ public:
       return 1;
     }
 };
-
 
 // -- new parts follow
 
@@ -113,7 +113,7 @@ public:
 
 struct ltexpr {
     bool operator()(SgNode* a, SgNode* b) const {
-        return a->unparseToString() < b->unparseToString();
+        return Ir::fragmentToString(a) < Ir::fragmentToString(b);
     }
 };
 
@@ -161,7 +161,7 @@ public:
                 SgNode *a,*b,*tmp;
                 a = *i;
                 b = *j;
-                if (a->unparseToString().length() < b->unparseToString().length()) {
+                if (Ir::fragmentToString(a).length() < Ir::fragmentToString(b).length()) {
                     // make sure that the longer expression is on the left (to avoid duplicates)
                     tmp = a;
                     a = b;
@@ -171,9 +171,7 @@ public:
             }
         }
         
-        free(exprs);
-        exprs = NULL;
-        
+        delete exprs;
         return pairs;
     }
 };
@@ -263,7 +261,7 @@ protected:
     virtual void handleStmtDfi(SgStatement* stmt, std::string _unused1, std::string _unused2) {
         std::string preInfo =  AliasPairsTextPrinter<DFI_STORE_TYPE>::getPreInfo(stmt);
         std::string postInfo = AliasPairsTextPrinter<DFI_STORE_TYPE>::getPostInfo(stmt);
-        std::string stmt_str = stmt->unparseToString();
+        std::string stmt_str = Ir::fragmentToString(stmt);
         
         std::cout << this->currentFunction() << ": " << "// pre must-aliases : " << 
           format_alias_pairs(stmt, "pre", "must") << std::endl;
