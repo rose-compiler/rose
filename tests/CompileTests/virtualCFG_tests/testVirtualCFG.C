@@ -19,6 +19,12 @@ void testCFG(SgFunctionDefinition* stmt) {
   set<CFGNode> nodes;
   getReachableNodes(stmt->cfgForBeginning(), nodes);
 
+  // Dump graph of CFG
+  {
+     std::ofstream graph("graph.dot");
+     cfgToDotForDebugging(graph, "dotGraph", stmt->cfgForBeginning());
+  }
+  
   // Ensure that the procedure can return (this might need to be removed later
   // if the CFG accounts for non-returning subroutine calls)
   // ROSE_ASSERT (nodes.find(stmt->cfgForEnd()) != nodes.end());
