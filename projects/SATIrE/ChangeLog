@@ -1,3 +1,8 @@
+V0.8.3 (in progress)
+
+* Better support for combined analyses
+  - correct prefixing of SATIrE support functions
+
 V0.8.2 2008-06-02 GB,MS,AP
 
 * required user changes:
