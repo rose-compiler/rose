@@ -18,6 +18,8 @@ analysis=$1
 shift
 children=$@
 
+newanalysis=/nfs/scratch/gergo/satire-install//bin/newanalysis
+
 CURRENTDIR=`pwd`
 if [ $analysis = `basename $CURRENTDIR` ]
 then
@@ -31,17 +33,17 @@ fi
 
 for child in $children
 do
-    echo "calling newanalysis $child"
-    newanalysis -p $child $analysisdir/$child
+    echo "calling $newanalysis $child"
+    $newanalysis -p $child $analysisdir/$child
     if [ $? -ne 0 ]
     then
-        echo "Error: subprocess newanalysis failed!"
+        echo "Error: subprocess $newanalysis failed!"
         exit 1
     fi
 done
 
-newanalysis -d "$children" $analysisdir
+$newanalysis -d "$children" $analysisdir
 
 echo "OTHERANALYSES = $children" > $analysisdir/Makefile.custom
 
-echo "newanalysis: Successfully created $(($# + 1)) analyzer directories. Have fun!"
+echo "$newanalysis: Successfully created $(($# + 1)) analyzer directories. Have fun!"

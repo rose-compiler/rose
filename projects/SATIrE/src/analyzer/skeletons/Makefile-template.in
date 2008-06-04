@@ -43,8 +43,10 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	ar x $(SATIRE_LIB)/libpagdatatypes.a
 	mv `ar t $(SATIRE_LIB)/libpagdatatypes.a` $(ANALYSIS)-out/src/
 	cp $(SATIRE_INCLUDE)/o_*.h $(ANALYSIS)-out/src/
+	# customize prefixed_support_funcs.h with the analysis prefix
+	sed -e 's/[@]PREFIX[@]/$(PREFIX)/g' < $(SATIRE_DATA)/prefixed_support_funcs.h-template > $(ANALYSIS)-out/src/prefixed_support_funcs.h
 	# make the analyzer library; suppress warnings with -w; do not recompile our files
-	$(MAKE) `ar t $(SATIRE_LIB)/libpagdatatypes.a | sed -s 's/^/-o /'` CFLAGS="$(CUSTOM_CFLAGS) -w" -C $(ANALYSIS)-out/src/
+	$(MAKE) `ar t $(SATIRE_LIB)/libpagdatatypes.a | sed -s 's/^/-o /'` CFLAGS="$(CUSTOM_CFLAGS) $(D_FLAGS) -w" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
