@@ -31,6 +31,13 @@ touch stamp-h1.in || : exit 1
 # Do the same steps in libltdl
 (cd src/3rdPartyLibraries/libltdl && aclocal && automake --add-missing && autoconf)
 
+# Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
+# and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
+find . -name Makefile.in |xargs sed -i~ -r \
+           -e 's/^((LT)?(CXX)?COMPILE =)/\1 @echo "  COMPILE $@";/' \
+           -e 's/^((CXX)?LINK =)/\1 @echo "  LINK    $@";/'       \
+           -e 's/(@LIBTOOL@)/\1 --quiet/g'
+
 echo "***** BUILD TERMINATED NORMALLY *****"
 
 # run build or better yet RUN_ME_AFTER_CHECKOUT.sh
