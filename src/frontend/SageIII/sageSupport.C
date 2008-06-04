@@ -5248,10 +5248,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // allow conditional skipping of the final compile step for testing ROSE
      if (get_skipfinalCompileStep() == false)
         {
-#if 0
-          if ( get_verbose() > 1 )
-               printf ("calling systemFromVector(%s) \n",compilerNameString.c_str());
-#endif
+          if ( get_verbose() > 1 ) {
+               printf ("calling systemFromVector() \n");
+               printf ("Number of command line arguments: %zu\n", compilerNameString.size());
+               for (size_t i = 0; i < compilerNameString.size(); ++i) {
+                 printf ("Compiler arg %zu: %s\n", i, compilerNameString[i].c_str());
+               }
+               printf("End of command line for backend compiler\n");
+          }
 
           returnValueForCompiler = systemFromVector (compilerNameString);
         }
