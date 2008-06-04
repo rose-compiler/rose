@@ -31,7 +31,8 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
     for (size_t i = 0; i < (size_t) processes; i++) {
 
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
-	"  real # functions: " <<(dynamicFunctionsPerProcessor[i]) << std::endl;
+	"  real # functions: " <<(dynamicFunctionsPerProcessor[i])  << std::endl;
+
 
       total_time += times[i];
       total_memory += memory[i];
@@ -118,6 +119,7 @@ int main(int argc, char **argv)
 
   if (my_rank==0)
     std::cout << "\n>>> Running on functions ... " << std::endl;
+  std::vector<int> bounds;
   if (sequential) {
     dynamicFunctionsPerProcessor = new int[processes];
     for (int k=0;k<processes;k++)
@@ -125,13 +127,13 @@ int main(int argc, char **argv)
     if (DEBUG_OUTPUT_MORE) 
       cout << "Processes = " << processes << endl;
     if (processes==1) {
-      std::vector<int> bounds;
+
       myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
       if (DEBUG_OUTPUT_MORE) 
 	cout << "bounds size = " << bounds.size() << endl;
       for (int i = 0; i<(int)bounds.size();i++) {
-	//if (DEBUG_OUTPUT_MORE) 
-	// cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
+	if (DEBUG_OUTPUT_MORE) 
+	 cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
 	if (bounds[i]== my_rank) {
 	  //if (DEBUG_OUTPUT_MORE) 
 	  // std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
@@ -149,7 +151,7 @@ int main(int argc, char **argv)
       }
     } else {
       // apply run-time load balancing
-      std::vector<int> bounds;
+      //      std::vector<int> bounds;
       myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
       // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
       int currentJob = -1;
@@ -242,6 +244,7 @@ int main(int argc, char **argv)
   unsigned int *output_values = new unsigned int[outputs.size()];
   double *times = new double[processes];
   double *memory = new double[processes];
+
   communicateResult(outputs, times, memory, output_values, my_time, memusage);
 
 

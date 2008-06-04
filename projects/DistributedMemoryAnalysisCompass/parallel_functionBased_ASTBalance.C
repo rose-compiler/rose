@@ -12,7 +12,7 @@ using namespace std;
 
 void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> &outputs,
 		    unsigned int* output_values,
-		    double* times, double* memory
+		    double* times, double* memory, double* nr_func
 		    ) {
   /* print everything */
   if (my_rank == 0) {
@@ -30,7 +30,7 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
     for (size_t i = 0; i < (size_t) processes; i++) {
 
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
-	"  real # functions: none." << std::endl;
+	"  real # functions: none.   static func: " << nr_func[i] << std::endl;
 
       total_time += times[i];
       total_memory += memory[i];
@@ -47,9 +47,9 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
 
     std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB " << endl;
     std::cout << "\nfastest func : " << fastest_func << "  slowest_func : " << slowest_func ;
-    std::cout      << "\n    fastest process: " << min_time << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
-		     << "\n    slowest process: " << max_time << " slowest   in file: " << root->get_file(slowest_func).getFileName()
-		     << std::endl;
+    //    std::cout      << "\n    fastest process: " << min_time << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
+    //		     << "\n    slowest process: " << max_time << " slowest   in file: " << root->get_file(slowest_func).getFileName()
+    //	     << std::endl;
     std::cout << std::endl;
 
     if (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() ==0) {
@@ -130,15 +130,14 @@ int main(int argc, char **argv)
     // gergos original algorithm
     for (int i = bounds.first; i < bounds.second; i++)
       {
-	std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " 
+	std::cout << my_rank << ": bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ in range length: " 
 		  << (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
 	  "   Weight : " << myanalysis.myFuncWeights[i] << std::endl;
-
 	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	  if (DEBUG_OUTPUT_MORE)
-	    std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-		      <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
-	      "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
+	    //std::cout << my_rank << ": running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
+	    //	      <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
+	    // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
 	  (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
 	}
       }
@@ -160,11 +159,11 @@ int main(int argc, char **argv)
     std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal -- funcDecls size : " << 
       myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size() << std::endl;
     AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-    for (int i = bounds.first; i < bounds.second; i++)
+    for (int i = bounds.first; i < bounds.second; i++) {
+      //cerr << "parallel threaded - bounds : " << i << endl;
       parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
+    }
   }
-
-
 
   gettime(end_time);
   double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -172,13 +171,15 @@ int main(int argc, char **argv)
   double my_time = timeDifference(end_time, begin_time);
   std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << std::endl;
 
+
   unsigned int *output_values = new unsigned int[outputs.size()];
   double *times = new double[processes];
   double *memory = new double[processes];
-  communicateResult(outputs, times, memory, output_values, my_time, memusage);
+  double *nr_func = new double[processes];
+  double thisfunction = bounds.second-bounds.first;
+  communicateResult(outputs, times, memory, output_values, my_time, memusage, nr_func, thisfunction);
 
-
-  printPCResults(myanalysis, outputs, output_values, times, memory);
+  printPCResults(myanalysis, outputs, output_values, times, memory, nr_func);
 
 
   /* all done */

@@ -23,7 +23,7 @@ struct timespec begin_time, end_time;
 int my_rank, processes;
 bool sequential=false;
 bool combined=false;
-int nrOfThreads = 2;
+int nrOfThreads = 3;
 int* dynamicFunctionsPerProcessor;
 
 // ************************************************************
@@ -210,6 +210,29 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
 	     MPI_COMM_WORLD);
 }
 
+void communicateResult(std::vector<CountingOutputObject *> &outputs, 
+		       double* times, double* memory, 
+		       unsigned int* output_values, 
+		       double my_time, double memusage, double* nr_func, double thisfunction) {
+  /* communicate results */
+  unsigned int *my_output_values = new unsigned int[outputs.size()];
+  for (size_t i = 0; i < outputs.size(); i++)
+    my_output_values[i] = outputs[i]->outputs;
+
+  MPI_Reduce(my_output_values, output_values, outputs.size(), MPI_UNSIGNED,
+	     MPI_SUM, 0, MPI_COMM_WORLD);
+
+  /* communicate times */
+  MPI_Gather(&my_time, 1, MPI_DOUBLE, times, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+
+  MPI_Gather(&memusage, 1, MPI_DOUBLE, memory, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+
+  MPI_Gather(&thisfunction, 1, MPI_DOUBLE, nr_func, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+  
+}
 
 
 #endif
