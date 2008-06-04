@@ -9,7 +9,7 @@
 #include <vector>
 
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
-#define DUMP_FIELD_WIDTH        48                      /* min columns to use for member names in dump() functions */
+#define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */
 
 namespace Exec 
 {
@@ -255,6 +255,7 @@ enum SectionPurpose {
     SP_UNSPECIFIED,                                     /* File format did not specify a reason and none could be determined */
     SP_PROGRAM,                                         /* Program-supplied data, code, etc. */
     SP_HEADER,                                          /* Section contains a header for the executable file format */
+    SP_SYMTAB,                                          /* Symbol table */
     SP_OTHER                                            /* File-specified purpose other than any given in this enum */
 };                                                      
 
@@ -296,7 +297,8 @@ class ExecFile {
     ExecSection *lookup_section_id(int id);             /* Find section within file by ID */
     ExecSection *lookup_section_name(const std::string&);/* Find section within file by name */
     std::vector<class ExecSection*> lookup_section_offset(addr_t offset, addr_t size);
-    addr_t lookup_next_address(addr_t offset);
+    std::vector<class ExecSection*> lookup_section_rva(addr_t rva);
+    addr_t lookup_next_offset(addr_t offset);           /* Find file offset for next segment */
     void find_holes();                                  /* Find holes in file and create sections to fill them */
   private:
     int                 fd;                             /* File descriptor opened for read-only (or negative) */
@@ -311,8 +313,9 @@ class ExecFile {
 class ExecSection {
     friend class ExecSegment;
   public:
-    ExecSection(ExecFile *f, addr_t offset, addr_t size):
-        data(0), purpose(SP_UNSPECIFIED), synthesized(false), id(-1) {ctor(f, offset, size);}
+    ExecSection(ExecFile *f, addr_t offset, addr_t size)
+        : data(0), purpose(SP_UNSPECIFIED), synthesized(false), id(-1), mapped(false), mapped_rva(0)
+        {ctor(f, offset, size);}
     virtual ~ExecSection();
 
     addr_t              end_offset() {return offset+size;} /* file offset for end of section */
@@ -322,6 +325,7 @@ class ExecSection {
 
     /* I/O-like functions for reading */
     const unsigned char *content(addr_t offset, addr_t size);
+    const char          *content_str(addr_t offset);
     uint16_t            u16le(addr_t offset);           /* returns 16-bit little-endian unsigned integer in native format */
     int16_t             s16le(addr_t offset);           /* returns 16-bit little-endian signed integer in native format */
     uint32_t            u32le(addr_t offset);           /* returns 32-bit little-endian unsigned integer in native format */
@@ -342,6 +346,9 @@ class ExecSection {
     addr_t              get_size() {return size;}       /* read-only */
     addr_t              get_offset() {return offset;}   /* read-only */
     std::vector<class ExecSegment*> get_segments() {return segments;}
+    bool                is_mapped() {return mapped;}
+    addr_t              get_mapped() {return mapped ? mapped_rva : 0;}
+    void                set_mapped(bool b, addr_t a) {mapped=b; mapped_rva=a;}
 
   private:
     void                ctor(ExecFile*, addr_t offset, addr_t size);
@@ -353,6 +360,8 @@ class ExecSection {
     bool                synthesized;                    /* Section was created by the format reader; not specified in file */
     int                 id;                             /* Non-unique section ID (unique for ELF) or negative */
     std::string         name;                           /* Optional, non-unique name of section */
+    bool                mapped;                         /* True if section should be mapped to program's address space */
+    addr_t              mapped_rva;                     /* Intended relative virtual address if `mapped' is true */
     std::vector<class ExecSegment*> segments;           /* All segments belonging within this section */
 };
 
@@ -404,6 +413,9 @@ class ExecSegment {
     bool                get_writable() {return writable;}
     void                set_executable(bool b) {executable=b;}
     bool                get_executable() {return executable;}
+    ExecSection         *get_section() {return section;} /*read-only*/
+    addr_t              get_disk_size() {return disk_size;} /* read-only */
+    addr_t              get_offset() {return offset;}   /* read-only */
     
   private:
     void ctor(ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);

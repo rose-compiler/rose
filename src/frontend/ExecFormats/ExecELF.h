@@ -77,7 +77,7 @@ class ElfFileHeader : public ExecHeader {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ELF Section Table Entries (i.e., section headers) and the table itself.
+// ELF Sections
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Section types (host order). All other values are reserved. */
@@ -148,27 +148,40 @@ class ElfSectionTableEntry {
     const unsigned char *extra;
     addr_t              nextra;                 /*extra size in bytes*/
 
-    /* The pointer to the actual section on disk, null for sections like SHT_NOBITS */
-    ExecSection         *section;
-
   private:
     void ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk);
     void ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk);
 };
 
-/* The section table is just a file section containing an array of section table entries (i.e., array of section headers) */
+/* An ELF (non-synthesized) section */
+class ElfSection : public ExecSection {
+  public:
+    ElfSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
+        : ExecSection(fhdr->get_file(), shdr->sh_offset, shdr->sh_size),
+        linked_section(NULL)
+        {ctor(fhdr, shdr);}
+    virtual void dump(FILE*, const char *prefix);
+    virtual void set_linked_section(ElfSection *sec) {linked_section=sec;}
+    ElfSection *get_linked_section() {return linked_section;}
+  private:
+    void ctor(ElfFileHeader*, ElfSectionTableEntry*);
+    ElfSection *linked_section;
+};
+
+/* The section table is just a synthesized file section containing an array of section table entries (i.e., array of section
+ * headers) */
 class ElfSectionTable : public ExecSection {
   public:
     ElfSectionTable(ElfFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->e_shoff, fhdr->e_shnum*fhdr->e_shentsize) {ctor(fhdr);}
+        : ExecSection(fhdr->get_file(), fhdr->e_shoff, fhdr->e_shnum*fhdr->e_shentsize)
+        {ctor(fhdr);}
     ElfSectionTableEntry *lookup(addr_t offset, addr_t size);
     virtual void dump(FILE*, const char *prefix);
-
   private:
     void ctor(ElfFileHeader *fhdr);    
     std::vector<ElfSectionTableEntry*> entries;
 };
-
+    
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ELF Segment Table entries (program headers) and the table itself.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,6 +234,7 @@ class ElfSegmentTableEntry {
         : extra(NULL), nextra(0) {ctor(sex, disk);}
     ElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
         : extra(NULL), nextra(0) {ctor(sex, disk);}
+    virtual void dump(FILE*, const char *prefix);
 
     /* These are the native-format versions of the same members described in Elf*SegmentTableEntry_disk */
     unsigned            p_type, p_flags;
@@ -240,16 +254,147 @@ class ElfSegmentTableEntry {
     void ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk);
 };
 
-/* The segment table is just a file section containing an array of segment table entries (i.e., array of Elf program headers) */
+/* The segment table is a synthesized file section containing an array of segment table entries (i.e., array of ELF
+ * program headers) */
 class ElfSegmentTable : public ExecSection {
   public:
     ElfSegmentTable(ElfFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->e_phoff, fhdr->e_phnum*fhdr->e_phentsize) {ctor(fhdr);}
-private:
+        : ExecSection(fhdr->get_file(), fhdr->e_phoff, fhdr->e_phnum*fhdr->e_phentsize)
+        {ctor(fhdr);}
+    virtual void dump(FILE*, const char *prefix);
+  private:
     void ctor(ElfFileHeader*);
     std::vector<ElfSegmentTableEntry*> entries;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dynamic Linking Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct Elf32DynamicEntry_disk {
+    uint32_t            d_tag;                  /* Entry type, one of the DT_* constants */
+    uint32_t            d_val;                  /* Tag's value */
+};
+
+struct Elf64DynamicEntry_disk {
+    uint64_t            d_tag;                  /* Entry type, one of the DT_* constants */
+    uint64_t            d_val;                  /* Tag's value */
+};
+
+class ElfDynamicEntry {
+  public:
+    ElfDynamicEntry(ByteOrder sex, const Elf32DynamicEntry_disk *disk) {ctor(sex, disk);}
+    ElfDynamicEntry(ByteOrder sex, const Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
+    void dump(FILE*, const char *prefix);
+    unsigned            d_tag;
+    addr_t              d_val;
+  private:
+    void ctor(ByteOrder sex, const Elf32DynamicEntry_disk *disk);
+    void ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk);
+};
+
+class ElfDynamicSegment : public ExecSegment {
+  public:
+    ElfDynamicSegment(ElfFileHeader *fhdr, ElfSection *section,
+                      addr_t offset_wrt_section, addr_t file_size, addr_t rva, addr_t mem_size)
+        : ExecSegment(section, offset_wrt_section, file_size, rva, mem_size),
+        dt_pltrelsz(0), dt_pltgot(0), dt_hash(0), dt_strtab(0), dt_symtab(0), dt_rela(0), dt_relasz(0), dt_relaent(0),
+        dt_strsz(0), dt_symentsz(0), dt_init(0), dt_fini(0), dt_pltrel(0), dt_jmprel(0),
+        dt_verneednum(0), dt_verneed(0), dt_versym(0)
+        {ctor(fhdr, section, offset_wrt_section, file_size, rva, mem_size);}
+    virtual void dump(FILE*, const char *prefix);
+  private:
+    std::vector<std::string> required_libs;             /* List of libraries that are needed by this executable */
+    unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */
+    addr_t              dt_pltgot;                      /* Address of global offset table */
+    addr_t              dt_hash;                        /* Address of symbol hash table */
+    addr_t              dt_strtab;                      /* Address of dynamic string table */
+    addr_t              dt_symtab;                      /* Address of symbol table */
+    addr_t              dt_rela;                        /* Address of Rela relocations */
+    unsigned            dt_relasz;                      /* Total size in bytes of Rela relocations */
+    unsigned            dt_relaent;                     /* Size of one Rela relocation */
+    unsigned            dt_strsz;                       /* Size in bytes of string table */
+    unsigned            dt_symentsz;                    /* Size in bytes of one symbol table entry */
+    addr_t              dt_init;                        /* Address of initialization function */
+    addr_t              dt_fini;                        /* Address of termination function */
+    unsigned            dt_pltrel;                      /* Type of relocation in PLT */
+    addr_t              dt_jmprel;                      /* Address of PLT relocations */
+    unsigned            dt_verneednum;                  /* Number of entries in dt_verneed table */
+    addr_t              dt_verneed;                     /* Address of table with needed versions */
+    addr_t              dt_versym;                      /* GNU version symbol address */
+    std::vector<ElfDynamicEntry> other;                 /* Other values not specifically parsed out */
+    void ctor(ElfFileHeader*, ElfSection*, addr_t offset_rwt_section, addr_t file_size, addr_t rva, addr_t mem_size);
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Symbol Tables
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum ElfSymBinding {
+    STB_LOCAL=0,
+    STB_GLOBAL=1,
+    STB_WEAK=2
+};
+
+enum ElfSymType {
+    STT_NOTYPE  = 0,
+    STT_OBJECT  = 1,
+    STT_FUNC    = 2,
+    STT_SECTION = 3,
+    STT_FILE    = 4
+};
+
+struct Elf32SymbolEntry_disk {
+    uint32_t            st_name;                        /* Name offset into string table */
+    uint32_t            st_value;                       /* Value: absolute value, address, etc. depending on sym type */
+    uint32_t            st_size;                        /* Symbol size in bytes */
+    unsigned char       st_info;                        /* Type and binding attributes */
+    unsigned char       st_res1;                        /* Reserved; always zero */
+    uint16_t            st_shndx;                       /* Section index or special meaning */
+};
+
+struct Elf64SymbolEntry_disk {
+    uint32_t            st_name;
+    unsigned char       st_info;
+    unsigned char       st_res1;
+    uint16_t            st_shndx;
+    uint64_t            st_value;
+    uint64_t            st_size;
+};
+
+class ElfSymbol {
+  public:
+    ElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk) {ctor(sex, disk);}
+    ElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk) {ctor(sex, disk);}
+    virtual void dump(FILE *f, const char *prefix) {dump(f, prefix, NULL);}
+    void dump(FILE*, const char *prefix, ExecSection*);
+    ElfSymBinding get_binding() {return (ElfSymBinding)(st_info>>4);}
+    ElfSymType get_type() {return (ElfSymType)(st_info & 0xf);}
+        
+    std::string         name;
+
+    /* Members defined by the ELF standard */
+    addr_t              st_name;
+    unsigned char       st_info, st_res1;
+    unsigned            st_shndx;
+    addr_t              st_value, st_size;
+
+  private:
+    void ctor(ByteOrder, const Elf32SymbolEntry_disk*);
+    void ctor(ByteOrder, const Elf64SymbolEntry_disk*);
+};
+
+class ElfSymbolSection : public ElfSection {
+  public:
+    ElfSymbolSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
+        : ElfSection(fhdr, shdr)
+        {ctor(fhdr, shdr);}
+    virtual void set_linked_section(ElfSection *strtab);
+    virtual void dump(FILE*, const char *prefix);
+  private:
+    void ctor(ElfFileHeader*, ElfSectionTableEntry*);
+    std::vector<ElfSymbol> symbols;
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -202,8 +202,57 @@ ElfFileHeader::dump(FILE *f, const char *prefix)
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_shnum",                e_shnum);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_shstrndx",             e_shstrndx);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sections
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+ElfSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
+{
+    set_synthesized(false);
+
+    /* Section purpose */
+    switch (shdr->sh_type) {
+      case SHT_PROGBITS:
+        set_purpose(SP_PROGRAM);
+        break;
+      case SHT_STRTAB:
+        set_purpose(SP_HEADER);
+        break;
+      case SHT_DYNSYM:
+      case SHT_SYMTAB:
+        set_purpose(SP_SYMTAB);
+        break;
+      default:
+        set_purpose(SP_OTHER);
+        break;
+    }
+
+    /* Section mapping */
+    if (shdr->sh_addr>0)
+        set_mapped(true, shdr->sh_addr);
+}
+
+/* Print some debugging info */
+void
+ElfSection::dump(FILE *f, const char *prefix)
+{
+    char p[4096];
+    sprintf(p, "%sElfSection.", prefix);
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    
+    ExecSection::dump(f, p);
+    if (linked_section) {
+        fprintf(f, "%s%-*s = [%d] \"%s\" @%" PRIu64 ", %" PRIu64 " bytes\n", p, w, "linked_to",
+                linked_section->get_id(), linked_section->get_name().c_str(),
+                linked_section->get_offset(), linked_section->get_size());
+    } else {
+        fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Section tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,80 +300,68 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
     ByteOrder sex = fhdr->fileFormat.sex;
 
     if (fhdr->e_shnum>0) {
-        ROSE_ASSERT(4==fhdr->fileFormat.word_size || 8==fhdr->fileFormat.word_size);
-        if ((4==fhdr->fileFormat.word_size && fhdr->e_shentsize < sizeof(Elf32SectionTableEntry_disk)) ||
-            (8==fhdr->fileFormat.word_size && fhdr->e_shentsize < sizeof(Elf64SectionTableEntry_disk)))
-            throw FormatError("ELF header shentsize is too small");
 
-        ElfSectionTableEntry *strtab = NULL;            /* Section containing section names */
-        addr_t offset=0;                                /* w.r.t. the beginning of this section */
+        /* Check sizes */
+        ROSE_ASSERT(4==fhdr->fileFormat.word_size || 8==fhdr->fileFormat.word_size);
+        size_t struct_size = 4==fhdr->fileFormat.word_size ?
+                             sizeof(Elf32SectionTableEntry_disk) : sizeof(Elf64SectionTableEntry_disk);
+        if (fhdr->e_shentsize < struct_size)
+            throw FormatError("ELF header shentsize is too small");
+        
+        /* Read all the section headers. We can't just cast this to an array like with other structs because
+         * the ELF header specifies the size of each entry. */
+        addr_t offset=0;
         for (size_t i=0; i<fhdr->e_shnum; i++, offset+=fhdr->e_shentsize) {
-            /* Read the section header */
-            ElfSectionTableEntry *shdr=NULL;
-            size_t struct_size=0;
+            ElfSectionTableEntry *shdr = NULL;
             if (4==fhdr->fileFormat.word_size) {
-                struct_size = sizeof(Elf32SectionTableEntry_disk);
-                const Elf32SectionTableEntry_disk *disk = (const Elf32SectionTableEntry_disk*)content(offset, struct_size);
-                shdr = new ElfSectionTableEntry(sex, disk);
-            } else if (8==fhdr->fileFormat.word_size) {
-                struct_size = sizeof(Elf64SectionTableEntry_disk);
-                const Elf64SectionTableEntry_disk *disk = (const Elf64SectionTableEntry_disk*)content(offset, struct_size);
+                const Elf32SectionTableEntry_disk *disk = (const Elf32SectionTableEntry_disk*)content(offset, fhdr->e_shentsize);
                 shdr = new ElfSectionTableEntry(sex, disk);
             } else {
-                ROSE_ASSERT(!"invalid word size");
+                const Elf64SectionTableEntry_disk *disk = (const Elf64SectionTableEntry_disk*)content(offset, fhdr->e_shentsize);
+                shdr = new ElfSectionTableEntry(sex, disk);
             }
-
-            /* If the disk struct is smaller than the section header size as advertised in the file header then claim the
-             * extra data as part of the section header. We already know that fhdr->shentsize is larger than struct_size. */
             shdr->nextra = fhdr->e_shentsize - struct_size;
             if (shdr->nextra>0)
                 shdr->extra = content(offset+struct_size, shdr->nextra);
-
-            /* Read the section itself */
-            if (shdr->sh_type!=SHT_NOBITS && shdr->sh_type!=SHT_NULL) {
-                shdr->section = new ExecSection(fhdr->get_file(), shdr->sh_offset, shdr->sh_size);
-                if (i==fhdr->e_shstrndx) strtab = shdr;
-                shdr->section->set_synthesized(false);
-                shdr->section->set_id(i);
-                switch (shdr->sh_type) {
-                  case SHT_PROGBITS:
-                    shdr->section->set_purpose(SP_PROGRAM);
-                    break;
-                  case SHT_STRTAB:
-                    shdr->section->set_purpose(SP_HEADER);
-                    break;
-                  default:
-                    shdr->section->set_purpose(SP_OTHER);
-                    break;
-                }
-            }
-
-            /* The section table entry is a member of the section table */
             entries.push_back(shdr);
         }
 
-        /* After we've read all the sections, go back and initialize the names. We have to do this last because the names
-         * are stored in one of the section (the "section name table" section). The name table should have the a NUL as the
-         * first byte. All remaining strings are NUL terminated and we check that here.
-         *
-         * FIXME: It's possible to hide stuff in the name table since (1) section names might point into the middle of a
-         *        string (such as the a section named "foo" pointing into "malwarefoo\0" in the table) and (2) not all
-         *        strings need to be explicitly referenced from elsewhere. */
-        if (strtab && strtab->section) {
-            for (std::vector<ElfSectionTableEntry*>::iterator i=entries.begin(); i!=entries.end(); i++) {
-                addr_t string_offset = (*i)->sh_name;
-                if (string_offset >= strtab->section->get_size())
-                    throw FormatError("ELF section string offset is beyond end of string table");
-                addr_t remaining_bytes = strtab->section->get_size() - string_offset;
-                const unsigned char *name = strtab->section->content(string_offset, remaining_bytes);
-                for (addr_t j=0; j<=remaining_bytes; j++) {
-                    if (j>=remaining_bytes)
-                        throw FormatError("ELF string table entry is not NUL terminated");
-                    if (!name[j]) break;
-                }
-                if ((*i)->section) {
-                    (*i)->section->set_name(name);
-                }
+        /* Read the string table section first because we'll need this to initialize section names. */
+        ElfSection *strtab = NULL;
+        if (fhdr->e_shstrndx>0) {
+            ElfSectionTableEntry *shdr = entries[fhdr->e_shstrndx];
+            strtab = new ElfSection(fhdr, shdr);
+            strtab->set_id(fhdr->e_shstrndx);
+            strtab->set_name(strtab->content_str(shdr->sh_name));
+        }
+        
+        /* Read all other sections */
+        for (size_t i=0; i<entries.size(); i++) {
+            ElfSectionTableEntry *shdr = entries[i];
+            ElfSection *section=NULL;
+            if (i==fhdr->e_shstrndx) continue; /*we already read string table*/
+            if (SHT_NULL==shdr->sh_type || SHT_NOBITS==shdr->sh_type) continue; /*no disk representation*/
+            switch (shdr->sh_type) {
+              case SHT_DYNSYM:
+              case SHT_SYMTAB:
+                section = new ElfSymbolSection(fhdr, shdr);
+                break;
+              default:
+                section = new ElfSection(fhdr, shdr);
+                break;
+            }
+            section->set_id(i);
+            if (strtab)
+                section->set_name(strtab->content_str(shdr->sh_name));
+        }
+
+        /* Initialize links between sections */
+        for (size_t i=0; i<entries.size(); i++) {
+            ElfSectionTableEntry *shdr = entries[i];
+            if (shdr->sh_link>0) {
+                ElfSection *source = dynamic_cast<ElfSection*>(fhdr->get_file()->lookup_section_id(i));
+                ElfSection *target = dynamic_cast<ElfSection*>(fhdr->get_file()->lookup_section_id(shdr->sh_link));
+                source->set_linked_section(target);
             }
         }
     }
@@ -418,6 +455,25 @@ ElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *dis
     p_align     = disk_to_host(sex, disk->p_align);
 }
 
+/* Print some debugging info */
+void
+ElfSegmentTableEntry::dump(FILE *f, const char *prefix)
+{
+    const char *p = prefix; /* Don't append to prefix since caller (ElfSegmentTable::dump) is adding array indices. */
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = %u\n",                              p, w, "p_type",         p_type);
+    fprintf(f, "%s%-*s = 0x%08x\n",                          p, w, "p_flags",        p_flags);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " bytes into file\n", p, w, "p_offset",       p_offset);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "p_vaddr",        p_vaddr);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "p_paddr",        p_paddr);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_filesz",       p_filesz);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_memsz",        p_memsz);
+    fprintf(f, "%s%-*s = %" PRIu64 " byte boundary\n",       p, w, "p_align",        p_align);
+    if (nextra>0)
+        fprintf(f, "%s%-*s = %s\n",                           p, w, "extra",          "<FIXME>");
+}
+
 /* Constructor reads the Elf Segment (Program Header) Table */
 void
 ElfSegmentTable::ctor(ElfFileHeader *fhdr)
@@ -430,67 +486,42 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
     ByteOrder sex = fhdr->fileFormat.sex;
     
     if (fhdr->e_phnum>0) {
+
+        /* Check sizes */
         ROSE_ASSERT(4==fhdr->fileFormat.word_size || 8==fhdr->fileFormat.word_size);
-        if ((4==fhdr->fileFormat.word_size && fhdr->e_phentsize < sizeof(Elf32SegmentTableEntry_disk)) ||
-            (8==fhdr->fileFormat.word_size && fhdr->e_phentsize < sizeof(Elf64SegmentTableEntry_disk)))
+        size_t struct_size = 4==fhdr->fileFormat.word_size ?
+                             sizeof(Elf32SegmentTableEntry_disk) : sizeof(Elf64SegmentTableEntry_disk);
+        if (fhdr->e_phentsize < struct_size)
             throw FormatError("ELF header phentsize is too small");
 
+        /* Read all segment headers. We can't just cast this to an array like with other structs because the ELF header
+         * specifies the size of each entry. */
         addr_t offset=0;                                /* w.r.t. the beginning of this section */
         for (size_t i=0; i<fhdr->e_phnum; i++, offset+=fhdr->e_phentsize) {
-            /* Read the segment header */
             ElfSegmentTableEntry *shdr=NULL;
-            size_t struct_size=0;
             if (4==fhdr->fileFormat.word_size) {
-                struct_size = sizeof(Elf32SegmentTableEntry_disk);
                 const Elf32SegmentTableEntry_disk *disk = (const Elf32SegmentTableEntry_disk*)content(offset, struct_size);
                 shdr = new ElfSegmentTableEntry(sex, disk);
-            } else if (8==fhdr->fileFormat.word_size) {
-                struct_size = sizeof(Elf64SegmentTableEntry_disk);
+            } else {
                 const Elf64SegmentTableEntry_disk *disk = (const Elf64SegmentTableEntry_disk*)content(offset, struct_size);
                 shdr = new ElfSegmentTableEntry(sex, disk);
-            } else {
-                ROSE_ASSERT(!"invalid word size");
             }
-            
-            /* If the disk struct is smaller than the segment header size as advertised in the file header then claim the extra
-             * data as part of the segment header. We already know that fhdr->phentsize is larger than struct_size. */
             shdr->nextra = fhdr->e_phentsize - struct_size;
             if (shdr->nextra>0)
                 shdr->extra = content(offset+struct_size, shdr->nextra);
-            
-            /* Read the segment itself */
-            //FIXME
-
-            /* The segment table entry is a member of the segment table */
             entries.push_back(shdr);
         }
     }
 
-    /* The ElfFileHeader's base address (base_va) is the lowest virtual address associated with the memory image of the
-     * programs and can be used to relocate the memory image of the program during dynamic linking. It is calculated here
-     * (and in the program loader) since it's not stored explicitly in the file. */
-    ROSE_ASSERT(fhdr->e_phnum>0); /*FIXME: no base_va if no segments?*/
-    ROSE_ASSERT(0==fhdr->base_va); /*shouldn't be set yet since elf has no explicit base address*/
-    addr_t lowest_vaddr=~(addr_t)0;
-    for (std::vector<ElfSegmentTableEntry*>::iterator si=entries.begin(); si!=entries.end(); si++) {
-        if ((*si)->p_type != PT_LOAD && 
-            (*si)->p_vaddr < lowest_vaddr) {
-            lowest_vaddr = (*si)->p_vaddr;
-            fhdr->base_va = ALIGN((*si)->p_vaddr, fhdr->max_page_size());
-        }
-    }
-
-    /* Load the segments */
-    for (std::vector<ElfSegmentTableEntry*>::iterator si=entries.begin(); si!=entries.end(); si++) {
-        ElfSegmentTableEntry *shdr = *si;
+    /* Read the segments */
+    for (size_t i=0; i<entries.size(); i++) {
+        ElfSegmentTableEntry *shdr = entries[i];
 
         /* Get (or synthesize) the section in which this segment lives. */
-        ExecSection *section=NULL;
-        ElfSectionTableEntry *section_hdr = fhdr->section_table ? 
-                                            fhdr->section_table->lookup(shdr->p_offset, shdr->p_filesz) :
-                                            NULL;
-        if (section_hdr && section_hdr->section) {
-            section = section_hdr->section;
+        std::vector<ExecSection*> found = fhdr->get_file()->lookup_section_offset(shdr->p_offset, shdr->p_filesz);
+        ExecSection *section = NULL;
+        if (found.size()>0) {
+            section = found[0];
         } else {
             section = new ExecSection(fhdr->get_file(), shdr->p_offset, shdr->p_filesz);
             section->set_synthesized(true);
@@ -498,31 +529,359 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
             section->set_purpose(SP_UNSPECIFIED);
         }
 
+        /* Calculate offsets and sizes */
         addr_t offset_wrt_section = shdr->p_offset - section->get_offset();
-        ROSE_ASSERT(shdr->p_vaddr >= fhdr->base_va); /*from calculations for the base_va above*/
-        addr_t rva = shdr->p_vaddr - fhdr->base_va; /*relative virtual address of segment*/
-        ExecSegment *segment = new ExecSegment(section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
+        ROSE_ASSERT(shdr->p_vaddr >= fhdr->base_va);
+        addr_t rva = shdr->p_vaddr - fhdr->base_va;
+
+        /* Read the segment */
+        ExecSegment *segment = NULL;
+        if (PT_DYNAMIC==shdr->p_type) {
+            ElfSection *elf_section = dynamic_cast<ElfSection*>(section); /*Dynamic segments always live in real sections!*/
+            segment = new ElfDynamicSegment(fhdr, elf_section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
+        } else {
+            segment = new ExecSegment(section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
+            switch (shdr->p_type) {
+              case PT_NULL:    segment->set_name("NULL");    break;
+              case PT_LOAD:    segment->set_name("LOAD");    break;
+              case PT_DYNAMIC: segment->set_name("DYNAMIC"); break;
+              case PT_INTERP:  segment->set_name("INPERP");  break;
+              case PT_NOTE:    segment->set_name("NOTE");    break;
+              case PT_SHLIB:   segment->set_name("SHLIB");   break;
+              case PT_PHDR:    segment->set_name("PHDR");    break;
+              default:
+                char s[128];
+                sprintf(s, "p_type=0x%08x", shdr->p_type);
+                segment->set_name(s);
+                break;
+            }
+        }
         segment->set_executable(shdr->p_flags & 0x1 ? true : false);
         segment->set_writable  (shdr->p_flags & 0x2 ? true : false);
+    }
+}
+    
+/* Print some debugging info */
+void
+ElfSegmentTable::dump(FILE *f, const char *prefix)
+{
+    char p[4096];
+    sprintf(p, "%sSegmentTable.", prefix);
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-        /* Segment name */
-        switch (shdr->p_type) {
-          case PT_NULL:    segment->set_name("NULL");    break;
-          case PT_LOAD:    segment->set_name("LOAD");    break;
-          case PT_DYNAMIC: segment->set_name("DYNAMIC"); break;
-          case PT_INTERP:  segment->set_name("INPERP");  break;
-          case PT_NOTE:    segment->set_name("NOTE");    break;
-          case PT_SHLIB:   segment->set_name("SHLIB");   break;
-          case PT_PHDR:    segment->set_name("PHDR");    break;
+    ExecSection::dump(f, p);
+    fprintf(f, "%s%-*s = %u entries\n", p, w, "size", entries.size());
+    for (size_t i=0; i<entries.size(); i++) {
+        sprintf(p, "%sSegmentTable.entries[%d].", prefix, i);
+        entries[i]->dump(f, p);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dynamic Linking
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructors */
+void
+ElfDynamicEntry::ctor(ByteOrder sex, const Elf32DynamicEntry_disk *disk)
+{
+    d_tag = disk_to_host(sex, disk->d_tag);
+    d_val = disk_to_host(sex, disk->d_val);
+}
+void
+ElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
+{
+    d_tag = disk_to_host(sex, disk->d_tag);
+    d_val = disk_to_host(sex, disk->d_val);
+}
+
+/* Print some debugging info */
+void
+ElfDynamicEntry::dump(FILE *f, const char *prefix)
+{
+    const char *p = prefix; /* Don't append to prefix since caller is adding array indices. */
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    if (d_tag>=34) {
+        fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "d_tag",      d_tag);
+    } else {
+        fprintf(f, "%s%-*s = %u\n",              p, w, "d_tag",      d_tag);
+    }
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",     p, w, "d_val_addr", d_val);
+}
+
+/* Constructor */
+void
+ElfDynamicSegment::ctor(ElfFileHeader *fhdr, ElfSection *section,
+                        addr_t offset_wrt_section, addr_t file_size, addr_t rva, addr_t mem_size)
+{
+    set_name("DYNAMIC");
+    ElfSection *dynamic_strtab = section->get_linked_section();
+
+    std::vector<ElfDynamicEntry> entries;
+    size_t entry_size=0, nentries=0;
+    if (4==fhdr->fileFormat.word_size) {
+        const Elf32DynamicEntry_disk *disk = (const Elf32DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
+        entry_size = sizeof(Elf32DynamicEntry_disk);
+        nentries = file_size / entry_size;
+        for (int i=0; i<nentries; i++) {
+            entries.push_back(ElfDynamicEntry(fhdr->fileFormat.sex, disk+i));
+        }
+    } else if (8==fhdr->fileFormat.word_size) {
+        const Elf64DynamicEntry_disk *disk = (const Elf64DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
+        entry_size = sizeof(Elf64DynamicEntry_disk);
+        nentries = file_size / entry_size;
+        for (int i=0; i<nentries; i++) {
+            entries.push_back(ElfDynamicEntry(fhdr->fileFormat.sex, disk+i));
+        }
+    } else {
+        throw FormatError("bad ELF word size");
+    }
+
+    for (int i=0; i<nentries; i++) {
+        switch (entries[i].d_tag) {
+          case 0:
+            /* DT_NULL: unused entry */
+            break;
+          case 1:
+            /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
+            if (dynamic_strtab) {
+                const char *name = (const char*)dynamic_strtab->content_str(entries[i].d_val);
+                required_libs.push_back(name);
+            } else {
+                throw FormatError("DYNAMIC segment is not linked to a string table");
+            }
+            break;
+          case 2:
+            dt_pltrelsz = entries[i].d_val;
+            break;
+          case 3:
+            dt_pltgot = entries[i].d_val;
+            break;
+          case 4:
+            dt_hash = entries[i].d_val;
+            break;
+          case 5:
+            dt_strtab = entries[i].d_val;
+            break;
+          case 6:
+            dt_symtab = entries[i].d_val;
+            break;
+          case 7:
+            dt_rela = entries[i].d_val;
+            break;
+          case 8:
+            dt_relasz = entries[i].d_val;
+            break;
+          case 9:
+            dt_relaent = entries[i].d_val;
+            break;
+          case 10:
+            dt_strsz = entries[i].d_val;
+            break;
+          case 11:
+            dt_symentsz = entries[i].d_val;
+            break;
+          case 12:
+            dt_init = entries[i].d_val;
+            break;
+          case 13:
+            dt_fini = entries[i].d_val;
+            break;
+          case 20:
+            dt_pltrel = entries[i].d_val;
+            break;
+          case 23:
+            dt_jmprel = entries[i].d_val;
+            break;
+          case 0x6fffffff:
+            dt_verneednum = entries[i].d_val;
+            break;
+          case 0x6ffffffe:
+            dt_verneed = entries[i].d_val;
+            break;
+          case 0x6ffffff0:
+            dt_versym = entries[i].d_val;
+            break;
           default:
-            char s[128];
-            sprintf(s, "p_type=0x%08x", shdr->p_type);
-            segment->set_name(s);
+            other.push_back(entries[i]);
             break;
         }
     }
 }
+
+/* Helper for ElfDynamicSegment::dump */
+static void
+dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, ExecFile *ef)
+{
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, name, addr);
+    std::vector<ExecSection*> sections = ef->lookup_section_rva(addr);
+    for (int i=0; i<sections.size(); i++) {
+        fprintf(f, "%s%-*s     [%d] \"%s\"", p, w, "...", sections[i]->get_id(), sections[i]->get_name().c_str());
+        addr_t offset = addr - sections[i]->get_mapped();
+        if (offset>0) {
+            addr_t nbytes = sections[i]->get_size() - offset;
+            fprintf(f, " @(0x%08"PRIx64"+%"PRIu64") %"PRIu64" bytes", sections[i]->get_mapped(), offset, nbytes);
+        } else {
+            fprintf(f, " @0x%08"PRIx64" %"PRIu64" bytes" , sections[i]->get_mapped(), sections[i]->get_size());
+        }
+        fprintf(f, "\n");
+    }
+}
+
+/* Print some debugging info */
+void
+ElfDynamicSegment::dump(FILE *f, const char *prefix)
+{
+    char p[4096];
+    sprintf(p, "%sDynamicSegment.", prefix);
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    ExecFile *ef = get_section()->get_file();
+
+    ExecSegment::dump(f, p);
+    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "pltrelsz",   dt_pltrelsz);
+    dump_section_rva(f, p, w, "pltgot",  dt_pltgot, ef);
+    dump_section_rva(f, p, w, "hash",    dt_hash,   ef);
+    dump_section_rva(f, p, w, "strtab",  dt_strtab, ef);
+    dump_section_rva(f, p, w, "symtab",  dt_symtab, ef);
+    dump_section_rva(f, p, w, "rela",    dt_rela,   ef);
+    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "relasz",     dt_relasz);
+    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "relaent",    dt_relaent);
+    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "strsz",      dt_strsz);
+    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "symentsz",   dt_symentsz);
+    dump_section_rva(f, p, w, "init",    dt_init,   ef);
+    dump_section_rva(f, p, w, "fini",    dt_fini,   ef);
+    fprintf(f, "%s%-*s = %u\n",              p, w, "pltrel",     dt_pltrel);
+    dump_section_rva(f, p, w, "jmprel",  dt_jmprel, ef);
+    fprintf(f, "%s%-*s = %u\n",              p, w, "verneednum", dt_verneednum);
+    dump_section_rva(f, p, w, "verneed", dt_verneed, ef);
+    dump_section_rva(f, p, w, "versym",  dt_versym,  ef);
     
+    for (size_t i=0; i<other.size(); i++) {
+        sprintf(p, "%sDynamicSegment.other[%d].", prefix, i);
+        other[i].dump(f, p);
+    }
+}
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Symbol Tables
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructors */
+void
+ElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+{
+    st_name =  disk_to_host(sex, disk->st_name);
+    st_value = disk_to_host(sex, disk->st_value);
+    st_size =  disk_to_host(sex, disk->st_size);
+    st_info =  disk_to_host(sex, disk->st_info);
+    st_res1 =  disk_to_host(sex, disk->st_res1);
+    st_shndx = disk_to_host(sex, disk->st_shndx);
+}
+void
+ElfSymbol::ctor(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+{
+    st_name =  disk_to_host(sex, disk->st_name);
+    st_value = disk_to_host(sex, disk->st_value);
+    st_size =  disk_to_host(sex, disk->st_size);
+    st_info =  disk_to_host(sex, disk->st_info);
+    st_res1 =  disk_to_host(sex, disk->st_res1);
+    st_shndx = disk_to_host(sex, disk->st_shndx);
+}
+
+/* Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
+void
+ElfSymbol::dump(FILE *f, const char *prefix, ExecSection *section)
+{
+    const char *p = prefix; /* Don't append to prefix since caller is adding array indices. */
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const char *s;
+    char sbuf[256];
+
+    fprintf(f, "%s%-*s = %u \"%s\"\n",  p, w, "name",  st_name, name.c_str());
+    fprintf(f, "%s%-*s = %u\n",         p, w, "value", st_value);
+    fprintf(f, "%s%-*s = %u\n",         p, w, "size",  st_size);
+
+    fprintf(f, "%s%-*s = %u",         p, w, "info",  st_info);
+    switch (get_type()) {
+      case STT_NOTYPE:  s = "";          break;
+      case STT_OBJECT:  s = " object";   break;
+      case STT_FUNC:    s = " function"; break;
+      case STT_SECTION: s = " section";  break;
+      case STT_FILE:    s = " file";     break;
+      default:
+        sprintf(sbuf, " type=%d", get_type());
+        s = sbuf;
+        break;
+    }
+    fputs(s, f);
+    switch (get_binding()) {
+      case STB_LOCAL:  s = " local";  break;
+      case STB_GLOBAL: s = " global"; break;
+      case STB_WEAK:   s = " weak";   break;
+      default:
+        sprintf(sbuf, " binding=%d", get_binding());
+        s = sbuf;
+        break;
+    }
+    fputs(s, f);
+    fputc('\n', f);
+
+    fprintf(f, "%s%-*s = %u\n",         p, w, "res1",  st_res1);
+
+    if (section && section->get_id()==st_shndx) {
+        fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "st_shndx",
+                section->get_id(), section->get_name().c_str(), section->get_offset(), section->get_size());
+    } else {
+        fprintf(f, "%s%-*s = %u\n",         p, w, "shndx", st_shndx);        
+    }
+}
+
+/* Constructor */
+void
+ElfSymbolSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
+{
+    if (4==fhdr->fileFormat.word_size) {
+        const Elf32SymbolEntry_disk *disk = (const Elf32SymbolEntry_disk*)content(0, get_size());
+        size_t nentries = get_size() / sizeof(Elf32SymbolEntry_disk);
+        for (size_t i=0; i<nentries; i++) {
+            symbols.push_back(ElfSymbol(fhdr->fileFormat.sex, disk+i));
+        }
+    } else {
+        const Elf64SymbolEntry_disk *disk = (const Elf64SymbolEntry_disk*)content(0, get_size());
+        size_t nentries = get_size() / sizeof(Elf64SymbolEntry_disk);
+        for (size_t i=0; i<nentries; i++) {
+            symbols.push_back(ElfSymbol(fhdr->fileFormat.sex, disk+i));
+        }
+    }
+}
+
+/* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated. */
+void
+ElfSymbolSection::set_linked_section(ElfSection *strtab)
+{
+    ElfSection::set_linked_section(strtab);
+    for (size_t i=0; i<symbols.size(); i++) {
+        symbols[i].name = strtab->content_str(symbols[i].st_name);
+    }
+}
+
+/* Print some debugging info */
+void
+ElfSymbolSection::dump(FILE *f, const char *prefix)
+{
+    char p[4096];
+    sprintf(p, "%sElfSymbolSection.", prefix);
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ElfSection::dump(f, p);
+    fprintf(f, "%s%-*s = %u symbols\n", p, w, "size", symbols.size());
+    for (size_t i=0; i<symbols.size(); i++) {
+        sprintf(p, "%sElfSymbolSection.symbols[%d].", prefix, i);
+        ExecSection *section = get_file()->lookup_section_id(symbols[i].st_shndx);
+        symbols[i].dump(f, p, section);
+    }
+}
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -550,7 +909,6 @@ parse(ExecFile *f)
     ROSE_ASSERT(f);
     
     ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
-    ExecSection *strtab = NULL; /*section containing strings for section names*/
 
     /* Read the optional section and segment tables and the sections/segments to which they point. */
     if (fhdr->e_shnum) fhdr->section_table = new ElfSectionTable(fhdr);

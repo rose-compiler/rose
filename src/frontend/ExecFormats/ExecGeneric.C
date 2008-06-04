@@ -190,10 +190,24 @@ ExecFile::lookup_section_offset(addr_t offset, addr_t size)
     return retval;
 }
 
+/* Returns a vector of sections that are mapped to the specified RVA */
+std::vector<ExecSection*>
+ExecFile::lookup_section_rva(addr_t rva)
+{
+    std::vector<ExecSection*> retval;
+    for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
+        ExecSection *section = *i;
+        if (section->is_mapped() && rva>=section->get_mapped() && rva<section->get_mapped()+section->get_size()) {
+            retval.push_back(section);
+        }
+    }
+    return retval;
+}
+
 /* Given a file address, return the file offset of the following section(s). If there is no following section then return an
  * address of -1 (when signed) */
 addr_t
-ExecFile::lookup_next_address(addr_t offset)
+ExecFile::lookup_next_offset(addr_t offset)
 {
     addr_t found = ~(addr_t)0;
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
@@ -213,10 +227,9 @@ ExecFile::find_holes()
     while (offset < sb.st_size) {
         std::vector<ExecSection*> sections = lookup_section_offset(offset, 1);
         if (0==sections.size()) {
-            addr_t next_addr = lookup_next_address(offset);
-            fprintf(stderr, "Unspecified extent from offset %" PRIu64 " to %" PRIu64 "\n", offset, next_addr);
-            extents.push_back(std::pair<addr_t,addr_t>(offset, next_addr-offset));
-            offset = next_addr;
+            addr_t next_offset = lookup_next_offset(offset);
+            extents.push_back(std::pair<addr_t,addr_t>(offset, next_offset-offset));
+            offset = next_offset;
         } else {
             offset += sections[0]->get_size();
         }
@@ -274,6 +287,18 @@ ExecSection::content(addr_t offset, addr_t size)
     return data + offset;
 }
 
+/* Returns ptr to a NUL-terminated string */
+const char *
+ExecSection::content_str(addr_t offset)
+{
+    const char *ret = (const char*)content(offset, 0);
+    size_t nchars=0;
+    while (offset+nchars<size && ret[nchars]) nchars++;
+    if (offset+nchars>=size)
+        throw ShortRead(this, offset, nchars);
+    return ret;
+}
+
 /* Extend a section by some number of bytes and return a pointer to the content of the newly extended area. Called with a zero
  * size is a convenient way to return a pointer to the first byte after the section, although depending on the size of the
  * file, this might not be a valid pointer. */
@@ -326,16 +351,17 @@ ExecSection::dump(FILE *f, const char *prefix)
     sprintf(p, "%sExecSection.", prefix);
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n",             p, w, "name",        name.c_str());
-    fprintf(f, "%s%-*s = %d\n",                 p, w, "id",          id);
+    fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        name.c_str());
+    fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          id);
     fprintf(f, "%s%-*s = %" PRId64 " bytes into file\n", p, w, "offset",      offset);
     fprintf(f, "%s%-*s = %" PRId64 " bytes\n",           p, w, "size",        size);
-    fprintf(f, "%s%-*s = %s\n",                 p, w, "synthesized", synthesized?"yes":"no");
+    fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", synthesized?"yes":"no");
 
     switch (purpose) {
       case SP_UNSPECIFIED: s = "not specified"; break;
       case SP_PROGRAM:     s = "program-supplied data/code/etc"; break;
       case SP_HEADER:      s = "executable format header";       break;
+      case SP_SYMTAB:      s = "symbol table";                   break;
       case SP_OTHER:       s = "other";                          break;
       default:
         sprintf(sbuf, "%u", purpose);
@@ -343,6 +369,12 @@ ExecSection::dump(FILE *f, const char *prefix)
         break;
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", s);
+
+    if (mapped) {
+        fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "mapped_rva", mapped_rva);
+    } else {
+        fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped_rva");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -440,13 +472,15 @@ ExecSegment::dump(FILE *f, const char *prefix)
     char p[4096];
     sprintf(p, "%sExecSegment.", prefix);
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    fprintf(f, "%s%-*s = \"%s\"\n",                   p, w, "name",        name.c_str());
-    fprintf(f, "%s%-*s = %d / %s\n",                  p, w, "section",     section->get_id(), section->get_name().c_str());
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes into section\n",    p, w, "offset",      offset);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",                 p, w, "disk_size",   disk_size);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",                 p, w, "mapped_size", mapped_size);
-    fprintf(f, "%s%-*s = %swritable, %sexecutable\n", p, w, "permissions", writable?"":"not-", executable?"":"not-");
+
+    fprintf(f, "%s%-*s = \"%s\"\n",                         p, w, "name",          name.c_str());
+    fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "section",
+            section->get_id(), section->get_name().c_str(), section->get_offset(), section->get_size());
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes into section\n", p, w, "offset",        offset);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",              p, w, "disk_size",     disk_size);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                p, w, "address (rva)", mapped_rva);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",              p, w, "mapped_size",   mapped_size);
+    fprintf(f, "%s%-*s = %swritable, %sexecutable\n",       p, w, "permissions",   writable?"":"not-", executable?"":"not-");
 }
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
