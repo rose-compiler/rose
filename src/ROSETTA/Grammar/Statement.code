@@ -11734,8 +11734,16 @@ SgTryStmt::get_catch_statement_seq() const {
 void
 SgTryStmt::append_catch_statement(SgStatement * what)
    {
-     get_catch_statement_seq_root()->append_catch_statement(what);
-     what->set_parent(this);
+  // DQ (6/4/2008): The SgCatchOptionStmt should have a parent pointing to 
+  // the SgCatchStatementSeq in order for the Virtual CFG to work properly.
+
+  // get_catch_statement_seq_root()->append_catch_statement(what);
+  // what->set_parent(this);
+  // get_catch_statement_seq_root()->append_catch_statement(what);
+     SgCatchStatementSeq* catchStatementList = get_catch_statement_seq_root();
+     ROSE_ASSERT(catchStatementList != NULL);
+     catchStatementList->append_catch_statement(what);
+     what->set_parent(catchStatementList);
    }
 
 // MS: C++98: handler (catch_statement in SAGE)
