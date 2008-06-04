@@ -513,6 +513,6 @@ check-local: check-cxx check-c check-c99 check-fortran
 	@echo "******************************************************************************************************"
 
 clean-local:
-	rm -f *.o *.c *-o *.mod
+	rm -f *.o *.c *-o *.mod graph.dot
 	rm -rf QMTest
 
