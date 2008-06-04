@@ -1,9 +1,12 @@
 #!/bin/bash 
-# debug model has -x
+# Replace the first line with the following if you want to debug the script
 #!/bin/bash -x 
 #
 # A script to do tests on a local working copy of ROSE
 #  used before committing local changes to the SVN repository.
+#
+# Warning!!!!
+#   It will erase the build tree and build the binaries from scratch!!!
 #
 # Set up the following before using:
 #
@@ -27,7 +30,6 @@ ROSE_BUILD="${ROSE_TOP}/buildrose"
 ROSE_INSTALL="${ROSE_TOP}/opt/roseLatest"
 BUILD_LOG="${ROSE_BUILD}/buildlog"
 BOOST_INSTALL=/home/liao6/opt/boost_1_35_0
-
 
 # store configuration options into an array ()
 # $@ means the optional parameters provided with the command line running current script 
@@ -94,6 +96,12 @@ latex2html -v | grep -w LaTeX2HTML >> mailtext1
 #------------------------------------------------------
 #  Building and Making Section
 #------------------------------------------------------
+
+# prepare a fresh build tree
+ echo "Making a fresh build directory:... "
+ rm -rf ${ROSE_BUILD}
+ mkdir -p ${ROSE_BUILD}
+
 buildstatus=0
 (
   set -e
@@ -104,11 +112,6 @@ buildstatus=0
   cd ${ROSE_SRC}
   ./build
   cd ..
-
-# prepare a fresh build tree
- echo "Making a fresh build directory:... "
- rm -rf ${ROSE_BUILD}
- mkdir -p ${ROSE_BUILD}
 
 # configure ROSE
   cd ${ROSE_BUILD}
