@@ -132,6 +132,13 @@
 /src/3rdPartyLibraries/coco/Makefile.in
 /src/3rdPartyLibraries/coco/cplus2/Makefile.in
 /src/3rdPartyLibraries/coco/sources/Makefile.in
+/src/3rdPartyLibraries/libltdl/Makefile.in
+/src/3rdPartyLibraries/libltdl/aclocal.m4
+/src/3rdPartyLibraries/libltdl/autom4te.cache/
+/src/3rdPartyLibraries/libltdl/config.guess
+/src/3rdPartyLibraries/libltdl/config.sub
+/src/3rdPartyLibraries/libltdl/configure
+/src/3rdPartyLibraries/libltdl/install-sh
 /src/Makefile.in
 /src/ROSETTA/Makefile.in
 /src/ROSETTA/src/Makefile.in
@@ -183,6 +190,7 @@
 /src/midend/loopProcessing/driver/Makefile.in
 /src/midend/loopProcessing/prepostTransformation/Makefile.in
 /src/midend/loopProcessing/slicing/Makefile.in
+/src/midend/programAnalysis/annotationLanguageParser/Makefile.in
 /src/midend/programAnalysis/CFG/Makefile.in
 /src/midend/programAnalysis/CallGraphAnalysis/Makefile.in
 /src/midend/programAnalysis/Makefile.in
@@ -191,6 +199,7 @@
 /src/midend/programAnalysis/defUseAnalysis/Makefile.in
 /src/midend/programAnalysis/dominanceAnalysis/Makefile.in
 /src/midend/programAnalysis/pointerAnal/Makefile.in
+/src/midend/programAnalysis/sideEffectAnalysis/Makefile.in
 /src/midend/programAnalysis/staticInterproceduralSlicing/Makefile.in
 /src/midend/programAnalysis/valuePropagation/Makefile.in
 /src/midend/programTransformation/Makefile.in
@@ -293,6 +302,8 @@
 /tests/roseTests/loopProcessingTests/Makefile.in
 /tests/roseTests/programAnalysisTests/Makefile.in
 /tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile.in
+/tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile.in
+/tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile.in
 /tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.in
 /tests/roseTests/programTransformationTests/Makefile.in
 /tests/roseTests/roseHPCToolkitTests/Makefile.in
