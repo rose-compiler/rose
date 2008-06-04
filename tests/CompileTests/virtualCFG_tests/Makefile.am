@@ -469,17 +469,17 @@ $(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
 	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.c)
 	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.c) && touch $@
 
+# DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F90_FILES): ./testVirtualCFG
-#	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
-	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
 
+# DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F77_FILES): ./testVirtualCFG
-#	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
-	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
 
+# DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F03_FILES): ./testVirtualCFG
-#	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
-	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
