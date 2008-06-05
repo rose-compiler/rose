@@ -5,9 +5,10 @@
 \section{Building ROSE from the Source Code Repository Checkout {\em (for developers only)}}
 \label{gettingStarted:DeveloperInstructions}
 
-     The instructions for building ROSE from CVS are a little more complex.
+     The instructions for building ROSE from SVN are a little more complex.
 A few GNU software build tools are required (not required for the user
-{\em ROSE Distribution, e.g. ROSE-\VersionNumber.tar.gz}.  Required tools ({\bf ** Note current dependencies}):
+{\em ROSE Distribution, e.g. ROSE-\VersionNumber.tar.gz}.  Required 
+tools ({\bf ** Note current dependencies}):
 \begin{itemize}
      \item autoconf \\
           Autoconf version 2.53 or higher is required. % Autoconf can be problematic, some
@@ -17,7 +18,7 @@ A few GNU software build tools are required (not required for the user
           install version 2.53 specifically to use ROSE. 
           {\em Check the ROSE/ChangeLog for current version numbers to be used with ROSE.}
      \item automake \\
-          Automake version 1.5 or higher is required. Most software projects appear to be
+          Automake version 1.9 or higher is required. Most software projects appear to be
           less sensitive to the specific version of automake.
           {\em Check the ROSE/ChangeLog for current version numbers to be used with ROSE.}
 \end{itemize}
@@ -33,6 +34,7 @@ A few GNU software build tools are required (not required for the user
 The {\tt ROSE/ChangeLog} details the changes between versions of ROSE and lists the
 specific version numbers of all software upon which ROSE depends. Comments of this type
 appear in the {\tt ChangeLog} as:
+\fixme{This needs to be updated.}
 {\footnotesize
 \begin{verbatim}
 ********* TESTED with **************
@@ -54,38 +56,64 @@ appear in the {\tt ChangeLog} as:
 
 The build process for a {\em Developer Version} is:
 \begin{enumerate}
-%     \item {\bf CVS} checkout \\
-%           Type {\tt cvs -d/usr/casc/overture/ROSE/ROSE2_Repository checkout ROSE} to
-%           checkout a new version of ROSE into a new directory.  {\em The ROSE directory
-%           should not exist in the current directory.}  Checking out a new version of ROSE
-%           on top of an existing version can lead to undefined results.
-     \item Checkout a NEW version from CVS: \\
-     In your {\tt .cshrc} file set the variable {\tt CVSROOT} to 
-     {\tt /usr/casc/overture/ROSE/ROSE2\_Repository}
-     ({\tt setenv CVSROOT /usr/casc/overture/ROSE/ROSE2\_Repository})
-     and ({\tt setenv CVS\_RSH ssh}).
-     The later is to permit checkout of the {\bf acmacros} project from its separate 
-     CVS repository.  Note that this will only work from a machine on the LLNL domain.
-     Other machines will have to get the separate tarball for this project (it should
-     also be in the {\bf CVS} repository and is checked out with ROSE into the top 
-     level ROSE directory).
+     \item Checkout a NEW version from SVN: \\
+     The newest work on ROSE (as of March 2008) is using SVN, instead of CVS.
+     This switch to SVN means the directions for how developers use ROSE have
+     changed.  This effects developers of ROSE only (or anyone with access to 
+     the newer SVN repository).
+     {\bf Please learn about SVN on another project before using it on ours.}
 
-     Then run {\tt source ~/.cshrc} to have this environment variable set properly.
-     Now you can run {\tt cvs} to checkout the current version from ROSE. Type
-     {\tt cvs co ROSE} or {\tt cvs checkout ROSE} to do this.
+     To checkout ROSE (assumes access to repository at LLNL), type: \\
+     {\tt svn checkout file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE svn-rose} \\
+     This will checkout a copy of the source code for ROSE from the svn repository.
+     Any directory name can be used for {\tt svn-rose} in the example commandline.
 
-     \item  Update an {\em existing} version from CVS: \\
-     Run {\tt cvs update} from inside the ROSE directory (at the top level) to update
-     an existing version of ROSE with the new changes in the CVS repository.
-     Note that the ROSE team uses a common {\tt .cvsrc} file so that reasonable options
-     to prune empty directories are used uniformly within project development.
+     \item  Update an {\em existing} version from SVN: \\
+     Run {\tt svn update} from inside the ROSE directory (at the top level) to update
+     an existing version of ROSE with the new changes in the SVN repository.
+     \fixme{What are the SVN rules for pruning directories?}
+%    Note that the ROSE team uses a common {\tt .cvsrc} file so that reasonable options
+%    to prune empty directories are used uniformly within project development.
 
-     \item After being checked out (or updated) from CVS: \\
+     \item After being checked out (or updated) from SVN: \\
      Run the {\tt build} script in the top level ROSE directory to build all configure scripts
      and {\tt Makefile.in} files (using {\bf automake}).  This is the difference between the development
      environment and the distribution. This script will call the different {\bf autoconf}
      tools required to setup ROSE and also checkout other work common to multiple projects
      within CASC.
+
+%%     \item {\bf CVS} checkout \\
+%%           Type {\tt cvs -d/usr/casc/overture/ROSE/ROSE2_Repository checkout ROSE} to
+%%           checkout a new version of ROSE into a new directory.  {\em The ROSE directory
+%%           should not exist in the current directory.}  Checking out a new version of ROSE
+%%           on top of an existing version can lead to undefined results.
+%     \item Checkout a NEW version from CVS: \\
+%     In your {\tt .cshrc} file set the variable {\tt CVSROOT} to 
+%     {\tt /usr/casc/overture/ROSE/ROSE2\_Repository}
+%     ({\tt setenv CVSROOT /usr/casc/overture/ROSE/ROSE2\_Repository})
+%     and ({\tt setenv CVS\_RSH ssh}).
+%     The later is to permit checkout of the {\bf acmacros} project from its separate 
+%     CVS repository.  Note that this will only work from a machine on the LLNL domain.
+%     Other machines will have to get the separate tarball for this project (it should
+%     also be in the {\bf CVS} repository and is checked out with ROSE into the top 
+%     level ROSE directory).
+
+%     Then run {\tt source ~/.cshrc} to have this environment variable set properly.
+%     Now you can run {\tt cvs} to checkout the current version from ROSE. Type
+%     {\tt cvs co ROSE} or {\tt cvs checkout ROSE} to do this.
+
+%     \item  Update an {\em existing} version from CVS: \\
+%     Run {\tt cvs update} from inside the ROSE directory (at the top level) to update
+%     an existing version of ROSE with the new changes in the CVS repository.
+%     Note that the ROSE team uses a common {\tt .cvsrc} file so that reasonable options
+%     to prune empty directories are used uniformly within project development.
+
+%     \item After being checked out (or updated) from CVS: \\
+%     Run the {\tt build} script in the top level ROSE directory to build all configure scripts
+%     and {\tt Makefile.in} files (using {\bf automake}).  This is the difference between the development
+%     environment and the distribution. This script will call the different {\bf autoconf}
+%     tools required to setup ROSE and also checkout other work common to multiple projects
+%     within CASC.
 
      \item Build a compile directory (for the compile tree): \\
      Make a separate directory to be the root of the compile tree. There can be many compile 
@@ -100,7 +128,7 @@ The build process for a {\em Developer Version} is:
      \item Running configure: \\
      Type {\tt <pathToSourceTree>/configure --help} to see the different configuration options.
      {\tt <pathToSourceTree>} is meant to be the absolute or relative path to the source tree
-     where the {\bf CVS} version was checked out.  After options have been selected, type
+     where the {\bf SVN} version was checked out.  After options have been selected, type
      {\tt <pathToSourceTree>/configure <selected-options>} to run the configure script.
      Running the configure script with no options is sufficient (uses default values which
      are either already set or which the configure script will figure out on your machine).
@@ -137,6 +165,24 @@ The build process for a {\em Developer Version} is:
 
 \end{enumerate}
 
+% DQ (6/5/2008): This is the resulting lesson from the erasure
+% of my ROSE directory as the result of a bad cron script.
+\section{How to recover from a file-system disaster at LLNL}
+   Disasters can happen (cron scripts can go very very badly).  If you 
+loose files on the CASC cluster at LLNL you can get the backup from the 
+night before.  It just takes a while.
+
+   To restore from backups at LLNL: use the command: \\
+{\tt restore}
+\begin{enumerate}
+   \item {\tt add <directory name>} \\
+       This will build the list of files to be recovered.
+   \item recover \\
+       This will start the process to restore the files from tape.
+\end{enumerate}
+   This process can take a long time if you have a lot of files to recover.
+
+
 \section{Generating Documentation}
    There is a standard GNU {\tt make docs} rule for building all documentation.
 
@@ -150,7 +196,7 @@ default configuration for LaTeX.
 }
 
 \section{Check In Process}
-   If you are building the development version of ROSE (available only from CVS, not what 
+   If you are building the development version of ROSE (available only from SVN, not what 
 we package as a ROSE distribution; e.g. ROSE-\VersionNumber.tar.gz) then the README
 file in the top level directory also has instructions for how to get started. 
 The README\_CHECKIN file has the instructions for our standard testing process.
