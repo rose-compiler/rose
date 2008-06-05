@@ -1133,7 +1133,8 @@ $CLASSNAME::setAttribute( std::string s, AstAttribute* a )
 AstAttribute*
 $CLASSNAME::getAttribute(std::string s) const
    {
-     ROSE_ASSERT(get_attributeMechanism() != NULL);
+     //ROSE_ASSERT(get_attributeMechanism() != NULL); // Liao, bug 130 6/4/2008
+     if (attributeExists(s)==false) return NULL;
      AstAttribute* returnValue = get_attributeMechanism()->operator[](s);
      ROSE_ASSERT(returnValue != NULL);
      return returnValue;
