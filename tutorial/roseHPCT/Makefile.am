@@ -116,7 +116,7 @@ endif # ROSE_BUILD_ROSEHPCT
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
-	rm -f $(noinst_DATA)
+	rm -f $(noinst_DATA) rose_profiled.c
 
 distclean-local:
 	rm -rf Templates.DB
