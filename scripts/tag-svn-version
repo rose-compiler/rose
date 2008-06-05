@@ -1,0 +1,11 @@
+#!/bin/sh
+REPOSITORYBASE=file:///usr/casc/overture/ROSE/svn/ROSE
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 release" 1>&2
+  echo "  where release is a release specifier from \"svn help checkout\"" 1>&2
+  exit 1
+fi
+releaseinfo="$1"
+tagname=`date -u +release-%F-%H-%M`
+echo "Copying revision ${releaseinfo} of trunk to ${REPOSITORYBASE}/tags/${tagname}"
+svn cp -m"Tagged trunk at `date -u`" -r${releaseinfo} ${REPOSITORYBASE}/trunk/ROSE ${REPOSITORYBASE}/tags/${tagname}
