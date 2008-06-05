@@ -195,9 +195,9 @@ numbers for each release of ROSE).
          see and work with ROSE.  Instructions are also located in the ROSE/README file.
 
    \item {\bf Development Version} \\
-         Only available directly from the CVS repository. The details of building this
-         version are located in the Appendix \ref{appendix:InstructionsToRoseDevelopers}.
-\end{itemize}
+         Only available directly from the Subversion (SVN) repository. The details of building this
+         version are located in the Appendix \ref{gettingStarted:DeveloperInstructions}.
+\end{itemize}  
 To simplify the descriptions of the build process, we define:
 \begin{itemize} 
    \item {\bf Source Tree} \\
@@ -217,7 +217,7 @@ are the same, then there is only one combined {\bf Source/Compile Tree}.
 Alternatively, numerous different {\bf Compile Trees} can be used from 
 a single {\bf Source Tree}.  More than one {\bf Compile Tree} allows
 ROSE to be generated on different platforms from a single source 
-(either a generated distribution or checked out from CVS).  ROSE is developed 
+(either a generated distribution or checked out from SVN).  ROSE is developed 
 and tested internally using separate {\bf Compile Trees}.
 
 \commentout{
