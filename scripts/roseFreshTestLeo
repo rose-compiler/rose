@@ -23,7 +23,8 @@ ROSE_SRC=${ROSE_TOP}/sourcetree
 ROSE_BUILD=${ROSE_TOP}/build
 ROSE_INSTALL=${ROSE_TOP}/install
 ROSE_LOG=${ROSE_TOP}/buildlog
-
+# check out the revision of the past 11:00pm PDT (06:00am UTC)
+SVN_REVISION="`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`"
 BOOST_INSTALL=/home/liao6/opt/boost_1_35_0
 
 # the right version of subversion is required!!
@@ -103,8 +104,9 @@ buildstatus=0
   set -e
   set -x
 # check out a fresh copy for testing
-  $SVN co -q ${ROSE_SVNROOT} ${ROSE_SRC}
+#  $SVN co -q ${ROSE_SVNROOT} ${ROSE_SRC}
 #  $SVN co -r {2008-04-22} -q ${ROSE_SVNROOT} ${ROSE_SRC}
+  $SVN co -r {${SVN_REVISION}} -q ${ROSE_SVNROOT} ${ROSE_SRC}
 # $SVN export -q ${ROSE_SVNROOT} sourcetree
 
 # rebuild the Makefile in the source tree
