@@ -1,7 +1,7 @@
 # Example Makefile for ROSE users
 # This makefile is provided as an example of how to use ROSE when ROSE is
 # installed (using "make install").  This makefile is tested as part of the
-# "make distcheck" rule (run as part of tests before any CVS checkin).
+# "make distcheck" rule (run as part of tests before any SVN checkin).
 # The test of this makefile can also be run by using the "make installcheck"
 # rule (run as part of "make distcheck").
 
