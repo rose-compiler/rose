@@ -5,11 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 LDADD = $(LIBS_WITH_RPATH) $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
 
 # HPCToolkit-generated files.
-HPCT_FILES = $(srcdir)/PAPI_FP_OPS.xml \
-	$(srcdir)/PAPI_TOT_CYC.xml \
-	$(srcdir)/PAPI_L1_DCA.xml \
-	$(srcdir)/PAPI_L1_DCM.xml \
-	$(srcdir)/PAPI_L2_TCM.xml
+HPCT_FILES = PAPI_FP_OPS.xml \
+	     PAPI_TOT_CYC.xml \
+	     PAPI_L1_DCA.xml \
+	     PAPI_L1_DCM.xml \
+	     PAPI_L2_TCM.xml
 
 # Extra files that need to be included in a distribution tarball.
 EXTRA_DIST = $(HPCT_FILES) \
