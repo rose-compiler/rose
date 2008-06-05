@@ -75,7 +75,8 @@ buildstatus=0
 
 #------------------------------------------------------
 # check out a fresh copy for testing
-  $SVN export -q ${ROSE_SVNROOT} sourcetree
+  if [ "x$SVNOP" = "x" ]; then SVNOP=export; fi
+  $SVN ${SVNOP} -q ${ROSE_SVNROOT} sourcetree
 
 #------------------------------------------------------
 # rebuild the Makefile in the source tree
