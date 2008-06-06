@@ -570,9 +570,9 @@ Grammar::setUpStatements ()
      IfStmt.setFunctionPrototype ( "HEADER_IF_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",
 			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     IfStmt.setDataPrototype ( "SgBasicBlock*", "true_body",   "= NULL",
+     IfStmt.setDataPrototype ( "SgStatement*", "true_body",   "= NULL",
 			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     IfStmt.setDataPrototype ( "SgBasicBlock*", "false_body",  "= NULL",
+     IfStmt.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
 			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // IfStmt.setAutomaticGenerationOfDestructor(FALSE);
@@ -654,7 +654,7 @@ Grammar::setUpStatements ()
 #endif
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 
-     ForStatement.setDataPrototype ( "SgBasicBlock*", "loop_body",        "= NULL",
+     ForStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
 				     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (11/16/2007): Added support for string labels (for Fortran).
      ForStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
@@ -1466,7 +1466,7 @@ Grammar::setUpStatements ()
      WhileStmt.setFunctionPrototype ( "HEADER_WHILE_STATEMENT", "../Grammar/Statement.code" );
      WhileStmt.setDataPrototype     ( "SgStatement*", "condition", "= NULL",
 				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     WhileStmt.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
+     WhileStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
 				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/24/2007): Added to support Fortran specific use of do ... while construct.
@@ -1484,7 +1484,7 @@ Grammar::setUpStatements ()
 
      DoWhileStmt.setFunctionPrototype ( "HEADER_DO_WHILE_STATEMENT", "../Grammar/Statement.code" );
   // DQ (11/17/2005): Swapped order to force order of traversal to reflect structure.
-     DoWhileStmt.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
+     DoWhileStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DoWhileStmt.setDataPrototype     ( "SgStatement*", "condition", "= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1565,7 +1565,7 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
-     CaseOptionStmt.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
+     CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
 				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (1/6/2006): Added support for GNU case label ranges (e.g. "case 2 ... 5:" in switch statements; see test2005_202.C)
      CaseOptionStmt.setDataPrototype ( "SgExpression*", "key_range_end", " = NULL",
@@ -1579,7 +1579,7 @@ Grammar::setUpStatements ()
      TryStmt.editSubstitute       ( "LIST_FUNCTION_NAME", "catch_statement" );
      TryStmt.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
 
-     TryStmt.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
+     TryStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
 				    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TryStmt.setDataPrototype ( "SgCatchStatementSeq*", "catch_statement_seq_root", "= NULL",
 				NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1600,13 +1600,13 @@ Grammar::setUpStatements ()
 
      CatchOptionStmt.setDataPrototype ( "SgVariableDeclaration*", "condition", "= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     CatchOptionStmt.setDataPrototype ( "SgBasicBlock*"         , "body"     , "= NULL",
+     CatchOptionStmt.setDataPrototype ( "SgStatement*"         , "body"     , "= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CatchOptionStmt.setDataPrototype ( "SgTryStmt*"            , "trystmt"  , "= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DefaultOptionStmt.setFunctionPrototype ( "HEADER_DEFAULT_OPTION_STATEMENT", "../Grammar/Statement.code" );
-     DefaultOptionStmt.setDataPrototype ( "SgBasicBlock*", "body"   , "= NULL",
+     DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
 					  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      BreakStmt.setFunctionPrototype ( "HEADER_BREAK_STATEMENT", "../Grammar/Statement.code" );

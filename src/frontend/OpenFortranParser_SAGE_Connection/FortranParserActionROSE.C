@@ -599,7 +599,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
        // Output debugging information about saved state (stack) information.
           outputState("hasKindSelector == true in R403 c_action_intrinsic_type_spec()");
 #endif
-       // Strings are handled special (converted to character arrays to be consistant within ROSE.
+       // Strings are handled special (converted to character arrays to be consistent within ROSE.
           if (isSgTypeChar(intrinsicType) != NULL)
              {
             // This is the case of "CHARACTER*2", for this case the char_length from R426 is saved on the astExpressionStack.
@@ -2873,7 +2873,7 @@ void c_action_entity_decl_list(int count)
   // In general it is a tradeoff as to if we should build the list in the <rule>_list__begin()
   // function and then add the elements to the list in the element-specific functions or
   // if we should push the elements onto the stack in the element-specific functions and
-  // assemble the lists in the <rule>_list() functions.  Except that we want to be consistant
+  // assemble the lists in the <rule>_list() functions.  Except that we want to be consistent
   // it is not clear if there is a best answer to this question.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -3166,7 +3166,7 @@ void c_action_array_spec_element(int type)
                   }
              }
 
-       // DQ (11/20/2007): Changed to push_front to be consistant.
+       // DQ (11/20/2007): Changed to push_front to be consistent.
        // astExpressionStack.push_back(expression);
           astExpressionStack.push_front(expression);
         }
@@ -7746,7 +7746,7 @@ void c_action_forall_stmt__begin()
      forAllStatement->set_parent(currentScope);
 
   // Push the if scope (it is a scope in C/C++, even if not in Fortran)
-  // treating it as a scope will allow it to be consistant across C,C++, and Fortran.
+  // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      astScopeStack.push_front(forAllStatement);
 
   // Now push the SgBasicBlock
@@ -7907,7 +7907,7 @@ void c_action_if_then_stmt( Token_t *label, Token_t *id, Token_t *ifKeyword, Tok
   // printf ("Appending ifStatement = %p to scope = %p currentBlockScope->get_statements().size() = %zu \n",ifStatement,currentScope,currentBlockScope->get_statements().size());
 
   // Push the if scope (it is a scope in C/C++, even if not in Fortran)
-  // treating it as a scope will allow it to be consistant across C,C++, and Fortran.
+  // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      astScopeStack.push_front(ifStatement);
 
   // Now push the SgBasicBlock
@@ -7965,7 +7965,7 @@ void c_action_else_if_stmt(Token_t *label, Token_t *elseKeyword, Token_t *ifKeyw
      ROSE_ASSERT(ifStatement != NULL);
 
   // Find the previously built false body in the SgIfStmt
-     SgBasicBlock* false_body = ifStatement->get_false_body();
+     SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
      ROSE_ASSERT(false_body != NULL);
 
   // Push the false body onto the scope stack
@@ -8043,7 +8043,7 @@ void c_action_else_stmt(Token_t *label, Token_t *elseKeyword, Token_t *id, Token
      ROSE_ASSERT(ifStatement != NULL);
 
   // Find the previously built false body in the SgIfStmt
-     SgBasicBlock* false_body = ifStatement->get_false_body();
+     SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
      ROSE_ASSERT(false_body != NULL);
 
   // Push the false body onto the scope stack
@@ -8118,7 +8118,7 @@ void c_action_end_if_stmt(Token_t *label, Token_t *endKeyword, Token_t *ifKeywor
           setStatementEndNumericLabel(ifStatement,label);
 
   // Pop off the if scope (it is a scope in C/C++, even if not in Fortran)
-  // treating it as a scope will allow it to be consistant across C,C++, and Fortran.
+  // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      ROSE_ASSERT(astScopeStack.empty() == false);
      astScopeStack.pop_front();
 
@@ -8146,7 +8146,7 @@ void c_action_if_stmt__begin()
 #if !SKIP_C_ACTION_IMPLEMENTATION
      SgBasicBlock* true_block  = new SgBasicBlock();
      SgBasicBlock* false_block = new SgBasicBlock();
-     SgIfStmt* ifStatement     = new SgIfStmt(NULL,true_block,false_block);
+     SgIfStmt* ifStatement     = new SgIfStmt((SgStatement*)NULL,true_block,false_block);
 
   // astIfStatementStack.push_front(ifStatement);
 
@@ -8158,7 +8158,7 @@ void c_action_if_stmt__begin()
      ifStatement->set_parent(currentScope);
 
   // Push the if scope (it is a scope in C/C++, even if not in Fortran)
-  // treating it as a scope will allow it to be consistant across C,C++, and Fortran.
+  // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      astScopeStack.push_front(ifStatement);
 
   // Now push the SgBasicBlock
@@ -8217,7 +8217,7 @@ void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
      astScopeStack.pop_front();
 
   // Pop the if scope (it is a scope in C/C++, even if not in Fortran)
-  // treating it as a scope will allow it to be consistant across C,C++, and Fortran.
+  // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      astScopeStack.pop_front();
 
   // printf ("CLEAR THE astLabelSymbolStack (c_action_if_stmt) \n");
@@ -9023,7 +9023,7 @@ void c_action_end_do()
   // astScopeStack.pop_front();
 
   // Pop off the loop construct's scope (it is a scope in C/C++, even if not in Fortran)
-  // treating it as a scope will allow it to be consistant across C,C++, and Fortran.
+  // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
      ROSE_ASSERT(astScopeStack.empty() == false);
      astScopeStack.pop_front();
 

@@ -2048,7 +2048,7 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
      SgIfStmt* childIfStatement = NULL;
 
      bool ifStatementInFalseBody = false;
-     SgBasicBlock* falseBlock   = parentIfStatement->get_false_body();
+     SgBasicBlock* falseBlock   = isSgBasicBlock(parentIfStatement->get_false_body());
   // printf ("falseBlock = %p \n",falseBlock);
      if (falseBlock != NULL)
         {
@@ -2125,7 +2125,8 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
        // printf ("parentIfStatement = %p \n",parentIfStatement);
           if (parentIfStatement != NULL)
              {
-               SgStatementPtrList & statementList = parentIfStatement->get_false_body()->get_statements();
+               ROSE_ASSERT (isSgBasicBlock(parentIfStatement->get_false_body()));
+               SgStatementPtrList & statementList = isSgBasicBlock(parentIfStatement->get_false_body())->get_statements();
                ifStatementInFalseBody = (find(statementList.begin(),statementList.end(),if_stmt) != statementList.end());
              }
         }
@@ -2155,7 +2156,8 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
             else
              {
             // "THEN" is not output for the case of "IF (C) B = 0"
-               SgStatementPtrList & statementList = if_stmt->get_true_body()->get_statements();
+               ROSE_ASSERT (isSgBasicBlock(if_stmt->get_true_body()));
+               SgStatementPtrList & statementList = isSgBasicBlock(if_stmt->get_true_body())->get_statements();
                ROSE_ASSERT(statementList.size() == 1);
                SgStatement* statement = *(statementList.begin());
                ROSE_ASSERT(statement != NULL);

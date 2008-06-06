@@ -422,7 +422,7 @@ INPUT                  = \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
                          @top_pwd@/src/frontend/SageIII \
                          @top_srcdir@/src/frontend/frontend.docs \
-                         @top_srcdir@/src/frontend/EDG/EDG_3.3/documentation.docs \
+                         @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
@@ -475,7 +475,7 @@ SIMPLE_INPUT                  = \
                          @top_pwd@/rose.docs \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
                          @top_srcdir@/src/frontend/frontend.docs \
-                         @top_srcdir@/src/frontend/EDG/EDG_3.3/documentation.docs \
+                         @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_pwd@/src/frontend/SageIII/sage.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \

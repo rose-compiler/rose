@@ -434,10 +434,10 @@ SgLabelStatement * buildLabelStatement(const SgName& name, SgStatement * stmt = 
 SgGotoStatement * buildGotoStatement(SgLabelStatement *  label=NULL,SgScopeStatement* scope=NULL);
 
 //! build a case option statement
-SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgBasicBlock *body = NULL);
+SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
 
 //! build a default option statement
-SgDefaultOptionStmt * buildDefaultOptionStmt( SgBasicBlock *body = NULL);
+SgDefaultOptionStmt * buildDefaultOptionStmt( SgStatement *body = NULL);
 
 //! build a SgExprStatement, set File_Info automatically 
 SgExprStatement*
@@ -450,14 +450,14 @@ inline SgSwitchStatement* buildSwitchStatement(SgExpression *item_selector, SgBa
 }
 
 //! build if statement
-SgIfStmt * buildIfStmt(SgStatement* conditional, SgBasicBlock * true_body, SgBasicBlock * false_body);
-inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgBasicBlock * true_body, SgBasicBlock * false_body) {
+SgIfStmt * buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
+inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body, SgStatement * false_body) {
   return buildIfStmt(buildExprStatement(conditional), true_body, false_body);
 }
 
 //! build while statement
-SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgBasicBlock *body);
-inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgBasicBlock *body) {
+SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);
+inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body) {
   return buildWhileStmt(buildExprStatement(condition), body);
 }
 

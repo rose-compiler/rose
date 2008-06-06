@@ -279,8 +279,10 @@ namespace VirtualCFG {
       SgIfStmt* ifs = isSgIfStmt(srcNode);
       if (ifs->get_true_body() == tgtNode) {
 	return eckTrue;
-      } else if (ifs->get_false_body() == tgtNode) {
+      } else if (tgtNode != NULL && ifs->get_false_body() == tgtNode) {
 	return eckFalse;
+      } else if (ifs->get_false_body() == NULL && tgtNode == ifs && tgtIndex == 2) {
+        return eckFalse;
       } else ROSE_ASSERT (!"Bad successor in if statement");
     } else if (isSgArithmeticIfStatement(srcNode) && srcIndex == 1) {
       SgArithmeticIfStatement* aif = isSgArithmeticIfStatement(srcNode);
@@ -704,6 +706,7 @@ namespace VirtualCFG {
       case SgLabelSymbol::e_else_label_type: {
         SgIfStmt* ifs = isSgIfStmt(st);
         ROSE_ASSERT (ifs);
+        ROSE_ASSERT (ifs->get_false_body() != NULL);
         return ifs->get_false_body()->cfgForBeginning();
       }
       case SgLabelSymbol::e_end_label_type: {
@@ -732,6 +735,7 @@ namespace VirtualCFG {
     if (index == stmt->cfgIndexForEnd() && stmt->has_end_numeric_label()) hasLabel = true;
     if (index == 0 &&
         isSgIfStmt(stmt->get_parent()) &&
+        stmt != NULL &&
         stmt == isSgIfStmt(stmt->get_parent())->get_false_body()) hasLabel = true;
     if (isSgProcedureHeaderStatement(stmt) ||
         isSgProgramHeaderStatement(stmt) ||

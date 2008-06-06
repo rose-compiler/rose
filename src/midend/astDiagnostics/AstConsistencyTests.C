@@ -1644,8 +1644,8 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                   {
                     SgIfStmt* ifStatement = isSgIfStmt(scope);
                     ROSE_ASSERT (ifStatement != NULL);
-                    statementList = ifStatement->get_true_body()->generateStatementList();
-                    SgStatementPtrList falseStatementList = ifStatement->get_false_body()->generateStatementList();
+                    statementList = isSgBasicBlock(ifStatement->get_true_body()) ? isSgBasicBlock(ifStatement->get_true_body())->generateStatementList() : SgStatementPtrList(1, ifStatement->get_true_body());
+                    SgStatementPtrList falseStatementList = isSgBasicBlock(ifStatement->get_false_body()) ? isSgBasicBlock(ifStatement->get_false_body())->generateStatementList() : ifStatement->get_false_body() ? SgStatementPtrList(1, ifStatement->get_false_body()) : SgStatementPtrList();
 
                  // statementList.merge(falseStatementList);
                     statementList.insert(statementList.end(),falseStatementList.begin(),falseStatementList.end());

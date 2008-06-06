@@ -291,7 +291,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 	     if ( forStm )
 	       {
 		 SgStatement *parentScope = isSgStatement( stm->get_scope() );
-		 SgBasicBlock *body = forStm->get_loop_body();
+		 SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfFor(forStm);
 		 ROSE_ASSERT ( !inForTest.empty() && body && parentScope );
 		 // SgStatementPtrList &list = body->get_statements();
 
@@ -339,7 +339,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		   case V_SgWhileStmt:
 		     {
 		       // assignments need to be inserted at the end of each while loop
-		       SgBasicBlock *body = isSgBasicBlock( isSgWhileStmt( scope )->get_body() );
+		       SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfWhile(isSgWhileStmt( scope ) );
 		       ROSE_ASSERT ( body );
 		       d->assignment->set_parent( body );
 		       body->get_statements().push_back( d->assignment );
@@ -380,7 +380,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
 		       ROSE_ASSERT ( initName->get_scope() );
 
 		       // adding assignemts at the end of the do-while loop
-		       SgBasicBlock *body = isSgDoWhileStmt( scope )->get_body();
+		       SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfDoWhile( isSgDoWhileStmt(scope) );
 		       ROSE_ASSERT ( body );
 		       body->get_statements().push_back( d->assignment );
                        d->assignment->set_parent(body);

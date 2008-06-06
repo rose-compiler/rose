@@ -1461,21 +1461,26 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      ROSE_ASSERT(this->get_true_body() != NULL);
      ROSE_ASSERT(ifStatement_copy->get_true_body() != NULL);
-     ROSE_ASSERT(ifStatement_copy->get_true_body()->get_symbol_table() != NULL);
-     ROSE_ASSERT(ifStatement_copy->get_true_body()->get_symbol_table()->size()  == 0);
+     if (isSgScopeStatement(ifStatement_copy->get_true_body())) {
+       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table() != NULL);
+       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table()->size()  == 0);
+     }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");
 
      this->get_true_body()->fixupCopy_scopes(ifStatement_copy->get_true_body(),help);
 
-     ROSE_ASSERT(this->get_false_body() != NULL);
-     ROSE_ASSERT(ifStatement_copy->get_false_body() != NULL);
-     ROSE_ASSERT(ifStatement_copy->get_false_body()->get_symbol_table()->size() == 0);
-     ROSE_ASSERT(ifStatement_copy->get_false_body()->get_symbol_table() != NULL);
+     ROSE_ASSERT((this->get_false_body() != NULL) == (ifStatement_copy->get_false_body() != NULL));
+     if (isSgScopeStatement(ifStatement_copy->get_false_body())) {
+       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size() == 0);
+       ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
+     }
 
   // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");
 
-     this->get_false_body()->fixupCopy_scopes(ifStatement_copy->get_false_body(),help);
+     if (this->get_false_body() != NULL) {
+       this->get_false_body()->fixupCopy_scopes(ifStatement_copy->get_false_body(),help);
+     }
 
   // printf ("\nLeaving SgIfStmt::fixupCopy_scopes() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
    }
