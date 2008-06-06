@@ -66,6 +66,10 @@ export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
 export CLASSPATH="/home/liao6/opt/antlr-3.0.1/lib/antlr-2.7.7.jar:/home/liao6/opt/antlr-3.0.1/lib/antlr-3.0.1.jar:/home/liao6/opt/antlr-3.0.1/lib/antlr-runtime-3.0.1.jar:/home/liao6/opt/antlr-3.0.1/lib/stringtemplate-3.1b1.jar:/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/OpenFortranParser.jar:."
 
+# grab the revision number
+svnversioninfo="`${SVN} -q -r{${SVN_REVISION}} log ${ROSE_SVNROOT} | sed -n 2p`"
+svnversion=`echo "${svnversioninfo}" | cut -f1 -d \  | tr -d r`
+
 #------------------------------------------------------
 # Starting Section
 #------------------------------------------------------
@@ -77,6 +81,7 @@ set -e
   echo "See build log in ${ROSE_LOG} for status" >> mailtext1
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext1
   echo "" >> mailtext1
+  echo "SVN repository version no is ${svnversion}" >> mailtext1
   echo "Make flags = ${MAKEFLAGS}" >> mailtext1
   echo "" >> mailtext1
   echo "> Command versions" >> mailtext1
@@ -138,11 +143,13 @@ buildstatus=0
 #------------------------------------------------------
 if [ $buildstatus == 0 ]; then
   echo "Subject: ROSE test ${TIMESTAMP} results (pass)" > mailtext
+  echo "SVN repository version no is ${svnversion}" >> mailtext
   echo "" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "Make flags = ${MAKEFLAGS}" >> mailtext
 else
   echo "Subject: ROSE test ${TIMESTAMP} results (fail)" > mailtext
+  echo "SVN repository version no is ${svnversion}" >> mailtext
   echo "" >> mailtext
   echo "-------------------- Error summary --------------------" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
