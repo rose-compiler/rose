@@ -819,6 +819,26 @@ CommandlineProcessing::isFortran2008FileNameSuffix ( const std::string & suffix 
      return returnValue;
    }
 
+//Liao, 6/6/2008 Support for UPC
+bool
+CommandlineProcessing::isUPCFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "upc")
+#else//It is a case insensitive system
+     if ( suffix == "upc" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 void
 CommandlineProcessing::initSourceFileSuffixList ( )
    {
@@ -859,6 +879,8 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F95");
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
+     // Liao (6/6/2008)  Support for UPC   
+          validSourceFileSuffixes.push_back(".upc");
 #else 
        // it is a case insensitive system
           validSourceFileSuffixes.push_back(".c");
@@ -885,6 +907,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F95");
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
+          validSourceFileSuffixes.push_back(".upc");
 #endif
           first_call = false;
         }
