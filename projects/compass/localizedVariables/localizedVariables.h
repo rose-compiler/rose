@@ -82,6 +82,10 @@ namespace CompassAnalyses {
         this->traverse(n, NULL);
       }
 
+      void visit(SgNode* n) {
+        this->traverse(n, NULL);
+      }
+
       virtual void* evaluateInheritedAttribute(SgNode* n, void*);
       virtual void* evaluateSynthesizedAttribute(SgNode* n, void*,
 						 SynthesizedAttributesList);

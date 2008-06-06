@@ -60,6 +60,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
 {
 }
 
+
 void*
 CompassAnalyses::LocalizedVariables::Traversal::
 evaluateInheritedAttribute(SgNode* n, void*)
