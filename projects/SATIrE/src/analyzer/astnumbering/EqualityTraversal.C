@@ -554,13 +554,13 @@ bool EqualityTraversal::equal_child_ids(SgNode* n, SgNode* m) {
       // check for constant propagation node
       SgValueExp* value = isSgValueExp(nchild);
       if (value == NULL || 
-	  value->get_originalExpressionTree() == NULL)
-	// no constant propagation, continue searching
-	nchild = n->get_traversalSuccessorByIndex(++i);
+          value->get_originalExpressionTree() == NULL)
+        // no constant propagation, continue searching
+        nchild = n->get_traversalSuccessorByIndex(++i);
       else {
-	// constant propagation node, get 
-	// original expression tree
-	nchild = value->get_originalExpressionTree();
+        // constant propagation node, get 
+        // original expression tree
+        nchild = value->get_originalExpressionTree();
       }
       
     }
@@ -571,13 +571,13 @@ bool EqualityTraversal::equal_child_ids(SgNode* n, SgNode* m) {
       // check for constant propagation node
       SgValueExp* value = isSgValueExp(mchild);
       if (value == NULL || 
-	  value->get_originalExpressionTree() == NULL)
-	// no constant propagation, continue searching
-	mchild = m->get_traversalSuccessorByIndex(++j);
+          value->get_originalExpressionTree() == NULL)
+        // no constant propagation, continue searching
+        mchild = m->get_traversalSuccessorByIndex(++j);
       else {
-	// constant propagation node, get 
-	// original expression tree
-	mchild = value->get_originalExpressionTree();
+        // constant propagation node, get 
+        // original expression tree
+        mchild = value->get_originalExpressionTree();
       }
       
     }
@@ -790,8 +790,25 @@ EqualityId EqualityTraversal::evaluateSynthesizedAttribute
   EqualityId ret = idForNode(node);
 
   // add the node to the node list map
-  node_list_map[ret].push_back(astNode);
-  node_id_map[astNode] = ret;
+  // GB (2008-06-06): If the node is a type, only add it if it isn't already
+  // there! We will see the same type pointer many times, but we only want
+  // to add it once.
+  if (isSgType(astNode))
+  {
+   // These lists will be very short, so this search shouldn't be too
+   // costly, I think.
+      std::vector<SgNode *> &nodes = node_list_map[ret];
+      if (std::find(nodes.begin(), nodes.end(), astNode) == nodes.end())
+      {
+          node_list_map[ret].push_back(astNode);
+          node_id_map[astNode] = ret;
+      }
+  }
+  else
+  {
+      node_list_map[ret].push_back(astNode);
+      node_id_map[astNode] = ret;
+  }
 
   return ret;
 }
@@ -812,13 +829,13 @@ void EqualityTraversal::output_tables() {
     std::vector<SgNode*> *nodes = &node_list_map[id];
     
     for (std::vector<EqualityId>::iterator j = children->begin();
-	 j != children->end(); j++) {
+         j != children->end(); j++) {
       std::cout << *j << " ";
     }
     std::cout << ") = ";
     
     for (std::vector<SgNode*>::iterator j = nodes->begin();
-	 j != nodes->end(); j++) {
+         j != nodes->end(); j++) {
       std::cout << (*j) << " ";
     }
 
@@ -847,13 +864,13 @@ const std::vector<SgNode*>& EqualityTraversal::get_nodes_for_id(EqualityId id) {
 
 
 bool EqualityTraversal::add_extra_criteria(std::stringstream& out, 
-					   SgNode* node) {
+                                           SgNode* node) {
 
   bool output = false;
 
   //std::cout << "adding extra criteria for node type " << 
   // node->variantT() << "(" 
-  //	    << node->sage_class_name() << ")" << std::endl;
+  //            << node->sage_class_name() << ")" << std::endl;
 
   switch (node->variantT()) {
 
@@ -923,7 +940,7 @@ bool EqualityTraversal::add_extra_criteria(std::stringstream& out,
     // initlalized name
   case V_SgInitializedName:
     out << "\"" << (std::string)isSgInitializedName(node)->get_name()
-	<< "\"";
+        << "\"";
     output = true;
     break;
 
@@ -931,12 +948,12 @@ bool EqualityTraversal::add_extra_criteria(std::stringstream& out,
     
     /*case V_SgVariableDeclaration:
     out << "\"" << (std::string)isSgVariableDeclaration(node)->get_name() 
-	<< "\"";
-	break;*/
+        << "\"";
+        break;*/
 
   case V_SgVarRefExp:
     out << "\"" << (std::string)isSgVarRefExp(node)->get_symbol()->get_name() 
-	<< "\"";
+        << "\"";
     output = true;
     break;
 
@@ -955,19 +972,19 @@ bool EqualityTraversal::add_extra_criteria(std::stringstream& out,
 
   /*if (SgDeclarationStatement* d = isSgDeclarationStatement(node)) {
     out << "\"" << (std::string)d->get_mangled_name()
-	<< "\"";
+        << "\"";
     output = true;
     }*/
 
   // SgClassDeclaration - display qualified name, use mangled name
   if (SgClassDeclaration* d = isSgClassDeclaration(node)) {
     out << "\"" << (std::string)d->get_qualified_name()
-	<< "\"";
+        << "\"";
     output = true;
   }
   if (SgFunctionDeclaration* d = isSgFunctionDeclaration(node)) {
     out << "\"" << (std::string)d->get_qualified_name()
-	<< "\"";
+        << "\"";
     output = true;
   }
 
@@ -993,8 +1010,8 @@ std::string EqualityTraversal::get_id_specifics(EqualityId id) {
 }
 
 void EqualityTraversal::get_node_repr_recursive(std::stringstream& out,
-						EqualityId id, 
-						NodeStringRepresentation r) {
+                                                EqualityId id, 
+                                                NodeStringRepresentation r) {
 
   // fetch the node if needed
   SgNode* node = NULL;
@@ -1068,7 +1085,7 @@ std::string EqualityTraversal::get_node_repr(EqualityId id, NodeStringRepresenta
 // assert if two nodes have the same id, either both or none are SgExpressions
 void EqualityTraversal::get_all_exprs(std::vector<EqualityId>& ids) {
   for (__gnu_cxx::hash_map<EqualityId, std::vector<SgNode*> >::iterator i =
-	 node_list_map.begin();
+         node_list_map.begin();
        i != node_list_map.end();
        i++) {
     
@@ -1083,7 +1100,7 @@ void EqualityTraversal::get_all_exprs(std::vector<EqualityId>& ids) {
 void EqualityTraversal::get_all_types(std::vector<EqualityId>& ids) {
 
   for (__gnu_cxx::hash_map<EqualityId, std::vector<SgNode*> >::iterator i =
-	 node_list_map.begin();
+         node_list_map.begin();
        i != node_list_map.end();
        i++) {
     
