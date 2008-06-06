@@ -3,6 +3,10 @@ V0.8.3 (in progress)
 * Better support for combined analyses
   - correct prefixing of SATIrE support functions
 
+* New PAG analysis support features
+  - TypeId as abstract type identifier
+  - experimental side-effecting add_tmpvarid support function
+
 * Termite: [AP]
   - Changed all occurrences of PrologString to PrologAtom
     (all names in the term representation are now 'singlequoted')
