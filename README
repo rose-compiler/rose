@@ -92,7 +92,7 @@ HOW TO BUILD ROSE (For people with a distribution, ROSE-x.x.x.tar.gz (not checke
     Please read the chapter on getting started in the ROSE User Manual. Basically, 
 sufficient steps are:
 
-   # Start from where you have untared the ROSE distibution (your ROSE source tree)
+   # Start from where you have untared the ROSE distribution (your ROSE source tree)
      cd  <your ROSE source tree>
 
    # You can put the build tree anywhere, but DO NOT build in the sources tree
