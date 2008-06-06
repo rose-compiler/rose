@@ -54,6 +54,6 @@ int main( int argc, char * argv[] )
   // from header files).
      exampleTraversal.traverse(project,preorder);
 
-     return backend(project);
+     return 0;
    }
 
