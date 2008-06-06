@@ -1,5 +1,20 @@
 #! /bin/sh
 
+# Parse command-line
+do_quiet=
+while [ "$#" -gt 0 ]; do
+    arg="$1"; shift
+    case "$arg" in
+	--quiet)
+	    do_quiet=yes
+	    ;;
+        *)
+	    echo "$0: unrecognized argument: $arg" >&2
+	    exit 1
+	    ;;
+    esac
+done
+
 # Debugging output is provided using the -x option as in "#! /bin/sh -x"
 
 # DQ (12/22/2005): remove the autoconf caches
@@ -33,10 +48,12 @@ touch stamp-h1.in || : exit 1
 
 # Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
 # and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
-find . -name Makefile.in |xargs sed -i~ -r \
-           -e 's/^((LT)?(CXX)?COMPILE =)/\1 @echo "  COMPILE $@";/' \
-           -e 's/^((CXX)?LINK =)/\1 @echo "  LINK    $@";/'       \
-           -e 's/(@LIBTOOL@)/\1 --quiet/g'
+if [ "$do_quiet" = "yes" ]; then
+    find . -name Makefile.in |xargs sed -i~ -r \
+	-e 's/^((LT)?(CXX)?COMPILE =)/\1 @echo "  COMPILE $@";/' \
+	-e 's/^((CXX)?LINK =)/\1 @echo "  LINK    $@";/'       \
+	-e 's/(@LIBTOOL@)/\1 --quiet/g'
+fi
 
 echo "***** BUILD TERMINATED NORMALLY *****"
 
