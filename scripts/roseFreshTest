@@ -89,7 +89,7 @@ buildstatus=0
 # rebuild the Makefile in the source tree
   echo "Build configuration and Makefile.in in the source tree...."
   cd sourcetree
-  ./build
+  ./build --quiet
   cd ..
 
 #------------------------------------------------------
