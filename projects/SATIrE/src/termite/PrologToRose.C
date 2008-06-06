@@ -441,7 +441,6 @@ PrologToRose::testFileInfo(Sg_File_Info* fi) {
 Sg_File_Info*
 PrologToRose::createFileInfo(PrologTerm* t) {
   debug("unparsing file info");
-  cerr<<t->getRepresentation()<<endl;
   Sg_File_Info *fi = NULL;
   if (PrologAtom *a = dynamic_cast<PrologAtom*>(t)) {
     /*node new or file info removed during transformation*/
