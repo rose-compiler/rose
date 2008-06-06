@@ -18,7 +18,7 @@ analysis=$1
 shift
 children=$@
 
-newanalysis=/nfstmp/adrian/sw/bin/newanalysis
+newanalysis=/nfs/scratch/gergo/satire-install//bin/newanalysis
 
 CURRENTDIR=`pwd`
 if [ $analysis = `basename $CURRENTDIR` ]
