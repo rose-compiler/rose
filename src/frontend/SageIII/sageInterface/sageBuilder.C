@@ -1266,7 +1266,7 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   return labelstmt;
 }
 
-SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgBasicBlock * true_body, SgBasicBlock * false_body)
+SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body)
 {
   ROSE_ASSERT(conditional);
   ROSE_ASSERT(true_body);
@@ -1281,7 +1281,7 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgBasicBlock * tru
   return ifstmt;
 }
 
-SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgBasicBlock *body)
+SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement *body)
 {
   ROSE_ASSERT(condition);
   ROSE_ASSERT(body);
@@ -1356,7 +1356,7 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label,SgScopeStatement* scop
   return result;
 }
 
-SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgBasicBlock *body)
+SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgStatement *body)
 {
   SgCaseOptionStmt* result = new SgCaseOptionStmt(key,body);
   ROSE_ASSERT(result);
@@ -1367,7 +1367,7 @@ SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgBasicB
   return result;
 }
 
-SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgBasicBlock *body)
+SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgStatement *body)
 {
   SgDefaultOptionStmt* result = new SgDefaultOptionStmt(body);
   ROSE_ASSERT(result);

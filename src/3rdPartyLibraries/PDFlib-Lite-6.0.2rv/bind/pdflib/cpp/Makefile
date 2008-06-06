@@ -33,8 +33,10 @@ PROGS = \
 	businesscard$(EXE)	\
 	quickreference$(EXE)
 
-include $(top_builddir)/config/mkprogs.inc
+# JJW comment these out as they don't compile anymore
+# include $(top_builddir)/config/mkprogs.inc
 
+all: pdflib$(LO)
 
 test:: $(PROGS)
 	-./hello

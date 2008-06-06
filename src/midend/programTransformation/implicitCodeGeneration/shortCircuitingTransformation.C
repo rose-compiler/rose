@@ -182,49 +182,16 @@ inline void rewriteConditionals(SgNode *n)
 	}
    }
 
-void replaceContinues(SgBasicBlock *bb, SgLabelStatement *dest)
+static SgStatement* replaceContinues(SgStatement *stmt, SgLabelStatement *dest)
    {
-     SgStatementPtrList &stmts = bb->get_statements();
-     for (SgStatementPtrList::iterator i = stmts.begin(); i != stmts.end(); ++i)
-	{
-	  SgStatement *stmt = *i;
-	  switch (stmt->variantT())
-	     {
-	       case V_SgContinueStmt:
-		     {
-		       SgGotoStatement *gotoStmt = new SgGotoStatement(SgNULL_FILE, dest);
-		       gotoStmt->set_parent(bb);
-		       *i = gotoStmt;
-		       delete stmt;
-
-		       break;
-		     }
-		       
-	       case V_SgIfStmt:
-		     {
-		       SgIfStmt *ifStmt = isSgIfStmt(stmt);
-		       ROSE_ASSERT(ifStmt != NULL);
-
-		       replaceContinues(ifStmt->get_true_body(), dest);
-		       replaceContinues(ifStmt->get_false_body(), dest);
-
-		       break;
-		     }
-
-	       case V_SgBasicBlock:
-		     {
-		       SgBasicBlock *bbStmt = isSgBasicBlock(stmt);
-		       ROSE_ASSERT(bbStmt != NULL);
-
-		       replaceContinues(bbStmt, dest);
-
-		       break;
-		     }
-
-	       default:
-		  break;
-	     }
-	}
+     if (isSgContinueStmt(stmt)) {
+       SgGotoStatement *gotoStmt = new SgGotoStatement(SgNULL_FILE, dest);
+       delete stmt;
+       return gotoStmt;
+     } else {
+       SageInterface::changeContinuesToGotos(stmt, dest);
+       return stmt;
+     }
    }
 
 // Split a variable declaration into two statements: the variable declaration
@@ -509,7 +476,7 @@ void initialTransformation(SgNode *n)
 	  if (hasSC(cond))
 	     {
 	       whileStmt->set_condition(
-		       moveConditionToBody(whileStmt->get_condition(), whileStmt->get_body()));
+		       moveConditionToBody(whileStmt->get_condition(), SageInterface::ensureBasicBlockAsBodyOfWhile(whileStmt)));
 #if 0
 	       SgBoolValExp *trueExp = new SgBoolValExp(SgNULL_FILE, 1);
 	       SgExpressionRoot *trueRoot = new SgExpressionRoot(SgNULL_FILE, trueExp);
@@ -606,10 +573,11 @@ void initialTransformation(SgNode *n)
 	       SgName labelName = labelNameSS.str();
 
 	       SgLabelStatement *labelStmt = new SgLabelStatement(SgNULL_FILE, labelName);
-	       dowhileStmt->get_body()->append_statement(labelStmt);
+	       SageInterface::ensureBasicBlockAsBodyOfDoWhile(dowhileStmt)->append_statement(labelStmt);
 	       labelStmt->set_parent(dowhileStmt->get_body());
 
-	       replaceContinues(dowhileStmt->get_body(), labelStmt);
+	       dowhileStmt->set_body(replaceContinues(dowhileStmt->get_body(), labelStmt));
+               dowhileStmt->get_body()->set_parent(dowhileStmt);
 
 	       SgBasicBlock *trueBody = new SgBasicBlock(SgNULL_FILE);
 
@@ -620,7 +588,7 @@ void initialTransformation(SgNode *n)
 	       SgIfStmt *ifStmt = new SgIfStmt(SgNULL_FILE, NULL, trueBody, falseBody);
 	       trueBody->set_parent(ifStmt);
 	       falseBody->set_parent(ifStmt);
-	       dowhileStmt->get_body()->append_statement(ifStmt);
+	       SageInterface::ensureBasicBlockAsBodyOfDoWhile(dowhileStmt)->append_statement(ifStmt);
 	       ifStmt->set_parent(dowhileStmt->get_body());
 
 	       ifStmt->set_conditional(cond);
@@ -663,7 +631,7 @@ void initialTransformation(SgNode *n)
 	  if (hasSC(forTest))
 	     {
 	       forStmt->set_test(
-		       moveConditionToBody(forTest, forStmt->get_loop_body()));
+		       moveConditionToBody(forTest, SageInterface::ensureBasicBlockAsBodyOfFor(forStmt)));
 	     }
 
   // DQ (11/7/2006): modified to reflect removal of SgExpressionRoot IR node
@@ -674,7 +642,7 @@ void initialTransformation(SgNode *n)
 	       SgExprStatement *forIncStmt = new SgExprStatement(SgNULL_FILE, forInc);
 	       forInc->set_parent(forIncStmt);
 
-	       SgBasicBlock *forBody = forStmt->get_loop_body();
+	       SgBasicBlock *forBody = SageInterface::ensureBasicBlockAsBodyOfFor(forStmt);
 	       forBody->append_statement(forIncStmt);
 	       forIncStmt->set_parent(forBody);
 
@@ -838,7 +806,9 @@ void ifConstOptimization(SgExpression *expr)
 			 else
 			    {
 			   // false branch
-			      replacementStmtParent->replace_statement(replacementStmt, constIfStmt->get_false_body());
+                              SgStatement* falseBranch = constIfStmt->get_false_body();
+                              if (!falseBranch) falseBranch = SageBuilder::buildBasicBlock();
+			      replacementStmtParent->replace_statement(replacementStmt, falseBranch);
 			      delete constIfStmt->get_true_body();
 			    }
 		       }

@@ -24,12 +24,10 @@ int min3(int a0,int a1,int a2)
 
 double abs(double x)
 {
-  if (x < (0)) {
+  if (x < (0)) 
     return -x;
-  }
-  else {
+  else 
     return x;
-  }
 }
 
 #define n 50
@@ -59,8 +57,6 @@ int main(int argc,char *argv[])
         mu = abs(((a[i])[j]));
         p[j] = i;
       }
-      else {
-      }
     }
     t = ((a[j])[j]);
     (a[j])[j] = ((a[p[j]])[j]);
@@ -82,8 +78,6 @@ int main(int argc,char *argv[])
         if (mu < abs(((a[i])[j]))) {
           mu = abs(((a[i])[j]));
           p[j] = i;
-        }
-        else {
         }
       }
       t = ((a[j])[j]);

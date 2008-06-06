@@ -892,18 +892,14 @@ void MPINonBlockingCodeMotion::cleanUpAfterMove(SgNode* startPath)
 		}
 
 		// is true body empty?
-		SgBasicBlock* leftOverTrueBody = isSgIfStmt(startPath)->get_true_body();
-		SgStatementPtrList leftOverTrueBodyStmtList = leftOverTrueBody->get_statements();
-		if(leftOverTrueBodyStmtList.empty())
+		if(isSgBasicBlock(isSgIfStmt(startPath)->get_true_body()) && isSgBasicBlock(isSgIfStmt(startPath)->get_true_body())->get_statements().empty())
 		{
 			cout << "Han: empty true body" << endl;
 			true_body_empty = true;
 		}
 
 		// is false body empty?
-		SgBasicBlock* leftOverFalseBody = isSgIfStmt(startPath)->get_false_body();
-		SgStatementPtrList leftOverFalseBodyStmtList = leftOverFalseBody->get_statements();
-		if(leftOverFalseBodyStmtList.empty())
+		if(isSgIfStmt(startPath)->get_false_body() == NULL || (isSgBasicBlock(isSgIfStmt(startPath)->get_false_body()) && isSgBasicBlock(isSgIfStmt(startPath)->get_false_body())->get_statements().empty()))
 		{
 			cout << "Han: empty false body" << endl;
 			false_body_empty = true;
@@ -942,9 +938,8 @@ void MPINonBlockingCodeMotion::cleanUpAfterMove(SgNode* startPath)
 			simple_condition = true;
 
 		// is body empty?
-		SgBasicBlock* leftOverBody = isSgWhileStmt(startPath)->get_body();
-		SgStatementPtrList leftOverBodyList = leftOverBody->get_statements();
-		if(leftOverBodyList.empty())
+		SgStatement* leftOverBody = isSgWhileStmt(startPath)->get_body();
+		if(isSgBasicBlock(leftOverBody) && isSgBasicBlock(leftOverBody)->get_statements().empty())
 			empty_body = true;
 
 		if(simple_condition && empty_body)
@@ -968,9 +963,8 @@ void MPINonBlockingCodeMotion::cleanUpAfterMove(SgNode* startPath)
 			simple_condition = true;
 
 		// is body empty?
-		SgBasicBlock* leftOverBody = isSgWhileStmt(startPath)->get_body();
-		SgStatementPtrList leftOverBodyList = leftOverBody->get_statements();
-		if(leftOverBodyList.empty())
+		SgStatement* leftOverBody = isSgDoWhileStmt(startPath)->get_body();
+		if(isSgBasicBlock(leftOverBody) && isSgBasicBlock(leftOverBody)->get_statements().empty())
 			empty_body = true;
 
 		// then remove

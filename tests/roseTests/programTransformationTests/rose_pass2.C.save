@@ -42,8 +42,7 @@ void foo()
       y = cachevar__1;
     }
   }
-  else {
-    if ((unknown())) {
+  else if ((unknown())) {
       while((unknown())){
       }
       if ((unknown())) {
@@ -57,7 +56,6 @@ void foo()
     else {
       goto L10;
     }
-  }
   z = cachevar__1;
   a = c;
   L9:

@@ -1861,6 +1861,38 @@ int Unparse_ExprStmt::num_stmt_in_block(SgBasicBlock* basic_stmt) {
 }
 #endif
 
+// Determine how many "else {}"'s an outer if that has an else clause needs to
+// prevent dangling if problems
+static size_t countElsesNeededToPreventDangling(SgStatement* s) {
+  // The basic rule here is that anything that has a defined end marker
+  // (i.e., cannot end with an unmatched if statement) returns 0, everything
+  // else (except if) gets the correct number of elses from its body
+  switch (s->variantT()) {
+    case V_SgCaseOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
+    case V_SgCatchStatementSeq: {
+      SgCatchStatementSeq* cs = isSgCatchStatementSeq(s);
+      const SgStatementPtrList& seq = cs->get_catch_statement_seq();
+      ROSE_ASSERT (!seq.empty());
+      return countElsesNeededToPreventDangling(seq.back());
+    }
+    case V_SgDefaultOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
+    case V_SgLabelStatement: return countElsesNeededToPreventDangling(isSgLabelStatement(s)->get_statement());
+    case V_SgCatchOptionStmt: return countElsesNeededToPreventDangling(isSgCatchOptionStmt(s)->get_body());
+    case V_SgForStatement: return countElsesNeededToPreventDangling(isSgForStatement(s)->get_loop_body());
+    case V_SgIfStmt: {
+      SgIfStmt* ifs = isSgIfStmt(s);
+      if (ifs->get_false_body() != NULL) {
+        return 0;
+      } else {
+        return countElsesNeededToPreventDangling(ifs->get_true_body()) + 1;
+      }
+    }
+    case V_SgWhileStmt: return countElsesNeededToPreventDangling(isSgWhileStmt(s)->get_body());
+    case V_SgSwitchStatement: ROSE_ASSERT(isSgBasicBlock(isSgSwitchStatement(s)->get_body())); return 0;
+    default: return 0;
+  }
+}
+
 void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // DQ (12/13/2005): I don't like this implementation with the while loop...
@@ -1886,17 +1918,26 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
             // printf ("Unparse the if true body \n");
             // curprint ( string("\n/* Unparse the if true body */ \n";
+               unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
                unparseStatement(tmp_stmt, info);
+               unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
             // curprint ( string("\n/* DONE: Unparse the if true body */ \n";
              }
 
           if ( (tmp_stmt = if_stmt->get_false_body()) )
              {
+               size_t elsesNeededForInnerIfs = countElsesNeededToPreventDangling(if_stmt->get_true_body());
+               for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) {
+                 curprint ( string(" else {}") ); // Ensure this else does not match an inner if statement
+               }
                unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
                curprint ( string("else "));
                if_stmt = isSgIfStmt(tmp_stmt);
-               if (if_stmt == NULL)
-                    unparseStatement(tmp_stmt, info);
+               if (if_stmt == NULL) {
+                 unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
+                 unparseStatement(tmp_stmt, info);
+                 unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
+               }
              }
             else
              {
@@ -2105,7 +2146,10 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        // printf ("Unparse the for loop body \n");
        // curprint ( string("\n/* Unparse the for loop body */ \n";
        // unparseStatement(tmp_stmt, info);
+
+          unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
           unparseStatement(loopBody, info);
+          unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
        // curprint ( string("\n/* DONE: Unparse the for loop body */ \n";
         }
        else
@@ -4383,8 +4427,11 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   unparseStatement(while_stmt->get_condition(), info);
   info.unset_inConditional();
   curprint ( string(")"));
-  if(while_stmt->get_body()) 
+  if(while_stmt->get_body()) {
+    unp->cur.format(while_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
     unparseStatement(while_stmt->get_body(), info);
+    unp->cur.format(while_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
+  }
   else if (!info.SkipSemiColon()) { curprint ( string(";")); }
 
 }
@@ -4395,7 +4442,9 @@ Unparse_ExprStmt::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   ROSE_ASSERT(dowhile_stmt != NULL);
 
   curprint ( string("do "));
+  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
   unparseStatement(dowhile_stmt->get_body(), info);
+  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
   curprint ( string("while " ) + "(");
   SgUnparse_Info ninfo(info);
   ninfo.set_inConditional();
@@ -4456,7 +4505,9 @@ Unparse_ExprStmt::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint ( string("try "));
   
+     unp->cur.format(try_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
      unparseStatement(try_stmt->get_body(), info);
+     unp->cur.format(try_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
   
      SgStatementPtrList::iterator i=try_stmt->get_catch_statement_seq().begin();
      while (i != try_stmt->get_catch_statement_seq().end())
@@ -4487,7 +4538,9 @@ Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ( string(")"));
   // if (catch_statement->get_condition() == NULL) prevnode = catch_statement;
 
+     unp->cur.format(catch_statement->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
      unparseStatement(catch_statement->get_body(), info);
+     unp->cur.format(catch_statement->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
    }
 
 void

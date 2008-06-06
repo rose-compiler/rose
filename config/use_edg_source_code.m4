@@ -31,26 +31,26 @@ dnl requirements of the free EDG research license.
          echo "pathToBuildDir = $pathToBuildDir"
          echo "pathToSourceDir = $pathToSourceDir"
 
-         if test -r $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la; then
-              echo "Found $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la"
+         if test -r $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la; then
+              echo "Found $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la"
            else
-              echo "Could not find $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la"
+              echo "Could not find $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la"
          fi
 
-         if test -r src/frontend/EDG/EDG_3.3/src/libedg33.la; then
-              echo "Found src/frontend/EDG/EDG_3.3/src/libedg33.la"
+         if test -r src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la; then
+              echo "Found src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la"
            else
-              echo "Could not find src/frontend/EDG/EDG_3.3/src/libedg33.la"
+              echo "Could not find src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la"
          fi
     fi
 
   # The binaries are either in the source tree or have been built in the compile tree previously
-    if ! (test -r $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la || test -r src/frontend/EDG/EDG_3.3/src/libedg33.la); then
+    if ! (test -r $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la || test -r src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la); then
          if test "$with_edg_source_code" = true; then
               echo "ROSE configured to use EDG source code, this is a development version (no binaries present in compile tree)"
            else
               echo "**********************************************************************************************************************"
-              echo "$pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la not found, rerun configure using --with-edg_source_code=true"
+              echo "$pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la not found, rerun configure using --with-edg_source_code=true"
               echo ""
               echo "     *** This is a development version, checked out from the ROSE CVS repository ***"
               echo "     Binaries not found in source tree, EDG source is required to build EDG binaries"

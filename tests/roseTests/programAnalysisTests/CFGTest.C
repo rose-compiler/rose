@@ -110,6 +110,8 @@ main ( int argc,  char * argv[] )
 
      SgProject sageProject ( (int)argc,argv);
 
+     SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
+
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
    int filenum = sageProject.numberOfFiles();

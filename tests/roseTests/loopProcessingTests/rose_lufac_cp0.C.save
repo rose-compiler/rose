@@ -1,12 +1,10 @@
 
 double abs(double x)
 {
-  if (x < (0)) {
+  if (x < (0)) 
     return -x;
-  }
-  else {
+  else 
     return x;
-  }
 }
 
 #define n 50
@@ -34,8 +32,6 @@ int main(int argc,char *argv[])
       if (mu < abs(((a[i])[k]))) {
         mu = abs(((a[i])[k]));
         p_buf0 = i;
-      }
-      else {
       }
     }
     for (j = k; j <= 49; j += 1) {

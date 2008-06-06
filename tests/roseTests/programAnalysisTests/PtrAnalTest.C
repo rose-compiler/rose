@@ -176,6 +176,7 @@ main ( int argc,  char * argv[] )
      }
 
     SgProject sageProject ( argc,argv);
+    SageInterface::changeAllLoopBodiesToBlocks(&sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 

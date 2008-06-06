@@ -4052,7 +4052,7 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 void SageInterface::addStepToLoopBody(SgScopeStatement* loopStmt, SgStatement* step) {
   using namespace SageBuilder;
   SgScopeStatement* proc = SageInterface::getEnclosingProcedure(loopStmt);
-  SgBasicBlock* old_body = SageInterface::getLoopBody(loopStmt);
+  SgStatement* old_body = SageInterface::getLoopBody(loopStmt);
   SgBasicBlock* new_body = buildBasicBlock();
 // printf ("Building IR node #13: new SgBasicBlock = %p \n",new_body);
   SgName labelname = "rose_label__";
@@ -4098,8 +4098,7 @@ void SageInterface::convertForToWhile(SgForStatement* f) {
   SgWhileStmt* ws = SageBuilder::buildWhileStmt(
       test,
       f->get_loop_body());
-  bbStmts.push_back(ws);
-  ws->set_parent(bb);
+  appendStatement(ws, bb);
   isSgStatement(f->get_parent())->replace_statement(f, bb);
 }
 
@@ -4807,14 +4806,14 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
 //----------------------------------enclosing into the namespace ---------------
 namespace SageInterface {
 
-  SgBasicBlock* getLoopBody(SgScopeStatement* loopStmt) {
+  SgStatement* getLoopBody(SgScopeStatement* loopStmt) {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_body();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_loop_body();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_body();
     ROSE_ASSERT (!"Bad loop kind");
   }
 
-  void setLoopBody(SgScopeStatement* loopStmt, SgBasicBlock* body) {
+  void setLoopBody(SgScopeStatement* loopStmt, SgStatement* body) {
     if (isSgWhileStmt(loopStmt)) {
       isSgWhileStmt(loopStmt)->set_body(body);
     } else if (isSgForStatement(loopStmt)) {
@@ -5542,9 +5541,9 @@ PreprocessingInfo* attachComment(
   //! new label.
   void changeBreakStatementsToGotos(SgStatement* loopOrSwitch) {
     using namespace SageBuilder;
-    SgBasicBlock* body = NULL;
+    SgStatement* body = NULL;
     if (isSgWhileStmt(loopOrSwitch) || isSgDoWhileStmt(loopOrSwitch) ||
-  isSgForStatement(loopOrSwitch)) {
+        isSgForStatement(loopOrSwitch)) {
       body = SageInterface::getLoopBody(isSgScopeStatement(loopOrSwitch));
     } else if (isSgSwitchStatement(loopOrSwitch)) {
       body = isSgSwitchStatement(loopOrSwitch)->get_body();
@@ -5632,6 +5631,143 @@ PreprocessingInfo* attachComment(
     for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
       infoList->erase( find(infoList->begin(),infoList->end(),*j) );
   } 
+
+  SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs) {
+    SgStatement* b = fs->get_loop_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b);
+      fs->set_loop_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
+  SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* fs) {
+    SgStatement* b = fs->get_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b);
+      fs->set_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
+  SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* fs) {
+    SgStatement* b = fs->get_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b);
+      fs->set_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
+  SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* fs) {
+    SgStatement* b = fs->get_true_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b);
+      fs->set_true_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
+  SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* fs) {
+    SgStatement* b = fs->get_false_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b); // This works if b is NULL as well (producing an empty block)
+      fs->set_false_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
+  SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* fs) {
+    SgStatement* b = fs->get_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b);
+      fs->set_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
+  SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
+    SgStatement* p = isSgStatement(s->get_parent());
+    ROSE_ASSERT (p);
+    switch (p->variantT()) {
+      case V_SgBasicBlock: return isSgBasicBlock(p);
+      case V_SgForStatement: {
+        if (isSgForStatement(p)->get_loop_body() == s)
+          return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
+        else ROSE_ASSERT (false);
+      }
+      case V_SgWhileStmt: {
+        if (isSgWhileStmt(p)->get_body() == s)
+          return ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
+        else ROSE_ASSERT (false);
+      }
+      case V_SgDoWhileStmt: {
+        if (isSgDoWhileStmt(p)->get_body() == s)
+          return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
+        else ROSE_ASSERT (false);
+      }
+      case V_SgCatchOptionStmt: {
+        if (isSgCatchOptionStmt(p)->get_body() == s)
+          return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
+        else ROSE_ASSERT (false);
+      }
+      case V_SgIfStmt: {
+        if (isSgIfStmt(p)->get_true_body() == s)
+          return ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
+        else if (isSgIfStmt(p)->get_false_body() == s)
+          return ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
+        else ROSE_ASSERT (false);
+      }
+      default: {
+        cerr << p->class_name() << endl;
+        ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
+      }
+    }
+  }
+
+  void changeAllLoopBodiesToBlocks(SgNode* top) {
+    struct Visitor: public AstSimpleProcessing {
+      virtual void visit(SgNode* n) {
+        switch (n->variantT()) {
+          case V_SgForStatement: {
+            ensureBasicBlockAsBodyOfFor(isSgForStatement(n));
+            break;
+          }
+          case V_SgWhileStmt: {
+            ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(n));
+            break;
+          }
+          case V_SgDoWhileStmt: {
+            ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(n));
+            break;
+          }
+          case V_SgIfStmt: {
+            ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(n));
+            ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n));
+            break;
+          }
+          case V_SgCatchOptionStmt: {
+            ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(n));
+            break;
+          }
+          default: break;
+        }
+      }
+    };
+    Visitor().traverse(top, postorder);
+  }
 
 } // end namespace SageInterface
 

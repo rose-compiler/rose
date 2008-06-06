@@ -161,7 +161,7 @@ Outliner::Preprocess::createBlock (SgStatement* s)
     {
       SgBasicBlock* b_new = new SgBasicBlock (ASTtools::newFileInfo ());
       ROSE_ASSERT (b_new);
-      SgBasicBlock * parent = isSgBasicBlock(s->get_parent ());
+      SgStatement * parent = isSgStatement(s->get_parent ());
       ROSE_ASSERT(parent); 
       ASTtools::moveUpPreprocInfo (b_new, s);
       ASTtools::replaceStatement (s, b_new);

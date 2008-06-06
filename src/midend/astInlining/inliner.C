@@ -63,8 +63,7 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
 	       // std::cout << " into possible assignment to " << where_to_write_answer->unparseToString();
 	       // std::cout << " and jump to " << label->get_name().getString() << std::endl;
                SgExpression* return_expr = rs->get_expression();
-               SgBasicBlock* block = new SgBasicBlock(SgNULL_FILE);
-               block->set_endOfConstruct(SgNULL_FILE);
+               SgBasicBlock* block = SageBuilder::buildBasicBlock();
             // printf ("Building IR node #1: new SgBasicBlock = %p \n",block);
                if (return_expr)
                   {
@@ -74,9 +73,7 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
 		    if (return_expr != assignment)
 		      return_expr->set_parent(assignment);
                     SgStatement* assign_stmt = SageBuilder::buildExprStatement(assignment);
-
-                    assign_stmt->set_parent(block);
-                    block->get_statements().push_back(assign_stmt);
+                    SageInterface::appendStatement(assign_stmt, block);
                   }
 
             // block->get_statements().push_back(new SgGotoStatement(SgNULL_FILE, label));
@@ -84,8 +81,7 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
                gotoStatement->set_endOfConstruct(SgNULL_FILE);
                ROSE_ASSERT(n->get_parent() != NULL);
             // printf ("Building gotoStatement #2 = %p  n->get_parent() = %p = %s \n",gotoStatement,n->get_parent(),n->get_parent()->class_name().c_str());
-               block->get_statements().push_back(gotoStatement);
-               gotoStatement->set_parent(block);
+               SageInterface::appendStatement(gotoStatement, block);
                isSgStatement(n->get_parent())->replace_statement(rs, block);
 	       block->set_parent(n->get_parent());
                ROSE_ASSERT(gotoStatement->get_parent() != NULL);

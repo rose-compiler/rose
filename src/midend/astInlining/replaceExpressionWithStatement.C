@@ -180,6 +180,8 @@ void myStatementInsert ( SgStatement* target, SgStatement* newstmt, bool before,
              {
                ROSE_ASSERT(parent != NULL);
                siblings_ptr = &isSgScopeStatement(parent)->getStatementList();
+               parent = isSgStatement(target->get_parent()); // getStatementList might have changed it when parent was a loop or something similar
+               ROSE_ASSERT (parent);
              }
             else
              {
@@ -308,6 +310,9 @@ SgAssignInitializer* splitExpression(SgExpression* from, string newName) {
   assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
   SgStatement* stmt = getStatementOfExpression(from);
   assert (stmt);
+  if (!isSgForInitStatement(stmt->get_parent())) {
+    SageInterface::ensureBasicBlockAsParent(stmt);
+  }
   SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
   // cout << "parent is a " << (parent ? parent->sage_class_name() : "NULL") << endl;
   if (!parent && isSgForInitStatement(stmt->get_parent()))
@@ -352,35 +357,23 @@ SgAssignInitializer* splitExpression(SgExpression* from, string newName) {
     return splitExpression(from); 
     // Need to recompute everything if there were ancestors
   }
-  SgVariableDeclaration* vardecl =
-    new SgVariableDeclaration(SgNULL_FILE, varname, vartype, 0);
-  vardecl->set_endOfConstruct(SgNULL_FILE);
-  vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
-  vardecl->set_definingDeclaration(vardecl);
-  SgInitializedName* initname = 
-    vardecl->get_variables().back();
-  // initname->set_endOfConstruct(SgNULL_FILE);
-  SgVariableSymbol* sym = new SgVariableSymbol(initname);
-  assert (sym);
-  SgVarRefExp* varref = new SgVarRefExp(SgNULL_FILE, sym);
-  varref->set_endOfConstruct(SgNULL_FILE);
+  SgVariableDeclaration* vardecl = SageBuilder::buildVariableDeclaration(varname, vartype, NULL, parent);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym(vardecl);
+  ROSE_ASSERT (sym);
+  SgInitializedName* initname = sym->get_declaration();
+  ROSE_ASSERT (initname);
+  SgVarRefExp* varref = SageBuilder::buildVarRefExp(sym);
   replaceExpressionWithExpression(from, varref);
   // std::cout << "Unparsed 3: " << fromparent->sage_class_name() << " --- " << fromparent->unparseToString() << endl;
   // cout << "From is a " << from->sage_class_name() << endl;
-     SgAssignInitializer* ai = new SgAssignInitializer(SgNULL_FILE, from, vartype);
-     ai->set_endOfConstruct(SgNULL_FILE);
-     from->set_parent(ai);
+     SgAssignInitializer* ai = SageBuilder::buildAssignInitializer(from);
      initname->set_initializer(ai);
      ai->set_parent(initname);
 //  }
-  initname->set_parent(vardecl);
-  initname->set_scope(parent);
   myStatementInsert(stmt, vardecl, true);
   // vardecl->set_parent(stmt->get_parent());
   // FixSgTree(vardecl);
   // FixSgTree(parent);
-  parent->insert_symbol(varname, sym);
-  sym->set_parent(parent->get_symbol_table());
   return ai;
 }
 
@@ -526,7 +519,7 @@ void pushTestIntoBody(SgScopeStatement* loopStmt) {
   using namespace SageBuilder;
   AstPostProcessing(loopStmt);
   SgBasicBlock* new_body = buildBasicBlock();
-  SgBasicBlock* old_body = SageInterface::getLoopBody(loopStmt);
+  SgStatement* old_body = SageInterface::getLoopBody(loopStmt);
   SageInterface::setLoopBody(loopStmt, new_body);
   new_body->set_parent(loopStmt);
   AstPostProcessing(loopStmt);
@@ -542,14 +535,14 @@ void pushTestIntoBody(SgScopeStatement* loopStmt) {
                              buildAssignInitializer(cast),
                              new_body);
   SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
-  new_body->get_statements().push_back(new_decl);
+  SageInterface::appendStatement(new_decl, new_body);
   AstPostProcessing(loopStmt);
   SgIfStmt* loop_break =
     buildIfStmt(buildExprStatement(
                   buildNotOp(buildVarRefExp(varsym))),
                 buildBasicBlock(buildBreakStmt()),
                 buildBasicBlock());
-  new_body->get_statements().push_back(loop_break);
+  SageInterface::appendStatement(loop_break, new_body);
   AstPostProcessing(loopStmt);
   if (isSgDoWhileStmt(loopStmt)) {
     SgName label = "rose_test_label__";
@@ -557,13 +550,12 @@ void pushTestIntoBody(SgScopeStatement* loopStmt) {
     label << ++gensym_counter;
     SgLabelStatement* ls = buildLabelStatement(label, buildBasicBlock(), SageInterface::getEnclosingProcedure(loopStmt));
     SageInterface::changeContinuesToGotos(old_body, ls);
-    old_body->get_statements().push_back(ls);
-    ls->set_parent(old_body);
-    new_body->get_statements().insert(new_body->get_statements().begin(), old_body);
+    // Note that these two insertions are backwards of the resulting statement order
+    SageInterface::prependStatement(ls, new_body);
+    SageInterface::prependStatement(old_body, new_body);
   } else {
-    new_body->get_statements().push_back(old_body);
+    SageInterface::appendStatement(old_body, new_body);
   }
-  old_body->set_parent(new_body);
   AstPostProcessing(loopStmt);
   SageInterface::setLoopCondition(loopStmt, buildExprStatement(buildBoolValExp(true)));
   AstPostProcessing(loopStmt);
@@ -729,10 +721,8 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                       SgVariableSymbol* varsym = new SgVariableSymbol(initname);
                       new_statement->insert_symbol(varname, varsym);
                       varsym->set_parent(new_statement->get_symbol_table());
-                      new_decl->set_parent(new_statement);
-                      new_statement->get_statements().push_back(new_decl);
-                      new_statement->get_statements().push_back(doWhileStatement);
-                      doWhileStatement->set_parent(new_statement);
+                      SageInterface::appendStatement(new_decl, new_statement);
+                      SageInterface::appendStatement(doWhileStatement, new_statement);
                       assert (varsym);
 
                    // SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, new SgVarRefExp(SgNULL_FILE, varsym), new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool()));
@@ -779,8 +769,7 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                       SgVariableSymbol* varsym = new SgVariableSymbol(initname);
                       new_statement->insert_symbol(varname, varsym);
                       varsym->set_parent(new_statement->get_symbol_table());
-                      new_decl->set_parent(new_statement);
-                      new_statement->get_statements().push_back(new_decl);
+                      SageInterface::appendStatement(new_decl, new_statement);
                       ifStatement->set_parent(new_statement);
                       assert (varsym);
 
@@ -791,10 +780,8 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
 		      vr->set_endOfConstruct(SgNULL_FILE);
                       vr->set_lvalue(true);
                       SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp2 );
-                      new_statement->get_statements().push_back(temp_setup);
-                      new_statement->get_statements().push_back(ifStatement);
-                      temp_setup->set_parent(new_statement);
-                      ifStatement->set_parent(new_statement);
+                      SageInterface::appendStatement(temp_setup, new_statement);
+                      SageInterface::appendStatement(ifStatement, new_statement);
                       SgVarRefExp* vr2 = SageBuilder::buildVarRefExp(varsym);
                       SgExprStatement* es = SageBuilder::buildExprStatement(vr2);
                       ifStatement->set_conditional(es);
@@ -816,16 +803,14 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
                       switchCond->set_parent(NULL);
                       SgVariableDeclaration* new_decl = SageBuilder::buildVariableDeclaration(varname, switchCond->get_type(), SageBuilder::buildAssignInitializer(switchCond), new_statement);
                       SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
-                      new_decl->set_parent(new_statement);
-                      new_statement->get_statements().push_back(new_decl);
+                      SageInterface::appendStatement(new_decl, new_statement);
                       switchStatement->set_parent(new_statement);
                       assert (varsym);
 
                    // SgAssignOp* assignment = new SgAssignOp(SgNULL_FILE, new SgVarRefExp(SgNULL_FILE, varsym), new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool()));
                    // SgCastExp* castExp2 = new SgCastExp(SgNULL_FILE, root->get_operand_i(), new SgTypeBool());
 
-                      new_statement->get_statements().push_back(switchStatement);
-                      switchStatement->set_parent(new_statement);
+                      SageInterface::appendStatement(switchStatement, new_statement);
                       SgVarRefExp* vr2 = SageBuilder::buildVarRefExp(varsym);
                       SgExprStatement* es = SageBuilder::buildExprStatement(vr2);
                       switchStatement->set_item_selector(es);

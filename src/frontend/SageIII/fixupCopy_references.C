@@ -914,7 +914,9 @@ SgIfStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
   // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");
 
-     this->get_false_body()->fixupCopy_references(ifStatement_copy->get_false_body(),help);
+     if (this->get_false_body()) {
+       this->get_false_body()->fixupCopy_references(ifStatement_copy->get_false_body(),help);
+     }
 
   // printf ("\nLeaving SgIfStmt::fixupCopy_references() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);
    }

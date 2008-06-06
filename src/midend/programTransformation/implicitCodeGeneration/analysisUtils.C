@@ -90,14 +90,16 @@ stmt_pos_list findFollowingPositions(SgStatement *stmt)
 	  else
 #endif
 	     {
-	       SgStatementPtrList &ts = is->get_true_body()->get_statements(), &fs = is->get_false_body()->get_statements();
+	       SgStatementPtrList &ts = SageInterface::ensureBasicBlockAsTrueBodyOfIf(is)->get_statements(), &fs = SageInterface::ensureBasicBlockAsFalseBodyOfIf(is)->get_statements();
 	       poss.push_back(stmt_pos(&ts, ts.begin(), is->get_true_body()));
-	       poss.push_back(stmt_pos(&fs, fs.begin(), is->get_false_body()));
+	       if (is->get_false_body()) {
+                 poss.push_back(stmt_pos(&fs, fs.begin(), is->get_false_body()));
+               }
 	     }
 	}
      else if (SgWhileStmt *ws = isSgWhileStmt(parent))
 	{
-	  SgStatementPtrList &stmts = ws->get_body()->get_statements();
+	  SgStatementPtrList &stmts = SageInterface::ensureBasicBlockAsBodyOfWhile(ws)->get_statements();
 	  poss.push_back(stmt_pos(&stmts, stmts.begin(), ws->get_body()));
 	  stmt_pos outerPos = findPosition(ws);
 	  ++outerPos.second;
@@ -108,7 +110,7 @@ stmt_pos_list findFollowingPositions(SgStatement *stmt)
        // we cannot check the inits here, as it would lead to a reference being made to a place which is passed multiple times for a one-time initializetion
 	  if (fs->get_test() == stmt)
 	     {
-	       SgStatementPtrList &stmts = fs->get_loop_body()->get_statements();
+	       SgStatementPtrList &stmts = SageInterface::ensureBasicBlockAsBodyOfFor(fs)->get_statements();
 	       poss.push_back(stmt_pos(&stmts, stmts.begin(), fs->get_loop_body()));
 	       stmt_pos outerPos = findPosition(fs);
 	       ++outerPos.second;
@@ -130,7 +132,7 @@ stmt_pos_list findPrecedingPositions(SgStatement *stmt)
 	  stmt_pos_list poss;
 	  poss.push_back(findPosition(ws));
 	  
-	  SgStatementPtrList &stmts = ws->get_body()->get_statements();
+	  SgStatementPtrList &stmts = SageInterface::ensureBasicBlockAsBodyOfWhile(ws)->get_statements();
 	  poss.push_back(stmt_pos(&stmts, stmts.end(), ws->get_body()));
 	  return poss;
 	}

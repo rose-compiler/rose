@@ -224,7 +224,7 @@ convertJumpsToGotos (SgVariableSymbol* jump_var,
                                                            local_target);
       ROSE_ASSERT (new_block);
 
-      SgBasicBlock* jump_par = isSgBasicBlock (jump_stmt->get_parent ());
+      SgStatement* jump_par = isSgStatement (jump_stmt->get_parent ());
       ROSE_ASSERT (jump_par);
 
       // \todo Is the original 'jump_stmt' leaked at this point?

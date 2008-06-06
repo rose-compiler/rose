@@ -26,6 +26,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2006_133.c \
      test2006_135.c \
      test2008_01.c \
+     test2008_02.c \
      math.c \
      complex_01.c \
      constants.c
@@ -65,6 +66,10 @@ $(TEST_Objects): ../../testTranslator
 
 test2005_168.o: $(srcdir)/test2005_168.c
 	../../testTranslator $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+
+# Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
+test2008_02.o: $(srcdir)/test2008_02.c
+	env ROSE_TEST_ELSE_DISAMBIGUATION=x ../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator

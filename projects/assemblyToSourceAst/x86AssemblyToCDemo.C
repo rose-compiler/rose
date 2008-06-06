@@ -378,7 +378,7 @@ void removeIfConstants(SgNode* top) {
     if (!cond) continue;
     SgExpression* conde = cond->get_expression();
     if (!isSgBoolValExp(conde)) continue;
-    SgBasicBlock* bb = isSgBoolValExp(conde)->get_value() ? stmt->get_true_body() : stmt->get_false_body();
+    SgBasicBlock* bb = isSgBoolValExp(conde)->get_value() ? SageInterface::ensureBasicBlockAsTrueBodyOfIf(stmt) : SageInterface::ensureBasicBlockAsFalseBodyOfIf(stmt);
     insertStatementListBefore(stmt, bb->get_statements());
     isSgStatement(stmt->get_parent())->remove_statement(stmt);
   }
@@ -544,8 +544,8 @@ void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgE
       es->set_expression(plugInDefsForExpression(es->get_expression(), defs));
       es->get_expression()->set_parent(es);
       map<SgInitializedName*, SgExpression*> defsSave = defs;
-      plugInAllConstVarDefsForBlock(ifs->get_true_body(), defsSave, conv);
-      plugInAllConstVarDefsForBlock(ifs->get_false_body(), defs, conv);
+      plugInAllConstVarDefsForBlock(SageInterface::ensureBasicBlockAsTrueBodyOfIf(ifs), defsSave, conv);
+      plugInAllConstVarDefsForBlock(SageInterface::ensureBasicBlockAsFalseBodyOfIf(ifs), defs, conv);
       defs.clear();
     } else if (isSgPragmaDeclaration(s)) {
       // Do nothing
@@ -671,7 +671,7 @@ void getPredecessorsFromEnd(SgStatement* s, set<SgStatement*>& result, const map
 
     case V_SgIfStmt: {
       getPredecessorsFromEnd(isSgIfStmt(s)->get_true_body(), result, gotoMap);
-      getPredecessorsFromEnd(isSgIfStmt(s)->get_false_body(), result, gotoMap);
+      getPredecessorsFromEnd(SageInterface::ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(s)), result, gotoMap);
       break;
     }
 
@@ -771,7 +771,7 @@ set<SgInitializedName*> computeLiveVars(SgStatement* stmt, const X86AssemblyToCW
     }
     case V_SgIfStmt: {
       set<SgInitializedName*> liveForBranches = computeLiveVars(isSgIfStmt(stmt)->get_true_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
-      setUnionInplace(liveForBranches, computeLiveVars(isSgIfStmt(stmt)->get_false_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove));
+      setUnionInplace(liveForBranches, (isSgIfStmt(stmt)->get_false_body() != NULL ? computeLiveVars(isSgIfStmt(stmt)->get_false_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove) : set<SgInitializedName*>()));
       return computeLiveVars(isSgIfStmt(stmt)->get_conditional(), conv, liveVarsForLabels, liveForBranches, actuallyRemove);
     }
     case V_SgWhileStmt: {
@@ -874,10 +874,11 @@ void removeEmptyBasicBlocks(SgNode* top) {
     }
     vector<SgNode*> ifs = NodeQuery::querySubTree(top, V_SgIfStmt);
     for (size_t i = 0; i < ifs.size(); ++i) {
-      if (isSgIfStmt(ifs[i])->get_true_body()->get_statements().empty() &&
-          isSgIfStmt(ifs[i])->get_false_body()->get_statements().empty()) {
-        isSgStatement(ifs[i]->get_parent())->remove_statement(isSgIfStmt(ifs[i]));
-      }
+      if (!isSgBasicBlock(isSgIfStmt(ifs[i])->get_true_body())) continue;
+      if (!isSgBasicBlock(isSgIfStmt(ifs[i])->get_true_body())->get_statements().empty()) continue;
+      if (!isSgBasicBlock(isSgIfStmt(ifs[i])->get_false_body())) continue;
+      if (!isSgBasicBlock(isSgIfStmt(ifs[i])->get_false_body())->get_statements().empty()) continue;
+      isSgStatement(ifs[i]->get_parent())->remove_statement(isSgIfStmt(ifs[i]));
     }
   }
 }
@@ -920,6 +921,7 @@ bool endsWithGoto(SgStatement* s) {
     }
     case V_SgIfStmt: {
       return endsWithGoto(isSgIfStmt(s)->get_true_body()) &&
+             isSgIfStmt(s)->get_false_body() != NULL &&
              endsWithGoto(isSgIfStmt(s)->get_false_body());
     }
     default: cerr << "endsWithGoto: " << s->class_name() << endl; abort();
@@ -968,8 +970,8 @@ void structureCode(SgBasicBlock* switchBody) {
     vector<SgNode*> ifs = NodeQuery::querySubTree(switchBody, V_SgIfStmt);
     for (size_t i = 0; i < ifs.size(); ++i) {
       SgIfStmt* ifstmt = isSgIfStmt(ifs[i]);
-      const SgStatementPtrList& stmtsTrue = ifstmt->get_true_body()->get_statements();
-      const SgStatementPtrList& stmtsFalse = ifstmt->get_false_body()->get_statements();
+      const SgStatementPtrList& stmtsTrue = SageInterface::ensureBasicBlockAsTrueBodyOfIf(ifstmt)->get_statements();
+      const SgStatementPtrList& stmtsFalse = SageInterface::ensureBasicBlockAsFalseBodyOfIf(ifstmt)->get_statements();
       if (stmtsTrue.empty()) continue;
       if (stmtsFalse.empty()) continue;
       SgGotoStatement* gsTrue = isSgGotoStatement(stmtsTrue.back());
@@ -979,7 +981,9 @@ void structureCode(SgBasicBlock* switchBody) {
       if (gsFalse->get_label() != ls) continue;
       changed = true;
       ifstmt->get_true_body()->remove_statement(gsTrue);
-      ifstmt->get_false_body()->remove_statement(gsFalse);
+      if (ifstmt->get_false_body() != NULL) {
+        ifstmt->get_false_body()->remove_statement(gsFalse);
+      }
       insertStatementAfter(ifstmt, gsTrue);
     }
   }
@@ -1161,7 +1165,9 @@ int TrackVariableDefs::go(SgStatement* s, TrackVariableDefs::DefMap& lastDef) co
       DefMap mTrue = lastDef;
       DefMap mFalse = lastDef;
       go(isSgIfStmt(s)->get_true_body(), mTrue);
-      go(isSgIfStmt(s)->get_false_body(), mFalse);
+      if (isSgIfStmt(s)->get_false_body() != NULL) {
+        go(isSgIfStmt(s)->get_false_body(), mFalse);
+      }
       DefMap mCommon;
       for (DefMap::const_iterator i = mTrue.begin(); i != mTrue.end(); ++i) {
         DefMap::const_iterator j = mFalse.find(i->first);
@@ -1174,17 +1180,18 @@ int TrackVariableDefs::go(SgStatement* s, TrackVariableDefs::DefMap& lastDef) co
         mTrue.erase(i->first);
         mFalse.erase(i->first);
       }
-      appendStatementList(flush(mTrue), isSgIfStmt(s)->get_true_body());
-      appendStatementList(flush(mFalse), isSgIfStmt(s)->get_false_body());
+      appendStatementList(flush(mTrue), SageInterface::ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(s)));
+      appendStatementList(flush(mFalse), SageInterface::ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(s)));
       lastDef = mCommon;
 #else
       insertStatementListBefore(s, flush(lastDef));
       lastDef.clear();
       go(isSgIfStmt(s)->get_true_body(), lastDef);
-      appendStatementList(flush(lastDef), isSgIfStmt(s)->get_true_body());
+      appendStatementList(flush(lastDef), SageInterface::ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(s)));
       lastDef.clear();
+      ROSE_ASSERT (isSgIfStmt(s)->get_false_body());
       go(isSgIfStmt(s)->get_false_body(), lastDef);
-      appendStatementList(flush(lastDef), isSgIfStmt(s)->get_false_body());
+      appendStatementList(flush(lastDef), SageInterface::ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(s)));
       lastDef.clear();
 #endif
       return 1;
@@ -1553,7 +1560,7 @@ void unparseAsSExpressions(ostream& o, SgStatement* s) {
       o << "(if ";
       unparseAsSExpressions(o, isSgIfStmt(s)->get_conditional());
       unparseAsSExpressions(o, isSgIfStmt(s)->get_true_body());
-      unparseAsSExpressions(o, isSgIfStmt(s)->get_false_body());
+      unparseAsSExpressions(o, (isSgIfStmt(s)->get_false_body() != NULL ? isSgIfStmt(s)->get_false_body() : SageBuilder::buildBasicBlock()));
       o << ")\n";
       break;
     }

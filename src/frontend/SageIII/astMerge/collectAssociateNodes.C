@@ -1541,7 +1541,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                nodeList.insert(ifStatement->get_true_body());
 
             // The false body might not be traversed if there is no true body (see if this fixes the problem)
-               nodeList.insert(ifStatement->get_false_body());
+               if (ifStatement->get_false_body() != NULL) {
+                 nodeList.insert(ifStatement->get_false_body());
+               }
              }
 
        // Ignore these SgStatement cases since we don't permit them to be shared

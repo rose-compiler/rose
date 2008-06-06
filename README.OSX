@@ -1,3 +1,8 @@
+As of the more recent Subversion versions of ROSE and Mac OS X 10.4 for Intel,
+ROSE runs out of the box on Mac.  ROSE is not supported on any non-x86 platform.
+
+The following notes are old, and might give hints about running ROSE on PowerPC:
+
 ROSE is developed on Linux I86 architectures.  We have not worked much on portablity
 to other platforms.  I few users have been using ROSE on Apple's OS X and here are their
 notes.  At some point (likely when we get access to OS X and start using it) we will

@@ -494,8 +494,8 @@ void convertAllForsToWhiles(SgNode* top);
 void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
  
 //! Routines to get and set the body of a loop
-SgBasicBlock* getLoopBody(SgScopeStatement* loop);
-void setLoopBody(SgScopeStatement* loop, SgBasicBlock* body);
+SgStatement* getLoopBody(SgScopeStatement* loop);
+void setLoopBody(SgScopeStatement* loop, SgStatement* body);
 
 //! Routines to get and set the condition of a loop
 SgStatement* getLoopCondition(SgScopeStatement* loop);
@@ -772,8 +772,20 @@ void removeLabeledGotos(SgNode* top);
 
 //! If the given statement contains any break statements in its body, add a new label below the statement and change the breaks into gotos to that new label.
 void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
-//@}
 
+SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
+SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* ws);
+SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
+SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
+SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
+SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
+SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
+
+//! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
+//! clauses to if statements that don't have them
+void changeAllLoopBodiesToBlocks(SgNode* top);
+
+//@}
 
 
 #if 0

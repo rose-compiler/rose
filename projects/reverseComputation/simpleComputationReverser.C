@@ -108,11 +108,13 @@ void reverseOneStatement(SgStatement* stmt, SgBasicBlock* forwardBlockToAppendTo
       SgBasicBlock* trueBodyBackward = buildBasicBlock();
       SgBasicBlock* falseBodyForward = buildBasicBlock();
       SgBasicBlock* falseBodyBackward = buildBasicBlock();
+      SageInterface::ensureBasicBlockAsTrueBodyOfIf(ifs);
+      SageInterface::ensureBasicBlockAsFalseBodyOfIf(ifs);
       reverseOneStatement(ifs->get_true_body(), trueBodyForward, forwardSaveStack, trueBodyBackward, backwardSaveStack);
       reverseOneStatement(ifs->get_false_body(), falseBodyForward, forwardSaveStack, falseBodyBackward, backwardSaveStack);
       SgIfStmt* ifsForward = buildIfStmt(deepCopy(ifs->get_conditional()), trueBodyForward, falseBodyForward);
-      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildBoolValExp(true))), ifsForward->get_true_body());
-      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildBoolValExp(false))), ifsForward->get_false_body());
+      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildBoolValExp(true))), SageInterface::ensureBasicBlockAsTrueBodyOfIf(ifsForward));
+      appendStatement(buildExprStatement(makeStatePush(forwardSaveStack, buildBoolValExp(false))), SageInterface::ensureBasicBlockAsFalseBodyOfIf(ifsForward));
       appendStatement(ifsForward, forwardBlockToAppendTo);
       static int popVariableCounter = 0;
       SgVariableDeclaration* popVariable = buildVariableDeclaration("popResult__" + StringUtility::numberToString(++popVariableCounter), getBoolType(ifs), NULL, backwardBlockToPrependTo);

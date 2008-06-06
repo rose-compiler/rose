@@ -24,7 +24,7 @@ void foo() {
     while (unknown()) {y = a + b;}
   } else if (unknown()) {
     while (unknown()) {}
-    if (unknown()) {y = a + b;} else goto L9;
+    if (unknown()) {y = a + b;} else {goto L9;} // FIXME: the PRE code crashes if this isn't in a block
   } else {
     goto L10;
   }

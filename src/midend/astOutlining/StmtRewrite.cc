@@ -85,18 +85,42 @@ ASTtools::appendStmtsCopy (const SgBasicBlock* a, SgBasicBlock* b)
 void
 ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
 {
-  SgBasicBlock* targetBB = isSgBasicBlock (s_cur->get_parent ());
-  ROSE_ASSERT (targetBB != NULL);
+  switch (s_cur->get_parent()->variantT()) {
+    case V_SgBasicBlock: {
+      SgBasicBlock* targetBB = isSgBasicBlock (s_cur->get_parent ());
+      ROSE_ASSERT (targetBB != NULL);
 
-  SgStatementPtrList& targetBB_list = targetBB->getStatementList ();
-  SgStatementPtrList::iterator i =
-    find (targetBB_list.begin (), targetBB_list.end (), s_cur);
-  ROSE_ASSERT (i != targetBB_list.end ());
-  SgStatement* oldblock = (*i);
+      SgStatementPtrList& targetBB_list = targetBB->getStatementList ();
+      SgStatementPtrList::iterator i =
+        find (targetBB_list.begin (), targetBB_list.end (), s_cur);
+      ROSE_ASSERT (i != targetBB_list.end ());
+      SgStatement* oldblock = (*i);
 
-  targetBB->get_statements().insert(i, s_new);
-  s_new->set_parent(targetBB);
-  LowLevelRewrite::remove (oldblock);
+      targetBB->get_statements().insert(i, s_new);
+      s_new->set_parent(targetBB);
+      LowLevelRewrite::remove (oldblock);
+      break;
+    }
+    case V_SgIfStmt: {
+      SgIfStmt* p = isSgIfStmt(s_cur->get_parent());
+      ROSE_ASSERT (p);
+      s_new->set_parent(p);
+      if (p->get_conditional() == s_cur) {
+        p->set_conditional(s_new);
+      } else if (p->get_true_body() == s_cur) {
+        p->set_true_body(s_new);
+      } else if (s_cur != NULL && p->get_false_body() == s_cur) {
+        p->set_false_body(s_new);
+      } else {
+        ROSE_ASSERT (!"s_cur not found as child of if");
+      }
+      break;
+    }
+    default: {
+      cerr << "replaceStatement: bad parent kind " << s_cur->get_parent()->class_name() << endl;
+      abort();
+    }
+  }
 }
 
 void

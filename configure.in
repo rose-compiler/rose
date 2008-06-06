@@ -84,7 +84,7 @@ USE_EDG_SOURCE_CODE
 
 # echo "In configure: with_edg_source_code = $with_edg_source_code"
 
-# Setup Automake conditional in src/frontend/EDG/EDG_3.3/src/Makefile.am
+# Setup Automake conditional in src/frontend/CxxFrontend/EDG_3.3/src/Makefile.am
 AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
 AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 AM_CONDITIONAL(ROSE_BUILD_ROSEHPCT,test "$with_hpct" = true)
@@ -760,11 +760,15 @@ src/frontend/SageIII/virtualCFG/Makefile
 src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
-src/frontend/EDG/Makefile
-src/frontend/EDG/EDG_3.3/Makefile
-src/frontend/EDG/EDG_3.3/misc/Makefile
-src/frontend/EDG/EDG_3.3/src/Makefile
-src/frontend/EDG_SAGE_Connection/Makefile
+src/frontend/CxxFrontend/Makefile
+src/frontend/CxxFrontend/EDG_3.3/Makefile
+src/frontend/CxxFrontend/EDG_3.3/misc/Makefile
+src/frontend/CxxFrontend/EDG_3.3/src/Makefile
+src/frontend/CxxFrontend/EDG_3.10/Makefile
+src/frontend/CxxFrontend/EDG_3.10/misc/Makefile
+src/frontend/CxxFrontend/EDG_3.10/src/Makefile
+src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
+src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/Disassemblers/Makefile
@@ -1278,14 +1282,6 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 # ExamplePreprocessors/DocumentedExamples/AstProcessingExamples/Makefile
 # ExamplePreprocessors/DocumentedExamples/DataBaseExamples/Makefile
 
-# Removed as part of directory structure reorganization 
-# (that required to support new version of EDG).
-# src/frontend/EDG/EDG_1.4/Makefile
-# src/frontend/EDG/EDG_1.4/misc/Makefile
-# src/frontend/EDG/EDG_1.4/errinfo/Makefile
-# src/frontend/EDG/EDG_1.4/src/Makefile
-# src/frontend/EDG/EDG_1.4/util/Makefile
-
 # src/EDG_Connection/Makefile
 # EDG_3.3/Makefile
 # EDG_3.3/misc/Makefile
@@ -1306,15 +1302,15 @@ AC_CONFIG_COMMANDS([default],[[
 
    # Note that the value of $with_edg_source_code is not available here unless it is exported (now fixed)
    # echo "How is this set: with_edg_source_code = $with_edg_source_code"
-     if test -r $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la; then
-          echo "Copying $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la binary to compile tree src/frontend/EDG/EDG_3.3/src"
-        # cp -p $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.a  src/frontend/EDG/EDG_3.3/src
-          $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la src/frontend/EDG/EDG_3.3/src
+     if test -r $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la; then
+          echo "Copying $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la binary to compile tree src/frontend/CxxFrontend/EDG_3.3/src"
+        # cp -p $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.a  src/frontend/CxxFrontend/EDG_3.3/src
+          $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la src/frontend/CxxFrontend/EDG_3.3/src
      else
           if test "$with_edg_source_code" = true; then
                echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
 #           else
-#              echo "$pathToSourceDir/src/frontend/EDG/EDG_3.3/src/libedg33.la not found, rerun configure --with-edg_source_code ..."
+#              echo "$pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la not found, rerun configure --with-edg_source_code ..."
           fi
      fi
 

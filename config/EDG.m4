@@ -137,15 +137,6 @@ fi
 
 AC_SUBST(GEN_BE)
 
-# DQ (1/14/2007): I am not clear if this is used now that we use libtool.
-# JJW 6-2-2008: it isn't
-dnl EDG_LIBS='$(top_builddir)/src/frontend/EDG/EDG_3.3/util/libedgutil.a $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.a $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.a'
-
-dnl AC_SUBST(EDG_LIBS)
-dnl if test -n "$EDG_LIBS"; then EDG_LIBS="$EDG_LIBS"; fi
-
-# echo "Am I set: EDG_LIBS = $EDG_LIBS"
-
 ])
 
 

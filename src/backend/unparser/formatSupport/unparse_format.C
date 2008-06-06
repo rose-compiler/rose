@@ -448,6 +448,12 @@ UnparseFormat::formatOptionToString(FormatOpt opt)
           case FORMAT_AFTER_BASIC_BLOCK2:
                s = "FORMAT_AFTER_BASIC_BLOCK2";
                break;
+          case FORMAT_BEFORE_NESTED_STATEMENT:
+               s = "FORMAT_BEFORE_NESTED_STATEMENT";
+               break;
+          case FORMAT_AFTER_NESTED_STATEMENT:
+               s = "FORMAT_AFTER_NESTED_STATEMENT";
+               break;
 
           default:
              {
@@ -533,6 +539,16 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
                     insert_newline(1,stmtIndent);
                     break;
                case FORMAT_AFTER_BASIC_BLOCK2:
+                    break;
+               case FORMAT_BEFORE_NESTED_STATEMENT:
+                    if (v != V_SgBasicBlock) {
+                      stmtIndent += tabIndentSize;
+                    }
+                    break;
+               case FORMAT_AFTER_NESTED_STATEMENT:
+                    if (v != V_SgBasicBlock) {
+                      stmtIndent -= tabIndentSize;
+                    }
                     break;
                default:
                   {

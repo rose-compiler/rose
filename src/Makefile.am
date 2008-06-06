@@ -31,10 +31,10 @@ if ROSE_USE_EDG_SOURCE
 # distributed as a binary file (to avoid distribution of the
 # EDG source code as required by the EDG license).
 libedgObjects = \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/decode.lo \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_prelink.lo \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/src/*.lo \
-   $(top_builddir)/src/frontend/EDG_SAGE_Connection/*.lo
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/util/decode.lo \
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo \
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/*.lo \
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/*.lo
 
 #   $(top_builddir)/src/frontend/EDG/EDG_3.3/util/edg_decode.lo 
 
@@ -155,14 +155,14 @@ if ROSE_USE_EDG_SOURCE
 # in the binary version of the ROSE distribution (but are in the compile tree since this 
 # distribution includes the EDG source code).
 libroseEDGlibraries = \
-   $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.la \
-   $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.la
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la \
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/libedgSage.la
 else
 # This is a distribution containing binaries in the source tree (distribution).
 # These versions are available only as binaries and stored in the distribution (in this case).
 libroseEDGlibraries = \
-   $(top_srcdir)/src/frontend/EDG/EDG_3.3/src/libedg33.la \
-   $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.la
+   $(top_srcdir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la \
+   $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/libedgSage.la
 endif
 
 # TODO: correct list!
@@ -371,20 +371,20 @@ $(libdir)/libsage3.so: $(top_builddir)/src/frontend/SageIII/libsage3.so
 #	@echo "Adding links to separate dynamic libraries to simplify development ..."
 #	test -f libastMerge.so            || ln -s $(top_builddir)/src/frontend/SageIII/astMerge/libastMerge.so libastMerge.so
 
-$(libdir)/libedg33.so: $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so
+$(libdir)/libedg33.so: $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.so
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to libedg33.so)"
-	if test -f $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so; then \
-      echo "Error: no $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so exists, configure using --with-edg_source_code=true so that EDG source code can be used to build libedg33.so"; \
+	if test -f $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.so; then \
+      echo "Error: no $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.so exists, configure using --with-edg_source_code=true so that EDG source code can be used to build libedg33.so"; \
    fi
 #	test -f $(libdir)/libedg33.so               || ln -s $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
 #	test -f $(libdir)/libedg33.so               || cp $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
-	cp $(top_builddir)/src/frontend/EDG/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
+	cp $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.so $(libdir)/libedg33.so
 
-$(libdir)/libedgSage.so: $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.so
+$(libdir)/libedgSage.so: $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/libedgSage.so
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
 #	test -f $(libdir)/libedgSage.so             || ln -s $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.so $(libdir)/libedgSage.so
 #	test -f $(libdir)/libedgSage.so             || cp $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.so $(libdir)/libedgSage.so
-	cp $(top_builddir)/src/frontend/EDG_SAGE_Connection/libedgSage.so $(libdir)/libedgSage.so
+	cp $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/libedgSage.so $(libdir)/libedgSage.so
 
 $(libdir)/libastinlining.so: $(top_builddir)/src/midend/astInlining/libastinlining.so
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
@@ -806,7 +806,7 @@ uninstall-local:
 
 
 rebuildPrelinker:
-	rm -f frontend/EDG/EDG_3.3/util/edg_prelink.lo
+	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)

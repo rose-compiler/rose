@@ -2058,6 +2058,8 @@ void
 SgIfStmt::fixupCopy(SgNode* copy, SgCopyHelp & help) const
    {
   // DQ (10/19/2007): Added support to fixup the base class names
+   
+    ROSE_ASSERT (!"fixupCopy on if");
 
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgIfStmt::fixupCopy() this = %p = %s  copy = %p \n",this,this->class_name().c_str(),copy);

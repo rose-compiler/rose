@@ -90,7 +90,8 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                if (expr_parent) continue;
                if (isSgExpression(*j))
                   {
-                    expr_parent = isSgStatement((*j)->get_parent()->get_parent());
+                    expr_parent = isSgStatement((*j)->get_parent());
+                    ROSE_ASSERT (expr_parent);
                   }
                  else
                   {
@@ -148,6 +149,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                               pair<SgStatement*, bool> insert_point;
                               CFGConfig::EdgeType kind = controlflow.edge_type[*out];
                            // printf ("CFGConfig::EdgeType kind = %d \n",(int)kind);
+                              try_next_ancestor:
                               ROSE_ASSERT(expr_parent != NULL);
                               switch (expr_parent->variantT())
                                  {
@@ -159,9 +161,13 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                           else
                                            {
                                           // DQ (3/13/2006): Make this an error (partly as just a test)
-                                          // FIXME
+                                          // FIXME -- We can't really use
+                                          // do-while in tests anymore, since
+                                          // there isn't a good way to put
+                                          // something on the true branch of
+                                          // the test
                                              printf ("kind != CFGConfig::COND_FALSE in SgDoWhileStmt \n");
-                                          // ROSE_ASSERT(false);
+                                             ROSE_ASSERT(false);
                                            }
                                         break;
 
@@ -172,6 +178,12 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                            }
                                           else
                                            {
+                                             if (isSgIfStmt(expr_parent)->get_false_body() == NULL) {
+                                               SgBasicBlock* bb = SageBuilder::buildBasicBlock();
+                                               isSgIfStmt(expr_parent)->set_false_body(bb);
+                                               bb->set_parent(expr_parent);
+                                             }
+                                             ROSE_ASSERT (isSgIfStmt(expr_parent)->get_false_body());
                                              insert_point = make_pair(isSgIfStmt(expr_parent)->get_false_body(), true);
                                            }
                                          break;
@@ -226,6 +238,12 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
                                            }
                                         break;
 #endif
+                                   case V_SgExprStatement:
+                                   case V_SgGotoStatement:
+                                   case V_SgLabelStatement: {
+                                     expr_parent = isSgStatement(expr_parent->get_parent());
+                                     goto try_next_ancestor;
+                                   }
                                    default:
                                         cerr << "Unknown variant " << expr_parent->sage_class_name() << endl;
                                         expr_parent->get_file_info()->display("Location in input code");

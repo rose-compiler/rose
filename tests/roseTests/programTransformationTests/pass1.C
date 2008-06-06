@@ -17,13 +17,14 @@ main(int, char**)
           --b;
         }
 
-     do {
+     while (true) {
           --b; LLL: if (b <= -999) return 0;
+          if (!(b > 2)) break;
         }
-     while (b > 2);
 
-     for (b = 0; b < 10; ++b)
+     for (b = 0; b < 10; ++b) {
           ++z;
+     }
 
      for (int z2 = 7 + z * 5; z2 + 9 < b % 10; ++*(&z2 + 5 - 5))
         {
