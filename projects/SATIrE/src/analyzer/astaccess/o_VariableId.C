@@ -170,6 +170,45 @@ extern "C" void *o_varid_exprid(void *p)
     return e;
 }
 
+#include <o_TypeId.h>
+#include <IrCreation.h>
+// add new, unique temporary variable
+extern "C" void *o_add_tmpvarid(void *p_type)
+{
+    static unsigned long add_tmpvarid_counter = 0;
+
+    TypeId *t = (TypeId *) p_type;
+    SgType *type = get_global_cfg()->numbers_types[t->id];
+    std::stringstream varname;
+    varname << "$tmpvar$" << add_tmpvarid_counter++;
+
+ // Determine the new id value.
+    unsigned long i = get_global_cfg()->exprs_numbers.size();
+
+ // Add the value to the variable symbol and expression maps, and to the
+ // list of variable ids.
+    SgVariableSymbol *sym = Ir::createVariableSymbol(varname.str(), type);
+    get_global_cfg()->varsyms_ids[sym] = i;
+    get_global_cfg()->ids_varsyms[i] = sym;
+
+    SgVarRefExp *exp = Ir::createVarRefExp(sym);
+    get_global_cfg()->exprs_numbers[exp] = i;
+    get_global_cfg()->numbers_exprs.push_back(exp);
+
+    globalVariableIdPool.push_back(i);
+
+    std::cout
+        << "added var " << varname.str()
+        << " with type " << Ir::fragmentToString(type)
+        << " and id " << i
+        << std::endl;
+
+    VariableId *v = (VariableId *) GC_alloc(VariableId::type_id);
+    v->id = i;
+
+    return v;
+}
+
 
 // *** Some more PAG support stuff
 // 10.2 Common Functions
