@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.41 2008-06-02 11:27:33 gergo Exp $
+// $Id: CFGTraversal.C,v 1.42 2008-06-06 13:01:29 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -945,8 +945,15 @@ CFGTraversal::number_exprs()
         for (type = types.begin(); type != types.end(); ++type)
         {
             SgType *t = const_cast<SgType *>(isSgType(*type));
-            cfg->numbers_types[j] = t;
+         // GB (2008-06-05): The [] operator is wrong here.
+         // cfg->numbers_types[j] = t;
+            cfg->numbers_types.push_back(t);
             cfg->types_numbers[t] = j;
+#if 0
+            std::cout << "id " << j << ": added type "
+                << (void *) t << "/" << Ir::fragmentToString(t)
+                << std::endl;
+#endif
         }
         j++;
     }
