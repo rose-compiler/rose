@@ -16,6 +16,7 @@ namespace CompassAnalyses {
         paletteMain();
       }
       virtual void visit(SgNode*) {};
+
       Traversal(Compass::Parameters inputParameters,
           Compass::OutputObject* output)
         : Compass::TraversalBase(output, "Palette-compiled code", "", ""),
