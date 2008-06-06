@@ -49,10 +49,10 @@ touch stamp-h1.in || : exit 1
 # Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
 # and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
 if [ "$do_quiet" = "yes" ]; then
-    find . -name Makefile.in |xargs sed -i~ -r \
-	-e 's/^((LT)?(CXX)?COMPILE =)/\1 @echo "  COMPILE $@";/' \
-	-e 's/^((CXX)?LINK =)/\1 @echo "  LINK    $@";/'       \
-	-e 's/(@LIBTOOL@)/\1 --quiet/g'
+    find . -name Makefile.in |xargs sed -i~ \
+	-e 's/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
+	-e 's/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
+	-e 's/@LIBTOOL@/& --quiet/g'
 fi
 
 echo "***** BUILD TERMINATED NORMALLY *****"
