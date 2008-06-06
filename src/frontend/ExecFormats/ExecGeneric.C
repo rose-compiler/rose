@@ -224,7 +224,7 @@ ExecFile::find_holes()
     std::vector<std::pair<addr_t,addr_t> > extents;
 
     addr_t offset = 0;
-    while (offset < sb.st_size) {
+    while (offset < (uint64_t)sb.st_size) {
         std::vector<ExecSection*> sections = lookup_section_offset(offset, 1);
         if (0==sections.size()) {
             addr_t next_offset = lookup_next_offset(offset);

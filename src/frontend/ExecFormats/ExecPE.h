@@ -223,6 +223,7 @@ class ObjectTableEntry {
   public:
     ObjectTableEntry(const ObjectTableEntry_disk *disk)
         {ctor(disk);}
+    virtual ~ObjectTableEntry() {};
     virtual void dump(FILE*, const char *prefix);
     
     /* These are the native-format versions of the same members described in the ObjectTableEntry_disk struct. */

@@ -445,7 +445,6 @@ ImportSegment::dump(FILE *f, const char *prefix)
 {
     char p[4096];
     sprintf(p, "%sImportSegment.", prefix);
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     ExecSegment::dump(f, p);
     for (size_t i=0; i<dirs.size(); i++)

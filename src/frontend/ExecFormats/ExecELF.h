@@ -234,6 +234,7 @@ class ElfSegmentTableEntry {
         : extra(NULL), nextra(0) {ctor(sex, disk);}
     ElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
         : extra(NULL), nextra(0) {ctor(sex, disk);}
+    virtual ~ElfSegmentTableEntry() {};
     virtual void dump(FILE*, const char *prefix);
 
     /* These are the native-format versions of the same members described in Elf*SegmentTableEntry_disk */
@@ -366,6 +367,7 @@ class ElfSymbol {
   public:
     ElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk) {ctor(sex, disk);}
     ElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk) {ctor(sex, disk);}
+    virtual ~ElfSymbol() {};
     virtual void dump(FILE *f, const char *prefix) {dump(f, prefix, NULL);}
     void dump(FILE*, const char *prefix, ExecSection*);
     ElfSymBinding get_binding() {return (ElfSymBinding)(st_info>>4);}

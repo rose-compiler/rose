@@ -570,9 +570,9 @@ ElfSegmentTable::dump(FILE *f, const char *prefix)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     ExecSection::dump(f, p);
-    fprintf(f, "%s%-*s = %u entries\n", p, w, "size", entries.size());
+    fprintf(f, "%s%-*s = %zd entries\n", p, w, "size", entries.size());
     for (size_t i=0; i<entries.size(); i++) {
-        sprintf(p, "%sSegmentTable.entries[%d].", prefix, i);
+        sprintf(p, "%sSegmentTable.entries[%zd].", prefix, i);
         entries[i]->dump(f, p);
     }
 }
@@ -603,7 +603,7 @@ ElfDynamicEntry::dump(FILE *f, const char *prefix)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     if (d_tag>=34) {
-        fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "d_tag",      d_tag);
+        fprintf(f, "%s%-*s = 0x%08u\n",          p, w, "d_tag",      d_tag);
     } else {
         fprintf(f, "%s%-*s = %u\n",              p, w, "d_tag",      d_tag);
     }
@@ -624,21 +624,21 @@ ElfDynamicSegment::ctor(ElfFileHeader *fhdr, ElfSection *section,
         const Elf32DynamicEntry_disk *disk = (const Elf32DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
         entry_size = sizeof(Elf32DynamicEntry_disk);
         nentries = file_size / entry_size;
-        for (int i=0; i<nentries; i++) {
+        for (size_t i=0; i<nentries; i++) {
             entries.push_back(ElfDynamicEntry(fhdr->fileFormat.sex, disk+i));
         }
     } else if (8==fhdr->fileFormat.word_size) {
         const Elf64DynamicEntry_disk *disk = (const Elf64DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
         entry_size = sizeof(Elf64DynamicEntry_disk);
         nentries = file_size / entry_size;
-        for (int i=0; i<nentries; i++) {
+        for (size_t i=0; i<nentries; i++) {
             entries.push_back(ElfDynamicEntry(fhdr->fileFormat.sex, disk+i));
         }
     } else {
         throw FormatError("bad ELF word size");
     }
 
-    for (int i=0; i<nentries; i++) {
+    for (size_t i=0; i<nentries; i++) {
         switch (entries[i].d_tag) {
           case 0:
             /* DT_NULL: unused entry */
@@ -716,7 +716,7 @@ dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, E
 {
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, name, addr);
     std::vector<ExecSection*> sections = ef->lookup_section_rva(addr);
-    for (int i=0; i<sections.size(); i++) {
+    for (size_t i=0; i<sections.size(); i++) {
         fprintf(f, "%s%-*s     [%d] \"%s\"", p, w, "...", sections[i]->get_id(), sections[i]->get_name().c_str());
         addr_t offset = addr - sections[i]->get_mapped();
         if (offset>0) {
@@ -758,7 +758,7 @@ ElfDynamicSegment::dump(FILE *f, const char *prefix)
     dump_section_rva(f, p, w, "versym",  dt_versym,  ef);
     
     for (size_t i=0; i<other.size(); i++) {
-        sprintf(p, "%sDynamicSegment.other[%d].", prefix, i);
+        sprintf(p, "%sDynamicSegment.other[%zd].", prefix, i);
         other[i].dump(f, p);
     }
 }
@@ -798,9 +798,9 @@ ElfSymbol::dump(FILE *f, const char *prefix, ExecSection *section)
     const char *s;
     char sbuf[256];
 
-    fprintf(f, "%s%-*s = %u \"%s\"\n",  p, w, "name",  st_name, name.c_str());
-    fprintf(f, "%s%-*s = %u\n",         p, w, "value", st_value);
-    fprintf(f, "%s%-*s = %u\n",         p, w, "size",  st_size);
+    fprintf(f, "%s%-*s = %"PRIu64" \"%s\"\n", p, w, "name",  st_name, name.c_str());
+    fprintf(f, "%s%-*s = %"PRIu64"\n",        p, w, "value", st_value);
+    fprintf(f, "%s%-*s = %"PRIu64"\n",        p, w, "size",  st_size);
 
     fprintf(f, "%s%-*s = %u",         p, w, "info",  st_info);
     switch (get_type()) {
@@ -829,7 +829,7 @@ ElfSymbol::dump(FILE *f, const char *prefix, ExecSection *section)
 
     fprintf(f, "%s%-*s = %u\n",         p, w, "res1",  st_res1);
 
-    if (section && section->get_id()==st_shndx) {
+    if (section && section->get_id()==(int)st_shndx) {
         fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "st_shndx",
                 section->get_id(), section->get_name().c_str(), section->get_offset(), section->get_size());
     } else {
@@ -875,9 +875,9 @@ ElfSymbolSection::dump(FILE *f, const char *prefix)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     ElfSection::dump(f, p);
-    fprintf(f, "%s%-*s = %u symbols\n", p, w, "size", symbols.size());
+    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", symbols.size());
     for (size_t i=0; i<symbols.size(); i++) {
-        sprintf(p, "%sElfSymbolSection.symbols[%d].", prefix, i);
+        sprintf(p, "%sElfSymbolSection.symbols[%zd].", prefix, i);
         ExecSection *section = get_file()->lookup_section_id(symbols[i].st_shndx);
         symbols[i].dump(f, p, section);
     }
