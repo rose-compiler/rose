@@ -1,2 +1,5 @@
-compass_defUseAnalysis
+nullDeref
 locPerFunction
+constCast
+cyclomaticComplexity
+voidStar

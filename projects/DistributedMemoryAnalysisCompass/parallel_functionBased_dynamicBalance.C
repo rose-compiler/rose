@@ -144,7 +144,6 @@ int main(int argc, char **argv)
 	    //  (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
 	    //  "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
 	    //      << std::endl; 
-
 	    (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
 	  }
 	}
