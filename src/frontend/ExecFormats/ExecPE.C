@@ -373,11 +373,11 @@ ObjectTable::dump(FILE *f, const char *prefix)
 void
 ImportDirectory::ctor(const ImportDirectory_disk *disk)
 {
-    func_names_rva  = le_to_host(disk->func_names_rva);
-    res1            = le_to_host(disk->res1);
-    res2            = le_to_host(disk->res2);
-    module_name_rva = le_to_host(disk->module_name_rva);
-    addrs_rva       = le_to_host(disk->addrs_rva);
+    hintnames_rva   = le_to_host(disk->hintnames_rva);
+    time            = le_to_host(disk->time);
+    forwarder_chain = le_to_host(disk->forwarder_chain);
+    dll_name_rva    = le_to_host(disk->dll_name_rva);
+    bindings_rva    = le_to_host(disk->bindings_rva);
 }
 
 /* Print debugging info */
@@ -388,48 +388,54 @@ ImportDirectory::dump(FILE *f, const char *prefix)
     sprintf(p, "%sImportDirectory.", prefix);
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "func_names_rva",  func_names_rva);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "res1",            res1);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "res2",            res2);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "module_name_rva", module_name_rva);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "addrs_rva",       addrs_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "hintnames_rva",   hintnames_rva);
+    fprintf(f, "%s%-*s = %lu %s",          p, w, "time",            (unsigned long)time, ctime(&time));
+    fprintf(f, "%s%-*s = %u\n",            p, w, "forwarder_chain", forwarder_chain);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "dll_name_rva",    dll_name_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "bindings_rva",    bindings_rva);
 }
 
 /* Constructor */
 void
 ImportSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
 {
-    /* Read idata diretory entries--one per dll*/
+    size_t entry_size = sizeof(ImportDirectory_disk);
+    ImportDirectory_disk zero;
+    memset(&zero, 0, sizeof zero);
+
+    /* Read idata directory entries--one per DLL*/
     for (size_t i=0; 1; i++) {
-        size_t entry_size = sizeof(ImportDirectory_disk);
+        /* End of list is marked by an entry of all zero. */
         const ImportDirectory_disk *idir_disk = (const ImportDirectory_disk*)section->content(i*entry_size, entry_size);
+        if (!memcmp(&zero, idir_disk, sizeof zero)) break;
         ImportDirectory *idir = new ImportDirectory(idir_disk);
-        if (!idir->module_name_rva) {
-            delete idir;
-            break;
-        }
         dirs.push_back(idir);
 
-        ROSE_ASSERT(idir->module_name_rva >= get_mapped_rva());
-        addr_t module_name_offset = get_offset() + idir->module_name_rva - get_mapped_rva();
-        module_name = section->content_str(module_name_offset);
-        fprintf(stderr, "ROBB: dll = \"%s\"\n", module_name.c_str());
+        /* The library's name is indicated by RVA. We need a section offset instead. */
+        ROSE_ASSERT(idir->dll_name_rva >= get_mapped_rva());
+        addr_t dll_name_offset = get_offset() + idir->dll_name_rva - get_mapped_rva();
+        std::string dll_name = section->content_str(dll_name_offset);
+        fprintf(stderr, "ROBB: dll = \"%s\"\n", dll_name.c_str());
 
-        ROSE_ASSERT(idir->func_names_rva >= get_mapped_rva());
-        for (addr_t names_rvalist_offset = get_offset() + idir->func_names_rva - get_mapped_rva(); 
-             0!=le_to_host(*(const uint32_t*)section->content(names_rvalist_offset, 4));
-             names_rvalist_offset += 4) {
-            fprintf(stderr, "        ----\n");
-            fprintf(stderr, "        names_rvalist_offset = %"PRIu64"\n", names_rvalist_offset);
-            addr_t func_name_rva = le_to_host(*(const uint32_t*)section->content(names_rvalist_offset, 4));
-            ROSE_ASSERT(func_name_rva >= get_mapped_rva());
-            addr_t func_name_offset = get_offset() + func_name_rva - get_mapped_rva();
-            fprintf(stderr, "        func_name_offset     = %"PRIu64"\n", func_name_offset);
-            unsigned res1 = le_to_host(*(const uint16_t*)section->content(func_name_offset, 2));
-            fprintf(stderr, "        res1                 = 0x%04x\n", res1);
-            fprintf(stderr, "        func_name            = \"%s\"\n", section->content_str(func_name_offset+2));
+        /* The thunks is an array of RVAs that point to hint/name pairs for the entities imported from the DLL that we're
+         * currently processing. Each hint is a two-byte little-endian value. Each name is NUL-terminated. The array address
+         * and hint/name pair addresses are all specified with RVAs, but we need to convert them to section offsets in order
+         * to read them since we've not mapped sections to their preferred base addresses. */
+        if (idir->hintnames_rva < get_mapped_rva())
+            throw FormatError("hint/name RVA is before beginning of \".idata\" segment");
+        if (idir->bindings_rva < get_mapped_rva())
+            throw FormatError("bindings RVA is before beginning of \".idata\" segment");
+        addr_t hintnames_offset = get_offset() + idir->hintnames_rva - get_mapped_rva();
+        addr_t bindings_offset  = get_offset() + idir->bindings_rva  - get_mapped_rva();
+        while (1) {
+            addr_t hint_rva = le_to_host(*(const uint32_t*)section->content(hintnames_offset, sizeof(uint32_t)));
+            if (0==hint_rva) break; /*list of RVAs is null terminated */
+            addr_t hint_offset = get_offset() + hint_rva - get_mapped_rva();
+            unsigned hint = le_to_host(*(const uint16_t*)section->content(hint_offset, sizeof(uint16_t)));
+            const char *name = section->content_str(hint_offset+sizeof(uint16_t));
+            addr_t binding = le_to_host(*(const uint32_t*)section->content(bindings_offset, sizeof(uint32_t)));
+            /*FIXME: what to do with "hint", "name", and "binding"? */
         }
-
     }
 }
 
@@ -444,7 +450,6 @@ ImportSegment::dump(FILE *f, const char *prefix)
     ExecSegment::dump(f, p);
     for (size_t i=0; i<dirs.size(); i++)
         dirs[i]->dump(f, p);
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "module_name", module_name.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

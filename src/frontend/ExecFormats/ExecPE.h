@@ -248,19 +248,20 @@ class ObjectTable : public ExecSection {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct ImportDirectory_disk {
-    uint32_t            func_names_rva;
-    uint32_t            res1;
-    uint32_t            res2;
-    uint32_t            module_name_rva;
-    uint32_t            addrs_rva;
+    uint32_t            hintnames_rva;          /* address (RVA) of array of addresses (RVAs) of hint/name pairs */
+    uint32_t            time;
+    uint32_t            forwarder_chain;
+    uint32_t            dll_name_rva;           /* address of NUL-terminated library name */
+    uint32_t            bindings_rva;           /* address (RVA) of array of object addresses after binding to DLL */
 };
 
 class ImportDirectory {
   public:
     ImportDirectory(const ImportDirectory_disk *disk) {ctor(disk);}
     void dump(FILE*, const char *prefix);
-    addr_t              func_names_rva, module_name_rva, addrs_rva;
-    unsigned            res1, res2;
+    addr_t              hintnames_rva, bindings_rva, dll_name_rva;
+    time_t              time;
+    unsigned            forwarder_chain;
   private:
     void ctor(const ImportDirectory_disk*);
 };
@@ -274,7 +275,6 @@ class ImportSegment : public ExecSegment {
   private:
     void ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
     std::vector<ImportDirectory*> dirs;
-    std::string         module_name;
 };
 
 
