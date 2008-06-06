@@ -31,5 +31,5 @@ main ( int argc, char* argv[] )
      if (project->get_verbose() > 0)
           printf ("Calling the backend() \n");
 
-     return backend(project);
+     return 0;
    }

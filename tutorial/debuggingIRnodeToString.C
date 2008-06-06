@@ -46,5 +46,5 @@ main ( int argc, char* argv[] )
           i++;
         }
 
-     return backend(project);
+     return 0;
    }

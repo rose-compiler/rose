@@ -37,5 +37,6 @@ main ( int argc, char* argv[] )
   // return backend(project);
 
   // Build the AST, generate the source code and call the backend compiler ... 
-     return backend(frontend(l));
+     frontend(l);
+     return 0;
    }

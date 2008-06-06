@@ -8,5 +8,6 @@ int main( int argc, char * argv[] )
      SgProject* project = frontend(argc,argv);
 
      generatePDF ( *project );
+     return 0;
    }
 
