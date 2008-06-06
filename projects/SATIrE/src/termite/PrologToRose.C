@@ -440,7 +440,8 @@ PrologToRose::testFileInfo(Sg_File_Info* fi) {
 /** create Sg_File_Info from term*/
 Sg_File_Info*
 PrologToRose::createFileInfo(PrologTerm* t) {
-  debug("unparsing file  info");
+  debug("unparsing file info");
+  cerr<<t->getRepresentation()<<endl;
   Sg_File_Info *fi = NULL;
   if (PrologAtom *a = dynamic_cast<PrologAtom*>(t)) {
     /*node new or file info removed during transformation*/
@@ -456,12 +457,12 @@ PrologToRose::createFileInfo(PrologTerm* t) {
     assert_arity(u, 3);
     if(u->at(0)->getName() != "compilergenerated") {
       /* a filename is present => retrieve data from term and generete node*/
-      PrologString* filename = dynamic_cast<PrologString*>(u->at(0));
+      PrologAtom* filename = dynamic_cast<PrologAtom*>(u->at(0));
       PrologInt* line = dynamic_cast<PrologInt*>(u->at(1));
       PrologInt* col = dynamic_cast<PrologInt*>(u->at(2));
       /* filename must be a term representing a character string, 
        * line and col are integers */
-      assert(filename != (PrologString*) 0);
+      assert(filename != (PrologAtom*) 0);
       assert(line != (PrologInt*) 0);
       assert(col != (PrologInt*) 0);
       assert(line->getValue() >= 0);
@@ -804,7 +805,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing long int");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
     ROSE_ASSERT((s != 0) || (i != 0));
     long int number;
@@ -819,7 +820,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing unsigned long int");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
     ROSE_ASSERT((s != 0) || (i != 0));
     unsigned long int number;
@@ -834,7 +835,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing long long int");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
     ROSE_ASSERT((s != 0) || (i != 0));
     long long int number;
@@ -849,7 +850,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing unsigned long long int");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
     ROSE_ASSERT((s != 0) || (i != 0));
     unsigned long long int number;
@@ -881,7 +882,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing float");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     float f;
     istringstream i(s->getName());
     i >> f;
@@ -891,7 +892,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing double");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     double f;
     istringstream i(s->getName());
     i >> f;
@@ -901,7 +902,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing long double");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     long double f;
     istringstream i(s->getName());
     i >> f;
@@ -915,7 +916,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
     char number;
-    if (PrologString* s = dynamic_cast<PrologString*>(annot->at(0))) {
+    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
       number = unescape_char(s->getName());
     } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
       number = val->getValue();
@@ -931,7 +932,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
     unsigned char number;
-    if (PrologString* s = dynamic_cast<PrologString*>(annot->at(0))) {
+    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
       /*istringstream instr(s->getName());
 	instr >> number;*/
       number = unescape_char(s->getName());
@@ -948,7 +949,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing wchar");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     ROSE_ASSERT(s != NULL);
     unsigned long number;
     istringstream instr(s->getName());
@@ -960,7 +961,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
   } else if (vtype == SG_PREFIX "bool_val_exp") {
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     int i;
     istringstream str(s->getName());
     str >> i;
@@ -968,7 +969,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
   } else if (vtype == SG_PREFIX "string_val") {
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologString* s = dynamic_cast<PrologString*>(annot->at(0));
+    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     ve = new SgStringVal(fi,s->getName());
   }
 	
@@ -1227,7 +1228,7 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   /* get type*/
   SgType* tpe = createType(annot->at(0));
   /* create name*/
-  PrologString *nstring = dynamic_cast<PrologString*>(annot->at(1));
+  PrologAtom *nstring = dynamic_cast<PrologAtom*>(annot->at(1));
   SgName sgnm = nstring->getName().c_str();
   /* create a dummy varialbe declaration, only for the unparser to get the scope */
   SgVariableDeclaration* vdec = new SgVariableDeclaration(
@@ -1366,7 +1367,7 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
   SgFunctionType* func_type = dynamic_cast<SgFunctionType*>(createType(annot->at(0)));
   ROSE_ASSERT(func_type != NULL);
   /* get functioon name*/
-  PrologString* func_name_term = dynamic_cast<PrologString*>(annot->at(1));
+  PrologAtom* func_name_term = dynamic_cast<PrologAtom*>(annot->at(1));
   ROSE_ASSERT(func_name_term != NULL);
   SgName func_name = func_name_term->getName();
   /* create declaration*/
@@ -1412,7 +1413,7 @@ PrologToRose::createMemberFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list
   SgFunctionType* func_type = dynamic_cast<SgFunctionType*>(createType(annot->at(0)));
   ROSE_ASSERT(func_type != NULL);
   /* get functioon name*/
-  PrologString* func_name_term = dynamic_cast<PrologString*>(annot->at(1));
+  PrologAtom* func_name_term = dynamic_cast<PrologAtom*>(annot->at(1));
   ROSE_ASSERT(func_name_term != NULL);
   SgName func_name = func_name_term->getName();
   /* create declaration*/
@@ -1982,7 +1983,7 @@ PrologToRose::createLabelStatement(Sg_File_Info* fi,PrologCompTerm* t) {
   PrologCompTerm* u = retrieveAnnotation(t);
   ROSE_ASSERT(u != NULL);
   /* extract the label name*/
-  PrologString* s = dynamic_cast<PrologString*>(u->at(0));
+  PrologAtom* s = dynamic_cast<PrologAtom*>(u->at(0));
   ROSE_ASSERT(s != NULL);
   /* create SgLabelStatement with helper function*/
   /* makeLabel alreay asserts a non-NULL return value*/
@@ -1996,7 +1997,7 @@ PrologToRose::createGotoStatement(Sg_File_Info* fi,PrologCompTerm* t) {
   PrologCompTerm* u = retrieveAnnotation(t);
   ROSE_ASSERT(u != NULL);
   /* extract the label name*/
-  PrologString* s = dynamic_cast<PrologString*>(u->at(0));
+  PrologAtom* s = dynamic_cast<PrologAtom*>(u->at(0));
   ROSE_ASSERT(s != NULL);
   /* create dummy SgLabelStatement with helper function*/
   Sg_File_Info* fi2 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
@@ -2061,7 +2062,7 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   /* if there is a child, it is a definition*/
   SgClassDefinition* class_def = isSgClassDefinition(child1);
   /*retrieve name, class type and type*/
-  PrologString* class_name_s = dynamic_cast<PrologString*>(annot->at(0));
+  PrologAtom* class_name_s = dynamic_cast<PrologAtom*>(annot->at(0));
   ROSE_ASSERT(class_name_s != NULL);
   /* get the class type enum*/
   PrologInt* class_type = dynamic_cast<PrologInt*>(annot->at(1));
@@ -2412,13 +2413,13 @@ PrologToRose::isPrologString(PrologTerm* t) {
 }
 
 /**
- * create std::string* from PrologString* or PrologAtom*
+ * create std::string* from PrologAtom* or PrologAtom*
  * including downcast from PrologTerm*.
  * If both casts fail, an assertion will fail;
  */
 string*
 PrologToRose::toStringP(PrologTerm* t) {
-  if(PrologString* s =isPrologString(t)) {
+  if(PrologAtom* s =isPrologAtom(t)) {
     return new string(s->getName());
   } else {
     PrologAtom* s = isPrologAtom(t);

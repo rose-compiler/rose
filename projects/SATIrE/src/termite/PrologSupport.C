@@ -106,7 +106,7 @@ PrologCompTerm*
 PrologSupport::getFileInfo(Sg_File_Info* inf) {		
     ROSE_ASSERT(inf != NULL);
     PrologCompTerm* fi = new PrologCompTerm("file_info");
-    fi->addSubterm(new PrologString(inf->get_filename()));
+    fi->addSubterm(new PrologAtom(inf->get_filename()));
     fi->addSubterm(new PrologInt(inf->get_line()));
     fi->addSubterm(new PrologInt(inf->get_col()));
     return fi;
@@ -175,7 +175,7 @@ PrologSupport::getFunctionDeclarationSpecific(SgFunctionDeclaration* decl) {
     PrologCompTerm* t = new PrologCompTerm("function_declaration_annotation");
     /* add type and name*/
     t->addSubterm(getTypeSpecific(decl->get_type()));
-    t->addSubterm(new PrologString(decl->get_name().getString()));
+    t->addSubterm(new PrologAtom(decl->get_name().getString()));
     t->addSubterm(getDeclarationModifierSpecific(&(decl->get_declarationModifier())));
     return t;
 }
@@ -286,13 +286,13 @@ PrologSupport::getClassTypeSpecific(SgType* mtype) {
     PrologCompTerm* t = new PrologCompTerm("class_type");
     ROSE_ASSERT(t != NULL);
     /*add base type*/
-    t->addSubterm(new PrologString(ctype->get_name().str()));
+    t->addSubterm(new PrologAtom(ctype->get_name().str()));
     SgClassDeclaration* d = isSgClassDeclaration(ctype->get_declaration());
     ROSE_ASSERT(d != NULL);
     /* what kind of class is this?*/
     t->addSubterm(new PrologInt(d->get_class_type()));
     /* add qualified name of scope*/
-    t->addSubterm(new PrologString(d->get_scope()->get_scope()->get_qualified_name().getString()));
+    t->addSubterm(new PrologAtom(d->get_scope()->get_scope()->get_qualified_name().getString()));
     return t;
 }
 
@@ -309,7 +309,7 @@ PrologSupport::getTypedefTypeSpecific(SgType* mtype) {
 
     /* create term and add name*/
     PrologCompTerm* t = new PrologCompTerm("typedef_type");
-    t->addSubterm(new PrologString(tp->get_name().getString()));
+    t->addSubterm(new PrologAtom(tp->get_name().getString()));
 
     /* add base type */
     if (tp->get_base_type() != NULL)
@@ -331,7 +331,7 @@ PrologSupport::getConstructorInitializerSpecific(SgConstructorInitializer* ci) {
     /* get name from class declaration*/
     SgClassDeclaration* dec = ci->get_class_decl();
     ROSE_ASSERT(dec != NULL);
-    t->addSubterm(new PrologString(dec->get_qualified_name().getString()));
+    t->addSubterm(new PrologAtom(dec->get_qualified_name().getString()));
     return t;
 }
 
@@ -454,7 +454,7 @@ PrologSupport::getTypeSpecific(SgType* stype) {
 	    PrologAtom(prologize(cn));
     } else {
 	PrologCompTerm* ct  = new PrologCompTerm("not_yet_implemented");
-	ct->addSubterm(new PrologString(stype->class_name()));
+	ct->addSubterm(new PrologAtom(stype->class_name()));
 	t = ct;
     }
     /*we should have created some type info here*/
@@ -576,32 +576,32 @@ PrologSupport::getValueExpSpecific(SgValueExp* astNode) {
 	/* let the << handle the conversion to string*/
 	//o << n->get_value();
 	//string s = o.str();
-	/* add a new PrologString*/
-	//t->addSubterm(new PrologString(s));
+	/* add a new PrologAtom*/
+	//t->addSubterm(new PrologAtom(s));
 	t->addSubterm(new PrologInt(n->get_value()));
     } else if (SgUnsignedLongVal* n = dynamic_cast<SgUnsignedLongVal*>(astNode)) {
 	//ostringstream o;
 	//o << n->get_value();
 	//string s = o.str();
-	//t->addSubterm(new PrologString(s));
+	//t->addSubterm(new PrologAtom(s));
 	t->addSubterm(new PrologInt(n->get_value()));
     } else if (SgLongLongIntVal* n = dynamic_cast<SgLongLongIntVal*>(astNode)) {
 	//ostringstream o;
 	//o << n->get_value();
 	//string s = o.str();
-	//t->addSubterm(new PrologString(s));
+	//t->addSubterm(new PrologAtom(s));
 	t->addSubterm(new PrologInt(n->get_value()));
     } else if (SgUnsignedLongLongIntVal* n = dynamic_cast<SgUnsignedLongLongIntVal*>(astNode)) {
 	//ostringstream o;
 	//o << n->get_value();
 	//string s = o.str();
-	//t->addSubterm(new PrologString(s));
+	//t->addSubterm(new PrologAtom(s));
 	t->addSubterm(new PrologInt(n->get_value()));
     } else if(SgEnumVal* n = dynamic_cast<SgEnumVal*>(astNode)) { /*FIXME*/
 	/* value*/
 	t->addSubterm(new PrologInt(n->get_value())); 
 	/* name of value*/
-	t->addSubterm(new PrologString(n->get_name().getString()));
+	t->addSubterm(new PrologAtom(n->get_name().getString()));
 	/* name of declaration*/
 	t->addSubterm(traverseSingleNode(n->get_declaration()));
 		
@@ -611,39 +611,39 @@ PrologSupport::getValueExpSpecific(SgValueExp* astNode) {
 	ostringstream o;
 	o << n->get_value();
 	string s = o.str();
-	t->addSubterm(new PrologString(s));
+	t->addSubterm(new PrologAtom(s));
     } else if (SgDoubleVal* n = dynamic_cast<SgDoubleVal*>(astNode)) {
 	ostringstream o;
 	o << n->get_value();
 	string s = o.str();
-	t->addSubterm(new PrologString(s));
+	t->addSubterm(new PrologAtom(s));
     } else if (SgLongDoubleVal* n = dynamic_cast<SgLongDoubleVal*>(astNode)) {
 	ostringstream o;
 	o << n->get_value();
 	string s = o.str();
-	t->addSubterm(new PrologString(s));
+	t->addSubterm(new PrologAtom(s));
     } 
     /* boolean type */ 
     else if (SgBoolValExp* n = dynamic_cast<SgBoolValExp*>(astNode)) {
 	ostringstream o;
 	o << n->get_value();
 	string s = o.str();
-	t->addSubterm(new PrologString(s));
+	t->addSubterm(new PrologAtom(s));
     } 
     /* char and string types */
     else if (SgCharVal* n = dynamic_cast<SgCharVal*>(astNode)) {
-	t->addSubterm(new PrologString(
+	t->addSubterm(new PrologAtom(
 				       escape_string(std::string(1, (unsigned char)n->get_value()))));
     } else if (SgUnsignedCharVal* n = dynamic_cast<SgUnsignedCharVal*>(astNode)) {
-	t->addSubterm(new PrologString(
+	t->addSubterm(new PrologAtom(
 				       escape_string(std::string(1, n->get_value()))));
     } else if (SgWcharVal* n = dynamic_cast<SgWcharVal*>(astNode)) {
 	ostringstream o;
 	o << n->get_valueUL();
 	string s = o.str();
-	t->addSubterm(new PrologString(escape_string(s)));
+	t->addSubterm(new PrologAtom(escape_string(s)));
     } else if (SgStringVal* n = dynamic_cast<SgStringVal*>(astNode)) {
-	t->addSubterm(new PrologString(escape_string(n->get_value())));
+	t->addSubterm(new PrologAtom(escape_string(n->get_value())));
     } else {
 	t->addSubterm(new PrologAtom("null"));
     }
@@ -675,7 +675,7 @@ PrologSupport::getVarRefExpSpecific(SgVarRefExp* vr) {
     /* type*/
     annot->addSubterm(getTypeSpecific(n->get_typeptr()));
     /* name*/
-    annot->addSubterm(new PrologString(n->get_name().getString()));
+    annot->addSubterm(new PrologAtom(n->get_name().getString()));
     /* static? (relevant for unparsing if scope is a class)*/
     SgDeclarationStatement* vdec = n->get_declaration();
     if (vdec != NULL) {
@@ -711,7 +711,7 @@ PrologTerm*
 PrologSupport::getInitializedNameSpecific(SgInitializedName* n) {
     PrologCompTerm* t = new PrologCompTerm("initialized_name_annotation");
     t->addSubterm(getTypeSpecific(n->get_typeptr()));
-    t->addSubterm(new PrologString(n->get_name().getString()));
+    t->addSubterm(new PrologAtom(n->get_name().getString()));
     /* static? (relevant for unparsing if scope is a class)*/
     t->addSubterm(new PrologInt(n->get_storageModifier().isStatic()));
     /* named scope or irrelevant?*/
@@ -736,7 +736,7 @@ PrologTerm*
 PrologSupport::getClassDeclarationSpecific(SgClassDeclaration* cd) {
     PrologCompTerm* t = new PrologCompTerm("class_declaration_annotation");
     /* add name and type*/
-    t->addSubterm(new PrologString(cd->get_name().str()));
+    t->addSubterm(new PrologAtom(cd->get_name().str()));
     t->addSubterm(new PrologInt(cd->get_class_type()));
     t->addSubterm(getTypeSpecific(cd->get_type()));
     return t;
@@ -767,7 +767,7 @@ PrologSupport::getNamespaceDeclarationStatementSpecific(SgNamespaceDeclarationSt
     ROSE_ASSERT(dec != NULL);
     PrologCompTerm* t = new PrologCompTerm("namespace_declaration_statement");
     /* name*/
-    t->addSubterm(new PrologString(dec->get_name().getString()));
+    t->addSubterm(new PrologAtom(dec->get_name().getString()));
     /* unnamed?*/
     t->addSubterm(new PrologInt((int) dec->get_isUnnamedNamespace()));
     return t;
@@ -811,7 +811,7 @@ PrologSupport::getLabelStatementSpecific(SgLabelStatement* label) {
     string s = *(new string(label->get_label().getString()));
     // create a term containing the name;
     PrologCompTerm* t = new PrologCompTerm("label_annotation");
-    t->addSubterm(new PrologString(s));
+    t->addSubterm(new PrologAtom(s));
     return t;
 }
 
@@ -841,7 +841,7 @@ PrologSupport::getEnumDeclarationSpecific(SgEnumDeclaration* d) {
     //create term
     PrologCompTerm* t = new PrologCompTerm("enum_declaration_annotation");
     ROSE_ASSERT(t != NULL);
-    t->addSubterm(new PrologString(ename));
+    t->addSubterm(new PrologAtom(ename));
     t->addSubterm(getDeclarationAttributes(d));
     t->addSubterm(new PrologInt(d->get_embedded()));
     return t;
@@ -1099,7 +1099,7 @@ PrologSupport::getFunctionRefExpSpecific(SgFunctionRefExp* r) {
     /*create Prolog Term*/
     PrologCompTerm* t = new PrologCompTerm("function_ref_exp_annotation");
     ROSE_ASSERT(t != NULL);
-    t->addSubterm(new PrologString(s->get_name().getString()));
+    t->addSubterm(new PrologAtom(s->get_name().getString()));
     t->addSubterm(getTypeSpecific(tpe));
     return t;
 	
@@ -1165,7 +1165,7 @@ PrologSupport::getMemberFunctionDeclarationSpecific(SgMemberFunctionDeclaration*
     PrologCompTerm* t = new PrologCompTerm("member_function_declaration_annotation");
     t->addSubterm(getTypeSpecific(decl->get_type()));
     /* add the nodes name*/
-    t->addSubterm(new PrologString(decl->get_name().getString()));
+    t->addSubterm(new PrologAtom(decl->get_name().getString()));
     /* add scope */
     SgClassDefinition* def = decl->get_class_scope();
     /* we add the complete class scope name here */
@@ -1192,7 +1192,7 @@ PrologSupport::getClassScopeName(SgClassDefinition* def) {
     /* create a PrologCompTerm*/
     PrologCompTerm* t = new PrologCompTerm("class_scope");
     ROSE_ASSERT(t != NULL);
-    t->addSubterm(new PrologString(qname));
+    t->addSubterm(new PrologAtom(qname));
     t->addSubterm(new PrologInt(tpe));
     return t;
 }
@@ -1213,7 +1213,7 @@ PrologSupport::getNamespaceScopeName(SgNamespaceDefinitionStatement* def) {
     /* create annotation term*/
     PrologCompTerm* t = new PrologCompTerm("namespace_scope");
     /* add qualified name*/
-    t->addSubterm(new PrologString(decl->get_qualified_name().getString()));
+    t->addSubterm(new PrologAtom(decl->get_qualified_name().getString()));
     /* add unnamed */
     t->addSubterm(new PrologInt((int)decl->get_isUnnamedNamespace()));
     return t;
@@ -1298,8 +1298,8 @@ PrologSupport::getTypedefDeclarationSpecific(SgTypedefDeclaration* d) {
     /*create annotation term*/
     PrologCompTerm* t = new PrologCompTerm("typedef_annotation");
     /*get name*/
-    // FIXME :: t->addSubterm(new PrologString(d->get_qualified_name().getString()));
-    t->addSubterm(new PrologString(d->get_name().getString()));
+    // FIXME :: t->addSubterm(new PrologAtom(d->get_qualified_name().getString()));
+    t->addSubterm(new PrologAtom(d->get_name().getString()));
     /*get base type*/
     t->addSubterm(getTypeSpecific(d->get_base_type()));
     /*get declaration*/
@@ -1345,6 +1345,6 @@ PrologSupport::getPragmaSpecific(SgPragma* n) {
     // Hopefully I can remove it in a later revision
     string s = n->get_pragma();
     s.erase(remove_if(s.begin(), s.end(), bind1st(equal_to<char>(), ' ')), s.end());
-    t->addSubterm(new PrologString(s));
+    t->addSubterm(new PrologAtom(s));
     return t;
 }

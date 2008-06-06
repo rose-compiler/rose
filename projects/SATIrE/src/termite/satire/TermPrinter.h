@@ -14,7 +14,6 @@
 #include "PrologTerm.h"
 #include "PrologCompTerm.h"
 #include "PrologAtom.h"
-#include "PrologString.h"
 #include "PrologInt.h"
 #include "PrologList.h"
 #ifdef PAG_VERSION

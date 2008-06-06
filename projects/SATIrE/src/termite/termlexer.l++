@@ -66,11 +66,18 @@ operator [\-\+\*\/\<\=\>\:]+
         }
 
 {quoted} {
+       // FIXME write a more elegant regexp instead
+       if ((yyleng > 7) && (yytext[1] == '\\') && 
+          (yytext[2] >= '0') && (yytext[2] <= '9') &&
+          (yytext[3] >= '0') && (yytext[3] <= '9') &&
+          (yytext[4] >= '0') && (yytext[4] <= '9') &&
+          (yytext[5] == '\\') && (yytext[6] == '\'')) REJECT; // singlechar
+
         count();
         yytext++;
         *(yytext + yyleng - 2) = '\0';
         yylval.strValue = new string(yytext);
-	return(STRING);
+	return(ATOM);
         }
 
 {variable} { count(); yylval.strValue = new string(yytext); return(VARIABLE); }
