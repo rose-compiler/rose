@@ -198,9 +198,8 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
 
 
 // --------------------------------------------------------------------------
-// class DistributedMemoryAnalysisBase -- version by tps (based on computation weight)
+// class DistributedMemoryAnalysisBase -- version by tps (based on computation weight -- dynamic algorithm)
 // --------------------------------------------------------------------------
-
 template <class InheritedAttributeType>
 void
 DistributedMemoryAnalysisBase<InheritedAttributeType>::
@@ -515,8 +514,6 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
 // --------------------------------------------------------------------------
 // class DistributedMemoryAnalysisPreTraversal
 // --------------------------------------------------------------------------
-
-
 template <class InheritedAttributeType>
 InheritedAttributeType
 DistributedMemoryAnalysisPreTraversal<InheritedAttributeType>::
@@ -609,25 +606,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
 	// this weight is mostly used for the def-use checker
 	if (isSgNode(node))
 	  weightAssignOp++;
-#if 0
-	if (
-	    isSgIfStmt(node) || isSgWhileStmt(node) || isSgSwitchStatement(node)) {
-	  SgNode* temp = node;
-	  while (temp!=NULL) {
-	    if (isSgFunctionDefinition(temp))
-	      break;
-	    temp=temp->get_parent();
-	    weightAssignOp++;
-	  }
-	    
 
-	} else if (isSgBinaryOp(node) || isSgUnaryOp(node) || isSgAssignInitializer(node) || isSgAssignOp(node)) {
-	  weightNullDeref++;
-	} else if (isSgStringVal(node)) {
-	  if (weightNullDeref > 2)
-	    weightNullDeref--;
-	}
-#endif
 	// the following weight should be used if null-deref is checked for
 	/*
 	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
