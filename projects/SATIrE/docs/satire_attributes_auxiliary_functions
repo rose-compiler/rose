@@ -1,4 +1,4 @@
-$Id: satire_attributes_auxiliary_functions,v 1.10 2008-05-21 07:39:25 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.11 2008-06-06 13:00:06 gergo Exp $
 
 This file lists all CFG attributes and auxiliary functions accessible from
 PAG analysis specifications when using the SATIrE system.
@@ -65,14 +65,20 @@ ExpressionId
     program text will get the same ExpressionId iff they refer to the same
     variables a and b.
 
-TypeId is planned for a future release.
+TypeId
+    A unique identifier for each type in the program. Types are identical if
+    they are the same basic type or the same class type (i.e., have the same
+    definition, structural equivalence does not suffice) or are derived from
+    the same basic/class type using exactly the same specifiers and
+    modifiers (pointer, const, etc.).
 
 Any analysis specification that wishes to use one of these types must
 provide a dummy declaration for the type in the .set file. These dummy
 declarations are arbitrary, but must contain at least one type constructor.
 The following declarations usually work fine:
-    VariableId = VariableId * VariableId
+    VariableId   = VariableId * VariableId
     ExpressionId = ExpressionId * ExpressionId * ExpressionId
+    TypeId       = TypeId * TypeId * TypeId * TypeId
 
 Note that these type definitions do *not* mean that VariableIds or
 ExpressionIds are tuples; the type definitions are only needed to make PAG
@@ -113,16 +119,6 @@ binary_get_left_child :: Expression -> Expression;
 
 binary_get_right_child :: Expression -> Expression;
     get right child of a binary expression
-
-type_to_typenum :: Type -> unum;
-    convert a type to its corresponding type number, a unique integer
-    associated with each type
-
-typenum_to_type :: unum -> Type;
-    convert a type number to the corresponding type
-
-typenum_to_str :: unum -> str;
-    convert a type number to its corresponding string representation
 
 is_subtype_of :: Type, Type -> bool;
     test whether type1 is a subtype of type2 (in the object oriented class
@@ -169,13 +165,37 @@ varid_exprid :: VariableId -> ExpressionId;
     maps a variable identifier to an expression identifier which denotes a
     VarRefExp for that variable
 
+type_typeid :: Type -> TypeId;
+    convert a type to its corresponding TypeId
+
+typeid_type :: TypeId -> Type;
+    convert a type identifier to the actual type it represents
+
+typeid_str :: TypeId -> str;
+    convert a type identifier to a string representation of the type
+
+exprid_typeid :: ExpressionId -> TypeId;
+    get the type identifier for a given expression identifier
+
+add_tmpvarid :: TypeId -> VariableId;
+    creates a new, unique temporary variable of the given type; this
+    function returns different values for each call
+
 Deprecated Auxiliary Functions
 ------------------------------
 The following functions have been deprecated because they use old-style
 identifiers for expressions. The new opaque types offer better type safety
-and better visualization of analysis results. The functions above that use
-unums for type identifiers will be deprecated when implementation of TypeId
-is finished.
+and better visualization of analysis results.
+
+type_to_typenum :: Type -> unum;
+    convert a type to its corresponding type number, a unique integer
+    associated with each type
+
+typenum_to_type :: unum -> Type;
+    convert a type number to the corresponding type
+
+typenum_to_str :: unum -> str;
+    convert a type number to its corresponding string representation
 
 is_subtypenum_of :: unum, unum -> bool;
     test whether typenumber1 represents a subtype of the type corresponding
