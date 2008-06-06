@@ -331,8 +331,14 @@ ObjectTable::ctor(PEFileHeader *fhdr)
         section->set_name(entry->name);
         section->set_id(i);
         section->set_purpose(SP_PROGRAM);
-        
-        ExecSegment *segment = new ExecSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+
+        ExecSegment *segment = NULL;
+        if (0==entry->name.compare(".idata")) {
+            segment = new ImportSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+        } else {
+            segment = new ExecSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+        }
+
         segment->set_name(entry->name);
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);
@@ -358,7 +364,89 @@ ObjectTable::dump(FILE *f, const char *prefix)
         entries[i]->dump(f, p);
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PE Import Directory (".idata" segment)
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+ImportDirectory::ctor(const ImportDirectory_disk *disk)
+{
+    func_names_rva  = le_to_host(disk->func_names_rva);
+    res1            = le_to_host(disk->res1);
+    res2            = le_to_host(disk->res2);
+    module_name_rva = le_to_host(disk->module_name_rva);
+    addrs_rva       = le_to_host(disk->addrs_rva);
+}
+
+/* Print debugging info */
+void
+ImportDirectory::dump(FILE *f, const char *prefix)
+{
+    char p[4096];
+    sprintf(p, "%sImportDirectory.", prefix);
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "func_names_rva",  func_names_rva);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "res1",            res1);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "res2",            res2);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "module_name_rva", module_name_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "addrs_rva",       addrs_rva);
+}
+
+/* Constructor */
+void
+ImportSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+{
+    /* Read idata diretory entries--one per dll*/
+    for (size_t i=0; 1; i++) {
+        size_t entry_size = sizeof(ImportDirectory_disk);
+        const ImportDirectory_disk *idir_disk = (const ImportDirectory_disk*)section->content(i*entry_size, entry_size);
+        ImportDirectory *idir = new ImportDirectory(idir_disk);
+        if (!idir->module_name_rva) {
+            delete idir;
+            break;
+        }
+        dirs.push_back(idir);
+
+        ROSE_ASSERT(idir->module_name_rva >= get_mapped_rva());
+        addr_t module_name_offset = get_offset() + idir->module_name_rva - get_mapped_rva();
+        module_name = section->content_str(module_name_offset);
+        fprintf(stderr, "ROBB: dll = \"%s\"\n", module_name.c_str());
+
+        ROSE_ASSERT(idir->func_names_rva >= get_mapped_rva());
+        for (addr_t names_rvalist_offset = get_offset() + idir->func_names_rva - get_mapped_rva(); 
+             0!=le_to_host(*(const uint32_t*)section->content(names_rvalist_offset, 4));
+             names_rvalist_offset += 4) {
+            fprintf(stderr, "        ----\n");
+            fprintf(stderr, "        names_rvalist_offset = %"PRIu64"\n", names_rvalist_offset);
+            addr_t func_name_rva = le_to_host(*(const uint32_t*)section->content(names_rvalist_offset, 4));
+            ROSE_ASSERT(func_name_rva >= get_mapped_rva());
+            addr_t func_name_offset = get_offset() + func_name_rva - get_mapped_rva();
+            fprintf(stderr, "        func_name_offset     = %"PRIu64"\n", func_name_offset);
+            unsigned res1 = le_to_host(*(const uint16_t*)section->content(func_name_offset, 2));
+            fprintf(stderr, "        res1                 = 0x%04x\n", res1);
+            fprintf(stderr, "        func_name            = \"%s\"\n", section->content_str(func_name_offset+2));
+        }
+
+    }
+}
+
+/* Print debugging info */
+void
+ImportSegment::dump(FILE *f, const char *prefix)
+{
+    char p[4096];
+    sprintf(p, "%sImportSegment.", prefix);
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    ExecSegment::dump(f, p);
+    for (size_t i=0; i<dirs.size(); i++)
+        dirs[i]->dump(f, p);
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "module_name", module_name.c_str());
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Returns true if a cursory look at the file indicates that it could be a PE file. */

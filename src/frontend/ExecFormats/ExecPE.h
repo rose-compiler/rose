@@ -243,6 +243,39 @@ class ObjectTable : public ExecSection {
     std::vector<ObjectTableEntry*> entries;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PE Import Directory (".idata" segment)
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct ImportDirectory_disk {
+    uint32_t            func_names_rva;
+    uint32_t            res1;
+    uint32_t            res2;
+    uint32_t            module_name_rva;
+    uint32_t            addrs_rva;
+};
+
+class ImportDirectory {
+  public:
+    ImportDirectory(const ImportDirectory_disk *disk) {ctor(disk);}
+    void dump(FILE*, const char *prefix);
+    addr_t              func_names_rva, module_name_rva, addrs_rva;
+    unsigned            res1, res2;
+  private:
+    void ctor(const ImportDirectory_disk*);
+};
+
+class ImportSegment : public ExecSegment {
+  public:
+    ImportSegment(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+        : ExecSegment(section, offset, size, rva, mapped_size)
+        {ctor(section, offset, size, rva, mapped_size);}
+    virtual void dump(FILE*, const char *prefix);
+  private:
+    void ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
+    std::vector<ImportDirectory*> dirs;
+    std::string         module_name;
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

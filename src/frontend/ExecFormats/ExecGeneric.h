@@ -416,6 +416,7 @@ class ExecSegment {
     ExecSection         *get_section() {return section;} /*read-only*/
     addr_t              get_disk_size() {return disk_size;} /* read-only */
     addr_t              get_offset() {return offset;}   /* read-only */
+    addr_t              get_mapped_rva() {return mapped_rva;} /*read-only*/
     
   private:
     void ctor(ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
