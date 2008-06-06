@@ -19,20 +19,20 @@ int main (int argc, char *argv[])
 
   // build nondefining  int foo(int x, float)
  	 // build parameter list first
-  SgInitializedName* arg1 = buildInitializedName(SgName("x"),SgTypeInt::createType());
-  SgInitializedName* arg2 = buildInitializedName(SgName(""),SgTypeFloat::createType());
+  SgInitializedName* arg1 = buildInitializedName(SgName("x"),buildIntType());
+  SgInitializedName* arg2 = buildInitializedName(SgName(""),buildFloatType());
   SgFunctionParameterList * paraList = buildFunctionParameterList();
   appendArg(paraList,arg1);  
   appendArg(paraList,arg2);  
 	  // build nondefining function declaration 
   SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration \
-     (SgName("foo"),SgTypeVoid::createType(),paraList);
+     (SgName("foo"),buildVoidType(),paraList);
   appendStatement (func1);
 
     // SgFunctionParameterList should not be shared, deepcopy
   SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
   SgFunctionDeclaration * func2 = buildNondefiningFunctionDeclaration \
-     (SgName("foo"),SgTypeVoid::createType(),paraList2);
+     (SgName("foo"),buildVoidType(),paraList2);
   // insert prototype function declaration
   appendStatement (func2);
 
@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 
   SgFunctionParameterList * paraList3 = isSgFunctionParameterList(deepCopy(paraList));
   SgFunctionDeclaration *func3 =
-    buildDefiningFunctionDeclaration (SgName("foo"),SgTypeVoid::createType(),paraList3);
+    buildDefiningFunctionDeclaration (SgName("foo"),buildVoidType(),paraList3);
 
 	  // build a statement inside the function body
   SgBasicBlock *func_body = func3->get_definition ()->get_body ();
@@ -50,7 +50,7 @@ int main (int argc, char *argv[])
   pushScopeStack (isSgScopeStatement (func_body));
 
   SgVariableDeclaration *varDecl = buildVariableDeclaration
-    (SgName ("i"), SgTypeInt::createType ());
+    (SgName ("i"), buildIntType());
 
 	  // Insert the statement
   appendStatement (varDecl);
@@ -64,7 +64,7 @@ int main (int argc, char *argv[])
   // build nondefining  int foo(int x, float) the 3rd time
   SgFunctionParameterList * paraList4= isSgFunctionParameterList(deepCopy(paraList));
   SgFunctionDeclaration * func4 = buildNondefiningFunctionDeclaration \
-     (SgName("foo"),SgTypeVoid::createType(),paraList4);
+     (SgName("foo"),buildVoidType(),paraList4);
   appendStatement (func4);
 #endif 
  // pop the final scope after all AST insertion

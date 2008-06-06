@@ -24,7 +24,7 @@ int main (int argc, char *argv[])
   appendArg(paraList,arg2);  
   // build a nondefining function declaration 
   SgFunctionDeclaration * func1 = buildNondefiningFunctionDeclaration \
-     (SgName("foo"),SgTypeVoid::createType(),paraList);
+     (SgName("foo"),buildVoidType(),paraList);
 
   SgStatement * oldFirstStmt = getFirstStatement(globalScope);
 //  cout<<"debug..."<<oldFirstStmt->unparseToString()<<endl;

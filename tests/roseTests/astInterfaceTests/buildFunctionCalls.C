@@ -45,7 +45,7 @@ int main (int argc, char *argv[])
 #if 1
   //int bar(double); it is declared in a header
   //build call stmt then
-  SgType* return_type_2 = SgTypeInt::createType();
+  SgType* return_type_2 = buildIntType();
   SgDoubleVal* arg_2 = buildDoubleVal(0.5); 
   SgExprListExp* arg_list_2 = buildExprListExp();
   appendExpression(arg_list_2,arg_2);

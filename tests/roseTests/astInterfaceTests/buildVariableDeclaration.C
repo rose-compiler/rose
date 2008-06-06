@@ -37,14 +37,14 @@ int main (int argc, char *argv[])
 
   // extern int i;
   SgVariableDeclaration *varDecl = buildVariableDeclaration
-    (SgName ("i"), SgTypeInt::createType ());
+    (SgName ("i"), buildIntType());
   ((varDecl->get_declarationModifier()).get_storageModifier()).setExtern();
   appendStatement (varDecl);
 // two ways to build a same declaration
   // int i;
 #if 1
   SgVariableDeclaration *varDecl2 = buildVariableDeclaration
-    (SgName ("i"), SgTypeInt::createType ());
+    (SgName ("i"), buildIntType());
 #else
  // this one does not yet working,maybe related to copy mechanism
   SgVariableDeclaration *varDecl2 = isSgVariableDeclaration(deepCopy(varDecl));

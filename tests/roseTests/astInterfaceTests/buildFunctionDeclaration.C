@@ -18,15 +18,15 @@ int main (int argc, char *argv[])
 
   // defining  int foo(int x, float)
  	 // build parameter list first
-  SgInitializedName* arg1 = buildInitializedName(SgName("x"),SgTypeInt::createType());
-  SgInitializedName* arg2 = buildInitializedName(SgName(""),SgTypeFloat::createType());
+  SgInitializedName* arg1 = buildInitializedName(SgName("x"),buildIntType());
+  SgInitializedName* arg2 = buildInitializedName(SgName(""),buildFloatType());
   SgFunctionParameterList * paraList = buildFunctionParameterList();
   appendArg(paraList, arg1);  
   appendArg(paraList, arg2);  
 
 	  // build defining function declaration 
   SgFunctionDeclaration * func1 = buildDefiningFunctionDeclaration \
-     (SgName("foo"),SgTypeVoid::createType(),paraList);
+     (SgName("foo"),buildVoidType(),paraList);
 
 	  // build a statement inside the function body
   SgBasicBlock *func_body = func1->get_definition ()->get_body ();
@@ -34,7 +34,7 @@ int main (int argc, char *argv[])
   pushScopeStack (isSgScopeStatement (func_body));
 
   SgVariableDeclaration *varDecl = buildVariableDeclaration
-    (SgName ("i"), SgTypeInt::createType ());
+    (SgName ("i"), buildIntType());
 	  // Insert the statement
   appendStatement (varDecl);
   popScopeStack ();

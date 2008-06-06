@@ -21,13 +21,13 @@ int main (int argc, char *argv[])
 
   // build defining function declaration
   SgFunctionDeclaration * func_def = buildDefiningFunctionDeclaration \
-    ("check_var",SgTypeVoid::createType(),paraList);
+    ("check_var",buildVoidType(),paraList);
 
    // Build a corresponding prototype
   // Must not share a parameter list for different function declarations!
     SgFunctionParameterList * paraList2 = isSgFunctionParameterList(deepCopy(paraList));
   SgFunctionDeclaration * func_decl = buildNondefiningFunctionDeclaration 
-  (SgName("check_var"),SgTypeVoid::createType(),paraList2); 
+  (SgName("check_var"),buildVoidType(),paraList2); 
 
   // build a statement inside the function body
   SgBasicBlock *func_body = func_def->get_definition ()->get_body ();

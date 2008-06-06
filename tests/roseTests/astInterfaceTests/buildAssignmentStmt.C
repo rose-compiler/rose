@@ -20,7 +20,7 @@ int main (int argc, char *argv[])
   pushScopeStack(body);
   // int i;
   SgVariableDeclaration *varDecl2 = buildVariableDeclaration
-    (SgName ("i"), SgTypeInt::createType ());
+    (SgName ("i"), buildIntType());
 
  // insert before the last return statement
   SgStatement* lastStmt = getLastStatement(topScopeStack());
@@ -45,7 +45,7 @@ int main (int argc, char *argv[])
   insertStatement(lastStmt,assignStmt2);
 
    SgVariableDeclaration *varDecl_j = buildVariableDeclaration
-    (SgName ("j"), SgTypeInt::createType ());
+    (SgName ("j"), buildIntType());
 
  // insert before the last return statement
   SgStatement* firstStmt = getFirstStatement(topScopeStack());
