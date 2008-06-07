@@ -3867,10 +3867,12 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // Build a DEEP COPY of the input parameters!
      vector<string> local_commandLineArgumentList = argv;
 
-  // Liao, 6/6/2008. add --edg:upc if the file has .upc suffix but --edg:upc is not specified
+  // Liao, 6/6/2008. add --edg:upc if the file has .upc suffix but --edg:upc or -edg:upc is not specified
      if(get_UPC_only()) 
      {  
-       if (CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(upc)",false) ==false)
+       if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(upc)",false) ==false) &&
+        (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(upc)",false) ==false)) 
+
          local_commandLineArgumentList.push_back("--edg:upc");
      }    
  

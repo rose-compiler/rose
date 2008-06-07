@@ -9,6 +9,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 
 TESTCODE_CURRENTLY_FAILING = \
      threads.upc \
+     mythread.upc \
      hello.upc
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
