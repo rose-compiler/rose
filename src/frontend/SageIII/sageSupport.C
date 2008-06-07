@@ -2885,7 +2885,9 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                   }
                  else
                   {
-                    if (CommandlineProcessing::isCFileNameSuffix(filenameExtension) == true)
+                  // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
+                    if ((CommandlineProcessing::isCFileNameSuffix(filenameExtension) == true)||
+                     (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true))
                        {
                       // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                          set_sourceFileUsesCppFileExtension(false);
@@ -2894,6 +2896,10 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                          set_outputLanguage(SgFile::e_C_output_language);
 
                          set_C_only(true);
+                         // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
+                         //
+                         if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true) 
+                           set_UPC_only(true);
                        }
                       else
                        {
@@ -3857,10 +3863,17 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // printf ("p_sourceFileNameWithPath = %s \n",p_sourceFileNameWithPath);
      string timerLabel = "AST SgFile Constructor for " + p_sourceFileNameWithPath + ":";
      TimingPerformance timer (timerLabel);
-
+ 
   // Build a DEEP COPY of the input parameters!
      vector<string> local_commandLineArgumentList = argv;
 
+  // Liao, 6/6/2008. add --edg:upc if the file has .upc suffix but --edg:upc is not specified
+     if(get_UPC_only()) 
+     {  
+       if (CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(upc)",false) ==false)
+         local_commandLineArgumentList.push_back("--edg:upc");
+     }    
+ 
   // Save the commandline as a list of strings (we made a deep copy because the "callFrontEnd()" function might change it!
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
 

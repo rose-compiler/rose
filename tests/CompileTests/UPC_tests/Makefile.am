@@ -5,9 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #####################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
-     test2004_22.C
+     test2004_22.upc 
 
-TESTCODE_CURRENTLY_FAILING = 
+TESTCODE_CURRENTLY_FAILING = \
+     threads.upc \
+     hello.upc
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
@@ -18,24 +20,26 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc
+ROSE_FLAGS = --edg:no_warnings -w --edg:restrict 
+# Liao (6/6/2008) --edg:upc is not required since ROSE can add it internally based on the file suffix (.upc) 
+#ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
-PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
+PASSING_TEST_Objects = ${TESTCODES:.upc=.o}
+TEST_Objects = ${ALL_TESTCODES:.upc=.o}
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
+$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.upc)
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.upc)
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
-QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
+QMTEST_Objects = ${ALL_TESTCODES:.upc=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.C)
+$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.upc)
 	@echo "Calling QMTEST_Objects rule: "
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.upc)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
@@ -50,6 +54,6 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f *.o rose_*.[cC] rose_*.upc
 	rm -rf QMTest
 
