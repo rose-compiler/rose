@@ -64,3 +64,83 @@ us and we will add your as an external contributor.
    \item Your detector should have {\bf NO} side-effects on the AST.
 \end{itemize}
 
+
+
+
+
+
+\chapter{Design}
+
+
+\section{Use Cases}
+
+\label{design::UseCase}
+
+Figure~\ref{Compass_usecase} shows the use cases of \emph{Compass}.
+Compass as a tool is used to analyze source code. The analysis is triggered by the user who
+selects which detectors to execute. The user also specifies the source code to be checked.
+Results of the analysis are presented to that user.
+
+\begin{figure}[th]
+\includegraphics[width=4.5in]{compass_pic.png}
+\caption{Compass Use Case}
+\label{Compass_usecase}
+\end{figure}
+
+Furthermore, a user may contribute with his own detectors that he can add to Compass. Since 
+external users may contribute detectors automatically via scripts, a verification of the 
+validity and safety of these detectors is necessary. We provide a \emph{Compass Verifier}
+that helps to check that all detectors are safe. Currently, the verifier is run by
+a administrative person but may run automatically in the future.
+
+
+\section{Compass Verifier}
+
+Compass is designed to be safe. Detectors can only be added at compile time to Compass, not at run-time.
+This means that Detectors can not be exchanged against unsafe version at run-time. Only 
+the Compass tool builder may build safe versions of Compass that first pass the verifier.
+
+The Compass Verifier is a stable separate copy of Compass that contains only a few detectors
+to check user delivered detectors for safety. Currently, Compass Verifier consists of three
+detectors:
+
+\begin{itemize}
+\item \emph{fileReadOnlyAccess} ensures that a user defined detector perorms no write or execute operations on files. 
+\item \emph{forbiddenFunctions} is a white list of function calls permitted in a detector. This list contains functions
+that could possibly be harmful when integrated to Compass, such as emailing.
+\item \emph{noAsmStmtsOps} searches for assembly instructions in a detector and flags those as unsafe.
+\end{itemize}
+
+The above list contains an important subset of detectors that enforce Compass detectors to be safe. 
+Additional detectors can easily be added to that list.
+In the future, a detector submitted to Compass, should go first through the automatic verifier, before it is either 
+added to Compass or denied.  
+
+
+\section{Design}
+
+\begin{figure}[thb]
+\includegraphics[width=6.0in]{compassdesign.png}
+\caption{Compass Design}
+\label{CompassDesign}
+\end{figure}
+
+Compass is designed to be easy to extend. Any user may write a detector and add it to Compass. Figure~\ref{CompassDesign}
+illustrates the UML design decisions behind Compass.
+
+
+Most of the functionality of Compass is in abstract classes hidden in the Compass namespace within compass.h - a file within
+the compassSupport directory. All detectors, such as ConstCast illustrated in the figure, utilize the abstract classes
+to traverse a program with all its nodes and to output violations found in that code according to the local algorithm.
+
+CompassMain is the main executable that initially calls ROSE to parse a program. Then \emph{buildCheckers} is called to
+load all detectors that are specified within a configuration file. The configuration file allows users to turn on and off
+specific detectors for their run-time analyses. However, the configuration file only permits detectors to be loaded that 
+were part of Compass at compile-time.
+
+The main interface file compass.h contains the abstract classes \emph{TraversalBase} and 
+\emph{OutputObject}. TraversalBase is the interface to ROSE, allowing a detector to traverse the ROSE AST (program) and hence
+perform analysis on that AST. OutputObject aids to output defects found by a specific detector. More functionality to handle
+e.g. file input and parameters provided to Compass, is provided within the Compass namespace.
+
+

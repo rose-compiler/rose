@@ -73,7 +73,7 @@ namespace CompassAnalyses
 	    this->traverse(n, preorder); 
 	  };
 
-	  void visit(SgNode* n);
+	 	  void visit(SgNode* n);
 	};
     }
 }
