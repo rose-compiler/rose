@@ -94,28 +94,6 @@ that helps to check that all detectors are safe. Currently, the verifier is run 
 a administrative person but may run automatically in the future.
 
 
-\section{Compass Verifier}
-
-Compass is designed to be safe. Detectors can only be added at compile time to Compass, not at run-time.
-This means that Detectors can not be exchanged against unsafe version at run-time. Only 
-the Compass tool builder may build safe versions of Compass that first pass the verifier.
-
-The Compass Verifier is a stable separate copy of Compass that contains only a few detectors
-to check user delivered detectors for safety. Currently, Compass Verifier consists of three
-detectors:
-
-\begin{itemize}
-\item \emph{fileReadOnlyAccess} ensures that a user defined detector perorms no write or execute operations on files. 
-\item \emph{forbiddenFunctions} is a white list of function calls permitted in a detector. This list contains functions
-that could possibly be harmful when integrated to Compass, such as emailing.
-\item \emph{noAsmStmtsOps} searches for assembly instructions in a detector and flags those as unsafe.
-\end{itemize}
-
-The above list contains an important subset of detectors that enforce Compass detectors to be safe. 
-Additional detectors can easily be added to that list.
-In the future, a detector submitted to Compass, should go first through the automatic verifier, before it is either 
-added to Compass or denied.  
-
 
 \section{Design}
 
@@ -142,5 +120,59 @@ The main interface file compass.h contains the abstract classes \emph{TraversalB
 \emph{OutputObject}. TraversalBase is the interface to ROSE, allowing a detector to traverse the ROSE AST (program) and hence
 perform analysis on that AST. OutputObject aids to output defects found by a specific detector. More functionality to handle
 e.g. file input and parameters provided to Compass, is provided within the Compass namespace.
+
+
+\section{Compass Verifier}
+
+\subsection{Threats} 
+
+Compass must be safe, so that analyses and their results can be trusted. 
+The main threats to the validity of Compass are:
+
+\begin{itemize}
+\item \emph{Malicious User}. A malicious user is an external user of Compass contributing a detector that performs malicious behaviour.  
+\item \emph{Malicious Detector}. Compass is extensible and new detectos can be added externally (users outside the main development group).
+  A detector can be programmed arbitrarily using the C/C++ and assembly programming languages. 
+  It is therefore possible for a skilled programmer to hide malicious operations within a detector, e.g. allow a detector to scan the host machine and
+  send data away. Compass must prevent detectors with malicious behaviour to be part of the Compass system. 
+\item \emph{Source Code Replacement}. It should not be possible for users to exchange the source code of detectors within a running system,
+  i.e. Compass cannot implement dynamic loading of detectors. Such a feature would compromise its safety.
+\item \emph{Binary Replacement}. Another threat is the replacement of a valid Compass detector with a modified malicious version within a binary release of Compass.
+  Therefore, Compass should be aware if parts of itself were modified and should not execute.
+\end{itemize} 
+
+\subsection{Safety Handling}
+
+Compass is designed to be safe. The Compass Verifier is a stable separate copy of Compass that contains only a few detectors
+to check (external and internal) user delivered detectors for safety. We have designed Compass in a way that it addresses the threats mentioned above:
+
+\begin{itemize}
+\item \emph{Malicious User}. Initially, we permit only trusted individuals to add new detectors to Compass. Once the verification process
+  is matured, we will extend this policy to allow arbitrary users to contribute to Compass. 
+
+\item \emph{Malicious Detector}. To prevent Compass to execute malicious code, the Compass Verifier executes its own detectors on
+any user defined detector that is beeing considered to be added to Compass.
+Currently, the Compass Verifier contains three detectors:
+
+\begin{itemize}
+\item \emph{fileReadOnlyAccess} ensures that a user defined detector perorms no write or execute operations on files. 
+\item \emph{forbiddenFunctions} is a white list of function calls permitted in a detector. This list contains functions
+that could possibly be harmful when integrated to Compass, such as emailing.
+\item \emph{noAsmStmtsOps} searches for assembly instructions in a detector and flags those as unsafe.
+\end{itemize}
+
+\item \emph{Source Code Replacement}. Detectors can only be added at compile time to Compass, not at run-time.
+This means that detectors (meaning the source code) cannot be exchanged against unsafe versions at run-time. Furthermore, we allow only 
+the Compass tool builder (admin) to build versions of Compass that must pass the Compass Verifier.
+
+\item \emph{Binary Replacement}. Our goal is to perform a MD5 checksum on all the detectors part of the binary Compass distribution before
+  Compass is executed. In this way Compass will not run if parts of it were modified.
+\end{itemize} 
+
+
+%The above list contains an important subset of detectors that enforce Compass detectors to be safe. 
+%Additional detectors can easily be added to that list.
+%In the future, a detector submitted to Compass, should go first through the automatic verifier, before it is either 
+%added to Compass or denied.  
 
 
