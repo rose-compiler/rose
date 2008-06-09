@@ -1,13 +1,16 @@
 #! /bin/sh
 
 # Parse command-line
-do_quiet=
+do_quiet=yes
 while [ "$#" -gt 0 ]; do
     arg="$1"; shift
     case "$arg" in
-	--quiet)
-	    do_quiet=yes
+	--verbose)
+	    do_quiet=no
 	    ;;
+        --quiet)
+            echo "$0: warning: --quiet is now the default mode and is ignored"
+            ;;
         *)
 	    echo "$0: unrecognized argument: $arg" >&2
 	    exit 1
