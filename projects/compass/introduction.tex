@@ -157,7 +157,7 @@ Currently, the Compass Verifier contains three detectors:
 \begin{itemize}
 \item \emph{fileReadOnlyAccess} ensures that a user defined detector perorms no write or execute operations on files. 
 \item \emph{forbiddenFunctions} is a white list of function calls permitted in a detector. This list contains functions
-that could possibly be harmful when integrated to Compass, such as emailing.
+that are trusted and hence considered unharmful when integrated to Compass.
 \item \emph{noAsmStmtsOps} searches for assembly instructions in a detector and flags those as unsafe.
 \end{itemize}
 
