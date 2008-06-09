@@ -118,6 +118,34 @@ extern "C" void o_TypeId_clear_flag(void)
  // dummy iff TypeId_find_obj is a dummy
 }
 
+EXTERN_C FLO_BOOL o_TypeId_le(void *a, void *b)
+{
+    TypeId *v = (TypeId *) a;
+    TypeId *w = (TypeId *) b;
+    return (v->id < w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_TypeId_leq(void *a, void *b)
+{
+    TypeId *v = (TypeId *) a;
+    TypeId *w = (TypeId *) b;
+    return (v->id <= w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_TypeId_ge(void *a, void *b)
+{
+    TypeId *v = (TypeId *) a;
+    TypeId *w = (TypeId *) b;
+    return (v->id > w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_TypeId_geq(void *a, void *b)
+{
+    TypeId *v = (TypeId *) a;
+    TypeId *w = (TypeId *) b;
+    return (v->id >= w->id ? FLO_TRUE : FLO_FALSE);
+}
+
 
 // *** Analyzer support functions
 // map type to TypeId object, i.e. construct a new instance on the PAG heap

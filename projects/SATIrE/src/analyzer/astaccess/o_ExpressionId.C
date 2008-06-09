@@ -114,6 +114,34 @@ extern "C" void o_ExpressionId_clear_flag(void)
  // dummy iff ExpressionId_find_obj is a dummy
 }
 
+EXTERN_C FLO_BOOL o_ExpressionId_le(void *a, void *b)
+{
+    ExpressionId *v = (ExpressionId *) a;
+    ExpressionId *w = (ExpressionId *) b;
+    return (v->id < w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_ExpressionId_leq(void *a, void *b)
+{
+    ExpressionId *v = (ExpressionId *) a;
+    ExpressionId *w = (ExpressionId *) b;
+    return (v->id <= w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_ExpressionId_ge(void *a, void *b)
+{
+    ExpressionId *v = (ExpressionId *) a;
+    ExpressionId *w = (ExpressionId *) b;
+    return (v->id > w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_ExpressionId_geq(void *a, void *b)
+{
+    ExpressionId *v = (ExpressionId *) a;
+    ExpressionId *w = (ExpressionId *) b;
+    return (v->id >= w->id ? FLO_TRUE : FLO_FALSE);
+}
+
 
 // *** Analyzer support functions
 // map expression to ExpressionId object, i.e. construct a new instance

@@ -61,6 +61,11 @@ EXTERN_C void o_ExpressionId_print_fp(FILE *f, void *p);
 EXTERN_C char *o_ExpressionId_to_charp(void *p);
 EXTERN_C char *o_ExpressionId_gdlprint(void *p);
 
+EXTERN_C FLO_BOOL o_ExpressionId_le(void *a, void *b);
+EXTERN_C FLO_BOOL o_ExpressionId_leq(void *a, void *b);
+EXTERN_C FLO_BOOL o_ExpressionId_ge(void *a, void *b);
+EXTERN_C FLO_BOOL o_ExpressionId_geq(void *a, void *b);
+
 #define o_ExpressionId_RCI(foo) (foo)
 #define o_ExpressionId_RCD(foo) (foo)
 

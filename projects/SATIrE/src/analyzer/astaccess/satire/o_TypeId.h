@@ -50,6 +50,11 @@ EXTERN_C void o_TypeId_print_fp(FILE *f, void *p);
 EXTERN_C char *o_TypeId_to_charp(void *p);
 EXTERN_C char *o_TypeId_gdlprint(void *p);
 
+EXTERN_C FLO_BOOL o_TypeId_le(void *a, void *b);
+EXTERN_C FLO_BOOL o_TypeId_leq(void *a, void *b);
+EXTERN_C FLO_BOOL o_TypeId_ge(void *a, void *b);
+EXTERN_C FLO_BOOL o_TypeId_geq(void *a, void *b);
+
 #define o_TypeId_RCI(foo) (foo)
 #define o_TypeId_RCD(foo) (foo)
 

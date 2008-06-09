@@ -69,6 +69,12 @@ EXTERN_C char *o_VariableId_print(void *p);
 EXTERN_C void o_VariableId_print_fp(FILE *f, void *p);
 EXTERN_C char *o_VariableId_to_charp(void *p);
 EXTERN_C char *o_VariableId_gdlprint(void *p);
+/* Comparison functions; at least the less-than operation is needed if PAG's
+ * binary trees are used. */
+EXTERN_C FLO_BOOL o_VariableId_le(void *a, void *b);
+EXTERN_C FLO_BOOL o_VariableId_leq(void *a, void *b);
+EXTERN_C FLO_BOOL o_VariableId_ge(void *a, void *b);
+EXTERN_C FLO_BOOL o_VariableId_geq(void *a, void *b);
 
 /* Useless macros required by PAG-generated code but NOT DOCUMENTED in the
    PAG manual. */

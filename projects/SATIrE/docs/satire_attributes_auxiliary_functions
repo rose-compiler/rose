@@ -1,4 +1,4 @@
-$Id: satire_attributes_auxiliary_functions,v 1.11 2008-06-06 13:00:06 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.12 2008-06-09 08:40:14 gergo Exp $
 
 This file lists all CFG attributes and auxiliary functions accessible from
 PAG analysis specifications when using the SATIrE system.
@@ -84,8 +84,8 @@ Note that these type definitions do *not* mean that VariableIds or
 ExpressionIds are tuples; the type definitions are only needed to make PAG
 accept that the type on the left hand side really exists. When using them in
 analysis specifications, do not assume anything about the types' internal
-structure. Comparisons for equality are provided, ordering relations will be
-considered for a future release.
+structure. Comparisons for equality and total ordering relations are
+provided by SATIrE.
 
 
 Auxiliary Functions

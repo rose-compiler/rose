@@ -119,6 +119,34 @@ extern "C" void o_VariableId_clear_flag(void)
  // dummy iff VariableId_find_obj is a dummy
 }
 
+EXTERN_C FLO_BOOL o_VariableId_le(void *a, void *b)
+{
+    VariableId *v = (VariableId *) a;
+    VariableId *w = (VariableId *) b;
+    return (v->id < w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_VariableId_leq(void *a, void *b)
+{
+    VariableId *v = (VariableId *) a;
+    VariableId *w = (VariableId *) b;
+    return (v->id <= w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_VariableId_ge(void *a, void *b)
+{
+    VariableId *v = (VariableId *) a;
+    VariableId *w = (VariableId *) b;
+    return (v->id > w->id ? FLO_TRUE : FLO_FALSE);
+}
+
+EXTERN_C FLO_BOOL o_VariableId_geq(void *a, void *b)
+{
+    VariableId *v = (VariableId *) a;
+    VariableId *w = (VariableId *) b;
+    return (v->id >= w->id ? FLO_TRUE : FLO_FALSE);
+}
+
 
 // *** Analyzer support functions
 // map variable symbol to VariableId object
@@ -196,12 +224,6 @@ extern "C" void *o_add_tmpvarid(void *p_type)
     get_global_cfg()->numbers_exprs.push_back(exp);
 
     globalVariableIdPool.push_back(i);
-
-    std::cout
-        << "added var " << varname.str()
-        << " with type " << Ir::fragmentToString(type)
-        << " and id " << i
-        << std::endl;
 
     VariableId *v = (VariableId *) GC_alloc(VariableId::type_id);
     v->id = i;
