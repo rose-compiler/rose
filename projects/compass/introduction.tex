@@ -69,7 +69,7 @@ us and we will add your as an external contributor.
 
 
 
-\chapter{Design}
+\chapter{Compass Design and Verification}
 
 
 \section{Use Cases}
@@ -92,6 +92,45 @@ external users may contribute detectors automatically via scripts, a verificatio
 validity and safety of these detectors is necessary. We provide a \emph{Compass Verifier}
 that helps to check that all detectors are safe. Currently, the verifier is run by
 a administrative person but may run automatically in the future.
+
+
+
+\section{Architecture}
+
+\begin{figure}[thb]
+\includegraphics[width=6.0in]{compass_arc.png}
+\caption{Compass Architecture}
+\label{CompassArchitecture}
+\end{figure}
+
+
+Compass is a tool that allows users to implement detectors to locate and
+report software defects.
+Documentation of various kinds of software defects can be found in sources
+such as the Common Weakness Enumeration from MITRE. Our focus is not to
+define new software defects but
+rather to provide a platform that allows the easy implementation of defect
+detectors.
+Compass has been designed to be easy to extend, allowing users to implement
+their custom detectors (custom source code analyses for
+identifying defects), as shown in Figure~\ref{CompassArchitecture}. Compass supports
+the implementation of both simple as well as more advanced defect
+detectors. For the latter, Compass utilizes the ROSE infrastructure to
+perform a wide range of general purpose program analyses, such as control
+flow analysis, data flow analysis, program slicing, etc.
+
+
+Compass is designed in a way that allows users who do not necessarily have
+compiler backgrounds to utilize the ROSE infrastructure to build their
+own analysis tools.
+Compass is foremost an extensible open source infrastructure for the
+development of large
+collections of rules. Our current implementation supports automatic
+defect checking, programming language restriction, and malware detection in
+C, C++, and object code.
+Support for Fortran is a new addition to ROSE and will be supported in
+Compass in the near future.
+
 
 
 
